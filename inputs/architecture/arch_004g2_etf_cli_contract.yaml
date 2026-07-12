@@ -1,7 +1,7 @@
 schema_version: arch_004g2_cli_contract.v1
 source:
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: d0ece3eef61bc7cf2c32c959efe5de4da8efff7803fe17d2dac575741fad43be
+  sha256: ca318a5bae37d4db0de4aa6f3a211632b354574f2069fafaa10a44f1d8d8004e
 counts:
   root_command_count: 41
   group_count: 291
@@ -9,7 +9,7 @@ counts:
   registered_leaf_count: 993
   unique_path_count: 1284
   duplicate_path_count: 0
-tree_sha256: 055c644c5e4b3092c381de7484f15c4748db9f74213796ec6518bafb8c62f75e
+tree_sha256: 77c2a9cee274898d972ec5013e2dca149ae514cb2bf1abb412f8cd60f6b43753
 nodes:
 - path: <root>
   kind: group
@@ -1578,7 +1578,7 @@ nodes:
 - path: dynamic-v3-rescue outcome-update run
   kind: command
   parameter_count: 7
-  contract_sha256: c0817cc3b40c5bafcd0c860ed9e6b0fd660bc0b6164f99eca2b9a01226a25794
+  contract_sha256: 2257f4f8783d229502ec05bebc0b197db225032fe7e16c2edd26851c0e1ebf92
 - path: dynamic-v3-rescue outcome-update-review
   kind: group
   parameter_count: 0
@@ -3734,7 +3734,7 @@ nodes:
 - path: dynamic-v3-rescue validate-outcome-update
   kind: command
   parameter_count: 2
-  contract_sha256: 946d676d6f394fd03c0ea21c3deefb52a69a1650c0b5f60f4d1d985c4da6e97f
+  contract_sha256: ab73b614cd4a2b7d25665e24f1cd0882d977dc8b8d81c724a5785c9e3b15f862
 - path: dynamic-v3-rescue validate-outcome-update-review
   kind: command
   parameter_count: 2

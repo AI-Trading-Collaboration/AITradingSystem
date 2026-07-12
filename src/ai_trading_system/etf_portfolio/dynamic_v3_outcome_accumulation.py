@@ -4,6 +4,8 @@ import csv
 import io
 import json
 import math
+import shutil
+import tempfile
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime, timedelta
@@ -94,6 +96,8 @@ DEFAULT_CONSENSUS_RISK_POLICY_PATH = Path(
     "config/etf_portfolio/dynamic_v3_rescue/consensus_risk_v1.yaml"
 )
 OUTCOME_UPDATE_REVIEW_SNAPSHOT_SCHEMA_VERSION = "outcome_update_review_source_snapshot.v2"
+OUTCOME_UPDATE_SNAPSHOT_SCHEMA_VERSION = "outcome_update_source_snapshot.v2"
+OUTCOME_UPDATE_TRANSACTION_SCHEMA_VERSION = "outcome_update_transaction.v1"
 
 OUTCOME_WINDOWS = (1, 5, 10, 20)
 OUTCOME_WINDOW_STATUSES = {"AVAILABLE", "PENDING", "INSUFFICIENT_DATA"}
@@ -2142,116 +2146,208 @@ def run_outcome_update(
     rates_path: Path = DEFAULT_RATES_CACHE_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _aware_utc(generated_at or datetime.now(UTC), "generated_at")
+    _safe_child_dir(review_dir, update_review_id, "update_review_id")
+    _recover_prepared_outcome_updates(
+        output_dir=output_dir,
+        update_review_id=update_review_id,
+        advisory_outcome_dir=advisory_outcome_dir,
+    )
+    if _committed_outcome_update_for_review(output_dir, update_review_id):
+        raise DynamicV3OutcomeAccumulationError(
+            "outcome update review already has a COMMITTED update"
+        )
+    review_validation = validate_outcome_update_review_artifact(
+        review_id=update_review_id,
+        output_dir=review_dir,
+    )
+    if review_validation.get("status") != "PASS":
+        raise DynamicV3OutcomeAccumulationError(
+            "outcome update review validation must PASS before mutation; "
+            f"status={review_validation.get('status')}"
+        )
     review_artifact_dir = review_dir / update_review_id
     review_manifest = _read_json(review_artifact_dir / "outcome_update_review_manifest.json")
-    review_rows = _read_jsonl(review_artifact_dir / "update_ready_review_matrix.jsonl")
+    review_generated = _datetime_from_any(review_manifest.get("generated_at"))
     as_of = _date_from_any(review_manifest.get("as_of"))
-    if as_of is None:
-        raise DynamicV3OutcomeAccumulationError("outcome update review missing as_of")
-    before_rows = _forward_outcome_rows(advisory_outcome_dir)
-    before_by_window = _forward_rows_by_outcome_window(before_rows)
+    if review_generated is None or as_of is None:
+        raise DynamicV3OutcomeAccumulationError(
+            "outcome update review missing timezone-aware generated_at or as_of"
+        )
+    if generated < review_generated or as_of > generated.date():
+        raise DynamicV3OutcomeAccumulationError(
+            "outcome update generated_at must not precede review or as_of"
+        )
+    review_rows = _read_jsonl(review_artifact_dir / "update_ready_review_matrix.jsonl")
+    identities = [
+        (_text(row.get("outcome_id")), _int(row.get("window_days")))
+        for row in review_rows
+    ]
+    if (
+        len(identities) != len(set(identities))
+        or any(not outcome_id or window_days <= 0 for outcome_id, window_days in identities)
+    ):
+        raise DynamicV3OutcomeAccumulationError(
+            "outcome update review rows require unique non-empty outcome-window identities"
+        )
     ready_rows = [row for row in review_rows if row.get("review_status") == "READY_TO_UPDATE"]
     ready_outcome_ids = sorted({_text(row.get("outcome_id")) for row in ready_rows})
-    ready_keys = {
+    ready_keys = set(identities) & {
         (_text(row.get("outcome_id")), _int(row.get("window_days"))) for row in ready_rows
     }
-    for outcome_id in ready_outcome_ids:
-        update_advisory_outcome(
-            as_of=as_of,
-            outcome_id=outcome_id,
-            output_dir=advisory_outcome_dir,
-            paper_portfolio_dir=(
-                DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_portfolio"
-                if paper_portfolio_dir is None
-                else paper_portfolio_dir
-            ),
-            prices_path=prices_path,
-            rates_path=rates_path,
-            generated_at=generated,
-            allowed_window_days={
-                window_days
-                for selected_outcome_id, window_days in ready_keys
-                if selected_outcome_id == outcome_id
-            },
-        )
-    after_rows = _forward_outcome_rows(advisory_outcome_dir)
-    after_by_window = _forward_rows_by_outcome_window(after_rows)
-    updated_windows: list[dict[str, Any]] = []
-    skipped_windows: list[dict[str, Any]] = []
-    for row in review_rows:
-        outcome_id = _text(row.get("outcome_id"))
-        window_days = _int(row.get("window_days"))
-        key = (outcome_id, window_days)
-        before = before_by_window.get(key, {})
-        after = after_by_window.get(key, before)
-        if row.get("review_status") != "READY_TO_UPDATE":
-            skipped_windows.append(_skipped_outcome_update_row(row, before))
-            continue
-        if _text(after.get("outcome_status")) == "AVAILABLE":
-            updated_windows.append(_updated_outcome_window_row(row, before, after))
-        else:
-            skipped_windows.append(
-                {
-                    "daily_advisory_id": _text(row.get("daily_advisory_id")),
-                    "outcome_id": outcome_id,
-                    "window_days": window_days,
-                    "old_status": _text(before.get("outcome_status"), "PENDING"),
-                    "skip_reason": "INSUFFICIENT_DATA",
-                    "review_status": "READY_TO_UPDATE",
-                    "new_status": _text(after.get("outcome_status"), "INSUFFICIENT_DATA"),
-                    "broker_action_taken": False,
-                }
-            )
-    before_counts = _forward_status_summary(before_rows)
-    after_counts = _forward_status_summary(after_rows)
-    status_delta = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_outcome_status_delta",
-        "before": before_counts,
-        "after": after_counts,
-        "updated_count": len(updated_windows),
-        "skipped_count": len(skipped_windows),
-        "production_effect": "none",
-        "broker_action_taken": False,
-    }
-    update_id = _stable_id("outcome-update", update_review_id, generated.isoformat())
-    update_dir = _unique_dir(output_dir / update_id)
-    update_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_outcome_update_manifest",
-        "outcome_update_id": update_dir.name,
-        "update_review_id": update_review_id,
-        "due_id": _text(review_manifest.get("due_id")),
-        "as_of": as_of.isoformat(),
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if updated_windows else "INSUFFICIENT_DATA",
-        "updated_count": len(updated_windows),
-        "skipped_count": len(skipped_windows),
-        "future_data_used_in_decision": False,
-        "downstream_refresh_required": True,
-        "outcome_update_manifest_path": str(update_dir / "outcome_update_manifest.json"),
-        "updated_windows_path": str(update_dir / "updated_windows.jsonl"),
-        "skipped_windows_path": str(update_dir / "skipped_windows.jsonl"),
-        "outcome_status_delta_path": str(update_dir / "outcome_status_delta.json"),
-        "outcome_update_report_path": str(update_dir / "outcome_update_report.md"),
-        "production_effect": "none",
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "production_candidate_generated": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
-    _write_json(update_dir / "outcome_update_manifest.json", manifest)
-    _write_jsonl(update_dir / "updated_windows.jsonl", updated_windows)
-    _write_jsonl(update_dir / "skipped_windows.jsonl", skipped_windows)
-    _write_json(update_dir / "outcome_status_delta.json", status_delta)
-    _write_text(
-        update_dir / "outcome_update_report.md",
-        render_outcome_update_report(manifest, status_delta, updated_windows, skipped_windows),
+    selected_outcome_ids = sorted({_text(row.get("outcome_id")) for row in review_rows})
+    pre_bundles, pre_validations = _validated_outcome_update_bundles(
+        outcome_ids=selected_outcome_ids,
+        advisory_outcome_dir=advisory_outcome_dir,
     )
+    before_by_window = _outcome_rows_by_window_from_bundles(pre_bundles)
+    for row in review_rows:
+        key = (_text(row.get("outcome_id")), _int(row.get("window_days")))
+        before = before_by_window.get(key)
+        if before is None or before.get("outcome_status") != row.get("existing_status"):
+            raise DynamicV3OutcomeAccumulationError(
+                f"outcome update live pre-state drift for {key[0]}:{key[1]}"
+            )
+    resolved_paper_dir = (
+        DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_portfolio"
+        if paper_portfolio_dir is None
+        else paper_portfolio_dir
+    )
+    _preflight_outcome_update_batch(
+        outcome_ids=ready_outcome_ids,
+        ready_keys=ready_keys,
+        advisory_outcome_dir=advisory_outcome_dir,
+        paper_portfolio_dir=resolved_paper_dir,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        as_of=as_of,
+        generated=generated,
+    )
+    update_id = _stable_id("outcome-update", update_review_id, generated.isoformat())
+    update_dir = output_dir / update_id
+    if update_dir.exists():
+        raise DynamicV3OutcomeAccumulationError(
+            f"outcome update transaction already exists: {update_dir}"
+        )
+    update_dir.mkdir(parents=True, exist_ok=False)
+    backup_root = update_dir / "rollback_backups"
+    backup_paths = _backup_outcome_update_sources(
+        outcome_ids=ready_outcome_ids,
+        advisory_outcome_dir=advisory_outcome_dir,
+        backup_root=backup_root,
+    )
+    transaction_path = update_dir / "outcome_update_transaction.json"
+    snapshot_path = update_dir / "outcome_update_source_snapshot.json"
+    transaction = _outcome_update_transaction(
+        update_id=update_id,
+        update_review_id=update_review_id,
+        generated=generated,
+        status="PREPARED",
+        selected_outcome_ids=selected_outcome_ids,
+        ready_outcome_ids=ready_outcome_ids,
+        backup_paths=backup_paths,
+    )
+    snapshot: dict[str, Any] = {
+        "schema_version": OUTCOME_UPDATE_SNAPSHOT_SCHEMA_VERSION,
+        "outcome_update_id": update_id,
+        "update_review_id": update_review_id,
+        "generated_at": generated.isoformat(),
+        "review_generated_at": review_generated.isoformat(),
+        "as_of": as_of.isoformat(),
+        "future_data_used_in_decision": False,
+        "selected_outcome_ids": selected_outcome_ids,
+        "ready_outcome_ids": ready_outcome_ids,
+        "ready_keys": [list(key) for key in sorted(ready_keys)],
+        "review_source_bundle": _immutable_source_bundle(review_artifact_dir),
+        "review_validation": review_validation,
+        "pre_outcome_bundles": pre_bundles,
+        "pre_outcome_validations": pre_validations,
+        "post_outcome_bundles": {},
+        "post_outcome_validations": {},
+        "transaction_status": "PREPARED",
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+    _write_json(transaction_path, transaction)
+    _write_json(snapshot_path, snapshot)
+    try:
+        for outcome_id in ready_outcome_ids:
+            update_advisory_outcome(
+                as_of=as_of,
+                outcome_id=outcome_id,
+                output_dir=advisory_outcome_dir,
+                paper_portfolio_dir=resolved_paper_dir,
+                prices_path=prices_path,
+                rates_path=rates_path,
+                generated_at=generated,
+                allowed_window_days={
+                    window_days
+                    for selected_outcome_id, window_days in ready_keys
+                    if selected_outcome_id == outcome_id
+                },
+            )
+        post_bundles, post_validations = _validated_outcome_update_bundles(
+            outcome_ids=selected_outcome_ids,
+            advisory_outcome_dir=advisory_outcome_dir,
+        )
+        snapshot["post_outcome_bundles"] = post_bundles
+        snapshot["post_outcome_validations"] = post_validations
+        snapshot["transaction_status"] = "COMMITTED"
+        updated_windows, skipped_windows, status_delta = _outcome_update_derived_views(snapshot)
+        _write_json(snapshot_path, snapshot)
+        manifest = _outcome_update_manifest(
+            update_dir=update_dir,
+            update_review_id=update_review_id,
+            review_manifest=review_manifest,
+            generated=generated,
+            as_of=as_of,
+            updated_windows=updated_windows,
+            skipped_windows=skipped_windows,
+            source_snapshot_checksum=_file_sha256(snapshot_path),
+        )
+        _write_json(update_dir / "outcome_update_manifest.json", manifest)
+        _write_jsonl(update_dir / "updated_windows.jsonl", updated_windows)
+        _write_jsonl(update_dir / "skipped_windows.jsonl", skipped_windows)
+        _write_json(update_dir / "outcome_status_delta.json", status_delta)
+        _write_text(
+            update_dir / "outcome_update_report.md",
+            render_outcome_update_report(
+                manifest, status_delta, updated_windows, skipped_windows
+            ),
+        )
+        if backup_root.exists():
+            shutil.rmtree(backup_root)
+        transaction = _outcome_update_transaction(
+            update_id=update_id,
+            update_review_id=update_review_id,
+            generated=generated,
+            status="COMMITTED",
+            selected_outcome_ids=selected_outcome_ids,
+            ready_outcome_ids=ready_outcome_ids,
+            backup_paths=[],
+        )
+        _write_json(transaction_path, transaction)
+    except Exception as exc:
+        rollback_validation = _restore_outcome_update_sources(
+            outcome_ids=ready_outcome_ids,
+            advisory_outcome_dir=advisory_outcome_dir,
+            backup_root=backup_root,
+        )
+        transaction = _outcome_update_transaction(
+            update_id=update_id,
+            update_review_id=update_review_id,
+            generated=generated,
+            status="ROLLED_BACK",
+            selected_outcome_ids=selected_outcome_ids,
+            ready_outcome_ids=ready_outcome_ids,
+            backup_paths=[],
+            error=str(exc),
+            rollback_validation=rollback_validation,
+        )
+        _write_json(transaction_path, transaction)
+        raise DynamicV3OutcomeAccumulationError(
+            f"outcome update transaction rolled back: {exc}"
+        ) from exc
     _update_latest_pointer(
         "latest_outcome_update",
         update_dir.name,
@@ -2264,6 +2360,8 @@ def run_outcome_update(
         "updated_windows": updated_windows,
         "skipped_windows": skipped_windows,
         "outcome_status_delta": status_delta,
+        "source_snapshot": snapshot,
+        "transaction": transaction,
     }
 
 
@@ -2280,6 +2378,8 @@ def outcome_update_report_payload(
     )
     return {
         **_read_json(update_dir / "outcome_update_manifest.json"),
+        "source_snapshot": _read_json(update_dir / "outcome_update_source_snapshot.json"),
+        "transaction": _read_json(update_dir / "outcome_update_transaction.json"),
         "updated_windows": _read_jsonl(update_dir / "updated_windows.jsonl"),
         "skipped_windows": _read_jsonl(update_dir / "skipped_windows.jsonl"),
         "outcome_status_delta": _read_json(update_dir / "outcome_status_delta.json"),
@@ -2291,10 +2391,50 @@ def validate_outcome_update_artifact(
     *, update_id: str, output_dir: Path = DEFAULT_OUTCOME_UPDATE_DIR
 ) -> dict[str, Any]:
     update_dir = output_dir / update_id
+    snapshot_path = update_dir / "outcome_update_source_snapshot.json"
+    transaction_path = update_dir / "outcome_update_transaction.json"
     manifest = _read_optional_json(update_dir / "outcome_update_manifest.json") or {}
     updated = _read_jsonl(update_dir / "updated_windows.jsonl")
     skipped = _read_jsonl(update_dir / "skipped_windows.jsonl")
     delta = _read_optional_json(update_dir / "outcome_status_delta.json") or {}
+    snapshot = _read_optional_json(snapshot_path) or {}
+    transaction = _read_optional_json(transaction_path) or {}
+    report = _read_text(update_dir / "outcome_update_report.md")
+    try:
+        expected_updated, expected_skipped, expected_delta = _outcome_update_derived_views(
+            snapshot
+        )
+        review_bundle = _mapping(snapshot.get("review_source_bundle"))
+        review_manifest = _mapping(
+            _source_bundle_content(review_bundle, "outcome_update_review_manifest.json")
+        )
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        as_of = _date_from_any(snapshot.get("as_of"))
+        expected_manifest = (
+            _outcome_update_manifest(
+                update_dir=update_dir,
+                update_review_id=_text(snapshot.get("update_review_id")),
+                review_manifest=review_manifest,
+                generated=generated,
+                as_of=as_of,
+                updated_windows=expected_updated,
+                skipped_windows=expected_skipped,
+                source_snapshot_checksum=_file_sha256(snapshot_path),
+            )
+            if generated is not None and as_of is not None
+            else {}
+        )
+        expected_report = render_outcome_update_report(
+            expected_manifest,
+            expected_delta,
+            expected_updated,
+            expected_skipped,
+        )
+        snapshot_errors = _outcome_update_snapshot_errors(snapshot)
+    except Exception as exc:  # noqa: BLE001
+        expected_updated, expected_skipped, expected_delta = [], [], {}
+        expected_manifest, expected_report = {}, ""
+        snapshot_errors = [f"snapshot_recompute_error:{exc}"]
     checks = [
         _check(
             "manifest_exists", (update_dir / "outcome_update_manifest.json").exists(), update_id
@@ -2313,27 +2453,45 @@ def validate_outcome_update_artifact(
             "status_delta_exists", (update_dir / "outcome_status_delta.json").exists(), update_id
         ),
         _check("report_exists", (update_dir / "outcome_update_report.md").exists(), update_id),
+        _check("source_snapshot_exists", snapshot_path.exists(), update_id),
+        _check("transaction_exists", transaction_path.exists(), update_id),
         _check("update_id_matches", manifest.get("outcome_update_id") == update_id, update_id),
         _check(
-            "updated_rows_available",
+            "source_snapshot_schema",
+            snapshot.get("schema_version") == OUTCOME_UPDATE_SNAPSHOT_SCHEMA_VERSION,
+            _text(snapshot.get("schema_version")),
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _file_sha256(snapshot_path),
+            str(snapshot_path),
+        ),
+        _check(
+            "transaction_committed",
+            transaction.get("schema_version") == OUTCOME_UPDATE_TRANSACTION_SCHEMA_VERSION
+            and transaction.get("status") == "COMMITTED"
+            and transaction.get("outcome_update_id") == update_id
+            and transaction.get("update_review_id") == manifest.get("update_review_id")
+            and transaction.get("rollback_required") is False,
+            _text(transaction.get("status")),
+        ),
+        _check(
+            "snapshot_contract_recomputed",
+            not snapshot_errors,
+            ",".join(snapshot_errors),
+        ),
+        _check("updated_windows_recomputed", updated == expected_updated, "updated windows"),
+        _check("skipped_windows_recomputed", skipped == expected_skipped, "skipped windows"),
+        _check("status_delta_recomputed", delta == expected_delta, "status delta"),
+        _check("manifest_recomputed", manifest == expected_manifest, "manifest"),
+        _check("report_recomputed", report == expected_report, "Markdown"),
+        _check(
+            "live_post_outcomes_match",
             all(
-                row.get("old_status") == "PENDING"
-                and row.get("new_status") == "AVAILABLE"
-                and row.get("future_data_used_in_decision") is False
-                for row in updated
+                _source_bundle_matches(_mapping(bundle))
+                for bundle in _mapping(snapshot.get("post_outcome_bundles")).values()
             ),
-            "updated rows",
-        ),
-        _check(
-            "skipped_reason_valid",
-            all(row.get("skip_reason") in OUTCOME_UPDATE_SKIP_REASONS for row in skipped),
-            "skip reasons",
-        ),
-        _check(
-            "delta_counts_match_manifest",
-            _int(delta.get("updated_count")) == _int(manifest.get("updated_count"))
-            and _int(delta.get("skipped_count")) == _int(manifest.get("skipped_count")),
-            "delta counts",
+            "committed outcome bundles",
         ),
         _check(
             "broker_action_forbidden",
@@ -3103,6 +3261,8 @@ def render_outcome_update_report(
                 f"- outcome_update_id: `{manifest.get('outcome_update_id')}`",
                 f"- update_review_id: `{manifest.get('update_review_id')}`",
                 f"- status: {manifest.get('status')}",
+                f"- transaction_status: {manifest.get('transaction_status')}",
+                f"- cohort: {delta.get('cohort')}",
                 f"- updated_count: {len(updated)}",
                 f"- skipped_count: {len(skipped)}",
                 (
@@ -3115,6 +3275,10 @@ def render_outcome_update_report(
                 ),
                 f"- future_data_used_in_decision: {manifest.get('future_data_used_in_decision')}",
                 f"- downstream_refresh_required: {manifest.get('downstream_refresh_required')}",
+                (
+                    "- automatic_downstream_refresh_allowed: "
+                    f"{manifest.get('automatic_downstream_refresh_allowed')}"
+                ),
                 "",
                 "本次更新只处理 review_status=READY_TO_UPDATE 的窗口，并写入 audit artifact。",
             ]
@@ -3502,6 +3666,478 @@ def _outcome_update_impact_preview(rows: Sequence[Mapping[str, Any]]) -> dict[st
         "production_effect": "none",
         "broker_action_taken": False,
     }
+
+
+def _validated_outcome_update_bundles(
+    *, outcome_ids: Sequence[str], advisory_outcome_dir: Path
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    bundles: dict[str, Any] = {}
+    validations: dict[str, Any] = {}
+    for outcome_id in outcome_ids:
+        outcome_dir = _safe_child_dir(advisory_outcome_dir, outcome_id, "outcome_id")
+        validation = validate_advisory_outcome_artifact(
+            outcome_id=outcome_id,
+            output_dir=advisory_outcome_dir,
+        )
+        if validation.get("status") != "PASS":
+            raise DynamicV3OutcomeAccumulationError(
+                f"advisory outcome validation must PASS: {outcome_id}="
+                f"{validation.get('status')}"
+            )
+        bundles[outcome_id] = _immutable_source_bundle(outcome_dir)
+        validations[outcome_id] = validation
+    return bundles, validations
+
+
+def _preflight_outcome_update_batch(
+    *,
+    outcome_ids: Sequence[str],
+    ready_keys: set[tuple[str, int]],
+    advisory_outcome_dir: Path,
+    paper_portfolio_dir: Path,
+    prices_path: Path,
+    rates_path: Path,
+    as_of: date,
+    generated: datetime,
+) -> None:
+    if not outcome_ids:
+        return
+    with tempfile.TemporaryDirectory(prefix="aits_outcome_update_preflight_") as temporary:
+        preflight_root = Path(temporary) / "advisory_outcome"
+        preflight_root.mkdir(parents=True, exist_ok=True)
+        for outcome_id in outcome_ids:
+            source = _safe_child_dir(advisory_outcome_dir, outcome_id, "outcome_id")
+            copied = preflight_root / outcome_id
+            shutil.copytree(source, copied)
+            _rebase_outcome_bundle_paths(copied)
+        for outcome_id in outcome_ids:
+            update_advisory_outcome(
+                as_of=as_of,
+                outcome_id=outcome_id,
+                output_dir=preflight_root,
+                paper_portfolio_dir=paper_portfolio_dir,
+                prices_path=prices_path,
+                rates_path=rates_path,
+                generated_at=generated,
+                allowed_window_days={
+                    window_days
+                    for selected_outcome_id, window_days in ready_keys
+                    if selected_outcome_id == outcome_id
+                },
+                update_latest_pointer=False,
+            )
+            validation = validate_advisory_outcome_artifact(
+                outcome_id=outcome_id,
+                output_dir=preflight_root,
+            )
+            if validation.get("status") != "PASS":
+                raise DynamicV3OutcomeAccumulationError(
+                    f"outcome update isolated preflight failed: {outcome_id}="
+                    f"{validation.get('status')}"
+                )
+
+
+def _rebase_outcome_bundle_paths(outcome_dir: Path) -> None:
+    manifest_path = outcome_dir / "advisory_outcome_manifest.json"
+    manifest = _read_json(manifest_path)
+    manifest.update(
+        {
+            "advisory_event_path": str(outcome_dir / "advisory_event.json"),
+            "outcome_windows_path": str(outcome_dir / "outcome_windows.jsonl"),
+            "outcome_update_events_path": str(outcome_dir / "outcome_update_events.jsonl"),
+            "advisory_counterfactuals_path": str(outcome_dir / "advisory_counterfactuals.json"),
+            "advisory_outcome_report_path": str(outcome_dir / "advisory_outcome_report.md"),
+            "source_snapshots_root": str(outcome_dir / "source_snapshots"),
+        }
+    )
+    _write_json(manifest_path, manifest)
+
+
+def _backup_outcome_update_sources(
+    *, outcome_ids: Sequence[str], advisory_outcome_dir: Path, backup_root: Path
+) -> dict[str, str]:
+    paths: dict[str, str] = {}
+    for outcome_id in outcome_ids:
+        source = _safe_child_dir(advisory_outcome_dir, outcome_id, "outcome_id")
+        destination = backup_root / outcome_id
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(source, destination)
+        paths[outcome_id] = str(destination)
+    return paths
+
+
+def _restore_outcome_update_sources(
+    *, outcome_ids: Sequence[str], advisory_outcome_dir: Path, backup_root: Path
+) -> dict[str, str]:
+    statuses: dict[str, str] = {}
+    for outcome_id in outcome_ids:
+        backup = _safe_child_dir(backup_root, outcome_id, "outcome_id")
+        destination = advisory_outcome_dir / outcome_id
+        if not backup.is_dir():
+            raise DynamicV3OutcomeAccumulationError(
+                f"outcome update rollback backup missing: {backup}"
+            )
+        if destination.exists():
+            shutil.rmtree(destination)
+        shutil.copytree(backup, destination)
+        validation = validate_advisory_outcome_artifact(
+            outcome_id=outcome_id,
+            output_dir=advisory_outcome_dir,
+        )
+        status = _text(validation.get("status"))
+        statuses[outcome_id] = status
+        if status != "PASS":
+            raise DynamicV3OutcomeAccumulationError(
+                f"outcome update rollback validation failed: {outcome_id}={status}"
+            )
+    if backup_root.exists():
+        shutil.rmtree(backup_root)
+    return statuses
+
+
+def _outcome_update_transaction(
+    *,
+    update_id: str,
+    update_review_id: str,
+    generated: datetime,
+    status: str,
+    selected_outcome_ids: Sequence[str],
+    ready_outcome_ids: Sequence[str],
+    backup_paths: Mapping[str, str],
+    error: str = "",
+    rollback_validation: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    if status not in {"PREPARED", "COMMITTED", "ROLLED_BACK"}:
+        raise DynamicV3OutcomeAccumulationError("outcome update transaction status invalid")
+    return {
+        "schema_version": OUTCOME_UPDATE_TRANSACTION_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_outcome_update_transaction",
+        "outcome_update_id": update_id,
+        "update_review_id": update_review_id,
+        "transaction_at": generated.isoformat(),
+        "status": status,
+        "selected_outcome_ids": list(selected_outcome_ids),
+        "ready_outcome_ids": list(ready_outcome_ids),
+        "rollback_backup_paths": dict(backup_paths),
+        "rollback_required": status == "PREPARED",
+        "rollback_validation": dict(rollback_validation or {}),
+        "error": error,
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _recover_prepared_outcome_updates(
+    *, output_dir: Path, update_review_id: str, advisory_outcome_dir: Path
+) -> None:
+    if not output_dir.exists():
+        return
+    for child in sorted(item for item in output_dir.iterdir() if item.is_dir()):
+        transaction_path = child / "outcome_update_transaction.json"
+        transaction = _read_optional_json(transaction_path) or {}
+        if (
+            transaction.get("update_review_id") != update_review_id
+            or transaction.get("status") != "PREPARED"
+        ):
+            continue
+        ready_ids = _texts(transaction.get("ready_outcome_ids"))
+        generated = _datetime_from_any(transaction.get("transaction_at"))
+        if generated is None:
+            raise DynamicV3OutcomeAccumulationError(
+                f"prepared outcome update transaction time invalid: {child.name}"
+            )
+        rollback_validation = _restore_outcome_update_sources(
+            outcome_ids=ready_ids,
+            advisory_outcome_dir=advisory_outcome_dir,
+            backup_root=child / "rollback_backups",
+        )
+        recovered = _outcome_update_transaction(
+            update_id=child.name,
+            update_review_id=update_review_id,
+            generated=generated,
+            status="ROLLED_BACK",
+            selected_outcome_ids=_texts(transaction.get("selected_outcome_ids")),
+            ready_outcome_ids=ready_ids,
+            backup_paths={},
+            error="recovered_prepared_transaction_before_retry",
+            rollback_validation=rollback_validation,
+        )
+        _write_json(transaction_path, recovered)
+
+
+def _committed_outcome_update_for_review(output_dir: Path, update_review_id: str) -> bool:
+    if not output_dir.exists():
+        return False
+    committed = []
+    for child in sorted(item for item in output_dir.iterdir() if item.is_dir()):
+        transaction = _read_optional_json(child / "outcome_update_transaction.json") or {}
+        if (
+            transaction.get("update_review_id") == update_review_id
+            and transaction.get("status") == "COMMITTED"
+        ):
+            committed.append(child.name)
+    if len(committed) > 1:
+        raise DynamicV3OutcomeAccumulationError(
+            "multiple COMMITTED outcome updates found for one review"
+        )
+    return bool(committed)
+
+
+def _outcome_rows_by_window_from_bundles(
+    bundles: Mapping[str, Any],
+) -> dict[tuple[str, int], dict[str, Any]]:
+    rows: dict[tuple[str, int], dict[str, Any]] = {}
+    for outcome_id, raw_bundle in sorted(bundles.items()):
+        bundle = _mapping(raw_bundle)
+        manifest = _mapping(_source_bundle_content(bundle, "advisory_outcome_manifest.json"))
+        for raw_row in _records(_source_bundle_content(bundle, "outcome_windows.jsonl")):
+            row = {
+                **raw_row,
+                "outcome_id": outcome_id,
+                "daily_advisory_id": _text(manifest.get("daily_advisory_id")),
+            }
+            key = (outcome_id, _int(row.get("window_days")))
+            if not key[0] or key[1] <= 0 or key in rows:
+                raise DynamicV3OutcomeAccumulationError(
+                    "outcome update bundle contains duplicate or invalid window identity"
+                )
+            rows[key] = row
+    return rows
+
+
+def _outcome_update_derived_views(
+    snapshot: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    review_bundle = _mapping(snapshot.get("review_source_bundle"))
+    review_rows = _records(
+        _source_bundle_content(review_bundle, "update_ready_review_matrix.jsonl")
+    )
+    before_by_window = _outcome_rows_by_window_from_bundles(
+        _mapping(snapshot.get("pre_outcome_bundles"))
+    )
+    after_by_window = _outcome_rows_by_window_from_bundles(
+        _mapping(snapshot.get("post_outcome_bundles"))
+    )
+    updated_windows: list[dict[str, Any]] = []
+    skipped_windows: list[dict[str, Any]] = []
+    for row in review_rows:
+        outcome_id = _text(row.get("outcome_id"))
+        window_days = _int(row.get("window_days"))
+        key = (outcome_id, window_days)
+        before = before_by_window.get(key, {})
+        after = after_by_window.get(key, before)
+        if row.get("review_status") != "READY_TO_UPDATE":
+            skipped_windows.append(_skipped_outcome_update_row(row, before))
+        elif _text(after.get("outcome_status")) == "AVAILABLE":
+            updated_windows.append(_updated_outcome_window_row(row, before, after))
+        else:
+            skipped_windows.append(
+                {
+                    "daily_advisory_id": _text(row.get("daily_advisory_id")),
+                    "outcome_id": outcome_id,
+                    "window_days": window_days,
+                    "old_status": _text(before.get("outcome_status"), "PENDING"),
+                    "skip_reason": "INSUFFICIENT_DATA",
+                    "review_status": "READY_TO_UPDATE",
+                    "new_status": _text(after.get("outcome_status"), "INSUFFICIENT_DATA"),
+                    "broker_action_taken": False,
+                }
+            )
+    before_rows = list(before_by_window.values())
+    after_rows = list(after_by_window.values())
+    delta = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_outcome_status_delta",
+        "cohort": "selected_review_outcomes",
+        "before": _forward_status_summary(before_rows),
+        "after": _forward_status_summary(after_rows),
+        "updated_count": len(updated_windows),
+        "skipped_count": len(skipped_windows),
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+    return updated_windows, skipped_windows, delta
+
+
+def _outcome_update_manifest(
+    *,
+    update_dir: Path,
+    update_review_id: str,
+    review_manifest: Mapping[str, Any],
+    generated: datetime,
+    as_of: date,
+    updated_windows: Sequence[Mapping[str, Any]],
+    skipped_windows: Sequence[Mapping[str, Any]],
+    source_snapshot_checksum: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_outcome_update_manifest",
+        "outcome_update_id": update_dir.name,
+        "update_review_id": update_review_id,
+        "due_id": _text(review_manifest.get("due_id")),
+        "as_of": as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if updated_windows else "INSUFFICIENT_DATA",
+        "transaction_status": "COMMITTED",
+        "updated_count": len(updated_windows),
+        "skipped_count": len(skipped_windows),
+        "future_data_used_in_decision": False,
+        "downstream_refresh_required": bool(updated_windows),
+        "automatic_downstream_refresh_allowed": False,
+        "source_snapshot_path": str(update_dir / "outcome_update_source_snapshot.json"),
+        "source_snapshot_checksum": source_snapshot_checksum,
+        "transaction_path": str(update_dir / "outcome_update_transaction.json"),
+        "outcome_update_manifest_path": str(update_dir / "outcome_update_manifest.json"),
+        "updated_windows_path": str(update_dir / "updated_windows.jsonl"),
+        "skipped_windows_path": str(update_dir / "skipped_windows.jsonl"),
+        "outcome_status_delta_path": str(update_dir / "outcome_status_delta.json"),
+        "outcome_update_report_path": str(update_dir / "outcome_update_report.md"),
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def _outcome_update_snapshot_errors(snapshot: Mapping[str, Any]) -> list[str]:
+    errors: list[str] = []
+    generated = _datetime_from_any(snapshot.get("generated_at"))
+    review_generated = _datetime_from_any(snapshot.get("review_generated_at"))
+    as_of = _date_from_any(snapshot.get("as_of"))
+    selected_ids = _texts(snapshot.get("selected_outcome_ids"))
+    ready_ids = _texts(snapshot.get("ready_outcome_ids"))
+    if (
+        generated is None
+        or review_generated is None
+        or as_of is None
+        or generated < review_generated
+        or as_of > generated.date()
+        or snapshot.get("future_data_used_in_decision") is not False
+        or snapshot.get("transaction_status") != "COMMITTED"
+    ):
+        errors.append("time_or_transaction_boundary_invalid")
+    if (
+        len(selected_ids) != len(set(selected_ids))
+        or len(ready_ids) != len(set(ready_ids))
+        or not set(ready_ids) <= set(selected_ids)
+    ):
+        errors.append("selected_identity_invalid")
+    review_bundle = _mapping(snapshot.get("review_source_bundle"))
+    if not _source_bundle_matches(review_bundle):
+        errors.append("review_source_bundle_changed")
+    review_snapshot = _mapping(
+        _source_bundle_content(review_bundle, "outcome_update_review_source_snapshot.json")
+    )
+    try:
+        expected_review_rows, expected_safety, expected_impact, expected_status = (
+            _outcome_update_review_views(review_snapshot)
+        )
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"review_snapshot_invalid:{exc}")
+    else:
+        review_manifest = _mapping(
+            _source_bundle_content(review_bundle, "outcome_update_review_manifest.json")
+        )
+        review_rows = _records(
+            _source_bundle_content(review_bundle, "update_ready_review_matrix.jsonl")
+        )
+        safety = _mapping(_source_bundle_content(review_bundle, "update_safety_checks.json"))
+        impact = _mapping(_source_bundle_content(review_bundle, "update_impact_preview.json"))
+        report_content = _source_bundle_content(
+            review_bundle, "outcome_update_review_report.md"
+        )
+        report = report_content if isinstance(report_content, str) else ""
+        expected_manifest = _outcome_update_review_manifest(
+            review_dir=Path(_text(review_bundle.get("root"))),
+            due_id=_text(review_snapshot.get("due_id")),
+            as_of=_text(review_snapshot.get("as_of")),
+            generated_at=_text(review_snapshot.get("generated_at")),
+            status=expected_status,
+            rows=expected_review_rows,
+            safety=expected_safety,
+            source_snapshot_checksum=_text(
+                _mapping(
+                    _mapping(review_bundle.get("files")).get(
+                        "outcome_update_review_source_snapshot.json"
+                    )
+                ).get("sha256")
+            ),
+        )
+        expected_report = render_outcome_update_review_report(
+            expected_manifest, expected_safety, expected_impact
+        )
+        if (
+            review_rows != expected_review_rows
+            or safety != expected_safety
+            or impact != expected_impact
+            or review_manifest != expected_manifest
+            or report != expected_report
+        ):
+            errors.append("review_bundle_recompute_mismatch")
+    pre = _mapping(snapshot.get("pre_outcome_bundles"))
+    post = _mapping(snapshot.get("post_outcome_bundles"))
+    pre_validations = _mapping(snapshot.get("pre_outcome_validations"))
+    post_validations = _mapping(snapshot.get("post_outcome_validations"))
+    if set(pre) != set(selected_ids) or set(post) != set(selected_ids):
+        errors.append("pre_post_bundle_identity_mismatch")
+    if any(_mapping(value).get("status") != "PASS" for value in pre_validations.values()):
+        errors.append("pre_validation_not_pass")
+    if any(_mapping(value).get("status") != "PASS" for value in post_validations.values()):
+        errors.append("post_validation_not_pass")
+    ready_keys = {
+        (_text(item[0]), _int(item[1]))
+        for item in _records_or_lists(snapshot.get("ready_keys"))
+        if len(item) == 2
+    }
+    for outcome_id in selected_ids:
+        pre_events = _records(
+            _source_bundle_content(_mapping(pre.get(outcome_id)), "outcome_update_events.jsonl")
+        )
+        post_events = _records(
+            _source_bundle_content(_mapping(post.get(outcome_id)), "outcome_update_events.jsonl")
+        )
+        if outcome_id in ready_ids:
+            expected_windows = sorted(
+                window for selected_id, window in ready_keys if selected_id == outcome_id
+            )
+            if (
+                len(post_events) != len(pre_events) + 1
+                or post_events[:-1] != pre_events
+                or sorted(
+                    _int(value)
+                    for value in post_events[-1].get("allowed_window_days", [])
+                )
+                != expected_windows
+                or _date_from_any(post_events[-1].get("updated_as_of")) != as_of
+                or _datetime_from_any(post_events[-1].get("event_at")) != generated
+            ):
+                errors.append(f"post_event_append_invalid:{outcome_id}")
+        elif post_events != pre_events:
+            errors.append(f"non_ready_outcome_mutated:{outcome_id}")
+    return sorted(set(errors))
+
+
+def _records_or_lists(value: Any) -> list[list[Any]]:
+    return [list(item) for item in value] if isinstance(value, list) else []
+
+
+def _safe_child_dir(root: Path, identifier: str, field: str) -> Path:
+    if (
+        not identifier
+        or identifier in {".", ".."}
+        or Path(identifier).name != identifier
+        or "/" in identifier
+        or "\\" in identifier
+    ):
+        raise DynamicV3OutcomeAccumulationError(f"{field} must be a safe artifact id")
+    child = root / identifier
+    if child.resolve().parent != root.resolve():
+        raise DynamicV3OutcomeAccumulationError(f"{field} escapes artifact root")
+    return child
 
 
 def _forward_rows_by_outcome_window(

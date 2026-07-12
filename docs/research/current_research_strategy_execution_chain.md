@@ -868,6 +868,21 @@ Outcome Dashboard回答“当前冻结证据中，forward、historical replay与
 
 当前完整fixture验证1个READY row、0个blocked row且date-derived future-data flag为false；empty snapshot则得到0个READY、overall=`INSUFFICIENT_DATA`，duplicate identity被阻断。这些是计算与安全契约测试，不是当前策略已获得新的forward结果，也不批准真实outcome update。后续应优先补强canonical envelope、price/DQ provenance、review→update transaction reconciliation和staleness策略；不能通过信任source布尔值、放宽cutoff、覆盖duplicate或自动串联update来提高表面ready率。
 
+#### Outcome Update 链（TRADING-157 / G2.4BH）
+
+这一链回答“经人工审查为READY的forward window能否作为一个可回滚、可重放的批次追加到Outcome evidence，以及实际pre→post变化是否与审查一致”。它必须位于review与rolling refresh之间，因为写Outcome是证据状态变更；若直接逐outcome更新而不先预演和冻结，后一个数据错误或文件错误可能让前一个已经提交，随后任何报告都无法判断批次究竟完整还是部分成功。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | Fail-closed与优化空间 |
+|---|---|---|---|---|
+| Review/single-use gate | 显式`update_review_id`、timezone-aware generated、review root | 同review若已有COMMITTED transaction即阻断；review content-derived PASS，generated≥review generated且as-of≤generated date；row identity唯一且非空 | frozen review bundle、selected/ready identities | invalid/tamper/time drift在mutation前阻断；后续接RunLedger/lease避免跨进程并发 |
+| Live pre-state | selected Advisory Outcome artifacts | 每个outcome validator必须PASS；冻结full bundle；每个window live status必须等于review existing status | pre bundles/validations | source drift、legacy warning、duplicate window阻断；后续增加content-addressed outcome envelope |
+| Full-batch preflight | ready outcomes、cached prices/rates、paper lineage | 在isolated copy按同一as-of/generated/allowed windows运行DQ、price计算、append event和post validator；全批通过才允许真实mutation | preflight PASS | 避免数据错误造成部分提交；后续把纯plan与apply拆成canonical transaction API，减少双计算成本 |
+| Transaction commit | PREPARED state、rollback backups、ready windows | 真实批次逐outcome append；任一异常恢复全部backup并记录ROLLED_BACK；全部post validators PASS才写COMMITTED | transaction state、post bundles/validations | hard crash后下次同review先恢复PREPARED；后续用跨进程lease/fsync journal增强突然掉电证明 |
+| Derived views | frozen review + pre/post selected bundles | READY且post AVAILABLE形成updated row；其他形成显式skip；before/after只统计selected cohort，不扫描无关root | updated/skipped JSONL、selected-cohort delta、manifest/Markdown | missing保持INSUFFICIENT，不把全目录变化归因于本批；后续加入event-level DQ/price provenance索引 |
+| Validator | snapshot、transaction、live post outcomes和全部views | 重算review bundle、time/identity、pre→post唯一append event/allowed windows、updated/skipped/delta/manifest/Markdown；核对live post full bundles | PASS/FAIL | source/snapshot/transaction/report tamper FAIL；不自动运行rolling refresh |
+
+当前fixture的单一ready window由PENDING变为AVAILABLE，selected cohort为forward available `0→1`、pending `4→3`；另三个NOT_DUE window进入skipped audit。8个Outcome Update测试覆盖正常commit、CASH零收益语义、invalid review零mutation、single-use、post-mutation异常全量rollback，以及snapshot/report/live-post tamper。结果证明事务与重放契约，不证明forward performance有效；下一步优化应优先是跨进程lease、纯plan/apply API、fsync/掉电恢复演练与transaction artifact envelope，而不是自动触发rolling refresh或放宽DQ/review gate。
+
 #### Portfolio intake 链
 
 Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。

@@ -6766,14 +6766,17 @@ reports:
     command: aits etf dynamic-v3-rescue outcome-update report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_update/*/outcome_update_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_update/*/outcome_update_source_snapshot.json
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_update/*/outcome_update_transaction.json
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_update/*/updated_windows.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_update/*/skipped_windows.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_update/*/outcome_status_delta.json
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_update/*/outcome_update_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-157 updates only READY_TO_UPDATE forward outcome windows and
-      records before/after status delta plus skipped-window audit.
+      TRADING-157 validates and freezes an explicit review, preflights the full
+      selected batch, commits or rolls back as one auditable transaction, and
+      records frozen pre/post outcome evidence plus selected-cohort status delta.
     owner_action: review_safe_outcome_update_audit_before_downstream_refresh
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

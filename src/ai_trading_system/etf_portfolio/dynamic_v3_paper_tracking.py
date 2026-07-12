@@ -876,6 +876,7 @@ def update_advisory_outcome(
     rates_path: Path = DEFAULT_RATES_CACHE_PATH,
     generated_at: datetime | None = None,
     allowed_window_days: set[int] | None = None,
+    update_latest_pointer: bool = True,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
     generated = generated if generated.tzinfo else generated.replace(tzinfo=UTC)
@@ -1056,11 +1057,12 @@ def update_advisory_outcome(
         advisory_event=event,
         update_events=[*update_events, update_event],
     )
-    _update_latest_pointer(
-        "latest_advisory_outcome",
-        resolved_outcome_id,
-        outcome_dir / "advisory_outcome_manifest.json",
-    )
+    if update_latest_pointer:
+        _update_latest_pointer(
+            "latest_advisory_outcome",
+            resolved_outcome_id,
+            outcome_dir / "advisory_outcome_manifest.json",
+        )
     advisory_event_view = {
         **event,
         "paper_action_status": paper_binding["status"],
