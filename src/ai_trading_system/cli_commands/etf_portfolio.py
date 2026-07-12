@@ -195,13 +195,11 @@ from ai_trading_system.etf_portfolio.dynamic_shadow import (
 from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR,
     DEFAULT_BACKTEST_SIM_CALIBRATION_DIR,
-    DEFAULT_BACKTEST_SIM_EVENT_DIR,
     DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR,
     DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
     DEFAULT_BACKTEST_SIM_PAPER_DIR,
     DEFAULT_BACKTEST_SIM_REGIME_DIR,
     DEFAULT_BACKTEST_SIM_SENSITIVITY_DIR,
-    DEFAULT_BACKTEST_SIM_VARIANT_DIR,
     DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR,
     DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR,
     DEFAULT_SIM_INTERPRETATION_DIR,
@@ -209,12 +207,10 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     advisory_proposal_review_report_payload,
     backtest_sim_calibration_report_payload,
     backtest_sim_forward_bridge_report_payload,
-    backtest_sim_sensitivity_report_payload,
     forward_confirmation_plan_report_payload,
     run_advisory_proposal_review,
     run_backtest_sim_calibration_pack,
     run_backtest_sim_forward_bridge,
-    run_backtest_sim_sensitivity,
     run_forward_confirmation_plan,
     run_sim_defensive_validation,
     run_sim_interpretation,
@@ -225,7 +221,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     validate_advisory_proposal_review_artifact,
     validate_backtest_sim_calibration_artifact,
     validate_backtest_sim_forward_bridge_artifact,
-    validate_backtest_sim_sensitivity_artifact,
     validate_forward_confirmation_plan_artifact,
     validate_sim_defensive_validation_artifact,
     validate_sim_interpretation_artifact,
@@ -15196,99 +15191,6 @@ def _echo_validation_payload(payload: Mapping[str, Any]) -> None:
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("broker_action_allowed=false")
-    typer.echo("production_effect=none")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_backtest_sim_app.command("sensitivity-run")
-def dynamic_v3_backtest_sim_sensitivity_run_command(
-    sim_outcome_id: Annotated[
-        str,
-        typer.Option("--sim-outcome-id", help="simulation outcome id。"),
-    ],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="backtest simulation sensitivity artifact root。"),
-    ] = DEFAULT_BACKTEST_SIM_SENSITIVITY_DIR,
-    outcome_dir: Annotated[
-        Path,
-        typer.Option("--outcome-dir", help="backtest simulation outcome artifact root。"),
-    ] = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
-    variant_dir: Annotated[
-        Path,
-        typer.Option("--variant-dir", help="backtest simulation variant artifact root。"),
-    ] = DEFAULT_BACKTEST_SIM_VARIANT_DIR,
-    event_dir: Annotated[
-        Path,
-        typer.Option("--event-dir", help="backtest simulation event artifact root。"),
-    ] = DEFAULT_BACKTEST_SIM_EVENT_DIR,
-) -> None:
-    """运行 TRADING-166 sensitivity and overfit diagnostics。"""
-    result = run_backtest_sim_sensitivity(
-        sim_outcome_id=sim_outcome_id,
-        output_dir=output_dir,
-        outcome_dir=outcome_dir,
-        variant_dir=variant_dir,
-        event_dir=event_dir,
-    )
-    manifest = result["manifest"]
-    warnings = result["overfit_warning_summary"]
-    typer.echo(f"sensitivity_id={result['sensitivity_id']}")
-    typer.echo(f"sensitivity_dir={result['sensitivity_dir']}")
-    typer.echo(f"status={manifest['status']}")
-    typer.echo(f"simulation_overfit_status={warnings['simulation_overfit_status']}")
-    typer.echo(f"strong_calibration_allowed={warnings['strong_calibration_allowed']}")
-    typer.echo("broker_action_taken=false")
-    typer.echo("production_effect=none")
-
-
-@dynamic_v3_backtest_sim_app.command("sensitivity-report")
-def dynamic_v3_backtest_sim_sensitivity_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest backtest sim sensitivity。"),
-    ] = False,
-    sensitivity_id: Annotated[
-        str | None,
-        typer.Option("--sensitivity-id", help="sensitivity id。"),
-    ] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="backtest simulation sensitivity artifact root。"),
-    ] = DEFAULT_BACKTEST_SIM_SENSITIVITY_DIR,
-) -> None:
-    """展示 TRADING-166 sensitivity 摘要。"""
-    payload = backtest_sim_sensitivity_report_payload(
-        sensitivity_id=sensitivity_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    warnings = payload["overfit_warning_summary"]
-    typer.echo(f"sensitivity_id={payload['sensitivity_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"simulation_overfit_status={warnings['simulation_overfit_status']}")
-    typer.echo(f"strong_calibration_allowed={warnings['strong_calibration_allowed']}")
-    typer.echo(f"report_path={payload['backtest_sim_sensitivity_report_path']}")
-    typer.echo("production_effect=none")
-
-
-@dynamic_v3_rescue_app.command("validate-backtest-sim-sensitivity")
-def dynamic_v3_validate_backtest_sim_sensitivity_command(
-    sensitivity_id: Annotated[str, typer.Option("--sensitivity-id", help="sensitivity id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="backtest simulation sensitivity artifact root。"),
-    ] = DEFAULT_BACKTEST_SIM_SENSITIVITY_DIR,
-) -> None:
-    """校验 TRADING-166 backtest simulation sensitivity artifact。"""
-    payload = validate_backtest_sim_sensitivity_artifact(
-        sensitivity_id=sensitivity_id,
-        output_dir=output_dir,
-    )
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("broker_action_taken=false")
     typer.echo("production_effect=none")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)

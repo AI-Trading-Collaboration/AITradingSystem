@@ -4176,6 +4176,10 @@ flowchart TD
 
 `backtest-sim regime-review`只接受content-derived PASS且不晚于generated cutoff的Outcome；`regime_input_snapshot.json`（schema=`backtest_sim_regime_input_snapshot.v2`）冻结完整outcome bundle/validation。Inventory记录regime与outcome-status窗口单位；metrics穷举known regime×variant并只聚合AVAILABLE finite rows，同时披露distinct event与window counts。Missing return/relative/win-rate/drawdown/turnover为null且不参与best ranking。Validator重验live Outcome并逐字节重算snapshot、inventory、metrics、summary、manifest和Markdown；任一drift阻断后续calibration。固定non-PIT/no-production/no-broker。
 
+### Backtest Simulation Sensitivity 可复算边界（TRADING-166 / ARCH-004G2.4BQ）
+
+`backtest-sim sensitivity-run`只接受content-derived PASS且不晚于generated cutoff的Outcome；`sensitivity_input_snapshot.json`（schema=`backtest_sim_sensitivity_input_snapshot.v2`）冻结完整Outcome bundle/validation及唯一variant/event binding。Frequency、adjustment-limit、shortlist、threshold四类grid由冻结reviewed policy exact驱动；counterfactual只计算到Outcome requested-end，threshold从冻结event读取finite dispersion。AVAILABLE finite以外的avg/spread为null，event/window/available/excluded/result-row单位分别披露；缺dispersion不默认通过。Overfit status从可复算grid和policy产生，只有`LOW_RISK`可标记strong calibration allowed，仍不自动apply。Validator重验live Outcome并逐字节重算snapshot、四类diagnostics、warnings、manifest和Markdown；任一drift阻断calibration。固定non-PIT/no-production/no-broker。
+
 ## 文件和命令责任表
 
 |层级|命令或文件|责任|当前状态|

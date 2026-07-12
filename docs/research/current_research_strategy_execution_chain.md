@@ -1092,6 +1092,8 @@ TRADING-164 paper层同样从validated/cutoff-safe variant bundle出发，在out
 
 TRADING-165 regime review只接受validated且不晚于generated cutoff的Outcome，冻结完整outcome bundle与validation到`backtest_sim_regime_input_snapshot.v2`。Inventory保留原始regime/outcome-status窗口计数；metrics按known regime×variant穷举，只聚合AVAILABLE且finite的return/relative/drawdown/turnover，并同时披露distinct event count和window count。无样本均值、win rate与risk为null，summary只在finite relative存在时选择best variant。Validator重验live Outcome并逐字节重算全部views。当前结论只用于发现simulation表现是否集中于少数regime，不是因果、PIT或production证据；优化空间是引入reviewed minimum event/window floor与不确定性区间，但在治理前不能用硬编码样本门槛改变投资解释。
 
+TRADING-166 sensitivity只接受validated且不晚于generated cutoff的Outcome；`backtest_sim_sensitivity_input_snapshot.v2`冻结完整Outcome bundle/validation，variant/event/config/price/DQ不再从平行目录独立拼接。Frequency profile按冻结5日limited-adjustment窗口抽样；adjustment-limit和shortlist grid用同一冻结event/config及Outcome requested-end重新计算counterfactual；threshold用event中的finite dispersion做过滤，缺dispersion显式计入missing而不是默认0/通过。每个grid row分别记录event count、window count、AVAILABLE与excluded windows；无样本avg为null，少于两个finite grid结果时spread为null。Overfit status只从这些可复算口径和reviewed policy产生；`LOW_RISK`之外一律`strong_calibration_allowed=false`，且任何status都不自动apply。Validator重验live Outcome并逐字节重算snapshot、四类diagnostics、warnings、manifest和Markdown。当前结果只能回答参数扰动下simulation是否脆弱，不能证明统计显著、PIT有效或production可用。优化顺序应是same-event paired deltas、effective sample size/cluster bootstrap、regime-conditioned confidence intervals、multiple-testing correction与独立holdout；在这些证据闭合前不得通过填0、放宽missing或调整status文字制造低风险。
+
 ## 6. 真实 reference trace：growth-tilt closure
 
 | 环节 | 实际内容 |

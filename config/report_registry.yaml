@@ -6989,11 +6989,13 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_sensitivity/*/adjustment_limit_sensitivity.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_sensitivity/*/event_frequency_sensitivity.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_sensitivity/*/overfit_warning_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_sensitivity/*/sensitivity_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_sensitivity/*/backtest_sim_sensitivity_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-166 sensitivity and overfit diagnostics must be reviewed before
-      any simulation calibration proposal is treated as credible.
+      TRADING-166 sensitivity and overfit diagnostics must bind a validated
+      Outcome source snapshot, preserve null missing metrics and expose exact
+      grid/sample units before any simulation calibration proposal is credible.
     owner_action: review_overfit_and_parameter_sensitivity_before_calibration
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

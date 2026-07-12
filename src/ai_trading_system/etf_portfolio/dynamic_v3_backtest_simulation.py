@@ -91,6 +91,7 @@ BACKTEST_SIM_VARIANT_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_variant_input_snaps
 BACKTEST_SIM_OUTCOME_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_outcome_input_snapshot.v2"
 BACKTEST_SIM_PAPER_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_paper_input_snapshot.v2"
 BACKTEST_SIM_REGIME_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_regime_input_snapshot.v2"
+BACKTEST_SIM_SENSITIVITY_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_sensitivity_input_snapshot.v2"
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
     "consensus_target",
@@ -2380,6 +2381,49 @@ def validate_backtest_sim_regime_artifact(
     )
 
 
+def _backtest_sim_sensitivity_source_inputs(
+    *,
+    outcome_bundle: Mapping[str, Any],
+    variant_dir: Path,
+    event_dir: Path,
+) -> dict[str, Any]:
+    outcome_manifest = _mapping(outcome_bundle.get("manifest"))
+    outcome_snapshot = _mapping(outcome_bundle.get("input_snapshot"))
+    variant_set_id = _text(outcome_manifest.get("variant_set_id"))
+    event_set_id = _text(outcome_manifest.get("event_set_id"))
+    variant_set_dir = Path(_text(outcome_snapshot.get("variant_set_dir")))
+    frozen_event_dir = Path(_text(outcome_snapshot.get("event_set_dir")))
+    if (
+        variant_set_dir.name != variant_set_id
+        or variant_set_dir.parent != variant_dir
+        or frozen_event_dir.name != event_set_id
+        or frozen_event_dir.parent != event_dir
+    ):
+        raise DynamicV3BacktestSimulationError("sensitivity source binding invalid")
+    variant_bundle = _mapping(outcome_snapshot.get("variant_bundle"))
+    variant_snapshot = _mapping(variant_bundle.get("input_snapshot"))
+    event_bundle = _mapping(variant_snapshot.get("event_bundle"))
+    if Path(_text(event_bundle.get("event_set_dir"))) != frozen_event_dir:
+        raise DynamicV3BacktestSimulationError("sensitivity event binding invalid")
+    config = _mapping(outcome_snapshot.get("config"))
+    if config != _mapping(variant_snapshot.get("config")) or config != _mapping(
+        _mapping(event_bundle.get("input_snapshot")).get("config")
+    ):
+        raise DynamicV3BacktestSimulationError("sensitivity config binding invalid")
+    requested_end = _date_from_any(outcome_snapshot.get("requested_end"))
+    if requested_end is None:
+        raise DynamicV3BacktestSimulationError("sensitivity requested end missing")
+    return {
+        "variant_set_id": variant_set_id,
+        "event_set_id": event_set_id,
+        "variant_set_dir": str(variant_set_dir),
+        "event_set_dir": str(frozen_event_dir),
+        "events": _records(event_bundle.get("events")),
+        "config": config,
+        "requested_end": requested_end.isoformat(),
+    }
+
+
 def run_backtest_sim_sensitivity(
     *,
     sim_outcome_id: str,
@@ -2390,15 +2434,33 @@ def run_backtest_sim_sensitivity(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    outcome_source_dir = outcome_dir / sim_outcome_id
-    outcome_manifest = _read_json(outcome_source_dir / "sim_outcome_manifest.json")
-    variant_set_id = _text(outcome_manifest.get("variant_set_id"))
-    event_set_id = _text(outcome_manifest.get("event_set_id"))
-    events = _read_jsonl(event_dir / event_set_id / "simulated_advisory_events.jsonl")
-    config = _mapping(
-        _read_json(event_dir / event_set_id / "simulation_input_snapshot.json").get("config")
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3BacktestSimulationError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
+    source_dir = outcome_dir / sim_outcome_id
+    outcome_validation = validate_backtest_sim_outcome_artifact(
+        sim_outcome_id=sim_outcome_id, output_dir=outcome_dir
     )
-    rows = _read_jsonl(outcome_source_dir / "simulated_outcome_windows.jsonl")
+    if outcome_validation.get("status") != "PASS":
+        raise DynamicV3BacktestSimulationError("backtest simulation outcome validation failed")
+    outcome_bundle = _backtest_sim_outcome_bundle(source_dir)
+    source_manifest = _mapping(outcome_bundle.get("manifest"))
+    source_generated = _datetime_from_any(source_manifest.get("generated_at"))
+    if source_generated is None or source_generated > generated:
+        raise DynamicV3BacktestSimulationError("outcome source generated after sensitivity cutoff")
+    source_inputs = _backtest_sim_sensitivity_source_inputs(
+        outcome_bundle=outcome_bundle,
+        variant_dir=variant_dir,
+        event_dir=event_dir,
+    )
+    variant_set_id = _text(source_inputs.get("variant_set_id"))
+    event_set_id = _text(source_inputs.get("event_set_id"))
+    events = _records(source_inputs.get("events"))
+    config = _mapping(source_inputs.get("config"))
+    rows = _records(outcome_bundle.get("windows"))
+    requested_end = _date_from_any(source_inputs.get("requested_end"))
+    if requested_end is None or requested_end > generated.date():
+        raise DynamicV3BacktestSimulationError("requested end exceeds sensitivity cutoff")
     source = _mapping(config.get("source"))
     prices = _load_prices(
         _resolve_project_path(Path(_text(source.get("price_cache_path")))),
@@ -2406,15 +2468,78 @@ def run_backtest_sim_sensitivity(
     )
     policy = _mapping(config.get("sensitivity_policy"))
     frequency = _frequency_sensitivity(rows, policy)
-    adjustment = _adjustment_limit_sensitivity(events, config, prices, policy)
-    shortlist = _shortlist_sensitivity(events, prices, policy)
-    threshold = _threshold_sensitivity(rows, policy)
+    adjustment = _adjustment_limit_sensitivity(
+        events, config, prices, policy, generated_date=requested_end
+    )
+    shortlist = _shortlist_sensitivity(events, prices, policy, generated_date=requested_end)
+    threshold = _threshold_sensitivity(rows, events, policy)
     warnings = _overfit_warnings(rows, frequency, adjustment, shortlist, threshold, policy)
     sensitivity_id = _stable_id("backtest-sim-sensitivity", sim_outcome_id, generated.isoformat())
     sensitivity_dir = _unique_dir(output_dir / sensitivity_id)
-    sensitivity_dir.mkdir(parents=True, exist_ok=False)
     status = warnings["simulation_overfit_status"]
-    manifest = {
+    input_snapshot = {
+        "schema_version": BACKTEST_SIM_SENSITIVITY_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_backtest_sim_sensitivity_input_snapshot",
+        "generated_at": generated.isoformat(),
+        "sim_outcome_id": sim_outcome_id,
+        "sim_outcome_dir": str(source_dir),
+        "outcome_bundle": outcome_bundle,
+        "outcome_validation": outcome_validation,
+        "variant_set_dir": str(source_inputs.get("variant_set_dir")),
+        "event_set_dir": str(source_inputs.get("event_set_dir")),
+        "requested_end": requested_end.isoformat(),
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "not_for_production": True,
+    }
+    manifest = _backtest_sim_sensitivity_manifest(
+        sensitivity_dir=sensitivity_dir,
+        generated=generated,
+        status=status,
+        sim_outcome_id=sim_outcome_id,
+        variant_set_id=variant_set_id,
+        event_set_id=event_set_id,
+    )
+    sensitivity_dir.mkdir(parents=True, exist_ok=False)
+    _write_json(sensitivity_dir / "sim_sensitivity_manifest.json", manifest)
+    _write_json(sensitivity_dir / "threshold_sensitivity.json", threshold)
+    _write_json(sensitivity_dir / "shortlist_sensitivity.json", shortlist)
+    _write_json(sensitivity_dir / "adjustment_limit_sensitivity.json", adjustment)
+    _write_json(sensitivity_dir / "event_frequency_sensitivity.json", frequency)
+    _write_json(sensitivity_dir / "overfit_warning_summary.json", warnings)
+    _write_json(sensitivity_dir / "sensitivity_input_snapshot.json", input_snapshot)
+    _write_text(
+        sensitivity_dir / "backtest_sim_sensitivity_report.md",
+        render_sensitivity_report(manifest, warnings),
+    )
+    _update_latest_pointer(
+        "latest_backtest_sim_sensitivity",
+        sensitivity_dir.name,
+        sensitivity_dir / "sim_sensitivity_manifest.json",
+    )
+    return {
+        "sensitivity_id": sensitivity_dir.name,
+        "sensitivity_dir": sensitivity_dir,
+        "manifest": manifest,
+        "threshold_sensitivity": threshold,
+        "shortlist_sensitivity": shortlist,
+        "adjustment_limit_sensitivity": adjustment,
+        "event_frequency_sensitivity": frequency,
+        "overfit_warning_summary": warnings,
+        "input_snapshot": input_snapshot,
+    }
+
+
+def _backtest_sim_sensitivity_manifest(
+    *,
+    sensitivity_dir: Path,
+    generated: datetime,
+    status: str,
+    sim_outcome_id: str,
+    variant_set_id: str,
+    event_set_id: str,
+) -> dict[str, Any]:
+    return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_backtest_sim_sensitivity_manifest",
         "sensitivity_id": sensitivity_dir.name,
@@ -2437,6 +2562,7 @@ def run_backtest_sim_sensitivity(
             sensitivity_dir / "event_frequency_sensitivity.json"
         ),
         "overfit_warning_summary_path": str(sensitivity_dir / "overfit_warning_summary.json"),
+        "sensitivity_input_snapshot_path": str(sensitivity_dir / "sensitivity_input_snapshot.json"),
         "backtest_sim_sensitivity_report_path": str(
             sensitivity_dir / "backtest_sim_sensitivity_report.md"
         ),
@@ -2448,31 +2574,6 @@ def run_backtest_sim_sensitivity(
         "manual_review_required": True,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
-    _write_json(sensitivity_dir / "sim_sensitivity_manifest.json", manifest)
-    _write_json(sensitivity_dir / "threshold_sensitivity.json", threshold)
-    _write_json(sensitivity_dir / "shortlist_sensitivity.json", shortlist)
-    _write_json(sensitivity_dir / "adjustment_limit_sensitivity.json", adjustment)
-    _write_json(sensitivity_dir / "event_frequency_sensitivity.json", frequency)
-    _write_json(sensitivity_dir / "overfit_warning_summary.json", warnings)
-    _write_text(
-        sensitivity_dir / "backtest_sim_sensitivity_report.md",
-        render_sensitivity_report(manifest, warnings),
-    )
-    _update_latest_pointer(
-        "latest_backtest_sim_sensitivity",
-        sensitivity_dir.name,
-        sensitivity_dir / "sim_sensitivity_manifest.json",
-    )
-    return {
-        "sensitivity_id": sensitivity_dir.name,
-        "sensitivity_dir": sensitivity_dir,
-        "manifest": manifest,
-        "threshold_sensitivity": threshold,
-        "shortlist_sensitivity": shortlist,
-        "adjustment_limit_sensitivity": adjustment,
-        "event_frequency_sensitivity": frequency,
-        "overfit_warning_summary": warnings,
     }
 
 
@@ -2498,6 +2599,9 @@ def backtest_sim_sensitivity_report_payload(
             sensitivity_dir / "event_frequency_sensitivity.json"
         ),
         "overfit_warning_summary": _read_json(sensitivity_dir / "overfit_warning_summary.json"),
+        "sensitivity_input_snapshot": _read_json(
+            sensitivity_dir / "sensitivity_input_snapshot.json"
+        ),
         "sensitivity_dir": str(sensitivity_dir),
     }
 
@@ -2507,7 +2611,111 @@ def validate_backtest_sim_sensitivity_artifact(
 ) -> dict[str, Any]:
     sensitivity_dir = output_dir / sensitivity_id
     manifest = _read_optional_json(sensitivity_dir / "sim_sensitivity_manifest.json") or {}
+    frequency = _read_optional_json(sensitivity_dir / "event_frequency_sensitivity.json") or {}
+    adjustment = _read_optional_json(sensitivity_dir / "adjustment_limit_sensitivity.json") or {}
+    shortlist = _read_optional_json(sensitivity_dir / "shortlist_sensitivity.json") or {}
+    threshold = _read_optional_json(sensitivity_dir / "threshold_sensitivity.json") or {}
     warnings = _read_optional_json(sensitivity_dir / "overfit_warning_summary.json") or {}
+    snapshot = _read_optional_json(sensitivity_dir / "sensitivity_input_snapshot.json") or {}
+    source_errors: list[str] = []
+    recompute_error = ""
+    try:
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        sim_outcome_id = _text(snapshot.get("sim_outcome_id"))
+        sim_outcome_dir = Path(_text(snapshot.get("sim_outcome_dir")))
+        variant_set_dir = Path(_text(snapshot.get("variant_set_dir")))
+        event_set_dir = Path(_text(snapshot.get("event_set_dir")))
+        if (
+            snapshot.get("schema_version") != BACKTEST_SIM_SENSITIVITY_SNAPSHOT_SCHEMA_VERSION
+            or generated is None
+            or sim_outcome_dir.name != sim_outcome_id
+        ):
+            raise DynamicV3BacktestSimulationError("sensitivity snapshot identity/time invalid")
+        live_validation = validate_backtest_sim_outcome_artifact(
+            sim_outcome_id=sim_outcome_id, output_dir=sim_outcome_dir.parent
+        )
+        if live_validation.get("status") != "PASS":
+            source_errors.append("outcome_validation_failed")
+        if live_validation != snapshot.get("outcome_validation"):
+            source_errors.append("outcome_validation_changed")
+        live_bundle = _backtest_sim_outcome_bundle(sim_outcome_dir)
+        if live_bundle != snapshot.get("outcome_bundle"):
+            source_errors.append("outcome_bundle_changed")
+        source_manifest = _mapping(live_bundle.get("manifest"))
+        source_generated = _datetime_from_any(source_manifest.get("generated_at"))
+        if source_generated is None or source_generated > generated:
+            source_errors.append("outcome_source_after_cutoff")
+        source_inputs = _backtest_sim_sensitivity_source_inputs(
+            outcome_bundle=live_bundle,
+            variant_dir=variant_set_dir.parent,
+            event_dir=event_set_dir.parent,
+        )
+        if str(source_inputs.get("variant_set_dir")) != str(variant_set_dir):
+            source_errors.append("variant_binding_changed")
+        if str(source_inputs.get("event_set_dir")) != str(event_set_dir):
+            source_errors.append("event_binding_changed")
+        requested_end = _date_from_any(source_inputs.get("requested_end"))
+        if requested_end is None or requested_end > generated.date():
+            raise DynamicV3BacktestSimulationError("sensitivity requested end invalid")
+        events = _records(source_inputs.get("events"))
+        config = _mapping(source_inputs.get("config"))
+        rows = _records(live_bundle.get("windows"))
+        source = _mapping(config.get("source"))
+        prices = _load_prices(
+            _resolve_project_path(Path(_text(source.get("price_cache_path")))),
+            extra_symbols=_event_symbols(events),
+        )
+        policy = _mapping(config.get("sensitivity_policy"))
+        expected_frequency = _frequency_sensitivity(rows, policy)
+        expected_adjustment = _adjustment_limit_sensitivity(
+            events, config, prices, policy, generated_date=requested_end
+        )
+        expected_shortlist = _shortlist_sensitivity(
+            events, prices, policy, generated_date=requested_end
+        )
+        expected_threshold = _threshold_sensitivity(rows, events, policy)
+        expected_warnings = _overfit_warnings(
+            rows,
+            expected_frequency,
+            expected_adjustment,
+            expected_shortlist,
+            expected_threshold,
+            policy,
+        )
+        expected_snapshot = {
+            "schema_version": BACKTEST_SIM_SENSITIVITY_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_backtest_sim_sensitivity_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "sim_outcome_id": sim_outcome_id,
+            "sim_outcome_dir": str(sim_outcome_dir),
+            "outcome_bundle": live_bundle,
+            "outcome_validation": live_validation,
+            "variant_set_dir": str(variant_set_dir),
+            "event_set_dir": str(event_set_dir),
+            "requested_end": requested_end.isoformat(),
+            "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+            "pit_safety_status": PIT_SAFETY_SIMULATION,
+            "not_for_production": True,
+        }
+        expected_manifest = _backtest_sim_sensitivity_manifest(
+            sensitivity_dir=sensitivity_dir,
+            generated=generated,
+            status=_text(expected_warnings.get("simulation_overfit_status")),
+            sim_outcome_id=sim_outcome_id,
+            variant_set_id=_text(source_inputs.get("variant_set_id")),
+            event_set_id=_text(source_inputs.get("event_set_id")),
+        )
+        expected_report = render_sensitivity_report(expected_manifest, expected_warnings)
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_frequency = {}
+        expected_adjustment = {}
+        expected_shortlist = {}
+        expected_threshold = {}
+        expected_warnings = {}
+        expected_snapshot = {}
+        expected_manifest = {}
+        expected_report = ""
     checks = [
         _check("manifest_exists", (sensitivity_dir / "sim_sensitivity_manifest.json").exists(), ""),
         _check("threshold_exists", (sensitivity_dir / "threshold_sensitivity.json").exists(), ""),
@@ -2524,9 +2732,44 @@ def validate_backtest_sim_sensitivity_artifact(
         ),
         _check("warnings_exists", (sensitivity_dir / "overfit_warning_summary.json").exists(), ""),
         _check(
+            "snapshot_exists", (sensitivity_dir / "sensitivity_input_snapshot.json").exists(), ""
+        ),
+        _check(
             "report_exists", (sensitivity_dir / "backtest_sim_sensitivity_report.md").exists(), ""
         ),
         _check("sensitivity_id_matches", manifest.get("sensitivity_id") == sensitivity_id, ""),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live source"),
+        _check("frequency_recomputed", frequency == expected_frequency, "snapshot"),
+        _check("adjustment_recomputed", adjustment == expected_adjustment, "snapshot"),
+        _check("shortlist_recomputed", shortlist == expected_shortlist, "snapshot"),
+        _check("threshold_recomputed", threshold == expected_threshold, "snapshot"),
+        _check("warnings_recomputed", warnings == expected_warnings, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "all_json_bytes_recomputed",
+            all(
+                path.is_file() and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
+                for path, payload in (
+                    (sensitivity_dir / "sensitivity_input_snapshot.json", expected_snapshot),
+                    (sensitivity_dir / "event_frequency_sensitivity.json", expected_frequency),
+                    (sensitivity_dir / "adjustment_limit_sensitivity.json", expected_adjustment),
+                    (sensitivity_dir / "shortlist_sensitivity.json", expected_shortlist),
+                    (sensitivity_dir / "threshold_sensitivity.json", expected_threshold),
+                    (sensitivity_dir / "overfit_warning_summary.json", expected_warnings),
+                    (sensitivity_dir / "sim_sensitivity_manifest.json", expected_manifest),
+                )
+            ),
+            "canonical JSON",
+        ),
+        _check(
+            "report_recomputed",
+            (sensitivity_dir / "backtest_sim_sensitivity_report.md").is_file()
+            and (sensitivity_dir / "backtest_sim_sensitivity_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown",
+        ),
         _check(
             "overfit_status_valid",
             warnings.get("simulation_overfit_status")
@@ -2534,10 +2777,17 @@ def validate_backtest_sim_sensitivity_artifact(
             _text(warnings.get("simulation_overfit_status")),
         ),
         _check(
-            "high_risk_no_strong_calibration",
-            warnings.get("simulation_overfit_status") != "HIGH_RISK"
-            or warnings.get("strong_calibration_allowed") is False,
-            "HIGH_RISK must not allow strong calibration",
+            "strong_calibration_low_risk_only",
+            warnings.get("strong_calibration_allowed")
+            is (warnings.get("simulation_overfit_status") == "LOW_RISK"),
+            "only LOW_RISK may allow strong calibration",
+        ),
+        _check(
+            "sensitivity_contract_valid",
+            _sensitivity_views_contract_valid(
+                frequency, adjustment, shortlist, threshold, warnings
+            ),
+            "grid/sample/null contract",
         ),
         _check("broker_action_forbidden", manifest.get("broker_action_taken") is False, ""),
     ]
@@ -3788,8 +4038,12 @@ def render_sensitivity_report(manifest: Mapping[str, Any], warnings: Mapping[str
             f"- simulation_overfit_status：{warnings.get('simulation_overfit_status')}",
             f"- sensitive_parameters：{warnings.get('sensitive_parameters')}",
             f"- regime_return_concentration：{warnings.get('regime_return_concentration')}",
+            f"- source_event_count：{warnings.get('source_event_count')}",
+            f"- source_window_count：{warnings.get('source_window_count')}",
+            f"- available_window_count：{warnings.get('available_window_count')}",
+            f"- result_row_count：{warnings.get('result_row_count')}",
             f"- strong_calibration_allowed：{warnings.get('strong_calibration_allowed')}",
-            "- HIGH_RISK 时不允许产生 strong calibration proposal。",
+            "- 只有 LOW_RISK 才允许 strong calibration proposal；仍不自动 apply。",
         ]
     )
 
@@ -5426,33 +5680,54 @@ def _regime_summary(metrics: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _available_finite_sensitivity_rows(
+    rows: Sequence[Mapping[str, Any]],
+) -> list[Mapping[str, Any]]:
+    return [
+        row
+        for row in rows
+        if row.get("outcome_status") == "AVAILABLE"
+        and _finite_number(row.get("relative_to_no_trade"))
+    ]
+
+
+def _sensitivity_sample_counts(
+    rows: Sequence[Mapping[str, Any]], available: Sequence[Mapping[str, Any]]
+) -> dict[str, int]:
+    return {
+        "event_count": len({_text(row.get("sim_event_id")) for row in rows}),
+        "window_count": len(rows),
+        "available_window_count": len(available),
+        "excluded_window_count": len(rows) - len(available),
+    }
+
+
 def _frequency_sensitivity(
     rows: Sequence[Mapping[str, Any]], policy: Mapping[str, Any]
 ) -> dict[str, Any]:
     profiles = _texts(policy.get("event_frequency_profiles")) or ["weekly", "biweekly", "monthly"]
-    limited_5d = [
+    limited_5d_inputs = [
         row
         for row in rows
-        if row.get("variant") == "limited_adjustment"
-        and row.get("window_days") == 5
-        and row.get("outcome_status") == "AVAILABLE"
+        if row.get("variant") == "limited_adjustment" and row.get("window_days") == 5
     ]
     by_date = defaultdict(list)
-    for row in limited_5d:
+    for row in limited_5d_inputs:
         by_date[_text(row.get("as_of"))].append(row)
     dates = sorted(by_date)
     results = []
     for profile in profiles:
         selected_dates = _profile_dates(dates, profile)
-        selected = [row for day in selected_dates for row in by_date[day]]
+        selected_inputs = [row for day in selected_dates for row in by_date[day]]
+        available = _available_finite_sensitivity_rows(selected_inputs)
         results.append(
             {
                 "profile": profile,
-                "sample_count": len(selected),
-                "avg_relative_to_no_trade_5d": round(
-                    _avg([_float(row.get("relative_to_no_trade")) for row in selected]),
-                    6,
+                **_sensitivity_sample_counts(selected_inputs, available),
+                "avg_relative_to_no_trade_5d": _nullable_avg(
+                    [_float(row.get("relative_to_no_trade")) for row in available]
                 ),
+                "result_status": "AVAILABLE" if available else "INSUFFICIENT_DATA",
             }
         )
     return {
@@ -5468,6 +5743,8 @@ def _adjustment_limit_sensitivity(
     config: Mapping[str, Any],
     prices: pd.DataFrame,
     policy: Mapping[str, Any],
+    *,
+    generated_date: date,
 ) -> dict[str, Any]:
     grid = _records_as_floats(policy.get("adjustment_limit_grid"))
     if not grid:
@@ -5486,22 +5763,18 @@ def _adjustment_limit_sensitivity(
             windows=[5],
             prices=prices,
             price_dates=price_dates,
-            generated_date=date.max,
+            generated_date=generated_date,
         )
-        selected = [
-            row
-            for row in outcome
-            if row.get("variant") == "limited_adjustment"
-            and row.get("outcome_status") == "AVAILABLE"
-        ]
+        selected_inputs = [row for row in outcome if row.get("variant") == "limited_adjustment"]
+        available = _available_finite_sensitivity_rows(selected_inputs)
         results.append(
             {
                 "max_single_event_total_adjustment": limit,
-                "sample_count": len(selected),
-                "avg_relative_to_no_trade_5d": round(
-                    _avg([_float(row.get("relative_to_no_trade")) for row in selected]),
-                    6,
+                **_sensitivity_sample_counts(selected_inputs, available),
+                "avg_relative_to_no_trade_5d": _nullable_avg(
+                    [_float(row.get("relative_to_no_trade")) for row in available]
                 ),
+                "result_status": "AVAILABLE" if available else "INSUFFICIENT_DATA",
             }
         )
     return {
@@ -5516,6 +5789,8 @@ def _shortlist_sensitivity(
     events: Sequence[Mapping[str, Any]],
     prices: pd.DataFrame,
     policy: Mapping[str, Any],
+    *,
+    generated_date: date,
 ) -> dict[str, Any]:
     grid = _records_as_ints(policy.get("shortlist_top_n_grid")) or [1, 2, 5]
     price_dates = _available_price_dates(prices)
@@ -5558,22 +5833,18 @@ def _shortlist_sensitivity(
             windows=[5],
             prices=prices,
             price_dates=price_dates,
-            generated_date=date.max,
+            generated_date=generated_date,
         )
-        selected = [
-            row
-            for row in outcome
-            if row.get("variant") == f"top_{top_n}_consensus"
-            and row.get("outcome_status") == "AVAILABLE"
-        ]
+        selected_inputs = [row for row in outcome if row.get("variant") == f"top_{top_n}_consensus"]
+        available = _available_finite_sensitivity_rows(selected_inputs)
         results.append(
             {
                 "shortlist_top_n": top_n,
-                "sample_count": len(selected),
-                "avg_relative_to_no_trade_5d": round(
-                    _avg([_float(row.get("relative_to_no_trade")) for row in selected]),
-                    6,
+                **_sensitivity_sample_counts(selected_inputs, available),
+                "avg_relative_to_no_trade_5d": _nullable_avg(
+                    [_float(row.get("relative_to_no_trade")) for row in available]
                 ),
+                "result_status": "AVAILABLE" if available else "INSUFFICIENT_DATA",
             }
         )
     return {
@@ -5585,33 +5856,46 @@ def _shortlist_sensitivity(
 
 
 def _threshold_sensitivity(
-    rows: Sequence[Mapping[str, Any]], policy: Mapping[str, Any]
+    rows: Sequence[Mapping[str, Any]],
+    events: Sequence[Mapping[str, Any]],
+    policy: Mapping[str, Any],
 ) -> dict[str, Any]:
     thresholds = _mapping(policy.get("consensus_dispersion_thresholds"))
-    base = [
+    base_inputs = [
         row
         for row in rows
-        if row.get("variant") == "limited_adjustment"
-        and row.get("window_days") == 5
-        and row.get("outcome_status") == "AVAILABLE"
+        if row.get("variant") == "limited_adjustment" and row.get("window_days") == 5
     ]
+    dispersion_by_event = {
+        _text(event.get("sim_event_id")): event.get("consensus_max_symbol_dispersion")
+        for event in events
+    }
     results = []
     for name, threshold in sorted(thresholds.items()):
-        selected = [
+        with_dispersion = [
             row
-            for row in base
-            if _float(row.get("consensus_max_symbol_dispersion"), default=0.0) <= _float(threshold)
-            or "consensus_max_symbol_dispersion" not in row
+            for row in base_inputs
+            if _finite_number(dispersion_by_event.get(_text(row.get("sim_event_id"))))
         ]
+        selected_inputs = [
+            row
+            for row in with_dispersion
+            if _float(dispersion_by_event.get(_text(row.get("sim_event_id")))) <= _float(threshold)
+        ]
+        available = _available_finite_sensitivity_rows(selected_inputs)
         results.append(
             {
                 "threshold_profile": name,
                 "max_symbol_dispersion": _float(threshold),
-                "sample_count": len(selected),
-                "avg_relative_to_no_trade_5d": round(
-                    _avg([_float(row.get("relative_to_no_trade")) for row in selected]),
-                    6,
+                "input_event_count": len({_text(row.get("sim_event_id")) for row in base_inputs}),
+                "input_window_count": len(base_inputs),
+                "dispersion_missing_window_count": len(base_inputs) - len(with_dispersion),
+                "threshold_excluded_window_count": len(with_dispersion) - len(selected_inputs),
+                **_sensitivity_sample_counts(selected_inputs, available),
+                "avg_relative_to_no_trade_5d": _nullable_avg(
+                    [_float(row.get("relative_to_no_trade")) for row in available]
                 ),
+                "result_status": "AVAILABLE" if available else "INSUFFICIENT_DATA",
             }
         )
     return {
@@ -5630,7 +5914,7 @@ def _overfit_warnings(
     threshold: Mapping[str, Any],
     policy: Mapping[str, Any],
 ) -> dict[str, Any]:
-    available = [row for row in rows if row.get("outcome_status") == "AVAILABLE"]
+    available = _available_finite_sensitivity_rows(rows)
     min_available = _float(policy.get("min_available_windows_for_low_risk"), 20)
     concentration = _regime_return_concentration(available)
     spreads = {
@@ -5642,12 +5926,15 @@ def _overfit_warnings(
     sensitive = [
         name
         for name, spread in spreads.items()
-        if spread > _float(policy.get("max_parameter_result_spread_low_risk"), 0.02)
+        if spread is not None
+        and spread > _float(policy.get("max_parameter_result_spread_low_risk"), 0.02)
     ]
-    if not available:
+    missing_spreads = [name for name, spread in spreads.items() if spread is None]
+    if not available or concentration is None or missing_spreads:
         status = "INSUFFICIENT_DATA"
     elif concentration >= _float(policy.get("high_risk_regime_return_concentration"), 0.85) or any(
-        spread >= _float(policy.get("high_risk_parameter_result_spread"), 0.05)
+        spread is not None
+        and spread >= _float(policy.get("high_risk_parameter_result_spread"), 0.05)
         for spread in spreads.values()
     ):
         status = "HIGH_RISK"
@@ -5659,15 +5946,32 @@ def _overfit_warnings(
         status = "REVIEW_REQUIRED"
     else:
         status = "LOW_RISK"
+    result_rows = [
+        row
+        for view in (frequency, adjustment, shortlist, threshold)
+        for row in _records(view.get("results"))
+    ]
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_backtest_sim_overfit_warning_summary",
         "simulation_overfit_status": status,
+        "source_event_count": len({_text(row.get("sim_event_id")) for row in rows}),
+        "source_window_count": len(rows),
+        "available_event_count": len({_text(row.get("sim_event_id")) for row in available}),
         "available_window_count": len(available),
-        "regime_return_concentration": round(concentration, 6),
+        "excluded_source_window_count": len(rows) - len(available),
+        "result_row_count": len(result_rows),
+        "available_result_count": sum(
+            row.get("result_status") == "AVAILABLE" for row in result_rows
+        ),
+        "insufficient_result_count": sum(
+            row.get("result_status") == "INSUFFICIENT_DATA" for row in result_rows
+        ),
+        "regime_return_concentration": (None if concentration is None else round(concentration, 6)),
         "parameter_result_spreads": spreads,
+        "missing_parameter_spreads": missing_spreads,
         "sensitive_parameters": sensitive,
-        "strong_calibration_allowed": status not in {"HIGH_RISK", "INSUFFICIENT_DATA"},
+        "strong_calibration_allowed": status == "LOW_RISK",
         "requires_forward_confirmation": True,
         "broker_action_taken": False,
     }
@@ -6410,7 +6714,9 @@ def _with_limit(config: Mapping[str, Any], limit: float) -> dict[str, Any]:
     return result
 
 
-def _regime_return_concentration(rows: Sequence[Mapping[str, Any]]) -> float:
+def _regime_return_concentration(rows: Sequence[Mapping[str, Any]]) -> float | None:
+    if not rows:
+        return None
     by_regime: dict[str, float] = defaultdict(float)
     total = 0.0
     for row in rows:
@@ -6420,11 +6726,73 @@ def _regime_return_concentration(rows: Sequence[Mapping[str, Any]]) -> float:
     return max(by_regime.values() or [0.0]) / total if total > 0 else 0.0
 
 
-def _result_spread(rows: Sequence[Mapping[str, Any]]) -> float:
+def _result_spread(rows: Sequence[Mapping[str, Any]]) -> float | None:
     values = [
-        _float(row.get("avg_relative_to_no_trade_5d")) for row in rows if row.get("sample_count")
+        _float(row.get("avg_relative_to_no_trade_5d"))
+        for row in rows
+        if row.get("result_status") == "AVAILABLE"
+        and _finite_number(row.get("avg_relative_to_no_trade_5d"))
     ]
-    return round(max(values) - min(values), 6) if values else 0.0
+    return round(max(values) - min(values), 6) if len(values) >= 2 else None
+
+
+def _sensitivity_views_contract_valid(
+    frequency: Mapping[str, Any],
+    adjustment: Mapping[str, Any],
+    shortlist: Mapping[str, Any],
+    threshold: Mapping[str, Any],
+    warnings: Mapping[str, Any],
+) -> bool:
+    views = (frequency, adjustment, shortlist, threshold)
+    results = [row for view in views for row in _records(view.get("results"))]
+    if not results:
+        return False
+    for row in results:
+        counts = [
+            row.get("event_count"),
+            row.get("window_count"),
+            row.get("available_window_count"),
+            row.get("excluded_window_count"),
+        ]
+        if not all(
+            isinstance(value, int) and not isinstance(value, bool) and value >= 0
+            for value in counts
+        ):
+            return False
+        if row.get("window_count") != row.get("available_window_count") + row.get(
+            "excluded_window_count"
+        ):
+            return False
+        status = row.get("result_status")
+        metric = row.get("avg_relative_to_no_trade_5d")
+        if status == "AVAILABLE":
+            if row.get("available_window_count", 0) <= 0 or not _finite_number(metric):
+                return False
+        elif status == "INSUFFICIENT_DATA":
+            if row.get("available_window_count") != 0 or metric is not None:
+                return False
+        else:
+            return False
+    identities = (
+        [row.get("profile") for row in _records(frequency.get("results"))],
+        [
+            row.get("max_single_event_total_adjustment")
+            for row in _records(adjustment.get("results"))
+        ],
+        [row.get("shortlist_top_n") for row in _records(shortlist.get("results"))],
+        [row.get("threshold_profile") for row in _records(threshold.get("results"))],
+    )
+    if any(not values or len(values) != len(set(values)) for values in identities):
+        return False
+    status = warnings.get("simulation_overfit_status")
+    return (
+        status in {"LOW_RISK", "REVIEW_REQUIRED", "HIGH_RISK", "INSUFFICIENT_DATA"}
+        and warnings.get("strong_calibration_allowed") is (status == "LOW_RISK")
+        and warnings.get("result_row_count") == len(results)
+        and _int(warnings.get("available_result_count"))
+        + _int(warnings.get("insufficient_result_count"))
+        == len(results)
+    )
 
 
 def _price_source_snapshot(path: Path) -> dict[str, Any]:

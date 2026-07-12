@@ -2223,6 +2223,8 @@ TRADING-348 Reader Brief update: 上述 Weight Optimization Batch Search excerpt
 
 `reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_regime/<regime_review_id>/regime_input_snapshot.json` 使用 `backtest_sim_regime_input_snapshot.v2`冻结full Outcome bundle/validation。Regime validator重验live Outcome并逐字节重算inventory/metrics/summary/manifest/Markdown；metrics只纳入AVAILABLE finite rows，event/window单位分离，missing为null且不参与ranking。该artifact不是PIT/因果/production evidence，`production_effect=none`。
 
+`reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_sensitivity/<sensitivity_id>/sensitivity_input_snapshot.json` 使用 `backtest_sim_sensitivity_input_snapshot.v2`冻结full Outcome bundle/validation以及唯一variant/event binding。四类diagnostic grid必须与reviewed policy exact/unique；只纳入AVAILABLE finite windows，missing avg/spread保持null，并分别披露event、window、available/excluded和result-row单位。Threshold从冻结event读取dispersion，缺字段显式排除；strong calibration仅`LOW_RISK`允许且不自动apply。Validator重验live Outcome并逐字节重算全部JSON/Markdown。该artifact不是PIT/production证据，`production_effect=none`。
+
 ## TRADING-2320 Event Gating Validation
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|

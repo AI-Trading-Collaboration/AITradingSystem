@@ -1,7 +1,7 @@
 schema_version: arch_004g2_cli_contract.v1
 source:
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: 73445501bb12b531c4ee61bfd5c1621151bd705e358efa027ea6d5965b849a54
+  sha256: aecb155e0ee9a0dfdc4f773b04555caf2b39434436d1dbd90f4bda7325757630
 counts:
   root_command_count: 41
   group_count: 291
@@ -9,7 +9,7 @@ counts:
   registered_leaf_count: 993
   unique_path_count: 1284
   duplicate_path_count: 0
-tree_sha256: 41822fdf459f390f67d2acb338cbe5423b5a60a7786c29de77230e34db4e22dc
+tree_sha256: 17b74072ab1d61c9bd1ea77e0170842b78cb422d9c41c1c643d566ad59a90070
 nodes:
 - path: <root>
   kind: group
@@ -438,11 +438,11 @@ nodes:
 - path: dynamic-v3-rescue backtest-sim sensitivity-report
   kind: command
   parameter_count: 3
-  contract_sha256: 97359c0c91631a8b3e1f991d067fbbf533ad77e27254cb0c81811384ddf4587c
+  contract_sha256: 3b961b097c648d4e97b644d5eed3306660770d2e13c1a7f6f5596cc1190c9dec
 - path: dynamic-v3-rescue backtest-sim sensitivity-run
   kind: command
   parameter_count: 5
-  contract_sha256: 41e81d884965752c038479eea6768bcbaea0b57d2124b60f73f3325c77c204a0
+  contract_sha256: eb50666949371bd7d02e92e0b2ac9ade6e06aa6e5f2f77e9b1de986357f81238
 - path: dynamic-v3-rescue backtest-sim variants-generate
   kind: command
   parameter_count: 3
@@ -3378,7 +3378,7 @@ nodes:
 - path: dynamic-v3-rescue validate-backtest-sim-sensitivity
   kind: command
   parameter_count: 2
-  contract_sha256: 557e03c4a26ba02bb9eb24e8bf621b99fe7df54236d7099b08dc68213a78a5be
+  contract_sha256: 49355a2be5a6541aa4c4b637b2672251da4f58ace4be883e6d095c4f944b5151
 - path: dynamic-v3-rescue validate-backtest-sim-variants
   kind: command
   parameter_count: 2
