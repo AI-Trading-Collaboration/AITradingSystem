@@ -985,17 +985,20 @@ TRADING-174_to_178_FORWARD_CONFIRMATION_CYCLE 把上述 static
 `reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_registry|confirmation_progress|confirmation_evaluation|rule_review_cycle|rule_owner_decision/`，
 并同步生成 reviewable
 `registry/etf_portfolio/dynamic_v3_rescue_forward_confirmation_targets.yaml`。Registry
-register会先重验status=`AVAILABLE`的Forward Plan，冻结full bundle、generated cutoff与materialized registry preimage/postimage；只逐值注册source targets，同一Plan重复注册或unknown tracking status会在写件前阻断。Artifact和reviewable registry YAML均atomic写入；注册PASS不表示progress/evaluation/success。
+register会先重验status=`AVAILABLE`的Forward Plan，冻结覆盖全部canonical文件path/size/SHA-256的bounded commitment bundle、计算视图、generated cutoff与materialized registry preimage/postimage；只逐值注册source targets，同一Plan重复注册或unknown tracking status会在写件前阻断。Artifact和reviewable registry YAML均atomic写入；注册PASS不表示progress/evaluation/success。
 Progress tracker会先重验Registry，按cutoff的`generated_at/id`确定性选择validated
-`limited-vs-notrade`或`consensus-risk` evidence，并冻结full bundles/validations到
+`limited-vs-notrade`或`consensus-risk` evidence，并冻结bounded full-byte commitments/validations到
 `confirmation_progress_input_snapshot.v2`；不使用mtime、不把同一event跨window相加。
 缺少样本、窗口或pressure-regime标签时指标保持null且状态保持
 `INSUFFICIENT_EVENTS` / `NOT_READY`，不得用0或未治理near-ready阈值伪造READY。
 Evaluation会再次验证并冻结Progress到`confirmation_evaluation_input_snapshot.v2`；
 NOT_READY时criteria固定`NOT_EVALUATED`且不触发failure，只有READY时才按source
 `_min/_max` criteria计算。Failure condition boundary引用同一source criterion，全部criteria
-PASS且无failure才可标SUCCESS，单指标PASS不能解锁。Rule review cycle 默认
-`policy_change_allowed=false`；owner decision journal
+PASS且无failure才可标SUCCESS，单指标PASS不能解锁。Rule review cycle重新验证同一
+Registry→Progress→Evaluation lineage，冻结`rule_review_cycle_input_snapshot.v2`；
+SUCCESS/FAILURE只解锁generic人工review并原样携带source criteria/failure actions，报告分别
+披露progress-ready与evaluation success/failure/review-required，默认
+`policy_change_allowed=false`。Owner decision journal
 只记录人工决策，`approve_manual_policy_review` 也不自动修改配置。该闭环继续固定
 `auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`，不触发 broker、
 不进入 production、不修改 `position_advisory_v1.yaml`、policy、official target weights、

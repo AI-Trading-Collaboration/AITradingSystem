@@ -84,6 +84,20 @@ rule review cycle和owner decision journal。
 
 2026-07-13完成：3 callback已迁canonical；Progress full validation/cutoff snapshot、NOT_READY零partial evaluation、READY criteria/failure严格判定、unknown failure阻断和全部JSON/JSONL/Markdown byte validation通过。当前source-backed fixture只有1个NOT_READY limited target，输出0 success/0 failure；这是样本未成熟，不是规则失败。首次并发验证的parallel worker因内存竞争失败，保留artifact后仍用16-worker parallel、按重型文件资源隔离重跑通过。
 
+## 4.4 ARCH-004G2.4CB Rule Review contract
+
+- Run必须先要求Registry、Progress、Evaluation三个content-derived validator=`PASS`，并校验timezone-aware generated cutoff、Registry→Progress→Evaluation id lineage、生成时间单调与三层target exact coverage；
+- `rule_review_cycle_input_snapshot.v2`冻结三层bounded full-byte commitment bundles、计算必需的JSON/YAML/JSONL views、validation evidence、path/id与lineage；commitment必须覆盖每个canonical source file的path、size与SHA-256，validator逐文件重算，不得把上游input snapshot解析后递归嵌套；
+- watch-only target固定`KEEP_REFERENCE_ONLY`；active NOT_READY=`CONTINUE_TRACKING`；MIXED/REVIEW_REQUIRED=`DEFER`；active SUCCESS/FAILURE只表示`READY_FOR_OWNER_REVIEW`，不得把review readiness误写成规则已批准；
+- Matrix完整携带Progress状态、Evaluation criteria results、source failure conditions/triggers/actions；不得按target id另造RENAME/TIGHTEN结论或新threshold；
+- report/Reader Brief分别披露progress-ready、success、failure、review-required，不再把SUCCESS数量误标为ready-for-evaluation；
+- validator重验live三source并重算snapshot、decision matrix、manifest、Markdown与Reader Brief bytes；
+- 本slice不创建/记录TRADING-178 Owner Decision，不修改投资policy/portfolio/production/broker。
+
+2026-07-13实现审计发现：既有Registry/Progress/Evaluation“full bundle”把上游input snapshot同时作为parsed JSON和raw text递归嵌入，fixture分别膨胀到约0.89GB/2.37GB/6.50GB，CB再嵌套时并行测试在JSON序列化处`MemoryError`。这不是可接受的资源偶发或测试绕路。CB将BY/BZ/CA与本slice统一改为bounded source bundle：完整canonical文件集合只保存path/size/SHA-256 commitment，计算所需视图单独解析；validator仍重验上游content-derived PASS并逐文件比较live commitment，因此保留全字节漂移检测，同时把artifact大小从递归指数增长改为随文件数线性增长。首次失败的16-worker parallel证据保留，修复后仍以相同parallel配置验证。
+
+2026-07-13完成：3 callback已迁canonical，三源validation/cutoff、lineage/chronology/exact coverage、bounded commitment snapshot、generic owner-review decision、source action保留、progress/evaluation分离统计和全部输出byte validation通过。四层snapshot约18KB/28KB/14KB/37KB，资源增长恢复为线性；累计focused 570、architecture 263、contract 203均以16-worker parallel通过。当前fixture仍为1个active limited target、Progress `INSUFFICIENT_EVENTS`、Evaluation `NOT_READY`，所以Cycle正确输出`CONTINUE_TRACKING`和0 owner action；这表示样本尚未成熟，不是自动否定规则。本slice未创建TRADING-178 Owner Decision，未修改policy/config/portfolio/production/broker。
+
 ## 5. 安全边界
 
 - 不修改 `config/etf_portfolio/dynamic_v3_rescue/position_advisory_v1.yaml`。

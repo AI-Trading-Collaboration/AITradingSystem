@@ -237,6 +237,8 @@ Daily chain 还包括 `download-data`、`validate-data`、SEC companyfacts / met
 
 以下任务登记为周期性运营职责。除非后续受控 scheduler 明确实现 due-cadence dispatch，否则它们不会由 `aits ops daily-run` 自动执行。
 
+Dynamic v3 forward confirmation execution / rule review 另有强制资源与完整性约束：Registry、Progress、Evaluation、Rule Review snapshot使用bounded `content_commitment_bundle.v1`，逐个覆盖canonical source file的path、size与SHA-256，并单独保存计算必需views；禁止解析后递归嵌入上游input snapshot。每个producer在写件前仍须运行对应上游content-derived validator，artifact validator须逐文件重算commitment、cutoff、lineage和全部输出bytes。Rule Review只把SUCCESS/FAILURE解释为generic人工review readiness，并原样携带source criteria/failure actions；不得自动创建Owner Decision或修改policy/config/portfolio/production/broker。
+
 |Cadence|登记任务|默认入口|Due 条件|验收重点|
 |---|---|---|---|---|
 |Weekly|Weekly review|`aits etf weekly-review generate --as-of {as_of}`、`aits etf weekly-review validate`、`aits backtest --regime ai_after_chatgpt`、`aits backtest --regime ai_after_chatgpt --robustness-report`、`aits feedback build-parameter-replay --as-of {as_of}`、`aits feedback build-parameter-candidates --as-of {as_of}`、`aits feedback evaluate-parameter-governance --as-of {as_of}`、`aits reports research-governance-summary --latest`|每周最后一个已完成美股交易日之后，且 daily chain PASS 或明确披露限制。|ETF weekly review 只读 existing artifacts，并固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；报告声明 regime/date range、source artifacts、missing data 和 validation status；backtest/robustness/parameter governance 不得直接改变 production。|

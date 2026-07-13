@@ -266,6 +266,10 @@ DYNAMIC_V3_CONFIRMATION_EVALUATION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_confirmation_evaluation.py"
 )
+DYNAMIC_V3_RULE_REVIEW_CYCLE_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_rule_review_cycle.py"
+)
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py"
@@ -419,7 +423,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 23246
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 23136
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -630,8 +634,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 23246
-    assert len(legacy_names) == 681
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 23136
+    assert len(legacy_names) == 678
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -2176,6 +2180,28 @@ def test_g2_4_dynamic_v3_confirmation_evaluation_callbacks_leave_legacy_root() -
             "confirmation_evaluation_report_payload",
             "run_confirmation_evaluation",
             "validate_confirmation_evaluation_artifact",
+        }
+    )
+
+
+def test_g2_4_dynamic_v3_rule_review_cycle_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_RULE_REVIEW_CYCLE_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_rule_review_cycle_run_command",
+        "dynamic_v3_rule_review_cycle_report_command",
+        "dynamic_v3_validate_rule_review_cycle_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert _imported_names(legacy_tree).isdisjoint(
+        {
+            "rule_review_cycle_report_payload",
+            "run_rule_review_cycle",
+            "validate_rule_review_cycle_artifact",
         }
     )
 

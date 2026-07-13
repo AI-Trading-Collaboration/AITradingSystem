@@ -1,11 +1,12 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CA_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CB_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-13
-base_commit: b8550060
+base_commit: 7b1cf9e6
 production_effect: none
 
 arch_004_owned_paths:
+  - README.md
   - config/architecture/arch_004_refactor_policy.yaml
   - config/architecture/arch_004g_deprecation_policy.yaml
   - config/scheduled_tasks.yaml
@@ -31,6 +32,7 @@ arch_004_owned_paths:
   - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
+  - docs/requirements/TRADING-174_to_178_Forward_Confirmation_Execution_and_Rule_Review_Cycle.md
   - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
   - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
   - docs/requirements/TRADING-141_to_145_Historical_Advisory_Replay_and_Backfilled_Outcome_Evaluation.md
@@ -198,6 +200,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_limited_vs_notrade.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_confirmation_progress.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_confirmation_evaluation.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_rule_review_cycle.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_consensus_risk.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_outcome_update_review.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_outcome_update.py
@@ -268,6 +271,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_outcome_dashboard.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_confirmation_cycle.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_tracking.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_historical_replay.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_outcome_accumulation.py
@@ -305,6 +309,8 @@ arch_004_owned_paths:
   - tests/test_backtest_sim_outcome.py
   - tests/dynamic_v3_paper_tracking_helpers.py
   - tests/test_position_advisory_daily.py
+  - tests/test_confirmation_targets.py
+  - tests/test_rule_review_cycle.py
   - src/ai_trading_system/etf_portfolio/dynamic_rescue.py
   - src/ai_trading_system/etf_portfolio/dynamic_v2_review.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_rescue.py

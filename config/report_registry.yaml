@@ -7247,6 +7247,7 @@ reports:
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/rule_review_cycle/*/rule_review_cycle_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/rule_review_cycle/*/rule_review_decision_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_review_cycle/*/rule_review_cycle_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/rule_review_cycle/*/rule_review_cycle_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/rule_review_cycle/*/reader_brief_section.md
     freshness_sla_days: 30

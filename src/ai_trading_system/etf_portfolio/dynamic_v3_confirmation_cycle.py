@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 from collections.abc import Mapping, Sequence
@@ -66,6 +67,7 @@ DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH = (
 CONFIRMATION_REGISTRY_SNAPSHOT_SCHEMA_VERSION = "confirmation_registry_input_snapshot.v2"
 CONFIRMATION_PROGRESS_SNAPSHOT_SCHEMA_VERSION = "confirmation_progress_input_snapshot.v2"
 CONFIRMATION_EVALUATION_SNAPSHOT_SCHEMA_VERSION = "confirmation_evaluation_input_snapshot.v2"
+RULE_REVIEW_CYCLE_SNAPSHOT_SCHEMA_VERSION = "rule_review_cycle_input_snapshot.v2"
 
 # Source Plan conditions are declarative labels. Evaluation binds each label to the
 # corresponding source criterion so no independent threshold is introduced here.
@@ -258,12 +260,13 @@ def _confirmation_registry_plan_bundle(plan_dir: Path) -> dict[str, Any]:
         "forward_confirmation_plan_input_snapshot.json",
     )
     text_files = ("forward_confirmation_plan_report.md", "reader_brief_section.md")
-    return {
-        "source_dir": str(plan_dir),
-        "json": {name: _read_json(plan_dir / name) for name in json_files},
-        "text": {name: _read_text(plan_dir / name) for name in text_files},
-        "file_contents": {name: _read_text(plan_dir / name) for name in json_files + text_files},
-    }
+    return _bounded_source_bundle(
+        source_dir=plan_dir,
+        canonical_files=json_files + text_files,
+        json_views=tuple(
+            name for name in json_files if name != "forward_confirmation_plan_input_snapshot.json"
+        ),
+    )
 
 
 def _registry_targets_from_plan(
@@ -532,15 +535,12 @@ def _confirmation_progress_registry_bundle(registry_dir: Path) -> dict[str, Any]
     )
     yaml_files = ("registered_targets.yaml",)
     text_files = ("confirmation_targets_report.md",)
-    return {
-        "source_dir": str(registry_dir),
-        "json": {name: _read_json(registry_dir / name) for name in json_files},
-        "yaml": {name: _read_yaml(registry_dir / name) for name in yaml_files},
-        "text": {name: _read_text(registry_dir / name) for name in text_files},
-        "file_contents": {
-            name: _read_text(registry_dir / name) for name in json_files + yaml_files + text_files
-        },
-    }
+    return _bounded_source_bundle(
+        source_dir=registry_dir,
+        canonical_files=json_files + yaml_files + text_files,
+        json_views=("confirmation_registry_manifest.json",),
+        yaml_views=yaml_files,
+    )
 
 
 def _progress_source_kind(target_id: str) -> str:
@@ -576,15 +576,12 @@ def _confirmation_progress_source_bundle(*, kind: str, source_dir: Path) -> dict
         text_files = ("consensus_risk_report.md",)
     else:
         raise DynamicV3ConfirmationCycleError(f"unsupported progress source kind: {kind}")
-    return {
-        "source_dir": str(source_dir),
-        "json": {name: _read_json(source_dir / name) for name in json_files},
-        "jsonl": {name: _read_jsonl(source_dir / name) for name in jsonl_files},
-        "text": {name: _read_text(source_dir / name) for name in text_files},
-        "file_contents": {
-            name: _read_text(source_dir / name) for name in json_files + jsonl_files + text_files
-        },
-    }
+    return _bounded_source_bundle(
+        source_dir=source_dir,
+        canonical_files=json_files + jsonl_files + text_files,
+        json_views=tuple(name for name in json_files if not name.endswith("_source_snapshot.json")),
+        jsonl_views=jsonl_files,
+    )
 
 
 def _select_confirmation_progress_source(
@@ -995,15 +992,12 @@ def _confirmation_evaluation_progress_bundle(progress_dir: Path) -> dict[str, An
     )
     jsonl_files = ("target_progress.jsonl",)
     text_files = ("confirmation_progress_report.md",)
-    return {
-        "source_dir": str(progress_dir),
-        "json": {name: _read_json(progress_dir / name) for name in json_files},
-        "jsonl": {name: _read_jsonl(progress_dir / name) for name in jsonl_files},
-        "text": {name: _read_text(progress_dir / name) for name in text_files},
-        "file_contents": {
-            name: _read_text(progress_dir / name) for name in json_files + jsonl_files + text_files
-        },
-    }
+    return _bounded_source_bundle(
+        source_dir=progress_dir,
+        canonical_files=json_files + jsonl_files + text_files,
+        json_views=("confirmation_progress_manifest.json", "target_progress_summary.json"),
+        jsonl_views=jsonl_files,
+    )
 
 
 def _confirmation_evaluation_rows_from_snapshot(
@@ -1335,6 +1329,224 @@ def validate_confirmation_evaluation_artifact(
     )
 
 
+def _rule_review_cycle_evaluation_bundle(evaluation_dir: Path) -> dict[str, Any]:
+    json_files = (
+        "confirmation_evaluation_manifest.json",
+        "confirmation_evaluation_summary.json",
+        "confirmation_evaluation_input_snapshot.json",
+    )
+    jsonl_files = ("target_evaluations.jsonl",)
+    text_files = ("confirmation_evaluation_report.md",)
+    return _bounded_source_bundle(
+        source_dir=evaluation_dir,
+        canonical_files=json_files + jsonl_files + text_files,
+        json_views=(
+            "confirmation_evaluation_manifest.json",
+            "confirmation_evaluation_summary.json",
+        ),
+        jsonl_views=jsonl_files,
+    )
+
+
+def _bounded_source_bundle(
+    *,
+    source_dir: Path,
+    canonical_files: Sequence[str],
+    json_views: Sequence[str] = (),
+    jsonl_views: Sequence[str] = (),
+    yaml_views: Sequence[str] = (),
+) -> dict[str, Any]:
+    names = list(canonical_files)
+    if not names or len(names) != len(set(names)):
+        raise DynamicV3ConfirmationCycleError("source bundle files missing or duplicate")
+    files: dict[str, Any] = {}
+    for name in names:
+        path = source_dir / name
+        if not path.is_file():
+            raise DynamicV3ConfirmationCycleError(f"source bundle file missing: {path}")
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        files[name] = {
+            "path": str(path),
+            "size_bytes": path.stat().st_size,
+            "sha256": digest.hexdigest(),
+        }
+    return {
+        "schema_version": "content_commitment_bundle.v1",
+        "source_dir": str(source_dir),
+        "canonical_file_count": len(names),
+        "files": files,
+        "json": {name: _read_json(source_dir / name) for name in json_views},
+        "jsonl": {name: _read_jsonl(source_dir / name) for name in jsonl_views},
+        "yaml": {name: _read_yaml(source_dir / name) for name in yaml_views},
+    }
+
+
+def _strict_rule_review_target_ids(
+    rows: Sequence[Mapping[str, Any]], *, source_name: str
+) -> list[str]:
+    target_ids = [_text(row.get("target_id")) for row in rows]
+    if (
+        not rows
+        or any(not target_id for target_id in target_ids)
+        or len(target_ids) != len(set(target_ids))
+    ):
+        raise DynamicV3ConfirmationCycleError(
+            f"rule review {source_name} targets missing or duplicate"
+        )
+    return target_ids
+
+
+def _rule_review_cycle_source_views(
+    snapshot: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+    generated = _datetime_from_any(snapshot.get("generated_at"))
+    registry_id = _text(snapshot.get("registry_id"))
+    progress_id = _text(snapshot.get("progress_id"))
+    evaluation_id = _text(snapshot.get("evaluation_id"))
+    if generated is None or not registry_id or not progress_id or not evaluation_id:
+        raise DynamicV3ConfirmationCycleError("rule review snapshot identity/time invalid")
+    registry_bundle = _mapping(snapshot.get("registry_bundle"))
+    progress_bundle = _mapping(snapshot.get("progress_bundle"))
+    evaluation_bundle = _mapping(snapshot.get("evaluation_bundle"))
+    registry_manifest = _mapping(
+        _mapping(registry_bundle.get("json")).get("confirmation_registry_manifest.json")
+    )
+    progress_manifest = _mapping(
+        _mapping(progress_bundle.get("json")).get("confirmation_progress_manifest.json")
+    )
+    evaluation_manifest = _mapping(
+        _mapping(evaluation_bundle.get("json")).get("confirmation_evaluation_manifest.json")
+    )
+    registry_generated = _datetime_from_any(registry_manifest.get("generated_at"))
+    progress_generated = _datetime_from_any(progress_manifest.get("generated_at"))
+    evaluation_generated = _datetime_from_any(evaluation_manifest.get("generated_at"))
+    if (
+        registry_manifest.get("registry_id") != registry_id
+        or progress_manifest.get("progress_id") != progress_id
+        or progress_manifest.get("registry_id") != registry_id
+        or evaluation_manifest.get("evaluation_id") != evaluation_id
+        or evaluation_manifest.get("progress_id") != progress_id
+        or evaluation_manifest.get("registry_id") != registry_id
+    ):
+        raise DynamicV3ConfirmationCycleError("rule review source lineage mismatch")
+    if (
+        registry_generated is None
+        or progress_generated is None
+        or evaluation_generated is None
+        or not registry_generated <= progress_generated <= evaluation_generated <= generated
+    ):
+        raise DynamicV3ConfirmationCycleError("rule review source chronology invalid")
+    registry_targets = _records(
+        _mapping(_mapping(registry_bundle.get("yaml")).get("registered_targets.yaml")).get(
+            "targets"
+        )
+    )
+    progress_rows = _records(_mapping(progress_bundle.get("jsonl")).get("target_progress.jsonl"))
+    evaluation_rows = _records(
+        _mapping(evaluation_bundle.get("jsonl")).get("target_evaluations.jsonl")
+    )
+    registry_target_ids = _strict_rule_review_target_ids(registry_targets, source_name="registry")
+    progress_target_ids = _strict_rule_review_target_ids(progress_rows, source_name="progress")
+    evaluation_target_ids = _strict_rule_review_target_ids(
+        evaluation_rows, source_name="evaluation"
+    )
+    if set(registry_target_ids) != set(progress_target_ids) or set(registry_target_ids) != set(
+        evaluation_target_ids
+    ):
+        raise DynamicV3ConfirmationCycleError("rule review source target coverage mismatch")
+    progress_by_target = {_text(row.get("target_id")): dict(row) for row in progress_rows}
+    evaluation_by_target = {_text(row.get("target_id")): dict(row) for row in evaluation_rows}
+    for target in registry_targets:
+        target_id = _text(target.get("target_id"))
+        progress = progress_by_target[target_id]
+        evaluation = evaluation_by_target[target_id]
+        if progress.get("target_status") != target.get("status") or evaluation.get(
+            "progress_status"
+        ) != progress.get("progress_status"):
+            raise DynamicV3ConfirmationCycleError(
+                f"rule review target state lineage mismatch: {target_id}"
+            )
+    return registry_targets, progress_by_target, evaluation_by_target
+
+
+def _rule_review_cycle_decision_matrix(
+    *,
+    cycle_id: str,
+    registry_id: str,
+    progress_id: str,
+    evaluation_id: str,
+    generated: datetime,
+    registry_targets: Sequence[Mapping[str, Any]],
+    progress_rows: Mapping[str, Mapping[str, Any]],
+    evaluation_rows: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    decision_targets = [
+        _rule_review_decision_row(
+            target,
+            progress=progress_rows[_text(target.get("target_id"))],
+            evaluation=evaluation_rows[_text(target.get("target_id"))],
+        )
+        for target in registry_targets
+    ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_rule_review_decision_matrix",
+        "cycle_id": cycle_id,
+        "registry_id": registry_id,
+        "progress_id": progress_id,
+        "evaluation_id": evaluation_id,
+        "generated_at": generated.isoformat(),
+        "targets": decision_targets,
+        "cycle_recommendation": _cycle_recommendation(decision_targets),
+        "policy_change_allowed": False,
+        "auto_apply": False,
+        "broker_action_allowed": False,
+        "production_effect": "none",
+    }
+
+
+def _rule_review_cycle_manifest(
+    *,
+    cycle_dir: Path,
+    generated: datetime,
+    decision_matrix: Mapping[str, Any],
+) -> dict[str, Any]:
+    targets = _records(decision_matrix.get("targets"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_rule_review_cycle_manifest",
+        "cycle_id": cycle_dir.name,
+        "registry_id": decision_matrix.get("registry_id"),
+        "progress_id": decision_matrix.get("progress_id"),
+        "evaluation_id": decision_matrix.get("evaluation_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if targets else "FAIL",
+        "cycle_recommendation": decision_matrix.get("cycle_recommendation"),
+        "targets_requiring_owner_action": sum(
+            1 for row in targets if row.get("owner_action_required") is True
+        ),
+        "policy_change_allowed": False,
+        "rule_review_cycle_manifest_path": str(cycle_dir / "rule_review_cycle_manifest.json"),
+        "rule_review_decision_matrix_path": str(cycle_dir / "rule_review_decision_matrix.json"),
+        "rule_review_cycle_input_snapshot_path": str(
+            cycle_dir / "rule_review_cycle_input_snapshot.json"
+        ),
+        "rule_review_cycle_report_path": str(cycle_dir / "rule_review_cycle_report.md"),
+        "reader_brief_section_path": str(cycle_dir / "reader_brief_section.md"),
+        "auto_apply": False,
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
 def run_rule_review_cycle(
     *,
     registry_id: str,
@@ -1347,87 +1559,72 @@ def run_rule_review_cycle(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    registry_payload = confirmation_targets_report_payload(
-        registry_id=registry_id,
-        output_dir=registry_dir,
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3ConfirmationCycleError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
+    registry_validation = validate_confirmation_targets_artifact(
+        registry_id=registry_id, output_dir=registry_dir
     )
-    progress_payload = confirmation_progress_report_payload(
-        progress_id=progress_id,
-        output_dir=progress_dir,
+    progress_validation = validate_confirmation_progress_artifact(
+        progress_id=progress_id, output_dir=progress_dir
     )
-    evaluation_payload = confirmation_evaluation_report_payload(
-        evaluation_id=evaluation_id,
-        output_dir=evaluation_dir,
+    evaluation_validation = validate_confirmation_evaluation_artifact(
+        evaluation_id=evaluation_id, output_dir=evaluation_dir
     )
-    registry_targets = _records(_mapping(registry_payload.get("registered_targets")).get("targets"))
-    progress_rows = {
-        _text(row.get("target_id")): row
-        for row in _records(progress_payload.get("target_progress"))
+    if registry_validation.get("status") != "PASS":
+        raise DynamicV3ConfirmationCycleError("confirmation registry validation failed")
+    if progress_validation.get("status") != "PASS":
+        raise DynamicV3ConfirmationCycleError("confirmation progress validation failed")
+    if evaluation_validation.get("status") != "PASS":
+        raise DynamicV3ConfirmationCycleError("confirmation evaluation validation failed")
+    snapshot = {
+        "schema_version": RULE_REVIEW_CYCLE_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_rule_review_cycle_input_snapshot",
+        "generated_at": generated.isoformat(),
+        "registry_id": registry_id,
+        "registry_root": str(registry_dir),
+        "registry_bundle": _confirmation_progress_registry_bundle(registry_dir / registry_id),
+        "registry_validation": registry_validation,
+        "progress_id": progress_id,
+        "progress_root": str(progress_dir),
+        "progress_bundle": _confirmation_evaluation_progress_bundle(progress_dir / progress_id),
+        "progress_validation": progress_validation,
+        "evaluation_id": evaluation_id,
+        "evaluation_root": str(evaluation_dir),
+        "evaluation_bundle": _rule_review_cycle_evaluation_bundle(evaluation_dir / evaluation_id),
+        "evaluation_validation": evaluation_validation,
+        "lineage": {
+            "registry_id": registry_id,
+            "progress_id": progress_id,
+            "evaluation_id": evaluation_id,
+        },
+        "production_effect": "none",
     }
-    evaluation_rows = {
-        _text(row.get("target_id")): row
-        for row in _records(evaluation_payload.get("target_evaluations"))
-    }
-    decision_targets = [
-        _rule_review_decision_row(
-            target,
-            progress=progress_rows.get(_text(target.get("target_id")), {}),
-            evaluation=evaluation_rows.get(_text(target.get("target_id")), {}),
-        )
-        for target in registry_targets
-    ]
-    cycle_recommendation = _cycle_recommendation(decision_targets)
+    registry_targets, progress_rows, evaluation_rows = _rule_review_cycle_source_views(snapshot)
     cycle_id = _stable_id("rule-review-cycle", registry_id, progress_id, evaluation_id, generated)
     cycle_dir = _unique_dir(output_dir / cycle_id)
-    cycle_dir.mkdir(parents=True, exist_ok=False)
-    decision_matrix = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_rule_review_decision_matrix",
-        "cycle_id": cycle_dir.name,
-        "registry_id": registry_id,
-        "progress_id": progress_id,
-        "evaluation_id": evaluation_id,
-        "targets": decision_targets,
-        "cycle_recommendation": cycle_recommendation,
-        "policy_change_allowed": False,
-        "auto_apply": False,
-        "broker_action_allowed": False,
-        "production_effect": "none",
-    }
+    decision_matrix = _rule_review_cycle_decision_matrix(
+        cycle_id=cycle_dir.name,
+        registry_id=registry_id,
+        progress_id=progress_id,
+        evaluation_id=evaluation_id,
+        generated=generated,
+        registry_targets=registry_targets,
+        progress_rows=progress_rows,
+        evaluation_rows=evaluation_rows,
+    )
+    manifest = _rule_review_cycle_manifest(
+        cycle_dir=cycle_dir,
+        generated=generated,
+        decision_matrix=decision_matrix,
+    )
+    report = render_rule_review_cycle_report(manifest, decision_matrix)
     reader_brief = render_rule_review_reader_brief(decision_matrix)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_rule_review_cycle_manifest",
-        "cycle_id": cycle_dir.name,
-        "registry_id": registry_id,
-        "progress_id": progress_id,
-        "evaluation_id": evaluation_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if decision_targets else "FAIL",
-        "cycle_recommendation": cycle_recommendation,
-        "targets_requiring_owner_action": sum(
-            1 for row in decision_targets if row.get("owner_action_required") is True
-        ),
-        "policy_change_allowed": False,
-        "rule_review_cycle_manifest_path": str(cycle_dir / "rule_review_cycle_manifest.json"),
-        "rule_review_decision_matrix_path": str(cycle_dir / "rule_review_decision_matrix.json"),
-        "rule_review_cycle_report_path": str(cycle_dir / "rule_review_cycle_report.md"),
-        "reader_brief_section_path": str(cycle_dir / "reader_brief_section.md"),
-        "auto_apply": False,
-        "production_effect": "none",
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "production_candidate_generated": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
+    cycle_dir.mkdir(parents=True, exist_ok=False)
     _write_json(cycle_dir / "rule_review_cycle_manifest.json", manifest)
     _write_json(cycle_dir / "rule_review_decision_matrix.json", decision_matrix)
-    _write_text(
-        cycle_dir / "rule_review_cycle_report.md",
-        render_rule_review_cycle_report(manifest, decision_matrix),
-    )
+    _write_json(cycle_dir / "rule_review_cycle_input_snapshot.json", snapshot)
+    _write_text(cycle_dir / "rule_review_cycle_report.md", report)
     _write_text(cycle_dir / "reader_brief_section.md", reader_brief)
     _update_latest_pointer(
         "latest_rule_review_cycle",
@@ -1439,6 +1636,7 @@ def run_rule_review_cycle(
         "cycle_dir": cycle_dir,
         "manifest": manifest,
         "rule_review_decision_matrix": decision_matrix,
+        "input_snapshot": snapshot,
         "reader_brief_section": reader_brief,
     }
 
@@ -1457,6 +1655,7 @@ def rule_review_cycle_report_payload(
     return {
         **_read_json(cycle_dir / "rule_review_cycle_manifest.json"),
         "rule_review_decision_matrix": _read_json(cycle_dir / "rule_review_decision_matrix.json"),
+        "input_snapshot": _read_json(cycle_dir / "rule_review_cycle_input_snapshot.json"),
         "reader_brief_section": _read_text(cycle_dir / "reader_brief_section.md"),
         "rule_review_cycle_report": _read_text(cycle_dir / "rule_review_cycle_report.md"),
         "cycle_dir": str(cycle_dir),
@@ -1471,10 +1670,113 @@ def validate_rule_review_cycle_artifact(
     cycle_dir = output_dir / cycle_id
     manifest = _read_optional_json(cycle_dir / "rule_review_cycle_manifest.json") or {}
     matrix = _read_optional_json(cycle_dir / "rule_review_decision_matrix.json") or {}
+    snapshot = _read_optional_json(cycle_dir / "rule_review_cycle_input_snapshot.json") or {}
     targets = _records(matrix.get("targets"))
+    source_errors: list[str] = []
+    recompute_error = ""
+    expected_snapshot: dict[str, Any] = {}
+    expected_matrix: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_report = ""
+    expected_reader_brief = ""
+    try:
+        if snapshot.get("schema_version") != RULE_REVIEW_CYCLE_SNAPSHOT_SCHEMA_VERSION:
+            source_errors.append("rule review snapshot schema mismatch")
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        registry_id = _text(snapshot.get("registry_id"))
+        progress_id = _text(snapshot.get("progress_id"))
+        evaluation_id = _text(snapshot.get("evaluation_id"))
+        registry_root = Path(_text(snapshot.get("registry_root")))
+        progress_root = Path(_text(snapshot.get("progress_root")))
+        evaluation_root = Path(_text(snapshot.get("evaluation_root")))
+        if generated is None or not registry_id or not progress_id or not evaluation_id:
+            raise DynamicV3ConfirmationCycleError("rule review snapshot identity/time invalid")
+        registry_validation = validate_confirmation_targets_artifact(
+            registry_id=registry_id, output_dir=registry_root
+        )
+        progress_validation = validate_confirmation_progress_artifact(
+            progress_id=progress_id, output_dir=progress_root
+        )
+        evaluation_validation = validate_confirmation_evaluation_artifact(
+            evaluation_id=evaluation_id, output_dir=evaluation_root
+        )
+        for source_name, validation in (
+            ("registry", registry_validation),
+            ("progress", progress_validation),
+            ("evaluation", evaluation_validation),
+        ):
+            if validation.get("status") != "PASS":
+                source_errors.append(f"confirmation {source_name} validation failed")
+        registry_bundle = _confirmation_progress_registry_bundle(registry_root / registry_id)
+        progress_bundle = _confirmation_evaluation_progress_bundle(progress_root / progress_id)
+        evaluation_bundle = _rule_review_cycle_evaluation_bundle(evaluation_root / evaluation_id)
+        expected_snapshot = {
+            "schema_version": RULE_REVIEW_CYCLE_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_rule_review_cycle_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "registry_id": registry_id,
+            "registry_root": str(registry_root),
+            "registry_bundle": registry_bundle,
+            "registry_validation": registry_validation,
+            "progress_id": progress_id,
+            "progress_root": str(progress_root),
+            "progress_bundle": progress_bundle,
+            "progress_validation": progress_validation,
+            "evaluation_id": evaluation_id,
+            "evaluation_root": str(evaluation_root),
+            "evaluation_bundle": evaluation_bundle,
+            "evaluation_validation": evaluation_validation,
+            "lineage": {
+                "registry_id": registry_id,
+                "progress_id": progress_id,
+                "evaluation_id": evaluation_id,
+            },
+            "production_effect": "none",
+        }
+        for source_name, live, frozen in (
+            ("registry bundle", registry_bundle, snapshot.get("registry_bundle")),
+            ("registry validation", registry_validation, snapshot.get("registry_validation")),
+            ("progress bundle", progress_bundle, snapshot.get("progress_bundle")),
+            ("progress validation", progress_validation, snapshot.get("progress_validation")),
+            ("evaluation bundle", evaluation_bundle, snapshot.get("evaluation_bundle")),
+            (
+                "evaluation validation",
+                evaluation_validation,
+                snapshot.get("evaluation_validation"),
+            ),
+        ):
+            if live != frozen:
+                source_errors.append(f"{source_name} changed")
+        registry_targets, progress_rows, evaluation_rows = _rule_review_cycle_source_views(
+            expected_snapshot
+        )
+        expected_matrix = _rule_review_cycle_decision_matrix(
+            cycle_id=cycle_id,
+            registry_id=registry_id,
+            progress_id=progress_id,
+            evaluation_id=evaluation_id,
+            generated=generated,
+            registry_targets=registry_targets,
+            progress_rows=progress_rows,
+            evaluation_rows=evaluation_rows,
+        )
+        expected_manifest = _rule_review_cycle_manifest(
+            cycle_dir=cycle_dir,
+            generated=generated,
+            decision_matrix=expected_matrix,
+        )
+        expected_report = render_rule_review_cycle_report(expected_manifest, expected_matrix)
+        expected_reader_brief = render_rule_review_reader_brief(expected_matrix)
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
     checks = [
         _check("manifest_exists", (cycle_dir / "rule_review_cycle_manifest.json").exists(), ""),
         _check("matrix_exists", (cycle_dir / "rule_review_decision_matrix.json").exists(), ""),
+        _check(
+            "snapshot_exists",
+            (cycle_dir / "rule_review_cycle_input_snapshot.json").exists(),
+            "",
+        ),
         _check("report_exists", (cycle_dir / "rule_review_cycle_report.md").exists(), ""),
         _check("reader_brief_exists", (cycle_dir / "reader_brief_section.md").exists(), ""),
         _check("cycle_id_matches", manifest.get("cycle_id") == cycle_id, ""),
@@ -1482,6 +1784,38 @@ def validate_rule_review_cycle_artifact(
             "decision_values_valid",
             all(row.get("rule_review_decision") in RULE_REVIEW_DECISIONS for row in targets),
             "rule_review_decision",
+        ),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live sources"),
+        _check("matrix_recomputed", matrix == expected_matrix, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "json_bytes_recomputed",
+            all(
+                path.is_file()
+                and _read_text(path)
+                == json.dumps(_jsonable(payload), ensure_ascii=False, indent=2, sort_keys=True)
+                + "\n"
+                for path, payload in (
+                    (cycle_dir / "rule_review_cycle_manifest.json", expected_manifest),
+                    (cycle_dir / "rule_review_decision_matrix.json", expected_matrix),
+                    (cycle_dir / "rule_review_cycle_input_snapshot.json", expected_snapshot),
+                )
+            ),
+            "canonical JSON bytes",
+        ),
+        _check(
+            "report_recomputed",
+            (cycle_dir / "rule_review_cycle_report.md").is_file()
+            and _read_text(cycle_dir / "rule_review_cycle_report.md") == expected_report,
+            "report bytes",
+        ),
+        _check(
+            "reader_brief_recomputed",
+            (cycle_dir / "reader_brief_section.md").is_file()
+            and _read_text(cycle_dir / "reader_brief_section.md") == expected_reader_brief,
+            "reader brief bytes",
         ),
         _check(
             "policy_change_disallowed",
@@ -1798,6 +2132,15 @@ def render_rule_review_cycle_report(
     manifest: Mapping[str, Any], decision_matrix: Mapping[str, Any]
 ) -> str:
     targets = _records(decision_matrix.get("targets"))
+    progress_ready_count = sum(
+        1 for row in targets if row.get("progress_status") == "READY_FOR_EVALUATION"
+    )
+    success_count = sum(1 for row in targets if row.get("current_status") == "SUCCESS")
+    failure_count = sum(1 for row in targets if row.get("current_status") == "FAILURE")
+    mixed_count = sum(1 for row in targets if row.get("current_status") == "MIXED")
+    review_required_count = sum(
+        1 for row in targets if row.get("current_status") == "REVIEW_REQUIRED"
+    )
     lines = [
         "# Dynamic Rescue Rule Review Cycle",
         "",
@@ -1813,11 +2156,11 @@ def render_rule_review_cycle_report(
         "## Review Questions",
         "",
         f"- active targets: {sum(1 for row in targets if row.get('target_status') == 'active')}",
-        f"- ready for evaluation: "
-        f"{sum(1 for row in targets if row.get('current_status') == 'SUCCESS')}",
-        f"- success reached: {sum(1 for row in targets if row.get('current_status') == 'SUCCESS')}",
-        f"- failure triggered: "
-        f"{sum(1 for row in targets if row.get('failure_conditions_triggered'))}",
+        f"- progress ready for evaluation: {progress_ready_count}",
+        f"- evaluation success: {success_count}",
+        f"- evaluation failure: {failure_count}",
+        f"- evaluation mixed: {mixed_count}",
+        f"- evaluation review required: {review_required_count}",
         "- policy change allowed: false",
         "",
         "## Decision Matrix",
@@ -1827,9 +2170,14 @@ def render_rule_review_cycle_report(
             [
                 "",
                 f"### {_text(row.get('target_id'))}",
+                f"- progress_status: `{row.get('progress_status')}`",
                 f"- current_status: `{row.get('current_status')}`",
                 f"- rule_review_decision: `{row.get('rule_review_decision')}`",
                 f"- owner_action_required: `{row.get('owner_action_required')}`",
+                f"- evaluation_recommendation: `{row.get('evaluation_recommendation')}`",
+                f"- criteria_results: `{row.get('criteria_results')}`",
+                f"- failure_conditions: `{row.get('failure_conditions')}`",
+                f"- failure_conditions_triggered: `{row.get('failure_conditions_triggered')}`",
                 f"- policy_change_allowed: `{row.get('policy_change_allowed')}`",
                 f"- reason: {row.get('reason')}",
             ]
@@ -1839,12 +2187,24 @@ def render_rule_review_cycle_report(
 
 def render_rule_review_reader_brief(decision_matrix: Mapping[str, Any]) -> str:
     targets = _records(decision_matrix.get("targets"))
-    ready_count = sum(1 for row in targets if row.get("current_status") == "SUCCESS")
+    progress_ready_count = sum(
+        1 for row in targets if row.get("progress_status") == "READY_FOR_EVALUATION"
+    )
+    success_count = sum(1 for row in targets if row.get("current_status") == "SUCCESS")
+    failure_count = sum(1 for row in targets if row.get("current_status") == "FAILURE")
+    mixed_count = sum(1 for row in targets if row.get("current_status") == "MIXED")
+    review_required_count = sum(
+        1 for row in targets if row.get("current_status") == "REVIEW_REQUIRED"
+    )
     owner_count = sum(1 for row in targets if row.get("owner_action_required") is True)
     return (
         "## Dynamic Rescue Rule Review Cycle\n\n"
         f"- targets_total: {len(targets)}\n"
-        f"- ready_for_evaluation_count: {ready_count}\n"
+        f"- progress_ready_for_evaluation_count: {progress_ready_count}\n"
+        f"- evaluation_success_count: {success_count}\n"
+        f"- evaluation_failure_count: {failure_count}\n"
+        f"- evaluation_mixed_count: {mixed_count}\n"
+        f"- evaluation_review_required_count: {review_required_count}\n"
         f"- rule_review_decision: `{decision_matrix.get('cycle_recommendation')}`\n"
         f"- cycle_recommendation: `{decision_matrix.get('cycle_recommendation')}`\n"
         f"- targets_requiring_owner_action: {owner_count}\n"
@@ -2312,21 +2672,19 @@ def _rule_review_decision_row(
 ) -> dict[str, Any]:
     target_id = _text(target.get("target_id"))
     evaluation_status = _text(evaluation.get("evaluation_status"), "NOT_READY")
+    failure_conditions = _records(evaluation.get("failure_conditions"))
     failures = _records(evaluation.get("failure_conditions_triggered"))
+    criteria_results = dict(_mapping(evaluation.get("criteria_results")))
     if target.get("status") == "watch_only":
         decision = "KEEP_REFERENCE_ONLY"
-        reason = "Consensus target remains a risk watch item and reference only."
+        reason = "The source registry classifies this target as watch-only reference evidence."
         owner_action = False
-    elif evaluation_status == "SUCCESS":
+    elif evaluation_status in {"SUCCESS", "FAILURE"}:
         decision = "READY_FOR_OWNER_REVIEW"
-        reason = "Forward evidence satisfies registry criteria; manual rule review is allowed."
-        owner_action = True
-    elif evaluation_status == "FAILURE":
-        if target_id == "defensive_limited_adjustment_drawdown":
-            decision = "RENAME_OR_RECLASSIFY"
-        else:
-            decision = "TIGHTEN_RULES_RECOMMENDED"
-        reason = "Failure condition triggered or criteria failed; do not loosen rules."
+        reason = (
+            "Evaluation is complete; source criteria and failure actions are ready for manual "
+            "owner review without authorizing a rule change."
+        )
         owner_action = True
     elif evaluation_status in {"MIXED", "REVIEW_REQUIRED"}:
         decision = "DEFER"
@@ -2345,7 +2703,10 @@ def _rule_review_decision_row(
         "progress_status": progress.get("progress_status"),
         "rule_review_decision": decision,
         "reason": reason,
+        "criteria_results": criteria_results,
+        "failure_conditions": failure_conditions,
         "failure_conditions_triggered": failures,
+        "evaluation_recommendation": evaluation.get("recommendation"),
         "owner_action_required": owner_action,
         "policy_change_allowed": False,
         "auto_apply": False,
