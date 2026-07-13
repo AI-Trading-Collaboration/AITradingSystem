@@ -7225,6 +7225,7 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_evaluation/*/confirmation_evaluation_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_evaluation/*/target_evaluations.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_evaluation/*/confirmation_evaluation_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/confirmation_evaluation/*/confirmation_evaluation_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_evaluation/*/confirmation_evaluation_report.md
     freshness_sla_days: 30
     freshness_rationale: >

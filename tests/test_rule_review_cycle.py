@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
 from dynamic_v3_confirmation_cycle_helpers import cycle_fixture
 
 from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_cycle import (
@@ -14,10 +15,17 @@ from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_cycle import (
 from ai_trading_system.reports import reader_brief
 
 
+@pytest.fixture(scope="module")
+def review_cycle_bundle(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
+    fixture = cycle_fixture(tmp_path_factory.mktemp("rule-review-cycle"))
+    yield fixture
+    fixture["_monkeypatch"].undo()
+
+
 def test_rule_review_cycle_defaults_to_continue_tracking_without_policy_change(
-    tmp_path: Path,
+    review_cycle_bundle: dict[str, object],
 ) -> None:
-    fixture = cycle_fixture(tmp_path)
+    fixture = review_cycle_bundle
     review_cycle = fixture["cycle"]
     matrix = review_cycle["rule_review_decision_matrix"]
     decisions = {row["target_id"]: row for row in matrix["targets"]}
@@ -44,8 +52,10 @@ def test_rule_review_cycle_defaults_to_continue_tracking_without_policy_change(
     assert validation["status"] == "PASS"
 
 
-def test_reader_brief_surfaces_confirmation_cycle_fields(tmp_path: Path) -> None:
-    fixture = cycle_fixture(tmp_path)
+def test_reader_brief_surfaces_confirmation_cycle_fields(
+    review_cycle_bundle: dict[str, object],
+) -> None:
+    fixture = review_cycle_bundle
     created = create_rule_owner_decision(
         cycle_id=fixture["cycle"]["cycle_id"],
         cycle_dir=fixture["cycle_dir"],

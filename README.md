@@ -991,7 +991,11 @@ Progress tracker会先重验Registry，按cutoff的`generated_at/id`确定性选
 `confirmation_progress_input_snapshot.v2`；不使用mtime、不把同一event跨window相加。
 缺少样本、窗口或pressure-regime标签时指标保持null且状态保持
 `INSUFFICIENT_EVENTS` / `NOT_READY`，不得用0或未治理near-ready阈值伪造READY。
-Rule review cycle 默认 `policy_change_allowed=false`；owner decision journal
+Evaluation会再次验证并冻结Progress到`confirmation_evaluation_input_snapshot.v2`；
+NOT_READY时criteria固定`NOT_EVALUATED`且不触发failure，只有READY时才按source
+`_min/_max` criteria计算。Failure condition boundary引用同一source criterion，全部criteria
+PASS且无failure才可标SUCCESS，单指标PASS不能解锁。Rule review cycle 默认
+`policy_change_allowed=false`；owner decision journal
 只记录人工决策，`approve_manual_policy_review` 也不自动修改配置。该闭环继续固定
 `auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`，不触发 broker、
 不进入 production、不修改 `position_advisory_v1.yaml`、policy、official target weights、

@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: ae667e9ecfc3e6ef46d8c514b95ea9d17e4d1c4ddf077d338ad7d9bb65019f2f
+  sha256: 2a099eee1bc78cb735050a4885bb599798ab6d302461182976d074a30f391320
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7605,7 +7605,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g2_etf_cli_contract
   path: tests/test_arch_004g2_etf_cli_contract.py
-  sha256: 0abd6d7df70d0de083285b800c4be009e9f83b89dbd8a6870d1ff61866f5aec6
+  sha256: e9ac797e5437505e6377e85af04045ab106e5905cbb8ba4a8f278f61d17e7425
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7623,7 +7623,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 4af0d7b20ba1d57f7da17294321e0c1581d219215e9d27a38330c749a4eac963
+  sha256: 0ae5b889e7dbd9c6418b29733da8bb73ecc6a674e5a9c8ca0c24cddfacd46d74
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8427,7 +8427,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_confirmation_evaluate
   path: tests/test_confirmation_evaluate.py
-  sha256: 0186ea9fffecad488ed0fd1ff7c60069ea52b2c2929b4ac10f346924dd30b215
+  sha256: 6aa070e9ed1065dfd8ec00203405f771bf2afc8c52c0ad5e5f4f534b71f5f613
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8443,7 +8443,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_confirmation_progress
   path: tests/test_confirmation_progress.py
-  sha256: 9a1bee35a3fa88663913ea83873ca335619d171b59200e828267d800cf264fa8
+  sha256: 2dc523008260c2372a72d32637de2f1ff4efe6e5587220c08e3fe6af9d1576c0
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -13697,7 +13697,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_rule_review_cycle
   path: tests/test_rule_review_cycle.py
-  sha256: e6bb29518c4ca32423093409aee3cfcd7bdd1a772e17149e54504c93e8ce5fa0
+  sha256: fc285315d23391312a27528e084935ec2ea4503104703a83e05b8450fdf546f9
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

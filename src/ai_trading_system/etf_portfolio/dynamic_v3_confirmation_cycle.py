@@ -65,6 +65,16 @@ DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH = (
 )
 CONFIRMATION_REGISTRY_SNAPSHOT_SCHEMA_VERSION = "confirmation_registry_input_snapshot.v2"
 CONFIRMATION_PROGRESS_SNAPSHOT_SCHEMA_VERSION = "confirmation_progress_input_snapshot.v2"
+CONFIRMATION_EVALUATION_SNAPSHOT_SCHEMA_VERSION = "confirmation_evaluation_input_snapshot.v2"
+
+# Source Plan conditions are declarative labels. Evaluation binds each label to the
+# corresponding source criterion so no independent threshold is introduced here.
+FAILURE_CONDITION_CRITERION_KEYS: dict[str, tuple[str, ...]] = {
+    "underperforms_no_trade": ("avg_relative_return_min",),
+    "drawdown_worsening_persists": ("avg_drawdown_delta_max", "drawdown_delta_max"),
+    "fails_to_reduce_drawdown_in_pressure_regime": ("drawdown_delta_vs_no_trade_max",),
+    "excess_drawdown_persists": ("drawdown_delta_vs_limited_adjustment_max",),
+}
 
 PROGRESS_STATUSES = {
     "INSUFFICIENT_EVENTS",
@@ -977,32 +987,58 @@ def validate_confirmation_progress_artifact(
     )
 
 
-def run_confirmation_evaluation(
-    *,
-    progress_id: str,
-    progress_dir: Path = DEFAULT_CONFIRMATION_PROGRESS_DIR,
-    output_dir: Path = DEFAULT_CONFIRMATION_EVALUATION_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    progress_payload = confirmation_progress_report_payload(
-        progress_id=progress_id,
-        output_dir=progress_dir,
+def _confirmation_evaluation_progress_bundle(progress_dir: Path) -> dict[str, Any]:
+    json_files = (
+        "confirmation_progress_manifest.json",
+        "target_progress_summary.json",
+        "confirmation_progress_input_snapshot.json",
     )
-    rows = [
-        _evaluation_row(row, generated=generated)
-        for row in _records(progress_payload.get("target_progress"))
-    ]
-    summary = _evaluation_summary(rows, progress_id, generated)
-    evaluation_id = _stable_id("confirmation-evaluation", progress_id, generated)
-    evaluation_dir = _unique_dir(output_dir / evaluation_id)
-    evaluation_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
+    jsonl_files = ("target_progress.jsonl",)
+    text_files = ("confirmation_progress_report.md",)
+    return {
+        "source_dir": str(progress_dir),
+        "json": {name: _read_json(progress_dir / name) for name in json_files},
+        "jsonl": {name: _read_jsonl(progress_dir / name) for name in jsonl_files},
+        "text": {name: _read_text(progress_dir / name) for name in text_files},
+        "file_contents": {
+            name: _read_text(progress_dir / name) for name in json_files + jsonl_files + text_files
+        },
+    }
+
+
+def _confirmation_evaluation_rows_from_snapshot(
+    snapshot: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    generated = _datetime_from_any(snapshot.get("generated_at"))
+    if generated is None:
+        raise DynamicV3ConfirmationCycleError("evaluation snapshot generated_at invalid")
+    progress_bundle = _mapping(snapshot.get("progress_bundle"))
+    progress_rows = _records(_mapping(progress_bundle.get("jsonl")).get("target_progress.jsonl"))
+    target_ids = [_text(row.get("target_id")) for row in progress_rows]
+    if (
+        not progress_rows
+        or any(not target_id for target_id in target_ids)
+        or len(target_ids) != len(set(target_ids))
+    ):
+        raise DynamicV3ConfirmationCycleError("progress targets missing or duplicate")
+    return [_evaluation_row_v2(row, generated=generated) for row in progress_rows]
+
+
+def _confirmation_evaluation_manifest(
+    *,
+    evaluation_dir: Path,
+    progress_id: str,
+    registry_id: str,
+    generated: datetime,
+    rows: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_confirmation_evaluation_manifest",
         "evaluation_id": evaluation_dir.name,
         "progress_id": progress_id,
-        "registry_id": progress_payload.get("registry_id"),
+        "registry_id": registry_id,
         "generated_at": generated.isoformat(),
         "status": "PASS" if rows else "FAIL",
         "rule_review_ready": summary["rule_review_ready"],
@@ -1012,6 +1048,9 @@ def run_confirmation_evaluation(
         "target_evaluations_path": str(evaluation_dir / "target_evaluations.jsonl"),
         "confirmation_evaluation_summary_path": str(
             evaluation_dir / "confirmation_evaluation_summary.json"
+        ),
+        "confirmation_evaluation_input_snapshot_path": str(
+            evaluation_dir / "confirmation_evaluation_input_snapshot.json"
         ),
         "confirmation_evaluation_report_path": str(
             evaluation_dir / "confirmation_evaluation_report.md"
@@ -1025,13 +1064,66 @@ def run_confirmation_evaluation(
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+
+
+def run_confirmation_evaluation(
+    *,
+    progress_id: str,
+    progress_dir: Path = DEFAULT_CONFIRMATION_PROGRESS_DIR,
+    output_dir: Path = DEFAULT_CONFIRMATION_EVALUATION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3ConfirmationCycleError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
+    progress_validation = validate_confirmation_progress_artifact(
+        progress_id=progress_id, output_dir=progress_dir
+    )
+    if progress_validation.get("status") != "PASS":
+        raise DynamicV3ConfirmationCycleError("confirmation progress validation failed")
+    progress_artifact_dir = progress_dir / progress_id
+    progress_bundle = _confirmation_evaluation_progress_bundle(progress_artifact_dir)
+    progress_manifest = _mapping(
+        _mapping(progress_bundle.get("json")).get("confirmation_progress_manifest.json")
+    )
+    progress_generated = _datetime_from_any(progress_manifest.get("generated_at"))
+    if progress_generated is None or progress_generated > generated:
+        raise DynamicV3ConfirmationCycleError("confirmation progress generated after cutoff")
+    snapshot = {
+        "schema_version": CONFIRMATION_EVALUATION_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_confirmation_evaluation_input_snapshot",
+        "generated_at": generated.isoformat(),
+        "progress_id": progress_id,
+        "progress_root": str(progress_dir),
+        "progress_bundle": progress_bundle,
+        "progress_validation": progress_validation,
+        "lineage": {
+            "progress_id": progress_id,
+            "registry_id": progress_manifest.get("registry_id"),
+        },
+        "production_effect": "none",
+    }
+    rows = _confirmation_evaluation_rows_from_snapshot(snapshot)
+    summary = _evaluation_summary(rows, progress_id, generated)
+    evaluation_id = _stable_id("confirmation-evaluation", progress_id, generated)
+    evaluation_dir = _unique_dir(output_dir / evaluation_id)
+    summary["evaluation_id"] = evaluation_dir.name
+    manifest = _confirmation_evaluation_manifest(
+        evaluation_dir=evaluation_dir,
+        progress_id=progress_id,
+        registry_id=_text(progress_manifest.get("registry_id")),
+        generated=generated,
+        rows=rows,
+        summary=summary,
+    )
+    report = render_confirmation_evaluation_report(manifest, rows, summary)
+    evaluation_dir.mkdir(parents=True, exist_ok=False)
     _write_json(evaluation_dir / "confirmation_evaluation_manifest.json", manifest)
     _write_jsonl(evaluation_dir / "target_evaluations.jsonl", rows)
     _write_json(evaluation_dir / "confirmation_evaluation_summary.json", summary)
-    _write_text(
-        evaluation_dir / "confirmation_evaluation_report.md",
-        render_confirmation_evaluation_report(manifest, rows, summary),
-    )
+    _write_json(evaluation_dir / "confirmation_evaluation_input_snapshot.json", snapshot)
+    _write_text(evaluation_dir / "confirmation_evaluation_report.md", report)
     _update_latest_pointer(
         "latest_confirmation_evaluation",
         evaluation_dir.name,
@@ -1043,6 +1135,7 @@ def run_confirmation_evaluation(
         "manifest": manifest,
         "target_evaluations": rows,
         "confirmation_evaluation_summary": summary,
+        "input_snapshot": snapshot,
     }
 
 
@@ -1078,6 +1171,71 @@ def validate_confirmation_evaluation_artifact(
     evaluation_dir = output_dir / evaluation_id
     manifest = _read_optional_json(evaluation_dir / "confirmation_evaluation_manifest.json") or {}
     rows = _read_jsonl(evaluation_dir / "target_evaluations.jsonl")
+    summary = _read_optional_json(evaluation_dir / "confirmation_evaluation_summary.json") or {}
+    snapshot = (
+        _read_optional_json(evaluation_dir / "confirmation_evaluation_input_snapshot.json") or {}
+    )
+    source_errors: list[str] = []
+    recompute_error = ""
+    expected_rows: list[dict[str, Any]] = []
+    expected_summary: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_snapshot: dict[str, Any] = {}
+    expected_report = ""
+    try:
+        if snapshot.get("schema_version") != CONFIRMATION_EVALUATION_SNAPSHOT_SCHEMA_VERSION:
+            source_errors.append("evaluation snapshot schema mismatch")
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        progress_id = _text(snapshot.get("progress_id"))
+        progress_root = Path(_text(snapshot.get("progress_root")))
+        if generated is None or not progress_id:
+            raise DynamicV3ConfirmationCycleError("evaluation snapshot identity/time invalid")
+        live_validation = validate_confirmation_progress_artifact(
+            progress_id=progress_id, output_dir=progress_root
+        )
+        if live_validation.get("status") != "PASS":
+            source_errors.append("confirmation progress validation failed")
+        live_bundle = _confirmation_evaluation_progress_bundle(progress_root / progress_id)
+        progress_manifest = _mapping(
+            _mapping(live_bundle.get("json")).get("confirmation_progress_manifest.json")
+        )
+        progress_generated = _datetime_from_any(progress_manifest.get("generated_at"))
+        if progress_generated is None or progress_generated > generated:
+            source_errors.append("confirmation progress after cutoff")
+        expected_snapshot = {
+            "schema_version": CONFIRMATION_EVALUATION_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_confirmation_evaluation_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "progress_id": progress_id,
+            "progress_root": str(progress_root),
+            "progress_bundle": live_bundle,
+            "progress_validation": live_validation,
+            "lineage": {
+                "progress_id": progress_id,
+                "registry_id": progress_manifest.get("registry_id"),
+            },
+            "production_effect": "none",
+        }
+        if live_bundle != snapshot.get("progress_bundle"):
+            source_errors.append("confirmation progress bundle changed")
+        if live_validation != snapshot.get("progress_validation"):
+            source_errors.append("confirmation progress validation changed")
+        expected_rows = _confirmation_evaluation_rows_from_snapshot(expected_snapshot)
+        expected_summary = _evaluation_summary(expected_rows, progress_id, generated)
+        expected_summary["evaluation_id"] = evaluation_id
+        expected_manifest = _confirmation_evaluation_manifest(
+            evaluation_dir=evaluation_dir,
+            progress_id=progress_id,
+            registry_id=_text(progress_manifest.get("registry_id")),
+            generated=generated,
+            rows=expected_rows,
+            summary=expected_summary,
+        )
+        expected_report = render_confirmation_evaluation_report(
+            expected_manifest, expected_rows, expected_summary
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
     checks = [
         _check(
             "manifest_exists",
@@ -1095,6 +1253,11 @@ def validate_confirmation_evaluation_artifact(
             (evaluation_dir / "confirmation_evaluation_report.md").exists(),
             "",
         ),
+        _check(
+            "snapshot_exists",
+            (evaluation_dir / "confirmation_evaluation_input_snapshot.json").exists(),
+            "",
+        ),
         _check("evaluation_id_matches", manifest.get("evaluation_id") == evaluation_id, ""),
         _check(
             "evaluation_status_valid",
@@ -1105,10 +1268,56 @@ def validate_confirmation_evaluation_artifact(
             "not_ready_respects_progress",
             all(
                 row.get("evaluation_status") == "NOT_READY"
+                and not _records(row.get("failure_conditions_triggered"))
+                and all(
+                    result.get("status") == "NOT_EVALUATED" and result.get("actual") is None
+                    for result in _mapping(row.get("criteria_results")).values()
+                    if isinstance(result, Mapping)
+                )
                 for row in rows
                 if row.get("progress_status") != "READY_FOR_EVALUATION"
             ),
             "not ready",
+        ),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live progress"),
+        _check("rows_recomputed", rows == expected_rows, "snapshot"),
+        _check("summary_recomputed", summary == expected_summary, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "json_bytes_recomputed",
+            all(
+                path.is_file()
+                and _read_text(path)
+                == json.dumps(_jsonable(payload), ensure_ascii=False, indent=2, sort_keys=True)
+                + "\n"
+                for path, payload in (
+                    (evaluation_dir / "confirmation_evaluation_manifest.json", expected_manifest),
+                    (evaluation_dir / "confirmation_evaluation_summary.json", expected_summary),
+                    (
+                        evaluation_dir / "confirmation_evaluation_input_snapshot.json",
+                        expected_snapshot,
+                    ),
+                )
+            ),
+            "canonical JSON bytes",
+        ),
+        _check(
+            "jsonl_bytes_recomputed",
+            (evaluation_dir / "target_evaluations.jsonl").is_file()
+            and _read_text(evaluation_dir / "target_evaluations.jsonl")
+            == "".join(
+                json.dumps(_jsonable(row), ensure_ascii=False, sort_keys=True) + "\n"
+                for row in expected_rows
+            ),
+            "canonical JSONL bytes",
+        ),
+        _check(
+            "report_recomputed",
+            (evaluation_dir / "confirmation_evaluation_report.md").is_file()
+            and _read_text(evaluation_dir / "confirmation_evaluation_report.md") == expected_report,
+            "report bytes",
         ),
         _check("auto_apply_forbidden", manifest.get("auto_apply") is False, "auto apply"),
         _check(
@@ -1926,21 +2135,32 @@ def _progress_summary(
     }
 
 
-def _evaluation_row(row: Mapping[str, Any], *, generated: datetime) -> dict[str, Any]:
-    criteria = _mapping(row.get("success_criteria"))
-    metrics = _mapping(row.get("current_metrics"))
-    criteria_results = {
-        name: _criteria_result(name, required, metrics) for name, required in criteria.items()
-    }
+def _evaluation_row_v2(row: Mapping[str, Any], *, generated: datetime) -> dict[str, Any]:
+    target_id = _text(row.get("target_id"))
     progress_status = _text(row.get("progress_status"))
-    triggered = _failure_conditions_triggered(
-        _mapping(row.get("failure_conditions")),
-        metrics,
+    if progress_status not in PROGRESS_STATUSES:
+        raise DynamicV3ConfirmationCycleError(f"progress status invalid: {target_id}")
+    criteria = _strict_evaluation_criteria(row)
+    failures = _strict_failure_conditions(
+        target_id=target_id,
+        failure_conditions=row.get("failure_conditions"),
+        criteria=criteria,
     )
+    metrics = _mapping(row.get("current_metrics"))
     if progress_status != "READY_FOR_EVALUATION":
+        criteria_results = {
+            name: {"required": required, "actual": None, "status": "NOT_EVALUATED"}
+            for name, required in criteria.items()
+        }
+        triggered: list[dict[str, Any]] = []
         status = "NOT_READY"
         recommendation = "continue_tracking"
     else:
+        criteria_results = {
+            name: _criteria_result_v2(name, required, metrics)
+            for name, required in criteria.items()
+        }
+        triggered = _failure_conditions_triggered_v2(failures, criteria_results)
         statuses = [_text(item.get("status")) for item in criteria_results.values()]
         if triggered or "FAIL" in statuses:
             status = "FAILURE"
@@ -1955,10 +2175,11 @@ def _evaluation_row(row: Mapping[str, Any], *, generated: datetime) -> dict[str,
             status = "MIXED"
             recommendation = "manual_review_required"
     return {
-        "target_id": row.get("target_id"),
+        "target_id": target_id,
         "evaluation_status": status,
         "progress_status": progress_status,
         "criteria_results": criteria_results,
+        "failure_conditions": failures,
         "failure_conditions_triggered": triggered,
         "recommendation": recommendation,
         "evaluated_at": generated.isoformat(),
@@ -1967,6 +2188,92 @@ def _evaluation_row(row: Mapping[str, Any], *, generated: datetime) -> dict[str,
         "broker_action_allowed": False,
         "production_effect": "none",
     }
+
+
+def _strict_evaluation_criteria(row: Mapping[str, Any]) -> dict[str, float]:
+    criteria = _mapping(row.get("success_criteria"))
+    if not criteria:
+        raise DynamicV3ConfirmationCycleError("evaluation success criteria missing")
+    result: dict[str, float] = {}
+    for name, required in criteria.items():
+        key = _text(name)
+        finite_required = _finite_or_none(required)
+        if not key or not key.endswith(("_min", "_max")) or finite_required is None:
+            raise DynamicV3ConfirmationCycleError(f"evaluation criterion invalid: {key}")
+        result[key] = finite_required
+    return result
+
+
+def _strict_failure_conditions(
+    *,
+    target_id: str,
+    failure_conditions: Any,
+    criteria: Mapping[str, float],
+) -> list[dict[str, Any]]:
+    rows = _records(failure_conditions)
+    if not rows:
+        raise DynamicV3ConfirmationCycleError(f"failure conditions missing: {target_id}")
+    seen: set[str] = set()
+    result: list[dict[str, Any]] = []
+    for row in rows:
+        condition = _text(row.get("condition"))
+        action = _text(row.get("action"))
+        source_target = _text(row.get("target"), target_id)
+        candidates = FAILURE_CONDITION_CRITERION_KEYS.get(condition)
+        criterion = next(
+            (candidate for candidate in candidates or () if candidate in criteria),
+            "",
+        )
+        if (
+            not condition
+            or condition in seen
+            or not action
+            or source_target != target_id
+            or candidates is None
+            or not criterion
+        ):
+            raise DynamicV3ConfirmationCycleError(
+                f"failure condition/criterion binding invalid: {target_id}:{condition}"
+            )
+        seen.add(condition)
+        result.append(
+            {
+                "target": target_id,
+                "condition": condition,
+                "action": action,
+                "criterion": criterion,
+                "required_boundary": criteria[criterion],
+            }
+        )
+    return result
+
+
+def _criteria_result_v2(name: str, required: float, metrics: Mapping[str, Any]) -> dict[str, Any]:
+    actual = _finite_or_none(_metric_actual(name, metrics))
+    if actual is None:
+        status = "INSUFFICIENT_DATA"
+    elif name.endswith("_min"):
+        status = "PASS" if actual >= required else "FAIL"
+    else:
+        status = "PASS" if actual <= required else "FAIL"
+    return {"required": required, "actual": actual, "status": status}
+
+
+def _failure_conditions_triggered_v2(
+    failure_conditions: Sequence[Mapping[str, Any]],
+    criteria_results: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "condition": row.get("condition"),
+            "action": row.get("action"),
+            "criterion": row.get("criterion"),
+            "required_boundary": row.get("required_boundary"),
+            "actual": _mapping(criteria_results.get(_text(row.get("criterion")))).get("actual"),
+        }
+        for row in failure_conditions
+        if _mapping(criteria_results.get(_text(row.get("criterion")))).get("status") == "FAIL"
+    ]
 
 
 def _evaluation_summary(
@@ -2055,19 +2362,6 @@ def _cycle_recommendation(rows: Sequence[Mapping[str, Any]]) -> str:
     return "continue_tracking"
 
 
-def _criteria_result(name: str, required: Any, metrics: Mapping[str, Any]) -> dict[str, Any]:
-    actual = _metric_actual(name, metrics)
-    if actual is None:
-        status = "INSUFFICIENT_DATA"
-    elif name.endswith("_min"):
-        status = "PASS" if _float(actual) >= _float(required) else "FAIL"
-    elif name.endswith("_max"):
-        status = "PASS" if _float(actual) <= _float(required) else "FAIL"
-    else:
-        status = "REVIEW_REQUIRED"
-    return {"required": required, "actual": actual, "status": status}
-
-
 def _metric_actual(name: str, metrics: Mapping[str, Any]) -> Any:
     mapping = {
         "win_rate_vs_no_trade_min": "win_rate_vs_no_trade",
@@ -2079,29 +2373,6 @@ def _metric_actual(name: str, metrics: Mapping[str, Any]) -> Any:
     }
     key = mapping.get(name, name.removesuffix("_min").removesuffix("_max"))
     return metrics.get(key)
-
-
-def _failure_conditions_triggered(
-    failure_conditions: Mapping[str, Any], metrics: Mapping[str, Any]
-) -> list[dict[str, Any]]:
-    triggered = []
-    for condition, payload in failure_conditions.items():
-        action = _text(_mapping(payload).get("action"))
-        if condition == "underperforms_no_trade" and _float(metrics.get("avg_relative_return")) < 0:
-            triggered.append({"condition": condition, "action": action})
-        elif condition in {
-            "drawdown_worsening_persists",
-            "fails_to_reduce_drawdown_in_pressure_regime",
-            "excess_drawdown_persists",
-        }:
-            drawdown = (
-                metrics.get("drawdown_delta")
-                if metrics.get("drawdown_delta") is not None
-                else metrics.get("drawdown_delta_vs_no_trade")
-            )
-            if drawdown is not None and _float(drawdown) > 0:
-                triggered.append({"condition": condition, "action": action})
-    return triggered
 
 
 def _failure_recommendation(row: Mapping[str, Any], triggered: Sequence[Mapping[str, Any]]) -> str:

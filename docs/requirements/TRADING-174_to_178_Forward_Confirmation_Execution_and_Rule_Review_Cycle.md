@@ -72,6 +72,18 @@ rule review cycle和owner decision journal。
 
 2026-07-13完成：3 callback已迁canonical；Registry与selected evidence content-derived validation、cutoff-bound deterministic selection、full bundle/validation snapshot、source-exact windows/events、cross-window conservative unique count、missing-null/pressure-tag insufficiency和全部JSON/JSONL/Markdown byte validation通过。旧mutable latest、10/5 default和80% near-ready路径已删除。当前Registry只有1个limited target且fixture没有AVAILABLE event，因此输出0 ready和`INSUFFICIENT_EVENTS`；这不是failure或rule-change信号。
 
+## 4.3 ARCH-004G2.4CA Evaluation contract
+
+- Run必须先要求指定Progress content-derived validation=`PASS`且Progress generated time不晚于本次timezone-aware cutoff；
+- `confirmation_evaluation_input_snapshot.v2`冻结Progress full JSON/JSONL/Markdown bundle、validation、path/id和registry lineage；
+- Progress非`READY_FOR_EVALUATION`时不做criteria/failure判定：criteria逐项`NOT_EVALUATED`、actual=null，failure trigger为空，evaluation=`NOT_READY`；
+- READY时success criteria必须非空唯一且仅使用source `_min/_max` operator；actual只接受finite metric；全部criteria PASS且无failure trigger才SUCCESS，任一FAIL或trigger才FAILURE，missing/unknown为REVIEW_REQUIRED；
+- Failure conditions按Registry/Progress冻结的list逐条读取，condition/action不得丢失；condition adapter的boundary引用对应source criterion required值，不设置独立0或default，unknown condition写件前阻断；
+- validator重验live Progress并重算snapshot、target evaluations、summary、manifest和Markdown bytes；
+- 本slice不运行TRADING-177及后续链，不修改投资policy/portfolio/production/broker。
+
+2026-07-13完成：3 callback已迁canonical；Progress full validation/cutoff snapshot、NOT_READY零partial evaluation、READY criteria/failure严格判定、unknown failure阻断和全部JSON/JSONL/Markdown byte validation通过。当前source-backed fixture只有1个NOT_READY limited target，输出0 success/0 failure；这是样本未成熟，不是规则失败。首次并发验证的parallel worker因内存竞争失败，保留artifact后仍用16-worker parallel、按重型文件资源隔离重跑通过。
+
 ## 5. 安全边界
 
 - 不修改 `config/etf_portfolio/dynamic_v3_rescue/position_advisory_v1.yaml`。

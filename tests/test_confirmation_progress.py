@@ -14,8 +14,17 @@ from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_cycle import (
 )
 
 
-def test_confirmation_progress_keeps_missing_samples_null_and_not_ready(tmp_path: Path) -> None:
-    fixture = progress_fixture(tmp_path)
+@pytest.fixture(scope="module")
+def progress_bundle(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
+    fixture = progress_fixture(tmp_path_factory.mktemp("confirmation-progress"))
+    yield fixture
+    fixture["_monkeypatch"].undo()
+
+
+def test_confirmation_progress_keeps_missing_samples_null_and_not_ready(
+    progress_bundle: dict[str, object],
+) -> None:
+    fixture = progress_bundle
     progress = fixture["progress"]
     rows = {row["target_id"]: row for row in progress["target_progress"]}
 
@@ -46,8 +55,10 @@ def test_confirmation_progress_keeps_missing_samples_null_and_not_ready(tmp_path
     assert validation["status"] == "PASS"
 
 
-def test_confirmation_progress_validator_rejects_each_output_tamper(tmp_path: Path) -> None:
-    fixture = progress_fixture(tmp_path)
+def test_confirmation_progress_validator_rejects_each_output_tamper(
+    progress_bundle: dict[str, object],
+) -> None:
+    fixture = progress_bundle
     for artifact_name in (
         "confirmation_progress_manifest.json",
         "target_progress.jsonl",
@@ -75,8 +86,11 @@ def test_confirmation_progress_validator_rejects_each_output_tamper(tmp_path: Pa
         path.write_text(original, encoding="utf-8")
 
 
-def test_confirmation_progress_rejects_naive_cutoff_before_output(tmp_path: Path) -> None:
-    fixture = progress_fixture(tmp_path)
+def test_confirmation_progress_rejects_naive_cutoff_before_output(
+    progress_bundle: dict[str, object],
+) -> None:
+    fixture = progress_bundle
+    tmp_path = fixture["progress_dir"].parent
     with pytest.raises(ValueError, match="timezone-aware"):
         from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_cycle import (
             update_confirmation_progress,
@@ -93,8 +107,11 @@ def test_confirmation_progress_rejects_naive_cutoff_before_output(tmp_path: Path
     assert not (tmp_path / "naive-progress").exists()
 
 
-def test_confirmation_progress_validator_rejects_live_source_drift(tmp_path: Path) -> None:
-    fixture = progress_fixture(tmp_path)
+def test_confirmation_progress_validator_rejects_live_source_drift(
+    progress_bundle: dict[str, object],
+) -> None:
+    fixture = progress_bundle
+    tmp_path = fixture["progress_dir"].parent
     source_dir = Path(
         fixture["progress"]["input_snapshot"]["evidence_sources"]["limited_vs_notrade"][
             "source_dir"

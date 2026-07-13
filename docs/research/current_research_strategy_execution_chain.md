@@ -1244,6 +1244,24 @@ Progress Tracker必须作为下一独立slice重新验证Registry；Registry PAS
 
 Evaluation必须作为下一独立slice消费并重新验证Progress；Progress PASS只证明观察artifact一致，不表示criteria成功、允许改规则或可用于production。
 
+### 7.10 Success / Failure Evaluation（TRADING-176 / ARCH-004G2.4CA）
+
+为什么这样设计：Evaluation负责把“样本已成熟”转换成“criteria结果”，两者不能提前合并。旧实现未验证Progress，并在NOT_READY时照样输出单指标PASS；同时BY后的failure conditions已变成source-exact list，旧mapping reader会静默丢弃全部failure。其failure 0边界也形成了Plan criteria之外的第二套threshold。本环节因此先冻结Progress，再把readiness、criteria与failure三层严格分离。
+
+| 项目 | 当前定义 |
+|---|---|
+| 输入 | 显式`progress_id/root`、artifact root与timezone-aware cutoff；Progress content-derived validator必须PASS且generated time不晚于cutoff |
+| 冻结证据 | `confirmation_evaluation_input_snapshot.v2`保存Progress full JSON/JSONL/Markdown bundle、validation、path/id、registry lineage与原始bytes |
+| NOT_READY计算 | Progress不是`READY_FOR_EVALUATION`时不读取metric方向：每个source criterion保留required但actual=null、status=`NOT_EVALUATED`；failure trigger为空；target固定`NOT_READY/continue_tracking` |
+| READY criteria | Success criteria必须非空、required finite且operator只能是`_min/_max`；actual只接受finite metric。`_min`执行actual>=required，`_max`执行actual<=required；missing为`INSUFFICIENT_DATA` |
+| failure计算 | Source failure list逐条保留target/condition/action；versioned code adapter把condition绑定到同target source criterion，`required_boundary`直接复制criterion required。Criterion FAIL才触发对应failure；unknown/duplicate/missing binding写件前阻断，不另设0/default |
+| target状态 | 任一criterion FAIL或failure trigger=`FAILURE`；全部criteria PASS且无trigger=`SUCCESS`；READY但metric不足=`REVIEW_REQUIRED`；单指标PASS永远不构成SUCCESS |
+| 输出 | manifest、target evaluations JSONL、summary、input snapshot和Markdown；validator重验live Progress并逐字节重算全部views。只写manual evaluation evidence，不运行Rule Review |
+| 当前结果 | 当前Progress只有1个limited target且status=`INSUFFICIENT_EVENTS`，因此Evaluation为1 NOT_READY、0 success、0 failure；所有criteria均`NOT_EVALUATED`，failure list保留但trigger为空 |
+| 优化空间 | Progress提供reviewed cross-window aggregate后再校准criteria uncertainty/CI、multiple testing与minimum effective sample；failure condition adapter未来可迁versioned policy，但必须继续引用source criterion边界并做backward-compatible replay |
+
+Rule Review必须作为下一独立slice重新验证Registry/Progress/Evaluation同一lineage；Evaluation PASS只表示artifact一致，不是rule change approval、owner decision或production readiness。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |
