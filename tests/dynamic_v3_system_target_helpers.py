@@ -38,6 +38,13 @@ model_target:
   mode: research_target_only
   not_official_target_weights: true
   paper_shadow_only: true
+policy_metadata:
+  policy_id: test_dynamic_v3_rescue_model_target_portfolio_v1
+  owner: test_owner
+  version: 2026-01-05
+  status: pilot_baseline
+  rationale: Test reviewed model target policy.
+  review_condition: Revisit after fixture evidence changes.
 source:
   shadow_shortlist: latest
   candidate_cluster: latest
@@ -114,6 +121,13 @@ paper_shadow_account:
   initial_equity: 100000
   start_date: "2022-12-01"
   initial_method: static_baseline
+policy_metadata:
+  policy_id: test_dynamic_v3_rescue_paper_shadow_account_v1
+  owner: test_owner
+  version: 2026-01-05
+  status: pilot_baseline
+  rationale: Test reviewed paper shadow policy.
+  review_condition: Revisit after fixture evidence changes.
 tracking:
   target_methods:
     - static_baseline
@@ -132,6 +146,13 @@ baseline:
     SMH: 0.20
     TLT: 0.10
     CASH: 0.20
+costs:
+  transaction_cost_bps: 0
+  slippage_bps: 0
+performance_policy:
+  minimum_common_observations: 2
+  minimum_regime_observations: 1
+  pressure_daily_return_threshold: -0.02
 safety:
   research_target_only: true
   paper_shadow_only: true
@@ -150,6 +171,17 @@ safety:
 def write_target_source_artifacts(tmp_path: Path) -> dict[str, Path]:
     daily_dir = tmp_path / "position_advisory_daily" / "daily-1"
     daily_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(
+        daily_dir / "daily_advisory_manifest.json",
+        {
+            "daily_advisory_id": "daily-1",
+            "as_of": TARGET_AS_OF.isoformat(),
+            "generated_at": datetime(2026, 1, 5, tzinfo=UTC).isoformat(),
+            "status": "PASS",
+            "production_effect": "none",
+            "broker_action_allowed": False,
+        },
+    )
     candidates = [
         {
             "candidate_id": "candidate-a",
@@ -272,6 +304,7 @@ def run_performance_fixture(tmp_path: Path) -> dict[str, Any]:
         output_dir=tmp_path / "paper_shadow_performance",
         price_cache_path=prices_path,
         rates_cache_path=rates_path,
+        model_rebalance_dir=tmp_path / "model_rebalance",
         as_of=EVALUATION_AS_OF,
         generated_at=datetime(2026, 1, 8, tzinfo=UTC),
     )

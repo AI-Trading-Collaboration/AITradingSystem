@@ -2414,6 +2414,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue model-target report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/model_target/*/model_target_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/model_target/*/model_target_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/model_target/*/model_target_weights.json
       - reports/etf_portfolio/dynamic_v3_rescue/model_target/*/method_target_weights.jsonl
@@ -2436,6 +2437,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue paper-shadow report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow/*/paper_shadow_account_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow/*/paper_shadow_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow/*/paper_shadow_state.json
       - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow/*/paper_shadow_method_states.jsonl
@@ -2456,7 +2458,9 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue model-rebalance report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/model_rebalance/*/model_rebalance_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/model_rebalance/*/model_rebalance_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/model_rebalance/*/paper_shadow_state_after.json
       - reports/etf_portfolio/dynamic_v3_rescue/model_rebalance/*/rebalance_events.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/model_rebalance/*/method_weight_history.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/model_rebalance/*/rebalance_turnover_summary.json
@@ -2477,10 +2481,12 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue paper-shadow-performance report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/paper_shadow_performance_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/paper_shadow_performance_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/method_performance_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/method_pairwise_comparison.json
       - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/regime_performance_breakdown.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/validate_data_quality_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/paper_shadow_performance_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/reader_brief_section.md
     freshness_sla_days: 7
@@ -2499,6 +2505,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue system-target-review report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/system_target_review/*/system_target_review_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/system_target_review/*/system_target_review_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/system_target_review/*/system_target_decision.json
       - reports/etf_portfolio/dynamic_v3_rescue/system_target_review/*/owner_research_review_checklist.md

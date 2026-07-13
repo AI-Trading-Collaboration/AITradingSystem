@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CG_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CH_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-13
-base_commit: e974784e
+base_commit: 73f381e6
 production_effect: none
 
 arch_004_owned_paths:
@@ -28,6 +28,7 @@ arch_004_owned_paths:
   - config/etf_portfolio/dynamic_v3_rescue/backtest_simulation_advisory_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/defensive_research_synthesis_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/forward_pressure_capture_v1.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/paper_shadow_account_v1.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -38,6 +39,7 @@ arch_004_owned_paths:
   - docs/requirements/TRADING-179_to_183_Confirmation_Cycle_Scheduling_and_Weekly_Evidence_Operations.md
   - docs/requirements/TRADING-184_to_188_Pressure_Regime_Sample_Expansion_and_Defensive_Rule_Validation.md
   - docs/requirements/TRADING-189_to_198_Defensive_Hypothesis_Review_and_Forward_Evidence_Automation.md
+  - docs/requirements/TRADING-209_to_213_System_Target_Portfolio_and_Paper_Shadow_Account.md
   - config/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation_v1.yaml
   - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
   - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
@@ -226,9 +228,12 @@ arch_004_owned_paths:
   - src/ai_trading_system/etf_portfolio/dynamic_v3_defensive_evidence.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_defensive_research.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_forward_pressure.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_portfolio.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_pressure_validation.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_defensive_research.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_forward_pressure.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_portfolio.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/common.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/baseline_review.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/shadow_review.py
@@ -385,6 +390,12 @@ arch_004_owned_paths:
   - tests/test_defensive_research_note.py
   - tests/test_defensive_owner_pack.py
   - tests/test_forward_pressure_capture.py
+  - tests/dynamic_v3_system_target_helpers.py
+  - tests/test_model_target_portfolio.py
+  - tests/test_paper_shadow_account.py
+  - tests/test_model_rebalance.py
+  - tests/test_paper_shadow_performance.py
+  - tests/test_system_target_review.py
   - tests/test_pressure_trigger.py
   - tests/test_pressure_sample_ledger.py
   - tests/test_weekly_defensive_evidence.py

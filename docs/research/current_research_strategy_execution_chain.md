@@ -1408,6 +1408,30 @@ Owner Decision validator PASS只证明人工记录与其冻结证据一致；它
 4. 将2021长期primary research window与`2022-12-01` AI-cycle conclusion window分开累计和报告，不合并headline；
 5. 只有PIT/holdout/cost/risk验证、预注册change proposal和owner decision全部通过，才可讨论policy change；本层不自动修改任何policy、weights、portfolio或broker状态。
 
+### 7.17 System Target Portfolio 与 Paper Shadow Core（TRADING-209～213 / ARCH-004G2.4CH）
+
+为什么这样设计：这条链回答的是“系统研究规则当前会形成哪些候选权重，以及这些候选在隔离的paper环境里表现怎样”，不是“真实账户应该持有什么”。旧实现会在缺少daily candidate/consensus时以baseline补造target，Paper Init会吞掉缺失Target并创建默认state，Rebalance会原地覆盖source paper state，Performance会把missing metric降为0且未冻结cache/DQ/config，Review还能拼接不相关的Target、Paper和Performance，并把policy preference写成performance recommendation。这些行为会把缺证据、不同血缘或事后变化误写成可比较结论。因此五环节现在都采用先验政策、cutoff-bound source、不可变input snapshot、content-derived output和fail-closed validator。
+
+| 环节 | 输入与门禁 | 计算逻辑 | 输出与解释边界 |
+|---|---|---|---|
+| Model Target | reviewed `model_target_portfolio_v1.yaml`、请求`as_of`、timezone-aware generated cutoff，以及cutoff内唯一latest daily advisory；daily manifest/actions/candidates/consensus与关联policy必须完整、有限、weights守恒且source时间不晚于cutoff | `static_baseline/no_trade`来自reviewed baseline；`consensus_target`来自真实daily consensus；`selected_top_candidate`按唯一rank/score排序；`equal_weight_shadow_candidates`对真实候选逐symbol平均后归一化；`limited/smoothed/risk-capped/defensive`只按各自reviewed policy变换。缺candidate或consensus直接FAIL，不用baseline补造。所有weights与concentration/cash/risk constraints重验 | `model_target_input_snapshot.v2`、manifest、method weights、constraint checks和Markdown。`recommended_research_method`只是`REVIEWED_OBSERVATION_PRIORITY`，不是performance winner或official target |
+| Paper Init | reviewed `paper_shadow_account_v1.yaml`与cutoff内唯一、validator PASS的Model Target；Target/config/source commitments在写件前验证 | 起始日固定不早于`2022-12-01` AI-cycle；每个tracked method用reviewed static baseline建立独立初始state，Model Target只证明全部method可用且冻结lineage，避免在paper start时偷看未来target weights | `paper_shadow_account_input_snapshot.v2`、immutable initial state、method states和报告。没有validated Target不得初始化，也不读取owner real portfolio |
+| Model Rebalance | 显式Paper/Target ids；两者validator PASS、method集合一致、Target/Paper生成时间不晚于rebalance cutoff；同一Paper+Target只能出现一次 | 对每method计算`delta=target-current`、`turnover=0.5*sum(abs(delta))`，生成event与history；transition cost留给versioned cost policy。源`paper_shadow_state.json`保持不可变，新状态写入rebalance artifact的`paper_shadow_state_after.json` | `model_rebalance_input_snapshot.v2`、append-only post-state、events、weight history、turnover summary和报告。它不覆写Paper source、不下单、不修改真实或production state |
+| Paper Performance | 显式Paper、evaluation `as_of`、timezone-aware cutoff、cutoff内语义latest rebalance、reviewed paper/cost/performance policy、price/rate/DQ-policy/cache sidecars；正式输出前运行统一cached DQ gate | 价格只使用`date<=evaluation_as_of`；每method只在所有正权重symbol价格均finite的共同日期计算日收益，missing保持null；`total_return=prod(1+r)-1`，annualized return按有效观察数，drawdown来自累计NAV峰值，volatility按有限日收益，cost=`turnover*(transaction_cost_bps+slippage_bps)/10000`。ranking只在达到reviewed minimum observation时进行 | `paper_shadow_performance_input_snapshot.v2`、DQ报告、summary、pairwise、regime breakdown、Markdown和Reader Brief。未来cache row不进入计算，DQ/任何cache漂移使validator FAIL |
+| System Target Review | 显式Target/Paper/Performance，三者validator PASS；必须满足Target→Paper→Performance exact ids与Target<=Paper<=Performance<=Review chronology | Performance winners按return/drawdown/risk-adjusted分别披露；观察优先方法按Target config的reviewed preference order从“有足够finite evidence”的method中选择。二者不合并，`performance_winner_claimed=false` | `system_target_review_input_snapshot.v2`、decision、owner checklist、报告和Reader Brief。只能`CONTINUE_OBSERVATION`或`INSUFFICIENT_DATA`，不批准policy/official weights/production |
+
+五类snapshot都保存配置、上游artifact、cache和必要validation的path/size/SHA-256 commitments以及计算views。各validator重新读取live source、重跑上游validator与semantic selection，并从snapshot逐字节重建JSON/JSONL/Markdown；source/config/cache/DQ/output漂移、future source、重复identity、时间回退、跨lineage或non-finite值都会FAIL。17个CLI callback已迁至`interfaces/cli/etf_portfolio/dynamic_v3_system_target_portfolio.py`，领域实现集中在`etf_portfolio/dynamic_v3_system_target_portfolio.py`；旧领域入口只保留lazy compatibility surface。
+
+当前source-backed fixture结果：10个target methods全部通过约束；Rebalance总turnover为`0.4961400001`且source initial state保持`INITIALIZED`；Performance在`2026-01-05`到`2026-01-08`的3个共同return observations上为`PASS_WITH_WARNINGS`，best return/risk-adjusted为`consensus_target`、best drawdown为`static_baseline`；Review仍按reviewed observation priority选择`limited_adjustment`并标记`CONTINUE_OBSERVATION`，同时明确`performance_winner_claimed=false`。该短fixture只证明计算、血缘、DQ和解释语义可复算，不构成策略优越性证据。
+
+后续优化按证据成熟度排序：
+
+1. 用真实forward paper observations扩充共同日期样本，并分别报告`2022-12-01` AI-cycle结论窗口与2021长期context窗口；短fixture不得参与threshold调优；
+2. 引入session-aware calendar、corporate-action/PIT价格验证、现金收益与versioned transaction/slippage model，并做cost stress、turnover和缺失数据敏感性；
+3. 在预注册minimum sample之后增加bootstrap/clustered CI、multiple-testing控制、rolling/regime/leave-one-regime-out和untouched holdout；
+4. 把append-only rebalance states演进为有sequence/previous-hash/supersession的paper state event stream，并提供多account但不共享mutable state；
+5. 只有完整forward/PIT/holdout/cost/risk证据、ChangeProposal和owner decision通过后，才能讨论调整preference或policy；任何winner都不得自动写official weights、portfolio或broker状态。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |

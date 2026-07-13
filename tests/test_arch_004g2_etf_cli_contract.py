@@ -291,6 +291,11 @@ DYNAMIC_V3_FORWARD_PRESSURE_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_forward_pressure.py"
 )
+DYNAMIC_V3_SYSTEM_TARGET_PORTFOLIO_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_system_target_portfolio.py"
+)
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py"
@@ -444,7 +449,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 21286
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 20841
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -655,8 +660,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 21286
-    assert len(legacy_names) == 612
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 20841
+    assert len(legacy_names) == 595
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -2402,6 +2407,38 @@ def test_g2_4_dynamic_v3_forward_pressure_callbacks_leave_legacy_root() -> None:
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names
     assert "dynamic_v3_defensive_evidence" not in _imported_modules(legacy_tree)
+
+
+def test_g2_4_dynamic_v3_system_target_portfolio_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_tree = ast.parse(
+        DYNAMIC_V3_SYSTEM_TARGET_PORTFOLIO_COMMANDS_PATH.read_text(encoding="utf-8")
+    )
+    canonical_names = _function_names(canonical_tree)
+    callbacks = {
+        "dynamic_v3_model_target_config_validate_command",
+        "dynamic_v3_model_target_generate_command",
+        "dynamic_v3_model_target_report_command",
+        "dynamic_v3_validate_model_target_command",
+        "dynamic_v3_paper_shadow_init_command",
+        "dynamic_v3_paper_shadow_state_command",
+        "dynamic_v3_paper_shadow_report_command",
+        "dynamic_v3_validate_paper_shadow_command",
+        "dynamic_v3_model_rebalance_simulate_command",
+        "dynamic_v3_model_rebalance_report_command",
+        "dynamic_v3_validate_model_rebalance_command",
+        "dynamic_v3_paper_shadow_performance_run_command",
+        "dynamic_v3_paper_shadow_performance_report_command",
+        "dynamic_v3_validate_paper_shadow_performance_command",
+        "dynamic_v3_system_target_review_pack_command",
+        "dynamic_v3_system_target_review_report_command",
+        "dynamic_v3_validate_system_target_review_command",
+    }
+    assert len(callbacks) == 17
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert "dynamic_v3_system_target_portfolio" in _imported_names(canonical_tree)
 
 
 def __file_path() -> Path:

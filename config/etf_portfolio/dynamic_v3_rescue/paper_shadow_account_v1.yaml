@@ -50,6 +50,11 @@ costs:
   transaction_cost_bps: 0
   slippage_bps: 0
 
+performance_policy:
+  minimum_common_observations: 20
+  minimum_regime_observations: 5
+  pressure_daily_return_threshold: -0.02
+
 safety:
   research_target_only: true
   paper_shadow_only: true

@@ -410,61 +410,6 @@ class DynamicV3SystemTargetError(ValueError):
     """Raised when system target or paper shadow artifacts fail closed."""
 
 
-def load_model_target_config(path: Path = DEFAULT_MODEL_TARGET_CONFIG_PATH) -> dict[str, Any]:
-    payload = _load_yaml_mapping(path)
-    _assert_model_target_config_safe(payload)
-    return payload
-
-
-def validate_model_target_config(path: Path = DEFAULT_MODEL_TARGET_CONFIG_PATH) -> dict[str, Any]:
-    checks: list[dict[str, Any]] = []
-    payload: dict[str, Any] = {}
-    try:
-        payload = load_model_target_config(path)
-    except Exception as exc:  # noqa: BLE001
-        checks.append(_check("config_loads", False, str(exc)))
-    else:
-        checks.extend(
-            [
-                _check("schema_version", payload.get("schema_version") == SCHEMA_VERSION, ""),
-                _check(
-                    "research_target_only",
-                    _mapping(payload.get("model_target")).get("mode") == "research_target_only",
-                    "",
-                ),
-                _check(
-                    "not_official_target_weights",
-                    _mapping(payload.get("model_target")).get("not_official_target_weights")
-                    is True,
-                    "",
-                ),
-                _check(
-                    "paper_shadow_only",
-                    _mapping(payload.get("model_target")).get("paper_shadow_only") is True,
-                    "",
-                ),
-                _check("target_methods_present", bool(_enabled_methods(payload)), ""),
-                _check(
-                    "required_methods_enabled",
-                    {
-                        "static_baseline",
-                        "consensus_target",
-                        "limited_adjustment",
-                        "defensive_limited_adjustment",
-                    }.issubset(set(_enabled_methods(payload))),
-                    ",".join(_enabled_methods(payload)),
-                ),
-                _check("baseline_weights_valid", bool(_config_baseline_weights(payload)), ""),
-                _check("constraints_valid", bool(_constraints(payload)), ""),
-                _check("safety_locked", _safety_config_locked(_mapping(payload.get("safety"))), ""),
-            ]
-        )
-    return _validation_payload(
-        "etf_dynamic_v3_model_target_config_validation",
-        "model_target_config",
-        checks,
-        extra={"config_path": str(path)},
-    )
 
 
 def load_risk_capped_limited_config(
@@ -2128,1020 +2073,6 @@ def validate_method_promotion_plan_artifact(
     )
 
 
-def generate_model_target(
-    *,
-    config_path: Path = DEFAULT_MODEL_TARGET_CONFIG_PATH,
-    as_of: date | None = None,
-    output_dir: Path = DEFAULT_MODEL_TARGET_DIR,
-    position_advisory_daily_dir: Path = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
-    shadow_monitor_dir: Path = DEFAULT_SHADOW_MONITOR_RUN_DIR,
-    shadow_shortlist_dir: Path = DEFAULT_SHADOW_SHORTLIST_DIR,
-    consensus_drift_dir: Path = DEFAULT_CONSENSUS_DRIFT_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    config = load_model_target_config(config_path)
-    generated = generated_at or datetime.now(UTC)
-    target_date = as_of or generated.date()
-    enabled = _enabled_methods(config)
-    baseline = _config_baseline_weights(config)
-    source = _latest_target_source(
-        position_advisory_daily_dir=position_advisory_daily_dir,
-        shadow_monitor_dir=shadow_monitor_dir,
-        shadow_shortlist_dir=shadow_shortlist_dir,
-        consensus_drift_dir=consensus_drift_dir,
-    )
-    candidates = source["candidate_targets"]
-    consensus = _normalize_weights(
-        source.get("consensus_weights") or _average_candidate_weights(candidates) or baseline
-    )
-    top_candidate = _normalize_weights(
-        _first_candidate_weights(candidates) or consensus or baseline
-    )
-    equal_weight = _normalize_weights(_average_candidate_weights(candidates) or consensus)
-    advisory_limits = _load_advisory_limits(
-        _mapping(config.get("source")).get("position_advisory_config")
-    )
-    if not advisory_limits:
-        advisory_limits = _load_advisory_limits(DEFAULT_POSITION_ADVISORY_CONFIG_PATH)
-    if not advisory_limits:
-        raise DynamicV3SystemTargetError("position advisory adjustment limits are required")
-    limited = _limited_adjustment(
-        baseline=baseline,
-        target=consensus,
-        max_total_adjustment=_float(advisory_limits.get("max_single_day_total_adjustment")),
-        max_symbol_adjustment=_float(advisory_limits.get("max_single_symbol_adjustment")),
-    )
-    defensive = _defensive_adjustment(
-        limited,
-        _mapping(_mapping(config.get("method_policy")).get("defensive_limited_adjustment")),
-    )
-    risk_capped = _risk_capped_limited_weights_for_model_target(
-        base_weights=limited,
-        previous_weights=baseline,
-        risk_config=_load_risk_capped_config_if_available(config),
-        model_config=config,
-        as_of=target_date,
-        regime_context="normal",
-    )
-    smoothed_config = _load_smoothed_config_if_available(config)
-    smooth_3d = _smoothed_limited_weights_for_model_target(
-        base_weights=limited,
-        previous_weights=baseline,
-        smoothed_config=smoothed_config,
-        model_config=config,
-        as_of=target_date,
-        variant_id="smooth_weights_3d",
-        regime_context="normal",
-    )
-    smooth_5d = _smoothed_limited_weights_for_model_target(
-        base_weights=limited,
-        previous_weights=baseline,
-        smoothed_config=smoothed_config,
-        model_config=config,
-        as_of=target_date,
-        variant_id="smooth_weights_5d",
-        regime_context="normal",
-    )
-    method_weights = {
-        "static_baseline": baseline,
-        "no_trade_baseline": baseline,
-        "consensus_target": consensus,
-        "limited_adjustment": limited,
-        "smooth_weights_3d_limited_adjustment": smooth_3d,
-        "smooth_weights_5d_limited_adjustment": smooth_5d,
-        "risk_capped_limited_adjustment": risk_capped,
-        "defensive_limited_adjustment": defensive,
-        "equal_weight_shadow_candidates": equal_weight,
-        "selected_top_candidate": top_candidate,
-    }
-    rows = [
-        {
-            "target_id": "",
-            "as_of": target_date.isoformat(),
-            "target_method": method,
-            "weights": method_weights[method],
-            "source_candidates": [row.get("candidate_id") for row in candidates],
-            "source_shadow_shortlist_id": source.get("shadow_shortlist_id", ""),
-            "source_shadow_monitor_run_id": source.get("shadow_monitor_run_id", ""),
-            "source_consensus_drift_id": source.get("consensus_drift_id", ""),
-            **SYSTEM_TARGET_SAFETY,
-        }
-        for method in enabled
-        if method in method_weights
-    ]
-    target_id = _stable_id(
-        "model-target",
-        target_date.isoformat(),
-        config_path,
-        [(row["target_method"], row["weights"]) for row in rows],
-    )
-    target_dir = _unique_dir(output_dir / target_id)
-    target_dir.mkdir(parents=True, exist_ok=False)
-    for row in rows:
-        row["target_id"] = target_dir.name
-    constraint_checks = _constraint_checks(
-        target_id=target_dir.name,
-        rows=rows,
-        constraints=_constraints(config),
-    )
-    selected = _select_model_target_weights(rows, preferred_method="limited_adjustment")
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_model_target_manifest",
-        "target_id": target_dir.name,
-        "as_of": target_date.isoformat(),
-        "generated_at": generated.isoformat(),
-        "status": constraint_checks["overall_status"],
-        "config_path": str(config_path),
-        "generated_methods": [row["target_method"] for row in rows],
-        "recommended_research_method": selected["target_method"],
-        "model_target_manifest_path": str(target_dir / "model_target_manifest.json"),
-        "model_target_weights_path": str(target_dir / "model_target_weights.json"),
-        "method_target_weights_path": str(target_dir / "method_target_weights.jsonl"),
-        "target_constraint_checks_path": str(target_dir / "target_constraint_checks.json"),
-        "model_target_report_path": str(target_dir / "model_target_report.md"),
-        "source_summary": source["summary"],
-        "warnings": source["warnings"],
-        "method_policy": _mapping(config.get("method_policy")),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    model_target_weights = {
-        "schema_version": SCHEMA_VERSION,
-        "target_id": target_dir.name,
-        "as_of": target_date.isoformat(),
-        "recommended_research_method": selected["target_method"],
-        "weights": selected["weights"],
-        "method_count": len(rows),
-        "method_weights": {row["target_method"]: row["weights"] for row in rows},
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(target_dir / "model_target_manifest.json", manifest)
-    _write_json(target_dir / "model_target_weights.json", model_target_weights)
-    _write_jsonl(target_dir / "method_target_weights.jsonl", rows)
-    _write_json(target_dir / "target_constraint_checks.json", constraint_checks)
-    _write_text(
-        target_dir / "model_target_report.md",
-        render_model_target_report(manifest, rows, constraint_checks),
-    )
-    _write_latest_pointer(
-        "latest_model_target", target_dir.name, target_dir / "model_target_manifest.json"
-    )
-    return {
-        "target_id": target_dir.name,
-        "target_dir": target_dir,
-        "manifest": manifest,
-        "model_target_weights": model_target_weights,
-        "method_target_weights": rows,
-        "target_constraint_checks": constraint_checks,
-    }
-
-
-def model_target_report_payload(
-    *,
-    target_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_MODEL_TARGET_DIR,
-) -> dict[str, Any]:
-    target_dir = _artifact_dir(
-        artifact_id=target_id,
-        latest_pointer="latest_model_target",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="model_target_manifest.json",
-    )
-    return {
-        **_read_json(target_dir / "model_target_manifest.json"),
-        "model_target_weights": _read_json(target_dir / "model_target_weights.json"),
-        "method_target_weights": _read_jsonl(target_dir / "method_target_weights.jsonl"),
-        "target_constraint_checks": _read_json(target_dir / "target_constraint_checks.json"),
-        "target_dir": str(target_dir),
-    }
-
-
-def validate_model_target_artifact(
-    *,
-    target_id: str,
-    output_dir: Path = DEFAULT_MODEL_TARGET_DIR,
-) -> dict[str, Any]:
-    target_dir = output_dir / target_id
-    manifest = _read_optional_json(target_dir / "model_target_manifest.json") or {}
-    weights = _read_optional_json(target_dir / "model_target_weights.json") or {}
-    rows = _read_jsonl(target_dir / "method_target_weights.jsonl")
-    checks_payload = _read_optional_json(target_dir / "target_constraint_checks.json") or {}
-    checks = _required_file_checks(
-        target_dir,
-        (
-            "model_target_manifest.json",
-            "model_target_weights.json",
-            "method_target_weights.jsonl",
-            "target_constraint_checks.json",
-            "model_target_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "target_id_matches",
-                manifest.get("target_id") == target_id
-                and weights.get("target_id") == target_id
-                and all(row.get("target_id") == target_id for row in rows),
-                target_id,
-            ),
-            _check(
-                "required_methods_present",
-                {
-                    "static_baseline",
-                    "consensus_target",
-                    "limited_adjustment",
-                    "defensive_limited_adjustment",
-                }.issubset({str(row.get("target_method")) for row in rows}),
-                "",
-            ),
-            _check(
-                "weights_sum_to_one",
-                all(_weights_sum_to_one(row.get("weights")) for row in rows),
-                "",
-            ),
-            _check("all_rows_research_only", all(_payload_safe(row) for row in rows), ""),
-            _check(
-                "not_official_target_weights",
-                manifest.get("not_official_target_weights") is True
-                and weights.get("not_official_target_weights") is True,
-                "",
-            ),
-            _check(
-                "constraint_status_valid",
-                checks_payload.get("overall_status") in {"PASS", "PASS_WITH_WARNINGS", "FAIL"},
-                _text(checks_payload.get("overall_status")),
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, weights, checks_payload), ""),
-        ]
-    )
-    return _validation_payload("etf_dynamic_v3_model_target_validation", target_id, checks)
-
-
-def load_paper_shadow_config(path: Path = DEFAULT_PAPER_SHADOW_CONFIG_PATH) -> dict[str, Any]:
-    payload = _load_yaml_mapping(path)
-    _assert_paper_shadow_config_safe(payload)
-    return payload
-
-
-def init_paper_shadow_account(
-    *,
-    config_path: Path = DEFAULT_PAPER_SHADOW_CONFIG_PATH,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_DIR,
-    model_target_dir: Path = DEFAULT_MODEL_TARGET_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    config = load_paper_shadow_config(config_path)
-    generated = generated_at or datetime.now(UTC)
-    account = _mapping(config.get("paper_shadow_account"))
-    tracked_methods = [
-        str(item) for item in _mapping(config.get("tracking")).get("target_methods", [])
-    ]
-    if not tracked_methods:
-        raise DynamicV3SystemTargetError("paper shadow account must track target methods")
-    target_payload = _optional_latest_model_target_payload(model_target_dir)
-    baseline_weights = _paper_initial_weights(config, target_payload)
-    paper_shadow_id = _stable_id(
-        "paper-shadow",
-        config_path,
-        account.get("name"),
-        account.get("start_date"),
-        tracked_methods,
-        generated.isoformat(),
-    )
-    shadow_dir = _unique_dir(output_dir / paper_shadow_id)
-    shadow_dir.mkdir(parents=True, exist_ok=False)
-    method_rows = [
-        {
-            "paper_shadow_id": shadow_dir.name,
-            "target_method": method,
-            "as_of": _text(account.get("start_date"), generated.date().isoformat()),
-            "portfolio_value": _float(account.get("initial_equity"), 100000.0),
-            "weights": dict(baseline_weights),
-            "cash_weight": _float(baseline_weights.get("CASH")),
-            "turnover_to_date": 0.0,
-            "last_rebalance_date": None,
-            "broker_action_taken": False,
-            "production_effect": PRODUCTION_EFFECT,
-            **SYSTEM_TARGET_SAFETY,
-        }
-        for method in tracked_methods
-    ]
-    state = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_paper_shadow_state",
-        "paper_shadow_id": shadow_dir.name,
-        "state_status": "INITIALIZED",
-        "as_of": _text(account.get("start_date"), generated.date().isoformat()),
-        "base_currency": _text(account.get("base_currency"), "USD"),
-        "initial_equity": _float(account.get("initial_equity"), 100000.0),
-        "tracked_methods": tracked_methods,
-        "method_states": method_rows,
-        "source_model_target_id": _text(
-            _mapping(target_payload.get("model_target_weights")).get("target_id")
-        ),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_paper_shadow_manifest",
-        "paper_shadow_id": shadow_dir.name,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "config_path": str(config_path),
-        "paper_shadow_manifest_path": str(shadow_dir / "paper_shadow_manifest.json"),
-        "paper_shadow_state_path": str(shadow_dir / "paper_shadow_state.json"),
-        "paper_shadow_method_states_path": str(shadow_dir / "paper_shadow_method_states.jsonl"),
-        "paper_shadow_report_path": str(shadow_dir / "paper_shadow_report.md"),
-        "tracked_methods": tracked_methods,
-        "source_model_target_id": state["source_model_target_id"],
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(shadow_dir / "paper_shadow_manifest.json", manifest)
-    _write_json(shadow_dir / "paper_shadow_state.json", state)
-    _write_jsonl(shadow_dir / "paper_shadow_method_states.jsonl", method_rows)
-    _write_text(shadow_dir / "paper_shadow_report.md", render_paper_shadow_report(manifest, state))
-    _write_latest_pointer(
-        "latest_paper_shadow", shadow_dir.name, shadow_dir / "paper_shadow_manifest.json"
-    )
-    return {
-        "paper_shadow_id": shadow_dir.name,
-        "paper_shadow_dir": shadow_dir,
-        "manifest": manifest,
-        "state": state,
-        "method_states": method_rows,
-    }
-
-
-def paper_shadow_state_payload(
-    *,
-    paper_shadow_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_DIR,
-) -> dict[str, Any]:
-    shadow_dir = _artifact_dir(
-        artifact_id=paper_shadow_id,
-        latest_pointer="latest_paper_shadow",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="paper_shadow_manifest.json",
-    )
-    return {
-        **_read_json(shadow_dir / "paper_shadow_state.json"),
-        "paper_shadow_dir": str(shadow_dir),
-    }
-
-
-def paper_shadow_report_payload(
-    *,
-    paper_shadow_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_DIR,
-) -> dict[str, Any]:
-    shadow_dir = _artifact_dir(
-        artifact_id=paper_shadow_id,
-        latest_pointer="latest_paper_shadow",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="paper_shadow_manifest.json",
-    )
-    return {
-        **_read_json(shadow_dir / "paper_shadow_manifest.json"),
-        "paper_shadow_state": _read_json(shadow_dir / "paper_shadow_state.json"),
-        "paper_shadow_method_states": _read_jsonl(shadow_dir / "paper_shadow_method_states.jsonl"),
-        "paper_shadow_dir": str(shadow_dir),
-    }
-
-
-def validate_paper_shadow_artifact(
-    *,
-    paper_shadow_id: str,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_DIR,
-) -> dict[str, Any]:
-    shadow_dir = output_dir / paper_shadow_id
-    manifest = _read_optional_json(shadow_dir / "paper_shadow_manifest.json") or {}
-    state = _read_optional_json(shadow_dir / "paper_shadow_state.json") or {}
-    rows = _read_jsonl(shadow_dir / "paper_shadow_method_states.jsonl")
-    checks = _required_file_checks(
-        shadow_dir,
-        (
-            "paper_shadow_manifest.json",
-            "paper_shadow_state.json",
-            "paper_shadow_method_states.jsonl",
-            "paper_shadow_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "paper_shadow_id_matches",
-                manifest.get("paper_shadow_id") == paper_shadow_id
-                and state.get("paper_shadow_id") == paper_shadow_id
-                and all(row.get("paper_shadow_id") == paper_shadow_id for row in rows),
-                paper_shadow_id,
-            ),
-            _check("method_states_present", bool(rows), ""),
-            _check(
-                "each_method_has_state",
-                len(rows) == len(set(row.get("target_method") for row in rows)),
-                "",
-            ),
-            _check(
-                "weights_sum_to_one",
-                all(_weights_sum_to_one(row.get("weights")) for row in rows),
-                "",
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, state, *rows), ""),
-        ]
-    )
-    return _validation_payload("etf_dynamic_v3_paper_shadow_validation", paper_shadow_id, checks)
-
-
-def simulate_model_rebalance(
-    *,
-    paper_shadow_id: str,
-    target_id: str,
-    paper_shadow_dir: Path = DEFAULT_PAPER_SHADOW_DIR,
-    model_target_dir: Path = DEFAULT_MODEL_TARGET_DIR,
-    output_dir: Path = DEFAULT_MODEL_REBALANCE_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    shadow_root = paper_shadow_dir / paper_shadow_id
-    target_root = model_target_dir / target_id
-    state = _read_json(shadow_root / "paper_shadow_state.json")
-    manifest_target = _read_json(target_root / "model_target_manifest.json")
-    method_targets = {
-        row["target_method"]: row
-        for row in _read_jsonl(target_root / "method_target_weights.jsonl")
-    }
-    constraint_rows = {
-        row.get("target_method"): row
-        for row in _records(_read_json(target_root / "target_constraint_checks.json").get("checks"))
-    }
-    current_rows = {
-        row["target_method"]: dict(row)
-        for row in _records(state.get("method_states"))
-        if row.get("target_method")
-    }
-    events: list[dict[str, Any]] = []
-    history: list[dict[str, Any]] = []
-    next_rows: list[dict[str, Any]] = []
-    for method in _texts(state.get("tracked_methods")):
-        before = _normalize_weights(_mapping(current_rows.get(method, {}).get("weights")))
-        target_row = method_targets.get(method)
-        check = constraint_rows.get(method, {})
-        if target_row is None:
-            status = "INSUFFICIENT_DATA"
-            target_weights: dict[str, float] = {}
-            after = before
-            turnover = 0.0
-        elif check.get("status") == "FAIL":
-            status = "SKIPPED"
-            target_weights = _normalize_weights(_mapping(target_row.get("weights")))
-            after = before
-            turnover = 0.0
-        else:
-            status = "APPLIED_TO_PAPER"
-            target_weights = _normalize_weights(_mapping(target_row.get("weights")))
-            after = target_weights
-            turnover = _turnover(before, target_weights)
-        row = dict(current_rows.get(method, {}))
-        row.update(
-            {
-                "paper_shadow_id": paper_shadow_id,
-                "target_method": method,
-                "as_of": manifest_target.get("as_of"),
-                "weights": after,
-                "cash_weight": _float(after.get("CASH")),
-                "turnover_to_date": round(_float(row.get("turnover_to_date")) + turnover, 10),
-                "last_rebalance_date": (
-                    manifest_target.get("as_of")
-                    if status == "APPLIED_TO_PAPER"
-                    else row.get("last_rebalance_date")
-                ),
-                "broker_action_taken": False,
-                "production_effect": PRODUCTION_EFFECT,
-                **SYSTEM_TARGET_SAFETY,
-            }
-        )
-        next_rows.append(row)
-        events.append(
-            {
-                "rebalance_id": "",
-                "date": manifest_target.get("as_of"),
-                "target_method": method,
-                "before_weights": before,
-                "target_weights": target_weights,
-                "after_weights": after,
-                "deltas": _weight_deltas(before, target_weights or before),
-                "turnover": turnover,
-                "rebalance_status": status,
-                "broker_action_taken": False,
-                "production_effect": PRODUCTION_EFFECT,
-                **SYSTEM_TARGET_SAFETY,
-            }
-        )
-        history.append(
-            {
-                "date": manifest_target.get("as_of"),
-                "target_method": method,
-                "weights": after,
-                "portfolio_value": _float(
-                    row.get("portfolio_value"), _float(state.get("initial_equity"), 100000.0)
-                ),
-                "daily_return": 0.0,
-                "drawdown": 0.0,
-                "turnover": turnover,
-                **SYSTEM_TARGET_SAFETY,
-            }
-        )
-    rebalance_id = _stable_id("model-rebalance", paper_shadow_id, target_id, generated.isoformat())
-    rebalance_dir = _unique_dir(output_dir / rebalance_id)
-    rebalance_dir.mkdir(parents=True, exist_ok=False)
-    for event in events:
-        event["rebalance_id"] = rebalance_dir.name
-    turnover_summary = {
-        "schema_version": SCHEMA_VERSION,
-        "rebalance_id": rebalance_dir.name,
-        "paper_shadow_id": paper_shadow_id,
-        "target_id": target_id,
-        "total_turnover": round(sum(_float(event.get("turnover")) for event in events), 10),
-        "applied_methods": [
-            event["target_method"]
-            for event in events
-            if event["rebalance_status"] == "APPLIED_TO_PAPER"
-        ],
-        "skipped_methods": [
-            event["target_method"] for event in events if event["rebalance_status"] == "SKIPPED"
-        ],
-        "insufficient_data_methods": [
-            event["target_method"]
-            for event in events
-            if event["rebalance_status"] == "INSUFFICIENT_DATA"
-        ],
-        **SYSTEM_TARGET_SAFETY,
-    }
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_model_rebalance_manifest",
-        "rebalance_id": rebalance_dir.name,
-        "paper_shadow_id": paper_shadow_id,
-        "target_id": target_id,
-        "generated_at": generated.isoformat(),
-        "status": (
-            "PASS" if not turnover_summary["insufficient_data_methods"] else "PASS_WITH_WARNINGS"
-        ),
-        "model_rebalance_manifest_path": str(rebalance_dir / "model_rebalance_manifest.json"),
-        "rebalance_events_path": str(rebalance_dir / "rebalance_events.jsonl"),
-        "method_weight_history_path": str(rebalance_dir / "method_weight_history.jsonl"),
-        "rebalance_turnover_summary_path": str(rebalance_dir / "rebalance_turnover_summary.json"),
-        "model_rebalance_report_path": str(rebalance_dir / "model_rebalance_report.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    state["method_states"] = next_rows
-    state["as_of"] = manifest_target.get("as_of")
-    state["state_status"] = "REBALANCED_TO_MODEL_TARGET"
-    state["source_model_target_id"] = target_id
-    state.update(SYSTEM_TARGET_SAFETY)
-    _write_json(shadow_root / "paper_shadow_state.json", state)
-    _write_jsonl(shadow_root / "paper_shadow_method_states.jsonl", next_rows)
-    _write_json(rebalance_dir / "model_rebalance_manifest.json", manifest)
-    _write_jsonl(rebalance_dir / "rebalance_events.jsonl", events)
-    _write_jsonl(rebalance_dir / "method_weight_history.jsonl", history)
-    _write_json(rebalance_dir / "rebalance_turnover_summary.json", turnover_summary)
-    _write_text(
-        rebalance_dir / "model_rebalance_report.md",
-        render_model_rebalance_report(manifest, turnover_summary, events),
-    )
-    _write_latest_pointer(
-        "latest_model_rebalance",
-        rebalance_dir.name,
-        rebalance_dir / "model_rebalance_manifest.json",
-    )
-    return {
-        "rebalance_id": rebalance_dir.name,
-        "rebalance_dir": rebalance_dir,
-        "manifest": manifest,
-        "rebalance_events": events,
-        "method_weight_history": history,
-        "rebalance_turnover_summary": turnover_summary,
-    }
-
-
-def model_rebalance_report_payload(
-    *,
-    rebalance_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_MODEL_REBALANCE_DIR,
-) -> dict[str, Any]:
-    rebalance_dir = _artifact_dir(
-        artifact_id=rebalance_id,
-        latest_pointer="latest_model_rebalance",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="model_rebalance_manifest.json",
-    )
-    return {
-        **_read_json(rebalance_dir / "model_rebalance_manifest.json"),
-        "rebalance_events": _read_jsonl(rebalance_dir / "rebalance_events.jsonl"),
-        "method_weight_history": _read_jsonl(rebalance_dir / "method_weight_history.jsonl"),
-        "rebalance_turnover_summary": _read_json(rebalance_dir / "rebalance_turnover_summary.json"),
-        "rebalance_dir": str(rebalance_dir),
-    }
-
-
-def validate_model_rebalance_artifact(
-    *,
-    rebalance_id: str,
-    output_dir: Path = DEFAULT_MODEL_REBALANCE_DIR,
-) -> dict[str, Any]:
-    root = output_dir / rebalance_id
-    manifest = _read_optional_json(root / "model_rebalance_manifest.json") or {}
-    events = _read_jsonl(root / "rebalance_events.jsonl")
-    summary = _read_optional_json(root / "rebalance_turnover_summary.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "model_rebalance_manifest.json",
-            "rebalance_events.jsonl",
-            "method_weight_history.jsonl",
-            "rebalance_turnover_summary.json",
-            "model_rebalance_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "rebalance_id_matches",
-                manifest.get("rebalance_id") == rebalance_id
-                and summary.get("rebalance_id") == rebalance_id,
-                "",
-            ),
-            _check("events_present", bool(events), ""),
-            _check(
-                "statuses_valid",
-                all(
-                    event.get("rebalance_status")
-                    in {"APPLIED_TO_PAPER", "SKIPPED", "INSUFFICIENT_DATA"}
-                    for event in events
-                ),
-                "",
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, summary, *events), ""),
-        ]
-    )
-    return _validation_payload("etf_dynamic_v3_model_rebalance_validation", rebalance_id, checks)
-
-
-def run_paper_shadow_performance(
-    *,
-    paper_shadow_id: str,
-    paper_shadow_dir: Path = DEFAULT_PAPER_SHADOW_DIR,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_PERFORMANCE_DIR,
-    price_cache_path: Path = DEFAULT_PRICE_CACHE_PATH,
-    rates_cache_path: Path = DEFAULT_RATES_CACHE_PATH,
-    as_of: date | None = None,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    shadow_root = paper_shadow_dir / paper_shadow_id
-    state = _read_json(shadow_root / "paper_shadow_state.json")
-    method_rows = _records(state.get("method_states"))
-    symbols = sorted(
-        {
-            symbol
-            for row in method_rows
-            for symbol in _mapping(row.get("weights"))
-            if symbol != "CASH"
-        }
-    )
-    performance_start = _coerce_date(state.get("as_of"), generated.date())
-    evaluation_as_of = as_of or generated.date()
-    if evaluation_as_of < performance_start:
-        raise DynamicV3SystemTargetError(
-            "performance as-of cannot predate paper shadow state as_of"
-        )
-    quality = _run_data_quality_gate(
-        price_cache_path=price_cache_path,
-        rates_cache_path=rates_cache_path,
-        expected_symbols=symbols,
-        as_of=evaluation_as_of,
-    )
-    prices = _load_price_returns(price_cache_path, symbols, performance_start)
-    performance_rows = [
-        _method_performance(row, prices, _float(row.get("turnover_to_date"))) for row in method_rows
-    ]
-    static_return = _metric_for(performance_rows, "static_baseline", "total_return")
-    no_trade_return = _metric_for(performance_rows, "no_trade_baseline", "total_return")
-    for row in performance_rows:
-        row["relative_to_static_baseline"] = round(
-            _float(row.get("total_return")) - static_return, 10
-        )
-        row["relative_to_no_trade"] = round(_float(row.get("total_return")) - no_trade_return, 10)
-    summary = {
-        "schema_version": SCHEMA_VERSION,
-        "methods": performance_rows,
-        "best_return_method": _best_method(performance_rows, "total_return", high=True),
-        "best_drawdown_method": _best_method(performance_rows, "max_drawdown", high=True),
-        "best_risk_adjusted_method": _best_method(
-            performance_rows, "risk_adjusted_return_to_volatility", high=True
-        ),
-        "data_quality_status": quality.status,
-        "data_quality_checked_at": quality.checked_at.isoformat(),
-        "performance_start_date": performance_start.isoformat(),
-        "evaluation_as_of": evaluation_as_of.isoformat(),
-        "return_observation_count": len(prices),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    pairwise = _pairwise_comparisons(performance_rows)
-    regime = _regime_breakdown(method_rows, prices)
-    performance_id = _stable_id("paper-shadow-performance", paper_shadow_id, generated.isoformat())
-    perf_dir = _unique_dir(output_dir / performance_id)
-    perf_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_paper_shadow_performance_manifest",
-        "performance_id": perf_dir.name,
-        "paper_shadow_id": paper_shadow_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if quality.passed else "FAIL",
-        "performance_start_date": performance_start.isoformat(),
-        "evaluation_as_of": evaluation_as_of.isoformat(),
-        "paper_shadow_performance_manifest_path": str(
-            perf_dir / "paper_shadow_performance_manifest.json"
-        ),
-        "method_performance_summary_path": str(perf_dir / "method_performance_summary.json"),
-        "method_pairwise_comparison_path": str(perf_dir / "method_pairwise_comparison.json"),
-        "regime_performance_breakdown_path": str(perf_dir / "regime_performance_breakdown.json"),
-        "paper_shadow_performance_report_path": str(
-            perf_dir / "paper_shadow_performance_report.md"
-        ),
-        "reader_brief_section_path": str(perf_dir / "reader_brief_section.md"),
-        "data_quality_status": quality.status,
-        "data_quality_report_visible": True,
-        **SYSTEM_TARGET_SAFETY,
-    }
-    if not quality.passed:
-        raise DynamicV3SystemTargetError(f"data quality gate failed: {quality.status}")
-    _write_json(perf_dir / "paper_shadow_performance_manifest.json", manifest)
-    _write_json(perf_dir / "method_performance_summary.json", summary)
-    _write_json(perf_dir / "method_pairwise_comparison.json", pairwise)
-    _write_json(perf_dir / "regime_performance_breakdown.json", regime)
-    _write_text(
-        perf_dir / "paper_shadow_performance_report.md",
-        render_paper_shadow_performance_report(manifest, summary, pairwise, regime),
-    )
-    _write_text(perf_dir / "reader_brief_section.md", render_performance_reader_brief(summary))
-    _write_latest_pointer(
-        "latest_paper_shadow_performance",
-        perf_dir.name,
-        perf_dir / "paper_shadow_performance_manifest.json",
-    )
-    return {
-        "performance_id": perf_dir.name,
-        "performance_dir": perf_dir,
-        "manifest": manifest,
-        "method_performance_summary": summary,
-        "method_pairwise_comparison": pairwise,
-        "regime_performance_breakdown": regime,
-    }
-
-
-def paper_shadow_performance_report_payload(
-    *,
-    performance_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_PERFORMANCE_DIR,
-) -> dict[str, Any]:
-    perf_dir = _artifact_dir(
-        artifact_id=performance_id,
-        latest_pointer="latest_paper_shadow_performance",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="paper_shadow_performance_manifest.json",
-    )
-    return {
-        **_read_json(perf_dir / "paper_shadow_performance_manifest.json"),
-        "method_performance_summary": _read_json(perf_dir / "method_performance_summary.json"),
-        "method_pairwise_comparison": _read_json(perf_dir / "method_pairwise_comparison.json"),
-        "regime_performance_breakdown": _read_json(perf_dir / "regime_performance_breakdown.json"),
-        "performance_dir": str(perf_dir),
-    }
-
-
-def validate_paper_shadow_performance_artifact(
-    *,
-    performance_id: str,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_PERFORMANCE_DIR,
-) -> dict[str, Any]:
-    root = output_dir / performance_id
-    manifest = _read_optional_json(root / "paper_shadow_performance_manifest.json") or {}
-    summary = _read_optional_json(root / "method_performance_summary.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "paper_shadow_performance_manifest.json",
-            "method_performance_summary.json",
-            "method_pairwise_comparison.json",
-            "regime_performance_breakdown.json",
-            "paper_shadow_performance_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check("performance_id_matches", manifest.get("performance_id") == performance_id, ""),
-            _check("method_summary_present", bool(_records(summary.get("methods"))), ""),
-            _check(
-                "best_methods_present",
-                bool(
-                    summary.get("best_return_method")
-                    and summary.get("best_drawdown_method")
-                    and summary.get("best_risk_adjusted_method")
-                ),
-                "",
-            ),
-            _check("data_quality_visible", bool(manifest.get("data_quality_status")), ""),
-            _check("broker_forbidden", _payload_safe(manifest, summary), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_paper_shadow_performance_validation", performance_id, checks
-    )
-
-
-def build_system_target_review_pack(
-    *,
-    target_id: str,
-    paper_shadow_id: str,
-    performance_id: str,
-    model_target_dir: Path = DEFAULT_MODEL_TARGET_DIR,
-    paper_shadow_dir: Path = DEFAULT_PAPER_SHADOW_DIR,
-    performance_dir: Path = DEFAULT_PAPER_SHADOW_PERFORMANCE_DIR,
-    output_dir: Path = DEFAULT_SYSTEM_TARGET_REVIEW_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    target = model_target_report_payload(target_id=target_id, output_dir=model_target_dir)
-    paper = paper_shadow_report_payload(
-        paper_shadow_id=paper_shadow_id, output_dir=paper_shadow_dir
-    )
-    performance = paper_shadow_performance_report_payload(
-        performance_id=performance_id, output_dir=performance_dir
-    )
-    summary = _mapping(performance.get("method_performance_summary"))
-    method_rows = _records(summary.get("methods"))
-    review_policy = _mapping(_mapping(target.get("method_policy")).get("review_policy"))
-    recommended = _recommended_research_method(
-        method_rows,
-        summary,
-        preferred_order=_texts(review_policy.get("preferred_method_order")),
-    )
-    alternatives = [
-        method
-        for method in (
-            "defensive_limited_adjustment",
-            "consensus_target",
-            "equal_weight_shadow_candidates",
-            "selected_top_candidate",
-        )
-        if method != recommended and any(row.get("target_method") == method for row in method_rows)
-    ][:3]
-    decision_status = "INSUFFICIENT_DATA" if not method_rows else "CONTINUE_OBSERVATION"
-    decision = {
-        "review_id": "",
-        "recommended_research_method": recommended,
-        "alternative_methods": alternatives,
-        "not_recommended_methods": [
-            row.get("target_method")
-            for row in method_rows
-            if row.get("performance_status") == "INSUFFICIENT_DATA"
-        ],
-        "decision_status": decision_status,
-        "reason": _review_reason(recommended, summary),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    review_id = _stable_id(
-        "system-target-review", target_id, paper_shadow_id, performance_id, generated.isoformat()
-    )
-    review_dir = _unique_dir(output_dir / review_id)
-    review_dir.mkdir(parents=True, exist_ok=False)
-    decision["review_id"] = review_dir.name
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_system_target_review_manifest",
-        "review_id": review_dir.name,
-        "system_target_review_id": review_dir.name,
-        "target_id": target_id,
-        "paper_shadow_id": paper_shadow_id,
-        "performance_id": performance_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "recommended_research_method": recommended,
-        "decision_status": decision_status,
-        "system_target_review_manifest_path": str(
-            review_dir / "system_target_review_manifest.json"
-        ),
-        "system_target_decision_path": str(review_dir / "system_target_decision.json"),
-        "owner_research_review_checklist_path": str(
-            review_dir / "owner_research_review_checklist.md"
-        ),
-        "system_target_review_report_path": str(review_dir / "system_target_review_report.md"),
-        "reader_brief_section_path": str(review_dir / "reader_brief_section.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    checklist = render_owner_research_review_checklist(decision)
-    _write_json(review_dir / "system_target_review_manifest.json", manifest)
-    _write_json(review_dir / "system_target_decision.json", decision)
-    _write_text(review_dir / "owner_research_review_checklist.md", checklist)
-    _write_text(
-        review_dir / "system_target_review_report.md",
-        render_system_target_review_report(manifest, decision, target, paper, performance),
-    )
-    _write_text(
-        review_dir / "reader_brief_section.md", render_system_target_reader_brief(decision, summary)
-    )
-    _write_latest_pointer(
-        "latest_system_target_review",
-        review_dir.name,
-        review_dir / "system_target_review_manifest.json",
-    )
-    return {
-        "review_id": review_dir.name,
-        "system_target_review_id": review_dir.name,
-        "review_dir": review_dir,
-        "manifest": manifest,
-        "system_target_decision": decision,
-    }
-
-
-def system_target_review_report_payload(
-    *,
-    review_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SYSTEM_TARGET_REVIEW_DIR,
-) -> dict[str, Any]:
-    review_dir = _artifact_dir(
-        artifact_id=review_id,
-        latest_pointer="latest_system_target_review",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="system_target_review_manifest.json",
-    )
-    return {
-        **_read_json(review_dir / "system_target_review_manifest.json"),
-        "system_target_decision": _read_json(review_dir / "system_target_decision.json"),
-        "review_dir": str(review_dir),
-    }
-
-
-def validate_system_target_review_artifact(
-    *,
-    review_id: str,
-    output_dir: Path = DEFAULT_SYSTEM_TARGET_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = output_dir / review_id
-    manifest = _read_optional_json(root / "system_target_review_manifest.json") or {}
-    decision = _read_optional_json(root / "system_target_decision.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "system_target_review_manifest.json",
-            "system_target_decision.json",
-            "owner_research_review_checklist.md",
-            "system_target_review_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "review_id_matches",
-                manifest.get("review_id") == review_id and decision.get("review_id") == review_id,
-                "",
-            ),
-            _check(
-                "recommended_method_present", bool(decision.get("recommended_research_method")), ""
-            ),
-            _check(
-                "decision_status_valid",
-                decision.get("decision_status")
-                in {"CONTINUE_OBSERVATION", "REVIEW_REQUIRED", "INSUFFICIENT_DATA"},
-                "",
-            ),
-            _check("research_target_only", decision.get("research_target_only") is True, ""),
-            _check(
-                "not_official_target_weights",
-                decision.get("not_official_target_weights") is True,
-                "",
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, decision), ""),
-        ]
-    )
-    return _validation_payload("etf_dynamic_v3_system_target_review_validation", review_id, checks)
 
 
 def load_paper_shadow_backfill_config(
@@ -28803,3 +27734,105 @@ def _float(value: object, default: float = 0.0) -> float:
         return float(value)  # type: ignore[arg-type]
     except (TypeError, ValueError):
         return default
+
+
+# ARCH-004 G2.4CH compatibility surface. The canonical implementation lives in
+# the bounded system-target portfolio domain; lazy imports avoid a module cycle
+# while preserving every historical Python caller.
+def _system_target_portfolio_implementation() -> Any:
+    from ai_trading_system.etf_portfolio import dynamic_v3_system_target_portfolio
+
+    return dynamic_v3_system_target_portfolio
+
+
+def _call_system_target_portfolio(name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    try:
+        return getattr(_system_target_portfolio_implementation(), name)(*args, **kwargs)
+    except DynamicV3SystemTargetError:
+        raise
+    except ValueError as exc:
+        raise DynamicV3SystemTargetError(str(exc)) from exc
+
+
+def load_model_target_config(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("load_model_target_config", *args, **kwargs)
+
+
+def validate_model_target_config(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("validate_model_target_config", *args, **kwargs)
+
+
+def generate_model_target(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("generate_model_target", *args, **kwargs)
+
+
+def model_target_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("model_target_report_payload", *args, **kwargs)
+
+
+def validate_model_target_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("validate_model_target_artifact", *args, **kwargs)
+
+
+def load_paper_shadow_config(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("load_paper_shadow_config", *args, **kwargs)
+
+
+def init_paper_shadow_account(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("init_paper_shadow_account", *args, **kwargs)
+
+
+def paper_shadow_state_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("paper_shadow_state_payload", *args, **kwargs)
+
+
+def paper_shadow_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("paper_shadow_report_payload", *args, **kwargs)
+
+
+def validate_paper_shadow_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("validate_paper_shadow_artifact", *args, **kwargs)
+
+
+def simulate_model_rebalance(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("simulate_model_rebalance", *args, **kwargs)
+
+
+def model_rebalance_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("model_rebalance_report_payload", *args, **kwargs)
+
+
+def validate_model_rebalance_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("validate_model_rebalance_artifact", *args, **kwargs)
+
+
+def run_paper_shadow_performance(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("run_paper_shadow_performance", *args, **kwargs)
+
+
+def paper_shadow_performance_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio(
+        "paper_shadow_performance_report_payload", *args, **kwargs
+    )
+
+
+def validate_paper_shadow_performance_artifact(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_system_target_portfolio(
+        "validate_paper_shadow_performance_artifact", *args, **kwargs
+    )
+
+
+def build_system_target_review_pack(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("build_system_target_review_pack", *args, **kwargs)
+
+
+def system_target_review_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio("system_target_review_report_payload", *args, **kwargs)
+
+
+def validate_system_target_review_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_portfolio(
+        "validate_system_target_review_artifact", *args, **kwargs
+    )
