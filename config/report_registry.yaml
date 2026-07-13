@@ -7156,12 +7156,14 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_plan/*/confirmation_targets.json
       - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_plan/*/trigger_conditions.json
       - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_plan/*/failure_conditions.json
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_plan/*/forward_confirmation_plan_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_plan/*/forward_confirmation_plan_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_plan/*/reader_brief_section.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-173 turns manual proposal review into forward success and failure
-      conditions without production, policy, or broker effects.
+      TRADING-173 validates and freezes Proposal Review plus Forward Bridge,
+      then projects only source-backed targets and exact bridge criteria into a
+      manual tracking plan without production, policy, or broker effects.
     owner_action: review_forward_confirmation_plan_before_weekly_advisory_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

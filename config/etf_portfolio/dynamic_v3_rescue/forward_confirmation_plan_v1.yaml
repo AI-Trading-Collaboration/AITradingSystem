@@ -1,0 +1,41 @@
+schema_version: forward_confirmation_plan_policy.v1
+
+policy_metadata:
+  policy_id: dynamic_v3_forward_confirmation_plan_v1
+  owner: project_owner
+  version: "2026-07-13"
+  status: pilot_baseline
+  rationale: >
+    A forward confirmation plan may translate reviewed simulation proposals and
+    bridge targets into manual tracking instructions, but it must not invent a
+    target, numeric criterion, or production authorization.
+  intended_effect: >
+    Govern proposal-to-target binding and failure actions while preserving every
+    numeric event, window, and success criterion from the reviewed Forward Bridge.
+  validation_evidence: >
+    G2.4BX tests cover strict two-source validation and lineage, empty and unmatched
+    proposal semantics, exact criterion inheritance, policy/source drift, and full
+    view recomputation.
+  review_condition: >
+    Review before adding a target, changing proposal binding or failure action, or
+    changing the upstream Forward Bridge policy.
+
+target_rules:
+  limited_adjustment_vs_no_trade:
+    proposal_ids:
+      - require_forward_confirmation
+      - keep_limited_adjustment_default
+    failure_condition: underperforms_no_trade
+    failure_action: owner_review_tighten_or_disable_limited_adjustment_proposal
+  defensive_limited_adjustment_drawdown:
+    proposal_ids:
+      - rename_defensive_limited_adjustment
+    failure_condition: fails_to_reduce_drawdown_in_pressure_regime
+    failure_action: owner_review_rename_or_remove_defensive_label
+
+safety:
+  outcome_mode: BACKTEST_SIMULATION
+  pit_safety_status: SIMULATION_NOT_PIT
+  auto_apply: false
+  production_effect: none
+  broker_action: none

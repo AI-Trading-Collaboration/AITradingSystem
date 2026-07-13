@@ -96,6 +96,13 @@ DEFAULT_ADVISORY_PROPOSAL_REVIEW_POLICY_PATH = (
 DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_confirmation_plan"
 )
+DEFAULT_FORWARD_CONFIRMATION_PLAN_POLICY_PATH = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT.parents[2]
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "forward_confirmation_plan_v1.yaml"
+)
 
 OUTCOME_MODE_BACKTEST_SIMULATION = "BACKTEST_SIMULATION"
 PIT_SAFETY_SIMULATION = "SIMULATION_NOT_PIT"
@@ -117,6 +124,9 @@ SIM_DEFENSIVE_VALIDATION_SNAPSHOT_SCHEMA_VERSION = (
 )
 ADVISORY_PROPOSAL_REVIEW_SNAPSHOT_SCHEMA_VERSION = (
     "advisory_proposal_review_input_snapshot.v2"
+)
+FORWARD_CONFIRMATION_PLAN_SNAPSHOT_SCHEMA_VERSION = (
+    "forward_confirmation_plan_input_snapshot.v2"
 )
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
@@ -5590,20 +5600,53 @@ def run_forward_confirmation_plan(
     proposal_review_dir: Path = DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR,
     bridge_dir: Path = DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR,
     output_dir: Path = DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR,
+    policy_path: Path = DEFAULT_FORWARD_CONFIRMATION_PLAN_POLICY_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    review_manifest = _read_json(
-        proposal_review_dir / proposal_review_id / "proposal_review_manifest.json"
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3BacktestSimulationError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
+    source_dirs = {
+        "proposal_review": proposal_review_dir / proposal_review_id,
+        "forward_bridge": bridge_dir / bridge_id,
+    }
+    validations = {
+        "proposal_review": validate_advisory_proposal_review_artifact(
+            proposal_review_id=proposal_review_id, output_dir=proposal_review_dir
+        ),
+        "forward_bridge": validate_backtest_sim_forward_bridge_artifact(
+            bridge_id=bridge_id, output_dir=bridge_dir
+        ),
+    }
+    if any(item.get("status") != "PASS" for item in validations.values()):
+        raise DynamicV3BacktestSimulationError("forward plan source validation failed")
+    bundles = {
+        name: _forward_confirmation_plan_source_bundle(path, name)
+        for name, path in source_dirs.items()
+    }
+    review_json = _mapping(bundles["proposal_review"].get("json"))
+    bridge_json = _mapping(bundles["forward_bridge"].get("json"))
+    review_manifest = _mapping(review_json.get("proposal_review_manifest.json"))
+    decision_matrix = _mapping(review_json.get("proposal_decision_matrix.json"))
+    bridge_manifest = _mapping(bridge_json.get("sim_forward_bridge_manifest.json"))
+    bridge_targets = _mapping(bridge_json.get("forward_confirmation_targets.json"))
+    _validate_forward_confirmation_plan_lineage_and_time(
+        generated=generated,
+        proposal_review_id=proposal_review_id,
+        bridge_id=bridge_id,
+        review_manifest=review_manifest,
+        bridge_manifest=bridge_manifest,
     )
-    decision_matrix = _read_json(
-        proposal_review_dir / proposal_review_id / "proposal_decision_matrix.json"
-    )
-    bridge_manifest = _read_json(bridge_dir / bridge_id / "sim_forward_bridge_manifest.json")
-    bridge_targets = _read_json(bridge_dir / bridge_id / "forward_confirmation_targets.json")
-    targets = _confirmation_targets(decision_matrix, bridge_targets)
+    policy = _load_forward_confirmation_plan_policy(policy_path)
+    policy_bundle = {
+        "path": str(policy_path),
+        "payload": policy,
+        "file_contents": _read_text(policy_path),
+    }
+    targets = _confirmation_targets(decision_matrix, bridge_targets, policy=policy)
     trigger_conditions = _confirmation_trigger_conditions(targets)
-    failure_conditions = _confirmation_failure_conditions()
+    failure_conditions = _confirmation_failure_conditions(targets, policy=policy)
     confirmation_plan_id = _stable_id(
         "forward-confirmation-plan",
         proposal_review_id,
@@ -5611,54 +5654,45 @@ def run_forward_confirmation_plan(
         generated.isoformat(),
     )
     plan_dir = _unique_dir(output_dir / confirmation_plan_id)
-    plan_dir.mkdir(parents=True, exist_ok=False)
     reader_brief = render_forward_confirmation_plan_reader_brief(targets, trigger_conditions)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_forward_confirmation_plan_manifest",
-        "confirmation_plan_id": plan_dir.name,
-        "proposal_review_id": proposal_review_id,
-        "bridge_id": bridge_id,
+    input_snapshot = {
+        "schema_version": FORWARD_CONFIRMATION_PLAN_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_forward_confirmation_plan_input_snapshot",
         "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": "ai_after_chatgpt",
+        "source_dirs": {name: str(path) for name, path in source_dirs.items()},
+        "source_bundles": bundles,
+        "source_validations": validations,
+        "policy_bundle": policy_bundle,
+        "lineage": {
+            "proposal_review_id": proposal_review_id,
+            "bridge_id": bridge_id,
+            "calibration_id": review_manifest.get("calibration_id"),
+            "sim_outcome_id": bridge_manifest.get("sim_outcome_id"),
+        },
         "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
         "pit_safety_status": PIT_SAFETY_SIMULATION,
-        "report_label": REPORT_LABEL_BACKTEST_SIMULATION,
         "not_for_production": True,
-        "source_bridge_next_action": bridge_manifest.get("next_action"),
-        "source_review_status": review_manifest.get("status"),
-        "confirmation_plan_manifest_path": str(plan_dir / "confirmation_plan_manifest.json"),
-        "confirmation_targets_path": str(plan_dir / "confirmation_targets.json"),
-        "trigger_conditions_path": str(plan_dir / "trigger_conditions.json"),
-        "failure_conditions_path": str(plan_dir / "failure_conditions.json"),
-        "forward_confirmation_plan_report_path": str(
-            plan_dir / "forward_confirmation_plan_report.md"
-        ),
-        "reader_brief_section_path": str(plan_dir / "reader_brief_section.md"),
-        "auto_apply": False,
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "auto_policy_apply": False,
-        "production_effect": "none",
-        "production_candidate_generated": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+    manifest = _forward_confirmation_plan_manifest(
+        plan_dir=plan_dir,
+        generated=generated,
+        proposal_review_id=proposal_review_id,
+        bridge_id=bridge_id,
+        review_manifest=review_manifest,
+        bridge_manifest=bridge_manifest,
+        targets=targets,
+        policy=policy,
+    )
+    report = render_forward_confirmation_plan_report(
+        manifest, targets, trigger_conditions, failure_conditions
+    )
+    plan_dir.mkdir(parents=True, exist_ok=False)
     _write_json(plan_dir / "confirmation_plan_manifest.json", manifest)
     _write_json(plan_dir / "confirmation_targets.json", targets)
     _write_json(plan_dir / "trigger_conditions.json", trigger_conditions)
     _write_json(plan_dir / "failure_conditions.json", failure_conditions)
-    _write_text(
-        plan_dir / "forward_confirmation_plan_report.md",
-        render_forward_confirmation_plan_report(
-            manifest,
-            targets,
-            trigger_conditions,
-            failure_conditions,
-        ),
-    )
+    _write_json(plan_dir / "forward_confirmation_plan_input_snapshot.json", input_snapshot)
+    _write_text(plan_dir / "forward_confirmation_plan_report.md", report)
     _write_text(plan_dir / "reader_brief_section.md", reader_brief)
     _update_latest_pointer(
         "latest_forward_confirmation_plan",
@@ -5673,6 +5707,153 @@ def run_forward_confirmation_plan(
         "trigger_conditions": trigger_conditions,
         "failure_conditions": failure_conditions,
         "reader_brief_section": reader_brief,
+        "input_snapshot": input_snapshot,
+    }
+
+
+def _forward_confirmation_plan_source_bundle(
+    source_dir: Path, source_type: str
+) -> dict[str, Any]:
+    specs = {
+        "proposal_review": (
+            (
+                "proposal_review_manifest.json",
+                "proposal_decision_matrix.json",
+                "advisory_proposal_review_input_snapshot.json",
+            ),
+            (
+                "owner_approval_checklist.md",
+                "advisory_proposal_review_report.md",
+                "reader_brief_section.md",
+            ),
+        ),
+        "forward_bridge": (
+            (
+                "sim_forward_bridge_manifest.json",
+                "forward_confirmation_targets.json",
+                "weekly_review_questions.json",
+                "forward_bridge_input_snapshot.json",
+            ),
+            ("sim_forward_bridge_report.md", "reader_brief_section.md"),
+        ),
+    }
+    if source_type not in specs:
+        raise DynamicV3BacktestSimulationError(f"unknown forward plan source: {source_type}")
+    json_files, text_files = specs[source_type]
+    return _backtest_sim_calibration_source_bundle(
+        source_dir, json_files=json_files, text_files=text_files
+    )
+
+
+def _load_forward_confirmation_plan_policy(policy_path: Path) -> dict[str, Any]:
+    payload = safe_load_yaml_path(policy_path)
+    if not isinstance(payload, Mapping):
+        raise DynamicV3BacktestSimulationError("forward plan policy must be a mapping")
+    policy = dict(payload)
+    metadata = _mapping(policy.get("policy_metadata"))
+    required_metadata = (
+        "policy_id",
+        "owner",
+        "version",
+        "status",
+        "rationale",
+        "intended_effect",
+        "validation_evidence",
+        "review_condition",
+    )
+    rules = _mapping(policy.get("target_rules"))
+    if not all(_text(metadata.get(key)) for key in required_metadata) or not rules:
+        raise DynamicV3BacktestSimulationError("forward plan policy metadata/rules incomplete")
+    for target_id, raw_rule in rules.items():
+        rule = _mapping(raw_rule)
+        proposal_ids = rule.get("proposal_ids")
+        if (
+            not _text(target_id)
+            or not isinstance(proposal_ids, list)
+            or not proposal_ids
+            or len({_text(item) for item in proposal_ids}) != len(proposal_ids)
+            or any(not _text(item) for item in proposal_ids)
+            or not _text(rule.get("failure_condition"))
+            or not _text(rule.get("failure_action"))
+        ):
+            raise DynamicV3BacktestSimulationError(
+                f"forward plan target rule invalid: {target_id}"
+            )
+    return policy
+
+
+def _validate_forward_confirmation_plan_lineage_and_time(
+    *,
+    generated: datetime,
+    proposal_review_id: str,
+    bridge_id: str,
+    review_manifest: Mapping[str, Any],
+    bridge_manifest: Mapping[str, Any],
+) -> None:
+    if (
+        review_manifest.get("proposal_review_id") != proposal_review_id
+        or bridge_manifest.get("bridge_id") != bridge_id
+        or review_manifest.get("calibration_id") != bridge_manifest.get("calibration_pack_id")
+    ):
+        raise DynamicV3BacktestSimulationError("forward plan source lineage mismatch")
+    for name, manifest in (("proposal review", review_manifest), ("bridge", bridge_manifest)):
+        source_generated = _datetime_from_any(manifest.get("generated_at"))
+        if source_generated is None or source_generated > generated:
+            raise DynamicV3BacktestSimulationError(
+                f"forward plan {name} generated after cutoff"
+            )
+
+
+def _forward_confirmation_plan_manifest(
+    *,
+    plan_dir: Path,
+    generated: datetime,
+    proposal_review_id: str,
+    bridge_id: str,
+    review_manifest: Mapping[str, Any],
+    bridge_manifest: Mapping[str, Any],
+    targets: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    metadata = _mapping(policy.get("policy_metadata"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_forward_confirmation_plan_manifest",
+        "confirmation_plan_id": plan_dir.name,
+        "proposal_review_id": proposal_review_id,
+        "bridge_id": bridge_id,
+        "generated_at": generated.isoformat(),
+        "status": targets.get("evidence_status"),
+        "market_regime": "ai_after_chatgpt",
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "report_label": REPORT_LABEL_BACKTEST_SIMULATION,
+        "not_for_production": True,
+        "source_bridge_next_action": bridge_manifest.get("next_action"),
+        "source_review_status": review_manifest.get("status"),
+        "policy_id": metadata.get("policy_id"),
+        "policy_version": metadata.get("version"),
+        "target_count": len(_records(targets.get("targets"))),
+        "confirmation_plan_manifest_path": str(plan_dir / "confirmation_plan_manifest.json"),
+        "confirmation_targets_path": str(plan_dir / "confirmation_targets.json"),
+        "trigger_conditions_path": str(plan_dir / "trigger_conditions.json"),
+        "failure_conditions_path": str(plan_dir / "failure_conditions.json"),
+        "forward_confirmation_plan_input_snapshot_path": str(
+            plan_dir / "forward_confirmation_plan_input_snapshot.json"
+        ),
+        "forward_confirmation_plan_report_path": str(
+            plan_dir / "forward_confirmation_plan_report.md"
+        ),
+        "reader_brief_section_path": str(plan_dir / "reader_brief_section.md"),
+        "auto_apply": False,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "auto_policy_apply": False,
+        "production_effect": "none",
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
 
 
@@ -5692,6 +5873,9 @@ def forward_confirmation_plan_report_payload(
         "confirmation_targets": _read_json(plan_dir / "confirmation_targets.json"),
         "trigger_conditions": _read_json(plan_dir / "trigger_conditions.json"),
         "failure_conditions": _read_json(plan_dir / "failure_conditions.json"),
+        "forward_confirmation_plan_input_snapshot": _read_json(
+            plan_dir / "forward_confirmation_plan_input_snapshot.json"
+        ),
         "reader_brief_section": _read_text(plan_dir / "reader_brief_section.md"),
         "confirmation_plan_dir": str(plan_dir),
     }
@@ -5707,7 +5891,121 @@ def validate_forward_confirmation_plan_artifact(
     targets = _read_optional_json(plan_dir / "confirmation_targets.json") or {}
     trigger_conditions = _read_optional_json(plan_dir / "trigger_conditions.json") or {}
     failure_conditions = _read_optional_json(plan_dir / "failure_conditions.json") or {}
-    target_rows = _records(targets.get("targets"))
+    snapshot = (
+        _read_optional_json(plan_dir / "forward_confirmation_plan_input_snapshot.json") or {}
+    )
+    source_errors: list[str] = []
+    recompute_error = ""
+    expected_snapshot: dict[str, Any] = {}
+    expected_targets: dict[str, Any] = {}
+    expected_triggers: dict[str, Any] = {}
+    expected_failures: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_report = ""
+    expected_reader = ""
+    try:
+        if snapshot.get("schema_version") != FORWARD_CONFIRMATION_PLAN_SNAPSHOT_SCHEMA_VERSION:
+            source_errors.append("forward plan snapshot schema mismatch")
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        if generated is None:
+            raise DynamicV3BacktestSimulationError("forward plan snapshot time invalid")
+        lineage = _mapping(snapshot.get("lineage"))
+        source_dirs = {
+            name: Path(_text(path))
+            for name, path in _mapping(snapshot.get("source_dirs")).items()
+        }
+        if set(source_dirs) != {"proposal_review", "forward_bridge"}:
+            raise DynamicV3BacktestSimulationError("forward plan source dirs incomplete")
+        proposal_review_id = _text(lineage.get("proposal_review_id"))
+        bridge_id = _text(lineage.get("bridge_id"))
+        live_validations = {
+            "proposal_review": validate_advisory_proposal_review_artifact(
+                proposal_review_id=proposal_review_id,
+                output_dir=source_dirs["proposal_review"].parent,
+            ),
+            "forward_bridge": validate_backtest_sim_forward_bridge_artifact(
+                bridge_id=bridge_id, output_dir=source_dirs["forward_bridge"].parent
+            ),
+        }
+        if any(item.get("status") != "PASS" for item in live_validations.values()):
+            source_errors.append("source validation failed")
+        if live_validations != snapshot.get("source_validations"):
+            source_errors.append("source validations changed")
+        live_bundles = {
+            name: _forward_confirmation_plan_source_bundle(path, name)
+            for name, path in source_dirs.items()
+        }
+        if live_bundles != snapshot.get("source_bundles"):
+            source_errors.append("source bundles changed")
+        review_json = _mapping(live_bundles["proposal_review"].get("json"))
+        bridge_json = _mapping(live_bundles["forward_bridge"].get("json"))
+        review_manifest = _mapping(review_json.get("proposal_review_manifest.json"))
+        decision_matrix = _mapping(review_json.get("proposal_decision_matrix.json"))
+        bridge_manifest = _mapping(bridge_json.get("sim_forward_bridge_manifest.json"))
+        bridge_targets = _mapping(bridge_json.get("forward_confirmation_targets.json"))
+        _validate_forward_confirmation_plan_lineage_and_time(
+            generated=generated,
+            proposal_review_id=proposal_review_id,
+            bridge_id=bridge_id,
+            review_manifest=review_manifest,
+            bridge_manifest=bridge_manifest,
+        )
+        expected_lineage = {
+            "proposal_review_id": proposal_review_id,
+            "bridge_id": bridge_id,
+            "calibration_id": review_manifest.get("calibration_id"),
+            "sim_outcome_id": bridge_manifest.get("sim_outcome_id"),
+        }
+        if dict(lineage) != expected_lineage:
+            source_errors.append("source lineage changed")
+        policy_bundle = _mapping(snapshot.get("policy_bundle"))
+        policy_path = Path(_text(policy_bundle.get("path")))
+        live_policy = _load_forward_confirmation_plan_policy(policy_path)
+        live_policy_bundle = {
+            "path": str(policy_path),
+            "payload": live_policy,
+            "file_contents": _read_text(policy_path),
+        }
+        if live_policy_bundle != policy_bundle:
+            source_errors.append("forward plan policy changed")
+        expected_targets = _confirmation_targets(
+            decision_matrix, bridge_targets, policy=live_policy
+        )
+        expected_triggers = _confirmation_trigger_conditions(expected_targets)
+        expected_failures = _confirmation_failure_conditions(
+            expected_targets, policy=live_policy
+        )
+        expected_snapshot = {
+            "schema_version": FORWARD_CONFIRMATION_PLAN_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_forward_confirmation_plan_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "source_dirs": {name: str(path) for name, path in source_dirs.items()},
+            "source_bundles": live_bundles,
+            "source_validations": live_validations,
+            "policy_bundle": live_policy_bundle,
+            "lineage": expected_lineage,
+            "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+            "pit_safety_status": PIT_SAFETY_SIMULATION,
+            "not_for_production": True,
+        }
+        expected_manifest = _forward_confirmation_plan_manifest(
+            plan_dir=plan_dir,
+            generated=generated,
+            proposal_review_id=proposal_review_id,
+            bridge_id=bridge_id,
+            review_manifest=review_manifest,
+            bridge_manifest=bridge_manifest,
+            targets=expected_targets,
+            policy=live_policy,
+        )
+        expected_report = render_forward_confirmation_plan_report(
+            expected_manifest, expected_targets, expected_triggers, expected_failures
+        )
+        expected_reader = render_forward_confirmation_plan_reader_brief(
+            expected_targets, expected_triggers
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
     checks = [
         _check("manifest_exists", (plan_dir / "confirmation_plan_manifest.json").exists(), ""),
         _check("targets_exists", (plan_dir / "confirmation_targets.json").exists(), ""),
@@ -5720,32 +6018,50 @@ def validate_forward_confirmation_plan_artifact(
         ),
         _check("reader_brief_exists", (plan_dir / "reader_brief_section.md").exists(), ""),
         _check(
+            "snapshot_exists",
+            (plan_dir / "forward_confirmation_plan_input_snapshot.json").exists(),
+            "",
+        ),
+        _check(
             "confirmation_plan_id_matches",
             manifest.get("confirmation_plan_id") == confirmation_plan_id,
             "",
         ),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live sources/policy"),
+        _check("targets_recomputed", targets == expected_targets, "snapshot"),
+        _check("triggers_recomputed", trigger_conditions == expected_triggers, "targets"),
+        _check("failures_recomputed", failure_conditions == expected_failures, "policy"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
         _check(
-            "required_targets_present",
-            {row.get("target_id") for row in target_rows}
-            >= {
-                "limited_adjustment_vs_no_trade",
-                "defensive_limited_adjustment_drawdown",
-                "consensus_target_risk",
-            },
-            "targets",
+            "all_json_bytes_recomputed",
+            all(
+                path.is_file() and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
+                for path, payload in (
+                    (plan_dir / "confirmation_plan_manifest.json", expected_manifest),
+                    (plan_dir / "confirmation_targets.json", expected_targets),
+                    (plan_dir / "trigger_conditions.json", expected_triggers),
+                    (plan_dir / "failure_conditions.json", expected_failures),
+                    (plan_dir / "forward_confirmation_plan_input_snapshot.json", expected_snapshot),
+                )
+            ),
+            "canonical JSON bytes",
         ),
         _check(
-            "trigger_conditions_readable",
-            bool(_records(trigger_conditions.get("calibration_ready_conditions")))
-            and bool(_records(trigger_conditions.get("calibration_not_ready_conditions"))),
-            "trigger conditions",
+            "report_recomputed",
+            (plan_dir / "forward_confirmation_plan_report.md").is_file()
+            and _read_text(plan_dir / "forward_confirmation_plan_report.md") == expected_report,
+            "report bytes",
         ),
         _check(
-            "failure_conditions_readable",
-            bool(_records(failure_conditions.get("failure_conditions"))),
-            "failure conditions",
+            "reader_brief_recomputed",
+            (plan_dir / "reader_brief_section.md").is_file()
+            and _read_text(plan_dir / "reader_brief_section.md") == expected_reader,
+            "Reader Brief bytes",
         ),
         _check("no_auto_policy", manifest.get("auto_policy_apply") is False, ""),
+        _check("no_production", manifest.get("production_effect") == "none", ""),
     ]
     return _validation_payload(
         report_type="etf_dynamic_v3_forward_confirmation_plan_validation",
@@ -6222,19 +6538,21 @@ def render_forward_confirmation_plan_reader_brief(
 ) -> str:
     target_ids = ", ".join(row.get("target_id", "") for row in _records(targets.get("targets")))
     ready = ", ".join(
-        row.get("condition", "")
+        _text(row.get("target_id"))
         for row in _records(trigger_conditions.get("calibration_ready_conditions"))
-    )
+    ) or "none"
     return "\n".join(
         [
             "## Dynamic Rescue Forward Confirmation Plan",
             "",
-            f"- targets: {target_ids}",
-            f"- calibration_readiness: {ready}",
+            f"- evidence_status: {targets.get('evidence_status')}",
+            f"- targets: {target_ids or 'none'}",
+            f"- source_bridge_criteria_targets: {ready}",
             (
-                "- limited_adjustment confirmation、defensive drawdown confirmation "
-                "和 consensus risk watch 均需 forward evidence。"
+                "- 每个target、window、event floor与numeric criterion均逐值继承"
+                "validated Forward Bridge，并由真实review proposal解锁。"
             ),
+            "- 本计划不声明forward success；空/无匹配proposal为INSUFFICIENT_DATA。",
             "- auto_apply=false；production_effect=none；broker_action_allowed=false。",
         ]
     )
@@ -6254,6 +6572,8 @@ def render_forward_confirmation_plan_report(
             f"- proposal_review_id: {manifest.get('proposal_review_id')}",
             f"- bridge_id: {manifest.get('bridge_id')}",
             f"- evidence_label: {REPORT_LABEL_BACKTEST_SIMULATION}",
+            f"- evidence_status: {manifest.get('status')}",
+            f"- policy: {manifest.get('policy_id')}@{manifest.get('policy_version')}",
             "",
             "## Confirmation Targets",
             "",
@@ -6269,12 +6589,8 @@ def render_forward_confirmation_plan_report(
             "## Trigger Conditions",
             "",
             *[
-                f"- ready: {row.get('condition')} requires={row.get('requires')}"
+                f"- ready: {row.get('target_id')} predicates={row.get('predicates')}"
                 for row in _records(trigger_conditions.get("calibration_ready_conditions"))
-            ],
-            *[
-                f"- not_ready: {row.get('condition')} action={row.get('action')}"
-                for row in _records(trigger_conditions.get("calibration_not_ready_conditions"))
             ],
             "",
             "## Failure Conditions",
@@ -7177,145 +7493,111 @@ def _proposal_review_reason(
 def _confirmation_targets(
     decision_matrix: Mapping[str, Any],
     bridge_targets: Mapping[str, Any],
+    *,
+    policy: Mapping[str, Any],
 ) -> dict[str, Any]:
-    bridge_by_id = {
-        _text(row.get("target") or row.get("target_id")): row
-        for row in _records(bridge_targets.get("targets"))
+    proposal_ids = {
+        _text(row.get("proposal_id"))
+        for row in _records(decision_matrix.get("proposals"))
+        if _text(row.get("proposal_id"))
     }
-    limited = bridge_by_id.get("limited_adjustment_vs_no_trade", {})
-    defensive = bridge_by_id.get("defensive_limited_adjustment_drawdown", {})
-    limited_criteria = _mapping(limited.get("success_criteria"))
-    defensive_criteria = _mapping(defensive.get("success_criteria"))
-    required_events = _int(limited.get("required_forward_events"), 10)
-    win_rate_min = _float(limited_criteria.get("win_rate_vs_no_trade_min"), 0.55)
-    avg_relative_min = _float(limited_criteria.get("avg_relative_return_min"), 0.0)
-    drawdown_max = _float(
-        limited_criteria.get("drawdown_delta_max")
-        or limited_criteria.get("avg_drawdown_delta_max"),
-        0.0,
-    )
-    targets = [
-        {
-            "target_id": "limited_adjustment_vs_no_trade",
-            "priority": "HIGH",
-            "windows": [1, 5, 10, 20],
-            "required_forward_events": required_events,
-            "success_criteria": {
-                "win_rate_vs_no_trade_min": win_rate_min,
-                "avg_relative_return_min": avg_relative_min,
-                "drawdown_delta_max": drawdown_max,
-            },
-            "current_status": "IN_PROGRESS",
-            "reason": (
-                "Backtest simulation suggests medium-horizon return benefit but worse drawdown."
-            ),
-        },
-        {
-            "target_id": "defensive_limited_adjustment_drawdown",
-            "priority": "HIGH",
-            "windows": [5, 10, 20],
-            "required_pressure_regime_events": max(
-                5,
-                _int(defensive.get("required_forward_events"), 5),
-            ),
-            "success_criteria": {
-                "drawdown_delta_vs_no_trade_max": _float(
-                    defensive_criteria.get("drawdown_delta_vs_no_trade_max")
-                    or defensive_criteria.get("avg_drawdown_delta_max"),
-                    0.0,
-                ),
-                "win_rate_vs_no_trade_min": 0.50,
-            },
-            "current_status": "IN_PROGRESS",
-            "reason": "Defensive behavior not proven in simulation.",
-        },
-        {
-            "target_id": "consensus_target_risk",
-            "priority": "MEDIUM",
-            "windows": [5, 10, 20],
-            "required_forward_events": required_events,
-            "success_criteria": {
-                "drawdown_delta_vs_limited_adjustment_max": 0.0,
-                "turnover_delta_max": 0.0,
-            },
-            "current_status": "WATCH_ONLY",
-            "reason": "Consensus target acts as upper-bound reference, not default action.",
-        },
-    ]
+    rules = _mapping(policy.get("target_rules"))
+    targets = []
+    unmatched = []
+    for bridge_target in _records(bridge_targets.get("targets")):
+        target_id = _text(bridge_target.get("target") or bridge_target.get("target_id"))
+        rule = _mapping(rules.get(target_id))
+        if not target_id or not rule:
+            raise DynamicV3BacktestSimulationError(
+                f"forward plan policy does not cover bridge target: {target_id}"
+            )
+        matched = sorted(proposal_ids & set(_texts(rule.get("proposal_ids"))))
+        if not matched:
+            unmatched.append(target_id)
+            continue
+        targets.append(
+            {
+                "target_id": target_id,
+                "priority": bridge_target.get("priority"),
+                "windows": list(bridge_target.get("windows", [])),
+                "required_forward_events": bridge_target.get("required_forward_events"),
+                "success_criteria": dict(_mapping(bridge_target.get("success_criteria"))),
+                "current_status": bridge_target.get("tracking_status"),
+                "reason": bridge_target.get("reason"),
+                "source_proposal_ids": matched,
+                "source_bridge_target": dict(bridge_target),
+            }
+        )
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_confirmation_targets",
+        "evidence_status": "AVAILABLE" if targets else "INSUFFICIENT_DATA",
         "targets": targets,
-        "source_proposals": [
-            row.get("proposal_id") for row in _records(decision_matrix.get("proposals"))
-        ],
+        "source_proposals": sorted(proposal_ids),
+        "unmatched_bridge_target_ids": unmatched,
+        "target_semantics": "MANUAL_TRACKING_PLAN_ONLY",
         "broker_action_allowed": False,
         "production_effect": "none",
     }
 
 
 def _confirmation_trigger_conditions(targets: Mapping[str, Any]) -> dict[str, Any]:
-    limited = next(
-        (
-            row
-            for row in _records(targets.get("targets"))
-            if row.get("target_id") == "limited_adjustment_vs_no_trade"
-        ),
-        {},
-    )
-    criteria = _mapping(limited.get("success_criteria"))
+    ready_conditions = []
+    for target in _records(targets.get("targets")):
+        predicates = [
+            {
+                "metric": "forward_events",
+                "comparator": ">=",
+                "value": target.get("required_forward_events"),
+            }
+        ]
+        for metric, value in _mapping(target.get("success_criteria")).items():
+            if metric.endswith("_min"):
+                comparator = ">="
+            elif metric.endswith("_max"):
+                comparator = "<="
+            else:
+                raise DynamicV3BacktestSimulationError(
+                    f"forward bridge criterion comparator is ambiguous: {metric}"
+                )
+            predicates.append({"metric": metric, "comparator": comparator, "value": value})
+        ready_conditions.append(
+            {
+                "target_id": target.get("target_id"),
+                "condition": "all_source_bridge_criteria_satisfied",
+                "predicates": predicates,
+            }
+        )
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_confirmation_trigger_conditions",
-        "calibration_ready_conditions": [
-            {
-                "condition": "limited_adjustment_forward_success",
-                "requires": [
-                    f"forward_events >= {limited.get('required_forward_events', 10)}",
-                    f"win_rate_vs_no_trade >= {criteria.get('win_rate_vs_no_trade_min', 0.55)}",
-                    f"avg_relative_return >= {criteria.get('avg_relative_return_min', 0.0)}",
-                    f"drawdown_delta <= {criteria.get('drawdown_delta_max', 0.0)}",
-                ],
-            }
-        ],
-        "calibration_not_ready_conditions": [
-            {
-                "condition": "drawdown_worsening_persists",
-                "requires": ["drawdown_delta > 0"],
-                "action": "do_not_loosen_rules",
-            },
-            {
-                "condition": "defensive_status_not_proven",
-                "requires": ["pressure_regime_drawdown_delta > 0"],
-                "action": "do_not_label_defensive_variant_as_defensive",
-            },
-        ],
+        "evidence_status": targets.get("evidence_status"),
+        "calibration_ready_conditions": ready_conditions,
         "broker_action_allowed": False,
         "production_effect": "none",
     }
 
 
-def _confirmation_failure_conditions() -> dict[str, Any]:
+def _confirmation_failure_conditions(
+    targets: Mapping[str, Any], *, policy: Mapping[str, Any]
+) -> dict[str, Any]:
+    rules = _mapping(policy.get("target_rules"))
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_confirmation_failure_conditions",
         "failure_conditions": [
             {
-                "target": "limited_adjustment_vs_no_trade",
-                "condition": "underperforms_no_trade",
-                "action": "tighten_or_disable_limited_adjustment_proposal",
-            },
-            {
-                "target": "defensive_limited_adjustment_drawdown",
-                "condition": "fails_to_reduce_drawdown_in_pressure_regime",
-                "action": "rename_or_remove_defensive_label",
-            },
-            {
-                "target": "consensus_target_risk",
-                "condition": "excess_drawdown_persists",
-                "action": "keep_consensus_target_as_reference_only",
-            },
+                "target": row.get("target_id"),
+                "condition": _mapping(rules.get(_text(row.get("target_id")))).get(
+                    "failure_condition"
+                ),
+                "action": _mapping(rules.get(_text(row.get("target_id")))).get(
+                    "failure_action"
+                ),
+            }
+            for row in _records(targets.get("targets"))
         ],
+        "evidence_status": targets.get("evidence_status"),
         "broker_action_allowed": False,
         "production_effect": "none",
     }

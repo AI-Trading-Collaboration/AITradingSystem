@@ -956,6 +956,7 @@ Outcome/Calibration/Forward Bridge，并冻结`sim_interpretation_input_snapshot
 `validate-advisory-proposal-review` 和 `validate-forward-confirmation-plan`。Artifacts
 写入
 `reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation|sim_risk_return|sim_defensive_validation|advisory_proposal_review|forward_confirmation_plan/`。
+Forward Plan 会先验证并冻结 Proposal Review 与 Forward Bridge 的完整证据，要求同一 Calibration 与generated cutoff；只输出真实review proposal解锁且确实存在于Bridge的targets，events/windows/numeric criteria逐值继承Bridge。空或无匹配proposal显式为`INSUFFICIENT_DATA`，不会补造`consensus_target_risk`或默认阈值，也不会注册target或运行forward链。
 Interpretation pack 解释每个 variant 的 role、return/risk profile 和 recommended
 usage；risk-return review 把 limited / defensive / consensus 相对 `no_trade` 的收益、
 drawdown 和 turnover 代价拆开。Risk-return只消费validated Outcome，并把full bundle/
