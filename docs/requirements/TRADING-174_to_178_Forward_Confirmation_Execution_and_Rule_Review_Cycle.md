@@ -13,10 +13,10 @@ TRADING-169 to TRADING-173 已生成 simulation advisory review 和 forward conf
 - proposal_review_id：`f5dc442131f3740c`
 - confirmation_plan_id：`808e55a74ca6951f`
 
-当前 plan 已定义 `limited_adjustment_vs_no_trade`、
-`defensive_limited_adjustment_drawdown` 和 `consensus_target_risk` 三个 target，但仍是静态
-artifact。系统还缺少 target registry、progress tracking、success/failure evaluation、
-rule review cycle 和 owner decision journal。
+当前Plan在G2.4BX后只允许真实proposal解锁且存在于validated Forward Bridge的targets；
+fixture当前只有`limited_adjustment_vs_no_trade`，不得继续假设固定三target集合。Plan仍是静态
+artifact。系统还缺少target registry、progress tracking、success/failure evaluation、
+rule review cycle和owner decision journal。
 
 ## 2. 编号说明
 
@@ -47,6 +47,17 @@ rule review cycle 和 owner decision journal。
 |TRADING-176|Success / Failure Condition Evaluator|VALIDATING|只在 progress 达到要求后判断 SUCCESS/FAILURE；单指标 pass 不得判定 SUCCESS。|
 |TRADING-177|Rule Review Cycle Report|VALIDATING|汇总 registry/progress/evaluation；默认 `policy_change_allowed=false`；输出 Reader Brief section。|
 |TRADING-178|Owner Decision Integration|VALIDATING|创建和记录 owner decision journal；`auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`。|
+
+## 4.1 ARCH-004G2.4BY Registry contract
+
+- Register必须先调用同一Plan validator并要求Plan manifest status=`AVAILABLE`，再检查timezone-aware cutoff；
+- snapshot冻结Plan full bundle/validation/lineage、materialized registry path与写入前preimage；
+- 只逐值注册Plan真实targets，不补造固定三target、priority、events、windows、criteria或failure；
+- source `TRACKING_REQUIRED`严格映射`active`，其他未知status阻断；同一Plan重复注册阻断；
+- artifact与materialized YAML必须使用canonical atomic writer，全部views可从snapshot逐字节重算；
+- 本slice不运行TRADING-175及后续链，不修改投资policy/portfolio/production/broker。
+
+2026-07-13完成：4 callback已迁canonical；validated/AVAILABLE/cutoff Plan full bundle、registry preimage/postimage、source-exact target projection、duplicate Plan gate、atomic materialized registry及全view/live-source validator通过540 focused、260 architecture、203 contract。当前fixture只注册1个limited target；这只表示manual tracking registry已建立，不是forward progress或success。
 
 ## 5. 安全边界
 

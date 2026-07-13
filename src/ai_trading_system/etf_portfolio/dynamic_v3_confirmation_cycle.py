@@ -11,6 +11,8 @@ import yaml
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR,
+    _datetime_from_any,
+    validate_forward_confirmation_plan_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     _artifact_dir_from_latest,
@@ -40,6 +42,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     SCHEMA_VERSION,
 )
+from ai_trading_system.platform.artifacts.writer import write_yaml_atomic
 
 DEFAULT_CONFIRMATION_REGISTRY_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_confirmation_registry"
@@ -57,6 +60,7 @@ DEFAULT_RULE_OWNER_DECISION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "rule_owner
 DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH = (
     DEFAULT_RULE_OWNER_DECISION_DIR / "rule_owner_decision_journal.jsonl"
 )
+CONFIRMATION_REGISTRY_SNAPSHOT_SCHEMA_VERSION = "confirmation_registry_input_snapshot.v2"
 
 PROGRESS_STATUSES = {
     "INSUFFICIENT_EVENTS",
@@ -100,19 +104,36 @@ def register_confirmation_targets(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3ConfirmationCycleError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
     plan_dir = confirmation_plan_dir / confirmation_plan_id
-    plan_manifest = _read_json(plan_dir / "confirmation_plan_manifest.json")
-    plan_targets = _read_json(plan_dir / "confirmation_targets.json")
-    plan_failures = _read_optional_json(plan_dir / "failure_conditions.json") or {}
-    targets = [
-        _registry_target(row, plan_failures)
-        for row in _records(plan_targets.get("targets"))
-    ]
+    plan_validation = validate_forward_confirmation_plan_artifact(
+        confirmation_plan_id=confirmation_plan_id, output_dir=confirmation_plan_dir
+    )
+    if plan_validation.get("status") != "PASS":
+        raise DynamicV3ConfirmationCycleError("confirmation plan validation failed")
+    plan_bundle = _confirmation_registry_plan_bundle(plan_dir)
+    plan_json = _mapping(plan_bundle.get("json"))
+    plan_manifest = _mapping(plan_json.get("confirmation_plan_manifest.json"))
+    if plan_manifest.get("status") != "AVAILABLE":
+        raise DynamicV3ConfirmationCycleError("confirmation plan is not AVAILABLE")
+    plan_generated = _datetime_from_any(plan_manifest.get("generated_at"))
+    if plan_generated is None or plan_generated > generated:
+        raise DynamicV3ConfirmationCycleError("confirmation plan generated after registry cutoff")
+    plan_targets = _mapping(plan_json.get("confirmation_targets.json"))
+    plan_failures = _mapping(plan_json.get("failure_conditions.json"))
+    targets = _registry_targets_from_plan(plan_targets, plan_failures)
+    preimage_text = (
+        registry_yaml_path.read_text(encoding="utf-8")
+        if registry_yaml_path.is_file()
+        else ""
+    )
+    preimage = _read_yaml_optional(registry_yaml_path)
+    if preimage.get("source_confirmation_plan_id") == confirmation_plan_id:
+        raise DynamicV3ConfirmationCycleError("confirmation plan already registered")
     registry_id = _stable_id("forward-confirmation-registry", confirmation_plan_id, generated)
     registry_dir = _unique_dir(output_dir / registry_id)
-    registry_dir.mkdir(parents=True, exist_ok=False)
-    active_count = sum(1 for row in targets if row["status"] == "active")
-    watch_only_count = sum(1 for row in targets if row["status"] == "watch_only")
     registry = {
         "schema_version": SCHEMA_VERSION,
         "source_confirmation_plan_id": confirmation_plan_id,
@@ -124,7 +145,66 @@ def register_confirmation_targets(
         "auto_apply": False,
         "owner_approval_required": True,
     }
-    manifest = {
+    materialized_registry = {**registry, "registry_id": registry_dir.name}
+    input_snapshot = {
+        "schema_version": CONFIRMATION_REGISTRY_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_confirmation_registry_input_snapshot",
+        "generated_at": generated.isoformat(),
+        "confirmation_plan_dir": str(plan_dir),
+        "confirmation_plan_bundle": plan_bundle,
+        "confirmation_plan_validation": plan_validation,
+        "registry_yaml_path": str(registry_yaml_path),
+        "registry_preimage": {
+            "exists": bool(preimage_text),
+            "payload": preimage,
+            "file_contents": preimage_text,
+        },
+        "materialized_registry": materialized_registry,
+        "lineage": {"confirmation_plan_id": confirmation_plan_id},
+        "production_effect": "none",
+    }
+    manifest = _confirmation_registry_manifest(
+        registry_dir=registry_dir,
+        confirmation_plan_id=confirmation_plan_id,
+        plan_manifest=plan_manifest,
+        generated=generated,
+        targets=targets,
+        registry_yaml_path=registry_yaml_path,
+    )
+    report = render_confirmation_registry_report(manifest, registry)
+    registry_dir.mkdir(parents=True, exist_ok=False)
+    _write_json(registry_dir / "confirmation_registry_manifest.json", manifest)
+    write_yaml_atomic(registry_dir / "registered_targets.yaml", registry, sort_keys=False)
+    _write_json(registry_dir / "confirmation_registry_input_snapshot.json", input_snapshot)
+    _write_text(registry_dir / "confirmation_targets_report.md", report)
+    write_yaml_atomic(registry_yaml_path, materialized_registry, sort_keys=False)
+    _update_latest_pointer(
+        "latest_forward_confirmation_registry",
+        registry_dir.name,
+        registry_dir / "confirmation_registry_manifest.json",
+    )
+    return {
+        "registry_id": registry_dir.name,
+        "registry_dir": registry_dir,
+        "manifest": manifest,
+        "registry": registry,
+        "targets": targets,
+        "input_snapshot": input_snapshot,
+    }
+
+
+def _confirmation_registry_manifest(
+    *,
+    registry_dir: Path,
+    confirmation_plan_id: str,
+    plan_manifest: Mapping[str, Any],
+    generated: datetime,
+    targets: Sequence[Mapping[str, Any]],
+    registry_yaml_path: Path,
+) -> dict[str, Any]:
+    active_count = sum(1 for row in targets if row.get("status") == "active")
+    watch_only_count = sum(1 for row in targets if row.get("status") == "watch_only")
+    return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_forward_confirmation_registry_manifest",
         "registry_id": registry_dir.name,
@@ -139,6 +219,9 @@ def register_confirmation_targets(
             registry_dir / "confirmation_registry_manifest.json"
         ),
         "registered_targets_path": str(registry_dir / "registered_targets.yaml"),
+        "confirmation_registry_input_snapshot_path": str(
+            registry_dir / "confirmation_registry_input_snapshot.json"
+        ),
         "confirmation_targets_report_path": str(registry_dir / "confirmation_targets_report.md"),
         "registry_yaml_path": str(registry_yaml_path),
         "market_regime": "ai_after_chatgpt",
@@ -152,25 +235,75 @@ def register_confirmation_targets(
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
-    _write_json(registry_dir / "confirmation_registry_manifest.json", manifest)
-    _write_yaml(registry_dir / "registered_targets.yaml", registry)
-    _write_text(
-        registry_dir / "confirmation_targets_report.md",
-        render_confirmation_registry_report(manifest, registry),
+
+
+def _confirmation_registry_plan_bundle(plan_dir: Path) -> dict[str, Any]:
+    json_files = (
+        "confirmation_plan_manifest.json",
+        "confirmation_targets.json",
+        "trigger_conditions.json",
+        "failure_conditions.json",
+        "forward_confirmation_plan_input_snapshot.json",
     )
-    _write_yaml(registry_yaml_path, {**registry, "registry_id": registry_dir.name})
-    _update_latest_pointer(
-        "latest_forward_confirmation_registry",
-        registry_dir.name,
-        registry_dir / "confirmation_registry_manifest.json",
-    )
+    text_files = ("forward_confirmation_plan_report.md", "reader_brief_section.md")
     return {
-        "registry_id": registry_dir.name,
-        "registry_dir": registry_dir,
-        "manifest": manifest,
-        "registry": registry,
-        "targets": targets,
+        "source_dir": str(plan_dir),
+        "json": {name: _read_json(plan_dir / name) for name in json_files},
+        "text": {name: _read_text(plan_dir / name) for name in text_files},
+        "file_contents": {
+            name: _read_text(plan_dir / name) for name in json_files + text_files
+        },
     }
+
+
+def _registry_targets_from_plan(
+    plan_targets: Mapping[str, Any], failure_conditions: Mapping[str, Any]
+) -> list[dict[str, Any]]:
+    source_rows = _records(plan_targets.get("targets"))
+    target_ids = [_text(row.get("target_id")) for row in source_rows]
+    if (
+        not source_rows
+        or any(not item for item in target_ids)
+        or len(target_ids) != len(set(target_ids))
+    ):
+        raise DynamicV3ConfirmationCycleError("plan targets missing or duplicate")
+    failures = _records(failure_conditions.get("failure_conditions"))
+    failure_by_target: dict[str, list[dict[str, Any]]] = {}
+    for row in failures:
+        target_id = _text(row.get("target"))
+        if (
+            target_id not in target_ids
+            or not _text(row.get("condition"))
+            or not _text(row.get("action"))
+        ):
+            raise DynamicV3ConfirmationCycleError("plan failure condition invalid")
+        failure_by_target.setdefault(target_id, []).append(dict(row))
+    targets = []
+    for row in source_rows:
+        target_id = _text(row.get("target_id"))
+        if row.get("current_status") != "TRACKING_REQUIRED":
+            raise DynamicV3ConfirmationCycleError(f"unsupported plan target status: {target_id}")
+        if not failure_by_target.get(target_id):
+            raise DynamicV3ConfirmationCycleError(f"missing failure condition: {target_id}")
+        targets.append(
+            {
+                "target_id": target_id,
+                "status": "active",
+                "priority": row.get("priority"),
+                "source": "backtest_sim_forward_confirmation_plan",
+                "windows": list(row.get("windows", [])),
+                "required_forward_events": row.get("required_forward_events"),
+                "success_criteria": dict(_mapping(row.get("success_criteria"))),
+                "failure_conditions": failure_by_target[target_id],
+                "current_status": "in_progress",
+                "source_plan_target": dict(row),
+                "owner_approval_required": True,
+                "auto_apply": False,
+                "broker_action_allowed": False,
+                "production_effect": "none",
+            }
+        )
+    return targets
 
 
 def confirmation_targets_report_payload(
@@ -228,8 +361,87 @@ def validate_confirmation_targets_artifact(
     registry_dir = output_dir / registry_id
     manifest = _read_optional_json(registry_dir / "confirmation_registry_manifest.json") or {}
     registry = _read_yaml_optional(registry_dir / "registered_targets.yaml")
+    snapshot = _read_optional_json(registry_dir / "confirmation_registry_input_snapshot.json") or {}
     targets = _records(registry.get("targets"))
     target_ids = [_text(row.get("target_id")) for row in targets]
+    source_errors: list[str] = []
+    recompute_error = ""
+    expected_registry: dict[str, Any] = {}
+    expected_snapshot: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_materialized: dict[str, Any] = {}
+    expected_report = ""
+    try:
+        if snapshot.get("schema_version") != CONFIRMATION_REGISTRY_SNAPSHOT_SCHEMA_VERSION:
+            source_errors.append("registry snapshot schema mismatch")
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        plan_dir = Path(_text(snapshot.get("confirmation_plan_dir")))
+        plan_id = _text(_mapping(snapshot.get("lineage")).get("confirmation_plan_id"))
+        if generated is None or plan_dir.name != plan_id:
+            raise DynamicV3ConfirmationCycleError("registry snapshot identity/time invalid")
+        live_validation = validate_forward_confirmation_plan_artifact(
+            confirmation_plan_id=plan_id, output_dir=plan_dir.parent
+        )
+        if live_validation.get("status") != "PASS":
+            source_errors.append("confirmation plan validation failed")
+        if live_validation != snapshot.get("confirmation_plan_validation"):
+            source_errors.append("confirmation plan validation changed")
+        live_bundle = _confirmation_registry_plan_bundle(plan_dir)
+        if live_bundle != snapshot.get("confirmation_plan_bundle"):
+            source_errors.append("confirmation plan bundle changed")
+        plan_json = _mapping(live_bundle.get("json"))
+        plan_manifest = _mapping(plan_json.get("confirmation_plan_manifest.json"))
+        if plan_manifest.get("status") != "AVAILABLE":
+            source_errors.append("confirmation plan not available")
+        plan_generated = _datetime_from_any(plan_manifest.get("generated_at"))
+        if plan_generated is None or plan_generated > generated:
+            source_errors.append("confirmation plan after cutoff")
+        expected_targets = _registry_targets_from_plan(
+            _mapping(plan_json.get("confirmation_targets.json")),
+            _mapping(plan_json.get("failure_conditions.json")),
+        )
+        expected_registry = {
+            "schema_version": SCHEMA_VERSION,
+            "source_confirmation_plan_id": plan_id,
+            "created_at": generated.isoformat(),
+            "status": "active",
+            "targets": expected_targets,
+            "production_effect": "none",
+            "broker_action_allowed": False,
+            "auto_apply": False,
+            "owner_approval_required": True,
+        }
+        registry_yaml_path = Path(_text(snapshot.get("registry_yaml_path")))
+        expected_materialized = {**expected_registry, "registry_id": registry_id}
+        expected_snapshot = {
+            "schema_version": CONFIRMATION_REGISTRY_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_confirmation_registry_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "confirmation_plan_dir": str(plan_dir),
+            "confirmation_plan_bundle": live_bundle,
+            "confirmation_plan_validation": live_validation,
+            "registry_yaml_path": str(registry_yaml_path),
+            "registry_preimage": snapshot.get("registry_preimage"),
+            "materialized_registry": expected_materialized,
+            "lineage": {"confirmation_plan_id": plan_id},
+            "production_effect": "none",
+        }
+        expected_manifest = _confirmation_registry_manifest(
+            registry_dir=registry_dir,
+            confirmation_plan_id=plan_id,
+            plan_manifest=plan_manifest,
+            generated=generated,
+            targets=expected_targets,
+            registry_yaml_path=registry_yaml_path,
+        )
+        expected_report = render_confirmation_registry_report(
+            expected_manifest, expected_registry
+        )
+        materialized = _read_yaml_optional(registry_yaml_path)
+        if materialized.get("registry_id") == registry_id and materialized != expected_materialized:
+            source_errors.append("current materialized registry changed")
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
     checks = [
         _check(
             "manifest_exists",
@@ -238,18 +450,45 @@ def validate_confirmation_targets_artifact(
         ),
         _check("targets_yaml_exists", (registry_dir / "registered_targets.yaml").exists(), ""),
         _check("report_exists", (registry_dir / "confirmation_targets_report.md").exists(), ""),
+        _check(
+            "snapshot_exists",
+            (registry_dir / "confirmation_registry_input_snapshot.json").exists(),
+            "",
+        ),
         _check("registry_id_matches", manifest.get("registry_id") == registry_id, ""),
         _check("target_ids_unique", len(target_ids) == len(set(target_ids)), "target_id"),
         _check("target_count_nonzero", len(targets) > 0, "targets"),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("registry_recomputed", registry == expected_registry, "validated plan"),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "validated plan"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
         _check(
-            "required_targets_present",
-            set(target_ids)
-            >= {
-                "limited_adjustment_vs_no_trade",
-                "defensive_limited_adjustment_drawdown",
-                "consensus_target_risk",
-            },
-            "targets",
+            "json_bytes_recomputed",
+            all(
+                path.is_file()
+                and path.read_text(encoding="utf-8")
+                == json.dumps(_jsonable(payload), ensure_ascii=False, indent=2, sort_keys=True)
+                + "\n"
+                for path, payload in (
+                    (registry_dir / "confirmation_registry_manifest.json", expected_manifest),
+                    (registry_dir / "confirmation_registry_input_snapshot.json", expected_snapshot),
+                )
+            ),
+            "canonical JSON bytes",
+        ),
+        _check(
+            "registry_yaml_bytes_recomputed",
+            (registry_dir / "registered_targets.yaml").is_file()
+            and _read_text(registry_dir / "registered_targets.yaml")
+            == yaml.safe_dump(_jsonable(expected_registry), sort_keys=False, allow_unicode=True),
+            "canonical registry YAML bytes",
+        ),
+        _check(
+            "report_recomputed",
+            (registry_dir / "confirmation_targets_report.md").is_file()
+            and _read_text(registry_dir / "confirmation_targets_report.md") == expected_report,
+            "report bytes",
         ),
         _check(
             "auto_apply_forbidden",

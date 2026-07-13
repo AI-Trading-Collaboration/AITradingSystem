@@ -7179,13 +7179,14 @@ reports:
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_registry/*/confirmation_registry_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_registry/*/registered_targets.yaml
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_registry/*/confirmation_registry_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_registry/*/confirmation_targets_report.md
       - registry/etf_portfolio/dynamic_v3_rescue_forward_confirmation_targets.yaml
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-174_to_178 converts the static forward confirmation plan into
-      auditable target tracking state while preserving auto_apply=false and
-      production_effect=none.
+      TRADING-174_to_178 validates and freezes an AVAILABLE Forward Plan,
+      preserves source targets exactly, and records materialized registry
+      pre/post state while preserving auto_apply=false and production_effect=none.
     owner_action: review_registered_confirmation_targets_before_progress_tracking
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

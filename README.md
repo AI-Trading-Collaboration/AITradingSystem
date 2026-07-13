@@ -985,6 +985,7 @@ TRADING-174_to_178_FORWARD_CONFIRMATION_CYCLE 把上述 static
 `reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_registry|confirmation_progress|confirmation_evaluation|rule_review_cycle|rule_owner_decision/`，
 并同步生成 reviewable
 `registry/etf_portfolio/dynamic_v3_rescue_forward_confirmation_targets.yaml`。Progress
+Registry register会先重验status=`AVAILABLE`的Forward Plan，冻结full bundle、generated cutoff与materialized registry preimage/postimage；只逐值注册source targets，同一Plan重复注册或unknown tracking status会在写件前阻断。Artifact和reviewable registry YAML均atomic写入；注册PASS不表示progress/evaluation/success。
 tracker 会读取 latest `limited-vs-notrade` 和 `consensus-risk` evidence；缺少样本、窗口或
 pressure-regime 标签时必须保持 `INSUFFICIENT_EVENTS` / `NOT_READY`，不得伪造
 READY。Rule review cycle 默认 `policy_change_allowed=false`；owner decision journal
