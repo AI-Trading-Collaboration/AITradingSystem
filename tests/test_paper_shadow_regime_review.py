@@ -13,6 +13,10 @@ def test_paper_shadow_regime_review_keeps_defensive_status_auditable(tmp_path) -
 
     assert regime["manifest"]["status"] == "PASS"
     assert regime["manifest"]["market_regime"] == "ai_after_chatgpt"
+    assert (
+        regime["manifest"]["input_snapshot_schema"]
+        == "paper_shadow_regime_review_input_snapshot.v2"
+    )
     assert summary["defensive_limited_adjustment_status"] in {
         "PASS",
         "MIXED",
@@ -35,3 +39,21 @@ def test_paper_shadow_regime_review_keeps_defensive_status_auditable(tmp_path) -
         output_dir=tmp_path / "paper_shadow_regime_review",
     )
     assert validation["status"] == "PASS"
+
+
+def test_paper_shadow_regime_review_validation_rejects_label_tamper(tmp_path) -> None:
+    fixture = run_regime_review_fixture(tmp_path)
+    regime = fixture["regime"]
+    labels_path = regime["regime_review_dir"] / "regime_date_labels.jsonl"
+    labels_path.write_text(
+        labels_path.read_text(encoding="utf-8").replace("ai_trend", "unreviewed_regime", 1),
+        encoding="utf-8",
+    )
+
+    validation = system_target.validate_paper_shadow_regime_review_artifact(
+        regime_review_id=regime["regime_review_id"],
+        output_dir=tmp_path / "paper_shadow_regime_review",
+    )
+
+    assert validation["status"] == "FAIL"
+    assert validation["failed_check_count"] >= 1

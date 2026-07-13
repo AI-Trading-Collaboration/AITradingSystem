@@ -2075,938 +2075,6 @@ def validate_method_promotion_plan_artifact(
 
 
 
-def load_paper_shadow_backfill_config(
-    path: Path = DEFAULT_PAPER_SHADOW_BACKFILL_CONFIG_PATH,
-) -> dict[str, Any]:
-    payload = _load_yaml_mapping(path)
-    _assert_paper_shadow_backfill_config_safe(payload)
-    return payload
-
-
-def validate_paper_shadow_backfill_config(
-    path: Path = DEFAULT_PAPER_SHADOW_BACKFILL_CONFIG_PATH,
-) -> dict[str, Any]:
-    checks: list[dict[str, Any]] = []
-    payload: dict[str, Any] = {}
-    try:
-        payload = load_paper_shadow_backfill_config(path)
-    except Exception as exc:  # noqa: BLE001
-        checks.append(_check("config_loads", False, str(exc)))
-    else:
-        backfill = _mapping(payload.get("backfill"))
-        date_range = _mapping(payload.get("date_range"))
-        source = _mapping(payload.get("source"))
-        checks.extend(
-            [
-                _check("schema_version", payload.get("schema_version") == SCHEMA_VERSION, ""),
-                _check(
-                    "mode_backtest_simulation", backfill.get("mode") == "BACKTEST_SIMULATION", ""
-                ),
-                _check("not_pit_safe_visible", backfill.get("not_pit_safe") is True, ""),
-                _check("research_target_only", backfill.get("research_target_only") is True, ""),
-                _check("paper_shadow_only", backfill.get("paper_shadow_only") is True, ""),
-                _check(
-                    "date_start_ai_regime",
-                    _coerce_date(date_range.get("start"), date(1970, 1, 1))
-                    >= AI_AFTER_CHATGPT_START,
-                    _text(date_range.get("start")),
-                ),
-                _check("target_methods_present", bool(_enabled_methods(payload)), ""),
-                _check(
-                    "required_source_configs_present",
-                    bool(source.get("model_target_config") and source.get("paper_shadow_config")),
-                    "",
-                ),
-                _check("safety_locked", _safety_config_locked(_mapping(payload.get("safety"))), ""),
-            ]
-        )
-    return _validation_payload(
-        "etf_dynamic_v3_paper_shadow_backfill_config_validation",
-        "paper_shadow_backfill_config",
-        checks,
-        extra={
-            "config_path": str(path),
-            "mode": _text(backfill.get("mode")),
-            "not_pit_safe": backfill.get("not_pit_safe") is True,
-        },
-    )
-
-
-def run_paper_shadow_backfill(
-    *,
-    config_path: Path = DEFAULT_PAPER_SHADOW_BACKFILL_CONFIG_PATH,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    price_cache_path: Path | None = None,
-    rates_cache_path: Path = DEFAULT_RATES_CACHE_PATH,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    config = load_paper_shadow_backfill_config(config_path)
-    generated = generated_at or datetime.now(UTC)
-    source = _mapping(config.get("source"))
-    date_range = _mapping(config.get("date_range"))
-    start = _coerce_date(date_range.get("start"), AI_AFTER_CHATGPT_START)
-    enabled = _enabled_methods(config) or list(TARGET_METHODS)
-    prices_path = price_cache_path or _resolve_project_path(
-        source.get("price_cache_path"), DEFAULT_PRICE_CACHE_PATH
-    )
-    target_weights = _backfill_target_method_weights(config)
-    target_weights = {
-        method: target_weights[method] for method in enabled if method in target_weights
-    }
-    if not target_weights:
-        raise DynamicV3SystemTargetError("backfill has no enabled target method weights")
-    symbols = sorted(
-        {symbol for weights in target_weights.values() for symbol in weights if symbol != "CASH"}
-    )
-    pivot = _load_price_pivot(prices_path, symbols, start)
-    configured_end = _text(date_range.get("end"), "latest_available")
-    end = (
-        _coerce_date(configured_end, _latest_price_date(pivot))
-        if configured_end
-        else _latest_price_date(pivot)
-    )
-    if configured_end == "latest_available":
-        end = _latest_price_date(pivot)
-    pivot = pivot.loc[pivot.index.date <= end]
-    if pivot.empty:
-        raise DynamicV3SystemTargetError("backfill price window is empty")
-    actual_start = pivot.index[0].date()
-    actual_end = pivot.index[-1].date()
-    quality = _run_data_quality_gate(
-        price_cache_path=prices_path,
-        rates_cache_path=rates_cache_path,
-        expected_symbols=symbols,
-        as_of=actual_end,
-    )
-    if not quality.passed:
-        raise DynamicV3SystemTargetError(f"data quality gate failed: {quality.status}")
-    returns = pivot.pct_change().fillna(0.0)
-    trading_dates = [idx.date() for idx in returns.index]
-    rebalance_dates = _backfill_rebalance_dates(
-        trading_dates,
-        frequency=_text(date_range.get("rebalance_frequency"), "weekly"),
-        rebalance_day=_text(date_range.get("rebalance_day"), "MON"),
-        min_history_days=int(_float(date_range.get("min_history_days_before_first_rebalance"), 0)),
-    )
-    initial_weights = _backfill_initial_weights(config)
-    states: list[dict[str, Any]] = []
-    ledger: list[dict[str, Any]] = []
-    risk_config = _load_risk_capped_config_if_available(config)
-    smoothed_config = _load_smoothed_config_if_available(config)
-    model_config = load_model_target_config(
-        _resolve_project_path(source.get("model_target_config"), DEFAULT_MODEL_TARGET_CONFIG_PATH)
-    )
-    method_state = {
-        method: {
-            "weights": dict(initial_weights),
-            "portfolio_value": 1.0,
-            "peak_value": 1.0,
-        }
-        for method in target_weights
-    }
-    for timestamp, return_row in returns.iterrows():
-        current_date = timestamp.date()
-        is_calendar_rebalance = current_date in rebalance_dates
-        for method, target in target_weights.items():
-            state = method_state[method]
-            before_return_weights = _normalize_weights(_mapping(state["weights"]))
-            daily_return = _portfolio_return(before_return_weights, return_row)
-            portfolio_value = _float(state["portfolio_value"]) * (1.0 + daily_return)
-            drifted = _drift_weights(before_return_weights, return_row, daily_return)
-            turnover = 0.0
-            rebalance_event = False
-            before_trade = dict(drifted)
-            after_weights = dict(drifted)
-            cap_events: list[dict[str, Any]] = []
-            reallocation_events: list[dict[str, Any]] = []
-            cap_reason_summary: dict[str, Any] = {}
-            smoothing_events: list[dict[str, Any]] = []
-            lag_events: list[dict[str, Any]] = []
-            if is_calendar_rebalance and method != "no_trade_baseline":
-                if method == "risk_capped_limited_adjustment":
-                    cap_result = _apply_risk_capped_limited_adjustment(
-                        as_of=current_date,
-                        base_weights=target_weights["limited_adjustment"],
-                        previous_weights=before_trade,
-                        risk_config=risk_config,
-                        model_config=model_config,
-                        regime_context=_risk_capped_regime_context_for_return(return_row, config),
-                    )
-                    after_weights = cap_result["capped_weights"]
-                    cap_events = _records(cap_result.get("cap_events"))
-                    reallocation_events = _records(cap_result.get("reallocation_events"))
-                    cap_reason_summary = _mapping(cap_result.get("cap_reason_summary"))
-                elif method in SMOOTHED_METHOD_TO_VARIANT:
-                    smoothing_result = _apply_smoothed_limited_adjustment(
-                        as_of=current_date,
-                        base_weights=target_weights["limited_adjustment"],
-                        previous_smoothed_weights=before_trade,
-                        smoothed_config=smoothed_config,
-                        model_config=model_config,
-                        variant_id=SMOOTHED_METHOD_TO_VARIANT[method],
-                        regime_context=_risk_capped_regime_context_for_return(return_row, config),
-                    )
-                    after_weights = smoothing_result["smoothed_weights"]
-                    smoothing_events = _records(smoothing_result.get("smoothing_events"))
-                    lag_events = _records(smoothing_result.get("lag_events"))
-                else:
-                    after_weights = _normalize_weights(target)
-                turnover = _turnover(before_trade, after_weights)
-                rebalance_event = True
-                ledger.append(
-                    {
-                        "date": current_date.isoformat(),
-                        "target_method": method,
-                        "before_weights": before_trade,
-                        "target_weights": after_weights,
-                        "after_weights": after_weights,
-                        "deltas": _weight_deltas(before_trade, after_weights),
-                        "turnover": turnover,
-                        "trade_type": "paper_rebalance",
-                        "cap_events": cap_events,
-                        "reallocation_events": reallocation_events,
-                        "cap_reason_summary": cap_reason_summary,
-                        "smoothing_events": smoothing_events,
-                        "lag_events": lag_events,
-                        "broker_action_taken": False,
-                        "order_ticket_generated": False,
-                        **SYSTEM_TARGET_SAFETY,
-                    }
-                )
-            elif is_calendar_rebalance and method == "no_trade_baseline":
-                ledger.append(
-                    {
-                        "date": current_date.isoformat(),
-                        "target_method": method,
-                        "before_weights": before_trade,
-                        "target_weights": before_trade,
-                        "after_weights": before_trade,
-                        "deltas": {},
-                        "turnover": 0.0,
-                        "trade_type": "paper_no_trade",
-                        "broker_action_taken": False,
-                        "order_ticket_generated": False,
-                        **SYSTEM_TARGET_SAFETY,
-                    }
-                )
-            peak = max(_float(state["peak_value"]), portfolio_value)
-            drawdown = portfolio_value / peak - 1.0 if peak > 0 else 0.0
-            state["weights"] = after_weights
-            state["portfolio_value"] = portfolio_value
-            state["peak_value"] = peak
-            states.append(
-                {
-                    "date": current_date.isoformat(),
-                    "target_method": method,
-                    "weights": after_weights,
-                    "portfolio_value": round(portfolio_value, 10),
-                    "daily_return": round(daily_return, 10),
-                    "drawdown": round(drawdown, 10),
-                    "turnover": round(turnover, 10),
-                    "rebalance_event": rebalance_event,
-                    "cap_event_count": len(cap_events) if rebalance_event else 0,
-                    "smoothing_event_count": len(smoothing_events) if rebalance_event else 0,
-                    "lag_event_count": len(lag_events) if rebalance_event else 0,
-                    "research_target_only": True,
-                    "not_official_target_weights": True,
-                    "broker_action_taken": False,
-                    **SYSTEM_TARGET_SAFETY,
-                }
-            )
-    backfill_id = _stable_id(
-        "paper-shadow-backfill",
-        config_path,
-        actual_start.isoformat(),
-        actual_end.isoformat(),
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / backfill_id)
-    root.mkdir(parents=True, exist_ok=False)
-    calendar = {
-        "schema_version": SCHEMA_VERSION,
-        "backfill_id": root.name,
-        "rebalance_frequency": _text(date_range.get("rebalance_frequency"), "weekly"),
-        "rebalance_day": _text(date_range.get("rebalance_day"), "MON"),
-        "rebalance_dates": [item.isoformat() for item in sorted(rebalance_dates)],
-        "rebalance_count": len(rebalance_dates),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    data_quality = _backfill_data_quality_payload(
-        backfill_id=root.name,
-        start=actual_start,
-        end=actual_end,
-        pivot=pivot,
-        symbols=symbols,
-        quality=quality,
-    )
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_paper_shadow_backfill_manifest",
-        "backfill_id": root.name,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if quality.passed else "FAIL",
-        "market_regime": "ai_after_chatgpt",
-        "requested_start_date": start.isoformat(),
-        "requested_end_date": configured_end,
-        "date_start": actual_start.isoformat(),
-        "date_end": actual_end.isoformat(),
-        "rebalance_count": len(rebalance_dates),
-        "tracked_methods": list(target_weights),
-        "data_quality_status": quality.status,
-        "mode": "BACKTEST_SIMULATION",
-        "not_pit_safe": True,
-        "config_path": str(config_path),
-        "paper_shadow_backfill_manifest_path": str(root / "paper_shadow_backfill_manifest.json"),
-        "backfill_rebalance_calendar_path": str(root / "backfill_rebalance_calendar.json"),
-        "backfill_method_states_path": str(root / "backfill_method_states.jsonl"),
-        "backfill_trade_ledger_path": str(root / "backfill_trade_ledger.jsonl"),
-        "backfill_data_quality_path": str(root / "backfill_data_quality.json"),
-        "paper_shadow_backfill_report_path": str(root / "paper_shadow_backfill_report.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "paper_shadow_backfill_manifest.json", manifest)
-    _write_json(root / "backfill_rebalance_calendar.json", calendar)
-    _write_jsonl(root / "backfill_method_states.jsonl", states)
-    _write_jsonl(root / "backfill_trade_ledger.jsonl", ledger)
-    _write_json(root / "backfill_data_quality.json", data_quality)
-    _write_text(
-        root / "paper_shadow_backfill_report.md",
-        render_paper_shadow_backfill_report(manifest, calendar, data_quality),
-    )
-    _write_latest_pointer(
-        "latest_paper_shadow_backfill", root.name, root / "paper_shadow_backfill_manifest.json"
-    )
-    return {
-        "backfill_id": root.name,
-        "backfill_dir": root,
-        "manifest": manifest,
-        "backfill_rebalance_calendar": calendar,
-        "backfill_method_states": states,
-        "backfill_trade_ledger": ledger,
-        "backfill_data_quality": data_quality,
-    }
-
-
-def paper_shadow_backfill_report_payload(
-    *,
-    backfill_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=backfill_id,
-        latest_pointer="latest_paper_shadow_backfill",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="paper_shadow_backfill_manifest.json",
-    )
-    return {
-        **_read_json(root / "paper_shadow_backfill_manifest.json"),
-        "backfill_rebalance_calendar": _read_json(root / "backfill_rebalance_calendar.json"),
-        "backfill_method_states": _read_jsonl(root / "backfill_method_states.jsonl"),
-        "backfill_trade_ledger": _read_jsonl(root / "backfill_trade_ledger.jsonl"),
-        "backfill_data_quality": _read_json(root / "backfill_data_quality.json"),
-        "backfill_dir": str(root),
-    }
-
-
-def validate_paper_shadow_backfill_artifact(
-    *,
-    backfill_id: str,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-) -> dict[str, Any]:
-    root = output_dir / backfill_id
-    manifest = _read_optional_json(root / "paper_shadow_backfill_manifest.json") or {}
-    calendar = _read_optional_json(root / "backfill_rebalance_calendar.json") or {}
-    data_quality = _read_optional_json(root / "backfill_data_quality.json") or {}
-    states = _read_jsonl(root / "backfill_method_states.jsonl")
-    ledger = _read_jsonl(root / "backfill_trade_ledger.jsonl")
-    tracked = set(_texts(manifest.get("tracked_methods")))
-    state_methods = {str(row.get("target_method")) for row in states}
-    checks = _required_file_checks(
-        root,
-        (
-            "paper_shadow_backfill_manifest.json",
-            "backfill_rebalance_calendar.json",
-            "backfill_method_states.jsonl",
-            "backfill_trade_ledger.jsonl",
-            "backfill_data_quality.json",
-            "paper_shadow_backfill_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check("backfill_id_matches", manifest.get("backfill_id") == backfill_id, ""),
-            _check(
-                "market_regime_visible", manifest.get("market_regime") == "ai_after_chatgpt", ""
-            ),
-            _check("not_pit_safe_visible", manifest.get("not_pit_safe") is True, ""),
-            _check("state_history_present", bool(states), ""),
-            _check(
-                "all_methods_have_states", tracked.issubset(state_methods), ",".join(state_methods)
-            ),
-            _check("rebalance_calendar_present", bool(calendar.get("rebalance_dates")), ""),
-            _check(
-                "trade_ledger_broker_false",
-                all(row.get("broker_action_taken") is not True for row in ledger),
-                "",
-            ),
-            _check(
-                "data_quality_visible",
-                data_quality.get("data_quality") in {"PASS", "PASS_WITH_WARNINGS"},
-                _text(data_quality.get("data_quality")),
-            ),
-            _check(
-                "broker_forbidden", _payload_safe(manifest, calendar, data_quality, *states), ""
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_paper_shadow_backfill_validation", backfill_id, checks
-    )
-
-
-def run_paper_shadow_rolling_eval(
-    *,
-    backfill_id: str,
-    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_ROLLING_EVAL_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    backfill = paper_shadow_backfill_report_payload(
-        backfill_id=backfill_id, output_dir=backfill_dir
-    )
-    states = _records(backfill.get("backfill_method_states"))
-    config = _load_backfill_config_from_manifest(backfill)
-    min_observations = _config_int(
-        config, ("evaluation", "min_observations_per_window"), DEFAULT_MIN_EVAL_OBSERVATIONS
-    )
-    windows = _rolling_window_inventory(states, min_observations=min_observations)
-    metrics: list[dict[str, Any]] = []
-    for window in windows:
-        metrics.extend(_rolling_metrics_for_window(states, window, min_observations))
-    _rank_rolling_metrics(metrics)
-    stability = _rolling_rank_stability(metrics)
-    rolling_eval_id = _stable_id("paper-shadow-rolling-eval", backfill_id, generated.isoformat())
-    root = _unique_dir(output_dir / rolling_eval_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_paper_shadow_rolling_eval_manifest",
-        "rolling_eval_id": root.name,
-        "backfill_id": backfill_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if metrics else "FAIL",
-        "window_count": len(windows),
-        "metric_row_count": len(metrics),
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "rolling_eval_manifest_path": str(root / "rolling_eval_manifest.json"),
-        "rolling_window_inventory_path": str(root / "rolling_window_inventory.json"),
-        "rolling_method_metrics_path": str(root / "rolling_method_metrics.jsonl"),
-        "rolling_rank_stability_path": str(root / "rolling_rank_stability.json"),
-        "paper_shadow_rolling_eval_report_path": str(root / "paper_shadow_rolling_eval_report.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    inventory = {
-        "schema_version": SCHEMA_VERSION,
-        "rolling_eval_id": root.name,
-        "windows": windows,
-        "window_count": len(windows),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "rolling_eval_manifest.json", manifest)
-    _write_json(root / "rolling_window_inventory.json", inventory)
-    _write_jsonl(root / "rolling_method_metrics.jsonl", metrics)
-    _write_json(root / "rolling_rank_stability.json", stability)
-    _write_text(
-        root / "paper_shadow_rolling_eval_report.md",
-        render_paper_shadow_rolling_eval_report(manifest, stability, metrics),
-    )
-    _write_latest_pointer(
-        "latest_paper_shadow_rolling_eval", root.name, root / "rolling_eval_manifest.json"
-    )
-    return {
-        "rolling_eval_id": root.name,
-        "rolling_eval_dir": root,
-        "manifest": manifest,
-        "rolling_window_inventory": inventory,
-        "rolling_method_metrics": metrics,
-        "rolling_rank_stability": stability,
-    }
-
-
-def paper_shadow_rolling_eval_report_payload(
-    *,
-    rolling_eval_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_ROLLING_EVAL_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=rolling_eval_id,
-        latest_pointer="latest_paper_shadow_rolling_eval",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="rolling_eval_manifest.json",
-    )
-    return {
-        **_read_json(root / "rolling_eval_manifest.json"),
-        "rolling_window_inventory": _read_json(root / "rolling_window_inventory.json"),
-        "rolling_method_metrics": _read_jsonl(root / "rolling_method_metrics.jsonl"),
-        "rolling_rank_stability": _read_json(root / "rolling_rank_stability.json"),
-        "rolling_eval_dir": str(root),
-    }
-
-
-def validate_paper_shadow_rolling_eval_artifact(
-    *,
-    rolling_eval_id: str,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_ROLLING_EVAL_DIR,
-) -> dict[str, Any]:
-    root = output_dir / rolling_eval_id
-    manifest = _read_optional_json(root / "rolling_eval_manifest.json") or {}
-    inventory = _read_optional_json(root / "rolling_window_inventory.json") or {}
-    stability = _read_optional_json(root / "rolling_rank_stability.json") or {}
-    metrics = _read_jsonl(root / "rolling_method_metrics.jsonl")
-    window_types = {str(row.get("window_type")) for row in _records(inventory.get("windows"))}
-    checks = _required_file_checks(
-        root,
-        (
-            "rolling_eval_manifest.json",
-            "rolling_window_inventory.json",
-            "rolling_method_metrics.jsonl",
-            "rolling_rank_stability.json",
-            "paper_shadow_rolling_eval_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "rolling_eval_id_matches", manifest.get("rolling_eval_id") == rolling_eval_id, ""
-            ),
-            _check("metrics_present", bool(metrics), ""),
-            _check(
-                "required_window_types_present",
-                {"full", "yearly", "rolling_3m", "rolling_6m", "rolling_12m"}.issubset(
-                    window_types
-                ),
-                ",".join(sorted(window_types)),
-            ),
-            _check("rank_stability_present", bool(_records(stability.get("methods"))), ""),
-            _check("broker_forbidden", _payload_safe(manifest, inventory, stability, *metrics), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_paper_shadow_rolling_eval_validation", rolling_eval_id, checks
-    )
-
-
-def run_paper_shadow_regime_review(
-    *,
-    backfill_id: str,
-    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_REGIME_REVIEW_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    backfill = paper_shadow_backfill_report_payload(
-        backfill_id=backfill_id, output_dir=backfill_dir
-    )
-    states = _records(backfill.get("backfill_method_states"))
-    config = _load_backfill_config_from_manifest(backfill)
-    min_sample = _config_int(config, ("regime_policy", "min_sample_count"), 5)
-    labels = _regime_labels_from_states(states, config)
-    metrics = _regime_method_metrics(states, labels, min_sample)
-    summary = _regime_method_summary(metrics)
-    regime_review_id = _stable_id("paper-shadow-regime-review", backfill_id, generated.isoformat())
-    root = _unique_dir(output_dir / regime_review_id)
-    root.mkdir(parents=True, exist_ok=False)
-    inventory = {
-        "schema_version": SCHEMA_VERSION,
-        "regime_review_id": root.name,
-        "regimes": [
-            {"regime": regime, "sample_count": sum(1 for item in labels.values() if item == regime)}
-            for regime in _configured_regimes()
-        ],
-        **SYSTEM_TARGET_SAFETY,
-    }
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_paper_shadow_regime_review_manifest",
-        "regime_review_id": root.name,
-        "backfill_id": backfill_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if metrics else "FAIL",
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "paper_shadow_regime_manifest_path": str(root / "paper_shadow_regime_manifest.json"),
-        "regime_window_inventory_path": str(root / "regime_window_inventory.json"),
-        "method_regime_metrics_path": str(root / "method_regime_metrics.jsonl"),
-        "regime_method_summary_path": str(root / "regime_method_summary.json"),
-        "paper_shadow_regime_review_report_path": str(
-            root / "paper_shadow_regime_review_report.md"
-        ),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "paper_shadow_regime_manifest.json", manifest)
-    _write_json(root / "regime_window_inventory.json", inventory)
-    _write_jsonl(root / "method_regime_metrics.jsonl", metrics)
-    _write_json(root / "regime_method_summary.json", summary)
-    _write_text(
-        root / "paper_shadow_regime_review_report.md",
-        render_paper_shadow_regime_review_report(manifest, summary),
-    )
-    _write_latest_pointer(
-        "latest_paper_shadow_regime_review",
-        root.name,
-        root / "paper_shadow_regime_manifest.json",
-    )
-    return {
-        "regime_review_id": root.name,
-        "regime_review_dir": root,
-        "manifest": manifest,
-        "regime_window_inventory": inventory,
-        "method_regime_metrics": metrics,
-        "regime_method_summary": summary,
-    }
-
-
-def paper_shadow_regime_review_report_payload(
-    *,
-    regime_review_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_REGIME_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=regime_review_id,
-        latest_pointer="latest_paper_shadow_regime_review",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="paper_shadow_regime_manifest.json",
-    )
-    return {
-        **_read_json(root / "paper_shadow_regime_manifest.json"),
-        "regime_window_inventory": _read_json(root / "regime_window_inventory.json"),
-        "method_regime_metrics": _read_jsonl(root / "method_regime_metrics.jsonl"),
-        "regime_method_summary": _read_json(root / "regime_method_summary.json"),
-        "regime_review_dir": str(root),
-    }
-
-
-def validate_paper_shadow_regime_review_artifact(
-    *,
-    regime_review_id: str,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_REGIME_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = output_dir / regime_review_id
-    manifest = _read_optional_json(root / "paper_shadow_regime_manifest.json") or {}
-    summary = _read_optional_json(root / "regime_method_summary.json") or {}
-    metrics = _read_jsonl(root / "method_regime_metrics.jsonl")
-    regimes = {str(row.get("regime")) for row in metrics}
-    checks = _required_file_checks(
-        root,
-        (
-            "paper_shadow_regime_manifest.json",
-            "regime_window_inventory.json",
-            "method_regime_metrics.jsonl",
-            "regime_method_summary.json",
-            "paper_shadow_regime_review_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "regime_review_id_matches",
-                manifest.get("regime_review_id") == regime_review_id,
-                "",
-            ),
-            _check("metrics_present", bool(metrics), ""),
-            _check("configured_regimes_present", set(_configured_regimes()).issubset(regimes), ""),
-            _check("summary_present", bool(_records(summary.get("regimes"))), ""),
-            _check("broker_forbidden", _payload_safe(manifest, summary, *metrics), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_paper_shadow_regime_review_validation", regime_review_id, checks
-    )
-
-
-def run_paper_shadow_stability(
-    *,
-    backfill_id: str,
-    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_STABILITY_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    backfill = paper_shadow_backfill_report_payload(
-        backfill_id=backfill_id, output_dir=backfill_dir
-    )
-    states = _records(backfill.get("backfill_method_states"))
-    config = _load_backfill_config_from_manifest(backfill)
-    metrics, jumps, turnover = _stability_diagnostics(states, config)
-    stability_id = _stable_id("paper-shadow-stability", backfill_id, generated.isoformat())
-    root = _unique_dir(output_dir / stability_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_paper_shadow_stability_manifest",
-        "stability_id": root.name,
-        "backfill_id": backfill_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if metrics else "FAIL",
-        "paper_shadow_stability_manifest_path": str(root / "paper_shadow_stability_manifest.json"),
-        "method_stability_metrics_path": str(root / "method_stability_metrics.jsonl"),
-        "weight_path_jump_events_path": str(root / "weight_path_jump_events.jsonl"),
-        "turnover_diagnostics_path": str(root / "turnover_diagnostics.json"),
-        "paper_shadow_stability_report_path": str(root / "paper_shadow_stability_report.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "paper_shadow_stability_manifest.json", manifest)
-    _write_jsonl(root / "method_stability_metrics.jsonl", metrics)
-    _write_jsonl(root / "weight_path_jump_events.jsonl", jumps)
-    _write_json(root / "turnover_diagnostics.json", turnover)
-    _write_text(
-        root / "paper_shadow_stability_report.md",
-        render_paper_shadow_stability_report(manifest, metrics, turnover),
-    )
-    _write_latest_pointer(
-        "latest_paper_shadow_stability", root.name, root / "paper_shadow_stability_manifest.json"
-    )
-    return {
-        "stability_id": root.name,
-        "stability_dir": root,
-        "manifest": manifest,
-        "method_stability_metrics": metrics,
-        "weight_path_jump_events": jumps,
-        "turnover_diagnostics": turnover,
-    }
-
-
-def paper_shadow_stability_report_payload(
-    *,
-    stability_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_STABILITY_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=stability_id,
-        latest_pointer="latest_paper_shadow_stability",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="paper_shadow_stability_manifest.json",
-    )
-    return {
-        **_read_json(root / "paper_shadow_stability_manifest.json"),
-        "method_stability_metrics": _read_jsonl(root / "method_stability_metrics.jsonl"),
-        "weight_path_jump_events": _read_jsonl(root / "weight_path_jump_events.jsonl"),
-        "turnover_diagnostics": _read_json(root / "turnover_diagnostics.json"),
-        "stability_dir": str(root),
-    }
-
-
-def validate_paper_shadow_stability_artifact(
-    *,
-    stability_id: str,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_STABILITY_DIR,
-) -> dict[str, Any]:
-    root = output_dir / stability_id
-    manifest = _read_optional_json(root / "paper_shadow_stability_manifest.json") or {}
-    turnover = _read_optional_json(root / "turnover_diagnostics.json") or {}
-    metrics = _read_jsonl(root / "method_stability_metrics.jsonl")
-    jumps = _read_jsonl(root / "weight_path_jump_events.jsonl")
-    checks = _required_file_checks(
-        root,
-        (
-            "paper_shadow_stability_manifest.json",
-            "method_stability_metrics.jsonl",
-            "weight_path_jump_events.jsonl",
-            "turnover_diagnostics.json",
-            "paper_shadow_stability_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check("stability_id_matches", manifest.get("stability_id") == stability_id, ""),
-            _check("metrics_present", bool(metrics), ""),
-            _check("turnover_diagnostics_present", bool(_records(turnover.get("methods"))), ""),
-            _check(
-                "jump_events_broker_false",
-                all(row.get("broker_action_taken") is not True for row in jumps),
-                "",
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, turnover, *metrics, *jumps), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_paper_shadow_stability_validation", stability_id, checks
-    )
-
-
-def run_system_target_selection_review(
-    *,
-    backfill_id: str,
-    rolling_eval_id: str,
-    regime_review_id: str,
-    stability_id: str,
-    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    rolling_eval_dir: Path = DEFAULT_PAPER_SHADOW_ROLLING_EVAL_DIR,
-    regime_review_dir: Path = DEFAULT_PAPER_SHADOW_REGIME_REVIEW_DIR,
-    stability_dir: Path = DEFAULT_PAPER_SHADOW_STABILITY_DIR,
-    output_dir: Path = DEFAULT_SYSTEM_TARGET_SELECTION_REVIEW_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    backfill = paper_shadow_backfill_report_payload(
-        backfill_id=backfill_id, output_dir=backfill_dir
-    )
-    rolling = paper_shadow_rolling_eval_report_payload(
-        rolling_eval_id=rolling_eval_id, output_dir=rolling_eval_dir
-    )
-    regime = paper_shadow_regime_review_report_payload(
-        regime_review_id=regime_review_id, output_dir=regime_review_dir
-    )
-    stability = paper_shadow_stability_report_payload(
-        stability_id=stability_id, output_dir=stability_dir
-    )
-    config = _load_backfill_config_from_manifest(backfill)
-    scorecard = _selection_scorecard(rolling, regime, stability, config)
-    decision = _selection_decision(scorecard, config)
-    selection_review_id = _stable_id(
-        "system-target-selection-review",
-        backfill_id,
-        rolling_eval_id,
-        regime_review_id,
-        stability_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / selection_review_id)
-    root.mkdir(parents=True, exist_ok=False)
-    decision["selection_review_id"] = root.name
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_system_target_selection_manifest",
-        "selection_review_id": root.name,
-        "backfill_id": backfill_id,
-        "rolling_eval_id": rolling_eval_id,
-        "regime_review_id": regime_review_id,
-        "stability_id": stability_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "date_start": backfill.get("date_start"),
-        "date_end": backfill.get("date_end"),
-        "data_quality_status": backfill.get("data_quality_status"),
-        "system_target_selection_manifest_path": str(
-            root / "system_target_selection_manifest.json"
-        ),
-        "target_method_scorecard_path": str(root / "target_method_scorecard.json"),
-        "selection_decision_path": str(root / "selection_decision.json"),
-        "owner_research_checklist_path": str(root / "owner_research_checklist.md"),
-        "system_target_selection_review_report_path": str(
-            root / "system_target_selection_review_report.md"
-        ),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "system_target_selection_manifest.json", manifest)
-    _write_json(root / "target_method_scorecard.json", scorecard)
-    _write_json(root / "selection_decision.json", decision)
-    _write_text(root / "owner_research_checklist.md", render_selection_owner_checklist(decision))
-    _write_text(
-        root / "system_target_selection_review_report.md",
-        render_system_target_selection_review_report(manifest, scorecard, decision),
-    )
-    _write_text(root / "reader_brief_section.md", render_selection_reader_brief(decision))
-    _write_latest_pointer(
-        "latest_system_target_selection_review",
-        root.name,
-        root / "system_target_selection_manifest.json",
-    )
-    return {
-        "selection_review_id": root.name,
-        "selection_review_dir": root,
-        "manifest": manifest,
-        "target_method_scorecard": scorecard,
-        "selection_decision": decision,
-    }
-
-
-def system_target_selection_review_report_payload(
-    *,
-    selection_review_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SYSTEM_TARGET_SELECTION_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=selection_review_id,
-        latest_pointer="latest_system_target_selection_review",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="system_target_selection_manifest.json",
-    )
-    return {
-        **_read_json(root / "system_target_selection_manifest.json"),
-        "target_method_scorecard": _read_json(root / "target_method_scorecard.json"),
-        "selection_decision": _read_json(root / "selection_decision.json"),
-        "selection_review_dir": str(root),
-    }
-
-
-def validate_system_target_selection_review_artifact(
-    *,
-    selection_review_id: str,
-    output_dir: Path = DEFAULT_SYSTEM_TARGET_SELECTION_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = output_dir / selection_review_id
-    manifest = _read_optional_json(root / "system_target_selection_manifest.json") or {}
-    scorecard = _read_optional_json(root / "target_method_scorecard.json") or {}
-    decision = _read_optional_json(root / "selection_decision.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "system_target_selection_manifest.json",
-            "target_method_scorecard.json",
-            "selection_decision.json",
-            "owner_research_checklist.md",
-            "system_target_selection_review_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "selection_review_id_matches",
-                manifest.get("selection_review_id") == selection_review_id
-                and decision.get("selection_review_id") == selection_review_id,
-                "",
-            ),
-            _check("scorecard_present", bool(_records(scorecard.get("methods"))), ""),
-            _check(
-                "recommended_method_present",
-                bool(decision.get("recommended_research_method")),
-                "",
-            ),
-            _check(
-                "decision_status_valid",
-                decision.get("decision_status")
-                in {"CONTINUE_OBSERVATION", "REVIEW_REQUIRED", "INSUFFICIENT_DATA"},
-                "",
-            ),
-            _check(
-                "not_official_target_weights",
-                decision.get("not_official_target_weights") is True,
-                "",
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, scorecard, decision), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_system_target_selection_review_validation",
-        selection_review_id,
-        checks,
-    )
-
-
 def run_selection_attribution(
     *,
     selection_review_id: str,
@@ -27835,4 +26903,132 @@ def system_target_review_report_payload(*args: Any, **kwargs: Any) -> dict[str, 
 def validate_system_target_review_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_system_target_portfolio(
         "validate_system_target_review_artifact", *args, **kwargs
+    )
+
+
+# ARCH-004 G2.4CI compatibility surface. The canonical implementation lives in
+# the bounded historical-evaluation domain; lazy imports avoid a module cycle
+# while preserving every historical Python caller.
+def _system_target_history_implementation() -> Any:
+    from ai_trading_system.etf_portfolio import dynamic_v3_system_target_history
+
+    return dynamic_v3_system_target_history
+
+
+def _call_system_target_history(name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    try:
+        return getattr(_system_target_history_implementation(), name)(*args, **kwargs)
+    except DynamicV3SystemTargetError:
+        raise
+    except ValueError as exc:
+        raise DynamicV3SystemTargetError(str(exc)) from exc
+
+
+def load_paper_shadow_backfill_config(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_history(
+        "load_paper_shadow_backfill_config", *args, **kwargs
+    )
+
+
+def validate_paper_shadow_backfill_config(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_history(
+        "validate_paper_shadow_backfill_config", *args, **kwargs
+    )
+
+
+def run_paper_shadow_backfill(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_history("run_paper_shadow_backfill", *args, **kwargs)
+
+
+def paper_shadow_backfill_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_history(
+        "paper_shadow_backfill_report_payload", *args, **kwargs
+    )
+
+
+def validate_paper_shadow_backfill_artifact(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_system_target_history(
+        "validate_paper_shadow_backfill_artifact", *args, **kwargs
+    )
+
+
+def run_paper_shadow_rolling_eval(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_history("run_paper_shadow_rolling_eval", *args, **kwargs)
+
+
+def paper_shadow_rolling_eval_report_payload(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_system_target_history(
+        "paper_shadow_rolling_eval_report_payload", *args, **kwargs
+    )
+
+
+def validate_paper_shadow_rolling_eval_artifact(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_system_target_history(
+        "validate_paper_shadow_rolling_eval_artifact", *args, **kwargs
+    )
+
+
+def run_paper_shadow_regime_review(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_history("run_paper_shadow_regime_review", *args, **kwargs)
+
+
+def paper_shadow_regime_review_report_payload(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_system_target_history(
+        "paper_shadow_regime_review_report_payload", *args, **kwargs
+    )
+
+
+def validate_paper_shadow_regime_review_artifact(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_system_target_history(
+        "validate_paper_shadow_regime_review_artifact", *args, **kwargs
+    )
+
+
+def run_paper_shadow_stability(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_history("run_paper_shadow_stability", *args, **kwargs)
+
+
+def paper_shadow_stability_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_history(
+        "paper_shadow_stability_report_payload", *args, **kwargs
+    )
+
+
+def validate_paper_shadow_stability_artifact(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_system_target_history(
+        "validate_paper_shadow_stability_artifact", *args, **kwargs
+    )
+
+
+def run_system_target_selection_review(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_history(
+        "run_system_target_selection_review", *args, **kwargs
+    )
+
+
+def system_target_selection_review_report_payload(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_system_target_history(
+        "system_target_selection_review_report_payload", *args, **kwargs
+    )
+
+
+def validate_system_target_selection_review_artifact(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_system_target_history(
+        "validate_system_target_selection_review_artifact", *args, **kwargs
     )

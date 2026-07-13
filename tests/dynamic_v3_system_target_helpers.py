@@ -339,6 +339,13 @@ def write_paper_shadow_backfill_config(
     source_dirs = write_target_source_artifacts(tmp_path)
     model_config = write_model_target_config(tmp_path)
     paper_config = write_paper_shadow_config(tmp_path)
+    system_target.generate_model_target(
+        config_path=model_config,
+        as_of=TARGET_AS_OF,
+        output_dir=tmp_path / "model_target",
+        generated_at=datetime(2026, 1, 5, tzinfo=UTC),
+        **source_dirs,
+    )
     config_path = tmp_path / "paper_shadow_backfill_v1.yaml"
     config_path.write_text(
         f"""
@@ -349,6 +356,15 @@ backfill:
   paper_shadow_only: true
   not_pit_safe: true
   not_official_target_weights: true
+policy_metadata:
+  policy_id: test_paper_shadow_backfill_v1
+  owner: test_owner
+  version: 2026-07-13
+  status: pilot_baseline
+  rationale: Exercise the reviewed historical evaluation contract in tests.
+  intended_effect: Produce deterministic research-only fixtures.
+  validation_evidence: Focused TRADING-214-to-218 contract tests.
+  review_condition: Replace when the production policy schema changes.
 date_range:
   start: "{BACKFILL_START.isoformat()}"
   end: "{BACKFILL_END.isoformat()}"
@@ -357,6 +373,7 @@ date_range:
   min_history_days_before_first_rebalance: 20
 source:
   model_target_config: {model_config.as_posix()}
+  model_target_dir: {(tmp_path / "model_target").as_posix()}
   paper_shadow_config: {paper_config.as_posix()}
   position_advisory_daily_dir: {source_dirs["position_advisory_daily_dir"].as_posix()}
   shadow_monitor_dir: {source_dirs["shadow_monitor_dir"].as_posix()}
@@ -382,8 +399,18 @@ costs:
   slippage_bps: 0
 evaluation:
   min_observations_per_window: 10
+  rank_stability:
+    top_n: 3
+    stable_top_frequency_min: 0.60
+    stable_bottom_frequency_max: 0.20
+    unstable_bottom_frequency_min: 0.50
 regime_policy:
   min_sample_count: 2
+  risk_off_symbol: QQQ
+  tech_drawdown_symbol: QQQ
+  semiconductor_pullback_symbol: SMH
+  ai_trend_symbol: QQQ
+  strong_recovery_symbol: SMH
   risk_off_return_threshold: -0.015
   tech_drawdown_return_threshold: -0.010
   semiconductor_pullback_return_threshold: -0.012
@@ -414,6 +441,10 @@ selection_policy:
     regime: 0.15
     stability: 0.15
     turnover_penalty: 0.10
+  stability_status_scores:
+    STABLE: 1.0
+    MODERATE: 0.65
+    UNSTABLE: 0.15
 safety:
   research_target_only: true
   paper_shadow_only: true
@@ -442,7 +473,7 @@ def run_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
         output_dir=tmp_path / "paper_shadow_backfill",
         price_cache_path=prices_path,
         rates_cache_path=rates_path,
-        generated_at=datetime(2024, 3, 1, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 6, tzinfo=UTC),
     )
     return {
         **config,
@@ -883,7 +914,7 @@ def run_rolling_eval_fixture(tmp_path: Path) -> dict[str, Any]:
         backfill_id=fixture["backfill"]["backfill_id"],
         backfill_dir=tmp_path / "paper_shadow_backfill",
         output_dir=tmp_path / "paper_shadow_rolling_eval",
-        generated_at=datetime(2024, 3, 1, 1, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 6, 1, tzinfo=UTC),
     )
     return {**fixture, "rolling": rolling}
 
@@ -894,7 +925,7 @@ def run_regime_review_fixture(tmp_path: Path) -> dict[str, Any]:
         backfill_id=fixture["backfill"]["backfill_id"],
         backfill_dir=tmp_path / "paper_shadow_backfill",
         output_dir=tmp_path / "paper_shadow_regime_review",
-        generated_at=datetime(2024, 3, 1, 2, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 6, 2, tzinfo=UTC),
     )
     return {**fixture, "regime": regime}
 
@@ -905,7 +936,7 @@ def run_stability_fixture(tmp_path: Path) -> dict[str, Any]:
         backfill_id=fixture["backfill"]["backfill_id"],
         backfill_dir=tmp_path / "paper_shadow_backfill",
         output_dir=tmp_path / "paper_shadow_stability",
-        generated_at=datetime(2024, 3, 1, 3, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 6, 3, tzinfo=UTC),
     )
     return {**fixture, "stability": stability}
 
@@ -916,19 +947,19 @@ def run_selection_review_fixture(tmp_path: Path) -> dict[str, Any]:
         backfill_id=fixture["backfill"]["backfill_id"],
         backfill_dir=tmp_path / "paper_shadow_backfill",
         output_dir=tmp_path / "paper_shadow_rolling_eval",
-        generated_at=datetime(2024, 3, 1, 1, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 6, 1, tzinfo=UTC),
     )
     regime = system_target.run_paper_shadow_regime_review(
         backfill_id=fixture["backfill"]["backfill_id"],
         backfill_dir=tmp_path / "paper_shadow_backfill",
         output_dir=tmp_path / "paper_shadow_regime_review",
-        generated_at=datetime(2024, 3, 1, 2, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 6, 2, tzinfo=UTC),
     )
     stability = system_target.run_paper_shadow_stability(
         backfill_id=fixture["backfill"]["backfill_id"],
         backfill_dir=tmp_path / "paper_shadow_backfill",
         output_dir=tmp_path / "paper_shadow_stability",
-        generated_at=datetime(2024, 3, 1, 3, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 6, 3, tzinfo=UTC),
     )
     selection = system_target.run_system_target_selection_review(
         backfill_id=fixture["backfill"]["backfill_id"],
@@ -940,7 +971,7 @@ def run_selection_review_fixture(tmp_path: Path) -> dict[str, Any]:
         regime_review_dir=tmp_path / "paper_shadow_regime_review",
         stability_dir=tmp_path / "paper_shadow_stability",
         output_dir=tmp_path / "system_target_selection_review",
-        generated_at=datetime(2024, 3, 1, 4, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 6, 4, tzinfo=UTC),
     )
     return {
         **fixture,

@@ -36,6 +36,7 @@ date_range:
 
 source:
   model_target_config: config/etf_portfolio/dynamic_v3_rescue/model_target_portfolio_v1.yaml
+  model_target_dir: reports/etf_portfolio/dynamic_v3_rescue/model_target
   paper_shadow_config: config/etf_portfolio/dynamic_v3_rescue/paper_shadow_account_v1.yaml
   position_advisory_daily_dir: reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily
   shadow_monitor_dir: reports/etf_portfolio/dynamic_v3_rescue/shadow_monitor_runs
@@ -66,12 +67,23 @@ costs:
 
 evaluation:
   min_observations_per_window: 20
+  rank_stability:
+    top_n: 3
+    stable_top_frequency_min: 0.60
+    stable_bottom_frequency_max: 0.20
+    unstable_bottom_frequency_min: 0.50
   rationale: >
     Thin windows remain visible but are marked INSUFFICIENT_DATA before they
-    influence method selection.
+    influence method selection. Rank-stability labels are governed here rather
+    than embedded as unexplained code thresholds.
 
 regime_policy:
   min_sample_count: 5
+  risk_off_symbol: QQQ
+  tech_drawdown_symbol: QQQ
+  semiconductor_pullback_symbol: SMH
+  ai_trend_symbol: QQQ
+  strong_recovery_symbol: SMH
   risk_off_return_threshold: -0.015
   tech_drawdown_return_threshold: -0.010
   semiconductor_pullback_return_threshold: -0.012
@@ -110,6 +122,10 @@ selection_policy:
     regime: 0.15
     stability: 0.15
     turnover_penalty: 0.10
+  stability_status_scores:
+    STABLE: 1.0
+    MODERATE: 0.65
+    UNSTABLE: 0.15
   rationale: >
     Balanced pilot scorecard that favors durable return, lower drawdown,
     risk-adjusted behavior, regime coverage, and stability. A preferred method

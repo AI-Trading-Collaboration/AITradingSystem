@@ -1,6 +1,6 @@
 # 当前研究策略执行链路、计算逻辑与优化边界
 
-最后更新：2026-07-12
+最后更新：2026-07-13
 
 项目级 AI market regime：`ai_after_chatgpt`，起点 `2022-12-01`
 
@@ -1431,6 +1431,33 @@ Owner Decision validator PASS只证明人工记录与其冻结证据一致；它
 3. 在预注册minimum sample之后增加bootstrap/clustered CI、multiple-testing控制、rolling/regime/leave-one-regime-out和untouched holdout；
 4. 把append-only rebalance states演进为有sequence/previous-hash/supersession的paper state event stream，并提供多account但不共享mutable state；
 5. 只有完整forward/PIT/holdout/cost/risk证据、ChangeProposal和owner decision通过后，才能讨论调整preference或policy；任何winner都不得自动写official weights、portfolio或broker状态。
+
+### 7.18 Historical System Target Evaluation（TRADING-214～218 / ARCH-004G2.4CI）
+
+为什么这样设计：这条链回答“用当前已reviewed的target method定义回放AI-cycle历史时，各方法的收益、回撤、regime和稳定性证据是否足以支持继续观察”，不回答“这些方法在当时真实可获得的信息下是否可执行”。旧实现会从mutable latest/baseline补造method，允许价格缺口和重复日期进入pivot，把不足样本的missing metric降为0，使用static组合收益替代不同市场proxy做regime标签，并允许Rolling、Regime、Stability和Selection跨Backfill拼接。这样会把事后定义、缺失证据或不相关血缘伪装成一套长期结果。因此本层明确标记`current_definition_replayed_historically=true/not_pit_safe=true`，并把五阶段做成content-derived、same-lineage、null-preserving链路。
+
+| 环节 | 输入与门禁 | 计算逻辑 | 输出与解释边界 |
+|---|---|---|---|
+| Historical Backfill | reviewed `paper_shadow_backfill_v1.yaml`、timezone-aware generated cutoff、cutoff内唯一validated Model Target及其linked policies、price/rates/DQ policy/cache sidecars；正式目录创建前运行统一DQ gate | 从Model Target读取真实method weights，不从Daily/Monitor latest或baseline补造；价格只保留全部required symbols共同finite且无duplicate的日期；按reviewed weekly calendar回放，每次rebalance将`transaction_cost_bps+slippage_bps`计入NAV；配置start默认`2022-12-01` | `paper_shadow_backfill_input_snapshot.v2`、manifest、calendar、method states、trade ledger、DQ JSON/Markdown和report；它是current-definition historical simulation，不是PIT replay |
+| Rolling Evaluation | validated Backfill及其中冻结的同一config/policy | 计算full、yearly、rolling 3m/6m/12m窗口；`total_return=prod(1+r)-1`，annualized return、drawdown、volatility、turnover和risk-adjusted metric只在finite observations达到policy minimum时生成；不足样本全部metric/rank为null。Top/bottom frequency和STABLE/MODERATE/UNSTABLE边界来自`evaluation.rank_stability` policy | `paper_shadow_rolling_eval_input_snapshot.v2`、window inventory、metrics JSONL、rank stability和report；null不参与排序 |
+| Regime Review | 同一validated Backfill与reviewed symbol/threshold regime policy | QQQ/SMH等指定proxy分别计算日收益，再按具名阈值生成`ai_trend/tech_drawdown/semiconductor_pullback/risk_off/sideways_choppy/strong_recovery`标签；每个regime只有达到minimum sample count才汇总method metric，否则`INSUFFICIENT_DATA` | `paper_shadow_regime_review_input_snapshot.v2`、date labels、regime inventory、method metrics、summary和report；标签是research diagnostic，不是正式classifier |
+| Stability Diagnostics | 同一validated Backfill与reviewed jump/turnover policy | 从相邻method weights计算最大日权重变化、large/high jump count和annualized turnover，再按policy映射stability status；阈值不散落为匿名代码数字 | `paper_shadow_stability_input_snapshot.v2`、jump events、method stability、turnover diagnostics和report；稳定性与收益同级，不被收益排序覆盖 |
+| Selection Review | validated Backfill、Rolling、Regime和Stability；四者必须exact same-backfill ids、source commitments与合法生成顺序 | 只对finite且存在的return/drawdown/risk-adjusted/regime/stability component按reviewed weights评分，缺component不以0填充；turnover只作具名penalty；`reference_only_methods`永不进入推荐集合，preference order只在score tolerance内打破并列 | `system_target_selection_review_input_snapshot.v2`、scorecard、decision、owner checklist、Markdown与Reader Brief；只能`CONTINUE_OBSERVATION/REVIEW_REQUIRED/INSUFFICIENT_DATA`，不生成official target、promotion或broker动作 |
+
+五类snapshot冻结canonical source path、size、SHA-256、config/cache/DQ commitments、source validation与重算所需有限views。Producer在正式输出前校验；validator随后重新读取live Model Target/config/cache或上游artifact、重跑semantic selection和上游validator，并从snapshot逐字节重建全部JSON、JSONL、Markdown与Reader Brief。Live source drift、future/ambiguous Model Target、duplicate/nonfinite price、snapshot/output tamper、cross-backfill lineage、chronology错误、missing值补0或reference-only推荐都会FAIL。16个CLI callback的canonical owner为`interfaces/cli/etf_portfolio/dynamic_v3_system_target_history.py`，领域实现为`etf_portfolio/dynamic_v3_system_target_history.py`；legacy domain只保留lazy compatibility surface。
+
+当前source-backed contract fixture结果：10个methods、实际区间`2022-12-01..2024-02-29`、63个rebalance、3,260条method states，DQ=`PASS_WITH_WARNINGS`；Rolling有49个windows/490条method metrics；Defensive regime status=`PASS`；Stability记录4个jump events；Selection推荐`limited_adjustment`、secondary为`equal_weight_shadow_candidates`与`smooth_weights_3d_limited_adjustment`，`consensus_target`明确是reference-only，decision=`REVIEW_REQUIRED`且`performance_winner_claimed=false`。这些数值只证明fixture计算、血缘和解释边界可复算，不证明策略优越；真实项目结论仍需重新运行当前cache、PIT/forward/holdout/cost/risk门禁。
+
+后续优化按进入条件排序：
+
+1. 把current-definition replay与真正PIT replay拆成平行artifact family；只有历史as-of source/archive、available-time和method-version lineage完整时才允许`pit_safe=true`；
+2. 引入exchange session calendar、corporate-action校验、现金收益和多档versioned cost/slippage stress，并分别披露coverage变化；
+3. Forward paper distinct observations达到预注册floor后，再做event-clustered/bootstrap interval、tail loss、multiple-testing、leave-one-regime-out与untouched holdout；
+4. 对regime symbol/threshold和selection weights做独立calibration task，必须预注册、版本化、保留旧policy replay，不得依据本fixture或单次收益事后调参；
+5. 以`source commitments + validator version + cutoff`建立验证缓存，命中时仍核对live commitment；再演进content-addressed archive、可信时间戳与source signature；
+6. `2021-02-22`长期primary research窗口可用于另行声明的context/regime comparison，AI-cycle conclusion仍从`2022-12-01`单独报告；两者不得静默合并headline。
+
+本slice固定`not_official_target_weights=true`、`auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`；任何方法分数、排名或推荐都不能直接修改policy、weights、portfolio、baseline/production或broker状态。
 
 ## 8. 定期复核与优化触发
 

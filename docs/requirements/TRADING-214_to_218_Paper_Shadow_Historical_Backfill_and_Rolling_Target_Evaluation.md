@@ -1,10 +1,10 @@
 # TRADING-214～218 Paper Shadow Historical Backfill and Rolling Target Evaluation
 
-最后更新：2026-06-12
+最后更新：2026-07-13
 
 ## 状态
 
-`VALIDATING`
+`VALIDATING`（ARCH-004 G2.4CI hardened migration `COMPLETE_G2_4_CONTINUES`）
 
 本阶段把 TRADING-209～213 的 2 天 paper shadow 链路验证扩展为从
 `2022-12-01` 开始的 AI after ChatGPT regime 历史回填、滚动窗口评估、regime
@@ -92,7 +92,7 @@ section 和 selection review report。
 - Rolling evaluation 用于防止全区间平均掩盖 regime 或局部窗口失效。
 - Regime review 用 rule-based return buckets 生成初版 regime 标签；样本不足时不得强行排名。
 - Stability/turnover diagnostics 是 target method selection 的同级证据，不允许只因收益最高而推荐 method。
-- Selection review 默认保持 `limited_adjustment` 作为主 research method，除非证据显示它在收益、回撤、regime 和稳定性上被明显替代；这仍不构成 official target 或 broker action。
+- Selection review只按reviewed score weights、turnover penalty、reference-only exclusion与preference tolerance计算；preference order只能在有限且完整component的候选之间打破容差内并列，不能预先固定winner，也不构成official target或broker action。
 
 ## 验收标准
 
@@ -159,6 +159,8 @@ section 和 selection review report。
 
 ## 进展记录
 
+- 2026-07-13: ARCH-004 G2.4CI hardened migration `COMPLETE_G2_4_CONTINUES`，不触发phase-level ARCH-005 handoff。16 callback迁canonical history interface，legacy CLI root从20,841降至20,437行、595降至579函数、556降至540 decorators；legacy system-target domain从27,838降至27,034行，17个旧public实现已删除，仅保留lazy compatibility wrappers。五类v2 snapshot、validated cutoff-unique Model Target、pre-output DQ/source/config/cache commitments、common finite duplicate-free price dates、versioned costs、same-Backfill exact lineage、null-preserving metrics、policy-governed regime/rank stability和reference-only exclusion闭合。Source-backed fixture为10 methods、`2022-12-01..2024-02-29`、63 rebalances、3,260 method states、49 rolling windows/490 metrics、DQ=`PASS_WITH_WARNINGS`、defensive regime=`PASS`、4 jump events，Selection=`limited_adjustment/REVIEW_REQUIRED`且`consensus_target`仅reference-only；这只证明contract可复算，不证明策略优越。Focused domain/downstream=`33 passed`、current positive/negative=`10 passed`、slice+CLI=`112 passed`、architecture-fitness=`270 passed`（`outputs/validation_runtime/architecture-fitness_20260713T204112Z/test_runtime_summary.json`）、contract-validation=`203 passed`（`outputs/validation_runtime/contract-validation_20260713T204319Z/test_runtime_summary.json`）；generated=`903 modules / 1,114 tests / 858 writers / 0 violations`。固定not-PIT research/manual-only、no official/no auto/no order/no broker、`production_effect=none`。
+- 2026-07-13: ARCH-004 G2.4CI hardened migration进入`IN_PROGRESS`。范围固定为Backfill 4、Rolling Eval 3、Regime Review 3、Stability 3、System Target Selection 3，共16 callback迁至独立canonical history模块。验收边界升级为：Backfill只接受cutoff内唯一且通过v2 content validator的Model Target，不从mutable Daily/Monitor latest或baseline fallback补造方法；正式写件前校验reviewed config、timezone/cutoff、DQ与price/rates/config/source commitments，价格只纳入全部required symbols共同finite且无duplicate的交易日，versioned costs进入净值，明确`current_definition_replayed_historically=true/not_pit_safe=true`。五阶段分别写bounded `*.v2` input snapshot；Rolling/Regime/Stability必须绑定并重验同一Backfill，missing/insufficient metrics保持null且不排名；regime label按reviewed symbol+threshold policy计算，不用static portfolio return冒充semiconductor/tech regime；rank stability threshold全部policy化；Selection要求Rolling/Regime/Stability exact same-backfill lineage与chronology，reference-only method不得被推荐，missing component不以0进入score。所有validator重验live source/config/cache并逐byte重建JSON/JSONL/Markdown/Reader Brief。固定historical research/manual-only、no official/no auto/no order/no broker、`production_effect=none`；不触发phase handoff。
 - 2026-06-12: 新增任务文档并进入 `IN_PROGRESS`，原因：owner 要求推进 TRADING-214～218，从短窗口 paper shadow 验证升级为 AI after ChatGPT 历史回填、rolling/regime/stability/selection review 闭环。
 - 2026-06-12: baseline 实现完成并转入 `VALIDATING`。真实链路已生成
   backfill / rolling eval / regime review / stability / selection review artifacts；

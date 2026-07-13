@@ -1191,6 +1191,17 @@ artifacts 写入
 `broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、
 `production_effect=none`，不得修改 target config、official target weights、paper/real
 portfolio、baseline/production state、policy 或触发 broker。
+ARCH-004G2.4CI 将这16个CLI callback迁至 canonical
+`interfaces/cli/etf_portfolio/dynamic_v3_system_target_history.py`，领域计算集中在
+`etf_portfolio/dynamic_v3_system_target_history.py`。Backfill不再从mutable latest或
+baseline补造method path，而是只接受cutoff内唯一且validator PASS的Model Target；
+价格计算只使用全部required symbols共同finite且无duplicate的日期，并把versioned
+transaction/slippage cost计入净值。Backfill、Rolling、Regime、Stability和Selection分别
+写入`*.v2` bounded input snapshot；下游必须绑定同一Backfill与合法chronology，missing/
+insufficient metric保持null且不参与ranking，reference-only method不得被推荐。Validator
+会重验live source/config/cache/DQ commitments并逐字节重建JSON、JSONL、Markdown与Reader
+Brief；source/output漂移或cross-lineage一律FAIL。该链仍是
+`current_definition_replayed_historically=true/not_pit_safe=true`的研究模拟，不是PIT结论。
 TRADING-219_to_223_PAPER_SHADOW_SELECTION_DRILLDOWN_AND_RESEARCH_METHOD_HARDENING
 在上述 selection review 之后新增原因归因和 research method hardening pack。CLI 链路为
 `selection-attribution run/report`、`limited-long-risk run/report`、

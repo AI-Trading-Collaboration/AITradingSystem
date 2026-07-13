@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.dynamic_v3_system_target_helpers
   path: tests/dynamic_v3_system_target_helpers.py
-  sha256: 11a3f8c1a9461fa00b039695bc086eb4c67c5957898052854386b786d4358af7
+  sha256: 3b4705842b73cf7869af4dec7deca14a53adde48100a85c3c2ccd0d3a52b5671
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 3548498714981b19bb9a08a14a455c7ebae4d2554256523f13a4f11e956557bf
+  sha256: 414ee486c85162ead89eebf5dffcbb338c26cbbea413c3c64ccbbc67ebebb0ac
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7605,7 +7605,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g2_etf_cli_contract
   path: tests/test_arch_004g2_etf_cli_contract.py
-  sha256: 11c90599986cf042d27b33882cee6d012ae40b5e94fdf217e0d54c41999f4c81
+  sha256: 636c7c0c65e91d0efb2d87262764ac0457125a7e4f2e88d686063ab1cc015c98
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7623,7 +7623,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: ee3a12ff0e26bf803b8424a8a18cdcca426f4e2b39703ac98e70821b5ecabc26
+  sha256: 5eb4712c77c5f0db7960195ddc31c423964d4598a294ea41742943f76a41309c
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -12113,7 +12113,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_paper_shadow_backfill
   path: tests/test_paper_shadow_backfill.py
-  sha256: bfd491d7c6553fdfd2c0c93011b8761abdf9d7e2adfc283897139d15afcbb53c
+  sha256: e7b12ede5f70f93aa769ffafcba458191fbae5fb58a19b19cf454dd062b16ee7
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -12257,7 +12257,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_paper_shadow_regime_review
   path: tests/test_paper_shadow_regime_review.py
-  sha256: 10f4b85e5d4118a6d6b6a4c0d4427f6f6c89e7f7fecc806b9d563bfe0dcf57ea
+  sha256: e01517e4b716a51a878031beec1dba1a8cf59b7daeeb55161710626d9e4b7956
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -12273,7 +12273,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_paper_shadow_rolling_eval
   path: tests/test_paper_shadow_rolling_eval.py
-  sha256: 80d6a4f72221be71eb2b9cf100cfbb1d4558257bbca07f6b2f4e2f683ca519d2
+  sha256: 90d7afd3a9c9bf8c42860eca2198eedcae85a9fce9cdcef7154c8860c8f253ff
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -12289,7 +12289,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_paper_shadow_stability
   path: tests/test_paper_shadow_stability.py
-  sha256: 7972a5ded54d58aff08e2f5e88e19410b27924a8a3190622d0d23320166936a1
+  sha256: 6bd2b78776a5513240bf7b7dd11922e50ae557b7701cdc640db835882a4849d7
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -14801,7 +14801,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_system_target_selection_review
   path: tests/test_system_target_selection_review.py
-  sha256: 2c7e128fc27681fd145f84769e9b9872bb68de0b8badc6057030ae6e63ac5530
+  sha256: b2ef104b0f652bf4bb03a38b8c8bb1e7c6870ab1340a1dff79dee3db18493b45
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
