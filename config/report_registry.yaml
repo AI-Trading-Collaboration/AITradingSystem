@@ -7646,6 +7646,7 @@ reports:
     command: aits etf dynamic-v3-rescue forward-pressure-capture report --latest
     artifact_selection_policy: latest_available
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_pressure_capture/*/capture_plan_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/forward_pressure_capture/*/capture_plan_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/forward_pressure_capture/*/daily_command_pack.json
       - reports/etf_portfolio/dynamic_v3_rescue/forward_pressure_capture/*/weekly_command_pack.json
@@ -7668,9 +7669,11 @@ reports:
     command: aits etf dynamic-v3-rescue pressure-trigger report --latest
     artifact_selection_policy: latest_available
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_trigger/*/pressure_trigger_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_trigger/*/pressure_trigger_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_trigger/*/trigger_metrics.json
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_trigger/*/triggered_actions.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_trigger/*/validate_data_quality_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_trigger/*/pressure_trigger_report.md
     freshness_sla_days: 7
     freshness_rationale: >
@@ -7689,6 +7692,7 @@ reports:
     command: aits etf dynamic-v3-rescue pressure-capture report --latest
     artifact_selection_policy: latest_available
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_capture/*/pressure_capture_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_capture/*/pressure_capture_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_capture/*/pressure_capture_steps.json
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_capture/*/pressure_capture_artifacts.json
@@ -7710,6 +7714,7 @@ reports:
     command: aits etf dynamic-v3-rescue pressure-sample-ledger report --latest
     artifact_selection_policy: latest_available
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_sample_ledger/*/pressure_sample_ledger_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_sample_ledger/*/pressure_sample_ledger_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_sample_ledger/*/pressure_samples.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_sample_ledger/*/pressure_sample_summary.json
@@ -7731,6 +7736,7 @@ reports:
     command: aits etf dynamic-v3-rescue weekly-defensive-evidence report --latest
     artifact_selection_policy: latest_available
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_defensive_evidence/*/weekly_defensive_evidence_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/weekly_defensive_evidence/*/weekly_defensive_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/weekly_defensive_evidence/*/weekly_defensive_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/weekly_defensive_evidence/*/weekly_defensive_report.md

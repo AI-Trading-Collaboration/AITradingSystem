@@ -6,19 +6,19 @@ from typing import Any
 
 from dynamic_v3_pressure_validation_helpers import run_pressure_backfill_fixture
 
-from ai_trading_system.etf_portfolio.dynamic_v3_defensive_evidence import (
-    build_forward_pressure_capture_plan,
-    run_pressure_capture_workflow,
-    run_pressure_trigger_scan,
-    run_weekly_defensive_evidence_update,
-    update_pressure_sample_ledger,
-)
 from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
     run_defensive_failure_study,
     run_defensive_hypothesis_deep_dive,
     run_defensive_label_review,
     run_defensive_owner_pack,
     run_defensive_research_note,
+)
+from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+    build_forward_pressure_capture_plan,
+    run_pressure_capture_workflow,
+    run_pressure_trigger_scan,
+    run_weekly_defensive_evidence_update,
+    update_pressure_sample_ledger,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_pressure_validation import (
     run_defensive_pressure_compare,
@@ -216,6 +216,9 @@ def _write_capture_config(tmp_path: Path) -> Path:
                 "policy_metadata:",
                 "  owner: project_owner",
                 "  version: test_forward_pressure_capture_v1",
+                "  status: test_fixture",
+                "  rationale: deterministic forward-pressure workflow test policy",
+                "  review_condition: revise when the workflow contract changes",
                 "daily:",
                 "  enabled: true",
                 "  commands:",
@@ -241,8 +244,11 @@ def _write_capture_config(tmp_path: Path) -> Path:
                 "  required_forward_pressure_samples: 5",
                 "safety:",
                 "  broker_action_allowed: false",
+                "  broker_action_taken: false",
                 "  production_effect: none",
                 "  auto_apply_policy: false",
+                "  policy_change_allowed: false",
+                "  owner_approval_required: true",
                 "",
             ]
         ),

@@ -1384,6 +1384,30 @@ Owner Decision validator PASS只证明人工记录与其冻结证据一致；它
 5. 在Forward Pressure Capture积累真实样本后，分别报告2021长期窗口与2022-12-01 AI-cycle窗口，并做leave-one-regime-out稳定性；不得合并成单一headline；
 6. 只有证据成熟、预注册change proposal、PIT/holdout/cost/risk validation和owner decision全部通过，才允许在独立任务讨论rename、mitigation或rule change。本slice不会自动触发这些动作。
 
+### 7.16 Forward Pressure Evidence Automation（TRADING-194～198 / ARCH-004G2.4CG）
+
+为什么这样设计：旧链虽然能产出capture plan、trigger、event capture、ledger和weekly summary，但config只做浅层检查，Trigger会在DQ失败前创建正式目录，Capture不验证Trigger也不冻结Tag→Backfill→Compare血缘，Ledger把latest读取异常吞成空样本并按window row计数，Weekly同样允许缺Ledger时生成看似PASS的空报告。五类validator只检查文件、枚举和安全字段，不能证明结果来自当前policy/cache/source。这会把“没有读到证据”误写成“证据为零”，也可能在source被替换后继续展示旧结论。因此本层把计划、触发、采集、台账、周报定义为一条可复算的research-only证据链。
+
+| 环节 | 输入与门禁 | 计算逻辑 | 输出与含义 |
+|---|---|---|---|
+| Capture Plan | reviewed `forward_pressure_capture_v1`；metadata必须含owner/version/status/rationale/review condition；daily/weekly/event commands必须启用、非空、无重复；四个drawdown阈值必须finite且<0；forward sample floor必须为正整数；strict safety必须完整 | 从同一冻结policy投影daily、weekly和event command packs，不解释为scheduler已部署，也不运行任何命令 | `capture_plan_input_snapshot.v2`、manifest、三类command pack和Markdown；只描述计划 |
+| Pressure Trigger | timezone-aware generated、`as_of<=generated.date`、reviewed policy、ETF price cache、rates cache；正式目录创建前先运行统一cached DQ gate。`--skip-data-quality-gate`只允许显式test fixture并写入报告 | 从QQQ/SMH截至as-of的价格计算1d/5d return与5d drawdown，逐项对reviewed threshold；任一阈值命中为`PRESSURE_TRIGGERED`，数据不足为`INSUFFICIENT_DATA`。Metrics/actions从live committed cache和policy重算 | `pressure_trigger_input_snapshot.v2`、metrics、actions、DQ report、manifest和Markdown；trigger只是收集证据信号，不是交易信号 |
+| Pressure Capture | validated Trigger且Trigger时间不晚于capture cutoff；仅`PRESSURE_TRIGGERED`或显式manual force进入重链 | 同一次调用依次运行并验证Pressure Tag、Outcome Backfill、Defensive Compare；Backfill manifest必须引用本次Tag，Compare必须引用本次Backfill。No-trigger分支冻结三个空id与`SKIPPED/no_trigger`，不得从latest补齐 | `pressure_capture_input_snapshot.v2`、steps、artifact ids、manifest和Markdown；明确run/skip原因及exact lineage |
+| Sample Ledger | cutoff语义选择zero-or-one Backfill；目录中任何invalid/ambiguous/future manifest都fail closed；存在source时必须full validation | 以`source_mode + source_event_id`为sample identity，把同一事件多个window合并并披露`window_count`；只有`FORWARD_OUTCOME`、defensive relevant且source允许production support时才计rule-approval eligible。Simulation/PIT仍分别披露 | `pressure_sample_ledger_input_snapshot.v2`、distinct-event JSONL、summary、manifest和Markdown；无截止日前source时显式`PASS_WITH_WARNINGS`，不是吞异常 |
+| Weekly Evidence | cutoff语义选择exactly one validated Ledger；`week_ending<=generated.date` | 只按sample `as_of`落在week start～week ending的distinct events计new forward/PIT/simulation，累计forward count和reviewed requirement继承Ledger | `weekly_defensive_evidence_input_snapshot.v2`、weekly summary、Markdown、Reader Brief和manifest；rule status固定`RESEARCH_ONLY` |
+
+五类snapshot冻结policy、cache、source validation、canonical file commitments、semantic selection和必要计算views。Validator重验live config/cache/source、cutoff selection与递归upstream validator，再逐byte重建manifest、JSON/JSONL、DQ disclosure、Markdown和Reader Brief。Policy/cache/source漂移、snapshot或输出篡改、future/naive time、cross-lineage、duplicate identity、non-finite metric和ambiguous latest都会FAIL。
+
+当前source-backed fixture同时覆盖quiet与pressure window：quiet为`NO_TRIGGER`且不要求重采集，pressure为`PRESSURE_TRIGGERED`；forced Capture成功形成Tag→Backfill→Compare，同一链的空source场景保留`PASS_WITH_WARNINGS`而不是伪造forward evidence。Ledger只得到simulation distinct events，forward count为0、progress为0，simulation全部`can_support_rule_approval=false`；Weekly继续输出`RESEARCH_ONLY/continue_tracking`。这证明automation、血缘和计数语义可复算，不证明defensive rule有效。
+
+后续优化必须等待证据成熟：
+
+1. forward distinct events达到预注册floor后，增加event-clustered confidence interval、false-trigger、tail loss、turnover/cost和跨regime稳定性；不得用早期样本回调trigger threshold；
+2. 将自然日5d窗口迁为session-aware trading calendar，并对holiday/缺口做明确coverage；
+3. 为DQ/source validation引入以`source hash + validator version + cutoff`为键的可信缓存；命中仍核对live commitments；
+4. 将2021长期primary research window与`2022-12-01` AI-cycle conclusion window分开累计和报告，不合并headline；
+5. 只有PIT/holdout/cost/risk验证、预注册change proposal和owner decision全部通过，才可讨论policy change；本层不自动修改任何policy、weights、portfolio或broker状态。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |

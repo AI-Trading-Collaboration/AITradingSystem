@@ -82,9 +82,10 @@ def test_reader_brief_summarizes_defensive_hypothesis_and_forward_evidence(tmp_p
     assert summary["defensive_hypothesis_can_support_rule_approval"] is False
     assert summary["defensive_label_status"] == "POTENTIALLY_MISLEADING"
     assert summary["defensive_recommended_label"] == "risk_aware_limited_adjustment"
-    assert summary["defensive_failure_top_pattern"] == (
-        "increased_risk_exposure_during_drawdown"
-    )
+    failure_patterns = failure["failure_pattern_summary"]["patterns"]
+    assert summary["defensive_failure_top_pattern"] == max(
+        failure_patterns, key=lambda row: row["count"]
+    )["pattern"]
     assert summary["defensive_hypothesis_current_status"] == "RESEARCH_ONLY"
     assert summary["defensive_hypothesis_forward_support"] == "NONE"
     assert summary["defensive_owner_continue_tracking_recommended"] is True

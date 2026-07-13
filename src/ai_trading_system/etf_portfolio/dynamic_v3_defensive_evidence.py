@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +12,6 @@ import yaml
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_operations import (
     DEFAULT_PRESSURE_REGIME_TAG_DIR,
-    run_pressure_regime_tagging,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     DEFAULT_RATES_CACHE_PATH,
@@ -24,16 +23,9 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     _mapping,
     _read_json,
     _read_jsonl,
-    _read_optional_json,
     _records,
     _stable_id,
     _text,
-    _unique_dir,
-    _update_latest_pointer,
-    _validation_payload,
-    _write_json,
-    _write_jsonl,
-    _write_text,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
@@ -48,9 +40,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_pressure_validation import (
     DEFAULT_PRESSURE_OUTCOME_BACKFILL_DIR,
     EVIDENCE_QUALITY_BY_SOURCE,
     PRESSURE_REGIMES,
-    SOURCE_MODES,
-    run_defensive_pressure_compare,
-    run_pressure_outcome_backfill,
 )
 from ai_trading_system.etf_portfolio.models import DEFAULT_ETF_PRICE_PATH
 
@@ -303,60 +292,12 @@ def build_forward_pressure_capture_plan(
     output_dir: Path = DEFAULT_FORWARD_PRESSURE_CAPTURE_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    config = _read_yaml_config(config_path)
-    validation = _capture_config_checks(config)
-    if not all(row["passed"] for row in validation):
-        failed = ", ".join(row["check_id"] for row in validation if not row["passed"])
-        raise DynamicV3DefensiveEvidenceError(f"forward pressure capture config failed: {failed}")
-    daily_pack = _command_pack("daily", config)
-    weekly_pack = _command_pack("weekly", config)
-    event_plan = _event_trigger_plan(config)
-    capture_plan_id = _stable_id(
-        "forward-pressure-capture-plan",
-        str(config_path),
-        generated.isoformat(),
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        build_forward_pressure_capture_plan as implementation,
     )
-    plan_dir = _unique_dir(output_dir / capture_plan_id)
-    plan_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_forward_pressure_capture_manifest",
-        "capture_plan_id": plan_dir.name,
-        "config_path": str(config_path),
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": "ai_after_chatgpt",
-        "capture_plan_manifest_path": str(plan_dir / "capture_plan_manifest.json"),
-        "daily_command_pack_path": str(plan_dir / "daily_command_pack.json"),
-        "weekly_command_pack_path": str(plan_dir / "weekly_command_pack.json"),
-        "event_driven_trigger_plan_path": str(plan_dir / "event_driven_trigger_plan.json"),
-        "forward_pressure_capture_report_path": str(
-            plan_dir / "forward_pressure_capture_report.md"
-        ),
-        **_artifact_safety(),
-    }
-    _write_json(plan_dir / "capture_plan_manifest.json", manifest)
-    _write_json(plan_dir / "daily_command_pack.json", daily_pack)
-    _write_json(plan_dir / "weekly_command_pack.json", weekly_pack)
-    _write_json(plan_dir / "event_driven_trigger_plan.json", event_plan)
-    _write_text(
-        plan_dir / "forward_pressure_capture_report.md",
-        render_forward_pressure_capture_report(manifest, daily_pack, weekly_pack, event_plan),
-    )
-    _update_latest_pointer(
-        "latest_forward_pressure_capture",
-        plan_dir.name,
-        plan_dir / "capture_plan_manifest.json",
-    )
-    return {
-        "capture_plan_id": plan_dir.name,
-        "capture_plan_dir": plan_dir,
-        "manifest": manifest,
-        "daily_command_pack": daily_pack,
-        "weekly_command_pack": weekly_pack,
-        "event_driven_trigger_plan": event_plan,
-    }
+
+    return implementation(**arguments)
 
 
 def forward_pressure_capture_report_payload(
@@ -365,18 +306,12 @@ def forward_pressure_capture_report_payload(
     latest: bool = False,
     output_dir: Path = DEFAULT_FORWARD_PRESSURE_CAPTURE_DIR,
 ) -> dict[str, Any]:
-    plan_dir = _artifact_dir_from_latest(
-        output_dir=output_dir,
-        artifact_id=capture_plan_id if not latest else None,
-        pointer_name="latest_forward_pressure_capture",
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        forward_pressure_capture_report_payload as implementation,
     )
-    return {
-        **_read_json(plan_dir / "capture_plan_manifest.json"),
-        "daily_command_pack": _read_json(plan_dir / "daily_command_pack.json"),
-        "weekly_command_pack": _read_json(plan_dir / "weekly_command_pack.json"),
-        "event_driven_trigger_plan": _read_json(plan_dir / "event_driven_trigger_plan.json"),
-        "capture_plan_dir": str(plan_dir),
-    }
+
+    return implementation(**arguments)
 
 
 def validate_forward_pressure_capture_artifact(
@@ -384,34 +319,12 @@ def validate_forward_pressure_capture_artifact(
     capture_plan_id: str,
     output_dir: Path = DEFAULT_FORWARD_PRESSURE_CAPTURE_DIR,
 ) -> dict[str, Any]:
-    plan_dir = output_dir / capture_plan_id
-    manifest = _read_optional_json(plan_dir / "capture_plan_manifest.json") or {}
-    daily_pack = _read_optional_json(plan_dir / "daily_command_pack.json") or {}
-    weekly_pack = _read_optional_json(plan_dir / "weekly_command_pack.json") or {}
-    event_plan = _read_optional_json(plan_dir / "event_driven_trigger_plan.json") or {}
-    checks = [
-        _check("manifest_exists", (plan_dir / "capture_plan_manifest.json").exists(), ""),
-        _check("daily_pack_exists", (plan_dir / "daily_command_pack.json").exists(), ""),
-        _check("weekly_pack_exists", (plan_dir / "weekly_command_pack.json").exists(), ""),
-        _check("event_plan_exists", (plan_dir / "event_driven_trigger_plan.json").exists(), ""),
-        _check("report_exists", (plan_dir / "forward_pressure_capture_report.md").exists(), ""),
-        _check("capture_plan_id_matches", manifest.get("capture_plan_id") == capture_plan_id, ""),
-        _check("daily_commands_present", bool(_command_items(daily_pack.get("commands"))), ""),
-        _check("weekly_commands_present", bool(_command_items(weekly_pack.get("commands"))), ""),
-        _check("event_triggers_present", bool(_mapping(event_plan.get("triggers"))), ""),
-        _check(
-            "safety_no_broker",
-            manifest.get("broker_action_allowed") is False
-            and manifest.get("production_effect") == "none",
-            "no broker/no production",
-        ),
-    ]
-    return _validation_payload(
-        report_type="etf_dynamic_v3_forward_pressure_capture_validation",
-        artifact_id_key="capture_plan_id",
-        artifact_id=capture_plan_id,
-        checks=checks,
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        validate_forward_pressure_capture_artifact as implementation,
     )
+
+    return implementation(**arguments)
 
 
 def run_pressure_trigger_scan(
@@ -424,64 +337,12 @@ def run_pressure_trigger_scan(
     enforce_data_quality_gate: bool = True,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    config = _read_yaml_config(config_path)
-    validation = _capture_config_checks(config)
-    if not all(row["passed"] for row in validation):
-        failed = ", ".join(row["check_id"] for row in validation if not row["passed"])
-        raise DynamicV3DefensiveEvidenceError(f"pressure trigger config failed: {failed}")
-    trigger_id = _stable_id("pressure-trigger", as_of.isoformat(), generated.isoformat())
-    trigger_dir = _unique_dir(output_dir / trigger_id)
-    trigger_dir.mkdir(parents=True, exist_ok=False)
-    data_quality_status, data_quality_report_path = _quality_gate_for_pressure_trigger(
-        as_of=as_of,
-        generated=generated,
-        prices_path=prices_path,
-        rates_path=rates_path,
-        report_path=trigger_dir / "validate_data_quality_report.md",
-        enforce=enforce_data_quality_gate,
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        run_pressure_trigger_scan as implementation,
     )
-    metrics = _trigger_metrics(as_of=as_of, prices_path=prices_path)
-    metrics["trigger_status"] = _trigger_status(metrics, config)
-    actions = _triggered_actions(metrics, config)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_pressure_trigger_manifest",
-        "trigger_id": trigger_dir.name,
-        "as_of": as_of.isoformat(),
-        "config_path": str(config_path),
-        "generated_at": generated.isoformat(),
-        "status": (
-            "PASS" if metrics["trigger_status"] != "INSUFFICIENT_DATA" else "INSUFFICIENT_DATA"
-        ),
-        "data_quality_status": data_quality_status,
-        "data_quality_report_path": data_quality_report_path,
-        "market_regime": "ai_after_chatgpt",
-        "pressure_trigger_manifest_path": str(trigger_dir / "pressure_trigger_manifest.json"),
-        "trigger_metrics_path": str(trigger_dir / "trigger_metrics.json"),
-        "triggered_actions_path": str(trigger_dir / "triggered_actions.json"),
-        "pressure_trigger_report_path": str(trigger_dir / "pressure_trigger_report.md"),
-        **_artifact_safety(),
-    }
-    _write_json(trigger_dir / "pressure_trigger_manifest.json", manifest)
-    _write_json(trigger_dir / "trigger_metrics.json", metrics)
-    _write_json(trigger_dir / "triggered_actions.json", actions)
-    _write_text(
-        trigger_dir / "pressure_trigger_report.md",
-        render_pressure_trigger_report(manifest, metrics, actions),
-    )
-    _update_latest_pointer(
-        "latest_pressure_trigger",
-        trigger_dir.name,
-        trigger_dir / "pressure_trigger_manifest.json",
-    )
-    return {
-        "trigger_id": trigger_dir.name,
-        "trigger_dir": trigger_dir,
-        "manifest": manifest,
-        "trigger_metrics": metrics,
-        "triggered_actions": actions,
-    }
+
+    return implementation(**arguments)
 
 
 def pressure_trigger_report_payload(
@@ -490,52 +351,23 @@ def pressure_trigger_report_payload(
     latest: bool = False,
     output_dir: Path = DEFAULT_PRESSURE_TRIGGER_DIR,
 ) -> dict[str, Any]:
-    trigger_dir = _artifact_dir_from_latest(
-        output_dir=output_dir,
-        artifact_id=trigger_id if not latest else None,
-        pointer_name="latest_pressure_trigger",
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        pressure_trigger_report_payload as implementation,
     )
-    return {
-        **_read_json(trigger_dir / "pressure_trigger_manifest.json"),
-        "trigger_metrics": _read_json(trigger_dir / "trigger_metrics.json"),
-        "triggered_actions": _read_json(trigger_dir / "triggered_actions.json"),
-        "trigger_dir": str(trigger_dir),
-    }
+
+    return implementation(**arguments)
 
 
 def validate_pressure_trigger_artifact(
     *, trigger_id: str, output_dir: Path = DEFAULT_PRESSURE_TRIGGER_DIR
 ) -> dict[str, Any]:
-    trigger_dir = output_dir / trigger_id
-    manifest = _read_optional_json(trigger_dir / "pressure_trigger_manifest.json") or {}
-    metrics = _read_optional_json(trigger_dir / "trigger_metrics.json") or {}
-    actions = _read_optional_json(trigger_dir / "triggered_actions.json") or {}
-    checks = [
-        _check("manifest_exists", (trigger_dir / "pressure_trigger_manifest.json").exists(), ""),
-        _check("metrics_exists", (trigger_dir / "trigger_metrics.json").exists(), ""),
-        _check("actions_exists", (trigger_dir / "triggered_actions.json").exists(), ""),
-        _check("report_exists", (trigger_dir / "pressure_trigger_report.md").exists(), ""),
-        _check("trigger_id_matches", manifest.get("trigger_id") == trigger_id, ""),
-        _check(
-            "trigger_status_valid",
-            metrics.get("trigger_status")
-            in {"NO_TRIGGER", "PRESSURE_TRIGGERED", "INSUFFICIENT_DATA"},
-            "trigger status",
-        ),
-        _check(
-            "no_trigger_has_no_capture_required",
-            metrics.get("trigger_status") != "NO_TRIGGER"
-            or actions.get("event_driven_capture_required") is False,
-            "no heavy flow when no trigger",
-        ),
-        _check("safety_no_broker", manifest.get("broker_action_allowed") is False, ""),
-    ]
-    return _validation_payload(
-        report_type="etf_dynamic_v3_pressure_trigger_validation",
-        artifact_id_key="trigger_id",
-        artifact_id=trigger_id,
-        checks=checks,
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        validate_pressure_trigger_artifact as implementation,
     )
+
+    return implementation(**arguments)
 
 
 def run_pressure_capture_workflow(
@@ -555,126 +387,12 @@ def run_pressure_capture_workflow(
     enforce_data_quality_gate: bool = True,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    source_dir = trigger_dir / trigger_id
-    trigger_manifest = _read_json(source_dir / "pressure_trigger_manifest.json")
-    trigger_metrics = _read_json(source_dir / "trigger_metrics.json")
-    as_of = _date_from_any(trigger_manifest.get("as_of")) or generated.date()
-    trigger_status = _text(trigger_metrics.get("trigger_status"), "INSUFFICIENT_DATA")
-    steps: list[dict[str, Any]] = []
-    artifacts: dict[str, Any] = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_pressure_capture_artifacts",
-    }
-    should_run = force or trigger_status == "PRESSURE_TRIGGERED"
-    capture_status = "PASS" if should_run else "SKIPPED"
-    if should_run:
-        tag = run_pressure_regime_tagging(
-            start=AI_AFTER_CHATGPT_START,
-            end=as_of,
-            output_dir=pressure_tag_dir,
-            prices_path=prices_path,
-            rates_path=rates_path,
-            enforce_data_quality_gate=enforce_data_quality_gate,
-            generated_at=generated,
-        )
-        artifacts["pressure_regime_tag_id"] = tag["tag_id"]
-        steps.append(_capture_step("pressure-regime-tag", "PASS", tag["tag_id"]))
-        backfill = run_pressure_outcome_backfill(
-            start=AI_AFTER_CHATGPT_START,
-            end=as_of,
-            output_dir=pressure_backfill_dir,
-            pressure_tag_dir=pressure_tag_dir,
-            advisory_outcome_dir=advisory_outcome_dir,
-            backfilled_outcome_dir=backfilled_outcome_dir,
-            backtest_sim_outcome_dir=backtest_sim_outcome_dir,
-            generated_at=generated,
-        )
-        artifacts["pressure_backfill_id"] = backfill["pressure_backfill_id"]
-        steps.append(
-            _capture_step(
-                "pressure-outcome-backfill",
-                _text(_mapping(backfill.get("manifest")).get("status"), "PASS"),
-                backfill["pressure_backfill_id"],
-            )
-        )
-        compare = run_defensive_pressure_compare(
-            pressure_backfill_id=backfill["pressure_backfill_id"],
-            backfill_dir=pressure_backfill_dir,
-            output_dir=comparison_dir,
-            generated_at=generated,
-        )
-        artifacts["comparison_id"] = compare["comparison_id"]
-        steps.append(_capture_step("defensive-pressure-compare", "PASS", compare["comparison_id"]))
-    else:
-        artifacts["pressure_regime_tag_id"] = ""
-        artifacts["pressure_backfill_id"] = ""
-        artifacts["comparison_id"] = ""
-        steps.extend(
-            [
-                _capture_step("pressure-regime-tag", "SKIPPED", "", reason="no_trigger"),
-                _capture_step("pressure-outcome-backfill", "SKIPPED", "", reason="no_trigger"),
-                _capture_step("defensive-pressure-compare", "SKIPPED", "", reason="no_trigger"),
-            ]
-        )
-    capture_steps = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_pressure_capture_steps",
-        "trigger_id": trigger_id,
-        "trigger_status": trigger_status,
-        "manual_force": bool(force),
-        "steps": steps,
-        "broker_action_allowed": False,
-        "policy_change_allowed": False,
-        "production_effect": "none",
-    }
-    artifacts.update(
-        {
-            "trigger_id": trigger_id,
-            "trigger_status": trigger_status,
-            "manual_force": bool(force),
-            "broker_action_allowed": False,
-            "policy_change_allowed": False,
-            "production_effect": "none",
-        }
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        run_pressure_capture_workflow as implementation,
     )
-    capture_id = _stable_id("pressure-capture", trigger_id, force, generated.isoformat())
-    capture_dir = _unique_dir(output_dir / capture_id)
-    capture_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_pressure_capture_manifest",
-        "capture_id": capture_dir.name,
-        "trigger_id": trigger_id,
-        "generated_at": generated.isoformat(),
-        "status": capture_status,
-        "manual_force": bool(force),
-        "market_regime": "ai_after_chatgpt",
-        "pressure_capture_manifest_path": str(capture_dir / "pressure_capture_manifest.json"),
-        "pressure_capture_steps_path": str(capture_dir / "pressure_capture_steps.json"),
-        "pressure_capture_artifacts_path": str(capture_dir / "pressure_capture_artifacts.json"),
-        "pressure_capture_report_path": str(capture_dir / "pressure_capture_report.md"),
-        **_artifact_safety(),
-    }
-    _write_json(capture_dir / "pressure_capture_manifest.json", manifest)
-    _write_json(capture_dir / "pressure_capture_steps.json", capture_steps)
-    _write_json(capture_dir / "pressure_capture_artifacts.json", artifacts)
-    _write_text(
-        capture_dir / "pressure_capture_report.md",
-        render_pressure_capture_report(manifest, capture_steps, artifacts),
-    )
-    _update_latest_pointer(
-        "latest_pressure_capture",
-        capture_dir.name,
-        capture_dir / "pressure_capture_manifest.json",
-    )
-    return {
-        "capture_id": capture_dir.name,
-        "capture_dir": capture_dir,
-        "manifest": manifest,
-        "pressure_capture_steps": capture_steps,
-        "pressure_capture_artifacts": artifacts,
-    }
+
+    return implementation(**arguments)
 
 
 def pressure_capture_report_payload(
@@ -683,47 +401,23 @@ def pressure_capture_report_payload(
     latest: bool = False,
     output_dir: Path = DEFAULT_PRESSURE_CAPTURE_DIR,
 ) -> dict[str, Any]:
-    capture_dir = _artifact_dir_from_latest(
-        output_dir=output_dir,
-        artifact_id=capture_id if not latest else None,
-        pointer_name="latest_pressure_capture",
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        pressure_capture_report_payload as implementation,
     )
-    return {
-        **_read_json(capture_dir / "pressure_capture_manifest.json"),
-        "pressure_capture_steps": _read_json(capture_dir / "pressure_capture_steps.json"),
-        "pressure_capture_artifacts": _read_json(capture_dir / "pressure_capture_artifacts.json"),
-        "capture_dir": str(capture_dir),
-    }
+
+    return implementation(**arguments)
 
 
 def validate_pressure_capture_artifact(
     *, capture_id: str, output_dir: Path = DEFAULT_PRESSURE_CAPTURE_DIR
 ) -> dict[str, Any]:
-    capture_dir = output_dir / capture_id
-    manifest = _read_optional_json(capture_dir / "pressure_capture_manifest.json") or {}
-    steps = _read_optional_json(capture_dir / "pressure_capture_steps.json") or {}
-    checks = [
-        _check("manifest_exists", (capture_dir / "pressure_capture_manifest.json").exists(), ""),
-        _check("steps_exists", (capture_dir / "pressure_capture_steps.json").exists(), ""),
-        _check("artifacts_exists", (capture_dir / "pressure_capture_artifacts.json").exists(), ""),
-        _check("report_exists", (capture_dir / "pressure_capture_report.md").exists(), ""),
-        _check("capture_id_matches", manifest.get("capture_id") == capture_id, ""),
-        _check(
-            "no_trigger_skip_or_force",
-            steps.get("trigger_status") != "NO_TRIGGER"
-            or manifest.get("status") == "SKIPPED"
-            or steps.get("manual_force") is True,
-            "NO_TRIGGER must skip unless force",
-        ),
-        _check("broker_action_false", steps.get("broker_action_allowed") is False, ""),
-        _check("production_effect_none", steps.get("production_effect") == "none", ""),
-    ]
-    return _validation_payload(
-        report_type="etf_dynamic_v3_pressure_capture_validation",
-        artifact_id_key="capture_id",
-        artifact_id=capture_id,
-        checks=checks,
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        validate_pressure_capture_artifact as implementation,
     )
+
+    return implementation(**arguments)
 
 
 def update_pressure_sample_ledger(
@@ -733,48 +427,12 @@ def update_pressure_sample_ledger(
     config_path: Path = DEFAULT_FORWARD_PRESSURE_CAPTURE_CONFIG_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    inventory = _latest_pressure_inventory(pressure_backfill_dir)
-    required_forward = _required_forward_samples(config_path)
-    samples = [_pressure_sample_row(row) for row in inventory]
-    summary = _pressure_sample_summary(samples, required_forward=required_forward)
-    ledger_id = _stable_id("pressure-sample-ledger", generated.isoformat(), len(samples))
-    ledger_dir = _unique_dir(output_dir / ledger_id)
-    ledger_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_pressure_sample_ledger_manifest",
-        "ledger_id": ledger_dir.name,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if samples else "PASS_WITH_WARNINGS",
-        "market_regime": "ai_after_chatgpt",
-        "pressure_sample_ledger_manifest_path": str(
-            ledger_dir / "pressure_sample_ledger_manifest.json"
-        ),
-        "pressure_samples_path": str(ledger_dir / "pressure_samples.jsonl"),
-        "pressure_sample_summary_path": str(ledger_dir / "pressure_sample_summary.json"),
-        "pressure_sample_ledger_report_path": str(ledger_dir / "pressure_sample_ledger_report.md"),
-        **_artifact_safety(),
-    }
-    _write_json(ledger_dir / "pressure_sample_ledger_manifest.json", manifest)
-    _write_jsonl(ledger_dir / "pressure_samples.jsonl", samples)
-    _write_json(ledger_dir / "pressure_sample_summary.json", summary)
-    _write_text(
-        ledger_dir / "pressure_sample_ledger_report.md",
-        render_pressure_sample_ledger_report(manifest, summary),
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        update_pressure_sample_ledger as implementation,
     )
-    _update_latest_pointer(
-        "latest_pressure_sample_ledger",
-        ledger_dir.name,
-        ledger_dir / "pressure_sample_ledger_manifest.json",
-    )
-    return {
-        "ledger_id": ledger_dir.name,
-        "ledger_dir": ledger_dir,
-        "manifest": manifest,
-        "pressure_samples": samples,
-        "pressure_sample_summary": summary,
-    }
+
+    return implementation(**arguments)
 
 
 def pressure_sample_ledger_report_payload(
@@ -783,70 +441,23 @@ def pressure_sample_ledger_report_payload(
     latest: bool = False,
     output_dir: Path = DEFAULT_PRESSURE_SAMPLE_LEDGER_DIR,
 ) -> dict[str, Any]:
-    ledger_dir = _artifact_dir_from_latest(
-        output_dir=output_dir,
-        artifact_id=ledger_id if not latest else None,
-        pointer_name="latest_pressure_sample_ledger",
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        pressure_sample_ledger_report_payload as implementation,
     )
-    return {
-        **_read_json(ledger_dir / "pressure_sample_ledger_manifest.json"),
-        "pressure_samples": _read_jsonl(ledger_dir / "pressure_samples.jsonl"),
-        "pressure_sample_summary": _read_json(ledger_dir / "pressure_sample_summary.json"),
-        "ledger_dir": str(ledger_dir),
-    }
+
+    return implementation(**arguments)
 
 
 def validate_pressure_sample_ledger_artifact(
     *, ledger_id: str, output_dir: Path = DEFAULT_PRESSURE_SAMPLE_LEDGER_DIR
 ) -> dict[str, Any]:
-    ledger_dir = output_dir / ledger_id
-    manifest = _read_optional_json(ledger_dir / "pressure_sample_ledger_manifest.json") or {}
-    samples = _read_jsonl(ledger_dir / "pressure_samples.jsonl")
-    summary = _read_optional_json(ledger_dir / "pressure_sample_summary.json") or {}
-    checks = [
-        _check(
-            "manifest_exists",
-            (ledger_dir / "pressure_sample_ledger_manifest.json").exists(),
-            "",
-        ),
-        _check("samples_exists", (ledger_dir / "pressure_samples.jsonl").exists(), ""),
-        _check("summary_exists", (ledger_dir / "pressure_sample_summary.json").exists(), ""),
-        _check("report_exists", (ledger_dir / "pressure_sample_ledger_report.md").exists(), ""),
-        _check("ledger_id_matches", manifest.get("ledger_id") == ledger_id, ""),
-        _check(
-            "source_modes_valid",
-            all(_text(row.get("source_mode")) in SOURCE_MODES for row in samples),
-            "source modes",
-        ),
-        _check(
-            "simulation_not_approval_eligible",
-            all(
-                row.get("can_support_rule_approval") is False
-                for row in samples
-                if row.get("source_mode") == "BACKTEST_SIMULATION"
-            ),
-            "simulation not approval eligible",
-        ),
-        _check(
-            "summary_counts_present",
-            all(
-                key in summary
-                for key in (
-                    "forward_samples",
-                    "pit_replay_samples",
-                    "simulation_samples",
-                    "progress_to_requirement",
-                )
-            ),
-            "summary source counts",
-        ),
-    ]
-    return _validation_payload(
-        report_type="etf_dynamic_v3_pressure_sample_ledger_validation",
-        artifact_id_key="ledger_id",
-        artifact_id=ledger_id,
-        checks=checks,
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        validate_pressure_sample_ledger_artifact as implementation,
     )
+
+    return implementation(**arguments)
 
 
 def run_weekly_defensive_evidence_update(
@@ -856,56 +467,12 @@ def run_weekly_defensive_evidence_update(
     ledger_dir: Path = DEFAULT_PRESSURE_SAMPLE_LEDGER_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    ledger_payload = _latest_ledger_payload(ledger_dir)
-    samples = _records(ledger_payload.get("pressure_samples"))
-    ledger_summary = _mapping(ledger_payload.get("pressure_sample_summary"))
-    weekly_summary = _weekly_defensive_summary(
-        week_ending=week_ending,
-        samples=samples,
-        ledger_summary=ledger_summary,
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        run_weekly_defensive_evidence_update as implementation,
     )
-    weekly_defensive_id = _stable_id(
-        "weekly-defensive-evidence",
-        week_ending.isoformat(),
-        generated.isoformat(),
-    )
-    weekly_dir = _unique_dir(output_dir / weekly_defensive_id)
-    weekly_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weekly_defensive_manifest",
-        "weekly_defensive_id": weekly_dir.name,
-        "week_ending": week_ending.isoformat(),
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": "ai_after_chatgpt",
-        "weekly_defensive_manifest_path": str(weekly_dir / "weekly_defensive_manifest.json"),
-        "weekly_defensive_summary_path": str(weekly_dir / "weekly_defensive_summary.json"),
-        "weekly_defensive_report_path": str(weekly_dir / "weekly_defensive_report.md"),
-        "reader_brief_section_path": str(weekly_dir / "reader_brief_section.md"),
-        **_artifact_safety(),
-    }
-    reader_brief = render_weekly_defensive_reader_brief(weekly_summary)
-    _write_json(weekly_dir / "weekly_defensive_manifest.json", manifest)
-    _write_json(weekly_dir / "weekly_defensive_summary.json", weekly_summary)
-    _write_text(
-        weekly_dir / "weekly_defensive_report.md",
-        render_weekly_defensive_report(manifest, weekly_summary),
-    )
-    _write_text(weekly_dir / "reader_brief_section.md", reader_brief)
-    _update_latest_pointer(
-        "latest_weekly_defensive_evidence",
-        weekly_dir.name,
-        weekly_dir / "weekly_defensive_manifest.json",
-    )
-    return {
-        "weekly_defensive_id": weekly_dir.name,
-        "weekly_defensive_dir": weekly_dir,
-        "manifest": manifest,
-        "weekly_defensive_summary": weekly_summary,
-        "reader_brief_section": reader_brief,
-    }
+
+    return implementation(**arguments)
 
 
 def weekly_defensive_evidence_report_payload(
@@ -914,17 +481,12 @@ def weekly_defensive_evidence_report_payload(
     latest: bool = False,
     output_dir: Path = DEFAULT_WEEKLY_DEFENSIVE_EVIDENCE_DIR,
 ) -> dict[str, Any]:
-    weekly_dir = _artifact_dir_from_latest(
-        output_dir=output_dir,
-        artifact_id=weekly_defensive_id if not latest else None,
-        pointer_name="latest_weekly_defensive_evidence",
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        weekly_defensive_evidence_report_payload as implementation,
     )
-    return {
-        **_read_json(weekly_dir / "weekly_defensive_manifest.json"),
-        "weekly_defensive_summary": _read_json(weekly_dir / "weekly_defensive_summary.json"),
-        "reader_brief_section": _read_text(weekly_dir / "reader_brief_section.md"),
-        "weekly_defensive_dir": str(weekly_dir),
-    }
+
+    return implementation(**arguments)
 
 
 def validate_weekly_defensive_evidence_artifact(
@@ -932,33 +494,12 @@ def validate_weekly_defensive_evidence_artifact(
     weekly_defensive_id: str,
     output_dir: Path = DEFAULT_WEEKLY_DEFENSIVE_EVIDENCE_DIR,
 ) -> dict[str, Any]:
-    weekly_dir = output_dir / weekly_defensive_id
-    manifest = _read_optional_json(weekly_dir / "weekly_defensive_manifest.json") or {}
-    summary = _read_optional_json(weekly_dir / "weekly_defensive_summary.json") or {}
-    checks = [
-        _check("manifest_exists", (weekly_dir / "weekly_defensive_manifest.json").exists(), ""),
-        _check("summary_exists", (weekly_dir / "weekly_defensive_summary.json").exists(), ""),
-        _check("report_exists", (weekly_dir / "weekly_defensive_report.md").exists(), ""),
-        _check("reader_brief_exists", (weekly_dir / "reader_brief_section.md").exists(), ""),
-        _check(
-            "weekly_defensive_id_matches",
-            manifest.get("weekly_defensive_id") == weekly_defensive_id,
-            "",
-        ),
-        _check(
-            "rule_status_research_only",
-            summary.get("defensive_rule_status") == "RESEARCH_ONLY",
-            "",
-        ),
-        _check("policy_change_false", summary.get("policy_change_allowed") is False, ""),
-        _check("safety_no_production", manifest.get("production_effect") == "none", ""),
-    ]
-    return _validation_payload(
-        report_type="etf_dynamic_v3_weekly_defensive_evidence_validation",
-        artifact_id_key="weekly_defensive_id",
-        artifact_id=weekly_defensive_id,
-        checks=checks,
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_forward_pressure import (
+        validate_weekly_defensive_evidence_artifact as implementation,
     )
+
+    return implementation(**arguments)
 
 
 def render_defensive_hypothesis_deep_dive_report(

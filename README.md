@@ -1094,7 +1094,15 @@ views和`defensive_research_synthesis_v1` policy；validator重验live source/po
 当前source-backed fixture为3个simulation distinct events、0 forward/PIT events，得到2
 supporting、1 contradicting、0 mixed，label=`POTENTIALLY_MISLEADING`，Research Note仍为
 `RESEARCH_ONLY/forward_support=NONE`。这不批准rename、mitigation或rule；TRADING-194～198
-Forward Pressure Capture保持下一独立slice。
+Forward Pressure Capture由下一独立slice治理。
+ARCH-004G2.4CG 将 TRADING-194～198 的15个callback迁至
+`src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_forward_pressure.py`，
+真实计算owner为`src/ai_trading_system/etf_portfolio/dynamic_v3_forward_pressure.py`。
+Plan、Trigger、Capture、Ledger、Weekly分别写入bounded `*.v2` input snapshot；Trigger在
+正式目录创建前完成cached DQ，Capture冻结并验证Trigger→Tag→Backfill→Compare exact
+lineage，Ledger/Weekly按cutoff语义选validated source并以`source_mode+source_event_id`
+distinct event计数。Validator重验live policy/cache/source/selection并逐byte重建全部views；
+DQ skip只允许显式test fixture。旧领域入口仅保留惰性兼容转发，CLI路径与参数不变。
 TRADING-199_to_203_MANUAL_PORTFOLIO_GUARDRAILS 在 dynamic v3 rescue shadow shortlist
 和 position advisory 之上新增严格 manual snapshot / exposure / drift / execution
 guardrail / review pack 链路。CLI 包括 `manual-portfolio validate/normalize/report`、
