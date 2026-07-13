@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -36,6 +37,8 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
 from ai_trading_system.etf_portfolio.dynamic_v3_outcome_accumulation import (
     DEFAULT_CONSENSUS_RISK_DIR,
     DEFAULT_LIMITED_VS_NOTRADE_DIR,
+    validate_consensus_risk_artifact,
+    validate_limited_vs_notrade_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
@@ -61,6 +64,7 @@ DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH = (
     DEFAULT_RULE_OWNER_DECISION_DIR / "rule_owner_decision_journal.jsonl"
 )
 CONFIRMATION_REGISTRY_SNAPSHOT_SCHEMA_VERSION = "confirmation_registry_input_snapshot.v2"
+CONFIRMATION_PROGRESS_SNAPSHOT_SCHEMA_VERSION = "confirmation_progress_input_snapshot.v2"
 
 PROGRESS_STATUSES = {
     "INSUFFICIENT_EVENTS",
@@ -125,9 +129,7 @@ def register_confirmation_targets(
     plan_failures = _mapping(plan_json.get("failure_conditions.json"))
     targets = _registry_targets_from_plan(plan_targets, plan_failures)
     preimage_text = (
-        registry_yaml_path.read_text(encoding="utf-8")
-        if registry_yaml_path.is_file()
-        else ""
+        registry_yaml_path.read_text(encoding="utf-8") if registry_yaml_path.is_file() else ""
     )
     preimage = _read_yaml_optional(registry_yaml_path)
     if preimage.get("source_confirmation_plan_id") == confirmation_plan_id:
@@ -250,9 +252,7 @@ def _confirmation_registry_plan_bundle(plan_dir: Path) -> dict[str, Any]:
         "source_dir": str(plan_dir),
         "json": {name: _read_json(plan_dir / name) for name in json_files},
         "text": {name: _read_text(plan_dir / name) for name in text_files},
-        "file_contents": {
-            name: _read_text(plan_dir / name) for name in json_files + text_files
-        },
+        "file_contents": {name: _read_text(plan_dir / name) for name in json_files + text_files},
     }
 
 
@@ -434,9 +434,7 @@ def validate_confirmation_targets_artifact(
             targets=expected_targets,
             registry_yaml_path=registry_yaml_path,
         )
-        expected_report = render_confirmation_registry_report(
-            expected_manifest, expected_registry
-        )
+        expected_report = render_confirmation_registry_report(expected_manifest, expected_registry)
         materialized = _read_yaml_optional(registry_yaml_path)
         if materialized.get("registry_id") == registry_id and materialized != expected_materialized:
             source_errors.append("current materialized registry changed")
@@ -517,39 +515,160 @@ def validate_confirmation_targets_artifact(
     )
 
 
-def update_confirmation_progress(
-    *,
-    registry_id: str,
-    registry_dir: Path = DEFAULT_CONFIRMATION_REGISTRY_DIR,
-    output_dir: Path = DEFAULT_CONFIRMATION_PROGRESS_DIR,
-    limited_vs_notrade_dir: Path = DEFAULT_LIMITED_VS_NOTRADE_DIR,
-    consensus_risk_dir: Path = DEFAULT_CONSENSUS_RISK_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    registry_payload = confirmation_targets_report_payload(
-        registry_id=registry_id,
-        output_dir=registry_dir,
+def _confirmation_progress_registry_bundle(registry_dir: Path) -> dict[str, Any]:
+    json_files = (
+        "confirmation_registry_manifest.json",
+        "confirmation_registry_input_snapshot.json",
     )
-    registry = _mapping(registry_payload.get("registered_targets"))
-    limited_payload, limited_missing = _latest_limited_payload(limited_vs_notrade_dir)
-    consensus_payload, consensus_missing = _latest_consensus_payload(consensus_risk_dir)
-    rows = [
-        _progress_row(
-            target,
-            limited_payload=limited_payload,
-            limited_missing=limited_missing,
-            consensus_payload=consensus_payload,
-            consensus_missing=consensus_missing,
-            generated=generated,
+    yaml_files = ("registered_targets.yaml",)
+    text_files = ("confirmation_targets_report.md",)
+    return {
+        "source_dir": str(registry_dir),
+        "json": {name: _read_json(registry_dir / name) for name in json_files},
+        "yaml": {name: _read_yaml(registry_dir / name) for name in yaml_files},
+        "text": {name: _read_text(registry_dir / name) for name in text_files},
+        "file_contents": {
+            name: _read_text(registry_dir / name) for name in json_files + yaml_files + text_files
+        },
+    }
+
+
+def _progress_source_kind(target_id: str) -> str:
+    mapping = {
+        "limited_adjustment_vs_no_trade": "limited_vs_notrade",
+        "defensive_limited_adjustment_drawdown": "limited_vs_notrade",
+        "consensus_target_risk": "consensus_risk",
+    }
+    if target_id not in mapping:
+        raise DynamicV3ConfirmationCycleError(f"unsupported confirmation target: {target_id}")
+    return mapping[target_id]
+
+
+def _confirmation_progress_source_bundle(*, kind: str, source_dir: Path) -> dict[str, Any]:
+    if kind == "limited_vs_notrade":
+        json_files = (
+            "limited_vs_notrade_manifest.json",
+            "window_comparison_metrics.json",
+            "regime_breakdown.json",
+            "limited_vs_notrade_source_snapshot.json",
         )
-        for target in _records(registry.get("targets"))
-    ]
-    summary = _progress_summary(rows, registry_id, generated)
-    progress_id = _stable_id("confirmation-progress", registry_id, generated)
-    progress_dir = _unique_dir(output_dir / progress_id)
-    progress_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
+        jsonl_files = ("sample_inventory.jsonl",)
+        text_files = ("limited_vs_notrade_report.md",)
+    elif kind == "consensus_risk":
+        json_files = (
+            "consensus_risk_manifest.json",
+            "consensus_exposure_summary.json",
+            "consensus_drawdown_risk.json",
+            "consensus_turnover_risk.json",
+            "consensus_risk_source_snapshot.json",
+        )
+        jsonl_files = ("consensus_exposure_samples.jsonl", "consensus_drawdown_pairs.jsonl")
+        text_files = ("consensus_risk_report.md",)
+    else:
+        raise DynamicV3ConfirmationCycleError(f"unsupported progress source kind: {kind}")
+    return {
+        "source_dir": str(source_dir),
+        "json": {name: _read_json(source_dir / name) for name in json_files},
+        "jsonl": {name: _read_jsonl(source_dir / name) for name in jsonl_files},
+        "text": {name: _read_text(source_dir / name) for name in text_files},
+        "file_contents": {
+            name: _read_text(source_dir / name) for name in json_files + jsonl_files + text_files
+        },
+    }
+
+
+def _select_confirmation_progress_source(
+    *, kind: str, output_dir: Path, generated: datetime
+) -> dict[str, Any]:
+    manifest_name = (
+        "limited_vs_notrade_manifest.json"
+        if kind == "limited_vs_notrade"
+        else "consensus_risk_manifest.json"
+    )
+    id_key = "focus_id" if kind == "limited_vs_notrade" else "risk_id"
+    candidates: list[tuple[datetime, str, Path]] = []
+    if output_dir.is_dir():
+        for child in output_dir.iterdir():
+            if not child.is_dir() or not (child / manifest_name).is_file():
+                continue
+            manifest = _read_json(child / manifest_name)
+            artifact_id = _text(manifest.get(id_key))
+            source_generated = _datetime_from_any(manifest.get("generated_at"))
+            if not artifact_id or artifact_id != child.name or source_generated is None:
+                raise DynamicV3ConfirmationCycleError(f"{kind} source identity/time invalid")
+            if source_generated <= generated:
+                candidates.append((source_generated, artifact_id, child))
+    if not candidates:
+        return {
+            "source_kind": kind,
+            "selection_status": "MISSING",
+            "artifact_id": None,
+            "source_root": str(output_dir),
+            "source_dir": None,
+            "validation": None,
+            "bundle": None,
+        }
+    identities = [(item[0].isoformat(), item[1]) for item in candidates]
+    if len(identities) != len(set(identities)):
+        raise DynamicV3ConfirmationCycleError(f"duplicate {kind} source identity")
+    _, artifact_id, source_dir = max(candidates, key=lambda item: (item[0], item[1]))
+    validation = (
+        validate_limited_vs_notrade_artifact(focus_id=artifact_id, output_dir=output_dir)
+        if kind == "limited_vs_notrade"
+        else validate_consensus_risk_artifact(risk_id=artifact_id, output_dir=output_dir)
+    )
+    if validation.get("status") != "PASS":
+        raise DynamicV3ConfirmationCycleError(f"{kind} source validation failed")
+    return {
+        "source_kind": kind,
+        "selection_status": "SELECTED",
+        "artifact_id": artifact_id,
+        "source_root": str(output_dir),
+        "source_dir": str(source_dir),
+        "validation": validation,
+        "bundle": _confirmation_progress_source_bundle(kind=kind, source_dir=source_dir),
+    }
+
+
+def _confirmation_progress_rows_from_snapshot(
+    snapshot: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    generated = _datetime_from_any(snapshot.get("generated_at"))
+    if generated is None:
+        raise DynamicV3ConfirmationCycleError("progress snapshot generated_at invalid")
+    registry_bundle = _mapping(snapshot.get("registry_bundle"))
+    registry = _mapping(_mapping(registry_bundle.get("yaml")).get("registered_targets.yaml"))
+    sources = _mapping(snapshot.get("evidence_sources"))
+    rows = []
+    for target in _records(registry.get("targets")):
+        kind = _progress_source_kind(_text(target.get("target_id")))
+        source = _mapping(sources.get(kind))
+        if source.get("selection_status") not in {"SELECTED", "MISSING"}:
+            raise DynamicV3ConfirmationCycleError(f"{kind} selection status invalid")
+        bundle = (
+            _mapping(source.get("bundle")) if source.get("selection_status") == "SELECTED" else {}
+        )
+        rows.append(
+            _progress_row_v2(
+                target,
+                source_kind=kind,
+                source_bundle=bundle,
+                source_missing=source.get("selection_status") == "MISSING",
+                generated=generated,
+            )
+        )
+    return rows
+
+
+def _confirmation_progress_manifest(
+    *,
+    progress_dir: Path,
+    registry_id: str,
+    generated: datetime,
+    rows: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_confirmation_progress_manifest",
         "progress_id": progress_dir.name,
@@ -565,6 +684,9 @@ def update_confirmation_progress(
         "target_progress_path": str(progress_dir / "target_progress.jsonl"),
         "target_progress_summary_path": str(progress_dir / "target_progress_summary.json"),
         "confirmation_progress_report_path": str(progress_dir / "confirmation_progress_report.md"),
+        "confirmation_progress_input_snapshot_path": str(
+            progress_dir / "confirmation_progress_input_snapshot.json"
+        ),
         "market_regime": "ai_after_chatgpt",
         "production_effect": "none",
         "broker_action_allowed": False,
@@ -575,13 +697,86 @@ def update_confirmation_progress(
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+
+
+def update_confirmation_progress(
+    *,
+    registry_id: str,
+    registry_dir: Path = DEFAULT_CONFIRMATION_REGISTRY_DIR,
+    output_dir: Path = DEFAULT_CONFIRMATION_PROGRESS_DIR,
+    limited_vs_notrade_dir: Path = DEFAULT_LIMITED_VS_NOTRADE_DIR,
+    consensus_risk_dir: Path = DEFAULT_CONSENSUS_RISK_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3ConfirmationCycleError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
+    registry_validation = validate_confirmation_targets_artifact(
+        registry_id=registry_id, output_dir=registry_dir
+    )
+    if registry_validation.get("status") != "PASS":
+        raise DynamicV3ConfirmationCycleError("confirmation registry validation failed")
+    registry_artifact_dir = registry_dir / registry_id
+    registry_bundle = _confirmation_progress_registry_bundle(registry_artifact_dir)
+    registry_manifest = _mapping(
+        _mapping(registry_bundle.get("json")).get("confirmation_registry_manifest.json")
+    )
+    registry_generated = _datetime_from_any(registry_manifest.get("generated_at"))
+    if registry_generated is None or registry_generated > generated:
+        raise DynamicV3ConfirmationCycleError("confirmation registry generated after cutoff")
+    registry = _mapping(_mapping(registry_bundle.get("yaml")).get("registered_targets.yaml"))
+    targets = _records(registry.get("targets"))
+    source_kinds = {_progress_source_kind(_text(row.get("target_id"))) for row in targets}
+    evidence_sources = {
+        kind: _select_confirmation_progress_source(
+            kind=kind,
+            output_dir=(
+                limited_vs_notrade_dir if kind == "limited_vs_notrade" else consensus_risk_dir
+            ),
+            generated=generated,
+        )
+        for kind in sorted(source_kinds)
+    }
+    snapshot = {
+        "schema_version": CONFIRMATION_PROGRESS_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_confirmation_progress_input_snapshot",
+        "generated_at": generated.isoformat(),
+        "registry_id": registry_id,
+        "registry_root": str(registry_dir),
+        "registry_bundle": registry_bundle,
+        "registry_validation": registry_validation,
+        "evidence_sources": evidence_sources,
+        "selection_inventory": [
+            {
+                "source_kind": kind,
+                "selection_status": _mapping(source).get("selection_status"),
+                "artifact_id": _mapping(source).get("artifact_id"),
+                "source_dir": _mapping(source).get("source_dir"),
+            }
+            for kind, source in sorted(evidence_sources.items())
+        ],
+        "production_effect": "none",
+    }
+    rows = _confirmation_progress_rows_from_snapshot(snapshot)
+    summary = _progress_summary(rows, registry_id, generated)
+    progress_id = _stable_id("confirmation-progress", registry_id, generated)
+    progress_dir = _unique_dir(output_dir / progress_id)
+    summary["progress_id"] = progress_dir.name
+    manifest = _confirmation_progress_manifest(
+        progress_dir=progress_dir,
+        registry_id=registry_id,
+        generated=generated,
+        rows=rows,
+        summary=summary,
+    )
+    report = render_confirmation_progress_report(manifest, rows, summary)
+    progress_dir.mkdir(parents=True, exist_ok=False)
     _write_json(progress_dir / "confirmation_progress_manifest.json", manifest)
     _write_jsonl(progress_dir / "target_progress.jsonl", rows)
     _write_json(progress_dir / "target_progress_summary.json", summary)
-    _write_text(
-        progress_dir / "confirmation_progress_report.md",
-        render_confirmation_progress_report(manifest, rows, summary),
-    )
+    _write_json(progress_dir / "confirmation_progress_input_snapshot.json", snapshot)
+    _write_text(progress_dir / "confirmation_progress_report.md", report)
     _update_latest_pointer(
         "latest_confirmation_progress",
         progress_dir.name,
@@ -593,6 +788,7 @@ def update_confirmation_progress(
         "manifest": manifest,
         "target_progress": rows,
         "target_progress_summary": summary,
+        "input_snapshot": snapshot,
     }
 
 
@@ -627,6 +823,79 @@ def validate_confirmation_progress_artifact(
     manifest = _read_optional_json(progress_dir / "confirmation_progress_manifest.json") or {}
     rows = _read_jsonl(progress_dir / "target_progress.jsonl")
     summary = _read_optional_json(progress_dir / "target_progress_summary.json") or {}
+    snapshot = _read_optional_json(progress_dir / "confirmation_progress_input_snapshot.json") or {}
+    source_errors: list[str] = []
+    recompute_error = ""
+    expected_rows: list[dict[str, Any]] = []
+    expected_summary: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_snapshot: dict[str, Any] = {}
+    expected_report = ""
+    try:
+        if snapshot.get("schema_version") != CONFIRMATION_PROGRESS_SNAPSHOT_SCHEMA_VERSION:
+            source_errors.append("progress snapshot schema mismatch")
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        registry_id = _text(snapshot.get("registry_id"))
+        registry_root = Path(_text(snapshot.get("registry_root")))
+        if generated is None or not registry_id:
+            raise DynamicV3ConfirmationCycleError("progress snapshot identity/time invalid")
+        live_registry_validation = validate_confirmation_targets_artifact(
+            registry_id=registry_id, output_dir=registry_root
+        )
+        if live_registry_validation.get(
+            "status"
+        ) != "PASS" or live_registry_validation != snapshot.get("registry_validation"):
+            source_errors.append("confirmation registry validation changed")
+        live_registry_bundle = _confirmation_progress_registry_bundle(registry_root / registry_id)
+        if live_registry_bundle != snapshot.get("registry_bundle"):
+            source_errors.append("confirmation registry bundle changed")
+        frozen_sources = _mapping(snapshot.get("evidence_sources"))
+        expected_sources: dict[str, Any] = {}
+        for kind, source_value in frozen_sources.items():
+            source = _mapping(source_value)
+            source_root = Path(_text(source.get("source_root")))
+            expected_source = _select_confirmation_progress_source(
+                kind=_text(kind), output_dir=source_root, generated=generated
+            )
+            expected_sources[_text(kind)] = expected_source
+            if expected_source != source:
+                source_errors.append(f"{kind} evidence selection changed")
+        expected_inventory = [
+            {
+                "source_kind": kind,
+                "selection_status": _mapping(source).get("selection_status"),
+                "artifact_id": _mapping(source).get("artifact_id"),
+                "source_dir": _mapping(source).get("source_dir"),
+            }
+            for kind, source in sorted(expected_sources.items())
+        ]
+        expected_snapshot = {
+            "schema_version": CONFIRMATION_PROGRESS_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_confirmation_progress_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "registry_id": registry_id,
+            "registry_root": str(registry_root),
+            "registry_bundle": live_registry_bundle,
+            "registry_validation": live_registry_validation,
+            "evidence_sources": expected_sources,
+            "selection_inventory": expected_inventory,
+            "production_effect": "none",
+        }
+        expected_rows = _confirmation_progress_rows_from_snapshot(expected_snapshot)
+        expected_summary = _progress_summary(expected_rows, registry_id, generated)
+        expected_summary["progress_id"] = progress_id
+        expected_manifest = _confirmation_progress_manifest(
+            progress_dir=progress_dir,
+            registry_id=registry_id,
+            generated=generated,
+            rows=expected_rows,
+            summary=expected_summary,
+        )
+        expected_report = render_confirmation_progress_report(
+            expected_manifest, expected_rows, expected_summary
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
     checks = [
         _check(
             "manifest_exists",
@@ -636,6 +905,11 @@ def validate_confirmation_progress_artifact(
         _check("progress_jsonl_exists", (progress_dir / "target_progress.jsonl").exists(), ""),
         _check("summary_exists", (progress_dir / "target_progress_summary.json").exists(), ""),
         _check("report_exists", (progress_dir / "confirmation_progress_report.md").exists(), ""),
+        _check(
+            "snapshot_exists",
+            (progress_dir / "confirmation_progress_input_snapshot.json").exists(),
+            "",
+        ),
         _check("progress_id_matches", manifest.get("progress_id") == progress_id, ""),
         _check(
             "progress_status_valid",
@@ -651,10 +925,42 @@ def validate_confirmation_progress_artifact(
             ),
             "required event floor",
         ),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live sources"),
+        _check("rows_recomputed", rows == expected_rows, "snapshot"),
+        _check("summary_recomputed", summary == expected_summary, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
         _check(
-            "summary_counts_match",
-            _int(summary.get("targets_total")) == len(rows),
-            "summary count",
+            "json_bytes_recomputed",
+            all(
+                path.is_file()
+                and _read_text(path)
+                == json.dumps(_jsonable(payload), ensure_ascii=False, indent=2, sort_keys=True)
+                + "\n"
+                for path, payload in (
+                    (progress_dir / "confirmation_progress_manifest.json", expected_manifest),
+                    (progress_dir / "target_progress_summary.json", expected_summary),
+                    (progress_dir / "confirmation_progress_input_snapshot.json", expected_snapshot),
+                )
+            ),
+            "canonical JSON bytes",
+        ),
+        _check(
+            "jsonl_bytes_recomputed",
+            (progress_dir / "target_progress.jsonl").is_file()
+            and _read_text(progress_dir / "target_progress.jsonl")
+            == "".join(
+                json.dumps(_jsonable(row), ensure_ascii=False, sort_keys=True) + "\n"
+                for row in expected_rows
+            ),
+            "canonical JSONL bytes",
+        ),
+        _check(
+            "report_recomputed",
+            (progress_dir / "confirmation_progress_report.md").is_file()
+            and _read_text(progress_dir / "confirmation_progress_report.md") == expected_report,
+            "report bytes",
         ),
         _check(
             "broker_action_forbidden",
@@ -844,9 +1150,7 @@ def run_rule_review_cycle(
         evaluation_id=evaluation_id,
         output_dir=evaluation_dir,
     )
-    registry_targets = _records(
-        _mapping(registry_payload.get("registered_targets")).get("targets")
-    )
+    registry_targets = _records(_mapping(registry_payload.get("registered_targets")).get("targets"))
     progress_rows = {
         _text(row.get("target_id")): row
         for row in _records(progress_payload.get("target_progress"))
@@ -1005,9 +1309,7 @@ def create_rule_owner_decision(
     matrix = _mapping(cycle_payload.get("rule_review_decision_matrix"))
     targets = _records(matrix.get("targets"))
     requiring_owner = [
-        _text(row.get("target_id"))
-        for row in targets
-        if row.get("owner_action_required") is True
+        _text(row.get("target_id")) for row in targets if row.get("owner_action_required") is True
     ]
     target_ids = requiring_owner or [_text(row.get("target_id")) for row in targets]
     decision_id = _stable_id("rule-owner-decision", cycle_id, generated)
@@ -1406,77 +1708,193 @@ def _registry_target(
     return result
 
 
-def _progress_row(
+def _progress_row_v2(
     target: Mapping[str, Any],
     *,
-    limited_payload: Mapping[str, Any],
-    limited_missing: bool,
-    consensus_payload: Mapping[str, Any],
-    consensus_missing: bool,
+    source_kind: str,
+    source_bundle: Mapping[str, Any],
+    source_missing: bool,
     generated: datetime,
 ) -> dict[str, Any]:
     target_id = _text(target.get("target_id"))
-    if target_id == "limited_adjustment_vs_no_trade":
-        metrics, available_by_window = _limited_metrics(limited_payload, _int_windows(target))
-        available = sum(available_by_window.values())
-        required = _int(target.get("required_forward_events"), 10)
-        blocking = _event_blockers(
-            available=available,
-            required=required,
-            available_by_window=available_by_window,
-            missing_source=limited_missing,
-            missing_source_reason="missing_limited_vs_notrade_artifact",
-        )
-        status = _progress_status(available, required, available_by_window, blocking)
-    elif target_id == "defensive_limited_adjustment_drawdown":
-        metrics, available_by_window = _defensive_metrics(limited_payload, _int_windows(target))
-        available = 0
-        required = _int(target.get("required_pressure_regime_events"), 5)
-        blocking = [
-            "missing_pressure_regime_forward_events",
-            "pressure_regime_tagged_outcomes_required",
+    windows = _strict_progress_windows(target)
+    required_key = (
+        "required_pressure_regime_events"
+        if target_id == "defensive_limited_adjustment_drawdown"
+        else "required_forward_events"
+    )
+    required_raw = target.get(required_key)
+    required = _int(required_raw)
+    if isinstance(required_raw, bool) or required <= 0:
+        raise DynamicV3ConfirmationCycleError(f"{target_id} missing positive {required_key}")
+    available_by_window = {window: 0 for window in windows}
+    metrics: dict[str, Any]
+    blocking: list[str] = []
+    if source_missing:
+        metrics = {
+            "aggregation_status": "INSUFFICIENT_DATA",
+            "metrics_by_window": [],
+        }
+        blocking.append(f"missing_{source_kind}_artifact")
+    elif source_kind == "limited_vs_notrade":
+        json_views = _mapping(source_bundle.get("json"))
+        samples = _records(_mapping(source_bundle.get("jsonl")).get("sample_inventory.jsonl"))
+        identities: set[tuple[str, int]] = set()
+        for row in samples:
+            sample_id = _text(row.get("sample_id"))
+            window = _int(row.get("window_days"))
+            identity = (sample_id, window)
+            if not sample_id or identity in identities:
+                raise DynamicV3ConfirmationCycleError("limited progress sample identity invalid")
+            identities.add(identity)
+            if (
+                window in available_by_window
+                and row.get("sample_status") == "AVAILABLE"
+                and _finite_or_none(row.get("relative_return")) is not None
+            ):
+                available_by_window[window] += 1
+        metric_rows = [
+            dict(row)
+            for row in _records(
+                _mapping(json_views.get("window_comparison_metrics.json")).get("by_window")
+            )
+            if _int(row.get("window_days")) in set(windows)
         ]
-        if limited_missing:
-            blocking.append("missing_limited_vs_notrade_artifact")
-        status = _progress_status(available, required, available_by_window, blocking)
+        if target_id == "defensive_limited_adjustment_drawdown":
+            available_by_window = {window: 0 for window in windows}
+            metrics = {
+                "aggregation_status": "INSUFFICIENT_PRESSURE_REGIME_TAGS",
+                "metrics_by_window": metric_rows,
+                "drawdown_delta_vs_no_trade": None,
+                "win_rate_vs_no_trade": None,
+                "pressure_regime_sample_status": "MISSING_PRESSURE_REGIME_TAGS",
+            }
+            blocking.extend(
+                [
+                    "missing_pressure_regime_forward_events",
+                    "pressure_regime_tagged_outcomes_required",
+                ]
+            )
+        else:
+            metrics = {
+                "aggregation_status": "WINDOW_METRICS_ONLY",
+                "metrics_by_window": metric_rows,
+                "win_rate_vs_no_trade": None,
+                "avg_relative_return": None,
+                "drawdown_delta": None,
+            }
+    elif source_kind == "consensus_risk":
+        json_views = _mapping(source_bundle.get("json"))
+        pairs = _records(_mapping(source_bundle.get("jsonl")).get("consensus_drawdown_pairs.jsonl"))
+        identities: set[tuple[str, int]] = set()
+        for row in pairs:
+            sample_id = _text(row.get("sample_id") or row.get("event_id"))
+            window = _int(row.get("window_days"))
+            identity = (sample_id, window)
+            if not sample_id or identity in identities:
+                raise DynamicV3ConfirmationCycleError("consensus progress sample identity invalid")
+            identities.add(identity)
+            if (
+                window in available_by_window
+                and row.get("sample_status") == "AVAILABLE"
+                and _finite_or_none(row.get("drawdown_delta_vs_no_trade")) is not None
+            ):
+                available_by_window[window] += 1
+        metrics = {
+            "aggregation_status": "WINDOW_METRICS_ONLY",
+            "metrics_by_window": _records(
+                _mapping(json_views.get("consensus_drawdown_risk.json")).get("window_results")
+            ),
+            "drawdown_delta_vs_limited_adjustment": None,
+            "drawdown_delta_vs_no_trade": None,
+            "turnover_delta": None,
+            "consensus_target_risk": _mapping(json_views.get("consensus_risk_manifest.json")).get(
+                "consensus_target_risk"
+            ),
+        }
+        blocking.append("missing_consensus_vs_limited_adjustment_drawdown_metric")
     else:
-        metrics, available_by_window = _consensus_metrics(consensus_payload, _int_windows(target))
-        available = sum(available_by_window.values())
-        required = _int(target.get("required_forward_events"), 10)
-        blocking = _event_blockers(
-            available=available,
-            required=required,
-            available_by_window=available_by_window,
-            missing_source=consensus_missing,
-            missing_source_reason="missing_consensus_risk_artifact",
-        )
-        if metrics.get("drawdown_delta_vs_limited_adjustment") is None:
-            blocking.append("missing_consensus_vs_limited_adjustment_drawdown_metric")
-        status = _progress_status(available, required, available_by_window, blocking)
+        raise DynamicV3ConfirmationCycleError(f"unsupported progress source kind: {source_kind}")
+    available = max(available_by_window.values(), default=0)
+    if available < required:
+        blocking.append("not_enough_forward_events")
+    missing_windows = [str(window) for window, count in available_by_window.items() if count <= 0]
+    if missing_windows:
+        blocking.append("missing_" + "_".join(missing_windows) + "d_windows")
+    status = _progress_status_v2(
+        available=available,
+        required=required,
+        available_by_window=available_by_window,
+        blocking=blocking,
+    )
     return {
         "target_id": target_id,
         "status": target.get("current_status"),
         "target_status": target.get("status"),
         "priority": target.get("priority"),
-        "windows": _int_windows(target),
-        "required_forward_events": _int(target.get("required_forward_events")),
-        "required_pressure_regime_events": _int(target.get("required_pressure_regime_events")),
-        "available_forward_events": available,
-        "available_pressure_regime_events": (
-            available if target_id == "defensive_limited_adjustment_drawdown" else 0
+        "windows": windows,
+        "required_forward_events": (
+            required if required_key == "required_forward_events" else None
         ),
+        "required_pressure_regime_events": (
+            required if required_key == "required_pressure_regime_events" else None
+        ),
+        "available_forward_events": (available if required_key == "required_forward_events" else 0),
+        "available_pressure_regime_events": (
+            available if required_key == "required_pressure_regime_events" else 0
+        ),
+        "available_event_count_unit": "unique_event_conservative_max_across_windows",
         "available_by_window": {str(key): value for key, value in available_by_window.items()},
         "current_metrics": metrics,
-        "success_criteria": _mapping(target.get("success_criteria")),
-        "failure_conditions": _mapping(target.get("failure_conditions")),
+        "success_criteria": dict(_mapping(target.get("success_criteria"))),
+        "failure_conditions": list(_records(target.get("failure_conditions"))),
         "progress_status": status,
         "blocking_reasons": sorted(set(blocking)),
+        "source_kind": source_kind,
+        "source_status": "MISSING" if source_missing else "VALIDATED",
         "last_updated": generated.isoformat(),
         "owner_approval_required": True,
         "auto_apply": False,
         "broker_action_allowed": False,
         "production_effect": "none",
     }
+
+
+def _strict_progress_windows(target: Mapping[str, Any]) -> list[int]:
+    raw = target.get("windows")
+    if not isinstance(raw, list) or not raw:
+        raise DynamicV3ConfirmationCycleError("confirmation target windows missing")
+    windows = [_int(value) for value in raw]
+    if any(isinstance(value, bool) for value in raw) or any(value <= 0 for value in windows):
+        raise DynamicV3ConfirmationCycleError("confirmation target windows invalid")
+    if len(windows) != len(set(windows)):
+        raise DynamicV3ConfirmationCycleError("confirmation target windows duplicate")
+    return windows
+
+
+def _finite_or_none(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    candidate = _float(value, default=float("nan"))
+    return candidate if math.isfinite(candidate) else None
+
+
+def _progress_status_v2(
+    *,
+    available: int,
+    required: int,
+    available_by_window: Mapping[int, int],
+    blocking: Sequence[str],
+) -> str:
+    if any(reason.startswith("invalid_") for reason in blocking):
+        return "BLOCKED"
+    if (
+        available >= required
+        and all(count > 0 for count in available_by_window.values())
+        and not blocking
+    ):
+        return "READY_FOR_EVALUATION"
+    return "IN_PROGRESS" if available > 0 else "INSUFFICIENT_EVENTS"
 
 
 def _progress_summary(
@@ -1512,8 +1930,7 @@ def _evaluation_row(row: Mapping[str, Any], *, generated: datetime) -> dict[str,
     criteria = _mapping(row.get("success_criteria"))
     metrics = _mapping(row.get("current_metrics"))
     criteria_results = {
-        name: _criteria_result(name, required, metrics)
-        for name, required in criteria.items()
+        name: _criteria_result(name, required, metrics) for name, required in criteria.items()
     }
     progress_status = _text(row.get("progress_status"))
     triggered = _failure_conditions_triggered(
@@ -1638,142 +2055,7 @@ def _cycle_recommendation(rows: Sequence[Mapping[str, Any]]) -> str:
     return "continue_tracking"
 
 
-def _latest_limited_payload(output_dir: Path) -> tuple[dict[str, Any], bool]:
-    try:
-        latest = _artifact_dir_from_latest(
-            output_dir=output_dir,
-            artifact_id=None,
-            pointer_name="latest_limited_vs_notrade",
-        )
-    except Exception:  # noqa: BLE001
-        return {}, True
-    return {
-        **(_read_optional_json(latest / "limited_vs_notrade_manifest.json") or {}),
-        "sample_inventory": _read_jsonl(latest / "sample_inventory.jsonl"),
-        "window_comparison_metrics": _read_optional_json(latest / "window_comparison_metrics.json")
-        or {},
-    }, False
-
-
-def _latest_consensus_payload(output_dir: Path) -> tuple[dict[str, Any], bool]:
-    try:
-        latest = _artifact_dir_from_latest(
-            output_dir=output_dir,
-            artifact_id=None,
-            pointer_name="latest_consensus_risk",
-        )
-    except Exception:  # noqa: BLE001
-        return {}, True
-    return {
-        **(_read_optional_json(latest / "consensus_risk_manifest.json") or {}),
-        "consensus_exposure_summary": _read_optional_json(
-            latest / "consensus_exposure_summary.json"
-        )
-        or {},
-        "consensus_drawdown_risk": _read_optional_json(latest / "consensus_drawdown_risk.json")
-        or {},
-        "consensus_turnover_risk": _read_optional_json(latest / "consensus_turnover_risk.json")
-        or {},
-    }, False
-
-
-def _limited_metrics(
-    payload: Mapping[str, Any], windows: Sequence[int]
-) -> tuple[dict[str, Any], dict[int, int]]:
-    by_window = _records(_mapping(payload.get("window_comparison_metrics")).get("by_window"))
-    selected = [row for row in by_window if _int(row.get("window_days")) in set(windows)]
-    available_by_window = {
-        window: sum(
-            _int(row.get("available_count"))
-            for row in selected
-            if _int(row.get("window_days")) == window
-        )
-        for window in windows
-    }
-    weights = [_int(row.get("available_count")) for row in selected]
-    return {
-        "win_rate_vs_no_trade": _weighted_avg(selected, "win_rate", weights),
-        "avg_relative_return": _weighted_avg(selected, "avg_relative_return", weights),
-        "drawdown_delta": _weighted_avg(selected, "avg_drawdown_delta", weights),
-    }, available_by_window
-
-
-def _defensive_metrics(
-    payload: Mapping[str, Any], windows: Sequence[int]
-) -> tuple[dict[str, Any], dict[int, int]]:
-    metrics, available = _limited_metrics(payload, windows)
-    return {
-        "drawdown_delta_vs_no_trade": metrics.get("drawdown_delta"),
-        "win_rate_vs_no_trade": metrics.get("win_rate_vs_no_trade"),
-        "pressure_regime_sample_status": "MISSING_PRESSURE_REGIME_TAGS",
-    }, available
-
-
-def _consensus_metrics(
-    payload: Mapping[str, Any], windows: Sequence[int]
-) -> tuple[dict[str, Any], dict[int, int]]:
-    drawdown_rows = _records(_mapping(payload.get("consensus_drawdown_risk")).get("window_results"))
-    available_by_window = {
-        window: sum(
-            _int(row.get("available_count"))
-            for row in drawdown_rows
-            if _int(row.get("window_days")) == window
-        )
-        for window in windows
-    }
-    selected = [row for row in drawdown_rows if _int(row.get("window_days")) in set(windows)]
-    weights = [_int(row.get("available_count")) for row in selected]
-    turnover = _mapping(payload.get("consensus_turnover_risk"))
-    return {
-        "drawdown_delta_vs_limited_adjustment": None,
-        "drawdown_delta_vs_no_trade": _weighted_avg(
-            selected, "drawdown_delta_vs_no_trade", weights
-        ),
-        "turnover_delta": _float(turnover.get("avg_turnover")),
-        "consensus_target_risk": _text(payload.get("consensus_target_risk"), "INSUFFICIENT_DATA"),
-    }, available_by_window
-
-
-def _event_blockers(
-    *,
-    available: int,
-    required: int,
-    available_by_window: Mapping[int, int],
-    missing_source: bool,
-    missing_source_reason: str,
-) -> list[str]:
-    reasons = []
-    if missing_source:
-        reasons.append(missing_source_reason)
-    if available < required:
-        reasons.append("not_enough_forward_events")
-    missing_windows = [str(window) for window, count in available_by_window.items() if count <= 0]
-    if missing_windows:
-        reasons.append("missing_" + "_".join(missing_windows) + "d_windows")
-    return reasons
-
-
-def _progress_status(
-    available: int,
-    required: int,
-    available_by_window: Mapping[int, int],
-    blocking: Sequence[str],
-) -> str:
-    if any(reason.startswith("invalid_") for reason in blocking):
-        return "BLOCKED"
-    all_windows_present = all(count > 0 for count in available_by_window.values())
-    if available >= required and all_windows_present and not blocking:
-        return "READY_FOR_EVALUATION"
-    if available >= max(1, int(required * 0.8)):
-        return "NEAR_READY"
-    if available > 0:
-        return "IN_PROGRESS"
-    return "INSUFFICIENT_EVENTS"
-
-
-def _criteria_result(
-    name: str, required: Any, metrics: Mapping[str, Any]
-) -> dict[str, Any]:
+def _criteria_result(name: str, required: Any, metrics: Mapping[str, Any]) -> dict[str, Any]:
     actual = _metric_actual(name, metrics)
     if actual is None:
         status = "INSUFFICIENT_DATA"
@@ -1805,9 +2087,7 @@ def _failure_conditions_triggered(
     triggered = []
     for condition, payload in failure_conditions.items():
         action = _text(_mapping(payload).get("action"))
-        if condition == "underperforms_no_trade" and _float(
-            metrics.get("avg_relative_return")
-        ) < 0:
+        if condition == "underperforms_no_trade" and _float(metrics.get("avg_relative_return")) < 0:
             triggered.append({"condition": condition, "action": action})
         elif condition in {
             "drawdown_worsening_persists",
@@ -1834,20 +2114,6 @@ def _failure_recommendation(row: Mapping[str, Any], triggered: Sequence[Mapping[
     return "manual_review_required"
 
 
-def _weighted_avg(
-    rows: Sequence[Mapping[str, Any]], key: str, weights: Sequence[int]
-) -> float | None:
-    pairs = [
-        (_float(row.get(key)), weight)
-        for row, weight in zip(rows, weights, strict=False)
-        if weight > 0 and row.get(key) is not None
-    ]
-    total = sum(weight for _, weight in pairs)
-    if total <= 0:
-        return None
-    return round(sum(value * weight for value, weight in pairs) / total, 6)
-
-
 def _required_event_count(row: Mapping[str, Any]) -> int:
     pressure = _int(row.get("required_pressure_regime_events"))
     forward = _int(row.get("required_forward_events"))
@@ -1858,13 +2124,6 @@ def _available_event_count(row: Mapping[str, Any]) -> int:
     pressure = _int(row.get("available_pressure_regime_events"))
     forward = _int(row.get("available_forward_events"))
     return pressure or forward
-
-
-def _int_windows(target: Mapping[str, Any]) -> list[int]:
-    raw = target.get("windows")
-    if not isinstance(raw, Sequence) or isinstance(raw, str | bytes):
-        return []
-    return [_int(item) for item in raw]
 
 
 def _read_owner_decisions(path: Path) -> list[dict[str, Any]]:

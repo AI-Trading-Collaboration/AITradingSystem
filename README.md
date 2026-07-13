@@ -984,11 +984,14 @@ TRADING-174_to_178_FORWARD_CONFIRMATION_CYCLE 把上述 static
 `validate-rule-owner-decision`。Artifacts 写入
 `reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_registry|confirmation_progress|confirmation_evaluation|rule_review_cycle|rule_owner_decision/`，
 并同步生成 reviewable
-`registry/etf_portfolio/dynamic_v3_rescue_forward_confirmation_targets.yaml`。Progress
-Registry register会先重验status=`AVAILABLE`的Forward Plan，冻结full bundle、generated cutoff与materialized registry preimage/postimage；只逐值注册source targets，同一Plan重复注册或unknown tracking status会在写件前阻断。Artifact和reviewable registry YAML均atomic写入；注册PASS不表示progress/evaluation/success。
-tracker 会读取 latest `limited-vs-notrade` 和 `consensus-risk` evidence；缺少样本、窗口或
-pressure-regime 标签时必须保持 `INSUFFICIENT_EVENTS` / `NOT_READY`，不得伪造
-READY。Rule review cycle 默认 `policy_change_allowed=false`；owner decision journal
+`registry/etf_portfolio/dynamic_v3_rescue_forward_confirmation_targets.yaml`。Registry
+register会先重验status=`AVAILABLE`的Forward Plan，冻结full bundle、generated cutoff与materialized registry preimage/postimage；只逐值注册source targets，同一Plan重复注册或unknown tracking status会在写件前阻断。Artifact和reviewable registry YAML均atomic写入；注册PASS不表示progress/evaluation/success。
+Progress tracker会先重验Registry，按cutoff的`generated_at/id`确定性选择validated
+`limited-vs-notrade`或`consensus-risk` evidence，并冻结full bundles/validations到
+`confirmation_progress_input_snapshot.v2`；不使用mtime、不把同一event跨window相加。
+缺少样本、窗口或pressure-regime标签时指标保持null且状态保持
+`INSUFFICIENT_EVENTS` / `NOT_READY`，不得用0或未治理near-ready阈值伪造READY。
+Rule review cycle 默认 `policy_change_allowed=false`；owner decision journal
 只记录人工决策，`approve_manual_policy_review` 也不自动修改配置。该闭环继续固定
 `auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`，不触发 broker、
 不进入 production、不修改 `position_advisory_v1.yaml`、policy、official target weights、

@@ -59,6 +59,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_candidate_observation as dynamic_v3_candidate_observation_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_confirmation_progress as dynamic_v3_confirmation_progress_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_confirmation_targets as dynamic_v3_confirmation_targets_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -253,6 +256,7 @@ __all__ = [
     "dynamic_v3_rescue_commands",
     "dynamic_v3_advisory_outcome_commands",
     "dynamic_v3_advisory_proposal_review_commands",
+    "dynamic_v3_confirmation_progress_commands",
     "dynamic_v3_confirmation_targets_commands",
     "dynamic_v3_forward_confirmation_plan_commands",
     "dynamic_v3_real_evaluation_commands",

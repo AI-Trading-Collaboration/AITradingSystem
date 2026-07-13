@@ -39,15 +39,12 @@ def test_confirmation_dashboard_summarizes_target_and_pressure_progress(
         generated_at=datetime(2026, 6, 10, 5, tzinfo=UTC),
     )
 
-    targets = {
-        row["target_id"]: row
-        for row in dashboard["target_status_table"]["targets"]
-    }
+    targets = {row["target_id"]: row for row in dashboard["target_status_table"]["targets"]}
     pressure = dashboard["pressure_sample_dashboard"]
     summary = dashboard["confirmation_dashboard_summary"]
-    assert summary["targets_total"] == 3
+    assert summary["targets_total"] == 1
     assert summary["ready_for_evaluation"] == 0
-    assert targets["limited_adjustment_vs_no_trade"]["progress_pct"] == 0.2
+    assert targets["limited_adjustment_vs_no_trade"]["progress_pct"] == 0.0
     assert pressure["defensive_validation_status"] == "INSUFFICIENT_PRESSURE_EVENTS"
     assert pressure["pressure_samples"]["tech_drawdown"] == 0
     assert summary["policy_change_allowed"] is False

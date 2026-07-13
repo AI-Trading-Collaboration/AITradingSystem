@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from dynamic_v3_confirmation_cycle_helpers import CONFIRMATION_PLAN_ID, cycle_fixture
+from dynamic_v3_confirmation_cycle_helpers import cycle_fixture
 
 from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_cycle import (
     create_rule_owner_decision,
@@ -20,20 +20,14 @@ def test_rule_review_cycle_defaults_to_continue_tracking_without_policy_change(
     fixture = cycle_fixture(tmp_path)
     review_cycle = fixture["cycle"]
     matrix = review_cycle["rule_review_decision_matrix"]
-    decisions = {
-        row["target_id"]: row
-        for row in matrix["targets"]
-    }
+    decisions = {row["target_id"]: row for row in matrix["targets"]}
 
     assert matrix["cycle_recommendation"] == "continue_tracking"
     assert matrix["policy_change_allowed"] is False
     assert decisions["limited_adjustment_vs_no_trade"]["rule_review_decision"] == (
         "CONTINUE_TRACKING"
     )
-    assert decisions["defensive_limited_adjustment_drawdown"]["rule_review_decision"] == (
-        "CONTINUE_TRACKING"
-    )
-    assert decisions["consensus_target_risk"]["rule_review_decision"] == "KEEP_REFERENCE_ONLY"
+    assert list(decisions) == ["limited_adjustment_vs_no_trade"]
     assert all(row["policy_change_allowed"] is False for row in matrix["targets"])
     assert "Dynamic Rescue Rule Review Cycle" in review_cycle["reader_brief_section"]
 
@@ -71,7 +65,7 @@ def test_reader_brief_surfaces_confirmation_cycle_fields(tmp_path: Path) -> None
             _report(
                 "etf_dynamic_v3_forward_confirmation_plan",
                 fixture["confirmation_plan_root"]
-                / CONFIRMATION_PLAN_ID
+                / fixture["confirmation_plan_id"]
                 / "confirmation_plan_manifest.json",
             ),
             _report(
@@ -84,8 +78,7 @@ def test_reader_brief_surfaces_confirmation_cycle_fields(tmp_path: Path) -> None
             ),
             _report(
                 "etf_dynamic_v3_confirmation_evaluation",
-                fixture["evaluation"]["evaluation_dir"]
-                / "confirmation_evaluation_manifest.json",
+                fixture["evaluation"]["evaluation_dir"] / "confirmation_evaluation_manifest.json",
             ),
             _report(
                 "etf_dynamic_v3_rule_review_cycle",
@@ -101,16 +94,16 @@ def test_reader_brief_surfaces_confirmation_cycle_fields(tmp_path: Path) -> None
     summary = reader_brief._etf_dynamic_v3_sim_review_summary(report_index)
 
     assert summary["availability"] == "PARTIAL"
-    assert summary["status"] == "PASS"
+    assert summary["status"] == "AVAILABLE"
     assert summary["confirmation_registry_id"] == fixture["registry"]["registry_id"]
     assert summary["confirmation_progress_id"] == fixture["progress"]["progress_id"]
     assert summary["confirmation_evaluation_id"] == fixture["evaluation"]["evaluation_id"]
     assert summary["rule_review_cycle_id"] == fixture["cycle"]["cycle_id"]
     assert summary["rule_review_cycle_recommendation"] == "continue_tracking"
     assert summary["confirmation_ready_for_evaluation_count"] == 0
-    assert summary["confirmation_insufficient_events_count"] == 2
+    assert summary["confirmation_insufficient_events_count"] == 1
     assert summary["confirmation_success_count"] == 0
-    assert summary["confirmation_not_ready_count"] == 3
+    assert summary["confirmation_not_ready_count"] == 1
     assert summary["rule_review_policy_change_allowed"] is False
     assert summary["rule_owner_decision_id"] == created["decision_id"]
     assert summary["rule_owner_decision"] == "continue_tracking"

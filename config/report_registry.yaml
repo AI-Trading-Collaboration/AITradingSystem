@@ -7203,6 +7203,7 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_progress/*/confirmation_progress_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_progress/*/target_progress.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_progress/*/target_progress_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/confirmation_progress/*/confirmation_progress_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_progress/*/confirmation_progress_report.md
     freshness_sla_days: 30
     freshness_rationale: >

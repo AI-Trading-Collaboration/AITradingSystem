@@ -5,7 +5,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from dynamic_v3_backtest_sim_helpers import run_forward_confirmation_plan_fixture
+from pytest import MonkeyPatch
+
 from ai_trading_system.etf_portfolio import dynamic_v3_confirmation_cycle as cycle
+from ai_trading_system.etf_portfolio import dynamic_v3_outcome_accumulation as accumulation
 
 CONFIRMATION_PLAN_ID = "808e55a74ca6951f"
 
@@ -118,136 +122,41 @@ def write_confirmation_plan_fixture(tmp_path: Path) -> dict[str, Any]:
 
 
 def register_targets_fixture(tmp_path: Path) -> dict[str, Any]:
-    paths = write_confirmation_plan_fixture(tmp_path)
+    monkeypatch = MonkeyPatch()
+    plan_fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    plan = plan_fixture["confirmation_plan"]
+    paths = {
+        **plan_fixture,
+        "confirmation_plan_id": plan["confirmation_plan_id"],
+        "confirmation_plan_root": plan_fixture["confirmation_plan_dir"],
+        "registry_dir": tmp_path / "forward_confirmation_registry",
+        "registry_yaml_path": tmp_path / "registry" / "targets.yaml",
+        "progress_dir": tmp_path / "confirmation_progress",
+        "evaluation_dir": tmp_path / "confirmation_evaluation",
+        "cycle_dir": tmp_path / "rule_review_cycle",
+        "journal_path": tmp_path / "rule_owner_decision" / "rule_owner_decision_journal.jsonl",
+        "limited_dir": tmp_path / "limited_vs_notrade",
+        "consensus_dir": tmp_path / "consensus_risk",
+        "position_config_path": tmp_path / "position_advisory_v1.yaml",
+    }
     registry = cycle.register_confirmation_targets(
         confirmation_plan_id=paths["confirmation_plan_id"],
         confirmation_plan_dir=paths["confirmation_plan_root"],
         output_dir=paths["registry_dir"],
         registry_yaml_path=paths["registry_yaml_path"],
-        generated_at=datetime(2026, 6, 10, tzinfo=UTC),
+        generated_at=datetime(2026, 7, 31, 15, tzinfo=UTC),
     )
-    return {**paths, "registry": registry}
+    return {**paths, "registry": registry, "_monkeypatch": monkeypatch}
 
 
 def write_progress_sources(paths: dict[str, Any]) -> None:
-    limited_dir = paths["limited_dir"] / "limited-focus"
-    limited_dir.mkdir(parents=True, exist_ok=True)
-    _write_json(
-        limited_dir / "limited_vs_notrade_manifest.json",
-        {
-            "schema_version": 1,
-            "focus_id": "limited-focus",
-            "status": "PASS_WITH_WARNINGS",
-            "available_count": 2,
-            "auto_policy_apply": False,
-            "broker_action_allowed": False,
-            "broker_action_taken": False,
-            "production_effect": "none",
-        },
+    accumulation.run_limited_vs_notrade_evaluation(
+        output_dir=paths["limited_dir"],
+        advisory_outcome_dir=paths["limited_dir"].parent / "advisory_outcome",
+        backfill_dir=paths["limited_dir"].parent / "backfilled_outcome",
+        repair_dir=paths["limited_dir"].parent / "backfill_repair",
+        generated_at=datetime(2026, 7, 31, 16, tzinfo=UTC),
     )
-    _write_jsonl(
-        limited_dir / "sample_inventory.jsonl",
-        [
-            {
-                "sample_id": "sample-1",
-                "window_days": 1,
-                "relative_return": 0.00049,
-                "sample_status": "AVAILABLE",
-            },
-            {
-                "sample_id": "sample-2",
-                "window_days": 1,
-                "relative_return": 0.00049,
-                "sample_status": "AVAILABLE",
-            },
-        ],
-    )
-    _write_json(
-        limited_dir / "window_comparison_metrics.json",
-        {
-            "schema_version": 1,
-            "by_window": [
-                {
-                    "window_days": 1,
-                    "available_count": 2,
-                    "win_rate": 1.0,
-                    "avg_relative_return": 0.00049,
-                    "avg_drawdown_delta": None,
-                    "confidence": "LOW",
-                },
-                {
-                    "window_days": 5,
-                    "available_count": 0,
-                    "win_rate": 0.0,
-                    "avg_relative_return": 0.0,
-                    "avg_drawdown_delta": None,
-                    "confidence": "INSUFFICIENT_DATA",
-                },
-                {
-                    "window_days": 10,
-                    "available_count": 0,
-                    "win_rate": 0.0,
-                    "avg_relative_return": 0.0,
-                    "avg_drawdown_delta": None,
-                    "confidence": "INSUFFICIENT_DATA",
-                },
-                {
-                    "window_days": 20,
-                    "available_count": 0,
-                    "win_rate": 0.0,
-                    "avg_relative_return": 0.0,
-                    "avg_drawdown_delta": None,
-                    "confidence": "INSUFFICIENT_DATA",
-                },
-            ],
-            "overall_recommendation": "continue_tracking",
-            "policy_mutated": False,
-            "production_effect": "none",
-        },
-    )
-    (limited_dir / "limited_vs_notrade_report.md").write_text("limited\n", encoding="utf-8")
-
-    consensus_dir = paths["consensus_dir"] / "consensus-risk"
-    consensus_dir.mkdir(parents=True, exist_ok=True)
-    _write_json(
-        consensus_dir / "consensus_risk_manifest.json",
-        {
-            "schema_version": 1,
-            "risk_id": "consensus-risk",
-            "status": "INSUFFICIENT_DATA",
-            "consensus_target_risk": "INSUFFICIENT_DATA",
-            "sample_count": 0,
-            "consensus_target_default_execution_recommended": False,
-            "auto_policy_apply": False,
-            "broker_action_allowed": False,
-            "broker_action_taken": False,
-            "production_effect": "none",
-        },
-    )
-    _write_json(
-        consensus_dir / "consensus_exposure_summary.json",
-        {"schema_version": 1, "sample_count": 0},
-    )
-    _write_json(
-        consensus_dir / "consensus_drawdown_risk.json",
-        {
-            "schema_version": 1,
-            "window_results": [
-                {
-                    "window_days": window,
-                    "available_count": 0,
-                    "drawdown_delta_vs_no_trade": 0.0,
-                    "risk_status": "INSUFFICIENT_DATA",
-                }
-                for window in [5, 10, 20]
-            ],
-        },
-    )
-    _write_json(
-        consensus_dir / "consensus_turnover_risk.json",
-        {"schema_version": 1, "avg_turnover": 0.0, "turnover_status": "INSUFFICIENT_DATA"},
-    )
-    (consensus_dir / "consensus_risk_report.md").write_text("consensus\n", encoding="utf-8")
 
 
 def progress_fixture(tmp_path: Path) -> dict[str, Any]:
@@ -259,7 +168,7 @@ def progress_fixture(tmp_path: Path) -> dict[str, Any]:
         output_dir=fixture["progress_dir"],
         limited_vs_notrade_dir=fixture["limited_dir"],
         consensus_risk_dir=fixture["consensus_dir"],
-        generated_at=datetime(2026, 6, 10, 1, tzinfo=UTC),
+        generated_at=datetime(2026, 7, 31, 17, tzinfo=UTC),
     )
     return {**fixture, "progress": progress}
 
@@ -270,7 +179,7 @@ def evaluation_fixture(tmp_path: Path) -> dict[str, Any]:
         progress_id=fixture["progress"]["progress_id"],
         progress_dir=fixture["progress_dir"],
         output_dir=fixture["evaluation_dir"],
-        generated_at=datetime(2026, 6, 10, 2, tzinfo=UTC),
+        generated_at=datetime(2026, 7, 31, 18, tzinfo=UTC),
     )
     return {**fixture, "evaluation": evaluation}
 
@@ -285,7 +194,7 @@ def cycle_fixture(tmp_path: Path) -> dict[str, Any]:
         progress_dir=fixture["progress_dir"],
         evaluation_dir=fixture["evaluation_dir"],
         output_dir=fixture["cycle_dir"],
-        generated_at=datetime(2026, 6, 10, 3, tzinfo=UTC),
+        generated_at=datetime(2026, 7, 31, 19, tzinfo=UTC),
     )
     return {**fixture, "cycle": review_cycle}
 

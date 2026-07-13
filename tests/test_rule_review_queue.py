@@ -27,7 +27,7 @@ def test_rule_review_queue_keeps_not_ready_items_out_of_owner_action(
     summary = queue["queue_summary"]
     assert summary["pending_count"] == 0
     assert summary["ready_for_owner_review_count"] == 0
-    assert summary["not_ready_count"] == 3
+    assert summary["not_ready_count"] == 1
     assert all(row["queue_status"] == "not_ready" for row in queue["queue_items"])
     assert all(row["policy_change_allowed"] is False for row in queue["queue_items"])
     assert all(row["broker_action_allowed"] is False for row in queue["queue_items"])

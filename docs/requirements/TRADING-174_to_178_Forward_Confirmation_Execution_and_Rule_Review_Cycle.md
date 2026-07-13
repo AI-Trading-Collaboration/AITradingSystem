@@ -59,6 +59,19 @@ rule review cycle和owner decision journal。
 
 2026-07-13完成：4 callback已迁canonical；validated/AVAILABLE/cutoff Plan full bundle、registry preimage/postimage、source-exact target projection、duplicate Plan gate、atomic materialized registry及全view/live-source validator通过540 focused、260 architecture、203 contract。当前fixture只注册1个limited target；这只表示manual tracking registry已建立，不是forward progress或success。
 
+## 4.2 ARCH-004G2.4BZ Progress contract
+
+- Update必须先要求指定Registry content-derived validation=`PASS`且其generated time不晚于本次cutoff；
+- 只按Registry真实target选择所需evidence source；source按`generated_at/id`确定性选择，不使用mtime，且必须通过其content-derived validator；
+- `confirmation_progress_input_snapshot.v2`冻结Registry与selected evidence的full bundles、validation payload、path/checksum和selection inventory；
+- events/windows/criteria不设fallback，逐值继承Registry；target或source adapter未知、重复event identity、future/invalid evidence均在写件前阻断；
+- available count使用unique event unit，不能把同一event的多个window相加；每个window独立披露AVAILABLE finite覆盖；
+- defensive pressure evidence只有真实pressure tag时才计数；缺source、缺window、缺pressure tag或指标不可定义必须保持null/`INSUFFICIENT_EVENTS`，不得用0冒充观察结果；
+- validator重验live Registry/evidence并重算snapshot、progress rows、summary、manifest和Markdown bytes；
+- 本slice不运行TRADING-176及后续链，不修改投资policy/portfolio/production/broker。
+
+2026-07-13完成：3 callback已迁canonical；Registry与selected evidence content-derived validation、cutoff-bound deterministic selection、full bundle/validation snapshot、source-exact windows/events、cross-window conservative unique count、missing-null/pressure-tag insufficiency和全部JSON/JSONL/Markdown byte validation通过。旧mutable latest、10/5 default和80% near-ready路径已删除。当前Registry只有1个limited target且fixture没有AVAILABLE event，因此输出0 ready和`INSUFFICIENT_EVENTS`；这不是failure或rule-change信号。
+
 ## 5. 安全边界
 
 - 不修改 `config/etf_portfolio/dynamic_v3_rescue/position_advisory_v1.yaml`。
