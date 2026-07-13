@@ -1309,6 +1309,8 @@ ARCH-004G2.4BU 补充：`sim_risk_return/<risk_return_id>/` 必须包含`sim_ris
 
 ARCH-004G2.4BV 补充：`sim_defensive_validation/<defensive_validation_id>/` 必须包含`sim_defensive_validation_input_snapshot.json`（schema=`sim_defensive_validation_input_snapshot.v2`），冻结validated Outcome full bundle/validation/lineage及reviewed defensive policy。Matrix只使用same-regime/event/window AVAILABLE finite defensive/no_trade pairs并披露paired units；无pair指标为null/`INSUFFICIENT_DATA`，best variant只在五variant共同cohort上排名。Pressure regimes/windows/sample floor/boundaries由policy治理。`validate-sim-defensive-validation`重验live Outcome/policy并逐字节重算全views，PASS不批准defensive label、policy change或production readiness。
 
+ARCH-004G2.4BW 补充：`advisory_proposal_review/<proposal_review_id>/` 必须包含`advisory_proposal_review_input_snapshot.json`（schema=`advisory_proposal_review_input_snapshot.v2`），冻结validated same-Outcome Interpretation/Risk/Defensive/Calibration full bundles/validations及reviewed proposal policy。Matrix只映射Calibration真实proposal；空proposal为`INSUFFICIENT_DATA`，不得补造proposal/confidence，decision/conditions只来自policy。`validate-advisory-proposal-review`重验live sources/policy并逐字节重算全部JSON/Markdown，PASS只进入人工观察/owner review，不是policy adoption或production approval。
+
 ## Trading engine / paper trading 产物
 
 | Artifact | 由谁生成 | 上游输入 | 关键字段或内容 | 下游使用 | 是否影响 production | 常见误解 |

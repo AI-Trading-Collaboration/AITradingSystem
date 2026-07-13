@@ -170,6 +170,8 @@
 
 - G2.4BV开始，`sim-defensive-validation run`必须在创建artifact目录前要求Outcome content-derived validator PASS、timezone-aware generated cutoff和严格reviewed `sim_defensive_validation_v1.yaml`。`sim_defensive_validation_input_snapshot.v2`冻结full Outcome bundle/validation/lineage与policy bytes。Regime matrix只使用同regime、同event、同window且return/max_drawdown均为AVAILABLE finite的`defensive_limited_adjustment`/`no_trade` pair，披露paired event/window counts；无配对时return/relative/win-rate/drawdown delta为null/`INSUFFICIENT_DATA`。Pressure regimes、tracked windows、distinct-event sample floor和return/drawdown boundaries由policy治理；best variant只在五variant共同finite cohort上排名。运行后用`validate-sim-defensive-validation`重验live Outcome/policy并逐字节重算snapshot/matrix/failure cases/summary/manifest/Markdown；FAIL不得进入Proposal Review。本步为manual/ad-hoc non-PIT diagnostic，不新增scheduler entry或改policy/config/portfolio/production/order/broker。
 
+- G2.4BW开始，`advisory-proposal-review run`必须在创建artifact目录前要求Interpretation、Risk Return、Defensive Validation和Calibration四个content-derived validator PASS，校验timezone-aware generated cutoff、四源same-Outcome lineage及Interpretation→Calibration绑定，并加载strict reviewed `advisory_proposal_review_v1.yaml`。`advisory_proposal_review_input_snapshot.v2`冻结四个full bundles/validations/lineage与policy bytes。Decision matrix只能逐条映射Calibration真实proposal；空proposal为`INSUFFICIENT_DATA`，不得补造proposal或confidence，decision/conditions只来自policy且不嵌入forward数值阈值。运行后用`validate-advisory-proposal-review`重验live sources/policy并逐字节重算snapshot/matrix/manifest/checklist/report/Reader Brief；FAIL不得进入Forward Confirmation。本步为manual/ad-hoc non-PIT review，不新增scheduler entry或改policy/config/portfolio/production/order/broker。
+
 ## Unified Daily Trigger
 
 标准外部调度入口：

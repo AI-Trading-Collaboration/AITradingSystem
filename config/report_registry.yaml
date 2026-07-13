@@ -7130,13 +7130,15 @@ reports:
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/advisory_proposal_review/*/proposal_review_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/advisory_proposal_review/*/proposal_decision_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_proposal_review/*/advisory_proposal_review_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/advisory_proposal_review/*/owner_approval_checklist.md
       - reports/etf_portfolio/dynamic_v3_rescue/advisory_proposal_review/*/advisory_proposal_review_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/advisory_proposal_review/*/reader_brief_section.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-172 converts simulation calibration proposals into manual review
-      decisions with auto_apply=false and owner_approval_required=true.
+      TRADING-172 validates and freezes four same-Outcome source bundles plus
+      reviewed policy, then converts only real calibration proposals into manual
+      review decisions without fabricated confidence or auto-application.
     owner_action: review_advisory_proposal_matrix_before_any_manual_policy_edit
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

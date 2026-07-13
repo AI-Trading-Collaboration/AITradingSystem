@@ -1,0 +1,47 @@
+schema_version: advisory_proposal_review_policy.v1
+
+policy_metadata:
+  policy_id: dynamic_v3_advisory_proposal_review_v1
+  owner: project_owner
+  version: "2026-07-13"
+  status: pilot_baseline
+  rationale: >
+    Simulation proposals may enter manual observation or owner review but may
+    never be treated as adopted policy or production authorization.
+  intended_effect: >
+    Govern proposal review decisions and required conditions without embedding
+    numeric forward thresholds or fabricating missing proposals.
+  validation_evidence: >
+    G2.4BW tests cover strict four-source validation and lineage, policy binding,
+    empty-proposal semantics, source/policy drift and full view recomputation.
+  review_condition: >
+    Review before adding a proposal type or changing any decision mapping; numeric
+    confirmation criteria remain owned by the forward bridge policy.
+
+proposal_rules:
+  require_forward_confirmation:
+    decision: ACCEPT_FOR_OBSERVATION
+    conditions:
+      - use_reviewed_forward_bridge_criteria
+      - owner_approval_required_before_policy_mutation
+  keep_limited_adjustment_default:
+    decision: ACCEPT_FOR_OBSERVATION
+    conditions:
+      - continue_observation_without_execution
+      - use_reviewed_forward_bridge_criteria
+  rename_defensive_limited_adjustment:
+    decision: OWNER_REVIEW_REQUIRED
+    conditions:
+      - review_defensive_evidence_and_label_before_policy_mutation
+
+default_rule:
+  decision: OWNER_REVIEW_REQUIRED
+  conditions:
+    - owner_review_required_before_policy_mutation
+
+safety:
+  outcome_mode: BACKTEST_SIMULATION
+  pit_safety_status: SIMULATION_NOT_PIT
+  auto_apply: false
+  production_effect: none
+  broker_action: none

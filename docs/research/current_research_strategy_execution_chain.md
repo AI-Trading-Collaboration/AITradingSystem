@@ -1175,6 +1175,22 @@ TRADING-169 Simulation Interpretation回答“当Outcome、Calibration与forward
 
 Workflow PASS只证明来源、policy binding和计算可重放，不代表防守假设成立。Proposal Review必须作为下一独立slice重新验证输入，不得由本环节自动触发。
 
+### 7.6 Advisory Proposal Review（TRADING-172 / ARCH-004G2.4BW）
+
+为什么这样设计：proposal是待审假设，不是采用决定。若从mutable latest views拼接四类证据、缺proposal时自动补一条、缺confidence时默认MEDIUM，人工review会在不知情下审查系统制造的主张。本环节因此冻结完整来源与policy，并保持source proposal一一对应。
+
+| 项目 | 当前定义 |
+|---|---|
+| 输入 | Interpretation、Risk Return、Defensive Validation、Calibration显式ids/roots与timezone-aware cutoff；四validator均PASS且共享同一Outcome，Interpretation绑定同一Calibration |
+| 冻结证据 | `advisory_proposal_review_input_snapshot.v2`：四个full bundles/validations/lineage、`advisory_proposal_review_v1.yaml` payload和原始bytes |
+| 计算逻辑 | 只遍历Calibration真实proposals；proposal id按reviewed policy映射decision/conditions；reason引用risk/defensive evidence，source confidence/evidence mode原样保留，missing为null |
+| 空证据 | Calibration proposals为空时输出空matrix及`INSUFFICIENT_DATA`，不自动生成`require_forward_confirmation`或默认MEDIUM confidence |
+| 输出 | decision matrix、owner checklist、manifest、冻结快照、review report和Reader Brief；全部固定manual review/no auto apply/no production |
+| 当前结果边界 | `ACCEPT_FOR_OBSERVATION`只表示继续观察，不是接受配置变更；conditions引用reviewed Forward Bridge criteria，不在本层复制0.55/0等数值 |
+| 优化空间 | 新proposal type必须先更新policy和契约测试；后续可加入结构化evidence sufficiency、proposal supersede/revoke和owner-decision ledger，但不能由报告层重算投资结论 |
+
+Forward Confirmation必须作为独立slice重验Proposal Review与Bridge，不得把本环节PASS写成forward success、policy adoption或production readiness。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |

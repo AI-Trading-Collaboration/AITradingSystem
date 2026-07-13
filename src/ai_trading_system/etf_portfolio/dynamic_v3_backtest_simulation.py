@@ -86,6 +86,13 @@ DEFAULT_SIM_DEFENSIVE_VALIDATION_POLICY_PATH = (
     / "sim_defensive_validation_v1.yaml"
 )
 DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "advisory_proposal_review"
+DEFAULT_ADVISORY_PROPOSAL_REVIEW_POLICY_PATH = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT.parents[2]
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "advisory_proposal_review_v1.yaml"
+)
 DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_confirmation_plan"
 )
@@ -107,6 +114,9 @@ SIM_INTERPRETATION_SNAPSHOT_SCHEMA_VERSION = "sim_interpretation_input_snapshot.
 SIM_RISK_RETURN_SNAPSHOT_SCHEMA_VERSION = "sim_risk_return_input_snapshot.v2"
 SIM_DEFENSIVE_VALIDATION_SNAPSHOT_SCHEMA_VERSION = (
     "sim_defensive_validation_input_snapshot.v2"
+)
+ADVISORY_PROPOSAL_REVIEW_SNAPSHOT_SCHEMA_VERSION = (
+    "advisory_proposal_review_input_snapshot.v2"
 )
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
@@ -1649,6 +1659,61 @@ def _backtest_sim_outcome_bundle(outcome_dir: Path) -> dict[str, Any]:
             ),
         },
     }
+
+
+def _advisory_proposal_review_source_bundle(
+    source_dir: Path, source_type: str
+) -> dict[str, Any]:
+    specs: dict[str, tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]] = {
+        "interpretation": (
+            (
+                "sim_interpretation_manifest.json",
+                "variant_interpretation_matrix.json",
+                "key_findings.json",
+                "sim_interpretation_input_snapshot.json",
+            ),
+            (),
+            ("sim_interpretation_report.md",),
+        ),
+        "risk_return": (
+            (
+                "risk_return_manifest.json",
+                "risk_adjusted_summary.json",
+                "sim_risk_return_input_snapshot.json",
+            ),
+            (),
+            ("active_variant_tradeoff_table.csv", "risk_return_report.md"),
+        ),
+        "defensive": (
+            (
+                "defensive_validation_manifest.json",
+                "defensive_validation_summary.json",
+                "sim_defensive_validation_input_snapshot.json",
+            ),
+            ("defensive_regime_matrix.jsonl", "defensive_failure_cases.jsonl"),
+            ("defensive_validation_report.md",),
+        ),
+        "calibration": (
+            (
+                "sim_calibration_manifest.json",
+                "simulation_evidence_summary.json",
+                "proposed_advisory_rule_changes.json",
+                "simulation_limitations.json",
+                "calibration_input_snapshot.json",
+            ),
+            (),
+            ("backtest_sim_calibration_report.md", "reader_brief_section.md"),
+        ),
+    }
+    if source_type not in specs:
+        raise DynamicV3BacktestSimulationError(f"unknown proposal review source: {source_type}")
+    json_files, jsonl_files, text_files = specs[source_type]
+    return _backtest_sim_calibration_source_bundle(
+        source_dir,
+        json_files=json_files,
+        jsonl_files=jsonl_files,
+        text_files=text_files,
+    )
 
 
 def _backtest_sim_calibration_source_bundle(
@@ -4992,6 +5057,39 @@ def validate_sim_defensive_validation_artifact(
     )
 
 
+def _validate_advisory_proposal_review_lineage_and_time(
+    *,
+    generated: datetime,
+    interpretation_id: str,
+    risk_return_id: str,
+    defensive_validation_id: str,
+    calibration_id: str,
+    manifests: Mapping[str, Mapping[str, Any]],
+) -> None:
+    interpretation = manifests["interpretation"]
+    risk_return = manifests["risk_return"]
+    defensive = manifests["defensive"]
+    calibration = manifests["calibration"]
+    expected_outcome_id = _text(calibration.get("sim_outcome_id"))
+    if (
+        interpretation.get("interpretation_id") != interpretation_id
+        or risk_return.get("risk_return_id") != risk_return_id
+        or defensive.get("defensive_validation_id") != defensive_validation_id
+        or calibration.get("calibration_pack_id") != calibration_id
+        or interpretation.get("calibration_id") != calibration_id
+        or interpretation.get("outcome_id") != expected_outcome_id
+        or risk_return.get("outcome_id") != expected_outcome_id
+        or defensive.get("outcome_id") != expected_outcome_id
+    ):
+        raise DynamicV3BacktestSimulationError("proposal review source lineage mismatch")
+    for name, manifest in manifests.items():
+        source_generated = _datetime_from_any(manifest.get("generated_at"))
+        if source_generated is None or source_generated > generated:
+            raise DynamicV3BacktestSimulationError(
+                f"proposal review {name} source generated after cutoff"
+            )
+
+
 def run_advisory_proposal_review(
     *,
     interpretation_id: str,
@@ -5003,26 +5101,77 @@ def run_advisory_proposal_review(
     defensive_validation_dir: Path = DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR,
     calibration_dir: Path = DEFAULT_BACKTEST_SIM_CALIBRATION_DIR,
     output_dir: Path = DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR,
+    policy_path: Path = DEFAULT_ADVISORY_PROPOSAL_REVIEW_POLICY_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    interpretation_manifest = _read_json(
-        interpretation_dir / interpretation_id / "sim_interpretation_manifest.json"
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3BacktestSimulationError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
+    source_dirs = {
+        "interpretation": interpretation_dir / interpretation_id,
+        "risk_return": risk_return_dir / risk_return_id,
+        "defensive": defensive_validation_dir / defensive_validation_id,
+        "calibration": calibration_dir / calibration_id,
+    }
+    validations = {
+        "interpretation": validate_sim_interpretation_artifact(
+            interpretation_id=interpretation_id, output_dir=interpretation_dir
+        ),
+        "risk_return": validate_sim_risk_return_artifact(
+            risk_return_id=risk_return_id, output_dir=risk_return_dir
+        ),
+        "defensive": validate_sim_defensive_validation_artifact(
+            defensive_validation_id=defensive_validation_id,
+            output_dir=defensive_validation_dir,
+        ),
+        "calibration": validate_backtest_sim_calibration_artifact(
+            calibration_pack_id=calibration_id, output_dir=calibration_dir
+        ),
+    }
+    if any(item.get("status") != "PASS" for item in validations.values()):
+        raise DynamicV3BacktestSimulationError("proposal review source validation failed")
+    bundles = {
+        name: _advisory_proposal_review_source_bundle(path, name)
+        for name, path in source_dirs.items()
+    }
+    manifests = {
+        name: _mapping(_mapping(bundle.get("json")).get(filename))
+        for name, bundle, filename in (
+            ("interpretation", bundles["interpretation"], "sim_interpretation_manifest.json"),
+            ("risk_return", bundles["risk_return"], "risk_return_manifest.json"),
+            ("defensive", bundles["defensive"], "defensive_validation_manifest.json"),
+            ("calibration", bundles["calibration"], "sim_calibration_manifest.json"),
+        )
+    }
+    _validate_advisory_proposal_review_lineage_and_time(
+        generated=generated,
+        interpretation_id=interpretation_id,
+        risk_return_id=risk_return_id,
+        defensive_validation_id=defensive_validation_id,
+        calibration_id=calibration_id,
+        manifests=manifests,
     )
-    key_findings = _read_json(interpretation_dir / interpretation_id / "key_findings.json")
-    risk_summary = _read_json(risk_return_dir / risk_return_id / "risk_adjusted_summary.json")
-    defensive_summary = _read_json(
-        defensive_validation_dir / defensive_validation_id / "defensive_validation_summary.json"
-    )
-    calibration_manifest = _read_json(
-        calibration_dir / calibration_id / "sim_calibration_manifest.json"
-    )
-    proposals = _read_json(calibration_dir / calibration_id / "proposed_advisory_rule_changes.json")
+    policy = _load_advisory_proposal_review_policy(policy_path)
+    policy_bundle = {
+        "path": str(policy_path),
+        "payload": policy,
+        "file_contents": _read_text(policy_path),
+    }
+    interpretation_json = _mapping(bundles["interpretation"].get("json"))
+    risk_json = _mapping(bundles["risk_return"].get("json"))
+    defensive_json = _mapping(bundles["defensive"].get("json"))
+    calibration_json = _mapping(bundles["calibration"].get("json"))
+    key_findings = _mapping(interpretation_json.get("key_findings.json"))
+    risk_summary = _mapping(risk_json.get("risk_adjusted_summary.json"))
+    defensive_summary = _mapping(defensive_json.get("defensive_validation_summary.json"))
+    proposals = _mapping(calibration_json.get("proposed_advisory_rule_changes.json"))
     decision_matrix = _proposal_decision_matrix(
         proposals=proposals,
         risk_summary=risk_summary,
         defensive_summary=defensive_summary,
         key_findings=key_findings,
+        policy=policy,
     )
     proposal_review_id = _stable_id(
         "advisory-proposal-review",
@@ -5033,10 +5182,79 @@ def run_advisory_proposal_review(
         generated.isoformat(),
     )
     review_dir = _unique_dir(output_dir / proposal_review_id)
-    review_dir.mkdir(parents=True, exist_ok=False)
     reader_brief = render_proposal_review_reader_brief(decision_matrix, defensive_summary)
     checklist = render_owner_approval_checklist(decision_matrix, defensive_summary)
-    manifest = {
+    input_snapshot = {
+        "schema_version": ADVISORY_PROPOSAL_REVIEW_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_advisory_proposal_review_input_snapshot",
+        "generated_at": generated.isoformat(),
+        "source_dirs": {name: str(path) for name, path in source_dirs.items()},
+        "source_bundles": bundles,
+        "source_validations": validations,
+        "policy_bundle": policy_bundle,
+        "lineage": {
+            "interpretation_id": interpretation_id,
+            "risk_return_id": risk_return_id,
+            "defensive_validation_id": defensive_validation_id,
+            "calibration_id": calibration_id,
+            "sim_outcome_id": manifests["calibration"].get("sim_outcome_id"),
+        },
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "not_for_production": True,
+    }
+    manifest = _advisory_proposal_review_manifest(
+        review_dir=review_dir,
+        generated=generated,
+        interpretation_id=interpretation_id,
+        risk_return_id=risk_return_id,
+        defensive_validation_id=defensive_validation_id,
+        calibration_id=calibration_id,
+        interpretation_manifest=manifests["interpretation"],
+        calibration_manifest=manifests["calibration"],
+        policy=policy,
+        decision_matrix=decision_matrix,
+    )
+    report = render_advisory_proposal_review_report(
+        manifest, decision_matrix, defensive_summary
+    )
+    review_dir.mkdir(parents=True, exist_ok=False)
+    _write_json(review_dir / "proposal_review_manifest.json", manifest)
+    _write_json(review_dir / "proposal_decision_matrix.json", decision_matrix)
+    _write_json(review_dir / "advisory_proposal_review_input_snapshot.json", input_snapshot)
+    _write_text(review_dir / "owner_approval_checklist.md", checklist)
+    _write_text(review_dir / "advisory_proposal_review_report.md", report)
+    _write_text(review_dir / "reader_brief_section.md", reader_brief)
+    _update_latest_pointer(
+        "latest_advisory_proposal_review",
+        review_dir.name,
+        review_dir / "proposal_review_manifest.json",
+    )
+    return {
+        "proposal_review_id": review_dir.name,
+        "proposal_review_dir": review_dir,
+        "manifest": manifest,
+        "proposal_decision_matrix": decision_matrix,
+        "owner_approval_checklist": checklist,
+        "reader_brief_section": reader_brief,
+        "input_snapshot": input_snapshot,
+    }
+
+
+def _advisory_proposal_review_manifest(
+    *,
+    review_dir: Path,
+    generated: datetime,
+    interpretation_id: str,
+    risk_return_id: str,
+    defensive_validation_id: str,
+    calibration_id: str,
+    interpretation_manifest: Mapping[str, Any],
+    calibration_manifest: Mapping[str, Any],
+    policy: Mapping[str, Any],
+    decision_matrix: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_advisory_proposal_review_manifest",
         "proposal_review_id": review_dir.name,
@@ -5045,7 +5263,7 @@ def run_advisory_proposal_review(
         "defensive_validation_id": defensive_validation_id,
         "calibration_id": calibration_id,
         "generated_at": generated.isoformat(),
-        "status": "PASS",
+        "status": decision_matrix.get("evidence_status"),
         "market_regime": "ai_after_chatgpt",
         "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
         "pit_safety_status": PIT_SAFETY_SIMULATION,
@@ -5053,8 +5271,13 @@ def run_advisory_proposal_review(
         "not_for_production": True,
         "source_best_variant": interpretation_manifest.get("source_best_variant"),
         "source_calibration_pack_id": calibration_manifest.get("calibration_pack_id"),
+        "policy_id": _mapping(policy.get("policy_metadata")).get("policy_id"),
+        "policy_version": _mapping(policy.get("policy_metadata")).get("version"),
         "proposal_review_manifest_path": str(review_dir / "proposal_review_manifest.json"),
         "proposal_decision_matrix_path": str(review_dir / "proposal_decision_matrix.json"),
+        "advisory_proposal_review_input_snapshot_path": str(
+            review_dir / "advisory_proposal_review_input_snapshot.json"
+        ),
         "owner_approval_checklist_path": str(review_dir / "owner_approval_checklist.md"),
         "advisory_proposal_review_report_path": str(
             review_dir / "advisory_proposal_review_report.md"
@@ -5070,27 +5293,6 @@ def run_advisory_proposal_review(
         "manual_review_required": True,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
-    _write_json(review_dir / "proposal_review_manifest.json", manifest)
-    _write_json(review_dir / "proposal_decision_matrix.json", decision_matrix)
-    _write_text(review_dir / "owner_approval_checklist.md", checklist)
-    _write_text(
-        review_dir / "advisory_proposal_review_report.md",
-        render_advisory_proposal_review_report(manifest, decision_matrix, defensive_summary),
-    )
-    _write_text(review_dir / "reader_brief_section.md", reader_brief)
-    _update_latest_pointer(
-        "latest_advisory_proposal_review",
-        review_dir.name,
-        review_dir / "proposal_review_manifest.json",
-    )
-    return {
-        "proposal_review_id": review_dir.name,
-        "proposal_review_dir": review_dir,
-        "manifest": manifest,
-        "proposal_decision_matrix": decision_matrix,
-        "owner_approval_checklist": checklist,
-        "reader_brief_section": reader_brief,
     }
 
 
@@ -5108,6 +5310,9 @@ def advisory_proposal_review_report_payload(
     return {
         **_read_json(review_dir / "proposal_review_manifest.json"),
         "proposal_decision_matrix": _read_json(review_dir / "proposal_decision_matrix.json"),
+        "advisory_proposal_review_input_snapshot": _read_json(
+            review_dir / "advisory_proposal_review_input_snapshot.json"
+        ),
         "reader_brief_section": _read_text(review_dir / "reader_brief_section.md"),
         "proposal_review_dir": str(review_dir),
     }
@@ -5121,7 +5326,161 @@ def validate_advisory_proposal_review_artifact(
     review_dir = output_dir / proposal_review_id
     manifest = _read_optional_json(review_dir / "proposal_review_manifest.json") or {}
     matrix = _read_optional_json(review_dir / "proposal_decision_matrix.json") or {}
+    snapshot = (
+        _read_optional_json(review_dir / "advisory_proposal_review_input_snapshot.json") or {}
+    )
     proposals = _records(matrix.get("proposals"))
+    source_errors: list[str] = []
+    recompute_error = ""
+    expected_snapshot: dict[str, Any] = {}
+    expected_matrix: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_checklist = ""
+    expected_report = ""
+    expected_reader_brief = ""
+    source_proposal_ids: list[str] = []
+    try:
+        if snapshot.get("schema_version") != ADVISORY_PROPOSAL_REVIEW_SNAPSHOT_SCHEMA_VERSION:
+            source_errors.append("proposal review snapshot schema mismatch")
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        if generated is None:
+            raise DynamicV3BacktestSimulationError(
+                "proposal review snapshot generated_at must be timezone-aware"
+            )
+        lineage = _mapping(snapshot.get("lineage"))
+        source_dirs = {
+            name: Path(_text(value))
+            for name, value in _mapping(snapshot.get("source_dirs")).items()
+        }
+        required_sources = {"interpretation", "risk_return", "defensive", "calibration"}
+        if set(source_dirs) != required_sources:
+            raise DynamicV3BacktestSimulationError("proposal review source dirs incomplete")
+        interpretation_id = _text(lineage.get("interpretation_id"))
+        risk_return_id = _text(lineage.get("risk_return_id"))
+        defensive_validation_id = _text(lineage.get("defensive_validation_id"))
+        calibration_id = _text(lineage.get("calibration_id"))
+        live_validations = {
+            "interpretation": validate_sim_interpretation_artifact(
+                interpretation_id=interpretation_id,
+                output_dir=source_dirs["interpretation"].parent,
+            ),
+            "risk_return": validate_sim_risk_return_artifact(
+                risk_return_id=risk_return_id,
+                output_dir=source_dirs["risk_return"].parent,
+            ),
+            "defensive": validate_sim_defensive_validation_artifact(
+                defensive_validation_id=defensive_validation_id,
+                output_dir=source_dirs["defensive"].parent,
+            ),
+            "calibration": validate_backtest_sim_calibration_artifact(
+                calibration_pack_id=calibration_id,
+                output_dir=source_dirs["calibration"].parent,
+            ),
+        }
+        if any(item.get("status") != "PASS" for item in live_validations.values()):
+            source_errors.append("live proposal review source validation failed")
+        live_bundles = {
+            name: _advisory_proposal_review_source_bundle(path, name)
+            for name, path in source_dirs.items()
+        }
+        if snapshot.get("source_validations") != live_validations:
+            source_errors.append("proposal review source validation drift")
+        if snapshot.get("source_bundles") != live_bundles:
+            source_errors.append("proposal review source bundle drift")
+        manifests = {
+            name: _mapping(_mapping(bundle.get("json")).get(filename))
+            for name, bundle, filename in (
+                (
+                    "interpretation",
+                    live_bundles["interpretation"],
+                    "sim_interpretation_manifest.json",
+                ),
+                ("risk_return", live_bundles["risk_return"], "risk_return_manifest.json"),
+                ("defensive", live_bundles["defensive"], "defensive_validation_manifest.json"),
+                ("calibration", live_bundles["calibration"], "sim_calibration_manifest.json"),
+            )
+        }
+        _validate_advisory_proposal_review_lineage_and_time(
+            generated=generated,
+            interpretation_id=interpretation_id,
+            risk_return_id=risk_return_id,
+            defensive_validation_id=defensive_validation_id,
+            calibration_id=calibration_id,
+            manifests=manifests,
+        )
+        frozen_policy_bundle = _mapping(snapshot.get("policy_bundle"))
+        policy_path = Path(_text(frozen_policy_bundle.get("path")))
+        policy = _load_advisory_proposal_review_policy(policy_path)
+        live_policy_bundle = {
+            "path": str(policy_path),
+            "payload": policy,
+            "file_contents": _read_text(policy_path),
+        }
+        if frozen_policy_bundle != live_policy_bundle:
+            source_errors.append("proposal review policy drift")
+        interpretation_json = _mapping(live_bundles["interpretation"].get("json"))
+        risk_json = _mapping(live_bundles["risk_return"].get("json"))
+        defensive_json = _mapping(live_bundles["defensive"].get("json"))
+        calibration_json = _mapping(live_bundles["calibration"].get("json"))
+        source_proposals = _mapping(
+            calibration_json.get("proposed_advisory_rule_changes.json")
+        )
+        source_proposal_ids = [
+            _text(row.get("proposal_id") or row.get("proposal_type"))
+            for row in _records(source_proposals.get("proposals"))
+        ]
+        defensive_summary = _mapping(
+            defensive_json.get("defensive_validation_summary.json")
+        )
+        expected_matrix = _proposal_decision_matrix(
+            proposals=source_proposals,
+            risk_summary=_mapping(risk_json.get("risk_adjusted_summary.json")),
+            defensive_summary=defensive_summary,
+            key_findings=_mapping(interpretation_json.get("key_findings.json")),
+            policy=policy,
+        )
+        expected_snapshot = {
+            "schema_version": ADVISORY_PROPOSAL_REVIEW_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_advisory_proposal_review_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "source_dirs": {name: str(path) for name, path in source_dirs.items()},
+            "source_bundles": live_bundles,
+            "source_validations": live_validations,
+            "policy_bundle": live_policy_bundle,
+            "lineage": {
+                "interpretation_id": interpretation_id,
+                "risk_return_id": risk_return_id,
+                "defensive_validation_id": defensive_validation_id,
+                "calibration_id": calibration_id,
+                "sim_outcome_id": manifests["calibration"].get("sim_outcome_id"),
+            },
+            "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+            "pit_safety_status": PIT_SAFETY_SIMULATION,
+            "not_for_production": True,
+        }
+        expected_manifest = _advisory_proposal_review_manifest(
+            review_dir=review_dir,
+            generated=generated,
+            interpretation_id=interpretation_id,
+            risk_return_id=risk_return_id,
+            defensive_validation_id=defensive_validation_id,
+            calibration_id=calibration_id,
+            interpretation_manifest=manifests["interpretation"],
+            calibration_manifest=manifests["calibration"],
+            policy=policy,
+            decision_matrix=expected_matrix,
+        )
+        expected_checklist = render_owner_approval_checklist(
+            expected_matrix, defensive_summary
+        )
+        expected_report = render_advisory_proposal_review_report(
+            expected_manifest, expected_matrix, defensive_summary
+        )
+        expected_reader_brief = render_proposal_review_reader_brief(
+            expected_matrix, defensive_summary
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
     checks = [
         _check("manifest_exists", (review_dir / "proposal_review_manifest.json").exists(), ""),
         _check("matrix_exists", (review_dir / "proposal_decision_matrix.json").exists(), ""),
@@ -5137,14 +5496,66 @@ def validate_advisory_proposal_review_artifact(
         ),
         _check("reader_brief_exists", (review_dir / "reader_brief_section.md").exists(), ""),
         _check(
+            "snapshot_exists",
+            (review_dir / "advisory_proposal_review_input_snapshot.json").exists(),
+            "",
+        ),
+        _check(
             "proposal_review_id_matches",
             manifest.get("proposal_review_id") == proposal_review_id,
             "",
+        ),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live sources/policy"),
+        _check("matrix_recomputed", matrix == expected_matrix, "frozen sources/policy"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "all_json_bytes_recomputed",
+            all(
+                path.is_file()
+                and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
+                for path, payload in (
+                    (
+                        review_dir / "advisory_proposal_review_input_snapshot.json",
+                        expected_snapshot,
+                    ),
+                    (review_dir / "proposal_decision_matrix.json", expected_matrix),
+                    (review_dir / "proposal_review_manifest.json", expected_manifest),
+                )
+            ),
+            "canonical JSON",
+        ),
+        _check(
+            "all_markdown_bytes_recomputed",
+            all(
+                path.is_file() and path.read_text(encoding="utf-8") == expected
+                for path, expected in (
+                    (review_dir / "owner_approval_checklist.md", expected_checklist),
+                    (review_dir / "advisory_proposal_review_report.md", expected_report),
+                    (review_dir / "reader_brief_section.md", expected_reader_brief),
+                )
+            ),
+            "all Markdown views",
+        ),
+        _check(
+            "no_fabricated_proposals",
+            [row.get("proposal_id") for row in proposals] == source_proposal_ids,
+            "Calibration proposals only",
         ),
         _check(
             "decision_values_valid",
             all(row.get("decision") in PROPOSAL_REVIEW_DECISIONS for row in proposals),
             "decisions",
+        ),
+        _check(
+            "source_confidence_not_fabricated",
+            all(
+                row.get("source_confidence") is None
+                or row.get("source_confidence") in {"LOW", "MEDIUM", "HIGH"}
+                for row in proposals
+            ),
+            "null or source confidence",
         ),
         _check(
             "auto_apply_false",
@@ -5155,7 +5566,7 @@ def validate_advisory_proposal_review_artifact(
         _check(
             "owner_approval_required",
             manifest.get("owner_approval_required") is True
-            and any(row.get("owner_approval_required") is True for row in proposals),
+            and all(row.get("owner_approval_required") is True for row in proposals),
             "owner approval required",
         ),
         _check(
@@ -6659,22 +7070,17 @@ def _proposal_decision_matrix(
     risk_summary: Mapping[str, Any],
     defensive_summary: Mapping[str, Any],
     key_findings: Mapping[str, Any],
+    policy: Mapping[str, Any],
 ) -> dict[str, Any]:
     proposal_rows = []
     source_proposals = _records(proposals.get("proposals"))
-    if not source_proposals:
-        source_proposals = [
-            {
-                "proposal_id": "require_forward_confirmation",
-                "proposal_type": "require_forward_confirmation",
-            }
-        ]
     for proposal in source_proposals:
         proposal_id = _text(proposal.get("proposal_id") or proposal.get("proposal_type"))
+        rule = _proposal_review_rule(policy, proposal_id)
         proposal_rows.append(
             {
                 "proposal_id": proposal_id,
-                "decision": _proposal_decision(proposal_id),
+                "decision": rule.get("decision"),
                 "auto_apply": False,
                 "owner_approval_required": True,
                 "reason": _proposal_review_reason(
@@ -6682,12 +7088,9 @@ def _proposal_decision_matrix(
                     risk_summary=risk_summary,
                     defensive_summary=defensive_summary,
                 ),
-                "conditions": _proposal_review_conditions(proposal_id),
-                "source_confidence": proposal.get("confidence", "MEDIUM"),
-                "source_evidence_mode": proposal.get(
-                    "evidence_mode",
-                    OUTCOME_MODE_BACKTEST_SIMULATION,
-                ),
+                "conditions": _texts(rule.get("conditions")),
+                "source_confidence": proposal.get("confidence"),
+                "source_evidence_mode": proposal.get("evidence_mode"),
             }
         )
     return {
@@ -6695,6 +7098,9 @@ def _proposal_decision_matrix(
         "report_type": "etf_dynamic_v3_proposal_decision_matrix",
         "proposals": proposal_rows,
         "key_findings": [row.get("finding_id") for row in _records(key_findings.get("findings"))],
+        "evidence_status": "AVAILABLE" if proposal_rows else "INSUFFICIENT_DATA",
+        "policy_id": _mapping(policy.get("policy_metadata")).get("policy_id"),
+        "policy_version": _mapping(policy.get("policy_metadata")).get("version"),
         "auto_apply": False,
         "owner_approval_required": True,
         "position_advisory_config_mutated": False,
@@ -6704,12 +7110,46 @@ def _proposal_decision_matrix(
     }
 
 
-def _proposal_decision(proposal_id: str) -> str:
-    if proposal_id == "keep_limited_adjustment_default":
-        return "ACCEPT_FOR_OBSERVATION"
-    if proposal_id == "require_forward_confirmation":
-        return "ACCEPT"
-    return "OWNER_REVIEW_REQUIRED"
+def _load_advisory_proposal_review_policy(path: Path) -> dict[str, Any]:
+    payload = safe_load_yaml_path(path)
+    if not isinstance(payload, Mapping) or payload.get("schema_version") != (
+        "advisory_proposal_review_policy.v1"
+    ):
+        raise DynamicV3BacktestSimulationError("advisory proposal review policy schema invalid")
+    policy = dict(payload)
+    metadata = _mapping(policy.get("policy_metadata"))
+    if any(
+        not _text(metadata.get(key))
+        for key in ("policy_id", "owner", "version", "status", "rationale", "review_condition")
+    ):
+        raise DynamicV3BacktestSimulationError(
+            "advisory proposal review policy metadata incomplete"
+        )
+    rules = _mapping(policy.get("proposal_rules"))
+    default_rule = _mapping(policy.get("default_rule"))
+    for name, rule in [*rules.items(), ("default_rule", default_rule)]:
+        item = _mapping(rule)
+        if item.get("decision") not in PROPOSAL_REVIEW_DECISIONS or not _texts(
+            item.get("conditions")
+        ):
+            raise DynamicV3BacktestSimulationError(
+                f"advisory proposal review rule invalid: {name}"
+            )
+    safety = _mapping(policy.get("safety"))
+    if (
+        safety.get("outcome_mode") != OUTCOME_MODE_BACKTEST_SIMULATION
+        or safety.get("pit_safety_status") != PIT_SAFETY_SIMULATION
+        or safety.get("auto_apply") is not False
+        or safety.get("production_effect") != "none"
+        or safety.get("broker_action") != "none"
+    ):
+        raise DynamicV3BacktestSimulationError("advisory proposal review policy safety invalid")
+    return policy
+
+
+def _proposal_review_rule(policy: Mapping[str, Any], proposal_id: str) -> dict[str, Any]:
+    rules = _mapping(policy.get("proposal_rules"))
+    return dict(_mapping(rules.get(proposal_id)) or _mapping(policy.get("default_rule")))
 
 
 def _proposal_review_reason(
@@ -6732,16 +7172,6 @@ def _proposal_review_reason(
         )
     statuses = [row.get("risk_return_status") for row in _records(risk_summary.get("summary"))]
     return f"owner review required; risk_return_statuses={statuses}."
-
-
-def _proposal_review_conditions(proposal_id: str) -> list[str]:
-    if proposal_id in {"keep_limited_adjustment_default", "require_forward_confirmation"}:
-        return [
-            "forward win_rate_vs_no_trade >= 0.55",
-            "forward avg_relative_return >= 0",
-            "forward drawdown_delta <= 0",
-        ]
-    return ["owner review required before any policy mutation"]
 
 
 def _confirmation_targets(
