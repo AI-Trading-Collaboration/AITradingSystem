@@ -2077,845 +2077,125 @@ def validate_method_promotion_plan_artifact(
 
 
 
-def run_limited_instability_diagnosis(
-    *,
-    backfill_id: str,
-    consistency_id: str,
-    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    consistency_dir: Path = DEFAULT_LIMITED_CONSISTENCY_DIR,
-    rolling_eval_dir: Path = DEFAULT_PAPER_SHADOW_ROLLING_EVAL_DIR,
-    output_dir: Path = DEFAULT_LIMITED_INSTABILITY_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    backfill = paper_shadow_backfill_report_payload(
-        backfill_id=backfill_id,
-        output_dir=backfill_dir,
-    )
-    consistency = limited_consistency_report_payload(
-        consistency_id=consistency_id,
-        output_dir=consistency_dir,
-    )
-    rolling = paper_shadow_rolling_eval_report_payload(
-        rolling_eval_id=_text(consistency.get("rolling_eval_id")),
-        output_dir=rolling_eval_dir,
-    )
-    states = _records(backfill.get("backfill_method_states"))
-    config = _load_backfill_config_from_manifest(backfill)
-    inventory = _unstable_window_inventory(
-        rolling=_records(rolling.get("rolling_method_metrics")),
-        states=states,
-        config=config,
-    )
-    reason_summary = _instability_reason_summary(consistency, inventory)
-    failure_pattern = _rolling_failure_pattern(inventory)
-    instability_id = _stable_id(
-        "limited-instability",
-        backfill_id,
-        consistency_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / instability_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_limited_instability_manifest",
-        "instability_id": root.name,
-        "backfill_id": backfill_id,
-        "consistency_id": consistency_id,
-        "rolling_eval_id": rolling.get("rolling_eval_id"),
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "date_start": backfill.get("date_start"),
-        "date_end": backfill.get("date_end"),
-        "data_quality_status": backfill.get("data_quality_status"),
-        "limited_instability_manifest_path": str(root / "limited_instability_manifest.json"),
-        "unstable_window_inventory_path": str(root / "unstable_window_inventory.jsonl"),
-        "instability_reason_summary_path": str(root / "instability_reason_summary.json"),
-        "rolling_failure_pattern_path": str(root / "rolling_failure_pattern.json"),
-        "limited_instability_report_path": str(root / "limited_instability_report.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "limited_instability_manifest.json", manifest)
-    _write_jsonl(root / "unstable_window_inventory.jsonl", inventory)
-    _write_json(root / "instability_reason_summary.json", reason_summary)
-    _write_json(root / "rolling_failure_pattern.json", failure_pattern)
-    _write_text(
-        root / "limited_instability_report.md",
-        render_limited_instability_report(manifest, inventory, reason_summary, failure_pattern),
-    )
-    _write_latest_pointer(
-        "latest_limited_instability",
-        root.name,
-        root / "limited_instability_manifest.json",
-    )
-    return {
-        "instability_id": root.name,
-        "instability_dir": root,
-        "manifest": manifest,
-        "unstable_window_inventory": inventory,
-        "instability_reason_summary": reason_summary,
-        "rolling_failure_pattern": failure_pattern,
-    }
-
-
-def limited_instability_report_payload(
-    *,
-    instability_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_LIMITED_INSTABILITY_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=instability_id,
-        latest_pointer="latest_limited_instability",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="limited_instability_manifest.json",
-    )
-    return {
-        **_read_json(root / "limited_instability_manifest.json"),
-        "unstable_window_inventory": _read_jsonl(root / "unstable_window_inventory.jsonl"),
-        "instability_reason_summary": _read_json(root / "instability_reason_summary.json"),
-        "rolling_failure_pattern": _read_json(root / "rolling_failure_pattern.json"),
-        "instability_dir": str(root),
-    }
-
-
-def validate_limited_instability_artifact(
-    *,
-    instability_id: str,
-    output_dir: Path = DEFAULT_LIMITED_INSTABILITY_DIR,
-) -> dict[str, Any]:
-    root = output_dir / instability_id
-    manifest = _read_optional_json(root / "limited_instability_manifest.json") or {}
-    inventory = _read_jsonl(root / "unstable_window_inventory.jsonl")
-    summary = _read_optional_json(root / "instability_reason_summary.json") or {}
-    pattern = _read_optional_json(root / "rolling_failure_pattern.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "limited_instability_manifest.json",
-            "unstable_window_inventory.jsonl",
-            "instability_reason_summary.json",
-            "rolling_failure_pattern.json",
-            "limited_instability_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "instability_id_matches",
-                manifest.get("instability_id") == instability_id,
-                "",
-            ),
-            _check(
-                "target_method_limited",
-                summary.get("target_method") == "limited_adjustment",
-                _text(summary.get("target_method")),
-            ),
-            _check(
-                "rolling_status_visible",
-                summary.get("rolling_consistency_status")
-                in {"STABLE", "MIXED", "UNSTABLE", "INSUFFICIENT_DATA"},
-                _text(summary.get("rolling_consistency_status")),
-            ),
-            _check(
-                "unstable_window_count_matches",
-                int(_float(summary.get("unstable_window_count"))) == len(inventory),
-                str(len(inventory)),
-            ),
-            _check("failure_patterns_present", bool(_records(pattern.get("patterns"))), ""),
-            _check(
-                "recommendation_valid",
-                summary.get("recommendation")
-                in {
-                    "continue_diagnosis",
-                    "consider_regime_gate",
-                    "consider_risk_cap",
-                    "insufficient_data",
-                },
-                _text(summary.get("recommendation")),
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, summary, pattern, *inventory), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_limited_instability_validation",
-        instability_id,
-        checks,
+def run_limited_instability_diagnosis(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
     )
 
-
-def run_limited_risk_attribution(
-    *,
-    backfill_id: str,
-    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    output_dir: Path = DEFAULT_LIMITED_RISK_ATTRIBUTION_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    backfill = paper_shadow_backfill_report_payload(
-        backfill_id=backfill_id,
-        output_dir=backfill_dir,
-    )
-    states = _records(backfill.get("backfill_method_states"))
-    symbols = _backfill_non_cash_symbols(backfill)
-    price_cache_path, rates_cache_path = _backfill_cache_paths(backfill)
-    quality = _run_data_quality_gate(
-        price_cache_path=price_cache_path,
-        rates_cache_path=rates_cache_path,
-        expected_symbols=symbols,
-        as_of=_coerce_date(
-            backfill.get("requested_end_date") or backfill.get("date_end"),
-            generated.date(),
-        ),
-    )
-    if not quality.passed:
-        raise DynamicV3SystemTargetError(f"data quality gate failed: {quality.status}")
-    returns = _backfill_symbol_returns(backfill)
-    return_contribution = _return_contribution_by_symbol(states, returns)
-    drawdown_contribution = _drawdown_contribution_by_symbol(states, returns)
-    exposure = _risk_exposure_shift_attribution(states)
-    events = _risk_worsening_events(states)
-    attribution_id = _stable_id(
-        "limited-risk-attribution",
-        backfill_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / attribution_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_limited_risk_attribution_manifest",
-        "risk_attribution_id": root.name,
-        "attribution_id": root.name,
-        "backfill_id": backfill_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "date_start": backfill.get("date_start"),
-        "date_end": backfill.get("date_end"),
-        "data_quality_status": quality.status,
-        "source_backfill_data_quality_status": backfill.get("data_quality_status"),
-        "data_quality_checked_at": quality.checked_at.isoformat(),
-        "data_quality_report_visible": True,
-        "limited_risk_attribution_manifest_path": str(
-            root / "limited_risk_attribution_manifest.json"
-        ),
-        "return_contribution_by_symbol_path": str(root / "return_contribution_by_symbol.json"),
-        "drawdown_contribution_by_symbol_path": str(root / "drawdown_contribution_by_symbol.json"),
-        "exposure_shift_attribution_path": str(root / "exposure_shift_attribution.json"),
-        "risk_worsening_events_path": str(root / "risk_worsening_events.jsonl"),
-        "limited_risk_attribution_report_path": str(root / "limited_risk_attribution_report.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "limited_risk_attribution_manifest.json", manifest)
-    _write_json(root / "return_contribution_by_symbol.json", return_contribution)
-    _write_json(root / "drawdown_contribution_by_symbol.json", drawdown_contribution)
-    _write_json(root / "exposure_shift_attribution.json", exposure)
-    _write_jsonl(root / "risk_worsening_events.jsonl", events)
-    _write_text(
-        root / "limited_risk_attribution_report.md",
-        render_limited_risk_attribution_report(
-            manifest,
-            return_contribution,
-            drawdown_contribution,
-            exposure,
-            events,
-        ),
-    )
-    _write_latest_pointer(
-        "latest_limited_risk_attribution",
-        root.name,
-        root / "limited_risk_attribution_manifest.json",
-    )
-    return {
-        "risk_attribution_id": root.name,
-        "attribution_id": root.name,
-        "risk_attribution_dir": root,
-        "attribution_dir": root,
-        "manifest": manifest,
-        "return_contribution_by_symbol": return_contribution,
-        "drawdown_contribution_by_symbol": drawdown_contribution,
-        "exposure_shift_attribution": exposure,
-        "risk_worsening_events": events,
-    }
+    return refinement.run_limited_instability_diagnosis(*args, **kwargs)
 
 
-def limited_risk_attribution_report_payload(
-    *,
-    attribution_id: str | None = None,
-    risk_attribution_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_LIMITED_RISK_ATTRIBUTION_DIR,
-) -> dict[str, Any]:
-    resolved_id = risk_attribution_id or attribution_id
-    root = _artifact_dir(
-        artifact_id=resolved_id,
-        latest_pointer="latest_limited_risk_attribution",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="limited_risk_attribution_manifest.json",
-    )
-    return {
-        **_read_json(root / "limited_risk_attribution_manifest.json"),
-        "return_contribution_by_symbol": _read_json(root / "return_contribution_by_symbol.json"),
-        "drawdown_contribution_by_symbol": _read_json(
-            root / "drawdown_contribution_by_symbol.json"
-        ),
-        "exposure_shift_attribution": _read_json(root / "exposure_shift_attribution.json"),
-        "risk_worsening_events": _read_jsonl(root / "risk_worsening_events.jsonl"),
-        "risk_attribution_dir": str(root),
-        "attribution_dir": str(root),
-    }
-
-
-def validate_limited_risk_attribution_artifact(
-    *,
-    attribution_id: str | None = None,
-    risk_attribution_id: str | None = None,
-    output_dir: Path = DEFAULT_LIMITED_RISK_ATTRIBUTION_DIR,
-) -> dict[str, Any]:
-    resolved_id = risk_attribution_id or attribution_id
-    if not resolved_id:
-        raise DynamicV3SystemTargetError("risk attribution id is required")
-    root = output_dir / resolved_id
-    manifest = _read_optional_json(root / "limited_risk_attribution_manifest.json") or {}
-    returns = _read_optional_json(root / "return_contribution_by_symbol.json") or {}
-    drawdown = _read_optional_json(root / "drawdown_contribution_by_symbol.json") or {}
-    exposure = _read_optional_json(root / "exposure_shift_attribution.json") or {}
-    events = _read_jsonl(root / "risk_worsening_events.jsonl")
-    checks = _required_file_checks(
-        root,
-        (
-            "limited_risk_attribution_manifest.json",
-            "return_contribution_by_symbol.json",
-            "drawdown_contribution_by_symbol.json",
-            "exposure_shift_attribution.json",
-            "risk_worsening_events.jsonl",
-            "limited_risk_attribution_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "risk_attribution_id_matches",
-                manifest.get("risk_attribution_id") == resolved_id
-                or manifest.get("attribution_id") == resolved_id,
-                "",
-            ),
-            _check(
-                "target_method_limited",
-                returns.get("target_method") == "limited_adjustment"
-                and drawdown.get("target_method") == "limited_adjustment"
-                and exposure.get("target_method") == "limited_adjustment",
-                "",
-            ),
-            _check("return_symbols_present", bool(_records(returns.get("symbols"))), ""),
-            _check("drawdown_symbols_present", bool(_records(drawdown.get("symbols"))), ""),
-            _check(
-                "risk_source_valid",
-                exposure.get("risk_worsening_source")
-                in {
-                    "higher_risk_asset_exposure",
-                    "higher_semiconductor_exposure",
-                    "lower_cash",
-                    "timing_error",
-                    "mixed",
-                    "unknown",
-                },
-                _text(exposure.get("risk_worsening_source")),
-            ),
-            _check("events_jsonl_readable", isinstance(events, list), ""),
-            _check(
-                "broker_forbidden",
-                _payload_safe(manifest, returns, drawdown, exposure, *events),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_limited_risk_attribution_validation",
-        resolved_id,
-        checks,
+def limited_instability_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
     )
 
-
-def run_data_warning_repair_plan(
-    *,
-    impact_id: str,
-    data_warning_impact_dir: Path = DEFAULT_DATA_WARNING_IMPACT_DIR,
-    output_dir: Path = DEFAULT_DATA_WARNING_REPAIR_PLAN_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    impact = data_warning_impact_report_payload(
-        impact_id=impact_id,
-        output_dir=data_warning_impact_dir,
-    )
-    actions = _warning_repair_actions(impact)
-    matrix = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_data_warning_blocking_matrix",
-        "status": "PASS",
-        **_warning_blocking_matrix(impact, actions),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    repair_plan_id = _stable_id(
-        "data-warning-repair-plan",
-        impact_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / repair_plan_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_data_warning_repair_plan_manifest",
-        "repair_plan_id": root.name,
-        "impact_id": impact_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": impact.get("market_regime", "ai_after_chatgpt"),
-        "date_start": impact.get("date_start"),
-        "date_end": impact.get("date_end"),
-        "data_quality_status": impact.get("data_quality_status"),
-        "data_warning_repair_plan_manifest_path": str(
-            root / "data_warning_repair_plan_manifest.json"
-        ),
-        "warning_repair_actions_path": str(root / "warning_repair_actions.jsonl"),
-        "warning_blocking_matrix_path": str(root / "warning_blocking_matrix.json"),
-        "data_warning_repair_plan_report_path": str(root / "data_warning_repair_plan_report.md"),
-        "auto_repair_executed": False,
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "data_warning_repair_plan_manifest.json", manifest)
-    _write_jsonl(root / "warning_repair_actions.jsonl", actions)
-    _write_json(root / "warning_blocking_matrix.json", matrix)
-    _write_text(
-        root / "data_warning_repair_plan_report.md",
-        render_data_warning_repair_plan_report(manifest, actions, matrix),
-    )
-    _write_latest_pointer(
-        "latest_data_warning_repair_plan",
-        root.name,
-        root / "data_warning_repair_plan_manifest.json",
-    )
-    return {
-        "repair_plan_id": root.name,
-        "repair_plan_dir": root,
-        "manifest": manifest,
-        "warning_repair_actions": actions,
-        "warning_blocking_matrix": matrix,
-    }
+    return refinement.limited_instability_report_payload(*args, **kwargs)
 
 
-def data_warning_repair_plan_report_payload(
-    *,
-    repair_plan_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_DATA_WARNING_REPAIR_PLAN_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=repair_plan_id,
-        latest_pointer="latest_data_warning_repair_plan",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="data_warning_repair_plan_manifest.json",
-    )
-    return {
-        **_read_json(root / "data_warning_repair_plan_manifest.json"),
-        "warning_repair_actions": _read_jsonl(root / "warning_repair_actions.jsonl"),
-        "warning_blocking_matrix": _read_json(root / "warning_blocking_matrix.json"),
-        "repair_plan_dir": str(root),
-    }
-
-
-def validate_data_warning_repair_plan_artifact(
-    *,
-    repair_plan_id: str,
-    output_dir: Path = DEFAULT_DATA_WARNING_REPAIR_PLAN_DIR,
-) -> dict[str, Any]:
-    root = output_dir / repair_plan_id
-    manifest = _read_optional_json(root / "data_warning_repair_plan_manifest.json") or {}
-    actions = _read_jsonl(root / "warning_repair_actions.jsonl")
-    matrix = _read_optional_json(root / "warning_blocking_matrix.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "data_warning_repair_plan_manifest.json",
-            "warning_repair_actions.jsonl",
-            "warning_blocking_matrix.json",
-            "data_warning_repair_plan_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "repair_plan_id_matches",
-                manifest.get("repair_plan_id") == repair_plan_id,
-                "",
-            ),
-            _check("warning_actions_present", bool(actions), ""),
-            _check(
-                "no_auto_repair",
-                manifest.get("auto_repair_executed") is False
-                and all(row.get("auto_repair_allowed") is False for row in actions),
-                "",
-            ),
-            _check(
-                "overall_status_valid",
-                matrix.get("overall_data_warning_status")
-                in {"PASS", "PASS_WITH_WARNINGS", "REVIEW_REQUIRED", "BLOCKING"},
-                _text(matrix.get("overall_data_warning_status")),
-            ),
-            _check(
-                "hardening_after_repair_valid",
-                matrix.get("hardening_allowed_after_repair") in {"UNKNOWN", "YES", "NO"},
-                _text(matrix.get("hardening_allowed_after_repair")),
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, matrix, *actions), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_data_warning_repair_plan_validation",
-        repair_plan_id,
-        checks,
+def validate_limited_instability_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
     )
 
-
-def run_alternative_method_review(
-    *,
-    backfill_id: str,
-    risk_attribution_id: str,
-    instability_id: str,
-    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    risk_attribution_dir: Path = DEFAULT_LIMITED_RISK_ATTRIBUTION_DIR,
-    instability_dir: Path = DEFAULT_LIMITED_INSTABILITY_DIR,
-    output_dir: Path = DEFAULT_ALTERNATIVE_METHOD_REVIEW_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    backfill = paper_shadow_backfill_report_payload(
-        backfill_id=backfill_id,
-        output_dir=backfill_dir,
-    )
-    risk = limited_risk_attribution_report_payload(
-        risk_attribution_id=risk_attribution_id,
-        output_dir=risk_attribution_dir,
-    )
-    instability = limited_instability_report_payload(
-        instability_id=instability_id,
-        output_dir=instability_dir,
-    )
-    candidates = _alternative_method_candidates(risk, instability)
-    scorecard = _alternative_method_scorecard(backfill, risk, instability, candidates)
-    alt_review_id = _stable_id(
-        "alternative-method-review",
-        backfill_id,
-        risk_attribution_id,
-        instability_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / alt_review_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_alternative_method_review_manifest",
-        "alt_review_id": root.name,
-        "backfill_id": backfill_id,
-        "risk_attribution_id": risk_attribution_id,
-        "instability_id": instability_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "date_start": backfill.get("date_start"),
-        "date_end": backfill.get("date_end"),
-        "data_quality_status": backfill.get("data_quality_status"),
-        "alternative_method_review_manifest_path": str(
-            root / "alternative_method_review_manifest.json"
-        ),
-        "alternative_method_candidates_path": str(root / "alternative_method_candidates.json"),
-        "alternative_method_scorecard_path": str(root / "alternative_method_scorecard.json"),
-        "alternative_method_review_report_path": str(root / "alternative_method_review_report.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "alternative_method_review_manifest.json", manifest)
-    _write_json(root / "alternative_method_candidates.json", candidates)
-    _write_json(root / "alternative_method_scorecard.json", scorecard)
-    _write_text(
-        root / "alternative_method_review_report.md",
-        render_alternative_method_review_report(manifest, candidates, scorecard),
-    )
-    _write_latest_pointer(
-        "latest_alternative_method_review",
-        root.name,
-        root / "alternative_method_review_manifest.json",
-    )
-    return {
-        "alt_review_id": root.name,
-        "alt_review_dir": root,
-        "manifest": manifest,
-        "alternative_method_candidates": candidates,
-        "alternative_method_scorecard": scorecard,
-    }
+    return refinement.validate_limited_instability_artifact(*args, **kwargs)
 
 
-def alternative_method_review_report_payload(
-    *,
-    alt_review_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_ALTERNATIVE_METHOD_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=alt_review_id,
-        latest_pointer="latest_alternative_method_review",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="alternative_method_review_manifest.json",
-    )
-    return {
-        **_read_json(root / "alternative_method_review_manifest.json"),
-        "alternative_method_candidates": _read_json(root / "alternative_method_candidates.json"),
-        "alternative_method_scorecard": _read_json(root / "alternative_method_scorecard.json"),
-        "alt_review_dir": str(root),
-    }
-
-
-def validate_alternative_method_review_artifact(
-    *,
-    alt_review_id: str,
-    output_dir: Path = DEFAULT_ALTERNATIVE_METHOD_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = output_dir / alt_review_id
-    manifest = _read_optional_json(root / "alternative_method_review_manifest.json") or {}
-    candidates = _read_optional_json(root / "alternative_method_candidates.json") or {}
-    scorecard = _read_optional_json(root / "alternative_method_scorecard.json") or {}
-    methods = {row.get("method") for row in _records(candidates.get("candidates"))}
-    checks = _required_file_checks(
-        root,
-        (
-            "alternative_method_review_manifest.json",
-            "alternative_method_candidates.json",
-            "alternative_method_scorecard.json",
-            "alternative_method_review_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check("alt_review_id_matches", manifest.get("alt_review_id") == alt_review_id, ""),
-            _check(
-                "risk_capped_candidate_present",
-                "risk_capped_limited_adjustment" in methods,
-                ",".join(sorted(str(item) for item in methods)),
-            ),
-            _check(
-                "regime_gated_candidate_present",
-                "regime_gated_limited_adjustment" in methods,
-                ",".join(sorted(str(item) for item in methods)),
-            ),
-            _check(
-                "no_new_method_auto_apply",
-                all(
-                    row.get("auto_apply") is False for row in _records(candidates.get("candidates"))
-                ),
-                "",
-            ),
-            _check("scorecard_present", bool(_records(scorecard.get("methods"))), ""),
-            _check("broker_forbidden", _payload_safe(manifest, candidates, scorecard), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_alternative_method_review_validation",
-        alt_review_id,
-        checks,
+def run_limited_risk_attribution(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
     )
 
-
-def run_refined_method_proposal(
-    *,
-    instability_id: str,
-    risk_attribution_id: str,
-    repair_plan_id: str,
-    alt_review_id: str,
-    instability_dir: Path = DEFAULT_LIMITED_INSTABILITY_DIR,
-    risk_attribution_dir: Path = DEFAULT_LIMITED_RISK_ATTRIBUTION_DIR,
-    repair_plan_dir: Path = DEFAULT_DATA_WARNING_REPAIR_PLAN_DIR,
-    alt_review_dir: Path = DEFAULT_ALTERNATIVE_METHOD_REVIEW_DIR,
-    output_dir: Path = DEFAULT_REFINED_METHOD_PROPOSAL_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    instability = limited_instability_report_payload(
-        instability_id=instability_id,
-        output_dir=instability_dir,
-    )
-    risk = limited_risk_attribution_report_payload(
-        risk_attribution_id=risk_attribution_id,
-        output_dir=risk_attribution_dir,
-    )
-    repair = data_warning_repair_plan_report_payload(
-        repair_plan_id=repair_plan_id,
-        output_dir=repair_plan_dir,
-    )
-    alt_review = alternative_method_review_report_payload(
-        alt_review_id=alt_review_id,
-        output_dir=alt_review_dir,
-    )
-    decision = _refined_method_decision(instability, risk, repair, alt_review)
-    next_methods = _proposed_next_methods(decision, alt_review)
-    proposal_id = _stable_id(
-        "refined-method-proposal",
-        instability_id,
-        risk_attribution_id,
-        repair_plan_id,
-        alt_review_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / proposal_id)
-    root.mkdir(parents=True, exist_ok=False)
-    decision["proposal_id"] = root.name
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_refined_method_proposal_manifest",
-        "proposal_id": root.name,
-        "instability_id": instability_id,
-        "risk_attribution_id": risk_attribution_id,
-        "repair_plan_id": repair_plan_id,
-        "alt_review_id": alt_review_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "recommended_next_step": decision.get("recommended_next_step"),
-        "confidence": decision.get("confidence"),
-        "refined_method_proposal_manifest_path": str(
-            root / "refined_method_proposal_manifest.json"
-        ),
-        "refined_method_decision_path": str(root / "refined_method_decision.json"),
-        "proposed_next_methods_path": str(root / "proposed_next_methods.json"),
-        "owner_refined_method_checklist_path": str(root / "owner_refined_method_checklist.md"),
-        "refined_method_proposal_report_path": str(root / "refined_method_proposal_report.md"),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "refined_method_proposal_manifest.json", manifest)
-    _write_json(root / "refined_method_decision.json", decision)
-    _write_json(root / "proposed_next_methods.json", next_methods)
-    _write_text(
-        root / "owner_refined_method_checklist.md",
-        render_refined_owner_checklist(decision),
-    )
-    _write_text(
-        root / "refined_method_proposal_report.md",
-        render_refined_method_proposal_report(
-            manifest,
-            decision,
-            next_methods,
-            instability,
-            risk,
-            repair,
-            alt_review,
-        ),
-    )
-    _write_text(
-        root / "reader_brief_section.md",
-        render_refined_method_reader_brief(decision, next_methods),
-    )
-    _write_latest_pointer(
-        "latest_refined_method_proposal",
-        root.name,
-        root / "refined_method_proposal_manifest.json",
-    )
-    return {
-        "proposal_id": root.name,
-        "proposal_dir": root,
-        "manifest": manifest,
-        "refined_method_decision": decision,
-        "proposed_next_methods": next_methods,
-    }
+    return refinement.run_limited_risk_attribution(*args, **kwargs)
 
 
-def refined_method_proposal_report_payload(
-    *,
-    proposal_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_REFINED_METHOD_PROPOSAL_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=proposal_id,
-        latest_pointer="latest_refined_method_proposal",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="refined_method_proposal_manifest.json",
+def limited_risk_attribution_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
     )
-    return {
-        **_read_json(root / "refined_method_proposal_manifest.json"),
-        "refined_method_decision": _read_json(root / "refined_method_decision.json"),
-        "proposed_next_methods": _read_json(root / "proposed_next_methods.json"),
-        "proposal_dir": str(root),
-    }
+
+    return refinement.limited_risk_attribution_report_payload(*args, **kwargs)
 
 
-def validate_refined_method_proposal_artifact(
-    *,
-    proposal_id: str,
-    output_dir: Path = DEFAULT_REFINED_METHOD_PROPOSAL_DIR,
-) -> dict[str, Any]:
-    root = output_dir / proposal_id
-    manifest = _read_optional_json(root / "refined_method_proposal_manifest.json") or {}
-    decision = _read_optional_json(root / "refined_method_decision.json") or {}
-    next_methods = _read_optional_json(root / "proposed_next_methods.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "refined_method_proposal_manifest.json",
-            "refined_method_decision.json",
-            "proposed_next_methods.json",
-            "owner_refined_method_checklist.md",
-            "refined_method_proposal_report.md",
-            "reader_brief_section.md",
-        ),
+def validate_limited_risk_attribution_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
     )
-    checks.extend(
-        [
-            _check(
-                "proposal_id_matches",
-                manifest.get("proposal_id") == proposal_id
-                and decision.get("proposal_id") == proposal_id,
-                "",
-            ),
-            _check(
-                "recommended_next_step_valid",
-                decision.get("recommended_next_step")
-                in {
-                    "IMPLEMENT_RISK_CAPPED_RESEARCH_METHOD",
-                    "IMPLEMENT_REGIME_GATED_RESEARCH_METHOD",
-                    "CONTINUE_OBSERVATION",
-                    "REPAIR_DATA_WARNINGS_FIRST",
-                    "DEFER",
-                },
-                _text(decision.get("recommended_next_step")),
-            ),
-            _check("next_methods_present", bool(_records(next_methods.get("methods"))), ""),
-            _check("auto_apply_false", decision.get("auto_apply") is False, ""),
-            _check(
-                "research_target_only_true",
-                decision.get("research_target_only") is True,
-                "",
-            ),
-            _check(
-                "broker_action_allowed_false",
-                decision.get("broker_action_allowed") is False,
-                "",
-            ),
-            _check("production_effect_none", decision.get("production_effect") == "none", ""),
-            _check("broker_forbidden", _payload_safe(manifest, decision, next_methods), ""),
-        ]
+
+    return refinement.validate_limited_risk_attribution_artifact(*args, **kwargs)
+
+
+def run_data_warning_repair_plan(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
     )
-    return _validation_payload(
-        "etf_dynamic_v3_refined_method_proposal_validation",
-        proposal_id,
-        checks,
+
+    return refinement.run_data_warning_repair_plan(*args, **kwargs)
+
+
+def data_warning_repair_plan_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
     )
+
+    return refinement.data_warning_repair_plan_report_payload(*args, **kwargs)
+
+
+def validate_data_warning_repair_plan_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
+    )
+
+    return refinement.validate_data_warning_repair_plan_artifact(*args, **kwargs)
+
+
+def run_alternative_method_review(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
+    )
+
+    return refinement.run_alternative_method_review(*args, **kwargs)
+
+
+def alternative_method_review_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
+    )
+
+    return refinement.alternative_method_review_report_payload(*args, **kwargs)
+
+
+def validate_alternative_method_review_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
+    )
+
+    return refinement.validate_alternative_method_review_artifact(*args, **kwargs)
+
+
+def run_refined_method_proposal(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
+    )
+
+    return refinement.run_refined_method_proposal(*args, **kwargs)
+
+
+def refined_method_proposal_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
+    )
+
+    return refinement.refined_method_proposal_report_payload(*args, **kwargs)
+
+
+def validate_refined_method_proposal_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_refinement as refinement,
+    )
+
+    return refinement.validate_refined_method_proposal_artifact(*args, **kwargs)
+
 
 
 def generate_risk_capped_limited_target(

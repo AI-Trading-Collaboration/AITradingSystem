@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+import pytest
 from dynamic_v3_system_target_helpers import run_selection_review_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
@@ -13,7 +14,7 @@ def test_limited_risk_attribution_outputs_return_drawdown_and_exposure(tmp_path)
         backfill_id=fixture["backfill"]["backfill_id"],
         backfill_dir=tmp_path / "paper_shadow_backfill",
         output_dir=tmp_path / "limited_risk_attribution",
-        generated_at=datetime(2024, 3, 1, 11, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 11, tzinfo=UTC),
     )
 
     returns = attribution["return_contribution_by_symbol"]
@@ -48,3 +49,17 @@ def test_limited_risk_attribution_outputs_return_drawdown_and_exposure(tmp_path)
         output_dir=tmp_path / "limited_risk_attribution",
     )
     assert validation["status"] == "PASS"
+
+    assert attribution["manifest"]["input_snapshot_schema"] == (
+        "limited_risk_attribution_input_snapshot.v2"
+    )
+    assert attribution["manifest"]["bounded_price_rows_used"] is True
+    assert attribution["manifest"]["cache_commitments_visible"] is True
+
+    with pytest.raises(ValueError, match="chronology"):
+        system_target.run_limited_risk_attribution(
+            backfill_id=fixture["backfill"]["backfill_id"],
+            backfill_dir=tmp_path / "paper_shadow_backfill",
+            output_dir=tmp_path / "limited_risk_attribution_past",
+            generated_at=datetime(2024, 3, 1, 11, tzinfo=UTC),
+        )

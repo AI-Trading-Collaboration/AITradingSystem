@@ -1245,6 +1245,19 @@ method proposal；`risk_capped_limited_adjustment` 与 `regime_gated_limited_adj
 在本阶段只是 conceptual candidate，不实现、不写 target config、不写 official target
 weights、不修改 `position_advisory_v1.yaml`、paper/real portfolio、baseline/production
 state 或 policy、不生成 order ticket、不触发 broker。
+ARCH-004G2.4CK 将上述 15 个 CLI callback 迁至 canonical
+`interfaces/cli/etf_portfolio/dynamic_v3_system_target_refinement.py`，领域实现集中在
+`etf_portfolio/dynamic_v3_system_target_refinement.py`；legacy domain 只保留 lazy
+compatibility wrappers。五阶段分别写入 `limited_instability_input_snapshot.v2`、
+`limited_risk_attribution_input_snapshot.v2`、`data_warning_repair_plan_input_snapshot.v2`、
+`alternative_method_review_input_snapshot.v2` 和
+`refined_method_proposal_input_snapshot.v2`。Producer 在创建正式目录前验证 live source、
+exact Backfill/Selection lineage、chronology 和 reviewed `method_refinement_v1` policy；Risk
+Attribution 只使用 Backfill 已冻结且通过 DQ 的共同 finite price rows，第一日或缺失收益保持
+missing，不再用 0 补齐。Conceptual methods 的指标固定为 null/`UNKNOWN`，validator 重验
+source/policy/cache/DQ commitment 并逐字节重建所有 JSON、JSONL、Markdown 和 Reader Brief；
+source/output drift、cross-lineage、future source 或 tamper 一律 FAIL。该加固不改变既有策略
+阈值或 target method，只把研究解释和后续优化入口变为可审计、可复算。
 
 TRADING-229_to_233_RISK_CAPPED_LIMITED_ADJUSTMENT_RESEARCH_METHOD 实现
 `risk_capped_limited_adjustment` research-only method。配置入口为

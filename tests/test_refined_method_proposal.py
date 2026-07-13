@@ -88,6 +88,68 @@ def test_reader_brief_displays_refined_method_proposal(tmp_path) -> None:
     assert summary["broker_action_allowed"] is False
 
 
+def test_refinement_chain_rejects_output_policy_and_cache_drift(tmp_path) -> None:
+    artifacts = _run_refined_fixture(tmp_path)
+    cases = (
+        (
+            artifacts["instability"]["instability_dir"] / "instability_reason_summary.json",
+            lambda: system_target.validate_limited_instability_artifact(
+                instability_id=artifacts["instability"]["instability_id"],
+                output_dir=tmp_path / "limited_instability",
+            ),
+        ),
+        (
+            artifacts["risk"]["risk_attribution_dir"] / "return_contribution_by_symbol.json",
+            lambda: system_target.validate_limited_risk_attribution_artifact(
+                risk_attribution_id=artifacts["risk"]["risk_attribution_id"],
+                output_dir=tmp_path / "limited_risk_attribution",
+            ),
+        ),
+        (
+            artifacts["repair"]["repair_plan_dir"] / "warning_blocking_matrix.json",
+            lambda: system_target.validate_data_warning_repair_plan_artifact(
+                repair_plan_id=artifacts["repair"]["repair_plan_id"],
+                output_dir=tmp_path / "data_warning_repair_plan",
+            ),
+        ),
+        (
+            artifacts["alt_review"]["alt_review_dir"] / "alternative_method_scorecard.json",
+            lambda: system_target.validate_alternative_method_review_artifact(
+                alt_review_id=artifacts["alt_review"]["alt_review_id"],
+                output_dir=tmp_path / "alternative_method_review",
+            ),
+        ),
+        (
+            artifacts["proposal"]["proposal_dir"] / "refined_method_decision.json",
+            lambda: system_target.validate_refined_method_proposal_artifact(
+                proposal_id=artifacts["proposal"]["proposal_id"],
+                output_dir=tmp_path / "refined_method_proposal",
+            ),
+        ),
+    )
+    for path, validator in cases:
+        original = path.read_bytes()
+        path.write_bytes(original + b"\n")
+        assert validator()["status"] == "FAIL"
+        path.write_bytes(original)
+        assert validator()["status"] == "PASS"
+
+    risk_validator = cases[1][1]
+    config_path = artifacts["config_path"]
+    original_config = config_path.read_bytes()
+    config_path.write_bytes(original_config + b"\n")
+    assert risk_validator()["status"] == "FAIL"
+    config_path.write_bytes(original_config)
+    assert risk_validator()["status"] == "PASS"
+
+    prices_path = artifacts["prices_path"]
+    original_prices = prices_path.read_bytes()
+    prices_path.write_bytes(original_prices + b"\n")
+    assert risk_validator()["status"] == "FAIL"
+    prices_path.write_bytes(original_prices)
+    assert risk_validator()["status"] == "PASS"
+
+
 def _run_refined_fixture(tmp_path):
     fixture = run_selection_review_fixture(tmp_path)
     selection = fixture["selection"]

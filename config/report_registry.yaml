@@ -2753,6 +2753,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue limited-instability report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_instability/*/limited_instability_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/limited_instability/*/limited_instability_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/limited_instability/*/unstable_window_inventory.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/limited_instability/*/instability_reason_summary.json
@@ -2774,6 +2775,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue limited-risk-attribution report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_risk_attribution/*/limited_risk_attribution_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/limited_risk_attribution/*/limited_risk_attribution_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/limited_risk_attribution/*/return_contribution_by_symbol.json
       - reports/etf_portfolio/dynamic_v3_rescue/limited_risk_attribution/*/drawdown_contribution_by_symbol.json
@@ -2796,6 +2798,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue data-warning-repair-plan report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/data_warning_repair_plan/*/data_warning_repair_plan_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/data_warning_repair_plan/*/data_warning_repair_plan_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/data_warning_repair_plan/*/warning_repair_actions.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/data_warning_repair_plan/*/warning_blocking_matrix.json
@@ -2816,6 +2819,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue alternative-method-review report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/alternative_method_review/*/alternative_method_review_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/alternative_method_review/*/alternative_method_review_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/alternative_method_review/*/alternative_method_candidates.json
       - reports/etf_portfolio/dynamic_v3_rescue/alternative_method_review/*/alternative_method_scorecard.json
@@ -2836,6 +2840,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue refined-method-proposal report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/refined_method_proposal/*/refined_method_proposal_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/refined_method_proposal/*/refined_method_proposal_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/refined_method_proposal/*/refined_method_decision.json
       - reports/etf_portfolio/dynamic_v3_rescue/refined_method_proposal/*/proposed_next_methods.json

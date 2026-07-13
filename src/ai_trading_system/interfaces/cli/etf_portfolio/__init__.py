@@ -242,6 +242,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_system_target_portfolio as dynamic_v3_system_target_portfolio_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_system_target_refinement as dynamic_v3_system_target_refinement_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_validation_evidence as dynamic_v3_validation_evidence_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -350,6 +353,7 @@ __all__ = [
     "dynamic_v3_system_target_portfolio_commands",
     "dynamic_v3_system_target_history_commands",
     "dynamic_v3_system_target_hardening_commands",
+    "dynamic_v3_system_target_refinement_commands",
     "dynamic_v3_data_audit_commands",
     "dynamic_v3_data_provenance_commands",
     "dynamic_v3_defensive_research_commands",

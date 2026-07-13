@@ -306,6 +306,11 @@ DYNAMIC_V3_SYSTEM_TARGET_HARDENING_COMMANDS_PATH = (
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_hardening.py"
 )
+DYNAMIC_V3_SYSTEM_TARGET_REFINEMENT_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_system_target_refinement.py"
+)
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py"
@@ -459,7 +464,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 20017
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 19586
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -670,8 +675,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 20017
-    assert len(legacy_names) == 564
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 19586
+    assert len(legacy_names) == 549
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -2510,6 +2515,36 @@ def test_g2_4_dynamic_v3_system_target_hardening_callbacks_leave_legacy_root() -
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names
     assert "dynamic_v3_system_target_hardening" in _imported_names(canonical_tree)
+
+
+def test_g2_4_dynamic_v3_system_target_refinement_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_tree = ast.parse(
+        DYNAMIC_V3_SYSTEM_TARGET_REFINEMENT_COMMANDS_PATH.read_text(encoding="utf-8")
+    )
+    canonical_names = _function_names(canonical_tree)
+    callbacks = {
+        "dynamic_v3_limited_instability_run_command",
+        "dynamic_v3_limited_instability_report_command",
+        "dynamic_v3_validate_limited_instability_command",
+        "dynamic_v3_limited_risk_attribution_run_command",
+        "dynamic_v3_limited_risk_attribution_report_command",
+        "dynamic_v3_validate_limited_risk_attribution_command",
+        "dynamic_v3_data_warning_repair_plan_run_command",
+        "dynamic_v3_data_warning_repair_plan_report_command",
+        "dynamic_v3_validate_data_warning_repair_plan_command",
+        "dynamic_v3_alternative_method_review_run_command",
+        "dynamic_v3_alternative_method_review_report_command",
+        "dynamic_v3_validate_alternative_method_review_command",
+        "dynamic_v3_refined_method_proposal_run_command",
+        "dynamic_v3_refined_method_proposal_report_command",
+        "dynamic_v3_validate_refined_method_proposal_command",
+    }
+    assert len(callbacks) == 15
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert "dynamic_v3_system_target_refinement" in _imported_names(canonical_tree)
 
 
 def __file_path() -> Path:

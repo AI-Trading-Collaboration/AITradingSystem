@@ -61,6 +61,15 @@ def test_alternative_method_review_proposes_risk_capped_and_regime_gated(tmp_pat
         row["recommendation"] == "IMPLEMENT_AS_RESEARCH_CANDIDATE"
         for row in scorecard["methods"]
     )
+    conceptual = [
+        row for row in scorecard["methods"] if row["implementation_status"] == "NOT_IMPLEMENTED"
+    ]
+    assert conceptual
+    assert all(row["metrics"]["total_return"] is None for row in conceptual)
+    assert all(row["return_expectation"] == "UNKNOWN" for row in conceptual)
+    assert review["manifest"]["input_snapshot_schema"] == (
+        "alternative_method_review_input_snapshot.v2"
+    )
 
     validation = system_target.validate_alternative_method_review_artifact(
         alt_review_id=review["alt_review_id"],

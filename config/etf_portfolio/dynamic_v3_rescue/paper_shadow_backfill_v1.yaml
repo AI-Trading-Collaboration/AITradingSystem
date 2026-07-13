@@ -133,6 +133,10 @@ selection_policy:
     blocked by insufficient data.
 
 method_hardening_policy:
+  policy_version: method_refinement_v1
+  policy_status: PILOT_BASELINE
+  policy_owner: project_owner
+  reviewed_at: 2026-07-13
   candidate_method: limited_adjustment
   comparison_baselines:
     - static_baseline
@@ -151,6 +155,40 @@ method_hardening_policy:
     - tech_drawdown
     - semiconductor_pullback
   exposure_similarity_tolerance: 0.03
+  method_refinement:
+    instability:
+      return_underperformance_tolerance: -0.0001
+      drawdown_worse_tolerance: -0.002
+      high_severity_return_delta: -0.005
+      high_severity_drawdown_delta: -0.01
+      turnover_high_threshold: 0.08
+      weight_jump_threshold: 0.04
+    risk_events:
+      window_days: 20
+      drawdown_delta_threshold: -0.002
+      volatility_delta_threshold: 0.005
+      turnover_delta_threshold: 0.02
+      high_semiconductor_weight: 0.25
+      low_cash_weight: 0.10
+    alternative_review:
+      high_total_return_threshold: 0.10
+      existing_methods:
+        - limited_adjustment
+        - defensive_limited_adjustment
+        - static_baseline
+        - consensus_target
+      conceptual_methods:
+        - risk_capped_limited_adjustment
+        - regime_gated_limited_adjustment
+        - lower_turnover_limited_adjustment
+        - cash_buffered_limited_adjustment
+      primary_research_candidates:
+        - risk_capped_limited_adjustment
+        - regime_gated_limited_adjustment
+  review_condition: >
+    Replace this pilot baseline when owner-approved calibration, forward
+    paper-shadow evidence, or a material change to the candidate methods,
+    pressure regimes, or source data contract is accepted.
   forward_confirmation_required: true
   rationale: >
     Bind TRADING-219 to 223 attribution, long-window risk, consistency, warning

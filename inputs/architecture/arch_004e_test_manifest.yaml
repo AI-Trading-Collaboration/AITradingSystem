@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.dynamic_v3_system_target_helpers
   path: tests/dynamic_v3_system_target_helpers.py
-  sha256: 6e95782a13195f482d07ef594f2d6c6d9bff7a03f0d05d4e40fff5259e4180ad
+  sha256: d45d6901b1426d3d27d55e266a6655e6dc863a31548d903dd04ef060819f788a
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -7373,7 +7373,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_alternative_method_review
   path: tests/test_alternative_method_review.py
-  sha256: 063b8903ea06f0620023c66cefeff230941dee1b4819f819db04138ebfaf9765
+  sha256: af0149739b949dfa1a35c7d60c4674536c818b712570de134e3dbfee1e402c24
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 8849b35f4cea96f464ff10d543eab473bf082b41f00b84d3b15243666404ebc0
+  sha256: f323a6d75d5bcd8ace78f5796f88346425d4e3cd48b88d6f4c235ebe318026bf
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7605,7 +7605,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g2_etf_cli_contract
   path: tests/test_arch_004g2_etf_cli_contract.py
-  sha256: c164d3fc2249f856ef2425f97298619d8d0e931b02c52dd83ad7a8dfc0d10d72
+  sha256: d52bfb8e263611fa8fac3481790a26d077297b78a1e99077c1ddbccab68de363
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7623,7 +7623,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 0b04f563395cd70b058ca6b43488dc75b173eb0031858ad67069787b5e0cfb6f
+  sha256: 3c4b12a46f522f6a3105a67bcf8fb214312572c837897b8f2cca188f31007b52
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -11281,7 +11281,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_limited_risk_attribution
   path: tests/test_limited_risk_attribution.py
-  sha256: 604964574d96881364b26cc88179e53cea01f1a9473409fc1f5df668efa90006
+  sha256: 10b5bd4a56032040f5e7f2d829eea530da0734d4eeea98eced5e46607f772bf9
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -12993,7 +12993,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_refined_method_proposal
   path: tests/test_refined_method_proposal.py
-  sha256: 35f3b27c0714cb247227d84afb3b289b41fbde35b9da722bfc5d56f5a9ad44ae
+  sha256: f109544bbac9fd5e5acd9c2c844d3b51ed2595c240472de04233ca5b67413dae
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
