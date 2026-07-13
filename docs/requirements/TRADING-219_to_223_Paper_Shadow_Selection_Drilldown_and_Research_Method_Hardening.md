@@ -1,6 +1,6 @@
 # TRADING-219～223 Paper Shadow Selection Drilldown and Research Method Hardening
 
-最后更新：2026-06-12
+最后更新：2026-07-13
 
 ## 背景
 
@@ -63,6 +63,7 @@ TRADING-214～218 已将 paper shadow 从短窗口链路验证扩展到 `ai_afte
 
 ## 状态记录
 
+- 2026-07-13: ARCH-004 G2.4CJ hardened migration=`COMPLETE_G2_4_CONTINUES`，不触发phase-level ARCH-005 handoff。15个callback已迁入canonical interface，真实领域实现迁入`dynamic_v3_system_target_hardening.py`，legacy domain仅保留lazy compatibility wrappers；legacy CLI root=`20,017 lines / 564 functions / 525 decorators`，legacy system-target domain=`26,087 lines / 801 functions`，generated=`905 modules / 1,114 tests / 858 direct writers / 0 violations`。五类`*.v2` bounded snapshot、pre-output live validation、zero implicit upstream run、same-Backfill/Selection lineage与chronology、null/reference-only/UNKNOWN preservation、reviewed hardening policy和live-source/逐bytecontent validator全部闭合；CLI tree仍为`41 roots / 291 groups / 993 leaves / 1,284 unique / 0 duplicate`且tree hash不变。Fixture实际窗口`2022-12-01..2024-02-29`，Long Risk=`RETURN_IMPROVES_RISK_WORSENS`、Rolling=`MIXED`、Regime=`WEAK_IN_PRESSURE`、Warning=`UNKNOWN/REVIEW_REQUIRED`、Hardening=`REVIEW_REQUIRED/LOW`；workflow PASS不构成投资结论。Focused core/downstream=`7/5 passed`，current slice+CLI=`110 passed`，architecture=`271 passed`（`outputs/validation_runtime/architecture-fitness_20260713T215124Z`），contract=`203 passed`（`outputs/validation_runtime/contract-validation_20260713T215321Z`）。固定not-PIT research/manual-only、no official/no auto/no order/no broker、`production_effect=none`。
 - 2026-06-12: 新增任务文档并进入 `IN_PROGRESS`，原因：owner 要求完成 TRADING-219～223 selection drilldown 与 research method hardening pack。
 - 2026-06-12: baseline 实现完成并转入 `VALIDATING`。真实链路 artifacts：
   `selection-attribution_0206b2ebef7fa3f7`、

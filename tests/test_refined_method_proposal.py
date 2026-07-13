@@ -96,13 +96,13 @@ def _run_refined_fixture(tmp_path):
         selection_review_id=selection["selection_review_id"],
         selection_review_dir=tmp_path / "system_target_selection_review",
         output_dir=tmp_path / "selection_attribution",
-        generated_at=datetime(2024, 3, 1, 5, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 5, tzinfo=UTC),
     )
     long_risk = system_target.run_limited_long_risk_review(
         backfill_id=backfill_id,
         backfill_dir=tmp_path / "paper_shadow_backfill",
         output_dir=tmp_path / "limited_long_risk",
-        generated_at=datetime(2024, 3, 1, 6, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 6, tzinfo=UTC),
     )
     consistency = system_target.run_limited_consistency_check(
         backfill_id=backfill_id,
@@ -111,7 +111,7 @@ def _run_refined_fixture(tmp_path):
         regime_review_dir=tmp_path / "paper_shadow_regime_review",
         stability_dir=tmp_path / "paper_shadow_stability",
         output_dir=tmp_path / "limited_consistency",
-        generated_at=datetime(2024, 3, 1, 7, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 7, tzinfo=UTC),
     )
     impact = system_target.run_data_warning_impact_review(
         backfill_id=backfill_id,
@@ -119,7 +119,7 @@ def _run_refined_fixture(tmp_path):
         backfill_dir=tmp_path / "paper_shadow_backfill",
         selection_review_dir=tmp_path / "system_target_selection_review",
         output_dir=tmp_path / "data_warning_impact",
-        generated_at=datetime(2024, 3, 1, 8, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 8, tzinfo=UTC),
     )
     hardening = system_target.run_research_method_hardening_pack(
         selection_attribution_id=attribution["attribution_id"],
@@ -131,7 +131,7 @@ def _run_refined_fixture(tmp_path):
         consistency_dir=tmp_path / "limited_consistency",
         data_warning_impact_dir=tmp_path / "data_warning_impact",
         output_dir=tmp_path / "research_method_hardening",
-        generated_at=datetime(2024, 3, 1, 9, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 9, tzinfo=UTC),
     )
     instability = system_target.run_limited_instability_diagnosis(
         backfill_id=backfill_id,
@@ -140,19 +140,19 @@ def _run_refined_fixture(tmp_path):
         consistency_dir=tmp_path / "limited_consistency",
         rolling_eval_dir=tmp_path / "paper_shadow_rolling_eval",
         output_dir=tmp_path / "limited_instability",
-        generated_at=datetime(2024, 3, 1, 10, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 10, tzinfo=UTC),
     )
     risk = system_target.run_limited_risk_attribution(
         backfill_id=backfill_id,
         backfill_dir=tmp_path / "paper_shadow_backfill",
         output_dir=tmp_path / "limited_risk_attribution",
-        generated_at=datetime(2024, 3, 1, 11, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 11, tzinfo=UTC),
     )
     repair = system_target.run_data_warning_repair_plan(
         impact_id=impact["impact_id"],
         data_warning_impact_dir=tmp_path / "data_warning_impact",
         output_dir=tmp_path / "data_warning_repair_plan",
-        generated_at=datetime(2024, 3, 1, 12, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 12, tzinfo=UTC),
     )
     alt_review = system_target.run_alternative_method_review(
         backfill_id=backfill_id,
@@ -162,7 +162,7 @@ def _run_refined_fixture(tmp_path):
         risk_attribution_dir=tmp_path / "limited_risk_attribution",
         instability_dir=tmp_path / "limited_instability",
         output_dir=tmp_path / "alternative_method_review",
-        generated_at=datetime(2024, 3, 1, 13, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 13, tzinfo=UTC),
     )
     proposal = system_target.run_refined_method_proposal(
         instability_id=instability["instability_id"],
@@ -174,7 +174,7 @@ def _run_refined_fixture(tmp_path):
         repair_plan_dir=tmp_path / "data_warning_repair_plan",
         alt_review_dir=tmp_path / "alternative_method_review",
         output_dir=tmp_path / "refined_method_proposal",
-        generated_at=datetime(2024, 3, 1, 14, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 14, tzinfo=UTC),
     )
     return {
         **fixture,

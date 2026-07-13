@@ -17,7 +17,7 @@ def test_limited_instability_diagnosis_lists_unstable_windows(tmp_path) -> None:
         regime_review_dir=tmp_path / "paper_shadow_regime_review",
         stability_dir=tmp_path / "paper_shadow_stability",
         output_dir=tmp_path / "limited_consistency",
-        generated_at=datetime(2024, 3, 1, 7, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 7, tzinfo=UTC),
     )
 
     diagnosis = system_target.run_limited_instability_diagnosis(
@@ -27,7 +27,7 @@ def test_limited_instability_diagnosis_lists_unstable_windows(tmp_path) -> None:
         consistency_dir=tmp_path / "limited_consistency",
         rolling_eval_dir=tmp_path / "paper_shadow_rolling_eval",
         output_dir=tmp_path / "limited_instability",
-        generated_at=datetime(2024, 3, 1, 10, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 10, tzinfo=UTC),
     )
 
     summary = diagnosis["instability_reason_summary"]

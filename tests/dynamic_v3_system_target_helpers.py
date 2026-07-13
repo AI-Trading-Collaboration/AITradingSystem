@@ -445,6 +445,27 @@ selection_policy:
     STABLE: 1.0
     MODERATE: 0.65
     UNSTABLE: 0.15
+method_hardening_policy:
+  candidate_method: limited_adjustment
+  comparison_baselines:
+    - static_baseline
+    - no_trade_baseline
+  risk_exposure_symbols:
+    - SPY
+    - QQQ
+    - SMH
+    - SOXX
+    - TQQQ
+  semiconductor_symbols:
+    - SMH
+    - SOXX
+  pressure_regimes:
+    - risk_off
+    - tech_drawdown
+    - semiconductor_pullback
+  exposure_similarity_tolerance: 0.03
+  forward_confirmation_required: true
+  rationale: Deterministic reviewed pilot policy for hardening contract fixtures.
 safety:
   research_target_only: true
   paper_shadow_only: true

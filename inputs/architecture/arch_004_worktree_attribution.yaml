@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CI_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CJ_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-13
-base_commit: 2165c7c2
+base_commit: d14aaa9b
 production_effect: none
 
 arch_004_owned_paths:
@@ -42,6 +42,7 @@ arch_004_owned_paths:
   - docs/requirements/TRADING-189_to_198_Defensive_Hypothesis_Review_and_Forward_Evidence_Automation.md
   - docs/requirements/TRADING-209_to_213_System_Target_Portfolio_and_Paper_Shadow_Account.md
   - docs/requirements/TRADING-214_to_218_Paper_Shadow_Historical_Backfill_and_Rolling_Target_Evaluation.md
+  - docs/requirements/TRADING-219_to_223_Paper_Shadow_Selection_Drilldown_and_Research_Method_Hardening.md
   - config/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation_v1.yaml
   - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
   - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
@@ -207,6 +208,8 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/__init__.py
   - src/ai_trading_system/interfaces/cli/__init__.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_hardening.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_hardening.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_limited_vs_notrade.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_confirmation_progress.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_confirmation_evaluation.py
@@ -395,6 +398,15 @@ arch_004_owned_paths:
   - tests/test_defensive_owner_pack.py
   - tests/test_forward_pressure_capture.py
   - tests/dynamic_v3_system_target_helpers.py
+  - tests/test_selection_attribution.py
+  - tests/test_limited_long_risk.py
+  - tests/test_limited_consistency.py
+  - tests/test_data_warning_impact.py
+  - tests/test_research_method_hardening.py
+  - tests/test_limited_instability.py
+  - tests/test_data_warning_repair_plan.py
+  - tests/test_alternative_method_review.py
+  - tests/test_refined_method_proposal.py
   - tests/test_model_target_portfolio.py
   - tests/test_paper_shadow_account.py
   - tests/test_model_rebalance.py

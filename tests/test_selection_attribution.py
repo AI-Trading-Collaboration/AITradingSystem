@@ -15,7 +15,7 @@ def test_selection_attribution_explains_recommendation_and_review_required(tmp_p
         selection_review_id=selection["selection_review_id"],
         selection_review_dir=tmp_path / "system_target_selection_review",
         output_dir=tmp_path / "selection_attribution",
-        generated_at=datetime(2024, 3, 1, 5, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 5, tzinfo=UTC),
     )
 
     rows = attribution["method_score_attribution"]
@@ -32,9 +32,19 @@ def test_selection_attribution_explains_recommendation_and_review_required(tmp_p
     assert review["can_trigger_official_target_weights"] is False
     assert review["can_trigger_production"] is False
     assert all(row["broker_action_allowed"] is False for row in rows)
+    assert attribution["manifest"]["input_snapshot_schema"] == (
+        "selection_attribution_input_snapshot.v2"
+    )
 
     validation = system_target.validate_selection_attribution_artifact(
         attribution_id=attribution["attribution_id"],
         output_dir=tmp_path / "selection_attribution",
     )
     assert validation["status"] == "PASS"
+
+    report_path = attribution["attribution_dir"] / "selection_attribution_report.md"
+    report_path.write_text("tampered\n", encoding="utf-8")
+    assert system_target.validate_selection_attribution_artifact(
+        attribution_id=attribution["attribution_id"],
+        output_dir=tmp_path / "selection_attribution",
+    )["status"] == "FAIL"

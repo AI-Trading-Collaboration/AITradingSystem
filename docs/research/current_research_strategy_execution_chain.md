@@ -1459,6 +1459,33 @@ Owner Decision validator PASS只证明人工记录与其冻结证据一致；它
 
 本slice固定`not_official_target_weights=true`、`auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`；任何方法分数、排名或推荐都不能直接修改policy、weights、portfolio、baseline/production或broker状态。
 
+### 7.19 Selection Drilldown 与 Research Method Hardening（TRADING-219～223 / ARCH-004G2.4CJ）
+
+为什么这样设计：Selection只给出“推荐谁”和总分，不能单独回答推荐来自哪些component、风险是否同步改善、不同window/regime是否一致，以及`PASS_WITH_WARNINGS`是否会改变结论。旧实现又允许直接读取未验证上游、Consistency缺件时隐式补跑、跨Backfill拼接、missing score补0，并让Hardening只按文件存在性组合结果。这会把运行成功误写成研究结论。因此本层不新增策略收益假设，而是把已存在的历史研究证据做成五段可验证解释链；所有source必须先通过其content-derived validator，输入在正式写件前冻结，missing/null/UNKNOWN语义不可升级。
+
+| 环节 | 输入 | 计算逻辑 | 输出与边界 |
+|---|---|---|---|
+| Selection Attribution | 唯一指定且validated Selection manifest、scorecard、decision及其Backfill lineage | 按finite `overall_score`降序重建rank；逐项保留`return/drawdown/risk_adjusted/regime/stability` score和turnover penalty，缺值为null；DQ只作未量化review reason，`data_quality_penalty=null`且不参与分数；从原decision保留recommended/secondary/reference-only状态并生成why-not | `selection_attribution_input_snapshot.v2`、method attribution JSONL、recommendation/review-required breakdown、report；解释既有reviewed decision，不重新选method |
+| Limited Long Risk | validated Backfill、其中冻结的method states与reviewed `method_hardening_policy` | 对candidate和configured baselines按日期排序；`total_return=V_end/V_start-1`，`annualized=(1+R)^(252/(n-1))-1`，volatility为daily return样本标准差乘`sqrt(252)`，max drawdown取路径最小drawdown，turnover为逐期和；return/drawdown与primary baseline共同映射四象限status；risk/semiconductor/cash exposure只按policy symbol集合计算，candidate与baseline平均risk exposure差超过policy tolerance才判higher/lower | `limited_long_risk_input_snapshot.v2`、risk-return、baseline breakdown、exposure analysis、report；current-definition historical、not-PIT，不能把正收益差等同于风险改善 |
+| Limited Consistency | validated Backfill以及同一Backfill的validated Rolling、Regime、Stability；CLI在未给id时必须从各root找到恰好一个合法候选 | Rolling沿用reviewed rank-stability并另算risk-adjusted top-N frequency；Regime对candidate分别减static/no-trade return，missing保持null，任一configured pressure regime为FAIL则整体`WEAK_IN_PRESSURE`；Stability只转述validated jump/turnover diagnostics。零个、多个、future或cross-backfill source直接FAIL，不运行上游 | `limited_consistency_input_snapshot.v2`、rolling/regime/stability summaries、report；不是把三个PASS取多数，而是保留各自证据与压力期弱点 |
+| Data Warning Impact | 同一validated Backfill的DQ snapshot/evidence与同一Selection | 只接纳结构化warning/issue；`PASS_WITH_WARNINGS`却无detail时生成`pass_with_warnings_detail_unavailable`，四类核心metric impact均为`UNKNOWN`、`affected=null`；DQ FAIL→BLOCKED，UNKNOWN/MEDIUM/HIGH→REVIEW_REQUIRED，只有无warning或LOW才可`ACCEPT_FOR_RESEARCH` | `data_warning_impact_input_snapshot.v2`、warning inventory、affected metrics、sensitivity、report；未知不是零影响，也不是技术validator失败 |
+| Research Method Hardening | Attribution、Risk、Consistency、Warning四路validated artifacts | 要求同一Backfill、Attribution与Warning同一Selection且四路生成时间不晚于Hardening；再由已有decision policy组合risk-return、rolling/regime/stability与DQ状态，并附加`historical_simulation_only/not_pit_safe/workflow_pass_is_not_investment_conclusion` | `research_method_hardening_input_snapshot.v2`、decision、owner checklist、report、Reader Brief section；最多改变research observation status，不产生official weight、promotion、order或broker授权 |
+
+五类snapshot保存canonical source dir、文件size/SHA-256、validator结果和全部重算所需JSON/JSONL/Markdown bundle；Long Risk还冻结Backfill关联config中的reviewed hardening policy。Producer在`_unique_dir`和latest pointer之前完成source/lineage/chronology检查。Validator重新读取live source、重跑上游validator、比较bundle checksum，并从snapshot逐byte重建所有views；source drift、output tamper、多个候选、cross-lineage、future source或null语义被改变都会FAIL。15个CLI callback的canonical owner为`interfaces/cli/etf_portfolio/dynamic_v3_system_target_hardening.py`，领域实现为`etf_portfolio/dynamic_v3_system_target_hardening.py`；legacy domain只保留lazy compatibility wrappers。
+
+当前source-backed fixture结果（实际历史区间`2022-12-01..2024-02-29`）：推荐仍为`limited_adjustment`；326 observations下total return=`0.372159`、annualized return=`0.278031`、max drawdown=`-0.035025`、realized volatility=`0.094458`、turnover=`0.224405`，相对static/no-trade return分别为`+0.038447/+0.020214`，但risk status=`RETURN_IMPROVES_RISK_WORSENS`。平均risk-asset exposure=`0.756158`，高于static的`0.700528`并超过`0.03` tolerance。Rolling=`MIXED`；Regime=`WEAK_IN_PRESSURE`，其中`risk_off`相对static/no-trade为负，三个稀疏regime保持`INSUFFICIENT_DATA`；Stability=`MODERATE`、turnover=`LOW`。DQ=`PASS_WITH_WARNINGS`但warning detail不可用，因此impact=`UNKNOWN/REVIEW_REQUIRED`。最终Hardening=`REVIEW_REQUIRED`、confidence=`LOW`，blocking issues包括DQ impact待复核、证据有限、owner review与pressure weakness。这里的精确数值是contract fixture结果，用于证明计算与解释可复算，不是当前投资建议或策略优越性证明。
+
+后续优化空间及进入条件：
+
+1. Warning影响量化：先让DQ artifact结构化保存warning id、symbols、dates、severity与metric impact，再做排除/修复前后paired rerun；明细缺失前不得估计为LOW。
+2. Exposure/risk attribution：在TRADING-224～228的独立slice中增加source-bound symbol contribution、tail loss、event window和cost decomposition；不得用当前平均exposure替代因果归因。
+3. Consistency统计：只有forward/PIT distinct observations达到预注册floor后，才加入bootstrap interval、event-clustered uncertainty、multiple-testing control和leave-one-regime-out；稀疏regime保持insufficient。
+4. Policy calibration：candidate/baseline、risk symbol集合、pressure regimes和`0.03` exposure tolerance均是reviewed pilot policy；变更必须另建ChangeProposal、冻结旧版本、在untouched holdout复验，不能依据本fixture事后调参。
+5. Source selection：后续可把zero-or-one扫描升级为content-addressed source index与可信签名；但任何缓存命中仍必须核对live commitment，不能恢复mtime/latest优先。
+6. Window解释：`2021-02-22`可在明确标记的长期primary/context报告中单独使用；本链的AI-cycle conclusion窗口仍从`2022-12-01`开始，两个headline与证据表不得混合。
+
+本slice固定`requires_forward_confirmation=true`、`not_official_target_weights=true`、`auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`。定期复盘可以提出新的Observation/ChangeProposal，但不得因一次Hardening结果直接优化阈值、修改method policy或进入生产。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |

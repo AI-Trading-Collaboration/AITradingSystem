@@ -16,14 +16,14 @@ def test_data_warning_repair_plan_keeps_manual_repair_boundary(tmp_path) -> None
         backfill_dir=tmp_path / "paper_shadow_backfill",
         selection_review_dir=tmp_path / "system_target_selection_review",
         output_dir=tmp_path / "data_warning_impact",
-        generated_at=datetime(2024, 3, 1, 8, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 8, tzinfo=UTC),
     )
 
     repair = system_target.run_data_warning_repair_plan(
         impact_id=impact["impact_id"],
         data_warning_impact_dir=tmp_path / "data_warning_impact",
         output_dir=tmp_path / "data_warning_repair_plan",
-        generated_at=datetime(2024, 3, 1, 9, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 9, tzinfo=UTC),
     )
 
     actions = repair["warning_repair_actions"]

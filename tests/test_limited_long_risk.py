@@ -14,7 +14,7 @@ def test_limited_long_risk_reports_tradeoff_and_exposure_path(tmp_path) -> None:
         backfill_id=fixture["backfill"]["backfill_id"],
         backfill_dir=tmp_path / "paper_shadow_backfill",
         output_dir=tmp_path / "limited_long_risk",
-        generated_at=datetime(2024, 3, 1, 6, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 6, tzinfo=UTC),
     )
 
     long_window = risk["long_window_risk_return"]
@@ -45,9 +45,18 @@ def test_limited_long_risk_reports_tradeoff_and_exposure_path(tmp_path) -> None:
     }
     assert long_window["not_official_target_weights"] is True
     assert long_window["broker_action_allowed"] is False
+    assert risk["manifest"]["input_snapshot_schema"] == "limited_long_risk_input_snapshot.v2"
+    assert risk["limited_vs_baseline_breakdown"]["missing_metrics_remain_null"] is True
 
     validation = system_target.validate_limited_long_risk_artifact(
         risk_review_id=risk["risk_review_id"],
         output_dir=tmp_path / "limited_long_risk",
     )
     assert validation["status"] == "PASS"
+
+    risk_path = risk["risk_review_dir"] / "long_window_risk_return.json"
+    risk_path.write_text("{}\n", encoding="utf-8")
+    assert system_target.validate_limited_long_risk_artifact(
+        risk_review_id=risk["risk_review_id"],
+        output_dir=tmp_path / "limited_long_risk",
+    )["status"] == "FAIL"

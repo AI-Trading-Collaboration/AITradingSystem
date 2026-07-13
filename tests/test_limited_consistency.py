@@ -17,7 +17,7 @@ def test_limited_consistency_integrates_rolling_regime_and_stability(tmp_path) -
         regime_review_dir=tmp_path / "paper_shadow_regime_review",
         stability_dir=tmp_path / "paper_shadow_stability",
         output_dir=tmp_path / "limited_consistency",
-        generated_at=datetime(2024, 3, 1, 7, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 7, tzinfo=UTC),
     )
 
     rolling = consistency["rolling_consistency_summary"]
@@ -47,9 +47,36 @@ def test_limited_consistency_integrates_rolling_regime_and_stability(tmp_path) -
     assert stability["target_method"] == "limited_adjustment"
     assert stability["turnover_status"] in {"LOW", "MODERATE", "HIGH", "INSUFFICIENT_DATA"}
     assert stability["broker_action_allowed"] is False
+    assert consistency["manifest"]["input_snapshot_schema"] == (
+        "limited_consistency_input_snapshot.v2"
+    )
+    assert consistency["manifest"]["exact_same_backfill_lineage"] is True
 
     validation = system_target.validate_limited_consistency_artifact(
         consistency_id=consistency["consistency_id"],
         output_dir=tmp_path / "limited_consistency",
     )
     assert validation["status"] == "PASS"
+
+
+def test_limited_consistency_rejects_cross_backfill_sources(tmp_path) -> None:
+    first = run_selection_review_fixture(tmp_path / "first")
+    second = run_selection_review_fixture(tmp_path / "second")
+
+    try:
+        system_target.run_limited_consistency_check(
+            backfill_id=first["backfill"]["backfill_id"],
+            rolling_eval_id=second["rolling"]["rolling_eval_id"],
+            regime_review_id=first["regime"]["regime_review_id"],
+            stability_id=first["stability"]["stability_id"],
+            backfill_dir=tmp_path / "first" / "paper_shadow_backfill",
+            rolling_eval_dir=tmp_path / "second" / "paper_shadow_rolling_eval",
+            regime_review_dir=tmp_path / "first" / "paper_shadow_regime_review",
+            stability_dir=tmp_path / "first" / "paper_shadow_stability",
+            output_dir=tmp_path / "limited_consistency",
+            generated_at=datetime(2026, 1, 7, 7, tzinfo=UTC),
+        )
+    except ValueError as exc:
+        assert "cross-backfill" in str(exc)
+    else:
+        raise AssertionError("cross-backfill consistency source must fail")

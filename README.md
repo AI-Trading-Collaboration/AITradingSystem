@@ -1218,6 +1218,17 @@ checklist；它不写 `model_target_portfolio_v1.yaml`、不写 `position_adviso
 不写 official target weights、不修改 paper/real portfolio、baseline/production state 或
 policy、不生成 order ticket、不触发 broker。即使 hardening decision 未来通过，也只表示
 `hardened_primary_research_method` 观察口径，不是 production approval。
+ARCH-004G2.4CJ 将上述15个CLI callback迁至canonical
+`interfaces/cli/etf_portfolio/dynamic_v3_system_target_hardening.py`，领域实现集中在
+`etf_portfolio/dynamic_v3_system_target_hardening.py`。Attribution、Long Risk、
+Consistency、Warning Impact和Hardening分别写入`*.v2` bounded input snapshot；producer
+在创建正式输出目录前验证live source，禁止隐式运行上游。Consistency只接受同一Backfill
+的validated Rolling/Regime/Stability，Hardening要求四路证据属于同一Backfill/Selection
+血缘并满足chronology；missing component、insufficient regime和未知warning影响保持null/
+`UNKNOWN`，不得填0或静默放行。Validator重验live source并逐字节重建JSON、JSONL、
+Markdown与Reader Brief；source/output drift、cross-lineage或tamper一律FAIL。当前fixture仍为
+`REVIEW_REQUIRED/LOW`：收益改善伴随风险恶化、rolling=`MIXED`、pressure regime偏弱且
+warning明细缺失；workflow PASS不是投资结论。
 TRADING-224_to_228_LIMITED_ADJUSTMENT_WEAKNESS_DIAGNOSIS_AND_RESEARCH_METHOD_REFINEMENT
 在 hardening pack 之后继续拆解 `limited_adjustment` 的未通过原因。CLI 链路为
 `limited-instability run/report`、`limited-risk-attribution run/report`、

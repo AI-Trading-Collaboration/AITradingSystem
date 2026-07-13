@@ -2643,6 +2643,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue selection-attribution report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/selection_attribution/*/selection_attribution_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/selection_attribution/*/selection_attribution_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/selection_attribution/*/method_score_attribution.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/selection_attribution/*/recommendation_reason_breakdown.json
@@ -2664,6 +2665,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue limited-long-risk report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_long_risk/*/limited_long_risk_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/limited_long_risk/*/limited_long_risk_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/limited_long_risk/*/long_window_risk_return.json
       - reports/etf_portfolio/dynamic_v3_rescue/limited_long_risk/*/limited_vs_baseline_breakdown.json
@@ -2685,6 +2687,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue limited-consistency report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_consistency/*/limited_consistency_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/limited_consistency/*/limited_consistency_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/limited_consistency/*/rolling_consistency_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/limited_consistency/*/regime_consistency_summary.json
@@ -2706,6 +2709,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue data-warning-impact report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/data_warning_impact/*/data_warning_impact_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/data_warning_impact/*/data_warning_impact_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/data_warning_impact/*/data_warning_inventory.json
       - reports/etf_portfolio/dynamic_v3_rescue/data_warning_impact/*/affected_metrics.json
@@ -2727,6 +2731,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue research-method-hardening report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/research_method_hardening/*/research_method_hardening_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/research_method_hardening/*/research_method_hardening_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/research_method_hardening/*/hardening_decision.json
       - reports/etf_portfolio/dynamic_v3_rescue/research_method_hardening/*/owner_research_method_checklist.md

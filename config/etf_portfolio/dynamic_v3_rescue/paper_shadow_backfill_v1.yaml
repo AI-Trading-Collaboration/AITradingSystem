@@ -132,6 +132,33 @@ selection_policy:
     can remain recommended only when it is close to the highest score and is not
     blocked by insufficient data.
 
+method_hardening_policy:
+  candidate_method: limited_adjustment
+  comparison_baselines:
+    - static_baseline
+    - no_trade_baseline
+  risk_exposure_symbols:
+    - SPY
+    - QQQ
+    - SMH
+    - SOXX
+    - TQQQ
+  semiconductor_symbols:
+    - SMH
+    - SOXX
+  pressure_regimes:
+    - risk_off
+    - tech_drawdown
+    - semiconductor_pullback
+  exposure_similarity_tolerance: 0.03
+  forward_confirmation_required: true
+  rationale: >
+    Bind TRADING-219 to 223 attribution, long-window risk, consistency, warning
+    impact, and hardening interpretations to reviewed method, baseline,
+    exposure, and pressure-regime semantics. This pilot policy affects only
+    manual research review and expires when owner-approved calibration or
+    forward paper-shadow evidence replaces it.
+
 safety:
   research_target_only: true
   paper_shadow_only: true

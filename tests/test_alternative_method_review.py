@@ -17,7 +17,7 @@ def test_alternative_method_review_proposes_risk_capped_and_regime_gated(tmp_pat
         regime_review_dir=tmp_path / "paper_shadow_regime_review",
         stability_dir=tmp_path / "paper_shadow_stability",
         output_dir=tmp_path / "limited_consistency",
-        generated_at=datetime(2024, 3, 1, 7, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 7, tzinfo=UTC),
     )
     instability = system_target.run_limited_instability_diagnosis(
         backfill_id=backfill_id,
@@ -26,13 +26,13 @@ def test_alternative_method_review_proposes_risk_capped_and_regime_gated(tmp_pat
         consistency_dir=tmp_path / "limited_consistency",
         rolling_eval_dir=tmp_path / "paper_shadow_rolling_eval",
         output_dir=tmp_path / "limited_instability",
-        generated_at=datetime(2024, 3, 1, 10, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 10, tzinfo=UTC),
     )
     risk = system_target.run_limited_risk_attribution(
         backfill_id=backfill_id,
         backfill_dir=tmp_path / "paper_shadow_backfill",
         output_dir=tmp_path / "limited_risk_attribution",
-        generated_at=datetime(2024, 3, 1, 11, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 11, tzinfo=UTC),
     )
 
     review = system_target.run_alternative_method_review(
@@ -43,7 +43,7 @@ def test_alternative_method_review_proposes_risk_capped_and_regime_gated(tmp_pat
         risk_attribution_dir=tmp_path / "limited_risk_attribution",
         instability_dir=tmp_path / "limited_instability",
         output_dir=tmp_path / "alternative_method_review",
-        generated_at=datetime(2024, 3, 1, 12, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 7, 12, tzinfo=UTC),
     )
 
     candidates = review["alternative_method_candidates"]["candidates"]
