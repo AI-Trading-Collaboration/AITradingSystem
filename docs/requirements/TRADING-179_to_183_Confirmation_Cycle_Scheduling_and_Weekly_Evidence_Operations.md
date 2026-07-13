@@ -1,6 +1,6 @@
 # TRADING-179 to 183 Confirmation Cycle Scheduling and Weekly Evidence Operations
 
-最后更新：2026-06-11
+最后更新：2026-07-13
 
 ## 状态
 
@@ -90,6 +90,20 @@ Owner rule review queue 从 latest rule review cycle 和 owner decision journal 
 - deferred items 代表 evidence mixed 或 owner decision defer/request_more_data。
 
 ## 进展记录
+
+### ARCH-004G2.4CD contract hardening
+
+2026-07-13 进入`IN_PROGRESS`。本slice不把旧baseline smoke的`PASS`视为content-derived保证，重新冻结以下契约：
+
+- Weekly：schedule config、Registry与每个已执行step必须在写weekly artifact前通过对应validator并满足cutoff/lineage；input snapshot记录exact ids、bounded file commitments与validation。可选step只能对“确实不存在的可选输入”标`SKIPPED`，invalid artifact或非预期异常必须FAIL，不得用广义异常掩盖。
+- Pressure：在创建output前完成timezone、date range、config和DQ前置检查；price/rates、DQ evidence与选中的Advisory Outcome必须冻结并验证，future/duplicate/invalid relevant outcome fail closed。Price behavior proxy仍只作研究标签，不得提升为已验证因果regime label。
+- Dashboard：只投影同一条validated Progress→Evaluation→Rule Review→Queue lineage及可选validated Weekly/Pressure source；missing与invalid分开表达。`available_*`与readiness完全继承Progress，Pressure只作补充展示，不得回写或覆盖Progress count。
+- Queue：Rule Review source必须PASS/cutoff；owner decision只有在event chain合法、source Cycle与当前Cycle完全相同、target在该Cycle decision scope且final event不晚于cutoff时才可标`reviewed`。其他Cycle相同target不得串扰。
+- Validation：Plan、Weekly、Pressure、Dashboard、Queue五类artifact都保存versioned bounded input snapshot；validator重验live source commitments并从snapshot重算JSON/JSONL/Markdown。新producer不得产生legacy unsnapshotted artifact；旧artifact仅允许只读warning，不进入当前结论。
+
+退出要求：16 callback完成迁移且legacy root definition/import为0；focused tamper/cutoff/lineage/missing-vs-invalid/cross-Cycle tests、CLI parity、architecture、contract与Ruff通过；研究执行链、system flow、runbook、report registry、artifact catalog、manifests/deprecation/attribution同步。该slice仅生成operations evidence，默认dry-run，`production_effect=none`，完成后G2.4仍继续且不触发phase-level handoff。
+
+2026-07-13 完成并转为`COMPLETE`。16 callback已迁canonical interface module，legacy root降至`22,538 lines / 657 functions / 618 decorators`；generated inventory为`894 modules / 1,114 tests / 858 direct writers / 0 violations`，CLI保持`993 leaf / 0 duplicate`。Focused累计580通过；正式architecture-fitness 265通过（`outputs/validation_runtime/architecture-fitness_20260713T152448Z/test_runtime_summary.json`），contract-validation 203通过（`outputs/validation_runtime/contract-validation_20260713T152711Z/test_runtime_summary.json`）。Plan config/path/live drift、Weekly step-chain/tamper、Pressure PENDING/invalid outcome/DQ preflight、Dashboard invalid optional source与Progress readiness、Queue cross-Cycle target均有fail-closed覆盖。当前fixture保持weekly 0 updates/0 ready、Pressure 0 defensive evidence、Dashboard 1 target/0 ready、cross-Cycle queue不误标reviewed；这些是当前证据状态，不是策略有效性结论。深链回归的主要研发效率债是重复验证同一上游bundle，后续只允许按source hash+validator version缓存PASS证据并保留cutoff/lineage/live drift重验，不允许删减gate。默认dry-run，`production_effect=none`；G2.4 callback/migration matrix继续，未到phase exit或handoff。
 
 2026-06-11 baseline 实现完成并转入 `VALIDATING`。真实 CLI smoke 生成 artifacts：
 

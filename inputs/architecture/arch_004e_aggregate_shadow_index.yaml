@@ -9,7 +9,7 @@ targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
   current_exists: true
-  current_sha256: ede5762c326614163856d3fe70270f25e2038a02cc33b587a717b36d6203cc07
+  current_sha256: 738e1c61cac90c1d05ee740b77e49bba1a5fdf81fe3cb96dc08399a3c8228a0c
   fragment_root: config/architecture/fragments/reports
   fragment_count: 4
   fragment_paths:
@@ -20,7 +20,7 @@ targets:
 - target_id: artifact_catalog
   current_path: docs/artifact_catalog.md
   current_exists: true
-  current_sha256: ee70e1c6dfbfddc742eb94a447f9e6970ed26e45c2a3cf7cc9bdf5959f2fc4ab
+  current_sha256: cff912a187a550c0339a626d5e16d7915c5e7915409507bca47a4a4d0fea07b6
   fragment_root: config/architecture/fragments/artifacts
   fragment_count: 4
   fragment_paths:
@@ -31,7 +31,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 849f7e83d833239ad3d8a24b9cac0948028587ad6508ea8f70c66f3e5a11775b
+  current_sha256: 5e7974d23504458ed06127afd50c7bb4641378b085002222f230eb71cdf94786
   fragment_root: config/architecture/fragments/flows
   fragment_count: 4
   fragment_paths:

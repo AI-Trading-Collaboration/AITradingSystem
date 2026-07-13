@@ -5,6 +5,11 @@ from pathlib import Path
 
 from dynamic_v3_confirmation_cycle_helpers import cycle_fixture
 
+from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_cycle import (
+    create_rule_owner_decision,
+    record_rule_owner_decision,
+    run_rule_review_cycle,
+)
 from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_operations import (
     build_rule_review_queue,
     rule_review_queue_report_payload,
@@ -21,7 +26,7 @@ def test_rule_review_queue_keeps_not_ready_items_out_of_owner_action(
         output_dir=tmp_path / "rule_review_queue",
         cycle_dir=fixture["cycle_dir"],
         journal_path=fixture["journal_path"],
-        generated_at=datetime(2026, 6, 10, 4, tzinfo=UTC),
+        generated_at=datetime(2026, 7, 31, 20, tzinfo=UTC),
     )
 
     summary = queue["queue_summary"]
@@ -41,6 +46,54 @@ def test_rule_review_queue_keeps_not_ready_items_out_of_owner_action(
         validate_rule_review_queue_artifact(
             queue_id=queue["queue_id"],
             output_dir=tmp_path / "rule_review_queue",
+        )["status"]
+        == "PASS"
+    )
+
+    summary_path = Path(queue["queue_dir"]) / "queue_summary.json"
+    summary_path.write_text("{}\n", encoding="utf-8")
+    assert (
+        validate_rule_review_queue_artifact(
+            queue_id=queue["queue_id"], output_dir=tmp_path / "rule_review_queue"
+        )["status"]
+        == "FAIL"
+    )
+
+    second_cycle = run_rule_review_cycle(
+        registry_id=fixture["registry"]["registry_id"],
+        progress_id=fixture["progress"]["progress_id"],
+        evaluation_id=fixture["evaluation"]["evaluation_id"],
+        registry_dir=fixture["registry_dir"],
+        progress_dir=fixture["progress_dir"],
+        evaluation_dir=fixture["evaluation_dir"],
+        output_dir=fixture["cycle_dir"],
+        generated_at=datetime(2026, 8, 1, tzinfo=UTC),
+    )
+    decision = create_rule_owner_decision(
+        cycle_id=fixture["cycle"]["cycle_id"],
+        cycle_dir=fixture["cycle_dir"],
+        journal_path=fixture["journal_path"],
+        generated_at=datetime(2026, 8, 1, 1, tzinfo=UTC),
+    )
+    record_rule_owner_decision(
+        decision_id=decision["decision_id"],
+        decision="continue_tracking",
+        journal_path=fixture["journal_path"],
+        generated_at=datetime(2026, 8, 1, 2, tzinfo=UTC),
+    )
+    cross_cycle_queue = build_rule_review_queue(
+        cycle_id=second_cycle["cycle_id"],
+        output_dir=tmp_path / "cross_cycle_queue",
+        cycle_dir=fixture["cycle_dir"],
+        journal_path=fixture["journal_path"],
+        generated_at=datetime(2026, 8, 1, 3, tzinfo=UTC),
+    )
+    assert all(row["queue_status"] != "reviewed" for row in cross_cycle_queue["queue_items"])
+    assert all(not row["owner_decision_id"] for row in cross_cycle_queue["queue_items"])
+    assert (
+        validate_rule_review_queue_artifact(
+            queue_id=cross_cycle_queue["queue_id"],
+            output_dir=tmp_path / "cross_cycle_queue",
         )["status"]
         == "PASS"
     )

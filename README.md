@@ -1023,6 +1023,15 @@ update；只有显式 `--execute-ready-updates` 才会调用 safe outcome update
 cached data quality gate。Pressure regime thresholds 全部来自配置；dashboard 和 queue 只供
 人工复核，不授权 defensive label、policy mutation、official target weights mutation、
 portfolio mutation、broker action 或 production action。
+上述五类producer现在都要求timezone-aware cutoff与validated semantic latest，并分别保存
+versioned input snapshot、bounded path/size/SHA-256 source commitments和validation evidence；
+validator会重验live source并从snapshot重算JSON/JSONL/Markdown。Weekly只有真实缺失的可选
+source可以`SKIPPED`，invalid source直接fail closed；Pressure仅把`AVAILABLE`且5/10/20日的
+pressure-tagged outcome计为防守相关证据；Dashboard不得覆盖Progress readiness，Queue仅认同
+Cycle、同target scope且cutoff内final的Owner Decision。旧版无快照artifact只能只读展示并标记
+`current_conclusion_eligible=false`。16个confirmation operations callback的canonical CLI owner为
+`src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_confirmation_operations.py`，外部命令
+路径保持不变。
 TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION 在 weekly evidence operations
 之后新增 pressure-regime sample expansion 和 defensive rule validation 链路。CLI 包括
 `pressure-tag-diagnosis run/report`、`pressure-outcome-backfill run/report`、

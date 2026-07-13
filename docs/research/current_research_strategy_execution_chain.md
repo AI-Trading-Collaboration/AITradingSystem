@@ -1302,6 +1302,33 @@ Rule Review PASS只证明manual review evidence一致；本slice不创建/记录
 
 Owner Decision validator PASS只证明人工记录与其冻结证据一致；它不批准Rule Review建议、不修改任何策略参数，也不自动进入Confirmation Operations或下一架构phase。
 
+### 7.13 Confirmation Operations（TRADING-179～183 / ARCH-004G2.4CD）
+
+为什么这样设计：这层负责把分散的due scan、可选safe update、Progress、Evaluation、Rule Review、Owner Queue和每周展示串成一次可复核操作，但不能把“编排成功”误写成“研究假设成立”。旧baseline依赖mutable latest、文件mtime和宽泛异常降级，Pressure还可能把`PENDING` outcome计为防守证据，Dashboard可能用Pressure投影反向覆盖Progress readiness，Queue则只按target匹配owner decision而忽略Cycle。这会让同一报告混入未来、无效、跨Cycle或事后变化的输入。本环节因此以timezone-aware cutoff、semantic latest、source validator、bounded commitment snapshot和逐输出重算建立证据边界。
+
+| 环节 | 输入与门禁 | 计算逻辑 | 固定输出与解释边界 |
+|---|---|---|---|
+| Plan | reviewed schedule config、config path和timezone-aware generated；写件前config validator必须PASS | 从config确定cadence、weekday、timezone、安全字段和ordered command pack；不执行任何command | plan manifest、command pack、runbook、report、`confirmation_cycle_plan_input_snapshot.v2`；只说明“计划可执行”，不说明本周证据充分 |
+| Weekly | 显式或cutoff内唯一Registry；每个实际执行step的artifact id/root、validator和full bounded commitments；`week_ending <= generated.date()` | 默认dry-run；依序物化Due、Review、可选Update/Refresh、Trend、Progress、Evaluation、Rule Cycle、Queue、可选Forward Decision和Dashboard。Summary只从冻结source views重算：due/updated window数、Progress ready数、Evaluation状态、Cycle recommendation和Queue counts | manifest、steps、artifact ids、summary、Markdown、Reader Brief与`confirmation_cycle_weekly_input_snapshot.v2`；`execute_ready_updates=false`时Update明确`SKIPPED`，invalid source不得伪装为missing |
+| Pressure | reviewed tagging config、requested start/end、cached price/rate commitments、同源DQ PASS、cutoff内唯一且content-derived PASS的Advisory Outcomes | 对每个configured rolling window计算`return=P_end/P_start-1`、`drawdown=P_end/max(P_window)-1`、年化realized volatility和`trend_slope=return/window`；按reviewed thresholds与全窗口volatility percentile打price-behavior proxy tags。只有Outcome window为`AVAILABLE`、命中pressure tag且window为5/10/20日才计入`defensive_validation_relevant` | window tags、outcome tags、summary、report与`pressure_regime_input_snapshot.v2`；price proxy不是因果regime truth，`PENDING`不计防守证据，样本不足必须保持`INSUFFICIENT_PRESSURE_EVENTS` |
+| Dashboard | 同一validated Progress→Evaluation→Rule Review→Queue lineage；Weekly/Pressure仅可选且invalid与absent分开 | target progress/readiness完全继承Progress；Evaluation/Cycle/Queue只补充状态和人工动作；Pressure只投影样本展示，不能覆盖`available_*`、progress或ready状态 | target table、pressure dashboard、summary、Markdown、Reader Brief与`confirmation_dashboard_input_snapshot.v2`；`owner_action_required`只由同lineage Queue决定 |
+| Queue | cutoff内唯一validated Rule Review Cycle与append-only Owner Decision journal | 每个item id绑定`cycle_id+target_id`；只有final decision同时匹配当前Cycle、target属于decision scope且final event不晚于cutoff时才标`reviewed`。否则按Cycle row落为`pending/deferred/not_ready` | items、summary、report与`rule_review_queue_input_snapshot.v2`；跨Cycle相同target不得消除本Cycle人工复核任务 |
+
+所有新producer都先验证输入再创建正式artifact目录，并用atomic writer写各文件；四类operations artifact validator与Plan validator会重验live commitments/validation、id/cutoff/lineage，并从snapshot逐字节重算JSON、JSONL和Markdown。历史无versioned snapshot的artifact可以只读展示，但返回`legacy_unsnapshotted=true`、`current_conclusion_eligible=false`，validator保持FAIL，不能进入当前结论。
+
+当前结果与含义：source-backed focused fixtures中，Plan正常生成安全command pack，修改config、manifest path或使用naive timestamp都会被拒绝；Weekly只有1个limited target且默认dry-run，因此`updated_windows=0`、`ready_for_evaluation=0`、recommendation=`continue_tracking`，summary tamper会FAIL；Pressure可以生成price-behavior窗口，但fixture Outcome仍为`PENDING`，所以outcome pressure tags为空、`defensive_validation_relevant_outcomes=0`，不能支持防守标签；Dashboard显示1个target、0 ready、progress 0%与`INSUFFICIENT_PRESSURE_EVENTS`，无效Pressure source会在写件前FAIL；Queue验证了第一Cycle的final decision不会把第二Cycle同target标为reviewed。这里的真实研究结论仍是“继续积累forward evidence”，而不是“weekly链路PASS所以策略可调整”。
+
+后续优化按风险排序：
+
+1. 用`source hash + validator version`建立验证证据缓存，减少Weekly中重复递归验证，但缓存命中必须保留live commitment、cutoff和validator版本，不得跳过漂移检查；
+2. 为显式`--execute-ready-updates`增加整条Weekly的PREPARED/COMMITTED/ROLLED_BACK事务层，避免中段失败留下部分下游artifact；
+3. 引入交易日历/session-aware cutoff、content-addressed archive、可信时间戳和owner数字签名，分别解决自然日窗口、mutable storage和身份认证问题；
+4. Pressure label在独立forward样本成熟后做预注册holdout calibration、false-trigger/tail-loss/cost sensitivity，并接入更可信的macro/liquidity primary sources；在此之前只保留price proxy；
+5. Dashboard可增加lineage drill-down、缺失/无效源分层和uncertainty可视化，但展示层不得重算或改写research state；
+6. 只有通过`docs/operations/operations_runbook.md`定义的daily统一入口、date/condition gate、DQ和owner approval后，才评估受控自动调度；不得为本链单独新增未审计scheduler entry。
+
+本slice固定`policy_change_allowed=false`、`auto_apply=false`、`broker_action_allowed=false`、`broker_action_taken=false`、`production_effect=none`；它只产生每周研究证据和人工复核输入，不修改policy/config、official target weights、portfolio、baseline/production、order或broker。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |

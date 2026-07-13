@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 import pandas as pd
@@ -17,12 +20,15 @@ from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_cycle import (
     DEFAULT_CONFIRMATION_REGISTRY_DIR,
     DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH,
     DEFAULT_RULE_REVIEW_CYCLE_DIR,
-    confirmation_evaluation_report_payload,
-    confirmation_progress_report_payload,
-    rule_review_cycle_report_payload,
+    list_rule_owner_decisions,
     run_confirmation_evaluation,
     run_rule_review_cycle,
     update_confirmation_progress,
+    validate_confirmation_evaluation_artifact,
+    validate_confirmation_progress_artifact,
+    validate_confirmation_targets_artifact,
+    validate_rule_owner_decision_artifact,
+    validate_rule_review_cycle_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     _artifact_dir_from_latest,
@@ -39,9 +45,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     _unique_dir,
     _update_latest_pointer,
     _validation_payload,
-    _write_json,
     _write_jsonl,
-    _write_text,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_outcome_accumulation import (
     DEFAULT_CONSENSUS_RISK_DIR,
@@ -58,11 +62,18 @@ from ai_trading_system.etf_portfolio.dynamic_v3_outcome_accumulation import (
     run_outcome_update,
     run_outcome_update_review,
     run_rolling_evidence_refresh,
+    validate_evidence_trend_artifact,
+    validate_forward_outcome_decision_artifact,
+    validate_outcome_due_artifact,
+    validate_outcome_update_artifact,
+    validate_outcome_update_review_artifact,
+    validate_rolling_evidence_refresh_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
     DEFAULT_ADVISORY_OUTCOME_DIR,
     DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH,
     DEFAULT_RATES_CACHE_PATH,
+    validate_advisory_outcome_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_CONSENSUS_DRIFT_DIR,
@@ -75,6 +86,11 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     SCHEMA_VERSION,
 )
 from ai_trading_system.etf_portfolio.models import DEFAULT_ETF_PRICE_PATH
+from ai_trading_system.platform.artifacts.writer import (
+    write_bytes_atomic,
+    write_json_atomic,
+    write_text_atomic,
+)
 
 DEFAULT_CONFIRMATION_CYCLE_SCHEDULE_CONFIG_PATH = (
     PROJECT_ROOT
@@ -90,9 +106,7 @@ DEFAULT_PRESSURE_REGIME_TAGGING_CONFIG_PATH = (
     / "dynamic_v3_rescue"
     / "pressure_regime_tagging_v1.yaml"
 )
-DEFAULT_CONFIRMATION_CYCLE_PLAN_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "confirmation_cycle_plan"
-)
+DEFAULT_CONFIRMATION_CYCLE_PLAN_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "confirmation_cycle_plan"
 DEFAULT_CONFIRMATION_CYCLE_WEEKLY_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "confirmation_cycle_weekly"
 )
@@ -121,10 +135,214 @@ REQUIRED_CONFIRMATION_CYCLE_STEPS = (
     "weekly_dashboard",
     "reader_brief_update",
 )
+CONFIRMATION_CYCLE_PLAN_SNAPSHOT_SCHEMA_VERSION = "confirmation_cycle_plan_input_snapshot.v2"
+CONFIRMATION_CYCLE_WEEKLY_SNAPSHOT_SCHEMA_VERSION = "confirmation_cycle_weekly_input_snapshot.v2"
+PRESSURE_REGIME_SNAPSHOT_SCHEMA_VERSION = "pressure_regime_input_snapshot.v2"
+CONFIRMATION_DASHBOARD_SNAPSHOT_SCHEMA_VERSION = "confirmation_dashboard_input_snapshot.v2"
+RULE_REVIEW_QUEUE_SNAPSHOT_SCHEMA_VERSION = "rule_review_queue_input_snapshot.v2"
 
 
 class DynamicV3ConfirmationOperationsError(ValueError):
     """Raised when confirmation weekly operations artifacts fail closed."""
+
+
+def _operations_generated_at(value: datetime | None) -> datetime:
+    generated = value or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3ConfirmationOperationsError("generated_at must be timezone-aware")
+    return generated.astimezone(UTC)
+
+
+def _operations_datetime(value: Any, *, field: str) -> datetime:
+    if isinstance(value, datetime):
+        parsed = value
+    else:
+        try:
+            parsed = datetime.fromisoformat(_text(value))
+        except ValueError as exc:
+            raise DynamicV3ConfirmationOperationsError(f"{field} must be ISO datetime") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise DynamicV3ConfirmationOperationsError(f"{field} must be timezone-aware")
+    return parsed.astimezone(UTC)
+
+
+def _operations_file_commitment(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise DynamicV3ConfirmationOperationsError(f"source file missing: {path}")
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return {
+        "path": str(path),
+        "size_bytes": path.stat().st_size,
+        "sha256": digest.hexdigest(),
+    }
+
+
+def _operations_source_bundle(
+    *,
+    source_dir: Path,
+    canonical_files: Sequence[str] | None = None,
+    json_views: Sequence[str] = (),
+    jsonl_views: Sequence[str] = (),
+    text_views: Sequence[str] = (),
+) -> dict[str, Any]:
+    names = list(
+        canonical_files or sorted(path.name for path in source_dir.iterdir() if path.is_file())
+    )
+    if not names or len(names) != len(set(names)):
+        raise DynamicV3ConfirmationOperationsError("source bundle files missing or duplicate")
+    files = {name: _operations_file_commitment(source_dir / name) for name in names}
+    return {
+        "schema_version": "content_commitment_bundle.v1",
+        "source_dir": str(source_dir),
+        "canonical_file_count": len(names),
+        "files": files,
+        "json": {name: _read_json(source_dir / name) for name in json_views},
+        "jsonl": {name: _read_jsonl(source_dir / name) for name in jsonl_views},
+        "text": {name: _read_text(source_dir / name) for name in text_views},
+    }
+
+
+def _validate_operations_source_bundle(bundle: Mapping[str, Any]) -> list[str]:
+    errors: list[str] = []
+    source_dir = Path(_text(bundle.get("source_dir")))
+    files = _mapping(bundle.get("files"))
+    if (
+        bundle.get("schema_version") != "content_commitment_bundle.v1"
+        or _int(bundle.get("canonical_file_count")) != len(files)
+        or not files
+    ):
+        errors.append("source bundle envelope invalid")
+        return errors
+    for name, raw in files.items():
+        expected = _mapping(raw)
+        path = source_dir / name
+        try:
+            actual = _operations_file_commitment(path)
+        except DynamicV3ConfirmationOperationsError as exc:
+            errors.append(str(exc))
+            continue
+        if actual != expected:
+            errors.append(f"source commitment drift: {path}")
+    for name, expected in _mapping(bundle.get("json")).items():
+        try:
+            if _read_json(source_dir / name) != expected:
+                errors.append(f"source JSON drift: {source_dir / name}")
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"source JSON invalid: {source_dir / name}: {exc}")
+    for name, expected in _mapping(bundle.get("jsonl")).items():
+        try:
+            if _read_jsonl(source_dir / name) != expected:
+                errors.append(f"source JSONL drift: {source_dir / name}")
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"source JSONL invalid: {source_dir / name}: {exc}")
+    for name, expected in _mapping(bundle.get("text")).items():
+        try:
+            if _read_text(source_dir / name) != expected:
+                errors.append(f"source text drift: {source_dir / name}")
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"source text invalid: {source_dir / name}: {exc}")
+    return errors
+
+
+def _strict_validation(validation: Mapping[str, Any], *, source_name: str) -> dict[str, Any]:
+    payload = dict(validation)
+    if payload.get("status") != "PASS":
+        raise DynamicV3ConfirmationOperationsError(f"{source_name} validation failed")
+    return payload
+
+
+def _report_input_snapshot(path: Path) -> dict[str, Any]:
+    snapshot = _read_optional_json(path)
+    if snapshot is not None:
+        return {"input_snapshot": snapshot}
+    return {
+        "input_snapshot": {},
+        "status": "PASS_WITH_WARNINGS",
+        "legacy_unsnapshotted": True,
+        "current_conclusion_eligible": False,
+        "warnings": [
+            "legacy artifact has no versioned input snapshot; read-only display only"
+        ],
+    }
+
+
+def _source_not_after_cutoff(
+    manifest: Mapping[str, Any], *, generated: datetime, source_name: str
+) -> datetime:
+    source_generated = _operations_datetime(
+        manifest.get("generated_at"), field=f"{source_name} generated_at"
+    )
+    if source_generated > generated:
+        raise DynamicV3ConfirmationOperationsError(f"{source_name} generated after cutoff")
+    return source_generated
+
+
+def _semantic_artifact_id(
+    *,
+    output_dir: Path,
+    artifact_id: str | None,
+    manifest_name: str,
+    id_key: str,
+    generated: datetime,
+    source_name: str,
+    required: bool,
+) -> str:
+    if artifact_id is not None:
+        if artifact_id == "" and not required:
+            return ""
+        manifest = _read_optional_json(output_dir / artifact_id / manifest_name)
+        if not manifest:
+            raise DynamicV3ConfirmationOperationsError(
+                f"{source_name} artifact not found: {artifact_id}"
+            )
+        if manifest.get(id_key) != artifact_id:
+            raise DynamicV3ConfirmationOperationsError(f"{source_name} id mismatch")
+        _source_not_after_cutoff(manifest, generated=generated, source_name=source_name)
+        return artifact_id
+    candidates: list[tuple[datetime, str]] = []
+    if output_dir.exists():
+        for path in sorted(output_dir.glob(f"*/{manifest_name}")):
+            manifest = _read_optional_json(path)
+            if not manifest:
+                raise DynamicV3ConfirmationOperationsError(
+                    f"{source_name} manifest invalid: {path}"
+                )
+            candidate_id = _text(manifest.get(id_key))
+            if not candidate_id or candidate_id != path.parent.name:
+                raise DynamicV3ConfirmationOperationsError(
+                    f"{source_name} manifest identity invalid: {path}"
+                )
+            candidate_generated = _operations_datetime(
+                manifest.get("generated_at"), field=f"{source_name} generated_at"
+            )
+            if candidate_generated <= generated:
+                candidates.append((candidate_generated, candidate_id))
+    if not candidates:
+        if required:
+            raise DynamicV3ConfirmationOperationsError(
+                f"{source_name} has no artifact at or before cutoff"
+            )
+        return ""
+    return max(candidates, key=lambda item: (item[0], item[1]))[1]
+
+
+def _json_bytes(payload: Mapping[str, Any]) -> bytes:
+    return (json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode(
+        "utf-8"
+    )
+
+
+def _jsonl_bytes(rows: Sequence[Mapping[str, Any]]) -> bytes:
+    return "".join(
+        json.dumps(dict(row), ensure_ascii=False, sort_keys=True) + "\n" for row in rows
+    ).encode("utf-8")
+
+
+def _file_bytes_match(path: Path, expected: bytes) -> bool:
+    return path.is_file() and path.read_bytes() == expected
 
 
 def validate_confirmation_cycle_schedule_config(
@@ -163,8 +381,7 @@ def validate_confirmation_cycle_schedule_config(
         ),
         _check(
             "safety_no_production",
-            safety.get("production_effect") == "none"
-            and safety.get("auto_apply_policy") is False,
+            safety.get("production_effect") == "none" and safety.get("auto_apply_policy") is False,
             "no production or auto apply",
         ),
         _check(
@@ -189,14 +406,12 @@ def build_confirmation_cycle_plan(
     output_dir: Path = DEFAULT_CONFIRMATION_CYCLE_PLAN_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _operations_generated_at(generated_at)
     validation = validate_confirmation_cycle_schedule_config(config_path=config_path)
-    if validation["status"] != "PASS":
-        raise DynamicV3ConfirmationOperationsError("confirmation cycle config validation failed")
+    _strict_validation(validation, source_name="confirmation cycle config")
     config = _mapping(validation.get("config"))
     plan_id = _stable_id("confirmation-cycle-plan", str(config_path), generated.isoformat())
     plan_dir = _unique_dir(output_dir / plan_id)
-    plan_dir.mkdir(parents=True, exist_ok=False)
     safety = _schedule_safety(config)
     commands = _scheduled_commands(config_path)
     command_pack = {
@@ -224,22 +439,37 @@ def build_confirmation_cycle_plan(
             plan_dir / "confirmation_cycle_plan_manifest.json"
         ),
         "scheduled_command_pack_path": str(plan_dir / "scheduled_command_pack.json"),
-        "confirmation_cycle_runbook_path": str(plan_dir / "confirmation_cycle_runbook.md"),
-        "confirmation_cycle_plan_report_path": str(
-            plan_dir / "confirmation_cycle_plan_report.md"
+        "confirmation_cycle_plan_input_snapshot_path": str(
+            plan_dir / "confirmation_cycle_plan_input_snapshot.json"
         ),
+        "confirmation_cycle_runbook_path": str(plan_dir / "confirmation_cycle_runbook.md"),
+        "confirmation_cycle_plan_report_path": str(plan_dir / "confirmation_cycle_plan_report.md"),
         "market_regime": "ai_after_chatgpt",
         **_artifact_safety(),
     }
-    _write_json(plan_dir / "confirmation_cycle_plan_manifest.json", manifest)
-    _write_json(plan_dir / "scheduled_command_pack.json", command_pack)
-    _write_text(
+    snapshot = {
+        "schema_version": CONFIRMATION_CYCLE_PLAN_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_confirmation_cycle_plan_input_snapshot",
+        "generated_at": generated.isoformat(),
+        "config_path": str(config_path),
+        "config_commitment": _operations_file_commitment(config_path),
+        "config": config,
+        "config_validation": validation,
+        "production_effect": "none",
+    }
+    runbook = render_confirmation_cycle_runbook(manifest, command_pack)
+    report = render_confirmation_cycle_plan_report(manifest, command_pack)
+    plan_dir.mkdir(parents=True, exist_ok=False)
+    write_json_atomic(plan_dir / "confirmation_cycle_plan_manifest.json", manifest)
+    write_json_atomic(plan_dir / "scheduled_command_pack.json", command_pack)
+    write_json_atomic(plan_dir / "confirmation_cycle_plan_input_snapshot.json", snapshot)
+    write_text_atomic(
         plan_dir / "confirmation_cycle_runbook.md",
-        render_confirmation_cycle_runbook(manifest, command_pack),
+        runbook,
     )
-    _write_text(
+    write_text_atomic(
         plan_dir / "confirmation_cycle_plan_report.md",
-        render_confirmation_cycle_plan_report(manifest, command_pack),
+        report,
     )
     _update_latest_pointer(
         "latest_confirmation_cycle_plan",
@@ -251,6 +481,7 @@ def build_confirmation_cycle_plan(
         "plan_dir": plan_dir,
         "manifest": manifest,
         "scheduled_command_pack": command_pack,
+        "input_snapshot": snapshot,
     }
 
 
@@ -268,12 +499,264 @@ def confirmation_cycle_plan_report_payload(
     return {
         **_read_json(plan_dir / "confirmation_cycle_plan_manifest.json"),
         "scheduled_command_pack": _read_json(plan_dir / "scheduled_command_pack.json"),
+        **_report_input_snapshot(plan_dir / "confirmation_cycle_plan_input_snapshot.json"),
         "confirmation_cycle_runbook": _read_text(plan_dir / "confirmation_cycle_runbook.md"),
         "confirmation_cycle_plan_report": _read_text(
             plan_dir / "confirmation_cycle_plan_report.md"
         ),
         "plan_dir": str(plan_dir),
     }
+
+
+def validate_confirmation_cycle_plan_artifact(
+    *, plan_id: str, output_dir: Path = DEFAULT_CONFIRMATION_CYCLE_PLAN_DIR
+) -> dict[str, Any]:
+    plan_dir = output_dir / plan_id
+    manifest = _read_optional_json(plan_dir / "confirmation_cycle_plan_manifest.json") or {}
+    command_pack = _read_optional_json(plan_dir / "scheduled_command_pack.json") or {}
+    snapshot = _read_optional_json(plan_dir / "confirmation_cycle_plan_input_snapshot.json") or {}
+    recompute_error = ""
+    expected_pack: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_runbook = ""
+    expected_report = ""
+    source_ok = False
+    try:
+        if snapshot.get("schema_version") != CONFIRMATION_CYCLE_PLAN_SNAPSHOT_SCHEMA_VERSION:
+            raise DynamicV3ConfirmationOperationsError("plan snapshot schema mismatch")
+        generated = _operations_datetime(snapshot.get("generated_at"), field="plan generated_at")
+        config_path = Path(_text(snapshot.get("config_path")))
+        if _operations_file_commitment(config_path) != _mapping(snapshot.get("config_commitment")):
+            raise DynamicV3ConfirmationOperationsError("plan config commitment drift")
+        validation = validate_confirmation_cycle_schedule_config(config_path=config_path)
+        _strict_validation(validation, source_name="confirmation cycle config")
+        if validation != _mapping(snapshot.get("config_validation")) or _mapping(
+            validation.get("config")
+        ) != _mapping(snapshot.get("config")):
+            raise DynamicV3ConfirmationOperationsError("plan config snapshot drift")
+        config = _mapping(snapshot.get("config"))
+        expected_pack = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_scheduled_command_pack",
+            "plan_id": plan_id,
+            "cadence": _text(_mapping(config.get("schedule")).get("cadence"), "weekly"),
+            "preferred_weekday": _text(_mapping(config.get("schedule")).get("preferred_weekday")),
+            "timezone": _text(_mapping(config.get("schedule")).get("timezone")),
+            "safety": _schedule_safety(config),
+            "commands": _scheduled_commands(config_path),
+            "production_effect": "none",
+            "broker_action_allowed": False,
+            "broker_action_taken": False,
+        }
+        expected_manifest = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_confirmation_cycle_plan_manifest",
+            "plan_id": plan_id,
+            "generated_at": generated.isoformat(),
+            "status": "PASS",
+            "config_path": str(config_path),
+            "planned_step_count": len(expected_pack["commands"]),
+            "confirmation_cycle_plan_manifest_path": str(
+                plan_dir / "confirmation_cycle_plan_manifest.json"
+            ),
+            "scheduled_command_pack_path": str(plan_dir / "scheduled_command_pack.json"),
+            "confirmation_cycle_plan_input_snapshot_path": str(
+                plan_dir / "confirmation_cycle_plan_input_snapshot.json"
+            ),
+            "confirmation_cycle_runbook_path": str(plan_dir / "confirmation_cycle_runbook.md"),
+            "confirmation_cycle_plan_report_path": str(
+                plan_dir / "confirmation_cycle_plan_report.md"
+            ),
+            "market_regime": "ai_after_chatgpt",
+            **_artifact_safety(),
+        }
+        expected_runbook = render_confirmation_cycle_runbook(expected_manifest, expected_pack)
+        expected_report = render_confirmation_cycle_plan_report(expected_manifest, expected_pack)
+        source_ok = True
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+    checks = [
+        _check(
+            "manifest_exists", (plan_dir / "confirmation_cycle_plan_manifest.json").is_file(), ""
+        ),
+        _check("command_pack_exists", (plan_dir / "scheduled_command_pack.json").is_file(), ""),
+        _check(
+            "input_snapshot_exists",
+            (plan_dir / "confirmation_cycle_plan_input_snapshot.json").is_file(),
+            "",
+        ),
+        _check("runbook_exists", (plan_dir / "confirmation_cycle_runbook.md").is_file(), ""),
+        _check("report_exists", (plan_dir / "confirmation_cycle_plan_report.md").is_file(), ""),
+        _check("source_snapshot_valid", source_ok, recompute_error),
+        _check("command_pack_recomputed", source_ok and command_pack == expected_pack, ""),
+        _check("manifest_recomputed", source_ok and manifest == expected_manifest, ""),
+        _check(
+            "runbook_recomputed",
+            source_ok
+            and _read_text(plan_dir / "confirmation_cycle_runbook.md") == expected_runbook,
+            "",
+        ),
+        _check(
+            "report_recomputed",
+            source_ok
+            and _read_text(plan_dir / "confirmation_cycle_plan_report.md") == expected_report,
+            "",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_confirmation_cycle_plan_validation",
+        artifact_id_key="plan_id",
+        artifact_id=plan_id,
+        checks=checks,
+    )
+
+
+def _weekly_validation(*, kind: str, artifact_id: str, root: Path) -> dict[str, Any]:
+    validators = {
+        "outcome_due": lambda: validate_outcome_due_artifact(due_id=artifact_id, output_dir=root),
+        "outcome_update_review": lambda: validate_outcome_update_review_artifact(
+            review_id=artifact_id, output_dir=root
+        ),
+        "outcome_update": lambda: validate_outcome_update_artifact(
+            update_id=artifact_id, output_dir=root
+        ),
+        "rolling_refresh": lambda: validate_rolling_evidence_refresh_artifact(
+            refresh_id=artifact_id, output_dir=root
+        ),
+        "evidence_trend": lambda: validate_evidence_trend_artifact(
+            trend_id=artifact_id, output_dir=root
+        ),
+        "confirmation_progress": lambda: validate_confirmation_progress_artifact(
+            progress_id=artifact_id, output_dir=root
+        ),
+        "confirmation_evaluation": lambda: validate_confirmation_evaluation_artifact(
+            evaluation_id=artifact_id, output_dir=root
+        ),
+        "rule_review_cycle": lambda: validate_rule_review_cycle_artifact(
+            cycle_id=artifact_id, output_dir=root
+        ),
+        "rule_review_queue": lambda: validate_rule_review_queue_artifact(
+            queue_id=artifact_id, output_dir=root
+        ),
+        "forward_outcome_decision": lambda: validate_forward_outcome_decision_artifact(
+            decision_id=artifact_id, output_dir=root
+        ),
+        "confirmation_dashboard": lambda: validate_confirmation_dashboard_artifact(
+            dashboard_id=artifact_id, output_dir=root
+        ),
+    }
+    validator = validators.get(kind)
+    if validator is None:
+        raise DynamicV3ConfirmationOperationsError(f"unknown weekly source kind: {kind}")
+    return _strict_validation(validator(), source_name=kind)
+
+
+def _weekly_source_record(
+    *, kind: str, artifact_id: str, root: Path, generated: datetime
+) -> dict[str, Any]:
+    validation = _weekly_validation(kind=kind, artifact_id=artifact_id, root=root)
+    artifact_dir = root / artifact_id
+    names = sorted(path.name for path in artifact_dir.iterdir() if path.is_file())
+    json_views = [
+        name
+        for name in names
+        if name.endswith(".json") and "snapshot" not in name and "transaction" not in name
+    ]
+    jsonl_views = [name for name in names if name.endswith(".jsonl")]
+    bundle = _operations_source_bundle(
+        source_dir=artifact_dir,
+        canonical_files=names,
+        json_views=json_views,
+        jsonl_views=jsonl_views,
+    )
+    manifests = [
+        _mapping(value)
+        for name, value in _mapping(bundle.get("json")).items()
+        if "manifest" in name
+    ]
+    if len(manifests) != 1:
+        raise DynamicV3ConfirmationOperationsError(
+            f"{kind} must expose exactly one top-level manifest"
+        )
+    source_generated = _source_not_after_cutoff(manifests[0], generated=generated, source_name=kind)
+    return {
+        "kind": kind,
+        "artifact_id": artifact_id,
+        "root": str(root),
+        "generated_at": source_generated.isoformat(),
+        "validation": validation,
+        "bundle": bundle,
+    }
+
+
+def _weekly_snapshot_source(snapshot: Mapping[str, Any], kind: str) -> dict[str, Any] | None:
+    matches = [row for row in _records(snapshot.get("sources")) if row.get("kind") == kind]
+    if len(matches) > 1:
+        raise DynamicV3ConfirmationOperationsError(f"duplicate weekly source kind: {kind}")
+    return matches[0] if matches else None
+
+
+def _weekly_source_json(source: Mapping[str, Any], name: str) -> dict[str, Any]:
+    payload = _mapping(_mapping(source.get("bundle")).get("json"))
+    value = payload.get(name)
+    if not isinstance(value, Mapping):
+        raise DynamicV3ConfirmationOperationsError(
+            f"weekly source view missing: {source.get('kind')}:{name}"
+        )
+    return dict(value)
+
+
+def _weekly_summary_from_snapshot(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    due = _weekly_snapshot_source(snapshot, "outcome_due")
+    progress = _weekly_snapshot_source(snapshot, "confirmation_progress")
+    evaluation = _weekly_snapshot_source(snapshot, "confirmation_evaluation")
+    cycle = _weekly_snapshot_source(snapshot, "rule_review_cycle")
+    queue = _weekly_snapshot_source(snapshot, "rule_review_queue")
+    if not all((due, progress, evaluation, cycle, queue)):
+        raise DynamicV3ConfirmationOperationsError("weekly core source set incomplete")
+    update = _weekly_snapshot_source(snapshot, "outcome_update")
+    update_payload: dict[str, Any] | None = None
+    if update is not None:
+        update_manifest = next(
+            (
+                _mapping(value)
+                for name, value in _mapping(_mapping(update.get("bundle")).get("json")).items()
+                if "manifest" in name
+            ),
+            {},
+        )
+        updated_rows = next(
+            (
+                _records(value)
+                for name, value in _mapping(_mapping(update.get("bundle")).get("jsonl")).items()
+                if "updated" in name
+            ),
+            [],
+        )
+        skipped_rows = next(
+            (
+                _records(value)
+                for name, value in _mapping(_mapping(update.get("bundle")).get("jsonl")).items()
+                if "skipped" in name
+            ),
+            [],
+        )
+        update_payload = {
+            "manifest": update_manifest,
+            "updated_windows": updated_rows,
+            "skipped_windows": skipped_rows,
+        }
+    summary = _weekly_cycle_summary(
+        week_ending=date.fromisoformat(_text(snapshot.get("week_ending"))),
+        due_summary=_weekly_source_json(due, "pending_window_summary.json"),
+        update=update_payload,
+        progress_summary=_weekly_source_json(progress, "target_progress_summary.json"),
+        evaluation_summary=_weekly_source_json(evaluation, "confirmation_evaluation_summary.json"),
+        cycle_manifest=_weekly_source_json(cycle, "rule_review_cycle_manifest.json"),
+        queue_summary=_weekly_source_json(queue, "queue_summary.json"),
+    )
+    summary["weekly_cycle_id"] = _text(snapshot.get("weekly_cycle_id"))
+    return summary
 
 
 def run_confirmation_cycle_weekly(
@@ -294,6 +777,7 @@ def run_confirmation_cycle_weekly(
     evaluation_dir: Path = DEFAULT_CONFIRMATION_EVALUATION_DIR,
     rule_cycle_dir: Path = DEFAULT_RULE_REVIEW_CYCLE_DIR,
     queue_dir: Path = DEFAULT_RULE_REVIEW_QUEUE_DIR,
+    rule_owner_decision_journal_path: Path = DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH,
     dashboard_dir: Path = DEFAULT_CONFIRMATION_DASHBOARD_DIR,
     pressure_tag_dir: Path = DEFAULT_PRESSURE_REGIME_TAG_DIR,
     advisory_outcome_dir: Path = DEFAULT_ADVISORY_OUTCOME_DIR,
@@ -310,15 +794,45 @@ def run_confirmation_cycle_weekly(
     enforce_data_quality_gate: bool = True,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _operations_generated_at(generated_at)
+    if week_ending > generated.date():
+        raise DynamicV3ConfirmationOperationsError("week_ending must not exceed generated cutoff")
     validation = validate_confirmation_cycle_schedule_config(config_path=config_path)
-    if validation["status"] != "PASS":
-        raise DynamicV3ConfirmationOperationsError("confirmation cycle config validation failed")
-    resolved_registry_id = registry_id or _latest_artifact_id(
-        registry_dir,
-        "latest_forward_confirmation_registry",
+    _strict_validation(validation, source_name="confirmation cycle config")
+    config_commitment = _operations_file_commitment(config_path)
+    resolved_registry_id = _semantic_artifact_id(
+        output_dir=registry_dir,
+        artifact_id=registry_id,
+        manifest_name="confirmation_registry_manifest.json",
+        id_key="registry_id",
+        generated=generated,
+        source_name="confirmation registry",
+        required=True,
     )
+    registry_validation = _strict_validation(
+        validate_confirmation_targets_artifact(
+            registry_id=resolved_registry_id, output_dir=registry_dir
+        ),
+        source_name="confirmation registry",
+    )
+    registry_manifest = _read_json(
+        registry_dir / resolved_registry_id / "confirmation_registry_manifest.json"
+    )
+    _source_not_after_cutoff(
+        registry_manifest, generated=generated, source_name="confirmation registry"
+    )
+    weekly_cycle_id = _stable_id(
+        "confirmation-cycle-weekly",
+        week_ending.isoformat(),
+        generated.isoformat(),
+    )
+    weekly_dir = output_dir / weekly_cycle_id
+    if weekly_dir.exists():
+        raise DynamicV3ConfirmationOperationsError(
+            f"weekly cycle already exists: {weekly_cycle_id}"
+        )
     steps: list[dict[str, Any]] = []
+    sources: list[dict[str, Any]] = []
     artifacts: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_weekly_cycle_artifacts",
@@ -334,6 +848,14 @@ def run_confirmation_cycle_weekly(
     )
     due_summary = _mapping(due.get("pending_window_summary"))
     artifacts["outcome_due_id"] = due["due_id"]
+    sources.append(
+        _weekly_source_record(
+            kind="outcome_due",
+            artifact_id=due["due_id"],
+            root=outcome_due_dir,
+            generated=generated,
+        )
+    )
     steps.append(
         _step(
             "outcome_due_scan",
@@ -351,6 +873,14 @@ def run_confirmation_cycle_weekly(
     )
     review_manifest = _mapping(review.get("manifest"))
     artifacts["outcome_update_review_id"] = review["update_review_id"]
+    sources.append(
+        _weekly_source_record(
+            kind="outcome_update_review",
+            artifact_id=review["update_review_id"],
+            root=outcome_update_review_dir,
+            generated=generated,
+        )
+    )
     steps.append(
         _step(
             "outcome_update_review",
@@ -372,6 +902,14 @@ def run_confirmation_cycle_weekly(
             generated_at=generated,
         )
         artifacts["outcome_update_id"] = update["outcome_update_id"]
+        sources.append(
+            _weekly_source_record(
+                kind="outcome_update",
+                artifact_id=update["outcome_update_id"],
+                root=outcome_update_dir,
+                generated=generated,
+            )
+        )
         steps.append(
             _step(
                 "outcome_update",
@@ -382,11 +920,7 @@ def run_confirmation_cycle_weekly(
             )
         )
     else:
-        reason = (
-            "execute_ready_updates_false"
-            if not execute_ready_updates
-            else "no_ready_updates"
-        )
+        reason = "execute_ready_updates_false" if not execute_ready_updates else "no_ready_updates"
         artifacts["outcome_update_id"] = ""
         steps.append(_step("outcome_update", "SKIPPED", "", reason=reason))
     refresh: dict[str, Any] | None = None
@@ -408,6 +942,14 @@ def run_confirmation_cycle_weekly(
             generated_at=generated,
         )
         artifacts["rolling_refresh_id"] = refresh["refresh_id"]
+        sources.append(
+            _weekly_source_record(
+                kind="rolling_refresh",
+                artifact_id=refresh["refresh_id"],
+                root=rolling_refresh_dir,
+                generated=generated,
+            )
+        )
         steps.append(
             _step(
                 "rolling_evidence_refresh",
@@ -431,6 +973,14 @@ def run_confirmation_cycle_weekly(
         generated_at=generated,
     )
     artifacts["evidence_trend_id"] = trend["trend_id"]
+    sources.append(
+        _weekly_source_record(
+            kind="evidence_trend",
+            artifact_id=trend["trend_id"],
+            root=evidence_trend_dir,
+            generated=generated,
+        )
+    )
     steps.append(
         _step(
             "evidence_trend",
@@ -449,6 +999,14 @@ def run_confirmation_cycle_weekly(
     )
     progress_summary = _mapping(progress.get("target_progress_summary"))
     artifacts["confirmation_progress_id"] = progress["progress_id"]
+    sources.append(
+        _weekly_source_record(
+            kind="confirmation_progress",
+            artifact_id=progress["progress_id"],
+            root=progress_dir,
+            generated=generated,
+        )
+    )
     steps.append(
         _step(
             "confirmation_progress",
@@ -466,6 +1024,14 @@ def run_confirmation_cycle_weekly(
     )
     evaluation_summary = _mapping(evaluation.get("confirmation_evaluation_summary"))
     artifacts["confirmation_evaluation_id"] = evaluation["evaluation_id"]
+    sources.append(
+        _weekly_source_record(
+            kind="confirmation_evaluation",
+            artifact_id=evaluation["evaluation_id"],
+            root=evaluation_dir,
+            generated=generated,
+        )
+    )
     steps.append(
         _step(
             "confirmation_evaluate",
@@ -488,6 +1054,14 @@ def run_confirmation_cycle_weekly(
     )
     artifacts["rule_review_cycle_id"] = rule_cycle["cycle_id"]
     cycle_manifest = _mapping(rule_cycle.get("manifest"))
+    sources.append(
+        _weekly_source_record(
+            kind="rule_review_cycle",
+            artifact_id=rule_cycle["cycle_id"],
+            root=rule_cycle_dir,
+            generated=generated,
+        )
+    )
     steps.append(
         _step(
             "rule_review_cycle",
@@ -501,9 +1075,18 @@ def run_confirmation_cycle_weekly(
         cycle_id=rule_cycle["cycle_id"],
         output_dir=queue_dir,
         cycle_dir=rule_cycle_dir,
+        journal_path=rule_owner_decision_journal_path,
         generated_at=generated,
     )
     artifacts["rule_review_queue_id"] = queue["queue_id"]
+    sources.append(
+        _weekly_source_record(
+            kind="rule_review_queue",
+            artifact_id=queue["queue_id"],
+            root=queue_dir,
+            generated=generated,
+        )
+    )
     steps.append(
         _step(
             "owner_decision_queue_update",
@@ -514,29 +1097,48 @@ def run_confirmation_cycle_weekly(
             ),
         )
     )
-    try:
+    if update is not None and refresh is not None:
         forward_decision = run_forward_outcome_decision(
             week_ending=week_ending,
             output_dir=forward_decision_dir,
             outcome_update_dir=outcome_update_dir,
             rolling_refresh_dir=rolling_refresh_dir,
             evidence_trend_dir=evidence_trend_dir,
+            outcome_update_id=update["outcome_update_id"],
+            refresh_id=refresh["refresh_id"],
+            trend_id=trend["trend_id"],
             generated_at=generated,
         )
         artifacts["forward_outcome_decision_id"] = forward_decision["decision_id"]
-    except Exception:  # noqa: BLE001
+        sources.append(
+            _weekly_source_record(
+                kind="forward_outcome_decision",
+                artifact_id=forward_decision["decision_id"],
+                root=forward_decision_dir,
+                generated=generated,
+            )
+        )
+        steps.append(
+            _step(
+                "forward_outcome_decision",
+                _text(_mapping(forward_decision.get("manifest")).get("status"), "PASS"),
+                forward_decision["decision_id"],
+            )
+        )
+    else:
         artifacts["forward_outcome_decision_id"] = ""
         steps.append(
             _step(
                 "forward_outcome_decision",
                 "SKIPPED",
                 "",
-                reason="no_outcome_update_or_refresh_artifact",
+                reason="no_current_outcome_update_or_refresh_artifact",
             )
         )
     dashboard = build_confirmation_dashboard(
         week_ending=week_ending,
         weekly_cycle_id="",
+        weekly_cycle_reference_id=weekly_cycle_id,
         progress_id=progress["progress_id"],
         evaluation_id=evaluation["evaluation_id"],
         cycle_id=rule_cycle["cycle_id"],
@@ -551,6 +1153,14 @@ def run_confirmation_cycle_weekly(
         generated_at=generated,
     )
     artifacts["confirmation_dashboard_id"] = dashboard["dashboard_id"]
+    sources.append(
+        _weekly_source_record(
+            kind="confirmation_dashboard",
+            artifact_id=dashboard["dashboard_id"],
+            root=dashboard_dir,
+            generated=generated,
+        )
+    )
     steps.append(
         _step(
             "weekly_dashboard",
@@ -573,13 +1183,6 @@ def run_confirmation_cycle_weekly(
         cycle_manifest=cycle_manifest,
         queue_summary=_mapping(queue.get("queue_summary")),
     )
-    weekly_cycle_id = _stable_id(
-        "confirmation-cycle-weekly",
-        week_ending.isoformat(),
-        generated.isoformat(),
-    )
-    weekly_dir = _unique_dir(output_dir / weekly_cycle_id)
-    weekly_dir.mkdir(parents=True, exist_ok=False)
     artifacts["weekly_cycle_id"] = weekly_dir.name
     summary["weekly_cycle_id"] = weekly_dir.name
     manifest = {
@@ -595,33 +1198,62 @@ def run_confirmation_cycle_weekly(
         "weekly_cycle_steps_path": str(weekly_dir / "weekly_cycle_steps.json"),
         "weekly_cycle_artifacts_path": str(weekly_dir / "weekly_cycle_artifacts.json"),
         "weekly_cycle_summary_path": str(weekly_dir / "weekly_cycle_summary.json"),
+        "confirmation_cycle_weekly_input_snapshot_path": str(
+            weekly_dir / "confirmation_cycle_weekly_input_snapshot.json"
+        ),
         "weekly_cycle_report_path": str(weekly_dir / "weekly_cycle_report.md"),
         "reader_brief_section_path": str(weekly_dir / "reader_brief_section.md"),
         **_artifact_safety(),
     }
-    _write_json(weekly_dir / "weekly_cycle_manifest.json", manifest)
-    _write_json(
+    snapshot = {
+        "schema_version": CONFIRMATION_CYCLE_WEEKLY_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_confirmation_cycle_weekly_input_snapshot",
+        "weekly_cycle_id": weekly_cycle_id,
+        "week_ending": week_ending.isoformat(),
+        "generated_at": generated.isoformat(),
+        "execute_ready_updates": execute_ready_updates,
+        "config_path": str(config_path),
+        "config_commitment": config_commitment,
+        "config": _mapping(validation.get("config")),
+        "config_validation": validation,
+        "registry_id": resolved_registry_id,
+        "registry_root": str(registry_dir),
+        "registry_validation": registry_validation,
+        "registry_bundle": _operations_source_bundle(
+            source_dir=registry_dir / resolved_registry_id,
+            json_views=("confirmation_registry_manifest.json",),
+        ),
+        "sources": sources,
+        "materialized_views": {
+            "steps": steps,
+            "artifacts": artifacts,
+            "summary": summary,
+        },
+        "production_effect": "none",
+    }
+    report = render_weekly_cycle_report(manifest, steps, summary)
+    reader_brief = render_weekly_cycle_reader_brief(summary)
+    weekly_dir.mkdir(parents=True, exist_ok=False)
+    write_json_atomic(weekly_dir / "weekly_cycle_manifest.json", manifest)
+    write_json_atomic(
         weekly_dir / "weekly_cycle_steps.json",
         {"schema_version": SCHEMA_VERSION, "steps": steps},
     )
-    _write_json(weekly_dir / "weekly_cycle_artifacts.json", artifacts)
-    _write_json(weekly_dir / "weekly_cycle_summary.json", summary)
-    _write_text(
+    write_json_atomic(weekly_dir / "weekly_cycle_artifacts.json", artifacts)
+    write_json_atomic(weekly_dir / "weekly_cycle_summary.json", summary)
+    write_json_atomic(weekly_dir / "confirmation_cycle_weekly_input_snapshot.json", snapshot)
+    write_text_atomic(
         weekly_dir / "weekly_cycle_report.md",
-        render_weekly_cycle_report(manifest, steps, summary),
+        report,
     )
-    _write_text(
+    write_text_atomic(
         weekly_dir / "reader_brief_section.md",
-        render_weekly_cycle_reader_brief(summary),
+        reader_brief,
     )
     _update_latest_pointer(
         "latest_confirmation_cycle_weekly",
         weekly_dir.name,
         weekly_dir / "weekly_cycle_manifest.json",
-    )
-    _patch_dashboard_weekly_cycle_id(
-        dashboard_dir=Path(dashboard["dashboard_dir"]),
-        weekly_cycle_id=weekly_dir.name,
     )
     return {
         "weekly_cycle_id": weekly_dir.name,
@@ -630,6 +1262,7 @@ def run_confirmation_cycle_weekly(
         "weekly_cycle_steps": {"steps": steps},
         "weekly_cycle_artifacts": artifacts,
         "weekly_cycle_summary": summary,
+        "input_snapshot": snapshot,
     }
 
 
@@ -649,6 +1282,7 @@ def confirmation_cycle_weekly_report_payload(
         "weekly_cycle_steps": _read_json(weekly_dir / "weekly_cycle_steps.json"),
         "weekly_cycle_artifacts": _read_json(weekly_dir / "weekly_cycle_artifacts.json"),
         "weekly_cycle_summary": _read_json(weekly_dir / "weekly_cycle_summary.json"),
+        **_report_input_snapshot(weekly_dir / "confirmation_cycle_weekly_input_snapshot.json"),
         "reader_brief_section": _read_text(weekly_dir / "reader_brief_section.md"),
         "weekly_cycle_dir": str(weekly_dir),
     }
@@ -663,7 +1297,101 @@ def validate_confirmation_cycle_weekly_artifact(
     steps = _records(steps_payload.get("steps"))
     summary = _read_optional_json(weekly_dir / "weekly_cycle_summary.json") or {}
     artifacts = _read_optional_json(weekly_dir / "weekly_cycle_artifacts.json") or {}
+    snapshot = (
+        _read_optional_json(weekly_dir / "confirmation_cycle_weekly_input_snapshot.json") or {}
+    )
     step_names = {_text(row.get("step")) for row in steps}
+    source_errors: list[str] = []
+    expected_summary: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    recompute_error = ""
+    source_bindings_ok = False
+    try:
+        if snapshot.get("schema_version") != CONFIRMATION_CYCLE_WEEKLY_SNAPSHOT_SCHEMA_VERSION:
+            raise DynamicV3ConfirmationOperationsError("weekly snapshot schema mismatch")
+        generated = _operations_datetime(snapshot.get("generated_at"), field="weekly generated_at")
+        if snapshot.get("weekly_cycle_id") != weekly_cycle_id:
+            raise DynamicV3ConfirmationOperationsError("weekly snapshot id mismatch")
+        config_path = Path(_text(snapshot.get("config_path")))
+        if _operations_file_commitment(config_path) != _mapping(snapshot.get("config_commitment")):
+            raise DynamicV3ConfirmationOperationsError("weekly config commitment drift")
+        config_validation = validate_confirmation_cycle_schedule_config(config_path=config_path)
+        _strict_validation(config_validation, source_name="confirmation cycle config")
+        if config_validation != _mapping(snapshot.get("config_validation")):
+            raise DynamicV3ConfirmationOperationsError("weekly config validation drift")
+        registry_id = _text(snapshot.get("registry_id"))
+        registry_root = Path(_text(snapshot.get("registry_root")))
+        registry_validation = _strict_validation(
+            validate_confirmation_targets_artifact(
+                registry_id=registry_id, output_dir=registry_root
+            ),
+            source_name="confirmation registry",
+        )
+        if registry_validation != _mapping(snapshot.get("registry_validation")):
+            raise DynamicV3ConfirmationOperationsError("weekly registry validation drift")
+        source_errors.extend(
+            _validate_operations_source_bundle(_mapping(snapshot.get("registry_bundle")))
+        )
+        source_ids: dict[str, str] = {}
+        for source in _records(snapshot.get("sources")):
+            kind = _text(source.get("kind"))
+            artifact_id = _text(source.get("artifact_id"))
+            root = Path(_text(source.get("root")))
+            if not kind or not artifact_id or kind in source_ids:
+                source_errors.append("weekly source identity missing or duplicate")
+                continue
+            live_validation = _weekly_validation(kind=kind, artifact_id=artifact_id, root=root)
+            if live_validation != _mapping(source.get("validation")):
+                source_errors.append(f"weekly source validation drift: {kind}")
+            source_errors.extend(_validate_operations_source_bundle(_mapping(source.get("bundle"))))
+            source_generated = _operations_datetime(
+                source.get("generated_at"), field=f"{kind} generated_at"
+            )
+            if source_generated > generated:
+                source_errors.append(f"weekly source after cutoff: {kind}")
+            source_ids[kind] = artifact_id
+        artifact_keys = {
+            "outcome_due": "outcome_due_id",
+            "outcome_update_review": "outcome_update_review_id",
+            "outcome_update": "outcome_update_id",
+            "rolling_refresh": "rolling_refresh_id",
+            "evidence_trend": "evidence_trend_id",
+            "confirmation_progress": "confirmation_progress_id",
+            "confirmation_evaluation": "confirmation_evaluation_id",
+            "rule_review_cycle": "rule_review_cycle_id",
+            "rule_review_queue": "rule_review_queue_id",
+            "forward_outcome_decision": "forward_outcome_decision_id",
+            "confirmation_dashboard": "confirmation_dashboard_id",
+        }
+        source_bindings_ok = all(
+            artifacts.get(key) == source_ids.get(kind, "") for kind, key in artifact_keys.items()
+        )
+        expected_summary = _weekly_summary_from_snapshot(snapshot)
+        expected_manifest = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_weekly_cycle_manifest",
+            "weekly_cycle_id": weekly_cycle_id,
+            "week_ending": snapshot.get("week_ending"),
+            "generated_at": generated.isoformat(),
+            "status": "PASS",
+            "execute_ready_updates": snapshot.get("execute_ready_updates") is True,
+            "dry_run": snapshot.get("execute_ready_updates") is not True,
+            "weekly_cycle_manifest_path": str(weekly_dir / "weekly_cycle_manifest.json"),
+            "weekly_cycle_steps_path": str(weekly_dir / "weekly_cycle_steps.json"),
+            "weekly_cycle_artifacts_path": str(weekly_dir / "weekly_cycle_artifacts.json"),
+            "weekly_cycle_summary_path": str(weekly_dir / "weekly_cycle_summary.json"),
+            "confirmation_cycle_weekly_input_snapshot_path": str(
+                weekly_dir / "confirmation_cycle_weekly_input_snapshot.json"
+            ),
+            "weekly_cycle_report_path": str(weekly_dir / "weekly_cycle_report.md"),
+            "reader_brief_section_path": str(weekly_dir / "reader_brief_section.md"),
+            **_artifact_safety(),
+        }
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+    materialized = _mapping(snapshot.get("materialized_views"))
+    expected_steps = _records(materialized.get("steps"))
+    expected_artifacts = _mapping(materialized.get("artifacts"))
     checks = [
         _check("manifest_exists", (weekly_dir / "weekly_cycle_manifest.json").exists(), ""),
         _check("steps_exists", (weekly_dir / "weekly_cycle_steps.json").exists(), ""),
@@ -671,11 +1399,15 @@ def validate_confirmation_cycle_weekly_artifact(
         _check("summary_exists", (weekly_dir / "weekly_cycle_summary.json").exists(), ""),
         _check("report_exists", (weekly_dir / "weekly_cycle_report.md").exists(), ""),
         _check("reader_brief_exists", (weekly_dir / "reader_brief_section.md").exists(), ""),
+        _check(
+            "input_snapshot_exists",
+            (weekly_dir / "confirmation_cycle_weekly_input_snapshot.json").exists(),
+            "",
+        ),
         _check("weekly_cycle_id_matches", manifest.get("weekly_cycle_id") == weekly_cycle_id, ""),
         _check(
             "required_steps_present",
-            {"outcome_due_scan", "confirmation_progress", "confirmation_evaluate"}
-            <= step_names,
+            {"outcome_due_scan", "confirmation_progress", "confirmation_evaluate"} <= step_names,
             "core weekly steps",
         ),
         _check(
@@ -689,6 +1421,27 @@ def validate_confirmation_cycle_weekly_artifact(
         ),
         _check("summary_id_matches", summary.get("weekly_cycle_id") == weekly_cycle_id, ""),
         _check("artifact_id_matches", artifacts.get("weekly_cycle_id") == weekly_cycle_id, ""),
+        _check("source_recompute_succeeded", not recompute_error, recompute_error),
+        _check("source_bundles_valid", not source_errors, "; ".join(source_errors)),
+        _check("source_artifact_bindings", source_bindings_ok, "source ids must match artifacts"),
+        _check("steps_recomputed", steps == expected_steps, "snapshot materialized steps"),
+        _check("artifacts_recomputed", artifacts == expected_artifacts, "snapshot artifacts"),
+        _check("summary_recomputed", summary == expected_summary, "source-derived summary"),
+        _check("manifest_recomputed", manifest == expected_manifest, "manifest contract"),
+        _check(
+            "report_recomputed",
+            not recompute_error
+            and _read_text(weekly_dir / "weekly_cycle_report.md")
+            == render_weekly_cycle_report(expected_manifest, expected_steps, expected_summary),
+            "",
+        ),
+        _check(
+            "reader_brief_recomputed",
+            not recompute_error
+            and _read_text(weekly_dir / "reader_brief_section.md")
+            == render_weekly_cycle_reader_brief(expected_summary),
+            "",
+        ),
         _check(
             "safety_no_broker",
             manifest.get("broker_action_allowed") is False
@@ -710,6 +1463,149 @@ def validate_confirmation_cycle_weekly_artifact(
     )
 
 
+def _pressure_outcome_sources(
+    *, advisory_outcome_dir: Path, start: date, end: date, generated: datetime
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    selected: list[dict[str, Any]] = []
+    inventory: list[dict[str, Any]] = []
+    seen_daily: set[str] = set()
+    for manifest_path in sorted(advisory_outcome_dir.glob("*/advisory_outcome_manifest.json")):
+        manifest = _read_optional_json(manifest_path)
+        if not manifest:
+            raise DynamicV3ConfirmationOperationsError(
+                f"advisory outcome manifest invalid: {manifest_path}"
+            )
+        outcome_id = _text(manifest.get("outcome_id"))
+        if not outcome_id or outcome_id != manifest_path.parent.name:
+            raise DynamicV3ConfirmationOperationsError(
+                f"advisory outcome identity invalid: {manifest_path}"
+            )
+        outcome_generated = _operations_datetime(
+            manifest.get("generated_at"), field="advisory outcome generated_at"
+        )
+        windows = _read_jsonl(manifest_path.parent / "outcome_windows.jsonl")
+        relevant_windows = [
+            row
+            for row in windows
+            if (
+                (parsed := _date_or_none(row.get("end_date"))) is not None
+                and start <= parsed <= end
+            )
+        ]
+        inventory.append(
+            {
+                "outcome_id": outcome_id,
+                "generated_at": outcome_generated.isoformat(),
+                "selected": outcome_generated <= generated and bool(relevant_windows),
+                "relevant_window_count": len(relevant_windows),
+                "manifest_commitment": _operations_file_commitment(manifest_path),
+            }
+        )
+        if outcome_generated > generated or not relevant_windows:
+            continue
+        validation = _strict_validation(
+            validate_advisory_outcome_artifact(
+                outcome_id=outcome_id, output_dir=advisory_outcome_dir
+            ),
+            source_name=f"advisory outcome {outcome_id}",
+        )
+        updated_at = manifest.get("updated_at")
+        if (
+            updated_at
+            and _operations_datetime(updated_at, field="advisory outcome updated_at") > generated
+        ):
+            raise DynamicV3ConfirmationOperationsError(
+                f"advisory outcome updated after cutoff: {outcome_id}"
+            )
+        daily_id = _text(manifest.get("daily_advisory_id"))
+        if not daily_id or daily_id in seen_daily:
+            raise DynamicV3ConfirmationOperationsError(
+                f"advisory outcome daily id missing or duplicate: {daily_id}"
+            )
+        seen_daily.add(daily_id)
+        names = sorted(path.name for path in manifest_path.parent.iterdir() if path.is_file())
+        selected.append(
+            {
+                "outcome_id": outcome_id,
+                "daily_advisory_id": daily_id,
+                "validation": validation,
+                "bundle": _operations_source_bundle(
+                    source_dir=manifest_path.parent,
+                    canonical_files=names,
+                    json_views=(
+                        "advisory_outcome_manifest.json",
+                        "advisory_event.json",
+                        "advisory_counterfactuals.json",
+                    ),
+                    jsonl_views=("outcome_windows.jsonl", "outcome_update_events.jsonl"),
+                ),
+            }
+        )
+    return selected, inventory
+
+
+def _date_or_none(value: Any) -> date | None:
+    try:
+        return date.fromisoformat(_text(value)[:10])
+    except ValueError:
+        return None
+
+
+def _build_outcome_regime_tags_from_sources(
+    *,
+    sources: Sequence[Mapping[str, Any]],
+    window_tags: Sequence[Mapping[str, Any]],
+    start: date,
+    end: date,
+) -> list[dict[str, Any]]:
+    tags_by_end: dict[tuple[str, int], list[str]] = {
+        (_text(row.get("end_date")), _int(row.get("window_days"))): _records_to_texts(
+            row.get("regime_tags")
+        )
+        for row in window_tags
+    }
+    rows: list[dict[str, Any]] = []
+    for source in sources:
+        bundle = _mapping(source.get("bundle"))
+        json_views = _mapping(bundle.get("json"))
+        jsonl_views = _mapping(bundle.get("jsonl"))
+        manifest = _mapping(json_views.get("advisory_outcome_manifest.json"))
+        windows = _records(jsonl_views.get("outcome_windows.jsonl"))
+        for window in windows:
+            window_end = _date_or_none(window.get("end_date"))
+            if window_end is None or not start <= window_end <= end:
+                continue
+            end_text = window_end.isoformat()
+            window_days = _int(window.get("window_days"))
+            regime_tags = tags_by_end.get((end_text, window_days), [])
+            pressure = bool(set(regime_tags) & PRESSURE_VALIDATION_TAGS)
+            outcome_status = _text(window.get("outcome_status"))
+            rows.append(
+                {
+                    "outcome_id": _text(source.get("outcome_id")),
+                    "daily_advisory_id": _text(
+                        window.get("daily_advisory_id") or manifest.get("daily_advisory_id")
+                    ),
+                    "as_of": _text(window.get("start_date") or manifest.get("as_of")),
+                    "window_days": window_days,
+                    "outcome_status": outcome_status,
+                    "regime_tags": regime_tags,
+                    "pressure_regime": pressure,
+                    "defensive_validation_relevant": outcome_status == "AVAILABLE"
+                    and pressure
+                    and window_days in {5, 10, 20},
+                    "tag_status": (
+                        "PASS"
+                        if outcome_status == "AVAILABLE" and regime_tags
+                        else "INSUFFICIENT_DATA"
+                    ),
+                    "production_effect": "none",
+                    "broker_action_allowed": False,
+                }
+            )
+    return rows
+
+
 def run_pressure_regime_tagging(
     *,
     start: date,
@@ -722,25 +1618,78 @@ def run_pressure_regime_tagging(
     enforce_data_quality_gate: bool = True,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _operations_generated_at(generated_at)
+    if start > end:
+        raise DynamicV3ConfirmationOperationsError("pressure start must not exceed end")
+    if end > generated.date():
+        raise DynamicV3ConfirmationOperationsError("pressure end must not exceed cutoff date")
+    config_validation = _strict_validation(
+        validate_pressure_regime_tagging_config(config_path=config_path),
+        source_name="pressure regime config",
+    )
     config = _read_yaml_config(config_path)
-    _validate_pressure_config_or_raise(config)
-    tag_id = _stable_id("pressure-regime-tag", start.isoformat(), end.isoformat(), generated)
-    tag_dir = _unique_dir(output_dir / tag_id)
-    tag_dir.mkdir(parents=True, exist_ok=False)
-    data_quality_status, data_quality_report_path = _pressure_quality_gate(
-        as_of=end,
-        generated=generated,
-        prices_path=prices_path,
-        rates_path=rates_path,
-        report_path=tag_dir / "validate_data_quality_report.md",
-        enforce=enforce_data_quality_gate,
+    config_commitment = _operations_file_commitment(config_path)
+    prices_commitment = _operations_file_commitment(prices_path)
+    rates_commitment = (
+        _operations_file_commitment(rates_path)
+        if rates_path.is_file()
+        else {"path": str(rates_path), "exists": False}
     )
     price_frame = _load_price_frame(prices_path, start=start, end=end)
-    window_tags = _build_regime_window_tags(price_frame, config)
-    outcome_tags = _build_outcome_regime_tags(
+    if price_frame.empty:
+        raise DynamicV3ConfirmationOperationsError("pressure price source has no usable rows")
+    outcome_sources, outcome_inventory = _pressure_outcome_sources(
         advisory_outcome_dir=advisory_outcome_dir,
+        start=start,
+        end=end,
+        generated=generated,
+    )
+    tag_id = _stable_id("pressure-regime-tag", start.isoformat(), end.isoformat(), generated)
+    tag_dir = output_dir / tag_id
+    if tag_dir.exists():
+        raise DynamicV3ConfirmationOperationsError(f"pressure tag already exists: {tag_id}")
+    data_quality_report_bytes = b""
+    with TemporaryDirectory(prefix="aits-pressure-regime-dq-") as temporary_dir:
+        temporary_report_path = Path(temporary_dir) / "validate_data_quality_report.md"
+        data_quality_status, preflight_report_path = _pressure_quality_gate(
+            as_of=end,
+            generated=generated,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            report_path=temporary_report_path,
+            enforce=enforce_data_quality_gate,
+        )
+        if enforce_data_quality_gate and data_quality_status != "PASS":
+            raise DynamicV3ConfirmationOperationsError(
+                f"pressure data quality gate failed: {data_quality_status}"
+            )
+        if preflight_report_path:
+            resolved_preflight_path = Path(preflight_report_path)
+            if not resolved_preflight_path.is_file():
+                raise DynamicV3ConfirmationOperationsError(
+                    "pressure data quality report missing after PASS"
+                )
+            data_quality_report_bytes = resolved_preflight_path.read_bytes()
+    data_quality_report_path = (
+        str(tag_dir / "validate_data_quality_report.md")
+        if data_quality_report_bytes
+        else ""
+    )
+    data_quality_report_commitment = (
+        {
+            "path": data_quality_report_path,
+            "size_bytes": len(data_quality_report_bytes),
+            "sha256": hashlib.sha256(data_quality_report_bytes).hexdigest(),
+        }
+        if data_quality_report_bytes
+        else {}
+    )
+    window_tags = _build_regime_window_tags(price_frame, config)
+    outcome_tags = _build_outcome_regime_tags_from_sources(
+        sources=outcome_sources,
         window_tags=window_tags,
+        start=start,
+        end=end,
     )
     summary = _pressure_regime_summary(
         window_tags=window_tags,
@@ -767,17 +1716,47 @@ def run_pressure_regime_tagging(
         "regime_window_tags_path": str(tag_dir / "regime_window_tags.jsonl"),
         "outcome_regime_tags_path": str(tag_dir / "outcome_regime_tags.jsonl"),
         "pressure_regime_summary_path": str(tag_dir / "pressure_regime_summary.json"),
+        "pressure_regime_input_snapshot_path": str(tag_dir / "pressure_regime_input_snapshot.json"),
         "pressure_regime_report_path": str(tag_dir / "pressure_regime_report.md"),
         "market_regime": "ai_after_chatgpt",
         **_artifact_safety(),
     }
-    _write_json(tag_dir / "pressure_regime_manifest.json", manifest)
+    snapshot = {
+        "schema_version": PRESSURE_REGIME_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_pressure_regime_input_snapshot",
+        "tag_id": tag_id,
+        "generated_at": generated.isoformat(),
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "config_path": str(config_path),
+        "config": config,
+        "config_commitment": config_commitment,
+        "config_validation": config_validation,
+        "prices_path": str(prices_path),
+        "prices_commitment": prices_commitment,
+        "rates_path": str(rates_path),
+        "rates_commitment": rates_commitment,
+        "data_quality_status": data_quality_status,
+        "data_quality_report_path": data_quality_report_path,
+        "data_quality_report_commitment": data_quality_report_commitment,
+        "enforce_data_quality_gate": enforce_data_quality_gate,
+        "outcome_root": str(advisory_outcome_dir),
+        "outcome_inventory": outcome_inventory,
+        "outcome_sources": outcome_sources,
+        "production_effect": "none",
+    }
+    report = render_pressure_regime_report(manifest, summary)
+    tag_dir.mkdir(parents=True, exist_ok=False)
+    if data_quality_report_bytes:
+        write_bytes_atomic(Path(data_quality_report_path), data_quality_report_bytes)
+    write_json_atomic(tag_dir / "pressure_regime_manifest.json", manifest)
     _write_jsonl(tag_dir / "regime_window_tags.jsonl", window_tags)
     _write_jsonl(tag_dir / "outcome_regime_tags.jsonl", outcome_tags)
-    _write_json(tag_dir / "pressure_regime_summary.json", summary)
-    _write_text(
+    write_json_atomic(tag_dir / "pressure_regime_summary.json", summary)
+    write_json_atomic(tag_dir / "pressure_regime_input_snapshot.json", snapshot)
+    write_text_atomic(
         tag_dir / "pressure_regime_report.md",
-        render_pressure_regime_report(manifest, summary),
+        report,
     )
     _update_latest_pointer(
         "latest_pressure_regime_tag",
@@ -791,6 +1770,7 @@ def run_pressure_regime_tagging(
         "regime_window_tags": window_tags,
         "outcome_regime_tags": outcome_tags,
         "pressure_regime_summary": summary,
+        "input_snapshot": snapshot,
     }
 
 
@@ -810,6 +1790,7 @@ def pressure_regime_tag_report_payload(
         "regime_window_tags": _read_jsonl(tag_dir / "regime_window_tags.jsonl"),
         "outcome_regime_tags": _read_jsonl(tag_dir / "outcome_regime_tags.jsonl"),
         "pressure_regime_summary": _read_json(tag_dir / "pressure_regime_summary.json"),
+        **_report_input_snapshot(tag_dir / "pressure_regime_input_snapshot.json"),
         "tag_dir": str(tag_dir),
     }
 
@@ -822,27 +1803,137 @@ def validate_pressure_regime_tag_artifact(
     window_tags = _read_jsonl(tag_dir / "regime_window_tags.jsonl")
     outcome_tags = _read_jsonl(tag_dir / "outcome_regime_tags.jsonl")
     summary = _read_optional_json(tag_dir / "pressure_regime_summary.json") or {}
+    snapshot = _read_optional_json(tag_dir / "pressure_regime_input_snapshot.json") or {}
     valid_tags = set(PRESSURE_TAGS)
+    source_errors: list[str] = []
+    recompute_error = ""
+    expected_window_tags: list[dict[str, Any]] = []
+    expected_outcome_tags: list[dict[str, Any]] = []
+    expected_summary: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_report = ""
+    try:
+        if snapshot.get("schema_version") != PRESSURE_REGIME_SNAPSHOT_SCHEMA_VERSION:
+            raise DynamicV3ConfirmationOperationsError("pressure snapshot schema mismatch")
+        generated = _operations_datetime(
+            snapshot.get("generated_at"), field="pressure generated_at"
+        )
+        start = date.fromisoformat(_text(snapshot.get("start")))
+        end = date.fromisoformat(_text(snapshot.get("end")))
+        config_path = Path(_text(snapshot.get("config_path")))
+        prices_path = Path(_text(snapshot.get("prices_path")))
+        rates_path = Path(_text(snapshot.get("rates_path")))
+        if _operations_file_commitment(config_path) != _mapping(snapshot.get("config_commitment")):
+            source_errors.append("pressure config commitment drift")
+        if _operations_file_commitment(prices_path) != _mapping(snapshot.get("prices_commitment")):
+            source_errors.append("pressure prices commitment drift")
+        rates_commitment = _mapping(snapshot.get("rates_commitment"))
+        if rates_commitment.get("exists") is False:
+            if rates_path.exists():
+                source_errors.append("pressure rates source appearance drift")
+        elif _operations_file_commitment(rates_path) != rates_commitment:
+            source_errors.append("pressure rates commitment drift")
+        live_config_validation = _strict_validation(
+            validate_pressure_regime_tagging_config(config_path=config_path),
+            source_name="pressure regime config",
+        )
+        if live_config_validation != _mapping(snapshot.get("config_validation")):
+            source_errors.append("pressure config validation drift")
+        dq_commitment = _mapping(snapshot.get("data_quality_report_commitment"))
+        dq_path = _text(snapshot.get("data_quality_report_path"))
+        if dq_commitment and _operations_file_commitment(Path(dq_path)) != dq_commitment:
+            source_errors.append("pressure data quality report drift")
+        live_sources, live_inventory = _pressure_outcome_sources(
+            advisory_outcome_dir=Path(_text(snapshot.get("outcome_root"))),
+            start=start,
+            end=end,
+            generated=generated,
+        )
+        if live_inventory != _records(snapshot.get("outcome_inventory")):
+            source_errors.append("pressure outcome inventory drift")
+        frozen_sources = _records(snapshot.get("outcome_sources"))
+        if [row.get("outcome_id") for row in live_sources] != [
+            row.get("outcome_id") for row in frozen_sources
+        ]:
+            source_errors.append("pressure selected outcome set drift")
+        for source in frozen_sources:
+            source_errors.extend(_validate_operations_source_bundle(_mapping(source.get("bundle"))))
+            live_validation = _strict_validation(
+                validate_advisory_outcome_artifact(
+                    outcome_id=_text(source.get("outcome_id")),
+                    output_dir=Path(_text(snapshot.get("outcome_root"))),
+                ),
+                source_name=f"advisory outcome {source.get('outcome_id')}",
+            )
+            if live_validation != _mapping(source.get("validation")):
+                source_errors.append(
+                    f"pressure outcome validation drift: {source.get('outcome_id')}"
+                )
+        config = _mapping(snapshot.get("config"))
+        price_frame = _load_price_frame(prices_path, start=start, end=end)
+        expected_window_tags = _build_regime_window_tags(price_frame, config)
+        expected_outcome_tags = _build_outcome_regime_tags_from_sources(
+            sources=frozen_sources,
+            window_tags=expected_window_tags,
+            start=start,
+            end=end,
+        )
+        expected_summary = _pressure_regime_summary(
+            window_tags=expected_window_tags,
+            outcome_tags=expected_outcome_tags,
+            config=config,
+            start=start,
+            end=end,
+        )
+        status = "PASS" if expected_window_tags else "INSUFFICIENT_DATA"
+        expected_manifest = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_pressure_regime_manifest",
+            "tag_id": tag_id,
+            "generated_at": generated.isoformat(),
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+            "status": status,
+            "data_quality_status": snapshot.get("data_quality_status"),
+            "data_quality_report_path": snapshot.get("data_quality_report_path"),
+            "config_path": str(config_path),
+            "pressure_regime_manifest_path": str(tag_dir / "pressure_regime_manifest.json"),
+            "regime_window_tags_path": str(tag_dir / "regime_window_tags.jsonl"),
+            "outcome_regime_tags_path": str(tag_dir / "outcome_regime_tags.jsonl"),
+            "pressure_regime_summary_path": str(tag_dir / "pressure_regime_summary.json"),
+            "pressure_regime_input_snapshot_path": str(
+                tag_dir / "pressure_regime_input_snapshot.json"
+            ),
+            "pressure_regime_report_path": str(tag_dir / "pressure_regime_report.md"),
+            "market_regime": "ai_after_chatgpt",
+            **_artifact_safety(),
+        }
+        expected_report = render_pressure_regime_report(expected_manifest, expected_summary)
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
     checks = [
         _check("manifest_exists", (tag_dir / "pressure_regime_manifest.json").exists(), ""),
         _check("window_tags_exists", (tag_dir / "regime_window_tags.jsonl").exists(), ""),
         _check("outcome_tags_exists", (tag_dir / "outcome_regime_tags.jsonl").exists(), ""),
         _check("summary_exists", (tag_dir / "pressure_regime_summary.json").exists(), ""),
         _check("report_exists", (tag_dir / "pressure_regime_report.md").exists(), ""),
+        _check(
+            "input_snapshot_exists",
+            (tag_dir / "pressure_regime_input_snapshot.json").exists(),
+            "",
+        ),
         _check("tag_id_matches", manifest.get("tag_id") == tag_id, ""),
         _check(
             "window_tags_valid",
             all(
-                set(_records_to_texts(row.get("regime_tags"))) <= valid_tags
-                for row in window_tags
+                set(_records_to_texts(row.get("regime_tags"))) <= valid_tags for row in window_tags
             ),
             "known pressure tags",
         ),
         _check(
             "outcome_tag_status_valid",
             all(
-                row.get("tag_status")
-                in {"PASS", "PASS_WITH_WARNINGS", "INSUFFICIENT_DATA"}
+                row.get("tag_status") in {"PASS", "PASS_WITH_WARNINGS", "INSUFFICIENT_DATA"}
                 for row in outcome_tags
             ),
             "outcome tag status",
@@ -851,6 +1942,17 @@ def validate_pressure_regime_tag_artifact(
             "summary_counts_present",
             all(tag in _mapping(summary.get("pressure_samples")) for tag in PRESSURE_TAGS),
             "pressure sample buckets",
+        ),
+        _check("source_recompute_succeeded", not recompute_error, recompute_error),
+        _check("source_bundles_valid", not source_errors, "; ".join(source_errors)),
+        _check("window_tags_recomputed", window_tags == expected_window_tags, ""),
+        _check("outcome_tags_recomputed", outcome_tags == expected_outcome_tags, ""),
+        _check("summary_recomputed", summary == expected_summary, ""),
+        _check("manifest_recomputed", manifest == expected_manifest, ""),
+        _check(
+            "report_recomputed",
+            _read_text(tag_dir / "pressure_regime_report.md") == expected_report,
+            "",
         ),
         _check(
             "safety_no_broker",
@@ -867,10 +1969,193 @@ def validate_pressure_regime_tag_artifact(
     )
 
 
+def _dashboard_source_validation(*, kind: str, artifact_id: str, root: Path) -> dict[str, Any]:
+    validators = {
+        "weekly": lambda: validate_confirmation_cycle_weekly_artifact(
+            weekly_cycle_id=artifact_id, output_dir=root
+        ),
+        "progress": lambda: validate_confirmation_progress_artifact(
+            progress_id=artifact_id, output_dir=root
+        ),
+        "evaluation": lambda: validate_confirmation_evaluation_artifact(
+            evaluation_id=artifact_id, output_dir=root
+        ),
+        "rule_cycle": lambda: validate_rule_review_cycle_artifact(
+            cycle_id=artifact_id, output_dir=root
+        ),
+        "queue": lambda: validate_rule_review_queue_artifact(queue_id=artifact_id, output_dir=root),
+        "pressure": lambda: validate_pressure_regime_tag_artifact(
+            tag_id=artifact_id, output_dir=root
+        ),
+    }
+    validator = validators.get(kind)
+    if validator is None:
+        raise DynamicV3ConfirmationOperationsError(f"unknown dashboard source: {kind}")
+    return _strict_validation(validator(), source_name=f"dashboard {kind}")
+
+
+def _dashboard_source_record(
+    *,
+    kind: str,
+    artifact_id: str | None,
+    root: Path,
+    manifest_name: str,
+    id_key: str,
+    generated: datetime,
+    required: bool,
+) -> dict[str, Any]:
+    resolved_id = _semantic_artifact_id(
+        output_dir=root,
+        artifact_id=artifact_id,
+        manifest_name=manifest_name,
+        id_key=id_key,
+        generated=generated,
+        source_name=f"dashboard {kind}",
+        required=required,
+    )
+    if not resolved_id:
+        return {
+            "kind": kind,
+            "selection_status": "ABSENT",
+            "artifact_id": "",
+            "root": str(root),
+        }
+    validation = _dashboard_source_validation(kind=kind, artifact_id=resolved_id, root=root)
+    artifact_dir = root / resolved_id
+    names = sorted(path.name for path in artifact_dir.iterdir() if path.is_file())
+    bundle = _operations_source_bundle(
+        source_dir=artifact_dir,
+        canonical_files=names,
+        json_views=[name for name in names if name.endswith(".json") and "snapshot" not in name],
+        jsonl_views=[name for name in names if name.endswith(".jsonl")],
+    )
+    manifest = _mapping(_mapping(bundle.get("json")).get(manifest_name))
+    source_generated = _source_not_after_cutoff(
+        manifest, generated=generated, source_name=f"dashboard {kind}"
+    )
+    return {
+        "kind": kind,
+        "selection_status": "SELECTED",
+        "artifact_id": resolved_id,
+        "root": str(root),
+        "generated_at": source_generated.isoformat(),
+        "validation": validation,
+        "bundle": bundle,
+    }
+
+
+def _dashboard_payload(source: Mapping[str, Any]) -> dict[str, Any]:
+    if source.get("selection_status") != "SELECTED":
+        return {}
+    kind = _text(source.get("kind"))
+    bundle = _mapping(source.get("bundle"))
+    json_views = _mapping(bundle.get("json"))
+    jsonl_views = _mapping(bundle.get("jsonl"))
+    manifests = [_mapping(value) for name, value in json_views.items() if "manifest" in name]
+    if len(manifests) != 1:
+        raise DynamicV3ConfirmationOperationsError(
+            f"dashboard {kind} source manifest count invalid"
+        )
+    payload = dict(manifests[0])
+    mappings: dict[str, tuple[dict[str, Any], str]] = {
+        "progress": (
+            {
+                "target_progress": _records(jsonl_views.get("target_progress.jsonl")),
+                "target_progress_summary": _mapping(json_views.get("target_progress_summary.json")),
+            },
+            "progress_id",
+        ),
+        "evaluation": (
+            {
+                "target_evaluations": _records(jsonl_views.get("target_evaluations.jsonl")),
+                "confirmation_evaluation_summary": _mapping(
+                    json_views.get("confirmation_evaluation_summary.json")
+                ),
+            },
+            "evaluation_id",
+        ),
+        "rule_cycle": (
+            {
+                "rule_review_decision_matrix": _mapping(
+                    json_views.get("rule_review_decision_matrix.json")
+                )
+            },
+            "cycle_id",
+        ),
+        "queue": (
+            {
+                "queue_items": _records(jsonl_views.get("queue_items.jsonl")),
+                "queue_summary": _mapping(json_views.get("queue_summary.json")),
+            },
+            "queue_id",
+        ),
+        "pressure": (
+            {
+                "regime_window_tags": _records(jsonl_views.get("regime_window_tags.jsonl")),
+                "outcome_regime_tags": _records(jsonl_views.get("outcome_regime_tags.jsonl")),
+                "pressure_regime_summary": _mapping(json_views.get("pressure_regime_summary.json")),
+            },
+            "tag_id",
+        ),
+        "weekly": (
+            {
+                "weekly_cycle_steps": _mapping(json_views.get("weekly_cycle_steps.json")),
+                "weekly_cycle_artifacts": _mapping(json_views.get("weekly_cycle_artifacts.json")),
+                "weekly_cycle_summary": _mapping(json_views.get("weekly_cycle_summary.json")),
+            },
+            "weekly_cycle_id",
+        ),
+    }
+    extra, _ = mappings[kind]
+    payload.update(extra)
+    return payload
+
+
+def _dashboard_validate_lineage(sources: Sequence[Mapping[str, Any]]) -> None:
+    by_kind = {_text(source.get("kind")): source for source in sources}
+    progress = _dashboard_payload(by_kind["progress"])
+    evaluation = _dashboard_payload(by_kind["evaluation"])
+    cycle = _dashboard_payload(by_kind["rule_cycle"])
+    queue = _dashboard_payload(by_kind["queue"])
+    progress_id = _text(progress.get("progress_id"))
+    evaluation_id = _text(evaluation.get("evaluation_id"))
+    cycle_id = _text(cycle.get("cycle_id"))
+    if (
+        evaluation.get("progress_id") != progress_id
+        or cycle.get("progress_id") != progress_id
+        or cycle.get("evaluation_id") != evaluation_id
+        or queue.get("source_cycle_id") != cycle_id
+    ):
+        raise DynamicV3ConfirmationOperationsError("dashboard source lineage mismatch")
+    target_sets = [
+        {_text(row.get("target_id")) for row in _records(progress.get("target_progress"))},
+        {_text(row.get("target_id")) for row in _records(evaluation.get("target_evaluations"))},
+        {
+            _text(row.get("target_id"))
+            for row in _records(_mapping(cycle.get("rule_review_decision_matrix")).get("targets"))
+        },
+        {_text(row.get("target_id")) for row in _records(queue.get("queue_items"))},
+    ]
+    if not target_sets[0] or any(targets != target_sets[0] for targets in target_sets[1:]):
+        raise DynamicV3ConfirmationOperationsError("dashboard target coverage mismatch")
+    weekly_source = by_kind.get("weekly")
+    if weekly_source and weekly_source.get("selection_status") == "SELECTED":
+        weekly = _dashboard_payload(weekly_source)
+        artifacts = _mapping(weekly.get("weekly_cycle_artifacts"))
+        if (
+            artifacts.get("confirmation_progress_id") != progress_id
+            or artifacts.get("confirmation_evaluation_id") != evaluation_id
+            or artifacts.get("rule_review_cycle_id") != cycle_id
+            or artifacts.get("rule_review_queue_id") != queue.get("queue_id")
+        ):
+            raise DynamicV3ConfirmationOperationsError("dashboard weekly source lineage mismatch")
+
+
 def build_confirmation_dashboard(
     *,
     week_ending: date,
     weekly_cycle_id: str | None = None,
+    weekly_cycle_reference_id: str | None = None,
     progress_id: str | None = None,
     evaluation_id: str | None = None,
     cycle_id: str | None = None,
@@ -884,13 +2169,71 @@ def build_confirmation_dashboard(
     pressure_tag_dir: Path = DEFAULT_PRESSURE_REGIME_TAG_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    weekly = _optional_weekly_payload(weekly_cycle_id, weekly_cycle_dir)
-    progress = _optional_progress_payload(progress_id, progress_dir)
-    evaluation = _optional_evaluation_payload(evaluation_id, evaluation_dir)
-    rule_cycle = _optional_rule_cycle_payload(cycle_id, rule_cycle_dir)
-    queue = _optional_queue_payload(queue_id, queue_dir)
-    pressure = _optional_pressure_payload(pressure_tag_dir)
+    generated = _operations_generated_at(generated_at)
+    sources = [
+        _dashboard_source_record(
+            kind="weekly",
+            artifact_id=weekly_cycle_id,
+            root=weekly_cycle_dir,
+            manifest_name="weekly_cycle_manifest.json",
+            id_key="weekly_cycle_id",
+            generated=generated,
+            required=False,
+        ),
+        _dashboard_source_record(
+            kind="progress",
+            artifact_id=progress_id,
+            root=progress_dir,
+            manifest_name="confirmation_progress_manifest.json",
+            id_key="progress_id",
+            generated=generated,
+            required=True,
+        ),
+        _dashboard_source_record(
+            kind="evaluation",
+            artifact_id=evaluation_id,
+            root=evaluation_dir,
+            manifest_name="confirmation_evaluation_manifest.json",
+            id_key="evaluation_id",
+            generated=generated,
+            required=True,
+        ),
+        _dashboard_source_record(
+            kind="rule_cycle",
+            artifact_id=cycle_id,
+            root=rule_cycle_dir,
+            manifest_name="rule_review_cycle_manifest.json",
+            id_key="cycle_id",
+            generated=generated,
+            required=True,
+        ),
+        _dashboard_source_record(
+            kind="queue",
+            artifact_id=queue_id,
+            root=queue_dir,
+            manifest_name="rule_review_queue_manifest.json",
+            id_key="queue_id",
+            generated=generated,
+            required=True,
+        ),
+        _dashboard_source_record(
+            kind="pressure",
+            artifact_id=None,
+            root=pressure_tag_dir,
+            manifest_name="pressure_regime_manifest.json",
+            id_key="tag_id",
+            generated=generated,
+            required=False,
+        ),
+    ]
+    _dashboard_validate_lineage(sources)
+    by_kind = {_text(source.get("kind")): source for source in sources}
+    weekly = _dashboard_payload(by_kind["weekly"])
+    progress = _dashboard_payload(by_kind["progress"])
+    evaluation = _dashboard_payload(by_kind["evaluation"])
+    rule_cycle = _dashboard_payload(by_kind["rule_cycle"])
+    queue = _dashboard_payload(by_kind["queue"])
+    pressure = _dashboard_payload(by_kind["pressure"])
     target_table = _dashboard_target_status_table(progress, evaluation, pressure)
     pressure_dashboard = _pressure_sample_dashboard(pressure)
     summary = _confirmation_dashboard_summary(
@@ -904,13 +2247,19 @@ def build_confirmation_dashboard(
         week_ending.isoformat(),
         generated.isoformat(),
     )
-    dashboard_dir = _unique_dir(output_dir / dashboard_id)
-    dashboard_dir.mkdir(parents=True, exist_ok=False)
+    dashboard_dir = output_dir / dashboard_id
+    if dashboard_dir.exists():
+        raise DynamicV3ConfirmationOperationsError(
+            f"confirmation dashboard already exists: {dashboard_id}"
+        )
+    reference_weekly_id = _text(
+        weekly_cycle_reference_id or weekly_cycle_id or weekly.get("weekly_cycle_id")
+    )
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_confirmation_dashboard_manifest",
         "dashboard_id": dashboard_dir.name,
-        "weekly_cycle_id": _text(weekly_cycle_id or weekly.get("weekly_cycle_id")),
+        "weekly_cycle_id": reference_weekly_id,
         "week_ending": week_ending.isoformat(),
         "generated_at": generated.isoformat(),
         "status": "PASS" if target_table["targets"] else "INSUFFICIENT_DATA",
@@ -918,11 +2267,12 @@ def build_confirmation_dashboard(
             dashboard_dir / "confirmation_dashboard_manifest.json"
         ),
         "target_status_table_path": str(dashboard_dir / "target_status_table.json"),
-        "pressure_sample_dashboard_path": str(
-            dashboard_dir / "pressure_sample_dashboard.json"
-        ),
+        "pressure_sample_dashboard_path": str(dashboard_dir / "pressure_sample_dashboard.json"),
         "confirmation_dashboard_summary_path": str(
             dashboard_dir / "confirmation_dashboard_summary.json"
+        ),
+        "confirmation_dashboard_input_snapshot_path": str(
+            dashboard_dir / "confirmation_dashboard_input_snapshot.json"
         ),
         "confirmation_dashboard_report_path": str(
             dashboard_dir / "confirmation_dashboard_report.md"
@@ -930,17 +2280,35 @@ def build_confirmation_dashboard(
         "reader_brief_section_path": str(dashboard_dir / "reader_brief_section.md"),
         **_artifact_safety(),
     }
-    _write_json(dashboard_dir / "confirmation_dashboard_manifest.json", manifest)
-    _write_json(dashboard_dir / "target_status_table.json", target_table)
-    _write_json(dashboard_dir / "pressure_sample_dashboard.json", pressure_dashboard)
-    _write_json(dashboard_dir / "confirmation_dashboard_summary.json", summary)
-    _write_text(
-        dashboard_dir / "confirmation_dashboard_report.md",
-        render_confirmation_dashboard_report(manifest, target_table, pressure_dashboard, summary),
+    snapshot = {
+        "schema_version": CONFIRMATION_DASHBOARD_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_confirmation_dashboard_input_snapshot",
+        "dashboard_id": dashboard_id,
+        "week_ending": week_ending.isoformat(),
+        "generated_at": generated.isoformat(),
+        "weekly_cycle_reference_id": reference_weekly_id,
+        "sources": sources,
+        "production_effect": "none",
+    }
+    report = render_confirmation_dashboard_report(
+        manifest, target_table, pressure_dashboard, summary
     )
-    _write_text(
+    reader_brief = render_confirmation_dashboard_reader_brief(
+        summary, target_table, pressure_dashboard
+    )
+    dashboard_dir.mkdir(parents=True, exist_ok=False)
+    write_json_atomic(dashboard_dir / "confirmation_dashboard_manifest.json", manifest)
+    write_json_atomic(dashboard_dir / "target_status_table.json", target_table)
+    write_json_atomic(dashboard_dir / "pressure_sample_dashboard.json", pressure_dashboard)
+    write_json_atomic(dashboard_dir / "confirmation_dashboard_summary.json", summary)
+    write_json_atomic(dashboard_dir / "confirmation_dashboard_input_snapshot.json", snapshot)
+    write_text_atomic(
+        dashboard_dir / "confirmation_dashboard_report.md",
+        report,
+    )
+    write_text_atomic(
         dashboard_dir / "reader_brief_section.md",
-        render_confirmation_dashboard_reader_brief(summary, target_table, pressure_dashboard),
+        reader_brief,
     )
     _update_latest_pointer(
         "latest_confirmation_dashboard",
@@ -954,6 +2322,7 @@ def build_confirmation_dashboard(
         "target_status_table": target_table,
         "pressure_sample_dashboard": pressure_dashboard,
         "confirmation_dashboard_summary": summary,
+        "input_snapshot": snapshot,
     }
 
 
@@ -971,12 +2340,11 @@ def confirmation_dashboard_report_payload(
     return {
         **_read_json(dashboard_dir / "confirmation_dashboard_manifest.json"),
         "target_status_table": _read_json(dashboard_dir / "target_status_table.json"),
-        "pressure_sample_dashboard": _read_json(
-            dashboard_dir / "pressure_sample_dashboard.json"
-        ),
+        "pressure_sample_dashboard": _read_json(dashboard_dir / "pressure_sample_dashboard.json"),
         "confirmation_dashboard_summary": _read_json(
             dashboard_dir / "confirmation_dashboard_summary.json"
         ),
+        **_report_input_snapshot(dashboard_dir / "confirmation_dashboard_input_snapshot.json"),
         "reader_brief_section": _read_text(dashboard_dir / "reader_brief_section.md"),
         "dashboard_dir": str(dashboard_dir),
     }
@@ -990,7 +2358,109 @@ def validate_confirmation_dashboard_artifact(
     target_table = _read_optional_json(dashboard_dir / "target_status_table.json") or {}
     pressure = _read_optional_json(dashboard_dir / "pressure_sample_dashboard.json") or {}
     summary = _read_optional_json(dashboard_dir / "confirmation_dashboard_summary.json") or {}
+    snapshot = (
+        _read_optional_json(dashboard_dir / "confirmation_dashboard_input_snapshot.json") or {}
+    )
     targets = _records(target_table.get("targets"))
+    source_errors: list[str] = []
+    recompute_error = ""
+    expected_target_table: dict[str, Any] = {}
+    expected_pressure: dict[str, Any] = {}
+    expected_summary: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_report = ""
+    expected_reader_brief = ""
+    try:
+        if snapshot.get("schema_version") != CONFIRMATION_DASHBOARD_SNAPSHOT_SCHEMA_VERSION:
+            raise DynamicV3ConfirmationOperationsError("dashboard snapshot schema mismatch")
+        generated = _operations_datetime(
+            snapshot.get("generated_at"), field="dashboard generated_at"
+        )
+        week_ending = date.fromisoformat(_text(snapshot.get("week_ending")))
+        sources = _records(snapshot.get("sources"))
+        by_kind = {_text(source.get("kind")): source for source in sources}
+        if set(by_kind) != {
+            "weekly",
+            "progress",
+            "evaluation",
+            "rule_cycle",
+            "queue",
+            "pressure",
+        } or len(by_kind) != len(sources):
+            raise DynamicV3ConfirmationOperationsError(
+                "dashboard source kinds missing or duplicate"
+            )
+        for source in sources:
+            if source.get("selection_status") == "ABSENT":
+                if source.get("kind") not in {"weekly", "pressure"}:
+                    source_errors.append(f"required dashboard source absent: {source.get('kind')}")
+                continue
+            kind = _text(source.get("kind"))
+            artifact_id = _text(source.get("artifact_id"))
+            root = Path(_text(source.get("root")))
+            live_validation = _dashboard_source_validation(
+                kind=kind, artifact_id=artifact_id, root=root
+            )
+            if live_validation != _mapping(source.get("validation")):
+                source_errors.append(f"dashboard source validation drift: {kind}")
+            source_errors.extend(_validate_operations_source_bundle(_mapping(source.get("bundle"))))
+            source_generated = _operations_datetime(
+                source.get("generated_at"), field=f"dashboard {kind} generated_at"
+            )
+            if source_generated > generated:
+                source_errors.append(f"dashboard source after cutoff: {kind}")
+        _dashboard_validate_lineage(sources)
+        progress_payload = _dashboard_payload(by_kind["progress"])
+        evaluation_payload = _dashboard_payload(by_kind["evaluation"])
+        cycle_payload = _dashboard_payload(by_kind["rule_cycle"])
+        queue_payload = _dashboard_payload(by_kind["queue"])
+        pressure_payload = _dashboard_payload(by_kind["pressure"])
+        expected_target_table = _dashboard_target_status_table(
+            progress_payload, evaluation_payload, pressure_payload
+        )
+        expected_pressure = _pressure_sample_dashboard(pressure_payload)
+        expected_summary = _confirmation_dashboard_summary(
+            week_ending=week_ending,
+            target_table=expected_target_table,
+            rule_cycle=cycle_payload,
+            queue=queue_payload,
+        )
+        expected_manifest = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_confirmation_dashboard_manifest",
+            "dashboard_id": dashboard_id,
+            "weekly_cycle_id": snapshot.get("weekly_cycle_reference_id"),
+            "week_ending": week_ending.isoformat(),
+            "generated_at": generated.isoformat(),
+            "status": "PASS" if expected_target_table["targets"] else "INSUFFICIENT_DATA",
+            "confirmation_dashboard_manifest_path": str(
+                dashboard_dir / "confirmation_dashboard_manifest.json"
+            ),
+            "target_status_table_path": str(dashboard_dir / "target_status_table.json"),
+            "pressure_sample_dashboard_path": str(dashboard_dir / "pressure_sample_dashboard.json"),
+            "confirmation_dashboard_summary_path": str(
+                dashboard_dir / "confirmation_dashboard_summary.json"
+            ),
+            "confirmation_dashboard_input_snapshot_path": str(
+                dashboard_dir / "confirmation_dashboard_input_snapshot.json"
+            ),
+            "confirmation_dashboard_report_path": str(
+                dashboard_dir / "confirmation_dashboard_report.md"
+            ),
+            "reader_brief_section_path": str(dashboard_dir / "reader_brief_section.md"),
+            **_artifact_safety(),
+        }
+        expected_report = render_confirmation_dashboard_report(
+            expected_manifest,
+            expected_target_table,
+            expected_pressure,
+            expected_summary,
+        )
+        expected_reader_brief = render_confirmation_dashboard_reader_brief(
+            expected_summary, expected_target_table, expected_pressure
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
     checks = [
         _check(
             "manifest_exists",
@@ -1010,6 +2480,11 @@ def validate_confirmation_dashboard_artifact(
         ),
         _check("report_exists", (dashboard_dir / "confirmation_dashboard_report.md").exists(), ""),
         _check("reader_brief_exists", (dashboard_dir / "reader_brief_section.md").exists(), ""),
+        _check(
+            "input_snapshot_exists",
+            (dashboard_dir / "confirmation_dashboard_input_snapshot.json").exists(),
+            "",
+        ),
         _check("dashboard_id_matches", manifest.get("dashboard_id") == dashboard_id, ""),
         _check("targets_present", bool(targets), "target table"),
         _check(
@@ -1021,6 +2496,22 @@ def validate_confirmation_dashboard_artifact(
             "policy_change_disallowed",
             summary.get("policy_change_allowed") is False,
             "policy_change_allowed=false",
+        ),
+        _check("source_recompute_succeeded", not recompute_error, recompute_error),
+        _check("source_bundles_valid", not source_errors, "; ".join(source_errors)),
+        _check("target_table_recomputed", target_table == expected_target_table, ""),
+        _check("pressure_dashboard_recomputed", pressure == expected_pressure, ""),
+        _check("summary_recomputed", summary == expected_summary, ""),
+        _check("manifest_recomputed", manifest == expected_manifest, ""),
+        _check(
+            "report_recomputed",
+            _read_text(dashboard_dir / "confirmation_dashboard_report.md") == expected_report,
+            "",
+        ),
+        _check(
+            "reader_brief_recomputed",
+            _read_text(dashboard_dir / "reader_brief_section.md") == expected_reader_brief,
+            "",
         ),
         _check(
             "broker_action_forbidden",
@@ -1037,6 +2528,68 @@ def validate_confirmation_dashboard_artifact(
     )
 
 
+def _queue_owner_snapshot(
+    *, journal_path: Path, cycle_id: str, generated: datetime
+) -> dict[str, Any]:
+    listing = list_rule_owner_decisions(journal_path=journal_path)
+    legacy = listing.get("legacy_unsnapshotted") is True
+    records: list[dict[str, Any]] = []
+    validations: dict[str, Any] = {}
+    if listing.get("status") == "PASS":
+        for row in _records(listing.get("records")):
+            decision_id = _text(row.get("decision_id"))
+            validation = _strict_validation(
+                validate_rule_owner_decision_artifact(
+                    decision_id=decision_id, journal_path=journal_path
+                ),
+                source_name=f"owner decision {decision_id}",
+            )
+            validations[decision_id] = validation
+            if _text(row.get("cycle_id")) != cycle_id:
+                continue
+            event_time = _operations_datetime(
+                row.get("recorded_at") or row.get("created_at"),
+                field=f"owner decision {decision_id} event time",
+            )
+            if event_time > generated:
+                raise DynamicV3ConfirmationOperationsError(
+                    f"owner decision generated after queue cutoff: {decision_id}"
+                )
+            records.append(dict(row))
+    elif listing.get("status") not in {"MISSING", "PASS_WITH_WARNINGS"}:
+        raise DynamicV3ConfirmationOperationsError("owner decision journal validation failed")
+    commitment: dict[str, Any] = (
+        _operations_file_commitment(journal_path)
+        if journal_path.is_file()
+        else {"path": str(journal_path), "exists": False}
+    )
+    return {
+        "journal_path": str(journal_path),
+        "journal_commitment": commitment,
+        "listing_status": listing.get("status"),
+        "legacy_unsnapshotted_ignored": legacy,
+        "selected_cycle_id": cycle_id,
+        "selected_records": records,
+        "selected_validations": validations,
+        "production_effect": "none",
+    }
+
+
+def _queue_cycle_payload(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    bundle = _mapping(snapshot.get("cycle_bundle"))
+    json_views = _mapping(bundle.get("json"))
+    manifest = _mapping(json_views.get("rule_review_cycle_manifest.json"))
+    matrix = _mapping(json_views.get("rule_review_decision_matrix.json"))
+    return {**manifest, "rule_review_decision_matrix": matrix}
+
+
+def _queue_items_from_snapshot(snapshot: Mapping[str, Any]) -> list[dict[str, Any]]:
+    cycle_payload = _queue_cycle_payload(snapshot)
+    matrix = _mapping(cycle_payload.get("rule_review_decision_matrix"))
+    decisions = _records(_mapping(snapshot.get("owner_decisions")).get("selected_records"))
+    return [_queue_item(row, decisions, cycle_payload) for row in _records(matrix.get("targets"))]
+
+
 def build_rule_review_queue(
     *,
     cycle_id: str | None = None,
@@ -1045,47 +2598,88 @@ def build_rule_review_queue(
     journal_path: Path = DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    cycle_payload = rule_review_cycle_report_payload(
-        cycle_id=cycle_id,
-        latest=cycle_id is None,
+    generated = _operations_generated_at(generated_at)
+    resolved_cycle_id = _semantic_artifact_id(
         output_dir=cycle_dir,
+        artifact_id=cycle_id,
+        manifest_name="rule_review_cycle_manifest.json",
+        id_key="cycle_id",
+        generated=generated,
+        source_name="rule review queue cycle",
+        required=True,
     )
-    matrix = _mapping(cycle_payload.get("rule_review_decision_matrix"))
-    decisions = _read_jsonl(journal_path)
-    items = [
-        _queue_item(row, decisions, cycle_payload)
-        for row in _records(matrix.get("targets"))
-    ]
-    summary = _queue_summary(items, generated)
+    cycle_validation = _strict_validation(
+        validate_rule_review_cycle_artifact(cycle_id=resolved_cycle_id, output_dir=cycle_dir),
+        source_name="rule review queue cycle",
+    )
+    cycle_artifact_dir = cycle_dir / resolved_cycle_id
+    cycle_bundle = _operations_source_bundle(
+        source_dir=cycle_artifact_dir,
+        json_views=(
+            "rule_review_cycle_manifest.json",
+            "rule_review_decision_matrix.json",
+        ),
+    )
+    cycle_manifest = _mapping(
+        _mapping(cycle_bundle.get("json")).get("rule_review_cycle_manifest.json")
+    )
+    _source_not_after_cutoff(
+        cycle_manifest, generated=generated, source_name="rule review queue cycle"
+    )
+    owner_snapshot = _queue_owner_snapshot(
+        journal_path=journal_path,
+        cycle_id=resolved_cycle_id,
+        generated=generated,
+    )
     queue_id = _stable_id(
         "rule-review-queue",
-        _text(cycle_payload.get("cycle_id")),
+        resolved_cycle_id,
         generated.isoformat(),
     )
-    queue_dir = _unique_dir(output_dir / queue_id)
-    queue_dir.mkdir(parents=True, exist_ok=False)
+    queue_dir = output_dir / queue_id
+    if queue_dir.exists():
+        raise DynamicV3ConfirmationOperationsError(f"rule review queue exists: {queue_id}")
+    snapshot = {
+        "schema_version": RULE_REVIEW_QUEUE_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_rule_review_queue_input_snapshot",
+        "queue_id": queue_id,
+        "generated_at": generated.isoformat(),
+        "cycle_id": resolved_cycle_id,
+        "cycle_root": str(cycle_dir),
+        "cycle_validation": cycle_validation,
+        "cycle_bundle": cycle_bundle,
+        "owner_decisions": owner_snapshot,
+        "production_effect": "none",
+    }
+    items = _queue_items_from_snapshot(snapshot)
+    summary = _queue_summary(items, generated)
     summary["queue_id"] = queue_dir.name
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_rule_review_queue_manifest",
         "queue_id": queue_dir.name,
-        "source_cycle_id": _text(cycle_payload.get("cycle_id")),
+        "source_cycle_id": resolved_cycle_id,
         "generated_at": generated.isoformat(),
         "status": "PASS" if items else "INSUFFICIENT_DATA",
         "rule_review_queue_manifest_path": str(queue_dir / "rule_review_queue_manifest.json"),
         "queue_items_path": str(queue_dir / "queue_items.jsonl"),
         "queue_summary_path": str(queue_dir / "queue_summary.json"),
+        "rule_review_queue_input_snapshot_path": str(
+            queue_dir / "rule_review_queue_input_snapshot.json"
+        ),
         "rule_review_queue_report_path": str(queue_dir / "rule_review_queue_report.md"),
         "policy_change_allowed": False,
         **_artifact_safety(),
     }
-    _write_json(queue_dir / "rule_review_queue_manifest.json", manifest)
+    report = render_rule_review_queue_report(manifest, summary, items)
+    queue_dir.mkdir(parents=True, exist_ok=False)
+    write_json_atomic(queue_dir / "rule_review_queue_manifest.json", manifest)
     _write_jsonl(queue_dir / "queue_items.jsonl", items)
-    _write_json(queue_dir / "queue_summary.json", summary)
-    _write_text(
+    write_json_atomic(queue_dir / "queue_summary.json", summary)
+    write_json_atomic(queue_dir / "rule_review_queue_input_snapshot.json", snapshot)
+    write_text_atomic(
         queue_dir / "rule_review_queue_report.md",
-        render_rule_review_queue_report(manifest, summary, items),
+        report,
     )
     _update_latest_pointer(
         "latest_rule_review_queue",
@@ -1098,6 +2692,7 @@ def build_rule_review_queue(
         "manifest": manifest,
         "queue_items": items,
         "queue_summary": summary,
+        "input_snapshot": snapshot,
     }
 
 
@@ -1116,6 +2711,7 @@ def rule_review_queue_report_payload(
         **_read_json(queue_dir / "rule_review_queue_manifest.json"),
         "queue_items": _read_jsonl(queue_dir / "queue_items.jsonl"),
         "queue_summary": _read_json(queue_dir / "queue_summary.json"),
+        **_report_input_snapshot(queue_dir / "rule_review_queue_input_snapshot.json"),
         "rule_review_queue_report": _read_text(queue_dir / "rule_review_queue_report.md"),
         "queue_dir": str(queue_dir),
     }
@@ -1128,12 +2724,79 @@ def validate_rule_review_queue_artifact(
     manifest = _read_optional_json(queue_dir / "rule_review_queue_manifest.json") or {}
     items = _read_jsonl(queue_dir / "queue_items.jsonl")
     summary = _read_optional_json(queue_dir / "queue_summary.json") or {}
+    snapshot = _read_optional_json(queue_dir / "rule_review_queue_input_snapshot.json") or {}
     allowed_status = {"pending", "reviewed", "deferred", "not_ready"}
+    source_errors: list[str] = []
+    recompute_error = ""
+    expected_items: list[dict[str, Any]] = []
+    expected_summary: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_report = ""
+    try:
+        if snapshot.get("schema_version") != RULE_REVIEW_QUEUE_SNAPSHOT_SCHEMA_VERSION:
+            raise DynamicV3ConfirmationOperationsError("queue snapshot schema mismatch")
+        generated = _operations_datetime(snapshot.get("generated_at"), field="queue generated_at")
+        cycle_id = _text(snapshot.get("cycle_id"))
+        cycle_root = Path(_text(snapshot.get("cycle_root")))
+        live_cycle_validation = _strict_validation(
+            validate_rule_review_cycle_artifact(cycle_id=cycle_id, output_dir=cycle_root),
+            source_name="rule review queue cycle",
+        )
+        if live_cycle_validation != _mapping(snapshot.get("cycle_validation")):
+            source_errors.append("queue cycle validation drift")
+        source_errors.extend(
+            _validate_operations_source_bundle(_mapping(snapshot.get("cycle_bundle")))
+        )
+        owner_snapshot = _mapping(snapshot.get("owner_decisions"))
+        journal_path = Path(_text(owner_snapshot.get("journal_path")))
+        commitment = _mapping(owner_snapshot.get("journal_commitment"))
+        if commitment.get("exists") is False:
+            if journal_path.exists():
+                source_errors.append("queue owner journal appearance drift")
+        elif _operations_file_commitment(journal_path) != commitment:
+            source_errors.append("queue owner journal commitment drift")
+        live_owner_snapshot = _queue_owner_snapshot(
+            journal_path=journal_path,
+            cycle_id=cycle_id,
+            generated=generated,
+        )
+        if live_owner_snapshot != owner_snapshot:
+            source_errors.append("queue owner decision snapshot drift")
+        expected_items = _queue_items_from_snapshot(snapshot)
+        expected_summary = _queue_summary(expected_items, generated)
+        expected_summary["queue_id"] = queue_id
+        expected_manifest = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_rule_review_queue_manifest",
+            "queue_id": queue_id,
+            "source_cycle_id": cycle_id,
+            "generated_at": generated.isoformat(),
+            "status": "PASS" if expected_items else "INSUFFICIENT_DATA",
+            "rule_review_queue_manifest_path": str(queue_dir / "rule_review_queue_manifest.json"),
+            "queue_items_path": str(queue_dir / "queue_items.jsonl"),
+            "queue_summary_path": str(queue_dir / "queue_summary.json"),
+            "rule_review_queue_input_snapshot_path": str(
+                queue_dir / "rule_review_queue_input_snapshot.json"
+            ),
+            "rule_review_queue_report_path": str(queue_dir / "rule_review_queue_report.md"),
+            "policy_change_allowed": False,
+            **_artifact_safety(),
+        }
+        expected_report = render_rule_review_queue_report(
+            expected_manifest, expected_summary, expected_items
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
     checks = [
         _check("manifest_exists", (queue_dir / "rule_review_queue_manifest.json").exists(), ""),
         _check("items_exists", (queue_dir / "queue_items.jsonl").exists(), ""),
         _check("summary_exists", (queue_dir / "queue_summary.json").exists(), ""),
         _check("report_exists", (queue_dir / "rule_review_queue_report.md").exists(), ""),
+        _check(
+            "input_snapshot_exists",
+            (queue_dir / "rule_review_queue_input_snapshot.json").exists(),
+            "",
+        ),
         _check("queue_id_matches", manifest.get("queue_id") == queue_id, ""),
         _check(
             "queue_status_valid",
@@ -1163,6 +2826,16 @@ def validate_rule_review_queue_artifact(
             + _int(summary.get("not_ready_count"))
             == len(items),
             "queue counts",
+        ),
+        _check("source_recompute_succeeded", not recompute_error, recompute_error),
+        _check("source_bundles_valid", not source_errors, "; ".join(source_errors)),
+        _check("items_recomputed", items == expected_items, ""),
+        _check("summary_recomputed", summary == expected_summary, ""),
+        _check("manifest_recomputed", manifest == expected_manifest, ""),
+        _check(
+            "report_recomputed",
+            _read_text(queue_dir / "rule_review_queue_report.md") == expected_report,
+            "",
         ),
         _check(
             "broker_action_forbidden",
@@ -1264,8 +2937,7 @@ def render_weekly_cycle_report(
     ]
     for row in steps:
         lines.append(
-            f"- {_text(row.get('step'))}: `{row.get('status')}` "
-            f"artifact=`{row.get('artifact_id')}`"
+            f"- {_text(row.get('step'))}: `{row.get('status')}` artifact=`{row.get('artifact_id')}`"
         )
     return "\n".join(lines) + "\n"
 
@@ -1283,9 +2955,7 @@ def render_weekly_cycle_reader_brief(summary: Mapping[str, Any]) -> str:
     )
 
 
-def render_pressure_regime_report(
-    manifest: Mapping[str, Any], summary: Mapping[str, Any]
-) -> str:
+def render_pressure_regime_report(manifest: Mapping[str, Any], summary: Mapping[str, Any]) -> str:
     samples = _mapping(summary.get("pressure_samples"))
     return (
         "# Dynamic Rescue Pressure Regime Tagging\n\n"
@@ -1530,15 +3200,6 @@ def _scheduled_commands(config_path: Path) -> list[dict[str, Any]]:
     ]
 
 
-def _latest_artifact_id(output_dir: Path, pointer_name: str) -> str:
-    latest_dir = _artifact_dir_from_latest(
-        output_dir=output_dir,
-        artifact_id=None,
-        pointer_name=pointer_name,
-    )
-    return latest_dir.name
-
-
 def _step(step: str, status: str, artifact_id: str, **summary: Any) -> dict[str, Any]:
     row = {
         "step": step,
@@ -1690,9 +3351,7 @@ def _load_price_frame(prices_path: Path, *, start: date, end: date) -> pd.DataFr
     frame["date"] = pd.to_datetime(frame["date"], errors="coerce").dt.date
     frame["price"] = pd.to_numeric(frame["price"], errors="coerce")
     frame = frame.dropna(subset=["date", "symbol", "price"])
-    return frame[(frame["date"] >= start) & (frame["date"] <= end)].sort_values(
-        ["symbol", "date"]
-    )
+    return frame[(frame["date"] >= start) & (frame["date"] <= end)].sort_values(["symbol", "date"])
 
 
 def _build_regime_window_tags(
@@ -1768,43 +3427,6 @@ def _build_regime_window_tags(
             }
         )
     return tagged
-
-
-def _build_outcome_regime_tags(
-    *, advisory_outcome_dir: Path, window_tags: Sequence[Mapping[str, Any]]
-) -> list[dict[str, Any]]:
-    tags_by_end: dict[tuple[str, int], list[str]] = {}
-    for row in window_tags:
-        tags_by_end[(_text(row.get("end_date")), _int(row.get("window_days")))] = (
-            _records_to_texts(row.get("regime_tags"))
-        )
-    rows = []
-    for manifest_path in sorted(advisory_outcome_dir.glob("*/advisory_outcome_manifest.json")):
-        manifest = _read_optional_json(manifest_path) or {}
-        outcome_id = _text(manifest.get("outcome_id"), manifest_path.parent.name)
-        windows = _read_jsonl(manifest_path.parent / "outcome_windows.jsonl")
-        for window in windows:
-            end_date = _text(window.get("end_date"))
-            window_days = _int(window.get("window_days"))
-            regime_tags = tags_by_end.get((end_date, window_days), [])
-            pressure = bool(set(regime_tags) & PRESSURE_VALIDATION_TAGS)
-            rows.append(
-                {
-                    "outcome_id": outcome_id,
-                    "daily_advisory_id": _text(
-                        window.get("daily_advisory_id") or manifest.get("daily_advisory_id")
-                    ),
-                    "as_of": _text(window.get("start_date") or manifest.get("as_of")),
-                    "window_days": window_days,
-                    "regime_tags": regime_tags,
-                    "pressure_regime": pressure,
-                    "defensive_validation_relevant": pressure and window_days in {5, 10, 20},
-                    "tag_status": "PASS" if regime_tags else "INSUFFICIENT_DATA",
-                    "production_effect": "none",
-                    "broker_action_allowed": False,
-                }
-            )
-    return rows
 
 
 def _pressure_regime_summary(
@@ -1936,80 +3558,14 @@ def _regime_tags_for_metrics(
     return tags
 
 
-def _optional_weekly_payload(weekly_cycle_id: str | None, output_dir: Path) -> dict[str, Any]:
-    if weekly_cycle_id == "":
-        return {}
-    try:
-        return confirmation_cycle_weekly_report_payload(
-            weekly_cycle_id=weekly_cycle_id,
-            latest=weekly_cycle_id is None,
-            output_dir=output_dir,
-        )
-    except Exception:  # noqa: BLE001
-        return {}
-
-
-def _optional_progress_payload(progress_id: str | None, output_dir: Path) -> dict[str, Any]:
-    try:
-        return confirmation_progress_report_payload(
-            progress_id=progress_id,
-            latest=progress_id is None,
-            output_dir=output_dir,
-        )
-    except Exception:  # noqa: BLE001
-        return {}
-
-
-def _optional_evaluation_payload(evaluation_id: str | None, output_dir: Path) -> dict[str, Any]:
-    try:
-        return confirmation_evaluation_report_payload(
-            evaluation_id=evaluation_id,
-            latest=evaluation_id is None,
-            output_dir=output_dir,
-        )
-    except Exception:  # noqa: BLE001
-        return {}
-
-
-def _optional_rule_cycle_payload(cycle_id: str | None, output_dir: Path) -> dict[str, Any]:
-    try:
-        return rule_review_cycle_report_payload(
-            cycle_id=cycle_id,
-            latest=cycle_id is None,
-            output_dir=output_dir,
-        )
-    except Exception:  # noqa: BLE001
-        return {}
-
-
-def _optional_queue_payload(queue_id: str | None, output_dir: Path) -> dict[str, Any]:
-    try:
-        return rule_review_queue_report_payload(
-            queue_id=queue_id,
-            latest=queue_id is None,
-            output_dir=output_dir,
-        )
-    except Exception:  # noqa: BLE001
-        return {}
-
-
-def _optional_pressure_payload(output_dir: Path) -> dict[str, Any]:
-    try:
-        return pressure_regime_tag_report_payload(latest=True, output_dir=output_dir)
-    except Exception:  # noqa: BLE001
-        return {}
-
-
 def _dashboard_target_status_table(
     progress: Mapping[str, Any],
     evaluation: Mapping[str, Any],
-    pressure: Mapping[str, Any],
+    _pressure: Mapping[str, Any],
 ) -> dict[str, Any]:
     eval_by_target = {
         _text(row.get("target_id")): row for row in _records(evaluation.get("target_evaluations"))
     }
-    pressure_summary = _mapping(pressure.get("pressure_regime_summary"))
-    defensive_count = _int(pressure_summary.get("defensive_validation_relevant_outcomes"))
     targets = []
     for row in _records(progress.get("target_progress")):
         target_id = _text(row.get("target_id"))
@@ -2017,11 +3573,7 @@ def _dashboard_target_status_table(
         required_forward = _int(row.get("required_forward_events"))
         required_pressure = _int(row.get("required_pressure_regime_events"))
         available_forward = _int(row.get("available_forward_events"))
-        available_pressure = (
-            defensive_count
-            if target_id == "defensive_limited_adjustment_drawdown"
-            else _int(row.get("available_pressure_regime_events"))
-        )
+        available_pressure = _int(row.get("available_pressure_regime_events"))
         required = required_pressure or required_forward
         available = available_pressure if required_pressure else available_forward
         progress_pct = round(available / required, 4) if required else 0.0
@@ -2116,7 +3668,8 @@ def _queue_item(
     reviewed = [
         item
         for item in decisions
-        if target_id in _records_to_texts(item.get("target_ids"))
+        if _text(item.get("cycle_id")) == _text(cycle_payload.get("cycle_id"))
+        and target_id in _records_to_texts(item.get("target_ids"))
         and _text(item.get("owner_decision")) not in {"", "pending"}
     ]
     decision = _text(row.get("rule_review_decision"))
@@ -2140,6 +3693,8 @@ def _queue_item(
         "target_id": target_id,
         "source_cycle_id": _text(cycle_payload.get("cycle_id")),
         "source_evaluation_id": _text(cycle_payload.get("evaluation_id")),
+        "owner_decision_id": _text(reviewed[-1].get("decision_id")) if reviewed else "",
+        "owner_decision": _text(reviewed[-1].get("owner_decision")) if reviewed else "",
         "queue_status": status,
         "recommended_owner_action": recommended,
         "evidence_status": evidence,
@@ -2196,12 +3751,3 @@ def _records_to_texts(value: Any) -> list[str]:
 
 def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
-
-
-def _patch_dashboard_weekly_cycle_id(*, dashboard_dir: Path, weekly_cycle_id: str) -> None:
-    manifest_path = dashboard_dir / "confirmation_dashboard_manifest.json"
-    if not manifest_path.exists():
-        return
-    manifest = _read_json(manifest_path)
-    manifest["weekly_cycle_id"] = weekly_cycle_id
-    _write_json(manifest_path, manifest)

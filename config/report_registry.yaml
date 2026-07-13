@@ -7295,12 +7295,14 @@ reports:
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_cycle_plan/*/confirmation_cycle_plan_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_cycle_plan/*/scheduled_command_pack.json
+      - reports/etf_portfolio/dynamic_v3_rescue/confirmation_cycle_plan/*/confirmation_cycle_plan_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_cycle_plan/*/confirmation_cycle_runbook.md
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_cycle_plan/*/confirmation_cycle_plan_report.md
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-179 packages the weekly confirmation cycle command sequence and
-      safety boundary before any periodic operation is run.
+      safety boundary before any periodic operation is run. The versioned input
+      snapshot binds the reviewed config and supports content-derived validation.
     owner_action: review_weekly_command_pack_before_confirmation_cycle_execution
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -7318,13 +7320,15 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_cycle_weekly/*/weekly_cycle_steps.json
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_cycle_weekly/*/weekly_cycle_artifacts.json
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_cycle_weekly/*/weekly_cycle_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/confirmation_cycle_weekly/*/confirmation_cycle_weekly_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_cycle_weekly/*/weekly_cycle_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_cycle_weekly/*/reader_brief_section.md
     freshness_sla_days: 14
     freshness_rationale: >
       TRADING-180 combines due scan, review, optional safe update, confirmation
       progress, evaluation, rule review and owner queue into a dry-run-by-default
-      weekly evidence operation.
+      weekly evidence operation. Every executed source is validated and committed
+      in the versioned snapshot before the materialized views are accepted.
     owner_action: review_weekly_cycle_summary_before_any_manual_rule_or_policy_work
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -7342,12 +7346,14 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_regime_tag/*/regime_window_tags.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_regime_tag/*/outcome_regime_tags.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_regime_tag/*/pressure_regime_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_regime_tag/*/pressure_regime_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_regime_tag/*/pressure_regime_report.md
     freshness_sla_days: 14
     freshness_rationale: >
       TRADING-181 tags price-behavior pressure regimes from configured
       thresholds so defensive confirmation blockers become measurable without
-      hardcoded policy changes.
+      hardcoded policy changes. Only validated AVAILABLE 5/10/20-day outcomes can
+      contribute defensive evidence; price-behavior tags remain research proxies.
     owner_action: review_pressure_proxy_counts_before_defensive_label_interpretation
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -7365,12 +7371,14 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_dashboard/*/target_status_table.json
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_dashboard/*/pressure_sample_dashboard.json
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_dashboard/*/confirmation_dashboard_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/confirmation_dashboard/*/confirmation_dashboard_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_dashboard/*/confirmation_dashboard_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/confirmation_dashboard/*/reader_brief_section.md
     freshness_sla_days: 14
     freshness_rationale: >
       TRADING-182 summarizes target progress, pressure samples, rule review
-      recommendation and owner action status for weekly confirmation evidence.
+      recommendation and owner action status for one validated lineage. Pressure
+      display cannot override Progress readiness or availability counts.
     owner_action: review_confirmation_dashboard_before_owner_rule_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -7387,11 +7395,13 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/rule_review_queue/*/rule_review_queue_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/rule_review_queue/*/queue_items.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/rule_review_queue/*/queue_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_review_queue/*/rule_review_queue_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/rule_review_queue/*/rule_review_queue_report.md
     freshness_sla_days: 14
     freshness_rationale: >
       TRADING-183 centralizes pending, ready, deferred, reviewed and not-ready
-      owner rule review items while keeping policy_change_allowed=false.
+      owner rule review items while keeping policy_change_allowed=false. A final
+      owner decision only closes an item when Cycle, target scope and cutoff match.
     owner_action: review_ready_queue_items_and_record_manual_decisions
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

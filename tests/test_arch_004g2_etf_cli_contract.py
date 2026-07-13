@@ -274,6 +274,11 @@ DYNAMIC_V3_RULE_OWNER_DECISION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_rule_owner_decision.py"
 )
+DYNAMIC_V3_CONFIRMATION_OPERATIONS_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_confirmation_operations.py"
+)
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py"
@@ -427,7 +432,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 22981
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 22538
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -638,8 +643,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 22981
-    assert len(legacy_names) == 673
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 22538
+    assert len(legacy_names) == 657
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -2234,6 +2239,55 @@ def test_g2_4_dynamic_v3_rule_owner_decision_callbacks_leave_legacy_root() -> No
             "validate_rule_owner_decision_artifact",
         }
     )
+
+
+def test_g2_4_dynamic_v3_confirmation_operations_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(
+            DYNAMIC_V3_CONFIRMATION_OPERATIONS_COMMANDS_PATH.read_text(encoding="utf-8")
+        )
+    )
+    callbacks = {
+        "dynamic_v3_confirmation_cycle_plan_command",
+        "dynamic_v3_confirmation_cycle_runbook_command",
+        "dynamic_v3_confirmation_cycle_validate_config_command",
+        "dynamic_v3_confirmation_cycle_weekly_run_command",
+        "dynamic_v3_confirmation_cycle_weekly_report_command",
+        "dynamic_v3_validate_confirmation_cycle_weekly_command",
+        "dynamic_v3_pressure_regime_tag_run_command",
+        "dynamic_v3_pressure_regime_tag_validate_config_command",
+        "dynamic_v3_pressure_regime_tag_report_command",
+        "dynamic_v3_validate_pressure_regime_tag_command",
+        "dynamic_v3_confirmation_dashboard_build_command",
+        "dynamic_v3_confirmation_dashboard_report_command",
+        "dynamic_v3_validate_confirmation_dashboard_command",
+        "dynamic_v3_rule_review_queue_build_command",
+        "dynamic_v3_rule_review_queue_report_command",
+        "dynamic_v3_validate_rule_review_queue_command",
+    }
+    migrated_domain_names = {
+        "build_confirmation_cycle_plan",
+        "build_confirmation_dashboard",
+        "build_rule_review_queue",
+        "confirmation_cycle_weekly_report_payload",
+        "confirmation_dashboard_report_payload",
+        "pressure_regime_tag_report_payload",
+        "rule_review_queue_report_payload",
+        "run_confirmation_cycle_weekly",
+        "run_pressure_regime_tagging",
+        "validate_confirmation_cycle_schedule_config",
+        "validate_confirmation_cycle_weekly_artifact",
+        "validate_confirmation_dashboard_artifact",
+        "validate_pressure_regime_tag_artifact",
+        "validate_pressure_regime_tagging_config",
+        "validate_rule_review_queue_artifact",
+    }
+    assert len(callbacks) == 16
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert _imported_names(legacy_tree).isdisjoint(migrated_domain_names)
 
 
 def __file_path() -> Path:

@@ -1,6 +1,6 @@
 # AITradingSystem Operations Runbook
 
-最后更新：2026-06-26
+最后更新：2026-07-13
 
 本文是 AITradingSystem 周期性任务的总入口。执行任何 daily、weekly、biweekly、monthly、governance、scheduler validation 或 artifact catalog consistency 任务前，先读取本文，再进入对应的细分 runbook、配置或报告。
 
@@ -343,3 +343,5 @@ ARCH-004G2.4BJ Evidence Trend 是显式ad-hoc历史观察，不是auto-tuning或
 ARCH-004G2.4BK Forward Outcome Decision 是显式ad-hoc owner decision-support pack，不是scheduler、auto-calibration或policy apply入口。`week_ending`与timezone-aware generated必须满足reviewed week window；evidence cutoff取generated与week-end UTC日末较早者。Outcome Update、Rolling Refresh、Evidence Trend按显式id或cutoff内semantic latest选择，selected source必须content-derived PASS并冻结full bundle/validation；Refresh绑定Update，Trend包含selected Refresh，invalid/duplicate/cross-lineage fail closed，真正缺source写MISSING且metrics为null。Sample/confidence/risk/trend readiness、manual-review precedence、recommended action和next due cadence均由reviewed `forward_outcome_decision_v1` policy治理。Validator重验live selection/source/policy并重算matrix/actions/manifest/Markdown/Reader Brief。不得运行update/refresh/trend、修改policy/config/weights/portfolio/production/order/broker。
 
 ARCH-004G2.4BG Outcome Update Review 是显式owner review入口，不是outcome update执行器。执行前必须验证explicit Outcome Due artifact并冻结full bundle；due id、generated/as-of/latest price cutoff或outcome×window identity不合法即fail closed。READY仅由DUE+PENDING+can-update+cutoff-visible price确定性推导；validator从snapshot重算matrix/safety/impact/manifest/report。不得在本命令刷新数据、执行update或修改policy/portfolio/production/broker。
+
+ARCH-004G2.4CD Confirmation Operations 是weekly/manual研究证据编排，不是新增daily scheduler entry，也不是策略优化器。运行前必须确认cadence与`week_ending`、timezone-aware cutoff、Schedule/Pressure config、Registry和所有实际执行step的content-derived validators；Pressure还必须通过cached price/rate同源DQ gate。Latest source只能按manifest generated time/id语义选择，不能按mtime；invalid source必须fail closed，只有真正缺失的可选source可标`SKIPPED/ABSENT`。Plan、Weekly、Pressure、Dashboard和Queue必须写versioned input snapshot、bounded path/size/SHA-256 commitments和validation evidence，validator重验live sources并重算全部views。Weekly默认dry-run；显式`--execute-ready-updates`仍只允许已有safe update路径，不授权policy/config/weights/portfolio mutation。Pressure只把`AVAILABLE`且5/10/20日pressure-tagged outcome计为defensive evidence；Dashboard不覆盖Progress readiness；Queue只认同Cycle、同scope、cutoff内final Owner Decision。Legacy无快照artifact仅可只读warning且不得作为当前结论。全部输出固定`auto_apply=false`、`broker_action_allowed=false`、`broker_action_taken=false`、`production_effect=none`。

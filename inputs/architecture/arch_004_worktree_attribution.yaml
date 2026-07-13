@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CC_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CD_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-13
-base_commit: c8995c5c
+base_commit: 94d7ffc4
 production_effect: none
 
 arch_004_owned_paths:
@@ -33,6 +33,7 @@ arch_004_owned_paths:
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
   - docs/requirements/TRADING-174_to_178_Forward_Confirmation_Execution_and_Rule_Review_Cycle.md
+  - docs/requirements/TRADING-179_to_183_Confirmation_Cycle_Scheduling_and_Weekly_Evidence_Operations.md
   - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
   - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
   - docs/requirements/TRADING-141_to_145_Historical_Advisory_Replay_and_Backfilled_Outcome_Evaluation.md
@@ -214,6 +215,8 @@ arch_004_owned_paths:
   - src/ai_trading_system/etf_portfolio/dynamic_v3_backtest_simulation.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/registration.py
   - src/ai_trading_system/cli_commands/etf_portfolio.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_confirmation_operations.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_confirmation_operations.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/common.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/baseline_review.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/shadow_review.py
@@ -351,6 +354,11 @@ arch_004_owned_paths:
   - tests/test_scheduled_tasks.py
   - tests/test_ops_daily.py
   - tests/test_reader_brief.py
+  - tests/test_confirmation_cycle_plan.py
+  - tests/test_confirmation_cycle_weekly.py
+  - tests/test_pressure_regime_tagging.py
+  - tests/test_confirmation_dashboard.py
+  - tests/test_rule_review_queue.py
   - tests/test_cli_direct.py
 
 shared_but_attributable_paths:

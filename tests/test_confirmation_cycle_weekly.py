@@ -24,7 +24,7 @@ def test_confirmation_cycle_weekly_dry_run_skips_outcome_update(
     outcome_fixture = build_ready_outcome_update_fixture(outcome_root, monkeypatch)
 
     result = run_confirmation_cycle_weekly(
-        week_ending=date(2026, 6, 10),
+        week_ending=date(2026, 7, 31),
         execute_ready_updates=False,
         registry_id=registry_fixture["registry"]["registry_id"],
         output_dir=tmp_path / "weekly",
@@ -39,6 +39,7 @@ def test_confirmation_cycle_weekly_dry_run_skips_outcome_update(
         evaluation_dir=tmp_path / "weekly_evaluation",
         rule_cycle_dir=tmp_path / "weekly_rule_cycle",
         queue_dir=tmp_path / "weekly_queue",
+        rule_owner_decision_journal_path=registry_fixture["journal_path"],
         dashboard_dir=tmp_path / "weekly_dashboard",
         pressure_tag_dir=tmp_path / "pressure_tag",
         advisory_outcome_dir=outcome_fixture["outcome"]["outcome_dir"].parent,
@@ -47,7 +48,7 @@ def test_confirmation_cycle_weekly_dry_run_skips_outcome_update(
         prices_path=outcome_fixture["prices_path"],
         rates_path=outcome_fixture["rates_path"],
         enforce_data_quality_gate=False,
-        generated_at=datetime(2026, 6, 10, tzinfo=UTC),
+        generated_at=datetime(2026, 8, 1, tzinfo=UTC),
     )
 
     steps = {row["step"]: row for row in result["weekly_cycle_steps"]["steps"]}
@@ -64,4 +65,14 @@ def test_confirmation_cycle_weekly_dry_run_skips_outcome_update(
             output_dir=tmp_path / "weekly",
         )["status"]
         == "PASS"
+    )
+
+    summary_path = Path(result["weekly_cycle_dir"]) / "weekly_cycle_summary.json"
+    summary_path.write_text("{}\n", encoding="utf-8")
+    assert (
+        validate_confirmation_cycle_weekly_artifact(
+            weekly_cycle_id=result["weekly_cycle_id"],
+            output_dir=tmp_path / "weekly",
+        )["status"]
+        == "FAIL"
     )
