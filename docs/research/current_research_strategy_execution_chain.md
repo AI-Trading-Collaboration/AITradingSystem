@@ -1282,6 +1282,26 @@ Rule Review必须作为下一独立slice重新验证Registry/Progress/Evaluation
 
 Rule Review PASS只证明manual review evidence一致；本slice不创建/记录TRADING-178 Owner Decision，不修改policy/config/portfolio/official weights/production/order/broker，也不触发下一phase。
 
+### 7.12 Rule Owner Decision（TRADING-178 / ARCH-004G2.4CC）
+
+为什么这样设计：Owner Decision是“人工看过哪份Rule Review后记录了什么决定”的审计边界，不是策略执行器。旧实现直接读取mutable Cycle views、允许同一Cycle重复建decision，并通过原地改写JSONL覆盖pending/final状态；系统无法证明记录时看到的Cycle、target scope和eligible decision，也无法识别事后回填、二次改判或报告被改写。本环节因此把不可变source snapshot和append-only事件作为canonical evidence，所有易读文件都降为可重算投影。
+
+| 项目 | 当前定义 |
+|---|---|
+| 输入与前置门禁 | 显式`cycle_id/cycle_root`、journal path、timezone-aware generated time、final decision及可选notes。Create/record在任何写入前调用同一Rule Review content-derived validator，要求Cycle id匹配且Cycle generated time不晚于create cutoff |
+| Source snapshot | `rule_owner_decision_source_snapshot.v2`冻结Cycle全部canonical files的bounded path/size/SHA-256 commitments、manifest/matrix计算views、validation、cycle root/id/time、全target ids、READY target ids、实际decision scope、scope reason、cycle recommendation与allowed decisions。Record和validator以原captured time重建live snapshot并要求逐值相等 |
+| Scope与eligibility | 若Cycle存在`owner_action_required=true`且decision=`READY_FOR_OWNER_REVIEW`的target，scope严格等于这些target；否则scope显式等于全部Cycle targets并标记`ALL_CYCLE_TARGETS_NO_READY_OWNER_ACTION`。只有前一种情况才允许`approve_manual_policy_review`；该值也只打开人工policy review，不批准policy/config change |
+| Create事件 | 同一Cycle不存在既有decision且目标目录不存在时生成stable decision id；追加`DECISION_CREATED`，owner decision固定`pending`，事件冻结target scope、allowed decisions和source snapshot path/hash |
+| Record事件 | 先重放并验证全journal，目标必须仍为pending，requested decision必须属于snapshot allowed list，live Cycle/snapshot/path/hash必须未漂移，generated time必须严格晚于journal head；随后只追加一个`DECISION_RECORDED`，不重写create event |
+| Event chain计算 | `event_id=stable(decision_id,event_type,event_at)`；首event `previous_event_sha256=GENESIS`，后续指向前一event SHA-256；`event_sha256=SHA256(canonical event excluding event_sha256)`。Sequence、id/type、previous link、自身hash、全局严格时间、duplicate cycle/decision/event及create→record状态机任一异常均fail closed。该hash链是完整性证据，不是owner数字签名 |
+| Materialized输出 | 全局event journal；每decision的source snapshot、record、manifest和Markdown；全局journal Markdown及latest pointer。Record由event replay得到，manifest/reports从record+snapshot重算；validator逐字节比较snapshot、journal canonical bytes、record、manifest、per-decision和global Markdown |
+| Legacy边界 | 旧“一decision一行”无snapshot/chain日志只能list/report并返回`PASS_WITH_WARNINGS`和`legacy_unsnapshotted=true`；create/record与validator均拒绝，不能后台猜测事件时间或伪造chain |
+| 当前结果 | source-backed fixture的Rule Review为`CONTINUE_TRACKING`且0 owner action；create得到全部target的显式fallback scope，allowed decisions自动删除`approve_manual_policy_review`。8个parallel focused tests全部通过，覆盖正常create→record、cutoff、duplicate cycle、eligibility、backdate、二次final、全部materialized view tamper、live Cycle drift、broken chain和legacy只读；累计focused 578、architecture-fitness 264、contract-validation 203均通过 |
+| 当前效果 | 本环节把“人工决定已记录”与“规则已修改”分开；所有event/record固定`policy_change_allowed=false`、`auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`。因此即使记录`approve_manual_policy_review`也不会写policy/config、official weights、portfolio、production、order或broker |
+| 优化空间 | 第一优先级是独立、逐条验证source且保留`LEGACY_IMPORTED` provenance的legacy迁移工具；第二是owner identity、数字签名、可信时间戳、key rotation与revoke/supersede事件；第三是跨journal与物化views的transaction/atomic append、字段级加密和retention。真实READY样本出现后再评估decision workload priority与reason taxonomy，且必须版本化治理，不得把普通hash升级描述为身份认证 |
+
+Owner Decision validator PASS只证明人工记录与其冻结证据一致；它不批准Rule Review建议、不修改任何策略参数，也不自动进入Confirmation Operations或下一架构phase。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |

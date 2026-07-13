@@ -200,14 +200,14 @@ def test_reader_brief_surfaces_confirmation_cycle_fields(
         cycle_id=fixture["cycle"]["cycle_id"],
         cycle_dir=fixture["cycle_dir"],
         journal_path=fixture["journal_path"],
-        generated_at=datetime(2026, 6, 10, 4, tzinfo=UTC),
+        generated_at=datetime(2026, 7, 31, 20, tzinfo=UTC),
     )
     record_rule_owner_decision(
         decision_id=created["decision_id"],
         decision="continue_tracking",
         notes="Continue forward evidence accumulation.",
         journal_path=fixture["journal_path"],
-        generated_at=datetime(2026, 6, 10, 5, tzinfo=UTC),
+        generated_at=datetime(2026, 7, 31, 21, tzinfo=UTC),
     )
 
     report_index = {

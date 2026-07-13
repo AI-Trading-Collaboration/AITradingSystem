@@ -46,7 +46,11 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     SCHEMA_VERSION,
 )
-from ai_trading_system.platform.artifacts.writer import write_yaml_atomic
+from ai_trading_system.platform.artifacts.writer import (
+    write_json_atomic,
+    write_text_atomic,
+    write_yaml_atomic,
+)
 
 DEFAULT_CONFIRMATION_REGISTRY_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_confirmation_registry"
@@ -68,6 +72,12 @@ CONFIRMATION_REGISTRY_SNAPSHOT_SCHEMA_VERSION = "confirmation_registry_input_sna
 CONFIRMATION_PROGRESS_SNAPSHOT_SCHEMA_VERSION = "confirmation_progress_input_snapshot.v2"
 CONFIRMATION_EVALUATION_SNAPSHOT_SCHEMA_VERSION = "confirmation_evaluation_input_snapshot.v2"
 RULE_REVIEW_CYCLE_SNAPSHOT_SCHEMA_VERSION = "rule_review_cycle_input_snapshot.v2"
+RULE_OWNER_DECISION_SOURCE_SNAPSHOT_SCHEMA_VERSION = (
+    "rule_owner_decision_source_snapshot.v2"
+)
+RULE_OWNER_DECISION_EVENT_SCHEMA_VERSION = "rule_owner_decision_event.v2"
+RULE_OWNER_DECISION_RECORD_SCHEMA_VERSION = "rule_owner_decision_record.v2"
+RULE_OWNER_DECISION_MANIFEST_SCHEMA_VERSION = "rule_owner_decision_manifest.v2"
 
 # Source Plan conditions are declarative labels. Evaluation binds each label to the
 # corresponding source criterion so no independent threshold is introduced here.
@@ -105,6 +115,14 @@ OWNER_DECISIONS = {
     "reject_rule_change",
     "defer",
 }
+FINAL_OWNER_DECISIONS = (
+    "continue_tracking",
+    "keep_current_rules",
+    "request_more_data",
+    "approve_manual_policy_review",
+    "reject_rule_change",
+    "defer",
+)
 
 
 class DynamicV3ConfirmationCycleError(ValueError):
@@ -1847,35 +1865,56 @@ def create_rule_owner_decision(
     journal_path: Path = DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    cycle_payload = rule_review_cycle_report_payload(cycle_id=cycle_id, output_dir=cycle_dir)
-    matrix = _mapping(cycle_payload.get("rule_review_decision_matrix"))
-    targets = _records(matrix.get("targets"))
-    requiring_owner = [
-        _text(row.get("target_id")) for row in targets if row.get("owner_action_required") is True
-    ]
-    target_ids = requiring_owner or [_text(row.get("target_id")) for row in targets]
+    generated = _rule_owner_decision_generated_at(generated_at)
+    source_snapshot = _rule_owner_decision_source_snapshot(
+        cycle_id=cycle_id,
+        cycle_root=cycle_dir,
+        captured_at=generated,
+    )
+    events = _rule_owner_decision_events_for_write(journal_path)
+    existing_records = _materialize_rule_owner_decisions(events)
+    if any(record.get("cycle_id") == cycle_id for record in existing_records):
+        raise DynamicV3ConfirmationCycleError(
+            f"owner decision already exists for cycle: {cycle_id}"
+        )
     decision_id = _stable_id("rule-owner-decision", cycle_id, generated)
-    record = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_rule_owner_decision_record",
-        "decision_id": decision_id,
-        "cycle_id": cycle_id,
-        "created_at": generated.isoformat(),
-        "updated_at": generated.isoformat(),
-        "target_ids": target_ids,
-        "recommended_cycle_action": _text(matrix.get("cycle_recommendation"), "continue_tracking"),
-        "owner_decision": "pending",
-        "policy_change_allowed": False,
-        "auto_apply": False,
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "production_effect": "none",
-        "notes": "",
-        "source_cycle_report": cycle_payload.get("rule_review_cycle_report_path"),
-    }
-    _append_owner_decision(journal_path, record)
-    _write_owner_decision_report(journal_path, decision_id=decision_id)
+    decision_dir = journal_path.parent / decision_id
+    if decision_dir.exists():
+        raise DynamicV3ConfirmationCycleError(
+            f"owner decision artifact already exists: {decision_dir}"
+        )
+    snapshot_path = decision_dir / "rule_owner_decision_source_snapshot.json"
+    snapshot_sha256 = _rule_owner_decision_payload_sha256(source_snapshot)
+    event = _rule_owner_decision_event(
+        event_type="DECISION_CREATED",
+        decision_id=decision_id,
+        cycle_id=cycle_id,
+        event_at=generated.isoformat(),
+        target_ids=source_snapshot["target_ids"],
+        decision_scope_reason=source_snapshot["decision_scope_reason"],
+        recommended_cycle_action=source_snapshot["recommended_cycle_action"],
+        allowed_owner_decisions=source_snapshot["allowed_owner_decisions"],
+        owner_decision="pending",
+        notes="",
+        source_snapshot_path=str(snapshot_path),
+        source_snapshot_sha256=snapshot_sha256,
+        policy_change_allowed=False,
+        auto_apply=False,
+        broker_action_allowed=False,
+        broker_action_taken=False,
+        production_effect="none",
+        previous_event_sha256=_text(events[-1].get("event_sha256")) if events else "GENESIS",
+    )
+    updated_events = [*events, event]
+    records = _materialize_rule_owner_decisions(updated_events)
+    record = _select_owner_decision(records, decision_id=decision_id, latest=False)
+    _write_rule_owner_decision_views(
+        journal_path=journal_path,
+        events=updated_events,
+        records=records,
+        record=record,
+        source_snapshot=source_snapshot,
+    )
     _update_latest_pointer(
         "latest_rule_owner_decision",
         decision_id,
@@ -1885,7 +1924,10 @@ def create_rule_owner_decision(
         "decision_id": decision_id,
         "journal_path": journal_path,
         "record": record,
-        "records": _read_owner_decisions(journal_path),
+        "records": records,
+        "event": event,
+        "source_snapshot": source_snapshot,
+        "decision_dir": decision_dir,
     }
 
 
@@ -1904,27 +1946,93 @@ def record_rule_owner_decision(
     journal_path: Path = DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    if decision not in OWNER_DECISIONS - {"pending"}:
+    if decision not in FINAL_OWNER_DECISIONS:
         raise DynamicV3ConfirmationCycleError(f"unsupported owner decision: {decision}")
-    generated = generated_at or datetime.now(UTC)
-    records = _read_owner_decisions(journal_path)
-    updated = False
-    for row in records:
-        if row.get("decision_id") == decision_id:
-            row["owner_decision"] = decision
-            row["updated_at"] = generated.isoformat()
-            row["notes"] = notes
-            row["policy_change_allowed"] = False
-            row["auto_apply"] = False
-            row["broker_action_allowed"] = False
-            row["broker_action_taken"] = False
-            row["production_effect"] = "none"
-            updated = True
-            break
-    if not updated:
-        raise DynamicV3ConfirmationCycleError(f"owner decision not found: {decision_id}")
-    _write_jsonl(journal_path, records)
-    _write_owner_decision_report(journal_path, decision_id=decision_id)
+    generated = _rule_owner_decision_generated_at(generated_at)
+    events = _rule_owner_decision_events_for_write(journal_path)
+    records = _materialize_rule_owner_decisions(events)
+    record = _select_owner_decision(records, decision_id=decision_id, latest=False)
+    if record.get("owner_decision") != "pending":
+        raise DynamicV3ConfirmationCycleError(
+            f"owner decision already finalized: {decision_id}"
+        )
+    source_snapshot = _read_rule_owner_decision_source_snapshot(
+        journal_path=journal_path,
+        decision_id=decision_id,
+    )
+    expected_snapshot = _rule_owner_decision_source_snapshot(
+        cycle_id=_text(source_snapshot.get("cycle_id")),
+        cycle_root=Path(_text(source_snapshot.get("cycle_root"))),
+        captured_at=_rule_owner_decision_timestamp(
+            source_snapshot.get("captured_at"),
+            field="captured_at",
+        ),
+    )
+    if source_snapshot != expected_snapshot:
+        raise DynamicV3ConfirmationCycleError(
+            f"rule review source drifted before owner decision: {decision_id}"
+        )
+    expected_snapshot_path = (
+        journal_path.parent
+        / decision_id
+        / "rule_owner_decision_source_snapshot.json"
+    )
+    if (
+        _texts(record.get("target_ids")) != _texts(source_snapshot.get("target_ids"))
+        or _text(record.get("decision_scope_reason"))
+        != _text(source_snapshot.get("decision_scope_reason"))
+        or _texts(record.get("allowed_owner_decisions"))
+        != _texts(source_snapshot.get("allowed_owner_decisions"))
+        or _text(record.get("source_snapshot_path")) != str(expected_snapshot_path)
+        or _text(record.get("source_snapshot_sha256"))
+        != _rule_owner_decision_payload_sha256(source_snapshot)
+    ):
+        raise DynamicV3ConfirmationCycleError(
+            f"owner decision scope/source binding invalid: {decision_id}"
+        )
+    allowed = tuple(_texts(source_snapshot.get("allowed_owner_decisions")))
+    if decision not in allowed:
+        raise DynamicV3ConfirmationCycleError(
+            f"owner decision not eligible for cycle evidence: {decision}"
+        )
+    previous_at = _rule_owner_decision_timestamp(
+        events[-1].get("event_at"),
+        field="event_at",
+    )
+    if generated <= previous_at:
+        raise DynamicV3ConfirmationCycleError(
+            "owner decision event time must be strictly later than the journal head"
+        )
+    event = _rule_owner_decision_event(
+        event_type="DECISION_RECORDED",
+        decision_id=decision_id,
+        cycle_id=_text(record.get("cycle_id")),
+        event_at=generated.isoformat(),
+        owner_decision=decision,
+        notes=notes,
+        source_snapshot_path=_text(record.get("source_snapshot_path")),
+        source_snapshot_sha256=_text(record.get("source_snapshot_sha256")),
+        policy_change_allowed=False,
+        auto_apply=False,
+        broker_action_allowed=False,
+        broker_action_taken=False,
+        production_effect="none",
+        previous_event_sha256=_text(events[-1].get("event_sha256")),
+    )
+    updated_events = [*events, event]
+    updated_records = _materialize_rule_owner_decisions(updated_events)
+    updated_record = _select_owner_decision(
+        updated_records,
+        decision_id=decision_id,
+        latest=False,
+    )
+    _write_rule_owner_decision_views(
+        journal_path=journal_path,
+        events=updated_events,
+        records=updated_records,
+        record=updated_record,
+        source_snapshot=source_snapshot,
+    )
     _update_latest_pointer(
         "latest_rule_owner_decision",
         decision_id,
@@ -1933,23 +2041,28 @@ def record_rule_owner_decision(
     return {
         "decision_id": decision_id,
         "journal_path": journal_path,
-        "record": next(row for row in records if row.get("decision_id") == decision_id),
-        "records": records,
+        "record": updated_record,
+        "records": updated_records,
+        "event": event,
     }
 
 
 def list_rule_owner_decisions(
     *, journal_path: Path = DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH
 ) -> dict[str, Any]:
-    records = _read_owner_decisions(journal_path)
+    rows = _read_owner_decision_journal_rows(journal_path)
+    legacy = _legacy_rule_owner_decision_journal(rows)
+    records = rows if legacy else _materialize_rule_owner_decisions(rows)
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_rule_owner_decision_list",
-        "status": "PASS" if records else "MISSING",
+        "status": "PASS_WITH_WARNINGS" if legacy else ("PASS" if records else "MISSING"),
         "journal_path": str(journal_path),
         "decision_count": len(records),
         "pending_count": sum(1 for row in records if row.get("owner_decision") == "pending"),
         "records": records,
+        "event_count": 0 if legacy else len(rows),
+        "legacy_unsnapshotted": legacy,
         "production_effect": "none",
         "broker_action_allowed": False,
         "auto_apply": False,
@@ -1962,15 +2075,23 @@ def rule_owner_decision_report_payload(
     latest: bool = False,
     journal_path: Path = DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH,
 ) -> dict[str, Any]:
-    records = _read_owner_decisions(journal_path)
-    if not records:
+    rows = _read_owner_decision_journal_rows(journal_path)
+    if not rows:
         raise DynamicV3ConfirmationCycleError(f"owner decision journal not found: {journal_path}")
+    legacy = _legacy_rule_owner_decision_journal(rows)
+    records = rows if legacy else _materialize_rule_owner_decisions(rows)
     record = _select_owner_decision(records, decision_id=decision_id, latest=latest)
-    report_path = journal_path.parent / "rule_owner_decision_report.md"
+    report_path = (
+        journal_path.parent / "rule_owner_decision_report.md"
+        if legacy
+        else journal_path.parent
+        / _text(record.get("decision_id"))
+        / "rule_owner_decision_report.md"
+    )
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_rule_owner_decision_report",
-        "status": "PASS",
+        "status": "PASS_WITH_WARNINGS" if legacy else "PASS",
         "decision_id": record.get("decision_id"),
         "owner_decision": record.get("owner_decision"),
         "record": record,
@@ -1978,6 +2099,10 @@ def rule_owner_decision_report_payload(
         "journal_path": str(journal_path),
         "rule_owner_decision_report_path": str(report_path),
         "rule_owner_decision_report": _read_text(report_path) if report_path.exists() else "",
+        "global_rule_owner_decision_report_path": str(
+            journal_path.parent / "rule_owner_decision_report.md"
+        ),
+        "legacy_unsnapshotted": legacy,
         "auto_apply": False,
         "broker_action_allowed": False,
         "production_effect": "none",
@@ -1989,10 +2114,62 @@ def validate_rule_owner_decision_artifact(
     decision_id: str,
     journal_path: Path = DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH,
 ) -> dict[str, Any]:
-    records = _read_owner_decisions(journal_path)
-    record = next((row for row in records if row.get("decision_id") == decision_id), {})
+    rows = _read_owner_decision_journal_rows(journal_path)
+    legacy = _legacy_rule_owner_decision_journal(rows)
+    chain_error = ""
+    source_error = ""
+    records: list[dict[str, Any]] = []
+    record: dict[str, Any] = {}
+    source_snapshot: dict[str, Any] = {}
+    expected_snapshot: dict[str, Any] = {}
+    expected_record: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_detail_report = ""
+    expected_global_report = ""
+    try:
+        if legacy:
+            raise DynamicV3ConfirmationCycleError("legacy owner decision journal is unsnapshotted")
+        records = _materialize_rule_owner_decisions(rows)
+        record = _select_owner_decision(records, decision_id=decision_id, latest=False)
+    except (OSError, TypeError, ValueError) as exc:
+        chain_error = str(exc)
+    if record:
+        try:
+            source_snapshot = _read_rule_owner_decision_source_snapshot(
+                journal_path=journal_path,
+                decision_id=decision_id,
+            )
+            expected_snapshot = _rule_owner_decision_source_snapshot(
+                cycle_id=_text(source_snapshot.get("cycle_id")),
+                cycle_root=Path(_text(source_snapshot.get("cycle_root"))),
+                captured_at=_rule_owner_decision_timestamp(
+                    source_snapshot.get("captured_at"),
+                    field="captured_at",
+                ),
+            )
+            expected_record = _select_owner_decision(
+                _materialize_rule_owner_decisions(rows),
+                decision_id=decision_id,
+                latest=False,
+            )
+            expected_manifest = _rule_owner_decision_manifest(expected_record)
+            expected_detail_report = render_rule_owner_decision_detail_report(
+                expected_record,
+                expected_snapshot,
+            )
+            expected_global_report = render_rule_owner_decision_report(records)
+        except (OSError, TypeError, ValueError) as exc:
+            source_error = str(exc)
+    decision_dir = journal_path.parent / decision_id
+    record_path = decision_dir / "rule_owner_decision_record.json"
+    manifest_path = decision_dir / "rule_owner_decision_manifest.json"
+    snapshot_path = decision_dir / "rule_owner_decision_source_snapshot.json"
+    detail_report_path = decision_dir / "rule_owner_decision_report.md"
+    global_report_path = journal_path.parent / "rule_owner_decision_report.md"
     checks = [
         _check("journal_exists", journal_path.exists(), str(journal_path)),
+        _check("journal_schema_current", not legacy, "legacy_unsnapshotted=false"),
+        _check("event_chain_valid", not chain_error, chain_error),
         _check("decision_exists", bool(record), decision_id),
         _check(
             "owner_decision_valid",
@@ -2015,6 +2192,77 @@ def validate_rule_owner_decision_artifact(
             "policy_change_disallowed",
             record.get("policy_change_allowed") is False,
             "policy_change_allowed=false",
+        ),
+        _check("source_snapshot_valid", not source_error, source_error),
+        _check(
+            "source_snapshot_recomputed",
+            bool(source_snapshot) and source_snapshot == expected_snapshot,
+            "live rule review cycle",
+        ),
+        _check(
+            "source_snapshot_hash_valid",
+            bool(source_snapshot)
+            and _text(record.get("source_snapshot_sha256"))
+            == _rule_owner_decision_payload_sha256(source_snapshot),
+            "source snapshot sha256",
+        ),
+        _check(
+            "decision_eligible",
+            _text(record.get("owner_decision")) == "pending"
+            or _text(record.get("owner_decision"))
+            in _texts(source_snapshot.get("allowed_owner_decisions")),
+            "allowed owner decisions",
+        ),
+        _check(
+            "decision_scope_bound_to_snapshot",
+            _texts(record.get("target_ids")) == _texts(source_snapshot.get("target_ids"))
+            and _text(record.get("decision_scope_reason"))
+            == _text(source_snapshot.get("decision_scope_reason"))
+            and _texts(record.get("allowed_owner_decisions"))
+            == _texts(source_snapshot.get("allowed_owner_decisions"))
+            and _text(record.get("source_snapshot_path")) == str(snapshot_path),
+            "snapshot scope/path",
+        ),
+        _check(
+            "record_recomputed",
+            record_path.is_file() and _read_optional_json(record_path) == expected_record,
+            "materialized record",
+        ),
+        _check(
+            "manifest_recomputed",
+            manifest_path.is_file()
+            and _read_optional_json(manifest_path) == expected_manifest,
+            "materialized manifest",
+        ),
+        _check(
+            "json_bytes_recomputed",
+            all(
+                path.is_file() and _read_text(path) == _rule_owner_decision_json_text(payload)
+                for path, payload in (
+                    (snapshot_path, expected_snapshot),
+                    (record_path, expected_record),
+                    (manifest_path, expected_manifest),
+                )
+            ),
+            "canonical JSON bytes",
+        ),
+        _check(
+            "journal_bytes_recomputed",
+            journal_path.is_file()
+            and _read_text(journal_path) == _rule_owner_decision_jsonl_text(rows),
+            "canonical event JSONL bytes",
+        ),
+        _check(
+            "detail_report_recomputed",
+            detail_report_path.is_file()
+            and _read_text(detail_report_path) == expected_detail_report,
+            "per-decision report bytes",
+        ),
+        _check(
+            "global_report_recomputed",
+            global_report_path.is_file()
+            and _read_text(global_report_path) == expected_global_report,
+            "global report bytes",
         ),
     ]
     return _validation_payload(
@@ -2243,6 +2491,33 @@ def render_rule_owner_decision_report(records: Sequence[Mapping[str, Any]]) -> s
             ]
         )
     return "\n".join(lines) + "\n"
+
+
+def render_rule_owner_decision_detail_report(
+    record: Mapping[str, Any],
+    source_snapshot: Mapping[str, Any],
+) -> str:
+    return (
+        "# Dynamic Rescue Rule Owner Decision\n\n"
+        f"- decision_id: `{record.get('decision_id')}`\n"
+        f"- cycle_id: `{record.get('cycle_id')}`\n"
+        f"- status: `{'PENDING' if record.get('owner_decision') == 'pending' else 'RECORDED'}`\n"
+        f"- owner_decision: `{record.get('owner_decision')}`\n"
+        f"- target_ids: `{record.get('target_ids')}`\n"
+        f"- decision_scope_reason: `{record.get('decision_scope_reason')}`\n"
+        f"- recommended_cycle_action: `{record.get('recommended_cycle_action')}`\n"
+        f"- allowed_owner_decisions: `{record.get('allowed_owner_decisions')}`\n"
+        f"- ready_for_owner_review_target_ids: "
+        f"`{source_snapshot.get('ready_for_owner_review_target_ids')}`\n"
+        f"- event_count: {record.get('event_count')}\n"
+        f"- source_snapshot_sha256: `{record.get('source_snapshot_sha256')}`\n"
+        f"- notes: {record.get('notes', '')}\n"
+        "- manual_policy_review_only: `true`\n"
+        "- policy_change_allowed: `false`\n"
+        "- auto_apply: `false`\n"
+        "- broker_action_allowed: `false`\n"
+        "- production_effect: `none`\n"
+    )
 
 
 def _registry_target(
@@ -2758,23 +3033,403 @@ def _available_event_count(row: Mapping[str, Any]) -> int:
     return pressure or forward
 
 
-def _read_owner_decisions(path: Path) -> list[dict[str, Any]]:
-    return _read_jsonl(path)
+def _rule_owner_decision_generated_at(value: datetime | None) -> datetime:
+    generated = value or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3ConfirmationCycleError("generated_at must be timezone-aware")
+    return generated.astimezone(UTC)
 
 
-def _append_owner_decision(path: Path, record: Mapping[str, Any]) -> None:
-    records = _read_owner_decisions(path)
-    records.append(dict(record))
-    _write_jsonl(path, records)
+def _rule_owner_decision_timestamp(value: Any, *, field: str) -> datetime:
+    parsed = value if isinstance(value, datetime) else _datetime_from_any(value)
+    if parsed is None or parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise DynamicV3ConfirmationCycleError(
+            f"owner decision {field} must be timezone-aware"
+        )
+    return parsed.astimezone(UTC)
 
 
-def _write_owner_decision_report(path: Path, *, decision_id: str) -> None:
-    _ = decision_id
-    records = _read_owner_decisions(path)
-    _write_text(
-        path.parent / "rule_owner_decision_report.md",
+def _rule_owner_decision_cycle_bundle(cycle_dir: Path) -> dict[str, Any]:
+    json_files = (
+        "rule_review_cycle_manifest.json",
+        "rule_review_decision_matrix.json",
+        "rule_review_cycle_input_snapshot.json",
+    )
+    text_files = ("rule_review_cycle_report.md", "reader_brief_section.md")
+    return _bounded_source_bundle(
+        source_dir=cycle_dir,
+        canonical_files=json_files + text_files,
+        json_views=(
+            "rule_review_cycle_manifest.json",
+            "rule_review_decision_matrix.json",
+        ),
+    )
+
+
+def _rule_owner_decision_source_snapshot(
+    *,
+    cycle_id: str,
+    cycle_root: Path,
+    captured_at: datetime,
+) -> dict[str, Any]:
+    captured = _rule_owner_decision_generated_at(captured_at)
+    validation = validate_rule_review_cycle_artifact(
+        cycle_id=cycle_id,
+        output_dir=cycle_root,
+    )
+    if validation.get("status") != "PASS":
+        raise DynamicV3ConfirmationCycleError(
+            f"rule review cycle validation failed: {cycle_id}"
+        )
+    bundle = _rule_owner_decision_cycle_bundle(cycle_root / cycle_id)
+    json_views = _mapping(bundle.get("json"))
+    manifest = _mapping(json_views.get("rule_review_cycle_manifest.json"))
+    matrix = _mapping(json_views.get("rule_review_decision_matrix.json"))
+    if manifest.get("cycle_id") != cycle_id or matrix.get("cycle_id") != cycle_id:
+        raise DynamicV3ConfirmationCycleError(
+            f"rule review cycle id mismatch: {cycle_id}"
+        )
+    cycle_generated = _rule_owner_decision_timestamp(
+        manifest.get("generated_at"),
+        field="cycle generated_at",
+    )
+    if cycle_generated > captured:
+        raise DynamicV3ConfirmationCycleError(
+            f"rule review cycle is newer than owner decision cutoff: {cycle_id}"
+        )
+    targets = _records(matrix.get("targets"))
+    all_target_ids = _strict_rule_review_target_ids(targets, source_name="rule review")
+    ready_targets = [
+        row for row in targets if row.get("rule_review_decision") == "READY_FOR_OWNER_REVIEW"
+    ]
+    owner_targets = [row for row in targets if row.get("owner_action_required") is True]
+    ready_target_ids = [_text(row.get("target_id")) for row in ready_targets]
+    owner_target_ids = [_text(row.get("target_id")) for row in owner_targets]
+    if ready_target_ids != owner_target_ids:
+        raise DynamicV3ConfirmationCycleError(
+            "rule review owner-action scope does not match READY_FOR_OWNER_REVIEW targets"
+        )
+    if owner_target_ids:
+        target_ids = owner_target_ids
+        scope_reason = "OWNER_ACTION_REQUIRED_TARGETS"
+    else:
+        target_ids = all_target_ids
+        scope_reason = "ALL_CYCLE_TARGETS_NO_READY_OWNER_ACTION"
+    allowed = list(FINAL_OWNER_DECISIONS)
+    if not ready_target_ids:
+        allowed.remove("approve_manual_policy_review")
+    recommendation = _text(matrix.get("cycle_recommendation"))
+    if not recommendation:
+        raise DynamicV3ConfirmationCycleError(
+            f"rule review cycle recommendation missing: {cycle_id}"
+        )
+    return {
+        "schema_version": RULE_OWNER_DECISION_SOURCE_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_rule_owner_decision_source_snapshot",
+        "captured_at": captured.isoformat(),
+        "cycle_id": cycle_id,
+        "cycle_root": str(cycle_root),
+        "cycle_generated_at": cycle_generated.isoformat(),
+        "cycle_validation": validation,
+        "cycle_bundle": bundle,
+        "all_target_ids": all_target_ids,
+        "ready_for_owner_review_target_ids": ready_target_ids,
+        "target_ids": target_ids,
+        "decision_scope_reason": scope_reason,
+        "recommended_cycle_action": recommendation,
+        "allowed_owner_decisions": allowed,
+        "policy_change_allowed": False,
+        "auto_apply": False,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_effect": "none",
+    }
+
+
+def _read_owner_decision_journal_rows(path: Path) -> list[dict[str, Any]]:
+    return _read_jsonl(path) if path.is_file() else []
+
+
+def _legacy_rule_owner_decision_journal(rows: Sequence[Mapping[str, Any]]) -> bool:
+    return bool(rows) and any(
+        row.get("schema_version") != RULE_OWNER_DECISION_EVENT_SCHEMA_VERSION
+        or row.get("event_type") not in {"DECISION_CREATED", "DECISION_RECORDED"}
+        for row in rows
+    )
+
+
+def _rule_owner_decision_events_for_write(path: Path) -> list[dict[str, Any]]:
+    rows = _read_owner_decision_journal_rows(path)
+    if _legacy_rule_owner_decision_journal(rows):
+        raise DynamicV3ConfirmationCycleError(
+            f"legacy owner decision journal is read-only and requires explicit migration: {path}"
+        )
+    _materialize_rule_owner_decisions(rows)
+    return rows
+
+
+def _rule_owner_decision_event(
+    *,
+    event_type: str,
+    decision_id: str,
+    cycle_id: str,
+    event_at: str,
+    previous_event_sha256: str,
+    **fields: Any,
+) -> dict[str, Any]:
+    event_time = _rule_owner_decision_timestamp(event_at, field="event_at")
+    if event_type not in {"DECISION_CREATED", "DECISION_RECORDED"}:
+        raise DynamicV3ConfirmationCycleError(
+            f"owner decision event type invalid: {event_type}"
+        )
+    payload = {
+        "schema_version": RULE_OWNER_DECISION_EVENT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_rule_owner_decision_event",
+        "event_type": event_type,
+        "event_id": _stable_id(
+            "rule-owner-decision-event",
+            decision_id,
+            event_type,
+            event_time.isoformat(),
+        ),
+        "decision_id": decision_id,
+        "cycle_id": cycle_id,
+        "event_at": event_time.isoformat(),
+        "previous_event_sha256": previous_event_sha256,
+        **_jsonable(fields),
+    }
+    payload["event_sha256"] = _rule_owner_decision_payload_sha256(payload)
+    return payload
+
+
+def _materialize_rule_owner_decisions(
+    events: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    records: dict[str, dict[str, Any]] = {}
+    decision_order: list[str] = []
+    cycle_ids: set[str] = set()
+    event_ids: set[str] = set()
+    previous_hash = "GENESIS"
+    previous_time: datetime | None = None
+    for index, raw in enumerate(events):
+        event = dict(raw)
+        event_type = _text(event.get("event_type"))
+        decision_id = _text(event.get("decision_id"))
+        cycle_id = _text(event.get("cycle_id"))
+        event_id = _text(event.get("event_id"))
+        event_time = _rule_owner_decision_timestamp(
+            event.get("event_at"),
+            field="event_at",
+        )
+        expected_hash = _rule_owner_decision_payload_sha256(
+            {key: value for key, value in event.items() if key != "event_sha256"}
+        )
+        expected_event_id = _stable_id(
+            "rule-owner-decision-event",
+            decision_id,
+            event_type,
+            event_time.isoformat(),
+        )
+        if (
+            event.get("schema_version") != RULE_OWNER_DECISION_EVENT_SCHEMA_VERSION
+            or event.get("report_type") != "etf_dynamic_v3_rule_owner_decision_event"
+            or event_type not in {"DECISION_CREATED", "DECISION_RECORDED"}
+            or not decision_id
+            or not cycle_id
+            or not event_id
+            or event_id != expected_event_id
+            or event_id in event_ids
+            or event.get("previous_event_sha256") != previous_hash
+            or event.get("event_sha256") != expected_hash
+            or (previous_time is not None and event_time <= previous_time)
+            or event.get("policy_change_allowed") is not False
+            or event.get("auto_apply") is not False
+            or event.get("broker_action_allowed") is not False
+            or event.get("broker_action_taken") is not False
+            or event.get("production_effect") != "none"
+        ):
+            raise DynamicV3ConfirmationCycleError(
+                f"owner decision event chain invalid at index {index}"
+            )
+        event_ids.add(event_id)
+        previous_hash = expected_hash
+        previous_time = event_time
+        if event_type == "DECISION_CREATED":
+            target_ids = _texts(event.get("target_ids"))
+            allowed = _texts(event.get("allowed_owner_decisions"))
+            if (
+                decision_id in records
+                or cycle_id in cycle_ids
+                or not target_ids
+                or len(target_ids) != len(set(target_ids))
+                or any(not target_id for target_id in target_ids)
+                or not allowed
+                or len(allowed) != len(set(allowed))
+                or any(item not in FINAL_OWNER_DECISIONS for item in allowed)
+                or not _text(event.get("decision_scope_reason"))
+                or not _text(event.get("recommended_cycle_action"))
+                or event.get("owner_decision") != "pending"
+                or not _text(event.get("source_snapshot_path"))
+                or len(_text(event.get("source_snapshot_sha256"))) != 64
+            ):
+                raise DynamicV3ConfirmationCycleError(
+                    f"owner decision create event invalid: {decision_id}"
+                )
+            cycle_ids.add(cycle_id)
+            decision_order.append(decision_id)
+            records[decision_id] = {
+                "schema_version": RULE_OWNER_DECISION_RECORD_SCHEMA_VERSION,
+                "report_type": "etf_dynamic_v3_rule_owner_decision_record",
+                "decision_id": decision_id,
+                "cycle_id": cycle_id,
+                "created_at": event_time.isoformat(),
+                "updated_at": event_time.isoformat(),
+                "target_ids": target_ids,
+                "decision_scope_reason": _text(event.get("decision_scope_reason")),
+                "recommended_cycle_action": _text(event.get("recommended_cycle_action")),
+                "allowed_owner_decisions": allowed,
+                "owner_decision": "pending",
+                "notes": "",
+                "source_snapshot_path": _text(event.get("source_snapshot_path")),
+                "source_snapshot_sha256": _text(event.get("source_snapshot_sha256")),
+                "event_count": 1,
+                "event_ids": [event_id],
+                "latest_event_id": event_id,
+                "latest_event_sha256": expected_hash,
+                "policy_change_allowed": False,
+                "auto_apply": False,
+                "broker_action_allowed": False,
+                "broker_action_taken": False,
+                "production_effect": "none",
+            }
+        else:
+            record = records.get(decision_id)
+            decision = _text(event.get("owner_decision"))
+            if (
+                record is None
+                or record.get("cycle_id") != cycle_id
+                or record.get("owner_decision") != "pending"
+                or decision not in _texts(record.get("allowed_owner_decisions"))
+                or event.get("source_snapshot_path") != record.get("source_snapshot_path")
+                or event.get("source_snapshot_sha256")
+                != record.get("source_snapshot_sha256")
+            ):
+                raise DynamicV3ConfirmationCycleError(
+                    f"owner decision record event invalid: {decision_id}"
+                )
+            record["owner_decision"] = decision
+            record["notes"] = str(event.get("notes") or "")
+            record["updated_at"] = event_time.isoformat()
+            record["event_count"] = _int(record.get("event_count")) + 1
+            record["event_ids"] = [*_texts(record.get("event_ids")), event_id]
+            record["latest_event_id"] = event_id
+            record["latest_event_sha256"] = expected_hash
+    return [records[decision_id] for decision_id in decision_order]
+
+
+def _read_rule_owner_decision_source_snapshot(
+    *,
+    journal_path: Path,
+    decision_id: str,
+) -> dict[str, Any]:
+    path = (
+        journal_path.parent
+        / decision_id
+        / "rule_owner_decision_source_snapshot.json"
+    )
+    payload = _read_json(path)
+    if payload.get("schema_version") != RULE_OWNER_DECISION_SOURCE_SNAPSHOT_SCHEMA_VERSION:
+        raise DynamicV3ConfirmationCycleError(
+            f"owner decision source snapshot schema invalid: {path}"
+        )
+    return payload
+
+
+def _rule_owner_decision_manifest(record: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": RULE_OWNER_DECISION_MANIFEST_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_rule_owner_decision_manifest",
+        "decision_id": record.get("decision_id"),
+        "cycle_id": record.get("cycle_id"),
+        "created_at": record.get("created_at"),
+        "updated_at": record.get("updated_at"),
+        "status": "PENDING" if record.get("owner_decision") == "pending" else "RECORDED",
+        "owner_decision": record.get("owner_decision"),
+        "target_count": len(_texts(record.get("target_ids"))),
+        "event_count": record.get("event_count"),
+        "latest_event_sha256": record.get("latest_event_sha256"),
+        "source_snapshot_sha256": record.get("source_snapshot_sha256"),
+        "policy_change_allowed": False,
+        "auto_apply": False,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_effect": "none",
+    }
+
+
+def _write_rule_owner_decision_views(
+    *,
+    journal_path: Path,
+    events: Sequence[Mapping[str, Any]],
+    records: Sequence[Mapping[str, Any]],
+    record: Mapping[str, Any],
+    source_snapshot: Mapping[str, Any],
+) -> None:
+    decision_id = _text(record.get("decision_id"))
+    decision_dir = journal_path.parent / decision_id
+    write_json_atomic(
+        decision_dir / "rule_owner_decision_source_snapshot.json",
+        _jsonable(source_snapshot),
+    )
+    write_json_atomic(
+        decision_dir / "rule_owner_decision_record.json",
+        _jsonable(record),
+    )
+    write_json_atomic(
+        decision_dir / "rule_owner_decision_manifest.json",
+        _rule_owner_decision_manifest(record),
+    )
+    write_text_atomic(
+        decision_dir / "rule_owner_decision_report.md",
+        render_rule_owner_decision_detail_report(record, source_snapshot),
+    )
+    write_text_atomic(journal_path, _rule_owner_decision_jsonl_text(events))
+    write_text_atomic(
+        journal_path.parent / "rule_owner_decision_report.md",
         render_rule_owner_decision_report(records),
     )
+
+
+def _rule_owner_decision_payload_sha256(payload: Mapping[str, Any]) -> str:
+    material = json.dumps(
+        _jsonable(payload),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(material).hexdigest()
+
+
+def _rule_owner_decision_json_text(payload: Mapping[str, Any]) -> str:
+    return json.dumps(
+        _jsonable(payload),
+        ensure_ascii=False,
+        indent=2,
+        sort_keys=True,
+    ) + "\n"
+
+
+def _rule_owner_decision_jsonl_text(rows: Sequence[Mapping[str, Any]]) -> str:
+    return "".join(
+        json.dumps(_jsonable(row), ensure_ascii=False, sort_keys=True) + "\n"
+        for row in rows
+    )
+
+
+def _texts(value: Any) -> list[str]:
+    if not isinstance(value, Sequence) or isinstance(value, str | bytes):
+        return []
+    return [_text(item) for item in value]
 
 
 def _select_owner_decision(

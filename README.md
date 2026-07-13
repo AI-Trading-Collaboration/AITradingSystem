@@ -998,8 +998,13 @@ PASS且无failure才可标SUCCESS，单指标PASS不能解锁。Rule review cycl
 Registry→Progress→Evaluation lineage，冻结`rule_review_cycle_input_snapshot.v2`；
 SUCCESS/FAILURE只解锁generic人工review并原样携带source criteria/failure actions，报告分别
 披露progress-ready与evaluation success/failure/review-required，默认
-`policy_change_allowed=false`。Owner decision journal
-只记录人工决策，`approve_manual_policy_review` 也不自动修改配置。该闭环继续固定
+`policy_change_allowed=false`。Owner decision journal会在任何写入前重验Rule Review，
+以`rule_owner_decision_source_snapshot.v2`冻结Cycle canonical files的path/size/SHA-256、
+validation、exact target scope与allowed decisions；每个Cycle只能创建一个decision。Journal
+使用`DECISION_CREATED`/`DECISION_RECORDED` append-only events及previous/event SHA-256链，
+`pending`只能严格单次转为final，旧无snapshot/chain日志只读。Record、manifest、per-decision
+Markdown与global report全部从snapshot+events重算；`approve_manual_policy_review`仅在Cycle含
+`READY_FOR_OWNER_REVIEW` target时可记录，且仍不自动修改配置。该闭环继续固定
 `auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`，不触发 broker、
 不进入 production、不修改 `position_advisory_v1.yaml`、policy、official target weights、
 portfolio 或 baseline state。

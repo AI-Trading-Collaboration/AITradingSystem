@@ -7270,11 +7270,16 @@ reports:
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/rule_owner_decision/rule_owner_decision_journal.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/rule_owner_decision/rule_owner_decision_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_owner_decision/*/rule_owner_decision_source_snapshot.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_owner_decision/*/rule_owner_decision_record.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_owner_decision/*/rule_owner_decision_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_owner_decision/*/rule_owner_decision_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-174_to_178 records manual owner decisions for the rule review cycle
-      without mutating position advisory config, targets, portfolios, policy, or
-      broker state.
+      TRADING-174_to_178 records one append-only, snapshot-bound manual owner
+      decision per validated rule review cycle. Per-decision source/record/manifest
+      and reports remain content-derived views and do not mutate position advisory
+      config, targets, portfolios, policy, or broker state.
     owner_action: record_owner_decision_after_rule_review_cycle_manual_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

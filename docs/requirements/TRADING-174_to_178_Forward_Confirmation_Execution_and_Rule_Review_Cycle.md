@@ -98,6 +98,18 @@ rule review cycle和owner decision journal。
 
 2026-07-13完成：3 callback已迁canonical，三源validation/cutoff、lineage/chronology/exact coverage、bounded commitment snapshot、generic owner-review decision、source action保留、progress/evaluation分离统计和全部输出byte validation通过。四层snapshot约18KB/28KB/14KB/37KB，资源增长恢复为线性；累计focused 570、architecture 263、contract 203均以16-worker parallel通过。当前fixture仍为1个active limited target、Progress `INSUFFICIENT_EVENTS`、Evaluation `NOT_READY`，所以Cycle正确输出`CONTINUE_TRACKING`和0 owner action；这表示样本尚未成熟，不是自动否定规则。本slice未创建TRADING-178 Owner Decision，未修改policy/config/portfolio/production/broker。
 
+## 4.5 ARCH-004G2.4CC Owner Decision contract
+
+- Create必须在任何output前要求Rule Review content-derived validator=`PASS`、cycle generated time不晚于timezone-aware cutoff，并冻结Cycle全部canonical files的bounded path/size/SHA-256 commitments、validation、matrix/manifest计算views、target exact scope与allowed decisions到`rule_owner_decision_source_snapshot.v2`；
+- 一个Cycle只允许创建一个decision；owner-action targets存在时scope只包含这些targets，否则明确以`ALL_CYCLE_TARGETS_NO_READY_OWNER_ACTION`记录全部targets，不得静默fallback；
+- Journal使用`DECISION_CREATED`/`DECISION_RECORDED` append-only semantic events，每个event冻结event id、previous event SHA-256与自身SHA-256；旧无snapshot/chain journal只允许显式legacy只读披露，不得继续写入或冒充新contract PASS；
+- Decision只能从`pending`严格单次转为final，record generated time必须timezone-aware且晚于create/前一event；重复final覆盖、duplicate decision/cycle/event、broken chain或backdating在写件前阻断；
+- `approve_manual_policy_review`仅在snapshot至少一个target为`READY_FOR_OWNER_REVIEW`时允许，并只代表人工policy review入口，不代表批准规则/threshold/config变更；
+- Materialized record、manifest、per-decision Markdown与global report必须只从snapshot+event prefix重算；validator重验live Cycle及snapshot commitments，并逐字节重建journal chain、record、manifest与两层reports；
+- 本slice允许记录owner人工decision，但不自动运行policy review/change，不修改policy/config/official weights/portfolio/production/order/broker。
+
+2026-07-13完成：5 callback已迁canonical；Cycle pre-output PASS/cutoff、bounded source snapshot、exact scope/eligibility、每Cycle唯一decision、append-only create/record event hash chain、严格chronology与pending单次final transition均已实现。Materialized journal/record/manifest/per-decision/global report均可从snapshot+events重算；8个parallel focused tests逐项证明duplicate cycle、回填时间、二次final、live Cycle drift、任一物化view篡改、broken chain与legacy继续写入都会fail closed。当前source-backed fixture的Cycle为`CONTINUE_TRACKING`、0 owner action，因此decision scope显式为`ALL_CYCLE_TARGETS_NO_READY_OWNER_ACTION`，allowed decisions不含`approve_manual_policy_review`。累计focused 578、architecture 264、contract 203 parallel通过；普通SHA-256链提供完整性检测，不等同owner身份签名，身份、签名与可信时间戳属于后续优化。本slice不修改policy/config/portfolio/production/order/broker，G2.4继续且未触发phase-level handoff。
+
 ## 5. 安全边界
 
 - 不修改 `config/etf_portfolio/dynamic_v3_rescue/position_advisory_v1.yaml`。
