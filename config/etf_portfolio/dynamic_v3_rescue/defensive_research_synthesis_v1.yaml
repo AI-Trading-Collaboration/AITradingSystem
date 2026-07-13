@@ -1,0 +1,78 @@
+schema_version: 1
+policy_metadata:
+  owner: project_owner
+  version: defensive_research_synthesis_v1
+  status: pilot_baseline
+  rationale: >-
+    Govern diagnostic case classification, failure severity display, defensive label
+    wording, and owner research options without granting any trading or policy action.
+  review_condition: >-
+    Review after five distinct forward pressure events per configured regime, or when
+    the evidence schema, label taxonomy, or failure attribution method changes.
+
+case_classification:
+  supporting_requires_non_negative_return_and_drawdown_delta: true
+  contradicting_requires_negative_return_and_drawdown_delta: true
+  otherwise_mixed: true
+
+failure_severity:
+  formula: abs(min(return_delta,0))+abs(min(drawdown_delta,0))
+  high_score_min: 0.02
+  medium_score_min: 0.005
+
+failure_reason_rules:
+  risk_increase_regimes:
+    - tech_drawdown
+    - risk_off
+  positive_exposure_reason: increased_risk_exposure_during_drawdown
+  positive_turnover_reason: late_de_risking
+  otherwise_reason: unknown
+
+mitigation_ideas:
+  - idea_id: block_risk_increase_in_tech_drawdown
+    description: Research whether risk exposure increases should be prohibited during tech drawdowns.
+    requires_forward_confirmation: true
+  - idea_id: require_forward_pressure_confirmation
+    description: Keep every mitigation proposal research-only until validated forward pressure evidence exists.
+    requires_forward_confirmation: true
+
+label_review:
+  current_label: defensive_limited_adjustment
+  recommended_label: risk_aware_limited_adjustment
+  minimum_forward_distinct_events_for_acceptable_label: 5
+  candidate_labels:
+    - label: defensive_limited_adjustment
+      description: Current label; retain only with an explicit unproven-protection warning.
+      risk: May imply drawdown protection that current evidence has not established.
+    - label: risk_aware_limited_adjustment
+      description: Conservative research label that avoids claiming proven defense.
+      risk: Requires owner review before any future configuration rename.
+    - label: defensive_hypothesis_limited_adjustment
+      description: Makes the unproven defensive hypothesis explicit.
+      risk: Longer identifier and still requires owner review.
+    - label: active_limited_adjustment
+      description: Describes active risk tilting without a protection claim.
+      risk: May understate a future defensive benefit if forward evidence later supports it.
+
+owner_options:
+  - decision: continue_tracking
+    description: Keep the variant research-only and continue evidence collection.
+    recommended: true
+  - decision: rename_later
+    description: Revisit naming after stronger forward evidence and owner review.
+    recommended: false
+  - decision: keep_label_with_warning
+    description: Retain the current label only with an explicit unproven-defense warning.
+    recommended: true
+  - decision: request_more_forward_pressure_samples
+    description: Prioritize validated event-driven forward pressure evidence.
+    recommended: true
+
+safety:
+  can_support_rule_approval: false
+  auto_apply: false
+  policy_change_allowed: false
+  config_change_allowed: false
+  broker_action_allowed: false
+  broker_action_taken: false
+  production_effect: none

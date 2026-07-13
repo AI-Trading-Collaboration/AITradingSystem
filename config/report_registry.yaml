@@ -7531,9 +7531,11 @@ reports:
     command: aits etf dynamic-v3-rescue defensive-hypothesis-deep-dive report --latest
     artifact_selection_policy: latest_available
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/deep_dive_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/deep_dive_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/supporting_cases.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/contradicting_cases.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/mixed_cases.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/regime_effect_matrix.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/exposure_change_attribution.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/defensive_hypothesis_deep_dive_report.md
@@ -7554,6 +7556,7 @@ reports:
     command: aits etf dynamic-v3-rescue defensive-label-review report --latest
     artifact_selection_policy: latest_available
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_label_review/*/label_review_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_label_review/*/label_review_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_label_review/*/label_decision_matrix.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_label_review/*/candidate_labels.json
@@ -7576,6 +7579,7 @@ reports:
     command: aits etf dynamic-v3-rescue defensive-failure-study report --latest
     artifact_selection_policy: latest_available
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_failure_study/*/failure_study_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_failure_study/*/failure_study_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_failure_study/*/failure_cases_ranked.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_failure_study/*/failure_pattern_summary.json
@@ -7598,6 +7602,7 @@ reports:
     command: aits etf dynamic-v3-rescue defensive-research-note report --latest
     artifact_selection_policy: latest_available
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_research_note/*/defensive_research_note_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_research_note/*/defensive_research_note_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_research_note/*/defensive_hypothesis_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_research_note/*/defensive_research_note.md
@@ -7619,6 +7624,7 @@ reports:
     command: aits etf dynamic-v3-rescue defensive-owner-pack report --latest
     artifact_selection_policy: latest_available
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_owner_pack/*/owner_pack_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_owner_pack/*/defensive_owner_pack_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_owner_pack/*/owner_decision_options.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_owner_pack/*/owner_decision_checklist.md

@@ -1357,6 +1357,33 @@ Owner Decision validator PASS只证明人工记录与其冻结证据一致；它
 
 本slice固定`production_effect=none`、`broker_action_allowed=false`、`policy_change_allowed=false`、`auto_apply=false`；它不修改`position_advisory_v1.yaml`、official target weights、portfolio、baseline/production、order或broker。
 
+### 7.15 Defensive Research Synthesis（TRADING-189～193 / ARCH-004G2.4CF）
+
+为什么这样设计：Pressure Compare只提供按source mode和pressure regime汇总的成对差异，不能直接回答“哪些事件支持或反驳防守假设、标签是否误导、失败发生在哪里、owner下一步能安全选择什么”。旧实现直接读取mutable source views，五级artifact之间缺少严格lineage，缺失exposure/turnover会被0掩盖，Label和Failure的阈值散落在代码中，validator也不能证明报告来自当前source和policy。这样既可能把simulation样本写成规则结论，也可能在Label与Failure引用不同Deep Dive时仍生成一份看似完整的Research Note。本层因此把五个环节定义为一条只读研究解释链，并在每一级冻结最小必要证据、计算视图和versioned policy。
+
+| 环节 | 输入与门禁 | 计算逻辑 | 输出与含义 |
+|---|---|---|---|
+| Deep Dive | 显式且validated的Pressure Outcome Backfill与Defensive Pressure Compare；Compare必须引用同一Backfill；两者id、root、timezone-aware generated time、cutoff和canonical file commitments都必须匹配 | 对每个paired case计算`return_delta=defensive_return-no_trade_return`与`drawdown_delta=no_trade_drawdown-defensive_drawdown`。两者均`>=0`为supporting，均`<0`为contradicting，其余为mixed；按source mode/regime聚合effect matrix。Exposure/turnover只有source真实提供时才计算变化，缺失保持null并标记insufficient，不按0解释 | `deep_dive_input_snapshot.v2`、supporting/contradicting/mixed JSONL、regime matrix、exposure attribution、manifest、Markdown和Reader Brief；只描述case evidence，不批准label或rule |
+| Label Review | validated Deep Dive与reviewed synthesis policy；冻结Deep source、policy path/version/hash和实际计算views | 只使用distinct event而非window row计数；按policy的forward evidence floor、simulation-only警告和candidate label表生成label decision。当前没有足够forward evidence时，任何candidate都只能供owner人工复核 | `label_review_input_snapshot.v2`、decision matrix、candidate labels、manifest与报告；`rename_allowed=false`、`can_support_rule_approval=false` |
+| Failure Study | 与Label相同的validated Deep Dive和同一policy | 对contradicting/mixed case按policy定义的return shortfall、drawdown shortfall与权重计算failure score并映射severity band；failure reason和mitigation idea来自具名policy规则。空failure cohort的平均值保持null | `failure_study_input_snapshot.v2`、ranked failures、pattern summary、mitigation ideas、manifest与报告；mitigation只是研究假设，`auto_apply=false` |
+| Research Note | validated且来自同一Deep Dive的Label Review与Failure Study；必须满足Deep<=Label/Failure<=Note cutoff | 汇总case counts、source-mode evidence、label风险、failure patterns和证据缺口；simulation、forward、PIT支持分别披露，不把总样本数替代forward distinct events | `defensive_research_note_input_snapshot.v2`、hypothesis summary、Markdown、Reader Brief与manifest；状态固定`RESEARCH_ONLY` |
+| Owner Pack | validated Research Note并继承其Deep/Label/Failure完整lineage及同一policy | 仅从policy投影允许的研究选项、checklist和缺失证据；选项不携带执行权限，不创建owner decision或修改任何配置 | `owner_pack_input_snapshot.v2`、owner decision options、checklist、manifest、Markdown与Reader Brief；`policy_change_allowed=false`、`production_effect=none` |
+
+五类`*.v2` snapshot都采用bounded commitment：记录canonical path、size和SHA-256，并保存重算必需的有限views，不递归复制整条上游artifact。Producer在创建正式输出目录前执行content-derived validation；validator随后重新读取live source和live policy、核对路径/大小/hash/metadata，并逐字节重建manifest、JSON、JSONL、Markdown和Reader Brief。Source/policy drift、output tamper、naive或future timestamp、cutoff前来源、跨Deep lineage、非法owner option和安全字段变化都会FAIL。
+
+日期窗口继续分层解释：项目AI market regime默认仍是`2022-12-01`；QQQ/SGOV/TQQQ的`exact_three_asset_validated` primary research window可从`2021-02-22`开始。Deep Dive不自行改写上游requested range，而是逐值继承Backfill/Compare已经声明的source mode、range和regime。因此2021证据可以用于长期primary research、warm-up或regime comparison，但报告必须显式说明其role；它不能被包装成ChatGPT发布后的AI-cycle证据，也不能静默把命令的2022-12-01默认起点提前。
+
+当前source-backed fixture结果：3个distinct events全部是`BACKTEST_SIMULATION`，其中2个supporting、1个contradicting、0个mixed；forward和historical distinct events都为0，exposure attribution因source没有相关字段而是`INSUFFICIENT_SOURCE_EXPOSURE_FIELDS`，不是0变化。Label结果为`POTENTIALLY_MISLEADING`；Failure识别1个`late_de_risking` case，空pattern的平均值保持null；Research Note为`RESEARCH_ONLY`，simulation support=`PARTIAL`、forward support=`NONE`、PIT support=`NONE`。Owner Pack只允许继续追踪、保留警告和补充样本等研究选项，当前不允许rename。这说明链路已能一致地表达“simulation中有方向性信号，但没有forward/PIT证据”，不说明防守规则有效。
+
+后续优化按证据成熟度进入：
+
+1. 真实forward distinct events达到预注册floor后，增加event-clustered uncertainty、bootstrap confidence interval、tail loss、cost/turnover和false-trigger分析；在此之前不根据3个simulation events调整阈值；
+2. Exposure/turnover source contract补齐并通过DQ/PIT验证后，再启用exposure attribution；字段缺失期间保持null，不从组合差异反推伪值；
+3. 将验证缓存键固定为`source commitments + policy hash + validator version + cutoff`，减少五级链重复读取；缓存命中仍需核对live commitments；
+4. 为case taxonomy、failure severity和label candidate做独立holdout、跨regime sensitivity及owner-reviewed policy calibration；每次policy变更必须版本化并保留旧artifact replay；
+5. 在Forward Pressure Capture积累真实样本后，分别报告2021长期窗口与2022-12-01 AI-cycle窗口，并做leave-one-regime-out稳定性；不得合并成单一headline；
+6. 只有证据成熟、预注册change proposal、PIT/holdout/cost/risk validation和owner decision全部通过，才允许在独立任务讨论rename、mitigation或rule change。本slice不会自动触发这些动作。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |

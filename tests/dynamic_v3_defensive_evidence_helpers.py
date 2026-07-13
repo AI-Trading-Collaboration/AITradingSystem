@@ -8,15 +8,17 @@ from dynamic_v3_pressure_validation_helpers import run_pressure_backfill_fixture
 
 from ai_trading_system.etf_portfolio.dynamic_v3_defensive_evidence import (
     build_forward_pressure_capture_plan,
+    run_pressure_capture_workflow,
+    run_pressure_trigger_scan,
+    run_weekly_defensive_evidence_update,
+    update_pressure_sample_ledger,
+)
+from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
     run_defensive_failure_study,
     run_defensive_hypothesis_deep_dive,
     run_defensive_label_review,
     run_defensive_owner_pack,
     run_defensive_research_note,
-    run_pressure_capture_workflow,
-    run_pressure_trigger_scan,
-    run_weekly_defensive_evidence_update,
-    update_pressure_sample_ledger,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_pressure_validation import (
     run_defensive_pressure_compare,

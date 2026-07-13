@@ -64,24 +64,14 @@ DEFAULT_FORWARD_PRESSURE_CAPTURE_CONFIG_PATH = (
 DEFAULT_DEFENSIVE_HYPOTHESIS_DEEP_DIVE_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "defensive_hypothesis_deep_dive"
 )
-DEFAULT_DEFENSIVE_LABEL_REVIEW_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "defensive_label_review"
-)
-DEFAULT_DEFENSIVE_FAILURE_STUDY_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "defensive_failure_study"
-)
-DEFAULT_DEFENSIVE_RESEARCH_NOTE_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "defensive_research_note"
-)
+DEFAULT_DEFENSIVE_LABEL_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "defensive_label_review"
+DEFAULT_DEFENSIVE_FAILURE_STUDY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "defensive_failure_study"
+DEFAULT_DEFENSIVE_RESEARCH_NOTE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "defensive_research_note"
 DEFAULT_DEFENSIVE_OWNER_PACK_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "defensive_owner_pack"
-DEFAULT_FORWARD_PRESSURE_CAPTURE_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_pressure_capture"
-)
+DEFAULT_FORWARD_PRESSURE_CAPTURE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_pressure_capture"
 DEFAULT_PRESSURE_TRIGGER_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "pressure_trigger"
 DEFAULT_PRESSURE_CAPTURE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "pressure_capture"
-DEFAULT_PRESSURE_SAMPLE_LEDGER_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "pressure_sample_ledger"
-)
+DEFAULT_PRESSURE_SAMPLE_LEDGER_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "pressure_sample_ledger"
 DEFAULT_WEEKLY_DEFENSIVE_EVIDENCE_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "weekly_defensive_evidence"
 )
@@ -108,94 +98,12 @@ def run_defensive_hypothesis_deep_dive(
     output_dir: Path = DEFAULT_DEFENSIVE_HYPOTHESIS_DEEP_DIVE_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    source_backfill_dir = backfill_dir / pressure_backfill_id
-    source_comparison_dir = comparison_dir / comparison_id
-    backfill_manifest = _read_json(source_backfill_dir / "pressure_backfill_manifest.json")
-    inventory = _read_jsonl(source_backfill_dir / "pressure_outcome_inventory.jsonl")
-    comparison_manifest = _read_json(
-        source_comparison_dir / "defensive_pressure_compare_manifest.json"
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        run_defensive_hypothesis_deep_dive as implementation,
     )
-    comparison_summary = _read_json(source_comparison_dir / "defensive_pressure_summary.json")
-    cases = _defensive_case_rows(inventory)
-    supporting = [
-        _supporting_case_payload(row)
-        for row in cases
-        if row["classification"] == "supporting"
-    ]
-    contradicting = [
-        _contradicting_case_payload(row)
-        for row in cases
-        if row["classification"] == "contradicting"
-    ]
-    matrix = _regime_effect_matrix(cases)
-    attribution = _exposure_change_attribution(cases)
-    source_counts = Counter(_text(row.get("source_mode")) for row in cases)
-    deep_dive_id = _stable_id(
-        "defensive-hypothesis-deep-dive",
-        pressure_backfill_id,
-        comparison_id,
-        generated.isoformat(),
-    )
-    deep_dive_dir = _unique_dir(output_dir / deep_dive_id)
-    deep_dive_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_defensive_hypothesis_deep_dive_manifest",
-        "deep_dive_id": deep_dive_dir.name,
-        "pressure_backfill_id": pressure_backfill_id,
-        "comparison_id": comparison_id,
-        "source_pressure_backfill_id": backfill_manifest.get("pressure_backfill_id"),
-        "source_comparison_id": comparison_manifest.get("comparison_id"),
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if cases else "PASS_WITH_WARNINGS",
-        "market_regime": "ai_after_chatgpt",
-        "source_mode_counts": {mode: source_counts.get(mode, 0) for mode in SOURCE_MODES},
-        "supporting_case_count": len(supporting),
-        "contradicting_case_count": len(contradicting),
-        "mixed_or_empty_case_count": sum(1 for row in cases if row["classification"] == "mixed"),
-        "defensive_pressure_status": comparison_summary.get("defensive_status"),
-        "can_support_rule_approval": False,
-        "deep_dive_manifest_path": str(deep_dive_dir / "deep_dive_manifest.json"),
-        "supporting_cases_path": str(deep_dive_dir / "supporting_cases.jsonl"),
-        "contradicting_cases_path": str(deep_dive_dir / "contradicting_cases.jsonl"),
-        "regime_effect_matrix_path": str(deep_dive_dir / "regime_effect_matrix.json"),
-        "exposure_change_attribution_path": str(
-            deep_dive_dir / "exposure_change_attribution.json"
-        ),
-        "defensive_hypothesis_deep_dive_report_path": str(
-            deep_dive_dir / "defensive_hypothesis_deep_dive_report.md"
-        ),
-        **_artifact_safety(),
-    }
-    _write_json(deep_dive_dir / "deep_dive_manifest.json", manifest)
-    _write_jsonl(deep_dive_dir / "supporting_cases.jsonl", supporting)
-    _write_jsonl(deep_dive_dir / "contradicting_cases.jsonl", contradicting)
-    _write_json(deep_dive_dir / "regime_effect_matrix.json", matrix)
-    _write_json(deep_dive_dir / "exposure_change_attribution.json", attribution)
-    _write_text(
-        deep_dive_dir / "defensive_hypothesis_deep_dive_report.md",
-        render_defensive_hypothesis_deep_dive_report(
-            manifest,
-            matrix,
-            attribution,
-            comparison_summary,
-        ),
-    )
-    _update_latest_pointer(
-        "latest_defensive_hypothesis_deep_dive",
-        deep_dive_dir.name,
-        deep_dive_dir / "deep_dive_manifest.json",
-    )
-    return {
-        "deep_dive_id": deep_dive_dir.name,
-        "deep_dive_dir": deep_dive_dir,
-        "manifest": manifest,
-        "supporting_cases": supporting,
-        "contradicting_cases": contradicting,
-        "regime_effect_matrix": matrix,
-        "exposure_change_attribution": attribution,
-    }
+
+    return implementation(**arguments)
 
 
 def defensive_hypothesis_deep_dive_report_payload(
@@ -204,21 +112,12 @@ def defensive_hypothesis_deep_dive_report_payload(
     latest: bool = False,
     output_dir: Path = DEFAULT_DEFENSIVE_HYPOTHESIS_DEEP_DIVE_DIR,
 ) -> dict[str, Any]:
-    deep_dive_dir = _artifact_dir_from_latest(
-        output_dir=output_dir,
-        artifact_id=deep_dive_id if not latest else None,
-        pointer_name="latest_defensive_hypothesis_deep_dive",
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        defensive_hypothesis_deep_dive_report_payload as implementation,
     )
-    return {
-        **_read_json(deep_dive_dir / "deep_dive_manifest.json"),
-        "supporting_cases": _read_jsonl(deep_dive_dir / "supporting_cases.jsonl"),
-        "contradicting_cases": _read_jsonl(deep_dive_dir / "contradicting_cases.jsonl"),
-        "regime_effect_matrix": _read_json(deep_dive_dir / "regime_effect_matrix.json"),
-        "exposure_change_attribution": _read_json(
-            deep_dive_dir / "exposure_change_attribution.json"
-        ),
-        "deep_dive_dir": str(deep_dive_dir),
-    }
+
+    return implementation(**arguments)
 
 
 def validate_defensive_hypothesis_deep_dive_artifact(
@@ -226,58 +125,12 @@ def validate_defensive_hypothesis_deep_dive_artifact(
     deep_dive_id: str,
     output_dir: Path = DEFAULT_DEFENSIVE_HYPOTHESIS_DEEP_DIVE_DIR,
 ) -> dict[str, Any]:
-    deep_dive_dir = output_dir / deep_dive_id
-    manifest = _read_optional_json(deep_dive_dir / "deep_dive_manifest.json") or {}
-    supporting = _read_jsonl(deep_dive_dir / "supporting_cases.jsonl")
-    contradicting = _read_jsonl(deep_dive_dir / "contradicting_cases.jsonl")
-    matrix = _read_optional_json(deep_dive_dir / "regime_effect_matrix.json") or {}
-    checks = [
-        _check("manifest_exists", (deep_dive_dir / "deep_dive_manifest.json").exists(), ""),
-        _check("supporting_cases_exists", (deep_dive_dir / "supporting_cases.jsonl").exists(), ""),
-        _check(
-            "contradicting_cases_exists",
-            (deep_dive_dir / "contradicting_cases.jsonl").exists(),
-            "",
-        ),
-        _check("regime_matrix_exists", (deep_dive_dir / "regime_effect_matrix.json").exists(), ""),
-        _check(
-            "exposure_attribution_exists",
-            (deep_dive_dir / "exposure_change_attribution.json").exists(),
-            "",
-        ),
-        _check(
-            "report_exists",
-            (deep_dive_dir / "defensive_hypothesis_deep_dive_report.md").exists(),
-            "",
-        ),
-        _check("deep_dive_id_matches", manifest.get("deep_dive_id") == deep_dive_id, ""),
-        _check(
-            "case_source_modes_valid",
-            all(
-                _text(row.get("source_mode")) in SOURCE_MODES
-                for row in supporting + contradicting
-            ),
-            "known source modes",
-        ),
-        _check(
-            "regime_matrix_complete",
-            set(row.get("regime") for row in _records(matrix.get("regimes")))
-            >= set(PRESSURE_REGIMES),
-            "all pressure regimes present",
-        ),
-        _check(
-            "simulation_not_rule_approval",
-            manifest.get("can_support_rule_approval") is False
-            and manifest.get("production_effect") == "none",
-            "simulation research does not approve rule",
-        ),
-    ]
-    return _validation_payload(
-        report_type="etf_dynamic_v3_defensive_hypothesis_deep_dive_validation",
-        artifact_id_key="deep_dive_id",
-        artifact_id=deep_dive_id,
-        checks=checks,
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        validate_defensive_hypothesis_deep_dive_artifact as implementation,
     )
+
+    return implementation(**arguments)
 
 
 def run_defensive_label_review(
@@ -287,54 +140,12 @@ def run_defensive_label_review(
     output_dir: Path = DEFAULT_DEFENSIVE_LABEL_REVIEW_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    source_dir = deep_dive_dir / deep_dive_id
-    deep_manifest = _read_json(source_dir / "deep_dive_manifest.json")
-    matrix = _read_json(source_dir / "regime_effect_matrix.json")
-    label_matrix = _label_decision_matrix(deep_manifest, matrix)
-    candidate_labels = _candidate_labels(label_matrix)
-    label_review_id = _stable_id("defensive-label-review", deep_dive_id, generated.isoformat())
-    review_dir = _unique_dir(output_dir / label_review_id)
-    review_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_defensive_label_review_manifest",
-        "label_review_id": review_dir.name,
-        "deep_dive_id": deep_dive_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": "ai_after_chatgpt",
-        "label_review_manifest_path": str(review_dir / "label_review_manifest.json"),
-        "label_decision_matrix_path": str(review_dir / "label_decision_matrix.json"),
-        "candidate_labels_path": str(review_dir / "candidate_labels.json"),
-        "defensive_label_review_report_path": str(
-            review_dir / "defensive_label_review_report.md"
-        ),
-        "reader_brief_section_path": str(review_dir / "reader_brief_section.md"),
-        **_artifact_safety(),
-    }
-    reader_brief = render_defensive_label_reader_brief(label_matrix)
-    _write_json(review_dir / "label_review_manifest.json", manifest)
-    _write_json(review_dir / "label_decision_matrix.json", label_matrix)
-    _write_json(review_dir / "candidate_labels.json", candidate_labels)
-    _write_text(
-        review_dir / "defensive_label_review_report.md",
-        render_defensive_label_review_report(manifest, label_matrix, candidate_labels),
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        run_defensive_label_review as implementation,
     )
-    _write_text(review_dir / "reader_brief_section.md", reader_brief)
-    _update_latest_pointer(
-        "latest_defensive_label_review",
-        review_dir.name,
-        review_dir / "label_review_manifest.json",
-    )
-    return {
-        "label_review_id": review_dir.name,
-        "label_review_dir": review_dir,
-        "manifest": manifest,
-        "label_decision_matrix": label_matrix,
-        "candidate_labels": candidate_labels,
-        "reader_brief_section": reader_brief,
-    }
+
+    return implementation(**arguments)
 
 
 def defensive_label_review_report_payload(
@@ -343,49 +154,23 @@ def defensive_label_review_report_payload(
     latest: bool = False,
     output_dir: Path = DEFAULT_DEFENSIVE_LABEL_REVIEW_DIR,
 ) -> dict[str, Any]:
-    review_dir = _artifact_dir_from_latest(
-        output_dir=output_dir,
-        artifact_id=label_review_id if not latest else None,
-        pointer_name="latest_defensive_label_review",
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        defensive_label_review_report_payload as implementation,
     )
-    return {
-        **_read_json(review_dir / "label_review_manifest.json"),
-        "label_decision_matrix": _read_json(review_dir / "label_decision_matrix.json"),
-        "candidate_labels": _read_json(review_dir / "candidate_labels.json"),
-        "reader_brief_section": _read_text(review_dir / "reader_brief_section.md"),
-        "label_review_dir": str(review_dir),
-    }
+
+    return implementation(**arguments)
 
 
 def validate_defensive_label_review_artifact(
     *, label_review_id: str, output_dir: Path = DEFAULT_DEFENSIVE_LABEL_REVIEW_DIR
 ) -> dict[str, Any]:
-    review_dir = output_dir / label_review_id
-    manifest = _read_optional_json(review_dir / "label_review_manifest.json") or {}
-    matrix = _read_optional_json(review_dir / "label_decision_matrix.json") or {}
-    labels = _read_optional_json(review_dir / "candidate_labels.json") or {}
-    checks = [
-        _check("manifest_exists", (review_dir / "label_review_manifest.json").exists(), ""),
-        _check("decision_matrix_exists", (review_dir / "label_decision_matrix.json").exists(), ""),
-        _check("candidate_labels_exists", (review_dir / "candidate_labels.json").exists(), ""),
-        _check("report_exists", (review_dir / "defensive_label_review_report.md").exists(), ""),
-        _check("reader_brief_exists", (review_dir / "reader_brief_section.md").exists(), ""),
-        _check("label_review_id_matches", manifest.get("label_review_id") == label_review_id, ""),
-        _check("auto_rename_false", matrix.get("auto_rename") is False, ""),
-        _check(
-            "config_change_disallowed",
-            matrix.get("config_change_allowed") is False
-            and manifest.get("policy_change_allowed") is False,
-            "review cannot change config",
-        ),
-        _check("candidate_labels_present", bool(_records(labels.get("labels"))), "labels"),
-    ]
-    return _validation_payload(
-        report_type="etf_dynamic_v3_defensive_label_review_validation",
-        artifact_id_key="label_review_id",
-        artifact_id=label_review_id,
-        checks=checks,
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        validate_defensive_label_review_artifact as implementation,
     )
+
+    return implementation(**arguments)
 
 
 def run_defensive_failure_study(
@@ -395,55 +180,12 @@ def run_defensive_failure_study(
     output_dir: Path = DEFAULT_DEFENSIVE_FAILURE_STUDY_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    source_dir = deep_dive_dir / deep_dive_id
-    _read_json(source_dir / "deep_dive_manifest.json")
-    contradicting = _read_jsonl(source_dir / "contradicting_cases.jsonl")
-    ranked = _rank_failure_cases(contradicting)
-    pattern_summary = _failure_pattern_summary(ranked)
-    mitigation_ideas = _failure_mitigation_ideas(pattern_summary)
-    failure_study_id = _stable_id("defensive-failure-study", deep_dive_id, generated.isoformat())
-    study_dir = _unique_dir(output_dir / failure_study_id)
-    study_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_defensive_failure_study_manifest",
-        "failure_study_id": study_dir.name,
-        "deep_dive_id": deep_dive_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if ranked else "PASS_WITH_WARNINGS",
-        "market_regime": "ai_after_chatgpt",
-        "failure_case_count": len(ranked),
-        "failure_study_manifest_path": str(study_dir / "failure_study_manifest.json"),
-        "failure_cases_ranked_path": str(study_dir / "failure_cases_ranked.jsonl"),
-        "failure_pattern_summary_path": str(study_dir / "failure_pattern_summary.json"),
-        "failure_mitigation_ideas_path": str(study_dir / "failure_mitigation_ideas.json"),
-        "defensive_failure_study_report_path": str(
-            study_dir / "defensive_failure_study_report.md"
-        ),
-        **_artifact_safety(),
-    }
-    _write_json(study_dir / "failure_study_manifest.json", manifest)
-    _write_jsonl(study_dir / "failure_cases_ranked.jsonl", ranked)
-    _write_json(study_dir / "failure_pattern_summary.json", pattern_summary)
-    _write_json(study_dir / "failure_mitigation_ideas.json", mitigation_ideas)
-    _write_text(
-        study_dir / "defensive_failure_study_report.md",
-        render_defensive_failure_study_report(manifest, pattern_summary, mitigation_ideas),
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        run_defensive_failure_study as implementation,
     )
-    _update_latest_pointer(
-        "latest_defensive_failure_study",
-        study_dir.name,
-        study_dir / "failure_study_manifest.json",
-    )
-    return {
-        "failure_study_id": study_dir.name,
-        "failure_study_dir": study_dir,
-        "manifest": manifest,
-        "failure_cases_ranked": ranked,
-        "failure_pattern_summary": pattern_summary,
-        "failure_mitigation_ideas": mitigation_ideas,
-    }
+
+    return implementation(**arguments)
 
 
 def defensive_failure_study_report_payload(
@@ -452,65 +194,23 @@ def defensive_failure_study_report_payload(
     latest: bool = False,
     output_dir: Path = DEFAULT_DEFENSIVE_FAILURE_STUDY_DIR,
 ) -> dict[str, Any]:
-    study_dir = _artifact_dir_from_latest(
-        output_dir=output_dir,
-        artifact_id=failure_study_id if not latest else None,
-        pointer_name="latest_defensive_failure_study",
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        defensive_failure_study_report_payload as implementation,
     )
-    return {
-        **_read_json(study_dir / "failure_study_manifest.json"),
-        "failure_cases_ranked": _read_jsonl(study_dir / "failure_cases_ranked.jsonl"),
-        "failure_pattern_summary": _read_json(study_dir / "failure_pattern_summary.json"),
-        "failure_mitigation_ideas": _read_json(study_dir / "failure_mitigation_ideas.json"),
-        "failure_study_dir": str(study_dir),
-    }
+
+    return implementation(**arguments)
 
 
 def validate_defensive_failure_study_artifact(
     *, failure_study_id: str, output_dir: Path = DEFAULT_DEFENSIVE_FAILURE_STUDY_DIR
 ) -> dict[str, Any]:
-    study_dir = output_dir / failure_study_id
-    manifest = _read_optional_json(study_dir / "failure_study_manifest.json") or {}
-    ranked = _read_jsonl(study_dir / "failure_cases_ranked.jsonl")
-    ideas = _read_optional_json(study_dir / "failure_mitigation_ideas.json") or {}
-    checks = [
-        _check("manifest_exists", (study_dir / "failure_study_manifest.json").exists(), ""),
-        _check("ranked_cases_exists", (study_dir / "failure_cases_ranked.jsonl").exists(), ""),
-        _check("pattern_summary_exists", (study_dir / "failure_pattern_summary.json").exists(), ""),
-        _check(
-            "mitigation_ideas_exists",
-            (study_dir / "failure_mitigation_ideas.json").exists(),
-            "",
-        ),
-        _check("report_exists", (study_dir / "defensive_failure_study_report.md").exists(), ""),
-        _check(
-            "failure_study_id_matches",
-            manifest.get("failure_study_id") == failure_study_id,
-            "",
-        ),
-        _check(
-            "severity_values_valid",
-            all(row.get("failure_severity") in {"HIGH", "MEDIUM", "LOW"} for row in ranked),
-            "severity bands",
-        ),
-        _check(
-            "mitigation_not_auto_apply",
-            all(row.get("auto_apply") is False for row in _records(ideas.get("ideas"))),
-            "mitigation ideas are research-only",
-        ),
-        _check(
-            "safety_no_policy_change",
-            manifest.get("policy_change_allowed") is False
-            and manifest.get("production_effect") == "none",
-            "no policy change",
-        ),
-    ]
-    return _validation_payload(
-        report_type="etf_dynamic_v3_defensive_failure_study_validation",
-        artifact_id_key="failure_study_id",
-        artifact_id=failure_study_id,
-        checks=checks,
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        validate_defensive_failure_study_artifact as implementation,
     )
+
+    return implementation(**arguments)
 
 
 def run_defensive_research_note(
@@ -524,63 +224,12 @@ def run_defensive_research_note(
     output_dir: Path = DEFAULT_DEFENSIVE_RESEARCH_NOTE_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    deep_manifest = _read_json(deep_dive_dir / deep_dive_id / "deep_dive_manifest.json")
-    regime_matrix = _read_json(deep_dive_dir / deep_dive_id / "regime_effect_matrix.json")
-    label_matrix = _read_json(label_review_dir / label_review_id / "label_decision_matrix.json")
-    failure_summary = _read_json(
-        failure_study_dir / failure_study_id / "failure_pattern_summary.json"
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        run_defensive_research_note as implementation,
     )
-    summary = _defensive_hypothesis_summary(deep_manifest, label_matrix)
-    note_id = _stable_id(
-        "defensive-research-note",
-        deep_dive_id,
-        label_review_id,
-        failure_study_id,
-        generated.isoformat(),
-    )
-    note_dir = _unique_dir(output_dir / note_id)
-    note_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_defensive_research_note_manifest",
-        "note_id": note_dir.name,
-        "deep_dive_id": deep_dive_id,
-        "label_review_id": label_review_id,
-        "failure_study_id": failure_study_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": "ai_after_chatgpt",
-        "defensive_research_note_manifest_path": str(
-            note_dir / "defensive_research_note_manifest.json"
-        ),
-        "defensive_hypothesis_summary_path": str(
-            note_dir / "defensive_hypothesis_summary.json"
-        ),
-        "defensive_research_note_path": str(note_dir / "defensive_research_note.md"),
-        "reader_brief_section_path": str(note_dir / "reader_brief_section.md"),
-        **_artifact_safety(),
-    }
-    reader_brief = render_defensive_research_reader_brief(summary)
-    _write_json(note_dir / "defensive_research_note_manifest.json", manifest)
-    _write_json(note_dir / "defensive_hypothesis_summary.json", summary)
-    _write_text(
-        note_dir / "defensive_research_note.md",
-        render_defensive_research_note(summary, regime_matrix, label_matrix, failure_summary),
-    )
-    _write_text(note_dir / "reader_brief_section.md", reader_brief)
-    _update_latest_pointer(
-        "latest_defensive_research_note",
-        note_dir.name,
-        note_dir / "defensive_research_note_manifest.json",
-    )
-    return {
-        "note_id": note_dir.name,
-        "note_dir": note_dir,
-        "manifest": manifest,
-        "defensive_hypothesis_summary": summary,
-        "reader_brief_section": reader_brief,
-    }
+
+    return implementation(**arguments)
 
 
 def defensive_research_note_report_payload(
@@ -589,65 +238,23 @@ def defensive_research_note_report_payload(
     latest: bool = False,
     output_dir: Path = DEFAULT_DEFENSIVE_RESEARCH_NOTE_DIR,
 ) -> dict[str, Any]:
-    note_dir = _artifact_dir_from_latest(
-        output_dir=output_dir,
-        artifact_id=note_id if not latest else None,
-        pointer_name="latest_defensive_research_note",
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        defensive_research_note_report_payload as implementation,
     )
-    return {
-        **_read_json(note_dir / "defensive_research_note_manifest.json"),
-        "defensive_hypothesis_summary": _read_json(
-            note_dir / "defensive_hypothesis_summary.json"
-        ),
-        "defensive_research_note": _read_text(note_dir / "defensive_research_note.md"),
-        "reader_brief_section": _read_text(note_dir / "reader_brief_section.md"),
-        "note_dir": str(note_dir),
-    }
+
+    return implementation(**arguments)
 
 
 def validate_defensive_research_note_artifact(
     *, note_id: str, output_dir: Path = DEFAULT_DEFENSIVE_RESEARCH_NOTE_DIR
 ) -> dict[str, Any]:
-    note_dir = output_dir / note_id
-    manifest = _read_optional_json(note_dir / "defensive_research_note_manifest.json") or {}
-    summary = _read_optional_json(note_dir / "defensive_hypothesis_summary.json") or {}
-    note = _read_text(note_dir / "defensive_research_note.md")
-    checks = [
-        _check(
-            "manifest_exists",
-            (note_dir / "defensive_research_note_manifest.json").exists(),
-            "",
-        ),
-        _check("summary_exists", (note_dir / "defensive_hypothesis_summary.json").exists(), ""),
-        _check("note_exists", (note_dir / "defensive_research_note.md").exists(), ""),
-        _check("reader_brief_exists", (note_dir / "reader_brief_section.md").exists(), ""),
-        _check("note_id_matches", manifest.get("note_id") == note_id, ""),
-        _check(
-            "rule_approval_false",
-            summary.get("can_support_rule_approval") is False,
-            "research note cannot approve rule",
-        ),
-        _check(
-            "required_sections_present",
-            all(
-                phrase in note
-                for phrase in (
-                    "当前假设",
-                    "simulation 支持",
-                    "forward / PIT",
-                    "owner",
-                )
-            ),
-            "core research sections",
-        ),
-        _check("safety_no_production", manifest.get("production_effect") == "none", ""),
-    ]
-    return _validation_payload(
-        report_type="etf_dynamic_v3_defensive_research_note_validation",
-        artifact_id_key="note_id",
-        artifact_id=note_id,
-        checks=checks,
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        validate_defensive_research_note_artifact as implementation,
     )
+
+    return implementation(**arguments)
 
 
 def run_defensive_owner_pack(
@@ -657,48 +264,12 @@ def run_defensive_owner_pack(
     output_dir: Path = DEFAULT_DEFENSIVE_OWNER_PACK_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    summary = _read_json(note_dir / note_id / "defensive_hypothesis_summary.json")
-    options = _owner_decision_options()
-    checklist = render_owner_decision_checklist()
-    pack_id = _stable_id("defensive-owner-pack", note_id, generated.isoformat())
-    pack_dir = _unique_dir(output_dir / pack_id)
-    pack_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_defensive_owner_pack_manifest",
-        "pack_id": pack_dir.name,
-        "note_id": note_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": "ai_after_chatgpt",
-        "defensive_owner_pack_manifest_path": str(
-            pack_dir / "defensive_owner_pack_manifest.json"
-        ),
-        "owner_decision_options_path": str(pack_dir / "owner_decision_options.json"),
-        "owner_decision_checklist_path": str(pack_dir / "owner_decision_checklist.md"),
-        "defensive_owner_pack_report_path": str(pack_dir / "defensive_owner_pack_report.md"),
-        **_artifact_safety(),
-    }
-    _write_json(pack_dir / "defensive_owner_pack_manifest.json", manifest)
-    _write_json(pack_dir / "owner_decision_options.json", options)
-    _write_text(pack_dir / "owner_decision_checklist.md", checklist)
-    _write_text(
-        pack_dir / "defensive_owner_pack_report.md",
-        render_defensive_owner_pack_report(manifest, summary, options),
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        run_defensive_owner_pack as implementation,
     )
-    _update_latest_pointer(
-        "latest_defensive_owner_pack",
-        pack_dir.name,
-        pack_dir / "defensive_owner_pack_manifest.json",
-    )
-    return {
-        "pack_id": pack_dir.name,
-        "pack_dir": pack_dir,
-        "manifest": manifest,
-        "owner_decision_options": options,
-        "owner_decision_checklist": checklist,
-    }
+
+    return implementation(**arguments)
 
 
 def defensive_owner_pack_report_payload(
@@ -707,43 +278,23 @@ def defensive_owner_pack_report_payload(
     latest: bool = False,
     output_dir: Path = DEFAULT_DEFENSIVE_OWNER_PACK_DIR,
 ) -> dict[str, Any]:
-    pack_dir = _artifact_dir_from_latest(
-        output_dir=output_dir,
-        artifact_id=pack_id if not latest else None,
-        pointer_name="latest_defensive_owner_pack",
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        defensive_owner_pack_report_payload as implementation,
     )
-    return {
-        **_read_json(pack_dir / "defensive_owner_pack_manifest.json"),
-        "owner_decision_options": _read_json(pack_dir / "owner_decision_options.json"),
-        "owner_decision_checklist": _read_text(pack_dir / "owner_decision_checklist.md"),
-        "pack_dir": str(pack_dir),
-    }
+
+    return implementation(**arguments)
 
 
 def validate_defensive_owner_pack_artifact(
     *, pack_id: str, output_dir: Path = DEFAULT_DEFENSIVE_OWNER_PACK_DIR
 ) -> dict[str, Any]:
-    pack_dir = output_dir / pack_id
-    manifest = _read_optional_json(pack_dir / "defensive_owner_pack_manifest.json") or {}
-    options = _read_optional_json(pack_dir / "owner_decision_options.json") or {}
-    checklist = _read_text(pack_dir / "owner_decision_checklist.md")
-    checks = [
-        _check("manifest_exists", (pack_dir / "defensive_owner_pack_manifest.json").exists(), ""),
-        _check("options_exists", (pack_dir / "owner_decision_options.json").exists(), ""),
-        _check("checklist_exists", (pack_dir / "owner_decision_checklist.md").exists(), ""),
-        _check("report_exists", (pack_dir / "defensive_owner_pack_report.md").exists(), ""),
-        _check("pack_id_matches", manifest.get("pack_id") == pack_id, ""),
-        _check("auto_apply_false", options.get("auto_apply") is False, ""),
-        _check("policy_change_false", options.get("policy_change_allowed") is False, ""),
-        _check("broker_action_false", options.get("broker_action_allowed") is False, ""),
-        _check("checklist_mentions_broker", "broker" in checklist, "broker boundary"),
-    ]
-    return _validation_payload(
-        report_type="etf_dynamic_v3_defensive_owner_pack_validation",
-        artifact_id_key="pack_id",
-        artifact_id=pack_id,
-        checks=checks,
+    arguments = dict(locals())
+    from ai_trading_system.etf_portfolio.dynamic_v3_defensive_research import (
+        validate_defensive_owner_pack_artifact as implementation,
     )
+
+    return implementation(**arguments)
 
 
 def build_forward_pressure_capture_plan(
@@ -901,9 +452,7 @@ def run_pressure_trigger_scan(
         "config_path": str(config_path),
         "generated_at": generated.isoformat(),
         "status": (
-            "PASS"
-            if metrics["trigger_status"] != "INSUFFICIENT_DATA"
-            else "INSUFFICIENT_DATA"
+            "PASS" if metrics["trigger_status"] != "INSUFFICIENT_DATA" else "INSUFFICIENT_DATA"
         ),
         "data_quality_status": data_quality_status,
         "data_quality_report_path": data_quality_report_path,
@@ -1204,9 +753,7 @@ def update_pressure_sample_ledger(
         ),
         "pressure_samples_path": str(ledger_dir / "pressure_samples.jsonl"),
         "pressure_sample_summary_path": str(ledger_dir / "pressure_sample_summary.json"),
-        "pressure_sample_ledger_report_path": str(
-            ledger_dir / "pressure_sample_ledger_report.md"
-        ),
+        "pressure_sample_ledger_report_path": str(ledger_dir / "pressure_sample_ledger_report.md"),
         **_artifact_safety(),
     }
     _write_json(ledger_dir / "pressure_sample_ledger_manifest.json", manifest)
@@ -1771,9 +1318,7 @@ def render_pressure_sample_ledger_report(
     )
 
 
-def render_weekly_defensive_report(
-    manifest: Mapping[str, Any], summary: Mapping[str, Any]
-) -> str:
+def render_weekly_defensive_report(manifest: Mapping[str, Any], summary: Mapping[str, Any]) -> str:
     return "\n".join(
         [
             "# Dynamic Rescue Weekly Defensive Evidence",
@@ -1913,9 +1458,7 @@ def _regime_effect_matrix(cases: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         rows = [row for row in cases if row.get("regime") == regime]
         supporting = [row for row in rows if row.get("classification") == "supporting"]
         contradicting = [row for row in rows if row.get("classification") == "contradicting"]
-        avg_return = _avg(
-            [_float(row.get("defensive_return_delta_vs_no_trade")) for row in rows]
-        )
+        avg_return = _avg([_float(row.get("defensive_return_delta_vs_no_trade")) for row in rows])
         avg_drawdown = _avg(
             [_float(row.get("defensive_drawdown_delta_vs_no_trade")) for row in rows]
         )
@@ -2056,12 +1599,8 @@ def _rank_failure_cases(contradicting: Sequence[Mapping[str, Any]]) -> list[dict
                 "regime": row.get("regime"),
                 "as_of": row.get("as_of"),
                 "window_days": row.get("window_days"),
-                "relative_return_vs_no_trade": row.get(
-                    "defensive_return_delta_vs_no_trade"
-                ),
-                "drawdown_delta_vs_no_trade": row.get(
-                    "defensive_drawdown_delta_vs_no_trade"
-                ),
+                "relative_return_vs_no_trade": row.get("defensive_return_delta_vs_no_trade"),
+                "drawdown_delta_vs_no_trade": row.get("defensive_drawdown_delta_vs_no_trade"),
                 "turnover": row.get("turnover_delta"),
                 "risk_asset_exposure_delta": row.get("risk_asset_exposure_delta"),
                 "failure_severity": _failure_severity(score),

@@ -1,6 +1,6 @@
 # TRADING-189 to 198 Defensive Hypothesis Review and Forward Evidence Automation
 
-最后更新：2026-06-11
+最后更新：2026-07-13
 
 ## 背景
 
@@ -113,6 +113,7 @@ Reader Brief section；默认建议 `continue_tracking`，`policy_change_allowed
 
 ## 进展记录
 
+- 2026-07-13：ARCH-004 G2.4CF完成TRADING-189～193 hardening，状态转为`BASELINE_DONE / G2.4_CONTINUES`。15 callback已迁canonical interface；五级producer在正式写件前完成upstream content validation、timezone cutoff、strict lineage/chronology并写`*.v2` bounded source/policy snapshot，validator重验live source/policy并逐byte重算全部JSON/JSONL/Markdown/Reader Brief/manifest。Missing/empty保持null，failure severity、label与owner options绑定owner/version/status/rationale/review condition完整的research policy。当前fixture为3 simulation distinct events、0 forward/PIT：2 supporting、1 contradicting、label=`POTENTIALLY_MISLEADING`、forward support=`NONE`，不支持rename或rule approval。新增focused 11、CLI组合110、下游5、architecture 267、contract 203并行通过；Root=`21,696/627/588`，generated=`897/1,114/858/0 violations`。TRADING-194～198仍待后续slice；全链固定research-only/manual-only、`production_effect=none`。
 - 2026-06-11：新增需求文档并进入实现。初始范围为附件中的 TRADING-189～198，按一个大功能闭环交付；不得用 simulation-only evidence 批准 defensive rule。
 - 2026-06-11：实现 10 组 CLI、配置、Reader Brief 聚合、report registry、artifact catalog、system flow、operations runbook 和 focused tests。本地真实链路使用 pressure backfill `af2d09c3b5aabc6e`、defensive comparison `6d3ea9b43618c7db` 生成：deep dive `7dde2defa8472fdd`、label review `839b841071b71eee`、failure study `603f3464fbb75826`、research note `098efbf1be65506c`、owner pack `386d63af79363f22`、capture plan `0e666a62ab48b6c3`、pressure trigger `10f11e44b3a6ac84`、pressure capture `77ce7f2ea4d9cb35`、pressure sample ledger `c252b4af86d5ab46`、weekly defensive evidence `752808d0ef02b3ba`；对应 validate CLI 均为 `PASS`。当前 ledger 为 `forward_samples=0`、`simulation_samples=116`、`progress_to_requirement=0.0`，因此 defensive rule 仍为 `RESEARCH_ONLY`。
 - 2026-06-11：验证通过 `python -m ruff check src tests`、`python -m compileall -q src tests`、`git diff --check`、focused pytest 12 passed、`aits etf dynamic-v3-rescue validate`、`aits etf dynamic-v3-rescue artifacts validate --family dynamic_v3_rescue`、`aits reports index --latest`、`aits reports reader-brief --latest` 和 `aits reports validate-reader-brief --latest`。全量 `python -m pytest tests -q` 已尝试，10 分钟超时且未返回失败详情；本阶段不把 full pytest 记为通过。

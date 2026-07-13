@@ -83,6 +83,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_data_provenance as dynamic_v3_data_provenance_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_defensive_research as dynamic_v3_defensive_research_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_evidence_governance as dynamic_v3_evidence_governance_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -333,6 +336,7 @@ __all__ = [
     "dynamic_v3_sweep_runtime_commands",
     "dynamic_v3_data_audit_commands",
     "dynamic_v3_data_provenance_commands",
+    "dynamic_v3_defensive_research_commands",
     "dynamic_v3_candidate_evidence_commands",
     "dynamic_v3_candidate_observation_commands",
     "dynamic_v3_consensus_drift_commands",

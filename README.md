@@ -1080,6 +1080,21 @@ capture plan、trigger scan、capture run/skip、pressure sample ledger 和 week
 `policy_change_allowed=false`、`broker_action_allowed=false`、`production_effect=none`，不修改
 `position_advisory_v1.yaml`、policy、official target weights、portfolio 或 baseline/production
 state，也不触发 broker。
+ARCH-004G2.4CF 将其中 TRADING-189～193 的15个callback迁至
+`src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_defensive_research.py`，
+并把计算owner拆到
+`src/ai_trading_system/etf_portfolio/dynamic_v3_defensive_research.py`；外部CLI tree不变。
+五级producer现在必须先验证timezone-aware cutoff和上游content-derived PASS：Deep Dive
+绑定同一Backfill派生的Compare，Label/Failure绑定同一Deep Dive，Research Note绑定该
+Deep Dive派生的Label与Failure，Owner Pack继承完整Note lineage。每级写入versioned
+bounded input snapshot，冻结canonical file path/size/SHA-256、validation、calculation
+views和`defensive_research_synthesis_v1` policy；validator重验live source/policy并逐字节
+重算JSON/JSONL/Markdown/Reader Brief。空cohort和缺失exposure保持null，不再填0；case
+只有return/drawdown delta均非负才是supporting、均为负才是contradicting，其余为mixed。
+当前source-backed fixture为3个simulation distinct events、0 forward/PIT events，得到2
+supporting、1 contradicting、0 mixed，label=`POTENTIALLY_MISLEADING`，Research Note仍为
+`RESEARCH_ONLY/forward_support=NONE`。这不批准rename、mitigation或rule；TRADING-194～198
+Forward Pressure Capture保持下一独立slice。
 TRADING-199_to_203_MANUAL_PORTFOLIO_GUARDRAILS 在 dynamic v3 rescue shadow shortlist
 和 position advisory 之上新增严格 manual snapshot / exposure / drift / execution
 guardrail / review pack 链路。CLI 包括 `manual-portfolio validate/normalize/report`、
