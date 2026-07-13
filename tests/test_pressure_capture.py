@@ -23,14 +23,14 @@ def test_pressure_capture_skips_without_trigger_and_runs_when_forced(tmp_path):
     }
     assert forced_capture["manifest"]["status"] == "PASS"
     assert forced_capture["pressure_capture_steps"]["manual_force"] is True
-    assert {
-        step["step"]
+    forced_steps = {
+        step["step"]: step["status"]
         for step in forced_capture["pressure_capture_steps"]["steps"]
-        if step["status"] == "PASS"
-    } == {
-        "pressure-regime-tag",
-        "pressure-outcome-backfill",
-        "defensive-pressure-compare",
+    }
+    assert forced_steps == {
+        "pressure-regime-tag": "PASS",
+        "pressure-outcome-backfill": "PASS_WITH_WARNINGS",
+        "defensive-pressure-compare": "PASS",
     }
 
     for fixture, capture in ((skipped, skipped_capture), (forced, forced_capture)):

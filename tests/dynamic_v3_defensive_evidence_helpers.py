@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
@@ -27,13 +26,9 @@ GENERATED_AT = datetime(2026, 6, 30, tzinfo=UTC)
 
 
 def run_defensive_deep_dive_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_pressure_backfill_fixture(tmp_path)
+    fixture = run_pressure_backfill_fixture(tmp_path, include_contradicting=True)
     backfill_root = fixture["pressure_backfill_dir"]
     backfill_id = fixture["pressure_backfill"]["pressure_backfill_id"]
-    inventory_path = backfill_root / backfill_id / "pressure_outcome_inventory.jsonl"
-    rows = _read_jsonl(inventory_path)
-    rows.append(_contradicting_pressure_row())
-    _write_jsonl(inventory_path, rows)
     compare_root = tmp_path / "defensive_pressure_compare"
     comparison = run_defensive_pressure_compare(
         pressure_backfill_id=backfill_id,
@@ -175,6 +170,9 @@ def run_pressure_capture_force_fixture(tmp_path: Path) -> dict[str, Any]:
         pressure_tag_dir=tmp_path / "pressure_regime_tag",
         pressure_backfill_dir=tmp_path / "pressure_outcome_backfill_for_capture",
         comparison_dir=tmp_path / "defensive_pressure_compare_for_capture",
+        advisory_outcome_dir=tmp_path / "advisory_outcome_for_capture",
+        backfilled_outcome_dir=tmp_path / "backfilled_outcome_for_capture",
+        backtest_sim_outcome_dir=tmp_path / "backtest_sim_outcome_for_capture",
         prices_path=_write_price_fixture(tmp_path, triggered=True),
         enforce_data_quality_gate=False,
         generated_at=GENERATED_AT,
@@ -204,37 +202,6 @@ def run_weekly_defensive_evidence_fixture(tmp_path: Path) -> dict[str, Any]:
         generated_at=GENERATED_AT,
     )
     return {**fixture, "weekly_defensive_evidence_dir": weekly_root, "weekly_defensive": weekly}
-
-
-def _contradicting_pressure_row() -> dict[str, Any]:
-    return {
-        "schema_version": 1,
-        "pressure_outcome_id": "pressure-outcome-failure",
-        "source_mode": "BACKTEST_SIMULATION",
-        "source_artifact_id": "sim-outcome-fixture",
-        "source_event_id": "sim-event-failure",
-        "as_of": "2026-06-24",
-        "window_days": 20,
-        "regime_tags": ["tech_drawdown"],
-        "pressure_regime": True,
-        "defensive_validation_relevant": True,
-        "outcome_status": "AVAILABLE",
-        "variant_results": {
-            "no_trade": {"return": -0.010, "max_drawdown": -0.040, "turnover": 0.0},
-            "defensive_limited_adjustment": {
-                "return": -0.024,
-                "max_drawdown": -0.065,
-                "turnover": 0.025,
-                "risk_asset_exposure": 0.70,
-            },
-            "limited_adjustment": {"return": -0.012, "max_drawdown": -0.050, "turnover": 0.02},
-            "consensus_target": {"return": -0.014, "max_drawdown": -0.052, "turnover": 0.02},
-        },
-        "evidence_quality": "SIMULATION_NOT_PIT",
-        "can_support_production": False,
-        "production_effect": "none",
-        "broker_action_allowed": False,
-    }
 
 
 def _write_capture_config(tmp_path: Path) -> Path:
@@ -305,18 +272,3 @@ def _write_price_fixture(tmp_path: Path, *, triggered: bool) -> Path:
         rows.append(f"{day},SMH,{price}")
     path.write_text("\n".join(rows) + "\n", encoding="utf-8")
     return path
-
-
-def _read_jsonl(path: Path) -> list[dict[str, Any]]:
-    return [
-        json.loads(line)
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
-
-
-def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
-    path.write_text(
-        "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
-        encoding="utf-8",
-    )

@@ -1329,6 +1329,34 @@ Owner Decision validator PASS只证明人工记录与其冻结证据一致；它
 
 本slice固定`policy_change_allowed=false`、`auto_apply=false`、`broker_action_allowed=false`、`broker_action_taken=false`、`production_effect=none`；它只产生每周研究证据和人工复核输入，不修改policy/config、official target weights、portfolio、baseline/production、order或broker。
 
+### 7.14 Pressure Validation and Defensive Decision Update（TRADING-184～188 / ARCH-004G2.4CE）
+
+为什么这样设计：Pressure Tag只说明某段价格行为命中代理标签，不能直接证明`defensive_limited_adjustment`有效；simulation、historical replay与forward outcome的PIT质量也不同。旧链会读取mutable latest、把invalid source当作0、纳入`PENDING`或缺variant outcome，并以0填补缺失指标；Compare没有受治理的sample floor，单个event也可能被写成`PROVEN_DEFENSIVE`。这会把“有一个方向正确的样本”误写成“规则已验证”。本层因此先固定来源、适用时间、配对单位和policy，再把计算结果与规则批准彻底分开。
+
+| 环节 | 输入与门禁 | 计算逻辑 | 输出与含义 |
+|---|---|---|---|
+| Diagnosis | 显式Pressure Tag id/root、reviewed tagging config、generated cutoff；可选historical/simulation只能按manifest语义时间/id选择并通过content validation | 从冻结window/outcome rows重算threshold hit、near miss与outcome mapping gap；invalid optional source是FAIL，不按“没有样本”处理 | manifest、distribution、near-miss JSONL、mapping diagnostics、report和`pressure_tag_diagnosis_input_snapshot.v2`；只解释缺口，不调整threshold |
+| Backfill | validated Pressure Tag、cutoff内全部validated Advisory Outcome、zero-or-one Historical Backfill与Simulation Outcome；保存bounded path/size/SHA-256 commitments | 只接收`AVAILABLE`、finite、identity唯一且requested range内的event/window。`FORWARD_OUTCOME`、`HISTORICAL_REPLAY`、`BACKTEST_SIMULATION`保持分层；simulation固定`SIMULATION_NOT_PIT/can_support_production=false` | inventory、source summary、manifest、report和`pressure_outcome_backfill_input_snapshot.v2`；同时披露row count与distinct event count，不能把多个window当多个独立事件 |
+| Compare | validated Backfill；reviewed `sim_defensive_validation_v1`与`forward_pressure_capture_v1`，并冻结policy metadata/version/hash | cohort key固定为source mode、source event、as-of、window、pressure regime；只有同key下defensive与no-trade均`AVAILABLE`且finite才配对。`return_delta=mean(r_defensive-r_no_trade)`；`drawdown_delta=mean(dd_no_trade-dd_defensive)`，正值表示防守方案回撤更小；`win_rate=mean(1[r_defensive-r_no_trade>=0])`。每个configured regime至少5个distinct events，且return/drawdown/win-rate同时达到reviewed policy边界才可形成充分的单source结论；任一configured regime不足则整个source=`INSUFFICIENT_DATA`。空cohort指标为null | metrics JSONL、pairwise comparison、summary、manifest、report和`defensive_pressure_compare_input_snapshot.v2`；simulation结论永不升级为production approval |
+| Rule Review | validated Compare及same frozen policies | 从source breakdown和policy重算decision matrix/checklist；`rule_approval_allowed=false`、`auto_apply=false`是本层安全不变量，即使forward达到统计门槛也只能进入owner review | matrix、checklist、Reader Brief、manifest、report和`defensive_rule_review_input_snapshot.v2`；PASS只证明review material一致 |
+| Weekly Update | validated Weekly、Backfill、Compare、Review；要求Backfill→Compare→Review exact ids、生成时间递增且全部不晚于cutoff；Pressure Tag仅在真实不存在时可optional absent | “before”从Backfill冻结的Pressure source计算，“after”从同一Backfill summary计算；next action按distinct forward event count与reviewed floor生成，不按window rows凑数 | updated matrix、next actions、Reader Brief、manifest、report和`weekly_ops_decision_update_input_snapshot.v2`；只允许`continue_tracking`/人工复核，不改policy或执行 |
+
+日期窗口边界：命令必须记录实际requested `start/end`。`pressure-outcome-backfill`示例与AI-cycle默认起点仍是`2022-12-01`；全项目的primary research window可从`2021-02-22`用于warm-up、regime comparison或长期研究，但不会静默覆盖本命令的requested range，也不能把2021～2022样本伪装成ChatGPT发布后的AI-cycle结论。任何使用更早窗口的主要结论都必须单独说明原因。
+
+当前结果与解释：source-backed contract fixture在2026-06 requested range内有2个simulation events、0个forward、0个historical events；两个simulation rows均为defensive-relevant但三个configured pressure regimes的minimum distinct-event floor均未满足，所以Backtest Simulation与Forward breakdown都为`INSUFFICIENT_DATA`，总体为`NOT_PROVEN_DEFENSIVE`。Weekly由0增至2只表示research inventory增加，仍输出`continue_tracking`、`rule_approval_allowed=false`。2026-06-11旧真实artifact曾显示116个simulation outcome rows、87个defensive-relevant rows，但它们没有CE versioned snapshot和live commitment验证，现只能作为legacy历史观察，不能作为当前规则结论或覆盖新的样本口径。
+
+五类validator都会重新验证live source/config/policy commitments，并从snapshot逐字节重建全部JSON、JSONL和Markdown；source drift、future/naive time、duplicate identity、PENDING/non-finite、lineage/chronology错误和任一输出tamper均FAIL。15个CLI callback的canonical owner为`src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_pressure_validation.py`，legacy root不再拥有这些定义。
+
+后续优化按进入条件排序：
+
+1. 以`source hash + validator version + cutoff`缓存验证证据，解决深链重复哈希开销；命中缓存仍必须核对live commitment，不得跳过漂移检查；
+2. 建立content-addressed archive、可信时间戳和source identity/signature，分别增强不可变存储、时间可信度与身份认证；普通SHA-256只证明内容完整性；
+3. 在真实forward样本达到预注册下限后，引入clustered bootstrap或event-level confidence interval、tail loss、交易成本、跨regime稳定性和multiple-testing控制；在样本成熟前不得用本批simulation结果反向调threshold；
+4. 将自然日窗口迁为交易日历/session-aware窗口，并接入更可信的macro、liquidity、volatility primary sources，减少price-behavior proxy误判；
+5. 对2021 comparison window与2022-12-01 AI regime分别报告，不合并成单一headline；只有独立holdout与owner-reviewed change proposal通过后，才允许提出policy调整。
+
+本slice固定`production_effect=none`、`broker_action_allowed=false`、`policy_change_allowed=false`、`auto_apply=false`；它不修改`position_advisory_v1.yaml`、official target weights、portfolio、baseline/production、order或broker。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |

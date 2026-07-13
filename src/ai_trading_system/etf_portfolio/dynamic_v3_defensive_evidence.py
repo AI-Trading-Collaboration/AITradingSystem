@@ -41,6 +41,9 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     SCHEMA_VERSION,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_pressure_validation import (
+    DEFAULT_ADVISORY_OUTCOME_DIR,
+    DEFAULT_BACKFILLED_OUTCOME_DIR,
+    DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
     DEFAULT_DEFENSIVE_PRESSURE_COMPARE_DIR,
     DEFAULT_PRESSURE_OUTCOME_BACKFILL_DIR,
     EVIDENCE_QUALITY_BY_SOURCE,
@@ -995,6 +998,9 @@ def run_pressure_capture_workflow(
     pressure_tag_dir: Path = DEFAULT_PRESSURE_REGIME_TAG_DIR,
     pressure_backfill_dir: Path = DEFAULT_PRESSURE_OUTCOME_BACKFILL_DIR,
     comparison_dir: Path = DEFAULT_DEFENSIVE_PRESSURE_COMPARE_DIR,
+    advisory_outcome_dir: Path = DEFAULT_ADVISORY_OUTCOME_DIR,
+    backfilled_outcome_dir: Path = DEFAULT_BACKFILLED_OUTCOME_DIR,
+    backtest_sim_outcome_dir: Path = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
     prices_path: Path = DEFAULT_ETF_PRICE_PATH,
     rates_path: Path = DEFAULT_RATES_CACHE_PATH,
     enforce_data_quality_gate: bool = True,
@@ -1030,6 +1036,9 @@ def run_pressure_capture_workflow(
             end=as_of,
             output_dir=pressure_backfill_dir,
             pressure_tag_dir=pressure_tag_dir,
+            advisory_outcome_dir=advisory_outcome_dir,
+            backfilled_outcome_dir=backfilled_outcome_dir,
+            backtest_sim_outcome_dir=backtest_sim_outcome_dir,
             generated_at=generated,
         )
         artifacts["pressure_backfill_id"] = backfill["pressure_backfill_id"]

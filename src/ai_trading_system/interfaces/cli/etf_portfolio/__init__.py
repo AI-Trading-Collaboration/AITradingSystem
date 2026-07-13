@@ -155,6 +155,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_position_advisory_daily as dynamic_v3_position_advisory_daily_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_pressure_validation as dynamic_v3_pressure_validation_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_real_evaluation as dynamic_v3_real_evaluation_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -303,6 +306,7 @@ __all__ = [
     "dynamic_v3_portfolio_risk_controls_commands",
     "dynamic_v3_position_advisory_commands",
     "dynamic_v3_position_advisory_daily_commands",
+    "dynamic_v3_pressure_validation_commands",
     "dynamic_v3_replay_inventory_commands",
     "dynamic_v3_replay_sample_expansion_commands",
     "dynamic_v3_replay_diagnosis_commands",

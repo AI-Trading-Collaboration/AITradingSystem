@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+from datetime import date, timedelta
 from pathlib import Path
 
+import pytest
 from dynamic_v3_pressure_validation_helpers import (
+    GENERATED_AT,
     run_defensive_rule_review_fixture,
     write_weekly_cycle_fixture,
 )
 
 from ai_trading_system.etf_portfolio.dynamic_v3_pressure_validation import (
+    DynamicV3PressureValidationError,
+    run_pressure_outcome_backfill,
     run_weekly_ops_decision_update,
     validate_weekly_ops_decision_update_artifact,
 )
@@ -50,3 +55,35 @@ def test_weekly_ops_decision_update_keeps_weekly_tracking_non_production(
         )["status"]
         == "PASS"
     )
+
+
+def test_weekly_ops_decision_update_rejects_cross_backfill_lineage(
+    tmp_path: Path,
+) -> None:
+    fixture = run_defensive_rule_review_fixture(tmp_path)
+    weekly = write_weekly_cycle_fixture(tmp_path)
+    second_backfill = run_pressure_outcome_backfill(
+        start=date(2026, 6, 1),
+        end=date(2026, 6, 30),
+        output_dir=fixture["pressure_backfill_dir"],
+        pressure_tag_dir=fixture["pressure_tag_dir"],
+        advisory_outcome_dir=tmp_path / "advisory_outcome",
+        backfilled_outcome_dir=tmp_path / "backfilled_outcome",
+        backtest_sim_outcome_dir=fixture["backtest_sim_outcome_dir"],
+        generated_at=GENERATED_AT + timedelta(minutes=1),
+    )
+    output_dir = tmp_path / "weekly_ops_decision_update"
+
+    with pytest.raises(DynamicV3PressureValidationError, match="lineage mismatch"):
+        run_weekly_ops_decision_update(
+            weekly_cycle_id=weekly["weekly_cycle_id"],
+            pressure_backfill_id=second_backfill["pressure_backfill_id"],
+            defensive_review_id=fixture["defensive_rule_review"]["review_id"],
+            weekly_cycle_dir=weekly["weekly_cycle_dir"],
+            backfill_dir=fixture["pressure_backfill_dir"],
+            defensive_review_dir=fixture["defensive_rule_review_dir"],
+            output_dir=output_dir,
+            generated_at=GENERATED_AT + timedelta(minutes=2),
+        )
+
+    assert not output_dir.exists()

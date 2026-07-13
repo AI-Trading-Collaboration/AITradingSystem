@@ -27,6 +27,7 @@ tracked_window_days: [5, 10, 20]
 minimum_distinct_events_per_pressure_regime: 5
 minimum_relative_return: 0.0
 minimum_drawdown_delta_vs_no_trade: 0.0
+minimum_win_rate_vs_no_trade: 0.50
 
 safety:
   outcome_mode: BACKTEST_SIMULATION

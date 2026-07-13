@@ -3530,6 +3530,43 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 continue
             actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
             assert actual == source["sha256"], source["path"]
+    phase_g2_4ce = baseline["phase_g2_4ce_etf_cli_dynamic_v3_pressure_validation"]
+    assert phase_g2_4ce["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4ce = phase_g2_4ce["migration"]
+    assert migration_g2_4ce["callback_count"] == 15
+    assert migration_g2_4ce["pre_output_timezone_and_cutoff_required"] is True
+    assert migration_g2_4ce["semantic_latest_selection_without_mtime_required"] is True
+    assert migration_g2_4ce["content_derived_consumer_validation_required"] is True
+    assert migration_g2_4ce["bounded_source_and_policy_commitments_required"] is True
+    assert migration_g2_4ce["available_finite_unique_paired_evidence_only"] is True
+    assert migration_g2_4ce["missing_metrics_must_remain_null"] is True
+    assert migration_g2_4ce["policy_governed_distinct_event_floor_and_boundaries"] is True
+    assert (
+        migration_g2_4ce["all_configured_pressure_regimes_required_for_source_conclusion"]
+        is True
+    )
+    assert migration_g2_4ce["weekly_distinct_forward_event_count_required"] is True
+    assert migration_g2_4ce["downstream_pressure_capture_source_roots_explicit"] is True
+    assert migration_g2_4ce["simulation_and_historical_evidence_research_only"] is True
+    assert migration_g2_4ce["weekly_exact_lineage_and_chronology_required"] is True
+    assert migration_g2_4ce["rule_approval_allowed"] is False
+    assert migration_g2_4ce["auto_apply_allowed"] is False
+    assert migration_g2_4ce["content_derived_all_views_validation"] is True
+    assert migration_g2_4ce["automatic_policy_or_execution_allowed"] is False
+    assert migration_g2_4ce["legacy_root_lines_after"] == 22069
+    assert migration_g2_4ce["legacy_root_top_level_functions_after"] == 642
+    assert migration_g2_4ce["legacy_root_command_decorators_after"] == 603
+    assert migration_g2_4ce["python_module_count"] == 895
+    if phase_g2_4ce["status"] == "COMPLETE_G2_4_CONTINUES":
+        assert phase_g2_4ce["validation"]["focused"]["passed"] > 580
+        assert phase_g2_4ce["validation"]["architecture_fitness"]["passed"] > 265
+        assert phase_g2_4ce["validation"]["contract_validation"]["passed"] == 203
+        assert phase_g2_4ce["sources"]
+        for source in phase_g2_4ce["sources"]:
+            if source["path"] in set(phase_g2_4ce.get("superseded_source_paths", [])):
+                continue
+            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            assert actual == source["sha256"], source["path"]
 
 
 def test_arch_004c_dependency_policy_uses_count_ratchet_without_waiver() -> None:
@@ -3664,6 +3701,9 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CD_IN_PROGRESS_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CD_VALIDATING_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CD_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CE_IN_PROGRESS_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CE_VALIDATING_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CE_COMPLETE_G2_4_CONTINUES",
     }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

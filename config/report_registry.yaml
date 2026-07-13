@@ -7416,6 +7416,7 @@ reports:
     artifact_selection_policy: latest_available
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_tag_diagnosis/*/pressure_tag_diagnosis_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_tag_diagnosis/*/pressure_tag_diagnosis_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_tag_diagnosis/*/threshold_hit_distribution.json
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_tag_diagnosis/*/near_miss_windows.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_tag_diagnosis/*/outcome_mapping_diagnostics.json
@@ -7439,6 +7440,7 @@ reports:
     artifact_selection_policy: latest_available
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_outcome_backfill/*/pressure_backfill_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_outcome_backfill/*/pressure_outcome_backfill_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_outcome_backfill/*/pressure_outcome_inventory.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_outcome_backfill/*/pressure_source_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/pressure_outcome_backfill/*/pressure_backfill_report.md
@@ -7460,6 +7462,7 @@ reports:
     artifact_selection_policy: latest_available
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_pressure_compare/*/defensive_pressure_compare_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_pressure_compare/*/defensive_pressure_compare_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_pressure_compare/*/pressure_variant_metrics.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_pressure_compare/*/defensive_pairwise_comparison.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_pressure_compare/*/defensive_pressure_summary.json
@@ -7483,6 +7486,7 @@ reports:
     artifact_selection_policy: latest_available
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_rule_review/*/defensive_rule_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_rule_review/*/defensive_rule_review_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_rule_review/*/defensive_rule_decision_matrix.json
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_rule_review/*/defensive_rule_owner_checklist.md
       - reports/etf_portfolio/dynamic_v3_rescue/defensive_rule_review/*/defensive_rule_review_report.md
@@ -7505,6 +7509,7 @@ reports:
     artifact_selection_policy: latest_available
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/weekly_ops_decision_update/*/weekly_ops_decision_update_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_ops_decision_update/*/weekly_ops_decision_update_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/weekly_ops_decision_update/*/updated_weekly_decision_matrix.json
       - reports/etf_portfolio/dynamic_v3_rescue/weekly_ops_decision_update/*/weekly_ops_next_actions.json
       - reports/etf_portfolio/dynamic_v3_rescue/weekly_ops_decision_update/*/weekly_ops_decision_update_report.md

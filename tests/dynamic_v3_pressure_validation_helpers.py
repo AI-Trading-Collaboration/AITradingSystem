@@ -24,6 +24,12 @@ def write_pressure_tag_fixture(tmp_path: Path) -> dict[str, Any]:
         "\n".join(
             [
                 "schema_version: 1",
+                "policy_metadata:",
+                "  owner: project_owner",
+                "  version: pressure_tag_fixture_v1",
+                "  status: pilot_baseline",
+                "  rationale: Test-only pressure tag policy fixture.",
+                "  review_condition: Replace when the focused fixture changes.",
                 "thresholds:",
                 "  tech_drawdown_pct: -0.05",
                 "  semiconductor_pullback_pct: -0.06",
@@ -38,6 +44,7 @@ def write_pressure_tag_fixture(tmp_path: Path) -> dict[str, Any]:
         {
             "schema_version": 1,
             "tag_id": tag_id,
+            "generated_at": GENERATED_AT.isoformat(),
             "config_path": str(config_path),
             "status": "PASS",
             "production_effect": "none",
@@ -117,7 +124,9 @@ def write_pressure_tag_fixture(tmp_path: Path) -> dict[str, Any]:
     }
 
 
-def write_backtest_sim_outcome_fixture(tmp_path: Path) -> dict[str, Any]:
+def write_backtest_sim_outcome_fixture(
+    tmp_path: Path, *, include_contradicting: bool = False
+) -> dict[str, Any]:
     outcome_dir = tmp_path / "backtest_sim_outcome"
     sim_outcome_id = "sim-outcome-fixture"
     artifact_dir = outcome_dir / sim_outcome_id
@@ -127,6 +136,7 @@ def write_backtest_sim_outcome_fixture(tmp_path: Path) -> dict[str, Any]:
         {
             "schema_version": 1,
             "sim_outcome_id": sim_outcome_id,
+            "generated_at": GENERATED_AT.isoformat(),
             "status": "PASS",
             "outcome_mode": "BACKTEST_SIMULATION",
             "pit_safety_status": "SIMULATION_NOT_PIT",
@@ -147,6 +157,20 @@ def write_backtest_sim_outcome_fixture(tmp_path: Path) -> dict[str, Any]:
             defensive_drawdown=-0.040,
         )
     )
+    if include_contradicting:
+        rows.extend(
+            _sim_window_rows(
+                sim_event_id="sim-event-failure",
+                as_of="2026-06-24",
+                window_days=20,
+                regime_label="tech_drawdown",
+                no_trade_return=-0.010,
+                no_trade_drawdown=-0.040,
+                defensive_return=-0.024,
+                defensive_drawdown=-0.065,
+                defensive_risk_asset_exposure=0.70,
+            )
+        )
     rows.extend(
         _sim_window_rows(
             sim_event_id="sim-event-semi",
@@ -167,9 +191,13 @@ def write_backtest_sim_outcome_fixture(tmp_path: Path) -> dict[str, Any]:
     }
 
 
-def run_pressure_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
+def run_pressure_backfill_fixture(
+    tmp_path: Path, *, include_contradicting: bool = False
+) -> dict[str, Any]:
     pressure = write_pressure_tag_fixture(tmp_path)
-    sim = write_backtest_sim_outcome_fixture(tmp_path)
+    sim = write_backtest_sim_outcome_fixture(
+        tmp_path, include_contradicting=include_contradicting
+    )
     backfill_dir = tmp_path / "pressure_outcome_backfill"
     backfill = run_pressure_outcome_backfill(
         start=date(2026, 6, 1),
@@ -227,10 +255,22 @@ def write_weekly_cycle_fixture(tmp_path: Path) -> dict[str, Any]:
     artifact_dir = weekly_cycle_dir / weekly_cycle_id
     artifact_dir.mkdir(parents=True)
     _write_json(
+        artifact_dir / "weekly_cycle_manifest.json",
+        {
+            "schema_version": 1,
+            "weekly_cycle_id": weekly_cycle_id,
+            "generated_at": GENERATED_AT.isoformat(),
+            "status": "PASS",
+            "production_effect": "none",
+            "broker_action_allowed": False,
+        },
+    )
+    _write_json(
         artifact_dir / "weekly_cycle_summary.json",
         {
             "schema_version": 1,
             "weekly_cycle_id": weekly_cycle_id,
+            "generated_at": GENERATED_AT.isoformat(),
             "status": "PASS",
             "as_of": "2026-06-30",
             "production_effect": "none",
@@ -250,6 +290,7 @@ def _sim_window_rows(
     no_trade_drawdown: float,
     defensive_return: float,
     defensive_drawdown: float,
+    defensive_risk_asset_exposure: float | None = None,
 ) -> list[dict[str, Any]]:
     return [
         _sim_row(
@@ -273,6 +314,7 @@ def _sim_window_rows(
             max_drawdown=defensive_drawdown,
             relative_to_no_trade=defensive_return - no_trade_return,
             turnover=0.02,
+            risk_asset_exposure=defensive_risk_asset_exposure,
         ),
         _sim_row(
             sim_event_id=sim_event_id,
@@ -310,8 +352,9 @@ def _sim_row(
     max_drawdown: float,
     relative_to_no_trade: float,
     turnover: float,
+    risk_asset_exposure: float | None = None,
 ) -> dict[str, Any]:
-    return {
+    row = {
         "schema_version": 1,
         "sim_event_id": sim_event_id,
         "as_of": as_of,
@@ -326,6 +369,9 @@ def _sim_row(
         "production_effect": "none",
         "broker_action_allowed": False,
     }
+    if risk_asset_exposure is not None:
+        row["risk_asset_exposure"] = risk_asset_exposure
+    return row
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:

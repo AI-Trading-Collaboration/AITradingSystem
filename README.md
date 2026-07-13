@@ -1047,6 +1047,17 @@ TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION 在 weekly evidence oper
 mapping gap、扩充 research-only pressure outcome inventory，并生成 owner checklist /
 weekly next actions；不批准 defensive label、不修改 `position_advisory_v1.yaml`、
 policy、official target weights、portfolio 或 baseline state、不触发 broker。
+ARCH-004G2.4CE 将上述15个callback迁至
+`src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_pressure_validation.py`，
+外部命令路径保持不变。五类producer现在均在写件前执行timezone-aware cutoff、semantic
+source selection和适用的content-derived validator，并分别冻结versioned input snapshot；
+validator会重验live source/policy commitments并逐字节重算全部JSON/JSONL/Markdown。
+Backfill只接收`AVAILABLE`、finite、identity唯一的outcome；Compare只使用同source/event/
+as-of/window/regime的paired defensive/no-trade cohort，以reviewed policy规定的5个distinct
+events/regime、return、drawdown与win-rate边界判断充分性，空值保持null。当前source-backed
+fixture只有2个simulation events、0个forward events，三个pressure regimes均未达到样本下限，
+因此结论仍是`NOT_PROVEN_DEFENSIVE` / `continue_tracking`，不是规则批准。旧无snapshot
+artifact只可只读展示，不参与当前结论。
 TRADING-189_to_198_DEFENSIVE_HYPOTHESIS_FORWARD_EVIDENCE 在上述 pressure validation
 后新增 defensive hypothesis review 和 forward evidence automation。CLI 包括
 `defensive-hypothesis-deep-dive run/report`、`defensive-label-review run/report`、
