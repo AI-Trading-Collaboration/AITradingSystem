@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CS_COMPLETE_G2_4_CONTINUES
-as_of: 2026-07-14
-base_commit: 44c94d9e
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CT_COMPLETE_G2_4_CONTINUES
+as_of: 2026-07-15
+base_commit: d05e6cba
 production_effect: none
 
 arch_004_owned_paths:
@@ -57,6 +57,7 @@ arch_004_owned_paths:
   - docs/requirements/TRADING-261_to_265_Smoothed_Method_Promotion_Review_and_Primary_Candidate_Gate.md
   - docs/requirements/TRADING-266_to_270_Smoothed_Forward_Evidence_Operations_and_Primary_Candidate_Readiness.md
   - docs/requirements/TRADING-271_to_275_Smoothed_Forward_Sample_Bootstrap_and_Daily_Evidence_Collection.md
+  - docs/requirements/TRADING-276_to_280_Smoothed_Forward_Data_Freshness_and_Latest_Available_Bootstrap.md
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   - config/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation_v1.yaml
   - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
@@ -215,6 +216,10 @@ arch_004_owned_paths:
   - tests/test_smoothed_latest_emission.py
   - tests/test_smoothed_outcome_due.py
   - tests/test_smoothed_outcome_update.py
+  - tests/test_smoothed_data_preflight.py
+  - tests/test_smoothed_blocked_explain.py
+  - tests/test_smoothed_refresh_plan.py
+  - tests/test_smoothed_freshness_hardening.py
   - tests/test_limited_vs_notrade.py
   - tests/test_confirmation_progress.py
   - tests/test_confirmation_evaluate.py
@@ -255,6 +260,8 @@ arch_004_owned_paths:
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_operations.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_bootstrap.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_bootstrap.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_freshness.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_freshness.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_refinement.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_risk_capped.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_risk_capped.py
@@ -517,6 +524,7 @@ shared_but_attributable_paths:
       - TRADING-261_to_265_SMOOTHED_METHOD_PROMOTION_REVIEW_AND_PRIMARY_CANDIDATE_GATE
       - TRADING-266_to_270_SMOOTHED_FORWARD_EVIDENCE_OPERATIONS_AND_PRIMARY_CANDIDATE_READINESS
       - TRADING-271_to_275_SMOOTHED_FORWARD_SAMPLE_BOOTSTRAP_AND_DAILY_EVIDENCE_COLLECTION
+      - TRADING-276_to_280_SMOOTHED_FORWARD_DATA_FRESHNESS_AND_LATEST_AVAILABLE_BOOTSTRAP
       - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
   - path: docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
     attributable_tasks:
@@ -542,6 +550,7 @@ shared_but_attributable_paths:
       - TRADING-261_to_265_SMOOTHED_METHOD_PROMOTION_REVIEW_AND_PRIMARY_CANDIDATE_GATE
       - TRADING-266_to_270_SMOOTHED_FORWARD_EVIDENCE_OPERATIONS_AND_PRIMARY_CANDIDATE_READINESS
       - TRADING-271_to_275_SMOOTHED_FORWARD_SAMPLE_BOOTSTRAP_AND_DAILY_EVIDENCE_COLLECTION
+      - TRADING-276_to_280_SMOOTHED_FORWARD_DATA_FRESHNESS_AND_LATEST_AVAILABLE_BOOTSTRAP
       - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
       - TRADING-096
       - TRADING-097

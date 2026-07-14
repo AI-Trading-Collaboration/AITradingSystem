@@ -64,6 +64,12 @@ def test_smoothed_source_refresh_execute_then_post_refresh_ready(tmp_path) -> No
     assert all(row["freshness_after_refresh"] == "READY" for row in required_sources)
     assert all(row["after_latest_date"] == "2026-01-20" for row in required_sources)
     assert results["all_sources_refreshed"] is True
+    assert refresh["refresh_execution_request"]["source_preflight_id"] == fixture["preflight"][
+        "preflight_id"
+    ]
+    assert Path(refresh["refresh_execution_request"]["model_target_dir"]).resolve() == (
+        tmp_path / "model_target"
+    ).resolve()
 
     refresh_check = system_target.validate_smoothed_source_refresh_artifact(
         refresh_execution_id=refresh["refresh_execution_id"],

@@ -275,8 +275,7 @@ DYNAMIC_V3_RULE_OWNER_DECISION_COMMANDS_PATH = (
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_rule_owner_decision.py"
 )
 DYNAMIC_V3_CONFIRMATION_OPERATIONS_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_confirmation_operations.py"
 )
 DYNAMIC_V3_PRESSURE_VALIDATION_COMMANDS_PATH = (
@@ -292,64 +291,56 @@ DYNAMIC_V3_FORWARD_PRESSURE_COMMANDS_PATH = (
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_forward_pressure.py"
 )
 DYNAMIC_V3_SYSTEM_TARGET_PORTFOLIO_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_portfolio.py"
 )
 DYNAMIC_V3_SYSTEM_TARGET_HISTORY_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_history.py"
 )
 DYNAMIC_V3_SYSTEM_TARGET_HARDENING_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_hardening.py"
 )
 DYNAMIC_V3_SYSTEM_TARGET_REFINEMENT_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_refinement.py"
 )
 DYNAMIC_V3_SYSTEM_TARGET_RISK_CAPPED_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_risk_capped.py"
 )
 DYNAMIC_V3_SYSTEM_TARGET_EXPERIMENT_FACTORY_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_experiment_factory.py"
 )
 DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_METHOD_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_smoothed_method.py"
 )
 DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_EVIDENCE_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_smoothed_evidence.py"
 )
 DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_READINESS_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_smoothed_readiness.py"
 )
 DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_PROMOTION_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_smoothed_promotion.py"
 )
 DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_OPERATIONS_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_smoothed_operations.py"
 )
 DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_BOOTSTRAP_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_smoothed_bootstrap.py"
+)
+DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_FRESHNESS_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_system_target_smoothed_freshness.py"
 )
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
@@ -504,7 +495,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 15842
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 15373
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -715,8 +706,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 15842
-    assert len(legacy_names) == 422
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 15373
+    assert len(legacy_names) == 407
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -2317,9 +2308,7 @@ def test_g2_4_dynamic_v3_confirmation_operations_callbacks_leave_legacy_root() -
     legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
     legacy_names = _function_names(legacy_tree)
     canonical_names = _function_names(
-        ast.parse(
-            DYNAMIC_V3_CONFIRMATION_OPERATIONS_COMMANDS_PATH.read_text(encoding="utf-8")
-        )
+        ast.parse(DYNAMIC_V3_CONFIRMATION_OPERATIONS_COMMANDS_PATH.read_text(encoding="utf-8"))
     )
     callbacks = {
         "dynamic_v3_confirmation_cycle_plan_command",
@@ -2621,9 +2610,7 @@ def test_g2_4_dynamic_v3_experiment_factory_callbacks_leave_legacy_root() -> Non
     legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
     legacy_names = _function_names(legacy_tree)
     canonical_tree = ast.parse(
-        DYNAMIC_V3_SYSTEM_TARGET_EXPERIMENT_FACTORY_COMMANDS_PATH.read_text(
-            encoding="utf-8"
-        )
+        DYNAMIC_V3_SYSTEM_TARGET_EXPERIMENT_FACTORY_COMMANDS_PATH.read_text(encoding="utf-8")
     )
     canonical_names = _function_names(canonical_tree)
     callbacks = {
@@ -2659,9 +2646,7 @@ def test_g2_4_dynamic_v3_smoothed_method_callbacks_leave_legacy_root() -> None:
     legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
     legacy_names = _function_names(legacy_tree)
     canonical_tree = ast.parse(
-        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_METHOD_COMMANDS_PATH.read_text(
-            encoding="utf-8"
-        )
+        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_METHOD_COMMANDS_PATH.read_text(encoding="utf-8")
     )
     canonical_names = _function_names(canonical_tree)
     callbacks = {
@@ -2691,9 +2676,7 @@ def test_g2_4_dynamic_v3_smoothed_evidence_callbacks_leave_legacy_root() -> None
     legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
     legacy_names = _function_names(legacy_tree)
     canonical_tree = ast.parse(
-        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_EVIDENCE_COMMANDS_PATH.read_text(
-            encoding="utf-8"
-        )
+        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_EVIDENCE_COMMANDS_PATH.read_text(encoding="utf-8")
     )
     canonical_names = _function_names(canonical_tree)
     callbacks = {
@@ -2716,18 +2699,14 @@ def test_g2_4_dynamic_v3_smoothed_evidence_callbacks_leave_legacy_root() -> None
     assert len(callbacks) == 15
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names
-    assert "dynamic_v3_system_target_smoothed_evidence" in _imported_names(
-        canonical_tree
-    )
+    assert "dynamic_v3_system_target_smoothed_evidence" in _imported_names(canonical_tree)
 
 
 def test_g2_4_dynamic_v3_smoothed_readiness_callbacks_leave_legacy_root() -> None:
     legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
     legacy_names = _function_names(legacy_tree)
     canonical_tree = ast.parse(
-        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_READINESS_COMMANDS_PATH.read_text(
-            encoding="utf-8"
-        )
+        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_READINESS_COMMANDS_PATH.read_text(encoding="utf-8")
     )
     canonical_names = _function_names(canonical_tree)
     callbacks = {
@@ -2750,18 +2729,14 @@ def test_g2_4_dynamic_v3_smoothed_readiness_callbacks_leave_legacy_root() -> Non
     assert len(callbacks) == 15
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names
-    assert "dynamic_v3_system_target_smoothed_readiness" in _imported_names(
-        canonical_tree
-    )
+    assert "dynamic_v3_system_target_smoothed_readiness" in _imported_names(canonical_tree)
 
 
 def test_g2_4_dynamic_v3_smoothed_promotion_callbacks_leave_legacy_root() -> None:
     legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
     legacy_names = _function_names(legacy_tree)
     canonical_tree = ast.parse(
-        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_PROMOTION_COMMANDS_PATH.read_text(
-            encoding="utf-8"
-        )
+        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_PROMOTION_COMMANDS_PATH.read_text(encoding="utf-8")
     )
     canonical_names = _function_names(canonical_tree)
     callbacks = {
@@ -2785,18 +2760,14 @@ def test_g2_4_dynamic_v3_smoothed_promotion_callbacks_leave_legacy_root() -> Non
     assert len(callbacks) == 16
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names
-    assert "dynamic_v3_system_target_smoothed_promotion" in _imported_names(
-        canonical_tree
-    )
+    assert "dynamic_v3_system_target_smoothed_promotion" in _imported_names(canonical_tree)
 
 
 def test_g2_4_dynamic_v3_smoothed_operations_callbacks_leave_legacy_root() -> None:
     legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
     legacy_names = _function_names(legacy_tree)
     canonical_tree = ast.parse(
-        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_OPERATIONS_COMMANDS_PATH.read_text(
-            encoding="utf-8"
-        )
+        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_OPERATIONS_COMMANDS_PATH.read_text(encoding="utf-8")
     )
     canonical_names = _function_names(canonical_tree)
     callbacks = {
@@ -2819,18 +2790,14 @@ def test_g2_4_dynamic_v3_smoothed_operations_callbacks_leave_legacy_root() -> No
     assert len(callbacks) == 15
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names
-    assert "dynamic_v3_system_target_smoothed_operations" in _imported_names(
-        canonical_tree
-    )
+    assert "dynamic_v3_system_target_smoothed_operations" in _imported_names(canonical_tree)
 
 
 def test_g2_4_dynamic_v3_smoothed_bootstrap_callbacks_leave_legacy_root() -> None:
     legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
     legacy_names = _function_names(legacy_tree)
     canonical_tree = ast.parse(
-        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_BOOTSTRAP_COMMANDS_PATH.read_text(
-            encoding="utf-8"
-        )
+        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_BOOTSTRAP_COMMANDS_PATH.read_text(encoding="utf-8")
     )
     canonical_names = _function_names(canonical_tree)
     callbacks = {
@@ -2853,9 +2820,37 @@ def test_g2_4_dynamic_v3_smoothed_bootstrap_callbacks_leave_legacy_root() -> Non
     assert len(callbacks) == 15
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names
-    assert "dynamic_v3_system_target_smoothed_bootstrap" in _imported_names(
-        canonical_tree
+    assert "dynamic_v3_system_target_smoothed_bootstrap" in _imported_names(canonical_tree)
+
+
+def test_g2_4_dynamic_v3_smoothed_freshness_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_tree = ast.parse(
+        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_FRESHNESS_COMMANDS_PATH.read_text(encoding="utf-8")
     )
+    canonical_names = _function_names(canonical_tree)
+    callbacks = {
+        "dynamic_v3_smoothed_data_preflight_run_command",
+        "dynamic_v3_smoothed_data_preflight_report_command",
+        "dynamic_v3_validate_smoothed_data_preflight_command",
+        "dynamic_v3_smoothed_latest_emission_run_command",
+        "dynamic_v3_smoothed_latest_emission_report_command",
+        "dynamic_v3_validate_smoothed_latest_emission_command",
+        "dynamic_v3_smoothed_blocked_explain_run_command",
+        "dynamic_v3_smoothed_blocked_explain_report_command",
+        "dynamic_v3_validate_smoothed_blocked_explain_command",
+        "dynamic_v3_smoothed_refresh_plan_run_command",
+        "dynamic_v3_smoothed_refresh_plan_report_command",
+        "dynamic_v3_validate_smoothed_refresh_plan_command",
+        "dynamic_v3_smoothed_bootstrap_retry_run_command",
+        "dynamic_v3_smoothed_bootstrap_retry_report_command",
+        "dynamic_v3_validate_smoothed_bootstrap_retry_command",
+    }
+    assert len(callbacks) == 15
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert "dynamic_v3_system_target_smoothed_freshness" in _imported_names(canonical_tree)
 
 
 def __file_path() -> Path:

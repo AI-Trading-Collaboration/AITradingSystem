@@ -1,6 +1,6 @@
 # ARCH-004G2 Interfaces 与 ETF CLI 迁移
 
-最后更新：2026-07-14
+最后更新：2026-07-15
 
 ## 任务信息
 
@@ -20,6 +20,30 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-15：G2.4CT=`COMPLETE_G2_4_CONTINUES`。Focused/architecture/contract/full=
+  `125/281/203/6,018 passed`，full=`2,514.64s`；generated=`926/1,124/858/0`，CLI contract
+  `41/291/993/0`与tree hash不变。首轮full暴露的post-refresh Model Target lineage缺口已按exact
+  refresh-plan→Preflight路径修复并在final full中通过。单slice完成不触发handoff，G2.4继续且不进入
+  G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CT Smoothed Data Freshness / Latest Bootstrap implementation完成并进入
+  `VALIDATING`。15 callbacks已迁canonical freshness interface，root CLI `15,842→15,373`；五类
+  producer/validator迁canonical domain，legacy domain `14,895→13,978`且仅留15个lazy wrappers。
+  首轮full暴露的downstream post-refresh默认目录回退已移除：source-refresh验证exact refresh-plan并
+  传递Preflight `source_preflight_id/model_target_dir`，post-refresh只消费该冻结lineage。
+  五类v2 snapshots、same validate-data live replay、strict Model Target selection、exact
+  Preflight/Explain/Refresh/Weekly/Latest lineage和all-view byte rebuild闭合；tamper/cross-lineage/
+  zero-blocker/null-candidate测试PASS。combined focused=`125 passed`，generated=`926 modules / 1,124
+  tests / 858 writers / 0 violations`。等待正式architecture/contract/full closeout；不触发handoff、
+  不进入G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CT Smoothed Data Freshness / Latest Bootstrap contract freeze并进入
+  `IN_PROGRESS`。TRADING-276～280共15 callbacks迁独立 canonical freshness interface/domain。
+  旧五类producer无input snapshot，Latest/Explain/Refresh不验证上游，Preflight不重放live DQ/
+  source checksum，Retry不验证child artifact，全部validator不能byte重建Markdown/Reader Brief；
+  invalid/ambiguous Model Target latest还会被吞为null。Exit固定五类bounded v2 snapshots、same
+  validate-data path、semantic cutoff/source commitments、exact Preflight→Latest/Explain→Refresh与
+  Preflight→Weekly/Latest Retry lineage、CS null-candidate/0-event preservation、content-derived
+  steps/summary和all-view byte rebuild。单slice不触发handoff，不进入G2.5，
+  `production_effect=none`。
 - 2026-07-14：G2.4CS Smoothed Forward Sample Bootstrap `COMPLETE_G2_4_CONTINUES`。
   TRADING-271～275 共15 callbacks与旧业务实现迁独立 canonical sample-bootstrap
   interface/domain；五类 bounded v2 snapshots、pre-output live source/DQ/cutoff、Binding-only

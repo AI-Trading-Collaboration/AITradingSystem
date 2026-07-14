@@ -3634,6 +3634,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-data-preflight report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_preflight/*/smoothed_data_preflight_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_preflight/*/smoothed_data_preflight_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_preflight/*/data_freshness_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_preflight/*/runnable_command_matrix.json
@@ -3656,6 +3657,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-latest-emission report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_latest_emission/*/smoothed_latest_emission_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_latest_emission/*/smoothed_latest_emission_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_latest_emission/*/latest_emission_resolution.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_latest_emission/*/latest_emission_artifact_links.json
@@ -3677,6 +3679,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-blocked-explain report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_blocked_explain/*/smoothed_blocked_explain_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_blocked_explain/*/smoothed_blocked_explain_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_blocked_explain/*/blocked_command_explanations.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_blocked_explain/*/blocked_owner_summary.md
@@ -3698,6 +3701,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-refresh-plan report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_refresh_plan/*/smoothed_refresh_plan_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_refresh_plan/*/smoothed_refresh_plan_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_refresh_plan/*/source_refresh_requirements.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_refresh_plan/*/rerun_command_plan.json
@@ -3719,6 +3723,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-bootstrap-retry report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_bootstrap_retry/*/smoothed_bootstrap_retry_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_bootstrap_retry/*/smoothed_bootstrap_retry_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_bootstrap_retry/*/retry_preflight_result.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_bootstrap_retry/*/retry_steps.json
