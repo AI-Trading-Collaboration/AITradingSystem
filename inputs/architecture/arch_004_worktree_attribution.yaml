@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CP_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CQ_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-14
-base_commit: aa46ffec
+base_commit: 1f6c31ab
 production_effect: none
 
 arch_004_owned_paths:
@@ -54,6 +54,7 @@ arch_004_owned_paths:
   - docs/requirements/TRADING-246_to_250_Smoothed_Limited_Adjustment_Research_Method.md
   - docs/requirements/TRADING-251_to_255_Smoothed_Method_Evidence_Drilldown_and_Forward_Confirmation.md
   - docs/requirements/TRADING-256_to_260_Smoothed_Evidence_Completeness_and_Promotion_Readiness.md
+  - docs/requirements/TRADING-261_to_265_Smoothed_Method_Promotion_Review_and_Primary_Candidate_Gate.md
   - config/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation_v1.yaml
   - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
   - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
@@ -228,6 +229,8 @@ arch_004_owned_paths:
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_evidence.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_readiness.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_readiness.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_promotion.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_promotion.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_refinement.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_risk_capped.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_risk_capped.py
@@ -453,10 +456,16 @@ arch_004_owned_paths:
   - tests/test_smoothed_review.py
   - tests/test_dynamic_v3_system_target_smoothed_evidence_hardening.py
   - tests/test_dynamic_v3_system_target_smoothed_readiness_hardening.py
+  - tests/test_dynamic_v3_system_target_smoothed_promotion_hardening.py
   - tests/test_smoothed_review_attribution.py
   - tests/test_smoothed_confirmation.py
   - tests/test_smoothed_watch_pack.py
   - tests/test_smoothed_readiness_review.py
+  - tests/test_smoothed_promotion_review.py
+  - tests/test_primary_research_candidate_gate.py
+  - tests/test_smoothed_forward_binding.py
+  - tests/test_paper_shadow_primary_switch.py
+  - tests/test_smoothed_owner_promotion.py
   - tests/test_model_target_portfolio.py
   - tests/test_paper_shadow_account.py
   - tests/test_model_rebalance.py
@@ -481,6 +490,7 @@ shared_but_attributable_paths:
       - TRADING-246_to_250_SMOOTHED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
       - TRADING-251_to_255_SMOOTHED_METHOD_EVIDENCE_DRILLDOWN_AND_FORWARD_CONFIRMATION
       - TRADING-256_to_260_SMOOTHED_EVIDENCE_COMPLETENESS_AND_PROMOTION_READINESS
+      - TRADING-261_to_265_SMOOTHED_METHOD_PROMOTION_REVIEW_AND_PRIMARY_CANDIDATE_GATE
   - path: docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
     attributable_tasks:
       - ARCH-004
@@ -502,6 +512,7 @@ shared_but_attributable_paths:
       - TRADING-246_to_250_SMOOTHED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
       - TRADING-251_to_255_SMOOTHED_METHOD_EVIDENCE_DRILLDOWN_AND_FORWARD_CONFIRMATION
       - TRADING-256_to_260_SMOOTHED_EVIDENCE_COMPLETENESS_AND_PROMOTION_READINESS
+      - TRADING-261_to_265_SMOOTHED_METHOD_PROMOTION_REVIEW_AND_PRIMARY_CANDIDATE_GATE
       - TRADING-096
       - TRADING-097
       - TRADING-098

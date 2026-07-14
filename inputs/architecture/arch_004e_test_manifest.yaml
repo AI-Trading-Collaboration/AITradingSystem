@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 test_root: tests
-test_file_count: 1119
-test_count: 1061
+test_file_count: 1120
+test_count: 1062
 support_file_count: 58
 orphan_count: 0
 specific_overlap_count: 0
@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.dynamic_v3_system_target_helpers
   path: tests/dynamic_v3_system_target_helpers.py
-  sha256: 700639bbae0a975c38c05a2ac1ea4ea9c3360b2ec179d964a58b6e8053d87837
+  sha256: 5cdf7970aca7bd3346928f92cc99cb38dc1c976865f7ae2b51d2aa06ceb81141
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 1cb449993f6175826be4f43c6bbd8563294b3cc7452ec35c9af3cb28f0b49600
+  sha256: 5cccfae2f2ad4fd3f27f183f33c5d749dfb06d97afef21da86ae6ffa9e2d18eb
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7605,7 +7605,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g2_etf_cli_contract
   path: tests/test_arch_004g2_etf_cli_contract.py
-  sha256: 69d1db9969f69b242b81e6184e8e8c6de173c1a7d0ba08f68cc55ae4fd00a090
+  sha256: 5c3a3f8554ae2b9c77b72633501d46172e2c4f47542e088e2e9c41ca8c0adc28
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7623,7 +7623,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 1344335680e8c798e189997c72b497f55a738067e8213c432b4333f605015660
+  sha256: 2ce9bda9740cbe4140d80b2a7c474048a54eb09f3a2caafe3c6476c17d259ee6
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -9376,6 +9376,22 @@ tests:
 - test_id: tests.test_dynamic_v3_system_target_smoothed_method_hardening
   path: tests/test_dynamic_v3_system_target_smoothed_method_hardening.py
   sha256: de6f26477c89e17cf518911c69bf778d086408a76b1eefeaf595aac7f8748e97
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_dynamic_v3_system_target_smoothed_promotion_hardening
+  path: tests/test_dynamic_v3_system_target_smoothed_promotion_hardening.py
+  sha256: 918d9faafd2b9265cccb6ee938e1f296682379b3e37ba810ced6ea7fe293135f
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -12289,7 +12305,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_paper_shadow_primary_switch
   path: tests/test_paper_shadow_primary_switch.py
-  sha256: 910f7a6198084be04bb8a2bd0c17c57a8be9c8dda503a87ba8b1993700cabaf9
+  sha256: a0fb04507687af88aed1995e4d74e2d034249d4e46dc98d72c99d85f7ba0afe9
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -12801,7 +12817,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_primary_research_candidate_gate
   path: tests/test_primary_research_candidate_gate.py
-  sha256: 5a27a4fa4e82c24198ff2afad7c62f84e69a33a5ab435f91f7c7d0db8a908d26
+  sha256: b37c1c63c3b1df10b62ebf14d788f1cefbbe782ca3a61ca84382486ada80362d
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -14497,7 +14513,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_smoothed_forward_binding
   path: tests/test_smoothed_forward_binding.py
-  sha256: d27821f75fd99c3aa42603735625c10f1bfda5f7c55980f01566accffdfce673
+  sha256: 3c3d989c7cd29beb6636698aaa9594c8c7bc78297d05e1b42b67f187329722eb
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -14641,7 +14657,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_smoothed_owner_promotion
   path: tests/test_smoothed_owner_promotion.py
-  sha256: dc1fe4cce747cad38dd68d845ceae3764cb576188a102fb689deee5d8a2b856a
+  sha256: 1962538d5b6089d91568976d8a10622806a4554faa6ff0c3f7afbc594c9bea62
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -14673,7 +14689,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_smoothed_promotion_review
   path: tests/test_smoothed_promotion_review.py
-  sha256: 8786d8c3e6dd390af47d52b1e9e401265ad7a301cb6def750e9557bf5071088b
+  sha256: d01bbabe3bb2c6606451cf543930682e3af9e699b7340da055c334caac5fdf6c
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

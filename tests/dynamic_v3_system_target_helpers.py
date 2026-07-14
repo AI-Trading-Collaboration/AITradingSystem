@@ -8,6 +8,9 @@ from typing import Any
 import yaml
 
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
+from ai_trading_system.etf_portfolio import (
+    dynamic_v3_system_target_smoothed_promotion as smoothed_promotion,
+)
 
 TARGET_AS_OF = date(2026, 1, 5)
 EVALUATION_AS_OF = date(2026, 1, 8)
@@ -775,8 +778,13 @@ def run_smoothed_readiness_chain_fixture(tmp_path: Path) -> dict[str, Any]:
     }
 
 
+@smoothed_promotion._with_validation_session
 def run_smoothed_promotion_chain_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_smoothed_readiness_chain_fixture(tmp_path)
+    source_generated = max(
+        datetime.fromisoformat(fixture[key]["manifest"]["generated_at"])
+        for key in ("scorecard", "owner_update", "watch", "confirmation")
+    )
     promotion_review = system_target.build_smoothed_promotion_review_pack(
         readiness_scorecard_id=fixture["scorecard"]["scorecard_id"],
         owner_update_id=fixture["owner_update"]["owner_update_id"],
@@ -785,13 +793,13 @@ def run_smoothed_promotion_chain_fixture(tmp_path: Path) -> dict[str, Any]:
         owner_update_dir=tmp_path / "smoothed_owner_review_update",
         watch_pack_dir=tmp_path / "smoothed_watch_pack",
         output_dir=tmp_path / "smoothed_promotion_review",
-        generated_at=datetime(2024, 3, 7, tzinfo=UTC),
+        generated_at=source_generated + timedelta(seconds=1),
     )
     gate = system_target.run_primary_research_candidate_gate(
         promotion_review_id=promotion_review["promotion_review_id"],
         promotion_review_dir=tmp_path / "smoothed_promotion_review",
         output_dir=tmp_path / "primary_research_candidate_gate",
-        generated_at=datetime(2024, 3, 8, tzinfo=UTC),
+        generated_at=source_generated + timedelta(seconds=2),
     )
     binding = system_target.run_smoothed_forward_binding(
         confirmation_id=fixture["confirmation"]["confirmation_id"],
@@ -799,7 +807,7 @@ def run_smoothed_promotion_chain_fixture(tmp_path: Path) -> dict[str, Any]:
         confirmation_dir=tmp_path / "smoothed_forward_confirmation",
         gate_dir=tmp_path / "primary_research_candidate_gate",
         output_dir=tmp_path / "smoothed_forward_binding",
-        generated_at=datetime(2024, 3, 9, tzinfo=UTC),
+        generated_at=source_generated + timedelta(seconds=3),
     )
     switch_plan = system_target.build_paper_shadow_primary_switch_plan(
         gate_id=gate["gate_id"],
@@ -807,7 +815,7 @@ def run_smoothed_promotion_chain_fixture(tmp_path: Path) -> dict[str, Any]:
         gate_dir=tmp_path / "primary_research_candidate_gate",
         binding_dir=tmp_path / "smoothed_forward_binding",
         output_dir=tmp_path / "paper_shadow_primary_switch",
-        generated_at=datetime(2024, 3, 10, tzinfo=UTC),
+        generated_at=source_generated + timedelta(seconds=4),
     )
     owner_promotion = system_target.create_smoothed_owner_promotion_decision(
         promotion_review_id=promotion_review["promotion_review_id"],
@@ -817,7 +825,7 @@ def run_smoothed_promotion_chain_fixture(tmp_path: Path) -> dict[str, Any]:
         gate_dir=tmp_path / "primary_research_candidate_gate",
         switch_plan_dir=tmp_path / "paper_shadow_primary_switch",
         output_dir=tmp_path / "smoothed_owner_promotion",
-        generated_at=datetime(2024, 3, 11, tzinfo=UTC),
+        generated_at=source_generated + timedelta(seconds=5),
     )
     return {
         **fixture,

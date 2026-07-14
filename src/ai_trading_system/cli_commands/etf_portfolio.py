@@ -570,11 +570,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     dynamic_v3_paper_shadow_drift_monitor_app,
     dynamic_v3_paper_shadow_health_app,
     dynamic_v3_paper_shadow_outcome_attribution_app,
-    dynamic_v3_paper_shadow_primary_switch_app,
     dynamic_v3_paper_shadow_protocol_app,
     dynamic_v3_paper_shadow_weekly_review_app,
     dynamic_v3_position_review_app,
-    dynamic_v3_primary_research_candidate_gate_app,
     dynamic_v3_promotion_gate_threshold_calibration_app,
     dynamic_v3_promotion_threshold_sensitivity_app,
     dynamic_v3_readiness_health_recovery_app,
@@ -599,17 +597,14 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     dynamic_v3_smoothed_data_preflight_app,
     dynamic_v3_smoothed_data_readiness_app,
     dynamic_v3_smoothed_event_monitor_app,
-    dynamic_v3_smoothed_forward_binding_app,
     dynamic_v3_smoothed_forward_classify_app,
     dynamic_v3_smoothed_forward_progress_app,
     dynamic_v3_smoothed_forward_weekly_run_app,
     dynamic_v3_smoothed_latest_emission_app,
     dynamic_v3_smoothed_outcome_due_app,
     dynamic_v3_smoothed_outcome_update_app,
-    dynamic_v3_smoothed_owner_promotion_app,
     dynamic_v3_smoothed_owner_renewal_app,
     dynamic_v3_smoothed_post_refresh_validate_app,
-    dynamic_v3_smoothed_promotion_review_app,
     dynamic_v3_smoothed_refresh_plan_app,
     dynamic_v3_smoothed_retry_resume_app,
     dynamic_v3_smoothed_sample_growth_app,
@@ -654,446 +649,6 @@ from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
 )
-
-
-@dynamic_v3_smoothed_promotion_review_app.command("pack")
-def dynamic_v3_smoothed_promotion_review_pack_command(
-    readiness_scorecard_id: Annotated[
-        str,
-        typer.Option("--readiness-scorecard-id", help="readiness scorecard id。"),
-    ],
-    owner_update_id: Annotated[
-        str,
-        typer.Option("--owner-update-id", help="owner update id。"),
-    ],
-    watch_pack_id: Annotated[
-        str,
-        typer.Option("--watch-pack-id", help="watch pack id。"),
-    ],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="smoothed promotion review artifact root。"),
-    ] = system_target.DEFAULT_SMOOTHED_PROMOTION_REVIEW_DIR,
-) -> None:
-    """运行 TRADING-261 smoothed promotion review pack。"""
-    result = system_target.build_smoothed_promotion_review_pack(
-        readiness_scorecard_id=readiness_scorecard_id,
-        owner_update_id=owner_update_id,
-        watch_pack_id=watch_pack_id,
-        output_dir=output_dir,
-    )
-    evidence = result["promotion_evidence_summary"]
-    blocking = result["promotion_blocking_issues"]
-    typer.echo(f"promotion_review_id={result['promotion_review_id']}")
-    typer.echo(f"promotion_review_dir={result['promotion_review_dir']}")
-    typer.echo(f"readiness_decision={evidence['readiness_decision']}")
-    typer.echo(f"decision_confidence={evidence['decision_confidence']}")
-    typer.echo(f"can_enter_owner_review={blocking['can_enter_owner_review']}")
-    typer.echo("automatic_promotion_allowed=false")
-    typer.echo("broker_action_allowed=false")
-
-
-@dynamic_v3_smoothed_promotion_review_app.command("report")
-def dynamic_v3_smoothed_promotion_review_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest promotion review。"),
-    ] = False,
-    promotion_review_id: Annotated[
-        str | None,
-        typer.Option("--promotion-review-id", help="promotion review id。"),
-    ] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="smoothed promotion review artifact root。"),
-    ] = system_target.DEFAULT_SMOOTHED_PROMOTION_REVIEW_DIR,
-) -> None:
-    """展示 TRADING-261 smoothed promotion review 摘要。"""
-    payload = system_target.smoothed_promotion_review_report_payload(
-        promotion_review_id=promotion_review_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    evidence = _mapping_obj(payload.get("promotion_evidence_summary"))
-    blocking = _mapping_obj(payload.get("promotion_blocking_issues"))
-    typer.echo(f"promotion_review_id={payload['promotion_review_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"readiness_decision={evidence.get('readiness_decision')}")
-    typer.echo(f"decision_confidence={evidence.get('decision_confidence')}")
-    typer.echo(f"can_enter_owner_review={blocking.get('can_enter_owner_review')}")
-    typer.echo(f"report_path={payload['smoothed_promotion_review_report_path']}")
-    typer.echo("broker_action_allowed=false")
-
-
-@dynamic_v3_rescue_app.command("validate-smoothed-promotion-review")
-def dynamic_v3_validate_smoothed_promotion_review_command(
-    promotion_review_id: Annotated[
-        str,
-        typer.Option("--promotion-review-id", help="promotion review id。"),
-    ],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="smoothed promotion review artifact root。"),
-    ] = system_target.DEFAULT_SMOOTHED_PROMOTION_REVIEW_DIR,
-) -> None:
-    """校验 TRADING-261 smoothed promotion review artifact。"""
-    payload = system_target.validate_smoothed_promotion_review_artifact(
-        promotion_review_id=promotion_review_id,
-        output_dir=output_dir,
-    )
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("broker_action_allowed=false")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_primary_research_candidate_gate_app.command("run")
-def dynamic_v3_primary_research_candidate_gate_run_command(
-    promotion_review_id: Annotated[
-        str,
-        typer.Option("--promotion-review-id", help="promotion review id。"),
-    ],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="primary candidate gate artifact root。"),
-    ] = system_target.DEFAULT_PRIMARY_RESEARCH_CANDIDATE_GATE_DIR,
-) -> None:
-    """运行 TRADING-262 primary research candidate gate。"""
-    result = system_target.run_primary_research_candidate_gate(
-        promotion_review_id=promotion_review_id,
-        output_dir=output_dir,
-    )
-    decision = result["gate_decision"]
-    typer.echo(f"gate_id={result['gate_id']}")
-    typer.echo(f"gate_dir={result['gate_dir']}")
-    typer.echo(f"gate_decision={decision['gate_decision']}")
-    typer.echo(f"decision_confidence={decision['decision_confidence']}")
-    typer.echo(f"owner_approval_required={decision['owner_approval_required']}")
-    typer.echo("auto_apply=false")
-    typer.echo("broker_action_allowed=false")
-
-
-@dynamic_v3_primary_research_candidate_gate_app.command("report")
-def dynamic_v3_primary_research_candidate_gate_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest primary gate。"),
-    ] = False,
-    gate_id: Annotated[str | None, typer.Option("--gate-id", help="gate id。")] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="primary candidate gate artifact root。"),
-    ] = system_target.DEFAULT_PRIMARY_RESEARCH_CANDIDATE_GATE_DIR,
-) -> None:
-    """展示 TRADING-262 primary gate 摘要。"""
-    payload = system_target.primary_research_candidate_gate_report_payload(
-        gate_id=gate_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    decision = _mapping_obj(payload.get("gate_decision"))
-    typer.echo(f"gate_id={payload['gate_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"gate_decision={decision.get('gate_decision')}")
-    typer.echo(f"decision_confidence={decision.get('decision_confidence')}")
-    typer.echo(f"report_path={payload['primary_research_candidate_gate_report_path']}")
-    typer.echo("broker_action_allowed=false")
-
-
-@dynamic_v3_rescue_app.command("validate-primary-research-candidate-gate")
-def dynamic_v3_validate_primary_research_candidate_gate_command(
-    gate_id: Annotated[str, typer.Option("--gate-id", help="gate id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="primary candidate gate artifact root。"),
-    ] = system_target.DEFAULT_PRIMARY_RESEARCH_CANDIDATE_GATE_DIR,
-) -> None:
-    """校验 TRADING-262 primary research candidate gate artifact。"""
-    payload = system_target.validate_primary_research_candidate_gate_artifact(
-        gate_id=gate_id,
-        output_dir=output_dir,
-    )
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("broker_action_allowed=false")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_smoothed_forward_binding_app.command("run")
-def dynamic_v3_smoothed_forward_binding_run_command(
-    confirmation_id: Annotated[
-        str,
-        typer.Option("--confirmation-id", help="smoothed confirmation id。"),
-    ],
-    gate_id: Annotated[str, typer.Option("--gate-id", help="primary gate id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="smoothed forward binding artifact root。"),
-    ] = system_target.DEFAULT_SMOOTHED_FORWARD_BINDING_DIR,
-) -> None:
-    """运行 TRADING-263 smoothed forward confirmation binding。"""
-    result = system_target.run_smoothed_forward_binding(
-        confirmation_id=confirmation_id,
-        gate_id=gate_id,
-        output_dir=output_dir,
-    )
-    targets = _records_obj(result["bound_confirmation_targets"].get("targets"))
-    typer.echo(f"binding_id={result['binding_id']}")
-    typer.echo(f"binding_dir={result['binding_dir']}")
-    typer.echo(f"bound_target_count={len(targets)}")
-    typer.echo("bound_to_weekly_progress=true")
-    typer.echo("auto_rule_change_allowed=false")
-    typer.echo("broker_action_allowed=false")
-
-
-@dynamic_v3_smoothed_forward_binding_app.command("report")
-def dynamic_v3_smoothed_forward_binding_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest forward binding。"),
-    ] = False,
-    binding_id: Annotated[str | None, typer.Option("--binding-id", help="binding id。")] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="smoothed forward binding artifact root。"),
-    ] = system_target.DEFAULT_SMOOTHED_FORWARD_BINDING_DIR,
-) -> None:
-    """展示 TRADING-263 smoothed forward binding 摘要。"""
-    payload = system_target.smoothed_forward_binding_report_payload(
-        binding_id=binding_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    targets = _records_obj(_mapping_obj(payload.get("bound_confirmation_targets")).get("targets"))
-    watch_only = [row.get("target_id") for row in targets if row.get("status") == "WATCH_ONLY"]
-    typer.echo(f"binding_id={payload['binding_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"bound_target_count={len(targets)}")
-    typer.echo(f"watch_only_targets={','.join(str(item) for item in watch_only)}")
-    typer.echo(f"report_path={payload['smoothed_forward_binding_report_path']}")
-    typer.echo("broker_action_allowed=false")
-
-
-@dynamic_v3_rescue_app.command("validate-smoothed-forward-binding")
-def dynamic_v3_validate_smoothed_forward_binding_command(
-    binding_id: Annotated[str, typer.Option("--binding-id", help="binding id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="smoothed forward binding artifact root。"),
-    ] = system_target.DEFAULT_SMOOTHED_FORWARD_BINDING_DIR,
-) -> None:
-    """校验 TRADING-263 smoothed forward binding artifact。"""
-    payload = system_target.validate_smoothed_forward_binding_artifact(
-        binding_id=binding_id,
-        output_dir=output_dir,
-    )
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("broker_action_allowed=false")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_paper_shadow_primary_switch_app.command("plan")
-def dynamic_v3_paper_shadow_primary_switch_plan_command(
-    gate_id: Annotated[str, typer.Option("--gate-id", help="primary gate id。")],
-    binding_id: Annotated[str, typer.Option("--binding-id", help="binding id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="paper shadow primary switch artifact root。"),
-    ] = system_target.DEFAULT_PAPER_SHADOW_PRIMARY_SWITCH_DIR,
-) -> None:
-    """运行 TRADING-264 paper shadow primary candidate switch plan。"""
-    result = system_target.build_paper_shadow_primary_switch_plan(
-        gate_id=gate_id,
-        binding_id=binding_id,
-        output_dir=output_dir,
-    )
-    plan = result["primary_switch_plan"]
-    safety = result["primary_switch_safety_checks"]
-    typer.echo(f"switch_plan_id={result['switch_plan_id']}")
-    typer.echo(f"switch_plan_dir={result['switch_plan_dir']}")
-    typer.echo(f"proposed_primary_research_candidate={plan['proposed_primary_research_candidate']}")
-    typer.echo(f"auto_switch={plan['auto_switch']}")
-    typer.echo(f"safety_status={safety['status']}")
-    typer.echo("broker_action_allowed=false")
-
-
-@dynamic_v3_paper_shadow_primary_switch_app.command("report")
-def dynamic_v3_paper_shadow_primary_switch_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest primary switch plan。"),
-    ] = False,
-    switch_plan_id: Annotated[
-        str | None,
-        typer.Option("--switch-plan-id", help="switch plan id。"),
-    ] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="paper shadow primary switch artifact root。"),
-    ] = system_target.DEFAULT_PAPER_SHADOW_PRIMARY_SWITCH_DIR,
-) -> None:
-    """展示 TRADING-264 paper shadow primary switch plan 摘要。"""
-    payload = system_target.paper_shadow_primary_switch_report_payload(
-        switch_plan_id=switch_plan_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    plan = _mapping_obj(payload.get("primary_switch_plan"))
-    safety = _mapping_obj(payload.get("primary_switch_safety_checks"))
-    typer.echo(f"switch_plan_id={payload['switch_plan_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(
-        f"proposed_primary_research_candidate={plan.get('proposed_primary_research_candidate')}"
-    )
-    typer.echo(f"auto_switch={plan.get('auto_switch')}")
-    typer.echo(f"safety_status={safety.get('status')}")
-    typer.echo(f"report_path={payload['paper_shadow_primary_switch_report_path']}")
-    typer.echo("broker_action_allowed=false")
-
-
-@dynamic_v3_rescue_app.command("validate-paper-shadow-primary-switch")
-def dynamic_v3_validate_paper_shadow_primary_switch_command(
-    switch_plan_id: Annotated[
-        str,
-        typer.Option("--switch-plan-id", help="switch plan id。"),
-    ],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="paper shadow primary switch artifact root。"),
-    ] = system_target.DEFAULT_PAPER_SHADOW_PRIMARY_SWITCH_DIR,
-) -> None:
-    """校验 TRADING-264 paper shadow primary switch artifact。"""
-    payload = system_target.validate_paper_shadow_primary_switch_artifact(
-        switch_plan_id=switch_plan_id,
-        output_dir=output_dir,
-    )
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("broker_action_allowed=false")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_smoothed_owner_promotion_app.command("create")
-def dynamic_v3_smoothed_owner_promotion_create_command(
-    promotion_review_id: Annotated[
-        str,
-        typer.Option("--promotion-review-id", help="promotion review id。"),
-    ],
-    gate_id: Annotated[str, typer.Option("--gate-id", help="primary gate id。")],
-    switch_plan_id: Annotated[
-        str,
-        typer.Option("--switch-plan-id", help="switch plan id。"),
-    ],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="owner promotion decision artifact root。"),
-    ] = system_target.DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR,
-) -> None:
-    """创建 TRADING-265 smoothed owner promotion decision journal。"""
-    result = system_target.create_smoothed_owner_promotion_decision(
-        promotion_review_id=promotion_review_id,
-        gate_id=gate_id,
-        switch_plan_id=switch_plan_id,
-        output_dir=output_dir,
-    )
-    decision = result["owner_promotion_decision"]
-    typer.echo(f"decision_id={result['decision_id']}")
-    typer.echo(f"decision_dir={result['decision_dir']}")
-    typer.echo(f"owner_decision={decision['owner_decision']}")
-    typer.echo(f"recommended_owner_action={decision['recommended_owner_action']}")
-    typer.echo("actual_switch_executed=false")
-    typer.echo("broker_action_allowed=false")
-
-
-@dynamic_v3_smoothed_owner_promotion_app.command("record")
-def dynamic_v3_smoothed_owner_promotion_record_command(
-    decision_id: Annotated[str, typer.Option("--decision-id", help="decision id。")],
-    decision: Annotated[
-        str,
-        typer.Option("--decision", help="owner decision。"),
-    ],
-    decision_reason: Annotated[
-        str,
-        typer.Option("--decision-reason", help="owner decision reason。"),
-    ] = "",
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="owner promotion decision artifact root。"),
-    ] = system_target.DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR,
-) -> None:
-    """记录 TRADING-265 smoothed owner promotion decision。"""
-    result = system_target.record_smoothed_owner_promotion_decision(
-        decision_id=decision_id,
-        decision=decision,
-        decision_reason=decision_reason,
-        output_dir=output_dir,
-    )
-    owner_decision = result["owner_promotion_decision"]
-    typer.echo(f"decision_id={result['decision_id']}")
-    typer.echo(f"owner_decision={owner_decision['owner_decision']}")
-    typer.echo(f"recommended_owner_action={owner_decision['recommended_owner_action']}")
-    typer.echo(
-        "paper_shadow_primary_candidate_change_allowed="
-        f"{owner_decision['paper_shadow_primary_candidate_change_allowed']}"
-    )
-    typer.echo("actual_switch_executed=false")
-    typer.echo("broker_action_allowed=false")
-
-
-@dynamic_v3_smoothed_owner_promotion_app.command("report")
-def dynamic_v3_smoothed_owner_promotion_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest owner promotion。"),
-    ] = False,
-    decision_id: Annotated[str | None, typer.Option("--decision-id", help="decision id。")] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="owner promotion decision artifact root。"),
-    ] = system_target.DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR,
-) -> None:
-    """展示 TRADING-265 owner promotion decision 摘要。"""
-    payload = system_target.smoothed_owner_promotion_report_payload(
-        decision_id=decision_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    decision = _mapping_obj(payload.get("owner_promotion_decision"))
-    typer.echo(f"decision_id={payload['decision_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"owner_decision={decision.get('owner_decision')}")
-    typer.echo(f"recommended_owner_action={decision.get('recommended_owner_action')}")
-    typer.echo(
-        "paper_shadow_primary_candidate_change_allowed="
-        f"{decision.get('paper_shadow_primary_candidate_change_allowed')}"
-    )
-    typer.echo(f"report_path={payload['smoothed_owner_promotion_report_path']}")
-    typer.echo("broker_action_allowed=false")
-
-
-@dynamic_v3_rescue_app.command("validate-smoothed-owner-promotion")
-def dynamic_v3_validate_smoothed_owner_promotion_command(
-    decision_id: Annotated[str, typer.Option("--decision-id", help="decision id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="owner promotion decision artifact root。"),
-    ] = system_target.DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR,
-) -> None:
-    """校验 TRADING-265 smoothed owner promotion decision artifact。"""
-    payload = system_target.validate_smoothed_owner_promotion_artifact(
-        decision_id=decision_id,
-        output_dir=output_dir,
-    )
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("broker_action_allowed=false")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
 
 
 @dynamic_v3_smoothed_forward_progress_app.command("update")
@@ -4912,8 +4467,7 @@ def dynamic_v3_scorecard_attribution_run_command(
     typer.echo(f"status={result['manifest']['status']}")
     typer.echo(f"variant_count={result['manifest']['variant_count']}")
     typer.echo(
-        "dominant_weak_components="
-        + ",".join(_texts(distribution.get("dominant_weak_components")))
+        "dominant_weak_components=" + ",".join(_texts(distribution.get("dominant_weak_components")))
     )
     typer.echo("broker_action_allowed=false")
 
@@ -4939,8 +4493,7 @@ def dynamic_v3_scorecard_attribution_report_command(
     typer.echo(f"scorecard_attribution_id={payload['scorecard_attribution_id']}")
     typer.echo(f"status={payload['status']}")
     typer.echo(
-        "dominant_weak_components="
-        + ",".join(_texts(distribution.get("dominant_weak_components")))
+        "dominant_weak_components=" + ",".join(_texts(distribution.get("dominant_weak_components")))
     )
     typer.echo(f"report_path={payload['scorecard_attribution_report_path']}")
 
@@ -6578,7 +6131,9 @@ def dynamic_v3_drawdown_mismatch_reduction_run_command(
     summary = _mapping_obj(result.get("mismatch_reduction_summary"))
     typer.echo(f"reduction_id={result['reduction_id']}")
     typer.echo(f"status={result['manifest']['status']}")
-    typer.echo(f"drawdown_mismatch_reduction_status={summary.get('drawdown_mismatch_reduction_status')}")
+    typer.echo(
+        f"drawdown_mismatch_reduction_status={summary.get('drawdown_mismatch_reduction_status')}"
+    )
     typer.echo("production_effect=none")
 
 
@@ -6602,7 +6157,9 @@ def dynamic_v3_drawdown_mismatch_reduction_report_command(
     summary = _mapping_obj(payload.get("mismatch_reduction_summary"))
     typer.echo(f"reduction_id={payload['reduction_id']}")
     typer.echo(f"status={payload['status']}")
-    typer.echo(f"drawdown_mismatch_reduction_status={summary.get('drawdown_mismatch_reduction_status')}")
+    typer.echo(
+        f"drawdown_mismatch_reduction_status={summary.get('drawdown_mismatch_reduction_status')}"
+    )
     typer.echo(f"report_path={payload['drawdown_mismatch_reduction_report_path']}")
 
 
@@ -7198,10 +6755,7 @@ def dynamic_v3_promotion_gate_threshold_calibration_report_command(
     typer.echo(f"policy_id={report.get('policy_id')}")
     typer.echo(f"policy_version={report.get('policy_version')}")
     typer.echo(f"candidate={report.get('candidate')}")
-    typer.echo(
-        "current_threshold_interpretation="
-        f"{report.get('current_threshold_interpretation')}"
-    )
+    typer.echo(f"current_threshold_interpretation={report.get('current_threshold_interpretation')}")
     typer.echo(f"validation_status={validation.get('status')}")
     typer.echo("threshold_policy_only=true")
     typer.echo("production_effect=none")
@@ -7356,8 +6910,7 @@ def dynamic_v3_signal_input_completeness_run_command(
     typer.echo(f"missing_signal_files={','.join(_texts(report.get('missing_signal_files')))}")
     typer.echo(f"stale_signal_files={','.join(_texts(report.get('stale_signal_files')))}")
     typer.echo(
-        "incompatible_schema_inputs="
-        f"{','.join(_texts(report.get('incompatible_schema_inputs')))}"
+        f"incompatible_schema_inputs={','.join(_texts(report.get('incompatible_schema_inputs')))}"
     )
     typer.echo(
         "partial_market_coverage_inputs="
@@ -7404,8 +6957,7 @@ def dynamic_v3_signal_input_completeness_report_command(
     typer.echo(f"missing_signal_files={','.join(_texts(report.get('missing_signal_files')))}")
     typer.echo(f"stale_signal_files={','.join(_texts(report.get('stale_signal_files')))}")
     typer.echo(
-        "incompatible_schema_inputs="
-        f"{','.join(_texts(report.get('incompatible_schema_inputs')))}"
+        f"incompatible_schema_inputs={','.join(_texts(report.get('incompatible_schema_inputs')))}"
     )
     typer.echo(
         "partial_market_coverage_inputs="
@@ -7564,8 +7116,7 @@ def dynamic_v3_validate_signal_input_completeness_recovery_command(
     resolved_id = recovery_id
     if latest:
         payload = (
-            signal_input_completeness_recovery
-            .signal_input_completeness_recovery_report_payload(
+            signal_input_completeness_recovery.signal_input_completeness_recovery_report_payload(
                 latest=True,
                 output_dir=output_dir,
             )
@@ -8103,8 +7654,7 @@ def dynamic_v3_paper_shadow_weekly_review_build_command(
     typer.echo(f"coverage_status={review.get('coverage_status')}")
     typer.echo(f"coverage_ratio={review.get('coverage_ratio')}")
     typer.echo(
-        "missing_input_artifacts="
-        f"{','.join(_texts(summary.get('missing_input_artifacts')))}"
+        f"missing_input_artifacts={','.join(_texts(summary.get('missing_input_artifacts')))}"
     )
     typer.echo(f"validation_status={validation.get('status')}")
     typer.echo("paper_shadow_weekly_review_only=true")
@@ -8146,8 +7696,7 @@ def dynamic_v3_paper_shadow_weekly_review_report_command(
     typer.echo(f"coverage_status={review.get('coverage_status')}")
     typer.echo(f"coverage_ratio={review.get('coverage_ratio')}")
     typer.echo(
-        "missing_input_artifacts="
-        f"{','.join(_texts(summary.get('missing_input_artifacts')))}"
+        f"missing_input_artifacts={','.join(_texts(summary.get('missing_input_artifacts')))}"
     )
     typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
     typer.echo(f"report_path={payload['paper_shadow_weekly_report_path']}")
@@ -8476,7 +8025,9 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
     typer.echo(f"fallback_used_count={report.get('fallback_used_count')}")
     typer.echo(f"fallback_blocking_data_types={report.get('fallback_blocking_data_types')}")
     typer.echo(f"cache_integrity_status={report.get('cache_integrity_status')}")
-    typer.echo(f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}")
+    typer.echo(
+        f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}"
+    )
     typer.echo(f"cache_checksum_mismatch_count={report.get('cache_checksum_mismatch_count')}")
     typer.echo(f"signal_input_status={report.get('signal_input_status')}")
     typer.echo(f"signal_input_blocking_count={report.get('signal_input_blocking_count')}")
@@ -8532,7 +8083,9 @@ def dynamic_v3_evidence_staleness_monitor_report_command(
     typer.echo(f"fallback_used_count={report.get('fallback_used_count')}")
     typer.echo(f"fallback_blocking_data_types={report.get('fallback_blocking_data_types')}")
     typer.echo(f"cache_integrity_status={report.get('cache_integrity_status')}")
-    typer.echo(f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}")
+    typer.echo(
+        f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}"
+    )
     typer.echo(f"cache_checksum_mismatch_count={report.get('cache_checksum_mismatch_count')}")
     typer.echo(f"signal_input_status={report.get('signal_input_status')}")
     typer.echo(f"signal_input_blocking_count={report.get('signal_input_blocking_count')}")
@@ -8731,7 +8284,9 @@ def dynamic_v3_shadow_continuation_readiness_run_command(
     typer.echo(f"fallback_used_count={report.get('fallback_used_count')}")
     typer.echo(f"fallback_blocking_data_types={report.get('fallback_blocking_data_types')}")
     typer.echo(f"cache_integrity_status={report.get('cache_integrity_status')}")
-    typer.echo(f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}")
+    typer.echo(
+        f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}"
+    )
     typer.echo(f"cache_checksum_mismatch_count={report.get('cache_checksum_mismatch_count')}")
     typer.echo(f"signal_input_status={report.get('signal_input_status')}")
     typer.echo(f"signal_input_blocking_count={report.get('signal_input_blocking_count')}")
@@ -8780,7 +8335,9 @@ def dynamic_v3_shadow_continuation_readiness_report_command(
     typer.echo(f"fallback_used_count={report.get('fallback_used_count')}")
     typer.echo(f"fallback_blocking_data_types={report.get('fallback_blocking_data_types')}")
     typer.echo(f"cache_integrity_status={report.get('cache_integrity_status')}")
-    typer.echo(f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}")
+    typer.echo(
+        f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}"
+    )
     typer.echo(f"cache_checksum_mismatch_count={report.get('cache_checksum_mismatch_count')}")
     typer.echo(f"signal_input_status={report.get('signal_input_status')}")
     typer.echo(f"signal_input_blocking_count={report.get('signal_input_blocking_count')}")
@@ -9091,25 +8648,16 @@ def _echo_readiness_health_recovery_summary(
 ) -> None:
     statuses = _mapping_obj(report.get("source_statuses"))
     typer.echo(f"recovery_id={report.get('recovery_id') or manifest.get('recovery_id')}")
-    typer.echo(
-        "readiness_health_recovery_status="
-        f"{report.get('readiness_health_recovery_status')}"
-    )
+    typer.echo(f"readiness_health_recovery_status={report.get('readiness_health_recovery_status')}")
     typer.echo(f"normal_paper_shadow_may_resume={report.get('normal_paper_shadow_may_resume')}")
     typer.echo(f"hard_stop_triggered={report.get('hard_stop_triggered')}")
     typer.echo(f"manual_review_required={report.get('manual_review_required')}")
     typer.echo(f"signal_input_status={statuses.get('signal_input_status')}")
     typer.echo(f"evidence_freshness_status={statuses.get('evidence_freshness_status')}")
-    typer.echo(
-        "shadow_continuation_readiness="
-        f"{statuses.get('shadow_continuation_readiness')}"
-    )
+    typer.echo(f"shadow_continuation_readiness={statuses.get('shadow_continuation_readiness')}")
     typer.echo(f"paper_shadow_health_status={statuses.get('paper_shadow_health_status')}")
     typer.echo(f"evidence_staleness_monitor_id={report.get('evidence_staleness_monitor_id')}")
-    typer.echo(
-        "shadow_continuation_readiness_id="
-        f"{report.get('shadow_continuation_readiness_id')}"
-    )
+    typer.echo(f"shadow_continuation_readiness_id={report.get('shadow_continuation_readiness_id')}")
     typer.echo(f"paper_shadow_health_id={report.get('paper_shadow_health_id')}")
     typer.echo(f"blocking_reasons={','.join(_texts(report.get('blocking_reasons')))}")
     typer.echo(f"warning_reasons={','.join(_texts(report.get('warning_reasons')))}")
@@ -9319,26 +8867,14 @@ def _echo_normal_paper_shadow_resumption_gate_summary(
     )
     typer.echo(f"normal_paper_shadow_may_resume={report.get('normal_paper_shadow_may_resume')}")
     typer.echo(f"owner_action={report.get('owner_action')}")
-    typer.echo(
-        "manual_owner_review_completed="
-        f"{report.get('manual_owner_review_completed')}"
-    )
-    typer.echo(
-        "readiness_health_recovery_id="
-        f"{report.get('readiness_health_recovery_id')}"
-    )
-    typer.echo(
-        "readiness_health_recovery_status="
-        f"{report.get('readiness_health_recovery_status')}"
-    )
+    typer.echo(f"manual_owner_review_completed={report.get('manual_owner_review_completed')}")
+    typer.echo(f"readiness_health_recovery_id={report.get('readiness_health_recovery_id')}")
+    typer.echo(f"readiness_health_recovery_status={report.get('readiness_health_recovery_status')}")
     typer.echo(f"blocking_reasons={','.join(_texts(report.get('blocking_reasons')))}")
     typer.echo(f"warning_reasons={','.join(_texts(report.get('warning_reasons')))}")
     typer.echo(f"next_required_action={report.get('next_required_action')}")
     typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
-    typer.echo(
-        "report_path="
-        f"{manifest.get('normal_paper_shadow_resumption_gate_markdown_path')}"
-    )
+    typer.echo(f"report_path={manifest.get('normal_paper_shadow_resumption_gate_markdown_path')}")
     typer.echo("normal_paper_shadow_resumption_gate_only=true")
     typer.echo("normal_paper_shadow_observation_only=true")
     typer.echo("promotion_board_allowed=false")
@@ -9456,9 +8992,7 @@ def dynamic_v3_normal_paper_shadow_resumption_gate_report_command(
     _echo_normal_paper_shadow_resumption_gate_summary(
         manifest=_mapping_obj(payload),
         report=_mapping_obj(payload.get("normal_paper_shadow_resumption_gate_report")),
-        validation=_mapping_obj(
-            payload.get("normal_paper_shadow_resumption_gate_validation")
-        ),
+        validation=_mapping_obj(payload.get("normal_paper_shadow_resumption_gate_validation")),
     )
 
 
@@ -9513,10 +9047,7 @@ def _echo_paper_shadow_outcome_attribution_summary(
     typer.echo(f"warnings={','.join(_texts(report.get('warnings')))}")
     typer.echo(f"next_required_action={report.get('next_required_action')}")
     typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
-    typer.echo(
-        "report_path="
-        f"{manifest.get('paper_shadow_outcome_attribution_markdown_path')}"
-    )
+    typer.echo(f"report_path={manifest.get('paper_shadow_outcome_attribution_markdown_path')}")
     typer.echo("paper_shadow_outcome_attribution_only=true")
     typer.echo("read_only_attribution=true")
     typer.echo("weekly_decision_mutated=false")
@@ -9620,9 +9151,7 @@ def dynamic_v3_paper_shadow_outcome_attribution_report_command(
     _echo_paper_shadow_outcome_attribution_summary(
         manifest=_mapping_obj(payload),
         report=_mapping_obj(payload.get("paper_shadow_outcome_attribution_report")),
-        validation=_mapping_obj(
-            payload.get("paper_shadow_outcome_attribution_validation")
-        ),
+        validation=_mapping_obj(payload.get("paper_shadow_outcome_attribution_validation")),
     )
 
 
@@ -9663,13 +9192,10 @@ def _echo_shadow_decision_comparison_summary(
 ) -> None:
     previous_state = _mapping_obj(report.get("previous_state"))
     current_state = _mapping_obj(report.get("current_state"))
-    typer.echo(
-        f"comparison_id={report.get('comparison_id') or manifest.get('comparison_id')}"
-    )
+    typer.echo(f"comparison_id={report.get('comparison_id') or manifest.get('comparison_id')}")
     typer.echo(f"candidate={report.get('candidate') or manifest.get('candidate')}")
     typer.echo(
-        "shadow_decision_comparison_status="
-        f"{report.get('shadow_decision_comparison_status')}"
+        f"shadow_decision_comparison_status={report.get('shadow_decision_comparison_status')}"
     )
     typer.echo(f"current_readiness_id={report.get('current_readiness_id')}")
     typer.echo(f"previous_readiness_id={report.get('previous_readiness_id')}")
@@ -9690,10 +9216,7 @@ def _echo_shadow_decision_comparison_summary(
     )
     typer.echo(f"recommended_owner_action={report.get('recommended_owner_action')}")
     typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
-    typer.echo(
-        "report_path="
-        f"{manifest.get('shadow_decision_comparison_markdown_path')}"
-    )
+    typer.echo(f"report_path={manifest.get('shadow_decision_comparison_markdown_path')}")
     typer.echo("shadow_decision_comparison_only=true")
     typer.echo("read_only_comparison=true")
     typer.echo("decision_mutated=false")
@@ -9840,10 +9363,7 @@ def _echo_cost_sensitivity_summary(
     typer.echo(f"gross_performance_proxy={review.get('gross_performance_proxy')}")
     typer.echo(f"gross_improvement_proxy={review.get('gross_improvement_proxy')}")
     typer.echo(f"worst_net_improvement_proxy={review.get('worst_net_improvement_proxy')}")
-    typer.echo(
-        "high_cost_improvement_meaningful="
-        f"{review.get('high_cost_improvement_meaningful')}"
-    )
+    typer.echo(f"high_cost_improvement_meaningful={review.get('high_cost_improvement_meaningful')}")
     typer.echo(f"blocking_reasons={','.join(_texts(review.get('blocking_reasons')))}")
     typer.echo(f"warnings={','.join(_texts(review.get('warnings')))}")
     typer.echo(f"next_required_action={review.get('next_required_action')}")
@@ -9985,8 +9505,7 @@ def _echo_cost_metrics_materialization_summary(
         f"{report.get('materialization_id') or manifest.get('materialization_id')}"
     )
     typer.echo(
-        "cost_metrics_materialization_status="
-        f"{report.get('cost_metrics_materialization_status')}"
+        f"cost_metrics_materialization_status={report.get('cost_metrics_materialization_status')}"
     )
     typer.echo(f"candidate={report.get('candidate') or manifest.get('candidate')}")
     typer.echo(f"source_variant={report.get('source_variant') or manifest.get('source_variant')}")
@@ -10287,17 +9806,10 @@ def _echo_benchmark_baseline_control_summary(
     typer.echo(f"policy_id={pack.get('policy_id')}")
     typer.echo(f"policy_version={pack.get('policy_version')}")
     typer.echo(f"baseline_count={pack.get('baseline_count')}")
+    typer.echo(f"outperformed_baseline_count={summary.get('outperformed_baseline_count')}")
+    typer.echo(f"underperformed_baseline_count={summary.get('underperformed_baseline_count')}")
     typer.echo(
-        "outperformed_baseline_count="
-        f"{summary.get('outperformed_baseline_count')}"
-    )
-    typer.echo(
-        "underperformed_baseline_count="
-        f"{summary.get('underperformed_baseline_count')}"
-    )
-    typer.echo(
-        "insufficient_metric_baseline_count="
-        f"{summary.get('insufficient_metric_baseline_count')}"
+        f"insufficient_metric_baseline_count={summary.get('insufficient_metric_baseline_count')}"
     )
     typer.echo(f"worst_baseline_delta={summary.get('worst_baseline_delta')}")
     typer.echo(f"best_baseline_delta={summary.get('best_baseline_delta')}")
@@ -10455,8 +9967,7 @@ def _echo_benchmark_baseline_metrics_materialization_summary(
         f"{report.get('materialization_id') or manifest.get('materialization_id')}"
     )
     typer.echo(
-        "benchmark_baseline_metrics_status="
-        f"{report.get('benchmark_baseline_metrics_status')}"
+        f"benchmark_baseline_metrics_status={report.get('benchmark_baseline_metrics_status')}"
     )
     typer.echo(f"candidate={report.get('candidate') or manifest.get('candidate')}")
     typer.echo(f"source_variant={report.get('source_variant') or manifest.get('source_variant')}")
@@ -10467,25 +9978,17 @@ def _echo_benchmark_baseline_metrics_materialization_summary(
     typer.echo(f"baseline_metrics_path={report.get('baseline_metrics_path')}")
     typer.echo(f"benchmark_baseline_control_id={report.get('benchmark_baseline_control_id')}")
     typer.echo(f"benchmark_baseline_status={report.get('benchmark_baseline_status')}")
+    typer.echo(f"outperformed_baseline_count={summary.get('outperformed_baseline_count')}")
+    typer.echo(f"underperformed_baseline_count={summary.get('underperformed_baseline_count')}")
     typer.echo(
-        "outperformed_baseline_count="
-        f"{summary.get('outperformed_baseline_count')}"
-    )
-    typer.echo(
-        "underperformed_baseline_count="
-        f"{summary.get('underperformed_baseline_count')}"
-    )
-    typer.echo(
-        "insufficient_metric_baseline_count="
-        f"{summary.get('insufficient_metric_baseline_count')}"
+        f"insufficient_metric_baseline_count={summary.get('insufficient_metric_baseline_count')}"
     )
     typer.echo(f"blocking_reasons={','.join(_texts(report.get('blocking_reasons')))}")
     typer.echo(f"warnings={','.join(_texts(report.get('warnings')))}")
     typer.echo(f"next_required_action={report.get('next_required_action')}")
     typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
     typer.echo(
-        "report_path="
-        f"{manifest.get('benchmark_baseline_metrics_materialization_markdown_path')}"
+        f"report_path={manifest.get('benchmark_baseline_metrics_materialization_markdown_path')}"
     )
     typer.echo("research_only=true")
     typer.echo("benchmark_baseline_metrics_materialization_only=true")
@@ -10579,10 +10082,7 @@ def dynamic_v3_benchmark_baseline_metrics_materialization_run_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="baseline metrics materialization artifact root。"),
-    ] = (
-        baseline_metrics_materialization
-        .DEFAULT_BENCHMARK_BASELINE_METRICS_MATERIALIZATION_DIR
-    ),
+    ] = (baseline_metrics_materialization.DEFAULT_BENCHMARK_BASELINE_METRICS_MATERIALIZATION_DIR),
 ) -> None:
     result = baseline_metrics_materialization.run_benchmark_baseline_metrics_materialization(
         as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
@@ -10604,9 +10104,7 @@ def dynamic_v3_benchmark_baseline_metrics_materialization_run_command(
     )
     _echo_benchmark_baseline_metrics_materialization_summary(
         manifest=_mapping_obj(result.get("manifest")),
-        report=_mapping_obj(
-            result.get("benchmark_baseline_metrics_materialization_report")
-        ),
+        report=_mapping_obj(result.get("benchmark_baseline_metrics_materialization_report")),
         validation=_mapping_obj(
             result.get("benchmark_baseline_metrics_materialization_validation")
         ),
@@ -10626,16 +10124,12 @@ def dynamic_v3_benchmark_baseline_metrics_materialization_report_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="baseline metrics materialization artifact root。"),
-    ] = (
-        baseline_metrics_materialization
-        .DEFAULT_BENCHMARK_BASELINE_METRICS_MATERIALIZATION_DIR
-    ),
+    ] = (baseline_metrics_materialization.DEFAULT_BENCHMARK_BASELINE_METRICS_MATERIALIZATION_DIR),
 ) -> None:
     if not latest and not materialization_id:
         raise typer.BadParameter("--materialization-id or --latest is required")
     payload = (
-        baseline_metrics_materialization
-        .benchmark_baseline_metrics_materialization_report_payload(
+        baseline_metrics_materialization.benchmark_baseline_metrics_materialization_report_payload(
             materialization_id=materialization_id,
             latest=latest,
             output_dir=output_dir,
@@ -10643,9 +10137,7 @@ def dynamic_v3_benchmark_baseline_metrics_materialization_report_command(
     )
     _echo_benchmark_baseline_metrics_materialization_summary(
         manifest=_mapping_obj(payload),
-        report=_mapping_obj(
-            payload.get("benchmark_baseline_metrics_materialization_report")
-        ),
+        report=_mapping_obj(payload.get("benchmark_baseline_metrics_materialization_report")),
         validation=_mapping_obj(
             payload.get("benchmark_baseline_metrics_materialization_validation")
         ),
@@ -10665,26 +10157,20 @@ def dynamic_v3_validate_benchmark_baseline_metrics_materialization_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="baseline metrics materialization artifact root。"),
-    ] = (
-        baseline_metrics_materialization
-        .DEFAULT_BENCHMARK_BASELINE_METRICS_MATERIALIZATION_DIR
-    ),
+    ] = (baseline_metrics_materialization.DEFAULT_BENCHMARK_BASELINE_METRICS_MATERIALIZATION_DIR),
 ) -> None:
     resolved_id = materialization_id
     if latest:
-        payload = (
-            baseline_metrics_materialization
-            .benchmark_baseline_metrics_materialization_report_payload(
-                latest=True,
-                output_dir=output_dir,
-            )
+        report_payload = baseline_metrics_materialization.benchmark_baseline_metrics_materialization_report_payload  # noqa: E501
+        payload = report_payload(
+            latest=True,
+            output_dir=output_dir,
         )
         resolved_id = str(payload.get("materialization_id") or "")
     if not resolved_id:
         raise typer.BadParameter("--materialization-id or --latest is required")
     _echo_validation_payload(
-        baseline_metrics_materialization
-        .validate_benchmark_baseline_metrics_materialization_artifact(
+        baseline_metrics_materialization.validate_benchmark_baseline_metrics_materialization_artifact(
             materialization_id=resolved_id,
             output_dir=output_dir,
         )
@@ -10701,8 +10187,7 @@ def _echo_candidate_regression_replay_summary(
     typer.echo(f"replay_id={report.get('replay_id') or manifest.get('replay_id')}")
     typer.echo(f"candidate={report.get('candidate') or manifest.get('candidate')}")
     typer.echo(
-        "candidate_regression_replay_status="
-        f"{report.get('candidate_regression_replay_status')}"
+        f"candidate_regression_replay_status={report.get('candidate_regression_replay_status')}"
     )
     typer.echo(f"policy_id={report.get('policy_id')}")
     typer.echo(f"policy_version={report.get('policy_version')}")
@@ -10736,8 +10221,7 @@ def dynamic_v3_candidate_regression_replay_run_command(
             "--as-of",
             "--date",
             help=(
-                "candidate regression replay as-of date YYYY-MM-DD；"
-                "省略时使用 policy window end。"
+                "candidate regression replay as-of date YYYY-MM-DD；省略时使用 policy window end。"
             ),
         ),
     ] = None,
@@ -11677,24 +11161,6 @@ def validate_config_command() -> None:
     typer.echo(f"model_version={config.strategy.model.version}")
     typer.echo(f"config_hash={config.config_hash}")
     typer.echo(f"assets={', '.join(config.assets.assets)}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 @relative_strength_app.command("report")
@@ -15894,8 +15360,7 @@ def weight_research_run_static_baselines_command(
     typer.echo(f"Daily：{daily_path}")
     if write_source_alias:
         typer.echo(
-            "Source Alias："
-            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'static_baseline_family_result.json'}"
+            f"Source Alias：{DEFAULT_RESEARCH_SOURCE_DIR / 'static_baseline_family_result.json'}"
         )
     if payload["status"] == "STATIC_BASELINE_FAMILY_BLOCKED":
         raise typer.Exit(code=1)
@@ -15913,9 +15378,7 @@ def weight_research_run_b1_attribution_command(
     start: Annotated[str, typer.Option("--from", help="B1E attribution start date。")] = (
         "2023-01-03"
     ),
-    end: Annotated[str, typer.Option("--to", help="B1E attribution end date。")] = (
-        "2023-07-31"
-    ),
+    end: Annotated[str, typer.Option("--to", help="B1E attribution end date。")] = ("2023-07-31"),
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="B1E attribution output directory。"),
@@ -15949,8 +15412,7 @@ def weight_research_run_b1_attribution_command(
     typer.echo(f"Daily：{daily_path}")
     if write_source_alias:
         typer.echo(
-            "Source Alias："
-            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b1_isolated_attribution_result.json'}"
+            f"Source Alias：{DEFAULT_RESEARCH_SOURCE_DIR / 'b1_isolated_attribution_result.json'}"
         )
     if payload["status"] == "B1_ATTRIBUTION_INVALID":
         raise typer.Exit(code=1)
@@ -16022,9 +15484,7 @@ def weight_research_run_b2_command(
     start: Annotated[str, typer.Option("--from", help="B2 mini-backfill start date。")] = (
         "2024-07-10"
     ),
-    end: Annotated[str, typer.Option("--to", help="B2 mini-backfill end date。")] = (
-        "2024-08-09"
-    ),
+    end: Annotated[str, typer.Option("--to", help="B2 mini-backfill end date。")] = ("2024-08-09"),
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="B2 output directory。"),
@@ -16059,8 +15519,7 @@ def weight_research_run_b2_command(
         typer.echo(f"{name}：{path}")
     if write_source_alias:
         typer.echo(
-            "Source Alias："
-            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_risk_scaler_research_result.json'}"
+            f"Source Alias：{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_risk_scaler_research_result.json'}"
         )
     if payload["status"] in {"B2_SIGNAL_BLOCKED", "B2_SIGNAL_NEEDS_REVISION"}:
         raise typer.Exit(code=1)
@@ -16078,9 +15537,7 @@ def weight_research_run_b3_command(
     start: Annotated[str, typer.Option("--from", help="B3 mini-backfill start date。")] = (
         "2024-07-10"
     ),
-    end: Annotated[str, typer.Option("--to", help="B3 mini-backfill end date。")] = (
-        "2024-08-09"
-    ),
+    end: Annotated[str, typer.Option("--to", help="B3 mini-backfill end date。")] = ("2024-08-09"),
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="B3 output directory。"),
@@ -16115,8 +15572,7 @@ def weight_research_run_b3_command(
         typer.echo(f"{name}：{path}")
     if write_source_alias:
         typer.echo(
-            "Source Alias："
-            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b3_relative_tilt_research_result.json'}"
+            f"Source Alias：{DEFAULT_RESEARCH_SOURCE_DIR / 'b3_relative_tilt_research_result.json'}"
         )
     if payload["status"] in {"B3_SIGNAL_BLOCKED", "B3_SIGNAL_NEEDS_REVISION"}:
         raise typer.Exit(code=1)
@@ -16134,9 +15590,7 @@ def weight_research_run_b4_command(
     start: Annotated[str, typer.Option("--from", help="B4 mini-backfill start date。")] = (
         "2024-07-10"
     ),
-    end: Annotated[str, typer.Option("--to", help="B4 mini-backfill end date。")] = (
-        "2024-08-09"
-    ),
+    end: Annotated[str, typer.Option("--to", help="B4 mini-backfill end date。")] = ("2024-08-09"),
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="B4 output directory。"),
@@ -16181,8 +15635,7 @@ def weight_research_run_b4_command(
         typer.echo(f"{name}：{path}")
     if write_source_alias:
         typer.echo(
-            "Source Alias："
-            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b4_risk_tilt_interaction_result.json'}"
+            f"Source Alias：{DEFAULT_RESEARCH_SOURCE_DIR / 'b4_risk_tilt_interaction_result.json'}"
         )
     if payload["status"] in {
         "B4_INTERACTION_BLOCKED",
@@ -16259,8 +15712,7 @@ def weight_research_diagnose_b1_b4_command(
         typer.echo(f"{name}.md：{markdown_path}")
     if write_source_alias:
         typer.echo(
-            "Source Alias："
-            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b4_next_decision_checkpoint.json'}"
+            f"Source Alias：{DEFAULT_RESEARCH_SOURCE_DIR / 'b4_next_decision_checkpoint.json'}"
         )
     if decision["b5_allowed"] or decision["b6_allowed"]:
         raise typer.Exit(code=1)
@@ -16304,10 +15756,7 @@ def weight_research_diagnose_b2_b4_expansion_command(
         typer.echo(f"{name}.json：{json_path}")
         typer.echo(f"{name}.md：{markdown_path}")
     if write_source_alias:
-        typer.echo(
-            "Source Alias："
-            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b5_admission_checkpoint.json'}"
-        )
+        typer.echo(f"Source Alias：{DEFAULT_RESEARCH_SOURCE_DIR / 'b5_admission_checkpoint.json'}")
     if checkpoint["b6_allowed"] or checkpoint["v3_allowed"]:
         raise typer.Exit(code=1)
 
@@ -16398,8 +15847,7 @@ def weight_research_post_b2_b3_research_command(
         typer.echo(f"{name}.md：{markdown_path}")
     if write_source_alias:
         typer.echo(
-            "Source Alias："
-            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'final_branch_decision_snapshot.json'}"
+            f"Source Alias：{DEFAULT_RESEARCH_SOURCE_DIR / 'final_branch_decision_snapshot.json'}"
         )
     if final["b5_allowed"] or final["b6_allowed"] or final["v3_allowed"]:
         raise typer.Exit(code=1)
@@ -16491,8 +15939,7 @@ def weight_research_b2_full_diagnostic_research_command(
         typer.echo(f"{name}.md：{markdown_path}")
     if write_source_alias:
         typer.echo(
-            "Source Alias："
-            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_b3_branch_status_snapshot.json'}"
+            f"Source Alias：{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_b3_branch_status_snapshot.json'}"
         )
     if (
         snapshot["B4_retest_allowed"]
@@ -16543,8 +15990,7 @@ def weight_research_b2_control_window_research_command(
         typer.echo(f"{name}.md：{markdown_path}")
     if write_source_alias:
         typer.echo(
-            "Source Alias："
-            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_path_decision_snapshot.json'}"
+            f"Source Alias：{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_path_decision_snapshot.json'}"
         )
     if (
         snapshot["B4_retest_allowed"]
@@ -16589,8 +16035,7 @@ def weight_research_b2_followup_research_command(
         typer.echo(f"{name}.md：{markdown_path}")
     if write_source_alias:
         typer.echo(
-            "Source Alias："
-            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_research_branch_snapshot.json'}"
+            f"Source Alias：{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_research_branch_snapshot.json'}"
         )
     if (
         snapshot["B4_retest_allowed"]
@@ -16645,8 +16090,7 @@ def weight_research_b2_targeted_evidence_research_command(
         typer.echo(f"{name}.md：{markdown_path}")
     if write_source_alias:
         typer.echo(
-            "Source Alias："
-            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_research_branch_snapshot_v2.json'}"
+            f"Source Alias：{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_research_branch_snapshot_v2.json'}"
         )
     if (
         snapshot["B4_retest_allowed"]
@@ -16691,10 +16135,7 @@ def weight_research_b2_final_decision_research_command(
         typer.echo(f"{name}.json：{json_path}")
         typer.echo(f"{name}.md：{markdown_path}")
     if write_source_alias:
-        typer.echo(
-            "Source Alias："
-            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_branch_snapshot_final.json'}"
-        )
+        typer.echo(f"Source Alias：{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_branch_snapshot_final.json'}")
     if (
         snapshot["B4_retest_allowed"]
         or snapshot["b5_allowed"]
@@ -16717,9 +16158,7 @@ def weight_research_run_b1_command(
     start: Annotated[str, typer.Option("--from", help="B1 mini-backfill start date。")] = (
         "2023-01-03"
     ),
-    end: Annotated[str, typer.Option("--to", help="B1 mini-backfill end date。")] = (
-        "2023-07-31"
-    ),
+    end: Annotated[str, typer.Option("--to", help="B1 mini-backfill end date。")] = ("2023-07-31"),
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="B1 output directory。"),
@@ -17102,8 +16541,6 @@ def _resolve_p2_source_date(value: str | None, path: Path, as_of_column: str) ->
     return _resolve_frame_date("latest", frame, as_of_column)
 
 
-
-
 def _parse_datetime(value: str) -> datetime:
     try:
         parsed = pd.Timestamp(value).to_pydatetime()
@@ -17150,8 +16587,6 @@ def _latest_json_file(directory: Path, pattern: str) -> Path | None:
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
-
-
 
 
 def _records_obj(value: object) -> list[dict[str, object]]:
@@ -17302,8 +16737,6 @@ def _write_p2_frame(
         metadata=metadata or p2_metadata(config),
     )
     typer.echo(f"{title}：{md_path}")
-
-
 
 
 def _available_price_symbols(prices: pd.DataFrame, run_date: date) -> set[str]:

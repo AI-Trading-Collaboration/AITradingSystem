@@ -200,6 +200,47 @@ readiness_policy:
   candidate_required_for_promotion: true
   missing_component_score: null
 
+promotion_policy_metadata:
+  policy_id: dynamic_v3_rescue_smoothed_promotion_v2
+  owner: project_owner
+  version: 2026-07-14
+  status: pilot_baseline
+  rationale: >
+    Govern the research-only promotion review, candidate gate, forward binding,
+    paper-shadow switch plan, and owner decision journal without assigning a
+    fixed 3d/5d candidate or treating missing evidence as approval.
+  intended_effect: >
+    Preserve the upstream confirmation candidate exactly, fail closed when no
+    candidate or forward target exists, and require an explicit owner record
+    before any paper-shadow research-candidate change can be requested.
+  validation_evidence: >
+    ARCH-004 G2.4CQ focused lineage, chronology, null-candidate, source-tamper,
+    policy-tamper, byte-rebuild, CLI, architecture, and contract validation.
+  review_condition: >
+    Revisit after independent forward, PIT, data-quality, cost, and holdout
+    evidence, or when the owner explicitly replaces this pilot policy.
+
+promotion_policy:
+  gate_scope: paper_shadow_research_only
+  current_primary_research_candidate: limited_adjustment
+  rollback_method: limited_adjustment
+  eligible_readiness_decisions:
+    - PROMOTE_FOR_REVIEW
+  forward_observation_statuses:
+    - IN_PROGRESS
+    - WATCH_ONLY
+  forward_pass_statuses:
+    - PASS
+  owner_decisions:
+    - pending
+    - continue_observation
+    - promote_to_primary_research_candidate
+    - defer
+    - reject
+    - request_more_forward_data
+  candidate_required_for_owner_review: true
+  candidate_required_for_switch: true
+
 safety:
   research_target_only: true
   paper_shadow_only: true

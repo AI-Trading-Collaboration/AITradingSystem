@@ -3,8 +3,12 @@ from __future__ import annotations
 from dynamic_v3_system_target_helpers import run_smoothed_promotion_chain_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
+from ai_trading_system.etf_portfolio import (
+    dynamic_v3_system_target_smoothed_promotion as smoothed_promotion,
+)
 
 
+@smoothed_promotion._with_validation_session
 def test_paper_shadow_primary_switch_plan_is_non_applying_and_safe(tmp_path) -> None:
     fixture = run_smoothed_promotion_chain_fixture(tmp_path)
     switch = fixture["switch_plan"]
@@ -12,16 +16,14 @@ def test_paper_shadow_primary_switch_plan_is_non_applying_and_safe(tmp_path) -> 
     plan = switch["primary_switch_plan"]
     assert plan["switch_scope"] == "paper_shadow_research_only"
     assert plan["current_primary_research_candidate"] == "limited_adjustment"
-    assert (
-        plan["proposed_primary_research_candidate"]
-        == "smooth_weights_3d_limited_adjustment"
-    )
-    assert plan["switch_decision"] == "OWNER_DECISION_REQUIRED"
+    assert plan["proposed_primary_research_candidate"] is None
+    assert plan["switch_decision"] == "NO_ELIGIBLE_CANDIDATE"
     assert plan["auto_switch"] is False
     assert plan["requires_owner_decision"] is True
-    assert plan["requires_forward_confirmation"] is True
+    assert plan["requires_forward_confirmation"] is False
     assert plan["rollback_method"] == "limited_adjustment"
     assert "paper_shadow_reports" in plan["effective_only_for"]
+    assert "no_eligible_candidate" in plan["switch_blocking_reasons"]
 
     safety = switch["primary_switch_safety_checks"]
     assert safety["status"] == "PASS"

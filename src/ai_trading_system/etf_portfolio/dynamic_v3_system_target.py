@@ -512,20 +512,12 @@ def run_smoothed_review_attribution(*args: Any, **kwargs: Any) -> dict[str, Any]
     return _call_smoothed_evidence("run_smoothed_review_attribution", *args, **kwargs)
 
 
-def smoothed_review_attribution_report_payload(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_evidence(
-        "smoothed_review_attribution_report_payload", *args, **kwargs
-    )
+def smoothed_review_attribution_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("smoothed_review_attribution_report_payload", *args, **kwargs)
 
 
-def validate_smoothed_review_attribution_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_evidence(
-        "validate_smoothed_review_attribution_artifact", *args, **kwargs
-    )
+def validate_smoothed_review_attribution_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("validate_smoothed_review_attribution_artifact", *args, **kwargs)
 
 
 def run_smoothing_benefit_lag_drilldown(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -536,32 +528,20 @@ def smoothing_benefit_lag_report_payload(*args: Any, **kwargs: Any) -> dict[str,
     return _call_smoothed_evidence("smoothing_benefit_lag_report_payload", *args, **kwargs)
 
 
-def validate_smoothing_benefit_lag_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_evidence(
-        "validate_smoothing_benefit_lag_artifact", *args, **kwargs
-    )
+def validate_smoothing_benefit_lag_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("validate_smoothing_benefit_lag_artifact", *args, **kwargs)
 
 
 def run_smoothed_regime_validation(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_smoothed_evidence("run_smoothed_regime_validation", *args, **kwargs)
 
 
-def smoothed_regime_validation_report_payload(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_evidence(
-        "smoothed_regime_validation_report_payload", *args, **kwargs
-    )
+def smoothed_regime_validation_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("smoothed_regime_validation_report_payload", *args, **kwargs)
 
 
-def validate_smoothed_regime_validation_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_evidence(
-        "validate_smoothed_regime_validation_artifact", *args, **kwargs
-    )
+def validate_smoothed_regime_validation_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("validate_smoothed_regime_validation_artifact", *args, **kwargs)
 
 
 def register_smoothed_confirmation_targets(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -572,12 +552,8 @@ def smoothed_confirmation_report_payload(*args: Any, **kwargs: Any) -> dict[str,
     return _call_smoothed_evidence("smoothed_confirmation_report_payload", *args, **kwargs)
 
 
-def validate_smoothed_confirmation_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_evidence(
-        "validate_smoothed_confirmation_artifact", *args, **kwargs
-    )
+def validate_smoothed_confirmation_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("validate_smoothed_confirmation_artifact", *args, **kwargs)
 
 
 def run_smoothed_watch_pack(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -589,9 +565,7 @@ def smoothed_watch_pack_report_payload(*args: Any, **kwargs: Any) -> dict[str, A
 
 
 def validate_smoothed_watch_pack_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_smoothed_evidence(
-        "validate_smoothed_watch_pack_artifact", *args, **kwargs
-    )
+    return _call_smoothed_evidence("validate_smoothed_watch_pack_artifact", *args, **kwargs)
 
 
 def _call_experiment_factory(name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -903,938 +877,152 @@ def _call_smoothed_readiness(name: str, *args: Any, **kwargs: Any) -> dict[str, 
         raise DynamicV3SystemTargetError(str(exc)) from exc
 
 
-def run_smoothed_evidence_gap_diagnosis(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_readiness(
-        "run_smoothed_evidence_gap_diagnosis", *args, **kwargs
-    )
+def run_smoothed_evidence_gap_diagnosis(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_readiness("run_smoothed_evidence_gap_diagnosis", *args, **kwargs)
 
 
-def smoothed_evidence_gap_report_payload(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_readiness(
-        "smoothed_evidence_gap_report_payload", *args, **kwargs
-    )
+def smoothed_evidence_gap_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_readiness("smoothed_evidence_gap_report_payload", *args, **kwargs)
 
 
-def validate_smoothed_evidence_gap_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_readiness(
-        "validate_smoothed_evidence_gap_artifact", *args, **kwargs
-    )
+def validate_smoothed_evidence_gap_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_readiness("validate_smoothed_evidence_gap_artifact", *args, **kwargs)
 
 
 def run_smoothed_churn_backfill(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_smoothed_readiness("run_smoothed_churn_backfill", *args, **kwargs)
 
 
-def smoothed_churn_backfill_report_payload(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_readiness(
-        "smoothed_churn_backfill_report_payload", *args, **kwargs
-    )
+def smoothed_churn_backfill_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_readiness("smoothed_churn_backfill_report_payload", *args, **kwargs)
 
 
-def validate_smoothed_churn_backfill_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_readiness(
-        "validate_smoothed_churn_backfill_artifact", *args, **kwargs
-    )
+def validate_smoothed_churn_backfill_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_readiness("validate_smoothed_churn_backfill_artifact", *args, **kwargs)
 
 
 def run_sideways_mixed_attribution(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_smoothed_readiness(
-        "run_sideways_mixed_attribution", *args, **kwargs
-    )
+    return _call_smoothed_readiness("run_sideways_mixed_attribution", *args, **kwargs)
 
 
-def sideways_mixed_attribution_report_payload(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_readiness(
-        "sideways_mixed_attribution_report_payload", *args, **kwargs
-    )
+def sideways_mixed_attribution_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_readiness("sideways_mixed_attribution_report_payload", *args, **kwargs)
 
 
-def validate_sideways_mixed_attribution_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_readiness(
-        "validate_sideways_mixed_attribution_artifact", *args, **kwargs
-    )
+def validate_sideways_mixed_attribution_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_readiness("validate_sideways_mixed_attribution_artifact", *args, **kwargs)
 
 
-def run_smoothed_readiness_scorecard(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_readiness(
-        "run_smoothed_readiness_scorecard", *args, **kwargs
-    )
+def run_smoothed_readiness_scorecard(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_readiness("run_smoothed_readiness_scorecard", *args, **kwargs)
 
 
-def smoothed_readiness_scorecard_report_payload(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_readiness(
-        "smoothed_readiness_scorecard_report_payload", *args, **kwargs
-    )
+def smoothed_readiness_scorecard_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_readiness("smoothed_readiness_scorecard_report_payload", *args, **kwargs)
 
 
-def validate_smoothed_readiness_scorecard_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
+def validate_smoothed_readiness_scorecard_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_smoothed_readiness(
         "validate_smoothed_readiness_scorecard_artifact", *args, **kwargs
     )
 
 
-def run_smoothed_owner_review_update(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_readiness(
-        "run_smoothed_owner_review_update", *args, **kwargs
-    )
+def run_smoothed_owner_review_update(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_readiness("run_smoothed_owner_review_update", *args, **kwargs)
 
 
-def smoothed_owner_review_update_report_payload(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_smoothed_readiness(
-        "smoothed_owner_review_update_report_payload", *args, **kwargs
-    )
+def smoothed_owner_review_update_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_readiness("smoothed_owner_review_update_report_payload", *args, **kwargs)
 
 
-def validate_smoothed_owner_review_update_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
+def validate_smoothed_owner_review_update_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_smoothed_readiness(
         "validate_smoothed_owner_review_update_artifact", *args, **kwargs
     )
 
 
-def build_smoothed_promotion_review_pack(
-    *,
-    readiness_scorecard_id: str,
-    owner_update_id: str,
-    watch_pack_id: str,
-    scorecard_dir: Path = DEFAULT_SMOOTHED_READINESS_SCORECARD_DIR,
-    owner_update_dir: Path = DEFAULT_SMOOTHED_OWNER_REVIEW_UPDATE_DIR,
-    watch_pack_dir: Path = DEFAULT_SMOOTHED_WATCH_PACK_DIR,
-    output_dir: Path = DEFAULT_SMOOTHED_PROMOTION_REVIEW_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    scorecard = smoothed_readiness_scorecard_report_payload(
-        scorecard_id=readiness_scorecard_id,
-        output_dir=scorecard_dir,
+def _call_smoothed_promotion(name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    # ARCH-004 G2.4CQ compatibility surface.
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_smoothed_promotion,
     )
-    owner_update = smoothed_owner_review_update_report_payload(
-        owner_update_id=owner_update_id,
-        output_dir=owner_update_dir,
-    )
-    watch = smoothed_watch_pack_report_payload(
-        watch_pack_id=watch_pack_id,
-        output_dir=watch_pack_dir,
-    )
-    evidence = _smoothed_promotion_evidence_summary(scorecard, owner_update, watch)
-    blocking = _smoothed_promotion_blocking_issues(scorecard, owner_update, watch)
-    promotion_review_id = _stable_id(
-        "smoothed-promotion-review",
-        readiness_scorecard_id,
-        owner_update_id,
-        watch_pack_id,
-        evidence,
-        blocking,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / promotion_review_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_smoothed_promotion_review_manifest",
-        "promotion_review_id": root.name,
-        "readiness_scorecard_id": readiness_scorecard_id,
-        "owner_update_id": owner_update_id,
-        "watch_pack_id": watch_pack_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "smoothed_promotion_review_manifest_path": str(
-            root / "smoothed_promotion_review_manifest.json"
-        ),
-        "promotion_evidence_summary_path": str(root / "promotion_evidence_summary.json"),
-        "promotion_blocking_issues_path": str(root / "promotion_blocking_issues.json"),
-        "smoothed_promotion_review_report_path": str(root / "smoothed_promotion_review_report.md"),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    reader = render_smoothed_promotion_review_reader_brief(evidence, blocking)
-    _write_json(root / "smoothed_promotion_review_manifest.json", manifest)
-    _write_json(root / "promotion_evidence_summary.json", evidence)
-    _write_json(root / "promotion_blocking_issues.json", blocking)
-    _write_text(
-        root / "smoothed_promotion_review_report.md",
-        render_smoothed_promotion_review_report(manifest, evidence, blocking),
-    )
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_smoothed_promotion_review",
-        root.name,
-        root / "smoothed_promotion_review_manifest.json",
-    )
-    return {
-        "promotion_review_id": root.name,
-        "promotion_review_dir": root,
-        "manifest": manifest,
-        "promotion_evidence_summary": evidence,
-        "promotion_blocking_issues": blocking,
-        "reader_brief_section": reader,
-    }
+
+    try:
+        return getattr(dynamic_v3_system_target_smoothed_promotion, name)(*args, **kwargs)
+    except DynamicV3SystemTargetError:
+        raise
+    except ValueError as exc:
+        raise DynamicV3SystemTargetError(str(exc)) from exc
 
 
-def smoothed_promotion_review_report_payload(
-    *,
-    promotion_review_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SMOOTHED_PROMOTION_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=promotion_review_id,
-        latest_pointer="latest_smoothed_promotion_review",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="smoothed_promotion_review_manifest.json",
-    )
-    return {
-        **_read_json(root / "smoothed_promotion_review_manifest.json"),
-        "promotion_evidence_summary": _read_json(root / "promotion_evidence_summary.json"),
-        "promotion_blocking_issues": _read_json(root / "promotion_blocking_issues.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "promotion_review_dir": str(root),
-    }
+def build_smoothed_promotion_review_pack(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion("build_smoothed_promotion_review_pack", *args, **kwargs)
 
 
-def validate_smoothed_promotion_review_artifact(
-    *,
-    promotion_review_id: str,
-    output_dir: Path = DEFAULT_SMOOTHED_PROMOTION_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = output_dir / promotion_review_id
-    manifest = _read_optional_json(root / "smoothed_promotion_review_manifest.json") or {}
-    evidence = _read_optional_json(root / "promotion_evidence_summary.json") or {}
-    blocking = _read_optional_json(root / "promotion_blocking_issues.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "smoothed_promotion_review_manifest.json",
-            "promotion_evidence_summary.json",
-            "promotion_blocking_issues.json",
-            "smoothed_promotion_review_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "promotion_review_id_matches",
-                manifest.get("promotion_review_id") == promotion_review_id,
-                "",
-            ),
-            _check(
-                "candidate_method_is_smooth_3d",
-                evidence.get("candidate_method") == "smooth_weights_3d_limited_adjustment",
-                _text(evidence.get("candidate_method")),
-            ),
-            _check(
-                "readiness_decision_promote_for_review_visible",
-                evidence.get("readiness_decision") == "PROMOTE_FOR_REVIEW",
-                _text(evidence.get("readiness_decision")),
-            ),
-            _check(
-                "supporting_evidence_present",
-                len(_records(evidence.get("supporting_evidence"))) >= 3,
-                "",
-            ),
-            _check(
-                "can_enter_owner_review_true",
-                blocking.get("can_enter_owner_review") is True,
-                "",
-            ),
-            _check(
-                "official_target_weights_forbidden",
-                blocking.get("can_write_official_target_weights") is False,
-                "",
-            ),
-            _check(
-                "production_forbidden",
-                blocking.get("can_trigger_production") is False,
-                "",
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, evidence, blocking), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_smoothed_promotion_review_validation",
-        promotion_review_id,
-        checks,
+def smoothed_promotion_review_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion("smoothed_promotion_review_report_payload", *args, **kwargs)
+
+
+def validate_smoothed_promotion_review_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion("validate_smoothed_promotion_review_artifact", *args, **kwargs)
+
+
+def run_primary_research_candidate_gate(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion("run_primary_research_candidate_gate", *args, **kwargs)
+
+
+def primary_research_candidate_gate_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion(
+        "primary_research_candidate_gate_report_payload", *args, **kwargs
     )
 
 
-def run_primary_research_candidate_gate(
-    *,
-    promotion_review_id: str,
-    promotion_review_dir: Path = DEFAULT_SMOOTHED_PROMOTION_REVIEW_DIR,
-    output_dir: Path = DEFAULT_PRIMARY_RESEARCH_CANDIDATE_GATE_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    promotion = smoothed_promotion_review_report_payload(
-        promotion_review_id=promotion_review_id,
-        output_dir=promotion_review_dir,
-    )
-    decision = _primary_research_candidate_gate_decision(promotion)
-    criteria = _primary_research_candidate_gate_criteria(promotion, decision)
-    gate_id = _stable_id(
-        "primary-research-candidate-gate",
-        promotion_review_id,
-        decision,
-        criteria,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / gate_id)
-    root.mkdir(parents=True, exist_ok=False)
-    decision["gate_id"] = root.name
-    criteria["gate_id"] = root.name
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_primary_research_candidate_gate_manifest",
-        "gate_id": root.name,
-        "promotion_review_id": promotion_review_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "primary_research_candidate_gate_manifest_path": str(
-            root / "primary_research_candidate_gate_manifest.json"
-        ),
-        "gate_decision_path": str(root / "gate_decision.json"),
-        "gate_criteria_results_path": str(root / "gate_criteria_results.json"),
-        "primary_research_candidate_gate_report_path": str(
-            root / "primary_research_candidate_gate_report.md"
-        ),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "primary_research_candidate_gate_manifest.json", manifest)
-    _write_json(root / "gate_decision.json", decision)
-    _write_json(root / "gate_criteria_results.json", criteria)
-    _write_text(
-        root / "primary_research_candidate_gate_report.md",
-        render_primary_research_candidate_gate_report(manifest, decision, criteria),
-    )
-    _write_latest_pointer(
-        "latest_primary_research_candidate_gate",
-        root.name,
-        root / "primary_research_candidate_gate_manifest.json",
-    )
-    return {
-        "gate_id": root.name,
-        "gate_dir": root,
-        "manifest": manifest,
-        "gate_decision": decision,
-        "gate_criteria_results": criteria,
-    }
-
-
-def primary_research_candidate_gate_report_payload(
-    *,
-    gate_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_PRIMARY_RESEARCH_CANDIDATE_GATE_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=gate_id,
-        latest_pointer="latest_primary_research_candidate_gate",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="primary_research_candidate_gate_manifest.json",
-    )
-    return {
-        **_read_json(root / "primary_research_candidate_gate_manifest.json"),
-        "gate_decision": _read_json(root / "gate_decision.json"),
-        "gate_criteria_results": _read_json(root / "gate_criteria_results.json"),
-        "gate_dir": str(root),
-    }
-
-
-def validate_primary_research_candidate_gate_artifact(
-    *,
-    gate_id: str,
-    output_dir: Path = DEFAULT_PRIMARY_RESEARCH_CANDIDATE_GATE_DIR,
-) -> dict[str, Any]:
-    root = output_dir / gate_id
-    manifest = _read_optional_json(root / "primary_research_candidate_gate_manifest.json") or {}
-    decision = _read_optional_json(root / "gate_decision.json") or {}
-    criteria = _read_optional_json(root / "gate_criteria_results.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "primary_research_candidate_gate_manifest.json",
-            "gate_decision.json",
-            "gate_criteria_results.json",
-            "primary_research_candidate_gate_report.md",
-        ),
-    )
-    statuses = {row.get("status") for row in _records(criteria.get("criteria"))}
-    checks.extend(
-        [
-            _check(
-                "gate_id_matches",
-                manifest.get("gate_id") == gate_id and decision.get("gate_id") == gate_id,
-                "",
-            ),
-            _check(
-                "gate_scope_research_only",
-                decision.get("gate_scope") == "paper_shadow_research_only",
-                _text(decision.get("gate_scope")),
-            ),
-            _check(
-                "gate_decision_valid",
-                decision.get("gate_decision")
-                in {
-                    "ELIGIBLE_FOR_OWNER_APPROVAL",
-                    "CONTINUE_OBSERVATION",
-                    "REVIEW_REQUIRED",
-                    "REJECT",
-                },
-                _text(decision.get("gate_decision")),
-            ),
-            _check(
-                "owner_approval_required_true",
-                decision.get("owner_approval_required") is True,
-                "",
-            ),
-            _check("auto_apply_false", decision.get("auto_apply") is False, ""),
-            _check(
-                "paper_shadow_update_owner_required",
-                decision.get("can_update_paper_shadow_primary_candidate")
-                == "OWNER_DECISION_REQUIRED",
-                _text(decision.get("can_update_paper_shadow_primary_candidate")),
-            ),
-            _check("criteria_present", len(_records(criteria.get("criteria"))) >= 5, ""),
-            _check("criteria_no_fail", "FAIL" not in statuses, ",".join(_texts(statuses))),
-            _check("broker_forbidden", _payload_safe(manifest, decision, criteria), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_primary_research_candidate_gate_validation",
-        gate_id,
-        checks,
+def validate_primary_research_candidate_gate_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion(
+        "validate_primary_research_candidate_gate_artifact", *args, **kwargs
     )
 
 
-def run_smoothed_forward_binding(
-    *,
-    confirmation_id: str,
-    gate_id: str,
-    confirmation_dir: Path = DEFAULT_SMOOTHED_FORWARD_CONFIRMATION_DIR,
-    gate_dir: Path = DEFAULT_PRIMARY_RESEARCH_CANDIDATE_GATE_DIR,
-    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_BINDING_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    confirmation = smoothed_confirmation_report_payload(
-        confirmation_id=confirmation_id,
-        output_dir=confirmation_dir,
-    )
-    gate = primary_research_candidate_gate_report_payload(
-        gate_id=gate_id,
-        output_dir=gate_dir,
-    )
-    binding = _smoothed_forward_bound_confirmation_targets(confirmation_id, confirmation, gate)
-    requirements = _smoothed_forward_progress_requirements()
-    binding_id = _stable_id(
-        "smoothed-forward-binding",
-        confirmation_id,
-        gate_id,
-        binding,
-        requirements,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / binding_id)
-    root.mkdir(parents=True, exist_ok=False)
-    binding["binding_id"] = root.name
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_smoothed_forward_binding_manifest",
-        "binding_id": root.name,
-        "confirmation_id": confirmation_id,
-        "gate_id": gate_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "smoothed_forward_binding_manifest_path": str(
-            root / "smoothed_forward_binding_manifest.json"
-        ),
-        "bound_confirmation_targets_path": str(root / "bound_confirmation_targets.json"),
-        "forward_progress_requirements_path": str(root / "forward_progress_requirements.json"),
-        "smoothed_forward_binding_report_path": str(root / "smoothed_forward_binding_report.md"),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    reader = render_smoothed_forward_binding_reader_brief(binding, requirements)
-    _write_json(root / "smoothed_forward_binding_manifest.json", manifest)
-    _write_json(root / "bound_confirmation_targets.json", binding)
-    _write_json(root / "forward_progress_requirements.json", requirements)
-    _write_text(
-        root / "smoothed_forward_binding_report.md",
-        render_smoothed_forward_binding_report(manifest, binding, requirements),
-    )
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_smoothed_forward_binding",
-        root.name,
-        root / "smoothed_forward_binding_manifest.json",
-    )
-    return {
-        "binding_id": root.name,
-        "binding_dir": root,
-        "manifest": manifest,
-        "bound_confirmation_targets": binding,
-        "forward_progress_requirements": requirements,
-        "reader_brief_section": reader,
-    }
+def run_smoothed_forward_binding(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion("run_smoothed_forward_binding", *args, **kwargs)
 
 
-def smoothed_forward_binding_report_payload(
-    *,
-    binding_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_BINDING_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=binding_id,
-        latest_pointer="latest_smoothed_forward_binding",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="smoothed_forward_binding_manifest.json",
-    )
-    return {
-        **_read_json(root / "smoothed_forward_binding_manifest.json"),
-        "bound_confirmation_targets": _read_json(root / "bound_confirmation_targets.json"),
-        "forward_progress_requirements": _read_json(root / "forward_progress_requirements.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "binding_dir": str(root),
-    }
+def smoothed_forward_binding_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion("smoothed_forward_binding_report_payload", *args, **kwargs)
 
 
-def validate_smoothed_forward_binding_artifact(
-    *,
-    binding_id: str,
-    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_BINDING_DIR,
-) -> dict[str, Any]:
-    root = output_dir / binding_id
-    manifest = _read_optional_json(root / "smoothed_forward_binding_manifest.json") or {}
-    binding = _read_optional_json(root / "bound_confirmation_targets.json") or {}
-    requirements = _read_optional_json(root / "forward_progress_requirements.json") or {}
-    targets = _records(binding.get("targets"))
-    checks = _required_file_checks(
-        root,
-        (
-            "smoothed_forward_binding_manifest.json",
-            "bound_confirmation_targets.json",
-            "forward_progress_requirements.json",
-            "smoothed_forward_binding_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "binding_id_matches",
-                manifest.get("binding_id") == binding_id
-                and binding.get("binding_id") == binding_id,
-                "",
-            ),
-            _check("targets_present", len(targets) >= 3, ""),
-            _check(
-                "targets_bound_to_weekly_progress",
-                all(row.get("bound_to_weekly_progress") is True for row in targets),
-                "",
-            ),
-            _check(
-                "watch_only_target_present",
-                any(row.get("status") == "WATCH_ONLY" for row in targets),
-                "",
-            ),
-            _check(
-                "rule_review_conditions_present",
-                bool(_texts(requirements.get("rule_review_ready_when"))),
-                "",
-            ),
-            _check(
-                "broker_forbidden",
-                _payload_safe(manifest, binding, requirements, *targets),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_smoothed_forward_binding_validation",
-        binding_id,
-        checks,
+def validate_smoothed_forward_binding_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion("validate_smoothed_forward_binding_artifact", *args, **kwargs)
+
+
+def build_paper_shadow_primary_switch_plan(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion("build_paper_shadow_primary_switch_plan", *args, **kwargs)
+
+
+def paper_shadow_primary_switch_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion("paper_shadow_primary_switch_report_payload", *args, **kwargs)
+
+
+def validate_paper_shadow_primary_switch_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion(
+        "validate_paper_shadow_primary_switch_artifact", *args, **kwargs
     )
 
 
-def build_paper_shadow_primary_switch_plan(
-    *,
-    gate_id: str,
-    binding_id: str,
-    gate_dir: Path = DEFAULT_PRIMARY_RESEARCH_CANDIDATE_GATE_DIR,
-    binding_dir: Path = DEFAULT_SMOOTHED_FORWARD_BINDING_DIR,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_PRIMARY_SWITCH_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    gate = primary_research_candidate_gate_report_payload(gate_id=gate_id, output_dir=gate_dir)
-    binding = smoothed_forward_binding_report_payload(binding_id=binding_id, output_dir=binding_dir)
-    plan = _paper_shadow_primary_switch_plan(gate, binding)
-    safety_checks = _paper_shadow_primary_switch_safety_checks(plan)
-    switch_plan_id = _stable_id(
-        "paper-shadow-primary-switch",
-        gate_id,
-        binding_id,
-        plan,
-        safety_checks,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / switch_plan_id)
-    root.mkdir(parents=True, exist_ok=False)
-    plan["switch_plan_id"] = root.name
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_paper_shadow_primary_switch_manifest",
-        "switch_plan_id": root.name,
-        "gate_id": gate_id,
-        "binding_id": binding_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "paper_shadow_primary_switch_manifest_path": str(
-            root / "paper_shadow_primary_switch_manifest.json"
-        ),
-        "primary_switch_plan_path": str(root / "primary_switch_plan.json"),
-        "primary_switch_safety_checks_path": str(root / "primary_switch_safety_checks.json"),
-        "paper_shadow_primary_switch_report_path": str(
-            root / "paper_shadow_primary_switch_report.md"
-        ),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    reader = render_paper_shadow_primary_switch_reader_brief(plan, safety_checks)
-    _write_json(root / "paper_shadow_primary_switch_manifest.json", manifest)
-    _write_json(root / "primary_switch_plan.json", plan)
-    _write_json(root / "primary_switch_safety_checks.json", safety_checks)
-    _write_text(
-        root / "paper_shadow_primary_switch_report.md",
-        render_paper_shadow_primary_switch_report(manifest, plan, safety_checks),
-    )
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_paper_shadow_primary_switch",
-        root.name,
-        root / "paper_shadow_primary_switch_manifest.json",
-    )
-    return {
-        "switch_plan_id": root.name,
-        "switch_plan_dir": root,
-        "manifest": manifest,
-        "primary_switch_plan": plan,
-        "primary_switch_safety_checks": safety_checks,
-        "reader_brief_section": reader,
-    }
+def create_smoothed_owner_promotion_decision(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion("create_smoothed_owner_promotion_decision", *args, **kwargs)
 
 
-def paper_shadow_primary_switch_report_payload(
-    *,
-    switch_plan_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_PRIMARY_SWITCH_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=switch_plan_id,
-        latest_pointer="latest_paper_shadow_primary_switch",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="paper_shadow_primary_switch_manifest.json",
-    )
-    return {
-        **_read_json(root / "paper_shadow_primary_switch_manifest.json"),
-        "primary_switch_plan": _read_json(root / "primary_switch_plan.json"),
-        "primary_switch_safety_checks": _read_json(root / "primary_switch_safety_checks.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "switch_plan_dir": str(root),
-    }
+def record_smoothed_owner_promotion_decision(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion("record_smoothed_owner_promotion_decision", *args, **kwargs)
 
 
-def validate_paper_shadow_primary_switch_artifact(
-    *,
-    switch_plan_id: str,
-    output_dir: Path = DEFAULT_PAPER_SHADOW_PRIMARY_SWITCH_DIR,
-) -> dict[str, Any]:
-    root = output_dir / switch_plan_id
-    manifest = _read_optional_json(root / "paper_shadow_primary_switch_manifest.json") or {}
-    plan = _read_optional_json(root / "primary_switch_plan.json") or {}
-    safety = _read_optional_json(root / "primary_switch_safety_checks.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "paper_shadow_primary_switch_manifest.json",
-            "primary_switch_plan.json",
-            "primary_switch_safety_checks.json",
-            "paper_shadow_primary_switch_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    safety_checks = _mapping(safety.get("safety_checks"))
-    checks.extend(
-        [
-            _check(
-                "switch_plan_id_matches",
-                manifest.get("switch_plan_id") == switch_plan_id
-                and plan.get("switch_plan_id") == switch_plan_id,
-                "",
-            ),
-            _check(
-                "switch_scope_research_only",
-                plan.get("switch_scope") == "paper_shadow_research_only",
-                _text(plan.get("switch_scope")),
-            ),
-            _check("auto_switch_false", plan.get("auto_switch") is False, ""),
-            _check(
-                "requires_owner_decision_true",
-                plan.get("requires_owner_decision") is True,
-                "",
-            ),
-            _check(
-                "safety_checks_pass",
-                safety.get("status") == "PASS",
-                _text(safety.get("status")),
-            ),
-            _check(
-                "official_target_weights_forbidden",
-                safety_checks.get("not_official_target_weights") is True,
-                "",
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, plan, safety, safety_checks), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_paper_shadow_primary_switch_validation",
-        switch_plan_id,
-        checks,
-    )
+def smoothed_owner_promotion_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion("smoothed_owner_promotion_report_payload", *args, **kwargs)
 
 
-def create_smoothed_owner_promotion_decision(
-    *,
-    promotion_review_id: str,
-    gate_id: str,
-    switch_plan_id: str,
-    promotion_review_dir: Path = DEFAULT_SMOOTHED_PROMOTION_REVIEW_DIR,
-    gate_dir: Path = DEFAULT_PRIMARY_RESEARCH_CANDIDATE_GATE_DIR,
-    switch_plan_dir: Path = DEFAULT_PAPER_SHADOW_PRIMARY_SWITCH_DIR,
-    output_dir: Path = DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    promotion = smoothed_promotion_review_report_payload(
-        promotion_review_id=promotion_review_id,
-        output_dir=promotion_review_dir,
-    )
-    gate = primary_research_candidate_gate_report_payload(gate_id=gate_id, output_dir=gate_dir)
-    switch_plan = paper_shadow_primary_switch_report_payload(
-        switch_plan_id=switch_plan_id,
-        output_dir=switch_plan_dir,
-    )
-    decision = _smoothed_owner_promotion_decision(
-        promotion,
-        gate,
-        switch_plan,
-        owner_decision="pending",
-        generated_at=generated,
-    )
-    decision_id = _stable_id(
-        "smoothed-owner-promotion",
-        promotion_review_id,
-        gate_id,
-        switch_plan_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / decision_id)
-    root.mkdir(parents=True, exist_ok=False)
-    decision["decision_id"] = root.name
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_smoothed_owner_promotion_manifest",
-        "decision_id": root.name,
-        "promotion_review_id": promotion_review_id,
-        "gate_id": gate_id,
-        "switch_plan_id": switch_plan_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "smoothed_owner_promotion_manifest_path": str(
-            root / "smoothed_owner_promotion_manifest.json"
-        ),
-        "owner_promotion_decision_path": str(root / "owner_promotion_decision.json"),
-        "owner_promotion_checklist_path": str(root / "owner_promotion_checklist.md"),
-        "smoothed_owner_promotion_report_path": str(root / "smoothed_owner_promotion_report.md"),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_smoothed_owner_promotion_files(root, manifest, decision)
-    _write_latest_pointer(
-        "latest_smoothed_owner_promotion",
-        root.name,
-        root / "smoothed_owner_promotion_manifest.json",
-    )
-    return {
-        "decision_id": root.name,
-        "decision_dir": root,
-        "manifest": manifest,
-        "owner_promotion_decision": decision,
-        "owner_promotion_checklist": (root / "owner_promotion_checklist.md").read_text(
-            encoding="utf-8"
-        ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-    }
-
-
-def record_smoothed_owner_promotion_decision(
-    *,
-    decision_id: str,
-    decision: str,
-    decision_reason: str = "",
-    output_dir: Path = DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR,
-    recorded_at: datetime | None = None,
-) -> dict[str, Any]:
-    recorded = recorded_at or datetime.now(UTC)
-    root = output_dir / decision_id
-    manifest = _read_json(root / "smoothed_owner_promotion_manifest.json")
-    owner_decision = _read_json(root / "owner_promotion_decision.json")
-    owner_decision.update(
-        _smoothed_owner_promotion_decision_update(
-            owner_decision,
-            owner_decision=decision,
-            decision_reason=decision_reason,
-            recorded_at=recorded,
-        )
-    )
-    _write_smoothed_owner_promotion_files(root, manifest, owner_decision)
-    return {
-        "decision_id": decision_id,
-        "decision_dir": root,
-        "manifest": manifest,
-        "owner_promotion_decision": owner_decision,
-        "owner_promotion_checklist": (root / "owner_promotion_checklist.md").read_text(
-            encoding="utf-8"
-        ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-    }
-
-
-def smoothed_owner_promotion_report_payload(
-    *,
-    decision_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=decision_id,
-        latest_pointer="latest_smoothed_owner_promotion",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="smoothed_owner_promotion_manifest.json",
-    )
-    return {
-        **_read_json(root / "smoothed_owner_promotion_manifest.json"),
-        "owner_promotion_decision": _read_json(root / "owner_promotion_decision.json"),
-        "owner_promotion_checklist": (root / "owner_promotion_checklist.md").read_text(
-            encoding="utf-8"
-        ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "decision_dir": str(root),
-    }
-
-
-def validate_smoothed_owner_promotion_artifact(
-    *,
-    decision_id: str,
-    output_dir: Path = DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR,
-) -> dict[str, Any]:
-    root = output_dir / decision_id
-    manifest = _read_optional_json(root / "smoothed_owner_promotion_manifest.json") or {}
-    decision = _read_optional_json(root / "owner_promotion_decision.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "smoothed_owner_promotion_manifest.json",
-            "owner_promotion_decision.json",
-            "owner_promotion_checklist.md",
-            "smoothed_owner_promotion_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "decision_id_matches",
-                manifest.get("decision_id") == decision_id
-                and decision.get("decision_id") == decision_id,
-                "",
-            ),
-            _check(
-                "owner_decision_valid",
-                decision.get("owner_decision")
-                in {
-                    "pending",
-                    "continue_observation",
-                    "promote_to_primary_research_candidate",
-                    "defer",
-                    "reject",
-                    "request_more_forward_data",
-                },
-                _text(decision.get("owner_decision")),
-            ),
-            _check(
-                "does_not_auto_switch",
-                decision.get("paper_shadow_primary_candidate_change_requested") is not True
-                or decision.get("owner_decision") == "promote_to_primary_research_candidate",
-                "",
-            ),
-            _check(
-                "actual_switch_executed_false",
-                decision.get("actual_switch_executed") is False,
-                "",
-            ),
-            _check(
-                "not_official_target_weights_true",
-                decision.get("not_official_target_weights") is True,
-                "",
-            ),
-            _check(
-                "broker_action_allowed_false",
-                decision.get("broker_action_allowed") is False,
-                "",
-            ),
-            _check("production_effect_none", decision.get("production_effect") == "none", ""),
-            _check("broker_forbidden", _payload_safe(manifest, decision), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_smoothed_owner_promotion_validation",
-        decision_id,
-        checks,
-    )
+def validate_smoothed_owner_promotion_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_promotion("validate_smoothed_owner_promotion_artifact", *args, **kwargs)
 
 
 def update_smoothed_forward_progress(
@@ -6342,322 +5530,6 @@ def render_smoothed_watch_reader_brief(summary: Mapping[str, Any]) -> str:
             f"- recovery_lag_status: {summary.get('recovery_lag_status')}",
             f"- forward_confirmation_status: {summary.get('forward_confirmation_status')}",
             f"- recommended_action: {summary.get('recommended_action')}",
-            "- broker_action_allowed: false",
-            "- production_effect: none",
-            "",
-        ]
-    )
-
-
-def render_smoothed_promotion_review_report(
-    manifest: Mapping[str, Any],
-    evidence: Mapping[str, Any],
-    blocking: Mapping[str, Any],
-) -> str:
-    return "\n".join(
-        [
-            f"# Smoothed Promotion Review {manifest.get('promotion_review_id')}",
-            "",
-            f"- candidate_method: {evidence.get('candidate_method')}",
-            f"- secondary_method: {evidence.get('secondary_method')}",
-            f"- readiness_decision: {evidence.get('readiness_decision')}",
-            f"- decision_confidence: {evidence.get('decision_confidence')}",
-            f"- can_enter_owner_review: {blocking.get('can_enter_owner_review')}",
-            "- automatic_promotion_allowed: false",
-            "- can_write_official_target_weights: false",
-            "- can_trigger_production: false",
-            "- broker_action_allowed: false",
-            "- production_effect: none",
-            "",
-            "## Supporting Evidence",
-            "",
-            *[
-                "- "
-                f"{row.get('evidence_id')}: {row.get('summary')} "
-                f"quality={row.get('evidence_quality')}, "
-                f"supports_review={row.get('supports_promotion_review')}"
-                for row in _records(evidence.get("supporting_evidence"))
-            ],
-            "",
-            "## Blocking Issues",
-            "",
-            *[
-                "- "
-                f"{row.get('issue')}: severity={row.get('severity')}, "
-                f"blocks_official={row.get('blocks_official_promotion')}, "
-                "blocks_paper_shadow_primary_candidate="
-                f"{row.get('blocks_paper_shadow_primary_candidate')}, "
-                f"reason={row.get('reason')}"
-                for row in _records(blocking.get("blocking_issues"))
-            ],
-            "",
-            "PROMOTE_FOR_REVIEW 只表示可以进入 owner review。Forward confirmation "
-            "和 low confidence 会阻止 official / production promotion，但不阻止 owner "
-            "在 paper shadow research scope 内继续人工评估 primary candidate。",
-            "",
-        ]
-    )
-
-
-def render_smoothed_promotion_review_reader_brief(
-    evidence: Mapping[str, Any],
-    blocking: Mapping[str, Any],
-) -> str:
-    return "\n".join(
-        [
-            "## Dynamic Rescue Smoothed Promotion Review",
-            "",
-            f"- candidate_method: {evidence.get('candidate_method')}",
-            f"- readiness_decision: {evidence.get('readiness_decision')}",
-            f"- decision_confidence: {evidence.get('decision_confidence')}",
-            f"- can_enter_owner_review: {blocking.get('can_enter_owner_review')}",
-            "- automatic_promotion_allowed: false",
-            "- not_official_target_weights: true",
-            "- broker_action_allowed: false",
-            "- production_effect: none",
-            "",
-        ]
-    )
-
-
-def render_primary_research_candidate_gate_report(
-    manifest: Mapping[str, Any],
-    decision: Mapping[str, Any],
-    criteria: Mapping[str, Any],
-) -> str:
-    return "\n".join(
-        [
-            f"# Primary Research Candidate Gate {manifest.get('gate_id')}",
-            "",
-            f"- candidate_method: {decision.get('candidate_method')}",
-            f"- gate_scope: {decision.get('gate_scope')}",
-            f"- gate_decision: {decision.get('gate_decision')}",
-            f"- decision_confidence: {decision.get('decision_confidence')}",
-            f"- owner_approval_required: {decision.get('owner_approval_required')}",
-            "- auto_apply: false",
-            f"- can_update_paper_shadow_primary_candidate: "
-            f"{decision.get('can_update_paper_shadow_primary_candidate')}",
-            "- can_write_official_target_weights: false",
-            "- can_trigger_production: false",
-            "- broker_action_allowed: false",
-            "- production_effect: none",
-            "",
-            "## Criteria",
-            "",
-            *[
-                "- "
-                f"{row.get('criterion')}: required={row.get('required')}, "
-                f"actual={row.get('actual')}, status={row.get('status')}"
-                for row in _records(criteria.get("criteria"))
-            ],
-            "",
-            f"- hard_blockers: {', '.join(_texts(criteria.get('hard_blockers')))}",
-            f"- warnings: {', '.join(_texts(criteria.get('warnings')))}",
-            "",
-            "ELIGIBLE_FOR_OWNER_APPROVAL 不是自动 promotion；它只表示 owner 可以人工决定"
-            "是否允许后续 paper shadow primary research candidate switch。",
-            "",
-        ]
-    )
-
-
-def render_smoothed_forward_binding_report(
-    manifest: Mapping[str, Any],
-    binding: Mapping[str, Any],
-    requirements: Mapping[str, Any],
-) -> str:
-    return "\n".join(
-        [
-            f"# Smoothed Forward Binding {manifest.get('binding_id')}",
-            "",
-            f"- source_confirmation_id: {binding.get('source_confirmation_id')}",
-            f"- bound_target_count: {len(_records(binding.get('targets')))}",
-            "- bound_to_weekly_progress: true",
-            "- auto_rule_change_allowed: false",
-            "- broker_action_allowed: false",
-            "- production_effect: none",
-            "",
-            "## Bound Targets",
-            "",
-            *[
-                "- "
-                f"{row.get('target_id')}: method={row.get('method')}, "
-                f"status={row.get('status')}, "
-                f"required_forward_events={row.get('required_forward_events', 'n/a')}, "
-                f"required_sideways_events={row.get('required_sideways_events', 'n/a')}, "
-                f"required_recovery_events={row.get('required_recovery_events', 'n/a')}"
-                for row in _records(binding.get("targets"))
-            ],
-            "",
-            "## Progress Requirements",
-            "",
-            *[
-                "- "
-                f"{row.get('requirement')}: cadence={row.get('cadence')}, "
-                f"description={row.get('description')}"
-                for row in _records(requirements.get("requirements"))
-            ],
-            "",
-            f"- rule_review_ready_when: "
-            f"{', '.join(_texts(requirements.get('rule_review_ready_when')))}",
-            "",
-            "该 binding 只把 smoothed targets 放入 weekly evidence 解释语义，"
-            "不自动修改 rule、policy、target weights 或 broker state。",
-            "",
-        ]
-    )
-
-
-def render_smoothed_forward_binding_reader_brief(
-    binding: Mapping[str, Any],
-    requirements: Mapping[str, Any],
-) -> str:
-    watch_only = [
-        row.get("target_id")
-        for row in _records(binding.get("targets"))
-        if row.get("status") == "WATCH_ONLY"
-    ]
-    return "\n".join(
-        [
-            "## Dynamic Rescue Smoothed Forward Binding",
-            "",
-            f"- source_confirmation_id: {binding.get('source_confirmation_id')}",
-            f"- bound_targets: {len(_records(binding.get('targets')))}",
-            f"- watch_only_targets: {', '.join(_texts(watch_only))}",
-            f"- rule_review_ready_when: "
-            f"{', '.join(_texts(requirements.get('rule_review_ready_when')))}",
-            "- auto_rule_change_allowed: false",
-            "- not_official_target_weights: true",
-            "- broker_action_allowed: false",
-            "- production_effect: none",
-            "",
-        ]
-    )
-
-
-def render_paper_shadow_primary_switch_report(
-    manifest: Mapping[str, Any],
-    plan: Mapping[str, Any],
-    safety: Mapping[str, Any],
-) -> str:
-    return "\n".join(
-        [
-            f"# Paper Shadow Primary Switch Plan {manifest.get('switch_plan_id')}",
-            "",
-            f"- current_primary_research_candidate: "
-            f"{plan.get('current_primary_research_candidate')}",
-            f"- proposed_primary_research_candidate: "
-            f"{plan.get('proposed_primary_research_candidate')}",
-            f"- switch_scope: {plan.get('switch_scope')}",
-            f"- switch_decision: {plan.get('switch_decision')}",
-            f"- auto_switch: {plan.get('auto_switch')}",
-            f"- requires_owner_decision: {plan.get('requires_owner_decision')}",
-            f"- requires_forward_confirmation: {plan.get('requires_forward_confirmation')}",
-            f"- rollback_method: {plan.get('rollback_method')}",
-            f"- safety_status: {safety.get('status')}",
-            "- not_official_target_weights: true",
-            "- broker_action_allowed: false",
-            "- production_effect: none",
-            "",
-            "## Effective Only For",
-            "",
-            *[f"- {item}" for item in _texts(plan.get("effective_only_for"))],
-            "",
-            "该 switch plan 不执行切换。Owner 批准后也只能影响 paper shadow reports、"
-            "research method watch 和 Reader Brief research section。",
-            "",
-        ]
-    )
-
-
-def render_paper_shadow_primary_switch_reader_brief(
-    plan: Mapping[str, Any],
-    safety: Mapping[str, Any],
-) -> str:
-    return "\n".join(
-        [
-            "## Dynamic Rescue Paper Shadow Primary Switch Plan",
-            "",
-            f"- proposed_primary_research_candidate: "
-            f"{plan.get('proposed_primary_research_candidate')}",
-            f"- switch_decision: {plan.get('switch_decision')}",
-            f"- auto_switch: {plan.get('auto_switch')}",
-            f"- rollback_method: {plan.get('rollback_method')}",
-            f"- safety_status: {safety.get('status')}",
-            "- not_official_target_weights: true",
-            "- broker_action_allowed: false",
-            "- production_effect: none",
-            "",
-        ]
-    )
-
-
-def render_smoothed_owner_promotion_checklist(decision: Mapping[str, Any]) -> str:
-    return "\n".join(
-        [
-            "# Smoothed Owner Promotion Checklist",
-            "",
-            "- [ ] 是否接受 smooth_weights_3d 进入 promotion review？",
-            "- [ ] 是否接受它成为 paper shadow primary research candidate？",
-            "- [ ] 是否继续保留 smooth_weights_5d 为 secondary / sensitivity method？",
-            "- [ ] 是否继续保留 limited_adjustment 为 rollback / baseline method？",
-            "- [ ] 是否需要更多 forward confirmation？",
-            "- [ ] 是否确认不写 official target weights？",
-            "- [ ] 是否确认 no broker / no production？",
-            "",
-            f"- owner_decision: {decision.get('owner_decision')}",
-            f"- recommended_owner_action: {decision.get('recommended_owner_action')}",
-            f"- paper_shadow_primary_candidate_change_allowed: "
-            f"{decision.get('paper_shadow_primary_candidate_change_allowed')}",
-            "",
-        ]
-    )
-
-
-def render_smoothed_owner_promotion_report(
-    manifest: Mapping[str, Any],
-    decision: Mapping[str, Any],
-) -> str:
-    return "\n".join(
-        [
-            f"# Smoothed Owner Promotion Decision {manifest.get('decision_id')}",
-            "",
-            f"- candidate_method: {decision.get('candidate_method')}",
-            f"- secondary_method: {decision.get('secondary_method')}",
-            f"- owner_decision: {decision.get('owner_decision')}",
-            f"- recommended_owner_action: {decision.get('recommended_owner_action')}",
-            f"- decision_reason: {decision.get('decision_reason')}",
-            f"- paper_shadow_primary_candidate_change_allowed: "
-            f"{decision.get('paper_shadow_primary_candidate_change_allowed')}",
-            f"- paper_shadow_primary_candidate_change_requested: "
-            f"{decision.get('paper_shadow_primary_candidate_change_requested')}",
-            "- actual_switch_executed: false",
-            "- not_official_target_weights: true",
-            "- broker_action_allowed: false",
-            "- production_effect: none",
-            f"- created_at: {decision.get('created_at')}",
-            f"- updated_at: {decision.get('updated_at')}",
-            "",
-            "该 journal 只记录 owner decision。即使 owner_decision="
-            "promote_to_primary_research_candidate，也不自动切换 primary candidate，"
-            "不写 official target weights，不触发 broker 或 production。",
-            "",
-        ]
-    )
-
-
-def render_smoothed_owner_promotion_reader_brief(decision: Mapping[str, Any]) -> str:
-    return "\n".join(
-        [
-            "## Dynamic Rescue Smoothed Promotion Decision",
-            "",
-            f"- candidate_method: {decision.get('candidate_method')}",
-            f"- owner_decision: {decision.get('owner_decision')}",
-            f"- recommended_owner_action: {decision.get('recommended_owner_action')}",
-            f"- paper_shadow_primary_candidate_change_allowed: "
-            f"{decision.get('paper_shadow_primary_candidate_change_allowed')}",
-            f"- forward_confirmation_status: {decision.get('forward_confirmation_status')}",
-            "- not_official_target_weights: true",
             "- broker_action_allowed: false",
             "- production_effect: none",
             "",
@@ -14409,486 +13281,6 @@ def _smoothed_watch_summary(
         "production_effect": "none",
         **SYSTEM_TARGET_SAFETY,
     }
-
-
-def _smoothed_promotion_evidence_summary(
-    scorecard: Mapping[str, Any],
-    owner_update: Mapping[str, Any],
-    watch: Mapping[str, Any],
-) -> dict[str, Any]:
-    decision = _mapping(scorecard.get("promotion_readiness_decision"))
-    options = _mapping(owner_update.get("smoothed_owner_decision_options"))
-    watch_summary = _mapping(watch.get("smoothed_watch_summary"))
-    primary_method = _text(
-        decision.get("recommended_method"),
-        _text(options.get("candidate_method"), "smooth_weights_3d_limited_adjustment"),
-    )
-    secondary_method = _text(
-        decision.get("secondary_method"),
-        _text(options.get("secondary_method"), "smooth_weights_5d_limited_adjustment"),
-    )
-    return {
-        "schema_version": SCHEMA_VERSION,
-        "candidate_method": primary_method,
-        "secondary_method": secondary_method,
-        "readiness_decision": _text(decision.get("decision"), "REVIEW_REQUIRED"),
-        "decision_confidence": _text(decision.get("confidence"), "LOW"),
-        "recommended_owner_action": _text(
-            options.get("recommended_owner_action"),
-            "continue_observation",
-        ),
-        "forward_confirmation_status": _text(
-            options.get("forward_confirmation_status"),
-            _text(watch_summary.get("forward_confirmation_status"), "IN_PROGRESS"),
-        ),
-        "supporting_evidence": [
-            {
-                "evidence_id": "churn_reduction_strong",
-                "summary": (
-                    "smooth_weights_3d shows strong churn reduction versus limited_adjustment."
-                ),
-                "evidence_quality": "BACKTEST_OR_PAPER_SHADOW",
-                "supports_promotion_review": True,
-                **SYSTEM_TARGET_SAFETY,
-            },
-            {
-                "evidence_id": "sideways_churn_reduction_helped",
-                "summary": (
-                    "sideways mixed attribution indicates churn reduction helped "
-                    "and prefers 3d over 5d."
-                ),
-                "evidence_quality": "BACKTEST_OR_PAPER_SHADOW",
-                "supports_promotion_review": True,
-                **SYSTEM_TARGET_SAFETY,
-            },
-            {
-                "evidence_id": "recovery_lag_low",
-                "summary": "recovery lag is currently LOW.",
-                "evidence_quality": "BACKTEST_OR_PAPER_SHADOW",
-                "supports_promotion_review": True,
-                **SYSTEM_TARGET_SAFETY,
-            },
-        ],
-        **SYSTEM_TARGET_SAFETY,
-    }
-
-
-def _smoothed_promotion_blocking_issues(
-    scorecard: Mapping[str, Any],
-    owner_update: Mapping[str, Any],
-    watch: Mapping[str, Any],
-) -> dict[str, Any]:
-    decision = _mapping(scorecard.get("promotion_readiness_decision"))
-    options = _mapping(owner_update.get("smoothed_owner_decision_options"))
-    watch_summary = _mapping(watch.get("smoothed_watch_summary"))
-    forward_status = _text(
-        options.get("forward_confirmation_status"),
-        _text(watch_summary.get("forward_confirmation_status"), "IN_PROGRESS"),
-    )
-    confidence = _text(decision.get("confidence"), "LOW")
-    issues: list[dict[str, Any]] = []
-    if forward_status == "IN_PROGRESS":
-        issues.append(
-            {
-                "issue": "forward_confirmation_in_progress",
-                "severity": "REVIEW_REQUIRED",
-                "blocks_official_promotion": True,
-                "blocks_paper_shadow_primary_candidate": False,
-                "reason": "Forward confirmation has not yet completed.",
-                **SYSTEM_TARGET_SAFETY,
-            }
-        )
-    if confidence == "LOW":
-        issues.append(
-            {
-                "issue": "decision_confidence_low",
-                "severity": "WARNING",
-                "blocks_official_promotion": True,
-                "blocks_paper_shadow_primary_candidate": False,
-                "reason": (
-                    "Backtest / paper shadow evidence supports review, but confidence remains LOW."
-                ),
-                **SYSTEM_TARGET_SAFETY,
-            }
-        )
-    return {
-        "schema_version": SCHEMA_VERSION,
-        "blocking_issues": issues,
-        "can_enter_owner_review": decision.get("decision") == "PROMOTE_FOR_REVIEW",
-        "can_become_paper_shadow_primary_candidate": "OWNER_DECISION_REQUIRED",
-        "can_write_official_target_weights": False,
-        "can_trigger_production": False,
-        "automatic_promotion_allowed": False,
-        **SYSTEM_TARGET_SAFETY,
-    }
-
-
-def _primary_research_candidate_gate_decision(
-    promotion: Mapping[str, Any],
-) -> dict[str, Any]:
-    evidence = _mapping(promotion.get("promotion_evidence_summary"))
-    blocking = _mapping(promotion.get("promotion_blocking_issues"))
-    can_owner_review = blocking.get("can_enter_owner_review") is True
-    hard_blockers = [
-        row.get("issue")
-        for row in _records(blocking.get("blocking_issues"))
-        if row.get("blocks_paper_shadow_primary_candidate") is True
-    ]
-    if hard_blockers:
-        gate_decision = "REJECT"
-    elif can_owner_review:
-        gate_decision = "ELIGIBLE_FOR_OWNER_APPROVAL"
-    else:
-        gate_decision = "CONTINUE_OBSERVATION"
-    return {
-        "schema_version": SCHEMA_VERSION,
-        "candidate_method": _text(
-            evidence.get("candidate_method"),
-            "smooth_weights_3d_limited_adjustment",
-        ),
-        "secondary_method": _text(
-            evidence.get("secondary_method"),
-            "smooth_weights_5d_limited_adjustment",
-        ),
-        "gate_scope": "paper_shadow_research_only",
-        "gate_decision": gate_decision,
-        "decision_confidence": _text(evidence.get("decision_confidence"), "LOW"),
-        "owner_approval_required": True,
-        "auto_apply": False,
-        "can_update_paper_shadow_primary_candidate": "OWNER_DECISION_REQUIRED",
-        "can_write_official_target_weights": False,
-        "can_trigger_production": False,
-        "broker_action_allowed": False,
-        "production_effect": "none",
-        **SYSTEM_TARGET_SAFETY,
-    }
-
-
-def _primary_research_candidate_gate_criteria(
-    promotion: Mapping[str, Any],
-    decision: Mapping[str, Any],
-) -> dict[str, Any]:
-    evidence = _mapping(promotion.get("promotion_evidence_summary"))
-    blocking = _mapping(promotion.get("promotion_blocking_issues"))
-    forward_status = _text(evidence.get("forward_confirmation_status"), "IN_PROGRESS")
-    hard_blockers = [
-        _text(row.get("issue"))
-        for row in _records(blocking.get("blocking_issues"))
-        if row.get("blocks_paper_shadow_primary_candidate") is True
-    ]
-    warnings = [
-        _text(row.get("issue"))
-        for row in _records(blocking.get("blocking_issues"))
-        if row.get("blocks_paper_shadow_primary_candidate") is False
-    ]
-    criteria = [
-        {
-            "criterion": "promotion_review_decision",
-            "required": "PROMOTE_FOR_REVIEW",
-            "actual": _text(evidence.get("readiness_decision"), "MISSING"),
-            "status": (
-                "PASS" if evidence.get("readiness_decision") == "PROMOTE_FOR_REVIEW" else "FAIL"
-            ),
-            **SYSTEM_TARGET_SAFETY,
-        },
-        {
-            "criterion": "churn_reduction",
-            "required": "STRONG_OR_MODERATE",
-            "actual": "STRONG",
-            "status": "PASS",
-            **SYSTEM_TARGET_SAFETY,
-        },
-        {
-            "criterion": "recovery_lag",
-            "required": "LOW_OR_MEDIUM",
-            "actual": "LOW",
-            "status": "PASS",
-            **SYSTEM_TARGET_SAFETY,
-        },
-        {
-            "criterion": "forward_confirmation",
-            "required": "IN_PROGRESS_OR_PASS",
-            "actual": forward_status,
-            "status": "PASS_WITH_WARNINGS" if forward_status == "IN_PROGRESS" else "PASS",
-            **SYSTEM_TARGET_SAFETY,
-        },
-        {
-            "criterion": "production_safety",
-            "required": "NO_PRODUCTION",
-            "actual": (
-                "NO_PRODUCTION"
-                if decision.get("can_trigger_production") is False
-                and decision.get("can_write_official_target_weights") is False
-                else "PRODUCTION_ALLOWED"
-            ),
-            "status": "PASS" if decision.get("can_trigger_production") is False else "FAIL",
-            **SYSTEM_TARGET_SAFETY,
-        },
-    ]
-    return {
-        "schema_version": SCHEMA_VERSION,
-        "criteria": criteria,
-        "hard_blockers": hard_blockers,
-        "warnings": warnings,
-        **SYSTEM_TARGET_SAFETY,
-    }
-
-
-def _smoothed_forward_bound_confirmation_targets(
-    confirmation_id: str,
-    confirmation: Mapping[str, Any],
-    gate: Mapping[str, Any],
-) -> dict[str, Any]:
-    gate_decision = _mapping(gate.get("gate_decision"))
-    source_targets = _records(
-        _mapping(confirmation.get("smoothed_confirmation_targets")).get("targets")
-    )
-    source_ids = {_text(row.get("target_id")) for row in source_targets}
-    return {
-        "schema_version": SCHEMA_VERSION,
-        "binding_id": "",
-        "source_confirmation_id": confirmation_id,
-        "gate_id": gate_decision.get("gate_id"),
-        "targets": [
-            {
-                "target_id": "smooth_3d_vs_limited",
-                "method": "smooth_weights_3d_limited_adjustment",
-                "baseline": "limited_adjustment",
-                "status": "IN_PROGRESS",
-                "required_forward_events": SMOOTHED_CONFIRMATION_REQUIRED_FORWARD_EVENTS,
-                "windows": list(SMOOTHED_CONFIRMATION_WINDOWS),
-                "source_target_registered": "smooth_3d_vs_limited" in source_ids,
-                "bound_to_weekly_progress": True,
-                "bound_to_confirmation_dashboard": True,
-                "bound_to_rule_review_queue": True,
-                **SYSTEM_TARGET_SAFETY,
-            },
-            {
-                "target_id": "smooth_3d_sideways_choppy_improvement",
-                "method": "smooth_weights_3d_limited_adjustment",
-                "baseline": "limited_adjustment",
-                "status": "IN_PROGRESS",
-                "required_sideways_events": SMOOTHED_CONFIRMATION_REQUIRED_SIDEWAYS_EVENTS,
-                "bound_to_weekly_progress": True,
-                "bound_to_confirmation_dashboard": True,
-                "bound_to_rule_review_queue": True,
-                "source_target_registered": "smooth_3d_sideways_choppy_improvement" in source_ids,
-                **SYSTEM_TARGET_SAFETY,
-            },
-            {
-                "target_id": "smooth_3d_recovery_lag_watch",
-                "method": "smooth_weights_3d_limited_adjustment",
-                "baseline": "limited_adjustment",
-                "status": "WATCH_ONLY",
-                "required_recovery_events": SMOOTHED_CONFIRMATION_REQUIRED_RECOVERY_EVENTS,
-                "bound_to_weekly_progress": True,
-                "bound_to_confirmation_dashboard": True,
-                "bound_to_rule_review_queue": True,
-                "source_target_registered": "smooth_3d_recovery_lag_watch" in source_ids,
-                **SYSTEM_TARGET_SAFETY,
-            },
-        ],
-        **SYSTEM_TARGET_SAFETY,
-    }
-
-
-def _smoothed_forward_progress_requirements() -> dict[str, Any]:
-    return {
-        "schema_version": SCHEMA_VERSION,
-        "requirements": [
-            {
-                "requirement": "forward_outcome_collection",
-                "description": (
-                    "Collect forward outcomes for smoothed method versus limited_adjustment."
-                ),
-                "cadence": "weekly",
-                **SYSTEM_TARGET_SAFETY,
-            },
-            {
-                "requirement": "sideways_regime_tagged_forward_events",
-                "description": "Collect at least 5 sideways_choppy forward events.",
-                "cadence": "event_driven",
-                **SYSTEM_TARGET_SAFETY,
-            },
-            {
-                "requirement": "recovery_lag_watch",
-                "description": "Monitor strong_recovery / fast regime change for lag cost.",
-                "cadence": "event_driven",
-                **SYSTEM_TARGET_SAFETY,
-            },
-        ],
-        "rule_review_ready_when": [
-            "required_forward_events_met",
-            "sideways_events_met",
-            "no_high_lag_failure",
-        ],
-        **SYSTEM_TARGET_SAFETY,
-    }
-
-
-def _paper_shadow_primary_switch_plan(
-    gate: Mapping[str, Any],
-    binding: Mapping[str, Any],
-) -> dict[str, Any]:
-    decision = _mapping(gate.get("gate_decision"))
-    _ = binding
-    return {
-        "schema_version": SCHEMA_VERSION,
-        "switch_plan_id": "",
-        "candidate_method": _text(
-            decision.get("candidate_method"),
-            "smooth_weights_3d_limited_adjustment",
-        ),
-        "secondary_method": _text(
-            decision.get("secondary_method"),
-            "smooth_weights_5d_limited_adjustment",
-        ),
-        "switch_scope": "paper_shadow_research_only",
-        "current_primary_research_candidate": "limited_adjustment",
-        "proposed_primary_research_candidate": "smooth_weights_3d_limited_adjustment",
-        "switch_decision": "OWNER_DECISION_REQUIRED",
-        "auto_switch": False,
-        "requires_owner_decision": True,
-        "requires_forward_confirmation": True,
-        "rollback_method": "limited_adjustment",
-        "effective_only_for": [
-            "paper_shadow_reports",
-            "research_method_watch",
-            "Reader Brief research section",
-        ],
-        **SYSTEM_TARGET_SAFETY,
-    }
-
-
-def _paper_shadow_primary_switch_safety_checks(
-    plan: Mapping[str, Any],
-) -> dict[str, Any]:
-    checks = {
-        "not_official_target_weights": True,
-        "does_not_modify_position_advisory_config": True,
-        "does_not_modify_real_portfolio": True,
-        "does_not_generate_order_ticket": True,
-        "broker_action_allowed": False,
-        "production_effect": "none",
-        "auto_apply": False,
-    }
-    status = "PASS" if plan.get("auto_switch") is False and _payload_safe(plan) else "FAIL"
-    return {
-        "schema_version": SCHEMA_VERSION,
-        "safety_checks": checks,
-        "status": status,
-        **SYSTEM_TARGET_SAFETY,
-    }
-
-
-def _smoothed_owner_promotion_decision(
-    promotion: Mapping[str, Any],
-    gate: Mapping[str, Any],
-    switch_plan: Mapping[str, Any],
-    *,
-    owner_decision: str,
-    generated_at: datetime,
-) -> dict[str, Any]:
-    evidence = _mapping(promotion.get("promotion_evidence_summary"))
-    gate_decision = _mapping(gate.get("gate_decision"))
-    plan = _mapping(switch_plan.get("primary_switch_plan"))
-    decision = {
-        "schema_version": SCHEMA_VERSION,
-        "decision_id": "",
-        "candidate_method": _text(
-            evidence.get("candidate_method"),
-            _text(gate_decision.get("candidate_method"), "smooth_weights_3d_limited_adjustment"),
-        ),
-        "secondary_method": _text(
-            evidence.get("secondary_method"),
-            _text(gate_decision.get("secondary_method"), "smooth_weights_5d_limited_adjustment"),
-        ),
-        "promotion_review_id": promotion.get("promotion_review_id"),
-        "gate_id": gate.get("gate_id"),
-        "switch_plan_id": plan.get("switch_plan_id"),
-        "owner_decision": owner_decision,
-        "recommended_owner_action": "continue_observation",
-        "decision_reason": "",
-        "paper_shadow_primary_candidate_change_allowed": False,
-        "paper_shadow_primary_candidate_change_requested": False,
-        "actual_switch_executed": False,
-        "forward_confirmation_status": _text(
-            evidence.get("forward_confirmation_status"),
-            "IN_PROGRESS",
-        ),
-        "not_official_target_weights": True,
-        "broker_action_allowed": False,
-        "production_effect": "none",
-        "created_at": generated_at.isoformat(),
-        "updated_at": generated_at.isoformat(),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    return {
-        **decision,
-        **_smoothed_owner_promotion_decision_update(
-            decision,
-            owner_decision=owner_decision,
-            decision_reason="",
-            recorded_at=generated_at,
-        ),
-    }
-
-
-def _smoothed_owner_promotion_decision_update(
-    current: Mapping[str, Any],
-    *,
-    owner_decision: str,
-    decision_reason: str,
-    recorded_at: datetime,
-) -> dict[str, Any]:
-    if owner_decision not in {
-        "pending",
-        "continue_observation",
-        "promote_to_primary_research_candidate",
-        "defer",
-        "reject",
-        "request_more_forward_data",
-    }:
-        raise DynamicV3SystemTargetError(f"invalid owner decision: {owner_decision}")
-    recommended = {
-        "pending": "continue_observation",
-        "continue_observation": "continue_observation",
-        "promote_to_primary_research_candidate": "promote_to_primary_research_candidate",
-        "defer": "defer",
-        "reject": "reject",
-        "request_more_forward_data": "request_more_forward_data",
-    }[owner_decision]
-    change_allowed = owner_decision == "promote_to_primary_research_candidate"
-    return {
-        "owner_decision": owner_decision,
-        "recommended_owner_action": recommended,
-        "decision_reason": decision_reason or _text(current.get("decision_reason"), ""),
-        "paper_shadow_primary_candidate_change_allowed": change_allowed,
-        "paper_shadow_primary_candidate_change_requested": change_allowed,
-        "actual_switch_executed": False,
-        "not_official_target_weights": True,
-        "broker_action_allowed": False,
-        "production_effect": "none",
-        "updated_at": recorded_at.isoformat(),
-        **SYSTEM_TARGET_SAFETY,
-    }
-
-
-def _write_smoothed_owner_promotion_files(
-    root: Path,
-    manifest: Mapping[str, Any],
-    decision: Mapping[str, Any],
-) -> None:
-    checklist = render_smoothed_owner_promotion_checklist(decision)
-    reader = render_smoothed_owner_promotion_reader_brief(decision)
-    _write_json(root / "smoothed_owner_promotion_manifest.json", dict(manifest))
-    _write_json(root / "owner_promotion_decision.json", dict(decision))
-    _write_text(root / "owner_promotion_checklist.md", checklist)
-    _write_text(
-        root / "smoothed_owner_promotion_report.md",
-        render_smoothed_owner_promotion_report(manifest, decision),
-    )
-    _write_text(root / "reader_brief_section.md", reader)
 
 
 def _smoothed_forward_progress_targets(

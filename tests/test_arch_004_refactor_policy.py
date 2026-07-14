@@ -4037,6 +4037,72 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         assert phase_g2_4cp["validation"]["contract_validation"]["passed"] >= 203
         assert phase_g2_4cp["sources"]
         for source in phase_g2_4cp["sources"]:
+            if source["path"] in set(
+                phase_g2_4cp.get("superseded_source_paths", [])
+            ):
+                continue
+            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            assert actual == source["sha256"], source["path"]
+
+    phase_g2_4cq = baseline[
+        "phase_g2_4cq_etf_cli_dynamic_v3_system_target_smoothed_promotion"
+    ]
+    assert phase_g2_4cq["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4cq = phase_g2_4cq["migration"]
+    assert migration_g2_4cq["callback_count"] == 16
+    assert migration_g2_4cq["pre_output_live_source_validation_required"] is True
+    assert migration_g2_4cq["source_chronology_required"] is True
+    assert migration_g2_4cq["exact_candidate_lineage_required"] is True
+    assert migration_g2_4cq["reviewed_promotion_policy_required"] is True
+    assert migration_g2_4cq["confirmation_candidate_is_only_candidate_authority"] is True
+    assert migration_g2_4cq["fixed_method_fallback_allowed"] is False
+    assert migration_g2_4cq["candidate_less_target_fabrication_allowed"] is False
+    assert migration_g2_4cq["candidate_less_switch_proposal_allowed"] is False
+    assert migration_g2_4cq["candidate_less_promote_record_allowed"] is False
+    assert migration_g2_4cq["candidate_less_continue_observation_valid"] is True
+    assert (
+        migration_g2_4cq["bounded_source_bundle_recursive_input_snapshot_allowed"]
+        is False
+    )
+    assert migration_g2_4cq["bounded_source_bundle_live_validator_required"] is True
+    assert (
+        migration_g2_4cq["content_derived_evidence_criteria_targets_switch_journal"]
+        is True
+    )
+    assert migration_g2_4cq["owner_record_atomic_all_view_rebuild"] is True
+    assert len(migration_g2_4cq["snapshot_schemas"]) == 5
+    assert migration_g2_4cq["content_derived_all_views_validation"] is True
+    assert migration_g2_4cq["automatic_policy_or_execution_allowed"] is False
+    assert migration_g2_4cq["portfolio_or_execution_effect"] is False
+    assert migration_g2_4cq["legacy_root_lines_after"] == 16761
+    assert migration_g2_4cq["legacy_root_top_level_functions_after"] == 452
+    assert migration_g2_4cq["legacy_root_command_decorators_after"] == 413
+    assert migration_g2_4cq["legacy_domain_lines_after"] == 18248
+    assert migration_g2_4cq["legacy_domain_top_level_functions_after"] == 740
+    assert migration_g2_4cq["legacy_domain_compatibility_wrapper_count"] == 11
+    assert migration_g2_4cq["python_module_count"] == 919
+    assert migration_g2_4cq["python_test_file_count"] == 1120
+    fixture_g2_4cq = phase_g2_4cq["fixture"]
+    assert fixture_g2_4cq["candidate_method"] is None
+    assert fixture_g2_4cq["promotion_can_enter_owner_review"] is False
+    assert fixture_g2_4cq["promotion_can_become_primary_candidate"] == "NOT_ELIGIBLE"
+    assert fixture_g2_4cq["gate_decision"] == "CONTINUE_OBSERVATION"
+    assert fixture_g2_4cq["binding_status"] == "NOT_REGISTERED"
+    assert fixture_g2_4cq["bound_target_count"] == 0
+    assert fixture_g2_4cq["proposed_primary_research_candidate"] is None
+    assert fixture_g2_4cq["switch_decision"] == "NO_ELIGIBLE_CANDIDATE"
+    assert fixture_g2_4cq["owner_recommended_action"] == "request_more_forward_data"
+    assert fixture_g2_4cq["invalid_candidate_less_promote_rejected"] is True
+    assert fixture_g2_4cq["continue_observation_validation"] == "PASS"
+    assert fixture_g2_4cq["actual_switch_executed"] is False
+    assert fixture_g2_4cq["workflow_pass_is_not_investment_conclusion"] is True
+    if phase_g2_4cq["status"] == "COMPLETE_G2_4_CONTINUES":
+        assert phase_g2_4cq["validation"]["hardening"]["passed"] >= 7
+        assert phase_g2_4cq["validation"]["five_stage_integration"]["passed"] >= 5
+        assert phase_g2_4cq["validation"]["architecture_fitness"]["passed"] >= 278
+        assert phase_g2_4cq["validation"]["contract_validation"]["passed"] >= 203
+        assert phase_g2_4cq["sources"]
+        for source in phase_g2_4cq["sources"]:
             actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
             assert actual == source["sha256"], source["path"]
 
@@ -4200,6 +4266,8 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CO_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CP_VALIDATING_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CP_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CQ_VALIDATING_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CQ_COMPLETE_G2_4_CONTINUES",
     }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

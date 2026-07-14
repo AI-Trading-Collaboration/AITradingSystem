@@ -1765,6 +1765,53 @@ component 都为 missing、overall readiness score 都为 null。最终 Scorecar
 任一 diagnostic score 都不能自动修改 method/policy/weights/portfolio/production、生成
 order 或触发 broker。
 
+### 7.26 Smoothed Promotion / Gate / Binding / Switch / Owner（TRADING-261～265 / ARCH-004G2.4CQ）
+
+为什么这样设计：G2.4CP 已给出 `candidate_method=null`、Scorecard
+`CONTINUE_OBSERVATION/INSUFFICIENT_EVIDENCE`、Owner `request_additional_evidence`。旧 CQ
+consumer 却在 candidate 为空时回填固定 3d/5d、写静态 supporting evidence / PASS criteria、
+从空 Confirmation 补造 targets，并生成 non-null switch proposal；其 validator 又把“必须
+PROMOTE”当作 artifact 完整性条件。这会把旧假设伪装成当前证据。G2.4CQ 因而把 candidate
+authority、研究 gate、switch plan 和 owner journal 分层，且所有判断都从 validated snapshot
+content 重建。
+
+| 环节 | 输入与写前门禁 | 核心计算逻辑 | 输出与解释边界 |
+|---|---|---|---|
+| Promotion Review | validated Readiness Scorecard、Owner Update、Watch，三者 Review/Comparison/Smoothed/Baseline/candidate exact match；reviewed promotion policy 与 timezone chronology 合法 | candidate 只取 Scorecard/Owner/Watch 共同值；supporting evidence 只列实际 PASS/available component，blocking issues 由 null、readiness、forward 与 hard blockers 逐项生成 | `smoothed_promotion_review_input_snapshot.v2`、evidence、blockers、report/Reader Brief。当前 candidate=null、`can_enter_owner_review=false`，workflow artifact仍可 PASS |
+| Primary Candidate Gate | validated Promotion Review；live policy、candidate 与 generated chronology重验 | 按 policy 对 candidate presence、readiness、forward、blocking、owner approval requirement逐项判断；criteria是实际布尔结果，不是静态 PASS | `primary_research_candidate_gate_input_snapshot.v2`、decision/criteria/report。当前=`CONTINUE_OBSERVATION`，不是 rejection，也不是 eligible approval |
+| Forward Binding | validated Confirmation 与 Gate；candidate 必须 exact match | 只复制 Confirmation 中已登记且属于 Gate candidate 的 targets；candidate=null时 targets保持空数组，requirements也为空 | `smoothed_forward_binding_input_snapshot.v2`、targets/requirements/report/Reader Brief。当前=`NOT_REGISTERED/0 targets`，不补造3个观察目标 |
+| Paper-shadow Switch | validated Gate 与 Binding；current/rollback method及eligibility来自reviewed policy | 只有 candidate非空、Gate eligible、Binding registered且targets非空才可提出 owner-reviewed research switch；否则 proposed candidate=null | `paper_shadow_primary_switch_input_snapshot.v2`、plan/safety/report。当前=`NO_ELIGIBLE_CANDIDATE`、actual switch=false |
+| Owner Journal | validated Promotion/Gate/Switch exact candidate lineage；create或record前先验证现有views | create生成pending decision；record request必须属于policy枚举，并以同一snapshot原子重建全部views。若无candidate或gate/switch不允许，记录promote立即失败 | `smoothed_owner_promotion_input_snapshot.v2`、decision/checklist/report/Reader Brief。当前推荐`request_more_forward_data`；合法`continue_observation`可PASS，任何记录都不执行switch |
+
+五类 producer 的 source binding 只冻结本段实际消费的业务 views、source path/file commitment、
+hash 与上游 validation payload，不递归复制上游 `*_input_snapshot.json` 正文；否则深链会把同一
+source tree 指数级嵌入，既降低可读性又导致 GB 级 artifact。该 bounded 设计不是放宽校验：
+producer/validator仍调用完整 live upstream validator，内容寻址验证会话只复用未变化 source，
+任一 source file fingerprint 改变即失效。Validator从本段 snapshot逐 byte重建全部JSON、
+Markdown、checklist与Reader Brief；业务view或上游source tamper均FAIL。
+
+当前 source-backed 结果仍使用 `ai_after_chatgpt=2022-12-01` 主结论窗口：candidate=null，
+Promotion不能进入owner review，Gate继续观察，Binding无targets，Switch无proposed candidate，
+Owner pending且建议补forward evidence。合法记录`continue_observation`后artifact仍PASS。这是
+“链路完整但证据不足”，不能写成方法晋升、paper-shadow切换或投资结论。
+
+后续优化空间及进入条件：
+
+1. 先由独立 forward/PIT/holdout/cost evidence 令上游 Review/Confirmation产生唯一 candidate；
+   不得直接修改CQ snapshot或promotion policy制造候选。
+2. Promotion/gate/switch policy只能通过versioned ChangeProposal与独立验证校准；本次null结果
+   不能作为事后放宽阈值的理由。
+3. Validation session未来可升级为持久化cache，但key必须包含完整source commitments、validator
+   version、policy hash与cutoff，并保留跨进程失效测试；不能只按artifact id缓存。
+4. 继续治理CP及更早source snapshot的递归bundle膨胀；每次迁移须证明下游需要哪些views、
+   validator如何覆盖未内嵌文件，不能以删除source audit换取性能。
+5. 当candidate真实出现时，补充eligible与ineligible双路径、owner promote记录以及rollback计划
+   的contract tests；在此之前不得用手工伪造candidate作为当前研究结论。
+
+本 slice 固定 manual/current-definition/not-PIT paper-shadow research，
+`not_official_target_weights=true`、`auto_apply=false`、`broker_action_allowed=false`、
+`actual_switch_executed=false`、`production_effect=none`。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |
