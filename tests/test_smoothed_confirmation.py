@@ -23,20 +23,14 @@ def test_smoothed_confirmation_registers_targets_and_safety_boundary(tmp_path) -
     )
 
     targets = result["smoothed_confirmation_targets"]
-    assert targets["schema_version"] == 1
+    assert targets["schema_version"] == 2
     assert targets["report_type"] == "etf_dynamic_v3_smoothed_confirmation_targets"
-    assert targets["status"] == "PASS"
-    target_ids = {row["target_id"] for row in targets["targets"]}
-    assert target_ids >= {
-        "smooth_3d_vs_limited",
-        "smooth_3d_vs_static_baseline",
-        "smooth_3d_sideways_choppy_improvement",
-        "smooth_3d_recovery_lag_watch",
-    }
+    assert targets["status"] == "INSUFFICIENT_EVIDENCE"
+    assert targets["candidate_method"] is None
+    assert targets["targets"] == []
     assert targets["auto_apply"] is False
     assert targets["broker_action_allowed"] is False
     assert targets["production_effect"] == "none"
-    assert any(row["status"] == "WATCH_ONLY" for row in targets["targets"])
 
     validation = system_target.validate_smoothed_confirmation_artifact(
         confirmation_id=result["confirmation_id"],

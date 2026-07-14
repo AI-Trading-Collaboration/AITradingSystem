@@ -3090,8 +3090,8 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review_attribution/*/smoothed_review_attribution_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-251 explains why smoothed review remains continue-observation /
-      low confidence before owner uses it for forward confirmation.
+      TRADING-251 explains per-method evidence behind continue-observation / low
+      confidence without assigning fixed primary or secondary method roles.
     owner_action: review_smoothed_attribution_before_promotion_discussion
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -3111,8 +3111,8 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/smoothing_benefit_lag/*/smoothing_benefit_lag_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-252 separates smoothing benefits from lag cost so owner can assess
-      whether smooth_weights_3d remains worth forward observation.
+      TRADING-252 separates per-method smoothing benefits from lag cost while
+      preserving null and insufficient-data states for both 3d and 5d methods.
     owner_action: review_benefit_lag_tradeoff_before_forward_confirmation
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -3150,8 +3150,9 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_confirmation/*/smoothed_confirmation_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-254 registers forward evidence targets for smooth_weights_3d while
-      keeping auto_apply false and production_effect none.
+      TRADING-254 registers forward evidence targets only for the unique eligible
+      review recommendation; no candidate produces zero targets and an explicit
+      insufficient-evidence status while keeping production_effect none.
     owner_action: review_smoothed_confirmation_targets_before_weekly_watch
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

@@ -1371,12 +1371,19 @@ TRADING-251_to_255_SMOOTHED_METHOD_EVIDENCE_DRILLDOWN_AND_FORWARD_CONFIRMATION
 `smoothed-confirmation register/report`、`validate-smoothed-confirmation`、
 `smoothed-watch-pack run/report` 和 `validate-smoothed-watch-pack`。Runtime artifacts 写入
 `reports/etf_portfolio/dynamic_v3_rescue/smoothed_review_attribution|smoothing_benefit_lag|smoothed_regime_validation|smoothed_forward_confirmation|smoothed_watch_pack/`，
-并登记 report registry / Reader Brief `Dynamic Rescue Smoothed Method Watch`。该链路解释
-`CONTINUE_OBSERVATION` / `LOW` confidence 原因，拆解 smoothing benefit vs lag cost，
-验证 `sideways_choppy` 和 `strong_recovery` 表现，登记 `smooth_3d_vs_limited`、
-`smooth_3d_vs_static_baseline`、`smooth_3d_sideways_choppy_improvement` 和
-`smooth_3d_recovery_lag_watch` forward confirmation targets，并生成 owner weekly watch
-pack。所有输出继续固定 `research_target_only=true`、`paper_shadow_only=true`、
+并登记 report registry / Reader Brief `Dynamic Rescue Smoothed Method Watch`。ARCH-004G2.4CO
+将 15 个 callback 迁至 `interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_evidence.py`，
+领域实现迁至 `etf_portfolio/dynamic_v3_system_target_smoothed_evidence.py`；Attribution、Benefit/Lag、
+Regime、Confirmation、Watch 分别冻结五类 `*.v2` snapshot，重验 live source/config、exact
+Review→Comparison→Smoothed→Baseline lineage 与 chronology，并逐 byte 重建全部 views。该链路
+按 method 拆解 smoothing benefit vs lag cost，验证 `sideways_choppy` 和 `strong_recovery`，但
+只有 Review 实际给出唯一 `promotion_eligible=true` 的 `recommended_method` 时才为该方法登记
+forward confirmation targets；无候选时明确输出 `candidate_method=null`、`targets=[]`、
+`status=INSUFFICIENT_EVIDENCE`，不再固定 3d 为主方法。当前 fixture 的 3d/5d benefit 均为
+`MODERATE`、tradeoff 均为 `FAVORABLE`，sideways 分别为 `MIXED/IMPROVED`、recovery 均为
+`LOW`，但上游 Review 仍为 `CONTINUE_OBSERVATION/LOW` 且无 eligible candidate，因此未登记
+任何 forward target；workflow PASS 不等于投资结论。所有输出继续固定
+`research_target_only=true`、`paper_shadow_only=true`、
 `not_official_target_weights=true`、`broker_action_allowed=false`、
 `broker_action_taken=false`、`order_ticket_generated=false`、`auto_apply=false`、
 `production_effect=none`；达标后也不自动 promotion，不写 official target weights、不触发

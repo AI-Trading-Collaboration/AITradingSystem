@@ -28,12 +28,18 @@ def test_smoothed_review_attribution_explains_continue_observation(tmp_path) -> 
     assert breakdown["broker_action_allowed"] is False
 
     matrix = result["smoothed_metric_support_matrix"]
-    assert {row["metric"] for row in matrix["metrics"]} >= {
+    statuses = {
+        key
+        for row in matrix["methods"]
+        for key in row["statuses"]
+    }
+    assert statuses >= {
         "rolling_consistency",
         "turnover",
         "weight_jump",
         "lag_cost",
     }
+    assert breakdown["recommended_method"] is None
 
     validation = system_target.validate_smoothed_review_attribution_artifact(
         attribution_id=result["attribution_id"],

@@ -51,10 +51,11 @@ def test_smoothed_watch_pack_outputs_reader_brief_section_and_safety(tmp_path) -
     )
 
     summary = result["smoothed_watch_summary"]
-    assert summary["candidate_method"] == "smooth_weights_3d_limited_adjustment"
-    assert summary["forward_confirmation_status"] == "IN_PROGRESS"
-    assert summary["sideways_validation_status"] != "INSUFFICIENT_DATA"
-    assert summary["recovery_lag_status"] != "INSUFFICIENT_DATA"
+    assert summary["candidate_method"] is None
+    assert summary["forward_confirmation_status"] == "NOT_REGISTERED"
+    assert summary["benefit_lag_tradeoff"] == "INSUFFICIENT_EVIDENCE"
+    assert summary["sideways_validation_status"] == "INSUFFICIENT_EVIDENCE"
+    assert summary["recovery_lag_status"] == "INSUFFICIENT_EVIDENCE"
     assert summary["research_target_only"] is True
     assert summary["not_official_target_weights"] is True
     assert summary["broker_action_allowed"] is False
@@ -98,7 +99,7 @@ def test_smoothed_watch_pack_outputs_reader_brief_section_and_safety(tmp_path) -
     }
     reader_summary = reader_brief._etf_dynamic_v3_system_target_summary(report_index)
     assert reader_summary["smoothed_watch_pack_id"] == result["watch_pack_id"]
-    assert reader_summary["smoothed_watch_forward_confirmation_status"] == "IN_PROGRESS"
+    assert reader_summary["smoothed_watch_forward_confirmation_status"] == "NOT_REGISTERED"
     assert reader_summary["smoothed_watch_sideways_validation_status"] == summary[
         "sideways_validation_status"
     ]

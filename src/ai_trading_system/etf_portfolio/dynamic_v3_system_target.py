@@ -515,6 +515,106 @@ def validate_smoothed_review_artifact(*args: Any, **kwargs: Any) -> dict[str, An
     return _call_smoothed_method("validate_smoothed_review_artifact", *args, **kwargs)
 
 
+def _call_smoothed_evidence(name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    # ARCH-004 G2.4CO compatibility surface.
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_smoothed_evidence,
+    )
+
+    try:
+        return getattr(dynamic_v3_system_target_smoothed_evidence, name)(*args, **kwargs)
+    except DynamicV3SystemTargetError:
+        raise
+    except ValueError as exc:
+        raise DynamicV3SystemTargetError(str(exc)) from exc
+
+
+def run_smoothed_review_attribution(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("run_smoothed_review_attribution", *args, **kwargs)
+
+
+def smoothed_review_attribution_report_payload(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_smoothed_evidence(
+        "smoothed_review_attribution_report_payload", *args, **kwargs
+    )
+
+
+def validate_smoothed_review_attribution_artifact(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_smoothed_evidence(
+        "validate_smoothed_review_attribution_artifact", *args, **kwargs
+    )
+
+
+def run_smoothing_benefit_lag_drilldown(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("run_smoothing_benefit_lag_drilldown", *args, **kwargs)
+
+
+def smoothing_benefit_lag_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("smoothing_benefit_lag_report_payload", *args, **kwargs)
+
+
+def validate_smoothing_benefit_lag_artifact(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_smoothed_evidence(
+        "validate_smoothing_benefit_lag_artifact", *args, **kwargs
+    )
+
+
+def run_smoothed_regime_validation(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("run_smoothed_regime_validation", *args, **kwargs)
+
+
+def smoothed_regime_validation_report_payload(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_smoothed_evidence(
+        "smoothed_regime_validation_report_payload", *args, **kwargs
+    )
+
+
+def validate_smoothed_regime_validation_artifact(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_smoothed_evidence(
+        "validate_smoothed_regime_validation_artifact", *args, **kwargs
+    )
+
+
+def register_smoothed_confirmation_targets(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("register_smoothed_confirmation_targets", *args, **kwargs)
+
+
+def smoothed_confirmation_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("smoothed_confirmation_report_payload", *args, **kwargs)
+
+
+def validate_smoothed_confirmation_artifact(
+    *args: Any, **kwargs: Any
+) -> dict[str, Any]:
+    return _call_smoothed_evidence(
+        "validate_smoothed_confirmation_artifact", *args, **kwargs
+    )
+
+
+def run_smoothed_watch_pack(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("run_smoothed_watch_pack", *args, **kwargs)
+
+
+def smoothed_watch_pack_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence("smoothed_watch_pack_report_payload", *args, **kwargs)
+
+
+def validate_smoothed_watch_pack_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_smoothed_evidence(
+        "validate_smoothed_watch_pack_artifact", *args, **kwargs
+    )
+
+
 def _call_experiment_factory(name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
     # ARCH-004 G2.4CM compatibility surface. The lazy import avoids a module
     # cycle while preserving every historical Python caller.
@@ -808,760 +908,6 @@ def risk_capped_review_report_payload(*args: Any, **kwargs: Any) -> dict[str, An
 
 def validate_risk_capped_review_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_risk_capped("validate_risk_capped_review_artifact", *args, **kwargs)
-
-
-def run_smoothed_review_attribution(
-    *,
-    review_id: str,
-    comparison_id: str,
-    backfill_id: str,
-    review_dir: Path = DEFAULT_SMOOTHED_REVIEW_DIR,
-    comparison_dir: Path = DEFAULT_SMOOTHED_COMPARISON_DIR,
-    backfill_dir: Path = DEFAULT_SMOOTHED_BACKFILL_DIR,
-    output_dir: Path = DEFAULT_SMOOTHED_REVIEW_ATTRIBUTION_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    review = smoothed_review_report_payload(review_id=review_id, output_dir=review_dir)
-    comparison = smoothed_comparison_report_payload(
-        comparison_id=comparison_id,
-        output_dir=comparison_dir,
-    )
-    backfill = smoothed_backfill_report_payload(backfill_id=backfill_id, output_dir=backfill_dir)
-    breakdown = _smoothed_decision_reason_breakdown(review, comparison, backfill)
-    support_matrix = _smoothed_metric_support_matrix(comparison)
-    attribution_id = _stable_id(
-        "smoothed-review-attribution",
-        review_id,
-        comparison_id,
-        backfill_id,
-        breakdown,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / attribution_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_smoothed_review_attribution_manifest",
-        "attribution_id": root.name,
-        "review_id": review_id,
-        "comparison_id": comparison_id,
-        "smoothed_backfill_id": backfill_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "date_start": backfill.get("date_start"),
-        "date_end": backfill.get("date_end"),
-        "data_quality_status": _mapping(backfill.get("smoothed_backfill_summary")).get(
-            "data_quality"
-        ),
-        "smoothed_review_attribution_manifest_path": str(
-            root / "smoothed_review_attribution_manifest.json"
-        ),
-        "smoothed_decision_reason_breakdown_path": str(
-            root / "smoothed_decision_reason_breakdown.json"
-        ),
-        "smoothed_metric_support_matrix_path": str(root / "smoothed_metric_support_matrix.json"),
-        "smoothed_review_attribution_report_path": str(
-            root / "smoothed_review_attribution_report.md"
-        ),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "smoothed_review_attribution_manifest.json", manifest)
-    _write_json(root / "smoothed_decision_reason_breakdown.json", breakdown)
-    _write_json(root / "smoothed_metric_support_matrix.json", support_matrix)
-    _write_text(
-        root / "smoothed_review_attribution_report.md",
-        render_smoothed_review_attribution_report(manifest, breakdown, support_matrix),
-    )
-    _write_latest_pointer(
-        "latest_smoothed_review_attribution",
-        root.name,
-        root / "smoothed_review_attribution_manifest.json",
-    )
-    return {
-        "attribution_id": root.name,
-        "attribution_dir": root,
-        "manifest": manifest,
-        "smoothed_decision_reason_breakdown": breakdown,
-        "smoothed_metric_support_matrix": support_matrix,
-    }
-
-
-def smoothed_review_attribution_report_payload(
-    *,
-    attribution_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SMOOTHED_REVIEW_ATTRIBUTION_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=attribution_id,
-        latest_pointer="latest_smoothed_review_attribution",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="smoothed_review_attribution_manifest.json",
-    )
-    return {
-        **_read_json(root / "smoothed_review_attribution_manifest.json"),
-        "smoothed_decision_reason_breakdown": _read_json(
-            root / "smoothed_decision_reason_breakdown.json"
-        ),
-        "smoothed_metric_support_matrix": _read_json(root / "smoothed_metric_support_matrix.json"),
-        "attribution_dir": str(root),
-    }
-
-
-def validate_smoothed_review_attribution_artifact(
-    *,
-    attribution_id: str,
-    output_dir: Path = DEFAULT_SMOOTHED_REVIEW_ATTRIBUTION_DIR,
-) -> dict[str, Any]:
-    root = output_dir / attribution_id
-    manifest = _read_optional_json(root / "smoothed_review_attribution_manifest.json") or {}
-    breakdown = _read_optional_json(root / "smoothed_decision_reason_breakdown.json") or {}
-    support_matrix = _read_optional_json(root / "smoothed_metric_support_matrix.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "smoothed_review_attribution_manifest.json",
-            "smoothed_decision_reason_breakdown.json",
-            "smoothed_metric_support_matrix.json",
-            "smoothed_review_attribution_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "attribution_id_matches",
-                manifest.get("attribution_id") == attribution_id,
-                "",
-            ),
-            _check(
-                "decision_visible",
-                breakdown.get("decision")
-                in {
-                    "PROMOTE_TO_RECOMMENDED_RESEARCH",
-                    "CONTINUE_OBSERVATION",
-                    "REJECT",
-                    "REVIEW_REQUIRED",
-                },
-                _text(breakdown.get("decision")),
-            ),
-            _check(
-                "supporting_reasons_present",
-                bool(_records(breakdown.get("supporting_reasons"))),
-                "",
-            ),
-            _check(
-                "blocking_reasons_present",
-                bool(_records(breakdown.get("blocking_reasons"))),
-                "",
-            ),
-            _check("why_not_promote_present", bool(breakdown.get("why_not_promote")), ""),
-            _check("why_not_reject_present", bool(breakdown.get("why_not_reject")), ""),
-            _check(
-                "metric_matrix_present",
-                bool(_records(support_matrix.get("metrics"))),
-                "",
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, breakdown, support_matrix), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_smoothed_review_attribution_validation",
-        attribution_id,
-        checks,
-    )
-
-
-def run_smoothing_benefit_lag_drilldown(
-    *,
-    smoothed_backfill_id: str,
-    comparison_id: str,
-    backfill_dir: Path = DEFAULT_SMOOTHED_BACKFILL_DIR,
-    comparison_dir: Path = DEFAULT_SMOOTHED_COMPARISON_DIR,
-    output_dir: Path = DEFAULT_SMOOTHING_BENEFIT_LAG_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    backfill = smoothed_backfill_report_payload(
-        backfill_id=smoothed_backfill_id,
-        output_dir=backfill_dir,
-    )
-    comparison = smoothed_comparison_report_payload(
-        comparison_id=comparison_id,
-        output_dir=comparison_dir,
-    )
-    benefit = _smoothing_benefit_summary(comparison)
-    lag = _smoothing_lag_cost_summary(comparison)
-    tradeoff = _smoothing_benefit_lag_tradeoff_matrix(benefit, lag)
-    drilldown_id = _stable_id(
-        "smoothing-benefit-lag",
-        smoothed_backfill_id,
-        comparison_id,
-        benefit,
-        lag,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / drilldown_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_smoothing_benefit_lag_manifest",
-        "drilldown_id": root.name,
-        "smoothed_backfill_id": smoothed_backfill_id,
-        "comparison_id": comparison_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "date_start": backfill.get("date_start"),
-        "date_end": backfill.get("date_end"),
-        "data_quality_status": _mapping(backfill.get("smoothed_backfill_summary")).get(
-            "data_quality"
-        ),
-        "smoothing_benefit_lag_manifest_path": str(root / "smoothing_benefit_lag_manifest.json"),
-        "smoothing_benefit_summary_path": str(root / "smoothing_benefit_summary.json"),
-        "lag_cost_summary_path": str(root / "lag_cost_summary.json"),
-        "benefit_lag_tradeoff_matrix_path": str(root / "benefit_lag_tradeoff_matrix.json"),
-        "smoothing_benefit_lag_report_path": str(root / "smoothing_benefit_lag_report.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "smoothing_benefit_lag_manifest.json", manifest)
-    _write_json(root / "smoothing_benefit_summary.json", benefit)
-    _write_json(root / "lag_cost_summary.json", lag)
-    _write_json(root / "benefit_lag_tradeoff_matrix.json", tradeoff)
-    _write_text(
-        root / "smoothing_benefit_lag_report.md",
-        render_smoothing_benefit_lag_report(manifest, benefit, lag, tradeoff),
-    )
-    _write_latest_pointer(
-        "latest_smoothing_benefit_lag",
-        root.name,
-        root / "smoothing_benefit_lag_manifest.json",
-    )
-    return {
-        "drilldown_id": root.name,
-        "drilldown_dir": root,
-        "manifest": manifest,
-        "smoothing_benefit_summary": benefit,
-        "lag_cost_summary": lag,
-        "benefit_lag_tradeoff_matrix": tradeoff,
-    }
-
-
-def smoothing_benefit_lag_report_payload(
-    *,
-    drilldown_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SMOOTHING_BENEFIT_LAG_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=drilldown_id,
-        latest_pointer="latest_smoothing_benefit_lag",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="smoothing_benefit_lag_manifest.json",
-    )
-    return {
-        **_read_json(root / "smoothing_benefit_lag_manifest.json"),
-        "smoothing_benefit_summary": _read_json(root / "smoothing_benefit_summary.json"),
-        "lag_cost_summary": _read_json(root / "lag_cost_summary.json"),
-        "benefit_lag_tradeoff_matrix": _read_json(root / "benefit_lag_tradeoff_matrix.json"),
-        "drilldown_dir": str(root),
-    }
-
-
-def validate_smoothing_benefit_lag_artifact(
-    *,
-    drilldown_id: str,
-    output_dir: Path = DEFAULT_SMOOTHING_BENEFIT_LAG_DIR,
-) -> dict[str, Any]:
-    root = output_dir / drilldown_id
-    manifest = _read_optional_json(root / "smoothing_benefit_lag_manifest.json") or {}
-    benefit = _read_optional_json(root / "smoothing_benefit_summary.json") or {}
-    lag = _read_optional_json(root / "lag_cost_summary.json") or {}
-    tradeoff = _read_optional_json(root / "benefit_lag_tradeoff_matrix.json") or {}
-    methods = {row.get("method") for row in _records(benefit.get("methods"))}
-    checks = _required_file_checks(
-        root,
-        (
-            "smoothing_benefit_lag_manifest.json",
-            "smoothing_benefit_summary.json",
-            "lag_cost_summary.json",
-            "benefit_lag_tradeoff_matrix.json",
-            "smoothing_benefit_lag_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check("drilldown_id_matches", manifest.get("drilldown_id") == drilldown_id, ""),
-            _check(
-                "smoothed_methods_present",
-                set(SMOOTHED_METHOD_TO_VARIANT).issubset(methods),
-                ",".join(sorted(str(item) for item in methods)),
-            ),
-            _check("lag_methods_present", bool(_records(lag.get("methods"))), ""),
-            _check("tradeoff_present", bool(_records(tradeoff.get("methods"))), ""),
-            _check("broker_forbidden", _payload_safe(manifest, benefit, lag, tradeoff), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_smoothing_benefit_lag_validation",
-        drilldown_id,
-        checks,
-    )
-
-
-def run_smoothed_regime_validation(
-    *,
-    smoothed_backfill_id: str,
-    smoothed_backfill_dir: Path = DEFAULT_SMOOTHED_BACKFILL_DIR,
-    baseline_backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    output_dir: Path = DEFAULT_SMOOTHED_REGIME_VALIDATION_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    smoothed = smoothed_backfill_report_payload(
-        backfill_id=smoothed_backfill_id,
-        output_dir=smoothed_backfill_dir,
-    )
-    source_id = _text(smoothed.get("source_paper_shadow_backfill_id"))
-    baseline = paper_shadow_backfill_report_payload(
-        backfill_id=source_id,
-        output_dir=baseline_backfill_dir,
-    )
-    sideways = _smoothed_sideways_validation_summary(smoothed, baseline)
-    recovery = _smoothed_recovery_lag_validation_summary(smoothed, baseline)
-    regime_validation_id = _stable_id(
-        "smoothed-regime-validation",
-        smoothed_backfill_id,
-        source_id,
-        sideways,
-        recovery,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / regime_validation_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_smoothed_regime_validation_manifest",
-        "regime_validation_id": root.name,
-        "smoothed_backfill_id": smoothed_backfill_id,
-        "baseline_backfill_id": source_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": smoothed.get("market_regime", "ai_after_chatgpt"),
-        "date_start": smoothed.get("date_start"),
-        "date_end": smoothed.get("date_end"),
-        "data_quality_status": _mapping(smoothed.get("smoothed_backfill_summary")).get(
-            "data_quality"
-        ),
-        "smoothed_regime_validation_manifest_path": str(
-            root / "smoothed_regime_validation_manifest.json"
-        ),
-        "sideways_validation_summary_path": str(root / "sideways_validation_summary.json"),
-        "recovery_lag_validation_summary_path": str(root / "recovery_lag_validation_summary.json"),
-        "smoothed_regime_validation_report_path": str(
-            root / "smoothed_regime_validation_report.md"
-        ),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "smoothed_regime_validation_manifest.json", manifest)
-    _write_json(root / "sideways_validation_summary.json", sideways)
-    _write_json(root / "recovery_lag_validation_summary.json", recovery)
-    _write_text(
-        root / "smoothed_regime_validation_report.md",
-        render_smoothed_regime_validation_report(manifest, sideways, recovery),
-    )
-    _write_latest_pointer(
-        "latest_smoothed_regime_validation",
-        root.name,
-        root / "smoothed_regime_validation_manifest.json",
-    )
-    return {
-        "regime_validation_id": root.name,
-        "regime_validation_dir": root,
-        "manifest": manifest,
-        "sideways_validation_summary": sideways,
-        "recovery_lag_validation_summary": recovery,
-    }
-
-
-def smoothed_regime_validation_report_payload(
-    *,
-    regime_validation_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SMOOTHED_REGIME_VALIDATION_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=regime_validation_id,
-        latest_pointer="latest_smoothed_regime_validation",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="smoothed_regime_validation_manifest.json",
-    )
-    return {
-        **_read_json(root / "smoothed_regime_validation_manifest.json"),
-        "sideways_validation_summary": _read_json(root / "sideways_validation_summary.json"),
-        "recovery_lag_validation_summary": _read_json(
-            root / "recovery_lag_validation_summary.json"
-        ),
-        "regime_validation_dir": str(root),
-    }
-
-
-def validate_smoothed_regime_validation_artifact(
-    *,
-    regime_validation_id: str,
-    output_dir: Path = DEFAULT_SMOOTHED_REGIME_VALIDATION_DIR,
-) -> dict[str, Any]:
-    root = output_dir / regime_validation_id
-    manifest = _read_optional_json(root / "smoothed_regime_validation_manifest.json") or {}
-    sideways = _read_optional_json(root / "sideways_validation_summary.json") or {}
-    recovery = _read_optional_json(root / "recovery_lag_validation_summary.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "smoothed_regime_validation_manifest.json",
-            "sideways_validation_summary.json",
-            "recovery_lag_validation_summary.json",
-            "smoothed_regime_validation_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "regime_validation_id_matches",
-                manifest.get("regime_validation_id") == regime_validation_id,
-                "",
-            ),
-            _check("sideways_methods_present", bool(_records(sideways.get("methods"))), ""),
-            _check("recovery_methods_present", bool(_records(recovery.get("methods"))), ""),
-            _check(
-                "sideways_regime_visible",
-                sideways.get("regime") == "sideways_choppy",
-                _text(sideways.get("regime")),
-            ),
-            _check(
-                "recovery_regime_visible",
-                recovery.get("regime") == "strong_recovery",
-                _text(recovery.get("regime")),
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, sideways, recovery), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_smoothed_regime_validation_validation",
-        regime_validation_id,
-        checks,
-    )
-
-
-def register_smoothed_confirmation_targets(
-    *,
-    review_id: str,
-    regime_validation_id: str,
-    review_dir: Path = DEFAULT_SMOOTHED_REVIEW_DIR,
-    regime_validation_dir: Path = DEFAULT_SMOOTHED_REGIME_VALIDATION_DIR,
-    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_CONFIRMATION_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    review = smoothed_review_report_payload(review_id=review_id, output_dir=review_dir)
-    regime = smoothed_regime_validation_report_payload(
-        regime_validation_id=regime_validation_id,
-        output_dir=regime_validation_dir,
-    )
-    targets = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_smoothed_confirmation_targets",
-        "status": "PASS",
-        **_smoothed_confirmation_targets(review, regime),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    confirmation_id = _stable_id(
-        "smoothed-confirmation",
-        review_id,
-        regime_validation_id,
-        targets,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / confirmation_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_smoothed_confirmation_manifest",
-        "confirmation_id": root.name,
-        "review_id": review_id,
-        "regime_validation_id": regime_validation_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "target_count": len(_records(targets.get("targets"))),
-        "smoothed_confirmation_manifest_path": str(root / "smoothed_confirmation_manifest.json"),
-        "smoothed_confirmation_targets_path": str(root / "smoothed_confirmation_targets.json"),
-        "smoothed_confirmation_report_path": str(root / "smoothed_confirmation_report.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    _write_json(root / "smoothed_confirmation_manifest.json", manifest)
-    _write_json(root / "smoothed_confirmation_targets.json", targets)
-    _write_text(
-        root / "smoothed_confirmation_report.md",
-        render_smoothed_confirmation_report(manifest, targets),
-    )
-    _write_latest_pointer(
-        "latest_smoothed_confirmation",
-        root.name,
-        root / "smoothed_confirmation_manifest.json",
-    )
-    return {
-        "confirmation_id": root.name,
-        "confirmation_dir": root,
-        "manifest": manifest,
-        "smoothed_confirmation_targets": targets,
-    }
-
-
-def smoothed_confirmation_report_payload(
-    *,
-    confirmation_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_CONFIRMATION_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=confirmation_id,
-        latest_pointer="latest_smoothed_confirmation",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="smoothed_confirmation_manifest.json",
-    )
-    return {
-        **_read_json(root / "smoothed_confirmation_manifest.json"),
-        "smoothed_confirmation_targets": _read_json(root / "smoothed_confirmation_targets.json"),
-        "confirmation_dir": str(root),
-    }
-
-
-def validate_smoothed_confirmation_artifact(
-    *,
-    confirmation_id: str,
-    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_CONFIRMATION_DIR,
-) -> dict[str, Any]:
-    root = output_dir / confirmation_id
-    manifest = _read_optional_json(root / "smoothed_confirmation_manifest.json") or {}
-    targets = _read_optional_json(root / "smoothed_confirmation_targets.json") or {}
-    target_rows = _records(targets.get("targets"))
-    target_ids = {row.get("target_id") for row in target_rows}
-    checks = _required_file_checks(
-        root,
-        (
-            "smoothed_confirmation_manifest.json",
-            "smoothed_confirmation_targets.json",
-            "smoothed_confirmation_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "confirmation_id_matches",
-                manifest.get("confirmation_id") == confirmation_id,
-                "",
-            ),
-            _check(
-                "required_targets_present",
-                {
-                    "smooth_3d_vs_limited",
-                    "smooth_3d_vs_static_baseline",
-                    "smooth_3d_sideways_choppy_improvement",
-                    "smooth_3d_recovery_lag_watch",
-                }.issubset(target_ids),
-                ",".join(sorted(str(item) for item in target_ids)),
-            ),
-            _check("auto_apply_false", targets.get("auto_apply") is False, ""),
-            _check(
-                "broker_action_allowed_false",
-                targets.get("broker_action_allowed") is False,
-                "",
-            ),
-            _check("production_effect_none", targets.get("production_effect") == "none", ""),
-            _check(
-                "watch_only_target_present",
-                any(row.get("status") == "WATCH_ONLY" for row in target_rows),
-                "",
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, targets, *target_rows), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_smoothed_confirmation_validation",
-        confirmation_id,
-        checks,
-    )
-
-
-def run_smoothed_watch_pack(
-    *,
-    review_attribution_id: str,
-    benefit_lag_id: str,
-    regime_validation_id: str,
-    confirmation_id: str,
-    attribution_dir: Path = DEFAULT_SMOOTHED_REVIEW_ATTRIBUTION_DIR,
-    benefit_lag_dir: Path = DEFAULT_SMOOTHING_BENEFIT_LAG_DIR,
-    regime_validation_dir: Path = DEFAULT_SMOOTHED_REGIME_VALIDATION_DIR,
-    confirmation_dir: Path = DEFAULT_SMOOTHED_FORWARD_CONFIRMATION_DIR,
-    output_dir: Path = DEFAULT_SMOOTHED_WATCH_PACK_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    attribution = smoothed_review_attribution_report_payload(
-        attribution_id=review_attribution_id,
-        output_dir=attribution_dir,
-    )
-    benefit_lag = smoothing_benefit_lag_report_payload(
-        drilldown_id=benefit_lag_id,
-        output_dir=benefit_lag_dir,
-    )
-    regime = smoothed_regime_validation_report_payload(
-        regime_validation_id=regime_validation_id,
-        output_dir=regime_validation_dir,
-    )
-    confirmation = smoothed_confirmation_report_payload(
-        confirmation_id=confirmation_id,
-        output_dir=confirmation_dir,
-    )
-    summary = _smoothed_watch_summary(attribution, benefit_lag, regime, confirmation)
-    watch_pack_id = _stable_id(
-        "smoothed-watch-pack",
-        review_attribution_id,
-        benefit_lag_id,
-        regime_validation_id,
-        confirmation_id,
-        summary,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / watch_pack_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_smoothed_watch_manifest",
-        "watch_pack_id": root.name,
-        "review_attribution_id": review_attribution_id,
-        "benefit_lag_id": benefit_lag_id,
-        "regime_validation_id": regime_validation_id,
-        "confirmation_id": confirmation_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "smoothed_watch_manifest_path": str(root / "smoothed_watch_manifest.json"),
-        "smoothed_watch_summary_path": str(root / "smoothed_watch_summary.json"),
-        "owner_smoothed_watch_checklist_path": str(root / "owner_smoothed_watch_checklist.md"),
-        "smoothed_watch_pack_report_path": str(root / "smoothed_watch_pack_report.md"),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **SYSTEM_TARGET_SAFETY,
-    }
-    reader = render_smoothed_watch_reader_brief(summary)
-    _write_json(root / "smoothed_watch_manifest.json", manifest)
-    _write_json(root / "smoothed_watch_summary.json", summary)
-    _write_text(
-        root / "owner_smoothed_watch_checklist.md",
-        render_smoothed_watch_checklist(summary),
-    )
-    _write_text(
-        root / "smoothed_watch_pack_report.md",
-        render_smoothed_watch_pack_report(
-            manifest,
-            summary,
-            attribution,
-            benefit_lag,
-            regime,
-            confirmation,
-        ),
-    )
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_smoothed_watch_pack",
-        root.name,
-        root / "smoothed_watch_manifest.json",
-    )
-    return {
-        "watch_pack_id": root.name,
-        "watch_pack_dir": root,
-        "manifest": manifest,
-        "smoothed_watch_summary": summary,
-        "reader_brief_section": reader,
-    }
-
-
-def smoothed_watch_pack_report_payload(
-    *,
-    watch_pack_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SMOOTHED_WATCH_PACK_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=watch_pack_id,
-        latest_pointer="latest_smoothed_watch_pack",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="smoothed_watch_manifest.json",
-    )
-    return {
-        **_read_json(root / "smoothed_watch_manifest.json"),
-        "smoothed_watch_summary": _read_json(root / "smoothed_watch_summary.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "watch_pack_dir": str(root),
-    }
-
-
-def validate_smoothed_watch_pack_artifact(
-    *,
-    watch_pack_id: str,
-    output_dir: Path = DEFAULT_SMOOTHED_WATCH_PACK_DIR,
-) -> dict[str, Any]:
-    root = output_dir / watch_pack_id
-    manifest = _read_optional_json(root / "smoothed_watch_manifest.json") or {}
-    summary = _read_optional_json(root / "smoothed_watch_summary.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "smoothed_watch_manifest.json",
-            "smoothed_watch_summary.json",
-            "owner_smoothed_watch_checklist.md",
-            "smoothed_watch_pack_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check("watch_pack_id_matches", manifest.get("watch_pack_id") == watch_pack_id, ""),
-            _check(
-                "candidate_method_smoothed_3d",
-                summary.get("candidate_method") == "smooth_weights_3d_limited_adjustment",
-                _text(summary.get("candidate_method")),
-            ),
-            _check(
-                "forward_confirmation_in_progress",
-                summary.get("forward_confirmation_status") == "IN_PROGRESS",
-                _text(summary.get("forward_confirmation_status")),
-            ),
-            _check("research_target_only_true", summary.get("research_target_only") is True, ""),
-            _check(
-                "not_official_target_weights_true",
-                summary.get("not_official_target_weights") is True,
-                "",
-            ),
-            _check(
-                "broker_action_allowed_false",
-                summary.get("broker_action_allowed") is False,
-                "",
-            ),
-            _check("production_effect_none", summary.get("production_effect") == "none", ""),
-            _check("broker_forbidden", _payload_safe(manifest, summary), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_smoothed_watch_pack_validation",
-        watch_pack_id,
-        checks,
-    )
 
 
 def run_smoothed_evidence_gap_diagnosis(
