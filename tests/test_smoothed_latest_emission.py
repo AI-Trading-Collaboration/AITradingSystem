@@ -41,8 +41,8 @@ def test_smoothed_latest_emission_uses_preflight_latest_valid_as_of_only(
     assert resolution["due_scan_allowed"] is False
     assert resolution["outcome_update_allowed"] is False
     assert resolution["future_data_used"] is False
-    assert links["emitted_event_count"] == 1
-    assert links["event_status"] == "ACTIVE"
+    assert links["emitted_event_count"] == 0
+    assert links["event_status"] == "NOT_REGISTERED"
 
     check = system_target.validate_smoothed_latest_emission_artifact(
         latest_emission_id=latest["latest_emission_id"],

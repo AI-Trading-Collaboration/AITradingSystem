@@ -3521,6 +3521,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-daily-emission report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_daily_emission/*/smoothed_daily_emission_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_daily_emission/*/smoothed_daily_emission_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_daily_emission/*/smoothed_forward_events.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_daily_emission/*/smoothed_event_weights.json
@@ -3529,8 +3530,8 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_daily_emission/*/reader_brief_section.md
     freshness_sla_days: 7
     freshness_rationale: >
-      TRADING-271 emits one auditable smoothed forward observation event per
-      eligible trading date and records data-quality status without future data.
+      TRADING-271 emits one auditable event per Binding target and eligible date;
+      candidate-null/zero-target Binding records NOT_REGISTERED with zero events.
     owner_action: review_smoothed_daily_emission_before_outcome_due_updates
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -3543,14 +3544,15 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-outcome-due report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_due/*/smoothed_outcome_due_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_due/*/smoothed_outcome_due_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_due/*/due_windows.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_due/*/due_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_due/*/smoothed_outcome_due_report.md
     freshness_sla_days: 7
     freshness_rationale: >
-      TRADING-272 scans prior smoothed forward events for due 1/5/10/20-day
-      outcome windows and blocks future-as-of updates.
+      TRADING-272 scans exact validated same-Binding emissions for configured
+      windows and blocks future-as-of, ambiguous, or cross-lineage updates.
     owner_action: review_smoothed_due_windows_before_outcome_update
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -3563,6 +3565,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-outcome-update report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_update/*/smoothed_outcome_update_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_update/*/smoothed_outcome_update_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_update/*/updated_smoothed_outcomes.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_update/*/skipped_smoothed_outcomes.jsonl
@@ -3571,8 +3574,8 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_update/*/reader_brief_section.md
     freshness_sla_days: 7
     freshness_rationale: >
-      TRADING-273 writes realized smoothed vs limited forward outcome deltas
-      only for due windows with available cached prices.
+      TRADING-273 writes dynamic candidate/baseline returns and fixed-weight
+      drawdowns only for exact due windows with validated bounded prices.
     owner_action: review_smoothed_outcome_update_before_classification
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -3585,8 +3588,10 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-forward-classify report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_classification/*/smoothed_forward_classification_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_classification/*/smoothed_forward_classification_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_classification/*/classified_forward_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_classification/*/smoothed_forward_classification_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_classification/*/classification_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_classification/*/smoothed_forward_classification_report.md
     freshness_sla_days: 7
@@ -3605,6 +3610,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-forward-weekly-run report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_weekly_run/*/smoothed_forward_weekly_run_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_weekly_run/*/smoothed_forward_weekly_run_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_weekly_run/*/weekly_run_steps.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_weekly_run/*/weekly_run_artifacts.json

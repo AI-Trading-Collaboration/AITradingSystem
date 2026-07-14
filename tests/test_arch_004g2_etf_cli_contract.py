@@ -346,6 +346,11 @@ DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_OPERATIONS_COMMANDS_PATH = (
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_smoothed_operations.py"
 )
+DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_BOOTSTRAP_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_system_target_smoothed_bootstrap.py"
+)
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py"
@@ -499,7 +504,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 16359
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 15842
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -710,8 +715,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 16359
-    assert len(legacy_names) == 437
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 15842
+    assert len(legacy_names) == 422
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -2815,6 +2820,40 @@ def test_g2_4_dynamic_v3_smoothed_operations_callbacks_leave_legacy_root() -> No
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names
     assert "dynamic_v3_system_target_smoothed_operations" in _imported_names(
+        canonical_tree
+    )
+
+
+def test_g2_4_dynamic_v3_smoothed_bootstrap_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_tree = ast.parse(
+        DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_BOOTSTRAP_COMMANDS_PATH.read_text(
+            encoding="utf-8"
+        )
+    )
+    canonical_names = _function_names(canonical_tree)
+    callbacks = {
+        "dynamic_v3_smoothed_daily_emission_run_command",
+        "dynamic_v3_smoothed_daily_emission_report_command",
+        "dynamic_v3_validate_smoothed_daily_emission_command",
+        "dynamic_v3_smoothed_outcome_due_scan_command",
+        "dynamic_v3_smoothed_outcome_due_report_command",
+        "dynamic_v3_validate_smoothed_outcome_due_command",
+        "dynamic_v3_smoothed_outcome_update_run_command",
+        "dynamic_v3_smoothed_outcome_update_report_command",
+        "dynamic_v3_validate_smoothed_outcome_update_command",
+        "dynamic_v3_smoothed_forward_classify_run_command",
+        "dynamic_v3_smoothed_forward_classify_report_command",
+        "dynamic_v3_validate_smoothed_forward_classify_command",
+        "dynamic_v3_smoothed_forward_weekly_run_command",
+        "dynamic_v3_smoothed_forward_weekly_run_report_command",
+        "dynamic_v3_validate_smoothed_forward_weekly_run_command",
+    }
+    assert len(callbacks) == 15
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert "dynamic_v3_system_target_smoothed_bootstrap" in _imported_names(
         canonical_tree
     )
 

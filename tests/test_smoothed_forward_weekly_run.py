@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+import json
+from datetime import datetime, timedelta
 
 from dynamic_v3_system_target_helpers import (
     TARGET_AS_OF,
@@ -15,7 +16,11 @@ from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_t
 def test_smoothed_forward_weekly_run_handles_no_due_windows(tmp_path) -> None:
     target = build_model_target_fixture(tmp_path)
     ops = run_smoothed_forward_ops_chain_fixture(tmp_path)
-    prices_path, _ = write_market_cache(tmp_path / "weekly_market_cache")
+    prices_path, rates_path = write_market_cache(tmp_path / "weekly_market_cache")
+    generated_at = max(
+        datetime.fromisoformat(ops[key]["manifest"]["generated_at"])
+        for key in ("binding", "switch_plan", "recorded_owner_promotion")
+    ) + timedelta(seconds=1)
 
     weekly = system_target.run_smoothed_forward_weekly_run(
         week_ending=TARGET_AS_OF,
@@ -38,13 +43,15 @@ def test_smoothed_forward_weekly_run_handles_no_due_windows(tmp_path) -> None:
         renewal_dir=tmp_path / "smoothed_owner_renewal_weekly",
         output_dir=tmp_path / "smoothed_forward_weekly_run",
         price_cache_path=prices_path,
-        generated_at=datetime(2026, 1, 5, 4, tzinfo=UTC),
+        rates_cache_path=rates_path,
+        generated_at=generated_at,
     )
 
     summary = weekly["weekly_run_summary"]
     steps = weekly["weekly_run_steps"]["steps"]
 
-    assert summary["emitted_events"] == 1
+    assert summary["candidate_method"] is None
+    assert summary["emitted_events"] == 0
     assert summary["due_windows"] == 0
     assert summary["updated_windows"] == 0
     assert summary["available_forward_events"] == 0
@@ -52,6 +59,8 @@ def test_smoothed_forward_weekly_run_handles_no_due_windows(tmp_path) -> None:
     assert summary["available_recovery_events"] == 0
     assert summary["can_execute_switch"] is False
     assert summary["weekly_recommendation"] == "continue_observation"
+    assert summary["switch_readiness_status"] == "NO_ELIGIBLE_CANDIDATE"
+    assert summary["owner_recommendation"] == "request_more_forward_data"
     assert summary["broker_action_allowed"] is False
     assert summary["production_effect"] == "none"
     assert {row["step"] for row in steps} >= {
@@ -70,3 +79,15 @@ def test_smoothed_forward_weekly_run_handles_no_due_windows(tmp_path) -> None:
         output_dir=tmp_path / "smoothed_forward_weekly_run",
     )
     assert check["status"] == "PASS"
+
+    binding_path = (
+        ops["binding"]["binding_dir"] / "bound_confirmation_targets.json"
+    )
+    bound = json.loads(binding_path.read_text(encoding="utf-8"))
+    bound["binding_status"] = "OBSERVATION_BOUND"
+    binding_path.write_text(json.dumps(bound), encoding="utf-8")
+    tampered = system_target.validate_smoothed_forward_weekly_run_artifact(
+        weekly_run_id=weekly["weekly_run_id"],
+        output_dir=tmp_path / "smoothed_forward_weekly_run",
+    )
+    assert tampered["status"] == "FAIL"

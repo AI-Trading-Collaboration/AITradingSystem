@@ -636,6 +636,7 @@ def run_method_promotion_plan_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "promotion_plan": promotion_plan}
 
 
+@smoothed_promotion._with_validation_session
 def run_smoothed_review_chain_fixture(tmp_path: Path) -> dict[str, Any]:
     prices_path, rates_path = write_long_market_cache(tmp_path / "market_cache")
     config = write_paper_shadow_backfill_config(tmp_path, prices_path=prices_path)
@@ -674,6 +675,7 @@ def run_smoothed_review_chain_fixture(tmp_path: Path) -> dict[str, Any]:
     }
 
 
+@smoothed_promotion._with_validation_session
 def run_smoothed_readiness_chain_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_smoothed_review_chain_fixture(tmp_path)
     attribution = system_target.run_smoothed_review_attribution(

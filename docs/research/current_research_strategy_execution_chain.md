@@ -1870,6 +1870,63 @@ candidate 或 registered targets，Progress/Dashboard/Monitor 保持 `NOT_REGIST
 `not_official_target_weights=true`、`auto_apply=false`、`broker_action_allowed=false`、
 `can_execute_switch=false`、`production_effect=none`。
 
+### 7.28 Smoothed Forward Sample Bootstrap（TRADING-271～275 / ARCH-004G2.4CS）
+
+为什么这样设计：CR 只能汇总已经存在且被 Binding 认可的 forward evidence，不能自己产生
+样本；旧 CS 则把 3d 方法、3d/5d/limited/static/no-trade 角色和 10/5/5 requirements 写死，
+并从 emission 目录扫描历史结果。这会在 CQ/CR 当前 `candidate=null`、`targets=[]` 时仍制造
+“正在采样 3d”的假语义。G2.4CS 将 CQ Forward Binding 设为 candidate/target 的唯一 authority，
+用五个 bounded v2 input snapshots 把每日观察、到期判断、realized outcome、分类和九段周编排
+连接成一条可逐 byte 重放的 lineage。没有 Binding target 时输出 0 event 和
+`NOT_REGISTERED`，这是当前事实，不是缺省值或失败兜底。
+
+| 环节 | 输入与写前门禁 | 计算逻辑 | 输出及当前结果 |
+|---|---|---|---|
+| Daily Emission | 可选显式 Binding id；Binding live validator、generated chronology；只有 Binding 有 target 才读取与 target as-of 匹配的 validated Model Target，并读取 cutoff 内 prices/rates、同源 DQ | candidate、baseline、windows 与 requirement kind 全取 Binding target；event weights 取该 target 的 exact method weights，非现金权重用作市场 symbol 集，CASH 保留为零收益份额；as-of regime 只用截至当日的 bounded prices | `smoothed_daily_emission_input_snapshot.v2`、events、weights、DQ、report/Reader Brief。当前 Binding 未注册，故 0 events、0 weight rows、`event_status=NOT_REGISTERED`，不读取 Model Target 或 market cache制造候选 |
+| Outcome Due | 当前 Binding；cutoff 前全部语义相关 emission manifests；每个被选 emission 先 live validation，且 binding/candidate/target lineage exact match | 对每个 event 的 Binding windows 生成 `(event_id, window_days)` 唯一行；`expected_end_date` 由 snapshot 内固定交易日序列求得；只有 scanner as-of 已到期且 cutoff price 可用时 `can_update=true`，future-as-of 保持 blocked | `smoothed_outcome_due_input_snapshot.v2`、due rows/summary/report。当前 0 emission sources、0 windows、0 due，不扫描其他 Binding 或历史目录结果 |
+| Outcome Update | validated Due 及 Due 明确列出的 exact emission ids；若存在 ready window，再冻结 start～end bounded market slice、source checksum 与 DQ | 每方法 window return=`Σ weight×(end_price/start_price−1)`；CASH return=0。Drawdown 用固定 event weights 乘逐日 asset returns，生成 cumulative equity 后取 peak-to-trough minimum。candidate/baseline 与其他 relative metrics按同一 event 动态 method identity计算；缺价、non-finite、权重不守恒或非 ready window写 skip/null，不转成0 | `smoothed_outcome_update_input_snapshot.v2`、updated/skipped outcomes、delta summary/report/Reader Brief。当前 updated/skipped均0，平均相对收益为null |
+| Forward Classification | validated Update及其 exact emission sources；candidate/baseline必须同时存在于 event weights；只读取已实现 outcome | 优先使用 emission 时点已冻结的 `sideways_choppy`、`strong_recovery`、`tech_drawdown/semiconductor_pullback` context；未知 context 才用 candidate/baseline realized return proxy。阈值是命名的 reporting-only invariant，只决定bucket/confidence/lag warning，不进入promotion或仓位门禁；缺return输出`unknown/LOW` | `smoothed_forward_classification_input_snapshot.v2`、classified events、两个兼容summary view、report。当前0 classified、sideways/recovery/lag均0 |
+| Weekly Runner | 显式 Binding/Switch/Owner ids；三类 source live validation及chronology；显式 week-ending与market inputs | 严格执行 daily→due→update→classification→progress→dashboard→monitor→recheck→renewal；每步保存 artifact id、完整 source bundle与状态，validator按同样输入逐步重建并拒绝 source/output tamper | `smoothed_forward_weekly_run_input_snapshot.v2`、9-step bindings、artifact map、summary/report/Reader Brief。当前 emitted/due/updated/classified=0，Progress/Dashboard/Monitor=`NOT_REGISTERED`，Recheck=`NO_ELIGIBLE_CANDIDATE`，Renewal=`request_more_forward_data`，`can_execute_switch=false` |
+
+数据、时间与 lineage 约束：
+
+1. 主结论窗口仍是 `ai_after_chatgpt=2022-12-01`；`as_of/week_ending` 是实际观察日期，
+   `generated_at` 必须不早于所有输入 source。2021 或更早数据只能用于已说明的 warm-up、压力
+   或 regime comparison，不能成为本链默认结论窗口。
+2. Market binding 保存原 cache 绝对路径、完整 SHA-256、symbols、start/cutoff、bounded adjusted
+   close rows 与 prices/rates DQ summary；live validator 会重新读取 source 并重算 binding。
+3. Due/Update/Classification 不接受“目录里恰好存在”的 artifact，只接受前一段 snapshot 已列出的
+   ids；duplicate event/window、cross-binding、candidate mismatch、future或source drift全部FAIL。
+4. 每个 producer 在正式建目录前完成验证；每个 validator从input snapshot重建全部
+   JSON/JSONL/Markdown/Reader Brief bytes。Workflow PASS表示可复算，不表示candidate有效。
+
+工程效率结果：旧测试夹具复用了同一 `tmp_path/market_cache`，在建立上游 immutable evidence 后
+又覆盖该文件，触发深层 source drift 与约60秒无效递归重放；现已按职责分离
+`retry_market_cache` / `refresh_market_cache`。Review/readiness fixture 也改为在同一次构建事务中使用
+既有 content-fingerprint validation session，只复用未变化 PASS。相同29个 smoothed test文件的
+并行回归从 `1 failed / 38 passed / 270.04s` 改为 `41 passed / 100.98s`，墙钟下降62.61%、
+约2.67倍；最慢 readiness chain从245.98秒降至86.34秒。该优化没有跳过validator，并新增
+weekly上游 Binding byte tamper FAIL测试以及return/drawdown/CASH/missing/classification公式测试。
+
+后续优化空间与进入条件：
+
+1. 当前 fixture没有真实 Binding target，因此只证明 null/zero 路径和公式单元契约；必须等
+   CQ 产生 source-backed unique candidate/targets 后，再补多target、partial due、price-missing、
+   sideways/recovery coexist和eligible/ineligible全链 integration，不能手工改artifact制造研究结论。
+2. 将交易日计算统一为经过review的 calendar service前，需要保留现有 bounded price-date序列、
+   holiday/缺价测试和PIT cutoff；不能按自然日或未来完整calendar回填。
+3. 继续把 pytest durations、validation cache hit/miss、artifact snapshot bytes写入runtime artifact，
+   并对高于基线的DAG fan-out报警；优化只能通过共享validated session、bounded views、fixture复用
+   或更细测试分层，不能关闭source replay。
+4. 跨进程cache仍未启用。若实施，key必须增加validator/schema版本、policy/config hash、完整
+   transitive commitments与cutoff，并具备并发原子写、corruption recovery及source mutation测试。
+5. Classification reporting thresholds需要独立样本达到预注册最低量后才可校准；当前0样本不得
+   用来放宽阈值，更不得把这些阈值升级为promotion、position或order policy。
+
+本 slice 固定 research/paper-shadow observation only：`not_official_target_weights=true`、
+`auto_apply=false`、`broker_action_allowed=false`、`can_execute_switch=false`、
+`production_effect=none`。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |

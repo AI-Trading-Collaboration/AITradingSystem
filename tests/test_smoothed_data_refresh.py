@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -167,20 +167,26 @@ def test_smoothed_retry_resume_blocks_and_readiness_requires_refresh(tmp_path) -
 
 def test_smoothed_retry_resume_completes_after_ready_post_refresh(tmp_path) -> None:
     ops = run_smoothed_forward_ops_chain_fixture(tmp_path)
-    prices_path, rates_path = write_market_cache(tmp_path / "market_cache")
+    # The ops-chain artifacts bind tmp_path/market_cache as immutable evidence.
+    # Refresh inputs must not overwrite that lineage before retry revalidation.
+    prices_path, rates_path = write_market_cache(tmp_path / "refresh_market_cache")
+    generated_at = max(
+        datetime.fromisoformat(ops[key]["manifest"]["generated_at"])
+        for key in ("binding", "switch_plan", "recorded_owner_promotion")
+    ) + timedelta(seconds=1)
     preflight = system_target.run_smoothed_data_preflight(
         requested_as_of=EVALUATION_AS_OF,
         output_dir=tmp_path / "smoothed_data_preflight",
         price_cache_path=prices_path,
         rates_path=rates_path,
         model_target_dir=tmp_path / "model_target",
-        generated_at=datetime(2026, 1, 8, tzinfo=UTC),
+        generated_at=generated_at,
     )
     explain = system_target.run_smoothed_blocked_explain(
         preflight_id=preflight["preflight_id"],
         preflight_dir=tmp_path / "smoothed_data_preflight",
         output_dir=tmp_path / "smoothed_blocked_explain",
-        generated_at=datetime(2026, 1, 8, 1, tzinfo=UTC),
+        generated_at=generated_at + timedelta(seconds=1),
     )
     refresh_plan = system_target.run_smoothed_refresh_plan(
         preflight_id=preflight["preflight_id"],
@@ -188,7 +194,7 @@ def test_smoothed_retry_resume_completes_after_ready_post_refresh(tmp_path) -> N
         preflight_dir=tmp_path / "smoothed_data_preflight",
         explain_dir=tmp_path / "smoothed_blocked_explain",
         output_dir=tmp_path / "smoothed_refresh_plan",
-        generated_at=datetime(2026, 1, 8, 2, tzinfo=UTC),
+        generated_at=generated_at + timedelta(seconds=2),
     )
     refresh = system_target.run_smoothed_source_refresh(
         refresh_plan_id=refresh_plan["refresh_plan_id"],
@@ -196,7 +202,7 @@ def test_smoothed_retry_resume_completes_after_ready_post_refresh(tmp_path) -> N
         output_dir=tmp_path / "smoothed_source_refresh",
         price_cache_path=prices_path,
         rates_path=rates_path,
-        generated_at=datetime(2026, 1, 8, 3, tzinfo=UTC),
+        generated_at=generated_at + timedelta(seconds=3),
     )
     post = system_target.run_smoothed_post_refresh_validation(
         refresh_execution_id=refresh["refresh_execution_id"],
@@ -205,7 +211,7 @@ def test_smoothed_retry_resume_completes_after_ready_post_refresh(tmp_path) -> N
         preflight_dir=tmp_path / "post_refresh_preflight",
         price_cache_path=prices_path,
         rates_path=rates_path,
-        generated_at=datetime(2026, 1, 8, 4, tzinfo=UTC),
+        generated_at=generated_at + timedelta(seconds=4),
     )
 
     resume = system_target.run_smoothed_retry_resume(
@@ -234,13 +240,13 @@ def test_smoothed_retry_resume_completes_after_ready_post_refresh(tmp_path) -> N
         owner_promotion_id=ops["recorded_owner_promotion"]["decision_id"],
         price_cache_path=prices_path,
         rates_path=rates_path,
-        generated_at=datetime(2026, 1, 8, 5, tzinfo=UTC),
+        generated_at=generated_at + timedelta(seconds=5),
     )
     growth = system_target.build_smoothed_sample_growth(
         resume_id=resume["resume_id"],
         resume_dir=tmp_path / "smoothed_retry_resume",
         output_dir=tmp_path / "smoothed_sample_growth",
-        generated_at=datetime(2026, 1, 8, 6, tzinfo=UTC),
+        generated_at=generated_at + timedelta(seconds=6),
     )
 
     assert post["post_refresh_decision"]["retry_decision"] == "RETRY_READY"

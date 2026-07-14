@@ -20,6 +20,28 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-14：G2.4CS Smoothed Forward Sample Bootstrap `COMPLETE_G2_4_CONTINUES`。
+  TRADING-271～275 共15 callbacks与旧业务实现迁独立 canonical sample-bootstrap
+  interface/domain；五类 bounded v2 snapshots、pre-output live source/DQ/cutoff、Binding-only
+  candidate/targets、exact emission/event/window lineage、null-preserving calculations、动态
+  classification identity、九段 weekly binding 和 all-view byte rebuild 闭合。当前
+  candidate=null、Binding=`targets=[]/NOT_REGISTERED`，故 emitted/due/updated/classified=0，
+  Progress/Dashboard/Monitor=`NOT_REGISTERED`、Recheck=`NO_ELIGIBLE_CANDIDATE`、Renewal=
+  `request_more_forward_data`、switch=false。Smoothed regression `270.04s→100.98s`
+  （-62.61%/2.67x），readiness chain `245.98s→86.34s`（-64.90%）；focused/formula+
+  smoothed/docs/CLI/architecture/contract/full=`15/41/19/123/280/203/6,012 passed`，generated=
+  `924 modules/1,123 tests/858 writers/0 violations`，CLI tree/hash不变。剩余 full-suite 长尾已登记
+  `ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE`，不减少任何 gate。单 slice 不触发
+  handoff，G2.4继续且不进入G2.5，`production_effect=none`。
+- 2026-07-14：G2.4CS Smoothed Forward Sample Bootstrap contract freeze并进入`IN_PROGRESS`。
+  TRADING-271～275共15 callbacks迁独立canonical sample-bootstrap interface/domain。旧链固定3d
+  candidate/roles、全目录扫描emission、没有input snapshot/pre-output upstream replay，且validator
+  只做浅层枚举/计数检查；该前提与CQ/CR当前candidate=null、Binding=`targets=[]/NOT_REGISTERED`
+  冲突。Exit固定五类bounded v2 snapshots、Binding-only candidate/targets、same validate-data
+  path、semantic cutoff、exact emission/event/window lineage、null-preserving return/drawdown、九段
+  weekly source binding与all-view byte rebuild；当前结果必须0 sample/NOT_REGISTERED/
+  NO_ELIGIBLE_CANDIDATE/request_more_forward_data。单slice不触发handoff，不进入G2.5，
+  `production_effect=none`。
 - 2026-07-14：G2.4CR Smoothed Forward Operations `COMPLETE_G2_4_CONTINUES`。TRADING-266～270
   共15 callbacks迁canonical operations interface/domain；五类bounded v2 snapshots、live
   source/cutoff、Binding-only candidate/targets、explicit evidence ids、exact Progress/candidate
