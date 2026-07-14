@@ -413,7 +413,7 @@ def test_cli_direct_dispatches_dynamic_v3_schedule_observe(
         captured.update(kwargs)
 
     monkeypatch.setattr(
-        cli_direct.etf_cli,
+        cli_direct.etf_observation_lifecycle_cli,
         "dynamic_v3_schedule_observe_command",
         fake_schedule_observe_command,
     )
@@ -1008,7 +1008,7 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         recorder("validate_reader_brief"),
     )
     monkeypatch.setattr(
-        cli_direct.etf_cli,
+        cli_direct.etf_observation_lifecycle_cli,
         "dynamic_v3_schedule_observe_command",
         recorder("dynamic_v3_rescue_schedule_observe"),
     )

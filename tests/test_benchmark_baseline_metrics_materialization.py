@@ -294,6 +294,7 @@ def _write_sim_outcome(root: Path, sim_outcome_id: str) -> None:
         "sim_outcome_manifest_path": str(artifact_dir / "sim_outcome_manifest.json"),
         "simulated_outcome_windows_path": str(artifact_dir / "simulated_outcome_windows.jsonl"),
         "simulated_variant_summary_path": str(artifact_dir / "simulated_variant_summary.json"),
+        "outcome_input_snapshot_path": str(artifact_dir / "outcome_input_snapshot.json"),
         "backtest_sim_outcome_report_path": str(artifact_dir / "backtest_sim_outcome_report.md"),
         "broker_action_allowed": False,
         "broker_action_taken": False,
@@ -302,6 +303,19 @@ def _write_sim_outcome(root: Path, sim_outcome_id: str) -> None:
     }
     _write_json(artifact_dir / "sim_outcome_manifest.json", manifest)
     _write_json(artifact_dir / "simulated_variant_summary.json", summary)
+    _write_json(
+        artifact_dir / "outcome_input_snapshot.json",
+        {
+            "schema_version": (
+                materialization.sim.BACKTEST_SIM_OUTCOME_SNAPSHOT_SCHEMA_VERSION
+            ),
+            "generated_at": "2026-06-17T02:00:00+00:00",
+            "event_set_id": "synthetic-event-set-test",
+            "variant_set_id": "variant-set-test",
+            "fixture_scope": "benchmark_baseline_metrics_materialization_read_contract",
+            "production_effect": "none",
+        },
+    )
     (artifact_dir / "simulated_outcome_windows.jsonl").write_text(
         "".join(json.dumps(row, sort_keys=True) + "\n" for row in windows),
         encoding="utf-8",

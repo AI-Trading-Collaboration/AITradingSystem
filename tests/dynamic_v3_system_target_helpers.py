@@ -339,13 +339,15 @@ def write_paper_shadow_backfill_config(
     source_dirs = write_target_source_artifacts(tmp_path)
     model_config = write_model_target_config(tmp_path)
     paper_config = write_paper_shadow_config(tmp_path)
-    system_target.generate_model_target(
-        config_path=model_config,
-        as_of=TARGET_AS_OF,
-        output_dir=tmp_path / "model_target",
-        generated_at=datetime(2026, 1, 5, tzinfo=UTC),
-        **source_dirs,
-    )
+    model_target_dir = tmp_path / "model_target"
+    if not any(model_target_dir.glob("*/model_target_manifest.json")):
+        system_target.generate_model_target(
+            config_path=model_config,
+            as_of=TARGET_AS_OF,
+            output_dir=model_target_dir,
+            generated_at=datetime(2026, 1, 5, tzinfo=UTC),
+            **source_dirs,
+        )
     config_path = tmp_path / "paper_shadow_backfill_v1.yaml"
     config_path.write_text(
         f"""
@@ -565,7 +567,7 @@ def run_experiment_matrix_fixture(tmp_path: Path) -> dict[str, Any]:
     matrix = system_target.build_experiment_matrix(
         config_path=matrix_config,
         output_dir=tmp_path / "experiment_matrix",
-        generated_at=datetime(2024, 3, 2, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 6, 1, tzinfo=UTC),
     )
     return {**fixture, "matrix_config_path": matrix_config, "matrix": matrix}
 
@@ -583,7 +585,7 @@ def run_batch_experiment_fixture(
         output_dir=tmp_path / "batch_experiment",
         price_cache_path=fixture["prices_path"],
         rates_cache_path=fixture["rates_path"],
-        generated_at=datetime(2024, 3, 3, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 6, 2, tzinfo=UTC),
     )
     if force_promote:
         force_promotable_batch_metrics(batch["batch_dir"])
@@ -593,7 +595,7 @@ def run_batch_experiment_fixture(
 def run_experiment_triage_fixture(
     tmp_path: Path,
     *,
-    force_promote: bool = True,
+    force_promote: bool = False,
 ) -> dict[str, Any]:
     fixture = run_batch_experiment_fixture(tmp_path, force_promote=force_promote)
     triage = system_target.run_experiment_triage(
@@ -601,7 +603,7 @@ def run_experiment_triage_fixture(
         batch_dir=tmp_path / "batch_experiment",
         matrix_dir=tmp_path / "experiment_matrix",
         output_dir=tmp_path / "experiment_triage",
-        generated_at=datetime(2024, 3, 4, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 6, 3, tzinfo=UTC),
     )
     return {**fixture, "triage": triage}
 
@@ -613,7 +615,7 @@ def run_top_variant_interpretation_fixture(tmp_path: Path) -> dict[str, Any]:
         triage_dir=tmp_path / "experiment_triage",
         matrix_dir=tmp_path / "experiment_matrix",
         output_dir=tmp_path / "top_variant_interpretation",
-        generated_at=datetime(2024, 3, 5, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 6, 4, tzinfo=UTC),
     )
     return {**fixture, "interpretation": interpretation}
 
@@ -626,7 +628,7 @@ def run_method_promotion_plan_fixture(tmp_path: Path) -> dict[str, Any]:
         triage_dir=tmp_path / "experiment_triage",
         interpretation_dir=tmp_path / "top_variant_interpretation",
         output_dir=tmp_path / "method_promotion_plan",
-        generated_at=datetime(2024, 3, 6, tzinfo=UTC),
+        generated_at=datetime(2026, 1, 6, 5, tzinfo=UTC),
     )
     return {**fixture, "promotion_plan": promotion_plan}
 
@@ -728,9 +730,7 @@ def run_smoothed_readiness_chain_fixture(tmp_path: Path) -> dict[str, Any]:
     )
     churn = system_target.run_smoothed_churn_backfill(
         smoothed_backfill_id=fixture["smoothed"]["smoothed_backfill_id"],
-        baseline_backfill_id=fixture["smoothed"]["source_paper_shadow_backfill"][
-            "backfill_id"
-        ],
+        baseline_backfill_id=fixture["smoothed"]["source_paper_shadow_backfill"]["backfill_id"],
         risk_capped_backfill_id=fixture["risk_capped"]["risk_capped_backfill_id"],
         smoothed_backfill_dir=tmp_path / "smoothed_backfill",
         baseline_backfill_dir=tmp_path / "paper_shadow_backfill",
@@ -1141,9 +1141,7 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
     return [
-        json.loads(line)
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if line.strip()
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
     ]
 
 

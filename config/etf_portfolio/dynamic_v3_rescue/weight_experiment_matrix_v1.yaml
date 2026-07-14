@@ -1,5 +1,17 @@
 schema_version: 1
 
+policy_metadata:
+  policy_id: weight_experiment_matrix_v1
+  owner: research-method owner
+  version: v1
+  status: pilot_baseline
+  rationale: >
+    Freeze the first lightweight variant matrix, source-selection semantics, and
+    screening policy before any formal research-method implementation.
+  review_condition: >
+    Review after the first owner-reviewed formal-method cycle or when matrix,
+    candidate-selection, score, rejection, or promotion semantics change.
+
 source:
   hypothesis_config: config/etf_portfolio/dynamic_v3_rescue/weight_optimization_hypothesis_v1.yaml
   transform_spec_config: config/etf_portfolio/dynamic_v3_rescue/weight_variant_transform_v1.yaml
@@ -11,6 +23,25 @@ experiment_group:
   market_regime: ai_after_chatgpt
   requested_start_date: "2022-12-01"
   rationale: Lightweight screening before any formal research method implementation.
+
+candidate_selection_policy:
+  method_preference:
+    - limited_adjustment
+    - defensive_limited_adjustment
+    - consensus_target
+    - equal_weight_shadow_candidates
+    - selected_top_candidate
+  cluster_representatives:
+    - limited_adjustment
+    - defensive_limited_adjustment
+    - consensus_target
+  all_available_methods:
+    - limited_adjustment
+    - defensive_limited_adjustment
+    - consensus_target
+    - equal_weight_shadow_candidates
+    - selected_top_candidate
+  top_n: 5
 
 triage_policy:
   policy_version: weight_experiment_triage_v1
@@ -44,7 +75,35 @@ triage_policy:
     - pressure_regime_performance_worse
     - turnover_explodes
     - data_quality_FAIL
-    - only_wins_in_one_narrow_window
+    - insufficient_required_metrics
+  score_bounds:
+    return: [-0.05, 0.05]
+    drawdown: [-0.02, 0.02]
+    turnover: [-0.20, 0.20]
+  label_scores:
+    rolling_consistency:
+      IMPROVED: 1.0
+      MIXED: 0.55
+      INSUFFICIENT_DATA: 0.0
+      WORSE: 0.0
+    regime:
+      IMPROVED: 1.0
+      MIXED: 0.55
+      WORSE: 0.0
+    simplicity:
+      one_transform: 1.0
+      two_transforms: 0.75
+      multi_transform: 0.45
+  hard_reject_thresholds:
+    max_drawdown_delta_floor: -0.002
+    turnover_delta_ceiling: 0.25
+    pressure_regimes:
+      - risk_off
+      - tech_drawdown
+      - semiconductor_pullback
+  minimum_valid_regime_count: 1
+  top_candidate_cap: 2
+  missing_metric_decision: DEFER
 
 variants:
   - variant_id: sideways_choppy_hold_previous

@@ -1423,10 +1423,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_3c["validation"]["architecture_fitness"]["passed"] == 177
     for source in phase_g2_3c["sources"]:
         if source.get("historical_phase_g2_3c_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004G2.3D"
-            assert source["current_hash_tracked_in"] == (
-                "phase_g2_3d_etf_cli_evidence_dashboard.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004G2.3D", "ARCH-004G2.4CM"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -1442,10 +1440,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_3d["validation"]["architecture_fitness"]["passed"] == 178
     for source in phase_g2_3d["sources"]:
         if source.get("historical_phase_g2_3d_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004G2.3E"
-            assert source["current_hash_tracked_in"] == (
-                "phase_g2_3e_etf_cli_weekly_review.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004G2.3E", "ARCH-004G2.4CM"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -3819,6 +3815,57 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         assert phase_g2_4cl["validation"]["contract_validation"]["passed"] >= 203
         assert phase_g2_4cl["sources"]
         for source in phase_g2_4cl["sources"]:
+            if source["path"] in set(phase_g2_4cl.get("superseded_source_paths", [])):
+                continue
+            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            assert actual == source["sha256"], source["path"]
+
+    phase_g2_4cm = baseline[
+        "phase_g2_4cm_etf_cli_dynamic_v3_system_target_experiment_factory"
+    ]
+    assert phase_g2_4cm["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4cm = phase_g2_4cm["migration"]
+    assert migration_g2_4cm["callback_count"] == 21
+    assert migration_g2_4cm["pre_output_live_source_validation_required"] is True
+    assert migration_g2_4cm["exact_full_chain_lineage_required"] is True
+    assert migration_g2_4cm["source_chronology_required"] is True
+    assert migration_g2_4cm["common_finite_price_dates_required"] is True
+    assert migration_g2_4cm["first_or_missing_return_may_be_filled_zero"] is False
+    assert migration_g2_4cm["candidate_selection_must_execute"] is True
+    assert migration_g2_4cm["missing_regime_metrics_must_remain_null"] is True
+    assert migration_g2_4cm["zero_effect_transform_must_defer"] is True
+    assert migration_g2_4cm["reviewed_complete_triage_policy_required"] is True
+    assert migration_g2_4cm["expected_and_observed_evidence_are_separate"] is True
+    assert len(migration_g2_4cm["snapshot_schemas"]) == 7
+    assert migration_g2_4cm["content_derived_all_views_validation"] is True
+    assert migration_g2_4cm["automatic_policy_or_execution_allowed"] is False
+    assert migration_g2_4cm["portfolio_or_execution_effect"] is False
+    assert migration_g2_4cm["legacy_root_lines_after"] == 18568
+    assert migration_g2_4cm["legacy_root_top_level_functions_after"] == 513
+    assert migration_g2_4cm["legacy_root_command_decorators_after"] == 474
+    assert migration_g2_4cm["legacy_domain_lines_after"] == 23375
+    assert migration_g2_4cm["legacy_domain_top_level_functions_after"] == 803
+    assert migration_g2_4cm["python_module_count"] == 911
+    assert migration_g2_4cm["python_test_file_count"] == 1116
+    fixture_g2_4cm = phase_g2_4cm["fixture"]
+    assert fixture_g2_4cm["requested_start_date"].isoformat() == "2022-12-01"
+    assert fixture_g2_4cm["actual_return_start_date"].isoformat() == "2022-12-02"
+    assert fixture_g2_4cm["promote_count"] == 0
+    assert fixture_g2_4cm["keep_testing_count"] == 3
+    assert fixture_g2_4cm["reject_count"] == 7
+    assert fixture_g2_4cm["defer_count"] == 5
+    assert fixture_g2_4cm["promotion_plan_status"] == "DEFER"
+    assert fixture_g2_4cm["workflow_pass_is_not_investment_conclusion"] is True
+    if phase_g2_4cm["status"] == "COMPLETE_G2_4_CONTINUES":
+        assert phase_g2_4cm["validation"]["focused"]["passed"] >= 12
+        assert (
+            phase_g2_4cm["validation"]["current_slice_and_cli_contract"]["passed"]
+            >= 118
+        )
+        assert phase_g2_4cm["validation"]["architecture_fitness"]["passed"] >= 274
+        assert phase_g2_4cm["validation"]["contract_validation"]["passed"] >= 203
+        assert phase_g2_4cm["sources"]
+        for source in phase_g2_4cm["sources"]:
             actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
             assert actual == source["sha256"], source["path"]
 
@@ -3973,6 +4020,8 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CK_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CL_VALIDATING_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CL_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CM_VALIDATING_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CM_COMPLETE_G2_4_CONTINUES",
     }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

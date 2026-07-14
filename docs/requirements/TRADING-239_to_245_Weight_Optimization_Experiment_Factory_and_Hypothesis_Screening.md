@@ -1,7 +1,7 @@
 # TRADING-239 to 245 Weight Optimization Experiment Factory and Hypothesis Screening
 
-状态：VALIDATING
-最后更新：2026-06-13
+状态：BASELINE_DONE（ARCH-004 G2.4CM hardening `COMPLETE_G2_4_CONTINUES`；当前无可 promotion method，后续仍需独立证据调优）
+最后更新：2026-07-14
 
 ## 背景
 
@@ -65,6 +65,9 @@ TRADING-245: 生成 formal research method promotion plan 和 owner review check
 
 ## Progress Notes
 
+- 2026-07-14: G2.4CM canonical implementation、correctness hardening 与 slice validation 完成，状态转为 `COMPLETE_G2_4_CONTINUES`。Backlog/Transform/Matrix/Batch/Triage/Interpretation/Promotion 七段已分别使用 bounded v2 input snapshot，producer 全部 pre-output fail closed，Matrix 绑定三份 reviewed config，Batch 绑定 validated Paper Backfill 并使用共同 finite price dates 计算 `price/shift(1)-1`（首日丢弃、不填 0），candidate subset/aggregation 已实际执行；zero-sample regime metrics 保持 null，Triage 完整读取 reviewed score policy，并把 `transform_effective_rebalance_count=0` 视为 evidence missing 后 `DEFER`；Interpretation/Promotion 已分离 expected hypothesis、observed benefit、observed cost并要求 exact same-triage lineage。当前 fixture requested=`2022-12-01..2024-02-29`、actual returns=`2022-12-02..2024-02-29`、DQ=`PASS_WITH_WARNINGS`、15 variants，结果=`0 PROMOTE / 3 KEEP / 7 REJECT / 5 DEFER`；top=`sideways_choppy_signal_persistence_3d/KEEP/0.656744`，return/drawdown/turnover delta=`-0.0194958444/+0.0019514235/-0.1531475311`，effective rebalances=`53`。5 个 no-effect variants（含当前 fixture 的 3d/5d smoothing）正确 DEFER，Promotion Plan=`DEFER`、methods为空；旧 baseline 的 3 promotions/2 proposed smoothing methods 不再是可信当前结论。Full gate 同步修复 direct scheduler canonical dispatch、hardened outcome snapshot fixture 与唯一 Model Target fixture reuse，未放宽 fail-closed gate。Focused/slice+CLI/architecture/contract/full=`12/118/274/203/5,977 passed`，runtime artifacts=`architecture-fitness_20260714T012508Z`、`contract-validation_20260714T012705Z`、`full_20260714T024455Z`，generated=`911 modules / 1,116 tests / 858 writers / 0 violations`。研究任务保留 `BASELINE_DONE` 而非 DONE：当前链路可信，但尚无可 promotion method，后续优化必须基于新增独立 evidence，而不是调低 gate。
+- 2026-07-14: ARCH-004 G2.4CM contract freeze，状态进入 `IN_PROGRESS`；本 slice 迁移 TRADING-239～245 共 21 个 callback 到独立 canonical interface/domain，G2.4 phase 仍继续。审计确认旧 Backlog/Transform/Matrix producer 在 validation FAIL 时仍可建目录并写正式 artifact，且均无 immutable input snapshot；Matrix 不要求 hypothesis/transform config validator PASS，也未拒绝 unknown transform、missing required field 或 invalid mode。Batch 不验证 Matrix/Paper Backfill、不校验 generated cutoff 或 exact lineage，`pct_change().fillna(0)` 将首日和缺失收益伪装为 0，`candidate_subset` selection rule 只声明未执行，zero-sample regime metrics 还可经 `_float` 变成数值 0。Triage 不验证 Batch/Matrix exact lineage，score bounds、label scores、hard-reject boundaries 和 top-candidate cap 部分硬编码且未绑定 reviewed policy；Interpretation 把 hypothesis expected benefit 写成 observed benefit，Plan 不验证 Triage/Interpretation same lineage。CM 退出要求七类 bounded `*.v2` input snapshots、所有 producer pre-output source/config PASS 与 timezone cutoff、Matrix→Backfill→Batch→Triage→Interpretation→Plan exact lineage、common finite duplicate-free dates、missing/null preservation、candidate selection 真执行、reviewed complete triage policy、expected/observed evidence 分离，以及 validators 重验 live sources/policy 并逐 byte 重建所有 JSON/JSONL/YAML/Markdown/Reader Brief。固定 experiment-only/research-screening/manual-only、not formal method/no official/no auto/no order/no broker、`production_effect=none`，单 slice 完成不触发 phase-level ARCH-005 handoff。
+
 - 2026-06-13: 根据 owner 附件创建本需求文档和任务登记，状态设为 IN_PROGRESS。实现范围限定为 P0 lightweight experiment factory；P1/P2 延后。
 - 2026-06-13: baseline 实现完成并转入 VALIDATING。真实链路输出：
   - hypothesis backlog `hypothesis-backlog_fbbcbf2271748d54`，failure modes=13，hypotheses=15，HIGH priority=7；
@@ -81,4 +84,4 @@ TRADING-245: 生成 formal research method promotion plan 和 owner review check
 
 - 本阶段仍是 lightweight research screening；triage `PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE` 不等于 formal method implementation、owner approval、official target weights、paper/real portfolio mutation、order ticket 或 broker action。
 - `data_quality_status=PASS_WITH_WARNINGS` 的现有限制来自本地数据质量报告中的 provider/checksum warnings；batch artifact 已披露门禁状态和评估日，但没有修复数据源审计 warning。
-- 下一个 owner decision 是是否为 `smooth_weights_3d_limited_adjustment_research_method` 或 `smooth_weights_5d_limited_adjustment_research_method` 新开 formal research method implementation，并按计划补跑 paper shadow backfill、rolling eval、regime review、stability diagnostics 和 forward confirmation。
+- 当前没有 formal-method promotion candidate；下一步是对 5 个 no-effect variants 做 activation/target-change coverage 归因，并对 3 个 KEEP variants 做预注册 cost、non-overlapping/holdout、regime/event 与 forward 验证。不得通过放宽 `0.70` promotion floor 或把 expected benefit 当 observed result 来制造候选。

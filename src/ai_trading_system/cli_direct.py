@@ -26,6 +26,9 @@ from ai_trading_system.cli_commands import security as security_cli
 from ai_trading_system.cli_commands import signals as signals_cli
 from ai_trading_system.cli_commands import valuation as valuation_cli
 from ai_trading_system.interfaces.cli.etf_portfolio import data_quality as etf_data_quality_cli
+from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_observation_lifecycle as etf_observation_lifecycle_cli,
+)
 from ai_trading_system.interfaces.cli.etf_portfolio import operations as etf_operations_cli
 from ai_trading_system.interfaces.cli.etf_portfolio import reporting as etf_reporting_cli
 
@@ -446,28 +449,28 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:4] == ["etf", "dynamic-v3-rescue", "schedule", "observe"]:
-        etf_cli.dynamic_v3_schedule_observe_command(
+        etf_observation_lifecycle_cli.dynamic_v3_schedule_observe_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             family=_option(args, "--family", "dynamic_v3_rescue") or "dynamic_v3_rescue",
             config_path=(
                 _optional_path(args, "--config-path")
                 or _optional_path(args, "--config")
-                or etf_cli.DEFAULT_PARAMETER_SWEEP_CONFIG_PATH
+                or etf_observation_lifecycle_cli.DEFAULT_PARAMETER_SWEEP_CONFIG_PATH
             ),
             pointer_dir=_path_option_with_default(
                 args,
                 "--pointer-dir",
-                etf_cli.DEFAULT_LATEST_POINTER_DIR,
+                etf_observation_lifecycle_cli.DEFAULT_LATEST_POINTER_DIR,
             ),
             registry_path=(
                 _optional_path(args, "--registry-path")
                 or _optional_path(args, "--registry")
-                or etf_cli.DEFAULT_SHADOW_REGISTRY_PATH
+                or etf_observation_lifecycle_cli.DEFAULT_SHADOW_REGISTRY_PATH
             ),
             output_dir=_path_option_with_default(
                 args,
                 "--output-dir",
-                etf_cli.DEFAULT_SCHEDULE_OBSERVE_DIR,
+                etf_observation_lifecycle_cli.DEFAULT_SCHEDULE_OBSERVE_DIR,
             ),
             run_shadow_monitor=not _flag(args, "--skip-shadow-monitor"),
             force_due=_flag(args, "--force-due"),

@@ -11,16 +11,15 @@ def test_method_promotion_plan_is_research_only_and_reader_brief_visible(tmp_pat
     promotion_plan = fixture["promotion_plan"]
     manifest = promotion_plan["manifest"]
     specs = promotion_plan["promoted_method_specs"]
-    method = specs["methods"][0]
 
-    assert manifest["status"] == "PASS"
-    assert method["source_variant_id"] == "sideways_choppy_hold_previous"
-    assert method["implementation_scope"] == "research_only"
-    assert method["auto_apply"] is False
-    assert method["broker_action_allowed"] is False
-    assert method["production_effect"] == "none"
+    assert manifest["status"] == "DEFER"
+    assert specs["methods"] == []
+    assert specs["next_action"] == "run_more_experiments_before_promotion"
+    assert manifest["implementation_scope"] == "research_only"
+    assert manifest["broker_action_allowed"] is False
+    assert manifest["production_effect"] == "none"
     assert len(manifest["proposed_method_names"]) == len(set(manifest["proposed_method_names"]))
-    assert "推荐正式实现 method" in promotion_plan["formal_implementation_plan"]
+    assert manifest["proposed_method_names"] == []
     assert "Owner Review Checklist" in promotion_plan["owner_review_checklist"]
 
     validation = system_target.validate_method_promotion_plan_artifact(
@@ -56,8 +55,8 @@ def test_method_promotion_plan_is_research_only_and_reader_brief_visible(tmp_pat
 
     assert summary["availability"] == "AVAILABLE"
     assert summary["experiment_triage_id"] == fixture["triage"]["triage_id"]
-    assert summary["best_experiment_variant"] == "sideways_choppy_hold_previous"
+    assert summary["best_experiment_variant"] == fixture["triage"]["triage_summary"]["top_variant"]
     assert summary["method_promotion_plan_id"] == promotion_plan["promotion_plan_id"]
-    assert method["proposed_method_name"] in summary["proposed_method_names"]
+    assert summary["proposed_method_names"] == ""
     assert summary["promotion_implementation_scope"] == "research_only"
     assert summary["broker_action_allowed"] is False

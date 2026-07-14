@@ -1,5 +1,17 @@
 schema_version: 1
 
+policy_metadata:
+  policy_id: weight_optimization_hypothesis_v1
+  owner: research-method owner
+  version: v1
+  status: pilot_baseline
+  rationale: >
+    Preserve the reviewed failure taxonomy and hypothesis priority used by the
+    lightweight experiment factory without treating hypotheses as evidence.
+  review_condition: >
+    Review when failure taxonomy, hypothesis priority, or formal-method screening
+    scope changes after an owner-reviewed experiment cycle.
+
 hypothesis_families:
   - risk_exposure_control
   - regime_gating

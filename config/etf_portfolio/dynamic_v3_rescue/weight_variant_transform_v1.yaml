@@ -1,5 +1,17 @@
 schema_version: 1
 
+policy_metadata:
+  policy_id: weight_variant_transform_v1
+  owner: research-method owner
+  version: v1
+  status: pilot_baseline
+  rationale: >
+    Define the complete allow-listed transform vocabulary and required fields for
+    lightweight screening without registering a formal research method.
+  review_condition: >
+    Review before adding a transform type, changing required fields, or changing
+    allowed execution modes.
+
 transform_types:
   cap_group_weight:
     description: Cap aggregate group exposure and reallocate excess to CASH.

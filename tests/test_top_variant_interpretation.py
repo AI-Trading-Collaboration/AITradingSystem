@@ -11,17 +11,25 @@ def test_top_variant_interpretation_explains_promoted_variant_and_coverage(tmp_p
     manifest = interpretation["manifest"]
     explanations = interpretation["top_variant_explanations"]
     coverage = interpretation["variant_failure_mode_coverage"]
-    promoted = next(row for row in explanations if row["recommended_promotion"] is True)
+    best = explanations[0]
+    best_id = fixture["triage"]["variant_scorecard"][0]["variant_id"]
 
     assert manifest["status"] == "PASS"
-    assert manifest["recommended_variant"] == "sideways_choppy_hold_previous"
-    assert promoted["variant_id"] == "sideways_choppy_hold_previous"
-    assert promoted["what_it_changes"]
-    assert promoted["why_it_helped"]
-    assert promoted["what_it_costs"]
+    assert manifest["recommended_variant"] == best_id
+    assert best["variant_id"] == best_id
+    assert best["recommended_promotion"] is False
+    assert best["what_it_changes"]
+    assert best["why_it_helped"] == best["observed_screening_evidence"]
+    assert best["what_it_costs"] == best["observed_screening_costs"]
+    assert best["expected_benefit_hypothesis"]
+    assert best["expected_cost_hypothesis"]
     assert coverage["failure_modes"]
-    assert "Dynamic Rescue Weight Experiment Top Variant Interpretation" in (
-        interpretation["reader_brief_section"]
+    assert {row["coverage_status"] for row in coverage["failure_modes"]}.issubset(
+        {"OBSERVED_SUPPORT", "HYPOTHESIS_COVERAGE_ONLY", "MISSING"}
+    )
+    assert (
+        "Dynamic Rescue Weight Experiment Top Variant Interpretation"
+        in (interpretation["reader_brief_section"])
     )
     assert manifest["broker_action_allowed"] is False
     assert manifest["production_effect"] == "none"

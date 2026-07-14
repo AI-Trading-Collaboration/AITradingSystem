@@ -233,6 +233,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_sweep_runtime as dynamic_v3_sweep_runtime_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_system_target_experiment_factory as dynamic_v3_experiment_factory_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_system_target_hardening as dynamic_v3_system_target_hardening_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -358,6 +361,7 @@ __all__ = [
     "dynamic_v3_system_target_hardening_commands",
     "dynamic_v3_system_target_refinement_commands",
     "dynamic_v3_system_target_risk_capped_commands",
+    "dynamic_v3_experiment_factory_commands",
     "dynamic_v3_data_audit_commands",
     "dynamic_v3_data_provenance_commands",
     "dynamic_v3_defensive_research_commands",

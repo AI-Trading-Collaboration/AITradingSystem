@@ -3818,6 +3818,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue hypothesis-backlog report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/hypothesis_backlog/*/hypothesis_backlog_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/hypothesis_backlog/*/hypothesis_backlog_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/hypothesis_backlog/*/failure_mode_taxonomy.json
       - reports/etf_portfolio/dynamic_v3_rescue/hypothesis_backlog/*/hypotheses.jsonl
@@ -3839,6 +3840,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue variant-transform report-spec
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/variant_transform_spec/*/variant_transform_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/variant_transform_spec/*/variant_transform_spec_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/variant_transform_spec/*/normalized_transform_spec.yaml
       - reports/etf_portfolio/dynamic_v3_rescue/variant_transform_spec/*/transform_type_catalog.json
@@ -3859,6 +3861,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue experiment-matrix report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/experiment_matrix/*/experiment_matrix_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/experiment_matrix/*/experiment_matrix_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/experiment_matrix/*/variant_specs.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/experiment_matrix/*/transform_specs.json
@@ -3879,6 +3882,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue batch-experiment report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/batch_experiment/*/batch_experiment_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/batch_experiment/*/batch_experiment_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/batch_experiment/*/variant_weight_paths.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/batch_experiment/*/variant_performance_metrics.jsonl
@@ -3901,6 +3905,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue experiment-triage report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/experiment_triage/*/experiment_triage_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/experiment_triage/*/triage_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/experiment_triage/*/variant_scorecard.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/experiment_triage/*/promotion_candidates.jsonl
@@ -3923,6 +3928,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue top-variant-interpretation report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/top_variant_interpretation/*/top_variant_interpretation_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/top_variant_interpretation/*/top_variant_interpretation_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/top_variant_interpretation/*/top_variant_explanations.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/top_variant_interpretation/*/variant_failure_mode_coverage.json
@@ -3944,6 +3950,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue method-promotion-plan report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/method_promotion_plan/*/method_promotion_plan_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/method_promotion_plan/*/method_promotion_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/method_promotion_plan/*/promoted_method_specs.json
       - reports/etf_portfolio/dynamic_v3_rescue/method_promotion_plan/*/formal_implementation_plan.md

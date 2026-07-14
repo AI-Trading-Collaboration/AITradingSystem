@@ -410,8 +410,6 @@ class DynamicV3SystemTargetError(ValueError):
     """Raised when system target or paper shadow artifacts fail closed."""
 
 
-
-
 def _call_risk_capped(name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
     # ARCH-004 G2.4CL compatibility surface. The lazy import avoids a module
     # cycle while preserving every historical Python caller.
@@ -641,1288 +639,131 @@ def smoothed_limited_config_report_payload(
     }
 
 
-def load_weight_optimization_hypothesis_config(
-    path: Path = DEFAULT_WEIGHT_OPTIMIZATION_HYPOTHESIS_CONFIG_PATH,
-) -> dict[str, Any]:
-    payload = _load_yaml_mapping(path)
-    _assert_experiment_factory_config_safe(payload)
-    return payload
+def _call_experiment_factory(name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    # ARCH-004 G2.4CM compatibility surface. The lazy import avoids a module
+    # cycle while preserving every historical Python caller.
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_system_target_experiment_factory,
+    )
 
-
-def validate_weight_optimization_hypothesis_config(
-    path: Path = DEFAULT_WEIGHT_OPTIMIZATION_HYPOTHESIS_CONFIG_PATH,
-) -> dict[str, Any]:
-    checks: list[dict[str, Any]] = []
-    payload: dict[str, Any] = {}
     try:
-        payload = load_weight_optimization_hypothesis_config(path)
-    except Exception as exc:  # noqa: BLE001
-        checks.append(_check("config_loads", False, str(exc)))
-    else:
-        failure_modes = _records(payload.get("failure_modes"))
-        hypotheses = _records(payload.get("hypotheses"))
-        mode_ids = {str(row.get("id")) for row in failure_modes if row.get("id")}
-        families = set(_texts(payload.get("hypothesis_families")))
-        hypothesis_ids = [str(row.get("hypothesis_id")) for row in hypotheses]
-        target_modes = {
-            mode for row in hypotheses for mode in _texts(row.get("target_failure_modes"))
-        }
-        checks.extend(
-            [
-                _check("schema_version", payload.get("schema_version") == SCHEMA_VERSION, ""),
-                _check(
-                    "required_failure_modes_present",
-                    set(DEFAULT_FAILURE_MODES).issubset(mode_ids),
-                    ",".join(sorted(mode_ids)),
-                ),
-                _check(
-                    "required_hypothesis_families_present",
-                    set(DEFAULT_HYPOTHESIS_FAMILIES).issubset(families),
-                    ",".join(sorted(families)),
-                ),
-                _check("hypotheses_present", bool(hypotheses), ""),
-                _check(
-                    "hypothesis_ids_unique",
-                    len(hypothesis_ids) == len(set(hypothesis_ids)),
-                    ",".join(hypothesis_ids),
-                ),
-                _check(
-                    "hypotheses_have_target_failure_modes",
-                    all(_texts(row.get("target_failure_modes")) for row in hypotheses),
-                    "",
-                ),
-                _check(
-                    "hypothesis_failure_modes_known",
-                    target_modes.issubset(mode_ids),
-                    ",".join(sorted(target_modes - mode_ids)),
-                ),
-                _check(
-                    "hypothesis_families_known",
-                    {str(row.get("family")) for row in hypotheses}.issubset(families),
-                    "",
-                ),
-                _check(
-                    "safety_locked",
-                    _experiment_safety_config_locked(_mapping(payload.get("safety"))),
-                    "",
-                ),
-            ]
-        )
-    return _validation_payload(
-        "etf_dynamic_v3_weight_optimization_hypothesis_config_validation",
-        "weight_optimization_hypothesis_config",
-        checks,
-        extra={"config_path": str(path)},
+        return getattr(dynamic_v3_system_target_experiment_factory, name)(*args, **kwargs)
+    except DynamicV3SystemTargetError:
+        raise
+    except ValueError as exc:
+        raise DynamicV3SystemTargetError(str(exc)) from exc
+
+
+def load_weight_optimization_hypothesis_config(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("load_weight_optimization_hypothesis_config", *args, **kwargs)
+
+
+def validate_weight_optimization_hypothesis_config(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory(
+        "validate_weight_optimization_hypothesis_config", *args, **kwargs
     )
 
 
-def build_hypothesis_backlog(
-    *,
-    config_path: Path = DEFAULT_WEIGHT_OPTIMIZATION_HYPOTHESIS_CONFIG_PATH,
-    output_dir: Path = DEFAULT_HYPOTHESIS_BACKLOG_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    config = load_weight_optimization_hypothesis_config(config_path)
-    validation = validate_weight_optimization_hypothesis_config(config_path)
-    failure_modes = _normalized_failure_modes(config)
-    hypotheses = _normalized_hypotheses(config)
-    priority = _hypothesis_priority_summary(failure_modes, hypotheses)
-    backlog_id = _stable_id(
-        "hypothesis-backlog",
-        config_path,
-        validation["status"],
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / backlog_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_hypothesis_backlog_manifest",
-        "backlog_id": root.name,
-        "generated_at": generated.isoformat(),
-        "status": validation["status"],
-        "config_path": str(config_path),
-        "failure_modes_count": len(failure_modes["failure_modes"]),
-        "hypotheses_count": len(hypotheses),
-        "high_priority_hypotheses": priority["high_priority_hypotheses"],
-        "hypothesis_backlog_manifest_path": str(root / "hypothesis_backlog_manifest.json"),
-        "failure_mode_taxonomy_path": str(root / "failure_mode_taxonomy.json"),
-        "hypotheses_path": str(root / "hypotheses.jsonl"),
-        "hypothesis_priority_summary_path": str(root / "hypothesis_priority_summary.json"),
-        "hypothesis_backlog_report_path": str(root / "hypothesis_backlog_report.md"),
-        **EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "hypothesis_backlog_manifest.json", manifest)
-    _write_json(root / "failure_mode_taxonomy.json", failure_modes)
-    _write_jsonl(root / "hypotheses.jsonl", hypotheses)
-    _write_json(root / "hypothesis_priority_summary.json", priority)
-    _write_text(
-        root / "hypothesis_backlog_report.md",
-        render_hypothesis_backlog_report(manifest, failure_modes, hypotheses, priority),
-    )
-    _write_latest_pointer(
-        "latest_hypothesis_backlog",
-        root.name,
-        root / "hypothesis_backlog_manifest.json",
-    )
-    return {
-        "backlog_id": root.name,
-        "backlog_dir": root,
-        "manifest": manifest,
-        "failure_mode_taxonomy": failure_modes,
-        "hypotheses": hypotheses,
-        "hypothesis_priority_summary": priority,
-        "validation": validation,
-    }
+def build_hypothesis_backlog(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("build_hypothesis_backlog", *args, **kwargs)
 
 
-def hypothesis_backlog_report_payload(
-    *,
-    backlog_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_HYPOTHESIS_BACKLOG_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=backlog_id,
-        latest_pointer="latest_hypothesis_backlog",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="hypothesis_backlog_manifest.json",
-    )
-    return {
-        **_read_json(root / "hypothesis_backlog_manifest.json"),
-        "failure_mode_taxonomy": _read_json(root / "failure_mode_taxonomy.json"),
-        "hypotheses": _read_jsonl(root / "hypotheses.jsonl"),
-        "hypothesis_priority_summary": _read_json(root / "hypothesis_priority_summary.json"),
-        "backlog_dir": str(root),
-    }
+def hypothesis_backlog_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("hypothesis_backlog_report_payload", *args, **kwargs)
 
 
-def validate_hypothesis_backlog_artifact(
-    *,
-    backlog_id: str,
-    output_dir: Path = DEFAULT_HYPOTHESIS_BACKLOG_DIR,
-) -> dict[str, Any]:
-    root = output_dir / backlog_id
-    manifest = _read_optional_json(root / "hypothesis_backlog_manifest.json") or {}
-    taxonomy = _read_optional_json(root / "failure_mode_taxonomy.json") or {}
-    hypotheses = _read_jsonl(root / "hypotheses.jsonl")
-    priority = _read_optional_json(root / "hypothesis_priority_summary.json") or {}
-    mode_ids = {
-        str(row.get("id")) for row in _records(taxonomy.get("failure_modes")) if row.get("id")
-    }
-    checks = _required_file_checks(
-        root,
-        (
-            "hypothesis_backlog_manifest.json",
-            "failure_mode_taxonomy.json",
-            "hypotheses.jsonl",
-            "hypothesis_priority_summary.json",
-            "hypothesis_backlog_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check("backlog_id_matches", manifest.get("backlog_id") == backlog_id, ""),
-            _check("failure_mode_taxonomy_present", bool(mode_ids), ""),
-            _check("hypotheses_present", bool(hypotheses), ""),
-            _check(
-                "hypotheses_have_target_failure_modes",
-                all(_texts(row.get("target_failure_modes")) for row in hypotheses),
-                "",
-            ),
-            _check(
-                "hypothesis_failure_modes_known",
-                all(
-                    set(_texts(row.get("target_failure_modes"))).issubset(mode_ids)
-                    for row in hypotheses
-                ),
-                "",
-            ),
-            _check(
-                "priority_summary_present",
-                priority.get("hypotheses_total") == len(hypotheses),
-                "",
-            ),
-            _check(
-                "promotion_eligible_false",
-                all(row.get("promotion_eligible") is False for row in hypotheses),
-                "",
-            ),
-            _check(
-                "broker_forbidden",
-                _payload_safe(manifest, taxonomy, priority, *hypotheses),
-                "",
-            ),
-            _check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, taxonomy, priority, *hypotheses),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_hypothesis_backlog_validation",
-        backlog_id,
-        checks,
+def validate_hypothesis_backlog_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("validate_hypothesis_backlog_artifact", *args, **kwargs)
+
+
+def load_weight_variant_transform_spec(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("load_weight_variant_transform_spec", *args, **kwargs)
+
+
+def validate_weight_variant_transform_spec_config(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory(
+        "validate_weight_variant_transform_spec_config", *args, **kwargs
     )
 
 
-def load_weight_variant_transform_spec(
-    path: Path = DEFAULT_WEIGHT_VARIANT_TRANSFORM_CONFIG_PATH,
-) -> dict[str, Any]:
-    payload = _load_yaml_mapping(path)
-    _assert_experiment_factory_config_safe(payload)
-    return payload
+def build_variant_transform_spec_report(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("build_variant_transform_spec_report", *args, **kwargs)
 
 
-def validate_weight_variant_transform_spec_config(
-    path: Path = DEFAULT_WEIGHT_VARIANT_TRANSFORM_CONFIG_PATH,
-) -> dict[str, Any]:
-    checks: list[dict[str, Any]] = []
-    payload: dict[str, Any] = {}
-    try:
-        payload = load_weight_variant_transform_spec(path)
-    except Exception as exc:  # noqa: BLE001
-        checks.append(_check("config_loads", False, str(exc)))
-    else:
-        transform_types = _mapping(payload.get("transform_types"))
-        checks.extend(
-            [
-                _check("schema_version", payload.get("schema_version") == SCHEMA_VERSION, ""),
-                _check(
-                    "required_transform_types_present",
-                    set(DEFAULT_TRANSFORM_TYPES).issubset(set(transform_types)),
-                    ",".join(sorted(transform_types)),
-                ),
-                _check(
-                    "required_fields_declared",
-                    all(
-                        isinstance(_mapping(spec).get("required_fields"), Sequence)
-                        and not isinstance(_mapping(spec).get("required_fields"), str | bytes)
-                        for spec in transform_types.values()
-                    ),
-                    "",
-                ),
-                _check(
-                    "safety_locked",
-                    _experiment_safety_config_locked(_mapping(payload.get("safety"))),
-                    "",
-                ),
-            ]
-        )
-    return _validation_payload(
-        "etf_dynamic_v3_variant_transform_spec_config_validation",
-        "weight_variant_transform_spec_config",
-        checks,
-        extra={"config_path": str(path)},
-    )
+def variant_transform_spec_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("variant_transform_spec_report_payload", *args, **kwargs)
 
 
-def build_variant_transform_spec_report(
-    *,
-    config_path: Path = DEFAULT_WEIGHT_VARIANT_TRANSFORM_CONFIG_PATH,
-    output_dir: Path = DEFAULT_VARIANT_TRANSFORM_SPEC_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    spec = load_weight_variant_transform_spec(config_path)
-    validation = validate_weight_variant_transform_spec_config(config_path)
-    normalized = _normalized_variant_transform_spec(spec)
-    catalog = _transform_type_catalog(normalized)
-    spec_id = _stable_id("variant-transform-spec", config_path, generated.isoformat())
-    root = _unique_dir(output_dir / spec_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_variant_transform_spec_manifest",
-        "spec_id": root.name,
-        "generated_at": generated.isoformat(),
-        "status": validation["status"],
-        "config_path": str(config_path),
-        "transform_type_count": len(catalog["transform_types"]),
-        "variant_transform_spec_manifest_path": str(root / "variant_transform_spec_manifest.json"),
-        "normalized_transform_spec_path": str(root / "normalized_transform_spec.yaml"),
-        "transform_type_catalog_path": str(root / "transform_type_catalog.json"),
-        "variant_transform_spec_report_path": str(root / "variant_transform_spec_report.md"),
-        **EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "variant_transform_spec_manifest.json", manifest)
-    _write_text(
-        root / "normalized_transform_spec.yaml",
-        yaml.safe_dump(normalized, sort_keys=False, allow_unicode=True),
-    )
-    _write_json(root / "transform_type_catalog.json", catalog)
-    _write_text(
-        root / "variant_transform_spec_report.md",
-        render_variant_transform_spec_report(manifest, catalog),
-    )
-    _write_latest_pointer(
-        "latest_variant_transform_spec",
-        root.name,
-        root / "variant_transform_spec_manifest.json",
-    )
-    return {
-        "spec_id": root.name,
-        "spec_dir": root,
-        "manifest": manifest,
-        "normalized_transform_spec": normalized,
-        "transform_type_catalog": catalog,
-        "validation": validation,
-    }
+def validate_variant_transform_spec_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("validate_variant_transform_spec_artifact", *args, **kwargs)
 
 
-def variant_transform_spec_report_payload(
-    *,
-    spec_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_VARIANT_TRANSFORM_SPEC_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=spec_id,
-        latest_pointer="latest_variant_transform_spec",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="variant_transform_spec_manifest.json",
-    )
-    return {
-        **_read_json(root / "variant_transform_spec_manifest.json"),
-        "normalized_transform_spec": _load_yaml_mapping(root / "normalized_transform_spec.yaml"),
-        "transform_type_catalog": _read_json(root / "transform_type_catalog.json"),
-        "spec_dir": str(root),
-    }
+def load_weight_experiment_matrix_config(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("load_weight_experiment_matrix_config", *args, **kwargs)
 
 
-def validate_variant_transform_spec_artifact(
-    *,
-    spec_id: str,
-    output_dir: Path = DEFAULT_VARIANT_TRANSFORM_SPEC_DIR,
-) -> dict[str, Any]:
-    root = output_dir / spec_id
-    manifest = _read_optional_json(root / "variant_transform_spec_manifest.json") or {}
-    normalized = (
-        _load_yaml_mapping(root / "normalized_transform_spec.yaml")
-        if (root / "normalized_transform_spec.yaml").exists()
-        else {}
-    )
-    catalog = _read_optional_json(root / "transform_type_catalog.json") or {}
-    types = {str(row.get("type")) for row in _records(catalog.get("transform_types"))}
-    checks = _required_file_checks(
-        root,
-        (
-            "variant_transform_spec_manifest.json",
-            "normalized_transform_spec.yaml",
-            "transform_type_catalog.json",
-            "variant_transform_spec_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check("spec_id_matches", manifest.get("spec_id") == spec_id, ""),
-            _check(
-                "required_transform_types_present",
-                set(DEFAULT_TRANSFORM_TYPES).issubset(types),
-                ",".join(sorted(types)),
-            ),
-            _check("normalized_spec_present", bool(normalized.get("transform_types")), ""),
-            _check("broker_forbidden", _payload_safe(manifest, catalog), ""),
-            _check("experiment_safety_locked", _payload_experiment_safe(manifest, catalog), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_variant_transform_spec_validation",
-        spec_id,
-        checks,
-    )
+def validate_weight_experiment_matrix_config(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("validate_weight_experiment_matrix_config", *args, **kwargs)
 
 
-def load_weight_experiment_matrix_config(
-    path: Path = DEFAULT_WEIGHT_EXPERIMENT_MATRIX_CONFIG_PATH,
-) -> dict[str, Any]:
-    payload = _load_yaml_mapping(path)
-    _assert_experiment_factory_config_safe(payload)
-    return payload
+def build_experiment_matrix(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("build_experiment_matrix", *args, **kwargs)
 
 
-def validate_weight_experiment_matrix_config(
-    path: Path = DEFAULT_WEIGHT_EXPERIMENT_MATRIX_CONFIG_PATH,
-) -> dict[str, Any]:
-    checks: list[dict[str, Any]] = []
-    payload: dict[str, Any] = {}
-    try:
-        payload = load_weight_experiment_matrix_config(path)
-    except Exception as exc:  # noqa: BLE001
-        checks.append(_check("config_loads", False, str(exc)))
-    else:
-        variants = _records(payload.get("variants"))
-        group = _mapping(payload.get("experiment_group"))
-        variant_ids = [str(row.get("variant_id")) for row in variants]
-        transform_types = {
-            _text(transform.get("type"))
-            for row in variants
-            for transform in _records(row.get("transforms"))
-        }
-        checks.extend(
-            [
-                _check("schema_version", payload.get("schema_version") == SCHEMA_VERSION, ""),
-                _check("experiment_group_id_present", bool(group.get("id")), ""),
-                _check(
-                    "base_method_limited_adjustment",
-                    group.get("base_method") == "limited_adjustment",
-                    _text(group.get("base_method")),
-                ),
-                _check("source_backfill_id_present", bool(group.get("source_backfill_id")), ""),
-                _check("variants_present", bool(variants), ""),
-                _check(
-                    "variant_ids_unique",
-                    len(variant_ids) == len(set(variant_ids)),
-                    ",".join(variant_ids),
-                ),
-                _check(
-                    "variants_have_transforms",
-                    all(_records(row.get("transforms")) for row in variants),
-                    "",
-                ),
-                _check(
-                    "required_transform_families_covered",
-                    {
-                        "regime_gate",
-                        "weight_smoothing",
-                        "rebalance_threshold",
-                        "consensus_aggregation",
-                    }.issubset(transform_types),
-                    ",".join(sorted(transform_types)),
-                ),
-                _check(
-                    "safety_locked",
-                    _experiment_safety_config_locked(_mapping(payload.get("safety"))),
-                    "",
-                ),
-            ]
-        )
-    return _validation_payload(
-        "etf_dynamic_v3_experiment_matrix_config_validation",
-        "weight_experiment_matrix_config",
-        checks,
-        extra={"config_path": str(path)},
-    )
+def experiment_matrix_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("experiment_matrix_report_payload", *args, **kwargs)
 
 
-def build_experiment_matrix(
-    *,
-    config_path: Path = DEFAULT_WEIGHT_EXPERIMENT_MATRIX_CONFIG_PATH,
-    output_dir: Path = DEFAULT_EXPERIMENT_MATRIX_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    config = load_weight_experiment_matrix_config(config_path)
-    validation = validate_weight_experiment_matrix_config(config_path)
-    hypothesis_config = load_weight_optimization_hypothesis_config(
-        _resolve_project_path(
-            _mapping(config.get("source")).get("hypothesis_config"),
-            DEFAULT_WEIGHT_OPTIMIZATION_HYPOTHESIS_CONFIG_PATH,
-        )
-    )
-    transform_spec = load_weight_variant_transform_spec(
-        _resolve_project_path(
-            _mapping(config.get("source")).get("transform_spec_config"),
-            DEFAULT_WEIGHT_VARIANT_TRANSFORM_CONFIG_PATH,
-        )
-    )
-    hypothesis_lookup = {
-        str(row.get("hypothesis_id")): row
-        for row in _normalized_hypotheses(hypothesis_config)
-        if row.get("hypothesis_id")
-    }
-    variant_specs = _normalized_variant_specs(config, hypothesis_lookup, transform_spec)
-    transform_specs = _matrix_transform_specs(transform_spec, variant_specs)
-    summary = _experiment_matrix_summary(variant_specs)
-    matrix_id = _stable_id("experiment-matrix", config_path, generated.isoformat())
-    root = _unique_dir(output_dir / matrix_id)
-    root.mkdir(parents=True, exist_ok=False)
-    group = _mapping(config.get("experiment_group"))
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_experiment_matrix_manifest",
-        "matrix_id": root.name,
-        "experiment_group_id": group.get("id"),
-        "base_method": group.get("base_method"),
-        "source_backfill_id": group.get("source_backfill_id"),
-        "generated_at": generated.isoformat(),
-        "status": validation["status"],
-        "config_path": str(config_path),
-        "variant_count": len(variant_specs),
-        "families_covered": summary["families_covered"],
-        "failure_modes_covered": summary["failure_modes_covered"],
-        "experiment_matrix_manifest_path": str(root / "experiment_matrix_manifest.json"),
-        "variant_specs_path": str(root / "variant_specs.jsonl"),
-        "transform_specs_path": str(root / "transform_specs.json"),
-        "experiment_matrix_report_path": str(root / "experiment_matrix_report.md"),
-        **EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "experiment_matrix_manifest.json", manifest)
-    _write_jsonl(root / "variant_specs.jsonl", variant_specs)
-    _write_json(root / "transform_specs.json", transform_specs)
-    _write_text(
-        root / "experiment_matrix_report.md",
-        render_experiment_matrix_report(manifest, variant_specs, transform_specs, summary),
-    )
-    _write_latest_pointer(
-        "latest_experiment_matrix", root.name, root / "experiment_matrix_manifest.json"
-    )
-    return {
-        "matrix_id": root.name,
-        "matrix_dir": root,
-        "manifest": manifest,
-        "variant_specs": variant_specs,
-        "transform_specs": transform_specs,
-        "summary": summary,
-        "validation": validation,
-    }
+def validate_experiment_matrix_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("validate_experiment_matrix_artifact", *args, **kwargs)
 
 
-def experiment_matrix_report_payload(
-    *,
-    matrix_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_EXPERIMENT_MATRIX_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=matrix_id,
-        latest_pointer="latest_experiment_matrix",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="experiment_matrix_manifest.json",
-    )
-    return {
-        **_read_json(root / "experiment_matrix_manifest.json"),
-        "variant_specs": _read_jsonl(root / "variant_specs.jsonl"),
-        "transform_specs": _read_json(root / "transform_specs.json"),
-        "matrix_dir": str(root),
-    }
+def run_batch_experiment(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("run_batch_experiment", *args, **kwargs)
 
 
-def validate_experiment_matrix_artifact(
-    *,
-    matrix_id: str,
-    output_dir: Path = DEFAULT_EXPERIMENT_MATRIX_DIR,
-) -> dict[str, Any]:
-    root = output_dir / matrix_id
-    manifest = _read_optional_json(root / "experiment_matrix_manifest.json") or {}
-    variants = _read_jsonl(root / "variant_specs.jsonl")
-    transforms = _read_optional_json(root / "transform_specs.json") or {}
-    transform_types = {
-        _text(transform.get("type"))
-        for row in variants
-        for transform in _records(row.get("transforms"))
-    }
-    checks = _required_file_checks(
-        root,
-        (
-            "experiment_matrix_manifest.json",
-            "variant_specs.jsonl",
-            "transform_specs.json",
-            "experiment_matrix_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check("matrix_id_matches", manifest.get("matrix_id") == matrix_id, ""),
-            _check("variants_present", bool(variants), ""),
-            _check(
-                "variants_have_target_failure_modes",
-                all(_texts(row.get("target_failure_modes")) for row in variants),
-                "",
-            ),
-            _check(
-                "required_families_covered",
-                {
-                    "regime_gate",
-                    "weight_smoothing",
-                    "rebalance_threshold",
-                    "consensus_aggregation",
-                }.issubset(transform_types),
-                ",".join(sorted(transform_types)),
-            ),
-            _check(
-                "variants_experiment_only",
-                all(row.get("experiment_only") is True for row in variants),
-                "",
-            ),
-            _check(
-                "not_formal_research_method",
-                all(row.get("not_formal_research_method") is True for row in variants),
-                "",
-            ),
-            _check("transform_specs_present", bool(transforms.get("transform_types")), ""),
-            _check("broker_forbidden", _payload_safe(manifest, transforms, *variants), ""),
-            _check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, transforms, *variants),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload("etf_dynamic_v3_experiment_matrix_validation", matrix_id, checks)
+def batch_experiment_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("batch_experiment_report_payload", *args, **kwargs)
 
 
-def run_batch_experiment(
-    *,
-    matrix_id: str,
-    matrix_dir: Path = DEFAULT_EXPERIMENT_MATRIX_DIR,
-    baseline_backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    output_dir: Path = DEFAULT_BATCH_EXPERIMENT_DIR,
-    price_cache_path: Path | None = None,
-    rates_cache_path: Path = DEFAULT_RATES_CACHE_PATH,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    matrix = experiment_matrix_report_payload(matrix_id=matrix_id, output_dir=matrix_dir)
-    source_backfill_id = _text(matrix.get("source_backfill_id"))
-    backfill = paper_shadow_backfill_report_payload(
-        backfill_id=source_backfill_id,
-        output_dir=baseline_backfill_dir,
-    )
-    baseline_states = _records(backfill.get("backfill_method_states"))
-    config = _load_backfill_config_from_manifest(backfill)
-    start = _coerce_date(backfill.get("date_start"), AI_AFTER_CHATGPT_START)
-    end = _coerce_date(backfill.get("date_end"), start)
-    symbols = _symbols_from_state_paths(baseline_states)
-    source = _mapping(config.get("source"))
-    prices_path = price_cache_path or _resolve_project_path(
-        source.get("price_cache_path"), DEFAULT_PRICE_CACHE_PATH
-    )
-    pivot = _load_price_pivot(prices_path, symbols, start)
-    pivot = pivot.loc[pivot.index.date <= end]
-    quality_as_of = max(end, generated.date())
-    quality = _run_data_quality_gate(
-        price_cache_path=prices_path,
-        rates_cache_path=rates_cache_path,
-        expected_symbols=symbols,
-        as_of=quality_as_of,
-    )
-    if not quality.passed:
-        raise DynamicV3SystemTargetError(f"data quality gate failed: {quality.status}")
-    returns = pivot.pct_change().fillna(0.0)
-    labels = {
-        idx.date().isoformat(): _risk_capped_regime_context_for_return(row, config)
-        for idx, row in returns.iterrows()
-    }
-    variant_specs = _records(matrix.get("variant_specs"))
-    variant_states: list[dict[str, Any]] = []
-    for variant in variant_specs:
-        variant_states.extend(
-            _run_variant_weight_path(
-                variant=variant,
-                baseline_states=baseline_states,
-                returns=returns,
-                labels=labels,
-                config=config,
-            )
-        )
-    performance = _variant_performance_metrics(variant_states, baseline_states)
-    regime = _variant_regime_metrics(variant_states, baseline_states, labels, config)
-    stability = _variant_stability_metrics(variant_states, baseline_states, config)
-    batch_id = _stable_id("batch-experiment", matrix_id, generated.isoformat())
-    root = _unique_dir(output_dir / batch_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_batch_experiment_manifest",
-        "batch_id": root.name,
-        "matrix_id": matrix_id,
-        "source_backfill_id": source_backfill_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if performance else "FAIL",
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "requested_start_date": backfill.get("requested_start_date"),
-        "requested_end_date": backfill.get("requested_end_date"),
-        "date_start": start.isoformat(),
-        "date_end": end.isoformat(),
-        "data_quality_status": quality.status,
-        "data_quality_as_of": quality_as_of.isoformat(),
-        "data_quality_checked_at": quality.checked_at.isoformat(),
-        "variants_total": len(variant_specs),
-        "variants_completed": len({row.get("variant_id") for row in performance}),
-        "variant_weight_paths_path": str(root / "variant_weight_paths.jsonl"),
-        "variant_performance_metrics_path": str(root / "variant_performance_metrics.jsonl"),
-        "variant_regime_metrics_path": str(root / "variant_regime_metrics.jsonl"),
-        "variant_stability_metrics_path": str(root / "variant_stability_metrics.jsonl"),
-        "batch_experiment_report_path": str(root / "batch_experiment_report.md"),
-        **EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "batch_experiment_manifest.json", manifest)
-    _write_jsonl(root / "variant_weight_paths.jsonl", variant_states)
-    _write_jsonl(root / "variant_performance_metrics.jsonl", performance)
-    _write_jsonl(root / "variant_regime_metrics.jsonl", regime)
-    _write_jsonl(root / "variant_stability_metrics.jsonl", stability)
-    _write_text(
-        root / "batch_experiment_report.md",
-        render_batch_experiment_report(manifest, performance, regime, stability),
-    )
-    _write_latest_pointer(
-        "latest_batch_experiment", root.name, root / "batch_experiment_manifest.json"
-    )
-    return {
-        "batch_id": root.name,
-        "batch_dir": root,
-        "manifest": manifest,
-        "variant_weight_paths": variant_states,
-        "variant_performance_metrics": performance,
-        "variant_regime_metrics": regime,
-        "variant_stability_metrics": stability,
-    }
+def validate_batch_experiment_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("validate_batch_experiment_artifact", *args, **kwargs)
 
 
-def batch_experiment_report_payload(
-    *,
-    batch_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_BATCH_EXPERIMENT_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=batch_id,
-        latest_pointer="latest_batch_experiment",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="batch_experiment_manifest.json",
-    )
-    return {
-        **_read_json(root / "batch_experiment_manifest.json"),
-        "variant_weight_paths": _read_jsonl(root / "variant_weight_paths.jsonl"),
-        "variant_performance_metrics": _read_jsonl(root / "variant_performance_metrics.jsonl"),
-        "variant_regime_metrics": _read_jsonl(root / "variant_regime_metrics.jsonl"),
-        "variant_stability_metrics": _read_jsonl(root / "variant_stability_metrics.jsonl"),
-        "batch_dir": str(root),
-    }
+def run_experiment_triage(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("run_experiment_triage", *args, **kwargs)
 
 
-def validate_batch_experiment_artifact(
-    *,
-    batch_id: str,
-    output_dir: Path = DEFAULT_BATCH_EXPERIMENT_DIR,
-) -> dict[str, Any]:
-    root = output_dir / batch_id
-    manifest = _read_optional_json(root / "batch_experiment_manifest.json") or {}
-    weights = _read_jsonl(root / "variant_weight_paths.jsonl")
-    performance = _read_jsonl(root / "variant_performance_metrics.jsonl")
-    regime = _read_jsonl(root / "variant_regime_metrics.jsonl")
-    stability = _read_jsonl(root / "variant_stability_metrics.jsonl")
-    variants = {str(row.get("variant_id")) for row in performance}
-    checks = _required_file_checks(
-        root,
-        (
-            "batch_experiment_manifest.json",
-            "variant_weight_paths.jsonl",
-            "variant_performance_metrics.jsonl",
-            "variant_regime_metrics.jsonl",
-            "variant_stability_metrics.jsonl",
-            "batch_experiment_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check("batch_id_matches", manifest.get("batch_id") == batch_id, ""),
-            _check("variant_weight_paths_present", bool(weights), ""),
-            _check("performance_metrics_present", bool(performance), ""),
-            _check(
-                "each_variant_has_regime_metrics",
-                variants.issubset({str(row.get("variant_id")) for row in regime}),
-                "",
-            ),
-            _check(
-                "each_variant_has_stability_metrics",
-                variants.issubset({str(row.get("variant_id")) for row in stability}),
-                "",
-            ),
-            _check(
-                "data_quality_visible",
-                manifest.get("data_quality_status") in {"PASS", "PASS_WITH_WARNINGS"},
-                _text(manifest.get("data_quality_status")),
-            ),
-            _check("data_quality_as_of_visible", bool(manifest.get("data_quality_as_of")), ""),
-            _check("broker_forbidden", _payload_safe(manifest, *weights, *performance), ""),
-            _check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, *weights, *performance, *regime, *stability),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload("etf_dynamic_v3_batch_experiment_validation", batch_id, checks)
+def experiment_triage_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("experiment_triage_report_payload", *args, **kwargs)
 
 
-def run_experiment_triage(
-    *,
-    batch_id: str,
-    batch_dir: Path = DEFAULT_BATCH_EXPERIMENT_DIR,
-    matrix_dir: Path = DEFAULT_EXPERIMENT_MATRIX_DIR,
-    output_dir: Path = DEFAULT_EXPERIMENT_TRIAGE_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    batch = batch_experiment_report_payload(batch_id=batch_id, output_dir=batch_dir)
-    matrix = experiment_matrix_report_payload(
-        matrix_id=_text(batch.get("matrix_id")),
-        output_dir=matrix_dir,
-    )
-    variant_specs = _records(matrix.get("variant_specs"))
-    policy = _mapping(
-        _mapping(load_weight_experiment_matrix_config(Path(matrix["config_path"]))).get(
-            "triage_policy"
-        )
-    )
-    scorecard = _triage_variant_scorecard(batch, variant_specs, policy)
-    candidates = _promotion_candidates(scorecard, variant_specs)
-    rejected = [row for row in scorecard if row.get("triage_decision") == "REJECT"]
-    summary = _triage_summary(scorecard, candidates)
-    triage_id = _stable_id("experiment-triage", batch_id, generated.isoformat())
-    root = _unique_dir(output_dir / triage_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_experiment_triage_manifest",
-        "triage_id": root.name,
-        "batch_id": batch_id,
-        "matrix_id": batch.get("matrix_id"),
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if scorecard else "FAIL",
-        "triage_policy_version": policy.get("policy_version", "weight_experiment_triage_v1"),
-        "market_regime": batch.get("market_regime", "ai_after_chatgpt"),
-        "date_start": batch.get("date_start"),
-        "date_end": batch.get("date_end"),
-        "data_quality_status": batch.get("data_quality_status"),
-        "triage_manifest_path": str(root / "triage_manifest.json"),
-        "variant_scorecard_path": str(root / "variant_scorecard.jsonl"),
-        "promotion_candidates_path": str(root / "promotion_candidates.jsonl"),
-        "rejected_variants_path": str(root / "rejected_variants.jsonl"),
-        "triage_summary_path": str(root / "triage_summary.json"),
-        "triage_report_path": str(root / "triage_report.md"),
-        **EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "triage_manifest.json", manifest)
-    _write_jsonl(root / "variant_scorecard.jsonl", scorecard)
-    _write_jsonl(root / "promotion_candidates.jsonl", candidates)
-    _write_jsonl(root / "rejected_variants.jsonl", rejected)
-    _write_json(root / "triage_summary.json", summary)
-    _write_text(
-        root / "triage_report.md",
-        render_experiment_triage_report(manifest, summary, scorecard),
-    )
-    _write_latest_pointer(
-        "latest_experiment_triage",
-        root.name,
-        root / "triage_manifest.json",
-    )
-    return {
-        "triage_id": root.name,
-        "triage_dir": root,
-        "manifest": manifest,
-        "variant_scorecard": scorecard,
-        "promotion_candidates": candidates,
-        "rejected_variants": rejected,
-        "triage_summary": summary,
-    }
+def validate_experiment_triage_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("validate_experiment_triage_artifact", *args, **kwargs)
 
 
-def experiment_triage_report_payload(
-    *,
-    triage_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_EXPERIMENT_TRIAGE_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=triage_id,
-        latest_pointer="latest_experiment_triage",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="triage_manifest.json",
-    )
-    return {
-        **_read_json(root / "triage_manifest.json"),
-        "variant_scorecard": _read_jsonl(root / "variant_scorecard.jsonl"),
-        "promotion_candidates": _read_jsonl(root / "promotion_candidates.jsonl"),
-        "rejected_variants": _read_jsonl(root / "rejected_variants.jsonl"),
-        "triage_summary": _read_json(root / "triage_summary.json"),
-        "triage_dir": str(root),
-    }
+def run_top_variant_interpretation(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("run_top_variant_interpretation", *args, **kwargs)
 
 
-def validate_experiment_triage_artifact(
-    *,
-    triage_id: str,
-    output_dir: Path = DEFAULT_EXPERIMENT_TRIAGE_DIR,
-) -> dict[str, Any]:
-    root = output_dir / triage_id
-    manifest = _read_optional_json(root / "triage_manifest.json") or {}
-    scorecard = _read_jsonl(root / "variant_scorecard.jsonl")
-    candidates = _read_jsonl(root / "promotion_candidates.jsonl")
-    rejected = _read_jsonl(root / "rejected_variants.jsonl")
-    summary = _read_optional_json(root / "triage_summary.json") or {}
-    decisions = {str(row.get("triage_decision")) for row in scorecard}
-    checks = _required_file_checks(
-        root,
-        (
-            "triage_manifest.json",
-            "variant_scorecard.jsonl",
-            "promotion_candidates.jsonl",
-            "rejected_variants.jsonl",
-            "triage_summary.json",
-            "triage_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check("triage_id_matches", manifest.get("triage_id") == triage_id, ""),
-            _check("scorecard_present", bool(scorecard), ""),
-            _check("decisions_valid", decisions.issubset(set(DEFAULT_TRIAGE_DECISIONS)), ""),
-            _check(
-                "hard_reject_effective",
-                all(
-                    row.get("triage_decision") != "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
-                    for row in scorecard
-                    if _texts(row.get("hard_reject_flags"))
-                ),
-                "",
-            ),
-            _check(
-                "summary_counts_match",
-                int(_float(summary.get("variants_total"))) == len(scorecard),
-                "",
-            ),
-            _check(
-                "promotion_candidates_subset_scorecard",
-                {
-                    _text(row.get("variant_id")) for row in candidates if row.get("variant_id")
-                }.issubset(
-                    {
-                        _text(row.get("variant_id"))
-                        for row in scorecard
-                        if row.get("triage_decision") == "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
-                    }
-                )
-                and len(candidates) <= 2,
-                "",
-            ),
-            _check("rejected_variants_present_or_empty", rejected is not None, ""),
-            _check("broker_forbidden", _payload_safe(manifest, summary, *scorecard), ""),
-            _check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, summary, *scorecard, *candidates),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload("etf_dynamic_v3_experiment_triage_validation", triage_id, checks)
+def top_variant_interpretation_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("top_variant_interpretation_report_payload", *args, **kwargs)
 
 
-def run_top_variant_interpretation(
-    *,
-    triage_id: str,
-    triage_dir: Path = DEFAULT_EXPERIMENT_TRIAGE_DIR,
-    matrix_dir: Path = DEFAULT_EXPERIMENT_MATRIX_DIR,
-    output_dir: Path = DEFAULT_TOP_VARIANT_INTERPRETATION_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    triage = experiment_triage_report_payload(triage_id=triage_id, output_dir=triage_dir)
-    matrix = experiment_matrix_report_payload(
-        matrix_id=_text(triage.get("matrix_id")),
-        output_dir=matrix_dir,
-    )
-    variant_specs = _records(matrix.get("variant_specs"))
-    explanations = _top_variant_explanations(triage, variant_specs)
-    coverage = _variant_failure_mode_coverage(variant_specs, explanations)
-    interpretation_id = _stable_id("top-variant-interpretation", triage_id, generated.isoformat())
-    root = _unique_dir(output_dir / interpretation_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_top_variant_interpretation_manifest",
-        "interpretation_id": root.name,
-        "triage_id": triage_id,
-        "matrix_id": triage.get("matrix_id"),
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if explanations else "FAIL",
-        "top_variant_count": len(explanations),
-        "recommended_variant": _recommended_interpretation_variant(explanations),
-        "top_variant_interpretation_manifest_path": str(
-            root / "top_variant_interpretation_manifest.json"
-        ),
-        "top_variant_explanations_path": str(root / "top_variant_explanations.jsonl"),
-        "variant_failure_mode_coverage_path": str(root / "variant_failure_mode_coverage.json"),
-        "top_variant_interpretation_report_path": str(
-            root / "top_variant_interpretation_report.md"
-        ),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **EXPERIMENT_FACTORY_SAFETY,
-    }
-    reader = render_top_variant_interpretation_reader_brief(manifest, explanations)
-    _write_json(root / "top_variant_interpretation_manifest.json", manifest)
-    _write_jsonl(root / "top_variant_explanations.jsonl", explanations)
-    _write_json(root / "variant_failure_mode_coverage.json", coverage)
-    _write_text(
-        root / "top_variant_interpretation_report.md",
-        render_top_variant_interpretation_report(manifest, explanations, coverage),
-    )
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_top_variant_interpretation",
-        root.name,
-        root / "top_variant_interpretation_manifest.json",
-    )
-    return {
-        "interpretation_id": root.name,
-        "interpretation_dir": root,
-        "manifest": manifest,
-        "top_variant_explanations": explanations,
-        "variant_failure_mode_coverage": coverage,
-        "reader_brief_section": reader,
-    }
+def validate_top_variant_interpretation_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("validate_top_variant_interpretation_artifact", *args, **kwargs)
 
 
-def top_variant_interpretation_report_payload(
-    *,
-    interpretation_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_TOP_VARIANT_INTERPRETATION_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=interpretation_id,
-        latest_pointer="latest_top_variant_interpretation",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="top_variant_interpretation_manifest.json",
-    )
-    return {
-        **_read_json(root / "top_variant_interpretation_manifest.json"),
-        "top_variant_explanations": _read_jsonl(root / "top_variant_explanations.jsonl"),
-        "variant_failure_mode_coverage": _read_json(root / "variant_failure_mode_coverage.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "interpretation_dir": str(root),
-    }
+def run_method_promotion_plan(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("run_method_promotion_plan", *args, **kwargs)
 
 
-def validate_top_variant_interpretation_artifact(
-    *,
-    interpretation_id: str,
-    output_dir: Path = DEFAULT_TOP_VARIANT_INTERPRETATION_DIR,
-) -> dict[str, Any]:
-    root = output_dir / interpretation_id
-    manifest = _read_optional_json(root / "top_variant_interpretation_manifest.json") or {}
-    explanations = _read_jsonl(root / "top_variant_explanations.jsonl")
-    coverage = _read_optional_json(root / "variant_failure_mode_coverage.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "top_variant_interpretation_manifest.json",
-            "top_variant_explanations.jsonl",
-            "variant_failure_mode_coverage.json",
-            "top_variant_interpretation_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "interpretation_id_matches",
-                manifest.get("interpretation_id") == interpretation_id,
-                "",
-            ),
-            _check("explanations_present", bool(explanations), ""),
-            _check(
-                "promoted_variants_explained",
-                all(
-                    row.get("recommended_promotion") is True
-                    for row in explanations
-                    if row.get("triage_decision") == "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
-                ),
-                "",
-            ),
-            _check(
-                "failure_mode_coverage_present",
-                bool(_records(coverage.get("failure_modes"))),
-                "",
-            ),
-            _check("broker_forbidden", _payload_safe(manifest, coverage, *explanations), ""),
-            _check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, coverage, *explanations),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_top_variant_interpretation_validation",
-        interpretation_id,
-        checks,
-    )
+def method_promotion_plan_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("method_promotion_plan_report_payload", *args, **kwargs)
 
 
-def run_method_promotion_plan(
-    *,
-    triage_id: str,
-    interpretation_id: str,
-    triage_dir: Path = DEFAULT_EXPERIMENT_TRIAGE_DIR,
-    interpretation_dir: Path = DEFAULT_TOP_VARIANT_INTERPRETATION_DIR,
-    output_dir: Path = DEFAULT_METHOD_PROMOTION_PLAN_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    triage = experiment_triage_report_payload(triage_id=triage_id, output_dir=triage_dir)
-    interpretation = top_variant_interpretation_report_payload(
-        interpretation_id=interpretation_id,
-        output_dir=interpretation_dir,
-    )
-    method_specs = _promoted_method_specs(triage, interpretation)
-    promotion_plan_id = _stable_id(
-        "method-promotion-plan", triage_id, interpretation_id, generated.isoformat()
-    )
-    root = _unique_dir(output_dir / promotion_plan_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_method_promotion_plan_manifest",
-        "promotion_plan_id": root.name,
-        "triage_id": triage_id,
-        "interpretation_id": interpretation_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if method_specs["methods"] else "DEFER",
-        "proposed_method_names": [
-            row.get("proposed_method_name") for row in _records(method_specs.get("methods"))
-        ],
-        "implementation_scope": "research_only",
-        "method_promotion_manifest_path": str(root / "method_promotion_manifest.json"),
-        "promoted_method_specs_path": str(root / "promoted_method_specs.json"),
-        "formal_implementation_plan_path": str(root / "formal_implementation_plan.md"),
-        "owner_review_checklist_path": str(root / "owner_review_checklist.md"),
-        "method_promotion_plan_report_path": str(root / "method_promotion_plan_report.md"),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **EXPERIMENT_FACTORY_SAFETY,
-    }
-    plan = render_formal_implementation_plan(manifest, method_specs)
-    checklist = render_method_promotion_owner_checklist(method_specs)
-    report = render_method_promotion_plan_report(manifest, method_specs)
-    reader = render_method_promotion_reader_brief(manifest, method_specs)
-    _write_json(root / "method_promotion_manifest.json", manifest)
-    _write_json(root / "promoted_method_specs.json", method_specs)
-    _write_text(root / "formal_implementation_plan.md", plan)
-    _write_text(root / "owner_review_checklist.md", checklist)
-    _write_text(root / "method_promotion_plan_report.md", report)
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_method_promotion_plan",
-        root.name,
-        root / "method_promotion_manifest.json",
-    )
-    return {
-        "promotion_plan_id": root.name,
-        "promotion_plan_dir": root,
-        "manifest": manifest,
-        "promoted_method_specs": method_specs,
-        "formal_implementation_plan": plan,
-        "owner_review_checklist": checklist,
-        "reader_brief_section": reader,
-    }
-
-
-def method_promotion_plan_report_payload(
-    *,
-    promotion_plan_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_METHOD_PROMOTION_PLAN_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=promotion_plan_id,
-        latest_pointer="latest_method_promotion_plan",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="method_promotion_manifest.json",
-    )
-    return {
-        **_read_json(root / "method_promotion_manifest.json"),
-        "promoted_method_specs": _read_json(root / "promoted_method_specs.json"),
-        "formal_implementation_plan": (root / "formal_implementation_plan.md").read_text(
-            encoding="utf-8"
-        ),
-        "owner_review_checklist": (root / "owner_review_checklist.md").read_text(encoding="utf-8"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "promotion_plan_dir": str(root),
-    }
-
-
-def validate_method_promotion_plan_artifact(
-    *,
-    promotion_plan_id: str,
-    output_dir: Path = DEFAULT_METHOD_PROMOTION_PLAN_DIR,
-) -> dict[str, Any]:
-    root = output_dir / promotion_plan_id
-    manifest = _read_optional_json(root / "method_promotion_manifest.json") or {}
-    specs = _read_optional_json(root / "promoted_method_specs.json") or {}
-    methods = _records(specs.get("methods"))
-    method_names = [_text(row.get("proposed_method_name")) for row in methods]
-    checks = _required_file_checks(
-        root,
-        (
-            "method_promotion_manifest.json",
-            "promoted_method_specs.json",
-            "formal_implementation_plan.md",
-            "owner_review_checklist.md",
-            "method_promotion_plan_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            _check(
-                "promotion_plan_id_matches",
-                manifest.get("promotion_plan_id") == promotion_plan_id,
-                "",
-            ),
-            _check("method_specs_present", bool(methods), ""),
-            _check(
-                "proposed_method_names_unique",
-                len(method_names) == len(set(method_names)),
-                ",".join(method_names),
-            ),
-            _check(
-                "implementation_scope_research_only",
-                all(row.get("implementation_scope") == "research_only" for row in methods),
-                "",
-            ),
-            _check(
-                "no_auto_apply",
-                all(row.get("auto_apply") is False for row in methods),
-                "",
-            ),
-            _check(
-                "broker_forbidden",
-                all(row.get("broker_action_allowed") is False for row in methods),
-                "",
-            ),
-            _check(
-                "production_effect_none",
-                all(row.get("production_effect") == PRODUCTION_EFFECT for row in methods),
-                "",
-            ),
-            _check("broker_forbidden_manifest", _payload_safe(manifest, specs, *methods), ""),
-            _check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, specs, *methods),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_method_promotion_plan_validation",
-        promotion_plan_id,
-        checks,
-    )
-
-
-
-
+def validate_method_promotion_plan_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_experiment_factory("validate_method_promotion_plan_artifact", *args, **kwargs)
 
 
 def run_limited_instability_diagnosis(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -2045,39 +886,49 @@ def validate_refined_method_proposal_artifact(*args: Any, **kwargs: Any) -> dict
     return refinement.validate_refined_method_proposal_artifact(*args, **kwargs)
 
 
-
 def generate_risk_capped_limited_target(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_risk_capped("generate_risk_capped_limited_target", *args, **kwargs)
+
 
 def risk_capped_limited_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_risk_capped("risk_capped_limited_report_payload", *args, **kwargs)
 
+
 def validate_risk_capped_limited_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_risk_capped("validate_risk_capped_limited_artifact", *args, **kwargs)
+
 
 def run_risk_capped_backfill(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_risk_capped("run_risk_capped_backfill", *args, **kwargs)
 
+
 def risk_capped_backfill_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_risk_capped("risk_capped_backfill_report_payload", *args, **kwargs)
+
 
 def validate_risk_capped_backfill_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_risk_capped("validate_risk_capped_backfill_artifact", *args, **kwargs)
 
+
 def run_risk_capped_comparison(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_risk_capped("run_risk_capped_comparison", *args, **kwargs)
+
 
 def risk_capped_comparison_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_risk_capped("risk_capped_comparison_report_payload", *args, **kwargs)
 
+
 def validate_risk_capped_comparison_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_risk_capped("validate_risk_capped_comparison_artifact", *args, **kwargs)
+
 
 def build_risk_capped_review_pack(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_risk_capped("build_risk_capped_review_pack", *args, **kwargs)
 
+
 def risk_capped_review_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_risk_capped("risk_capped_review_report_payload", *args, **kwargs)
+
 
 def validate_risk_capped_review_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_risk_capped("validate_risk_capped_review_artifact", *args, **kwargs)
@@ -9484,11 +8335,9 @@ def render_smoothing_benefit_lag_report(
         [
             f"# Smoothing Benefit Lag Drilldown {manifest.get('drilldown_id')}",
             "",
-            f"- smooth_3d_weight_jump_reduction: "
-            f"{primary_benefit.get('weight_jump_reduction')}",
+            f"- smooth_3d_weight_jump_reduction: {primary_benefit.get('weight_jump_reduction')}",
             f"- smooth_3d_turnover_reduction: {primary_benefit.get('turnover_reduction')}",
-            f"- smooth_3d_signal_churn_reduction: "
-            f"{primary_benefit.get('signal_churn_reduction')}",
+            f"- smooth_3d_signal_churn_reduction: {primary_benefit.get('signal_churn_reduction')}",
             f"- smooth_3d_rolling_consistency_delta: "
             f"{primary_benefit.get('rolling_consistency_delta')}",
             f"- smooth_3d_benefit_status: {primary_benefit.get('benefit_status')}",
@@ -9531,8 +8380,7 @@ def render_smoothed_regime_validation_report(
             "",
             f"- sideways_status: {sideways_3d.get('sideways_status')}",
             f"- sideways_sample_count: {sideways_3d.get('sample_count')}",
-            f"- sideways_turnover_delta_vs_limited: "
-            f"{sideways_3d.get('turnover_delta_vs_limited')}",
+            f"- sideways_turnover_delta_vs_limited: {sideways_3d.get('turnover_delta_vs_limited')}",
             f"- sideways_signal_churn_delta_vs_limited: "
             f"{sideways_3d.get('signal_churn_delta_vs_limited')}",
             f"- sideways_weight_jump_delta_vs_limited: "
@@ -9633,8 +8481,7 @@ def render_smoothed_watch_pack_report(
             f"- supporting_reasons: {breakdown.get('supporting_reasons')}",
             f"- blocking_reasons: {breakdown.get('blocking_reasons')}",
             f"- tradeoff_recommendation: {tradeoff.get('recommendation')}",
-            f"- sideways_turnover_delta_vs_limited: "
-            f"{sideways.get('turnover_delta_vs_limited')}",
+            f"- sideways_turnover_delta_vs_limited: {sideways.get('turnover_delta_vs_limited')}",
             f"- registered_targets: {[row.get('target_id') for row in targets]}",
             "- research_target_only: true",
             "- not_official_target_weights: true",
@@ -9744,8 +8591,7 @@ def render_smoothed_churn_backfill_report(
             f"- smooth_3d_direction_flip_count: {primary.get('direction_flip_count')}",
             f"- smooth_3d_turnover: {primary.get('turnover')}",
             f"- smooth_3d_signal_churn_score: {primary.get('signal_churn_score')}",
-            f"- smooth_3d_churn_reduction_status: "
-            f"{primary_summary.get('churn_reduction_status')}",
+            f"- smooth_3d_churn_reduction_status: {primary_summary.get('churn_reduction_status')}",
             f"- best_churn_reduction_method: {summary.get('best_churn_reduction_method')}",
             f"- weight_jump_event_count: {len(weight_jump_events)}",
             f"- direction_flip_event_count: {len(direction_flip_events)}",
@@ -10661,8 +9507,7 @@ def render_smoothed_outcome_due_report(
                 for row in rows
             ],
             "",
-            "Due scanner 只判断窗口是否到期，不直接更新 outcome，不使用 scanner_as_of "
-            "之后的价格。",
+            "Due scanner 只判断窗口是否到期，不直接更新 outcome，不使用 scanner_as_of 之后的价格。",
             "",
         ]
     )
@@ -10683,7 +9528,7 @@ def render_smoothed_outcome_update_report(
             f"- skipped_windows: {summary.get('skipped_count')}",
             "- available_forward_events_after_update: "
             f"{summary.get('available_forward_events_after_update')}",
-            "- smooth_3d_win_rate_vs_limited: " f"{summary.get('smooth_3d_win_rate_vs_limited')}",
+            f"- smooth_3d_win_rate_vs_limited: {summary.get('smooth_3d_win_rate_vs_limited')}",
             "- avg_smooth_3d_relative_return_vs_limited: "
             f"{summary.get('avg_smooth_3d_relative_return_vs_limited')}",
             "- avg_smooth_3d_drawdown_delta_vs_limited: "
@@ -11096,7 +9941,7 @@ def render_smoothed_refresh_plan_report(
             "## Rerun Commands",
             "",
             *[
-                "- " f"{row.get('step')}. {row.get('command')} - {row.get('purpose')}"
+                f"- {row.get('step')}. {row.get('command')} - {row.get('purpose')}"
                 for row in _records(rerun.get("rerun_after_refresh"))
             ],
             "",
@@ -11180,7 +10025,7 @@ def render_smoothed_bootstrap_retry_reader_brief(summary: Mapping[str, Any]) -> 
             f"- requested_as_of: {summary.get('requested_as_of')}",
             f"- emitted_events: {summary.get('emitted_events')}",
             f"- updated_windows: {summary.get('updated_windows')}",
-            "- forward_progress: " f"{summary.get('available_forward_events_after_retry')}",
+            f"- forward_progress: {summary.get('available_forward_events_after_retry')}",
             f"- can_execute_switch: {summary.get('can_execute_switch')}",
             "- broker_action_allowed: false",
             "- production_effect: none",
@@ -11690,8 +10535,6 @@ def render_selection_reader_brief(decision: Mapping[str, Any]) -> str:
     )
 
 
-
-
 def render_limited_instability_report(
     manifest: Mapping[str, Any],
     inventory: Sequence[Mapping[str, Any]],
@@ -11771,8 +10614,7 @@ def render_limited_risk_attribution_report(
             f"- date_range: {manifest.get('date_start')} to {manifest.get('date_end')}",
             f"- top_return_contributors: {positive}",
             f"- top_drawdown_contributors: {drawdown_top}",
-            f"- avg_risk_asset_delta_vs_static: "
-            f"{exposure.get('avg_risk_asset_delta_vs_static')}",
+            f"- avg_risk_asset_delta_vs_static: {exposure.get('avg_risk_asset_delta_vs_static')}",
             f"- avg_semiconductor_delta_vs_static: "
             f"{exposure.get('avg_semiconductor_delta_vs_static')}",
             f"- avg_cash_delta_vs_static: {exposure.get('avg_cash_delta_vs_static')}",
@@ -11953,7 +10795,7 @@ def render_refined_method_proposal_report(
             f"- limited_instability_recommendation: {instability_summary.get('recommendation')}",
             f"- dominant_failure_regime: {instability_summary.get('dominant_failure_regime')}",
             f"- risk_worsening_source: {exposure.get('risk_worsening_source')}",
-            f"- hardening_allowed_after_repair: " f"{matrix.get('hardening_allowed_after_repair')}",
+            f"- hardening_allowed_after_repair: {matrix.get('hardening_allowed_after_repair')}",
             f"- recommended_alternative: {scorecard.get('recommended_alternative')}",
             "- research_target_only: true",
             "- not_official_target_weights: true",
@@ -13307,7 +12149,9 @@ def _stability_diagnostics(
                             "severity": (
                                 "HIGH"
                                 if total_abs >= high_jump
-                                else "MEDIUM" if total_abs >= large_jump else "LOW"
+                                else "MEDIUM"
+                                if total_abs >= large_jump
+                                else "LOW"
                             ),
                             "broker_action_taken": False,
                             **SYSTEM_TARGET_SAFETY,
@@ -18084,7 +16928,9 @@ def _smoothed_missing_evidence_matrix(
             "status": (
                 "MISSING"
                 if data_quality == "FAIL"
-                else "PARTIAL" if data_quality == "PASS_WITH_WARNINGS" else "AVAILABLE"
+                else "PARTIAL"
+                if data_quality == "PASS_WITH_WARNINGS"
+                else "AVAILABLE"
             ),
             "blocking": data_quality == "FAIL",
             "reason": (
@@ -19118,7 +17964,7 @@ def _smoothed_promotion_evidence_summary(
             {
                 "evidence_id": "churn_reduction_strong",
                 "summary": (
-                    "smooth_weights_3d shows strong churn reduction versus " "limited_adjustment."
+                    "smooth_weights_3d shows strong churn reduction versus limited_adjustment."
                 ),
                 "evidence_quality": "BACKTEST_OR_PAPER_SHADOW",
                 "supports_promotion_review": True,
@@ -19179,8 +18025,7 @@ def _smoothed_promotion_blocking_issues(
                 "blocks_official_promotion": True,
                 "blocks_paper_shadow_primary_candidate": False,
                 "reason": (
-                    "Backtest / paper shadow evidence supports review, but "
-                    "confidence remains LOW."
+                    "Backtest / paper shadow evidence supports review, but confidence remains LOW."
                 ),
                 **SYSTEM_TARGET_SAFETY,
             }
@@ -19373,7 +18218,7 @@ def _smoothed_forward_progress_requirements() -> dict[str, Any]:
             {
                 "requirement": "forward_outcome_collection",
                 "description": (
-                    "Collect forward outcomes for smoothed method versus " "limited_adjustment."
+                    "Collect forward outcomes for smoothed method versus limited_adjustment."
                 ),
                 "cadence": "weekly",
                 **SYSTEM_TARGET_SAFETY,
@@ -19767,9 +18612,7 @@ def _smoothed_weekly_dashboard_summary(
         progress_summary.get("available_forward_events_total")
     ) >= _float(progress_summary.get("required_forward_events_total")) and _float(
         progress_summary.get("available_sideways_events")
-    ) >= _float(
-        progress_summary.get("required_sideways_events")
-    )
+    ) >= _float(progress_summary.get("required_sideways_events"))
     return {
         "schema_version": SCHEMA_VERSION,
         "dashboard_id": "",
@@ -21148,8 +19991,7 @@ def _smoothed_rerun_command_plan(snapshot: Mapping[str, Any]) -> dict[str, Any]:
         "aits etf dynamic-v3-rescue smoothed-data-preflight run "
         f"--requested-week-ending {requested}"
         if use_week
-        else "aits etf dynamic-v3-rescue smoothed-data-preflight run "
-        f"--requested-as-of {requested}"
+        else f"aits etf dynamic-v3-rescue smoothed-data-preflight run --requested-as-of {requested}"
     )
     ready = snapshot.get("freshness_status") in {"READY", "READY_WITH_WARNINGS"}
     return {
@@ -21164,14 +20006,14 @@ def _smoothed_rerun_command_plan(snapshot: Mapping[str, Any]) -> dict[str, Any]:
             {
                 "step": 2,
                 "command": (
-                    "aits etf dynamic-v3-rescue smoothed-outcome-due scan " f"--as-of {requested}"
+                    f"aits etf dynamic-v3-rescue smoothed-outcome-due scan --as-of {requested}"
                 ),
                 "purpose": "find due windows",
             },
             {
                 "step": 3,
                 "command": (
-                    "aits etf dynamic-v3-rescue smoothed-outcome-update run " "--due-id <due_id>"
+                    "aits etf dynamic-v3-rescue smoothed-outcome-update run --due-id <due_id>"
                 ),
                 "purpose": "update matured outcomes",
             },
@@ -22514,9 +21356,9 @@ def _run_variant_weight_path(
     }
     rows_by_date_method: dict[str, dict[str, Mapping[str, Any]]] = {}
     for row in baseline_states:
-        rows_by_date_method.setdefault(str(row.get("date")), {})[
-            str(row.get("target_method"))
-        ] = row
+        rows_by_date_method.setdefault(str(row.get("date")), {})[str(row.get("target_method"))] = (
+            row
+        )
     initial = _mapping(next(iter(base_by_date.values()), {}).get("weights"))
     current_weights = _normalize_weights(initial or _backfill_initial_weights(config))
     portfolio_value = 1.0
@@ -23823,8 +22665,7 @@ def render_formal_implementation_plan(
     methods = _records(method_specs.get("methods"))
     recommended = ", ".join(_text(row.get("proposed_method_name")) for row in methods) or "none"
     selection_reason = (
-        "选择原因：来自 batch experiment triage 和 top variant interpretation；"
-        "仍需 owner review。"
+        "选择原因：来自 batch experiment triage 和 top variant interpretation；仍需 owner review。"
     )
     required_validation = (
         "实现后必须运行：paper shadow backfill、rolling eval、regime review、"
@@ -24337,14 +23178,10 @@ def run_paper_shadow_performance(*args: Any, **kwargs: Any) -> dict[str, Any]:
 
 
 def paper_shadow_performance_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_portfolio(
-        "paper_shadow_performance_report_payload", *args, **kwargs
-    )
+    return _call_system_target_portfolio("paper_shadow_performance_report_payload", *args, **kwargs)
 
 
-def validate_paper_shadow_performance_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
+def validate_paper_shadow_performance_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_system_target_portfolio(
         "validate_paper_shadow_performance_artifact", *args, **kwargs
     )
@@ -24359,9 +23196,7 @@ def system_target_review_report_payload(*args: Any, **kwargs: Any) -> dict[str, 
 
 
 def validate_system_target_review_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_portfolio(
-        "validate_system_target_review_artifact", *args, **kwargs
-    )
+    return _call_system_target_portfolio("validate_system_target_review_artifact", *args, **kwargs)
 
 
 # ARCH-004 G2.4CI compatibility surface. The canonical implementation lives in
@@ -24383,15 +23218,11 @@ def _call_system_target_history(name: str, *args: Any, **kwargs: Any) -> dict[st
 
 
 def load_paper_shadow_backfill_config(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_history(
-        "load_paper_shadow_backfill_config", *args, **kwargs
-    )
+    return _call_system_target_history("load_paper_shadow_backfill_config", *args, **kwargs)
 
 
 def validate_paper_shadow_backfill_config(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_history(
-        "validate_paper_shadow_backfill_config", *args, **kwargs
-    )
+    return _call_system_target_history("validate_paper_shadow_backfill_config", *args, **kwargs)
 
 
 def run_paper_shadow_backfill(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -24399,34 +23230,22 @@ def run_paper_shadow_backfill(*args: Any, **kwargs: Any) -> dict[str, Any]:
 
 
 def paper_shadow_backfill_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_history(
-        "paper_shadow_backfill_report_payload", *args, **kwargs
-    )
+    return _call_system_target_history("paper_shadow_backfill_report_payload", *args, **kwargs)
 
 
-def validate_paper_shadow_backfill_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_system_target_history(
-        "validate_paper_shadow_backfill_artifact", *args, **kwargs
-    )
+def validate_paper_shadow_backfill_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_history("validate_paper_shadow_backfill_artifact", *args, **kwargs)
 
 
 def run_paper_shadow_rolling_eval(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_system_target_history("run_paper_shadow_rolling_eval", *args, **kwargs)
 
 
-def paper_shadow_rolling_eval_report_payload(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_system_target_history(
-        "paper_shadow_rolling_eval_report_payload", *args, **kwargs
-    )
+def paper_shadow_rolling_eval_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_history("paper_shadow_rolling_eval_report_payload", *args, **kwargs)
 
 
-def validate_paper_shadow_rolling_eval_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
+def validate_paper_shadow_rolling_eval_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_system_target_history(
         "validate_paper_shadow_rolling_eval_artifact", *args, **kwargs
     )
@@ -24436,17 +23255,11 @@ def run_paper_shadow_regime_review(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_system_target_history("run_paper_shadow_regime_review", *args, **kwargs)
 
 
-def paper_shadow_regime_review_report_payload(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_system_target_history(
-        "paper_shadow_regime_review_report_payload", *args, **kwargs
-    )
+def paper_shadow_regime_review_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_history("paper_shadow_regime_review_report_payload", *args, **kwargs)
 
 
-def validate_paper_shadow_regime_review_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
+def validate_paper_shadow_regime_review_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_system_target_history(
         "validate_paper_shadow_regime_review_artifact", *args, **kwargs
     )
@@ -24457,36 +23270,24 @@ def run_paper_shadow_stability(*args: Any, **kwargs: Any) -> dict[str, Any]:
 
 
 def paper_shadow_stability_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_history(
-        "paper_shadow_stability_report_payload", *args, **kwargs
-    )
+    return _call_system_target_history("paper_shadow_stability_report_payload", *args, **kwargs)
 
 
-def validate_paper_shadow_stability_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
-    return _call_system_target_history(
-        "validate_paper_shadow_stability_artifact", *args, **kwargs
-    )
+def validate_paper_shadow_stability_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    return _call_system_target_history("validate_paper_shadow_stability_artifact", *args, **kwargs)
 
 
 def run_system_target_selection_review(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_history(
-        "run_system_target_selection_review", *args, **kwargs
-    )
+    return _call_system_target_history("run_system_target_selection_review", *args, **kwargs)
 
 
-def system_target_selection_review_report_payload(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
+def system_target_selection_review_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_system_target_history(
         "system_target_selection_review_report_payload", *args, **kwargs
     )
 
 
-def validate_system_target_selection_review_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
+def validate_system_target_selection_review_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_system_target_history(
         "validate_system_target_selection_review_artifact", *args, **kwargs
     )
@@ -24515,15 +23316,11 @@ def run_selection_attribution(*args: Any, **kwargs: Any) -> dict[str, Any]:
 
 
 def selection_attribution_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_hardening(
-        "selection_attribution_report_payload", *args, **kwargs
-    )
+    return _call_system_target_hardening("selection_attribution_report_payload", *args, **kwargs)
 
 
 def validate_selection_attribution_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_hardening(
-        "validate_selection_attribution_artifact", *args, **kwargs
-    )
+    return _call_system_target_hardening("validate_selection_attribution_artifact", *args, **kwargs)
 
 
 def run_limited_long_risk_review(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -24531,57 +23328,39 @@ def run_limited_long_risk_review(*args: Any, **kwargs: Any) -> dict[str, Any]:
 
 
 def limited_long_risk_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_hardening(
-        "limited_long_risk_report_payload", *args, **kwargs
-    )
+    return _call_system_target_hardening("limited_long_risk_report_payload", *args, **kwargs)
 
 
 def validate_limited_long_risk_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_hardening(
-        "validate_limited_long_risk_artifact", *args, **kwargs
-    )
+    return _call_system_target_hardening("validate_limited_long_risk_artifact", *args, **kwargs)
 
 
 def run_limited_consistency_check(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_hardening(
-        "run_limited_consistency_check", *args, **kwargs
-    )
+    return _call_system_target_hardening("run_limited_consistency_check", *args, **kwargs)
 
 
 def limited_consistency_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_hardening(
-        "limited_consistency_report_payload", *args, **kwargs
-    )
+    return _call_system_target_hardening("limited_consistency_report_payload", *args, **kwargs)
 
 
 def validate_limited_consistency_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_hardening(
-        "validate_limited_consistency_artifact", *args, **kwargs
-    )
+    return _call_system_target_hardening("validate_limited_consistency_artifact", *args, **kwargs)
 
 
 def run_data_warning_impact_review(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_hardening(
-        "run_data_warning_impact_review", *args, **kwargs
-    )
+    return _call_system_target_hardening("run_data_warning_impact_review", *args, **kwargs)
 
 
 def data_warning_impact_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_hardening(
-        "data_warning_impact_report_payload", *args, **kwargs
-    )
+    return _call_system_target_hardening("data_warning_impact_report_payload", *args, **kwargs)
 
 
 def validate_data_warning_impact_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_hardening(
-        "validate_data_warning_impact_artifact", *args, **kwargs
-    )
+    return _call_system_target_hardening("validate_data_warning_impact_artifact", *args, **kwargs)
 
 
 def run_research_method_hardening_pack(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    return _call_system_target_hardening(
-        "run_research_method_hardening_pack", *args, **kwargs
-    )
+    return _call_system_target_hardening("run_research_method_hardening_pack", *args, **kwargs)
 
 
 def research_method_hardening_report_payload(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -24590,9 +23369,7 @@ def research_method_hardening_report_payload(*args: Any, **kwargs: Any) -> dict[
     )
 
 
-def validate_research_method_hardening_artifact(
-    *args: Any, **kwargs: Any
-) -> dict[str, Any]:
+def validate_research_method_hardening_artifact(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return _call_system_target_hardening(
         "validate_research_method_hardening_artifact", *args, **kwargs
     )

@@ -1317,6 +1317,18 @@ broker。所有输出固定 `experiment_only=true`、`research_screening_only=tr
 `broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、
 `auto_apply=false`、`production_effect=none`。
 
+ARCH-004G2.4CM 将上述 21 个 callback 迁至
+`interfaces/cli/etf_portfolio/dynamic_v3_system_target_experiment_factory.py`，领域实现迁至
+`etf_portfolio/dynamic_v3_system_target_experiment_factory.py`。七段 producer 各自先冻结
+bounded `*.v2` input snapshot，再创建正式 artifact 目录；Matrix 要求 hypothesis、transform
+与 reviewed selection/triage policy 全部 PASS，Batch 只读取同一 validated Paper Backfill
+冻结的共同 finite price dates，首日 return 保持缺失而不是填 0，并实际执行 candidate subset。
+Triage 将“transform 从未改变任何 rebalance target”视为证据不足并按 policy `DEFER`，不再把
+no-op variant 的相似收益误判为 promotion；Interpretation/Promotion 明确区分 expected
+hypothesis、observed benefit 和 observed cost。所有 validator 重验 live config/source、
+cutoff、exact lineage 与逐 byte view 重建；本 fixture 当前为 `0 PROMOTE / 3 KEEP / 7 REJECT /
+5 DEFER`，因此 promotion plan=`DEFER`，不生成 formal method。
+
 TRADING-246_to_250_SMOOTHED_LIMITED_ADJUSTMENT_RESEARCH_METHOD 实现
 `smooth_weights_3d_limited_adjustment` 和 `smooth_weights_5d_limited_adjustment`
 research-only method。配置入口为
