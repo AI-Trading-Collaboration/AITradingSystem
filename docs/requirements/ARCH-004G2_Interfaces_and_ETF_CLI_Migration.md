@@ -20,6 +20,8 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-13：G2.4CL Dynamic-v3 Risk-Capped Limited Adjustment `COMPLETE_G2_4_CONTINUES`，不触发 phase-level ARCH-005 handoff。TRADING-229～233 共 15 callback 迁至 canonical `dynamic_v3_system_target_risk_capped.py` interface/domain；legacy CLI root 19,586→19,197 行、549→534 函数、510→495 decorators，legacy system-target domain 25,367→24,598 行/802 函数。五类 bounded v2 snapshots、pre-output live validation/time cutoff、canonical Backfill 显式编排、Risk/Baseline exact Backfill lineage、reviewed evaluation policy、DQ/cache commitments、去除重复 risk-method observations、missing regime metrics=null 及 live-source/policy/逐 byte 重建均已闭合。Fixture 2022-12-01～2024-02-29 为 63 rebalances/130 cap events，return delta=-0.0171641318、max-drawdown delta=+0.0017484558、average semiconductor exposure delta=-0.0238778863、turnover delta=+0.3211926199，rolling/stability=`MIXED`，pilot decision=`PROMOTE_TO_RECOMMENDED_RESEARCH/LOW`；该结果仅证明在 reviewed pilot threshold 下可继续研究，不是投资、promotion 或 production 结论。Focused/slice+CLI/architecture/contract=`11/116/273/203 passed`；generated=`909/1,115/858/0`，CLI tree 保持 41/291/993/0 duplicate/hash 不变；固定 not-PIT research/paper-shadow/manual-only、no official/no auto/no order/no broker、`production_effect=none`。
+
 ### G2.1 Command registry 与 golden contract
 
 输入：

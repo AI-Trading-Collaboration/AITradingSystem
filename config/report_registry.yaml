@@ -2863,6 +2863,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue risk-capped-limited report-config --config config/etf_portfolio/dynamic_v3_rescue/risk_capped_limited_adjustment_v1.yaml
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_limited_config/*/risk_capped_config_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_limited_config/*/risk_capped_config_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_limited_config/*/normalized_risk_capped_config.yaml
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_limited_config/*/risk_capped_config_report.md
@@ -2882,6 +2883,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue risk-capped-limited report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_limited/*/risk_capped_target_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_limited/*/risk_capped_limited_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_limited/*/risk_capped_target_weights.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_limited/*/cap_events.jsonl
@@ -2904,6 +2906,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue risk-capped-backfill report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_backfill/*/risk_capped_backfill_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_backfill/*/risk_capped_backfill_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_backfill/*/risk_capped_method_states.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_backfill/*/risk_capped_trade_ledger.jsonl
@@ -2925,6 +2928,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue risk-capped-comparison report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_comparison/*/risk_capped_comparison_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_comparison/*/risk_capped_comparison_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_comparison/*/risk_capped_vs_limited_metrics.json
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_comparison/*/risk_capped_regime_comparison.json
@@ -2947,6 +2951,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue risk-capped-review report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_review/*/risk_capped_review_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_review/*/risk_capped_review_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_review/*/risk_capped_decision.json
       - reports/etf_portfolio/dynamic_v3_rescue/risk_capped_review/*/owner_risk_capped_checklist.md

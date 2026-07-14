@@ -8876,6 +8876,28 @@ phase_g2_4cj_etf_cli_dynamic_v3_system_target_hardening:
 phase_g2_4ck_etf_cli_dynamic_v3_system_target_refinement:
   status: COMPLETE_G2_4_CONTINUES
   as_of: 2026-07-13
+  superseded_source_paths:
+  - README.md
+  - config/report_registry.yaml
+  - docs/artifact_catalog.md
+  - docs/operations/operations_runbook.md
+  - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
+  - docs/research/current_research_strategy_execution_chain.md
+  - docs/system_flow.md
+  - inputs/architecture/arch_004_worktree_attribution.yaml
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004f3_reporting_inventory.yaml
+  - inputs/architecture/arch_004g2_etf_cli_contract.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - src/ai_trading_system/cli_commands/etf_portfolio.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g2_etf_cli_contract.py
+  - tests/test_arch_004g_deprecation.py
   migration:
     callback_count: 15
     canonical_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_refinement.py
@@ -8940,3 +8962,87 @@ phase_g2_4ck_etf_cli_dynamic_v3_system_target_refinement:
   - {path: tests/test_alternative_method_review.py, sha256: af0149739b949dfa1a35c7d60c4674536c818b712570de134e3dbfee1e402c24}
   - {path: tests/test_limited_risk_attribution.py, sha256: 10b5bd4a56032040f5e7f2d829eea530da0734d4eeea98eced5e46607f772bf9}
   - {path: tests/test_refined_method_proposal.py, sha256: f109544bbac9fd5e5acd9c2c844d3b51ed2595c240472de04233ca5b67413dae}
+
+phase_g2_4cl_etf_cli_dynamic_v3_system_target_risk_capped:
+  status: COMPLETE_G2_4_CONTINUES
+  as_of: 2026-07-13
+  migration:
+    callback_count: 15
+    canonical_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_risk_capped.py
+    domain_owner: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_risk_capped.py
+    pre_output_live_source_validation_required: true
+    canonical_paper_backfill_orchestration_allowed: true
+    all_other_implicit_upstream_run_allowed: false
+    exact_same_backfill_lineage_required: true
+    source_chronology_required: true
+    reviewed_evaluation_policy_required: true
+    risk_data_quality_and_cache_commitments_required: true
+    duplicate_risk_method_observations_allowed: false
+    missing_regime_metrics_must_remain_null: true
+    bounded_source_policy_cache_snapshots_required: true
+    snapshot_schemas:
+    - risk_capped_config_input_snapshot.v2
+    - risk_capped_target_input_snapshot.v2
+    - risk_capped_backfill_input_snapshot.v2
+    - risk_capped_comparison_input_snapshot.v2
+    - risk_capped_review_input_snapshot.v2
+    content_derived_all_views_validation: true
+    automatic_policy_or_execution_allowed: false
+    portfolio_or_execution_effect: false
+    direct_writer_calls_after: 858
+    legacy_root_lines_after: 19197
+    legacy_root_top_level_functions_after: 534
+    legacy_root_command_decorators_after: 495
+    legacy_domain_lines_after: 24598
+    legacy_domain_top_level_functions_after: 802
+    python_module_count: 909
+    python_test_file_count: 1115
+    tree_sha256: d4744f3ec1bbbfc05d10246f7969b3f9174e4cfebc9bec9d8b39a472e83bc6f3
+    production_effect: none
+  fixture:
+    date_start: 2022-12-01
+    date_end: 2024-02-29
+    rebalance_count: 63
+    cap_event_count: 130
+    total_return_delta: -0.0171641318
+    max_drawdown_delta: 0.0017484558
+    avg_semiconductor_weight_delta: -0.0238778863
+    turnover_delta: 0.3211926199
+    rolling_stability: MIXED
+    stability_conclusion: MIXED
+    decision: PROMOTE_TO_RECOMMENDED_RESEARCH
+    confidence: LOW
+    workflow_pass_is_not_investment_conclusion: true
+  validation:
+    focused: {status: PASS, passed: 11}
+    current_slice_and_cli_contract: {status: PASS, passed: 116}
+    architecture_fitness: {status: PASS, passed: 273, runtime_artifact: outputs/validation_runtime/architecture-fitness_20260714T000555Z/test_runtime_summary.json}
+    contract_validation: {status: PASS, passed: 203, runtime_artifact: outputs/validation_runtime/contract-validation_20260714T000555Z/test_runtime_summary.json}
+  sources:
+  - {path: README.md, sha256: 7315ee9c84f1d5d21a9b10f8dbbf553d4b33158090e7491588af89511be0ee0c}
+  - {path: config/etf_portfolio/dynamic_v3_rescue/risk_capped_limited_adjustment_v1.yaml, sha256: b17ce9548ca05563e1d708097a255436bf29484c5c0465ea6ecbc2e060ef4a73}
+  - {path: config/report_registry.yaml, sha256: 00b038ab69d638fe6265b9e25c8a919d73dd54c965fc8f07e334f40755bf0446}
+  - {path: docs/artifact_catalog.md, sha256: 2eafa1f5b0b34a322b14e2c02da5bd1f2b14130005ecf4b1585754e03844d2c6}
+  - {path: docs/operations/operations_runbook.md, sha256: e488493ce8766701511eef54fff10b1cee7c976ae7c0e399525857984c95ac30}
+  - {path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md, sha256: 774b0550cebb09f43a70d84667eb02dad4108278ecf0e0c5be8d333e32cfe387}
+  - {path: docs/requirements/TRADING-229_to_233_Risk_Capped_Limited_Adjustment_Research_Method.md, sha256: b82b854d0be8c4aee62fc2ba82bdadd6d6916ed11fac6ea4467f60ad87971d49}
+  - {path: docs/research/current_research_strategy_execution_chain.md, sha256: 9127cd5274d1fe8b446b35b0ea66ac7fba7a6b72a0228a44f020a9f2334aa02d}
+  - {path: docs/system_flow.md, sha256: 6d1bdf140e1f68a114c00cd12cffc41a1b263529ccc29944ae6027683fdba90d}
+  - {path: inputs/architecture/arch_004_worktree_attribution.yaml, sha256: e09c9185a58c38d80575f47be16b640ed41e1a8007de1d37f1abb481757addab}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: d0e70c4e90ede771f0db5da80f73146a4bf4bc5ab210c26c8a7b32002051de16}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: b67b932133c14340b80892fda2003acfdd875909ae696e245100cfd72261cb5d}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 2f170135e96dbb27396881f7580b8826ab142d6fb2a8fa68d3296bc3272e1580}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 657490d6538953649c9480e1d447f87546e6434586ba780e48562f390abc7648}
+  - {path: inputs/architecture/arch_004f3_reporting_inventory.yaml, sha256: 7e218023d31e2f01c82dda9e1f9fbe4d7fc459f52f71c76e55b2e3b08e346c56}
+  - {path: inputs/architecture/arch_004g2_etf_cli_contract.yaml, sha256: b8a3de3316cc03fc843c83b8517f385d3f40e628c1672285ba5c02896c607d02}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: a93fbe1bc546dada402d87ccb01ff8c6870d1e34681ac719c6a42496c17f06a0}
+  - {path: src/ai_trading_system/cli_commands/etf_portfolio.py, sha256: 845e68827330804428d80e69ac52e13152a27f180fbed1c07680b4af9621bc30}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py, sha256: 85fdea62b830ed13bb6657f7423417bdc197c846f58d874a66927a897fefccb4}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_risk_capped.py, sha256: 58bba9267b0e47013a74dc7f94299420c47f9f6c7366c9433fcbd67b0e8a1c53}
+  - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py, sha256: 7705fd61866ec4cad519122968ded6636795876c8b098f8c69686b17be1fe9d8}
+  - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_risk_capped.py, sha256: 544c0e5fd9ee45067bb0627acb6a4348d68f67529a84370dca3365819151cd47}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: b5f27fe2ba73b65405ea2a4627e4dd2d32e5d0134032bb75f28f88ebb31ce77a}
+  - {path: tests/test_arch_004g2_etf_cli_contract.py, sha256: a7a011f4360532bcb7ec4a1b99dc9dba03a79450ed18b0bbd2f59f38f8e919fb}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: 9af3a3763b5e1a8c3581a192bad030c5ba3723907cfea19f27267ba08c93b9a0}
+  - {path: tests/test_dynamic_v3_system_target_risk_capped_hardening.py, sha256: 2fdca251882cc4cd8aed1a293f40c2ce07c4e267b2d8084f89cf4a9c2a9d22ff}
+  - {path: tests/test_risk_capped_review.py, sha256: 678eeccccc071f314474d6019c651085265881f57e865aad3ee82429674fe7ce}

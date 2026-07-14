@@ -29,6 +29,15 @@ policy_metadata:
     Revisit after owner review of the risk-capped review pack and after forward
     confirmation evidence is available.
 
+# These thresholds affect comparison and review interpretation. They are a
+# reviewed pilot policy, not implementation literals; ARCH-004 G2.4CL freezes
+# the exact values into every comparison/review snapshot and requires owner
+# review or evidence-backed recalibration before any change.
+evaluation_policy:
+  acceptable_return_delta_floor: -0.05
+  exposure_change_tolerance: 0.001
+  drawdown_improvement_floor: 0.0
+
 caps:
   max_total_risk_asset_weight: 0.90
   max_semiconductor_weight: 0.25

@@ -1,6 +1,6 @@
 # TRADING-229～233 Risk-Capped Limited Adjustment Research Method
 
-最后更新：2026-06-12
+最后更新：2026-07-13
 
 ## 背景
 
@@ -137,6 +137,39 @@ forward confirmation 和 owner review。
   清晰阻塞原因。
 
 ## 状态记录
+
+- 2026-07-13: ARCH-004 G2.4CL `COMPLETE_G2_4_CONTINUES`，整个 G2.4 phase
+  仍未完成且不触发 ARCH-005 handoff。15 个 callback 已迁至独立 canonical
+  interface/domain；五类 bounded v2 input snapshots、正式写件前 live source
+  validation/time cutoff、canonical Backfill 显式编排、Risk/Baseline exact Backfill
+  lineage、reviewed evaluation policy、DQ/cache commitments、重复 risk-method
+  observation 去除、zero-sample regime metrics=null，以及 validator 对 live
+  source/policy 和全部 views 的逐 byte 重建均已闭合。Fixture 2022-12-01～2024-02-29
+  产生 63 次 rebalance、130 次 cap event；相对 limited adjustment 的 return delta
+  =-0.0171641318、max-drawdown delta=+0.0017484558、average semiconductor exposure
+  delta=-0.0238778863、turnover delta=+0.3211926199，rolling/stability=`MIXED`；
+  pilot decision=`PROMOTE_TO_RECOMMENDED_RESEARCH/LOW` 仅表示 reviewed pilot
+  threshold 下可继续研究，不构成投资、正式 promotion 或 production 结论。
+  Focused/slice+CLI/architecture/contract=`11/116/273/203 passed`，generated
+  manifests=`909 modules/1,115 tests/858 direct writers/0 violations`；固定 not-PIT
+  research/paper-shadow/manual-only、no official/no auto/no order/no broker、
+  `production_effect=none`。
+
+- 2026-07-13: ARCH-004 G2.4CL contract freeze，状态进入 `IN_PROGRESS`；本 slice
+  迁移 TRADING-229～233 共 15 个 callback 到独立 canonical interface/domain，且
+  继续保持 G2.4 phase 未完成。审计确认旧 Target 只读取 mutable Model Target/config
+  后直接写件，未执行适用 content validator、timezone cutoff 或 input snapshot；旧
+  Backfill 会隐式运行上游但不冻结/重验其 DQ、cache、config 和完整输出；Comparison
+  不验证 Risk Backfill/Baseline Backfill，也不要求二者 exact lineage，缺失指标可经
+  `_float` 变成 0，return/exposure decision threshold 仍为未绑定 policy 的常量；Review
+  不验证 Comparison/Backfill 或两者 lineage。五类 artifact validator 都只做文件、
+  少量字段与 safety 检查，不能重验 live source/policy 或逐字节重建 JSON/JSONL/YAML/
+  Markdown/Reader Brief。CL 退出要求五类 bounded `*.v2` input snapshot、producer
+  pre-output upstream PASS/cutoff、same-Backfill lineage/chronology、reviewed comparison
+  policy、missing/null preservation，以及 validator 的 live-source/live-policy/全视图
+  byte rebuild 闭合；固定 not-PIT research/paper-shadow/manual-only、no official/no
+  auto/no order/no broker、`production_effect=none`，且不触发 phase-level ARCH-005
+  handoff。
 
 - 2026-06-12: 新增并进入 `IN_PROGRESS`，原因：owner 要求完成 TRADING-229～233
   risk-capped limited adjustment research method implementation。当前阶段只实现

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timedelta
 
 from dynamic_v3_system_target_helpers import (
     report_index_for_review_fixture,
@@ -55,11 +55,14 @@ def test_risk_capped_review_pack_keeps_research_only_boundary(tmp_path) -> None:
     assert validation["status"] == "PASS"
 
     review_fixture = run_review_fixture(tmp_path / "reader_brief_review")
+    target_generated = datetime.fromisoformat(
+        review_fixture["target"]["manifest"]["generated_at"]
+    )
     risk_capped_target = system_target.generate_risk_capped_limited_target(
         target_id=review_fixture["target"]["target_id"],
         model_target_dir=tmp_path / "reader_brief_review" / "model_target",
         output_dir=tmp_path / "risk_capped_limited",
-        generated_at=datetime(2024, 3, 1, 10, tzinfo=UTC),
+        generated_at=target_generated + timedelta(seconds=1),
     )
     report_index = report_index_for_review_fixture(review_fixture)
     report_index["reports"].extend(

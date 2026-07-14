@@ -1514,6 +1514,74 @@ Owner Decision validator PASS只证明人工记录与其冻结证据一致；它
 
 本slice固定manual/current-definition historical、`not_pit_safe=true`、`requires_forward_confirmation=true`、`not_official_target_weights=true`、`auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`。定期复盘可以提出新Observation或ChangeProposal，但不能因为本次Proposal写着`IMPLEMENT_*`就自动修改策略、policy、weights、portfolio、production或broker状态。
 
+### 7.21 Risk-Capped Limited Adjustment 研究方法（TRADING-229～233 / ARCH-004G2.4CL）
+
+为什么这样设计：7.20 的 Proposal=`IMPLEMENT_RISK_CAPPED_RESEARCH_METHOD/LOW` 只是把
+“限制风险暴露”列为下一项可检验假设，不能直接证明 cap 有效。旧实现虽然能生成结果，
+但 Target 未重验 Model Target/config，Comparison 可以把任意 Risk Backfill 与任意
+Baseline 拼接，而且 baseline 自身已含 risk method 时会再次追加 dedicated projection，
+造成同一观察重复；缺 regime 样本又会被 `_float` 变成 0。Review 不验证 lineage，
+validator 也不能证明 source/policy/output 未漂移。因此本层把“Policy—Target—Backfill—
+Comparison—Review”定义为五段 source-bound 链：先保证样本、口径与阈值可审计，再解释
+当前结果；本 slice 不依据结果调 cap 或自动切换方法。
+
+| 环节 | 输入与写前门禁 | 计算逻辑 | 输出与解释边界 |
+|---|---|---|---|
+| Config | `risk_capped_limited_adjustment_v1.yaml`、`model_target_portfolio_v1.yaml`；两者path/bytes/parsed payload冻结，config validator必须PASS | 校验base method、global/contextual/delta caps、destination universe、safety；`acceptable_return_delta_floor=-0.05`、`exposure_change_tolerance=0.001`、`drawdown_improvement_floor=0`由reviewed `evaluation_policy`治理，不再是未审计代码常量 | `risk_capped_config_input_snapshot.v2`、normalized YAML、manifest、中文报告。只说明policy定义完整，不说明policy有效 |
+| Risk Target | 显式Model Target id、risk/model config；Model Target content validator PASS，source generated/as_of不晚于timezone-aware cutoff | 从冻结的`limited_adjustment`取base weights、`static_baseline`取previous weights；先应用risk/semi/single-symbol全局和context cap，再应用单次增加/总调整上限，超额按reviewed reallocation destination转移，最后重验finite/nonnegative/simplex和minimum cash | `risk_capped_target_input_snapshot.v2`、target weights、cap/reallocation events、reason summary、manifest和Markdown。它是research target，不是official weights |
+| Risk Backfill | 显式wrapper运行canonical Paper Backfill；正式Risk目录创建前要求source Backfill validator PASS、DQ=`PASS|PASS_WITH_WARNINGS`、source时间不晚于cutoff | 不另造历史状态，只从同一validated Backfill投影`target_method=risk_capped_limited_adjustment`的state/ledger，汇总rebalance、cap event、turnover、semiconductor/cash exposure；source snapshot已冻结config、price/rate cache、DQ与current-definition/not-PIT边界 | `risk_capped_backfill_input_snapshot.v2`、state/ledger、summary、manifest和Markdown。它是current-definition historical paper shadow，不是PIT replay |
+| Comparison | validated Risk Backfill与validated Baseline Backfill；Risk manifest的source id和date range必须精确等于Baseline；reviewed policy绑定且两源不晚于cutoff | Dedicated risk projection替换Baseline内已有risk rows，禁止append重复样本。对同一Backfill计算`delta(metric)=risk-limited`；rolling/regime/stability使用唯一method-date rows。无regime样本时return/drawdown/win-rate为null且结论=`insufficient_data` | `risk_capped_comparison_input_snapshot.v2`、overall/regime/rolling/stability JSON、manifest和Markdown。`risk_capped_better`只表示pilot threshold组合通过，不是显著性或promotion结论 |
+| Review | validated Comparison与其精确引用的Risk Backfill；Comparison baseline id必须等于Risk source Backfill id，chronology合法；同一reviewed policy | 根据drawdown、semiconductor exposure、return preservation、rolling consistency和DQ状态生成decision/confidence。只有pilot组合满足时可写`PROMOTE_TO_RECOMMENDED_RESEARCH`，仍固定`requires_forward_confirmation=true`；DQ warning使confidence保持LOW | `risk_capped_review_input_snapshot.v2`、decision、owner checklist、报告、Reader Brief section。Decision最多进入owner review，不能自动apply、切换primary method或进入production |
+
+五类snapshot保存完整source bundle、content-derived validation、path/size/SHA-256、
+timezone cutoff、policy/config payload及DQ/cache commitments。Producer在任何正式目录/latest
+pointer创建前完成这些门禁；每个validator重验live source/policy、重跑上游validator并逐
+byte重建snapshot、JSON、JSONL、YAML、Markdown和Reader Brief。Source/policy drift、
+future/naive time、cross-lineage、重复risk observations、missing-to-zero或任一output tamper
+都会FAIL。15个CLI callback的canonical owner为
+`interfaces/cli/etf_portfolio/dynamic_v3_system_target_risk_capped.py`，领域实现为
+`etf_portfolio/dynamic_v3_system_target_risk_capped.py`；legacy domain只保留lazy
+compatibility wrappers。
+
+当前source-backed contract fixture的实际区间为`2022-12-01..2024-02-29`，共63次
+rebalance、130个cap events；risk-capped平均/最大semiconductor weight为
+`0.222106/0.245159`，平均/最小cash为`0.181937/0.158910`，DQ=`PASS_WITH_WARNINGS`。
+相对`limited_adjustment`，total return delta=`-0.017164`、max drawdown delta=
+`+0.001748`、realized volatility delta=`-0.003707`、turnover delta=`+0.321193`、平均
+semiconductor exposure delta=`-0.023878`、平均cash delta=`+0.023873`。49个rolling
+windows中risk-capped top-3 frequency=`0`、bottom-3 frequency=`0.571429`，rolling与
+stability均为`MIXED`；`sideways_choppy`有283个日状态、return delta=`-0.013471`，
+`tech_drawdown`为0样本并保持null/`insufficient_data`。Pilot policy最终给出
+`PROMOTE_TO_RECOMMENDED_RESEARCH/LOW`，含义仅是drawdown、exposure与return-preservation
+组合达到了当前review门槛，可以进入owner review；它不抵消turnover代价、rolling
+bottom频率、DQ warning、not-PIT限制或forward evidence缺失，也不是当前投资建议。
+
+后续优化空间及进入条件：
+
+1. 先补齐结构化DQ warning并做同一Backfill的repair前后paired replay；DQ仍为
+   `PASS_WITH_WARNINGS`时不得提高confidence。
+2. 当前cap policy明显降低semiconductor exposure但增加turnover；只有预注册cost/slippage
+   sensitivity、turnover budget和tail-risk objective后，才可提出新cap calibration，不能按
+   本fixture事后调到更好看。
+3. `tech_drawdown`为0样本，不能用0值或其他regime替代；必须积累PIT/forward distinct
+   events或预注册独立stress cohort后再判断contextual cap。
+4. Rolling windows互相重叠且risk-capped bottom-3频率较高；需要block bootstrap、
+   non-overlapping sensitivity、regime/event clustering和untouched holdout，不能把49窗口当
+   49个独立样本。
+5. Pilot decision policy尚未把turnover、DQ warning或forward sample floor设为promotion hard
+   gate；若owner要改变decision逻辑，必须另建ChangeProposal、policy version、rationale、
+   expected effect、old/new parallel replay和expiry/review condition，不能在架构迁移中暗改。
+6. Backfill使用current method definition，不是PIT；只有versioned historical config/known-at
+   inputs与forward confirmation同时达到预注册floor后，才可讨论formal research promotion。
+7. `2021-02-22`只能作为另行标记的长期context/stress窗口；本链AI-cycle结论窗口仍默认从
+   `2022-12-01`开始，不能把两种regime混成一个headline。
+
+本slice固定manual/current-definition historical、`not_pit_safe=true`、
+`requires_forward_confirmation=true`、`not_official_target_weights=true`、
+`auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`。定期复盘可以
+提出新Observation或ChangeProposal，但不能因为fixture写着`PROMOTE_*`就自动修改policy、
+weights、portfolio、production或broker状态。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |
