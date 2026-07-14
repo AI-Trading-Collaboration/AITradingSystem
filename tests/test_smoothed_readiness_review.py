@@ -12,7 +12,9 @@ def test_smoothed_readiness_review_chain_outputs_all_artifacts(tmp_path) -> None
     gap = fixture["gap"]
     gap_matrix = gap["missing_evidence_matrix"]
     gap_reasons = gap["evidence_gap_reason_summary"]
-    assert gap_reasons["tradeoff_can_be_resolved_by_backfill"] is True
+    assert gap_reasons["tradeoff_can_be_resolved_by_backfill"] is False
+    assert gap_matrix["candidate_method"] is None
+    assert gap_reasons["requires_forward_data"] is True
     assert gap_reasons["requires_new_target_method"] is False
     assert {
         row["evidence_type"] for row in gap_matrix["missing_evidence"]
@@ -50,12 +52,11 @@ def test_smoothed_readiness_review_chain_outputs_all_artifacts(tmp_path) -> None
 
     sideways = fixture["sideways"]
     assert sideways["sideways_window_outcomes"]
-    assert sideways["sideways_mixed_reason_summary"]["sideways_validation"] in {
-        "MIXED",
-        "IMPROVED",
-        "WORSE",
-        "INSUFFICIENT_DATA",
-    }
+    reason_summary = sideways["sideways_mixed_reason_summary"]
+    assert reason_summary["sideways_validation"] == "PER_METHOD_ONLY"
+    assert {
+        row["sideways_validation"] for row in reason_summary["methods"]
+    } <= {"MIXED", "IMPROVED", "WORSE", "INSUFFICIENT_DATA"}
     assert {
         row["method"] for row in sideways["sideways_3d_vs_5d_breakdown"]["methods"]
     } == set(system_target.SMOOTHED_METHOD_TO_VARIANT)
@@ -70,12 +71,16 @@ def test_smoothed_readiness_review_chain_outputs_all_artifacts(tmp_path) -> None
     assert {row["method"] for row in scorecard["smoothed_method_scorecard"]["methods"]} == set(
         system_target.SMOOTHED_METHOD_TO_VARIANT
     )
-    assert decision["decision"] in {
-        "PROMOTE_FOR_REVIEW",
-        "CONTINUE_OBSERVATION",
-        "REVIEW_REQUIRED",
-        "REJECT",
-    }
+    assert decision["recommended_method"] is None
+    assert decision["secondary_method"] is None
+    assert decision["evidence_status"] == "INSUFFICIENT_EVIDENCE"
+    assert decision["decision"] == "CONTINUE_OBSERVATION"
+    assert "no_eligible_candidate" in decision["blocking_reasons"]
+    assert all(
+        row["overall_readiness_score"] is None
+        and "forward_confirmation_score" in row["missing_score_components"]
+        for row in scorecard["smoothed_method_scorecard"]["methods"]
+    )
     assert decision["auto_apply"] is False
     assert decision["broker_action_allowed"] is False
     scorecard_validation = system_target.validate_smoothed_readiness_scorecard_artifact(
@@ -87,13 +92,15 @@ def test_smoothed_readiness_review_chain_outputs_all_artifacts(tmp_path) -> None
     owner_update = fixture["owner_update"]
     options = owner_update["smoothed_owner_decision_options"]
     assert options["readiness_decision"] == decision["decision"]
-    assert options["recommended_owner_action"] in {
-        "review_for_manual_promotion_decision",
-        "continue_observation",
-        "continue_forward_observation",
-        "reject_smoothed_promotion",
-        "request_additional_evidence",
-    }
+    assert options["candidate_method"] is None
+    assert options["secondary_method"] is None
+    assert options["recommended_owner_action"] == "request_additional_evidence"
+    promotion_option = next(
+        row
+        for row in options["owner_decision_options"]
+        if row["decision"] == "promote_for_research_review"
+    )
+    assert promotion_option["recommended"] is False
     assert "Dynamic Rescue Smoothed Owner Review" in owner_update["reader_brief_section"]
     owner_validation = system_target.validate_smoothed_owner_review_update_artifact(
         owner_update_id=owner_update["owner_update_id"],

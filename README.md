@@ -1399,10 +1399,19 @@ CLI 入口为 `smoothed-evidence-gap run/report`、`validate-smoothed-evidence-g
 `validate-smoothed-owner-review-update`。Runtime artifacts 写入
 `reports/etf_portfolio/dynamic_v3_rescue/smoothed_evidence_gap|smoothed_churn_backfill|sideways_mixed_attribution|smoothed_readiness_scorecard|smoothed_owner_review_update/`，
 并登记 report registry / Reader Brief `Dynamic Rescue Smoothed Owner Review`。该链路说明
-benefit / lag 缺失证据、direct signal churn / weight jump / direction flip metrics、
-sideways mixed 原因、3d vs 5d readiness score 和 owner decision options。Readiness weights、
-jump thresholds 和 review thresholds 是 research pilot baseline；`PROMOTE_FOR_REVIEW` 只代表
-可进入 owner review 讨论，不代表 automatic promotion。所有输出继续固定
+benefit / lag 缺失证据、基于 explicit dated deltas 的 signal churn / weight jump /
+direction flip metrics、逐 method 的 sideways mixed 原因、readiness scorecard 和 owner
+decision options。ARCH-004G2.4CP 将 15 个 callback 迁至
+`interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_readiness.py`，领域实现迁至
+`etf_portfolio/dynamic_v3_system_target_smoothed_readiness.py`，并为五个阶段冻结独立 `*.v2`
+input snapshot、live-source/config replay、exact lineage/chronology 与逐 byte view 重建。
+Readiness weights、jump thresholds 和 review thresholds 由 reviewed policy 管理；缺失 component
+保持 `null` 并令 overall score 为 `null`，不得用 `INSUFFICIENT_*` / `NOT_REGISTERED` 换取正分。
+Confirmation 是唯一 candidate authority，Gap/Churn/Sideways/Scorecard 不得固定 3d/5d 角色或
+自行创造候选。当前 fixture 为 `candidate_method=null`、`decision=CONTINUE_OBSERVATION`、
+`evidence_status=INSUFFICIENT_EVIDENCE`，owner action 为 `request_additional_evidence`，promotion
+option 保持 false。即使未来 `PROMOTE_FOR_REVIEW`，也只代表可进入 owner review 讨论，不代表
+automatic promotion。所有输出继续固定
 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、
 `broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、
 `auto_apply=false`、`production_effect=none`；不得新增/启用 target method、修改
