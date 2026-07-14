@@ -3866,6 +3866,62 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         assert phase_g2_4cm["validation"]["contract_validation"]["passed"] >= 203
         assert phase_g2_4cm["sources"]
         for source in phase_g2_4cm["sources"]:
+            if source["path"] in set(
+                phase_g2_4cm.get("superseded_source_paths", [])
+            ):
+                continue
+            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            assert actual == source["sha256"], source["path"]
+
+    phase_g2_4cn = baseline[
+        "phase_g2_4cn_etf_cli_dynamic_v3_system_target_smoothed_method"
+    ]
+    assert phase_g2_4cn["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4cn = phase_g2_4cn["migration"]
+    assert migration_g2_4cn["callback_count"] == 15
+    assert migration_g2_4cn["pre_output_live_source_validation_required"] is True
+    assert migration_g2_4cn["canonical_paper_backfill_orchestration_allowed"] is True
+    assert migration_g2_4cn["all_other_implicit_upstream_run_allowed"] is False
+    assert migration_g2_4cn["exact_same_backfill_lineage_required"] is True
+    assert migration_g2_4cn["source_chronology_required"] is True
+    assert migration_g2_4cn["reviewed_evaluation_policy_required"] is True
+    assert migration_g2_4cn["duplicate_method_observations_allowed"] is False
+    assert migration_g2_4cn["missing_metrics_must_remain_null"] is True
+    assert migration_g2_4cn["evidence_driven_method_selection_required"] is True
+    assert migration_g2_4cn["fixed_method_recommendation_allowed"] is False
+    assert len(migration_g2_4cn["snapshot_schemas"]) == 5
+    assert migration_g2_4cn["content_derived_all_views_validation"] is True
+    assert migration_g2_4cn["automatic_policy_or_execution_allowed"] is False
+    assert migration_g2_4cn["portfolio_or_execution_effect"] is False
+    assert migration_g2_4cn["legacy_root_lines_after"] == 18164
+    assert migration_g2_4cn["legacy_root_top_level_functions_after"] == 498
+    assert migration_g2_4cn["legacy_root_command_decorators_after"] == 459
+    assert migration_g2_4cn["legacy_domain_lines_after"] == 22551
+    assert migration_g2_4cn["legacy_domain_top_level_functions_after"] == 804
+    assert migration_g2_4cn["python_module_count"] == 913
+    assert migration_g2_4cn["python_test_file_count"] == 1117
+    fixture_g2_4cn = phase_g2_4cn["fixture"]
+    assert fixture_g2_4cn["date_start"].isoformat() == "2022-12-01"
+    assert fixture_g2_4cn["date_end"].isoformat() == "2024-02-29"
+    assert fixture_g2_4cn["comparison_observation_count"] == 326
+    assert fixture_g2_4cn["decision"] == "CONTINUE_OBSERVATION"
+    assert fixture_g2_4cn["recommended_method"] is None
+    assert fixture_g2_4cn["secondary_method"] is None
+    assert fixture_g2_4cn["workflow_pass_is_not_investment_conclusion"] is True
+    if phase_g2_4cn["status"] == "COMPLETE_G2_4_CONTINUES":
+        assert phase_g2_4cn["validation"]["focused"]["passed"] >= 45
+        assert (
+            phase_g2_4cn["validation"]["current_slice_and_cli_contract"]["passed"]
+            >= 152
+        )
+        assert phase_g2_4cn["validation"]["architecture_fitness"]["passed"] >= 275
+        assert phase_g2_4cn["validation"]["contract_validation"]["passed"] >= 203
+        assert phase_g2_4cn["sources"]
+        for source in phase_g2_4cn["sources"]:
+            if source["path"] in set(
+                phase_g2_4cn.get("superseded_source_paths", [])
+            ):
+                continue
             actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
             assert actual == source["sha256"], source["path"]
 
@@ -4022,6 +4078,8 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CL_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CM_VALIDATING_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CM_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CN_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CN_COMPLETE_G2_4_CONTINUES",
     }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

@@ -1458,6 +1458,23 @@ risk states、missing-to-zero 升级或 output tamper 一律 FAIL。
 | `reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/<review_id>/smoothed_review_manifest.json`<br/>`reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/<review_id>/smoothed_decision.json`<br/>`reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/<review_id>/owner_smoothed_checklist.md`<br/>`reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/<review_id>/smoothed_review_report.md`<br/>`reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/<review_id>/reader_brief_section.md` | `aits etf dynamic-v3-rescue smoothed-review pack/report` 和 `validate-smoothed-review` | smoothed comparison、smoothed backfill summary | `schema_version=1`、`status`、decision、decision_confidence、recommended_method、secondary_method、improvements_vs_limited、lag_risk、requires_forward_confirmation、next_action、安全字段、`broker_action_allowed=false`、`production_effect=none` | `etf_dynamic_v3_smoothed_review` registry entry、Reader Brief `Dynamic Rescue System Target Portfolio` smoothed fields、owner research method review | 否，owner review pack only | Review pack can recommend continued observation or forward confirmation, but cannot mutate configs, generate official weights, create order tickets, or apply broker actions. |
 | `outputs/reports/reader_brief_YYYY-MM-DD.html/json` Dynamic Rescue Smoothed Research Method Review excerpt | `aits reports reader-brief --date YYYY-MM-DD` / `--latest` | `report_index_YYYY-MM-DD.json` 中最新的 `etf_dynamic_v3_smoothed_limited`、`etf_dynamic_v3_smoothed_backfill`、`etf_dynamic_v3_smoothed_comparison` 和 `etf_dynamic_v3_smoothed_review` artifacts，并读取 sibling summary / metrics / lag / decision files | `etf_dynamic_v3_system_target.smoothed_id`、`smoothed_backfill_id`、`smoothed_comparison_id`、`smoothed_review_id`、`smoothed_decision`、`smoothed_recommended_method`、`smoothed_secondary_method`、`smoothed_confidence`、`smoothed_improvements_vs_limited`、`smoothed_return_delta_vs_limited`、`smoothed_drawdown_delta_vs_limited`、`smoothed_turnover_delta_vs_limited`、`smoothed_rolling_consistency_delta`、`smoothed_stability_conclusion`、`smoothed_lag_cost_status`、`production_effect=none` | Reader Brief smoothed review 摘要及 artifact 下钻入口 | 否，`production_effect=none` | Reader Brief 只读 report index 和 sibling artifacts，不运行 smoothed generation/backfill/comparison/review CLIs；缺 artifact 时显示 `MISSING`，不能补造 approval、official target weights、order ticket 或 broker action。 |
 
+ARCH-004G2.4CN 为上述五个 artifact family 增加并要求登记以下 bounded input snapshot：
+`smoothed_limited_config/*/smoothed_config_input_snapshot.json`
+(`smoothed_config_input_snapshot.v2`)、
+`smoothed_limited/*/smoothed_target_input_snapshot.json`
+(`smoothed_target_input_snapshot.v2`)、
+`smoothed_backfill/*/smoothed_backfill_input_snapshot.json`
+(`smoothed_backfill_input_snapshot.v2`)、
+`smoothed_comparison/*/smoothed_comparison_input_snapshot.json`
+(`smoothed_comparison_input_snapshot.v2`) 和
+`smoothed_review/*/smoothed_review_input_snapshot.json`
+(`smoothed_review_input_snapshot.v2`)。这些 snapshot 冻结 source/config/cache bundle、
+path/size/SHA-256、timezone cutoff、upstream validation、exact same-Backfill lineage 与
+reviewed evaluation policy；validator 必须重验 live commitments 并逐 byte 重建全部 views。
+Cross-lineage、duplicate method/date、missing-to-zero、future/non-finite、source/policy drift
+或 output tamper 一律 FAIL。Backfill CLI 同时披露 `paired_risk_capped_backfill_id`；Review
+无 eligible method 时 `recommended_method` / `secondary_method` 均为 null，不得固定推荐 3d/5d。
+
 ## TRADING-251～255 Smoothed Method Evidence Drilldown And Forward Confirmation
 
 |Artifact|生成命令|上游输入|关键字段 / schema|下游|Production effect|常见误解|

@@ -72,6 +72,20 @@ diagnostics:
   emit_lag_events: true
   emit_weight_jump_reduction_summary: true
 
+evaluation_policy:
+  acceptable_return_delta_floor: -0.03
+  drawdown_improvement_floor: 0.0
+  turnover_improvement_ceiling: 0.0
+  jump_improvement_ceiling: 0.0
+  lag_cost_high_threshold: -0.02
+  lag_cost_medium_threshold: -0.005
+  minimum_path_observations: 2
+  minimum_regime_observations: 2
+  minimum_rolling_windows: 1
+  candidate_priority:
+    - smooth_weights_3d_limited_adjustment
+    - smooth_weights_5d_limited_adjustment
+
 safety:
   research_target_only: true
   paper_shadow_only: true

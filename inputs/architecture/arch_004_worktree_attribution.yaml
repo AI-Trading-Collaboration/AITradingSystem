@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CM_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CN_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-14
-base_commit: c6367592
+base_commit: aeb332bd
 production_effect: none
 
 arch_004_owned_paths:
@@ -34,6 +34,7 @@ arch_004_owned_paths:
   - config/etf_portfolio/dynamic_v3_rescue/weight_optimization_hypothesis_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/weight_variant_transform_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/weight_experiment_matrix_v1.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/smoothed_limited_adjustment_v1.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -50,6 +51,7 @@ arch_004_owned_paths:
   - docs/requirements/TRADING-224_to_228_Limited_Adjustment_Weakness_Diagnosis_and_Research_Method_Refinement.md
   - docs/requirements/TRADING-229_to_233_Risk_Capped_Limited_Adjustment_Research_Method.md
   - docs/requirements/TRADING-239_to_245_Weight_Optimization_Experiment_Factory_and_Hypothesis_Screening.md
+  - docs/requirements/TRADING-246_to_250_Smoothed_Limited_Adjustment_Research_Method.md
   - config/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation_v1.yaml
   - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
   - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
@@ -218,6 +220,8 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_hardening.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_hardening.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_refinement.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_method.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_method.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_refinement.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_risk_capped.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_risk_capped.py
@@ -435,6 +439,12 @@ arch_004_owned_paths:
   - tests/test_risk_capped_backfill.py
   - tests/test_risk_capped_comparison.py
   - tests/test_risk_capped_review.py
+  - tests/test_dynamic_v3_system_target_smoothed_method_hardening.py
+  - tests/test_smoothed_limited_config.py
+  - tests/test_smoothed_limited_generation.py
+  - tests/test_smoothed_backfill.py
+  - tests/test_smoothed_comparison.py
+  - tests/test_smoothed_review.py
   - tests/test_model_target_portfolio.py
   - tests/test_paper_shadow_account.py
   - tests/test_model_rebalance.py
@@ -456,6 +466,7 @@ shared_but_attributable_paths:
     attributable_tasks:
       - ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION
       - ARCH-004_TO_ARCH-005_BOOTSTRAP_HANDOFF
+      - TRADING-246_to_250_SMOOTHED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
   - path: docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
     attributable_tasks:
       - ARCH-004
@@ -474,6 +485,7 @@ shared_but_attributable_paths:
       - ARCH-004F3_REPORTING_ARCHITECTURE
       - ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION
       - ARCH-004_TO_ARCH-005_BOOTSTRAP_HANDOFF
+      - TRADING-246_to_250_SMOOTHED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
       - TRADING-096
       - TRADING-097
       - TRADING-098

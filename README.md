@@ -1350,6 +1350,19 @@ decision；所有输出固定 `research_target_only=true`、`paper_shadow_only=t
 `production_effect=none`，不得写 official target weights、`position_advisory_v1.yaml`、
 paper/real portfolio、baseline/production state、policy、order ticket 或 broker。
 
+ARCH-004G2.4CN 将上述 15 个 callback 迁至
+`interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_method.py`，领域实现迁至
+`etf_portfolio/dynamic_v3_system_target_smoothed_method.py`。Config/Target/Backfill/
+Comparison/Review 分别冻结五类 bounded `*.v2` input snapshot；Backfill 先验证并显式编排
+canonical Paper Backfill，再从同一 baseline lineage 派生 Smoothed 与 paired Risk，CLI 会输出
+`paired_risk_capped_backfill_id`。Comparison 拒绝跨 Backfill、日期/chronology不一致、重复
+method/date、non-finite 或 missing-to-zero；Review 的 return/drawdown/turnover/jump/lag/
+sample floors 来自 reviewed `evaluation_policy`，只在完整 eligible evidence 中选择方法，不再
+固定 3d/5d 为 recommended/secondary。当前 `2022-12-01..2024-02-29` contract fixture 为
+`CONTINUE_OBSERVATION/LOW`，recommended/secondary 均为 null；这只证明 workflow、血缘和
+validator 可复算，不构成投资或 production 结论。所有 validator 重验 live source/config/
+cache 并逐 byte 重建全部 views。
+
 TRADING-251_to_255_SMOOTHED_METHOD_EVIDENCE_DRILLDOWN_AND_FORWARD_CONFIRMATION
 在上述 smoothed review 之后新增 evidence drilldown 和 weekly watch 闭环。CLI 入口为
 `smoothed-review-attribution run/report`、`validate-smoothed-review-attribution`、

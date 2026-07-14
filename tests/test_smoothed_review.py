@@ -21,13 +21,7 @@ def test_smoothed_review_pack_keeps_research_only_boundary_and_reader_brief(tmp_
         price_cache_path=prices_path,
         rates_cache_path=rates_path,
     )
-    risk_capped = system_target.run_risk_capped_backfill(
-        config_path=config["config_path"],
-        output_dir=tmp_path / "risk_capped_backfill",
-        paper_shadow_backfill_dir=tmp_path / "risk_source_backfill",
-        price_cache_path=prices_path,
-        rates_cache_path=rates_path,
-    )
+    risk_capped = smoothed["source_risk_capped_backfill"]
     comparison = system_target.run_smoothed_comparison(
         smoothed_backfill_id=smoothed["smoothed_backfill_id"],
         baseline_backfill_id=smoothed["source_paper_shadow_backfill"]["backfill_id"],
@@ -47,8 +41,11 @@ def test_smoothed_review_pack_keeps_research_only_boundary_and_reader_brief(tmp_
     )
 
     decision = review["smoothed_decision"]
-    assert decision["recommended_method"] == "smooth_weights_3d_limited_adjustment"
-    assert decision["secondary_method"] == "smooth_weights_5d_limited_adjustment"
+    assert decision["decision"] == "CONTINUE_OBSERVATION"
+    assert decision["recommended_method"] is None
+    assert decision["secondary_method"] is None
+    assert decision["observation_candidates"]
+    assert not any(row["promotion_eligible"] for row in decision["candidate_evidence"])
     assert decision["research_target_only"] is True
     assert decision["not_official_target_weights"] is True
     assert decision["broker_action_allowed"] is False

@@ -2973,6 +2973,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-limited report-config --config config/etf_portfolio/dynamic_v3_rescue/smoothed_limited_adjustment_v1.yaml
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited_config/*/smoothed_config_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited_config/*/smoothed_limited_config_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited_config/*/normalized_smoothed_limited_config.yaml
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited_config/*/smoothed_limited_config_report.md
@@ -2992,6 +2993,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-limited report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited/*/smoothed_target_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited/*/smoothed_limited_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited/*/smoothed_target_weights.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited/*/smoothing_events.jsonl
@@ -3014,6 +3016,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-backfill report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_backfill/*/smoothed_backfill_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_backfill/*/smoothed_backfill_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_backfill/*/smoothed_method_states.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_backfill/*/smoothed_trade_ledger.jsonl
@@ -3035,6 +3038,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-comparison report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_comparison/*/smoothed_comparison_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_comparison/*/smoothed_comparison_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_comparison/*/smoothed_vs_limited_metrics.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_comparison/*/smoothed_regime_comparison.json
@@ -3058,6 +3062,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-review report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/*/smoothed_review_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/*/smoothed_review_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/*/smoothed_decision.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/*/owner_smoothed_checklist.md

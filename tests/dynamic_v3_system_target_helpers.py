@@ -643,13 +643,7 @@ def run_smoothed_review_chain_fixture(tmp_path: Path) -> dict[str, Any]:
         price_cache_path=prices_path,
         rates_cache_path=rates_path,
     )
-    risk_capped = system_target.run_risk_capped_backfill(
-        config_path=config["config_path"],
-        output_dir=tmp_path / "risk_capped_backfill",
-        paper_shadow_backfill_dir=tmp_path / "risk_source_backfill",
-        price_cache_path=prices_path,
-        rates_cache_path=rates_path,
-    )
+    risk_capped = smoothed["source_risk_capped_backfill"]
     comparison = system_target.run_smoothed_comparison(
         smoothed_backfill_id=smoothed["smoothed_backfill_id"],
         baseline_backfill_id=smoothed["source_paper_shadow_backfill"]["backfill_id"],
