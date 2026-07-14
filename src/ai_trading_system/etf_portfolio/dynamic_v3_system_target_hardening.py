@@ -31,6 +31,9 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
 from ai_trading_system.etf_portfolio.dynamic_v3_pressure_validation import (
     _write_views_atomic,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    cached_artifact_validation,
+)
 
 SELECTION_ATTRIBUTION_SNAPSHOT_SCHEMA = "selection_attribution_input_snapshot.v2"
 LIMITED_LONG_RISK_SNAPSHOT_SCHEMA = "limited_long_risk_input_snapshot.v2"
@@ -144,7 +147,12 @@ def _source_binding(
     jsonl_views: Sequence[str] = (),
     text_views: Sequence[str] = (),
 ) -> dict[str, Any]:
-    validation = validator(**{validator_key: artifact_id, "output_dir": artifact_root})
+    validation = cached_artifact_validation(
+        validator=validator,
+        validator_key=validator_key,
+        artifact_id=artifact_id,
+        root=artifact_root,
+    )
     _require(validation.get("status") == "PASS", f"{kind} validation failed")
     return {
         "kind": kind,

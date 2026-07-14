@@ -311,7 +311,6 @@ def _watch_binding(watch_pack_id: str, root: Path) -> dict[str, Any]:
         validator=evidence.validate_smoothed_watch_pack_artifact,
         validator_key="watch_pack_id",
         json_views=(
-            "smoothed_watch_input_snapshot.json",
             "smoothed_watch_manifest.json",
             "smoothed_watch_summary.json",
         ),
@@ -722,7 +721,6 @@ def _churn_binding(churn_id: str, root: Path) -> dict[str, Any]:
         validator=validate_smoothed_churn_backfill_artifact,
         validator_key="churn_id",
         json_views=(
-            "smoothed_churn_backfill_input_snapshot.json",
             "smoothed_churn_manifest.json",
             "churn_reduction_summary.json",
         ),
@@ -1251,7 +1249,6 @@ def _sideways_binding(sideways_attribution_id: str, root: Path) -> dict[str, Any
         validator=validate_sideways_mixed_attribution_artifact,
         validator_key="sideways_attribution_id",
         json_views=(
-            "sideways_mixed_attribution_input_snapshot.json",
             "sideways_mixed_manifest.json",
             "sideways_mixed_reason_summary.json",
             "sideways_3d_vs_5d_breakdown.json",
@@ -1375,9 +1372,8 @@ def _sideways_outputs(
         "weight_jump_events": _bundle_jsonl(churn_binding, "weight_jump_events.jsonl"),
         "direction_flip_events": _bundle_jsonl(churn_binding, "direction_flip_events.jsonl"),
     }
-    churn_snapshot = _bundle_json(churn_binding, "smoothed_churn_backfill_input_snapshot.json")
-    smoothed_source = _mapping(churn_snapshot.get("smoothed_backfill_source"))
-    baseline_source = _mapping(churn_snapshot.get("baseline_backfill_source"))
+    smoothed_source = _mapping(snapshot.get("smoothed_backfill_source"))
+    baseline_source = _mapping(snapshot.get("baseline_backfill_source"))
     smoothed_states = _bundle_jsonl(smoothed_source, "smoothed_method_states.jsonl")
     baseline_states = _bundle_jsonl(baseline_source, "backfill_method_states.jsonl")
     baseline_snapshot = _bundle_json(baseline_source, "paper_shadow_backfill_input_snapshot.json")
@@ -1648,6 +1644,8 @@ def _validate_sideways_snapshot(snapshot: Mapping[str, Any]) -> list[str]:
         )
         regime_binding = _mapping(snapshot.get("regime_source"))
         churn_binding = _mapping(snapshot.get("churn_source"))
+        smoothed_binding = _mapping(snapshot.get("smoothed_backfill_source"))
+        baseline_binding = _mapping(snapshot.get("baseline_backfill_source"))
         errors.extend(
             _validate_binding(
                 regime_binding,
@@ -1664,15 +1662,41 @@ def _validate_sideways_snapshot(snapshot: Mapping[str, Any]) -> list[str]:
                 validator_key="churn_id",
             )
         )
+        errors.extend(
+            _validate_binding(
+                smoothed_binding,
+                kind="smoothed_backfill",
+                validator=method.validate_smoothed_backfill_artifact,
+                validator_key="backfill_id",
+            )
+        )
+        errors.extend(
+            _validate_binding(
+                baseline_binding,
+                kind="paper_shadow_backfill",
+                validator=history.validate_paper_shadow_backfill_artifact,
+                validator_key="backfill_id",
+            )
+        )
         errors.extend(_validate_policy_binding(_mapping(snapshot.get("policy_binding"))))
         regime = _bundle_json(regime_binding, "smoothed_regime_validation_manifest.json")
         churn = _bundle_json(churn_binding, "smoothed_churn_manifest.json")
+        smoothed = _bundle_json(smoothed_binding, "smoothed_backfill_manifest.json")
+        baseline = _bundle_json(baseline_binding, "paper_shadow_backfill_manifest.json")
         for field in ("smoothed_backfill_id", "baseline_backfill_id"):
             _require(regime.get(field) == churn.get(field), f"sideways {field} mismatch")
+        _require(
+            churn.get("smoothed_backfill_id") == smoothed.get("smoothed_backfill_id"),
+            "sideways smoothed source mismatch",
+        )
+        _require(
+            churn.get("baseline_backfill_id") == baseline.get("backfill_id"),
+            "sideways baseline source mismatch",
+        )
         generated = target_core._datetime(
             snapshot.get("generated_at"), field="sideways generated_at"
         )
-        evidence._chronology(generated, regime, churn)
+        evidence._chronology(generated, regime, churn, smoothed, baseline)
     except Exception as exc:  # noqa: BLE001
         errors.append(str(exc))
     return errors
@@ -1690,15 +1714,20 @@ def run_sideways_mixed_attribution(
     config_path: Path = DEFAULT_SMOOTHED_LIMITED_CONFIG_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    # smoothed_backfill_dir/baseline_backfill_dir remain accepted for CLI and
-    # Python compatibility. The exact sources are committed by churn_source.
-    del smoothed_backfill_dir, baseline_backfill_dir
     generated = _generated_at(generated_at)
+    churn_source = _churn_binding(churn_id, churn_dir)
+    churn_manifest = _bundle_json(churn_source, "smoothed_churn_manifest.json")
     snapshot = {
         "schema_version": SIDEWAYS_MIXED_ATTRIBUTION_SNAPSHOT_SCHEMA,
         "generated_at": generated.isoformat(),
         "regime_source": evidence._regime_binding(regime_validation_id, regime_validation_dir),
-        "churn_source": _churn_binding(churn_id, churn_dir),
+        "churn_source": churn_source,
+        "smoothed_backfill_source": method._smoothed_backfill_binding(
+            _text(churn_manifest.get("smoothed_backfill_id")), smoothed_backfill_dir
+        ),
+        "baseline_backfill_source": history._backfill_binding(
+            _text(churn_manifest.get("baseline_backfill_id")), baseline_backfill_dir
+        ),
         "policy_binding": _policy_binding(config_path),
         "production_effect": "none",
     }
@@ -1778,7 +1807,6 @@ def _scorecard_binding(scorecard_id: str, root: Path) -> dict[str, Any]:
         validator=validate_smoothed_readiness_scorecard_artifact,
         validator_key="scorecard_id",
         json_views=(
-            "smoothed_readiness_scorecard_input_snapshot.json",
             "smoothed_readiness_manifest.json",
             "smoothed_method_scorecard.json",
             "promotion_readiness_decision.json",

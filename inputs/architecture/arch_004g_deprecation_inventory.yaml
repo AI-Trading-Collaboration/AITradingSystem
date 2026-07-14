@@ -1,9 +1,9 @@
-inventory_id: arch_004g_deprecation_inventory_74b9713b8882077c958e
+inventory_id: arch_004g_deprecation_inventory_ebcc400edf6ee77c9797
 schema_version: arch_004g_deprecation_inventory.v1
 policy_id: arch_004g_deprecation_policy_v1
 repository:
-  python_module_count: 919
-  python_test_file_count: 1120
+  python_module_count: 922
+  python_test_file_count: 1122
   direct_writer_baseline_count: 894
   direct_writer_current_count: 858
   direct_writer_violation_count: 0
@@ -53,14 +53,14 @@ surfaces:
   migration_wave: G2
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
   file_count: 1
-  line_count: 16761
-  byte_count: 716585
-  source_sha256: e454bfab1241c61d051bf127e84c4bc8489b7596ea2937897ed1afdba4045173
-  top_level_function_count: 452
+  line_count: 16359
+  byte_count: 698801
+  source_sha256: 471c9cb11d3090ccbdfd8045b3b092cee4621bd1091704917ffee21f32331a2d
+  top_level_function_count: 437
   top_level_class_count: 0
-  cli_command_decorator_count: 413
+  cli_command_decorator_count: 398
   static_import_reachability_file_count: 1
-  test_reference_file_count: 303
+  test_reference_file_count: 304
   docs_config_reference_file_count: 116
   required_removal_gate_count: 12
   removal_ready: false
@@ -91,7 +91,7 @@ surfaces:
   top_level_class_count: 0
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 5
-  test_reference_file_count: 191
+  test_reference_file_count: 192
   docs_config_reference_file_count: 92
   required_removal_gate_count: 12
   removal_ready: false
@@ -208,14 +208,14 @@ surfaces:
   migration_wave: G6
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py
   file_count: 1
-  line_count: 18248
-  byte_count: 724930
-  source_sha256: 4f23c2af9f6c118a890e418594b1be0e5537407f1ffc080818984d66d65b7954
-  top_level_function_count: 740
+  line_count: 16659
+  byte_count: 660966
+  source_sha256: 7ee9600af942c59a1eb0de90ef339ca0aa44b9f13d4379f9964efb97a092738c
+  top_level_function_count: 713
   top_level_class_count: 1
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 0
-  test_reference_file_count: 87
+  test_reference_file_count: 88
   docs_config_reference_file_count: 14
   required_removal_gate_count: 12
   removal_ready: false

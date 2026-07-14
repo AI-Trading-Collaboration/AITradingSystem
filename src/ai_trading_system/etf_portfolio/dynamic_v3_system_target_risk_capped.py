@@ -890,7 +890,6 @@ def _risk_backfill_binding(backfill_id: str, root: Path) -> dict[str, Any]:
         validator=validate_risk_capped_backfill_artifact,
         validator_key="backfill_id",
         json_views=(
-            "risk_capped_backfill_input_snapshot.json",
             "risk_capped_backfill_manifest.json",
             "risk_capped_backfill_summary.json",
         ),

@@ -257,6 +257,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_system_target_smoothed_method as dynamic_v3_system_target_smoothed_method_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_system_target_smoothed_operations as dynamic_v3_smoothed_operations_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_system_target_smoothed_promotion as dynamic_v3_smoothed_promotion_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -375,6 +378,7 @@ __all__ = [
     "dynamic_v3_system_target_risk_capped_commands",
     "dynamic_v3_system_target_smoothed_method_commands",
     "dynamic_v3_smoothed_evidence_commands",
+    "dynamic_v3_smoothed_operations_commands",
     "dynamic_v3_smoothed_promotion_commands",
     "dynamic_v3_smoothed_readiness_commands",
     "dynamic_v3_experiment_factory_commands",

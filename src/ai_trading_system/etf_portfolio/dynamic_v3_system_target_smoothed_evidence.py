@@ -231,7 +231,6 @@ def _review_binding(review_id: str, root: Path) -> dict[str, Any]:
         validator=method.validate_smoothed_review_artifact,
         validator_key="review_id",
         json_views=(
-            "smoothed_review_input_snapshot.json",
             "smoothed_review_manifest.json",
             "smoothed_decision.json",
         ),
@@ -1690,7 +1689,6 @@ def _regime_binding(regime_validation_id: str, root: Path) -> dict[str, Any]:
         validator=validate_smoothed_regime_validation_artifact,
         validator_key="regime_validation_id",
         json_views=(
-            "smoothed_regime_validation_input_snapshot.json",
             "smoothed_regime_validation_manifest.json",
             "sideways_validation_summary.json",
             "recovery_lag_validation_summary.json",
@@ -1717,14 +1715,13 @@ def _confirmation_views(
     review = _review_payload(_mapping(snapshot.get("review_source")))
     regime = _regime_payload(_mapping(snapshot.get("regime_source")))
     config, policy = _policy(snapshot)
-    review_snapshot = _bundle_json(
-        _mapping(snapshot.get("review_source")), "smoothed_review_input_snapshot.json"
+    comparison_id = _text(review.get("comparison_id"))
+    smoothed_id = _text(review.get("smoothed_backfill_id"))
+    baseline_id = _text(regime.get("baseline_backfill_id"))
+    _require(
+        bool(comparison_id and smoothed_id and baseline_id),
+        "confirmation source lineage is incomplete",
     )
-    comparison = _comparison_payload(_mapping(review_snapshot.get("comparison_source")))
-    smoothed = _smoothed_backfill_payload(
-        _mapping(review_snapshot.get("smoothed_backfill_source"))
-    )
-    comparison_id, smoothed_id, baseline_id = _lineage(review, comparison, smoothed)
     _require(
         regime.get("smoothed_backfill_id") == smoothed_id
         and regime.get("baseline_backfill_id") == baseline_id,
@@ -1797,12 +1794,10 @@ def _validate_confirmation_snapshot(snapshot: Mapping[str, Any]) -> list[str]:
         )
         review = _review_payload(review_binding)
         regime = _regime_payload(regime_binding)
-        review_snapshot = _bundle_json(review_binding, "smoothed_review_input_snapshot.json")
-        comparison = _comparison_payload(_mapping(review_snapshot.get("comparison_source")))
-        smoothed = _smoothed_backfill_payload(
-            _mapping(review_snapshot.get("smoothed_backfill_source"))
-        )
-        _comparison_id, smoothed_id, baseline_id = _lineage(review, comparison, smoothed)
+        _require(bool(review.get("comparison_id")), "confirmation comparison lineage missing")
+        smoothed_id = _text(review.get("smoothed_backfill_id"))
+        baseline_id = _text(regime.get("baseline_backfill_id"))
+        _require(bool(smoothed_id and baseline_id), "confirmation backfill lineage missing")
         _require(
             regime.get("smoothed_backfill_id") == smoothed_id
             and regime.get("baseline_backfill_id") == baseline_id,
@@ -1908,7 +1903,6 @@ def _attribution_binding(attribution_id: str, root: Path) -> dict[str, Any]:
         validator=validate_smoothed_review_attribution_artifact,
         validator_key="attribution_id",
         json_views=(
-            "smoothed_review_attribution_input_snapshot.json",
             "smoothed_review_attribution_manifest.json",
             "smoothed_decision_reason_breakdown.json",
             "smoothed_metric_support_matrix.json",
@@ -1925,7 +1919,6 @@ def _benefit_binding(drilldown_id: str, root: Path) -> dict[str, Any]:
         validator=validate_smoothing_benefit_lag_artifact,
         validator_key="drilldown_id",
         json_views=(
-            "smoothing_benefit_lag_input_snapshot.json",
             "smoothing_benefit_lag_manifest.json",
             "smoothing_benefit_summary.json",
             "lag_cost_summary.json",
@@ -1943,7 +1936,6 @@ def _confirmation_binding(confirmation_id: str, root: Path) -> dict[str, Any]:
         validator=validate_smoothed_confirmation_artifact,
         validator_key="confirmation_id",
         json_views=(
-            "smoothed_confirmation_input_snapshot.json",
             "smoothed_confirmation_manifest.json",
             "smoothed_confirmation_targets.json",
         ),

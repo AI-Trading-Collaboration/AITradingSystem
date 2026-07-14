@@ -10,24 +10,22 @@ def test_smoothed_switch_readiness_keeps_switch_execution_forbidden(tmp_path) ->
     recheck = fixture["recheck"]
 
     decision = recheck["switch_readiness_decision"]
-    assert decision["candidate_method"] == "smooth_weights_3d_limited_adjustment"
-    assert decision["current_owner_decision"] == "continue_observation"
-    assert decision["previous_gate_decision"] == "ELIGIBLE_FOR_OWNER_APPROVAL"
-    assert decision["recheck_decision"] == "WAIT_FOR_MORE_FORWARD_DATA"
-    assert decision["decision_confidence"] == "LOW"
+    assert decision["candidate_method"] is None
+    assert decision["current_owner_decision"] is None
+    assert decision["previous_gate_decision"] is None
+    assert decision["recheck_decision"] == "NO_ELIGIBLE_CANDIDATE"
+    assert decision["decision_confidence"] is None
     assert decision["can_execute_switch"] is False
-    assert decision["owner_decision_required"] is True
+    assert decision["owner_decision_required"] is False
     assert decision["auto_switch"] is False
     assert decision["broker_action_allowed"] is False
     assert decision["production_effect"] == "none"
 
-    criteria = {row["criterion"]: row for row in recheck["switch_readiness_criteria"]["criteria"]}
-    assert criteria["smooth_3d_vs_limited_forward_events"]["status"] == "IN_PROGRESS"
-    assert criteria["sideways_events"]["status"] == "IN_PROGRESS"
-    assert criteria["recovery_lag_watch"]["actual"] == "INSUFFICIENT_EVENTS"
-    assert criteria["recovery_lag_watch"]["status"] == "IN_PROGRESS"
-    assert recheck["switch_readiness_criteria"]["hard_blockers"] == []
-    assert "sideways_events" in recheck["switch_readiness_criteria"]["warnings"]
+    assert recheck["switch_readiness_criteria"]["criteria"] == []
+    assert recheck["switch_readiness_criteria"]["hard_blockers"] == [
+        "no_eligible_candidate"
+    ]
+    assert recheck["switch_readiness_criteria"]["warnings"] == []
     assert "Dynamic Rescue Smoothed Switch Readiness" in recheck["reader_brief_section"]
 
     validation = system_target.validate_smoothed_switch_readiness_artifact(

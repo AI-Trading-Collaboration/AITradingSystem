@@ -3410,15 +3410,17 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-forward-progress report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_progress/*/smoothed_forward_progress_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_progress/*/smoothed_forward_progress_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_progress/*/smoothed_target_progress.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_progress/*/progress_evidence_commitments.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_progress/*/smoothed_forward_progress_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_progress/*/smoothed_forward_progress_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_progress/*/reader_brief_section.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-266 tracks smoothed forward, sideways, and recovery evidence
-      progress from the bound confirmation targets.
+      TRADING-266 tracks only Binding-owned targets and exact-lineage evidence;
+      zero targets remain candidate-null and NOT_REGISTERED.
     owner_action: review_smoothed_forward_progress_before_readiness_recheck
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -3431,6 +3433,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-weekly-dashboard report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_weekly_dashboard/*/smoothed_weekly_dashboard_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_weekly_dashboard/*/smoothed_weekly_dashboard_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_weekly_dashboard/*/smoothed_dashboard_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_weekly_dashboard/*/smoothed_target_status_table.json
@@ -3452,6 +3455,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-event-monitor report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_event_monitor/*/smoothed_event_monitor_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_event_monitor/*/smoothed_event_monitor_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_event_monitor/*/sideways_event_inventory.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_event_monitor/*/recovery_event_inventory.jsonl
@@ -3473,6 +3477,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-switch-readiness report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_switch_readiness/*/smoothed_switch_readiness_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_switch_readiness/*/smoothed_switch_readiness_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_switch_readiness/*/switch_readiness_decision.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_switch_readiness/*/switch_readiness_criteria.json
@@ -3480,8 +3485,8 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_switch_readiness/*/reader_brief_section.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-269 rechecks whether smoothed evidence is ready for another owner
-      review while keeping can_execute_switch=false.
+      TRADING-269 rechecks exact Dashboard/Monitor/Progress/Switch lineage;
+      candidate-null produces NO_ELIGIBLE_CANDIDATE and no owner decision request.
     owner_action: review_smoothed_switch_readiness_before_any_owner_renewal_decision
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -3494,6 +3499,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-owner-renewal report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_renewal/*/smoothed_owner_renewal_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_renewal/*/smoothed_owner_renewal_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_renewal/*/owner_renewal_options.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_renewal/*/owner_renewal_checklist.md
@@ -3501,8 +3507,8 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_renewal/*/reader_brief_section.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-270 packages smoothed readiness recheck evidence into owner
-      renewal options without executing a primary candidate switch.
+      TRADING-270 packages exact Recheck/Owner-journal evidence; candidate-null
+      keeps promotion unavailable and recommends request_more_forward_data.
     owner_action: owner_review_smoothed_renewal_options_before_any_followup_switch_task
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

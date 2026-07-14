@@ -11,21 +11,22 @@ def test_smoothed_event_monitor_outputs_sideways_and_recovery_summary(tmp_path) 
 
     summary = monitor["event_accumulation_summary"]
     assert summary["sideways_events"] == {
-        "required": 5,
+        "required": 0,
         "available": 0,
         "pending": 0,
         "progress_pct": 0.0,
     }
     assert summary["recovery_events"] == {
-        "required": 5,
+        "required": 0,
         "available": 0,
         "pending": 0,
         "progress_pct": 0.0,
     }
-    assert summary["sideways_status"] == "INSUFFICIENT_EVENTS"
-    assert summary["recovery_lag_status"] == "INSUFFICIENT_EVENTS"
+    assert summary["candidate_method"] is None
+    assert summary["sideways_status"] == "NOT_REGISTERED"
+    assert summary["recovery_lag_status"] == "NOT_REGISTERED"
     assert summary["lag_warning_count"] == 0
-    assert summary["recommended_action"] == "continue_event_collection"
+    assert summary["recommended_action"] == "request_more_forward_data"
     assert monitor["sideways_event_inventory"] == []
     assert monitor["recovery_event_inventory"] == []
 

@@ -1,11 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator, Mapping, Sequence
-from contextlib import contextmanager
-from contextvars import ContextVar
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from functools import wraps
-from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +28,11 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
 from ai_trading_system.etf_portfolio.dynamic_v3_pressure_validation import (
     _write_views_atomic,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+    cached_artifact_validation,
+    with_artifact_validation_session,
+)
 from ai_trading_system.platform.artifacts.writer import write_bytes_atomic
 
 SMOOTHED_PROMOTION_REVIEW_SNAPSHOT_SCHEMA = "smoothed_promotion_review_input_snapshot.v2"
@@ -53,9 +54,6 @@ DEFAULT_SMOOTHED_OWNER_REVIEW_UPDATE_DIR = readiness.DEFAULT_SMOOTHED_OWNER_REVI
 DEFAULT_SMOOTHED_WATCH_PACK_DIR = evidence.DEFAULT_SMOOTHED_WATCH_PACK_DIR
 DEFAULT_SMOOTHED_FORWARD_CONFIRMATION_DIR = evidence.DEFAULT_SMOOTHED_FORWARD_CONFIRMATION_DIR
 SYSTEM_TARGET_SAFETY = method.SYSTEM_TARGET_SAFETY
-_VALIDATION_SESSION: ContextVar[dict[tuple[str, str, str], dict[str, Any]] | None] = ContextVar(
-    "smoothed_promotion_validation_session", default=None
-)
 
 
 class DynamicV3SmoothedPromotionError(ValueError):
@@ -111,70 +109,9 @@ def _bundle_json(binding: Mapping[str, Any], name: str) -> dict[str, Any]:
     return hardening._bundle_json(binding, name)
 
 
-def _artifact_fingerprint(root: Path) -> str:
-    files = (
-        {path.resolve() for path in root.iterdir() if path.is_file()} if root.is_dir() else set()
-    )
-    digest = sha256()
-    for path in sorted(files, key=str):
-        digest.update(str(path).encode("utf-8"))
-        try:
-            with path.open("rb") as handle:
-                while chunk := handle.read(1024 * 1024):
-                    digest.update(chunk)
-        except OSError as exc:
-            digest.update(f"MISSING:{exc}".encode())
-    return digest.hexdigest()
-
-
-@contextmanager
-def smoothed_promotion_validation_session() -> Iterator[None]:
-    current = _VALIDATION_SESSION.get()
-    if current is not None:
-        yield
-        return
-    token = _VALIDATION_SESSION.set({})
-    try:
-        yield
-    finally:
-        _VALIDATION_SESSION.reset(token)
-
-
-def _with_validation_session(
-    function: Callable[..., dict[str, Any]],
-) -> Callable[..., dict[str, Any]]:
-    @wraps(function)
-    def wrapped(*args: Any, **kwargs: Any) -> dict[str, Any]:
-        with smoothed_promotion_validation_session():
-            return function(*args, **kwargs)
-
-    return wrapped
-
-
-def _cached_artifact_validation(
-    *,
-    validator: Callable[..., dict[str, Any]],
-    validator_key: str,
-    artifact_id: str,
-    root: Path,
-) -> dict[str, Any]:
-    cache = _VALIDATION_SESSION.get()
-    if cache is None:
-        with smoothed_promotion_validation_session():
-            return _cached_artifact_validation(
-                validator=validator,
-                validator_key=validator_key,
-                artifact_id=artifact_id,
-                root=root,
-            )
-    fingerprint = _artifact_fingerprint(root / artifact_id)
-    name = f"{validator.__module__}.{validator.__qualname__}:{validator_key}"
-    key = (name, str((root / artifact_id).resolve()), fingerprint)
-    cached = cache.get(key)
-    if cached is None:
-        cached = validator(**{validator_key: artifact_id, "output_dir": root})
-        cache[key] = dict(cached)
-    return dict(cached)
+smoothed_promotion_validation_session = artifact_validation_session
+_with_validation_session = with_artifact_validation_session
+_cached_artifact_validation = cached_artifact_validation
 
 
 def _source_binding(

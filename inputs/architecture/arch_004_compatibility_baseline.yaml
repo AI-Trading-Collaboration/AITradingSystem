@@ -8706,6 +8706,7 @@ phase_g2_4ci_etf_cli_dynamic_v3_system_target_history:
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004g2_etf_cli_contract.py
   - tests/test_arch_004g_deprecation.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_history.py
   migration:
     callback_count: 16
     canonical_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_history.py
@@ -8803,6 +8804,7 @@ phase_g2_4cj_etf_cli_dynamic_v3_system_target_hardening:
   - tests/test_alternative_method_review.py
   - tests/test_limited_risk_attribution.py
   - tests/test_refined_method_proposal.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_hardening.py
   migration:
     callback_count: 15
     canonical_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_hardening.py
@@ -8989,6 +8991,7 @@ phase_g2_4cl_etf_cli_dynamic_v3_system_target_risk_capped:
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004g2_etf_cli_contract.py
   - tests/test_arch_004g_deprecation.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_risk_capped.py
   migration:
     callback_count: 15
     canonical_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_risk_capped.py
@@ -9222,6 +9225,7 @@ phase_g2_4cn_etf_cli_dynamic_v3_system_target_smoothed_method:
   - tests/test_arch_004g_deprecation.py
   - tests/test_smoothed_review.py
   - tests/dynamic_v3_system_target_helpers.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_method.py
   migration:
     callback_count: 15
     canonical_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_method.py
@@ -9344,6 +9348,7 @@ phase_g2_4co_etf_cli_dynamic_v3_system_target_smoothed_evidence:
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004g2_etf_cli_contract.py
   - tests/test_arch_004g_deprecation.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_evidence.py
   migration:
     callback_count: 15
     canonical_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_evidence.py
@@ -9466,6 +9471,7 @@ phase_g2_4cp_etf_cli_dynamic_v3_system_target_smoothed_readiness:
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004g2_etf_cli_contract.py
   - tests/test_arch_004g_deprecation.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_readiness.py
   migration:
     callback_count: 15
     canonical_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_readiness.py
@@ -9556,6 +9562,32 @@ phase_g2_4cp_etf_cli_dynamic_v3_system_target_smoothed_readiness:
 phase_g2_4cq_etf_cli_dynamic_v3_system_target_smoothed_promotion:
   status: COMPLETE_G2_4_CONTINUES
   as_of: 2026-07-14
+  superseded_source_paths:
+  - README.md
+  - config/report_registry.yaml
+  - docs/artifact_catalog.md
+  - docs/operations/operations_runbook.md
+  - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
+  - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+  - docs/research/current_research_strategy_execution_chain.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004_worktree_attribution.yaml
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004f3_reporting_inventory.yaml
+  - inputs/architecture/arch_004g2_etf_cli_contract.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - src/ai_trading_system/cli_commands/etf_portfolio.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_promotion.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
+  - tests/dynamic_v3_system_target_helpers.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g2_etf_cli_contract.py
+  - tests/test_arch_004g_deprecation.py
   migration:
     callback_count: 16
     canonical_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_promotion.py
@@ -9649,3 +9681,126 @@ phase_g2_4cq_etf_cli_dynamic_v3_system_target_smoothed_promotion:
   - {path: tests/test_smoothed_forward_binding.py, sha256: 3c3d989c7cd29beb6636698aaa9594c8c7bc78297d05e1b42b67f187329722eb}
   - {path: tests/test_smoothed_owner_promotion.py, sha256: 1962538d5b6089d91568976d8a10622806a4554faa6ff0c3f7afbc594c9bea62}
   - {path: tests/test_smoothed_promotion_review.py, sha256: d01bbabe3bb2c6606451cf543930682e3af9e699b7340da055c334caac5fdf6c}
+
+phase_g2_4cr_etf_cli_dynamic_v3_system_target_smoothed_operations:
+  status: COMPLETE_G2_4_CONTINUES
+  as_of: 2026-07-14
+  migration:
+    callback_count: 15
+    canonical_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_operations.py
+    domain_owner: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_operations.py
+    pre_output_live_source_validation_required: true
+    source_chronology_required: true
+    binding_candidate_and_targets_are_only_authority: true
+    explicit_evidence_ids_and_exact_target_lineage_required: true
+    cross_lineage_directory_scan_allowed: false
+    progress_is_only_operations_lineage: true
+    dashboard_monitor_same_progress_required: true
+    recheck_exact_progress_candidate_lineage_required: true
+    renewal_exact_recheck_owner_lineage_required: true
+    fixed_method_fallback_allowed: false
+    candidate_less_requirement_fabrication_allowed: false
+    bounded_source_bundle_recursive_input_snapshot_allowed: false
+    bounded_source_bundle_live_validator_required: true
+    content_fingerprint_validation_session: true
+    complete_file_fingerprint_required: true
+    validation_cache_pass_only: true
+    validation_cache_failure_reuse_allowed: false
+    validation_cache_return_mutation_isolated: true
+    snapshot_schemas:
+    - smoothed_forward_progress_input_snapshot.v2
+    - smoothed_weekly_dashboard_input_snapshot.v2
+    - smoothed_event_monitor_input_snapshot.v2
+    - smoothed_switch_readiness_input_snapshot.v2
+    - smoothed_owner_renewal_input_snapshot.v2
+    content_derived_all_views_validation: true
+    automatic_policy_or_execution_allowed: false
+    portfolio_or_execution_effect: false
+    direct_writer_calls_after: 858
+    legacy_root_lines_after: 16359
+    legacy_root_top_level_functions_after: 437
+    legacy_root_command_decorators_after: 398
+    legacy_domain_lines_after: 16659
+    legacy_domain_top_level_functions_after: 713
+    legacy_domain_compatibility_wrapper_count: 15
+    python_module_count: 922
+    python_test_file_count: 1122
+    tree_sha256: d4744f3ec1bbbfc05d10246f7969b3f9174e4cfebc9bec9d8b39a472e83bc6f3
+    production_effect: none
+  fixture:
+    candidate_method: null
+    bound_target_count: 0
+    progress_status: NOT_REGISTERED
+    progress_requirement_count: 0
+    progress_forward_event_count: 0
+    dashboard_status: NOT_REGISTERED
+    dashboard_ready_for_switch_recheck: false
+    event_monitor_status: NOT_REGISTERED
+    sideways_event_count: 0
+    recovery_event_count: 0
+    recheck_decision: NO_ELIGIBLE_CANDIDATE
+    recheck_criteria_count: 0
+    owner_decision_required: false
+    can_execute_switch: false
+    renewal_promote_available: false
+    renewal_recommended_action: request_more_forward_data
+    workflow_pass_is_not_investment_conclusion: true
+  performance:
+    progress_test_baseline_seconds: 557.27
+    progress_test_session_cache_seconds: 122.66
+    progress_test_bounded_source_seconds: 13.60
+    elapsed_reduction_percent: 97.56
+    speedup_multiple: 40.98
+    largest_snapshot_before_mb: 633.06
+    largest_snapshot_after_mb: 9.49
+    largest_snapshot_reduction_percent: 98.5
+  validation:
+    cache_unit: {status: PASS, passed: 2}
+    operations_hardening: {status: PASS, passed: 1}
+    five_stage_integration: {status: PASS, passed: 5}
+    manifest_and_cli_baseline_reconciliation: {status: PASS, passed: 120}
+    architecture_fitness: {status: PASS, passed: 279, runtime_artifact: outputs/validation_runtime/architecture-fitness_20260714T154008Z/test_runtime_summary.json}
+    contract_validation: {status: PASS, passed: 203, runtime_artifact: outputs/validation_runtime/contract-validation_20260714T154147Z/test_runtime_summary.json}
+  sources:
+  - {path: README.md, sha256: 1fc82f8547cbb3b9bb96aa1b589c525a7bc115385606eb0f7e0ba49242a39cf6}
+  - {path: config/report_registry.yaml, sha256: 8c2bdb6e4fdeccdd8fd953d299d44a3209fd578b4048c28a83111ec863292a35}
+  - {path: docs/artifact_catalog.md, sha256: 3421ff2d7d5a84b92b17e16b03e338ccc8e01650e820c139e1d68d0b81324bca}
+  - {path: docs/operations/operations_runbook.md, sha256: 6d922fe4732d5225168640d4b790c112e6fa52b5d6aa612f504ed8108faa3f00}
+  - {path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md, sha256: ae89a055fdc667a74575d376116be4d4c9841e375e16268b4e5a67569af91dfb}
+  - {path: docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md, sha256: ee3fc54609e8befeb0b3807f10ba1a7200333b1044b95e1521ac844e2568076e}
+  - {path: docs/requirements/TRADING-266_to_270_Smoothed_Forward_Evidence_Operations_and_Primary_Candidate_Readiness.md, sha256: a833136b7aa0f6a072f445027234bb8ca34fc09d9980737363dc204dc602c899}
+  - {path: docs/research/current_research_strategy_execution_chain.md, sha256: cf6b960508b8135c05397df7ca009176119ff5fed510059694c6b52d33faa997}
+  - {path: docs/system_flow.md, sha256: ecd8c8e0c91822faa769219b9650637ff7c2da05312533e55e94fbbfd5eee314}
+  - {path: docs/task_register.md, sha256: f66df2eed9c1dafc004cf220c6928b12b5a27c6ab8061029b323c3c5e891b6e1}
+  - {path: inputs/architecture/arch_004_worktree_attribution.yaml, sha256: 55c0ea04ae2fdf31c22d4753fc77e63b71e4ed910423518374a2c6a89e830497}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 146d7f0eb5f04fd003635ae24058d078aead5b8fc75acfe669d421c986ea00f7}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 512396b86c8f3664f4ac610ba8fdfddd812b970e0836c1a7b4bfb7d33949ee3d}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 0c1d83e441a576b9626a789b8032dfb0d31ab1ef0aaa3d8477847717191a028a}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 9d3d65c96a9e3160ed2d0c759013e9897381af67c2b7caaeb02d3a446aea7485}
+  - {path: inputs/architecture/arch_004f3_reporting_inventory.yaml, sha256: 352be1dec5ea2e9d88fd149b3e5dc4111da009131ef24935beac2968dd0c6197}
+  - {path: inputs/architecture/arch_004g2_etf_cli_contract.yaml, sha256: 5663e0b98f797033de593b620040d8b43e8a437d7a8ca42572d0b2e164ad00cd}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 983756f5cddebf2b16e0b29b08ef260c5dae17b5ec41ba261c9f09ba239af0a2}
+  - {path: src/ai_trading_system/cli_commands/etf_portfolio.py, sha256: a6d744b3569c93fb8e0ae559cd15dc2169fa395a416ecd2a4e44c858116f56e1}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py, sha256: a6b9ba82a688d100b22a4001249a01f80917b53b8250d5df6355fd38e1aca208}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_hardening.py, sha256: 26f5363e3b597d9914cdf74938e0fbaee5af4953fd549708ae1b254750b0d549}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_history.py, sha256: b37c684163093dd29d50949db27d0c4e434372e21a7482241c21386373d09dbe}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_risk_capped.py, sha256: 9c148cf1b30e6e4a32099f2e4e87b711b7aff4b0069a9c78a340fab738919377}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_evidence.py, sha256: 77c6c02b2a95f376ed08b8ce3d0e94db56e0774f433ed788e4065218886468eb}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_method.py, sha256: d26a309334814ac9d72fb1fc0fbdf6a0eb946ee04b3b4d39a521bac6975083f3}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_operations.py, sha256: 8e40bcc3cbad2cd9c0d19ead415cc24e6810b3c28a673e82fe81d22e23db9e96}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_promotion.py, sha256: 2c3e7de2d601d98cd4e851839955dfcffd5e9a179ac9792615fc220c3f6f1d42}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_readiness.py, sha256: 8c28e9e99e433562ce4c1cf758700b18829253c0623fd17d47b75c741c465731}
+  - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py, sha256: a499837260a626d79fb4abd7d8ec20445c79c04fcafc7d539d4a00a854884e75}
+  - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_operations.py, sha256: f8bb6ffa63369e8d74f59b3a2331cf686f651d2d05257dd625082438440033cd}
+  - {path: src/ai_trading_system/platform/artifacts/validation_session.py, sha256: 7e3ce0196594aad36c54901455c172ce7d4c7ca99212260bf4cedfea27d73c8d}
+  - {path: tests/dynamic_v3_system_target_helpers.py, sha256: 48bc7391225422574d424d2cee6d3f0a7735bd8c7d613c690e6380e9637d6fb4}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: 1dbf87e7346b7a3b8cc8119a18c82805ebed6b6cb803284d5dc9e0fba0740156}
+  - {path: tests/test_arch_004g2_etf_cli_contract.py, sha256: a5ca1dd44a96ffde1297e8e9998e8d5c69a90352e456f6113a44ed4497e3ee7a}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: 69ded86be422e6b172d5b02f9e67814f39480c14edcffe0b956763409fd84786}
+  - {path: tests/test_artifact_validation_session.py, sha256: 882b1dcb5e645da0d7523d53fbcc8ce8ea0244dc529b04af40edb2a1aee58ad7}
+  - {path: tests/test_dynamic_v3_system_target_smoothed_operations_hardening.py, sha256: 7e828b1abcdcb6b896b4b9d23227ea267a3f5505f53fc5451e70b4d225909cf9}
+  - {path: tests/test_smoothed_event_monitor.py, sha256: 0a45bf47af1c5fb2844c33b0ed55933f75faf619aed0f8f9b4aad9ddfca6865f}
+  - {path: tests/test_smoothed_forward_progress.py, sha256: cba0fa542acbdc332b21347574c725b0c6243225d57c263963e3efccb34b65bc}
+  - {path: tests/test_smoothed_owner_renewal.py, sha256: e71873d4c039ffe15593cb234eca85d40a9a9b99097bf49a960496afcfe1c826}
+  - {path: tests/test_smoothed_switch_readiness.py, sha256: c3357ce95fc2e45b18eee2f10a4d81594fd0f20ac68effa5ff9d86ddaa592183}
+  - {path: tests/test_smoothed_weekly_dashboard.py, sha256: ff48a32aa74004625b12b5ebaa4f1bba8f9322f222de6cd0a278e21ea3e7b5e2}

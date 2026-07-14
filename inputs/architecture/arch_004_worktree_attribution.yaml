@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CQ_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CR_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-14
-base_commit: 1f6c31ab
+base_commit: 6a2a49e0
 production_effect: none
 
 arch_004_owned_paths:
@@ -55,6 +55,7 @@ arch_004_owned_paths:
   - docs/requirements/TRADING-251_to_255_Smoothed_Method_Evidence_Drilldown_and_Forward_Confirmation.md
   - docs/requirements/TRADING-256_to_260_Smoothed_Evidence_Completeness_and_Promotion_Readiness.md
   - docs/requirements/TRADING-261_to_265_Smoothed_Method_Promotion_Review_and_Primary_Candidate_Gate.md
+  - docs/requirements/TRADING-266_to_270_Smoothed_Forward_Evidence_Operations_and_Primary_Candidate_Readiness.md
   - config/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation_v1.yaml
   - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
   - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
@@ -96,6 +97,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/platform/__init__.py
   - src/ai_trading_system/platform/artifacts/__init__.py
   - src/ai_trading_system/platform/artifacts/writer.py
+  - src/ai_trading_system/platform/artifacts/validation_session.py
   - src/ai_trading_system/platform/config/__init__.py
   - src/ai_trading_system/platform/config/resolver.py
   - src/ai_trading_system/platform/config/market_regimes.py
@@ -195,6 +197,13 @@ arch_004_owned_paths:
   - tests/test_arch_004g_deprecation.py
   - tests/test_arch_004g_shared_writers.py
   - tests/test_arch_004g2_etf_cli_contract.py
+  - tests/test_artifact_validation_session.py
+  - tests/test_dynamic_v3_system_target_smoothed_operations_hardening.py
+  - tests/test_smoothed_forward_progress.py
+  - tests/test_smoothed_weekly_dashboard.py
+  - tests/test_smoothed_event_monitor.py
+  - tests/test_smoothed_switch_readiness.py
+  - tests/test_smoothed_owner_renewal.py
   - tests/test_limited_vs_notrade.py
   - tests/test_confirmation_progress.py
   - tests/test_confirmation_evaluate.py
@@ -231,6 +240,8 @@ arch_004_owned_paths:
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_readiness.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_promotion.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_promotion.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_operations.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_operations.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_refinement.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_risk_capped.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_risk_capped.py
@@ -491,6 +502,7 @@ shared_but_attributable_paths:
       - TRADING-251_to_255_SMOOTHED_METHOD_EVIDENCE_DRILLDOWN_AND_FORWARD_CONFIRMATION
       - TRADING-256_to_260_SMOOTHED_EVIDENCE_COMPLETENESS_AND_PROMOTION_READINESS
       - TRADING-261_to_265_SMOOTHED_METHOD_PROMOTION_REVIEW_AND_PRIMARY_CANDIDATE_GATE
+      - TRADING-266_to_270_SMOOTHED_FORWARD_EVIDENCE_OPERATIONS_AND_PRIMARY_CANDIDATE_READINESS
   - path: docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
     attributable_tasks:
       - ARCH-004

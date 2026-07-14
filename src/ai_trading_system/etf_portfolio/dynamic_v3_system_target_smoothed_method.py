@@ -32,6 +32,9 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
 from ai_trading_system.etf_portfolio.dynamic_v3_pressure_validation import (
     _write_views_atomic,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    cached_artifact_validation,
+)
 
 SMOOTHED_CONFIG_SNAPSHOT_SCHEMA = "smoothed_config_input_snapshot.v2"
 SMOOTHED_TARGET_SNAPSHOT_SCHEMA = "smoothed_target_input_snapshot.v2"
@@ -1023,7 +1026,12 @@ def _validate_custom_binding(
         _require(binding.get("kind") == kind, f"{kind} binding kind invalid")
         artifact_id = _text(binding.get("artifact_id"))
         source_dir = Path(_text(_mapping(binding.get("bundle")).get("source_dir")))
-        actual = validator(**{validator_key: artifact_id, "output_dir": source_dir.parent})
+        actual = cached_artifact_validation(
+            validator=validator,
+            validator_key=validator_key,
+            artifact_id=artifact_id,
+            root=source_dir.parent,
+        )
         if actual != _mapping(binding.get("validation")):
             errors.append(f"{kind} source validation drift")
     except Exception as exc:  # noqa: BLE001
@@ -1039,7 +1047,6 @@ def _smoothed_backfill_binding(backfill_id: str, root: Path) -> dict[str, Any]:
         validator=validate_smoothed_backfill_artifact,
         validator_key="backfill_id",
         json_views=(
-            "smoothed_backfill_input_snapshot.json",
             "smoothed_backfill_manifest.json",
             "smoothed_backfill_summary.json",
         ),
@@ -1518,7 +1525,6 @@ def _comparison_binding(comparison_id: str, root: Path) -> dict[str, Any]:
         validator=validate_smoothed_comparison_artifact,
         validator_key="comparison_id",
         json_views=(
-            "smoothed_comparison_input_snapshot.json",
             "smoothed_comparison_manifest.json",
             "smoothed_vs_limited_metrics.json",
             "smoothed_regime_comparison.json",

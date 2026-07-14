@@ -33,6 +33,9 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
 from ai_trading_system.etf_portfolio.dynamic_v3_pressure_validation import (
     _write_views_atomic,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    cached_artifact_validation,
+)
 
 PAPER_SHADOW_BACKFILL_SNAPSHOT_SCHEMA = "paper_shadow_backfill_input_snapshot.v2"
 ROLLING_EVAL_SNAPSHOT_SCHEMA = "paper_shadow_rolling_eval_input_snapshot.v2"
@@ -932,7 +935,12 @@ def _validate_history_binding(binding: Mapping[str, Any]) -> list[str]:
             "paper_shadow_regime_review": "regime_review_id",
             "paper_shadow_stability": "stability_id",
         }[kind]
-        actual = validator(**{key: artifact_id, "output_dir": source_dir.parent})
+        actual = cached_artifact_validation(
+            validator=validator,
+            validator_key=key,
+            artifact_id=artifact_id,
+            root=source_dir.parent,
+        )
         if actual != _mapping(binding.get("validation")):
             errors.append(f"{kind} source validation drift")
     except Exception as exc:  # noqa: BLE001
@@ -941,8 +949,11 @@ def _validate_history_binding(binding: Mapping[str, Any]) -> list[str]:
 
 
 def _backfill_binding(backfill_id: str, backfill_dir: Path) -> dict[str, Any]:
-    validation = validate_paper_shadow_backfill_artifact(
-        backfill_id=backfill_id, output_dir=backfill_dir
+    validation = cached_artifact_validation(
+        validator=validate_paper_shadow_backfill_artifact,
+        validator_key="backfill_id",
+        artifact_id=backfill_id,
+        root=backfill_dir,
     )
     return _history_binding(
         kind="paper_shadow_backfill",

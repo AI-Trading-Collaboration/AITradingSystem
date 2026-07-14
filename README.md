@@ -1448,19 +1448,23 @@ target weights、修改 `position_advisory_v1.yaml`、paper/real portfolio、bas
 state、policy、order ticket 或 broker。
 
 TRADING-266_to_270_SMOOTHED_FORWARD_EVIDENCE_OPERATIONS_AND_PRIMARY_CANDIDATE_READINESS
-在 smoothed owner promotion decision 之后新增 forward evidence operations 和 owner
-renewal 闭环。CLI 入口为 `smoothed-forward-progress update/report`、
-`validate-smoothed-forward-progress`、`smoothed-weekly-dashboard build/report`、
-`validate-smoothed-weekly-dashboard`、`smoothed-event-monitor update/report`、
-`validate-smoothed-event-monitor`、`smoothed-switch-readiness recheck/report`、
-`validate-smoothed-switch-readiness`、`smoothed-owner-renewal pack/report` 和
-`validate-smoothed-owner-renewal`。Runtime artifacts 写入
+由 canonical `dynamic_v3_system_target_smoothed_operations.py` domain/interface 承接 CQ 的
+candidate=null、Binding=`targets=[]/NOT_REGISTERED`、Switch proposed=null。CLI 入口为
+`smoothed-forward-progress update/report`、`validate-smoothed-forward-progress`、
+`smoothed-weekly-dashboard build/report`、`validate-smoothed-weekly-dashboard`、
+`smoothed-event-monitor update/report`、`validate-smoothed-event-monitor`、
+`smoothed-switch-readiness recheck/report`、`validate-smoothed-switch-readiness`、
+`smoothed-owner-renewal pack/report` 和 `validate-smoothed-owner-renewal`。五段均在正式写件前
+重验 live sources、cutoff、chronology 与 exact lineage，并写 bounded v2 input snapshot；只冻结
+消费者实际读取的 business views，不递归复制上游 input snapshot 正文。Progress 只接受
+Binding 真实 targets 与显式同 target lineage evidence，0 targets 时 requirements/events 保持空；
+Dashboard/Monitor 只投影同一 Progress；Recheck 输出 `NO_ELIGIBLE_CANDIDATE`、空 criteria 和
+`owner_decision_required=false`；Renewal 的 promote option 不可用并推荐
+`request_more_forward_data`。Runtime artifacts 写入
 `reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_progress|smoothed_weekly_dashboard|smoothed_event_monitor|smoothed_switch_readiness|smoothed_owner_renewal/`，
-并登记 report registry / Reader Brief `Dynamic Rescue Smoothed Owner Renewal`。该链路跟踪
-`smooth_3d_vs_limited` forward events、sideways_choppy samples 和 recovery lag watch，
-把 weekly dashboard、event monitor、switch readiness criteria 和 owner renewal options
-连接起来。当前 forward/sideways/recovery 样本不足时，recheck 保持
-`WAIT_FOR_MORE_FORWARD_DATA`，owner action 仍建议 `continue_observation`。所有输出继续固定
+并登记 report registry / Reader Brief `Dynamic Rescue Smoothed Owner Renewal`。同一 validation
+session 仅按 validator/path/完整 content fingerprint 复用未变化 PASS；任一 byte 变化即重验，
+FAIL 不缓存。所有输出继续固定
 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、
 `broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、
 `auto_apply=false`、`production_effect=none`；不得自动 switch、写 official target weights、
