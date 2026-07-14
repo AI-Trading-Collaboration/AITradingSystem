@@ -1,8 +1,9 @@
+inventory_id: arch_004g_deprecation_inventory_e055498edd0263f414a2
 schema_version: arch_004g_deprecation_inventory.v1
 policy_id: arch_004g_deprecation_policy_v1
 repository:
-  python_module_count: 926
-  python_test_file_count: 1124
+  python_module_count: 928
+  python_test_file_count: 1125
   direct_writer_baseline_count: 894
   direct_writer_current_count: 858
   direct_writer_violation_count: 0
@@ -52,14 +53,14 @@ surfaces:
   migration_wave: G2
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
   file_count: 1
-  line_count: 15373
-  byte_count: 671897
-  source_sha256: 70a118683d22d68312e02a9644b6cb968ecc846128f47ecdac4e1dd17625337e
-  top_level_function_count: 407
+  line_count: 14804
+  byte_count: 647223
+  source_sha256: 4564c9ee4ab7ba0df8807a754536abc53963f92fb2fd053f7b3db5be38bedbf8
+  top_level_function_count: 391
   top_level_class_count: 0
-  cli_command_decorator_count: 368
+  cli_command_decorator_count: 352
   static_import_reachability_file_count: 1
-  test_reference_file_count: 306
+  test_reference_file_count: 307
   docs_config_reference_file_count: 116
   required_removal_gate_count: 12
   removal_ready: false
@@ -90,7 +91,7 @@ surfaces:
   top_level_class_count: 0
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 5
-  test_reference_file_count: 193
+  test_reference_file_count: 194
   docs_config_reference_file_count: 92
   required_removal_gate_count: 12
   removal_ready: false
@@ -207,15 +208,15 @@ surfaces:
   migration_wave: G6
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py
   file_count: 1
-  line_count: 13978
-  byte_count: 571702
-  source_sha256: 4e2713f1450f7561ba14a8d5c1256663af42a930f8d15b5c60f2f3c9577d8a35
-  top_level_function_count: 679
+  line_count: 12951
+  byte_count: 528634
+  source_sha256: b3bb4a669799a246acc56c2cfdd844226b2250e0051b488cdb938d9e63c39b59
+  top_level_function_count: 680
   top_level_class_count: 1
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 0
-  test_reference_file_count: 90
-  docs_config_reference_file_count: 15
+  test_reference_file_count: 91
+  docs_config_reference_file_count: 16
   required_removal_gate_count: 12
   removal_ready: false
   open_gate_ids:

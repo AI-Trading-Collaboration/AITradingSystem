@@ -20,6 +20,25 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-15：G2.4CU=`COMPLETE_G2_4_CONTINUES`。Smoothed Refresh canonical
+  interface/domain、15个legacy lazy wrappers、五类bounded v2 snapshots、exact全链、provider
+  non-replay、blocked no-child、all-view byte rebuild与cross-chain fail-close闭合；正式
+  focused/architecture/contract/full=`123/282/203/6,023 passed`，full=`1,939.34s`，generated=
+  `928/1,125/858/0`，CLI tree/hash不变。TRADING-281～285转`BASELINE_DONE`等待真实provider与
+  更新数据复验；G2.4继续、不触发handoff、不进入G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CU canonical implementation完成并转 `VALIDATING`。16 callbacks和15个
+  producer/report/validator入口已迁独立Smoothed Refresh interface/domain；legacy CLI
+  `15,373→14,804`行、`407→391` functions，legacy domain `13,978→12,951`行并仅保留15个
+  lazy wrappers。五类v2 snapshots、exact全链、provider non-replay、blocked no-child、all-view
+  byte rebuild与cross-chain fail-close已由123个focused tests覆盖；CLI tree/hash不变，generated
+  `928 modules / 1,125 tests / 858 writers / 0 violations`。等待正式architecture/contract/full与
+  source-hash closeout；不触发handoff、不进入G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CU Smoothed Data Refresh Execution / Scheduled Retry contract freeze并进入
+  `IN_PROGRESS`。TRADING-281～285共16 callbacks迁canonical interface、15个业务入口迁canonical
+  domain；五类bounded v2 snapshots、exact Refresh Plan/Preflight/Refresh/Post/Resume/Growth
+  lineage、explicit execute authorization、before/after commitments、all-view byte rebuild与tamper
+  fail-close为退出边界。Validator不得重放有副作用provider refresh，不得用fake fresh cache解除真实
+  provider blocker；单slice不触发handoff、不进入G2.5，`production_effect=none`。
 - 2026-07-15：G2.4CT=`COMPLETE_G2_4_CONTINUES`。Focused/architecture/contract/full=
   `125/281/203/6,018 passed`，full=`2,514.64s`；generated=`926/1,124/858/0`，CLI contract
   `41/291/993/0`与tree hash不变。首轮full暴露的post-refresh Model Target lineage缺口已按exact

@@ -3747,6 +3747,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-source-refresh report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_source_refresh/*/smoothed_source_refresh_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_source_refresh/*/smoothed_source_refresh_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_source_refresh/*/refresh_execution_request.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_source_refresh/*/source_refresh_results.json
@@ -3769,6 +3770,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-post-refresh-validate report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_post_refresh_validation/*/smoothed_post_refresh_validation_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_post_refresh_validation/*/smoothed_post_refresh_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_post_refresh_validation/*/post_refresh_data_validation.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_post_refresh_validation/*/post_refresh_preflight_result.json
@@ -3791,6 +3793,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-retry-resume report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_retry_resume/*/smoothed_retry_resume_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_retry_resume/*/smoothed_retry_resume_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_retry_resume/*/resume_precondition_check.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_retry_resume/*/resume_steps.json
@@ -3814,6 +3817,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-sample-growth report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_sample_growth/*/smoothed_sample_growth_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_sample_growth/*/smoothed_sample_growth_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_sample_growth/*/sample_growth_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_sample_growth/*/sample_growth_by_target.json
@@ -3835,6 +3839,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue smoothed-data-readiness report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_readiness/*/smoothed_data_readiness_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_readiness/*/smoothed_data_readiness_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_readiness/*/owner_data_readiness_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_readiness/*/owner_data_readiness_checklist.md

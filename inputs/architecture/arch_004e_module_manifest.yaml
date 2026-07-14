@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 source_root: src/ai_trading_system
-module_count: 926
+module_count: 928
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -939,7 +939,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.etf_portfolio
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: c1d4fcf5252331bb5fe04f6699ca05f80854824a589102fcca02de44d99c38f0
+  sha256: 112ba801da3cd8c4a391e081ae24bfce037af45509c6c9d909ff95f9c97df1e7
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -6113,7 +6113,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_system_target
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py
-  sha256: 8ebd854544e29a12fb985626f61db18a35e60bee0ae391e664000b3f8bd6e9b7
+  sha256: 012d8ceacbfdd635a711217d45a4f4bde52ec9f7c1b3690ef6ad7540b3cb6b5b
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -6400,6 +6400,28 @@ modules:
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_system_target_smoothed_readiness
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_readiness.py
   sha256: 8c28e9e99e433562ce4c1cf758700b18829253c0623fd17d47b75c741c465731
+  rule_id: etf_portfolio
+  owner_profile: portfolio
+  owners:
+    code_owner: portfolio_engineering
+    policy_owner: investment_policy_governance
+    data_owner: portfolio_data_governance
+    artifact_owner: portfolio_reporting
+    runtime_owner: portfolio_operations
+  layer: domain
+  category: portfolio_research
+  public_contract: false
+  deprecation_status: active
+  test_globs:
+  - tests/test_etf*.py
+  - tests/trading_engine/test_portfolio*.py
+  validation_tiers:
+  - slow-research-regression
+  - integration
+  shared_integration: false
+- module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_system_target_smoothed_refresh
+  path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target_smoothed_refresh.py
+  sha256: 409a59085047a0d005cd12d23fecbab6f8ee77f5c65ffab48df98b2241a600e7
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -9740,7 +9762,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.__init__
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-  sha256: 21efb0493d326dc0bd919ef4b7faa5181debbd151646b4e22fcffa6db0415987
+  sha256: 7a5d02caaf12ae67368c39e1954ffa0aa2a20169bc2abe17c3c2b372c5d855e6
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -11621,6 +11643,26 @@ modules:
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_system_target_smoothed_readiness
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_readiness.py
   sha256: 403c2f84d054c3c34f6be453bdb5d241dbe2244cdb42fb4dd4ba5df23aa69cba
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_system_target_smoothed_refresh
+  path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_refresh.py
+  sha256: 44fa9d5ccbe2146526a0c73c3b58ae66f64b30a7fd9ced92d3cb678de9ffb368
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

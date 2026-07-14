@@ -1,6 +1,6 @@
 # ARCH-004G2 Validation Runtime Budget 与 Immutable Fixture Reuse
 
-最后更新：2026-07-14
+最后更新：2026-07-15
 
 ## 任务信息
 
@@ -26,6 +26,18 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 - 当前 full 收尾时只剩一个 CPU-bound worker，其他 15 个 idle worker 仍保留数百 MB；诊断观察
   到 active worker 约 97% CPU、约 `159 MB/s` read I/O、约 `548k page faults/s`，累计读取超过
   `231 GB`。这是重复读/重验和内存换页抖动，不是 coverage 本身不可避免的成本。
+- G2.4CT final full 为 `6,018 passed / 2,514.64s`，相对 `2,554.80s` 仅改善约 `1.57%`，
+  不足以声明稳定提速；最慢模块仍为 confirmation weekly `1,220.52s`、rule review queue
+  `704.54s`、confirmation dashboard `615.90s`。这进一步确认 S2 content-fingerprint DAG去重
+  应先于 S3 duration-aware shard，而不是单纯增加worker。
+- G2.4CU已把5族下游validator接入同一validation session：单次Readiness复验会复用
+  Refresh/Post/Resume/Growth嵌套链中的PASS-only content fingerprints；123个focused CLI/业务/
+  hardening tests通过。该局部优化避免新链继续放大重复校验，但没有声称解决旧confirmation长尾。
+- G2.4CU final full=`6,023 passed / 1,939.34s`，相对G2.4CT的`2,514.64s`单次缩短约
+  `22.9%`，但尚未满足连续3次稳定性要求，不能归因为已完成的系统性优化。最新长尾为
+  confirmation weekly=`1,229.71s`、confirmation dashboard=`824.66s`、rule review queue=
+  `726.05s`；99%阶段仅少数worker继续计算，健康检查还观察到单worker working set最高约
+  `3.7GB`。因此调度必须同时考虑duration和peak memory，固定`-n16`不是默认最优假设。
 
 ## 设计原则
 
@@ -45,6 +57,8 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 
 - 在 runtime artifact 增加 collected/passed nodeids、worker 分布、P50/P95/max duration、峰值
   working set、累计 read bytes/page faults（平台可用时）及历史基线差异；
+- 对超过预算的active node周期输出nodeid、elapsed、worker与resource heartbeat，区分正常长测、
+  资源争用和疑似挂起，避免只显示长期不变的suite百分比；
 - 定义 full gate 的 wall-time、peak-memory、read-amplification warning budget；超预算产生显式
   warning/治理任务，不静默降级 gate。
 
@@ -81,5 +95,10 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 ## 当前状态
 
 G2.4CR/CS 已完成第一批通用 validation session、bounded snapshot 和 fixture path isolation；本任务
-承接剩余 confirmation/full-suite 长尾。它是研发效率治理，不是 ARCH-004 G2.5 解锁条件，也不得
-绕过 owner 已批准的 phase-level `arch_005_bootstrap_handoff.v1` 停止条件。
+承接剩余 confirmation/full-suite 长尾；G2.4CT/CU继续证明局部session reuse有效但full长尾仍由
+旧confirmation DAG主导。G2.4CU单次full虽降至`1,939.34s`，仍需连续样本排除机器状态波动。
+建议实施顺序保持S2→S3：先完成confirmation weekly/dashboard、rule queue/owner decision的content
+fingerprint / bounded fixture治理，再用duration+peak-memory manifest比较loadfile/loadscope/explicit
+shard，并补active-node heartbeat。它是研发效率治理，
+不是 ARCH-004 G2.5 解锁条件，也不得绕过 owner 已批准的 phase-level
+`arch_005_bootstrap_handoff.v1` 停止条件。

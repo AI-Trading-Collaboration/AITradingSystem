@@ -272,6 +272,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_system_target_smoothed_readiness as dynamic_v3_smoothed_readiness_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_system_target_smoothed_refresh as dynamic_v3_smoothed_refresh_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_validation_evidence as dynamic_v3_validation_evidence_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -386,6 +389,7 @@ __all__ = [
     "dynamic_v3_smoothed_bootstrap_commands",
     "dynamic_v3_smoothed_evidence_commands",
     "dynamic_v3_smoothed_freshness_commands",
+    "dynamic_v3_smoothed_refresh_commands",
     "dynamic_v3_smoothed_operations_commands",
     "dynamic_v3_smoothed_promotion_commands",
     "dynamic_v3_smoothed_readiness_commands",
