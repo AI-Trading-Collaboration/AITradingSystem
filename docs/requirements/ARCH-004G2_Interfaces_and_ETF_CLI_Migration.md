@@ -20,6 +20,24 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-15：G2.4CW1=`COMPLETE_G2_4_CONTINUES`。Diagnostics 12 callbacks/12业务入口、
+  四类v2 snapshots、exact双链、21 views rebuild/tamper、reporting/CLI/deprecation/manifests/
+  compatibility闭合；focused/architecture/contract/full=`166/287/203/6,032 passed`，full=
+  `1,773.27s`，generated=`936/1,129/858/0`。长尾前三=`984.85/674.58/574.26s`，CW1
+  hardening=`279.65s`第8，单次full较CV3回归约11.3%，不宣称稳定改善。next继续CW2；whole
+  G2.4仍pending，不触发handoff、不进入G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CW1 canonical implementation完成并转`VALIDATING`。12 callbacks/12 public
+  业务入口完成interface/domain减法迁移，legacy root=`13,522/340/301`，legacy weight domain=
+  `10,320行/12 lazy wrappers`。四类v2 snapshots、exact双链、21 views byte rebuild、4 schema/
+  3 cross-lineage/policy/chronology tamper闭合；业务+hardening=`5 passed / 216.58s`，generated=
+  `936/1,129/858/0`，CLI tree/hash不变。正式architecture/contract/full与source hashes进行中；
+  CW2/CW3/whole phase仍pending，不触发handoff、不进入G2.5。
+- 2026-07-15：G2.4CW1进入`IN_PROGRESS`。TRADING-306～309的No-Promotion Review、Near-Miss、
+  Cash-Buffer Attribution、Search Coverage Gap共12 callbacks/12 public业务入口迁独立canonical
+  diagnostics interface/domain。退出固定四类bounded v2 snapshots、reviewed diagnostics policy、
+  validated exact Scorecard→Review→Near-Miss→Attribution与Search Space→Coverage lineage、
+  pre-output fail-close、live replay/all-view byte rebuild及source/policy/schema/cross-lineage/output
+  tamper。CW2/CW3及whole G2.4后续matrix仍pending，不触发handoff、不进入G2.5。
 - 2026-07-15：G2.4CV3=`COMPLETE_G2_4_CONTINUES`。18 callbacks/18 public domain入口、六类
   v2 snapshots、exact双链、27 views byte rebuild/tamper、reporting/CLI/deprecation/manifests全部
   闭合；focused/architecture/contract/full=`145/285/203/6,029 passed`，full=`1,592.38s`，

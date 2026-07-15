@@ -2,6 +2,29 @@
 
 本文档是系统从数据输入、中间评估到输出结论的流程图。它不是一次性说明文档，而是工程事实的一部分：后续新增命令、数据源、配置、评分模块、回测路径或报告输出时，必须同步维护本文件。
 
+ARCH-004G2.4CW1 把 TRADING-306～309 Diagnostics 的12个CLI callback迁至
+`interfaces/cli/etf_portfolio/dynamic_v3_weight_search_diagnostics.py`，并把12个public业务入口迁至
+同名canonical domain。`weight_search_diagnostics_v1.yaml`治理near-miss、gate assessment、
+cash-buffer recommendation和coverage cap；四类bounded v2 snapshots冻结validated exact
+Scorecard→No-Promotion Review→Near-Miss→Cash Attribution及exact Search Space→Coverage Gap
+lineage。Producer在创建output前校验source/policy/time，validator重验live bindings并逐byte重建
+21个JSON/JSONL/Markdown/Reader Brief views；policy/source/schema/cross-lineage/output drift全部
+fail closed，且不改变promotion gate、official weights、paper primary、portfolio、production、order或broker。
+
+```mermaid
+flowchart LR
+    SCORE["Validated Weight Scorecard v2"] --> REVIEW["No-Promotion Review v2"]
+    POLICY["Reviewed Diagnostics Policy v1"] --> REVIEW
+    REVIEW --> NEAR["Near-Miss Candidates v2"]
+    SCORE --> NEAR
+    NEAR --> CASH["Cash-Buffer Attribution v2"]
+    SCORE --> CASH
+    SEARCH["Validated Weight Search Space v2"] --> COVERAGE["Search Coverage Gap v2"]
+    NEAR --> COVERAGE
+    CASH --> COVERAGE
+    COVERAGE --> NEXT["CW2 Targeted Search v3（pending）"]
+```
+
 ARCH-004G2.4CV3 把 TRADING-294～305 Weight Search Decision 的18个CLI callback迁至`interfaces/cli/etf_portfolio/dynamic_v3_weight_search_decision.py`，数据流固定为：exact same-lineage Scorecard+Robustness → Candidate Cluster → Top Interpretation → Promotion Gate → Formal Auto Plan，以及exact Scorecard+Adaptive+optional same-lineage Gate → Search Dashboard → Owner Decision Pack。六级分别冻结`weight_candidate_cluster_input_snapshot.v2`、`weight_top_candidate_interpretation_input_snapshot.v2`、`weight_method_promotion_gate_input_snapshot.v2`、`formal_method_auto_plan_input_snapshot.v2`、`weight_search_dashboard_input_snapshot.v2`、`owner_research_decision_pack_input_snapshot.v2`，producer先验live source，validator重验source binding/lineage并逐byte重建全部27个materialized views。Formal Plan固定`implemented=false`，Owner Pack只列人工选项；任一source/output/schema/cross-lineage drift均fail closed，不改policy/config/official weights/portfolio/production/order/broker。
 
 ARCH-004G2.4BW 把 Advisory Proposal Review的三个CLI callback迁至`interfaces/cli/etf_portfolio/dynamic_v3_advisory_proposal_review.py`，数据流固定为：显式Interpretation+Risk+Defensive+Calibration ids/roots → 四个content-derived validators → timezone/cutoff + same-Outcome + Interpretation→Calibration lineage + reviewed proposal policy gate → four full bundles/validations/policy bytes → `advisory_proposal_review_input_snapshot.v2` → only-real-Calibration-proposals policy mapping → decision matrix/checklist/report/Reader Brief/manifest → live sources/policy/content-derived byte validator。Empty proposal为`INSUFFICIENT_DATA`，不补造proposal/confidence，conditions不硬编码forward数值。该链只作non-PIT manual review，不运行Forward或后续链，不改policy/config/portfolio/production/order/broker。

@@ -4292,6 +4292,7 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/no_promotion_review/*/score_component_failure_matrix.json
       - reports/etf_portfolio/dynamic_v3_rescue/no_promotion_review/*/no_promotion_review_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/no_promotion_review/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/no_promotion_review/*/no_promotion_review_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-306 diagnoses why the expanded weight search produced no formal
@@ -4313,6 +4314,7 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/near_miss_candidates/*/near_miss_family_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/near_miss_candidates/*/near_miss_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/near_miss_candidates/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/near_miss_candidates/*/near_miss_candidates_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-307 records candidates close enough to promotion gates to justify
@@ -4334,6 +4336,7 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/cash_buffer_attribution/*/cash_buffer_failure_reason.json
       - reports/etf_portfolio/dynamic_v3_rescue/cash_buffer_attribution/*/cash_buffer_variant_recommendations.json
       - reports/etf_portfolio/dynamic_v3_rescue/cash_buffer_attribution/*/cash_buffer_attribution_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/cash_buffer_attribution/*/cash_buffer_attribution_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-308 explains whether the cash-buffer near miss improves drawdown
@@ -4355,6 +4358,7 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/search_coverage_gap/*/parameter_coverage_gap.json
       - reports/etf_portfolio/dynamic_v3_rescue/search_coverage_gap/*/targeted_v3_recommendations.json
       - reports/etf_portfolio/dynamic_v3_rescue/search_coverage_gap/*/search_coverage_gap_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/search_coverage_gap/*/search_coverage_gap_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-309 compares near-miss families against the v2 search space and

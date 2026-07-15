@@ -1,0 +1,168 @@
+schema_version: dynamic_v3_weight_search_diagnostics_policy.v1
+
+policy_metadata:
+  policy_version: weight_search_diagnostics_pilot_v1
+  owner: research_method_governance
+  status: pilot_baseline
+  rationale: >
+    Govern no-promotion diagnosis, near-miss selection, cash-buffer follow-up
+    and targeted-search coverage recommendations without changing the reviewed
+    scorecard or promotion gate.
+  intended_effect: >
+    Produce reproducible owner-review evidence and bounded research follow-up
+    options only; no candidate is promoted or applied by this policy.
+  validation_evidence: >
+    Historical TRADING-306 to TRADING-309 artifacts plus ARCH-004 G2.4CW1
+    source-lineage, policy-drift, rebuild and tamper validation.
+  review_condition: >
+    Revisit after CW2/CW3 canonical migration or when independently reviewed
+    forward evidence supports recalibration.
+
+no_promotion:
+  scorecard_policy_version: weight_batch_search_scorecard_pilot_v1
+  promotion_score: 0.72
+  keep_testing_score: 0.56
+  primary_reason_limit: 5
+  near_miss_margin: 0.06
+  minimum_near_miss_count_for_too_strict: 3
+  severe_failure_fraction: 0.50
+  severe_gate_ids:
+    - drawdown_gate
+    - regime_gate
+    - recovery_lag_gate
+  recommended_next_action: extract_near_miss_candidates
+  weak_component_score: 0.50
+  component_percentile: 0.90
+  high_severity_gate_ids:
+    - drawdown_gate
+    - regime_gate
+    - data_quality_gate
+    - recovery_lag_gate
+  gate_universe:
+    - composite_score_gate
+    - return_preservation_gate
+    - drawdown_gate
+    - rolling_consistency_gate
+    - turnover_gate
+    - regime_gate
+    - recovery_lag_gate
+    - data_quality_gate
+  hard_reject_gate_map:
+    max_drawdown_materially_worse_than_limited_adjustment: drawdown_gate
+    rolling_consistency_worse_than_limited_adjustment: rolling_consistency_gate
+    turnover_materially_higher_than_limited_adjustment: turnover_gate
+    strong_recovery_lag_cost_HIGH: recovery_lag_gate
+    sideways_choppy_performance_WORSE: regime_gate
+    data_quality_FAIL: data_quality_gate
+    only_wins_in_one_narrow_window_or_pressure_regimes_worse: regime_gate
+  gate_reason_map:
+    composite_score_gate: composite_score_below_promotion_threshold
+    return_preservation_gate: return_preservation_weak
+    drawdown_gate: insufficient_drawdown_improvement
+    rolling_consistency_gate: rolling_consistency_not_strong_enough
+    turnover_gate: turnover_not_low_enough
+    regime_gate: regime_behavior_mixed
+    recovery_lag_gate: strong_recovery_lag_too_high
+    data_quality_gate: data_quality_warning_or_failure
+
+near_miss:
+  minimum_overall_score: 0.48
+  minimum_component_score: 0.65
+  maximum_failed_gates: 2
+  maximum_candidates: 20
+  maximum_focus_families: 6
+  required_focus_families:
+    - cash_buffer
+    - smoothing
+    - candidate_ensemble
+    - rebalance_threshold
+  return_preservation_gate_score: 0.45
+  suggested_adjustment_by_family:
+    cash_buffer: test_cash_buffer_8_or_hybrid_with_smoothing
+    smoothing: test_shorter_smoothing_or_fast_restore_hybrid
+    candidate_ensemble: test_top_k_consensus_with_threshold
+    rebalance_threshold: test_threshold_2pct_to_4pct_grid
+  default_suggested_adjustment: targeted_v3_hybrid_search
+  return_failure_adjustment: reduce_defensive_drag_or_add_recovery_restore
+
+cash_buffer:
+  source_family: cash_buffer
+  component_labels:
+    improved_minimum: 0.65
+    mixed_minimum: 0.40
+  return_cost_labels:
+    good_minimum: 0.70
+    acceptable_minimum: 0.45
+  recovery_lag_labels:
+    low_minimum: 0.70
+    medium_minimum: 0.35
+  interpretation:
+    drawdown_helped_minimum: 0.60
+    return_cost_threshold: 0.45
+  failure_gate_precedence:
+    - return_preservation_gate
+    - recovery_lag_gate
+    - regime_gate
+    - composite_score_gate
+  failure_reason_by_gate:
+    return_preservation_gate: return_preservation_weak
+    recovery_lag_gate: insufficient_robustness
+    regime_gate: regime_mixed
+    composite_score_gate: insufficient_robustness
+  default_failure_reason: unknown
+  recommended_variants:
+    - cash_buffer_6_plus_smooth_2d
+    - cash_buffer_8_plus_smooth_3d
+    - cash_buffer_10_plus_rebalance_threshold_3pct
+    - cash_buffer_12_plus_median_consensus
+    - sideways_cooldown_5d_plus_cash_buffer_8
+  recommended_direction: hybrid_component_not_standalone_method
+  recommendation_reasons:
+    - cash_buffer can help drawdown but may drag return
+    - targeted v3 should test smaller cash and hybrid controls
+
+coverage:
+  maximum_targeted_v3_variants: 120
+  recommended_focus:
+    - cash_buffer_smoothing_hybrid
+    - cash_buffer_threshold_hybrid
+    - median_consensus_smoothing
+    - top5_consensus_threshold
+    - sideways_cooldown_cash_buffer
+    - smoothing_recovery_fast_restore
+  family_gap_templates:
+    - gap: cash_buffer_smoothing_hybrid
+      reason: cash buffer and smoothing were screened separately but not jointly
+    - gap: cash_buffer_threshold_hybrid
+      reason: cash buffer and rebalance threshold were not jointly screened
+    - gap: median_consensus_smoothing
+      reason: consensus and smoothing interaction remains uncovered
+  parameter_gap_templates:
+    - parameter: cash_buffer
+      current_default_values: [0.10, 0.15, 0.20]
+      recommended_values: [0.06, 0.08, 0.10, 0.12, 0.15]
+      recommendation: test smaller cash levels and cash-plus-smoothing hybrids
+    - parameter: smoothing_window
+      current_default_values: [2, 3, 5, 7]
+      recommended_values: [2, 3, 4]
+      recommendation: test shorter smoothing and faster restore variants
+    - parameter: rebalance_threshold
+      current_default_values: [0.02, 0.03, 0.05]
+      recommended_values: [0.02, 0.025, 0.03, 0.04]
+      recommendation: refine low-turnover threshold controls around near misses
+    - parameter: top_k
+      current_default_values: [3, 5]
+      recommended_values: [3, 5, 7]
+      recommendation: pair top-k ensemble variants with threshold controls
+
+safety:
+  research_screening_only: true
+  experiment_only: true
+  not_formal_research_method: true
+  not_official_target_weights: true
+  paper_shadow_only: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  auto_apply: false
+  production_effect: none

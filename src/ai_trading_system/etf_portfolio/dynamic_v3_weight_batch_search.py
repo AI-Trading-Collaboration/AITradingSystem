@@ -428,572 +428,73 @@ def validate_owner_research_decision_pack_artifact(*args: Any, **kwargs: Any) ->
     )
 
 
-def run_no_promotion_review(
-    *,
-    scorecard_id: str,
-    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
-    output_dir: Path = DEFAULT_NO_PROMOTION_REVIEW_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
-    rows = _records(scorecard.get("variant_scorecard"))
-    reason_summary = _no_promotion_reason_summary(scorecard)
-    failure_distribution = _gate_failure_distribution(rows)
-    component_matrix = _score_component_failure_matrix(rows)
-    review_id = _stable_id("no-promotion-review", scorecard_id, generated.isoformat())
-    root = _unique_dir(output_dir / review_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_no_promotion_review_manifest",
-        "review_id": root.name,
-        "source_scorecard_id": scorecard_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if rows else "FAIL",
-        "market_regime": scorecard.get("market_regime", "ai_after_chatgpt"),
-        "date_start": scorecard.get("date_start"),
-        "date_end": scorecard.get("date_end"),
-        "data_quality_status": scorecard.get("data_quality_status"),
-        "variants_reviewed": len(rows),
-        "promoted_candidate_count": reason_summary["promoted_candidate_count"],
-        "no_promotion_review_manifest_path": str(root / "no_promotion_review_manifest.json"),
-        "no_promotion_reason_summary_path": str(root / "no_promotion_reason_summary.json"),
-        "gate_failure_distribution_path": str(root / "gate_failure_distribution.json"),
-        "score_component_failure_matrix_path": str(root / "score_component_failure_matrix.json"),
-        "no_promotion_review_report_path": str(root / "no_promotion_review_report.md"),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    reader = render_no_promotion_reader_brief(manifest, reason_summary)
-    _write_json(root / "no_promotion_review_manifest.json", manifest)
-    _write_json(root / "no_promotion_reason_summary.json", reason_summary)
-    _write_json(root / "gate_failure_distribution.json", failure_distribution)
-    _write_json(root / "score_component_failure_matrix.json", component_matrix)
-    _write_text(
-        root / "no_promotion_review_report.md",
-        render_no_promotion_review_report(
-            manifest, reason_summary, failure_distribution, component_matrix
-        ),
-    )
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_no_promotion_review", root.name, root / "no_promotion_review_manifest.json"
-    )
-    return {
-        "review_id": root.name,
-        "review_dir": root,
-        "manifest": manifest,
-        "no_promotion_reason_summary": reason_summary,
-        "gate_failure_distribution": failure_distribution,
-        "score_component_failure_matrix": component_matrix,
-        "reader_brief_section": reader,
-    }
+def _call_weight_search_diagnostics(name: str, *args: Any, **kwargs: Any) -> Any:
+    from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_diagnostics
+
+    return getattr(dynamic_v3_weight_search_diagnostics, name)(*args, **kwargs)
 
 
-def no_promotion_review_report_payload(
-    *,
-    review_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_NO_PROMOTION_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=review_id,
-        latest_pointer="latest_no_promotion_review",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="no_promotion_review_manifest.json",
-    )
-    return {
-        **_read_json(root / "no_promotion_review_manifest.json"),
-        "no_promotion_reason_summary": _read_json(root / "no_promotion_reason_summary.json"),
-        "gate_failure_distribution": _read_json(root / "gate_failure_distribution.json"),
-        "score_component_failure_matrix": _read_json(root / "score_component_failure_matrix.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "review_dir": str(root),
-    }
+def run_no_promotion_review(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_diagnostics("run_no_promotion_review", *args, **kwargs)
 
 
-def validate_no_promotion_review_artifact(
-    *,
-    review_id: str,
-    output_dir: Path = DEFAULT_NO_PROMOTION_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = output_dir / review_id
-    manifest = _read_optional_json(root / "no_promotion_review_manifest.json") or {}
-    reason = _read_optional_json(root / "no_promotion_reason_summary.json") or {}
-    failure = _read_optional_json(root / "gate_failure_distribution.json") or {}
-    matrix = _read_optional_json(root / "score_component_failure_matrix.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "no_promotion_review_manifest.json",
-            "no_promotion_reason_summary.json",
-            "gate_failure_distribution.json",
-            "score_component_failure_matrix.json",
-            "no_promotion_review_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("review_id_matches", manifest.get("review_id") == review_id, ""),
-            st._check(
-                "promoted_candidate_count_visible",
-                "promoted_candidate_count" in reason,
-                "",
-            ),
-            st._check(
-                "gate_assessment_valid",
-                reason.get("gate_assessment")
-                in {"REASONABLE", "TOO_STRICT", "TOO_LOOSE", "INCONCLUSIVE"},
-                _text(reason.get("gate_assessment")),
-            ),
-            st._check("gate_failures_readable", bool(_records(failure.get("failures"))), ""),
-            st._check("component_matrix_readable", bool(_records(matrix.get("components"))), ""),
-            st._check("broker_forbidden", _payload_safe(manifest, reason, failure, matrix), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, reason, failure, matrix),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload("etf_dynamic_v3_no_promotion_review_validation", review_id, checks)
-
-
-def extract_near_miss_candidates(
-    *,
-    scorecard_id: str,
-    no_promotion_review_id: str,
-    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
-    review_dir: Path = DEFAULT_NO_PROMOTION_REVIEW_DIR,
-    output_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
-    review = no_promotion_review_report_payload(
-        review_id=no_promotion_review_id, output_dir=review_dir
-    )
-    candidates = _near_miss_candidate_rows(scorecard)
-    family_summary = _near_miss_family_summary(candidates, scorecard)
-    near_miss_id = _stable_id(
-        "near-miss-candidates",
-        scorecard_id,
-        no_promotion_review_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / near_miss_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_near_miss_manifest",
-        "near_miss_id": root.name,
-        "source_scorecard_id": scorecard_id,
-        "no_promotion_review_id": no_promotion_review_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if candidates else "PASS_WITH_WARNINGS",
-        "market_regime": scorecard.get("market_regime", "ai_after_chatgpt"),
-        "date_start": scorecard.get("date_start"),
-        "date_end": scorecard.get("date_end"),
-        "candidate_count": len(candidates),
-        "cash_buffer_10_near_miss": any(
-            row.get("variant_id") == "cash_buffer_10" for row in candidates
-        ),
-        "source_review_gate_assessment": _mapping(review.get("no_promotion_reason_summary")).get(
-            "gate_assessment"
-        ),
-        "near_miss_manifest_path": str(root / "near_miss_manifest.json"),
-        "near_miss_candidates_path": str(root / "near_miss_candidates.jsonl"),
-        "near_miss_family_summary_path": str(root / "near_miss_family_summary.json"),
-        "near_miss_report_path": str(root / "near_miss_report.md"),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    reader = render_near_miss_reader_brief(manifest, family_summary)
-    _write_json(root / "near_miss_manifest.json", manifest)
-    _write_jsonl(root / "near_miss_candidates.jsonl", candidates)
-    _write_json(root / "near_miss_family_summary.json", family_summary)
-    _write_text(
-        root / "near_miss_report.md", render_near_miss_report(manifest, candidates, family_summary)
-    )
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_near_miss_candidates", root.name, root / "near_miss_manifest.json"
-    )
-    return {
-        "near_miss_id": root.name,
-        "near_miss_dir": root,
-        "manifest": manifest,
-        "near_miss_candidates": candidates,
-        "near_miss_family_summary": family_summary,
-        "reader_brief_section": reader,
-    }
-
-
-def near_miss_candidates_report_payload(
-    *,
-    near_miss_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=near_miss_id,
-        latest_pointer="latest_near_miss_candidates",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="near_miss_manifest.json",
-    )
-    return {
-        **_read_json(root / "near_miss_manifest.json"),
-        "near_miss_candidates": _read_jsonl(root / "near_miss_candidates.jsonl"),
-        "near_miss_family_summary": _read_json(root / "near_miss_family_summary.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "near_miss_dir": str(root),
-    }
-
-
-def validate_near_miss_candidates_artifact(
-    *,
-    near_miss_id: str,
-    output_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
-) -> dict[str, Any]:
-    root = output_dir / near_miss_id
-    manifest = _read_optional_json(root / "near_miss_manifest.json") or {}
-    candidates = _read_jsonl(root / "near_miss_candidates.jsonl")
-    summary = _read_optional_json(root / "near_miss_family_summary.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "near_miss_manifest.json",
-            "near_miss_candidates.jsonl",
-            "near_miss_family_summary.json",
-            "near_miss_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("near_miss_id_matches", manifest.get("near_miss_id") == near_miss_id, ""),
-            st._check(
-                "candidate_count_matches",
-                int(_float(manifest.get("candidate_count"))) == len(candidates),
-                "",
-            ),
-            st._check(
-                "candidates_have_status",
-                all(row.get("candidate_status") == "NEAR_MISS" for row in candidates),
-                "",
-            ),
-            st._check(
-                "recommended_focus_visible",
-                bool(_texts(summary.get("recommended_focus_families"))),
-                "",
-            ),
-            st._check("broker_forbidden", _payload_safe(manifest, summary, *candidates), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, summary, *candidates),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_near_miss_candidates_validation", near_miss_id, checks
+def no_promotion_review_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_diagnostics(
+        "no_promotion_review_report_payload", *args, **kwargs
     )
 
 
-def run_cash_buffer_attribution(
-    *,
-    variant_id: str,
-    scorecard_id: str,
-    near_miss_id: str,
-    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
-    near_miss_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
-    output_dir: Path = DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
-    near_miss = near_miss_candidates_report_payload(
-        near_miss_id=near_miss_id, output_dir=near_miss_dir
-    )
-    row = _scorecard_row(scorecard, variant_id)
-    effect = _cash_buffer_effect_summary(row)
-    failure = _cash_buffer_failure_reason(row, near_miss)
-    recommendations = _cash_buffer_variant_recommendations(row)
-    attribution_id = _stable_id(
-        "cash-buffer-attribution", variant_id, scorecard_id, near_miss_id, generated.isoformat()
-    )
-    root = _unique_dir(output_dir / attribution_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_cash_buffer_attribution_manifest",
-        "attribution_id": root.name,
-        "variant_id": variant_id,
-        "source_scorecard_id": scorecard_id,
-        "near_miss_id": near_miss_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if row else "FAIL",
-        "market_regime": scorecard.get("market_regime", "ai_after_chatgpt"),
-        "cash_buffer_attribution_manifest_path": str(
-            root / "cash_buffer_attribution_manifest.json"
-        ),
-        "cash_buffer_effect_summary_path": str(root / "cash_buffer_effect_summary.json"),
-        "cash_buffer_failure_reason_path": str(root / "cash_buffer_failure_reason.json"),
-        "cash_buffer_variant_recommendations_path": str(
-            root / "cash_buffer_variant_recommendations.json"
-        ),
-        "cash_buffer_attribution_report_path": str(root / "cash_buffer_attribution_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "cash_buffer_attribution_manifest.json", manifest)
-    _write_json(root / "cash_buffer_effect_summary.json", effect)
-    _write_json(root / "cash_buffer_failure_reason.json", failure)
-    _write_json(root / "cash_buffer_variant_recommendations.json", recommendations)
-    _write_text(
-        root / "cash_buffer_attribution_report.md",
-        render_cash_buffer_attribution_report(manifest, effect, failure, recommendations),
-    )
-    _write_latest_pointer(
-        "latest_cash_buffer_attribution",
-        root.name,
-        root / "cash_buffer_attribution_manifest.json",
-    )
-    return {
-        "attribution_id": root.name,
-        "attribution_dir": root,
-        "manifest": manifest,
-        "cash_buffer_effect_summary": effect,
-        "cash_buffer_failure_reason": failure,
-        "cash_buffer_variant_recommendations": recommendations,
-    }
-
-
-def cash_buffer_attribution_report_payload(
-    *,
-    attribution_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=attribution_id,
-        latest_pointer="latest_cash_buffer_attribution",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="cash_buffer_attribution_manifest.json",
-    )
-    return {
-        **_read_json(root / "cash_buffer_attribution_manifest.json"),
-        "cash_buffer_effect_summary": _read_json(root / "cash_buffer_effect_summary.json"),
-        "cash_buffer_failure_reason": _read_json(root / "cash_buffer_failure_reason.json"),
-        "cash_buffer_variant_recommendations": _read_json(
-            root / "cash_buffer_variant_recommendations.json"
-        ),
-        "attribution_dir": str(root),
-    }
-
-
-def validate_cash_buffer_attribution_artifact(
-    *,
-    attribution_id: str,
-    output_dir: Path = DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR,
-) -> dict[str, Any]:
-    root = output_dir / attribution_id
-    manifest = _read_optional_json(root / "cash_buffer_attribution_manifest.json") or {}
-    effect = _read_optional_json(root / "cash_buffer_effect_summary.json") or {}
-    failure = _read_optional_json(root / "cash_buffer_failure_reason.json") or {}
-    recommendations = _read_optional_json(root / "cash_buffer_variant_recommendations.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "cash_buffer_attribution_manifest.json",
-            "cash_buffer_effect_summary.json",
-            "cash_buffer_failure_reason.json",
-            "cash_buffer_variant_recommendations.json",
-            "cash_buffer_attribution_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check(
-                "attribution_id_matches", manifest.get("attribution_id") == attribution_id, ""
-            ),
-            st._check("variant_id_visible", bool(effect.get("variant_id")), ""),
-            st._check("failure_reason_visible", bool(failure.get("primary_failure_reason")), ""),
-            st._check(
-                "recommendations_visible",
-                bool(_texts(recommendations.get("recommended_variants"))),
-                "",
-            ),
-            st._check(
-                "broker_forbidden", _payload_safe(manifest, effect, failure, recommendations), ""
-            ),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, effect, failure, recommendations),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_cash_buffer_attribution_validation", attribution_id, checks
+def validate_no_promotion_review_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_diagnostics(
+        "validate_no_promotion_review_artifact", *args, **kwargs
     )
 
 
-def run_search_coverage_gap(
-    *,
-    search_space_id: str,
-    near_miss_id: str,
-    cash_buffer_attribution_id: str,
-    search_space_dir: Path = DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
-    near_miss_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
-    attribution_dir: Path = DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR,
-    output_dir: Path = DEFAULT_SEARCH_COVERAGE_GAP_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    search_space = weight_search_space_report_payload(
-        search_space_id=search_space_id, output_dir=search_space_dir
-    )
-    near_miss = near_miss_candidates_report_payload(
-        near_miss_id=near_miss_id, output_dir=near_miss_dir
-    )
-    attribution = cash_buffer_attribution_report_payload(
-        attribution_id=cash_buffer_attribution_id,
-        output_dir=attribution_dir,
-    )
-    family_gap = _family_coverage_gap(search_space, near_miss)
-    parameter_gap = _parameter_coverage_gap(search_space, attribution)
-    recommendations = _targeted_v3_recommendations(family_gap, parameter_gap)
-    coverage_gap_id = _stable_id(
-        "search-coverage-gap",
-        search_space_id,
-        near_miss_id,
-        cash_buffer_attribution_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / coverage_gap_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_search_coverage_gap_manifest",
-        "coverage_gap_id": root.name,
-        "search_space_id": search_space_id,
-        "near_miss_id": near_miss_id,
-        "cash_buffer_attribution_id": cash_buffer_attribution_id,
-        "source_scorecard_id": near_miss.get("source_scorecard_id"),
-        "source_backfill_id": _text(search_space.get("source_backfill_id"))
-        or _text(
-            _mapping(_mapping(search_space.get("normalized_search_space")).get("search")).get(
-                "source_backfill_id"
-            )
-        ),
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "search_coverage_gap_manifest_path": str(root / "search_coverage_gap_manifest.json"),
-        "family_coverage_gap_path": str(root / "family_coverage_gap.json"),
-        "parameter_coverage_gap_path": str(root / "parameter_coverage_gap.json"),
-        "targeted_v3_recommendations_path": str(root / "targeted_v3_recommendations.json"),
-        "search_coverage_gap_report_path": str(root / "search_coverage_gap_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "search_coverage_gap_manifest.json", manifest)
-    _write_json(root / "family_coverage_gap.json", family_gap)
-    _write_json(root / "parameter_coverage_gap.json", parameter_gap)
-    _write_json(root / "targeted_v3_recommendations.json", recommendations)
-    _write_text(
-        root / "search_coverage_gap_report.md",
-        render_search_coverage_gap_report(manifest, family_gap, parameter_gap, recommendations),
-    )
-    _write_latest_pointer(
-        "latest_search_coverage_gap", root.name, root / "search_coverage_gap_manifest.json"
-    )
-    return {
-        "coverage_gap_id": root.name,
-        "coverage_gap_dir": root,
-        "manifest": manifest,
-        "family_coverage_gap": family_gap,
-        "parameter_coverage_gap": parameter_gap,
-        "targeted_v3_recommendations": recommendations,
-    }
+def extract_near_miss_candidates(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_diagnostics("extract_near_miss_candidates", *args, **kwargs)
 
 
-def search_coverage_gap_report_payload(
-    *,
-    coverage_gap_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SEARCH_COVERAGE_GAP_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=coverage_gap_id,
-        latest_pointer="latest_search_coverage_gap",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="search_coverage_gap_manifest.json",
+def near_miss_candidates_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_diagnostics(
+        "near_miss_candidates_report_payload", *args, **kwargs
     )
-    return {
-        **_read_json(root / "search_coverage_gap_manifest.json"),
-        "family_coverage_gap": _read_json(root / "family_coverage_gap.json"),
-        "parameter_coverage_gap": _read_json(root / "parameter_coverage_gap.json"),
-        "targeted_v3_recommendations": _read_json(root / "targeted_v3_recommendations.json"),
-        "coverage_gap_dir": str(root),
-    }
 
 
-def validate_search_coverage_gap_artifact(
-    *,
-    coverage_gap_id: str,
-    output_dir: Path = DEFAULT_SEARCH_COVERAGE_GAP_DIR,
-) -> dict[str, Any]:
-    root = output_dir / coverage_gap_id
-    manifest = _read_optional_json(root / "search_coverage_gap_manifest.json") or {}
-    family_gap = _read_optional_json(root / "family_coverage_gap.json") or {}
-    parameter_gap = _read_optional_json(root / "parameter_coverage_gap.json") or {}
-    recommendations = _read_optional_json(root / "targeted_v3_recommendations.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "search_coverage_gap_manifest.json",
-            "family_coverage_gap.json",
-            "parameter_coverage_gap.json",
-            "targeted_v3_recommendations.json",
-            "search_coverage_gap_report.md",
-        ),
+def validate_near_miss_candidates_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_diagnostics(
+        "validate_near_miss_candidates_artifact", *args, **kwargs
     )
-    checks.extend(
-        [
-            st._check(
-                "coverage_gap_id_matches", manifest.get("coverage_gap_id") == coverage_gap_id, ""
-            ),
-            st._check("family_gap_readable", bool(_records(family_gap.get("gaps"))), ""),
-            st._check("parameter_gap_readable", bool(_records(parameter_gap.get("gaps"))), ""),
-            st._check(
-                "targeted_recommendations_visible",
-                bool(_texts(recommendations.get("recommended_focus"))),
-                "",
-            ),
-            st._check(
-                "max_v3_variants_bounded",
-                int(_float(recommendations.get("max_v3_variants"))) <= TARGETED_V3_MAX_VARIANTS,
-                _text(recommendations.get("max_v3_variants")),
-            ),
-            st._check(
-                "broker_forbidden",
-                _payload_safe(manifest, family_gap, parameter_gap, recommendations),
-                "",
-            ),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, family_gap, parameter_gap, recommendations),
-                "",
-            ),
-        ]
+
+
+def run_cash_buffer_attribution(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_diagnostics("run_cash_buffer_attribution", *args, **kwargs)
+
+
+def cash_buffer_attribution_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_diagnostics(
+        "cash_buffer_attribution_report_payload", *args, **kwargs
     )
-    return _validation_payload(
-        "etf_dynamic_v3_search_coverage_gap_validation", coverage_gap_id, checks
+
+
+def validate_cash_buffer_attribution_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_diagnostics(
+        "validate_cash_buffer_attribution_artifact", *args, **kwargs
+    )
+
+
+def run_search_coverage_gap(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_diagnostics("run_search_coverage_gap", *args, **kwargs)
+
+
+def search_coverage_gap_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_diagnostics(
+        "search_coverage_gap_report_payload", *args, **kwargs
+    )
+
+
+def validate_search_coverage_gap_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_diagnostics(
+        "validate_search_coverage_gap_artifact", *args, **kwargs
     )
 
 
