@@ -4,7 +4,7 @@
 
 ## 状态
 
-`IN_PROGRESS`（ARCH-004 G2.4 canonical migration/hardening）
+`BASELINE_DONE`（ARCH-004 G2.4CW1/CW2/CW3 canonical migration/hardening complete；whole G2.4 continues）
 
 Owner 要求完成附件中的 TRADING-306～315。本阶段已把 TRADING-286～305 的 no-promotion 结论扩展为可审计诊断链路、targeted v3 research-only search/backfill、promotion decision v2 和 next formal-or-search plan；后续 owner 复核点是是否接受继续小范围 v4/信号层诊断，或另开 scorecard policy 校准任务。
 
@@ -70,6 +70,33 @@ source 重放 lineage、计算结果或 Markdown bytes。因此旧 `VALIDATING` 
 - 10 legacy callbacks离开root、10 legacy domain入口只保留lazy dispatch；CLI tree/hash不变；
   research-only/no official weights/no broker/no production，`production_effect=none`。
 
+`G2.4CW3` canonical owner固定为
+`interfaces/cli/etf_portfolio/dynamic_v3_weight_search_followup.py`与
+`etf_portfolio/dynamic_v3_weight_search_followup.py`。退出标准：
+
+- Threshold Sensitivity、Candidate Promotion v2、Next Formal-or-Search Plan分别冻结
+  `promotion_threshold_sensitivity_input_snapshot.v2`、
+  `candidate_promotion_v2_input_snapshot.v2`、
+  `next_formal_or_search_plan_input_snapshot.v2`；
+- Sensitivity只消费validated CW2 Backfill、其精确Matrix与同一A/B；强制Backfill/Matrix/A/B/
+  Scorecard/Near-Miss共同lineage与generation chronology。base/relaxed score threshold、候选上限、
+  allowed status和诊断结论由reviewed follow-up policy治理；base gate保持权威，relaxed scenario
+  一律`recommended=false`，relaxed-only candidate一律`REVIEW_REQUIRED`；
+- Candidate Promotion v2只消费上述validated exact Sensitivity及同一Backfill/Matrix/A/B，重算候选
+  分组和decision。`PROMOTE_CANDIDATE`仅表示owner可评审是否另开research-only formal-method任务；
+  不等于实现、采用、official weights、paper-shadow primary切换、owner approval或production mutation；
+- Next Plan只消费validated exact Candidate Promotion v2；`FORMAL_METHOD_PLAN`仍必须
+  `implemented=false`、`owner_review_required=true`，只能生成手工检查清单和research plan，禁止
+  自动建任务、执行方法、改policy/config/portfolio或调用broker；
+- 三类producer在创建output directory前完成live source、policy、snapshot lineage、唯一ID、
+  timezone-aware generated time与chronology校验；三类validator重验live source/policy并逐byte重建
+  18个materialized views。source、policy、snapshot、schema、cross-lineage、chronology或任一output
+  tamper必须fail closed且不得留下半成品；
+- 9 legacy callbacks离开root、9 legacy domain入口只保留lazy dispatch；CLI tree/hash不变；
+  performance优化只允许PASS-only content-addressed validation session、immutable fixture复用与
+  duration+peak-memory-aware sharding，不得减少DQ/source replay/byte rebuild/nodeids；
+  `production_effect=none`。
+
 单个 CW slice 完成只能标记 `COMPLETE_G2_4_CONTINUES`。CW1/CW2/CW3 全部完成也不代表整个
 G2.4 phase exit；后续 migration matrix 与 phase-level handoff gate 仍须单独通过，不进入 G2.5。
 
@@ -96,12 +123,12 @@ G2.4 phase exit；后续 migration matrix 与 phase-level handoff gate 仍须单
 |TRADING-307|BASELINE_DONE_CW1|Near-miss candidate extraction|`near-miss-candidates extract/report` 与 validator 可运行；输出 near-miss JSONL、family summary 和 focus families。|
 |TRADING-308|BASELINE_DONE_CW1|Cash buffer 10 attribution|`cash-buffer-attribution run/report` 与 validator 可运行；解释收益、回撤、turnover、rolling、recovery lag tradeoff。|
 |TRADING-309|BASELINE_DONE_CW1|Search space coverage gap|`search-coverage-gap run/report` 与 validator 可运行；输出 family/parameter gaps 和 targeted v3 recommendation。|
-|TRADING-310|PENDING_CW2|Targeted Search v3 matrix|`targeted-search-v3 build/report` 与 validator 可运行；60～120 variants，每个 variant 有 near-miss parent 或 coverage gap reason。|
-|TRADING-311|PENDING_CW2|Targeted v3 backfill|`targeted-v3-backfill run/resume/report` 与 validator 可运行；先执行 `aits validate-data` 等价 cached data quality gate，输出 performance/regime/stability/churn metrics。|
-|TRADING-312|PENDING_CW2|Near-miss A/B comparison|`near-miss-ab-comparison run/report` 与 validator 可运行；比较 v3 variants、near-miss parent、smooth_weights_3d 和 limited_adjustment。|
-|TRADING-313|PENDING_CW3|Promotion threshold sensitivity|`promotion-threshold-sensitivity run/report` 与 validator 可运行；relaxed threshold 只进入 `REVIEW_REQUIRED`，不得自动放宽 base gate。|
-|TRADING-314|PENDING_CW3|Candidate promotion decision v2|`candidate-promotion-v2 run/report` 与 validator 可运行；输出 promoted/rejected/keep-testing 列表和 decision。|
-|TRADING-315|PENDING_CW3|Next formal or continue search plan|`next-formal-or-search-plan run/report` 与 validator 可运行；根据 promotion v2 生成 formal method candidates、keep-testing plan 或 next search plan。|
+|TRADING-310|BASELINE_DONE_CW2|Targeted Search v3 matrix|`targeted-search-v3 build/report` 与 validator 可运行；60～120 variants，每个 variant 有 near-miss parent 或 coverage gap reason。|
+|TRADING-311|BASELINE_DONE_CW2|Targeted v3 backfill|`targeted-v3-backfill run/resume/report` 与 validator 可运行；先执行 `aits validate-data` 等价 cached data quality gate，输出 performance/regime/stability/churn metrics。|
+|TRADING-312|BASELINE_DONE_CW2|Near-miss A/B comparison|`near-miss-ab-comparison run/report` 与 validator 可运行；比较 v3 variants、near-miss parent、smooth_weights_3d 和 limited_adjustment。|
+|TRADING-313|BASELINE_DONE_CW3|Promotion threshold sensitivity|`promotion-threshold-sensitivity run/report` 与 validator 可运行；relaxed threshold 只进入 `REVIEW_REQUIRED`，不得自动放宽 base gate。|
+|TRADING-314|BASELINE_DONE_CW3|Candidate promotion decision v2|`candidate-promotion-v2 run/report` 与 validator 可运行；输出 promoted/rejected/keep-testing 列表和 decision。|
+|TRADING-315|BASELINE_DONE_CW3|Next formal or continue search plan|`next-formal-or-search-plan run/report` 与 validator 可运行；根据 promotion v2 生成手工formal-method planning、keep-testing plan 或 next search plan，不自动实施。|
 
 ## Design Decisions
 
@@ -112,6 +139,28 @@ G2.4 phase exit；后续 migration matrix 与 phase-level handoff gate 仍须单
 - 如果 v3 无 promoted candidates，系统必须生成继续搜索或返回 signal-level diagnosis 的计划，而不是中断。
 
 ## Progress Notes
+
+- 2026-07-15: `G2.4CW3 / TRADING-313～315=COMPLETE_G2_4_CONTINUES`。9 callbacks/
+  9 public domain入口完成canonical follow-up interface/domain迁移；三类v2 snapshots、reviewed
+  follow-up policy、exact CW2 Backfill+Matrix+A/B及Scorecard/Near-Miss lineage、18 views逐byte
+  rebuild、schema/cross-lineage/policy/live-price/chronology tamper fail-close闭合。Legacy CLI降至
+  `13,016 lines / 321 functions / 282 decorators`，legacy weight domain为`9,379 lines / 9 lazy
+  wrappers`；CLI tree仍`41/291/993/0`且hash不变。Focused首轮`141 passed / 1 historical-hash
+  attribution failure`，同16-worker定向复验后合并为`142 passed`；architecture/contract/full=
+  `291/203/6,039 passed`，full=`3,045.40s`、641 warnings，generated=`940/1,131/858/0`。
+  三业务链由未优化`1,376.92s`仅完成2项降至`295.14s`全部PASS（至少-78.57%），但full较CW2
+  回退76.76%，最慢confirmation weekly=`1,325.47s`、CW3 hardening=`948.28s`，故不宣称稳定
+  全套件提速；下一步仍由runtime-budget任务治理duration+peak-memory shard与immutable fixture。
+  relaxed threshold保持诊断，promotion/plan均owner manual且`implemented=false`。whole G2.4仍
+  pending，不触发ARCH-005 handoff、不进入G2.5，`production_effect=none`。
+
+- 2026-07-15: `G2.4CW3 / TRADING-313～315` contract freeze并进入`IN_PROGRESS`。范围固定
+  Threshold Sensitivity、Candidate Promotion v2、Next Formal-or-Search Plan共9 callbacks/
+  9 public domain入口，迁独立canonical follow-up interface/domain；退出固定三类v2 snapshots、
+  reviewed follow-up policy、validated exact CW2 Backfill+Matrix+A/B及其Scorecard/Near-Miss lineage、
+  pre-output chronology、live replay与18 views逐byte重建。Relaxed gate只诊断，promotion/plan只支持
+  owner手工研究决策，`implemented=false`；whole G2.4仍pending，不触发ARCH-005 handoff、不进入
+  G2.5，`production_effect=none`。
 
 - 2026-07-15: `G2.4CW2 / TRADING-310～312=COMPLETE_G2_4_CONTINUES`。10 callbacks/
   10 public入口完成canonical targeted interface/domain迁移；三类v2 snapshots、reviewed policy、

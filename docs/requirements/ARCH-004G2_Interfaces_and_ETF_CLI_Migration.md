@@ -20,6 +20,20 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-15：G2.4CW3=`COMPLETE_G2_4_CONTINUES`。Threshold Sensitivity/Candidate
+  Promotion v2/Next Plan共9 callbacks/9 public入口完成canonical迁移；三类v2 snapshots、
+  reviewed policy、exact lineage/chronology、18 views byte rebuild与source/policy/schema/
+  cross-lineage/live-price tamper闭合。Legacy CLI=`13,016/321/282`，legacy weight domain=
+  `9,379 lines / 9 lazy wrappers`；focused/architecture/contract/full=`142/291/203/6,039 passed`，
+  full=`3,045.40s`、641 warnings，generated=`940/1,131/858/0`，CLI tree/hash不变。业务链墙钟
+  至少改善78.57%，但full较CW2回退76.76%，不宣称稳定提升；runtime-budget继续治理文件长尾。
+  whole G2.4仍pending，不触发handoff、不进入G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CW3进入`IN_PROGRESS`。TRADING-313～315的Threshold Sensitivity/
+  Candidate Promotion v2/Next Plan共9 callbacks/9 public业务入口迁独立canonical follow-up
+  interface/domain。退出固定三类bounded v2 snapshots、reviewed policy、validated exact CW2
+  Backfill+Matrix+A/B及Scorecard/Near-Miss lineage、pre-output chronology、live replay与18 views
+  byte rebuild/tamper；relaxed threshold只诊断，promotion/plan不自动实施。whole G2.4仍pending，
+  不触发handoff、不进入G2.5，`production_effect=none`。
 - 2026-07-15：G2.4CW2=`COMPLETE_G2_4_CONTINUES`。Targeted Matrix/DQ Backfill/Near-Miss
   A/B的10 callbacks/10 public入口完成canonical迁移；三类v2 snapshots、reviewed policy、exact
   CW1→Matrix→CV1 Backfill/DQ→A/B+CV2 lineage、resume先验PASS、16 views rebuild/tamper闭合。

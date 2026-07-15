@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator
+import json
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar
 from copy import deepcopy
@@ -19,19 +20,48 @@ _VALIDATION_SESSION: ContextVar[dict[_ValidationKey, dict[str, Any]] | None] = C
 
 
 def artifact_fingerprint(root: Path) -> str:
-    """Return a content-aware fingerprint for one immutable artifact directory."""
-    files = (
+    """Hash one artifact and every live file referenced by checksum bindings."""
+    pending = (
         {path.resolve() for path in root.iterdir() if path.is_file()} if root.is_dir() else set()
     )
-    digest = sha256()
-    for path in sorted(files, key=str):
-        digest.update(str(path).encode("utf-8"))
+    observed: dict[Path, bytes | None] = {}
+    while pending:
+        path = min(pending, key=str)
+        pending.remove(path)
+        if path in observed:
+            continue
         try:
-            with path.open("rb") as handle:
-                while chunk := handle.read(1024 * 1024):
-                    digest.update(chunk)
-        except OSError as exc:
-            digest.update(f"MISSING:{exc}".encode())
+            payload = path.read_bytes()
+        except OSError:
+            observed[path] = None
+            continue
+        observed[path] = payload
+        if path.suffix.lower() != ".json":
+            continue
+        try:
+            document = json.loads(payload.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        stack = [document]
+        while stack:
+            value = stack.pop()
+            if isinstance(value, Mapping):
+                bound_path = value.get("path")
+                if isinstance(bound_path, str) and "sha256" in value:
+                    pending.add(Path(bound_path).resolve())
+                stack.extend(value.values())
+            elif isinstance(value, list):
+                stack.extend(value)
+
+    digest = sha256()
+    for path in sorted(observed, key=str):
+        digest.update(str(path).encode("utf-8"))
+        payload = observed[path]
+        if payload is None:
+            digest.update(b"\0MISSING\0")
+        else:
+            digest.update(len(payload).to_bytes(8, "big"))
+            digest.update(payload)
     return digest.hexdigest()
 
 

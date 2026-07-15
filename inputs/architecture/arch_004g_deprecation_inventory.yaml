@@ -1,9 +1,9 @@
-inventory_id: arch_004g_deprecation_inventory_d5bed7b04b44defc9d08
+inventory_id: arch_004g_deprecation_inventory_1f558f6c04f3e90784d8
 schema_version: arch_004g_deprecation_inventory.v1
 policy_id: arch_004g_deprecation_policy_v1
 repository:
-  python_module_count: 938
-  python_test_file_count: 1130
+  python_module_count: 940
+  python_test_file_count: 1131
   direct_writer_baseline_count: 894
   direct_writer_current_count: 858
   direct_writer_violation_count: 0
@@ -53,14 +53,14 @@ surfaces:
   migration_wave: G2
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
   file_count: 1
-  line_count: 13269
-  byte_count: 569195
-  source_sha256: c05446a8050d16215bc748d42ba31fca7c065613b4a229f10eb69156716c9fe1
-  top_level_function_count: 330
+  line_count: 13016
+  byte_count: 558821
+  source_sha256: 5497a1aed8da9e6401d59c2515fbedee77bb24dc460199b978d868cdc65bf986
+  top_level_function_count: 321
   top_level_class_count: 0
-  cli_command_decorator_count: 291
+  cli_command_decorator_count: 282
   static_import_reachability_file_count: 1
-  test_reference_file_count: 312
+  test_reference_file_count: 313
   docs_config_reference_file_count: 116
   required_removal_gate_count: 12
   removal_ready: false

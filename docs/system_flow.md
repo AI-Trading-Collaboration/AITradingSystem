@@ -22,7 +22,13 @@ flowchart LR
     SEARCH["Validated Weight Search Space v2"] --> COVERAGE["Search Coverage Gap v2"]
     NEAR --> COVERAGE
     CASH --> COVERAGE
-    COVERAGE --> NEXT["CW2 Targeted Search v3（pending）"]
+    COVERAGE --> MATRIX["CW2 Targeted Search v3"]
+    MATRIX --> BACKFILL["CW2 DQ-gated Backfill"]
+    BACKFILL --> AB["CW2 Near-Miss A/B"]
+    AB --> SENSITIVITY["CW3 Threshold Sensitivity"]
+    FOLLOWUP_POLICY["Reviewed Follow-up Policy v1"] --> SENSITIVITY
+    SENSITIVITY --> PROMOTION["CW3 Candidate Promotion v2<br/>owner review only"]
+    PROMOTION --> PLAN["CW3 Formal-or-Search Plan<br/>implemented=false"]
 ```
 
 ARCH-004G2.4CV3 把 TRADING-294～305 Weight Search Decision 的18个CLI callback迁至`interfaces/cli/etf_portfolio/dynamic_v3_weight_search_decision.py`，数据流固定为：exact same-lineage Scorecard+Robustness → Candidate Cluster → Top Interpretation → Promotion Gate → Formal Auto Plan，以及exact Scorecard+Adaptive+optional same-lineage Gate → Search Dashboard → Owner Decision Pack。六级分别冻结`weight_candidate_cluster_input_snapshot.v2`、`weight_top_candidate_interpretation_input_snapshot.v2`、`weight_method_promotion_gate_input_snapshot.v2`、`formal_method_auto_plan_input_snapshot.v2`、`weight_search_dashboard_input_snapshot.v2`、`owner_research_decision_pack_input_snapshot.v2`，producer先验live source，validator重验source binding/lineage并逐byte重建全部27个materialized views。Formal Plan固定`implemented=false`，Owner Pack只列人工选项；任一source/output/schema/cross-lineage drift均fail closed，不改policy/config/official weights/portfolio/production/order/broker。
@@ -1748,6 +1754,23 @@ resume 必须先验证原 Backfill `PASS`。三个 validator 重验 live source/
 output drift 均 fail closed。Matrix family/range、Backfill accepted DQ/resume status、A/B
 winner thresholds 全由 reviewed policy 治理；结果只用于 research screening，固定
 `not_official_target_weights=true`、`broker_action_allowed=false`、`production_effect=none`。
+
+### ARCH-004 G2.4CW3 Targeted Follow-up Decision Chain
+
+TRADING-313～315 的 canonical 链路为：exact validated CW2 Backfill + Matrix + A/B及其同一
+Scorecard/Near-Miss lineage → reviewed `weight_search_followup_v1` policy → Threshold Sensitivity →
+Candidate Promotion v2 → Next Formal-or-Search Plan。三阶段分别冻结
+`promotion_threshold_sensitivity_input_snapshot.v2`、
+`candidate_promotion_v2_input_snapshot.v2`、
+`next_formal_or_search_plan_input_snapshot.v2`，保存完整transitive source、policy与view hashes。
+Producer在创建output directory前完成source validation、exact lineage、timezone与chronology校验；
+validator重验live source/policy并逐byte重建4+7+7个materialized views。PASS-only validation
+session使用artifact及递归绑定live source bytes的content fingerprint；任一config/cache/source/output
+byte drift都会miss cache并重跑validator，FAIL从不缓存。Base promotion gate始终权威；relaxed-only
+candidate只为`REVIEW_REQUIRED`，`PROMOTE_CANDIDATE`与`FORMAL_METHOD_PLAN`都只支持owner手工
+研究决策，固定`owner_review_required=true`、`implemented=false`、
+`formal_method_task_created=false`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`production_effect=none`。
 
 ## ETF Portfolio P2 Observe-Only Contracts
 

@@ -8,6 +8,9 @@ import yaml
 from dynamic_v3_system_target_helpers import run_backfill_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 
 def write_weight_search_space_config(
@@ -229,6 +232,7 @@ def run_search_coverage_gap_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "coverage_gap": coverage_gap}
 
 
+@with_artifact_validation_session
 def run_targeted_search_v3_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_search_coverage_gap_fixture(tmp_path)
     targeted_v3 = weight_search.build_targeted_search_v3(
@@ -241,6 +245,7 @@ def run_targeted_search_v3_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "targeted_v3": targeted_v3}
 
 
+@with_artifact_validation_session
 def run_targeted_v3_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_targeted_search_v3_fixture(tmp_path)
     targeted_v3_backfill = weight_search.run_targeted_v3_backfill(
@@ -255,6 +260,7 @@ def run_targeted_v3_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "targeted_v3_backfill": targeted_v3_backfill}
 
 
+@with_artifact_validation_session
 def run_near_miss_ab_comparison_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_targeted_v3_backfill_fixture(tmp_path)
     ab = weight_search.run_near_miss_ab_comparison(
@@ -270,6 +276,7 @@ def run_near_miss_ab_comparison_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "near_miss_ab": ab}
 
 
+@with_artifact_validation_session
 def run_promotion_threshold_sensitivity_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_near_miss_ab_comparison_fixture(tmp_path)
     sensitivity = weight_search.run_promotion_threshold_sensitivity(
@@ -279,11 +286,12 @@ def run_promotion_threshold_sensitivity_fixture(tmp_path: Path) -> dict[str, Any
         v3_matrix_dir=tmp_path / "targeted_search_v3",
         ab_dir=tmp_path / "near_miss_ab_comparison",
         output_dir=tmp_path / "promotion_threshold_sensitivity",
-        generated_at=datetime(2024, 3, 20, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 20, tzinfo=UTC),
     )
     return {**fixture, "sensitivity": sensitivity}
 
 
+@with_artifact_validation_session
 def run_candidate_promotion_v2_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_promotion_threshold_sensitivity_fixture(tmp_path)
     promotion_v2 = weight_search.run_candidate_promotion_v2(
@@ -295,18 +303,19 @@ def run_candidate_promotion_v2_fixture(tmp_path: Path) -> dict[str, Any]:
         ab_dir=tmp_path / "near_miss_ab_comparison",
         sensitivity_dir=tmp_path / "promotion_threshold_sensitivity",
         output_dir=tmp_path / "candidate_promotion_v2",
-        generated_at=datetime(2024, 3, 21, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 21, tzinfo=UTC),
     )
     return {**fixture, "promotion_v2": promotion_v2}
 
 
+@with_artifact_validation_session
 def run_next_formal_or_search_plan_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_candidate_promotion_v2_fixture(tmp_path)
     next_plan = weight_search.run_next_formal_or_search_plan(
         promotion_v2_id=fixture["promotion_v2"]["promotion_v2_id"],
         promotion_v2_dir=tmp_path / "candidate_promotion_v2",
         output_dir=tmp_path / "next_formal_or_search_plan",
-        generated_at=datetime(2024, 3, 22, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 22, tzinfo=UTC),
     )
     return {**fixture, "next_plan": next_plan}
 

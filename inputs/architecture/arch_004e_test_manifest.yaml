@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 test_root: tests
-test_file_count: 1130
-test_count: 1072
+test_file_count: 1131
+test_count: 1073
 support_file_count: 58
 orphan_count: 0
 specific_overlap_count: 0
@@ -203,7 +203,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.dynamic_v3_weight_batch_search_helpers
   path: tests/dynamic_v3_weight_batch_search_helpers.py
-  sha256: 1216db92e00dd74446688a96a18bcf180e03b3c32bdff5ae6b76986eea81ad92
+  sha256: b26f54e62558fbb4b0357b3b442d686b5bb93480d94d45bbdbf2d78c192465db
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 36e14c318f59c8d667a47003d4fd66ca9a723bfd2b56483ffa9dda6a32a9b826
+  sha256: a1254ad2acd70f0125a420de021993e9f3622b6ec73db01f3441e53a8d7cae5a
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7605,7 +7605,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g2_etf_cli_contract
   path: tests/test_arch_004g2_etf_cli_contract.py
-  sha256: 5590dd152694327223dc97cfc9abd2312dfb72c7b7a230bbf8665fd5e63c346a
+  sha256: 4774fa3a46726739c39f88c831a7acfaa5def1c4d001fa115a91b6f8fd4362a2
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7623,7 +7623,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: d10d70d22cf0326c741375b95fc50de8674c3469817f4ab70728de8f40719d89
+  sha256: 7489ff9917f1256e08a451854be3570d15af4aaf3c829aa283db41d8af7e56c4
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7691,7 +7691,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_artifact_validation_session
   path: tests/test_artifact_validation_session.py
-  sha256: 882b1dcb5e645da0d7523d53fbcc8ce8ea0244dc529b04af40edb2a1aee58ad7
+  sha256: 7b04439407f3b8a340e44fcb4f51f3dbe4ed2cd1c32b87e49b21dff8ab1df8f4
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8107,7 +8107,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_candidate_promotion_v2
   path: tests/test_candidate_promotion_v2.py
-  sha256: 94535d7f11562395e36403f90433d9aa16f4b0e032e9c6cd876fa666677ecd62
+  sha256: dfe7adc48d2e9756e5670007986dd97b1f1ba0fad0de036e405447738ca847f9
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -11793,7 +11793,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_next_formal_or_search_plan
   path: tests/test_next_formal_or_search_plan.py
-  sha256: 5ff2bf6223bb248ef3376dfafe4cbd101ea0a0b338d84532396992d1bace6b37
+  sha256: ccdc08bd87f015593a24729610099e9b3a8c127cce12bb029b90950e76c9cec7
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -12913,7 +12913,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_promotion_threshold_sensitivity
   path: tests/test_promotion_threshold_sensitivity.py
-  sha256: aa5a6ab85168283efeb948b379b4189074a49aac3718f07037b2bd024c067d2c
+  sha256: 362ab1039d29a82320d88ffbace888a5d735c51a1bd284e93a7089b2324c6085
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15910,6 +15910,22 @@ tests:
 - test_id: tests.test_weight_search_evaluation_hardening
   path: tests/test_weight_search_evaluation_hardening.py
   sha256: 8b73dfe77a773d271874b75b4ea5d571b4fde8326aca8cf7f291690052bc2a75
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_weight_search_followup_hardening
+  path: tests/test_weight_search_followup_hardening.py
+  sha256: c2e8aa45d4168d725a8d5cfc1996e828f976396fba41b527e92377968c5feaba
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

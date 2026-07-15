@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CW2_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CW3_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-15
-base_commit: d9957c7e
+base_commit: 3e0bd273
 production_effect: none
 
 arch_004_owned_paths:
@@ -302,14 +302,21 @@ arch_004_owned_paths:
   - tests/test_weight_search_decision_hardening.py
   - config/etf_portfolio/dynamic_v3_rescue/weight_search_diagnostics_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/weight_search_targeted_v1.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/weight_search_followup_v1.yaml
   - src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_diagnostics.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_targeted.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_followup.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_diagnostics.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_targeted.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_followup.py
   - tests/dynamic_v3_weight_batch_search_helpers.py
   - tests/test_targeted_search_v3.py
+  - tests/test_promotion_threshold_sensitivity.py
+  - tests/test_candidate_promotion_v2.py
+  - tests/test_next_formal_or_search_plan.py
   - tests/test_weight_search_diagnostics_hardening.py
   - tests/test_weight_search_targeted_hardening.py
+  - tests/test_weight_search_followup_hardening.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_confirmation_operations.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_confirmation_operations.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_pressure_validation.py
@@ -551,6 +558,7 @@ shared_but_attributable_paths:
       - TRADING-266_to_270_SMOOTHED_FORWARD_EVIDENCE_OPERATIONS_AND_PRIMARY_CANDIDATE_READINESS
       - TRADING-271_to_275_SMOOTHED_FORWARD_SAMPLE_BOOTSTRAP_AND_DAILY_EVIDENCE_COLLECTION
       - TRADING-276_to_280_SMOOTHED_FORWARD_DATA_FRESHNESS_AND_LATEST_AVAILABLE_BOOTSTRAP
+      - TRADING-306_to_315_NO_PROMOTION_DIAGNOSTICS_AND_TARGETED_SEARCH_V3
       - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
   - path: docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
     attributable_tasks:
@@ -577,6 +585,7 @@ shared_but_attributable_paths:
       - TRADING-266_to_270_SMOOTHED_FORWARD_EVIDENCE_OPERATIONS_AND_PRIMARY_CANDIDATE_READINESS
       - TRADING-271_to_275_SMOOTHED_FORWARD_SAMPLE_BOOTSTRAP_AND_DAILY_EVIDENCE_COLLECTION
       - TRADING-276_to_280_SMOOTHED_FORWARD_DATA_FRESHNESS_AND_LATEST_AVAILABLE_BOOTSTRAP
+      - TRADING-306_to_315_NO_PROMOTION_DIAGNOSTICS_AND_TARGETED_SEARCH_V3
       - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
       - TRADING-096
       - TRADING-097

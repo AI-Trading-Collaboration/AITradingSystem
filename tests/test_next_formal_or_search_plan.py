@@ -18,6 +18,13 @@ def test_next_formal_or_search_plan_records_manual_next_step(tmp_path) -> None:
         "NO_CANDIDATE_PLAN",
     }
     assert decision["broker_action_allowed"] is False
+    assert decision["owner_review_required"] is True
+    assert decision["implemented"] is False
+    assert decision["formal_method_task_created"] is False
+    assert next_plan["formal_method_candidates"]["implemented"] is False
+    assert next_plan["continue_search_plan"]["implemented"] is False
+    assert next_plan["manifest"]["followup_policy_version"] == "weight_search_followup_v1"
+    assert next_plan["manifest"]["next_formal_or_search_plan_input_snapshot_path"]
     assert "owner_review_required: true" in next_plan["owner_next_action_checklist"].lower()
 
     validation = weight_search.validate_next_formal_or_search_plan_artifact(

@@ -1,0 +1,121 @@
+schema_version: dynamic_v3_weight_search_followup_policy.v1
+policy_metadata:
+  policy_version: weight_search_followup_v1
+  owner: investment_policy_governance
+  status: reviewed
+  rationale: >-
+    Freeze threshold-sensitivity, candidate-promotion, and next-plan semantics so
+    research decisions cannot change through hidden literals or mutable upstream
+    artifacts.
+  intended_effect: >-
+    Produce reproducible owner-review evidence after targeted v3 without changing
+    the authoritative promotion gate, implementing a method, or mutating any
+    portfolio or production state.
+  validation_evidence: G2.4CW3 focused hardening and full validation
+  review_condition: >-
+    Review after an owner-approved scorecard policy revision, materially new
+    forward evidence, or a separately approved formal-method research task.
+
+sensitivity:
+  scenarios:
+    - name: base_threshold
+      score_threshold: 0.72
+      recommended: true
+      reason: Base promotion gate remains authoritative.
+    - name: slightly_relaxed_return_preservation
+      score_threshold: 0.66
+      recommended: false
+      reason: Diagnostic only; never auto-promote under a relaxed threshold.
+    - name: slightly_relaxed_composite_score
+      score_threshold: 0.69
+      recommended: false
+      reason: Diagnostic only; score relaxation requires explicit owner review.
+  authoritative_scenario: base_threshold
+  relaxed_candidate_floor_scenario: slightly_relaxed_return_preservation
+  base_scorecard_decision: PROMOTE_TO_FORMAL_IMPLEMENTATION
+  relaxed_candidate_status: REVIEW_REQUIRED
+  maximum_relaxed_candidates: 20
+  policy_effect: diagnostic_only_no_gate_change
+
+candidate_promotion:
+  promotable_scorecard_decisions: [PROMOTE_TO_FORMAL_IMPLEMENTATION]
+  promotable_ab_statuses: [V3_WINS, MIXED, V3_REVIEW_REQUIRED]
+  keep_testing_scorecard_decisions: [KEEP_FOR_MORE_TESTING]
+  promoted_candidate_status: PROMOTED_V2_OWNER_REVIEW_ONLY
+  keep_testing_candidate_status: KEEP_TESTING
+  rejected_candidate_status: REJECTED_V2
+  maximum_promoted_candidates: 3
+  maximum_keep_testing_candidates: 20
+  decisions:
+    promoted:
+      decision: PROMOTE_CANDIDATE
+      recommended_next_action: owner_review_before_formal_method_task
+    keep_testing:
+      decision: KEEP_TESTING
+      recommended_next_action: continue_targeted_search
+    rejected_only:
+      decision: RUN_ANOTHER_TARGETED_SEARCH
+      recommended_next_action: continue_targeted_search
+    empty:
+      decision: NO_CANDIDATE
+      recommended_next_action: owner_review
+
+next_plan:
+  decisions:
+    PROMOTE_CANDIDATE:
+      decision: FORMAL_METHOD_PLAN
+      recommended_next_action: draft_research_only_formal_method_plan
+      should_continue_parameter_search: false
+      priority: formal_plan
+      recommended_actions:
+        - prepare a research-only formal method plan
+        - obtain owner approval before creating any implementation task
+    KEEP_TESTING:
+      decision: KEEP_TESTING_PLAN
+      recommended_next_action: continue_paper_shadow_observation
+      should_continue_parameter_search: true
+      priority: targeted_observation
+      recommended_actions:
+        - continue paper shadow observation
+        - collect forward confirmation
+        - run a bounded v4 only around keep-testing candidates
+    RUN_ANOTHER_TARGETED_SEARCH:
+      decision: CONTINUE_SEARCH_PLAN
+      recommended_next_action: run_smaller_v4_or_signal_level_diagnosis
+      should_continue_parameter_search: true
+      priority: signal_level_diagnosis
+      recommended_actions:
+        - do not blindly expand parameters
+        - return to signal-level diagnosis
+        - run v4 only with a documented gate-failure hypothesis
+    NO_CANDIDATE:
+      decision: NO_CANDIDATE_PLAN
+      recommended_next_action: return_to_signal_level_diagnosis
+      should_continue_parameter_search: false
+      priority: stop_parameter_expansion
+      recommended_actions:
+        - keep the existing primary observation candidate unchanged
+        - lower batch-search priority
+        - return to feature and signal diagnosis
+  formal_candidate:
+    implementation_scope: research_only
+    transform_composable: true
+    requires_external_data: false
+    implementation_complexity: MEDIUM
+    implementation_allowed_without_owner_approval: false
+
+safety:
+  research_screening_only: true
+  experiment_only: true
+  not_formal_research_method: true
+  not_official_target_weights: true
+  paper_shadow_only: true
+  owner_review_required: true
+  implemented: false
+  formal_method_task_created: false
+  paper_shadow_primary_changed: false
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  auto_apply: false
+  production_effect: none

@@ -12,6 +12,7 @@ from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as _l
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_diagnostics as diagnostics
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_evaluation as evaluation
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_foundation as foundation
+from ai_trading_system.platform.artifacts.validation_session import cached_artifact_validation
 
 DEFAULT_WEIGHT_SEARCH_TARGETED_POLICY_PATH = (
     st.PROJECT_ROOT
@@ -325,17 +326,27 @@ def _validated_paper_backfill(backfill_id: str, backfill_dir: Path) -> dict[str,
 
 
 def _validated_matrix(matrix_id: str, matrix_dir: Path) -> dict[str, Any]:
-    validation = validate_targeted_search_v3_artifact(v3_matrix_id=matrix_id, output_dir=matrix_dir)
+    validation = cached_artifact_validation(
+        validator=validate_targeted_search_v3_artifact,
+        validator_key="v3_matrix_id",
+        artifact_id=matrix_id,
+        root=matrix_dir,
+    )
     _require(validation.get("status") == "PASS", "source targeted matrix validation failed")
     return targeted_search_v3_report_payload(v3_matrix_id=matrix_id, output_dir=matrix_dir)
 
 
 def _validated_targeted_backfill(backfill_id: str, backfill_dir: Path) -> dict[str, Any]:
-    validation = validate_targeted_v3_backfill_artifact(
-        v3_backfill_id=backfill_id, output_dir=backfill_dir
+    validation = cached_artifact_validation(
+        validator=validate_targeted_v3_backfill_artifact,
+        validator_key="v3_backfill_id",
+        artifact_id=backfill_id,
+        root=backfill_dir,
     )
     _require(validation.get("status") == "PASS", "source targeted backfill validation failed")
-    return targeted_v3_backfill_report_payload(v3_backfill_id=backfill_id, output_dir=backfill_dir)
+    return targeted_v3_backfill_report_payload(
+        v3_backfill_id=backfill_id, output_dir=backfill_dir
+    )
 
 
 def _variant_spec(

@@ -19,6 +19,12 @@ def test_candidate_promotion_v2_remains_owner_review_only(tmp_path) -> None:
     }
     assert decision["not_official_target_weights"] is True
     assert decision["broker_action_allowed"] is False
+    assert decision["owner_review_required"] is True
+    assert decision["implemented"] is False
+    assert decision["formal_method_task_created"] is False
+    assert decision["paper_shadow_primary_changed"] is False
+    assert promotion["manifest"]["followup_policy_version"] == "weight_search_followup_v1"
+    assert promotion["manifest"]["candidate_promotion_v2_input_snapshot_path"]
 
     validation = weight_search.validate_candidate_promotion_v2_artifact(
         promotion_v2_id=promotion["promotion_v2_id"],

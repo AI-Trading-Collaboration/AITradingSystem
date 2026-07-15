@@ -4446,6 +4446,7 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/promotion_threshold_sensitivity/*/threshold_scenarios.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/promotion_threshold_sensitivity/*/threshold_candidate_impact.json
       - reports/etf_portfolio/dynamic_v3_rescue/promotion_threshold_sensitivity/*/threshold_sensitivity_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/promotion_threshold_sensitivity/*/promotion_threshold_sensitivity_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-313 shows diagnostic-only effects of threshold relaxation without
@@ -4469,6 +4470,7 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/candidate_promotion_v2/*/keep_testing_candidates_v2.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/candidate_promotion_v2/*/candidate_promotion_v2_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/candidate_promotion_v2/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_promotion_v2/*/candidate_promotion_v2_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-314 converts v3 scorecard, A/B, and threshold sensitivity into
@@ -4492,6 +4494,7 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/next_formal_or_search_plan/*/owner_next_action_checklist.md
       - reports/etf_portfolio/dynamic_v3_rescue/next_formal_or_search_plan/*/next_formal_or_search_plan_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/next_formal_or_search_plan/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/next_formal_or_search_plan/*/next_formal_or_search_plan_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-315 records whether to draft a formal research-only method plan

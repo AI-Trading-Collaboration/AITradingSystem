@@ -154,3 +154,25 @@ duration+peak-memory manifest比较loadfile/loadscope/explicit shard并限制mem
 active-node heartbeat、当前node/worker资源与ETA；最终用连续3次median/P95与最大shard验收。
 它是研发效率治理，不是ARCH-004 G2.5解锁条件，也不得绕过owner已批准的phase-level
 `arch_005_bootstrap_handoff.v1`停止条件。
+
+2026-07-15 CW3 已实现第一批跨Targeted/Follow-up链的PASS-only validation session。Cache key不是
+artifact id或mtime，而是artifact全部业务/snapshot bytes以及从snapshot递归发现的live
+config/cache/source bindings bytes；只缓存validator PASS后的payload，任一byte drift、missing source
+或不同root都会产生新key并重跑真实validator，FAIL不缓存，恢复为完全相同bytes后才可复用原PASS。
+缓存仅存在于最外层context-local validation session，嵌套调用共享，session退出即整体释放；不跨
+进程、不持久化、不替代DQ/source replay或18 views byte rebuild。相同三个CW3业务nodeid在优化前
+运行`1,376.92s`仅完成2个、第三个被人工中断；优化后
+三个全部PASS为`295.14s`，观测wall time至少缩短78.57%。CW3 hardening含18-view/schema/lineage/
+policy/live price drift与chronology检查，使用同一正式transitive fingerprint实现PASS=`605.38s`。
+曾测得更快的非标准临时缓存结果，但因未覆盖完整live binding fingerprint而明确不采用。该单次对比证明本链根因修复有效，但不替代
+本任务对full连续3次median/P95、confirmation长尾与peak-memory-aware sharding的最终验收。
+
+CW3 final full=`6,039 passed / 3,045.40s`，相对CW2 `1,722.89s`单次回退76.76%，因此明确
+`stable_full_suite_improvement_claimed=false`。Top long-tail为Confirmation Weekly=`1,325.47s`、
+CW3 Follow-up Hardening=`948.28s`、Smoothed Freshness Hardening=`925.75s`、Confirmation
+Dashboard=`737.73s`、Rule Review Queue=`721.30s`。约98%后多数worker空闲，证明下一工程优化
+不能只增加`-n`：应基于历史duration与peak memory把这些文件分到独立shard，普通快测另组；同时为
+confirmation/weight-search建立跨测试可校验的immutable fixture content store，key必须包含完整source/
+policy/config/cache/DQ bytes、validator version和Python/schema version，命中后仍重验live binding，
+任一drift或FAIL不得复用。验收仍是连续3次median/P95、最大shard、峰值内存和read amplification，
+不得减少任何required nodeid、DQ/PIT/tamper/byte-rebuild gate。
