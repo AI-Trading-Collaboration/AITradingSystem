@@ -125,6 +125,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_manual_execution_review as dynamic_v3_manual_execution_review_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_micro_search_foundation as dynamic_v3_micro_search_foundation_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_observation_lifecycle as dynamic_v3_observation_lifecycle_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -395,6 +398,7 @@ __all__ = [
     "dynamic_v3_backtest_sim_variants_commands",
     "dynamic_v3_historical_paper_sim_commands",
     "dynamic_v3_shadow_registry_commands",
+    "dynamic_v3_micro_search_foundation_commands",
     "dynamic_v3_signal_diagnosis_foundation_commands",
     "dynamic_v3_sim_interpretation_commands",
     "dynamic_v3_sim_defensive_validation_commands",

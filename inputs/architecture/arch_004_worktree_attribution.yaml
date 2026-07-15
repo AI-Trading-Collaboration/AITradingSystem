@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CW3_COMPLETE_G2_4_CONTINUES
-as_of: 2026-07-15
-base_commit: 3e0bd273
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CX2_COMPLETE_G2_4_CONTINUES
+as_of: 2026-07-16
+base_commit: 4d757bfd
 production_effect: none
 
 arch_004_owned_paths:
@@ -35,6 +35,8 @@ arch_004_owned_paths:
   - config/etf_portfolio/dynamic_v3_rescue/weight_variant_transform_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/weight_experiment_matrix_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/smoothed_limited_adjustment_v1.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/signal_diagnosis_foundation_v1.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/micro_search_foundation_v1.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -61,6 +63,7 @@ arch_004_owned_paths:
   - docs/requirements/TRADING-281_to_285_Smoothed_Data_Refresh_Execution_and_Scheduled_Retry_Operations.md
   - docs/requirements/TRADING-286_to_305_Weight_Optimization_Batch_Search_and_Adaptive_Promotion_Pipeline.md
   - docs/requirements/TRADING-306_to_315_No_Promotion_Diagnostics_and_Targeted_Search_v3.md
+  - docs/requirements/TRADING-316_to_325_Signal_Level_Diagnosis_and_Gate_Calibration_with_Targeted_Micro_Search_v4.md
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   - config/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation_v1.yaml
   - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
@@ -86,6 +89,7 @@ arch_004_owned_paths:
   - inputs/architecture/arch_004_worktree_attribution.yaml
   - inputs/architecture/arch_004g_deprecation_inventory.yaml
   - inputs/architecture/arch_004f3_reporting_inventory.yaml
+  - inputs/architecture/arch_004g2_callback_migration_matrix.yaml
   - src/ai_trading_system/cli_commands/research_execution_common.py
   - src/ai_trading_system/contracts/__init__.py
   - src/ai_trading_system/contracts/status.py
@@ -309,6 +313,10 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_diagnostics.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_targeted.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_followup.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_signal_diagnosis_foundation.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_diagnosis_foundation.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_micro_search_foundation.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_micro_search_foundation.py
   - tests/dynamic_v3_weight_batch_search_helpers.py
   - tests/test_targeted_search_v3.py
   - tests/test_promotion_threshold_sensitivity.py
@@ -317,6 +325,13 @@ arch_004_owned_paths:
   - tests/test_weight_search_diagnostics_hardening.py
   - tests/test_weight_search_targeted_hardening.py
   - tests/test_weight_search_followup_hardening.py
+  - tests/test_signal_diagnosis_foundation.py
+  - tests/test_micro_search_foundation.py
+  - tests/test_micro_search_v4_design.py
+  - tests/test_micro_search_v4_backfill.py
+  - tests/test_gate_calibrated_review.py
+  - tests/test_signal_vs_parameter_attribution.py
+  - tests/test_arch_004g2_callback_migration_matrix.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_confirmation_operations.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_confirmation_operations.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_pressure_validation.py

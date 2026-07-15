@@ -4,7 +4,7 @@
 
 ## 状态
 
-`IN_PROGRESS`（ARCH-004 G2.4 canonical remigration：CX1 complete，CX2/CX3 pending）
+`IN_PROGRESS`（ARCH-004 G2.4 canonical remigration：CX1/CX2 complete，CX3 pending）
 
 Owner 要求完成附件中的 TRADING-316～325。本阶段承接 TRADING-306～315 的 no-promotion 结论，不继续无差别扩大参数空间，而是先判断 gate、scorecard、signal、consensus 与当前 AI regime 区间是否解释了没有 promotion candidate。
 
@@ -41,10 +41,10 @@ TRADING-306～315 已完成 targeted v3 诊断链路。真实输出显示：
 |TRADING-317|BASELINE_DONE_CX1|Scorecard component attribution|`scorecard-attribution run/report` 与 validator 可运行；输出 rejected variants 的 component distribution、variant matrix 和 family weakness。|
 |TRADING-318|BASELINE_DONE_CX1|Signal-level instability diagnosis|`signal-instability-diagnosis run/report` 与 validator 可运行；无dated ledger时events为空、counts/returns为null且结论为`INSUFFICIENT_DATA`。|
 |TRADING-319|BASELINE_DONE_CX1|Candidate consensus quality review|`consensus-quality-review run/report` 与 validator 可运行；只接受exact source variant，无dated method evidence时dispersion/delta为null且结论为`INSUFFICIENT_DATA`。|
-|TRADING-320|PENDING_CX2|Near-miss micro search v4 design|`micro-search-v4-design run/report` 与 validator 可运行；生成 20～40 个 v4 variants，每个有 rationale、安全边界和 failure-mode link。|
-|TRADING-321|PENDING_CX2|Micro search v4 backfill|`micro-search-v4-backfill run/report` 与 validator 可运行；完成或明确 partial，输出 performance/regime/stability/signal metrics。|
-|TRADING-322|PENDING_CX2|Gate-calibrated candidate review|`gate-calibrated-review run/report` 与 validator 可运行；official / diagnostic gate 双轨输出，diagnostic gate 不改正式 gate。|
-|TRADING-323|PENDING_CX2|Signal vs parameter failure attribution|`signal-vs-parameter-attribution run/report` 与 validator 可运行；明确 failure_source、confidence、recommended research shift。|
+|TRADING-320|BASELINE_DONE_CX2|Near-miss micro search v4 design|`micro-search-v4-design run/report` 与 validator 可运行；生成 20～40 个 v4 variants，每个有 rationale、安全边界和 failure-mode link。|
+|TRADING-321|BASELINE_DONE_CX2|Micro search v4 backfill|`micro-search-v4-backfill run/report` 与 validator 可运行；完成或明确 partial，输出 performance/regime/stability/signal metrics。|
+|TRADING-322|BASELINE_DONE_CX2|Gate-calibrated candidate review|`gate-calibrated-review run/report` 与 validator 可运行；official / diagnostic gate 双轨输出，diagnostic gate 不改正式 gate。|
+|TRADING-323|BASELINE_DONE_CX2|Signal vs parameter failure attribution|`signal-vs-parameter-attribution run/report` 与 validator 可运行；明确 failure_source、confidence、recommended research shift。|
 |TRADING-324|PENDING_CX3|Next research direction decision pack|`next-research-direction run/report` 与 validator 可运行；生成 next decision、next task plan 和 safety boundary。|
 |TRADING-325|PENDING_CX3|Owner research roadmap update|`owner-research-roadmap update/report` 与 validator 可运行；输出 owner summary、checklist、Reader Brief section。|
 
@@ -62,6 +62,30 @@ TRADING-306～315 已完成 targeted v3 诊断链路。真实输出显示：
 
 ## Progress Notes
 
+- 2026-07-16: ARCH-004G2.4CX2=`COMPLETE_G2_4_CONTINUES`。12 callbacks/12 public入口完成
+  canonical micro-search foundation迁移，legacy root=`12,339/297/258`，legacy weight domain=
+  `7,409 lines/12 lazy wrappers`，matrix=`709/258/0/0`。四类bounded v2 snapshots、reviewed policy、
+  CX1四源同Scorecard/Targeted lineage、Design→Backfill→Gate exact lineage、historical calculation/
+  current quality cache role、pre-output chronology/live replay、全部views byte rebuild及output/policy/
+  cross-lineage/cache-role tamper闭合。真实结论保持Design=`PASS_WITH_WARNINGS/INSUFFICIENT_DATA/
+  PILOT_HYPOTHESIS_ONLY`、Gate official=`0.72`/diagnostic=`0.67`且不改policy、Attribution=
+  `INCONCLUSIVE/LOW/DEFER_AND_BUILD_DATED_EVIDENCE`，不默认`MARKET_REGIME`。Focused business/
+  architecture=`13/156 passed`，architecture/contract/full=`298/203/6,061 passed`，full=
+  `641 warnings / 2,838.24s`；generated=`945/1,126/858/0`。旧四文件累计`3,479.43s`降为
+  `269.82s/13 tests`（observed -92.25%/12.90x），full较CX1单次快约13.95%但不声明稳定
+  full-suite改善。TRADING-324～325/CX3及whole G2.4仍pending，不触发ARCH-005 handoff、不进入
+  G2.5，`production_effect=none`。
+- 2026-07-16: ARCH-004G2.4CX2 contract freeze并进入`IN_PROGRESS`。本slice只迁
+  TRADING-320～323的12 callbacks/12 public入口到canonical micro-search foundation；TRADING-
+  324～325留CX3。审计确认旧Design不调用CX1 validators、不冻结四源binding且预设variant集合与
+  实际`INSUFFICIENT_DATA`脱节；旧Backfill validator不重放Design/Baseline/cache/DQ也不重建views；
+  旧Gate用未冻结`BATCH2_PROMOTE_SCORE=0.72`和`GATE_DIAGNOSTIC_RELAXATION=0.05`重打分；旧
+  Attribution在Signal/Consensus缺dated evidence时默认落到`MARKET_REGIME/LOW`，无法作为可信
+  failure-source结论。退出要求四类bounded v2 snapshots、reviewed pilot policy、CX1四源同一
+  Scorecard及exact Targeted Matrix→Backfill、Design→Backfill→Gate exact lineage、历史计算cache与
+  current DQ evidence角色分离、pre-output chronology/live replay与全部views byte rebuild/tamper。
+  缺dated signal/consensus evidence必须输出`INCONCLUSIVE/LOW`和补齐ledger/evidence行动；固定
+  research-only/no official/no auto/no order/no broker，`production_effect=none`。
 - 2026-07-16: CX1 final full复验=`6,050 passed / 642 warnings / 3,298.22s`，artifact=
   `outputs/validation_runtime/full_20260715T145342Z/test_runtime_summary.json`；六个旧CX2 fixture
   失败均已闭合。Architecture/contract=`296/203 passed`。Focused共享fixture局部改善仍为

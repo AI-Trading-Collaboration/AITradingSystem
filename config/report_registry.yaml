@@ -4607,10 +4607,11 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_design/*/v4_design_rationale.json
       - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_design/*/v4_variant_specs.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_design/*/micro_search_v4_design_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_design/*/micro_search_v4_design_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-320 materializes a bounded 20-40 variant micro search from
-      documented gate, signal, consensus, and scorecard diagnostics.
+      TRADING-320 materializes 20-40 reviewed pilot hypotheses from one exact
+      CX1 lineage; insufficient dated evidence remains explicit and is not a fix claim.
     owner_action: review_micro_search_v4_design_before_backfill
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -4631,10 +4632,12 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_backfill/*/v4_variant_signal_metrics.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_backfill/*/micro_search_v4_backfill_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_backfill/*/validate_data_quality_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_backfill/*/micro_search_v4_backfill_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-321 evaluates micro search v4 variants only after the required
-      cached-data quality gate and exposes actual date range.
+      quality gate, separates historical calculation from current DQ cache roles,
+      and exposes the actual date range.
     owner_action: review_micro_search_v4_backfill_before_gate_calibrated_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -4652,6 +4655,7 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/gate_calibrated_review/*/diagnostic_gate_results.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/gate_calibrated_review/*/gate_calibrated_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/gate_calibrated_review/*/gate_calibrated_review_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_calibrated_review/*/gate_calibrated_review_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-322 compares official and diagnostic gate outcomes without
@@ -4673,10 +4677,12 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/signal_vs_parameter_attribution/*/recommended_research_shift.json
       - reports/etf_portfolio/dynamic_v3_rescue/signal_vs_parameter_attribution/*/signal_vs_parameter_attribution_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/signal_vs_parameter_attribution/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_vs_parameter_attribution/*/signal_vs_parameter_attribution_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-323 determines whether failure comes mainly from signal quality,
-      consensus, gate policy, regime tagging, or parameter space.
+      TRADING-323 attributes failure only when dated evidence is sufficient;
+      otherwise it reports INCONCLUSIVE/LOW and requests dated evidence instead
+      of defaulting to a market-regime explanation.
     owner_action: review_failure_source_before_next_research_direction
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

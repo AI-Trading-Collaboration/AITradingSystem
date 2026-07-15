@@ -196,6 +196,24 @@ validator 根据 frozen snapshot 重验 live bindings 并逐 byte 重建所有 J
 与 Reader Brief。当前 workflow PASS 只证明“来源、计算和缺失语义可复现”，不能推出 signal
 或 consensus 已通过投资验证，也不能自动解锁 micro-search、正式方法或 production。
 
+### 5.5.2 TRADING-320～323 micro-search foundation 的当前设计
+
+该链路的目标不是“继续加参数直到出现 promotion”，而是把 CX1 的不足证据转换成一组
+可审计、可回放的 pilot hypotheses，并严格分离计算事实、数据质量事实和归因结论。当前
+canonical owner 是 `dynamic_v3_micro_search_foundation.py`，policy 是
+`config/etf_portfolio/dynamic_v3_rescue/micro_search_foundation_v1.yaml`。
+
+| 环节 | 输入 | 计算逻辑 | 输出与当前结果 | 后续优化空间 |
+|---|---|---|---|---|
+| Micro Search v4 Design | validated Gate Calibration、Scorecard Attribution、Signal Diagnosis、Consensus Review；必须属于同一 Scorecard/Matrix/Targeted Backfill lineage | reviewed policy 校验 20～40 个 variants、required families/ids；dated evidence 不足时禁止把设计解释成观察到的修复 | `micro_search_v4_design_input_snapshot.v2` + rationale/specs/report；当前 `PASS_WITH_WARNINGS`、`INSUFFICIENT_DATA`，variants=`PILOT_HYPOTHESIS_ONLY` | 接入 dated signal/weight paths 后另开 policy version；用 preregistered holdout 删除无效 family，而非持续膨胀 variants |
+| Micro Search v4 Backfill | validated Design、同源 Paper Backfill、price/rates cache | historical price bytes 负责计算窗口；current cache bytes 同时接受 DQ；先过 quality gate，再计算 performance/regime/stability/signal metrics | `micro_search_v4_backfill_input_snapshot.v2` + 8 views；manifest 显式披露 cache roles、actual range、latest valid as-of 和 DQ | 把计算 kernel 进一步抽象为跨 slice 可复用 batch executor；保留 DQ 与 calculation 的独立语义 |
+| Gate-Calibrated Review | validated Backfill + Design + CX1 Gate Calibration | official threshold=0.72；diagnostic threshold=0.67；high-risk failed gates 仍阻断；只比较，不写 policy | `gate_calibrated_review_input_snapshot.v2` + official/diagnostic rows/summary/report；`official_gate_changed=false` | 只有新 evidence + owner review 才能发布新 policy version；禁止按结果临时调 threshold |
+| Signal-vs-Parameter Attribution | validated Signal、Consensus、Gate Review | evidence 足够才运行多类 failure attribution；当前 dated Signal/Consensus 不足时直接 fail-safe 到 `INCONCLUSIVE/LOW` | `signal_vs_parameter_attribution_input_snapshot.v2` + failure/shift/report/Reader Brief；当前建议 `DEFER_AND_BUILD_DATED_EVIDENCE`，不声称 market-regime failure | 优先建设 dated signal ledger、candidate weight path 和 common-date outcome cohort；之后再校准 attribution policy |
+
+每个 producer 在写输出前验证 source/policy/cache/DQ/chronology；每个 validator 从 frozen
+snapshot 重放相同依赖并逐 byte 重建所有 materialized views。当前 PASS 只表示链路完整、
+缺失语义诚实且可复现，不表示 variants、gate 或 attribution 已获得投资有效性批准。
+
 ### 5.6 当前权重研究的具体计算
 
 下列 B0～B6 是 research-only 结构，不是 production allocator。

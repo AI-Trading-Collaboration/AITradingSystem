@@ -7,6 +7,7 @@ from typing import Any
 import yaml
 from dynamic_v3_system_target_helpers import run_backfill_fixture
 
+from ai_trading_system.etf_portfolio import dynamic_v3_micro_search_foundation as micro
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_diagnostics as diagnostics
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_targeted as targeted
@@ -528,34 +529,14 @@ def run_signal_diagnosis_foundation_fixture(tmp_path: Path) -> dict[str, Any]:
 
 
 def run_micro_search_v4_design_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_gate_calibration_review_fixture(tmp_path)
-    scorecard_attribution = weight_search.run_scorecard_attribution(
-        scorecard_id=fixture["scorecard"]["scorecard_id"],
-        v3_backfill_id=fixture["targeted_v3_backfill"]["v3_backfill_id"],
-        scorecard_dir=tmp_path / "weight_scorecard",
-        v3_backfill_dir=tmp_path / "targeted_v3_backfill",
-        v3_matrix_dir=tmp_path / "targeted_search_v3",
-        output_dir=tmp_path / "scorecard_attribution",
-        generated_at=datetime(2026, 3, 23, 1, tzinfo=UTC),
-    )
-    signal_diagnosis = weight_search.run_signal_instability_diagnosis(
-        scorecard_attribution_id=scorecard_attribution["scorecard_attribution_id"],
-        attribution_dir=tmp_path / "scorecard_attribution",
-        output_dir=tmp_path / "signal_instability_diagnosis",
-        generated_at=datetime(2026, 3, 24, tzinfo=UTC),
-    )
-    consensus_review = weight_search.run_consensus_quality_review(
-        signal_diagnosis_id=signal_diagnosis["signal_diagnosis_id"],
-        signal_dir=tmp_path / "signal_instability_diagnosis",
-        attribution_dir=tmp_path / "scorecard_attribution",
-        output_dir=tmp_path / "consensus_quality_review",
-        generated_at=datetime(2026, 3, 24, 1, tzinfo=UTC),
-    )
-    v4_design = weight_search.run_micro_search_v4_design(
+    fixture = run_signal_diagnosis_foundation_fixture(tmp_path)
+    v4_design = micro.run_micro_search_v4_design(
         gate_calibration_id=fixture["gate_calibration"]["gate_calibration_id"],
-        scorecard_attribution_id=scorecard_attribution["scorecard_attribution_id"],
-        signal_diagnosis_id=signal_diagnosis["signal_diagnosis_id"],
-        consensus_review_id=consensus_review["consensus_review_id"],
+        scorecard_attribution_id=fixture["scorecard_attribution"][
+            "scorecard_attribution_id"
+        ],
+        signal_diagnosis_id=fixture["signal_diagnosis"]["signal_diagnosis_id"],
+        consensus_review_id=fixture["consensus_review"]["consensus_review_id"],
         gate_calibration_dir=tmp_path / "gate_calibration_review",
         attribution_dir=tmp_path / "scorecard_attribution",
         signal_dir=tmp_path / "signal_instability_diagnosis",
@@ -563,13 +544,7 @@ def run_micro_search_v4_design_fixture(tmp_path: Path) -> dict[str, Any]:
         output_dir=tmp_path / "micro_search_v4_design",
         generated_at=datetime(2026, 3, 25, tzinfo=UTC),
     )
-    return {
-        **fixture,
-        "scorecard_attribution": scorecard_attribution,
-        "signal_diagnosis": signal_diagnosis,
-        "consensus_review": consensus_review,
-        "v4_design": v4_design,
-    }
+    return {**fixture, "v4_design": v4_design}
 
 
 def _write_micro_search_current_cache(
@@ -611,7 +586,7 @@ def run_micro_search_v4_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
         historical_prices_path=fixture["prices_path"],
         historical_rates_path=fixture["rates_path"],
     )
-    v4_backfill = weight_search.run_micro_search_v4_backfill(
+    v4_backfill = micro.run_micro_search_v4_backfill(
         v4_design_id=fixture["v4_design"]["v4_design_id"],
         v4_design_dir=tmp_path / "micro_search_v4_design",
         baseline_backfill_dir=tmp_path / "paper_shadow_backfill",
@@ -630,7 +605,7 @@ def run_micro_search_v4_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
 
 def run_gate_calibrated_review_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_micro_search_v4_backfill_fixture(tmp_path)
-    gate_review = weight_search.run_gate_calibrated_review(
+    gate_review = micro.run_gate_calibrated_review(
         v4_backfill_id=fixture["v4_backfill"]["v4_backfill_id"],
         gate_calibration_id=fixture["gate_calibration"]["gate_calibration_id"],
         v4_backfill_dir=tmp_path / "micro_search_v4_backfill",
@@ -642,9 +617,10 @@ def run_gate_calibrated_review_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "gate_review": gate_review}
 
 
+@with_artifact_validation_session
 def run_signal_vs_parameter_attribution_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_gate_calibrated_review_fixture(tmp_path)
-    signal_vs_parameter = weight_search.run_signal_vs_parameter_attribution(
+    signal_vs_parameter = micro.run_signal_vs_parameter_attribution(
         signal_diagnosis_id=fixture["signal_diagnosis"]["signal_diagnosis_id"],
         consensus_review_id=fixture["consensus_review"]["consensus_review_id"],
         gate_review_id=fixture["gate_review"]["gate_review_id"],
@@ -655,6 +631,11 @@ def run_signal_vs_parameter_attribution_fixture(tmp_path: Path) -> dict[str, Any
         generated_at=datetime(2026, 3, 27, tzinfo=UTC),
     )
     return {**fixture, "signal_vs_parameter": signal_vs_parameter}
+
+
+def run_micro_search_foundation_fixture(tmp_path: Path) -> dict[str, Any]:
+    """Build the four CX2 artifacts once inside one validation session."""
+    return run_signal_vs_parameter_attribution_fixture(tmp_path)
 
 
 def run_next_research_direction_fixture(tmp_path: Path) -> dict[str, Any]:

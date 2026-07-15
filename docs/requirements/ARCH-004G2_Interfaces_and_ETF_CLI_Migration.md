@@ -20,6 +20,29 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-16：G2.4CX2=`COMPLETE_G2_4_CONTINUES`。TRADING-320～323共12 callbacks/
+  12 public入口完成canonical micro-search foundation迁移与legacy subtraction；四类bounded v2
+  snapshots、reviewed pilot policy、CX1四源同一Scorecard/Targeted lineage、Design→Backfill→Gate
+  exact lineage、historical calculation/current quality cache角色分离、pre-output chronology/live replay、
+  全部views逐byte重建及output/policy/cross-lineage/cache-role tamper闭合。缺dated Signal/Consensus
+  evidence时Attribution固定`INCONCLUSIVE/LOW`，不再默认`MARKET_REGIME`。Legacy CLI=
+  `12,339/297/258`，legacy weight domain=`7,409 lines / 12 lazy wrappers`；matrix=
+  `709 migrated / 258 pending / 0 unresolved / 0 duplicate`，CLI tree/hash不变。Focused业务/架构=
+  `13/156 passed`，architecture/contract/full=`298/203/6,061 passed`，full=`641 warnings /
+  2,838.24s`（artifact=`outputs/validation_runtime/full_20260715T173654Z/test_runtime_summary.json`），
+  generated=`945/1,126/858/0`。四个旧文件累计`3,479.43s`降为共享fixture 13 tests
+  `269.82s`（observed -92.25%/12.90x）；本次full较CX1单次观测快约13.95%，但不声明稳定
+  full-suite提速。CX3/whole phase仍pending，不触发handoff、不进入G2.5，`production_effect=none`。
+- 2026-07-16：G2.4CX2 contract freeze并进入`IN_PROGRESS`。TRADING-320～323的Micro Search v4
+  Design/Backfill/Gate-calibrated Review/Signal-vs-Parameter Attribution共12 callbacks/12 public
+  入口迁独立canonical micro-search foundation interface/domain。退出固定四类bounded v2
+  snapshots、reviewed pilot policy、CX1 Gate/Attribution/Signal/Consensus同源Scorecard与
+  Matrix→Backfill exact lineage、Design→Backfill→Gate exact lineage、写前live source/policy/cache/
+  DQ/chronology replay及全部JSON/JSONL/Markdown/Reader Brief逐byte重建。旧Design只读JSON不验证
+  上游且variant集合与诊断证据脱节；旧Gate以未冻结`0.72/0.05`重打分；旧Attribution在Signal/
+  Consensus均`INSUFFICIENT_DATA`时默认归因`MARKET_REGIME`。新链缺dated evidence必须输出
+  `INCONCLUSIVE/LOW`与补齐ledger/evidence行动，不得伪造failure source。CX3/whole phase pending，
+  不触发handoff、不进入G2.5，`production_effect=none`。
 - 2026-07-15：G2.4CX1=`COMPLETE_G2_4_CONTINUES`。TRADING-316～319共12 callbacks/
   12 public入口完成canonical diagnosis-foundation迁移与legacy subtraction；四类bounded v2
   snapshots、reviewed policy、same-source Scorecard与Targeted Matrix→Backfill exact lineage、

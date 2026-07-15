@@ -9,7 +9,6 @@ import pandas as pd
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
-from ai_trading_system.data.quality import write_data_quality_report
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 
 DEFAULT_WEIGHT_SEARCH_SPACE_CONFIG_PATH = (
@@ -649,734 +648,81 @@ def validate_consensus_quality_review_artifact(*args: Any, **kwargs: Any) -> Any
     )
 
 
-def run_micro_search_v4_design(
-    *,
-    gate_calibration_id: str,
-    scorecard_attribution_id: str,
-    signal_diagnosis_id: str,
-    consensus_review_id: str,
-    gate_calibration_dir: Path = DEFAULT_GATE_CALIBRATION_REVIEW_DIR,
-    attribution_dir: Path = DEFAULT_SCORECARD_ATTRIBUTION_DIR,
-    signal_dir: Path = DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
-    consensus_dir: Path = DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
-    output_dir: Path = DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    gate = gate_calibration_review_report_payload(
-        gate_calibration_id=gate_calibration_id,
-        output_dir=gate_calibration_dir,
-    )
-    attribution = scorecard_attribution_report_payload(
-        scorecard_attribution_id=scorecard_attribution_id,
-        output_dir=attribution_dir,
-    )
-    signal = signal_instability_diagnosis_report_payload(
-        signal_diagnosis_id=signal_diagnosis_id,
-        output_dir=signal_dir,
-    )
-    consensus = consensus_quality_review_report_payload(
-        consensus_review_id=consensus_review_id,
-        output_dir=consensus_dir,
-    )
-    rationale = _micro_search_v4_design_rationale(gate, attribution, signal, consensus)
-    variants = _micro_search_v4_variant_specs(rationale)
-    design_id = _stable_id(
-        "micro-search-v4-design",
-        gate_calibration_id,
-        scorecard_attribution_id,
-        signal_diagnosis_id,
-        consensus_review_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / design_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_micro_search_v4_design_manifest",
-        "v4_design_id": root.name,
-        "gate_calibration_id": gate_calibration_id,
-        "scorecard_attribution_id": scorecard_attribution_id,
-        "signal_diagnosis_id": signal_diagnosis_id,
-        "consensus_review_id": consensus_review_id,
-        "v3_backfill_id": attribution.get("v3_backfill_id"),
-        "source_backfill_id": attribution.get("source_backfill_id"),
-        "generated_at": generated.isoformat(),
-        "status": "PASS"
-        if V4_MICRO_MIN_VARIANTS <= len(variants) <= V4_MICRO_MAX_VARIANTS
-        else "FAIL",
-        "market_regime": attribution.get("market_regime", "ai_after_chatgpt"),
-        "variant_count": len(variants),
-        "micro_search_v4_design_manifest_path": str(root / "micro_search_v4_design_manifest.json"),
-        "v4_design_rationale_path": str(root / "v4_design_rationale.json"),
-        "v4_variant_specs_path": str(root / "v4_variant_specs.jsonl"),
-        "micro_search_v4_design_report_path": str(root / "micro_search_v4_design_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "micro_search_v4_design_manifest.json", manifest)
-    _write_json(root / "v4_design_rationale.json", rationale)
-    _write_jsonl(root / "v4_variant_specs.jsonl", variants)
-    _write_text(
-        root / "micro_search_v4_design_report.md",
-        render_micro_search_v4_design_report(manifest, rationale, variants),
-    )
-    _write_latest_pointer(
-        "latest_micro_search_v4_design",
-        root.name,
-        root / "micro_search_v4_design_manifest.json",
-    )
-    return {
-        "v4_design_id": root.name,
-        "v4_design_dir": root,
-        "manifest": manifest,
-        "v4_design_rationale": rationale,
-        "v4_variant_specs": variants,
-    }
+def _call_micro_search_foundation(name: str, *args: Any, **kwargs: Any) -> Any:
+    from ai_trading_system.etf_portfolio import dynamic_v3_micro_search_foundation
+
+    return getattr(dynamic_v3_micro_search_foundation, name)(*args, **kwargs)
 
 
-def micro_search_v4_design_report_payload(
-    *,
-    v4_design_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=v4_design_id,
-        latest_pointer="latest_micro_search_v4_design",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="micro_search_v4_design_manifest.json",
-    )
-    return {
-        **_read_json(root / "micro_search_v4_design_manifest.json"),
-        "v4_design_rationale": _read_json(root / "v4_design_rationale.json"),
-        "v4_variant_specs": _read_jsonl(root / "v4_variant_specs.jsonl"),
-        "v4_design_dir": str(root),
-    }
-
-
-def validate_micro_search_v4_design_artifact(
-    *,
-    v4_design_id: str,
-    output_dir: Path = DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
-) -> dict[str, Any]:
-    root = output_dir / v4_design_id
-    manifest = _read_optional_json(root / "micro_search_v4_design_manifest.json") or {}
-    rationale = _read_optional_json(root / "v4_design_rationale.json") or {}
-    variants = _read_jsonl(root / "v4_variant_specs.jsonl")
-    checks = _required_file_checks(
-        root,
-        (
-            "micro_search_v4_design_manifest.json",
-            "v4_design_rationale.json",
-            "v4_variant_specs.jsonl",
-            "micro_search_v4_design_report.md",
-        ),
-    )
-    required_variants = {
-        "smooth_3d_plus_dispersion_gate",
-        "smooth_3d_plus_topk_stability_filter",
-        "smooth_3d_plus_rebalance_delta_3pct",
-        "cash_buffer_8_plus_smooth_3d",
-        "cash_buffer_10_plus_dispersion_gate",
-        "median_consensus_plus_smooth_3d",
-        "median_consensus_plus_dispersion_gate",
-        "top5_consensus_plus_smooth_3d",
-        "top5_consensus_plus_rebalance_threshold",
-        "high_disagreement_hold_previous",
-        "high_disagreement_reduce_tilt_50",
-        "sideways_hold_plus_fast_restore",
-    }
-    variant_ids = {_text(row.get("variant_id")) for row in variants}
-    checks.extend(
-        [
-            st._check("v4_design_id_matches", manifest.get("v4_design_id") == v4_design_id, ""),
-            st._check(
-                "variant_count_bounded",
-                V4_MICRO_MIN_VARIANTS <= len(variants) <= V4_MICRO_MAX_VARIANTS,
-                str(len(variants)),
-            ),
-            st._check(
-                "required_variants_present",
-                required_variants.issubset(variant_ids),
-                ",".join(sorted(required_variants - variant_ids)),
-            ),
-            st._check(
-                "each_variant_has_rationale",
-                all(_texts(row.get("target_failure_modes")) for row in variants),
-                "",
-            ),
-            st._check("rationale_visible", bool(_texts(rationale.get("design_principles"))), ""),
-            st._check("broker_forbidden", _payload_safe(manifest, rationale, *variants), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, rationale, *variants),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_micro_search_v4_design_validation",
-        v4_design_id,
-        checks,
+def run_micro_search_v4_design(*args: Any, **kwargs: Any) -> Any:
+    return _call_micro_search_foundation(
+        "run_micro_search_v4_design", *args, **kwargs
     )
 
 
-def run_micro_search_v4_backfill(
-    *,
-    v4_design_id: str,
-    v4_design_dir: Path = DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
-    baseline_backfill_dir: Path = st.DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    output_dir: Path = DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
-    price_cache_path: Path | None = None,
-    rates_cache_path: Path = st.DEFAULT_RATES_CACHE_PATH,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    design = micro_search_v4_design_report_payload(
-        v4_design_id=v4_design_id,
-        output_dir=v4_design_dir,
-    )
-    source_backfill_id = _text(design.get("source_backfill_id"))
-    if not source_backfill_id:
-        raise RuntimeError("micro search v4 design is missing source_backfill_id")
-    backfill = st.paper_shadow_backfill_report_payload(
-        backfill_id=source_backfill_id,
-        output_dir=baseline_backfill_dir,
-    )
-    baseline_states = _records(backfill.get("backfill_method_states"))
-    config = st._load_backfill_config_from_manifest(backfill)
-    start = max(
-        _coerce_date(backfill.get("date_start"), st.AI_AFTER_CHATGPT_START),
-        st.AI_AFTER_CHATGPT_START,
-    )
-    requested_end = _coerce_date(backfill.get("date_end"), generated.date())
-    source = _mapping(config.get("source"))
-    symbols = st._symbols_from_state_paths(baseline_states)
-    prices_path = price_cache_path or st._resolve_project_path(
-        source.get("price_cache_path"),
-        st.DEFAULT_PRICE_CACHE_PATH,
-    )
-    pivot = st._load_price_pivot(prices_path, symbols, start)
-    latest_valid_as_of = _latest_common_price_date(pivot, symbols)
-    end = min(requested_end, latest_valid_as_of, generated.date())
-    used_latest_valid_as_of = end < requested_end
-    pivot = pivot.loc[(pivot.index.date >= start) & (pivot.index.date <= end)]
-    quality_as_of = max(end, generated.date())
-    quality = st._run_data_quality_gate(
-        price_cache_path=prices_path,
-        rates_cache_path=rates_cache_path,
-        expected_symbols=symbols,
-        as_of=quality_as_of,
-    )
-    if not quality.passed:
-        raise RuntimeError(
-            f"data quality gate failed for micro search v4 backfill: {quality.status}"
-        )
-    returns = pivot.pct_change().fillna(0.0)
-    labels = {
-        idx.date().isoformat(): st._risk_capped_regime_context_for_return(row, config)
-        for idx, row in returns.iterrows()
-    }
-    variant_specs = _records(design.get("v4_variant_specs"))
-    variant_states: list[dict[str, Any]] = []
-    failed: list[dict[str, Any]] = []
-    for variant in variant_specs:
-        try:
-            variant_states.extend(
-                st._run_variant_weight_path(
-                    variant=variant,
-                    baseline_states=baseline_states,
-                    returns=returns,
-                    labels=labels,
-                    config=config,
-                )
-            )
-        except Exception as exc:  # noqa: BLE001
-            failed.append({"variant_id": _text(variant.get("variant_id")), "error": str(exc)})
-    performance = st._variant_performance_metrics(variant_states, baseline_states)
-    regime = st._variant_regime_metrics(variant_states, baseline_states, labels, config)
-    stability = st._variant_stability_metrics(variant_states, baseline_states, config)
-    signal = _v4_variant_signal_metrics(variant_states, stability, regime)
-    backfill_id = _stable_id(
-        "micro-search-v4-backfill",
-        v4_design_id,
-        end.isoformat(),
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / backfill_id)
-    root.mkdir(parents=True, exist_ok=False)
-    quality_report_path = root / "validate_data_quality_report.md"
-    progress = {
-        "schema_version": st.SCHEMA_VERSION,
-        "v4_backfill_id": root.name,
-        "variants_total": len(variant_specs),
-        "variants_completed": len({row.get("variant_id") for row in performance}),
-        "variants_failed": len(failed),
-        "failed_variants": failed,
-        "date_start": start.isoformat(),
-        "date_end": end.isoformat(),
-        "requested_date_end": requested_end.isoformat(),
-        "latest_valid_as_of": latest_valid_as_of.isoformat(),
-        "data_quality": quality.status,
-        "data_quality_as_of": quality_as_of.isoformat(),
-        "validate_data_quality_report_path": str(quality_report_path),
-        "used_latest_valid_as_of": used_latest_valid_as_of,
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_micro_search_v4_backfill_manifest",
-        "v4_backfill_id": root.name,
-        "v4_design_id": v4_design_id,
-        "source_backfill_id": source_backfill_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS"
-        if not failed and performance
-        else "PASS_WITH_WARNINGS"
-        if performance
-        else "FAIL",
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "date_start": start.isoformat(),
-        "date_end": end.isoformat(),
-        "requested_start_date": backfill.get("requested_start_date", start.isoformat()),
-        "requested_end_date": requested_end.isoformat(),
-        "latest_valid_as_of": latest_valid_as_of.isoformat(),
-        "data_quality_status": quality.status,
-        "data_quality_as_of": quality_as_of.isoformat(),
-        "data_quality_checked_at": quality.checked_at.isoformat(),
-        "validate_data_quality_report_path": str(quality_report_path),
-        "used_latest_valid_as_of": used_latest_valid_as_of,
-        "variants_total": len(variant_specs),
-        "variants_completed": progress["variants_completed"],
-        "variants_failed": len(failed),
-        "micro_search_v4_backfill_manifest_path": str(
-            root / "micro_search_v4_backfill_manifest.json"
-        ),
-        "v4_backfill_progress_path": str(root / "v4_backfill_progress.json"),
-        "v4_variant_performance_path": str(root / "v4_variant_performance.jsonl"),
-        "v4_variant_regime_metrics_path": str(root / "v4_variant_regime_metrics.jsonl"),
-        "v4_variant_stability_metrics_path": str(root / "v4_variant_stability_metrics.jsonl"),
-        "v4_variant_signal_metrics_path": str(root / "v4_variant_signal_metrics.jsonl"),
-        "micro_search_v4_backfill_report_path": str(root / "micro_search_v4_backfill_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "micro_search_v4_backfill_manifest.json", manifest)
-    _write_json(root / "v4_backfill_progress.json", progress)
-    write_data_quality_report(quality, quality_report_path)
-    _write_jsonl(root / "v4_variant_performance.jsonl", performance)
-    _write_jsonl(root / "v4_variant_regime_metrics.jsonl", regime)
-    _write_jsonl(root / "v4_variant_stability_metrics.jsonl", stability)
-    _write_jsonl(root / "v4_variant_signal_metrics.jsonl", signal)
-    _write_text(
-        root / "micro_search_v4_backfill_report.md",
-        render_micro_search_v4_backfill_report(manifest, progress),
-    )
-    _write_latest_pointer(
-        "latest_micro_search_v4_backfill",
-        root.name,
-        root / "micro_search_v4_backfill_manifest.json",
-    )
-    return {
-        "v4_backfill_id": root.name,
-        "v4_backfill_dir": root,
-        "manifest": manifest,
-        "v4_backfill_progress": progress,
-        "v4_variant_performance": performance,
-        "v4_variant_regime_metrics": regime,
-        "v4_variant_stability_metrics": stability,
-        "v4_variant_signal_metrics": signal,
-    }
-
-
-def micro_search_v4_backfill_report_payload(
-    *,
-    v4_backfill_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=v4_backfill_id,
-        latest_pointer="latest_micro_search_v4_backfill",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="micro_search_v4_backfill_manifest.json",
-    )
-    return {
-        **_read_json(root / "micro_search_v4_backfill_manifest.json"),
-        "v4_backfill_progress": _read_json(root / "v4_backfill_progress.json"),
-        "v4_variant_performance": _read_jsonl(root / "v4_variant_performance.jsonl"),
-        "v4_variant_regime_metrics": _read_jsonl(root / "v4_variant_regime_metrics.jsonl"),
-        "v4_variant_stability_metrics": _read_jsonl(root / "v4_variant_stability_metrics.jsonl"),
-        "v4_variant_signal_metrics": _read_jsonl(root / "v4_variant_signal_metrics.jsonl"),
-        "v4_backfill_dir": str(root),
-    }
-
-
-def validate_micro_search_v4_backfill_artifact(
-    *,
-    v4_backfill_id: str,
-    output_dir: Path = DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
-) -> dict[str, Any]:
-    root = output_dir / v4_backfill_id
-    manifest = _read_optional_json(root / "micro_search_v4_backfill_manifest.json") or {}
-    progress = _read_optional_json(root / "v4_backfill_progress.json") or {}
-    performance = _read_jsonl(root / "v4_variant_performance.jsonl")
-    regime = _read_jsonl(root / "v4_variant_regime_metrics.jsonl")
-    stability = _read_jsonl(root / "v4_variant_stability_metrics.jsonl")
-    signal = _read_jsonl(root / "v4_variant_signal_metrics.jsonl")
-    checks = _required_file_checks(
-        root,
-        (
-            "micro_search_v4_backfill_manifest.json",
-            "v4_backfill_progress.json",
-            "v4_variant_performance.jsonl",
-            "v4_variant_regime_metrics.jsonl",
-            "v4_variant_stability_metrics.jsonl",
-            "v4_variant_signal_metrics.jsonl",
-            "micro_search_v4_backfill_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check(
-                "v4_backfill_id_matches",
-                manifest.get("v4_backfill_id") == v4_backfill_id,
-                "",
-            ),
-            st._check(
-                "variants_completed_visible",
-                int(_float(progress.get("variants_completed"))) > 0,
-                _text(progress.get("variants_completed")),
-            ),
-            st._check(
-                "data_quality_visible",
-                manifest.get("data_quality_status") in {"PASS", "PASS_WITH_WARNINGS"},
-                _text(manifest.get("data_quality_status")),
-            ),
-            st._check("performance_readable", bool(performance), ""),
-            st._check("regime_metrics_readable", bool(regime), ""),
-            st._check("stability_metrics_readable", bool(stability), ""),
-            st._check("signal_metrics_readable", bool(signal), ""),
-            st._check("broker_forbidden", _payload_safe(manifest, progress, *performance), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, progress, *performance, *signal),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_micro_search_v4_backfill_validation",
-        v4_backfill_id,
-        checks,
+def micro_search_v4_design_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_micro_search_foundation(
+        "micro_search_v4_design_report_payload", *args, **kwargs
     )
 
 
-def run_gate_calibrated_review(
-    *,
-    v4_backfill_id: str,
-    gate_calibration_id: str,
-    v4_backfill_dir: Path = DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
-    v4_design_dir: Path = DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
-    gate_calibration_dir: Path = DEFAULT_GATE_CALIBRATION_REVIEW_DIR,
-    output_dir: Path = DEFAULT_GATE_CALIBRATED_REVIEW_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    backfill = micro_search_v4_backfill_report_payload(
-        v4_backfill_id=v4_backfill_id,
-        output_dir=v4_backfill_dir,
-    )
-    design = micro_search_v4_design_report_payload(
-        v4_design_id=_text(backfill.get("v4_design_id")),
-        output_dir=v4_design_dir,
-    )
-    gate = gate_calibration_review_report_payload(
-        gate_calibration_id=gate_calibration_id,
-        output_dir=gate_calibration_dir,
-    )
-    rows = _v4_scorecard_rows(backfill, design)
-    official = _gate_review_rows(rows, diagnostic=False)
-    diagnostic = _gate_review_rows(rows, diagnostic=True)
-    summary = _gate_calibrated_summary(official, diagnostic, gate)
-    gate_review_id = _stable_id(
-        "gate-calibrated-review",
-        v4_backfill_id,
-        gate_calibration_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / gate_review_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_gate_calibrated_review_manifest",
-        "gate_review_id": root.name,
-        "v4_backfill_id": v4_backfill_id,
-        "v4_design_id": backfill.get("v4_design_id"),
-        "gate_calibration_id": gate_calibration_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if rows else "FAIL",
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "gate_calibrated_review_manifest_path": str(root / "gate_calibrated_review_manifest.json"),
-        "official_gate_results_path": str(root / "official_gate_results.jsonl"),
-        "diagnostic_gate_results_path": str(root / "diagnostic_gate_results.jsonl"),
-        "gate_calibrated_summary_path": str(root / "gate_calibrated_summary.json"),
-        "gate_calibrated_review_report_path": str(root / "gate_calibrated_review_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "gate_calibrated_review_manifest.json", manifest)
-    _write_jsonl(root / "official_gate_results.jsonl", official)
-    _write_jsonl(root / "diagnostic_gate_results.jsonl", diagnostic)
-    _write_json(root / "gate_calibrated_summary.json", summary)
-    _write_text(
-        root / "gate_calibrated_review_report.md",
-        render_gate_calibrated_review_report(manifest, summary),
-    )
-    _write_latest_pointer(
-        "latest_gate_calibrated_review",
-        root.name,
-        root / "gate_calibrated_review_manifest.json",
-    )
-    return {
-        "gate_review_id": root.name,
-        "gate_review_dir": root,
-        "manifest": manifest,
-        "official_gate_results": official,
-        "diagnostic_gate_results": diagnostic,
-        "gate_calibrated_summary": summary,
-    }
-
-
-def gate_calibrated_review_report_payload(
-    *,
-    gate_review_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_GATE_CALIBRATED_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=gate_review_id,
-        latest_pointer="latest_gate_calibrated_review",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="gate_calibrated_review_manifest.json",
-    )
-    return {
-        **_read_json(root / "gate_calibrated_review_manifest.json"),
-        "official_gate_results": _read_jsonl(root / "official_gate_results.jsonl"),
-        "diagnostic_gate_results": _read_jsonl(root / "diagnostic_gate_results.jsonl"),
-        "gate_calibrated_summary": _read_json(root / "gate_calibrated_summary.json"),
-        "gate_review_dir": str(root),
-    }
-
-
-def validate_gate_calibrated_review_artifact(
-    *,
-    gate_review_id: str,
-    output_dir: Path = DEFAULT_GATE_CALIBRATED_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = output_dir / gate_review_id
-    manifest = _read_optional_json(root / "gate_calibrated_review_manifest.json") or {}
-    official = _read_jsonl(root / "official_gate_results.jsonl")
-    diagnostic = _read_jsonl(root / "diagnostic_gate_results.jsonl")
-    summary = _read_optional_json(root / "gate_calibrated_summary.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "gate_calibrated_review_manifest.json",
-            "official_gate_results.jsonl",
-            "diagnostic_gate_results.jsonl",
-            "gate_calibrated_summary.json",
-            "gate_calibrated_review_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check(
-                "gate_review_id_matches",
-                manifest.get("gate_review_id") == gate_review_id,
-                "",
-            ),
-            st._check("official_results_readable", isinstance(official, list), ""),
-            st._check("diagnostic_results_readable", isinstance(diagnostic, list), ""),
-            st._check(
-                "diagnostic_only_no_policy_change",
-                summary.get("gate_policy_change_recommended") is False,
-                "",
-            ),
-            st._check(
-                "broker_forbidden",
-                _payload_safe(manifest, summary, *official, *diagnostic),
-                "",
-            ),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, summary, *official, *diagnostic),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_gate_calibrated_review_validation",
-        gate_review_id,
-        checks,
+def validate_micro_search_v4_design_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_micro_search_foundation(
+        "validate_micro_search_v4_design_artifact", *args, **kwargs
     )
 
 
-def run_signal_vs_parameter_attribution(
-    *,
-    signal_diagnosis_id: str,
-    consensus_review_id: str,
-    gate_review_id: str,
-    signal_dir: Path = DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
-    consensus_dir: Path = DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
-    gate_review_dir: Path = DEFAULT_GATE_CALIBRATED_REVIEW_DIR,
-    output_dir: Path = DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    signal = signal_instability_diagnosis_report_payload(
-        signal_diagnosis_id=signal_diagnosis_id,
-        output_dir=signal_dir,
+def run_micro_search_v4_backfill(*args: Any, **kwargs: Any) -> Any:
+    return _call_micro_search_foundation(
+        "run_micro_search_v4_backfill", *args, **kwargs
     )
-    consensus = consensus_quality_review_report_payload(
-        consensus_review_id=consensus_review_id,
-        output_dir=consensus_dir,
-    )
-    gate = gate_calibrated_review_report_payload(
-        gate_review_id=gate_review_id,
-        output_dir=gate_review_dir,
-    )
-    failure = _signal_vs_parameter_failure_source(signal, consensus, gate)
-    shift = _recommended_research_shift(failure, consensus)
-    attribution_id = _stable_id(
-        "signal-vs-parameter-attribution",
-        signal_diagnosis_id,
-        consensus_review_id,
-        gate_review_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / attribution_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_signal_vs_parameter_manifest",
-        "attribution_id": root.name,
-        "signal_diagnosis_id": signal_diagnosis_id,
-        "consensus_review_id": consensus_review_id,
-        "gate_review_id": gate_review_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": signal.get("market_regime", "ai_after_chatgpt"),
-        "signal_vs_parameter_manifest_path": str(root / "signal_vs_parameter_manifest.json"),
-        "failure_source_attribution_path": str(root / "failure_source_attribution.json"),
-        "recommended_research_shift_path": str(root / "recommended_research_shift.json"),
-        "signal_vs_parameter_attribution_report_path": str(
-            root / "signal_vs_parameter_attribution_report.md"
-        ),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    reader = render_signal_vs_parameter_reader_brief(failure, shift)
-    _write_json(root / "signal_vs_parameter_manifest.json", manifest)
-    _write_json(root / "failure_source_attribution.json", failure)
-    _write_json(root / "recommended_research_shift.json", shift)
-    _write_text(
-        root / "signal_vs_parameter_attribution_report.md",
-        render_signal_vs_parameter_attribution_report(manifest, failure, shift),
-    )
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_signal_vs_parameter_attribution",
-        root.name,
-        root / "signal_vs_parameter_manifest.json",
-    )
-    return {
-        "signal_vs_parameter_id": root.name,
-        "attribution_dir": root,
-        "manifest": manifest,
-        "failure_source_attribution": failure,
-        "recommended_research_shift": shift,
-        "reader_brief_section": reader,
-    }
 
 
-def signal_vs_parameter_attribution_report_payload(
-    *,
-    attribution_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=attribution_id,
-        latest_pointer="latest_signal_vs_parameter_attribution",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="signal_vs_parameter_manifest.json",
+def micro_search_v4_backfill_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_micro_search_foundation(
+        "micro_search_v4_backfill_report_payload", *args, **kwargs
     )
-    return {
-        **_read_json(root / "signal_vs_parameter_manifest.json"),
-        "failure_source_attribution": _read_json(root / "failure_source_attribution.json"),
-        "recommended_research_shift": _read_json(root / "recommended_research_shift.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "attribution_dir": str(root),
-    }
 
 
-def validate_signal_vs_parameter_attribution_artifact(
-    *,
-    attribution_id: str,
-    output_dir: Path = DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR,
-) -> dict[str, Any]:
-    root = output_dir / attribution_id
-    manifest = _read_optional_json(root / "signal_vs_parameter_manifest.json") or {}
-    failure = _read_optional_json(root / "failure_source_attribution.json") or {}
-    shift = _read_optional_json(root / "recommended_research_shift.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "signal_vs_parameter_manifest.json",
-            "failure_source_attribution.json",
-            "recommended_research_shift.json",
-            "signal_vs_parameter_attribution_report.md",
-            "reader_brief_section.md",
-        ),
+def validate_micro_search_v4_backfill_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_micro_search_foundation(
+        "validate_micro_search_v4_backfill_artifact", *args, **kwargs
     )
-    checks.extend(
-        [
-            st._check(
-                "attribution_id_matches",
-                manifest.get("attribution_id") == attribution_id,
-                "",
-            ),
-            st._check(
-                "failure_source_valid",
-                failure.get("failure_source")
-                in {
-                    "PARAMETER_SPACE",
-                    "SIGNAL_QUALITY",
-                    "REGIME_TAGGING",
-                    "CONSENSUS_QUALITY",
-                    "GATE_POLICY",
-                    "MARKET_REGIME",
-                    "MIXED",
-                    "INCONCLUSIVE",
-                },
-                _text(failure.get("failure_source")),
-            ),
-            st._check("research_shift_visible", bool(shift.get("recommended_shift")), ""),
-            st._check("broker_forbidden", _payload_safe(manifest, failure, shift), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, failure, shift),
-                "",
-            ),
-        ]
+
+
+def run_gate_calibrated_review(*args: Any, **kwargs: Any) -> Any:
+    return _call_micro_search_foundation(
+        "run_gate_calibrated_review", *args, **kwargs
     )
-    return _validation_payload(
-        "etf_dynamic_v3_signal_vs_parameter_attribution_validation",
-        attribution_id,
-        checks,
+
+
+def gate_calibrated_review_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_micro_search_foundation(
+        "gate_calibrated_review_report_payload", *args, **kwargs
+    )
+
+
+def validate_gate_calibrated_review_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_micro_search_foundation(
+        "validate_gate_calibrated_review_artifact", *args, **kwargs
+    )
+
+
+def run_signal_vs_parameter_attribution(*args: Any, **kwargs: Any) -> Any:
+    return _call_micro_search_foundation(
+        "run_signal_vs_parameter_attribution", *args, **kwargs
+    )
+
+
+def signal_vs_parameter_attribution_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_micro_search_foundation(
+        "signal_vs_parameter_attribution_report_payload", *args, **kwargs
+    )
+
+
+def validate_signal_vs_parameter_attribution_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_micro_search_foundation(
+        "validate_signal_vs_parameter_attribution_artifact", *args, **kwargs
     )
 
 

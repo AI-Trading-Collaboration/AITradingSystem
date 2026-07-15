@@ -374,6 +374,10 @@ DYNAMIC_V3_SIGNAL_DIAGNOSIS_FOUNDATION_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_signal_diagnosis_foundation.py"
 )
+DYNAMIC_V3_MICRO_SEARCH_FOUNDATION_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_micro_search_foundation.py"
+)
 DYNAMIC_V3_WEIGHT_BATCH_SEARCH_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/etf_portfolio/dynamic_v3_weight_batch_search.py"
@@ -393,6 +397,10 @@ DYNAMIC_V3_WEIGHT_SEARCH_FOLLOWUP_PATH = (
 DYNAMIC_V3_SIGNAL_DIAGNOSIS_FOUNDATION_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/etf_portfolio/dynamic_v3_signal_diagnosis_foundation.py"
+)
+DYNAMIC_V3_MICRO_SEARCH_FOUNDATION_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/etf_portfolio/dynamic_v3_micro_search_foundation.py"
 )
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
@@ -547,7 +555,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 12693
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 12339
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -758,8 +766,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 12693
-    assert len(legacy_names) == 309
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 12339
+    assert len(legacy_names) == 297
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -3254,6 +3262,68 @@ def test_g2_4_signal_diagnosis_foundation_domain_leaves_legacy_owner() -> None:
         assert isinstance(call, ast.Call)
         assert isinstance(call.func, ast.Name)
         assert call.func.id == "_call_signal_diagnosis_foundation"
+        assert isinstance(call.args[0], ast.Constant)
+        assert call.args[0].value == name
+
+
+def test_g2_4_micro_search_foundation_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_tree = ast.parse(
+        DYNAMIC_V3_MICRO_SEARCH_FOUNDATION_COMMANDS_PATH.read_text(encoding="utf-8")
+    )
+    canonical_names = _function_names(canonical_tree)
+    callbacks = {
+        "dynamic_v3_micro_search_v4_design_run_command",
+        "dynamic_v3_micro_search_v4_design_report_command",
+        "dynamic_v3_validate_micro_search_v4_design_command",
+        "dynamic_v3_micro_search_v4_backfill_run_command",
+        "dynamic_v3_micro_search_v4_backfill_report_command",
+        "dynamic_v3_validate_micro_search_v4_backfill_command",
+        "dynamic_v3_gate_calibrated_review_run_command",
+        "dynamic_v3_gate_calibrated_review_report_command",
+        "dynamic_v3_validate_gate_calibrated_review_command",
+        "dynamic_v3_signal_vs_parameter_attribution_run_command",
+        "dynamic_v3_signal_vs_parameter_attribution_report_command",
+        "dynamic_v3_validate_signal_vs_parameter_attribution_command",
+    }
+    assert len(callbacks) == 12
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert "dynamic_v3_micro_search_foundation" in _imported_names(canonical_tree)
+
+
+def test_g2_4_micro_search_foundation_domain_leaves_legacy_owner() -> None:
+    legacy_tree = ast.parse(DYNAMIC_V3_WEIGHT_BATCH_SEARCH_PATH.read_text(encoding="utf-8"))
+    canonical_tree = ast.parse(
+        DYNAMIC_V3_MICRO_SEARCH_FOUNDATION_PATH.read_text(encoding="utf-8")
+    )
+    entrypoints = {
+        "run_micro_search_v4_design",
+        "micro_search_v4_design_report_payload",
+        "validate_micro_search_v4_design_artifact",
+        "run_micro_search_v4_backfill",
+        "micro_search_v4_backfill_report_payload",
+        "validate_micro_search_v4_backfill_artifact",
+        "run_gate_calibrated_review",
+        "gate_calibrated_review_report_payload",
+        "validate_gate_calibrated_review_artifact",
+        "run_signal_vs_parameter_attribution",
+        "signal_vs_parameter_attribution_report_payload",
+        "validate_signal_vs_parameter_attribution_artifact",
+    }
+    legacy_functions = {
+        node.name: node for node in legacy_tree.body if isinstance(node, ast.FunctionDef)
+    }
+    assert entrypoints <= _function_names(canonical_tree)
+    for name in entrypoints:
+        wrapper = legacy_functions[name]
+        assert len(wrapper.body) == 1
+        assert isinstance(wrapper.body[0], ast.Return)
+        call = wrapper.body[0].value
+        assert isinstance(call, ast.Call)
+        assert isinstance(call.func, ast.Name)
+        assert call.func.id == "_call_micro_search_foundation"
         assert isinstance(call.args[0], ast.Constant)
         assert call.args[0].value == name
 

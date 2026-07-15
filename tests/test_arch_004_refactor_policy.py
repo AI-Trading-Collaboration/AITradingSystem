@@ -4625,6 +4625,62 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         assert phase_g2_4cx1["validation"]["full_validation"]["passed"] >= 6040
         assert phase_g2_4cx1["sources"]
         for source in phase_g2_4cx1["sources"]:
+            if source["path"] in set(phase_g2_4cx1.get("superseded_source_paths", [])):
+                continue
+            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            assert actual == source["sha256"], source["path"]
+
+    phase_g2_4cx2 = baseline[
+        "phase_g2_4cx2_etf_cli_dynamic_v3_micro_search_foundation"
+    ]
+    assert phase_g2_4cx2["status"] in {
+        "IN_PROGRESS",
+        "VALIDATING",
+        "COMPLETE_G2_4_CONTINUES",
+    }
+    migration_g2_4cx2 = phase_g2_4cx2["migration"]
+    assert migration_g2_4cx2["callback_count"] == 12
+    assert migration_g2_4cx2["domain_entrypoint_count"] == 12
+    assert len(migration_g2_4cx2["snapshot_schemas"]) == 4
+    assert migration_g2_4cx2["reviewed_micro_search_policy_required"] is True
+    assert migration_g2_4cx2["exact_cx1_scorecard_matrix_backfill_lineage_required"] is True
+    assert migration_g2_4cx2["exact_design_backfill_gate_lineage_required"] is True
+    assert (
+        migration_g2_4cx2[
+            "historical_calculation_and_current_quality_cache_roles_required"
+        ]
+        is True
+    )
+    assert migration_g2_4cx2["insufficient_dated_evidence_inconclusive_required"] is True
+    assert migration_g2_4cx2["market_regime_default_attribution_forbidden"] is True
+    assert migration_g2_4cx2["broker_action_allowed"] is False
+    assert migration_g2_4cx2["production_effect"] == "none"
+    subtraction_g2_4cx2 = phase_g2_4cx2["subtraction"]
+    assert subtraction_g2_4cx2["legacy_cli_lines_after"] == 12339
+    assert subtraction_g2_4cx2["legacy_cli_top_level_functions_after"] == 297
+    assert subtraction_g2_4cx2["legacy_cli_callback_decorators_after"] == 258
+    assert subtraction_g2_4cx2["legacy_cli_callback_reduction"] == 12
+    assert subtraction_g2_4cx2["legacy_domain_lazy_wrapper_count"] == 12
+    matrix_g2_4cx2 = phase_g2_4cx2["callback_matrix"]
+    assert matrix_g2_4cx2["migrated_callback_count"] == 709
+    assert matrix_g2_4cx2["pending_callback_count"] == 258
+    assert matrix_g2_4cx2["phase_exit_ready"] is False
+    hardening_g2_4cx2 = phase_g2_4cx2["hardening"]
+    assert hardening_g2_4cx2["output_artifact_family_tamper_checked"] == 4
+    assert hardening_g2_4cx2["snapshot_policy_binding_tamper_checked"] == 4
+    assert hardening_g2_4cx2["cross_lineage_fail_closed_checked"] is True
+    performance_g2_4cx2 = phase_g2_4cx2["performance"]
+    assert performance_g2_4cx2["observed_wall_time_improvement_percent"] >= 92.2
+    assert performance_g2_4cx2["observed_speedup_ratio"] >= 12.8
+    assert performance_g2_4cx2["stable_full_suite_improvement_claimed"] is False
+    assert performance_g2_4cx2["full_gate_reduced_for_performance"] is False
+    if phase_g2_4cx2["status"] == "COMPLETE_G2_4_CONTINUES":
+        assert phase_g2_4cx2["validation"]["focused"]["passed"] >= 169
+        assert phase_g2_4cx2["validation"]["architecture_fitness"]["passed"] >= 298
+        assert phase_g2_4cx2["validation"]["contract_validation"]["passed"] >= 203
+        assert phase_g2_4cx2["validation"]["full_validation"]["passed"] >= 6047
+        assert phase_g2_4cx2["sources"]
+        for source in phase_g2_4cx2["sources"]:
             actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
             assert actual == source["sha256"], source["path"]
 
@@ -4814,6 +4870,8 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CW2_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CW3_VALIDATING",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CW3_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CX2_VALIDATING_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CX2_COMPLETE_G2_4_CONTINUES",
     }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

@@ -1,0 +1,75 @@
+schema_version: dynamic_v3_micro_search_foundation_policy.v1
+policy_metadata:
+  policy_version: micro_search_foundation_v1
+  owner: etf-research-governance
+  status: pilot_baseline
+  rationale: >-
+    TRADING-320～323需要在不改变official promotion policy的条件下，把diagnosis、bounded
+    micro search、historical backfill、双轨gate review和failure attribution连接为可复算链路。
+  intended_effect: >-
+    只生成research-screening evidence；diagnostic gate不等于正式门槛变更，缺dated signal或
+    consensus evidence时failure source保持INCONCLUSIVE。
+  validation_evidence: ARCH-004G2.4CX2 lineage, DQ replay, rebuild and tamper tests
+  review_condition: >-
+    获得validated dated signal ledger、candidate weight path、独立forward evidence或owner批准的
+    calibration study后复核。
+
+design:
+  minimum_variant_count: 20
+  maximum_variant_count: 40
+  required_variant_ids:
+    - smooth_3d_plus_dispersion_gate
+    - smooth_3d_plus_topk_stability_filter
+    - smooth_3d_plus_rebalance_delta_3pct
+    - cash_buffer_8_plus_smooth_3d
+    - cash_buffer_10_plus_dispersion_gate
+    - median_consensus_plus_smooth_3d
+    - median_consensus_plus_dispersion_gate
+    - top5_consensus_plus_smooth_3d
+    - top5_consensus_plus_rebalance_threshold
+    - high_disagreement_hold_previous
+    - high_disagreement_reduce_tilt_50
+    - sideways_hold_plus_fast_restore
+  required_families:
+    - smoothing
+    - candidate_ensemble
+    - rebalance_threshold
+    - cash_buffer
+    - regime_gating
+    - risk_exposure_control
+  insufficient_evidence_status: DESIGN_READY_WITH_EVIDENCE_LIMITATIONS
+  variant_evidence_role: PILOT_HYPOTHESIS_ONLY
+
+gate_review:
+  scorecard_policy_version: weight_batch_scorecard_pilot_v1
+  official_research_score_min: 0.72
+  diagnostic_relaxation: 0.05
+  high_risk_failed_gates:
+    - drawdown_gate
+    - regime_gate
+    - data_quality_gate
+    - recovery_lag_gate
+  official_gate_change_allowed: false
+  diagnostic_candidate_role: MANUAL_REVIEW_EVIDENCE_ONLY
+
+failure_attribution:
+  missing_dated_signal_status: INSUFFICIENT_DATA
+  missing_dated_consensus_status: INSUFFICIENT_DATA
+  insufficient_failure_source: INCONCLUSIVE
+  insufficient_confidence: LOW
+  insufficient_recommended_shift: DEFER_AND_BUILD_DATED_EVIDENCE
+  insufficient_next_task_family: dated_signal_and_candidate_weight_ledger
+
+safety:
+  research_screening_only: true
+  experiment_only: true
+  not_formal_research_method: true
+  not_official_target_weights: true
+  paper_shadow_only: true
+  owner_review_required: true
+  paper_shadow_primary_changed: false
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  auto_apply: false
+  production_effect: none

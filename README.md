@@ -1607,6 +1607,16 @@ signal ledger 或 candidate-weight path，因此 Signal 不生成伪造 flip/mis
 `null`/空列表并标记 `INSUFFICIENT_DATA`。Validators 会重验 live source/policy/chronology
 并逐 byte 重建全部 JSON/JSONL/Markdown/Reader Brief。
 
+TRADING-320～323 的 canonical micro-search foundation 由
+`micro_search_foundation_v1.yaml` 管理，并为 Design、Backfill、Gate Review、Attribution
+分别冻结 `input_snapshot.v2`。Design 只能把当前 20～40 个 variants 标为
+`PILOT_HYPOTHESIS_ONLY`；Backfill 同时区分 historical calculation cache 与 current data
+quality cache，并在计算前重验 Design、Paper Backfill、cache 和 DQ；Gate Review 固定
+official threshold=0.72、diagnostic relaxation=0.05，diagnostic 结果不得修改 official policy。
+当 Signal/Consensus 的 dated evidence 为 `INSUFFICIENT_DATA` 时，Attribution 必须输出
+`INCONCLUSIVE/LOW` 与 `DEFER_AND_BUILD_DATED_EVIDENCE`，不得默认归因到
+`MARKET_REGIME`。四类 validator 均重验 live transitive bindings 并逐 byte 重建全部 views。
+
 TRADING-326_to_335_SIGNAL_FEATURE_DIAGNOSIS_AND_CANDIDATE_QUALITY_FILTER_PIPELINE
 在 TRADING-316～325 判断需要 signal-level fix 后，追加 research-only signal feature
 diagnosis 与 candidate quality filter pipeline。CLI 入口为 `signal-failure-taxonomy
