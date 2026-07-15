@@ -20,6 +20,23 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-15：G2.4CV3=`COMPLETE_G2_4_CONTINUES`。18 callbacks/18 public domain入口、六类
+  v2 snapshots、exact双链、27 views byte rebuild/tamper、reporting/CLI/deprecation/manifests全部
+  闭合；focused/architecture/contract/full=`145/285/203/6,029 passed`，full=`1,592.38s`，
+  generated=`934/1,128/858/0`，CLI tree/hash不变。首轮architecture 2项冻结同步失败已按同并行
+  tier重跑PASS。whole G2.4后续matrix pending，不触发handoff、不进入G2.5。
+- 2026-07-15：G2.4CV3 canonical implementation完成并转`VALIDATING`。18 callbacks/18 public
+  domain入口迁独立decision interface/domain，legacy root减至`13,828行/352 functions/313 decorators`；
+  六类v2 snapshots、exact双链、27 views byte rebuild、6 schema/3 cross-lineage tamper fail-close闭合。
+  业务/hardening focused=`6 passed / 230.02s`与`1 passed / 337.68s`，generated=
+  `934 modules / 1,128 tests / 858 writers / 0 violations`；CLI command tree/hash不变。正式
+  architecture/contract/full进行中；单slice不触发handoff，whole G2.4后续matrix仍pending。
+- 2026-07-15：G2.4CV3进入`IN_PROGRESS`。TRADING-294～305的Cluster/Interpretation/Gate/
+  Formal Plan/Dashboard/Owner Pack共18 callbacks/18 public业务入口迁独立canonical decision
+  interface/domain；六类bounded v2 snapshots、validated same-lineage Scorecard+Robustness→Cluster→
+  Interpretation→Gate→Plan、Scorecard+Adaptive+optional exact Gate→Dashboard→Owner Pack和all-view
+  byte rebuild为退出合同。Formal Plan固定`implemented=false`，Owner Pack只提供人工选项；whole
+  G2.4后续matrix仍pending，不触发handoff、不进入G2.5，`production_effect=none`。
 - 2026-07-15：G2.4CV2=`COMPLETE_G2_4_CONTINUES`。11 callbacks/11 public业务入口canonical
   evaluation迁移、legacy subtraction、三类v2 snapshots、exact common lineage、Branch授权的
   expanded Matrix/DQ Backfill及all-view rebuild/tamper fail-close正式闭合。focused/architecture/

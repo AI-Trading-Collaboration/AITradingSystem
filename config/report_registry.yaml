@@ -4154,6 +4154,7 @@ reports:
     command: aits etf dynamic-v3-rescue weight-candidate-cluster report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/weight_candidate_cluster/*/candidate_cluster_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_candidate_cluster/*/weight_candidate_cluster_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_candidate_cluster/*/candidate_clusters.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_candidate_cluster/*/cluster_representatives.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_candidate_cluster/*/candidate_cluster_report.md
@@ -4174,6 +4175,7 @@ reports:
     command: aits etf dynamic-v3-rescue weight-top-candidate-interpretation report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/weight_top_candidate_interpretation/*/top_candidate_interpretation_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_top_candidate_interpretation/*/weight_top_candidate_interpretation_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_top_candidate_interpretation/*/top_candidate_explanations.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/weight_top_candidate_interpretation/*/failure_mode_coverage.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_top_candidate_interpretation/*/top_candidate_interpretation_report.md
@@ -4196,6 +4198,7 @@ reports:
     command: aits etf dynamic-v3-rescue weight-method-promotion-gate report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/weight_method_promotion_gate/*/promotion_gate_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_method_promotion_gate/*/weight_method_promotion_gate_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_method_promotion_gate/*/promotion_gate_decision.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_method_promotion_gate/*/promoted_candidate_specs.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_method_promotion_gate/*/promotion_gate_report.md
@@ -4216,6 +4219,7 @@ reports:
     command: aits etf dynamic-v3-rescue formal-method-auto-plan report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/formal_method_auto_plan/*/formal_method_auto_plan_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/formal_method_auto_plan/*/formal_method_auto_plan_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/formal_method_auto_plan/*/formal_method_specs.json
       - reports/etf_portfolio/dynamic_v3_rescue/formal_method_auto_plan/*/implementation_plan.md
       - reports/etf_portfolio/dynamic_v3_rescue/formal_method_auto_plan/*/validation_plan.json
@@ -4238,6 +4242,7 @@ reports:
     command: aits etf dynamic-v3-rescue weight-search-dashboard report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/weight_search_dashboard/*/search_dashboard_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_search_dashboard/*/weight_search_dashboard_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_search_dashboard/*/search_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_search_dashboard/*/top_candidates.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_search_dashboard/*/rejected_summary.json
@@ -4261,6 +4266,7 @@ reports:
     command: aits etf dynamic-v3-rescue owner-research-decision-pack report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/owner_research_decision_pack/*/owner_decision_pack_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_research_decision_pack/*/owner_research_decision_pack_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/owner_research_decision_pack/*/owner_decision_options.json
       - reports/etf_portfolio/dynamic_v3_rescue/owner_research_decision_pack/*/owner_decision_pack_report.md
     freshness_sla_days: 30

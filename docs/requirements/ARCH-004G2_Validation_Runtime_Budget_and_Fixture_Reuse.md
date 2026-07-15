@@ -54,6 +54,18 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
   单worker working set最高约`2.69GiB`，99%阶段18个Python进程合计约`12.23GiB`，且runner
   无active nodeid/elapsed/ETA心跳。S2因此增加Weight Search Evaluation immutable fixture DAG复用，
   S3必须限制memory-heavy shards并发，不能只按文件数平均或盲目增加worker。
+- G2.4CV3现有六个业务测试在`-n16 --dist loadfile`下为`6 passed / 230.02s`；每个文件
+  各自从Search上游重建一次完整fixture DAG。新增hardening改为单个module fixture只建链一次，覆盖
+  27个materialized-view drift、6个snapshot schema drift与3个cross-lineage drift，但其六个baseline
+  validator仍递归重复重放同一source链，实测`1 passed / 337.68s`。这说明fixture共享已减少重复producer，
+  下一瓶颈是同一次validation run内的PASS-only validator重放去重，而不是继续增加worker。
+- G2.4CV3 final full=`6,029 passed / 1,592.38s`，相对CV2的`1,542.60s`单次增加
+  `49.78s`（约`+3.23%`），继续证明单次运行不能支持稳定提速结论。前三长尾仍为confirmation
+  weekly=`977.42s`、dashboard=`635.07s`、rule queue=`505.32s`；CV3 decision hardening=
+  `414.50s`已升至第4，Owner Pack/Dashboard/Formal Plan分别=`292.58/219.74/178.31s`。
+  99%阶段抽样18个Python进程working set峰值约`15.09GiB`、private约`27.61GiB`，最大单worker
+  working set约`3.29GiB`；尾段working set随后回落约`9.9GiB`。因此Decision链同run fingerprint
+  复用和peak-memory-aware并发上限都是S2/S3必需项。
 
 ## 设计原则
 
@@ -84,6 +96,9 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
   `confirmation_dashboard`、`rule_owner_decision`；
 - 把 `weight_search_evaluation_hardening` / `weight_expanded_search` 接入同一不可变
   Search→Matrix→Backfill fixture DAG，正常链共享，tamper 分支copy-on-write；
+- 把 `weight_search_decision_hardening` 的Cluster→Interpretation→Gate→Plan与
+  Scorecard+Adaptive→Dashboard→Owner接入显式validation context；key必须包含validator、artifact
+  absolute path、全view/source fingerprint与语义参数，同一run仅缓存PASS，tamper后必须立即失效；
 - 接入 content-fingerprint validation session，并把 source commitments 改为 bounded contract；
 - module fixture 共享 immutable upstream，tamper 场景 copy-on-write。
 
@@ -116,8 +131,9 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 G2.4CR/CS 已完成第一批通用 validation session、bounded snapshot 和 fixture path isolation；本任务
 承接剩余 confirmation/full-suite 长尾。CV1/CU/CV2的`2,501.39/1,939.34/1,542.60s`证明单次
 结果波动大，尚无稳定系统性提速；CV2 evaluation hardening已成为次级新热点，但前三仍是既有
-confirmation/rule链。建议实施顺序保持S2→S3：先完成confirmation weekly/dashboard、rule queue/
-owner decision及weight evaluation的content-fingerprint / bounded immutable fixture治理，再用
+confirmation/rule链。CV3通过单次fixture建链降低producer重复，但full中`414.50s` hardening与
+`15.09GiB` working set峰值说明recursive validator和并发内存仍是显著次级热点。建议实施顺序保持S2→S3：先完成confirmation weekly/dashboard、rule queue/
+owner decision及weight evaluation/decision的content-fingerprint / bounded immutable fixture治理，再用
 duration+peak-memory manifest比较loadfile/loadscope/explicit shard并限制memory-heavy并发，补
 active-node heartbeat、当前node/worker资源与ETA；最终用连续3次median/P95与最大shard验收。
 它是研发效率治理，不是ARCH-004 G2.5解锁条件，也不得绕过owner已批准的phase-level

@@ -4,7 +4,7 @@
 
 ## 状态
 
-`IN_PROGRESS`（ARCH-004G2.4CV1 implementation complete / formal validation；CV2/CV3 pending）
+`IN_PROGRESS`（ARCH-004G2.4CV1/CV2/CV3 complete；whole G2.4后续matrix pending）
 
 Owner 要求推进附件中的 TRADING-286～305。本阶段把 dynamic v3 rescue weight search 从上一轮单点实验扩展为 research-only batch search、scorecard、robustness review、adaptive branch、expanded search、candidate cluster、top interpretation、promotion gate、formal method auto plan、dashboard 和 owner decision pack。
 
@@ -75,6 +75,30 @@ CV1退出要求：
 
 ## 进展记录
 
+- 2026-07-15：G2.4CV3=`COMPLETE_G2_4_CONTINUES`。18 callbacks/18 public domain入口、
+  六类v2 snapshots、exact双链、27 views byte rebuild、6 schema/3 cross-lineage tamper与legacy
+  subtraction正式闭合。focused/architecture/contract/full=`145/285/203/6,029 passed`，full=
+  `1,592.38s`，generated=`934/1,128/858/0`，CLI tree/hash不变。architecture首轮2项仅因CV3
+  attribution allowlist与manifest freshness未同步，修正后同16-worker tier全过，未用serial替代。
+  full长尾前三=`977.42/635.07/505.32s`，CV3 hardening=`414.50s`第4，99%阶段working set峰值
+  抽样约`15.09GiB`；效率任务继续治理同run fingerprint复用与内存感知分片。whole G2.4后续
+  matrix仍pending，不触发ARCH-005 handoff、不进入G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CV3 canonical implementation完成并转`VALIDATING`。18 callbacks/18 public
+  domain入口已迁`dynamic_v3_weight_search_decision.py` interface/domain；legacy CLI减至
+  `13,828行/352 functions/313 decorators`，legacy weight domain减至`10,819行`并只保留18个
+  lazy wrappers。六类v2 snapshots、exact双链lineage、27个materialized views byte rebuild、
+  6个schema与3个cross-lineage tamper fail-close已闭合。现有六业务测试=`6 passed / 230.02s`，
+  单次建链hardening=`1 passed / 337.68s`；generated=`934 modules / 1,128 tests / 858 writers /
+  0 violations`，CLI仍`41/291/993/0`且tree hash不变。正在执行architecture/contract/full gates；
+  CV3完成后整个G2.4仍继续，后续matrix pending，不触发handoff、不进入G2.5。
+- 2026-07-15：G2.4CV3 contract freeze并进入`IN_PROGRESS`。范围固定TRADING-294～305：
+  Candidate Cluster、Top Interpretation、Promotion Gate、Formal Auto Plan、Search Dashboard、Owner
+  Decision Pack各3 callbacks/public domain入口，共18/18迁独立canonical `weight_search_decision`
+  interface/domain。六类v2 snapshots依次冻结exact Scorecard+Robustness、Cluster、Interpretation、
+  Gate、Scorecard+Adaptive+optional Gate、Dashboard；producer写件前调用CV2 canonical validators并
+  拒绝跨lineage，validator重验live sources并逐byte重建所有views。Plan固定plan-only/
+  `implemented=false`，Owner Pack只生成manual review options。后续G2.4 matrix仍pending，不触发
+  ARCH-005 handoff、不进入G2.5，`production_effect=none`。
 - 2026-07-15：G2.4CV2=`COMPLETE_G2_4_CONTINUES`。Scorecard/Robustness/Adaptive/Expanded的
   11 callbacks/11 public domain入口已完成canonical evaluation迁移；三类v2 snapshots、exact
   common lineage、Branch authorization、canonical Matrix/DQ Backfill delegation、14个业务view+

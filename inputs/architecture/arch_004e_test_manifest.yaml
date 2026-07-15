@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 test_root: tests
-test_file_count: 1127
-test_count: 1069
+test_file_count: 1128
+test_count: 1070
 support_file_count: 58
 orphan_count: 0
 specific_overlap_count: 0
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 21a4ae5bf5d42626a472acf7eddf27c6cb5f257ac61a86b5e4fd00ea7358216d
+  sha256: b78d4aec953a92cd6d312bc142dfb5c52593be8018ff207ed5bd29a614a1760c
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7605,7 +7605,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g2_etf_cli_contract
   path: tests/test_arch_004g2_etf_cli_contract.py
-  sha256: 8bbddf73a5c8cfb1a211fdad560e1723064af3e9847cad61ac4e6b93d07c1b87
+  sha256: bda30c9469e83883bd34ade5a4358febb5c6b6d623c991403bd01ed6ca218dfd
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7623,7 +7623,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 62524df754a7045924cb6873d56074d24500dd395e37bf9b56082e871f2c01d9
+  sha256: a1aaa039f87efcd5114fc0206fd96e213c4f6d3e8d885d67981c3659545a87ad
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -15862,6 +15862,22 @@ tests:
 - test_id: tests.test_weight_search_dashboard
   path: tests/test_weight_search_dashboard.py
   sha256: ac071aa480ca41447dedbcf4c28d5a1a8ab38be21315c6d0f16a7c2cfad4b91a
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_weight_search_decision_hardening
+  path: tests/test_weight_search_decision_hardening.py
+  sha256: 42e07bc6b264c853d6df61fbb677d031842952f52fb5f441eb26da92e6aa3241
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

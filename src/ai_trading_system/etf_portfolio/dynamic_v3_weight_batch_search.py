@@ -332,720 +332,99 @@ def run_weight_expanded_search(*args: Any, **kwargs: Any) -> Any:
     return _call_weight_search_evaluation("run_weight_expanded_search", *args, **kwargs)
 
 
-def run_weight_candidate_cluster(
-    *,
-    scorecard_id: str,
-    robustness_id: str,
-    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
-    robustness_dir: Path = DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
-    output_dir: Path = DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
-    robustness = weight_robustness_review_report_payload(
-        robustness_id=robustness_id, output_dir=robustness_dir
-    )
-    clusters, representatives = _candidate_clusters(scorecard, robustness)
-    cluster_id = _stable_id(
-        "weight-candidate-cluster", scorecard_id, robustness_id, generated.isoformat()
-    )
-    root = _unique_dir(output_dir / cluster_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weight_candidate_cluster_manifest",
-        "cluster_id": root.name,
-        "scorecard_id": scorecard_id,
-        "robustness_id": robustness_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if representatives else "FAIL",
-        "cluster_count": len(clusters.get("clusters", [])),
-        "candidate_cluster_manifest_path": str(root / "candidate_cluster_manifest.json"),
-        "candidate_clusters_path": str(root / "candidate_clusters.json"),
-        "cluster_representatives_path": str(root / "cluster_representatives.json"),
-        "candidate_cluster_report_path": str(root / "candidate_cluster_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "candidate_cluster_manifest.json", manifest)
-    _write_json(root / "candidate_clusters.json", clusters)
-    _write_json(root / "cluster_representatives.json", representatives)
-    _write_text(
-        root / "candidate_cluster_report.md",
-        render_candidate_cluster_report(manifest, representatives),
-    )
-    _write_latest_pointer(
-        "latest_weight_candidate_cluster", root.name, root / "candidate_cluster_manifest.json"
-    )
-    return {
-        "cluster_id": root.name,
-        "cluster_dir": root,
-        "manifest": manifest,
-        "candidate_clusters": clusters,
-        "cluster_representatives": representatives,
-    }
+def _call_weight_search_decision(name: str, *args: Any, **kwargs: Any) -> Any:
+    from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_decision as decision
+
+    return getattr(decision, name)(*args, **kwargs)
 
 
-def weight_candidate_cluster_report_payload(
-    *,
-    cluster_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=cluster_id,
-        latest_pointer="latest_weight_candidate_cluster",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="candidate_cluster_manifest.json",
-    )
-    return {
-        **_read_json(root / "candidate_cluster_manifest.json"),
-        "candidate_clusters": _read_json(root / "candidate_clusters.json"),
-        "cluster_representatives": _read_json(root / "cluster_representatives.json"),
-        "cluster_dir": str(root),
-    }
+def run_weight_candidate_cluster(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision("run_weight_candidate_cluster", *args, **kwargs)
 
 
-def validate_weight_candidate_cluster_artifact(
-    *,
-    cluster_id: str,
-    output_dir: Path = DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR,
-) -> dict[str, Any]:
-    root = output_dir / cluster_id
-    manifest = _read_optional_json(root / "candidate_cluster_manifest.json") or {}
-    representatives = _read_optional_json(root / "cluster_representatives.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "candidate_cluster_manifest.json",
-            "candidate_clusters.json",
-            "cluster_representatives.json",
-            "candidate_cluster_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("cluster_id_matches", manifest.get("cluster_id") == cluster_id, ""),
-            st._check(
-                "representatives_present",
-                bool(_records(representatives.get("representatives"))),
-                "",
-            ),
-            st._check("broker_forbidden", _payload_safe(manifest, representatives), ""),
-            st._check(
-                "experiment_safety_locked", _payload_experiment_safe(manifest, representatives), ""
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_weight_candidate_cluster_validation", cluster_id, checks
+def weight_candidate_cluster_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision("weight_candidate_cluster_report_payload", *args, **kwargs)
+
+
+def validate_weight_candidate_cluster_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision(
+        "validate_weight_candidate_cluster_artifact", *args, **kwargs
     )
 
 
-def run_weight_top_candidate_interpretation(
-    *,
-    cluster_id: str,
-    cluster_dir: Path = DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR,
-    output_dir: Path = DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    cluster = weight_candidate_cluster_report_payload(cluster_id=cluster_id, output_dir=cluster_dir)
-    reps = _records(_mapping(cluster.get("cluster_representatives")).get("representatives"))
-    explanations = [_candidate_explanation(row) for row in reps[:5]]
-    coverage = _failure_mode_coverage_from_explanations(explanations)
-    interpretation_id = _stable_id(
-        "weight-top-candidate-interpretation", cluster_id, generated.isoformat()
-    )
-    root = _unique_dir(output_dir / interpretation_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weight_top_candidate_interpretation_manifest",
-        "interpretation_id": root.name,
-        "cluster_id": cluster_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if explanations else "FAIL",
-        "recommended_variant": _text(explanations[0].get("variant_id")) if explanations else "",
-        "top_candidate_interpretation_manifest_path": str(
-            root / "top_candidate_interpretation_manifest.json"
-        ),
-        "top_candidate_explanations_path": str(root / "top_candidate_explanations.jsonl"),
-        "failure_mode_coverage_path": str(root / "failure_mode_coverage.json"),
-        "top_candidate_interpretation_report_path": str(
-            root / "top_candidate_interpretation_report.md"
-        ),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    reader = render_top_candidate_reader_brief(manifest, explanations)
-    _write_json(root / "top_candidate_interpretation_manifest.json", manifest)
-    _write_jsonl(root / "top_candidate_explanations.jsonl", explanations)
-    _write_json(root / "failure_mode_coverage.json", coverage)
-    _write_text(
-        root / "top_candidate_interpretation_report.md",
-        render_top_candidate_interpretation_report(manifest, explanations),
-    )
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_weight_top_candidate_interpretation",
-        root.name,
-        root / "top_candidate_interpretation_manifest.json",
-    )
-    return {
-        "interpretation_id": root.name,
-        "interpretation_dir": root,
-        "manifest": manifest,
-        "top_candidate_explanations": explanations,
-        "failure_mode_coverage": coverage,
-        "reader_brief_section": reader,
-    }
+def run_weight_top_candidate_interpretation(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision("run_weight_top_candidate_interpretation", *args, **kwargs)
 
 
-def weight_top_candidate_interpretation_report_payload(
-    *,
-    interpretation_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=interpretation_id,
-        latest_pointer="latest_weight_top_candidate_interpretation",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="top_candidate_interpretation_manifest.json",
-    )
-    return {
-        **_read_json(root / "top_candidate_interpretation_manifest.json"),
-        "top_candidate_explanations": _read_jsonl(root / "top_candidate_explanations.jsonl"),
-        "failure_mode_coverage": _read_json(root / "failure_mode_coverage.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "interpretation_dir": str(root),
-    }
-
-
-def validate_weight_top_candidate_interpretation_artifact(
-    *,
-    interpretation_id: str,
-    output_dir: Path = DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR,
-) -> dict[str, Any]:
-    root = output_dir / interpretation_id
-    manifest = _read_optional_json(root / "top_candidate_interpretation_manifest.json") or {}
-    explanations = _read_jsonl(root / "top_candidate_explanations.jsonl")
-    checks = _required_file_checks(
-        root,
-        (
-            "top_candidate_interpretation_manifest.json",
-            "top_candidate_explanations.jsonl",
-            "failure_mode_coverage.json",
-            "top_candidate_interpretation_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check(
-                "interpretation_id_matches",
-                manifest.get("interpretation_id") == interpretation_id,
-                "",
-            ),
-            st._check("explanations_present", bool(explanations), ""),
-            st._check("broker_forbidden", _payload_safe(manifest, *explanations), ""),
-            st._check(
-                "experiment_safety_locked", _payload_experiment_safe(manifest, *explanations), ""
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_weight_top_candidate_interpretation_validation", interpretation_id, checks
+def weight_top_candidate_interpretation_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision(
+        "weight_top_candidate_interpretation_report_payload", *args, **kwargs
     )
 
 
-def run_weight_method_promotion_gate(
-    *,
-    interpretation_id: str,
-    interpretation_dir: Path = DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR,
-    output_dir: Path = DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    interpretation = weight_top_candidate_interpretation_report_payload(
-        interpretation_id=interpretation_id,
-        output_dir=interpretation_dir,
-    )
-    decisions = _promotion_gate_decisions(
-        _records(interpretation.get("top_candidate_explanations"))
-    )
-    promoted = [row for row in decisions if row["decision"] == "PROMOTE_TO_FORMAL_IMPLEMENTATION"][
-        :3
-    ]
-    gate_id = _stable_id("weight-method-promotion-gate", interpretation_id, generated.isoformat())
-    root = _unique_dir(output_dir / gate_id)
-    root.mkdir(parents=True, exist_ok=False)
-    decision_payload = {
-        "schema_version": st.SCHEMA_VERSION,
-        "promotion_gate_id": root.name,
-        "decision_summary": _promotion_decision_summary(decisions),
-        "decisions": decisions,
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    specs = {
-        "schema_version": st.SCHEMA_VERSION,
-        "promoted_candidates": [_promoted_candidate_spec(row) for row in promoted],
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weight_method_promotion_gate_manifest",
-        "promotion_gate_id": root.name,
-        "interpretation_id": interpretation_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if decisions else "FAIL",
-        "promoted_candidate_count": len(promoted),
-        "promotion_gate_manifest_path": str(root / "promotion_gate_manifest.json"),
-        "promotion_gate_decision_path": str(root / "promotion_gate_decision.json"),
-        "promoted_candidate_specs_path": str(root / "promoted_candidate_specs.json"),
-        "promotion_gate_report_path": str(root / "promotion_gate_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "promotion_gate_manifest.json", manifest)
-    _write_json(root / "promotion_gate_decision.json", decision_payload)
-    _write_json(root / "promoted_candidate_specs.json", specs)
-    _write_text(
-        root / "promotion_gate_report.md", render_promotion_gate_report(manifest, decision_payload)
-    )
-    _write_latest_pointer(
-        "latest_weight_method_promotion_gate", root.name, root / "promotion_gate_manifest.json"
-    )
-    return {
-        "promotion_gate_id": root.name,
-        "promotion_gate_dir": root,
-        "manifest": manifest,
-        "promotion_gate_decision": decision_payload,
-        "promoted_candidate_specs": specs,
-    }
-
-
-def weight_method_promotion_gate_report_payload(
-    *,
-    promotion_gate_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=promotion_gate_id,
-        latest_pointer="latest_weight_method_promotion_gate",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="promotion_gate_manifest.json",
-    )
-    return {
-        **_read_json(root / "promotion_gate_manifest.json"),
-        "promotion_gate_decision": _read_json(root / "promotion_gate_decision.json"),
-        "promoted_candidate_specs": _read_json(root / "promoted_candidate_specs.json"),
-        "promotion_gate_dir": str(root),
-    }
-
-
-def validate_weight_method_promotion_gate_artifact(
-    *,
-    promotion_gate_id: str,
-    output_dir: Path = DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
-) -> dict[str, Any]:
-    root = output_dir / promotion_gate_id
-    manifest = _read_optional_json(root / "promotion_gate_manifest.json") or {}
-    decision = _read_optional_json(root / "promotion_gate_decision.json") or {}
-    specs = _read_optional_json(root / "promoted_candidate_specs.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "promotion_gate_manifest.json",
-            "promotion_gate_decision.json",
-            "promoted_candidate_specs.json",
-            "promotion_gate_report.md",
-        ),
-    )
-    allowed = {
-        "PROMOTE_TO_FORMAL_IMPLEMENTATION",
-        "KEEP_FOR_MORE_TESTING",
-        "REJECT",
-        "DEFER_FOR_FORWARD_DATA",
-    }
-    checks.extend(
-        [
-            st._check(
-                "promotion_gate_id_matches",
-                manifest.get("promotion_gate_id") == promotion_gate_id,
-                "",
-            ),
-            st._check(
-                "decision_types_valid",
-                {row.get("decision") for row in _records(decision.get("decisions"))}.issubset(
-                    allowed
-                ),
-                "",
-            ),
-            st._check(
-                "promoted_specs_bounded", len(_records(specs.get("promoted_candidates"))) <= 3, ""
-            ),
-            st._check("broker_forbidden", _payload_safe(manifest, decision, specs), ""),
-            st._check(
-                "experiment_safety_locked", _payload_experiment_safe(manifest, decision, specs), ""
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_weight_method_promotion_gate_validation", promotion_gate_id, checks
+def validate_weight_top_candidate_interpretation_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision(
+        "validate_weight_top_candidate_interpretation_artifact", *args, **kwargs
     )
 
 
-def run_formal_method_auto_plan(
-    *,
-    promotion_gate_id: str,
-    promotion_gate_dir: Path = DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
-    output_dir: Path = DEFAULT_FORMAL_METHOD_AUTO_PLAN_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    gate = weight_method_promotion_gate_report_payload(
-        promotion_gate_id=promotion_gate_id,
-        output_dir=promotion_gate_dir,
-    )
-    candidates = _records(_mapping(gate.get("promoted_candidate_specs")).get("promoted_candidates"))
-    specs = _formal_method_specs(candidates)
-    validation_plan = _formal_validation_plan(specs)
-    plan_id = _stable_id("formal-method-auto-plan", promotion_gate_id, generated.isoformat())
-    root = _unique_dir(output_dir / plan_id)
-    root.mkdir(parents=True, exist_ok=False)
-    status = "PLAN_READY" if _records(specs.get("methods")) else "SKIPPED_NO_PROMOTED_CANDIDATE"
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_formal_method_auto_plan_manifest",
-        "plan_id": root.name,
-        "promotion_gate_id": promotion_gate_id,
-        "generated_at": generated.isoformat(),
-        "status": status,
-        "implemented": False,
-        "implementation_reason": (
-            "auto-plan only; no official target, broker, production, or owner approval action"
-        ),
-        "formal_method_auto_plan_manifest_path": str(
-            root / "formal_method_auto_plan_manifest.json"
-        ),
-        "formal_method_specs_path": str(root / "formal_method_specs.json"),
-        "implementation_plan_path": str(root / "implementation_plan.md"),
-        "validation_plan_path": str(root / "validation_plan.json"),
-        "formal_method_auto_plan_report_path": str(root / "formal_method_auto_plan_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    plan_text = render_formal_method_implementation_plan(manifest, specs, validation_plan)
-    _write_json(root / "formal_method_auto_plan_manifest.json", manifest)
-    _write_json(root / "formal_method_specs.json", specs)
-    _write_text(root / "implementation_plan.md", plan_text)
-    _write_json(root / "validation_plan.json", validation_plan)
-    _write_text(
-        root / "formal_method_auto_plan_report.md",
-        render_formal_method_auto_plan_report(manifest, specs),
-    )
-    _write_latest_pointer(
-        "latest_formal_method_auto_plan", root.name, root / "formal_method_auto_plan_manifest.json"
-    )
-    return {
-        "plan_id": root.name,
-        "plan_dir": root,
-        "manifest": manifest,
-        "formal_method_specs": specs,
-        "validation_plan": validation_plan,
-        "implementation_plan": plan_text,
-    }
+def run_weight_method_promotion_gate(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision("run_weight_method_promotion_gate", *args, **kwargs)
 
 
-def formal_method_auto_plan_report_payload(
-    *,
-    plan_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_FORMAL_METHOD_AUTO_PLAN_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=plan_id,
-        latest_pointer="latest_formal_method_auto_plan",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="formal_method_auto_plan_manifest.json",
-    )
-    return {
-        **_read_json(root / "formal_method_auto_plan_manifest.json"),
-        "formal_method_specs": _read_json(root / "formal_method_specs.json"),
-        "validation_plan": _read_json(root / "validation_plan.json"),
-        "implementation_plan": (root / "implementation_plan.md").read_text(encoding="utf-8"),
-        "plan_dir": str(root),
-    }
-
-
-def validate_formal_method_auto_plan_artifact(
-    *,
-    plan_id: str,
-    output_dir: Path = DEFAULT_FORMAL_METHOD_AUTO_PLAN_DIR,
-) -> dict[str, Any]:
-    root = output_dir / plan_id
-    manifest = _read_optional_json(root / "formal_method_auto_plan_manifest.json") or {}
-    specs = _read_optional_json(root / "formal_method_specs.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "formal_method_auto_plan_manifest.json",
-            "formal_method_specs.json",
-            "implementation_plan.md",
-            "validation_plan.json",
-            "formal_method_auto_plan_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("plan_id_matches", manifest.get("plan_id") == plan_id, ""),
-            st._check("implemented_false", manifest.get("implemented") is False, ""),
-            st._check(
-                "method_specs_safe",
-                all(
-                    row.get("broker_action_allowed") is False
-                    and row.get("production_effect") == st.PRODUCTION_EFFECT
-                    for row in _records(specs.get("methods"))
-                ),
-                "",
-            ),
-            st._check("broker_forbidden", _payload_safe(manifest, specs), ""),
-            st._check("experiment_safety_locked", _payload_experiment_safe(manifest, specs), ""),
-        ]
-    )
-    return _validation_payload("etf_dynamic_v3_formal_method_auto_plan_validation", plan_id, checks)
-
-
-def build_weight_search_dashboard(
-    *,
-    scorecard_id: str,
-    branch_id: str,
-    promotion_gate_id: str | None = None,
-    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
-    branch_dir: Path = DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
-    promotion_gate_dir: Path = DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
-    output_dir: Path = DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
-    branch = weight_adaptive_branch_report_payload(branch_id=branch_id, output_dir=branch_dir)
-    gate = (
-        weight_method_promotion_gate_report_payload(
-            promotion_gate_id=promotion_gate_id,
-            output_dir=promotion_gate_dir,
-        )
-        if promotion_gate_id
-        else {}
-    )
-    summary = _dashboard_summary(scorecard, branch, gate)
-    dashboard_id = _stable_id(
-        "weight-search-dashboard",
-        scorecard_id,
-        branch_id,
-        promotion_gate_id or "",
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / dashboard_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weight_search_dashboard_manifest",
-        "dashboard_id": root.name,
-        "scorecard_id": scorecard_id,
-        "branch_id": branch_id,
-        "promotion_gate_id": promotion_gate_id or "",
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "search_dashboard_manifest_path": str(root / "search_dashboard_manifest.json"),
-        "search_summary_path": str(root / "search_summary.json"),
-        "top_candidates_path": str(root / "top_candidates.json"),
-        "rejected_summary_path": str(root / "rejected_summary.json"),
-        "next_actions_path": str(root / "next_actions.json"),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    reader = render_dashboard_reader_brief(summary)
-    _write_json(root / "search_dashboard_manifest.json", manifest)
-    _write_json(root / "search_summary.json", summary["search_summary"])
-    _write_json(root / "top_candidates.json", summary["top_candidates"])
-    _write_json(root / "rejected_summary.json", summary["rejected_summary"])
-    _write_json(root / "next_actions.json", summary["next_actions"])
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_weight_search_dashboard", root.name, root / "search_dashboard_manifest.json"
-    )
-    return {
-        "dashboard_id": root.name,
-        "dashboard_dir": root,
-        "manifest": manifest,
-        **summary,
-        "reader_brief_section": reader,
-    }
-
-
-def weight_search_dashboard_report_payload(
-    *,
-    dashboard_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=dashboard_id,
-        latest_pointer="latest_weight_search_dashboard",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="search_dashboard_manifest.json",
-    )
-    return {
-        **_read_json(root / "search_dashboard_manifest.json"),
-        "search_summary": _read_json(root / "search_summary.json"),
-        "top_candidates": _read_json(root / "top_candidates.json"),
-        "rejected_summary": _read_json(root / "rejected_summary.json"),
-        "next_actions": _read_json(root / "next_actions.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "dashboard_dir": str(root),
-    }
-
-
-def validate_weight_search_dashboard_artifact(
-    *,
-    dashboard_id: str,
-    output_dir: Path = DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR,
-) -> dict[str, Any]:
-    root = output_dir / dashboard_id
-    manifest = _read_optional_json(root / "search_dashboard_manifest.json") or {}
-    summary = _read_optional_json(root / "search_summary.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "search_dashboard_manifest.json",
-            "search_summary.json",
-            "top_candidates.json",
-            "rejected_summary.json",
-            "next_actions.json",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("dashboard_id_matches", manifest.get("dashboard_id") == dashboard_id, ""),
-            st._check("summary_answers_variant_count", "variants_total" in summary, ""),
-            st._check("broker_forbidden", _payload_safe(manifest, summary), ""),
-            st._check("experiment_safety_locked", _payload_experiment_safe(manifest, summary), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_weight_search_dashboard_validation", dashboard_id, checks
+def weight_method_promotion_gate_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision(
+        "weight_method_promotion_gate_report_payload", *args, **kwargs
     )
 
 
-def build_owner_research_decision_pack(
-    *,
-    dashboard_id: str,
-    dashboard_dir: Path = DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR,
-    output_dir: Path = DEFAULT_OWNER_RESEARCH_DECISION_PACK_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    dashboard = weight_search_dashboard_report_payload(
-        dashboard_id=dashboard_id, output_dir=dashboard_dir
+def validate_weight_method_promotion_gate_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision(
+        "validate_weight_method_promotion_gate_artifact", *args, **kwargs
     )
-    options = _owner_decision_options(dashboard)
-    pack_id = _stable_id("owner-research-decision-pack", dashboard_id, generated.isoformat())
-    root = _unique_dir(output_dir / pack_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_owner_research_decision_pack_manifest",
-        "owner_pack_id": root.name,
-        "dashboard_id": dashboard_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "recommended_owner_decision": options.get("recommended_decision"),
-        "owner_decision_pack_manifest_path": str(root / "owner_decision_pack_manifest.json"),
-        "owner_decision_options_path": str(root / "owner_decision_options.json"),
-        "owner_decision_pack_report_path": str(root / "owner_decision_pack_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "owner_decision_pack_manifest.json", manifest)
-    _write_json(root / "owner_decision_options.json", options)
-    _write_text(
-        root / "owner_decision_pack_report.md", render_owner_decision_pack_report(manifest, options)
-    )
-    _write_latest_pointer(
-        "latest_owner_research_decision_pack", root.name, root / "owner_decision_pack_manifest.json"
-    )
-    return {
-        "owner_pack_id": root.name,
-        "owner_pack_dir": root,
-        "manifest": manifest,
-        "owner_decision_options": options,
-    }
 
 
-def owner_research_decision_pack_report_payload(
-    *,
-    owner_pack_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_OWNER_RESEARCH_DECISION_PACK_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=owner_pack_id,
-        latest_pointer="latest_owner_research_decision_pack",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="owner_decision_pack_manifest.json",
-    )
-    return {
-        **_read_json(root / "owner_decision_pack_manifest.json"),
-        "owner_decision_options": _read_json(root / "owner_decision_options.json"),
-        "owner_pack_dir": str(root),
-    }
+def run_formal_method_auto_plan(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision("run_formal_method_auto_plan", *args, **kwargs)
 
 
-def validate_owner_research_decision_pack_artifact(
-    *,
-    owner_pack_id: str,
-    output_dir: Path = DEFAULT_OWNER_RESEARCH_DECISION_PACK_DIR,
-) -> dict[str, Any]:
-    root = output_dir / owner_pack_id
-    manifest = _read_optional_json(root / "owner_decision_pack_manifest.json") or {}
-    options = _read_optional_json(root / "owner_decision_options.json") or {}
-    allowed = {
-        "continue_search",
-        "implement_top_candidate",
-        "defer_for_forward_data",
-        "reject_all_candidates",
-        "run_expanded_search",
-    }
-    checks = _required_file_checks(
-        root,
-        (
-            "owner_decision_pack_manifest.json",
-            "owner_decision_options.json",
-            "owner_decision_pack_report.md",
-        ),
+def formal_method_auto_plan_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision("formal_method_auto_plan_report_payload", *args, **kwargs)
+
+
+def validate_formal_method_auto_plan_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision(
+        "validate_formal_method_auto_plan_artifact", *args, **kwargs
     )
-    checks.extend(
-        [
-            st._check("owner_pack_id_matches", manifest.get("owner_pack_id") == owner_pack_id, ""),
-            st._check(
-                "recommended_decision_valid",
-                options.get("recommended_decision") in allowed,
-                _text(options.get("recommended_decision")),
-            ),
-            st._check("broker_forbidden", _payload_safe(manifest, options), ""),
-            st._check("experiment_safety_locked", _payload_experiment_safe(manifest, options), ""),
-        ]
+
+
+def build_weight_search_dashboard(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision("build_weight_search_dashboard", *args, **kwargs)
+
+
+def weight_search_dashboard_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision("weight_search_dashboard_report_payload", *args, **kwargs)
+
+
+def validate_weight_search_dashboard_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision(
+        "validate_weight_search_dashboard_artifact", *args, **kwargs
     )
-    return _validation_payload(
-        "etf_dynamic_v3_owner_research_decision_pack_validation", owner_pack_id, checks
+
+
+def build_owner_research_decision_pack(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision("build_owner_research_decision_pack", *args, **kwargs)
+
+
+def owner_research_decision_pack_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision(
+        "owner_research_decision_pack_report_payload", *args, **kwargs
+    )
+
+
+def validate_owner_research_decision_pack_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_decision(
+        "validate_owner_research_decision_pack_artifact", *args, **kwargs
     )
 
 
