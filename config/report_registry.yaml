@@ -4088,6 +4088,7 @@ reports:
     command: aits etf dynamic-v3-rescue weight-scorecard report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/weight_scorecard/*/weight_scorecard_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_scorecard/*/weight_scorecard_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_scorecard/*/variant_scorecard.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/weight_scorecard/*/pareto_frontier.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_scorecard/*/score_distribution.json
@@ -4110,6 +4111,7 @@ reports:
     command: aits etf dynamic-v3-rescue weight-robustness-review report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/weight_robustness_review/*/robustness_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_robustness_review/*/weight_robustness_review_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_robustness_review/*/rolling_robustness.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/weight_robustness_review/*/regime_robustness.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/weight_robustness_review/*/stability_robustness.jsonl
@@ -4132,6 +4134,7 @@ reports:
     command: aits etf dynamic-v3-rescue weight-adaptive-branch report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/weight_adaptive_branch/*/adaptive_branch_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_adaptive_branch/*/weight_adaptive_branch_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_adaptive_branch/*/branch_decision.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_adaptive_branch/*/weight_adaptive_branch_report.md
     freshness_sla_days: 30

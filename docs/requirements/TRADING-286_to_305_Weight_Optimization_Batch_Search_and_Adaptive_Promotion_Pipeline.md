@@ -75,6 +75,30 @@ CV1退出要求：
 
 ## 进展记录
 
+- 2026-07-15：G2.4CV2=`COMPLETE_G2_4_CONTINUES`。Scorecard/Robustness/Adaptive/Expanded的
+  11 callbacks/11 public domain入口已完成canonical evaluation迁移；三类v2 snapshots、exact
+  common lineage、Branch authorization、canonical Matrix/DQ Backfill delegation、14个业务view+
+  3个schema及cross-lineage/source tamper fail-close正式闭合。focused/architecture/contract/full=
+  `156/284/203/6,027 passed`，full=`1,542.60s`，generated=`932/1,127/858/0`，CLI仍
+  `41/291/993/0`且tree hash不变。whole TRADING-286～305继续`IN_PROGRESS`，CV3 pending；
+  不触发handoff、不进入G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CV2 canonical implementation完成并转`VALIDATING`。11 callbacks/11 public
+  domain入口已迁`dynamic_v3_weight_search_evaluation.py` interface/domain，legacy CLI减至14,262行/
+  370 functions/331 decorators，legacy domain对应入口仅保留lazy wrappers。Scorecard、Robustness、
+  Adaptive三类v2 snapshots分别绑定exact Backfill+Matrix、exact Scorecard+Backfill、same-lineage
+  Scorecard+Robustness；Expanded Build/Run重验Branch授权后调用CV1 canonical Matrix/DQ Backfill。
+  全views重建、三类schema tamper、跨lineage与Branch source tamper hardening=`1 passed / 121.89s`。
+  CV3仍pending；正式contracts/manifests/architecture/contract/full gates进行中，不触发handoff、
+  不进入G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CV2 contract freeze并进入`IN_PROGRESS`。范围固定TRADING-290～293：
+  Scorecard、Robustness、Adaptive Branch各3 callbacks，Expanded Search build/run 2 callbacks，
+  共11 callbacks/11 public domain入口迁独立canonical `weight_search_evaluation` interface/domain。
+  Scorecard必须绑定validated exact Backfill+Matrix并冻结v2 snapshot；Robustness绑定validated exact
+  Scorecard+Backfill；Adaptive绑定validated same-lineage Scorecard+Robustness；Expanded Build绑定
+  validated Branch与exact Search并调用CV1 canonical expanded Matrix，Expanded Run只接受validated
+  expanded Matrix并调用canonical DQ Backfill。三个新validator重验live sources并逐byte重建全部
+  views；cross-lineage/source/output/schema tamper fail closed。CV3仍pending，不触发handoff、不进入
+  G2.5，`production_effect=none`。
 - 2026-07-15：G2.4CV1=`COMPLETE_G2_4_CONTINUES`。三类v2 snapshots、exact Search→Matrix→
   Paper Backfill/cache/DQ lineage、same validate-data、18个业务views + 3个snapshot schema tamper
   fail-close、resume pre-validation、canonical ownership与legacy subtraction均闭合。正式focused/

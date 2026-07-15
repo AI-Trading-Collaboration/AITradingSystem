@@ -274,411 +274,62 @@ def validate_weight_batch_backfill_artifact(*args: Any, **kwargs: Any) -> Any:
     )
 
 
-def run_weight_scorecard(
-    *,
-    backfill_id: str,
-    backfill_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
-    matrix_dir: Path = DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
-    output_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    backfill = weight_batch_backfill_report_payload(
-        backfill_id=backfill_id, output_dir=backfill_dir
+def _call_weight_search_evaluation(name: str, *args: Any, **kwargs: Any) -> Any:
+    from ai_trading_system.etf_portfolio import (
+        dynamic_v3_weight_search_evaluation as evaluation,
     )
-    matrix = _batch2_matrix_payload(
-        matrix_id=_text(backfill.get("matrix_id")),
-        output_dir=matrix_dir,
-    )
-    scorecard = _scorecard_rows(backfill, _records(matrix.get("variant_specs")))
-    pareto = _pareto_frontier(scorecard)
-    distribution = _score_distribution(scorecard)
-    scorecard_id = _stable_id("weight-scorecard", backfill_id, generated.isoformat())
-    root = _unique_dir(output_dir / scorecard_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weight_scorecard_manifest",
-        "scorecard_id": root.name,
-        "batch_backfill_id": backfill_id,
-        "batch2_matrix_id": matrix.get("matrix_id"),
-        "search_space_id": matrix.get("search_space_id"),
-        "source_backfill_id": matrix.get("source_backfill_id"),
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if scorecard else "FAIL",
-        "market_regime": "ai_after_chatgpt",
-        "date_start": backfill.get("date_start"),
-        "date_end": backfill.get("date_end"),
-        "data_quality_status": backfill.get("data_quality_status"),
-        "top_return_candidate": _top_by(scorecard, "total_return"),
-        "top_drawdown_candidate": _top_by(scorecard, "max_drawdown"),
-        "top_stability_candidate": _top_stability(scorecard),
-        "weight_scorecard_manifest_path": str(root / "weight_scorecard_manifest.json"),
-        "variant_scorecard_path": str(root / "variant_scorecard.jsonl"),
-        "pareto_frontier_path": str(root / "pareto_frontier.json"),
-        "score_distribution_path": str(root / "score_distribution.json"),
-        "weight_scorecard_report_path": str(root / "weight_scorecard_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "weight_scorecard_manifest.json", manifest)
-    _write_jsonl(root / "variant_scorecard.jsonl", scorecard)
-    _write_json(root / "pareto_frontier.json", pareto)
-    _write_json(root / "score_distribution.json", distribution)
-    _write_text(
-        root / "weight_scorecard_report.md",
-        render_weight_scorecard_report(manifest, distribution, pareto),
-    )
-    _write_latest_pointer(
-        "latest_weight_scorecard", root.name, root / "weight_scorecard_manifest.json"
-    )
-    return {
-        "scorecard_id": root.name,
-        "scorecard_dir": root,
-        "manifest": manifest,
-        "variant_scorecard": scorecard,
-        "pareto_frontier": pareto,
-        "score_distribution": distribution,
-    }
+
+    return getattr(evaluation, name)(*args, **kwargs)
 
 
-def weight_scorecard_report_payload(
-    *,
-    scorecard_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=scorecard_id,
-        latest_pointer="latest_weight_scorecard",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="weight_scorecard_manifest.json",
-    )
-    return {
-        **_read_json(root / "weight_scorecard_manifest.json"),
-        "variant_scorecard": _read_jsonl(root / "variant_scorecard.jsonl"),
-        "pareto_frontier": _read_json(root / "pareto_frontier.json"),
-        "score_distribution": _read_json(root / "score_distribution.json"),
-        "scorecard_dir": str(root),
-    }
+def run_weight_scorecard(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_evaluation("run_weight_scorecard", *args, **kwargs)
 
 
-def validate_weight_scorecard_artifact(
-    *,
-    scorecard_id: str,
-    output_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
-) -> dict[str, Any]:
-    root = output_dir / scorecard_id
-    manifest = _read_optional_json(root / "weight_scorecard_manifest.json") or {}
-    rows = _read_jsonl(root / "variant_scorecard.jsonl")
-    pareto = _read_optional_json(root / "pareto_frontier.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "weight_scorecard_manifest.json",
-            "variant_scorecard.jsonl",
-            "pareto_frontier.json",
-            "score_distribution.json",
-            "weight_scorecard_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("scorecard_id_matches", manifest.get("scorecard_id") == scorecard_id, ""),
-            st._check("scorecard_present", bool(rows), ""),
-            st._check("pareto_present", "candidates" in pareto, ""),
-            st._check(
-                "hard_rejects_block_promotion",
-                all(
-                    row.get("scorecard_decision") != "PROMOTE_TO_FORMAL_IMPLEMENTATION"
-                    for row in rows
-                    if _texts(row.get("hard_reject_flags"))
-                ),
-                "",
-            ),
-            st._check(
-                "data_quality_visible",
-                manifest.get("data_quality_status") in {"PASS", "PASS_WITH_WARNINGS"},
-                _text(manifest.get("data_quality_status")),
-            ),
-            st._check("broker_forbidden", _payload_safe(manifest, pareto, *rows), ""),
-            st._check(
-                "experiment_safety_locked", _payload_experiment_safe(manifest, pareto, *rows), ""
-            ),
-        ]
-    )
-    return _validation_payload("etf_dynamic_v3_weight_scorecard_validation", scorecard_id, checks)
+def weight_scorecard_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_evaluation("weight_scorecard_report_payload", *args, **kwargs)
 
 
-def run_weight_robustness_review(
-    *,
-    scorecard_id: str,
-    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
-    backfill_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
-    output_dir: Path = DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
-    backfill = weight_batch_backfill_report_payload(
-        backfill_id=_text(scorecard.get("batch_backfill_id")),
-        output_dir=backfill_dir,
-    )
-    top_ids = [
-        _text(row.get("variant_id")) for row in _records(scorecard.get("variant_scorecard"))[:12]
-    ]
-    rolling = _rolling_robustness_rows(scorecard, backfill, top_ids)
-    regime = [
-        row
-        for row in _records(backfill.get("variant_regime_metrics"))
-        if row.get("variant_id") in top_ids
-    ]
-    stability = [
-        row
-        for row in _records(backfill.get("variant_stability_metrics"))
-        if row.get("variant_id") in top_ids
-    ]
-    summary = _robustness_summary(top_ids, rolling, regime, stability)
-    robustness_id = _stable_id("weight-robustness-review", scorecard_id, generated.isoformat())
-    root = _unique_dir(output_dir / robustness_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weight_robustness_review_manifest",
-        "robustness_id": root.name,
-        "scorecard_id": scorecard_id,
-        "batch_backfill_id": scorecard.get("batch_backfill_id"),
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if top_ids else "FAIL",
-        "robust_candidate_count": len(_texts(summary.get("robust_candidates"))),
-        "robustness_manifest_path": str(root / "robustness_manifest.json"),
-        "rolling_robustness_path": str(root / "rolling_robustness.jsonl"),
-        "regime_robustness_path": str(root / "regime_robustness.jsonl"),
-        "stability_robustness_path": str(root / "stability_robustness.jsonl"),
-        "robustness_summary_path": str(root / "robustness_summary.json"),
-        "weight_robustness_review_report_path": str(root / "weight_robustness_review_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "robustness_manifest.json", manifest)
-    _write_jsonl(root / "rolling_robustness.jsonl", rolling)
-    _write_jsonl(root / "regime_robustness.jsonl", regime)
-    _write_jsonl(root / "stability_robustness.jsonl", stability)
-    _write_json(root / "robustness_summary.json", summary)
-    _write_text(
-        root / "weight_robustness_review_report.md", render_robustness_report(manifest, summary)
-    )
-    _write_latest_pointer(
-        "latest_weight_robustness_review", root.name, root / "robustness_manifest.json"
-    )
-    return {
-        "robustness_id": root.name,
-        "robustness_dir": root,
-        "manifest": manifest,
-        "rolling_robustness": rolling,
-        "regime_robustness": regime,
-        "stability_robustness": stability,
-        "robustness_summary": summary,
-    }
+def validate_weight_scorecard_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_evaluation("validate_weight_scorecard_artifact", *args, **kwargs)
 
 
-def weight_robustness_review_report_payload(
-    *,
-    robustness_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=robustness_id,
-        latest_pointer="latest_weight_robustness_review",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="robustness_manifest.json",
-    )
-    return {
-        **_read_json(root / "robustness_manifest.json"),
-        "rolling_robustness": _read_jsonl(root / "rolling_robustness.jsonl"),
-        "regime_robustness": _read_jsonl(root / "regime_robustness.jsonl"),
-        "stability_robustness": _read_jsonl(root / "stability_robustness.jsonl"),
-        "robustness_summary": _read_json(root / "robustness_summary.json"),
-        "robustness_dir": str(root),
-    }
+def run_weight_robustness_review(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_evaluation("run_weight_robustness_review", *args, **kwargs)
 
 
-def validate_weight_robustness_review_artifact(
-    *,
-    robustness_id: str,
-    output_dir: Path = DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
-) -> dict[str, Any]:
-    root = output_dir / robustness_id
-    manifest = _read_optional_json(root / "robustness_manifest.json") or {}
-    summary = _read_optional_json(root / "robustness_summary.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "robustness_manifest.json",
-            "rolling_robustness.jsonl",
-            "regime_robustness.jsonl",
-            "stability_robustness.jsonl",
-            "robustness_summary.json",
-            "weight_robustness_review_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("robustness_id_matches", manifest.get("robustness_id") == robustness_id, ""),
-            st._check("summary_present", bool(summary), ""),
-            st._check("broker_forbidden", _payload_safe(manifest, summary), ""),
-            st._check("experiment_safety_locked", _payload_experiment_safe(manifest, summary), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_weight_robustness_review_validation", robustness_id, checks
+def weight_robustness_review_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_evaluation(
+        "weight_robustness_review_report_payload", *args, **kwargs
     )
 
 
-def run_weight_adaptive_branch(
-    *,
-    scorecard_id: str,
-    robustness_id: str,
-    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
-    robustness_dir: Path = DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
-    output_dir: Path = DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
-    robustness = weight_robustness_review_report_payload(
-        robustness_id=robustness_id,
-        output_dir=robustness_dir,
-    )
-    decision = _adaptive_branch_decision(scorecard, robustness)
-    branch_id = _stable_id(
-        "weight-adaptive-branch", scorecard_id, robustness_id, generated.isoformat()
-    )
-    root = _unique_dir(output_dir / branch_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weight_adaptive_branch_manifest",
-        "branch_id": root.name,
-        "scorecard_id": scorecard_id,
-        "robustness_id": robustness_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "branch_decision": decision["branch_decision"],
-        "weight_adaptive_branch_manifest_path": str(root / "adaptive_branch_manifest.json"),
-        "branch_decision_path": str(root / "branch_decision.json"),
-        "weight_adaptive_branch_report_path": str(root / "weight_adaptive_branch_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "adaptive_branch_manifest.json", manifest)
-    _write_json(root / "branch_decision.json", decision)
-    _write_text(
-        root / "weight_adaptive_branch_report.md", render_adaptive_branch_report(manifest, decision)
-    )
-    _write_latest_pointer(
-        "latest_weight_adaptive_branch", root.name, root / "adaptive_branch_manifest.json"
-    )
-    return {
-        "branch_id": root.name,
-        "branch_dir": root,
-        "manifest": manifest,
-        "branch_decision": decision,
-    }
-
-
-def weight_adaptive_branch_report_payload(
-    *,
-    branch_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=branch_id,
-        latest_pointer="latest_weight_adaptive_branch",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="adaptive_branch_manifest.json",
-    )
-    return {
-        **_read_json(root / "adaptive_branch_manifest.json"),
-        "branch_decision_payload": _read_json(root / "branch_decision.json"),
-        "branch_dir": str(root),
-    }
-
-
-def validate_weight_adaptive_branch_artifact(
-    *,
-    branch_id: str,
-    output_dir: Path = DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
-) -> dict[str, Any]:
-    root = output_dir / branch_id
-    manifest = _read_optional_json(root / "adaptive_branch_manifest.json") or {}
-    decision = _read_optional_json(root / "branch_decision.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "adaptive_branch_manifest.json",
-            "branch_decision.json",
-            "weight_adaptive_branch_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("branch_id_matches", manifest.get("branch_id") == branch_id, ""),
-            st._check("decision_present", bool(decision.get("branch_decision")), ""),
-            st._check("broker_forbidden", _payload_safe(manifest, decision), ""),
-            st._check("experiment_safety_locked", _payload_experiment_safe(manifest, decision), ""),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_weight_adaptive_branch_validation", branch_id, checks
+def validate_weight_robustness_review_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_evaluation(
+        "validate_weight_robustness_review_artifact", *args, **kwargs
     )
 
 
-def build_weight_expanded_search(
-    *,
-    branch_id: str,
-    branch_dir: Path = DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
-    search_space_dir: Path = DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
-    output_dir: Path = DEFAULT_WEIGHT_EXPANDED_SEARCH_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    branch = weight_adaptive_branch_report_payload(branch_id=branch_id, output_dir=branch_dir)
-    search_space_id = _text(_mapping(branch.get("branch_decision_payload")).get("search_space_id"))
-    if not search_space_id:
-        latest = True
-    else:
-        latest = False
-    return build_weight_experiment_batch2(
-        search_space_id=search_space_id or None,
-        latest_search_space=latest,
-        search_space_dir=search_space_dir,
-        output_dir=output_dir,
-        generated_at=generated_at,
-        expanded=True,
+def run_weight_adaptive_branch(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_evaluation("run_weight_adaptive_branch", *args, **kwargs)
+
+
+def weight_adaptive_branch_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_evaluation("weight_adaptive_branch_report_payload", *args, **kwargs)
+
+
+def validate_weight_adaptive_branch_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_evaluation(
+        "validate_weight_adaptive_branch_artifact", *args, **kwargs
     )
 
 
-def run_weight_expanded_search(
-    *,
-    expanded_matrix_id: str,
-    expanded_matrix_dir: Path = DEFAULT_WEIGHT_EXPANDED_SEARCH_DIR,
-    baseline_backfill_dir: Path = st.DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    output_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
-    price_cache_path: Path | None = None,
-    rates_cache_path: Path = st.DEFAULT_RATES_CACHE_PATH,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    return run_weight_batch_backfill(
-        matrix_id=expanded_matrix_id,
-        matrix_dir=expanded_matrix_dir,
-        baseline_backfill_dir=baseline_backfill_dir,
-        output_dir=output_dir,
-        price_cache_path=price_cache_path,
-        rates_cache_path=rates_cache_path,
-        generated_at=generated_at,
-    )
+def build_weight_expanded_search(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_evaluation("build_weight_expanded_search", *args, **kwargs)
+
+
+def run_weight_expanded_search(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_evaluation("run_weight_expanded_search", *args, **kwargs)
 
 
 def run_weight_candidate_cluster(

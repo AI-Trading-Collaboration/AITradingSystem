@@ -46,6 +46,14 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
   因此根因仍是既有confirmation DAG重复重建、loadfile shard尾部放大与内存竞争，而不是CV1
   coverage本身。性能验收必须使用同机连续多次median/P95、最大shard、peak memory和read
   amplification，不能使用单次最好值。
+- G2.4CV2 final full=`6,027 passed / 1,542.60s`，相对CV1单次缩短`958.79s`
+  （约`-38.33%`），但CV1/CU/CV2三次分别为`2,501.39/1,939.34/1,542.60s`，变异仍大，
+  不能把CV2快样本解释为系统性优化完成。本轮前三长尾为confirmation weekly=`975.52s`、
+  confirmation dashboard=`628.06s`、rule review queue=`495.38s`；CV2 evaluation hardening=
+  `164.97s`、expanded search=`130.21s`，新链已进入slowest 50但不是前三主瓶颈。72%阶段抽样
+  单worker working set最高约`2.69GiB`，99%阶段18个Python进程合计约`12.23GiB`，且runner
+  无active nodeid/elapsed/ETA心跳。S2因此增加Weight Search Evaluation immutable fixture DAG复用，
+  S3必须限制memory-heavy shards并发，不能只按文件数平均或盲目增加worker。
 
 ## 设计原则
 
@@ -74,6 +82,8 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 
 - 先治理当前长尾 `confirmation_cycle_weekly`、`rule_review_queue`、
   `confirmation_dashboard`、`rule_owner_decision`；
+- 把 `weight_search_evaluation_hardening` / `weight_expanded_search` 接入同一不可变
+  Search→Matrix→Backfill fixture DAG，正常链共享，tamper 分支copy-on-write；
 - 接入 content-fingerprint validation session，并把 source commitments 改为 bounded contract；
 - module fixture 共享 immutable upstream，tamper 场景 copy-on-write。
 
@@ -104,10 +114,11 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 ## 当前状态
 
 G2.4CR/CS 已完成第一批通用 validation session、bounded snapshot 和 fixture path isolation；本任务
-承接剩余 confirmation/full-suite 长尾。G2.4CV1的`2,501.39s`已证明CU的`1,939.34s`只是单次
-快样本，尚无稳定系统性提速；CV1 hardening也不是新增主瓶颈。建议实施顺序保持S2→S3：先完成
-confirmation weekly/dashboard、rule queue/owner decision的content-fingerprint / bounded fixture治理，
-再用duration+peak-memory manifest比较loadfile/loadscope/explicit shard，并补active-node heartbeat、
-当前active node/worker资源与ETA；最终用连续3次median/P95与最大shard验收。它是研发效率治理，
-不是 ARCH-004 G2.5 解锁条件，也不得绕过 owner 已批准的 phase-level
-`arch_005_bootstrap_handoff.v1` 停止条件。
+承接剩余 confirmation/full-suite 长尾。CV1/CU/CV2的`2,501.39/1,939.34/1,542.60s`证明单次
+结果波动大，尚无稳定系统性提速；CV2 evaluation hardening已成为次级新热点，但前三仍是既有
+confirmation/rule链。建议实施顺序保持S2→S3：先完成confirmation weekly/dashboard、rule queue/
+owner decision及weight evaluation的content-fingerprint / bounded immutable fixture治理，再用
+duration+peak-memory manifest比较loadfile/loadscope/explicit shard并限制memory-heavy并发，补
+active-node heartbeat、当前node/worker资源与ETA；最终用连续3次median/P95与最大shard验收。
+它是研发效率治理，不是ARCH-004 G2.5解锁条件，也不得绕过owner已批准的phase-level
+`arch_005_bootstrap_handoff.v1`停止条件。

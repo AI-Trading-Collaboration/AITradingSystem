@@ -20,6 +20,24 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-15：G2.4CV2=`COMPLETE_G2_4_CONTINUES`。11 callbacks/11 public业务入口canonical
+  evaluation迁移、legacy subtraction、三类v2 snapshots、exact common lineage、Branch授权的
+  expanded Matrix/DQ Backfill及all-view rebuild/tamper fail-close正式闭合。focused/architecture/
+  contract/full=`156/284/203/6,027 passed`，full=`1,542.60s`，generated=`932/1,127/858/0`，
+  CLI tree/hash不变。CV3及whole G2.4 matrix仍pending；next继续CV3，不触发handoff、不进入G2.5，
+  `production_effect=none`。
+- 2026-07-15：G2.4CV2 canonical implementation完成并转`VALIDATING`。Scorecard/Robustness/
+  Adaptive/Expanded的11 callbacks/11 public业务入口已迁evaluation interface/domain；legacy CLI
+  减至14,262行/370 functions/331 decorators，legacy weight domain对应11项仅保留lazy wrappers。
+  三类v2 snapshots、exact Backfill+Matrix→Scorecard→Robustness→Adaptive lineage、Branch授权的
+  canonical expanded Matrix/DQ Backfill及全部业务views逐byte重建已通过hardening `1 passed /
+  121.89s`。CV3/whole phase仍pending；正在刷新contracts/manifests并执行正式门禁，不触发handoff、
+  不进入G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CV2进入`IN_PROGRESS`。TRADING-290～293的Scorecard/Robustness/Adaptive/
+  Expanded共11 callbacks/11 public业务入口迁独立canonical evaluation interface/domain；三类v2
+  snapshots、exact Backfill+Matrix→Scorecard→Robustness→Adaptive lineage、Branch+Search→canonical
+  expanded Matrix→canonical DQ Backfill和all-view byte rebuild为退出合同。CV3/phase gate仍pending，
+  不触发handoff、不进入G2.5，`production_effect=none`。
 - 2026-07-15：G2.4CV1=`COMPLETE_G2_4_CONTINUES`。Search/Matrix/DQ Backfill canonical
   foundation及legacy subtraction、三类v2 snapshots、exact lineage、same DQ、all-view rebuild和
   tamper fail-close已闭合；正式focused/architecture/contract/full=`124/283/203/6,025 passed`，

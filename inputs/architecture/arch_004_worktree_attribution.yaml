@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CV1_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CV2_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-15
-base_commit: 09e7a83b
+base_commit: e7a947ea
 production_effect: none
 
 arch_004_owned_paths:
@@ -293,6 +293,9 @@ arch_004_owned_paths:
   - src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_foundation.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_foundation.py
   - tests/test_weight_search_foundation_hardening.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_evaluation.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_evaluation.py
+  - tests/test_weight_search_evaluation_hardening.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_confirmation_operations.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_confirmation_operations.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_pressure_validation.py
@@ -578,6 +581,7 @@ prior_completed_owned_paths_not_part_of_arch_runtime_change:
   - docs/research/current_research_strategy_and_periodic_optimization_review_2026-07-10.md
 
 excluded_user_or_other_task_paths:
+  - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
   - docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md
   - docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md
   - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md

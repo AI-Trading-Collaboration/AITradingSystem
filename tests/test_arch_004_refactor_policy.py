@@ -4325,6 +4325,49 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         assert phase_g2_4cv1["validation"]["full_validation"]["passed"] >= 6023
         assert phase_g2_4cv1["sources"]
         for source in phase_g2_4cv1["sources"]:
+            if source["path"] in set(phase_g2_4cv1.get("superseded_source_paths", [])):
+                continue
+            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            assert actual == source["sha256"], source["path"]
+
+    phase_g2_4cv2 = baseline["phase_g2_4cv2_etf_cli_dynamic_v3_weight_search_evaluation"]
+    assert phase_g2_4cv2["status"] in {
+        "IN_PROGRESS",
+        "VALIDATING",
+        "COMPLETE_G2_4_CONTINUES",
+    }
+    migration_g2_4cv2 = phase_g2_4cv2["migration"]
+    assert migration_g2_4cv2["callback_count"] == 11
+    assert migration_g2_4cv2["domain_entrypoint_count"] == 11
+    assert len(migration_g2_4cv2["snapshot_schemas"]) == 3
+    assert migration_g2_4cv2["exact_backfill_matrix_to_scorecard_lineage_required"] is True
+    assert migration_g2_4cv2["exact_scorecard_backfill_to_robustness_lineage_required"] is True
+    assert migration_g2_4cv2["same_lineage_scorecard_robustness_to_adaptive_required"] is True
+    assert migration_g2_4cv2["validated_branch_authorizes_expanded_matrix_required"] is True
+    assert (
+        migration_g2_4cv2["canonical_matrix_and_data_quality_backfill_delegation_required"] is True
+    )
+    assert migration_g2_4cv2["content_derived_all_views_validation_required"] is True
+    assert migration_g2_4cv2["broker_action_allowed"] is False
+    assert migration_g2_4cv2["production_effect"] == "none"
+    subtraction_g2_4cv2 = phase_g2_4cv2["subtraction"]
+    assert subtraction_g2_4cv2["legacy_cli_lines_after"] == 14262
+    assert subtraction_g2_4cv2["legacy_cli_top_level_functions_after"] == 370
+    assert subtraction_g2_4cv2["legacy_cli_callback_reduction"] == 11
+    hardening_g2_4cv2 = phase_g2_4cv2["hardening"]
+    assert hardening_g2_4cv2["scorecard_emitted_views_tamper_checked"] == 5
+    assert hardening_g2_4cv2["robustness_emitted_views_tamper_checked"] == 6
+    assert hardening_g2_4cv2["adaptive_emitted_views_tamper_checked"] == 3
+    assert hardening_g2_4cv2["snapshot_schema_tamper_checked"] == 3
+    assert hardening_g2_4cv2["cross_lineage_adaptive_fails"] is True
+    assert hardening_g2_4cv2["tampered_branch_blocks_expanded_run"] is True
+    if phase_g2_4cv2["status"] == "COMPLETE_G2_4_CONTINUES":
+        assert phase_g2_4cv2["validation"]["focused"]["passed"] >= 125
+        assert phase_g2_4cv2["validation"]["architecture_fitness"]["passed"] >= 284
+        assert phase_g2_4cv2["validation"]["contract_validation"]["passed"] >= 203
+        assert phase_g2_4cv2["validation"]["full_validation"]["passed"] >= 6026
+        assert phase_g2_4cv2["sources"]
+        for source in phase_g2_4cv2["sources"]:
             actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
             assert actual == source["sha256"], source["path"]
 
@@ -4502,9 +4545,13 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CV1_IN_PROGRESS_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CV1_VALIDATING_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CV1_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CV2_IN_PROGRESS_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CV2_VALIDATING_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CV2_COMPLETE_G2_4_CONTINUES",
     }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
+        "docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md",
         "docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md",
         "docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md",
         "docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md",

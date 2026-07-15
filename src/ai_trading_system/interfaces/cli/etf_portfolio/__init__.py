@@ -290,6 +290,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_weight_path as dynamic_v3_weight_path_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_weight_search_evaluation as dynamic_v3_weight_search_evaluation_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_weight_search_foundation as dynamic_v3_weight_search_foundation_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -408,6 +411,7 @@ __all__ = [
     "dynamic_v3_weekly_advisory_review_commands",
     "dynamic_v3_weight_path_commands",
     "dynamic_v3_weight_search_foundation_commands",
+    "dynamic_v3_weight_search_evaluation_commands",
     "dynamic_v3_validation_evidence_commands",
     "dynamic_v3_variant_comparison_commands",
     "dynamic_v3_rule_calibration_commands",
