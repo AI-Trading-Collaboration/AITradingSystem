@@ -20,6 +20,23 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-15：G2.4CV1=`COMPLETE_G2_4_CONTINUES`。Search/Matrix/DQ Backfill canonical
+  foundation及legacy subtraction、三类v2 snapshots、exact lineage、same DQ、all-view rebuild和
+  tamper fail-close已闭合；正式focused/architecture/contract/full=`124/283/203/6,025 passed`，
+  full=`2,501.39s`，generated=`930/1,126/858/0`，CLI tree/hash不变。CV2/CV3与whole G2.4
+  phase matrix仍pending；继续CV2，不触发handoff、不进入G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CV1 implementation完成并转`VALIDATING`。Search Space、Batch2 Matrix、
+  DQ-gated Backfill的10 callbacks/12业务入口已迁canonical foundation；legacy CLI减至
+  14,551行/381 functions/342 decorators，三类bounded v2 snapshots与exact Search→Matrix→
+  Paper Backfill/cache/DQ lineage均fail closed，validators重算全部views，resume先验原artifact。
+  focused parallel=`124 passed / 65.21s`；等待manifests及architecture/contract/full gates。
+  CV2/CV3仍pending，单子分片不触发handoff、不进入G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CV按三段原子边界启动，CV1=`IN_PROGRESS`。TRADING-286～305的39个
+  callbacks拆为CV1 Search/Matrix/Backfill 10个、CV2 Scorecard/Robustness/Branch/Expanded 11个、
+  CV3 Cluster/Interpretation/Gate/Plan/Dashboard/Owner 18个，避免把11K行多代domain整体搬成新god
+  module。CV1固定三类bounded v2 snapshots、pre-output config/upstream/cache/DQ validation、exact
+  Search→Matrix→Paper Backfill lineage、关键metrics与全部views byte rebuild。单子分片不触发handoff、
+  不进入G2.5，`production_effect=none`。
 - 2026-07-15：G2.4CU=`COMPLETE_G2_4_CONTINUES`。Smoothed Refresh canonical
   interface/domain、15个legacy lazy wrappers、五类bounded v2 snapshots、exact全链、provider
   non-replay、blocked no-child、all-view byte rebuild与cross-chain fail-close闭合；正式

@@ -346,6 +346,10 @@ DYNAMIC_V3_SYSTEM_TARGET_SMOOTHED_REFRESH_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_system_target_smoothed_refresh.py"
 )
+DYNAMIC_V3_WEIGHT_SEARCH_FOUNDATION_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_weight_search_foundation.py"
+)
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py"
@@ -499,7 +503,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 14804
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 14551
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -710,8 +714,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 14804
-    assert len(legacy_names) == 391
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 14551
+    assert len(legacy_names) == 381
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -2886,6 +2890,31 @@ def test_g2_4_dynamic_v3_smoothed_refresh_callbacks_leave_legacy_root() -> None:
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names
     assert "dynamic_v3_system_target_smoothed_refresh" in _imported_names(canonical_tree)
+
+
+def test_g2_4_dynamic_v3_weight_search_foundation_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_tree = ast.parse(
+        DYNAMIC_V3_WEIGHT_SEARCH_FOUNDATION_COMMANDS_PATH.read_text(encoding="utf-8")
+    )
+    canonical_names = _function_names(canonical_tree)
+    callbacks = {
+        "dynamic_v3_weight_search_space_validate_command",
+        "dynamic_v3_weight_search_space_report_command",
+        "dynamic_v3_validate_weight_search_space_command",
+        "dynamic_v3_weight_experiment_batch2_build_command",
+        "dynamic_v3_weight_experiment_batch2_report_command",
+        "dynamic_v3_validate_weight_experiment_batch2_command",
+        "dynamic_v3_weight_batch_backfill_run_command",
+        "dynamic_v3_weight_batch_backfill_resume_command",
+        "dynamic_v3_weight_batch_backfill_report_command",
+        "dynamic_v3_validate_weight_batch_backfill_command",
+    }
+    assert len(callbacks) == 10
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert "dynamic_v3_weight_search_foundation" in _imported_names(canonical_tree)
 
 
 def __file_path() -> Path:

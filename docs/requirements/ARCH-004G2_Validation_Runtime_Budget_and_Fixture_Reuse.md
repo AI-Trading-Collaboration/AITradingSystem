@@ -38,6 +38,14 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
   confirmation weekly=`1,229.71s`、confirmation dashboard=`824.66s`、rule review queue=
   `726.05s`；99%阶段仅少数worker继续计算，健康检查还观察到单worker working set最高约
   `3.7GB`。因此调度必须同时考虑duration和peak memory，固定`-n16`不是默认最优假设。
+- G2.4CV1 final full=`6,025 passed / 2,501.39s`，相对G2.4CU反而增加`562.05s`
+  （约`+29.0%`），明确否定“上轮22.9%已形成稳定系统性提速”。稳定前三长尾仍是
+  confirmation weekly=`1,230.03s`、rule review queue=`712.22s`、confirmation dashboard=
+  `603.42s`；新增weight-search foundation hardening不在slowest 50。99%阶段持续约十余分钟，
+  但worker CPU持续增长；抽样最高working set约`2.0GB`，另有多个worker约`1.6～1.9GB`。
+  因此根因仍是既有confirmation DAG重复重建、loadfile shard尾部放大与内存竞争，而不是CV1
+  coverage本身。性能验收必须使用同机连续多次median/P95、最大shard、peak memory和read
+  amplification，不能使用单次最好值。
 
 ## 设计原则
 
@@ -71,7 +79,7 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 
 ### S3：历史感知调度
 
-- 用最近 N 次 runtime artifacts 生成 deterministic duration manifest；
+- 用最近 N 次 runtime artifacts 生成 deterministic duration + peak-memory manifest；
 - 比较 `loadfile`、`loadscope` 与显式 shard 的 wall-time/peak-memory；
 - 根据机器可用内存选择 bounded worker count，并保证完整 nodeid 集合与失败传播一致。
 
@@ -83,7 +91,8 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 
 ## 验收标准
 
-- 当前 4 个 confirmation 长尾 module 的累计 wall time 至少降低 70%，且 tamper/drift focused
+- 当前 4 个 confirmation 长尾 module 的累计 wall time至少降低70%，最大单shard不超过当前
+  `1,230.03s`的40%，且tamper/drift focused
   tests 全部 PASS；
 - full collected nodeid 集合与优化前一致（仅允许任务本身新增测试），无 skip/xfail 增量；
 - 同一机器连续 3 次 full 的 P95 wall time 不高于当前 `2,554.80s` 的 60%；
@@ -95,10 +104,10 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 ## 当前状态
 
 G2.4CR/CS 已完成第一批通用 validation session、bounded snapshot 和 fixture path isolation；本任务
-承接剩余 confirmation/full-suite 长尾；G2.4CT/CU继续证明局部session reuse有效但full长尾仍由
-旧confirmation DAG主导。G2.4CU单次full虽降至`1,939.34s`，仍需连续样本排除机器状态波动。
-建议实施顺序保持S2→S3：先完成confirmation weekly/dashboard、rule queue/owner decision的content
-fingerprint / bounded fixture治理，再用duration+peak-memory manifest比较loadfile/loadscope/explicit
-shard，并补active-node heartbeat。它是研发效率治理，
+承接剩余 confirmation/full-suite 长尾。G2.4CV1的`2,501.39s`已证明CU的`1,939.34s`只是单次
+快样本，尚无稳定系统性提速；CV1 hardening也不是新增主瓶颈。建议实施顺序保持S2→S3：先完成
+confirmation weekly/dashboard、rule queue/owner decision的content-fingerprint / bounded fixture治理，
+再用duration+peak-memory manifest比较loadfile/loadscope/explicit shard，并补active-node heartbeat、
+当前active node/worker资源与ETA；最终用连续3次median/P95与最大shard验收。它是研发效率治理，
 不是 ARCH-004 G2.5 解锁条件，也不得绕过 owner 已批准的 phase-level
 `arch_005_bootstrap_handoff.v1` 停止条件。

@@ -76,18 +76,14 @@ DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "micr
 DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "micro_search_v4_backfill"
 )
-DEFAULT_GATE_CALIBRATED_REVIEW_DIR = (
-    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "gate_calibrated_review"
-)
+DEFAULT_GATE_CALIBRATED_REVIEW_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "gate_calibrated_review"
 DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "signal_vs_parameter_attribution"
 )
 DEFAULT_NEXT_RESEARCH_DIRECTION_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "next_research_direction"
 )
-DEFAULT_OWNER_RESEARCH_ROADMAP_DIR = (
-    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "owner_research_roadmap"
-)
+DEFAULT_OWNER_RESEARCH_ROADMAP_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "owner_research_roadmap"
 DEFAULT_SIGNAL_FAILURE_TAXONOMY_CONFIG_PATH = (
     PROJECT_ROOT
     / "config"
@@ -116,15 +112,11 @@ DEFAULT_FILTERED_CANDIDATE_BACKFILL_DIR = (
 DEFAULT_FILTERED_VS_ORIGINAL_COMPARISON_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "filtered_vs_original_comparison"
 )
-DEFAULT_SIGNAL_GATE_EXPERIMENT_DIR = (
-    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "signal_gate_experiment"
-)
+DEFAULT_SIGNAL_GATE_EXPERIMENT_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "signal_gate_experiment"
 DEFAULT_FILTERED_CANDIDATE_PROMOTION_REVIEW_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "filtered_candidate_promotion_review"
 )
-DEFAULT_OWNER_SIGNAL_ROADMAP_DIR = (
-    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "owner_signal_roadmap"
-)
+DEFAULT_OWNER_SIGNAL_ROADMAP_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "owner_signal_roadmap"
 
 SEARCH_REQUIRED_FAMILIES = (
     "smoothing",
@@ -222,608 +214,63 @@ HARD_REJECT_GATE_MAP = {
 }
 
 
-def load_weight_search_space_config(
-    path: Path = DEFAULT_WEIGHT_SEARCH_SPACE_CONFIG_PATH,
-) -> dict[str, Any]:
-    payload = st._load_yaml_mapping(path)
-    _assert_weight_search_safety(_mapping(payload.get("safety")))
-    return payload
+def _call_weight_search_foundation(name: str, *args: Any, **kwargs: Any) -> Any:
+    from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_foundation
+
+    return getattr(dynamic_v3_weight_search_foundation, name)(*args, **kwargs)
 
 
-def validate_weight_search_space_config(
-    path: Path = DEFAULT_WEIGHT_SEARCH_SPACE_CONFIG_PATH,
-) -> dict[str, Any]:
-    payload = st._load_yaml_mapping(path)
-    families = _enabled_families(payload)
-    checks = [
-        st._check("schema_version", payload.get("schema_version") == 1, ""),
-        st._check(
-            "research_screening_only",
-            _text(_mapping(payload.get("search")).get("mode")) == "research_screening_only",
-            "",
-        ),
-        st._check(
-            "required_families_covered",
-            set(SEARCH_REQUIRED_FAMILIES).issubset(set(families)),
-            ",".join(families),
-        ),
-        st._check(
-            "initial_batch_size_bounded",
-            50 <= int(_float(_mapping(payload.get("max_variants")).get("initial_batch"), 0)) <= 80,
-            _text(_mapping(payload.get("max_variants")).get("initial_batch")),
-        ),
-        st._check(
-            "expanded_batch_size_bounded",
-            int(_float(_mapping(payload.get("max_variants")).get("expanded_batch"), 0)) <= 200,
-            _text(_mapping(payload.get("max_variants")).get("expanded_batch")),
-        ),
-        st._check(
-            "safety_locked", _weight_search_safety_locked(_mapping(payload.get("safety"))), ""
-        ),
-    ]
-    return st._validation_payload(
-        "etf_dynamic_v3_weight_search_space_config_validation",
-        "weight_search_space_v2",
-        checks,
-        extra={"config_path": str(path)},
+def load_weight_search_space_config(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_foundation("load_weight_search_space_config", *args, **kwargs)
+
+
+def validate_weight_search_space_config(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_foundation("validate_weight_search_space_config", *args, **kwargs)
+
+
+def run_weight_search_space_validation(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_foundation("run_weight_search_space_validation", *args, **kwargs)
+
+
+def weight_search_space_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_foundation("weight_search_space_report_payload", *args, **kwargs)
+
+
+def validate_weight_search_space_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_foundation("validate_weight_search_space_artifact", *args, **kwargs)
+
+
+def build_weight_experiment_batch2(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_foundation("build_weight_experiment_batch2", *args, **kwargs)
+
+
+def weight_experiment_batch2_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_foundation(
+        "weight_experiment_batch2_report_payload", *args, **kwargs
     )
 
 
-def run_weight_search_space_validation(
-    *,
-    config_path: Path = DEFAULT_WEIGHT_SEARCH_SPACE_CONFIG_PATH,
-    output_dir: Path = DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    config = load_weight_search_space_config(config_path)
-    validation = validate_weight_search_space_config(config_path)
-    inventory = _search_family_inventory(config)
-    search = _mapping(config.get("search"))
-    search_space_id = _stable_id(
-        "weight-search-space",
-        search.get("name"),
-        config_path,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / search_space_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weight_search_space_manifest",
-        "search_space_id": root.name,
-        "search_name": search.get("name"),
-        "source_backfill_id": search.get("source_backfill_id"),
-        "generated_at": generated.isoformat(),
-        "status": validation["status"],
-        "config_path": str(config_path),
-        "market_regime": "ai_after_chatgpt",
-        "anchor_event": "ChatGPT public launch",
-        "anchor_date": "2022-11-30",
-        "default_backtest_start": st.AI_AFTER_CHATGPT_START.isoformat(),
-        "families": _enabled_families(config),
-        "max_variants": _mapping(config.get("max_variants")),
-        "weight_search_space_manifest_path": str(root / "weight_search_space_manifest.json"),
-        "normalized_search_space_path": str(root / "normalized_search_space.yaml"),
-        "search_family_inventory_path": str(root / "search_family_inventory.json"),
-        "weight_search_space_report_path": str(root / "weight_search_space_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "weight_search_space_manifest.json", manifest)
-    _write_text(
-        root / "normalized_search_space.yaml",
-        yaml.safe_dump(config, sort_keys=False, allow_unicode=True),
-    )
-    _write_json(root / "search_family_inventory.json", inventory)
-    _write_text(
-        root / "weight_search_space_report.md",
-        render_weight_search_space_report(manifest, inventory),
-    )
-    _write_latest_pointer(
-        "latest_weight_search_space",
-        root.name,
-        root / "weight_search_space_manifest.json",
-    )
-    return {
-        "search_space_id": root.name,
-        "search_space_dir": root,
-        "manifest": manifest,
-        "normalized_search_space": config,
-        "search_family_inventory": inventory,
-        "validation": validation,
-    }
-
-
-def weight_search_space_report_payload(
-    *,
-    search_space_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=search_space_id,
-        latest_pointer="latest_weight_search_space",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="weight_search_space_manifest.json",
-    )
-    return {
-        **_read_json(root / "weight_search_space_manifest.json"),
-        "normalized_search_space": yaml.safe_load(
-            (root / "normalized_search_space.yaml").read_text(encoding="utf-8")
-        ),
-        "search_family_inventory": _read_json(root / "search_family_inventory.json"),
-        "search_space_dir": str(root),
-    }
-
-
-def validate_weight_search_space_artifact(
-    *,
-    search_space_id: str,
-    output_dir: Path = DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
-) -> dict[str, Any]:
-    root = output_dir / search_space_id
-    manifest = _read_optional_json(root / "weight_search_space_manifest.json") or {}
-    inventory = _read_optional_json(root / "search_family_inventory.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "weight_search_space_manifest.json",
-            "normalized_search_space.yaml",
-            "search_family_inventory.json",
-            "weight_search_space_report.md",
-        ),
-    )
-    families = _texts(manifest.get("families"))
-    checks.extend(
-        [
-            st._check(
-                "search_space_id_matches", manifest.get("search_space_id") == search_space_id, ""
-            ),
-            st._check(
-                "required_families_visible",
-                set(SEARCH_REQUIRED_FAMILIES).issubset(set(families)),
-                "",
-            ),
-            st._check("family_inventory_present", bool(_records(inventory.get("families"))), ""),
-            st._check("broker_forbidden", _payload_safe(manifest, inventory), ""),
-            st._check(
-                "experiment_safety_locked", _payload_experiment_safe(manifest, inventory), ""
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_weight_search_space_artifact_validation",
-        search_space_id,
-        checks,
+def validate_weight_experiment_batch2_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_foundation(
+        "validate_weight_experiment_batch2_artifact", *args, **kwargs
     )
 
 
-def build_weight_experiment_batch2(
-    *,
-    search_space_id: str | None = None,
-    latest_search_space: bool = False,
-    source_backfill_id: str | None = None,
-    search_space_dir: Path = DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
-    output_dir: Path = DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
-    generated_at: datetime | None = None,
-    expanded: bool = False,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    search_space = weight_search_space_report_payload(
-        search_space_id=search_space_id,
-        latest=latest_search_space,
-        output_dir=search_space_dir,
-    )
-    config = _mapping(search_space.get("normalized_search_space"))
-    variants = _generate_batch2_variants(config, expanded=expanded)
-    max_key = "expanded_batch" if expanded else "initial_batch"
-    max_variants = int(_float(_mapping(config.get("max_variants")).get(max_key), len(variants)))
-    variants = variants[:max_variants]
-    if not expanded and len(variants) < 50:
-        raise ValueError("Batch-2 initial matrix must contain at least 50 variants")
-    coverage = _batch2_family_coverage(variants)
-    search = _mapping(config.get("search"))
-    resolved_source_backfill = source_backfill_id or _text(search.get("source_backfill_id"))
-    matrix_id = _stable_id(
-        "weight-experiment-batch2",
-        search_space.get("search_space_id"),
-        resolved_source_backfill,
-        "expanded" if expanded else "initial",
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / matrix_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weight_experiment_batch2_manifest",
-        "batch2_matrix_id": root.name,
-        "matrix_id": root.name,
-        "search_space_id": search_space.get("search_space_id"),
-        "source_backfill_id": resolved_source_backfill,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if len(variants) >= (50 if not expanded else 1) else "FAIL",
-        "market_regime": "ai_after_chatgpt",
-        "requested_start_date": st.AI_AFTER_CHATGPT_START.isoformat(),
-        "variant_count": len(variants),
-        "expanded": expanded,
-        "families_covered": coverage["families_covered"],
-        "failure_modes_covered": coverage["failure_modes_covered"],
-        "batch2_matrix_manifest_path": str(root / "batch2_matrix_manifest.json"),
-        "batch2_variant_specs_path": str(root / "batch2_variant_specs.jsonl"),
-        "batch2_family_coverage_path": str(root / "batch2_family_coverage.json"),
-        "batch2_matrix_report_path": str(root / "batch2_matrix_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "batch2_matrix_manifest.json", manifest)
-    _write_jsonl(root / "batch2_variant_specs.jsonl", variants)
-    _write_json(root / "batch2_family_coverage.json", coverage)
-    _write_text(root / "batch2_matrix_report.md", render_batch2_matrix_report(manifest, coverage))
-    pointer = "latest_weight_expanded_matrix" if expanded else "latest_weight_experiment_batch2"
-    _write_latest_pointer(pointer, root.name, root / "batch2_matrix_manifest.json")
-    return {
-        "batch2_matrix_id": root.name,
-        "matrix_id": root.name,
-        "matrix_dir": root,
-        "manifest": manifest,
-        "variant_specs": variants,
-        "family_coverage": coverage,
-    }
+def run_weight_batch_backfill(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_foundation("run_weight_batch_backfill", *args, **kwargs)
 
 
-def weight_experiment_batch2_report_payload(
-    *,
-    matrix_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=matrix_id,
-        latest_pointer="latest_weight_experiment_batch2",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="batch2_matrix_manifest.json",
-    )
-    return {
-        **_read_json(root / "batch2_matrix_manifest.json"),
-        "variant_specs": _read_jsonl(root / "batch2_variant_specs.jsonl"),
-        "family_coverage": _read_json(root / "batch2_family_coverage.json"),
-        "matrix_dir": str(root),
-    }
+def resume_weight_batch_backfill(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_foundation("resume_weight_batch_backfill", *args, **kwargs)
 
 
-def validate_weight_experiment_batch2_artifact(
-    *,
-    matrix_id: str,
-    output_dir: Path = DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
-) -> dict[str, Any]:
-    root = output_dir / matrix_id
-    manifest = _read_optional_json(root / "batch2_matrix_manifest.json") or {}
-    variants = _read_jsonl(root / "batch2_variant_specs.jsonl")
-    coverage = _read_optional_json(root / "batch2_family_coverage.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "batch2_matrix_manifest.json",
-            "batch2_variant_specs.jsonl",
-            "batch2_family_coverage.json",
-            "batch2_matrix_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("matrix_id_matches", manifest.get("batch2_matrix_id") == matrix_id, ""),
-            st._check("variants_present", bool(variants), ""),
-            st._check("variant_count_bounded", 1 <= len(variants) <= 200, str(len(variants))),
-            st._check(
-                "initial_batch_minimum_met_or_expanded",
-                manifest.get("expanded") is True or len(variants) >= 50,
-                str(len(variants)),
-            ),
-            st._check(
-                "covers_at_least_8_families",
-                len(_texts(coverage.get("families_covered"))) >= 8,
-                ",".join(_texts(coverage.get("families_covered"))),
-            ),
-            st._check(
-                "variants_have_failure_modes",
-                all(_texts(row.get("target_failure_modes")) for row in variants),
-                "",
-            ),
-            st._check(
-                "variants_have_expected_tradeoffs",
-                all(
-                    _texts(row.get("expected_benefit")) and _texts(row.get("expected_cost"))
-                    for row in variants
-                ),
-                "",
-            ),
-            st._check(
-                "not_formal_methods",
-                all(row.get("not_formal_research_method") is True for row in variants),
-                "",
-            ),
-            st._check("broker_forbidden", _payload_safe(manifest, coverage, *variants), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, coverage, *variants),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_weight_experiment_batch2_validation", matrix_id, checks
-    )
+def weight_batch_backfill_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_foundation("weight_batch_backfill_report_payload", *args, **kwargs)
 
 
-def run_weight_batch_backfill(
-    *,
-    matrix_id: str,
-    matrix_dir: Path = DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
-    baseline_backfill_dir: Path = st.DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    output_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
-    price_cache_path: Path | None = None,
-    rates_cache_path: Path = st.DEFAULT_RATES_CACHE_PATH,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    matrix = _batch2_matrix_payload(matrix_id=matrix_id, output_dir=matrix_dir)
-    source_backfill_id = _text(matrix.get("source_backfill_id"))
-    backfill = st.paper_shadow_backfill_report_payload(
-        backfill_id=source_backfill_id,
-        output_dir=baseline_backfill_dir,
-    )
-    baseline_states = _records(backfill.get("backfill_method_states"))
-    config = st._load_backfill_config_from_manifest(backfill)
-    start = max(
-        _coerce_date(backfill.get("date_start"), st.AI_AFTER_CHATGPT_START),
-        st.AI_AFTER_CHATGPT_START,
-    )
-    requested_end = _coerce_date(backfill.get("date_end"), generated.date())
-    source = _mapping(config.get("source"))
-    symbols = st._symbols_from_state_paths(baseline_states)
-    prices_path = price_cache_path or st._resolve_project_path(
-        source.get("price_cache_path"),
-        st.DEFAULT_PRICE_CACHE_PATH,
-    )
-    pivot = st._load_price_pivot(prices_path, symbols, start)
-    latest_valid_as_of = _latest_common_price_date(pivot, symbols)
-    end = min(requested_end, latest_valid_as_of, generated.date())
-    used_latest_valid_as_of = end < requested_end
-    pivot = pivot.loc[(pivot.index.date >= start) & (pivot.index.date <= end)]
-    quality_as_of = max(end, generated.date())
-    quality = st._run_data_quality_gate(
-        price_cache_path=prices_path,
-        rates_cache_path=rates_cache_path,
-        expected_symbols=symbols,
-        as_of=quality_as_of,
-    )
-    if not quality.passed:
-        raise RuntimeError(f"data quality gate failed for historical backfill: {quality.status}")
-    returns = pivot.pct_change().fillna(0.0)
-    labels = {
-        idx.date().isoformat(): st._risk_capped_regime_context_for_return(row, config)
-        for idx, row in returns.iterrows()
-    }
-    variant_specs = _records(matrix.get("variant_specs"))
-    variant_states: list[dict[str, Any]] = []
-    failed: list[dict[str, Any]] = []
-    for variant in variant_specs:
-        try:
-            variant_states.extend(
-                st._run_variant_weight_path(
-                    variant=variant,
-                    baseline_states=baseline_states,
-                    returns=returns,
-                    labels=labels,
-                    config=config,
-                )
-            )
-        except Exception as exc:  # noqa: BLE001
-            failed.append({"variant_id": _text(variant.get("variant_id")), "error": str(exc)})
-    performance = st._variant_performance_metrics(variant_states, baseline_states)
-    regime = st._variant_regime_metrics(variant_states, baseline_states, labels, config)
-    stability = st._variant_stability_metrics(variant_states, baseline_states, config)
-    churn = _variant_churn_metrics(variant_states, stability)
-    lag = _variant_lag_metrics(regime)
-    backfill_id = _stable_id(
-        "weight-batch-backfill", matrix_id, end.isoformat(), generated.isoformat()
-    )
-    root = _unique_dir(output_dir / backfill_id)
-    root.mkdir(parents=True, exist_ok=False)
-    quality_report_path = root / "validate_data_quality_report.md"
-    progress = {
-        "schema_version": st.SCHEMA_VERSION,
-        "batch_backfill_id": root.name,
-        "variants_total": len(variant_specs),
-        "variants_completed": len({row.get("variant_id") for row in performance}),
-        "variants_failed": len(failed),
-        "failed_variants": failed,
-        "date_start": start.isoformat(),
-        "date_end": end.isoformat(),
-        "requested_date_end": requested_end.isoformat(),
-        "latest_valid_as_of": latest_valid_as_of.isoformat(),
-        "data_quality": quality.status,
-        "data_quality_as_of": quality_as_of.isoformat(),
-        "validate_data_quality_report_path": str(quality_report_path),
-        "used_latest_valid_as_of": used_latest_valid_as_of,
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weight_batch_backfill_manifest",
-        "batch_backfill_id": root.name,
-        "batch2_matrix_id": matrix_id,
-        "matrix_id": matrix_id,
-        "source_backfill_id": source_backfill_id,
-        "generated_at": generated.isoformat(),
-        "status": (
-            "PASS"
-            if not failed and performance
-            else "PASS_WITH_WARNINGS"
-            if performance
-            else "FAIL"
-        ),
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "date_start": start.isoformat(),
-        "date_end": end.isoformat(),
-        "requested_start_date": backfill.get("requested_start_date", start.isoformat()),
-        "requested_end_date": requested_end.isoformat(),
-        "latest_valid_as_of": latest_valid_as_of.isoformat(),
-        "data_quality_status": quality.status,
-        "data_quality_as_of": quality_as_of.isoformat(),
-        "data_quality_checked_at": quality.checked_at.isoformat(),
-        "validate_data_quality_report_path": str(quality_report_path),
-        "used_latest_valid_as_of": used_latest_valid_as_of,
-        "variants_total": len(variant_specs),
-        "variants_completed": progress["variants_completed"],
-        "variants_failed": len(failed),
-        "batch_backfill_manifest_path": str(root / "batch_backfill_manifest.json"),
-        "batch_backfill_progress_path": str(root / "batch_backfill_progress.json"),
-        "variant_weight_paths_path": str(root / "variant_weight_paths.jsonl"),
-        "variant_performance_metrics_path": str(root / "variant_performance_metrics.jsonl"),
-        "variant_regime_metrics_path": str(root / "variant_regime_metrics.jsonl"),
-        "variant_stability_metrics_path": str(root / "variant_stability_metrics.jsonl"),
-        "variant_churn_metrics_path": str(root / "variant_churn_metrics.jsonl"),
-        "variant_lag_metrics_path": str(root / "variant_lag_metrics.jsonl"),
-        "batch_backfill_report_path": str(root / "batch_backfill_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "batch_backfill_manifest.json", manifest)
-    _write_json(root / "batch_backfill_progress.json", progress)
-    write_data_quality_report(quality, quality_report_path)
-    _write_jsonl(root / "variant_weight_paths.jsonl", variant_states)
-    _write_jsonl(root / "variant_performance_metrics.jsonl", performance)
-    _write_jsonl(root / "variant_regime_metrics.jsonl", regime)
-    _write_jsonl(root / "variant_stability_metrics.jsonl", stability)
-    _write_jsonl(root / "variant_churn_metrics.jsonl", churn)
-    _write_jsonl(root / "variant_lag_metrics.jsonl", lag)
-    _write_text(root / "batch_backfill_report.md", render_batch_backfill_report(manifest, progress))
-    _write_latest_pointer(
-        "latest_weight_batch_backfill", root.name, root / "batch_backfill_manifest.json"
-    )
-    return {
-        "batch_backfill_id": root.name,
-        "backfill_id": root.name,
-        "backfill_dir": root,
-        "manifest": manifest,
-        "progress": progress,
-        "variant_weight_paths": variant_states,
-        "variant_performance_metrics": performance,
-        "variant_regime_metrics": regime,
-        "variant_stability_metrics": stability,
-        "variant_churn_metrics": churn,
-        "variant_lag_metrics": lag,
-    }
-
-
-def resume_weight_batch_backfill(
-    *,
-    backfill_id: str,
-    output_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
-) -> dict[str, Any]:
-    payload = weight_batch_backfill_report_payload(backfill_id=backfill_id, output_dir=output_dir)
-    progress = _mapping(payload.get("batch_backfill_progress"))
-    return {
-        "batch_backfill_id": backfill_id,
-        "resume_status": (
-            "ALREADY_COMPLETE"
-            if int(_float(progress.get("variants_completed")))
-            >= int(_float(progress.get("variants_total")))
-            else "PARTIAL_COMPLETION_REVIEW_REQUIRED"
-        ),
-        "progress": progress,
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-
-
-def weight_batch_backfill_report_payload(
-    *,
-    backfill_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=backfill_id,
-        latest_pointer="latest_weight_batch_backfill",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="batch_backfill_manifest.json",
-    )
-    return {
-        **_read_json(root / "batch_backfill_manifest.json"),
-        "batch_backfill_progress": _read_json(root / "batch_backfill_progress.json"),
-        "variant_weight_paths": _read_jsonl(root / "variant_weight_paths.jsonl"),
-        "variant_performance_metrics": _read_jsonl(root / "variant_performance_metrics.jsonl"),
-        "variant_regime_metrics": _read_jsonl(root / "variant_regime_metrics.jsonl"),
-        "variant_stability_metrics": _read_jsonl(root / "variant_stability_metrics.jsonl"),
-        "variant_churn_metrics": _read_jsonl(root / "variant_churn_metrics.jsonl"),
-        "variant_lag_metrics": _read_jsonl(root / "variant_lag_metrics.jsonl"),
-        "backfill_dir": str(root),
-    }
-
-
-def validate_weight_batch_backfill_artifact(
-    *,
-    backfill_id: str,
-    output_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
-) -> dict[str, Any]:
-    root = output_dir / backfill_id
-    manifest = _read_optional_json(root / "batch_backfill_manifest.json") or {}
-    progress = _read_optional_json(root / "batch_backfill_progress.json") or {}
-    performance = _read_jsonl(root / "variant_performance_metrics.jsonl")
-    variants = {str(row.get("variant_id")) for row in performance}
-    regime = _read_jsonl(root / "variant_regime_metrics.jsonl")
-    stability = _read_jsonl(root / "variant_stability_metrics.jsonl")
-    checks = _required_file_checks(
-        root,
-        (
-            "batch_backfill_manifest.json",
-            "batch_backfill_progress.json",
-            "variant_weight_paths.jsonl",
-            "variant_performance_metrics.jsonl",
-            "variant_regime_metrics.jsonl",
-            "variant_stability_metrics.jsonl",
-            "variant_churn_metrics.jsonl",
-            "variant_lag_metrics.jsonl",
-            "batch_backfill_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("backfill_id_matches", manifest.get("batch_backfill_id") == backfill_id, ""),
-            st._check("performance_metrics_present", bool(performance), ""),
-            st._check(
-                "data_quality_visible",
-                manifest.get("data_quality_status") in {"PASS", "PASS_WITH_WARNINGS"},
-                _text(manifest.get("data_quality_status")),
-            ),
-            st._check("latest_valid_as_of_visible", bool(manifest.get("latest_valid_as_of")), ""),
-            st._check(
-                "each_variant_has_regime_metrics",
-                variants.issubset({str(row.get("variant_id")) for row in regime}),
-                "",
-            ),
-            st._check(
-                "each_variant_has_stability_metrics",
-                variants.issubset({str(row.get("variant_id")) for row in stability}),
-                "",
-            ),
-            st._check(
-                "progress_counts_match",
-                int(_float(progress.get("variants_completed"))) == len(variants),
-                "",
-            ),
-            st._check("broker_forbidden", _payload_safe(manifest, progress, *performance), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, progress, *performance, *regime, *stability),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_weight_batch_backfill_validation", backfill_id, checks
+def validate_weight_batch_backfill_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_foundation(
+        "validate_weight_batch_backfill_artifact", *args, **kwargs
     )
 
 
@@ -3750,9 +3197,7 @@ def run_scorecard_attribution(
         "source_batch2_scorecard_variant_count": len(
             _records(source_scorecard.get("variant_scorecard"))
         ),
-        "scorecard_attribution_manifest_path": str(
-            root / "scorecard_attribution_manifest.json"
-        ),
+        "scorecard_attribution_manifest_path": str(root / "scorecard_attribution_manifest.json"),
         "score_component_distribution_path": str(root / "score_component_distribution.json"),
         "rejected_variant_component_matrix_path": str(
             root / "rejected_variant_component_matrix.jsonl"
@@ -4222,9 +3667,7 @@ def run_micro_search_v4_design(
         else "FAIL",
         "market_regime": attribution.get("market_regime", "ai_after_chatgpt"),
         "variant_count": len(variants),
-        "micro_search_v4_design_manifest_path": str(
-            root / "micro_search_v4_design_manifest.json"
-        ),
+        "micro_search_v4_design_manifest_path": str(root / "micro_search_v4_design_manifest.json"),
         "v4_design_rationale_path": str(root / "v4_design_rationale.json"),
         "v4_variant_specs_path": str(root / "v4_variant_specs.jsonl"),
         "micro_search_v4_design_report_path": str(root / "micro_search_v4_design_report.md"),
@@ -4635,9 +4078,7 @@ def run_gate_calibrated_review(
         "generated_at": generated.isoformat(),
         "status": "PASS" if rows else "FAIL",
         "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "gate_calibrated_review_manifest_path": str(
-            root / "gate_calibrated_review_manifest.json"
-        ),
+        "gate_calibrated_review_manifest_path": str(root / "gate_calibrated_review_manifest.json"),
         "official_gate_results_path": str(root / "official_gate_results.jsonl"),
         "diagnostic_gate_results_path": str(root / "diagnostic_gate_results.jsonl"),
         "gate_calibrated_summary_path": str(root / "gate_calibrated_summary.json"),
@@ -5059,9 +4500,7 @@ def update_owner_research_roadmap(
         "generated_at": generated.isoformat(),
         "status": "PASS",
         "market_regime": direction.get("market_regime", "ai_after_chatgpt"),
-        "owner_research_roadmap_manifest_path": str(
-            root / "owner_research_roadmap_manifest.json"
-        ),
+        "owner_research_roadmap_manifest_path": str(root / "owner_research_roadmap_manifest.json"),
         "owner_roadmap_summary_path": str(root / "owner_roadmap_summary.json"),
         "owner_roadmap_checklist_path": str(root / "owner_roadmap_checklist.md"),
         "owner_research_roadmap_report_path": str(root / "owner_research_roadmap_report.md"),
@@ -5466,9 +4905,7 @@ def run_signal_churn_root_cause_review(
         "churn_root_cause_summary_path": str(root / "churn_root_cause_summary.json"),
         "churn_event_clusters_path": str(root / "churn_event_clusters.jsonl"),
         "churn_mitigation_candidates_path": str(root / "churn_mitigation_candidates.json"),
-        "signal_churn_root_cause_report_path": str(
-            root / "signal_churn_root_cause_report.md"
-        ),
+        "signal_churn_root_cause_report_path": str(root / "signal_churn_root_cause_report.md"),
         **st.EXPERIMENT_FACTORY_SAFETY,
     }
     _write_json(root / "signal_churn_root_cause_manifest.json", manifest)
@@ -5857,9 +5294,7 @@ def run_filtered_candidate_backfill(
         ),
         "filtered_variant_specs_path": str(root / "filtered_variant_specs.jsonl"),
         "filtered_variant_performance_path": str(root / "filtered_variant_performance.jsonl"),
-        "filtered_variant_signal_metrics_path": str(
-            root / "filtered_variant_signal_metrics.jsonl"
-        ),
+        "filtered_variant_signal_metrics_path": str(root / "filtered_variant_signal_metrics.jsonl"),
         "filtered_candidate_backfill_report_path": str(
             root / "filtered_candidate_backfill_report.md"
         ),
@@ -6123,15 +5558,9 @@ def run_signal_gate_experiment(
         "date_start": ledger.get("date_start"),
         "date_end": ledger.get("date_end"),
         "data_quality_status": ledger.get("data_quality_status"),
-        "signal_gate_experiment_manifest_path": str(
-            root / "signal_gate_experiment_manifest.json"
-        ),
-        "signal_gate_experiment_results_path": str(
-            root / "signal_gate_experiment_results.jsonl"
-        ),
-        "signal_gate_experiment_summary_path": str(
-            root / "signal_gate_experiment_summary.json"
-        ),
+        "signal_gate_experiment_manifest_path": str(root / "signal_gate_experiment_manifest.json"),
+        "signal_gate_experiment_results_path": str(root / "signal_gate_experiment_results.jsonl"),
+        "signal_gate_experiment_summary_path": str(root / "signal_gate_experiment_summary.json"),
         "signal_gate_experiment_report_path": str(root / "signal_gate_experiment_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **st.EXPERIMENT_FACTORY_SAFETY,
@@ -6178,9 +5607,7 @@ def signal_gate_experiment_report_payload(
         "signal_gate_experiment_results": _read_jsonl(
             root / "signal_gate_experiment_results.jsonl"
         ),
-        "signal_gate_experiment_summary": _read_json(
-            root / "signal_gate_experiment_summary.json"
-        ),
+        "signal_gate_experiment_summary": _read_json(root / "signal_gate_experiment_summary.json"),
         "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "signal_gate_experiment_dir": str(root),
     }
@@ -6452,9 +5879,7 @@ def owner_signal_roadmap_report_payload(
     return {
         **_read_json(root / "owner_signal_roadmap_manifest.json"),
         "owner_signal_roadmap_summary": _read_json(root / "owner_signal_roadmap_summary.json"),
-        "owner_signal_checklist": (root / "owner_signal_checklist.md").read_text(
-            encoding="utf-8"
-        ),
+        "owner_signal_checklist": (root / "owner_signal_checklist.md").read_text(encoding="utf-8"),
         "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "owner_signal_roadmap_dir": str(root),
     }
@@ -7100,8 +6525,7 @@ def render_gate_calibrated_review_report(
             f"- diagnostic_gate_promoted_count：{summary.get('diagnostic_gate_promoted_count')}",
             f"- diagnostic_only_candidates："
             f"{', '.join(_texts(summary.get('diagnostic_only_candidates')))}",
-            f"- gate_policy_change_recommended："
-            f"{summary.get('gate_policy_change_recommended')}",
+            f"- gate_policy_change_recommended：{summary.get('gate_policy_change_recommended')}",
             f"- recommended_next_action：{summary.get('recommended_next_action')}",
             "",
             "结论：diagnostic gate 只用于归因，不修改正式 gate，也不触发 promotion。",
@@ -7286,8 +6710,7 @@ def render_no_promotion_review_report(
     failures = _records(failure.get("failures"))
     components = _records(matrix.get("components"))
     reason_lines = [
-        f"- {row.get('reason')}: "
-        f"count={row.get('variant_count')} severity={row.get('severity')}"
+        f"- {row.get('reason')}: count={row.get('variant_count')} severity={row.get('severity')}"
         for row in reasons
     ]
     failure_lines = [
@@ -8901,10 +8324,16 @@ def _family_component_weakness(rows: Sequence[Mapping[str, Any]]) -> dict[str, A
             weakness = _text(row.get("largest_weakness"))
             weakness_counts[weakness] = weakness_counts.get(weakness, 0) + 1
         dominant = max(weakness_counts, key=weakness_counts.get) if weakness_counts else "unknown"
-        best = max(
-            selected,
-            key=lambda row: _float(_mapping(row.get("component_scores")).get("composite_score")),
-        ) if selected else {}
+        best = (
+            max(
+                selected,
+                key=lambda row: _float(
+                    _mapping(row.get("component_scores")).get("composite_score")
+                ),
+            )
+            if selected
+            else {}
+        )
         families.append(
             {
                 "family": family,
@@ -9685,9 +9114,9 @@ def _gate_calibrated_summary(
         "diagnostic_only_candidates": diagnostic_only,
         "gate_policy_change_recommended": False,
         "recommended_next_action": "signal_vs_parameter_attribution",
-        "source_gate_calibrated_assessment": _mapping(
-            gate.get("gate_strictness_diagnosis")
-        ).get("calibrated_assessment"),
+        "source_gate_calibrated_assessment": _mapping(gate.get("gate_strictness_diagnosis")).get(
+            "calibrated_assessment"
+        ),
         **st.EXPERIMENT_FACTORY_SAFETY,
     }
 
@@ -9935,9 +9364,7 @@ def _candidate_signal_events(
                 signal_direction = (
                     "increase_active_tilt" if event_index % 2 == 0 else "reduce_active_tilt"
                 )
-                previous = (
-                    "reduce_active_tilt" if event_index % 2 == 0 else "increase_active_tilt"
-                )
+                previous = "reduce_active_tilt" if event_index % 2 == 0 else "increase_active_tilt"
                 subsequent_5d = -0.004 if direction_changed else 0.002
                 subsequent_20d = -0.006 if direction_changed else 0.004
                 event_quality = "MIXED" if direction_changed else "NEUTRAL"
@@ -10170,10 +9597,11 @@ def _regime_mismatch_attribution_events(ledger: Mapping[str, Any]) -> list[dict[
         modes = _texts(row.get("failure_modes"))
         regime = _text(row.get("regime_context"))
         direction = _text(row.get("signal_direction"))
-        if (
-            "regime_mismatch" not in modes
-            and regime not in {"tech_drawdown", "strong_recovery", "semiconductor_pullback"}
-        ):
+        if "regime_mismatch" not in modes and regime not in {
+            "tech_drawdown",
+            "strong_recovery",
+            "semiconductor_pullback",
+        }:
             continue
         if regime == "tech_drawdown" and "increase" in direction:
             mismatch_type = "risk_increase_during_drawdown"
@@ -11267,8 +10695,7 @@ def _targeted_v3_variant_specs(
         for window in windows:
             for alpha in (0.40, 0.55):
                 variant_id = (
-                    f"cash_buffer_{int(cash * 100)}_plus_smooth_{window}d_"
-                    f"alpha_{int(alpha * 100)}"
+                    f"cash_buffer_{int(cash * 100)}_plus_smooth_{window}d_alpha_{int(alpha * 100)}"
                 )
                 variants.append(
                     _targeted_v3_variant(

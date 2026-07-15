@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CU_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CV1_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-15
-base_commit: ea50754f
+base_commit: 09e7a83b
 production_effect: none
 
 arch_004_owned_paths:
@@ -59,6 +59,7 @@ arch_004_owned_paths:
   - docs/requirements/TRADING-271_to_275_Smoothed_Forward_Sample_Bootstrap_and_Daily_Evidence_Collection.md
   - docs/requirements/TRADING-276_to_280_Smoothed_Forward_Data_Freshness_and_Latest_Available_Bootstrap.md
   - docs/requirements/TRADING-281_to_285_Smoothed_Data_Refresh_Execution_and_Scheduled_Retry_Operations.md
+  - docs/requirements/TRADING-286_to_305_Weight_Optimization_Batch_Search_and_Adaptive_Promotion_Pipeline.md
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   - config/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation_v1.yaml
   - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
@@ -288,6 +289,10 @@ arch_004_owned_paths:
   - src/ai_trading_system/etf_portfolio/dynamic_v3_backtest_simulation.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/registration.py
   - src/ai_trading_system/cli_commands/etf_portfolio.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_weight_batch_search.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_foundation.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_foundation.py
+  - tests/test_weight_search_foundation_hardening.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_confirmation_operations.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_confirmation_operations.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_pressure_validation.py

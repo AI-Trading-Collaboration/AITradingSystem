@@ -4017,6 +4017,7 @@ reports:
     command: aits etf dynamic-v3-rescue weight-search-space report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/weight_search_space/*/weight_search_space_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_search_space/*/weight_search_space_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_search_space/*/normalized_search_space.yaml
       - reports/etf_portfolio/dynamic_v3_rescue/weight_search_space/*/search_family_inventory.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_search_space/*/weight_search_space_report.md
@@ -4038,6 +4039,7 @@ reports:
     command: aits etf dynamic-v3-rescue weight-experiment-batch2 report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/weight_experiment_batch2/*/batch2_matrix_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_experiment_batch2/*/weight_experiment_batch2_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_experiment_batch2/*/batch2_variant_specs.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/weight_experiment_batch2/*/batch2_family_coverage.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_experiment_batch2/*/batch2_matrix_report.md
@@ -4059,6 +4061,7 @@ reports:
     command: aits etf dynamic-v3-rescue weight-batch-backfill report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/batch_backfill_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/weight_batch_backfill_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/batch_backfill_progress.json
       - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/variant_weight_paths.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/variant_performance_metrics.jsonl
