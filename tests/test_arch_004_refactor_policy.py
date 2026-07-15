@@ -4464,6 +4464,63 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         assert phase_g2_4cw1["validation"]["full_validation"]["passed"] >= 6030
         assert phase_g2_4cw1["sources"]
         for source in phase_g2_4cw1["sources"]:
+            if source["path"] in set(phase_g2_4cw1.get("superseded_source_paths", [])):
+                continue
+            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            assert actual == source["sha256"], source["path"]
+
+    phase_g2_4cw2 = baseline["phase_g2_4cw2_etf_cli_dynamic_v3_weight_search_targeted"]
+    assert phase_g2_4cw2["status"] in {
+        "IN_PROGRESS",
+        "VALIDATING",
+        "COMPLETE_G2_4_CONTINUES",
+    }
+    migration_g2_4cw2 = phase_g2_4cw2["migration"]
+    assert migration_g2_4cw2["callback_count"] == 10
+    assert migration_g2_4cw2["domain_entrypoint_count"] == 10
+    assert len(migration_g2_4cw2["snapshot_schemas"]) == 3
+    assert (
+        migration_g2_4cw2["exact_coverage_near_miss_scorecard_to_matrix_lineage_required"]
+        is True
+    )
+    assert migration_g2_4cw2["exact_matrix_weight_paper_backfill_lineage_required"] is True
+    assert (
+        migration_g2_4cw2[
+            "exact_backfill_matrix_near_miss_scorecard_to_ab_lineage_required"
+        ]
+        is True
+    )
+    assert migration_g2_4cw2["reviewed_targeted_policy_required"] is True
+    assert migration_g2_4cw2["pre_output_data_quality_gate_required"] is True
+    assert migration_g2_4cw2["backfill_resume_prior_pass_required"] is True
+    assert migration_g2_4cw2["live_source_policy_cache_and_dq_replay_required"] is True
+    assert migration_g2_4cw2["broker_action_allowed"] is False
+    assert migration_g2_4cw2["production_effect"] == "none"
+    subtraction_g2_4cw2 = phase_g2_4cw2["subtraction"]
+    assert subtraction_g2_4cw2["legacy_cli_lines_after"] == 13269
+    assert subtraction_g2_4cw2["legacy_cli_top_level_functions_after"] == 330
+    assert subtraction_g2_4cw2["legacy_cli_callback_reduction"] == 10
+    assert subtraction_g2_4cw2["legacy_domain_lazy_wrapper_count"] == 10
+    hardening_g2_4cw2 = phase_g2_4cw2["hardening"]
+    assert hardening_g2_4cw2["total_emitted_views_tamper_checked"] == 16
+    assert hardening_g2_4cw2["snapshot_schema_tamper_checked"] == 3
+    assert hardening_g2_4cw2["cross_lineage_tamper_checked"] == 3
+    assert hardening_g2_4cw2["policy_binding_tamper_checked"] is True
+    assert hardening_g2_4cw2["price_and_rates_binding_tamper_checked"] == 2
+    assert (
+        hardening_g2_4cw2["resume_tampered_or_incomplete_source_fail_closed_checked"]
+        is True
+    )
+    performance_g2_4cw2 = phase_g2_4cw2["performance"]
+    assert performance_g2_4cw2["stable_improvement_claimed"] is False
+    assert performance_g2_4cw2["full_gate_reduced_for_performance"] is False
+    if phase_g2_4cw2["status"] == "COMPLETE_G2_4_CONTINUES":
+        assert phase_g2_4cw2["validation"]["focused"]["passed"] >= 132
+        assert phase_g2_4cw2["validation"]["architecture_fitness"]["passed"] >= 286
+        assert phase_g2_4cw2["validation"]["contract_validation"]["passed"] >= 203
+        assert phase_g2_4cw2["validation"]["full_validation"]["passed"] >= 6030
+        assert phase_g2_4cw2["sources"]
+        for source in phase_g2_4cw2["sources"]:
             actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
             assert actual == source["sha256"], source["path"]
 
@@ -4649,6 +4706,8 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CV3_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CW1_IN_PROGRESS",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CW1_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CW2_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CW2_COMPLETE_G2_4_CONTINUES",
     }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

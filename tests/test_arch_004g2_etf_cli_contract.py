@@ -362,6 +362,10 @@ DYNAMIC_V3_WEIGHT_SEARCH_DIAGNOSTICS_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_weight_search_diagnostics.py"
 )
+DYNAMIC_V3_WEIGHT_SEARCH_TARGETED_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_weight_search_targeted.py"
+)
 DYNAMIC_V3_WEIGHT_BATCH_SEARCH_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/etf_portfolio/dynamic_v3_weight_batch_search.py"
@@ -369,6 +373,10 @@ DYNAMIC_V3_WEIGHT_BATCH_SEARCH_PATH = (
 DYNAMIC_V3_WEIGHT_SEARCH_DIAGNOSTICS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_diagnostics.py"
+)
+DYNAMIC_V3_WEIGHT_SEARCH_TARGETED_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_targeted.py"
 )
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
@@ -523,7 +531,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 13522
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 13269
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -734,8 +742,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 13522
-    assert len(legacy_names) == 340
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 13269
+    assert len(legacy_names) == 330
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -3054,6 +3062,64 @@ def test_g2_4_dynamic_v3_weight_search_diagnostics_domain_leaves_legacy_owner() 
         assert isinstance(call, ast.Call)
         assert isinstance(call.func, ast.Name)
         assert call.func.id == "_call_weight_search_diagnostics"
+        assert isinstance(call.args[0], ast.Constant)
+        assert call.args[0].value == name
+
+
+def test_g2_4_dynamic_v3_weight_search_targeted_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_tree = ast.parse(
+        DYNAMIC_V3_WEIGHT_SEARCH_TARGETED_COMMANDS_PATH.read_text(encoding="utf-8")
+    )
+    canonical_names = _function_names(canonical_tree)
+    callbacks = {
+        "dynamic_v3_targeted_search_v3_build_command",
+        "dynamic_v3_targeted_search_v3_report_command",
+        "dynamic_v3_validate_targeted_search_v3_command",
+        "dynamic_v3_targeted_v3_backfill_run_command",
+        "dynamic_v3_targeted_v3_backfill_resume_command",
+        "dynamic_v3_targeted_v3_backfill_report_command",
+        "dynamic_v3_validate_targeted_v3_backfill_command",
+        "dynamic_v3_near_miss_ab_comparison_run_command",
+        "dynamic_v3_near_miss_ab_comparison_report_command",
+        "dynamic_v3_validate_near_miss_ab_comparison_command",
+    }
+    assert len(callbacks) == 10
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert "dynamic_v3_weight_search_targeted" in _imported_names(canonical_tree)
+
+
+def test_g2_4_dynamic_v3_weight_search_targeted_domain_leaves_legacy_owner() -> None:
+    legacy_tree = ast.parse(DYNAMIC_V3_WEIGHT_BATCH_SEARCH_PATH.read_text(encoding="utf-8"))
+    canonical_tree = ast.parse(
+        DYNAMIC_V3_WEIGHT_SEARCH_TARGETED_PATH.read_text(encoding="utf-8")
+    )
+    entrypoints = {
+        "build_targeted_search_v3",
+        "targeted_search_v3_report_payload",
+        "validate_targeted_search_v3_artifact",
+        "run_targeted_v3_backfill",
+        "resume_targeted_v3_backfill",
+        "targeted_v3_backfill_report_payload",
+        "validate_targeted_v3_backfill_artifact",
+        "run_near_miss_ab_comparison",
+        "near_miss_ab_comparison_report_payload",
+        "validate_near_miss_ab_comparison_artifact",
+    }
+    legacy_functions = {
+        node.name: node for node in legacy_tree.body if isinstance(node, ast.FunctionDef)
+    }
+    assert entrypoints <= _function_names(canonical_tree)
+    for name in entrypoints:
+        wrapper = legacy_functions[name]
+        assert len(wrapper.body) == 1
+        assert isinstance(wrapper.body[0], ast.Return)
+        call = wrapper.body[0].value
+        assert isinstance(call, ast.Call)
+        assert isinstance(call.func, ast.Name)
+        assert call.func.id == "_call_weight_search_targeted"
         assert isinstance(call.args[0], ast.Constant)
         assert call.args[0].value == name
 

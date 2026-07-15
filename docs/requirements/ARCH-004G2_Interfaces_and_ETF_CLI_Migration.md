@@ -20,6 +20,18 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-15：G2.4CW2=`COMPLETE_G2_4_CONTINUES`。Targeted Matrix/DQ Backfill/Near-Miss
+  A/B的10 callbacks/10 public入口完成canonical迁移；三类v2 snapshots、reviewed policy、exact
+  CW1→Matrix→CV1 Backfill/DQ→A/B+CV2 lineage、resume先验PASS、16 views rebuild/tamper闭合。
+  focused/architecture/contract/full=`132/289/203/6,035 passed`，full=`1,722.89s`、641 warnings，
+  generated=`938/1,130/858/0`，CLI tree/hash不变。CW3/whole phase仍pending，不触发handoff、
+  不进入G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CW2进入`IN_PROGRESS`。TRADING-310～312的Targeted Matrix/DQ Backfill/
+  Near-Miss A/B共10 callbacks/10 public业务入口迁独立canonical targeted interface/domain。
+  退出固定三类bounded v2 snapshots、reviewed targeted policy、validated exact CW1 Coverage+
+  Near-Miss→Matrix→CV1 Backfill/DQ→A/B与CV2 Scorecard lineage、resume先验PASS、live source/
+  config/cache/DQ replay及16 views byte rebuild/tamper。CW3/whole phase仍pending，不触发handoff、
+  不进入G2.5，`production_effect=none`。
 - 2026-07-15：G2.4CW1=`COMPLETE_G2_4_CONTINUES`。Diagnostics 12 callbacks/12业务入口、
   四类v2 snapshots、exact双链、21 views rebuild/tamper、reporting/CLI/deprecation/manifests/
   compatibility闭合；focused/architecture/contract/full=`166/287/203/6,032 passed`，full=

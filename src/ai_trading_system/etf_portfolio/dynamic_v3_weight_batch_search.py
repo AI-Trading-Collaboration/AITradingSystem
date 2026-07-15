@@ -439,15 +439,11 @@ def run_no_promotion_review(*args: Any, **kwargs: Any) -> Any:
 
 
 def no_promotion_review_report_payload(*args: Any, **kwargs: Any) -> Any:
-    return _call_weight_search_diagnostics(
-        "no_promotion_review_report_payload", *args, **kwargs
-    )
+    return _call_weight_search_diagnostics("no_promotion_review_report_payload", *args, **kwargs)
 
 
 def validate_no_promotion_review_artifact(*args: Any, **kwargs: Any) -> Any:
-    return _call_weight_search_diagnostics(
-        "validate_no_promotion_review_artifact", *args, **kwargs
-    )
+    return _call_weight_search_diagnostics("validate_no_promotion_review_artifact", *args, **kwargs)
 
 
 def extract_near_miss_candidates(*args: Any, **kwargs: Any) -> Any:
@@ -455,9 +451,7 @@ def extract_near_miss_candidates(*args: Any, **kwargs: Any) -> Any:
 
 
 def near_miss_candidates_report_payload(*args: Any, **kwargs: Any) -> Any:
-    return _call_weight_search_diagnostics(
-        "near_miss_candidates_report_payload", *args, **kwargs
-    )
+    return _call_weight_search_diagnostics("near_miss_candidates_report_payload", *args, **kwargs)
 
 
 def validate_near_miss_candidates_artifact(*args: Any, **kwargs: Any) -> Any:
@@ -487,553 +481,59 @@ def run_search_coverage_gap(*args: Any, **kwargs: Any) -> Any:
 
 
 def search_coverage_gap_report_payload(*args: Any, **kwargs: Any) -> Any:
-    return _call_weight_search_diagnostics(
-        "search_coverage_gap_report_payload", *args, **kwargs
-    )
+    return _call_weight_search_diagnostics("search_coverage_gap_report_payload", *args, **kwargs)
 
 
 def validate_search_coverage_gap_artifact(*args: Any, **kwargs: Any) -> Any:
-    return _call_weight_search_diagnostics(
-        "validate_search_coverage_gap_artifact", *args, **kwargs
-    )
+    return _call_weight_search_diagnostics("validate_search_coverage_gap_artifact", *args, **kwargs)
 
 
-def build_targeted_search_v3(
-    *,
-    coverage_gap_id: str,
-    coverage_gap_dir: Path = DEFAULT_SEARCH_COVERAGE_GAP_DIR,
-    near_miss_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
-    output_dir: Path = DEFAULT_TARGETED_SEARCH_V3_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    coverage = search_coverage_gap_report_payload(
-        coverage_gap_id=coverage_gap_id,
-        output_dir=coverage_gap_dir,
-    )
-    near_miss = near_miss_candidates_report_payload(
-        near_miss_id=_text(coverage.get("near_miss_id")),
-        output_dir=near_miss_dir,
-    )
-    variants = _targeted_v3_variant_specs(coverage, near_miss)
-    variants = variants[
-        : int(
-            _float(
-                _mapping(coverage.get("targeted_v3_recommendations")).get("max_v3_variants"),
-                TARGETED_V3_MAX_VARIANTS,
-            )
-        )
-    ]
-    family_coverage = _targeted_v3_family_coverage(variants)
-    matrix_id = _stable_id("targeted-search-v3", coverage_gap_id, generated.isoformat())
-    root = _unique_dir(output_dir / matrix_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_targeted_search_v3_manifest",
-        "v3_matrix_id": root.name,
-        "coverage_gap_id": coverage_gap_id,
-        "near_miss_id": coverage.get("near_miss_id"),
-        "source_scorecard_id": coverage.get("source_scorecard_id"),
-        "source_backfill_id": coverage.get("source_backfill_id"),
-        "search_space_id": coverage.get("search_space_id"),
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if 60 <= len(variants) <= TARGETED_V3_MAX_VARIANTS else "FAIL",
-        "market_regime": "ai_after_chatgpt",
-        "requested_start_date": st.AI_AFTER_CHATGPT_START.isoformat(),
-        "variant_count": len(variants),
-        "targeted_search_v3_manifest_path": str(root / "targeted_search_v3_manifest.json"),
-        "v3_variant_specs_path": str(root / "v3_variant_specs.jsonl"),
-        "v3_family_coverage_path": str(root / "v3_family_coverage.json"),
-        "targeted_search_v3_report_path": str(root / "targeted_search_v3_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "targeted_search_v3_manifest.json", manifest)
-    _write_jsonl(root / "v3_variant_specs.jsonl", variants)
-    _write_json(root / "v3_family_coverage.json", family_coverage)
-    _write_text(
-        root / "targeted_search_v3_report.md",
-        render_targeted_search_v3_report(manifest, family_coverage),
-    )
-    _write_latest_pointer(
-        "latest_targeted_search_v3", root.name, root / "targeted_search_v3_manifest.json"
-    )
-    return {
-        "v3_matrix_id": root.name,
-        "v3_matrix_dir": root,
-        "manifest": manifest,
-        "v3_variant_specs": variants,
-        "v3_family_coverage": family_coverage,
-    }
+def _call_weight_search_targeted(name: str, *args: Any, **kwargs: Any) -> Any:
+    from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_targeted
+
+    return getattr(dynamic_v3_weight_search_targeted, name)(*args, **kwargs)
 
 
-def targeted_search_v3_report_payload(
-    *,
-    v3_matrix_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_TARGETED_SEARCH_V3_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=v3_matrix_id,
-        latest_pointer="latest_targeted_search_v3",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="targeted_search_v3_manifest.json",
-    )
-    return {
-        **_read_json(root / "targeted_search_v3_manifest.json"),
-        "v3_variant_specs": _read_jsonl(root / "v3_variant_specs.jsonl"),
-        "v3_family_coverage": _read_json(root / "v3_family_coverage.json"),
-        "v3_matrix_dir": str(root),
-    }
+def build_targeted_search_v3(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_targeted("build_targeted_search_v3", *args, **kwargs)
 
 
-def validate_targeted_search_v3_artifact(
-    *,
-    v3_matrix_id: str,
-    output_dir: Path = DEFAULT_TARGETED_SEARCH_V3_DIR,
-) -> dict[str, Any]:
-    root = output_dir / v3_matrix_id
-    manifest = _read_optional_json(root / "targeted_search_v3_manifest.json") or {}
-    variants = _read_jsonl(root / "v3_variant_specs.jsonl")
-    coverage = _read_optional_json(root / "v3_family_coverage.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "targeted_search_v3_manifest.json",
-            "v3_variant_specs.jsonl",
-            "v3_family_coverage.json",
-            "targeted_search_v3_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("v3_matrix_id_matches", manifest.get("v3_matrix_id") == v3_matrix_id, ""),
-            st._check(
-                "variant_count_bounded",
-                60 <= len(variants) <= TARGETED_V3_MAX_VARIANTS,
-                str(len(variants)),
-            ),
-            st._check(
-                "each_variant_has_parent_or_gap",
-                all(
-                    row.get("near_miss_parent") or row.get("coverage_gap_reason")
-                    for row in variants
-                ),
-                "",
-            ),
-            st._check(
-                "focus_families_covered",
-                {"cash_buffer_smoothing_hybrid", "cash_buffer_threshold_hybrid"}.issubset(
-                    set(_texts(coverage.get("targeted_families_covered")))
-                ),
-                ",".join(_texts(coverage.get("targeted_families_covered"))),
-            ),
-            st._check("broker_forbidden", _payload_safe(manifest, coverage, *variants), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, coverage, *variants),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload("etf_dynamic_v3_targeted_search_v3_validation", v3_matrix_id, checks)
+def targeted_search_v3_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_targeted("targeted_search_v3_report_payload", *args, **kwargs)
 
 
-def run_targeted_v3_backfill(
-    *,
-    v3_matrix_id: str,
-    v3_matrix_dir: Path = DEFAULT_TARGETED_SEARCH_V3_DIR,
-    baseline_backfill_dir: Path = st.DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
-    output_dir: Path = DEFAULT_TARGETED_V3_BACKFILL_DIR,
-    price_cache_path: Path | None = None,
-    rates_cache_path: Path = st.DEFAULT_RATES_CACHE_PATH,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    matrix = targeted_search_v3_report_payload(v3_matrix_id=v3_matrix_id, output_dir=v3_matrix_dir)
-    source_backfill_id = _text(matrix.get("source_backfill_id"))
-    if not source_backfill_id:
-        raise RuntimeError("targeted v3 matrix is missing source_backfill_id")
-    backfill = st.paper_shadow_backfill_report_payload(
-        backfill_id=source_backfill_id,
-        output_dir=baseline_backfill_dir,
-    )
-    baseline_states = _records(backfill.get("backfill_method_states"))
-    config = st._load_backfill_config_from_manifest(backfill)
-    start = max(
-        _coerce_date(backfill.get("date_start"), st.AI_AFTER_CHATGPT_START),
-        st.AI_AFTER_CHATGPT_START,
-    )
-    requested_end = _coerce_date(backfill.get("date_end"), generated.date())
-    source = _mapping(config.get("source"))
-    symbols = st._symbols_from_state_paths(baseline_states)
-    prices_path = price_cache_path or st._resolve_project_path(
-        source.get("price_cache_path"),
-        st.DEFAULT_PRICE_CACHE_PATH,
-    )
-    pivot = st._load_price_pivot(prices_path, symbols, start)
-    latest_valid_as_of = _latest_common_price_date(pivot, symbols)
-    end = min(requested_end, latest_valid_as_of, generated.date())
-    used_latest_valid_as_of = end < requested_end
-    pivot = pivot.loc[(pivot.index.date >= start) & (pivot.index.date <= end)]
-    quality_as_of = max(end, generated.date())
-    quality = st._run_data_quality_gate(
-        price_cache_path=prices_path,
-        rates_cache_path=rates_cache_path,
-        expected_symbols=symbols,
-        as_of=quality_as_of,
-    )
-    if not quality.passed:
-        raise RuntimeError(f"data quality gate failed for targeted v3 backfill: {quality.status}")
-    returns = pivot.pct_change().fillna(0.0)
-    labels = {
-        idx.date().isoformat(): st._risk_capped_regime_context_for_return(row, config)
-        for idx, row in returns.iterrows()
-    }
-    variant_specs = _records(matrix.get("v3_variant_specs"))
-    variant_states: list[dict[str, Any]] = []
-    failed: list[dict[str, Any]] = []
-    for variant in variant_specs:
-        try:
-            variant_states.extend(
-                st._run_variant_weight_path(
-                    variant=variant,
-                    baseline_states=baseline_states,
-                    returns=returns,
-                    labels=labels,
-                    config=config,
-                )
-            )
-        except Exception as exc:  # noqa: BLE001
-            failed.append({"variant_id": _text(variant.get("variant_id")), "error": str(exc)})
-    performance = st._variant_performance_metrics(variant_states, baseline_states)
-    regime = st._variant_regime_metrics(variant_states, baseline_states, labels, config)
-    stability = st._variant_stability_metrics(variant_states, baseline_states, config)
-    churn = _variant_churn_metrics(variant_states, stability)
-    backfill_id = _stable_id(
-        "targeted-v3-backfill", v3_matrix_id, end.isoformat(), generated.isoformat()
-    )
-    root = _unique_dir(output_dir / backfill_id)
-    root.mkdir(parents=True, exist_ok=False)
-    quality_report_path = root / "validate_data_quality_report.md"
-    progress = {
-        "schema_version": st.SCHEMA_VERSION,
-        "v3_backfill_id": root.name,
-        "variants_total": len(variant_specs),
-        "variants_completed": len({row.get("variant_id") for row in performance}),
-        "variants_failed": len(failed),
-        "failed_variants": failed,
-        "date_start": start.isoformat(),
-        "date_end": end.isoformat(),
-        "requested_date_end": requested_end.isoformat(),
-        "latest_valid_as_of": latest_valid_as_of.isoformat(),
-        "data_quality": quality.status,
-        "data_quality_as_of": quality_as_of.isoformat(),
-        "validate_data_quality_report_path": str(quality_report_path),
-        "used_latest_valid_as_of": used_latest_valid_as_of,
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_targeted_v3_backfill_manifest",
-        "v3_backfill_id": root.name,
-        "v3_matrix_id": v3_matrix_id,
-        "source_backfill_id": source_backfill_id,
-        "source_scorecard_id": matrix.get("source_scorecard_id"),
-        "generated_at": generated.isoformat(),
-        "status": "PASS"
-        if not failed and performance
-        else "PASS_WITH_WARNINGS"
-        if performance
-        else "FAIL",
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "date_start": start.isoformat(),
-        "date_end": end.isoformat(),
-        "requested_start_date": backfill.get("requested_start_date", start.isoformat()),
-        "requested_end_date": requested_end.isoformat(),
-        "latest_valid_as_of": latest_valid_as_of.isoformat(),
-        "data_quality_status": quality.status,
-        "data_quality_as_of": quality_as_of.isoformat(),
-        "data_quality_checked_at": quality.checked_at.isoformat(),
-        "validate_data_quality_report_path": str(quality_report_path),
-        "used_latest_valid_as_of": used_latest_valid_as_of,
-        "variants_total": len(variant_specs),
-        "variants_completed": progress["variants_completed"],
-        "variants_failed": len(failed),
-        "targeted_v3_backfill_manifest_path": str(root / "targeted_v3_backfill_manifest.json"),
-        "v3_backfill_progress_path": str(root / "v3_backfill_progress.json"),
-        "v3_variant_performance_path": str(root / "v3_variant_performance.jsonl"),
-        "v3_variant_regime_metrics_path": str(root / "v3_variant_regime_metrics.jsonl"),
-        "v3_variant_stability_metrics_path": str(root / "v3_variant_stability_metrics.jsonl"),
-        "v3_variant_churn_metrics_path": str(root / "v3_variant_churn_metrics.jsonl"),
-        "targeted_v3_backfill_report_path": str(root / "targeted_v3_backfill_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "targeted_v3_backfill_manifest.json", manifest)
-    _write_json(root / "v3_backfill_progress.json", progress)
-    write_data_quality_report(quality, quality_report_path)
-    _write_jsonl(root / "v3_variant_performance.jsonl", performance)
-    _write_jsonl(root / "v3_variant_regime_metrics.jsonl", regime)
-    _write_jsonl(root / "v3_variant_stability_metrics.jsonl", stability)
-    _write_jsonl(root / "v3_variant_churn_metrics.jsonl", churn)
-    _write_text(
-        root / "targeted_v3_backfill_report.md",
-        render_targeted_v3_backfill_report(manifest, progress),
-    )
-    _write_latest_pointer(
-        "latest_targeted_v3_backfill", root.name, root / "targeted_v3_backfill_manifest.json"
-    )
-    return {
-        "v3_backfill_id": root.name,
-        "v3_backfill_dir": root,
-        "manifest": manifest,
-        "v3_backfill_progress": progress,
-        "v3_variant_performance": performance,
-        "v3_variant_regime_metrics": regime,
-        "v3_variant_stability_metrics": stability,
-        "v3_variant_churn_metrics": churn,
-    }
+def validate_targeted_search_v3_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_targeted("validate_targeted_search_v3_artifact", *args, **kwargs)
 
 
-def resume_targeted_v3_backfill(
-    *,
-    v3_backfill_id: str,
-    output_dir: Path = DEFAULT_TARGETED_V3_BACKFILL_DIR,
-) -> dict[str, Any]:
-    payload = targeted_v3_backfill_report_payload(
-        v3_backfill_id=v3_backfill_id,
-        output_dir=output_dir,
-    )
-    progress = _mapping(payload.get("v3_backfill_progress"))
-    return {
-        "v3_backfill_id": v3_backfill_id,
-        "resume_status": (
-            "ALREADY_COMPLETE"
-            if int(_float(progress.get("variants_completed")))
-            >= int(_float(progress.get("variants_total")))
-            else "PARTIAL_COMPLETION_REVIEW_REQUIRED"
-        ),
-        "progress": progress,
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
+def run_targeted_v3_backfill(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_targeted("run_targeted_v3_backfill", *args, **kwargs)
 
 
-def targeted_v3_backfill_report_payload(
-    *,
-    v3_backfill_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_TARGETED_V3_BACKFILL_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=v3_backfill_id,
-        latest_pointer="latest_targeted_v3_backfill",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="targeted_v3_backfill_manifest.json",
-    )
-    regime = _read_jsonl(root / "v3_variant_regime_metrics.jsonl")
-    return {
-        **_read_json(root / "targeted_v3_backfill_manifest.json"),
-        "v3_backfill_progress": _read_json(root / "v3_backfill_progress.json"),
-        "v3_variant_performance": _read_jsonl(root / "v3_variant_performance.jsonl"),
-        "v3_variant_regime_metrics": regime,
-        "v3_variant_stability_metrics": _read_jsonl(root / "v3_variant_stability_metrics.jsonl"),
-        "v3_variant_churn_metrics": _read_jsonl(root / "v3_variant_churn_metrics.jsonl"),
-        "v3_variant_lag_metrics": _variant_lag_metrics(regime),
-        "v3_backfill_dir": str(root),
-    }
+def resume_targeted_v3_backfill(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_targeted("resume_targeted_v3_backfill", *args, **kwargs)
 
 
-def validate_targeted_v3_backfill_artifact(
-    *,
-    v3_backfill_id: str,
-    output_dir: Path = DEFAULT_TARGETED_V3_BACKFILL_DIR,
-) -> dict[str, Any]:
-    root = output_dir / v3_backfill_id
-    manifest = _read_optional_json(root / "targeted_v3_backfill_manifest.json") or {}
-    progress = _read_optional_json(root / "v3_backfill_progress.json") or {}
-    performance = _read_jsonl(root / "v3_variant_performance.jsonl")
-    regime = _read_jsonl(root / "v3_variant_regime_metrics.jsonl")
-    stability = _read_jsonl(root / "v3_variant_stability_metrics.jsonl")
-    churn = _read_jsonl(root / "v3_variant_churn_metrics.jsonl")
-    variants = {str(row.get("variant_id")) for row in performance}
-    checks = _required_file_checks(
-        root,
-        (
-            "targeted_v3_backfill_manifest.json",
-            "v3_backfill_progress.json",
-            "v3_variant_performance.jsonl",
-            "v3_variant_regime_metrics.jsonl",
-            "v3_variant_stability_metrics.jsonl",
-            "v3_variant_churn_metrics.jsonl",
-            "targeted_v3_backfill_report.md",
-            "validate_data_quality_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check(
-                "v3_backfill_id_matches", manifest.get("v3_backfill_id") == v3_backfill_id, ""
-            ),
-            st._check("performance_metrics_present", bool(performance), ""),
-            st._check(
-                "data_quality_visible",
-                manifest.get("data_quality_status") in {"PASS", "PASS_WITH_WARNINGS"},
-                _text(manifest.get("data_quality_status")),
-            ),
-            st._check("latest_valid_as_of_visible", bool(manifest.get("latest_valid_as_of")), ""),
-            st._check(
-                "each_variant_has_regime_metrics",
-                variants.issubset({str(row.get("variant_id")) for row in regime}),
-                "",
-            ),
-            st._check(
-                "each_variant_has_stability_metrics",
-                variants.issubset({str(row.get("variant_id")) for row in stability}),
-                "",
-            ),
-            st._check("churn_metrics_readable", isinstance(churn, list), ""),
-            st._check(
-                "progress_counts_match",
-                int(_float(progress.get("variants_completed"))) == len(variants),
-                "",
-            ),
-            st._check("broker_forbidden", _payload_safe(manifest, progress, *performance), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, progress, *performance, *regime, *stability),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_targeted_v3_backfill_validation", v3_backfill_id, checks
-    )
+def targeted_v3_backfill_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_targeted("targeted_v3_backfill_report_payload", *args, **kwargs)
 
 
-def run_near_miss_ab_comparison(
-    *,
-    v3_backfill_id: str,
-    near_miss_id: str,
-    v3_backfill_dir: Path = DEFAULT_TARGETED_V3_BACKFILL_DIR,
-    v3_matrix_dir: Path = DEFAULT_TARGETED_SEARCH_V3_DIR,
-    near_miss_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
-    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
-    output_dir: Path = DEFAULT_NEAR_MISS_AB_COMPARISON_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    backfill = targeted_v3_backfill_report_payload(
-        v3_backfill_id=v3_backfill_id,
-        output_dir=v3_backfill_dir,
-    )
-    matrix = targeted_search_v3_report_payload(
-        v3_matrix_id=_text(backfill.get("v3_matrix_id")),
-        output_dir=v3_matrix_dir,
-    )
-    near_miss = near_miss_candidates_report_payload(
-        near_miss_id=near_miss_id, output_dir=near_miss_dir
-    )
-    scorecard = weight_scorecard_report_payload(
-        scorecard_id=_text(near_miss.get("source_scorecard_id")),
-        output_dir=scorecard_dir,
-    )
-    comparison = _ab_comparison_rows(backfill, matrix, scorecard)
-    winner_summary = _ab_winner_summary(comparison)
-    ab_id = _stable_id(
-        "near-miss-ab-comparison", v3_backfill_id, near_miss_id, generated.isoformat()
-    )
-    root = _unique_dir(output_dir / ab_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_near_miss_ab_manifest",
-        "ab_id": root.name,
-        "v3_backfill_id": v3_backfill_id,
-        "near_miss_id": near_miss_id,
-        "source_scorecard_id": near_miss.get("source_scorecard_id"),
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if comparison else "FAIL",
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "near_miss_ab_manifest_path": str(root / "near_miss_ab_manifest.json"),
-        "ab_comparison_matrix_path": str(root / "ab_comparison_matrix.jsonl"),
-        "ab_winner_summary_path": str(root / "ab_winner_summary.json"),
-        "near_miss_ab_comparison_report_path": str(root / "near_miss_ab_comparison_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "near_miss_ab_manifest.json", manifest)
-    _write_jsonl(root / "ab_comparison_matrix.jsonl", comparison)
-    _write_json(root / "ab_winner_summary.json", winner_summary)
-    _write_text(
-        root / "near_miss_ab_comparison_report.md",
-        render_near_miss_ab_report(manifest, winner_summary),
-    )
-    _write_latest_pointer(
-        "latest_near_miss_ab_comparison", root.name, root / "near_miss_ab_manifest.json"
-    )
-    return {
-        "ab_id": root.name,
-        "ab_dir": root,
-        "manifest": manifest,
-        "ab_comparison_matrix": comparison,
-        "ab_winner_summary": winner_summary,
-    }
+def validate_targeted_v3_backfill_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_targeted("validate_targeted_v3_backfill_artifact", *args, **kwargs)
 
 
-def near_miss_ab_comparison_report_payload(
-    *,
-    ab_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_NEAR_MISS_AB_COMPARISON_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=ab_id,
-        latest_pointer="latest_near_miss_ab_comparison",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="near_miss_ab_manifest.json",
-    )
-    return {
-        **_read_json(root / "near_miss_ab_manifest.json"),
-        "ab_comparison_matrix": _read_jsonl(root / "ab_comparison_matrix.jsonl"),
-        "ab_winner_summary": _read_json(root / "ab_winner_summary.json"),
-        "ab_dir": str(root),
-    }
+def run_near_miss_ab_comparison(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_targeted("run_near_miss_ab_comparison", *args, **kwargs)
 
 
-def validate_near_miss_ab_comparison_artifact(
-    *,
-    ab_id: str,
-    output_dir: Path = DEFAULT_NEAR_MISS_AB_COMPARISON_DIR,
-) -> dict[str, Any]:
-    root = output_dir / ab_id
-    manifest = _read_optional_json(root / "near_miss_ab_manifest.json") or {}
-    rows = _read_jsonl(root / "ab_comparison_matrix.jsonl")
-    summary = _read_optional_json(root / "ab_winner_summary.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "near_miss_ab_manifest.json",
-            "ab_comparison_matrix.jsonl",
-            "ab_winner_summary.json",
-            "near_miss_ab_comparison_report.md",
-        ),
+def near_miss_ab_comparison_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_targeted("near_miss_ab_comparison_report_payload", *args, **kwargs)
+
+
+def validate_near_miss_ab_comparison_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_weight_search_targeted(
+        "validate_near_miss_ab_comparison_artifact", *args, **kwargs
     )
-    checks.extend(
-        [
-            st._check("ab_id_matches", manifest.get("ab_id") == ab_id, ""),
-            st._check("comparison_rows_present", bool(rows), ""),
-            st._check("winner_summary_present", bool(summary.get("best_v3_variant")), ""),
-            st._check("broker_forbidden", _payload_safe(manifest, summary, *rows), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, summary, *rows),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload("etf_dynamic_v3_near_miss_ab_comparison_validation", ab_id, checks)
 
 
 def run_promotion_threshold_sensitivity(

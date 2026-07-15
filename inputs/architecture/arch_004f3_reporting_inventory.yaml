@@ -1,4 +1,4 @@
-inventory_id: reporting_inventory_735ad64d8ff43cba5d03
+inventory_id: reporting_inventory_c4723a7e64f2e90b6446
 schema_version: reporting_architecture_inventory.v1
 reader_brief:
   path: src/ai_trading_system/reports/reader_brief.py
@@ -7,7 +7,7 @@ reader_brief:
   top_level_function_count: 367
 report_registry:
   path: config/report_registry.yaml
-  sha256: 9a0e25d196f6317ab109e17279d458a8464944af5802242a9bdadb9e3a16256b
+  sha256: da14284bd8bfaa078d4dfd8df5b7eb97f47369d28b7e6b37cc743b47247ac19e
   entry_count: 1358
   explicit_production_effect_count: 669
   missing_explicit_production_effect_count: 689

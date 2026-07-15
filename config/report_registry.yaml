@@ -4379,6 +4379,7 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/targeted_search_v3/*/v3_variant_specs.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/targeted_search_v3/*/v3_family_coverage.json
       - reports/etf_portfolio/dynamic_v3_rescue/targeted_search_v3/*/targeted_search_v3_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_search_v3/*/targeted_search_v3_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-310 materializes a bounded 60-120 variant follow-up matrix from
@@ -4403,6 +4404,7 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/targeted_v3_backfill/*/v3_variant_churn_metrics.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/targeted_v3_backfill/*/targeted_v3_backfill_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/targeted_v3_backfill/*/validate_data_quality_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_v3_backfill/*/targeted_v3_backfill_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-311 runs the required cached-data quality gate before evaluating
@@ -4423,6 +4425,7 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/near_miss_ab_comparison/*/ab_comparison_matrix.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/near_miss_ab_comparison/*/ab_winner_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/near_miss_ab_comparison/*/near_miss_ab_comparison_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/near_miss_ab_comparison/*/near_miss_ab_comparison_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-312 compares targeted v3 candidates against their near-miss

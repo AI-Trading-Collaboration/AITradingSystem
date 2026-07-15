@@ -302,6 +302,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_weight_search_foundation as dynamic_v3_weight_search_foundation_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_weight_search_targeted as dynamic_v3_weight_search_targeted_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_window_audit as dynamic_v3_window_audit_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import operations as operations_commands
@@ -420,6 +423,7 @@ __all__ = [
     "dynamic_v3_weight_search_evaluation_commands",
     "dynamic_v3_weight_search_decision_commands",
     "dynamic_v3_weight_search_diagnostics_commands",
+    "dynamic_v3_weight_search_targeted_commands",
     "dynamic_v3_validation_evidence_commands",
     "dynamic_v3_variant_comparison_commands",
     "dynamic_v3_rule_calibration_commands",

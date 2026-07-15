@@ -66,6 +66,20 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
   99%阶段抽样18个Python进程working set峰值约`15.09GiB`、private约`27.61GiB`，最大单worker
   working set约`3.29GiB`；尾段working set随后回落约`9.9GiB`。因此Decision链同run fingerprint
   复用和peak-memory-aware并发上限都是S2/S3必需项。
+- G2.4CW1 final full=`6,032 passed / 1,773.27s`，相对CV3单次增加约`11.30%`；前三长尾
+  confirmation weekly/dashboard/rule queue=`984.85/674.58/574.26s`，Diagnostics hardening=
+  `279.65s`、第8。该结果继续否定以单次最好值宣称稳定改善。
+- G2.4CW2 focused=`132 passed / 413.38s`；四个业务文件各自重建同一上游链，Matrix/Backfill/
+  A/B/Hardening=`168.63/235.69/408.97/340.11s`。Hardening 已做到单文件内只建一次 immutable
+  fixture，再用原地 tamper+restore 覆盖16 views/3 schemas/3 cross-lineage/policy/cache/resume，
+  但 deep validator 仍重复 replay source DAG。Final full=`6,035 passed / 1,722.89s`，相对CW1
+  单次缩短约`2.84%`，不构成稳定改善；前三长尾=`1,081.82/709.36/617.40s`，A/B=
+  `519.88s`第4、Targeted hardening=`415.81s`第12。99%长尾期间16 workers均持续消耗CPU，
+  抽样working set合计约`14.39GiB`、单worker最高约`1.99GiB`。因此下一工程优化应是：
+  （1）为Targeted/后续CW3链引入同run PASS-only content-addressed validation session；
+  （2）把完整 immutable Search→Diagnostics→Targeted fixture持久化为内容寻址基线，tamper走
+  copy-on-write；（3）S3按duration+peak-memory限制heavy shard并发。不得用关闭live source/DQ/
+  byte rebuild或减少collected nodeids换取速度。
 
 ## 设计原则
 
@@ -131,9 +145,11 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 G2.4CR/CS 已完成第一批通用 validation session、bounded snapshot 和 fixture path isolation；本任务
 承接剩余 confirmation/full-suite 长尾。CV1/CU/CV2的`2,501.39/1,939.34/1,542.60s`证明单次
 结果波动大，尚无稳定系统性提速；CV2 evaluation hardening已成为次级新热点，但前三仍是既有
-confirmation/rule链。CV3通过单次fixture建链降低producer重复，但full中`414.50s` hardening与
-`15.09GiB` working set峰值说明recursive validator和并发内存仍是显著次级热点。建议实施顺序保持S2→S3：先完成confirmation weekly/dashboard、rule queue/
-owner decision及weight evaluation/decision的content-fingerprint / bounded immutable fixture治理，再用
+confirmation/rule链。CV3/CW2通过单次fixture建链降低producer重复，但full中Decision hardening=
+`414.50s`、Targeted hardening=`415.81s`，working set抽样峰值约`15.09/14.39GiB`，说明recursive
+validator和并发内存仍是显著次级热点。建议实施顺序保持S2→S3：先完成confirmation weekly/
+dashboard、rule queue/owner decision及weight evaluation/decision/targeted链的content-fingerprint /
+bounded immutable fixture治理，再用
 duration+peak-memory manifest比较loadfile/loadscope/explicit shard并限制memory-heavy并发，补
 active-node heartbeat、当前node/worker资源与ETA；最终用连续3次median/P95与最大shard验收。
 它是研发效率治理，不是ARCH-004 G2.5解锁条件，也不得绕过owner已批准的phase-level

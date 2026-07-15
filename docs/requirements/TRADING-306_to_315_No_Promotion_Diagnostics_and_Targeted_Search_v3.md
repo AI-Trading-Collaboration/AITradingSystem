@@ -50,6 +50,26 @@ source 重放 lineage、计算结果或 Markdown bytes。因此旧 `VALIDATING` 
   41/291/993 CLI tree/hash 不变；不得自动放宽 gate、自动采用候选、修改 official weights/paper
   primary/portfolio/production/order/broker；`production_effect=none`。
 
+`G2.4CW2` canonical owner固定为
+`interfaces/cli/etf_portfolio/dynamic_v3_weight_search_targeted.py`与
+`etf_portfolio/dynamic_v3_weight_search_targeted.py`。退出标准：
+
+- Targeted Search v3、Targeted Backfill、Near-Miss A/B分别冻结
+  `targeted_search_v3_input_snapshot.v2`、`targeted_v3_backfill_input_snapshot.v2`、
+  `near_miss_ab_comparison_input_snapshot.v2`；
+- Matrix只消费validated CW1 Coverage+Near-Miss并验证同一Scorecard/Search Space/Attribution lineage，
+  variant数量、family/range、parent-or-gap provenance与组合规则由reviewed targeted policy治理；
+- Backfill只消费validated Matrix与其精确绑定的CV1 canonical baseline Backfill；写件前执行相同
+  `aits validate-data`代码路径，冻结price/rates/config/source checksums、实际date range、
+  `latest_valid_as_of`与DQ artifact；resume必须先验证既有artifact PASS且不得重复计算或静默跳过失败；
+- A/B只消费validated Backfill+Matrix+CW1 Near-Miss+CV2 Scorecard，强制精确Matrix/Scorecard/
+  Backfill/Near-Miss lineage；score delta、return/drawdown/turnover delta和winner status必须由冻结
+  source重算，阈值由reviewed policy治理；
+- 三类validator重验live source/config/cache/DQ并逐byte重建16个materialized views；source、cache、
+  policy、snapshot、schema、lineage、DQ、任一output tamper必须fail closed；
+- 10 legacy callbacks离开root、10 legacy domain入口只保留lazy dispatch；CLI tree/hash不变；
+  research-only/no official weights/no broker/no production，`production_effect=none`。
+
 单个 CW slice 完成只能标记 `COMPLETE_G2_4_CONTINUES`。CW1/CW2/CW3 全部完成也不代表整个
 G2.4 phase exit；后续 migration matrix 与 phase-level handoff gate 仍须单独通过，不进入 G2.5。
 
@@ -93,6 +113,19 @@ G2.4 phase exit；后续 migration matrix 与 phase-level handoff gate 仍须单
 
 ## Progress Notes
 
+- 2026-07-15: `G2.4CW2 / TRADING-310～312=COMPLETE_G2_4_CONTINUES`。10 callbacks/
+  10 public入口完成canonical targeted interface/domain迁移；三类v2 snapshots、reviewed policy、
+  exact CW1 Coverage+Near-Miss→Matrix→CV1 Backfill/DQ→A/B与CV2 Scorecard lineage、resume
+  先验PASS、16 views byte rebuild及source/policy/cache/schema/cross-lineage/output tamper闭合。
+  focused/architecture/contract/full=`132/289/203/6,035 passed`，full=`1,722.89s`、641 warnings，
+  generated=`938/1,130/858/0`，CLI=`13,269/330/291`且tree/hash不变。CW3/whole G2.4仍
+  pending，不触发ARCH-005 handoff、不进入G2.5，`production_effect=none`。
+- 2026-07-15: `G2.4CW2 / TRADING-310～312` contract freeze并进入`IN_PROGRESS`。范围固定
+  Targeted Matrix 3、DQ Backfill 4、Near-Miss A/B 3，共10 callbacks/10 public domain入口；
+  三类v2 snapshots、reviewed targeted policy、validated exact CW1 Coverage+Near-Miss→Matrix→
+  CV1 Backfill/DQ→A/B与CV2 Scorecard lineage、pre-output fail-close、resume先验PASS、live
+  source/config/cache/DQ replay及16 views byte rebuild为退出合同。CW3/whole G2.4仍pending，不触发
+  ARCH-005 handoff、不进入G2.5，`production_effect=none`。
 - 2026-07-15: `G2.4CW1=COMPLETE_G2_4_CONTINUES`。focused/architecture/contract/full=
   `166/287/203/6,032 passed`，full=`1,773.27s`、641 warnings；generated=`936/1,129/858/0`，
   CLI tree/hash不变。长尾前三=`984.85/674.58/574.26s`，CW1 hardening=`279.65s`第8；相对

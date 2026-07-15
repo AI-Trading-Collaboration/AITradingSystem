@@ -250,7 +250,7 @@ def run_targeted_v3_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
         output_dir=tmp_path / "targeted_v3_backfill",
         price_cache_path=fixture["prices_path"],
         rates_cache_path=fixture["rates_path"],
-        generated_at=datetime(2024, 3, 3, 2, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 18, 2, tzinfo=UTC),
     )
     return {**fixture, "targeted_v3_backfill": targeted_v3_backfill}
 
@@ -265,7 +265,7 @@ def run_near_miss_ab_comparison_fixture(tmp_path: Path) -> dict[str, Any]:
         near_miss_dir=tmp_path / "near_miss_candidates",
         scorecard_dir=tmp_path / "weight_scorecard",
         output_dir=tmp_path / "near_miss_ab_comparison",
-        generated_at=datetime(2024, 3, 19, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 19, tzinfo=UTC),
     )
     return {**fixture, "near_miss_ab": ab}
 

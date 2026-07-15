@@ -15,6 +15,10 @@ def test_targeted_search_v3_builds_bounded_variant_matrix(tmp_path) -> None:
         "cash_buffer_smoothing_hybrid"
         in targeted_v3["v3_family_coverage"]["targeted_families_covered"]
     )
+    assert (
+        targeted_v3["manifest"]["cash_buffer_attribution_id"]
+        == fixture["cash_buffer_attribution"]["attribution_id"]
+    )
 
     validation = weight_search.validate_targeted_search_v3_artifact(
         v3_matrix_id=targeted_v3["v3_matrix_id"],

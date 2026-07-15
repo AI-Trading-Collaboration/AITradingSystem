@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CW1_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CW2_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-15
-base_commit: 2ac6fe68
+base_commit: d9957c7e
 production_effect: none
 
 arch_004_owned_paths:
@@ -301,9 +301,15 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_decision.py
   - tests/test_weight_search_decision_hardening.py
   - config/etf_portfolio/dynamic_v3_rescue/weight_search_diagnostics_v1.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/weight_search_targeted_v1.yaml
   - src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_diagnostics.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_targeted.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_diagnostics.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_targeted.py
+  - tests/dynamic_v3_weight_batch_search_helpers.py
+  - tests/test_targeted_search_v3.py
   - tests/test_weight_search_diagnostics_hardening.py
+  - tests/test_weight_search_targeted_hardening.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_confirmation_operations.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_confirmation_operations.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_pressure_validation.py

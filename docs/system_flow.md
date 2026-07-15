@@ -1735,6 +1735,20 @@ flowchart TD
 
 TRADING-281_to_285 downstream 兼容链已由 G2.4CU canonical implementation 落地：source-refresh 在任何 provider side effect 前要求 exact plan validator PASS，并将其 Preflight 的 `source_preflight_id/model_target_dir`、plan/preflight input hashes、config binding 以及 cache before/after commitments 写入 input snapshot；post-refresh validation 只允许用该 Model Target lineage 与相同 prices/rates paths 重跑 Preflight，禁止回退默认目录或接受不同的显式目录。这样刷新 prices/rates 不会把模型目标语义静默切换到另一个工作区 artifact；后续 Resume/Growth/Readiness 也必须沿 exact ids 继续，不能拼接另一条链。
 
+### ARCH-004 G2.4CW2 Targeted Research Chain
+
+TRADING-310～312 的 canonical 链路为：validated CW1 Coverage + Near-Miss → reviewed
+`weight_search_targeted_v1` policy → bounded Targeted Matrix → exact CV1 weight/paper
+Backfill + prices/rates + 同源 data-quality gate → Targeted Backfill → exact Matrix/
+Near-Miss/CV2 Scorecard A/B。三阶段分别冻结
+`targeted_search_v3_input_snapshot.v2`、`targeted_v3_backfill_input_snapshot.v2` 和
+`near_miss_ab_comparison_input_snapshot.v2`，保存完整 source、policy、cache 与 view hashes；
+resume 必须先验证原 Backfill `PASS`。三个 validator 重验 live source/cache/DQ 并逐 byte
+重建 4+8+4 个 materialized views，任一 chronology、lineage、schema、source、policy、cache 或
+output drift 均 fail closed。Matrix family/range、Backfill accepted DQ/resume status、A/B
+winner thresholds 全由 reviewed policy 治理；结果只用于 research screening，固定
+`not_official_target_weights=true`、`broker_action_allowed=false`、`production_effect=none`。
+
 ## ETF Portfolio P2 Observe-Only Contracts
 
 `TRADING-062` P2 扩展先实现可审计 contract/report 底座，不接入未批准 provider，不伪造 EDGAR/news/options/holdings/live broker 数据。所有 P2 命令固定 `production_effect=none`；ML ranking 和 ensemble 只能输出 `candidate_only`；live interface 只做 read-only preflight，默认 `broker_routing_allowed=false`。
