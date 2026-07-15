@@ -1,6 +1,6 @@
 # ARCH-004G2 Interfaces 与 ETF CLI 迁移
 
-最后更新：2026-07-15
+最后更新：2026-07-16
 
 ## 任务信息
 
@@ -20,6 +20,32 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-15：G2.4CX1=`COMPLETE_G2_4_CONTINUES`。TRADING-316～319共12 callbacks/
+  12 public入口完成canonical diagnosis-foundation迁移与legacy subtraction；四类bounded v2
+  snapshots、reviewed policy、same-source Scorecard与Targeted Matrix→Backfill exact lineage、
+  pre-output chronology/live replay/all-view byte rebuild及source/policy/schema/cross-lineage/output
+  tamper闭合。无dated ledger时Signal不生成events且count/return为null，Consensus无exact method
+  evidence时dispersion/delta为null，两者均显式`INSUFFICIENT_DATA`。Legacy CLI=`12,693/309/270`，
+  legacy weight domain=`8,063 lines / 12 lazy wrappers`；focused=`166 passed / 233.27s`，generated=
+  `943/1,129/858/0`，CLI仍`41/291/993/0`且tree hash不变。共享fixture使旧四测试
+  `555.74s`降为十测试`216.42s`（-61.05%/2.57x），未降低production policy或验证门禁。
+  Architecture/contract/final full分别=`296/203/6,050 passed`，final full=`642 warnings /
+  3,298.22s`（artifact=`outputs/validation_runtime/full_20260715T145342Z/test_runtime_summary.json`）。
+  局部focused提速已成立，但full较首轮`2,962.64s`反增，不声明稳定整体提速；最长单测为
+  confirmation weekly `1,353.68s`，后续优化继续治理immutable DAG复用与duration+memory sharding。
+  CX2/CX3/whole phase pending，不触发handoff、不进入G2.5，`production_effect=none`。
+- 2026-07-15：G2.4CX1进入`IN_PROGRESS`。TRADING-316～319的Gate Calibration/Scorecard
+  Attribution/Signal Instability/Consensus Quality共12 callbacks/12 public入口迁独立canonical
+  diagnosis-foundation interface/domain。退出固定四类bounded v2 snapshots、reviewed policy、
+  validated exact Review+Sensitivity→same source Scorecard、Scorecard+Targeted Matrix→Targeted
+  Backfill lineage、pre-output chronology/live replay/all-view byte rebuild。无dated signal ledger时
+  禁止从aggregate score补造dated flip/mismatch/return；未观测consensus method不得任意fallback，
+  missing保持null/`INSUFFICIENT_DATA`。CX2/CX3/whole phase pending，不触发handoff、不进入G2.5，
+  `production_effect=none`。
+- 2026-07-15：phase-level callback migration matrix建立并验证`PASS`。冻结G2.4起点
+  `7c4cce3e`的967 callback，以`(Typer app, command name)`逐项对账当前owner；当前=
+  `697 migrated / 270 pending / 0 unresolved / 0 duplicate`，加G2.4前canonical 26项仍为993 leaf。
+  Matrix可复算且随slice刷新，但当前`phase_exit_ready=false`；清单PASS不等于G2.4完成。
 - 2026-07-15：G2.4CW3=`COMPLETE_G2_4_CONTINUES`。Threshold Sensitivity/Candidate
   Promotion v2/Next Plan共9 callbacks/9 public入口完成canonical迁移；三类v2 snapshots、
   reviewed policy、exact lineage/chronology、18 views byte rebuild与source/policy/schema/

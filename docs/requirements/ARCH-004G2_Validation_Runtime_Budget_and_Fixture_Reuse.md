@@ -1,6 +1,6 @@
 # ARCH-004G2 Validation Runtime Budget 与 Immutable Fixture Reuse
 
-最后更新：2026-07-15
+最后更新：2026-07-16
 
 ## 任务信息
 
@@ -80,6 +80,29 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
   （2）把完整 immutable Search→Diagnostics→Targeted fixture持久化为内容寻址基线，tamper走
   copy-on-write；（3）S3按duration+peak-memory限制heavy shard并发。不得用关闭live source/DQ/
   byte rebuild或减少collected nodeids换取速度。
+- G2.4CX1将四个各自构造完整evidence DAG的旧测试文件合并为一个module-scoped immutable
+  fixture，并在同一`artifact_validation_session`中复用PASS-only content fingerprints。旧四测试
+  `4 passed / 555.74s`；新测试以同一业务语义覆盖4条producer/validator路径、4类输出篡改、
+  live source tamper和policy tamper，共`10 passed / 216.42s`，墙钟降低`61.05%`、约`2.57x`。
+  测试专用policy把targeted variants缩到6～12以降低fixture成本，但仍强制全部6个必需family；
+  production policy仍为60～120，schema/family gates在早期压缩过度时如预期fail closed，未被放宽。
+- CX1首轮full=`6,044 passed / 6 failed / 2,962.64s`，六项失败全部来自尚未迁移的CX2
+  `micro_search_v4_backfill`链：CX1为修复chronology把下游fixture时间推进到2026，但旧CX2仍将
+  只到2024-02-29的历史cache作为2026-03-25“当前质量cache”，required DQ gate因
+  `prices_stale/rates_stale`正确FAIL。修复没有放宽DQ或改生产代码，而是为micro-backfill生成独立
+  current-quality cache，只追加4个标的+1个利率的2026-03-25 freshness rows；原历史cache及其
+  live-binding SHA保持不变，计算仍裁剪到请求的2022-12-01～2024-02-29窗口。DQ诊断为
+  `PASS_WITH_WARNINGS`（仅既有secondary source/download manifest warning），原`-n16 --dist
+  loadfile`六失败文件复验=`6 passed / 739.19s`。六文件仍各自重建同一DAG，说明CX2后续也应采用
+  CX1的module/session fixture模式。
+- CX1 final full=`6,050 passed / 642 warnings / 3,298.22s`，artifact=
+  `outputs/validation_runtime/full_20260715T145342Z/test_runtime_summary.json`。它比首轮失败运行
+  `2,962.64s`慢`335.58s`（约`+11.33%`），所以只承认CX1 focused的2.57x局部收益，不宣称
+  full稳定改善。top tail为confirmation weekly=`1,353.68s`；其次follow-up hardening=
+  `1,007.24s`、smoothed freshness hardening=`916.83s`。CX2六条业务链分别约
+  `726.98~900.41s`且共享同一micro-search DAG；99%阶段最终只剩单worker运行，确认最大shard
+  而非worker总数决定墙钟。工程优先级保持S2 immutable fixture/PASS-only content fingerprint/
+  copy-on-write tamper，再做S3 duration+peak-memory sharding与active-node heartbeat；不得减少门禁。
 
 ## 设计原则
 
@@ -176,3 +199,9 @@ confirmation/weight-search建立跨测试可校验的immutable fixture content s
 policy/config/cache/DQ bytes、validator version和Python/schema version，命中后仍重验live binding，
 任一drift或FAIL不得复用。验收仍是连续3次median/P95、最大shard、峰值内存和read amplification，
 不得减少任何required nodeid、DQ/PIT/tamper/byte-rebuild gate。
+
+CX1证明“先合并重复fixture、再做validator session复用”能在增强tamper coverage的同时取得局部
+`61.05%`墙钟收益；但这仍只是单链单次证据，`stable_full_suite_improvement_claimed=false`。
+本任务保持`READY`，下一工程动作不变：先治理confirmation weekly/dashboard/rule queue等既有
+长尾的immutable content store与copy-on-write，再用duration+peak-memory manifest限制heavy
+shard并发；不得把CX1局部快跑误写成full-suite优化完成。

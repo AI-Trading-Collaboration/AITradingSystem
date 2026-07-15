@@ -4517,10 +4517,11 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/gate_calibration_review/*/diagnostic_relaxed_gate_result.json
       - reports/etf_portfolio/dynamic_v3_rescue/gate_calibration_review/*/gate_calibration_review_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/gate_calibration_review/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_calibration_review/*/gate_calibration_review_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-316 diagnoses whether current promotion gates are too strict
-      after targeted v3 no-promotion, without changing official gate policy.
+      TRADING-316 uses validated same-Scorecard review and sensitivity evidence;
+      it diagnoses gate strictness without changing official gate policy.
     owner_action: review_gate_calibration_before_micro_search_v4_design
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -4538,10 +4539,11 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/scorecard_attribution/*/rejected_variant_component_matrix.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/scorecard_attribution/*/family_component_weakness.json
       - reports/etf_portfolio/dynamic_v3_rescue/scorecard_attribution/*/scorecard_attribution_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/scorecard_attribution/*/scorecard_attribution_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-317 attributes rejected v3 variants to score components and
-      family-level weaknesses before deciding whether more parameter search is useful.
+      TRADING-317 attributes exact Matrix-to-Backfill rejected variants to
+      score components while preserving missing component values.
     owner_action: review_scorecard_attribution_before_signal_diagnosis
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -4561,10 +4563,11 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/signal_instability_diagnosis/*/signal_instability_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/signal_instability_diagnosis/*/signal_instability_diagnosis_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/signal_instability_diagnosis/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_instability_diagnosis/*/signal_instability_diagnosis_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-318 separates signal churn and regime mismatch from pure
-      parameter weakness before another bounded search.
+      TRADING-318 exposes aggregate score proxies separately from dated signal
+      evidence; without a validated ledger, events and counts remain empty/null.
     owner_action: review_signal_instability_before_consensus_quality_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -4583,10 +4586,11 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/consensus_quality_review/*/consensus_failure_reasons.json
       - reports/etf_portfolio/dynamic_v3_rescue/consensus_quality_review/*/consensus_quality_review_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/consensus_quality_review/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_quality_review/*/consensus_quality_review_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-319 records ensemble dispersion and consensus failure reasons
-      before designing a signal-targeted micro search.
+      TRADING-319 uses exact configured method variants; without a validated
+      dated candidate-weight path, dispersion and quality deltas stay null.
     owner_action: review_consensus_quality_before_micro_search_v4_design
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

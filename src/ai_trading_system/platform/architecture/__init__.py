@@ -1,3 +1,13 @@
+from ai_trading_system.platform.architecture.callback_migration import (
+    CALLBACK_MIGRATION_SCHEMA_VERSION,
+    CallbackDeclaration,
+    CallbackMigrationError,
+    assert_frozen_callback_migration_matrix,
+    baseline_callbacks_from_matrix,
+    build_callback_migration_matrix,
+    scan_callback_source,
+    scan_current_callbacks,
+)
 from ai_trading_system.platform.architecture.cli_contract import (
     CLI_CONTRACT_SCHEMA_VERSION,
     CliContractError,
@@ -39,7 +49,10 @@ from ai_trading_system.platform.architecture.scaffold import (
 )
 
 __all__ = [
+    "CALLBACK_MIGRATION_SCHEMA_VERSION",
     "CLI_CONTRACT_SCHEMA_VERSION",
+    "CallbackDeclaration",
+    "CallbackMigrationError",
     "CliContractError",
     "ArchitectureGateReport",
     "ArchitectureViolation",
@@ -55,6 +68,9 @@ __all__ = [
     "ScaffoldKind",
     "ScaffoldResult",
     "assert_frozen_cli_contract",
+    "assert_frozen_callback_migration_matrix",
+    "baseline_callbacks_from_matrix",
+    "build_callback_migration_matrix",
     "build_aggregate_shadow_index",
     "build_architecture_fitness",
     "build_cli_contract",
@@ -65,6 +81,8 @@ __all__ = [
     "assert_frozen_deprecation_inventory",
     "load_deprecation_policy",
     "scan_deprecation_inventory",
+    "scan_callback_source",
+    "scan_current_callbacks",
     "select_impacted_tests",
     "validate_architecture_dependencies",
     "write_generated_architecture_artifact",

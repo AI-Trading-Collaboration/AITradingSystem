@@ -1,0 +1,111 @@
+schema_version: dynamic_v3_signal_diagnosis_foundation_policy.v1
+policy_metadata:
+  policy_version: signal_diagnosis_foundation_v1
+  owner: etf-research-governance
+  status: pilot_baseline
+  rationale: >-
+    TRADING-316～319需要在不修改official promotion gate的前提下解释gate、scorecard、
+    signal与consensus证据，同时区分aggregate proxy与真实dated signal observations。
+  intended_effect: >-
+    只生成可审计的research diagnosis；缺逐日证据时保持null和INSUFFICIENT_DATA，
+    不把推导值写成已观测事件。
+  validation_evidence: ARCH-004G2.4CX1 focused lineage, rebuild and tamper tests
+  review_condition: >-
+    获得validated dated signal ledger、独立forward observations或owner批准的新诊断政策后复核。
+
+gate_calibration:
+  high_impact_failed_share_min: 0.5
+  calibrated_assessments:
+    - REASONABLE
+    - TOO_STRICT
+    - TOO_LOOSE
+    - INCONCLUSIVE
+  diagnostic_conclusions:
+    gate_not_primary_issue:
+      calibrated_assessment: REASONABLE
+      recommendation: KEEP_GATE
+    gate_may_be_too_strict:
+      calibrated_assessment: TOO_STRICT
+      recommendation: DIAGNOSTIC_REVIEW_ONLY
+    inconclusive:
+      calibrated_assessment: INCONCLUSIVE
+      recommendation: MANUAL_REVIEW_REQUIRED
+  official_gate_change_allowed: false
+
+scorecard_attribution:
+  components:
+    - return_score
+    - drawdown_score
+    - volatility_score
+    - turnover_score
+    - rolling_consistency_score
+    - regime_score
+    - signal_churn_score
+    - weight_jump_score
+    - lag_cost_score
+    - simplicity_score
+    - data_quality_score
+    - composite_score
+  weakness_high_below: 0.35
+  weakness_medium_below: 0.55
+  dominant_weak_component_count: 3
+
+signal_diagnosis:
+  evidence_role: AGGREGATE_SCORE_PROXY_ONLY
+  dated_signal_events_required_for_event_claims: true
+  methods:
+    limited_adjustment:
+      exact_variant_ids: [limited_adjustment]
+    smooth_weights_3d_limited_adjustment:
+      exact_variant_ids:
+        - smooth_weights_3d_limited_adjustment
+        - smooth_3d_plus_rebalance_delta_3pct
+        - median_consensus_plus_smooth_3d
+    smooth_weights_5d_limited_adjustment:
+      exact_variant_ids:
+        - smooth_weights_5d_limited_adjustment
+        - smooth_5d_plus_strong_recovery_restore_85
+    median_target_weights:
+      exact_variant_ids:
+        - median_target_weights
+        - median_consensus_plus_smooth_3d
+    top5_candidate_consensus:
+      exact_variant_ids:
+        - top5_candidate_consensus
+        - top5_consensus_plus_smooth_3d
+    cash_buffer_10_plus_smooth_2d_alpha_40:
+      exact_variant_ids: [cash_buffer_10_plus_smooth_2d_alpha_40]
+  no_dated_ledger_status: INSUFFICIENT_DATA
+  no_dated_ledger_recommended_action: build_validated_dated_signal_ledger
+
+consensus_quality:
+  methods:
+    median_target_weights:
+      exact_variant_ids: [median_target_weights, median_consensus_plus_smooth_3d]
+    trimmed_mean_target_weights:
+      exact_variant_ids: [trimmed_mean_target_weights]
+    top_3_candidate_consensus:
+      exact_variant_ids: [top_3_candidate_consensus]
+    top_5_candidate_consensus:
+      exact_variant_ids: [top_5_candidate_consensus, top5_consensus_plus_smooth_3d]
+    cluster_representative_consensus:
+      exact_variant_ids: [cluster_representative_consensus]
+    risk_adjusted_weighted_consensus:
+      exact_variant_ids: [risk_adjusted_weighted_consensus]
+  missing_method_status: INSUFFICIENT_DATA
+  no_dated_dispersion_status: INSUFFICIENT_DATA
+  no_dated_dispersion_reason: validated dated candidate weight paths are not available
+
+safety:
+  research_screening_only: true
+  experiment_only: true
+  not_formal_research_method: true
+  not_official_target_weights: true
+  paper_shadow_only: true
+  owner_review_required: true
+  paper_shadow_primary_changed: false
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  auto_apply: false
+  production_effect: none

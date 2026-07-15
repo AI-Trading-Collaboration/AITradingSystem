@@ -1338,10 +1338,11 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_1["validation"]["architecture_fitness"]["passed"] == 171
     for source in phase_g2_1["sources"]:
         if source.get("historical_phase_g2_1_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004G2.2"
-            assert source["current_hash_tracked_in"] == (
-                "phase_g2_2_etf_cli_registration_shell.sources"
-            )
+            assert source["superseded_by_phase"] in {
+                "ARCH-004G2.2",
+                "ARCH-004G2.4CX1",
+            }
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -4574,6 +4575,56 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         assert phase_g2_4cw3["validation"]["full_validation"]["passed"] >= 6035
         assert phase_g2_4cw3["sources"]
         for source in phase_g2_4cw3["sources"]:
+            if source["path"] in set(phase_g2_4cw3.get("superseded_source_paths", [])):
+                continue
+            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            assert actual == source["sha256"], source["path"]
+
+    phase_g2_4cx1 = baseline[
+        "phase_g2_4cx1_etf_cli_dynamic_v3_signal_diagnosis_foundation"
+    ]
+    assert phase_g2_4cx1["status"] in {
+        "IN_PROGRESS",
+        "VALIDATING",
+        "COMPLETE_G2_4_CONTINUES",
+    }
+    migration_g2_4cx1 = phase_g2_4cx1["migration"]
+    assert migration_g2_4cx1["callback_count"] == 12
+    assert migration_g2_4cx1["domain_entrypoint_count"] == 12
+    assert len(migration_g2_4cx1["snapshot_schemas"]) == 4
+    assert migration_g2_4cx1["no_dated_signal_event_fabrication_required"] is True
+    assert migration_g2_4cx1["no_consensus_variant_fallback_required"] is True
+    assert migration_g2_4cx1["missing_observation_null_and_insufficient_data_required"] is True
+    assert migration_g2_4cx1["broker_action_allowed"] is False
+    assert migration_g2_4cx1["production_effect"] == "none"
+    subtraction_g2_4cx1 = phase_g2_4cx1["subtraction"]
+    assert subtraction_g2_4cx1["legacy_cli_lines_after"] == 12693
+    assert subtraction_g2_4cx1["legacy_cli_top_level_functions_after"] == 309
+    assert subtraction_g2_4cx1["legacy_cli_callback_decorators_after"] == 270
+    assert subtraction_g2_4cx1["legacy_cli_callback_reduction"] == 12
+    assert subtraction_g2_4cx1["legacy_domain_lazy_wrapper_count"] == 12
+    matrix_g2_4cx1 = phase_g2_4cx1["callback_matrix"]
+    assert matrix_g2_4cx1["migrated_callback_count"] == 697
+    assert matrix_g2_4cx1["pending_callback_count"] == 270
+    assert matrix_g2_4cx1["phase_exit_ready"] is False
+    hardening_g2_4cx1 = phase_g2_4cx1["hardening"]
+    assert hardening_g2_4cx1["output_artifact_family_tamper_checked"] == 4
+    assert hardening_g2_4cx1["snapshot_schema_tamper_checked"] == 4
+    assert hardening_g2_4cx1["live_source_tamper_fail_closed_checked"] is True
+    performance_g2_4cx1 = phase_g2_4cx1["performance"]
+    assert performance_g2_4cx1["observed_wall_time_improvement_percent"] >= 61.0
+    assert performance_g2_4cx1["test_policy_required_family_count"] == 6
+    assert performance_g2_4cx1["production_policy_min_variant_count"] == 60
+    assert performance_g2_4cx1["production_policy_max_variant_count"] == 120
+    assert performance_g2_4cx1["stable_full_suite_improvement_claimed"] is False
+    assert performance_g2_4cx1["full_gate_reduced_for_performance"] is False
+    if phase_g2_4cx1["status"] == "COMPLETE_G2_4_CONTINUES":
+        assert phase_g2_4cx1["validation"]["focused"]["passed"] >= 166
+        assert phase_g2_4cx1["validation"]["architecture_fitness"]["passed"] >= 292
+        assert phase_g2_4cx1["validation"]["contract_validation"]["passed"] >= 203
+        assert phase_g2_4cx1["validation"]["full_validation"]["passed"] >= 6040
+        assert phase_g2_4cx1["sources"]
+        for source in phase_g2_4cx1["sources"]:
             actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
             assert actual == source["sha256"], source["path"]
 

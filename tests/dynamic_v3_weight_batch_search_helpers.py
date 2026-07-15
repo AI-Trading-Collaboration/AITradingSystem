@@ -8,6 +8,8 @@ import yaml
 from dynamic_v3_system_target_helpers import run_backfill_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_diagnostics as diagnostics
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_targeted as targeted
 from ai_trading_system.platform.artifacts.validation_session import (
     with_artifact_validation_session,
 )
@@ -328,7 +330,7 @@ def run_gate_calibration_review_fixture(tmp_path: Path) -> dict[str, Any]:
         review_dir=tmp_path / "no_promotion_review",
         sensitivity_dir=tmp_path / "promotion_threshold_sensitivity",
         output_dir=tmp_path / "gate_calibration_review",
-        generated_at=datetime(2024, 3, 23, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 23, tzinfo=UTC),
     )
     return {**fixture, "gate_calibration": gate_calibration}
 
@@ -342,7 +344,7 @@ def run_scorecard_attribution_fixture(tmp_path: Path) -> dict[str, Any]:
         v3_backfill_dir=tmp_path / "targeted_v3_backfill",
         v3_matrix_dir=tmp_path / "targeted_search_v3",
         output_dir=tmp_path / "scorecard_attribution",
-        generated_at=datetime(2024, 3, 23, 1, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 23, 1, tzinfo=UTC),
     )
     return {**fixture, "scorecard_attribution": scorecard_attribution}
 
@@ -355,7 +357,7 @@ def run_signal_instability_diagnosis_fixture(tmp_path: Path) -> dict[str, Any]:
         ],
         attribution_dir=tmp_path / "scorecard_attribution",
         output_dir=tmp_path / "signal_instability_diagnosis",
-        generated_at=datetime(2024, 3, 24, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 24, tzinfo=UTC),
     )
     return {**fixture, "signal_diagnosis": signal_diagnosis}
 
@@ -367,9 +369,162 @@ def run_consensus_quality_review_fixture(tmp_path: Path) -> dict[str, Any]:
         signal_dir=tmp_path / "signal_instability_diagnosis",
         attribution_dir=tmp_path / "scorecard_attribution",
         output_dir=tmp_path / "consensus_quality_review",
-        generated_at=datetime(2024, 3, 24, 1, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 24, 1, tzinfo=UTC),
     )
     return {**fixture, "consensus_review": consensus_review}
+
+
+@with_artifact_validation_session
+def run_signal_diagnosis_foundation_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_weight_scorecard_fixture(tmp_path)
+    diagnostics_policy_path = tmp_path / "weight_search_diagnostics_test_v1.yaml"
+    diagnostics_policy = yaml.safe_load(
+        diagnostics.DEFAULT_WEIGHT_SEARCH_DIAGNOSTICS_POLICY_PATH.read_text(encoding="utf-8")
+    )
+    diagnostics_policy["policy_metadata"][
+        "policy_version"
+    ] = "weight_search_diagnostics_test_v1"
+    diagnostics_policy["coverage"]["maximum_targeted_v3_variants"] = 12
+    compact_ranges = {
+        "cash_buffer": [0.10],
+        "smoothing_window": [3],
+        "rebalance_threshold": [0.03],
+        "top_k": [3],
+    }
+    for parameter_gap in diagnostics_policy["coverage"]["parameter_gap_templates"]:
+        parameter = parameter_gap["parameter"]
+        parameter_gap["recommended_values"] = compact_ranges[parameter]
+    diagnostics_policy_path.write_text(
+        yaml.safe_dump(diagnostics_policy, sort_keys=False), encoding="utf-8"
+    )
+    no_promotion_review = weight_search.run_no_promotion_review(
+        scorecard_id=fixture["scorecard"]["scorecard_id"],
+        scorecard_dir=tmp_path / "weight_scorecard",
+        output_dir=tmp_path / "no_promotion_review",
+        generated_at=datetime(2024, 3, 13, tzinfo=UTC),
+        policy_path=diagnostics_policy_path,
+    )
+    near_miss = weight_search.extract_near_miss_candidates(
+        scorecard_id=fixture["scorecard"]["scorecard_id"],
+        no_promotion_review_id=no_promotion_review["review_id"],
+        scorecard_dir=tmp_path / "weight_scorecard",
+        review_dir=tmp_path / "no_promotion_review",
+        output_dir=tmp_path / "near_miss_candidates",
+        generated_at=datetime(2024, 3, 14, tzinfo=UTC),
+        policy_path=diagnostics_policy_path,
+    )
+    cash_buffer_attribution = weight_search.run_cash_buffer_attribution(
+        scorecard_id=fixture["scorecard"]["scorecard_id"],
+        near_miss_id=near_miss["near_miss_id"],
+        variant_id="cash_buffer_10",
+        scorecard_dir=tmp_path / "weight_scorecard",
+        near_miss_dir=tmp_path / "near_miss_candidates",
+        output_dir=tmp_path / "cash_buffer_attribution",
+        generated_at=datetime(2024, 3, 15, tzinfo=UTC),
+        policy_path=diagnostics_policy_path,
+    )
+    coverage_gap = weight_search.run_search_coverage_gap(
+        search_space_id=fixture["search_space"]["search_space_id"],
+        near_miss_id=near_miss["near_miss_id"],
+        cash_buffer_attribution_id=cash_buffer_attribution["attribution_id"],
+        search_space_dir=tmp_path / "weight_search_space",
+        near_miss_dir=tmp_path / "near_miss_candidates",
+        attribution_dir=tmp_path / "cash_buffer_attribution",
+        output_dir=tmp_path / "search_coverage_gap",
+        generated_at=datetime(2024, 3, 16, tzinfo=UTC),
+        policy_path=diagnostics_policy_path,
+    )
+    policy_path = tmp_path / "weight_search_targeted_test_v1.yaml"
+    policy = yaml.safe_load(
+        targeted.DEFAULT_WEIGHT_SEARCH_TARGETED_POLICY_PATH.read_text(encoding="utf-8")
+    )
+    policy["policy_metadata"]["policy_version"] = "weight_search_targeted_test_v1"
+    policy["matrix"]["minimum_variants"] = 6
+    policy["matrix"]["maximum_variants"] = 12
+    policy_path.write_text(yaml.safe_dump(policy, sort_keys=False), encoding="utf-8")
+    targeted_v3 = weight_search.build_targeted_search_v3(
+        coverage_gap_id=coverage_gap["coverage_gap_id"],
+        coverage_gap_dir=tmp_path / "search_coverage_gap",
+        near_miss_dir=tmp_path / "near_miss_candidates",
+        output_dir=tmp_path / "targeted_search_v3",
+        generated_at=datetime(2024, 3, 17, tzinfo=UTC),
+        policy_path=policy_path,
+    )
+    targeted_v3_backfill = weight_search.run_targeted_v3_backfill(
+        v3_matrix_id=targeted_v3["v3_matrix_id"],
+        v3_matrix_dir=tmp_path / "targeted_search_v3",
+        baseline_backfill_dir=tmp_path / "paper_shadow_backfill",
+        output_dir=tmp_path / "targeted_v3_backfill",
+        price_cache_path=fixture["prices_path"],
+        rates_cache_path=fixture["rates_path"],
+        generated_at=datetime(2026, 3, 18, 2, tzinfo=UTC),
+        policy_path=policy_path,
+    )
+    near_miss_ab = weight_search.run_near_miss_ab_comparison(
+        v3_backfill_id=targeted_v3_backfill["v3_backfill_id"],
+        near_miss_id=near_miss["near_miss_id"],
+        v3_backfill_dir=tmp_path / "targeted_v3_backfill",
+        v3_matrix_dir=tmp_path / "targeted_search_v3",
+        near_miss_dir=tmp_path / "near_miss_candidates",
+        scorecard_dir=tmp_path / "weight_scorecard",
+        output_dir=tmp_path / "near_miss_ab_comparison",
+        generated_at=datetime(2026, 3, 19, tzinfo=UTC),
+        policy_path=policy_path,
+    )
+    sensitivity = weight_search.run_promotion_threshold_sensitivity(
+        v3_backfill_id=targeted_v3_backfill["v3_backfill_id"],
+        ab_id=near_miss_ab["ab_id"],
+        v3_backfill_dir=tmp_path / "targeted_v3_backfill",
+        v3_matrix_dir=tmp_path / "targeted_search_v3",
+        ab_dir=tmp_path / "near_miss_ab_comparison",
+        output_dir=tmp_path / "promotion_threshold_sensitivity",
+        generated_at=datetime(2026, 3, 20, tzinfo=UTC),
+    )
+    gate_calibration = weight_search.run_gate_calibration_review(
+        no_promotion_review_id=no_promotion_review["review_id"],
+        threshold_sensitivity_id=sensitivity["sensitivity_id"],
+        review_dir=tmp_path / "no_promotion_review",
+        sensitivity_dir=tmp_path / "promotion_threshold_sensitivity",
+        output_dir=tmp_path / "gate_calibration_review",
+        generated_at=datetime(2026, 3, 23, tzinfo=UTC),
+    )
+    scorecard_attribution = weight_search.run_scorecard_attribution(
+        scorecard_id=fixture["scorecard"]["scorecard_id"],
+        v3_backfill_id=targeted_v3_backfill["v3_backfill_id"],
+        scorecard_dir=tmp_path / "weight_scorecard",
+        v3_backfill_dir=tmp_path / "targeted_v3_backfill",
+        v3_matrix_dir=tmp_path / "targeted_search_v3",
+        output_dir=tmp_path / "scorecard_attribution",
+        generated_at=datetime(2026, 3, 23, 1, tzinfo=UTC),
+    )
+    signal_diagnosis = weight_search.run_signal_instability_diagnosis(
+        scorecard_attribution_id=scorecard_attribution["scorecard_attribution_id"],
+        attribution_dir=tmp_path / "scorecard_attribution",
+        output_dir=tmp_path / "signal_instability_diagnosis",
+        generated_at=datetime(2026, 3, 24, tzinfo=UTC),
+    )
+    consensus_review = weight_search.run_consensus_quality_review(
+        signal_diagnosis_id=signal_diagnosis["signal_diagnosis_id"],
+        signal_dir=tmp_path / "signal_instability_diagnosis",
+        attribution_dir=tmp_path / "scorecard_attribution",
+        output_dir=tmp_path / "consensus_quality_review",
+        generated_at=datetime(2026, 3, 24, 1, tzinfo=UTC),
+    )
+    return {
+        **fixture,
+        "no_promotion_review": no_promotion_review,
+        "near_miss": near_miss,
+        "cash_buffer_attribution": cash_buffer_attribution,
+        "coverage_gap": coverage_gap,
+        "targeted_v3": targeted_v3,
+        "targeted_v3_backfill": targeted_v3_backfill,
+        "near_miss_ab": near_miss_ab,
+        "sensitivity": sensitivity,
+        "gate_calibration": gate_calibration,
+        "scorecard_attribution": scorecard_attribution,
+        "signal_diagnosis": signal_diagnosis,
+        "consensus_review": consensus_review,
+    }
 
 
 def run_micro_search_v4_design_fixture(tmp_path: Path) -> dict[str, Any]:
@@ -381,20 +536,20 @@ def run_micro_search_v4_design_fixture(tmp_path: Path) -> dict[str, Any]:
         v3_backfill_dir=tmp_path / "targeted_v3_backfill",
         v3_matrix_dir=tmp_path / "targeted_search_v3",
         output_dir=tmp_path / "scorecard_attribution",
-        generated_at=datetime(2024, 3, 23, 1, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 23, 1, tzinfo=UTC),
     )
     signal_diagnosis = weight_search.run_signal_instability_diagnosis(
         scorecard_attribution_id=scorecard_attribution["scorecard_attribution_id"],
         attribution_dir=tmp_path / "scorecard_attribution",
         output_dir=tmp_path / "signal_instability_diagnosis",
-        generated_at=datetime(2024, 3, 24, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 24, tzinfo=UTC),
     )
     consensus_review = weight_search.run_consensus_quality_review(
         signal_diagnosis_id=signal_diagnosis["signal_diagnosis_id"],
         signal_dir=tmp_path / "signal_instability_diagnosis",
         attribution_dir=tmp_path / "scorecard_attribution",
         output_dir=tmp_path / "consensus_quality_review",
-        generated_at=datetime(2024, 3, 24, 1, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 24, 1, tzinfo=UTC),
     )
     v4_design = weight_search.run_micro_search_v4_design(
         gate_calibration_id=fixture["gate_calibration"]["gate_calibration_id"],
@@ -406,7 +561,7 @@ def run_micro_search_v4_design_fixture(tmp_path: Path) -> dict[str, Any]:
         signal_dir=tmp_path / "signal_instability_diagnosis",
         consensus_dir=tmp_path / "consensus_quality_review",
         output_dir=tmp_path / "micro_search_v4_design",
-        generated_at=datetime(2024, 3, 25, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 25, tzinfo=UTC),
     )
     return {
         **fixture,
@@ -417,18 +572,60 @@ def run_micro_search_v4_design_fixture(tmp_path: Path) -> dict[str, Any]:
     }
 
 
+def _write_micro_search_current_cache(
+    tmp_path: Path,
+    *,
+    historical_prices_path: Path,
+    historical_rates_path: Path,
+) -> tuple[Path, Path]:
+    """Build a current-quality cache without mutating the frozen historical source."""
+    root = tmp_path / "micro_search_v4_market_cache"
+    root.mkdir(parents=True, exist_ok=False)
+    prices_path = root / "prices_daily.csv"
+    rates_path = root / "rates_daily.csv"
+
+    price_lines = historical_prices_path.read_text(encoding="utf-8").splitlines()
+    last_price_by_ticker: dict[str, list[str]] = {}
+    for line in price_lines[1:]:
+        columns = line.split(",")
+        if len(columns) >= 8:
+            last_price_by_ticker[columns[1]] = columns
+    for ticker in sorted(last_price_by_ticker):
+        current = list(last_price_by_ticker[ticker])
+        current[0] = "2026-03-25"
+        price_lines.append(",".join(current))
+    prices_path.write_text("\n".join(price_lines) + "\n", encoding="utf-8")
+
+    rate_lines = historical_rates_path.read_text(encoding="utf-8").splitlines()
+    latest_rate = rate_lines[-1].split(",")
+    latest_rate[0] = "2026-03-25"
+    rate_lines.append(",".join(latest_rate))
+    rates_path.write_text("\n".join(rate_lines) + "\n", encoding="utf-8")
+    return prices_path, rates_path
+
+
 def run_micro_search_v4_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_micro_search_v4_design_fixture(tmp_path)
+    current_prices_path, current_rates_path = _write_micro_search_current_cache(
+        tmp_path,
+        historical_prices_path=fixture["prices_path"],
+        historical_rates_path=fixture["rates_path"],
+    )
     v4_backfill = weight_search.run_micro_search_v4_backfill(
         v4_design_id=fixture["v4_design"]["v4_design_id"],
         v4_design_dir=tmp_path / "micro_search_v4_design",
         baseline_backfill_dir=tmp_path / "paper_shadow_backfill",
         output_dir=tmp_path / "micro_search_v4_backfill",
-        price_cache_path=fixture["prices_path"],
-        rates_cache_path=fixture["rates_path"],
-        generated_at=datetime(2024, 3, 3, 3, tzinfo=UTC),
+        price_cache_path=current_prices_path,
+        rates_cache_path=current_rates_path,
+        generated_at=datetime(2026, 3, 25, 2, tzinfo=UTC),
     )
-    return {**fixture, "v4_backfill": v4_backfill}
+    return {
+        **fixture,
+        "v4_prices_path": current_prices_path,
+        "v4_rates_path": current_rates_path,
+        "v4_backfill": v4_backfill,
+    }
 
 
 def run_gate_calibrated_review_fixture(tmp_path: Path) -> dict[str, Any]:
@@ -440,7 +637,7 @@ def run_gate_calibrated_review_fixture(tmp_path: Path) -> dict[str, Any]:
         v4_design_dir=tmp_path / "micro_search_v4_design",
         gate_calibration_dir=tmp_path / "gate_calibration_review",
         output_dir=tmp_path / "gate_calibrated_review",
-        generated_at=datetime(2024, 3, 26, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 26, tzinfo=UTC),
     )
     return {**fixture, "gate_review": gate_review}
 
@@ -455,7 +652,7 @@ def run_signal_vs_parameter_attribution_fixture(tmp_path: Path) -> dict[str, Any
         consensus_dir=tmp_path / "consensus_quality_review",
         gate_review_dir=tmp_path / "gate_calibrated_review",
         output_dir=tmp_path / "signal_vs_parameter_attribution",
-        generated_at=datetime(2024, 3, 27, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 27, tzinfo=UTC),
     )
     return {**fixture, "signal_vs_parameter": signal_vs_parameter}
 
@@ -466,7 +663,7 @@ def run_next_research_direction_fixture(tmp_path: Path) -> dict[str, Any]:
         attribution_id=fixture["signal_vs_parameter"]["signal_vs_parameter_id"],
         attribution_dir=tmp_path / "signal_vs_parameter_attribution",
         output_dir=tmp_path / "next_research_direction",
-        generated_at=datetime(2024, 3, 28, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 28, tzinfo=UTC),
     )
     return {**fixture, "next_direction": next_direction}
 
@@ -477,7 +674,7 @@ def run_owner_research_roadmap_fixture(tmp_path: Path) -> dict[str, Any]:
         direction_id=fixture["next_direction"]["direction_id"],
         direction_dir=tmp_path / "next_research_direction",
         output_dir=tmp_path / "owner_research_roadmap",
-        generated_at=datetime(2024, 3, 29, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 29, tzinfo=UTC),
     )
     return {**fixture, "owner_roadmap": owner_roadmap}
 
@@ -487,7 +684,7 @@ def run_signal_failure_taxonomy_fixture(tmp_path: Path) -> dict[str, Any]:
     taxonomy = weight_search.run_signal_failure_taxonomy_validation(
         config_path=weight_search.DEFAULT_SIGNAL_FAILURE_TAXONOMY_CONFIG_PATH,
         output_dir=tmp_path / "signal_failure_taxonomy",
-        generated_at=datetime(2024, 3, 30, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 30, tzinfo=UTC),
     )
     return {**fixture, "signal_failure_taxonomy": taxonomy}
 
@@ -503,7 +700,7 @@ def run_candidate_signal_ledger_fixture(tmp_path: Path) -> dict[str, Any]:
         signal_dir=tmp_path / "signal_instability_diagnosis",
         consensus_dir=tmp_path / "consensus_quality_review",
         output_dir=tmp_path / "candidate_signal_ledger",
-        generated_at=datetime(2024, 3, 31, tzinfo=UTC),
+        generated_at=datetime(2026, 3, 31, tzinfo=UTC),
     )
     return {**fixture, "candidate_signal_ledger": ledger}
 
@@ -514,7 +711,7 @@ def run_signal_churn_root_cause_fixture(tmp_path: Path) -> dict[str, Any]:
         ledger_id=fixture["candidate_signal_ledger"]["ledger_id"],
         ledger_dir=tmp_path / "candidate_signal_ledger",
         output_dir=tmp_path / "signal_churn_root_cause",
-        generated_at=datetime(2024, 4, 1, tzinfo=UTC),
+        generated_at=datetime(2026, 4, 1, tzinfo=UTC),
     )
     return {**fixture, "signal_churn_root_cause": root_cause}
 
@@ -525,7 +722,7 @@ def run_regime_mismatch_attribution_fixture(tmp_path: Path) -> dict[str, Any]:
         ledger_id=fixture["candidate_signal_ledger"]["ledger_id"],
         ledger_dir=tmp_path / "candidate_signal_ledger",
         output_dir=tmp_path / "regime_mismatch_attribution",
-        generated_at=datetime(2024, 4, 2, tzinfo=UTC),
+        generated_at=datetime(2026, 4, 2, tzinfo=UTC),
     )
     return {**fixture, "regime_mismatch_attribution": mismatch}
 
@@ -538,7 +735,7 @@ def run_candidate_quality_filter_design_fixture(tmp_path: Path) -> dict[str, Any
         root_cause_dir=tmp_path / "signal_churn_root_cause",
         mismatch_dir=tmp_path / "regime_mismatch_attribution",
         output_dir=tmp_path / "candidate_quality_filter_design",
-        generated_at=datetime(2024, 4, 3, tzinfo=UTC),
+        generated_at=datetime(2026, 4, 3, tzinfo=UTC),
     )
     return {**fixture, "candidate_quality_filter_design": filter_design}
 
@@ -550,7 +747,7 @@ def run_filtered_candidate_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
         filter_design_dir=tmp_path / "candidate_quality_filter_design",
         ledger_dir=tmp_path / "candidate_signal_ledger",
         output_dir=tmp_path / "filtered_candidate_backfill",
-        generated_at=datetime(2024, 4, 4, tzinfo=UTC),
+        generated_at=datetime(2026, 4, 4, tzinfo=UTC),
     )
     return {**fixture, "filtered_candidate_backfill": filtered_backfill}
 
@@ -561,7 +758,7 @@ def run_filtered_vs_original_comparison_fixture(tmp_path: Path) -> dict[str, Any
         filtered_backfill_id=fixture["filtered_candidate_backfill"]["filtered_backfill_id"],
         filtered_backfill_dir=tmp_path / "filtered_candidate_backfill",
         output_dir=tmp_path / "filtered_vs_original_comparison",
-        generated_at=datetime(2024, 4, 5, tzinfo=UTC),
+        generated_at=datetime(2026, 4, 5, tzinfo=UTC),
     )
     return {**fixture, "filtered_vs_original_comparison": comparison}
 
@@ -573,7 +770,7 @@ def run_signal_gate_experiment_fixture(tmp_path: Path) -> dict[str, Any]:
         filter_design_dir=tmp_path / "candidate_quality_filter_design",
         ledger_dir=tmp_path / "candidate_signal_ledger",
         output_dir=tmp_path / "signal_gate_experiment",
-        generated_at=datetime(2024, 4, 6, tzinfo=UTC),
+        generated_at=datetime(2026, 4, 6, tzinfo=UTC),
     )
     return {**fixture, "signal_gate_experiment": gate_experiment}
 
@@ -588,7 +785,7 @@ def run_filtered_candidate_promotion_review_fixture(tmp_path: Path) -> dict[str,
         comparison_dir=tmp_path / "filtered_vs_original_comparison",
         experiment_dir=tmp_path / "signal_gate_experiment",
         output_dir=tmp_path / "filtered_candidate_promotion_review",
-        generated_at=datetime(2024, 4, 7, tzinfo=UTC),
+        generated_at=datetime(2026, 4, 7, tzinfo=UTC),
     )
     return {**fixture, "filtered_candidate_promotion_review": review}
 
@@ -599,6 +796,6 @@ def run_owner_signal_roadmap_fixture(tmp_path: Path) -> dict[str, Any]:
         filtered_review_id=fixture["filtered_candidate_promotion_review"]["filtered_review_id"],
         review_dir=tmp_path / "filtered_candidate_promotion_review",
         output_dir=tmp_path / "owner_signal_roadmap",
-        generated_at=datetime(2024, 4, 8, tzinfo=UTC),
+        generated_at=datetime(2026, 4, 8, tzinfo=UTC),
     )
     return {**fixture, "owner_signal_roadmap": roadmap}

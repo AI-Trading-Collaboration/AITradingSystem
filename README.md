@@ -1597,6 +1597,16 @@ owner roadmap 只生成 owner research checklist。所有输出继续固定 no b
 `production_effect=none`，不得修改 `position_advisory_v1.yaml`、official target weights、
 paper/real portfolio、baseline/production state、policy 或 broker。
 
+TRADING-316～319 的 canonical diagnosis foundation 由
+`signal_diagnosis_foundation_v1.yaml` 管理，并为 Gate、Attribution、Signal、Consensus
+分别冻结 bounded `input_snapshot.v2`。Gate 必须证明 Review 与 Sensitivity 回到同一
+Scorecard；Attribution 必须证明 Scorecard 等于 Targeted Matrix source Scorecard 且
+Matrix→Backfill 完全一致。当前 source 只有 aggregate score proxy，没有 validated dated
+signal ledger 或 candidate-weight path，因此 Signal 不生成伪造 flip/mismatch event、count
+或 zero return，Consensus 不用任意 family/variant fallback 补造 method，未知值保持
+`null`/空列表并标记 `INSUFFICIENT_DATA`。Validators 会重验 live source/policy/chronology
+并逐 byte 重建全部 JSON/JSONL/Markdown/Reader Brief。
+
 TRADING-326_to_335_SIGNAL_FEATURE_DIAGNOSIS_AND_CANDIDATE_QUALITY_FILTER_PIPELINE
 在 TRADING-316～325 判断需要 signal-level fix 后，追加 research-only signal feature
 diagnosis 与 candidate quality filter pipeline。CLI 入口为 `signal-failure-taxonomy

@@ -1,6 +1,6 @@
 # 当前研究策略执行链路、计算逻辑与优化边界
 
-最后更新：2026-07-13
+最后更新：2026-07-15
 
 项目级 AI market regime：`ai_after_chatgpt`，起点 `2022-12-01`
 
@@ -176,6 +176,25 @@ flowchart TD
 - label 与 feature 的时间边界独立；
 - 缺字段产生 coverage/blocker，不用零值代表未知；
 - signal 输出 score/state/confidence/diagnostics，不直接写 official target weights。
+
+### 5.5.1 TRADING-316～319 diagnosis foundation 的当前设计
+
+该链路处在“参数搜索结果 → 是否值得进入下一轮 signal-level 研究”的诊断边界，不能把
+aggregate score 解释成逐日 signal event。当前 canonical owner 是
+`dynamic_v3_signal_diagnosis_foundation.py`，policy 是
+`config/etf_portfolio/dynamic_v3_rescue/signal_diagnosis_foundation_v1.yaml`。
+
+| 环节 | 输入与 lineage | 计算逻辑 | 输出与当前可得结论 | 后续优化空间 |
+|---|---|---|---|---|
+| Gate Calibration | validated No-Promotion Review + Threshold Sensitivity；两者必须回到同一 source Scorecard | 按 reviewed policy 汇总 gate failure share 与 relaxed-scenario impact；只作 diagnostic | `gate_calibration_review_input_snapshot.v2` + diagnosis/impact/report；可判断 evidence 是否支持 gate review，但 `official_gate_changed=false` | 新 evidence 出现后 preregister 新 policy version；不能为得到 promotion 临时改 threshold |
+| Scorecard Attribution | validated Scorecard + Targeted Matrix + Targeted Backfill；Scorecard 必须等于 Matrix source Scorecard，Matrix→Backfill 必须 exact | 对真实存在的 targeted score components 作分布和 family weakness 归因；missing 不补 0 | `scorecard_attribution_input_snapshot.v2` + component/family views；结论角色是 aggregate attribution | 扩充真实 component coverage、独立 holdout，并校准 weakness policy；保持 source cohort 一致 |
+| Signal Instability | validated Scorecard Attribution + reviewed exact method mapping | 仅把 aggregate component score 标为 proxy；无 dated signal ledger 时不计算 flip/jump/mismatch count，不生成同日伪事件或 zero subsequent return | `signal_instability_diagnosis_input_snapshot.v2`；当前 dated evidence=`INSUFFICIENT_DATA`，event lists 为空，`requires_signal_level_fix=null` | 接入 validated dated signal ledger 后另开 versioned run，计算真实 event/time-to-outcome 与 regime mismatch |
+| Consensus Quality | validated Signal Diagnosis + exact same Attribution；method 只能使用 policy 指定 exact variant | 无 dated candidate-weight path 时不计算 dispersion、quality delta 或 disagreement day；不得 arbitrary family/first-row fallback | `consensus_quality_review_input_snapshot.v2`；当前 dispersion/delta 为 null，status=`INSUFFICIENT_DATA` | 接入 dated candidate-weight path 与 common-date cohort，再做 preregistered dispersion/quality calibration |
+
+四类 producer 都在写输出前验证 live source、policy、timezone chronology 与安全边界；四类
+validator 根据 frozen snapshot 重验 live bindings 并逐 byte 重建所有 JSON、JSONL、Markdown
+与 Reader Brief。当前 workflow PASS 只证明“来源、计算和缺失语义可复现”，不能推出 signal
+或 consensus 已通过投资验证，也不能自动解锁 micro-search、正式方法或 production。
 
 ### 5.6 当前权重研究的具体计算
 
