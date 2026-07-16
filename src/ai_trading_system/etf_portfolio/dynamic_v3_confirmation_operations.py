@@ -86,6 +86,9 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     SCHEMA_VERSION,
 )
 from ai_trading_system.etf_portfolio.models import DEFAULT_ETF_PRICE_PATH
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 from ai_trading_system.platform.artifacts.writer import (
     write_bytes_atomic,
     write_json_atomic,
@@ -759,6 +762,7 @@ def _weekly_summary_from_snapshot(snapshot: Mapping[str, Any]) -> dict[str, Any]
     return summary
 
 
+@with_artifact_validation_session
 def run_confirmation_cycle_weekly(
     *,
     week_ending: date,
@@ -1288,6 +1292,7 @@ def confirmation_cycle_weekly_report_payload(
     }
 
 
+@with_artifact_validation_session
 def validate_confirmation_cycle_weekly_artifact(
     *, weekly_cycle_id: str, output_dir: Path = DEFAULT_CONFIRMATION_CYCLE_WEEKLY_DIR
 ) -> dict[str, Any]:
@@ -2151,6 +2156,7 @@ def _dashboard_validate_lineage(sources: Sequence[Mapping[str, Any]]) -> None:
             raise DynamicV3ConfirmationOperationsError("dashboard weekly source lineage mismatch")
 
 
+@with_artifact_validation_session
 def build_confirmation_dashboard(
     *,
     week_ending: date,
@@ -2350,6 +2356,7 @@ def confirmation_dashboard_report_payload(
     }
 
 
+@with_artifact_validation_session
 def validate_confirmation_dashboard_artifact(
     *, dashboard_id: str, output_dir: Path = DEFAULT_CONFIRMATION_DASHBOARD_DIR
 ) -> dict[str, Any]:
@@ -2590,6 +2597,7 @@ def _queue_items_from_snapshot(snapshot: Mapping[str, Any]) -> list[dict[str, An
     return [_queue_item(row, decisions, cycle_payload) for row in _records(matrix.get("targets"))]
 
 
+@with_artifact_validation_session
 def build_rule_review_queue(
     *,
     cycle_id: str | None = None,
@@ -2717,6 +2725,7 @@ def rule_review_queue_report_payload(
     }
 
 
+@with_artifact_validation_session
 def validate_rule_review_queue_artifact(
     *, queue_id: str, output_dir: Path = DEFAULT_RULE_REVIEW_QUEUE_DIR
 ) -> dict[str, Any]:

@@ -10,6 +10,9 @@ from pytest import MonkeyPatch
 
 from ai_trading_system.etf_portfolio import dynamic_v3_confirmation_cycle as cycle
 from ai_trading_system.etf_portfolio import dynamic_v3_outcome_accumulation as accumulation
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 CONFIRMATION_PLAN_ID = "808e55a74ca6951f"
 
@@ -121,6 +124,7 @@ def write_confirmation_plan_fixture(tmp_path: Path) -> dict[str, Any]:
     }
 
 
+@with_artifact_validation_session
 def register_targets_fixture(tmp_path: Path) -> dict[str, Any]:
     monkeypatch = MonkeyPatch()
     plan_fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
@@ -159,6 +163,7 @@ def write_progress_sources(paths: dict[str, Any]) -> None:
     )
 
 
+@with_artifact_validation_session
 def progress_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = register_targets_fixture(tmp_path)
     write_progress_sources(fixture)
@@ -173,6 +178,7 @@ def progress_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "progress": progress}
 
 
+@with_artifact_validation_session
 def evaluation_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = progress_fixture(tmp_path)
     evaluation = cycle.run_confirmation_evaluation(
@@ -184,6 +190,7 @@ def evaluation_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "evaluation": evaluation}
 
 
+@with_artifact_validation_session
 def cycle_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = evaluation_fixture(tmp_path)
     review_cycle = cycle.run_rule_review_cycle(

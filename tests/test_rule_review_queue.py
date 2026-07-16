@@ -15,8 +15,12 @@ from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_operations import (
     rule_review_queue_report_payload,
     validate_rule_review_queue_artifact,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 
+@with_artifact_validation_session
 def test_rule_review_queue_keeps_not_ready_items_out_of_owner_action(
     tmp_path: Path,
 ) -> None:

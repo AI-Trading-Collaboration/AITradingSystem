@@ -13,8 +13,12 @@ from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_operations import (
     build_rule_review_queue,
     validate_confirmation_dashboard_artifact,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 
+@with_artifact_validation_session
 def test_confirmation_dashboard_summarizes_target_and_pressure_progress(
     tmp_path: Path,
 ) -> None:

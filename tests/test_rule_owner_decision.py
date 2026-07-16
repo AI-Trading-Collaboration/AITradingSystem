@@ -15,13 +15,17 @@ from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_cycle import (
     rule_owner_decision_report_payload,
     validate_rule_owner_decision_artifact,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+)
 
 
 @pytest.fixture(scope="module")
 def owner_decision_cycle(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
-    fixture = cycle_fixture(tmp_path_factory.mktemp("rule-owner-decision"))
-    yield fixture
-    fixture["_monkeypatch"].undo()
+    with artifact_validation_session():
+        fixture = cycle_fixture(tmp_path_factory.mktemp("rule-owner-decision"))
+        yield fixture
+        fixture["_monkeypatch"].undo()
 
 
 def test_rule_owner_decision_records_one_append_only_manual_choice(

@@ -3,6 +3,10 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
+import sys
+import threading
+from collections import OrderedDict
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -11,6 +15,8 @@ from typing import Any, Literal
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.etf_portfolio import dynamic_v3_backtest_simulation as backtest_simulation
+from ai_trading_system.etf_portfolio import dynamic_v3_historical_replay as historical_replay
 from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR,
     _datetime_from_any,
@@ -45,6 +51,13 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
     DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     SCHEMA_VERSION,
+)
+from ai_trading_system.platform.artifacts.validation_session import (
+    ArtifactFingerprintInventory,
+    ArtifactFingerprintScope,
+    artifact_content_identity,
+    cached_artifact_validation,
+    with_artifact_validation_session,
 )
 from ai_trading_system.platform.artifacts.writer import (
     write_json_atomic,
@@ -129,6 +142,702 @@ class DynamicV3ConfirmationCycleError(ValueError):
     """Raised when forward confirmation cycle inputs or artifacts are invalid."""
 
 
+_FORWARD_PLAN_SOURCE_DIR_KEYSETS = {
+    frozenset({"proposal_review", "forward_bridge"}),
+    frozenset({"interpretation", "risk_return", "defensive", "calibration"}),
+    frozenset({"outcome", "calibration", "bridge"}),
+    frozenset({"outcome", "paper", "regime", "sensitivity"}),
+}
+_FORWARD_PLAN_SCALAR_DIR_FIELDS = {
+    "calibration_dir",
+    "outcome_dir",
+    "sim_outcome_dir",
+    "source_dir",
+    "variant_set_dir",
+    "event_set_dir",
+}
+_FORWARD_PLAN_REQUIRED_DEPENDENCY_DIRS = 12
+_FORWARD_PLAN_MAX_FILES_PER_DIR = 32
+_FORWARD_PLAN_MAX_SNAPSHOT_BYTES = 512 * 1024 * 1024
+_FORWARD_PLAN_MAX_EXPLICIT_PATHS = 4_096
+_FORWARD_PLAN_MAX_CONTAINER_NODES = 5_000_000
+_FORWARD_PLAN_SCOPE_CACHE_MAX_ENTRIES = 16
+_FORWARD_PLAN_SCOPE_PATH_MAX_UTF8_BYTES = 32 * 1024
+_FORWARD_PLAN_SCOPE_TOTAL_UTF8_BYTES = 8 * 1024 * 1024
+_FORWARD_PLAN_SCOPE_PATH_MAX_COMPONENTS = 256
+_FORWARD_PLAN_SCOPE_TOTAL_COMPONENTS = 16_384
+_FORWARD_PLAN_SCOPE_CACHE_MAX_BYTES = 64 * 1024 * 1024
+_FORWARD_PLAN_SCOPE_CACHE_ENTRY_OVERHEAD_BYTES = 1024
+_ForwardPlanScopeCacheValue = tuple[
+    tuple[str, ...],
+    tuple[str, ...],
+    tuple[tuple[str, tuple[str, ...]], ...],
+]
+_FORWARD_PLAN_SCOPE_CACHE: OrderedDict[
+    tuple[str, ...],
+    tuple[_ForwardPlanScopeCacheValue, int],
+] = OrderedDict()
+_FORWARD_PLAN_SCOPE_CACHE_BYTES = 0
+_FORWARD_PLAN_SCOPE_CACHE_PID = os.getpid()
+_FORWARD_PLAN_SCOPE_CACHE_LOCK = threading.Lock()
+_FORWARD_PLAN_EXPLICIT_PATH_FIELDS = {"position_advisory_config"}
+_FORWARD_PLAN_PROJECT_RELATIVE_PATH_FIELDS = {
+    "position_advisory_config",
+    "price_cache_path",
+    "rates_cache_path",
+}
+_FORWARD_PLAN_INPUT_SNAPSHOT_SCHEMAS = {
+    "etf_dynamic_v3_backtest_sim_input_snapshot": (
+        backtest_simulation.BACKTEST_SIM_EVENT_SNAPSHOT_SCHEMA_VERSION
+    ),
+    "etf_dynamic_v3_backtest_sim_variant_input_snapshot": (
+        backtest_simulation.BACKTEST_SIM_VARIANT_SNAPSHOT_SCHEMA_VERSION
+    ),
+    "etf_dynamic_v3_backtest_sim_outcome_input_snapshot": (
+        backtest_simulation.BACKTEST_SIM_OUTCOME_SNAPSHOT_SCHEMA_VERSION
+    ),
+    "etf_dynamic_v3_backtest_sim_paper_input_snapshot": (
+        backtest_simulation.BACKTEST_SIM_PAPER_SNAPSHOT_SCHEMA_VERSION
+    ),
+    "etf_dynamic_v3_backtest_sim_regime_input_snapshot": (
+        backtest_simulation.BACKTEST_SIM_REGIME_SNAPSHOT_SCHEMA_VERSION
+    ),
+    "etf_dynamic_v3_backtest_sim_sensitivity_input_snapshot": (
+        backtest_simulation.BACKTEST_SIM_SENSITIVITY_SNAPSHOT_SCHEMA_VERSION
+    ),
+    "etf_dynamic_v3_backtest_sim_calibration_input_snapshot": (
+        backtest_simulation.BACKTEST_SIM_CALIBRATION_SNAPSHOT_SCHEMA_VERSION
+    ),
+    "etf_dynamic_v3_backtest_sim_forward_bridge_input_snapshot": (
+        backtest_simulation.BACKTEST_SIM_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION
+    ),
+    "etf_dynamic_v3_sim_interpretation_input_snapshot": (
+        backtest_simulation.SIM_INTERPRETATION_SNAPSHOT_SCHEMA_VERSION
+    ),
+    "etf_dynamic_v3_sim_risk_return_input_snapshot": (
+        backtest_simulation.SIM_RISK_RETURN_SNAPSHOT_SCHEMA_VERSION
+    ),
+    "etf_dynamic_v3_sim_defensive_validation_input_snapshot": (
+        backtest_simulation.SIM_DEFENSIVE_VALIDATION_SNAPSHOT_SCHEMA_VERSION
+    ),
+    "etf_dynamic_v3_advisory_proposal_review_input_snapshot": (
+        backtest_simulation.ADVISORY_PROPOSAL_REVIEW_SNAPSHOT_SCHEMA_VERSION
+    ),
+    "etf_dynamic_v3_forward_confirmation_plan_input_snapshot": (
+        backtest_simulation.FORWARD_CONFIRMATION_PLAN_SNAPSHOT_SCHEMA_VERSION
+    ),
+}
+
+
+class _ForwardPlanLexicalPathBudget:
+    """Bound snapshot path shape before any resolve/stat/parents expansion."""
+
+    def __init__(self) -> None:
+        self._seen: set[str] = set()
+        self._total_utf8_bytes = 0
+        self._total_components = 0
+
+    def path(self, path_text: str) -> Path | None:
+        if path_text in self._seen:
+            return Path(path_text)
+        try:
+            path_bytes = path_text.encode("utf-8")
+            path = Path(path_text)
+            component_count = len(path.parts)
+        except (OSError, RuntimeError, UnicodeError, ValueError):
+            return None
+        if (
+            len(path_bytes) > _FORWARD_PLAN_SCOPE_PATH_MAX_UTF8_BYTES
+            or component_count > _FORWARD_PLAN_SCOPE_PATH_MAX_COMPONENTS
+        ):
+            return None
+        next_utf8_bytes = self._total_utf8_bytes + len(path_bytes)
+        next_components = self._total_components + component_count
+        if (
+            next_utf8_bytes > _FORWARD_PLAN_SCOPE_TOTAL_UTF8_BYTES
+            or next_components > _FORWARD_PLAN_SCOPE_TOTAL_COMPONENTS
+        ):
+            return None
+        self._seen.add(path_text)
+        self._total_utf8_bytes = next_utf8_bytes
+        self._total_components = next_components
+        return path
+
+    def resolve(self, path: Path) -> Path | None:
+        if self.path(str(path)) is None:
+            return None
+        try:
+            resolved_text = str(path.resolve(strict=False))
+        except (OSError, RuntimeError, UnicodeError, ValueError):
+            return None
+        return self.path(resolved_text)
+
+
+def _forward_plan_scope_cache_value(
+    scope: ArtifactFingerprintScope,
+) -> _ForwardPlanScopeCacheValue | None:
+    """Serialize one scope without retaining ``Path`` implementation caches."""
+    if scope.discover_bound_paths:
+        return None
+    observed_lexical_paths: dict[str, str] = {}
+    total_utf8_bytes = 0
+    total_components = 0
+
+    def observe_path(path: Path) -> str | None:
+        nonlocal total_components
+        nonlocal total_utf8_bytes
+
+        lexical = str(path)
+        cached_lexical = observed_lexical_paths.get(lexical)
+        if cached_lexical is not None:
+            return cached_lexical
+        try:
+            lexical_bytes = lexical.encode("utf-8")
+            lexical_components = len(path.parts)
+        except (OSError, RuntimeError, UnicodeError, ValueError):
+            return None
+        if (
+            len(lexical_bytes) > _FORWARD_PLAN_SCOPE_PATH_MAX_UTF8_BYTES
+            or lexical_components > _FORWARD_PLAN_SCOPE_PATH_MAX_COMPONENTS
+        ):
+            return None
+        try:
+            resolved = str(path.resolve(strict=False))
+            resolved_bytes = resolved.encode("utf-8")
+            resolved_components = len(Path(resolved).parts)
+        except (OSError, RuntimeError, UnicodeError, ValueError):
+            return None
+        if (
+            len(resolved_bytes) > _FORWARD_PLAN_SCOPE_PATH_MAX_UTF8_BYTES
+            or resolved_components > _FORWARD_PLAN_SCOPE_PATH_MAX_COMPONENTS
+        ):
+            return None
+        next_utf8_bytes = total_utf8_bytes + len(lexical_bytes) + len(resolved_bytes)
+        next_components = total_components + lexical_components + resolved_components
+        if (
+            next_utf8_bytes > _FORWARD_PLAN_SCOPE_TOTAL_UTF8_BYTES
+            or next_components > _FORWARD_PLAN_SCOPE_TOTAL_COMPONENTS
+        ):
+            return None
+        observed_lexical_paths[lexical] = lexical
+        total_utf8_bytes = next_utf8_bytes
+        total_components = next_components
+        return lexical
+
+    cached_paths: list[str] = []
+    for path in scope.paths:
+        cached_path = observe_path(path)
+        if cached_path is None:
+            return None
+        cached_paths.append(cached_path)
+    cached_metadata_paths: list[str] = []
+    for path in scope.metadata_paths:
+        cached_path = observe_path(path)
+        if cached_path is None:
+            return None
+        cached_metadata_paths.append(cached_path)
+    cached_inventories: list[tuple[str, tuple[str, ...]]] = []
+    for inventory in scope.inventories:
+        cached_root = observe_path(inventory.root)
+        if cached_root is None:
+            return None
+        cached_inventories.append((cached_root, inventory.patterns))
+    return (
+        tuple(cached_paths),
+        tuple(cached_metadata_paths),
+        tuple(cached_inventories),
+    )
+
+
+def _forward_plan_scope_from_cache_value(
+    value: _ForwardPlanScopeCacheValue,
+) -> ArtifactFingerprintScope:
+    paths, metadata_paths, inventories = value
+    return ArtifactFingerprintScope(
+        paths=tuple(Path(path) for path in paths),
+        metadata_paths=tuple(Path(path) for path in metadata_paths),
+        inventories=tuple(
+            ArtifactFingerprintInventory(root=Path(root), patterns=patterns)
+            for root, patterns in inventories
+        ),
+        discover_bound_paths=False,
+    )
+
+
+def _forward_plan_scope_cache_retained_object_bytes(
+    value: Any,
+    *,
+    seen: set[int],
+) -> int:
+    object_id = id(value)
+    if object_id in seen:
+        return 0
+    seen.add(object_id)
+    retained = sys.getsizeof(value)
+    if type(value) is tuple:
+        retained += sum(
+            _forward_plan_scope_cache_retained_object_bytes(item, seen=seen)
+            for item in value
+        )
+    return retained
+
+
+def _forward_plan_scope_cache_retained_bytes(
+    key: tuple[str, ...],
+    value: _ForwardPlanScopeCacheValue,
+) -> int:
+    seen: set[int] = set()
+    return (
+        _FORWARD_PLAN_SCOPE_CACHE_ENTRY_OVERHEAD_BYTES
+        + _forward_plan_scope_cache_retained_object_bytes(key, seen=seen)
+        + _forward_plan_scope_cache_retained_object_bytes(value, seen=seen)
+    )
+
+
+def _reset_forward_plan_scope_cache_after_fork() -> None:
+    """Discard inherited scope entries and lock state in a fork child."""
+    global _FORWARD_PLAN_SCOPE_CACHE
+    global _FORWARD_PLAN_SCOPE_CACHE_BYTES
+    global _FORWARD_PLAN_SCOPE_CACHE_LOCK
+    global _FORWARD_PLAN_SCOPE_CACHE_PID
+
+    _FORWARD_PLAN_SCOPE_CACHE = OrderedDict()
+    _FORWARD_PLAN_SCOPE_CACHE_BYTES = 0
+    _FORWARD_PLAN_SCOPE_CACHE_LOCK = threading.Lock()
+    _FORWARD_PLAN_SCOPE_CACHE_PID = os.getpid()
+
+
+def _ensure_forward_plan_scope_cache_owner() -> None:
+    if _FORWARD_PLAN_SCOPE_CACHE_PID != os.getpid():
+        _reset_forward_plan_scope_cache_after_fork()
+
+
+if hasattr(os, "register_at_fork"):
+    os.register_at_fork(after_in_child=_reset_forward_plan_scope_cache_after_fork)
+
+
+def _forward_plan_scope_cache_get(
+    key: tuple[str, ...],
+) -> ArtifactFingerprintScope | None:
+    _ensure_forward_plan_scope_cache_owner()
+    with _FORWARD_PLAN_SCOPE_CACHE_LOCK:
+        cached = _FORWARD_PLAN_SCOPE_CACHE.get(key)
+        if cached is None:
+            return None
+        _FORWARD_PLAN_SCOPE_CACHE.move_to_end(key)
+        value = cached[0]
+    return _forward_plan_scope_from_cache_value(value)
+
+
+def _forward_plan_scope_cache_discard(key: tuple[str, ...]) -> None:
+    global _FORWARD_PLAN_SCOPE_CACHE_BYTES
+
+    _ensure_forward_plan_scope_cache_owner()
+    with _FORWARD_PLAN_SCOPE_CACHE_LOCK:
+        discarded = _FORWARD_PLAN_SCOPE_CACHE.pop(key, None)
+        if discarded is not None:
+            _FORWARD_PLAN_SCOPE_CACHE_BYTES -= discarded[1]
+
+
+def _forward_plan_scope_cache_put(
+    key: tuple[str, ...],
+    scope: ArtifactFingerprintScope,
+) -> bool:
+    global _FORWARD_PLAN_SCOPE_CACHE
+    global _FORWARD_PLAN_SCOPE_CACHE_BYTES
+
+    value = _forward_plan_scope_cache_value(scope)
+    if value is None:
+        return False
+    retained_bytes = _forward_plan_scope_cache_retained_bytes(key, value)
+    if retained_bytes > _FORWARD_PLAN_SCOPE_CACHE_MAX_BYTES:
+        return False
+    _ensure_forward_plan_scope_cache_owner()
+    with _FORWARD_PLAN_SCOPE_CACHE_LOCK:
+        previous = _FORWARD_PLAN_SCOPE_CACHE.pop(key, None)
+        if previous is not None:
+            _FORWARD_PLAN_SCOPE_CACHE_BYTES -= previous[1]
+        _FORWARD_PLAN_SCOPE_CACHE[key] = (value, retained_bytes)
+        _FORWARD_PLAN_SCOPE_CACHE_BYTES += retained_bytes
+        evicted = False
+        while _FORWARD_PLAN_SCOPE_CACHE and (
+            len(_FORWARD_PLAN_SCOPE_CACHE) > _FORWARD_PLAN_SCOPE_CACHE_MAX_ENTRIES
+            or _FORWARD_PLAN_SCOPE_CACHE_BYTES
+            > _FORWARD_PLAN_SCOPE_CACHE_MAX_BYTES
+        ):
+            _, (_, evicted_bytes) = _FORWARD_PLAN_SCOPE_CACHE.popitem(last=False)
+            _FORWARD_PLAN_SCOPE_CACHE_BYTES -= evicted_bytes
+            evicted = True
+        if evicted:
+            _FORWARD_PLAN_SCOPE_CACHE = OrderedDict(_FORWARD_PLAN_SCOPE_CACHE)
+    return True
+
+
+def _forward_plan_scope_live_preconditions(
+    scope: ArtifactFingerprintScope,
+    *,
+    plan_dir: Path,
+) -> bool:
+    """Recheck cheap mutable topology constraints before returning an LRU hit."""
+    try:
+        resolved_plan_dir = plan_dir.resolve(strict=False)
+        resolved_project_root = PROJECT_ROOT.resolve(strict=False)
+        for inventory in scope.inventories:
+            root = inventory.root
+            is_junction = getattr(root, "is_junction", None)
+            if (
+                not root.is_absolute()
+                or not root.is_dir()
+                or root.is_symlink()
+                or bool(is_junction is not None and is_junction())
+            ):
+                return False
+            resolved_root = root.resolve(strict=False)
+            if (
+                resolved_root == resolved_project_root
+                or resolved_root in resolved_plan_dir.parents
+            ):
+                return False
+            entries: list[Path] = []
+            for index, entry in enumerate(root.iterdir()):
+                if index >= _FORWARD_PLAN_MAX_FILES_PER_DIR:
+                    return False
+                entries.append(entry)
+            if any(
+                entry.is_dir()
+                or entry.is_symlink()
+                or bool(
+                    (is_entry_junction := getattr(entry, "is_junction", None))
+                    is not None
+                    and is_entry_junction()
+                )
+                for entry in entries
+            ):
+                return False
+        for explicit_path in (*scope.paths, *scope.metadata_paths):
+            if explicit_path.exists() and explicit_path.is_dir():
+                return False
+    except (OSError, RuntimeError, ValueError):
+        return False
+    return True
+
+
+def _forward_plan_dependency_scope(plan_dir: Path) -> ArtifactFingerprintScope | None:
+    """Resolve the fixed Plan validator DAG without scanning any output parent."""
+    path_budget = _ForwardPlanLexicalPathBudget()
+    bounded_plan_dir = path_budget.path(str(plan_dir))
+    if bounded_plan_dir is None:
+        return None
+    snapshot_path = path_budget.path(
+        str(bounded_plan_dir / "forward_confirmation_plan_input_snapshot.json")
+    )
+    if snapshot_path is None:
+        return None
+    resolved_snapshot_path = path_budget.resolve(snapshot_path)
+    if resolved_snapshot_path is None:
+        return None
+    try:
+        snapshot_stat = snapshot_path.stat()
+        is_junction = getattr(snapshot_path, "is_junction", None)
+        if (
+            not snapshot_path.is_file()
+            or snapshot_path.is_symlink()
+            or bool(is_junction is not None and is_junction())
+            or snapshot_stat.st_size > _FORWARD_PLAN_MAX_SNAPSHOT_BYTES
+        ):
+            return None
+    except OSError:
+        return None
+    snapshot_identity = artifact_content_identity(snapshot_path)
+    if snapshot_identity is None:
+        return None
+    scope_cache_key = (
+        str(snapshot_path),
+        str(resolved_snapshot_path),
+        snapshot_identity,
+        str(PROJECT_ROOT),
+        str(PROJECT_ROOT.resolve(strict=False)),
+        str(backtest_simulation.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT),
+        str(backtest_simulation.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT.resolve(strict=False)),
+    )
+    cached_scope = _forward_plan_scope_cache_get(scope_cache_key)
+    if cached_scope is not None:
+        if _forward_plan_scope_live_preconditions(
+            cached_scope,
+            plan_dir=bounded_plan_dir,
+        ):
+            return cached_scope
+        _forward_plan_scope_cache_discard(scope_cache_key)
+        return None
+    try:
+        snapshot = _read_optional_json(snapshot_path)
+    except (OSError, UnicodeError, RecursionError, ValueError):
+        return None
+    if not isinstance(snapshot, Mapping):
+        return None
+    if snapshot.get("report_type") != (
+        "etf_dynamic_v3_forward_confirmation_plan_input_snapshot"
+    ) or snapshot.get("schema_version") != (
+        backtest_simulation.FORWARD_CONFIRMATION_PLAN_SNAPSHOT_SCHEMA_VERSION
+    ):
+        return None
+
+    dependency_dirs: set[Path] = set()
+    snapshot_paths: set[Path] = set()
+    metadata_snapshot_paths: set[Path] = set()
+    event_snapshots: list[Mapping[str, Any]] = []
+    observed_input_snapshot_types: set[str] = set()
+    visited_containers = 0
+    stack: list[Any] = [snapshot]
+    while stack:
+        value = stack.pop()
+        visited_containers += 1
+        if visited_containers > _FORWARD_PLAN_MAX_CONTAINER_NODES:
+            return None
+        if isinstance(value, Mapping):
+            report_type = value.get("report_type")
+            if isinstance(report_type, str) and "input_snapshot" in report_type:
+                expected_schema = _FORWARD_PLAN_INPUT_SNAPSHOT_SCHEMAS.get(report_type)
+                if expected_schema is None or value.get("schema_version") != expected_schema:
+                    return None
+                observed_input_snapshot_types.add(report_type)
+            if report_type == "etf_dynamic_v3_backtest_sim_input_snapshot":
+                event_snapshots.append(value)
+            if "source_dirs" in value:
+                source_dirs = value.get("source_dirs")
+                if not isinstance(source_dirs, Mapping):
+                    return None
+                if frozenset(source_dirs) not in _FORWARD_PLAN_SOURCE_DIR_KEYSETS:
+                    return None
+                for path_value in source_dirs.values():
+                    if not isinstance(path_value, str) or not path_value:
+                        return None
+                    dependency_dir = path_budget.path(path_value)
+                    if dependency_dir is None or not dependency_dir.is_absolute():
+                        return None
+                    dependency_dirs.add(dependency_dir)
+            if any(
+                isinstance(field, str)
+                and field.casefold().endswith("_dir")
+                and field.casefold() not in _FORWARD_PLAN_SCALAR_DIR_FIELDS
+                for field in value
+            ):
+                return None
+            for field in _FORWARD_PLAN_SCALAR_DIR_FIELDS:
+                if field not in value:
+                    continue
+                path_value = value.get(field)
+                if not isinstance(path_value, str) or not path_value:
+                    return None
+                dependency_dir = path_budget.path(path_value)
+                if dependency_dir is None or not dependency_dir.is_absolute():
+                    return None
+                dependency_dirs.add(dependency_dir)
+            has_metadata_commitment = any(
+                isinstance(field, str)
+                and (
+                    field.casefold() == "download_timestamp"
+                    or field.casefold().endswith("_download_timestamp")
+                )
+                for field in value
+            )
+            for field, path_value in value.items():
+                if not isinstance(field, str):
+                    continue
+                field_name = field.casefold()
+                if (
+                    field_name != "path"
+                    and not field_name.endswith("_path")
+                    and field_name not in _FORWARD_PLAN_EXPLICIT_PATH_FIELDS
+                ):
+                    continue
+                if path_value is None or path_value == "":
+                    continue
+                if not isinstance(path_value, str):
+                    return None
+                candidate_path = path_budget.path(path_value)
+                if candidate_path is None:
+                    return None
+                if not candidate_path.is_absolute():
+                    if field_name not in _FORWARD_PLAN_PROJECT_RELATIVE_PATH_FIELDS:
+                        return None
+                    candidate_path = path_budget.path(
+                        str(backtest_simulation._resolve_project_path(candidate_path))
+                    )
+                    if candidate_path is None or not candidate_path.is_absolute():
+                        return None
+                snapshot_paths.add(candidate_path)
+                if has_metadata_commitment:
+                    metadata_snapshot_paths.add(candidate_path)
+                if len(snapshot_paths) > _FORWARD_PLAN_MAX_EXPLICIT_PATHS:
+                    return None
+            stack.extend(
+                item for item in value.values() if isinstance(item, (Mapping, list))
+            )
+        elif isinstance(value, list):
+            stack.extend(item for item in value if isinstance(item, (Mapping, list)))
+
+    if observed_input_snapshot_types != set(_FORWARD_PLAN_INPUT_SNAPSHOT_SCHEMAS):
+        return None
+
+    resolved_plan_dir = path_budget.resolve(bounded_plan_dir)
+    if resolved_plan_dir is None:
+        return None
+    dependency_dirs_by_resolved: dict[Path, list[Path]] = {}
+    for dependency_dir in dependency_dirs:
+        resolved_dependency_dir = path_budget.resolve(dependency_dir)
+        if resolved_dependency_dir is None:
+            return None
+        dependency_dirs_by_resolved.setdefault(
+            resolved_dependency_dir,
+            [],
+        ).append(dependency_dir)
+    resolved_dirs = set(dependency_dirs_by_resolved)
+    if not event_snapshots or not resolved_dirs:
+        return None
+    if len(resolved_dirs) != _FORWARD_PLAN_REQUIRED_DEPENDENCY_DIRS:
+        return None
+
+    inventories: list[ArtifactFingerprintInventory] = []
+    for resolved_dependency_dir in sorted(resolved_dirs, key=str):
+        lexical_dirs = dependency_dirs_by_resolved[resolved_dependency_dir]
+        if len(lexical_dirs) != 1:
+            return None
+        dependency_dir = lexical_dirs[0]
+        if not dependency_dir.is_absolute() or not dependency_dir.is_dir():
+            return None
+        if (
+            resolved_dependency_dir == PROJECT_ROOT.resolve()
+            or resolved_dependency_dir in resolved_plan_dir.parents
+        ):
+            return None
+        try:
+            entries: list[Path] = []
+            for index, entry in enumerate(dependency_dir.iterdir()):
+                if index >= _FORWARD_PLAN_MAX_FILES_PER_DIR:
+                    return None
+                entries.append(entry)
+        except OSError:
+            return None
+        if (
+            any(entry.is_dir() or entry.is_symlink() for entry in entries)
+        ):
+            return None
+        inventories.append(
+            ArtifactFingerprintInventory(root=dependency_dir, patterns=("*",))
+        )
+
+    shortlist_ids: set[str] = set()
+    price_paths: set[Path] = set()
+    for event_snapshot in event_snapshots:
+        config = _mapping(event_snapshot.get("config"))
+        source = _mapping(config.get("source"))
+        shortlist_id = _text(source.get("shadow_shortlist_id"))
+        price_path = _text(_mapping(event_snapshot.get("price_source")).get("path"))
+        if not shortlist_id or not price_path:
+            return None
+        shortlist_component = path_budget.path(shortlist_id)
+        if (
+            shortlist_component is None
+            or shortlist_component.is_absolute()
+            or len(shortlist_component.parts) != 1
+            or shortlist_component.parts[0] in {".", ".."}
+        ):
+            return None
+        shortlist_ids.add(shortlist_id)
+        raw_price_path = path_budget.path(price_path)
+        if raw_price_path is None:
+            return None
+        if not raw_price_path.is_absolute():
+            return None
+        price_paths.add(raw_price_path)
+    if len(shortlist_ids) != 1 or len(price_paths) != 1:
+        return None
+
+    shortlist_id = next(iter(shortlist_ids))
+    price_path = next(iter(price_paths))
+    current_shortlist_path = (
+        backtest_simulation.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT
+        / "shadow_shortlist"
+        / shortlist_id
+        / "shadow_shortlist_candidates.jsonl"
+    )
+    etf_config_root = PROJECT_ROOT / "config" / "etf_portfolio"
+    explicit_paths = {
+        PROJECT_ROOT / "config" / "universe.yaml",
+        PROJECT_ROOT / "config" / "data_quality.yaml",
+        *(etf_config_root / name for name in (
+            "assets.yaml",
+            "strategy.yaml",
+            "risk.yaml",
+            "backtest.yaml",
+            "p1.yaml",
+            "p2.yaml",
+        )),
+        current_shortlist_path,
+        price_path.parent / "download_manifests" / "prices_daily_download_manifest.json",
+        price_path.with_name("prices_marketstack_daily.csv"),
+        *snapshot_paths,
+    }
+    normalized_explicit_paths: set[Path] = set()
+    for explicit_path in explicit_paths:
+        resolved_path = path_budget.resolve(explicit_path)
+        if resolved_path is None:
+            return None
+        try:
+            if resolved_path in resolved_dirs:
+                if explicit_path not in dependency_dirs_by_resolved[resolved_path]:
+                    return None
+                continue
+            if explicit_path.exists() and explicit_path.is_dir():
+                return None
+        except (OSError, RuntimeError, ValueError):
+            return None
+        normalized_explicit_paths.add(explicit_path)
+    if len(normalized_explicit_paths) > _FORWARD_PLAN_MAX_EXPLICIT_PATHS:
+        return None
+    scope = ArtifactFingerprintScope(
+        paths=tuple(sorted(normalized_explicit_paths, key=str)),
+        metadata_paths=tuple(sorted(metadata_snapshot_paths, key=str)),
+        inventories=tuple(inventories),
+        discover_bound_paths=False,
+    )
+    if artifact_content_identity(snapshot_path) != snapshot_identity:
+        return None
+    if not _forward_plan_scope_cache_put(scope_cache_key, scope):
+        return None
+    return scope
+
+
+def _validated_forward_confirmation_plan(
+    *,
+    confirmation_plan_id: str,
+    output_dir: Path,
+) -> dict[str, Any]:
+    """Reuse only a byte-stable fixed Plan DAG inside the active validation session."""
+    plan_dir = output_dir / confirmation_plan_id
+    scope = _forward_plan_dependency_scope(plan_dir)
+    if scope is None:
+        return validate_forward_confirmation_plan_artifact(
+            confirmation_plan_id=confirmation_plan_id,
+            output_dir=output_dir,
+        )
+    return cached_artifact_validation(
+        validator=validate_forward_confirmation_plan_artifact,
+        validator_key="confirmation_plan_id",
+        artifact_id=confirmation_plan_id,
+        root=output_dir,
+        semantic_key={
+            "dependency_contract": "forward-confirmation-plan.dependencies.v2",
+            "dynamic_v3_root": backtest_simulation.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
+            "default_etf_price_path": historical_replay.DEFAULT_ETF_PRICE_PATH,
+        },
+        validator_version="forward-confirmation-plan.validation.v3",
+        fingerprint_scope=scope,
+    )
+
+
+@with_artifact_validation_session
 def register_confirmation_targets(
     *,
     confirmation_plan_id: str,
@@ -142,8 +851,9 @@ def register_confirmation_targets(
         raise DynamicV3ConfirmationCycleError("generated_at must be timezone-aware")
     generated = generated.astimezone(UTC)
     plan_dir = confirmation_plan_dir / confirmation_plan_id
-    plan_validation = validate_forward_confirmation_plan_artifact(
-        confirmation_plan_id=confirmation_plan_id, output_dir=confirmation_plan_dir
+    plan_validation = _validated_forward_confirmation_plan(
+        confirmation_plan_id=confirmation_plan_id,
+        output_dir=confirmation_plan_dir,
     )
     if plan_validation.get("status") != "PASS":
         raise DynamicV3ConfirmationCycleError("confirmation plan validation failed")
@@ -384,6 +1094,7 @@ def list_confirmation_targets(
     }
 
 
+@with_artifact_validation_session
 def validate_confirmation_targets_artifact(
     *,
     registry_id: str,
@@ -410,8 +1121,9 @@ def validate_confirmation_targets_artifact(
         plan_id = _text(_mapping(snapshot.get("lineage")).get("confirmation_plan_id"))
         if generated is None or plan_dir.name != plan_id:
             raise DynamicV3ConfirmationCycleError("registry snapshot identity/time invalid")
-        live_validation = validate_forward_confirmation_plan_artifact(
-            confirmation_plan_id=plan_id, output_dir=plan_dir.parent
+        live_validation = _validated_forward_confirmation_plan(
+            confirmation_plan_id=plan_id,
+            output_dir=plan_dir.parent,
         )
         if live_validation.get("status") != "PASS":
             source_errors.append("confirmation plan validation failed")
@@ -724,6 +1436,7 @@ def _confirmation_progress_manifest(
     }
 
 
+@with_artifact_validation_session
 def update_confirmation_progress(
     *,
     registry_id: str,
@@ -839,6 +1552,7 @@ def confirmation_progress_report_payload(
     }
 
 
+@with_artifact_validation_session
 def validate_confirmation_progress_artifact(
     *,
     progress_id: str,
@@ -1078,6 +1792,7 @@ def _confirmation_evaluation_manifest(
     }
 
 
+@with_artifact_validation_session
 def run_confirmation_evaluation(
     *,
     progress_id: str,
@@ -1175,6 +1890,7 @@ def confirmation_evaluation_report_payload(
     }
 
 
+@with_artifact_validation_session
 def validate_confirmation_evaluation_artifact(
     *,
     evaluation_id: str,
@@ -1565,6 +2281,7 @@ def _rule_review_cycle_manifest(
     }
 
 
+@with_artifact_validation_session
 def run_rule_review_cycle(
     *,
     registry_id: str,
@@ -1680,6 +2397,7 @@ def rule_review_cycle_report_payload(
     }
 
 
+@with_artifact_validation_session
 def validate_rule_review_cycle_artifact(
     *,
     cycle_id: str,
@@ -1858,6 +2576,7 @@ def validate_rule_review_cycle_artifact(
     )
 
 
+@with_artifact_validation_session
 def create_rule_owner_decision(
     *,
     cycle_id: str,
@@ -1931,6 +2650,7 @@ def create_rule_owner_decision(
     }
 
 
+@with_artifact_validation_session
 def record_rule_owner_decision(
     *,
     decision_id: str,
@@ -2109,6 +2829,7 @@ def rule_owner_decision_report_payload(
     }
 
 
+@with_artifact_validation_session
 def validate_rule_owner_decision_artifact(
     *,
     decision_id: str,

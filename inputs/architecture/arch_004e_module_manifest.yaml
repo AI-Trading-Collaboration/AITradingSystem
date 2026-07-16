@@ -5387,7 +5387,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_confirmation_cycle
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_confirmation_cycle.py
-  sha256: a863730a19a6bdf4670ec075a048b818316c6de1cbacf6dfc5a0a3a0274e0423
+  sha256: 089d0b6269a83b393989a864aebdcb59095293d628068138a5c258372167dd56
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -5409,7 +5409,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_confirmation_operations
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_confirmation_operations.py
-  sha256: 6858b662eb52a170419961f4fa60a59cea9f7adb7b6f3377c473d26da999496c
+  sha256: ce3f4f7a0ae19cc50040d44d916e0dcf15c5497e5011af84ca4a6c60157925a3
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -13192,7 +13192,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.artifacts.validation_session
   path: src/ai_trading_system/platform/artifacts/validation_session.py
-  sha256: 2039732a8b8a453d286c2da434319aa6f75c34c6e1c803e52c0df143dc4507b5
+  sha256: 235c050bac9e641dae4ee41c2a0a60b0c6f4cdc5940455f0a57f414047ed77c6
   rule_id: platform
   owner_profile: platform
   owners:
