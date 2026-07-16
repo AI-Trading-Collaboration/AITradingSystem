@@ -46,8 +46,8 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     inventory = scan_deprecation_inventory(load_deprecation_policy())
     surfaces = {item.surface_id: item for item in inventory.surfaces}
 
-    assert inventory.python_module_count == 945
-    assert inventory.python_test_file_count == 1126
+    assert inventory.python_module_count == 947
+    assert inventory.python_test_file_count == 1125
     assert inventory.direct_writer_baseline_count == 894
     assert inventory.direct_writer_current_count == 858
     assert inventory.direct_writer_violation_count == 0
@@ -57,9 +57,9 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     assert dict(inventory.lifecycle_counts) == {"ACTIVE": 6, "DEPRECATED": 3}
     assert inventory.removal_ready_count == 0
     assert len(inventory.surfaces) == 9
-    assert surfaces["etf_portfolio_cli_god_module"].line_count == 12339
-    assert surfaces["etf_portfolio_cli_god_module"].top_level_function_count == 297
-    assert surfaces["etf_portfolio_cli_god_module"].cli_command_decorator_count == 258
+    assert surfaces["etf_portfolio_cli_god_module"].line_count == 12196
+    assert surfaces["etf_portfolio_cli_god_module"].top_level_function_count == 291
+    assert surfaces["etf_portfolio_cli_god_module"].cli_command_decorator_count == 252
     assert surfaces["dynamic_v3_system_target_god_module"].line_count == 12951
     assert surfaces["dynamic_v3_system_target_god_module"].top_level_function_count == 680
     assert surfaces["reader_brief_legacy_builder_renderer"].line_count == 29050

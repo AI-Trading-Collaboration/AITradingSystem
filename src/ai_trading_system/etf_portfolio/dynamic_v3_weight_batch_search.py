@@ -726,255 +726,45 @@ def validate_signal_vs_parameter_attribution_artifact(*args: Any, **kwargs: Any)
     )
 
 
-def run_next_research_direction(
-    *,
-    attribution_id: str,
-    attribution_dir: Path = DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR,
-    output_dir: Path = DEFAULT_NEXT_RESEARCH_DIRECTION_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    attribution = signal_vs_parameter_attribution_report_payload(
-        attribution_id=attribution_id,
-        output_dir=attribution_dir,
-    )
-    decision = _next_research_direction_decision(attribution)
-    task_plan = _next_research_task_plan(decision)
-    direction_id = _stable_id("next-research-direction", attribution_id, generated.isoformat())
-    root = _unique_dir(output_dir / direction_id)
-    root.mkdir(parents=True, exist_ok=False)
-    decision["direction_id"] = root.name
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_next_research_direction_manifest",
-        "direction_id": root.name,
-        "attribution_id": attribution_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": attribution.get("market_regime", "ai_after_chatgpt"),
-        "next_research_direction_manifest_path": str(
-            root / "next_research_direction_manifest.json"
-        ),
-        "next_research_direction_decision_path": str(
-            root / "next_research_direction_decision.json"
-        ),
-        "next_task_plan_path": str(root / "next_task_plan.json"),
-        "next_research_direction_report_path": str(root / "next_research_direction_report.md"),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    reader = render_next_research_direction_reader_brief(decision)
-    _write_json(root / "next_research_direction_manifest.json", manifest)
-    _write_json(root / "next_research_direction_decision.json", decision)
-    _write_json(root / "next_task_plan.json", task_plan)
-    _write_text(
-        root / "next_research_direction_report.md",
-        render_next_research_direction_report(manifest, decision, task_plan),
-    )
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_next_research_direction",
-        root.name,
-        root / "next_research_direction_manifest.json",
-    )
-    return {
-        "direction_id": root.name,
-        "direction_dir": root,
-        "manifest": manifest,
-        "next_research_direction_decision": decision,
-        "next_task_plan": task_plan,
-        "reader_brief_section": reader,
-    }
+def _call_research_direction_foundation(name: str, *args: Any, **kwargs: Any) -> Any:
+    from ai_trading_system.etf_portfolio import dynamic_v3_research_direction_foundation
+
+    return getattr(dynamic_v3_research_direction_foundation, name)(*args, **kwargs)
 
 
-def next_research_direction_report_payload(
-    *,
-    direction_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_NEXT_RESEARCH_DIRECTION_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=direction_id,
-        latest_pointer="latest_next_research_direction",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="next_research_direction_manifest.json",
-    )
-    return {
-        **_read_json(root / "next_research_direction_manifest.json"),
-        "next_research_direction_decision": _read_json(
-            root / "next_research_direction_decision.json"
-        ),
-        "next_task_plan": _read_json(root / "next_task_plan.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "direction_dir": str(root),
-    }
-
-
-def validate_next_research_direction_artifact(
-    *,
-    direction_id: str,
-    output_dir: Path = DEFAULT_NEXT_RESEARCH_DIRECTION_DIR,
-) -> dict[str, Any]:
-    root = output_dir / direction_id
-    manifest = _read_optional_json(root / "next_research_direction_manifest.json") or {}
-    decision = _read_optional_json(root / "next_research_direction_decision.json") or {}
-    task_plan = _read_optional_json(root / "next_task_plan.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "next_research_direction_manifest.json",
-            "next_research_direction_decision.json",
-            "next_task_plan.json",
-            "next_research_direction_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("direction_id_matches", manifest.get("direction_id") == direction_id, ""),
-            st._check(
-                "decision_valid",
-                decision.get("decision")
-                in {
-                    "CONTINUE_MICRO_SEARCH_V5",
-                    "SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS",
-                    "IMPLEMENT_CANDIDATE_QUALITY_FILTER",
-                    "REVIEW_GATE_POLICY",
-                    "DEFER_PARAMETER_SEARCH_AND_CONTINUE_FORWARD_CONFIRMATION",
-                },
-                _text(decision.get("decision")),
-            ),
-            st._check("task_plan_readable", bool(_records(task_plan.get("tasks"))), ""),
-            st._check("broker_forbidden", _payload_safe(manifest, decision, task_plan), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, decision, task_plan),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_next_research_direction_validation",
-        direction_id,
-        checks,
+def run_next_research_direction(*args: Any, **kwargs: Any) -> Any:
+    return _call_research_direction_foundation(
+        "run_next_research_direction", *args, **kwargs
     )
 
 
-def update_owner_research_roadmap(
-    *,
-    direction_id: str,
-    direction_dir: Path = DEFAULT_NEXT_RESEARCH_DIRECTION_DIR,
-    output_dir: Path = DEFAULT_OWNER_RESEARCH_ROADMAP_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    direction = next_research_direction_report_payload(
-        direction_id=direction_id,
-        output_dir=direction_dir,
+def next_research_direction_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_research_direction_foundation(
+        "next_research_direction_report_payload", *args, **kwargs
     )
-    summary = _owner_roadmap_summary(direction)
-    checklist = render_owner_roadmap_checklist(summary, direction)
-    roadmap_id = _stable_id("owner-research-roadmap", direction_id, generated.isoformat())
-    root = _unique_dir(output_dir / roadmap_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_owner_research_roadmap_manifest",
-        "roadmap_id": root.name,
-        "direction_id": direction_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": direction.get("market_regime", "ai_after_chatgpt"),
-        "owner_research_roadmap_manifest_path": str(root / "owner_research_roadmap_manifest.json"),
-        "owner_roadmap_summary_path": str(root / "owner_roadmap_summary.json"),
-        "owner_roadmap_checklist_path": str(root / "owner_roadmap_checklist.md"),
-        "owner_research_roadmap_report_path": str(root / "owner_research_roadmap_report.md"),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    reader = render_owner_roadmap_reader_brief(summary)
-    _write_json(root / "owner_research_roadmap_manifest.json", manifest)
-    _write_json(root / "owner_roadmap_summary.json", summary)
-    _write_text(root / "owner_roadmap_checklist.md", checklist)
-    _write_text(
-        root / "owner_research_roadmap_report.md",
-        render_owner_research_roadmap_report(manifest, summary, checklist),
-    )
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_owner_research_roadmap",
-        root.name,
-        root / "owner_research_roadmap_manifest.json",
-    )
-    return {
-        "roadmap_id": root.name,
-        "roadmap_dir": root,
-        "manifest": manifest,
-        "owner_roadmap_summary": summary,
-        "owner_roadmap_checklist": checklist,
-        "reader_brief_section": reader,
-    }
 
 
-def owner_research_roadmap_report_payload(
-    *,
-    roadmap_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_OWNER_RESEARCH_ROADMAP_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=roadmap_id,
-        latest_pointer="latest_owner_research_roadmap",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="owner_research_roadmap_manifest.json",
+def validate_next_research_direction_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_research_direction_foundation(
+        "validate_next_research_direction_artifact", *args, **kwargs
     )
-    return {
-        **_read_json(root / "owner_research_roadmap_manifest.json"),
-        "owner_roadmap_summary": _read_json(root / "owner_roadmap_summary.json"),
-        "owner_roadmap_checklist": (root / "owner_roadmap_checklist.md").read_text(
-            encoding="utf-8"
-        ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "roadmap_dir": str(root),
-    }
 
 
-def validate_owner_research_roadmap_artifact(
-    *,
-    roadmap_id: str,
-    output_dir: Path = DEFAULT_OWNER_RESEARCH_ROADMAP_DIR,
-) -> dict[str, Any]:
-    root = output_dir / roadmap_id
-    manifest = _read_optional_json(root / "owner_research_roadmap_manifest.json") or {}
-    summary = _read_optional_json(root / "owner_roadmap_summary.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "owner_research_roadmap_manifest.json",
-            "owner_roadmap_summary.json",
-            "owner_roadmap_checklist.md",
-            "owner_research_roadmap_report.md",
-            "reader_brief_section.md",
-        ),
+def update_owner_research_roadmap(*args: Any, **kwargs: Any) -> Any:
+    return _call_research_direction_foundation(
+        "update_owner_research_roadmap", *args, **kwargs
     )
-    checks.extend(
-        [
-            st._check("roadmap_id_matches", manifest.get("roadmap_id") == roadmap_id, ""),
-            st._check("current_phase_visible", bool(summary.get("current_phase")), ""),
-            st._check("broker_forbidden", _payload_safe(manifest, summary), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, summary),
-                "",
-            ),
-        ]
+
+
+def owner_research_roadmap_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_research_direction_foundation(
+        "owner_research_roadmap_report_payload", *args, **kwargs
     )
-    return _validation_payload(
-        "etf_dynamic_v3_owner_research_roadmap_validation",
-        roadmap_id,
-        checks,
+
+
+def validate_owner_research_roadmap_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_research_direction_foundation(
+        "validate_owner_research_roadmap_artifact", *args, **kwargs
     )
 
 
@@ -2779,109 +2569,6 @@ def render_signal_vs_parameter_attribution_report(
             "",
             "## Evidence",
             *[f"- {item}" for item in _texts(failure.get("evidence"))],
-            "",
-        ]
-    )
-
-
-def render_next_research_direction_reader_brief(decision: Mapping[str, Any]) -> str:
-    return "\n".join(
-        [
-            "## Next Research Direction",
-            "",
-            f"- decision: {decision.get('decision')}",
-            f"- confidence: {decision.get('confidence')}",
-            f"- continue_parameter_search: {decision.get('continue_parameter_search')}",
-            "- recommended_next_tasks: "
-            f"{', '.join(_texts(decision.get('recommended_next_tasks')))}",
-            "- safety: no official target / no broker / no production",
-            "",
-        ]
-    )
-
-
-def render_next_research_direction_report(
-    manifest: Mapping[str, Any],
-    decision: Mapping[str, Any],
-    task_plan: Mapping[str, Any],
-) -> str:
-    return "\n".join(
-        [
-            f"# Next Research Direction {manifest.get('direction_id')}",
-            "",
-            f"- decision：{decision.get('decision')}",
-            f"- confidence：{decision.get('confidence')}",
-            f"- continue_parameter_search：{decision.get('continue_parameter_search')}",
-            f"- recommended_next_tasks："
-            f"{', '.join(_texts(decision.get('recommended_next_tasks')))}",
-            "",
-            "## Next Task Plan",
-            *[
-                f"- {row.get('task_id')}: {row.get('status')} / {row.get('acceptance')}"
-                for row in _records(task_plan.get("tasks"))
-            ],
-            "",
-        ]
-    )
-
-
-def render_owner_roadmap_reader_brief(summary: Mapping[str, Any]) -> str:
-    return "\n".join(
-        [
-            "## Owner Research Roadmap",
-            "",
-            f"- current_phase: {summary.get('current_phase')}",
-            f"- parameter_search_status: {summary.get('parameter_search_status')}",
-            f"- next_research_direction: {summary.get('next_research_direction')}",
-            f"- recommended_owner_action: {summary.get('recommended_owner_action')}",
-            "- safety: no official target / no broker / no production",
-            "",
-        ]
-    )
-
-
-def render_owner_roadmap_checklist(
-    summary: Mapping[str, Any],
-    direction: Mapping[str, Any],
-) -> str:
-    decision = _mapping(direction.get("next_research_direction_decision"))
-    return "\n".join(
-        [
-            f"# Owner Research Roadmap Checklist {summary.get('roadmap_id', '')}",
-            "",
-            f"- current_phase: {summary.get('current_phase')}",
-            f"- parameter_search_status: {summary.get('parameter_search_status')}",
-            f"- next_research_direction: {summary.get('next_research_direction')}",
-            f"- decision_confidence: {decision.get('confidence')}",
-            "- confirm v3/v4 no-promotion conclusion before extending parameter search",
-            "- continue smoothed forward confirmation as observation evidence",
-            "- approve any official gate policy change manually before implementation",
-            "- confirm broker_action_allowed=false and production_effect=none",
-            "",
-        ]
-    )
-
-
-def render_owner_research_roadmap_report(
-    manifest: Mapping[str, Any],
-    summary: Mapping[str, Any],
-    checklist: str,
-) -> str:
-    return "\n".join(
-        [
-            f"# Owner Research Roadmap {manifest.get('roadmap_id')}",
-            "",
-            f"- current_phase：{summary.get('current_phase')}",
-            f"- parameter_search_status：{summary.get('parameter_search_status')}",
-            f"- best_current_observation_candidate："
-            f"{summary.get('best_current_observation_candidate')}",
-            f"- next_research_direction：{summary.get('next_research_direction')}",
-            f"- recommended_owner_action：{summary.get('recommended_owner_action')}",
-            f"- broker_action_allowed：{summary.get('broker_action_allowed')}",
-            f"- production_effect：{summary.get('production_effect')}",
-            "",
-            "## Checklist",
-            checklist,
             "",
         ]
     )
@@ -5733,92 +5420,6 @@ def _recommended_research_shift(
             f"consensus_failure={consensus_failure.get('primary_failure_reason')}",
         ],
         "next_task_family": task_family,
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-
-
-def _next_research_direction_decision(attribution: Mapping[str, Any]) -> dict[str, Any]:
-    shift = _mapping(attribution.get("recommended_research_shift"))
-    failure = _mapping(attribution.get("failure_source_attribution"))
-    recommended_shift = _text(shift.get("recommended_shift"))
-    decision_map = {
-        "CONTINUE_MICRO_SEARCH": "CONTINUE_MICRO_SEARCH_V5",
-        "SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS": "SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS",
-        "SHIFT_TO_CANDIDATE_QUALITY_FILTER": "IMPLEMENT_CANDIDATE_QUALITY_FILTER",
-        "REVIEW_GATE_POLICY": "REVIEW_GATE_POLICY",
-        "DEFER": "DEFER_PARAMETER_SEARCH_AND_CONTINUE_FORWARD_CONFIRMATION",
-    }
-    decision = decision_map.get(recommended_shift, "SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS")
-    continue_search = decision == "CONTINUE_MICRO_SEARCH_V5"
-    if decision == "SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS":
-        next_tasks = [
-            "TRADING-326 Signal Feature Diagnostics",
-            "TRADING-327 Candidate Quality Filter Design",
-        ]
-    elif decision == "IMPLEMENT_CANDIDATE_QUALITY_FILTER":
-        next_tasks = [
-            "TRADING-327 Candidate Quality Filter Design",
-            "TRADING-328 Consensus Dispersion Gate Forward Test",
-        ]
-    elif decision == "REVIEW_GATE_POLICY":
-        next_tasks = ["TRADING-329 Promotion Gate Policy Review"]
-    else:
-        next_tasks = ["TRADING-326 Signal Feature Diagnostics"]
-    return {
-        "schema_version": st.SCHEMA_VERSION,
-        "direction_id": "",
-        "decision": decision,
-        "confidence": failure.get("confidence", "LOW"),
-        "reason": _texts(failure.get("evidence")),
-        "continue_parameter_search": continue_search,
-        "recommended_next_tasks": next_tasks,
-        "not_official_target_weights": True,
-        "broker_action_allowed": False,
-        "production_effect": st.PRODUCTION_EFFECT,
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-
-
-def _next_research_task_plan(decision: Mapping[str, Any]) -> dict[str, Any]:
-    tasks = []
-    for task in _texts(decision.get("recommended_next_tasks")):
-        task_id = task.split(" ", 1)[0]
-        tasks.append(
-            {
-                "task_id": task_id,
-                "title": task,
-                "status": "PROPOSED",
-                "acceptance": "owner reviews evidence and task is registered before implementation",
-                "not_official_target_weights": True,
-                "broker_action_allowed": False,
-                "production_effect": st.PRODUCTION_EFFECT,
-                **st.EXPERIMENT_FACTORY_SAFETY,
-            }
-        )
-    return {"schema_version": st.SCHEMA_VERSION, "tasks": tasks, **st.EXPERIMENT_FACTORY_SAFETY}
-
-
-def _owner_roadmap_summary(direction: Mapping[str, Any]) -> dict[str, Any]:
-    decision = _mapping(direction.get("next_research_direction_decision"))
-    next_direction = _text(decision.get("decision"), "SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS")
-    if next_direction == "CONTINUE_MICRO_SEARCH_V5":
-        search_status = "CONTINUE"
-        owner_action = "review_v4_and_approve_micro_search_v5_scope"
-    elif next_direction == "DEFER_PARAMETER_SEARCH_AND_CONTINUE_FORWARD_CONFIRMATION":
-        search_status = "DEFER"
-        owner_action = "continue_forward_confirmation"
-    else:
-        search_status = "NO_PROMOTION_AFTER_BATCH2_V3_V4"
-        owner_action = "continue_forward_confirmation_and_start_signal_diagnosis"
-    return {
-        "schema_version": st.SCHEMA_VERSION,
-        "current_phase": "post_batch_search_diagnosis",
-        "parameter_search_status": search_status,
-        "best_current_observation_candidate": "smooth_weights_3d_limited_adjustment",
-        "next_research_direction": next_direction,
-        "recommended_owner_action": owner_action,
-        "broker_action_allowed": False,
-        "production_effect": st.PRODUCTION_EFFECT,
         **st.EXPERIMENT_FACTORY_SAFETY,
     }
 

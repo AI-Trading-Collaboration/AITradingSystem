@@ -49,7 +49,7 @@ def test_scheduled_validate_data_adapter_preserves_legacy_command_and_safety() -
 
     assert spec.workflow_id == "scheduled_task:daily_validate_data"
     assert spec.cadence is WorkflowCadence.DAILY
-    assert spec.due_policy_id == "scheduled_tasks_v1:daily_trading_day"
+    assert spec.due_policy_id == "scheduled_tasks_v2:daily_trading_day"
     assert spec.steps[0].step_id == task.daily_plan_step_id
     assert " ".join(spec.steps[0].legacy_command) == task.command
     assert spec.steps[0].entrypoint.display == ("ai_trading_system.cli_commands.data:validate_data")

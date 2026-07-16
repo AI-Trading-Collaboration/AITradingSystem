@@ -1,9 +1,43 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4CX2_COMPLETE_G2_4_CONTINUES
+status: INTEGRATED_WORKTREE_ATTRIBUTION_PROVEN_PHASE_G2_4CX3_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-16
-base_commit: 4d757bfd
+base_commit: 4487252d
 production_effect: none
+
+integrated_task_ids:
+  - ARCH-004
+  - TRADING-316_to_325_SIGNAL_LEVEL_DIAGNOSIS_AND_GATE_CALIBRATION_WITH_TARGETED_MICRO_SEARCH_V4
+  - TRADING-2443_MARKETSTACK_QUOTA_CYCLE_RECOVERY
+  - TRADING-2444_CANONICAL_READER_BRIEF_TRACE_ROUTING
+  - TRADING-2445_TASK_REGISTER_BASELINE_DONE_ACTIVE_SEMANTICS
+  - ARCH-004G2_PARALLEL_READINESS_GATE
+  - ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+  - ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL
+  - DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+  - KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE
+  - PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH
+
+integrated_non_arch_paths:
+  - config/data_source_request_budget_policy.yaml
+  - docs/requirements/TRADING-2443_Marketstack_Quota_Cycle_Recovery.md
+  - docs/requirements/TRADING-2444_Canonical_Reader_Brief_Trace_Routing.md
+  - docs/requirements/TRADING-2445_Task_Register_BASELINE_DONE_Active_Semantics.md
+  - docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md
+  - docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md
+  - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  - docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md
+  - docs/requirements/PLATFORM-UX-001_System_Understanding_Workbench.md
+  - src/ai_trading_system/cli_commands/data_cache.py
+  - src/ai_trading_system/cli_commands/ops.py
+  - src/ai_trading_system/data/download.py
+  - src/ai_trading_system/reports/task_register_consistency.py
+  - tests/test_config.py
+  - tests/test_data_download.py
+  - tests/test_ops_daily.py
+  - tests/test_scheduled_tasks.py
+  - tests/test_task_register_consistency.py
 
 arch_004_owned_paths:
   - README.md
@@ -37,6 +71,7 @@ arch_004_owned_paths:
   - config/etf_portfolio/dynamic_v3_rescue/smoothed_limited_adjustment_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/signal_diagnosis_foundation_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/micro_search_foundation_v1.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/research_direction_foundation_v1.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -317,6 +352,8 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_diagnosis_foundation.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_micro_search_foundation.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_micro_search_foundation.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_research_direction_foundation.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_direction_foundation.py
   - tests/dynamic_v3_weight_batch_search_helpers.py
   - tests/test_targeted_search_v3.py
   - tests/test_promotion_threshold_sensitivity.py
@@ -327,6 +364,9 @@ arch_004_owned_paths:
   - tests/test_weight_search_followup_hardening.py
   - tests/test_signal_diagnosis_foundation.py
   - tests/test_micro_search_foundation.py
+  - tests/test_research_direction_foundation.py
+  - tests/test_next_research_direction.py
+  - tests/test_owner_research_roadmap.py
   - tests/test_micro_search_v4_design.py
   - tests/test_micro_search_v4_backfill.py
   - tests/test_gate_calibrated_review.py
@@ -562,9 +602,14 @@ arch_004_owned_paths:
   - tests/test_cli_direct.py
 
 shared_but_attributable_paths:
+  - path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
+    attributable_tasks:
+      - ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION
+      - TRADING-316_to_325_SIGNAL_LEVEL_DIAGNOSIS_AND_GATE_CALIBRATION_WITH_TARGETED_MICRO_SEARCH_V4
   - path: docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
     attributable_tasks:
       - ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION
+      - ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION
       - ARCH-004_TO_ARCH-005_BOOTSTRAP_HANDOFF
       - TRADING-246_to_250_SMOOTHED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
       - TRADING-251_to_255_SMOOTHED_METHOD_EVIDENCE_DRILLDOWN_AND_FORWARD_CONFIRMATION
@@ -574,6 +619,7 @@ shared_but_attributable_paths:
       - TRADING-271_to_275_SMOOTHED_FORWARD_SAMPLE_BOOTSTRAP_AND_DAILY_EVIDENCE_COLLECTION
       - TRADING-276_to_280_SMOOTHED_FORWARD_DATA_FRESHNESS_AND_LATEST_AVAILABLE_BOOTSTRAP
       - TRADING-306_to_315_NO_PROMOTION_DIAGNOSTICS_AND_TARGETED_SEARCH_V3
+      - TRADING-316_to_325_SIGNAL_LEVEL_DIAGNOSIS_AND_GATE_CALIBRATION_WITH_TARGETED_MICRO_SEARCH_V4
       - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
   - path: docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
     attributable_tasks:
@@ -601,7 +647,17 @@ shared_but_attributable_paths:
       - TRADING-271_to_275_SMOOTHED_FORWARD_SAMPLE_BOOTSTRAP_AND_DAILY_EVIDENCE_COLLECTION
       - TRADING-276_to_280_SMOOTHED_FORWARD_DATA_FRESHNESS_AND_LATEST_AVAILABLE_BOOTSTRAP
       - TRADING-306_to_315_NO_PROMOTION_DIAGNOSTICS_AND_TARGETED_SEARCH_V3
+      - TRADING-316_to_325_SIGNAL_LEVEL_DIAGNOSIS_AND_GATE_CALIBRATION_WITH_TARGETED_MICRO_SEARCH_V4
       - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+      - TRADING-2443_MARKETSTACK_QUOTA_CYCLE_RECOVERY
+      - TRADING-2444_CANONICAL_READER_BRIEF_TRACE_ROUTING
+      - TRADING-2445_TASK_REGISTER_BASELINE_DONE_ACTIVE_SEMANTICS
+      - ARCH-004G2_PARALLEL_READINESS_GATE
+      - ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+      - ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL
+      - DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+      - KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE
+      - PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH
       - TRADING-096
       - TRADING-097
       - TRADING-098
@@ -611,6 +667,9 @@ shared_but_attributable_paths:
       - ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION
       - ARCH-004B_SEMANTIC_KERNEL
       - ARCH-004
+      - TRADING-2443_MARKETSTACK_QUOTA_CYCLE_RECOVERY
+      - TRADING-2444_CANONICAL_READER_BRIEF_TRACE_ROUTING
+      - TRADING-2445_TASK_REGISTER_BASELINE_DONE_ACTIVE_SEMANTICS
       - TRADING-096
       - TRADING-097
       - TRADING-098
@@ -619,13 +678,6 @@ prior_completed_owned_paths_not_part_of_arch_runtime_change:
   - docs/research/current_research_strategy_and_periodic_optimization_review_2026-07-10.md
 
 excluded_user_or_other_task_paths:
-  - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
-  - docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md
-  - docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md
-  - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
-  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
-  - docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md
-  - docs/requirements/PLATFORM-UX-001_System_Understanding_Workbench.md
   - docs/research/growth_tilt_owner_decision_resolution.md
   - docs/research/indicator_family_only_model_review.md
   - docs/research/layer1_selector_pause_or_continue_owner_pack.md

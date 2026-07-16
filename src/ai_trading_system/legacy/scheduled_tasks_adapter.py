@@ -316,7 +316,7 @@ def _workflow_step(task: ScheduledTask, *, dependencies: tuple[str, ...]) -> Wor
         dependencies=dependencies,
         quality_gate_required=False,
         idempotent=True,
-        max_attempts=1,
+        max_attempts=task.max_attempts,
         production_effect=effect,
         legacy_command=tuple(task.command.split()),
     )

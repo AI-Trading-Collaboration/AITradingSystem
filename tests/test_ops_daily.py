@@ -676,6 +676,20 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
             "# 下载诊断\n\n- 状态：PASS\n",
             encoding="utf-8",
         )
+        evidence_dir = reports_dir / "evidence"
+        evidence_dir.mkdir(parents=True, exist_ok=True)
+        (evidence_dir / "daily_score_2026-05-06_trace.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "report_id": "daily_score:2026-05-06",
+                    "claims": [],
+                    "dataset_refs": [],
+                    "quality_refs": [],
+                }
+            ),
+            encoding="utf-8",
+        )
         started_at = datetime(2020, 1, 1, 0, 0, tzinfo=UTC)
         finished_at = datetime(2020, 1, 1, 0, 1, tzinfo=UTC)
         step_results = tuple(
@@ -796,6 +810,9 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     reader_brief_quality_json = next(
         run_output_root.rglob("reports/reader_brief_quality_2026-05-06.json")
     )
+    canonical_trace = next(
+        run_output_root.rglob("traces/daily_score_2026-05-06_trace.json")
+    )
     periodic_plan_json = next(
         run_output_root.rglob("metadata/periodic_operations_plan_2026-05-06.json")
     )
@@ -806,6 +823,7 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     assert reader_brief_json.exists()
     assert owner_daily_brief_json.exists()
     assert reader_brief_quality_json.exists()
+    assert canonical_trace.exists()
     assert periodic_plan_json.exists()
     assert "关键结论总览" in task_dashboard.read_text(encoding="utf-8")
     assert (tmp_path / "outputs" / "reports" / "daily_task_dashboard_2026-05-06.html").exists()
@@ -822,6 +840,8 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     reader_brief = json.loads(reader_brief_json.read_text(encoding="utf-8"))
     assert reader_brief["run_context"]["run_id"] == "daily_ops_run:2026-05-06:test"
     assert reader_brief["production_effect"] == "none"
+    assert reader_brief["source_inputs"]["trace_bundle"]["availability"] == "AVAILABLE"
+    assert Path(reader_brief["source_inputs"]["trace_bundle"]["full_path"]) == canonical_trace
     owner_daily_brief = json.loads(owner_daily_brief_json.read_text(encoding="utf-8"))
     assert len(owner_daily_brief["sections"]) == 10
     assert owner_daily_brief["production_effect"] == "none"

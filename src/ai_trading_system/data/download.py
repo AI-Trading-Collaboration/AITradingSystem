@@ -100,6 +100,7 @@ class ProviderQuotaBudgetError(RuntimeError):
 
 _MARKETSTACK_DAILY_OVERAGE_PROFILE = "owner_approved_overage"
 _MARKETSTACK_TAIL_CATCH_UP_PROFILE = "owner_approved_tail_catch_up"
+_MARKETSTACK_QUOTA_CYCLE_RESET_PROFILE = "quota_cycle_reset"
 _MARKETSTACK_BLOCKED_STATUS = "BLOCKED_QUOTA_INSUFFICIENT"
 _MARKETSTACK_CALENDAR_WINDOW_BLOCKER = "calendar_window_exceeds_owner_approved_limit"
 
@@ -563,6 +564,15 @@ def _marketstack_fetch_windows_and_budget_status(
     )
     if not isinstance(provider, MarketstackPriceProvider):
         return fetch_windows, request_budget_status
+    quota_cycle_reset_status = _marketstack_quota_cycle_reset_status(
+        request_budget_status,
+        fetch_windows=fetch_windows,
+        request_start=request.start,
+    )
+    if quota_cycle_reset_status is not None:
+        if quota_cycle_reset_status.get("status") == _MARKETSTACK_BLOCKED_STATUS:
+            _raise_provider_quota_budget_error(quota_cycle_reset_status)
+        return fetch_windows, quota_cycle_reset_status
     if (
         allow_tail_catch_up
         and request_budget_status is not None
@@ -603,6 +613,143 @@ def _marketstack_fetch_windows_and_budget_status(
     ):
         _raise_provider_quota_budget_error(request_budget_status)
     return fetch_windows, request_budget_status
+
+
+def _marketstack_quota_cycle_reset_status(
+    request_budget_status: Mapping[str, object] | None,
+    *,
+    fetch_windows: tuple[IncrementalPriceWindow, ...],
+    request_start: date,
+) -> dict[str, object] | None:
+    if (
+        request_budget_status is None
+        or request_budget_status.get("status") != _MARKETSTACK_BLOCKED_STATUS
+    ):
+        return None
+    policy = load_data_source_request_budget_policy()
+    cycle_policy = policy.marketstack.eod_daily_prices.quota_cycle_reset
+    if not cycle_policy.enabled:
+        return None
+    observed_at = _parse_quota_observed_at(
+        request_budget_status.get("latest_quota_observed_at")
+    )
+    if observed_at is None:
+        return None
+    cycle_start, next_cycle_start = _marketstack_billing_cycle_bounds(
+        datetime.now(tz=UTC),
+        reset_day_of_month=cycle_policy.reset_day_of_month,
+    )
+    if observed_at >= cycle_start:
+        return None
+    if not fetch_windows or not all(window.start > request_start for window in fetch_windows):
+        return None
+
+    estimated_units = int(request_budget_status.get("estimated_increment_usage") or 0)
+    window_calendar_days = tuple(
+        max(1, (window.end - window.start).days + 1) for window in fetch_windows
+    )
+    violation_reasons: list[str] = []
+    if estimated_units <= 0:
+        violation_reasons.append("no_live_request_needed")
+    if estimated_units > cycle_policy.max_estimated_increment_usage:
+        violation_reasons.append("estimated_usage_exceeds_quota_cycle_reset_limit")
+    if len(fetch_windows) > cycle_policy.max_fetch_window_count:
+        violation_reasons.append("fetch_window_count_exceeds_quota_cycle_reset_limit")
+    if any(
+        days > cycle_policy.max_calendar_days_per_window
+        for days in window_calendar_days
+    ):
+        violation_reasons.append("calendar_window_exceeds_quota_cycle_reset_limit")
+
+    approved = not violation_reasons
+    payload = dict(request_budget_status)
+    payload.update(
+        {
+            "budget_profile": _MARKETSTACK_QUOTA_CYCLE_RESET_PROFILE,
+            "status": (
+                cycle_policy.allowed_status if approved else _MARKETSTACK_BLOCKED_STATUS
+            ),
+            "quota_cycle_reset": {
+                "approved": approved,
+                "approval_profile": _MARKETSTACK_QUOTA_CYCLE_RESET_PROFILE,
+                "policy_version": policy.policy_version,
+                "policy_status": policy.policy_metadata.status,
+                "allowed_status": cycle_policy.allowed_status,
+                "evidence_id": cycle_policy.evidence_id,
+                "timezone": cycle_policy.timezone,
+                "reset_day_of_month": cycle_policy.reset_day_of_month,
+                "current_cycle_start": cycle_start.date().isoformat(),
+                "current_cycle_end": (next_cycle_start.date() - timedelta(days=1)).isoformat(),
+                "latest_quota_observed_at": observed_at.isoformat(),
+                "stale_header_status": "STALE_PREVIOUS_BILLING_CYCLE",
+                "stale_quota_limit": request_budget_status.get("quota_limit"),
+                "stale_quota_remaining": request_budget_status.get("quota_remaining"),
+                "estimated_increment_usage": estimated_units,
+                "fetch_window_count": len(fetch_windows),
+                "max_estimated_increment_usage": (
+                    cycle_policy.max_estimated_increment_usage
+                ),
+                "max_fetch_window_count": cycle_policy.max_fetch_window_count,
+                "max_calendar_days_per_window": (
+                    cycle_policy.max_calendar_days_per_window
+                ),
+                "window_calendar_days": list(window_calendar_days),
+                "violation_reasons": violation_reasons,
+                "reason": cycle_policy.reason,
+                "behavioral_impact": cycle_policy.behavioral_impact,
+                "risk": cycle_policy.risk,
+                "validation_coverage": cycle_policy.validation_coverage,
+                "review_condition": cycle_policy.review_condition,
+            },
+        }
+    )
+    return payload
+
+
+def _parse_quota_observed_at(value: object) -> datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        observed_at = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    if observed_at.tzinfo is None:
+        observed_at = observed_at.replace(tzinfo=UTC)
+    return observed_at.astimezone(UTC)
+
+
+def _marketstack_billing_cycle_bounds(
+    now: datetime,
+    *,
+    reset_day_of_month: int,
+) -> tuple[datetime, datetime]:
+    now_utc = now.astimezone(UTC)
+    candidate = datetime(
+        now_utc.year,
+        now_utc.month,
+        reset_day_of_month,
+        tzinfo=UTC,
+    )
+    if now_utc < candidate:
+        previous_year = now_utc.year - 1 if now_utc.month == 1 else now_utc.year
+        previous_month = 12 if now_utc.month == 1 else now_utc.month - 1
+        cycle_start = datetime(
+            previous_year,
+            previous_month,
+            reset_day_of_month,
+            tzinfo=UTC,
+        )
+    else:
+        cycle_start = candidate
+    next_year = cycle_start.year + 1 if cycle_start.month == 12 else cycle_start.year
+    next_month = 1 if cycle_start.month == 12 else cycle_start.month + 1
+    next_cycle_start = datetime(
+        next_year,
+        next_month,
+        reset_day_of_month,
+        tzinfo=UTC,
+    )
+    return cycle_start, next_cycle_start
 
 
 def _should_attempt_marketstack_tail_catch_up(
@@ -798,7 +945,11 @@ def _raise_provider_quota_budget_error(payload: Mapping[str, object]) -> None:
 
 
 def _budget_violation_reasons(payload: Mapping[str, object]) -> list[str]:
-    for key in ("owner_approved_tail_catch_up", "owner_approved_overage"):
+    for key in (
+        "quota_cycle_reset",
+        "owner_approved_tail_catch_up",
+        "owner_approved_overage",
+    ):
         approval = payload.get(key)
         if isinstance(approval, Mapping):
             reasons = approval.get("violation_reasons")

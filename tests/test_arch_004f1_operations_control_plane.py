@@ -1313,7 +1313,7 @@ def test_controlled_daily_executor_blocks_concurrent_trigger_before_runner(
     active.lease.release()
 
 
-def test_controlled_daily_executor_failure_is_terminal_and_not_unsafely_retried(
+def test_controlled_daily_executor_allows_one_configured_download_retry_then_blocks(
     tmp_path: Path,
 ) -> None:
     as_of = date(2026, 5, 6)
@@ -1350,10 +1350,24 @@ def test_controlled_daily_executor_failure_is_terminal_and_not_unsafely_retried(
         visibility_latest_completed_trading_day=as_of,
         runtime_control=control,
     )
+    exhausted = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=failing_runner,
+        run_id="exhausted",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        runtime_control=control,
+    )
 
     assert failed.status == "FAIL"
-    assert retry.status == "RUN_CONTROL_BLOCKED_RETRY_EXHAUSTED"
-    assert "STEP_ATTEMPT_BUDGET_EXHAUSTED:download_data" in str(retry.failed_step.error)
+    assert retry.status == "FAIL"
+    assert exhausted.status == "RUN_CONTROL_BLOCKED_RETRY_EXHAUSTED"
+    assert exhausted.failed_step.error == "RUN_ATTEMPT_BUDGET_EXHAUSTED"
+    state = json.loads(_execution_state_path(tmp_path / "control" / "states").read_text())
+    attempts = {row["step_id"]: row["attempts"] for row in state["step_attempts"]}
+    assert attempts["download_data"] == 2
 
 
 @pytest.mark.parametrize("as_of", [date(2026, 5, 6), date(2026, 5, 10)])

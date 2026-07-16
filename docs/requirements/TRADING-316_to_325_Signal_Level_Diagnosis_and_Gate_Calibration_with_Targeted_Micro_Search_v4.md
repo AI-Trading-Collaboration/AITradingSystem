@@ -4,7 +4,7 @@
 
 ## 状态
 
-`IN_PROGRESS`（ARCH-004 G2.4 canonical remigration：CX1/CX2 complete，CX3 pending）
+`BASELINE_DONE`（ARCH-004 G2.4 canonical remigration：CX1/CX2/CX3 complete；等待真实 dated evidence 与 owner review，whole G2.4 continues）
 
 Owner 要求完成附件中的 TRADING-316～325。本阶段承接 TRADING-306～315 的 no-promotion 结论，不继续无差别扩大参数空间，而是先判断 gate、scorecard、signal、consensus 与当前 AI regime 区间是否解释了没有 promotion candidate。
 
@@ -45,8 +45,8 @@ TRADING-306～315 已完成 targeted v3 诊断链路。真实输出显示：
 |TRADING-321|BASELINE_DONE_CX2|Micro search v4 backfill|`micro-search-v4-backfill run/report` 与 validator 可运行；完成或明确 partial，输出 performance/regime/stability/signal metrics。|
 |TRADING-322|BASELINE_DONE_CX2|Gate-calibrated candidate review|`gate-calibrated-review run/report` 与 validator 可运行；official / diagnostic gate 双轨输出，diagnostic gate 不改正式 gate。|
 |TRADING-323|BASELINE_DONE_CX2|Signal vs parameter failure attribution|`signal-vs-parameter-attribution run/report` 与 validator 可运行；明确 failure_source、confidence、recommended research shift。|
-|TRADING-324|PENDING_CX3|Next research direction decision pack|`next-research-direction run/report` 与 validator 可运行；生成 next decision、next task plan 和 safety boundary。|
-|TRADING-325|PENDING_CX3|Owner research roadmap update|`owner-research-roadmap update/report` 与 validator 可运行；输出 owner summary、checklist、Reader Brief section。|
+|TRADING-324|BASELINE_DONE_CX3|Next research direction decision pack|`next-research-direction run/report` 与 validator 可运行；生成 next decision、next task plan 和 safety boundary。|
+|TRADING-325|BASELINE_DONE_CX3|Owner research roadmap update|`owner-research-roadmap update/report` 与 validator 可运行；输出 owner summary、checklist、Reader Brief section。|
 
 ## Design Decisions
 
@@ -62,6 +62,31 @@ TRADING-306～315 已完成 targeted v3 诊断链路。真实输出显示：
 
 ## Progress Notes
 
+- 2026-07-16: ARCH-004G2.4CX3=`COMPLETE_G2_4_CONTINUES`，TRADING-324～325转
+  `BASELINE_DONE_CX3`。6 callbacks/6 public入口完成canonical research-direction foundation迁移；
+  legacy CLI=`12,196 lines / 291 functions / 252 callbacks`，legacy domain=`7,010 lines /
+  6 lazy wrappers`，并删除8个旧renderer/decision helpers。两类bounded v2 snapshots、reviewed
+  direction policy、exact Attribution→Direction→Roadmap lineage、pre-output chronology/live replay、
+  all-view byte rebuild及output/policy/safety/file-set/path/cross-lineage/evidence-status tamper均闭合。
+  Matrix=`715 migrated / 252 pending / 0 unresolved / 0 duplicate`，CLI=`41 roots / 291 groups /
+  993 leaves / 0 duplicate`。Focused/architecture/contract/full=`28/304/203/6,097 passed`，full=
+  `643 warnings / 2,337.22s`，artifact=`outputs/validation_runtime/full_20260716T060048Z/
+  test_runtime_summary.json`；generated=`947/1,125/858/0`。当前结论仍为证据不足下的
+  `DEFER_PARAMETER_SEARCH_AND_BUILD_DATED_EVIDENCE`，不得用历史downstream artifacts替代当前
+  dated evidence。Whole G2.4仍有252 callbacks pending，不触发ARCH-005 handoff、不进入G2.5，
+  `production_effect=none`。
+- 2026-07-16: ARCH-004G2.4CX3 contract freeze并进入`IN_PROGRESS`。本slice只迁TRADING-324～
+  325的6 callbacks/6 public入口到canonical research-direction foundation。审计确认旧Direction
+  decision map不认识CX2新结论`DEFER_AND_BUILD_DATED_EVIDENCE`，会通过unknown fallback静默
+  改写为`SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS`；旧task plan还会重复提议已经实施并处于历史
+  `VALIDATING`状态的TRADING-326/327，Owner Roadmap继而把未识别shift写成start signal diagnosis。
+  新合同固定两类bounded v2 snapshots、reviewed direction policy、validated exact Attribution→
+  Direction→Roadmap lineage、pre-output chronology/live replay和全部views逐byte重建；证据不足只可
+  输出`DEFER_PARAMETER_SEARCH_AND_BUILD_DATED_EVIDENCE`，TRADING-326～345只作historical
+  downstream evidence，不能证明当前dated ledger已存在。Task plan只允许
+  `PROPOSED_OWNER_REVIEW` evidence-gap action，不自动注册、实施、改task状态或授权研究方向。
+  whole G2.4在CX3后仍有252 callbacks pending，不触发handoff、不进入G2.5，
+  `production_effect=none`。
 - 2026-07-16: ARCH-004G2.4CX2=`COMPLETE_G2_4_CONTINUES`。12 callbacks/12 public入口完成
   canonical micro-search foundation迁移，legacy root=`12,339/297/258`，legacy weight domain=
   `7,409 lines/12 lazy wrappers`，matrix=`709/258/0/0`。四类bounded v2 snapshots、reviewed policy、

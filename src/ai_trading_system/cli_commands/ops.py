@@ -533,6 +533,7 @@ def _refresh_reader_brief_from_daily_run_summary(
     *,
     as_of: date,
     reports_dir: Path,
+    trace_bundle_path: Path,
     daily_decision_summary_path: Path,
     daily_task_dashboard_json_path: Path,
 ) -> tuple[Path, ...]:
@@ -553,7 +554,7 @@ def _refresh_reader_brief_from_daily_run_summary(
         evidence_dashboard_json_path=default_evidence_dashboard_json_path(reports_dir, as_of),
         daily_task_dashboard_json_path=daily_task_dashboard_json_path,
         daily_report_path=daily_report_path,
-        trace_bundle_path=default_report_trace_bundle_path(daily_report_path),
+        trace_bundle_path=trace_bundle_path,
         score_change_attribution_path=default_score_change_attribution_json_path(
             reports_dir,
             as_of,
@@ -806,6 +807,12 @@ def daily_ops_run_command(
         _refresh_reader_brief_from_daily_run_summary(
             as_of=plan_date,
             reports_dir=run_paths.reports_dir,
+            trace_bundle_path=(
+                run_paths.traces_dir
+                / default_report_trace_bundle_path(
+                    default_daily_score_report_path(run_paths.reports_dir, plan_date)
+                ).name
+            ),
             daily_decision_summary_path=daily_decision_summary_path,
             daily_task_dashboard_json_path=daily_task_dashboard_json_path,
         )

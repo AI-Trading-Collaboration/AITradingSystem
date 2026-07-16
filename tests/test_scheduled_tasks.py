@@ -18,10 +18,14 @@ from ai_trading_system.scheduled_tasks import (
 def test_scheduled_tasks_config_registers_required_cadences_and_safety() -> None:
     config = load_scheduled_tasks_config()
 
+    assert config.policy_version == "scheduled_tasks_v2"
     cadence_ids = {cadence.cadence_id for cadence in config.cadences}
     assert DAILY_CADENCE_ID in cadence_ids
     assert set(NON_DAILY_CADENCE_IDS).issubset(cadence_ids)
     assert scheduled_safety_issues(config) == ()
+    tasks_by_id = config.tasks_by_id()
+    assert tasks_by_id["daily_download_data"].max_attempts == 2
+    assert tasks_by_id["daily_validate_data"].max_attempts == 1
     assert {
         "weekly_backtest",
         "weekly_backtest_robustness",

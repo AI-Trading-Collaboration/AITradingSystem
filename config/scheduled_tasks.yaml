@@ -1,5 +1,5 @@
 schema_version: 1
-policy_version: scheduled_tasks_v1
+policy_version: scheduled_tasks_v2
 policy_metadata:
   owner: system
   status: active_baseline
@@ -7,19 +7,24 @@ policy_metadata:
     Keep daily, weekly, biweekly, monthly, and ad hoc operational chains in one
     auditable plan so scheduler changes do not silently omit Reader Brief,
     SEC PIT shadow monitoring, research governance, backtest, parameter, weight,
-    documentation, or report registry tasks.
+    documentation, or report registry tasks. TRADING-2443 makes the idempotent
+    download-data step attempt budget explicit after a reviewed provider-policy
+    correction, while all other steps retain the one-attempt default.
   intended_effect: >
     Make `aits ops daily-plan` and `aits ops daily-run` enforce the default
     daily trading-day chain while registering non-daily governance chains for
-    manual or future scheduler review.
+    manual or future scheduler review. Permit one bounded rerun of the
+    idempotent download-data step without deleting prior state or ledger;
+    a second failure under the same workflow spec remains terminal.
   validation_evidence: >
     OPS-059 tests cover daily command order, closed-market skips, non-daily task
     registration, and no-production safety invariants for reader/governance/
-    shadow monitor tasks.
+    shadow monitor tasks. TRADING-2443 tests cover configured step-attempt
+    propagation and hard stop after the bounded second download attempt.
   review_condition: >
     Review whenever a daily report, governance report, shadow monitor, backtest,
-    parameter, documentation, report registry, or scheduler command is added or
-    renamed.
+    parameter, documentation, report registry, scheduler command, or per-step
+    attempt budget is added or changed.
 market_regime:
   default_regime_id: ai_after_chatgpt
   anchor_event: ChatGPT public launch
@@ -43,6 +48,7 @@ cadences:
       - task_id: daily_download_data
         daily_plan_step_id: download_data
         title: Download market and macro data
+        max_attempts: 2
         command: aits download-data --start {download_start} --end {download_end}
         command_contains:
           - aits

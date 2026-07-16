@@ -175,6 +175,12 @@ def download_data(
             if isinstance(tail_catch_up, dict)
             else None
         )
+        quota_cycle_reset = budget.get("quota_cycle_reset")
+        quota_cycle_reset_status = (
+            quota_cycle_reset.get("stale_header_status")
+            if isinstance(quota_cycle_reset, dict)
+            else None
+        )
         console.print(
             "请求预算："
             f"{budget.get('provider')} / {budget.get('api_family')} "
@@ -183,7 +189,8 @@ def download_data(
             f"estimated_increment_usage={budget.get('estimated_increment_usage')} "
             f"quota_remaining={budget.get('quota_remaining')} "
             f"violation_reasons={','.join(violation_reasons)} "
-            f"tail_catch_up_applied={tail_catch_up_applied}"
+            f"tail_catch_up_applied={tail_catch_up_applied} "
+            f"quota_cycle_reset_status={quota_cycle_reset_status}"
         )
     for cache_summary in summary.request_cache_summaries:
         console.print(
@@ -296,7 +303,11 @@ def _download_manifest_path(prices_path: Path) -> Path:
 
 
 def _budget_violation_reasons(budget: dict[str, object]) -> list[str]:
-    for key in ("owner_approved_tail_catch_up", "owner_approved_overage"):
+    for key in (
+        "quota_cycle_reset",
+        "owner_approved_tail_catch_up",
+        "owner_approved_overage",
+    ):
         approval = budget.get(key)
         if isinstance(approval, dict):
             reasons = approval.get("violation_reasons")

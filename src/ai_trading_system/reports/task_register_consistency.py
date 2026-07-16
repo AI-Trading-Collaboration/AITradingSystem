@@ -37,7 +37,8 @@ VALID_TASK_STATUSES = frozenset(
         "DROPPED",
     }
 )
-TERMINAL_TASK_STATUSES = frozenset({"DONE", "BASELINE_DONE", "DROPPED"})
+TERMINAL_TASK_STATUSES = frozenset({"DONE", "DROPPED"})
+ACTIVE_BASELINE_TASK_STATUSES = frozenset({"BASELINE_DONE"})
 REQUIRED_REPORT_IDS = (
     "task_register_consistency",
     "task_register_consistency_validation",
@@ -144,6 +145,9 @@ def build_task_register_consistency_payload(
     status = FAIL_STATUS if blocking_issues else WARN_STATUS if warning_issues else PASS_STATUS
     summary = {
         "active_task_count": len(active_rows),
+        "active_baseline_task_count": len(
+            [row for row in active_rows if row.status in ACTIVE_BASELINE_TASK_STATUSES]
+        ),
         "completed_task_count": len(completed_rows),
         "total_task_count": len(all_rows),
         "check_count": len(checks),
@@ -212,6 +216,7 @@ def build_task_register_consistency_payload(
             "production_effect": PRODUCTION_EFFECT,
             "valid_task_statuses": sorted(VALID_TASK_STATUSES),
             "terminal_task_statuses": sorted(TERMINAL_TASK_STATUSES),
+            "active_baseline_task_statuses": sorted(ACTIVE_BASELINE_TASK_STATUSES),
         },
     }
     return payload
@@ -399,6 +404,11 @@ def write_task_register_consistency_validation_markdown(
 def render_task_register_consistency_markdown(payload: Mapping[str, Any]) -> str:
     summary = _mapping(payload.get("summary"))
     reader = _mapping(payload.get("reader_brief"))
+    methodology = _mapping(payload.get("methodology"))
+    terminal_statuses = ", ".join(_strings(methodology.get("terminal_task_statuses")))
+    active_baseline_statuses = ", ".join(
+        _strings(methodology.get("active_baseline_task_statuses"))
+    )
     lines = [
         f"# Task Register Consistency {payload.get('as_of')}",
         "",
@@ -466,6 +476,8 @@ def render_task_register_consistency_markdown(payload: Mapping[str, Any]) -> str
             "",
             "## Methodology",
             "",
+            f"- terminal task statuses：{terminal_statuses}",
+            f"- active baseline task statuses：{active_baseline_statuses}",
             "本报告只读取 task register、completed register、report registry 和 artifact catalog；"
             "不运行上游命令、不刷新数据、不修改任务登记或 production state。",
             "",
@@ -591,7 +603,7 @@ def _check_active_completed_boundaries(
         check_id="completed_register_terminal_only",
         passed=not completed_nonterminal,
         severity="BLOCKING",
-        message="Completed register must only contain DONE, BASELINE_DONE, or DROPPED rows.",
+        message="Completed register must only contain DONE or DROPPED rows.",
         recommended_action="move_nonterminal_completed_rows_back_to_active_register",
         details={
             "completed_nonterminal_task_ids": [
@@ -615,7 +627,7 @@ def _check_active_completed_boundaries(
         check_id="archived_completed_tasks_not_missing",
         passed=not active_terminal,
         severity="BLOCKING",
-        message="Any task marked DONE, BASELINE_DONE, or DROPPED must be archived.",
+        message="Any task marked DONE or DROPPED must be archived.",
         recommended_action="archive_terminal_rows_in_completed_register",
         details={"missing_completed_archive_task_ids": [row.task_id for row in active_terminal]},
     )
@@ -698,9 +710,7 @@ def _check_artifact_family(
         if _text(entry.get("report_id")) in REQUIRED_REPORT_IDS
     ]
     missing_group = [
-        _text(entry.get("report_id"))
-        for entry in entries
-        if not _text(entry.get("group"))
+        _text(entry.get("report_id")) for entry in entries if not _text(entry.get("group"))
     ]
     catalog_text = catalog_path.read_text(encoding="utf-8") if catalog_path.exists() else ""
     catalog_has_family = all(report_id in catalog_text for report_id in REQUIRED_REPORT_IDS)
@@ -785,9 +795,7 @@ def _reader_brief(
             f"一致性状态为 {status}。"
         ),
         "key_result": status,
-        "blocking_issues": [
-            _text(issue.get("issue_id")) for issue in blocking_issues
-        ],
+        "blocking_issues": [_text(issue.get("issue_id")) for issue in blocking_issues],
         "warnings": [_text(issue.get("issue_id")) for issue in warning_issues],
         "safety_boundary": (
             "read_existing_governance_artifacts_only; production_effect=none; "

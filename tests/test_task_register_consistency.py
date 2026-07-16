@@ -5,6 +5,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -43,8 +44,12 @@ def test_task_register_consistency_passes_minimal_project(tmp_path: Path) -> Non
     assert "Task Register Consistency" in markdown
 
 
-def test_task_register_consistency_blocks_terminal_active_task(tmp_path: Path) -> None:
-    registry_path = _write_project(tmp_path, active_status="DONE")
+@pytest.mark.parametrize("active_status", ["DONE", "DROPPED"])
+def test_task_register_consistency_blocks_terminal_active_task(
+    tmp_path: Path,
+    active_status: str,
+) -> None:
+    registry_path = _write_project(tmp_path, active_status=active_status)
 
     payload = build_task_register_consistency_payload(
         as_of=RUN_DATE,
@@ -56,6 +61,60 @@ def test_task_register_consistency_blocks_terminal_active_task(tmp_path: Path) -
     assert payload["consistency_status"] == "FAIL"
     assert "completed_tasks_not_active" in issue_ids
     assert "archived_completed_tasks_not_missing" in issue_ids
+
+
+def test_task_register_consistency_allows_baseline_done_active_task(tmp_path: Path) -> None:
+    registry_path = _write_project(tmp_path, active_status="BASELINE_DONE")
+
+    payload = build_task_register_consistency_payload(
+        as_of=RUN_DATE,
+        project_root=tmp_path,
+        report_registry_path=registry_path,
+    )
+
+    assert payload["consistency_status"] == "PASS"
+    assert payload["methodology"]["terminal_task_statuses"] == ["DONE", "DROPPED"]
+    assert payload["methodology"]["active_baseline_task_statuses"] == ["BASELINE_DONE"]
+    markdown = render_task_register_consistency_markdown(payload)
+    assert "terminal task statuses：DONE, DROPPED" in markdown
+    assert "active baseline task statuses：BASELINE_DONE" in markdown
+
+
+def test_task_register_consistency_blocks_baseline_done_in_completed_register(
+    tmp_path: Path,
+) -> None:
+    registry_path = _write_project(tmp_path, completed_status="BASELINE_DONE")
+
+    payload = build_task_register_consistency_payload(
+        as_of=RUN_DATE,
+        project_root=tmp_path,
+        report_registry_path=registry_path,
+    )
+
+    issue_ids = {issue["issue_id"] for issue in payload["blocking_issues"]}
+    assert payload["consistency_status"] == "FAIL"
+    assert "completed_register_terminal_only" in issue_ids
+
+
+def test_task_register_consistency_blocks_duplicate_across_registers(
+    tmp_path: Path,
+) -> None:
+    registry_path = _write_project(
+        tmp_path,
+        active_status="BASELINE_DONE",
+        active_task_id="TRADING-998_DONE",
+    )
+
+    payload = build_task_register_consistency_payload(
+        as_of=RUN_DATE,
+        project_root=tmp_path,
+        report_registry_path=registry_path,
+    )
+
+    issue_ids = {issue["issue_id"] for issue in payload["blocking_issues"]}
+    assert payload["consistency_status"] == "FAIL"
+    assert "task_id_unique" in issue_ids
+    assert "active_tasks_not_duplicated_in_completed" in issue_ids
 
 
 def test_task_register_consistency_allows_multi_segment_task_ids(tmp_path: Path) -> None:
@@ -217,6 +276,7 @@ def _write_project(
     *,
     active_status: str = "IN_PROGRESS",
     active_task_id: str = "TRADING-999_TEST",
+    completed_status: str = "DONE",
 ) -> Path:
     docs_dir = tmp_path / "docs"
     requirements_dir = docs_dir / "requirements"
@@ -239,7 +299,7 @@ def _write_project(
     (docs_dir / "task_register_completed.md").write_text(
         "|ID|Area|Priority|Status|Next Owner|Blocker / Next Step|Acceptance Criteria|Notes|\n"
         "|---|---|---|---|---|---|---|---|\n"
-        "|TRADING-998_DONE|Governance|P1|DONE|system|"
+        f"|TRADING-998_DONE|Governance|P1|{completed_status}|system|"
         "See `docs/requirements/TRADING-998_Done.md`|Archived|2026-05-04|\n",
         encoding="utf-8",
     )

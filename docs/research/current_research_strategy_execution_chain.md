@@ -1,6 +1,6 @@
 # 当前研究策略执行链路、计算逻辑与优化边界
 
-最后更新：2026-07-15
+最后更新：2026-07-16
 
 项目级 AI market regime：`ai_after_chatgpt`，起点 `2022-12-01`
 
@@ -213,6 +213,22 @@ canonical owner 是 `dynamic_v3_micro_search_foundation.py`，policy 是
 每个 producer 在写输出前验证 source/policy/cache/DQ/chronology；每个 validator 从 frozen
 snapshot 重放相同依赖并逐 byte 重建所有 materialized views。当前 PASS 只表示链路完整、
 缺失语义诚实且可复现，不表示 variants、gate 或 attribution 已获得投资有效性批准。
+
+### 5.5.3 TRADING-324～325 research direction foundation 的当前设计
+
+该层把“归因证据”转换为“可供 owner 评审的计划”，但不把计划伪装成已批准的研究方向。
+canonical owner 是 `dynamic_v3_research_direction_foundation.py`，所有映射由 reviewed
+`config/etf_portfolio/dynamic_v3_rescue/research_direction_foundation_v1.yaml` 管理。
+
+| 环节 | 输入 | 计算逻辑 | 输出与当前结果 | 后续优化空间 |
+|---|---|---|---|---|
+| Next Research Direction | validated Signal-vs-Parameter Attribution；冻结 exact artifact bytes、source id、source shift 与 policy hash | 只接受 policy 列出的六种 shift，unknown fail closed；`DEFER_AND_BUILD_DATED_EVIDENCE` 只能映射到 `DEFER_PARAMETER_SEARCH_AND_BUILD_DATED_EVIDENCE`；task 固定 `PROPOSED_OWNER_REVIEW`、`implemented=false`、`auto_register=false` | `next_research_direction_input_snapshot.v2` + 5 views；当前 source=`INCONCLUSIVE/LOW/INSUFFICIENT_DATA`，因此 direction=`PASS_WITH_WARNINGS`、不授权研究方向变更 | 建成 PIT dated signal ledger、exact candidate-method weight path 与 common-date outcome cohort 后，发布新 policy version并重新跑 CX1→CX3；不得原地改旧 artifact |
+| Owner Research Roadmap | exact validated Direction 与同一 policy；保留 source attribution id | 继承不足证据语义；parameter search=`DEFER`；TRADING-326～345 标记为历史上下文而非当前 dated proof；只生成 owner checklist，不写 task register、不启动实现 | `owner_research_roadmap_input_snapshot.v2` + 5 views；当前 action=`register_and_review_dated_evidence_build_before_directional_research`，`task_state_mutation_allowed=false`、`production_effect=none` | owner 显式登记 evidence-build requirement 后，可把真实 dated inputs 接入现有 snapshot/binding contract；后续按独立 holdout、regime 与样本充分性校准 mapping，而不是按期望结果改 decision |
+
+两个 producer 均在写件前验证上游，两个 validator 均重验 live source/policy/chronology 并逐
+byte 重建所有 views。它修复了旧逻辑把未知 shift 静默降级为 signal diagnosis、以及把已经发生
+过的 TRADING-326～345 当成当前证据继续启动的风险；当前结果是“暂停参数搜索并建设 dated
+evidence”，不是对后续历史研究成果的否定，也不是新的投资结论。
 
 ### 5.6 当前权重研究的具体计算
 

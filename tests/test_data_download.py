@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -15,6 +15,7 @@ from ai_trading_system.data.download import (
     IncrementalPriceWindow,
     ProviderQuotaBudgetError,
     _estimate_marketstack_increment_usage,
+    _marketstack_billing_cycle_bounds,
     _price_fetch_windows,
     _provider_request_budget_status,
     download_daily_data,
@@ -340,7 +341,7 @@ def test_marketstack_owner_approved_small_daily_overage_allows_tail_preflight(
     owner_approved_overage = status["owner_approved_overage"]
     assert isinstance(owner_approved_overage, dict)
     assert owner_approved_overage["approved"] is True
-    assert owner_approved_overage["policy_version"] == "data_source_request_budget_policy_v1"
+    assert owner_approved_overage["policy_version"] == "data_source_request_budget_policy_v2"
     assert owner_approved_overage["max_estimated_increment_usage"] == 50
     assert owner_approved_overage["max_quota_overage_ratio"] == 0.10
     assert owner_approved_overage["quota_shortfall"] == 713
@@ -587,6 +588,186 @@ def test_marketstack_tail_catch_up_blocks_when_split_shortfall_exceeds_ratio(
     assert "quota_overage_ratio_exceeds_owner_approved_limit" in text
 
 
+def test_marketstack_prior_cycle_quota_header_allows_bounded_tail_bootstrap(
+    tmp_path: Path,
+) -> None:
+    request_cache_dir = tmp_path / "request_cache"
+    write_external_request_cache_response(
+        provider="Marketstack",
+        api_family="eod_daily_prices",
+        method="GET",
+        url="https://api.marketstack.com/v2/eod",
+        params={"symbols": "NVDA"},
+        status_code=200,
+        response_headers={
+            "x-quota-limit": "10000",
+            "x-quota-remaining": "-938",
+            "x-increment-usage": "25",
+        },
+        content=b'{"data":[]}',
+        cache_dir=request_cache_dir,
+        requested_at=datetime(2020, 1, 11, tzinfo=UTC),
+    )
+    fake_requests = _FakeMarketstackRangeRequests()
+    provider = MarketstackPriceProvider(
+        api_key="test-key",
+        requests_module=fake_requests,
+        request_cache_dir=request_cache_dir,
+    )
+    supported_tickers = tuple(
+        ticker
+        for ticker in configured_price_tickers(load_universe())
+        if provider.symbol_aliases.get(ticker, ticker) is not None
+    )
+    _write_price_cache(
+        tmp_path / "prices_marketstack_daily.csv",
+        tickers=supported_tickers,
+        price_date=date(2026, 7, 10),
+    )
+
+    summary = download_daily_data(
+        load_universe(),
+        start=date(2018, 1, 1),
+        end=date(2026, 7, 15),
+        output_dir=tmp_path,
+        price_provider=FakePriceProvider(),
+        secondary_price_provider=provider,
+        rate_provider=FakeRateProvider(),
+    )
+
+    assert len(fake_requests.calls) == 1
+    assert fake_requests.calls[0]["date_from"] == "2026-07-13"
+    assert fake_requests.calls[0]["date_to"] == "2026-07-15"
+    budget = summary.request_budget_statuses[0]
+    assert budget["budget_profile"] == "quota_cycle_reset"
+    assert budget["status"] == "CURRENT_CYCLE_QUOTA_BOOTSTRAP_ALLOWED"
+    assert budget["estimated_increment_usage"] == 25
+    assert budget["fetch_window_count"] == 1
+    cycle = budget["quota_cycle_reset"]
+    assert cycle["approved"] is True
+    assert cycle["policy_version"] == "data_source_request_budget_policy_v2"
+    assert cycle["stale_header_status"] == "STALE_PREVIOUS_BILLING_CYCLE"
+    assert cycle["stale_quota_remaining"] == -938
+    expected_start, expected_next = _marketstack_billing_cycle_bounds(
+        datetime.now(tz=UTC),
+        reset_day_of_month=12,
+    )
+    assert cycle["current_cycle_start"] == expected_start.date().isoformat()
+    assert cycle["current_cycle_end"] < expected_next.date().isoformat()
+
+    manifest = pd.read_csv(summary.manifest_path)
+    marketstack_manifest = manifest.loc[
+        manifest["source_id"] == "marketstack_eod_daily_prices"
+    ].iloc[0]
+    request_parameters = json.loads(str(marketstack_manifest["request_parameters"]))
+    incremental = request_parameters["incremental_refresh"]
+    assert incremental["fetch_window_count"] == 1
+    assert incremental["request_budget_status"]["budget_profile"] == "quota_cycle_reset"
+    assert (
+        incremental["request_budget_status"]["quota_cycle_reset"]["evidence_id"]
+        == "marketstack_dashboard_billing_cycle_2026-07-12_to_2026-08-11"
+    )
+
+
+def test_marketstack_prior_cycle_quota_header_does_not_allow_full_history(
+    tmp_path: Path,
+) -> None:
+    request_cache_dir = tmp_path / "request_cache"
+    write_external_request_cache_response(
+        provider="Marketstack",
+        api_family="eod_daily_prices",
+        method="GET",
+        url="https://api.marketstack.com/v2/eod",
+        params={"symbols": "NVDA"},
+        status_code=200,
+        response_headers={
+            "x-quota-limit": "10000",
+            "x-quota-remaining": "-938",
+            "x-increment-usage": "25",
+        },
+        content=b'{"data":[]}',
+        cache_dir=request_cache_dir,
+        requested_at=datetime(2020, 1, 11, tzinfo=UTC),
+    )
+    fake_requests = _NeverRequests()
+
+    with pytest.raises(ProviderQuotaBudgetError) as exc_info:
+        download_daily_data(
+            load_universe(),
+            start=date(2026, 7, 13),
+            end=date(2026, 7, 15),
+            output_dir=tmp_path,
+            price_provider=FakePriceProvider(),
+            secondary_price_provider=MarketstackPriceProvider(
+                api_key="test-key",
+                requests_module=fake_requests,
+                request_cache_dir=request_cache_dir,
+            ),
+            rate_provider=FakeRateProvider(),
+        )
+
+    assert fake_requests.calls == []
+    assert exc_info.value.budget_status["budget_profile"] == "owner_approved_overage"
+
+
+def test_marketstack_prior_cycle_quota_header_blocks_oversized_tail_bootstrap(
+    tmp_path: Path,
+) -> None:
+    request_cache_dir = tmp_path / "request_cache"
+    write_external_request_cache_response(
+        provider="Marketstack",
+        api_family="eod_daily_prices",
+        method="GET",
+        url="https://api.marketstack.com/v2/eod",
+        params={"symbols": "NVDA"},
+        status_code=200,
+        response_headers={
+            "x-quota-limit": "10000",
+            "x-quota-remaining": "-938",
+            "x-increment-usage": "25",
+        },
+        content=b'{"data":[]}',
+        cache_dir=request_cache_dir,
+        requested_at=datetime(2020, 1, 11, tzinfo=UTC),
+    )
+    fake_requests = _NeverRequests()
+    provider = MarketstackPriceProvider(
+        api_key="test-key",
+        requests_module=fake_requests,
+        request_cache_dir=request_cache_dir,
+    )
+    supported_tickers = tuple(
+        ticker
+        for ticker in configured_price_tickers(load_universe())
+        if provider.symbol_aliases.get(ticker, ticker) is not None
+    )
+    _write_price_cache(
+        tmp_path / "prices_marketstack_daily.csv",
+        tickers=supported_tickers,
+        price_date=date(2026, 6, 30),
+    )
+
+    with pytest.raises(ProviderQuotaBudgetError) as exc_info:
+        download_daily_data(
+            load_universe(),
+            start=date(2018, 1, 1),
+            end=date(2026, 7, 15),
+            output_dir=tmp_path,
+            price_provider=FakePriceProvider(),
+            secondary_price_provider=provider,
+            rate_provider=FakeRateProvider(),
+        )
+
+    assert fake_requests.calls == []
+    budget = exc_info.value.budget_status
+    assert budget["budget_profile"] == "quota_cycle_reset"
+    assert budget["quota_cycle_reset"]["approved"] is False
+    assert (
+        "calendar_window_exceeds_quota_cycle_reset_limit"
+        in budget["quota_cycle_reset"]["violation_reasons"]
+    )
+
+
 def test_marketstack_negative_quota_does_not_block_no_live_request(
     tmp_path: Path,
 ) -> None:
@@ -805,6 +986,46 @@ class _FakeMarketstackCatchUpRequests:
             headers={
                 "x-quota-limit": "10000",
                 "x-quota-remaining": "-788",
+                "x-increment-usage": "25",
+            },
+        )
+
+
+class _FakeMarketstackRangeRequests:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def get(
+        self,
+        _url: str,
+        *,
+        params: dict[str, object],
+        timeout: int,
+    ) -> _FakeResponse:
+        assert params["access_key"] == "test-key"
+        assert timeout == 30
+        self.calls.append(dict(params))
+        symbols = str(params["symbols"]).split(",")
+        dates = pd.date_range(str(params["date_from"]), str(params["date_to"]), freq="D")
+        records = [
+            {
+                "date": current.strftime("%Y-%m-%d"),
+                "symbol": symbol,
+                "open": 1.0,
+                "high": 1.0,
+                "low": 1.0,
+                "close": 1.0,
+                "adj_close": 1.0,
+                "volume": 1,
+            }
+            for current in dates
+            for symbol in symbols
+        ]
+        return _FakeResponse(
+            {"pagination": {"count": len(records), "total": len(records)}, "data": records},
+            headers={
+                "x-quota-limit": "10000",
+                "x-quota-remaining": "9975",
                 "x-increment-usage": "25",
             },
         )

@@ -1,0 +1,92 @@
+schema_version: dynamic_v3_research_direction_foundation_policy.v1
+policy_metadata:
+  policy_version: research_direction_foundation_v1
+  owner: etf-research-governance
+  status: pilot_baseline
+  rationale: >-
+    TRADING-324～325必须把validated failure attribution转换为owner可读研究方向，同时保留
+    evidence insufficiency，不得用unknown fallback伪造signal、parameter或gate failure结论。
+  intended_effect: >-
+    只生成research planning evidence；task plan和roadmap均需owner review，不自动注册、实施、
+    修改task状态、promotion、paper shadow、official weights或production。
+  validation_evidence: ARCH-004G2.4CX3 lineage, rebuild and tamper tests
+  review_condition: >-
+    获得validated dated signal ledger、dated consensus/method weight ledger与独立forward evidence后复核。
+
+direction:
+  shift_to_decision:
+    CONTINUE_MICRO_SEARCH: CONTINUE_MICRO_SEARCH_V5
+    SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS: SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS
+    SHIFT_TO_CANDIDATE_QUALITY_FILTER: IMPLEMENT_CANDIDATE_QUALITY_FILTER
+    REVIEW_GATE_POLICY: REVIEW_GATE_POLICY
+    DEFER: DEFER_PARAMETER_SEARCH_AND_CONTINUE_FORWARD_CONFIRMATION
+    DEFER_AND_BUILD_DATED_EVIDENCE: DEFER_PARAMETER_SEARCH_AND_BUILD_DATED_EVIDENCE
+  insufficient_source_shift: DEFER_AND_BUILD_DATED_EVIDENCE
+  insufficient_failure_source: INCONCLUSIVE
+  insufficient_confidence: LOW
+  insufficient_decision: DEFER_PARAMETER_SEARCH_AND_BUILD_DATED_EVIDENCE
+  unknown_shift_behavior: FAIL_CLOSED
+  task_status: PROPOSED_OWNER_REVIEW
+  historical_downstream_evidence_role: HISTORICAL_CONTEXT_ONLY_NOT_CURRENT_ATTRIBUTION_PROOF
+  historical_downstream_task_ranges:
+    - TRADING-326_to_335
+    - TRADING-336_to_345
+
+task_plan:
+  DEFER_AND_BUILD_DATED_EVIDENCE:
+    - task_id: TRADING-316_to_325_EVIDENCE_GAP
+      title: Build dated signal and consensus evidence before directional attribution
+      acceptance: >-
+        Update the tracked requirement before implementation; build PIT dated signal events and exact
+        candidate-method weight observations; rerun CX1～CX3 validators; require owner review before any
+        research-direction change.
+  CONTINUE_MICRO_SEARCH:
+    - task_id: TRADING-316_to_325_OWNER_REVIEW
+      title: Review current evidence before authorizing another bounded micro search
+      acceptance: Owner reviews validated evidence and explicitly authorizes a registered follow-up.
+  SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS:
+    - task_id: TRADING-316_to_325_OWNER_REVIEW
+      title: Review signal diagnosis evidence and historical downstream status
+      acceptance: Owner confirms current dated evidence before reusing or reopening downstream research.
+  SHIFT_TO_CANDIDATE_QUALITY_FILTER:
+    - task_id: TRADING-316_to_325_OWNER_REVIEW
+      title: Review candidate quality evidence and historical downstream status
+      acceptance: Owner confirms current dated evidence before reusing or reopening downstream research.
+  REVIEW_GATE_POLICY:
+    - task_id: TRADING-316_to_325_OWNER_REVIEW
+      title: Review gate policy evidence without changing the official gate
+      acceptance: A separately registered calibration study and explicit owner approval are required.
+  DEFER:
+    - task_id: TRADING-316_to_325_OWNER_REVIEW
+      title: Continue observation and review the evidence gap
+      acceptance: Owner reviews the observation plan before any parameter-search restart.
+
+roadmap:
+  insufficient_parameter_search_status: DEFER
+  insufficient_current_phase: post_micro_search_v4_evidence_gap
+  insufficient_best_candidate: NOT_SELECTED_CURRENT_EVIDENCE_INSUFFICIENT
+  insufficient_owner_action: register_and_review_dated_evidence_build_before_directional_research
+  roadmap_decision_status: OWNER_REVIEW_REQUIRED
+  task_state_mutation_allowed: false
+  automatic_implementation_allowed: false
+
+safety:
+  research_target_only: true
+  research_screening_only: true
+  experiment_only: true
+  not_formal_research_method: true
+  not_official_target_weights: true
+  paper_shadow_only: true
+  owner_approval_required: true
+  owner_review_required: true
+  paper_shadow_primary_changed: false
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  auto_apply: false
+  production_effect: none
+  production_state_mutated: false
+  baseline_config_mutated: false
+  official_target_weights_mutated: false
+  production_candidate_generated: false
+  automatic_candidate_promotion: false

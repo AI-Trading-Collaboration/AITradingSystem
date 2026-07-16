@@ -8,6 +8,7 @@ import yaml
 from dynamic_v3_system_target_helpers import run_backfill_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_micro_search_foundation as micro
+from ai_trading_system.etf_portfolio import dynamic_v3_research_direction_foundation as direction
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_diagnostics as diagnostics
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_targeted as targeted
@@ -640,7 +641,7 @@ def run_micro_search_foundation_fixture(tmp_path: Path) -> dict[str, Any]:
 
 def run_next_research_direction_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_signal_vs_parameter_attribution_fixture(tmp_path)
-    next_direction = weight_search.run_next_research_direction(
+    next_direction = direction.run_next_research_direction(
         attribution_id=fixture["signal_vs_parameter"]["signal_vs_parameter_id"],
         attribution_dir=tmp_path / "signal_vs_parameter_attribution",
         output_dir=tmp_path / "next_research_direction",
@@ -649,15 +650,21 @@ def run_next_research_direction_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "next_direction": next_direction}
 
 
+@with_artifact_validation_session
 def run_owner_research_roadmap_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_next_research_direction_fixture(tmp_path)
-    owner_roadmap = weight_search.update_owner_research_roadmap(
+    owner_roadmap = direction.update_owner_research_roadmap(
         direction_id=fixture["next_direction"]["direction_id"],
         direction_dir=tmp_path / "next_research_direction",
         output_dir=tmp_path / "owner_research_roadmap",
         generated_at=datetime(2026, 3, 29, tzinfo=UTC),
     )
     return {**fixture, "owner_roadmap": owner_roadmap}
+
+
+def run_research_direction_foundation_fixture(tmp_path: Path) -> dict[str, Any]:
+    """Build both CX3 artifacts once inside one validation session."""
+    return run_owner_research_roadmap_fixture(tmp_path)
 
 
 def run_signal_failure_taxonomy_fixture(tmp_path: Path) -> dict[str, Any]:

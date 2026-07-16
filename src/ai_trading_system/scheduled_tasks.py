@@ -39,6 +39,7 @@ class ScheduledTask:
     active_shadow_weight_write: bool = False
     broker_action: bool = False
     trading_action: bool = False
+    max_attempts: int = 1
     activation_condition: TaskActivationCondition = TaskActivationCondition.ALWAYS
 
     def active_for_session(self, *, is_trading_day: bool) -> bool:
@@ -241,6 +242,7 @@ def _load_task(cadence_id: str, raw: Any) -> ScheduledTask:
         active_shadow_weight_write=bool(raw.get("active_shadow_weight_write", False)),
         broker_action=bool(raw.get("broker_action", False)),
         trading_action=bool(raw.get("trading_action", False)),
+        max_attempts=_positive_task_int(raw.get("max_attempts"), field=f"{task_id}.max_attempts"),
         activation_condition=TaskActivationCondition(
             str(raw.get("activation_condition") or TaskActivationCondition.ALWAYS.value)
         ),
@@ -252,6 +254,14 @@ def _optional_task_text(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+def _positive_task_int(value: Any, *, field: str) -> int:
+    if value is None:
+        return 1
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(f"{field} must be a positive integer")
+    return value
 
 
 def _validate_config(config: ScheduledTasksConfig) -> None:

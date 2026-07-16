@@ -5,6 +5,7 @@ from ai_trading_system.config import (
     configured_rate_series,
     load_backtest_validation_policy,
     load_data_quality,
+    load_data_source_request_budget_policy,
     load_data_sources,
     load_features,
     load_fundamental_features,
@@ -85,6 +86,20 @@ def test_data_sources_config_loads_current_and_planned_sources() -> None:
     assert "fred_daily_rates" in source_ids
     assert "sec_company_facts" in source_ids
     assert any(source.status == "planned" for source in config.sources)
+
+
+def test_data_source_request_budget_policy_loads_quota_cycle_reset() -> None:
+    config = load_data_source_request_budget_policy()
+    cycle = config.marketstack.eod_daily_prices.quota_cycle_reset
+
+    assert config.policy_version == "data_source_request_budget_policy_v2"
+    assert cycle.enabled is True
+    assert cycle.reset_day_of_month == 12
+    assert cycle.timezone == "UTC"
+    assert cycle.max_estimated_increment_usage == 50
+    assert cycle.max_fetch_window_count == 1
+    assert cycle.max_calendar_days_per_window == 7
+    assert cycle.allowed_status == "CURRENT_CYCLE_QUOTA_BOOTSTRAP_ALLOWED"
 
 
 def test_sec_companies_config_covers_core_watchlist() -> None:

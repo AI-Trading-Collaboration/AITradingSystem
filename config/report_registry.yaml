@@ -4700,11 +4700,13 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/next_research_direction/*/next_task_plan.json
       - reports/etf_portfolio/dynamic_v3_rescue/next_research_direction/*/next_research_direction_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/next_research_direction/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/next_research_direction/*/next_research_direction_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-324 records the next manual research branch and task plan after
-      signal-vs-parameter attribution.
-    owner_action: owner_review_next_research_direction_before_roadmap_update
+      TRADING-324 maps validated attribution through a reviewed policy. When
+      dated evidence is insufficient it defers parameter search and proposes
+      evidence-building tasks for owner review without registering them.
+    owner_action: review_dated_evidence_gap_before_any_direction_change
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
@@ -4721,11 +4723,13 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/owner_research_roadmap/*/owner_roadmap_checklist.md
       - reports/etf_portfolio/dynamic_v3_rescue/owner_research_roadmap/*/owner_research_roadmap_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/owner_research_roadmap/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_research_roadmap/*/owner_research_roadmap_input_snapshot.json
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-325 preserves the owner-facing roadmap and checklist for the
-      next research step without production or broker side effects.
-    owner_action: owner_review_roadmap_before_starting_followup_research
+      TRADING-325 binds the exact validated direction and preserves historical
+      downstream work as context rather than current attribution proof. It does
+      not mutate task state, start implementation, production, or broker work.
+    owner_action: register_and_review_dated_evidence_build_before_research
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false

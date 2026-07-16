@@ -20,6 +20,25 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-16：G2.4CX3=`COMPLETE_G2_4_CONTINUES`。TRADING-324～325共6 callbacks/
+  6 public入口完成canonical research-direction foundation迁移；legacy CLI=`12,196/291/252`，
+  legacy domain=`7,010 lines / 6 lazy wrappers`，删除8个旧renderer/decision helpers。两类bounded
+  v2 snapshots、reviewed policy、exact Attribution→Direction→Roadmap lineage、pre-output
+  chronology/live replay、全部views逐byte重建和tamper fail-close闭合。Matrix=`715 migrated /
+  252 pending / 0 unresolved / 0 duplicate`，CLI tree/hash不变。Focused/architecture/contract/full=
+  `28/304/203/6,097 passed`，full=`643 warnings / 2,337.22s`，generated=`947/1,125/858/0`。
+  TRADING-324～325转`BASELINE_DONE_CX3`并等待真实dated evidence/owner review；whole G2.4仍
+  `IN_PROGRESS`，不触发handoff、不进入G2.5，`production_effect=none`。
+- 2026-07-16：G2.4CX3 contract freeze并进入`IN_PROGRESS`。TRADING-324～325的Next Research
+  Direction与Owner Research Roadmap共6 callbacks/6 public入口迁独立canonical research-direction
+  foundation interface/domain。退出固定两类bounded v2 snapshots、reviewed direction policy、validated
+  exact CX2 Attribution→Direction→Roadmap lineage、pre-output chronology/live replay及全部JSON/
+  Markdown/Reader Brief逐byte重建。CX2的`DEFER_AND_BUILD_DATED_EVIDENCE`只能映射为
+  `DEFER_PARAMETER_SEARCH_AND_BUILD_DATED_EVIDENCE`；禁止旧代码的unknown-shift默认
+  `SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS`，也不得把已执行的TRADING-326～345历史downstream artifacts
+  当作当前dated evidence或重复自动提议。Task plan只允许`PROPOSED_OWNER_REVIEW`，不得自动注册、
+  实施、修改task状态或授权研究方向。CX3完成后whole phase仍有252 callbacks pending，单slice不触发
+  handoff、不进入G2.5，`production_effect=none`。
 - 2026-07-16：G2.4CX2=`COMPLETE_G2_4_CONTINUES`。TRADING-320～323共12 callbacks/
   12 public入口完成canonical micro-search foundation迁移与legacy subtraction；四类bounded v2
   snapshots、reviewed pilot policy、CX1四源同一Scorecard/Targeted lineage、Design→Backfill→Gate

@@ -254,7 +254,39 @@ class OwnerApprovedProviderOverageConfig(BaseModel):
         return self
 
 
+class ProviderQuotaCycleResetConfig(BaseModel):
+    enabled: bool = False
+    reset_day_of_month: int = Field(default=1, ge=1, le=28)
+    timezone: Literal["UTC"] = "UTC"
+    max_estimated_increment_usage: int = Field(default=0, ge=0)
+    max_fetch_window_count: int = Field(default=0, ge=0)
+    max_calendar_days_per_window: int = Field(default=0, ge=0)
+    allowed_status: str = Field(
+        default="CURRENT_CYCLE_QUOTA_BOOTSTRAP_ALLOWED",
+        min_length=1,
+    )
+    evidence_id: str = Field(default="", min_length=1)
+    reason: str = Field(default="", min_length=1)
+    behavioral_impact: str = Field(default="", min_length=1)
+    risk: str = Field(default="", min_length=1)
+    validation_coverage: str = Field(default="", min_length=1)
+    review_condition: str = Field(default="", min_length=1)
+
+    @model_validator(mode="after")
+    def validate_enabled_limits(self) -> Self:
+        if self.enabled and (
+            self.max_estimated_increment_usage <= 0
+            or self.max_fetch_window_count <= 0
+            or self.max_calendar_days_per_window <= 0
+        ):
+            raise ValueError("enabled quota-cycle reset must define positive limits")
+        return self
+
+
 class MarketstackEodDailyPricesBudgetPolicyConfig(BaseModel):
+    quota_cycle_reset: ProviderQuotaCycleResetConfig = Field(
+        default_factory=ProviderQuotaCycleResetConfig
+    )
     owner_approved_overage: OwnerApprovedProviderOverageConfig = Field(
         default_factory=OwnerApprovedProviderOverageConfig
     )

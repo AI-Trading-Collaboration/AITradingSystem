@@ -1,0 +1,409 @@
+# ARCH-005 Parallel Development Control Plane
+
+最后更新：2026-07-12
+
+## 任务信息
+
+- task id：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`
+- priority：`P0`
+- status：`READY`
+- owner：architecture coordinator / developer platform owner / integration coordinator
+- owner review：project owner 负责 source-of-truth cutover 与调度策略复核
+- hard dependency：`ARCH-004C_PLATFORM_CONTRACTS`、`ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES` `DONE`；现有 task-register consistency baseline
+- bootstrap start condition：整个 ARCH-004G2.4 phase exit gate PASS，并收到 `arch_005_bootstrap_handoff.v1`；在此之前保持 `READY` 但 `next_slice_unblocked=false`
+- integration milestone：S0～S3 在 G2.4 handoff 后推进；S4 controlled dispatch 与 `ARCH-004G2_PARALLEL_READINESS_GATE` 的三 lane rehearsal 共同验收
+- downstream consumers：ARCH-004 G3/G4/G5 lanes、`PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH`
+- production effect：`none`
+
+## 决策
+
+后续并行研发不能继续依赖一份由所有 worker 共同编辑的 Markdown 任务表。系统需要一个 Git-native、可审计、可重放、fail-closed 的并行研发控制平面，负责从需求、依赖和资源边界推导可运行任务，分配 execution lane，收集验证证据，并把状态、原因、结果和后续动作投影为人类可读视图。
+
+`docs/task_register.md` 与 `docs/task_register_completed.md` 在显式 cutover 前继续作为权威事实源；cutover 后保留原路径和兼容表格结构，但改为 deterministic generated views，禁止人工双写。任何 source-of-truth 切换必须经过本需求定义的 parity、replay、rollback 和 owner review，不得由 ARCH-004G2 或某个局部实现静默完成。
+
+## 为什么这是基础设施
+
+当前登记机制同时承担：
+
+- 当前任务状态数据库；
+- 全局 latest increment event log；
+- owner 与 blocker 队列；
+- 需求文档索引；
+- 完成任务归档；
+- 多个 runtime/report/test consumer 的隐式接口。
+
+2026-07-12 讨论时的初始只读快照显示（用于证明瓶颈，不作为后续 cutover baseline）：
+
+- active register 约 1.27 MiB，337 个活跃任务；
+- completed register 约 1.16 MiB，522 个归档任务；
+- 两者合计 859 个唯一任务、927 个显式文档链接；
+- 最近 200 个提交约 96% 触达 active register；
+- 298/337 个活跃任务处于 `VALIDATING`，单一状态轴已经难以表达真实排程就绪度。
+
+这说明瓶颈不是 Markdown 语法，而是把 command queue、current state、history、audit index 和 compatibility API 放进同一全局可写对象。继续人工拆成多个总表只会把一个冲突热点变成多个冲突热点。
+
+## 系统目标
+
+控制平面必须回答并保存证据：
+
+1. 当前有哪些任务，任务为什么存在；
+2. 哪些任务已经满足启动条件，哪些仍被什么依赖阻塞；
+3. 哪些任务可以并行，哪些因为 path、module、contract、policy 或 production effect 必须串行；
+4. 本次为何选择某个任务和某条 lane；
+5. 执行者获得了哪些输入、权限、资源租约和验证要求；
+6. 执行结果、测试证据、失败原因和集成结果是什么；
+7. 中断后如何恢复、重新分配或回滚；
+8. 使用者如何理解系统正在做什么、为什么这么做以及后续如何改进。
+
+目标链路：
+
+```text
+requirement
+  -> canonical task record + append-only events
+  -> dependency DAG + readiness evaluation
+  -> deterministic ready queue
+  -> resource/ownership lease
+  -> human/agent/CI execution lane
+  -> validation evidence
+  -> integration queue
+  -> generated status, audit and understanding views
+```
+
+## 核心不变量
+
+1. 不同任务不得因为维护全局控制文件而发生文本冲突。
+2. task、event、dependency、lease 和 evidence 都必须有稳定 ID、schema version 和 provenance。
+3. 调度结果必须 deterministic 或明确记录经过 review 的 tie-break policy；禁止隐藏评分和未治理阈值。
+4. 同一资源不得同时授予互斥 lease；unknown path、unknown owner、base drift、contract conflict 和 unsafe effect 必须 fail closed。
+5. readiness 只说明是否满足启动条件，不得自动伪造 task status 或验收结论。
+6. 同一任务的互斥 state transition 必须形成单一因果链；sibling transition 冲突必须阻断。
+7. 没有验收证据不得标记完成；focused/impact-selected validation 不替代要求的 full gate。
+8. lane 失败不得污染其他独立 lane；事件必须支持 replay、resume 和 reassignment。
+9. shared aggregate 只能由 integration coordinator 确定性生成。
+10. 本控制平面不得执行交易、修改投资策略、权重、阈值、promotion、paper-shadow、production 或 broker 状态。
+
+## 逻辑架构
+
+### 1. Canonical Task Registry
+
+推荐采用一任务一稳定目录的 Git-native records；最终路径在 S0 schema review 冻结，当前首选布局为：
+
+```text
+registry/development_tasks/<domain>/<TASK_ID>/
+  task.yaml
+  events/<EVENT_ID>.yaml
+```
+
+不得直接放入 `config/architecture/fragments/tasks`：现有 aggregate shadow scanner 会把该目录下全部 YAML 按 `fragment_id/fragment_kind/owner/target_id` contract 解析，`task_record.v1` 与其不兼容。启用 `registry/development_tasks` 前必须先增加明确的 DevEx ownership/change rule、task-specific schema/manifest 和 generated-view target，不能依赖 unknown-path fallback。
+
+`task_record.v1` 至少包括：
+
+- `task_id`、`title`、`domain`、`parent_task_id`；
+- `created_at`、`created_by`、`priority`；
+- `accountable_owner`、`next_owner`；
+- `requirement_refs`、`module_ids`、`contract_versions`；
+- typed `dependencies`；
+- structured `acceptance_criteria`；
+- `production_effect`、`broker_action`；
+- legacy source path、row checksum 与 history completeness。
+
+记录的身份和创建事实保持稳定。状态、owner、priority、dependency、acceptance 或 progress 的后续变化通过 versioned event 表达，不通过修改全局表格表达。
+
+### 2. Append-only Task Events
+
+`task_event.v1` 至少包括：
+
+- `event_id`、`task_id`、`event_type`；
+- `occurred_at`、`actor`、`change_id`、`lane_id`；
+- `base_commit`、`previous_state_event_id`；
+- `from_status`、`to_status`；
+- `payload`、`rationale`、`evidence_refs`。
+
+普通 progress event 可以稳定排序并合并；status、owner、priority、acceptance 等互斥变更必须进入 task-specific causal chain。旧 Markdown 无法可靠恢复的历史只能标记 `LEGACY_HISTORY_PARTIAL`，不得伪造事件时间或原因。
+
+### 3. Dependency DAG 与 Readiness Engine
+
+依赖必须从自由文本中分离为 typed edge：
+
+- `blocks_start`；
+- `blocks_completion`；
+- `parent_child`；
+- `informational`。
+
+每条 edge 记录 target task、required statuses、rationale、owner 和 add/resolve event。validator 必须拒绝 unknown target、自依赖和 hard-edge cycle。
+
+初始迁移不得从旧 blocker prose 猜测 dependency；未结构化内容保留为 `UNSTRUCTURED_LEGACY`，由后续 review 转换。
+
+治理状态与执行就绪度保持两个维度：
+
+- governance status 首期完全兼容现有 task register；
+- readiness 由依赖、资源、contract、validation 和 policy 派生；
+- 后续是否拆分 delivery/validation status，必须另经 schema review，不在迁移时静默重解释 859 个历史任务。
+
+### 4. Resource、Ownership 与 Lease
+
+`execution_lease.v1` 绑定：
+
+- task/change/lane/actor；
+- base commit；
+- owned paths、shared paths requested；
+- module IDs、contract versions；
+- generated outputs、removal targets；
+- required validation tiers；
+- production effect 与 broker action；
+- reviewed policy version；
+- lease lifecycle 与 release evidence。
+
+lease duration、capacity、retry、aging 和 fairness 如需阈值，必须来自带 owner、version、rationale、evidence/review condition 的 policy manifest，禁止硬编码。
+
+### 5. Deterministic Scheduler
+
+scheduler 首期采用可解释的规则引擎，不引入不透明优化模型。它只对满足以下条件的任务生成 ready candidate：
+
+- start dependencies satisfied；
+- requirement 与 acceptance contract 完整；
+- owner/capability 可用；
+- owned-path 与 contract scope 不冲突；
+- base revision 未漂移；
+- required inputs 与 validation policy 可解析；
+- safety boundary 明确。
+
+每次选择或不选择必须输出 reason codes、输入 snapshot、policy version 和 alternatives。人工 override 必须成为审计事件，不能覆盖原始推导。
+
+### 6. Execution Lanes
+
+执行 adapter 至少支持：
+
+- human-owned lane；
+- Codex/agent lane；
+- CI/validation lane；
+- integration coordinator lane。
+
+控制平面负责契约、派发、租约、状态和证据，不把某个 agent runtime、worktree 工具或外部 SaaS 变成 canonical source。adapter 崩溃后必须能从 event/evidence replay 恢复，而不是依赖聊天历史。
+
+### 7. Validation 与 Integration
+
+每个 task/change manifest 声明：
+
+- focused feedback tests；
+- minimum validation tiers；
+- integration/full gates；
+- generated aggregate targets；
+- evidence artifact contract。
+
+worker 只能修改其 task/event、owned module、tests 和 fragment。coordinator 按固定 merge order 集成 shared contract、adapter、domain migration、generated aggregates 与 compatibility removal。validator 必须在 merge 前检查 base drift、scope overlap、dependency freshness 和 evidence completeness。
+
+### 8. Generated Views 与理解工作台
+
+由 canonical replay 确定性生成：
+
+- `docs/task_register.md` active compatibility view；
+- `docs/task_register_completed.md` terminal compatibility view；
+- latest activity；
+- owner queue；
+- blocker/dependency view；
+- lane/lease/integration queue；
+- scheduler decision trace；
+- System Understanding Workbench read model。
+
+任何 generated view stale 或与 canonical replay 不一致时必须 fail closed。view renderer 不得重新计算业务结论或改变 task state。
+
+## 与现有架构任务的关系
+
+### ARCH-004E
+
+复用已经完成的 module/test ownership、impact selector、architecture fitness、scaffold 和 fragment/shadow aggregate 模式。ARCH-005 不复制这些能力。
+
+### ARCH-004G2 Parallel Readiness Gate
+
+G2 是 ARCH-004 的近期并行验收场景：
+
+- `change_manifest.v1`；
+- owned/shared-path overlap；
+- base drift；
+- coordinator-only paths；
+- deterministic fragment preview；
+- 三 lane readiness rehearsal。
+
+`change_manifest.v1`、lease/conflict primitives 和 scheduler kernel 由 ARCH-005 冻结为长期 contract；G2 使用它们完成 G3/G4/G5 的三 lane rehearsal，不再建立第二套临时 manifest/scheduler。ARCH-005 增加 canonical task registry、dependency/readiness、execution adapters、event replay、integration queue 和 generated task views。为避免当前共享工作区和 manifests 被两个控制面同时修改，ARCH-005 S0 在整个 G2.4 phase-level handoff 后启动；真实 S4 dispatch 再与 G2 readiness milestone 汇合。
+
+### ARCH-004H
+
+手工 task register 的 source-of-truth retirement 属于受治理 cutover。ARCH-005 可以先运行 shadow 和 controlled dispatch；正式切换需与 ARCH-004H 的 aggregate/source retirement gate 对齐。
+
+### PLATFORM-UX-001
+
+Understanding Workbench 是本控制平面的只读客户端之一，不持有 scheduler state，不成为第二套 status/task source。
+
+## G2.4 -> ARCH-005 Bootstrap Handoff Gate
+
+Owner 已于 2026-07-12 确认此 handoff。它是 ARCH-005 实现的唯一启动入口，不要求 owner 在 G2.4 结束时人工暂停工作区。
+
+### 触发条件
+
+触发点是整个 `ARCH-004G2.4` phase exit，而不是某个 G2.4A～G2.4ZZ slice 完成。ARCH-004 coordinator 必须先证明：
+
+- remaining callback/migration matrix 全部闭合；
+- phase-required focused、architecture、contract 和 full validation PASS；
+- module/test manifests、compatibility baseline、deprecation inventory、source hashes 全部 fresh；
+- 可归属变更已经提交并正常推送；
+- 无未提交的 ARCH-004 shared-path 改动或未完成 integration operation；
+- 既有无关用户文件被明确列出且没有混入提交；
+- `production_effect=none`、`broker_action=none`。
+
+任一条件未满足时不得伪造 handoff，也不得通过跳过验证、吸收无关改动或口头说明继续。
+
+### Handoff Contract
+
+ARCH-004 coordinator 生成并验证 `arch_005_bootstrap_handoff.v1`。S0 冻结最终路径和 schema；最少字段为：
+
+- `source_task_id=ARCH-004`、`completed_phase=ARCH-004G2.4`；
+- `head_commit`、`base_commit`、`branch`、`push_status`；
+- migration matrix completeness 与 remaining count；
+- required validation artifact refs、status 和 checksums；
+- module/test manifest、compatibility baseline、deprecation inventory 的 path/hash/freshness；
+- active shared-path owner/lease/integration count；
+- known unrelated worktree files 与 attribution；
+- `next_slice_unblocked=false`；
+- `production_effect=none`、`broker_action=none`；
+- generated time、producer version 和 handoff checksum。
+
+### 停止与恢复语义
+
+1. 当前及后续 G2.4 slice 正常完成，不中断在途原子工作。
+2. handoff 写入、验证、提交和推送后，ARCH-004 不得选择 G2.5、G3/G4/G5 或其他下一 slice。
+3. ARCH-004 任务停止在 handoff boundary；工作区无需删除或关闭。
+4. ARCH-005 只从 handoff 冻结的 commit 启动 S0/S1。
+5. ARCH-005 S0/S1 通过后，必须有新的显式恢复指令，ARCH-004 才能进入 G2.5。
+6. handoff artifact stale、hash mismatch 或 worktree attribution 不清时 fail closed，回到 ARCH-004 coordinator 修复。
+
+## 实施阶段
+
+### S0：契约、库存与 Characterization
+
+- entry gate：`arch_005_bootstrap_handoff.v1` validation PASS 且 `next_slice_unblocked=false`；
+- 冻结 `task_record.v1`、`task_event.v1`、dependency、lease、scheduler decision 和 generated-view contract；
+- 记录现有两份 register 的 bytes、checksum、parser version、ID/status/owner/docs-link 集合和 row checksums；
+- characterization 现有 runtime/report/test consumers；
+- 冻结状态兼容、terminal projection、排序和 Markdown renderer 规则；
+- 明确 source-of-truth cutover 与 rollback owner。
+
+退出：schema 和状态机 review 完成；当前库存无丢失、无 ID overlap；migration baseline 可重复生成。
+
+### S1：Shadow Registry 与 Compatibility Projection
+
+- importer 由旧 Markdown 生成 per-task shadow fragments；
+- canonical replay/compiler 生成 shadow index 和两份 compatibility views；
+- 旧 Markdown 仍是唯一可写事实源；
+- 禁止人工 dual write；
+- semantic parity 覆盖全部任务字段、terminal 分类和 docs links；
+- 相同输入重复生成 byte-identical。
+
+退出：shadow parity PASS，S0 冻结 baseline 中的全部任务无丢失；所有无法恢复的历史被诚实标记。
+
+### S2：Dependency、Readiness、Conflict 与 Lease Kernel
+
+- typed dependency graph 与 cycle validation；
+- readiness reason codes；
+- change manifest binding；
+- owned/shared path、module、contract、base drift 与 production-effect conflict validation；
+- lease acquire/release/expire/reassign event contract；
+- crash/replay/idempotency tests。
+
+退出：unknown、conflict、cycle、stale base、unsafe effect 全部 fail closed；non-conflicting task 可并行获得 lease。
+
+### S3：Read-only Shadow Scheduler
+
+- 从 canonical snapshot 生成 ready queue 和 scheduling decisions；
+- 只建议，不派发、不修改 task status；
+- 对照人工队列运行至少两个 governance cycles；
+- 披露 selected/not-selected reasons、policy version、capacity 和 alternatives；
+- 发现差异只记录 evidence，不静默修正历史状态。
+
+退出：同输入同 policy 结果一致；所有差异有分类和 owner disposition。
+
+### S4：Controlled Three-lane Dispatch
+
+- 选择三个不改变投资逻辑的独立 ARCH-004 slices；
+- 分配 human/agent lanes 和 coordinator lane；
+- 执行 lease、validation evidence、integration queue 和 failure recovery；
+- conflicting fixture 必须在启动前拒绝；
+- lane 失败不得阻断无依赖 lane；
+- focused feedback 后仍执行规定的 phase/full gates。
+
+退出：三 lane 持续并行，无 task-register shared-write conflict；merge/recovery/replay 证据完整。
+
+### S5：Canonical Cutover 与 Self-hosting
+
+- 短暂冻结旧 register 写入并完成最终 import；
+- 同一原子变更切换 canonical source、loader、validator、generator、治理规则和 consumer；
+- Markdown 标记 generated/do-not-edit；
+- 新任务通过 ARCH-005 自身登记、调度、验证和集成；
+- 稳定两个 governance cycles 后移除 manual row-move workflow。
+
+退出：直接读取手工 Markdown 的 runtime consumer 为零；generated compatibility paths 保留；rollback 演练通过。
+
+### S6：Understanding 与持续优化
+
+- 向 PLATFORM-UX-001 提供 versioned read model；
+- 显示任务、依赖、ready reason、lease、结果、证据、阻塞和建议；
+- 基于真实调度数据评估 throughput、queue age、failure/rework 和 conflict 分类；
+- 任何新 heuristic、priority aging、capacity 或 fairness 政策单独治理和验证。
+
+## 总体验收标准
+
+- 一任务一 canonical identity，task/event/dependency/lease/evidence 全链路可重放；
+- 不同任务的 worker 不再编辑同一任务事实文件；
+- task ID、status、priority、owner、blocker、acceptance、docs links 和 terminal projection 无损迁移；
+- dependency unknown/self/cycle 和 unsatisfied completion 均可检测；
+- overlap、base drift、contract conflict、unsafe production effect 在执行前 fail closed；
+- scheduler decision deterministic、versioned、可解释、可人工 override 且保留审计；
+- crash 后可以 resume/reassign，不重复产生不可幂等 side effect；
+- 三条独立 lane 可并行执行并由 coordinator 确定性集成；
+- active/completed/latest/owner/dependency/understanding views 均由 canonical replay 生成；
+- task-register consistency、architecture fitness、contract validation、clean-clone、reproducibility 和 full parallel pytest PASS；
+- `production_effect=none`、`broker_action=none`。
+
+## 回滚与兼容策略
+
+1. S0～S3 不切换事实源，删除 shadow outputs 即可回滚。
+2. S5 cutover 前冻结 legacy checksum 和 importer/compiler version。
+3. cutover 必须是单一方向；禁止 YAML 与 Markdown 同时可写。
+4. cutover 后如生成视图故障，优先 forward-fix；不得用旧 Markdown 覆盖已经产生的新 events。
+5. 如必须回到 pre-cutover source，先把新 events 无损投影为 legacy-compatible snapshot，并由 owner 审核无事件丢失。
+6. 原 register 路径在 consumer migration 完成前保持兼容，避免一次性破坏现有报告和测试。
+
+## 已知集成风险
+
+- `task_register_consistency.py` 不是唯一 consumer；Research Roadmap、Safety Boundary、Reader Brief/report schema 和大量 literal task-ID tests 也直接读取 Markdown。S0 必须形成完整 consumer inventory，S5 前先统一 canonical reader/compatibility layer。
+- `docs/task_register_completed.md` 当前未纳入 shared integration ownership；S0 必须补充 coordinator/generated ownership。
+- Git records 只承担持久审计事实，不能替代运行期原子 lease/CAS。S2 必须由单一逻辑仲裁器发放 lease，并使用 isolated worktree/branch；事后 merge-time 冲突检测不满足安全要求。
+- generated active/completed views 不能由每个 worker 随事件提交，否则中央冲突会原样恢复。worker 只提交 task/event/owned files，coordinator 按 integration batch 统一生成 views。
+- generated view 的“最后更新”必须取最大语义事件时间，而不是 renderer wall clock，保证 replay 与 byte-identical。
+- 现有 `arch_004_worktree_attribution.yaml` 是手工中央清单；change manifest/lease 稳定后必须有显式 supersession，禁止形成两套 ownership 事实源。
+- 当前 architecture manifests 可能因并行 G2.4 source/test slice 暂时 stale；本任务不得通过 regenerate 吸收其他 lane 的未提交改动。
+
+## 非目标
+
+- 不在 S0/S1 自动调度或启动 agent；
+- 不把 task registry 迁到远程 SaaS、Notion、Jira 或数据库作为唯一事实源；
+- 不自动 approve、merge 或关闭任务；
+- 不从自由文本猜 owner、dependency、验收状态或 priority；
+- 不用调度吞吐替代正确性、审计和 full validation；
+- 不执行周期 operations、策略计算、数据刷新、paper/real portfolio 或交易行为；
+- 不为追求并行复制 shared helper 或建立第二套 architecture/status/control plane。
+
+## 当前开放问题
+
+- `registry/development_tasks` 的目录 fan-out、manifest 和 DevEx ownership/change rule 细节；
+- progress event 使用一事件一文件还是 task-local append-only stream；
+- scheduler capacity、lease expiry、retry 和 fairness policy 的首个 reviewed baseline；
+- S4 三条 pilot lane 的具体选择；
+- S5 source-of-truth cutover 是否与 ARCH-004H 同一 wave 完成。
+
+这些问题不阻塞 handoff entry PASS 之后的 S0 inventory/schema/characterization；在完整 G2.4 handoff 前仍不得启动 S0。任何会影响调度或状态解释的选择必须在进入 S2/S3 前冻结。
+
+## 状态记录
+
+- 2026-07-12：project owner 确认并行任务调度系统是后续研发基石并要求高优先级推进。完整 scope、阶段、验收和回滚已冻结，任务以 `P0/READY` 独立立项：它会决定资源冲突、验证证据和集成是否允许通过，属于系统正确性与审计基础设施；需求已 READY，S0 实现等待完整 G2.4 handoff，真实 dispatch 仍受 S4/G2 门禁约束。当前仅建立需求和迁移边界，不改变 runtime、task-register source-of-truth、scheduler、production 或 broker。
+- 2026-07-12：owner 进一步确认不在 G2.4 进行中并发启动 ARCH-005。已向当前 ARCH-004 主任务预置 phase-level handoff 指令：完整 G2.4 exit、validation、commit/push 和 manifest freshness 闭合后生成 `arch_005_bootstrap_handoff.v1`，设置 `next_slice_unblocked=false` 并停止在 G2.5 之前；owner 无需届时手动暂停工作区。

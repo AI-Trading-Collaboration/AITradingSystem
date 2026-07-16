@@ -1,5 +1,5 @@
 schema_version: 1
-policy_version: data_source_request_budget_policy_v1
+policy_version: data_source_request_budget_policy_v2
 policy_metadata:
   owner: project_owner
   status: active_owner_approved_temporary_override
@@ -7,20 +7,61 @@ policy_metadata:
     After TRADING-1087 reduced the Marketstack daily tail refresh estimate from
     full-history usage to tens of units, the project owner approved continuing
     the daily run when the only blocker is a small single-day Marketstack quota
-    overage.
+    overage. TRADING-2443 adds the owner-confirmed monthly billing-cycle reset
+    so a prior-cycle negative quota header cannot block the new cycle.
   intended_effect: >
     Keep the audited daily data-quality workflow moving while preserving
     fail-closed behavior for full-history refreshes, multi-day repairs, and
-    large quota shortfalls.
+    large quota shortfalls. A stale prior-cycle quota header may only authorize
+    one bounded existing-cache tail bootstrap that refreshes the live header.
   validation_evidence: >
     tests/test_data_download.py covers owner-approved small daily overage and
-    confirms large Marketstack quota shortfalls still block before live calls.
+    confirms large Marketstack quota shortfalls still block before live calls;
+    TRADING-2443 adds stale-cycle allowed and oversized/full-history blocked
+    cases based on the owner-provided 2026-07-16 Account Dashboard evidence.
   review_condition: >
     Remove or tighten after the Marketstack monthly quota resets, the vendor
-    plan changes, or daily estimated usage exceeds this approved small-tail
+    plan or renewal day changes, or daily estimated usage exceeds an approved
     boundary.
 marketstack:
   eod_daily_prices:
+    quota_cycle_reset:
+      enabled: true
+      reset_day_of_month: 12
+      timezone: UTC
+      max_estimated_increment_usage: 50
+      max_fetch_window_count: 1
+      max_calendar_days_per_window: 7
+      allowed_status: CURRENT_CYCLE_QUOTA_BOOTSTRAP_ALLOWED
+      evidence_id: marketstack_dashboard_billing_cycle_2026-07-12_to_2026-08-11
+      reason: >
+        The project owner supplied a Marketstack Account Dashboard screenshot
+        on 2026-07-16 showing a 2026-07-12 through 2026-08-11 billing period,
+        renewal on 2026-08-12, 10,000 requests per month, overage enabled, and
+        zero API calls used in the current cycle. Therefore a quota header last
+        observed before 2026-07-12 belongs to the previous billing cycle.
+      behavioral_impact: >
+        When the latest cached Marketstack quota header predates the configured
+        current billing-cycle start, one existing-cache tail window may proceed
+        within the bounded request and calendar limits. The original multi-day
+        tail window remains intact, avoiding the extra quota consumption caused
+        by splitting it into one request per trading day. The live response then
+        writes a current-cycle quota header through the normal request cache.
+      risk: >
+        If the vendor changes the renewal day without a policy update, a stale
+        header could be classified against the wrong cycle. The path is limited
+        to one existing-cache tail window, at most 50 estimated units and seven
+        calendar days; full-history, new-ticker and larger stale windows remain
+        fail closed.
+      validation_coverage: >
+        Focused tests verify that a prior-cycle negative header allows the
+        bounded 2026-07-13 through 2026-07-15 tail bootstrap as one request,
+        while a full-history request and an oversized stale tail remain blocked.
+        Manifest and CLI assertions cover the policy/version/cycle evidence.
+      review_condition: >
+        Review immediately if the Marketstack Account Dashboard renewal day,
+        monthly quota, overage setting or pricing plan changes; otherwise review
+        with the next provider-account governance check.
     owner_approved_overage:
       enabled: true
       max_estimated_increment_usage: 50

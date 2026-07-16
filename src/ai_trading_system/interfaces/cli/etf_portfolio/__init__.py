@@ -203,6 +203,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_research_control as dynamic_v3_research_control_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_research_direction_foundation as dynamic_v3_research_direction_foundation_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_rolling_evidence_refresh as dynamic_v3_rolling_evidence_refresh_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -399,6 +402,7 @@ __all__ = [
     "dynamic_v3_historical_paper_sim_commands",
     "dynamic_v3_shadow_registry_commands",
     "dynamic_v3_micro_search_foundation_commands",
+    "dynamic_v3_research_direction_foundation_commands",
     "dynamic_v3_signal_diagnosis_foundation_commands",
     "dynamic_v3_sim_interpretation_commands",
     "dynamic_v3_sim_defensive_validation_commands",

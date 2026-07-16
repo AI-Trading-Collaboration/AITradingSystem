@@ -1,9 +1,9 @@
-inventory_id: arch_004g_deprecation_inventory_4c1553d182eae04c10d7
+inventory_id: arch_004g_deprecation_inventory_547623ec6ab81f915b26
 schema_version: arch_004g_deprecation_inventory.v1
 policy_id: arch_004g_deprecation_policy_v1
 repository:
-  python_module_count: 945
-  python_test_file_count: 1126
+  python_module_count: 947
+  python_test_file_count: 1125
   direct_writer_baseline_count: 894
   direct_writer_current_count: 858
   direct_writer_violation_count: 0
@@ -53,14 +53,14 @@ surfaces:
   migration_wave: G2
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
   file_count: 1
-  line_count: 12339
-  byte_count: 529734
-  source_sha256: 9161e28706521ef2e71e95aa520f898a818f328758a2fb1b62f82c4ccc5afa1f
-  top_level_function_count: 297
+  line_count: 12196
+  byte_count: 523845
+  source_sha256: 5d10daa3e8da296c4823119b8a78f2283d9aa0e8930fb0348abef23e731e7b0c
+  top_level_function_count: 291
   top_level_class_count: 0
-  cli_command_decorator_count: 258
+  cli_command_decorator_count: 252
   static_import_reachability_file_count: 1
-  test_reference_file_count: 307
+  test_reference_file_count: 306
   docs_config_reference_file_count: 116
   required_removal_gate_count: 12
   removal_ready: false
@@ -91,7 +91,7 @@ surfaces:
   top_level_class_count: 0
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 5
-  test_reference_file_count: 193
+  test_reference_file_count: 192
   docs_config_reference_file_count: 92
   required_removal_gate_count: 12
   removal_ready: false
@@ -146,15 +146,15 @@ surfaces:
   migration_wave: G4
   path: src/ai_trading_system/scheduled_tasks.py
   file_count: 1
-  line_count: 310
-  byte_count: 11947
-  source_sha256: 4b475b18bbb12b2b9fe82036991cb9dd1f07acd1b8587cf4e906719fd364a60c
-  top_level_function_count: 8
+  line_count: 320
+  byte_count: 12327
+  source_sha256: 310da4bb5f37c9cb83fe664fe3bfe347700265a1312563b57da89931914762a3
+  top_level_function_count: 9
   top_level_class_count: 4
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 5
   test_reference_file_count: 7
-  docs_config_reference_file_count: 22
+  docs_config_reference_file_count: 23
   required_removal_gate_count: 12
   removal_ready: false
   open_gate_ids:
