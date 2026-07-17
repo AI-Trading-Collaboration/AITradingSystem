@@ -41,7 +41,7 @@ def _tamper_snapshot_field(
 
 
 def test_targeted_chain_rebuilds_all_views_and_fails_closed(tmp_path: Path) -> None:
-    fixture = run_near_miss_ab_comparison_fixture(tmp_path)
+    fixture = run_near_miss_ab_comparison_fixture(tmp_path, compact_test_matrix=True)
     matrix = fixture["targeted_v3"]
     backfill = fixture["targeted_v3_backfill"]
     comparison = fixture["near_miss_ab"]

@@ -48,7 +48,7 @@ def _tamper_snapshot_field(
 def test_followup_chain_rebuilds_all_views_and_invalidates_cached_pass(
     tmp_path: Path,
 ) -> None:
-    fixture = run_next_formal_or_search_plan_fixture(tmp_path)
+    fixture = run_next_formal_or_search_plan_fixture(tmp_path, compact_test_matrix=True)
     sensitivity = fixture["sensitivity"]
     promotion = fixture["promotion_v2"]
     next_plan = fixture["next_plan"]

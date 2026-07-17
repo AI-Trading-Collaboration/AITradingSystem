@@ -10,6 +10,9 @@ from dynamic_v3_system_target_helpers import (
 )
 
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 
 def test_smoothed_bootstrap_retry_blocks_when_preflight_stale(tmp_path) -> None:
@@ -46,6 +49,7 @@ def test_smoothed_bootstrap_retry_blocks_when_preflight_stale(tmp_path) -> None:
     assert check["status"] == "PASS"
 
 
+@with_artifact_validation_session
 def test_smoothed_bootstrap_retry_runs_full_chain_when_preflight_ready(tmp_path) -> None:
     build_model_target_fixture(tmp_path)
     ops = run_smoothed_forward_ops_chain_fixture(tmp_path)

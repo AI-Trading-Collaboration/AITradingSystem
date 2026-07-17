@@ -103,6 +103,50 @@ contract=`204 passed / 42.28s`、full=`6,196 passed / 2 skipped / 642 warnings /
 -38.8%`），但full总时长较`1,720.76s`增加约`6.4%`，说明其他loadfile尾部与运行波动已遮蔽
 局部收益；S3C闭合但runtime任务继续，不自动启动Smoothed、Targeted或EB1。
 
+2026-07-18 owner批准继续优化full整体性能并允许独立耗时单项多agent并行，启动S3D。最新full=
+`6,196 passed / 2 skipped / 642 warnings / 1,830.80s`，top-50累计`13,724.22 worker-seconds`；
+Smoothed、Weight/Targeted/Search、Research governance/promotion分别占top-50约`28.7% / 27.9% /
+22.8%`。先以三个只读lane审计共享DAG和duration-aware调度，再由协调者选择互斥文件范围实施；
+开发期使用focused/分片，正式architecture/contract/full仅在integration boundary各执行一次。EB1及
+下一callback slice继续暂停，不因性能lane并行而改变G2.4/ARCH-005 handoff边界。
+
+S3D审计后选择三项互斥实现并通过局部门槛：Smoothed五文件=`435.79s -> 348.57s`
+（约`-20.0%`），Weight/Targeted五文件=`435.56s -> 313.45s`（约`-28.0%`），共享Signal
+Foundation=`10 passed / 216.03s`；production默认80及targeted 60～120规模不变，compact
+test-only路径仍完整覆盖全部required families。full lane用top-50聚合的44文件`PARTIAL_SEED`做
+duration-descending stable loadfile排序，并新增全量node/file/worker/tail-idle sidecar；invalid profile
+显式stock fallback且不能形成performance PASS。pre-full审计同步修复worker侧真实execution contract、
+sidecar异常不得覆盖pytest exit和`pytest-xdist>=3.8`能力floor；串行/非loadfile/worker mismatch/
+filtered selection均不得误报调度PASS。独立复核进一步要求最终canonical collection实际满足duration
+stable order、sidecar exit与subprocess exit一致，并在summary前atomic写入final sidecar以记录真实hash；
+任一不一致只令performance evidence FAIL。最终telemetry focused加family边界=`38 passed / 11.17s`，
+14文件扩大focused=`37 passed / 395.37s`。architecture、contract、full、manifests与source hashes仍
+pending，EB1和
+下一callback继续暂停，`production_effect=none`。
+
+Post-full closeout复核进一步把runner sidecar acceptance改为独立派生：严格JSON、真实runner invocation、
+duration manifest bytes/metadata/fixed-point、完整test-manifest文件集合、collection/node/phase/file/worker/
+outcome/session-window聚合、phase UTC与formal scheduler policy/tie/fallback语义必须一致，
+unmatched file/worker identity或contract evaluator异常必须
+fail closed，不能用不完整或flag-only payload伪造performance PASS。Runtime artifact改为
+auxiliary-first、summary-last finalization，reader/log/sidecar记录最终真实hash/size，summary self record
+显式省略自引用hash/size且不再预写`exists=false`；空output覆盖旧log，外部JSON与summary使用同一final
+payload；外部JSON与任一managed artifact path冲突时fail-fast。相关focused先行通过，真实formal sidecar
+经新contract重验仍PASS；无需重复运行full。
+
+S3D formal integration最终闭合：新增test file使deprecation inventory预期`1125`被architecture首轮正确
+拒绝，刷新到`1126`后architecture=`322 passed / 59.65s`、contract=`214 passed / 45.32s`、full=
+`6,224 passed / 2 skipped / 642 warnings / 1,231.76s`。full相对`1,830.80s`直接基线缩短约
+`32.7%`，slowest-50累计缩短约`16.0%`；完整sidecar证明16-worker final order、6,226-node
+collection、exit binding、44/44 tracked file命中与phase completeness全部PASS，worker busy CV=`1.10%`、
+tail capacity=`2.12%`、最大tail=`37.64s`。该结果只形成第1个complete profile，不声明连续3次稳定
+改善；S3D切片完成而长期runtime任务继续。下一性能lane只读审计Layer1 meta-policy、promotion/owner
+governance、Refined Method/Weight Dashboard，须在本切片提交后另行登记互斥实现范围；EB1和下一callback
+未启动。Post-full contract hardening新增22个runner/evidence测试后，正式architecture/contract已重跑为
+`344 passed / 50.28s`与`236 passed / 35.75s`；既有full证据经严格reader重验仍PASS，但未为同一切片
+重复执行full。
+继续暂停，`production_effect=none`。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

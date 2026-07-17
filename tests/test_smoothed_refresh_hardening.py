@@ -19,6 +19,9 @@ from ai_trading_system.etf_portfolio import (
 from ai_trading_system.etf_portfolio import (
     dynamic_v3_system_target_smoothed_refresh as refresh,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 STALE_AS_OF = date(2026, 1, 20)
 
@@ -291,6 +294,7 @@ def test_data_readiness_rejects_cross_chain_composition(tmp_path: Path) -> None:
     assert not (tmp_path / "mismatched_readiness").exists()
 
 
+@with_artifact_validation_session
 def test_retry_resume_revalidates_exact_bootstrap_child(tmp_path: Path) -> None:
     ops = run_smoothed_forward_ops_chain_fixture(tmp_path)
     prices_path, rates_path = write_market_cache(tmp_path / "refresh_market_cache")

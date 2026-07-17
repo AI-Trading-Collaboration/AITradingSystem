@@ -12,6 +12,9 @@ from dynamic_v3_system_target_helpers import (
 )
 
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 from ai_trading_system.reports import reader_brief
 
 REQUESTED_STALE_AS_OF = date(2026, 1, 20)
@@ -171,6 +174,7 @@ def test_smoothed_retry_resume_blocks_and_readiness_requires_refresh(tmp_path) -
     )["status"] == "PASS"
 
 
+@with_artifact_validation_session
 def test_smoothed_retry_resume_completes_after_ready_post_refresh(tmp_path) -> None:
     ops = run_smoothed_forward_ops_chain_fixture(tmp_path)
     # The ops-chain artifacts bind tmp_path/market_cache as immutable evidence.

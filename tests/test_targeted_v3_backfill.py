@@ -8,7 +8,7 @@ from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as we
 
 
 def test_targeted_v3_backfill_runs_data_gated_metrics(tmp_path) -> None:
-    fixture = run_targeted_v3_backfill_fixture(tmp_path)
+    fixture = run_targeted_v3_backfill_fixture(tmp_path, compact_test_matrix=True)
     backfill = fixture["targeted_v3_backfill"]
 
     assert backfill["manifest"]["status"] == "PASS"

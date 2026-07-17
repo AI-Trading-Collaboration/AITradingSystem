@@ -1,0 +1,120 @@
+schema_version: arch_004g2_full_duration_profile.v1
+profile_id: arch_004g2_s3d_full_duration_partial_seed
+status: PARTIAL_SEED
+owner: validation_operations
+version: 1
+source:
+  artifact_path: outputs/validation_runtime/full_20260717T161557Z/test_runtime_summary.json
+  artifact_sha256: 93d1713f78bc1bec3a9792bbea99c02da6a0966123d096a9c233004d2b47c756
+  tier: full
+  workers: 16
+  dist: loadfile
+  elapsed_seconds: 1830.80
+  git_commit: ab82f1b69026c7c7f4b0de650fa228d19e030a64
+partial_seed:
+  enabled: true
+  source_duration_row_count: 50
+  aggregated_file_count: 44
+  coverage_limitation: >-
+    The source runtime artifact records only the slowest 50 pytest phase rows. Untracked files
+    therefore retain stable collection order behind tracked files; this seed is not a complete
+    duration model and cannot support a stable full-suite improvement claim by itself.
+review:
+  use_scope: advisory_test_file_scheduling_only
+  stable_improvement_claimed: false
+  replace_after_complete_full_profiles: 3
+  conditions:
+    - Use only with the full tier and pytest-xdist loadfile distribution.
+    - Preserve the complete collected nodeid set and the order of nodes within each test file.
+    - Treat a missing or invalid profile as an explicit stock loadfile fallback.
+    - Do not promote fallback or incomplete telemetry as performance evidence.
+    - Rebuild from complete runtime profiles before claiming stable duration-aware scheduling.
+files:
+  - path: tests/test_layer1_meta_policy_readiness.py
+    observed_seconds: 1198.77
+  - path: tests/test_refined_method_proposal.py
+    observed_seconds: 621.99
+  - path: tests/test_next_formal_or_search_plan.py
+    observed_seconds: 467.68
+  - path: tests/test_smoothed_refresh_hardening.py
+    observed_seconds: 464.23
+  - path: tests/test_candidate_promotion_v2.py
+    observed_seconds: 461.69
+  - path: tests/test_smoothed_data_refresh.py
+    observed_seconds: 457.12
+  - path: tests/test_smoothed_forward_weekly_run.py
+    observed_seconds: 453.60
+  - path: tests/test_near_miss_ab_comparison.py
+    observed_seconds: 451.86
+  - path: tests/test_promotion_threshold_sensitivity.py
+    observed_seconds: 448.15
+  - path: tests/test_smoothed_bootstrap_retry.py
+    observed_seconds: 441.48
+  - path: tests/test_owner_research_decision_pack.py
+    observed_seconds: 428.88
+  - path: tests/test_weight_search_followup_hardening.py
+    observed_seconds: 424.28
+  - path: tests/test_targeted_v3_backfill.py
+    observed_seconds: 374.16
+  - path: tests/test_weight_search_targeted_hardening.py
+    observed_seconds: 359.54
+  - path: tests/test_signal_feature_quality_filter_pipeline.py
+    observed_seconds: 357.83
+  - path: tests/test_weight_search_dashboard.py
+    observed_seconds: 348.69
+  - path: tests/test_smoothed_freshness_hardening.py
+    observed_seconds: 337.99
+  - path: tests/test_weight_search_diagnostics_hardening.py
+    observed_seconds: 334.91
+  - path: tests/test_research_direction_foundation.py
+    observed_seconds: 318.96
+  - path: tests/test_micro_search_foundation.py
+    observed_seconds: 314.23
+  - path: tests/test_targeted_search_v3.py
+    observed_seconds: 278.92
+  - path: tests/test_signal_diagnosis_foundation.py
+    observed_seconds: 278.90
+  - path: tests/test_formal_method_auto_plan.py
+    observed_seconds: 266.38
+  - path: tests/test_execution_semantics.py
+    observed_seconds: 243.28
+  - path: tests/test_equal_risk_growth_research_restart.py
+    observed_seconds: 226.81
+  - path: tests/test_smoothed_event_monitor.py
+    observed_seconds: 220.94
+  - path: tests/test_smoothed_forward_progress.py
+    observed_seconds: 220.52
+  - path: tests/test_smoothed_switch_readiness.py
+    observed_seconds: 219.82
+  - path: tests/test_weight_method_promotion_gate.py
+    observed_seconds: 216.82
+  - path: tests/test_smoothed_owner_renewal.py
+    observed_seconds: 214.51
+  - path: tests/test_dynamic_v3_system_target_smoothed_operations_hardening.py
+    observed_seconds: 212.59
+  - path: tests/test_weight_search_evaluation_hardening.py
+    observed_seconds: 212.30
+  - path: tests/test_search_coverage_gap.py
+    observed_seconds: 191.66
+  - path: tests/test_confirmation_cycle_weekly.py
+    observed_seconds: 186.49
+  - path: tests/test_weight_expanded_search.py
+    observed_seconds: 179.16
+  - path: tests/test_weight_top_candidate_interpretation.py
+    observed_seconds: 178.53
+  - path: tests/test_smoothed_weekly_dashboard.py
+    observed_seconds: 169.54
+  - path: tests/test_weight_candidate_cluster.py
+    observed_seconds: 144.29
+  - path: tests/test_smoothed_readiness_review.py
+    observed_seconds: 142.34
+  - path: tests/test_weight_search_decision_hardening.py
+    observed_seconds: 136.60
+  - path: tests/test_layer2_strategy_component_readiness.py
+    observed_seconds: 135.58
+  - path: tests/test_dynamic_v3_system_target_smoothed_evidence_hardening.py
+    observed_seconds: 130.30
+  - path: tests/test_smoothed_promotion_review.py
+    observed_seconds: 126.32
+  - path: tests/test_smoothed_forward_binding.py
+    observed_seconds: 125.58

@@ -20,6 +20,48 @@ from ai_trading_system.platform.artifacts.validation_session import (
 # 52 variants.  Foundation fixtures use that complete prefix; broad weight
 # search tests retain the reviewed production default of 80 variants.
 _RESEARCH_FOUNDATION_COMPLETE_PREFIX_VARIANTS = 52
+_COMPACT_TARGETED_MIN_VARIANTS = 6
+_COMPACT_TARGETED_MAX_VARIANTS = 12
+_COMPACT_DIAGNOSTICS_PARAMETER_RANGES = {
+    "cash_buffer": [0.10],
+    "smoothing_window": [3],
+    "rebalance_threshold": [0.03],
+    "top_k": [3],
+}
+
+
+def write_compact_weight_diagnostics_policy(tmp_path: Path) -> Path:
+    """Write the existing complete, test-only diagnostics search profile."""
+    policy_path = tmp_path / "weight_search_diagnostics_test_v1.yaml"
+    policy = yaml.safe_load(
+        diagnostics.DEFAULT_WEIGHT_SEARCH_DIAGNOSTICS_POLICY_PATH.read_text(encoding="utf-8")
+    )
+    policy["policy_metadata"]["policy_version"] = "weight_search_diagnostics_test_v1"
+    policy["coverage"]["maximum_targeted_v3_variants"] = _COMPACT_TARGETED_MAX_VARIANTS
+    for parameter_gap in policy["coverage"]["parameter_gap_templates"]:
+        parameter = parameter_gap["parameter"]
+        parameter_gap["recommended_values"] = _COMPACT_DIAGNOSTICS_PARAMETER_RANGES[parameter]
+    policy_path.write_text(
+        yaml.safe_dump(policy, sort_keys=False),
+        encoding="utf-8",
+    )
+    return policy_path
+
+
+def write_compact_weight_targeted_policy(tmp_path: Path) -> Path:
+    """Write the existing complete, test-only six-family targeted profile."""
+    policy_path = tmp_path / "weight_search_targeted_test_v1.yaml"
+    policy = yaml.safe_load(
+        targeted.DEFAULT_WEIGHT_SEARCH_TARGETED_POLICY_PATH.read_text(encoding="utf-8")
+    )
+    policy["policy_metadata"]["policy_version"] = "weight_search_targeted_test_v1"
+    policy["matrix"]["minimum_variants"] = _COMPACT_TARGETED_MIN_VARIANTS
+    policy["matrix"]["maximum_variants"] = _COMPACT_TARGETED_MAX_VARIANTS
+    policy_path.write_text(
+        yaml.safe_dump(policy, sort_keys=False),
+        encoding="utf-8",
+    )
+    return policy_path
 
 
 def write_weight_search_space_config(
@@ -217,19 +259,45 @@ def run_owner_research_decision_pack_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "owner_pack": owner_pack}
 
 
-def run_no_promotion_review_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_weight_scorecard_fixture(tmp_path)
+def run_no_promotion_review_fixture(
+    tmp_path: Path,
+    *,
+    compact_test_matrix: bool = False,
+) -> dict[str, Any]:
+    fixture = run_weight_scorecard_fixture(
+        tmp_path,
+        initial_batch_variants=(
+            _RESEARCH_FOUNDATION_COMPLETE_PREFIX_VARIANTS if compact_test_matrix else None
+        ),
+    )
+    diagnostics_policy_path = (
+        write_compact_weight_diagnostics_policy(tmp_path)
+        if compact_test_matrix
+        else diagnostics.DEFAULT_WEIGHT_SEARCH_DIAGNOSTICS_POLICY_PATH
+    )
     review = weight_search.run_no_promotion_review(
         scorecard_id=fixture["scorecard"]["scorecard_id"],
         scorecard_dir=tmp_path / "weight_scorecard",
         output_dir=tmp_path / "no_promotion_review",
         generated_at=datetime(2024, 3, 13, tzinfo=UTC),
+        policy_path=diagnostics_policy_path,
     )
-    return {**fixture, "no_promotion_review": review}
+    return {
+        **fixture,
+        "diagnostics_policy_path": diagnostics_policy_path,
+        "no_promotion_review": review,
+    }
 
 
-def run_near_miss_candidates_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_no_promotion_review_fixture(tmp_path)
+def run_near_miss_candidates_fixture(
+    tmp_path: Path,
+    *,
+    compact_test_matrix: bool = False,
+) -> dict[str, Any]:
+    fixture = run_no_promotion_review_fixture(
+        tmp_path,
+        compact_test_matrix=compact_test_matrix,
+    )
     near_miss = weight_search.extract_near_miss_candidates(
         scorecard_id=fixture["scorecard"]["scorecard_id"],
         no_promotion_review_id=fixture["no_promotion_review"]["review_id"],
@@ -237,12 +305,20 @@ def run_near_miss_candidates_fixture(tmp_path: Path) -> dict[str, Any]:
         review_dir=tmp_path / "no_promotion_review",
         output_dir=tmp_path / "near_miss_candidates",
         generated_at=datetime(2024, 3, 14, tzinfo=UTC),
+        policy_path=fixture["diagnostics_policy_path"],
     )
     return {**fixture, "near_miss": near_miss}
 
 
-def run_cash_buffer_attribution_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_near_miss_candidates_fixture(tmp_path)
+def run_cash_buffer_attribution_fixture(
+    tmp_path: Path,
+    *,
+    compact_test_matrix: bool = False,
+) -> dict[str, Any]:
+    fixture = run_near_miss_candidates_fixture(
+        tmp_path,
+        compact_test_matrix=compact_test_matrix,
+    )
     attribution = weight_search.run_cash_buffer_attribution(
         scorecard_id=fixture["scorecard"]["scorecard_id"],
         near_miss_id=fixture["near_miss"]["near_miss_id"],
@@ -251,12 +327,20 @@ def run_cash_buffer_attribution_fixture(tmp_path: Path) -> dict[str, Any]:
         near_miss_dir=tmp_path / "near_miss_candidates",
         output_dir=tmp_path / "cash_buffer_attribution",
         generated_at=datetime(2024, 3, 15, tzinfo=UTC),
+        policy_path=fixture["diagnostics_policy_path"],
     )
     return {**fixture, "cash_buffer_attribution": attribution}
 
 
-def run_search_coverage_gap_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_cash_buffer_attribution_fixture(tmp_path)
+def run_search_coverage_gap_fixture(
+    tmp_path: Path,
+    *,
+    compact_test_matrix: bool = False,
+) -> dict[str, Any]:
+    fixture = run_cash_buffer_attribution_fixture(
+        tmp_path,
+        compact_test_matrix=compact_test_matrix,
+    )
     coverage_gap = weight_search.run_search_coverage_gap(
         search_space_id=fixture["search_space"]["search_space_id"],
         near_miss_id=fixture["near_miss"]["near_miss_id"],
@@ -266,26 +350,51 @@ def run_search_coverage_gap_fixture(tmp_path: Path) -> dict[str, Any]:
         attribution_dir=tmp_path / "cash_buffer_attribution",
         output_dir=tmp_path / "search_coverage_gap",
         generated_at=datetime(2024, 3, 16, tzinfo=UTC),
+        policy_path=fixture["diagnostics_policy_path"],
     )
     return {**fixture, "coverage_gap": coverage_gap}
 
 
 @with_artifact_validation_session
-def run_targeted_search_v3_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_search_coverage_gap_fixture(tmp_path)
+def run_targeted_search_v3_fixture(
+    tmp_path: Path,
+    *,
+    compact_test_matrix: bool = False,
+) -> dict[str, Any]:
+    fixture = run_search_coverage_gap_fixture(
+        tmp_path,
+        compact_test_matrix=compact_test_matrix,
+    )
+    targeted_policy_path = (
+        write_compact_weight_targeted_policy(tmp_path)
+        if compact_test_matrix
+        else targeted.DEFAULT_WEIGHT_SEARCH_TARGETED_POLICY_PATH
+    )
     targeted_v3 = weight_search.build_targeted_search_v3(
         coverage_gap_id=fixture["coverage_gap"]["coverage_gap_id"],
         coverage_gap_dir=tmp_path / "search_coverage_gap",
         near_miss_dir=tmp_path / "near_miss_candidates",
         output_dir=tmp_path / "targeted_search_v3",
         generated_at=datetime(2024, 3, 17, tzinfo=UTC),
+        policy_path=targeted_policy_path,
     )
-    return {**fixture, "targeted_v3": targeted_v3}
+    return {
+        **fixture,
+        "targeted_policy_path": targeted_policy_path,
+        "targeted_v3": targeted_v3,
+    }
 
 
 @with_artifact_validation_session
-def run_targeted_v3_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_targeted_search_v3_fixture(tmp_path)
+def run_targeted_v3_backfill_fixture(
+    tmp_path: Path,
+    *,
+    compact_test_matrix: bool = False,
+) -> dict[str, Any]:
+    fixture = run_targeted_search_v3_fixture(
+        tmp_path,
+        compact_test_matrix=compact_test_matrix,
+    )
     targeted_v3_backfill = weight_search.run_targeted_v3_backfill(
         v3_matrix_id=fixture["targeted_v3"]["v3_matrix_id"],
         v3_matrix_dir=tmp_path / "targeted_search_v3",
@@ -294,13 +403,21 @@ def run_targeted_v3_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
         price_cache_path=fixture["prices_path"],
         rates_cache_path=fixture["rates_path"],
         generated_at=datetime(2026, 3, 18, 2, tzinfo=UTC),
+        policy_path=fixture["targeted_policy_path"],
     )
     return {**fixture, "targeted_v3_backfill": targeted_v3_backfill}
 
 
 @with_artifact_validation_session
-def run_near_miss_ab_comparison_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_targeted_v3_backfill_fixture(tmp_path)
+def run_near_miss_ab_comparison_fixture(
+    tmp_path: Path,
+    *,
+    compact_test_matrix: bool = False,
+) -> dict[str, Any]:
+    fixture = run_targeted_v3_backfill_fixture(
+        tmp_path,
+        compact_test_matrix=compact_test_matrix,
+    )
     ab = weight_search.run_near_miss_ab_comparison(
         v3_backfill_id=fixture["targeted_v3_backfill"]["v3_backfill_id"],
         near_miss_id=fixture["near_miss"]["near_miss_id"],
@@ -310,13 +427,21 @@ def run_near_miss_ab_comparison_fixture(tmp_path: Path) -> dict[str, Any]:
         scorecard_dir=tmp_path / "weight_scorecard",
         output_dir=tmp_path / "near_miss_ab_comparison",
         generated_at=datetime(2026, 3, 19, tzinfo=UTC),
+        policy_path=fixture["targeted_policy_path"],
     )
     return {**fixture, "near_miss_ab": ab}
 
 
 @with_artifact_validation_session
-def run_promotion_threshold_sensitivity_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_near_miss_ab_comparison_fixture(tmp_path)
+def run_promotion_threshold_sensitivity_fixture(
+    tmp_path: Path,
+    *,
+    compact_test_matrix: bool = False,
+) -> dict[str, Any]:
+    fixture = run_near_miss_ab_comparison_fixture(
+        tmp_path,
+        compact_test_matrix=compact_test_matrix,
+    )
     sensitivity = weight_search.run_promotion_threshold_sensitivity(
         v3_backfill_id=fixture["targeted_v3_backfill"]["v3_backfill_id"],
         ab_id=fixture["near_miss_ab"]["ab_id"],
@@ -330,8 +455,15 @@ def run_promotion_threshold_sensitivity_fixture(tmp_path: Path) -> dict[str, Any
 
 
 @with_artifact_validation_session
-def run_candidate_promotion_v2_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_promotion_threshold_sensitivity_fixture(tmp_path)
+def run_candidate_promotion_v2_fixture(
+    tmp_path: Path,
+    *,
+    compact_test_matrix: bool = False,
+) -> dict[str, Any]:
+    fixture = run_promotion_threshold_sensitivity_fixture(
+        tmp_path,
+        compact_test_matrix=compact_test_matrix,
+    )
     promotion_v2 = weight_search.run_candidate_promotion_v2(
         v3_backfill_id=fixture["targeted_v3_backfill"]["v3_backfill_id"],
         ab_id=fixture["near_miss_ab"]["ab_id"],
@@ -347,8 +479,15 @@ def run_candidate_promotion_v2_fixture(tmp_path: Path) -> dict[str, Any]:
 
 
 @with_artifact_validation_session
-def run_next_formal_or_search_plan_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_candidate_promotion_v2_fixture(tmp_path)
+def run_next_formal_or_search_plan_fixture(
+    tmp_path: Path,
+    *,
+    compact_test_matrix: bool = False,
+) -> dict[str, Any]:
+    fixture = run_candidate_promotion_v2_fixture(
+        tmp_path,
+        compact_test_matrix=compact_test_matrix,
+    )
     next_plan = weight_search.run_next_formal_or_search_plan(
         promotion_v2_id=fixture["promotion_v2"]["promotion_v2_id"],
         promotion_v2_dir=tmp_path / "candidate_promotion_v2",
@@ -412,116 +551,13 @@ def run_consensus_quality_review_fixture(tmp_path: Path) -> dict[str, Any]:
 
 @with_artifact_validation_session
 def run_signal_diagnosis_foundation_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_weight_scorecard_fixture(
+    fixture = run_promotion_threshold_sensitivity_fixture(
         tmp_path,
-        initial_batch_variants=_RESEARCH_FOUNDATION_COMPLETE_PREFIX_VARIANTS,
-    )
-    diagnostics_policy_path = tmp_path / "weight_search_diagnostics_test_v1.yaml"
-    diagnostics_policy = yaml.safe_load(
-        diagnostics.DEFAULT_WEIGHT_SEARCH_DIAGNOSTICS_POLICY_PATH.read_text(encoding="utf-8")
-    )
-    diagnostics_policy["policy_metadata"][
-        "policy_version"
-    ] = "weight_search_diagnostics_test_v1"
-    diagnostics_policy["coverage"]["maximum_targeted_v3_variants"] = 12
-    compact_ranges = {
-        "cash_buffer": [0.10],
-        "smoothing_window": [3],
-        "rebalance_threshold": [0.03],
-        "top_k": [3],
-    }
-    for parameter_gap in diagnostics_policy["coverage"]["parameter_gap_templates"]:
-        parameter = parameter_gap["parameter"]
-        parameter_gap["recommended_values"] = compact_ranges[parameter]
-    diagnostics_policy_path.write_text(
-        yaml.safe_dump(diagnostics_policy, sort_keys=False), encoding="utf-8"
-    )
-    no_promotion_review = weight_search.run_no_promotion_review(
-        scorecard_id=fixture["scorecard"]["scorecard_id"],
-        scorecard_dir=tmp_path / "weight_scorecard",
-        output_dir=tmp_path / "no_promotion_review",
-        generated_at=datetime(2024, 3, 13, tzinfo=UTC),
-        policy_path=diagnostics_policy_path,
-    )
-    near_miss = weight_search.extract_near_miss_candidates(
-        scorecard_id=fixture["scorecard"]["scorecard_id"],
-        no_promotion_review_id=no_promotion_review["review_id"],
-        scorecard_dir=tmp_path / "weight_scorecard",
-        review_dir=tmp_path / "no_promotion_review",
-        output_dir=tmp_path / "near_miss_candidates",
-        generated_at=datetime(2024, 3, 14, tzinfo=UTC),
-        policy_path=diagnostics_policy_path,
-    )
-    cash_buffer_attribution = weight_search.run_cash_buffer_attribution(
-        scorecard_id=fixture["scorecard"]["scorecard_id"],
-        near_miss_id=near_miss["near_miss_id"],
-        variant_id="cash_buffer_10",
-        scorecard_dir=tmp_path / "weight_scorecard",
-        near_miss_dir=tmp_path / "near_miss_candidates",
-        output_dir=tmp_path / "cash_buffer_attribution",
-        generated_at=datetime(2024, 3, 15, tzinfo=UTC),
-        policy_path=diagnostics_policy_path,
-    )
-    coverage_gap = weight_search.run_search_coverage_gap(
-        search_space_id=fixture["search_space"]["search_space_id"],
-        near_miss_id=near_miss["near_miss_id"],
-        cash_buffer_attribution_id=cash_buffer_attribution["attribution_id"],
-        search_space_dir=tmp_path / "weight_search_space",
-        near_miss_dir=tmp_path / "near_miss_candidates",
-        attribution_dir=tmp_path / "cash_buffer_attribution",
-        output_dir=tmp_path / "search_coverage_gap",
-        generated_at=datetime(2024, 3, 16, tzinfo=UTC),
-        policy_path=diagnostics_policy_path,
-    )
-    policy_path = tmp_path / "weight_search_targeted_test_v1.yaml"
-    policy = yaml.safe_load(
-        targeted.DEFAULT_WEIGHT_SEARCH_TARGETED_POLICY_PATH.read_text(encoding="utf-8")
-    )
-    policy["policy_metadata"]["policy_version"] = "weight_search_targeted_test_v1"
-    policy["matrix"]["minimum_variants"] = 6
-    policy["matrix"]["maximum_variants"] = 12
-    policy_path.write_text(yaml.safe_dump(policy, sort_keys=False), encoding="utf-8")
-    targeted_v3 = weight_search.build_targeted_search_v3(
-        coverage_gap_id=coverage_gap["coverage_gap_id"],
-        coverage_gap_dir=tmp_path / "search_coverage_gap",
-        near_miss_dir=tmp_path / "near_miss_candidates",
-        output_dir=tmp_path / "targeted_search_v3",
-        generated_at=datetime(2024, 3, 17, tzinfo=UTC),
-        policy_path=policy_path,
-    )
-    targeted_v3_backfill = weight_search.run_targeted_v3_backfill(
-        v3_matrix_id=targeted_v3["v3_matrix_id"],
-        v3_matrix_dir=tmp_path / "targeted_search_v3",
-        baseline_backfill_dir=tmp_path / "paper_shadow_backfill",
-        output_dir=tmp_path / "targeted_v3_backfill",
-        price_cache_path=fixture["prices_path"],
-        rates_cache_path=fixture["rates_path"],
-        generated_at=datetime(2026, 3, 18, 2, tzinfo=UTC),
-        policy_path=policy_path,
-    )
-    near_miss_ab = weight_search.run_near_miss_ab_comparison(
-        v3_backfill_id=targeted_v3_backfill["v3_backfill_id"],
-        near_miss_id=near_miss["near_miss_id"],
-        v3_backfill_dir=tmp_path / "targeted_v3_backfill",
-        v3_matrix_dir=tmp_path / "targeted_search_v3",
-        near_miss_dir=tmp_path / "near_miss_candidates",
-        scorecard_dir=tmp_path / "weight_scorecard",
-        output_dir=tmp_path / "near_miss_ab_comparison",
-        generated_at=datetime(2026, 3, 19, tzinfo=UTC),
-        policy_path=policy_path,
-    )
-    sensitivity = weight_search.run_promotion_threshold_sensitivity(
-        v3_backfill_id=targeted_v3_backfill["v3_backfill_id"],
-        ab_id=near_miss_ab["ab_id"],
-        v3_backfill_dir=tmp_path / "targeted_v3_backfill",
-        v3_matrix_dir=tmp_path / "targeted_search_v3",
-        ab_dir=tmp_path / "near_miss_ab_comparison",
-        output_dir=tmp_path / "promotion_threshold_sensitivity",
-        generated_at=datetime(2026, 3, 20, tzinfo=UTC),
+        compact_test_matrix=True,
     )
     gate_calibration = weight_search.run_gate_calibration_review(
-        no_promotion_review_id=no_promotion_review["review_id"],
-        threshold_sensitivity_id=sensitivity["sensitivity_id"],
+        no_promotion_review_id=fixture["no_promotion_review"]["review_id"],
+        threshold_sensitivity_id=fixture["sensitivity"]["sensitivity_id"],
         review_dir=tmp_path / "no_promotion_review",
         sensitivity_dir=tmp_path / "promotion_threshold_sensitivity",
         output_dir=tmp_path / "gate_calibration_review",
@@ -529,7 +565,7 @@ def run_signal_diagnosis_foundation_fixture(tmp_path: Path) -> dict[str, Any]:
     )
     scorecard_attribution = weight_search.run_scorecard_attribution(
         scorecard_id=fixture["scorecard"]["scorecard_id"],
-        v3_backfill_id=targeted_v3_backfill["v3_backfill_id"],
+        v3_backfill_id=fixture["targeted_v3_backfill"]["v3_backfill_id"],
         scorecard_dir=tmp_path / "weight_scorecard",
         v3_backfill_dir=tmp_path / "targeted_v3_backfill",
         v3_matrix_dir=tmp_path / "targeted_search_v3",
@@ -551,14 +587,6 @@ def run_signal_diagnosis_foundation_fixture(tmp_path: Path) -> dict[str, Any]:
     )
     return {
         **fixture,
-        "no_promotion_review": no_promotion_review,
-        "near_miss": near_miss,
-        "cash_buffer_attribution": cash_buffer_attribution,
-        "coverage_gap": coverage_gap,
-        "targeted_v3": targeted_v3,
-        "targeted_v3_backfill": targeted_v3_backfill,
-        "near_miss_ab": near_miss_ab,
-        "sensitivity": sensitivity,
         "gate_calibration": gate_calibration,
         "scorecard_attribution": scorecard_attribution,
         "signal_diagnosis": signal_diagnosis,
