@@ -502,7 +502,7 @@ def test_g2_1_etf_cli_contract_matches_frozen_runtime_tree() -> None:
         "duplicate_path_count": 0,
     }
     assert contract["tree_sha256"] == (
-        "d4744f3ec1bbbfc05d10246f7969b3f9174e4cfebc9bec9d8b39a472e83bc6f3"
+        "01c78550ae58b38c2d8cca0683376643e2934f93e324710612c87d39eea7302d"
     )
     assert contract["production_effect"] == "none"
     assert contract == safe_load_yaml_path(BASELINE_PATH)
@@ -545,6 +545,36 @@ def test_g2_1_cli_contract_detects_option_default_and_help_drift(tmp_path: Path)
     write_generated_architecture_artifact(frozen_path, before_contract)
     with pytest.raises(CliContractError, match="CLI_CONTRACT_BASELINE_DRIFT"):
         assert_frozen_cli_contract(after_contract, baseline_path=frozen_path)
+
+
+def test_g2_1_cli_contract_is_independent_of_checkout_root(tmp_path: Path) -> None:
+    def build_checkout_contract(checkout_root: Path) -> dict[str, object]:
+        app = typer.Typer()
+
+        @app.command("run")
+        def run(
+            input_path: Path = typer.Option(
+                checkout_root / "data" / "input.json",
+                "--input-path",
+            ),
+        ) -> None:
+            pass
+
+        source_path = checkout_root / "src" / "contract_source.py"
+        source_path.parent.mkdir(parents=True)
+        source_path.write_text("# stable contract source\n", encoding="utf-8")
+        return build_cli_contract(
+            app,
+            source_path=source_path,
+            project_root=checkout_root,
+        )
+
+    first = build_checkout_contract(tmp_path / "checkout-a")
+    second = build_checkout_contract(tmp_path / "checkout-b")
+
+    assert first == second
+    run_node = next(node for node in first["nodes"] if node["path"] == "<root>")
+    assert run_node["parameter_count"] == 3
 
 
 def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None:

@@ -29,7 +29,7 @@ def build_cli_contract(
     """Build a deterministic, callback-location-independent Click/Typer contract."""
     root = get_command(app)
     duplicate_paths, registered_leaf_count = _registered_duplicate_paths(app)
-    contracts = _walk_click_tree(root)
+    contracts = _walk_click_tree(root, project_root=project_root.resolve())
     leaf_count = sum(row["kind"] == "command" for row in contracts)
     group_count = sum(row["kind"] == "group" for row in contracts)
     paths = [str(row["path"]) for row in contracts]
@@ -89,7 +89,11 @@ def assert_frozen_cli_contract(
         raise CliContractError(f"CLI_CONTRACT_BASELINE_DRIFT: {baseline_path}")
 
 
-def _walk_click_tree(root: click.Command) -> list[dict[str, object]]:
+def _walk_click_tree(
+    root: click.Command,
+    *,
+    project_root: Path,
+) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
 
     def visit(command: click.Command, path: tuple[str, ...]) -> None:
@@ -104,7 +108,10 @@ def _walk_click_tree(root: click.Command) -> list[dict[str, object]]:
             "epilog": command.epilog,
             "hidden": bool(command.hidden),
             "deprecated": bool(command.deprecated),
-            "parameters": [_parameter_contract(param) for param in command.params],
+            "parameters": [
+                _parameter_contract(param, project_root=project_root)
+                for param in command.params
+            ],
         }
         if is_group:
             group = command
@@ -123,42 +130,50 @@ def _walk_click_tree(root: click.Command) -> list[dict[str, object]]:
     return rows
 
 
-def _parameter_contract(param: click.Parameter) -> dict[str, object]:
+def _parameter_contract(
+    param: click.Parameter,
+    *,
+    project_root: Path,
+) -> dict[str, object]:
     row: dict[str, object] = {
         "kind": "option" if isinstance(param, click.Option) else "argument",
         "name": param.name,
         "required": bool(param.required),
         "nargs": param.nargs,
         "multiple": bool(param.multiple),
-        "default": _normalize_value(param.default),
-        "type": _type_contract(param.type),
+        "default": _normalize_value(param.default, project_root=project_root),
+        "type": _type_contract(param.type, project_root=project_root),
         "metavar": param.metavar,
         "expose_value": bool(param.expose_value),
         "is_eager": bool(param.is_eager),
-        "envvar": _normalize_value(param.envvar),
+        "envvar": _normalize_value(param.envvar, project_root=project_root),
         "callback_present": param.callback is not None,
     }
     if isinstance(param, click.Option):
         row.update(
             opts=list(param.opts),
             secondary_opts=list(param.secondary_opts),
-            prompt=_normalize_value(param.prompt),
+            prompt=_normalize_value(param.prompt, project_root=project_root),
             confirmation_prompt=bool(param.confirmation_prompt),
             hide_input=bool(param.hide_input),
             is_flag=bool(param.is_flag),
-            flag_value=_normalize_value(param.flag_value),
+            flag_value=_normalize_value(param.flag_value, project_root=project_root),
             count=bool(param.count),
             allow_from_autoenv=bool(param.allow_from_autoenv),
             help=param.help,
             hidden=bool(param.hidden),
-            show_default=_normalize_value(param.show_default),
+            show_default=_normalize_value(param.show_default, project_root=project_root),
             show_choices=bool(param.show_choices),
             show_envvar=bool(param.show_envvar),
         )
     return row
 
 
-def _type_contract(param_type: click.ParamType) -> dict[str, object]:
+def _type_contract(
+    param_type: click.ParamType,
+    *,
+    project_root: Path,
+) -> dict[str, object]:
     row: dict[str, object] = {
         "class": f"{type(param_type).__module__}.{type(param_type).__qualname__}",
         "name": param_type.name,
@@ -179,7 +194,10 @@ def _type_contract(param_type: click.ParamType) -> dict[str, object]:
         "allow_dash",
     ):
         if hasattr(param_type, attribute):
-            row[attribute] = _normalize_value(getattr(param_type, attribute))
+            row[attribute] = _normalize_value(
+                getattr(param_type, attribute),
+                project_root=project_root,
+            )
     path_type = getattr(param_type, "path_type", None)
     if path_type is not None:
         row["path_type"] = f"{path_type.__module__}.{path_type.__qualname__}"
@@ -212,17 +230,28 @@ def _registered_duplicate_paths(app: typer.Typer) -> tuple[list[str], int]:
     return duplicates, leaf_count
 
 
-def _normalize_value(value: Any) -> object:
+def _normalize_value(value: Any, *, project_root: Path) -> object:
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
     if isinstance(value, Path):
+        if value.is_absolute():
+            try:
+                relative = value.resolve().relative_to(project_root)
+            except ValueError:
+                pass
+            else:
+                suffix = relative.as_posix()
+                return f"<PROJECT_ROOT>/{suffix}" if suffix != "." else "<PROJECT_ROOT>"
         return value.as_posix()
     if isinstance(value, (date, datetime)):
         return value.isoformat()
     if isinstance(value, (list, tuple)):
-        return [_normalize_value(item) for item in value]
+        return [_normalize_value(item, project_root=project_root) for item in value]
     if isinstance(value, dict):
-        return {str(key): _normalize_value(value[key]) for key in sorted(value, key=str)}
+        return {
+            str(key): _normalize_value(value[key], project_root=project_root)
+            for key in sorted(value, key=str)
+        }
     raise CliContractError(
         "CLI_CONTRACT_NON_DETERMINISTIC_VALUE: "
         f"{type(value).__module__}.{type(value).__qualname__}"

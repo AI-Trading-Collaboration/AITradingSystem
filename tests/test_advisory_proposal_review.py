@@ -14,12 +14,82 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     DynamicV3BacktestSimulationError,
     validate_advisory_proposal_review_artifact,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+)
+
+
+@pytest.fixture(scope="module")
+def immutable_advisory_proposal_review(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Any:
+    """Build the direct Confirmation upstream once per worker/module."""
+    root = tmp_path_factory.mktemp("advisory-proposal-review-upstream")
+    monkeypatch = pytest.MonkeyPatch()
+    try:
+        with artifact_validation_session():
+            fixture = run_advisory_proposal_review_fixture(root, monkeypatch)
+            yield fixture
+    finally:
+        monkeypatch.undo()
+
+
+@pytest.fixture
+def advisory_proposal_review_fixture(
+    immutable_advisory_proposal_review: dict[str, Any],
+) -> dict[str, Any]:
+    return immutable_advisory_proposal_review
+
+
+@pytest.fixture
+def mutable_advisory_review_fixture(
+    immutable_advisory_proposal_review: dict[str, Any], artifact_name: str
+) -> Any:
+    path = (
+        immutable_advisory_proposal_review["proposal_review"]["proposal_review_dir"]
+        / artifact_name
+    )
+    original = path.read_bytes()
+    try:
+        yield immutable_advisory_proposal_review
+    finally:
+        path.write_bytes(original)
+
+
+@pytest.fixture
+def mutable_risk_return_fixture(
+    immutable_advisory_proposal_review: dict[str, Any],
+) -> Any:
+    path = (
+        immutable_advisory_proposal_review["risk_return"]["risk_return_dir"]
+        / "risk_return_report.md"
+    )
+    original = path.read_bytes()
+    try:
+        yield immutable_advisory_proposal_review
+    finally:
+        path.write_bytes(original)
+
+
+@pytest.fixture
+def mutable_calibration_fixture(
+    immutable_advisory_proposal_review: dict[str, Any],
+) -> Any:
+    path = (
+        immutable_advisory_proposal_review["calibration"]["calibration_pack_dir"]
+        / "reader_brief_section.md"
+    )
+    original = path.read_bytes()
+    try:
+        yield immutable_advisory_proposal_review
+    finally:
+        path.write_bytes(original)
 
 
 def test_advisory_proposal_review_requires_owner_and_no_auto_apply(
-    tmp_path: Path, monkeypatch: Any
+    advisory_proposal_review_fixture: dict[str, Any],
 ) -> None:
-    fixture = run_advisory_proposal_review_fixture(tmp_path, monkeypatch)
+    fixture = advisory_proposal_review_fixture
     review = fixture["proposal_review"]
     manifest = review["manifest"]
     matrix = review["proposal_decision_matrix"]
@@ -46,18 +116,18 @@ def test_advisory_proposal_review_requires_owner_and_no_auto_apply(
 
 
 def test_advisory_proposal_review_rejects_naive_cutoff_before_output(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, advisory_proposal_review_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_advisory_proposal_review_fixture(tmp_path, monkeypatch)
+    fixture = advisory_proposal_review_fixture
     with pytest.raises(DynamicV3BacktestSimulationError, match="timezone-aware"):
         _run_review(fixture, tmp_path / "new", datetime(2026, 7, 31, 13))
     assert not (tmp_path / "new").exists()
 
 
 def test_advisory_proposal_review_rejects_invalid_source_before_output(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, mutable_risk_return_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_advisory_proposal_review_fixture(tmp_path, monkeypatch)
+    fixture = mutable_risk_return_fixture
     source = fixture["risk_return"]["risk_return_dir"] / "risk_return_report.md"
     source.write_text(source.read_text(encoding="utf-8") + "tamper\n", encoding="utf-8")
     with pytest.raises(DynamicV3BacktestSimulationError, match="source validation"):
@@ -83,9 +153,9 @@ def test_advisory_proposal_review_empty_source_proposals_are_not_fabricated() ->
 
 
 def test_advisory_proposal_review_rejects_invalid_policy_before_output(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, advisory_proposal_review_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_advisory_proposal_review_fixture(tmp_path, monkeypatch)
+    fixture = advisory_proposal_review_fixture
     policy_path = tmp_path / "invalid.yaml"
     policy_path.write_text("schema_version: invalid\n", encoding="utf-8")
     with pytest.raises(DynamicV3BacktestSimulationError, match="policy schema"):
@@ -110,9 +180,9 @@ def test_advisory_proposal_review_rejects_invalid_policy_before_output(
     ],
 )
 def test_advisory_proposal_review_validator_rejects_output_tamper(
-    tmp_path: Path, monkeypatch: Any, artifact_name: str
+    mutable_advisory_review_fixture: dict[str, Any], artifact_name: str
 ) -> None:
-    fixture = run_advisory_proposal_review_fixture(tmp_path, monkeypatch)
+    fixture = mutable_advisory_review_fixture
     review = fixture["proposal_review"]
     path = review["proposal_review_dir"] / artifact_name
     if path.suffix == ".md":
@@ -132,9 +202,9 @@ def test_advisory_proposal_review_validator_rejects_output_tamper(
 
 
 def test_advisory_proposal_review_validator_rejects_live_source_drift(
-    tmp_path: Path, monkeypatch: Any
+    mutable_calibration_fixture: dict[str, Any],
 ) -> None:
-    fixture = run_advisory_proposal_review_fixture(tmp_path, monkeypatch)
+    fixture = mutable_calibration_fixture
     review = fixture["proposal_review"]
     source = fixture["calibration"]["calibration_pack_dir"] / "reader_brief_section.md"
     source.write_text(source.read_text(encoding="utf-8") + "tamper\n", encoding="utf-8")
@@ -146,9 +216,9 @@ def test_advisory_proposal_review_validator_rejects_live_source_drift(
 
 
 def test_advisory_proposal_review_validator_rejects_live_policy_drift(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, advisory_proposal_review_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_advisory_proposal_review_fixture(tmp_path, monkeypatch)
+    fixture = advisory_proposal_review_fixture
     policy_path = tmp_path / "policy.yaml"
     policy_path.write_text(
         sim.DEFAULT_ADVISORY_PROPOSAL_REVIEW_POLICY_PATH.read_text(encoding="utf-8"),

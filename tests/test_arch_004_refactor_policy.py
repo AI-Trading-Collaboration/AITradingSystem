@@ -1347,6 +1347,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {
                 "ARCH-004G2.2",
                 "ARCH-004G2.4CX1",
+                "ARCH-004G2_EB0_S2C",
             }
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
@@ -4729,6 +4730,101 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cx3["sources"]:
             actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
             assert actual == source["sha256"], source["path"]
+
+    eb0_s2b = baseline["integrated_change_arch_004g2_eb0_s2b"]
+    assert eb0_s2b["status"] == "VALIDATING"
+    assert eb0_s2b["task_id"] == "ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION"
+    assert eb0_s2b["behavior"] == "bounded_high_node_compatibility_fingerprint_reuse"
+    assert eb0_s2b["root_cause"] == {
+        "snapshot_size_bytes": 9_531_096,
+        "snapshot_json_node_count": 226_197,
+        "snapshot_bound_path_count": 45,
+        "previous_json_node_limit": 100_000,
+        "current_json_node_limit": 500_000,
+        "pre_fix_observed_read_gib": 171.05,
+        "pre_fix_elapsed_lower_bound_seconds": 947.08,
+    }
+    assert eb0_s2b["safety"] == {
+        "max_document_size_bytes": 64 * 1024 * 1024,
+        "max_bound_path_count": 4_096,
+        "pass_only_cache": True,
+        "before_after_fingerprint_required": True,
+        "link_and_topology_gate_preserved": True,
+        "above_node_limit_bypasses_cache": True,
+        "production_effect": "none",
+    }
+    assert eb0_s2b["validation"]["cache_hardening"]["passed"] == 78
+    assert eb0_s2b["validation"]["same_node_same_command"] == {
+        "status": "PASS",
+        "passed": 1,
+        "elapsed_seconds": 172.23,
+        "slowest_call_seconds": 168.66,
+    }
+    assert eb0_s2b["validation"]["smoothed_focused"] == {
+        "status": "PASS",
+        "passed": 27,
+        "elapsed_seconds": 498.56,
+    }
+    assert eb0_s2b["validation"]["confirmation_targets_focused"] == {
+        "status": "PASS",
+        "passed": 10,
+        "elapsed_seconds": 85.37,
+        "pre_fix_elapsed_lower_bound_seconds": 665.0,
+        "reduction_lower_bound_percent": 87.2,
+    }
+    assert eb0_s2b["validation"]["advisory_proposal_review_focused"] == {
+        "status": "PASS",
+        "passed": 13,
+        "elapsed_seconds": 119.35,
+        "isolated_worker_elapsed_seconds": 450.0,
+        "reduction_percent_approx": 73.5,
+    }
+    assert eb0_s2b["validation"]["forward_plan_and_rule_review_focused"] == {
+        "status": "PASS",
+        "passed": 22,
+        "elapsed_seconds": 209.97,
+        "forward_plan_reduction_percent_approx": 65.0,
+        "rule_review_reduction_percent_approx": 70.0,
+    }
+    assert eb0_s2b["validation"]["confirmation_direct_chain_focused"] == {
+        "status": "PASS",
+        "passed": 45,
+        "elapsed_seconds": 235.97,
+    }
+    assert eb0_s2b["validation"]["correctness_shards"] == {
+        "status": "PASS",
+        "passed": 5_782,
+        "skipped": 1,
+        "failed": 0,
+        "junit_wall_seconds": [246.411, 371.109, 313.790, 249.942],
+    }
+    assert eb0_s2b["validation"]["historical_top45_diagnostic"] == {
+        "status": "DIAGNOSTIC_STOP",
+        "elapsed_seconds": 1_253,
+        "full_pass_claimed": False,
+        "peak_working_set_gib": 6.33,
+        "peak_private_gib": 17.84,
+        "available_memory_gib": 62.0,
+        "residual_owner": "weight_search",
+        "active_file_count": 6,
+    }
+    assert eb0_s2b["validation"]["architecture_fitness"]["status"] == "PENDING"
+    assert eb0_s2b["validation"]["contract_validation"]["status"] == "PENDING"
+    assert eb0_s2b["validation"]["full_validation"]["status"] == "PENDING"
+    assert eb0_s2b["checkout_reproducibility"] == {
+        "first_architecture_gate_status": "FAIL",
+        "first_architecture_gate_passed": 302,
+        "first_architecture_gate_failed": 2,
+        "first_architecture_gate_elapsed_seconds": 55.60,
+        "absolute_root_drift_node_count": 987,
+        "project_relative_token": "<PROJECT_ROOT>",
+        "runtime_defaults_changed": False,
+        "cli_surface_changed": False,
+        "production_effect": "none",
+    }
+    for source in eb0_s2b["sources"]:
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
 
 
 def test_arch_004c_dependency_policy_uses_count_ratchet_without_waiver() -> None:

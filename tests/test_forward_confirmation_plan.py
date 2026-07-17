@@ -13,12 +13,83 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     DynamicV3BacktestSimulationError,
     validate_forward_confirmation_plan_artifact,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+)
+
+
+@pytest.fixture(scope="module")
+def immutable_forward_confirmation_plan(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Any:
+    root = tmp_path_factory.mktemp("forward-confirmation-plan-upstream")
+    monkeypatch = pytest.MonkeyPatch()
+    try:
+        with artifact_validation_session():
+            fixture = run_forward_confirmation_plan_fixture(root, monkeypatch)
+            yield fixture
+    finally:
+        monkeypatch.undo()
+
+
+@pytest.fixture
+def forward_confirmation_plan_fixture(
+    immutable_forward_confirmation_plan: dict[str, Any],
+) -> dict[str, Any]:
+    return immutable_forward_confirmation_plan
+
+
+@pytest.fixture
+def mutable_forward_plan_fixture(
+    immutable_forward_confirmation_plan: dict[str, Any], artifact_name: str
+) -> Any:
+    path = (
+        immutable_forward_confirmation_plan["confirmation_plan"][
+            "confirmation_plan_dir"
+        ]
+        / artifact_name
+    )
+    original = path.read_bytes()
+    try:
+        yield immutable_forward_confirmation_plan
+    finally:
+        path.write_bytes(original)
+
+
+@pytest.fixture
+def mutable_bridge_fixture(
+    immutable_forward_confirmation_plan: dict[str, Any],
+) -> Any:
+    path = (
+        immutable_forward_confirmation_plan["bridge"]["bridge_dir"]
+        / "sim_forward_bridge_report.md"
+    )
+    original = path.read_bytes()
+    try:
+        yield immutable_forward_confirmation_plan
+    finally:
+        path.write_bytes(original)
+
+
+@pytest.fixture
+def mutable_proposal_review_fixture(
+    immutable_forward_confirmation_plan: dict[str, Any],
+) -> Any:
+    path = (
+        immutable_forward_confirmation_plan["proposal_review"]["proposal_review_dir"]
+        / "reader_brief_section.md"
+    )
+    original = path.read_bytes()
+    try:
+        yield immutable_forward_confirmation_plan
+    finally:
+        path.write_bytes(original)
 
 
 def test_forward_confirmation_plan_inherits_only_source_targets_and_criteria(
-    tmp_path: Path, monkeypatch: Any
+    forward_confirmation_plan_fixture: dict[str, Any],
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = forward_confirmation_plan_fixture
     plan = fixture["confirmation_plan"]
     targets = plan["confirmation_targets"]["targets"]
     bridge_targets = fixture["bridge"]["forward_confirmation_targets"]["targets"]
@@ -73,18 +144,18 @@ def test_forward_confirmation_plan_empty_proposals_do_not_fabricate_targets() ->
 
 
 def test_forward_confirmation_plan_rejects_naive_cutoff_before_output(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, forward_confirmation_plan_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = forward_confirmation_plan_fixture
     with pytest.raises(DynamicV3BacktestSimulationError, match="timezone-aware"):
         _run_plan(fixture, tmp_path / "new", datetime(2026, 7, 31, 14))
     assert not (tmp_path / "new").exists()
 
 
 def test_forward_confirmation_plan_rejects_invalid_source_before_output(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, mutable_bridge_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = mutable_bridge_fixture
     source = fixture["bridge"]["bridge_dir"] / "sim_forward_bridge_report.md"
     source.write_text(source.read_text(encoding="utf-8") + "tamper\n", encoding="utf-8")
     with pytest.raises(DynamicV3BacktestSimulationError, match="source validation"):
@@ -95,9 +166,9 @@ def test_forward_confirmation_plan_rejects_invalid_source_before_output(
 
 
 def test_forward_confirmation_plan_rejects_invalid_policy_before_output(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, forward_confirmation_plan_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = forward_confirmation_plan_fixture
     policy_path = tmp_path / "invalid.yaml"
     policy_path.write_text("schema_version: invalid\n", encoding="utf-8")
     with pytest.raises(DynamicV3BacktestSimulationError, match="metadata/rules"):
@@ -123,9 +194,9 @@ def test_forward_confirmation_plan_rejects_invalid_policy_before_output(
     ],
 )
 def test_forward_confirmation_plan_validator_rejects_output_tamper(
-    tmp_path: Path, monkeypatch: Any, artifact_name: str
+    mutable_forward_plan_fixture: dict[str, Any], artifact_name: str
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = mutable_forward_plan_fixture
     plan = fixture["confirmation_plan"]
     path = plan["confirmation_plan_dir"] / artifact_name
     if path.suffix == ".md":
@@ -145,9 +216,9 @@ def test_forward_confirmation_plan_validator_rejects_output_tamper(
 
 
 def test_forward_confirmation_plan_validator_rejects_live_source_drift(
-    tmp_path: Path, monkeypatch: Any
+    mutable_proposal_review_fixture: dict[str, Any],
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = mutable_proposal_review_fixture
     plan = fixture["confirmation_plan"]
     source = fixture["proposal_review"]["proposal_review_dir"] / "reader_brief_section.md"
     source.write_text(source.read_text(encoding="utf-8") + "tamper\n", encoding="utf-8")
@@ -159,9 +230,9 @@ def test_forward_confirmation_plan_validator_rejects_live_source_drift(
 
 
 def test_forward_confirmation_plan_validator_rejects_live_policy_drift(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, forward_confirmation_plan_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = forward_confirmation_plan_fixture
     policy_path = tmp_path / "policy.yaml"
     policy_path.write_text(
         sim.DEFAULT_FORWARD_CONFIRMATION_PLAN_POLICY_PATH.read_text(encoding="utf-8"),

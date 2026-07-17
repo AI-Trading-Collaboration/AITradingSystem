@@ -16,6 +16,9 @@ from dynamic_v3_system_target_helpers import (
 from ai_trading_system.etf_portfolio import (
     dynamic_v3_system_target_smoothed_freshness as freshness,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 
 def _assert_every_view_is_content_derived(
@@ -245,6 +248,7 @@ def test_refresh_rejects_cross_preflight_lineage_and_rebuilds_every_view(tmp_pat
     )
 
 
+@with_artifact_validation_session
 def test_retry_rebuilds_views_and_rejects_tampered_validated_weekly_child(tmp_path: Path) -> None:
     build_model_target_fixture(tmp_path)
     ops = run_smoothed_forward_ops_chain_fixture(tmp_path)

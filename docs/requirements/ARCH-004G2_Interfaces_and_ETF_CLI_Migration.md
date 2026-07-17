@@ -1,6 +1,6 @@
 # ARCH-004G2 Interfaces 与 ETF CLI 迁移
 
-最后更新：2026-07-16
+最后更新：2026-07-17
 
 ## 任务信息
 
@@ -20,6 +20,14 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-17：owner 批准 G2.4 剩余阶段改为效率优先的 batch execution。详细关键路径、
+  callback分配、timebox、验证频率和停止条件见
+  `docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md`。先执行1～3日EB0
+  最高长尾限时治理，再以EB1～EB8按`15/15/30/39/37/40/40/36`完整覆盖当前252个pending
+  callbacks；开发期持续focused，architecture/contract/full在batch integration boundary正式执行。
+  28个legacy/no-scope cache调用不再作为恢复callback主线的整包前置，按所属batch渐进迁移；稳定
+  callback集合形成后再做完整runtime acceptance与phase closeout。该重排不减少任何DQ/PIT/
+  tamper/source gate，不改变whole G2.4 handoff或G2.5前停止条件，`production_effect=none`。
 - 2026-07-16：G2.4CX3=`COMPLETE_G2_4_CONTINUES`。TRADING-324～325共6 callbacks/
   6 public入口完成canonical research-direction foundation迁移；legacy CLI=`12,196/291/252`，
   legacy domain=`7,010 lines / 6 lazy wrappers`，删除8个旧renderer/decision helpers。两类bounded
@@ -321,6 +329,9 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 - 分别迁research/experiments/calibration、shadow/paper-shadow、portfolio/allocation/backtest；
 - 每个slice单独证明DQ/PIT、窗口、阈值、artifact和exit parity；
 - dynamic-v3大组继续按内部语义边界拆分，不形成另一个god module。
+- CX3后的252个pending callbacks按效率计划合并为EB1～EB8；这里的batch就是正式integration
+  slice，producer/report/validator/legacy subtraction不得跨batch，正式full在batch boundary执行一次，
+  不再为batch内部的微小family重复运行整套full。
 
 退出：全部993 leaf由明确模块owner承载；root无计算和artifact write；两组真实fixture及相关domain tests PASS。
 

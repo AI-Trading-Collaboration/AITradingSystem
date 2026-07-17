@@ -13060,7 +13060,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.cli_contract
   path: src/ai_trading_system/platform/architecture/cli_contract.py
-  sha256: 0467c9392ed0ef424bf9a2a0ba822de57530f2f12b19a0be9744257add4338d0
+  sha256: e7c321bd94306fd27fd5e0d873d8c1bc01935289b56b90963af280c650310719
   rule_id: platform
   owner_profile: platform
   owners:
@@ -13192,7 +13192,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.artifacts.validation_session
   path: src/ai_trading_system/platform/artifacts/validation_session.py
-  sha256: 235c050bac9e641dae4ee41c2a0a60b0c6f4cdc5940455f0a57f414047ed77c6
+  sha256: 5d301ad10646bcede4f3e589839cc4d9c16ba83d6047d6d8e272cfd4dbc4a038
   rule_id: platform
   owner_profile: platform
   owners:

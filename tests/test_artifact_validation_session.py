@@ -2392,6 +2392,78 @@ def test_raw_fingerprint_mode_handles_large_json_without_cross_mode_memo_reuse(
     assert calls == 3
 
 
+def test_compatibility_fingerprint_caches_bounded_high_node_snapshot(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "artifacts"
+    artifact_root = output_dir / "artifact-1"
+    artifact_root.mkdir(parents=True)
+    (artifact_root / "snapshot.json").write_text(
+        json.dumps({"payload": list(range(100_001))}),
+        encoding="utf-8",
+    )
+    calls = 0
+
+    def validator(*, artifact_id: str, output_dir: Path) -> dict[str, Any]:
+        nonlocal calls
+        calls += 1
+        return {
+            "status": "PASS",
+            "artifact_id": artifact_id,
+            "output_dir": str(output_dir),
+            "calls": calls,
+        }
+
+    with artifact_validation_session():
+        for _ in range(2):
+            result = cached_artifact_validation(
+                validator=validator,
+                validator_key="artifact_id",
+                artifact_id="artifact-1",
+                root=output_dir,
+            )
+
+    assert calls == 1
+    assert result["calls"] == 1
+
+
+def test_compatibility_fingerprint_bypasses_cache_above_node_limit(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    output_dir = tmp_path / "artifacts"
+    artifact_root = output_dir / "artifact-1"
+    artifact_root.mkdir(parents=True)
+    (artifact_root / "snapshot.json").write_text(
+        json.dumps({"payload": list(range(16))}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(validation_session_module, "_MAX_COMMITMENT_JSON_NODES", 8)
+    calls = 0
+
+    def validator(*, artifact_id: str, output_dir: Path) -> dict[str, Any]:
+        nonlocal calls
+        calls += 1
+        return {
+            "status": "PASS",
+            "artifact_id": artifact_id,
+            "output_dir": str(output_dir),
+            "calls": calls,
+        }
+
+    with artifact_validation_session():
+        for _ in range(2):
+            result = cached_artifact_validation(
+                validator=validator,
+                validator_key="artifact_id",
+                artifact_id="artifact-1",
+                root=output_dir,
+            )
+
+    assert calls == 2
+    assert result["calls"] == 2
+
+
 def test_validation_session_path_subclass_semantics_bypass_cache(tmp_path: Path) -> None:
     artifact_root = tmp_path / "artifact-1"
     artifact_root.mkdir()

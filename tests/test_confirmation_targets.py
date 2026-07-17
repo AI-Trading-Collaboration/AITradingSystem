@@ -10,12 +10,55 @@ import yaml
 from dynamic_v3_backtest_sim_helpers import run_forward_confirmation_plan_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_confirmation_cycle as cycle
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+)
+
+
+@pytest.fixture(scope="module")
+def immutable_confirmation_plan_upstream(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Any:
+    """Build the expensive immutable plan DAG once per worker/module."""
+    root = tmp_path_factory.mktemp("confirmation-targets-upstream")
+    monkeypatch = pytest.MonkeyPatch()
+    try:
+        with artifact_validation_session():
+            fixture = run_forward_confirmation_plan_fixture(root, monkeypatch)
+            yield fixture
+    finally:
+        monkeypatch.undo()
+
+
+@pytest.fixture
+def confirmation_plan_fixture(
+    immutable_confirmation_plan_upstream: dict[str, Any],
+) -> dict[str, Any]:
+    return immutable_confirmation_plan_upstream
+
+
+@pytest.fixture
+def mutable_confirmation_plan_fixture(
+    immutable_confirmation_plan_upstream: dict[str, Any],
+) -> Any:
+    """Restore the sole mutable plan file byte-for-byte after a tamper assertion."""
+    plan_dir = Path(
+        immutable_confirmation_plan_upstream["confirmation_plan"][
+            "confirmation_plan_dir"
+        ]
+    )
+    source = plan_dir / "reader_brief_section.md"
+    original = source.read_bytes()
+    try:
+        yield immutable_confirmation_plan_upstream
+    finally:
+        source.write_bytes(original)
 
 
 def test_confirmation_targets_registers_only_validated_plan_targets(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, confirmation_plan_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = confirmation_plan_fixture
     plan = fixture["confirmation_plan"]
     registry_root = tmp_path / "forward_confirmation_registry"
     registry_yaml_path = tmp_path / "registry" / "targets.yaml"
@@ -51,18 +94,18 @@ def test_confirmation_targets_registers_only_validated_plan_targets(
 
 
 def test_confirmation_targets_rejects_naive_cutoff_before_output(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, confirmation_plan_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = confirmation_plan_fixture
     with pytest.raises(cycle.DynamicV3ConfirmationCycleError, match="timezone-aware"):
         _register(fixture, tmp_path / "registry-a", tmp_path / "registry-a.yaml", naive=True)
     assert not (tmp_path / "registry-a").exists()
 
 
 def test_confirmation_targets_rejects_invalid_plan_before_output(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, mutable_confirmation_plan_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = mutable_confirmation_plan_fixture
     source = fixture["confirmation_plan"]["confirmation_plan_dir"] / "reader_brief_section.md"
     source.write_text(source.read_text(encoding="utf-8") + "tamper\n", encoding="utf-8")
     with pytest.raises(cycle.DynamicV3ConfirmationCycleError, match="plan validation"):
@@ -71,9 +114,9 @@ def test_confirmation_targets_rejects_invalid_plan_before_output(
 
 
 def test_confirmation_targets_rejects_duplicate_plan_registration(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, confirmation_plan_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = confirmation_plan_fixture
     registry_yaml = tmp_path / "registry-c.yaml"
     _register(fixture, tmp_path / "registry-c", registry_yaml)
     with pytest.raises(cycle.DynamicV3ConfirmationCycleError, match="already registered"):
@@ -91,9 +134,11 @@ def test_confirmation_targets_rejects_duplicate_plan_registration(
     ],
 )
 def test_confirmation_targets_validator_rejects_output_tamper(
-    tmp_path: Path, monkeypatch: Any, artifact_name: str
+    tmp_path: Path,
+    confirmation_plan_fixture: dict[str, Any],
+    artifact_name: str,
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = confirmation_plan_fixture
     result = _register(fixture, tmp_path / "registry-d", tmp_path / "registry-d.yaml")
     path = result["registry_dir"] / artifact_name
     if path.suffix == ".json":
@@ -116,9 +161,9 @@ def test_confirmation_targets_validator_rejects_output_tamper(
 
 
 def test_confirmation_targets_validator_rejects_live_plan_drift(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, mutable_confirmation_plan_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = mutable_confirmation_plan_fixture
     result = _register(fixture, tmp_path / "registry-e", tmp_path / "registry-e.yaml")
     source = fixture["confirmation_plan"]["confirmation_plan_dir"] / "reader_brief_section.md"
     source.write_text(source.read_text(encoding="utf-8") + "tamper\n", encoding="utf-8")
@@ -129,9 +174,9 @@ def test_confirmation_targets_validator_rejects_live_plan_drift(
 
 
 def test_confirmation_targets_validator_rejects_current_materialized_drift(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, confirmation_plan_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_forward_confirmation_plan_fixture(tmp_path, monkeypatch)
+    fixture = confirmation_plan_fixture
     registry_yaml = tmp_path / "registry-f.yaml"
     result = _register(fixture, tmp_path / "registry-f", registry_yaml)
     payload = yaml.safe_load(registry_yaml.read_text(encoding="utf-8"))

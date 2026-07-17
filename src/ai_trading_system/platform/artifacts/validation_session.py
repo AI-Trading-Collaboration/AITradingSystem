@@ -38,7 +38,10 @@ _MAX_COMMITMENT_JSON_SIZE_BYTES = 64 * 1024 * 1024
 _FINGERPRINT_READ_CHUNK_BYTES = 1024 * 1024
 _WINDOWS_CHANGE_TOKEN_REQUIRED = os.name == "nt"
 _MAX_AUTOMATIC_BOUND_PATHS = 4_096
-_MAX_COMMITMENT_JSON_NODES = 100_000
+# Large bounded research snapshots currently contain about 226k JSON nodes while
+# binding only tens of external paths.  Keep them cacheable without relaxing the
+# independent 64 MiB document, 4,096 bound-path, and aggregate path-shape caps.
+_MAX_COMMITMENT_JSON_NODES = 500_000
 _MAX_FINGERPRINT_OBSERVED_PATHS = 16_384
 _MAX_BOUND_PATH_UTF8_BYTES = 32 * 1024
 _MAX_BOUND_PATH_TOTAL_UTF8_BYTES = 8 * 1024 * 1024

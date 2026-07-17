@@ -15,14 +15,20 @@ from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_cycle import (
     run_rule_review_cycle,
     validate_rule_review_cycle_artifact,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+)
 from ai_trading_system.reports import reader_brief
 
 
 @pytest.fixture(scope="module")
 def review_cycle_bundle(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
-    fixture = cycle_fixture(tmp_path_factory.mktemp("rule-review-cycle"))
-    yield fixture
-    fixture["_monkeypatch"].undo()
+    with artifact_validation_session():
+        fixture = cycle_fixture(tmp_path_factory.mktemp("rule-review-cycle"))
+        try:
+            yield fixture
+        finally:
+            fixture["_monkeypatch"].undo()
 
 
 def test_rule_review_cycle_defaults_to_continue_tracking_without_policy_change(

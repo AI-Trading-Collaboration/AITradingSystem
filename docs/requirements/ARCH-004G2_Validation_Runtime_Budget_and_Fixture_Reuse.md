@@ -1,6 +1,6 @@
 # ARCH-004G2 Validation Runtime Budget 与 Immutable Fixture Reuse
 
-最后更新：2026-07-16
+最后更新：2026-07-17
 
 ## 任务信息
 
@@ -16,6 +16,28 @@
 G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG 对同一 immutable source
 反复做 live validation、byte rebuild 与大 snapshot 读取：
 
+- EB0-S2D～S2F最终focused：Targets=`10/85.37s`、Advisory=`13/119.35s`、Forward+Rule=
+  `22/209.97s`、四文件合并=`45 passed/235.97s`；同口径基线下界/隔离worker观测对应局部
+  改善至少`87.2%/73.5%/65%/70%`。四个非heavy correctness分片共覆盖`5,782 passed +
+  1 skipped`且0 failure；top-45 heavy在`1,253s`预算停止，不是PASS。停止时6个active文件均为
+  Weight Search共享DAG，16-worker峰值工作集/private约`6.33/17.84GiB`且可用内存约`62GiB`；
+  因此S3应治理duration-aware heavy shard，而不是增加worker或扩张本轮fixture范围。
+- EB0-S2D 隔离候选树诊断把 full 划为文件分片后，`tests/test_confirmation_targets.py` 在
+  `11m05s` 预算停止时仍有一个满核 worker；pytest worker 临时目录证明同一文件内的
+  positive、duplicate、4类 output tamper、live-plan drift 与materialized drift节点分别重建
+  `run_forward_confirmation_plan_fixture` 的完整上游。治理边界固定为module/worker内一次
+  immutable upstream+plan与一个PASS-only validation session；registry输出继续per-test隔离。
+  首个per-test plan copy因绝对self-path commitment正确FAIL，已否决；两个plan tamper节点只允许
+  在`loadfile`串行边界内原地修改并由fixture `finally` byte-exact restore，tamper指纹必须触发真实
+  revalidation。不得减少tamper参数或把validator替换成stub。
+- EB0-S2E 同一分片的 `tests/test_advisory_proposal_review.py` 约占7.5分钟，12个节点重复构建
+  Confirmation Plan直接上游。仅按S2D模式共享module upstream+review；三类可变边界
+  （review output、risk-return source、calibration source）分别由function fixture snapshot/restore，
+  不共享tampered bytes，不改变真实validator或生产实现。
+- EB0-S2F 第2分片最后两个heavy shards为Forward Plan约10分钟及Rule Review约5分钟；后者
+  已构建一次module fixture但session过早关闭。治理仅复用同worker immutable DAG，并让现有
+  byte-restore tamper测试在同一个module session内按内容指纹失效/恢复；峰值约1.76GiB记入S3
+  duration+memory shard证据，不以增加worker掩盖偏斜。
 - G2.4CR 单个 progress 测试从 `557.27s` 降至 `13.60s`，最大 snapshot 从
   `633.06MB` 降至 `9.49MB`；
 - G2.4CS smoothed regression 从 `270.04s` 降至 `100.98s`，readiness chain 从
@@ -116,6 +138,22 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 5. Worker 数和分布策略由历史 duration、可用内存与峰值 working-set 预算推导；不能假设 worker
    越多越快。调整只改变调度，不改变 collected nodeids、assertions 或 exit gate。
 
+## 与 G2.4 剩余批次的执行顺序
+
+2026-07-17 owner 批准把本任务从“整包完成后才恢复callback迁移”调整为 critical-path companion。
+详细计划见 `docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md`：
+
+1. 先执行EB0 1～3日timebox，只治理当前约`17,801.26s`最高长尾、其直接共享DAG、最小
+   immutable fixture/copy-on-write和运行观测；
+2. EB0通过正式focused/architecture/contract/full后进入EB1，不等待28个无关legacy/no-scope
+   调用整包迁移；
+3. EB1～EB8触及相同DAG时渐进迁移scope/reuse，禁止以性能任务横向扩张batch范围；
+4. callback集合稳定后再执行连续3次full、P95、peak-memory、read-amplification和S3完整验收；
+5. required gate无法可靠完成时性能问题才阻塞G2.4；长期目标未满足但required gates可靠PASS时，
+   本任务保持`IN_PROGRESS`并诚实留债，不得无限阻塞callback matrix。
+
+该顺序不降低本任务验收标准，也不把不同命令、nodeids或资源条件的样本拼成改善比例。
+
 ## 分阶段实施
 
 ### S1：Runtime telemetry 与预算
@@ -164,6 +202,31 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 - `strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
 
 ## 当前状态
+
+2026-07-17 / EB0-S2C：正式architecture首轮在`55.60s`结束，说明node-cap修复没有把架构层拖成长尾；
+失败为2项可复现性/新鲜度门禁而非业务回归。其一是本批修改source/test/doc后generated manifests stale；
+其二是CLI frozen tree把checkout绝对根目录编码进`Path`默认值，临时候选worktree与主工作区因根目录
+不同产生987个node hash漂移。为保持并发任务隔离且不把共享工作区未归属改动混入formal gate，本批
+增加有界architecture-only修复：contract序列化仅把`project_root`内绝对`Path`规范化为稳定token，
+实际Typer默认值、参数解析、callback、CLI surface和production行为不变；增加跨checkout等价测试，
+刷新CLI frozen contract与module/test/aggregate manifests后重跑全部正式门禁。该首轮architecture为
+明确FAIL证据，不得静默记作PASS，`production_effect=none`。
+
+2026-07-17 / EB0-S2B：定位并修复smoothed最高长尾的compatibility fingerprint node-cap
+cache bypass。真实`9.09 MiB`snapshot包含`226,197` JSON nodes但仅45个bound paths，超过旧
+`100,000`节点上限后会先累计读/解析、再把整个validation转为uncacheable并递归重放；修复前
+单节点24分钟读取`171.05 GiB`且未完成。Node cap调整为`500,000`，但`64 MiB`文档、4,096
+bound paths、路径形状、link/topology、tamper、PASS-only与before/after fingerprint门禁保持不变；
+超过新上限仍明确bypass。高节点cache hardening=`78 passed, 1 skipped / 3.47s`；同节点同命令
+从`>947.08s`收敛至`1 passed / 172.23s`，6个最重节点=`6 passed / 446.15s`，15文件扩大
+focused=`27 passed / 498.56s`。这些结果证明局部read amplification根因已解除，但尚未执行本批
+architecture/contract/full，也没有连续3次full、完整peak-memory/read telemetry或S3验收；因此本任务
+与EB0都保持`IN_PROGRESS`，不得宣称全局稳定提速，`production_effect=none`。
+
+2026-07-17：owner批准效率优先重排。本任务当前下一动作收敛为EB0 top-tail timebox，而非继续横向
+迁移全部28个legacy scopes；EB0后回到G2.4 EB1～EB8主线，scope migration随所属batch渐进完成，
+完整S2/S3性能验收等待稳定callback集合。本次只改变计划顺序，不改变已实现S2A代码、验证结论、
+runtime或production状态。
 
 G2.4CR/CS 已完成第一批通用 validation session、bounded snapshot 和 fixture path isolation；本任务
 承接剩余 confirmation/full-suite 长尾。CV1/CU/CV2的`2,501.39/1,939.34/1,542.60s`证明单次
