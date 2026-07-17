@@ -1203,7 +1203,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.pit_snapshots
   path: src/ai_trading_system/cli_commands/pit_snapshots.py
-  sha256: 1f541994bd38b4e23b4914ef1aeb424b6b13efad2c64fec3914f28b920568cba
+  sha256: 376668bdcd8f95d4bdd6a4c71f133faab18e8678d228c42f5f8865059dffb10e
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -1291,7 +1291,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.reports
   path: src/ai_trading_system/cli_commands/reports.py
-  sha256: a29759ad6d42e51c96335bb9016f5e9d5a8cc2646ea6b362338309c338a25916
+  sha256: 45f5dbd74ac86b0c4e36a4f162bc01c8a51d88620e26d82c58187134bd5753c8
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -1357,7 +1357,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.research_execution_common
   path: src/ai_trading_system/cli_commands/research_execution_common.py
-  sha256: 188c9318e0a530a0b269b8c11bb6bd594f51bb96a8650b95cd1433750a48cbcc
+  sha256: 069bee9e3d0611f0bddcb4d319cd815b2b8678e44feb274be562c7f6a870ebc8
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -1379,7 +1379,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.research_execution_growth_tilt
   path: src/ai_trading_system/cli_commands/research_execution_growth_tilt.py
-  sha256: 25b2ac5753faf65213419dd4a403ce69e37775560340c5aa8adafc7410f7f3a0
+  sha256: 5d1b61f80d21677bb15445343e04145535ec2a8d44f8b8581eaf9d9b9b434a92
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -1401,7 +1401,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.research_execution_growth_tilt_pit_replay
   path: src/ai_trading_system/cli_commands/research_execution_growth_tilt_pit_replay.py
-  sha256: e91f6086df1d6cf85ed65176ea27aa184156e0441689ea44b2d3b2dc80b447df
+  sha256: feae64de48561d2b9ea8df5e5a57c50e874bb10c716a616470ccab15ca2d904f
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -1423,7 +1423,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.research_execution_semantics
   path: src/ai_trading_system/cli_commands/research_execution_semantics.py
-  sha256: 1b3c718a348a8b00ae0a8670a2f54908a0051088e6283ead92548fd10a3dc0ee
+  sha256: 0d78932cd213ddff13458a6951aa3b1f3bcc19efed356d392b215a8aa4d5343f
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -6179,7 +6179,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_system_target
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py
-  sha256: 012d8ceacbfdd635a711217d45a4f4bde52ec9f7c1b3690ef6ad7540b3cb6b5b
+  sha256: 4bb7d887a3c7632a33221604f75c7fc44a350eab5c514ea31438039b8eee513c
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -6531,7 +6531,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_weight_search_decision
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_decision.py
-  sha256: 85236ac08e2022da9ca9ee421b41e13a77044f6623ad7aee6fac59760e258772
+  sha256: 2242e9464d9cc443f2a669377436a121612150dbae306c7eca5e4e481f5ccfa3
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -11820,7 +11820,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_system_target_smoothed_freshness
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_system_target_smoothed_freshness.py
-  sha256: bc268a1292730b9751c5febe2702dd1a456b85b7e74b6b56d7efc4508fe4b8d7
+  sha256: 9097236a538d90dfe649b2d7bfd455cf5b396338717d824aa153faf0128225b8
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -13104,7 +13104,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.deprecation
   path: src/ai_trading_system/platform/architecture/deprecation.py
-  sha256: a3cb144f770cec4a30a0bcd15512fdddbf91ceb1aa82d2cf529f0088175a6880
+  sha256: 7e4c9ee89bd82ba6f7a4d2444908fc38deb5b35d29b02fdc9c00385968464bfd
   rule_id: platform
   owner_profile: platform
   owners:
@@ -13126,7 +13126,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.devex
   path: src/ai_trading_system/platform/architecture/devex.py
-  sha256: f536638dcdb7c0315fc10d12e0b2d702bc738ff508fbfe086ffd34d7d37d74db
+  sha256: 12bd07e53bdf8c88d279bf80abdcd483ef9619c63c55b8ff0abb9cac0b792820
   rule_id: platform
   owner_profile: platform
   owners:

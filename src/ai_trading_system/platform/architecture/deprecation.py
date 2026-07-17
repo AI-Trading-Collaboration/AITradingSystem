@@ -401,7 +401,10 @@ def _scan_target(
         any(token in text for token in tokens) for text in reference_text.values()
     )
     digest_material = "\n".join(
-        f"{_project_path(path, project_root)}:{hashlib.sha256(path.read_bytes()).hexdigest()}"
+        (
+            f"{_project_path(path, project_root)}:"
+            f"{hashlib.sha256(_canonical_repository_text_bytes(path)).hexdigest()}"
+        )
         for path in paths
     ).encode("utf-8")
     return DeprecationSurfaceInventory(
@@ -435,9 +438,10 @@ def _target_paths(target: DeprecationTargetPolicy, project_root: Path) -> tuple[
 
 
 def _python_stats(path: Path) -> tuple[int, int, int, int, int]:
-    text = path.read_text(encoding="utf-8")
+    canonical_bytes = _canonical_repository_text_bytes(path)
+    text = canonical_bytes.decode("utf-8")
     if path.suffix != ".py":
-        return len(text.splitlines()), path.stat().st_size, 0, 0, 0
+        return len(text.splitlines()), len(canonical_bytes), 0, 0, 0
     tree = ast.parse(text)
     functions = sum(
         isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) for node in tree.body
@@ -449,7 +453,12 @@ def _python_stats(path: Path) -> tuple[int, int, int, int, int]:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
         for decorator in node.decorator_list
     )
-    return len(text.splitlines()), path.stat().st_size, functions, classes, command_decorators
+    return len(text.splitlines()), len(canonical_bytes), functions, classes, command_decorators
+
+
+def _canonical_repository_text_bytes(path: Path) -> bytes:
+    """Return UTF-8 bytes with universal newlines normalized to LF."""
+    return path.read_text(encoding="utf-8").encode("utf-8")
 
 
 def _is_command_decorator(node: ast.expr) -> bool:

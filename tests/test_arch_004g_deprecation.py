@@ -15,6 +15,7 @@ from ai_trading_system.contracts.deprecation import (
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.platform.architecture.deprecation import (
     DeprecationArchitectureError,
+    _canonical_repository_text_bytes,
     assert_frozen_deprecation_inventory,
     load_deprecation_policy,
     scan_deprecation_inventory,
@@ -69,6 +70,19 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     assert all(not item.removal_ready for item in inventory.surfaces)
     assert all(len(item.open_gate_ids) == 12 for item in inventory.surfaces)
     assert_frozen_deprecation_inventory(inventory)
+
+
+def test_deprecation_inventory_source_bytes_are_checkout_eol_independent(
+    tmp_path: Path,
+) -> None:
+    lf_path = tmp_path / "lf.py"
+    crlf_path = tmp_path / "crlf.py"
+    lf_path.write_bytes(b"def sample():\n    return 1\n")
+    crlf_path.write_bytes(b"def sample():\r\n    return 1\r\n")
+
+    assert _canonical_repository_text_bytes(lf_path) == _canonical_repository_text_bytes(
+        crlf_path
+    )
 
 
 def test_g0_inventory_drift_fails_closed() -> None:

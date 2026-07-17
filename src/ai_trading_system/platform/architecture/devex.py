@@ -12,6 +12,8 @@ from ai_trading_system.platform.architecture.dependency_gate import (
 from ai_trading_system.platform.artifacts import write_yaml_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
+_GIT_EOL_LF_SUFFIXES = frozenset({".md", ".py", ".toml", ".yaml", ".yml"})
+
 
 class DevExArchitectureError(ValueError):
     def __init__(self, code: str, message: str) -> None:
@@ -395,7 +397,10 @@ def _strings(value: object) -> list[str]:
 
 
 def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    payload = path.read_bytes()
+    if path.suffix.lower() in _GIT_EOL_LF_SUFFIXES:
+        payload = payload.replace(b"\r\n", b"\n")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _portable(path: Path, project_root: Path) -> str:

@@ -22,6 +22,18 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
   1 skipped`且0 failure；top-45 heavy在`1,253s`预算停止，不是PASS。停止时6个active文件均为
   Weight Search共享DAG，16-worker峰值工作集/private约`6.33/17.84GiB`且可用内存约`62GiB`；
   因此S3应治理duration-aware heavy shard，而不是增加worker或扩张本轮fixture范围。
+- clean candidate正式focused首轮=`258 passed / 1 skipped / 1 failed / 252.60s`；唯一失败是
+  frozen baseline记录CRLF原始字节、仓库规范与clean checkout均为LF造成的SHA差异。第二次
+  baseline单节点`2.35s`确认还有mixed line ending。严格main/candidate逻辑内容等价审计共6项；
+  DevEx hash helper须对受`.gitattributes eol=lf`约束的architecture text canonicalize，并以
+  LF/CRLF/mixed等价、binary raw-byte差异测试约束。baseline保留previous worktree SHA；不得改
+  业务源文件。两轮均不算PASS，修复后必须同命令重跑。
+- 修复后的正式focused=`274 passed / 1 skipped / 248.21s`，新增DevEx EOL约束后仍比首轮
+  快约`1.7%`；最慢节点为smoothed freshness tamper=`204.52s`，证明剩余风险集中在单文件
+  loadfile尾部而非整体回退。正式architecture首轮=`310 passed / 1 failed / 62.70s`，进一步
+  暴露deprecation inventory的Python source byte/hash仍依赖CRLF/LF工作区；切换为UTF-8
+  universal-newline LF后，architecture=`312 passed / 58.22s`、contract=`204 passed /
+  44.22s`。生成manifests连续耗时`14.40～16.17s`，无异常增长；formal full仍待执行。
 - EB0-S2D 隔离候选树诊断把 full 划为文件分片后，`tests/test_confirmation_targets.py` 在
   `11m05s` 预算停止时仍有一个满核 worker；pytest worker 临时目录证明同一文件内的
   positive、duplicate、4类 output tamper、live-plan drift 与materialized drift节点分别重建
@@ -183,6 +195,31 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 - 比较 `loadfile`、`loadscope` 与显式 shard 的 wall-time/peak-memory；
 - 根据机器可用内存选择 bounded worker count，并保证完整 nodeid 集合与失败传播一致。
 
+### S3A：Weight Search tail hardening（owner批准的有界优先批次）
+
+2026-07-17 owner在EB0 formal full后批准继续针对性优化尾部。该批次以
+`full_20260717T075427Z`为唯一同机器pre-change full证据：`6,195 passed / 2 skipped /
+2,138.84s`，94%约在9分钟完成，但最后6%持续到35分38秒；进程树约13～14.5核持续活跃，
+working/private峰值约`9.41/21.65GiB`且系统仍有约`57.9GiB`可用内存，因此根因优先级为
+重复DAG计算与file-level duration偏斜，不是hang或内存不足。
+
+S3A严格限定为：
+
+- 第一批只审计并治理Weight Search直接链，优先顺序为Follow-up=`1,059.34s`、Decision=
+  `635.33s`、Targeted=`410.65s`、Diagnostics=`369.99s`、Dashboard=`300.18s`、Evaluation=
+  `267.60s`；Near-Miss A/B=`652.38s`仅在证明共享同一上游后才可纳入；
+- 先识别单node内部重复builder/validator replay，再选择module/session immutable fixture、
+  content-fingerprint PASS-only validation context或byte-exact copy-on-write；不得仅为降时替换真实
+  builder/validator、跳过all-view rebuild或缩减tamper矩阵；
+- Research Foundation的`468.92～500.45s`setup作为第二批候选，必须等待Weight Search第一批
+  同node同命令证据闭合，不与第一批并发扩大修改范围；
+- 调度策略只做只读benchmark；在证明nodeid、fixture隔离与失败传播等价前，不把`worksteal`、
+  `loadscope`或不同worker数的结果替代正式`-n16 --dist loadfile` gate。
+
+S3A第一批退出要求：目标文件collected nodeids/skip/xfail不减少；source/policy/output/tamper任一
+byte变化仍真实失效且FAIL不缓存；同node同命令before/after可比；scoped Ruff、focused并行pytest、
+architecture/contract/full均PASS；所有改动`strategy_logic_changed=false`、`production_effect=none`。
+
 ### S4：持续回归约束
 
 - architecture/contract tests 校验 runtime manifest freshness、调度确定性和 gate coverage；
@@ -202,6 +239,40 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 - `strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
 
 ## 当前状态
+
+2026-07-17 / S3A Weight Search第一批实现完成、转入正式验证：同机器、同
+`python -m pytest -n 16 --dist loadfile`五文件命令的pre-change基线为`5 passed / 889.01s`，
+其中Follow-up=`884.24s`、Decision=`533.73s`；最终同命令为`5 passed / 254.19s`，wall time
+缩短约`71.4%`，其中Follow-up=`229.78s`、Decision=`88.59s`。隔离Decision同节点从
+`500.55s`降至`102.93s`（约`-79.4%`），Follow-up隔离同节点从`884.24s`降至
+`352.36s`（约`-60.1%`）。实现只让完整hardening node共享既有
+`artifact_validation_session`，并把Decision内部上游验证迁移到PASS-only content fingerprint
+调用；第一次完整builder/rebuild仍执行，任一view、snapshot或cross-lineage byte篡改均产生新指纹并
+真实FAIL，FAIL不缓存。原五文件nodeid、skip/xfail与all-view tamper矩阵未减少；scoped Ruff已PASS。
+最终正式门禁为focused=`291 passed / 1 skipped / 269.09s`、architecture=`312 passed /
+51.75s`、contract=`204 passed / 43.65s`、full=`6,195 passed / 2 skipped / 642 warnings /
+1,789.86s`。full相对同机器pre-change `2,138.84s`缩短`348.98s`（约`16.3%`）；其中
+Follow-up full节点=`1,059.34s -> 408.82s`（约`-61.4%`），Decision hardening=
+`635.33s -> 157.40s`（约`-75.2%`）。剩余前三直接长尾转为Signal Feature Quality=
+`744.32s`、Near-Miss A/B=`605.90s`、Promotion Sensitivity=`593.53s`，Research Foundation
+setup仍为`453.54～482.45s`。Targeted/Diagnostics/Evaluation没有保留无收益的代码修改；Research
+Foundation第二批未启动，等待owner在本轮收口复盘后决定。`strategy_logic_changed=false`、
+`cached_data_mutated=false`、`production_effect=none`。
+
+2026-07-17 / S3A启动：owner确认在EB0 formal full后继续针对尾部耗时做有界优化。pre-change full=
+`6,195 passed / 2 skipped / 642 warnings / 2,138.84s`，runtime artifact=
+`outputs/validation_runtime/full_20260717T075427Z/test_runtime_summary.json`。相对`2,554.80s`与
+`2,514.64s`近期基线分别约缩短`16.3%/14.9%`，但仍比历史最快`1,534.77s`慢约`39.4%`，且未满足
+连续3次P95目标。当前优化先处理Weight Search单node内部重复DAG，Research Foundation setup排第二；
+不启动EB1、不改变正式gate、worker/distribution或production语义。
+
+2026-07-17 / EB0 clean candidate：正式focused已`274 passed / 1 skipped / 248.21s`；
+architecture在修复deprecation inventory原始EOL hash漂移后由`310 passed / 1 failed /
+62.70s`转为`312 passed / 58.22s`，contract=`204 passed / 44.22s`。修复仅规范架构inventory
+的文本字节计数与SHA，不改变被扫描业务source、生命周期或removal readiness。当前最慢focused
+节点为`204.52s`的smoothed freshness tamper，architecture最慢节点为`30.15s`的manifest stale
+检查；二者均未越过既有预算，但前者应作为S3 duration-aware shard治理输入。formal full仍为
+`PENDING`，不得把当前状态记为EB0完成，`production_effect=none`。
 
 2026-07-17 / EB0-S2C：正式architecture首轮在`55.60s`结束，说明node-cap修复没有把架构层拖成长尾；
 失败为2项可复现性/新鲜度门禁而非业务回归。其一是本批修改source/test/doc后generated manifests stale；

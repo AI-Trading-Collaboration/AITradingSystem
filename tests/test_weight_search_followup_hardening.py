@@ -10,7 +10,10 @@ import pytest
 from dynamic_v3_weight_batch_search_helpers import run_next_formal_or_search_plan_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_followup as followup
-from ai_trading_system.platform.artifacts.validation_session import artifact_validation_session
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+    with_artifact_validation_session,
+)
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -41,6 +44,7 @@ def _tamper_snapshot_field(
         path.write_bytes(original)
 
 
+@with_artifact_validation_session
 def test_followup_chain_rebuilds_all_views_and_invalidates_cached_pass(
     tmp_path: Path,
 ) -> None:

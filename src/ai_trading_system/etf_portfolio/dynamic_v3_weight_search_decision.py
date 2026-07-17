@@ -9,6 +9,10 @@ from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as _legacy
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_evaluation as evaluation
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_foundation as foundation
+from ai_trading_system.platform.artifacts.validation_session import (
+    cached_artifact_validation,
+    with_artifact_validation_session,
+)
 
 DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR = _legacy.DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR
 DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR = (
@@ -205,9 +209,11 @@ def _view_hash_check(root: Path, snapshot: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _validated_scorecard(scorecard_id: str, scorecard_dir: Path) -> dict[str, Any]:
-    validation = evaluation.validate_weight_scorecard_artifact(
-        scorecard_id=scorecard_id,
-        output_dir=scorecard_dir,
+    validation = cached_artifact_validation(
+        validator=evaluation.validate_weight_scorecard_artifact,
+        validator_key="scorecard_id",
+        artifact_id=scorecard_id,
+        root=scorecard_dir,
     )
     _require(validation.get("status") == "PASS", "source scorecard validation failed")
     return evaluation.weight_scorecard_report_payload(
@@ -217,9 +223,11 @@ def _validated_scorecard(scorecard_id: str, scorecard_dir: Path) -> dict[str, An
 
 
 def _validated_robustness(robustness_id: str, robustness_dir: Path) -> dict[str, Any]:
-    validation = evaluation.validate_weight_robustness_review_artifact(
-        robustness_id=robustness_id,
-        output_dir=robustness_dir,
+    validation = cached_artifact_validation(
+        validator=evaluation.validate_weight_robustness_review_artifact,
+        validator_key="robustness_id",
+        artifact_id=robustness_id,
+        root=robustness_dir,
     )
     _require(validation.get("status") == "PASS", "source robustness validation failed")
     return evaluation.weight_robustness_review_report_payload(
@@ -229,9 +237,11 @@ def _validated_robustness(robustness_id: str, robustness_dir: Path) -> dict[str,
 
 
 def _validated_adaptive(branch_id: str, branch_dir: Path) -> dict[str, Any]:
-    validation = evaluation.validate_weight_adaptive_branch_artifact(
-        branch_id=branch_id,
-        output_dir=branch_dir,
+    validation = cached_artifact_validation(
+        validator=evaluation.validate_weight_adaptive_branch_artifact,
+        validator_key="branch_id",
+        artifact_id=branch_id,
+        root=branch_dir,
     )
     _require(validation.get("status") == "PASS", "source adaptive branch validation failed")
     return evaluation.weight_adaptive_branch_report_payload(
@@ -240,6 +250,7 @@ def _validated_adaptive(branch_id: str, branch_dir: Path) -> dict[str, Any]:
     )
 
 
+@with_artifact_validation_session
 def run_weight_candidate_cluster(
     *,
     scorecard_id: str,
@@ -415,6 +426,7 @@ def _rebuild_cluster(root: Path, cluster_id: str) -> list[dict[str, Any]]:
     return checks
 
 
+@with_artifact_validation_session
 def validate_weight_candidate_cluster_artifact(
     *,
     cluster_id: str,
@@ -443,6 +455,7 @@ def validate_weight_candidate_cluster_artifact(
     )
 
 
+@with_artifact_validation_session
 def run_weight_top_candidate_interpretation(
     *,
     cluster_id: str,
@@ -451,9 +464,11 @@ def run_weight_top_candidate_interpretation(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    cluster_validation = validate_weight_candidate_cluster_artifact(
-        cluster_id=cluster_id,
-        output_dir=cluster_dir,
+    cluster_validation = cached_artifact_validation(
+        validator=validate_weight_candidate_cluster_artifact,
+        validator_key="cluster_id",
+        artifact_id=cluster_id,
+        root=cluster_dir,
     )
     _require(cluster_validation.get("status") == "PASS", "source cluster validation failed")
     cluster = weight_candidate_cluster_report_payload(cluster_id=cluster_id, output_dir=cluster_dir)
@@ -590,9 +605,11 @@ def _rebuild_interpretation(root: Path, interpretation_id: str) -> list[dict[str
     cluster_source = _mapping(snapshot.get("cluster_source"))
     _validate_binding(cluster_source, kind="weight_candidate_cluster")
     cluster_id = _source_id(cluster_source)
-    validation = validate_weight_candidate_cluster_artifact(
-        cluster_id=cluster_id,
-        output_dir=_source_dir(cluster_source).parent,
+    validation = cached_artifact_validation(
+        validator=validate_weight_candidate_cluster_artifact,
+        validator_key="cluster_id",
+        artifact_id=cluster_id,
+        root=_source_dir(cluster_source).parent,
     )
     _require(validation.get("status") == "PASS", "source cluster validation failed")
     cluster = weight_candidate_cluster_report_payload(
@@ -630,6 +647,7 @@ def _rebuild_interpretation(root: Path, interpretation_id: str) -> list[dict[str
     return checks
 
 
+@with_artifact_validation_session
 def validate_weight_top_candidate_interpretation_artifact(
     *,
     interpretation_id: str,
@@ -658,6 +676,7 @@ def validate_weight_top_candidate_interpretation_artifact(
     )
 
 
+@with_artifact_validation_session
 def run_weight_method_promotion_gate(
     *,
     interpretation_id: str,
@@ -666,9 +685,11 @@ def run_weight_method_promotion_gate(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    validation = validate_weight_top_candidate_interpretation_artifact(
-        interpretation_id=interpretation_id,
-        output_dir=interpretation_dir,
+    validation = cached_artifact_validation(
+        validator=validate_weight_top_candidate_interpretation_artifact,
+        validator_key="interpretation_id",
+        artifact_id=interpretation_id,
+        root=interpretation_dir,
     )
     _require(validation.get("status") == "PASS", "source interpretation validation failed")
     interpretation = weight_top_candidate_interpretation_report_payload(
@@ -812,9 +833,11 @@ def _rebuild_gate(root: Path, promotion_gate_id: str) -> list[dict[str, Any]]:
     source = _mapping(snapshot.get("interpretation_source"))
     _validate_binding(source, kind="weight_top_candidate_interpretation")
     interpretation_id = _source_id(source)
-    validation = validate_weight_top_candidate_interpretation_artifact(
-        interpretation_id=interpretation_id,
-        output_dir=_source_dir(source).parent,
+    validation = cached_artifact_validation(
+        validator=validate_weight_top_candidate_interpretation_artifact,
+        validator_key="interpretation_id",
+        artifact_id=interpretation_id,
+        root=_source_dir(source).parent,
     )
     _require(validation.get("status") == "PASS", "source interpretation validation failed")
     interpretation = weight_top_candidate_interpretation_report_payload(
@@ -851,6 +874,7 @@ def _rebuild_gate(root: Path, promotion_gate_id: str) -> list[dict[str, Any]]:
     return checks
 
 
+@with_artifact_validation_session
 def validate_weight_method_promotion_gate_artifact(
     *,
     promotion_gate_id: str,
@@ -879,6 +903,7 @@ def validate_weight_method_promotion_gate_artifact(
     )
 
 
+@with_artifact_validation_session
 def run_formal_method_auto_plan(
     *,
     promotion_gate_id: str,
@@ -946,9 +971,11 @@ def run_formal_method_auto_plan(
 
 
 def _validated_gate(promotion_gate_id: str, promotion_gate_dir: Path) -> dict[str, Any]:
-    validation = validate_weight_method_promotion_gate_artifact(
-        promotion_gate_id=promotion_gate_id,
-        output_dir=promotion_gate_dir,
+    validation = cached_artifact_validation(
+        validator=validate_weight_method_promotion_gate_artifact,
+        validator_key="promotion_gate_id",
+        artifact_id=promotion_gate_id,
+        root=promotion_gate_dir,
     )
     _require(validation.get("status") == "PASS", "source promotion gate validation failed")
     return weight_method_promotion_gate_report_payload(
@@ -1067,6 +1094,7 @@ def _rebuild_plan(root: Path, plan_id: str) -> list[dict[str, Any]]:
     return checks
 
 
+@with_artifact_validation_session
 def validate_formal_method_auto_plan_artifact(
     *,
     plan_id: str,
@@ -1095,6 +1123,7 @@ def validate_formal_method_auto_plan_artifact(
     )
 
 
+@with_artifact_validation_session
 def build_weight_search_dashboard(
     *,
     scorecard_id: str,
@@ -1309,6 +1338,7 @@ def _rebuild_dashboard(root: Path, dashboard_id: str) -> list[dict[str, Any]]:
     return checks
 
 
+@with_artifact_validation_session
 def validate_weight_search_dashboard_artifact(
     *,
     dashboard_id: str,
@@ -1337,6 +1367,7 @@ def validate_weight_search_dashboard_artifact(
     )
 
 
+@with_artifact_validation_session
 def build_owner_research_decision_pack(
     *,
     dashboard_id: str,
@@ -1345,9 +1376,11 @@ def build_owner_research_decision_pack(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    validation = validate_weight_search_dashboard_artifact(
-        dashboard_id=dashboard_id,
-        output_dir=dashboard_dir,
+    validation = cached_artifact_validation(
+        validator=validate_weight_search_dashboard_artifact,
+        validator_key="dashboard_id",
+        artifact_id=dashboard_id,
+        root=dashboard_dir,
     )
     _require(validation.get("status") == "PASS", "source dashboard validation failed")
     dashboard = weight_search_dashboard_report_payload(
@@ -1459,9 +1492,11 @@ def _rebuild_owner(root: Path, owner_pack_id: str) -> list[dict[str, Any]]:
     source = _mapping(snapshot.get("dashboard_source"))
     _validate_binding(source, kind="weight_search_dashboard")
     dashboard_id = _source_id(source)
-    validation = validate_weight_search_dashboard_artifact(
-        dashboard_id=dashboard_id,
-        output_dir=_source_dir(source).parent,
+    validation = cached_artifact_validation(
+        validator=validate_weight_search_dashboard_artifact,
+        validator_key="dashboard_id",
+        artifact_id=dashboard_id,
+        root=_source_dir(source).parent,
     )
     _require(validation.get("status") == "PASS", "source dashboard validation failed")
     dashboard = weight_search_dashboard_report_payload(
@@ -1505,6 +1540,7 @@ def _rebuild_owner(root: Path, owner_pack_id: str) -> list[dict[str, Any]]:
     return checks
 
 
+@with_artifact_validation_session
 def validate_owner_research_decision_pack_artifact(
     *,
     owner_pack_id: str,

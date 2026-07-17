@@ -14,6 +14,16 @@ DEPENDENCY_POLICY_PATH = Path("config/architecture/arch_004c_dependency_policy.y
 DIRECT_WRITER_BASELINE_PATH = Path("inputs/architecture/arch_004c_direct_writer_baseline.yaml")
 
 
+def _source_sha256(source: dict[str, object]) -> str:
+    payload = Path(str(source["path"])).read_bytes()
+    normalization = source.get("hash_normalization")
+    if normalization == "git_eol_lf":
+        payload = payload.replace(b"\r\n", b"\n")
+    elif normalization is not None:
+        raise AssertionError(f"unsupported hash normalization: {normalization}")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety() -> None:
     policy = safe_load_yaml_path(POLICY_PATH)
 
@@ -869,6 +879,23 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert baseline["surface_inventory"]["types"]["cli_command"] == 1103
     assert baseline["surface_inventory"]["types"]["report_registry_entry"] == 1358
     assert baseline["repository_inventory"]["python_module_count"] == 752
+    assert baseline["checkout_hash_normalization"] == {
+        "schema_version": "arch_004_checkout_hash_normalization.v1",
+        "status": "PASS",
+        "policy": "git_eol_lf",
+        "normalized_source_count": 6,
+        "source_content_changed": False,
+        "production_effect": "none",
+        "paths": [
+            "docs/artifact_catalog.md",
+            "src/ai_trading_system/cli_commands/reports.py",
+            "src/ai_trading_system/cli_commands/research_execution_common.py",
+            "src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py",
+            "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+            "dynamic_v3_system_target_smoothed_freshness.py",
+            "tests/test_cli_direct.py",
+        ],
+    }
     assert baseline["validation_baseline"]["full_after_fix"]["status"] == "PASS"
     assert baseline["validation_baseline"]["full_after_fix"]["failed"] == 0
     date_range_contract = baseline["explicit_cli_adapter_contracts"]["date_range_kwargs"]
@@ -887,6 +914,15 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         "positional_parameters": ["as_of"],
         "exact_output_keys": ["as_of_date"],
     }
+    execution_cli_source = next(
+        source
+        for source in baseline["frozen_sources"]
+        if source["contract_id"] == "execution_cli_date_adapters_after_arch_004a1"
+    )
+    assert execution_cli_source["hash_normalization"] == "git_eol_lf"
+    assert execution_cli_source["previous_worktree_sha256"] == (
+        "188c9318e0a530a0b269b8c11bb6bd594f51bb96a8650b95cd1433750a48cbcc"
+    )
     for source in baseline["frozen_sources"]:
         if source.get("historical_phase_a_hash"):
             assert source["superseded_by_phase"] in {
@@ -896,7 +932,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             }
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["contract_id"]
     phase_b = baseline["phase_b_semantic_kernel"]
     assert phase_b["status"] == "COMPLETE_PHASE_C_READY"
@@ -915,7 +951,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] == "ARCH-004C"
             assert source["current_hash_tracked_in"] == "phase_c_platform_contracts.sources"
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_c = baseline["phase_c_platform_contracts"]
     assert phase_c["status"] == "COMPLETE_PHASE_D_READY"
@@ -946,7 +982,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             }
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_d = baseline["phase_d_reference_vertical_slice"]
     assert phase_d["status"] == "COMPLETE_PHASE_E_READY"
@@ -968,7 +1004,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004E", "ARCH-004F2_RUNTIME"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_e = baseline["phase_e_devex_ownership_generated_indexes"]
     assert phase_e["status"] == "COMPLETE_PHASE_F_READY"
@@ -1010,10 +1046,11 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "ARCH-004F2",
                 "ARCH-004F2_RUNTIME",
                 "ARCH-004G",
+                "ARCH-004G2.4_EB0",
             }
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_f2 = baseline["phase_f2_research_lifecycle_and_execution_chain"]
     assert phase_f2["status"] == "BASELINE_DONE_RUNTIME_MIGRATION_PENDING"
@@ -1036,7 +1073,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] == "ARCH-004F2_RUNTIME"
             assert source["current_hash_tracked_in"] == ("phase_f2_runtime_lifecycle.sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     runtime = baseline["phase_f2_runtime_lifecycle"]
     assert runtime["status"] == "COMPLETE_F1_F3_READY"
@@ -1066,7 +1103,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             }
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_f1 = baseline["phase_f1_operations_control_plane"]
     assert phase_f1["status"] == "COMPLETE_F3_READY"
@@ -1105,7 +1142,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             }
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_f3 = baseline["phase_f3_reporting_architecture"]
     assert phase_f3["status"] == "COMPLETE_G_READY"
@@ -1135,7 +1172,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             }
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g0 = baseline["phase_g0_deprecation_inventory_and_policy"]
     assert phase_g0["status"] == "COMPLETE_G1_IN_PROGRESS"
@@ -1163,10 +1200,11 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "ARCH-004G1",
                 "ARCH-004G2.1",
                 "ARCH-004G2.4P",
+                "ARCH-004G2.4_EB0",
             }
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g1 = baseline["phase_g1_shared_writer_migration"]
     assert phase_g1["status"] == "FIRST_FAMILY_COMPLETE_G1_CONTINUES"
@@ -1192,7 +1230,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G1.3A", "ARCH-004G1.3C"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g1_3a = baseline["phase_g1_3a_trading_engine_summary_writer_migration"]
     assert phase_g1_3a["status"] == "SECOND_FAMILY_COMPLETE_G1_CONTINUES"
@@ -1217,7 +1255,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G1.3B", "ARCH-004G1.3C"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g1_3b = baseline["phase_g1_3b_notification_retry_writer_migration"]
     assert phase_g1_3b["status"] == "THIRD_FAMILY_COMPLETE_G1_CONTINUES"
@@ -1242,7 +1280,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G1.3C", "ARCH-004G1.3D"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g1_3c = baseline["phase_g1_3c_streaming_checksum_helper_migration"]
     assert phase_g1_3c["status"] == "FOURTH_FAMILY_COMPLETE_G1_CONTINUES"
@@ -1268,7 +1306,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g1_3d_pit_replay_runtime_metadata_migration.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g1_3d = baseline["phase_g1_3d_pit_replay_runtime_metadata_migration"]
     assert phase_g1_3d["status"] == "FIFTH_FAMILY_COMPLETE_G1_CONTINUES"
@@ -1295,7 +1333,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g1_3e_growth_tilt_data_quality_gate_migration.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g1_3e = baseline["phase_g1_3e_growth_tilt_data_quality_gate_migration"]
     assert phase_g1_3e["status"] == "SIXTH_FAMILY_COMPLETE_G1_COMPLETE_G2_IN_PROGRESS"
@@ -1323,7 +1361,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             }
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_1 = baseline["phase_g2_1_etf_cli_contract_baseline"]
     assert phase_g2_1["status"] == "COMPLETE_G2_2_IN_PROGRESS"
@@ -1351,7 +1389,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             }
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_2 = baseline["phase_g2_2_etf_cli_registration_shell"]
     assert phase_g2_2["status"] == "COMPLETE_G2_3_IN_PROGRESS"
@@ -1384,7 +1422,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_3a_etf_cli_data_features.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_3a = baseline["phase_g2_3a_etf_cli_data_features"]
     assert phase_g2_3a["status"] == "COMPLETE_G2_3_CONTINUES"
@@ -1400,7 +1438,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G2.3B", "ARCH-004G2.3G"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_3b = baseline["phase_g2_3b_etf_cli_data_quality"]
     assert phase_g2_3b["status"] == "COMPLETE_G2_3_CONTINUES"
@@ -1415,7 +1453,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G2.3C", "ARCH-004G2.3H"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_3c = baseline["phase_g2_3c_etf_cli_operations"]
     assert phase_g2_3c["status"] == "COMPLETE_G2_3_CONTINUES"
@@ -1434,7 +1472,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G2.3D", "ARCH-004G2.4CM"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_3d = baseline["phase_g2_3d_etf_cli_evidence_dashboard"]
     assert phase_g2_3d["status"] == "COMPLETE_G2_3_CONTINUES"
@@ -1451,7 +1489,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G2.3E", "ARCH-004G2.4CM"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_3e = baseline["phase_g2_3e_etf_cli_weekly_review"]
     assert phase_g2_3e["status"] == "COMPLETE_G2_3_CONTINUES"
@@ -1471,7 +1509,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_3f_etf_cli_parameter_review.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_3f = baseline["phase_g2_3f_etf_cli_parameter_review"]
     assert phase_g2_3f["status"] == "COMPLETE_G2_3_CONTINUES"
@@ -1491,7 +1529,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_3g_etf_cli_satellite_attribution.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_3g = baseline["phase_g2_3g_etf_cli_satellite_attribution"]
     assert phase_g2_3g["status"] == "COMPLETE_G2_3_CONTINUES"
@@ -1510,7 +1548,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G2.3H", "ARCH-004G2.4A"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_3h = baseline["phase_g2_3h_etf_cli_trend_calibration"]
     assert phase_g2_3h["status"] == "COMPLETE_G2_3_CONTINUES"
@@ -1530,7 +1568,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G2.3_CLOSEOUT", "ARCH-004G2.4A"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     closeout = baseline["phase_g2_3_closeout_g2_4_start"]
     assert closeout["status"] == "COMPLETE_G2_4_IN_PROGRESS"
@@ -1550,7 +1588,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_4a_etf_cli_baseline_review.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4a = baseline["phase_g2_4a_etf_cli_baseline_review"]
     assert phase_g2_4a["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1570,7 +1608,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G2.4B", "ARCH-004G2.4C"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4b = baseline["phase_g2_4b_etf_cli_shadow_review"]
     assert phase_g2_4b["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1591,7 +1629,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_4c_etf_cli_dynamic_allocation.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4c = baseline["phase_g2_4c_etf_cli_dynamic_allocation"]
     assert phase_g2_4c["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1612,7 +1650,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_4d_etf_cli_dynamic_calibration.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4d = baseline["phase_g2_4d_etf_cli_dynamic_calibration"]
     assert phase_g2_4d["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1633,7 +1671,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_4e_etf_cli_dynamic_robustness.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4e = baseline["phase_g2_4e_etf_cli_dynamic_robustness"]
     assert phase_g2_4e["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1652,7 +1690,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_4f_etf_cli_dynamic_rescue.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4f = baseline["phase_g2_4f_etf_cli_dynamic_rescue"]
     assert phase_g2_4f["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1675,7 +1713,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_4g_etf_cli_dynamic_v2_review.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4g = baseline["phase_g2_4g_etf_cli_dynamic_v2_review"]
     assert phase_g2_4g["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1696,7 +1734,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_4h_etf_cli_dynamic_v3_rescue_base.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4h = baseline["phase_g2_4h_etf_cli_dynamic_v3_rescue_base"]
     assert phase_g2_4h["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1715,7 +1753,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G2.4I", "ARCH-004G2.4BG"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4i = baseline["phase_g2_4i_etf_cli_dynamic_v3_real_evaluation"]
     assert phase_g2_4i["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1736,7 +1774,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_4j_etf_cli_dynamic_v3_failure_attribution.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4j = baseline["phase_g2_4j_etf_cli_dynamic_v3_failure_attribution"]
     assert phase_g2_4j["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1757,7 +1795,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_4k_etf_cli_dynamic_v3_sweep_config.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4k = baseline["phase_g2_4k_etf_cli_dynamic_v3_sweep_config"]
     assert phase_g2_4k["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1776,7 +1814,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G2.4L", "ARCH-004G2.4O"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4l = baseline["phase_g2_4l_etf_cli_dynamic_v3_sweep_runtime"]
     assert phase_g2_4l["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1795,7 +1833,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G2.4M", "ARCH-004G2.4O"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4m = baseline["phase_g2_4m_etf_cli_dynamic_v3_data_audit"]
     assert phase_g2_4m["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1814,7 +1852,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             assert source["superseded_by_phase"] in {"ARCH-004G2.4N", "ARCH-004G2.4O"}
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4n = baseline["phase_g2_4n_etf_cli_dynamic_v3_data_provenance"]
     assert phase_g2_4n["status"] == "COMPLETE_G2_4_CONTINUES"
@@ -1834,7 +1872,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_4o_etf_cli_dynamic_v3_window_audit.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4o = baseline["phase_g2_4o_etf_cli_dynamic_v3_window_audit"]
     assert phase_g2_4o["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -1858,7 +1896,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "phase_g2_4p_etf_cli_dynamic_v3_injection_audit.sources"
             )
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4p = baseline["phase_g2_4p_etf_cli_dynamic_v3_injection_audit"]
     assert phase_g2_4p["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -1882,7 +1920,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4p["sources"]:
         if source["path"] in superseded_g2_4p:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4q = baseline["phase_g2_4q_etf_cli_dynamic_v3_weight_path"]
     assert phase_g2_4q["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -1907,7 +1945,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4q["sources"]:
         if source["path"] in superseded_g2_4q:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4r = baseline["phase_g2_4r_etf_cli_dynamic_v3_candidate_evidence"]
     assert phase_g2_4r["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -1934,7 +1972,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4r["sources"]:
         if source["path"] in superseded_g2_4r:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4s = baseline["phase_g2_4s_etf_cli_dynamic_v3_validation_evidence"]
     assert phase_g2_4s["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -1970,7 +2008,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4s["sources"]:
         if source["path"] in superseded_g2_4s:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4t = baseline["phase_g2_4t_etf_cli_dynamic_v3_legacy_validation"]
     assert phase_g2_4t["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2008,7 +2046,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4t["sources"]:
         if source["path"] in superseded_g2_4t:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4u = baseline["phase_g2_4u_etf_cli_dynamic_v3_shadow_registry"]
     assert phase_g2_4u["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2034,7 +2072,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4u["sources"]:
         if source["path"] in superseded_g2_4u:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4v = baseline["phase_g2_4v_etf_cli_dynamic_v3_research_control"]
     assert phase_g2_4v["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2058,7 +2096,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4v["sources"]:
         if source["path"] in superseded_g2_4v:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4w = baseline["phase_g2_4w_etf_cli_dynamic_v3_observation_lifecycle"]
     assert phase_g2_4w["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2081,7 +2119,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4w["sources"]:
         if source["path"] in superseded_g2_4w:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4x = baseline["phase_g2_4x_etf_cli_dynamic_v3_evidence_readiness"]
     assert phase_g2_4x["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2105,7 +2143,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4x["sources"]:
         if source["path"] in superseded_g2_4x:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4y = baseline["phase_g2_4y_etf_cli_dynamic_v3_evidence_governance"]
     assert phase_g2_4y["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2128,7 +2166,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4y["sources"]:
         if source["path"] in superseded_g2_4y:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4z = baseline["phase_g2_4z_etf_cli_dynamic_v3_candidate_observation"]
     assert phase_g2_4z["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2150,7 +2188,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4z["sources"]:
         if source["path"] in superseded_g2_4z:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4aa = baseline["phase_g2_4aa_etf_cli_dynamic_v3_portfolio_intake"]
     assert phase_g2_4aa["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2170,7 +2208,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4aa["sources"]:
         if source["path"] in superseded_g2_4aa:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ab = baseline["phase_g2_4ab_etf_cli_dynamic_v3_portfolio_risk_controls"]
     assert phase_g2_4ab["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2191,7 +2229,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ab["sources"]:
         if source["path"] in superseded_g2_4ab:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ac = baseline["phase_g2_4ac_etf_cli_dynamic_v3_manual_execution_review"]
     assert phase_g2_4ac["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2212,7 +2250,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ac["sources"]:
         if source["path"] in superseded_g2_4ac:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ad = baseline["phase_g2_4ad_etf_cli_dynamic_v3_real_snapshot_intake"]
     assert phase_g2_4ad["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2232,7 +2270,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ad["sources"]:
         if source["path"] in superseded_g2_4ad:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ae = baseline["phase_g2_4ae_etf_cli_dynamic_v3_real_snapshot_dry_run"]
     assert phase_g2_4ae["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2252,7 +2290,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ae["sources"]:
         if source["path"] in superseded_g2_4ae:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4af = baseline["phase_g2_4af_etf_cli_dynamic_v3_real_execution_owner_review"]
     assert phase_g2_4af["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2272,7 +2310,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4af["sources"]:
         if source["path"] in superseded_g2_4af:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ag = baseline["phase_g2_4ag_etf_cli_dynamic_v3_real_snapshot_paper_action"]
     assert phase_g2_4ag["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2293,7 +2331,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ag["sources"]:
         if source["path"] in superseded_g2_4ag:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ah = baseline["phase_g2_4ah_etf_cli_dynamic_v3_weekly_real_snapshot_review"]
     assert phase_g2_4ah["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2315,7 +2353,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ah["sources"]:
         if source["path"] in superseded_g2_4ah:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ai = baseline["phase_g2_4ai_etf_cli_dynamic_v3_position_advisory"]
     assert phase_g2_4ai["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2337,7 +2375,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ai["sources"]:
         if source["path"] in superseded_g2_4ai:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4aj = baseline["phase_g2_4aj_etf_cli_dynamic_v3_position_advisory_daily"]
     assert phase_g2_4aj["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2361,7 +2399,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4aj["sources"]:
         if source["path"] in superseded_g2_4aj:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ak = baseline["phase_g2_4ak_etf_cli_dynamic_v3_consensus_drift"]
     assert phase_g2_4ak["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2388,7 +2426,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ak["sources"]:
         if source["path"] in superseded_g2_4ak:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4al = baseline["phase_g2_4al_etf_cli_dynamic_v3_owner_review_journal"]
     assert phase_g2_4al["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2413,7 +2451,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4al["sources"]:
         if source["path"] in superseded_g2_4al:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4am = baseline["phase_g2_4am_etf_cli_dynamic_v3_paper_portfolio"]
     assert phase_g2_4am["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2438,7 +2476,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4am["sources"]:
         if source["path"] in superseded_g2_4am:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4an = baseline["phase_g2_4an_etf_cli_dynamic_v3_advisory_outcome"]
     assert phase_g2_4an["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2464,7 +2502,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4an["sources"]:
         if source["path"] in superseded_g2_4an:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ao = baseline["phase_g2_4ao_etf_cli_dynamic_v3_owner_attribution"]
     assert phase_g2_4ao["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2490,7 +2528,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ao["sources"]:
         if source["path"] in superseded_g2_4ao:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ap = baseline["phase_g2_4ap_etf_cli_dynamic_v3_shadow_aging"]
     assert phase_g2_4ap["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2517,7 +2555,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ap["sources"]:
         if source["path"] in superseded_g2_4ap:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4aq = baseline["phase_g2_4aq_etf_cli_dynamic_v3_weekly_advisory_review"]
     assert phase_g2_4aq["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2542,7 +2580,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4aq["sources"]:
         if source["path"] in superseded_g2_4aq:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ar = baseline["phase_g2_4ar_etf_cli_dynamic_v3_replay_inventory"]
     assert phase_g2_4ar["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2567,7 +2605,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ar["sources"]:
         if source["path"] in superseded_g2_4ar:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4as = baseline["phase_g2_4as_etf_cli_dynamic_v3_historical_replay"]
     assert phase_g2_4as["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2592,7 +2630,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4as["sources"]:
         if source["path"] in superseded_g2_4as:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4at = baseline["phase_g2_4at_etf_cli_dynamic_v3_backfilled_outcome"]
     assert phase_g2_4at["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2616,7 +2654,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4at["sources"]:
         if source["path"] in superseded_g2_4at:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4au = baseline["phase_g2_4au_etf_cli_dynamic_v3_historical_paper_sim"]
     assert phase_g2_4au["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2639,7 +2677,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4au["sources"]:
         if source["path"] in superseded_g2_4au:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4av = baseline["phase_g2_4av_etf_cli_dynamic_v3_replay_performance_review"]
     assert phase_g2_4av["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2662,7 +2700,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4av["sources"]:
         if source["path"] in superseded_g2_4av:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4aw = baseline["phase_g2_4aw_etf_cli_dynamic_v3_replay_diagnosis"]
     assert phase_g2_4aw["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2686,7 +2724,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4aw["sources"]:
         if source["path"] in superseded_g2_4aw:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ax = baseline["phase_g2_4ax_etf_cli_dynamic_v3_backfill_repair"]
     assert phase_g2_4ax["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2710,7 +2748,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ax["sources"]:
         if source["path"] in superseded_g2_4ax:
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ay = baseline["phase_g2_4ay_etf_cli_dynamic_v3_variant_comparison"]
     assert phase_g2_4ay["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2734,7 +2772,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ay["sources"]:
         if source["path"] in set(phase_g2_4ay.get("superseded_source_paths", [])):
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4az = baseline["phase_g2_4az_etf_cli_dynamic_v3_rule_calibration"]
     assert phase_g2_4az["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2756,7 +2794,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4az["sources"]:
         if source["path"] in set(phase_g2_4az.get("superseded_source_paths", [])):
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4ba = baseline["phase_g2_4ba_etf_cli_dynamic_v3_replay_forward_bridge"]
     assert phase_g2_4ba["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2778,7 +2816,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4ba["sources"]:
         if source["path"] in set(phase_g2_4ba.get("superseded_source_paths", [])):
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4bb = baseline["phase_g2_4bb_etf_cli_dynamic_v3_outcome_due"]
     assert phase_g2_4bb["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2800,7 +2838,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4bb["sources"]:
         if source["path"] in set(phase_g2_4bb.get("superseded_source_paths", [])):
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4bc = baseline["phase_g2_4bc_etf_cli_dynamic_v3_replay_sample_expansion"]
     assert phase_g2_4bc["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2822,7 +2860,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4bc["sources"]:
         if source["path"] in set(phase_g2_4bc.get("superseded_source_paths", [])):
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4bd = baseline["phase_g2_4bd_etf_cli_dynamic_v3_outcome_dashboard"]
     assert phase_g2_4bd["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2844,7 +2882,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4bd["sources"]:
         if source["path"] in set(phase_g2_4bd.get("superseded_source_paths", [])):
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4be = baseline["phase_g2_4be_etf_cli_dynamic_v3_limited_vs_notrade"]
     assert phase_g2_4be["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2867,7 +2905,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4be["sources"]:
         if source["path"] in set(phase_g2_4be.get("superseded_source_paths", [])):
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4bf = baseline["phase_g2_4bf_etf_cli_dynamic_v3_consensus_risk"]
     assert phase_g2_4bf["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2892,7 +2930,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4bf["sources"]:
         if source["path"] in set(phase_g2_4bf.get("superseded_source_paths", [])):
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4bg = baseline["phase_g2_4bg_etf_cli_dynamic_v3_outcome_update_review"]
     assert phase_g2_4bg["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2916,7 +2954,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4bg["sources"]:
         if source["path"] in set(phase_g2_4bg.get("superseded_source_paths", [])):
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4bh = baseline["phase_g2_4bh_etf_cli_dynamic_v3_outcome_update"]
     assert phase_g2_4bh["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2945,7 +2983,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4bh["sources"]:
         if source["path"] in set(phase_g2_4bh.get("superseded_source_paths", [])):
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4bi = baseline["phase_g2_4bi_etf_cli_dynamic_v3_rolling_evidence_refresh"]
     assert phase_g2_4bi["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -2974,7 +3012,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_g2_4bi["sources"]:
         if source["path"] in set(phase_g2_4bi.get("superseded_source_paths", [])):
             continue
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
     phase_g2_4bj = baseline["phase_g2_4bj_etf_cli_dynamic_v3_evidence_trend"]
     assert phase_g2_4bj["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3000,7 +3038,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bj["sources"]:
             if source["path"] in set(phase_g2_4bj.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bk = baseline["phase_g2_4bk_etf_cli_dynamic_v3_forward_outcome_decision"]
     assert phase_g2_4bk["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3026,7 +3064,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bk["sources"]:
             if source["path"] in set(phase_g2_4bk.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bl = baseline["phase_g2_4bl_etf_cli_dynamic_v3_backtest_sim_events"]
     assert phase_g2_4bl["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3051,7 +3089,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bl["sources"]:
             if source["path"] in set(phase_g2_4bl.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bm = baseline["phase_g2_4bm_etf_cli_dynamic_v3_backtest_sim_variants"]
     assert phase_g2_4bm["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3075,7 +3113,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bm["sources"]:
             if source["path"] in set(phase_g2_4bm.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bn = baseline["phase_g2_4bn_etf_cli_dynamic_v3_backtest_sim_outcome"]
     assert phase_g2_4bn["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3101,7 +3139,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bn["sources"]:
             if source["path"] in set(phase_g2_4bn.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bo = baseline["phase_g2_4bo_etf_cli_dynamic_v3_backtest_sim_paper"]
     assert phase_g2_4bo["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3128,7 +3166,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bo["sources"]:
             if source["path"] in set(phase_g2_4bo.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bp = baseline["phase_g2_4bp_etf_cli_dynamic_v3_backtest_sim_regime"]
     assert phase_g2_4bp["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3152,7 +3190,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bp["sources"]:
             if source["path"] in set(phase_g2_4bp.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bq = baseline["phase_g2_4bq_etf_cli_dynamic_v3_backtest_sim_sensitivity"]
     assert phase_g2_4bq["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3180,7 +3218,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bq["sources"]:
             if source["path"] in set(phase_g2_4bq.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4br = baseline["phase_g2_4br_etf_cli_dynamic_v3_backtest_sim_calibration"]
     assert phase_g2_4br["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3205,7 +3243,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4br["sources"]:
             if source["path"] in set(phase_g2_4br.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bs = baseline["phase_g2_4bs_etf_cli_dynamic_v3_backtest_sim_forward_bridge"]
     assert phase_g2_4bs["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3230,7 +3268,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bs["sources"]:
             if source["path"] in set(phase_g2_4bs.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bt = baseline["phase_g2_4bt_etf_cli_dynamic_v3_sim_interpretation"]
     assert phase_g2_4bt["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3256,7 +3294,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bt["sources"]:
             if source["path"] in set(phase_g2_4bt.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bu = baseline["phase_g2_4bu_etf_cli_dynamic_v3_sim_risk_return"]
     assert phase_g2_4bu["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3281,7 +3319,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bu["sources"]:
             if source["path"] in set(phase_g2_4bu.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bv = baseline["phase_g2_4bv_etf_cli_dynamic_v3_sim_defensive_validation"]
     assert phase_g2_4bv["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3307,7 +3345,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bv["sources"]:
             if source["path"] in set(phase_g2_4bv.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bw = baseline["phase_g2_4bw_etf_cli_dynamic_v3_advisory_proposal_review"]
     assert phase_g2_4bw["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3333,7 +3371,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bw["sources"]:
             if source["path"] in set(phase_g2_4bw.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bx = baseline["phase_g2_4bx_etf_cli_dynamic_v3_forward_confirmation_plan"]
     assert phase_g2_4bx["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3360,7 +3398,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bx["sources"]:
             if source["path"] in set(phase_g2_4bx.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4by = baseline["phase_g2_4by_etf_cli_dynamic_v3_confirmation_targets"]
     assert phase_g2_4by["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3389,7 +3427,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4by["sources"]:
             if source["path"] in set(phase_g2_4by.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4bz = baseline["phase_g2_4bz_etf_cli_dynamic_v3_confirmation_progress"]
     assert phase_g2_4bz["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3416,7 +3454,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4bz["sources"]:
             if source["path"] in set(phase_g2_4bz.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4ca = baseline["phase_g2_4ca_etf_cli_dynamic_v3_confirmation_evaluation"]
     assert phase_g2_4ca["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3443,7 +3481,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4ca["sources"]:
             if source["path"] in set(phase_g2_4ca.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4cb = baseline["phase_g2_4cb_etf_cli_dynamic_v3_rule_review_cycle"]
     assert phase_g2_4cb["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3472,7 +3510,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cb["sources"]:
             if source["path"] in set(phase_g2_4cb.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4cc = baseline["phase_g2_4cc_etf_cli_dynamic_v3_rule_owner_decision"]
     assert phase_g2_4cc["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3501,7 +3539,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cc["sources"]:
             if source["path"] in set(phase_g2_4cc.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4cd = baseline["phase_g2_4cd_etf_cli_dynamic_v3_confirmation_operations"]
     assert phase_g2_4cd["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3531,7 +3569,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cd["sources"]:
             if source["path"] in set(phase_g2_4cd.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4ce = baseline["phase_g2_4ce_etf_cli_dynamic_v3_pressure_validation"]
     assert phase_g2_4ce["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3567,7 +3605,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4ce["sources"]:
             if source["path"] in set(phase_g2_4ce.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4cf = baseline["phase_g2_4cf_etf_cli_dynamic_v3_defensive_research_synthesis"]
     assert phase_g2_4cf["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3596,7 +3634,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cf["sources"]:
             if source["path"] in set(phase_g2_4cf.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4cg = baseline["phase_g2_4cg_etf_cli_dynamic_v3_forward_pressure_evidence"]
     assert phase_g2_4cg["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3627,7 +3665,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cg["sources"]:
             if source["path"] in set(phase_g2_4cg.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4ch = baseline["phase_g2_4ch_etf_cli_dynamic_v3_system_target_portfolio"]
     assert phase_g2_4ch["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3665,7 +3703,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4ch["sources"]:
             if source["path"] in set(phase_g2_4ch.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4ci = baseline["phase_g2_4ci_etf_cli_dynamic_v3_system_target_history"]
     assert phase_g2_4ci["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3701,7 +3739,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4ci["sources"]:
             if source["path"] in set(phase_g2_4ci.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
     phase_g2_4cj = baseline["phase_g2_4cj_etf_cli_dynamic_v3_system_target_hardening"]
     assert phase_g2_4cj["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
@@ -3736,7 +3774,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cj["sources"]:
             if source["path"] in set(phase_g2_4cj.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4ck = baseline["phase_g2_4ck_etf_cli_dynamic_v3_system_target_refinement"]
@@ -3774,7 +3812,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4ck["sources"]:
             if source["path"] in set(phase_g2_4ck.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cl = baseline["phase_g2_4cl_etf_cli_dynamic_v3_system_target_risk_capped"]
@@ -3815,7 +3853,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cl["sources"]:
             if source["path"] in set(phase_g2_4cl.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cm = baseline["phase_g2_4cm_etf_cli_dynamic_v3_system_target_experiment_factory"]
@@ -3861,7 +3899,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cm["sources"]:
             if source["path"] in set(phase_g2_4cm.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cn = baseline["phase_g2_4cn_etf_cli_dynamic_v3_system_target_smoothed_method"]
@@ -3906,7 +3944,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cn["sources"]:
             if source["path"] in set(phase_g2_4cn.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4co = baseline["phase_g2_4co_etf_cli_dynamic_v3_system_target_smoothed_evidence"]
@@ -3953,7 +3991,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4co["sources"]:
             if source["path"] in set(phase_g2_4co.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cp = baseline["phase_g2_4cp_etf_cli_dynamic_v3_system_target_smoothed_readiness"]
@@ -4011,7 +4049,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cp["sources"]:
             if source["path"] in set(phase_g2_4cp.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cq = baseline["phase_g2_4cq_etf_cli_dynamic_v3_system_target_smoothed_promotion"]
@@ -4067,7 +4105,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cq["sources"]:
             if source["path"] in set(phase_g2_4cq.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cr = baseline["phase_g2_4cr_etf_cli_dynamic_v3_system_target_smoothed_operations"]
@@ -4136,7 +4174,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cr["sources"]:
             if source["path"] in set(phase_g2_4cr.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cs = baseline["phase_g2_4cs_etf_cli_dynamic_v3_smoothed_forward_sample_bootstrap"]
@@ -4198,7 +4236,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cs["sources"]:
             if source["path"] in set(phase_g2_4cs.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4ct = baseline["phase_g2_4ct_etf_cli_dynamic_v3_smoothed_data_freshness"]
@@ -4245,10 +4283,22 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         assert phase_g2_4ct["validation"]["contract_validation"]["passed"] >= 203
         assert phase_g2_4ct["validation"]["full_validation"]["passed"] >= 6012
         assert phase_g2_4ct["sources"]
+        smoothed_interface_source = next(
+            source
+            for source in phase_g2_4ct["sources"]
+            if source["path"].endswith(
+                "dynamic_v3_system_target_smoothed_freshness.py"
+            )
+            and "/interfaces/" in source["path"]
+        )
+        assert smoothed_interface_source["hash_normalization"] == "git_eol_lf"
+        assert smoothed_interface_source["previous_worktree_sha256"] == (
+            "bc268a1292730b9751c5febe2702dd1a456b85b7e74b6b56d7efc4508fe4b8d7"
+        )
         for source in phase_g2_4ct["sources"]:
             if source["path"] in set(phase_g2_4ct.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cu = baseline["phase_g2_4cu_etf_cli_dynamic_v3_smoothed_data_refresh_operations"]
@@ -4288,7 +4338,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cu["sources"]:
             if source["path"] in set(phase_g2_4cu.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cv1 = baseline["phase_g2_4cv1_etf_cli_dynamic_v3_weight_search_foundation"]
@@ -4335,7 +4385,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cv1["sources"]:
             if source["path"] in set(phase_g2_4cv1.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cv2 = baseline["phase_g2_4cv2_etf_cli_dynamic_v3_weight_search_evaluation"]
@@ -4378,7 +4428,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cv2["sources"]:
             if source["path"] in set(phase_g2_4cv2.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cv3 = baseline["phase_g2_4cv3_etf_cli_dynamic_v3_weight_search_decision"]
@@ -4427,7 +4477,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cv3["sources"]:
             if source["path"] in set(phase_g2_4cv3.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cw1 = baseline["phase_g2_4cw1_etf_cli_dynamic_v3_weight_search_diagnostics"]
@@ -4472,7 +4522,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cw1["sources"]:
             if source["path"] in set(phase_g2_4cw1.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cw2 = baseline["phase_g2_4cw2_etf_cli_dynamic_v3_weight_search_targeted"]
@@ -4523,7 +4573,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cw2["sources"]:
             if source["path"] in set(phase_g2_4cw2.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cw3 = baseline["phase_g2_4cw3_etf_cli_dynamic_v3_weight_search_followup"]
@@ -4575,7 +4625,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cw3["sources"]:
             if source["path"] in set(phase_g2_4cw3.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cx1 = baseline["phase_g2_4cx1_etf_cli_dynamic_v3_signal_diagnosis_foundation"]
@@ -4623,7 +4673,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cx1["sources"]:
             if source["path"] in set(phase_g2_4cx1.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cx2 = baseline["phase_g2_4cx2_etf_cli_dynamic_v3_micro_search_foundation"]
@@ -4674,7 +4724,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in phase_g2_4cx2["sources"]:
             if source["path"] in set(phase_g2_4cx2.get("superseded_source_paths", [])):
                 continue
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     phase_g2_4cx3 = baseline["phase_g2_4cx3_etf_cli_dynamic_v3_research_direction_foundation"]
@@ -4728,7 +4778,9 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         assert phase_g2_4cx3["validation"]["full_validation"]["passed"] >= 6050
         assert phase_g2_4cx3["sources"]
         for source in phase_g2_4cx3["sources"]:
-            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            if source["path"] in set(phase_g2_4cx3.get("superseded_source_paths", [])):
+                continue
+            actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
     eb0_s2b = baseline["integrated_change_arch_004g2_eb0_s2b"]
@@ -4807,10 +4859,50 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         "available_memory_gib": 62.0,
         "residual_owner": "weight_search",
         "active_file_count": 6,
+        "active_files": [
+            "tests/test_weight_expanded_search.py",
+            "tests/test_formal_method_auto_plan.py",
+            "tests/test_near_miss_ab_comparison.py",
+            "tests/test_search_coverage_gap.py",
+            "tests/test_weight_top_candidate_interpretation.py",
+            "tests/test_weight_candidate_cluster.py",
+        ],
     }
-    assert eb0_s2b["validation"]["architecture_fitness"]["status"] == "PENDING"
-    assert eb0_s2b["validation"]["contract_validation"]["status"] == "PENDING"
-    assert eb0_s2b["validation"]["full_validation"]["status"] == "PENDING"
+    assert eb0_s2b["validation"]["formal_focused"] == {
+        "status": "PASS",
+        "passed": 274,
+        "skipped": 1,
+        "elapsed_seconds": 248.21,
+        "junit_artifact": (
+            "outputs/validation_runtime/arch004g2-eb0-focused_20260717T073027Z/junit.xml"
+        ),
+    }
+    assert eb0_s2b["validation"]["architecture_fitness_first_clean_candidate"] == {
+        "status": "FAIL",
+        "passed": 310,
+        "failed": 1,
+        "elapsed_seconds": 62.70,
+        "runtime_artifact": (
+            "outputs/validation_runtime/architecture-fitness_20260717T073451Z/"
+            "test_runtime_summary.json"
+        ),
+        "reason": "deprecation_inventory_raw_worktree_eol_hash_drift",
+    }
+    assert eb0_s2b["validation"]["architecture_fitness"]["status"] == "PASS"
+    assert eb0_s2b["validation"]["architecture_fitness"]["passed"] == 312
+    assert eb0_s2b["validation"]["contract_validation"]["status"] == "PASS"
+    assert eb0_s2b["validation"]["contract_validation"]["passed"] == 204
+    assert eb0_s2b["validation"]["full_validation"] == {
+        "status": "PASS",
+        "passed": 6_195,
+        "skipped": 2,
+        "warnings": 642,
+        "elapsed_seconds": 2_138.84,
+        "runtime_artifact": (
+            "outputs/validation_runtime/full_20260717T075427Z/"
+            "test_runtime_summary.json"
+        ),
+    }
     assert eb0_s2b["checkout_reproducibility"] == {
         "first_architecture_gate_status": "FAIL",
         "first_architecture_gate_passed": 302,
@@ -4820,10 +4912,89 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         "project_relative_token": "<PROJECT_ROOT>",
         "runtime_defaults_changed": False,
         "cli_surface_changed": False,
+        "deprecation_inventory_text_hash_policy": "universal_newline_lf",
+        "deprecation_inventory_raw_byte_count_before": 528_634,
+        "deprecation_inventory_canonical_byte_count": 515_757,
+        "deprecation_inventory_source_content_changed": False,
         "production_effect": "none",
     }
     for source in eb0_s2b["sources"]:
-        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        if source["path"] in set(eb0_s2b.get("superseded_source_paths", [])):
+            continue
+        actual = _source_sha256(source)
+        assert actual == source["sha256"], source["path"]
+
+    eb0_s3a = baseline["integrated_change_arch_004g2_eb0_s3a_weight_search_tail"]
+    assert eb0_s3a["status"] == "COMPLETE_RUNTIME_TASK_CONTINUES"
+    assert eb0_s3a["task_id"] == "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE"
+    assert eb0_s3a["behavior"] == "weight_search_tail_pass_only_validation_reuse"
+    assert eb0_s3a["pre_change_full"] == {
+        "passed": 6_195,
+        "skipped": 2,
+        "warnings": 642,
+        "elapsed_seconds": 2_138.84,
+        "runtime_artifact": (
+            "outputs/validation_runtime/full_20260717T075427Z/"
+            "test_runtime_summary.json"
+        ),
+    }
+    assert eb0_s3a["same_command"] == {
+        "node_count": 5,
+        "before_elapsed_seconds": 889.01,
+        "after_elapsed_seconds": 254.19,
+        "reduction_percent": 71.4,
+    }
+    assert eb0_s3a["isolated_nodes"] == {
+        "followup": {
+            "before_seconds": 884.24,
+            "after_seconds": 352.36,
+            "reduction_percent": 60.1,
+        },
+        "decision": {
+            "before_seconds": 500.55,
+            "after_seconds": 102.93,
+            "reduction_percent": 79.4,
+        },
+    }
+    assert eb0_s3a["post_change_full"]["passed"] == 6_195
+    assert eb0_s3a["post_change_full"]["elapsed_seconds"] == 1_789.86
+    assert eb0_s3a["post_change_full"]["reduction_percent"] == 16.3
+    assert eb0_s3a["post_change_full"]["followup_seconds"] == 408.82
+    assert eb0_s3a["post_change_full"]["decision_hardening_seconds"] == 157.40
+    assert eb0_s3a["safety"] == {
+        "first_full_builder_preserved": True,
+        "all_view_rebuild_preserved": True,
+        "tamper_matrix_preserved": True,
+        "cross_lineage_fail_closed_preserved": True,
+        "pass_only_cache": True,
+        "fail_not_cached": True,
+        "strategy_logic_changed": False,
+        "cached_data_mutated": False,
+        "production_effect": "none",
+    }
+    assert eb0_s3a["scope"]["research_foundation_started"] is False
+    assert eb0_s3a["scope"]["eb1_started"] is False
+    assert eb0_s3a["validation"]["same_command"]["status"] == "PASS"
+    assert eb0_s3a["validation"]["decision_isolated"]["status"] == "PASS"
+    assert eb0_s3a["validation"]["scoped_ruff"]["status"] == "PASS"
+    assert eb0_s3a["validation"]["formal_focused"] == {
+        "status": "PASS",
+        "passed": 291,
+        "skipped": 1,
+        "elapsed_seconds": 269.09,
+        "junit_artifact": (
+            "outputs/validation_runtime/"
+            "arch004g2-eb0-s3a-focused_20260717T221426Z/junit.xml"
+        ),
+    }
+    assert eb0_s3a["validation"]["architecture_fitness"]["status"] == "PASS"
+    assert eb0_s3a["validation"]["architecture_fitness"]["passed"] == 312
+    assert eb0_s3a["validation"]["contract_validation"]["status"] == "PASS"
+    assert eb0_s3a["validation"]["contract_validation"]["passed"] == 204
+    assert eb0_s3a["validation"]["full_validation"]["status"] == "PASS"
+    assert eb0_s3a["validation"]["full_validation"]["passed"] == 6_195
+    for source in eb0_s3a["sources"]:
+        actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
 
 

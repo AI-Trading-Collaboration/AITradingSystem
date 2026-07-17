@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from datetime import date
 from pathlib import Path
 
@@ -14,6 +15,9 @@ from ai_trading_system.platform.architecture import (
     create_scaffold,
     select_impacted_tests,
     write_generated_architecture_artifact,
+)
+from ai_trading_system.platform.architecture import (
+    devex as devex_module,
 )
 from ai_trading_system.reports.engineering_closeout import (
     build_engineering_surface_inventory_payload,
@@ -30,6 +34,33 @@ DEPENDENCY_POLICY_PATH = PROJECT_ROOT / "config/architecture/arch_004c_dependenc
 DIRECT_WRITER_BASELINE_PATH = (
     PROJECT_ROOT / "inputs/architecture/arch_004c_direct_writer_baseline.yaml"
 )
+
+
+@pytest.mark.parametrize("suffix", [".md", ".py", ".toml", ".yaml", ".yml"])
+def test_devex_sha256_uses_canonical_lf_for_repository_text(
+    tmp_path: Path, suffix: str
+) -> None:
+    lf_payload = b"alpha\nbeta\ngamma\n"
+    crlf_payload = b"alpha\r\nbeta\r\ngamma\r\n"
+    mixed_payload = b"alpha\r\nbeta\ngamma\r\n"
+    expected = hashlib.sha256(lf_payload).hexdigest()
+
+    paths = [tmp_path / f"source-{index}{suffix}" for index in range(3)]
+    for path, payload in zip(
+        paths, (lf_payload, crlf_payload, mixed_payload), strict=True
+    ):
+        path.write_bytes(payload)
+
+    assert {devex_module._sha256(path) for path in paths} == {expected}
+
+
+def test_devex_sha256_preserves_binary_bytes(tmp_path: Path) -> None:
+    first = tmp_path / "first.bin"
+    second = tmp_path / "second.bin"
+    first.write_bytes(b"\x00alpha\r\nbeta\x00")
+    second.write_bytes(b"\x00alpha\nbeta\x00")
+
+    assert devex_module._sha256(first) != devex_module._sha256(second)
 
 
 def test_generated_module_and_test_manifests_cover_every_python_file_once() -> None:

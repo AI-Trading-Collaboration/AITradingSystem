@@ -8,6 +8,9 @@ from typing import Any
 from dynamic_v3_weight_batch_search_helpers import run_owner_research_decision_pack_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_decision as decision
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 Validator = Callable[[], dict[str, Any]]
 
@@ -39,6 +42,7 @@ def _tamper_snapshot(
         path.write_bytes(original)
 
 
+@with_artifact_validation_session
 def test_weight_search_decision_chain_rebuilds_all_views_and_rejects_tamper(tmp_path) -> None:
     fixture = run_owner_research_decision_pack_fixture(tmp_path)
     cluster = fixture["cluster"]
