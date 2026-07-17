@@ -1,8 +1,38 @@
 from __future__ import annotations
 
-from dynamic_v3_weight_batch_search_helpers import run_weight_search_space_fixture
+from dynamic_v3_weight_batch_search_helpers import (
+    _RESEARCH_FOUNDATION_COMPLETE_PREFIX_VARIANTS,
+    run_weight_search_space_fixture,
+    write_weight_search_space_config,
+)
 
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_foundation as foundation
+
+
+def test_research_foundation_prefix_preserves_default_and_required_families(tmp_path) -> None:
+    (tmp_path / "default").mkdir()
+    (tmp_path / "compact").mkdir()
+    default_path = write_weight_search_space_config(
+        tmp_path / "default",
+        source_backfill_id="test-backfill",
+    )
+    compact_path = write_weight_search_space_config(
+        tmp_path / "compact",
+        source_backfill_id="test-backfill",
+        initial_batch_variants=_RESEARCH_FOUNDATION_COMPLETE_PREFIX_VARIANTS,
+    )
+    default_config = foundation.load_weight_search_space_config(default_path)
+    compact_config = foundation.load_weight_search_space_config(compact_path)
+
+    assert default_config["max_variants"]["initial_batch"] == 80
+    assert compact_config["max_variants"]["initial_batch"] == 52
+    assert foundation.validate_weight_search_space_config(compact_path)["status"] == "PASS"
+
+    variants = foundation._generate_batch2_variants(compact_config, expanded=False)[:52]
+    coverage = foundation._batch2_family_coverage(variants)
+    assert len(variants) == 52
+    assert len(coverage["families_covered"]) == 8
 
 
 def test_weight_search_space_config_and_artifact_are_auditable(tmp_path) -> None:

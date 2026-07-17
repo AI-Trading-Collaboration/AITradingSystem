@@ -203,7 +203,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.dynamic_v3_weight_batch_search_helpers
   path: tests/dynamic_v3_weight_batch_search_helpers.py
-  sha256: a30fb5449b05604134f7c820e681206f1ee1dba4c52fc613f4cfbb9399a9a5bb
+  sha256: 5acc3c61ab324fbc3304145d6fefb97883a742c6652c10c638a89c7dd560a08e
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15863,7 +15863,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_weight_search_space
   path: tests/test_weight_search_space.py
-  sha256: 1b664af2924de3b6723033dab69798943745057e5cf5252b7c74b876cb55c165
+  sha256: 987300d579449ce9d6d776858a362b0f70eb5faa11584525ca1a5776542a2900
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

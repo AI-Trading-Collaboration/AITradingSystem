@@ -241,6 +241,34 @@ S3B退出要求：先记录目标文件同命令before，再以相同nodeids/命
 focused、architecture、contract、full均PASS；`strategy_logic_changed=false`、
 `cached_data_mutated=false`、`production_effect=none`。S3B完成前不启动EB1。
 
+### S3C：三个 Research Foundation setup（owner批准继续）
+
+2026-07-18 owner在S3B闭合复盘后批准继续三个Research Foundation候选。S3C以
+`outputs/validation_runtime/full_20260717T145741Z/test_runtime_summary.json`为pre-change full
+基线：`6,195 passed / 2 skipped / 642 warnings / 1,720.76s`。范围严格限定为：
+
+- `tests/test_research_direction_foundation.py` setup=`487.92s`；
+- `tests/test_micro_search_foundation.py` setup=`478.61s`；
+- `tests/test_signal_diagnosis_foundation.py` setup=`455.51s`；
+- Smoothed、Targeted hardening、策略/阈值/评分/回测/promotion、EB1与任何下一callback slice均不在
+  本批范围。
+
+三个模块当前均已有module-scoped immutable fixture及覆盖fixture生命周期的
+`artifact_validation_session`，调用图为Direction→Micro Search→Signal Diagnosis→Weight Scorecard
+的嵌套前缀，主要嫌疑是`--dist loadfile`下不同worker重复构建相同上游，而不是缺少test-level session。
+S3C必须先运行三文件同命令before并量化builder/validator调用与fixture规模，再按以下顺序评估：
+
+1. 是否存在不改变business contract的测试fixture规模冗余；
+2. 是否存在单worker内部仍重复的builder/validator或可安全延长的session边界；
+3. 只有绝对路径/self-path commitment、source/policy/config/cache/DQ bytes、并发锁、失败恢复、
+   tamper copy-on-write与worker/process隔离全部可证明时，才允许实验跨worker content store。
+
+禁止用预生成stub替代真实builder/validator，禁止把共享可写root暴露给tamper测试，禁止减少nodeid、
+skip/xfail、DQ/PIT/source replay、lineage、all-view byte rebuild或tamper矩阵。任何未获得明确同命令收益、
+需要放松绝对路径/commitment或造成共享状态耦合的实验必须撤销。退出要求为scoped Ruff、三文件
+same-command、expanded focused、architecture、contract与full全部PASS；记录full尾部和内存/CPU风险；
+`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。S3C完成前不启动EB1。
+
 ### S4：持续回归约束
 
 - architecture/contract tests 校验 runtime manifest freshness、调度确定性和 gate coverage；
@@ -260,6 +288,26 @@ focused、architecture、contract、full均PASS；`strategy_logic_changed=false`
 - `strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
 
 ## 当前状态
+
+2026-07-18 / S3C实现及focused验证完成，正式门禁待闭合：同机器、同
+`python -m pytest -n 16 --dist loadfile`三文件pre-change=`51 passed / 333.25s`，Direction=
+`328.00s`、Micro Search=`279.32s`、Signal Diagnosis=`310.34s`。跨worker store因
+absolute-path/self-commitment、共享root、锁恢复及tamper COW隔离风险未实施。S3C改为仅在
+Research Foundation test fixture中使用production generator的最小完整前缀；50 variants只覆盖
+7个required families并被正式validator拒绝（`5 passed / 46 errors`，不计为PASS），52 variants
+完整覆盖8个families且config validator PASS，非Foundation默认路径仍为80。候选同命令=
+`51 passed / 204.73s`（约`-38.6%`），Direction=`197.70s`（`-39.7%`）、Micro Search=
+`195.15s`（`-30.1%`）、Signal Diagnosis=`182.45s`（`-41.2%`）；expanded focused覆盖默认
+80、完整Weight Foundation rebuild/DQ及tamper=`54 passed / 249.89s`。nodeid、DQ/PIT/source、
+lineage、all-view与tamper矩阵均保留。正式architecture=`312 passed / 56.85s`、contract=
+`204 passed / 42.28s`、full=`6,196 passed / 2 skipped / 642 warnings / 1,830.80s`均PASS；
+三个目标full setup=`318.96s / 314.23s / 278.90s`，较旧full分别约`-34.6% / -34.3% /
+-38.8%`。但full总时长较`1,720.76s`增加`110.04s`（约`+6.4%`），其他Smoothed、Next
+Plan、Promotion和Weight/Targeted loadfile尾部继续主导，单次full不支持全局加速结论。S3C闭合，
+任务因长期连续3-run P95/read-amplification与调度偏斜债务继续IN_PROGRESS；Smoothed、Targeted、
+EB1与下一callback slice均未启动。module manifest与deprecation inventory不变、test manifest已刷新，
+本次仅测试fixture及其contract/doc evidence，`docs/system_flow.md`数据/CLI/报告流不受影响；
+`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
 
 2026-07-17 / S3B实现与focused验证完成，正式门禁待闭合：同机器、同
 `python -m pytest -n 16 --dist loadfile`五文件pre-change=`5 passed / 498.20s`，Signal=

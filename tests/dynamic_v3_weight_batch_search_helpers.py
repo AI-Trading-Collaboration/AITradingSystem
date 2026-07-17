@@ -16,16 +16,24 @@ from ai_trading_system.platform.artifacts.validation_session import (
     with_artifact_validation_session,
 )
 
+# The production generator first reaches all eight required search families at
+# 52 variants.  Foundation fixtures use that complete prefix; broad weight
+# search tests retain the reviewed production default of 80 variants.
+_RESEARCH_FOUNDATION_COMPLETE_PREFIX_VARIANTS = 52
+
 
 def write_weight_search_space_config(
     tmp_path: Path,
     *,
     source_backfill_id: str,
+    initial_batch_variants: int | None = None,
 ) -> Path:
     payload = yaml.safe_load(
         weight_search.DEFAULT_WEIGHT_SEARCH_SPACE_CONFIG_PATH.read_text(encoding="utf-8")
     )
     payload["search"]["source_backfill_id"] = source_backfill_id
+    if initial_batch_variants is not None:
+        payload["max_variants"]["initial_batch"] = initial_batch_variants
     config_path = tmp_path / "weight_search_space_v2.yaml"
     config_path.write_text(
         yaml.safe_dump(payload, sort_keys=False, allow_unicode=True),
@@ -34,11 +42,16 @@ def write_weight_search_space_config(
     return config_path
 
 
-def run_weight_search_space_fixture(tmp_path: Path) -> dict[str, Any]:
+def run_weight_search_space_fixture(
+    tmp_path: Path,
+    *,
+    initial_batch_variants: int | None = None,
+) -> dict[str, Any]:
     fixture = run_backfill_fixture(tmp_path)
     config_path = write_weight_search_space_config(
         tmp_path,
         source_backfill_id=fixture["backfill"]["backfill_id"],
+        initial_batch_variants=initial_batch_variants,
     )
     search_space = weight_search.run_weight_search_space_validation(
         config_path=config_path,
@@ -48,8 +61,15 @@ def run_weight_search_space_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "weight_search_config_path": config_path, "search_space": search_space}
 
 
-def run_weight_experiment_batch2_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_weight_search_space_fixture(tmp_path)
+def run_weight_experiment_batch2_fixture(
+    tmp_path: Path,
+    *,
+    initial_batch_variants: int | None = None,
+) -> dict[str, Any]:
+    fixture = run_weight_search_space_fixture(
+        tmp_path,
+        initial_batch_variants=initial_batch_variants,
+    )
     matrix = weight_search.build_weight_experiment_batch2(
         search_space_id=fixture["search_space"]["search_space_id"],
         source_backfill_id=fixture["backfill"]["backfill_id"],
@@ -60,8 +80,15 @@ def run_weight_experiment_batch2_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "matrix": matrix}
 
 
-def run_weight_batch_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_weight_experiment_batch2_fixture(tmp_path)
+def run_weight_batch_backfill_fixture(
+    tmp_path: Path,
+    *,
+    initial_batch_variants: int | None = None,
+) -> dict[str, Any]:
+    fixture = run_weight_experiment_batch2_fixture(
+        tmp_path,
+        initial_batch_variants=initial_batch_variants,
+    )
     backfill = weight_search.run_weight_batch_backfill(
         matrix_id=fixture["matrix"]["matrix_id"],
         matrix_dir=tmp_path / "weight_experiment_batch2",
@@ -74,8 +101,15 @@ def run_weight_batch_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "weight_backfill": backfill}
 
 
-def run_weight_scorecard_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_weight_batch_backfill_fixture(tmp_path)
+def run_weight_scorecard_fixture(
+    tmp_path: Path,
+    *,
+    initial_batch_variants: int | None = None,
+) -> dict[str, Any]:
+    fixture = run_weight_batch_backfill_fixture(
+        tmp_path,
+        initial_batch_variants=initial_batch_variants,
+    )
     scorecard = weight_search.run_weight_scorecard(
         backfill_id=fixture["weight_backfill"]["batch_backfill_id"],
         backfill_dir=tmp_path / "weight_batch_backfill",
@@ -378,7 +412,10 @@ def run_consensus_quality_review_fixture(tmp_path: Path) -> dict[str, Any]:
 
 @with_artifact_validation_session
 def run_signal_diagnosis_foundation_fixture(tmp_path: Path) -> dict[str, Any]:
-    fixture = run_weight_scorecard_fixture(tmp_path)
+    fixture = run_weight_scorecard_fixture(
+        tmp_path,
+        initial_batch_variants=_RESEARCH_FOUNDATION_COMPLETE_PREFIX_VARIANTS,
+    )
     diagnostics_policy_path = tmp_path / "weight_search_diagnostics_test_v1.yaml"
     diagnostics_policy = yaml.safe_load(
         diagnostics.DEFAULT_WEIGHT_SEARCH_DIAGNOSTICS_POLICY_PATH.read_text(encoding="utf-8")

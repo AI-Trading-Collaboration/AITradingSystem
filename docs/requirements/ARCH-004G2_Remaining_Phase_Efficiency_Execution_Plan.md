@@ -87,6 +87,22 @@ S3B正式门禁闭合：full=`6,195 passed / 2 skipped / 642 warnings / 1,720.76
 中缩短约`19.6%～40.3%`，但剩余尾部已转为Research Foundation setup、Targeted hardening和
 Smoothed Refresh。按既定边界本轮暂停复盘，不自动启动Research Foundation或EB1。
 
+2026-07-18 owner批准继续三个Research Foundation候选，启动有界S3C。范围仅含Research
+Direction=`487.92s`、Micro Search=`478.61s`、Signal Diagnosis=`455.51s`三个setup；先量化
+不同loadfile worker的嵌套前缀重复构建，再评估fixture规模、单worker复用与安全跨worker store。
+Smoothed、Targeted、EB1及下一callback slice不并发启动；S3C正式门禁闭合前不改变主线状态。
+
+S3C同三文件pre-change=`51 passed / 333.25s`，三个setup分别为`328.00s / 279.32s /
+310.34s`。审计确认跨worker store会引入absolute-path/self-commitment、共享可写root、锁恢复和
+tamper copy-on-write风险，因此不实施；改为使用production generator仍完整覆盖全部8个required
+families的最小test-only前缀。50 variants仅覆盖7个family并被正式validator fail-closed；52
+variants通过config validator且保留默认80路径。候选同命令=`51 passed / 204.73s`，缩短约
+`38.6%`；expanded focused=`54 passed / 249.89s`。正式architecture=`312 passed / 56.85s`、
+contract=`204 passed / 42.28s`、full=`6,196 passed / 2 skipped / 642 warnings / 1,830.80s`
+均PASS。三个目标在full中降至`318.96s / 314.23s / 278.90s`（约`-34.6% / -34.3% /
+-38.8%`），但full总时长较`1,720.76s`增加约`6.4%`，说明其他loadfile尾部与运行波动已遮蔽
+局部收益；S3C闭合但runtime任务继续，不自动启动Smoothed、Targeted或EB1。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。
