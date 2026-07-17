@@ -6,6 +6,9 @@ from typing import Any
 from dynamic_v3_weight_batch_search_helpers import run_owner_signal_roadmap_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 
 def _assert_research_safe(payload: dict[str, Any]) -> None:
@@ -14,6 +17,7 @@ def _assert_research_safe(payload: dict[str, Any]) -> None:
     assert payload["production_effect"] == "none"
 
 
+@with_artifact_validation_session
 def test_signal_feature_quality_filter_pipeline_builds_and_validates(tmp_path: Path) -> None:
     fixture = run_owner_signal_roadmap_fixture(tmp_path)
 

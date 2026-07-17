@@ -72,6 +72,21 @@ Targeted/Diagnostics/Evaluation实验修改已撤销。最终正式focused=`291 
 按owner“本轮跑完后暂停复盘”的要求，本批不继续扩张到Research Foundation；EB1继续暂停，等待本轮
 复盘后由owner选择Research Foundation第二批或恢复callback主线。
 
+2026-07-17 owner随后批准继续尾部优化，启动有界S3B：先审计Signal Feature Quality=`744.32s`，
+再审计Near-Miss/Promotion/Next Plan共享Weight Search DAG；Research Foundation与Smoothed不并发
+扩张。S3B仍属于EB0 runtime closeout，不解锁EB1；只有同命令before/after与全部正式门禁闭合后才
+再次暂停复盘。
+
+S3B实现已完成并进入正式门禁：五个Signal/Weight目标的同命令从`498.20s`降至两次候选
+`399.15s/363.87s`（约`-19.9%/-27.0%`），focused=`85 passed / 1 skipped / 430.45s`。
+只保留Signal的消融回到`498.69s`，证明五个并行node必须保持一致session边界。Weight fixture内部
+已是独立线性DAG，跨worker store风险超出本批，故未扩张第二项实现；EB1继续未启动。
+
+S3B正式门禁闭合：full=`6,195 passed / 2 skipped / 642 warnings / 1,720.76s`，较S3A
+`1,789.86s`再缩短约`3.9%`；architecture=`312 passed`、contract=`204 passed`。五个目标在full
+中缩短约`19.6%～40.3%`，但剩余尾部已转为Research Foundation setup、Targeted hardening和
+Smoothed Refresh。按既定边界本轮暂停复盘，不自动启动Research Foundation或EB1。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

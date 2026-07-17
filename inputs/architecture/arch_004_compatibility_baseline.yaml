@@ -11098,9 +11098,9 @@ phase_g2_4cw3_etf_cli_dynamic_v3_weight_search_followup:
   - {path: tests/test_arch_004g2_etf_cli_contract.py, sha256: 4774fa3a46726739c39f88c831a7acfaa5def1c4d001fa115a91b6f8fd4362a2}
   - {path: tests/test_arch_004g_deprecation.py, sha256: 7489ff9917f1256e08a451854be3570d15af4aaf3c829aa283db41d8af7e56c4}
   - {path: tests/test_artifact_validation_session.py, sha256: f5b8010c9598303bf0759e2e92daa9f6579701fcc3fe6eb798ccd6a812e17cd8}
-  - {path: tests/test_promotion_threshold_sensitivity.py, sha256: 362ab1039d29a82320d88ffbace888a5d735c51a1bd284e93a7089b2324c6085}
-  - {path: tests/test_candidate_promotion_v2.py, sha256: dfe7adc48d2e9756e5670007986dd97b1f1ba0fad0de036e405447738ca847f9}
-  - {path: tests/test_next_formal_or_search_plan.py, sha256: ccdc08bd87f015593a24729610099e9b3a8c127cce12bb029b90950e76c9cec7}
+  - {path: tests/test_promotion_threshold_sensitivity.py, sha256: 3f0b00a20be222ba4b8e453e53a44bf058ad29a1c3b4978a097aee29b92c5a15}
+  - {path: tests/test_candidate_promotion_v2.py, sha256: d7a8846ec7125c1352d6b9608815e81d61eaf969ae55ec787af82d66304e9744}
+  - {path: tests/test_next_formal_or_search_plan.py, sha256: 6bd215c02bcd4f713de99c7cecb66f6182f7f6c40c464b6aeafc8320bb58205b}
   - {path: tests/test_weight_search_followup_hardening.py, sha256: c2e8aa45d4168d725a8d5cfc1996e828f976396fba41b527e92377968c5feaba}
 
 phase_g2_4cx1_etf_cli_dynamic_v3_signal_diagnosis_foundation:
@@ -11869,13 +11869,80 @@ integrated_change_arch_004g2_eb0_s3a_weight_search_tail:
       warnings: 642
       elapsed_seconds: 1789.86
       runtime_artifact: outputs/validation_runtime/full_20260717T132134Z/test_runtime_summary.json
+  s3b_tail_hardening:
+    status: COMPLETE_RUNTIME_TASK_CONTINUES
+    behavior: signal_and_weight_tail_full_test_validation_session
+    same_command:
+      node_count: 5
+      before_elapsed_seconds: 498.20
+      candidate_elapsed_seconds: [399.15, 363.87]
+      reduction_percent: [19.9, 27.0]
+      signal_only_ablation_elapsed_seconds: 498.69
+    post_change_full:
+      passed: 6195
+      skipped: 2
+      warnings: 642
+      elapsed_seconds: 1720.76
+      prior_elapsed_seconds: 1789.86
+      reduction_seconds: 69.10
+      reduction_percent: 3.9
+      runtime_artifact: outputs/validation_runtime/full_20260717T145741Z/test_runtime_summary.json
+      target_seconds:
+        signal_feature_quality_filter_pipeline: 444.13
+        near_miss_ab_comparison: 444.57
+        promotion_threshold_sensitivity: 437.77
+        next_formal_or_search_plan: 403.21
+        candidate_promotion_v2: 451.04
+    safety:
+      first_full_builder_preserved: true
+      data_quality_and_pit_preserved: true
+      live_source_validation_preserved: true
+      all_view_rebuild_preserved: true
+      tamper_and_cross_lineage_preserved: true
+      pass_only_cache: true
+      fail_not_cached: true
+      strategy_logic_changed: false
+      cached_data_mutated: false
+      production_effect: none
+    scope:
+      cross_worker_store_implemented: false
+      research_foundation_started: false
+      smoothed_started: false
+      eb1_started: false
+    validation:
+      focused:
+        status: PASS
+        passed: 85
+        skipped: 1
+        elapsed_seconds: 430.45
+        junit_artifact: outputs/validation_runtime/s3b-focused_20260717T234432Z/junit.xml
+      architecture_fitness:
+        status: PASS
+        passed: 312
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260717T152714Z/test_runtime_summary.json
+      contract_validation:
+        status: PASS
+        passed: 204
+        elapsed_seconds: 42.36
+        runtime_artifact: outputs/validation_runtime/contract-validation_20260717T152826Z/test_runtime_summary.json
+      full_validation:
+        status: PASS
+        passed: 6195
+        skipped: 2
+        warnings: 642
+        elapsed_seconds: 1720.76
   sources:
-  - {path: docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md, sha256: c3fa6740c161f791f332d4b8ad37cb8090ccba7d23d9e4433c90ac987584f87c}
-  - {path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md, sha256: bfacb964b2ccaed635ba4fecb2b3cc2ee72fc825707c8c226bf93f77483098ca}
-  - {path: docs/task_register.md, sha256: 7bca8da857cd8dc6854f354154e03ad301ce217f8d68008b633d2da77bbeb411}
+  - {path: docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md, sha256: 19b232fe7043da8c052e41416d24a08c5fbdd66abb97550411a45db56fa1ee18}
+  - {path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md, sha256: b3ecc59f841323f48457ff215362a50e010c7548a90ae51a66b224ff6b0e5641}
+  - {path: docs/task_register.md, sha256: 65ae5a724bb85b0f0a5e6ae648384b0d785c17eb1d8b61c8ff27ad14039bd85d}
   - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 71686f3535fe948c48e7f58c7f9465a33530158cc69bd110ce806b9ca64ab883}
-  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: be2c9a9174c61f5680f8f3294155c4ec57b6d088e89080681be64c301d1487f6}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: ea8b8acd56901a459144cdda75b48a5ac5112d92f2a52dba044c78cd6cf7e021}
   - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_decision.py, sha256: 2242e9464d9cc443f2a669377436a121612150dbae306c7eca5e4e481f5ccfa3}
   - {path: tests/test_arch_004_refactor_policy.py, sha256: 8431817f0123ce345df8618e8fc35cf07261d319bd5f30760f7cf4fed7d89962}
+  - {path: tests/test_signal_feature_quality_filter_pipeline.py, sha256: c075af26506638e07d7705bd81ac86a795d1d10ad1ee158ae162bb160a41e797}
+  - {path: tests/test_near_miss_ab_comparison.py, sha256: 8a322ee46615ea3cf3ca335a5ba2c31e41a91a699a67b1e3fbc4311e80dcc0f9}
+  - {path: tests/test_promotion_threshold_sensitivity.py, sha256: 3f0b00a20be222ba4b8e453e53a44bf058ad29a1c3b4978a097aee29b92c5a15}
+  - {path: tests/test_candidate_promotion_v2.py, sha256: d7a8846ec7125c1352d6b9608815e81d61eaf969ae55ec787af82d66304e9744}
+  - {path: tests/test_next_formal_or_search_plan.py, sha256: 6bd215c02bcd4f713de99c7cecb66f6182f7f6c40c464b6aeafc8320bb58205b}
   - {path: tests/test_weight_search_decision_hardening.py, sha256: 6375915cd02f099b2d400642725f910797089cf7ddb5dfac0e21c8ac4b4b3cf9}
   - {path: tests/test_weight_search_followup_hardening.py, sha256: cf89068a9915e3acf8d8bee80966d41b679bbf8abb83850584dcb47056a0fa4b}

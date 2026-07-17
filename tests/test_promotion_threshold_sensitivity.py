@@ -4,8 +4,12 @@ from dynamic_v3_weight_batch_search_helpers import run_promotion_threshold_sensi
 
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_followup as followup
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 
+@with_artifact_validation_session
 def test_promotion_threshold_sensitivity_keeps_relaxed_scenarios_diagnostic(tmp_path) -> None:
     fixture = run_promotion_threshold_sensitivity_fixture(tmp_path)
     sensitivity = fixture["sensitivity"]
