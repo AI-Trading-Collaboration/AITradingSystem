@@ -9,9 +9,13 @@ from dynamic_v3_system_target_helpers import (
 )
 
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 from ai_trading_system.reports import reader_brief
 
 
+@with_artifact_validation_session
 def test_refined_method_proposal_preserves_research_only_boundary(tmp_path) -> None:
     artifacts = _run_refined_fixture(tmp_path)
     proposal = artifacts["proposal"]
@@ -43,6 +47,7 @@ def test_refined_method_proposal_preserves_research_only_boundary(tmp_path) -> N
     assert validation["status"] == "PASS"
 
 
+@with_artifact_validation_session
 def test_reader_brief_displays_refined_method_proposal(tmp_path) -> None:
     review_fixture = run_review_fixture(tmp_path / "review")
     artifacts = _run_refined_fixture(tmp_path / "selection")
@@ -88,6 +93,7 @@ def test_reader_brief_displays_refined_method_proposal(tmp_path) -> None:
     assert summary["broker_action_allowed"] is False
 
 
+@with_artifact_validation_session
 def test_refinement_chain_rejects_output_policy_and_cache_drift(tmp_path) -> None:
     artifacts = _run_refined_fixture(tmp_path)
     cases = (

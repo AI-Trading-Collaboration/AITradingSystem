@@ -1,6 +1,6 @@
 # ARCH-004G2 剩余阶段效率优先执行计划
 
-最后更新：2026-07-17
+最后更新：2026-07-18
 
 ## 任务信息
 
@@ -146,6 +146,38 @@ governance、Refined Method/Weight Dashboard，须在本切片提交后另行登
 `344 passed / 50.28s`与`236 passed / 35.75s`；既有full证据经严格reader重验仍PASS，但未为同一切片
 重复执行full。
 继续暂停，`production_effect=none`。
+
+2026-07-18 owner批准继续降低full耗时，S3E在首个complete profile上完成Layer1/Layer2、Refined
+Method、Weight Dashboard与Promotion/Owner governance四个互斥lane的审计并实施有界优化。Layer1/
+Layer2 forward outcome统一改为PIT等价、逐字段exact且按临时cube元素预算分块的NumPy kernel；Refined、
+Weight与Owner仅延长单test/worker PASS-only content-fingerprint session；Candidate/Next/Sensitivity仅在
+fixture显式使用覆盖全部required families的compact matrix，production默认规模不变。首份profile的
+file busy / worker-seconds与隔离focused墙钟分别记录，不混作同口径结论；未删除nodeid或弱化tamper、
+DQ、PIT、source replay、lineage、all-view验证。多个候选合并后只执行一次自然integration-boundary
+architecture/contract/full；下一次full仅在order、exit、telemetry、performance及manifest freshness
+全部PASS后才成为第2份complete profile。EB1与下一callback继续暂停，`production_effect=none`。
+
+S3E首次候选full完整运行到100%但因nested-xdist外部临时suite collection竞态得到`6,245 passed /
+1 failed / 2 skipped / 1,083.96s`，故只保留方向性性能trace、complete profile仍为1。根因修复保持
+生产runner cleanup不变，把三个nested subprocess隔离到各自`cwd/rootdir/confcutdir=tmp_path`并使用
+显式仓库`PYTHONPATH`和相对suite；原两文件、外层16-worker真实plugin组合连续3次均`59 passed`，
+650次同前缀TEMP兄弟目录churn压力回归为`3 passed / 5.85s`。下一步刷新manifests/source hashes，
+重跑architecture、contract与一次标准full；不得把失败run计为第2份profile。当前manifests刷新为
+`947 modules / 1,126 test files / 858 writers / 0 violations`，architecture=`344 passed / 50.37s`、
+contract=`236 passed / 37.29s`已PASS；标准full重跑=`6,246 passed / 2 skipped / 642 warnings /
+1,109.04s`并由strict reader确认profile/telemetry/performance全PASS；但提交前code review发现多个非法
+值时整表转换改变legacy首异常优先级，因此该run只作完整性能方向证据、不计最终第2份qualifying profile。
+有效输入继续走批量fast path，conversion failure才按decision→horizon→strategy旧顺序重放；双非法值
+exact type/message golden与focused/Ruff已PASS；刷新manifests/hashes后architecture=`344 passed /
+50.53s`、contract=`236 passed / 34.47s`均PASS。replacement standard full=`6,246 passed / 2 skipped /
+642 warnings / 1,040.50s`（`full_20260717T231920Z`），strict reader确认profile/telemetry/performance、
+order、exit、16-worker loadfile、no fallback与manifest freshness全部PASS，成为第2份qualifying profile。
+相对首份complete profile墙钟约`-15.53%`、worker busy约`-15.60%`、nearest-rank file P99约`-29.54%`、
+八个S3E目标约`-55.03%`，tail max/total=`32.46/355.47s`；`complete_profile_count=2/3`，仍固定
+`stable_full_improvement_claimed=false`。下一批按最新profile治理Smoothed operations/evidence session
+断点、retry/weekly authority prefix与两份tracked research Markdown的test direct-writer隔离，不为每个
+候选或为了凑计数单独跑full；第3份只在下一自然
+integration boundary取得，日常研究继续使用DQ、workflow validator与focused tier。
 
 ## EB0：最高长尾限时治理
 

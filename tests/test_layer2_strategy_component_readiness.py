@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import json
 import math
+import warnings
 from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
+import pytest
 from typer.testing import CliRunner
 
+from ai_trading_system import layer2_strategy_component_readiness as layer2_readiness
 from ai_trading_system.cli import app
 from ai_trading_system.layer1_meta_policy_readiness import (
     run_layer1_dataset_lineage_leakage_audit,
@@ -206,6 +209,7 @@ def test_layer2_component_readiness_cli_and_report_registry(tmp_path: Path) -> N
 
 def test_layer2_fact_and_outcome_builders_exclude_growth_and_preserve_safety(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     prices_path, marketstack_path, rates_path, as_of = _write_layer2_caches(tmp_path)
     output_root = tmp_path / "outputs" / "research_strategies" / "layer2_components"
@@ -286,6 +290,139 @@ def test_layer2_fact_and_outcome_builders_exclude_growth_and_preserve_safety(
     assert {"5d", "120d"} <= set(cube_frame["horizon"].unique())
     assert cube_frame["outcome_side_only"].all()
     assert (cube_frame["relative_return_vs_growth_candidate"].isna()).all()
+
+    equivalence_panel = _forward_outcome_equivalence_panel()
+    vectorized_cube = layer2_readiness._build_forward_outcome_cube_frame(equivalence_panel)
+    scalar_cube = _scalar_forward_outcome_cube_frame(equivalence_panel)
+    comparison_columns = [
+        "decision_date",
+        "strategy_id",
+        "horizon",
+        "outcome_status",
+        "outcome_start_date",
+        "outcome_end_date",
+        "future_net_return",
+        "future_max_drawdown",
+        "future_realized_volatility",
+        "future_downside_deviation",
+        "future_calmar_proxy",
+        "relative_return_vs_100_qqq",
+        "relative_return_vs_equal_risk",
+        "relative_drawdown_vs_100_qqq",
+        "regret_vs_best_component",
+    ]
+    pd.testing.assert_frame_equal(
+        vectorized_cube[comparison_columns],
+        scalar_cube[comparison_columns],
+        check_exact=True,
+    )
+    for chunk_budget in (64, 1):
+        monkeypatch.setattr(
+            layer2_readiness,
+            "_MAX_FORWARD_WINDOW_CUBE_ELEMENTS",
+            chunk_budget,
+        )
+        forced_chunk_cube = layer2_readiness._build_forward_outcome_cube_frame(
+            equivalence_panel
+        )
+        pd.testing.assert_frame_equal(
+            forced_chunk_cube[comparison_columns],
+            scalar_cube[comparison_columns],
+            check_exact=True,
+        )
+    nonfinite_panel = _forward_outcome_equivalence_panel()
+    nonfinite_dates = sorted(nonfinite_panel["date"].unique())
+    nonfinite_panel.loc[
+        (nonfinite_panel["date"] == nonfinite_dates[2])
+        & (nonfinite_panel["strategy_id"] == "100_qqq"),
+        "net_return",
+    ] = float("inf")
+    nonfinite_panel.loc[
+        (nonfinite_panel["date"] == nonfinite_dates[3])
+        & (nonfinite_panel["strategy_id"] == "equal_risk_qqq_sgov"),
+        "net_return",
+    ] = float("-inf")
+    nonfinite_panel.loc[
+        (nonfinite_panel["date"] == nonfinite_dates[4])
+        & (nonfinite_panel["strategy_id"] == "qqq_50_sgov_50"),
+        "net_return",
+    ] = -1.2
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        nonfinite_vector = layer2_readiness._build_forward_outcome_cube_frame(
+            nonfinite_panel
+        )
+        nonfinite_scalar = _scalar_forward_outcome_cube_frame(nonfinite_panel)
+    pd.testing.assert_frame_equal(
+        nonfinite_vector[comparison_columns],
+        nonfinite_scalar[comparison_columns],
+        check_exact=True,
+    )
+    short_bad_panel = _forward_outcome_equivalence_panel(day_count=5)
+    short_bad_panel["net_return"] = short_bad_panel["net_return"].astype(object)
+    short_bad_panel.loc[short_bad_panel.index[0], "net_return"] = "unused-bad"
+    pd.testing.assert_frame_equal(
+        layer2_readiness._build_forward_outcome_cube_frame(short_bad_panel)[
+            comparison_columns
+        ],
+        _scalar_forward_outcome_cube_frame(short_bad_panel)[comparison_columns],
+        check_exact=True,
+    )
+    row_zero_bad_panel = _forward_outcome_equivalence_panel(day_count=6)
+    row_zero_bad_panel["net_return"] = row_zero_bad_panel["net_return"].astype(object)
+    row_zero_bad_panel.loc[row_zero_bad_panel.index[0], "net_return"] = "unused-bad"
+    pd.testing.assert_frame_equal(
+        layer2_readiness._build_forward_outcome_cube_frame(row_zero_bad_panel)[
+            comparison_columns
+        ],
+        _scalar_forward_outcome_cube_frame(row_zero_bad_panel)[comparison_columns],
+        check_exact=True,
+    )
+    future_bad_panel = _forward_outcome_equivalence_panel(day_count=6)
+    future_bad_panel["net_return"] = future_bad_panel["net_return"].astype(object)
+    future_bad_panel.loc[future_bad_panel.index[3], "net_return"] = "consumed-bad"
+    with pytest.raises(ValueError):
+        layer2_readiness._build_forward_outcome_cube_frame(future_bad_panel)
+    with pytest.raises(ValueError):
+        _scalar_forward_outcome_cube_frame(future_bad_panel)
+    priority_bad_panel = _forward_outcome_equivalence_panel(day_count=11)
+    priority_bad_panel["net_return"] = priority_bad_panel["net_return"].astype(object)
+    priority_dates = sorted(priority_bad_panel["date"].unique())
+    priority_bad_panel.loc[
+        (priority_bad_panel["date"] == priority_dates[10])
+        & (priority_bad_panel["strategy_id"] == "100_qqq"),
+        "net_return",
+    ] = "bad-first-strategy-horizon10"
+    priority_bad_panel.loc[
+        (priority_bad_panel["date"] == priority_dates[6])
+        & (priority_bad_panel["strategy_id"] == "equal_risk_qqq_sgov"),
+        "net_return",
+    ] = "bad-earlier-row-second-strategy"
+    with pytest.raises(ValueError) as vector_priority_error:
+        layer2_readiness._build_forward_outcome_cube_frame(priority_bad_panel)
+    with pytest.raises(ValueError) as scalar_priority_error:
+        _scalar_forward_outcome_cube_frame(priority_bad_panel)
+    assert type(vector_priority_error.value) is type(scalar_priority_error.value)
+    assert str(vector_priority_error.value) == str(scalar_priority_error.value)
+    assert "bad-first-strategy-horizon10" in str(vector_priority_error.value)
+    ordered_dates = sorted(equivalence_panel["date"].unique())
+    first_5d = vectorized_cube[
+        (vectorized_cube["decision_date"] == ordered_dates[0])
+        & (vectorized_cube["horizon"] == "5d")
+    ].iloc[0]
+    assert first_5d["outcome_start_date"] == ordered_dates[1]
+    assert first_5d["outcome_end_date"] == ordered_dates[5]
+    last_matured_120d = vectorized_cube[
+        (vectorized_cube["decision_date"] == ordered_dates[2])
+        & (vectorized_cube["horizon"] == "120d")
+    ]
+    first_immature_120d = vectorized_cube[
+        (vectorized_cube["decision_date"] == ordered_dates[3])
+        & (vectorized_cube["horizon"] == "120d")
+    ]
+    assert set(last_matured_120d["outcome_status"]) == {"MATURED"}
+    assert set(first_immature_120d["outcome_status"]) == {"INSUFFICIENT_FUTURE_WINDOW"}
+    assert first_immature_120d["future_net_return"].isna().all()
 
     for payload in (weight_path, return_panel, outcome_cube, leakage_audit, robustness):
         assert payload["production_effect"] == "none"
@@ -692,6 +829,137 @@ def _business_dates(start: date, count: int) -> list[date]:
             result.append(current)
         current += timedelta(days=1)
     return result
+
+
+def _forward_outcome_equivalence_panel(*, day_count: int = 123) -> pd.DataFrame:
+    dates = _business_dates(date(2023, 1, 2), day_count)
+    rows = []
+    for day_index, row_date in enumerate(dates):
+        returns = {
+            "100_qqq": float("nan") if day_index == 7 else 0.001 + (day_index % 5) * 0.0001,
+            "equal_risk_qqq_sgov": -0.0007 if day_index % 4 == 0 else 0.0005,
+            "qqq_50_sgov_50": (
+                -1.0 if day_index == 9 else (-0.0002 if day_index % 11 == 0 else 0.0004)
+            ),
+        }
+        for strategy_id, net_return in returns.items():
+            rows.append(
+                {
+                    "date": row_date.isoformat(),
+                    "strategy_id": strategy_id,
+                    "strategy_role": (
+                        "selectable" if strategy_id != "qqq_50_sgov_50" else "reference"
+                    ),
+                    "policy_definition_hash": f"hash-{strategy_id}",
+                    "component_pool_hash": "pool-hash",
+                    "net_return": net_return,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def _scalar_forward_outcome_cube_frame(panel: pd.DataFrame) -> pd.DataFrame:
+    ordered_dates = sorted(panel["date"].unique())
+    net = panel.pivot(index="date", columns="strategy_id", values="net_return").sort_index()
+    rows = []
+    for date_index, decision_date in enumerate(ordered_dates):
+        for horizon in layer2_readiness.FORWARD_HORIZONS:
+            future_dates = ordered_dates[date_index + 1 : date_index + 1 + horizon]
+            matured = len(future_dates) == horizon
+            horizon_returns: dict[str, float | None] = {}
+            horizon_drawdowns: dict[str, float | None] = {}
+            horizon_volatilities: dict[str, float | None] = {}
+            horizon_downside: dict[str, float | None] = {}
+            for strategy_id in net.columns:
+                key = str(strategy_id)
+                if not matured:
+                    horizon_returns[key] = None
+                    horizon_drawdowns[key] = None
+                    horizon_volatilities[key] = None
+                    horizon_downside[key] = None
+                    continue
+                series = net.loc[future_dates, strategy_id].fillna(0.0).astype(float)
+                equity = (1.0 + series).cumprod()
+                downside = series[series < 0.0]
+                horizon_returns[key] = float(equity.iloc[-1] - 1.0)
+                horizon_drawdowns[key] = float((equity / equity.cummax() - 1.0).min())
+                horizon_volatilities[key] = float(series.std(ddof=0) * math.sqrt(252))
+                horizon_downside[key] = (
+                    float(downside.std(ddof=0) * math.sqrt(252)) if not downside.empty else 0.0
+                )
+            best_return = max(
+                (value for value in horizon_returns.values() if value is not None),
+                default=None,
+            )
+            for strategy_id in net.columns:
+                key = str(strategy_id)
+                future_return = horizon_returns[key]
+                future_drawdown = horizon_drawdowns[key]
+                rows.append(
+                    {
+                        "decision_date": decision_date,
+                        "strategy_id": key,
+                        "horizon": f"{horizon}d",
+                        "outcome_status": (
+                            "MATURED" if matured else "INSUFFICIENT_FUTURE_WINDOW"
+                        ),
+                        "outcome_start_date": future_dates[0] if matured else None,
+                        "outcome_end_date": future_dates[-1] if matured else None,
+                        "future_net_return": _nullable_round(future_return),
+                        "future_max_drawdown": _nullable_round(future_drawdown),
+                        "future_realized_volatility": _nullable_round(horizon_volatilities[key]),
+                        "future_downside_deviation": _nullable_round(horizon_downside[key]),
+                        "future_calmar_proxy": _nullable_round(
+                            _ratio_or_none(future_return, abs(future_drawdown or 0.0))
+                        ),
+                        "relative_return_vs_100_qqq": _nullable_round(
+                            _diff_or_none(future_return, horizon_returns.get("100_qqq"))
+                        ),
+                        "relative_return_vs_equal_risk": _nullable_round(
+                            _diff_or_none(
+                                future_return,
+                                horizon_returns.get("equal_risk_qqq_sgov"),
+                            )
+                        ),
+                        "relative_drawdown_vs_100_qqq": _nullable_round(
+                            _diff_or_none(future_drawdown, horizon_drawdowns.get("100_qqq"))
+                        ),
+                        "regret_vs_best_component": _nullable_round(
+                            _diff_or_none(best_return, future_return)
+                        ),
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
+def _nullable_round(value: object, digits: int = 8) -> float | None:
+    if value is None:
+        return None
+    number = float(value)
+    return round(number, digits) if math.isfinite(number) else None
+
+
+def _ratio_or_none(numerator: object, denominator: object) -> float | None:
+    if numerator is None or denominator is None:
+        return None
+    resolved_denominator = _finite_float(denominator)
+    if resolved_denominator == 0.0:
+        return None
+    return _finite_float(numerator) / resolved_denominator
+
+
+def _diff_or_none(left: object, right: object) -> float | None:
+    if left is None or right is None:
+        return None
+    return _finite_float(left) - _finite_float(right)
+
+
+def _finite_float(value: object, default: float = 0.0) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    return number if math.isfinite(number) else default
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:

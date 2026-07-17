@@ -11,7 +11,10 @@ from ai_trading_system.platform.artifacts.validation_session import (
 
 @with_artifact_validation_session
 def test_promotion_threshold_sensitivity_keeps_relaxed_scenarios_diagnostic(tmp_path) -> None:
-    fixture = run_promotion_threshold_sensitivity_fixture(tmp_path)
+    fixture = run_promotion_threshold_sensitivity_fixture(
+        tmp_path,
+        compact_test_matrix=True,
+    )
     sensitivity = fixture["sensitivity"]
     relaxed = [
         row for row in sensitivity["threshold_scenarios"] if row["scenario"] != "base_threshold"

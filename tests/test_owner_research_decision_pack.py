@@ -3,8 +3,12 @@ from __future__ import annotations
 from dynamic_v3_weight_batch_search_helpers import run_owner_research_decision_pack_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 
+@with_artifact_validation_session
 def test_owner_research_decision_pack_lists_manual_options(tmp_path) -> None:
     fixture = run_owner_research_decision_pack_fixture(tmp_path)
     owner_pack = fixture["owner_pack"]

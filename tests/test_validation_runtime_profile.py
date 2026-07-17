@@ -453,6 +453,7 @@ def test_failed_pytest_outcome_cannot_be_promoted_as_performance_evidence() -> N
 
 
 def test_real_xdist_plugin_writes_complete_noncomparable_profile(tmp_path: Path) -> None:
+    repo_root = Path.cwd().resolve()
     suite_dir = tmp_path / "mini_suite"
     suite_dir.mkdir()
     (suite_dir / "test_alpha.py").write_text(
@@ -468,6 +469,10 @@ def test_real_xdist_plugin_writes_complete_noncomparable_profile(tmp_path: Path)
     env = dict(os.environ)
     env[RUNTIME_PROFILE_OUTPUT_ENV] = str(output_path)
     env[RUNTIME_PROFILE_FORMAL_SELECTION_ENV] = "1"
+    python_path_parts = [str(repo_root), str(repo_root / "src")]
+    if env.get("PYTHONPATH"):
+        python_path_parts.append(env["PYTHONPATH"])
+    env["PYTHONPATH"] = os.pathsep.join(python_path_parts)
 
     completed = subprocess.run(
         [
@@ -481,12 +486,19 @@ def test_real_xdist_plugin_writes_complete_noncomparable_profile(tmp_path: Path)
             "-p",
             "scripts.pytest_runtime_profile",
             "--aits-duration-profile",
-            str(PROFILE_PATH),
-            str(suite_dir),
+            str((repo_root / PROFILE_PATH).resolve()),
+            "--rootdir",
+            str(tmp_path),
+            "--confcutdir",
+            str(tmp_path),
+            "mini_suite",
             "-q",
             "--no-loadscope-reorder",
         ],
-        cwd=Path.cwd(),
+        # Keep the nested session inside one hermetic root.  Collecting an
+        # external temp suite from the repository root makes Windows pytest
+        # traverse sibling temp paths that another xdist worker may delete.
+        cwd=tmp_path,
         env=env,
         check=False,
         capture_output=True,
@@ -500,9 +512,9 @@ def test_real_xdist_plugin_writes_complete_noncomparable_profile(tmp_path: Path)
     assert payload["performance_evidence_status"] == "FAIL"
     assert payload["collection"]["count"] == 3
     assert payload["collection"]["nodeids"] == [
-        "test_beta.py::test_beta_first",
-        "test_beta.py::test_beta_second",
-        "test_alpha.py::test_alpha",
+        "mini_suite/test_beta.py::test_beta_first",
+        "mini_suite/test_beta.py::test_beta_second",
+        "mini_suite/test_alpha.py::test_alpha",
     ]
     assert payload["node_count"] == 3
     assert payload["file_count"] == 2
@@ -551,6 +563,8 @@ def test_real_xdist_plugin_applies_and_verifies_duration_order(tmp_path: Path) -
             str((repo_root / PROFILE_PATH).resolve()),
             "--rootdir",
             str(tmp_path),
+            "--confcutdir",
+            str(tmp_path),
             "tests",
             "-q",
             "--no-loadscope-reorder",
@@ -583,6 +597,7 @@ def test_real_xdist_plugin_applies_and_verifies_duration_order(tmp_path: Path) -
 
 
 def test_runtime_sidecar_write_failure_preserves_pytest_exit(tmp_path: Path) -> None:
+    repo_root = Path.cwd().resolve()
     suite_dir = tmp_path / "write_failure_suite"
     suite_dir.mkdir()
     (suite_dir / "test_ok.py").write_text(
@@ -594,6 +609,10 @@ def test_runtime_sidecar_write_failure_preserves_pytest_exit(tmp_path: Path) -> 
     env = dict(os.environ)
     env[RUNTIME_PROFILE_OUTPUT_ENV] = str(output_path)
     env[RUNTIME_PROFILE_FORMAL_SELECTION_ENV] = "1"
+    python_path_parts = [str(repo_root), str(repo_root / "src")]
+    if env.get("PYTHONPATH"):
+        python_path_parts.append(env["PYTHONPATH"])
+    env["PYTHONPATH"] = os.pathsep.join(python_path_parts)
 
     completed = subprocess.run(
         [
@@ -603,11 +622,15 @@ def test_runtime_sidecar_write_failure_preserves_pytest_exit(tmp_path: Path) -> 
             "-p",
             "scripts.pytest_runtime_profile",
             "--aits-duration-profile",
-            str(PROFILE_PATH),
-            str(suite_dir),
+            str((repo_root / PROFILE_PATH).resolve()),
+            "--rootdir",
+            str(tmp_path),
+            "--confcutdir",
+            str(tmp_path),
+            "write_failure_suite",
             "-q",
         ],
-        cwd=Path.cwd(),
+        cwd=tmp_path,
         env=env,
         check=False,
         capture_output=True,

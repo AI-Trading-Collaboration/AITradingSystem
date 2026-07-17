@@ -10,7 +10,7 @@ from ai_trading_system.platform.artifacts.validation_session import (
 
 @with_artifact_validation_session
 def test_candidate_promotion_v2_remains_owner_review_only(tmp_path) -> None:
-    fixture = run_candidate_promotion_v2_fixture(tmp_path)
+    fixture = run_candidate_promotion_v2_fixture(tmp_path, compact_test_matrix=True)
     promotion = fixture["promotion_v2"]
     decision = promotion["promotion_v2_decision"]
 

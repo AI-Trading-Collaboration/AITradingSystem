@@ -12400,7 +12400,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.layer2_strategy_component_readiness
   path: src/ai_trading_system/layer2_strategy_component_readiness.py
-  sha256: 284ac3b41e4562e7bc58b2d42f2fe0e129af4e4c8a0d9bc3c37e4021be6f69c0
+  sha256: b228f2d2d84e3d4339141dc0aedc1c19ba50ede613d89c4e9dcd801ea5f2ba57
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

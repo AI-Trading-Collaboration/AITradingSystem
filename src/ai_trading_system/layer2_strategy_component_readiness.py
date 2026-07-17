@@ -8,6 +8,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
@@ -47,6 +48,9 @@ INACTIVE_COMPONENT_SECTION = "inactive_research_reference_candidates"
 GROWTH_OWNER_DECISION_KEEP_RESEARCH_ONLY = "KEEP_GROWTH_RESEARCH_ONLY"
 FORWARD_HORIZONS = (5, 10, 20, 60, 120)
 ASSET_COLUMNS = ("QQQ", "TQQQ", "SGOV")
+# Bound each temporary (decision, strategy, horizon) float64 cube to about 2 MiB.
+# This is an execution-memory invariant; it does not alter any research threshold.
+_MAX_FORWARD_WINDOW_CUBE_ELEMENTS = 262_144
 
 
 def run_layer2_component_readiness_reconciliation(
@@ -2094,36 +2098,41 @@ def _build_forward_outcome_cube_frame(panel: pd.DataFrame) -> pd.DataFrame:
         str(row["strategy_id"]): str(row["component_pool_hash"])
         for _, row in panel.drop_duplicates("strategy_id").iterrows()
     }
+    metrics_by_horizon = _forward_window_metrics(net)
     rows: list[dict[str, Any]] = []
     for date_index, decision_date in enumerate(ordered_dates):
         for horizon in FORWARD_HORIZONS:
             future_dates = ordered_dates[date_index + 1 : date_index + 1 + horizon]
             matured = len(future_dates) == horizon
-            horizon_returns = {}
-            horizon_drawdowns = {}
-            for strategy_id in net.columns:
-                if not matured:
-                    horizon_returns[str(strategy_id)] = None
-                    horizon_drawdowns[str(strategy_id)] = None
-                    continue
-                series = net.loc[future_dates, strategy_id].fillna(0.0)
-                horizon_returns[str(strategy_id)] = _compound_return(series)
-                horizon_drawdowns[str(strategy_id)] = _max_drawdown_from_returns(series)
+            compound_returns, max_drawdowns, realized_volatilities, downside_deviations = (
+                metrics_by_horizon[horizon]
+            )
+            horizon_returns = {
+                str(strategy_id): (
+                    float(compound_returns[date_index, strategy_index]) if matured else None
+                )
+                for strategy_index, strategy_id in enumerate(net.columns)
+            }
+            horizon_drawdowns = {
+                str(strategy_id): (
+                    float(max_drawdowns[date_index, strategy_index]) if matured else None
+                )
+                for strategy_index, strategy_id in enumerate(net.columns)
+            }
             best_return = max(
                 [value for value in horizon_returns.values() if value is not None],
                 default=None,
             )
-            for strategy_id in net.columns:
+            for strategy_index, strategy_id in enumerate(net.columns):
                 key = str(strategy_id)
-                series = (
-                    net.loc[future_dates, strategy_id].fillna(0.0)
-                    if matured
-                    else pd.Series(dtype=float)
-                )
                 future_return = horizon_returns.get(key)
                 future_drawdown = horizon_drawdowns.get(key)
-                realized_vol = _realized_volatility_from_returns(series) if matured else None
-                downside = _downside_deviation_from_returns(series) if matured else None
+                realized_vol = (
+                    float(realized_volatilities[date_index, strategy_index]) if matured else None
+                )
+                downside = (
+                    float(downside_deviations[date_index, strategy_index]) if matured else None
+                )
                 rows.append(
                     {
                         "decision_date": decision_date,
@@ -2167,6 +2176,115 @@ def _build_forward_outcome_cube_frame(panel: pd.DataFrame) -> pd.DataFrame:
                     }
                 )
     return pd.DataFrame(rows)
+
+
+def _forward_window_metrics(
+    net: pd.DataFrame,
+) -> dict[int, tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
+    """Calculate the forward-window metric planes once per configured horizon."""
+    strategy_count = net.shape[1]
+    metrics: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = {}
+    if len(net) <= min(FORWARD_HORIZONS):
+        for horizon in FORWARD_HORIZONS:
+            empty = np.empty((0, strategy_count), dtype=float)
+            metrics[horizon] = (empty, empty.copy(), empty.copy(), empty.copy())
+        return metrics
+
+    # The decision-date row is never part of a future outcome. Preserve the scalar
+    # path's lazy conversion contract by converting only rows that can be consumed.
+    values = _forward_values_preserving_scalar_error_priority(net)
+    for horizon in FORWARD_HORIZONS:
+        if len(net) <= horizon:
+            empty = np.empty((0, strategy_count), dtype=float)
+            metrics[horizon] = (empty, empty.copy(), empty.copy(), empty.copy())
+            continue
+
+        # The first converted row is decision row 0's first future observation.
+        windows = np.lib.stride_tricks.sliding_window_view(
+            values,
+            window_shape=horizon,
+            axis=0,
+        )
+        result_shape = (len(windows), strategy_count)
+        compound_returns = np.empty(result_shape, dtype=float)
+        max_drawdowns = np.empty(result_shape, dtype=float)
+        realized_volatilities = np.empty(result_shape, dtype=float)
+        downside_deviations = np.empty(result_shape, dtype=float)
+        chunk_rows = max(
+            1,
+            _MAX_FORWARD_WINDOW_CUBE_ELEMENTS
+            // max(1, strategy_count * horizon),
+        )
+        for chunk_start in range(0, len(windows), chunk_rows):
+            chunk_stop = min(len(windows), chunk_start + chunk_rows)
+            window_chunk = windows[chunk_start:chunk_stop]
+            equity = np.cumprod(1.0 + window_chunk, axis=2)
+            compound_returns[chunk_start:chunk_stop] = equity[:, :, -1] - 1.0
+            with np.errstate(divide="ignore", invalid="ignore"):
+                drawdown_paths = (
+                    equity / np.maximum.accumulate(equity, axis=2) - 1.0
+                )
+            valid_drawdowns = ~np.isnan(drawdown_paths)
+            chunk_drawdowns = np.where(
+                valid_drawdowns, drawdown_paths, np.inf
+            ).min(axis=2)
+            chunk_drawdowns[~valid_drawdowns.any(axis=2)] = np.nan
+            max_drawdowns[chunk_start:chunk_stop] = chunk_drawdowns
+            realized_volatilities[chunk_start:chunk_stop] = (
+                np.std(window_chunk, axis=2, ddof=0) * math.sqrt(252)
+            )
+
+            negative = window_chunk < 0.0
+            negative_counts = negative.sum(axis=2)
+            negative_sums = np.where(negative, window_chunk, 0.0).sum(axis=2)
+            negative_means = np.divide(
+                negative_sums,
+                negative_counts,
+                out=np.zeros_like(negative_sums),
+                where=negative_counts > 0,
+            )
+            centered_negative = np.where(
+                negative,
+                window_chunk - negative_means[:, :, np.newaxis],
+                0.0,
+            )
+            downside_variances = np.divide(
+                np.square(centered_negative).sum(axis=2),
+                negative_counts,
+                out=np.zeros_like(negative_sums),
+                where=negative_counts > 0,
+            )
+            downside_deviations[chunk_start:chunk_stop] = (
+                np.sqrt(np.maximum(downside_variances, 0.0)) * math.sqrt(252)
+            )
+        metrics[horizon] = (
+            compound_returns,
+            max_drawdowns,
+            realized_volatilities,
+            downside_deviations,
+        )
+    return metrics
+
+
+def _forward_values_preserving_scalar_error_priority(net: pd.DataFrame) -> np.ndarray:
+    """Use the vectorized fast path while retaining the scalar error contract."""
+    try:
+        return net.iloc[1:].fillna(0.0).to_numpy(dtype=float)
+    except (OverflowError, TypeError, ValueError) as conversion_error:
+        # Invalid research inputs are exceptional. Replay only that failure path
+        # in the exact legacy decision -> horizon -> strategy traversal order so
+        # the first surfaced bad value remains stable without taxing valid runs.
+        for date_index in range(len(net)):
+            for horizon in FORWARD_HORIZONS:
+                window_start = date_index + 1
+                window_stop = window_start + horizon
+                if window_stop > len(net):
+                    continue
+                for strategy_id in net.columns:
+                    _compound_return(
+                        net.iloc[window_start:window_stop][strategy_id].fillna(0.0)
+                    )
+        raise conversion_error
 
 
 def _anti_leakage_issues(

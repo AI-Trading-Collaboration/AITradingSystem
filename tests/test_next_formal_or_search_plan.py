@@ -10,7 +10,7 @@ from ai_trading_system.platform.artifacts.validation_session import (
 
 @with_artifact_validation_session
 def test_next_formal_or_search_plan_records_manual_next_step(tmp_path) -> None:
-    fixture = run_next_formal_or_search_plan_fixture(tmp_path)
+    fixture = run_next_formal_or_search_plan_fixture(tmp_path, compact_test_matrix=True)
     next_plan = fixture["next_plan"]
     decision = next_plan["next_plan_decision"]
 

@@ -293,6 +293,123 @@ focused/分片；正式architecture、contract、full仅在本integration bounda
 `strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`；EB1与下一callback
 slice继续不自动启动。
 
+### S3E：post-profile critical-tail 去重（owner批准继续）
+
+2026-07-18 / S3D提交后，按首个complete full profile重新排序下一轮候选，而不是沿用旧top-50摘要。
+首个complete profile按file busy / worker-seconds（不是focused墙钟）重排出的候选为：Layer1
+meta-policy=`962.13 worker-s/6 nodes`、Refined Method=`553.26 worker-s/3 nodes`、Promotion/Owner
+governance四文件合计=`1,744.08 worker-s`、Weight Dashboard=`362.54 worker-s/1 node`。四个互斥
+只读审计lane已完成，协调者继续独占本需求、task register、manifests、compatibility baseline和最终集成。
+
+S3E优先消除同一test node内重复artifact builder/validator DAG与可证明安全的production-default测试放大；
+不得跨worker共享可写artifact，不得弱化content fingerprint失效、absolute-path/self-commitment、
+tamper FAIL、DQ/PIT/source replay、lineage或all-view byte rebuild。每个实现必须保留nodeids与生产默认，
+使用同机器、同`python -m pytest -n 16 --dist loadfile`命令形成before/after，并通过对应expanded focused。
+
+S3E已选择并实施三类互斥优化：Layer1/Layer2 forward outcome计算改为有界分块NumPy window kernel，
+严格保持`decision_date + 1` PIT、NaN/downside/ddof/rounding/异常优先级与scalar结果逐字段exact；Refined
+Method、Weight Dashboard和Owner Decision Pack只在单test/worker内延长PASS-only content-fingerprint
+validation session；Candidate Promotion、Next Formal/Search Plan和Promotion Sensitivity仅在测试fixture显式
+启用满足全部required families的compact matrix，production默认`80`及targeted `60～120`保持不变。
+Layer1由首份profile的`962.13 worker-s`降至隔离after调用累计`318.71 worker-s`（约`-66.9%`），
+Layer2由`165.28`降至`47.97 worker-s`（约`-71.0%`）；Refined同命令墙钟由`373.89s`降至
+`279.36s`（约`-25.3%`）。Weight首份profile的`362.54 worker-s`与隔离after墙钟`77.26s`、
+Governance首份profile的`1,744.08 worker-s`与隔离after调用累计`604.24 worker-s`因运行选择和并发上下文
+不同，只作为候选方向证据，不冒充同命令全局降幅。forward kernel的无界3D原型在`6,352×5`输入峰值
+`141.18 MiB`，加入`262,144`元素临时cube预算后为`15.39 MiB`；该预算是执行内存不变量，不是投资阈值。
+未删除任何nodeid、skip/xfail或验证族，full级整体收益仍待integration gate证明。
+
+多个独立候选合并后只在一个自然integration boundary运行architecture、contract和full，禁止为每个候选
+单独重复full。下一次full只是第2份profile候选；只有final order、exit binding、telemetry、performance和
+manifest freshness全部PASS后才计入连续3次要求，否则complete profile计数仍为1。EB1与下一callback仍
+未启动，`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+
+#### S3E候选full首次运行：性能方向成立、complete gate拒绝
+
+2026-07-18 / 标准`python scripts/run_validation_tier.py full --write-runtime-artifact`完整运行到100%，
+结果=`6,245 passed / 1 failed / 2 skipped / 641 warnings / 1,083.96s`，artifact=
+`outputs/validation_runtime/full_20260717T215025Z/`。唯一失败为
+`tests/test_validation_runtime_profile.py::test_real_xdist_plugin_writes_complete_noncomparable_profile`：
+内嵌2-worker pytest在collection期间遇到`aits_pytest_runtime_profile_*`临时目录消失，继而两个worker
+收集集不一致。该失败不是业务、策略、PIT或Layer2计算回归，但属于runtime evidence自身的并发可靠性
+缺口，必须直接修复并补竞态回归；不得用重试、serial或忽略失败绕过。
+
+本次sidecar仍证明scheduler applied/no fallback/order verified、`6,248` nodes、`1,068` files、16 workers、
+collection与telemetry PASS且无missing/extra/duplicate/inactive；但pytest exit=`1`使performance evidence
+FAIL，因此complete profile计数保持1。作为不升级资格的方向性trace，总墙钟相对首份complete profile
+`1,231.76s -> 1,083.96s`（约`-12.0%`），worker busy约`-11.9%`，八个S3E目标合计
+`3,787.29 -> 1,807.84 worker-s`（约`-52.3%`），file P99约`346.50 -> 255.45s`、`>=300s`
+文件由16降至7；这些结果不能声明稳定PASS样本。修复后须刷新test manifest/compatibility/source hashes，
+并重跑相关focused、architecture、contract及一次标准full；只有新run联合PASS才能成为第2份profile。
+
+竞态根因已直接闭合在测试隔离边界，而未修改生产runner生命周期：三个在系统TEMP生成mini suite的
+subprocess测试现在使用仓库与`src`的显式`PYTHONPATH`、绝对duration profile、临时目录内相对suite、
+`cwd/rootdir/confcutdir=tmp_path`。Windows pytest不再为外部initial path遍历系统TEMP兄弟目录，避免其他
+xdist worker清理`aits_pytest_runtime_profile_*`时在`scandir -> lstat`之间触发`FileNotFoundError`。
+原故障组合在外层`-n16 --dist loadfile`并加载真实runtime plugin后连续3次均为`59 passed`
+（`8.77/8.82/8.82s`）；另在650次同前缀兄弟目录并发创建/删除压力下，三条real/subprocess测试
+`3 passed / 5.85s`。未加入retry、serial、skip/xfail或延迟cleanup。刷新`947 modules / 1,126 test
+files / 858 direct writers / 0 violations`后，正式architecture=`344 passed / 50.37s`（artifact=
+`outputs/validation_runtime/architecture-fitness_20260717T223306Z/`）、contract=`236 passed / 37.29s`
+（artifact=`outputs/validation_runtime/contract-validation_20260717T223402Z/`）；标准full rerun仍待执行。
+
+#### S3E正式full重跑：runtime contract PASS，final code audit后资格待重跑
+
+2026-07-18 / 修复nested-xdist隔离、刷新manifests/source hashes并通过formal architecture/contract后，
+标准`python scripts/run_validation_tier.py full --write-runtime-artifact`结果=`6,246 passed / 2 skipped /
+642 warnings / 1,109.04s`，artifact=`outputs/validation_runtime/full_20260717T223652Z/`。严格reader
+重验为`profile/telemetry/performance=PASS`、pytest exit=`0`、`6,248 nodes / 1,068 files / 16 workers`；
+scheduler applied、no fallback、duration order verified，collection无missing/extra/duplicate/inactive，且与首次
+S3E候选run的ordered/set SHA-256完全一致。该run的runtime contract完整，但提交前独立code review随后
+发现向量化整表转换在“多个非法值并存”时改变legacy decision→horizon→strategy首异常优先级；现有full
+未覆盖这一exact契约。因此`223652Z`只保留完整性能方向证据，不计最终S3E第2份qualifying profile，
+`complete_profile_count`暂时保持1，`stable_full_improvement_claimed=false`。
+
+相对首份complete profile，正式墙钟`1,231.76 -> 1,109.04s`（约`-10.0%`）、worker busy
+`19,126.79 -> 17,071.59 worker-s`（约`-10.7%`）、八个S3E目标`3,787.29 -> 1,832.55
+worker-s`（约`-51.6%`）、file P99 `353.76 -> 269.52s`，`>=300s`文件由16降至7。
+但tail max/total为`45.81/512.68s`，高于首份profile的`37.64/414.51s`；当前前三文件为Layer1
+`448.42s`、Smoothed Weekly `418.06s`、Smoothed Refresh Hardening `394.23s`，说明critical path已
+转向Smoothed与剩余foundation/weight链。人工只读采样还观察到working/private约`13.8/25.8 GiB`，
+这是采样值而非完整peak telemetry。
+
+性能可比性保守限制：并行只读Smoothed审计在full启动附近有一个约91～92秒的单Python fixture分段
+计时，无法排除最多覆盖full开始后的前92秒；它不影响pytest正确性、collection或sidecar完整性，且只
+可能使本run变慢，但本run不得单独用于稳定P95结论。full再次覆写两份tracked research Markdown，已
+恢复HEAD内容；测试direct-writer隔离作为后续研发效率风险保留。异常优先级已用valid-input批量转换
+fast path加conversion-failure-only legacy-order replay直接修复，并新增11日、两个策略分别在row10/row6
+含非法值的exact type/message golden；focused=`1 passed / 10.17s`、Ruff PASS。刷新manifests/hashes后，
+architecture=`344 passed / 50.53s`（`architecture-fitness_20260717T231619Z`）、contract=`236 passed /
+34.47s`（`contract-validation_20260717T231715Z`）均PASS；replacement standard full随后已运行并形成
+第2份qualifying profile，见下节。之后下一批
+优先补齐Smoothed operations /
+evidence test-local session，并把retry/weekly前置链收窄为recorded-owner authority prefix；生产默认、
+DQ/PIT/source replay/all-view/tamper语义不得改变。
+
+#### S3E replacement standard full：第2份complete profile PASS
+
+2026-07-18 / 最终语义修复、manifest/hash刷新及formal architecture/contract PASS后，标准
+`python scripts/run_validation_tier.py full --write-runtime-artifact`得到`6,246 passed / 2 skipped /
+642 warnings / 1,040.50s`，artifact=`outputs/validation_runtime/full_20260717T231920Z/`。当前manifest与
+duration profile下的strict reader确认`profile/telemetry/performance=PASS`、pytest exit=`0`、
+`6,248 nodes / 1,068 files / 16 workers`；scheduler applied、no fallback、duration order verified，
+collection与`215025Z/223652Z`的ordered/set SHA-256完全一致，telemetry不存在missing、extra、duplicate、
+inactive、inconsistent或invalid phase。测试再次覆写的两份tracked research Markdown已恢复为HEAD内容，
+其test direct-writer隔离保留为S3F明确工作项。
+
+相对首份qualifying profile `191414Z`，墙钟`1,231.76 -> 1,040.50s`（`-15.53%`）、worker busy
+`19,126.79 -> 16,143.75 worker-s`（`-15.60%`）、nearest-rank file P99
+`353.76 -> 249.25s`（`-29.54%`）、`>=300s`文件`16 -> 6`、八个S3E目标
+`3,787.29 -> 1,703.14 worker-s`（`-55.03%`）。worker busy CV=`1.10%`，tail max/total=
+`32.46/355.47s`；相对非资格方向run `223652Z`，墙钟再降`6.18%`、tail total降`30.66%`。
+因此`complete_profile_count=2/3`，但collection相对首份profile包含已知22个新增runtime-contract nodes，
+且尚无第3份稳定集合证据，继续固定`stable_full_improvement_claimed=false`。
+
+不为凑齐计数立即空跑第3次full。日常研究迭代只执行DQ、对应workflow validator与focused tier；full只在
+下一自然integration boundary、phase exit/handoff、broad shared-contract变更、正式性能profile或失败修复后
+重跑时执行。S4应把受治理的`trigger_reason`、task/boundary id及可选parent run写入runtime summary与
+Reader Brief，使低频触发原因从artifact本身可审计；weekly/monthly研究复盘不得自动映射为周期full。
+
 ### S4：持续回归约束
 
 - architecture/contract tests 校验 runtime manifest freshness、调度确定性和 gate coverage；
