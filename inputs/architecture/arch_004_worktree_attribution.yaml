@@ -1,14 +1,14 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
 status: INTEGRATED_WORKTREE_ATTRIBUTION_PROVEN_PHASE_G2_4CX3_COMPLETE_G2_4_CONTINUES
-as_of: 2026-07-18
-base_commit: ee68b98f
+as_of: 2026-07-19
+base_commit: 13d85f1e
 production_effect: none
 current_staging_authority:
   task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
-  increment: S3M_WEIGHT_INTERPRETATION_CLUSTER_TAIL
+  increment: S3N_ADAPTIVE_EQUAL_RISK_TAIL_CLOSEOUT
   status: COMPLETE_RUNTIME_TASK_CONTINUES
-  base_commit: ee68b98f
+  base_commit: 13d85f1e
   declared_path_set_current: true
 
 integrated_task_ids:
@@ -276,6 +276,9 @@ arch_004_owned_paths:
   - tests/test_confirmation_evaluate.py
   - tests/test_weight_candidate_cluster.py
   - tests/test_weight_top_candidate_interpretation.py
+  - tests/test_weight_adaptive_branch.py
+  - tests/test_equal_risk_growth_research_restart.py
+  - tests/test_equal_risk_growth_tilt.py
   - tests/dynamic_v3_confirmation_cycle_helpers.py
   - tests/test_consensus_risk.py
   - tests/test_outcome_update_review.py

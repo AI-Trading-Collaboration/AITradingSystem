@@ -1078,6 +1078,90 @@ status并增加显式S3M staging authority；最终独立审查再为该authorit
 S3N candidate coordinator基于`133435Z`新profile登记下一批；EB1、下一callback与ARCH-005仍锁定，
 `production_effect=none`。
 
+### S3N：Adaptive 与 Equal Risk 尾部有界收尾
+
+2026-07-19 / owner复盘后继续推进一次有界低/中风险收尾，不启动Smoothed immutable authority/COW
+架构。权威base=`13d85f1e`，source profile=`outputs/validation_runtime/full_20260718T133435Z/
+test_runtime_profile.json`；该profile为`6,248 nodes / 1,068 files / 16 workers / 991.64s`，调度tail idle
+仅`0.222s`，因此本批只减少真实test builder/CLI/validator重复工作，不再调整文件顺序。
+
+|lane|profile证据|唯一允许范围|预登记机制与安全边界|
+|---|---:|---|---|
+|A Weight Adaptive|`tests/test_weight_adaptive_branch.py`=`116.378s / 1 node`|仅该test file|审计既有test-function outer validation session；public Adaptive validator必须逐次真实调用，branch snapshot、live commitments、DQ、lineage、nodeid与断言不变，不新增supported root。|
+|B Equal Risk Restart|`tests/test_equal_risk_growth_research_restart.py`=`251.115s / 5 nodes`，其中roadmap-v2 node=`208.875s`|仅该文件的`test_roadmap_v2_real_result_convergence_builders_and_cli` test body|只允许消除该node内已由同次真实suite/CLI生成artifact后的重复builder/CLI工作；至少一次真实CLI、最终gate、安全字段、artifact bytes与所有断言必须保留，不改production helper。|
+|C Equal Risk Tilt|`tests/test_equal_risk_growth_tilt.py`=`271.338s / 5 nodes`|仅五个既有test bodies；不得改文件尾部helper/cross-import或production source|只允许test-body内复用同node已生成的immutable payload/artifact，真实CLI/validator与research-only、DQ、AI regime、paper-shadow/production/broker safety断言保持；不得缩减candidate family或fixture日期。|
+
+协调者先在clean base且无其他candidate Python/pytest负载下顺序取得A exact node、B roadmap-v2 exact node、
+C whole-file isolated before；之后分别冻结`worst-of-2 after <= min(0.90 * B, B - 30s)`，不得按after结果
+放宽。三agent只有在baseline登记后才能按互斥文件编辑，且不得自行运行Python/pytest或编辑共享docs。
+任一lane未达门槛、减少nodeid/skip/xfail/断言、弱化真实CLI/validator/DQ/安全边界或出现P0/P1即
+byte-exact撤回。coordinator顺序执行after与expanded focused；所有保留lane合并后才运行一次自然
+architecture/contract/full。理论三文件合计`638.83 worker-s`，即使局部节省50%也只对应约`19.96s`
+full容量，故裁决以isolated同命令证据为主，不要求单次full突破约35s自然波动。S3N后停止继续叠加
+小型session wrapper，再决定是否单独登记Smoothed架构研究；`stable_full_improvement_claimed=false`、
+`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`，EB1、下一callback与
+ARCH-005仍锁定。
+
+S3N isolated before已在base=`13d85f1e`、显式candidate `PYTHONPATH`且无其他Python/pytest负载下顺序
+闭合，三条命令均为`-n 16 --dist loadfile -q --durations=0`且无skip/failure。A Adaptive exact node=
+`1 passed / pytest 59.29s / wall 59.889s / call 56.16s`，冻结worst-of-2 wall上限=`29.889s`；B Restart
+roadmap-v2 exact node=`1 passed / pytest 127.66s / wall 129.064s / call 122.51s`，上限=`99.064s`；
+C Tilt whole-file=`5 passed / pytest 147.57s / wall 148.079s`，五call=`57.43/47.19/32.59/5.11/0.16s`，
+上限=`118.079s`。三上限均为`min(0.90*B,B-30s)`，不得事后放宽。当前进入`IMPLEMENTING`前安全点；
+agent只能按A/B/C互斥test file实施已审计的最小差异，不自行运行Python/pytest，所有after与裁决由
+coordinator顺序执行。
+
+S3N三条lane的双after已在同样无负载、显式candidate `PYTHONPATH`和相同pytest命令下闭合，
+均保留且不放宽冻结门槛。A Adaptive=`17.995/17.903s` worst wall，相对`59.889s`减少
+`41.894s/-69.95%`；B Restart roadmap-v2=`78.485/78.410s`，相对`129.064s`减少
+`50.579s/-39.19%`；C Tilt whole-file=`92.541/92.236s`，相对`148.079s`减少
+`55.538s/-37.51%`，两轮均`5 passed`。三条isolated worst合计减少`148.011s`；该值只是同命令
+局部证据，不等同于full wall收益。A/B独立只读交叉审查均为`P0/P1/P2=0/0/0`；C交叉审查、
+expanded focused、manifests/compatibility/deprecation/source hashes、architecture/contract与本批唯一natural full
+尚待闭合。当前状态=`VALIDATING`，next owner=integration coordinator，`production_effect=none`。
+
+S3N expanded focused已按`-n 16 --dist loadfile`闭合为`97 passed / 1 skipped / pytest 108.37s /
+wall 108.890s`；唯一skip为Windows缺少`os.fork`的既有条件用例。覆盖三条目标lane、
+validation-session基础设施和Weight Foundation→Scorecard→Robustness→Adaptive→Expanded→
+Evaluation/Follow-up hardening链。三条lane的独立只读交叉审查现均为
+`P0/P1/P2=0/0/0`；C审查特别确认5个nodeid、四个真实CLI、原业务/安全断言、同node
+JSON provenance、`ai_after_chatgpt`与`production_effect=none`均保持。三目标Ruff和`py_compile`
+均PASS；尚需刷新共享tracked artifacts并执行architecture/contract和唯一natural full。
+
+S3N pre-full generated manifests=`948 modules / 1,126 test-support files / 0 violations`，compatibility/
+deprecation/attribution focused=`9 passed / wall 12.799s`，architecture=`344 passed / wall 49.83s`，
+contract=`236 passed / wall 36.56s`。本批唯一natural full=`6,246 passed / 2 skipped / 643 warnings /
+pytest 903.03s / wall 904.14s`，exact `6,248 nodes / 1,068 files / 16 workers`，ordered/set collection
+hash与S3M一致，scheduler=`COMPLETE/applied/no-fallback`、telemetry/performance=`PASS`、tail idle total=
+`0.108s`。不运行第二次full。
+
+三目标full file time分别为Adaptive `116.378→28.473s`（`-75.53%`）、Restart
+`251.115→167.742s`（`-33.20%`）、Tilt `271.338→117.175s`（`-56.82%`），合计
+`638.831→313.389 worker-s`（`-325.442s/-50.94%`），node数仍`1/5/5`。相对S3M，本次总
+wall/file worker-s=`-87.50s/-8.82%`与`-1,382.855s/-8.82%`，nearest-rank P95/P99/max=
+`76.122/251.115/589.598→66.892/211.728/481.740s`（`-12.12%/-15.68%/-18.29%`）。但非目标
+文件也减少`1,057.413 worker-s/-7.03%`，因此只声明三目标局部收益与本次overall
+single-run improvement，不将非目标波动归因于S3N，`stable_full_improvement_claimed=false`。当前
+进入`POST_FULL_TRACKED_STATE_VALIDATING`；next owner=closeout coordinator刷新final docs/authority/manifests/
+source hashes并复验focused/architecture/contract，`strategy_logic_changed=false`、`cached_data_mutated=false`、
+`production_effect=none`。
+
+S3N第一轮post-full tracked-state focused/architecture/contract=`9/344/236 passed`，architecture与contract
+wall=`65.41/43.63s`，runtime artifacts分别为`architecture-fitness_20260718T160951Z`和
+`contract-validation_20260718T161104Z`。据此current staging authority转为
+`COMPLETE_RUNTIME_TASK_CONTINUES`；final docs/authority/test manifest/aggregate/source hashes刷新后再对该最终
+tracked state执行focused/architecture/contract复验，不跑第二次full。S3N后停止叠加小型
+wrapper/session微优化，也不自动启动Smoothed COW、S4、EB1、下一callback或ARCH-005；next owner=
+project owner / performance-review coordinator评估当前收益、剩余瓶颈与风险后选择后续方向。
+
+S3N final tracked-state focused/architecture/contract=`13/344/236 passed`，focused pytest与architecture/
+contract wall=`12.11/50.37/36.09s`，architecture/contract artifacts=
+`architecture-fitness_20260718T163403Z`/`contract-validation_20260718T163513Z`。77个active sources、
+12个changed tracked paths与12个declared paths
+完全对齐，3个excluded user docs未改，deprecation inventory=`FRESH_UNCHANGED`。S3N据此完成为
+`COMPLETE_RUNTIME_TASK_CONTINUES`；不运行第二次full，不解锁下一任务。next owner=project owner /
+performance-review coordinator，本线程将暂停并输出优化进展、剩余长尾、收益/风险与后续方案。
+
 ### S4：持续回归约束
 
 - architecture/contract tests 校验 runtime manifest freshness、调度确定性和 gate coverage；

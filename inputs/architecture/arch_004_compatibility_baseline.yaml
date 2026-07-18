@@ -13430,17 +13430,183 @@ integrated_change_arch_004g2_eb0_s3a_weight_search_tail:
       daily_research_runs_full_validation: false
       empty_full_rerun_allowed: false
     next_phase_or_slice_unblocked: false
+  s3n_adaptive_equal_risk_tail_closeout:
+    status: COMPLETE_RUNTIME_TASK_CONTINUES
+    task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+    as_of: 2026-07-19
+    base_commit: 13d85f1e
+    source_profile: outputs/validation_runtime/full_20260718T133435Z/test_runtime_profile.json
+    lanes:
+      weight_adaptive_outer_session:
+        files: [tests/test_weight_adaptive_branch.py]
+        full_profile_file_seconds: 116.378
+        before_elapsed_seconds: 59.889
+        frozen_elapsed_ceiling_seconds: 29.889
+        after_elapsed_seconds: [17.995, 17.903]
+        worst_after_elapsed_reduction_seconds: 41.894
+        worst_after_elapsed_reduction_percent: 69.95
+        full_after_file_seconds: 28.473
+        full_file_reduction_seconds: 87.906
+        full_file_reduction_percent: 75.53
+        node_count_before: 1
+        node_count_after: 1
+        final_public_validator_preserved: true
+        status: RETAINED_THRESHOLD_PASS
+      equal_risk_restart_cli_canonical_json_reuse:
+        files: [tests/test_equal_risk_growth_research_restart.py]
+        full_profile_file_seconds: 251.115
+        atomic_before_elapsed_seconds: 129.064
+        frozen_atomic_elapsed_ceiling_seconds: 99.064
+        atomic_after_elapsed_seconds: [78.485, 78.410]
+        worst_after_elapsed_reduction_seconds: 50.579
+        worst_after_elapsed_reduction_percent: 39.19
+        full_after_file_seconds: 167.742
+        full_file_reduction_seconds: 83.373
+        full_file_reduction_percent: 33.20
+        node_count_before: 5
+        node_count_after: 5
+        real_cli_count_before: 1
+        real_cli_count_after: 1
+        real_cli_count_preserved: true
+        status: RETAINED_THRESHOLD_PASS
+      equal_risk_tilt_cli_dag_canonical_json_reuse:
+        files: [tests/test_equal_risk_growth_tilt.py]
+        full_profile_file_seconds: 271.338
+        before_elapsed_seconds: 148.079
+        frozen_elapsed_ceiling_seconds: 118.079
+        after_elapsed_seconds: [92.541, 92.236]
+        worst_after_elapsed_reduction_seconds: 55.538
+        worst_after_elapsed_reduction_percent: 37.51
+        full_after_file_seconds: 117.175
+        full_file_reduction_seconds: 154.163
+        full_file_reduction_percent: 56.82
+        node_count_before: 5
+        node_count_after: 5
+        real_cli_count_before: 4
+        real_cli_count_after: 4
+        real_cli_count_preserved: true
+        status: RETAINED_THRESHOLD_PASS
+    safety:
+      node_count_by_lane: [1, 5, 5]
+      nodeids_skips_xfails_or_assertions_reduced: false
+      final_public_validators_preserved: true
+      real_cli_paths_preserved: true
+      same_node_canonical_json_only: true
+      mock_or_monkeypatch_added: false
+      cross_test_worker_or_process_cache_added: false
+      data_quality_or_production_cache_added: false
+      ai_after_chatgpt_regime_preserved: true
+      paper_shadow_production_and_broker_boundaries_preserved: true
+      production_defaults_changed: false
+      strategy_logic_changed: false
+      cached_data_mutated: false
+      stable_full_improvement_claimed: false
+      production_effect: none
+    validation:
+      isolated_before_after: {status: PASS, retained_lane_count: 3, rejected_lane_count: 0, combined_worst_reduction_seconds: 148.011}
+      expanded_focused: {status: PASS, passed: 97, skipped: 1, pytest_elapsed_seconds: 108.37, wall_elapsed_seconds: 108.890}
+      independent_cross_review: {status: PASS, review_count: 3, p0: 0, p1: 0, p2: 0}
+      scoped_ruff_and_py_compile: PASS
+      architecture_manifest_generate: {status: PASS, module_count: 948, test_file_count: 1126, orphan_count: 0, overlap_count: 0, direct_writer_violation_count: 0}
+      compatibility_deprecation_and_attribution_focused: {status: PASS, passed: 9, elapsed_seconds: 12.799}
+      pre_full_architecture_fitness: {status: PASS, passed: 344, elapsed_seconds: 49.83, runtime_artifact: outputs/validation_runtime/architecture-fitness_20260718T154444Z/test_runtime_summary.json, runtime_artifact_sha256: c753c5a757929c61d48b086121844d3827a2826840476db313ebaab7e953d1c0}
+      pre_full_contract_validation: {status: PASS, passed: 236, elapsed_seconds: 36.56, runtime_artifact: outputs/validation_runtime/contract-validation_20260718T154539Z/test_runtime_summary.json, runtime_artifact_sha256: 30f23fd45d0fb050da908f27d3a239a29315a55d40edad24b637b40264540857}
+      full_validation:
+        status: PASS
+        passed: 6246
+        skipped: 2
+        warnings: 643
+        pytest_elapsed_seconds: 903.03
+        elapsed_seconds: 904.14
+        workers: 16
+        distribution: loadfile
+        natural_integration_boundary: true
+        run_count: 1
+        node_count: 6248
+        file_count: 1068
+        collection_ordered_sha256: a426c7e9a326fdbabf76f2ad16f4891e47cd8e116ae4eae0e6dd3f267a23d3fd
+        collection_set_sha256: 6e8fee8709c8e781952a29224a8857d01bd6df5c50f9070508ad1dac9c5a18ee
+        collection_matches_s3m: true
+        scheduler_status: COMPLETE
+        scheduler_applied: true
+        scheduler_fallback: false
+        duration_order_verified: true
+        formal_full_selection_eligible: true
+        telemetry_status: PASS
+        performance_evidence_status: PASS
+        pytest_outcome_authoritative: true
+        pytest_outcome_overridden: false
+        tail_idle_total_seconds: 0.108
+        worker_busy_cv_percent: 0.00954
+        duration_manifest_sha256: 071728504389dd9b54aafd989c896bb1351a96b51f9af74fdd60673433298305
+        source_file_set_sha256: 11d3fb989f3f3e0a55141affe2db5b735598afdb06466476e976e82fcdf44e4b
+        runtime_artifact: outputs/validation_runtime/full_20260718T154654Z/test_runtime_summary.json
+        runtime_artifact_sha256: ff52cd95c0097e4bcaf4fafac0814138e5164bf0da83bd4650db4ed7ca9c8a68
+        runtime_profile: outputs/validation_runtime/full_20260718T154654Z/test_runtime_profile.json
+        runtime_profile_sha256: 562bf20b0cd373a12c0e66c990e105bb2f3e54fa9728375a837a1847e8186a6a
+      formal_full_comparison:
+        baseline_profile: outputs/validation_runtime/full_20260718T133435Z/test_runtime_profile.json
+        wall_seconds_before: 991.64
+        wall_seconds_after: 904.14
+        wall_reduction_seconds: 87.50
+        wall_reduction_percent: 8.82
+        file_worker_seconds_before: 15672.453
+        file_worker_seconds_after: 14289.598
+        file_worker_reduction_seconds: 1382.855
+        file_worker_reduction_percent: 8.82
+        non_target_file_worker_reduction_seconds: 1057.413
+        non_target_file_worker_reduction_percent: 7.03
+        p95_seconds_before: 76.122
+        p95_seconds_after: 66.892
+        p95_reduction_percent: 12.12
+        p99_seconds_before: 251.115
+        p99_seconds_after: 211.728
+        p99_reduction_percent: 15.68
+        max_seconds_before: 589.598
+        max_seconds_after: 481.740
+        max_reduction_percent: 18.29
+        target_file_seconds:
+          weight_adaptive_branch: {before: 116.378, after: 28.473, reduction_seconds: 87.906, reduction_percent: 75.53, node_count_before: 1, node_count_after: 1}
+          equal_risk_growth_research_restart: {before: 251.115, after: 167.742, reduction_seconds: 83.373, reduction_percent: 33.20, node_count_before: 5, node_count_after: 5}
+          equal_risk_growth_tilt: {before: 271.338, after: 117.175, reduction_seconds: 154.163, reduction_percent: 56.82, node_count_before: 5, node_count_after: 5}
+        target_combined_worker_seconds_before: 638.831
+        target_combined_worker_seconds_after: 313.389
+        target_combined_reduction_seconds: 325.442
+        target_combined_reduction_percent: 50.94
+        target_local_improvement_proven: true
+        overall_single_run_improvement_proven: true
+        stable_full_improvement_claimed: false
+      post_full_first_tracked_state_focused: {status: PASS, passed: 9, pytest_elapsed_seconds: 12.79, wall_elapsed_seconds: 43.050}
+      post_full_first_architecture_fitness: {status: PASS, passed: 344, elapsed_seconds: 65.41, runtime_artifact: outputs/validation_runtime/architecture-fitness_20260718T160951Z/test_runtime_summary.json, runtime_artifact_sha256: 9d3a1c4eb1b596eab3e673bcdb75c813413f5ed55396ad197f21569723ebd6ad}
+      post_full_first_contract_validation: {status: PASS, passed: 236, elapsed_seconds: 43.63, runtime_artifact: outputs/validation_runtime/contract-validation_20260718T161104Z/test_runtime_summary.json, runtime_artifact_sha256: 98ef75fe015713720330b08c0f278fd3e70b4f952fb0215a609abaab8da9de5b}
+      post_full_final_tracked_state_focused: {status: PASS, passed: 13, pytest_elapsed_seconds: 12.11}
+      post_full_final_architecture_fitness: {status: PASS, passed: 344, elapsed_seconds: 50.37, runtime_artifact: outputs/validation_runtime/architecture-fitness_20260718T163403Z/test_runtime_summary.json, runtime_artifact_sha256: 329eb2ead1b4a28d0070fcb40e364aef63a537b95c0cc0a65fa125166452fe4b}
+      post_full_final_contract_validation: {status: PASS, passed: 236, elapsed_seconds: 36.09, runtime_artifact: outputs/validation_runtime/contract-validation_20260718T163513Z/test_runtime_summary.json, runtime_artifact_sha256: 46a93a6396d63935380504479a1aa007297f41ec584e4dfc594e8c38b90ac986}
+      post_full_tracked_state_pending: false
+      active_source_count: 77
+      worktree_attribution: {status: PASS, changed_tracked_path_count: 12, declared_changed_tracked_path_count: 12, excluded_user_path_count: 3}
+      deprecation_inventory: {status: FRESH_UNCHANGED, inventory_id: arch_004g_deprecation_inventory_ba630716c91b974f212a, sha256: f28cab4fb70a4378bf4e1ca293e72e31a9998926a5c2c1ef04aa6adf91b8d137}
+    next_work:
+      refresh_final_docs_authority_manifests_and_source_hashes: false
+      post_full_tracked_state_revalidation_pending: false
+      post_full_pass_satisfied: true
+      single_full_pending: false
+      second_full_allowed: false
+      pause_for_owner_direction_after_closeout: true
+      daily_research_runs_full_validation: false
+      next_owner: project owner / performance-review coordinator after final tracked-state PASS
+    next_phase_or_slice_unblocked: false
   sources:
   - {path: docs/artifact_catalog.md, sha256: 7f30d59c2b5c236577ebc4b9adf470fc312c7e0649024d5d76a82f7a988ec3fc}
-  - {path: docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md, sha256: 97fda0c44c8af88031281e638f791291808591254b4a545ca3afbe882e0f31c0}
-  - {path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md, sha256: 915726aef576f6a7461bc4ccf5f700cff8417ff6fddd34c77292eeec354b1e31}
-  - {path: docs/system_flow.md, sha256: 5ac9209974fb0adacd7abde2011061d1e8e854ce612e65d79638db35e7cc83d8}
-  - {path: docs/task_register.md, sha256: 500266685a81fc90dcabd1249a327cb9890fd0915d42fc5558691f126eea3094}
-  - {path: inputs/architecture/arch_004_worktree_attribution.yaml, sha256: f0df3b8687e2d833277dde6a56c031fe56d377841e85dd7e27339cf4fe3544b1}
-  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 35bea974b006c2605c1f71abed297758adba21d937d6349f9dd8ab5c264d8ed0}
+  - {path: docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md, sha256: ee3e11b6cd7840a470b2a960fdb847a92f3fec40ee3918703d7c42caec0195a1}
+  - {path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md, sha256: e93d616fb37d60686148db40abe7068bddf187ee6bcd59847fb153e8321cb01a}
+  - {path: docs/system_flow.md, sha256: a10474750b32e825fd7721594b7e6ed87773a9edd929f472885b67973b1630ce}
+  - {path: docs/task_register.md, sha256: 454fadab6cd4fd769193aae49b8611c4ceaa933d62f23fc86c964ba22a718ddd}
+  - {path: inputs/architecture/arch_004_worktree_attribution.yaml, sha256: 5ab9a59a6714088187d6eff41b5eef855a343ed270955181f944950aaac77759}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: d5aa142929219f07475051709265c706684257296f8806514b68f9662e0ea5d9}
   - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 3672f82b36c2e931a19b36446c84c8c88a9ed38230978651b69811b1abf4e0a6}
   - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 526e9b95f4630c3ee70163acf7edc55ae4b61e1c5131917e70773fbd9f86e5a6}
-  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 19068091fbcc07d3b1f4527b9bdd24045b891b476d55244dcc125db6e12c9b92}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 09f7f1bc49ecc09beee1e64d63f4889a7597cafadff273bcbbcfba9db3ca3f08}
   - {path: inputs/architecture/arch_004g2_full_duration_profile.yaml, sha256: 071728504389dd9b54aafd989c896bb1351a96b51f9af74fdd60673433298305}
   - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: f28cab4fb70a4378bf4e1ca293e72e31a9998926a5c2c1ef04aa6adf91b8d137}
   - {path: pyproject.toml, sha256: dbe3d92e15c66ebd768c2e74e84b13b0b84f779229a9b0a170ec4c8d99d3048e}
@@ -13453,7 +13619,7 @@ integrated_change_arch_004g2_eb0_s3a_weight_search_tail:
   - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_validation_scope.py, sha256: 30fc1255bc9b5d1bc3bc5f852212c19f7e8ab6b2095618e92d330cbdb39c5c8b}
   - {path: src/ai_trading_system/layer2_strategy_component_readiness.py, sha256: b228f2d2d84e3d4339141dc0aedc1c19ba50ede613d89c4e9dcd801ea5f2ba57}
   - {path: tests/dynamic_v3_weight_batch_search_helpers.py, sha256: fbe16bf084c7c650e5ec8b1cc665b3b1ed15c22a65f5049b428f8c5898bc4178}
-  - {path: tests/test_arch_004_refactor_policy.py, sha256: 920599d96ed24ae28435d42a2cfc32757f2f7ff3562db6a16e152e5cfd05e56c}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: e14a0cae844f5aa2f32e86b254701e4cd7b742c0da8efeca88363ea4f2eb9554}
   - {path: tests/test_arch_004g_deprecation.py, sha256: b95a63e080317c77ff631dc6d75acaed00fcd0b80b705ec015529017b94d7d59}
   - {path: tests/test_cash_buffer_attribution.py, sha256: 48c08ffdd2dcec847f327889916117df671ff84d991fde8d77496f91a6ea220c}
   - {path: tests/test_candidate_promotion_v2.py, sha256: 2deed0f771998d1ca98a9b6c0f5e4659ffdd9a9ffbdc8228bf0fd0f5f85a6dd0}
@@ -13505,3 +13671,6 @@ integrated_change_arch_004g2_eb0_s3a_weight_search_tail:
   - {path: tests/test_weight_expanded_search.py, sha256: 4074571fff9615873c42f4374c63909cf17247d1153fba12829e38cac5a3ad01}
   - {path: tests/test_weight_candidate_cluster.py, sha256: db5d474d688c24c191759d2e1b827863e208f997e182878e28fe817b1da37749}
   - {path: tests/test_weight_top_candidate_interpretation.py, sha256: 8b25645d1625cd5131501a1dd91566b4c04489b7bf4879cd613fd8dc3d0ef67d}
+  - {path: tests/test_weight_adaptive_branch.py, sha256: d75c12d293e3835170f2798941df8e85850ec3d355da876c07577c9508e26e5f}
+  - {path: tests/test_equal_risk_growth_research_restart.py, sha256: e00516e49736993c95a4254086e4f6df4db7a0c1e0abc2e714bdaf431123ac1e}
+  - {path: tests/test_equal_risk_growth_tilt.py, sha256: 37d90271e34003f3543b603d4506756e1da68f57210123144d9d8b75b4ea4aa0}

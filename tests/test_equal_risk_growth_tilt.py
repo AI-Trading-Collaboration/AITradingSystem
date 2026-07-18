@@ -147,60 +147,109 @@ def test_equal_risk_growth_tilt_builders_preserve_research_only_boundary(
         "as_of_date": as_of,
     }
 
-    payloads = [
-        run_growth_research_framing_correction(output_root=growth_root),
-        run_equal_risk_growth_tilt_objective_contract(
-            config_path=config_path,
-            output_root=growth_root,
-        ),
-        run_equal_risk_growth_tilt_registry_review(
-            config_path=config_path,
-            output_root=growth_root,
-        ),
-    ]
-    payloads.extend(
-        builder(**data_kwargs)
-        for builder in (
-            run_equal_risk_cap_floor_tilt_search,
-            run_equal_risk_risk_budget_tilt_search,
-            run_equal_risk_trend_on_qqq_boost_search,
-            run_equal_risk_missed_upside_compensation_search,
-            run_equal_risk_small_tqqq_overlay_search,
-            run_equal_risk_vol_target_growth_tilt_search,
-            run_equal_risk_growth_tilt_ranking_tiering,
-            run_growth_tilt_beta_risk_budget_attribution,
-            run_growth_tilt_period_drawdown_replay,
-            run_growth_tilt_cost_turnover_sensitivity,
-            run_equal_risk_growth_tilt_tradeoff_frontier,
-            run_growth_tilt_definition_lock_versioning,
-            run_growth_tilt_forward_aging_readiness_gate,
-            run_growth_tilt_reader_brief_safety_preview,
+    result = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "equal-risk-cap-floor-tilt-search",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--config",
+            str(config_path),
+            "--as-of",
+            as_of.isoformat(),
+            "--output-root",
+            str(growth_root),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    written = json.loads(
+        (growth_root / "equal_risk_cap_floor_tilt_search.json").read_text(
+            encoding="utf-8"
         )
     )
-    payloads.extend(
-        [
-            run_growth_tilt_owner_decision_pack(
-                **data_kwargs,
-                docs_path=owner_docs_path,
-            ),
-            run_growth_exploration_master_review(
-                **data_kwargs,
-                docs_path=master_docs_path,
-                owner_docs_path=owner_docs_path,
-            ),
-            run_roadmap_update_after_growth_tilt_review(
-                prices_path=prices_path,
-                marketstack_prices_path=marketstack_path,
-                rates_path=rates_path,
-                config_path=config_path,
-                growth_output_root=growth_root,
-                output_root=roadmap_root,
-                growth_master_docs_path=master_docs_path,
-                growth_owner_docs_path=owner_docs_path,
-                as_of_date=as_of,
-            ),
-        ]
+    assert written["summary"]["broker_action"] == "none"
+    cap_floor = written
+
+    objective = run_equal_risk_growth_tilt_objective_contract(
+        config_path=config_path,
+        output_root=growth_root,
     )
+    registry = run_equal_risk_growth_tilt_registry_review(
+        config_path=config_path,
+        output_root=growth_root,
+    )
+    roadmap = run_roadmap_update_after_growth_tilt_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        growth_output_root=growth_root,
+        output_root=roadmap_root,
+        growth_master_docs_path=master_docs_path,
+        growth_owner_docs_path=owner_docs_path,
+        as_of_date=as_of,
+    )
+    roadmap_ranking = json.loads(
+        (growth_root / "equal_risk_growth_tilt_ranking_tiering.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    frontier = run_equal_risk_growth_tilt_tradeoff_frontier(
+        **data_kwargs,
+        _ranking_payload=roadmap_ranking,
+    )
+    reader_preview = run_growth_tilt_reader_brief_safety_preview(**data_kwargs)
+    generated_report_ids = {
+        run_growth_research_framing_correction: "growth_research_framing_correction",
+        run_equal_risk_cap_floor_tilt_search: "equal_risk_cap_floor_tilt_search",
+        run_equal_risk_risk_budget_tilt_search: "equal_risk_risk_budget_tilt_search",
+        run_equal_risk_trend_on_qqq_boost_search: (
+            "equal_risk_trend_on_qqq_boost_search"
+        ),
+        run_equal_risk_missed_upside_compensation_search: (
+            "equal_risk_missed_upside_compensation_search"
+        ),
+        run_equal_risk_small_tqqq_overlay_search: (
+            "equal_risk_small_tqqq_overlay_search"
+        ),
+        run_equal_risk_vol_target_growth_tilt_search: (
+            "equal_risk_vol_target_growth_tilt_search"
+        ),
+        run_equal_risk_growth_tilt_ranking_tiering: (
+            "equal_risk_growth_tilt_ranking_tiering"
+        ),
+        run_growth_tilt_beta_risk_budget_attribution: (
+            "growth_tilt_beta_risk_budget_attribution"
+        ),
+        run_growth_tilt_period_drawdown_replay: "growth_tilt_period_drawdown_replay",
+        run_growth_tilt_cost_turnover_sensitivity: (
+            "growth_tilt_cost_turnover_sensitivity"
+        ),
+        run_growth_tilt_definition_lock_versioning: (
+            "growth_tilt_definition_lock_versioning"
+        ),
+        run_growth_tilt_forward_aging_readiness_gate: (
+            "growth_tilt_forward_aging_readiness_gate"
+        ),
+        run_growth_tilt_owner_decision_pack: "growth_tilt_owner_decision_pack",
+        run_growth_exploration_master_review: "growth_exploration_master_review",
+    }
+    payloads = [
+        cap_floor
+        if builder is run_equal_risk_cap_floor_tilt_search
+        else json.loads(
+            (growth_root / f"{report_id}.json").read_text(encoding="utf-8")
+        )
+        for builder, report_id in generated_report_ids.items()
+    ]
+    payloads.extend([objective, registry, frontier, reader_preview, roadmap])
 
     payloads_by_type = {payload["report_type"]: payload for payload in payloads}
     ranking = payloads_by_type["equal_risk_growth_tilt_ranking_tiering"]
@@ -243,35 +292,6 @@ def test_equal_risk_growth_tilt_builders_preserve_research_only_boundary(
     for payload in payloads:
         _assert_research_only_payload(payload)
 
-    result = CliRunner().invoke(
-        app,
-        [
-            "research",
-            "strategies",
-            "equal-risk-cap-floor-tilt-search",
-            "--prices-path",
-            str(prices_path),
-            "--marketstack-prices-path",
-            str(marketstack_path),
-            "--rates-path",
-            str(rates_path),
-            "--config",
-            str(config_path),
-            "--as-of",
-            as_of.isoformat(),
-            "--output-root",
-            str(growth_root),
-        ],
-    )
-
-    assert result.exit_code == 0, result.output
-    written = json.loads(
-        (growth_root / "equal_risk_cap_floor_tilt_search.json").read_text(
-            encoding="utf-8"
-        )
-    )
-    assert written["summary"]["broker_action"] == "none"
-
 
 def test_growth_tilt_real_result_convergence_builders_and_cli(
     tmp_path: Path,
@@ -300,7 +320,31 @@ def test_growth_tilt_real_result_convergence_builders_and_cli(
         owner_docs_path=source_owner_docs_path,
         master_docs_path=source_master_docs_path,
     )
-    candidate_summary = run_growth_tilt_candidate_result_summary(**common)
+    result = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "growth-tilt-candidate-result-summary",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--config",
+            str(config_path),
+            "--as-of",
+            as_of.isoformat(),
+            "--output-root",
+            str(growth_root),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (growth_root / "growth_tilt_candidate_result_summary.json").exists()
+    candidate_summary_path = growth_root / "growth_tilt_candidate_result_summary.json"
+    candidate_summary = json.loads(candidate_summary_path.read_text(encoding="utf-8"))
     tier = run_growth_tilt_tier_validation(
         **common,
         _candidate_summary_payload=candidate_summary,
@@ -411,30 +455,6 @@ def test_growth_tilt_real_result_convergence_builders_and_cli(
     ):
         _assert_research_only_payload(payload)
 
-    result = CliRunner().invoke(
-        app,
-        [
-            "research",
-            "strategies",
-            "growth-tilt-candidate-result-summary",
-            "--prices-path",
-            str(prices_path),
-            "--marketstack-prices-path",
-            str(marketstack_path),
-            "--rates-path",
-            str(rates_path),
-            "--config",
-            str(config_path),
-            "--as-of",
-            as_of.isoformat(),
-            "--output-root",
-            str(growth_root),
-        ],
-    )
-
-    assert result.exit_code == 0, result.output
-    assert (growth_root / "growth_tilt_candidate_result_summary.json").exists()
-
 
 def test_growth_tilt_focused_diagnosis_builders_and_cli(
     tmp_path: Path,
@@ -454,37 +474,72 @@ def test_growth_tilt_focused_diagnosis_builders_and_cli(
         "as_of_date": as_of,
     }
 
-    deep = run_best_growth_tilt_candidate_deep_dive(**common)
-    sensitivity = run_vol_target_growth_tilt_local_sensitivity(**common)
-    beta_method = run_beta_adjusted_edge_methodology_audit(
-        **common,
-        _deep_dive_payload=deep,
+    result = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "growth-tilt-focused-diagnosis-master-review",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--config",
+            str(config_path),
+            "--as-of",
+            as_of.isoformat(),
+            "--output-root",
+            str(growth_root),
+            "--docs-path",
+            str(master_docs_path),
+        ],
     )
-    role = run_growth_tilt_balanced_core_role_review(
-        **common,
-        _deep_dive_payload=deep,
-        _beta_method_payload=beta_method,
+
+    assert result.exit_code == 0, result.output
+    assert (growth_root / "growth_tilt_focused_diagnosis_master_review.json").exists()
+    cli_master = json.loads(
+        (
+            growth_root / "growth_tilt_focused_diagnosis_master_review.json"
+        ).read_text(encoding="utf-8")
     )
-    missed = run_growth_tilt_vs_equal_risk_missed_upside_review(
-        **common,
-        _deep_dive_payload=deep,
-    )
-    finalist = run_growth_tilt_parameter_neighbor_finalist_review(
-        **common,
-        _sensitivity_payload=sensitivity,
-        _deep_dive_payload=deep,
-        _beta_method_payload=beta_method,
-        _role_payload=role,
-    )
-    watchlist = run_growth_tilt_watchlist_reconsideration_gate(
-        **common,
-        _deep_dive_payload=deep,
-        _sensitivity_payload=sensitivity,
-        _beta_method_payload=beta_method,
-        _role_payload=role,
-        _missed_payload=missed,
-        _finalist_payload=finalist,
-    )
+    generated_report_ids = {
+        run_best_growth_tilt_candidate_deep_dive: (
+            "best_growth_tilt_candidate_deep_dive"
+        ),
+        run_vol_target_growth_tilt_local_sensitivity: (
+            "vol_target_growth_tilt_local_sensitivity"
+        ),
+        run_beta_adjusted_edge_methodology_audit: (
+            "beta_adjusted_edge_methodology_audit"
+        ),
+        run_growth_tilt_balanced_core_role_review: (
+            "growth_tilt_balanced_core_role_review"
+        ),
+        run_growth_tilt_vs_equal_risk_missed_upside_review: (
+            "growth_tilt_vs_equal_risk_missed_upside_review"
+        ),
+        run_growth_tilt_parameter_neighbor_finalist_review: (
+            "growth_tilt_parameter_neighbor_finalist_review"
+        ),
+        run_growth_tilt_watchlist_reconsideration_gate: (
+            "growth_tilt_watchlist_reconsideration_gate"
+        ),
+    }
+    generated_payloads = {
+        builder: json.loads(
+            (growth_root / f"{report_id}.json").read_text(encoding="utf-8")
+        )
+        for builder, report_id in generated_report_ids.items()
+    }
+    deep = generated_payloads[run_best_growth_tilt_candidate_deep_dive]
+    sensitivity = generated_payloads[run_vol_target_growth_tilt_local_sensitivity]
+    beta_method = generated_payloads[run_beta_adjusted_edge_methodology_audit]
+    role = generated_payloads[run_growth_tilt_balanced_core_role_review]
+    missed = generated_payloads[run_growth_tilt_vs_equal_risk_missed_upside_review]
+    finalist = generated_payloads[run_growth_tilt_parameter_neighbor_finalist_review]
+    watchlist = generated_payloads[run_growth_tilt_watchlist_reconsideration_gate]
     owner = run_growth_tilt_owner_diagnosis_pack(
         **common,
         docs_path=owner_docs_path,
@@ -509,6 +564,7 @@ def test_growth_tilt_focused_diagnosis_builders_and_cli(
         _watchlist_payload=watchlist,
         _owner_payload=owner,
     )
+    assert cli_master["status"] == master["status"]
 
     assert deep["status"] in {
         "BEST_GROWTH_TILT_DEEP_DIVE_READY",
@@ -582,32 +638,6 @@ def test_growth_tilt_focused_diagnosis_builders_and_cli(
     ):
         _assert_research_only_payload(payload)
 
-    result = CliRunner().invoke(
-        app,
-        [
-            "research",
-            "strategies",
-            "growth-tilt-focused-diagnosis-master-review",
-            "--prices-path",
-            str(prices_path),
-            "--marketstack-prices-path",
-            str(marketstack_path),
-            "--rates-path",
-            str(rates_path),
-            "--config",
-            str(config_path),
-            "--as-of",
-            as_of.isoformat(),
-            "--output-root",
-            str(growth_root),
-            "--docs-path",
-            str(master_docs_path),
-        ],
-    )
-
-    assert result.exit_code == 0, result.output
-    assert (growth_root / "growth_tilt_focused_diagnosis_master_review.json").exists()
-
 
 def test_balanced_core_forward_aging_launch_builders_and_cli(
     tmp_path: Path,
@@ -660,7 +690,35 @@ def test_balanced_core_forward_aging_launch_builders_and_cli(
         **common,
         decision_date=as_of,
     )
-    maturity = run_balanced_core_maturity_scoreboard_safety_gate(**common)
+    result = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "balanced-core-maturity-scoreboard-safety-gate",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--config",
+            str(config_path),
+            "--as-of",
+            as_of.isoformat(),
+            "--output-root",
+            str(growth_root),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (growth_root / "balanced_core_maturity_scoreboard_safety_gate.json").exists()
+    maturity_report_id = (
+        run_balanced_core_maturity_scoreboard_safety_gate.__name__.removeprefix("run_")
+    )
+    maturity = json.loads(
+        (growth_root / f"{maturity_report_id}.json").read_text(encoding="utf-8")
+    )
     panel = run_dual_forward_aging_comparator_panel(
         prices_path=prices_path,
         marketstack_prices_path=marketstack_path,
@@ -753,30 +811,6 @@ def test_balanced_core_forward_aging_launch_builders_and_cli(
         master,
     ):
         _assert_research_only_payload(payload)
-
-    result = CliRunner().invoke(
-        app,
-        [
-            "research",
-            "strategies",
-            "balanced-core-maturity-scoreboard-safety-gate",
-            "--prices-path",
-            str(prices_path),
-            "--marketstack-prices-path",
-            str(marketstack_path),
-            "--rates-path",
-            str(rates_path),
-            "--config",
-            str(config_path),
-            "--as-of",
-            as_of.isoformat(),
-            "--output-root",
-            str(growth_root),
-        ],
-    )
-
-    assert result.exit_code == 0, result.output
-    assert (growth_root / "balanced_core_maturity_scoreboard_safety_gate.json").exists()
 
 
 def test_equal_risk_growth_tilt_reports_and_registry_contracts() -> None:

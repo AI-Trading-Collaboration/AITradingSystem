@@ -4993,6 +4993,38 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert eb0_s3a["validation"]["contract_validation"]["passed"] == 204
     assert eb0_s3a["validation"]["full_validation"]["status"] == "PASS"
     assert eb0_s3a["validation"]["full_validation"]["passed"] == 6_195
+    assert "s3n_adaptive_equal_risk_tail_closeout" not in phase_b
+    s3n = eb0_s3a["s3n_adaptive_equal_risk_tail_closeout"]
+    assert s3n["status"] == "COMPLETE_RUNTIME_TASK_CONTINUES"
+    assert s3n["base_commit"] == "13d85f1e"
+    assert set(s3n["lanes"]) == {
+        "weight_adaptive_outer_session",
+        "equal_risk_restart_cli_canonical_json_reuse",
+        "equal_risk_tilt_cli_dag_canonical_json_reuse",
+    }
+    restart_lane = s3n["lanes"]["equal_risk_restart_cli_canonical_json_reuse"]
+    assert restart_lane["real_cli_count_before"] == 1
+    assert restart_lane["real_cli_count_after"] == 1
+    assert restart_lane["real_cli_count_preserved"] is True
+    tilt_lane = s3n["lanes"]["equal_risk_tilt_cli_dag_canonical_json_reuse"]
+    assert tilt_lane["real_cli_count_before"] == 4
+    assert tilt_lane["real_cli_count_after"] == 4
+    assert tilt_lane["real_cli_count_preserved"] is True
+    assert s3n["validation"]["full_validation"]["run_count"] == 1
+    assert s3n["validation"]["full_validation"]["node_count"] == 6_248
+    assert s3n["validation"]["full_validation"]["file_count"] == 1_068
+    assert s3n["validation"]["active_source_count"] == 77
+    assert len(eb0_s3a["sources"]) == s3n["validation"]["active_source_count"]
+    assert s3n["validation"]["worktree_attribution"] == {
+        "status": "PASS",
+        "changed_tracked_path_count": 12,
+        "declared_changed_tracked_path_count": 12,
+        "excluded_user_path_count": 3,
+    }
+    assert s3n["validation"]["post_full_tracked_state_pending"] is False
+    assert s3n["next_work"]["post_full_pass_satisfied"] is True
+    assert s3n["next_work"]["second_full_allowed"] is False
+    assert s3n["next_phase_or_slice_unblocked"] is False
     for source in eb0_s3a["sources"]:
         actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
@@ -5193,9 +5225,9 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     }
     assert attribution["current_staging_authority"] == {
         "task_id": "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE",
-        "increment": "S3M_WEIGHT_INTERPRETATION_CLUSTER_TAIL",
+        "increment": "S3N_ADAPTIVE_EQUAL_RISK_TAIL_CLOSEOUT",
         "status": "COMPLETE_RUNTIME_TASK_CONTINUES",
-        "base_commit": "ee68b98f",
+        "base_commit": "13d85f1e",
         "declared_path_set_current": True,
     }
     assert (
@@ -5206,6 +5238,11 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         attribution["current_staging_authority"]["task_id"]
         in attribution["integrated_task_ids"]
     )
+    assert {
+        "tests/test_weight_adaptive_branch.py",
+        "tests/test_equal_risk_growth_research_restart.py",
+        "tests/test_equal_risk_growth_tilt.py",
+    }.issubset(set(attribution["arch_004_owned_paths"]))
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
         "docs/research/growth_tilt_owner_decision_resolution.md",

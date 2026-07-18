@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 920599d96ed24ae28435d42a2cfc32757f2f7ff3562db6a16e152e5cfd05e56c
+  sha256: e14a0cae844f5aa2f32e86b254701e4cd7b742c0da8efeca88363ea4f2eb9554
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -9523,7 +9523,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_equal_risk_growth_research_restart
   path: tests/test_equal_risk_growth_research_restart.py
-  sha256: 6f86470de2e6826fd5070a4b3000ca7d78d94e5c332fd7e2a785e5d6e6328f0b
+  sha256: e00516e49736993c95a4254086e4f6df4db7a0c1e0abc2e714bdaf431123ac1e
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -9539,7 +9539,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_equal_risk_growth_tilt
   path: tests/test_equal_risk_growth_tilt.py
-  sha256: 1f4752ff689d13610380e4a9073d938fc4112c66a48497eeaaed4038afb2f7b5
+  sha256: 37d90271e34003f3543b603d4506756e1da68f57210123144d9d8b75b4ea4aa0
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15383,7 +15383,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_weight_adaptive_branch
   path: tests/test_weight_adaptive_branch.py
-  sha256: 246f9526c8bb349943cdf8e8ca07af59b54d5e8aba291040abcba6fce7bb485a
+  sha256: d75c12d293e3835170f2798941df8e85850ec3d355da876c07577c9508e26e5f
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
