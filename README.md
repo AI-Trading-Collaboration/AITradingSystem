@@ -98,7 +98,7 @@ python scripts/run_validation_tier.py report-validation --write-runtime-artifact
 python scripts/run_validation_tier.py integration --write-runtime-artifact
 python scripts/run_validation_tier.py reproducibility --write-runtime-artifact
 python scripts/run_validation_tier.py slow-research-regression --write-runtime-artifact
-python scripts/run_validation_tier.py full --write-runtime-artifact
+python scripts/run_validation_tier.py full --write-runtime-artifact --trigger-reason natural_integration_boundary --task-id ARCH-004G2-S4 --boundary-id ARCH-004G2-S4-INTEGRATION-1
 ```
 
 focused one-off pytest 也默认显式使用 `python -m pytest -n 16 --dist loadfile ...`。
@@ -108,6 +108,26 @@ focused one-off pytest 也默认显式使用 `python -m pytest -n 16 --dist load
 `outputs/validation_runtime/<run_id>/test_runtime_summary.json` 和
 `test_runtime_reader_brief.md`，用于记录 suite、命令、runtime、promotion-blocking
 状态和 no-production safety boundary。
+
+`full` 还必须在 pytest 启动前提供 `validation_trigger_provenance.v1`。受治理的原因只有
+`natural_integration_boundary`、`phase_exit_or_handoff`、`broad_shared_contract_change`、
+`formal_performance_profile`、`failure_fix_rerun` 和 `scheduled_ci`，并要求非空的
+`task_id` / `boundary_id`。CLI 参数为 `--trigger-reason`、`--task-id`、`--boundary-id`、
+`--parent-run`；环境变量入口为 `AITS_VALIDATION_TRIGGER_REASON`、
+`AITS_VALIDATION_TASK_ID`、`AITS_VALIDATION_BOUNDARY_ID`、`AITS_VALIDATION_PARENT_RUN`。
+两种入口按 whole-envelope 选择：只要出现任一 CLI provenance 参数，四个字段就全部从 CLI
+解析，缺失字段不会回退到环境变量；完全未提供 CLI 参数时才读取整组环境变量。
+非 Full tier 未声明 provenance 时保持兼容并记录 `status=NOT_REQUIRED`。
+`failure_fix_rerun` 的 `--parent-run` 必须指向
+`outputs/validation_runtime/.../test_runtime_summary.json` 中一份真实失败的 formal Full summary；
+runner 会重新校验 schema、非 benchmark/print-only、exit/status、PASS provenance、profile resolved fixed-sibling
+containment，并用同一份 captured profile bytes完成语义验证与inventory SHA/size绑定；随后把路径、run id、
+失败依据、summary/profile SHA-256 固化为 parent binding。summary、Full profile
+和 Reader Brief 复用同一 canonical object，profile binding 不一致时 performance evidence 为
+FAIL。benchmark mode 仍产出 canonical summary / Reader Brief / 通用 log 以及 benchmark
+comparison summary / variant logs，但不生成正式 `test_runtime_profile.json`，并精确记录
+`runtime_profile_status=NOT_APPLICABLE`；这些产物不能作为 Full profile 或 promotion evidence。GitHub Actions 的 daily scheduled Full 是工程 CI
+例外，不属于项目 daily / weekly / monthly 研究执行链。
 
 `fast-unit` 用于 CLI wiring、轻量 helper、report registry 和 documentation contract
 快速反馈；`contract-validation` 是 docs/report/artifact/safety contract 的 promotion-facing

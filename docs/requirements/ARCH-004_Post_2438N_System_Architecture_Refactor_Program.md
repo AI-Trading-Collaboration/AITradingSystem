@@ -1,6 +1,6 @@
 # ARCH-004：TRADING-2438N 后系统架构重构计划
 
-最后更新：2026-07-12
+最后更新：2026-07-19
 
 ## 任务信息
 
@@ -618,3 +618,4 @@ Entry decision：`ARCH_004_PHASE_A_COMPLETE_PHASE_B_UNBLOCKED`。这只解锁 Se
 - 2026-07-12：A～E、F1、F2、F3、G0、G1 和 G2.1～G2.3 已完成，当前进入 G2.4 research/shadow/portfolio command-group 迁移；权威当前阶段继续由 `config/architecture/arch_004_refactor_policy.yaml` 和 task register latest increment 记录。本轮纠正文档顶部仍停留 Phase E 的状态漂移，不改 runtime、CLI 或投资语义。
 - 2026-07-12：根据 owner 对后续执行方式的确认，登记 `ARCH-004G2_PARALLEL_READINESS_GATE`，用于在 G2.5 将 ownership/change manifest/shared-path/merge-order 约束变成可执行门禁；登记 `ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL`，冻结 G7 handoff 后逐 surface cutover/removal 的 entry gate、顺序和验收。两个任务当前均为 `PROPOSED`，不提前解锁 H，也不改变现有 aggregate source-of-truth。
 - 2026-07-12：owner 将“天然支持并行开发的任务调度系统”提升为独立 `ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`，以 `P0/READY` 登记需求。ARCH-005 负责 canonical task/event registry、DAG/readiness、resource lease、deterministic scheduler、execution lanes、validation/integration、generated views 和 self-hosting；G2 保留为 ARCH-004 的首个三 lane rehearsal。Owner后续确认：S0实现不得与G2.4并行，必须等待整个G2 callback/migration matrix、required validation、manifest/inventory/source-hash freshness和clean attribution均通过，并产出`arch_005_bootstrap_handoff.v1` PASS。Handoff必须记录commit/branch/push、shared-path owner/lease count、known unrelated files与`production_effect=none`，且明确`next_slice_unblocked=false`；完成后ARCH-004停在G2.5之前，不自动进入G2.5/G3/G4/G5。ARCH-005 S0/S1后只由新的显式指令恢复ARCH-004。当前不切换 task-register source-of-truth 或改变 runtime/production。
+- 2026-07-19：G2.4 matrix仍为`715 migrated / 252 pending`，phase exit未通过。Owner方案A的`S4_FULL_TRIGGER_PROVENANCE`已闭合：expanded-focused/pre-final architecture/contract=`136/362/254 passed`，post-doc final tracked-state artifact/hash由self-excluded compatibility baseline的S4 validation节点canonical绑定；Full run count=`0`。runner/CI现有可验证trigger/task/boundary、formal failed-parent summary/profile binding、benchmark inherited-env隔离、profile binding与持久化证据。S4不迁移callback、不改变投资或生产语义；closeout后已返回G2.4协调点且`next_phase_or_slice_unblocked=false`。EB1、下一callback、ARCH-005 S0和G2.5都需要后续显式owner指令或既定phase-level handoff，不能自动启动。

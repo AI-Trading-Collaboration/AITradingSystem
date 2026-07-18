@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 from __future__ import annotations
 
 import argparse
@@ -17,7 +18,46 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from ai_trading_system.yaml_loader import safe_load_yaml_path
+# The runner must prefer this worktree's src package when executed as a script.
+REPO_ROOT_FOR_IMPORTS = Path(__file__).resolve().parents[1]
+SRC_ROOT_FOR_IMPORTS = REPO_ROOT_FOR_IMPORTS / "src"
+if str(SRC_ROOT_FOR_IMPORTS) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT_FOR_IMPORTS))
+
+from ai_trading_system.platform.validation_trigger_provenance import (  # noqa: E402
+    BOUNDARY_ID_ENV as VALIDATION_BOUNDARY_ID_ENV,
+)
+from ai_trading_system.platform.validation_trigger_provenance import (
+    FULL_TRIGGER_REASONS as FULL_VALIDATION_TRIGGER_REASONS,
+)
+from ai_trading_system.platform.validation_trigger_provenance import (
+    IDENTIFIER_RE as PROVENANCE_IDENTIFIER_RE,
+)
+from ai_trading_system.platform.validation_trigger_provenance import (
+    PARENT_RUN_ENV as VALIDATION_PARENT_RUN_ENV,
+)
+from ai_trading_system.platform.validation_trigger_provenance import (
+    PROFILE_JSON_ENV as RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV,
+)
+from ai_trading_system.platform.validation_trigger_provenance import (
+    SCHEMA_VERSION as VALIDATION_PROVENANCE_SCHEMA_VERSION,
+)
+from ai_trading_system.platform.validation_trigger_provenance import (
+    TASK_ID_ENV as VALIDATION_TASK_ID_ENV,
+)
+from ai_trading_system.platform.validation_trigger_provenance import (
+    TRIGGER_REASON_ENV as VALIDATION_TRIGGER_REASON_ENV,
+)
+from ai_trading_system.platform.validation_trigger_provenance import (
+    TRIGGER_REASONS as VALIDATION_TRIGGER_REASONS,
+)
+from ai_trading_system.platform.validation_trigger_provenance import (
+    load_json as load_provenance_json,
+)
+from ai_trading_system.platform.validation_trigger_provenance import (
+    validate_full_provenance,
+)
+from ai_trading_system.yaml_loader import safe_load_yaml_path  # noqa: E402
 
 DEFAULT_WORKERS = "16"
 DEFAULT_DIST = "loadfile"
@@ -29,9 +69,23 @@ RUNTIME_PROFILE_OUTPUT_NAME = "test_runtime_profile.json"
 RUNTIME_PROFILE_SCHEMA_VERSION = "test_runtime_profile.v1"
 RUNTIME_PROFILE_OUTPUT_ENV = "AITS_PYTEST_RUNTIME_PROFILE_OUTPUT"
 RUNTIME_PROFILE_FORMAL_SELECTION_ENV = "AITS_PYTEST_RUNTIME_PROFILE_FORMAL_SELECTION"
+BENCHMARK_REMOVED_VALIDATION_ENV_VARS = (
+    RUNTIME_PROFILE_OUTPUT_ENV,
+    RUNTIME_PROFILE_FORMAL_SELECTION_ENV,
+    RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV,
+    VALIDATION_TRIGGER_REASON_ENV,
+    VALIDATION_TASK_ID_ENV,
+    VALIDATION_BOUNDARY_ID_ENV,
+    VALIDATION_PARENT_RUN_ENV,
+)
 FULL_RUNTIME_PROFILE_PLUGIN = "scripts.pytest_runtime_profile"
 FULL_DURATION_PROFILE_MANIFEST = "inputs/architecture/arch_004g2_full_duration_profile.yaml"
 FULL_TEST_MANIFEST = "inputs/architecture/arch_004e_test_manifest.yaml"
+FULL_NON_SELECTION_PYTEST_ARG_OPTIONS = (
+    "--junitxml",
+    "--junit-xml",
+    "--junit-prefix",
+)
 PYTEST_SLOW_DURATION_RE = re.compile(
     r"^\s*(?P<seconds>\d+(?:\.\d+)?)s\s+"
     r"(?P<phase>call|setup|teardown)\s+"
@@ -348,12 +402,17 @@ def _run_command(
     *,
     cwd: Path,
     env_overrides: Mapping[str, str] | None = None,
+    env_removals: Sequence[str] = (),
 ) -> dict[str, object]:
     started = time.perf_counter()
     output_parts: list[str] = []
     process_env = None
-    if env_overrides:
+    if env_overrides or env_removals:
         process_env = dict(os.environ)
+        for variable_name in env_removals:
+            process_env.pop(str(variable_name), None)
+    if env_overrides:
+        assert process_env is not None
         process_env.update(env_overrides)
     with subprocess.Popen(
         command,
@@ -517,6 +576,370 @@ def _runtime_run_id(resolved_tier: str, started_at: datetime) -> str:
     return f"{resolved_tier}_{timestamp}"
 
 
+def _validated_parent_run_binding(
+    raw_parent_run: str,
+    *,
+    repo_root: Path,
+) -> tuple[dict[str, object] | None, list[str]]:
+    candidate = Path(raw_parent_run)
+    parent_path = candidate if candidate.is_absolute() else repo_root / candidate
+    try:
+        resolved_path = parent_path.resolve(strict=True)
+    except (OSError, RuntimeError, ValueError) as exc:
+        return None, [f"parent_run summary does not exist or could not be resolved: {exc}"]
+    try:
+        allowed_root = (repo_root / DEFAULT_ARTIFACT_ROOT).resolve()
+    except (OSError, RuntimeError, ValueError) as exc:
+        return None, [f"validation artifact root could not be resolved: {exc}"]
+    if not _is_relative_to(resolved_path, allowed_root):
+        return None, ["parent_run summary must be under outputs/validation_runtime"]
+    if resolved_path.name != "test_runtime_summary.json":
+        return None, ["parent_run must reference test_runtime_summary.json"]
+    try:
+        raw_bytes = resolved_path.read_bytes()
+        summary = load_provenance_json(raw_bytes.decode("utf-8"))
+    except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
+        return None, [f"parent_run summary is invalid: {exc}"]
+    errors: list[str] = []
+    if summary.get("schema_version") != 1:
+        errors.append("parent_run schema_version must be 1")
+    if summary.get("report_type") != "test_runtime_summary":
+        errors.append("parent_run report_type must be test_runtime_summary")
+    if summary.get("resolved_tier") != "full":
+        errors.append("parent_run resolved_tier must be full")
+    if summary.get("production_effect") != "none":
+        errors.append("parent_run production_effect must be none")
+    if summary.get("print_only") is not False:
+        errors.append("parent_run must be an executed non-print-only Full")
+    if summary.get("benchmark_mode") is not False:
+        errors.append("parent_run must be a non-benchmark Full")
+
+    parent_status = summary.get("status")
+    exit_code = summary.get("exit_code")
+    valid_exit_code = not isinstance(exit_code, bool) and isinstance(exit_code, int)
+    if not valid_exit_code:
+        errors.append("parent_run exit_code must be an integer pytest exit status")
+    if not isinstance(parent_status, str) or parent_status not in ("PASS", "FAIL"):
+        errors.append("parent_run status must be PASS or FAIL")
+    elif valid_exit_code and ((parent_status == "PASS") is not (exit_code == 0)):
+        errors.append("parent_run status and exit_code are inconsistent")
+
+    parent_provenance = summary.get("validation_provenance")
+    parent_provenance_errors = validate_full_provenance(parent_provenance)
+    if parent_provenance_errors:
+        errors.append(
+            "parent_run validation provenance is invalid: "
+            + "; ".join(parent_provenance_errors)
+        )
+    elif summary.get("validation_provenance_status") != "PASS":
+        errors.append("parent_run validation_provenance_status must match PASS provenance")
+
+    profile_path = resolved_path.parent / RUNTIME_PROFILE_OUTPUT_NAME
+    resolved_profile_path: Path | None = None
+    runtime_profile_sha256: str | None = None
+    runtime_profile_size: int | None = None
+    try:
+        candidate_profile_path = profile_path.resolve(strict=True)
+    except (OSError, RuntimeError, ValueError) as exc:
+        errors.append(
+            "parent_run runtime profile does not exist or could not be resolved: "
+            f"{exc}"
+        )
+        runtime_profile_bytes = None
+    else:
+        if (
+            not _is_relative_to(candidate_profile_path, allowed_root)
+            or candidate_profile_path.parent != resolved_path.parent
+            or candidate_profile_path.name != RUNTIME_PROFILE_OUTPUT_NAME
+        ):
+            errors.append(
+                "parent_run runtime profile must resolve to the fixed sibling "
+                "in its parent run directory"
+            )
+            runtime_profile_bytes = None
+        else:
+            resolved_profile_path = candidate_profile_path
+            try:
+                runtime_profile_bytes = resolved_profile_path.read_bytes()
+            except OSError as exc:
+                errors.append(f"parent_run runtime profile could not be read: {exc}")
+                runtime_profile_bytes = None
+            else:
+                runtime_profile_sha256 = hashlib.sha256(runtime_profile_bytes).hexdigest()
+                runtime_profile_size = len(runtime_profile_bytes)
+
+    output_artifacts = summary.get("output_artifacts")
+    matching_profile_records: list[Mapping[str, object]] = []
+    if isinstance(output_artifacts, list):
+        for record in output_artifacts:
+            if not isinstance(record, Mapping) or not isinstance(record.get("path"), str):
+                continue
+            try:
+                record_path = Path(str(record["path"]))
+                record_resolved = (
+                    record_path if record_path.is_absolute() else repo_root / record_path
+                ).resolve()
+            except (OSError, RuntimeError, ValueError, TypeError):
+                errors.append("parent_run output_artifacts contains an invalid path")
+                continue
+            if resolved_profile_path is not None and record_resolved == resolved_profile_path:
+                matching_profile_records.append(record)
+    if len(matching_profile_records) != 1:
+        errors.append("parent_run must inventory exactly one runtime profile sidecar")
+    elif runtime_profile_sha256 is not None and runtime_profile_size is not None:
+        profile_record = matching_profile_records[0]
+        if (
+            profile_record.get("exists") is not True
+            or profile_record.get("sha256") != runtime_profile_sha256
+            or profile_record.get("size_bytes") != runtime_profile_size
+        ):
+            errors.append("parent_run runtime profile inventory hash/size is stale")
+
+    validated_profile: dict[str, object] | None = None
+    if valid_exit_code and resolved_profile_path is not None and runtime_profile_bytes is not None:
+        validated_profile = _read_runtime_profile_payload(
+            resolved_profile_path,
+            pytest_exitstatus=int(exit_code),
+            formal_selection_eligible=True,
+            expected_validation_provenance=(
+                parent_provenance if isinstance(parent_provenance, Mapping) else None
+            ),
+            raw_bytes=runtime_profile_bytes,
+        )
+        profile_telemetry = validated_profile.get("telemetry")
+        if (
+            not isinstance(profile_telemetry, Mapping)
+            or profile_telemetry.get("missing_runtime_profile_artifact") is True
+        ):
+            errors.append("parent_run runtime profile is missing or invalid")
+        else:
+            derived_profile_summary = _summarize_runtime_profile(
+                validated_profile,
+                final_path=resolved_profile_path,
+            )
+            recorded_profile_path = summary.get("runtime_profile_path")
+            if not isinstance(recorded_profile_path, str):
+                errors.append("parent_run runtime_profile_path is missing")
+            else:
+                try:
+                    recorded_candidate = Path(recorded_profile_path)
+                    recorded_resolved = (
+                        recorded_candidate
+                        if recorded_candidate.is_absolute()
+                        else repo_root / recorded_candidate
+                    ).resolve()
+                except (OSError, RuntimeError, ValueError, TypeError):
+                    errors.append("parent_run runtime_profile_path is invalid")
+                else:
+                    if recorded_resolved != resolved_profile_path:
+                        errors.append(
+                            "parent_run runtime_profile_path does not match its sidecar"
+                        )
+            for field_name in (
+                "runtime_profile_status",
+                "formal_full_selection_eligible",
+                "runtime_profile_summary",
+            ):
+                if summary.get(field_name) != derived_profile_summary[field_name]:
+                    errors.append(f"parent_run {field_name} does not match its runtime profile")
+
+    runtime_profile = (
+        validated_profile.get("performance_evidence_status")
+        if isinstance(validated_profile, Mapping)
+        else None
+    )
+    failure_basis: str | None = None
+    if (
+        valid_exit_code
+        and parent_status == "FAIL"
+        and exit_code != 0
+        and runtime_profile == "FAIL"
+    ):
+        failure_basis = "PYTEST_FAIL"
+    elif (
+        valid_exit_code
+        and parent_status == "PASS"
+        and exit_code == 0
+        and runtime_profile == "FAIL"
+    ):
+        failure_basis = "RUNTIME_PROFILE_FAIL"
+    else:
+        errors.append(
+            "parent_run must contain a consistent failed pytest or runtime profile result"
+        )
+
+    run_id = resolved_path.parent.name
+    if PROVENANCE_IDENTIFIER_RE.fullmatch(run_id) is None:
+        errors.append("parent_run directory name is not a stable run id")
+    if errors:
+        return None, errors
+    try:
+        resolved_repo_root = repo_root.resolve()
+        relative_path = resolved_path.relative_to(resolved_repo_root).as_posix()
+    except (OSError, RuntimeError, ValueError) as exc:
+        return None, [
+            "repository root could not be resolved for parent_run summary: "
+            f"{exc}"
+        ]
+    return (
+        {
+            "run_id": run_id,
+            "summary_path": relative_path,
+            "summary_sha256": hashlib.sha256(raw_bytes).hexdigest(),
+            "runtime_profile_sha256": str(runtime_profile_sha256),
+            "report_type": "test_runtime_summary",
+            "resolved_tier": "full",
+            "status": parent_status,
+            "failure_basis": str(failure_basis),
+            "production_effect": "none",
+        },
+        [],
+    )
+
+
+def _validation_trigger_provenance(
+    args: argparse.Namespace,
+    *,
+    resolved_tier: str,
+    repo_root: Path,
+) -> dict[str, object]:
+    """Build the canonical S4 object shared by summary, profile, and Reader Brief."""
+
+    cli_values = {
+        "trigger_reason": args.trigger_reason,
+        "task_id": args.task_id,
+        "boundary_id": args.boundary_id,
+        "parent_run": args.parent_run,
+    }
+    env_names = {
+        "trigger_reason": VALIDATION_TRIGGER_REASON_ENV,
+        "task_id": VALIDATION_TASK_ID_ENV,
+        "boundary_id": VALIDATION_BOUNDARY_ID_ENV,
+        "parent_run": VALIDATION_PARENT_RUN_ENV,
+    }
+    if any(value is not None for value in cli_values.values()):
+        envelope_source = "cli"
+        raw_values = cli_values
+    elif any(env_name in os.environ for env_name in env_names.values()):
+        envelope_source = "environment"
+        raw_values = {
+            field_name: os.environ.get(env_name)
+            for field_name, env_name in env_names.items()
+        }
+    else:
+        envelope_source = "unset"
+        raw_values = {field_name: None for field_name in env_names}
+    values: dict[str, object] = {
+        field_name: (str(raw_value).strip() or None) if raw_value is not None else None
+        for field_name, raw_value in raw_values.items()
+    }
+    field_sources = {
+        field_name: envelope_source if raw_values[field_name] is not None else "unset"
+        for field_name in raw_values
+    }
+
+    required_for_tier = resolved_tier == "full"
+    any_declared = envelope_source != "unset"
+    errors: list[str] = []
+    trigger_reason = values["trigger_reason"]
+    if trigger_reason is not None and trigger_reason not in VALIDATION_TRIGGER_REASONS:
+        errors.append(f"unsupported trigger_reason={trigger_reason}")
+    if any_declared:
+        if trigger_reason is None:
+            errors.append("declared provenance requires non-empty trigger_reason")
+        for field_name in ("task_id", "boundary_id"):
+            if values[field_name] is None:
+                errors.append(f"declared provenance requires non-empty {field_name}")
+    for field_name in ("task_id", "boundary_id"):
+        value = values[field_name]
+        if value is not None and PROVENANCE_IDENTIFIER_RE.fullmatch(str(value)) is None:
+            errors.append(f"{field_name} must be a 1-256 character stable audit identifier")
+    if trigger_reason == "failure_fix_rerun":
+        raw_parent_run = values["parent_run"]
+        if not isinstance(raw_parent_run, str):
+            errors.append("failure_fix_rerun requires non-empty parent_run")
+        else:
+            parent_binding, parent_errors = _validated_parent_run_binding(
+                raw_parent_run,
+                repo_root=repo_root,
+            )
+            errors.extend(parent_errors)
+            values["parent_run"] = parent_binding
+    elif values["parent_run"] is not None:
+        errors.append("parent_run is only allowed for failure_fix_rerun")
+
+    if required_for_tier:
+        if trigger_reason not in FULL_VALIDATION_TRIGGER_REASONS:
+            errors.append(
+                "full requires trigger_reason in " + ",".join(FULL_VALIDATION_TRIGGER_REASONS)
+            )
+        for field_name in ("task_id", "boundary_id"):
+            if values[field_name] is None:
+                errors.append(f"full requires non-empty {field_name}")
+
+    if errors:
+        status = "FAIL"
+    elif required_for_tier or any_declared:
+        status = "PASS"
+    else:
+        status = "NOT_REQUIRED"
+    payload: dict[str, object] = {
+        "schema_version": VALIDATION_PROVENANCE_SCHEMA_VERSION,
+        "status": status,
+        "required_for_tier": required_for_tier,
+        **values,
+        "envelope_source": envelope_source,
+        "field_sources": field_sources,
+        "cli_over_environment_precedence": "whole_envelope",
+        "validation_errors": errors,
+    }
+    if required_for_tier and not errors:
+        contract_errors = validate_full_provenance(payload)
+        if contract_errors:
+            payload["status"] = "FAIL"
+            payload["validation_errors"] = contract_errors
+    return payload
+
+
+def _attach_validation_provenance(
+    payload: Mapping[str, object],
+    provenance: Mapping[str, object],
+) -> dict[str, object]:
+    bound = dict(payload)
+    bound["validation_provenance"] = dict(provenance)
+    return bound
+
+
+def _formal_full_selection_eligible(
+    extra_pytest_args: Sequence[str],
+    *,
+    pytest_addopts: str,
+) -> bool:
+    """Allow audited reporting instrumentation without treating Full as filtered."""
+
+    if pytest_addopts.strip():
+        return False
+    index = 0
+    while index < len(extra_pytest_args):
+        argument = str(extra_pytest_args[index]).strip()
+        if any(
+            argument.startswith(f"{option}=")
+            for option in FULL_NON_SELECTION_PYTEST_ARG_OPTIONS
+        ):
+            index += 1
+            continue
+        if argument in FULL_NON_SELECTION_PYTEST_ARG_OPTIONS:
+            if index + 1 >= len(extra_pytest_args):
+                return False
+            value = str(extra_pytest_args[index + 1]).strip()
+            if not value or value.startswith("-"):
+                return False
+            index += 2
+            continue
+        return False
+    return True
+
+
 def _artifact_dir(repo_root: Path, args: argparse.Namespace, run_id: str) -> Path | None:
     if not args.write_runtime_artifact:
         return None
@@ -562,6 +985,7 @@ def _runtime_payload(
     result: dict[str, object] | None = None,
     extra_pytest_args: Sequence[str] = (),
     artifact_dir: Path | None = None,
+    validation_provenance: Mapping[str, object],
 ) -> dict[str, object]:
     elapsed = round((ended_at - started_at).total_seconds(), 2)
     input_artifacts = _command_input_artifacts(command, repo_root=repo_root)
@@ -580,6 +1004,7 @@ def _runtime_payload(
         "slow_suite_allowed": spec.slow_suite_allowed,
         "can_support_promotion_evidence": status == "PASS" and spec.promotion_blocking,
         "print_only": status == "PRINT_ONLY",
+        "benchmark_mode": False,
         "workers": workers,
         "dist": dist,
         "extra_pytest_args": list(extra_pytest_args),
@@ -589,6 +1014,7 @@ def _runtime_payload(
         "input_checksums": _artifact_checksums(input_artifacts),
         "schema_versions": {
             "test_runtime_summary": "1",
+            "validation_trigger_provenance": VALIDATION_PROVENANCE_SCHEMA_VERSION,
             **(
                 {"test_runtime_profile": RUNTIME_PROFILE_SCHEMA_VERSION}
                 if resolved_tier == "full"
@@ -606,6 +1032,8 @@ def _runtime_payload(
         "ended_at_utc": ended_at.isoformat().replace("+00:00", "Z"),
         "elapsed_seconds": elapsed,
         "exit_code": None,
+        "validation_provenance_status": validation_provenance.get("status", "FAIL"),
+        "validation_provenance": dict(validation_provenance),
         "safety_boundary": dict(SAFETY_BOUNDARY),
         **SAFETY_BOUNDARY,
     }
@@ -613,6 +1041,8 @@ def _runtime_payload(
         payload.update({key: value for key, value in result.items() if key != "pytest_output"})
     if pytest_output:
         payload.update(_pytest_output_summary(pytest_output, artifact_dir=artifact_dir))
+    if validation_provenance.get("status") == "FAIL":
+        payload["warnings"].append("validation_trigger_provenance=FAIL")
     runtime_profile_summary = payload.get("runtime_profile_summary")
     if (
         isinstance(runtime_profile_summary, dict)
@@ -622,6 +1052,12 @@ def _runtime_payload(
             "runtime_profile_performance_evidence="
             f"{runtime_profile_summary.get('performance_evidence_status', 'FAIL')}"
         )
+        if resolved_tier == "full":
+            payload["can_support_promotion_evidence"] = False
+            payload["promotion_evidence_limitation"] = (
+                "Full pytest exit remains authoritative, but formal Full promotion evidence "
+                "also requires a PASS runtime profile and trigger provenance."
+            )
     if status == "PRINT_ONLY":
         payload["promotion_evidence_limitation"] = (
             "PRINT_ONLY renders the command and artifact contract but does not execute pytest."
@@ -700,6 +1136,8 @@ def _runtime_profile_failure_payload(
         "profile_status": "FAIL",
         "telemetry_status": "FAIL",
         "performance_evidence_status": "FAIL",
+        "validation_provenance_binding_status": "FAIL",
+        "validation_provenance": None,
         "stable_full_improvement_claimed": False,
         "pytest_exitstatus": pytest_exitstatus,
         "pytest_outcome_authoritative": True,
@@ -858,6 +1296,7 @@ def _runtime_profile_contract_error(
     duration_profile_path: Path | None = None,
     expected_test_files: set[str] | None = None,
     expected_test_files_error: str | None = None,
+    expected_validation_provenance: Mapping[str, object] | None = None,
 ) -> str | None:
     statuses = {
         key: payload.get(key)
@@ -865,6 +1304,24 @@ def _runtime_profile_contract_error(
     }
     if any(value not in {"PASS", "FAIL"} for value in statuses.values()):
         return f"runtime profile status fields are invalid: {statuses!r}"
+    provenance_binding_status = payload.get("validation_provenance_binding_status")
+    if provenance_binding_status not in {"PASS", "FAIL"}:
+        return "runtime profile validation provenance binding status is invalid"
+    observed_provenance = payload.get("validation_provenance")
+    provenance_errors = validate_full_provenance(observed_provenance)
+    if provenance_binding_status == "PASS" and provenance_errors:
+        return (
+            "runtime profile validation provenance is invalid: "
+            + "; ".join(provenance_errors)
+        )
+    if expected_validation_provenance is not None:
+        if provenance_binding_status != "PASS":
+            return "runtime profile validation provenance binding did not pass"
+        if (
+            not isinstance(observed_provenance, Mapping)
+            or dict(observed_provenance) != dict(expected_validation_provenance)
+        ):
+            return "runtime profile validation provenance does not match runner envelope"
 
     required_boolean_values = {
         "stable_full_improvement_claimed": False,
@@ -1585,6 +2042,7 @@ def _runtime_profile_contract_error(
         and duration_verified
         and (not manifest_is_complete or complete_collection_verified)
         and selection_eligible
+        and provenance_binding_status == "PASS"
         and pytest_exitstatus == 0
     )
     expected_performance_status = "PASS" if performance_should_pass else "FAIL"
@@ -1647,10 +2105,17 @@ def _read_runtime_profile_payload(
     duration_profile_path: Path | None = None,
     expected_test_files: set[str] | None = None,
     expected_test_files_error: str | None = None,
+    expected_validation_provenance: Mapping[str, object] | None = None,
+    raw_bytes: bytes | None = None,
 ) -> dict[str, object]:
     try:
+        raw_text = (
+            path.read_text(encoding="utf-8")
+            if raw_bytes is None
+            else raw_bytes.decode("utf-8")
+        )
         payload = json.loads(
-            path.read_text(encoding="utf-8"),
+            raw_text,
             object_pairs_hook=_reject_duplicate_json_keys,
             parse_constant=_reject_non_finite_json_constant,
         )
@@ -1695,6 +2160,7 @@ def _read_runtime_profile_payload(
             duration_profile_path=duration_profile_path,
             expected_test_files=expected_test_files,
             expected_test_files_error=expected_test_files_error,
+            expected_validation_provenance=expected_validation_provenance,
         )
     except Exception as exc:  # noqa: BLE001 - malformed evidence must not override pytest
         return _runtime_profile_failure_payload(
@@ -1748,12 +2214,24 @@ def _summarize_runtime_profile(
     return {
         "runtime_profile_path": str(final_path),
         "runtime_profile_status": payload.get("profile_status", "FAIL"),
+        "formal_full_selection_eligible": scheduler_summary.get(
+            "formal_full_selection_eligible",
+            False,
+        ),
         "runtime_profile_summary": {
             "schema_version": payload.get("schema_version"),
             "telemetry_status": payload.get("telemetry_status", "FAIL"),
             "performance_evidence_status": payload.get(
                 "performance_evidence_status",
                 "FAIL",
+            ),
+            "validation_provenance_binding_status": payload.get(
+                "validation_provenance_binding_status",
+                "FAIL",
+            ),
+            "formal_full_selection_eligible": scheduler_summary.get(
+                "formal_full_selection_eligible",
+                False,
             ),
             "stable_full_improvement_claimed": payload.get(
                 "stable_full_improvement_claimed",
@@ -1795,6 +2273,20 @@ def _summarize_runtime_profile(
             "warning_count": len(warning_rows),
         },
     }
+
+
+def _mark_runtime_profile_not_applicable(
+    payload: dict[str, object],
+    *,
+    reason: str,
+) -> None:
+    """Keep non-formal benchmark envelopes from claiming a missing Full sidecar."""
+
+    schema_versions = payload.get("schema_versions")
+    if isinstance(schema_versions, dict):
+        schema_versions.pop("test_runtime_profile", None)
+    payload["runtime_profile_status"] = "NOT_APPLICABLE"
+    payload["runtime_profile_not_applicable_reason"] = reason
 
 
 def _artifact_checksums(records: Sequence[dict[str, object]]) -> dict[str, str]:
@@ -1856,7 +2348,7 @@ def _git_commit(repo_root: Path) -> str | None:
 def _is_relative_to(path: Path, parent: Path) -> bool:
     try:
         path.resolve().relative_to(parent.resolve())
-    except ValueError:
+    except (OSError, RuntimeError, ValueError):
         return False
     return True
 
@@ -1865,6 +2357,8 @@ def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
     status = payload["status"]
     can_support = payload["can_support_promotion_evidence"]
     limitation = payload.get("promotion_evidence_limitation", "None")
+    provenance = payload.get("validation_provenance")
+    provenance = provenance if isinstance(provenance, dict) else {}
     lines = [
         "# Test Runtime Reader Brief",
         "",
@@ -1883,6 +2377,17 @@ def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
         f"- Broker action allowed: `{payload['broker_action_allowed']}`",
         f"- Limitation: {limitation}",
         "",
+        "## Validation Trigger Provenance",
+        "",
+        f"- Status: `{provenance.get('status', 'MISSING')}`",
+        f"- Required for tier: `{provenance.get('required_for_tier', False)}`",
+        f"- Trigger reason: `{provenance.get('trigger_reason')}`",
+        f"- Task id: `{provenance.get('task_id')}`",
+        f"- Boundary id: `{provenance.get('boundary_id')}`",
+        f"- Parent run: `{provenance.get('parent_run')}`",
+        f"- Field sources: `{json.dumps(provenance.get('field_sources', {}), sort_keys=True)}`",
+        f"- Validation errors: `{json.dumps(provenance.get('validation_errors', []))}`",
+        "",
         "## Command",
         "",
         "```powershell",
@@ -1894,6 +2399,11 @@ def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
         lines.extend(
             [
                 "## Benchmark Runs",
+                "",
+                (
+                    "- Runtime profile: `NOT_APPLICABLE` ("
+                    f"{payload.get('runtime_profile_not_applicable_reason', 'benchmark mode')})"
+                ),
                 "",
                 "|workers|dist|status|elapsed_seconds|slow_duration_count|",
                 "|---|---|---|---|---|",
@@ -1949,6 +2459,10 @@ def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
                     "- Performance evidence: "
                     f"`{runtime_profile.get('performance_evidence_status', 'FAIL')}`"
                 ),
+                (
+                    "- Provenance binding: "
+                    f"`{runtime_profile.get('validation_provenance_binding_status', 'FAIL')}`"
+                ),
                 f"- Collection count: `{runtime_profile.get('collection_count', 0)}`",
                 ("- Duration manifest: " f"`{runtime_profile.get('duration_manifest_status')}`"),
                 (
@@ -2003,7 +2517,11 @@ def _write_runtime_artifacts(
     final_payload = dict(payload)
     final_payload["output_artifacts"] = _runtime_output_artifacts(
         artifact_dir,
-        include_runtime_profile=payload.get("resolved_tier") == "full",
+        include_runtime_profile=(
+            payload.get("resolved_tier") == "full"
+            and payload.get("status") != "PRINT_ONLY"
+            and not payload.get("benchmark_mode")
+        ),
         include_benchmark_summary=bool(payload.get("benchmark_mode")),
     )
     # The summary is written last.  Its self-record intentionally omits a digest
@@ -2060,6 +2578,30 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         "--artifact-dir",
         type=Path,
         help="Optional exact directory for runtime artifacts when --write-runtime-artifact is set.",
+    )
+    parser.add_argument(
+        "--trigger-reason",
+        choices=VALIDATION_TRIGGER_REASONS,
+        help=(
+            "Audited reason for this validation run. Full requires one of the reviewed "
+            "Full trigger reasons; CLI overrides AITS_VALIDATION_TRIGGER_REASON."
+        ),
+    )
+    parser.add_argument(
+        "--task-id",
+        help="Owning task id; CLI overrides AITS_VALIDATION_TASK_ID.",
+    )
+    parser.add_argument(
+        "--boundary-id",
+        help="Stable integration/run boundary id; CLI overrides AITS_VALIDATION_BOUNDARY_ID.",
+    )
+    parser.add_argument(
+        "--parent-run",
+        help=(
+            "Path to a prior failed Full test_runtime_summary.json for failure_fix_rerun; "
+            "CLI overrides "
+            "AITS_VALIDATION_PARENT_RUN."
+        ),
     )
     parser.add_argument(
         "--python",
@@ -2119,6 +2661,25 @@ def main(argv: Sequence[str] | None = None) -> int:
     repo_root = _repo_root()
     resolved_tier = resolve_tier(args.tier)
     spec = TIER_SPECS[resolved_tier]
+    validation_provenance = _validation_trigger_provenance(
+        args,
+        resolved_tier=resolved_tier,
+        repo_root=repo_root,
+    )
+    if validation_provenance["status"] == "FAIL":
+        print(
+            "error: Validation trigger provenance failed: "
+            + "; ".join(validation_provenance["validation_errors"]),
+            file=sys.stderr,
+        )
+        return 2
+    if resolved_tier == "full" and not args.write_runtime_artifact:
+        print(
+            "error: Full validation requires --write-runtime-artifact for auditable "
+            "summary/profile provenance",
+            file=sys.stderr,
+        )
+        return 2
     started_at = _utc_now()
     run_id = _runtime_run_id(resolved_tier, started_at)
     artifact_dir = _artifact_dir(repo_root, args, run_id)
@@ -2165,6 +2726,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(f"Slow suite allowed: {spec.slow_suite_allowed}", flush=True)
     print(f"Workers: {args.workers}", flush=True)
     print(f"Distribution: {args.dist}", flush=True)
+    print(
+        "Trigger provenance: "
+        f"status={validation_provenance['status']} "
+        f"reason={validation_provenance['trigger_reason']} "
+        f"task={validation_provenance['task_id']} "
+        f"boundary={validation_provenance['boundary_id']} "
+        f"parent={validation_provenance['parent_run']}",
+        flush=True,
+    )
     print(f"Command: {_format_command(command)}", flush=True)
     if benchmark_mode:
         print(f"Benchmark variants: {len(benchmark_variants)}", flush=True)
@@ -2191,6 +2761,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             ended_at=ended_at,
             extra_pytest_args=args.pytest_arg,
             artifact_dir=artifact_dir,
+            validation_provenance=validation_provenance,
         )
         if benchmark_mode:
             payload.update(
@@ -2218,6 +2789,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                     ),
                 }
             )
+            _mark_runtime_profile_not_applicable(
+                payload,
+                reason="benchmark_variants_are_non_formal",
+            )
         if artifact_dir is not None:
             payload = _write_runtime_artifacts(artifact_dir, payload)
             print(f"Runtime artifact: {artifact_dir / 'test_runtime_summary.json'}", flush=True)
@@ -2238,7 +2813,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "Running benchmark variant " f"workers={variant['workers']} dist={variant['dist']}",
                 flush=True,
             )
-            result = _run_command(variant["command"], cwd=repo_root)  # type: ignore[arg-type]
+            result = _run_command(
+                variant["command"],  # type: ignore[arg-type]
+                cwd=repo_root,
+                env_removals=BENCHMARK_REMOVED_VALIDATION_ENV_VARS,
+            )
             status = "PASS" if result["exit_code"] == 0 else "FAIL"
             log_name = f"pytest_output_{variant['variant_id']}.log"
             pytest_output = str(result.get("pytest_output") or "")
@@ -2274,6 +2853,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             result={"exit_code": overall_exit_code},
             extra_pytest_args=args.pytest_arg,
             artifact_dir=artifact_dir,
+            validation_provenance=validation_provenance,
         )
         payload.update(
             {
@@ -2290,6 +2870,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 ),
                 **_summarize_benchmark_runs(benchmark_runs),
             }
+        )
+        _mark_runtime_profile_not_applicable(
+            payload,
+            reason="benchmark_variants_are_non_formal",
         )
         print(f"Status: {status}")
         print(f"Elapsed seconds: {payload['elapsed_seconds']}")
@@ -2321,11 +2905,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(runtime_profile_temp_dir.name) / RUNTIME_PROFILE_OUTPUT_NAME
         )
         env_overrides[RUNTIME_PROFILE_OUTPUT_ENV] = str(runtime_profile_temp_path)
-        formal_selection_eligible = (
-            not args.pytest_arg and not os.environ.get("PYTEST_ADDOPTS", "").strip()
+        formal_selection_eligible = _formal_full_selection_eligible(
+            args.pytest_arg,
+            pytest_addopts=os.environ.get("PYTEST_ADDOPTS", ""),
         )
         env_overrides[RUNTIME_PROFILE_FORMAL_SELECTION_ENV] = (
             "1" if formal_selection_eligible else "0"
+        )
+        env_overrides[RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV] = json.dumps(
+            validation_provenance,
+            separators=(",", ":"),
+            sort_keys=True,
         )
 
     result = _run_command(
@@ -2350,6 +2940,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             duration_profile_path=repo_root / FULL_DURATION_PROFILE_MANIFEST,
             expected_test_files=expected_full_test_files,
             expected_test_files_error=expected_full_test_files_error,
+            expected_validation_provenance=validation_provenance,
+        )
+        runtime_profile_payload = _attach_validation_provenance(
+            runtime_profile_payload,
+            validation_provenance,
         )
         runtime_profile_payload = _persist_runtime_profile_before_summary(
             artifact_dir / RUNTIME_PROFILE_OUTPUT_NAME,
@@ -2378,6 +2973,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         result=result,
         extra_pytest_args=args.pytest_arg,
         artifact_dir=artifact_dir,
+        validation_provenance=validation_provenance,
     )
     print(f"Status: {status}")
     print(f"Elapsed seconds: {result['elapsed_seconds']}")

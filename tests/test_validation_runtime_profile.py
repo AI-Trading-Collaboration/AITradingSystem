@@ -8,11 +8,14 @@ import sys
 import tomllib
 from dataclasses import replace
 from pathlib import Path
+from unittest.mock import patch
 
 from scripts.pytest_runtime_profile import (
     RUNTIME_PROFILE_FORMAL_SELECTION_ENV,
     RUNTIME_PROFILE_OUTPUT_ENV,
+    RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV,
     DurationProfile,
+    _validation_provenance_from_environment,
     build_runtime_profile,
     collection_identity,
     load_duration_profile,
@@ -23,6 +26,41 @@ from scripts.pytest_runtime_profile import (
 )
 
 PROFILE_PATH = Path("inputs/architecture/arch_004g2_full_duration_profile.yaml")
+
+
+def _full_validation_provenance(
+    *,
+    boundary_id: str = "runtime-profile-test",
+) -> dict[str, object]:
+    return {
+        "schema_version": "validation_trigger_provenance.v1",
+        "status": "PASS",
+        "required_for_tier": True,
+        "trigger_reason": "formal_performance_profile",
+        "task_id": "ARCH-004G2",
+        "boundary_id": boundary_id,
+        "parent_run": None,
+        "envelope_source": "environment",
+        "field_sources": {
+            "trigger_reason": "environment",
+            "task_id": "environment",
+            "boundary_id": "environment",
+            "parent_run": "unset",
+        },
+        "cli_over_environment_precedence": "whole_envelope",
+        "validation_errors": [],
+    }
+
+
+def _full_validation_provenance_json(
+    *,
+    boundary_id: str = "runtime-profile-test",
+) -> str:
+    return json.dumps(
+        _full_validation_provenance(boundary_id=boundary_id),
+        separators=(",", ":"),
+        sort_keys=True,
+    )
 
 
 def _file_set_sha256(paths: list[str]) -> str:
@@ -178,6 +216,43 @@ def _phase(
         "duration": stop - start,
         "outcome": outcome,
     }
+
+
+def _build_comparable_runtime_payload(
+    *,
+    validation_provenance: dict[str, object] | None,
+    validation_provenance_errors: tuple[str, ...] = (),
+) -> dict[str, object]:
+    nodeids = [f"tests/test_{index:02d}.py::test_{index:02d}" for index in range(16)]
+    phase_reports = [
+        _phase(nodeid, phase, f"gw{index}", start, stop)
+        for index, nodeid in enumerate(nodeids)
+        for phase, start, stop in (
+            ("setup", 1.0, 1.1),
+            ("call", 1.1, 1.2),
+            ("teardown", 1.2, 1.3),
+        )
+    ]
+    return build_runtime_profile(
+        collections={f"gw{index}": nodeids for index in range(16)},
+        phase_reports=phase_reports,
+        duration_profile=_legacy_runtime_profile(
+            observed_seconds={
+                f"tests/test_{index:02d}.py": float(16 - index)
+                for index in range(16)
+            },
+            source_workers=16,
+        ),
+        expected_worker_count=16,
+        xdist_dist="loadfile",
+        loadscope_reorder=False,
+        formal_full_selection_eligible=True,
+        pytest_exitstatus=0,
+        started_at=0.0,
+        ended_at=2.0,
+        validation_provenance=validation_provenance,
+        validation_provenance_errors=validation_provenance_errors,
+    )
 
 
 def test_tracked_partial_seed_profile_is_valid_and_source_bound(tmp_path: Path) -> None:
@@ -449,6 +524,7 @@ def test_runtime_profile_aggregates_nodes_files_workers_and_tail_idle() -> None:
         _phase(nodeids[2], "teardown", "gw1", 20.0, 20.5),
     ]
 
+    provenance = _full_validation_provenance(boundary_id="runtime-profile-unit")
     payload = build_runtime_profile(
         collections={"gw0": nodeids, "gw1": nodeids},
         phase_reports=reports,
@@ -460,9 +536,11 @@ def test_runtime_profile_aggregates_nodes_files_workers_and_tail_idle() -> None:
         pytest_exitstatus=0,
         started_at=9.0,
         ended_at=21.0,
+        validation_provenance=provenance,
     )
 
     assert payload["profile_status"] == "PASS"
+    assert payload["validation_provenance_binding_status"] == "PASS"
     assert payload["performance_evidence_status"] == "PASS"
     assert payload["scheduler"]["duration_order_verified"] is True
     assert payload["scheduler"]["matched_tracked_file_count"] == 2
@@ -478,6 +556,123 @@ def test_runtime_profile_aggregates_nodes_files_workers_and_tail_idle() -> None:
     assert workers["gw0"]["tail_idle_seconds"] == 4.5
     assert workers["gw1"]["tail_idle_seconds"] == 0.0
     assert payload["tail_idle_total_seconds"] == 4.5
+    assert payload["validation_provenance"] == provenance
+
+
+def test_missing_validation_provenance_fails_only_performance_binding() -> None:
+    payload = _build_comparable_runtime_payload(validation_provenance=None)
+
+    assert payload["profile_status"] == "PASS"
+    assert payload["telemetry_status"] == "PASS"
+    assert payload["scheduler"]["applied"] is True
+    assert payload["scheduler"]["duration_order_verified"] is True
+    assert payload["validation_provenance_binding_status"] == "FAIL"
+    assert payload["performance_evidence_status"] == "FAIL"
+    assert payload["pytest_exitstatus"] == 0
+    assert payload["pytest_outcome_authoritative"] is True
+    assert payload["pytest_outcome_overridden"] is False
+    assert payload["validation_provenance"] is None
+    assert any(
+        "validation provenance must be a mapping" in warning
+        for warning in payload["warnings"]
+    )
+
+
+def test_invalid_validation_provenance_fails_only_performance_binding() -> None:
+    invalid_provenance = _full_validation_provenance()
+    invalid_provenance["status"] = "FAIL"
+
+    payload = _build_comparable_runtime_payload(
+        validation_provenance=invalid_provenance,
+    )
+
+    assert payload["profile_status"] == "PASS"
+    assert payload["telemetry_status"] == "PASS"
+    assert payload["scheduler"]["applied"] is True
+    assert payload["scheduler"]["duration_order_verified"] is True
+    assert payload["validation_provenance_binding_status"] == "FAIL"
+    assert payload["performance_evidence_status"] == "FAIL"
+    assert payload["pytest_exitstatus"] == 0
+    assert payload["pytest_outcome_authoritative"] is True
+    assert payload["pytest_outcome_overridden"] is False
+    assert payload["validation_provenance"] == invalid_provenance
+    assert any(
+        "validation provenance status must be PASS" in warning
+        for warning in payload["warnings"]
+    )
+
+
+def test_validation_provenance_environment_rejects_duplicate_and_non_finite_json() -> None:
+    invalid_cases = [
+        (
+            '{"schema_version":"first","schema_version":"second"}',
+            "duplicate JSON key: schema_version",
+        ),
+        ('{"schema_version":NaN}', "non-finite JSON constant: NaN"),
+    ]
+
+    for raw_provenance, expected_error in invalid_cases:
+        with patch.dict(
+            os.environ,
+            {RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV: raw_provenance},
+        ):
+            payload, errors = _validation_provenance_from_environment()
+
+        assert payload is None
+        assert any(expected_error in error for error in errors)
+
+
+def test_validation_provenance_validator_is_total_for_legal_json_types() -> None:
+    invalid_payloads = []
+    invalid_source = _full_validation_provenance()
+    invalid_source["envelope_source"] = []
+    invalid_payloads.append(invalid_source)
+    invalid_field_source = _full_validation_provenance()
+    field_sources = invalid_field_source["field_sources"]
+    assert isinstance(field_sources, dict)
+    field_sources["task_id"] = {}
+    invalid_payloads.append(invalid_field_source)
+
+    for invalid_payload in invalid_payloads:
+        with patch.dict(
+            os.environ,
+            {
+                RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV: json.dumps(invalid_payload),
+            },
+        ):
+            payload, errors = _validation_provenance_from_environment()
+
+        assert payload == invalid_payload
+        assert errors
+
+
+def test_validation_provenance_validator_exception_fails_closed() -> None:
+    provenance = _full_validation_provenance()
+    with (
+        patch.dict(
+            os.environ,
+            {
+                RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV: json.dumps(provenance),
+            },
+        ),
+        patch(
+            "scripts.pytest_runtime_profile.validate_full_provenance",
+            side_effect=RuntimeError("validator boom"),
+        ),
+    ):
+        parsed, errors = _validation_provenance_from_environment()
+        payload = _build_comparable_runtime_payload(
+            validation_provenance=parsed,
+            validation_provenance_errors=tuple(errors),
+        )
+
+    assert parsed == provenance
+    assert any("RuntimeError: validator boom" in error for error in errors)
+    assert payload["profile_status"] == "PASS"
+    assert payload["telemetry_status"] == "PASS"
+    assert payload["validation_provenance_binding_status"] == "FAIL"
+    assert payload["performance_evidence_status"] == "FAIL"
+    assert payload["pytest_exitstatus"] == 0
 
 
 def test_applied_scheduler_with_wrong_final_order_cannot_form_performance_evidence() -> None:
@@ -681,6 +876,9 @@ def test_real_xdist_plugin_writes_complete_noncomparable_profile(tmp_path: Path)
     env = dict(os.environ)
     env[RUNTIME_PROFILE_OUTPUT_ENV] = str(output_path)
     env[RUNTIME_PROFILE_FORMAL_SELECTION_ENV] = "1"
+    env[RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV] = _full_validation_provenance_json(
+        boundary_id="real-xdist-noncomparable",
+    )
     python_path_parts = [str(repo_root), str(repo_root / "src")]
     if env.get("PYTHONPATH"):
         python_path_parts.append(env["PYTHONPATH"])
@@ -721,6 +919,7 @@ def test_real_xdist_plugin_writes_complete_noncomparable_profile(tmp_path: Path)
     payload = json.loads(output_path.read_text(encoding="utf-8"))
     assert payload["profile_status"] == "PASS"
     assert payload["telemetry_status"] == "PASS"
+    assert payload["validation_provenance_binding_status"] == "PASS"
     assert payload["performance_evidence_status"] == "FAIL"
     assert payload["collection"]["count"] == 3
     assert payload["collection"]["nodeids"] == [
@@ -772,6 +971,12 @@ def test_real_xdist_plugin_applies_and_verifies_duration_order(tmp_path: Path) -
     env = dict(os.environ)
     env[RUNTIME_PROFILE_OUTPUT_ENV] = str(output_path)
     env[RUNTIME_PROFILE_FORMAL_SELECTION_ENV] = "1"
+    provenance = _full_validation_provenance(boundary_id="real-xdist-comparable")
+    env[RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV] = json.dumps(
+        provenance,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
     python_path_parts = [str(repo_root), str(repo_root / "src")]
     if env.get("PYTHONPATH"):
         python_path_parts.append(env["PYTHONPATH"])
@@ -809,7 +1014,9 @@ def test_real_xdist_plugin_applies_and_verifies_duration_order(tmp_path: Path) -
     payload = json.loads(output_path.read_text(encoding="utf-8"))
     assert payload["profile_status"] == "PASS"
     assert payload["telemetry_status"] == "PASS"
+    assert payload["validation_provenance_binding_status"] == "PASS"
     assert payload["performance_evidence_status"] == "PASS"
+    assert payload["validation_provenance"] == provenance
     assert payload["scheduler"]["applied"] is True
     assert payload["scheduler"]["policy"] == "complete_full_duration_descending_stable"
     assert payload["scheduler"]["manifest_status"] == "COMPLETE"
@@ -867,7 +1074,94 @@ def test_real_xdist_plugin_applies_and_verifies_duration_order(tmp_path: Path) -
     assert stale_payload["scheduler"]["applied"] is False
     assert stale_payload["scheduler"]["fallback"] is True
     assert stale_payload["scheduler"]["complete_collection_verified"] is False
+    assert stale_payload["validation_provenance_binding_status"] == "PASS"
     assert stale_payload["performance_evidence_status"] == "FAIL"
+
+
+def test_real_xdist_plugin_fails_closed_for_missing_or_malformed_provenance(
+    tmp_path: Path,
+) -> None:
+    repo_root = Path.cwd().resolve()
+    suite_dir = tmp_path / "tests"
+    suite_dir.mkdir()
+    nodeids: list[str] = []
+    observed_seconds: dict[str, float] = {}
+    for index in range(16):
+        file_name = f"test_provenance_{index:02d}.py"
+        (suite_dir / file_name).write_text(
+            f"def test_provenance_{index:02d}():\n    assert True\n",
+            encoding="utf-8",
+        )
+        nodeid = f"tests/{file_name}::test_provenance_{index:02d}"
+        nodeids.append(nodeid)
+        observed_seconds[f"tests/{file_name}"] = float(16 - index)
+    complete_profile_path = _write_complete_profile(
+        tmp_path / "complete_duration_profile.yaml",
+        nodeids=nodeids,
+        observed_seconds=observed_seconds,
+    )
+
+    base_env = dict(os.environ)
+    base_env[RUNTIME_PROFILE_FORMAL_SELECTION_ENV] = "1"
+    python_path_parts = [str(repo_root), str(repo_root / "src")]
+    if base_env.get("PYTHONPATH"):
+        python_path_parts.append(base_env["PYTHONPATH"])
+    base_env["PYTHONPATH"] = os.pathsep.join(python_path_parts)
+    invalid_cases = [
+        ("missing", None, "validation provenance environment is missing"),
+        ("malformed", "{", "validation provenance environment is invalid"),
+    ]
+
+    for case_name, raw_provenance, expected_warning in invalid_cases:
+        output_path = tmp_path / f"{case_name}_test_runtime_profile.json"
+        env = dict(base_env)
+        env[RUNTIME_PROFILE_OUTPUT_ENV] = str(output_path)
+        if raw_provenance is None:
+            env.pop(RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV, None)
+        else:
+            env[RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV] = raw_provenance
+
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "-n",
+                "16",
+                "--dist",
+                "loadfile",
+                "-p",
+                "scripts.pytest_runtime_profile",
+                "--aits-duration-profile",
+                str(complete_profile_path.resolve()),
+                "--rootdir",
+                str(tmp_path),
+                "--confcutdir",
+                str(tmp_path),
+                "tests",
+                "-q",
+                "--no-loadscope-reorder",
+            ],
+            cwd=tmp_path,
+            env=env,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        assert completed.returncode == 0, completed.stdout + completed.stderr
+        payload = json.loads(output_path.read_text(encoding="utf-8"))
+        assert payload["profile_status"] == "PASS"
+        assert payload["telemetry_status"] == "PASS"
+        assert payload["scheduler"]["applied"] is True
+        assert payload["scheduler"]["duration_order_verified"] is True
+        assert payload["validation_provenance_binding_status"] == "FAIL"
+        assert payload["performance_evidence_status"] == "FAIL"
+        assert payload["pytest_exitstatus"] == 0
+        assert payload["pytest_outcome_authoritative"] is True
+        assert payload["pytest_outcome_overridden"] is False
+        assert payload["validation_provenance"] is None
+        assert any(expected_warning in warning for warning in payload["warnings"])
 
 
 def test_runtime_sidecar_write_failure_preserves_pytest_exit(tmp_path: Path) -> None:
@@ -883,6 +1177,9 @@ def test_runtime_sidecar_write_failure_preserves_pytest_exit(tmp_path: Path) -> 
     env = dict(os.environ)
     env[RUNTIME_PROFILE_OUTPUT_ENV] = str(output_path)
     env[RUNTIME_PROFILE_FORMAL_SELECTION_ENV] = "1"
+    env[RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV] = _full_validation_provenance_json(
+        boundary_id="real-xdist-write-failure",
+    )
     python_path_parts = [str(repo_root), str(repo_root / "src")]
     if env.get("PYTHONPATH"):
         python_path_parts.append(env["PYTHONPATH"])

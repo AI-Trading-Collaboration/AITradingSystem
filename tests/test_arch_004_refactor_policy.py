@@ -5014,7 +5014,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert s3n["validation"]["full_validation"]["node_count"] == 6_248
     assert s3n["validation"]["full_validation"]["file_count"] == 1_068
     assert s3n["validation"]["active_source_count"] == 77
-    assert len(eb0_s3a["sources"]) == s3n["validation"]["active_source_count"]
+    assert len(eb0_s3a["sources"]) >= s3n["validation"]["active_source_count"]
     assert s3n["validation"]["worktree_attribution"] == {
         "status": "PASS",
         "changed_tracked_path_count": 12,
@@ -5025,6 +5025,32 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert s3n["next_work"]["post_full_pass_satisfied"] is True
     assert s3n["next_work"]["second_full_allowed"] is False
     assert s3n["next_phase_or_slice_unblocked"] is False
+    s4 = eb0_s3a["s4_full_trigger_provenance"]
+    assert s4["status"] == "COMPLETE_RUNTIME_TASK_CONTINUES"
+    assert s4["base_commit"] == "2962e02f"
+    assert s4["owner_authorization"] == {
+        "selected_option": "A",
+        "authorized_increment": "S4_FULL_TRIGGER_PROVENANCE",
+        "return_to_g2_4_coordination_point_after_closeout": True,
+        "eb1_requires_new_explicit_owner_instruction": True,
+    }
+    assert s4["contract"]["cli_over_environment_precedence"] == "whole_envelope"
+    assert s4["contract"]["profile_binding_status_required_for_performance_pass"] is True
+    assert s4["contract"]["full_benchmark_runtime_profile_status"] == "NOT_APPLICABLE"
+    assert "runtime_profile_sha256" in s4["contract"]["failure_fix_parent_binding"]["binds"]
+    assert s4["contract"]["failure_fix_parent_binding"]["formal_parent_proof"][-1] == (
+        "inventory_sha_size_fresh"
+    )
+    assert s4["contract"]["benchmark_inherited_formal_profile_provenance_env_removed"] is True
+    assert s4["contract"]["malformed_json_types_fail_closed_without_validator_exception"] is True
+    assert s4["validation"]["full_run_count"] == 0
+    assert s4["validation"]["full_validation_required_for_s4"] is False
+    assert s4["validation"]["architecture_fitness"]["status"] == (
+        "PASS_AFTER_FRESHNESS_CORRECTION"
+    )
+    assert s4["validation"]["contract_validation"]["status"] == "PASS"
+    assert s4["validation"]["active_source_count"] == len(eb0_s3a["sources"])
+    assert s4["next_phase_or_slice_unblocked"] is False
     for source in eb0_s3a["sources"]:
         actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
@@ -5223,13 +5249,25 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "INTEGRATED_WORKTREE_ATTRIBUTION_PROVEN_PHASE_G2_4CX3_VALIDATING_G2_4_CONTINUES",
         "INTEGRATED_WORKTREE_ATTRIBUTION_PROVEN_PHASE_G2_4CX3_COMPLETE_G2_4_CONTINUES",
     }
-    assert attribution["current_staging_authority"] == {
-        "task_id": "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE",
-        "increment": "S3N_ADAPTIVE_EQUAL_RISK_TAIL_CLOSEOUT",
-        "status": "COMPLETE_RUNTIME_TASK_CONTINUES",
-        "base_commit": "13d85f1e",
-        "declared_path_set_current": True,
+    current_authority = attribution["current_staging_authority"]
+    assert current_authority["task_id"] == (
+        "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE"
+    )
+    assert current_authority["increment"] == "S4_FULL_TRIGGER_PROVENANCE"
+    assert current_authority["status"] == "COMPLETE_RUNTIME_TASK_CONTINUES"
+    assert current_authority["base_commit"] == "2962e02f"
+    assert current_authority["declared_path_set_current"] is True
+    assert current_authority["owner_authorization"] == {
+        "selected_option": "A",
+        "return_to_g2_4_coordination_point_after_closeout": True,
     }
+    assert current_authority["phase_lock"] == {
+        "next_phase_or_slice_unblocked": False,
+        "eb1_requires_new_explicit_owner_instruction": True,
+        "next_callback_requires_new_explicit_owner_instruction": True,
+        "arch_005_or_g2_5_unblocked": False,
+    }
+    assert len(current_authority["declared_changed_paths"]) == 24
     assert (
         attribution["current_staging_authority"]["base_commit"]
         == attribution["base_commit"]

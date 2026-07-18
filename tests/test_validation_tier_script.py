@@ -29,6 +29,75 @@ from scripts.run_validation_tier import (
     resolve_tier,
 )
 
+FULL_PROVENANCE_ARGS = [
+    "--trigger-reason",
+    "formal_performance_profile",
+    "--task-id",
+    "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE",
+    "--boundary-id",
+    "pytest-runtime-contract",
+]
+
+
+def _full_provenance_payload(*, boundary_id: str = "pytest-runtime-contract") -> dict[str, object]:
+    return {
+        "schema_version": "validation_trigger_provenance.v1",
+        "status": "PASS",
+        "required_for_tier": True,
+        "trigger_reason": "formal_performance_profile",
+        "task_id": "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE",
+        "boundary_id": boundary_id,
+        "parent_run": None,
+        "envelope_source": "cli",
+        "field_sources": {
+            "trigger_reason": "cli",
+            "task_id": "cli",
+            "boundary_id": "cli",
+            "parent_run": "unset",
+        },
+        "cli_over_environment_precedence": "whole_envelope",
+        "validation_errors": [],
+    }
+
+
+def _write_formal_failed_full_parent(
+    parent_path: Path,
+    *,
+    exit_code: int = 1,
+    status: str | None = None,
+    benchmark_mode: bool = False,
+    print_only: bool = False,
+) -> bytes:
+    parent_path.parent.mkdir(parents=True, exist_ok=True)
+    profile_path = parent_path.parent / RUNTIME_PROFILE_OUTPUT_NAME
+    profile_payload = _runtime_profile_payload(pytest_exitstatus=exit_code)
+    profile_path.write_text(json.dumps(profile_payload), encoding="utf-8")
+    profile_bytes = profile_path.read_bytes()
+    parent_payload = {
+        "schema_version": 1,
+        "report_type": "test_runtime_summary",
+        "resolved_tier": "full",
+        "status": status or ("PASS" if exit_code == 0 else "FAIL"),
+        "exit_code": exit_code,
+        "print_only": print_only,
+        "benchmark_mode": benchmark_mode,
+        "production_effect": "none",
+        "validation_provenance_status": "PASS",
+        "validation_provenance": _full_provenance_payload(),
+        "output_artifacts": [
+            {
+                "path": str(profile_path),
+                "exists": True,
+                "sha256": hashlib.sha256(profile_bytes).hexdigest(),
+                "size_bytes": len(profile_bytes),
+            }
+        ],
+        **_summarize_runtime_profile(profile_payload, final_path=profile_path),
+    }
+    raw_parent = json.dumps(parent_payload, sort_keys=True).encode()
+    parent_path.write_bytes(raw_parent)
+    return raw_parent
+
 
 def test_validation_tier_print_only_writes_command_summary(tmp_path: Path) -> None:
     report_path = tmp_path / "validation_tier.json"
@@ -121,6 +190,550 @@ def test_full_command_preserves_loadfile_and_enables_duration_profile() -> None:
     assert f"--aits-duration-profile {FULL_DURATION_PROFILE_MANIFEST}" in rendered
     assert command[-1] == "--no-loadscope-reorder"
     assert rendered.count("tests") >= 1
+
+
+def test_full_junit_instrumentation_preserves_formal_selection_eligibility() -> None:
+    assert validation_tier._formal_full_selection_eligible(
+        ["--junitxml=pytest-results.xml"],
+        pytest_addopts="",
+    )
+    assert validation_tier._formal_full_selection_eligible(
+        ["--junitxml", "pytest-results.xml"],
+        pytest_addopts="",
+    )
+    assert not validation_tier._formal_full_selection_eligible(
+        ["-k", "focused"],
+        pytest_addopts="",
+    )
+    assert not validation_tier._formal_full_selection_eligible(
+        ["--junitxml=pytest-results.xml"],
+        pytest_addopts="-k focused",
+    )
+
+
+def test_full_fails_before_pytest_without_trigger_provenance(
+    tmp_path: Path,
+) -> None:
+    report_path = tmp_path / "should_not_exist.json"
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_validation_tier.py",
+            "full",
+            "--print-only",
+            "--json-output",
+            str(report_path),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 2
+    assert "Validation trigger provenance failed" in completed.stderr
+    assert "full requires trigger_reason" in completed.stderr
+    assert not report_path.exists()
+
+
+def test_full_requires_runtime_artifacts_before_pytest() -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_validation_tier.py",
+            "full",
+            "--print-only",
+            *FULL_PROVENANCE_ARGS,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 2
+    assert "Full validation requires --write-runtime-artifact" in completed.stderr
+
+
+def test_full_print_only_records_canonical_trigger_provenance(tmp_path: Path) -> None:
+    artifact_dir = tmp_path / "runtime_artifact"
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_validation_tier.py",
+            "full",
+            "--print-only",
+            "--write-runtime-artifact",
+            "--artifact-dir",
+            str(artifact_dir),
+            *FULL_PROVENANCE_ARGS,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0
+    summary = json.loads(
+        (artifact_dir / "test_runtime_summary.json").read_text(encoding="utf-8")
+    )
+    provenance = summary["validation_provenance"]
+    assert provenance == {
+        "schema_version": "validation_trigger_provenance.v1",
+        "status": "PASS",
+        "required_for_tier": True,
+        "trigger_reason": "formal_performance_profile",
+        "task_id": "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE",
+        "boundary_id": "pytest-runtime-contract",
+        "parent_run": None,
+        "envelope_source": "cli",
+        "field_sources": {
+            "trigger_reason": "cli",
+            "task_id": "cli",
+            "boundary_id": "cli",
+            "parent_run": "unset",
+        },
+        "cli_over_environment_precedence": "whole_envelope",
+        "validation_errors": [],
+    }
+    reader_brief = (artifact_dir / "test_runtime_reader_brief.md").read_text(
+        encoding="utf-8"
+    )
+    assert "## Validation Trigger Provenance" in reader_brief
+    assert "Trigger reason: `formal_performance_profile`" in reader_brief
+
+
+def test_failure_fix_rerun_requires_parent_run_before_pytest() -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_validation_tier.py",
+            "full",
+            "--print-only",
+            "--trigger-reason",
+            "failure_fix_rerun",
+            "--task-id",
+            "ARCH-004G2",
+            "--boundary-id",
+            "rerun-boundary",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 2
+    assert "failure_fix_rerun requires non-empty parent_run" in completed.stderr
+
+
+def test_failure_fix_rerun_binds_failed_full_summary_and_sha256(tmp_path: Path) -> None:
+    parent_path = (
+        tmp_path
+        / "outputs"
+        / "validation_runtime"
+        / "full_parent_failure"
+        / "test_runtime_summary.json"
+    )
+    raw_parent = _write_formal_failed_full_parent(parent_path)
+    args = validation_tier.parse_args(
+        [
+            "full",
+            "--trigger-reason",
+            "failure_fix_rerun",
+            "--task-id",
+            "ARCH-004G2",
+            "--boundary-id",
+            "rerun-boundary",
+            "--parent-run",
+            parent_path.relative_to(tmp_path).as_posix(),
+        ]
+    )
+
+    provenance = validation_tier._validation_trigger_provenance(
+        args,
+        resolved_tier="full",
+        repo_root=tmp_path,
+    )
+
+    assert provenance["status"] == "PASS"
+    assert provenance["parent_run"] == {
+        "run_id": "full_parent_failure",
+        "summary_path": (
+            "outputs/validation_runtime/full_parent_failure/test_runtime_summary.json"
+        ),
+        "summary_sha256": hashlib.sha256(raw_parent).hexdigest(),
+        "runtime_profile_sha256": hashlib.sha256(
+            (parent_path.parent / RUNTIME_PROFILE_OUTPUT_NAME).read_bytes()
+        ).hexdigest(),
+        "report_type": "test_runtime_summary",
+        "resolved_tier": "full",
+        "status": "FAIL",
+        "failure_basis": "PYTEST_FAIL",
+        "production_effect": "none",
+    }
+
+
+def test_failure_fix_rerun_validates_the_same_profile_bytes_it_hashes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    parent_path = (
+        tmp_path
+        / "outputs"
+        / "validation_runtime"
+        / "full_parent_profile_replace"
+        / "test_runtime_summary.json"
+    )
+    _write_formal_failed_full_parent(parent_path)
+    profile_path = parent_path.parent / RUNTIME_PROFILE_OUTPUT_NAME
+    valid_profile_bytes = profile_path.read_bytes()
+    captured_invalid_bytes = b"{}"
+    profile_path.write_bytes(captured_invalid_bytes)
+    parent_payload = json.loads(parent_path.read_text(encoding="utf-8"))
+    profile_record = parent_payload["output_artifacts"][0]
+    profile_record["sha256"] = hashlib.sha256(captured_invalid_bytes).hexdigest()
+    profile_record["size_bytes"] = len(captured_invalid_bytes)
+    parent_path.write_text(json.dumps(parent_payload), encoding="utf-8")
+
+    original_reader = validation_tier._read_runtime_profile_payload
+
+    def replace_path_then_read(path: Path, **kwargs: object) -> dict[str, object]:
+        profile_path.write_bytes(valid_profile_bytes)
+        return original_reader(path, **kwargs)
+
+    monkeypatch.setattr(
+        validation_tier,
+        "_read_runtime_profile_payload",
+        replace_path_then_read,
+    )
+    args = validation_tier.parse_args(
+        [
+            "full",
+            "--trigger-reason",
+            "failure_fix_rerun",
+            "--task-id",
+            "ARCH-004G2",
+            "--boundary-id",
+            "rerun-boundary",
+            "--parent-run",
+            parent_path.relative_to(tmp_path).as_posix(),
+        ]
+    )
+
+    provenance = validation_tier._validation_trigger_provenance(
+        args,
+        resolved_tier="full",
+        repo_root=tmp_path,
+    )
+
+    assert provenance["status"] == "FAIL"
+    assert "runtime profile is missing or invalid" in "; ".join(
+        provenance["validation_errors"]
+    )
+
+
+def test_failure_fix_rerun_rejects_profile_resolving_outside_parent_run(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    parent_path = (
+        tmp_path
+        / "outputs"
+        / "validation_runtime"
+        / "full_parent_profile_symlink"
+        / "test_runtime_summary.json"
+    )
+    _write_formal_failed_full_parent(parent_path)
+    profile_path = parent_path.parent / RUNTIME_PROFILE_OUTPUT_NAME
+    external_profile_path = tmp_path / "outside" / RUNTIME_PROFILE_OUTPUT_NAME
+    original_resolve = Path.resolve
+
+    def resolve_with_external_profile(self: Path, strict: bool = False) -> Path:
+        if self == profile_path and strict:
+            return external_profile_path
+        return original_resolve(self, strict=strict)
+
+    monkeypatch.setattr(Path, "resolve", resolve_with_external_profile)
+    args = validation_tier.parse_args(
+        [
+            "full",
+            "--trigger-reason",
+            "failure_fix_rerun",
+            "--task-id",
+            "ARCH-004G2",
+            "--boundary-id",
+            "rerun-boundary",
+            "--parent-run",
+            parent_path.relative_to(tmp_path).as_posix(),
+        ]
+    )
+
+    provenance = validation_tier._validation_trigger_provenance(
+        args,
+        resolved_tier="full",
+        repo_root=tmp_path,
+    )
+
+    assert provenance["status"] == "FAIL"
+    assert "fixed sibling in its parent run directory" in "; ".join(
+        provenance["validation_errors"]
+    )
+
+
+@pytest.mark.parametrize(
+    ("resolution_target", "expected_error"),
+    [
+        (
+            "runtime_profile",
+            "runtime profile does not exist or could not be resolved",
+        ),
+        ("allowed_root", "validation artifact root could not be resolved"),
+        (
+            "repo_root",
+            "repository root could not be resolved for parent_run summary",
+        ),
+        (
+            "summary_containment",
+            "parent_run summary must be under outputs/validation_runtime",
+        ),
+    ],
+)
+def test_failure_fix_rerun_resolve_loop_is_a_canonical_cli_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    resolution_target: str,
+    expected_error: str,
+) -> None:
+    parent_path = (
+        tmp_path
+        / "outputs"
+        / "validation_runtime"
+        / "full_parent_profile_loop"
+        / "test_runtime_summary.json"
+    )
+    _write_formal_failed_full_parent(parent_path)
+    profile_path = parent_path.parent / RUNTIME_PROFILE_OUTPUT_NAME
+    original_resolve = Path.resolve
+    pytest_started = False
+    allowed_root = tmp_path / validation_tier.DEFAULT_ARTIFACT_ROOT
+
+    def resolve_with_profile_loop(self: Path, strict: bool = False) -> Path:
+        if resolution_target == "runtime_profile" and self == profile_path and strict:
+            raise RuntimeError("simulated runtime_profile symlink loop")
+        if resolution_target == "allowed_root" and self == allowed_root and not strict:
+            raise RuntimeError("simulated allowed_root symlink loop")
+        if resolution_target == "repo_root" and self == tmp_path and not strict:
+            raise RuntimeError("simulated repo_root symlink loop")
+        if (
+            resolution_target == "summary_containment"
+            and self == parent_path
+            and not strict
+        ):
+            raise RuntimeError("simulated summary_containment symlink loop")
+        return original_resolve(self, strict=strict)
+
+    def fail_if_pytest_starts(*args: object, **kwargs: object) -> dict[str, object]:
+        nonlocal pytest_started
+        del args, kwargs
+        pytest_started = True
+        raise AssertionError("pytest subprocess must not start after provenance failure")
+
+    monkeypatch.setattr(Path, "resolve", resolve_with_profile_loop)
+    monkeypatch.setattr(validation_tier, "_repo_root", lambda: tmp_path)
+    monkeypatch.setattr(validation_tier, "_run_command", fail_if_pytest_starts)
+
+    exit_code = validation_tier.main(
+        [
+            "full",
+            "--write-runtime-artifact",
+            "--trigger-reason",
+            "failure_fix_rerun",
+            "--task-id",
+            "ARCH-004G2",
+            "--boundary-id",
+            "rerun-boundary",
+            "--parent-run",
+            parent_path.relative_to(tmp_path).as_posix(),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert not pytest_started
+    assert "Validation trigger provenance failed" in captured.err
+    assert expected_error in captured.err
+    if resolution_target != "summary_containment":
+        assert f"simulated {resolution_target} symlink loop" in captured.err
+    assert "Traceback" not in captured.err
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_error"),
+    [
+        ({"schema_version": None}, "schema_version must be 1"),
+        ({"benchmark_mode": True}, "non-benchmark Full"),
+        ({"print_only": True, "status": "PRINT_ONLY"}, "non-print-only Full"),
+        ({"status": "FAIL", "exit_code": 0}, "status and exit_code are inconsistent"),
+        ({"runtime_profile_path": "invalid\x00path"}, "runtime_profile_path"),
+        ({"output_artifacts": []}, "inventory exactly one runtime profile sidecar"),
+    ],
+)
+def test_failure_fix_rerun_rejects_non_formal_or_inconsistent_parent(
+    tmp_path: Path,
+    mutation: dict[str, object],
+    expected_error: str,
+) -> None:
+    parent_path = (
+        tmp_path
+        / "outputs"
+        / "validation_runtime"
+        / "full_parent_not_failed"
+        / "test_runtime_summary.json"
+    )
+    _write_formal_failed_full_parent(parent_path)
+    parent_payload = json.loads(parent_path.read_text(encoding="utf-8"))
+    parent_payload.update(mutation)
+    parent_path.write_text(json.dumps(parent_payload), encoding="utf-8")
+    args = validation_tier.parse_args(
+        [
+            "full",
+            "--trigger-reason",
+            "failure_fix_rerun",
+            "--task-id",
+            "ARCH-004G2",
+            "--boundary-id",
+            "rerun-boundary",
+            "--parent-run",
+            parent_path.relative_to(tmp_path).as_posix(),
+        ]
+    )
+
+    provenance = validation_tier._validation_trigger_provenance(
+        args,
+        resolved_tier="full",
+        repo_root=tmp_path,
+    )
+
+    assert provenance["status"] == "FAIL"
+    assert expected_error in "; ".join(provenance["validation_errors"])
+
+
+def test_failure_fix_rerun_rejects_minimal_forged_summary(tmp_path: Path) -> None:
+    parent_path = (
+        tmp_path
+        / "outputs"
+        / "validation_runtime"
+        / "full_parent_minimal_forgery"
+        / "test_runtime_summary.json"
+    )
+    parent_path.parent.mkdir(parents=True)
+    parent_path.write_text(
+        json.dumps(
+            {
+                "report_type": "test_runtime_summary",
+                "resolved_tier": "full",
+                "status": "FAIL",
+                "production_effect": "none",
+            }
+        ),
+        encoding="utf-8",
+    )
+    args = validation_tier.parse_args(
+        [
+            "full",
+            "--trigger-reason",
+            "failure_fix_rerun",
+            "--task-id",
+            "ARCH-004G2",
+            "--boundary-id",
+            "rerun-boundary",
+            "--parent-run",
+            parent_path.relative_to(tmp_path).as_posix(),
+        ]
+    )
+
+    provenance = validation_tier._validation_trigger_provenance(
+        args,
+        resolved_tier="full",
+        repo_root=tmp_path,
+    )
+
+    assert provenance["status"] == "FAIL"
+    assert "schema_version must be 1" in "; ".join(provenance["validation_errors"])
+
+
+def test_failure_fix_rerun_rejects_unbound_identifier(tmp_path: Path) -> None:
+    args = validation_tier.parse_args(
+        [
+            "full",
+            "--trigger-reason",
+            "failure_fix_rerun",
+            "--task-id",
+            "ARCH-004G2",
+            "--boundary-id",
+            "rerun-boundary",
+            "--parent-run",
+            "fake-run-id",
+        ]
+    )
+
+    provenance = validation_tier._validation_trigger_provenance(
+        args,
+        resolved_tier="full",
+        repo_root=tmp_path,
+    )
+
+    assert provenance["status"] == "FAIL"
+    assert "does not exist" in "; ".join(provenance["validation_errors"])
+
+
+def test_trigger_provenance_uses_one_complete_cli_or_environment_envelope(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(validation_tier.VALIDATION_TRIGGER_REASON_ENV, "scheduled_ci")
+    monkeypatch.setenv(validation_tier.VALIDATION_TASK_ID_ENV, "ENV_TASK")
+    monkeypatch.setenv(validation_tier.VALIDATION_BOUNDARY_ID_ENV, "env-boundary")
+    env_args = validation_tier.parse_args(["full"])
+    env_provenance = validation_tier._validation_trigger_provenance(
+        env_args,
+        resolved_tier="full",
+        repo_root=Path.cwd(),
+    )
+
+    assert env_provenance["status"] == "PASS"
+    assert env_provenance["envelope_source"] == "environment"
+    assert env_provenance["task_id"] == "ENV_TASK"
+
+    cli_args = validation_tier.parse_args(
+        [
+            "full",
+            "--trigger-reason",
+            "formal_performance_profile",
+            "--task-id",
+            "CLI_TASK",
+            "--boundary-id",
+            "cli-boundary",
+        ]
+    )
+
+    provenance = validation_tier._validation_trigger_provenance(
+        cli_args,
+        resolved_tier="full",
+        repo_root=Path.cwd(),
+    )
+
+    assert provenance["status"] == "PASS"
+    assert provenance["envelope_source"] == "cli"
+    assert provenance["trigger_reason"] == "formal_performance_profile"
+    assert provenance["task_id"] == "CLI_TASK"
+    assert provenance["boundary_id"] == "cli-boundary"
+    assert provenance["field_sources"] == {
+        "trigger_reason": "cli",
+        "task_id": "cli",
+        "boundary_id": "cli",
+        "parent_run": "unset",
+    }
 
 
 def test_runtime_profile_summary_does_not_embed_node_rows(tmp_path: Path) -> None:
@@ -237,6 +850,8 @@ def _runtime_profile_payload(
         "profile_status": "PASS",
         "telemetry_status": "PASS",
         "performance_evidence_status": "FAIL",
+        "validation_provenance_binding_status": "PASS",
+        "validation_provenance": _full_provenance_payload(),
         "stable_full_improvement_claimed": False,
         "pytest_exitstatus": pytest_exitstatus,
         "pytest_outcome_authoritative": True,
@@ -844,6 +1459,27 @@ def test_runtime_profile_contract_exception_fails_closed(
     assert "contract evaluation failed closed" in observed["warnings"][0]
 
 
+def test_runtime_profile_provenance_must_match_runner_envelope(tmp_path: Path) -> None:
+    profile_path = tmp_path / "profile.json"
+    expected_provenance = _full_provenance_payload(boundary_id="expected-boundary")
+    payload = _runtime_profile_payload(pytest_exitstatus=0)
+    payload["validation_provenance"] = {
+        **expected_provenance,
+        "boundary_id": "different-boundary",
+    }
+    profile_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    observed = _read_runtime_profile_payload(
+        profile_path,
+        pytest_exitstatus=0,
+        expected_validation_provenance=expected_provenance,
+    )
+
+    assert observed["profile_status"] == "FAIL"
+    assert observed["performance_evidence_status"] == "FAIL"
+    assert "does not match runner envelope" in observed["warnings"][0]
+
+
 def test_full_runtime_summary_hashes_final_sidecar_before_summary(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -859,8 +1495,12 @@ def test_full_runtime_summary_hashes_final_sidecar_before_summary(
         del cwd
         assert env_overrides is not None
         profile_path = Path(env_overrides[RUNTIME_PROFILE_OUTPUT_ENV])
+        profile_payload = _runtime_profile_payload(pytest_exitstatus=0)
+        profile_payload["validation_provenance"] = json.loads(
+            env_overrides[validation_tier.RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV]
+        )
         profile_path.write_text(
-            json.dumps(_runtime_profile_payload(pytest_exitstatus=0)),
+            json.dumps(profile_payload),
             encoding="utf-8",
         )
         return {
@@ -880,6 +1520,7 @@ def test_full_runtime_summary_hashes_final_sidecar_before_summary(
     exit_code = validation_tier.main(
         [
             "full",
+            *FULL_PROVENANCE_ARGS,
             "--workers",
             "1",
             "--write-runtime-artifact",
@@ -894,6 +1535,8 @@ def test_full_runtime_summary_hashes_final_sidecar_before_summary(
     reader_path = artifact_dir / "test_runtime_reader_brief.md"
     log_path = artifact_dir / "pytest_output.log"
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
+    assert sidecar["validation_provenance"] == summary["validation_provenance"]
     records = {row["path"]: row for row in summary["output_artifacts"]}
     summary_record = records[str(summary_path)]
     assert summary_record["exists"] is True
@@ -930,8 +1573,12 @@ def test_sidecar_exit_mismatch_fails_evidence_without_overriding_subprocess_exit
         del cwd
         assert env_overrides is not None
         profile_path = Path(env_overrides[RUNTIME_PROFILE_OUTPUT_ENV])
+        profile_payload = _runtime_profile_payload(pytest_exitstatus=0)
+        profile_payload["validation_provenance"] = json.loads(
+            env_overrides[validation_tier.RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV]
+        )
         profile_path.write_text(
-            json.dumps(_runtime_profile_payload(pytest_exitstatus=0)),
+            json.dumps(profile_payload),
             encoding="utf-8",
         )
         return {
@@ -951,6 +1598,7 @@ def test_sidecar_exit_mismatch_fails_evidence_without_overriding_subprocess_exit
     exit_code = validation_tier.main(
         [
             "full",
+            *FULL_PROVENANCE_ARGS,
             "--workers",
             "1",
             "--write-runtime-artifact",
@@ -986,8 +1634,12 @@ def test_sidecar_write_failure_does_not_override_subprocess_exit(
         del cwd
         assert env_overrides is not None
         profile_path = Path(env_overrides[RUNTIME_PROFILE_OUTPUT_ENV])
+        profile_payload = _runtime_profile_payload(pytest_exitstatus=0)
+        profile_payload["validation_provenance"] = json.loads(
+            env_overrides[validation_tier.RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV]
+        )
         profile_path.write_text(
-            json.dumps(_runtime_profile_payload(pytest_exitstatus=0)),
+            json.dumps(profile_payload),
             encoding="utf-8",
         )
         return {
@@ -1013,6 +1665,7 @@ def test_sidecar_write_failure_does_not_override_subprocess_exit(
     exit_code = validation_tier.main(
         [
             "full",
+            *FULL_PROVENANCE_ARGS,
             "--workers",
             "1",
             "--write-runtime-artifact",
@@ -1175,6 +1828,85 @@ def test_validation_tier_print_only_can_render_benchmark_variants(tmp_path: Path
     assert [variant["dist"] for variant in variants] == ["loadfile", "worksteal"]
     assert all(variant["status"] == "PRINT_ONLY" for variant in variants)
     assert "--dist worksteal" in " ".join(variants[1]["command"])
+
+
+def test_full_benchmark_print_only_marks_runtime_profile_not_applicable(
+    tmp_path: Path,
+) -> None:
+    artifact_dir = tmp_path / "full_benchmark"
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_validation_tier.py",
+            "full",
+            "--print-only",
+            "--write-runtime-artifact",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--benchmark-worker",
+            "8,16",
+            *FULL_PROVENANCE_ARGS,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(
+        (artifact_dir / "test_runtime_summary.json").read_text(encoding="utf-8")
+    )
+    assert payload["runtime_profile_status"] == "NOT_APPLICABLE"
+    assert payload["runtime_profile_not_applicable_reason"] == (
+        "benchmark_variants_are_non_formal"
+    )
+    assert "test_runtime_profile" not in payload["schema_versions"]
+    assert not (artifact_dir / "test_runtime_profile.json").exists()
+    assert all(
+        not str(row["path"]).endswith("test_runtime_profile.json")
+        for row in payload["output_artifacts"]
+    )
+
+
+def test_full_benchmark_removes_inherited_validation_profile_environment(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    artifact_dir = tmp_path / "full_benchmark"
+    inherited_variables = validation_tier.BENCHMARK_REMOVED_VALIDATION_ENV_VARS
+    for variable_name in inherited_variables:
+        monkeypatch.setenv(variable_name, f"inherited-{variable_name}")
+    observed_removals: list[tuple[str, ...]] = []
+
+    def fake_run_command(
+        command: list[str],
+        *,
+        cwd: Path,
+        env_overrides: dict[str, str] | None = None,
+        env_removals: tuple[str, ...] = (),
+    ) -> dict[str, object]:
+        del command, cwd, env_overrides
+        observed_removals.append(env_removals)
+        return {"exit_code": 0, "elapsed_seconds": 0.01, "pytest_output": ""}
+
+    monkeypatch.setattr(validation_tier, "_run_command", fake_run_command)
+
+    exit_code = validation_tier.main(
+        [
+            "full",
+            "--write-runtime-artifact",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--benchmark-worker",
+            "16",
+            *FULL_PROVENANCE_ARGS,
+        ]
+    )
+
+    assert exit_code == 0
+    assert observed_removals == [inherited_variables]
+    assert not (artifact_dir / RUNTIME_PROFILE_OUTPUT_NAME).exists()
 
 
 def test_runtime_artifact_records_pytest_output_and_slow_durations(tmp_path: Path) -> None:

@@ -2,14 +2,47 @@ schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
 status: INTEGRATED_WORKTREE_ATTRIBUTION_PROVEN_PHASE_G2_4CX3_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-19
-base_commit: 13d85f1e
+base_commit: 2962e02f
 production_effect: none
 current_staging_authority:
   task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
-  increment: S3N_ADAPTIVE_EQUAL_RISK_TAIL_CLOSEOUT
+  increment: S4_FULL_TRIGGER_PROVENANCE
   status: COMPLETE_RUNTIME_TASK_CONTINUES
-  base_commit: 13d85f1e
+  base_commit: 2962e02f
   declared_path_set_current: true
+  owner_authorization:
+    selected_option: A
+    return_to_g2_4_coordination_point_after_closeout: true
+  phase_lock:
+    next_phase_or_slice_unblocked: false
+    eb1_requires_new_explicit_owner_instruction: true
+    next_callback_requires_new_explicit_owner_instruction: true
+    arch_005_or_g2_5_unblocked: false
+  declared_changed_paths:
+    - .github/workflows/ci.yml
+    - README.md
+    - docs/artifact_catalog.md
+    - docs/operations/operations_runbook.md
+    - docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md
+    - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
+    - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+    - docs/system_flow.md
+    - docs/task_register.md
+    - inputs/architecture/arch_004_compatibility_baseline.yaml
+    - inputs/architecture/arch_004_worktree_attribution.yaml
+    - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    - inputs/architecture/arch_004e_architecture_fitness.yaml
+    - inputs/architecture/arch_004e_module_manifest.yaml
+    - inputs/architecture/arch_004e_test_manifest.yaml
+    - inputs/architecture/arch_004g_deprecation_inventory.yaml
+    - scripts/pytest_runtime_profile.py
+    - scripts/run_validation_tier.py
+    - src/ai_trading_system/platform/validation_trigger_provenance.py
+    - tests/test_arch_004_refactor_policy.py
+    - tests/test_arch_004g_deprecation.py
+    - tests/test_ci_workflow.py
+    - tests/test_validation_runtime_profile.py
+    - tests/test_validation_tier_script.py
 
 integrated_task_ids:
   - ARCH-004
@@ -47,6 +80,7 @@ integrated_non_arch_paths:
   - tests/test_task_register_consistency.py
 
 arch_004_owned_paths:
+  - .github/workflows/ci.yml
   - README.md
   - config/architecture/arch_004_refactor_policy.yaml
   - config/architecture/arch_004g_deprecation_policy.yaml
@@ -148,6 +182,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/legacy/research_context_adapter.py
   - src/ai_trading_system/legacy/platform_contract_adapters.py
   - src/ai_trading_system/platform/__init__.py
+  - src/ai_trading_system/platform/validation_trigger_provenance.py
   - src/ai_trading_system/platform/artifacts/__init__.py
   - src/ai_trading_system/platform/artifacts/writer.py
   - src/ai_trading_system/platform/artifacts/validation_session.py
@@ -242,6 +277,7 @@ arch_004_owned_paths:
   - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
   - inputs/architecture/arch_004e_architecture_fitness.yaml
   - scripts/architecture_devex.py
+  - scripts/pytest_runtime_profile.py
   - scripts/run_validation_tier.py
   - src/ai_trading_system/platform/architecture/devex.py
   - src/ai_trading_system/platform/architecture/scaffold.py
@@ -250,6 +286,9 @@ arch_004_owned_paths:
   - tests/test_arch_004g_deprecation.py
   - tests/test_arch_004g_shared_writers.py
   - tests/test_arch_004g2_etf_cli_contract.py
+  - tests/test_ci_workflow.py
+  - tests/test_validation_runtime_profile.py
+  - tests/test_validation_tier_script.py
   - tests/test_artifact_validation_session.py
   - tests/test_dynamic_v3_system_target_smoothed_operations_hardening.py
   - tests/test_smoothed_forward_progress.py

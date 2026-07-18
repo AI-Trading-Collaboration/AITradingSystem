@@ -16,7 +16,21 @@ from pathlib import Path, PurePosixPath
 import pytest
 import yaml
 
-from ai_trading_system.yaml_loader import safe_load_yaml_path
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SRC_ROOT = REPO_ROOT / "src"
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
+from ai_trading_system.platform.validation_trigger_provenance import (  # noqa: E402
+    PROFILE_JSON_ENV as RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV,
+)
+from ai_trading_system.platform.validation_trigger_provenance import (  # noqa: E402
+    load_json as load_provenance_json,
+)
+from ai_trading_system.platform.validation_trigger_provenance import (  # noqa: E402
+    validate_full_provenance,
+)
+from ai_trading_system.yaml_loader import safe_load_yaml_path  # noqa: E402
 
 RUNTIME_PROFILE_SCHEMA_VERSION = "test_runtime_profile.v1"
 DURATION_PROFILE_SCHEMA_VERSION = "arch_004g2_full_duration_profile.v1"
@@ -771,6 +785,27 @@ def _worker_loadscope_reorder(argv: Sequence[str], *, default: bool) -> bool:
     return value
 
 
+def _validation_provenance_contract_errors(payload: object) -> list[str]:
+    try:
+        return validate_full_provenance(payload)
+    except Exception as exc:  # noqa: BLE001 - evidence validation must fail closed
+        return [
+            "validation provenance contract evaluation failed closed: "
+            f"{type(exc).__name__}: {exc}"
+        ]
+
+
+def _validation_provenance_from_environment() -> tuple[dict[str, object] | None, list[str]]:
+    raw_value = os.environ.get(RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV, "").strip()
+    if not raw_value:
+        return None, ["validation provenance environment is missing"]
+    try:
+        payload = load_provenance_json(raw_value)
+    except (TypeError, ValueError, json.JSONDecodeError) as exc:
+        return None, [f"validation provenance environment is invalid: {exc}"]
+    return payload, _validation_provenance_contract_errors(payload)
+
+
 def build_runtime_profile(
     *,
     collections: Mapping[str, Sequence[str]],
@@ -783,8 +818,17 @@ def build_runtime_profile(
     pytest_exitstatus: int,
     started_at: float,
     ended_at: float,
+    validation_provenance: Mapping[str, object] | None = None,
+    validation_provenance_errors: Sequence[str] = (),
 ) -> dict[str, object]:
     warnings: list[str] = []
+    provenance_errors = [
+        *[str(error) for error in validation_provenance_errors],
+        *_validation_provenance_contract_errors(validation_provenance),
+    ]
+    provenance_errors = list(dict.fromkeys(provenance_errors))
+    provenance_binding_status = "PASS" if not provenance_errors else "FAIL"
+    warnings.extend(f"validation provenance: {error}" for error in provenance_errors)
     collection_rows = {
         worker_id: [str(nodeid) for nodeid in nodeids]
         for worker_id, nodeids in sorted(collections.items())
@@ -1042,6 +1086,7 @@ def build_runtime_profile(
             )
             and formal_full_selection_eligible
             and pytest_exitstatus == 0
+            and provenance_binding_status == "PASS"
         )
         else "FAIL"
     )
@@ -1049,12 +1094,13 @@ def build_runtime_profile(
     for row in node_rows:
         outcome_counts[str(row["outcome"])] += 1
 
-    return {
+    payload: dict[str, object] = {
         "schema_version": RUNTIME_PROFILE_SCHEMA_VERSION,
         "report_type": "test_runtime_profile",
         "profile_status": "PASS" if telemetry_complete else "FAIL",
         "telemetry_status": "PASS" if telemetry_complete else "FAIL",
         "performance_evidence_status": performance_evidence_status,
+        "validation_provenance_binding_status": provenance_binding_status,
         "stable_full_improvement_claimed": False,
         "pytest_exitstatus": pytest_exitstatus,
         "pytest_outcome_authoritative": True,
@@ -1157,6 +1203,10 @@ def build_runtime_profile(
         "broker_action_allowed": False,
         "broker_action_taken": False,
     }
+    payload["validation_provenance"] = (
+        dict(validation_provenance) if validation_provenance is not None else None
+    )
+    return payload
 
 
 class RuntimeProfilePlugin:
@@ -1195,6 +1245,10 @@ class RuntimeProfilePlugin:
         self.formal_full_selection_eligible = (
             os.environ.get(RUNTIME_PROFILE_FORMAL_SELECTION_ENV, "").strip() == "1"
         )
+        (
+            self.validation_provenance,
+            self.validation_provenance_errors,
+        ) = _validation_provenance_from_environment()
         self.scheduler_decision = resolve_scheduler_decision(
             duration_profile,
             expected_worker_count=self.expected_worker_count,
@@ -1289,6 +1343,8 @@ class RuntimeProfilePlugin:
             pytest_exitstatus=int(exitstatus),
             started_at=self.started_at,
             ended_at=time.time(),
+            validation_provenance=self.validation_provenance,
+            validation_provenance_errors=self.validation_provenance_errors,
         )
         output_path = Path(output_value)
         try:

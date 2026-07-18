@@ -554,6 +554,21 @@ declared tracked paths、3 excluded user docs未改，deprecation inventory fres
 以本轮数据决定是否实施高风险Smoothed immutable/COW架构研究、仅做S4 provenance，
 或返回ARCH-004主路径；不自动启动任一选项。
 
+2026-07-19 owner 已选择方案 A，具名授权 `S4_FULL_TRIGGER_PROVENANCE`，base=`2962e02f`。该子任务
+在任何 Full 启动前 fail-fast 校验 reviewed trigger/task/boundary（failure rerun另需parent），并把同一
+`validation_trigger_provenance.v1` 写入summary/profile/Reader Brief。CLI与environment按whole envelope互斥，
+failure rerun必须重验并绑定此前失败formal Full summary/profile的path/hash，profile binding PASS才可形成performance evidence；
+保留独立developer CI daily scheduled Full（不是研究cadence），push/PR仍走fast-unit，manual默认避免无意
+Full且不暴露clean checkout无法自证的failure rerun。S4只跑focused/architecture/contract，不为自身制造Full；
+closeout提交推送后返回G2.4主线协调点。此授权不是phase解锁：EB1、下一callback、ARCH-005/G2.5仍
+受原gate约束，`next_phase_or_slice_unblocked=false`、`production_effect=none`。
+
+S4已按该合同闭合：expanded-focused/pre-final architecture/contract=`136/362/254 passed`，首轮architecture对新增module的
+deprecation/test-manifest freshness漂移fail closed并在刷新后复验PASS；post-doc final tracked-state artifact/hash
+不在活跃文档中递归固化，统一由self-excluded `arch_004_compatibility_baseline.yaml` 的S4 validation节点绑定。
+24/24 attribution paths、83 active sources与generated manifests均fresh，Full run count=`0`。状态=`COMPLETE_RUNTIME_TASK_CONTINUES`，当前
+返回G2.4协调点；这不是EB1或下一callback授权。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

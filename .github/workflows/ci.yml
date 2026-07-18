@@ -9,12 +9,28 @@ on:
       validation_tier:
         description: "Validation tier to run"
         required: true
-        default: full
+        default: fast-unit
         type: choice
         options:
           - fast-unit
           - contract-validation
           - full
+      validation_trigger_reason:
+        description: "Audited validation boundary; Full requires a reviewed Full reason"
+        required: true
+        default: manual_validation
+        type: choice
+        options:
+          - manual_validation
+          - natural_integration_boundary
+          - phase_exit_or_handoff
+          - broad_shared_contract_change
+          - formal_performance_profile
+      task_id:
+        description: "Owning project task id"
+        required: true
+        default: CI_MANUAL_VALIDATION
+        type: string
   schedule:
     - cron: "0 18 * * *"
 
@@ -27,6 +43,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VALIDATION_TIER: fast-unit
+      VALIDATION_TRIGGER_REASON: ci_change_validation
+      VALIDATION_TASK_ID: CI_CHANGE_VALIDATION
+      VALIDATION_BOUNDARY_ID: "github:${{ github.workflow }}:${{ github.run_id }}:${{ github.run_attempt }}"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -40,13 +59,34 @@ jobs:
         run: python -m ai_trading_system.cli docs validate-freshness
       - name: Select scheduled validation tier
         if: ${{ github.event_name == 'schedule' }}
-        run: echo "VALIDATION_TIER=full" >> "$GITHUB_ENV"
+        run: |
+          echo "VALIDATION_TIER=full" >> "$GITHUB_ENV"
+          echo "VALIDATION_TRIGGER_REASON=scheduled_ci" >> "$GITHUB_ENV"
+          echo "VALIDATION_TASK_ID=CI_DAILY_FULL" >> "$GITHUB_ENV"
       - name: Select manual validation tier
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: echo "VALIDATION_TIER=${{ inputs.validation_tier }}" >> "$GITHUB_ENV"
+        run: |
+          echo "VALIDATION_TIER=${{ inputs.validation_tier }}" >> "$GITHUB_ENV"
+          echo "VALIDATION_TRIGGER_REASON=${{ inputs.validation_trigger_reason }}" >> "$GITHUB_ENV"
+          echo "VALIDATION_TASK_ID=${{ inputs.task_id }}" >> "$GITHUB_ENV"
       - name: Test
         id: pytest
-        run: python scripts/run_validation_tier.py "$VALIDATION_TIER" --pytest-arg=--junitxml=pytest-results.xml
+        run: >-
+          python scripts/run_validation_tier.py "$VALIDATION_TIER"
+          --write-runtime-artifact
+          --trigger-reason="$VALIDATION_TRIGGER_REASON"
+          --task-id="$VALIDATION_TASK_ID"
+          --boundary-id="$VALIDATION_BOUNDARY_ID"
+          --pytest-arg=--junitxml=pytest-results.xml
+      - name: Upload validation evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            outputs/validation_runtime/
+            pytest-results.xml
+          if-no-files-found: warn
       - name: Test failure annotations
         if: ${{ failure() && steps.pytest.conclusion == 'failure' }}
         run: |

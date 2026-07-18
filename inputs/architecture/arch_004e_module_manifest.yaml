@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 source_root: src/ai_trading_system
-module_count: 948
+module_count: 949
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -13479,6 +13479,28 @@ modules:
 - module_id: src.ai_trading_system.platform.reporting.research_review
   path: src/ai_trading_system/platform/reporting/research_review.py
   sha256: c6391c499fc0a124589f640f378600e6ba63c3b13daecc0cd06f352ff607c8dd
+  rule_id: platform
+  owner_profile: platform
+  owners:
+    code_owner: platform_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: platform
+  category: platform_services
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004c_*.py
+  - tests/test_arch_004e_*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.platform.validation_trigger_provenance
+  path: src/ai_trading_system/platform/validation_trigger_provenance.py
+  sha256: 4cd2558ceadd8140a97cd04ab0ca66ab5224866cd2525d7b881b460063be6732
   rule_id: platform
   owner_profile: platform
   owners:
