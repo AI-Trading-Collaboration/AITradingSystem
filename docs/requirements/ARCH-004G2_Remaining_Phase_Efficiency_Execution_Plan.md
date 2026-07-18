@@ -243,6 +243,24 @@ threshold/conclusion不变。第三lane只读比较duration-only/stock/resource-
 可复现resource class和wall/busy/P99不回退设计时修改默认调度。共享文档/manifests/compatibility与正式
 集成由协调者独占；下一full仍只在S3H自然边界运行一次。
 
+S3H两实现lane已达到退出门槛。Search Coverage Gap=`120.28s -> 95.77/91.64s`
+（`-20.38%/-23.81%`）；三个legacy结论文件=`86.17s -> 69.38/62.57s`
+（`-19.49%/-27.39%`），三个call合计=`173.51s -> 137.13/119.09s`。四文件均只在既有helper
+调用点增加compact flag，52 variants仍覆盖8/8 families，production 80、nodeid、断言及安全链不变；
+expanded focused=`6 passed / 116.57s`。调度只读模型发现新首批16同时启动3个setup-majority Foundation、
+旧首批为0，静态rank`0/16/40` stagger不增加离线makespan；但profile缺RSS/I/O/read-amplification且存在
+全局`1.2625x`膨胀，因果证据不足，本slice不修改duration-only pilot。下一步刷新共享manifests/hashes，
+运行architecture/contract与唯一一次自然边界full；不增加第三个业务lane或额外full。
+
+S3H自然边界full=`6,246 passed / 2 skipped / 643 warnings / 1,294.07s`，exact collection、COMPLETE
+order、no-fallback与profile/telemetry/performance均PASS。四目标full合计=`440.604s -> 351.160s`
+（`-20.30%`），但raw wall/worker busy相对S3G=`+4.05%/+4.08%`，其余文件累计约增加
+`893.022 worker-s`，故保留局部改动但不声明全局稳定改善。worker CV=`0.00519%`、tail total/max=
+`0.119/0.014s`再次证明调度均衡已接近收益上限；Foundation setup相对全局没有额外恶化，继续不做
+经验stagger。S3H闭合为`COMPLETE_RUNTIME_TASK_CONTINUES`，下一批先并行只读审计最新profile的
+Smoothed、Signal与Weight/Search高成本DAG，完成任务登记与isolated baseline后再实施；EB1及下一
+callback slice仍未解锁。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

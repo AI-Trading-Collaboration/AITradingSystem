@@ -6,7 +6,7 @@ from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as we
 
 
 def test_near_miss_candidates_capture_research_followups(tmp_path) -> None:
-    fixture = run_near_miss_candidates_fixture(tmp_path)
+    fixture = run_near_miss_candidates_fixture(tmp_path, compact_test_matrix=True)
     near_miss = fixture["near_miss"]
 
     assert near_miss["manifest"]["status"] == "PASS"

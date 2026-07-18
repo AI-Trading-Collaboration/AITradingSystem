@@ -6,7 +6,7 @@ from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as we
 
 
 def test_cash_buffer_attribution_records_tradeoff_and_recommendations(tmp_path) -> None:
-    fixture = run_cash_buffer_attribution_fixture(tmp_path)
+    fixture = run_cash_buffer_attribution_fixture(tmp_path, compact_test_matrix=True)
     attribution = fixture["cash_buffer_attribution"]
 
     assert attribution["manifest"]["status"] == "PASS"

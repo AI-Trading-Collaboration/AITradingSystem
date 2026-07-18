@@ -6,7 +6,7 @@ from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as we
 
 
 def test_no_promotion_review_explains_zero_promotions(tmp_path) -> None:
-    fixture = run_no_promotion_review_fixture(tmp_path)
+    fixture = run_no_promotion_review_fixture(tmp_path, compact_test_matrix=True)
     review = fixture["no_promotion_review"]
 
     assert review["manifest"]["status"] == "PASS"

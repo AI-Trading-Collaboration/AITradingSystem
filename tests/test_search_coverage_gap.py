@@ -6,7 +6,7 @@ from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as we
 
 
 def test_search_coverage_gap_bounds_targeted_v3_recommendations(tmp_path) -> None:
-    fixture = run_search_coverage_gap_fixture(tmp_path)
+    fixture = run_search_coverage_gap_fixture(tmp_path, compact_test_matrix=True)
     coverage_gap = fixture["coverage_gap"]
     recommendations = coverage_gap["targeted_v3_recommendations"]
 

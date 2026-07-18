@@ -8253,7 +8253,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_cash_buffer_attribution
   path: tests/test_cash_buffer_attribution.py
-  sha256: 18588c5911630c4d34539b58c8af2240d47fd09e0be9ebf8af9229abbe50da71
+  sha256: 48c08ffdd2dcec847f327889916117df671ff84d991fde8d77496f91a6ea220c
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -11731,7 +11731,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_near_miss_candidates
   path: tests/test_near_miss_candidates.py
-  sha256: 8f3f83a3a928344483b827ffec1c4d72a054a318f825664945566ea0f021e945
+  sha256: 4ae06492b109e69f318f5cbf34c1f4d3fb2a5db60d86b4257ff453ff9be789e9
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -11795,7 +11795,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_no_promotion_review
   path: tests/test_no_promotion_review.py
-  sha256: 831f15af72d86fb5f61c6f36326c05b50c73c0672a2c93258add773d4bdb64a1
+  sha256: 5d23c6d758ece119e89a28e2c460aab11ad52cbee17b46624a9aef72c2647a76
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -13859,7 +13859,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_search_coverage_gap
   path: tests/test_search_coverage_gap.py
-  sha256: 2cf2a5eca015574063afc56557eef2b3b174966f4dd759e00686609db62e33ce
+  sha256: b85250a86e6a0dcb1dff5f0d892270c063e2c1da377e72d27eb254f83c67256f
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
