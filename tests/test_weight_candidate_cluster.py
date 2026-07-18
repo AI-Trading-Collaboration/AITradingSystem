@@ -3,8 +3,12 @@ from __future__ import annotations
 from dynamic_v3_weight_batch_search_helpers import run_weight_candidate_cluster_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 
+@with_artifact_validation_session
 def test_weight_candidate_cluster_groups_representative_variants(tmp_path) -> None:
     fixture = run_weight_candidate_cluster_fixture(tmp_path)
     cluster = fixture["cluster"]

@@ -1839,6 +1839,31 @@ P95/P99=`-5.51%/-2.62%`；Confirmation Evaluate、Confirmation Progress、Weight
 结论；单次full不构成稳定全局提速声明，`strategy_logic_changed=false`、`cached_data_mutated=false`、
 `production_effect=none`。
 
+S3M继续只延长两个既有Weight Search测试函数的同步validation-session生命周期：
+`test_weight_top_candidate_interpretation.py`与`test_weight_candidate_cluster.py`各自让helper build和末尾
+public validator共享同一outer session中的eligible stable upstream `PASS`。Interpretation/Cluster public
+validator仍被逐次调用，并继续从snapshot与live commitments逐byte重建全部views、lineage和DQ结论；未知scope、
+内容漂移、`FAIL`、exception或unsupported root仍bypass cache并真实重验。未新增supported root，未修改helper、
+production resolver、fixture规模、nodeid、断言、研究矩阵、阈值或结论，也没有持久化、跨test/worker/process
+cache；`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。单lane只跑
+isolated/focused，整批仅在自然集成边界运行一次full。
+
+S3M唯一natural full保持exact `6,248 nodes / 1,068 files / 16 workers`及与S3L一致的ordered/set
+collection hashes，scheduler=`COMPLETE/applied/no-fallback`、telemetry/performance=`PASS`。Top Candidate
+Interpretation与Candidate Cluster文件时间分别由`120.734/113.515s`降至`30.463/32.895s`，合计减少
+`170.891 worker-s/-72.95%`；但非目标文件在本次运行合计回升`361.402 worker-s/+2.37%`，使总wall由
+`979.11s`回升至`991.64s`（`+1.28%`）。该结果证明两条test-only生命周期优化有效，却不能证明单次full
+全局稳定改善；不为性能计数补跑第二次full，`stable_full_improvement_claimed=false`。完整业务数据流、
+DQ/PIT、研究策略与production边界不变，`strategy_logic_changed=false`、`cached_data_mutated=false`、
+`production_effect=none`。
+
+S3M post-full收口将worktree attribution提升为当前S3M staging authority，当前11个tracked change paths全部
+落入owned/shared声明，且仍排除3个既有用户文档。最终审查修正full比较统一舍入、EB1 phase-exit/owner授权
+语义与归属status契约，并以逐字段focused断言保护current authority；修正后的focused/architecture/contract=
+`9/344/236 passed`，74个active sources、
+module/test manifests、aggregate bindings与deprecation inventory保持fresh。S3M状态为
+`COMPLETE_RUNTIME_TASK_CONTINUES`，next owner=S3N candidate coordinator；EB1、下一callback与ARCH-005仍锁定。
+
 ## ETF Portfolio P2 Observe-Only Contracts
 
 `TRADING-062` P2 扩展先实现可审计 contract/report 底座，不接入未批准 provider，不伪造 EDGAR/news/options/holdings/live broker 数据。所有 P2 命令固定 `production_effect=none`；ML ranking 和 ensemble 只能输出 `candidate_only`；live interface 只做 read-only preflight，默认 `broker_routing_allowed=false`。

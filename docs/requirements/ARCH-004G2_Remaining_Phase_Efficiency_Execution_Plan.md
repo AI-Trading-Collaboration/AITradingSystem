@@ -444,6 +444,61 @@ P95/P99=`-5.51%/-2.62%`；Evaluate/Progress/Expanded file time分别从`247.72/2
 `stable_full_improvement_claimed=false`；post-full tracked-state exact artifacts与最终状态以compatibility baseline
 为准，不运行第二次full，不解锁EB1、下一callback或ARCH-005，`production_effect=none`。
 
+S3M以commit=`ee68b98f`和qualifying profile=`full_20260718T121649Z`进入`BASELINING`。只读审计排除
+已闭合或否决的Layer1、Smoothed、Refined transactional、Forward Plan tamper、Execution、Targeted/
+Diagnostics、Formal/Gate/Evaluation及S3L三lane后，冻结两条互斥低风险候选：Top Candidate
+Interpretation=`120.734s/1 node`，唯一允许编辑`tests/test_weight_top_candidate_interpretation.py`；Candidate
+Cluster=`113.515s/1 node`，唯一允许编辑`tests/test_weight_candidate_cluster.py`。两条都只允许给现有单test
+function增加同步outer validation session，使helper build与final validator共享既有eligible upstream PASS；public
+Interpretation/Cluster final validator、all-view rebuild、lineage、DQ、nodeid与断言必须真实保留，不得改helper、
+production resolver、fixture规模或新增supported root。coordinator先在无其他candidate Python/pytest负载下顺序
+取得exact-file before，再冻结`worst-of-2 after <= min(0.90 * before, before - 30s)`；不达标或安全审查出现
+P0/P1即byte-exact撤回。Refined=`DEFERRED_HIGH_RISK_TRANSACTIONAL_NOT_S3M`；Equal Risk两文件只做并行
+只读后续审计，不混入本批实现。单lane不跑full，整批保留项只在自然集成边界运行一次full，
+`production_effect=none`。
+
+S3M无负载isolated before已闭合并进入`IMPLEMENTING`。Top Candidate Interpretation=`1 passed / pytest
+79.21s / wall 79.90s`，call=`76.02s`；Candidate Cluster=`1 passed / pytest 69.00s / wall 70.68s`，
+call=`65.69s`。按`min(0.90 * B, B - 30s)`冻结双after worst wall上限分别为`49.90s`与`40.68s`，
+不得以after或full并发抖动事后放宽。两个agent只编辑互斥单test file且不自行运行Python/pytest；coordinator
+继续独占共享docs、顺序after、focused和最终集成门禁。
+
+S3M双after已在同一base、显式candidate `PYTHONPATH`且无其他Python/pytest负载下顺序闭合，两条lane均
+保留并进入`VALIDATING`。Top Candidate Interpretation=`1 passed / pytest 24.19/23.39s / wall
+24.78/23.97s`，call=`20.82/20.14s`，worst相对before下降`55.12s/68.99%`；Candidate Cluster=
+`1 passed / pytest 23.41/23.22s / wall 23.97/23.76s`，call=`20.16/19.93s`，worst下降
+`46.71s/66.09%`。两文件node数仍各`1`，worst分别低于冻结上限`49.90/40.68s`；下一步只做整批
+expanded focused、独立交叉审查和共享门禁，单lane不补跑full。
+
+S3M expanded focused在`-n 16 --dist loadfile`下=`89 passed / 1 skipped / pytest 99.62s / wall
+100.17s`；唯一skip为Windows缺少`os.fork`的既有条件用例。coverage包含validation-session基础设施、两条
+目标lane以及Weight Matrix/Backfill/Scorecard/Robustness/Adaptive/Expanded/Evaluation/Follow-up链。
+两轮互斥lane交叉只读审查均为`P0/P1/P2=0/0/0`。首轮共享门禁已PASS：generated manifests=
+`948 modules / 1,126 test-support files / 0 violations`，compatibility/deprecation focused=`8 passed /
+14.16s`，architecture-fitness=`344 passed / 60.72s`，contract-validation=`236 passed / 45.66s`。
+集成审查P0/P1/P2=`0/0/1`，唯一P2是本段和task register仍把已完成门禁写成下一步；已修正状态，必须
+刷新受影响source hashes并复验current tracked state后，才运行整批唯一natural full。
+
+S3M唯一natural full已PASS：`6,246 passed / 2 skipped / 642 warnings / pytest 990.51s / wall
+991.64s`，artifact=`outputs/validation_runtime/full_20260718T133435Z/`；exact `6,248 nodes / 1,068
+files / 16 workers`与S3L collection ordered/set hashes一致，scheduler=`COMPLETE/applied/no-fallback`、
+telemetry/performance=`PASS`。Top Interpretation=`120.734 -> 30.463s`（`-74.77%`），Cluster=
+`113.515 -> 32.895s`（`-71.02%`），两文件仍各`1 node`且合计减少`170.89 worker-s/-72.95%`。
+但S3L→S3M总体wall=`979.11 -> 991.64s`（`+12.53s/+1.28%`）、file worker-s=
+`15,481.94 -> 15,672.45s`（`+1.23%`）、P95/P99/max=`+1.70%/+3.22%/+1.89%`；排除两目标后
+其余文件合计回升`361.40 worker-s/+2.37%`，主要Smoothed长尾普遍慢约`6%～7%`，说明局部收益被本次
+非目标运行抖动抵消。两lane保留，但`stable_full_improvement_claimed=false`；不跑第二次full，进入post-full
+tracked-state manifests/hash/architecture/contract闭合。
+
+S3M post-full第一轮tracked-state已PASS：compatibility/deprecation focused=`8 passed / pytest 13.44s`，
+architecture-fitness=`344 passed / 68.71s`，contract-validation=`236 passed / 45.44s`；full artifact内部
+完整性、73个active sources、module/test manifests、aggregate bindings与deprecation freshness均无mismatch。
+S3M据此进入`COMPLETE_RUNTIME_TASK_CONTINUES`。最终审查修正统一舍入、EB1锁语义与worktree attribution
+11/11路径覆盖；归属focused首轮捕获未登记status枚举后，以既有schema status加显式S3M staging authority
+完成契约修正，并为该authority补齐逐字段focused断言；修正后focused/architecture/contract=`9/344/236 passed`。exact最终artifacts、74个active
+source hashes与final status以compatibility baseline为准，不运行第二次full。下一候选由S3N coordinator基于
+`133435Z` profile选择，EB1、下一callback与ARCH-005仍锁定。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

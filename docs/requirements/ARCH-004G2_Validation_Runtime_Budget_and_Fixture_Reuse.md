@@ -157,8 +157,9 @@ G2.4CR/CS 已证明主要耗时不在投资计算，而在高扇入 artifact DAG
 
 1. 先执行EB0 1～3日timebox，只治理当前约`17,801.26s`最高长尾、其直接共享DAG、最小
    immutable fixture/copy-on-write和运行观测；
-2. EB0通过正式focused/architecture/contract/full后进入EB1，不等待28个无关legacy/no-scope
-   调用整包迁移；
+2. EB0只有在phase-exit/owner停止点满足、正式focused/architecture/contract/full通过且当时owner显式
+   授权时才可进入EB1，不等待28个无关legacy/no-scope调用整包迁移；后续owner批准的S3延展和最新
+   slice lock优先，当前EB1仍锁定；
 3. EB1～EB8触及相同DAG时渐进迁移scope/reuse，禁止以性能任务横向扩张batch范围；
 4. callback集合稳定后再执行连续3次full、P95、peak-memory、read-amplification和S3完整验收；
 5. required gate无法可靠完成时性能问题才阻塞G2.4；长期目标未满足但required gates可靠PASS时，
@@ -989,6 +990,93 @@ P99=`249.82 -> 243.27s`（`-2.62%`），max=`578.54 -> 578.68s`（`+0.02%`）。
 post-full compatibility/architecture/contract exact artifacts与最终S3L状态以compatibility baseline为准。
 下一候选从新profile选择，S4 trigger provenance仍待独立实现；EB1、下一callback、ARCH-005继续锁定，
 `strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+
+### S3M：Weight Interpretation / Cluster outer session
+
+S3M权威base=`ee68b98f`、source profile=`outputs/validation_runtime/full_20260718T121649Z/
+test_runtime_profile.json`。在排除已闭合/已撤回lane后，只登记两个文件互斥、test-only且不扩张resolver的候选：
+
+|lane|121649Z file time|唯一允许编辑范围|候选机制|必须保留|
+|---|---:|---|---|---|
+|Top Candidate Interpretation|`120.734s / 1 node`|`tests/test_weight_top_candidate_interpretation.py`|仅给现有test function增加`with_artifact_validation_session`，让helper build与final validator共享eligible stable upstream PASS|public Interpretation validator逐byte真实执行；完整views/lineage/DQ/断言|
+|Candidate Cluster|`113.515s / 1 node`|`tests/test_weight_candidate_cluster.py`|仅给现有test function增加同一outer session，让helper build与final validator共享eligible stable upstream PASS|public Cluster validator逐byte真实执行；完整views/lineage/DQ/断言|
+
+两文件在`103249Z`分别为`125.363/112.442s`，两次自然profile合计基本稳定；但full并发值只用于候选优先级，
+不能替代isolated before。coordinator必须在无其他candidate Python/pytest负载下顺序取得exact-file baseline B，
+实现前冻结`worst-of-2 after <= min(0.90 * B, B - 30s)`，同时记录call；任一node/skip/xfail/断言减少、
+final validator被缓存、FAIL/exception被复用、unsupported root不再bypass、收益门槛失败或P0/P1即byte-exact撤回。
+两个agent只编辑各自单test file，不运行Python/pytest、不编辑共享docs/manifests；after、expanded focused与最终
+architecture/contract/full由coordinator顺序执行。Refined剩余`216.72s`主要来自独立tamper transactional重建，
+需要try/finally exact restore、tree fingerprint与session隔离，故本批明确不实施；Equal Risk Growth Tilt/
+Restart合计约`515.31s`只并行只读审计。`stable_full_improvement_claimed=false`、`production_effect=none`，
+EB1、下一callback、ARCH-005仍锁定。
+
+S3M isolated before已在commit=`ee68b98f`、显式candidate `PYTHONPATH`且无其他Python/pytest负载下顺序
+闭合。Top Candidate Interpretation=`1 passed / pytest 79.21s / wall 79.90s`，call=`76.02s`；Candidate
+Cluster=`1 passed / pytest 69.00s / wall 70.68s`，call=`65.69s`。实现前已冻结worst-of-2 wall门槛：
+Interpretation≤`49.90s`、Cluster≤`40.68s`，不得事后放宽。S3M现进入`IMPLEMENTING`；两个互斥agent
+只可编辑各自登记的单test file，不运行Python/pytest、不编辑共享docs/manifests，所有after/focused由coordinator
+顺序执行。
+
+S3M双after在相同无负载口径下闭合，两条lane均保留并进入`VALIDATING`：
+
+|lane|after-1|after-2|worst vs before|裁决|
+|---|---:|---:|---:|---|
+|Top Candidate Interpretation|`pytest 24.19s / wall 24.78s / call 20.82s`|`pytest 23.39s / wall 23.97s / call 20.14s`|`79.90 -> 24.78s`，`-55.12s/-68.99%`|`RETAINED`，低于`49.90s`|
+|Candidate Cluster|`pytest 23.41s / wall 23.97s / call 20.16s`|`pytest 23.22s / wall 23.76s / call 19.93s`|`70.68 -> 23.97s`，`-46.71s/-66.09%`|`RETAINED`，低于`40.68s`|
+
+两文件仍各收集`1`个node；未改函数名、fixture、helper、断言、final public validator参数、production resolver
+或supported roots。coordinator接手expanded focused、独立交叉审查、manifests/compatibility/deprecation/source
+hashes及整批唯一一次natural full；单lane不补跑full。
+
+S3M expanded focused=`89 passed / 1 skipped / pytest 99.62s / wall 100.17s`，使用`-n 16 --dist
+loadfile`；skip为Windows无`os.fork`的既有session隔离条件用例。coverage显式包含
+`test_artifact_validation_session.py`、两条目标文件，以及Weight Matrix/Backfill/Scorecard/Robustness/
+Adaptive/Expanded/Evaluation/Follow-up hardening链。两个实现agent分别对另一lane完成独立静态交叉审查，
+结论均为`P0/P1/P2=0/0/0`；decorator同步生命周期、`functools.wraps` nodeid/fixture保留、异常`finally`
+清理、final public validator真实执行及production/helper/resolver不变均获确认。
+
+S3M首轮pre-full共享门禁已PASS：`architecture_devex.py generate/validate`报告`948 modules / 1,126
+test-support files / 0 orphan / 0 overlap / 0 violations`；compatibility/deprecation focused=`8 passed /
+14.16s`；architecture-fitness=`344 passed / 60.72s`，artifact=`outputs/validation_runtime/
+architecture-fitness_20260718T132125Z/test_runtime_summary.json`；contract-validation=`236 passed /
+45.66s`，artifact=`outputs/validation_runtime/contract-validation_20260718T132233Z/
+test_runtime_summary.json`。集成只读审查P0/P1/P2=`0/0/1`，唯一P2是requirements/task register把已
+完成门禁仍写为下一步；代码、manifest、73个active source hashes与deprecation inventory均无mismatch。
+现先修正文档并刷新hash，再复验current tracked state；整批唯一natural full仍未运行。
+
+P2修正后的current tracked-state门再次PASS：compatibility/deprecation focused=`8 passed / 14.27s`，
+architecture-fitness=`344 passed / 60.57s`，contract-validation=`236 passed / 46.67s`；随后只运行一次
+S3M natural full。结果=`6,246 passed / 2 skipped / 642 warnings / pytest 990.51s / wall 991.64s`，
+runtime summary/profile=`outputs/validation_runtime/full_20260718T133435Z/test_runtime_summary.json`与
+`test_runtime_profile.json`，SHA-256分别为`5dce7e459731a17d367ada2e69dfad3fccf2cf96c99909ef5a6e346c7192cb8d`/
+`d43a4b88e404c8775342d0b078258cb56155cfd17f0683edcae48814cf6b91f5`。exact `6,248 nodes /
+1,068 files / 16 workers`、ordered/set collection SHA与S3L一致，scheduler=`COMPLETE/applied/no-fallback`、
+telemetry/performance=`PASS`、pytest outcome authoritative且未override。
+
+两目标在full中的局部收益明确成立：Top Interpretation=`120.734 -> 30.463s`（`-90.271s/-74.77%`），
+Candidate Cluster=`113.515 -> 32.895s`（`-80.619s/-71.02%`），node数仍各`1`；合计=
+`234.249 -> 63.358 worker-s`（`-170.891s/-72.95%`）。但相对S3L，runner wall=`979.11 ->
+991.64s`（`+12.53s/+1.28%`）、file worker-s=`15,481.941 -> 15,672.453s`（`+190.512s/
++1.23%`），nearest-rank P95=`74.853 -> 76.122s`（`+1.70%`）、P99=`243.270 -> 251.115s`
+（`+3.22%`）、max=`578.682 -> 589.598s`（`+1.89%`）。排除两目标后非目标file worker-s增加
+`361.402s/+2.37%`；多个Smoothed长尾同步回升约`6%～7%`，而worker busy CV仍约`0.00884%`、
+tail idle total仅`0.222s`，没有scheduler失衡证据。因此保留局部优化但不把单次full写成全局赢家，
+`stable_full_improvement_claimed=false`；不运行第二次full，post-full tracked-state门仍待闭合。
+
+S3M post-full第一轮tracked-state门已PASS：compatibility/deprecation focused=`8 passed / pytest
+13.44s`，architecture-fitness=`344 passed / 68.71s`（`outputs/validation_runtime/
+architecture-fitness_20260718T140944Z/test_runtime_summary.json`），contract-validation=`236 passed /
+45.44s`（`outputs/validation_runtime/contract-validation_20260718T141058Z/test_runtime_summary.json`）。
+full summary/profile/log/Reader Brief、collection、scheduler、telemetry、manifests、73 active sources、aggregate
+bindings与deprecation inventory的独立只读审查均为0 mismatch。S3M转为
+`COMPLETE_RUNTIME_TASK_CONTINUES`。最终审查修正raw profile统一舍入、EB1 phase-exit/owner授权语义和
+worktree attribution 11/11路径覆盖；归属focused首轮按预期捕获未登记的新status枚举，随后保留既有schema
+status并增加显式S3M staging authority；最终独立审查再为该authority补齐task/increment/status/base/path-set
+逐字段契约断言，修正后focused/architecture/contract=`9/344/236 passed`。
+最终tracked-state source hashes与exact artifacts以compatibility baseline为准，不运行第二次full。next owner=
+S3N candidate coordinator基于`133435Z`新profile登记下一批；EB1、下一callback与ARCH-005仍锁定，
+`production_effect=none`。
 
 ### S4：持续回归约束
 

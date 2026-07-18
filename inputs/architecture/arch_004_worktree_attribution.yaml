@@ -1,9 +1,15 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
 status: INTEGRATED_WORKTREE_ATTRIBUTION_PROVEN_PHASE_G2_4CX3_COMPLETE_G2_4_CONTINUES
-as_of: 2026-07-16
-base_commit: 4487252d
+as_of: 2026-07-18
+base_commit: ee68b98f
 production_effect: none
+current_staging_authority:
+  task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+  increment: S3M_WEIGHT_INTERPRETATION_CLUSTER_TAIL
+  status: COMPLETE_RUNTIME_TASK_CONTINUES
+  base_commit: ee68b98f
+  declared_path_set_current: true
 
 integrated_task_ids:
   - ARCH-004
@@ -17,6 +23,7 @@ integrated_task_ids:
   - DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
   - KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE
   - PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH
+  - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
 
 integrated_non_arch_paths:
   - config/data_source_request_budget_policy.yaml
@@ -99,6 +106,7 @@ arch_004_owned_paths:
   - docs/requirements/TRADING-286_to_305_Weight_Optimization_Batch_Search_and_Adaptive_Promotion_Pipeline.md
   - docs/requirements/TRADING-306_to_315_No_Promotion_Diagnostics_and_Targeted_Search_v3.md
   - docs/requirements/TRADING-316_to_325_Signal_Level_Diagnosis_and_Gate_Calibration_with_Targeted_Micro_Search_v4.md
+  - docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   - config/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation_v1.yaml
   - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
@@ -266,6 +274,8 @@ arch_004_owned_paths:
   - tests/test_limited_vs_notrade.py
   - tests/test_confirmation_progress.py
   - tests/test_confirmation_evaluate.py
+  - tests/test_weight_candidate_cluster.py
+  - tests/test_weight_top_candidate_interpretation.py
   - tests/dynamic_v3_confirmation_cycle_helpers.py
   - tests/test_consensus_risk.py
   - tests/test_outcome_update_review.py

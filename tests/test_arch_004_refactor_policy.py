@@ -5191,6 +5191,21 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "INTEGRATED_WORKTREE_ATTRIBUTION_PROVEN_PHASE_G2_4CX3_VALIDATING_G2_4_CONTINUES",
         "INTEGRATED_WORKTREE_ATTRIBUTION_PROVEN_PHASE_G2_4CX3_COMPLETE_G2_4_CONTINUES",
     }
+    assert attribution["current_staging_authority"] == {
+        "task_id": "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE",
+        "increment": "S3M_WEIGHT_INTERPRETATION_CLUSTER_TAIL",
+        "status": "COMPLETE_RUNTIME_TASK_CONTINUES",
+        "base_commit": "ee68b98f",
+        "declared_path_set_current": True,
+    }
+    assert (
+        attribution["current_staging_authority"]["base_commit"]
+        == attribution["base_commit"]
+    )
+    assert (
+        attribution["current_staging_authority"]["task_id"]
+        in attribution["integrated_task_ids"]
+    )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
         "docs/research/growth_tilt_owner_decision_resolution.md",
