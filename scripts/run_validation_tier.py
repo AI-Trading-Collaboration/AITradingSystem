@@ -778,13 +778,35 @@ def _nodeid_identity(nodeids: Sequence[str]) -> dict[str, object]:
     return {
         "count": len(nodeids),
         "ordered_sha256": hashlib.sha256("\n".join(nodeids).encode("utf-8")).hexdigest(),
-        "set_sha256": hashlib.sha256(
-            "\n".join(sorted(nodeids)).encode("utf-8")
-        ).hexdigest(),
-        "duplicate_nodeids": sorted(
-            nodeid for nodeid, count in counts.items() if count > 1
-        ),
+        "set_sha256": hashlib.sha256("\n".join(sorted(nodeids)).encode("utf-8")).hexdigest(),
+        "duplicate_nodeids": sorted(nodeid for nodeid, count in counts.items() if count > 1),
     }
+
+
+def _string_set_sha256(values: Sequence[str]) -> str:
+    return hashlib.sha256("\n".join(sorted(values)).encode("utf-8")).hexdigest()
+
+
+def _duration_file_rows_sha256(
+    observed_seconds: Mapping[str, float],
+    file_node_counts: Mapping[str, int],
+) -> str:
+    rows = [
+        {
+            "node_count": file_node_counts[path],
+            "observed_seconds": observed_seconds[path],
+            "path": path,
+        }
+        for path in sorted(observed_seconds)
+    ]
+    return hashlib.sha256(
+        json.dumps(
+            rows,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
 
 
 def _load_expected_full_test_files(path: Path) -> tuple[set[str] | None, str | None]:
@@ -869,6 +891,46 @@ def _runtime_profile_contract_error(
     if not isinstance(telemetry, Mapping):
         return "runtime profile telemetry must be a mapping"
 
+    manifest_status = scheduler.get("manifest_status")
+    if manifest_status not in {"PARTIAL_SEED", "COMPLETE"}:
+        return "runtime profile scheduler.manifest_status is invalid"
+    manifest_is_partial = manifest_status == "PARTIAL_SEED"
+    manifest_is_complete = manifest_status == "COMPLETE"
+    if scheduler.get("partial_seed") is not manifest_is_partial:
+        return "runtime profile scheduler.partial_seed differs from manifest status"
+    if scheduler.get("complete_profile") is not manifest_is_complete:
+        return "runtime profile scheduler.complete_profile differs from manifest status"
+    if scheduler.get("source_tier") != "full":
+        return "runtime profile scheduler.source_tier must be full"
+    source_workers = scheduler.get("source_workers")
+    source_dist = scheduler.get("source_dist")
+    if source_workers != 16:
+        return "runtime profile scheduler.source_workers must equal 16"
+    if source_dist != "loadfile":
+        return "runtime profile scheduler.source_dist must be loadfile"
+    if not isinstance(scheduler.get("complete_collection_verified"), bool):
+        return "runtime profile scheduler.complete_collection_verified must be boolean"
+    complete_hash_fields = (
+        "source_collection_ordered_sha256",
+        "source_collection_set_sha256",
+        "source_file_set_sha256",
+        "source_file_rows_sha256",
+        "complete_expected_ordered_sha256",
+    )
+    if manifest_is_complete:
+        if not _is_non_bool_int(scheduler.get("tracked_node_count"), minimum=1):
+            return "runtime profile scheduler.tracked_node_count must be positive"
+        for key in complete_hash_fields:
+            value = scheduler.get(key)
+            if not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None:
+                return f"runtime profile scheduler.{key} is invalid"
+    elif (
+        scheduler.get("tracked_node_count") is not None
+        or scheduler.get("complete_collection_verified") is not False
+        or any(scheduler.get(key) is not None for key in complete_hash_fields)
+    ):
+        return "runtime profile partial scheduler contains complete-only evidence"
+
     collection_complete = collection.get("complete")
     telemetry_complete = telemetry.get("complete")
     if not isinstance(collection_complete, bool):
@@ -893,17 +955,12 @@ def _runtime_profile_contract_error(
         "collection.expected_worker_count": collection.get("expected_worker_count"),
         "collection.observed_worker_count": collection.get("observed_worker_count"),
         "telemetry.phase_report_count": telemetry.get("phase_report_count"),
-        "telemetry.invalid_phase_report_count": telemetry.get(
-            "invalid_phase_report_count"
-        ),
+        "telemetry.invalid_phase_report_count": telemetry.get("invalid_phase_report_count"),
         "telemetry.reported_node_count": telemetry.get("reported_node_count"),
         "scheduler.expected_worker_count": scheduler.get("expected_worker_count"),
-        "scheduler.matched_tracked_file_count": scheduler.get(
-            "matched_tracked_file_count"
-        ),
-        "scheduler.matched_tracked_node_count": scheduler.get(
-            "matched_tracked_node_count"
-        ),
+        "scheduler.tracked_file_count": scheduler.get("tracked_file_count"),
+        "scheduler.matched_tracked_file_count": scheduler.get("matched_tracked_file_count"),
+        "scheduler.matched_tracked_node_count": scheduler.get("matched_tracked_node_count"),
     }
     for key, value in count_fields.items():
         if not _is_non_bool_int(value):
@@ -917,8 +974,7 @@ def _runtime_profile_contract_error(
 
     worker_identities = collection.get("worker_identities")
     if not isinstance(worker_identities, Mapping) or any(
-        not isinstance(worker_id, str) or not worker_id
-        for worker_id in worker_identities
+        not isinstance(worker_id, str) or not worker_id for worker_id in worker_identities
     ):
         return "runtime profile collection.worker_identities must be a mapping"
     for worker_id, worker_identity in worker_identities.items():
@@ -1012,12 +1068,9 @@ def _runtime_profile_contract_error(
                     return f"runtime profile phase {key} is invalid for {expected_nodeid}"
             if float(phase["stop_epoch_seconds"]) < float(phase["start_epoch_seconds"]):
                 return f"runtime profile phase chronology is invalid for {expected_nodeid}"
-            if (
-                phase.get("start_utc")
-                != _epoch_utc_iso(float(phase["start_epoch_seconds"]))
-                or phase.get("stop_utc")
-                != _epoch_utc_iso(float(phase["stop_epoch_seconds"]))
-            ):
+            if phase.get("start_utc") != _epoch_utc_iso(
+                float(phase["start_epoch_seconds"])
+            ) or phase.get("stop_utc") != _epoch_utc_iso(float(phase["stop_epoch_seconds"])):
                 return (
                     "runtime profile phase UTC timing is not epoch-derived for "
                     f"{expected_nodeid}"
@@ -1032,9 +1085,7 @@ def _runtime_profile_contract_error(
         if phases and (len(phase_worker_ids) != 1 or worker_id not in phase_worker_ids):
             return f"runtime profile node/phase worker differs for {expected_nodeid}"
         phase_outcomes = {
-            str(phase.get("outcome") or "unknown")
-            for phase in phases
-            if isinstance(phase, Mapping)
+            str(phase.get("outcome") or "unknown") for phase in phases if isinstance(phase, Mapping)
         }
         if "failed" in phase_outcomes:
             derived_outcome = "failed"
@@ -1049,9 +1100,7 @@ def _runtime_profile_contract_error(
         derived_outcome_counts[derived_outcome] += 1
         if telemetry_complete:
             phase_by_name = {
-                str(phase["phase"]): phase
-                for phase in phases
-                if isinstance(phase, Mapping)
+                str(phase["phase"]): phase for phase in phases if isinstance(phase, Mapping)
             }
             if "setup" not in phase_by_name or "teardown" not in phase_by_name:
                 return f"runtime profile required phases are missing for {expected_nodeid}"
@@ -1136,10 +1185,7 @@ def _runtime_profile_contract_error(
         if telemetry_complete:
             expected_rows = node_runtime_by_worker.get(worker_id, [])
             if not expected_rows:
-                return (
-                    "runtime profile worker aggregate is not node-derived for "
-                    f"{worker_id}"
-                )
+                return "runtime profile worker aggregate is not node-derived for " f"{worker_id}"
             expected_start = min(runtime_row[0] for runtime_row in expected_rows)
             expected_stop = max(runtime_row[1] for runtime_row in expected_rows)
             expected_busy = round(sum(runtime_row[2] for runtime_row in expected_rows), 9)
@@ -1155,9 +1201,7 @@ def _runtime_profile_contract_error(
                 or row.get("last_stop_utc") != _epoch_utc_iso(expected_stop)
                 or not _numbers_close(row.get("busy_seconds"), expected_busy)
                 or not _numbers_close(row.get("span_seconds"), expected_span)
-                or not _numbers_close(
-                    row.get("internal_idle_seconds"), expected_internal_idle
-                )
+                or not _numbers_close(row.get("internal_idle_seconds"), expected_internal_idle)
                 or not _numbers_close(row.get("tail_idle_seconds"), expected_tail_idle)
             ):
                 return f"runtime profile worker aggregate is not node-derived for {worker_id}"
@@ -1167,6 +1211,7 @@ def _runtime_profile_contract_error(
     if expected_test_files is not None and set(node_file_counts) != expected_test_files:
         return "runtime profile collected file set does not match the full test manifest"
 
+    recomputed_complete_collection_verified: bool | None = None
     if duration_profile_path is not None:
         resolved_profile_path = duration_profile_path.resolve()
         configured_path = scheduler.get("configured_manifest_path")
@@ -1183,22 +1228,73 @@ def _runtime_profile_contract_error(
             return f"runtime duration manifest could not be reloaded: {exc}"
         if not isinstance(duration_manifest, Mapping):
             return "runtime duration manifest root must be a mapping"
+        duration_profile_id = duration_manifest.get("profile_id")
+        duration_owner = duration_manifest.get("owner")
+        duration_version = duration_manifest.get("version")
+        duration_review = duration_manifest.get("review")
+        if (
+            duration_manifest.get("schema_version") != "arch_004g2_full_duration_profile.v1"
+            or not isinstance(duration_profile_id, str)
+            or not duration_profile_id.strip()
+            or not isinstance(duration_owner, str)
+            or not duration_owner.strip()
+            or not _is_non_bool_int(duration_version, minimum=1)
+            or not isinstance(duration_review, Mapping)
+            or duration_review.get("stable_improvement_claimed") is not False
+            or not isinstance(duration_review.get("conditions"), list)
+            or not duration_review.get("conditions")
+        ):
+            return "runtime duration manifest common contract is invalid"
         source = duration_manifest.get("source")
         partial_seed = duration_manifest.get("partial_seed")
+        complete_profile = duration_manifest.get("complete_profile")
         duration_rows = duration_manifest.get("files")
-        if (
-            not isinstance(source, Mapping)
-            or not isinstance(partial_seed, Mapping)
-            or not isinstance(duration_rows, list)
+        duration_status = duration_manifest.get("status")
+        if not isinstance(source, Mapping) or not isinstance(duration_rows, list):
+            return "runtime duration manifest source/files contract is invalid"
+        if duration_status not in {"PARTIAL_SEED", "COMPLETE"}:
+            return "runtime duration manifest status is invalid"
+        duration_is_partial = duration_status == "PARTIAL_SEED"
+        duration_is_complete = duration_status == "COMPLETE"
+        if duration_is_partial:
+            if (
+                not isinstance(partial_seed, Mapping)
+                or partial_seed.get("enabled") is not True
+                or complete_profile is not None
+            ):
+                return "runtime partial duration manifest contract is invalid"
+        elif (
+            partial_seed is not None
+            or not isinstance(complete_profile, Mapping)
+            or complete_profile.get("enabled") is not True
         ):
-            return "runtime duration manifest source/partial_seed/files contract is invalid"
+            return "runtime complete duration manifest contract is invalid"
+        source_workers_value = source.get("workers")
+        source_artifact_path = source.get("artifact_path")
+        source_artifact_sha256 = source.get("artifact_sha256")
+        if (
+            source.get("tier") != "full"
+            or source.get("dist") != "loadfile"
+            or not _is_non_bool_int(source_workers_value, minimum=1)
+            or int(source_workers_value) != 16
+            or not isinstance(source_artifact_path, str)
+            or not source_artifact_path.strip()
+            or not isinstance(source_artifact_sha256, str)
+            or re.fullmatch(r"[0-9a-f]{64}", source_artifact_sha256) is None
+        ):
+            return "runtime duration manifest source execution contract is invalid"
         duration_metadata = {
             "manifest_sha256": manifest_sha256,
             "manifest_schema_version": duration_manifest.get("schema_version"),
             "profile_id": duration_manifest.get("profile_id"),
             "owner": duration_manifest.get("owner"),
             "version": duration_manifest.get("version"),
-            "partial_seed": partial_seed.get("enabled"),
+            "manifest_status": duration_status,
+            "partial_seed": duration_is_partial,
+            "complete_profile": duration_is_complete,
+            "source_tier": source.get("tier"),
+            "source_workers": source_workers_value,
+            "source_dist": source.get("dist"),
             "source_artifact_path": source.get("artifact_path"),
             "source_artifact_sha256": source.get("artifact_sha256"),
         }
@@ -1206,20 +1302,31 @@ def _runtime_profile_contract_error(
             if scheduler.get(key) != expected:
                 return f"runtime profile scheduler manifest metadata mismatch for {key}"
         observed_seconds: dict[str, float] = {}
+        duration_file_node_counts: dict[str, int] = {}
         for row in duration_rows:
             if not isinstance(row, Mapping):
                 return "runtime duration manifest file row must be a mapping"
             path = row.get("path")
             seconds = row.get("observed_seconds")
+            normalized_path = path.replace("\\", "/") if isinstance(path, str) else ""
             if (
                 not isinstance(path, str)
                 or not path
+                or not normalized_path.startswith("tests/")
+                or Path(normalized_path).is_absolute()
+                or "." in Path(normalized_path).parts
+                or ".." in Path(normalized_path).parts
                 or not _is_nonnegative_finite_number(seconds)
                 or float(seconds) <= 0.0
-                or path in observed_seconds
+                or normalized_path in observed_seconds
             ):
                 return "runtime duration manifest file row is invalid"
-            observed_seconds[path.replace("\\", "/")] = float(seconds)
+            observed_seconds[normalized_path] = float(seconds)
+            if duration_is_complete:
+                row_node_count = row.get("node_count")
+                if not _is_non_bool_int(row_node_count, minimum=1):
+                    return "runtime complete duration manifest node_count is invalid"
+                duration_file_node_counts[normalized_path] = int(row_node_count)
         if scheduler.get("tracked_file_count") != len(observed_seconds):
             return "runtime profile tracked file count differs from duration manifest"
         grouped_nodeids: dict[str, list[str]] = {}
@@ -1235,19 +1342,105 @@ def _runtime_profile_contract_error(
             for nodeid in grouped_rows
         ]
         matched_files = set(grouped_nodeids) & set(observed_seconds)
-        matched_node_count = sum(
-            len(grouped_nodeids[path]) for path in matched_files
-        )
+        matched_node_count = sum(len(grouped_nodeids[path]) for path in matched_files)
         recomputed_order_verified = bool(matched_files) and nodeids == expected_nodeids
         expected_order_identity = _nodeid_identity(expected_nodeids)
         if (
             scheduler.get("duration_order_verified") is not recomputed_order_verified
             or scheduler.get("matched_tracked_file_count") != len(matched_files)
             or scheduler.get("matched_tracked_node_count") != matched_node_count
-            or scheduler.get("expected_ordered_sha256")
-            != expected_order_identity["ordered_sha256"]
+            or scheduler.get("expected_ordered_sha256") != expected_order_identity["ordered_sha256"]
         ):
             return "runtime profile duration-order evidence is not reproducible"
+
+        if duration_is_complete:
+            if (
+                source.get("profile_status") != "PASS"
+                or source.get("telemetry_status") != "PASS"
+                or source.get("performance_evidence_status") != "PASS"
+                or isinstance(source.get("pytest_exitstatus"), bool)
+                or source.get("pytest_exitstatus") != 0
+            ):
+                return "runtime complete duration source PASS contract is invalid"
+            source_elapsed = source.get("elapsed_seconds")
+            source_git_commit = source.get("git_commit")
+            if (
+                not _is_nonnegative_finite_number(source_elapsed)
+                or float(source_elapsed) <= 0.0
+                or not isinstance(source_git_commit, str)
+                or re.fullmatch(r"[0-9a-f]{40}", source_git_commit) is None
+            ):
+                return "runtime complete duration source provenance is invalid"
+            expected_source_node_count = complete_profile.get("source_node_count")
+            expected_source_file_count = complete_profile.get("source_file_count")
+            if (
+                not _is_non_bool_int(expected_source_node_count, minimum=1)
+                or not _is_non_bool_int(expected_source_file_count, minimum=1)
+                or int(expected_source_file_count) != len(observed_seconds)
+                or int(expected_source_node_count) != sum(duration_file_node_counts.values())
+            ):
+                return "runtime complete duration source counts are stale"
+            complete_manifest_hashes = {
+                "source_collection_ordered_sha256": complete_profile.get(
+                    "source_collection_ordered_sha256"
+                ),
+                "source_collection_set_sha256": complete_profile.get(
+                    "source_collection_set_sha256"
+                ),
+                "source_file_set_sha256": complete_profile.get("source_file_set_sha256"),
+                "source_file_rows_sha256": complete_profile.get("source_file_rows_sha256"),
+                "complete_expected_ordered_sha256": complete_profile.get(
+                    "expected_scheduled_ordered_sha256"
+                ),
+            }
+            for key, expected in complete_manifest_hashes.items():
+                if (
+                    not isinstance(expected, str)
+                    or re.fullmatch(r"[0-9a-f]{64}", expected) is None
+                    or scheduler.get(key) != expected
+                ):
+                    return f"runtime complete duration hash evidence mismatch for {key}"
+            if scheduler.get("tracked_node_count") != expected_source_node_count:
+                return "runtime complete tracked node count differs from manifest"
+            expected_file_set_sha256 = _string_set_sha256(list(observed_seconds))
+            if complete_profile.get(
+                "source_file_set_sha256"
+            ) != expected_file_set_sha256 or complete_profile.get(
+                "source_file_rows_sha256"
+            ) != _duration_file_rows_sha256(
+                observed_seconds,
+                duration_file_node_counts,
+            ):
+                return "runtime complete duration file hash evidence is stale"
+            duration_total = complete_profile.get("source_file_duration_total_seconds")
+            if not _numbers_close(duration_total, sum(observed_seconds.values())):
+                return "runtime complete duration total is stale"
+            if expected_test_files is not None and set(observed_seconds) != expected_test_files:
+                return "runtime complete duration file set differs from full test manifest"
+            current_identity = _nodeid_identity(nodeids)
+            recomputed_complete_collection_verified = bool(
+                not current_identity["duplicate_nodeids"]
+                and len(nodeids) == int(expected_source_node_count)
+                and current_identity["set_sha256"]
+                == complete_profile.get("source_collection_set_sha256")
+                and len(grouped_nodeids) == int(expected_source_file_count)
+                and set(grouped_nodeids) == set(observed_seconds)
+                and _string_set_sha256(list(grouped_nodeids))
+                == complete_profile.get("source_file_set_sha256")
+                and all(
+                    len(grouped_nodeids[path]) == duration_file_node_counts.get(path)
+                    for path in grouped_nodeids
+                )
+                and expected_order_identity["ordered_sha256"]
+                == complete_profile.get("expected_scheduled_ordered_sha256")
+            )
+            if (
+                scheduler.get("complete_collection_verified")
+                is not recomputed_complete_collection_verified
+            ):
+                return "runtime complete collection coverage evidence is not reproducible"
+        elif scheduler.get("complete_collection_verified") is not False:
+            return "runtime partial duration profile claims complete collection coverage"
 
     for key in (
         "tail_idle_total_seconds",
@@ -1262,9 +1455,7 @@ def _runtime_profile_contract_error(
     session_end = _parse_utc_iso_epoch(payload.get("ended_at_utc"))
     if session_start is None or session_end is None or session_end < session_start:
         return "runtime profile session UTC window is invalid"
-    if not _numbers_close(
-        payload.get("elapsed_seconds"), round(session_end - session_start, 9)
-    ):
+    if not _numbers_close(payload.get("elapsed_seconds"), round(session_end - session_start, 9)):
         return "runtime profile elapsed_seconds is not session-window-derived"
 
     scheduler_boolean_fields = (
@@ -1278,6 +1469,51 @@ def _runtime_profile_contract_error(
     for key in scheduler_boolean_fields:
         if not isinstance(scheduler.get(key), bool):
             return f"runtime profile scheduler.{key} must be boolean"
+    scheduler_applied = bool(scheduler["applied"])
+    scheduler_fallback = bool(scheduler["fallback"])
+    fallback_reason = scheduler.get("fallback_reason")
+    if scheduler_applied and (scheduler_fallback or fallback_reason is not None):
+        return "runtime profile applied scheduler contains fallback evidence"
+    if scheduler_fallback and (
+        scheduler_applied or not isinstance(fallback_reason, str) or not fallback_reason.strip()
+    ):
+        return "runtime profile fallback scheduler evidence is invalid"
+    if scheduler_applied:
+        expected_applied_policy = (
+            "complete_full_duration_descending_stable"
+            if manifest_is_complete
+            else "tracked_partial_seed_duration_descending_stable"
+        )
+        if (
+            scheduler.get("policy") != expected_applied_policy
+            or scheduler.get("equal_duration_tie_policy")
+            != "stable_first_seen_file_order"
+            or not _numbers_close(scheduler.get("untracked_file_weight_seconds"), 0.0)
+            or scheduler.get("xdist_dist") != "loadfile"
+            or scheduler.get("loadscope_reorder_disabled") is not True
+            or scheduler.get("file_internal_node_order_preserved") is not True
+        ):
+            return (
+                "runtime profile applied scheduler does not satisfy the formal "
+                "scheduler contract"
+            )
+    complete_collection_verified = bool(scheduler["complete_collection_verified"])
+    if manifest_is_complete:
+        source_contract_matches = (
+            int(source_workers) == int(scheduler["expected_worker_count"])
+            and source_dist == scheduler.get("xdist_dist")
+            and scheduler.get("xdist_dist") == "loadfile"
+            and scheduler.get("loadscope_reorder_disabled") is True
+        )
+        complete_scheduler_eligible = complete_collection_verified and source_contract_matches
+        if scheduler_applied and not complete_scheduler_eligible:
+            return "runtime complete scheduler applied without exact coverage/worker contract"
+        if not scheduler_applied and complete_scheduler_eligible:
+            return "runtime complete scheduler fell back despite exact eligibility"
+        if not scheduler_applied and scheduler.get("policy") != "stock_loadfile_test_count_order":
+            return "runtime complete scheduler fallback policy is invalid"
+        if not scheduler_applied and not scheduler_fallback:
+            return "runtime complete scheduler mismatch must use explicit stock fallback"
 
     if telemetry_complete:
         if not collection_complete:
@@ -1310,8 +1546,7 @@ def _runtime_profile_contract_error(
         if (
             global_first_start < session_start - 1e-6
             or global_last_stop > session_end + 1e-6
-            or float(payload["elapsed_seconds"])
-            < float(payload["observed_test_window_seconds"])
+            or float(payload["elapsed_seconds"]) < float(payload["observed_test_window_seconds"])
         ):
             return "runtime profile node window is outside the session window"
         expected_tail_values = [
@@ -1342,13 +1577,13 @@ def _runtime_profile_contract_error(
     elif statuses["profile_status"] != "FAIL" or statuses["telemetry_status"] != "FAIL":
         return "runtime profile incomplete telemetry must have FAIL profile/telemetry status"
 
-    scheduler_applied = bool(scheduler["applied"])
     duration_verified = bool(scheduler["duration_order_verified"])
     selection_eligible = bool(scheduler["formal_full_selection_eligible"])
     performance_should_pass = (
         telemetry_complete
         and scheduler_applied
         and duration_verified
+        and (not manifest_is_complete or complete_collection_verified)
         and selection_eligible
         and pytest_exitstatus == 0
     )
@@ -1356,11 +1591,14 @@ def _runtime_profile_contract_error(
     if statuses["performance_evidence_status"] != expected_performance_status:
         return "runtime profile performance status is inconsistent with its evidence"
     if performance_should_pass:
+        expected_policy = (
+            "complete_full_duration_descending_stable"
+            if manifest_is_complete
+            else "tracked_partial_seed_duration_descending_stable"
+        )
         if (
-            scheduler.get("policy")
-            != "tracked_partial_seed_duration_descending_stable"
-            or scheduler.get("equal_duration_tie_policy")
-            != "stable_first_seen_file_order"
+            scheduler.get("policy") != expected_policy
+            or scheduler.get("equal_duration_tie_policy") != "stable_first_seen_file_order"
             or not _numbers_close(scheduler.get("untracked_file_weight_seconds"), 0.0)
             or scheduler.get("fallback_reason") is not None
             or scheduler.get("xdist_dist") != "loadfile"
@@ -1371,6 +1609,18 @@ def _runtime_profile_contract_error(
             or int(scheduler["matched_tracked_file_count"]) < 1
             or int(scheduler["matched_tracked_node_count"]) < 1
             or scheduler.get("expected_ordered_sha256") != identity["ordered_sha256"]
+            or (
+                manifest_is_complete
+                and (
+                    int(scheduler["matched_tracked_file_count"])
+                    != int(scheduler["tracked_file_count"])
+                    or int(scheduler["matched_tracked_node_count"])
+                    != int(scheduler["tracked_node_count"])
+                    or scheduler.get("source_collection_set_sha256") != identity["set_sha256"]
+                    or scheduler.get("complete_expected_ordered_sha256")
+                    != identity["ordered_sha256"]
+                )
+            )
             or warnings
         ):
             return "runtime profile PASS evidence does not satisfy the formal scheduler contract"
@@ -1449,8 +1699,7 @@ def _read_runtime_profile_payload(
     except Exception as exc:  # noqa: BLE001 - malformed evidence must not override pytest
         return _runtime_profile_failure_payload(
             reason=(
-                "runtime profile contract evaluation failed closed: "
-                f"{type(exc).__name__}: {exc}"
+                "runtime profile contract evaluation failed closed: " f"{type(exc).__name__}: {exc}"
             ),
             pytest_exitstatus=pytest_exitstatus,
         )
@@ -1468,9 +1717,7 @@ def _persist_runtime_profile_before_summary(
     *,
     pytest_exitstatus: int,
 ) -> dict[str, object]:
-    temporary_path = path.with_name(
-        f".{path.name}.{os.getpid()}.{time.time_ns()}.tmp"
-    )
+    temporary_path = path.with_name(f".{path.name}.{os.getpid()}.{time.time_ns()}.tmp")
     try:
         _write_report(temporary_path, payload)
         temporary_path.replace(path)
@@ -1523,6 +1770,28 @@ def _summarize_runtime_profile(
             "scheduler_applied": scheduler_summary.get("applied", False),
             "scheduler_fallback": scheduler_summary.get("fallback", True),
             "scheduler_fallback_reason": scheduler_summary.get("fallback_reason"),
+            "duration_manifest_status": scheduler_summary.get("manifest_status"),
+            "duration_complete_profile": scheduler_summary.get(
+                "complete_profile",
+                False,
+            ),
+            "duration_collection_coverage_verified": scheduler_summary.get(
+                "complete_collection_verified",
+                False,
+            ),
+            "duration_tracked_file_count": scheduler_summary.get(
+                "tracked_file_count",
+                0,
+            ),
+            "duration_tracked_node_count": scheduler_summary.get("tracked_node_count"),
+            "duration_matched_file_count": scheduler_summary.get(
+                "matched_tracked_file_count",
+                0,
+            ),
+            "duration_matched_node_count": scheduler_summary.get(
+                "matched_tracked_node_count",
+                0,
+            ),
             "warning_count": len(warning_rows),
         },
     }
@@ -1681,6 +1950,18 @@ def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
                     f"`{runtime_profile.get('performance_evidence_status', 'FAIL')}`"
                 ),
                 f"- Collection count: `{runtime_profile.get('collection_count', 0)}`",
+                ("- Duration manifest: " f"`{runtime_profile.get('duration_manifest_status')}`"),
+                (
+                    "- Complete collection coverage: "
+                    f"`{runtime_profile.get('duration_collection_coverage_verified', False)}`"
+                ),
+                (
+                    "- Duration coverage files/nodes: "
+                    f"`{runtime_profile.get('duration_matched_file_count', 0)}/"
+                    f"{runtime_profile.get('duration_tracked_file_count', 0)}` files, "
+                    f"`{runtime_profile.get('duration_matched_node_count', 0)}/"
+                    f"{runtime_profile.get('duration_tracked_node_count')}` nodes"
+                ),
                 f"- Scheduler applied: `{runtime_profile.get('scheduler_applied', False)}`",
                 f"- Scheduler fallback: `{runtime_profile.get('scheduler_fallback', True)}`",
                 f"- Artifact: `{payload.get('runtime_profile_path', '')}`",
@@ -2040,9 +2321,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(runtime_profile_temp_dir.name) / RUNTIME_PROFILE_OUTPUT_NAME
         )
         env_overrides[RUNTIME_PROFILE_OUTPUT_ENV] = str(runtime_profile_temp_path)
-        formal_selection_eligible = not args.pytest_arg and not os.environ.get(
-            "PYTEST_ADDOPTS", ""
-        ).strip()
+        formal_selection_eligible = (
+            not args.pytest_arg and not os.environ.get("PYTEST_ADDOPTS", "").strip()
+        )
         env_overrides[RUNTIME_PROFILE_FORMAL_SELECTION_ENV] = (
             "1" if formal_selection_eligible else "0"
         )
@@ -2054,8 +2335,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     if runtime_profile_temp_path is not None and artifact_dir is not None:
         subprocess_exitstatus = int(result["exit_code"])
-        expected_full_test_files, expected_full_test_files_error = (
-            _load_expected_full_test_files(repo_root / FULL_TEST_MANIFEST)
+        expected_full_test_files, expected_full_test_files_error = _load_expected_full_test_files(
+            repo_root / FULL_TEST_MANIFEST
         )
         runtime_profile_payload = _read_runtime_profile_payload(
             runtime_profile_temp_path,

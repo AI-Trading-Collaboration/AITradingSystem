@@ -5,11 +5,17 @@ import json
 import subprocess
 import sys
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
 import scripts.run_validation_tier as validation_tier
+from scripts.pytest_runtime_profile import (
+    build_runtime_profile,
+    collection_identity,
+    load_duration_profile,
+)
 from scripts.run_validation_tier import (
     FULL_DURATION_PROFILE_MANIFEST,
     FULL_RUNTIME_PROFILE_PLUGIN,
@@ -62,12 +68,12 @@ def test_validation_tier_print_only_writes_command_summary(tmp_path: Path) -> No
     assert payload["workers"] == "16"
     assert payload["dist"] == "loadfile"
     assert "tests/test_report_index.py" in " ".join(payload["command"]).replace("\\", "/")
-    assert "tests/test_clean_clone_release_acceptance.py" in " ".join(
-        payload["command"]
-    ).replace("\\", "/")
-    assert "tests/test_engineering_release_candidate.py" in " ".join(
-        payload["command"]
-    ).replace("\\", "/")
+    assert "tests/test_clean_clone_release_acceptance.py" in " ".join(payload["command"]).replace(
+        "\\", "/"
+    )
+    assert "tests/test_engineering_release_candidate.py" in " ".join(payload["command"]).replace(
+        "\\", "/"
+    )
     assert "-n 16 --dist loadfile" in " ".join(payload["command"])
 
 
@@ -126,10 +132,17 @@ def test_runtime_profile_summary_does_not_embed_node_rows(tmp_path: Path) -> Non
         "stable_full_improvement_claimed": False,
         "collection": {"count": 2, "set_sha256": "abc"},
         "scheduler": {
-            "policy": "tracked_partial_seed_duration_descending_stable",
+            "policy": "complete_full_duration_descending_stable",
             "applied": True,
             "fallback": False,
             "fallback_reason": None,
+            "manifest_status": "COMPLETE",
+            "complete_profile": True,
+            "complete_collection_verified": True,
+            "tracked_file_count": 2,
+            "tracked_node_count": 2,
+            "matched_tracked_file_count": 2,
+            "matched_tracked_node_count": 2,
         },
         "node_count": 2,
         "file_count": 2,
@@ -148,16 +161,29 @@ def test_runtime_profile_summary_does_not_embed_node_rows(tmp_path: Path) -> Non
     assert summary["runtime_profile_status"] == "PASS"
     assert summary["runtime_profile_summary"]["collection_count"] == 2
     assert summary["runtime_profile_summary"]["scheduler_applied"] is True
+    assert summary["runtime_profile_summary"]["duration_manifest_status"] == "COMPLETE"
+    assert summary["runtime_profile_summary"]["duration_collection_coverage_verified"] is True
+    assert summary["runtime_profile_summary"]["duration_tracked_node_count"] == 2
     assert "nodes" not in summary["runtime_profile_summary"]
 
 
-def _runtime_profile_payload(*, pytest_exitstatus: object) -> dict[str, object]:
+def _runtime_profile_payload(
+    *,
+    pytest_exitstatus: object,
+    duration_profile_path: Path | None = None,
+) -> dict[str, object]:
     nodeid = "tests/test_layer1_meta_policy_readiness.py::test_runtime_profile_stub"
     file_path = nodeid.split("::", 1)[0]
     ordered_sha256 = hashlib.sha256(nodeid.encode("utf-8")).hexdigest()
-    duration_profile_path = Path(FULL_DURATION_PROFILE_MANIFEST).resolve()
+    duration_profile_path = (
+        duration_profile_path or Path(FULL_DURATION_PROFILE_MANIFEST)
+    ).resolve()
     duration_profile = validation_tier.safe_load_yaml_path(duration_profile_path)
     duration_source = duration_profile["source"]
+    manifest_status = duration_profile["status"]
+    partial_seed = manifest_status == "PARTIAL_SEED"
+    complete_profile = manifest_status == "COMPLETE"
+    complete_evidence = duration_profile.get("complete_profile", {})
     phases = [
         {
             "phase": "setup",
@@ -196,6 +222,15 @@ def _runtime_profile_payload(*, pytest_exitstatus: object) -> dict[str, object]:
         "set_sha256": ordered_sha256,
         "duplicate_nodeids": [],
     }
+    complete_collection_verified = bool(
+        complete_profile
+        and complete_evidence.get("source_node_count") == 1
+        and complete_evidence.get("source_file_count") == 1
+        and complete_evidence.get("source_collection_set_sha256") == ordered_sha256
+        and complete_evidence.get("source_file_set_sha256")
+        == hashlib.sha256(file_path.encode("utf-8")).hexdigest()
+        and complete_evidence.get("expected_scheduled_ordered_sha256") == ordered_sha256
+    )
     return {
         "schema_version": "test_runtime_profile.v1",
         "report_type": "test_runtime_profile",
@@ -218,20 +253,44 @@ def _runtime_profile_payload(*, pytest_exitstatus: object) -> dict[str, object]:
             "nodeids": [nodeid],
         },
         "scheduler": {
-            "policy": "non_loadfile_collection_order_preserved",
+            "policy": (
+                "stock_loadfile_test_count_order"
+                if complete_profile
+                else "non_loadfile_collection_order_preserved"
+            ),
             "applied": False,
-            "fallback": False,
-            "fallback_reason": "duration-aware scheduling requires pytest-xdist loadfile",
+            "fallback": complete_profile,
+            "fallback_reason": (
+                "complete duration profile requires pytest-xdist --dist loadfile; observed=no"
+                if complete_profile
+                else "duration-aware scheduling requires pytest-xdist loadfile"
+            ),
             "configured_manifest_path": str(duration_profile_path),
             "manifest_sha256": hashlib.sha256(duration_profile_path.read_bytes()).hexdigest(),
             "manifest_schema_version": duration_profile["schema_version"],
             "profile_id": duration_profile["profile_id"],
             "owner": duration_profile["owner"],
             "version": duration_profile["version"],
-            "partial_seed": duration_profile["partial_seed"]["enabled"],
+            "manifest_status": manifest_status,
+            "partial_seed": partial_seed,
+            "complete_profile": complete_profile,
             "tracked_file_count": len(duration_profile["files"]),
+            "tracked_node_count": complete_evidence.get("source_node_count"),
+            "source_tier": duration_source["tier"],
+            "source_workers": duration_source["workers"],
+            "source_dist": duration_source["dist"],
             "source_artifact_path": duration_source["artifact_path"],
             "source_artifact_sha256": duration_source["artifact_sha256"],
+            "source_collection_ordered_sha256": complete_evidence.get(
+                "source_collection_ordered_sha256"
+            ),
+            "source_collection_set_sha256": complete_evidence.get("source_collection_set_sha256"),
+            "source_file_set_sha256": complete_evidence.get("source_file_set_sha256"),
+            "source_file_rows_sha256": complete_evidence.get("source_file_rows_sha256"),
+            "complete_expected_ordered_sha256": complete_evidence.get(
+                "expected_scheduled_ordered_sha256"
+            ),
+            "complete_collection_verified": complete_collection_verified,
             "file_internal_node_order_preserved": True,
             "duration_order_verified": True,
             "matched_tracked_file_count": 1,
@@ -308,6 +367,54 @@ def _runtime_profile_payload(*, pytest_exitstatus: object) -> dict[str, object]:
         "broker_action_allowed": False,
         "broker_action_taken": False,
     }
+
+
+def _write_complete_duration_manifest(path: Path) -> Path:
+    nodeid = "tests/test_layer1_meta_policy_readiness.py::test_runtime_profile_stub"
+    file_path = nodeid.split("::", 1)[0]
+    node_identity = validation_tier._nodeid_identity([nodeid])
+    file_rows = [{"path": file_path, "node_count": 1, "observed_seconds": 1.0}]
+    payload = {
+        "schema_version": "arch_004g2_full_duration_profile.v1",
+        "profile_id": "strict_reader_complete_profile_test",
+        "status": "COMPLETE",
+        "owner": "validation_operations",
+        "version": 2,
+        "source": {
+            "artifact_path": "outputs/validation_runtime/test/test_runtime_profile.json",
+            "artifact_sha256": "5" * 64,
+            "tier": "full",
+            "workers": 16,
+            "dist": "loadfile",
+            "elapsed_seconds": 1.0,
+            "git_commit": "6" * 40,
+            "profile_status": "PASS",
+            "telemetry_status": "PASS",
+            "performance_evidence_status": "PASS",
+            "pytest_exitstatus": 0,
+        },
+        "complete_profile": {
+            "enabled": True,
+            "source_node_count": 1,
+            "source_file_count": 1,
+            "source_collection_ordered_sha256": node_identity["ordered_sha256"],
+            "source_collection_set_sha256": node_identity["set_sha256"],
+            "source_file_set_sha256": hashlib.sha256(file_path.encode("utf-8")).hexdigest(),
+            "source_file_rows_sha256": validation_tier._duration_file_rows_sha256(
+                {file_path: 1.0},
+                {file_path: 1},
+            ),
+            "expected_scheduled_ordered_sha256": node_identity["ordered_sha256"],
+            "source_file_duration_total_seconds": 1.0,
+        },
+        "review": {
+            "stable_improvement_claimed": False,
+            "conditions": ["strict complete reader fixture"],
+        },
+        "files": file_rows,
+    }
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
 
 
 @pytest.mark.parametrize(
@@ -424,7 +531,13 @@ def test_runtime_profile_rejects_duplicate_keys_and_non_finite_json(
 
 def test_runtime_profile_binds_runner_manifest_and_full_file_contract(tmp_path: Path) -> None:
     profile_path = tmp_path / RUNTIME_PROFILE_OUTPUT_NAME
-    expected = _runtime_profile_payload(pytest_exitstatus=0)
+    duration_manifest_path = _write_complete_duration_manifest(
+        tmp_path / "complete_duration_profile.yaml"
+    )
+    expected = _runtime_profile_payload(
+        pytest_exitstatus=0,
+        duration_profile_path=duration_manifest_path,
+    )
     profile_path.write_text(json.dumps(expected), encoding="utf-8")
     expected_files = {"tests/test_layer1_meta_policy_readiness.py"}
 
@@ -434,7 +547,7 @@ def test_runtime_profile_binds_runner_manifest_and_full_file_contract(tmp_path: 
         expected_worker_count=1,
         expected_dist="no",
         formal_selection_eligible=True,
-        duration_profile_path=Path(FULL_DURATION_PROFILE_MANIFEST),
+        duration_profile_path=duration_manifest_path,
         expected_test_files=expected_files,
     )
     rejected = _read_runtime_profile_payload(
@@ -443,13 +556,28 @@ def test_runtime_profile_binds_runner_manifest_and_full_file_contract(tmp_path: 
         expected_worker_count=1,
         expected_dist="no",
         formal_selection_eligible=True,
-        duration_profile_path=Path(FULL_DURATION_PROFILE_MANIFEST),
+        duration_profile_path=duration_manifest_path,
         expected_test_files={"tests/test_different.py"},
     )
 
     assert accepted == expected
     assert rejected["profile_status"] == "FAIL"
     assert "full test manifest" in rejected["warnings"][0]
+
+    drifted = json.loads(json.dumps(expected))
+    drifted["scheduler"]["source_file_rows_sha256"] = "0" * 64
+    profile_path.write_text(json.dumps(drifted), encoding="utf-8")
+    drift_rejected = _read_runtime_profile_payload(
+        profile_path,
+        pytest_exitstatus=0,
+        expected_worker_count=1,
+        expected_dist="no",
+        formal_selection_eligible=True,
+        duration_profile_path=duration_manifest_path,
+        expected_test_files=expected_files,
+    )
+    assert drift_rejected["profile_status"] == "FAIL"
+    assert "hash evidence mismatch" in drift_rejected["warnings"][0]
 
 
 def test_runtime_profile_rejects_empty_required_phase_telemetry(tmp_path: Path) -> None:
@@ -558,6 +686,66 @@ def test_runtime_profile_rejects_phase_utc_drift(tmp_path: Path) -> None:
     assert "phase UTC timing is not epoch-derived" in observed["warnings"][0]
 
 
+def _formal_scheduler_profile_payload() -> dict[str, object]:
+    nodeids = [f"tests/runtime_semantic_{index:02d}.py::test_case" for index in range(16)]
+    files = [nodeid.split("::", 1)[0] for nodeid in nodeids]
+    identity = collection_identity(nodeids)
+    observed_seconds = {
+        file_path: float(len(files) - index) for index, file_path in enumerate(files)
+    }
+    file_node_counts = {file_path: 1 for file_path in files}
+    file_set_sha256 = hashlib.sha256(
+        "\n".join(sorted(files)).encode("utf-8")
+    ).hexdigest()
+    duration_profile = replace(
+        load_duration_profile(Path(FULL_DURATION_PROFILE_MANIFEST)),
+        observed_seconds=observed_seconds,
+        file_node_counts=file_node_counts,
+        source_node_count=len(nodeids),
+        source_file_count=len(files),
+        source_collection_ordered_sha256=str(identity["ordered_sha256"]),
+        source_collection_set_sha256=str(identity["set_sha256"]),
+        source_file_set_sha256=file_set_sha256,
+        source_file_rows_sha256=validation_tier._duration_file_rows_sha256(
+            observed_seconds,
+            file_node_counts,
+        ),
+        expected_scheduled_ordered_sha256=str(identity["ordered_sha256"]),
+        source_file_duration_total_seconds=sum(observed_seconds.values()),
+    )
+    phase_reports: list[dict[str, object]] = []
+    for index, nodeid in enumerate(nodeids):
+        worker_id = f"gw{index}"
+        for phase, start, stop in (
+            ("setup", 1.0, 1.1),
+            ("call", 1.1, 1.2),
+            ("teardown", 1.2, 1.3),
+        ):
+            phase_reports.append(
+                {
+                    "nodeid": nodeid,
+                    "phase": phase,
+                    "worker_id": worker_id,
+                    "start": start,
+                    "stop": stop,
+                    "duration": stop - start,
+                    "outcome": "passed",
+                }
+            )
+    return build_runtime_profile(
+        collections={f"gw{index}": nodeids for index in range(16)},
+        phase_reports=phase_reports,
+        duration_profile=duration_profile,
+        expected_worker_count=16,
+        xdist_dist="loadfile",
+        loadscope_reorder=False,
+        formal_full_selection_eligible=True,
+        pytest_exitstatus=0,
+        started_at=0.0,
+        ended_at=2.0,
+    )
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
@@ -573,27 +761,65 @@ def test_runtime_profile_rejects_formal_scheduler_semantic_drift(
     value: object,
 ) -> None:
     profile_path = tmp_path / RUNTIME_PROFILE_OUTPUT_NAME
-    payload = _runtime_profile_payload(pytest_exitstatus=0)
+    payload = _formal_scheduler_profile_payload()
+    assert validation_tier._runtime_profile_contract_error(
+        payload,
+        pytest_exitstatus=0,
+    ) is None
+    if field == "policy":
+        exact_fallback = _formal_scheduler_profile_payload()
+        exact_fallback_scheduler = exact_fallback["scheduler"]  # type: ignore[assignment]
+        exact_fallback_scheduler.update(
+            {
+                "policy": "stock_loadfile_test_count_order",
+                "applied": False,
+                "fallback": True,
+                "fallback_reason": "fabricated exact-match fallback",
+            }
+        )
+        exact_fallback["performance_evidence_status"] = "FAIL"
+        assert validation_tier._runtime_profile_contract_error(
+            exact_fallback,
+            pytest_exitstatus=0,
+        ) == "runtime complete scheduler fell back despite exact eligibility"
+
+        ineligible_policy_drift = _formal_scheduler_profile_payload()
+        ineligible_scheduler = ineligible_policy_drift["scheduler"]  # type: ignore[assignment]
+        ineligible_scheduler["formal_full_selection_eligible"] = False
+        ineligible_scheduler["policy"] = "bogus"
+        ineligible_policy_drift["performance_evidence_status"] = "FAIL"
+        ineligible_policy_drift["warnings"] = [
+            "runtime profile invocation is not the formal unfiltered full-tier selection"
+        ]
+        assert validation_tier._runtime_profile_contract_error(
+            ineligible_policy_drift,
+            pytest_exitstatus=0,
+        ) == (
+            "runtime profile applied scheduler does not satisfy the formal scheduler "
+            "contract"
+        )
     scheduler = payload["scheduler"]  # type: ignore[assignment]
-    scheduler.update(
-        {
-            "policy": "tracked_partial_seed_duration_descending_stable",
-            "applied": True,
-            "fallback": False,
-            "fallback_reason": None,
-            "xdist_dist": "loadfile",
-        }
-    )
     scheduler[field] = value
-    payload["performance_evidence_status"] = "PASS"
-    payload["warnings"] = []
+    error = validation_tier._runtime_profile_contract_error(
+        payload,
+        pytest_exitstatus=0,
+    )
+    expected_error = (
+        "runtime profile applied scheduler contains fallback evidence"
+        if field == "fallback_reason"
+        else (
+            "runtime profile applied scheduler does not satisfy the formal scheduler "
+            "contract"
+        )
+    )
+    assert error == expected_error
     profile_path.write_text(json.dumps(payload), encoding="utf-8")
 
     observed = _read_runtime_profile_payload(profile_path, pytest_exitstatus=0)
 
     assert observed["profile_status"] == "FAIL"
     assert observed["performance_evidence_status"] == "FAIL"
-    assert "formal scheduler contract" in observed["warnings"][0]
+    assert "scheduler" in observed["warnings"][0]
 
 
 def test_runtime_profile_contract_exception_fails_closed(
@@ -609,9 +835,7 @@ def test_runtime_profile_contract_exception_fails_closed(
         del args, kwargs
         raise OverflowError("malformed epoch")
 
-    monkeypatch.setattr(
-        validation_tier, "_runtime_profile_contract_error", raise_contract_error
-    )
+    monkeypatch.setattr(validation_tier, "_runtime_profile_contract_error", raise_contract_error)
 
     observed = _read_runtime_profile_payload(profile_path, pytest_exitstatus=0)
 
@@ -736,12 +960,8 @@ def test_sidecar_exit_mismatch_fails_evidence_without_overriding_subprocess_exit
     )
 
     assert exit_code == 7
-    sidecar = json.loads(
-        (artifact_dir / RUNTIME_PROFILE_OUTPUT_NAME).read_text(encoding="utf-8")
-    )
-    summary = json.loads(
-        (artifact_dir / "test_runtime_summary.json").read_text(encoding="utf-8")
-    )
+    sidecar = json.loads((artifact_dir / RUNTIME_PROFILE_OUTPUT_NAME).read_text(encoding="utf-8"))
+    summary = json.loads((artifact_dir / "test_runtime_summary.json").read_text(encoding="utf-8"))
     assert sidecar["profile_status"] == "FAIL"
     assert sidecar["pytest_exitstatus"] == 7
     assert "sidecar=0 subprocess=7" in sidecar["warnings"][0]
@@ -802,9 +1022,7 @@ def test_sidecar_write_failure_does_not_override_subprocess_exit(
     )
 
     assert exit_code == 0
-    summary = json.loads(
-        (artifact_dir / "test_runtime_summary.json").read_text(encoding="utf-8")
-    )
+    summary = json.loads((artifact_dir / "test_runtime_summary.json").read_text(encoding="utf-8"))
     sidecar_record = next(
         row
         for row in summary["output_artifacts"]
@@ -902,14 +1120,12 @@ def test_json_output_cannot_overwrite_managed_runtime_artifact(tmp_path: Path) -
 
 
 def test_pytest_slow_duration_parser_extracts_duration_rows() -> None:
-    durations = _parse_pytest_slow_durations(
-        """
+    durations = _parse_pytest_slow_durations("""
         ============================= slowest 3 durations =============================
         12.34s call     tests/test_example.py::test_slow_case
         2.50s setup    tests/test_other.py::test_setup
         0.99s teardown tests/test_other.py::test_teardown
-        """
-    )
+        """)
 
     assert durations == [
         {

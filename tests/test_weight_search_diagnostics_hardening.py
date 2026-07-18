@@ -28,7 +28,7 @@ def _assert_fail(validator: Callable[[], dict[str, Any]]) -> None:
 
 
 def test_diagnostics_chain_rebuilds_every_view_and_fails_closed(tmp_path: Path) -> None:
-    fixture = run_search_coverage_gap_fixture(tmp_path)
+    fixture = run_search_coverage_gap_fixture(tmp_path, compact_test_matrix=True)
     review = fixture["no_promotion_review"]
     near_miss = fixture["near_miss"]
     attribution = fixture["cash_buffer_attribution"]

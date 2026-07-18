@@ -503,6 +503,131 @@ P95=`1,231.76s`，满足既定墙钟阈值；但第1份collection少22个runtime
 两份tracked research Markdown在full前后SHA与worktree均不变，direct-writer隔离闭合；本批
 `strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
 
+### S3G：转移后关键路径与complete duration profile（owner批准继续）
+
+2026-07-18 / S3F提交`f557d04d`并推送后，以第3份qualifying profile
+`outputs/validation_runtime/full_20260718T004439Z/test_runtime_profile.json`冻结下一批。该profile
+覆盖`6,248 nodes / 1,068 files / 16 workers`，文件duration合计`15,830.64 worker-s`；当前前五为
+Layer1=`436.82s`、Smoothed Weekly=`366.89s`、Refined Method=`365.32s`、Smoothed Refresh=
+`342.49s`、Weight Diagnostics=`305.55s`。实际worker busy最大值约`1,018.20s`，而完整文件duration
+的离线LPT容量下界约`989.41s`，两者约`28.8s`差距只作为调度候选排序证据，不作为未来wall收益承诺。
+
+S3G冻结为四个互斥lane；协调者继续独占本需求、执行计划、task register、system flow、module/test/
+aggregate manifests、compatibility、deprecation inventory与最终集成：
+
+| lane | 独占范围 | profile基线 | 实施与安全边界 |
+|---|---|---:|---|
+|A Layer1 per-node context session|`tests/test_layer1_meta_policy_readiness.py`|`6 nodes / 436.82 worker-s`|只在每个test的direct Python producer block内复用一次真实PASS/DQ/PIT context；key绑定resolved输入/输出路径、配置、日期及live content fingerprint，hit重验输入和materialized facts并deep-copy返回值；进入真实CLI前恢复原函数，不跨test/worker共享，不应用于DQ/source/lineage/tamper路径|
+|B Smoothed Refresh outer session|`tests/test_smoothed_refresh_hardening.py`|`4 nodes / 342.49 worker-s`|只为`test_blocked_chain_freezes_v2_inputs_and_rebuilds_every_view`与`test_data_readiness_rejects_cross_chain_composition`增加既有public validation session外层；仍真实执行34项all-view/tamper、left/right chain、readiness与source drift；本轮不缩短326-day authority prefix、不删Evidence Gap、不改production validator|
+|C Refined/Diagnostics fixtures|`tests/test_refined_method_proposal.py`、`tests/test_weight_search_diagnostics_hardening.py`|`3 nodes / 365.32s`与`1 node / 305.55s`|Refined仅由前两个read-only nodes共享module-scoped immutable真实fixture，并用tree fingerprint finalizer证明无写入；tamper node继续独立完整建链。Diagnostics仅显式使用既有test-only 52-variant complete-family matrix，仍覆盖8个required families、21 views、schema/lineage/policy/tamper；production 80-variant默认不变|
+|D complete full-file scheduler profile|`scripts/pytest_runtime_profile.py`、`scripts/run_validation_tier.py`、对应runtime tests、`inputs/architecture/arch_004g2_full_duration_profile.yaml`|现有44-file旧`PARTIAL_SEED`；source profile为1,068-file exact duration|v1 loader兼容`PARTIAL_SEED`并新增fail-closed `COMPLETE`状态；complete manifest必须绑定source profile SHA-256、1,068-file/6,248-node collection identity与文件全集，runtime sidecar披露coverage；完整集合才使用`complete_full_duration_descending_stable`，缺失/重复/stale/worker/dist不匹配均stock fallback且performance evidence FAIL；保持同文件node顺序、完整nodeid和16-worker loadfile语义|
+
+执行顺序固定为：共享文档先冻结；在无其他pytest负载下顺序运行A、B（Weekly/Refresh分别及合并）、
+C（两个文件分别及合并）的同命令`-n 16 --dist loadfile -q --durations=0` pre-change baseline；随后按
+互斥文件并行实现并使用相同命令after。D先通过loader/reorder/strict-reader focused contract，再由协调者
+从上述source profile机械生成完整manifest；不得用估算duration、局部top-N或after focused比例伪装完整
+profile。四lane合并后运行expanded focused、Ruff、diff/side-effect、manifest/hash freshness、architecture与
+contract；只在这一自然integration boundary运行一次标准full。
+
+S3G pre-change baseline已在无其他pytest进程下顺序完成，全部使用显式candidate `PYTHONPATH`与相同
+`-n 16 --dist loadfile -q --durations=0`：A=`6 passed / 357.91s`，五个业务call为
+`52.77/59.20/30.59/95.27/113.07s`；B的Weekly=`1 passed / 230.57s`、Refresh=
+`4 passed / 213.56s`、两文件合并=`5 passed / 267.77s`，Refresh四call为
+`39.06/1.68/21.70/147.80s`；C的Refined=`3 passed / 330.34s`、Diagnostics=
+`1 passed / 275.80s`、两文件合并=`4 passed / 381.70s`，单文件call分别为
+`99.87/83.61/143.50s`与`272.57s`。合并运行因CPU/I/O竞争使B/C aggregate call分别约
+`518.21/721.35 worker-s`，因此after必须同时报告单文件wall、合并wall与aggregate call，不能把并行
+资源竞争误写成代码回退或把墙钟遮蔽误写成无收益。
+
+S3G A首次after=`6 passed / 330.74s`，相对`357.91s`仅`-7.59%`；相同命令第二次after=
+`6 passed / 362.52s`，反而`+1.29%`。该方案需增加约314行test-local fingerprint/deep-copy/session逻辑，
+两次结果不能证明收益稳定且维护成本过高，故完整撤回并确认Layer1测试文件与`f557d04d` byte-exact；
+Layer1后续候选改为下一profile后的文件拆分或更直接的上游去重，不在本批为保留“优化”而接受复杂度。
+
+S3G B/C同命令after已闭合。Refresh=`4 passed / 185.66s`，相对`213.56s`为`-13.06%`；两个
+目标call=`60.76 -> 40.89s`（`-32.70%`），未改retry control仍真实执行。Weekly+Refresh合并wall=
+`267.77 -> 275.33s`（`+2.82%`），但目标call=`72.83 -> 47.51s`（`-34.77%`）、全部call=
+`518.21 -> 512.66s`（`-1.07%`）；回退来自Weekly/retry资源波动，证明不能只看被遮蔽wall。
+Refined=`3 passed / 276.60s`（由`330.34s`下降`16.27%`），Diagnostics=`1 passed / 240.19s`
+（由`275.80s`下降`12.91%`）；两文件合并=`4 passed / 247.81s`，由`381.70s`下降`35.08%`，
+aggregate phases约`721.35 -> 459.29 worker-s`（`-36.33%`）。共享Refined tree finalizer PASS，tamper
+仍独立完整建链；Diagnostics仍覆盖全部8个required families与21 views。B/C保留，A拒绝；D的
+COMPLETE profile contract已实现；在该pre-full安全集成点，正式architecture/contract/full门禁尚待执行，
+后续结果见本节formal closeout。
+
+S3G D已把旧44-file `PARTIAL_SEED`兼容扩展为绑定`004439Z`的1,068-file/6,248-node
+`COMPLETE` profile。机械生成时逐项断言source artifact SHA、collection ordered/set SHA、file-set SHA、
+canonical file-row SHA、expected scheduled-order SHA和`15,830.6369954 worker-s`总量；loader重验
+`valid=true`。完整集合、16-worker、`loadfile`和`--no-loadscope-reorder`同时匹配时才应用
+`complete_full_duration_descending_stable`；任何stale/duplicate/worker/dist/loadscope不匹配均显式使用
+`stock_loadfile_test_count_order`、`fallback=true`且performance evidence FAIL。Strict reader新增双向
+eligibility约束，既拒绝不满足全集的伪applied，也拒绝exact eligible条件下的伪fallback；applied scheduler
+的policy/tie/untracked/loadscope/file-order语义即使performance为FAIL也独立校验。独立审查用归档6248-node
+phase telemetry按新顺序静态重建，profile/telemetry/performance、coverage、order和manifest rebind均PASS，
+P0/P1/P2未留项。
+
+D冻结59个既有nodeids的focused由before=`59 passed / 9.97s`变为最终`59 passed / 12.56s`；新增检查
+只强化完整profile/strict-reader契约，不以该毫秒级fixture开销宣称性能收益。四lane扩大focused覆盖
+validation-session、Weekly/Refresh control、Refined、Diagnostics默认/compact边界、runtime reader和共享
+文档契约，共`168 passed / 1 skipped / 285.14s`；唯一skip仍是Windows缺少POSIX `os.fork`。Ruff、
+py_compile、diff check、module/test/aggregate manifest生成及compatibility/deprecation source freshness均PASS；
+pre-full architecture=`344 passed / 58.90s`、contract=`236 passed / 45.03s`均PASS；唯一一次自然边界
+full随后执行。
+
+S3G formal full=`6,246 passed / 2 skipped / 642 warnings / 1,243.76s`，pytest wall=
+`1,242.72s`，artifact=`outputs/validation_runtime/full_20260718T031839Z/test_runtime_summary.json`。
+严格reader确认相同`6,248 nodes / 1,068 files / 16 workers`、完整phase telemetry、expected order、
+`scheduler_applied=true`、`fallback=false`、profile/telemetry/performance=`PASS`，tracked research Markdown
+前后SHA不变。该PASS只证明正确性与证据契约，不等于原始性能改善。
+
+相对source `004439Z`，summary wall=`1,027.74 -> 1,243.76s`（`+21.02%`）、profile wall=
+`1,026.638 -> 1,242.285s`（`+21.01%`）、worker busy=`15,830.637 -> 19,707.901
+worker-s`（`+24.49%`）、nearest-rank file P99=`258.007 -> 333.018s`（`+29.07%`）。
+`1,068`个相同文件中`981`个变慢，文件倍率median=`1.2625x`，old/new file duration correlation=
+`0.9914`；call/setup分别增加约`23.09%/40.84%`，属于广泛近似乘法膨胀，不能归因于单个B/C改动。
+三个实际改动业务文件合计仅`1,013.359 -> 1,016.127s`（`+0.27%`），两个Refresh目标node仍
+`-23.23%`、Refined两个共享fixture node仍`-30.24%`；Diagnostics虽原始`+8.82%`，相对同期重文件约
+`+25%～29%`的控制变化仍与focused改善方向一致。因此B/C保留，但不声明稳定full收益。
+
+COMPLETE调度的独立容量分解证明其负载均衡有效：worker busy CV=`1.529% -> 0.00619%`，tail
+total/max=`460.495/42.281s -> 0.177/0.017s`；test-window与容量下界的差距由约`29.024s`
+降至`0.492s`，消除约`28.53s`调度损失。但执行工作量下界同时增加约`242.33s`，净wall仍回退。
+两次不是同commit受控A/B，尚不能区分外部机器降频与重型文件同时前置造成的CPU/I/O/memory竞争。
+因此保留COMPLETE manifest、exact coverage、fallback和strict-reader基础设施，将
+`complete_full_duration_descending_stable`视为试验性调度策略；不把异常慢run回写为新权重，也不为寻求
+更好数字空跑full。下一自然边界前先做同commit的resource-aware stagger/bucket只读建模和focused
+验证；验收必须同时要求raw wall、worker busy、P99不回退并保持CV/tail收益。
+
+S3G验收不以单文件降幅代替full结论。每lane必须保持原nodeids、skip/xfail与required assertions；A/C的
+immutable复用发生在同worker且必须证明输入未漂移，B不扩大到语义缩短，D只改变调度顺序。最终full已
+验证collection set、同文件node顺序、scheduler applied/no fallback、profile/telemetry/performance、manifest
+freshness与tracked-doc/worktree副作用；其原始wall/busy/P99回退而调度CV/tail改善，故全局收益判定为
+`INCONCLUSIVE_RAW_REGRESSION`。仍不补写缺失的complete peak-memory/read-amplification，且固定
+`stable_full_improvement_claimed=false`、`strategy_logic_changed=false`、`cached_data_mutated=false`、
+`production_effect=none`。EB1、下一callback与ARCH-004下一slice继续暂停。
+
+### S3H：低风险compact前缀与resource-aware调度建模（owner批准继续）
+
+2026-07-18 / owner继续授权尽可能降低full耗时，并允许高耗时单项按互斥文件多agent并行。S3H以
+`outputs/validation_runtime/full_20260718T031839Z/test_runtime_profile.json`为候选排序证据，但因该run
+存在广泛`1.2625x`文件膨胀，所有old/new比较必须同时给出raw与全局worker-busy倍率归一口径，不能把
+系统性变慢误判为代码回退或收益。
+
+S3H只冻结两个低复杂度实现lane和一个只读调度lane；共享需求、task register、system flow、manifests、
+compatibility与最终集成仍由协调者独占：
+
+| lane | 独占范围 | 最新profile成本 | 候选与退出门槛 |
+|---|---|---:|---|
+|A Search Coverage Gap compact prefix|`tests/test_search_coverage_gap.py`|`196.08 worker-s`|只给既有fixture显式传入`compact_test_matrix=true`，继续覆盖8个required families；production默认80、nodeid、断言、DQ/PIT/source-lineage/tamper不变。同命令before一次、after至少两次；若两次after不能稳定改善至少10%，完整撤回。|
+|B Legacy conclusion compact prefix|`tests/test_no_promotion_review.py`、`tests/test_near_miss_candidates.py`、`tests/test_cash_buffer_attribution.py`|合计`244.53 worker-s`|仅在三个既有helper调用点启用已有compact完整family矩阵；保留zero-promotion、`cash_buffer_10` near-miss、tradeoff/recommendation语义及所有threshold/conclusion。同命令before一次、after至少两次，并检查逐文件duration；稳定改善不足10%或任一安全断言需放宽即撤回。|
+|C Resource-aware scheduler model|只读消费`004439Z`与`031839Z` profiles；若后续实施只允许runtime scheduler/test专属文件|duration-only已消除约`28.53s`调度损失但worker busy增加`24.49%`|独立量化首批重文件重合、resource contention proxy及duration-only/stock/stagger/bucket离线容量；在没有可复现分类、确定性tie、exact collection/fallback和不回退wall/busy/P99验收设计前不修改默认调度。|
+
+基线必须在无其他pytest负载下由协调者顺序取得；A/B随后按互斥文件并行实现，禁止agent编辑共享文件。
+合并后运行相同命令复测、expanded focused、Ruff、diff/side-effect、manifest/hash freshness及正式
+architecture/contract；只在两个实现lane均达到退出门槛且调度决策冻结后的下一自然integration boundary
+运行一次full。第三个高复杂度业务lane不启动：Layer1已因不稳定和314行复杂度撤回，Foundation跨worker
+复用与tamper/race风险、Execution Semantics大上下文重构均尚未达到收益/风险门槛。
+
 ### S4：持续回归约束
 
 - architecture/contract tests 校验 runtime manifest freshness、调度确定性和 gate coverage；

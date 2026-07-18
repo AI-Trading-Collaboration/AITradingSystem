@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
 
+import pytest
 from dynamic_v3_system_target_helpers import (
     report_index_for_review_fixture,
     run_review_fixture,
@@ -15,9 +19,50 @@ from ai_trading_system.platform.artifacts.validation_session import (
 from ai_trading_system.reports import reader_brief
 
 
+def _tree_content_fingerprint(root: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(root.rglob("*"), key=lambda item: item.relative_to(root).as_posix()):
+        relative_path = path.relative_to(root).as_posix().encode("utf-8")
+        if path.is_symlink():
+            entry_kind = b"L"
+            content = str(path.readlink()).encode("utf-8")
+        elif path.is_dir():
+            entry_kind = b"D"
+            content = b""
+        else:
+            entry_kind = b"F"
+            content = path.read_bytes()
+        digest.update(len(relative_path).to_bytes(8, "big"))
+        digest.update(relative_path)
+        digest.update(entry_kind)
+        digest.update(len(content).to_bytes(8, "big"))
+        digest.update(content)
+    return digest.hexdigest()
+
+
+@pytest.fixture(scope="module")
 @with_artifact_validation_session
-def test_refined_method_proposal_preserves_research_only_boundary(tmp_path) -> None:
-    artifacts = _run_refined_fixture(tmp_path)
+def immutable_refined_method_fixture(
+    tmp_path_factory: pytest.TempPathFactory,
+    request: pytest.FixtureRequest,
+) -> dict[str, Any]:
+    root = tmp_path_factory.mktemp("refined-method-proposal")
+    artifacts = _run_refined_fixture(root)
+    initial_fingerprint = _tree_content_fingerprint(root)
+
+    def assert_fixture_unchanged() -> None:
+        assert _tree_content_fingerprint(root) == initial_fingerprint
+
+    request.addfinalizer(assert_fixture_unchanged)
+    return {"root": root, "artifacts": artifacts}
+
+
+@with_artifact_validation_session
+def test_refined_method_proposal_preserves_research_only_boundary(
+    immutable_refined_method_fixture: dict[str, Any],
+) -> None:
+    root = immutable_refined_method_fixture["root"]
+    artifacts = immutable_refined_method_fixture["artifacts"]
     proposal = artifacts["proposal"]
     decision = proposal["refined_method_decision"]
     next_methods = proposal["proposed_next_methods"]["methods"]
@@ -42,15 +87,18 @@ def test_refined_method_proposal_preserves_research_only_boundary(tmp_path) -> N
 
     validation = system_target.validate_refined_method_proposal_artifact(
         proposal_id=proposal["proposal_id"],
-        output_dir=tmp_path / "refined_method_proposal",
+        output_dir=root / "refined_method_proposal",
     )
     assert validation["status"] == "PASS"
 
 
 @with_artifact_validation_session
-def test_reader_brief_displays_refined_method_proposal(tmp_path) -> None:
+def test_reader_brief_displays_refined_method_proposal(
+    tmp_path: Path,
+    immutable_refined_method_fixture: dict[str, Any],
+) -> None:
     review_fixture = run_review_fixture(tmp_path / "review")
-    artifacts = _run_refined_fixture(tmp_path / "selection")
+    artifacts = immutable_refined_method_fixture["artifacts"]
     proposal = artifacts["proposal"]
 
     report_index = report_index_for_review_fixture(review_fixture)

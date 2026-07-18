@@ -24,6 +24,7 @@ RUNTIME_PROFILE_OUTPUT_ENV = "AITS_PYTEST_RUNTIME_PROFILE_OUTPUT"
 RUNTIME_PROFILE_FORMAL_SELECTION_ENV = "AITS_PYTEST_RUNTIME_PROFILE_FORMAL_SELECTION"
 DURATION_PROFILE_OPTION = "--aits-duration-profile"
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+GIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 PHASE_ORDER = {"setup": 0, "call": 1, "teardown": 2}
 
 
@@ -35,12 +36,24 @@ class DurationProfile:
     profile_id: str | None
     owner: str | None
     version: int | None
+    manifest_status: str | None
     partial_seed: bool
+    complete_profile: bool
+    source_tier: str | None
     source_artifact_path: str | None
     source_artifact_sha256: str | None
     source_workers: int | None
     source_dist: str | None
     observed_seconds: Mapping[str, float]
+    file_node_counts: Mapping[str, int]
+    source_node_count: int | None
+    source_file_count: int | None
+    source_collection_ordered_sha256: str | None
+    source_collection_set_sha256: str | None
+    source_file_set_sha256: str | None
+    source_file_rows_sha256: str | None
+    expected_scheduled_ordered_sha256: str | None
+    source_file_duration_total_seconds: float | None
     valid: bool
     fallback_reason: str | None
 
@@ -62,6 +75,17 @@ class DurationOrderVerification:
     expected_ordered_sha256: str
 
 
+@dataclass(frozen=True)
+class CompleteCollectionVerification:
+    verified: bool
+    fallback_reason: str | None
+    observed_node_count: int
+    observed_file_count: int
+    observed_collection_set_sha256: str
+    observed_file_set_sha256: str
+    expected_ordered_sha256: str
+
+
 def _normalize_file_path(value: str) -> str:
     return value.replace("\\", "/").split("::", 1)[0]
 
@@ -78,14 +102,52 @@ def _invalid_duration_profile(path: Path, reason: str) -> DurationProfile:
         profile_id=None,
         owner=None,
         version=None,
+        manifest_status=None,
         partial_seed=False,
+        complete_profile=False,
+        source_tier=None,
         source_artifact_path=None,
         source_artifact_sha256=None,
         source_workers=None,
         source_dist=None,
         observed_seconds={},
+        file_node_counts={},
+        source_node_count=None,
+        source_file_count=None,
+        source_collection_ordered_sha256=None,
+        source_collection_set_sha256=None,
+        source_file_set_sha256=None,
+        source_file_rows_sha256=None,
+        expected_scheduled_ordered_sha256=None,
+        source_file_duration_total_seconds=None,
         valid=False,
         fallback_reason=reason,
+    )
+
+
+def _string_set_sha256(values: Sequence[str]) -> str:
+    return _sha256_bytes("\n".join(sorted(values)).encode("utf-8"))
+
+
+def _canonical_file_rows_sha256(
+    observed_seconds: Mapping[str, float],
+    file_node_counts: Mapping[str, int],
+) -> str:
+    rows = [
+        {
+            "node_count": file_node_counts[path],
+            "observed_seconds": observed_seconds[path],
+            "path": path,
+        }
+        for path in sorted(observed_seconds)
+    ]
+    return _sha256_bytes(
+        json.dumps(
+            rows,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
     )
 
 
@@ -106,6 +168,7 @@ def load_duration_profile(path: Path) -> DurationProfile:
     version = payload.get("version")
     source = payload.get("source")
     partial_seed = payload.get("partial_seed")
+    complete_profile = payload.get("complete_profile")
     review = payload.get("review")
     file_rows = payload.get("files")
 
@@ -113,8 +176,11 @@ def load_duration_profile(path: Path) -> DurationProfile:
         return _invalid_duration_profile(path, "duration profile schema_version is unsupported")
     if not isinstance(profile_id, str) or not profile_id.strip():
         return _invalid_duration_profile(path, "duration profile profile_id is required")
-    if status != "PARTIAL_SEED":
-        return _invalid_duration_profile(path, "duration profile status must be PARTIAL_SEED")
+    if status not in {"PARTIAL_SEED", "COMPLETE"}:
+        return _invalid_duration_profile(
+            path,
+            "duration profile status must be PARTIAL_SEED or COMPLETE",
+        )
     if not isinstance(owner, str) or not owner.strip():
         return _invalid_duration_profile(path, "duration profile owner is required")
     if isinstance(version, bool) or not isinstance(version, int) or version < 1:
@@ -124,8 +190,6 @@ def load_duration_profile(path: Path) -> DurationProfile:
         )
     if not isinstance(source, dict):
         return _invalid_duration_profile(path, "duration profile source is required")
-    if not isinstance(partial_seed, dict) or partial_seed.get("enabled") is not True:
-        return _invalid_duration_profile(path, "duration profile must declare partial_seed.enabled")
     if not isinstance(review, dict):
         return _invalid_duration_profile(path, "duration profile review contract is required")
     conditions = review.get("conditions")
@@ -134,7 +198,7 @@ def load_duration_profile(path: Path) -> DurationProfile:
     if review.get("stable_improvement_claimed") is not False:
         return _invalid_duration_profile(
             path,
-            "partial duration profile must set stable_improvement_claimed=false",
+            "duration profile must set stable_improvement_claimed=false",
         )
     if source.get("tier") != "full" or source.get("dist") != "loadfile":
         return _invalid_duration_profile(path, "duration profile source must be full/loadfile")
@@ -145,14 +209,16 @@ def load_duration_profile(path: Path) -> DurationProfile:
     source_artifact_sha256 = source.get("artifact_sha256")
     if not isinstance(source_artifact_path, str) or not source_artifact_path.strip():
         return _invalid_duration_profile(path, "duration profile source artifact_path is required")
-    if not isinstance(source_artifact_sha256, str) or SHA256_RE.fullmatch(
-        source_artifact_sha256
-    ) is None:
+    if (
+        not isinstance(source_artifact_sha256, str)
+        or SHA256_RE.fullmatch(source_artifact_sha256) is None
+    ):
         return _invalid_duration_profile(path, "duration profile source artifact_sha256 is invalid")
     if not isinstance(file_rows, list) or not file_rows:
         return _invalid_duration_profile(path, "duration profile files must be non-empty")
 
     observed_seconds: dict[str, float] = {}
+    file_node_counts: dict[str, int] = {}
     for row in file_rows:
         if not isinstance(row, dict):
             return _invalid_duration_profile(path, "duration profile file row must be a mapping")
@@ -189,17 +255,174 @@ def load_duration_profile(path: Path) -> DurationProfile:
                 f"duration profile observed_seconds must be positive: {normalized_file}",
             )
         observed_seconds[normalized_file] = seconds
+        raw_node_count = row.get("node_count")
+        if status == "COMPLETE":
+            if (
+                isinstance(raw_node_count, bool)
+                or not isinstance(raw_node_count, int)
+                or raw_node_count < 1
+            ):
+                return _invalid_duration_profile(
+                    path,
+                    f"complete duration profile node_count is invalid: {normalized_file}",
+                )
+            file_node_counts[normalized_file] = raw_node_count
 
-    aggregated_file_count = partial_seed.get("aggregated_file_count")
-    source_duration_row_count = partial_seed.get("source_duration_row_count")
-    if aggregated_file_count != len(observed_seconds):
-        return _invalid_duration_profile(path, "partial seed aggregated_file_count is stale")
-    if (
-        isinstance(source_duration_row_count, bool)
-        or not isinstance(source_duration_row_count, int)
-        or source_duration_row_count < len(observed_seconds)
-    ):
-        return _invalid_duration_profile(path, "partial seed source_duration_row_count is invalid")
+    source_node_count: int | None = None
+    source_file_count: int | None = None
+    source_collection_ordered_sha256: str | None = None
+    source_collection_set_sha256: str | None = None
+    source_file_set_sha256: str | None = None
+    source_file_rows_sha256: str | None = None
+    expected_scheduled_ordered_sha256: str | None = None
+    source_file_duration_total_seconds: float | None = None
+    if status == "PARTIAL_SEED":
+        if not isinstance(partial_seed, dict) or partial_seed.get("enabled") is not True:
+            return _invalid_duration_profile(
+                path,
+                "partial duration profile must declare partial_seed.enabled=true",
+            )
+        if complete_profile is not None:
+            return _invalid_duration_profile(
+                path,
+                "partial duration profile must not declare complete_profile",
+            )
+        aggregated_file_count = partial_seed.get("aggregated_file_count")
+        source_duration_row_count = partial_seed.get("source_duration_row_count")
+        if aggregated_file_count != len(observed_seconds):
+            return _invalid_duration_profile(path, "partial seed aggregated_file_count is stale")
+        if (
+            isinstance(source_duration_row_count, bool)
+            or not isinstance(source_duration_row_count, int)
+            or source_duration_row_count < len(observed_seconds)
+        ):
+            return _invalid_duration_profile(
+                path,
+                "partial seed source_duration_row_count is invalid",
+            )
+    else:
+        if partial_seed is not None:
+            return _invalid_duration_profile(
+                path,
+                "complete duration profile must not declare partial_seed",
+            )
+        if not isinstance(complete_profile, dict) or complete_profile.get("enabled") is not True:
+            return _invalid_duration_profile(
+                path,
+                "complete duration profile must declare complete_profile.enabled=true",
+            )
+        if (
+            source.get("profile_status") != "PASS"
+            or source.get("telemetry_status") != "PASS"
+            or source.get("performance_evidence_status") != "PASS"
+            or isinstance(source.get("pytest_exitstatus"), bool)
+            or source.get("pytest_exitstatus") != 0
+        ):
+            return _invalid_duration_profile(
+                path,
+                "complete duration profile source must be PASS with pytest_exitstatus=0",
+            )
+        source_elapsed = source.get("elapsed_seconds")
+        source_git_commit = source.get("git_commit")
+        if (
+            isinstance(source_elapsed, bool)
+            or not isinstance(source_elapsed, (int, float))
+            or not math.isfinite(float(source_elapsed))
+            or float(source_elapsed) <= 0.0
+        ):
+            return _invalid_duration_profile(
+                path,
+                "complete duration profile source elapsed_seconds is invalid",
+            )
+        if (
+            not isinstance(source_git_commit, str)
+            or GIT_SHA_RE.fullmatch(source_git_commit) is None
+        ):
+            return _invalid_duration_profile(
+                path,
+                "complete duration profile source git_commit is invalid",
+            )
+        source_node_count = complete_profile.get("source_node_count")
+        source_file_count = complete_profile.get("source_file_count")
+        if (
+            isinstance(source_node_count, bool)
+            or not isinstance(source_node_count, int)
+            or source_node_count < 1
+            or isinstance(source_file_count, bool)
+            or not isinstance(source_file_count, int)
+            or source_file_count < 1
+        ):
+            return _invalid_duration_profile(
+                path,
+                "complete duration profile source node/file counts are invalid",
+            )
+        if source_file_count != len(observed_seconds):
+            return _invalid_duration_profile(
+                path,
+                "complete duration profile source_file_count is stale",
+            )
+        if source_node_count != sum(file_node_counts.values()):
+            return _invalid_duration_profile(
+                path,
+                "complete duration profile source_node_count is stale",
+            )
+        hash_fields = {
+            "source_collection_ordered_sha256": complete_profile.get(
+                "source_collection_ordered_sha256"
+            ),
+            "source_collection_set_sha256": complete_profile.get("source_collection_set_sha256"),
+            "source_file_set_sha256": complete_profile.get("source_file_set_sha256"),
+            "source_file_rows_sha256": complete_profile.get("source_file_rows_sha256"),
+            "expected_scheduled_ordered_sha256": complete_profile.get(
+                "expected_scheduled_ordered_sha256"
+            ),
+        }
+        for field_name, field_value in hash_fields.items():
+            if not isinstance(field_value, str) or SHA256_RE.fullmatch(field_value) is None:
+                return _invalid_duration_profile(
+                    path,
+                    f"complete duration profile {field_name} is invalid",
+                )
+        source_collection_ordered_sha256 = str(hash_fields["source_collection_ordered_sha256"])
+        source_collection_set_sha256 = str(hash_fields["source_collection_set_sha256"])
+        source_file_set_sha256 = str(hash_fields["source_file_set_sha256"])
+        source_file_rows_sha256 = str(hash_fields["source_file_rows_sha256"])
+        expected_scheduled_ordered_sha256 = str(hash_fields["expected_scheduled_ordered_sha256"])
+        if source_file_set_sha256 != _string_set_sha256(list(observed_seconds)):
+            return _invalid_duration_profile(
+                path,
+                "complete duration profile source_file_set_sha256 is stale",
+            )
+        if source_file_rows_sha256 != _canonical_file_rows_sha256(
+            observed_seconds,
+            file_node_counts,
+        ):
+            return _invalid_duration_profile(
+                path,
+                "complete duration profile source_file_rows_sha256 is stale",
+            )
+        raw_duration_total = complete_profile.get("source_file_duration_total_seconds")
+        if (
+            isinstance(raw_duration_total, bool)
+            or not isinstance(raw_duration_total, (int, float))
+            or not math.isfinite(float(raw_duration_total))
+            or float(raw_duration_total) <= 0.0
+        ):
+            return _invalid_duration_profile(
+                path,
+                "complete duration profile source duration total is invalid",
+            )
+        source_file_duration_total_seconds = float(raw_duration_total)
+        if not math.isclose(
+            source_file_duration_total_seconds,
+            sum(observed_seconds.values()),
+            rel_tol=0.0,
+            abs_tol=1e-6,
+        ):
+            return _invalid_duration_profile(
+                path,
+                "complete duration profile source duration total is stale",
+            )
 
     return DurationProfile(
         configured_path=str(path),
@@ -208,12 +431,24 @@ def load_duration_profile(path: Path) -> DurationProfile:
         profile_id=profile_id,
         owner=owner,
         version=version,
-        partial_seed=True,
+        manifest_status=status,
+        partial_seed=status == "PARTIAL_SEED",
+        complete_profile=status == "COMPLETE",
+        source_tier=str(source["tier"]),
         source_artifact_path=source_artifact_path,
         source_artifact_sha256=source_artifact_sha256,
         source_workers=int(source["workers"]),
         source_dist=str(source["dist"]),
         observed_seconds=observed_seconds,
+        file_node_counts=file_node_counts,
+        source_node_count=source_node_count,
+        source_file_count=source_file_count,
+        source_collection_ordered_sha256=source_collection_ordered_sha256,
+        source_collection_set_sha256=source_collection_set_sha256,
+        source_file_set_sha256=source_file_set_sha256,
+        source_file_rows_sha256=source_file_rows_sha256,
+        expected_scheduled_ordered_sha256=expected_scheduled_ordered_sha256,
+        source_file_duration_total_seconds=source_file_duration_total_seconds,
         valid=True,
         fallback_reason=None,
     )
@@ -225,8 +460,74 @@ def resolve_scheduler_decision(
     expected_worker_count: int,
     xdist_dist: str,
     loadscope_reorder: bool,
+    nodeids: Sequence[str] | None = None,
 ) -> SchedulerDecision:
     normalized_dist = xdist_dist.strip().lower() or "no"
+    if duration_profile.valid and duration_profile.complete_profile:
+        if normalized_dist != "loadfile":
+            return SchedulerDecision(
+                policy="stock_loadfile_test_count_order",
+                applied=False,
+                fallback=True,
+                plugin_fallback_by_count=True,
+                fallback_reason=(
+                    "complete duration profile requires pytest-xdist --dist loadfile; "
+                    f"observed={normalized_dist}"
+                ),
+            )
+        if expected_worker_count < 2:
+            return SchedulerDecision(
+                policy="stock_loadfile_test_count_order",
+                applied=False,
+                fallback=True,
+                plugin_fallback_by_count=True,
+                fallback_reason=(
+                    "complete duration profile requires parallel pytest-xdist workers"
+                ),
+            )
+        if loadscope_reorder:
+            return SchedulerDecision(
+                policy="stock_loadfile_test_count_order",
+                applied=False,
+                fallback=True,
+                plugin_fallback_by_count=False,
+                fallback_reason=(
+                    "complete duration profile requires --no-loadscope-reorder; "
+                    "pytest-xdist owns the stock test-count fallback"
+                ),
+            )
+        if expected_worker_count != duration_profile.source_workers:
+            return SchedulerDecision(
+                policy="stock_loadfile_test_count_order",
+                applied=False,
+                fallback=True,
+                plugin_fallback_by_count=True,
+                fallback_reason=(
+                    "complete duration profile worker count mismatch: "
+                    f"profile={duration_profile.source_workers} "
+                    f"observed={expected_worker_count}"
+                ),
+            )
+        if nodeids is not None:
+            complete_verification = verify_complete_profile_collection(
+                nodeids,
+                duration_profile,
+            )
+            if not complete_verification.verified:
+                return SchedulerDecision(
+                    policy="stock_loadfile_test_count_order",
+                    applied=False,
+                    fallback=True,
+                    plugin_fallback_by_count=True,
+                    fallback_reason=complete_verification.fallback_reason,
+                )
+        return SchedulerDecision(
+            policy="complete_full_duration_descending_stable",
+            applied=True,
+            fallback=False,
+            plugin_fallback_by_count=False,
+            fallback_reason=None,
+        )
     if normalized_dist != "loadfile":
         return SchedulerDecision(
             policy="non_loadfile_collection_order_preserved",
@@ -339,16 +640,11 @@ def verify_duration_order(
         if _normalize_file_path(nodeid) in observed_seconds
     }
     matched_node_count = sum(
-        1
-        for nodeid in normalized_nodeids
-        if _normalize_file_path(nodeid) in observed_seconds
+        1 for nodeid in normalized_nodeids if _normalize_file_path(nodeid) in observed_seconds
     )
     expected_identity = collection_identity(expected_nodeids)
     return DurationOrderVerification(
-        verified=(
-            bool(matched_files)
-            and normalized_nodeids == expected_nodeids
-        ),
+        verified=(bool(matched_files) and normalized_nodeids == expected_nodeids),
         matched_tracked_file_count=len(matched_files),
         matched_tracked_node_count=matched_node_count,
         expected_ordered_sha256=str(expected_identity["ordered_sha256"]),
@@ -369,6 +665,61 @@ def collection_identity(nodeids: Sequence[str]) -> dict[str, object]:
         "set_sha256": _sha256_bytes(set_payload),
         "duplicate_nodeids": duplicates,
     }
+
+
+def verify_complete_profile_collection(
+    nodeids: Sequence[str],
+    duration_profile: DurationProfile,
+) -> CompleteCollectionVerification:
+    normalized_nodeids = [str(nodeid) for nodeid in nodeids]
+    identity = collection_identity(normalized_nodeids)
+    grouped: OrderedDict[str, list[str]] = OrderedDict()
+    for nodeid in normalized_nodeids:
+        grouped.setdefault(_normalize_file_path(nodeid), []).append(nodeid)
+    observed_files = list(grouped)
+    observed_file_set_sha256 = _string_set_sha256(observed_files)
+    expected_nodeids = stable_reorder_nodeids(
+        normalized_nodeids,
+        duration_profile.observed_seconds,
+    )
+    expected_ordered_sha256 = str(collection_identity(expected_nodeids)["ordered_sha256"])
+
+    def result(reason: str | None) -> CompleteCollectionVerification:
+        return CompleteCollectionVerification(
+            verified=reason is None,
+            fallback_reason=reason,
+            observed_node_count=len(normalized_nodeids),
+            observed_file_count=len(grouped),
+            observed_collection_set_sha256=str(identity["set_sha256"]),
+            observed_file_set_sha256=observed_file_set_sha256,
+            expected_ordered_sha256=expected_ordered_sha256,
+        )
+
+    if not duration_profile.valid or not duration_profile.complete_profile:
+        return result("complete duration profile collection verification is unavailable")
+    if identity["duplicate_nodeids"]:
+        return result("complete duration profile collection contains duplicate nodeids")
+    if len(normalized_nodeids) != duration_profile.source_node_count:
+        return result(
+            "complete duration profile collection node count mismatch: "
+            f"profile={duration_profile.source_node_count} observed={len(normalized_nodeids)}"
+        )
+    if identity["set_sha256"] != duration_profile.source_collection_set_sha256:
+        return result("complete duration profile collection set_sha256 mismatch")
+    if len(grouped) != duration_profile.source_file_count:
+        return result(
+            "complete duration profile collection file count mismatch: "
+            f"profile={duration_profile.source_file_count} observed={len(grouped)}"
+        )
+    if set(grouped) != set(duration_profile.observed_seconds):
+        return result("complete duration profile collected file set mismatch")
+    if observed_file_set_sha256 != duration_profile.source_file_set_sha256:
+        return result("complete duration profile collected file-set sha256 mismatch")
+    if any(len(grouped[path]) != duration_profile.file_node_counts.get(path) for path in grouped):
+        return result("complete duration profile per-file node counts mismatch")
+    if expected_ordered_sha256 != duration_profile.expected_scheduled_ordered_sha256:
+        return result("complete duration profile expected scheduler order is stale")
+    return result(None)
 
 
 def _as_finite_float(value: object) -> float | None:
@@ -434,21 +785,27 @@ def build_runtime_profile(
     ended_at: float,
 ) -> dict[str, object]:
     warnings: list[str] = []
-    scheduler_decision = resolve_scheduler_decision(
-        duration_profile,
-        expected_worker_count=expected_worker_count,
-        xdist_dist=xdist_dist,
-        loadscope_reorder=loadscope_reorder,
-    )
     collection_rows = {
         worker_id: [str(nodeid) for nodeid in nodeids]
         for worker_id, nodeids in sorted(collections.items())
     }
     canonical_nodeids = next(iter(collection_rows.values()), [])
     canonical_identity = collection_identity(canonical_nodeids)
+    scheduler_decision = resolve_scheduler_decision(
+        duration_profile,
+        expected_worker_count=expected_worker_count,
+        xdist_dist=xdist_dist,
+        loadscope_reorder=loadscope_reorder,
+        nodeids=canonical_nodeids,
+    )
     duration_order_verification = verify_duration_order(
         canonical_nodeids,
         duration_profile.observed_seconds,
+    )
+    complete_collection_verification = (
+        verify_complete_profile_collection(canonical_nodeids, duration_profile)
+        if duration_profile.complete_profile
+        else None
     )
     collection_complete = bool(collection_rows)
 
@@ -560,8 +917,7 @@ def build_runtime_profile(
         warnings.append(f"duplicate phase telemetry node count={len(duplicate_phase_nodeids)}")
     if missing_required_phase_nodeids:
         warnings.append(
-            "missing required phase telemetry node count="
-            f"{len(missing_required_phase_nodeids)}"
+            "missing required phase telemetry node count=" f"{len(missing_required_phase_nodeids)}"
         )
     if inconsistent_worker_nodeids:
         warnings.append(
@@ -618,9 +974,7 @@ def build_runtime_profile(
         stops = [float(row["stop_epoch_seconds"]) for row in rows]
         busy_seconds = sum(float(row["duration_seconds"]) for row in rows)
         span_seconds = max(stops) - min(starts)
-        tail_idle = (
-            max(0.0, global_last_stop - max(stops)) if global_last_stop is not None else 0.0
-        )
+        tail_idle = max(0.0, global_last_stop - max(stops)) if global_last_stop is not None else 0.0
         worker_rows.append(
             {
                 "worker_id": worker_id,
@@ -641,9 +995,7 @@ def build_runtime_profile(
     if inactive_worker_ids:
         warnings.append(f"inactive runtime worker count={len(inactive_worker_ids)}")
     if unexpected_runtime_worker_ids:
-        warnings.append(
-            "unexpected runtime worker count=" f"{len(unexpected_runtime_worker_ids)}"
-        )
+        warnings.append("unexpected runtime worker count=" f"{len(unexpected_runtime_worker_ids)}")
 
     telemetry_complete = (
         collection_complete
@@ -659,8 +1011,7 @@ def build_runtime_profile(
     scheduler_applied = scheduler_decision.applied
     if not scheduler_applied:
         warnings.append(
-            "duration-aware scheduling was not eligible: "
-            f"{scheduler_decision.fallback_reason}"
+            "duration-aware scheduling was not eligible: " f"{scheduler_decision.fallback_reason}"
         )
     elif not duration_order_verification.verified:
         warnings.append(
@@ -682,6 +1033,13 @@ def build_runtime_profile(
             telemetry_complete
             and scheduler_applied
             and duration_order_verification.verified
+            and (
+                not duration_profile.complete_profile
+                or (
+                    complete_collection_verification is not None
+                    and complete_collection_verification.verified
+                )
+            )
             and formal_full_selection_eligible
             and pytest_exitstatus == 0
         )
@@ -715,21 +1073,32 @@ def build_runtime_profile(
             "profile_id": duration_profile.profile_id,
             "owner": duration_profile.owner,
             "version": duration_profile.version,
+            "manifest_status": duration_profile.manifest_status,
             "partial_seed": duration_profile.partial_seed,
+            "complete_profile": duration_profile.complete_profile,
             "tracked_file_count": len(duration_profile.observed_seconds),
+            "tracked_node_count": duration_profile.source_node_count,
+            "source_tier": duration_profile.source_tier,
+            "source_workers": duration_profile.source_workers,
+            "source_dist": duration_profile.source_dist,
             "source_artifact_path": duration_profile.source_artifact_path,
             "source_artifact_sha256": duration_profile.source_artifact_sha256,
+            "source_collection_ordered_sha256": (duration_profile.source_collection_ordered_sha256),
+            "source_collection_set_sha256": (duration_profile.source_collection_set_sha256),
+            "source_file_set_sha256": duration_profile.source_file_set_sha256,
+            "source_file_rows_sha256": duration_profile.source_file_rows_sha256,
+            "complete_expected_ordered_sha256": (
+                duration_profile.expected_scheduled_ordered_sha256
+            ),
+            "complete_collection_verified": bool(
+                complete_collection_verification is not None
+                and complete_collection_verification.verified
+            ),
             "file_internal_node_order_preserved": True,
             "duration_order_verified": duration_order_verification.verified,
-            "matched_tracked_file_count": (
-                duration_order_verification.matched_tracked_file_count
-            ),
-            "matched_tracked_node_count": (
-                duration_order_verification.matched_tracked_node_count
-            ),
-            "expected_ordered_sha256": (
-                duration_order_verification.expected_ordered_sha256
-            ),
+            "matched_tracked_file_count": (duration_order_verification.matched_tracked_file_count),
+            "matched_tracked_node_count": (duration_order_verification.matched_tracked_node_count),
+            "expected_ordered_sha256": (duration_order_verification.expected_ordered_sha256),
             "equal_duration_tie_policy": "stable_first_seen_file_order",
             "untracked_file_weight_seconds": 0.0,
             "expected_worker_count": expected_worker_count,
@@ -810,10 +1179,14 @@ class RuntimeProfilePlugin:
         if self.expected_worker_count < 1:
             self.expected_worker_count = 1
         self.xdist_dist = (
-            _worker_cli_option(worker_argv, "--dist", default="no")
-            if self.is_worker
-            else str(config.getoption("dist", default="no") or "no")
-        ).strip().lower()
+            (
+                _worker_cli_option(worker_argv, "--dist", default="no")
+                if self.is_worker
+                else str(config.getoption("dist", default="no") or "no")
+            )
+            .strip()
+            .lower()
+        )
         self.loadscope_reorder = (
             _worker_loadscope_reorder(worker_argv, default=True)
             if self.is_worker
@@ -840,16 +1213,20 @@ class RuntimeProfilePlugin:
         items: list[pytest.Item],
     ) -> None:
         del session, config
-        if not (
-            self.scheduler_decision.applied
-            or self.scheduler_decision.plugin_fallback_by_count
-        ):
-            return
         nodeids = [item.nodeid for item in items]
+        scheduler_decision = resolve_scheduler_decision(
+            self.duration_profile,
+            expected_worker_count=self.expected_worker_count,
+            xdist_dist=self.xdist_dist,
+            loadscope_reorder=self.loadscope_reorder,
+            nodeids=nodeids,
+        )
+        if not (scheduler_decision.applied or scheduler_decision.plugin_fallback_by_count):
+            return
         order = _stable_file_order_indices(
             nodeids,
             self.duration_profile.observed_seconds,
-            fallback_by_count=self.scheduler_decision.plugin_fallback_by_count,
+            fallback_by_count=scheduler_decision.plugin_fallback_by_count,
         )
         original = list(items)
         items[:] = [original[index] for index in order]

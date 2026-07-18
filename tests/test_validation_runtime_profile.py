@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -11,15 +12,152 @@ from pathlib import Path
 from scripts.pytest_runtime_profile import (
     RUNTIME_PROFILE_FORMAL_SELECTION_ENV,
     RUNTIME_PROFILE_OUTPUT_ENV,
+    DurationProfile,
     build_runtime_profile,
     collection_identity,
     load_duration_profile,
     resolve_scheduler_decision,
     stable_reorder_nodeids,
+    verify_complete_profile_collection,
     verify_duration_order,
 )
 
 PROFILE_PATH = Path("inputs/architecture/arch_004g2_full_duration_profile.yaml")
+
+
+def _file_set_sha256(paths: list[str]) -> str:
+    return hashlib.sha256("\n".join(sorted(paths)).encode("utf-8")).hexdigest()
+
+
+def _file_rows_sha256(rows: list[dict[str, object]]) -> str:
+    canonical = sorted(rows, key=lambda row: str(row["path"]))
+    return hashlib.sha256(
+        json.dumps(
+            canonical,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _write_legacy_partial_profile(path: Path) -> Path:
+    payload = {
+        "schema_version": "arch_004g2_full_duration_profile.v1",
+        "profile_id": "legacy_partial_seed_test",
+        "status": "PARTIAL_SEED",
+        "owner": "validation_operations",
+        "version": 1,
+        "source": {
+            "artifact_path": "outputs/validation_runtime/legacy/test_runtime_summary.json",
+            "artifact_sha256": "1" * 64,
+            "tier": "full",
+            "workers": 16,
+            "dist": "loadfile",
+        },
+        "partial_seed": {
+            "enabled": True,
+            "source_duration_row_count": 2,
+            "aggregated_file_count": 2,
+        },
+        "review": {
+            "stable_improvement_claimed": False,
+            "conditions": ["legacy v1 compatibility"],
+        },
+        "files": [
+            {"path": "tests/test_a.py", "observed_seconds": 2.0},
+            {"path": "tests/test_b.py", "observed_seconds": 1.0},
+        ],
+    }
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def _write_complete_profile(
+    path: Path,
+    *,
+    nodeids: list[str],
+    observed_seconds: dict[str, float],
+) -> Path:
+    file_node_counts = {
+        file_path: sum(
+            nodeid.split("::", 1)[0].replace("\\", "/") == file_path for nodeid in nodeids
+        )
+        for file_path in observed_seconds
+    }
+    file_rows = [
+        {
+            "path": file_path,
+            "node_count": file_node_counts[file_path],
+            "observed_seconds": observed_seconds[file_path],
+        }
+        for file_path in observed_seconds
+    ]
+    expected_nodeids = stable_reorder_nodeids(nodeids, observed_seconds)
+    payload = {
+        "schema_version": "arch_004g2_full_duration_profile.v1",
+        "profile_id": "complete_duration_profile_test",
+        "status": "COMPLETE",
+        "owner": "validation_operations",
+        "version": 2,
+        "source": {
+            "artifact_path": "outputs/validation_runtime/test/test_runtime_profile.json",
+            "artifact_sha256": "2" * 64,
+            "tier": "full",
+            "workers": 16,
+            "dist": "loadfile",
+            "elapsed_seconds": 1.0,
+            "git_commit": "3" * 40,
+            "profile_status": "PASS",
+            "telemetry_status": "PASS",
+            "performance_evidence_status": "PASS",
+            "pytest_exitstatus": 0,
+        },
+        "complete_profile": {
+            "enabled": True,
+            "source_node_count": len(nodeids),
+            "source_file_count": len(file_rows),
+            "source_collection_ordered_sha256": collection_identity(nodeids)["ordered_sha256"],
+            "source_collection_set_sha256": collection_identity(nodeids)["set_sha256"],
+            "source_file_set_sha256": _file_set_sha256(list(observed_seconds)),
+            "source_file_rows_sha256": _file_rows_sha256(file_rows),
+            "expected_scheduled_ordered_sha256": collection_identity(expected_nodeids)[
+                "ordered_sha256"
+            ],
+            "source_file_duration_total_seconds": sum(observed_seconds.values()),
+        },
+        "review": {
+            "stable_improvement_claimed": False,
+            "conditions": ["complete v1 collection binding"],
+        },
+        "files": file_rows,
+    }
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def _legacy_runtime_profile(
+    *,
+    observed_seconds: dict[str, float] | None = None,
+    source_workers: int = 2,
+) -> DurationProfile:
+    return replace(
+        load_duration_profile(PROFILE_PATH),
+        manifest_status="PARTIAL_SEED",
+        partial_seed=True,
+        complete_profile=False,
+        source_workers=source_workers,
+        observed_seconds=observed_seconds or {},
+        file_node_counts={},
+        source_node_count=None,
+        source_file_count=None,
+        source_collection_ordered_sha256=None,
+        source_collection_set_sha256=None,
+        source_file_set_sha256=None,
+        source_file_rows_sha256=None,
+        expected_scheduled_ordered_sha256=None,
+        source_file_duration_total_seconds=None,
+    )
 
 
 def _phase(
@@ -42,23 +180,53 @@ def _phase(
     }
 
 
-def test_tracked_partial_seed_profile_is_valid_and_source_bound() -> None:
+def test_tracked_partial_seed_profile_is_valid_and_source_bound(tmp_path: Path) -> None:
     profile = load_duration_profile(PROFILE_PATH)
 
     assert profile.valid is True
-    assert profile.partial_seed is True
+    assert profile.manifest_status == "COMPLETE"
+    assert profile.partial_seed is False
+    assert profile.complete_profile is True
     assert profile.owner == "validation_operations"
-    assert profile.version == 1
+    assert profile.version == 2
     assert profile.source_workers == 16
     assert profile.source_dist == "loadfile"
     assert profile.source_artifact_path == (
-        "outputs/validation_runtime/full_20260717T161557Z/test_runtime_summary.json"
+        "outputs/validation_runtime/full_20260718T004439Z/test_runtime_profile.json"
     )
     assert profile.source_artifact_sha256 == (
-        "93d1713f78bc1bec3a9792bbea99c02da6a0966123d096a9c233004d2b47c756"
+        "58206a1a015be4b24a3419301c27dca44a740409f7bc00f0d51e99ad8ae532c6"
     )
-    assert len(profile.observed_seconds) == 44
-    assert profile.observed_seconds["tests/test_layer1_meta_policy_readiness.py"] == 1198.77
+    assert len(profile.observed_seconds) == 1068
+    assert profile.source_node_count == 6248
+    assert profile.source_file_count == 1068
+    assert profile.source_collection_ordered_sha256 == (
+        "7b7dc4a7838cbf17d68a64b2e3aaf4dfc59267c75109a58139ea1b03986d7322"
+    )
+    assert profile.source_collection_set_sha256 == (
+        "6e8fee8709c8e781952a29224a8857d01bd6df5c50f9070508ad1dac9c5a18ee"
+    )
+    assert profile.source_file_set_sha256 == (
+        "11d3fb989f3f3e0a55141affe2db5b735598afdb06466476e976e82fcdf44e4b"
+    )
+    assert profile.expected_scheduled_ordered_sha256 == (
+        "a426c7e9a326fdbabf76f2ad16f4891e47cd8e116ae4eae0e6dd3f267a23d3fd"
+    )
+    assert profile.observed_seconds["tests/test_layer1_meta_policy_readiness.py"] == (436.8188494)
+
+    legacy = load_duration_profile(_write_legacy_partial_profile(tmp_path / "legacy_partial.yaml"))
+    assert legacy.valid is True
+    assert legacy.manifest_status == "PARTIAL_SEED"
+    assert legacy.partial_seed is True
+    assert legacy.complete_profile is False
+    legacy_decision = resolve_scheduler_decision(
+        legacy,
+        expected_worker_count=16,
+        xdist_dist="loadfile",
+        loadscope_reorder=False,
+    )
+    assert legacy_decision.policy == "tracked_partial_seed_duration_descending_stable"
+    assert legacy_decision.applied is True
 
 
 def test_duration_order_is_stable_and_preserves_file_internal_order() -> None:
@@ -91,9 +259,7 @@ def test_duration_order_is_stable_and_preserves_file_internal_order() -> None:
     assert verification.verified is True
     assert verification.matched_tracked_file_count == 3
     assert verification.matched_tracked_node_count == 4
-    assert verification.expected_ordered_sha256 == collection_identity(reordered)[
-        "ordered_sha256"
-    ]
+    assert verification.expected_ordered_sha256 == collection_identity(reordered)["ordered_sha256"]
     assert verify_duration_order(nodeids, observed).verified is False
 
 
@@ -115,14 +281,25 @@ def test_stock_fallback_matches_loadfile_test_count_order() -> None:
     ]
 
 
-def test_scheduler_requires_matching_parallel_loadfile_execution_contract() -> None:
-    profile = load_duration_profile(PROFILE_PATH)
+def test_scheduler_requires_matching_parallel_loadfile_execution_contract(
+    tmp_path: Path,
+) -> None:
+    nodeids = ["tests/test_a.py::test_a", "tests/test_b.py::test_b"]
+    observed = {"tests/test_a.py": 2.0, "tests/test_b.py": 1.0}
+    profile = load_duration_profile(
+        _write_complete_profile(
+            tmp_path / "complete.yaml",
+            nodeids=nodeids,
+            observed_seconds=observed,
+        )
+    )
 
     eligible = resolve_scheduler_decision(
         profile,
         expected_worker_count=16,
         xdist_dist="loadfile",
         loadscope_reorder=False,
+        nodeids=nodeids,
     )
     wrong_workers = resolve_scheduler_decision(
         profile,
@@ -150,24 +327,46 @@ def test_scheduler_requires_matching_parallel_loadfile_execution_contract() -> N
     )
 
     assert eligible.applied is True
+    assert eligible.policy == "complete_full_duration_descending_stable"
     assert eligible.fallback is False
     assert wrong_workers.applied is False
     assert wrong_workers.fallback is True
     assert wrong_workers.plugin_fallback_by_count is True
     assert worksteal.applied is False
-    assert worksteal.fallback is False
+    assert worksteal.fallback is True
+    assert worksteal.policy == "stock_loadfile_test_count_order"
     assert serial.applied is False
-    assert serial.fallback is False
+    assert serial.fallback is True
     assert xdist_reorder_enabled.applied is False
     assert xdist_reorder_enabled.fallback is True
     assert xdist_reorder_enabled.plugin_fallback_by_count is False
+
+    exact = verify_complete_profile_collection(nodeids, profile)
+    stale = verify_complete_profile_collection(
+        ["tests/test_a.py::test_changed", nodeids[1]],
+        profile,
+    )
+    duplicated = verify_complete_profile_collection([nodeids[0], nodeids[0]], profile)
+    assert exact.verified is True
+    assert stale.verified is False
+    assert "set_sha256 mismatch" in str(stale.fallback_reason)
+    assert duplicated.verified is False
+    assert "duplicate nodeids" in str(duplicated.fallback_reason)
+    stale_decision = resolve_scheduler_decision(
+        profile,
+        expected_worker_count=16,
+        xdist_dist="loadfile",
+        loadscope_reorder=False,
+        nodeids=["tests/test_a.py::test_changed", nodeids[1]],
+    )
+    assert stale_decision.policy == "stock_loadfile_test_count_order"
+    assert stale_decision.fallback is True
 
 
 def test_invalid_profile_is_explicit_and_can_only_use_stock_fallback(tmp_path: Path) -> None:
     invalid_path = tmp_path / "invalid_profile.yaml"
     invalid_path.write_text(
-        "schema_version: arch_004g2_full_duration_profile.v1\n"
-        "profile_id: incomplete\n",
+        "schema_version: arch_004g2_full_duration_profile.v1\n" "profile_id: incomplete\n",
         encoding="utf-8",
     )
 
@@ -196,12 +395,31 @@ def test_invalid_profile_is_explicit_and_can_only_use_stock_fallback(tmp_path: P
     assert traversal_profile.valid is False
     assert "out of scope" in str(traversal_profile.fallback_reason)
 
+    complete_path = _write_complete_profile(
+        tmp_path / "complete_profile.yaml",
+        nodeids=["tests/test_a.py::test_a", "tests/test_b.py::test_b"],
+        observed_seconds={"tests/test_a.py": 2.0, "tests/test_b.py": 1.0},
+    )
+    duplicate_payload = json.loads(complete_path.read_text(encoding="utf-8"))
+    duplicate_payload["files"].append(dict(duplicate_payload["files"][0]))
+    duplicate_path = tmp_path / "duplicate_complete_profile.yaml"
+    duplicate_path.write_text(json.dumps(duplicate_payload), encoding="utf-8")
+    duplicate_profile = load_duration_profile(duplicate_path)
+    assert duplicate_profile.valid is False
+    assert "duplicate file" in str(duplicate_profile.fallback_reason)
+
+    stale_payload = json.loads(complete_path.read_text(encoding="utf-8"))
+    stale_payload["complete_profile"]["source_node_count"] = 999
+    stale_path = tmp_path / "stale_complete_profile.yaml"
+    stale_path.write_text(json.dumps(stale_payload), encoding="utf-8")
+    stale_profile = load_duration_profile(stale_path)
+    assert stale_profile.valid is False
+    assert "source_node_count is stale" in str(stale_profile.fallback_reason)
+
 
 def test_collection_identity_is_order_and_duplicate_auditable() -> None:
     first = collection_identity(["tests/test_a.py::test_a", "tests/test_b.py::test_b"])
-    reversed_order = collection_identity(
-        ["tests/test_b.py::test_b", "tests/test_a.py::test_a"]
-    )
+    reversed_order = collection_identity(["tests/test_b.py::test_b", "tests/test_a.py::test_a"])
     duplicated = collection_identity(["tests/test_a.py::test_a", "tests/test_a.py::test_a"])
 
     assert first["count"] == 2
@@ -211,9 +429,7 @@ def test_collection_identity_is_order_and_duplicate_auditable() -> None:
 
 
 def test_runtime_profile_aggregates_nodes_files_workers_and_tail_idle() -> None:
-    profile = replace(
-        load_duration_profile(PROFILE_PATH),
-        source_workers=2,
+    profile = _legacy_runtime_profile(
         observed_seconds={"tests/test_a.py": 10.0, "tests/test_b.py": 5.0},
     )
     nodeids = [
@@ -265,9 +481,7 @@ def test_runtime_profile_aggregates_nodes_files_workers_and_tail_idle() -> None:
 
 
 def test_applied_scheduler_with_wrong_final_order_cannot_form_performance_evidence() -> None:
-    profile = replace(
-        load_duration_profile(PROFILE_PATH),
-        source_workers=2,
+    profile = _legacy_runtime_profile(
         observed_seconds={"tests/test_a.py": 5.0, "tests/test_b.py": 10.0},
     )
     nodeids = ["tests/test_a.py::test_a", "tests/test_b.py::test_b"]
@@ -300,13 +514,12 @@ def test_applied_scheduler_with_wrong_final_order_cannot_form_performance_eviden
     assert payload["scheduler"]["matched_tracked_node_count"] == 2
     assert payload["performance_evidence_status"] == "FAIL"
     assert any(
-        "final collection order verification failed" in warning
-        for warning in payload["warnings"]
+        "final collection order verification failed" in warning for warning in payload["warnings"]
     )
 
 
 def test_incomplete_telemetry_fails_performance_evidence_not_pytest_outcome() -> None:
-    profile = replace(load_duration_profile(PROFILE_PATH), source_workers=2)
+    profile = _legacy_runtime_profile()
     nodeids = ["tests/test_a.py::test_a", "tests/test_b.py::test_b"]
 
     payload = build_runtime_profile(
@@ -332,7 +545,7 @@ def test_incomplete_telemetry_fails_performance_evidence_not_pytest_outcome() ->
 
 
 def test_missing_required_phase_and_inactive_worker_fail_telemetry() -> None:
-    profile = replace(load_duration_profile(PROFILE_PATH), source_workers=2)
+    profile = _legacy_runtime_profile()
     nodeids = ["tests/test_a.py::test_a", "tests/test_b.py::test_b"]
     reports = [
         _phase(nodeids[0], "setup", "gw0", 1.0, 1.1),
@@ -362,7 +575,7 @@ def test_missing_required_phase_and_inactive_worker_fail_telemetry() -> None:
 
 
 def test_filtered_selection_cannot_be_performance_evidence() -> None:
-    profile = replace(load_duration_profile(PROFILE_PATH), source_workers=2)
+    profile = _legacy_runtime_profile()
     nodeids = ["tests/test_a.py::test_a", "tests/test_b.py::test_b"]
 
     payload = build_runtime_profile(
@@ -461,8 +674,7 @@ def test_real_xdist_plugin_writes_complete_noncomparable_profile(tmp_path: Path)
         encoding="utf-8",
     )
     (suite_dir / "test_beta.py").write_text(
-        "def test_beta_first():\n    assert True\n\n"
-        "def test_beta_second():\n    assert True\n",
+        "def test_beta_first():\n    assert True\n\n" "def test_beta_second():\n    assert True\n",
         encoding="utf-8",
     )
     output_path = tmp_path / "test_runtime_profile.json"
@@ -521,6 +733,9 @@ def test_real_xdist_plugin_writes_complete_noncomparable_profile(tmp_path: Path)
     assert payload["worker_count"] == 2
     assert payload["scheduler"]["applied"] is False
     assert payload["scheduler"]["fallback"] is True
+    assert payload["scheduler"]["policy"] == "stock_loadfile_test_count_order"
+    assert payload["scheduler"]["manifest_status"] == "COMPLETE"
+    assert payload["scheduler"]["complete_collection_verified"] is False
     assert "worker count mismatch" in payload["scheduler"]["fallback_reason"]
 
 
@@ -533,11 +748,25 @@ def test_real_xdist_plugin_applies_and_verifies_duration_order(tmp_path: Path) -
         "test_refined_method_proposal.py",
     ]
     untracked_files = [f"test_{index:02d}_untracked.py" for index in range(14)]
-    for index, file_name in enumerate([*tracked_files, *untracked_files]):
+    all_files = [*tracked_files, *untracked_files]
+    for index, file_name in enumerate(all_files):
         (suite_dir / file_name).write_text(
             f"def test_runtime_profile_smoke_{index}():\n    assert True\n",
             encoding="utf-8",
         )
+    expected_nodeids = [
+        f"tests/{file_name}::test_runtime_profile_smoke_{index}"
+        for index, file_name in enumerate(all_files)
+    ]
+    observed_seconds = {
+        f"tests/{file_name}": float(len(all_files) - index)
+        for index, file_name in enumerate(all_files)
+    }
+    complete_profile_path = _write_complete_profile(
+        tmp_path / "complete_duration_profile.yaml",
+        nodeids=expected_nodeids,
+        observed_seconds=observed_seconds,
+    )
 
     output_path = tmp_path / "test_runtime_profile.json"
     env = dict(os.environ)
@@ -560,7 +789,7 @@ def test_real_xdist_plugin_applies_and_verifies_duration_order(tmp_path: Path) -
             "-p",
             "scripts.pytest_runtime_profile",
             "--aits-duration-profile",
-            str((repo_root / PROFILE_PATH).resolve()),
+            str(complete_profile_path.resolve()),
             "--rootdir",
             str(tmp_path),
             "--confcutdir",
@@ -582,9 +811,12 @@ def test_real_xdist_plugin_applies_and_verifies_duration_order(tmp_path: Path) -
     assert payload["telemetry_status"] == "PASS"
     assert payload["performance_evidence_status"] == "PASS"
     assert payload["scheduler"]["applied"] is True
+    assert payload["scheduler"]["policy"] == "complete_full_duration_descending_stable"
+    assert payload["scheduler"]["manifest_status"] == "COMPLETE"
+    assert payload["scheduler"]["complete_collection_verified"] is True
     assert payload["scheduler"]["duration_order_verified"] is True
-    assert payload["scheduler"]["matched_tracked_file_count"] == 2
-    assert payload["scheduler"]["matched_tracked_node_count"] == 2
+    assert payload["scheduler"]["matched_tracked_file_count"] == 16
+    assert payload["scheduler"]["matched_tracked_node_count"] == 16
     assert payload["collection"]["nodeids"][:2] == [
         "tests/test_layer1_meta_policy_readiness.py::test_runtime_profile_smoke_0",
         "tests/test_refined_method_proposal.py::test_runtime_profile_smoke_1",
@@ -594,6 +826,48 @@ def test_real_xdist_plugin_applies_and_verifies_duration_order(tmp_path: Path) -
         for index, file_name in enumerate(untracked_files, start=2)
     ]
     assert payload["worker_count"] == 16
+
+    stale_file = suite_dir / untracked_files[-1]
+    stale_file.write_text(
+        "def test_runtime_profile_smoke_changed():\n    assert True\n",
+        encoding="utf-8",
+    )
+    stale_output_path = tmp_path / "stale_test_runtime_profile.json"
+    env[RUNTIME_PROFILE_OUTPUT_ENV] = str(stale_output_path)
+    stale_completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-n",
+            "16",
+            "--dist",
+            "loadfile",
+            "-p",
+            "scripts.pytest_runtime_profile",
+            "--aits-duration-profile",
+            str(complete_profile_path.resolve()),
+            "--rootdir",
+            str(tmp_path),
+            "--confcutdir",
+            str(tmp_path),
+            "tests",
+            "-q",
+            "--no-loadscope-reorder",
+        ],
+        cwd=tmp_path,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert stale_completed.returncode == 0, stale_completed.stdout + stale_completed.stderr
+    stale_payload = json.loads(stale_output_path.read_text(encoding="utf-8"))
+    assert stale_payload["scheduler"]["policy"] == "stock_loadfile_test_count_order"
+    assert stale_payload["scheduler"]["applied"] is False
+    assert stale_payload["scheduler"]["fallback"] is True
+    assert stale_payload["scheduler"]["complete_collection_verified"] is False
+    assert stale_payload["performance_evidence_status"] == "FAIL"
 
 
 def test_runtime_sidecar_write_failure_preserves_pytest_exit(tmp_path: Path) -> None:

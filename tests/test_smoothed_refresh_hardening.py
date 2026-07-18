@@ -130,6 +130,7 @@ def _blocked_chain(root: Path) -> dict[str, Any]:
     }
 
 
+@with_artifact_validation_session
 def test_blocked_chain_freezes_v2_inputs_and_rebuilds_every_view(tmp_path: Path) -> None:
     chain = _blocked_chain(tmp_path)
 
@@ -274,6 +275,7 @@ def test_source_refresh_validator_does_not_replay_provider_and_detects_live_drif
     assert calls == 1
 
 
+@with_artifact_validation_session
 def test_data_readiness_rejects_cross_chain_composition(tmp_path: Path) -> None:
     left = _blocked_chain(tmp_path / "left")
     right = _blocked_chain(tmp_path / "right")

@@ -8940,7 +8940,7 @@ phase_g2_4cj_etf_cli_dynamic_v3_system_target_hardening:
   - {path: tests/test_limited_instability.py, sha256: 7bf4946da3569f44c9215240b841c47da748e4c67c03f937afd93bff8fcd545e}
   - {path: tests/test_data_warning_repair_plan.py, sha256: df6067fbc75a98f96a8dd816ae62b6a6762eb91f70bdd54dfb7bcd721937d8cb}
   - {path: tests/test_alternative_method_review.py, sha256: 063b8903ea06f0620023c66cefeff230941dee1b4819f819db04138ebfaf9765}
-  - {path: tests/test_refined_method_proposal.py, sha256: 35f3b27c0714cb247227d84afb3b289b41fbde35b9da722bfc5d56f5a9ad44ae}
+  - {path: tests/test_refined_method_proposal.py, sha256: fabeb223389af403adebe27f41aafbd04b4e5138dd856f24e34ce3e86e49b1f2}
 
 phase_g2_4ck_etf_cli_dynamic_v3_system_target_refinement:
   status: COMPLETE_G2_4_CONTINUES
@@ -9032,7 +9032,7 @@ phase_g2_4ck_etf_cli_dynamic_v3_system_target_refinement:
   - {path: tests/test_arch_004g_deprecation.py, sha256: 3c4b12a46f522f6a3105a67bcf8fb214312572c837897b8f2cca188f31007b52}
   - {path: tests/test_alternative_method_review.py, sha256: af0149739b949dfa1a35c7d60c4674536c818b712570de134e3dbfee1e402c24}
   - {path: tests/test_limited_risk_attribution.py, sha256: 10b5bd4a56032040f5e7f2d829eea530da0734d4eeea98eced5e46607f772bf9}
-  - {path: tests/test_refined_method_proposal.py, sha256: f109544bbac9fd5e5acd9c2c844d3b51ed2595c240472de04233ca5b67413dae}
+  - {path: tests/test_refined_method_proposal.py, sha256: fabeb223389af403adebe27f41aafbd04b4e5138dd856f24e34ce3e86e49b1f2}
 
 phase_g2_4cl_etf_cli_dynamic_v3_system_target_risk_capped:
   status: COMPLETE_G2_4_CONTINUES
@@ -10308,7 +10308,7 @@ phase_g2_4cu_etf_cli_dynamic_v3_smoothed_data_refresh_operations:
   - {path: tests/test_arch_004g2_etf_cli_contract.py, sha256: 1231b0c576b3f147ede9198aaae69f26742e8c2fc203421f6c8c78581fb6120d}
   - {path: tests/test_arch_004g_deprecation.py, sha256: b1f8bd90165f41024ab9a995ba50379bf4586e555f9e89e87fe545445cd58a47}
   - {path: tests/test_smoothed_data_refresh.py, sha256: 86fb0ad69b365dd5afb74211cfcb8b076f0bae85b5822199996ecf85b8052fe9}
-  - {path: tests/test_smoothed_refresh_hardening.py, sha256: 6ddcacd5f1b64a429ad8d9adfd09ee1a9180cd650f9727b5706cf5b8c17297f1}
+  - {path: tests/test_smoothed_refresh_hardening.py, sha256: fc3d240422890458156b7007f03d72f021cd8c74580b3250e7096a5caf4e1565}
 
 phase_g2_4cv1_etf_cli_dynamic_v3_weight_search_foundation:
   status: COMPLETE_G2_4_CONTINUES
@@ -10828,7 +10828,7 @@ phase_g2_4cw1_etf_cli_dynamic_v3_weight_search_diagnostics:
   - {path: tests/test_arch_004_refactor_policy.py, sha256: 4f2553da70dca86a274b089dc0e54db472a70206bdccf57aa7f95de686aafd10}
   - {path: tests/test_arch_004g2_etf_cli_contract.py, sha256: 3a6f2d6d7e8137868ed460d714ea1034b2783d5992feffc18c0eb2441d97a272}
   - {path: tests/test_arch_004g_deprecation.py, sha256: baab3d8a8328ab079510db0ed645f92f5566757d83a594a2d58a7c645823cd21}
-  - {path: tests/test_weight_search_diagnostics_hardening.py, sha256: af2238e329e992968d6e19b1083bfdd300d97637643559d57b3bd54be6fa6024}
+  - {path: tests/test_weight_search_diagnostics_hardening.py, sha256: 6dca1d8d5eb4889d3be25a3b07dd0077cd2be49a2a88549dafda1493dc62f790}
 
 phase_g2_4cw2_etf_cli_dynamic_v3_weight_search_targeted:
   status: COMPLETE_G2_4_CONTINUES
@@ -12419,21 +12419,146 @@ integrated_change_arch_004g2_eb0_s3a_weight_search_tail:
       read_amplification_artifact_available: false
       same_collection_repeat_count: 2
       stable_full_improvement_claimed: false
+  s3g_transferred_critical_path_and_complete_profile:
+    status: COMPLETE_RUNTIME_TASK_CONTINUES
+    task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+    as_of: 2026-07-18
+    base_commit: f557d04dba1155d2879efd696b3687e5b793dcd4
+    behavior: test_local_fixture_reuse_and_exact_complete_duration_scheduling
+    source_profile:
+      path: outputs/validation_runtime/full_20260718T004439Z/test_runtime_profile.json
+      sha256: 58206a1a015be4b24a3419301c27dca44a740409f7bc00f0d51e99ad8ae532c6
+      node_count: 6248
+      file_count: 1068
+      worker_count: 16
+      file_duration_total_seconds: 15830.6369954
+      collection_ordered_sha256: 7b7dc4a7838cbf17d68a64b2e3aaf4dfc59267c75109a58139ea1b03986d7322
+      collection_set_sha256: 6e8fee8709c8e781952a29224a8857d01bd6df5c50f9070508ad1dac9c5a18ee
+      file_set_sha256: 11d3fb989f3f3e0a55141affe2db5b735598afdb06466476e976e82fcdf44e4b
+      file_rows_sha256: 1449c8993c369634859a692cc22df2575449c11abe70ec14e825eb9c21083db8
+      expected_scheduled_ordered_sha256: a426c7e9a326fdbabf76f2ad16f4891e47cd8e116ae4eae0e6dd3f267a23d3fd
+    lane_decisions:
+      layer1_context_session:
+        decision: REJECTED_AND_REVERTED
+        before_elapsed_seconds: 357.91
+        after_elapsed_seconds: [330.74, 362.52]
+        reason: unstable_benefit_and_excess_test_complexity
+        byte_exact_head_restored: true
+      smoothed_refresh_outer_session:
+        decision: RETAINED
+        before_elapsed_seconds: 213.56
+        after_elapsed_seconds: 185.66
+        elapsed_reduction_percent: 13.06
+        target_call_reduction_percent: 32.70
+      refined_method_fixture:
+        decision: RETAINED
+        before_elapsed_seconds: 330.34
+        after_elapsed_seconds: 276.60
+        elapsed_reduction_percent: 16.27
+        module_fixture_tree_fingerprint_finalizer: true
+        independent_tamper_chain_preserved: true
+      diagnostics_compact_complete_family_matrix:
+        decision: RETAINED
+        before_elapsed_seconds: 275.80
+        after_elapsed_seconds: 240.19
+        elapsed_reduction_percent: 12.91
+        required_family_count: 8
+        view_count: 21
+        production_default_variant_count: 80
+        test_variant_count: 52
+      complete_duration_scheduler:
+        decision: RETAINED_AS_PILOT
+        manifest_status: COMPLETE
+        policy: complete_full_duration_descending_stable
+        exact_collection_required: true
+        file_internal_node_order_preserved: true
+        stale_or_contract_mismatch_policy: stock_loadfile_test_count_order
+        mismatch_fallback_explicit: true
+        mismatch_performance_evidence_pass_allowed: false
+        raw_performance_winner_claimed: false
+        next_evaluation: resource_aware_stagger_or_bucket_same_commit_controlled_comparison
+    formal_full_result:
+      summary_path: outputs/validation_runtime/full_20260718T031839Z/test_runtime_summary.json
+      profile_path: outputs/validation_runtime/full_20260718T031839Z/test_runtime_profile.json
+      profile_sha256: 7a32c5373f25d543f94aaf0d941b7287634817b60386751fae357a56fac383c9
+      status: PASS
+      passed: 6246
+      skipped: 2
+      warnings: 642
+      elapsed_seconds: 1243.76
+      pytest_elapsed_seconds: 1242.72
+      node_count: 6248
+      file_count: 1068
+      worker_count: 16
+      scheduler_applied: true
+      scheduler_fallback: false
+      profile_status: PASS
+      telemetry_status: PASS
+      performance_evidence_status: PASS
+      raw_comparison:
+        source_summary_elapsed_seconds: 1027.74
+        current_summary_elapsed_seconds: 1243.76
+        wall_change_percent: 21.02
+        source_worker_busy_seconds: 15830.6369954
+        current_worker_busy_seconds: 19707.9006211
+        worker_busy_change_percent: 24.49
+        source_file_p99_seconds: 258.007
+        current_file_p99_seconds: 333.018
+        file_p99_change_percent: 29.07
+        slower_file_count: 981
+        total_file_count: 1068
+        median_file_duration_ratio: 1.2625
+        file_duration_correlation: 0.9914
+        conclusion: INCONCLUSIVE_RAW_REGRESSION
+      scheduling_balance:
+        source_worker_busy_cv_percent: 1.529
+        current_worker_busy_cv_percent: 0.00619
+        source_tail_idle_total_seconds: 460.495
+        current_tail_idle_total_seconds: 0.177
+        source_tail_idle_max_seconds: 42.281
+        current_tail_idle_max_seconds: 0.017
+        eliminated_scheduling_loss_seconds: 28.53
+        conclusion: COMPLETE_BALANCE_EFFECTIVE_EXECUTION_WORK_BROADLY_INFLATED
+    safety:
+      nodeids_reduced: false
+      skip_or_xfail_added: false
+      strategy_logic_changed: false
+      cached_data_mutated: false
+      production_defaults_changed: false
+      production_effect: none
+      data_quality_pit_source_lineage_and_tamper_preserved: true
+      stable_full_improvement_claimed: false
+    validation:
+      runtime_contract_focused: {status: PASS, passed: 59, elapsed_seconds: 12.56, nodeids_preserved: true}
+      expanded_focused: {status: PASS, passed: 168, skipped: 1, elapsed_seconds: 285.14, skip_reason: requires_posix_os_fork}
+      scoped_ruff: {status: PASS}
+      complete_profile_static_review: {status: PASS, p0: 0, p1: 0, p2: 0}
+      architecture_manifest_generate: {status: PASS, module_count: 947, test_file_count: 1126, orphan_count: 0, overlap_count: 0}
+      architecture_fitness: {status: PASS, passed: 344, elapsed_seconds: 59.93, runtime_artifact: outputs/validation_runtime/architecture-fitness_20260718T035713Z/test_runtime_summary.json, final_tracked_state: true}
+      contract_validation: {status: PASS, passed: 236, elapsed_seconds: 44.96, runtime_artifact: outputs/validation_runtime/contract-validation_20260718T035817Z/test_runtime_summary.json, final_tracked_state: true}
+      full_validation: {status: PASS, passed: 6246, skipped: 2, warnings: 642, elapsed_seconds: 1243.76, runtime_artifact: outputs/validation_runtime/full_20260718T031839Z/test_runtime_summary.json, natural_integration_boundary: true, run_count: 1}
+    next_work:
+      slice: S3H
+      implementation_lanes: [search_coverage_gap_compact_prefix, legacy_conclusion_compact_prefix]
+      read_only_lane: resource_aware_scheduler_model
+      empty_full_rerun_allowed: false
+      next_full_boundary: s3h_natural_integration_boundary
+    next_phase_or_slice_unblocked: false
   sources:
   - {path: docs/artifact_catalog.md, sha256: 7f30d59c2b5c236577ebc4b9adf470fc312c7e0649024d5d76a82f7a988ec3fc}
-  - {path: docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md, sha256: 4a745f17ccd0e1903b7a1dd5f250e2ff916d69b704982ae20157fdda1aac1562}
-  - {path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md, sha256: 697ce581679c386069424b147a35e7c2eac656d98354dbbaa806c3badd70e562}
-  - {path: docs/system_flow.md, sha256: 507c4e4b224831197712efc2266936959c43c3fe7cb6da699fe5ad2461ecbf6c}
-  - {path: docs/task_register.md, sha256: 89cf8198b4ed9369ee3c4910ac41b213e2d20f26476b05ee8c0131640f887bf9}
-  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: cebba8acccc5c582957bfacda49ca727583194c9f79a3d1d103987d3609aa54e}
+  - {path: docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md, sha256: ce0e0e83588b5c2bd3fff94c4ba8ce4292dac3c86dd9094693ad5b824946c8e5}
+  - {path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md, sha256: 62cbbcba11989845667a56f3439997ab3f8ca9f2ba2b7a143f1999f586bfde75}
+  - {path: docs/system_flow.md, sha256: cc405c08585932eadfa27669aea0d5d2b193c02703c6a0e1bf42d23d1364be5a}
+  - {path: docs/task_register.md, sha256: 506b2a3df85371b1d0254282212b926fe992ae9330f602d4627967b637417509}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 8a3459fad7f6a13bd73a952f025db72250f3c3d4a0322a984e9eeaad48320814}
   - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 7783b9bdad8f9ce467f3374f88469edc7bd5d1723b4811ca5999f5457c8eaaed}
   - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: f9327ab6ecc3bbbe5a3f570b5913e589bd667f9ed0d5cbc0714a8c4ddebcda63}
-  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: dc823637c8681a20406cdb3510697a969921fafb8cc560611a38b2a4bb151bd7}
-  - {path: inputs/architecture/arch_004g2_full_duration_profile.yaml, sha256: 27967b33f801d069f005b7fbcca808ca25d7f4e641403aa4da17260f3eed8a2b}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 8a283abef3e362432fec05d5f0a96facae83a53f5cfceddfe96e3485ffd8edb8}
+  - {path: inputs/architecture/arch_004g2_full_duration_profile.yaml, sha256: 071728504389dd9b54aafd989c896bb1351a96b51f9af74fdd60673433298305}
   - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 8d87c990a7e2baf8e5d7d94165b39d2e7c65a9a8f6c91c18cbb32c6be8c3a38f}
   - {path: pyproject.toml, sha256: dbe3d92e15c66ebd768c2e74e84b13b0b84f779229a9b0a170ec4c8d99d3048e}
-  - {path: scripts/pytest_runtime_profile.py, sha256: cedb8ce9133a137208bfbf23f8f34147666abced771c8b81563a9d6128c5936b}
-  - {path: scripts/run_validation_tier.py, sha256: 49aafb0b3688b129879c477a35c1136a319cb2584c5b51b7708afb91a40f29e5}
+  - {path: scripts/pytest_runtime_profile.py, sha256: 589d9e5ac6e92f995ba424a9f1bf25d1dfc173e6b093b9e64cb093fd6a5feb80}
+  - {path: scripts/run_validation_tier.py, sha256: 69a9abfdf688736898d41e4ea8b2d31ef242b62ca35e554245ca34a611272b18}
   - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_decision.py, sha256: 2242e9464d9cc443f2a669377436a121612150dbae306c7eca5e4e481f5ccfa3}
   - {path: src/ai_trading_system/layer2_strategy_component_readiness.py, sha256: b228f2d2d84e3d4339141dc0aedc1c19ba50ede613d89c4e9dcd801ea5f2ba57}
   - {path: tests/dynamic_v3_weight_batch_search_helpers.py, sha256: fbe16bf084c7c650e5ec8b1cc665b3b1ed15c22a65f5049b428f8c5898bc4178}
@@ -12445,7 +12570,7 @@ integrated_change_arch_004g2_eb0_s3a_weight_search_tail:
   - {path: tests/test_next_formal_or_search_plan.py, sha256: 940dd8dd94efdec0f5715f611ff5cca0c1ccaf9d22f1865a47e117f0bff6c9d0}
   - {path: tests/test_owner_research_decision_pack.py, sha256: c55b953134752af928de10df17e2039c1b46945a6a35124c7bf94fec076da861}
   - {path: tests/test_promotion_threshold_sensitivity.py, sha256: ff91eabae5f99b2fed81f8c77bc11afd2c77d2ae4877b0505e488b97d121c802}
-  - {path: tests/test_refined_method_proposal.py, sha256: d5ac367cbc378aaacd4dc4d09fb9c2aa5e89cfd4469fa36408bcf3dd81b6259d}
+  - {path: tests/test_refined_method_proposal.py, sha256: fabeb223389af403adebe27f41aafbd04b4e5138dd856f24e34ce3e86e49b1f2}
   - {path: tests/test_signal_feature_quality_filter_pipeline.py, sha256: c075af26506638e07d7705bd81ac86a795d1d10ad1ee158ae162bb160a41e797}
   - {path: tests/dynamic_v3_system_target_helpers.py, sha256: 3f5e0a58368b63dbd1a8ef941d411ce645cd46563b76ce7640f4481aa62079a4}
   - {path: tests/test_dynamic_v3_system_target_smoothed_evidence_hardening.py, sha256: 69666c4b535d1ca0f96b93335fca4512ae7dc0b6919990b3a14dc6518434151e}
@@ -12459,7 +12584,7 @@ integrated_change_arch_004g2_eb0_s3a_weight_search_tail:
   - {path: tests/test_smoothed_freshness_hardening.py, sha256: c6b3e9d88c3606de16f1c1f803b58af815a73afe68d8c6de592b481d68213ab4}
   - {path: tests/test_smoothed_owner_renewal.py, sha256: 279a6c519afe1657bc72a6190a9475efaf2e6896b68367afd820128bd8dbf5cf}
   - {path: tests/test_smoothed_readiness_review.py, sha256: daa8e34eb0ac235098bfd0ccd58325f8f904d0de36bcd4cbbb4fc1b94dbb04f9}
-  - {path: tests/test_smoothed_refresh_hardening.py, sha256: 8c460ddf6d2d075053aa0c44d637630405099049175587ca16b37a282c562172}
+  - {path: tests/test_smoothed_refresh_hardening.py, sha256: fc3d240422890458156b7007f03d72f021cd8c74580b3250e7096a5caf4e1565}
   - {path: tests/test_smoothed_regime_validation.py, sha256: d2460bca39b63a962d916a112f7f77529447b7387cbbe824a4a12f2b69ed39d5}
   - {path: tests/test_smoothed_review_attribution.py, sha256: af6d4c8356601e8e5c66490082658a09cd04fcb05fb200a3728a00fe198ff32d}
   - {path: tests/test_smoothed_switch_readiness.py, sha256: 1d7bb9461b254544f8787f1f2ed9211bf6027c8b91569d7988731405954e4e82}
@@ -12469,10 +12594,11 @@ integrated_change_arch_004g2_eb0_s3a_weight_search_tail:
   - {path: tests/test_two_layer_boundary_contract.py, sha256: 131a4c150ee7d255fe6063bcecd8e63f8783dd376123dcac3d2ec3eb6fd01120}
   - {path: tests/test_targeted_search_v3.py, sha256: dec2bdd19934f13996fc5392e44eedbd9ab2241c75140faa349f9f2485edb4c8}
   - {path: tests/test_targeted_v3_backfill.py, sha256: 732301f20772e5205b8bf92f6b9ffa0ae9db42582800437aea2748b9f3984d44}
-  - {path: tests/test_validation_runtime_profile.py, sha256: 8796111c57f626981e822a9ef4a48b97c4c81f6171311cc39b23ca773482e46d}
-  - {path: tests/test_validation_tier_script.py, sha256: bee7eae008f7d5e0514bb76c14e964792b94fbbec2d359525b2aed485e07b63d}
+  - {path: tests/test_validation_runtime_profile.py, sha256: 03d304fc90add28963b17481a1ec4635960b1cd8164b0bcf722b3502a1c6f28d}
+  - {path: tests/test_validation_tier_script.py, sha256: d5e3c2ed7d6e7a26015a5dfc719122ab804252a481fb689585025644c7b36747}
   - {path: tests/test_weight_search_dashboard.py, sha256: 1b993caaa35304bd29a6b1ad15c3e9d5319bbb0cdd8eadbc7001c876f2d6a39f}
   - {path: tests/test_weight_search_decision_hardening.py, sha256: 6375915cd02f099b2d400642725f910797089cf7ddb5dfac0e21c8ac4b4b3cf9}
+  - {path: tests/test_weight_search_diagnostics_hardening.py, sha256: 6dca1d8d5eb4889d3be25a3b07dd0077cd2be49a2a88549dafda1493dc62f790}
   - {path: tests/test_weight_search_followup_hardening.py, sha256: 7810fa1a4e49fdc23a608f8ad61b7e147fc41c274389bf56cb7c9988cace48ba}
   - {path: tests/test_weight_search_space.py, sha256: 987300d579449ce9d6d776858a362b0f70eb5faa11584525ca1a5776542a2900}
   - {path: tests/test_weight_search_targeted_hardening.py, sha256: 5e638663651eb02458a8e27f8c4c070079fbc6fdf5921a2aaac626ff266d1cd8}
