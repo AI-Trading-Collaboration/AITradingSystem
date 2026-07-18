@@ -8461,7 +8461,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_confirmation_evaluate
   path: tests/test_confirmation_evaluate.py
-  sha256: 6aa070e9ed1065dfd8ec00203405f771bf2afc8c52c0ad5e5f4f534b71f5f613
+  sha256: 7bb293f4c675e18d74c763db0adba821c785deedea904e794d79430943895a28
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8477,7 +8477,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_confirmation_progress
   path: tests/test_confirmation_progress.py
-  sha256: 2dc523008260c2372a72d32637de2f1ff4efe6e5587220c08e3fe6af9d1576c0
+  sha256: 6aff9f43cb3be8f7ce487238c1ebe5dcf3e44969ce989b9e8a0b466c8827e158
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15447,7 +15447,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_weight_expanded_search
   path: tests/test_weight_expanded_search.py
-  sha256: ed43a5ef0c07fcfde47d2b9bedbfb2baaad2e30e331b3f262cdd686344dad626
+  sha256: 4074571fff9615873c42f4374c63909cf17247d1153fba12829e38cac5a3ad01
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

@@ -13,13 +13,17 @@ from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_cycle import (
     run_confirmation_evaluation,
     validate_confirmation_evaluation_artifact,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+)
 
 
 @pytest.fixture(scope="module")
 def evaluation_bundle(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
-    fixture = evaluation_fixture(tmp_path_factory.mktemp("confirmation-evaluation"))
-    yield fixture
-    fixture["_monkeypatch"].undo()
+    with artifact_validation_session():
+        fixture = evaluation_fixture(tmp_path_factory.mktemp("confirmation-evaluation"))
+        yield fixture
+        fixture["_monkeypatch"].undo()
 
 
 def test_confirmation_evaluate_not_ready_does_not_leak_partial_pass(

@@ -397,6 +397,53 @@ architecture=`344 passed/61.23s`，post-full contract初次复验=`236 passed/45
 contract与focused hash证据写入compatibility baseline。没有第二次full；next owner=S3L candidate coordinator，
 继续只读审计新profile候选，不解锁EB1、下一callback或ARCH-005，`production_effect=none`。
 
+S3L只读候选审计已闭合并进入`BASELINING`。权威base=`27ce25ae`、profile=`103249Z`；首批三个
+互斥lane为Confirmation Evaluate=`247.72s`、Confirmation Progress=`231.84s`、Weight Expanded Search=
+`206.94s`。前两条只允许在各自module fixture generator的build→yield→teardown生命周期保持既有同步
+PASS-only session，第三条只允许给现有单test function增加outer session；不得改helper、production resolver、
+DQ cache、fixture规模、variant count、nodeid或断言。Confirmation output tamper与live-source drift validator
+必须逐次真实执行且不进入cache；只允许eligible stable upstream plan复用PASS，plan bytes变化必须使content
+fingerprint miss，FAIL/exception不缓存。Expanded Matrix和final Matrix validator继续真实执行。三条先顺序取得
+无负载exact-file before，再按两次after的worst值同时满足`>=10%`且`>=30s`节省；失败lane byte-exact撤回。
+单lane不跑full，整批保留项只在自然集成边界运行一次full，`production_effect=none`。
+
+S3L无负载isolated before已闭合并进入`IMPLEMENTING`。Evaluate/Progress/Expanded wall分别为
+`155.34/167.21/116.88s`，pytest=`153.77/166.68/116.37s`；Confirmation setup=
+`42.11/47.75s`，主要call合计=`108.54/115.83s`，Expanded call=`113.25s`。冻结worst-of-2
+wall上限=`125.34/137.21/86.88s`，不得事后放宽。三个agent只编辑互斥单test file且不自行跑
+Python/pytest；coordinator继续独占共享docs、顺序after/focused和最终集成门禁。
+
+S3L三lane双after均通过冻结门槛并进入`VALIDATING`。Evaluate=`155.34 -> 54.52/53.35s`
+（worst `-100.82s/-64.90%`），Progress=`167.21 -> 52.23/52.39s`（`-114.82s/
+-68.67%`），Expanded=`116.88 -> 28.92/29.40s`（`-87.48s/-74.85%`）。三文件
+node数仍为`5/4/1`，Confirmation setup没有被隐藏，主要重复PASS calls降至约`4.8s`；Confirmation
+output/live validators仍逐次真实执行，tamper/drift的FAIL断言与Expanded final Matrix validator均保留。下一步先做expanded focused和交叉安全审查，再刷新
+共享manifests/hashes并运行整批唯一自然architecture/contract/full；`production_effect=none`。
+
+S3L expanded focused=`136 passed/2 skipped/239.92s`，两项skip均为Windows缺少`os.fork`的既有条件
+用例；三轮交叉只读审查P0/P1/P2=`0/0/0`。覆盖范围同时包含session基础设施、完整Confirmation链与
+Weight Matrix→Expanded链；没有缩减nodeid、tamper/drift、DQ或final validator。S3L继续`VALIDATING`，
+由coordinator刷新system flow/manifests/compatibility/deprecation/source hashes后进入唯一自然集成门禁。
+
+S3L pre-full compatibility/deprecation focused=`8 passed/13.35s`；architecture-fitness=`344 passed/
+59.03s`，artifact=`outputs/validation_runtime/architecture-fitness_20260718T120042Z/test_runtime_summary.json`；
+contract-validation=`236 passed/44.09s`，artifact=`outputs/validation_runtime/contract-validation_20260718T120418Z/
+test_runtime_summary.json`。集成只读审查发现两个P2文档一致性问题：task-register主行仍停在IMPLEMENTING，且
+Confirmation安全机制误写为output/live validator发生cache miss。现已按真实实现修正为output/live validator逐次
+真实执行、只有eligible upstream plan PASS按transitive fingerprint复用；下一步刷新受影响hash并在最终tracked
+state重跑门禁后执行整批唯一自然full，`production_effect=none`。
+
+S3L最终tracked-state pre-full复验为compatibility/deprecation focused=`8 passed/13.04s`、architecture=
+`344 passed/58.10s`、contract=`236 passed/44.68s`。本批唯一自然full=
+`6,246 passed/2 skipped/642 warnings/979.11s`，exact `6,248 nodes/1,068 files/16 workers`，collection
+ordered/set hashes与S3K相同，scheduler=`COMPLETE/applied/no-fallback`、telemetry/performance=`PASS`。
+相对S3K，wall=`-34.94s/-3.45%`、file worker-s=`16,032.72 -> 15,481.94s`（`-3.44%`）、
+P95/P99=`-5.51%/-2.62%`；Evaluate/Progress/Expanded file time分别从`247.72/231.84/206.94s`
+降至`83.26/78.17/53.15s`（`-66.39%/-66.28%/-74.31%`），node数仍为`5/4/1`。max file
+基本持平（`+0.02%`），因此下一批优先治理新profile剩余长尾，不重开已闭合lane。只有一次S3L full，
+`stable_full_improvement_claimed=false`；post-full tracked-state exact artifacts与最终状态以compatibility baseline
+为准，不运行第二次full，不解锁EB1、下一callback或ARCH-005，`production_effect=none`。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

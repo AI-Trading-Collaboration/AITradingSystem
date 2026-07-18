@@ -8102,6 +8102,8 @@ phase_g2_4ca_etf_cli_dynamic_v3_confirmation_evaluation:
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004g2_etf_cli_contract.py
   - tests/test_arch_004g_deprecation.py
+  - tests/test_confirmation_evaluate.py
+  - tests/test_confirmation_progress.py
   - tests/test_rule_review_cycle.py
   - tests/test_confirmation_dashboard.py
   - tests/test_rule_review_queue.py
@@ -8186,6 +8188,8 @@ phase_g2_4cb_etf_cli_dynamic_v3_rule_review_cycle:
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004g2_etf_cli_contract.py
   - tests/test_arch_004g_deprecation.py
+  - tests/test_confirmation_evaluate.py
+  - tests/test_confirmation_progress.py
   - tests/test_rule_review_cycle.py
   - tests/test_confirmation_dashboard.py
   - tests/test_rule_review_queue.py
@@ -13112,16 +13116,177 @@ integrated_change_arch_004g2_eb0_s3a_weight_search_tail:
       full_trigger_boundaries: [integration, phase, broad_change, performance, failure_rerun]
       empty_full_rerun_allowed: false
     next_phase_or_slice_unblocked: false
+  s3l_confirmation_expanded_tail:
+    status: COMPLETE_RUNTIME_TASK_CONTINUES
+    task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+    as_of: 2026-07-18
+    base_commit: 27ce25ae
+    source_profile: outputs/validation_runtime/full_20260718T103249Z/test_runtime_profile.json
+    lanes:
+      confirmation_evaluate_module_session:
+        files: [tests/test_confirmation_evaluate.py]
+        full_profile_file_seconds: 247.72
+        before_elapsed_seconds: 155.34
+        before_pytest_seconds: 153.77
+        before_setup_seconds: 42.11
+        before_main_call_seconds: 108.54
+        frozen_elapsed_ceiling_seconds: 125.34
+        first_after_elapsed_seconds: 54.52
+        first_after_pytest_seconds: 53.98
+        first_after_setup_seconds: 46.24
+        first_after_main_call_seconds: 4.82
+        second_after_elapsed_seconds: 53.35
+        second_after_pytest_seconds: 52.78
+        second_after_setup_seconds: 44.91
+        second_after_main_call_seconds: 4.88
+        worst_after_elapsed_reduction_seconds: 100.82
+        worst_after_elapsed_reduction_percent: 64.90
+        output_tamper_and_live_progress_drift_preserved: true
+        status: RETAINED_THRESHOLD_PASS
+      confirmation_progress_module_session:
+        files: [tests/test_confirmation_progress.py]
+        full_profile_file_seconds: 231.84
+        before_elapsed_seconds: 167.21
+        before_pytest_seconds: 166.68
+        before_setup_seconds: 47.75
+        before_main_call_seconds: 115.83
+        frozen_elapsed_ceiling_seconds: 137.21
+        first_after_elapsed_seconds: 52.23
+        first_after_pytest_seconds: 51.73
+        first_after_setup_seconds: 43.99
+        first_after_main_call_seconds: 4.78
+        second_after_elapsed_seconds: 52.39
+        second_after_pytest_seconds: 51.85
+        second_after_setup_seconds: 44.08
+        second_after_main_call_seconds: 4.80
+        worst_after_elapsed_reduction_seconds: 114.82
+        worst_after_elapsed_reduction_percent: 68.67
+        output_tamper_and_live_source_drift_preserved: true
+        status: RETAINED_THRESHOLD_PASS
+      weight_expanded_search_outer_session:
+        files: [tests/test_weight_expanded_search.py]
+        full_profile_file_seconds: 206.94
+        before_elapsed_seconds: 116.88
+        before_call_seconds: 113.25
+        frozen_elapsed_ceiling_seconds: 86.88
+        first_after_elapsed_seconds: 28.92
+        first_after_pytest_seconds: 28.37
+        first_after_call_seconds: 25.29
+        second_after_elapsed_seconds: 29.40
+        second_after_pytest_seconds: 28.85
+        second_after_call_seconds: 25.84
+        worst_after_elapsed_reduction_seconds: 87.48
+        worst_after_elapsed_reduction_percent: 74.85
+        expanded_matrix_cached_as_new_supported_root: false
+        final_matrix_validator_preserved: true
+        status: RETAINED_THRESHOLD_PASS
+    safety:
+      node_count_by_lane: [5, 4, 1]
+      nodeids_skips_xfails_or_assertions_reduced: false
+      output_tamper_and_live_source_drift_preserved: true
+      confirmation_output_and_live_validators_cached: false
+      eligible_upstream_plan_pass_reuse_only: true
+      upstream_plan_transitive_fingerprint_drift_misses_cache: true
+      data_quality_and_final_matrix_validator_preserved: true
+      helper_or_production_resolver_changed: false
+      production_defaults_changed: false
+      strategy_logic_changed: false
+      cached_data_mutated: false
+      stable_full_improvement_claimed: false
+      production_effect: none
+    validation:
+      isolated_before_after: {status: PASS, retained_lane_count: 3, rejected_lane_count: 0}
+      expanded_focused: {status: PASS, passed: 136, skipped: 2, elapsed_seconds: 239.92}
+      independent_cross_review: {status: PASS, review_count: 3, p0: 0, p1: 0, p2: 0}
+      architecture_devex_generate_and_validate: {status: PASS}
+      compatibility_and_deprecation_focused: {status: PASS, passed: 8, elapsed_seconds: 13.04}
+      pre_full_architecture_fitness: {status: PASS, passed: 344, elapsed_seconds: 58.10, runtime_artifact: outputs/validation_runtime/architecture-fitness_20260718T121347Z/test_runtime_summary.json, runtime_artifact_sha256: 177f9a40ba40bab6ee14ede562e7ef526ac8790a70a450c470a0d5fe6b1e49b0}
+      pre_full_contract_validation: {status: PASS, passed: 236, elapsed_seconds: 44.68, runtime_artifact: outputs/validation_runtime/contract-validation_20260718T121452Z/test_runtime_summary.json, runtime_artifact_sha256: f7270116195e8fe2a41fc4f843e503fa26cc0641a7dd9a1dfef5944e6daf06aa}
+      integration_read_only_review: {status: PASS_AFTER_CORRECTION_AND_REVALIDATION, p0: 0, p1: 0, p2_detected: 2, p2_corrected: 2, remaining_p2: 0}
+      full_validation:
+        status: PASS
+        passed: 6246
+        skipped: 2
+        warnings: 642
+        pytest_elapsed_seconds: 978.10
+        elapsed_seconds: 979.11
+        workers: 16
+        distribution: loadfile
+        natural_integration_boundary: true
+        run_count: 1
+        node_count: 6248
+        file_count: 1068
+        collection_ordered_sha256: a426c7e9a326fdbabf76f2ad16f4891e47cd8e116ae4eae0e6dd3f267a23d3fd
+        collection_set_sha256: 6e8fee8709c8e781952a29224a8857d01bd6df5c50f9070508ad1dac9c5a18ee
+        collection_matches_s3k: true
+        scheduler_status: COMPLETE
+        scheduler_applied: true
+        scheduler_fallback: false
+        duration_order_verified: true
+        formal_full_selection_eligible: true
+        telemetry_status: PASS
+        performance_evidence_status: PASS
+        pytest_outcome_authoritative: true
+        pytest_outcome_overridden: false
+        duration_manifest_sha256: 071728504389dd9b54aafd989c896bb1351a96b51f9af74fdd60673433298305
+        source_file_set_sha256: 11d3fb989f3f3e0a55141affe2db5b735598afdb06466476e976e82fcdf44e4b
+        runtime_artifact: outputs/validation_runtime/full_20260718T121649Z/test_runtime_summary.json
+        runtime_artifact_sha256: 3fe735157b1fec8edfb90c96c396924c861cf5b4a1352e86fb3cebd13d0ea11c
+        runtime_profile: outputs/validation_runtime/full_20260718T121649Z/test_runtime_profile.json
+        runtime_profile_sha256: 75754109c658ec9ac4c91e76354cc37d35fc0d7d9d35f45a7a03644296608ee3
+      formal_full_comparison:
+        baseline_profile: outputs/validation_runtime/full_20260718T103249Z/test_runtime_profile.json
+        wall_seconds_before: 1014.05
+        wall_seconds_after: 979.11
+        wall_reduction_seconds: 34.94
+        wall_reduction_percent: 3.45
+        file_worker_seconds_before: 16032.724
+        file_worker_seconds_after: 15481.941
+        file_worker_reduction_seconds: 550.783
+        file_worker_reduction_percent: 3.44
+        p95_seconds_before: 79.219
+        p95_seconds_after: 74.853
+        p95_reduction_percent: 5.51
+        p99_seconds_before: 249.819
+        p99_seconds_after: 243.270
+        p99_reduction_percent: 2.62
+        max_seconds_before: 578.539
+        max_seconds_after: 578.682
+        max_change_percent: 0.02
+        target_file_seconds:
+          confirmation_evaluate: {before: 247.715, after: 83.264, reduction_seconds: 164.451, reduction_percent: 66.39, node_count_before: 5, node_count_after: 5}
+          confirmation_progress: {before: 231.837, after: 78.168, reduction_seconds: 153.670, reduction_percent: 66.28, node_count_before: 4, node_count_after: 4}
+          weight_expanded_search: {before: 206.940, after: 53.153, reduction_seconds: 153.787, reduction_percent: 74.31, node_count_before: 1, node_count_after: 1}
+        stable_full_improvement_claimed: false
+      post_full_tracked_state_pending: false
+      post_full_compatibility_and_deprecation_focused: {status: PASS, passed: 8, elapsed_seconds: 11.85}
+      post_full_architecture_fitness: {status: PASS, passed: 344, elapsed_seconds: 51.64, runtime_artifact: outputs/validation_runtime/architecture-fitness_20260718T125503Z/test_runtime_summary.json, runtime_artifact_sha256: caa1684b124d9176a91babb1b2d6bbde1ae862ca316e169422d665b9843bf4a0}
+      post_full_contract_validation: {status: PASS, passed: 236, elapsed_seconds: 42.92, runtime_artifact: outputs/validation_runtime/contract-validation_20260718T125615Z/test_runtime_summary.json, runtime_artifact_sha256: 09d17468d79cf0984fbfca39654f2cf60c35c133554442d63e9b7563e608cbc9}
+      post_full_independent_review: {status: PASS, p0: 0, p1: 0, p2: 0}
+      architecture_manifest_generate: {status: PASS, module_count: 948, test_file_count: 1126, orphan_count: 0, overlap_count: 0, direct_writer_violation_count: 0}
+      deprecation_inventory: {status: FRESH_UNCHANGED, inventory_id: arch_004g_deprecation_inventory_ba630716c91b974f212a, sha256: f28cab4fb70a4378bf4e1ca293e72e31a9998926a5c2c1ef04aa6adf91b8d137}
+    next_work:
+      refresh_system_flow_manifests_compatibility_deprecation_and_source_hashes: false
+      tracked_state_revalidation_pending: false
+      single_full_pending: false
+      post_full_tracked_state_architecture_contract_pending: false
+      next_candidate_from_new_full_profile: true
+      next_candidate_unblocked_only_after_post_full_pass: true
+      post_full_pass_satisfied: true
+      next_owner: S3M candidate coordinator
+      daily_research_runs_full_validation: false
+      empty_full_rerun_allowed: false
+    next_phase_or_slice_unblocked: false
   sources:
   - {path: docs/artifact_catalog.md, sha256: 7f30d59c2b5c236577ebc4b9adf470fc312c7e0649024d5d76a82f7a988ec3fc}
-  - {path: docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md, sha256: e2fff434fff6f39d62b44eaa4a681d88c0fed59f12fd20a8861845c7dbfaa21b}
-  - {path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md, sha256: 7ee8229acaf0b49e0fa8d74450a71e472f495207745e255867594d5442d7e48e}
-  - {path: docs/system_flow.md, sha256: 21c0230c36a01693ccbc38d856d8aba74cdcc2d7dd1d94dc4795a51279a91faa}
-  - {path: docs/task_register.md, sha256: c61fa8140632c3dbf7abf7ed513cda52c55424c2f202fbd3a2b98c2b0055fd34}
-  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 5876752f1d762b86b675c4771202aa1a2576c4acc3e95013956ad6a85cf690d9}
+  - {path: docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md, sha256: f333b8e697ef7eadd0f262b1427cf14cc025490fdbb0cef202ec006629fff053}
+  - {path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md, sha256: 7eaa7987fe62bba44b26f57de5732d34708b9fea67d2f2c493679cbfb67c907d}
+  - {path: docs/system_flow.md, sha256: d5120b7b0ef70f50eaa1eb6df3f3869986f58812f045da3482e73f13c288a3a2}
+  - {path: docs/task_register.md, sha256: 0a35f8e385983f72ecd1c6e2d79049713d26c3740ab7878ff87b73f5af6e38d6}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: a54e1a6e0aaa8063743954d209bea7952e9283fdfc76bba46a5a59db752eeea7}
   - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 3672f82b36c2e931a19b36446c84c8c88a9ed38230978651b69811b1abf4e0a6}
   - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 526e9b95f4630c3ee70163acf7edc55ae4b61e1c5131917e70773fbd9f86e5a6}
-  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: f93c3dc03cb822578e0db835cadeb150debdf7d2e61a81f82ab268da24b565dc}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 1700cf34fef9db18b26b3f4620959bb636db6231823faf1079240517e4b97980}
   - {path: inputs/architecture/arch_004g2_full_duration_profile.yaml, sha256: 071728504389dd9b54aafd989c896bb1351a96b51f9af74fdd60673433298305}
   - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: f28cab4fb70a4378bf4e1ca293e72e31a9998926a5c2c1ef04aa6adf91b8d137}
   - {path: pyproject.toml, sha256: dbe3d92e15c66ebd768c2e74e84b13b0b84f779229a9b0a170ec4c8d99d3048e}
@@ -13181,3 +13346,6 @@ integrated_change_arch_004g2_eb0_s3a_weight_search_tail:
   - {path: tests/test_weight_search_followup_hardening.py, sha256: 7810fa1a4e49fdc23a608f8ad61b7e147fc41c274389bf56cb7c9988cace48ba}
   - {path: tests/test_weight_search_space.py, sha256: 987300d579449ce9d6d776858a362b0f70eb5faa11584525ca1a5776542a2900}
   - {path: tests/test_weight_search_targeted_hardening.py, sha256: a81227f9bb858bfe8d2135bc22ab811e6d1957c6e5bb682d6ae8f1029b863a82}
+  - {path: tests/test_confirmation_evaluate.py, sha256: 7bb293f4c675e18d74c763db0adba821c785deedea904e794d79430943895a28}
+  - {path: tests/test_confirmation_progress.py, sha256: 6aff9f43cb3be8f7ce487238c1ebe5dcf3e44969ce989b9e8a0b466c8827e158}
+  - {path: tests/test_weight_expanded_search.py, sha256: 4074571fff9615873c42f4374c63909cf17247d1153fba12829e38cac5a3ad01}

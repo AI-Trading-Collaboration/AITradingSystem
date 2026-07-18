@@ -12,13 +12,15 @@ from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_cycle import (
     update_confirmation_progress,
     validate_confirmation_progress_artifact,
 )
+from ai_trading_system.platform.artifacts.validation_session import artifact_validation_session
 
 
 @pytest.fixture(scope="module")
 def progress_bundle(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
-    fixture = progress_fixture(tmp_path_factory.mktemp("confirmation-progress"))
-    yield fixture
-    fixture["_monkeypatch"].undo()
+    with artifact_validation_session():
+        fixture = progress_fixture(tmp_path_factory.mktemp("confirmation-progress"))
+        yield fixture
+        fixture["_monkeypatch"].undo()
 
 
 def test_confirmation_progress_keeps_missing_samples_null_and_not_ready(

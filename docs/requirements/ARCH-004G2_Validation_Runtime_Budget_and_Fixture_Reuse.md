@@ -1,6 +1,6 @@
 # ARCH-004G2 Validation Runtime Budget 与 Immutable Fixture Reuse
 
-最后更新：2026-07-17
+最后更新：2026-07-18
 
 ## 任务信息
 
@@ -910,6 +910,85 @@ architecture-fitness_20260718T110442Z/test_runtime_summary.json`。post-full con
 S3K状态为`COMPLETE_RUNTIME_TASK_CONTINUES`，next owner转为S3L candidate coordinator；本批不运行第二次
 full，不解锁EB1、下一callback或ARCH-005，`strategy_logic_changed=false`、`cached_data_mutated=false`、
 `production_effect=none`。
+
+### S3L：Confirmation module session与Expanded Search test session
+
+S3L以commit=`27ce25ae`和`full_20260718T103249Z`为权威输入。只读profile审计在排除
+Layer1不稳定撤回、Execution纯QQQ拒绝项及已完成Formal/Gate/Evaluation/Targeted/Diagnostics后，
+选择三个互斥lane：
+
+|lane|权威full file time|唯一允许编辑范围|候选边界|必须保留|
+|---|---:|---|---|---|
+|Confirmation Evaluate|`247.72s`|`tests/test_confirmation_evaluate.py`|仅让module-scoped `evaluation_bundle`从fixture build到teardown处于一个既有同步PASS-only validation session|5个既有node、5类output tamper、naive cutoff、live progress drift、FAIL真实重验|
+|Confirmation Progress|`231.84s`|`tests/test_confirmation_progress.py`|仅让module-scoped `progress_bundle`从fixture build到teardown处于一个既有同步PASS-only validation session|4个既有node、5类output tamper、naive cutoff、live evidence-source drift、FAIL真实重验|
+|Weight Expanded Search|`206.94s`|`tests/test_weight_expanded_search.py`|仅在现有单test function外延同步PASS-only validation session，使S3K已支持的stable upstream可在同一调用链复用|expanded Matrix与final Matrix validator真实执行、variant上限200、DQ状态、完整业务断言|
+
+Confirmation helper已有nested function session，但module fixture外层不存在持续session，因此每个helper返回后会销毁
+stable PASS state；S3L不得修改helper或production module，只允许在module fixture generator的`yield`期间保持外层
+session。Confirmation output/live-source validator本身不得进入cache，必须逐次真实执行；只有eligible stable upstream
+plan的PASS允许在session内按transitive fingerprint复用，plan bytes变化必须miss；`FAIL`或exception不得缓存。
+Progress live-source drift仍为该artifact fixture的最后一个drift node且不允许被session掩盖。Expanded lane不得把
+Adaptive、rewritten Matrix、expanded Matrix或DQ加入未登记resolver，也不得修改production variant count、fixture数据、
+nodeid、skip/xfail或断言。
+
+三lane分别在无其他candidate Python/pytest负载下顺序执行同一exact-file命令，先取得before，再冻结
+`worst-of-2 after <= min(0.90 * before, before - 30s)`；Confirmation同时报告setup/call分布，任一tamper/
+drift不再真实fail closed、出现P0/P1或未达门槛即byte-exact撤回该lane。单lane不跑full；只有保留lane整批合并、
+expanded focused与独立审查通过后才允许一个自然integration-boundary architecture/contract/full。
+`stable_full_improvement_claimed=false`、`strategy_logic_changed=false`、`cached_data_mutated=false`、
+`production_effect=none`，且不解锁EB1、下一callback或ARCH-005。
+
+S3L isolated before已在commit=`27ce25ae`、显式candidate `PYTHONPATH`且无其他Python/pytest负载下顺序
+闭合。Confirmation Evaluate=`5 passed / pytest 153.77s / wall 155.34s`，setup=`42.11s`、主要
+call合计=`108.54s`；Confirmation Progress=`4 passed / pytest 166.68s / wall 167.21s`，setup=
+`47.75s`、主要call合计=`115.83s`；Weight Expanded Search=`1 passed / pytest 116.37s / wall
+116.88s`，call=`113.25s`。按`min(0.90 * before, before - 30s)`预冻结worst-of-2 wall上限分别为
+Evaluate≤`125.34s`、Progress≤`137.21s`、Expanded≤`86.88s`，不得以after抖动或full并发值事后放宽。
+S3L现进入`IMPLEMENTING`；三个互斥agent只可编辑各自登记的单一test file，不运行Python/pytest、不编辑
+共享docs/manifests。所有after与focused由coordinator顺序执行。
+
+S3L isolated after已完成局部收益裁决，三lane均`RETAINED_THRESHOLD_PASS`。Evaluate两次after wall=
+`54.52/53.35s`（pytest=`53.98/52.78s`，setup=`46.24/44.91s`，主要call=`4.82/4.88s`），
+按worst相对before节省`100.82s / 64.90%`；Progress=`52.23/52.39s`（pytest=`51.73/
+51.85s`，setup=`43.99/44.08s`，主要call=`4.78/4.80s`），节省`114.82s / 68.67%`；
+Expanded=`28.92/29.40s`（pytest=`28.37/28.85s`，call=`25.29/25.84s`），节省
+`87.48s / 74.85%`。三条worst均显著低于预冻结上限，node数仍为`5/4/1`；Confirmation
+tamper/live-drift节点继续PASS的含义是其内部FAIL断言真实成立，Expanded final Matrix validator仍在原位置。
+S3L现进入`VALIDATING`；expanded focused、三轮交叉只读审查、manifests/compatibility/deprecation/source hashes
+及整批唯一自然architecture/contract/full仍待闭合。`stable_full_improvement_claimed=false`、
+`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+
+S3L expanded focused=`136 passed / 2 skipped / 239.92s`，两项skip均为Windows无`os.fork`的既有
+条件用例；覆盖validation-session基础设施、Confirmation plan/targets/progress/evaluate/dashboard/weekly及
+Weight Matrix/Backfill/Scorecard/Robustness/Adaptive/Expanded/Evaluation hardening。三轮交叉只读审查
+P0/P1/P2=`0/0/0`：每个agent审查另一lane，确认Confirmation output/live validator始终逐次真实执行，只有
+eligible upstream plan PASS可按transitive fingerprint复用；decorator保留pytest fixture签名，unsupported root仍
+bypass，Expanded final Matrix validator未被缓存或删除。下一步由
+coordinator刷新system flow、manifests、compatibility/deprecation/source hashes，再执行pre-full architecture/
+contract与整批唯一自然full。
+
+S3L pre-full compatibility/deprecation focused=`8 passed / 13.35s`；architecture-fitness=`344 passed /
+59.03s`，runtime artifact=`outputs/validation_runtime/architecture-fitness_20260718T120042Z/
+test_runtime_summary.json`；contract-validation=`236 passed / 44.09s`，runtime artifact=`outputs/
+validation_runtime/contract-validation_20260718T120418Z/test_runtime_summary.json`。集成只读审查P0/P1/P2=
+`0/0/2`，两项均为文档一致性：task-register主行状态陈旧、Confirmation缓存机制表述不精确；代码行为无
+P0/P1，现已修正文档与登记，刷新tracked hashes后复验门禁并运行整批唯一自然full。
+
+S3L最终tracked-state pre-full复验=`8 passed / 13.04s`、architecture=`344 passed / 58.10s`
+（`outputs/validation_runtime/architecture-fitness_20260718T121347Z/test_runtime_summary.json`）、contract=
+`236 passed / 44.68s`（`outputs/validation_runtime/contract-validation_20260718T121452Z/
+test_runtime_summary.json`）。唯一自然full=`6,246 passed / 2 skipped / 642 warnings / 979.11s`，
+runtime summary/profile分别为`outputs/validation_runtime/full_20260718T121649Z/test_runtime_summary.json`与
+`test_runtime_profile.json`；exact `6,248 nodes / 1,068 files / 16 workers`、ordered/set collection hashes
+与S3K一致，scheduler=`COMPLETE/applied/no-fallback`，telemetry/performance=`PASS`，pytest outcome
+authoritative且未override。相对S3K `1,014.05s`，wall减少`34.94s / 3.45%`；file worker-s=
+`16,032.72 -> 15,481.94s`（`-550.78s / -3.44%`），P95=`79.22 -> 74.85s`（`-5.51%`）、
+P99=`249.82 -> 243.27s`（`-2.62%`），max=`578.54 -> 578.68s`（`+0.02%`）。Evaluate=
+`247.72 -> 83.26s`（`-66.39%`）、Progress=`231.84 -> 78.17s`（`-66.28%`）、Expanded=
+`206.94 -> 53.15s`（`-74.31%`），各自node数仍`5/4/1`。只有一次S3L full，不能形成稳定全局提速声明；
+post-full compatibility/architecture/contract exact artifacts与最终S3L状态以compatibility baseline为准。
+下一候选从新profile选择，S4 trigger provenance仍待独立实现；EB1、下一callback、ARCH-005继续锁定，
+`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
 
 ### S4：持续回归约束
 
