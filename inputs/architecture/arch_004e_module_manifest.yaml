@@ -6575,7 +6575,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_weight_search_evaluation
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_evaluation.py
-  sha256: b9b089ba4ad8434175849afd91f6dfc6fd6123edfcedcdb477fe453a58edbc75
+  sha256: 8af167d624e3e546d6f8492fb3da6c9b1fe2d0519b0166cbb51a1da209e54b06
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:

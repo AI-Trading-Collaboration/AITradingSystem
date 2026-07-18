@@ -1805,6 +1805,20 @@ live source content fingerprint，只复用`PASS`；未知schema、path/topology
 重建各自materialized views并执行DQ/PIT/source-lineage、policy、chronology与tamper门禁；没有跨test、跨worker、
 持久化或production cache，因此研究矩阵、阈值、结论与production flow均不变，`production_effect=none`。
 
+S3K不改Weight Search Evaluation的canonical producer/validator次序：Matrix仍每次调用真实
+`validate_weight_experiment_batch2_artifact`；只在显式同步validation session内让Backfill通过S3J
+neutral hardened scope复用exact `PASS`，并由Evaluation私有本地adapter为Robustness/Adaptive内部重放
+复用Scorecard `PASS`。Public Scorecard validator未包装；Matrix/Robustness/Adaptive不被伪报为supported root，
+未知scope、relative path、source/config/price/rates byte drift、`FAIL`或exception都会直接重跑/
+fail closed，14 views、3 schema、cross-lineage与branch-decision tamper继续保留。Formal/Gate只在
+test function延长同一PASS-only session，helper、final public validator、production fixture、nodeid与断言不变。
+Execution QQQ invariant hoist因未达预登记性能门槛已byte-exact撤回，不引入comparison/rows/DQ cache。
+这些变化不修改研究矩阵、阈值、结论、paper-shadow、production或broker flow，
+`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+本批唯一自然full保持exact `6,248 nodes / 1,068 files / 16 workers`与相同collection hashes，
+在scheduler COMPLETE/applied/no-fallback与telemetry/performance PASS下为`1,014.05s`，相对前一自然边界
+缩短`65.32s / 6.05%`；这是工程验证证据，不是投资结论，且单次full不构成稳定全局提速声明。
+
 ## ETF Portfolio P2 Observe-Only Contracts
 
 `TRADING-062` P2 扩展先实现可审计 contract/report 底座，不接入未批准 provider，不伪造 EDGAR/news/options/holdings/live broker 数据。所有 P2 命令固定 `production_effect=none`；ML ranking 和 ensemble 只能输出 `candidate_only`；live interface 只做 read-only preflight，默认 `broker_routing_allowed=false`。

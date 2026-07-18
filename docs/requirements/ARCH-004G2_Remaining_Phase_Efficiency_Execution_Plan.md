@@ -355,6 +355,48 @@ exact node/file/worker=`6,248/1,068/16`，COMPLETE/applied/no-fallback及telemet
 三个互斥lane，完成任务登记和isolated before后才允许实现；EB1、下一callback及ARCH-005继续不解锁，
 `production_effect=none`。
 
+S3K三项只读审计已在commit=`6c66f78a`与`090446Z` profile上闭合。Decision lane仅给
+Formal/Gate两个测试函数延长现有PASS-only session；Evaluation lane仅让Backfill经S3J neutral API、
+Scorecard经Evaluation本地adapter复用，Matrix仍真实验证；Execution lane第一阶段仅hoist每build内与
+strategy/policy无关的QQQ benchmark metrics，不引入comparison/rows/DQ cache。三者都需先取无负载
+exact-node before，两次after的worst wall同时改善≥10%且≥30s；Decision的两个node分别裁决。
+不达标或出现P0/P1即byte-exact撤回，不临时扩张为高风险缓存。
+
+S3K继续采用分层验证：单lane只跑isolated/focused，retained lane整批合并后才跑一次
+architecture/contract/full。日常研究不频繁跑pytest full，只强制DQ gate与本次研究实际依赖的
+validator/focused链路；full仅用于integration/phase/broad-change/performance/failure-rerun等显式边界并记录触发原因。
+本批不解锁EB1、下一callback或ARCH-005，`production_effect=none`。
+
+四个exact-node isolated before已在无其他candidate Python/pytest负载下顺序闭合：Formal/Gate/
+Evaluation/Execution wall=`151.84/119.22/150.26/168.43s`，call=`148.59/116.07/147.10/
+163.09s`。按`min(0.90 * before, before - 30s)`冻结worst-of-2 wall上限=`121.84/89.22/
+120.26/138.43s`，不得事后放宽。S3K现进入`IMPLEMENTING`，三个agent只编辑互斥文件，
+coordinator继续独占共享docs、顺序after/focused与最终集成门禁。
+
+S3K局部裁决已闭合：Formal=`151.84 -> 22.84/23.13s`、Gate=`119.22 -> 22.70/
+22.74s`、Evaluation=`150.26 -> 29.99/30.04s`，worst wall分别改善`84.77%/80.92%/
+80.01%`，均保留。Execution纯QQQ invariant hoist的第一次after=`173.24s`，未达`138.43s`
+上限且高于`168.43s` before；因worst-of-2已无法达标，两个实现文件已byte-exact撤回，
+不自动扩张到rows/DQ cache。S3K进入`VALIDATING`，先执行expanded focused与独立安全审查，
+再刷新manifests/compatibility/deprecation/hashes并于整批自然集成边界只跑一次architecture/contract/full。
+`stable_full_improvement_claimed=false`、`production_effect=none`。
+
+S3K expanded focused=`93 passed/1 skipped/162.50s`，三轮独立只读审查最终P0/P1/P2=`0/0/0`。
+generated manifests=`948/1,126/0 violations`，compatibility/deprecation=`13 passed/13.08s`，pre-full
+architecture=`344 passed/59.64s`、contract=`236 passed/44.76s`。唯一自然full=`6,246 passed/
+2 skipped/642 warnings/1,014.05s`，exact `6,248 nodes/1,068 files/16 workers`、COMPLETE/applied/
+no-fallback、telemetry/performance PASS。相对S3J，wall/file worker-s/P95/P99分别改善
+`6.05%/6.13%/21.10%/3.75%`；Formal/Gate/Evaluation full file改善`86.58%/85.09%/
+81.61%`。仅一次after full，不声称稳定全局改善。
+
+S3K post-full tracked-state已闭合为`COMPLETE_RUNTIME_TASK_CONTINUES`。首次architecture真实失败为
+`343 passed/1 failed/97.51s`，不是module/test manifest漂移，而是full证据补入system flow后aggregate
+shadow index尚未刷新；正式generate后的第二次architecture-fitness又由compatibility baseline assertion
+捕获旧aggregate hash。统一刷新后
+architecture=`344 passed/61.23s`，post-full contract初次复验=`236 passed/45.87s`，最终tracked-state
+contract与focused hash证据写入compatibility baseline。没有第二次full；next owner=S3L candidate coordinator，
+继续只读审计新profile候选，不解锁EB1、下一callback或ARCH-005，`production_effect=none`。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

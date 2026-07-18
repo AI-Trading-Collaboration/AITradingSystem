@@ -11011,7 +11011,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_formal_method_auto_plan
   path: tests/test_formal_method_auto_plan.py
-  sha256: 36362af6cd7082c4b33de00d0e190d202a795d8f806d4e083a0c1c94c78a8926
+  sha256: 7cd4cdfcb46764bf23788056d4dc225f38891cc054e3a4c2f535da9861830ed0
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15479,7 +15479,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_weight_method_promotion_gate
   path: tests/test_weight_method_promotion_gate.py
-  sha256: 99761086009d6cc5c45e719023007d8fd112a77f5d3031895359d8ca417097cd
+  sha256: af62c48a7d48648760bdee95da8f4cf6c6effc88f38f7c0e4c06165ca810ba92
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15831,7 +15831,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_weight_search_evaluation_hardening
   path: tests/test_weight_search_evaluation_hardening.py
-  sha256: 8b73dfe77a773d271874b75b4ea5d571b4fde8326aca8cf7f291690052bc2a75
+  sha256: 7b7111a4c8e44b15cbfb5f0ecda935cda2d3db22e162ef02d833915015c27774
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

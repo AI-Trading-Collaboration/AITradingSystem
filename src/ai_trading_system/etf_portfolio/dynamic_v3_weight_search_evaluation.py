@@ -10,6 +10,9 @@ from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as _l
 from ai_trading_system.etf_portfolio import (
     dynamic_v3_weight_search_foundation as foundation,
 )
+from ai_trading_system.etf_portfolio.dynamic_v3_weight_search_validation_scope import (
+    validate_upstream_with_hardened_scope,
+)
 
 DEFAULT_WEIGHT_SCORECARD_DIR = _legacy.DEFAULT_WEIGHT_SCORECARD_DIR
 DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR = _legacy.DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR
@@ -200,9 +203,12 @@ def _validated_matrix(matrix_id: str, matrix_dir: Path) -> dict[str, Any]:
 
 
 def _validated_backfill(backfill_id: str, backfill_dir: Path) -> dict[str, Any]:
-    validation = foundation.validate_weight_batch_backfill_artifact(
-        backfill_id=backfill_id,
+    validation = validate_upstream_with_hardened_scope(
+        validator=foundation.validate_weight_batch_backfill_artifact,
+        validator_key="backfill_id",
+        artifact_id=backfill_id,
         output_dir=backfill_dir,
+        snapshot_name="weight_batch_backfill_input_snapshot.json",
     )
     _require(validation.get("status") == "PASS", "source backfill validation failed")
     return foundation.weight_batch_backfill_report_payload(
@@ -408,6 +414,18 @@ def validate_weight_scorecard_artifact(
     )
 
 
+def _validated_scorecard(scorecard_id: str, scorecard_dir: Path) -> dict[str, Any]:
+    validation = validate_upstream_with_hardened_scope(
+        validator=validate_weight_scorecard_artifact,
+        validator_key="scorecard_id",
+        artifact_id=scorecard_id,
+        output_dir=scorecard_dir,
+        snapshot_name="weight_scorecard_input_snapshot.json",
+    )
+    _require(validation.get("status") == "PASS", "source scorecard validation failed")
+    return weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
+
+
 def run_weight_robustness_review(
     *,
     scorecard_id: str,
@@ -417,11 +435,7 @@ def run_weight_robustness_review(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    score_validation = validate_weight_scorecard_artifact(
-        scorecard_id=scorecard_id, output_dir=scorecard_dir
-    )
-    _require(score_validation.get("status") == "PASS", "source scorecard validation failed")
-    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
+    scorecard = _validated_scorecard(scorecard_id, scorecard_dir)
     backfill_id = _text(scorecard.get("batch_backfill_id"))
     backfill = _validated_backfill(backfill_id, backfill_dir)
     _require(backfill_id == _text(scorecard.get("batch_backfill_id")), "scorecard backfill lineage")
@@ -540,13 +554,7 @@ def _rebuild_robustness(root: Path, robustness_id: str) -> list[dict[str, Any]]:
     _validate_binding(score_source, kind="weight_scorecard")
     _validate_binding(backfill_source, kind="weight_batch_backfill")
     score_id = _source_id(score_source)
-    score_validation = validate_weight_scorecard_artifact(
-        scorecard_id=score_id, output_dir=_source_dir(score_source).parent
-    )
-    _require(score_validation.get("status") == "PASS", "source scorecard validation failed")
-    scorecard = weight_scorecard_report_payload(
-        scorecard_id=score_id, output_dir=_source_dir(score_source).parent
-    )
+    scorecard = _validated_scorecard(score_id, _source_dir(score_source).parent)
     backfill_id = _source_id(backfill_source)
     backfill = _validated_backfill(backfill_id, _source_dir(backfill_source).parent)
     _require(
@@ -643,15 +651,11 @@ def run_weight_adaptive_branch(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    score_validation = validate_weight_scorecard_artifact(
-        scorecard_id=scorecard_id, output_dir=scorecard_dir
-    )
+    scorecard = _validated_scorecard(scorecard_id, scorecard_dir)
     robust_validation = validate_weight_robustness_review_artifact(
         robustness_id=robustness_id, output_dir=robustness_dir
     )
-    _require(score_validation.get("status") == "PASS", "source scorecard validation failed")
     _require(robust_validation.get("status") == "PASS", "source robustness validation failed")
-    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
     robustness = weight_robustness_review_report_payload(
         robustness_id=robustness_id, output_dir=robustness_dir
     )
@@ -746,22 +750,13 @@ def _rebuild_adaptive(root: Path, branch_id: str) -> list[dict[str, Any]]:
     _validate_binding(robust_source, kind="weight_robustness_review")
     score_id = _source_id(score_source)
     robust_id = _source_id(robust_source)
-    _require(
-        validate_weight_scorecard_artifact(
-            scorecard_id=score_id, output_dir=_source_dir(score_source).parent
-        ).get("status")
-        == "PASS",
-        "source scorecard validation failed",
-    )
+    scorecard = _validated_scorecard(score_id, _source_dir(score_source).parent)
     _require(
         validate_weight_robustness_review_artifact(
             robustness_id=robust_id, output_dir=_source_dir(robust_source).parent
         ).get("status")
         == "PASS",
         "source robustness validation failed",
-    )
-    scorecard = weight_scorecard_report_payload(
-        scorecard_id=score_id, output_dir=_source_dir(score_source).parent
     )
     robustness = weight_robustness_review_report_payload(
         robustness_id=robust_id, output_dir=_source_dir(robust_source).parent

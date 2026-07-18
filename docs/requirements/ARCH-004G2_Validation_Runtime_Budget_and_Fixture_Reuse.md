@@ -819,6 +819,98 @@ COMPLETE/applied/no-fallback，telemetry/performance均PASS。
 只读审计Decision leaf、Evaluation hardened-upstream与Execution comparison三个互斥候选，不自动启动实现、
 EB1、下一callback或ARCH-005，`production_effect=none`。
 
+### S3K：Decision leaf session、Evaluation upstream reuse与Execution invariant hoist
+
+2026-07-18 / 以commit=`6c66f78a`及`outputs/validation_runtime/full_20260718T090446Z/
+test_runtime_profile.json`为authoritative source完成三个互斥只读审计。开发期不把`full`当作单项内循环：
+每lane只顺序执行exact-node isolated before/after与focused contract，仅在所有retained lane合并的自然
+integration boundary执行一次architecture、contract和`full`。日常研究仅执行必要的data-quality gate与
+实际涉及链路；不把daily/weekly/monthly研究调度自动映射成pytest `full`。
+
+| lane | 独占候选范围 | 最新full证据 | 预登记最小方案与退出门槛 |
+|---|---|---:|---|
+|A Decision leaves|`tests/test_formal_method_auto_plan.py`；`tests/test_weight_method_promotion_gate.py`|Formal file/call=`259.553/259.551s`；Gate=`229.607/229.605s`|仅给两个现有test function增加`with_artifact_validation_session`，不装饰helper、不删最终validator、不缩减fixture。两个node分别取before与两次after，各自worst-after须`<= min(0.90 * before, before - 30s)`，不得用合并wall隐藏某个node未达标。|
+|B Evaluation hardened upstream|`src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_evaluation.py`；`tests/test_weight_search_evaluation_hardening.py`|file/call=`262.962/262.960s`，近三次稳定为`262.96/258.19/256.24s`|测试延长既有validation session；`_validated_backfill`只调用S3J neutral API，Evaluation本地adapter复用Scorecard PASS，Matrix继续真实验证。不改S3J resolver/Targeted/Diagnostics，不声称Matrix是supported root。worst-of-2须同时改善≥10%且≥30s。|
+|C Execution comparison invariants|`src/ai_trading_system/execution_semantics.py`；`tests/test_execution_semantics.py`|target call=`236.839s`、file=`243.386s`；近四次call CV约`0.442%`|第一阶段仅将与strategy/policy无关的QQQ target/benchmark metrics移出内层loop，使每build的QQQ benchmark从65次降为1次；不缓存comparison、rows或DQ payload。worst-of-2须同时改善≥10%且≥30s；若未达标则byte-exact撤回，rows-only session cache需重新登记完整bytes fingerprint和DQ等价门禁后才能实施，不在本lane自动扩张。|
+
+Lane A只让同test内已稳定PASS的transitive upstream复用；Gate预计tracked validator=`122 -> 62`、
+DQ=`39 -> 21`，Formal=`145 -> 63`、DQ=`45 -> 21`。两个final Gate/Formal validator仍真实执行，
+`auto_apply=false`、`implemented=false`、`production_effect=none`及全部stage/decision断言不变。
+
+Lane B的neutral resolver supported roots不含Matrix/Robustness/Adaptive；收益必须只来自Backfill/Scorecard的
+PASS-only reuse及其间接消除的Matrix重放。同内容两次底层验证必须为1次，FAIL/exception各两次必须
+为2次；source/config/price/rates变化必须miss/fail closed，14 views、3 schema、cross-lineage、
+branch-decision tamper断言不得减少。
+
+Lane C仅是纯等价loop-invariant hoist：不改行顺序、浮点计算输入、策略/政策数量、DQ调用、
+JSON/Markdown schema或研究结论。需固定时间字段后证明65-row canonical payload及五个公开builder输出
+byte-equivalent，并证明QQQ benchmark metrics=`1/build`。禁止使用path/mtime、当前不含secondary checksum的
+DQ payload或可变rows引用建立缓存。
+
+三个lane实现前必须在无其他candidate Python/pytest负载下顺序取exact-node isolated before，
+然后才允许按互斥文件范围并行实现。任一lane未达预登记门槛或安全审查出现P0/P1，必须
+byte-exact撤回；不减少nodeid/skip/xfail/DQ/PIT/source/lineage/all-view/schema/tamper，不改研究阈值、
+promotion、paper-shadow、production或broker状态。Refined Method的transactional shared fixture因需完整树恢复且风险更高，
+仅保留为后续候选，不进入S3K。`strategy_logic_changed=false`、`cached_data_mutated=false`、
+`production_effect=none`。
+
+S3K isolated before已在commit=`6c66f78a`、显式candidate `PYTHONPATH`、无其他candidate Python/pytest
+进程且未开始代码实现的状态下顺序取得：Formal=`1 passed / 151.84s`（call=`148.59s`），
+Gate=`1 passed / 119.22s`（call=`116.07s`），Evaluation=`1 passed / 150.26s`（call=
+`147.10s`），Execution=`1 passed / 168.43s`（call=`163.09s`）。因此两次after的worst wall上限
+分别冻结为Formal≤`121.84s`、Gate≤`89.22s`、Evaluation≤`120.26s`、Execution≤`138.43s`。
+这些上限在实现前固定，不得以after抖动或full内并发值事后放宽；四个node均必须保持原nodeid与全部
+断言。S3K现进入`IMPLEMENTING`，只允许按上表互斥文件范围并行编辑；所有Python/pytest计时仍由
+coordinator顺序执行。
+
+S3K isolated after已完成局部收益裁决。Formal两次after=`22.84/23.13s`（call=`19.53/
+19.83s`），按worst相对before节省`128.71s / 84.77%`；Gate=`22.70/22.74s`（call=
+`19.46/19.44s`），节省`96.48s / 80.92%`；Evaluation=`29.99/30.04s`（call=
+`26.75/26.80s`），节省`120.22s / 80.01%`。三者均远低于实现前冻结上限，裁决=
+`RETAINED_THRESHOLD_PASS`。
+
+Execution纯QQQ invariant hoist的第一次after=`173.24s`（call=`167.88s`），高于before=
+`168.43s`且远高于上限`138.43s`。因裁决取worst-of-2，第一次已使该lane在数学上无法
+达标，故不再浪费第二次计时；production/test两文件已byte-exact撤回HEAD，裁决=
+`REJECTED_THRESHOLD_MISS`。这证明QQQ benchmark并非当前主长尾，不引入未登记的rows/DQ cache；
+若后续重开，必须先完成secondary source bytes、全部config/policy、DQ等价与deep-copy隔离的新安全合同。
+S3K现进入`VALIDATING`；expanded focused、独立P0/P1审查、manifests/compatibility/deprecation/source hashes与
+唯一自然integration-boundary architecture/contract/full仍待闭合，`stable_full_improvement_claimed=false`、
+`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+
+S3K pre-full集成门禁与唯一自然full已PASS。generated manifests=`948 modules / 1,126 test/support
+files`，orphan/overlap/dependency/direct-writer violation均为0；compatibility/deprecation focused=`13 passed /
+13.08s`。architecture=`344 passed / 59.64s`，artifact=`outputs/validation_runtime/
+architecture-fitness_20260718T103046Z/test_runtime_summary.json`；contract=`236 passed / 44.76s`，
+artifact=`outputs/validation_runtime/contract-validation_20260718T103154Z/test_runtime_summary.json`。
+
+唯一full=`6,246 passed / 2 skipped / 642 warnings / 1,014.05s`，artifact=`outputs/validation_runtime/
+full_20260718T103249Z/test_runtime_summary.json`，profile=`outputs/validation_runtime/full_20260718T103249Z/
+test_runtime_profile.json`。exact node/file/worker=`6,248/1,068/16`，ordered/set hashes与S3J完全一致，
+scheduler=`COMPLETE/applied/no-fallback`，telemetry/performance均PASS。相对S3J `090446Z`，runner wall=
+`1,079.37 -> 1,014.05s`（`-65.32s / -6.05%`），file worker-s=`17,080.367 -> 16,032.724s`
+（`-1,047.642s / -6.13%`），P95=`100.407 -> 79.219s`（`-21.10%`），P99=
+`259.553 -> 249.819s`（`-3.75%`）。max因未修改的Layer1文件从`567.530`增至
+`578.539s`（`+1.94%`），仍是最大长尾。
+
+Formal/Gate/Evaluation full file分别为`259.553 -> 34.844s`（`-86.58%`）、
+`229.607 -> 34.232s`（`-85.09%`）、`262.962 -> 48.350s`（`-81.61%`），三文件合计
+约减少`634.695 worker-s`；Execution因已撤回，`243.386 -> 242.334s`仅属噪声水平。
+worker busy mean=`1,067.523 -> 1,002.045s`，CV仍为近零的`0.0077%`，tail idle total/max=
+`0.079/0.010s`。因仅有一次S3K after full，`stable_full_improvement_claimed=false`。
+
+S3K post-full tracked-state closeout已闭合。首次architecture在
+`architecture-fitness_20260718T105640Z`真实报告`343 passed/1 failed/97.51s`；module/test manifest逐项
+SHA均无漂移，根因是唯一full完成后补写`docs/system_flow.md`性能证据，而aggregate shadow index仍绑定
+补写前hash。按正式生成器刷新后，第二次architecture-fitness的compatibility baseline assertion又准确捕获
+baseline仍绑定旧aggregate hash；
+统一刷新active source hash后architecture=`344 passed/61.23s`，artifact=`outputs/validation_runtime/
+architecture-fitness_20260718T110442Z/test_runtime_summary.json`。post-full contract初次复验=`236 passed/
+45.87s`，最终tracked-state contract与compatibility/deprecation focused result由compatibility baseline记录。
+S3K状态为`COMPLETE_RUNTIME_TASK_CONTINUES`，next owner转为S3L candidate coordinator；本批不运行第二次
+full，不解锁EB1、下一callback或ARCH-005，`strategy_logic_changed=false`、`cached_data_mutated=false`、
+`production_effect=none`。
+
 ### S4：持续回归约束
 
 - architecture/contract tests 校验 runtime manifest freshness、调度确定性和 gate coverage；
