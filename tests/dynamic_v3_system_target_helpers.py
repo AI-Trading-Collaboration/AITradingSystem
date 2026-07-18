@@ -840,6 +840,28 @@ def run_smoothed_promotion_chain_fixture(tmp_path: Path) -> dict[str, Any]:
 
 
 @smoothed_promotion._with_validation_session
+def run_smoothed_recorded_owner_authority_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_smoothed_promotion_chain_fixture(tmp_path)
+    source_generated = max(
+        datetime.fromisoformat(fixture[key]["manifest"]["generated_at"])
+        for key in ("binding", "switch_plan", "owner_promotion")
+    )
+    authority_ready_at = source_generated + timedelta(seconds=1)
+    recorded_owner_promotion = system_target.record_smoothed_owner_promotion_decision(
+        decision_id=fixture["owner_promotion"]["decision_id"],
+        decision="continue_observation",
+        decision_reason="Forward confirmation remains in progress.",
+        output_dir=tmp_path / "smoothed_owner_promotion",
+        recorded_at=authority_ready_at,
+    )
+    return {
+        **fixture,
+        "recorded_owner_promotion": recorded_owner_promotion,
+        "authority_ready_at": authority_ready_at,
+    }
+
+
+@smoothed_promotion._with_validation_session
 def run_smoothed_forward_ops_chain_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_smoothed_promotion_chain_fixture(tmp_path)
     source_generated = max(

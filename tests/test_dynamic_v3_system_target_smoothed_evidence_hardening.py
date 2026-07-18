@@ -12,6 +12,9 @@ from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_t
 from ai_trading_system.etf_portfolio import (
     dynamic_v3_system_target_smoothed_evidence as evidence,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 
 def _run_evidence_chain(tmp_path: Path) -> dict[str, object]:
@@ -83,6 +86,7 @@ def _write_evidence_policy(
     return path
 
 
+@with_artifact_validation_session
 def test_smoothed_evidence_chain_is_replayable_and_preserves_no_candidate(
     tmp_path: Path,
 ) -> None:
@@ -121,6 +125,7 @@ def test_smoothed_evidence_chain_is_replayable_and_preserves_no_candidate(
     assert {row["status"] for row in validations} == {"PASS"}
 
 
+@with_artifact_validation_session
 def test_attribution_rejects_valid_but_cross_comparison_lineage_before_output(
     tmp_path: Path,
 ) -> None:
@@ -161,6 +166,7 @@ def test_attribution_rejects_valid_but_cross_comparison_lineage_before_output(
     assert not output_dir.exists()
 
 
+@with_artifact_validation_session
 def test_regime_policy_floor_keeps_insufficient_samples_null(tmp_path: Path) -> None:
     fixture = run_smoothed_review_chain_fixture(tmp_path)
     config_path = _write_evidence_policy(
@@ -264,6 +270,7 @@ def test_confirmation_targets_follow_eligible_method_instead_of_fixed_3d() -> No
     }
 
 
+@with_artifact_validation_session
 def test_policy_drift_and_render_tamper_fail_validation(tmp_path: Path) -> None:
     fixture = run_smoothed_review_chain_fixture(tmp_path)
     config_path = _write_evidence_policy(tmp_path / "smoothed_evidence_policy.yaml")
@@ -315,6 +322,7 @@ def test_policy_drift_and_render_tamper_fail_validation(tmp_path: Path) -> None:
     )
 
 
+@with_artifact_validation_session
 def test_watch_rejects_cross_comparison_confirmation_before_output(tmp_path: Path) -> None:
     chain = _run_evidence_chain(tmp_path)
     comparison_two = system_target.run_smoothed_comparison(

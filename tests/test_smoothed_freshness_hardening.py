@@ -9,7 +9,7 @@ import pytest
 from dynamic_v3_system_target_helpers import (
     EVALUATION_AS_OF,
     build_model_target_fixture,
-    run_smoothed_forward_ops_chain_fixture,
+    run_smoothed_recorded_owner_authority_fixture,
     write_market_cache,
 )
 
@@ -251,17 +251,14 @@ def test_refresh_rejects_cross_preflight_lineage_and_rebuilds_every_view(tmp_pat
 @with_artifact_validation_session
 def test_retry_rebuilds_views_and_rejects_tampered_validated_weekly_child(tmp_path: Path) -> None:
     build_model_target_fixture(tmp_path)
-    ops = run_smoothed_forward_ops_chain_fixture(tmp_path)
+    authority = run_smoothed_recorded_owner_authority_fixture(tmp_path)
     prices_path, rates_path = write_market_cache(tmp_path / "retry_market_cache")
-    generated = max(
-        datetime.fromisoformat(ops[key]["manifest"]["generated_at"])
-        for key in ("binding", "switch_plan", "recorded_owner_promotion")
-    ) + timedelta(seconds=1)
+    generated = authority["authority_ready_at"] + timedelta(seconds=1)
     retry = freshness.run_smoothed_bootstrap_retry(
         requested_as_of=EVALUATION_AS_OF,
-        binding_id=ops["binding"]["binding_id"],
-        switch_plan_id=ops["switch_plan"]["switch_plan_id"],
-        owner_promotion_id=ops["recorded_owner_promotion"]["decision_id"],
+        binding_id=authority["binding"]["binding_id"],
+        switch_plan_id=authority["switch_plan"]["switch_plan_id"],
+        owner_promotion_id=authority["recorded_owner_promotion"]["decision_id"],
         output_dir=tmp_path / "smoothed_bootstrap_retry",
         preflight_dir=tmp_path / "smoothed_data_preflight",
         model_target_dir=tmp_path / "model_target",

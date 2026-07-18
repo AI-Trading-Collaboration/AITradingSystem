@@ -3,9 +3,13 @@ from __future__ import annotations
 from dynamic_v3_system_target_helpers import run_smoothed_forward_ops_chain_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 from ai_trading_system.reports import reader_brief
 
 
+@with_artifact_validation_session
 def test_smoothed_owner_renewal_options_and_reader_brief(tmp_path) -> None:
     fixture = run_smoothed_forward_ops_chain_fixture(tmp_path)
     renewal = fixture["renewal"]

@@ -410,6 +410,99 @@ inactive、inconsistent或invalid phase。测试再次覆写的两份tracked res
 重跑时执行。S4应把受治理的`trigger_reason`、task/boundary id及可选parent run写入runtime summary与
 Reader Brief，使低频触发原因从artifact本身可审计；weekly/monthly研究复盘不得自动映射为周期full。
 
+### S3F：Smoothed critical-path session与authority prefix（owner批准继续）
+
+2026-07-18 / S3E提交`d407bc9b`并推送后，S3F按第2份qualifying profile
+`outputs/validation_runtime/full_20260717T231920Z/test_runtime_profile.json`重新冻结候选。当前名称包含
+`smoothed`或`smoothing_`的38个test files累计`3,559.65 worker-s`；其中Weekly/Refresh/Retry五个
+authority链、Evidence Hardening及五个Operations leaf files共11文件累计`2,773.41 worker-s`，约占
+Smoothed总量`77.9%`。这不是删除验证的理由，而是把重复建链收敛到同一worker内可证明安全的
+PASS-only session或更短但仍真实的authority prefix。
+
+S3F分为三个互斥实现lane，协调者独占本需求、执行计划、task register、system flow、manifests、
+compatibility与最终集成：
+
+| lane | 独占范围 | 当前profile基线 | 计划边界 |
+|---|---|---:|---|
+|A Operations leaf session|`test_smoothed_event_monitor.py`、`test_smoothed_forward_progress.py`、`test_smoothed_weekly_dashboard.py`、`test_smoothed_switch_readiness.py`、`test_smoothed_owner_renewal.py`|`898.89 worker-s`|仅在单test/worker内复用immutable上游与PASS-only content-fingerprint validation；每个leaf仍运行真实producer/validator，source/output/tamper与null-candidate语义不变|
+|B Evidence/Readiness session|`test_smoothed_readiness_review.py`、`test_dynamic_v3_system_target_smoothed_evidence_hardening.py`、`test_smoothed_review_attribution.py`、`test_smoothing_benefit_lag.py`、`test_smoothed_regime_validation.py`、`test_smoothed_confirmation.py`、`test_smoothed_watch_pack.py`|`493.79 worker-s`|收敛同worker重复Evidence/Review前缀；不得跳过cross-lineage、policy/source drift、all-view byte rebuild或tamper fail-close|
+|C Retry/Weekly authority prefix|`test_smoothed_forward_weekly_run.py`、`test_smoothed_bootstrap_retry.py`、`test_smoothed_data_refresh.py`、`test_smoothed_refresh_hardening.py`、`test_smoothed_freshness_hardening.py`|`1,628.75 worker-s`|新增test-only recorded-owner authority prefix，只允许真实Promotion→Gate/Switch→recorded `continue_observation`路径；必须保留Binding、Switch Plan、Recorded Owner、chronology、独立cache及至少一条Weekly/Retry完整链|
+
+两份tracked research Markdown的测试direct-writer隔离由协调者在三lane集成后单独治理；不得靠事后
+`git checkout`、忽略diff或永久写入随机TEMP路径掩盖副作用。Runtime artifact的`trigger_reason`与
+task/boundary/parent-run provenance属于S4审计增强，不与三个性能lane混成同一实现风险。
+
+执行顺序固定为：先用每个lane的完整文件集合与同一`python -m pytest -n 16 --dist loadfile`命令取得
+pre-change baseline；再由三个agent在互斥文件范围实施；随后分别同命令after、expanded focused、Ruff和
+副作用检查。只有三个lane全部集成后才刷新manifests/compatibility/source hashes并执行一次
+architecture、contract和标准full。该full是下一自然integration boundary及第3份profile候选；仅当
+node set、order、exit、telemetry、performance、manifest freshness和无外部负载均PASS时才计数。即使形成
+`3/3` complete profiles，也必须在collection差异、median/P95、memory/read amplification证据审计后才能
+决定是否升级`stable_full_improvement_claimed`，不得只因计数达到3自动宣称长期目标完成。
+
+S3F安全不变量：不减少nodeid、skip/xfail、required family或真实validator；不改变production默认、DQ、
+PIT、source replay、lineage、all-view rebuild、tamper、policy、阈值、投资解释或paper-shadow/production/
+broker边界；跨worker不共享可写artifact/cache；任何baseline/after失败先诊断根因，不用serial、retry或
+临时cleanup delay绕过。`strategy_logic_changed=false`、`cached_data_mutated=false`、
+`production_effect=none`；EB1与下一callback继续暂停。
+
+S3F pre-change同命令baseline已在无其他pytest负载下顺序完成：Lane A=`5 passed / 165.38s`，五个
+热点call累计`771.58s`；Lane B=`13 passed / 195.41s`，最慢Readiness/Watch cross-lineage/Replay为
+`79.74/74.79/65.97s`；Lane C=`17 passed / 287.40s`，五个真实Weekly/Retry热点call累计
+`1,111.66s`。三个命令均为`-n 16 --dist loadfile`且无skip/failure；after必须使用相同文件集合、参数与
+运行隔离，不把full profile worker-s与focused墙钟混算降幅。
+
+三个lane已按互斥范围实施并完成同命令after。Lane A只给五个test function增加public
+`with_artifact_validation_session`，不改共享helper；结果=`5 passed / 119.34s`，墙钟`-27.84%`，五call
+`771.58 -> 574.00s`（`-25.61%`）。Lane B同样只把既有session延长到11个磁盘链node外层，纯内存与
+无重复链node不装饰；结果=`13 passed / 61.99s`，墙钟`-68.28%`，主要call
+`384.71 -> 134.53s`（`-65.03%`）。Lane C新增test-only
+`run_smoothed_recorded_owner_authority_fixture`：真实运行Promotion链，按Binding/Switch/Pending Owner
+manifest最大时间`+1s`记录`continue_observation`，消费者再`+1s`；旧Operations helper原样保留，五个
+热点仍各自运行真实Weekly/Retry/Refresh与tamper validator。结果=`17 passed / 249.57s`，墙钟
+`-13.16%`，五热点call`1,111.66 -> 938.54s`（`-15.57%`）。三命令顺序墙钟合计
+`648.19 -> 430.90s`（`-33.52%`），目标call合计`2,267.95 -> 1,647.07s`（`-27.38%`）；这仍只是
+focused同命令单次运行证据（`single_run_focused_evidence=true`），其中call口径是各pytest node
+`call` phase duration的累计秒数（`aggregate_pytest_call_duration_seconds`），不是并行墙钟，也不冒充full
+整体收益。
+
+两处tracked-doc direct writer也已test-only隔离。Indicator Family Ablation exact CLI test把12个secondary
+matrix、1个feature-set和15个Markdown默认输出全部monkeypatch到`tmp_path`并断言28件真实写出；Layer1
+Final Gate exact CLI test仅用`functools.partial`为真实producer绑定临时owner doc。两个node=`2 passed /
+94.12s`，运行后`indicator_family_only_model_review.md`与
+`layer1_selector_pause_or_continue_owner_pack.md`均与HEAD byte内容一致且不进入worktree status。
+扩大focused覆盖三个lane、validation-session核心、Smoothed operations/promotion/evidence hardening、
+Layer1与boundary contract，共collection `135` nodes，结果=`134 passed / 1 skipped / 356.52s`；唯一skip
+为既有Windows平台条件
+`test_validation_session_active_report_and_digest_lock_do_not_cross_fork`（requires POSIX `os.fork`）。
+Ruff与`git diff --check` PASS，三个性能lane node counts分别保持`5/13/17`，未增加retry/serial/skip/xfail。
+
+S3F自然integration-boundary正式门禁已闭合：governance=`28 passed / 28.70s`、architecture=
+`344 passed / 49.72s`、contract=`236 passed / 35.49s`；唯一一次标准full位于
+`outputs/validation_runtime/full_20260718T004439Z/`，结果=`6,246 passed / 2 skipped / 642 warnings /
+1,027.74s`。Strict reader确认profile/telemetry/performance、pytest exit、16-worker loadfile、duration
+order、no fallback及test manifest全部PASS；sidecar覆盖`6,248 nodes / 1,068 files / 18,742 phases`，
+ordered/set SHA分别为`7b7dc4a7838cbf17d68a64b2e3aaf4dfc59267c75109a58139ea1b03986d7322`与
+`6e8fee8709c8e781952a29224a8857d01bd6df5c50f9070508ad1dac9c5a18ee`，与第2份profile完全一致，
+因此成为第3份qualifying complete profile。
+
+相对`231920Z`，full墙钟`1,040.50 -> 1,027.74s`（`-1.23%`）、worker busy
+`16,143.75 -> 15,830.64 worker-s`（`-1.94%`）；Smoothed 38文件
+`3,559.65 -> 2,988.52 worker-s`（`-16.04%`），S3F全部17文件
+`3,021.42 -> 2,447.23 worker-s`（`-19.00%`）。三lane在full中的A/B/C分别改善
+`17.07%/58.96%/7.96%`，证明实现收益真实存在；但wall收益较小，因为critical path已转移且调度尾部
+变差：file P99=`249.25 -> 258.01s`、worker CV=`1.10% -> 1.53%`、tail max/total=
+`32.46/355.47 -> 42.28/460.50s`。当前前五文件为Layer1=`436.82s`、Smoothed Weekly=
+`366.89s`、Refined Method=`365.32s`、Smoothed Refresh=`342.49s`、Weight Diagnostics=`305.55s`；
+它们构成下一批并行候选，不能再把Smoothed focused降幅线性外推为full墙钟。
+
+三份qualifying墙钟为`1,231.76/1,040.50/1,027.74s`，median=`1,040.50s`、nearest-rank
+P95=`1,231.76s`，满足既定墙钟阈值；但第1份collection少22个runtime-contract nodes，当前同集合样本
+只有2份，且sidecar仍没有complete peak-memory与read-amplification证据。因此
+`complete_profile_count=3`但`stable_full_improvement_claimed=false`，不得把计数闭合误报为长期验收完成。
+两份tracked research Markdown在full前后SHA与worktree均不变，direct-writer隔离闭合；本批
+`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+
 ### S4：持续回归约束
 
 - architecture/contract tests 校验 runtime manifest freshness、调度确定性和 gate coverage；

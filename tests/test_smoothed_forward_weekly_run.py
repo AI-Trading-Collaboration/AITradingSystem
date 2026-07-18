@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from dynamic_v3_system_target_helpers import (
     TARGET_AS_OF,
     build_model_target_fixture,
-    run_smoothed_forward_ops_chain_fixture,
+    run_smoothed_recorded_owner_authority_fixture,
     write_market_cache,
 )
 
@@ -19,19 +19,16 @@ from ai_trading_system.platform.artifacts.validation_session import (
 @with_artifact_validation_session
 def test_smoothed_forward_weekly_run_handles_no_due_windows(tmp_path) -> None:
     target = build_model_target_fixture(tmp_path)
-    ops = run_smoothed_forward_ops_chain_fixture(tmp_path)
+    authority = run_smoothed_recorded_owner_authority_fixture(tmp_path)
     prices_path, rates_path = write_market_cache(tmp_path / "weekly_market_cache")
-    generated_at = max(
-        datetime.fromisoformat(ops[key]["manifest"]["generated_at"])
-        for key in ("binding", "switch_plan", "recorded_owner_promotion")
-    ) + timedelta(seconds=1)
+    generated_at = authority["authority_ready_at"] + timedelta(seconds=1)
 
     weekly = system_target.run_smoothed_forward_weekly_run(
         week_ending=TARGET_AS_OF,
         target_id=target["target_id"],
-        binding_id=ops["binding"]["binding_id"],
-        switch_plan_id=ops["switch_plan"]["switch_plan_id"],
-        owner_promotion_id=ops["recorded_owner_promotion"]["decision_id"],
+        binding_id=authority["binding"]["binding_id"],
+        switch_plan_id=authority["switch_plan"]["switch_plan_id"],
+        owner_promotion_id=authority["recorded_owner_promotion"]["decision_id"],
         model_target_dir=tmp_path / "model_target",
         emission_dir=tmp_path / "smoothed_daily_emission",
         due_dir=tmp_path / "smoothed_outcome_due",
@@ -84,9 +81,7 @@ def test_smoothed_forward_weekly_run_handles_no_due_windows(tmp_path) -> None:
     )
     assert check["status"] == "PASS"
 
-    binding_path = (
-        ops["binding"]["binding_dir"] / "bound_confirmation_targets.json"
-    )
+    binding_path = authority["binding"]["binding_dir"] / "bound_confirmation_targets.json"
     bound = json.loads(binding_path.read_text(encoding="utf-8"))
     bound["binding_status"] = "OBSERVATION_BOUND"
     binding_path.write_text(json.dumps(bound), encoding="utf-8")

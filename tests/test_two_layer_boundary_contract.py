@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
+from ai_trading_system import indicator_family_ablation
 from ai_trading_system.cli import app
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -12,6 +14,41 @@ CHANNEL_POLICY_PATH = Path("config/research/first_layer_channel_policy.yaml")
 USAGE_MATRIX_PATH = Path("inputs/research_reviews/first_layer_signal_usage_matrix_v2.yaml")
 BASE_OVERLAY_PATH = Path("config/research/base_overlay_veto_policy_schema.yaml")
 FORWARD_LOG_PATH = Path("config/research/return_seeking_diagnostic_forward_log.yaml")
+
+_INDICATOR_ABLATION_SECONDARY_MATRIX_OUTPUTS = (
+    "DEFAULT_SCOPE_MATRIX_PATH",
+    "DEFAULT_REGISTRY_VALIDATION_MATRIX_PATH",
+    "DEFAULT_PIT_COVERAGE_MATRIX_PATH",
+    "DEFAULT_DO_NOT_DERISK_MATRIX_PATH",
+    "DEFAULT_STAY_CONSTRUCTIVE_MATRIX_PATH",
+    "DEFAULT_ADD_RISK_MATRIX_PATH",
+    "DEFAULT_RISK_ON_VETO_MATRIX_PATH",
+    "DEFAULT_2022_SLICE_MATRIX_PATH",
+    "DEFAULT_2023_PLUS_MATRIX_PATH",
+    "DEFAULT_BETA_TQQQ_MATRIX_PATH",
+    "DEFAULT_SELECTION_MATRIX_PATH",
+    "DEFAULT_FINAL_MATRIX_PATH",
+)
+_INDICATOR_ABLATION_SECONDARY_FEATURE_OUTPUTS = (
+    "DEFAULT_CHANNEL_FEATURE_SET_PATH",
+)
+_INDICATOR_ABLATION_SECONDARY_MARKDOWN_OUTPUTS = (
+    "DEFAULT_SCOPE_REVIEW_PATH",
+    "DEFAULT_REGISTRY_VALIDATION_REVIEW_PATH",
+    "DEFAULT_PIT_COVERAGE_REVIEW_PATH",
+    "DEFAULT_FAMILY_ONLY_MODEL_REVIEW_PATH",
+    "DEFAULT_DO_NOT_DERISK_REVIEW_PATH",
+    "DEFAULT_STAY_CONSTRUCTIVE_REVIEW_PATH",
+    "DEFAULT_ADD_RISK_REVIEW_PATH",
+    "DEFAULT_RISK_ON_VETO_REVIEW_PATH",
+    "DEFAULT_2022_SLICE_REVIEW_PATH",
+    "DEFAULT_2023_PLUS_REVIEW_PATH",
+    "DEFAULT_BETA_TQQQ_REVIEW_PATH",
+    "DEFAULT_INTERACTION_WARNING_REVIEW_PATH",
+    "DEFAULT_SELECTION_REVIEW_PATH",
+    "DEFAULT_OWNER_PACK_PATH",
+    "DEFAULT_CLOSEOUT_REVIEW_PATH",
+)
 
 
 def test_first_layer_cannot_emit_weights() -> None:
@@ -83,10 +120,24 @@ def test_diagnostic_signal_cannot_enable_promotion() -> None:
     assert forward_log["safety_boundary"]["broker_action"] == "none"
 
 
-def test_indicator_family_ablation_cli_writes_diagnostic_matrix(tmp_path: Path) -> None:
+def test_indicator_family_ablation_cli_writes_diagnostic_matrix(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     matrix_path = tmp_path / "indicator_family_ablation_matrix.yaml"
     review_path = tmp_path / "indicator_family_ablation_review.md"
     output_root = tmp_path / "outputs"
+    secondary_output_root = tmp_path / "secondary_outputs"
+    secondary_paths: list[Path] = []
+    for constant_name in (
+        *_INDICATOR_ABLATION_SECONDARY_MATRIX_OUTPUTS,
+        *_INDICATOR_ABLATION_SECONDARY_FEATURE_OUTPUTS,
+        *_INDICATOR_ABLATION_SECONDARY_MARKDOWN_OUTPUTS,
+    ):
+        original_path = Path(getattr(indicator_family_ablation, constant_name))
+        isolated_path = secondary_output_root / original_path.name
+        monkeypatch.setattr(indicator_family_ablation, constant_name, isolated_path)
+        secondary_paths.append(isolated_path)
 
     result = CliRunner().invoke(
         app,
@@ -112,6 +163,8 @@ def test_indicator_family_ablation_cli_writes_diagnostic_matrix(tmp_path: Path) 
     assert payload["summary"]["allocation_candidate_count"] == 0
     assert payload["promotion_allowed"] is False
     assert review_path.exists()
+    assert len(secondary_paths) == 28
+    assert all(path.exists() for path in secondary_paths)
 
 
 def _signals_by_name(matrix: dict[str, object]) -> dict[str, dict[str, object]]:

@@ -3,9 +3,13 @@ from __future__ import annotations
 from dynamic_v3_system_target_helpers import run_smoothed_review_chain_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 from ai_trading_system.reports import reader_brief
 
 
+@with_artifact_validation_session
 def test_smoothed_watch_pack_outputs_reader_brief_section_and_safety(tmp_path) -> None:
     fixture = run_smoothed_review_chain_fixture(tmp_path)
     attribution = system_target.run_smoothed_review_attribution(

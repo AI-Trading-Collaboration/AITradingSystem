@@ -3,11 +3,14 @@ from __future__ import annotations
 import json
 import math
 from datetime import date, timedelta
+from functools import partial
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
+from ai_trading_system.cli_commands import research_simple_baselines as simple_baselines_cli
 from ai_trading_system.layer1_simple_rule_meta_policy import (
     REQUIRED_SELECTOR_IDS,
     run_layer1_combined_simple_rule_selector_search,
@@ -558,6 +561,7 @@ def test_layer1_selector_low_turnover_refinement_outputs_are_research_only(
 
 def test_layer1_selector_low_turnover_final_gate_outputs_are_research_only(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     prices_path, marketstack_path, rates_path, as_of = _write_layer1_caches(tmp_path)
     output_root = tmp_path / "outputs" / "research_strategies" / "layer1_meta_policy"
@@ -688,6 +692,15 @@ def test_layer1_selector_low_turnover_final_gate_outputs_are_research_only(
         assert Path(payload["artifact_paths"]["markdown_path"]).exists()
 
     cli_output_root = tmp_path / "cli_outputs" / "layer1_meta_policy"
+    cli_owner_doc_path = docs_root / "cli_layer1_selector_pause_or_continue_owner_pack.md"
+    monkeypatch.setattr(
+        simple_baselines_cli,
+        "run_layer1_selector_pause_or_continue_owner_pack",
+        partial(
+            simple_baselines_cli.run_layer1_selector_pause_or_continue_owner_pack,
+            owner_doc_path=cli_owner_doc_path,
+        ),
+    )
     result_cli = CliRunner().invoke(
         app,
         [
@@ -710,6 +723,7 @@ def test_layer1_selector_low_turnover_final_gate_outputs_are_research_only(
     )
     assert result_cli.exit_code == 0, result_cli.output
     assert (cli_output_root / "layer1_selector_pause_or_continue_owner_pack.json").exists()
+    assert cli_owner_doc_path.exists()
 
 
 def test_layer1_archive_and_equal_risk_forward_aging_stabilization_outputs(

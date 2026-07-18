@@ -5,7 +5,7 @@ from datetime import UTC, date, datetime, timedelta
 from dynamic_v3_system_target_helpers import (
     EVALUATION_AS_OF,
     build_model_target_fixture,
-    run_smoothed_forward_ops_chain_fixture,
+    run_smoothed_recorded_owner_authority_fixture,
     write_market_cache,
 )
 
@@ -52,20 +52,17 @@ def test_smoothed_bootstrap_retry_blocks_when_preflight_stale(tmp_path) -> None:
 @with_artifact_validation_session
 def test_smoothed_bootstrap_retry_runs_full_chain_when_preflight_ready(tmp_path) -> None:
     build_model_target_fixture(tmp_path)
-    ops = run_smoothed_forward_ops_chain_fixture(tmp_path)
-    # The ops-chain artifacts bind tmp_path/market_cache as immutable evidence.
+    authority = run_smoothed_recorded_owner_authority_fixture(tmp_path)
+    # The authority-chain artifacts bind tmp_path/market_cache as immutable evidence.
     # Keep retry input isolated so replay cannot mutate its upstream lineage.
     prices_path, rates_path = write_market_cache(tmp_path / "retry_market_cache")
-    generated_at = max(
-        datetime.fromisoformat(ops[key]["manifest"]["generated_at"])
-        for key in ("binding", "switch_plan", "recorded_owner_promotion")
-    ) + timedelta(seconds=1)
+    generated_at = authority["authority_ready_at"] + timedelta(seconds=1)
 
     retry = system_target.run_smoothed_bootstrap_retry(
         requested_as_of=EVALUATION_AS_OF,
-        binding_id=ops["binding"]["binding_id"],
-        switch_plan_id=ops["switch_plan"]["switch_plan_id"],
-        owner_promotion_id=ops["recorded_owner_promotion"]["decision_id"],
+        binding_id=authority["binding"]["binding_id"],
+        switch_plan_id=authority["switch_plan"]["switch_plan_id"],
+        owner_promotion_id=authority["recorded_owner_promotion"]["decision_id"],
         output_dir=tmp_path / "smoothed_bootstrap_retry",
         preflight_dir=tmp_path / "smoothed_data_preflight",
         model_target_dir=tmp_path / "model_target",

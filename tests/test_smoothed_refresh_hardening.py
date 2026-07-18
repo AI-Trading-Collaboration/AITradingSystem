@@ -9,7 +9,7 @@ import pytest
 from dynamic_v3_system_target_helpers import (
     EVALUATION_AS_OF,
     build_model_target_fixture,
-    run_smoothed_forward_ops_chain_fixture,
+    run_smoothed_recorded_owner_authority_fixture,
     write_market_cache,
 )
 
@@ -296,12 +296,9 @@ def test_data_readiness_rejects_cross_chain_composition(tmp_path: Path) -> None:
 
 @with_artifact_validation_session
 def test_retry_resume_revalidates_exact_bootstrap_child(tmp_path: Path) -> None:
-    ops = run_smoothed_forward_ops_chain_fixture(tmp_path)
+    authority = run_smoothed_recorded_owner_authority_fixture(tmp_path)
     prices_path, rates_path = write_market_cache(tmp_path / "refresh_market_cache")
-    generated = max(
-        datetime.fromisoformat(ops[key]["manifest"]["generated_at"])
-        for key in ("binding", "switch_plan", "recorded_owner_promotion")
-    ) + timedelta(seconds=1)
+    generated = authority["authority_ready_at"] + timedelta(seconds=1)
     preflight = freshness.run_smoothed_data_preflight(
         requested_as_of=EVALUATION_AS_OF,
         output_dir=tmp_path / "smoothed_data_preflight",
@@ -362,9 +359,9 @@ def test_retry_resume_revalidates_exact_bootstrap_child(tmp_path: Path) -> None:
         owner_promotion_dir=tmp_path / "smoothed_owner_promotion",
         renewal_dir=tmp_path / "smoothed_owner_renewal_retry",
         weekly_run_dir=tmp_path / "smoothed_forward_weekly_run",
-        binding_id=ops["binding"]["binding_id"],
-        switch_plan_id=ops["switch_plan"]["switch_plan_id"],
-        owner_promotion_id=ops["recorded_owner_promotion"]["decision_id"],
+        binding_id=authority["binding"]["binding_id"],
+        switch_plan_id=authority["switch_plan"]["switch_plan_id"],
+        owner_promotion_id=authority["recorded_owner_promotion"]["decision_id"],
         price_cache_path=prices_path,
         rates_path=rates_path,
         generated_at=generated + timedelta(seconds=5),
