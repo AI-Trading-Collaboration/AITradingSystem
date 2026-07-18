@@ -12,6 +12,9 @@ from dynamic_v3_weight_batch_search_helpers import (
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_foundation as foundation
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_targeted as targeted
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 
 def test_compact_targeted_fixture_preserves_default_bounds_and_complete_families(
@@ -43,9 +46,7 @@ def test_compact_targeted_fixture_preserves_default_bounds_and_complete_families
     base_variants = foundation._generate_batch2_variants(compact_search, expanded=False)[:52]
     base_coverage = foundation._batch2_family_coverage(base_variants)
     assert len(base_variants) == 52
-    assert set(base_coverage["families_covered"]) == set(
-        foundation.SEARCH_REQUIRED_FAMILIES
-    )
+    assert set(base_coverage["families_covered"]) == set(foundation.SEARCH_REQUIRED_FAMILIES)
     assert len(base_coverage["families_covered"]) == 8
 
     diagnostics_policy = yaml.safe_load(compact_diagnostics_path.read_text(encoding="utf-8"))
@@ -66,6 +67,7 @@ def test_compact_targeted_fixture_preserves_default_bounds_and_complete_families
     assert len(targeted_coverage["targeted_families_covered"]) == 6
 
 
+@with_artifact_validation_session
 def test_targeted_search_v3_builds_bounded_variant_matrix(tmp_path) -> None:
     fixture = run_targeted_search_v3_fixture(tmp_path)
     targeted_v3 = fixture["targeted_v3"]

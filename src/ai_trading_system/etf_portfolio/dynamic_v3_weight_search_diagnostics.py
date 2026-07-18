@@ -10,6 +10,9 @@ from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as _legacy
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_evaluation as evaluation
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_foundation as foundation
+from ai_trading_system.etf_portfolio.dynamic_v3_weight_search_validation_scope import (
+    validate_upstream_with_hardened_scope,
+)
 
 DEFAULT_WEIGHT_SEARCH_DIAGNOSTICS_POLICY_PATH = (
     st.PROJECT_ROOT
@@ -252,8 +255,12 @@ def _validate_binding(binding: Mapping[str, Any], *, kind: str) -> None:
 
 
 def _validated_scorecard(scorecard_id: str, scorecard_dir: Path) -> dict[str, Any]:
-    validation = evaluation.validate_weight_scorecard_artifact(
-        scorecard_id=scorecard_id, output_dir=scorecard_dir
+    validation = validate_upstream_with_hardened_scope(
+        validator=evaluation.validate_weight_scorecard_artifact,
+        validator_key="scorecard_id",
+        artifact_id=scorecard_id,
+        output_dir=scorecard_dir,
+        snapshot_name="weight_scorecard_input_snapshot.json",
     )
     _require(validation.get("status") == "PASS", "source scorecard validation failed")
     payload = evaluation.weight_scorecard_report_payload(
@@ -264,8 +271,12 @@ def _validated_scorecard(scorecard_id: str, scorecard_dir: Path) -> dict[str, An
 
 
 def _validated_search_space(search_space_id: str, search_space_dir: Path) -> dict[str, Any]:
-    validation = foundation.validate_weight_search_space_artifact(
-        search_space_id=search_space_id, output_dir=search_space_dir
+    validation = validate_upstream_with_hardened_scope(
+        validator=foundation.validate_weight_search_space_artifact,
+        validator_key="search_space_id",
+        artifact_id=search_space_id,
+        output_dir=search_space_dir,
+        snapshot_name="weight_search_space_input_snapshot.json",
     )
     _require(validation.get("status") == "PASS", "source search-space validation failed")
     payload = foundation.weight_search_space_report_payload(
@@ -757,7 +768,7 @@ def _rebuild_review(root: Path, review_id: str) -> list[dict[str, Any]]:
     return checks
 
 
-def validate_no_promotion_review_artifact(
+def _validate_no_promotion_review_artifact_uncached(
     *, review_id: str, output_dir: Path = DEFAULT_NO_PROMOTION_REVIEW_DIR
 ) -> dict[str, Any]:
     root = output_dir / review_id
@@ -778,6 +789,18 @@ def validate_no_promotion_review_artifact(
         artifact_id=review_id,
         checks=checks,
         rebuild=lambda: _rebuild_review(root, review_id),
+    )
+
+
+def validate_no_promotion_review_artifact(
+    *, review_id: str, output_dir: Path = DEFAULT_NO_PROMOTION_REVIEW_DIR
+) -> dict[str, Any]:
+    return validate_upstream_with_hardened_scope(
+        validator=_validate_no_promotion_review_artifact_uncached,
+        validator_key="review_id",
+        artifact_id=review_id,
+        output_dir=output_dir,
+        snapshot_name="no_promotion_review_input_snapshot.json",
     )
 
 
@@ -1109,7 +1132,7 @@ def _rebuild_near_miss(root: Path, near_miss_id: str) -> list[dict[str, Any]]:
     return checks
 
 
-def validate_near_miss_candidates_artifact(
+def _validate_near_miss_candidates_artifact_uncached(
     *, near_miss_id: str, output_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR
 ) -> dict[str, Any]:
     root = output_dir / near_miss_id
@@ -1130,6 +1153,18 @@ def validate_near_miss_candidates_artifact(
         artifact_id=near_miss_id,
         checks=checks,
         rebuild=lambda: _rebuild_near_miss(root, near_miss_id),
+    )
+
+
+def validate_near_miss_candidates_artifact(
+    *, near_miss_id: str, output_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR
+) -> dict[str, Any]:
+    return validate_upstream_with_hardened_scope(
+        validator=_validate_near_miss_candidates_artifact_uncached,
+        validator_key="near_miss_id",
+        artifact_id=near_miss_id,
+        output_dir=output_dir,
+        snapshot_name="near_miss_candidates_input_snapshot.json",
     )
 
 
@@ -1445,7 +1480,7 @@ def _rebuild_cash(root: Path, attribution_id: str) -> list[dict[str, Any]]:
     return checks
 
 
-def validate_cash_buffer_attribution_artifact(
+def _validate_cash_buffer_attribution_artifact_uncached(
     *, attribution_id: str, output_dir: Path = DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR
 ) -> dict[str, Any]:
     root = output_dir / attribution_id
@@ -1466,6 +1501,18 @@ def validate_cash_buffer_attribution_artifact(
         artifact_id=attribution_id,
         checks=checks,
         rebuild=lambda: _rebuild_cash(root, attribution_id),
+    )
+
+
+def validate_cash_buffer_attribution_artifact(
+    *, attribution_id: str, output_dir: Path = DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR
+) -> dict[str, Any]:
+    return validate_upstream_with_hardened_scope(
+        validator=_validate_cash_buffer_attribution_artifact_uncached,
+        validator_key="attribution_id",
+        artifact_id=attribution_id,
+        output_dir=output_dir,
+        snapshot_name="cash_buffer_attribution_input_snapshot.json",
     )
 
 
@@ -1777,7 +1824,7 @@ def _rebuild_coverage(root: Path, coverage_gap_id: str) -> list[dict[str, Any]]:
     return checks
 
 
-def validate_search_coverage_gap_artifact(
+def _validate_search_coverage_gap_artifact_uncached(
     *, coverage_gap_id: str, output_dir: Path = DEFAULT_SEARCH_COVERAGE_GAP_DIR
 ) -> dict[str, Any]:
     root = output_dir / coverage_gap_id
@@ -1798,4 +1845,16 @@ def validate_search_coverage_gap_artifact(
         artifact_id=coverage_gap_id,
         checks=checks,
         rebuild=lambda: _rebuild_coverage(root, coverage_gap_id),
+    )
+
+
+def validate_search_coverage_gap_artifact(
+    *, coverage_gap_id: str, output_dir: Path = DEFAULT_SEARCH_COVERAGE_GAP_DIR
+) -> dict[str, Any]:
+    return validate_upstream_with_hardened_scope(
+        validator=_validate_search_coverage_gap_artifact_uncached,
+        validator_key="coverage_gap_id",
+        artifact_id=coverage_gap_id,
+        output_dir=output_dir,
+        snapshot_name="search_coverage_gap_input_snapshot.json",
     )

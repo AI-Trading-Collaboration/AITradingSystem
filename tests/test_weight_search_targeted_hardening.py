@@ -359,6 +359,32 @@ def test_targeted_chain_rebuilds_all_views_and_fails_closed(
                 )
         assert exception_calls == 2
 
+    with monkeypatch.context() as seam_patch:
+        resolver_bypass_calls = 0
+
+        def exploding_private_resolver(**_: Any) -> None:
+            raise RuntimeError("targeted resolver exception")
+
+        def resolver_bypass_validator(**_: Any) -> dict[str, Any]:
+            nonlocal resolver_bypass_calls
+            resolver_bypass_calls += 1
+            return {"status": "PASS"}
+
+        seam_patch.setattr(
+            targeted,
+            "_targeted_upstream_validation_scope",
+            exploding_private_resolver,
+        )
+        for _ in range(2):
+            targeted._validated_upstream_with_hardened_scope(
+                validator=resolver_bypass_validator,
+                validator_key="backfill_id",
+                artifact_id=paper_id,
+                output_dir=paper_dir,
+                snapshot_name="paper_shadow_backfill_input_snapshot.json",
+            )
+        assert resolver_bypass_calls == 2
+
     with monkeypatch.context():
         bypass_calls = 0
 

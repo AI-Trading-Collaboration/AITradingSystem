@@ -308,6 +308,53 @@ applied/no-fallback、telemetry PASS、node/file/worker=`6,248/1,068/16`且order
 单次full不构成稳定全局改善，故`stable_full_improvement_claimed=false`；S3I闭合为
 `COMPLETE_RUNTIME_TASK_CONTINUES`，EB1与下一callback仍暂停，后续候选选择不触发空跑full。
 
+2026-07-18 owner批准继续优化，S3J在三个互斥只读审计后冻结Targeted、Diagnostics与Smoothed三个lane。
+Lane A只改`tests/test_targeted_search_v3.py`：慢测外层延长既有同步validation session，使helper返回后的最终
+Targeted validator复用S3I hardened PASS upstream；production/default 60～120 variants、六family和最终内容重建
+不变。Lane B抽出`dynamic_v3_weight_search_targeted.py`现有exact hardened DAG resolver至新共享validation-scope
+模块，Targeted机械导入保持行为，再让Diagnostics四validator及scorecard/search-space adapter使用同一PASS-only
+cache；禁止复制resolver或循环反向import。Lane C最初只允许审计Smoothed operations local-binding，必须先证明
+现有间接cache未覆盖才可实现，不改weekly authority/window或四个目标测试的业务断言。
+
+最新full目标为Targeted call=`328.72s`、Diagnostics=`343.63s`、Smoothed四call=
+`302.08/300.35/295.50/272.39s`。每lane先顺序取一次无负载same-command before，至少两次after；A/B的
+worst-after须同时改善≥10%且≥30s，B另须两轮独立P0/P1审查为0；C的worst-after wall须改善≥10%且≥30s、
+四call总和改善≥15%且≥120s、任一call不得恶化>5%。门槛失败即byte-exact撤回，不事后降低标准。三个agent
+只持有互斥实现文件，共享docs/manifests/hashes与唯一architecture/contract/full由coordinator集成；EB1、下一
+callback及ARCH-005 bootstrap继续不解锁，`production_effect=none`。
+
+三lane无负载isolated before已顺序完成。A Targeted=`1 passed / 195.03s`、call=`191.94s`，冻结
+worst-after wall上限`165.03s`；B Diagnostics=`1 passed / 207.93s`、call=`204.73s`，上限
+`177.93s`；C Smoothed四节点=`4 passed / 212.18s`，call=`209.01/206.48/200.02/186.83s`、
+总和=`802.34s`，冻结worst-after wall≤`182.18s`、四call总和≤`681.99s`，对应单call不得超过
+`219.46/216.80/210.02/196.17s`。full争用值不参与局部收益计算；实现现在才允许按上述互斥范围并行。
+
+Lane C随后以零diff裁决`REJECTED_REDUNDANT_CACHE_ALREADY_PRESENT`。operations local source/binding路径经
+Smoothed readiness与evidence/method helper后已进入active-session PASS-only content cache，四目标本身也有outer
+session；唯一direct uncached latest selector被显式artifact ids短路。耗时来自四个独立`tmp_path`各自首次构建
+326-day authority与weekly九步，机械叠加wrapper只会重复fingerprint。该lane不运行after；跨test immutable
+authority bundle/COW只登记为后续架构候选，不在S3J自动扩张。
+
+Lane A两次无负载after=`132.96/133.63s`，相对`195.03s` before按worst-after节省
+`61.40s / 31.48%`；Lane B=`32.22/32.49s`，相对`207.93s`节省`175.44s / 84.37%`，
+两轮独立P0/P1审查均为`0/0`。A/B均为`RETAINED_THRESHOLD_PASS`；Targeted production bounds、
+六family、Diagnostics 21 views、schema/cross-lineage/policy/chronology、DQ/PIT/source与all-view tamper保持。
+九文件expanded focused=`87 passed / 1 skipped / 126.14s`，唯一skip为Windows无`os.fork`条件用例。
+S3J进入`VALIDATING`：先刷新system flow、module/test manifests、compatibility/deprecation/source hashes，
+再顺序执行architecture、contract与唯一自然integration-boundary full；EB1、下一callback及ARCH-005 bootstrap
+继续不解锁，`stable_full_improvement_claimed=false`、`production_effect=none`。
+
+S3J正式闭合为`COMPLETE_RUNTIME_TASK_CONTINUES`。generated=`948 modules / 1,126 test/support files / 0
+violations`，compatibility/deprecation focused=`8 passed/12.67s`，architecture=`344 passed/57.84s`，
+contract=`236 passed/44.40s`；唯一full=`6,246 passed / 2 skipped / 643 warnings / 1,079.37s`，
+exact node/file/worker=`6,248/1,068/16`，COMPLETE/applied/no-fallback及telemetry/performance均PASS。
+相对`070333Z`，wall=`-92.95s / -7.93%`、file worker-s=`-1,491.409s / -8.03%`、P95=
+`-12.14%`、P99=`-5.07%`；Targeted/Diagnostics file分别`328.770 -> 47.975s`与
+`343.639 -> 63.284s`。单次full不支持稳定全局声明，故`stable_full_improvement_claimed=false`。
+下一轮基于新profile并行只读审计Decision leaf（Formal/Gate）、Evaluation hardening与Execution comparison
+三个互斥lane，完成任务登记和isolated before后才允许实现；EB1、下一callback及ARCH-005继续不解锁，
+`production_effect=none`。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

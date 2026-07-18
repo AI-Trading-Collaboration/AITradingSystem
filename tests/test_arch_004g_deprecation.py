@@ -47,7 +47,7 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     inventory = scan_deprecation_inventory(load_deprecation_policy())
     surfaces = {item.surface_id: item for item in inventory.surfaces}
 
-    assert inventory.python_module_count == 947
+    assert inventory.python_module_count == 948
     assert inventory.python_test_file_count == 1126
     assert inventory.direct_writer_baseline_count == 894
     assert inventory.direct_writer_current_count == 858
@@ -80,9 +80,7 @@ def test_deprecation_inventory_source_bytes_are_checkout_eol_independent(
     lf_path.write_bytes(b"def sample():\n    return 1\n")
     crlf_path.write_bytes(b"def sample():\r\n    return 1\r\n")
 
-    assert _canonical_repository_text_bytes(lf_path) == _canonical_repository_text_bytes(
-        crlf_path
-    )
+    assert _canonical_repository_text_bytes(lf_path) == _canonical_repository_text_bytes(crlf_path)
 
 
 def test_g0_inventory_drift_fails_closed() -> None:

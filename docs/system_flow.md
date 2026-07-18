@@ -1797,6 +1797,14 @@ candidate只为`REVIEW_REQUIRED`，`PROMOTE_CANDIDATE`与`FORMAL_METHOD_PLAN`都
 `formal_method_task_created=false`、`not_official_target_weights=true`、
 `broker_action_allowed=false`、`production_effect=none`。
 
+S3J把Targeted与Diagnostics共同需要的exact schema-edge、resource-bounded upstream validation scope
+集中到`dynamic_v3_weight_search_validation_scope.py`，避免Diagnostics复制resolver或反向import Targeted。
+该复用只在显式同步`artifact_validation_session`内生效：cache key绑定validator identity、artifact及递归
+live source content fingerprint，只复用`PASS`；未知schema、path/topology/commitment、超预算或resolver异常
+都会bypass cache并执行真实validator，`FAIL`与exception不缓存。Targeted/Diagnostics public validator仍逐byte
+重建各自materialized views并执行DQ/PIT/source-lineage、policy、chronology与tamper门禁；没有跨test、跨worker、
+持久化或production cache，因此研究矩阵、阈值、结论与production flow均不变，`production_effect=none`。
+
 ## ETF Portfolio P2 Observe-Only Contracts
 
 `TRADING-062` P2 扩展先实现可审计 contract/report 底座，不接入未批准 provider，不伪造 EDGAR/news/options/holdings/live broker 数据。所有 P2 命令固定 `production_effect=none`；ML ranking 和 ensemble 只能输出 `candidate_only`；live interface 只做 read-only preflight，默认 `broker_routing_allowed=false`。
