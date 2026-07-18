@@ -663,6 +663,87 @@ CV=`0.00519%`、tail total/max=`0.119/0.014s`；三项Foundation setup保持约1
 审计高成本Smoothed、Signal与Weight/Search DAG，先登记、取isolated baseline，再按互斥文件多agent
 实现，仍只在多个候选合并后的自然integration boundary运行一次full。
 
+### S3I：Smoothed compact authority与Targeted上游PASS cache（owner批准继续）
+
+2026-07-18 / owner要求继续尽可能降低full耗时，并允许高耗时单项按互斥范围多agent并行。S3I以
+`outputs/validation_runtime/full_20260718T042919Z/test_runtime_profile.json`为排序证据，先完成三个只读
+审计lane再冻结实现；base commit=`77f394f0`，共享需求、task register、system flow、manifests、
+compatibility、最终集成与full仍由协调者独占。
+
+| lane | 独占实现范围 | 最新profile成本 | 实验与撤回门槛 |
+|---|---|---:|---|
+|A Smoothed weekly compact authority|`tests/dynamic_v3_system_target_helpers.py`、`tests/test_smoothed_forward_weekly_run.py`|`413.32 worker-s`|`REVERTED_THRESHOLD_MISS`：显式test-only 160-weekday profile首轮after=`2 passed / 209.62s`、重型call=`206.33s`，相对before `228.52/225.40s`仅改善`8.27%/8.46%`，低于预先冻结的worst-after 10%门槛。因为首轮已使worst gate数学上不可通过，按early-stop不再浪费第二轮；helper/test已byte-exact恢复base。production `end=latest_available`、synthetic默认326 weekdays及全部研究语义从未改变。|
+|B Targeted upstream PASS cache|`src/ai_trading_system/etf_portfolio/dynamic_v3_weight_search_targeted.py`、`tests/test_weight_search_targeted_hardening.py`|`373.29 worker-s`|`RETAINED_THRESHOLD_PASS`：五个adapter接入同一session、content-fingerprint、PASS-only cache；严格schema→edge白名单覆盖Coverage/Cash/Near/Review/Scorecard/Weight/Matrix/Search/Paper/Model DAG，paper全部cache paths、weight独立price-root DQ siblings及Model Target/Daily Advisory两级semantic inventory进入fingerprint。resolver任一schema、commitment、拓扑或预算异常均直接执行真实validator。before=`188.80s`，两次正式after=`136.04/136.92s`；worst-after节省`51.88s`、改善`27.48%`，超过10%且30s双门槛。|
+|C Signal Feature / Diagnosis immutable bundle|本slice无实现文件|Feature=`373.42s`、Diagnosis setup=`353.55s`|只读审计确认约95%为跨文件重复Diagnosis/Micro-Search producer前缀，但现有session已覆盖、52 variants已是8/8 family最小完整矩阵、后缀无放大。安全收益需要content-addressed immutable bundle、atomic publish、absolute-path/live binding重验与tamper私有副本，超出低风险slice；裁决`REJECTED_CURRENT_SLICE_ARCHITECTURE_BOUNDARY`。|
+
+Lane A必须保留原nodeid/断言与全部真实producer/validator，完整`SMOOTHED_METHOD_TO_VARIANT`、非空
+sideways/recovery并满足受审sample floor；scorecard继续`INSUFFICIENT_EVIDENCE`、candidate null，
+confirmation targets empty、gate=`CONTINUE_OBSERVATION`、binding=`NOT_REGISTERED`、switch=
+`NO_ELIGIBLE_CANDIDATE`、recorded owner=`continue_observation`；weekly九步、due/update/classification lineage、
+DQ与price/rates bytes、requested/actual range disclosure、clean rebuild PASS及binding byte tamper FAIL均不变。
+160-day值只是test fixture执行规模，不是投资阈值；若真实validator证明覆盖不足即撤回，不通过放宽policy保留。
+测试还必须直接读取canonical production backfill config并冻结`start=2022-12-01`、`end=latest_available`、
+`min_history_days_before_first_rebalance=60`、`evaluation.min_observations_per_window=20`与
+`regime_policy.min_sample_count=5`，防止把synthetic helper范围误写成生产或研究结论窗口。compact只需
+满足既有test policy `test_paper_shadow_backfill_v1`的warmup=20、evaluation minimum=10、regime minimum=2；
+测试必须同时冻结这组test值。160-day PASS只证明该synthetic test fixture覆盖完整契约，不构成production
+样本充分性、策略有效性或投资结论证据。
+
+Lane B必须保留Targeted 16 views、3 schema、3 cross-lineage、policy、price/rates source、resume与chronology
+检查；Weight test-only 52 variants继续覆盖8/8 families，Targeted 6～12继续覆盖6/6 families，production
+默认80与60～120不变。content/source/config/policy任一byte变化必须使key失效，FAIL/exception不得缓存，
+不得跨worker共享可写store。Diagnostics虽有相似五个直接适配器，但归一后已比`004439Z`快约15.5%，且
+历史外层session实验无收益；仅在Lane B运行时调用计数证明剩余独立重放后另行登记，不在S3I自动扩张。
+
+开发期只跑上述exact same-command、expanded focused、Ruff、py_compile与静态不变量；两个lane分别完成
+retain/revert裁决并合并后，才刷新共享manifests/hashes，运行architecture、contract及唯一一次自然边界
+full。不得为单lane单独跑full，不把raw `042919Z`的全局膨胀冒充代码回退或收益；
+`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+
+S3I isolated before已在commit`77f394f0`、显式candidate `PYTHONPATH`、无其他Python/pytest进程、同一
+`-n 16 --dist loadfile -q --durations=0`口径下顺序取得。Lane A Smoothed weekly=`1 passed /
+228.52s`、call=`225.40s`；Lane B Targeted hardening=`1 passed / 188.80s`、call=`185.79s`。两者在
+`042919Z` full中的raw call分别为`413.31/373.28s`，说明全量并发膨胀显著；retain/revert必须只用
+上述isolated same-command before与至少两次无负载after，不把raw full差值计入局部收益。
+
+Lane A首轮after实际为`2 passed / 209.62s`、重型call=`206.33s`。新增轻量profile契约node约3秒，
+但重型call相对before仍只减少`19.07s / 8.46%`，整体wall减少`18.90s / 8.27%`；预登记门槛要求
+worst-after至少10%，首轮结果已令最终worst不可能达标。因此执行确定性early-stop，不事后降低门槛、
+不空跑第二次after，完整撤回Lane A两个文件并验证`git diff --exit-code`为byte-exact HEAD。该结果否定
+当前“继续缩短synthetic authority窗口”的性价比，不否定后续对同一Smoothed共享producer DAG做更强
+immutable fixture/cache架构；本slice不再实施该方向。
+
+Lane B在首版legacy cache取得性能信号后没有把结果作为可接纳证据：独立安全审查发现paper validator
+还会读取nested cache paths、Model Target / Daily Advisory semantic-selection inventories，以及Weight
+validator会读取price-root两个optional DQ siblings。实现随后改为bounded、exact schema→edge resolver；
+单/总snapshot bytes、JSON nodes、binding/cache/explicit/inventory/path/queue/depth均有固定parser-safety
+预算，streaming read阻止`stat`后增长越界，canonical scheduled set拒绝重复入队与conflicting commitment。
+Foundation与operations两类binding envelope均校验kind、artifact id、source directory、file commitment与
+expected child snapshot；任一解析或预算失败只绕过cache并执行真实validator，不进入legacy/partial cache。
+
+最终same-command两次正式after分别为`1 passed / 136.04s`、call=`132.77s`及`1 passed /
+136.92s`、call=`133.66s`。按较慢值相对before wall=`188.80s`、call=`185.79s`计算，分别节省
+`51.88s / 27.48%`与`52.13s / 28.06%`，因此裁决`RETAINED_THRESHOLD_PASS`。测试以五个真实adapter
+入口证明unchanged seed/reuse只调用validator一次；独立Weight price root真实覆盖optional
+MISSING→PRESENT与exact restore，Paper真实validator覆盖required/optional cache bytes、Model/Daily sibling
+inventory、FAIL/exception不缓存与restore复用；实际relative cache path证明resolver连续两次绕过cache。
+两轮独立静态审查均为P0=`0`、P1=`0`。expanded focused覆盖validation-session contract、Targeted v3、
+Near-Miss A/B与hardening，共`82 passed / 1 skipped / 247.51s`；并发下Targeted Search v3仍为
+`243.86s`长尾，登记为下一轮profile候选，不影响本lane isolated退出门槛。
+
+S3I唯一一次自然integration-boundary full=`6,246 passed / 2 skipped / 642 warnings / 1,172.32s`，
+artifact=`outputs/validation_runtime/full_20260718T070333Z/test_runtime_summary.json`。与相同`6,248`
+nodes、`1,068`files、`16`workers、相同ordered collection hash且同为COMPLETE duration scheduler/no fallback的
+`042919Z` full=`1,294.07s`相比，本次raw wall减少`121.75s / 9.41%`；Targeted hardening文件由
+`373.292s`降至`210.925s`，减少`162.367s / 43.50%`。file P95由`123.075s`降至`114.284s`
+（`-7.14%`），P99由`342.907s`降至`273.417s`（`-20.27%`），max由`589.003s`降至
+`550.314s`（`-6.57%`）；worker busy mean由`1,281.967s`降至`1,160.736s`，CV仍约
+`0.005%`，tail idle total/max=`0.079/0.009s`。目标文件的full内下降与isolated双run方向一致，足以闭合
+S3I局部retention；但全局wall仅有一次after且其下降小于目标文件下降，继续记录
+`stable_full_improvement_claimed=false`，不得把并发负载变化归因于单一代码修改。S3I状态闭合为
+`COMPLETE_RUNTIME_TASK_CONTINUES`；下一轮优先只读审计full内`328.72s`的Targeted Search v3及其他新profile
+尾部，不自动重开已因门槛不足撤回的Lane A，也不为选候选空跑第二次full。
+
 ### S4：持续回归约束
 
 - architecture/contract tests 校验 runtime manifest freshness、调度确定性和 gate coverage；

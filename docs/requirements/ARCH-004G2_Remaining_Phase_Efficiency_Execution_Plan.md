@@ -261,6 +261,53 @@ order、no-fallback与profile/telemetry/performance均PASS。四目标full合计
 Smoothed、Signal与Weight/Search高成本DAG，完成任务登记与isolated baseline后再实施；EB1及下一
 callback slice仍未解锁。
 
+2026-07-18 owner批准继续优化，S3I在三个并行只读审计后只冻结两个互斥实验。Lane A严格限定
+`dynamic_v3_system_target_helpers.py`与`test_smoothed_forward_weekly_run.py`，尝试显式test-only
+160-weekday compact authority；production `end=latest_available`契约不变，synthetic helper默认326
+weekday不变，并由测试冻结production start/end/warmup/evaluation20/regime5及test warmup20/evaluation10/
+regime2；compact PASS不冒充production样本充分性。worst-after改善不足10%或任何
+Smoothed method/regime/sample、weekly九步、DQ/PIT/source/lineage/clean rebuild/tamper契约失败即撤回。
+Lane B限定Targeted production module与hardening test，只有调用计数先证明五个unchanged上游validator
+重复时才接入既有PASS-only content-fingerprint cache；worst-after不足10%或30s、FAIL被缓存、tamper未
+失效即撤回。Signal/Diagnosis需跨worker immutable bundle及更强atomic/live-binding/COW架构，当前slice
+拒绝；Diagnostics仅作为Lane B后续调用计数观察，不自动实施。两lane先顺序取得无负载baseline，再按
+互斥文件多agent实现；合并后只运行一次architecture/contract/full自然边界，EB1/下一callback继续暂停。
+
+S3I无负载isolated before已顺序完成：Smoothed weekly=`1 passed / 228.52s`、call=`225.40s`；Targeted
+hardening=`1 passed / 188.80s`、call=`185.79s`。同两项在最新full为`413.31/373.28s`，因此局部
+裁决只使用isolated same-command口径。两个互斥agent进入实现，但不得自行并发跑after；协调者待所有
+编辑完成且无其他Python/pytest后，对每lane顺序运行至少两次after。
+
+Lane A首轮after=`2 passed / 209.62s`、重型call=`206.33s`，相对before仅改善`8.27%/8.46%`。
+预登记worst-after 10%门槛已不可达，故不以结果为由降低标准，也不浪费第二轮；两个Lane A文件已
+byte-exact恢复base，裁决`REVERTED_THRESHOLD_MISS`。Lane B调用计数已证明coverage/near-miss/
+scorecard/weight-backfill/paper-backfill分别重复`4/13/38/41/44`次，但首版legacy scope被安全审查
+阻断：真实paper validator还读取两级semantic-selection inventory与nested cache paths。Lane B只有在
+bounded schema/edge resolver显式覆盖全部paper cache path、weight独立price-root DQ siblings、Model
+Target与Daily Advisory inventories，且任一解析失败直接绕过cache后，才允许进入after。
+
+Lane B最终通过两轮独立P0/P1=`0`安全审查。实现只在active synchronous validation session内为
+Coverage Gap、Near Miss、Weight Scorecard、Weight Backfill与Paper Backfill五个adapter复用exact PASS；
+resolver以白名单schema→typed edge遍历完整DAG，校验Foundation/operations binding envelope，并显式
+fingerprint全部paper cache paths、Weight独立price-root两个DQ siblings和Model Target / Daily Advisory
+semantic-selection inventories。单/总bytes、JSON nodes、path、binding、inventory、queue与depth均bounded；
+malformed、unknown、relative、commitment drift或预算异常全部直接执行真实validator，FAIL与exception不缓存。
+
+同命令正式after=`136.04/136.92s`、call=`132.77/133.66s`；按worst相对before `188.80s`、
+call=`185.79s`分别改善`27.48%/28.06%`并节省`51.88/52.13s`，超过预登记10%且30s双门槛，
+裁决`RETAINED_THRESHOLD_PASS`。五adapter seed/reuse、独立Weight MISSING→PRESENT、Paper required/optional、
+Model/Daily inventory、FAIL/exception、exact restore与真实relative-path bypass均有测试。expanded focused=
+`82 passed / 1 skipped / 247.51s`；其中Targeted Search v3=`243.86s`仍是下一轮候选，但本轮不追加第三个
+业务lane或第二次full。共享manifests/hashes已刷新；pre-full architecture=`344 passed / 59.34s`、
+contract=`236 passed / 44.91s`，post-full tracked-state architecture/contract复验均PASS，最终runtime
+artifact由compatibility baseline记录。唯一自然full=`6,246 passed / 2 skipped / 642 warnings /
+1,172.32s`，相对同
+collection的S3H `1,294.07s`减少`121.75s / 9.41%`；Targeted hardening文件由`373.292s`降至
+`210.925s`（`-43.50%`），P99由`342.907s`降至`273.417s`（`-20.27%`）。scheduler为COMPLETE/
+applied/no-fallback、telemetry PASS、node/file/worker=`6,248/1,068/16`且ordered collection hash一致。
+单次full不构成稳定全局改善，故`stable_full_improvement_claimed=false`；S3I闭合为
+`COMPLETE_RUNTIME_TASK_CONTINUES`，EB1与下一callback仍暂停，后续候选选择不触发空跑full。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

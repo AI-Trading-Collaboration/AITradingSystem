@@ -15895,7 +15895,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_weight_search_targeted_hardening
   path: tests/test_weight_search_targeted_hardening.py
-  sha256: 5e638663651eb02458a8e27f8c4c070079fbc6fdf5921a2aaac626ff266d1cd8
+  sha256: abfe496e6c499c1e1784451de3c6d050ec99bba1132901e828866fa6e3959499
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

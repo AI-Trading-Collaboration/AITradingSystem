@@ -61,7 +61,7 @@ surfaces:
   cli_command_decorator_count: 252
   static_import_reachability_file_count: 1
   test_reference_file_count: 307
-  docs_config_reference_file_count: 116
+  docs_config_reference_file_count: 117
   required_removal_gate_count: 12
   removal_ready: false
   open_gate_ids:
@@ -216,7 +216,7 @@ surfaces:
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 0
   test_reference_file_count: 91
-  docs_config_reference_file_count: 17
+  docs_config_reference_file_count: 18
   required_removal_gate_count: 12
   removal_ready: false
   open_gate_ids:
