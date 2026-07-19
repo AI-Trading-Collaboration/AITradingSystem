@@ -957,6 +957,63 @@ profile刷新v12 partial seed（`6,377 nodes / 1,072 files`），使EB5文件按
 形成稳定full改进。EB5完成只解锁EB6，matrix仍为`851/116/0/0`，whole G2.4 phase exit、handoff、
 ARCH-005 S0和G2.5均未触发。
 
+### EB6 启动授权与 callback freeze
+
+2026-07-19，按owner已批准的连续顺序，`ARCH-004G2.4-EB6`从
+base=`e5fc456c4f2c67466f6f8f78f551e7dc69801644`进入`IN_PROGRESS / CONTRACT_FREEZE`。
+入口matrix=`851 migrated / 116 pending / 0 unresolved / 0 duplicate`；本批严格隔离为两个bounded
+CLI owner，共40个callbacks，不吸收EB7/EB8：
+
+- `weight_calibration_app` 20个：`validate-config`、`search`、`register-candidates`、`export-top`、
+  `comparison`、`regime-robustness`、`enroll-forward`、`enroll-top`、`enroll`、`aggregate-evidence`、
+  `overfit-diagnostics`、`overfit-explain`、`recommendation`、`diagnostics`、`performance-validate`、
+  `profiling-validate`、`generate-proposals`、`report`、`validate`、`usability-validate`；
+- `weight_research_app` 20个：`validate-contracts`、`audit-b1`、`run-static-baselines`、
+  `run-b1-attribution`、`freeze-interfaces`、`run-b2`、`run-b3`、`run-b4`、`checkpoint`、
+  `diagnose-b1-b4`、`diagnose-b2-b4-expansion`、`branch-b2-b3`、`post-b2-b3-research`、
+  `b2-b3-v2-research`、`b2-full-diagnostic-research`、`b2-control-window-research`、
+  `b2-followup-research`、`b2-targeted-evidence-research`、`b2-final-decision-research`、`run-b1`。
+
+精确callback id、app/command/current function继续以migration matrix为source of truth。EB6只改变接口所有权和
+legacy subtraction，不改变任何weight candidate、score、阈值、sample floor、holdout、regime、date range、
+ranking、recommendation或promotion语义；所有既有policy/config provenance、data-quality gate、requested
+market regime/date disclosure与research-only边界必须原样保留。任何缺失/null/invalid source继续fail closed，
+不得为了模块化将其补0、默认PASS或提升为可执行权重；`production_effect=none`。
+
+实现边界固定为两个canonical CLI modules及一个共享、无投资语义的文件选择helper；legacy root必须移除40个
+callback实现与不再使用的domain imports，但CLI path/help/default/exit code/output保持frozen parity。退出要求：
+`891/76/0/0` matrix、root=`4,038 lines / 100 functions / 76 decorators`、无duplicate/compat callback
+wrapper/god-module回退；focused positive/
+missing/null/source-policy-output tamper及CLI parity PASS；module/test manifests、compatibility baseline、
+deprecation inventory、source hashes与duration seed fresh；formal architecture/contract及本批唯一natural Full
+PASS；clean attribution后正常commit/push。EB6完成只解锁EB7，不等于whole G2.4 phase exit，不触发handoff、
+ARCH-005 S0或G2.5。
+
+2026-07-19，EB6 implementation、legacy subtraction与focused gate完成，进入
+`VALIDATING_G2_4_CONTINUES`。40 callbacks已分别迁入两个canonical CLI owner；legacy root由
+`6,572 lines / 142 functions / 116 decorators`减至`4,038 / 100 / 76`，只保留两个Typer app对象的显式
+re-export以兼容既有import，不保留callback wrapper或第二份实现。Matrix=`891/76/0/0`；CLI保持
+`41/291/993/0`及tree hash=`01c78550...7302d`。迁移前focused=`231 passed / 52.28s`；首轮迁移后
+`223 passed / 1 collection error / 67.49s`真实捕获`weight_research_app` import compatibility缺口，补回
+同一registration对象后最终=`231 passed / 62.71s`，最慢node=`3.50s < 101.47s`，未触发性能治理。
+DevEx预生成=`965 modules / 1,130 tests / 858 writers / 0 violations`，deprecation inventory已刷新。
+当前剩余final manifests/compatibility/source hashes、formal architecture/contract与本批唯一natural Full；
+这些门禁闭合前EB6不算完成，EB7仍未启动，`production_effect=none`。
+
+2026-07-19，EB6闭合为`COMPLETE_G2_4_CONTINUES`。Formal architecture首轮
+`400 passed / 1 failed / 40.64s`捕获历史`common.py`hash未声明由EB6 supersede，修正后
+`401 passed / 41.20s`；contract=`265 passed / 181.38s`。唯一natural Full=
+`6375 passed / 1 failed / 2 skipped / 1127.39s`，捕获EB5刷新v12 duration seed后其精确断言仍停在
+v11；修复断言后的第一次有parent绑定rerun=`6374 passed / 2 failed / 2 skipped / 1159.52s`，继续捕获
+test manifest freshness与EB3/EB4历史source supersession未接管该测试。刷新manifests、保留历史hash并由
+EB6接管新hash后，正式architecture=`401 passed / 43.01s`，第二次有parent绑定rerun最终=
+`6376 passed / 2 skipped / 1139.04s`，telemetry、performance evidence、provenance binding均PASS，
+tail idle max/total=`0.0162s/0.1549s`。本次PASS profile刷新v13 partial seed（`6378 nodes / 1072 files`）；
+三个同口径Full约`18:46/19:18/18:58`，不宣称稳定提速，最高单node仍约`554s`并继续留在runtime-budget
+治理范围。Final generated=`965 modules / 1130 tests / 858 writers / 0 violations`，matrix仍
+`891/76/0/0`，CLI仍`41/291/993/0`且tree hash不变。EB6只解锁EB7；whole G2.4 exit、handoff、
+ARCH-005 S0及G2.5仍未触发，`production_effect=none`。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

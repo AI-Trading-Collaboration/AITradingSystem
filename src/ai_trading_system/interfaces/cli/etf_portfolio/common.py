@@ -63,6 +63,16 @@ def load_optional_json_payload(path: Path | None) -> dict[str, object]:
     return payload
 
 
+def latest_json_file(directory: Path, pattern: str) -> Path | None:
+    """Return the newest matching JSON artifact without interpreting its content."""
+    if not directory.exists():
+        return None
+    candidates = [path for path in directory.glob(pattern) if path.is_file()]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda path: path.stat().st_mtime)
+
+
 def quality_metadata(report: Any) -> dict[str, object]:
     report_date = report.max_date.isoformat() if report.max_date else "unknown"
     report_path = DEFAULT_ETF_REPORT_DIR / f"data_quality_{report_date}.md"
@@ -86,6 +96,7 @@ def mapping_obj(value: object) -> dict[str, object]:
 
 __all__ = [
     "artifact_stem",
+    "latest_json_file",
     "load_optional_json_payload",
     "mapping_obj",
     "parse_date",

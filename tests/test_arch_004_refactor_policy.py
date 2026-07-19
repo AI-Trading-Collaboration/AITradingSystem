@@ -1646,10 +1646,16 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4c["validation"]["architecture_fitness"]["passed"] == 186
     for source in phase_g2_4c["sources"]:
         if source.get("historical_phase_g2_4c_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004G2.4D"
-            assert source["current_hash_tracked_in"] == (
-                "phase_g2_4d_etf_cli_dynamic_calibration.sources"
+            assert source["superseded_by_phase"] in {
+                "ARCH-004G2.4D",
+                "ARCH-004G2.4-EB6",
+            }
+            expected_current = (
+                "phase_g2_4eb6_weight_calibration_and_research_interfaces.sources"
+                if source["superseded_by_phase"] == "ARCH-004G2.4-EB6"
+                else "phase_g2_4d_etf_cli_dynamic_calibration.sources"
             )
+            assert source["current_hash_tracked_in"] == expected_current
             continue
         actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
@@ -5434,7 +5440,90 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             "PASS_AFTER_AUDITED_FAILURE_FIX_RERUN",
         }
         assert eb5["next_phase_or_slice_unblocked"] is True
+        eb5_superseded = set(eb5["superseded_source_paths"])
+        assert len(eb5_superseded) == 18
         for source in eb5["sources"]:
+            if source["path"] in eb5_superseded:
+                continue
+            actual = _source_sha256(source)
+            assert actual == source["sha256"], source["path"]
+
+    eb6 = baseline["phase_g2_4eb6_weight_calibration_and_research_interfaces"]
+    assert eb6["status"] in {
+        "VALIDATING_G2_4_CONTINUES",
+        "COMPLETE_G2_4_CONTINUES",
+    }
+    assert eb6["base_commit"] == (
+        "e5fc456c4f2c67466f6f8f78f551e7dc69801644"
+    )
+    assert eb6["boundary_id"] == "ARCH-004G2.4-EB6"
+    assert eb6["migration"] == {
+        "callback_count": 40,
+        "weight_calibration_callback_count": 20,
+        "weight_research_callback_count": 20,
+        "canonical_interfaces": [
+            "src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py",
+            "src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py",
+        ],
+        "compatibility_app_reexports": True,
+        "compatibility_callback_wrappers": False,
+    }
+    assert eb6["contract"] == {
+        "interface_ownership_only": True,
+        "weight_or_threshold_semantics_changed": False,
+        "sample_holdout_regime_or_date_semantics_changed": False,
+        "ranking_recommendation_or_promotion_semantics_changed": False,
+        "data_quality_and_policy_provenance_preserved": True,
+        "cli_path_help_default_exit_and_output_preserved": True,
+        "latest_json_helper_has_no_investment_semantics": True,
+    }
+    assert eb6["subtraction"] == {
+        "legacy_cli_lines_before": 6572,
+        "legacy_cli_lines_after": 4038,
+        "legacy_cli_top_level_functions_before": 142,
+        "legacy_cli_top_level_functions_after": 100,
+        "legacy_cli_decorators_before": 116,
+        "legacy_cli_decorators_after": 76,
+        "duplicate_implementation_retained": False,
+    }
+    assert eb6["callback_matrix"] == {
+        "baseline_callback_count": 967,
+        "migrated_callback_count": 891,
+        "pending_callback_count": 76,
+        "unresolved_callback_count": 0,
+        "duplicate_registration_count": 0,
+        "phase_exit_criteria_passed": False,
+    }
+    assert eb6["cli_contract"] == {
+        "root_command_count": 41,
+        "group_count": 291,
+        "leaf_command_count": 993,
+        "duplicate_path_count": 0,
+        "command_tree_sha256": (
+            "01c78550ae58b38c2d8cca0683376643e2934f93e324710612c87d39eea7302d"
+        ),
+    }
+    assert eb6["focused_validation"]["pre_migration_baseline"]["passed"] == 231
+    assert eb6["focused_validation"]["corrected_post_migration_run"]["passed"] == 231
+    assert eb6["focused_validation"]["performance_triggered"] is False
+    assert eb6["safety"]["strategy_logic_changed"] is False
+    assert eb6["safety"]["production_effect"] == "none"
+    assert len(eb6["sources"]) == 42
+    if eb6["status"] == "VALIDATING_G2_4_CONTINUES":
+        assert eb6["formal_validation"]["architecture_fitness"]["status"] == "PENDING"
+        assert eb6["formal_validation"]["contract_validation"]["status"] == "PENDING"
+        assert eb6["formal_validation"]["full_validation"]["status"] == "PENDING"
+        assert eb6["next_phase_or_slice_unblocked"] is False
+        assert all(source["sha256"] == 0 for source in eb6["sources"])
+    else:
+        assert eb6["formal_validation"]["architecture_fitness"]["status"] == "PASS"
+        assert eb6["formal_validation"]["contract_validation"]["status"] == "PASS"
+        assert eb6["formal_validation"]["full_validation"]["status"] in {
+            "PASS",
+            "PASS_AFTER_AUDITED_FAILURE_FIX_RERUN",
+        }
+        assert eb6["next_phase_or_slice_unblocked"] is True
+        for source in eb6["sources"]:
             actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
@@ -5712,6 +5801,9 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB4_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB5_VALIDATING_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB5_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB6_IN_PROGRESS_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB6_VALIDATING_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB6_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_ARCH_005_PREBOOTSTRAP_IN_PROGRESS",
         "ATTRIBUTABLE_ISOLATION_PROVEN_ARCH_005_PREBOOTSTRAP_COMPLETE_G2_4_CONTINUES",
     }
@@ -5719,13 +5811,14 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     assert current_authority["task_id"] == (
         "ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION"
     )
-    assert current_authority["increment"] == "ARCH-004G2.4-EB5"
+    assert current_authority["increment"] == "ARCH-004G2.4-EB6"
     assert current_authority["status"] in {
+        "IN_PROGRESS_G2_4_CONTINUES",
         "VALIDATING_G2_4_CONTINUES",
         "COMPLETE_G2_4_CONTINUES",
     }
     assert current_authority["base_commit"] == (
-        "8332e9613e3fabd542f61689c899bb90dc1bd995"
+        "e5fc456c4f2c67466f6f8f78f551e7dc69801644"
     )
     assert current_authority["declared_path_set_current"] is True
     owner_authorization = current_authority["owner_authorization"]
@@ -5733,7 +5826,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "先按照这个顺序推进到可以考虑开始推进研究策略前把"
     )
     assert str(owner_authorization["authorized_at"]) == "2026-07-19"
-    assert owner_authorization["boundary_id"] == "ARCH-004G2.4-EB5"
+    assert owner_authorization["boundary_id"] == "ARCH-004G2.4-EB6"
     expected_complete = current_authority["status"] == "COMPLETE_G2_4_CONTINUES"
     assert current_authority["phase_lock"] == {
         "next_phase_or_slice_unblocked": expected_complete,
@@ -5748,12 +5841,15 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "eb4_unblocked": True,
         "eb5_unblocked": True,
         "eb5_authorized": True,
-        "eb5_complete": expected_complete,
-        "eb6_unblocked": expected_complete,
+        "eb5_complete": True,
+        "eb6_unblocked": True,
+        "eb6_authorized": True,
+        "eb6_complete": expected_complete,
+        "eb7_unblocked": expected_complete,
         "formal_arch_005_s0_unblocked": False,
         "g2_5_unblocked": False,
     }
-    assert len(current_authority["declared_changed_paths"]) == 39
+    assert len(current_authority["declared_changed_paths"]) == 43
     assert (
         attribution["current_staging_authority"]["base_commit"]
         == attribution["base_commit"]

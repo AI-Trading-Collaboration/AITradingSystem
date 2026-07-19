@@ -7,15 +7,15 @@ baseline:
   sha256: e6c047d18ad674a19c63c462be7901ae54791be6fc325cb2c1c879e3663108f3
 summary:
   baseline_callback_count: 967
-  migrated_callback_count: 851
-  pending_callback_count: 116
+  migrated_callback_count: 891
+  pending_callback_count: 76
   unresolved_callback_count: 0
   duplicate_callback_count: 0
   pre_g2_4_canonical_callback_count: 26
   current_total_callback_count: 993
   phase_exit_ready: false
   phase_completion_status: IN_PROGRESS
-current_callback_set_sha256: 0c45903af7d53892dac5ba19cca01ee4d8801966c8cbe2c6222e06a4615468d8
+current_callback_set_sha256: 75c4569fbf8767554037e72e06b18ed91e94b5d2687ef32c697fc42218efa249
 pending_by_app:
   ai_attribution_app: 3
   ai_confirmation_app: 4
@@ -39,10 +39,8 @@ pending_by_app:
   satellite_app: 6
   signals_app: 1
   simulation_app: 3
-  weight_calibration_app: 20
-  weight_research_app: 20
 current_owner_counts:
-  src/ai_trading_system/cli_commands/etf_portfolio.py: 116
+  src/ai_trading_system/cli_commands/etf_portfolio.py: 76
   src/ai_trading_system/interfaces/cli/etf_portfolio/baseline_review.py: 7
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_allocation.py: 3
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_calibration.py: 3
@@ -160,6 +158,8 @@ current_owner_counts:
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_targeted.py: 10
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_window_audit.py: 4
   src/ai_trading_system/interfaces/cli/etf_portfolio/shadow_review.py: 4
+  src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py: 20
+  src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py: 20
 callbacks:
 - callback_id: callback_e7aeffaecba8ad836f41
   app_name: ai_attribution_app
@@ -7583,320 +7583,320 @@ callbacks:
   baseline_function: weight_calibration_aggregate_evidence_command
   baseline_line: 31137
   current_function: weight_calibration_aggregate_evidence_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_3a761b9b517c5eb2381c
   app_name: weight_calibration_app
   command_name: comparison
   baseline_function: weight_calibration_comparison_command
   baseline_line: 30850
   current_function: weight_calibration_comparison_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_1a69927b9c21cae16459
   app_name: weight_calibration_app
   command_name: diagnostics
   baseline_function: weight_calibration_diagnostics_command
   baseline_line: 31440
   current_function: weight_calibration_diagnostics_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_2457a0d2f6df2997ac04
   app_name: weight_calibration_app
   command_name: enroll
   baseline_function: weight_calibration_enroll_command
   baseline_line: 31077
   current_function: weight_calibration_enroll_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_14ef11b5f61ebb81f97c
   app_name: weight_calibration_app
   command_name: enroll-forward
   baseline_function: weight_calibration_enroll_forward_command
   baseline_line: 30968
   current_function: weight_calibration_enroll_forward_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_357c6d9aa29ebe681e4b
   app_name: weight_calibration_app
   command_name: enroll-top
   baseline_function: weight_calibration_enroll_top_command
   baseline_line: 31019
   current_function: weight_calibration_enroll_top_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_7473c5e183c01f780b1b
   app_name: weight_calibration_app
   command_name: export-top
   baseline_function: weight_calibration_export_top_command
   baseline_line: 30791
   current_function: weight_calibration_export_top_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_710c4f53fcf52c935d1d
   app_name: weight_calibration_app
   command_name: generate-proposals
   baseline_function: weight_calibration_generate_proposals_command
   baseline_line: 31746
   current_function: weight_calibration_generate_proposals_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_245dccacf69cf640718d
   app_name: weight_calibration_app
   command_name: overfit-diagnostics
   baseline_function: weight_calibration_overfit_diagnostics_command
   baseline_line: 31231
   current_function: weight_calibration_overfit_diagnostics_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_133df0ed354089ddbfc0
   app_name: weight_calibration_app
   command_name: overfit-explain
   baseline_function: weight_calibration_overfit_explain_command
   baseline_line: 31286
   current_function: weight_calibration_overfit_explain_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_ab3d52f7925fc83007d8
   app_name: weight_calibration_app
   command_name: performance-validate
   baseline_function: weight_calibration_performance_validate_command
   baseline_line: 31677
   current_function: weight_calibration_performance_validate_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_b8e95d0af5747e39a617
   app_name: weight_calibration_app
   command_name: profiling-validate
   baseline_function: weight_calibration_profiling_validate_command
   baseline_line: 31709
   current_function: weight_calibration_profiling_validate_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_1495a648ed3f4d76fb2a
   app_name: weight_calibration_app
   command_name: recommendation
   baseline_function: weight_calibration_recommendation_command
   baseline_line: 31351
   current_function: weight_calibration_recommendation_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_0e04855d77b1222096e9
   app_name: weight_calibration_app
   command_name: regime-robustness
   baseline_function: weight_calibration_regime_robustness_command
   baseline_line: 30909
   current_function: weight_calibration_regime_robustness_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_dc70ddb759f9ec0ceb64
   app_name: weight_calibration_app
   command_name: register-candidates
   baseline_function: weight_calibration_register_candidates_command
   baseline_line: 30739
   current_function: weight_calibration_register_candidates_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_92cde98cf9aad7da9b4f
   app_name: weight_calibration_app
   command_name: report
   baseline_function: weight_calibration_report_command
   baseline_line: 31783
   current_function: weight_calibration_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_f04bad051235edf63505
   app_name: weight_calibration_app
   command_name: search
   baseline_function: weight_calibration_search_command
   baseline_line: 30631
   current_function: weight_calibration_search_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_f0526f3ed1eef375cb25
   app_name: weight_calibration_app
   command_name: usability-validate
   baseline_function: weight_calibration_usability_validate_command
   baseline_line: 31942
   current_function: weight_calibration_usability_validate_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_49b3e75ebeca3124a53c
   app_name: weight_calibration_app
   command_name: validate
   baseline_function: weight_calibration_validate_command
   baseline_line: 31892
   current_function: weight_calibration_validate_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_67cefed4a619cbdebc7a
   app_name: weight_calibration_app
   command_name: validate-config
   baseline_function: weight_calibration_validate_config_command
   baseline_line: 30598
   current_function: weight_calibration_validate_config_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_ae9c9204e43d76d87993
   app_name: weight_research_app
   command_name: audit-b1
   baseline_function: weight_research_audit_b1_command
   baseline_line: 32897
   current_function: weight_research_audit_b1_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_657b7ea7fe8fcea0883f
   app_name: weight_research_app
   command_name: b2-b3-v2-research
   baseline_function: weight_research_b2_b3_v2_research_command
   baseline_line: 33494
   current_function: weight_research_b2_b3_v2_research_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_51087747000a423b3770
   app_name: weight_research_app
   command_name: b2-control-window-research
   baseline_function: weight_research_b2_control_window_research_command
   baseline_line: 33592
   current_function: weight_research_b2_control_window_research_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_88203d3b6bf10e49051e
   app_name: weight_research_app
   command_name: b2-final-decision-research
   baseline_function: weight_research_b2_final_decision_research_command
   baseline_line: 33747
   current_function: weight_research_b2_final_decision_research_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_116d77e7be7e3d135ce3
   app_name: weight_research_app
   command_name: b2-followup-research
   baseline_function: weight_research_b2_followup_research_command
   baseline_line: 33644
   current_function: weight_research_b2_followup_research_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_462fe881dd6d72dad43b
   app_name: weight_research_app
   command_name: b2-full-diagnostic-research
   baseline_function: weight_research_b2_full_diagnostic_research_command
   baseline_line: 33540
   current_function: weight_research_b2_full_diagnostic_research_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_0f4a39e0847d64f8e8ed
   app_name: weight_research_app
   command_name: b2-targeted-evidence-research
   baseline_function: weight_research_b2_targeted_evidence_research_command
   baseline_line: 33691
   current_function: weight_research_b2_targeted_evidence_research_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_2d05813b4261f37c4c18
   app_name: weight_research_app
   command_name: branch-b2-b3
   baseline_function: weight_research_branch_b2_b3_command
   baseline_line: 33401
   current_function: weight_research_branch_b2_b3_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_ed096ca23e093deb9b98
   app_name: weight_research_app
   command_name: checkpoint
   baseline_function: weight_research_checkpoint_command
   baseline_line: 33280
   current_function: weight_research_checkpoint_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_87ce8469d6f49ba07b9d
   app_name: weight_research_app
   command_name: diagnose-b1-b4
   baseline_function: weight_research_diagnose_b1_b4_command
   baseline_line: 33312
   current_function: weight_research_diagnose_b1_b4_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_6f7e9599e2422f213f83
   app_name: weight_research_app
   command_name: diagnose-b2-b4-expansion
   baseline_function: weight_research_diagnose_b2_b4_expansion_command
   baseline_line: 33355
   current_function: weight_research_diagnose_b2_b4_expansion_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_7188cffa7ca778a92a3a
   app_name: weight_research_app
   command_name: freeze-interfaces
   baseline_function: weight_research_freeze_interfaces_command
   baseline_line: 33045
   current_function: weight_research_freeze_interfaces_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_31b66468346c9e79bc28
   app_name: weight_research_app
   command_name: post-b2-b3-research
   baseline_function: weight_research_post_b2_b3_research_command
   baseline_line: 33448
   current_function: weight_research_post_b2_b3_research_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_2c7e50b88e64c498d3a3
   app_name: weight_research_app
   command_name: run-b1
   baseline_function: weight_research_run_b1_command
   baseline_line: 33794
   current_function: weight_research_run_b1_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_e60a21a53314579e01da
   app_name: weight_research_app
   command_name: run-b1-attribution
   baseline_function: weight_research_run_b1_attribution_command
   baseline_line: 32990
   current_function: weight_research_run_b1_attribution_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_04f8e7e855b72a63ea7f
   app_name: weight_research_app
   command_name: run-b2
   baseline_function: weight_research_run_b2_command
   baseline_line: 33099
   current_function: weight_research_run_b2_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_84ba8a017e7c25ef2e5c
   app_name: weight_research_app
   command_name: run-b3
   baseline_function: weight_research_run_b3_command
   baseline_line: 33155
   current_function: weight_research_run_b3_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_9d3813ee9010b86aae3a
   app_name: weight_research_app
   command_name: run-b4
   baseline_function: weight_research_run_b4_command
   baseline_line: 33211
   current_function: weight_research_run_b4_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_14e27bbf4a8bbadb8a6c
   app_name: weight_research_app
   command_name: run-static-baselines
   baseline_function: weight_research_run_static_baselines_command
   baseline_line: 32935
   current_function: weight_research_run_static_baselines_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_620d5efc90477a756aed
   app_name: weight_research_app
   command_name: validate-contracts
   baseline_function: weight_research_validate_contracts_command
   baseline_line: 32851
   current_function: weight_research_validate_contracts_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+  migration_status: MIGRATED_CANONICAL
 production_effect: none
 broker_action: none
-matrix_id: arch_004g2_callback_matrix_b9c38492d4cb46785bb4
+matrix_id: arch_004g2_callback_matrix_c6f5bf4e583ed6d711a9

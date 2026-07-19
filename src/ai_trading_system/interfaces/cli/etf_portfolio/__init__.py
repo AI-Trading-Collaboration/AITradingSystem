@@ -359,6 +359,12 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     trend_calibration as trend_calibration_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import weekly_review as weekly_review_commands
+from ai_trading_system.interfaces.cli.etf_portfolio import (
+    weight_calibration as weight_calibration_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
+    weight_research as weight_research_commands,
+)
 from ai_trading_system.interfaces.cli.etf_portfolio.registration import etf_app
 
 __all__ = [
@@ -487,5 +493,7 @@ __all__ = [
     "shadow_review_commands",
     "satellite_attribution_commands",
     "weekly_review_commands",
+    "weight_calibration_commands",
+    "weight_research_commands",
     "trend_calibration_commands",
 ]

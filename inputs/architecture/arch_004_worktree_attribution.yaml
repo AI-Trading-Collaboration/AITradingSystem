@@ -1,19 +1,19 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB5_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB6_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-19
-base_commit: 8332e9613e3fabd542f61689c899bb90dc1bd995
+base_commit: e5fc456c4f2c67466f6f8f78f551e7dc69801644
 production_effect: none
 current_staging_authority:
   task_id: ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION
-  increment: ARCH-004G2.4-EB5
+  increment: ARCH-004G2.4-EB6
   status: COMPLETE_G2_4_CONTINUES
-  base_commit: 8332e9613e3fabd542f61689c899bb90dc1bd995
+  base_commit: e5fc456c4f2c67466f6f8f78f551e7dc69801644
   declared_path_set_current: true
   owner_authorization:
     instruction: 先按照这个顺序推进到可以考虑开始推进研究策略前把
     authorized_at: 2026-07-19
-    boundary_id: ARCH-004G2.4-EB5
+    boundary_id: ARCH-004G2.4-EB6
   phase_lock:
     next_phase_or_slice_unblocked: true
     eb2_authorized: true
@@ -29,6 +29,9 @@ current_staging_authority:
     eb5_authorized: true
     eb5_complete: true
     eb6_unblocked: true
+    eb6_authorized: true
+    eb6_complete: true
+    eb7_unblocked: true
     formal_arch_005_s0_unblocked: false
     g2_5_unblocked: false
   declared_changed_paths:
@@ -46,31 +49,35 @@ current_staging_authority:
     - inputs/architecture/arch_004g2_full_duration_profile.yaml
     - inputs/architecture/arch_004g_deprecation_inventory.yaml
     - src/ai_trading_system/cli_commands/etf_portfolio.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_filtered_candidate_readiness.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_normal_paper_shadow_resumption_gate.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_daily.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_drift.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_health.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_outcome_attribution.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_weekly.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_readiness_health_recovery.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_shadow_decision_comparison.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_stress_scenarios.py
     - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_paper_shadow_operations.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_shadow_decision_support.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_shadow_health_control.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/common.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
     - tests/test_arch_004_refactor_policy.py
     - tests/test_arch_004g2_callback_migration_matrix.py
     - tests/test_arch_004g2_etf_cli_contract.py
     - tests/test_arch_004g_deprecation.py
-    - tests/test_evidence_staleness_monitor.py
-    - tests/test_normal_paper_shadow_resumption_gate.py
-    - tests/test_paper_shadow_protocol.py
-    - tests/test_paper_shadow_weekly_review.py
-    - tests/test_readiness_health_recovery.py
-    - tests/test_shadow_continuation_readiness.py
+    - tests/test_etf_weight_calibration.py
+    - tests/test_etf_weight_calibration_cache.py
+    - tests/test_etf_weight_calibration_profiling.py
+    - tests/test_weight_calibration.py
+    - tests/test_weight_research_b2.py
+    - tests/test_weight_research_b2_b3_v2.py
+    - tests/test_weight_research_b2_control_windows.py
+    - tests/test_weight_research_b2_final_decision.py
+    - tests/test_weight_research_b2_followup.py
+    - tests/test_weight_research_b2_full_diagnostic.py
+    - tests/test_weight_research_b2_targeted_evidence.py
+    - tests/test_weight_research_b3.py
+    - tests/test_weight_research_b4.py
+    - tests/test_weight_research_branching.py
+    - tests/test_weight_research_diagnosis.py
+    - tests/test_weight_research_extended_diagnosis.py
+    - tests/test_weight_research_interfaces.py
+    - tests/test_weight_research_post_branch.py
+    - tests/test_weight_research_program_v1.py
+    - tests/test_weight_research_unblock.py
+    - tests/test_validation_runtime_profile.py
 
 integrated_task_ids:
   - ARCH-004

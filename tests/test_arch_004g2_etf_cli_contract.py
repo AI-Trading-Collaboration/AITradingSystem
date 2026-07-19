@@ -41,6 +41,12 @@ SHADOW_DECISION_SUPPORT_COMMANDS_PATH = (
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_shadow_decision_support.py"
 )
+WEIGHT_CALIBRATION_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py"
+)
+WEIGHT_RESEARCH_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py"
+)
 DATA_COMMANDS_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/data.py"
 DATA_QUALITY_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/data_quality.py"
@@ -642,7 +648,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 6572
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 4038
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -853,8 +859,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 6572
-    assert len(legacy_names) == 142
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 4038
+    assert len(legacy_names) == 100
 
 
 def test_g2_4_eb5_shadow_control_callbacks_leave_legacy_root() -> None:
@@ -909,6 +915,82 @@ def test_g2_4_eb5_shadow_control_callbacks_leave_legacy_root() -> None:
     assert len(callbacks) == 37
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names
+
+
+def test_g2_4_eb6_weight_callbacks_and_domain_imports_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names: set[str] = set()
+    for path in (WEIGHT_CALIBRATION_COMMANDS_PATH, WEIGHT_RESEARCH_COMMANDS_PATH):
+        canonical_names.update(_function_names(ast.parse(path.read_text(encoding="utf-8"))))
+    callbacks = {
+        "weight_calibration_validate_config_command",
+        "weight_calibration_search_command",
+        "weight_calibration_register_candidates_command",
+        "weight_calibration_export_top_command",
+        "weight_calibration_comparison_command",
+        "weight_calibration_regime_robustness_command",
+        "weight_calibration_enroll_forward_command",
+        "weight_calibration_enroll_top_command",
+        "weight_calibration_enroll_command",
+        "weight_calibration_aggregate_evidence_command",
+        "weight_calibration_overfit_diagnostics_command",
+        "weight_calibration_overfit_explain_command",
+        "weight_calibration_recommendation_command",
+        "weight_calibration_diagnostics_command",
+        "weight_calibration_performance_validate_command",
+        "weight_calibration_profiling_validate_command",
+        "weight_calibration_generate_proposals_command",
+        "weight_calibration_report_command",
+        "weight_calibration_validate_command",
+        "weight_calibration_usability_validate_command",
+        "weight_research_validate_contracts_command",
+        "weight_research_audit_b1_command",
+        "weight_research_run_static_baselines_command",
+        "weight_research_run_b1_attribution_command",
+        "weight_research_freeze_interfaces_command",
+        "weight_research_run_b2_command",
+        "weight_research_run_b3_command",
+        "weight_research_run_b4_command",
+        "weight_research_checkpoint_command",
+        "weight_research_diagnose_b1_b4_command",
+        "weight_research_diagnose_b2_b4_expansion_command",
+        "weight_research_branch_b2_b3_command",
+        "weight_research_post_b2_b3_research_command",
+        "weight_research_b2_b3_v2_research_command",
+        "weight_research_b2_full_diagnostic_research_command",
+        "weight_research_b2_control_window_research_command",
+        "weight_research_b2_followup_research_command",
+        "weight_research_b2_targeted_evidence_research_command",
+        "weight_research_b2_final_decision_research_command",
+        "weight_research_run_b1_command",
+    }
+    migrated_domain_imports = {
+        "ai_trading_system.etf_portfolio.weight_calibration",
+        "ai_trading_system.etf_portfolio.weight_calibration_cache",
+        "ai_trading_system.etf_portfolio.weight_calibration_profiling",
+        "ai_trading_system.etf_portfolio.weight_research_b2",
+        "ai_trading_system.etf_portfolio.weight_research_b2_b3_v2",
+        "ai_trading_system.etf_portfolio.weight_research_b2_control_windows",
+        "ai_trading_system.etf_portfolio.weight_research_b2_final_decision",
+        "ai_trading_system.etf_portfolio.weight_research_b2_followup",
+        "ai_trading_system.etf_portfolio.weight_research_b2_full_diagnostic",
+        "ai_trading_system.etf_portfolio.weight_research_b2_targeted_evidence",
+        "ai_trading_system.etf_portfolio.weight_research_b3",
+        "ai_trading_system.etf_portfolio.weight_research_b4",
+        "ai_trading_system.etf_portfolio.weight_research_branching",
+        "ai_trading_system.etf_portfolio.weight_research_checkpoint",
+        "ai_trading_system.etf_portfolio.weight_research_diagnosis",
+        "ai_trading_system.etf_portfolio.weight_research_extended_diagnosis",
+        "ai_trading_system.etf_portfolio.weight_research_interfaces",
+        "ai_trading_system.etf_portfolio.weight_research_post_branch",
+        "ai_trading_system.etf_portfolio.weight_research_unblock",
+    }
+
+    assert len(callbacks) == 40
+    assert legacy_names.isdisjoint(callbacks | {"_echo_weight_shadow_enrollment_summary"})
+    assert callbacks <= canonical_names
+    assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
