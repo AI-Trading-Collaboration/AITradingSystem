@@ -269,9 +269,12 @@ def test_shadow_continuation_readiness_cli_run_report_and_validate(
 
 
 def _shadow_continuation_fixture(tmp_path: Path, monkeypatch) -> dict[str, object]:
-    fixture = run_paper_shadow_protocol_fixture(tmp_path, monkeypatch)
+    fixture = run_paper_shadow_protocol_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end="2024-04-19",
+    )
     signal_input = run_signal_input_completeness_fixture(tmp_path, as_of="2024-04-22")
-    _set_filtered_evidence_date_end(fixture, "2024-04-19")
     ledger = readiness.record_candidate_decision_ledger(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         evidence_id=fixture["filtered_candidate_evidence"]["evidence_id"],
@@ -404,21 +407,6 @@ def _shadow_continuation_fixture(tmp_path: Path, monkeypatch) -> dict[str, objec
         "evidence_staleness": staleness,
         "signal_input_completeness": signal_input,
     }
-
-
-def _set_filtered_evidence_date_end(
-    fixture: dict[str, object],
-    date_end: str,
-) -> None:
-    evidence = fixture["filtered_candidate_evidence"]
-    assert isinstance(evidence, dict)
-    manifest_path = Path(evidence["manifest"]["filtered_candidate_evidence_manifest_path"])
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    manifest["date_end"] = date_end
-    manifest_path.write_text(
-        json.dumps(manifest, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
 
 
 def _write_data_quality_report(tmp_path: Path, *, status: str = "PASS_WITH_WARNINGS") -> Path:

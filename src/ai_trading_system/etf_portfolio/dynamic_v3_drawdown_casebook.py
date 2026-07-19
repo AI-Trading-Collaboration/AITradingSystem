@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_diagnostics as diagnostics
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_foundation as foundation
+from ai_trading_system.platform.artifacts import write_bytes_atomic
 
 DEFAULT_DRAWDOWN_EVENT_CASEBOOK_CONFIG_PATH = (
     st.PROJECT_ROOT
@@ -37,7 +40,20 @@ DRAWDOWN_EVENT_CASEBOOK_SAFETY = {
     "not_trading_signal": True,
     "data_downloaded_by_casebook": False,
     "pipelines_executed_by_casebook": False,
+    "evidence_role": "MANUAL_DIAGNOSTIC",
+    "quantitative_evidence_eligible": False,
+    "promotion_evidence_eligible": False,
+    "automatic_candidate_promotion": False,
+    "production_effect": "none",
 }
+DRAWDOWN_INPUT_SCHEMA = "drawdown_event_casebook_input_snapshot.v2"
+DRAWDOWN_VIEWS = (
+    "drawdown_casebook_manifest.json",
+    "drawdown_event_casebook.json",
+    "drawdown_event_casebook_report.md",
+    "drawdown_event_casebook_reader_brief.md",
+)
+DRAWDOWN_SNAPSHOT = "drawdown_event_casebook_input_snapshot.json"
 
 
 def build_drawdown_event_casebook(
@@ -46,9 +62,11 @@ def build_drawdown_event_casebook(
     output_dir: Path = DEFAULT_DRAWDOWN_EVENT_CASEBOOK_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _generated_time(generated_at)
+    policy_source = foundation._file_binding(config_path)
     config = st._load_yaml_mapping(config_path)
     normalized = _normalized_casebook(config, config_path=config_path)
+    _validate_manual_casebook_source(normalized, generated=generated)
     casebook_run_id = st._stable_id(
         "drawdown-event-casebook",
         normalized.get("casebook_id"),
@@ -57,53 +75,36 @@ def build_drawdown_event_casebook(
     )
     root = st._unique_dir(output_dir / casebook_run_id)
     root.mkdir(parents=True, exist_ok=False)
-    casebook = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_drawdown_event_casebook",
-        "casebook_run_id": root.name,
-        "drawdown_casebook_id": normalized.get("casebook_id"),
-        "version": normalized.get("version"),
-        "status": normalized.get("status"),
-        "owner": normalized.get("owner"),
-        "source_type": normalized.get("source_type"),
-        "generated_at": generated.isoformat(),
-        "config_path": str(config_path),
-        "event_count": len(_records(normalized.get("events"))),
-        "worst_event": _worst_event_id(normalized),
-        "regime_coverage": _regime_coverage(normalized),
-        "candidate_response_summary": _candidate_response_summary(normalized),
-        "next_review_action": _next_review_action(normalized),
-        "casebook_policy": normalized.get("casebook_policy"),
-        "events": normalized.get("events"),
-        **DRAWDOWN_EVENT_CASEBOOK_SAFETY,
-    }
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_drawdown_casebook_manifest",
-        "casebook_run_id": root.name,
-        "drawdown_casebook_id": normalized.get("casebook_id"),
-        "version": normalized.get("version"),
-        "status": "PASS" if _casebook_complete(normalized) else "FAIL",
-        "generated_at": generated.isoformat(),
-        "config_path": str(config_path),
-        "drawdown_casebook_manifest_path": str(root / "drawdown_casebook_manifest.json"),
-        "drawdown_event_casebook_path": str(root / "drawdown_event_casebook.json"),
-        "drawdown_event_casebook_report_path": str(
-            root / "drawdown_event_casebook_report.md"
-        ),
-        "drawdown_event_casebook_reader_brief_path": str(
-            root / "drawdown_event_casebook_reader_brief.md"
-        ),
-        **DRAWDOWN_EVENT_CASEBOOK_SAFETY,
-    }
-    reader = render_drawdown_event_casebook_reader_brief(casebook)
-    st._write_json(root / "drawdown_casebook_manifest.json", manifest)
-    st._write_json(root / "drawdown_event_casebook.json", casebook)
-    st._write_text(
-        root / "drawdown_event_casebook_report.md",
-        render_drawdown_event_casebook_report(manifest, casebook),
+    manifest, casebook, views = _drawdown_material(
+        root=root,
+        casebook_run_id=root.name,
+        normalized=normalized,
+        generated=generated,
     )
-    st._write_text(root / "drawdown_event_casebook_reader_brief.md", reader)
+    for name, payload in views.items():
+        write_bytes_atomic(root / name, payload)
+    snapshot = {
+        "schema_version": DRAWDOWN_INPUT_SCHEMA,
+        "casebook_run_id": root.name,
+        "generated_at": generated.isoformat(),
+        "policy_source": policy_source,
+        "policy_lineage": {
+            "casebook_id": normalized.get("casebook_id"),
+            "version": normalized.get("version"),
+            "status": normalized.get("status"),
+            "owner": normalized.get("owner"),
+        },
+        "chronology": {
+            "generated_at": generated.isoformat(),
+            "latest_manual_event_end": max(
+                (_text(row.get("end_date")) for row in _records(normalized.get("events"))),
+                default=None,
+            ),
+        },
+        "evidence_role": "MANUAL_DIAGNOSTIC",
+        "view_hashes": foundation._view_hashes(root, DRAWDOWN_VIEWS),
+    }
+    foundation._write_snapshot(root / DRAWDOWN_SNAPSHOT, snapshot)
     st._write_latest_pointer(
         "latest_drawdown_event_casebook",
         root.name,
@@ -119,9 +120,72 @@ def build_drawdown_event_casebook(
         "casebook_dir": root,
         "manifest": manifest,
         "drawdown_event_casebook": casebook,
-        "drawdown_event_casebook_reader_brief": reader,
+        "drawdown_event_casebook_reader_brief": (
+            root / "drawdown_event_casebook_reader_brief.md"
+        ).read_text(encoding="utf-8"),
+        "input_snapshot": snapshot,
         "drawdown_event_casebook_validation": validation,
     }
+
+
+def _drawdown_material(
+    *,
+    root: Path,
+    casebook_run_id: str,
+    normalized: Mapping[str, Any],
+    generated: datetime,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, bytes]]:
+    config_path = Path(_text(normalized.get("config_path")))
+    casebook = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_drawdown_event_casebook",
+        "casebook_run_id": casebook_run_id,
+        "drawdown_casebook_id": normalized.get("casebook_id"),
+        "version": normalized.get("version"),
+        "status": "MANUAL_DIAGNOSTIC",
+        "observed_evidence_status": "NOT_APPLICABLE",
+        "owner": normalized.get("owner"),
+        "source_type": normalized.get("source_type"),
+        "generated_at": generated.isoformat(),
+        "config_path": str(config_path),
+        "event_count": len(_records(normalized.get("events"))),
+        "worst_event": _worst_event_id(normalized),
+        "regime_coverage": _regime_coverage(normalized),
+        "candidate_response_summary": _candidate_response_summary(normalized),
+        "next_review_action": "manual_qualitative_review_only",
+        "casebook_policy": normalized.get("casebook_policy"),
+        "events": normalized.get("events"),
+        **DRAWDOWN_EVENT_CASEBOOK_SAFETY,
+    }
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_drawdown_casebook_manifest",
+        "casebook_run_id": casebook_run_id,
+        "drawdown_casebook_id": normalized.get("casebook_id"),
+        "version": normalized.get("version"),
+        "status": "PASS",
+        "generated_at": generated.isoformat(),
+        "config_path": str(config_path),
+        "drawdown_casebook_manifest_path": str(root / "drawdown_casebook_manifest.json"),
+        "drawdown_event_casebook_path": str(root / "drawdown_event_casebook.json"),
+        "drawdown_event_casebook_report_path": str(
+            root / "drawdown_event_casebook_report.md"
+        ),
+        "drawdown_event_casebook_reader_brief_path": str(
+            root / "drawdown_event_casebook_reader_brief.md"
+        ),
+        **DRAWDOWN_EVENT_CASEBOOK_SAFETY,
+    }
+    reader = render_drawdown_event_casebook_reader_brief(casebook)
+    views = {
+        "drawdown_casebook_manifest.json": foundation._json_bytes(manifest),
+        "drawdown_event_casebook.json": foundation._json_bytes(casebook),
+        "drawdown_event_casebook_report.md": foundation._text_file_bytes(
+            render_drawdown_event_casebook_report(manifest, casebook)
+        ),
+        "drawdown_event_casebook_reader_brief.md": foundation._text_file_bytes(reader),
+    }
+    return manifest, casebook, views
 
 
 def drawdown_event_casebook_report_payload(
@@ -145,6 +209,9 @@ def drawdown_event_casebook_report_payload(
         ).read_text(encoding="utf-8"),
         "casebook_dir": str(root),
     }
+    snapshot = st._read_optional_json(root / DRAWDOWN_SNAPSHOT)
+    if snapshot:
+        payload["input_snapshot"] = snapshot
     validation = st._read_optional_json(root / "drawdown_event_casebook_validation.json")
     if validation:
         payload["drawdown_event_casebook_validation"] = validation
@@ -158,62 +225,27 @@ def validate_drawdown_event_casebook_artifact(
     write_output: bool = True,
 ) -> dict[str, Any]:
     root = output_dir / casebook_run_id
-    manifest = st._read_optional_json(root / "drawdown_casebook_manifest.json") or {}
-    casebook = st._read_optional_json(root / "drawdown_event_casebook.json") or {}
-    reader = (
-        (root / "drawdown_event_casebook_reader_brief.md").read_text(encoding="utf-8")
-        if (root / "drawdown_event_casebook_reader_brief.md").exists()
-        else ""
+    checks, ok = diagnostics._snapshot_preflight(
+        root=root,
+        snapshot_name=DRAWDOWN_SNAPSHOT,
+        schema=DRAWDOWN_INPUT_SCHEMA,
+        id_key="casebook_run_id",
+        artifact_id=casebook_run_id,
+        view_names=DRAWDOWN_VIEWS,
     )
-    events = _records(casebook.get("events"))
-    event_ids = {_text(row.get("event_id")) for row in events}
-    checks = st._required_file_checks(
-        root,
-        (
-            "drawdown_casebook_manifest.json",
-            "drawdown_event_casebook.json",
-            "drawdown_event_casebook_report.md",
-            "drawdown_event_casebook_reader_brief.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check(
-                "casebook_run_id_matches",
-                manifest.get("casebook_run_id") == casebook_run_id,
-                "",
-            ),
-            st._check("metadata_visible", _metadata_visible(casebook), ""),
-            st._check("event_count", len(events) >= 3, str(len(events))),
-            st._check("event_ids_unique", len(event_ids) == len(events), ""),
-            st._check(
-                "event_schema_complete",
-                all(_event_complete(row) for row in events),
-                "",
-            ),
-            st._check("date_order_valid", all(_event_dates_valid(row) for row in events), ""),
-            st._check(
-                "max_drawdown_negative",
-                all(_float(row.get("max_drawdown")) < 0 for row in events),
-                "",
-            ),
-            st._check("source_type_visible", casebook.get("source_type") != "", ""),
-            st._check("reader_brief_fields", "drawdown_casebook_event_count" in reader, ""),
-            st._check(
-                "casebook_read_only",
-                casebook.get("data_downloaded_by_casebook") is False
-                and casebook.get("pipelines_executed_by_casebook") is False,
-                "",
-            ),
-            st._check("not_trading_signal", casebook.get("not_trading_signal") is True, ""),
-            st._check("broker_forbidden", st._payload_safe(manifest, casebook), ""),
-        ]
-    )
-    validation = st._validation_payload(
-        "etf_dynamic_v3_drawdown_event_casebook_validation",
-        casebook_run_id,
-        checks,
-    )
+    if ok:
+        validation = diagnostics._validate_content(
+            report_type="etf_dynamic_v3_drawdown_event_casebook_validation",
+            artifact_id=casebook_run_id,
+            checks=checks,
+            rebuild=lambda: _rebuild_drawdown_casebook(root, casebook_run_id),
+        )
+    else:
+        validation = st._validation_payload(
+            "etf_dynamic_v3_drawdown_event_casebook_validation",
+            casebook_run_id,
+            checks,
+        )
     if write_output:
         st._write_json(root / "drawdown_event_casebook_validation.json", validation)
         st._write_text(
@@ -221,6 +253,27 @@ def validate_drawdown_event_casebook_artifact(
             render_drawdown_event_casebook_validation_report(validation),
         )
     return validation
+
+
+def _rebuild_drawdown_casebook(root: Path, casebook_run_id: str) -> list[dict[str, Any]]:
+    snapshot = st._read_json(root / DRAWDOWN_SNAPSHOT)
+    policy_source = _mapping(snapshot.get("policy_source"))
+    foundation._validate_file_binding(policy_source)
+    generated = _aware_utc(snapshot.get("generated_at"), "snapshot.generated_at")
+    config_path = Path(_text(policy_source.get("path")))
+    normalized = _normalized_casebook(st._load_yaml_mapping(config_path), config_path=config_path)
+    _validate_manual_casebook_source(normalized, generated=generated)
+    lineage = _mapping(snapshot.get("policy_lineage"))
+    for key in ("casebook_id", "version", "status", "owner"):
+        if lineage.get(key) != normalized.get(key):
+            raise ValueError(f"drawdown casebook policy lineage mismatch: {key}")
+    _, _, expected = _drawdown_material(
+        root=root,
+        casebook_run_id=casebook_run_id,
+        normalized=normalized,
+        generated=generated,
+    )
+    return diagnostics._check_bytes(root, expected)
 
 
 def render_drawdown_event_casebook_reader_brief(casebook: Mapping[str, Any]) -> str:
@@ -346,8 +399,52 @@ def _normalized_event(row: Mapping[str, Any]) -> dict[str, Any]:
         "candidate_response": _text(row.get("candidate_response")),
         "benchmark_response": _text(row.get("benchmark_response")),
         "review_notes": _texts(row.get("review_notes")),
+        "evidence_role": "MANUAL_DIAGNOSTIC",
+        "quantitative_evidence_eligible": False,
+        "promotion_evidence_eligible": False,
         **DRAWDOWN_EVENT_CASEBOOK_SAFETY,
     }
+
+
+def _generated_time(value: datetime | None) -> datetime:
+    generated = value or datetime.now(UTC)
+    return _aware_utc(generated, "generated_at")
+
+
+def _aware_utc(value: object, field: str) -> datetime:
+    parsed = value if isinstance(value, datetime) else datetime.fromisoformat(_text(value))
+    if parsed.tzinfo is None or parsed.utcoffset() != UTC.utcoffset(parsed):
+        raise ValueError(f"{field} must be timezone-aware UTC")
+    return parsed.astimezone(UTC)
+
+
+def _validate_manual_casebook_source(
+    casebook: Mapping[str, Any], *, generated: datetime
+) -> None:
+    if not _metadata_visible(
+        {
+            "drawdown_casebook_id": casebook.get("casebook_id"),
+            "version": casebook.get("version"),
+            "status": casebook.get("status"),
+            "owner": casebook.get("owner"),
+            "source_type": casebook.get("source_type"),
+        }
+    ):
+        raise ValueError("drawdown casebook policy metadata is incomplete")
+    if _text(casebook.get("status")) not in {
+        "manual_diagnostic_baseline",
+        "reviewed_manual_diagnostic",
+    }:
+        raise ValueError("drawdown casebook policy is not reviewed manual diagnostic")
+    events = _records(casebook.get("events"))
+    if not events or not all(_event_complete(row) for row in events):
+        raise ValueError("drawdown casebook manual events are incomplete")
+    if len({_text(row.get("event_id")) for row in events}) != len(events):
+        raise ValueError("drawdown casebook event ids must be unique")
+    if not all(_event_dates_valid(row) for row in events):
+        raise ValueError("drawdown casebook event chronology is invalid")
+    if any(_text(row.get("end_date"))[:10] > generated.date().isoformat() for row in events):
+        raise ValueError("drawdown casebook event occurs after generated_at")
 
 
 def _casebook_complete(casebook: Mapping[str, Any]) -> bool:

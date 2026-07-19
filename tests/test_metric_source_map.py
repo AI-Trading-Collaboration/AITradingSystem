@@ -12,7 +12,7 @@ from ai_trading_system.etf_portfolio import dynamic_v3_metric_source_map as sour
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 
 
-def test_metric_source_map_ready_without_materializing_metrics(
+def test_metric_source_map_keeps_simulation_contract_insufficient_for_observed_metrics(
     monkeypatch: Any,
     tmp_path: Path,
 ) -> None:
@@ -21,16 +21,27 @@ def test_metric_source_map_ready_without_materializing_metrics(
 
     result = source_map.run_metric_source_map(
         as_of=date(2026, 6, 17),
+        source_variant="limited_adjustment",
+        sim_outcome_id="sim-outcome-source-map-test",
         price_cache_path=price_path,
         output_dir=tmp_path / "metric_source_map",
         generated_at=datetime(2026, 6, 17, 5, tzinfo=UTC),
     )
     report = result["metric_source_map_report"]
 
-    assert report["metric_source_map_status"] == "METRIC_SOURCE_MAP_READY"
+    assert report["metric_source_map_status"] == "INSUFFICIENT_DATA"
     assert report["source_summary"]["candidate_metric_count"] == 6
     assert report["source_summary"]["baseline_metric_count"] == 5
-    assert report["source_summary"]["derivable_now_count"] == 11
+    assert report["source_summary"]["derivable_now_count"] == 0
+    assert report["observed_evidence_status"] == "INSUFFICIENT_DATA"
+    assert report["candidate_lineage_status"] == "UNBOUND_SIMULATION_VARIANT"
+    assert all(
+        row["observed_value"] is None and row["derivable_now"] is False
+        for row in [
+            *report["candidate_metric_sources"],
+            *report["baseline_metric_sources"],
+        ]
+    )
     assert report["cost_metrics_materialized"] is False
     assert report["benchmark_metrics_materialized"] is False
     assert result["metric_source_map_validation"]["status"] == "PASS"
@@ -47,21 +58,24 @@ def test_metric_source_map_marks_missing_variant_without_fabrication(
 
     result = source_map.run_metric_source_map(
         as_of=date(2026, 6, 17),
+        source_variant="limited_adjustment",
+        sim_outcome_id="sim-outcome-source-map-test",
         price_cache_path=price_path,
         output_dir=tmp_path / "metric_source_map",
         generated_at=datetime(2026, 6, 17, 6, tzinfo=UTC),
     )
     report = result["metric_source_map_report"]
 
-    assert report["metric_source_map_status"] == "METRIC_SOURCE_MAP_PARTIAL"
+    assert report["metric_source_map_status"] == "INSUFFICIENT_DATA"
     missing = {
         row["metric_name"]: row["missing_fields"]
         for row in report["candidate_metric_sources"]
         if row["derivable_now"] is False
     }
-    assert missing["turnover"] == ["summary[source_variant]"]
+    assert "summary[source_variant]" in missing["turnover"]
+    assert "validated_same_candidate_lineage_dated_metric_source" in missing["turnover"]
     assert "turnover" in report["source_summary"]["missing_metric_names"]
-    assert result["metric_source_map_validation"]["status"] == "PASS_WITH_WARNINGS"
+    assert result["metric_source_map_validation"]["status"] == "PASS"
     assert report["cost_metrics_materialized"] is False
 
 
@@ -84,12 +98,14 @@ def test_metric_source_map_cli_run_report_and_validate(
             "2026-06-17",
             "--price-cache-path",
             str(price_path),
+            "--sim-outcome-id",
+            "sim-outcome-source-map-test",
             "--output-dir",
             str(output_dir),
         ],
     )
     assert run.exit_code == 0, run.output
-    assert "metric_source_map_status=METRIC_SOURCE_MAP_READY" in run.output
+    assert "metric_source_map_status=INSUFFICIENT_DATA" in run.output
     assert "cost_metrics_materialized=false" in run.output
     source_map_id = next(
         line.split("=", 1)[1]
@@ -111,7 +127,7 @@ def test_metric_source_map_cli_run_report_and_validate(
         ],
     )
     assert report.exit_code == 0, report.output
-    assert "derivable_now_count=11" in report.output
+    assert "derivable_now_count=0" in report.output
 
     validation = CliRunner().invoke(
         app,
@@ -127,6 +143,61 @@ def test_metric_source_map_cli_run_report_and_validate(
     )
     assert validation.exit_code == 0, validation.output
     assert "status=PASS" in validation.output
+
+
+def test_metric_source_map_missing_explicit_sources_is_reproducible(
+    monkeypatch: Any,
+    tmp_path: Path,
+) -> None:
+    def fail_if_called(**kwargs: Any) -> dict[str, Any]:
+        raise AssertionError("implicit latest source resolution is forbidden")
+
+    monkeypatch.setattr(
+        source_map.sim,
+        "backtest_sim_outcome_report_payload",
+        fail_if_called,
+    )
+    missing_price = tmp_path / "missing-prices.csv"
+    result = source_map.run_metric_source_map(
+        as_of=date(2026, 6, 17),
+        source_variant="limited_adjustment",
+        price_cache_path=missing_price,
+        output_dir=tmp_path / "metric_source_map",
+        generated_at=datetime(2026, 6, 17, 5, tzinfo=UTC),
+    )
+
+    report = result["metric_source_map_report"]
+    assert report["metric_source_map_status"] == "INSUFFICIENT_DATA"
+    assert result["input_snapshot"]["price_source"]["exists"] is False
+    assert result["input_snapshot"]["sim_source_reference"]["exists"] is False
+    assert result["metric_source_map_validation"]["status"] == "PASS"
+
+
+def test_metric_source_map_tampered_view_fails_closed(
+    monkeypatch: Any,
+    tmp_path: Path,
+) -> None:
+    _patch_sim_outcome(monkeypatch)
+    price_path = _write_prices(tmp_path)
+    output_dir = tmp_path / "metric_source_map"
+    result = source_map.run_metric_source_map(
+        as_of=date(2026, 6, 17),
+        source_variant="limited_adjustment",
+        sim_outcome_id="sim-outcome-source-map-test",
+        price_cache_path=price_path,
+        output_dir=output_dir,
+        generated_at=datetime(2026, 6, 17, 5, tzinfo=UTC),
+    )
+    report_path = result["source_map_dir"] / "metric_source_map_report.md"
+    report_path.write_text("tampered\n", encoding="utf-8")
+
+    validation = source_map.validate_metric_source_map_artifact(
+        source_map_id=result["source_map_id"],
+        output_dir=output_dir,
+        write_output=False,
+    )
+
+    assert validation["status"] == "FAIL"
 
 
 def _patch_sim_outcome(monkeypatch: Any, *, include_candidate: bool = True) -> None:

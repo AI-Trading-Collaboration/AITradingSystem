@@ -20,10 +20,18 @@ def test_cost_sensitivity_review_all_scenarios_meaningful(tmp_path: Path) -> Non
         metrics={
             "metrics_id": "candidate-metrics-strong",
             "candidate": "median_plus_regime_mismatch_filter",
-            "as_of": "2026-06-15",
+            "candidate_lineage_id": "filtered-candidate-lineage-2026-06-15",
+            "source_variant": "median_plus_regime_mismatch_filter",
+            "window_start": "2026-06-08",
+            "window_end": "2026-06-15",
+            "generated_at": "2026-06-15T23:00:00+00:00",
+            "validation_status": "PASS",
+            "evidence_status": "VALIDATED_DATED_METRICS",
+            "outcome_mode": "PAPER_SHADOW_OBSERVED",
+            "metric_source": "validated_paper_shadow_candidate_metrics",
             "turnover": 1.0,
-            "gross_performance_proxy": 0.08,
-            "baseline_performance_proxy": 0.06,
+            "gross_performance": 0.08,
+            "baseline_performance": 0.06,
         },
     )
 
@@ -48,6 +56,10 @@ def test_cost_sensitivity_review_all_scenarios_meaningful(tmp_path: Path) -> Non
     assert high["improvement_remains_meaningful"] is True
     assert review["promotion_board_inputs"]["high_cost_improvement_meaningful"] is True
     assert validation["status"] == "PASS"
+    assert result["input_snapshot"]["schema_version"] == (
+        cost.COST_SENSITIVITY_INPUT_SCHEMA
+    )
+    assert review["evidence_status"] == "VALIDATED_DATED_METRICS"
     assert "cost_sensitivity_status" in result["reader_brief_section"]
     assert_research_safe(review)
     assert review["execution_model_ready"] is False
@@ -82,10 +94,18 @@ def test_cost_sensitivity_cli_run_report_and_validate(tmp_path: Path) -> None:
         metrics={
             "metrics_id": "candidate-metrics-fragile",
             "candidate": "median_plus_regime_mismatch_filter",
-            "as_of": "2026-06-15",
+            "candidate_lineage_id": "filtered-candidate-lineage-2026-06-15",
+            "source_variant": "median_plus_regime_mismatch_filter",
+            "window_start": "2026-06-08",
+            "window_end": "2026-06-15",
+            "generated_at": "2026-06-15T23:00:00+00:00",
+            "validation_status": "PASS",
+            "evidence_status": "VALIDATED_DATED_METRICS",
+            "outcome_mode": "PAPER_SHADOW_OBSERVED",
+            "metric_source": "validated_paper_shadow_candidate_metrics",
             "turnover": 1.0,
-            "gross_performance_proxy": 0.013,
-            "baseline_performance_proxy": 0.01,
+            "gross_performance": 0.013,
+            "baseline_performance": 0.01,
         },
     )
     output_dir = tmp_path / "cost_sensitivity_cli"
@@ -155,6 +175,54 @@ def test_cost_sensitivity_cli_run_report_and_validate(tmp_path: Path) -> None:
     assert "status=PASS" in validation.output
 
 
+def test_cost_sensitivity_validation_fails_closed_on_source_and_view_tamper(
+    tmp_path: Path,
+) -> None:
+    fixture = _cost_fixture(
+        tmp_path,
+        metrics={
+            "metrics_id": "candidate-metrics-tamper",
+            "candidate": "median_plus_regime_mismatch_filter",
+            "candidate_lineage_id": "filtered-candidate-lineage-2026-06-15",
+            "source_variant": "median_plus_regime_mismatch_filter",
+            "window_start": "2026-06-08",
+            "window_end": "2026-06-15",
+            "generated_at": "2026-06-15T23:00:00+00:00",
+            "validation_status": "PASS",
+            "evidence_status": "VALIDATED_DATED_METRICS",
+            "outcome_mode": "PAPER_SHADOW_OBSERVED",
+            "metric_source": "validated_paper_shadow_candidate_metrics",
+            "turnover": 1.0,
+            "gross_performance": 0.08,
+            "baseline_performance": 0.06,
+        },
+    )
+    result = cost.run_cost_sensitivity_review(
+        as_of=date(2026, 6, 15),
+        candidate_metrics_path=fixture["metrics_path"],
+        weekly_review_id=fixture["weekly_id"],
+        weekly_review_dir=fixture["weekly_dir"],
+        paper_shadow_health_id=fixture["health_id"],
+        paper_shadow_health_dir=fixture["health_dir"],
+        output_dir=fixture["cost_dir"],
+        generated_at=datetime(2026, 6, 16, 1, tzinfo=UTC),
+    )
+    review_id = result["review_id"]
+    fixture["metrics_path"].write_text("{}\n", encoding="utf-8")
+    assert cost.validate_cost_sensitivity_artifact(
+        review_id=review_id,
+        output_dir=fixture["cost_dir"],
+        write_output=False,
+    )["status"] == "FAIL"
+    report_path = fixture["cost_dir"] / review_id / "cost_sensitivity_report.md"
+    report_path.write_text("tampered\n", encoding="utf-8")
+    assert cost.validate_cost_sensitivity_artifact(
+        review_id=review_id,
+        output_dir=fixture["cost_dir"],
+        write_output=False,
+    )["status"] == "FAIL"
+
+
 def _cost_fixture(tmp_path: Path, *, metrics: dict[str, Any] | None) -> dict[str, Any]:
     fixture = {
         "weekly_id": "paper-shadow-weekly-cost-test",
@@ -183,6 +251,7 @@ def _write_weekly_artifact(root: Path, weekly_id: str) -> None:
         "week_end": "2026-06-12",
         "status": "PASS",
         "weekly_decision": "CONTINUE",
+        "generated_at": "2026-06-12T23:00:00+00:00",
         "paper_shadow_weekly_manifest_path": str(
             artifact_dir / "paper_shadow_weekly_manifest.json"
         ),
@@ -201,8 +270,10 @@ def _write_weekly_artifact(root: Path, weekly_id: str) -> None:
         "report_type": "etf_dynamic_v3_paper_shadow_weekly_review",
         "weekly_review_id": weekly_id,
         "candidate": "median_plus_regime_mismatch_filter",
+        "candidate_lineage_id": "filtered-candidate-lineage-2026-06-15",
         "week_start": "2026-06-08",
         "week_end": "2026-06-12",
+        "generated_at": "2026-06-12T23:00:00+00:00",
         "weekly_decision": "CONTINUE",
         "coverage_status": "PASS",
         "coverage_classification": "FULL_WEEK_REVIEW",
@@ -243,6 +314,7 @@ def _write_health_artifact(root: Path, health_id: str) -> None:
         "report_type": "etf_dynamic_v3_paper_shadow_health_manifest",
         "health_id": health_id,
         "paper_shadow_health_status": "HEALTHY",
+        "generated_at": "2026-06-15T22:00:00+00:00",
         "paper_shadow_health_manifest_path": str(
             artifact_dir / "paper_shadow_health_manifest.json"
         ),
@@ -256,6 +328,10 @@ def _write_health_artifact(root: Path, health_id: str) -> None:
         "schema_version": st.SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_paper_shadow_health_report",
         "health_id": health_id,
+        "candidate": "median_plus_regime_mismatch_filter",
+        "candidate_lineage_id": "filtered-candidate-lineage-2026-06-15",
+        "as_of": "2026-06-15",
+        "generated_at": "2026-06-15T22:00:00+00:00",
         "paper_shadow_health_status": "HEALTHY",
         "safe_to_continue_shadow": True,
         "signal_input_status": "OK",

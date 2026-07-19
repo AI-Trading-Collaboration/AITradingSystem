@@ -378,6 +378,31 @@ S3D首个正式complete profile位于`outputs/validation_runtime/full_20260717T1
 
 S3E最终replacement profile位于`outputs/validation_runtime/full_20260717T231920Z/`：full=`6,246 passed / 2 skipped / 642 warnings / 1,040.50s`，strict reader确认`6,248 nodes / 1,068 files / 16 workers`、order/exit/telemetry/performance、scheduler applied与no fallback全部PASS，成为第2/3份complete profile；相对首份profile墙钟/worker busy/file P99/S3E target8分别改善`15.53%/15.60%/29.54%/55.03%`，但`stable_full_improvement_claimed`仍为false。日常研究链不运行full：它只执行DQ、对应workflow validator与focused tier；Full保留给`natural_integration_boundary`、`phase_exit_or_handoff`、`broad_shared_contract_change`、`formal_performance_profile`、`failure_fix_rerun`和`scheduled_ci`。ARCH-004G2 S4现以`validation_trigger_provenance.v1`在pytest启动前治理Full归属：CLI的`--trigger-reason/--task-id/--boundary-id/--parent-run`与对应`AITS_VALIDATION_*`环境变量按whole-envelope二选一，任一CLI字段出现后其余字段不回退env；`failure_fix_rerun`只能引用`outputs/validation_runtime/`下真实失败formal Full summary，runner以resolved path验证受控目录后重验schema、非benchmark/print-only、exit/status、PASS provenance、profile resolved fixed-sibling containment，并用同一份captured profile bytes完成formal语义与inventory SHA/size验证，再保存repository-relative summary path、run id、failure basis与summary/profile SHA-256。普通profile继续走完整strict reader；runner已持久化的fail-closed sidecar只在captured bytes与canonical失败形状、pytest exit、embedded provenance、summary派生字段和inventory SHA/size全部一致时可作为`RUNTIME_PROFILE_FAIL` parent，缺失、损坏、替换、未知字段或minimal forge继续拒绝。Summary、formal Full profile和Reader Brief复用同一canonical object，profile binding不一致即performance FAIL；benchmark子进程清除继承的formal/profile/provenance环境，并仍生成canonical summary/Reader Brief/通用log及comparison summary/variant logs，但不生成formal profile，记录`runtime_profile_status=NOT_APPLICABLE`。GitHub daily `scheduled_ci` Full是工程CI例外，不进入项目daily/weekly/monthly研究链。
 
+G2.4-EB4在不额外运行Full的前提下，把EB3自然Full的逐文件耗时通过
+`scripts/refresh_partial_duration_profile.py`刷新为tracked `PARTIAL_SEED v10`。刷新器默认dry-run；显式
+写入前必须确认source profile与sibling summary对路径/SHA/size、pytest exit、16-worker完整collection、
+无duplicate、scheduler applied/no-fallback及profile/telemetry/performance/provenance PASS。输出保留
+`6,359 nodes / 1,072 files`的全部duration rows，按duration降序并稳定保留同值source顺序；新seed只用于
+advisory file scheduling，不携带complete-only hashes，不改变nodeids、测试语义、研究链、投资结论或
+production边界。EB4唯一natural Full如实保留7项legacy fixture失败；修复后用
+`failure_fix_rerun`严格绑定原失败summary/profile，PASS=`6,373 passed / 2 skipped / 643 warnings /
+878.73s`，完整覆盖`6,375 nodes / 1,072 files / 16 workers`且scheduler/profile/telemetry/performance/
+provenance全部PASS。该PASS sidecar机械刷新为`PARTIAL_SEED v11`，仍不声明稳定Full改善。
+
+G2.4-EB4把Evidence Materialization、Research Contract / Ledger和Signal Input Readiness的39个legacy
+callbacks迁到三个canonical CLI owners。Benchmark/cost/regression/casebook/metric-source producer只能消费
+显式或确定性绑定的validated dated source；formal method contract必须绑定10个显式EB3 source并在写出前
+重验source/policy/PIT/chronology/lineage；candidate ledger只消费validated contract，以fixed-root exclusive
+lock、atomic replace、sequence和hash chain追加；promotion threshold只输出受治理的
+`PILOT_POLICY_ONLY_NOT_EMPIRICALLY_CALIBRATED`；signal completeness/recovery按requested as-of、source date、
+policy/raw-file hash和distinct later source判定。14类v2 input snapshots冻结输入，63个JSON/JSONL/CSV/
+Markdown/Reader Brief views由validator逐byte重建；source/snapshot/policy/output/cross-lineage/chronology tamper
+均fail closed。缺失或不合格输入保持empty/null/`INSUFFICIENT_DATA`，casebook仅为`MANUAL_DIAGNOSTIC`，
+不得生成observed performance、promotion、paper-shadow、production weights或broker action。Legacy CLI只做减法，
+公开`41 root / 291 groups / 993 leaves / 0 duplicate`与frozen tree hash保持不变；matrix推进至
+`814 migrated / 153 pending / 0 unresolved / 0 duplicate`。EB4=`COMPLETE_G2_4_CONTINUES`后只解锁
+owner既有序列中的EB5；整个G2.4 phase exit、ARCH-005 S0、G2.5与handoff仍未满足或触发。
+
 S3F只改变test execution fixture，不改变Smoothed生产链。Operations/Evidence测试把既有content-fingerprint、PASS-only validation session延长到单个同步test function，cache仍按validator/kwargs/path/exact bytes绑定并在内容变化时失效，不跨test、worker或进程；Retry/Weekly五个热点改用test-only recorded-owner authority prefix，仍真实运行Promotion、Binding、Switch与Owner `continue_observation`记录，再执行各自完整Weekly/Retry/Refresh producer、validator与tamper路径，旧Operations helper及其他消费者不变。Indicator Family Ablation的28个secondary test outputs与Layer1 Final Gate owner doc均重定向到各test `tmp_path`，因此full不再覆盖tracked research Markdown。三个same-command focused lane墙钟合计`648.19 -> 430.90s`，expanded focused=`134 passed / 1 skipped`；这些是工程验证证据，不改变artifact schema、research conclusion、DQ/PIT/policy、paper-shadow、production或broker状态，完整full收益仍以本批唯一integration-boundary profile为准。
 
 S3F唯一自然integration-boundary profile位于`outputs/validation_runtime/full_20260718T004439Z/`：full=`6,246 passed / 2 skipped / 642 warnings / 1,027.74s`，strict reader确认`6,248 nodes / 1,068 files / 16 workers`、与`231920Z`完全相同的ordered/set collection SHA、scheduler applied、no fallback及profile/telemetry/performance全部PASS。相对`231920Z`，Smoothed 38文件和S3F 17文件worker time分别下降`16.04%/19.00%`，但full墙钟只下降`1.23%`，file P99、worker CV和tail total分别变为`258.01s/1.53%/460.50s`；因此后续瓶颈已转为Layer1、Smoothed Weekly/Refresh、Refined Method和Weight Diagnostics，不能把focused收益当作全局收益。该run使`complete_profile_count=3`，但第1份collection少22 nodes且仍缺complete peak-memory/read-amplification artifact，故`stable_full_improvement_claimed=false`。Tracked research Markdown在full前后byte不变；完整研究数据流、结论语义及production边界均未改变。

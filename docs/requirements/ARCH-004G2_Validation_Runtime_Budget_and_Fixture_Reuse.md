@@ -519,6 +519,24 @@ Weekly no-due-windows=`476.01s`，其后Freshness/Refresh/Bootstrap长尾约`301
 近期优化后`912～1,030s`区间。由于只有一次同集合样本且profile仍是partial seed，继续固定
 `stable_full_improvement_claimed=false`；这些长尾作为后续runtime任务候选，不扩张EB3正确性范围。
 
+2026-07-19 / ARCH-004G2.4-EB4 duration seed refresh：新增
+`scripts/refresh_partial_duration_profile.py`，从上述唯一PASS Full的`test_runtime_profile.json`逐文件
+`duration_seconds`机械生成`PARTIAL_SEED v10`。刷新器默认dry-run，只有显式`--write`才原子替换tracked
+manifest；写入前要求pytest exit=0、16 workers、完整`6,359 nodes / 1,072 files`collection、无duplicate、
+scheduler applied/no-fallback、profile/telemetry/performance/provenance全部PASS，并校验同目录summary对
+profile的绝对路径、SHA-256与byte size精确绑定。v10保留1,072个source rows并按duration降序、同duration
+first-seen稳定排序；EB3 foundation的`57.8214758s`不再落入zero-weight tail。它仍是advisory partial seed，
+不写complete-only collection/file/order hashes，也不声明稳定Full改善；EB4只在自然integration boundary
+运行一次正式Full，`production_effect=none`。
+
+2026-07-19 / ARCH-004G2.4-EB4 Full与v11 seed：唯一natural Full完整运行但因7个legacy fixture
+绕过新snapshot/lineage contract而为`FAIL`（`6,366 passed / 7 failed / 2 skipped / 894.30s`）；
+修复后使用reviewed `failure_fix_rerun`绑定原summary/profile SHA，最终=`6,373 passed / 2 skipped /
+643 warnings / 878.73s`。PASS profile覆盖`6,375 nodes / 1,072 files / 16 workers`，collection完整、
+duplicate=0、scheduler applied/no-fallback、profile/telemetry/performance/provenance全部PASS。刷新器从该
+PASS sidecar机械生成`PARTIAL_SEED v11`，manifest SHA=`7e1e43d9...3172`；由于仍是单次当前集合样本，
+`stable_full_improvement_claimed=false`。878.73s比失败运行快1.7%，未触发尾部性能回归。
+
 ### S3G：转移后关键路径与complete duration profile（owner批准继续）
 
 2026-07-18 / S3F提交`f557d04d`并推送后，以第3份qualifying profile

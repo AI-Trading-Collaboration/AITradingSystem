@@ -645,3 +645,18 @@ Entry decision：`ARCH_004_PHASE_A_COMPLETE_PHASE_B_UNBLOCKED`。这只解锁 Se
   全部PASS、scheduler applied/no-fallback。EB3=`COMPLETE_G2_4_CONTINUES`，不等于whole G2.4 exit；
   EB4需新显式owner指令，正式ARCH-005 S0、G2.5与handoff继续锁定，
   `next_phase_or_slice_unblocked=false`、`production_effect=none`。
+- 2026-07-19：owner随后授权按EB4→EB8→phase exit→handoff推进。EB4的39 callbacks/public APIs已完成
+  canonical迁移、legacy subtraction和focused gate，当前为`VALIDATING_G2_4_CONTINUES`。Evidence/
+  benchmark/cost/casebook/regression、formal contract/ledger/threshold、signal-input completeness/recovery
+  三条lane统一为14类v2 snapshots、63 views、live source/policy/PIT/chronology/lineage与逐byte重建；缺失
+  或不合格证据只能empty/null/`INSUFFICIENT_DATA`，不得把spec、target、fixed-window proxy或默认值当作
+  observed performance。Legacy CLI=`10,725/231/192 -> 9,065/192/153`，matrix=`814/153/0/0`，
+  CLI冻结tree保持`41/291/993/0`且hash不变；focused=`54 + 138 passed`，changed-file max=`17.98s`
+  未触发性能风险；最终architecture=`399 passed / 54.13s`、contract=`264 passed / 68.69s`均已PASS，
+  最长相关节点=`24.05s`。Generated新鲜度已闭合；ARCH-005 S0/G2.5/handoff继续锁定，
+  `production_effect=none`。
+  首次natural Full=`6,366 passed / 7 failed / 2 skipped / 643 warnings / 894.30s`；7项均由旧测试fixture
+  在formal freeze后改写source或手写legacy signal artifact导致。canonical fixture修复后focused=`7 passed /
+  39.22s`；受审计`failure_fix_rerun`绑定原失败summary后=`6,373 passed / 2 skipped / 643 warnings /
+  878.73s`，profile/telemetry/performance/provenance与scheduler全部PASS。EB4收口为
+  `COMPLETE_G2_4_CONTINUES`，只解锁既授权EB5；whole phase exit、ARCH-005 S0、G2.5和handoff仍未触发。

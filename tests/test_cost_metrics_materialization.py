@@ -16,7 +16,7 @@ from ai_trading_system.etf_portfolio import (
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 
 
-def test_cost_metrics_materialization_available_reruns_cost_review(
+def test_cost_metrics_materialization_simulation_stays_insufficient(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
@@ -25,6 +25,8 @@ def test_cost_metrics_materialization_available_reruns_cost_review(
 
     result = materialization.run_cost_metrics_materialization(
         as_of=date(2026, 6, 17),
+        source_variant="limited_adjustment",
+        sim_outcome_id="sim-outcome-test",
         weekly_review_id=fixture["weekly_id"],
         weekly_review_dir=fixture["weekly_dir"],
         paper_shadow_health_id=fixture["health_id"],
@@ -35,16 +37,21 @@ def test_cost_metrics_materialization_available_reruns_cost_review(
     )
     report = result["cost_metrics_materialization_report"]
 
-    assert report["cost_metrics_materialization_status"] == "COST_INPUTS_AVAILABLE"
+    assert report["cost_metrics_materialization_status"] == "INSUFFICIENT_COST_INPUTS"
     assert report["source_variant"] == "limited_adjustment"
-    assert report["materialized_metrics"]["turnover"] == 0.005945
-    assert report["materialized_metrics"]["gross_performance_proxy"] == 0.00638
-    assert report["materialized_metrics"]["gross_improvement_proxy"] == 0.001144
-    assert report["materialized_metrics"]["drawdown_proxy"] == -0.042935
-    assert report["materialized_metrics"]["trade_rotation_count"] == 185
-    assert report["cost_sensitivity_status"] == "NOT_MEANINGFUL_UNDER_COSTS"
-    assert report["net_performance_proxy_by_scenario"]["high"] == 0.0063651375
+    assert report["materialized_metrics"]["turnover"] is None
+    assert report["materialized_metrics"]["gross_performance_proxy"] is None
+    assert report["materialized_metrics"]["gross_improvement_proxy"] is None
+    assert report["materialized_metrics"]["drawdown_proxy"] is None
+    assert report["materialized_metrics"]["trade_rotation_count"] is None
+    assert report["materialized_metrics"]["evidence_status"] == "INSUFFICIENT_DATA"
+    assert report["candidate_to_source_mapping"]["mapping_accepted"] is False
+    assert report["cost_sensitivity_status"] == "INSUFFICIENT_COST_INPUTS"
+    assert report["net_performance_proxy_by_scenario"]["high"] is None
     assert result["cost_metrics_materialization_validation"]["status"] == "PASS"
+    assert result["input_snapshot"]["schema_version"] == (
+        materialization.COST_METRICS_INPUT_SCHEMA
+    )
     assert "cost_metrics_materialization_status" in result["reader_brief_section"]
     assert Path(report["candidate_metrics_path"]).exists()
     assert_research_safe(report)
@@ -60,6 +67,7 @@ def test_cost_metrics_materialization_insufficient_when_variant_missing(
     result = materialization.run_cost_metrics_materialization(
         as_of=date(2026, 6, 17),
         source_variant="limited_adjustment",
+        sim_outcome_id="sim-outcome-test",
         weekly_review_id=fixture["weekly_id"],
         weekly_review_dir=fixture["weekly_dir"],
         paper_shadow_health_id=fixture["health_id"],
@@ -108,8 +116,8 @@ def test_cost_metrics_materialization_cli_run_report_and_validate(
         ],
     )
     assert run.exit_code == 0
-    assert "cost_metrics_materialization_status=COST_INPUTS_AVAILABLE" in run.output
-    assert "cost_sensitivity_status=NOT_MEANINGFUL_UNDER_COSTS" in run.output
+    assert "cost_metrics_materialization_status=INSUFFICIENT_COST_INPUTS" in run.output
+    assert "cost_sensitivity_status=INSUFFICIENT_COST_INPUTS" in run.output
     materialization_id = next(
         line.split("=", 1)[1]
         for line in run.output.splitlines()
@@ -130,7 +138,7 @@ def test_cost_metrics_materialization_cli_run_report_and_validate(
         ],
     )
     assert report.exit_code == 0
-    assert "turnover=0.005945" in report.output
+    assert "turnover=None" in report.output
 
     validation = CliRunner().invoke(
         app,
@@ -146,6 +154,44 @@ def test_cost_metrics_materialization_cli_run_report_and_validate(
     )
     assert validation.exit_code == 0
     assert "status=PASS" in validation.output
+
+
+def test_cost_metrics_materialization_validation_fails_closed_on_live_and_view_tamper(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    _patch_sim_outcome(monkeypatch)
+    fixture = _source_fixture(tmp_path)
+    result = materialization.run_cost_metrics_materialization(
+        as_of=date(2026, 6, 17),
+        source_variant="limited_adjustment",
+        sim_outcome_id="sim-outcome-test",
+        weekly_review_id=fixture["weekly_id"],
+        weekly_review_dir=fixture["weekly_dir"],
+        paper_shadow_health_id=fixture["health_id"],
+        paper_shadow_health_dir=fixture["health_dir"],
+        cost_sensitivity_output_dir=fixture["cost_dir"],
+        output_dir=fixture["materialization_dir"],
+        generated_at=datetime(2026, 6, 17, 3, tzinfo=UTC),
+    )
+    materialization_id = result["materialization_id"]
+    _patch_sim_outcome(monkeypatch, include_candidate=False)
+    assert materialization.validate_cost_metrics_materialization_artifact(
+        materialization_id=materialization_id,
+        output_dir=fixture["materialization_dir"],
+        write_output=False,
+    )["status"] == "FAIL"
+    report_path = (
+        fixture["materialization_dir"]
+        / materialization_id
+        / "cost_metrics_materialization_report.md"
+    )
+    report_path.write_text("tampered\n", encoding="utf-8")
+    assert materialization.validate_cost_metrics_materialization_artifact(
+        materialization_id=materialization_id,
+        output_dir=fixture["materialization_dir"],
+        write_output=False,
+    )["status"] == "FAIL"
 
 
 def _patch_sim_outcome(monkeypatch, *, include_candidate: bool = True) -> None:

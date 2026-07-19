@@ -38,6 +38,9 @@ def test_candidate_regression_replay_passes_expected_behavior(tmp_path: Path) ->
     assert summary["comparison_count"] > 0
     assert report["changed_outputs"] == []
     assert result["candidate_regression_replay_validation"]["status"] == "PASS"
+    assert result["input_snapshot"]["schema_version"] == replay.CANDIDATE_REPLAY_INPUT_SCHEMA
+    assert report["evidence_scope"] == "SCHEMA_BEHAVIOR_CONTRACT"
+    assert report["strategy_performance_claimed"] is False
     assert "candidate_regression_replay_status" in result["reader_brief_section"]
     assert_research_safe(report)
     assert report["regression_guard_only"] is True
@@ -80,6 +83,51 @@ def test_candidate_regression_replay_breaking_change_fails_closed(
         for row in report["changed_outputs"]
     )
     assert result["candidate_regression_replay_validation"]["status"] == "PASS"
+
+
+def test_candidate_regression_replay_without_explicit_source_never_reads_latest(
+    monkeypatch: Any,
+    tmp_path: Path,
+) -> None:
+    def fail_if_called(**kwargs: Any) -> dict[str, Any]:
+        raise AssertionError("implicit latest source resolution is forbidden")
+
+    monkeypatch.setattr(
+        replay.baseline_control,
+        "benchmark_baseline_report_payload",
+        fail_if_called,
+    )
+    result = replay.run_candidate_regression_replay(
+        as_of=date(2026, 6, 16),
+        output_dir=tmp_path / "candidate_regression_replay",
+        generated_at=datetime(2026, 6, 16, 3, tzinfo=UTC),
+    )
+
+    report = result["candidate_regression_replay_report"]
+    assert report["candidate_regression_replay_status"] == "BLOCKED_MISSING_CURRENT_BEHAVIOR"
+    assert report["current_behavior_source"]["exists"] is False
+    assert result["candidate_regression_replay_validation"]["status"] == "PASS"
+
+
+def test_candidate_regression_replay_tampered_source_fails_closed(tmp_path: Path) -> None:
+    current_path = _write_current_behavior(tmp_path)
+    result = replay.run_candidate_regression_replay(
+        as_of=date(2026, 6, 16),
+        current_behavior_path=current_path,
+        output_dir=tmp_path / "candidate_regression_replay",
+        generated_at=datetime(2026, 6, 16, 3, tzinfo=UTC),
+    )
+    payload = json.loads(current_path.read_text(encoding="utf-8"))
+    payload["candidate"] = "tampered-candidate"
+    _write_json(current_path, payload)
+
+    validation = replay.validate_candidate_regression_replay_artifact(
+        replay_id=result["replay_id"],
+        output_dir=tmp_path / "candidate_regression_replay",
+        write_output=False,
+    )
+
+    assert validation["status"] == "FAIL"
 
 
 def test_candidate_regression_replay_cli_run_report_and_validate(

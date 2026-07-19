@@ -5,7 +5,10 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-from dynamic_v3_filtered_candidate_readiness_helpers import assert_research_safe
+from dynamic_v3_filtered_candidate_readiness_helpers import (
+    assert_research_safe,
+    run_signal_input_completeness_fixture,
+)
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
@@ -159,6 +162,11 @@ def _paper_shadow_health_fixture(
     *,
     signal_status: str,
 ) -> dict[str, Any]:
+    signal_input = run_signal_input_completeness_fixture(
+        tmp_path,
+        as_of="2024-04-22",
+        missing_signal_series=signal_status == "BLOCKING",
+    )
     fixture = {
         "price_cache_path": _write_price_cache(tmp_path),
         "market_panel_dir": _write_market_panel(tmp_path),
@@ -170,7 +178,7 @@ def _paper_shadow_health_fixture(
         "readiness_dir": tmp_path / "shadow_continuation_readiness",
         "data_refresh_audit_dir": tmp_path / "data_refresh_audit",
         "health_dir": tmp_path / "paper_shadow_health",
-        "signal_input_id": "signal-input-test",
+        "signal_input_id": signal_input["monitor_id"],
         "daily_id": "paper-shadow-daily-test",
         "drift_id": "paper-shadow-drift-test",
         "weekly_id": "paper-shadow-weekly-test",
@@ -178,11 +186,6 @@ def _paper_shadow_health_fixture(
         "readiness_id": "shadow-readiness-test",
         "data_refresh_audit_id": "data-refresh-audit-test",
     }
-    _write_signal_input_artifact(
-        fixture["signal_input_dir"],
-        fixture["signal_input_id"],
-        status=signal_status,
-    )
     _write_daily_artifact(fixture["daily_dir"], fixture["daily_id"])
     _write_drift_artifact(fixture["drift_dir"], fixture["drift_id"])
     _write_weekly_artifact(fixture["weekly_dir"], fixture["weekly_id"])
@@ -220,73 +223,6 @@ def _write_market_panel(tmp_path: Path) -> Path:
         },
     )
     return root
-
-
-def _write_signal_input_artifact(root: Path, monitor_id: str, *, status: str) -> None:
-    artifact_dir = root / monitor_id
-    artifact_dir.mkdir(parents=True)
-    blocking = status == "BLOCKING"
-    report_path = artifact_dir / "signal_input_completeness_report.json"
-    report = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_signal_input_completeness_report",
-        "monitor_id": monitor_id,
-        "as_of": "2024-04-22",
-        "generated_at": "2024-04-22T01:00:00+00:00",
-        "signal_input_status": status,
-        "blocking_count": 1 if blocking else 0,
-        "warning_count": 0,
-        "blocking_input_ids": ["etf_signal_series"] if blocking else [],
-        "warning_input_ids": [],
-        "missing_signal_files": ["etf_signal_series"] if blocking else [],
-        "stale_signal_files": [],
-        "incompatible_schema_inputs": [],
-        "partial_market_coverage_inputs": [],
-        "missing_required_feature_columns": [],
-        "next_required_action": (
-            "stop_paper_shadow_until_signal_inputs_are_restored"
-            if blocking
-            else "continue_paper_shadow_with_signal_inputs"
-        ),
-        "signal_input_completeness_report_path": str(report_path),
-        "data_downloaded_by_monitor": False,
-        "pipelines_executed_by_monitor": False,
-        "production_effect": "none",
-    }
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_signal_input_completeness_manifest",
-        "monitor_id": monitor_id,
-        "as_of": "2024-04-22",
-        "status": "PASS" if not blocking else "BLOCKING",
-        "signal_input_status": status,
-        "signal_input_completeness_report_path": str(report_path),
-        "production_effect": "none",
-    }
-    finding = {
-        "input_id": "etf_signal_series",
-        "input_type": "csv_timeseries",
-        "severity": status,
-        "exists": not blocking,
-        "row_count": 4 if not blocking else 0,
-        "latest_date": "2024-04-22" if not blocking else "",
-        "age_days": 0,
-        "missing_required_columns": [],
-        "missing_coverage_values": [],
-        "incompatible_schema_versions": [],
-    }
-    _write_json(artifact_dir / "signal_input_completeness_manifest.json", manifest)
-    _write_json(report_path, report)
-    _write_jsonl(artifact_dir / "signal_input_completeness_findings.jsonl", [finding])
-    _write_text(artifact_dir / "signal_input_completeness_report.md", "# Signal Input\n")
-    _write_text(
-        artifact_dir / "reader_brief_section.md",
-        f"signal_input_status: {status}\nsignal_input_blocking_count: {int(blocking)}\n",
-    )
-    _write_json(
-        artifact_dir / "signal_input_completeness_validation.json",
-        _validation_payload(monitor_id),
-    )
 
 
 def _write_daily_artifact(root: Path, observation_id: str) -> None:

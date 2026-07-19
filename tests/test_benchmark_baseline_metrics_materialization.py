@@ -18,7 +18,7 @@ from ai_trading_system.etf_portfolio import (
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 
 
-def test_benchmark_baseline_metrics_materialization_available_reruns_control(
+def test_benchmark_baseline_metrics_materialization_keeps_simulation_insufficient(
     tmp_path: Path,
     monkeypatch: Any,
 ) -> None:
@@ -26,6 +26,7 @@ def test_benchmark_baseline_metrics_materialization_available_reruns_control(
 
     result = materialization.run_benchmark_baseline_metrics_materialization(
         as_of=date(2026, 6, 17),
+        source_variant="limited_adjustment",
         sim_outcome_id=fixture["sim_outcome_id"],
         sim_outcome_dir=fixture["sim_outcome_dir"],
         candidate_metrics_path=fixture["candidate_metrics_path"],
@@ -42,8 +43,8 @@ def test_benchmark_baseline_metrics_materialization_available_reruns_control(
     report = result["benchmark_baseline_metrics_materialization_report"]
     baselines = report["baseline_metrics"]["baselines"]
 
-    assert report["benchmark_baseline_metrics_status"] == "BASELINE_METRICS_AVAILABLE"
-    assert report["benchmark_baseline_status"] == "MIXED_BASELINE_RESULT"
+    assert report["benchmark_baseline_metrics_status"] == "INSUFFICIENT_BASELINE_METRICS"
+    assert report["benchmark_baseline_status"] == "INSUFFICIENT_BASELINE_METRICS"
     assert {row["baseline_id"] for row in baselines} == {
         "static_allocation",
         "no_trade",
@@ -51,13 +52,21 @@ def test_benchmark_baseline_metrics_materialization_available_reruns_control(
         "spy_only",
         "equal_weight_etf",
     }
-    assert report["required_metric_statuses"]["missing_baseline_count"] == 0
+    assert report["required_metric_statuses"]["missing_baseline_count"] == 5
+    assert report["required_metric_statuses"]["available_baseline_count"] == 0
+    assert report["candidate_metrics"]["net_performance_proxy"] is None
+    assert all(row["net_performance_proxy"] is None for row in baselines)
+    assert report["observed_evidence_status"] == "INSUFFICIENT_DATA"
     assert report["source_artifacts"]["data_quality_gate"]["status"] == "PASS"
     assert result["benchmark_baseline_metrics_materialization_validation"]["status"] == "PASS"
     assert "benchmark_baseline_metrics_status" in result["reader_brief_section"]
     assert_research_safe(report)
     assert report["benchmark_comparison_live_signal"] is False
     assert report["broker_action_allowed"] is False
+    assert (
+        result["input_snapshot"]["schema_version"]
+        == materialization.BENCHMARK_BASELINE_METRICS_INPUT_SCHEMA
+    )
 
 
 def test_benchmark_baseline_metrics_materialization_insufficient_without_candidate_metric(
@@ -85,7 +94,10 @@ def test_benchmark_baseline_metrics_materialization_insufficient_without_candida
     report = result["benchmark_baseline_metrics_materialization_report"]
 
     assert report["benchmark_baseline_metrics_status"] == "INSUFFICIENT_BASELINE_METRICS"
-    assert "candidate_metrics:missing_net_performance_proxy" in report["blocking_reasons"]
+    assert (
+        "candidate_metrics:missing_validated_net_performance"
+        in report["blocking_reasons"]
+    )
     assert report["benchmark_baseline_status"] == "INSUFFICIENT_BASELINE_METRICS"
     assert result["benchmark_baseline_metrics_materialization_validation"]["status"] == "PASS"
 
@@ -130,8 +142,8 @@ def test_benchmark_baseline_metrics_materialization_cli_run_report_and_validate(
         ],
     )
     assert run.exit_code == 0
-    assert "benchmark_baseline_metrics_status=BASELINE_METRICS_AVAILABLE" in run.output
-    assert "benchmark_baseline_status=MIXED_BASELINE_RESULT" in run.output
+    assert "benchmark_baseline_metrics_status=INSUFFICIENT_BASELINE_METRICS" in run.output
+    assert "benchmark_baseline_status=INSUFFICIENT_BASELINE_METRICS" in run.output
     materialization_id = next(
         line.split("=", 1)[1]
         for line in run.output.splitlines()
@@ -152,7 +164,7 @@ def test_benchmark_baseline_metrics_materialization_cli_run_report_and_validate(
         ],
     )
     assert report.exit_code == 0
-    assert "benchmark_baseline_metrics_status=BASELINE_METRICS_AVAILABLE" in report.output
+    assert "benchmark_baseline_metrics_status=INSUFFICIENT_BASELINE_METRICS" in report.output
 
     validation = CliRunner().invoke(
         app,
@@ -168,6 +180,38 @@ def test_benchmark_baseline_metrics_materialization_cli_run_report_and_validate(
     )
     assert validation.exit_code == 0
     assert "status=PASS" in validation.output
+
+
+def test_benchmark_baseline_metrics_tampered_source_fails_closed(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    fixture = _fixture(tmp_path, monkeypatch)
+    result = materialization.run_benchmark_baseline_metrics_materialization(
+        as_of=date(2026, 6, 17),
+        source_variant="limited_adjustment",
+        sim_outcome_id=fixture["sim_outcome_id"],
+        sim_outcome_dir=fixture["sim_outcome_dir"],
+        candidate_metrics_path=fixture["candidate_metrics_path"],
+        weekly_review_id=fixture["weekly_id"],
+        weekly_review_dir=fixture["weekly_dir"],
+        cost_sensitivity_review_id=fixture["cost_id"],
+        cost_sensitivity_dir=fixture["cost_dir"],
+        benchmark_baseline_output_dir=fixture["baseline_control_dir"],
+        price_cache_path=fixture["price_path"],
+        rates_cache_path=fixture["rates_path"],
+        output_dir=fixture["materialization_dir"],
+        generated_at=datetime(2026, 6, 17, 3, tzinfo=UTC),
+    )
+    fixture["candidate_metrics_path"].write_text("{}\n", encoding="utf-8")
+
+    validation = materialization.validate_benchmark_baseline_metrics_materialization_artifact(
+        materialization_id=result["materialization_id"],
+        output_dir=fixture["materialization_dir"],
+        write_output=False,
+    )
+
+    assert validation["status"] == "FAIL"
 
 
 @dataclass

@@ -89,6 +89,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_evidence_governance as dynamic_v3_evidence_governance_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_evidence_materialization as dynamic_v3_evidence_materialization_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_evidence_readiness as dynamic_v3_evidence_readiness_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -206,6 +209,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_rescue as dynamic_v3_rescue_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_research_contract_ledger as dynamic_v3_research_contract_ledger_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_research_control as dynamic_v3_research_control_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -234,6 +240,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_signal_filter_foundation as dynamic_v3_signal_filter_foundation_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_signal_input_readiness as dynamic_v3_signal_input_readiness_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_sim_defensive_validation as dynamic_v3_sim_defensive_validation_commands,
@@ -412,8 +421,10 @@ __all__ = [
     "dynamic_v3_shadow_registry_commands",
     "dynamic_v3_micro_search_foundation_commands",
     "dynamic_v3_research_direction_foundation_commands",
+    "dynamic_v3_research_contract_ledger_commands",
     "dynamic_v3_signal_diagnosis_foundation_commands",
     "dynamic_v3_signal_filter_foundation_commands",
+    "dynamic_v3_signal_input_readiness_commands",
     "dynamic_v3_sim_interpretation_commands",
     "dynamic_v3_sim_defensive_validation_commands",
     "dynamic_v3_sim_risk_return_commands",
@@ -434,6 +445,7 @@ __all__ = [
     "dynamic_v3_smoothed_promotion_commands",
     "dynamic_v3_smoothed_readiness_commands",
     "dynamic_v3_experiment_factory_commands",
+    "dynamic_v3_evidence_materialization_commands",
     "dynamic_v3_filtered_candidate_pipeline_commands",
     "dynamic_v3_filtered_candidate_readiness_commands",
     "dynamic_v3_data_audit_commands",

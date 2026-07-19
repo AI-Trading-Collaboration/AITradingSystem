@@ -3,11 +3,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 from ai_trading_system.etf_portfolio import dynamic_v3_cost_sensitivity as cost_review
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as weekly
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_diagnostics as diagnostics
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_foundation as foundation
 
 DEFAULT_BENCHMARK_BASELINE_CONFIG_PATH = (
     st.PROJECT_ROOT
@@ -55,6 +58,14 @@ BENCHMARK_BASELINE_SAFETY = {
     "auto_apply": False,
     "production_effect": "none",
 }
+BENCHMARK_BASELINE_INPUT_SCHEMA = "benchmark_baseline_control_input_snapshot.v2"
+BENCHMARK_BASELINE_VIEWS = (
+    "benchmark_baseline_manifest.json",
+    "benchmark_baseline_control_pack.json",
+    "benchmark_baseline_report.md",
+    "reader_brief_section.md",
+)
+BENCHMARK_BASELINE_SNAPSHOT = "benchmark_baseline_control_input_snapshot.json"
 
 
 def load_benchmark_baseline_policy(
@@ -77,8 +88,10 @@ def run_benchmark_baseline_control_pack(
     config_path: Path = DEFAULT_BENCHMARK_BASELINE_CONFIG_PATH,
     output_dir: Path = DEFAULT_BENCHMARK_BASELINE_CONTROL_DIR,
     generated_at: datetime | None = None,
+    _validate_output: bool = True,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _generated_time(generated_at)
+    policy_source = foundation._file_binding(config_path)
     policy = load_benchmark_baseline_policy(config_path)
     weekly_source = _weekly_source(
         weekly_review_id=weekly_review_id,
@@ -102,6 +115,20 @@ def run_benchmark_baseline_control_pack(
         or _parse_optional_date(_mapping(candidate_source.get("summary")).get("as_of"))
         or _parse_optional_date(_mapping(weekly_source.get("summary")).get("week_end"))
         or generated.date()
+    )
+    _validate_control_sources(
+        candidate_source=candidate_source,
+        baseline_source=baseline_source,
+        weekly_source=weekly_source,
+        cost_source=cost_source,
+        effective_as_of=effective_as_of,
+        generated=generated,
+    )
+    source_bindings = _control_source_bindings(
+        candidate_source=candidate_source,
+        baseline_source=baseline_source,
+        weekly_source=weekly_source,
+        cost_source=cost_source,
     )
     baselines = _baseline_records(
         policy=policy,
@@ -163,6 +190,14 @@ def run_benchmark_baseline_control_pack(
             )
         ),
         "benchmark_baseline_status": status,
+        "observed_evidence_status": (
+            "VALIDATED_DATED_METRICS"
+            if status not in {"INSUFFICIENT_BASELINE_METRICS", "BLOCKED_POLICY"}
+            else "INSUFFICIENT_DATA"
+        ),
+        "candidate_lineage_id": _mapping(candidate_source.get("summary")).get(
+            "candidate_lineage_id"
+        ),
         "baseline_count": len(baselines),
         "required_baselines_present": _required_baselines_present(policy),
         "missing_required_baselines": _missing_required_baselines(policy),
@@ -186,6 +221,8 @@ def run_benchmark_baseline_control_pack(
             "research-only benchmark baseline controls",
             "does not run backtests or refresh market data",
             "does not fabricate candidate or baseline metrics",
+            "gross performance is never substituted for missing net performance",
+            "only explicit validated dated same-candidate lineage metrics are comparable",
             "does not approve candidate promotion or production target weights",
         ],
         **BENCHMARK_BASELINE_SAFETY,
@@ -220,15 +257,62 @@ def run_benchmark_baseline_control_pack(
         render_benchmark_baseline_report(manifest, pack),
     )
     st._write_text(root / "reader_brief_section.md", reader)
+    snapshot = {
+        "schema_version": BENCHMARK_BASELINE_INPUT_SCHEMA,
+        "control_id": root.name,
+        "generated_at": generated.isoformat(),
+        "effective_as_of": effective_as_of.isoformat(),
+        "policy_source": policy_source,
+        "policy_lineage": {
+            "policy_id": policy.get("policy_id"),
+            "policy_version": policy.get("version"),
+        },
+        "source_bindings": source_bindings,
+        "candidate_lineage": {
+            "candidate": _mapping(candidate_source.get("summary")).get("candidate"),
+            "candidate_lineage_id": _mapping(candidate_source.get("summary")).get(
+                "candidate_lineage_id"
+            ),
+            "period_start": _mapping(candidate_source.get("summary")).get(
+                "period_start"
+            ),
+            "period_end": _mapping(candidate_source.get("summary")).get("period_end"),
+            "evidence_status": _mapping(candidate_source.get("summary")).get(
+                "evidence_status"
+            ),
+        },
+        "replay": {
+            "candidate_metrics_path": (
+                None
+                if candidate_metrics_path is None
+                else str(candidate_metrics_path.resolve())
+            ),
+            "baseline_metrics_path": (
+                None
+                if baseline_metrics_path is None
+                else str(baseline_metrics_path.resolve())
+            ),
+            "weekly_review_id": weekly_review_id,
+            "weekly_review_dir": str(weekly_review_dir.resolve()),
+            "cost_sensitivity_review_id": cost_sensitivity_review_id,
+            "cost_sensitivity_dir": str(cost_sensitivity_dir.resolve()),
+        },
+        "view_hashes": foundation._view_hashes(root, BENCHMARK_BASELINE_VIEWS),
+    }
+    foundation._write_snapshot(root / BENCHMARK_BASELINE_SNAPSHOT, snapshot)
     st._write_latest_pointer(
         "latest_benchmark_baseline_control",
         root.name,
         root / "benchmark_baseline_manifest.json",
     )
-    validation = validate_benchmark_baseline_artifact(
-        control_id=root.name,
-        output_dir=output_dir,
-        write_output=True,
+    validation = (
+        validate_benchmark_baseline_artifact(
+            control_id=root.name,
+            output_dir=output_dir,
+            write_output=True,
+        )
+        if _validate_output
+        else {"status": "NOT_RUN", "failed_check_count": 0, "checks": []}
     )
     return {
         "control_id": root.name,
@@ -236,6 +320,7 @@ def run_benchmark_baseline_control_pack(
         "manifest": manifest,
         "benchmark_baseline_control_pack": pack,
         "reader_brief_section": reader,
+        "input_snapshot": snapshot,
         "benchmark_baseline_validation": validation,
     }
 
@@ -263,6 +348,9 @@ def benchmark_baseline_report_payload(
         ),
         "control_dir": str(root),
     }
+    snapshot = st._read_optional_json(root / BENCHMARK_BASELINE_SNAPSHOT)
+    if snapshot:
+        payload["input_snapshot"] = snapshot
     validation = st._read_optional_json(root / "benchmark_baseline_validation.json")
     if validation:
         payload["benchmark_baseline_validation"] = validation
@@ -276,91 +364,25 @@ def validate_benchmark_baseline_artifact(
     write_output: bool = True,
 ) -> dict[str, Any]:
     root = output_dir / control_id
-    manifest = st._read_optional_json(root / "benchmark_baseline_manifest.json") or {}
-    pack = st._read_optional_json(root / "benchmark_baseline_control_pack.json") or {}
-    reader = (
-        (root / "reader_brief_section.md").read_text(encoding="utf-8")
-        if (root / "reader_brief_section.md").exists()
-        else ""
+    checks, ok = diagnostics._snapshot_preflight(
+        root=root,
+        snapshot_name=BENCHMARK_BASELINE_SNAPSHOT,
+        schema=BENCHMARK_BASELINE_INPUT_SCHEMA,
+        id_key="control_id",
+        artifact_id=control_id,
+        view_names=BENCHMARK_BASELINE_VIEWS,
     )
-    baselines = _records(pack.get("baselines"))
-    baseline_ids = {_text(row.get("baseline_id")) for row in baselines}
-    source_artifacts = _mapping(pack.get("source_artifacts"))
-    checks = st._required_file_checks(
-        root,
-        (
-            "benchmark_baseline_manifest.json",
-            "benchmark_baseline_control_pack.json",
-            "benchmark_baseline_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check(
-                "manifest_pack_id_match",
-                manifest.get("control_id") == pack.get("control_id") == control_id,
-                "",
-            ),
-            st._check(
-                "status_allowed",
-                pack.get("benchmark_baseline_status") in BENCHMARK_BASELINE_STATUSES,
-                _text(pack.get("benchmark_baseline_status")),
-            ),
-            st._check(
-                "required_baselines_present",
-                set(REQUIRED_BASELINE_IDS).issubset(baseline_ids),
-                ",".join(sorted(baseline_ids)),
-            ),
-            st._check(
-                "baseline_metadata_complete",
-                all(_baseline_metadata_complete(row) for row in baselines),
-                "",
-            ),
-            st._check(
-                "comparison_summary_visible",
-                bool(_mapping(pack.get("comparison_summary")).get("baseline_count")),
-                "",
-            ),
-            st._check(
-                "insufficient_metrics_fail_closed",
-                (
-                    _mapping(source_artifacts.get("candidate_metrics")).get("status")
-                    == "OK"
-                    and _mapping(source_artifacts.get("baseline_metrics")).get("status")
-                    == "OK"
-                )
-                or pack.get("benchmark_baseline_status")
-                == "INSUFFICIENT_BASELINE_METRICS",
-                "",
-            ),
-            st._check(
-                "monthly_review_inputs_visible",
-                bool(_mapping(pack.get("monthly_review_pack_inputs")).get("control_id")),
-                "",
-            ),
-            st._check(
-                "reader_brief_fields",
-                "benchmark_baseline_status" in reader
-                and "baseline_count" in reader
-                and "next_required_action" in reader,
-                "",
-            ),
-            st._check(
-                "research_only_control_pack",
-                pack.get("research_only") is True
-                and pack.get("execution_model_ready") is False
-                and pack.get("data_downloaded_by_pack") is False
-                and pack.get("pipelines_executed_by_pack") is False,
-                "",
-            ),
-            st._check("broker_forbidden", st._payload_safe(manifest, pack), ""),
-        ]
-    )
-    validation = st._validation_payload(
-        "etf_dynamic_v3_benchmark_baseline_validation",
-        control_id,
-        checks,
+    validation = (
+        diagnostics._validate_content(
+            report_type="etf_dynamic_v3_benchmark_baseline_validation",
+            artifact_id=control_id,
+            checks=checks,
+            rebuild=lambda: _rebuild_benchmark_baseline(root, control_id),
+        )
+        if ok
+        else st._validation_payload(
+            "etf_dynamic_v3_benchmark_baseline_validation", control_id, checks
+        )
     )
     if write_output:
         st._write_json(root / "benchmark_baseline_validation.json", validation)
@@ -369,6 +391,155 @@ def validate_benchmark_baseline_artifact(
             render_benchmark_baseline_validation_report(validation),
         )
     return validation
+
+
+def _generated_time(value: datetime | None) -> datetime:
+    generated = value or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() != UTC.utcoffset(generated):
+        raise ValueError("generated_at must be timezone-aware UTC")
+    return generated.astimezone(UTC)
+
+
+def _validate_control_sources(
+    *,
+    candidate_source: Mapping[str, Any],
+    baseline_source: Mapping[str, Any],
+    weekly_source: Mapping[str, Any],
+    cost_source: Mapping[str, Any],
+    effective_as_of: date,
+    generated: datetime,
+) -> None:
+    if effective_as_of > generated.date():
+        raise ValueError("benchmark baseline as_of occurs after generated_at")
+    for label, source in (
+        ("weekly review", weekly_source),
+        ("cost sensitivity", cost_source),
+    ):
+        if source.get("exists") is True and source.get("validation_status") != "PASS":
+            raise ValueError(f"benchmark baseline {label} validation must PASS")
+    candidate_summary = _mapping(candidate_source.get("summary"))
+    baseline_summary = _mapping(baseline_source.get("summary"))
+    for label, summary in (
+        ("candidate metrics", candidate_summary),
+        ("baseline metrics", baseline_summary),
+    ):
+        for field in ("period_start", "period_end", "as_of"):
+            parsed = _parse_optional_date(summary.get(field))
+            if parsed and (parsed > effective_as_of or parsed > generated.date()):
+                raise ValueError(f"benchmark baseline {label} {field} is future-dated")
+        start = _parse_optional_date(summary.get("period_start"))
+        end = _parse_optional_date(summary.get("period_end"))
+        if start and end and start > end:
+            raise ValueError(f"benchmark baseline {label} period chronology is invalid")
+    if candidate_source.get("status") == "OK" and baseline_source.get("status") == "OK":
+        if candidate_summary.get("candidate") != baseline_summary.get("candidate"):
+            raise ValueError("benchmark baseline candidate metrics identity mismatch")
+        if candidate_summary.get("candidate_lineage_id") != baseline_summary.get(
+            "candidate_lineage_id"
+        ):
+            raise ValueError("benchmark baseline candidate lineage mismatch")
+        if (
+            candidate_summary.get("period_start") != baseline_summary.get("period_start")
+            or candidate_summary.get("period_end") != baseline_summary.get("period_end")
+        ):
+            raise ValueError("benchmark baseline metric periods do not match")
+
+
+def _control_source_bindings(
+    *,
+    candidate_source: Mapping[str, Any],
+    baseline_source: Mapping[str, Any],
+    weekly_source: Mapping[str, Any],
+    cost_source: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    bindings: list[dict[str, Any]] = []
+    for role, source in (
+        ("candidate_metrics", candidate_source),
+        ("baseline_metrics", baseline_source),
+    ):
+        path = Path(_text(source.get("source_path")))
+        if path.is_file():
+            bindings.append({"role": role, **foundation._file_binding(path)})
+    for role, source, names in (
+        (
+            "paper_shadow_weekly",
+            weekly_source,
+            (
+                "paper_shadow_weekly_manifest.json",
+                "paper_shadow_weekly_review.json",
+                "paper_shadow_weekly_validation.json",
+            ),
+        ),
+        (
+            "cost_sensitivity",
+            cost_source,
+            (
+                "cost_sensitivity_manifest.json",
+                "cost_sensitivity_review.json",
+                "cost_sensitivity_validation.json",
+                "cost_sensitivity_input_snapshot.json",
+            ),
+        ),
+    ):
+        source_path = Path(_text(source.get("source_path")))
+        if source.get("exists") is not True or not source_path.parent.is_dir():
+            continue
+        for name in names:
+            path = source_path.parent / name
+            if path.is_file():
+                bindings.append({"role": f"{role}:{name}", **foundation._file_binding(path)})
+    return bindings
+
+
+def _rebuild_benchmark_baseline(root: Path, control_id: str) -> list[dict[str, Any]]:
+    snapshot = st._read_json(root / BENCHMARK_BASELINE_SNAPSHOT)
+    policy_source = _mapping(snapshot.get("policy_source"))
+    foundation._validate_file_binding(policy_source)
+    for binding in _records(snapshot.get("source_bindings")):
+        foundation._validate_file_binding(binding)
+    generated = _generated_time(
+        datetime.fromisoformat(_text(snapshot.get("generated_at")))
+    )
+    replay_args = _mapping(snapshot.get("replay"))
+    candidate_path = _text(replay_args.get("candidate_metrics_path"))
+    baseline_path = _text(replay_args.get("baseline_metrics_path"))
+    with TemporaryDirectory(prefix="eb4-benchmark-baseline-") as temp_dir:
+        result = run_benchmark_baseline_control_pack(
+            as_of=date.fromisoformat(_text(snapshot.get("effective_as_of"))),
+            candidate_metrics_path=Path(candidate_path) if candidate_path else None,
+            baseline_metrics_path=Path(baseline_path) if baseline_path else None,
+            weekly_review_id=_text(replay_args.get("weekly_review_id")) or None,
+            weekly_review_dir=Path(_text(replay_args.get("weekly_review_dir"))),
+            cost_sensitivity_review_id=(
+                _text(replay_args.get("cost_sensitivity_review_id")) or None
+            ),
+            cost_sensitivity_dir=Path(_text(replay_args.get("cost_sensitivity_dir"))),
+            config_path=Path(_text(policy_source.get("path"))),
+            output_dir=Path(temp_dir),
+            generated_at=generated,
+            _validate_output=False,
+        )
+        expected_root = Path(result["control_dir"])
+        expected = {
+            name: _normalize_replay_root(
+                (expected_root / name).read_bytes(),
+                expected_root=expected_root,
+                actual_root=root,
+            )
+            for name in BENCHMARK_BASELINE_VIEWS
+        }
+    if result["control_id"] != control_id:
+        raise ValueError("benchmark baseline control id is not reproducible")
+    return diagnostics._check_bytes(root, expected)
+
+
+def _normalize_replay_root(payload: bytes, *, expected_root: Path, actual_root: Path) -> bytes:
+    old = str(expected_root)
+    new = str(actual_root)
+    return payload.replace(old.encode(), new.encode()).replace(
+        old.replace("\\", "\\\\").encode(),
+        new.replace("\\", "\\\\").encode(),
+    )
 
 
 def render_benchmark_baseline_reader_brief(pack: Mapping[str, Any]) -> str:
@@ -509,10 +680,15 @@ def _normalized_baseline(row: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _weekly_source(*, weekly_review_id: str | None, output_dir: Path) -> dict[str, Any]:
+    if not weekly_review_id:
+        return _missing_source(
+            "paper_shadow_weekly_review",
+            "explicit weekly review id is required; latest resolution is forbidden",
+        )
     try:
         payload = weekly.paper_shadow_weekly_review_report_payload(
             weekly_review_id=weekly_review_id,
-            latest=weekly_review_id is None,
+            latest=False,
             output_dir=output_dir,
         )
     except Exception as exc:
@@ -531,8 +707,10 @@ def _weekly_source(*, weekly_review_id: str | None, output_dir: Path) -> dict[st
         summary={
             "weekly_review_id": payload.get("weekly_review_id"),
             "candidate": review.get("candidate"),
+            "candidate_lineage_id": review.get("candidate_lineage_id"),
             "week_start": review.get("week_start"),
             "week_end": review.get("week_end"),
+            "generated_at": review.get("generated_at", payload.get("generated_at")),
             "weekly_decision": review.get("weekly_decision"),
             "coverage_status": review.get("coverage_status"),
         },
@@ -541,6 +719,11 @@ def _weekly_source(*, weekly_review_id: str | None, output_dir: Path) -> dict[st
 
 
 def _cost_sensitivity_source(*, review_id: str | None, output_dir: Path) -> dict[str, Any]:
+    if not review_id:
+        return _missing_source(
+            "cost_sensitivity_review",
+            "explicit cost sensitivity review id is required; latest resolution is forbidden",
+        )
     try:
         summary = cost_review.latest_cost_sensitivity_summary(
             review_id=review_id,
@@ -572,7 +755,11 @@ def _candidate_metrics_source(
     weekly_source: Mapping[str, Any],
 ) -> dict[str, Any]:
     if metrics is not None:
-        payload = dict(metrics)
+        payload = {
+            "metrics_id": _text(metrics.get("metrics_id"), "inline_candidate_metrics"),
+            "candidate": _text(metrics.get("candidate")),
+            "limitation": "inline candidate metrics are not live-bindable evidence",
+        }
         source_path: Path | None = None
     elif metrics_path is not None:
         payload = st._read_json(metrics_path)
@@ -591,7 +778,11 @@ def _candidate_metrics_source(
         "candidate_metrics",
         exists=True,
         artifact_id=_text(summary.get("metrics_id"), "candidate_metrics"),
-        status="OK" if _candidate_metrics_complete(summary) else "INSUFFICIENT_METRICS",
+        status=(
+            "OK"
+            if source_path is not None and _candidate_metrics_complete(summary)
+            else "INSUFFICIENT_METRICS"
+        ),
         validation_status=_text(payload.get("validation_status"), "NOT_APPLICABLE"),
         source_path=source_path,
         summary=summary,
@@ -605,7 +796,11 @@ def _baseline_metrics_source(
     metrics_path: Path | None,
 ) -> dict[str, Any]:
     if metrics is not None:
-        payload = dict(metrics)
+        payload = {
+            "metrics_id": _text(metrics.get("metrics_id"), "inline_baseline_metrics"),
+            "limitation": "inline baseline metrics are not live-bindable evidence",
+            "baselines": [],
+        }
         source_path: Path | None = None
     elif metrics_path is not None:
         payload = st._read_json(metrics_path)
@@ -623,7 +818,11 @@ def _baseline_metrics_source(
         "baseline_metrics",
         exists=True,
         artifact_id=_text(summary.get("metrics_id"), "baseline_metrics"),
-        status="OK" if _baseline_metrics_complete(summary) else "INSUFFICIENT_METRICS",
+        status=(
+            "OK"
+            if source_path is not None and _baseline_metrics_complete(summary)
+            else "INSUFFICIENT_METRICS"
+        ),
         validation_status=_text(payload.get("validation_status"), "NOT_APPLICABLE"),
         source_path=source_path,
         summary=summary,
@@ -632,23 +831,26 @@ def _baseline_metrics_source(
 
 
 def _candidate_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
-    net = _first_float(
-        payload,
-        "net_performance_proxy",
-        "candidate_net_performance_proxy",
-        "net_return_proxy",
-        "total_return",
-    )
-    gross = _first_float(payload, "gross_performance_proxy", "candidate_return_proxy")
-    if net is None:
-        net = gross
+    net = _first_float(payload, "net_performance")
+    gross = _first_float(payload, "gross_performance")
     return {
         "metrics_id": _text(payload.get("metrics_id"), _text(payload.get("artifact_id"))),
         "candidate": _text(payload.get("candidate")),
-        "as_of": _text(payload.get("as_of")),
+        "candidate_lineage_id": _text(payload.get("candidate_lineage_id")),
+        "as_of": _text(payload.get("as_of"), _text(payload.get("period_end"))),
+        "period_start": _text(payload.get("period_start"), _text(payload.get("window_start"))),
+        "period_end": _text(
+            payload.get("period_end"),
+            _text(payload.get("window_end"), _text(payload.get("as_of"))),
+        ),
+        "evidence_status": _text(payload.get("evidence_status")),
+        "validation_status": _text(payload.get("validation_status")),
+        "outcome_mode": _text(payload.get("outcome_mode")),
+        "net_performance": _round_or_none(net),
+        "gross_performance": _round_or_none(gross),
         "net_performance_proxy": _round_or_none(net),
         "gross_performance_proxy": _round_or_none(gross),
-        "turnover": _round_or_none(_first_float(payload, "turnover", "turnover_proxy")),
+        "turnover": _round_or_none(_first_float(payload, "turnover")),
         "limitation": _text(payload.get("limitation")),
     }
 
@@ -657,7 +859,14 @@ def _baseline_metrics_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
     rows = [_baseline_metric_row(row) for row in _records(payload.get("baselines"))]
     return {
         "metrics_id": _text(payload.get("metrics_id"), _text(payload.get("artifact_id"))),
-        "as_of": _text(payload.get("as_of")),
+        "candidate": _text(payload.get("candidate")),
+        "candidate_lineage_id": _text(payload.get("candidate_lineage_id")),
+        "as_of": _text(payload.get("as_of"), _text(payload.get("period_end"))),
+        "period_start": _text(payload.get("period_start")),
+        "period_end": _text(payload.get("period_end"), _text(payload.get("as_of"))),
+        "evidence_status": _text(payload.get("evidence_status")),
+        "validation_status": _text(payload.get("validation_status")),
+        "outcome_mode": _text(payload.get("outcome_mode")),
         "baseline_count": len(rows),
         "baselines": rows,
         "limitation": _text(payload.get("limitation")),
@@ -665,21 +874,15 @@ def _baseline_metrics_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _baseline_metric_row(row: Mapping[str, Any]) -> dict[str, Any]:
-    net = _first_float(
-        row,
-        "net_performance_proxy",
-        "baseline_net_performance_proxy",
-        "return_proxy",
-        "total_return",
-    )
-    gross = _first_float(row, "gross_performance_proxy", "baseline_return_proxy")
-    if net is None:
-        net = gross
+    net = _first_float(row, "net_performance")
+    gross = _first_float(row, "gross_performance")
     return {
         "baseline_id": _text(row.get("baseline_id")),
+        "net_performance": _round_or_none(net),
+        "gross_performance": _round_or_none(gross),
         "net_performance_proxy": _round_or_none(net),
         "gross_performance_proxy": _round_or_none(gross),
-        "turnover": _round_or_none(_first_float(row, "turnover", "turnover_proxy")),
+        "turnover": _round_or_none(_first_float(row, "turnover")),
     }
 
 
@@ -945,7 +1148,16 @@ def _baseline_metadata_complete(row: Mapping[str, Any]) -> bool:
 
 
 def _candidate_metrics_complete(summary: Mapping[str, Any]) -> bool:
-    return _float_or_none(summary.get("net_performance_proxy")) is not None
+    return (
+        bool(_text(summary.get("candidate")))
+        and bool(_text(summary.get("candidate_lineage_id")))
+        and bool(_text(summary.get("period_start")))
+        and bool(_text(summary.get("period_end")))
+        and summary.get("evidence_status") == "VALIDATED_DATED_METRICS"
+        and summary.get("validation_status") == "PASS"
+        and summary.get("outcome_mode") != "BACKTEST_SIMULATION"
+        and _float_or_none(summary.get("net_performance")) is not None
+    )
 
 
 def _baseline_metrics_complete(summary: Mapping[str, Any]) -> bool:
@@ -953,9 +1165,18 @@ def _baseline_metrics_complete(summary: Mapping[str, Any]) -> bool:
     ids_with_metrics = {
         _text(row.get("baseline_id"))
         for row in rows
-        if _float_or_none(row.get("net_performance_proxy")) is not None
+        if _float_or_none(row.get("net_performance")) is not None
     }
-    return set(REQUIRED_BASELINE_IDS).issubset(ids_with_metrics)
+    return (
+        bool(_text(summary.get("candidate")))
+        and bool(_text(summary.get("candidate_lineage_id")))
+        and bool(_text(summary.get("period_start")))
+        and bool(_text(summary.get("period_end")))
+        and summary.get("evidence_status") == "VALIDATED_DATED_METRICS"
+        and summary.get("validation_status") == "PASS"
+        and summary.get("outcome_mode") != "BACKTEST_SIMULATION"
+        and set(REQUIRED_BASELINE_IDS).issubset(ids_with_metrics)
+    )
 
 
 def _first_float(payload: Mapping[str, Any], *keys: str) -> float | None:

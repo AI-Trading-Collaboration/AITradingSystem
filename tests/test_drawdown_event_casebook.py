@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -30,7 +31,11 @@ def test_drawdown_event_casebook_builds_and_validates(tmp_path: Path) -> None:
     assert data["event_count"] >= 5
     assert data["worst_event"] == "semiconductor_pullback_2024_07"
     assert "tech_drawdown" in data["regime_coverage"]
-    assert data["next_review_action"] == "use_casebook_in_next_drawdown_mismatch_review"
+    assert data["next_review_action"] == "manual_qualitative_review_only"
+    assert data["evidence_role"] == "MANUAL_DIAGNOSTIC"
+    assert data["quantitative_evidence_eligible"] is False
+    assert data["promotion_evidence_eligible"] is False
+    assert payload["input_snapshot"]["schema_version"].endswith(".v2")
     assert data["not_trading_signal"] is True
     assert data["data_downloaded_by_casebook"] is False
     assert data["pipelines_executed_by_casebook"] is False
@@ -45,16 +50,33 @@ def test_drawdown_event_casebook_validation_fails_incomplete_event(tmp_path: Pat
     config_path = tmp_path / "drawdown_event_casebook_v1.yaml"
     config_path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
+    with pytest.raises(ValueError, match="manual events are incomplete"):
+        casebook.build_drawdown_event_casebook(
+            config_path=config_path,
+            output_dir=tmp_path / "drawdown_event_casebook",
+            generated_at=datetime(2026, 6, 15, tzinfo=UTC),
+        )
+
+
+def test_drawdown_event_casebook_snapshot_and_view_tamper_fail_closed(tmp_path: Path) -> None:
+    output_dir = tmp_path / "drawdown_event_casebook"
     result = casebook.build_drawdown_event_casebook(
-        config_path=config_path,
-        output_dir=tmp_path / "drawdown_event_casebook",
+        output_dir=output_dir,
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
+    root = Path(result["casebook_dir"])
+    report = root / "drawdown_event_casebook_report.md"
+    report.write_text(report.read_text(encoding="utf-8") + "tampered\n", encoding="utf-8")
 
-    validation = result["drawdown_event_casebook_validation"]
-    failed = {row["check_id"] for row in validation["checks"] if row["passed"] is False}
+    validation = casebook.validate_drawdown_event_casebook_artifact(
+        casebook_run_id=result["casebook_run_id"], output_dir=output_dir
+    )
+
     assert validation["status"] == "FAIL"
-    assert "event_schema_complete" in failed
+    assert any(
+        row["check_id"] == "snapshot_view_hashes" and row["passed"] is False
+        for row in validation["checks"]
+    )
 
 
 def test_drawdown_event_casebook_cli_report_and_validate(tmp_path: Path) -> None:

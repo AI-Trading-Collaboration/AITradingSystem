@@ -7,15 +7,15 @@ baseline:
   sha256: e6c047d18ad674a19c63c462be7901ae54791be6fc325cb2c1c879e3663108f3
 summary:
   baseline_callback_count: 967
-  migrated_callback_count: 775
-  pending_callback_count: 192
+  migrated_callback_count: 814
+  pending_callback_count: 153
   unresolved_callback_count: 0
   duplicate_callback_count: 0
   pre_g2_4_canonical_callback_count: 26
   current_total_callback_count: 993
   phase_exit_ready: false
   phase_completion_status: IN_PROGRESS
-current_callback_set_sha256: f199e58569a69c78f5c47393246cfb035490b1b682e9bb11cc9b9529eabb2579
+current_callback_set_sha256: 36c6630166b38cc853948d7c29c95d74bd5faa7dd737d549b3824036086bb589
 pending_by_app:
   ai_attribution_app: 3
   ai_confirmation_app: 4
@@ -25,17 +25,7 @@ pending_by_app:
   credibility_app: 1
   decision_journal_app: 8
   dynamic_shadow_app: 6
-  dynamic_v3_benchmark_baseline_control_app: 2
-  dynamic_v3_benchmark_baseline_metrics_materialization_app: 2
-  dynamic_v3_candidate_decision_ledger_app: 2
-  dynamic_v3_candidate_regression_replay_app: 2
-  dynamic_v3_cost_sensitivity_metrics_materialization_app: 2
-  dynamic_v3_cost_sensitivity_review_app: 2
-  dynamic_v3_drawdown_event_casebook_app: 1
   dynamic_v3_evidence_staleness_monitor_app: 2
-  dynamic_v3_flip_rotation_event_casebook_app: 1
-  dynamic_v3_formal_research_method_contract_app: 2
-  dynamic_v3_metric_source_map_app: 2
   dynamic_v3_normal_paper_shadow_resumption_gate_app: 2
   dynamic_v3_paper_shadow_daily_app: 2
   dynamic_v3_paper_shadow_drift_monitor_app: 1
@@ -44,14 +34,10 @@ pending_by_app:
   dynamic_v3_paper_shadow_protocol_app: 2
   dynamic_v3_paper_shadow_weekly_review_app: 2
   dynamic_v3_position_review_app: 2
-  dynamic_v3_promotion_gate_threshold_calibration_app: 2
   dynamic_v3_readiness_health_recovery_app: 2
-  dynamic_v3_rescue_app: 26
+  dynamic_v3_rescue_app: 13
   dynamic_v3_shadow_continuation_readiness_app: 2
   dynamic_v3_shadow_decision_comparison_app: 2
-  dynamic_v3_signal_input_completeness_app: 2
-  dynamic_v3_signal_input_completeness_recovery_app: 2
-  dynamic_v3_signal_input_recovery_app: 2
   dynamic_v3_stress_scenario_library_app: 1
   etf_app: 1
   events_app: 1
@@ -70,7 +56,7 @@ pending_by_app:
   weight_calibration_app: 20
   weight_research_app: 20
 current_owner_counts:
-  src/ai_trading_system/cli_commands/etf_portfolio.py: 192
+  src/ai_trading_system/cli_commands/etf_portfolio.py: 153
   src/ai_trading_system/interfaces/cli/etf_portfolio/baseline_review.py: 7
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_allocation.py: 3
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_calibration.py: 3
@@ -101,6 +87,7 @@ current_owner_counts:
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_data_provenance.py: 3
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_defensive_research.py: 15
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_governance.py: 19
+  src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py: 22
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_readiness.py: 17
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_trend.py: 3
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_failure_attribution.py: 3
@@ -140,6 +127,7 @@ current_owner_counts:
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_performance_review.py: 3
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py: 3
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_rescue.py: 3
+  src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_contract_ledger.py: 8
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_control.py: 11
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_direction_foundation.py: 6
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_rolling_evidence_refresh.py: 3
@@ -150,6 +138,7 @@ current_owner_counts:
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_shadow_registry.py: 4
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_diagnosis_foundation.py: 12
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_filter_foundation.py: 15
+  src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_input_readiness.py: 9
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_sim_defensive_validation.py: 3
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_sim_interpretation.py: 3
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_sim_risk_return.py: 3
@@ -845,32 +834,32 @@ callbacks:
   baseline_function: dynamic_v3_benchmark_baseline_control_report_command
   baseline_line: 21132
   current_function: dynamic_v3_benchmark_baseline_control_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_e7716e04a867fab18b6d
   app_name: dynamic_v3_benchmark_baseline_control_app
   command_name: run
   baseline_function: dynamic_v3_benchmark_baseline_control_run_command
   baseline_line: 21061
   current_function: dynamic_v3_benchmark_baseline_control_run_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_1d555c08f6878a5e602d
   app_name: dynamic_v3_benchmark_baseline_metrics_materialization_app
   command_name: report
   baseline_function: dynamic_v3_benchmark_baseline_metrics_materialization_report_command
   baseline_line: 21358
   current_function: dynamic_v3_benchmark_baseline_metrics_materialization_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_73d7866e32c351713525
   app_name: dynamic_v3_benchmark_baseline_metrics_materialization_app
   command_name: run
   baseline_function: dynamic_v3_benchmark_baseline_metrics_materialization_run_command
   baseline_line: 21243
   current_function: dynamic_v3_benchmark_baseline_metrics_materialization_run_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_93cf2c8d9b633ae33230
   app_name: dynamic_v3_candidate_app
   command_name: attribution
@@ -925,16 +914,16 @@ callbacks:
   baseline_function: dynamic_v3_candidate_decision_ledger_record_command
   baseline_line: 18928
   current_function: dynamic_v3_candidate_decision_ledger_record_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_contract_ledger.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_e37d115708ab86d862f1
   app_name: dynamic_v3_candidate_decision_ledger_app
   command_name: report
   baseline_function: dynamic_v3_candidate_decision_ledger_report_command
   baseline_line: 19011
   current_function: dynamic_v3_candidate_decision_ledger_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_contract_ledger.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_2ab9d9c321beee982041
   app_name: dynamic_v3_candidate_promotion_v2_app
   command_name: report
@@ -989,16 +978,16 @@ callbacks:
   baseline_function: dynamic_v3_candidate_regression_replay_report_command
   baseline_line: 21535
   current_function: dynamic_v3_candidate_regression_replay_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_11db61c7743980a52713
   app_name: dynamic_v3_candidate_regression_replay_app
   command_name: run
   baseline_function: dynamic_v3_candidate_regression_replay_run_command
   baseline_line: 21473
   current_function: dynamic_v3_candidate_regression_replay_run_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_e5a0976db6a346347218
   app_name: dynamic_v3_candidate_signal_ledger_app
   command_name: build
@@ -1197,32 +1186,32 @@ callbacks:
   baseline_function: dynamic_v3_cost_sensitivity_metrics_materialization_report_command
   baseline_line: 20828
   current_function: dynamic_v3_cost_sensitivity_metrics_materialization_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_8279516623b9143b75d5
   app_name: dynamic_v3_cost_sensitivity_metrics_materialization_app
   command_name: run
   baseline_function: dynamic_v3_cost_sensitivity_metrics_materialization_run_command
   baseline_line: 20757
   current_function: dynamic_v3_cost_sensitivity_metrics_materialization_run_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_a5018d3a4f6ca9f838af
   app_name: dynamic_v3_cost_sensitivity_review_app
   command_name: report
   baseline_function: dynamic_v3_cost_sensitivity_review_report_command
   baseline_line: 20663
   current_function: dynamic_v3_cost_sensitivity_review_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_5dbe1cced1eda1dee266
   app_name: dynamic_v3_cost_sensitivity_review_app
   command_name: run
   baseline_function: dynamic_v3_cost_sensitivity_review_run_command
   baseline_line: 20604
   current_function: dynamic_v3_cost_sensitivity_review_run_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_8eda3cbb7a262a41f388
   app_name: dynamic_v3_data_audit_app
   command_name: report
@@ -1413,8 +1402,8 @@ callbacks:
   baseline_function: dynamic_v3_drawdown_event_casebook_report_command
   baseline_line: 21667
   current_function: dynamic_v3_drawdown_event_casebook_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_19dcd918fda18b2fa0e0
   app_name: dynamic_v3_drawdown_mismatch_reduction_app
   command_name: report
@@ -1677,8 +1666,8 @@ callbacks:
   baseline_function: dynamic_v3_flip_rotation_event_casebook_report_command
   baseline_line: 21746
   current_function: dynamic_v3_flip_rotation_event_casebook_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_4341ea09dee12493d3b1
   app_name: dynamic_v3_flip_rotation_reduction_app
   command_name: report
@@ -1717,16 +1706,16 @@ callbacks:
   baseline_function: dynamic_v3_formal_research_method_contract_build_command
   baseline_line: 17796
   current_function: dynamic_v3_formal_research_method_contract_build_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_contract_ledger.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_a677255aca5100ca0bb1
   app_name: dynamic_v3_formal_research_method_contract_app
   command_name: report
   baseline_function: dynamic_v3_formal_research_method_contract_report_command
   baseline_line: 17873
   current_function: dynamic_v3_formal_research_method_contract_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_contract_ledger.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_fecb178c485a90839595
   app_name: dynamic_v3_forward_confirmation_plan_app
   command_name: report
@@ -2101,16 +2090,16 @@ callbacks:
   baseline_function: dynamic_v3_metric_source_map_report_command
   baseline_line: 20964
   current_function: dynamic_v3_metric_source_map_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_dd86d8eb58b2d3f791a1
   app_name: dynamic_v3_metric_source_map_app
   command_name: run
   baseline_function: dynamic_v3_metric_source_map_run_command
   baseline_line: 20913
   current_function: dynamic_v3_metric_source_map_run_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_a0c6b41c86d369bb0b08
   app_name: dynamic_v3_micro_search_v4_backfill_app
   command_name: report
@@ -3013,16 +3002,16 @@ callbacks:
   baseline_function: dynamic_v3_promotion_gate_threshold_calibration_report_command
   baseline_line: 17911
   current_function: dynamic_v3_promotion_gate_threshold_calibration_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_contract_ledger.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_38a881c853265563d4b4
   app_name: dynamic_v3_promotion_gate_threshold_calibration_app
   command_name: validate
   baseline_function: dynamic_v3_promotion_gate_threshold_calibration_validate_command
   baseline_line: 17952
   current_function: dynamic_v3_promotion_gate_threshold_calibration_validate_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_contract_ledger.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_902620c2a9c69079cd24
   app_name: dynamic_v3_promotion_threshold_sensitivity_app
   command_name: report
@@ -3453,16 +3442,16 @@ callbacks:
   baseline_function: dynamic_v3_validate_benchmark_baseline_control_command
   baseline_line: 21158
   current_function: dynamic_v3_validate_benchmark_baseline_control_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_97b67d098cd670521047
   app_name: dynamic_v3_rescue_app
   command_name: validate-benchmark-baseline-metrics-materialization
   baseline_function: dynamic_v3_validate_benchmark_baseline_metrics_materialization_command
   baseline_line: 21397
   current_function: dynamic_v3_validate_benchmark_baseline_metrics_materialization_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_122a22cfbe56a90f8333
   app_name: dynamic_v3_rescue_app
   command_name: validate-candidate-attribution
@@ -3485,8 +3474,8 @@ callbacks:
   baseline_function: dynamic_v3_validate_candidate_decision_ledger_command
   baseline_line: 19038
   current_function: dynamic_v3_validate_candidate_decision_ledger_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_contract_ledger.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_af3699c5b22f31e09b39
   app_name: dynamic_v3_rescue_app
   command_name: validate-candidate-promotion-v2
@@ -3517,8 +3506,8 @@ callbacks:
   baseline_function: dynamic_v3_validate_candidate_regression_replay_command
   baseline_line: 21561
   current_function: dynamic_v3_validate_candidate_regression_replay_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_47bbd11f6f7560e681d6
   app_name: dynamic_v3_rescue_app
   command_name: validate-candidate-signal-ledger
@@ -3605,16 +3594,16 @@ callbacks:
   baseline_function: dynamic_v3_validate_cost_sensitivity_metrics_materialization_command
   baseline_line: 20854
   current_function: dynamic_v3_validate_cost_sensitivity_metrics_materialization_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_dd27391e28a827a280b1
   app_name: dynamic_v3_rescue_app
   command_name: validate-cost-sensitivity-review
   baseline_function: dynamic_v3_validate_cost_sensitivity_review_command
   baseline_line: 20689
   current_function: dynamic_v3_validate_cost_sensitivity_review_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_a1c9202b80cd64c9fa7a
   app_name: dynamic_v3_rescue_app
   command_name: validate-data-audit
@@ -3701,8 +3690,8 @@ callbacks:
   baseline_function: dynamic_v3_validate_drawdown_event_casebook_command
   baseline_line: 21717
   current_function: dynamic_v3_validate_drawdown_event_casebook_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_99ecb437b8a9e833ee4b
   app_name: dynamic_v3_rescue_app
   command_name: validate-drawdown-mismatch-reduction
@@ -3837,8 +3826,8 @@ callbacks:
   baseline_function: dynamic_v3_validate_flip_rotation_event_casebook_command
   baseline_line: 21797
   current_function: dynamic_v3_validate_flip_rotation_event_casebook_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_9ad121817708dcc944da
   app_name: dynamic_v3_rescue_app
   command_name: validate-flip-rotation-reduction
@@ -4029,8 +4018,8 @@ callbacks:
   baseline_function: dynamic_v3_validate_metric_source_map_command
   baseline_line: 20990
   current_function: dynamic_v3_validate_metric_source_map_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_26d93d0f8e7ef54a2154
   app_name: dynamic_v3_rescue_app
   command_name: validate-micro-search-v4-backfill
@@ -4573,8 +4562,8 @@ callbacks:
   baseline_function: dynamic_v3_validate_formal_research_method_contract_command
   baseline_line: 17895
   current_function: dynamic_v3_validate_formal_research_method_contract_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_contract_ledger.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_00583f20842ba9b1f017
   app_name: dynamic_v3_rescue_app
   command_name: validate-research-method-hardening
@@ -4805,24 +4794,24 @@ callbacks:
   baseline_function: dynamic_v3_validate_signal_input_completeness_command
   baseline_line: 18166
   current_function: dynamic_v3_validate_signal_input_completeness_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_input_readiness.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_4d42810db26c3782e4f8
   app_name: dynamic_v3_rescue_app
   command_name: validate-signal-input-completeness-recovery
   baseline_function: dynamic_v3_validate_signal_input_completeness_recovery_command
   baseline_line: 18294
   current_function: dynamic_v3_validate_signal_input_completeness_recovery_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_input_readiness.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_563315f7995ade52dbe9
   app_name: dynamic_v3_rescue_app
   command_name: validate-signal-input-recovery
   baseline_function: dynamic_v3_validate_signal_input_recovery_command
   baseline_line: 18420
   current_function: dynamic_v3_validate_signal_input_recovery_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_input_readiness.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_46b78070ca5e4f4328df
   app_name: dynamic_v3_rescue_app
   command_name: validate-signal-instability-diagnosis
@@ -5917,48 +5906,48 @@ callbacks:
   baseline_function: dynamic_v3_signal_input_completeness_report_command
   baseline_line: 18121
   current_function: dynamic_v3_signal_input_completeness_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_input_readiness.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_1f117c6507f2f82ddd24
   app_name: dynamic_v3_signal_input_completeness_app
   command_name: run
   baseline_function: dynamic_v3_signal_input_completeness_run_command
   baseline_line: 18068
   current_function: dynamic_v3_signal_input_completeness_run_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_input_readiness.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_7d4a32f5f84400107465
   app_name: dynamic_v3_signal_input_completeness_recovery_app
   command_name: report
   baseline_function: dynamic_v3_signal_input_completeness_recovery_report_command
   baseline_line: 18261
   current_function: dynamic_v3_signal_input_completeness_recovery_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_input_readiness.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_e79d2c97bbfc1b53b68f
   app_name: dynamic_v3_signal_input_completeness_recovery_app
   command_name: run
   baseline_function: dynamic_v3_signal_input_completeness_recovery_run_command
   baseline_line: 18200
   current_function: dynamic_v3_signal_input_completeness_recovery_run_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_input_readiness.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_b97bf15e57311e5e0048
   app_name: dynamic_v3_signal_input_recovery_app
   command_name: report
   baseline_function: dynamic_v3_signal_input_recovery_report_command
   baseline_line: 18388
   current_function: dynamic_v3_signal_input_recovery_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_input_readiness.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_67a24fc00287b2b337e7
   app_name: dynamic_v3_signal_input_recovery_app
   command_name: run
   baseline_function: dynamic_v3_signal_input_recovery_run_command
   baseline_line: 18326
   current_function: dynamic_v3_signal_input_recovery_run_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_input_readiness.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_3f93b9694a51253b292e
   app_name: dynamic_v3_signal_instability_diagnosis_app
   command_name: report
@@ -7921,4 +7910,4 @@ callbacks:
   migration_status: PENDING_LEGACY_ROOT
 production_effect: none
 broker_action: none
-matrix_id: arch_004g2_callback_matrix_9faff956af5142fbf835
+matrix_id: arch_004g2_callback_matrix_b6b0f0d4aab5977bc5a4

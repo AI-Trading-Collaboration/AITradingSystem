@@ -18,39 +18,59 @@ from ai_trading_system.etf_portfolio import (
 )
 
 
+def _blocking_prior_and_restored(
+    tmp_path: Path, fixture: dict[str, object], *, keep_blocked: bool = False
+) -> tuple[dict[str, object], dict[str, object]]:
+    paths = [
+        tmp_path / "signal_inputs" / "features.csv",
+        tmp_path / "signal_inputs" / "signals.csv",
+    ]
+    saved = {path: path.read_text(encoding="utf-8") for path in paths}
+    for path in paths:
+        path.unlink()
+    previous = signal_inputs.run_signal_input_completeness_monitor(
+        as_of=date(2024, 4, 22),
+        policy_path=fixture["policy_path"],
+        output_dir=fixture["output_dir"],
+        generated_at=datetime(2024, 4, 23, tzinfo=UTC),
+    )
+    if not keep_blocked:
+        for path, content in saved.items():
+            path.write_text(content, encoding="utf-8")
+    restored = signal_inputs.run_signal_input_completeness_monitor(
+        as_of=date(2024, 4, 22),
+        policy_path=fixture["policy_path"],
+        output_dir=fixture["output_dir"],
+        generated_at=datetime(2024, 4, 24, tzinfo=UTC),
+    )
+    return previous, restored
+
+
 def test_signal_input_recovery_records_stale_root_cause_and_restored_inputs(
     tmp_path: Path,
 ) -> None:
     fixture = run_signal_input_completeness_fixture(tmp_path, as_of="2024-04-22")
-    previous = signal_inputs.run_signal_input_completeness_monitor(
-        as_of=date(2024, 5, 5),
-        policy_path=fixture["policy_path"],
-        output_dir=fixture["output_dir"],
-        generated_at=datetime(2024, 5, 5, tzinfo=UTC),
-    )
+    previous, restored = _blocking_prior_and_restored(tmp_path, fixture)
 
     result = signal_recovery.run_signal_input_root_cause_recovery(
         as_of=date(2024, 4, 22),
-        restored_monitor_id=fixture["monitor_id"],
+        restored_monitor_id=restored["monitor_id"],
         previous_monitor_id=previous["monitor_id"],
         signal_input_dir=fixture["output_dir"],
         policy_path=fixture["policy_path"],
         output_dir=tmp_path / "signal_input_recovery",
-        generated_at=datetime(2024, 5, 6, tzinfo=UTC),
+        generated_at=datetime(2024, 4, 25, tzinfo=UTC),
     )
     report = result["signal_input_recovery_report"]
     root_rows = {row["input_id"]: row for row in report["root_cause_rows"]}
 
     assert report["restoration_status"] == "SIGNAL_INPUTS_RESTORED"
     assert report["signal_input_status"] == "OK"
-    assert report["restored_etf_feature_matrix_artifact_id"].startswith(
-        "etf_feature_matrix:2024-04-22"
-    )
-    assert report["restored_etf_signal_series_artifact_id"].startswith(
-        "etf_signal_series:2024-04-22"
-    )
-    assert root_rows["etf_feature_matrix"]["root_cause"] == "stale_cache"
-    assert root_rows["etf_signal_series"]["root_cause"] == "stale_cache"
+    assert report["restored_etf_feature_matrix_artifact_id"] is None
+    assert report["restored_etf_signal_series_artifact_id"] is None
+    assert root_rows["etf_feature_matrix"]["root_cause"] == "upstream_artifact_missing"
+    assert root_rows["etf_signal_series"]["root_cause"] == "upstream_artifact_missing"
+    assert all(row["canonical_artifact_id"] is None for row in report["restored_source_bindings"])
     assert result["signal_input_recovery_validation"]["status"] == "PASS"
     assert "signal_input_recovery_status" in result["reader_brief_section"]
     assert_research_safe(result["manifest"])
@@ -60,22 +80,16 @@ def test_signal_input_recovery_fail_closes_missing_feature_matrix_and_signal_ser
     tmp_path: Path,
 ) -> None:
     fixture = run_signal_input_completeness_fixture(tmp_path, as_of="2024-04-22")
-    (tmp_path / "signal_inputs" / "features.csv").unlink()
-    (tmp_path / "signal_inputs" / "signals.csv").unlink()
-    current = signal_inputs.run_signal_input_completeness_monitor(
-        as_of=date(2024, 4, 22),
-        policy_path=fixture["policy_path"],
-        output_dir=fixture["output_dir"],
-        generated_at=datetime(2024, 4, 23, tzinfo=UTC),
-    )
+    previous, current = _blocking_prior_and_restored(tmp_path, fixture, keep_blocked=True)
 
     result = signal_recovery.run_signal_input_root_cause_recovery(
         as_of=date(2024, 4, 22),
         restored_monitor_id=current["monitor_id"],
+        previous_monitor_id=previous["monitor_id"],
         signal_input_dir=fixture["output_dir"],
         policy_path=fixture["policy_path"],
         output_dir=tmp_path / "signal_input_recovery",
-        generated_at=datetime(2024, 4, 23, 1, tzinfo=UTC),
+        generated_at=datetime(2024, 4, 25, 1, tzinfo=UTC),
     )
     report = result["signal_input_recovery_report"]
     root_rows = {row["input_id"]: row for row in report["root_cause_rows"]}
@@ -86,13 +100,14 @@ def test_signal_input_recovery_fail_closes_missing_feature_matrix_and_signal_ser
     assert "etf_signal_series:blocking" in report["blocking_reasons"]
     assert root_rows["etf_feature_matrix"]["root_cause"] == "upstream_artifact_missing"
     assert root_rows["etf_signal_series"]["root_cause"] == "upstream_artifact_missing"
-    assert report["next_required_action"] == "stop_and_report_SIGNAL_INPUTS_STILL_BLOCKED"
+    assert report["next_required_action"] == "stop_and_restore_signal_inputs"
     assert result["signal_input_recovery_validation"]["status"] == "PASS"
     assert report["manual_signal_artifact_fabrication"] is False
 
 
 def test_signal_input_recovery_cli_run_report_and_validate(tmp_path: Path) -> None:
     fixture = run_signal_input_completeness_fixture(tmp_path, as_of="2024-04-22")
+    previous, restored = _blocking_prior_and_restored(tmp_path, fixture)
     output_dir = tmp_path / "signal_input_recovery_cli"
     run = CliRunner().invoke(
         app,
@@ -104,7 +119,9 @@ def test_signal_input_recovery_cli_run_report_and_validate(tmp_path: Path) -> No
             "--as-of",
             "2024-04-22",
             "--restored-monitor-id",
-            fixture["monitor_id"],
+            restored["monitor_id"],
+            "--previous-monitor-id",
+            previous["monitor_id"],
             "--signal-input-dir",
             str(fixture["output_dir"]),
             "--policy-path",
@@ -152,3 +169,19 @@ def test_signal_input_recovery_cli_run_report_and_validate(tmp_path: Path) -> No
     )
     assert validation.exit_code == 0
     assert "status=PASS" in validation.output
+
+
+def test_signal_input_recovery_without_prior_blocker_is_not_restored(tmp_path: Path) -> None:
+    fixture = run_signal_input_completeness_fixture(tmp_path, as_of="2024-04-22")
+    result = signal_recovery.run_signal_input_root_cause_recovery(
+        restored_monitor_id=fixture["monitor_id"],
+        signal_input_dir=fixture["output_dir"],
+        output_dir=tmp_path / "signal_input_recovery",
+        generated_at=datetime(2024, 4, 23, tzinfo=UTC),
+    )
+    report = result["signal_input_recovery_report"]
+
+    assert report["restoration_status"] == "NO_RECOVERY_EVIDENCE"
+    assert report["root_cause_rows"] == []
+    assert report["hard_stop_triggered"] is True
+    assert result["signal_input_recovery_validation"]["status"] == "PASS"

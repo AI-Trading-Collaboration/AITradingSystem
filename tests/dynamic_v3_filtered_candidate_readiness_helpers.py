@@ -19,6 +19,7 @@ def run_signal_input_completeness_fixture(
     tmp_path: Path,
     *,
     as_of: str = "2024-04-22",
+    missing_signal_series: bool = False,
 ) -> dict[str, Any]:
     as_of_date = date.fromisoformat(as_of)
     signal_dir = tmp_path / "signal_inputs"
@@ -222,6 +223,8 @@ required_inputs:
 """.lstrip(),
         encoding="utf-8",
     )
+    if missing_signal_series:
+        signals.unlink()
     result = signal_inputs.run_signal_input_completeness_monitor(
         as_of=as_of_date,
         policy_path=policy,
@@ -235,8 +238,17 @@ required_inputs:
     }
 
 
-def run_filtered_candidate_evidence_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
-    fixture = _source_filtered_candidate_fixture(tmp_path, monkeypatch)
+def run_filtered_candidate_evidence_fixture(
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    evidence_date_end: str = "2026-06-10",
+) -> dict[str, Any]:
+    fixture = _source_filtered_candidate_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end=evidence_date_end,
+    )
     evidence = readiness.run_filtered_candidate_evidence(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         filtered_comparison_id=fixture["filtered_vs_original_comparison"]["comparison_id"],
@@ -249,8 +261,17 @@ def run_filtered_candidate_evidence_fixture(tmp_path: Path, monkeypatch: Any) ->
     return {**fixture, "filtered_candidate_evidence": evidence}
 
 
-def run_median_regime_filter_spec_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
-    fixture = run_filtered_candidate_evidence_fixture(tmp_path, monkeypatch)
+def run_median_regime_filter_spec_fixture(
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    evidence_date_end: str = "2026-06-10",
+) -> dict[str, Any]:
+    fixture = run_filtered_candidate_evidence_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end=evidence_date_end,
+    )
     spec = readiness.review_median_regime_filter_spec(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         output_dir=tmp_path / "median_regime_filter_spec",
@@ -260,9 +281,16 @@ def run_median_regime_filter_spec_fixture(tmp_path: Path, monkeypatch: Any) -> d
 
 
 def run_filtered_candidate_stress_backfill_fixture(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    evidence_date_end: str = "2026-06-10",
 ) -> dict[str, Any]:
-    fixture = run_median_regime_filter_spec_fixture(tmp_path, monkeypatch)
+    fixture = run_median_regime_filter_spec_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end=evidence_date_end,
+    )
     stress = readiness.run_filtered_candidate_stress_backfill(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         spec_id=fixture["median_regime_filter_spec"]["spec_id"],
@@ -273,8 +301,17 @@ def run_filtered_candidate_stress_backfill_fixture(
     return {**fixture, "filtered_candidate_stress_backfill": stress}
 
 
-def run_drawdown_mismatch_reduction_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
-    fixture = run_filtered_candidate_stress_backfill_fixture(tmp_path, monkeypatch)
+def run_drawdown_mismatch_reduction_fixture(
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    evidence_date_end: str = "2026-06-10",
+) -> dict[str, Any]:
+    fixture = run_filtered_candidate_stress_backfill_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end=evidence_date_end,
+    )
     reduction = readiness.run_drawdown_mismatch_reduction(
         stress_backfill_id=fixture["filtered_candidate_stress_backfill"]["stress_backfill_id"],
         stress_backfill_dir=tmp_path / "filtered_candidate_stress_backfill",
@@ -284,8 +321,17 @@ def run_drawdown_mismatch_reduction_fixture(tmp_path: Path, monkeypatch: Any) ->
     return {**fixture, "drawdown_mismatch_reduction": reduction}
 
 
-def run_flip_rotation_reduction_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
-    fixture = run_drawdown_mismatch_reduction_fixture(tmp_path, monkeypatch)
+def run_flip_rotation_reduction_fixture(
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    evidence_date_end: str = "2026-06-10",
+) -> dict[str, Any]:
+    fixture = run_drawdown_mismatch_reduction_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end=evidence_date_end,
+    )
     flip = readiness.run_flip_rotation_reduction(
         stress_backfill_id=fixture["filtered_candidate_stress_backfill"]["stress_backfill_id"],
         stress_backfill_dir=tmp_path / "filtered_candidate_stress_backfill",
@@ -295,8 +341,17 @@ def run_flip_rotation_reduction_fixture(tmp_path: Path, monkeypatch: Any) -> dic
     return {**fixture, "flip_rotation_reduction": flip}
 
 
-def run_filtered_candidate_ab_review_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
-    fixture = run_flip_rotation_reduction_fixture(tmp_path, monkeypatch)
+def run_filtered_candidate_ab_review_fixture(
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    evidence_date_end: str = "2026-06-10",
+) -> dict[str, Any]:
+    fixture = run_flip_rotation_reduction_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end=evidence_date_end,
+    )
     ab = readiness.run_filtered_candidate_ab_review(
         stress_backfill_id=fixture["filtered_candidate_stress_backfill"]["stress_backfill_id"],
         mismatch_reduction_id=fixture["drawdown_mismatch_reduction"]["reduction_id"],
@@ -310,8 +365,17 @@ def run_filtered_candidate_ab_review_fixture(tmp_path: Path, monkeypatch: Any) -
     return {**fixture, "filtered_candidate_ab_review": ab}
 
 
-def run_signal_gate_confirmation_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
-    fixture = run_filtered_candidate_ab_review_fixture(tmp_path, monkeypatch)
+def run_signal_gate_confirmation_fixture(
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    evidence_date_end: str = "2026-06-10",
+) -> dict[str, Any]:
+    fixture = run_filtered_candidate_ab_review_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end=evidence_date_end,
+    )
     confirmation = readiness.register_signal_gate_confirmation(
         ab_review_id=fixture["filtered_candidate_ab_review"]["ab_review_id"],
         ab_review_dir=tmp_path / "filtered_candidate_ab_review",
@@ -322,9 +386,16 @@ def run_signal_gate_confirmation_fixture(tmp_path: Path, monkeypatch: Any) -> di
 
 
 def run_filtered_formalization_readiness_fixture(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    evidence_date_end: str = "2026-06-10",
 ) -> dict[str, Any]:
-    fixture = run_signal_gate_confirmation_fixture(tmp_path, monkeypatch)
+    fixture = run_signal_gate_confirmation_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end=evidence_date_end,
+    )
     formalization = readiness.run_filtered_formalization_readiness(
         ab_review_id=fixture["filtered_candidate_ab_review"]["ab_review_id"],
         confirmation_id=fixture["signal_gate_confirmation"]["confirmation_id"],
@@ -336,8 +407,17 @@ def run_filtered_formalization_readiness_fixture(
     return {**fixture, "filtered_formalization_readiness": formalization}
 
 
-def run_owner_filtered_candidate_review_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
-    fixture = run_filtered_formalization_readiness_fixture(tmp_path, monkeypatch)
+def run_owner_filtered_candidate_review_fixture(
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    evidence_date_end: str = "2026-06-10",
+) -> dict[str, Any]:
+    fixture = run_filtered_formalization_readiness_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end=evidence_date_end,
+    )
     owner_review = readiness.build_owner_filtered_candidate_review(
         readiness_id=fixture["filtered_formalization_readiness"]["readiness_id"],
         readiness_dir=tmp_path / "filtered_formalization_readiness",
@@ -347,8 +427,17 @@ def run_owner_filtered_candidate_review_fixture(tmp_path: Path, monkeypatch: Any
     return {**fixture, "owner_filtered_candidate_review": owner_review}
 
 
-def run_filtered_next_decision_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
-    fixture = run_owner_filtered_candidate_review_fixture(tmp_path, monkeypatch)
+def run_filtered_next_decision_fixture(
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    evidence_date_end: str = "2026-06-10",
+) -> dict[str, Any]:
+    fixture = run_owner_filtered_candidate_review_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end=evidence_date_end,
+    )
     decision = readiness.run_filtered_next_decision(
         owner_review_id=fixture["owner_filtered_candidate_review"]["owner_review_id"],
         owner_review_dir=tmp_path / "owner_filtered_candidate_review",
@@ -358,8 +447,17 @@ def run_filtered_next_decision_fixture(tmp_path: Path, monkeypatch: Any) -> dict
     return {**fixture, "filtered_next_decision": decision}
 
 
-def run_formal_research_method_contract_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
-    fixture = run_filtered_next_decision_fixture(tmp_path, monkeypatch)
+def run_formal_research_method_contract_fixture(
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    evidence_date_end: str = "2026-06-10",
+) -> dict[str, Any]:
+    fixture = run_filtered_next_decision_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end=evidence_date_end,
+    )
     contract = readiness.build_formal_research_method_contract(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         evidence_id=fixture["filtered_candidate_evidence"]["evidence_id"],
@@ -388,8 +486,17 @@ def run_formal_research_method_contract_fixture(tmp_path: Path, monkeypatch: Any
     return {**fixture, "formal_research_method_contract": contract}
 
 
-def run_paper_shadow_protocol_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
-    fixture = run_formal_research_method_contract_fixture(tmp_path, monkeypatch)
+def run_paper_shadow_protocol_fixture(
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    evidence_date_end: str = "2026-06-10",
+) -> dict[str, Any]:
+    fixture = run_formal_research_method_contract_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end=evidence_date_end,
+    )
     contract = fixture["formal_research_method_contract"]
     protocol = readiness.build_paper_shadow_protocol(
         contract_id=contract["contract_id"],
@@ -406,7 +513,12 @@ def assert_research_safe(payload: dict[str, Any]) -> None:
     assert payload["production_effect"] == "none"
 
 
-def _source_filtered_candidate_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
+def _source_filtered_candidate_fixture(
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    evidence_date_end: str,
+) -> dict[str, Any]:
     policy_source = {
         "path": "tests/fixtures/filtered_candidate_pipeline_policy.yaml",
         "sha256": "0" * 64,
@@ -469,7 +581,7 @@ def _source_filtered_candidate_fixture(tmp_path: Path, monkeypatch: Any) -> dict
         "status": "PASS",
         "market_regime": "ai_after_chatgpt",
         "date_start": "2022-12-01",
-        "date_end": "2026-06-10",
+        "date_end": evidence_date_end,
         "data_quality_status": "PASS_WITH_WARNINGS",
         "filtered_vs_original_manifest_path": str(
             comparison_dir / "filtered_vs_original_manifest.json"
@@ -544,7 +656,7 @@ def _source_filtered_candidate_fixture(tmp_path: Path, monkeypatch: Any) -> dict
         "status": "PASS",
         "market_regime": "ai_after_chatgpt",
         "date_start": "2022-12-01",
-        "date_end": "2026-06-10",
+        "date_end": evidence_date_end,
         "data_quality_status": "PASS_WITH_WARNINGS",
         "filtered_promotion_manifest_path": str(review_dir / "filtered_promotion_manifest.json"),
         "filtered_promotion_decision_path": str(review_dir / "filtered_promotion_decision.json"),

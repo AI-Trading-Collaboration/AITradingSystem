@@ -9265,7 +9265,7 @@ phase_g2_4cm_etf_cli_dynamic_v3_system_target_experiment_factory:
   - {path: tests/test_arch_004_refactor_policy.py, sha256: 120462a277b955fdb60860491c39f8f58476ca9adadb0ae6b5a7ba6b2bcfc33d}
   - {path: tests/test_arch_004g2_etf_cli_contract.py, sha256: 1e4550996683eab033aee3597079bc005a41a3ee36ef74c4887815c7864ed48b}
   - {path: tests/test_arch_004g_deprecation.py, sha256: a49bb1eef1eb4dc233724297a563357a04dfbf263bde3d66f59b0575a7970b1c}
-  - {path: tests/test_benchmark_baseline_metrics_materialization.py, sha256: 48a3e7924b748886d62ee6bbf48d35bba8aee3f28603cc22d61dac274c8fdeaf}
+  - {path: tests/test_benchmark_baseline_metrics_materialization.py, sha256: e9eec5ffef0b7d98cf1e1b9e387e505f6554206a6fe3abc6733dfa9eeac7fb9b}
   - path: tests/test_cli_direct.py
     sha256: 515c82ff8783ebad3ed86b692321ee2eed2580856f670c41b892eb98e63fad0e
     hash_normalization: git_eol_lf
@@ -11506,7 +11506,7 @@ integrated_change_trading_2445:
   - docs/system_flow.md
   - docs/task_register.md
   sources:
-  - {path: docs/operations/operations_runbook.md, sha256: cbac7d7faacbfe7031db6dbddcfadb3d83bd7e3baa2e0f5f50a80339a05fe4e1}
+  - {path: docs/operations/operations_runbook.md, sha256: a153828bd5c926d63e68aa322cb8c2d9481c549e12cde1638794fd9c3f498663}
   - {path: docs/requirements/TRADING-2445_Task_Register_BASELINE_DONE_Active_Semantics.md, sha256: 0204867f7cf1f845f9af69a3479c3d465d8820fec7999be685b8905e89875c30}
   - {path: docs/system_flow.md, sha256: 7711a0befeee44411ea3187c487f8fe2e3219c3065d94dff4cf9ae40ea2e0c3a}
   - {path: docs/task_register.md, sha256: 5c50929ba5eef4aff7c28abc6086962e26830128ba7197ef2d6b2e1b0f615586}
@@ -14584,35 +14584,35 @@ phase_g2_4eb3_etf_cli_dynamic_v3_filtered_candidate_readiness:
   next_phase_or_slice_unblocked: false
   sources:
   - {path: config/etf_portfolio/dynamic_v3_rescue/filtered_formalization_policy_v1.yaml, sha256: 59389ebf80269edc61d2ef9e828ca7956945732dbcb5cd8f4cae4e40a5955beb}
-  - {path: docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md, sha256: cf3bf755501a558dce5248e3daed386f3ed1d7e6c8713d6af7e591c0692bf2c5}
-  - {path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md, sha256: 78fede002b52fe496b5c4a9ffbca7007acba2cdc9a7099b266ed958473c6226e}
-  - {path: docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md, sha256: dd4fb726f6cfa7fbd7a5c826887e826916666d61581a82334b800714b97e0574}
-  - {path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md, sha256: b2e587906ae287e2c9632e7274dcf6fba98cd6618689d2bc09f9045a4dec903d}
+  - {path: docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md, sha256: fac360ce1c74544e7fd88a426510c08cf84ac89b114fbe533ad5f57d6af07269}
+  - {path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md, sha256: 957b0dd2d4f20c2023dc259be1f26cc466be112cbe7c15975c1c5e88720405d3}
+  - {path: docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md, sha256: 0ae7401484cdc248366317b28446f6f8ccf84f1215c88583ee6888b542e1c8ec}
+  - {path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md, sha256: 0e4b48d78fb4ecf6b34cfcff47b8195650b423d73c0c5805fbb5605a5960068d}
   - {path: docs/requirements/TRADING-336_to_345_Filtered_Signal_Candidate_Evidence_Expansion_and_Formalization_Readiness.md, sha256: ff9ed517d41a9cc6bceea827057e68e13562b350e9b498320db5105ce5854815}
   - {path: docs/requirements/TRADING-346_Formal_Research_Method_Contract.md, sha256: 3a93e6f368a8e72e954211f5a54d707b72850b348c5820713b397b8c399cfe2e}
-  - {path: docs/system_flow.md, sha256: bc02981d7369f48eb2df5d3958c6d70da53aa7bc5e5773d817d3b4ae053c386f}
-  - {path: docs/task_register.md, sha256: 8dd564a845a1c4bbaf543248cf86939bb1efba1f07bafee517b54907b1ce0622}
-  - {path: inputs/architecture/arch_004_worktree_attribution.yaml, sha256: be93797db621147b6639e02164fc8f2d48691045e2fd1a1d892fced0ffb02a63}
-  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 1f772ad7db4c02eebe028e16ba9dd4403a687ac3d94da8f7e4dccf2720fe98e5}
-  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 2db4c057555e252f0825fc78c4fbdab80efebb13eb6fba130e069f9683dab4dd}
-  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: d2166182fbba8eb7adce80cc8203cfed29f23bb70f04aec9fc84d94c4c6eeaf9}
-  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 36e8759691b19e314cdde623dbdb0283fc0b7f8be33433344954dab3f3f94279}
-  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: ac733fbcc7d066b4f397cf7ed15a2c130bb0881fa48d450017af54a5a44c7933}
-  - {path: inputs/architecture/arch_004g2_callback_migration_matrix.yaml, sha256: 8141c4a20d46961b769b6fe25fd4588e689fb8c8aea0243c5394f599472cf012}
-  - {path: inputs/architecture/arch_004g2_etf_cli_contract.yaml, sha256: 81120a94b481801697e991cb8901f20de49b615ca6b9257a9e58b46e1d74fce9}
-  - {path: inputs/architecture/arch_004g2_full_duration_profile.yaml, sha256: ad3a05a502fd2c922af2d4941d29e60704e6198fe26cc5717a1eec498ff04091}
-  - {path: src/ai_trading_system/cli_commands/etf_portfolio.py, sha256: 0932b883b32a038c32b6f8104e25f7b6bf1e88baf7ea9480f6208f9fce33e097, hash_normalization: git_eol_lf}
+  - {path: docs/system_flow.md, sha256: e8fbaba564670dcf97d56b74151cca9bb5cd79854ad1f6f04d5b130a71426a22}
+  - {path: docs/task_register.md, sha256: 5ad49ddfe4823fa4ea690f177b86164f4f064a10451430d09c0311cf562c8533}
+  - {path: inputs/architecture/arch_004_worktree_attribution.yaml, sha256: 434d8c7957a538e06255b902cdf28569942039a5af7fa8735e43a08e3ba98352}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: a42ddb204a41fc56674e676811e7599fef8df6f1bd7924ee6753ade089747e83}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 54c4e9e6d37005a072f1596a057f6531612113399b832f7fcd9f115de625b25f}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: be0ca08256e496da9670a4d784c98e22b865ddb1049048d0c0b323f4927fa33a}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 3230a5467df276f240fe0d9718e9c3ef59bca7f23617e7edf1e4e850715cd4f7}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 9c0517a7caf34339fae5d1707b8195b32a4b11e01ce1f96aff1e91df9fca35d2}
+  - {path: inputs/architecture/arch_004g2_callback_migration_matrix.yaml, sha256: dea710762653ed68761cc153ecae1f56822344dcba67e28c70ae3757372dc9c0}
+  - {path: inputs/architecture/arch_004g2_etf_cli_contract.yaml, sha256: 0f210bbcfbdbeab6ded8d4498f47062c21b34f27f4a68a5e32582d917a244921}
+  - {path: inputs/architecture/arch_004g2_full_duration_profile.yaml, sha256: 7e1e43d9a1d0b19bfbe2bfef9f746fa15c4e5f07a01793b9d4cc0ea285353172}
+  - {path: src/ai_trading_system/cli_commands/etf_portfolio.py, sha256: f0652cc97ee8127bc52d5f577e6d65ada46d371a4fd9ebf948e8d783981a8785, hash_normalization: git_eol_lf}
   - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_filtered_candidate_pipeline.py, sha256: 6881557903532ed195f3b563f159428c791a7308e74a0592dce682b544886f6c}
   - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_filtered_candidate_readiness_pipeline.py, sha256: c356a6bc10b8767a637a4bf9d0ab5d8dbfd23d0dfd1bbf1654fc302b3905047b}
-  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_filtered_candidate_readiness.py, sha256: fe363c9800a8921d9f88da3cb8c1815e23fe9550ae6bb6cc26bbe8f5da3146fe}
-  - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py, sha256: 99adc11938825705cf6e7876601bc00f238f4684dedb1c0e3fb80d7534204b42}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_filtered_candidate_readiness.py, sha256: bc66030d50b8d33aad5ee00da4dda5ed7103e4d1f32b7d71cdc597d7cfe6f38b}
+  - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py, sha256: 98121a09a81295c305761b80f2c9de83a1fc1e1d4df247df025478c59f6076f5}
   - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_filtered_candidate_readiness.py, sha256: 0bbe06d8567c79002c991368f7077b21a9fd4c44be4e13c4c66e8979a8aabf33}
-  - {path: tests/dynamic_v3_filtered_candidate_readiness_helpers.py, sha256: 6479387dcf36095709e745b000e3a45f5008747b193dc90fcc151b188e968018}
-  - {path: tests/test_arch_004_refactor_policy.py, sha256: 42a6769a8c5e296f117e8ae717b04c84bdecdd525c41f9e074a854aae69f7cd2}
-  - {path: tests/test_arch_004g_deprecation.py, sha256: 11e213e15e40955b021e2a62322a5de15bdde8c025bb33614884c5d315210a18}
-  - {path: tests/test_arch_004g2_callback_migration_matrix.py, sha256: 13156ba34c6284755f16cbf044203b85ed7be0ac6e2088fee7594404814cf87d}
-  - {path: tests/test_arch_004g2_etf_cli_contract.py, sha256: 71c4a7c3a1c8fb9681962d375b8e1ea0f7b8780a8e98a0c7a4c96f874788db37}
-  - {path: tests/test_candidate_decision_ledger.py, sha256: ff6fcb579bd493c9f378276bae0d824ed53129d1dc0066c7681f45b25a1549e8}
+  - {path: tests/dynamic_v3_filtered_candidate_readiness_helpers.py, sha256: 4133e317bf813d27a9d3797b4fdd8a7cdd516e387bd2260c12ce1e7fd708c864}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: d3ab7820421f8f85b1b6ab85625a67b71dfb543e3126403a9fb057d69fd35f2b}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: 97dfc5adb389fbe4cdbc9b311348cbb67f2c441e3b91b020d163835181e1623d}
+  - {path: tests/test_arch_004g2_callback_migration_matrix.py, sha256: c706b1f7e6bab2b42fa891bf82080a6386d267ee91a1fac0294edab5d29d10e0}
+  - {path: tests/test_arch_004g2_etf_cli_contract.py, sha256: c7ad3248a13afce893637c4394bc626d226f4eb196a6be78356d4070828f33cc}
+  - {path: tests/test_candidate_decision_ledger.py, sha256: 440b9a0929c94181a4433554109c38f218bc057cbcaeab59dd9de2069a57a443}
   - {path: tests/test_drawdown_mismatch_reduction.py, sha256: 85c4c38507403220f275e2b3d94c5eef03b2454134e8efd3877fa78786a7736d}
   - {path: tests/test_evidence_staleness_monitor.py, sha256: d37d5da272b270f3ea66e15b45665881db6832c7b402d5ea1b5659609946315f}
   - {path: tests/test_filtered_candidate_ab_review.py, sha256: 4005a4a8713b08f9b9d3af5ba79a45562afb4add3ef90d7de25f30670cda7a43}
@@ -14622,14 +14622,307 @@ phase_g2_4eb3_etf_cli_dynamic_v3_filtered_candidate_readiness:
   - {path: tests/test_filtered_formalization_readiness.py, sha256: 9ec488047626424d8ac94fbba6e0a8eecf544aa22065a39010e69fa94d618221}
   - {path: tests/test_filtered_next_decision.py, sha256: 42c6e0135aae2fd8b6cdf733ba47c87872b86354fb8509c55240d5eb77de1172}
   - {path: tests/test_flip_rotation_reduction.py, sha256: f0c9ca146f6512eed1e88156a2a362de8ec4fc8a0c03820307e9b50242088ec3}
-  - {path: tests/test_formal_research_method_contract.py, sha256: 75dea20a70676efbcfd23a87890ba34dbc7cf50e16d71d3ce5ed3a328ad7b6b4}
+  - {path: tests/test_formal_research_method_contract.py, sha256: bbafeda591e8808be9887671061705cbd244e9a511285fe59c101c3202ea6ba1}
   - {path: tests/test_median_regime_filter_spec.py, sha256: de683019465727552a8659554cd19056be4dd561240d5975c4a2742c1e06c9c0}
   - {path: tests/test_owner_filtered_candidate_review.py, sha256: ae654193846f7add8962313e96e3faca89197dfa1263ce541a732bf547c8c76e}
   - {path: tests/test_paper_shadow_daily.py, sha256: 2c4371160c57c1fd362a5dd6bacf34f15c082eec28ac91fefe34ed16ffe29712}
   - {path: tests/test_paper_shadow_drift_monitor.py, sha256: eed8be57800d575a72959cab7f2ca8aa9e60270f6ef0a3893f3bb18362f70a99}
   - {path: tests/test_paper_shadow_protocol.py, sha256: e3f9000896cefec70e61fff58ad9311e413cf656912d81d8142901a3d134a994}
   - {path: tests/test_paper_shadow_weekly_review.py, sha256: c848cf92864c07396e3b6da4f56cb029af8c7b9fe0678c7bb40e8953c664be75}
-  - {path: tests/test_promotion_gate_threshold_calibration.py, sha256: afb29718575c1c4c8e845b9f28bfa1632b78128222f00dfa099c36d9501e9595}
-  - {path: tests/test_shadow_continuation_readiness.py, sha256: 1e2cce226fa624d4e0f17abbd93c53171a4026d506c36b7f9b4496cc2a9d09fe}
+  - {path: tests/test_promotion_gate_threshold_calibration.py, sha256: dc23d314eb2c49b78cb48a0e57e607a81954b6b0857c73b6fab1264007c61b4b}
+  - {path: tests/test_shadow_continuation_readiness.py, sha256: 078ad124abc0367a4112adea72ed9c9b91045942fe5ce177ab50fea162cda273}
   - {path: tests/test_signal_gate_confirmation.py, sha256: 831ba639e449d70bb49baa89e41f01fa2643fec1243c2bd163a40e1b10a0545e}
-  - {path: tests/test_validation_runtime_profile.py, sha256: cea8bd903d1bbabda1717be60c989d7609cdc6788fb45da5fa73213733b3d001}
+  - {path: tests/test_validation_runtime_profile.py, sha256: 03051b424977cf1a2fe9603851a0887456dd639ff9925ebdd0656d416e390652}
+
+phase_g2_4eb4_etf_cli_evidence_materialization_and_input_readiness:
+  status: COMPLETE_G2_4_CONTINUES
+  task_id: ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION
+  as_of: 2026-07-19
+  base_commit: 26a45e0d
+  boundary_id: ARCH-004G2.4-EB4
+  owner_authorization:
+    instruction: 先按照这个顺序推进到可以考虑开始推进研究策略前把
+    eb4_through_handoff_authorized: true
+    arch_005_s0_s1_after_handoff_authorized: true
+    g2_5_requires_later_explicit_instruction: true
+  migration:
+    callback_count: 39
+    app_callback_count: 26
+    matching_validator_callback_count: 13
+    domain_public_entrypoint_count: 39
+    canonical_interfaces:
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_contract_ledger.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_input_readiness.py
+    callback_ids:
+    - callback_ef193f6f4e7895c7b947
+    - callback_e7716e04a867fab18b6d
+    - callback_1d555c08f6878a5e602d
+    - callback_73d7866e32c351713525
+    - callback_9475d238601959973a11
+    - callback_8279516623b9143b75d5
+    - callback_a5018d3a4f6ca9f838af
+    - callback_5dbe1cced1eda1dee266
+    - callback_f111e4c46dca4387c120
+    - callback_dd86d8eb58b2d3f791a1
+    - callback_ed8ec63b48818cabb5df
+    - callback_e37d115708ab86d862f1
+    - callback_b6f1f4fa28e5980f4368
+    - callback_11db61c7743980a52713
+    - callback_1df25f5eea624d94e2fd
+    - callback_7ebf1fcdf0c636b54400
+    - callback_928970ff85c534a1227c
+    - callback_a677255aca5100ca0bb1
+    - callback_3684d37a81e8a5fd13a2
+    - callback_38a881c853265563d4b4
+    - callback_0b8eb8ced4b4e6337795
+    - callback_1f117c6507f2f82ddd24
+    - callback_7d4a32f5f84400107465
+    - callback_e79d2c97bbfc1b53b68f
+    - callback_b97bf15e57311e5e0048
+    - callback_67a24fc00287b2b337e7
+    - callback_c09e4a7a8f98f8cc320c
+    - callback_97b67d098cd670521047
+    - callback_1b0ac7ff748184eba457
+    - callback_1d866928bcbe86031c3d
+    - callback_62ab6607853a379b1e56
+    - callback_dd27391e28a827a280b1
+    - callback_14f114236d969d5c8675
+    - callback_3c0043125bc95ca9dc91
+    - callback_ad09f664476568c1eef1
+    - callback_090308e9697e5076df04
+    - callback_408f277b4f3c401ae60b
+    - callback_4d42810db26c3782e4f8
+    - callback_563315f7995ade52dbe9
+  contract:
+    input_snapshot_schemas:
+    - benchmark_baseline_control_input_snapshot.v2
+    - benchmark_baseline_metrics_materialization_input_snapshot.v2
+    - candidate_regression_replay_input_snapshot.v2
+    - cost_metrics_materialization_input_snapshot.v2
+    - cost_sensitivity_review_input_snapshot.v2
+    - drawdown_event_casebook_input_snapshot.v2
+    - flip_rotation_event_casebook_input_snapshot.v2
+    - metric_source_map_input_snapshot.v2
+    - promotion_gate_threshold_calibration_input_snapshot.v2
+    - formal_research_method_contract_input_snapshot.v2
+    - candidate_decision_ledger_input_snapshot.v2
+    - signal_input_completeness_input_snapshot.v2
+    - signal_input_completeness_recovery_input_snapshot.v2
+    - signal_input_recovery_input_snapshot.v2
+    materialized_view_count: 63
+    pre_output_live_source_validation: true
+    pit_chronology_and_lineage_binding: true
+    all_view_byte_rebuild: true
+    missing_or_unqualified_evidence:
+      observed_metrics: null
+      observed_rows: empty
+      status: INSUFFICIENT_DATA
+      promotion_ready: false
+      automatic_promotion: false
+    formal_contract_requires_ten_explicit_validated_sources: true
+    candidate_ledger_append_only_hash_chain: true
+    casebooks_are_manual_diagnostics_only: true
+    regression_replay_is_behavior_contract_not_performance_replay: true
+    threshold_policy_status: PILOT_POLICY_ONLY_NOT_EMPIRICALLY_CALIBRATED
+  subtraction:
+    legacy_cli_lines_before: 10725
+    legacy_cli_lines_after: 9065
+    legacy_cli_top_level_functions_before: 231
+    legacy_cli_top_level_functions_after: 192
+    legacy_cli_decorators_before: 192
+    legacy_cli_decorators_after: 153
+    legacy_readiness_domain_lines_before: 4114
+    legacy_readiness_domain_lines_after: 2978
+    compatibility_wrapper_count: 6
+    duplicate_implementation_retained: false
+  callback_matrix:
+    baseline_callback_count: 967
+    migrated_callback_count: 814
+    pending_callback_count: 153
+    unresolved_callback_count: 0
+    duplicate_registration_count: 0
+    phase_exit_criteria_passed: false
+  cli_contract:
+    root_command_count: 41
+    group_count: 291
+    leaf_command_count: 993
+    duplicate_path_count: 0
+    command_tree_sha256: 01c78550ae58b38c2d8cca0683376643e2934f93e324710612c87d39eea7302d
+  hardening:
+    source_tamper_fail_closed: true
+    snapshot_tamper_fail_closed: true
+    policy_tamper_fail_closed: true
+    output_tamper_fail_closed: true
+    cross_lineage_tamper_fail_closed: true
+    chronology_tamper_fail_closed: true
+    implicit_latest_for_formal_sources_forbidden: true
+    synthetic_benchmark_cost_or_event_evidence_forbidden: true
+  focused_validation:
+    business_and_tamper: {status: PASS, passed: 54, elapsed_seconds: 33.73}
+    cli_contract: {status: PASS, passed: 138, elapsed_seconds: 36.50}
+    changed_file_max_duration_seconds: 17.98
+    frozen_tail_trigger_seconds: 57.8214758
+    performance_triggered: false
+  formal_validation:
+    architecture_fitness:
+      status: PASS
+      passed: 399
+      elapsed_seconds: 54.13
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260719T104824Z/test_runtime_summary.json
+      runtime_artifact_sha256: 07072fc0cbde0d0d626b9d563fa445cd1f831dc4f05b5cd8741dc3f85be903d7
+    contract_validation:
+      status: PASS
+      passed: 264
+      elapsed_seconds: 68.69
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260719T104824Z/test_runtime_summary.json
+      runtime_artifact_sha256: 4a345258be5d63b4e70f6d721bdcb3f1196cc1cdf7e8153f82fd417e13f4f396
+    full_validation:
+      status: PASS_AFTER_AUDITED_FAILURE_FIX_RERUN
+      required_natural_run_count: 1
+      actual_natural_run_count: 1
+      natural_run:
+        status: FAIL
+        passed: 6366
+        failed: 7
+        skipped: 2
+        warnings: 643
+        elapsed_seconds: 894.30
+        runtime_artifact: outputs/validation_runtime/full_20260719T102620Z/test_runtime_summary.json
+        runtime_artifact_sha256: c3acc6e90ceb44243ae0c1b2373c7884df7a0bce72a9513346396f0684d5154f
+        runtime_profile: outputs/validation_runtime/full_20260719T102620Z/test_runtime_profile.json
+        runtime_profile_sha256: 001765b254a576b0f1e3ac29c610ff30c0eb1a0b9abbddf821b4f963b8231340
+        trigger_reason: natural_integration_boundary
+        provenance_status: PASS
+        scheduler_applied: true
+        scheduler_fallback: false
+      failure_clusters:
+      - id: post_freeze_fixture_mutation
+        failed: 5
+        root_cause: test fixture mutated formal-contract source evidence after lineage freeze
+        fix: declare source date before building the validated downstream chain
+      - id: handcrafted_legacy_signal_fixture
+        failed: 2
+        root_cause: test fixture bypassed the v2 signal-input snapshot and exact rebuild contract
+        fix: use the canonical monitor for both OK and fail-closed BLOCKING evidence
+      focused_failure_fix: {status: PASS, passed: 7, elapsed_seconds: 39.22}
+      failure_fix_rerun:
+        status: PASS
+        trigger_reason: failure_fix_rerun
+        boundary_id: ARCH-004G2.4-EB4-FIX1
+        parent_run_validated: true
+        parent_summary_sha256: c3acc6e90ceb44243ae0c1b2373c7884df7a0bce72a9513346396f0684d5154f
+        passed: 6373
+        failed: 0
+        skipped: 2
+        warnings: 643
+        elapsed_seconds: 878.73
+        runtime_artifact: outputs/validation_runtime/full_20260719T105005Z/test_runtime_summary.json
+        runtime_artifact_sha256: 9a2a76dc95127faa4d644dc583801c01b625272f406946fd93fd85b3cc98723d
+        runtime_profile: outputs/validation_runtime/full_20260719T105005Z/test_runtime_profile.json
+        runtime_profile_sha256: 6da7ab43ad509b19277122fa575e37a4d2b3845a42c014096b555f75862ed5fb
+        node_count: 6375
+        file_count: 1072
+        worker_count: 16
+        collection_complete: true
+        duplicate_node_count: 0
+        scheduler_applied: true
+        scheduler_fallback: false
+        profile_status: PASS
+        telemetry_status: PASS
+        performance_evidence_status: PASS
+        validation_provenance_binding_status: PASS
+        production_effect: none
+      duration_profile_refresh:
+        status: PARTIAL_SEED
+        version: 11
+        source_runtime_profile_sha256: 6da7ab43ad509b19277122fa575e37a4d2b3845a42c014096b555f75862ed5fb
+        manifest_sha256: 7e1e43d9a1d0b19bfbe2bfef9f746fa15c4e5f07a01793b9d4cc0ea285353172
+        node_count: 6375
+        file_count: 1072
+        stable_full_improvement_claimed: false
+    architecture_devex:
+      status: PASS_GENERATED_FINAL
+      module_count: 960
+      test_file_count: 1130
+      direct_writer_count: 858
+      violation_count: 0
+    deprecation_inventory:
+      status: FRESH_REFRESHED_FINAL
+      inventory_id: arch_004g_deprecation_inventory_62f9f558a5715e6f126b
+      module_count: 960
+      test_file_count: 1130
+  safety:
+    strategy_logic_changed: true
+    change_reason: remove synthesized evidence and preserve missing data as null or insufficient
+    cached_data_mutated: false
+    official_weights_changed: false
+    paper_shadow_or_portfolio_mutated: false
+    order_or_broker_action: none
+    production_effect: none
+  next_work:
+    eb5_after_eb4_integration_gate: true
+    eb5_unblocked: true
+    whole_g2_4_phase_exit_passed: false
+    formal_arch_005_s0_unblocked: false
+    g2_5_unblocked: false
+    phase_exit_or_handoff_triggered: false
+  next_phase_or_slice_unblocked: true
+  sources:
+  - {path: docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md, sha256: fac360ce1c74544e7fd88a426510c08cf84ac89b114fbe533ad5f57d6af07269}
+  - {path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md, sha256: 957b0dd2d4f20c2023dc259be1f26cc466be112cbe7c15975c1c5e88720405d3}
+  - {path: docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md, sha256: 0ae7401484cdc248366317b28446f6f8ccf84f1215c88583ee6888b542e1c8ec}
+  - {path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md, sha256: 0e4b48d78fb4ecf6b34cfcff47b8195650b423d73c0c5805fbb5605a5960068d}
+  - {path: docs/system_flow.md, sha256: e8fbaba564670dcf97d56b74151cca9bb5cd79854ad1f6f04d5b130a71426a22}
+  - {path: docs/task_register.md, sha256: 5ad49ddfe4823fa4ea690f177b86164f4f064a10451430d09c0311cf562c8533}
+  - {path: inputs/architecture/arch_004_worktree_attribution.yaml, sha256: 434d8c7957a538e06255b902cdf28569942039a5af7fa8735e43a08e3ba98352}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: a42ddb204a41fc56674e676811e7599fef8df6f1bd7924ee6753ade089747e83}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 54c4e9e6d37005a072f1596a057f6531612113399b832f7fcd9f115de625b25f}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: be0ca08256e496da9670a4d784c98e22b865ddb1049048d0c0b323f4927fa33a}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 3230a5467df276f240fe0d9718e9c3ef59bca7f23617e7edf1e4e850715cd4f7}
+  - {path: inputs/architecture/arch_004g2_callback_migration_matrix.yaml, sha256: dea710762653ed68761cc153ecae1f56822344dcba67e28c70ae3757372dc9c0}
+  - {path: inputs/architecture/arch_004g2_etf_cli_contract.yaml, sha256: 0f210bbcfbdbeab6ded8d4498f47062c21b34f27f4a68a5e32582d917a244921}
+  - {path: inputs/architecture/arch_004g2_full_duration_profile.yaml, sha256: 7e1e43d9a1d0b19bfbe2bfef9f746fa15c4e5f07a01793b9d4cc0ea285353172}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 9c0517a7caf34339fae5d1707b8195b32a4b11e01ce1f96aff1e91df9fca35d2}
+  - {path: scripts/refresh_partial_duration_profile.py, sha256: 03848f7fef2fc76f5be15d4665d11f78a566ffe26c6dfb5f1d1f13bf63bca5aa}
+  - {path: src/ai_trading_system/cli_commands/etf_portfolio.py, sha256: f0652cc97ee8127bc52d5f577e6d65ada46d371a4fd9ebf948e8d783981a8785, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_benchmark_baseline_control.py, sha256: 44b9df567e470258698fcc2416e42966c781e4373d9116581513028042da0642}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_benchmark_baseline_metrics_materialization.py, sha256: 072a13789f80a4d5a5b62212251ac4f441f66d59b1a5759f84f25cc048391f78}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_candidate_regression_replay.py, sha256: 96fc8ff7503af1548172a95deab5f4330f7ce9f8af636fe05c50ffcdc2ac87fa}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_cost_metrics_materialization.py, sha256: 4b355a6cb2f9f12f0f54645de27e7c43fcefb96b4a6936954480235157a4e9f4}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_cost_sensitivity.py, sha256: 72503aa3467dedef17979e54ccbb1ce367d25cce73ffa72172b4ee06aae1748f}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_drawdown_casebook.py, sha256: 37231dfc2a7be218b59b06a7d060940dd976105514b3e66721f6259807913455}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_filtered_candidate_readiness.py, sha256: bc66030d50b8d33aad5ee00da4dda5ed7103e4d1f32b7d71cdc597d7cfe6f38b}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_flip_rotation_casebook.py, sha256: 8c257e91f11c4d9682fb2db66319756cbf50d92c44ba9897eb89a22d7496c774}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_metric_source_map.py, sha256: b7f18f3e81f008fa120e64206f97b056bd95d8f5a855b727397722e73aeac302}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_promotion_thresholds.py, sha256: e2114b98c8b7af60e0d4910dba3bd462750e63c7dd3bae2887fb947d90086e09}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_research_contract_ledger.py, sha256: 9ac383d65b62d972f47cc35599817fe00cfb725c367b212a13b51d4caec4687e}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_completeness.py, sha256: ebadf85aa63b953dcbfa0fb890f0987bf640ed6dba41c5db2160b275357d1d6b}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_completeness_recovery.py, sha256: 06e720d542140da7bc964b682cb9ed0c8d9a7574fd8161c3aad6b4d12e51f9cd}
+  - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_recovery.py, sha256: cb340d160f35fd26308c3facd9e261ef0cda96805f3113bc57e0a87fb14f7cc4}
+  - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py, sha256: 98121a09a81295c305761b80f2c9de83a1fc1e1d4df247df025478c59f6076f5}
+  - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py, sha256: 3ffe199524aa8560d2a3fa50ad553a9e30fb3656f302419882b2d45a55f46729}
+  - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_contract_ledger.py, sha256: eb6cd632a051759739e574efc87dd0cb357428bf1b1e1fa502309872f71a3a9a}
+  - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_input_readiness.py, sha256: 3eab94c7283a1f677c432c448715ff3e50deeb1a898a100f1256ebbf9cf88e0e}
+  - {path: tests/dynamic_v3_filtered_candidate_readiness_helpers.py, sha256: 4133e317bf813d27a9d3797b4fdd8a7cdd516e387bd2260c12ce1e7fd708c864}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: d3ab7820421f8f85b1b6ab85625a67b71dfb543e3126403a9fb057d69fd35f2b}
+  - {path: tests/test_arch_004g2_callback_migration_matrix.py, sha256: c706b1f7e6bab2b42fa891bf82080a6386d267ee91a1fac0294edab5d29d10e0}
+  - {path: tests/test_arch_004g2_etf_cli_contract.py, sha256: c7ad3248a13afce893637c4394bc626d226f4eb196a6be78356d4070828f33cc}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: 97dfc5adb389fbe4cdbc9b311348cbb67f2c441e3b91b020d163835181e1623d}
+  - {path: tests/test_benchmark_baseline_control.py, sha256: a79fc09273000f18de81d68d5288016b8632d53c98eb1a643188ef189f63dfee}
+  - {path: tests/test_benchmark_baseline_metrics_materialization.py, sha256: e9eec5ffef0b7d98cf1e1b9e387e505f6554206a6fe3abc6733dfa9eeac7fb9b}
+  - {path: tests/test_candidate_decision_ledger.py, sha256: 440b9a0929c94181a4433554109c38f218bc057cbcaeab59dd9de2069a57a443}
+  - {path: tests/test_candidate_regression_replay.py, sha256: 8f99ada18c852a230b4e2b98441f1163b10177ae30a45c14dfcbdda6a4ebecff}
+  - {path: tests/test_cost_metrics_materialization.py, sha256: 1b5681076755833c6c4f786e58f4e17878d573ed4e95a08ac7e7c4d96f571754}
+  - {path: tests/test_cost_sensitivity_review.py, sha256: 201b3174d5c83d12b6fda84d42beaa6d52701b201338ec972a125f7c430ed3d1}
+  - {path: tests/test_drawdown_event_casebook.py, sha256: 022825f70e1d0a10af13c300ff86e4d80e0f745bd07d2f53f8fb2d1e0caa6711}
+  - {path: tests/test_flip_rotation_event_casebook.py, sha256: 3b1646d5ab10e8a71418b27bb226c42fcc9131ac919e2a7135d9949584f1e25a}
+  - {path: tests/test_formal_research_method_contract.py, sha256: bbafeda591e8808be9887671061705cbd244e9a511285fe59c101c3202ea6ba1}
+  - {path: tests/test_metric_source_map.py, sha256: 7aa7a5199b233e6aad8b6a5fe891ab4f203b28349d2ee5e2c94f25a85b9df2f6}
+  - {path: tests/test_paper_shadow_health.py, sha256: 6bcabc6d3e9cb9a3155a58b8c1d14b6e671166f3168fb56036dafa486fb7d2c0}
+  - {path: tests/test_promotion_gate_threshold_calibration.py, sha256: dc23d314eb2c49b78cb48a0e57e607a81954b6b0857c73b6fab1264007c61b4b}
+  - {path: tests/test_signal_input_completeness.py, sha256: cad351f269c7e3b01c8eae2c6acee48faff7bf69aabd6ed5931c85f7bb303561}
+  - {path: tests/test_signal_input_completeness_recovery.py, sha256: 625ea3e57778a6d5bd73c20c5b9e57a40cacf791ed15afeaf3c09861261dcb00}
+  - {path: tests/test_signal_input_recovery.py, sha256: e1e109a4869c75de228937852be2bf1ca6b8d99ce8d3087798dc522482a0d2b2}
+  - {path: tests/test_shadow_continuation_readiness.py, sha256: 078ad124abc0367a4112adea72ed9c9b91045942fe5ce177ab50fea162cda273}
+  - {path: tests/test_validation_runtime_profile.py, sha256: 03051b424977cf1a2fe9603851a0887456dd639ff9925ebdd0656d416e390652}

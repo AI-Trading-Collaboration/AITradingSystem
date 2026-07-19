@@ -558,6 +558,23 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
   `397/262 passed`，唯一natural Full=`6,357 passed / 2 skipped / 643 warnings / 981.25s`；profile、
   telemetry、performance、provenance全部PASS，`PARTIAL_SEED v9`调度已应用且无fallback。单个EB3不等于
   G2.4 phase exit；ARCH-005 S0/G2.5/handoff与EB4仍未解锁，`production_effect=none`。
+- 2026-07-19：owner授权的G2.4-EB4 Evidence Materialization / Calibration / Signal-input Readiness
+  implementation与focused gate完成，进入`VALIDATING_G2_4_CONTINUES`。39 callbacks/public APIs迁至
+  `dynamic_v3_evidence_materialization.py`、`dynamic_v3_research_contract_ledger.py`与
+  `dynamic_v3_signal_input_readiness.py`，legacy CLI=`10,725/231/192 -> 9,065/192/153`，legacy readiness
+  domain=`2,978 lines / 6 lazy wrappers`。14类v2 snapshots、63 views、live source/policy/PIT/chronology/
+  lineage与all-view byte rebuild闭合；missing/unqualified evidence保持empty/null/`INSUFFICIENT_DATA`，
+  threshold/casebook保持research-only/manual-only。CLI=`41/291/993/0`且冻结tree hash不变，matrix=
+  `814/153/0/0`；focused business/tamper=`54 passed/33.73s`、CLI contract=`138 passed/36.50s`，
+  changed-file max=`17.98s`未触发`57.8214758s`性能门禁；最终architecture=`399 passed / 54.13s`、
+  contract=`264 passed / 68.69s`均已PASS，最长相关节点=`24.05s`。Generated新鲜度已闭合；
+  formal ARCH-005 S0、G2.5与handoff仍未解锁，`production_effect=none`。
+  首次natural Full=`6,366 passed / 7 failed / 2 skipped / 643 warnings / 894.30s`，失败集中在两个
+  legacy test fixture绕过EB4新snapshot/lineage contract；修复后focused=`7 passed / 39.22s`，下一步只允许
+  绑定原失败artifact的`failure_fix_rerun`最终=`6,373 passed / 2 skipped / 643 warnings / 878.73s`，
+  `6,375 nodes / 1,072 files / 16 workers`、scheduler applied/no-fallback及profile/telemetry/performance/
+  provenance全部PASS，并刷新`PARTIAL_SEED v11`。EB4=`COMPLETE_G2_4_CONTINUES`、matrix=`814/153/0/0`；
+  owner序列中的EB5已解锁，但ARCH-005 S0、G2.5与handoff未解锁。
 - 2026-07-11：G2.4G Dynamic v0.2 Review contract freeze。迁`package/report/validate`三callback；package只读existing rescue、candidate robustness和optional shadow artifacts，不重跑market backtest。Rescue/robustness缺失fail closed，optional shadow缺失仅显式warning；保留source DQ/range/lineage、AI-regime policy、eligibility blockers和latest只读。只允许review package/validation治理artifact，禁止approval、shadow enrollment、auto promotion、official target、production和broker；CLI visibility必须切到canonical registration/owner。
 - 2026-07-11：G2.4F Dynamic Rescue slice `COMPLETE`，G2.4继续。最终rescue/contract组合=`37 passed`、architecture-fitness=`189 passed`，generated=`817 modules / 1,114 tests / 858 direct writers / 0 violations`。Legacy root净减3 callback及266行；DQ/price/rescue顺序、fail-closed、canonical CLI visibility和no-enrollment/approval/promotion/production边界通过。
 - 2026-07-11：G2.4F Dynamic Rescue实现完成并进入`VALIDATING`。三callback迁canonical，旧root callback为0；validation从旧root文本探针改查canonical registration/owner。Root=`32,979 -> 32,713 lines / 988 -> 985 functions / 948 -> 945 decorators`，direct writer=858、CLI tree不变。Cached DQ→standard-price validation→bounded rescue顺序、fail-closed、source lineage与no-enrollment/approval/promotion/official-target/broker边界通过focused=25。

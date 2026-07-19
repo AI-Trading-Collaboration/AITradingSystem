@@ -3,11 +3,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_health as health
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as weekly
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_diagnostics as diagnostics
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_foundation as foundation
 
 DEFAULT_COST_SENSITIVITY_CONFIG_PATH = (
     st.PROJECT_ROOT
@@ -49,6 +52,14 @@ COST_SENSITIVITY_SAFETY = {
     "auto_apply": False,
     "production_effect": "none",
 }
+COST_SENSITIVITY_INPUT_SCHEMA = "cost_sensitivity_review_input_snapshot.v2"
+COST_SENSITIVITY_VIEWS = (
+    "cost_sensitivity_manifest.json",
+    "cost_sensitivity_review.json",
+    "cost_sensitivity_report.md",
+    "reader_brief_section.md",
+)
+COST_SENSITIVITY_SNAPSHOT = "cost_sensitivity_review_input_snapshot.json"
 
 
 def load_cost_sensitivity_policy(
@@ -69,8 +80,10 @@ def run_cost_sensitivity_review(
     config_path: Path = DEFAULT_COST_SENSITIVITY_CONFIG_PATH,
     output_dir: Path = DEFAULT_COST_SENSITIVITY_REVIEW_DIR,
     generated_at: datetime | None = None,
+    _validate_output: bool = True,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _generated_time(generated_at)
+    policy_source = foundation._file_binding(config_path)
     policy = load_cost_sensitivity_policy(config_path)
     weekly_source = _weekly_source(
         weekly_review_id=weekly_review_id,
@@ -90,6 +103,20 @@ def run_cost_sensitivity_review(
         or _parse_optional_date(metrics_source.get("as_of"))
         or _parse_optional_date(_mapping(weekly_source.get("summary")).get("week_end"))
         or generated.date()
+    )
+    if effective_as_of > generated.date():
+        raise ValueError("cost sensitivity as_of occurs after generated_at")
+    source_bindings = _cost_source_bindings(
+        metrics_source=metrics_source,
+        weekly_source=weekly_source,
+        health_source=health_source,
+    )
+    _validate_cost_sources(
+        metrics_source=metrics_source,
+        weekly_source=weekly_source,
+        health_source=health_source,
+        effective_as_of=effective_as_of,
+        generated=generated,
     )
     scenario_results = _scenario_results(
         policy=policy,
@@ -147,6 +174,12 @@ def run_cost_sensitivity_review(
             _mapping(policy.get("meaningful_improvement")).get("threshold"),
         ),
         "candidate_metrics_summary": metrics_source.get("summary"),
+        "candidate_lineage_id": _mapping(metrics_source.get("summary")).get(
+            "candidate_lineage_id"
+        ),
+        "evidence_status": _mapping(metrics_source.get("summary")).get(
+            "evidence_status"
+        ),
         "source_artifacts": {
             "candidate_metrics": metrics_source,
             "paper_shadow_weekly_review": weekly_source,
@@ -181,7 +214,11 @@ def run_cost_sensitivity_review(
         "promotion_board_inputs": promotion_board_inputs,
         "next_required_action": _next_required_action(cost_status),
         "limitations": [
-            "research-level linear cost sensitivity only",
+            "research-level linear cost sensitivity over validated dated gross metrics only",
+            (
+                "legacy proxy fields, simulation variants, gross-as-net inputs, "
+                "and missing-as-zero are rejected"
+            ),
             "does not model live spreads, market impact, taxes, financing, or fills",
             "does not refresh market data or rerun paper-shadow source artifacts",
             "does not approve candidate promotion or production target weights",
@@ -214,15 +251,58 @@ def run_cost_sensitivity_review(
         render_cost_sensitivity_report(manifest, review),
     )
     st._write_text(root / "reader_brief_section.md", reader)
+    snapshot = {
+        "schema_version": COST_SENSITIVITY_INPUT_SCHEMA,
+        "review_id": root.name,
+        "generated_at": generated.isoformat(),
+        "effective_as_of": effective_as_of.isoformat(),
+        "policy_source": policy_source,
+        "policy_lineage": {
+            "policy_id": policy.get("policy_id"),
+            "policy_version": policy.get("version"),
+        },
+        "source_bindings": source_bindings,
+        "source_lineage": {
+            "candidate": candidate,
+            "candidate_lineage_id": _mapping(metrics_source.get("summary")).get(
+                "candidate_lineage_id"
+            ),
+            "metrics_id": metrics_source.get("artifact_id"),
+            "weekly_review_id": weekly_source.get("artifact_id"),
+            "paper_shadow_health_id": health_source.get("artifact_id"),
+            "metrics_window_start": _mapping(metrics_source.get("summary")).get(
+                "window_start"
+            ),
+            "metrics_window_end": _mapping(metrics_source.get("summary")).get(
+                "window_end"
+            ),
+        },
+        "replay": {
+            "candidate_metrics_path": None
+            if candidate_metrics_path is None
+            else str(candidate_metrics_path.resolve()),
+            "inline_metrics": dict(candidate_metrics) if candidate_metrics is not None else None,
+            "weekly_review_id": weekly_review_id,
+            "weekly_review_dir": str(weekly_review_dir.resolve()),
+            "paper_shadow_health_id": paper_shadow_health_id,
+            "paper_shadow_health_dir": str(paper_shadow_health_dir.resolve()),
+        },
+        "view_hashes": foundation._view_hashes(root, COST_SENSITIVITY_VIEWS),
+    }
+    foundation._write_snapshot(root / COST_SENSITIVITY_SNAPSHOT, snapshot)
     st._write_latest_pointer(
         "latest_cost_sensitivity_review",
         root.name,
         root / "cost_sensitivity_manifest.json",
     )
-    validation = validate_cost_sensitivity_artifact(
-        review_id=root.name,
-        output_dir=output_dir,
-        write_output=True,
+    validation = (
+        validate_cost_sensitivity_artifact(
+            review_id=root.name,
+            output_dir=output_dir,
+            write_output=True,
+        )
+        if _validate_output
+        else {"status": "NOT_RUN", "failed_check_count": 0, "checks": []}
     )
     return {
         "review_id": root.name,
@@ -230,6 +310,7 @@ def run_cost_sensitivity_review(
         "manifest": manifest,
         "cost_sensitivity_review": review,
         "reader_brief_section": reader,
+        "input_snapshot": snapshot,
         "cost_sensitivity_validation": validation,
     }
 
@@ -255,6 +336,9 @@ def cost_sensitivity_report_payload(
         ),
         "review_dir": str(root),
     }
+    snapshot = st._read_optional_json(root / COST_SENSITIVITY_SNAPSHOT)
+    if snapshot:
+        payload["input_snapshot"] = snapshot
     validation = st._read_optional_json(root / "cost_sensitivity_validation.json")
     if validation:
         payload["cost_sensitivity_validation"] = validation
@@ -268,107 +352,25 @@ def validate_cost_sensitivity_artifact(
     write_output: bool = True,
 ) -> dict[str, Any]:
     root = output_dir / review_id
-    manifest = st._read_optional_json(root / "cost_sensitivity_manifest.json") or {}
-    review = st._read_optional_json(root / "cost_sensitivity_review.json") or {}
-    reader = (
-        (root / "reader_brief_section.md").read_text(encoding="utf-8")
-        if (root / "reader_brief_section.md").exists()
-        else ""
+    checks, ok = diagnostics._snapshot_preflight(
+        root=root,
+        snapshot_name=COST_SENSITIVITY_SNAPSHOT,
+        schema=COST_SENSITIVITY_INPUT_SCHEMA,
+        id_key="review_id",
+        artifact_id=review_id,
+        view_names=COST_SENSITIVITY_VIEWS,
     )
-    scenario_results = _records(review.get("scenario_results"))
-    scenario_ids = {_text(row.get("scenario_id")) for row in scenario_results}
-    source_artifacts = _mapping(review.get("source_artifacts"))
-    checks = st._required_file_checks(
-        root,
-        (
-            "cost_sensitivity_manifest.json",
-            "cost_sensitivity_review.json",
-            "cost_sensitivity_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check(
-                "manifest_review_id_match",
-                manifest.get("review_id") == review.get("review_id") == review_id,
-                "",
-            ),
-            st._check(
-                "status_allowed",
-                review.get("cost_sensitivity_status") in COST_SENSITIVITY_STATUSES,
-                _text(review.get("cost_sensitivity_status")),
-            ),
-            st._check(
-                "policy_metadata_visible",
-                all(
-                    _text(review.get(key))
-                    for key in ("policy_id", "policy_version", "config_path")
-                ),
-                "",
-            ),
-            st._check(
-                "meaningful_threshold_visible",
-                _float_or_none(review.get("meaningful_improvement_threshold"))
-                is not None,
-                _text(review.get("meaningful_improvement_threshold")),
-            ),
-            st._check(
-                "required_cost_scenarios_present",
-                set(REQUIRED_COST_SCENARIOS).issubset(scenario_ids),
-                ",".join(sorted(scenario_ids)),
-            ),
-            st._check(
-                "scenario_outputs_complete",
-                all(_scenario_output_complete(row) for row in scenario_results),
-                "",
-            ),
-            st._check(
-                "source_artifacts_visible",
-                {
-                    "candidate_metrics",
-                    "paper_shadow_weekly_review",
-                    "paper_shadow_health",
-                }.issubset(set(source_artifacts)),
-                ",".join(sorted(source_artifacts)),
-            ),
-            st._check(
-                "insufficient_inputs_fail_closed",
-                (
-                    _mapping(source_artifacts.get("candidate_metrics")).get("status")
-                    == "OK"
-                    or review.get("cost_sensitivity_status")
-                    == "INSUFFICIENT_COST_INPUTS"
-                ),
-                _text(_mapping(source_artifacts.get("candidate_metrics")).get("status")),
-            ),
-            st._check(
-                "promotion_board_input_visible",
-                bool(_mapping(review.get("promotion_board_inputs")).get("review_id")),
-                "",
-            ),
-            st._check(
-                "reader_brief_fields",
-                "cost_sensitivity_status" in reader
-                and "high_cost_improvement_meaningful" in reader
-                and "next_required_action" in reader,
-                "",
-            ),
-            st._check(
-                "research_only_cost_review",
-                review.get("research_only") is True
-                and review.get("execution_model_ready") is False
-                and review.get("data_downloaded_by_review") is False
-                and review.get("pipelines_executed_by_review") is False,
-                "",
-            ),
-            st._check("broker_forbidden", st._payload_safe(manifest, review), ""),
-        ]
-    )
-    validation = st._validation_payload(
-        "etf_dynamic_v3_cost_sensitivity_validation",
-        review_id,
-        checks,
+    validation = (
+        diagnostics._validate_content(
+            report_type="etf_dynamic_v3_cost_sensitivity_validation",
+            artifact_id=review_id,
+            checks=checks,
+            rebuild=lambda: _rebuild_cost_sensitivity(root, review_id),
+        )
+        if ok
+        else st._validation_payload(
+            "etf_dynamic_v3_cost_sensitivity_validation", review_id, checks
+        )
     )
     if write_output:
         st._write_json(root / "cost_sensitivity_validation.json", validation)
@@ -379,15 +381,184 @@ def validate_cost_sensitivity_artifact(
     return validation
 
 
+def _generated_time(value: datetime | None) -> datetime:
+    generated = value or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() != UTC.utcoffset(generated):
+        raise ValueError("generated_at must be timezone-aware UTC")
+    return generated.astimezone(UTC)
+
+
+def _aware_utc(value: object, field: str) -> datetime:
+    try:
+        parsed = value if isinstance(value, datetime) else datetime.fromisoformat(_text(value))
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{field} must be an ISO datetime") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() != UTC.utcoffset(parsed):
+        raise ValueError(f"{field} must be timezone-aware UTC")
+    return parsed.astimezone(UTC)
+
+
+def _cost_source_bindings(
+    *,
+    metrics_source: Mapping[str, Any],
+    weekly_source: Mapping[str, Any],
+    health_source: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    bindings: list[dict[str, Any]] = []
+    metrics_path = Path(_text(metrics_source.get("source_path")))
+    if metrics_path.is_file():
+        bindings.append({"role": "candidate_metrics", **foundation._file_binding(metrics_path)})
+    for role, source, names in (
+        (
+            "paper_shadow_weekly",
+            weekly_source,
+            (
+                "paper_shadow_weekly_manifest.json",
+                "paper_shadow_weekly_review.json",
+                "paper_shadow_weekly_validation.json",
+            ),
+        ),
+        (
+            "paper_shadow_health",
+            health_source,
+            (
+                "paper_shadow_health_manifest.json",
+                "paper_shadow_health_report.json",
+                "paper_shadow_health_validation.json",
+            ),
+        ),
+    ):
+        manifest_path = Path(_text(source.get("source_path")))
+        if source.get("exists") is not True:
+            continue
+        if not manifest_path.is_file():
+            raise ValueError(f"{role} manifest source missing: {manifest_path}")
+        for name in names:
+            bindings.append(
+                {
+                    "role": role,
+                    "artifact_id": source.get("artifact_id"),
+                    "name": name,
+                    **foundation._file_binding(manifest_path.parent / name),
+                }
+            )
+    return bindings
+
+
+def _validate_cost_sources(
+    *,
+    metrics_source: Mapping[str, Any],
+    weekly_source: Mapping[str, Any],
+    health_source: Mapping[str, Any],
+    effective_as_of: date,
+    generated: datetime,
+) -> None:
+    for label, source in (
+        ("paper_shadow_weekly", weekly_source),
+        ("paper_shadow_health", health_source),
+    ):
+        if source.get("exists") is True and source.get("validation_status") != "PASS":
+            raise ValueError(f"{label} source validation must PASS")
+        source_generated = _text(_mapping(source.get("summary")).get("generated_at"))
+        if source_generated and _aware_utc(source_generated, f"{label}.generated_at") > generated:
+            raise ValueError(f"{label} source occurs after generated_at")
+    metrics_summary = _mapping(metrics_source.get("summary"))
+    metrics_end = _parse_optional_date(metrics_summary.get("window_end"))
+    if metrics_end and metrics_end > effective_as_of:
+        raise ValueError("candidate metrics window_end occurs after requested as_of")
+    if metrics_source.get("status") != "OK":
+        return
+    metrics_generated = _aware_utc(
+        metrics_summary.get("generated_at"), "candidate_metrics.generated_at"
+    )
+    if metrics_generated > generated:
+        raise ValueError("candidate metrics source occurs after generated_at")
+    candidate = _text(metrics_summary.get("candidate"))
+    lineage = _text(metrics_summary.get("candidate_lineage_id"))
+    for label, source in (
+        ("paper_shadow_weekly", weekly_source),
+        ("paper_shadow_health", health_source),
+    ):
+        summary = _mapping(source.get("summary"))
+        source_candidate = _text(summary.get("candidate"))
+        source_lineage = _text(summary.get("candidate_lineage_id"))
+        if source_candidate and source_candidate != candidate:
+            raise ValueError(f"{label} candidate lineage candidate mismatch")
+        if source_lineage and source_lineage != lineage:
+            raise ValueError(f"{label} candidate lineage id mismatch")
+
+
+def _rebuild_cost_sensitivity(root: Path, review_id: str) -> list[dict[str, Any]]:
+    snapshot = st._read_json(root / COST_SENSITIVITY_SNAPSHOT)
+    policy_source = _mapping(snapshot.get("policy_source"))
+    foundation._validate_file_binding(policy_source)
+    for binding in _records(snapshot.get("source_bindings")):
+        foundation._validate_file_binding(binding)
+    policy = load_cost_sensitivity_policy(Path(_text(policy_source.get("path"))))
+    policy_lineage = _mapping(snapshot.get("policy_lineage"))
+    if policy.get("policy_id") != policy_lineage.get("policy_id") or policy.get(
+        "version"
+    ) != policy_lineage.get("policy_version"):
+        raise ValueError("cost sensitivity policy lineage drift")
+    generated = _aware_utc(snapshot.get("generated_at"), "snapshot.generated_at")
+    effective_as_of = date.fromisoformat(_text(snapshot.get("effective_as_of")))
+    replay = _mapping(snapshot.get("replay"))
+    metrics_path_text = _text(replay.get("candidate_metrics_path"))
+    with TemporaryDirectory(prefix="eb4-cost-sensitivity-") as temp_dir:
+        result = run_cost_sensitivity_review(
+            as_of=effective_as_of,
+            candidate_metrics_path=Path(metrics_path_text) if metrics_path_text else None,
+            candidate_metrics=_mapping(replay.get("inline_metrics"))
+            if replay.get("inline_metrics") is not None
+            else None,
+            weekly_review_id=_text(replay.get("weekly_review_id")) or None,
+            weekly_review_dir=Path(_text(replay.get("weekly_review_dir"))),
+            paper_shadow_health_id=_text(replay.get("paper_shadow_health_id")) or None,
+            paper_shadow_health_dir=Path(_text(replay.get("paper_shadow_health_dir"))),
+            config_path=Path(_text(policy_source.get("path"))),
+            output_dir=Path(temp_dir),
+            generated_at=generated,
+            _validate_output=False,
+        )
+        expected_root = Path(result["review_dir"])
+        expected = {
+            name: _normalize_replay_root(
+                (expected_root / name).read_bytes(),
+                expected_root=expected_root,
+                actual_root=root,
+            )
+            for name in COST_SENSITIVITY_VIEWS
+        }
+    if result["review_id"] != review_id:
+        raise ValueError("cost sensitivity review id is not reproducible")
+    return diagnostics._check_bytes(root, expected)
+
+
+def _normalize_replay_root(payload: bytes, *, expected_root: Path, actual_root: Path) -> bytes:
+    old = str(expected_root)
+    new = str(actual_root)
+    return payload.replace(old.encode(), new.encode()).replace(
+        old.replace("\\", "\\\\").encode(),
+        new.replace("\\", "\\\\").encode(),
+    )
+
+
 def latest_cost_sensitivity_summary(
     *,
     review_id: str | None = None,
     output_dir: Path = DEFAULT_COST_SENSITIVITY_REVIEW_DIR,
 ) -> dict[str, Any]:
+    if not review_id:
+        return {
+            "availability": "MISSING",
+            "review_id": None,
+            "limitation": "explicit cost sensitivity review id is required",
+            "production_effect": "none",
+        }
     try:
         payload = cost_sensitivity_report_payload(
             review_id=review_id,
-            latest=review_id is None,
+            latest=False,
             output_dir=output_dir,
         )
         review = _mapping(payload.get("cost_sensitivity_review"))
@@ -573,10 +744,15 @@ def _normalized_scenario(row: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _weekly_source(*, weekly_review_id: str | None, output_dir: Path) -> dict[str, Any]:
+    if not weekly_review_id:
+        return _missing_source(
+            "paper_shadow_weekly_review",
+            "explicit weekly review id is required; latest resolution is forbidden",
+        )
     try:
         payload = weekly.paper_shadow_weekly_review_report_payload(
             weekly_review_id=weekly_review_id,
-            latest=weekly_review_id is None,
+            latest=False,
             output_dir=output_dir,
         )
     except Exception as exc:
@@ -595,8 +771,10 @@ def _weekly_source(*, weekly_review_id: str | None, output_dir: Path) -> dict[st
         summary={
             "weekly_review_id": payload.get("weekly_review_id"),
             "candidate": review.get("candidate"),
+            "candidate_lineage_id": review.get("candidate_lineage_id"),
             "week_start": review.get("week_start"),
             "week_end": review.get("week_end"),
+            "generated_at": review.get("generated_at", payload.get("generated_at")),
             "weekly_decision": review.get("weekly_decision"),
             "coverage_status": review.get("coverage_status"),
             "coverage_classification": review.get("coverage_classification"),
@@ -607,10 +785,15 @@ def _weekly_source(*, weekly_review_id: str | None, output_dir: Path) -> dict[st
 
 
 def _health_source(*, health_id: str | None, output_dir: Path) -> dict[str, Any]:
+    if not health_id:
+        return _missing_source(
+            "paper_shadow_health",
+            "explicit paper-shadow health id is required; latest resolution is forbidden",
+        )
     try:
         payload = health.paper_shadow_health_report_payload(
             health_id=health_id,
-            latest=health_id is None,
+            latest=False,
             output_dir=output_dir,
         )
     except Exception as exc:
@@ -628,6 +811,10 @@ def _health_source(*, health_id: str | None, output_dir: Path) -> dict[str, Any]
         source_path=Path(_text(payload.get("paper_shadow_health_manifest_path"))),
         summary={
             "health_id": payload.get("health_id"),
+            "candidate": report.get("candidate"),
+            "candidate_lineage_id": report.get("candidate_lineage_id"),
+            "as_of": report.get("as_of"),
+            "generated_at": report.get("generated_at", payload.get("generated_at")),
             "paper_shadow_health_status": report.get("paper_shadow_health_status"),
             "safe_to_continue_shadow": report.get("safe_to_continue_shadow"),
             "signal_input_status": report.get("signal_input_status"),
@@ -652,7 +839,12 @@ def _candidate_metrics_source(
     else:
         payload = _metrics_from_weekly_source(weekly_source)
         source_path = None
-    summary = _normalized_metrics_summary(payload, weekly_source=weekly_source)
+    is_bound_file = source_path is not None and source_path.is_file()
+    summary = _normalized_metrics_summary(
+        payload,
+        weekly_source=weekly_source,
+        bound_file=is_bound_file,
+    )
     return _source(
         "candidate_metrics",
         exists=True,
@@ -661,7 +853,7 @@ def _candidate_metrics_source(
             _text(payload.get("artifact_id"), "candidate_metrics_inline_or_weekly_proxy"),
         ),
         status="OK" if _metrics_complete(summary) else "INSUFFICIENT_COST_INPUTS",
-        validation_status=_text(payload.get("validation_status"), "NOT_APPLICABLE"),
+        validation_status=_text(payload.get("validation_status"), "NOT_RUN"),
         source_path=source_path,
         summary=summary,
         payload={**payload, **COST_SENSITIVITY_SAFETY},
@@ -675,9 +867,8 @@ def _metrics_from_weekly_source(weekly_source: Mapping[str, Any]) -> dict[str, A
         "candidate": summary.get("candidate"),
         "as_of": summary.get("week_end"),
         "turnover": None,
-        "gross_performance_proxy": None,
-        "baseline_performance_proxy": None,
-        "gross_improvement_proxy": None,
+        "gross_performance": None,
+        "baseline_performance": None,
         "metric_source": "paper_shadow_weekly_review_proxy",
         "limitation": "weekly review does not contain numeric turnover/performance metrics",
         **COST_SENSITIVITY_SAFETY,
@@ -688,51 +879,76 @@ def _normalized_metrics_summary(
     payload: Mapping[str, Any],
     *,
     weekly_source: Mapping[str, Any],
+    bound_file: bool,
 ) -> dict[str, Any]:
-    weekly_summary = _mapping(weekly_source.get("summary"))
-    gross = _first_float(
+    eligible, reason = _validated_dated_metrics(
         payload,
-        "gross_performance_proxy",
-        "candidate_gross_performance_proxy",
-        "candidate_performance_proxy",
-        "candidate_return_proxy",
-        "total_return",
+        weekly_source=weekly_source,
+        bound_file=bound_file,
     )
-    baseline = _first_float(
-        payload,
-        "baseline_performance_proxy",
-        "baseline_return_proxy",
-        "benchmark_return_proxy",
-    )
-    gross_improvement = _first_float(
-        payload,
-        "gross_improvement_proxy",
-        "candidate_improvement_proxy",
-        "return_delta",
-        "candidate_return_delta",
-    )
-    if gross_improvement is None and gross is not None and baseline is not None:
-        gross_improvement = gross - baseline
+    gross = _float_or_none(payload.get("gross_performance")) if eligible else None
+    baseline = _float_or_none(payload.get("baseline_performance")) if eligible else None
+    turnover = _float_or_none(payload.get("turnover")) if eligible else None
+    gross_improvement = gross - baseline if gross is not None and baseline is not None else None
     return {
         "metrics_id": _text(payload.get("metrics_id"), _text(payload.get("artifact_id"))),
-        "candidate": _text(payload.get("candidate"), _text(weekly_summary.get("candidate"))),
-        "as_of": _text(payload.get("as_of"), _text(weekly_summary.get("week_end"))),
-        "metric_source": _text(payload.get("metric_source"), "candidate_metrics_json"),
-        "turnover": _round_or_none(
-            _first_float(
-                payload,
-                "turnover",
-                "turnover_proxy",
-                "candidate_turnover",
-                "average_turnover",
-                "avg_turnover",
-            )
-        ),
+        "candidate": _text(payload.get("candidate")),
+        "candidate_lineage_id": _text(payload.get("candidate_lineage_id")),
+        "source_variant": _text(payload.get("source_variant")),
+        "as_of": _text(payload.get("window_end")),
+        "window_start": _text(payload.get("window_start")),
+        "window_end": _text(payload.get("window_end")),
+        "generated_at": _text(payload.get("generated_at")),
+        "validation_status": _text(payload.get("validation_status"), "NOT_RUN"),
+        "evidence_status": "VALIDATED_DATED_METRICS" if eligible else "INSUFFICIENT_DATA",
+        "outcome_mode": _text(payload.get("outcome_mode")),
+        "metric_source": _text(payload.get("metric_source")),
+        "turnover": _round_or_none(turnover),
         "gross_performance_proxy": _round_or_none(gross),
         "baseline_performance_proxy": _round_or_none(baseline),
         "gross_improvement_proxy": _round_or_none(gross_improvement),
-        "limitation": _text(payload.get("limitation")),
+        "limitation": "" if eligible else reason,
     }
+
+
+def _validated_dated_metrics(
+    payload: Mapping[str, Any],
+    *,
+    weekly_source: Mapping[str, Any],
+    bound_file: bool,
+) -> tuple[bool, str]:
+    if not bound_file:
+        return False, "candidate metrics require a bound source file"
+    if payload.get("validation_status") != "PASS":
+        return False, "candidate metrics validation_status must PASS"
+    if payload.get("evidence_status") != "VALIDATED_DATED_METRICS":
+        return False, "candidate metrics evidence_status is not validated dated metrics"
+    if _text(payload.get("outcome_mode")) in {"", "BACKTEST_SIMULATION"}:
+        return False, "backtest simulation or unspecified outcome mode is not cost evidence"
+    candidate = _text(payload.get("candidate"))
+    lineage = _text(payload.get("candidate_lineage_id"))
+    source_variant = _text(payload.get("source_variant"))
+    if not candidate or not lineage or not source_variant:
+        return False, "candidate, candidate_lineage_id, and source_variant are required"
+    if source_variant == "limited_adjustment":
+        return False, "limited_adjustment is not the filtered candidate"
+    weekly_candidate = _text(_mapping(weekly_source.get("summary")).get("candidate"))
+    if weekly_candidate and candidate != weekly_candidate:
+        return False, "candidate does not match paper-shadow weekly candidate"
+    start = _parse_optional_date(payload.get("window_start"))
+    end = _parse_optional_date(payload.get("window_end"))
+    if start is None or end is None or start > end:
+        return False, "valid dated metric window_start/window_end is required"
+    try:
+        _aware_utc(payload.get("generated_at"), "candidate_metrics.generated_at")
+    except ValueError as exc:
+        return False, str(exc)
+    if any(
+        _float_or_none(payload.get(key)) is None
+        for key in ("turnover", "gross_performance", "baseline_performance")
+    ):
+        return False, "turnover, gross_performance, and baseline_performance are required"
+    return True, ""
 
 
 def _scenario_results(
@@ -761,7 +977,7 @@ def _scenario_result(
         cost_drag = None
         net_performance = None
         net_improvement = None
-        meaningful = False
+        meaningful = None
         classification = "INSUFFICIENT_INPUTS"
     else:
         cost_drag = turnover * total_cost_bps / 10_000.0
@@ -985,10 +1201,11 @@ def _metrics_complete(summary: Mapping[str, Any]) -> bool:
 def _scenario_meaningful(
     scenario_results: list[Mapping[str, Any]],
     scenario_id: str,
-) -> bool | str:
+) -> bool | None | str:
     for row in scenario_results:
         if _text(row.get("scenario_id")) == scenario_id:
-            return row.get("improvement_remains_meaningful") is True
+            value = row.get("improvement_remains_meaningful")
+            return None if value is None else value is True
     return "MISSING"
 
 
@@ -1013,7 +1230,9 @@ def _first_float(payload: Mapping[str, Any], *keys: str) -> float | None:
 
 def _float(value: object) -> float:
     parsed = _float_or_none(value)
-    return 0.0 if parsed is None else parsed
+    if parsed is None:
+        raise ValueError("required numeric policy value is missing")
+    return parsed
 
 
 def _float_or_none(value: object) -> float | None:

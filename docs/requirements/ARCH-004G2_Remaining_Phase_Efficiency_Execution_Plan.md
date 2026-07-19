@@ -782,6 +782,92 @@ no fallback，telemetry/performance/provenance均PASS，`stable_full_improvement
 `775/192/0/0`，因此whole G2.4 phase exit、`arch_005_bootstrap_handoff.v1`、正式ARCH-005 S0和G2.5
 继续锁定；EB4必须等待新的显式owner指令，`next_phase_or_slice_unblocked=false`、`production_effect=none`。
 
+### EB4 启动授权与 callback freeze
+
+2026-07-19，project owner 指令“先按照这个顺序推进到可以考虑开始推进研究策略前”构成继续既定
+关键路径并启动`ARCH-004G2.4-EB4`的显式授权，authority base=`26a45e0d`。它授权按
+EB4→EB5→EB6→EB7→EB8→G2.4 phase exit→handoff推进，并确认handoff PASS后按既定交接启动
+ARCH-005 S0/S1；但不改变每个batch的独立integration gate，也不允许在handoff前提前启动S0。
+S0/S1完成后仍必须取得一条届时新的显式恢复指令才能进入G2.5，当前指令不能预先替代该指令。
+入口matrix=`775 migrated / 192 pending / 0 unresolved / 0 duplicate`。
+
+EB4精确冻结39个仍为`PENDING_LEGACY_ROOT`的callbacks。26个app callbacks按source DAG分组为：
+
+- Benchmark/Cost/Source Materialization（10）：`callback_ef193f6f4e7895c7b947`、
+  `callback_e7716e04a867fab18b6d`、`callback_1d555c08f6878a5e602d`、
+  `callback_73d7866e32c351713525`、`callback_9475d238601959973a11`、
+  `callback_8279516623b9143b75d5`、`callback_a5018d3a4f6ca9f838af`、
+  `callback_5dbe1cced1eda1dee266`、`callback_f111e4c46dca4387c120`、
+  `callback_dd86d8eb58b2d3f791a1`；
+- Decision/Replay/Casebook（6）：`callback_ed8ec63b48818cabb5df`、
+  `callback_e37d115708ab86d862f1`、`callback_b6f1f4fa28e5980f4368`、
+  `callback_11db61c7743980a52713`、`callback_1df25f5eea624d94e2fd`、
+  `callback_7ebf1fcdf0c636b54400`；
+- Research Contract/Threshold/Signal Readiness（10）：`callback_928970ff85c534a1227c`、
+  `callback_a677255aca5100ca0bb1`、`callback_3684d37a81e8a5fd13a2`、
+  `callback_38a881c853265563d4b4`、`callback_0b8eb8ced4b4e6337795`、
+  `callback_1f117c6507f2f82ddd24`、`callback_7d4a32f5f84400107465`、
+  `callback_e79d2c97bbfc1b53b68f`、`callback_b97bf15e57311e5e0048`、
+  `callback_67a24fc00287b2b337e7`。
+
+13个matching validator callbacks为：`callback_c09e4a7a8f98f8cc320c`、
+`callback_97b67d098cd670521047`、`callback_1b0ac7ff748184eba457`、
+`callback_1d866928bcbe86031c3d`、`callback_62ab6607853a379b1e56`、
+`callback_dd27391e28a827a280b1`、`callback_14f114236d969d5c8675`、
+`callback_3c0043125bc95ca9dc91`、`callback_ad09f664476568c1eef1`、
+`callback_090308e9697e5076df04`、`callback_408f277b4f3c401ae60b`、
+`callback_4d42810db26c3782e4f8`、`callback_563315f7995ade52dbe9`。权威
+`(app_name, command_name, current_function)`继续以migration matrix为准；不得吸收EB5 callback。
+
+本批当前处于`IN_PROGRESS / CONTRACT_FREEZE`，下一责任方为G2.4 coordinator。实现前必须完成
+owned/shared path、上游validated source、下游consumer、fixture、view与focused nodeid审计。正确性边界固定为：
+
+1. observed benchmark、cost、regression、drawdown、flip/rotation与signal completeness只能由经过验证且
+   带日期、lineage、PIT/chronology和成本口径的source派生；缺失时保持empty/null和
+   `INSUFFICIENT_DATA`，不得用aggregate proxy、固定窗口、默认分母或公式合成；
+2. formal method contract与metric source map只能描述可执行研究合同和来源绑定，不能把spec/target当成
+   已观察证据；
+3. promotion threshold calibration属于受治理的research-only/manual-review policy surface，必须披露
+   policy/version/rationale/evidence与review condition；未校准或证据不足不得输出promotion-ready；
+4. producer写出前验证source，validator从冻结snapshot重验live source、policy、lineage、chronology并
+   逐byte重建全部JSON/JSONL/CSV/Markdown/Reader Brief views；source/snapshot/output/cross-lineage/
+   chronology tamper必须fail closed；
+5. 本批只迁producer/report/validator/domain public API并从legacy root做减法，不改变paper-shadow、
+   production weights、broker或automatic promotion，`production_effect=none`。
+
+EB4退出要求39 callbacks canonical迁移与legacy subtraction、focused parallel、matrix/CLI/manifests/
+compatibility/deprecation/reporting/source hashes fresh、architecture/contract及本批唯一natural Full PASS、
+clean worktree attribution和正常commit/push。EB4完成仍只是`COMPLETE_G2_4_CONTINUES`，不是whole G2.4 exit。
+
+2026-07-19，EB4 implementation与focused gate完成并进入`VALIDATING_G2_4_CONTINUES`。39 callbacks和
+39个domain public入口迁至三个canonical CLI owner，legacy root从`10,725/231/192`减至
+`9,065 lines / 192 functions / 153 decorators`；readiness legacy owner减至`2,978 lines / 6 lazy wrappers`。
+14类v2 snapshots和63个views绑定validated live source、policy、PIT/chronology与exact lineage，validator
+逐byte重建全部输出。Benchmark/cost/casebook/regression/metric-source/threshold/formal-contract/ledger/
+signal-input链不再用aggregate proxy、固定5d、default weights、gross-as-net、registered target或implicit latest
+伪造observed evidence；缺失或不合格证据保持empty/null/`INSUFFICIENT_DATA`。Formal contract必须绑定10个
+显式EB3 source，ledger使用fixed-root exclusive lock、atomic replace、sequence/hash chain，EB5 protocol缺失
+不能覆盖evidence gap；threshold保持`PILOT_POLICY_ONLY_NOT_EMPIRICALLY_CALIBRATED`，casebook保持
+`MANUAL_DIAGNOSTIC`。CLI tree精确恢复冻结`41/291/993/0`与hash=`01c78550...7302d`；matrix=
+`814 migrated / 153 pending / 0 unresolved / 0 duplicate`。Focused business/tamper=`54 passed / 33.73s`，
+CLI contract=`138 passed / 36.50s`；changed-file max=`17.98s`低于v10 frozen tail=`57.8214758s`，未触发
+性能风险。最终architecture=`399 passed / 54.13s`、contract=`264 passed / 68.69s`均已PASS，最长相关
+节点=`24.05s`，仍未触发性能门禁。Generated manifests、compatibility/deprecation/source hashes与
+duration seed均已刷新；EB4完成后按owner既有顺序授权解锁EB5，ARCH-005 S0/G2.5/handoff继续锁定，
+`production_effect=none`。
+
+首次natural Full已按`ARCH-004G2.4-EB4` provenance运行：`6,366 passed / 7 failed / 2 skipped /
+643 warnings / 894.30s`，scheduler applied/no-fallback。失败不是性能回归，而是Full补充暴露两个旧fixture
+绕过新契约：shadow continuation在formal lineage冻结后篡改source manifest（5项），paper-shadow health
+手写legacy signal artifact而未生成v2 snapshot（2项）。修复后两文件组合`7 passed / 39.22s`：前者将
+evidence date提前声明并完整重建下游链，后者复用canonical monitor生成`OK/BLOCKING`。原失败summary
+SHA=`c3acc6e9...154f`、profile SHA=`001765b2...1340`，runner preflight已确认可用受审计
+`failure_fix_rerun`绑定，不冒充第二次natural Full。修复Full最终=`6,373 passed / 2 skipped /
+643 warnings / 878.73s`，严格覆盖`6,375 nodes / 1,072 files / 16 workers`，scheduler applied/no-fallback，
+profile/telemetry/performance/provenance全部PASS。该PASS profile机械生成`PARTIAL_SEED v11`，manifest
+SHA=`7e1e43d9...3172`；仍不声明stable Full improvement。EB4收口为`COMPLETE_G2_4_CONTINUES`，
+只解锁EB5，不触发whole G2.4 exit、ARCH-005 S0或G2.5。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

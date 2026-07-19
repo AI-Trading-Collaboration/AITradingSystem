@@ -395,6 +395,18 @@ DYNAMIC_V3_FILTERED_CANDIDATE_READINESS_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_filtered_candidate_readiness.py"
 )
+DYNAMIC_V3_EVIDENCE_MATERIALIZATION_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_evidence_materialization.py"
+)
+DYNAMIC_V3_RESEARCH_CONTRACT_LEDGER_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_research_contract_ledger.py"
+)
+DYNAMIC_V3_SIGNAL_INPUT_READINESS_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_signal_input_readiness.py"
+)
 DYNAMIC_V3_WEIGHT_BATCH_SEARCH_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/etf_portfolio/dynamic_v3_weight_batch_search.py"
 )
@@ -428,6 +440,10 @@ DYNAMIC_V3_FILTERED_CANDIDATE_READINESS_PATH = (
 DYNAMIC_V3_FILTERED_CANDIDATE_READINESS_PIPELINE_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/etf_portfolio/dynamic_v3_filtered_candidate_readiness_pipeline.py"
+)
+DYNAMIC_V3_RESEARCH_CONTRACT_LEDGER_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/etf_portfolio/dynamic_v3_research_contract_ledger.py"
 )
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
@@ -611,7 +627,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 10725
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 9065
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -822,8 +838,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 10725
-    assert len(legacy_names) == 231
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 9065
+    assert len(legacy_names) == 192
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -3735,6 +3751,102 @@ def test_g2_4_filtered_candidate_readiness_domain_leaves_legacy_owner() -> None:
         assert isinstance(call, ast.Call)
         assert isinstance(call.func, ast.Name)
         assert call.func.id == "_call_filtered_candidate_readiness_pipeline"
+        assert isinstance(call.args[0], ast.Constant)
+        assert call.args[0].value == name
+
+
+def test_g2_4_eb4_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    evidence_tree = ast.parse(
+        DYNAMIC_V3_EVIDENCE_MATERIALIZATION_COMMANDS_PATH.read_text(encoding="utf-8")
+    )
+    contract_tree = ast.parse(
+        DYNAMIC_V3_RESEARCH_CONTRACT_LEDGER_COMMANDS_PATH.read_text(encoding="utf-8")
+    )
+    signal_tree = ast.parse(
+        DYNAMIC_V3_SIGNAL_INPUT_READINESS_COMMANDS_PATH.read_text(encoding="utf-8")
+    )
+    evidence_callbacks = {
+        "dynamic_v3_benchmark_baseline_control_run_command",
+        "dynamic_v3_benchmark_baseline_control_report_command",
+        "dynamic_v3_validate_benchmark_baseline_control_command",
+        "dynamic_v3_benchmark_baseline_metrics_materialization_run_command",
+        "dynamic_v3_benchmark_baseline_metrics_materialization_report_command",
+        "dynamic_v3_validate_benchmark_baseline_metrics_materialization_command",
+        "dynamic_v3_cost_sensitivity_review_run_command",
+        "dynamic_v3_cost_sensitivity_review_report_command",
+        "dynamic_v3_validate_cost_sensitivity_review_command",
+        "dynamic_v3_cost_sensitivity_metrics_materialization_run_command",
+        "dynamic_v3_cost_sensitivity_metrics_materialization_report_command",
+        "dynamic_v3_validate_cost_sensitivity_metrics_materialization_command",
+        "dynamic_v3_metric_source_map_run_command",
+        "dynamic_v3_metric_source_map_report_command",
+        "dynamic_v3_validate_metric_source_map_command",
+        "dynamic_v3_candidate_regression_replay_run_command",
+        "dynamic_v3_candidate_regression_replay_report_command",
+        "dynamic_v3_validate_candidate_regression_replay_command",
+        "dynamic_v3_drawdown_event_casebook_report_command",
+        "dynamic_v3_validate_drawdown_event_casebook_command",
+        "dynamic_v3_flip_rotation_event_casebook_report_command",
+        "dynamic_v3_validate_flip_rotation_event_casebook_command",
+    }
+    contract_callbacks = {
+        "dynamic_v3_formal_research_method_contract_build_command",
+        "dynamic_v3_formal_research_method_contract_report_command",
+        "dynamic_v3_validate_formal_research_method_contract_command",
+        "dynamic_v3_promotion_gate_threshold_calibration_report_command",
+        "dynamic_v3_promotion_gate_threshold_calibration_validate_command",
+        "dynamic_v3_candidate_decision_ledger_record_command",
+        "dynamic_v3_candidate_decision_ledger_report_command",
+        "dynamic_v3_validate_candidate_decision_ledger_command",
+    }
+    signal_callbacks = {
+        "dynamic_v3_signal_input_completeness_run_command",
+        "dynamic_v3_signal_input_completeness_report_command",
+        "dynamic_v3_validate_signal_input_completeness_command",
+        "dynamic_v3_signal_input_completeness_recovery_run_command",
+        "dynamic_v3_signal_input_completeness_recovery_report_command",
+        "dynamic_v3_validate_signal_input_completeness_recovery_command",
+        "dynamic_v3_signal_input_recovery_run_command",
+        "dynamic_v3_signal_input_recovery_report_command",
+        "dynamic_v3_validate_signal_input_recovery_command",
+    }
+    callbacks = evidence_callbacks | contract_callbacks | signal_callbacks
+    assert len(callbacks) == 39
+    assert _function_names(legacy_tree).isdisjoint(callbacks)
+    assert evidence_callbacks <= _function_names(evidence_tree)
+    assert contract_callbacks <= _function_names(contract_tree)
+    assert signal_callbacks <= _function_names(signal_tree)
+
+
+def test_g2_4_eb4_formal_contract_and_ledger_leave_shared_domain_owner() -> None:
+    legacy_tree = ast.parse(
+        DYNAMIC_V3_FILTERED_CANDIDATE_READINESS_PATH.read_text(encoding="utf-8")
+    )
+    canonical_tree = ast.parse(
+        DYNAMIC_V3_RESEARCH_CONTRACT_LEDGER_PATH.read_text(encoding="utf-8")
+    )
+    entrypoints = {
+        "build_formal_research_method_contract",
+        "formal_research_method_contract_report_payload",
+        "validate_formal_research_method_contract_artifact",
+        "record_candidate_decision_ledger",
+        "candidate_decision_ledger_report_payload",
+        "validate_candidate_decision_ledger_artifact",
+    }
+    legacy_functions = {
+        node.name: node for node in legacy_tree.body if isinstance(node, ast.FunctionDef)
+    }
+    assert entrypoints <= _function_names(canonical_tree)
+    assert "dynamic_v3_filtered_candidate_readiness" not in _imported_names(canonical_tree)
+    for name in entrypoints:
+        wrapper = legacy_functions[name]
+        assert len(wrapper.body) == 1
+        assert isinstance(wrapper.body[0], ast.Return)
+        call = wrapper.body[0].value
+        assert isinstance(call, ast.Call)
+        assert isinstance(call.func, ast.Name)
+        assert call.func.id == "_call_research_contract_ledger"
         assert isinstance(call.args[0], ast.Constant)
         assert call.args[0].value == name
 

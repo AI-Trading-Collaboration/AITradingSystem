@@ -3,12 +3,15 @@ from __future__ import annotations
 from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 from ai_trading_system.etf_portfolio import (
     dynamic_v3_benchmark_baseline_control as baseline_control,
 )
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_diagnostics as diagnostics
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_foundation as foundation
 
 DEFAULT_CANDIDATE_REGRESSION_REPLAY_CONFIG_PATH = (
     st.PROJECT_ROOT
@@ -59,6 +62,14 @@ CANDIDATE_REGRESSION_REPLAY_SAFETY = {
     "production_effect": "none",
 }
 _MISSING = object()
+CANDIDATE_REPLAY_INPUT_SCHEMA = "candidate_regression_replay_input_snapshot.v2"
+CANDIDATE_REPLAY_VIEWS = (
+    "candidate_regression_replay_manifest.json",
+    "candidate_regression_replay_report.json",
+    "candidate_regression_replay_report.md",
+    "reader_brief_section.md",
+)
+CANDIDATE_REPLAY_SNAPSHOT = "candidate_regression_replay_input_snapshot.json"
 
 
 def load_candidate_regression_replay_policy(
@@ -78,8 +89,10 @@ def run_candidate_regression_replay(
     config_path: Path = DEFAULT_CANDIDATE_REGRESSION_REPLAY_CONFIG_PATH,
     output_dir: Path = DEFAULT_CANDIDATE_REGRESSION_REPLAY_DIR,
     generated_at: datetime | None = None,
+    _validate_output: bool = True,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _generated_time(generated_at)
+    policy_source = foundation._file_binding(config_path)
     policy = load_candidate_regression_replay_policy(config_path)
     replay_window = _mapping(policy.get("replay_window"))
     effective_as_of = (
@@ -91,6 +104,15 @@ def run_candidate_regression_replay(
         current_behavior_path=current_behavior_path,
         benchmark_baseline_control_id=benchmark_baseline_control_id,
         benchmark_baseline_control_dir=benchmark_baseline_control_dir,
+    )
+    current_bindings = _current_source_bindings(current_source)
+    _validate_current_source(
+        current_source,
+        expected_candidate=_text(
+            _mapping(policy.get("expected_behavior")).get("candidate")
+        ),
+        effective_as_of=effective_as_of,
+        generated=generated,
     )
     policy_blockers = _policy_blockers(policy)
     comparisons = _comparison_rows(policy=policy, current_source=current_source)
@@ -166,10 +188,13 @@ def run_candidate_regression_replay(
         "next_required_action": _next_required_action(status),
         "limitations": [
             "regression guard only",
+            "schema and behavior contract comparison only; no strategy performance claim",
             "does not run strategy optimization or backtests",
             "does not refresh data or rerun upstream paper-shadow artifacts",
             "does not approve candidate promotion or production target weights",
         ],
+        "evidence_scope": "SCHEMA_BEHAVIOR_CONTRACT",
+        "strategy_performance_claimed": False,
         **CANDIDATE_REGRESSION_REPLAY_SAFETY,
     }
     manifest = {
@@ -203,15 +228,50 @@ def run_candidate_regression_replay(
         render_candidate_regression_replay_report(manifest, report),
     )
     st._write_text(root / "reader_brief_section.md", reader)
+    snapshot = {
+        "schema_version": CANDIDATE_REPLAY_INPUT_SCHEMA,
+        "replay_id": root.name,
+        "generated_at": generated.isoformat(),
+        "effective_as_of": effective_as_of.isoformat(),
+        "policy_source": policy_source,
+        "policy_lineage": {
+            "policy_id": policy.get("policy_id"),
+            "policy_version": policy.get("version"),
+            "expected_behavior_id": report.get("expected_behavior_id"),
+        },
+        "current_source_bindings": current_bindings,
+        "current_source_lineage": {
+            "artifact_id": current_source.get("artifact_id"),
+            "candidate": _mapping(current_source.get("summary")).get("candidate"),
+            "candidate_lineage_id": _mapping(current_source.get("summary")).get(
+                "candidate_lineage_id"
+            ),
+            "as_of": _mapping(current_source.get("summary")).get("as_of"),
+            "validation_status": current_source.get("validation_status"),
+        },
+        "replay": {
+            "current_behavior_path": None
+            if current_behavior_path is None
+            else str(current_behavior_path.resolve()),
+            "benchmark_baseline_control_id": benchmark_baseline_control_id,
+            "benchmark_baseline_control_dir": str(benchmark_baseline_control_dir.resolve()),
+        },
+        "view_hashes": foundation._view_hashes(root, CANDIDATE_REPLAY_VIEWS),
+    }
+    foundation._write_snapshot(root / CANDIDATE_REPLAY_SNAPSHOT, snapshot)
     st._write_latest_pointer(
         "latest_candidate_regression_replay",
         root.name,
         root / "candidate_regression_replay_manifest.json",
     )
-    validation = validate_candidate_regression_replay_artifact(
-        replay_id=root.name,
-        output_dir=output_dir,
-        write_output=True,
+    validation = (
+        validate_candidate_regression_replay_artifact(
+            replay_id=root.name,
+            output_dir=output_dir,
+            write_output=True,
+        )
+        if _validate_output
+        else {"status": "NOT_RUN", "failed_check_count": 0, "checks": []}
     )
     return {
         "replay_id": root.name,
@@ -219,6 +279,7 @@ def run_candidate_regression_replay(
         "manifest": manifest,
         "candidate_regression_replay_report": report,
         "reader_brief_section": reader,
+        "input_snapshot": snapshot,
         "candidate_regression_replay_validation": validation,
     }
 
@@ -246,6 +307,9 @@ def candidate_regression_replay_report_payload(
         ),
         "replay_dir": str(root),
     }
+    snapshot = st._read_optional_json(root / CANDIDATE_REPLAY_SNAPSHOT)
+    if snapshot:
+        payload["input_snapshot"] = snapshot
     validation = st._read_optional_json(
         root / "candidate_regression_replay_validation.json"
     )
@@ -261,102 +325,25 @@ def validate_candidate_regression_replay_artifact(
     write_output: bool = True,
 ) -> dict[str, Any]:
     root = output_dir / replay_id
-    manifest = (
-        st._read_optional_json(root / "candidate_regression_replay_manifest.json") or {}
+    checks, ok = diagnostics._snapshot_preflight(
+        root=root,
+        snapshot_name=CANDIDATE_REPLAY_SNAPSHOT,
+        schema=CANDIDATE_REPLAY_INPUT_SCHEMA,
+        id_key="replay_id",
+        artifact_id=replay_id,
+        view_names=CANDIDATE_REPLAY_VIEWS,
     )
-    report = (
-        st._read_optional_json(root / "candidate_regression_replay_report.json") or {}
-    )
-    reader = (
-        (root / "reader_brief_section.md").read_text(encoding="utf-8")
-        if (root / "reader_brief_section.md").exists()
-        else ""
-    )
-    comparisons = _records(report.get("comparisons"))
-    categories = {_text(row.get("category")) for row in comparisons}
-    summary = _mapping(report.get("comparison_summary"))
-    current_source = _mapping(report.get("current_behavior_source"))
-    checks = st._required_file_checks(
-        root,
-        (
-            "candidate_regression_replay_manifest.json",
-            "candidate_regression_replay_report.json",
-            "candidate_regression_replay_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check(
-                "manifest_report_id_match",
-                manifest.get("replay_id") == report.get("replay_id") == replay_id,
-                "",
-            ),
-            st._check(
-                "status_allowed",
-                report.get("candidate_regression_replay_status")
-                in CANDIDATE_REGRESSION_REPLAY_STATUSES,
-                _text(report.get("candidate_regression_replay_status")),
-            ),
-            st._check(
-                "replay_window_visible",
-                bool(_mapping(report.get("replay_window")).get("start_date"))
-                and bool(_mapping(report.get("replay_window")).get("end_date")),
-                "",
-            ),
-            st._check(
-                "expected_behavior_visible",
-                bool(report.get("expected_behavior_id")),
-                _text(report.get("expected_behavior_id")),
-            ),
-            st._check(
-                "current_source_visible",
-                bool(current_source.get("source_id")),
-                _text(current_source.get("source_id")),
-            ),
-            st._check(
-                "comparison_categories_complete",
-                set(COMPARISON_CATEGORIES).issubset(categories)
-                or report.get("candidate_regression_replay_status")
-                in {"BLOCKED_MISSING_CURRENT_BEHAVIOR", "BLOCKED_EXPECTED_BEHAVIOR"},
-                ",".join(sorted(categories)),
-            ),
-            st._check(
-                "breaking_changes_fail_closed",
-                int(summary.get("breaking_change_count") or 0) == 0
-                or report.get("candidate_regression_replay_status")
-                == "BREAKING_CHANGE_DETECTED",
-                str(summary.get("breaking_change_count")),
-            ),
-            st._check(
-                "missing_current_source_fail_closed",
-                current_source.get("exists") is not False
-                or report.get("candidate_regression_replay_status")
-                == "BLOCKED_MISSING_CURRENT_BEHAVIOR",
-                _text(current_source.get("limitation")),
-            ),
-            st._check(
-                "reader_brief_fields",
-                "candidate_regression_replay_status" in reader
-                and "breaking_change_count" in reader
-                and "next_required_action" in reader,
-                "",
-            ),
-            st._check(
-                "read_only_regression_guard",
-                report.get("regression_guard_only") is True
-                and report.get("strategy_behavior_changed") is False
-                and report.get("data_downloaded_by_replay") is False
-                and report.get("pipelines_executed_by_replay") is False,
-                "",
-            ),
-            st._check("broker_forbidden", st._payload_safe(manifest, report), ""),
-        ]
-    )
-    validation = st._validation_payload(
-        "etf_dynamic_v3_candidate_regression_replay_validation",
-        replay_id,
-        checks,
+    validation = (
+        diagnostics._validate_content(
+            report_type="etf_dynamic_v3_candidate_regression_replay_validation",
+            artifact_id=replay_id,
+            checks=checks,
+            rebuild=lambda: _rebuild_candidate_regression(root, replay_id),
+        )
+        if ok
+        else st._validation_payload(
+            "etf_dynamic_v3_candidate_regression_replay_validation", replay_id, checks
+        )
     )
     if write_output:
         st._write_json(root / "candidate_regression_replay_validation.json", validation)
@@ -365,6 +352,113 @@ def validate_candidate_regression_replay_artifact(
             render_candidate_regression_replay_validation_report(validation),
         )
     return validation
+
+
+def _generated_time(value: datetime | None) -> datetime:
+    generated = value or datetime.now(UTC)
+    return _aware_utc(generated, "generated_at")
+
+
+def _aware_utc(value: object, field: str) -> datetime:
+    parsed = value if isinstance(value, datetime) else datetime.fromisoformat(_text(value))
+    if parsed.tzinfo is None or parsed.utcoffset() != UTC.utcoffset(parsed):
+        raise ValueError(f"{field} must be timezone-aware UTC")
+    return parsed.astimezone(UTC)
+
+
+def _current_source_bindings(source: Mapping[str, Any]) -> list[dict[str, Any]]:
+    if source.get("exists") is not True:
+        return []
+    path = Path(_text(source.get("source_path")))
+    bindings = [{"role": "current_behavior", **foundation._file_binding(path)}]
+    reader_path = path.parent / "reader_brief_section.md"
+    if reader_path.is_file():
+        bindings.append({"role": "reader_brief", **foundation._file_binding(reader_path)})
+    validation_path = _validation_path_for(path)
+    if validation_path.is_file():
+        bindings.append({"role": "source_validation", **foundation._file_binding(validation_path)})
+    return bindings
+
+
+def _validate_current_source(
+    source: Mapping[str, Any],
+    *,
+    expected_candidate: str,
+    effective_as_of: date,
+    generated: datetime,
+) -> None:
+    if effective_as_of > generated.date():
+        raise ValueError("candidate regression requested as_of occurs after generated_at")
+    if source.get("exists") is not True:
+        return
+    if source.get("validation_status") != "PASS":
+        raise ValueError("candidate regression current source validation must PASS")
+    summary = _mapping(source.get("summary"))
+    candidate = _text(summary.get("candidate"))
+    if not candidate:
+        raise ValueError("candidate regression current source candidate is required")
+    if expected_candidate and candidate != expected_candidate:
+        raise ValueError("candidate regression current source candidate mismatch")
+    if not _text(summary.get("candidate_lineage_id")):
+        raise ValueError("candidate regression current source lineage is required")
+    source_date = _parse_optional_date(summary.get("as_of"))
+    if source_date is None:
+        raise ValueError("candidate regression current source as_of is required")
+    if source_date > effective_as_of:
+        raise ValueError("candidate regression source occurs after requested as_of")
+    if source_date > generated.date():
+        raise ValueError("candidate regression source occurs after generated_at")
+
+
+def _rebuild_candidate_regression(root: Path, replay_id: str) -> list[dict[str, Any]]:
+    snapshot = st._read_json(root / CANDIDATE_REPLAY_SNAPSHOT)
+    policy_source = _mapping(snapshot.get("policy_source"))
+    foundation._validate_file_binding(policy_source)
+    for binding in _records(snapshot.get("current_source_bindings")):
+        foundation._validate_file_binding(binding)
+    generated = _aware_utc(snapshot.get("generated_at"), "snapshot.generated_at")
+    effective_as_of = date.fromisoformat(_text(snapshot.get("effective_as_of")))
+    replay_args = _mapping(snapshot.get("replay"))
+    current_path = next(
+        (
+            Path(_text(binding.get("path")))
+            for binding in _records(snapshot.get("current_source_bindings"))
+            if binding.get("role") == "current_behavior"
+        ),
+        None,
+    )
+    with TemporaryDirectory(prefix="eb4-candidate-replay-") as temp_dir:
+        result = run_candidate_regression_replay(
+            as_of=effective_as_of,
+            current_behavior_path=current_path,
+            benchmark_baseline_control_id=replay_args.get("benchmark_baseline_control_id"),
+            benchmark_baseline_control_dir=Path(
+                _text(replay_args.get("benchmark_baseline_control_dir"))
+            ),
+            config_path=Path(_text(policy_source.get("path"))),
+            output_dir=Path(temp_dir),
+            generated_at=generated,
+            _validate_output=False,
+        )
+        expected_root = Path(result["replay_dir"])
+        expected = {
+            name: _normalize_replay_root(
+                (expected_root / name).read_bytes(), expected_root=expected_root, actual_root=root
+            )
+            for name in CANDIDATE_REPLAY_VIEWS
+        }
+    if result["replay_id"] != replay_id:
+        raise ValueError("candidate regression replay id is not reproducible")
+    return diagnostics._check_bytes(root, expected)
+
+
+def _normalize_replay_root(payload: bytes, *, expected_root: Path, actual_root: Path) -> bytes:
+    old = str(expected_root)
+    new = str(actual_root)
+    return payload.replace(old.encode(), new.encode()).replace(
+        old.replace("\\", "\\\\").encode(),
+        new.replace("\\", "\\\\").encode(),
+    )
 
 
 def render_candidate_regression_replay_reader_brief(report: Mapping[str, Any]) -> str:
@@ -507,10 +601,15 @@ def _current_behavior_source(
 ) -> dict[str, Any]:
     if current_behavior_path is not None:
         return _current_behavior_from_path(current_behavior_path)
+    if not benchmark_baseline_control_id:
+        return _missing_source(
+            "candidate_current_behavior",
+            "explicit current behavior path or benchmark baseline control id is required",
+        )
     try:
         payload = baseline_control.benchmark_baseline_report_payload(
             control_id=benchmark_baseline_control_id,
-            latest=benchmark_baseline_control_id is None,
+            latest=False,
             output_dir=benchmark_baseline_control_dir,
         )
     except Exception as exc:
@@ -769,6 +868,10 @@ def _behavior_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "artifact_id": _text(payload.get("control_id"), _text(payload.get("artifact_id"))),
         "candidate": _text(payload.get("candidate")),
+        "candidate_lineage_id": _text(
+            payload.get("candidate_lineage_id"),
+            _text(payload.get("control_id"), _text(payload.get("artifact_id"))),
+        ),
         "as_of": _text(payload.get("as_of")),
         "status": _text(
             payload.get("benchmark_baseline_status"),

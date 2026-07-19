@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_diagnostics as diagnostics
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_foundation as foundation
+from ai_trading_system.platform.artifacts import write_bytes_atomic
 
 DEFAULT_FLIP_ROTATION_EVENT_CASEBOOK_CONFIG_PATH = (
     st.PROJECT_ROOT
@@ -36,7 +39,20 @@ FLIP_ROTATION_EVENT_CASEBOOK_SAFETY = {
     "not_trading_signal": True,
     "data_downloaded_by_casebook": False,
     "pipelines_executed_by_casebook": False,
+    "evidence_role": "MANUAL_DIAGNOSTIC",
+    "quantitative_evidence_eligible": False,
+    "promotion_evidence_eligible": False,
+    "automatic_candidate_promotion": False,
+    "production_effect": "none",
 }
+FLIP_INPUT_SCHEMA = "flip_rotation_event_casebook_input_snapshot.v2"
+FLIP_VIEWS = (
+    "flip_rotation_casebook_manifest.json",
+    "flip_rotation_event_casebook.json",
+    "flip_rotation_event_casebook_report.md",
+    "flip_rotation_event_casebook_reader_brief.md",
+)
+FLIP_SNAPSHOT = "flip_rotation_event_casebook_input_snapshot.json"
 
 
 def build_flip_rotation_event_casebook(
@@ -45,9 +61,11 @@ def build_flip_rotation_event_casebook(
     output_dir: Path = DEFAULT_FLIP_ROTATION_EVENT_CASEBOOK_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _generated_time(generated_at)
+    policy_source = foundation._file_binding(config_path)
     config = st._load_yaml_mapping(config_path)
     normalized = _normalized_casebook(config, config_path=config_path)
+    _validate_manual_casebook_source(normalized, generated=generated)
     casebook_run_id = st._stable_id(
         "flip-rotation-event-casebook",
         normalized.get("casebook_id"),
@@ -56,14 +74,76 @@ def build_flip_rotation_event_casebook(
     )
     root = st._unique_dir(output_dir / casebook_run_id)
     root.mkdir(parents=True, exist_ok=False)
+    manifest, casebook, views = _flip_material(
+        root=root,
+        casebook_run_id=root.name,
+        normalized=normalized,
+        generated=generated,
+    )
+    for name, payload in views.items():
+        write_bytes_atomic(root / name, payload)
+    snapshot = {
+        "schema_version": FLIP_INPUT_SCHEMA,
+        "casebook_run_id": root.name,
+        "generated_at": generated.isoformat(),
+        "policy_source": policy_source,
+        "policy_lineage": {
+            "casebook_id": normalized.get("casebook_id"),
+            "version": normalized.get("version"),
+            "status": normalized.get("status"),
+            "owner": normalized.get("owner"),
+        },
+        "chronology": {
+            "generated_at": generated.isoformat(),
+            "latest_manual_event_date": max(
+                (_text(row.get("date")) for row in _records(normalized.get("events"))),
+                default=None,
+            ),
+        },
+        "evidence_role": "MANUAL_DIAGNOSTIC",
+        "view_hashes": foundation._view_hashes(root, FLIP_VIEWS),
+    }
+    foundation._write_snapshot(root / FLIP_SNAPSHOT, snapshot)
+    st._write_latest_pointer(
+        "latest_flip_rotation_event_casebook",
+        root.name,
+        root / "flip_rotation_casebook_manifest.json",
+    )
+    validation = validate_flip_rotation_event_casebook_artifact(
+        casebook_run_id=root.name,
+        output_dir=output_dir,
+        write_output=True,
+    )
+    return {
+        "casebook_run_id": root.name,
+        "casebook_dir": root,
+        "manifest": manifest,
+        "flip_rotation_event_casebook": casebook,
+        "flip_rotation_event_casebook_reader_brief": (
+            root / "flip_rotation_event_casebook_reader_brief.md"
+        ).read_text(encoding="utf-8"),
+        "input_snapshot": snapshot,
+        "flip_rotation_event_casebook_validation": validation,
+    }
+
+
+def _flip_material(
+    *,
+    root: Path,
+    casebook_run_id: str,
+    normalized: Mapping[str, Any],
+    generated: datetime,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, bytes]]:
     events = _records(normalized.get("events"))
+    config_path = Path(_text(normalized.get("config_path")))
     casebook = {
         "schema_version": st.SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_flip_rotation_event_casebook",
-        "casebook_run_id": root.name,
+        "casebook_run_id": casebook_run_id,
         "flip_rotation_casebook_id": normalized.get("casebook_id"),
         "version": normalized.get("version"),
-        "status": normalized.get("status"),
+        "status": "MANUAL_DIAGNOSTIC",
+        "observed_evidence_status": "NOT_APPLICABLE",
         "owner": normalized.get("owner"),
         "source_type": normalized.get("source_type"),
         "generated_at": generated.isoformat(),
@@ -74,7 +154,7 @@ def build_flip_rotation_event_casebook(
         "dominant_trigger_signal": _dominant_value(events, "trigger_signal"),
         "turnover_impact_summary": _value_summary(events, "turnover_impact"),
         "event_type_summary": _value_summary(events, "event_type"),
-        "next_review_action": _next_review_action(normalized),
+        "next_review_action": "manual_qualitative_review_only",
         "casebook_policy": normalized.get("casebook_policy"),
         "events": events,
         **FLIP_ROTATION_EVENT_CASEBOOK_SAFETY,
@@ -82,10 +162,10 @@ def build_flip_rotation_event_casebook(
     manifest = {
         "schema_version": st.SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_flip_rotation_casebook_manifest",
-        "casebook_run_id": root.name,
+        "casebook_run_id": casebook_run_id,
         "flip_rotation_casebook_id": normalized.get("casebook_id"),
         "version": normalized.get("version"),
-        "status": "PASS" if _casebook_complete(normalized) else "FAIL",
+        "status": "PASS",
         "generated_at": generated.isoformat(),
         "config_path": str(config_path),
         "flip_rotation_casebook_manifest_path": str(
@@ -103,31 +183,15 @@ def build_flip_rotation_event_casebook(
         **FLIP_ROTATION_EVENT_CASEBOOK_SAFETY,
     }
     reader = render_flip_rotation_event_casebook_reader_brief(casebook)
-    st._write_json(root / "flip_rotation_casebook_manifest.json", manifest)
-    st._write_json(root / "flip_rotation_event_casebook.json", casebook)
-    st._write_text(
-        root / "flip_rotation_event_casebook_report.md",
-        render_flip_rotation_event_casebook_report(manifest, casebook),
-    )
-    st._write_text(root / "flip_rotation_event_casebook_reader_brief.md", reader)
-    st._write_latest_pointer(
-        "latest_flip_rotation_event_casebook",
-        root.name,
-        root / "flip_rotation_casebook_manifest.json",
-    )
-    validation = validate_flip_rotation_event_casebook_artifact(
-        casebook_run_id=root.name,
-        output_dir=output_dir,
-        write_output=True,
-    )
-    return {
-        "casebook_run_id": root.name,
-        "casebook_dir": root,
-        "manifest": manifest,
-        "flip_rotation_event_casebook": casebook,
-        "flip_rotation_event_casebook_reader_brief": reader,
-        "flip_rotation_event_casebook_validation": validation,
+    views = {
+        "flip_rotation_casebook_manifest.json": foundation._json_bytes(manifest),
+        "flip_rotation_event_casebook.json": foundation._json_bytes(casebook),
+        "flip_rotation_event_casebook_report.md": foundation._text_file_bytes(
+            render_flip_rotation_event_casebook_report(manifest, casebook)
+        ),
+        "flip_rotation_event_casebook_reader_brief.md": foundation._text_file_bytes(reader),
     }
+    return manifest, casebook, views
 
 
 def flip_rotation_event_casebook_report_payload(
@@ -153,6 +217,9 @@ def flip_rotation_event_casebook_report_payload(
         ).read_text(encoding="utf-8"),
         "casebook_dir": str(root),
     }
+    snapshot = st._read_optional_json(root / FLIP_SNAPSHOT)
+    if snapshot:
+        payload["input_snapshot"] = snapshot
     validation = st._read_optional_json(root / "flip_rotation_event_casebook_validation.json")
     if validation:
         payload["flip_rotation_event_casebook_validation"] = validation
@@ -166,79 +233,27 @@ def validate_flip_rotation_event_casebook_artifact(
     write_output: bool = True,
 ) -> dict[str, Any]:
     root = output_dir / casebook_run_id
-    manifest = st._read_optional_json(root / "flip_rotation_casebook_manifest.json") or {}
-    casebook = st._read_optional_json(root / "flip_rotation_event_casebook.json") or {}
-    reader = (
-        (root / "flip_rotation_event_casebook_reader_brief.md").read_text(
-            encoding="utf-8"
+    checks, ok = diagnostics._snapshot_preflight(
+        root=root,
+        snapshot_name=FLIP_SNAPSHOT,
+        schema=FLIP_INPUT_SCHEMA,
+        id_key="casebook_run_id",
+        artifact_id=casebook_run_id,
+        view_names=FLIP_VIEWS,
+    )
+    if ok:
+        validation = diagnostics._validate_content(
+            report_type="etf_dynamic_v3_flip_rotation_event_casebook_validation",
+            artifact_id=casebook_run_id,
+            checks=checks,
+            rebuild=lambda: _rebuild_flip_casebook(root, casebook_run_id),
         )
-        if (root / "flip_rotation_event_casebook_reader_brief.md").exists()
-        else ""
-    )
-    events = _records(casebook.get("events"))
-    event_ids = {_text(row.get("event_id")) for row in events}
-    checks = st._required_file_checks(
-        root,
-        (
-            "flip_rotation_casebook_manifest.json",
-            "flip_rotation_event_casebook.json",
-            "flip_rotation_event_casebook_report.md",
-            "flip_rotation_event_casebook_reader_brief.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check(
-                "casebook_run_id_matches",
-                manifest.get("casebook_run_id") == casebook_run_id,
-                "",
-            ),
-            st._check("metadata_visible", _metadata_visible(casebook), ""),
-            st._check("event_count", len(events) >= 3, str(len(events))),
-            st._check("event_ids_unique", len(event_ids) == len(events), ""),
-            st._check(
-                "event_schema_complete",
-                all(_event_complete(row) for row in events),
-                "",
-            ),
-            st._check(
-                "event_dates_present",
-                all(_date_text(row.get("date")) for row in events),
-                "",
-            ),
-            st._check(
-                "boolean_classification",
-                all(_event_booleans_valid(row) for row in events),
-                "",
-            ),
-            st._check(
-                "summary_metrics_visible",
-                casebook.get("useful_flip_count") != "MISSING"
-                and casebook.get("false_positive_count") != "MISSING"
-                and bool(_text(casebook.get("dominant_trigger_signal"))),
-                "",
-            ),
-            st._check("source_type_visible", casebook.get("source_type") != "", ""),
-            st._check(
-                "reader_brief_fields",
-                "flip_rotation_casebook_event_count" in reader,
-                "",
-            ),
-            st._check(
-                "casebook_read_only",
-                casebook.get("data_downloaded_by_casebook") is False
-                and casebook.get("pipelines_executed_by_casebook") is False,
-                "",
-            ),
-            st._check("not_trading_signal", casebook.get("not_trading_signal") is True, ""),
-            st._check("broker_forbidden", st._payload_safe(manifest, casebook), ""),
-        ]
-    )
-    validation = st._validation_payload(
-        "etf_dynamic_v3_flip_rotation_event_casebook_validation",
-        casebook_run_id,
-        checks,
-    )
+    else:
+        validation = st._validation_payload(
+            "etf_dynamic_v3_flip_rotation_event_casebook_validation",
+            casebook_run_id,
+            checks,
+        )
     if write_output:
         st._write_json(root / "flip_rotation_event_casebook_validation.json", validation)
         st._write_text(
@@ -246,6 +261,27 @@ def validate_flip_rotation_event_casebook_artifact(
             render_flip_rotation_event_casebook_validation_report(validation),
         )
     return validation
+
+
+def _rebuild_flip_casebook(root: Path, casebook_run_id: str) -> list[dict[str, Any]]:
+    snapshot = st._read_json(root / FLIP_SNAPSHOT)
+    policy_source = _mapping(snapshot.get("policy_source"))
+    foundation._validate_file_binding(policy_source)
+    generated = _aware_utc(snapshot.get("generated_at"), "snapshot.generated_at")
+    config_path = Path(_text(policy_source.get("path")))
+    normalized = _normalized_casebook(st._load_yaml_mapping(config_path), config_path=config_path)
+    _validate_manual_casebook_source(normalized, generated=generated)
+    lineage = _mapping(snapshot.get("policy_lineage"))
+    for key in ("casebook_id", "version", "status", "owner"):
+        if lineage.get(key) != normalized.get(key):
+            raise ValueError(f"flip casebook policy lineage mismatch: {key}")
+    _, _, expected = _flip_material(
+        root=root,
+        casebook_run_id=casebook_run_id,
+        normalized=normalized,
+        generated=generated,
+    )
+    return diagnostics._check_bytes(root, expected)
 
 
 def render_flip_rotation_event_casebook_reader_brief(casebook: Mapping[str, Any]) -> str:
@@ -377,8 +413,51 @@ def _normalized_event(row: Mapping[str, Any]) -> dict[str, Any]:
         "turnover_impact": _text(row.get("turnover_impact")),
         "candidate_behavior": _text(row.get("candidate_behavior")),
         "review_notes": _texts(row.get("review_notes")),
+        "evidence_role": "MANUAL_DIAGNOSTIC",
+        "quantitative_evidence_eligible": False,
+        "promotion_evidence_eligible": False,
         **FLIP_ROTATION_EVENT_CASEBOOK_SAFETY,
     }
+
+
+def _generated_time(value: datetime | None) -> datetime:
+    generated = value or datetime.now(UTC)
+    return _aware_utc(generated, "generated_at")
+
+
+def _aware_utc(value: object, field: str) -> datetime:
+    parsed = value if isinstance(value, datetime) else datetime.fromisoformat(_text(value))
+    if parsed.tzinfo is None or parsed.utcoffset() != UTC.utcoffset(parsed):
+        raise ValueError(f"{field} must be timezone-aware UTC")
+    return parsed.astimezone(UTC)
+
+
+def _validate_manual_casebook_source(
+    casebook: Mapping[str, Any], *, generated: datetime
+) -> None:
+    metadata = {
+        "flip_rotation_casebook_id": casebook.get("casebook_id"),
+        "version": casebook.get("version"),
+        "status": casebook.get("status"),
+        "owner": casebook.get("owner"),
+        "source_type": casebook.get("source_type"),
+    }
+    if not _metadata_visible(metadata):
+        raise ValueError("flip casebook policy metadata is incomplete")
+    if _text(casebook.get("status")) not in {
+        "manual_diagnostic_baseline",
+        "reviewed_manual_diagnostic",
+    }:
+        raise ValueError("flip casebook policy is not reviewed manual diagnostic")
+    events = _records(casebook.get("events"))
+    if not events or not all(_event_complete(row) for row in events):
+        raise ValueError("flip casebook manual events are incomplete")
+    if len({_text(row.get("event_id")) for row in events}) != len(events):
+        raise ValueError("flip casebook event ids must be unique")
+    if not all(_date_text(row.get("date")) for row in events):
+        raise ValueError("flip casebook event dates are invalid")
+    if any(_date_text(row.get("date")) > generated.date().isoformat() for row in events):
+        raise ValueError("flip casebook event occurs after generated_at")
 
 
 def _casebook_complete(casebook: Mapping[str, Any]) -> bool:

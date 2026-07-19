@@ -5262,6 +5262,97 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
 
+    eb4 = baseline[
+        "phase_g2_4eb4_etf_cli_evidence_materialization_and_input_readiness"
+    ]
+    assert eb4["status"] in {
+        "VALIDATING_G2_4_CONTINUES",
+        "COMPLETE_G2_4_CONTINUES",
+    }
+    assert eb4["base_commit"] == "26a45e0d"
+    assert eb4["boundary_id"] == "ARCH-004G2.4-EB4"
+    assert eb4["owner_authorization"] == {
+        "instruction": "先按照这个顺序推进到可以考虑开始推进研究策略前把",
+        "eb4_through_handoff_authorized": True,
+        "arch_005_s0_s1_after_handoff_authorized": True,
+        "g2_5_requires_later_explicit_instruction": True,
+    }
+    assert eb4["migration"]["callback_count"] == 39
+    assert eb4["migration"]["app_callback_count"] == 26
+    assert eb4["migration"]["matching_validator_callback_count"] == 13
+    assert eb4["migration"]["domain_public_entrypoint_count"] == 39
+    assert len(eb4["migration"]["canonical_interfaces"]) == 3
+    assert len(eb4["migration"]["callback_ids"]) == 39
+    assert len(set(eb4["migration"]["callback_ids"])) == 39
+    assert len(eb4["contract"]["input_snapshot_schemas"]) == 14
+    assert eb4["contract"]["materialized_view_count"] == 63
+    assert eb4["contract"]["missing_or_unqualified_evidence"] == {
+        "observed_metrics": None,
+        "observed_rows": "empty",
+        "status": "INSUFFICIENT_DATA",
+        "promotion_ready": False,
+        "automatic_promotion": False,
+    }
+    assert eb4["subtraction"] == {
+        "legacy_cli_lines_before": 10_725,
+        "legacy_cli_lines_after": 9_065,
+        "legacy_cli_top_level_functions_before": 231,
+        "legacy_cli_top_level_functions_after": 192,
+        "legacy_cli_decorators_before": 192,
+        "legacy_cli_decorators_after": 153,
+        "legacy_readiness_domain_lines_before": 4_114,
+        "legacy_readiness_domain_lines_after": 2_978,
+        "compatibility_wrapper_count": 6,
+        "duplicate_implementation_retained": False,
+    }
+    assert eb4["callback_matrix"] == {
+        "baseline_callback_count": 967,
+        "migrated_callback_count": 814,
+        "pending_callback_count": 153,
+        "unresolved_callback_count": 0,
+        "duplicate_registration_count": 0,
+        "phase_exit_criteria_passed": False,
+    }
+    assert eb4["cli_contract"] == {
+        "root_command_count": 41,
+        "group_count": 291,
+        "leaf_command_count": 993,
+        "duplicate_path_count": 0,
+        "command_tree_sha256": (
+            "01c78550ae58b38c2d8cca0683376643e2934f93e324710612c87d39eea7302d"
+        ),
+    }
+    assert eb4["focused_validation"]["performance_triggered"] is False
+    assert eb4["formal_validation"]["architecture_fitness"]["status"] == "PASS"
+    assert eb4["formal_validation"]["contract_validation"]["status"] == "PASS"
+    full_validation = eb4["formal_validation"]["full_validation"]
+    assert full_validation["status"] == "PASS_AFTER_AUDITED_FAILURE_FIX_RERUN"
+    assert full_validation["actual_natural_run_count"] == 1
+    assert full_validation["natural_run"]["status"] == "FAIL"
+    assert full_validation["natural_run"]["failed"] == 7
+    assert full_validation["failure_fix_rerun"]["status"] == "PASS"
+    assert full_validation["failure_fix_rerun"]["passed"] == 6_373
+    assert full_validation["failure_fix_rerun"]["failed"] == 0
+    assert full_validation["failure_fix_rerun"]["scheduler_fallback"] is False
+    assert full_validation["failure_fix_rerun"]["production_effect"] == "none"
+    assert full_validation["duration_profile_refresh"]["version"] == 11
+    assert eb4["formal_validation"]["architecture_devex"]["violation_count"] == 0
+    assert eb4["formal_validation"]["deprecation_inventory"]["test_file_count"] == 1_130
+    assert eb4["safety"]["production_effect"] == "none"
+    assert eb4["next_work"] == {
+        "eb5_after_eb4_integration_gate": True,
+        "eb5_unblocked": True,
+        "whole_g2_4_phase_exit_passed": False,
+        "formal_arch_005_s0_unblocked": False,
+        "g2_5_unblocked": False,
+        "phase_exit_or_handoff_triggered": False,
+    }
+    assert eb4["next_phase_or_slice_unblocked"] is True
+    assert len(eb4["sources"]) == 57
+    for source in eb4["sources"]:
+        actual = _source_sha256(source)
+        assert actual == source["sha256"], source["path"]
+
     prebootstrap = baseline["arch_005_prebootstrap_primitives"]
     assert prebootstrap["status"] in {
         "IN_PROGRESS_NON_CUTOVER",
@@ -5532,38 +5623,46 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB2_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB3_VALIDATING_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB3_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB4_VALIDATING_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB4_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_ARCH_005_PREBOOTSTRAP_IN_PROGRESS",
         "ATTRIBUTABLE_ISOLATION_PROVEN_ARCH_005_PREBOOTSTRAP_COMPLETE_G2_4_CONTINUES",
     }
     current_authority = attribution["current_staging_authority"]
     assert current_authority["task_id"] == (
-        "ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION"
+        "ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION"
     )
-    assert current_authority["increment"] == "ARCH-004G2.4-EB3"
+    assert current_authority["increment"] == "ARCH-004G2.4-EB4"
     assert current_authority["status"] in {
         "VALIDATING_G2_4_CONTINUES",
         "COMPLETE_G2_4_CONTINUES",
     }
     assert current_authority["base_commit"] == (
-        "073a0c574b675b8dbb361356afa26ad1953fc3f0"
+        "26a45e0daf6bfad5ed11762d277d136c5cfb8883"
     )
     assert current_authority["declared_path_set_current"] is True
     owner_authorization = current_authority["owner_authorization"]
-    assert owner_authorization["instruction"] == "基于我们优化的提速流程继续推进后续开发吧"
+    assert owner_authorization["instruction"] == (
+        "先按照这个顺序推进到可以考虑开始推进研究策略前把"
+    )
     assert str(owner_authorization["authorized_at"]) == "2026-07-19"
-    assert owner_authorization["boundary_id"] == "ARCH-004G2.4-EB3"
+    assert owner_authorization["boundary_id"] == "ARCH-004G2.4-EB4"
     assert current_authority["phase_lock"] == {
-        "next_phase_or_slice_unblocked": False,
+        "next_phase_or_slice_unblocked": True,
         "eb2_authorized": True,
         "eb2_integration_gate_passed": True,
         "pre_bootstrap_after_integration_gate_authorized": True,
         "pre_bootstrap_unblocked": True,
         "pre_bootstrap_complete": True,
         "eb3_unblocked": True,
+        "eb3_complete": True,
+        "eb4_authorized": True,
+        "eb4_unblocked": True,
+        "eb5_unblocked": True,
         "formal_arch_005_s0_unblocked": False,
         "g2_5_unblocked": False,
     }
-    assert len(current_authority["declared_changed_paths"]) == 51
+    assert len(current_authority["declared_changed_paths"]) == 58
     assert (
         attribution["current_staging_authority"]["base_commit"]
         == attribution["base_commit"]

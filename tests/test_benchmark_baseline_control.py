@@ -46,6 +46,8 @@ def test_benchmark_baseline_control_all_baselines_outperformed(tmp_path: Path) -
         "cost_id"
     ]
     assert result["benchmark_baseline_validation"]["status"] == "PASS"
+    assert result["input_snapshot"]["schema_version"] == baseline.BENCHMARK_BASELINE_INPUT_SCHEMA
+    assert pack["observed_evidence_status"] == "VALIDATED_DATED_METRICS"
     assert "benchmark_baseline_status" in result["reader_brief_section"]
     assert_research_safe(pack)
     assert pack["execution_model_ready"] is False
@@ -73,6 +75,35 @@ def test_benchmark_baseline_control_fails_closed_without_numeric_metrics(
     assert "baseline_metrics:insufficient_metrics" in pack["blocking_reasons"]
     assert pack["comparison_summary"]["insufficient_metric_baseline_count"] == 5
     assert result["benchmark_baseline_validation"]["status"] == "PASS"
+
+
+def test_benchmark_baseline_control_tampered_metric_source_fails_closed(
+    tmp_path: Path,
+) -> None:
+    fixture = _baseline_fixture(tmp_path)
+    baseline_path = _baseline_metrics_path(tmp_path, "tamper", 0.05)
+    result = baseline.run_benchmark_baseline_control_pack(
+        as_of=date(2026, 6, 15),
+        candidate_metrics_path=fixture["candidate_metrics_path"],
+        baseline_metrics_path=baseline_path,
+        weekly_review_id=fixture["weekly_id"],
+        weekly_review_dir=fixture["weekly_dir"],
+        cost_sensitivity_review_id=fixture["cost_id"],
+        cost_sensitivity_dir=fixture["cost_dir"],
+        output_dir=fixture["baseline_dir"],
+        generated_at=datetime(2026, 6, 16, 2, tzinfo=UTC),
+    )
+    payload = json.loads(baseline_path.read_text(encoding="utf-8"))
+    payload["baselines"][0]["net_performance"] = 99.0
+    _write_json(baseline_path, payload)
+
+    validation = baseline.validate_benchmark_baseline_artifact(
+        control_id=result["control_id"],
+        output_dir=fixture["baseline_dir"],
+        write_output=False,
+    )
+
+    assert validation["status"] == "FAIL"
 
 
 def test_benchmark_baseline_cli_run_report_and_validate(tmp_path: Path) -> None:
@@ -200,11 +231,22 @@ def _baseline_fixture(tmp_path: Path) -> dict[str, Any]:
         {
             "metrics_id": "candidate-baseline-metrics",
             "candidate": "median_plus_regime_mismatch_filter",
+            "candidate_lineage_id": "candidate-lineage-baseline-test",
+            "source_variant": "median_plus_regime_mismatch_filter",
             "as_of": "2026-06-15",
+            "window_start": "2026-06-01",
+            "window_end": "2026-06-15",
+            "period_start": "2026-06-01",
+            "period_end": "2026-06-15",
+            "generated_at": "2026-06-15T23:00:00+00:00",
+            "validation_status": "PASS",
+            "evidence_status": "VALIDATED_DATED_METRICS",
+            "outcome_mode": "OBSERVED_VALIDATED_METRICS",
+            "metric_source": "validated_candidate_metrics_fixture",
             "turnover": 1.0,
-            "gross_performance_proxy": 0.08,
-            "net_performance_proxy": 0.08,
-            "baseline_performance_proxy": 0.06,
+            "gross_performance": 0.08,
+            "net_performance": 0.08,
+            "baseline_performance": 0.06,
             **baseline.BENCHMARK_BASELINE_SAFETY,
         },
     )
@@ -229,9 +271,16 @@ def _baseline_metrics_path(tmp_path: Path, suffix: str, value: float) -> Path:
         path,
         {
             "metrics_id": f"baseline-metrics-{suffix}",
+            "candidate": "median_plus_regime_mismatch_filter",
+            "candidate_lineage_id": "candidate-lineage-baseline-test",
             "as_of": "2026-06-15",
+            "period_start": "2026-06-01",
+            "period_end": "2026-06-15",
+            "validation_status": "PASS",
+            "evidence_status": "VALIDATED_DATED_METRICS",
+            "outcome_mode": "OBSERVED_VALIDATED_METRICS",
             "baselines": [
-                {"baseline_id": baseline_id, "net_performance_proxy": value}
+                {"baseline_id": baseline_id, "net_performance": value}
                 for baseline_id in baseline.REQUIRED_BASELINE_IDS
             ],
             **baseline.BENCHMARK_BASELINE_SAFETY,
@@ -246,13 +295,20 @@ def _mixed_baseline_metrics_path(tmp_path: Path) -> Path:
         path,
         {
             "metrics_id": "baseline-metrics-mixed",
+            "candidate": "median_plus_regime_mismatch_filter",
+            "candidate_lineage_id": "candidate-lineage-baseline-test",
             "as_of": "2026-06-15",
+            "period_start": "2026-06-01",
+            "period_end": "2026-06-15",
+            "validation_status": "PASS",
+            "evidence_status": "VALIDATED_DATED_METRICS",
+            "outcome_mode": "OBSERVED_VALIDATED_METRICS",
             "baselines": [
-                {"baseline_id": "static_allocation", "net_performance_proxy": 0.078},
-                {"baseline_id": "no_trade", "net_performance_proxy": 0.06},
-                {"baseline_id": "qqq_only", "net_performance_proxy": 0.081},
-                {"baseline_id": "spy_only", "net_performance_proxy": 0.03},
-                {"baseline_id": "equal_weight_etf", "net_performance_proxy": 0.08},
+                {"baseline_id": "static_allocation", "net_performance": 0.078},
+                {"baseline_id": "no_trade", "net_performance": 0.06},
+                {"baseline_id": "qqq_only", "net_performance": 0.081},
+                {"baseline_id": "spy_only", "net_performance": 0.03},
+                {"baseline_id": "equal_weight_etf", "net_performance": 0.08},
             ],
             **baseline.BENCHMARK_BASELINE_SAFETY,
         },
@@ -268,8 +324,10 @@ def _write_weekly_artifact(root: Path, weekly_id: str) -> None:
         "report_type": "etf_dynamic_v3_paper_shadow_weekly_manifest",
         "weekly_review_id": weekly_id,
         "candidate": "median_plus_regime_mismatch_filter",
+        "candidate_lineage_id": "candidate-lineage-baseline-test",
         "week_start": "2026-06-08",
         "week_end": "2026-06-12",
+        "generated_at": "2026-06-12T23:00:00+00:00",
         "status": "PASS",
         "weekly_decision": "CONTINUE",
         "paper_shadow_weekly_manifest_path": str(
@@ -290,8 +348,10 @@ def _write_weekly_artifact(root: Path, weekly_id: str) -> None:
         "report_type": "etf_dynamic_v3_paper_shadow_weekly_review",
         "weekly_review_id": weekly_id,
         "candidate": "median_plus_regime_mismatch_filter",
+        "candidate_lineage_id": "candidate-lineage-baseline-test",
         "week_start": "2026-06-08",
         "week_end": "2026-06-12",
+        "generated_at": "2026-06-12T23:00:00+00:00",
         "weekly_decision": "CONTINUE",
         "coverage_status": "PASS",
         "coverage_classification": "FULL_WEEK_REVIEW",

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from dynamic_v3_filtered_candidate_readiness_helpers import (
@@ -36,3 +37,21 @@ def test_formal_research_method_contract_builds_and_validates(tmp_path: Path, mo
     assert validation_path.exists()
     assert_research_safe(contract_result["manifest"])
     assert "blocking_issues" in contract_result["reader_brief_section"]
+    snapshot = contract_result["input_snapshot"]
+    assert snapshot["schema_version"] == "formal_research_method_contract_input_snapshot.v2"
+    assert len(snapshot["sources"]) == 10
+    gates = {row["gate_id"]: row for row in contract["objective_gates"]}
+    assert gates["confirmation_completed_observations"]["observed_status"] == 0
+    assert gates["confirmation_completed_observations"]["passed"] is False
+    assert gates["owner_approval"]["observed_status"] == "NOT_OBSERVED"
+    assert contract["method_boundary"]["positive_state_requires_all_observed_gates"] is True
+
+    decision_path = contract_result["contract_dir"] / "formal_research_method_decision.json"
+    tampered = json.loads(decision_path.read_text(encoding="utf-8"))
+    tampered["promotion_state"] = "FORMAL_RESEARCH_READY"
+    decision_path.write_text(json.dumps(tampered, sort_keys=True) + "\n", encoding="utf-8")
+    assert readiness.validate_formal_research_method_contract_artifact(
+        contract_id=contract_result["contract_id"],
+        output_dir=tmp_path / "formal_research_method_contract",
+        write_output=False,
+    )["status"] == "FAIL"

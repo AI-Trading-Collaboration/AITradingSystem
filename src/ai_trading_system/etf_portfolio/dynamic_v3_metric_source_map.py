@@ -1,20 +1,22 @@
 from __future__ import annotations
 
 import csv
+import hashlib
+import json
 from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 from ai_trading_system.etf_portfolio import dynamic_v3_backtest_simulation as sim
-from ai_trading_system.etf_portfolio import (
-    dynamic_v3_benchmark_baseline_metrics_materialization as baseline_metrics,
-)
 from ai_trading_system.etf_portfolio import dynamic_v3_cost_sensitivity as cost_sensitivity
 from ai_trading_system.etf_portfolio import (
     dynamic_v3_filtered_candidate_readiness as readiness,
 )
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_diagnostics as diagnostics
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_foundation as foundation
 from ai_trading_system.etf_portfolio.models import DEFAULT_ETF_PRICE_PATH
 
 DEFAULT_METRIC_SOURCE_MAP_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "metric_source_map"
@@ -23,7 +25,16 @@ METRIC_SOURCE_MAP_STATUSES = (
     "METRIC_SOURCE_MAP_READY",
     "METRIC_SOURCE_MAP_PARTIAL",
     "METRIC_SOURCE_MAP_BLOCKED",
+    "INSUFFICIENT_DATA",
 )
+METRIC_SOURCE_MAP_INPUT_SCHEMA = "metric_source_map_input_snapshot.v2"
+METRIC_SOURCE_MAP_VIEWS = (
+    "metric_source_map_manifest.json",
+    "metric_source_map_report.json",
+    "metric_source_map_report.md",
+    "reader_brief_section.md",
+)
+METRIC_SOURCE_MAP_SNAPSHOT = "metric_source_map_input_snapshot.json"
 
 METRIC_SOURCE_MAP_SAFETY = {
     **st.SYSTEM_TARGET_SAFETY,
@@ -145,24 +156,38 @@ def run_metric_source_map(
     *,
     as_of: date | None = None,
     candidate: str = readiness.TOP_FILTERED_CANDIDATE,
-    source_variant: str = "limited_adjustment",
+    source_variant: str | None = None,
     sim_outcome_id: str | None = None,
     sim_outcome_dir: Path = sim.DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
     price_cache_path: Path = DEFAULT_ETF_PRICE_PATH,
     output_dir: Path = DEFAULT_METRIC_SOURCE_MAP_DIR,
     generated_at: datetime | None = None,
+    _validate_output: bool = True,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _generated_time(generated_at)
+    if not _text(source_variant):
+        raise ValueError("source_variant must be explicit")
+    resolved_source_variant = _text(source_variant)
     outcome_payload = _load_sim_outcome(sim_outcome_id=sim_outcome_id, output_dir=sim_outcome_dir)
     effective_as_of = as_of or _parse_date(outcome_payload.get("as_of")) or generated.date()
+    if effective_as_of > generated.date():
+        raise ValueError("metric source map as_of occurs after generated_at")
+    _validate_sim_source(
+        outcome_payload,
+        requested_id=sim_outcome_id,
+        effective_as_of=effective_as_of,
+        generated=generated,
+    )
+    sim_source_bindings = _sim_source_bindings(outcome_payload)
+    price_source = _optional_file_binding(price_cache_path)
+    cost_policy_source = foundation._file_binding(
+        cost_sensitivity.DEFAULT_COST_SENSITIVITY_CONFIG_PATH
+    )
     outcome_summary = _mapping(outcome_payload.get("simulated_variant_summary"))
     summary_rows = _records(outcome_summary.get("summary"))
-    source_row = _variant_row(summary_rows, source_variant)
+    source_row = _variant_row(summary_rows, resolved_source_variant)
     no_trade_row = _variant_row(summary_rows, "no_trade")
-    window_rows = _available_window_rows(
-        _records(outcome_payload.get("simulated_outcome_windows")),
-        window_days=5,
-    )
+    window_rows = _dated_window_rows(_records(outcome_payload.get("simulated_outcome_windows")))
     price_symbols = _price_symbols(price_cache_path)
     cost_policy_exists = cost_sensitivity.DEFAULT_COST_SENSITIVITY_CONFIG_PATH.exists()
 
@@ -171,7 +196,7 @@ def run_metric_source_map(
             spec,
             outcome_payload=outcome_payload,
             candidate=candidate,
-            source_variant=source_variant,
+            source_variant=resolved_source_variant,
             source_row=source_row,
             no_trade_row=no_trade_row,
             cost_policy_exists=cost_policy_exists,
@@ -196,7 +221,7 @@ def run_metric_source_map(
     source_map_id = st._stable_id(
         "metric-source-map",
         candidate,
-        source_variant,
+        resolved_source_variant,
         _text(outcome_payload.get("sim_outcome_id")),
         status,
         generated.isoformat(),
@@ -208,11 +233,13 @@ def run_metric_source_map(
         "report_type": "etf_dynamic_v3_metric_source_map_report",
         "source_map_id": root.name,
         "candidate": candidate,
-        "source_variant": source_variant,
+        "source_variant": resolved_source_variant,
         "as_of": effective_as_of.isoformat(),
         "requested_as_of": effective_as_of.isoformat(),
         "generated_at": generated.isoformat(),
         "metric_source_map_status": status,
+        "observed_evidence_status": "INSUFFICIENT_DATA",
+        "candidate_lineage_status": "UNBOUND_SIMULATION_VARIANT",
         "candidate_metric_sources": candidate_metric_sources,
         "baseline_metric_sources": baseline_metric_sources,
         "source_summary": {
@@ -250,6 +277,8 @@ def run_metric_source_map(
         "limitations": [
             "Source map identifies derivable metric inputs but does not materialize metrics.",
             "BACKTEST_SIMULATION sources are research-only and not PIT/live execution evidence.",
+            "limited_adjustment is not treated as the filtered candidate without explicit lineage.",
+            "No fixed window is promoted to general observed evidence.",
             "Price-derived baselines still require the benchmark materialization data gate.",
         ],
         **METRIC_SOURCE_MAP_SAFETY,
@@ -259,7 +288,7 @@ def run_metric_source_map(
         "report_type": "etf_dynamic_v3_metric_source_map_manifest",
         "source_map_id": root.name,
         "candidate": candidate,
-        "source_variant": source_variant,
+        "source_variant": resolved_source_variant,
         "as_of": effective_as_of.isoformat(),
         "generated_at": generated.isoformat(),
         "status": status,
@@ -279,15 +308,46 @@ def run_metric_source_map(
         render_metric_source_map_report(manifest, report),
     )
     st._write_text(root / "reader_brief_section.md", reader)
+    snapshot = {
+        "schema_version": METRIC_SOURCE_MAP_INPUT_SCHEMA,
+        "source_map_id": root.name,
+        "generated_at": generated.isoformat(),
+        "effective_as_of": effective_as_of.isoformat(),
+        "candidate": candidate,
+        "source_variant": resolved_source_variant,
+        "sim_outcome_id": sim_outcome_id,
+        "sim_outcome_dir": str(sim_outcome_dir.resolve()),
+        "sim_source_sha256": _payload_sha256(outcome_payload),
+        "sim_source_bindings": sim_source_bindings,
+        "sim_source_reference": {
+            "requested_artifact_id": sim_outcome_id,
+            "source_dir": str(sim_outcome_dir.resolve()),
+            "exists": bool(sim_outcome_id),
+        },
+        "price_source": price_source,
+        "cost_policy_source": cost_policy_source,
+        "lineage": {
+            "candidate": candidate,
+            "source_variant": resolved_source_variant,
+            "candidate_lineage_status": "UNBOUND_SIMULATION_VARIANT",
+            "outcome_mode": outcome_payload.get("outcome_mode"),
+        },
+        "view_hashes": foundation._view_hashes(root, METRIC_SOURCE_MAP_VIEWS),
+    }
+    foundation._write_snapshot(root / METRIC_SOURCE_MAP_SNAPSHOT, snapshot)
     st._write_latest_pointer(
         "latest_metric_source_map",
         root.name,
         root / "metric_source_map_manifest.json",
     )
-    validation = validate_metric_source_map_artifact(
-        source_map_id=root.name,
-        output_dir=output_dir,
-        write_output=True,
+    validation = (
+        validate_metric_source_map_artifact(
+            source_map_id=root.name,
+            output_dir=output_dir,
+            write_output=True,
+        )
+        if _validate_output
+        else {"status": "NOT_RUN", "failed_check_count": 0, "checks": []}
     )
     return {
         "source_map_id": root.name,
@@ -295,6 +355,7 @@ def run_metric_source_map(
         "manifest": manifest,
         "metric_source_map_report": report,
         "reader_brief_section": reader,
+        "input_snapshot": snapshot,
         "metric_source_map_validation": validation,
     }
 
@@ -320,6 +381,9 @@ def metric_source_map_report_payload(
         ),
         "source_map_dir": str(root),
     }
+    snapshot = st._read_optional_json(root / METRIC_SOURCE_MAP_SNAPSHOT)
+    if snapshot:
+        payload["input_snapshot"] = snapshot
     validation = st._read_optional_json(root / "metric_source_map_validation.json")
     if validation:
         payload["metric_source_map_validation"] = validation
@@ -333,74 +397,26 @@ def validate_metric_source_map_artifact(
     write_output: bool = True,
 ) -> dict[str, Any]:
     root = output_dir / source_map_id
-    manifest = st._read_optional_json(root / "metric_source_map_manifest.json") or {}
-    report = st._read_optional_json(root / "metric_source_map_report.json") or {}
-    reader = (
-        (root / "reader_brief_section.md").read_text(encoding="utf-8")
-        if (root / "reader_brief_section.md").exists()
-        else ""
+    checks, ok = diagnostics._snapshot_preflight(
+        root=root,
+        snapshot_name=METRIC_SOURCE_MAP_SNAPSHOT,
+        schema=METRIC_SOURCE_MAP_INPUT_SCHEMA,
+        id_key="source_map_id",
+        artifact_id=source_map_id,
+        view_names=METRIC_SOURCE_MAP_VIEWS,
     )
-    rows = [
-        *_records(report.get("candidate_metric_sources")),
-        *_records(report.get("baseline_metric_sources")),
-    ]
-    checks = [
-        _check("manifest_exists", bool(manifest)),
-        _check("report_exists", bool(report)),
-        _check(
-            "report_type",
-            _text(report.get("report_type")) == "etf_dynamic_v3_metric_source_map_report",
-        ),
-        _check(
-            "status_enum",
-            _text(report.get("metric_source_map_status")) in METRIC_SOURCE_MAP_STATUSES,
-        ),
-        _check(
-            "candidate_metric_count",
-            len(_records(report.get("candidate_metric_sources"))) == 6,
-        ),
-        _check(
-            "baseline_metric_count",
-            len(_records(report.get("baseline_metric_sources"))) == 5,
-        ),
-        _check(
-            "source_rows_are_complete",
-            all(_source_row_complete(row) for row in rows),
-        ),
-        _check("reader_brief_exists", "metric_source_map_status" in reader),
-        _check(
-            "safety_no_materialization",
-            report.get("cost_metrics_materialized") is False
-            and report.get("benchmark_metrics_materialized") is False
-            and report.get("broker_action_taken") is False
-            and report.get("production_effect") == "none",
-        ),
-    ]
-    failed = [check for check in checks if check["status"] == "FAIL"]
-    warnings = [
-        {
-            "issue_id": "metric_sources_not_derivable",
-            "missing_metric_names": [
-                row.get("metric_name") for row in rows if row.get("derivable_now") is not True
-            ],
-        }
-    ] if any(row.get("derivable_now") is not True for row in rows) else []
-    status = "FAIL" if failed else "PASS_WITH_WARNINGS" if warnings else "PASS"
-    validation = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_metric_source_map_validation",
-        "source_map_id": source_map_id,
-        "generated_at": datetime.now(UTC).isoformat(),
-        "status": status,
-        "check_count": len(checks),
-        "failed_check_count": len(failed),
-        "warning_check_count": len(warnings),
-        "checks": checks,
-        "warning_issues": warnings,
-        "source_status": report.get("metric_source_map_status"),
-        "production_effect": "none",
-        **METRIC_SOURCE_MAP_SAFETY,
-    }
+    validation = (
+        diagnostics._validate_content(
+            report_type="etf_dynamic_v3_metric_source_map_validation",
+            artifact_id=source_map_id,
+            checks=checks,
+            rebuild=lambda: _rebuild_metric_source_map(root, source_map_id),
+        )
+        if ok
+        else st._validation_payload(
+            "etf_dynamic_v3_metric_source_map_validation", source_map_id, checks
+        )
+    )
     if write_output:
         st._write_json(root / "metric_source_map_validation.json", validation)
         st._write_text(
@@ -408,6 +424,140 @@ def validate_metric_source_map_artifact(
             render_metric_source_map_validation_report(validation),
         )
     return validation
+
+
+def _generated_time(value: datetime | None) -> datetime:
+    generated = value or datetime.now(UTC)
+    return _aware_utc(generated, "generated_at")
+
+
+def _aware_utc(value: object, field: str) -> datetime:
+    parsed = value if isinstance(value, datetime) else datetime.fromisoformat(_text(value))
+    if parsed.tzinfo is None or parsed.utcoffset() != UTC.utcoffset(parsed):
+        raise ValueError(f"{field} must be timezone-aware UTC")
+    return parsed.astimezone(UTC)
+
+
+def _payload_sha256(payload: Mapping[str, Any]) -> str:
+    return hashlib.sha256(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
+
+
+def _optional_file_binding(path: Path) -> dict[str, Any]:
+    resolved = path.resolve()
+    if resolved.is_file():
+        return {"exists": True, **foundation._file_binding(resolved)}
+    return {
+        "path": str(resolved),
+        "exists": False,
+        "sha256": None,
+        "size_bytes": None,
+    }
+
+
+def _validate_optional_file_binding(binding: Mapping[str, Any]) -> None:
+    path = Path(_text(binding.get("path")))
+    expected_exists = binding.get("exists") is True
+    if expected_exists:
+        foundation._validate_file_binding(binding)
+    elif path.is_file():
+        raise ValueError(f"optional metric source appeared after snapshot: {path}")
+
+
+def _validate_sim_source(
+    payload: Mapping[str, Any],
+    *,
+    requested_id: str | None,
+    effective_as_of: date,
+    generated: datetime,
+) -> None:
+    if not requested_id:
+        if payload.get("source_status") != "MISSING_EXPLICIT_SOURCE":
+            raise ValueError("metric source map must not resolve an implicit simulation source")
+        return
+    if _text(payload.get("sim_outcome_id")) != requested_id:
+        raise ValueError("metric source map simulation source id mismatch")
+    source_as_of = _parse_date(payload.get("as_of"))
+    if source_as_of and (source_as_of > effective_as_of or source_as_of > generated.date()):
+        raise ValueError("metric source map simulation source occurs after requested chronology")
+    for row in _dated_window_rows(_records(payload.get("simulated_outcome_windows"))):
+        start = _parse_date(row.get("start_date"))
+        end = _parse_date(row.get("end_date"))
+        if start is None or end is None or start > end:
+            raise ValueError("metric source map simulation window chronology is invalid")
+        if end > effective_as_of or end > generated.date():
+            raise ValueError(
+                "metric source map simulation window occurs after requested chronology"
+            )
+
+
+def _sim_source_bindings(payload: Mapping[str, Any]) -> dict[str, Any]:
+    source_dir = Path(_text(payload.get("sim_outcome_dir")))
+    names = (
+        "sim_outcome_manifest.json",
+        "simulated_outcome_windows.jsonl",
+        "simulated_variant_summary.json",
+        "outcome_input_snapshot.json",
+    )
+    if source_dir.is_dir() and all((source_dir / name).is_file() for name in names):
+        return foundation._artifact_binding(
+            kind="backtest_sim_outcome",
+            artifact_id=_text(payload.get("sim_outcome_id")),
+            root=source_dir,
+            names=names,
+        )
+    return {}
+
+
+def _rebuild_metric_source_map(root: Path, source_map_id: str) -> list[dict[str, Any]]:
+    snapshot = st._read_json(root / METRIC_SOURCE_MAP_SNAPSHOT)
+    _validate_optional_file_binding(_mapping(snapshot.get("price_source")))
+    foundation._validate_file_binding(_mapping(snapshot.get("cost_policy_source")))
+    sim_binding = _mapping(snapshot.get("sim_source_bindings"))
+    if sim_binding:
+        foundation._validate_artifact_binding(sim_binding, kind="backtest_sim_outcome")
+    generated = _aware_utc(snapshot.get("generated_at"), "snapshot.generated_at")
+    effective_as_of = date.fromisoformat(_text(snapshot.get("effective_as_of")))
+    sim_outcome_id = _text(snapshot.get("sim_outcome_id")) or None
+    sim_outcome_dir = Path(_text(snapshot.get("sim_outcome_dir")))
+    live_payload = _load_sim_outcome(
+        sim_outcome_id=sim_outcome_id,
+        output_dir=sim_outcome_dir,
+    )
+    if _payload_sha256(live_payload) != snapshot.get("sim_source_sha256"):
+        raise ValueError("metric source map simulation source drift")
+    with TemporaryDirectory(prefix="eb4-metric-source-map-") as temp_dir:
+        result = run_metric_source_map(
+            as_of=effective_as_of,
+            candidate=_text(snapshot.get("candidate")),
+            source_variant=_text(snapshot.get("source_variant")),
+            sim_outcome_id=sim_outcome_id,
+            sim_outcome_dir=sim_outcome_dir,
+            price_cache_path=Path(_text(_mapping(snapshot.get("price_source")).get("path"))),
+            output_dir=Path(temp_dir),
+            generated_at=generated,
+            _validate_output=False,
+        )
+        expected_root = Path(result["source_map_dir"])
+        expected = {
+            name: _normalize_replay_root(
+                (expected_root / name).read_bytes(), expected_root=expected_root, actual_root=root
+            )
+            for name in METRIC_SOURCE_MAP_VIEWS
+        }
+    if result["source_map_id"] != source_map_id:
+        raise ValueError("metric source map id is not reproducible")
+    return diagnostics._check_bytes(root, expected)
+
+
+def _normalize_replay_root(payload: bytes, *, expected_root: Path, actual_root: Path) -> bytes:
+    old = str(expected_root)
+    new = str(actual_root)
+    return payload.replace(old.encode(), new.encode()).replace(
+        old.replace("\\", "\\\\").encode(),
+        new.replace("\\", "\\\\").encode(),
+    )
 
 
 def render_metric_source_map_reader_brief(report: Mapping[str, Any]) -> str:
@@ -511,7 +661,13 @@ def _candidate_metric_row(
     cost_policy_exists: bool,
 ) -> dict[str, Any]:
     metric_name = _text(spec.get("metric_name"))
-    missing = _candidate_missing_fields(metric_name, source_row, no_trade_row, cost_policy_exists)
+    contract_missing = _candidate_missing_fields(
+        metric_name, source_row, no_trade_row, cost_policy_exists
+    )
+    missing = [
+        *contract_missing,
+        "validated_same_candidate_lineage_dated_metric_source",
+    ]
     return {
         "metric_name": metric_name,
         "metric_group": "candidate",
@@ -523,10 +679,17 @@ def _candidate_metric_row(
         "derivation_method": _text(spec.get("derivation_method")),
         "required_fields": list(_texts(spec.get("required_fields"))),
         "missing_fields": missing,
-        "derivable_now": not missing,
+        "source_contract_available": not contract_missing,
+        "derivable_now": False,
+        "observed_value": None,
         "materialized_by_source_map": False,
-        "outcome_mode": "BACKTEST_SIMULATION",
-        "limitation": "research-only source proof; not materialized here",
+        "outcome_mode": _text(
+            outcome_payload.get("outcome_mode"), "MISSING_EXPLICIT_SOURCE"
+        ),
+        "limitation": (
+            "research-only source contract; simulation variant is not the filtered "
+            "candidate and is not observed evidence"
+        ),
     }
 
 
@@ -541,7 +704,7 @@ def _baseline_metric_row(
 ) -> dict[str, Any]:
     baseline_id = _text(spec.get("baseline_id"))
     required_symbols = _baseline_required_symbols(baseline_id, outcome_payload)
-    missing = _baseline_missing_fields(
+    contract_missing = _baseline_missing_fields(
         baseline_id=baseline_id,
         summary_rows=summary_rows,
         window_rows=window_rows,
@@ -549,6 +712,7 @@ def _baseline_metric_row(
         price_symbols=price_symbols,
         required_symbols=required_symbols,
     )
+    missing = [*contract_missing, "validated_dated_baseline_metric_source"]
     return {
         "metric_name": _text(spec.get("metric_name")),
         "metric_group": "baseline",
@@ -560,10 +724,14 @@ def _baseline_metric_row(
         "derivation_method": _text(spec.get("derivation_method")),
         "required_fields": _baseline_required_fields(baseline_id, required_symbols),
         "missing_fields": missing,
-        "derivable_now": not missing,
+        "source_contract_available": not contract_missing,
+        "derivable_now": False,
+        "observed_value": None,
         "materialized_by_source_map": False,
-        "outcome_mode": "BACKTEST_SIMULATION",
-        "limitation": "research-only source proof; not materialized here",
+        "outcome_mode": _text(
+            outcome_payload.get("outcome_mode"), "MISSING_EXPLICIT_SOURCE"
+        ),
+        "limitation": "research-only source contract; no observed baseline metric bound",
     }
 
 
@@ -624,7 +792,9 @@ def _baseline_missing_fields(
             missing.append("summary[no_trade].avg_5d_return OR available no_trade windows")
         return missing
     if not window_rows:
-        missing.append("simulated_outcome_windows[variant=no_trade,window_days=5]")
+        missing.append("dated_simulated_outcome_windows[variant=no_trade]")
+    if baseline_id == "static_allocation" and not required_symbols:
+        missing.append("explicit_static_allocation_weights")
     if not price_cache_path.exists():
         missing.append("price_cache_path")
     missing_symbols = sorted(required_symbols - price_symbols)
@@ -637,11 +807,11 @@ def _baseline_required_fields(baseline_id: str, required_symbols: set[str]) -> l
     if baseline_id == "no_trade":
         return [
             "simulated_variant_summary[variant=no_trade].avg_5d_return",
-            "optional simulated_outcome_windows[variant=no_trade,window_days=5]",
+            "optional dated simulated_outcome_windows[variant=no_trade]",
         ]
     return [
-        "simulated_outcome_windows[variant=no_trade,window_days=5].start_date",
-        "simulated_outcome_windows[variant=no_trade,window_days=5].end_date",
+        "dated_simulated_outcome_windows[variant=no_trade].start_date",
+        "dated_simulated_outcome_windows[variant=no_trade].end_date",
         "price_cache.date",
         "price_cache.ticker_or_symbol",
         "price_cache.adj_close",
@@ -655,8 +825,8 @@ def _baseline_required_symbols(
 ) -> set[str]:
     if baseline_id == "static_allocation":
         return {
-            symbol
-            for symbol in baseline_metrics._static_baseline_weights(outcome_payload)  # noqa: SLF001
+            _text(symbol).upper()
+            for symbol in _mapping(outcome_payload.get("static_allocation_weights"))
             if symbol.upper() != "CASH"
         }
     if baseline_id == "qqq_only":
@@ -680,7 +850,7 @@ def _source_map_status(rows: Sequence[Mapping[str, Any]]) -> str:
         return "METRIC_SOURCE_MAP_READY"
     if derivable:
         return "METRIC_SOURCE_MAP_PARTIAL"
-    return "METRIC_SOURCE_MAP_BLOCKED"
+    return "INSUFFICIENT_DATA"
 
 
 def _source_map_warnings(
@@ -700,7 +870,7 @@ def _next_action(status: str) -> str:
         return "materialize_only_derivable_cost_and_benchmark_metrics"
     if status == "METRIC_SOURCE_MAP_PARTIAL":
         return "materialize_derivable_metrics_and_keep_missing_metrics_blocked"
-    return "restore_metric_source_artifacts_before_materialization"
+    return "bind_validated_same_lineage_dated_sources_before_materialization"
 
 
 def _source_artifact(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -709,30 +879,38 @@ def _source_artifact(payload: Mapping[str, Any]) -> dict[str, Any]:
         "path": _text(payload.get("sim_outcome_manifest_path")),
         "summary_path": _text(payload.get("simulated_variant_summary_path")),
         "window_path": _text(payload.get("simulated_outcome_windows_path")),
-        "outcome_mode": _text(payload.get("outcome_mode"), "BACKTEST_SIMULATION"),
+        "outcome_mode": _text(payload.get("outcome_mode"), "MISSING_EXPLICIT_SOURCE"),
         "production_effect": "none",
     }
 
 
 def _load_sim_outcome(*, sim_outcome_id: str | None, output_dir: Path) -> dict[str, Any]:
+    if not sim_outcome_id:
+        return {
+            "schema_version": st.SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_metric_source_map_missing_sim_source",
+            "sim_outcome_id": "",
+            "source_status": "MISSING_EXPLICIT_SOURCE",
+            "outcome_mode": "MISSING_EXPLICIT_SOURCE",
+            "simulated_variant_summary": {"summary": []},
+            "simulated_outcome_windows": [],
+            "production_effect": "none",
+        }
     return sim.backtest_sim_outcome_report_payload(
         sim_outcome_id=sim_outcome_id,
-        latest=sim_outcome_id is None,
+        latest=False,
         output_dir=output_dir,
     )
 
 
-def _available_window_rows(
-    rows: Sequence[Mapping[str, Any]],
-    *,
-    window_days: int,
-) -> list[dict[str, Any]]:
+def _dated_window_rows(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     result = []
     for row in rows:
         if (
             _text(row.get("variant")) == "no_trade"
-            and _int(row.get("window_days")) == window_days
             and _text(row.get("outcome_status")) == "AVAILABLE"
+            and bool(_text(row.get("start_date")))
+            and bool(_text(row.get("end_date")))
         ):
             result.append(dict(row))
     return result

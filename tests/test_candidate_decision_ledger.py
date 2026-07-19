@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -39,13 +40,18 @@ def test_candidate_decision_ledger_records_and_validates(tmp_path: Path, monkeyp
     assert record["evidence_status"] == "INSUFFICIENT_DATA"
     assert record["stress_result"] == "INSUFFICIENT_DATA"
     assert record["mismatch_result"] == "INSUFFICIENT_DATA"
+    assert record["flip_result"] == "INSUFFICIENT_DATA"
     assert record["rotation_result"] == "INSUFFICIENT_DATA"
     assert record["ab_result"] == "INSUFFICIENT_DATA"
     assert record["confirmation_count"] == 0
-    assert record["owner_action"] == "COLLECT_VALIDATED_DATED_FILTERED_OUTCOMES"
+    assert record["owner_action"] is None
+    assert record["owner_decision_status"] == "NOT_OBSERVED"
+    assert record["system_recommended_action"] == "COLLECT_VALIDATED_DATED_FILTERED_OUTCOMES"
     assert record["final_decision"] == "COLLECT_DATED_EVIDENCE"
-    assert record["next_required_action"] == "return_to_research_contract_review"
+    assert record["next_required_action"] == "collect_missing_research_evidence"
+    assert record["eb5_protocol_status"] == "UNVALIDATED_EB5_PROTOCOL_IGNORED"
     assert record["ledger_sequence"] == 2
+    assert record["previous_record_hash"] == first["candidate_decision_record"]["record_hash"]
     assert {row["record_id"] for row in ledger_rows} == {
         first["record_id"],
         second["record_id"],
@@ -57,6 +63,22 @@ def test_candidate_decision_ledger_records_and_validates(tmp_path: Path, monkeyp
     assert "candidate_decision_ledger_status" in second["reader_brief_section"]
     assert_research_safe(second["manifest"])
     assert second["manifest"]["append_only_ledger"] is True
+    assert second["input_snapshot"]["schema_version"] == (
+        "candidate_decision_ledger_input_snapshot.v2"
+    )
+
+    canonical_path = tmp_path / "candidate_decision_ledger" / "candidate_decision_ledger.jsonl"
+    tampered_rows = list(canonical_rows)
+    tampered_rows[0] = {**tampered_rows[0], "final_decision": "FORMALIZE"}
+    canonical_path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in tampered_rows),
+        encoding="utf-8",
+    )
+    assert readiness.validate_candidate_decision_ledger_artifact(
+        ledger_run_id=second["ledger_run_id"],
+        output_dir=tmp_path / "candidate_decision_ledger",
+        write_output=False,
+    )["status"] == "FAIL"
 
 
 def _record_candidate_decision(

@@ -4,6 +4,7 @@ from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime
 from hashlib import sha256
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 from ai_trading_system.config import (
@@ -23,6 +24,8 @@ from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readin
 from ai_trading_system.etf_portfolio import dynamic_v3_historical_replay as replay
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as weekly
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_diagnostics as diagnostics
+from ai_trading_system.etf_portfolio import dynamic_v3_weight_search_foundation as foundation
 from ai_trading_system.etf_portfolio.models import DEFAULT_ETF_PRICE_PATH
 
 DEFAULT_BENCHMARK_BASELINE_METRICS_MATERIALIZATION_DIR = (
@@ -38,20 +41,36 @@ BENCHMARK_BASELINE_METRICS_MATERIALIZATION_STATUSES = (
 BENCHMARK_BASELINE_METRICS_MATERIALIZATION_SAFETY = {
     **baseline_control.BENCHMARK_BASELINE_SAFETY,
     "benchmark_baseline_metrics_materialization_only": True,
-    "backtest_simulation_event_window_evidence_only": True,
+    "backtest_simulation_event_window_evidence_only": False,
+    "backtest_simulation_contract_only": True,
     "data_quality_gate_required": True,
     "data_downloaded_by_materialization": False,
     "pipelines_executed_by_materialization": False,
     "strategy_optimized_by_materialization": False,
     "benchmark_comparison_live_signal": False,
 }
+BENCHMARK_BASELINE_METRICS_INPUT_SCHEMA = (
+    "benchmark_baseline_metrics_materialization_input_snapshot.v2"
+)
+BENCHMARK_BASELINE_METRICS_VIEWS = (
+    "benchmark_baseline_metrics_materialization_manifest.json",
+    "benchmark_baseline_metrics_materialization_report.json",
+    "benchmark_baseline_metrics_materialization_report.md",
+    "candidate_benchmark_metrics.json",
+    "baseline_metrics.json",
+    "reader_brief_section.md",
+    "validate_data_quality_report.md",
+)
+BENCHMARK_BASELINE_METRICS_SNAPSHOT = (
+    "benchmark_baseline_metrics_materialization_input_snapshot.json"
+)
 
 
 def run_benchmark_baseline_metrics_materialization(
     *,
     as_of: date | None = None,
     candidate: str = readiness.TOP_FILTERED_CANDIDATE,
-    source_variant: str = "limited_adjustment",
+    source_variant: str | None = None,
     sim_outcome_id: str | None = None,
     sim_outcome_dir: Path = sim.DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
     candidate_metrics_path: Path | None = None,
@@ -70,17 +89,51 @@ def run_benchmark_baseline_metrics_materialization(
     rates_cache_path: Path = st.DEFAULT_RATES_CACHE_PATH,
     output_dir: Path = DEFAULT_BENCHMARK_BASELINE_METRICS_MATERIALIZATION_DIR,
     generated_at: datetime | None = None,
+    _validate_output: bool = True,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _generated_time(generated_at)
+    if not _text(source_variant):
+        raise ValueError("source_variant must be explicit")
+    resolved_source_variant = _text(source_variant)
     outcome_payload = _load_sim_outcome(
         sim_outcome_id=sim_outcome_id,
         output_dir=sim_outcome_dir,
     )
     effective_as_of = as_of or _parse_date(outcome_payload.get("as_of")) or generated.date()
+    if effective_as_of > generated.date():
+        raise ValueError("benchmark baseline metrics as_of occurs after generated_at")
+    candidate_metrics_input = _load_candidate_cost_metrics(
+        metrics_path=candidate_metrics_path,
+        materialization_id=candidate_cost_materialization_id,
+        output_dir=candidate_cost_materialization_dir,
+    )
+    cost_review_payload = _load_cost_review(
+        review_id=cost_sensitivity_review_id,
+        output_dir=cost_sensitivity_dir,
+    )
+    _validate_materialization_sources(
+        outcome_payload=outcome_payload,
+        requested_sim_outcome_id=sim_outcome_id,
+        candidate_metrics_payload=candidate_metrics_input,
+        effective_as_of=effective_as_of,
+        generated=generated,
+    )
+    source_bindings = _materialization_source_bindings(
+        outcome_payload=outcome_payload,
+        candidate_metrics_path=candidate_metrics_path,
+        candidate_cost_materialization_id=candidate_cost_materialization_id,
+        candidate_cost_materialization_dir=candidate_cost_materialization_dir,
+        weekly_review_id=weekly_review_id,
+        weekly_review_dir=weekly_review_dir,
+        cost_sensitivity_review_id=cost_sensitivity_review_id,
+        cost_sensitivity_dir=cost_sensitivity_dir,
+        price_cache_path=price_cache_path,
+        rates_cache_path=rates_cache_path,
+    )
     materialization_id = st._stable_id(
         "benchmark-baseline-metrics-materialization",
         candidate,
-        source_variant,
+        resolved_source_variant,
         _text(outcome_payload.get("sim_outcome_id")),
         _text(candidate_cost_materialization_id),
         generated.isoformat(),
@@ -100,38 +153,21 @@ def run_benchmark_baseline_metrics_materialization(
             f"data quality gate failed: {quality.status}"
         )
 
-    outcome_summary = _mapping(outcome_payload.get("simulated_variant_summary"))
-    rows = _records(outcome_summary.get("summary"))
-    window_rows = _available_window_rows(
-        _records(outcome_payload.get("simulated_outcome_windows")),
-        window_days=5,
-    )
-    prices = sim._load_prices(  # noqa: SLF001 - reuse project-standard ETF price loader.
-        price_cache_path,
-        extra_symbols=_required_price_symbols(),
-    )
     candidate_metrics_payload = _candidate_benchmark_metrics(
         candidate=candidate,
-        source_variant=source_variant,
-        source_row=_variant_row(rows, source_variant),
-        cost_review_payload=_load_cost_review(
-            review_id=cost_sensitivity_review_id,
-            output_dir=cost_sensitivity_dir,
-        ),
-        candidate_metrics_payload=_load_candidate_cost_metrics(
-            metrics_path=candidate_metrics_path,
-            materialization_id=candidate_cost_materialization_id,
-            output_dir=candidate_cost_materialization_dir,
-        ),
+        source_variant=resolved_source_variant,
+        source_row={},
+        cost_review_payload=cost_review_payload,
+        candidate_metrics_payload=candidate_metrics_input,
         outcome_payload=outcome_payload,
         effective_as_of=effective_as_of,
         generated_at=generated,
     )
     baseline_metrics_payload = _baseline_metrics(
         outcome_payload=outcome_payload,
-        outcome_rows=window_rows,
-        summary_rows=rows,
-        prices=prices,
+        outcome_rows=(),
+        summary_rows=(),
+        prices=None,
         effective_as_of=effective_as_of,
         generated_at=generated,
         price_cache_path=price_cache_path,
@@ -167,11 +203,13 @@ def run_benchmark_baseline_metrics_materialization(
         "report_type": "etf_dynamic_v3_benchmark_baseline_metrics_materialization_report",
         "materialization_id": root.name,
         "candidate": candidate,
-        "source_variant": source_variant,
+        "source_variant": resolved_source_variant,
         "as_of": effective_as_of.isoformat(),
         "requested_as_of": effective_as_of.isoformat(),
         "generated_at": generated.isoformat(),
         "benchmark_baseline_metrics_status": final_status,
+        "observed_evidence_status": "INSUFFICIENT_DATA",
+        "candidate_lineage_status": "UNBOUND_SIMULATION_VARIANT",
         "candidate_metrics_path": str(candidate_path),
         "baseline_metrics_path": str(baseline_path),
         "candidate_metrics": candidate_metrics_payload,
@@ -214,8 +252,15 @@ def run_benchmark_baseline_metrics_materialization(
         ),
         "next_required_action": _next_action(final_status, control_pack),
         "limitations": [
-            "baseline metrics are materialized from existing simulation windows and cached prices",
+            (
+                "simulation contracts are inventoried but no observed baseline metrics "
+                "are materialized"
+            ),
             "BACKTEST_SIMULATION event windows are not PIT/live execution evidence",
+            "limited_adjustment is not the filtered candidate without explicit lineage",
+            "no fixed event window is generalized into investment evidence",
+            "gross performance is never substituted for missing net performance",
+            "no default portfolio weights are used as evidence",
             "benchmark comparison is research-only and not a live allocation signal",
             "equal_weight_shadow_candidates is not mapped to equal_weight_etf",
         ],
@@ -226,7 +271,7 @@ def run_benchmark_baseline_metrics_materialization(
         "report_type": "etf_dynamic_v3_benchmark_baseline_metrics_materialization_manifest",
         "materialization_id": root.name,
         "candidate": candidate,
-        "source_variant": source_variant,
+        "source_variant": resolved_source_variant,
         "as_of": effective_as_of.isoformat(),
         "generated_at": generated.isoformat(),
         "status": final_status,
@@ -261,15 +306,75 @@ def run_benchmark_baseline_metrics_materialization(
         render_benchmark_baseline_metrics_materialization_report(manifest, report),
     )
     st._write_text(root / "reader_brief_section.md", reader)
+    control_id = _text(control_result.get("control_id"))
+    control_binding = foundation._artifact_binding(
+        kind="benchmark_baseline_control",
+        artifact_id=control_id,
+        root=benchmark_baseline_output_dir / control_id,
+        names=(
+            "benchmark_baseline_manifest.json",
+            "benchmark_baseline_control_pack.json",
+            "benchmark_baseline_report.md",
+            "reader_brief_section.md",
+            baseline_control.BENCHMARK_BASELINE_SNAPSHOT,
+            "benchmark_baseline_validation.json",
+        ),
+    )
+    snapshot = {
+        "schema_version": BENCHMARK_BASELINE_METRICS_INPUT_SCHEMA,
+        "materialization_id": root.name,
+        "generated_at": generated.isoformat(),
+        "effective_as_of": effective_as_of.isoformat(),
+        "source_bindings": source_bindings,
+        "benchmark_control_binding": control_binding,
+        "lineage": {
+            "candidate": candidate,
+            "source_variant": resolved_source_variant,
+            "sim_outcome_id": sim_outcome_id,
+            "outcome_mode": outcome_payload.get("outcome_mode"),
+            "candidate_lineage_status": "UNBOUND_SIMULATION_VARIANT",
+            "observed_evidence_status": "INSUFFICIENT_DATA",
+        },
+        "replay": {
+            "candidate": candidate,
+            "source_variant": resolved_source_variant,
+            "sim_outcome_id": sim_outcome_id,
+            "sim_outcome_dir": str(sim_outcome_dir.resolve()),
+            "candidate_metrics_path": (
+                None
+                if candidate_metrics_path is None
+                else str(candidate_metrics_path.resolve())
+            ),
+            "candidate_cost_materialization_id": candidate_cost_materialization_id,
+            "candidate_cost_materialization_dir": str(
+                candidate_cost_materialization_dir.resolve()
+            ),
+            "weekly_review_id": weekly_review_id,
+            "weekly_review_dir": str(weekly_review_dir.resolve()),
+            "cost_sensitivity_review_id": cost_sensitivity_review_id,
+            "cost_sensitivity_dir": str(cost_sensitivity_dir.resolve()),
+            "benchmark_baseline_output_dir": str(
+                benchmark_baseline_output_dir.resolve()
+            ),
+            "price_cache_path": str(price_cache_path.resolve()),
+            "rates_cache_path": str(rates_cache_path.resolve()),
+        },
+        "view_hashes": foundation._view_hashes(root, BENCHMARK_BASELINE_METRICS_VIEWS),
+    }
+    foundation._write_snapshot(root / BENCHMARK_BASELINE_METRICS_SNAPSHOT, snapshot)
     st._write_latest_pointer(
         "latest_benchmark_baseline_metrics_materialization",
         root.name,
         root / "benchmark_baseline_metrics_materialization_manifest.json",
     )
-    validation = validate_benchmark_baseline_metrics_materialization_artifact(
-        materialization_id=root.name,
-        output_dir=output_dir,
-        write_output=True,
+    validation = (
+        validate_benchmark_baseline_metrics_materialization_artifact(
+            materialization_id=root.name,
+            output_dir=output_dir,
+            write_output=True,
+        )
+        if _validate_output
+        else {"status": "NOT_RUN", "failed_check_count": 0, "checks": []}
     )
     return {
         "materialization_id": root.name,
@@ -277,6 +382,7 @@ def run_benchmark_baseline_metrics_materialization(
         "manifest": manifest,
         "benchmark_baseline_metrics_materialization_report": report,
         "reader_brief_section": reader,
+        "input_snapshot": snapshot,
         "benchmark_baseline_metrics_materialization_validation": validation,
         "benchmark_baseline_control_result": control_result,
     }
@@ -305,6 +411,9 @@ def benchmark_baseline_metrics_materialization_report_payload(
         ),
         "materialization_dir": str(root),
     }
+    snapshot = st._read_optional_json(root / BENCHMARK_BASELINE_METRICS_SNAPSHOT)
+    if snapshot:
+        payload["input_snapshot"] = snapshot
     validation = st._read_optional_json(
         root / "benchmark_baseline_metrics_materialization_validation.json"
     )
@@ -320,123 +429,31 @@ def validate_benchmark_baseline_metrics_materialization_artifact(
     write_output: bool = True,
 ) -> dict[str, Any]:
     root = output_dir / materialization_id
-    manifest = (
-        st._read_optional_json(
-            root / "benchmark_baseline_metrics_materialization_manifest.json"
+    checks, ok = diagnostics._snapshot_preflight(
+        root=root,
+        snapshot_name=BENCHMARK_BASELINE_METRICS_SNAPSHOT,
+        schema=BENCHMARK_BASELINE_METRICS_INPUT_SCHEMA,
+        id_key="materialization_id",
+        artifact_id=materialization_id,
+        view_names=BENCHMARK_BASELINE_METRICS_VIEWS,
+    )
+    validation = (
+        diagnostics._validate_content(
+            report_type=(
+                "etf_dynamic_v3_benchmark_baseline_metrics_materialization_validation"
+            ),
+            artifact_id=materialization_id,
+            checks=checks,
+            rebuild=lambda: _rebuild_benchmark_baseline_metrics(
+                root, materialization_id
+            ),
         )
-        or {}
-    )
-    report = (
-        st._read_optional_json(root / "benchmark_baseline_metrics_materialization_report.json")
-        or {}
-    )
-    candidate_metrics = st._read_optional_json(root / "candidate_benchmark_metrics.json") or {}
-    baseline_metrics = st._read_optional_json(root / "baseline_metrics.json") or {}
-    reader = (
-        (root / "reader_brief_section.md").read_text(encoding="utf-8")
-        if (root / "reader_brief_section.md").exists()
-        else ""
-    )
-    status = _text(report.get("benchmark_baseline_metrics_status"))
-    baselines = _records(baseline_metrics.get("baselines"))
-    baseline_ids = {_text(row.get("baseline_id")) for row in baselines}
-    source_artifacts = _mapping(report.get("source_artifacts"))
-    checks = st._required_file_checks(
-        root,
-        (
-            "benchmark_baseline_metrics_materialization_manifest.json",
-            "benchmark_baseline_metrics_materialization_report.json",
-            "benchmark_baseline_metrics_materialization_report.md",
-            "candidate_benchmark_metrics.json",
-            "baseline_metrics.json",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check(
-                "materialization_id_matches",
-                manifest.get("materialization_id")
-                == report.get("materialization_id")
-                == materialization_id,
-                "",
-            ),
-            st._check(
-                "status_allowed",
-                status in BENCHMARK_BASELINE_METRICS_MATERIALIZATION_STATUSES,
-                status,
-            ),
-            st._check(
-                "candidate_metric_visible",
-                status != "BASELINE_METRICS_AVAILABLE"
-                or _float_or_none(candidate_metrics.get("net_performance_proxy")) is not None,
-                _text(candidate_metrics.get("net_performance_proxy")),
-            ),
-            st._check(
-                "required_baselines_visible",
-                set(baseline_control.REQUIRED_BASELINE_IDS).issubset(baseline_ids),
-                ",".join(sorted(baseline_ids)),
-            ),
-            st._check(
-                "all_required_metrics_available_or_fail_closed",
-                (
-                    status != "BASELINE_METRICS_AVAILABLE"
-                    or all(
-                        _float_or_none(row.get("net_performance_proxy")) is not None
-                        for row in baselines
-                    )
-                ),
-                "",
-            ),
-            st._check(
-                "data_quality_gate_visible",
-                _mapping(source_artifacts.get("data_quality_gate")).get("status")
-                in {"PASS", "PASS_WITH_WARNINGS"},
-                _text(_mapping(source_artifacts.get("data_quality_gate")).get("status")),
-            ),
-            st._check(
-                "benchmark_control_rerun_visible",
-                bool(report.get("benchmark_baseline_control_id"))
-                and bool(report.get("benchmark_baseline_status")),
-                "",
-            ),
-            st._check(
-                "backtest_simulation_limitation_visible",
-                "BACKTEST_SIMULATION"
-                in " ".join(_texts(report.get("limitations")))
-                and report.get("backtest_simulation_event_window_evidence_only") is True,
-                "",
-            ),
-            st._check(
-                "equal_weight_etf_not_shadow_candidate_mapping",
-                any(
-                    _text(row.get("baseline_id")) == "equal_weight_etf"
-                    and _text(row.get("source_method")) == "price_cache_equal_weight_etf"
-                    for row in baselines
-                ),
-                "",
-            ),
-            st._check(
-                "reader_brief_fields",
-                "benchmark_baseline_metrics_status" in reader
-                and "benchmark_baseline_status" in reader
-                and "next_required_action" in reader,
-                "",
-            ),
-            st._check(
-                "research_only_materialization",
-                report.get("research_only") is True
-                and report.get("execution_model_ready") is False
-                and report.get("benchmark_comparison_live_signal") is False,
-                "",
-            ),
-            st._check("broker_forbidden", st._payload_safe(manifest, report), ""),
-        ]
-    )
-    validation = st._validation_payload(
-        "etf_dynamic_v3_benchmark_baseline_metrics_materialization_validation",
-        materialization_id,
-        checks,
+        if ok
+        else st._validation_payload(
+            "etf_dynamic_v3_benchmark_baseline_metrics_materialization_validation",
+            materialization_id,
+            checks,
+        )
     )
     if write_output:
         st._write_json(
@@ -448,6 +465,205 @@ def validate_benchmark_baseline_metrics_materialization_artifact(
             render_benchmark_baseline_metrics_materialization_validation_report(validation),
         )
     return validation
+
+
+def _generated_time(value: datetime | None) -> datetime:
+    generated = value or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() != UTC.utcoffset(generated):
+        raise ValueError("generated_at must be timezone-aware UTC")
+    return generated.astimezone(UTC)
+
+
+def _validate_materialization_sources(
+    *,
+    outcome_payload: Mapping[str, Any],
+    requested_sim_outcome_id: str | None,
+    candidate_metrics_payload: Mapping[str, Any],
+    effective_as_of: date,
+    generated: datetime,
+) -> None:
+    if requested_sim_outcome_id:
+        if _text(outcome_payload.get("sim_outcome_id")) != requested_sim_outcome_id:
+            raise ValueError("benchmark baseline simulation source id mismatch")
+    elif outcome_payload.get("source_status") != "MISSING_EXPLICIT_SOURCE":
+        raise ValueError("benchmark baseline materialization cannot resolve implicit latest")
+    for label, value in (
+        ("simulation as_of", outcome_payload.get("as_of")),
+        (
+            "candidate metric as_of",
+            candidate_metrics_payload.get("window_end", candidate_metrics_payload.get("as_of")),
+        ),
+    ):
+        parsed = _parse_date(value)
+        if parsed and (parsed > effective_as_of or parsed > generated.date()):
+            raise ValueError(f"benchmark baseline {label} occurs after requested chronology")
+    generated_text = _text(candidate_metrics_payload.get("generated_at"))
+    if generated_text:
+        candidate_generated = datetime.fromisoformat(generated_text)
+        if (
+            candidate_generated.tzinfo is None
+            or candidate_generated.utcoffset() != UTC.utcoffset(candidate_generated)
+        ):
+            raise ValueError("candidate metrics generated_at must be timezone-aware UTC")
+        if candidate_generated > generated:
+            raise ValueError("candidate metrics generated_at occurs after materialization")
+
+
+def _materialization_source_bindings(
+    *,
+    outcome_payload: Mapping[str, Any],
+    candidate_metrics_path: Path | None,
+    candidate_cost_materialization_id: str | None,
+    candidate_cost_materialization_dir: Path,
+    weekly_review_id: str | None,
+    weekly_review_dir: Path,
+    cost_sensitivity_review_id: str | None,
+    cost_sensitivity_dir: Path,
+    price_cache_path: Path,
+    rates_cache_path: Path,
+) -> list[dict[str, Any]]:
+    bindings: list[dict[str, Any]] = [
+        {"role": "price_cache", **foundation._file_binding(price_cache_path)},
+        {"role": "rates_cache", **foundation._file_binding(rates_cache_path)},
+    ]
+    manifest_path = Path(_text(outcome_payload.get("sim_outcome_manifest_path")))
+    if manifest_path.is_file():
+        for name in (
+            "sim_outcome_manifest.json",
+            "simulated_outcome_windows.jsonl",
+            "simulated_variant_summary.json",
+            "outcome_input_snapshot.json",
+        ):
+            path = manifest_path.parent / name
+            if path.is_file():
+                bindings.append({"role": f"sim_outcome:{name}", **foundation._file_binding(path)})
+    if candidate_metrics_path is not None:
+        bindings.append(
+            {"role": "candidate_metrics", **foundation._file_binding(candidate_metrics_path)}
+        )
+    elif candidate_cost_materialization_id:
+        source_root = candidate_cost_materialization_dir / candidate_cost_materialization_id
+        for name in (
+            "cost_metrics_materialization_manifest.json",
+            "cost_metrics_materialization_report.json",
+            "candidate_cost_metrics.json",
+            "cost_metrics_materialization_input_snapshot.json",
+        ):
+            path = source_root / name
+            if path.is_file():
+                bindings.append(
+                    {
+                        "role": f"candidate_cost_materialization:{name}",
+                        **foundation._file_binding(path),
+                    }
+                )
+    for role, artifact_id, artifact_dir, names in (
+        (
+            "weekly_review",
+            weekly_review_id,
+            weekly_review_dir,
+            (
+                "paper_shadow_weekly_manifest.json",
+                "paper_shadow_weekly_review.json",
+                "paper_shadow_weekly_validation.json",
+            ),
+        ),
+        (
+            "cost_sensitivity",
+            cost_sensitivity_review_id,
+            cost_sensitivity_dir,
+            (
+                "cost_sensitivity_manifest.json",
+                "cost_sensitivity_review.json",
+                "cost_sensitivity_validation.json",
+            ),
+        ),
+    ):
+        if not artifact_id:
+            continue
+        for name in names:
+            path = artifact_dir / artifact_id / name
+            if path.is_file():
+                bindings.append({"role": f"{role}:{name}", **foundation._file_binding(path)})
+    return bindings
+
+
+def _rebuild_benchmark_baseline_metrics(
+    root: Path, materialization_id: str
+) -> list[dict[str, Any]]:
+    snapshot = st._read_json(root / BENCHMARK_BASELINE_METRICS_SNAPSHOT)
+    for binding in _records(snapshot.get("source_bindings")):
+        foundation._validate_file_binding(binding)
+    control_binding = _mapping(snapshot.get("benchmark_control_binding"))
+    foundation._validate_artifact_binding(
+        control_binding, kind="benchmark_baseline_control"
+    )
+    replay_args = _mapping(snapshot.get("replay"))
+    generated = _generated_time(
+        datetime.fromisoformat(_text(snapshot.get("generated_at")))
+    )
+    candidate_path = _text(replay_args.get("candidate_metrics_path"))
+    with TemporaryDirectory(prefix="eb4-benchmark-metrics-") as temp_dir:
+        temp_root = Path(temp_dir)
+        temp_control_dir = temp_root / "benchmark_control"
+        result = run_benchmark_baseline_metrics_materialization(
+            as_of=date.fromisoformat(_text(snapshot.get("effective_as_of"))),
+            candidate=_text(replay_args.get("candidate")),
+            source_variant=_text(replay_args.get("source_variant")),
+            sim_outcome_id=_text(replay_args.get("sim_outcome_id")) or None,
+            sim_outcome_dir=Path(_text(replay_args.get("sim_outcome_dir"))),
+            candidate_metrics_path=Path(candidate_path) if candidate_path else None,
+            candidate_cost_materialization_id=(
+                _text(replay_args.get("candidate_cost_materialization_id")) or None
+            ),
+            candidate_cost_materialization_dir=Path(
+                _text(replay_args.get("candidate_cost_materialization_dir"))
+            ),
+            weekly_review_id=_text(replay_args.get("weekly_review_id")) or None,
+            weekly_review_dir=Path(_text(replay_args.get("weekly_review_dir"))),
+            cost_sensitivity_review_id=(
+                _text(replay_args.get("cost_sensitivity_review_id")) or None
+            ),
+            cost_sensitivity_dir=Path(_text(replay_args.get("cost_sensitivity_dir"))),
+            benchmark_baseline_output_dir=temp_control_dir,
+            price_cache_path=Path(_text(replay_args.get("price_cache_path"))),
+            rates_cache_path=Path(_text(replay_args.get("rates_cache_path"))),
+            output_dir=temp_root / "materialization",
+            generated_at=generated,
+            _validate_output=False,
+        )
+        expected_root = Path(result["materialization_dir"])
+        expected_control_root = Path(
+            _mapping(result.get("benchmark_baseline_control_result")).get("control_dir")
+        )
+        actual_control_root = Path(_text(control_binding.get("source_dir")))
+        expected = {
+            name: _normalize_materialization_roots(
+                (expected_root / name).read_bytes(),
+                replacements=(
+                    (expected_root, root),
+                    (expected_control_root, actual_control_root),
+                ),
+            )
+            for name in BENCHMARK_BASELINE_METRICS_VIEWS
+        }
+    if result["materialization_id"] != materialization_id:
+        raise ValueError("benchmark baseline metrics materialization id is not reproducible")
+    return diagnostics._check_bytes(root, expected)
+
+
+def _normalize_materialization_roots(
+    payload: bytes, *, replacements: Sequence[tuple[Path, Path]]
+) -> bytes:
+    normalized = payload
+    for old_path, new_path in replacements:
+        old = str(old_path)
+        new = str(new_path)
+        normalized = normalized.replace(old.encode(), new.encode()).replace(
+            old.replace("\\", "\\\\").encode(),
+            new.replace("\\", "\\\\").encode(),
+        )
+    return normalized
 
 
 def render_benchmark_baseline_metrics_materialization_reader_brief(
@@ -569,13 +785,6 @@ def _candidate_benchmark_metrics(
     generated_at: datetime,
 ) -> dict[str, Any]:
     cost_review = _mapping(cost_review_payload.get("cost_sensitivity_review"))
-    scenario = _conservative_cost_scenario(cost_review)
-    gross = _first_float(candidate_metrics_payload, "gross_performance_proxy")
-    if gross is None:
-        gross = _first_float(source_row, "avg_5d_return")
-    net = _first_float(scenario, "net_performance_proxy")
-    if net is None:
-        net = gross
     return {
         "schema_version": st.SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_candidate_benchmark_metrics",
@@ -587,6 +796,7 @@ def _candidate_benchmark_metrics(
             generated_at.isoformat(),
         ),
         "candidate": candidate,
+        "candidate_lineage_id": None,
         "as_of": effective_as_of.isoformat(),
         "source_variant": source_variant,
         "source_artifact_id": outcome_payload.get("sim_outcome_id"),
@@ -597,28 +807,24 @@ def _candidate_benchmark_metrics(
             "validation_status": _mapping(
                 cost_review_payload.get("cost_sensitivity_validation")
             ).get("status"),
-            "scenario_id": scenario.get("scenario_id"),
-            "scenario_label": scenario.get("label"),
+            "scenario_id": None,
+            "scenario_label": None,
         },
-        "gross_performance_proxy": _round_or_none(gross),
-        "net_performance_proxy": _round_or_none(net),
-        "turnover": _round_or_none(
-            _first_float(candidate_metrics_payload, "turnover")
-            or _first_float(source_row, "avg_turnover")
-        ),
-        "drawdown_proxy": _round_or_none(
-            _first_float(candidate_metrics_payload, "drawdown_proxy")
-            or _first_float(source_row, "avg_max_drawdown_20d")
-        ),
-        "trade_rotation_count": _int(
-            candidate_metrics_payload.get("trade_rotation_count")
-            or source_row.get("event_count")
-        ),
-        "sample_count": _int(source_row.get("available_count")),
-        "metric_source": "cost_metrics_materialization + cost_sensitivity_review",
+        "gross_performance": None,
+        "net_performance": None,
+        "gross_performance_proxy": None,
+        "net_performance_proxy": None,
+        "turnover": None,
+        "drawdown_proxy": None,
+        "trade_rotation_count": None,
+        "sample_count": 0,
+        "evidence_status": "INSUFFICIENT_DATA",
+        "validation_status": "NOT_APPLICABLE",
+        "lineage_match": False,
+        "metric_source": "simulation_contract_only",
         "limitation": (
-            "Candidate net proxy uses the conservative cost-sensitivity scenario; "
-            "BACKTEST_SIMULATION metric proxy is not PIT/live execution evidence."
+            "BACKTEST_SIMULATION and cost proxy inputs are not validated dated "
+            "same-candidate lineage evidence; numeric views remain null."
         ),
         **BENCHMARK_BASELINE_METRICS_MATERIALIZATION_SAFETY,
     }
@@ -635,42 +841,27 @@ def _baseline_metrics(
     price_cache_path: Path,
     data_quality_summary: Mapping[str, Any],
 ) -> dict[str, Any]:
-    static_weights = _static_baseline_weights(outcome_payload)
     baseline_rows = [
-        _price_baseline_row(
-            baseline_id="static_allocation",
-            source_method="price_cache_static_allocation",
-            weights=static_weights,
-            outcome_rows=outcome_rows,
-            prices=prices,
-        ),
-        _summary_baseline_row(
-            baseline_id="no_trade",
-            source_method="backtest_sim_outcome_no_trade",
-            row=_variant_row(summary_rows, "no_trade"),
-            outcome_rows=outcome_rows,
-        ),
-        _price_baseline_row(
-            baseline_id="qqq_only",
-            source_method="price_cache_single_asset",
-            weights={"QQQ": 1.0},
-            outcome_rows=outcome_rows,
-            prices=prices,
-        ),
-        _price_baseline_row(
-            baseline_id="spy_only",
-            source_method="price_cache_single_asset",
-            weights={"SPY": 1.0},
-            outcome_rows=outcome_rows,
-            prices=prices,
-        ),
-        _price_baseline_row(
-            baseline_id="equal_weight_etf",
-            source_method="price_cache_equal_weight_etf",
-            weights={"SPY": 0.25, "QQQ": 0.25, "SMH": 0.25, "SOXX": 0.25},
-            outcome_rows=outcome_rows,
-            prices=prices,
-        ),
+        {
+            "baseline_id": baseline_id,
+            "source_method": "simulation_contract_unbound",
+            "weights": None,
+            "gross_performance": None,
+            "net_performance": None,
+            "gross_performance_proxy": None,
+            "net_performance_proxy": None,
+            "turnover": None,
+            "drawdown_proxy": None,
+            "sample_count": 0,
+            "missing_window_count": None,
+            "metric_status": "INSUFFICIENT_DATA",
+            "evidence_status": "INSUFFICIENT_DATA",
+            "limitation": (
+                "No validated dated baseline metric source with explicit weights "
+                "and cost treatment is bound."
+            ),
+        }
+        for baseline_id in baseline_control.REQUIRED_BASELINE_IDS
     ]
     return {
         "schema_version": st.SCHEMA_VERSION,
@@ -683,101 +874,36 @@ def _baseline_metrics(
         ),
         "as_of": effective_as_of.isoformat(),
         "source_artifact_id": outcome_payload.get("sim_outcome_id"),
-        "source_window_days": 5,
-        "source_window_count": len(outcome_rows),
+        "source_window_definition": None,
+        "source_window_count": 0,
         "price_cache_path": str(price_cache_path),
         "price_cache_sha256": _file_sha256(price_cache_path),
         "data_quality_status": data_quality_summary.get("status"),
         "baselines": baseline_rows,
         "baseline_count": len(baseline_rows),
+        "evidence_status": "INSUFFICIENT_DATA",
+        "validation_status": "NOT_APPLICABLE",
         "limitation": (
-            "Baseline metrics use existing BACKTEST_SIMULATION event windows and cached "
-            "adjusted-close prices; they are research inputs only."
+            "BACKTEST_SIMULATION windows and cached prices are source contracts only; "
+            "no numeric baseline evidence is materialized."
         ),
         **BENCHMARK_BASELINE_METRICS_MATERIALIZATION_SAFETY,
     }
 
 
-def _summary_baseline_row(
-    *,
-    baseline_id: str,
-    source_method: str,
-    row: Mapping[str, Any],
-    outcome_rows: Sequence[Mapping[str, Any]],
-) -> dict[str, Any]:
-    returns = [_float_or_none(item.get("return")) for item in outcome_rows]
-    returns = [item for item in returns if item is not None]
-    drawdowns = [_float_or_none(item.get("max_drawdown")) for item in outcome_rows]
-    drawdowns = [item for item in drawdowns if item is not None]
-    gross = _first_float(row, "avg_5d_return")
-    if gross is None and returns:
-        gross = sum(returns) / len(returns)
-    metric_status = "AVAILABLE" if gross is not None else "MISSING"
-    return {
-        "baseline_id": baseline_id,
-        "source_method": source_method,
-        "gross_performance_proxy": _round_or_none(gross),
-        "net_performance_proxy": _round_or_none(gross),
-        "turnover": _round_or_none(_first_float(row, "avg_turnover") or 0.0),
-        "drawdown_proxy": _round_or_none(
-            _first_float(row, "avg_max_drawdown_20d")
-            or (sum(drawdowns) / len(drawdowns) if drawdowns else None)
-        ),
-        "sample_count": len(returns),
-        "missing_window_count": max(0, len(outcome_rows) - len(returns)),
-        "metric_status": metric_status,
-        "limitation": "No-trade baseline sourced from existing simulated no_trade windows.",
-    }
-
-
-def _price_baseline_row(
-    *,
-    baseline_id: str,
-    source_method: str,
-    weights: Mapping[str, float],
-    outcome_rows: Sequence[Mapping[str, Any]],
-    prices: Any,
-) -> dict[str, Any]:
-    returns: list[float] = []
-    drawdowns: list[float] = []
-    missing = 0
-    for row in outcome_rows:
-        start = _parse_date(row.get("start_date"))
-        end = _parse_date(row.get("end_date"))
-        if start is None or end is None:
-            missing += 1
-            continue
-        metrics = replay._portfolio_metrics(prices, weights, start, end)  # noqa: SLF001
-        if metrics.get("status") != "AVAILABLE":
-            missing += 1
-            continue
-        returns.append(_float(metrics.get("return")))
-        drawdowns.append(_float(metrics.get("max_drawdown")))
-    gross = sum(returns) / len(returns) if returns else None
-    drawdown = sum(drawdowns) / len(drawdowns) if drawdowns else None
-    metric_status = "AVAILABLE" if gross is not None else "MISSING"
-    return {
-        "baseline_id": baseline_id,
-        "source_method": source_method,
-        "weights": {key: _round_or_none(value) for key, value in sorted(weights.items())},
-        "gross_performance_proxy": _round_or_none(gross),
-        "net_performance_proxy": _round_or_none(gross),
-        "turnover": 0.0,
-        "drawdown_proxy": _round_or_none(drawdown),
-        "sample_count": len(returns),
-        "missing_window_count": missing,
-        "metric_status": metric_status,
-        "limitation": (
-            "Price-derived hold-period baseline over existing BACKTEST_SIMULATION "
-            "event windows; no live allocation or execution model."
-        ),
-    }
-
-
 def _load_sim_outcome(*, sim_outcome_id: str | None, output_dir: Path) -> dict[str, Any]:
+    if not sim_outcome_id:
+        return {
+            "schema_version": st.SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_missing_sim_outcome_source",
+            "sim_outcome_id": "",
+            "source_status": "MISSING_EXPLICIT_SOURCE",
+            "outcome_mode": "MISSING_EXPLICIT_SOURCE",
+            "production_effect": "none",
+        }
     return sim.backtest_sim_outcome_report_payload(
         sim_outcome_id=sim_outcome_id,
-        latest=sim_outcome_id is None,
+        latest=False,
         output_dir=output_dir,
     )
 
@@ -790,9 +916,15 @@ def _load_candidate_cost_metrics(
 ) -> dict[str, Any]:
     if metrics_path is not None:
         return st._read_json(metrics_path)
+    if not materialization_id:
+        return {
+            "metrics_id": "MISSING",
+            "evidence_status": "INSUFFICIENT_DATA",
+            "limitation": "explicit candidate metrics source is required",
+        }
     payload = cost_metrics.cost_metrics_materialization_report_payload(
         materialization_id=materialization_id,
-        latest=materialization_id is None,
+        latest=False,
         output_dir=output_dir,
     )
     report = _mapping(payload.get("cost_metrics_materialization_report"))
@@ -806,9 +938,15 @@ def _load_candidate_cost_metrics(
 
 
 def _load_cost_review(*, review_id: str | None, output_dir: Path) -> dict[str, Any]:
+    if not review_id:
+        return {
+            "review_id": "MISSING",
+            "cost_sensitivity_review": {},
+            "cost_sensitivity_validation": {"status": "MISSING"},
+        }
     return cost.cost_sensitivity_report_payload(
         review_id=review_id,
-        latest=review_id is None,
+        latest=False,
         output_dir=output_dir,
     )
 
@@ -900,9 +1038,11 @@ def _blocking_reasons(
 ) -> list[str]:
     reasons: list[str] = []
     if metric_statuses.get("candidate") != "AVAILABLE":
-        reasons.append("candidate_metrics:missing_net_performance_proxy")
+        reasons.append("candidate_metrics:missing_validated_net_performance")
     for baseline_id in _texts(metric_statuses.get("missing_baseline_ids")):
-        reasons.append(f"baseline_metrics:{baseline_id}:missing_net_performance_proxy")
+        reasons.append(
+            f"baseline_metrics:{baseline_id}:missing_validated_net_performance"
+        )
     if _text(control_pack.get("benchmark_baseline_status")) == "INSUFFICIENT_BASELINE_METRICS":
         reasons.append("benchmark_baseline_control:insufficient_metrics")
     return _dedupe(reasons)
@@ -952,62 +1092,6 @@ def _next_action(status: str, control_pack: Mapping[str, Any]) -> str:
         control_pack.get("next_required_action"),
         "review_benchmark_baseline_metrics_materialization",
     )
-
-
-def _conservative_cost_scenario(cost_review: Mapping[str, Any]) -> dict[str, Any]:
-    scenarios = _records(cost_review.get("scenario_results"))
-    high = next((row for row in scenarios if _text(row.get("scenario_id")) == "high"), None)
-    if high is not None:
-        return dict(high)
-    with_net = [
-        row
-        for row in scenarios
-        if _float_or_none(row.get("net_performance_proxy")) is not None
-    ]
-    if not with_net:
-        return {}
-    return min(with_net, key=lambda row: _float(row.get("net_performance_proxy")))
-
-
-def _available_window_rows(
-    rows: Sequence[Mapping[str, Any]],
-    *,
-    window_days: int,
-) -> list[dict[str, Any]]:
-    result = []
-    for row in rows:
-        if (
-            _text(row.get("variant")) == "no_trade"
-            and _int(row.get("window_days")) == window_days
-            and _text(row.get("outcome_status")) == "AVAILABLE"
-        ):
-            result.append(dict(row))
-    return result
-
-
-def _static_baseline_weights(outcome_payload: Mapping[str, Any]) -> dict[str, float]:
-    config = _sim_event_config(outcome_payload)
-    weights = _mapping(_mapping(config.get("portfolio")).get("baseline_snapshot"))
-    if not weights:
-        weights = {"QQQ": 0.5, "SMH": 0.2, "TLT": 0.1, "CASH": 0.2}
-    return _normalize_weights(weights)
-
-
-def _sim_event_config(outcome_payload: Mapping[str, Any]) -> dict[str, Any]:
-    event_set_id = _text(outcome_payload.get("event_set_id"))
-    if event_set_id:
-        snapshot = (
-            sim.DEFAULT_BACKTEST_SIM_EVENT_DIR
-            / event_set_id
-            / "simulation_input_snapshot.json"
-        )
-        if snapshot.exists():
-            return _mapping(st._read_json(snapshot).get("config"))
-    return {}
-
-
-def _required_price_symbols() -> set[str]:
-    return {"QQQ", "SPY", "SMH", "SOXX", "TLT"}
 
 
 def _source_artifact(outcome_payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -1105,18 +1189,6 @@ def _parse_date(value: object) -> date | None:
         return date.fromisoformat(text)
     except ValueError:
         return None
-
-
-def _normalize_weights(weights: Mapping[str, Any]) -> dict[str, float]:
-    clean = {
-        _text(symbol): _float(weight)
-        for symbol, weight in weights.items()
-        if _text(symbol) and _float(weight) > 0
-    }
-    total = sum(clean.values())
-    if total <= 0:
-        return {}
-    return {symbol: value / total for symbol, value in clean.items()}
 
 
 def _file_sha256(path: Path) -> str:

@@ -36,6 +36,18 @@ def test_signal_input_completeness_builds_and_validates(tmp_path: Path) -> None:
     assert summary["signal_input_status"] == "OK"
     assert "signal_input_status" in result["reader_brief_section"]
     assert_research_safe(result["manifest"])
+    assert result["input_snapshot"]["schema_version"] == (
+        "signal_input_completeness_input_snapshot.v2"
+    )
+    frozen = next(
+        row for row in result["input_snapshot"]["raw_sources"] if row["exists"] is True
+    )
+    Path(frozen["frozen_path"]).write_text("tampered\n", encoding="utf-8")
+    assert signal_inputs.validate_signal_input_completeness_artifact(
+        monitor_id=result["monitor_id"],
+        output_dir=tmp_path / "signal_input_completeness",
+        write_output=False,
+    )["status"] == "FAIL"
 
 
 def test_signal_input_completeness_blocks_schema_and_coverage_gaps(tmp_path: Path) -> None:
@@ -130,3 +142,27 @@ def test_signal_input_completeness_cli_run_report_and_validate(tmp_path: Path) -
     )
     assert validation.exit_code == 0
     assert "status=PASS" in validation.output
+
+
+def test_signal_input_completeness_excludes_future_rows_from_as_of(tmp_path: Path) -> None:
+    fixture = run_signal_input_completeness_fixture(tmp_path, as_of="2024-04-22")
+    signals = tmp_path / "signal_inputs" / "signals.csv"
+    with signals.open("a", encoding="utf-8") as handle:
+        handle.write(
+            "2024-04-23,QQQ,1,1,1,1,1,bullish,high,[],9.9.9,broken_future,"
+            "2024-04-23T00:00:00+00:00\n"
+        )
+    result = signal_inputs.run_signal_input_completeness_monitor(
+        as_of=date(2024, 4, 22),
+        policy_path=fixture["policy_path"],
+        output_dir=tmp_path / "signal_input_completeness_future",
+        generated_at=datetime(2024, 4, 24, tzinfo=UTC),
+    )
+    finding = {
+        row["input_id"]: row for row in result["signal_input_completeness_findings"]
+    }["etf_signal_series"]
+
+    assert finding["future_row_count"] == 1
+    assert finding["eligible_row_count"] == 4
+    assert finding["incompatible_schema_versions"] == []
+    assert finding["observed_feature_versions"] == ["etf_features_v0_1"]

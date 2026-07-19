@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -33,7 +34,11 @@ def test_flip_rotation_event_casebook_builds_and_validates(tmp_path: Path) -> No
     assert data["useful_flip_count"] == 3
     assert data["false_positive_count"] == 2
     assert data["dominant_trigger_signal"] != "MISSING"
-    assert data["next_review_action"] == "use_casebook_in_next_flip_rotation_review"
+    assert data["next_review_action"] == "manual_qualitative_review_only"
+    assert data["evidence_role"] == "MANUAL_DIAGNOSTIC"
+    assert data["quantitative_evidence_eligible"] is False
+    assert data["promotion_evidence_eligible"] is False
+    assert payload["input_snapshot"]["schema_version"].endswith(".v2")
     assert data["not_trading_signal"] is True
     assert data["data_downloaded_by_casebook"] is False
     assert data["pipelines_executed_by_casebook"] is False
@@ -54,16 +59,40 @@ def test_flip_rotation_event_casebook_validation_fails_incomplete_event(
     config_path = tmp_path / "flip_rotation_event_casebook_v1.yaml"
     config_path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
+    with pytest.raises(ValueError, match="manual events are incomplete"):
+        casebook.build_flip_rotation_event_casebook(
+            config_path=config_path,
+            output_dir=tmp_path / "flip_rotation_event_casebook",
+            generated_at=datetime(2026, 6, 15, tzinfo=UTC),
+        )
+
+
+def test_flip_rotation_event_casebook_source_and_view_tamper_fail_closed(
+    tmp_path: Path,
+) -> None:
+    config_path = tmp_path / "flip_rotation_event_casebook_v1.yaml"
+    config_path.write_bytes(
+        casebook.DEFAULT_FLIP_ROTATION_EVENT_CASEBOOK_CONFIG_PATH.read_bytes()
+    )
+    output_dir = tmp_path / "flip_rotation_event_casebook"
     result = casebook.build_flip_rotation_event_casebook(
         config_path=config_path,
-        output_dir=tmp_path / "flip_rotation_event_casebook",
+        output_dir=output_dir,
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8") + "\n# drift\n", encoding="utf-8"
+    )
 
-    validation = result["flip_rotation_event_casebook_validation"]
-    failed = {row["check_id"] for row in validation["checks"] if row["passed"] is False}
+    validation = casebook.validate_flip_rotation_event_casebook_artifact(
+        casebook_run_id=result["casebook_run_id"], output_dir=output_dir
+    )
+
     assert validation["status"] == "FAIL"
-    assert "event_schema_complete" in failed
+    assert any(
+        row["check_id"] == "content_rebuild" and row["passed"] is False
+        for row in validation["checks"]
+    )
 
 
 def test_flip_rotation_event_casebook_cli_report_and_validate(tmp_path: Path) -> None:

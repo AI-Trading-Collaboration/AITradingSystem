@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -37,18 +38,38 @@ def test_promotion_gate_threshold_report_builds_and_validates(tmp_path: Path, mo
         output_dir=tmp_path / "threshold_calibration",
     )
 
-    assert report["status"] == "PASS"
-    assert report["current_threshold_interpretation"] == "THRESHOLD_REVIEW_REQUIRED"
+    assert report["status"] == "PASS_WITH_WARNINGS"
+    assert report["current_threshold_interpretation"] == (
+        "PILOT_POLICY_ONLY_NOT_EMPIRICALLY_CALIBRATED"
+    )
+    assert report["calibration_status"] == "PILOT_POLICY_ONLY_NOT_EMPIRICALLY_CALIBRATED"
     assert report["stress_required"] == "STRONG"
     assert report["confirmation_target_minimum"] == 3
     assert {row["threshold_family"] for row in report["threshold_rows"]} == set(
         thresholds.REQUIRED_THRESHOLD_FAMILIES
     )
     assert any(row["passed"] is False for row in report["threshold_rows"])
+    assert all(row["passed"] is False for row in report["threshold_rows"])
+    assert all(row["promotion_effect"] is False for row in report["threshold_rows"])
     assert validation["status"] == "PASS"
-    assert payload["promotion_gate_threshold_calibration_report"]["status"] == "PASS"
+    assert payload["promotion_gate_threshold_calibration_report"]["status"] == (
+        "PASS_WITH_WARNINGS"
+    )
     assert "promotion_threshold_calibration_id" in result["reader_brief_section"]
     assert_research_safe(report)
+    assert result["input_snapshot"]["schema_version"] == (
+        "promotion_gate_threshold_calibration_input_snapshot.v2"
+    )
+
+    report_path = result["calibration_dir"] / "promotion_gate_threshold_calibration_report.json"
+    tampered = json.loads(report_path.read_text(encoding="utf-8"))
+    tampered["current_threshold_interpretation"] = "FORMAL_RESEARCH_READY"
+    report_path.write_text(json.dumps(tampered, sort_keys=True) + "\n", encoding="utf-8")
+    assert thresholds.validate_promotion_gate_threshold_calibration_artifact(
+        calibration_id=result["calibration_id"],
+        output_dir=tmp_path / "threshold_calibration",
+        write_output=False,
+    )["status"] == "FAIL"
 
 
 def test_promotion_gate_threshold_cli_report_and_validate(tmp_path: Path, monkeypatch) -> None:
@@ -71,7 +92,10 @@ def test_promotion_gate_threshold_cli_report_and_validate(tmp_path: Path, monkey
         ],
     )
     assert result.exit_code == 0
-    assert "current_threshold_interpretation=THRESHOLD_REVIEW_REQUIRED" in result.output
+    assert (
+        "current_threshold_interpretation=PILOT_POLICY_ONLY_NOT_EMPIRICALLY_CALIBRATED"
+        in result.output
+    )
     calibration_id = next(
         line.split("=", 1)[1]
         for line in result.output.splitlines()
