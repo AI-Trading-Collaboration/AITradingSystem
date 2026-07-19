@@ -137,6 +137,30 @@ def test_bootstrap_handoff_rejects_expected_source_drift(tmp_path: Path) -> None
         )
 
 
+def test_bootstrap_handoff_accepts_frozen_git_blob_with_checkout_eol_normalization(
+    tmp_path: Path,
+) -> None:
+    payload = _payload(tmp_path)
+    tracked_paths = [
+        payload["migration_matrix"]["path"],
+        *(
+            record["path"]
+            for record in payload["architecture_state"].values()
+        ),
+        payload["worktree_attribution"]["attribution_path"],
+    ]
+    frozen = {
+        path: (tmp_path / path).read_bytes().replace(b"\r\n", b"\n")
+        for path in tracked_paths
+    }
+
+    validate_bootstrap_handoff(
+        payload,
+        project_root=tmp_path,
+        frozen_tracked_files=frozen,
+    )
+
+
 def _payload(root: Path) -> dict[str, object]:
     artifacts = _frozen_project(root)
     return copy.deepcopy(

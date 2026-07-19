@@ -47,7 +47,7 @@ architecture_state:
     fresh: true
   compatibility_baseline:
     path: inputs/architecture/arch_004_compatibility_baseline.yaml
-    sha256: 5b75a33ec9bc916f23d638dc3a8b62db5e16c06260d19e99c99a408b4f0d604b
+    sha256: 764f2b214fb7781d654096b56b3fdf3bf0e2fe02d20d71f25e5693c8d431a8ce
     fresh: true
   deprecation_inventory:
     path: inputs/architecture/arch_004g_deprecation_inventory.yaml
@@ -100,4 +100,5 @@ production_effect: none
 broker_action: none
 generated_at: '2026-07-19T18:49:55.716615Z'
 producer_version: arch_005_bootstrap_handoff_producer.v1
-handoff_checksum: fcd66749c1a8acee092b255608df21e8a6329e903f8495c868a5de62388de8ca
+handoff_checksum: 10d3106b08582183aef07989d146d31c0bfed783a59fe273496beaa216afbfa0
+tracked_file_hash_basis: source_commit_git_blob_sha256

@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from ai_trading_system.yaml_loader import safe_load_yaml_path
+from ai_trading_system.yaml_loader import safe_load_yaml_text
 
 BOOTSTRAP_HANDOFF_SCHEMA_VERSION = "arch_005_bootstrap_handoff.v1"
 BOOTSTRAP_HANDOFF_PRODUCER_VERSION = "arch_005_bootstrap_handoff_producer.v1"
@@ -39,28 +39,37 @@ def build_bootstrap_handoff(
     validation_artifacts: Mapping[str, str | Path],
     known_unrelated_worktree_files: Sequence[str],
     generated_at: datetime | None = None,
+    frozen_tracked_files: Mapping[str, bytes] | None = None,
 ) -> dict[str, Any]:
     root = project_root.resolve()
     matrix_path = "inputs/architecture/arch_004g2_callback_migration_matrix.yaml"
-    matrix = _mapping(safe_load_yaml_path(root / matrix_path), "migration matrix")
+    matrix_bytes = _tracked_file_bytes(root, matrix_path, frozen_tracked_files)
+    matrix = _mapping(
+        safe_load_yaml_text(matrix_bytes.decode("utf-8")),
+        "migration matrix",
+    )
     matrix_summary = _mapping(matrix.get("summary"), "migration matrix summary")
     tiers = _validation_artifact_records(root, validation_artifacts)
     architecture_state = {
         "module_manifest": _file_state(
             root,
             "inputs/architecture/arch_004e_module_manifest.yaml",
+            frozen_tracked_files,
         ),
         "test_manifest": _file_state(
             root,
             "inputs/architecture/arch_004e_test_manifest.yaml",
+            frozen_tracked_files,
         ),
         "compatibility_baseline": _file_state(
             root,
             "inputs/architecture/arch_004_compatibility_baseline.yaml",
+            frozen_tracked_files,
         ),
         "deprecation_inventory": _file_state(
             root,
             "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+            frozen_tracked_files,
         ),
     }
     attribution_path = "inputs/architecture/arch_004_worktree_attribution.yaml"
@@ -78,9 +87,14 @@ def build_bootstrap_handoff(
         "base_commit": _commit(base_commit, "base_commit"),
         "branch": _required_text(branch, "branch"),
         "push_status": "SYNCED_WITH_UPSTREAM",
+        "tracked_file_hash_basis": (
+            "source_commit_git_blob_sha256"
+            if frozen_tracked_files is not None
+            else "source_snapshot_bytes_sha256"
+        ),
         "migration_matrix": {
             "path": matrix_path,
-            "sha256": _file_sha256(root / matrix_path),
+            "sha256": hashlib.sha256(matrix_bytes).hexdigest(),
             "status": "PASS",
             "baseline_callback_count": matrix_summary.get("baseline_callback_count"),
             "migrated_callback_count": matrix_summary.get("migrated_callback_count"),
@@ -105,7 +119,9 @@ def build_bootstrap_handoff(
         "worktree_attribution": {
             "source_worktree_clean": True,
             "attribution_path": attribution_path,
-            "attribution_sha256": _file_sha256(root / attribution_path),
+            "attribution_sha256": hashlib.sha256(
+                _tracked_file_bytes(root, attribution_path, frozen_tracked_files)
+            ).hexdigest(),
             "known_unrelated_worktree_files": sorted(
                 set(
                     _portable_path(item, "known_unrelated_worktree_files")
@@ -122,7 +138,11 @@ def build_bootstrap_handoff(
         "producer_version": BOOTSTRAP_HANDOFF_PRODUCER_VERSION,
     }
     payload["handoff_checksum"] = bootstrap_handoff_checksum(payload)
-    validate_bootstrap_handoff(payload, project_root=root)
+    validate_bootstrap_handoff(
+        payload,
+        project_root=root,
+        frozen_tracked_files=frozen_tracked_files,
+    )
     return payload
 
 
@@ -132,6 +152,7 @@ def validate_bootstrap_handoff(
     project_root: Path,
     expected_head_commit: str | None = None,
     expected_branch: str | None = None,
+    frozen_tracked_files: Mapping[str, bytes] | None = None,
 ) -> None:
     expected_top = {
         "schema_version",
@@ -141,6 +162,7 @@ def validate_bootstrap_handoff(
         "base_commit",
         "branch",
         "push_status",
+        "tracked_file_hash_basis",
         "migration_matrix",
         "validation_artifacts",
         "architecture_state",
@@ -172,6 +194,17 @@ def validate_bootstrap_handoff(
         raise BootstrapHandoffError("HANDOFF_BRANCH_DRIFT", f"expected {expected_branch}")
     if payload["push_status"] != "SYNCED_WITH_UPSTREAM":
         raise BootstrapHandoffError("HANDOFF_NOT_PUSHED", "push_status must be synced")
+    hash_basis = payload["tracked_file_hash_basis"]
+    if hash_basis not in {
+        "source_commit_git_blob_sha256",
+        "source_snapshot_bytes_sha256",
+    }:
+        raise BootstrapHandoffError("HANDOFF_HASH_BASIS", "unsupported hash basis")
+    if hash_basis == "source_commit_git_blob_sha256" and frozen_tracked_files is None:
+        raise BootstrapHandoffError(
+            "HANDOFF_FROZEN_SOURCE_REQUIRED",
+            "git-blob hash basis requires source-commit bytes",
+        )
     if payload["next_slice_unblocked"] is not False:
         raise BootstrapHandoffError(
             "HANDOFF_NEXT_SLICE_UNSAFE",
@@ -186,11 +219,15 @@ def validate_bootstrap_handoff(
         raise BootstrapHandoffError("HANDOFF_PRODUCER", "unsupported producer_version")
     _parse_generated_at(payload["generated_at"])
     root = project_root.resolve()
-    _validate_matrix(payload["migration_matrix"], root)
+    _validate_matrix(payload["migration_matrix"], root, frozen_tracked_files)
     _validate_tiers(payload["validation_artifacts"], root)
-    _validate_architecture_state(payload["architecture_state"], root)
+    _validate_architecture_state(
+        payload["architecture_state"], root, frozen_tracked_files
+    )
     _validate_shared_path_activity(payload["shared_path_activity"])
-    _validate_worktree_attribution(payload["worktree_attribution"], root)
+    _validate_worktree_attribution(
+        payload["worktree_attribution"], root, frozen_tracked_files
+    )
     checksum = _sha256(payload["handoff_checksum"], "handoff_checksum")
     if checksum != bootstrap_handoff_checksum(payload):
         raise BootstrapHandoffError("HANDOFF_CHECKSUM_DRIFT", "handoff checksum mismatch")
@@ -245,7 +282,11 @@ def _validation_artifact_records(
     return result
 
 
-def _validate_matrix(value: object, root: Path) -> None:
+def _validate_matrix(
+    value: object,
+    root: Path,
+    frozen_tracked_files: Mapping[str, bytes] | None,
+) -> None:
     matrix = _mapping(value, "migration_matrix")
     expected = {
         "path",
@@ -259,7 +300,13 @@ def _validate_matrix(value: object, root: Path) -> None:
         "phase_exit_criteria_passed",
     }
     _require_exact_keys(matrix, expected, "HANDOFF_MATRIX_FIELDS")
-    _verify_file_reference(matrix, root, path_key="path", sha_key="sha256")
+    matrix_bytes = _verify_tracked_file_reference(
+        matrix,
+        root,
+        path_key="path",
+        sha_key="sha256",
+        frozen_tracked_files=frozen_tracked_files,
+    )
     if matrix["status"] != "PASS":
         raise BootstrapHandoffError("HANDOFF_MATRIX_STATUS", "migration matrix must PASS")
     counts = (
@@ -274,7 +321,10 @@ def _validate_matrix(value: object, root: Path) -> None:
             "HANDOFF_MATRIX_INCOMPLETE",
             f"counts={counts} phase_exit={matrix['phase_exit_criteria_passed']}",
         )
-    frozen = _mapping(safe_load_yaml_path(root / str(matrix["path"])), "migration matrix")
+    frozen = _mapping(
+        safe_load_yaml_text(matrix_bytes.decode("utf-8")),
+        "migration matrix",
+    )
     summary = _mapping(frozen.get("summary"), "migration matrix summary")
     source_fields = {
         "baseline_callback_count": "baseline_callback_count",
@@ -310,7 +360,11 @@ def _validate_tiers(value: object, root: Path) -> None:
             raise BootstrapHandoffError("HANDOFF_VALIDATION_ARTIFACT_INVALID", tier)
 
 
-def _validate_architecture_state(value: object, root: Path) -> None:
+def _validate_architecture_state(
+    value: object,
+    root: Path,
+    frozen_tracked_files: Mapping[str, bytes] | None,
+) -> None:
     state = _mapping(value, "architecture_state")
     expected_names = {
         "module_manifest",
@@ -325,22 +379,28 @@ def _validate_architecture_state(value: object, root: Path) -> None:
         _require_exact_keys(record, {"path", "sha256", "fresh"}, "HANDOFF_FILE_STATE")
         if record["fresh"] is not True:
             raise BootstrapHandoffError("HANDOFF_FILE_NOT_FRESH", name)
-        path = _verify_file_reference(record, root, path_key="path", sha_key="sha256")
-        parsed = _mapping(safe_load_yaml_path(path), name)
+        content = _verify_tracked_file_reference(
+            record,
+            root,
+            path_key="path",
+            sha_key="sha256",
+            frozen_tracked_files=frozen_tracked_files,
+        )
+        parsed = _mapping(safe_load_yaml_text(content.decode("utf-8")), name)
         if name == "module_manifest" and (
             parsed.get("status") != "PASS" or parsed.get("orphan_count") != 0
         ):
-            raise BootstrapHandoffError("HANDOFF_MODULE_MANIFEST_INVALID", str(path))
+            raise BootstrapHandoffError("HANDOFF_MODULE_MANIFEST_INVALID", name)
         if name == "test_manifest" and (
             parsed.get("status") != "PASS" or parsed.get("orphan_count") != 0
         ):
-            raise BootstrapHandoffError("HANDOFF_TEST_MANIFEST_INVALID", str(path))
+            raise BootstrapHandoffError("HANDOFF_TEST_MANIFEST_INVALID", name)
         if name == "deprecation_inventory" and not str(parsed.get("inventory_id") or ""):
-            raise BootstrapHandoffError("HANDOFF_DEPRECATION_INVALID", str(path))
+            raise BootstrapHandoffError("HANDOFF_DEPRECATION_INVALID", name)
         if name == "compatibility_baseline":
             phase = _mapping(parsed.get("phase_g2_4_phase_exit"), "phase_g2_4_phase_exit")
             if phase.get("status") != "PASS":
-                raise BootstrapHandoffError("HANDOFF_PHASE_EXIT_NOT_PASS", str(path))
+                raise BootstrapHandoffError("HANDOFF_PHASE_EXIT_NOT_PASS", name)
 
 
 def _validate_shared_path_activity(value: object) -> None:
@@ -366,7 +426,11 @@ def _validate_shared_path_activity(value: object) -> None:
     _required_text(activity["evidence"], "shared_path_activity.evidence")
 
 
-def _validate_worktree_attribution(value: object, root: Path) -> None:
+def _validate_worktree_attribution(
+    value: object,
+    root: Path,
+    frozen_tracked_files: Mapping[str, bytes] | None,
+) -> None:
     attribution = _mapping(value, "worktree_attribution")
     expected = {
         "source_worktree_clean",
@@ -379,11 +443,12 @@ def _validate_worktree_attribution(value: object, root: Path) -> None:
     _require_exact_keys(attribution, expected, "HANDOFF_ATTRIBUTION_FIELDS")
     if attribution["source_worktree_clean"] is not True:
         raise BootstrapHandoffError("HANDOFF_SOURCE_WORKTREE_DIRTY", "must be true")
-    _verify_file_reference(
+    _verify_tracked_file_reference(
         attribution,
         root,
         path_key="attribution_path",
         sha_key="attribution_sha256",
+        frozen_tracked_files=frozen_tracked_files,
     )
     unrelated = attribution["known_unrelated_worktree_files"]
     if not isinstance(unrelated, list):
@@ -400,8 +465,33 @@ def _validate_worktree_attribution(value: object, root: Path) -> None:
         raise BootstrapHandoffError("HANDOFF_ARTIFACT_ATTRIBUTION", "unexpected owner")
 
 
-def _file_state(root: Path, relative: str) -> dict[str, object]:
-    return {"path": relative, "sha256": _file_sha256(root / relative), "fresh": True}
+def _file_state(
+    root: Path,
+    relative: str,
+    frozen_tracked_files: Mapping[str, bytes] | None,
+) -> dict[str, object]:
+    content = _tracked_file_bytes(root, relative, frozen_tracked_files)
+    return {
+        "path": relative,
+        "sha256": hashlib.sha256(content).hexdigest(),
+        "fresh": True,
+    }
+
+
+def _tracked_file_bytes(
+    root: Path,
+    relative: str,
+    frozen_tracked_files: Mapping[str, bytes] | None,
+) -> bytes:
+    if frozen_tracked_files is None:
+        return (root / relative).read_bytes()
+    try:
+        content = frozen_tracked_files[relative]
+    except KeyError as exc:
+        raise BootstrapHandoffError("HANDOFF_FROZEN_SOURCE_MISSING", relative) from exc
+    if not isinstance(content, bytes):
+        raise BootstrapHandoffError("HANDOFF_FROZEN_SOURCE_BYTES", relative)
+    return content
 
 
 def _verify_file_reference(
@@ -427,6 +517,39 @@ def _verify_file_reference(
             f"{portable}: expected={expected} actual={actual}",
         )
     return path
+
+
+def _verify_tracked_file_reference(
+    record: Mapping[str, Any],
+    root: Path,
+    *,
+    path_key: str,
+    sha_key: str,
+    frozen_tracked_files: Mapping[str, bytes] | None,
+) -> bytes:
+    portable = _portable_path(record[path_key], path_key)
+    expected = _sha256(record[sha_key], sha_key)
+    if frozen_tracked_files is None:
+        path = _verify_file_reference(
+            record,
+            root,
+            path_key=path_key,
+            sha_key=sha_key,
+        )
+        return path.read_bytes()
+    try:
+        content = frozen_tracked_files[portable]
+    except KeyError as exc:
+        raise BootstrapHandoffError("HANDOFF_FROZEN_SOURCE_MISSING", portable) from exc
+    if not isinstance(content, bytes):
+        raise BootstrapHandoffError("HANDOFF_FROZEN_SOURCE_BYTES", portable)
+    actual = hashlib.sha256(content).hexdigest()
+    if actual != expected:
+        raise BootstrapHandoffError(
+            "HANDOFF_FILE_HASH_DRIFT",
+            f"{portable}: expected={expected} actual={actual}",
+        )
+    return content
 
 
 def _json_mapping(path: Path, label: str) -> Mapping[str, Any]:
