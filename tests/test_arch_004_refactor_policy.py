@@ -5658,7 +5658,60 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             "PASS_AFTER_AUDITED_FAILURE_FIX_RERUN",
         }
         assert eb8["next_phase_or_slice_unblocked"] is True
+        eb8_superseded = set(eb8.get("superseded_source_paths", []))
         for source in eb8["sources"]:
+            if source["path"] in eb8_superseded:
+                continue
+            actual = _source_sha256(source)
+            assert actual == source["sha256"], source["path"]
+
+    phase_exit = baseline["phase_g2_4_phase_exit"]
+    assert phase_exit["status"] in {"VALIDATING_PHASE_EXIT", "PASS"}
+    assert phase_exit["task_id"] == "ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION"
+    assert phase_exit["base_commit"] == "873ad74c662394e876472a4cdd027458457c2dec"
+    assert phase_exit["boundary_id"] == "ARCH-004G2.4-PHASE-EXIT-HANDOFF"
+    assert phase_exit["callback_matrix"] == {
+        "baseline_callback_count": 967,
+        "migrated_callback_count": 967,
+        "pending_callback_count": 0,
+        "unresolved_callback_count": 0,
+        "duplicate_registration_count": 0,
+        "phase_exit_criteria_passed": True,
+    }
+    assert phase_exit["cli_contract"] == {
+        "root_command_count": 41,
+        "group_count": 291,
+        "leaf_command_count": 993,
+        "duplicate_path_count": 0,
+        "command_tree_sha256": (
+            "01c78550ae58b38c2d8cca0683376643e2934f93e324710612c87d39eea7302d"
+        ),
+    }
+    assert phase_exit["shared_path_activity"] == {
+        "status": "PASS",
+        "active_shared_path_owner_count": 0,
+        "active_shared_path_lease_count": 0,
+        "active_shared_path_integration_count": 0,
+        "lease_registry_present": False,
+    }
+    assert phase_exit["handoff"]["schema_version"] == "arch_005_bootstrap_handoff.v1"
+    assert phase_exit["handoff"]["validator_frozen"] is True
+    assert phase_exit["handoff"]["next_slice_unblocked"] is False
+    assert phase_exit["handoff"]["formal_arch_005_s0_unblocked"] is False
+    assert phase_exit["handoff"]["g2_5_unblocked"] is False
+    assert phase_exit["safety"]["production_effect"] == "none"
+    if phase_exit["status"] == "VALIDATING_PHASE_EXIT":
+        assert all(
+            record["status"] == "PENDING"
+            for record in phase_exit["required_validation"].values()
+        )
+        assert all(source["sha256"] == 0 for source in phase_exit["sources"])
+    else:
+        assert all(
+            record["status"] == "PASS"
+            for record in phase_exit["required_validation"].values()
+        )
+        for source in phase_exit["sources"]:
             actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
@@ -5941,52 +5994,43 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB8_IN_PROGRESS_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB8_VALIDATING_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB8_COMPLETE_G2_4_CONTINUES",
-        "ATTRIBUTABLE_ISOLATION_PROVEN_ARCH_005_PREBOOTSTRAP_IN_PROGRESS",
-        "ATTRIBUTABLE_ISOLATION_PROVEN_ARCH_005_PREBOOTSTRAP_COMPLETE_G2_4_CONTINUES",
-    }
+            "ATTRIBUTABLE_ISOLATION_PROVEN_ARCH_005_PREBOOTSTRAP_IN_PROGRESS",
+            "ATTRIBUTABLE_ISOLATION_PROVEN_ARCH_005_PREBOOTSTRAP_COMPLETE_G2_4_CONTINUES",
+            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EXIT_IN_PROGRESS",
+            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EXIT_PASS_HANDOFF_PENDING",
+            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_HANDOFF_PASS_STOPPED",
+        }
     current_authority = attribution["current_staging_authority"]
-    assert current_authority["task_id"] == ("ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION")
-    assert current_authority["increment"] == "ARCH-004G2.4-EB8"
+    assert current_authority["task_id"] == ("ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION")
+    assert current_authority["increment"] == "ARCH-004G2.4-PHASE-EXIT-HANDOFF"
     assert current_authority["status"] in {
-        "IN_PROGRESS_G2_4_CONTINUES",
-        "VALIDATING_G2_4_CONTINUES",
-        "COMPLETE_G2_4_CONTINUES",
+        "IN_PROGRESS_PHASE_EXIT",
+        "PASS_PHASE_EXIT_HANDOFF_PENDING",
+        "HANDOFF_PASS_STOPPED",
     }
-    assert current_authority["base_commit"] == ("bfbb38cf1ae0f9fbdd6fcefb10749bc5e59f03dc")
+    assert current_authority["base_commit"] == ("873ad74c662394e876472a4cdd027458457c2dec")
     assert current_authority["declared_path_set_current"] is True
     owner_authorization = current_authority["owner_authorization"]
     assert owner_authorization["instruction"] == (
         "先按照这个顺序推进到可以考虑开始推进研究策略前把"
     )
     assert str(owner_authorization["authorized_at"]) == "2026-07-19"
-    assert owner_authorization["boundary_id"] == "ARCH-004G2.4-EB8"
-    expected_complete = current_authority["status"] == "COMPLETE_G2_4_CONTINUES"
-    assert current_authority["phase_lock"] == {
-        "next_phase_or_slice_unblocked": expected_complete,
-        "eb2_authorized": True,
-        "eb2_integration_gate_passed": True,
-        "pre_bootstrap_after_integration_gate_authorized": True,
-        "pre_bootstrap_unblocked": True,
-        "pre_bootstrap_complete": True,
-        "eb3_unblocked": True,
-        "eb3_complete": True,
-        "eb4_authorized": True,
-        "eb4_unblocked": True,
-        "eb5_unblocked": True,
-        "eb5_authorized": True,
-        "eb5_complete": True,
-        "eb6_unblocked": True,
-        "eb6_authorized": True,
-        "eb6_complete": True,
-        "eb7_unblocked": True,
-        "eb7_authorized": True,
-        "eb7_complete": True,
-        "eb8_unblocked": True,
-        "eb8_authorized": True,
-        "eb8_complete": expected_complete,
-        "formal_arch_005_s0_unblocked": False,
-        "g2_5_unblocked": False,
-    }
+    assert owner_authorization["boundary_id"] == "ARCH-004G2.4-PHASE-EXIT-HANDOFF"
+    phase_lock = current_authority["phase_lock"]
+    assert phase_lock["next_phase_or_slice_unblocked"] is False
+    assert phase_lock["eb2_integration_gate_passed"] is True
+    assert phase_lock["pre_bootstrap_complete"] is True
+    assert phase_lock["eb3_complete"] is True
+    assert phase_lock["eb4_unblocked"] is True
+    assert phase_lock["eb5_complete"] is True
+    assert phase_lock["eb6_complete"] is True
+    assert phase_lock["eb7_complete"] is True
+    assert phase_lock["eb8_complete"] is True
+    assert phase_lock["whole_g2_4_phase_exit_review_unblocked"] is True
+    assert phase_lock["whole_g2_4_phase_exit_passed"] is (
+        current_authority["status"] != "IN_PROGRESS_PHASE_EXIT"
+    )
+    assert phase_lock["g2_5_unblocked"] is False
     assert len(current_authority["declared_changed_paths"]) == 27
     assert attribution["current_staging_authority"]["base_commit"] == attribution["base_commit"]
     assert attribution["current_staging_authority"]["task_id"] in attribution["integrated_task_ids"]

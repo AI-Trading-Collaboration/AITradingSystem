@@ -299,7 +299,7 @@ def build_partial_duration_manifest(
             "aggregated_file_count": expected_files,
             "coverage_limitation": (
                 f"The source Full exactly observed {expected_nodes:,} nodes in "
-                f"{expected_files:,} files at its source commit. Subsequent EB4 changes may alter "
+                f"{expected_files:,} files at its source commit. Subsequent changes may alter "
                 "collection identity, so preserve every observed file duration as an advisory "
                 "seed; new or changed files retain stable collection order until the next natural "
                 "Full records the current collection."

@@ -7,10 +7,21 @@
 - task id：`ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`
 - parent：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`
 - priority：`P0`
-- status：`IN_PROGRESS`（G2.3 `COMPLETE`，G2.4 `IN_PROGRESS`）
+- status：`COMPLETE_G2_4_PHASE_EXIT_HANDOFF_PENDING`（G2.3 / G2.4 `COMPLETE`）
 - owner：interface platform / architecture coordinator
 - dependency：ARCH-004G1 `COMPLETE`
 - production effect：`none`
+
+## 当前 phase exit 状态
+
+- 2026-07-19：独立 `ARCH-004G2.4-PHASE-EXIT-HANDOFF` gate 已 PASS。Callback matrix=
+  `967/0/0/0`、CLI=`41/291/993/0`；focused/architecture/contract/full=`292/411/265/
+  6386 passed`，Full另有2 skipped/643 warnings、946.63s，provenance/scheduler/telemetry/
+  performance evidence均PASS。Module/test manifests=`978/1131`、direct writers=`858`、
+  violations=`0`，deprecation inventory=`arch_004g_deprecation_inventory_4296af7c89bfd6eacd84`；
+  v16 partial duration seed绑定`6388 nodes / 1073 files`。当前只剩把本phase-exit source commit
+  提交推送并从该干净commit生成/验证/提交/推送handoff；在此之前正式ARCH-005 S0与G2.5仍锁定，
+  `next_slice_unblocked=false`、`production_effect=none`。
 
 ## 为什么先冻结 contract
 

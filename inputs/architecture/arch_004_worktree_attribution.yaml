@@ -1,21 +1,21 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB8_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EXIT_PASS_HANDOFF_PENDING
 as_of: 2026-07-19
-base_commit: bfbb38cf1ae0f9fbdd6fcefb10749bc5e59f03dc
+base_commit: 873ad74c662394e876472a4cdd027458457c2dec
 production_effect: none
 current_staging_authority:
-  task_id: ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION
-  increment: ARCH-004G2.4-EB8
-  status: COMPLETE_G2_4_CONTINUES
-  base_commit: bfbb38cf1ae0f9fbdd6fcefb10749bc5e59f03dc
+  task_id: ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION
+  increment: ARCH-004G2.4-PHASE-EXIT-HANDOFF
+  status: PASS_PHASE_EXIT_HANDOFF_PENDING
+  base_commit: 873ad74c662394e876472a4cdd027458457c2dec
   declared_path_set_current: true
   owner_authorization:
     instruction: 先按照这个顺序推进到可以考虑开始推进研究策略前把
     authorized_at: 2026-07-19
-    boundary_id: ARCH-004G2.4-EB8
+    boundary_id: ARCH-004G2.4-PHASE-EXIT-HANDOFF
   phase_lock:
-    next_phase_or_slice_unblocked: true
+    next_phase_or_slice_unblocked: false
     eb2_authorized: true
     eb2_integration_gate_passed: true
     pre_bootstrap_after_integration_gate_authorized: true
@@ -37,10 +37,19 @@ current_staging_authority:
     eb8_unblocked: true
     eb8_authorized: true
     eb8_complete: true
+    whole_g2_4_phase_exit_review_unblocked: true
+    whole_g2_4_phase_exit_passed: true
+    arch_005_bootstrap_handoff_written: false
+    arch_005_bootstrap_handoff_validated: false
+    arch_005_bootstrap_handoff_pushed: false
     formal_arch_005_s0_unblocked: false
     g2_5_unblocked: false
   declared_changed_paths:
+    - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
     - docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md
+    - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+    - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+    - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
     - docs/system_flow.md
     - docs/task_register.md
     - inputs/architecture/arch_004_compatibility_baseline.yaml
@@ -53,19 +62,15 @@ current_staging_authority:
     - inputs/architecture/arch_004g2_etf_cli_contract.yaml
     - inputs/architecture/arch_004g2_full_duration_profile.yaml
     - inputs/architecture/arch_004g_deprecation_inventory.yaml
-    - src/ai_trading_system/cli_commands/etf_portfolio.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/ai_attribution.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/ai_confirmation.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/backtest.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/decision_journal.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/forward.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/p1.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/workflow.py
+    - scripts/architecture_arch005_handoff.py
+    - scripts/refresh_partial_duration_profile.py
+    - scripts/run_validation_tier.py
+    - src/ai_trading_system/platform/architecture/__init__.py
+    - src/ai_trading_system/platform/architecture/bootstrap_handoff.py
     - tests/test_arch_004_refactor_policy.py
-    - tests/test_arch_004g2_callback_migration_matrix.py
-    - tests/test_arch_004g2_etf_cli_contract.py
+    - tests/test_arch_004e_devex.py
     - tests/test_arch_004g_deprecation.py
+    - tests/test_arch_005_bootstrap_handoff.py
     - tests/test_validation_runtime_profile.py
 
 integrated_task_ids:

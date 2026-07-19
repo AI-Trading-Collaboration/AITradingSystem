@@ -8,7 +8,7 @@
 - parent：`ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`
 - companion：`ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE`
 - priority：`P0`（G2.4 critical path）
-- status：`IN_PROGRESS`（EB1 已完成；等待 owner 显式选择下一合法 slice）
+- status：`COMPLETE_PHASE_EXIT_HANDOFF_PENDING`（EB1～EB8与phase exit已完成）
 - owner：architecture coordinator / test infrastructure owner
 - production effect：`none`
 
@@ -62,6 +62,16 @@ EB0 top-tail timebox
   -> arch_005_bootstrap_handoff.v1
   -> STOP before G2.5
 ```
+
+2026-07-19：EB1～EB8 已按批准顺序全部完成，matrix从`715/252/0/0`闭合为
+`967/0/0/0`，CLI tree保持`41/291/993/0`。批次计划不再选择新callback slice，当前只执行独立
+whole-phase exit、`arch_005_bootstrap_handoff.v1`及G2.5前停止条件；handoff前
+`next_slice_unblocked=false`。
+
+Phase exit最终Full=`6386 passed / 2 skipped / 643 warnings / 946.63s`，相对EB8审计Full
+`941.19s`约`+0.6%`，未见异常overall wall回归；最慢节点`519.78s`相对`498.63s`略高，记录为
+单次自然波动且不宣称稳定改善。V16 partial seed已刷新为`6388 nodes / 1073 files`。本执行计划至此
+不再选择开发slice，只等待handoff提交推送。
 
 2026-07-17 S3A Weight Search第一批已完成实现并转入正式验证：五个既定hardening文件的同命令
 wall time由`889.01s`降至`254.19s`（约`-71.4%`），未减少nodeid、all-view rebuild或tamper

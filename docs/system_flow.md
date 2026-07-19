@@ -2,6 +2,28 @@
 
 本文档是系统从数据输入、中间评估到输出结论的流程图。它不是一次性说明文档，而是工程事实的一部分：后续新增命令、数据源、配置、评分模块、回测路径或报告输出时，必须同步维护本文件。
 
+ARCH-004G2.4 phase exit 在EB8后的稳定callback集合上独立执行。Callback matrix必须为
+`967 migrated / 0 pending / 0 unresolved / 0 duplicate`，随后依次绑定focused、architecture、
+contract、full四类PASS artifact及其SHA-256，并复验module/test manifests、compatibility baseline、
+deprecation inventory与worktree attribution。`arch_005_bootstrap_handoff.v1`只允许从已经提交、推送且
+worktree干净的phase-exit source commit生成；validator逐文件复算hash、重验matrix与四类validation
+summary，并强制active shared-path owner/lease/integration=`0/0/0`、
+`next_slice_unblocked=false`、`production_effect=none`、`broker_action=none`。任一source/hash/status漂移
+都fail closed；handoff PASS后ARCH-004停在G2.5之前，才允许ARCH-005 S0/S1从冻结commit启动。
+
+```mermaid
+flowchart LR
+    EB8["G2.4 EB8 complete"] --> MATRIX["Matrix 967 / 0 / 0 / 0"]
+    MATRIX --> GATES["Focused + Architecture + Contract + Full"]
+    GATES --> FRESH["Manifests + Baseline + Deprecation + Attribution fresh"]
+    FRESH --> SOURCE["Commit and push clean phase-exit source"]
+    SOURCE --> HANDOFF["arch_005_bootstrap_handoff.v1"]
+    HANDOFF --> VALIDATE["Hash/status/matrix/shared-activity validation"]
+    VALIDATE --> STOP["ARCH-004 STOP before G2.5"]
+    STOP --> S01["ARCH-005 S0/S1 entry"]
+    VALIDATE -.-> BOUNDARY["next_slice=false / production=none / broker=none"]
+```
+
 ARCH-005-PB1 在 G2.4 尚未完成 phase-level handoff 时先提供 non-cutover 并行控制原语。调用方把每个候选变更声明为
 `change_manifest.v1`，其中固定 `base_commit`、DOMAIN/COORDINATOR 角色、owned/shared paths、module ids、
 contract 读写/version 以及 required validation tiers。解析器执行精确 schema、canonical POSIX path、40-hex base、

@@ -441,6 +441,12 @@ ARCH-004 coordinator 生成并验证 `arch_005_bootstrap_handoff.v1`。S0 冻结
 
 ## 状态记录
 
+- 2026-07-19：G2.4 phase-level exit已PASS，matrix=`967/0/0/0`，四级validation、manifests、
+  deprecation、source hashes与clean attribution均闭合。`arch_005_bootstrap_handoff.v1`严格validator
+  已冻结，但handoff尚未写入/验证/提交/推送，因此正式S0仍保持等待，
+  `next_slice_unblocked=false`。下一步先推送phase-exit source commit，再从该commit生成handoff，
+  避免artifact对自身commit/hash形成循环引用。
+
 - 2026-07-12：project owner 确认并行任务调度系统是后续研发基石并要求高优先级推进。完整 scope、阶段、验收和回滚已冻结，任务以 `P0/READY` 独立立项：它会决定资源冲突、验证证据和集成是否允许通过，属于系统正确性与审计基础设施；需求已 READY，S0 实现等待完整 G2.4 handoff，真实 dispatch 仍受 S4/G2 门禁约束。当前仅建立需求和迁移边界，不改变 runtime、task-register source-of-truth、scheduler、production 或 broker。
 - 2026-07-12：owner 进一步确认不在 G2.4 进行中并发启动 ARCH-005。已向当前 ARCH-004 主任务预置 phase-level handoff 指令：完整 G2.4 exit、validation、commit/push 和 manifest freshness 闭合后生成 `arch_005_bootstrap_handoff.v1`，设置 `next_slice_unblocked=false` 并停止在 G2.5 之前；owner 无需届时手动暂停工作区。
 - 2026-07-19：G2.4-EB2 integration gate 已 PASS，matrix仍为`745/222/0/0`，因此整个phase exit与

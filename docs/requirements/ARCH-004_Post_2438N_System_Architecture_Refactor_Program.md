@@ -6,7 +6,7 @@
 
 - 任务 ID：`ARCH-004`
 - 优先级：`P0`
-- 当前状态：`IN_PROGRESS_PHASE_G`
+- 当前状态：`G2_4_COMPLETE_ARCH_005_HANDOFF_PENDING`
 - 触发顺序：`TRADING-2438N` 完整收口之后
 - 责任方：系统架构协调者 + 各 bounded context owner + 项目 owner
 - 变更性质：系统级、行为保持优先、渐进迁移
@@ -660,3 +660,13 @@ Entry decision：`ARCH_004_PHASE_A_COMPLETE_PHASE_B_UNBLOCKED`。这只解锁 Se
   39.22s`；受审计`failure_fix_rerun`绑定原失败summary后=`6,373 passed / 2 skipped / 643 warnings /
   878.73s`，profile/telemetry/performance/provenance与scheduler全部PASS。EB4收口为
   `COMPLETE_G2_4_CONTINUES`，只解锁既授权EB5；whole phase exit、ARCH-005 S0、G2.5和handoff仍未触发。
+- 2026-07-19：EB5～EB8后续全部闭合，最终matrix=`967/0/0/0`、phase completion=`COMPLETE`，
+  legacy ETF CLI root收敛为`146 lines / 0 functions / 0 decorators`的显式兼容facade，CLI tree仍为
+  `41/291/993/0`。当前ARCH-004进入独立`ARCH-004G2.4-PHASE-EXIT-HANDOFF`：先完成最终四级验证、
+  manifests/inventory/source-hash/attribution闭环并提交推送source commit，再生成可校验
+  `arch_005_bootstrap_handoff.v1`。在handoff提交推送前，ARCH-005 S0和G2.5均不解锁。
+- 2026-07-19：whole-G2.4 phase exit已PASS：focused/architecture/contract/full=
+  `292/411/265/6386 passed`，Full=`2 skipped/643 warnings/946.63s`；manifests/deprecation/
+  callback/CLI/source hashes与clean attribution均闭合，shared-path active owner/lease/integration=
+  `0/0/0`。ARCH-004当前只执行bootstrap handoff，不选择G2.5或其他slice；handoff必须继续保持
+  `next_slice_unblocked=false`。

@@ -1,3 +1,12 @@
+from ai_trading_system.platform.architecture.bootstrap_handoff import (
+    BOOTSTRAP_HANDOFF_PRODUCER_VERSION,
+    BOOTSTRAP_HANDOFF_SCHEMA_VERSION,
+    REQUIRED_VALIDATION_TIERS,
+    BootstrapHandoffError,
+    bootstrap_handoff_checksum,
+    build_bootstrap_handoff,
+    validate_bootstrap_handoff,
+)
 from ai_trading_system.platform.architecture.callback_migration import (
     CALLBACK_MIGRATION_SCHEMA_VERSION,
     CallbackDeclaration,
@@ -69,6 +78,8 @@ from ai_trading_system.platform.architecture.scaffold import (
 )
 
 __all__ = [
+    "BOOTSTRAP_HANDOFF_PRODUCER_VERSION",
+    "BOOTSTRAP_HANDOFF_SCHEMA_VERSION",
     "CALLBACK_MIGRATION_SCHEMA_VERSION",
     "CLI_CONTRACT_SCHEMA_VERSION",
     "CHANGE_MANIFEST_SCHEMA_VERSION",
@@ -76,6 +87,7 @@ __all__ = [
     "VALIDATION_EVIDENCE_SCHEMA_VERSION",
     "CallbackDeclaration",
     "CallbackMigrationError",
+    "BootstrapHandoffError",
     "ChangeConflict",
     "ChangeManifest",
     "CliContractError",
@@ -100,13 +112,16 @@ __all__ = [
     "ScaffoldKind",
     "ScaffoldResult",
     "ValidationEvidence",
+    "REQUIRED_VALIDATION_TIERS",
     "assert_frozen_cli_contract",
     "assert_frozen_callback_migration_matrix",
     "baseline_callbacks_from_matrix",
     "build_callback_migration_matrix",
+    "bootstrap_handoff_checksum",
     "build_aggregate_shadow_index",
     "build_architecture_fitness",
     "build_cli_contract",
+    "build_bootstrap_handoff",
     "build_deterministic_lane_plan",
     "build_module_manifest",
     "build_test_manifest",
@@ -122,6 +137,7 @@ __all__ = [
     "scan_current_callbacks",
     "select_impacted_tests",
     "validate_architecture_dependencies",
+    "validate_bootstrap_handoff",
     "validate_evidence_binding",
     "write_generated_architecture_artifact",
 ]
