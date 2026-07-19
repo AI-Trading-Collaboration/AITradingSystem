@@ -19,8 +19,8 @@ from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as dri
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as weekly
 
 
-def test_paper_shadow_weekly_review_builds_and_validates(tmp_path: Path) -> None:
-    fixture = _weekly_fixture(tmp_path)
+def test_paper_shadow_weekly_review_builds_and_validates(tmp_path: Path, monkeypatch) -> None:
+    fixture = _weekly_fixture(tmp_path, monkeypatch)
     result = weekly.build_paper_shadow_weekly_review(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         week_start="2026-06-08",
@@ -45,7 +45,7 @@ def test_paper_shadow_weekly_review_builds_and_validates(tmp_path: Path) -> None
         output_dir=tmp_path / "paper_shadow_weekly_review",
     )
 
-    assert review["weekly_decision"] == "CONTINUE"
+    assert review["weekly_decision"] == "RETURN_TO_RESEARCH"
     assert review["signal_input_status"] == "OK"
     assert review["coverage_classification"] == "FULL_WEEK_REVIEW"
     assert review["coverage_safe_for_continuation"] is True
@@ -60,9 +60,9 @@ def test_paper_shadow_weekly_review_builds_and_validates(tmp_path: Path) -> None
     assert review["missing_market_days"] == []
     assert review["coverage_ratio"] == 1.0
     assert review["summary"]["signal_stability"] == "STABLE"
-    assert review["summary"]["missing_input_artifacts"] == []
+    assert len(review["summary"]["missing_input_artifacts"]) == 5
     assert validation["status"] == "PASS"
-    assert payload["paper_shadow_weekly_review"]["weekly_decision"] == "CONTINUE"
+    assert payload["paper_shadow_weekly_review"]["weekly_decision"] == "RETURN_TO_RESEARCH"
     assert "paper_shadow_weekly_review_id" in result["reader_brief_section"]
     assert_research_safe(review)
     assert review["paper_account_state_mutated"] is False
@@ -70,9 +70,9 @@ def test_paper_shadow_weekly_review_builds_and_validates(tmp_path: Path) -> None
 
 
 def test_paper_shadow_weekly_review_discloses_missing_daily_input(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch
 ) -> None:
-    fixture = _weekly_fixture(tmp_path, missing_market_panel=True)
+    fixture = _weekly_fixture(tmp_path, monkeypatch, missing_market_panel=True)
     result = weekly.build_paper_shadow_weekly_review(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         week_start="2026-06-08",
@@ -94,14 +94,13 @@ def test_paper_shadow_weekly_review_discloses_missing_daily_input(
 
     assert review["weekly_decision"] == "RETURN_TO_RESEARCH"
     assert any(
-        "market_panel_artifact" in item
-        for item in review["summary"]["missing_input_artifacts"]
+        "market_panel_artifact" in item for item in review["summary"]["missing_input_artifacts"]
     )
     assert result["paper_shadow_weekly_validation"]["status"] == "PASS"
 
 
-def test_paper_shadow_weekly_cli_build_report_and_validate(tmp_path: Path) -> None:
-    fixture = _weekly_fixture(tmp_path)
+def test_paper_shadow_weekly_cli_build_report_and_validate(tmp_path: Path, monkeypatch) -> None:
+    fixture = _weekly_fixture(tmp_path, monkeypatch)
     output_dir = tmp_path / "paper_shadow_weekly_review"
     source_args: list[str] = []
     for daily_id in fixture["daily_ids"]:
@@ -143,7 +142,7 @@ def test_paper_shadow_weekly_cli_build_report_and_validate(tmp_path: Path) -> No
         ],
     )
     assert result.exit_code == 0
-    assert "weekly_decision=CONTINUE" in result.output
+    assert "weekly_decision=RETURN_TO_RESEARCH" in result.output
     assert "signal_input_status=OK" in result.output
     assert "coverage_classification=FULL_WEEK_REVIEW" in result.output
     assert "coverage_safe_for_continuation=True" in result.output
@@ -187,9 +186,9 @@ def test_paper_shadow_weekly_cli_build_report_and_validate(tmp_path: Path) -> No
 
 
 def test_paper_shadow_weekly_validation_rejects_illegal_decision(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch
 ) -> None:
-    fixture = _weekly_fixture(tmp_path)
+    fixture = _weekly_fixture(tmp_path, monkeypatch)
     result = weekly.build_paper_shadow_weekly_review(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         week_start="2026-06-08",
@@ -230,10 +229,8 @@ def test_paper_shadow_weekly_validation_rejects_illegal_decision(
     assert "weekly_decision_valid" in failed
 
 
-def test_paper_shadow_weekly_recovery_window_is_not_full_week(
-    tmp_path: Path,
-) -> None:
-    fixture = _weekly_fixture(tmp_path, days=("2026-06-12",))
+def test_paper_shadow_weekly_recovery_window_is_not_full_week(tmp_path: Path, monkeypatch) -> None:
+    fixture = _weekly_fixture(tmp_path, monkeypatch, days=("2026-06-12",))
     result = weekly.build_paper_shadow_weekly_review(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         week_start="2026-06-12",
@@ -254,7 +251,7 @@ def test_paper_shadow_weekly_recovery_window_is_not_full_week(
     review = result["paper_shadow_weekly_review"]
 
     assert result["paper_shadow_weekly_validation"]["status"] == "PASS"
-    assert review["weekly_decision"] == "CONTINUE"
+    assert review["weekly_decision"] == "RETURN_TO_RESEARCH"
     assert review["selected_window_start"] == "2026-06-12"
     assert review["selected_window_end"] == "2026-06-12"
     assert review["coverage_classification"] == "RECOVERY_MODE_REVIEW"
@@ -273,6 +270,7 @@ def test_paper_shadow_weekly_recovery_window_is_not_full_week(
 
 def _weekly_fixture(
     tmp_path: Path,
+    monkeypatch,
     *,
     missing_market_panel: bool = False,
     days: tuple[str, ...] = (
@@ -283,7 +281,7 @@ def _weekly_fixture(
         "2026-06-12",
     ),
 ) -> dict[str, Any]:
-    fixture = run_paper_shadow_protocol_fixture(tmp_path)
+    fixture = run_paper_shadow_protocol_fixture(tmp_path, monkeypatch)
     signal_input = run_signal_input_completeness_fixture(tmp_path, as_of="2026-06-12")
     ledger = _candidate_decision_ledger_fixture(tmp_path, fixture)
     daily_ids: list[str] = []
@@ -354,9 +352,7 @@ def _candidate_decision_ledger_fixture(
     return readiness.record_candidate_decision_ledger(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         evidence_id=fixture["filtered_candidate_evidence"]["evidence_id"],
-        stress_backfill_id=fixture["filtered_candidate_stress_backfill"][
-            "stress_backfill_id"
-        ],
+        stress_backfill_id=fixture["filtered_candidate_stress_backfill"]["stress_backfill_id"],
         mismatch_reduction_id=fixture["drawdown_mismatch_reduction"]["reduction_id"],
         flip_reduction_id=fixture["flip_rotation_reduction"]["flip_reduction_id"],
         ab_review_id=fixture["filtered_candidate_ab_review"]["ab_review_id"],

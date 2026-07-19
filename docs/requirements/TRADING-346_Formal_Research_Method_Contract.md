@@ -1,16 +1,16 @@
 # TRADING-346 Formal Research Method Contract
 
-最后更新：2026-06-15
+最后更新：2026-07-19
 
 ## 状态
 
-`VALIDATING`
+`BASELINE_DONE`（canonical contract与正式门禁已闭合；等待真实dated evidence）
 
 Owner 要求完成附件中的 TRADING-346。本任务承接 TRADING-336～345 的 filtered candidate chain，把 `median_plus_regime_mismatch_filter` 的 evidence、stress、drawdown mismatch reduction、flip/rotation reduction、A/B review、confirmation targets、owner review 和 next decision 映射为可审计 Research Method Contract。
 
 ## 背景
 
-TRADING-336～345 当前真实链路结果为：
+TRADING-336～345 在 2026-06-15 legacy 运行中曾记录：
 
 - evidence=`PROMISING`
 - median regime filter spec contract=`PASS`
@@ -23,7 +23,13 @@ TRADING-336～345 当前真实链路结果为：
 - owner action=`formalize_research_method`
 - next decision=`FORMALIZE_RESEARCH_METHOD`
 
-这些结果可以支持 formal research method implementation，但仍不得被解释为 official target weights、production mutation、broker integration、order tickets 或 automatic position control。
+ARCH-004G2.4-EB3 已证明上述状态依赖合成 performance、固定 stress windows 与默认 confirmation
+targets，不能作为 validated dated evidence。当前 canonical v2 链路结果为：evidence/stress/drawdown/
+flip/A-B/formalization/owner/next decision=`INSUFFICIENT_DATA`，spec=`RESEARCH_SPEC_ONLY`，confirmation
+target count=0。因此 Contract 必须输出 `formal_research_method_status=NOT_READY`、
+`promotion_state=NEEDS_MORE_EVIDENCE`、`paper_shadow_eligibility=NOT_ELIGIBLE`，下一动作是收集同 lineage
+的 validated dated filtered outcomes。旧 READY artifact 只保留为历史，不得继续支持 formal method、
+paper-shadow 或 production 解释。
 
 ## Safety Boundary
 
@@ -94,7 +100,7 @@ Expected decision fields:
 |Validate CLI|DONE|Fail-closed 校验 schema、required gates、safety boundary、paper-shadow conditions 和 source links。|
 |Report CLI|DONE|输出 owner-readable 摘要和 artifact path。|
 |Documentation and registry|DONE|README、system flow、operations runbook、artifact catalog 和 report registry 同步。|
-|Tests and validation|VALIDATING|Focused pytest、CLI smoke、ruff、compileall、git diff check 通过。|
+|Tests and validation|DONE|Focused、architecture、contract、唯一natural Full及静态检查通过。|
 
 ## Progress Notes
 
@@ -114,3 +120,10 @@ Expected decision fields:
   index 为 `PASS_WITH_WARNINGS`，原因是既有 missing/stale visibility；documentation contract
   为 `PASS`；Reader Brief 为 `OK`；Reader Brief quality 为 `LIMITED_READER_CONTEXT`
   且 failed=0。
+- 2026-07-19: ARCH-004G2.4-EB3 修正 contract bridge：缺 dated evidence 不再落入 hard
+  `REJECTED`，而是 `NOT_READY` / `NEEDS_MORE_EVIDENCE`；只有 safety failure 或 upstream 明确
+  `REJECTED` / `FAIL` / `FAILED` 才触发 hard rejection。Canonical chain 同时阻断 paper-shadow
+  protocol/daily execution，threshold review保持required，weekly review返回research。当前实现与downstream
+  focused验证已通过；final architecture/contract=`397/262 passed`，唯一natural Full=
+  `6,357 passed / 2 skipped / 643 warnings / 981.25s`且runtime profile/telemetry/performance/provenance全部
+  PASS、无fallback。本任务转`BASELINE_DONE`等待真实dated evidence，`production_effect=none`。

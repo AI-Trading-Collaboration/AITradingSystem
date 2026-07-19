@@ -16,8 +16,8 @@ from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as dri
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as weekly
 
 
-def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path) -> None:
-    fixture = _paper_shadow_freshness_fixture(tmp_path)
+def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path, monkeypatch) -> None:
+    fixture = _paper_shadow_freshness_fixture(tmp_path, monkeypatch)
     evidence_manifest_path = Path(
         fixture["filtered_candidate_evidence"]["manifest"][
             "filtered_candidate_evidence_manifest_path"
@@ -208,8 +208,8 @@ def test_evidence_staleness_weekend_market_reference_does_not_hide_real_stale_da
     assert stale_finding["stale_reason"] == "older_than_blocking_policy_window"
 
 
-def test_evidence_staleness_missing_weekly_review_blocks(tmp_path: Path) -> None:
-    fixture = _paper_shadow_freshness_fixture(tmp_path)
+def test_evidence_staleness_missing_weekly_review_blocks(tmp_path: Path, monkeypatch) -> None:
+    fixture = _paper_shadow_freshness_fixture(tmp_path, monkeypatch)
     price_cache_path = tmp_path / "prices_daily.csv"
     price_cache_path.write_text(
         "date,ticker,close\n2024-04-22,QQQ,431\n",
@@ -256,8 +256,10 @@ def test_evidence_staleness_missing_weekly_review_blocks(tmp_path: Path) -> None
     assert result["evidence_staleness_validation"]["status"] == "PASS"
 
 
-def test_evidence_staleness_discovers_latest_weekly_review_artifact(tmp_path: Path) -> None:
-    fixture = _paper_shadow_freshness_fixture(tmp_path)
+def test_evidence_staleness_discovers_latest_weekly_review_artifact(
+    tmp_path: Path, monkeypatch
+) -> None:
+    fixture = _paper_shadow_freshness_fixture(tmp_path, monkeypatch)
     evidence_manifest_path = Path(
         fixture["filtered_candidate_evidence"]["manifest"][
             "filtered_candidate_evidence_manifest_path"
@@ -311,17 +313,18 @@ def test_evidence_staleness_discovers_latest_weekly_review_artifact(tmp_path: Pa
     assert "paper_shadow_weekly_review" not in report["blocking_artifacts"]
     assert report["safe_to_continue_shadow"] is False
     assert report["coverage_status"] == "MANUAL_REVIEW_REQUIRED"
-    assert findings["paper_shadow_weekly_review"]["artifact_id"] == fixture[
-        "paper_shadow_weekly"
-    ]["weekly_review_id"]
+    assert (
+        findings["paper_shadow_weekly_review"]["artifact_id"]
+        == fixture["paper_shadow_weekly"]["weekly_review_id"]
+    )
     assert findings["paper_shadow_weekly_review"]["missing"] is False
     assert findings["paper_shadow_weekly_review"]["coverage_classification"] == (
         "RECOVERY_MODE_REVIEW"
     )
 
 
-def test_evidence_staleness_blocks_on_fallback_policy_blocker(tmp_path: Path) -> None:
-    fixture = _paper_shadow_freshness_fixture(tmp_path)
+def test_evidence_staleness_blocks_on_fallback_policy_blocker(tmp_path: Path, monkeypatch) -> None:
+    fixture = _paper_shadow_freshness_fixture(tmp_path, monkeypatch)
     fallback_policy_report = _write_fallback_policy_report(
         tmp_path,
         fallback_status="BLOCKED_NO_VALID_SOURCE",
@@ -388,8 +391,8 @@ def test_evidence_staleness_blocks_on_fallback_policy_blocker(tmp_path: Path) ->
     assert result["evidence_staleness_validation"]["status"] == "PASS"
 
 
-def _paper_shadow_freshness_fixture(tmp_path: Path) -> dict[str, object]:
-    fixture = run_paper_shadow_protocol_fixture(tmp_path)
+def _paper_shadow_freshness_fixture(tmp_path: Path, monkeypatch) -> dict[str, object]:
+    fixture = run_paper_shadow_protocol_fixture(tmp_path, monkeypatch)
     signal_input = run_signal_input_completeness_fixture(tmp_path, as_of="2024-04-22")
     ledger = readiness.record_candidate_decision_ledger(
         candidate=readiness.TOP_FILTERED_CANDIDATE,

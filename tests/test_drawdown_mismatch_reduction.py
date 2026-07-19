@@ -10,8 +10,8 @@ from dynamic_v3_filtered_candidate_readiness_helpers import (
 from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readiness as readiness
 
 
-def test_drawdown_mismatch_reduction_builds_and_validates(tmp_path: Path) -> None:
-    fixture = run_drawdown_mismatch_reduction_fixture(tmp_path)
+def test_drawdown_mismatch_reduction_builds_and_validates(tmp_path: Path, monkeypatch) -> None:
+    fixture = run_drawdown_mismatch_reduction_fixture(tmp_path, monkeypatch)
     reduction = fixture["drawdown_mismatch_reduction"]
     validation = readiness.validate_drawdown_mismatch_reduction_artifact(
         reduction_id=reduction["reduction_id"],
@@ -19,9 +19,11 @@ def test_drawdown_mismatch_reduction_builds_and_validates(tmp_path: Path) -> Non
     )
     assert validation["status"] == "PASS"
     summary = reduction["mismatch_reduction_summary"]
-    assert summary["risk_increase_during_drawdown_before"] >= summary[
-        "risk_increase_during_drawdown_after"
-    ]
-    assert summary["drawdown_mismatch_reduction_status"] == "IMPROVED"
-    assert summary["blocked_signal_helpful_rate"] > summary["blocked_signal_harmful_rate"]
-    assert_research_safe(reduction["manifest"])
+    assert summary["evidence_status"] == "INSUFFICIENT_DATA"
+    assert summary["risk_increase_during_drawdown_before"] is None
+    assert summary["risk_increase_during_drawdown_after"] is None
+    assert summary["blocked_signal_helpful_rate"] is None
+    assert summary["blocked_signal_harmful_rate"] is None
+    assert summary["drawdown_mismatch_reduction_status"] == "INSUFFICIENT_DATA"
+    assert reduction["mismatch_reduction_events"] == []
+    assert_research_safe(reduction)

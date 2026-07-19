@@ -1,8 +1,8 @@
 schema_version: arch_004g2_full_duration_profile.v1
-profile_id: arch_005_pb1_full_duration_complete
-status: COMPLETE
+profile_id: arch_004g2_eb3_full_duration_partial_seed
+status: PARTIAL_SEED
 owner: validation_operations
-version: 8
+version: 9
 source:
   artifact_path: outputs/validation_runtime/full_20260719T063016Z/test_runtime_profile.json
   artifact_sha256: 83b058604486be8b36c8364e56b5769f589d79c5baefca77816e08ce2a1606c3
@@ -15,27 +15,26 @@ source:
   telemetry_status: PASS
   performance_evidence_status: PASS
   pytest_exitstatus: 0
-complete_profile:
+partial_seed:
   enabled: true
-  source_node_count: 6352
-  source_file_count: 1071
-  source_collection_ordered_sha256: d7ab832136c124e12bac0351d729b20f28a75ba497614d03b0d5ea1da57de28c
-  source_collection_set_sha256: e8a5370baf8da68200dcb442381fd2d96783d96d5b73319042baefb9e92271c8
-  source_file_set_sha256: 5e6ca0b25c5a902302852b727a3d847f5e533650210d17f0f5b8ab25bf43adb0
-  source_file_rows_sha256: 6d91ebfb7bdcef9ad389ddcf797a7c122342096df89263cee7d154bd1c8fa68c
-  expected_scheduled_ordered_sha256: 368da6f7662f838d5b2fc1b03b29276507bf45c9a6feca4dbac5e88408edab8c
-  source_file_duration_total_seconds: 14400.3621231
+  source_duration_row_count: 1071
+  aggregated_file_count: 1071
+  coverage_limitation: >-
+    The PB1 source profile exactly covered 6,352 nodes in 1,071 files. EB3 adds a
+    new test file, so the old collection identity is no longer complete. Preserve
+    all historical file durations as an advisory seed; new or changed files retain
+    stable collection order until this natural Full records the current collection.
 review:
-  use_scope: advisory_full_test_file_scheduling_only
+  use_scope: advisory_test_file_scheduling_only
   stable_improvement_claimed: false
   conditions:
   - Use only with the full tier and pytest-xdist loadfile distribution.
-  - Require an exact current 6,352-node and 1,071-file collection match before applying.
   - Preserve every nodeid and the order of nodes within each test file.
-  - Treat missing, duplicate, stale, worker-mismatched, or invalid evidence as an
-    explicit stock loadfile fallback.
-  - Do not promote fallback, incomplete telemetry, or this single source profile as
-    stable improvement evidence.
+  - Keep files absent from this seed in stable collection order after profiled files.
+  - Treat missing, duplicate, worker-mismatched, or invalid evidence as an explicit
+    stock loadfile fallback.
+  - Do not promote fallback, incomplete telemetry, or this seed as stable improvement
+    evidence.
 files:
 - path: tests/test_layer1_meta_policy_readiness.py
   node_count: 6

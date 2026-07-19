@@ -17,8 +17,8 @@ from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as dai
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as drift
 
 
-def test_paper_shadow_drift_monitor_builds_clean_report(tmp_path: Path) -> None:
-    fixture = _paper_shadow_daily_fixture(tmp_path)
+def test_paper_shadow_drift_monitor_builds_clean_report(tmp_path: Path, monkeypatch) -> None:
+    fixture = _paper_shadow_daily_fixture(tmp_path, monkeypatch)
     result = drift.build_paper_shadow_drift_monitor_report(
         observation_id=fixture["observation_id"],
         observation_dir=tmp_path / "paper_shadow_daily",
@@ -34,19 +34,21 @@ def test_paper_shadow_drift_monitor_builds_clean_report(tmp_path: Path) -> None:
         output_dir=tmp_path / "paper_shadow_drift_monitor",
     )
 
-    assert report["drift_severity"] == "NONE"
-    assert report["next_action"] == "continue_shadow"
-    assert report["blocking_count"] == 0
+    assert report["drift_severity"] == "BLOCKING"
+    assert report["next_action"] == "return_to_research"
+    assert report["blocking_count"] == 1
     assert {row["family"] for row in report["findings"]} == set(drift.DRIFT_FAMILIES)
     assert validation["status"] == "PASS"
-    assert payload["paper_shadow_drift_report"]["drift_severity"] == "NONE"
+    assert payload["paper_shadow_drift_report"]["drift_severity"] == "BLOCKING"
     assert "paper_shadow_drift_severity" in result["reader_brief_section"]
     assert_research_safe(report)
     assert report["paper_account_state_mutated"] is False
 
 
-def test_paper_shadow_drift_monitor_flags_missing_signal_inputs(tmp_path: Path) -> None:
-    fixture = _paper_shadow_daily_fixture(tmp_path, missing_market_panel=True)
+def test_paper_shadow_drift_monitor_flags_missing_signal_inputs(
+    tmp_path: Path, monkeypatch
+) -> None:
+    fixture = _paper_shadow_daily_fixture(tmp_path, monkeypatch, missing_market_panel=True)
     result = drift.build_paper_shadow_drift_monitor_report(
         observation_id=fixture["observation_id"],
         observation_dir=tmp_path / "paper_shadow_daily",
@@ -56,9 +58,7 @@ def test_paper_shadow_drift_monitor_flags_missing_signal_inputs(tmp_path: Path) 
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
     report = result["paper_shadow_drift_report"]
-    missing = next(
-        row for row in report["findings"] if row["family"] == "missing_signal_inputs"
-    )
+    missing = next(row for row in report["findings"] if row["family"] == "missing_signal_inputs")
 
     assert report["drift_severity"] == "BLOCKING"
     assert report["next_action"] == "return_to_research"
@@ -67,8 +67,8 @@ def test_paper_shadow_drift_monitor_flags_missing_signal_inputs(tmp_path: Path) 
     assert result["paper_shadow_drift_validation"]["status"] == "PASS"
 
 
-def test_paper_shadow_drift_monitor_cli_report_and_validate(tmp_path: Path) -> None:
-    fixture = _paper_shadow_daily_fixture(tmp_path)
+def test_paper_shadow_drift_monitor_cli_report_and_validate(tmp_path: Path, monkeypatch) -> None:
+    fixture = _paper_shadow_daily_fixture(tmp_path, monkeypatch)
     output_dir = tmp_path / "paper_shadow_drift_monitor"
     result = CliRunner().invoke(
         app,
@@ -90,7 +90,7 @@ def test_paper_shadow_drift_monitor_cli_report_and_validate(tmp_path: Path) -> N
         ],
     )
     assert result.exit_code == 0
-    assert "drift_severity=NONE" in result.output
+    assert "drift_severity=BLOCKING" in result.output
     monitor_id = next(
         line.split("=", 1)[1]
         for line in result.output.splitlines()
@@ -131,10 +131,11 @@ def test_paper_shadow_drift_monitor_cli_report_and_validate(tmp_path: Path) -> N
 
 def _paper_shadow_daily_fixture(
     tmp_path: Path,
+    monkeypatch,
     *,
     missing_market_panel: bool = False,
 ) -> dict[str, str]:
-    contract_fixture = run_formal_research_method_contract_fixture(tmp_path)
+    contract_fixture = run_formal_research_method_contract_fixture(tmp_path, monkeypatch)
     contract_id = contract_fixture["formal_research_method_contract"]["contract_id"]
     protocol_result = readiness.build_paper_shadow_protocol(
         contract_id=contract_id,

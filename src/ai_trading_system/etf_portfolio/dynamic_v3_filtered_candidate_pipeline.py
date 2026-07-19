@@ -486,9 +486,7 @@ def _dated_methods(ledger: Mapping[str, Any]) -> list[str]:
     return sorted({_text(row.get("method")) for row in _ledger_events(ledger) if row.get("method")})
 
 
-def _screening_specs(
-    design: Mapping[str, Any], ledger: Mapping[str, Any]
-) -> list[dict[str, Any]]:
+def _screening_specs(design: Mapping[str, Any], ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
     filters = _filter_rows(design)
     methods = _dated_methods(ledger)
     return [
@@ -520,7 +518,7 @@ def _event_matches_filter(
             if value is None
             else _float(value) >= _float(rules.get("candidate_dispersion_threshold"))
         )
-    if filter_id == "signal_persistence_3d_filter":
+    if filter_id == "signal_persistence_filter":
         value = event.get("persistence_days")
         return None if value is None else _float(value) < _float(rules.get("persistence_days"))
     if filter_id == "regime_mismatch_filter":
@@ -1101,9 +1099,7 @@ def _gate_results(
                     round(harmful_triggered / harmful_total, 6) if harmful_total else None
                 ),
                 "false_block_rate": (
-                    round(nonharmful_triggered / nonharmful_total, 6)
-                    if nonharmful_total
-                    else None
+                    round(nonharmful_triggered / nonharmful_total, 6) if nonharmful_total else None
                 ),
                 "turnover_reduction_rate": None,
                 "gate_result_status": "OBSERVED_SCREENING_ONLY",
@@ -1433,9 +1429,7 @@ def _review_material(
         "source_ledger_id": comparison.get("source_ledger_id"),
         "generated_at": generated.isoformat(),
         "status": (
-            "PASS_WITH_WARNINGS"
-            if decision.get("decision") == "INSUFFICIENT_DATA"
-            else "PASS"
+            "PASS_WITH_WARNINGS" if decision.get("decision") == "INSUFFICIENT_DATA" else "PASS"
         ),
         "evidence_status": decision.get("evidence_status"),
         "market_regime": comparison.get("market_regime", "ai_after_chatgpt"),
@@ -1577,9 +1571,7 @@ def _review_report(
         "filtered_promotion_decision": _read_json(root / REVIEW_VIEWS[1]),
         "filtered_candidate_specs": _read_json(root / REVIEW_VIEWS[2]),
         "reader_brief_section": (root / REVIEW_VIEWS[4]).read_text(encoding="utf-8"),
-        **_optional_input_snapshot(
-            root, "filtered_candidate_promotion_review_input_snapshot.json"
-        ),
+        **_optional_input_snapshot(root, "filtered_candidate_promotion_review_input_snapshot.json"),
         "filtered_review_dir": str(root),
     }
 
@@ -1605,8 +1597,7 @@ def _rebuild_review(root: Path, artifact_id: str) -> list[dict[str, Any]]:
     for field in ("filter_design_id", "source_ledger_id", "policy_version"):
         _require(comparison.get(field) == gate.get(field), f"review {field} lineage mismatch")
     _require(
-        _mapping(_mapping(comparison.get("input_snapshot")).get("policy_source"))
-        == policy_source,
+        _mapping(_mapping(comparison.get("input_snapshot")).get("policy_source")) == policy_source,
         "review comparison policy lineage",
     )
     _require(

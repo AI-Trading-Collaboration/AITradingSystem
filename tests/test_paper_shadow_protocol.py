@@ -10,8 +10,8 @@ from dynamic_v3_filtered_candidate_readiness_helpers import (
 from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readiness as readiness
 
 
-def test_paper_shadow_protocol_builds_and_validates(tmp_path: Path) -> None:
-    fixture = run_formal_research_method_contract_fixture(tmp_path)
+def test_paper_shadow_protocol_builds_and_validates(tmp_path: Path, monkeypatch) -> None:
+    fixture = run_formal_research_method_contract_fixture(tmp_path, monkeypatch)
     contract_result = fixture["formal_research_method_contract"]
     protocol_result = readiness.build_paper_shadow_protocol(
         contract_id=contract_result["contract_id"],
@@ -26,10 +26,13 @@ def test_paper_shadow_protocol_builds_and_validates(tmp_path: Path) -> None:
         output_dir=tmp_path / "paper_shadow_protocol",
     )
 
-    assert protocol["protocol_status"] == "PROTOCOL_READY"
-    assert protocol["eligibility_status"] == "ELIGIBLE"
-    assert protocol["blocking_reasons"] == []
-    assert protocol["next_required_action"] == "start_daily_paper_shadow_runner_design"
+    assert protocol["protocol_status"] == "PROTOCOL_BLOCKED"
+    assert protocol["eligibility_status"] == "BLOCKED"
+    assert set(protocol["blocking_reasons"]) >= {
+        "formal_contract_ready",
+        "paper_shadow_eligible_for_protocol_design",
+    }
+    assert protocol["next_required_action"] == "return_to_research_contract_review"
     assert (
         protocol["required_observation_period"]["minimum_trading_days"]
         == readiness.PAPER_SHADOW_REQUIRED_OBSERVATION_DAYS
@@ -41,7 +44,7 @@ def test_paper_shadow_protocol_builds_and_validates(tmp_path: Path) -> None:
         readiness.PAPER_SHADOW_EXIT_CONDITIONS
     )
     assert validation["status"] == "PASS"
-    assert report_payload["paper_shadow_protocol"]["protocol_status"] == "PROTOCOL_READY"
+    assert report_payload["paper_shadow_protocol"]["protocol_status"] == "PROTOCOL_BLOCKED"
     assert "paper_shadow_protocol_status" in protocol_result["reader_brief_section"]
     assert_research_safe(protocol_result["manifest"])
     assert protocol["broker_order_system_consumable"] is False

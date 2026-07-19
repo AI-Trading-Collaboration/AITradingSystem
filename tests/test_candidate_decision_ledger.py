@@ -11,8 +11,8 @@ from dynamic_v3_filtered_candidate_readiness_helpers import (
 from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readiness as readiness
 
 
-def test_candidate_decision_ledger_records_and_validates(tmp_path: Path) -> None:
-    fixture = run_paper_shadow_protocol_fixture(tmp_path)
+def test_candidate_decision_ledger_records_and_validates(tmp_path: Path, monkeypatch) -> None:
+    fixture = run_paper_shadow_protocol_fixture(tmp_path, monkeypatch)
     contract = fixture["formal_research_method_contract"]
     protocol = fixture["paper_shadow_protocol"]
     first = _record_candidate_decision(tmp_path, fixture, contract, protocol, 21)
@@ -36,15 +36,15 @@ def test_candidate_decision_ledger_records_and_validates(tmp_path: Path) -> None
     assert validation["status"] == "PASS"
     assert report_payload["candidate_decision_record"]["record_id"] == record["record_id"]
     assert record["candidate"] == readiness.TOP_FILTERED_CANDIDATE
-    assert record["evidence_status"] == "PROMISING"
-    assert record["stress_result"] == "STRONG"
-    assert record["mismatch_result"] == "IMPROVED"
-    assert record["rotation_result"] == "IMPROVED"
-    assert record["ab_result"] == "PROMISING"
-    assert record["confirmation_count"] == 3
-    assert record["owner_action"] == "formalize_research_method"
-    assert record["final_decision"] == "FORMALIZE_RESEARCH_METHOD"
-    assert record["next_required_action"] == "start_daily_paper_shadow_runner_design"
+    assert record["evidence_status"] == "INSUFFICIENT_DATA"
+    assert record["stress_result"] == "INSUFFICIENT_DATA"
+    assert record["mismatch_result"] == "INSUFFICIENT_DATA"
+    assert record["rotation_result"] == "INSUFFICIENT_DATA"
+    assert record["ab_result"] == "INSUFFICIENT_DATA"
+    assert record["confirmation_count"] == 0
+    assert record["owner_action"] == "COLLECT_VALIDATED_DATED_FILTERED_OUTCOMES"
+    assert record["final_decision"] == "COLLECT_DATED_EVIDENCE"
+    assert record["next_required_action"] == "return_to_research_contract_review"
     assert record["ledger_sequence"] == 2
     assert {row["record_id"] for row in ledger_rows} == {
         first["record_id"],

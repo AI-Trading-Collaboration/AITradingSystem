@@ -19,9 +19,9 @@ from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as we
 
 
 def test_shadow_continuation_readiness_requires_manual_review_for_recovery_week(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch
 ) -> None:
-    fixture = _shadow_continuation_fixture(tmp_path)
+    fixture = _shadow_continuation_fixture(tmp_path, monkeypatch)
     data_quality_report = _write_data_quality_report(tmp_path)
 
     result = readiness.run_shadow_continuation_readiness_report(
@@ -52,9 +52,7 @@ def test_shadow_continuation_readiness_requires_manual_review_for_recovery_week(
     )
 
     assert validation["status"] == "PASS"
-    assert payload["shadow_continuation_readiness_report"]["readiness_id"] == result[
-        "readiness_id"
-    ]
+    assert payload["shadow_continuation_readiness_report"]["readiness_id"] == result["readiness_id"]
     assert report["shadow_continuation_readiness"] == "MANUAL_REVIEW_REQUIRED"
     assert report["safe_to_continue_shadow"] is False
     assert report["missing_artifacts"] == []
@@ -77,9 +75,9 @@ def test_shadow_continuation_readiness_requires_manual_review_for_recovery_week(
 
 
 def test_shadow_continuation_readiness_blocks_missing_weekly_review(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch
 ) -> None:
-    fixture = _shadow_continuation_fixture(tmp_path)
+    fixture = _shadow_continuation_fixture(tmp_path, monkeypatch)
     data_quality_report = _write_data_quality_report(tmp_path, status="PASS")
 
     result = readiness.run_shadow_continuation_readiness_report(
@@ -109,9 +107,9 @@ def test_shadow_continuation_readiness_blocks_missing_weekly_review(
 
 
 def test_shadow_continuation_readiness_blocks_fallback_unavailable(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch
 ) -> None:
-    fixture = _shadow_continuation_fixture(tmp_path)
+    fixture = _shadow_continuation_fixture(tmp_path, monkeypatch)
     data_quality_report = _write_data_quality_report(tmp_path, status="PASS")
     fallback_policy_report = _write_fallback_policy_report(
         tmp_path,
@@ -149,9 +147,9 @@ def test_shadow_continuation_readiness_blocks_fallback_unavailable(
 
 
 def test_shadow_continuation_readiness_blocks_cache_catalog_failure(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch
 ) -> None:
-    fixture = _shadow_continuation_fixture(tmp_path)
+    fixture = _shadow_continuation_fixture(tmp_path, monkeypatch)
     data_quality_report = _write_data_quality_report(tmp_path, status="PASS")
     cache_catalog_report = _write_cache_catalog_report(tmp_path, status="FAIL")
 
@@ -184,9 +182,9 @@ def test_shadow_continuation_readiness_blocks_cache_catalog_failure(
 
 
 def test_shadow_continuation_readiness_cli_run_report_and_validate(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch
 ) -> None:
-    fixture = _shadow_continuation_fixture(tmp_path)
+    fixture = _shadow_continuation_fixture(tmp_path, monkeypatch)
     data_quality_report = _write_data_quality_report(tmp_path)
     output_dir = tmp_path / "shadow_continuation_readiness_cli"
 
@@ -270,8 +268,8 @@ def test_shadow_continuation_readiness_cli_run_report_and_validate(
     assert "status=PASS" in validation.output
 
 
-def _shadow_continuation_fixture(tmp_path: Path) -> dict[str, object]:
-    fixture = run_paper_shadow_protocol_fixture(tmp_path)
+def _shadow_continuation_fixture(tmp_path: Path, monkeypatch) -> dict[str, object]:
+    fixture = run_paper_shadow_protocol_fixture(tmp_path, monkeypatch)
     signal_input = run_signal_input_completeness_fixture(tmp_path, as_of="2024-04-22")
     _set_filtered_evidence_date_end(fixture, "2024-04-19")
     ledger = readiness.record_candidate_decision_ledger(

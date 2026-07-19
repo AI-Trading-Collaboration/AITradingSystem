@@ -21,8 +21,8 @@ def test_promotion_gate_threshold_policy_validates() -> None:
     assert failed == set()
 
 
-def test_promotion_gate_threshold_report_builds_and_validates(tmp_path: Path) -> None:
-    fixture = run_formal_research_method_contract_fixture(tmp_path)
+def test_promotion_gate_threshold_report_builds_and_validates(tmp_path: Path, monkeypatch) -> None:
+    fixture = run_formal_research_method_contract_fixture(tmp_path, monkeypatch)
     contract = fixture["formal_research_method_contract"]
     result = thresholds.build_promotion_gate_threshold_calibration_report(
         contract_id=contract["contract_id"],
@@ -38,24 +38,21 @@ def test_promotion_gate_threshold_report_builds_and_validates(tmp_path: Path) ->
     )
 
     assert report["status"] == "PASS"
-    assert (
-        report["current_threshold_interpretation"]
-        == "FORMAL_RESEARCH_READY_UNDER_PILOT_THRESHOLDS"
-    )
+    assert report["current_threshold_interpretation"] == "THRESHOLD_REVIEW_REQUIRED"
     assert report["stress_required"] == "STRONG"
     assert report["confirmation_target_minimum"] == 3
     assert {row["threshold_family"] for row in report["threshold_rows"]} == set(
         thresholds.REQUIRED_THRESHOLD_FAMILIES
     )
-    assert all(row["passed"] is True for row in report["threshold_rows"])
+    assert any(row["passed"] is False for row in report["threshold_rows"])
     assert validation["status"] == "PASS"
     assert payload["promotion_gate_threshold_calibration_report"]["status"] == "PASS"
     assert "promotion_threshold_calibration_id" in result["reader_brief_section"]
     assert_research_safe(report)
 
 
-def test_promotion_gate_threshold_cli_report_and_validate(tmp_path: Path) -> None:
-    fixture = run_formal_research_method_contract_fixture(tmp_path)
+def test_promotion_gate_threshold_cli_report_and_validate(tmp_path: Path, monkeypatch) -> None:
+    fixture = run_formal_research_method_contract_fixture(tmp_path, monkeypatch)
     contract = fixture["formal_research_method_contract"]
     output_dir = tmp_path / "threshold_calibration"
     result = CliRunner().invoke(
@@ -74,9 +71,7 @@ def test_promotion_gate_threshold_cli_report_and_validate(tmp_path: Path) -> Non
         ],
     )
     assert result.exit_code == 0
-    assert "current_threshold_interpretation=FORMAL_RESEARCH_READY_UNDER_PILOT_THRESHOLDS" in (
-        result.output
-    )
+    assert "current_threshold_interpretation=THRESHOLD_REVIEW_REQUIRED" in result.output
     calibration_id = next(
         line.split("=", 1)[1]
         for line in result.output.splitlines()

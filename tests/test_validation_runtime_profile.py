@@ -259,11 +259,11 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
     profile = load_duration_profile(PROFILE_PATH)
 
     assert profile.valid is True
-    assert profile.manifest_status == "COMPLETE"
-    assert profile.partial_seed is False
-    assert profile.complete_profile is True
+    assert profile.manifest_status == "PARTIAL_SEED"
+    assert profile.partial_seed is True
+    assert profile.complete_profile is False
     assert profile.owner == "validation_operations"
-    assert profile.version == 8
+    assert profile.version == 9
     assert profile.source_workers == 16
     assert profile.source_dist == "loadfile"
     assert profile.source_artifact_path == (
@@ -273,24 +273,14 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
         "83b058604486be8b36c8364e56b5769f589d79c5baefca77816e08ce2a1606c3"
     )
     assert len(profile.observed_seconds) == 1071
-    assert profile.source_node_count == 6352
-    assert profile.source_file_count == 1071
-    assert profile.source_collection_ordered_sha256 == (
-        "d7ab832136c124e12bac0351d729b20f28a75ba497614d03b0d5ea1da57de28c"
-    )
-    assert profile.source_collection_set_sha256 == (
-        "e8a5370baf8da68200dcb442381fd2d96783d96d5b73319042baefb9e92271c8"
-    )
-    assert profile.source_file_set_sha256 == (
-        "5e6ca0b25c5a902302852b727a3d847f5e533650210d17f0f5b8ab25bf43adb0"
-    )
-    assert profile.source_file_rows_sha256 == (
-        "6d91ebfb7bdcef9ad389ddcf797a7c122342096df89263cee7d154bd1c8fa68c"
-    )
-    assert profile.expected_scheduled_ordered_sha256 == (
-        "368da6f7662f838d5b2fc1b03b29276507bf45c9a6feca4dbac5e88408edab8c"
-    )
-    assert profile.source_file_duration_total_seconds == 14400.3621231
+    assert profile.source_node_count is None
+    assert profile.source_file_count is None
+    assert profile.source_collection_ordered_sha256 is None
+    assert profile.source_collection_set_sha256 is None
+    assert profile.source_file_set_sha256 is None
+    assert profile.source_file_rows_sha256 is None
+    assert profile.expected_scheduled_ordered_sha256 is None
+    assert profile.source_file_duration_total_seconds is None
     assert profile.observed_seconds["tests/test_layer1_meta_policy_readiness.py"] == (
         562.2951898
     )
@@ -939,7 +929,7 @@ def test_real_xdist_plugin_writes_complete_noncomparable_profile(tmp_path: Path)
     assert payload["scheduler"]["applied"] is False
     assert payload["scheduler"]["fallback"] is True
     assert payload["scheduler"]["policy"] == "stock_loadfile_test_count_order"
-    assert payload["scheduler"]["manifest_status"] == "COMPLETE"
+    assert payload["scheduler"]["manifest_status"] == "PARTIAL_SEED"
     assert payload["scheduler"]["complete_collection_verified"] is False
     assert "worker count mismatch" in payload["scheduler"]["fallback_reason"]
 

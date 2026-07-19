@@ -725,6 +725,63 @@ Focused/runtime-profile/architecture/contract=`49/23/395/262 passed`，natural F
 `stable_full_improvement_claimed=false`。PB1不迁callback，matrix仍`745/222/0/0`；EB3、正式S0、
 G2.5与phase handoff均未自动解锁，`next_phase_or_slice_unblocked=false`、`production_effect=none`。
 
+### EB3 启动授权、callback freeze 与正确性边界
+
+2026-07-19，project owner 指令“基于我们优化的提速流程继续推进后续开发”构成
+`ARCH-004G2.4-EB3`的新显式授权，base=`073a0c57`。入口审计确认下列30个callback全部仍为
+`PENDING_LEGACY_ROOT`，matrix=`745 migrated / 222 pending / 0 unresolved / 0 duplicate`：
+
+- app callbacks：Filtered Candidate Evidence、Median Regime Filter Spec、Filtered Candidate Stress
+  Backfill、Drawdown Mismatch Reduction、Flip Rotation Reduction、Filtered Candidate A/B Review、
+  Signal Gate Confirmation、Filtered Formalization Readiness、Owner Filtered Candidate Review、Filtered
+  Next Decision各2个；
+- validator callbacks：对应10个`dynamic_v3_rescue_app validate-*`命令；
+- authoritative callback ids与`(app_name, command_name)`以
+  `inputs/architecture/arch_004g2_callback_migration_matrix.yaml`为准，不得吸收EB4 callback。
+
+EB3属于EB1/EB2之后的同一signal/filter语义链，因此代码实现保持单条依赖链；PB1只执行manifest、
+owned/shared-path、module/contract冲突与validation evidence preflight，不把有先后依赖的producer伪装成
+可并行domain lanes。实现与验收边界冻结如下：
+
+1. Evidence必须消费validator PASS的EB2 comparison/promotion及其EB1 lineage；不得把空filter、空dated
+   events或`INSUFFICIENT_DATA`提升为candidate evidence。
+2. Median Regime Spec可以描述research-only方法，但不能自行生成observed performance；spec与policy版本、
+   source hashes和candidate lineage必须显式。
+3. Stress、drawdown mismatch与flip/rotation只能由validated dated rows/window evidence计算；禁止固定窗口、
+   index-based event counts、默认分母或公式常量合成表现。
+4. A/B Review只能汇总同lineage的真实可比行；无可比证据时rows为空，winner/confidence为null且状态为
+   `INSUFFICIENT_DATA`。
+5. Signal Gate Confirmation区分“注册观察目标”和“已观察证据”；默认target不计作完成。未达到真实
+   confirmation evidence时Formalization/Owner/Next Decision不得输出formalize、promote或继续测试的伪结论，
+   只能给出`INSUFFICIENT_DATA`/收集证据的人工复核动作。
+6. 全链使用bounded v2 input snapshots，冻结exact source files/checksums、candidate/policy/chronology/
+   lineage；producer在写出前验证上游，validator从冻结source逐byte重建所有JSON/JSONL/CSV/Markdown/
+   Reader Brief views，并对source、snapshot、output、cross-lineage、chronology tamper fail closed。
+7. 退出门禁为30 callbacks canonical迁移与legacy subtraction、focused parallel、matrix/CLI/manifests/
+   compatibility/deprecation/reporting/source hashes fresh、architecture/contract及本批唯一natural Full PASS，
+   最后只提交推送可归属文件。单个EB3完成不等于G2.4 phase exit，正式ARCH-005 S0、G2.5与handoff仍锁定。
+
+入口交叉审查另发现EB1输出canonical filter id=`signal_persistence_filter`，而EB2 matcher误写为
+`signal_persistence_3d_filter`；这会在未来出现真实dated events时把该filter静默判为不可评估。EB3把此
+项作为同链P1前置修复：matcher统一到EB1 canonical id并增加回归覆盖，不保留未登记alias。
+
+2026-07-19 implementation checkpoint：30 callbacks及30个domain public APIs已迁canonical，legacy
+CLI=`11,456→10,725 lines / 261→231 functions / 222→192 decorators`，legacy readiness domain=
+`6,155→4,114 lines`且仅留30个lazy compatibility wrappers；matrix=`775/192/0/0`，CLI tree hash不变。
+10类bounded v2 snapshots、47 views、reviewed policy与source/lineage/chronology/all-view validation已实现。
+缺dated filtered outcomes时observed rows/targets为空、数值为null、spec=`RESEARCH_SPEC_ONLY`、其余=
+`INSUFFICIENT_DATA`；formal contract桥为`NOT_READY / NEEDS_MORE_EVIDENCE`，paper-shadow保持blocked。
+Focused family/tamper/真实EB1→EB2→EB3/downstream与CLI/deprecation contract均PASS；当前进入shared
+manifests/compatibility/source hashes、architecture/contract与唯一natural Full的integration gate。
+
+2026-07-19 integration closeout：EB3=`COMPLETE_G2_4_CONTINUES`。Family/tamper/真实链/downstream/
+CLI-deprecation focused全部PASS；final tracked-state architecture=`397 passed / 48.67s`，contract=
+`262 passed / 48.65s`。本批唯一natural Full=`6,357 passed / 2 skipped / 643 warnings / 981.25s`，精确覆盖
+`6,359 nodes / 1,072 files / 16 workers`；`PARTIAL_SEED v9`匹配1,071个历史files，scheduler applied、
+no fallback，telemetry/performance/provenance均PASS，`stable_full_improvement_claimed=false`。当前matrix仍
+`775/192/0/0`，因此whole G2.4 phase exit、`arch_005_bootstrap_handoff.v1`、正式ARCH-005 S0和G2.5
+继续锁定；EB4必须等待新的显式owner指令，`next_phase_or_slice_unblocked=false`、`production_effect=none`。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

@@ -504,6 +504,21 @@ P95=`1,231.76s`，满足既定墙钟阈值；但第1份collection少22个runtime
 两份tracked research Markdown在full前后SHA与worktree均不变，direct-writer隔离闭合；本批
 `strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
 
+2026-07-19 / ARCH-004G2.4-EB3 collection bootstrap：EB3新增一个test file后，PB1的
+`COMPLETE v8 (6,352 nodes / 1,071 files)` identity自然过期。为避免先运行一次必然fallback的
+formal Full，tracked manifest转为`PARTIAL_SEED v9`，保留1,071个历史file durations但不再声明exact
+collection或stable improvement；EB3新文件保持stable collection order。下一次自然Full负责采集当前
+collection与telemetry，若profile/validation provenance不完整仍fail closed，不能把fallback记为性能PASS。
+
+2026-07-19 / ARCH-004G2.4-EB3 natural Full结果：唯一正式run=
+`outputs/validation_runtime/full_20260719T081601Z/test_runtime_summary.json`，`6,357 passed / 2 skipped /
+643 warnings / 981.25s`，精确覆盖`6,359 nodes / 1,072 files / 16 workers`。`PARTIAL_SEED v9`匹配
+1,071个历史files与6,354个nodes，新文件按stable order调度；scheduler=`applied/no-fallback`，telemetry、
+performance、validation-provenance binding全部PASS。最大tail-idle=`57.82s`，当前最慢node为Smoothed
+Weekly no-due-windows=`476.01s`，其后Freshness/Refresh/Bootstrap长尾约`301.15～340.71s`；整体墙钟仍在
+近期优化后`912～1,030s`区间。由于只有一次同集合样本且profile仍是partial seed，继续固定
+`stable_full_improvement_claimed=false`；这些长尾作为后续runtime任务候选，不扩张EB3正确性范围。
+
 ### S3G：转移后关键路径与complete duration profile（owner批准继续）
 
 2026-07-18 / S3F提交`f557d04d`并推送后，以第3份qualifying profile

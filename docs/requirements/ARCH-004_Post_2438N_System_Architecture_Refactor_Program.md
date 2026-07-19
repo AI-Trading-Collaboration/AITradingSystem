@@ -635,3 +635,13 @@ Entry decision：`ARCH_004_PHASE_A_COMPLETE_PHASE_B_UNBLOCKED`。这只解锁 Se
   精确绑定`6,352 nodes / 1,071 files`。该前置能力可供后续G2.4 rehearsal复用，但不把单个PB1完成误判为
   G2.4 phase exit；EB3、正式ARCH-005 S0、G2.5及handoff仍锁定，`next_phase_or_slice_unblocked=false`、
   `production_effect=none`。
+- 2026-07-19：owner随后显式授权并完成G2.4-EB3。30个Filtered Evidence→Formalization Readiness
+  callbacks/public APIs已迁canonical owner并完成legacy subtraction。10类bounded v2 snapshots、47 views、
+  reviewed policy、validated EB2 source、exact lineage/chronology和逐byte重建已闭合；旧合成stress/
+  performance/default confirmation及其READY结论失效。无dated outcomes时rows/targets为空、metrics为null、
+  `RESEARCH_SPEC_ONLY` / `INSUFFICIENT_DATA`，formal bridge为`NOT_READY / NEEDS_MORE_EVIDENCE`并阻断
+  paper-shadow。Matrix=`775/192/0/0`、CLI tree不变；final architecture/contract=`397/262 passed`，唯一
+  natural Full=`6,357 passed / 2 skipped / 643 warnings / 981.25s`且profile/telemetry/performance/provenance
+  全部PASS、scheduler applied/no-fallback。EB3=`COMPLETE_G2_4_CONTINUES`，不等于whole G2.4 exit；
+  EB4需新显式owner指令，正式ARCH-005 S0、G2.5与handoff继续锁定，
+  `next_phase_or_slice_unblocked=false`、`production_effect=none`。

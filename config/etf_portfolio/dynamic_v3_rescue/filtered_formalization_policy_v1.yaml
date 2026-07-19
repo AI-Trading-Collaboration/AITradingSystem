@@ -1,0 +1,36 @@
+schema_version: filtered_formalization_policy.v1
+policy_id: dynamic_v3_filtered_formalization_policy
+version: "1.0.0"
+status: reviewed_baseline
+owner: project_owner
+rationale: >-
+  ARCH-004G2.4-EB3 must distinguish declared research methods and registered
+  observation targets from real dated outcome evidence. Legacy synthetic stress
+  windows and formula-derived performance can otherwise be misread as support
+  for formalization.
+intended_effect: >-
+  Keep the filtered-candidate chain fail-closed until validated, same-lineage,
+  dated evidence exists; preserve manual review and production_effect=none.
+validation_evidence: ARCH-004G2.4-EB3 focused, architecture, contract and full gates
+review_condition: >-
+  Review when a validated filtered outcome cohort or completed forward
+  confirmation artifact becomes available, or before changing any readiness
+  interpretation.
+candidate_contract:
+  default_candidate: median_plus_regime_mismatch_filter
+  base_method: median_target_weights
+  method_mode: research_screening_only
+evidence_rules:
+  missing_dated_evidence_status: INSUFFICIENT_DATA
+  missing_dated_evidence_action: COLLECT_VALIDATED_DATED_FILTERED_OUTCOMES
+  specification_is_observed_evidence: false
+  registered_target_is_completed_observation: false
+  aggregate_proxy_is_observed_performance: false
+formalization_rules:
+  require_same_candidate_lineage: true
+  require_observed_ab_rows: true
+  require_completed_confirmation_observations: true
+  allow_official_target_weights: false
+  allow_automatic_promotion: false
+  allow_broker_action: false
+  production_effect: none

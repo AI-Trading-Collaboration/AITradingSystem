@@ -10,8 +10,8 @@ from dynamic_v3_filtered_candidate_readiness_helpers import (
 from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readiness as readiness
 
 
-def test_formal_research_method_contract_builds_and_validates(tmp_path: Path) -> None:
-    fixture = run_formal_research_method_contract_fixture(tmp_path)
+def test_formal_research_method_contract_builds_and_validates(tmp_path: Path, monkeypatch) -> None:
+    fixture = run_formal_research_method_contract_fixture(tmp_path, monkeypatch)
     contract_result = fixture["formal_research_method_contract"]
     validation = readiness.validate_formal_research_method_contract_artifact(
         contract_id=contract_result["contract_id"],
@@ -20,11 +20,12 @@ def test_formal_research_method_contract_builds_and_validates(tmp_path: Path) ->
     assert validation["status"] == "PASS"
     contract = contract_result["formal_research_method_contract"]
     decision = contract_result["formal_research_method_decision"]
-    assert decision["formal_research_method_status"] == "READY_FOR_RESEARCH_ONLY_IMPLEMENTATION"
-    assert decision["promotion_state"] == "FORMAL_RESEARCH_READY"
-    assert decision["blocking_reasons"] == []
-    assert decision["paper_shadow_eligibility"] == "ELIGIBLE_FOR_PROTOCOL_DESIGN"
-    assert contract["paper_shadow_eligibility"]["eligible"] is True
+    assert decision["formal_research_method_status"] == "NOT_READY"
+    assert decision["promotion_state"] == "NEEDS_MORE_EVIDENCE"
+    assert "validated_dated_filtered_outcomes_missing" in decision["blocking_reasons"]
+    assert decision["paper_shadow_eligibility"] == "NOT_ELIGIBLE"
+    assert decision["next_required_action"] == "collect_missing_research_evidence"
+    assert contract["paper_shadow_eligibility"]["eligible"] is False
     assert len(contract["objective_gates"]) >= 9
     assert set(readiness.FORMAL_RESEARCH_PROMOTION_STATES).issubset(
         set(contract["promotion_states"])

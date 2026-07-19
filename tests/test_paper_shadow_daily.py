@@ -16,8 +16,8 @@ from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readin
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as daily
 
 
-def test_paper_shadow_daily_observation_builds_and_validates(tmp_path: Path) -> None:
-    fixture = _paper_shadow_fixture(tmp_path)
+def test_paper_shadow_daily_observation_builds_and_validates(tmp_path: Path, monkeypatch) -> None:
+    fixture = _paper_shadow_fixture(tmp_path, monkeypatch)
     result = daily.run_paper_shadow_daily_observation(
         candidate="median_plus_regime_mismatch_filter",
         observation_date="2026-06-12",
@@ -47,25 +47,27 @@ def test_paper_shadow_daily_observation_builds_and_validates(tmp_path: Path) -> 
         output_dir=tmp_path / "paper_shadow_daily",
     )
 
-    assert observation["observation_status"] == "RECORDED"
+    assert observation["observation_status"] == "BLOCKED"
     assert observation["signal_input_status"] == "OK"
+    assert set(observation["blocking_reasons"]) == {
+        "formal_contract_not_ready",
+        "paper_shadow_protocol_not_ready",
+    }
     assert observation["candidate"] == "median_plus_regime_mismatch_filter"
     assert observation["daily_review"]["signal_output"] == "OBSERVE_RISK_ON"
     assert (
-        observation["daily_review"]["hypothetical_weight_recommendation"][
-            "paper_shadow_only"
-        ]
+        observation["daily_review"]["hypothetical_weight_recommendation"]["paper_shadow_only"]
         is True
     )
     assert validation["status"] == "PASS"
-    assert payload["paper_shadow_daily_observation"]["observation_status"] == "RECORDED"
+    assert payload["paper_shadow_daily_observation"]["observation_status"] == "BLOCKED"
     assert "paper_shadow_daily_observation_id" in result["reader_brief_section"]
     assert_research_safe(observation)
     assert observation["paper_account_state_mutated"] is False
 
 
-def test_paper_shadow_daily_validation_fails_missing_input(tmp_path: Path) -> None:
-    fixture = _paper_shadow_fixture(tmp_path)
+def test_paper_shadow_daily_validation_fails_missing_input(tmp_path: Path, monkeypatch) -> None:
+    fixture = _paper_shadow_fixture(tmp_path, monkeypatch)
     result = daily.run_paper_shadow_daily_observation(
         candidate="median_plus_regime_mismatch_filter",
         observation_date="2026-06-12",
@@ -96,8 +98,8 @@ def test_paper_shadow_daily_validation_fails_missing_input(tmp_path: Path) -> No
     assert "input_artifacts_exist" in failed
 
 
-def test_paper_shadow_daily_cli_run_report_and_validate(tmp_path: Path) -> None:
-    fixture = _paper_shadow_fixture(tmp_path)
+def test_paper_shadow_daily_cli_run_report_and_validate(tmp_path: Path, monkeypatch) -> None:
+    fixture = _paper_shadow_fixture(tmp_path, monkeypatch)
     output_dir = tmp_path / "paper_shadow_daily"
     result = CliRunner().invoke(
         app,
@@ -147,7 +149,7 @@ def test_paper_shadow_daily_cli_run_report_and_validate(tmp_path: Path) -> None:
         ],
     )
     assert result.exit_code == 0
-    assert "observation_status=RECORDED" in result.output
+    assert "observation_status=BLOCKED" in result.output
     assert "signal_input_status=OK" in result.output
     observation_id = next(
         line.split("=", 1)[1]
@@ -187,8 +189,8 @@ def test_paper_shadow_daily_cli_run_report_and_validate(tmp_path: Path) -> None:
     assert "status=PASS" in validation.output
 
 
-def _paper_shadow_fixture(tmp_path: Path) -> dict[str, Path | str]:
-    contract_fixture = run_formal_research_method_contract_fixture(tmp_path)
+def _paper_shadow_fixture(tmp_path: Path, monkeypatch) -> dict[str, Path | str]:
+    contract_fixture = run_formal_research_method_contract_fixture(tmp_path, monkeypatch)
     contract_id = contract_fixture["formal_research_method_contract"]["contract_id"]
     protocol_result = readiness.build_paper_shadow_protocol(
         contract_id=contract_id,

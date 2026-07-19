@@ -101,6 +101,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_filtered_candidate_pipeline as dynamic_v3_filtered_candidate_pipeline_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_filtered_candidate_readiness as dynamic_v3_filtered_candidate_readiness_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_forward_confirmation_plan as dynamic_v3_forward_confirmation_plan_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -432,6 +435,7 @@ __all__ = [
     "dynamic_v3_smoothed_readiness_commands",
     "dynamic_v3_experiment_factory_commands",
     "dynamic_v3_filtered_candidate_pipeline_commands",
+    "dynamic_v3_filtered_candidate_readiness_commands",
     "dynamic_v3_data_audit_commands",
     "dynamic_v3_data_provenance_commands",
     "dynamic_v3_defensive_research_commands",
