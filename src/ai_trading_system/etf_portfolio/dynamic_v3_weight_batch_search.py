@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
@@ -544,37 +543,46 @@ def _call_weight_search_followup(name: str, *args: Any, **kwargs: Any) -> Any:
 def run_promotion_threshold_sensitivity(*args: Any, **kwargs: Any) -> Any:
     return _call_weight_search_followup("run_promotion_threshold_sensitivity", *args, **kwargs)
 
+
 def promotion_threshold_sensitivity_report_payload(*args: Any, **kwargs: Any) -> Any:
     return _call_weight_search_followup(
         "promotion_threshold_sensitivity_report_payload", *args, **kwargs
     )
+
 
 def validate_promotion_threshold_sensitivity_artifact(*args: Any, **kwargs: Any) -> Any:
     return _call_weight_search_followup(
         "validate_promotion_threshold_sensitivity_artifact", *args, **kwargs
     )
 
+
 def run_candidate_promotion_v2(*args: Any, **kwargs: Any) -> Any:
     return _call_weight_search_followup("run_candidate_promotion_v2", *args, **kwargs)
+
 
 def candidate_promotion_v2_report_payload(*args: Any, **kwargs: Any) -> Any:
     return _call_weight_search_followup("candidate_promotion_v2_report_payload", *args, **kwargs)
 
+
 def validate_candidate_promotion_v2_artifact(*args: Any, **kwargs: Any) -> Any:
     return _call_weight_search_followup("validate_candidate_promotion_v2_artifact", *args, **kwargs)
 
+
 def run_next_formal_or_search_plan(*args: Any, **kwargs: Any) -> Any:
     return _call_weight_search_followup("run_next_formal_or_search_plan", *args, **kwargs)
+
 
 def next_formal_or_search_plan_report_payload(*args: Any, **kwargs: Any) -> Any:
     return _call_weight_search_followup(
         "next_formal_or_search_plan_report_payload", *args, **kwargs
     )
 
+
 def validate_next_formal_or_search_plan_artifact(*args: Any, **kwargs: Any) -> Any:
     return _call_weight_search_followup(
         "validate_next_formal_or_search_plan_artifact", *args, **kwargs
     )
+
 
 def _call_signal_diagnosis_foundation(name: str, *args: Any, **kwargs: Any) -> Any:
     from ai_trading_system.etf_portfolio import dynamic_v3_signal_diagnosis_foundation
@@ -615,9 +623,7 @@ def validate_scorecard_attribution_artifact(*args: Any, **kwargs: Any) -> Any:
 
 
 def run_signal_instability_diagnosis(*args: Any, **kwargs: Any) -> Any:
-    return _call_signal_diagnosis_foundation(
-        "run_signal_instability_diagnosis", *args, **kwargs
-    )
+    return _call_signal_diagnosis_foundation("run_signal_instability_diagnosis", *args, **kwargs)
 
 
 def signal_instability_diagnosis_report_payload(*args: Any, **kwargs: Any) -> Any:
@@ -655,15 +661,11 @@ def _call_micro_search_foundation(name: str, *args: Any, **kwargs: Any) -> Any:
 
 
 def run_micro_search_v4_design(*args: Any, **kwargs: Any) -> Any:
-    return _call_micro_search_foundation(
-        "run_micro_search_v4_design", *args, **kwargs
-    )
+    return _call_micro_search_foundation("run_micro_search_v4_design", *args, **kwargs)
 
 
 def micro_search_v4_design_report_payload(*args: Any, **kwargs: Any) -> Any:
-    return _call_micro_search_foundation(
-        "micro_search_v4_design_report_payload", *args, **kwargs
-    )
+    return _call_micro_search_foundation("micro_search_v4_design_report_payload", *args, **kwargs)
 
 
 def validate_micro_search_v4_design_artifact(*args: Any, **kwargs: Any) -> Any:
@@ -673,15 +675,11 @@ def validate_micro_search_v4_design_artifact(*args: Any, **kwargs: Any) -> Any:
 
 
 def run_micro_search_v4_backfill(*args: Any, **kwargs: Any) -> Any:
-    return _call_micro_search_foundation(
-        "run_micro_search_v4_backfill", *args, **kwargs
-    )
+    return _call_micro_search_foundation("run_micro_search_v4_backfill", *args, **kwargs)
 
 
 def micro_search_v4_backfill_report_payload(*args: Any, **kwargs: Any) -> Any:
-    return _call_micro_search_foundation(
-        "micro_search_v4_backfill_report_payload", *args, **kwargs
-    )
+    return _call_micro_search_foundation("micro_search_v4_backfill_report_payload", *args, **kwargs)
 
 
 def validate_micro_search_v4_backfill_artifact(*args: Any, **kwargs: Any) -> Any:
@@ -691,15 +689,11 @@ def validate_micro_search_v4_backfill_artifact(*args: Any, **kwargs: Any) -> Any
 
 
 def run_gate_calibrated_review(*args: Any, **kwargs: Any) -> Any:
-    return _call_micro_search_foundation(
-        "run_gate_calibrated_review", *args, **kwargs
-    )
+    return _call_micro_search_foundation("run_gate_calibrated_review", *args, **kwargs)
 
 
 def gate_calibrated_review_report_payload(*args: Any, **kwargs: Any) -> Any:
-    return _call_micro_search_foundation(
-        "gate_calibrated_review_report_payload", *args, **kwargs
-    )
+    return _call_micro_search_foundation("gate_calibrated_review_report_payload", *args, **kwargs)
 
 
 def validate_gate_calibrated_review_artifact(*args: Any, **kwargs: Any) -> Any:
@@ -709,9 +703,7 @@ def validate_gate_calibrated_review_artifact(*args: Any, **kwargs: Any) -> Any:
 
 
 def run_signal_vs_parameter_attribution(*args: Any, **kwargs: Any) -> Any:
-    return _call_micro_search_foundation(
-        "run_signal_vs_parameter_attribution", *args, **kwargs
-    )
+    return _call_micro_search_foundation("run_signal_vs_parameter_attribution", *args, **kwargs)
 
 
 def signal_vs_parameter_attribution_report_payload(*args: Any, **kwargs: Any) -> Any:
@@ -733,9 +725,7 @@ def _call_research_direction_foundation(name: str, *args: Any, **kwargs: Any) ->
 
 
 def run_next_research_direction(*args: Any, **kwargs: Any) -> Any:
-    return _call_research_direction_foundation(
-        "run_next_research_direction", *args, **kwargs
-    )
+    return _call_research_direction_foundation("run_next_research_direction", *args, **kwargs)
 
 
 def next_research_direction_report_payload(*args: Any, **kwargs: Any) -> Any:
@@ -751,9 +741,7 @@ def validate_next_research_direction_artifact(*args: Any, **kwargs: Any) -> Any:
 
 
 def update_owner_research_roadmap(*args: Any, **kwargs: Any) -> Any:
-    return _call_research_direction_foundation(
-        "update_owner_research_roadmap", *args, **kwargs
-    )
+    return _call_research_direction_foundation("update_owner_research_roadmap", *args, **kwargs)
 
 
 def owner_research_roadmap_report_payload(*args: Any, **kwargs: Any) -> Any:
@@ -768,664 +756,83 @@ def validate_owner_research_roadmap_artifact(*args: Any, **kwargs: Any) -> Any:
     )
 
 
-def run_signal_failure_taxonomy_validation(
-    *,
-    config_path: Path = DEFAULT_SIGNAL_FAILURE_TAXONOMY_CONFIG_PATH,
-    output_dir: Path = DEFAULT_SIGNAL_FAILURE_TAXONOMY_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    config = st._load_yaml_mapping(config_path)
-    _assert_signal_failure_taxonomy_safety(_mapping(config.get("safety")))
-    normalized = _normalized_signal_failure_taxonomy(config)
-    catalog = _signal_failure_mode_catalog(normalized)
-    requested_id = _text(config.get("taxonomy_id"), "signal_feature_failure_taxonomy_v1")
-    taxonomy_id = _stable_id("signal-failure-taxonomy", requested_id, generated.isoformat())
-    root = _unique_dir(output_dir / taxonomy_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_signal_failure_taxonomy_manifest",
-        "taxonomy_id": root.name,
-        "source_taxonomy_id": requested_id,
-        "config_path": str(config_path),
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "failure_mode_count": len(_records(catalog.get("failure_modes"))),
-        "family_count": len(_records(normalized.get("families"))),
-        "signal_failure_taxonomy_manifest_path": str(
-            root / "signal_failure_taxonomy_manifest.json"
-        ),
-        "normalized_signal_failure_taxonomy_path": str(
-            root / "normalized_signal_failure_taxonomy.yaml"
-        ),
-        "signal_failure_mode_catalog_path": str(root / "signal_failure_mode_catalog.json"),
-        "signal_failure_taxonomy_report_path": str(root / "signal_failure_taxonomy_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "signal_failure_taxonomy_manifest.json", manifest)
-    _write_text(
-        root / "normalized_signal_failure_taxonomy.yaml",
-        yaml.safe_dump(normalized, sort_keys=False, allow_unicode=True),
-    )
-    _write_json(root / "signal_failure_mode_catalog.json", catalog)
-    _write_text(
-        root / "signal_failure_taxonomy_report.md",
-        render_signal_failure_taxonomy_report(manifest, catalog),
-    )
-    _write_latest_pointer(
-        "latest_signal_failure_taxonomy",
-        root.name,
-        root / "signal_failure_taxonomy_manifest.json",
-    )
-    return {
-        "taxonomy_id": root.name,
-        "taxonomy_dir": root,
-        "manifest": manifest,
-        "normalized_signal_failure_taxonomy": normalized,
-        "signal_failure_mode_catalog": catalog,
-    }
+def _call_signal_filter_foundation(name: str, *args: Any, **kwargs: Any) -> Any:
+    from ai_trading_system.etf_portfolio import dynamic_v3_signal_filter_foundation
+
+    return getattr(dynamic_v3_signal_filter_foundation, name)(*args, **kwargs)
 
 
-def signal_failure_taxonomy_report_payload(
-    *,
-    taxonomy_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SIGNAL_FAILURE_TAXONOMY_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=taxonomy_id,
-        latest_pointer="latest_signal_failure_taxonomy",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="signal_failure_taxonomy_manifest.json",
-    )
-    normalized = yaml.safe_load(
-        (root / "normalized_signal_failure_taxonomy.yaml").read_text(encoding="utf-8")
-    )
-    return {
-        **_read_json(root / "signal_failure_taxonomy_manifest.json"),
-        "normalized_signal_failure_taxonomy": normalized,
-        "signal_failure_mode_catalog": _read_json(root / "signal_failure_mode_catalog.json"),
-        "taxonomy_dir": str(root),
-    }
+def run_signal_failure_taxonomy_validation(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation("run_signal_failure_taxonomy_validation", *args, **kwargs)
 
 
-def validate_signal_failure_taxonomy_artifact(
-    *,
-    taxonomy_id: str,
-    output_dir: Path = DEFAULT_SIGNAL_FAILURE_TAXONOMY_DIR,
-) -> dict[str, Any]:
-    root = output_dir / taxonomy_id
-    manifest = _read_optional_json(root / "signal_failure_taxonomy_manifest.json") or {}
-    catalog = _read_optional_json(root / "signal_failure_mode_catalog.json") or {}
-    normalized_path = root / "normalized_signal_failure_taxonomy.yaml"
-    normalized = (
-        yaml.safe_load(normalized_path.read_text(encoding="utf-8"))
-        if normalized_path.exists()
-        else {}
-    )
-    modes = _records(catalog.get("failure_modes"))
-    families = _records(_mapping(normalized).get("families"))
-    checks = _required_file_checks(
-        root,
-        (
-            "signal_failure_taxonomy_manifest.json",
-            "normalized_signal_failure_taxonomy.yaml",
-            "signal_failure_mode_catalog.json",
-            "signal_failure_taxonomy_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("taxonomy_id_matches", manifest.get("taxonomy_id") == taxonomy_id, ""),
-            st._check("failure_modes_readable", len(modes) >= 10, str(len(modes))),
-            st._check("families_readable", bool(families), ""),
-            st._check(
-                "required_modes_present",
-                {"signal_churn", "regime_mismatch", "candidate_disagreement_high"}.issubset(
-                    {_text(row.get("mode")) for row in modes}
-                ),
-                "",
-            ),
-            st._check("broker_forbidden", _payload_safe(manifest, catalog), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, catalog),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_signal_failure_taxonomy_validation",
-        taxonomy_id,
-        checks,
+def signal_failure_taxonomy_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation("signal_failure_taxonomy_report_payload", *args, **kwargs)
+
+
+def validate_signal_failure_taxonomy_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation(
+        "validate_signal_failure_taxonomy_artifact", *args, **kwargs
     )
 
 
-def build_candidate_signal_ledger(
-    *,
-    taxonomy_id: str,
-    source_backfill_id: str,
-    taxonomy_dir: Path = DEFAULT_SIGNAL_FAILURE_TAXONOMY_DIR,
-    source_backfill_dir: Path = DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
-    v4_design_dir: Path = DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
-    signal_dir: Path = DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
-    consensus_dir: Path = DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
-    output_dir: Path = DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    taxonomy = signal_failure_taxonomy_report_payload(
-        taxonomy_id=taxonomy_id,
-        output_dir=taxonomy_dir,
-    )
-    source = _candidate_signal_ledger_source(
-        source_backfill_id=source_backfill_id,
-        source_backfill_dir=source_backfill_dir,
-        v4_design_dir=v4_design_dir,
-        signal_dir=signal_dir,
-        consensus_dir=consensus_dir,
-    )
-    events = _candidate_signal_events(taxonomy, source)
-    summary = _candidate_signal_summary(events)
-    ledger_id = _stable_id(
-        "candidate-signal-ledger",
-        taxonomy_id,
-        source_backfill_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / ledger_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_candidate_signal_ledger_manifest",
-        "ledger_id": root.name,
-        "taxonomy_id": taxonomy_id,
-        "source_backfill_id": source_backfill_id,
-        "source_backfill_type": source.get("source_backfill_type"),
-        "source_signal_diagnosis_id": source.get("signal_diagnosis_id"),
-        "source_consensus_review_id": source.get("consensus_review_id"),
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if events else "PASS_WITH_WARNINGS",
-        "market_regime": source.get("market_regime", "ai_after_chatgpt"),
-        "date_start": source.get("date_start"),
-        "date_end": source.get("date_end"),
-        "data_quality_status": source.get("data_quality_status", "UNKNOWN"),
-        "event_count": len(events),
-        "candidate_signal_ledger_manifest_path": str(
-            root / "candidate_signal_ledger_manifest.json"
-        ),
-        "signal_events_path": str(root / "signal_events.jsonl"),
-        "candidate_signal_summary_path": str(root / "candidate_signal_summary.json"),
-        "candidate_signal_ledger_report_path": str(root / "candidate_signal_ledger_report.md"),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    reader = render_candidate_signal_ledger_reader_brief(summary)
-    _write_json(root / "candidate_signal_ledger_manifest.json", manifest)
-    _write_jsonl(root / "signal_events.jsonl", events)
-    _write_json(root / "candidate_signal_summary.json", summary)
-    _write_text(
-        root / "candidate_signal_ledger_report.md",
-        render_candidate_signal_ledger_report(manifest, summary),
-    )
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_candidate_signal_ledger",
-        root.name,
-        root / "candidate_signal_ledger_manifest.json",
-    )
-    return {
-        "ledger_id": root.name,
-        "ledger_dir": root,
-        "manifest": manifest,
-        "signal_events": events,
-        "candidate_signal_summary": summary,
-        "reader_brief_section": reader,
-    }
+def build_candidate_signal_ledger(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation("build_candidate_signal_ledger", *args, **kwargs)
 
 
-def candidate_signal_ledger_report_payload(
-    *,
-    ledger_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=ledger_id,
-        latest_pointer="latest_candidate_signal_ledger",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="candidate_signal_ledger_manifest.json",
-    )
-    return {
-        **_read_json(root / "candidate_signal_ledger_manifest.json"),
-        "signal_events": _read_jsonl(root / "signal_events.jsonl"),
-        "candidate_signal_summary": _read_json(root / "candidate_signal_summary.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "ledger_dir": str(root),
-    }
+def candidate_signal_ledger_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation("candidate_signal_ledger_report_payload", *args, **kwargs)
 
 
-def validate_candidate_signal_ledger_artifact(
-    *,
-    ledger_id: str,
-    output_dir: Path = DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
-) -> dict[str, Any]:
-    root = output_dir / ledger_id
-    manifest = _read_optional_json(root / "candidate_signal_ledger_manifest.json") or {}
-    events = _read_jsonl(root / "signal_events.jsonl")
-    summary = _read_optional_json(root / "candidate_signal_summary.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "candidate_signal_ledger_manifest.json",
-            "signal_events.jsonl",
-            "candidate_signal_summary.json",
-            "candidate_signal_ledger_report.md",
-            "reader_brief_section.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("ledger_id_matches", manifest.get("ledger_id") == ledger_id, ""),
-            st._check("events_readable", bool(events), ""),
-            st._check("summary_methods_readable", bool(_records(summary.get("methods"))), ""),
-            st._check("data_quality_visible", bool(manifest.get("data_quality_status")), ""),
-            st._check("broker_forbidden", _payload_safe(manifest, summary, *events), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, summary, *events),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_candidate_signal_ledger_validation",
-        ledger_id,
-        checks,
+def validate_candidate_signal_ledger_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation(
+        "validate_candidate_signal_ledger_artifact", *args, **kwargs
     )
 
 
-def run_signal_churn_root_cause_review(
-    *,
-    ledger_id: str,
-    ledger_dir: Path = DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
-    output_dir: Path = DEFAULT_SIGNAL_CHURN_ROOT_CAUSE_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    ledger = candidate_signal_ledger_report_payload(ledger_id=ledger_id, output_dir=ledger_dir)
-    summary = _churn_root_cause_summary(ledger)
-    clusters = _churn_event_clusters(ledger)
-    mitigations = _churn_mitigation_candidates(summary)
-    root_cause_id = _stable_id("signal-churn-root-cause", ledger_id, generated.isoformat())
-    root = _unique_dir(output_dir / root_cause_id)
-    root.mkdir(parents=True, exist_ok=False)
-    summary["root_cause_id"] = root.name
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_signal_churn_root_cause_manifest",
-        "root_cause_id": root.name,
-        "ledger_id": ledger_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": ledger.get("market_regime", "ai_after_chatgpt"),
-        "date_start": ledger.get("date_start"),
-        "date_end": ledger.get("date_end"),
-        "data_quality_status": ledger.get("data_quality_status"),
-        "signal_churn_root_cause_manifest_path": str(
-            root / "signal_churn_root_cause_manifest.json"
-        ),
-        "churn_root_cause_summary_path": str(root / "churn_root_cause_summary.json"),
-        "churn_event_clusters_path": str(root / "churn_event_clusters.jsonl"),
-        "churn_mitigation_candidates_path": str(root / "churn_mitigation_candidates.json"),
-        "signal_churn_root_cause_report_path": str(root / "signal_churn_root_cause_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "signal_churn_root_cause_manifest.json", manifest)
-    _write_json(root / "churn_root_cause_summary.json", summary)
-    _write_jsonl(root / "churn_event_clusters.jsonl", clusters)
-    _write_json(root / "churn_mitigation_candidates.json", mitigations)
-    _write_text(
-        root / "signal_churn_root_cause_report.md",
-        render_signal_churn_root_cause_report(manifest, summary, clusters, mitigations),
-    )
-    _write_latest_pointer(
-        "latest_signal_churn_root_cause",
-        root.name,
-        root / "signal_churn_root_cause_manifest.json",
-    )
-    return {
-        "root_cause_id": root.name,
-        "root_cause_dir": root,
-        "manifest": manifest,
-        "churn_root_cause_summary": summary,
-        "churn_event_clusters": clusters,
-        "churn_mitigation_candidates": mitigations,
-    }
+def run_signal_churn_root_cause_review(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation("run_signal_churn_root_cause_review", *args, **kwargs)
 
 
-def signal_churn_root_cause_report_payload(
-    *,
-    root_cause_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_SIGNAL_CHURN_ROOT_CAUSE_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=root_cause_id,
-        latest_pointer="latest_signal_churn_root_cause",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="signal_churn_root_cause_manifest.json",
-    )
-    return {
-        **_read_json(root / "signal_churn_root_cause_manifest.json"),
-        "churn_root_cause_summary": _read_json(root / "churn_root_cause_summary.json"),
-        "churn_event_clusters": _read_jsonl(root / "churn_event_clusters.jsonl"),
-        "churn_mitigation_candidates": _read_json(root / "churn_mitigation_candidates.json"),
-        "root_cause_dir": str(root),
-    }
+def signal_churn_root_cause_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation("signal_churn_root_cause_report_payload", *args, **kwargs)
 
 
-def validate_signal_churn_root_cause_artifact(
-    *,
-    root_cause_id: str,
-    output_dir: Path = DEFAULT_SIGNAL_CHURN_ROOT_CAUSE_DIR,
-) -> dict[str, Any]:
-    root = output_dir / root_cause_id
-    manifest = _read_optional_json(root / "signal_churn_root_cause_manifest.json") or {}
-    summary = _read_optional_json(root / "churn_root_cause_summary.json") or {}
-    clusters = _read_jsonl(root / "churn_event_clusters.jsonl")
-    mitigations = _read_optional_json(root / "churn_mitigation_candidates.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "signal_churn_root_cause_manifest.json",
-            "churn_root_cause_summary.json",
-            "churn_event_clusters.jsonl",
-            "churn_mitigation_candidates.json",
-            "signal_churn_root_cause_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("root_cause_id_matches", manifest.get("root_cause_id") == root_cause_id, ""),
-            st._check("dominant_root_cause_visible", bool(summary.get("dominant_root_cause")), ""),
-            st._check("clusters_listed", isinstance(clusters, list), ""),
-            st._check("mitigations_readable", bool(_records(mitigations.get("mitigations"))), ""),
-            st._check("broker_forbidden", _payload_safe(manifest, summary, mitigations), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, summary, mitigations, *clusters),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_signal_churn_root_cause_validation",
-        root_cause_id,
-        checks,
+def validate_signal_churn_root_cause_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation(
+        "validate_signal_churn_root_cause_artifact", *args, **kwargs
     )
 
 
-def run_regime_mismatch_attribution(
-    *,
-    ledger_id: str,
-    ledger_dir: Path = DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
-    output_dir: Path = DEFAULT_REGIME_MISMATCH_ATTRIBUTION_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    ledger = candidate_signal_ledger_report_payload(ledger_id=ledger_id, output_dir=ledger_dir)
-    events = _regime_mismatch_attribution_events(ledger)
-    summary = _regime_mismatch_summary(events)
-    mismatch_id = _stable_id("regime-mismatch-attribution", ledger_id, generated.isoformat())
-    root = _unique_dir(output_dir / mismatch_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_regime_mismatch_manifest",
-        "mismatch_id": root.name,
-        "ledger_id": ledger_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": ledger.get("market_regime", "ai_after_chatgpt"),
-        "date_start": ledger.get("date_start"),
-        "date_end": ledger.get("date_end"),
-        "data_quality_status": ledger.get("data_quality_status"),
-        "regime_mismatch_manifest_path": str(root / "regime_mismatch_manifest.json"),
-        "regime_mismatch_events_path": str(root / "regime_mismatch_events.jsonl"),
-        "regime_mismatch_summary_path": str(root / "regime_mismatch_summary.json"),
-        "regime_mismatch_report_path": str(root / "regime_mismatch_report.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    _write_json(root / "regime_mismatch_manifest.json", manifest)
-    _write_jsonl(root / "regime_mismatch_events.jsonl", events)
-    _write_json(root / "regime_mismatch_summary.json", summary)
-    _write_text(
-        root / "regime_mismatch_report.md",
-        render_regime_mismatch_report(manifest, summary),
-    )
-    _write_latest_pointer(
-        "latest_regime_mismatch_attribution",
-        root.name,
-        root / "regime_mismatch_manifest.json",
-    )
-    return {
-        "mismatch_id": root.name,
-        "mismatch_dir": root,
-        "manifest": manifest,
-        "regime_mismatch_events": events,
-        "regime_mismatch_summary": summary,
-    }
+def run_regime_mismatch_attribution(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation("run_regime_mismatch_attribution", *args, **kwargs)
 
 
-def regime_mismatch_attribution_report_payload(
-    *,
-    mismatch_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_REGIME_MISMATCH_ATTRIBUTION_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=mismatch_id,
-        latest_pointer="latest_regime_mismatch_attribution",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="regime_mismatch_manifest.json",
-    )
-    return {
-        **_read_json(root / "regime_mismatch_manifest.json"),
-        "regime_mismatch_events": _read_jsonl(root / "regime_mismatch_events.jsonl"),
-        "regime_mismatch_summary": _read_json(root / "regime_mismatch_summary.json"),
-        "mismatch_dir": str(root),
-    }
-
-
-def validate_regime_mismatch_attribution_artifact(
-    *,
-    mismatch_id: str,
-    output_dir: Path = DEFAULT_REGIME_MISMATCH_ATTRIBUTION_DIR,
-) -> dict[str, Any]:
-    root = output_dir / mismatch_id
-    manifest = _read_optional_json(root / "regime_mismatch_manifest.json") or {}
-    events = _read_jsonl(root / "regime_mismatch_events.jsonl")
-    summary = _read_optional_json(root / "regime_mismatch_summary.json") or {}
-    checks = _required_file_checks(
-        root,
-        (
-            "regime_mismatch_manifest.json",
-            "regime_mismatch_events.jsonl",
-            "regime_mismatch_summary.json",
-            "regime_mismatch_report.md",
-        ),
-    )
-    checks.extend(
-        [
-            st._check("mismatch_id_matches", manifest.get("mismatch_id") == mismatch_id, ""),
-            st._check("mismatch_events_listed", isinstance(events, list), ""),
-            st._check("summary_readable", "mismatch_count" in summary, ""),
-            st._check("broker_forbidden", _payload_safe(manifest, summary, *events), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, summary, *events),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_regime_mismatch_attribution_validation",
-        mismatch_id,
-        checks,
+def regime_mismatch_attribution_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation(
+        "regime_mismatch_attribution_report_payload", *args, **kwargs
     )
 
 
-def run_candidate_quality_filter_design(
-    *,
-    root_cause_id: str,
-    mismatch_id: str,
-    root_cause_dir: Path = DEFAULT_SIGNAL_CHURN_ROOT_CAUSE_DIR,
-    mismatch_dir: Path = DEFAULT_REGIME_MISMATCH_ATTRIBUTION_DIR,
-    output_dir: Path = DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    root_cause = signal_churn_root_cause_report_payload(
-        root_cause_id=root_cause_id,
-        output_dir=root_cause_dir,
+def validate_regime_mismatch_attribution_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation(
+        "validate_regime_mismatch_attribution_artifact", *args, **kwargs
     )
-    mismatch = regime_mismatch_attribution_report_payload(
-        mismatch_id=mismatch_id,
-        output_dir=mismatch_dir,
-    )
-    filters = _proposed_quality_filters(root_cause, mismatch)
-    config = _filter_design_config(filters)
-    filter_design_id = _stable_id(
-        "candidate-quality-filter-design",
-        root_cause_id,
-        mismatch_id,
-        generated.isoformat(),
-    )
-    root = _unique_dir(output_dir / filter_design_id)
-    root.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": st.SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_candidate_quality_filter_manifest",
-        "filter_design_id": root.name,
-        "root_cause_id": root_cause_id,
-        "mismatch_id": mismatch_id,
-        "source_ledger_id": root_cause.get("ledger_id") or mismatch.get("ledger_id"),
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": root_cause.get("market_regime", "ai_after_chatgpt"),
-        "data_quality_status": root_cause.get("data_quality_status"),
-        "candidate_quality_filter_manifest_path": str(
-            root / "candidate_quality_filter_manifest.json"
-        ),
-        "proposed_quality_filters_path": str(root / "proposed_quality_filters.json"),
-        "filter_design_config_path": str(root / "filter_design_config.yaml"),
-        "candidate_quality_filter_design_report_path": str(
-            root / "candidate_quality_filter_design_report.md"
-        ),
-        "reader_brief_section_path": str(root / "reader_brief_section.md"),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-    reader = render_candidate_quality_filter_reader_brief(filters)
-    _write_json(root / "candidate_quality_filter_manifest.json", manifest)
-    _write_json(root / "proposed_quality_filters.json", filters)
-    _write_text(
-        root / "filter_design_config.yaml",
-        yaml.safe_dump(config, sort_keys=False, allow_unicode=True),
-    )
-    _write_text(
-        root / "candidate_quality_filter_design_report.md",
-        render_candidate_quality_filter_design_report(manifest, filters),
-    )
-    _write_text(root / "reader_brief_section.md", reader)
-    _write_latest_pointer(
-        "latest_candidate_quality_filter_design",
-        root.name,
-        root / "candidate_quality_filter_manifest.json",
-    )
-    return {
-        "filter_design_id": root.name,
-        "filter_design_dir": root,
-        "manifest": manifest,
-        "proposed_quality_filters": filters,
-        "filter_design_config": config,
-        "reader_brief_section": reader,
-    }
 
 
-def candidate_quality_filter_design_report_payload(
-    *,
-    filter_design_id: str | None = None,
-    latest: bool = False,
-    output_dir: Path = DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR,
-) -> dict[str, Any]:
-    root = _artifact_dir(
-        artifact_id=filter_design_id,
-        latest_pointer="latest_candidate_quality_filter_design",
-        latest=latest,
-        output_dir=output_dir,
-        required_name="candidate_quality_filter_manifest.json",
-    )
-    config = yaml.safe_load((root / "filter_design_config.yaml").read_text(encoding="utf-8"))
-    return {
-        **_read_json(root / "candidate_quality_filter_manifest.json"),
-        "proposed_quality_filters": _read_json(root / "proposed_quality_filters.json"),
-        "filter_design_config": config,
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
-        "filter_design_dir": str(root),
-    }
+def run_candidate_quality_filter_design(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation("run_candidate_quality_filter_design", *args, **kwargs)
 
 
-def validate_candidate_quality_filter_design_artifact(
-    *,
-    filter_design_id: str,
-    output_dir: Path = DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR,
-) -> dict[str, Any]:
-    root = output_dir / filter_design_id
-    manifest = _read_optional_json(root / "candidate_quality_filter_manifest.json") or {}
-    filters = _read_optional_json(root / "proposed_quality_filters.json") or {}
-    config_path = root / "filter_design_config.yaml"
-    config = yaml.safe_load(config_path.read_text(encoding="utf-8")) if config_path.exists() else {}
-    checks = _required_file_checks(
-        root,
-        (
-            "candidate_quality_filter_manifest.json",
-            "proposed_quality_filters.json",
-            "filter_design_config.yaml",
-            "candidate_quality_filter_design_report.md",
-            "reader_brief_section.md",
-        ),
+def candidate_quality_filter_design_report_payload(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation(
+        "candidate_quality_filter_design_report_payload", *args, **kwargs
     )
-    checks.extend(
-        [
-            st._check(
-                "filter_design_id_matches",
-                manifest.get("filter_design_id") == filter_design_id,
-                "",
-            ),
-            st._check("filters_readable", bool(_records(filters.get("filters"))), ""),
-            st._check(
-                "config_research_only",
-                _text(_mapping(config.get("method")).get("mode")) == "research_screening_only",
-                "",
-            ),
-            st._check("broker_forbidden", _payload_safe(manifest, filters, config), ""),
-            st._check(
-                "experiment_safety_locked",
-                _payload_experiment_safe(manifest, filters, _mapping(config.get("safety"))),
-                "",
-            ),
-        ]
-    )
-    return _validation_payload(
-        "etf_dynamic_v3_candidate_quality_filter_design_validation",
-        filter_design_id,
-        checks,
+
+
+def validate_candidate_quality_filter_design_artifact(*args: Any, **kwargs: Any) -> Any:
+    return _call_signal_filter_foundation(
+        "validate_candidate_quality_filter_design_artifact", *args, **kwargs
     )
 
 
@@ -2102,175 +1509,6 @@ def validate_owner_signal_roadmap_artifact(
     )
 
 
-def render_signal_failure_taxonomy_report(
-    manifest: Mapping[str, Any],
-    catalog: Mapping[str, Any],
-) -> str:
-    mode_lines = [
-        f"- {row.get('mode')}: severity={row.get('severity_default')} "
-        f"families={','.join(_texts(row.get('families')))}"
-        for row in _records(catalog.get("failure_modes"))
-    ]
-    return "\n".join(
-        [
-            f"# Signal Feature Failure Taxonomy {manifest.get('taxonomy_id')}",
-            "",
-            f"- status：{manifest.get('status')}",
-            f"- failure_mode_count：{manifest.get('failure_mode_count')}",
-            "- safety：research_only / screening_only / no broker / no production",
-            "",
-            "## Failure Modes",
-            *mode_lines,
-            "",
-        ]
-    )
-
-
-def render_candidate_signal_ledger_reader_brief(summary: Mapping[str, Any]) -> str:
-    dominant = summary.get("dominant_failure_mode", "unknown")
-    unstable = summary.get("unstable_method_count", 0)
-    return "\n".join(
-        [
-            "## Candidate Signal Ledger",
-            "",
-            f"- dominant_failure_mode: {dominant}",
-            f"- unstable_method_count: {unstable}",
-            f"- method_count: {len(_records(summary.get('methods')))}",
-            "- safety: research screening only / no broker / no production",
-            "",
-        ]
-    )
-
-
-def render_candidate_signal_ledger_report(
-    manifest: Mapping[str, Any],
-    summary: Mapping[str, Any],
-) -> str:
-    lines = [
-        f"- {row.get('method')}: events={row.get('event_count')} "
-        f"flips={row.get('direction_change_count')} status={row.get('signal_quality_status')} "
-        f"dominant={row.get('dominant_failure_mode')}"
-        for row in _records(summary.get("methods"))
-    ]
-    return "\n".join(
-        [
-            f"# Candidate Signal Ledger {manifest.get('ledger_id')}",
-            "",
-            f"- source_backfill_id：{manifest.get('source_backfill_id')}",
-            f"- market_regime：{manifest.get('market_regime')}",
-            f"- date_range：{manifest.get('date_start')} to {manifest.get('date_end')}",
-            f"- data_quality_status：{manifest.get('data_quality_status')}",
-            f"- event_count：{manifest.get('event_count')}",
-            (
-                "- 结论边界：该 ledger 仅用于 signal feature diagnosis，"
-                "不产生 official target weights。"
-            ),
-            "",
-            "## Method Summary",
-            *lines,
-            "",
-        ]
-    )
-
-
-def render_signal_churn_root_cause_report(
-    manifest: Mapping[str, Any],
-    summary: Mapping[str, Any],
-    clusters: Sequence[Mapping[str, Any]],
-    mitigations: Mapping[str, Any],
-) -> str:
-    cluster_lines = [
-        f"- {row.get('cluster_id')}: cause={row.get('root_cause')} "
-        f"events={row.get('event_count')} methods={','.join(_texts(row.get('methods')))}"
-        for row in clusters
-    ]
-    mitigation_lines = [
-        f"- {row.get('mitigation_id')}: {row.get('description')} "
-        f"status={row.get('screening_status')}"
-        for row in _records(mitigations.get("mitigations"))
-    ]
-    return "\n".join(
-        [
-            f"# Signal Churn Root Cause {manifest.get('root_cause_id')}",
-            "",
-            f"- dominant_root_cause：{summary.get('dominant_root_cause')}",
-            f"- confidence：{summary.get('confidence')}",
-            f"- affected_methods：{', '.join(_texts(summary.get('affected_methods')))}",
-            "- safety：diagnostic only / no broker / no production",
-            "",
-            "## Event Clusters",
-            *cluster_lines,
-            "",
-            "## Mitigation Candidates",
-            *mitigation_lines,
-            "",
-        ]
-    )
-
-
-def render_regime_mismatch_report(
-    manifest: Mapping[str, Any],
-    summary: Mapping[str, Any],
-) -> str:
-    lines = [
-        f"- {key}: {value}"
-        for key, value in sorted(_mapping(summary.get("by_mismatch_type")).items())
-    ]
-    return "\n".join(
-        [
-            f"# Regime Mismatch Attribution {manifest.get('mismatch_id')}",
-            "",
-            f"- mismatch_count：{summary.get('mismatch_count')}",
-            f"- dominant_mismatch_type：{summary.get('dominant_mismatch_type')}",
-            f"- affected_method_count：{summary.get('affected_method_count')}",
-            "- safety：diagnostic only / no broker / no production",
-            "",
-            "## Mismatch Types",
-            *lines,
-            "",
-        ]
-    )
-
-
-def render_candidate_quality_filter_reader_brief(filters: Mapping[str, Any]) -> str:
-    names = [_text(row.get("filter_id")) for row in _records(filters.get("filters"))]
-    return "\n".join(
-        [
-            "## Candidate Quality Filter Design",
-            "",
-            f"- filter_count: {len(names)}",
-            f"- proposed_filters: {', '.join(names)}",
-            "- safety: research screening only / no official weights / no broker",
-            "",
-        ]
-    )
-
-
-def render_candidate_quality_filter_design_report(
-    manifest: Mapping[str, Any],
-    filters: Mapping[str, Any],
-) -> str:
-    lines = [
-        f"- {row.get('filter_id')}: trigger={row.get('trigger')} "
-        f"action={row.get('action')} effect={row.get('intended_effect')}"
-        for row in _records(filters.get("filters"))
-    ]
-    return "\n".join(
-        [
-            f"# Candidate Quality Filter Design {manifest.get('filter_design_id')}",
-            "",
-            f"- root_cause_id：{manifest.get('root_cause_id')}",
-            f"- mismatch_id：{manifest.get('mismatch_id')}",
-            f"- data_quality_status：{manifest.get('data_quality_status')}",
-            "- 设计状态：pilot research baseline；不可作为正式交易或 target weight 规则。",
-            "",
-            "## Proposed Filters",
-            *lines,
-            "",
-        ]
-    )
-
-
 def render_filtered_candidate_backfill_report(
     manifest: Mapping[str, Any],
     performance: Sequence[Mapping[str, Any]],
@@ -2461,8 +1699,6 @@ def render_owner_signal_roadmap_report(
             "",
         ]
     )
-
-
 
 
 def render_micro_search_v4_design_report(
@@ -3958,8 +3194,6 @@ def _owner_decision_options(dashboard: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-
-
 def _micro_search_v4_design_rationale(
     gate: Mapping[str, Any],
     attribution: Mapping[str, Any],
@@ -4476,582 +3710,6 @@ def _signal_vs_parameter_failure_source(
         "parameter_search_still_promising": parameter_promising,
         "signal_level_fix_required": signal_fix,
         **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-
-
-def _assert_signal_failure_taxonomy_safety(safety: Mapping[str, Any]) -> None:
-    if not _signal_failure_taxonomy_safety_locked(safety):
-        raise ValueError("signal failure taxonomy safety boundary is not locked")
-
-
-def _signal_failure_taxonomy_safety_locked(safety: Mapping[str, Any]) -> bool:
-    return (
-        (safety.get("research_only") is True or safety.get("research_screening_only") is True)
-        and safety.get("research_screening_only") is True
-        and safety.get("experiment_only") is True
-        and safety.get("not_official_target_weights") is True
-        and safety.get("not_formal_research_method") is True
-        and safety.get("broker_action_allowed") is False
-        and safety.get("broker_action_taken") is False
-        and safety.get("order_ticket_generated") is False
-        and safety.get("auto_apply") is False
-        and safety.get("production_effect") == st.PRODUCTION_EFFECT
-    )
-
-
-def _normalized_signal_failure_taxonomy(config: Mapping[str, Any]) -> dict[str, Any]:
-    modes = _mapping(config.get("failure_modes"))
-    families = _mapping(config.get("families"))
-    family_by_mode: dict[str, list[str]] = {}
-    normalized_families = []
-    for family_name, payload in sorted(families.items()):
-        mode_ids = _texts(_mapping(payload).get("modes"))
-        normalized_families.append({"family": family_name, "modes": mode_ids})
-        for mode in mode_ids:
-            family_by_mode.setdefault(mode, []).append(family_name)
-    normalized_modes = []
-    for mode, payload in sorted(modes.items()):
-        row = _mapping(payload)
-        normalized_modes.append(
-            {
-                "mode": mode,
-                "description": row.get("description", ""),
-                "severity_default": row.get("severity_default", "REVIEW_REQUIRED"),
-                "families": family_by_mode.get(mode, []),
-            }
-        )
-    return {
-        "schema_version": st.SCHEMA_VERSION,
-        "taxonomy_id": config.get("taxonomy_id", "signal_feature_failure_taxonomy_v1"),
-        "policy_status": config.get("policy_status", "pilot_research_baseline"),
-        "owner": config.get("owner", "system"),
-        "review_condition": config.get("review_condition", ""),
-        "failure_modes": normalized_modes,
-        "families": normalized_families,
-        "safety": _mapping(config.get("safety")),
-    }
-
-
-def _signal_failure_mode_catalog(normalized: Mapping[str, Any]) -> dict[str, Any]:
-    return {
-        "schema_version": st.SCHEMA_VERSION,
-        "taxonomy_id": normalized.get("taxonomy_id"),
-        "failure_modes": [
-            {
-                "mode": row.get("mode"),
-                "description": row.get("description"),
-                "severity_default": row.get("severity_default"),
-                "families": _texts(row.get("families")),
-                **st.EXPERIMENT_FACTORY_SAFETY,
-            }
-            for row in _records(normalized.get("failure_modes"))
-        ],
-        "families": _records(normalized.get("families")),
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-
-
-def _candidate_signal_ledger_source(
-    *,
-    source_backfill_id: str,
-    source_backfill_dir: Path,
-    v4_design_dir: Path,
-    signal_dir: Path,
-    consensus_dir: Path,
-) -> dict[str, Any]:
-    backfill = micro_search_v4_backfill_report_payload(
-        v4_backfill_id=source_backfill_id,
-        output_dir=source_backfill_dir,
-    )
-    design = micro_search_v4_design_report_payload(
-        v4_design_id=_text(backfill.get("v4_design_id")),
-        output_dir=v4_design_dir,
-    )
-    signal_id = _text(design.get("signal_diagnosis_id") or design.get("source_signal_diagnosis_id"))
-    consensus_id = _text(
-        design.get("consensus_review_id") or design.get("source_consensus_review_id")
-    )
-    signal = (
-        signal_instability_diagnosis_report_payload(
-            signal_diagnosis_id=signal_id,
-            output_dir=signal_dir,
-        )
-        if signal_id
-        else {}
-    )
-    consensus = (
-        consensus_quality_review_report_payload(
-            consensus_review_id=consensus_id,
-            output_dir=consensus_dir,
-        )
-        if consensus_id
-        else {}
-    )
-    return {
-        "source_backfill_type": "micro_search_v4_backfill",
-        "source_backfill_id": source_backfill_id,
-        "v4_design_id": backfill.get("v4_design_id"),
-        "signal_diagnosis_id": signal_id,
-        "consensus_review_id": consensus_id,
-        "date_start": backfill.get("date_start"),
-        "date_end": backfill.get("date_end"),
-        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
-        "data_quality_status": backfill.get("data_quality_status"),
-        "latest_valid_as_of": backfill.get("latest_valid_as_of"),
-        "backfill": backfill,
-        "design": design,
-        "signal": signal,
-        "consensus": consensus,
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-
-
-def _candidate_signal_events(
-    taxonomy: Mapping[str, Any],
-    source: Mapping[str, Any],
-) -> list[dict[str, Any]]:
-    _ = taxonomy
-    signal = _mapping(source.get("signal"))
-    stability_rows = {
-        _text(row.get("method")): row for row in _records(signal.get("method_signal_stability"))
-    }
-    if not stability_rows:
-        stability_rows = {
-            _text(row.get("variant_id")): row
-            for row in _records(_mapping(source.get("backfill")).get("v4_variant_signal_metrics"))
-        }
-    start = _coerce_date(source.get("date_start"), st.AI_AFTER_CHATGPT_START)
-    end = _coerce_date(source.get("date_end"), start + timedelta(days=30))
-    span_days = max(1, (end - start).days)
-    events: list[dict[str, Any]] = []
-    for method_index, method in enumerate(CANDIDATE_LEDGER_METHODS):
-        row = _mapping(stability_rows.get(method))
-        flip_count = int(
-            _float(row.get("direction_flip_count") or row.get("signal_churn_count"), 0)
-        )
-        risk_false_on = int(_float(row.get("false_risk_on_count"), 0))
-        risk_false_off = int(_float(row.get("false_risk_off_count"), 0))
-        semiconductor_flip = int(_float(row.get("semiconductor_flip_count"), 0))
-        dispersion = _float(
-            row.get("avg_consensus_dispersion") or row.get("max_consensus_dispersion"),
-            SIGNAL_QUALITY_DISPERSION_THRESHOLD,
-        )
-        jump_count = int(
-            _float(row.get("large_weight_jump_count") or row.get("large_jump_count"), 0)
-        )
-        event_count = max(1, min(3, flip_count or risk_false_on or risk_false_off or 1))
-        for event_index in range(event_count):
-            direction_changed = event_index < max(1, flip_count)
-            if risk_false_on:
-                regime = "tech_drawdown"
-                signal_direction = "increase_risk_asset"
-                previous = "hold_or_reduce_risk_asset"
-                subsequent_5d = -0.018
-                subsequent_20d = -0.034
-                event_quality = "HARMFUL"
-                symbol_group = "risk_asset"
-            elif risk_false_off:
-                regime = "strong_recovery"
-                signal_direction = "reduce_risk_asset"
-                previous = "hold_risk_asset"
-                subsequent_5d = 0.014
-                subsequent_20d = 0.041
-                event_quality = "HARMFUL"
-                symbol_group = "risk_asset"
-            elif semiconductor_flip:
-                regime = "semiconductor_pullback"
-                signal_direction = "increase_semiconductor"
-                previous = "reduce_semiconductor"
-                subsequent_5d = -0.012
-                subsequent_20d = -0.021
-                event_quality = "HARMFUL"
-                symbol_group = "semiconductor"
-            else:
-                regime = "sideways_choppy"
-                signal_direction = (
-                    "increase_active_tilt" if event_index % 2 == 0 else "reduce_active_tilt"
-                )
-                previous = "reduce_active_tilt" if event_index % 2 == 0 else "increase_active_tilt"
-                subsequent_5d = -0.004 if direction_changed else 0.002
-                subsequent_20d = -0.006 if direction_changed else 0.004
-                event_quality = "MIXED" if direction_changed else "NEUTRAL"
-                symbol_group = "portfolio"
-            modes = ["signal_churn"] if direction_changed else []
-            if flip_count >= SIGNAL_QUALITY_HIGH_FLIP_COUNT:
-                modes.append("direction_flip_high")
-            if dispersion >= SIGNAL_QUALITY_DISPERSION_THRESHOLD:
-                modes.extend(["candidate_disagreement_high", "consensus_dispersion_high"])
-            if jump_count:
-                modes.append("high_turnover_signal")
-            if regime in {"tech_drawdown", "strong_recovery", "semiconductor_pullback"}:
-                modes.append("regime_mismatch")
-            if risk_false_on:
-                modes.append("risk_asset_false_positive")
-            if risk_false_off:
-                modes.extend(["risk_asset_false_negative", "underreact_to_recovery"])
-            if semiconductor_flip:
-                modes.append("semiconductor_false_positive")
-            if regime == "sideways_choppy" and direction_changed:
-                modes.append("overreact_to_noise")
-            offset = min(span_days, method_index * max(1, span_days // 8) + event_index * 5)
-            events.append(
-                {
-                    "schema_version": st.SCHEMA_VERSION,
-                    "event_id": _stable_id(
-                        "signal-event",
-                        method,
-                        event_index,
-                        source.get("source_backfill_id"),
-                    ),
-                    "date": (start + timedelta(days=offset)).isoformat(),
-                    "method": method,
-                    "symbol_group": symbol_group,
-                    "signal_direction": signal_direction,
-                    "previous_signal_direction": previous,
-                    "direction_changed": direction_changed,
-                    "weight_delta": round(0.015 + 0.005 * event_index + dispersion / 10, 6),
-                    "total_abs_weight_change": round(
-                        0.035 + 0.01 * flip_count + dispersion / 5,
-                        6,
-                    ),
-                    "regime_context": regime,
-                    "candidate_dispersion": round(dispersion, 6),
-                    "consensus_confidence": round(max(0.0, 1.0 - dispersion), 6),
-                    "subsequent_5d_return": subsequent_5d,
-                    "subsequent_20d_return": subsequent_20d,
-                    "event_quality": event_quality,
-                    "failure_modes": sorted(set(modes)) or ["unstable_top_candidate"],
-                    "event_source": "derived_from_screening_metrics",
-                    "source_backfill_id": source.get("source_backfill_id"),
-                    "not_official_target_weights": True,
-                    "broker_action_allowed": False,
-                    "production_effect": st.PRODUCTION_EFFECT,
-                    **st.EXPERIMENT_FACTORY_SAFETY,
-                }
-            )
-    return sorted(events, key=lambda row: (_text(row.get("date")), _text(row.get("method"))))
-
-
-def _candidate_signal_summary(events: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    methods = sorted({_text(row.get("method")) for row in events})
-    failure_counts: dict[str, int] = {}
-    method_rows = []
-    for event in events:
-        for mode in _texts(event.get("failure_modes")):
-            failure_counts[mode] = failure_counts.get(mode, 0) + 1
-    for method in methods:
-        rows = [row for row in events if row.get("method") == method]
-        method_counts: dict[str, int] = {}
-        for row in rows:
-            for mode in _texts(row.get("failure_modes")):
-                method_counts[mode] = method_counts.get(mode, 0) + 1
-        harmful = sum(1 for row in rows if row.get("event_quality") == "HARMFUL")
-        direction_changes = sum(1 for row in rows if row.get("direction_changed") is True)
-        high_dispersion = sum(
-            1
-            for row in rows
-            if _float(row.get("candidate_dispersion")) >= SIGNAL_QUALITY_DISPERSION_THRESHOLD
-        )
-        dominant = max(method_counts, key=method_counts.get) if method_counts else "none"
-        harmful_share = harmful / len(rows) if rows else 0.0
-        if (
-            direction_changes >= SIGNAL_QUALITY_HIGH_FLIP_COUNT
-            or harmful_share >= SIGNAL_QUALITY_HARMFUL_EVENT_SHARE
-        ):
-            status = "UNSTABLE"
-        elif direction_changes or harmful:
-            status = "MIXED"
-        elif rows:
-            status = "STABLE"
-        else:
-            status = "INSUFFICIENT_DATA"
-        method_rows.append(
-            {
-                "method": method,
-                "event_count": len(rows),
-                "direction_change_count": direction_changes,
-                "harmful_event_count": harmful,
-                "harmful_event_share": round(harmful_share, 6),
-                "high_dispersion_event_count": high_dispersion,
-                "dominant_failure_mode": dominant,
-                "signal_quality_status": status,
-                **st.EXPERIMENT_FACTORY_SAFETY,
-            }
-        )
-    return {
-        "schema_version": st.SCHEMA_VERSION,
-        "event_count": len(events),
-        "method_count": len(methods),
-        "unstable_method_count": sum(
-            1 for row in method_rows if row.get("signal_quality_status") == "UNSTABLE"
-        ),
-        "dominant_failure_mode": (
-            max(failure_counts, key=failure_counts.get) if failure_counts else "none"
-        ),
-        "failure_mode_counts": failure_counts,
-        "methods": method_rows,
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-
-
-def _churn_root_cause_summary(ledger: Mapping[str, Any]) -> dict[str, Any]:
-    events = _records(ledger.get("signal_events"))
-    disagreement = [
-        row for row in events if "candidate_disagreement_high" in _texts(row.get("failure_modes"))
-    ]
-    sideways = [row for row in events if row.get("regime_context") == "sideways_choppy"]
-    high_flip = [row for row in events if "direction_flip_high" in _texts(row.get("failure_modes"))]
-    harmful = [row for row in events if row.get("event_quality") == "HARMFUL"]
-    if len(disagreement) >= max(1, len(events) // 3):
-        cause = "candidate_disagreement_high"
-        confidence = "HIGH"
-    elif len(sideways) >= max(1, len(events) // 3):
-        cause = "sideways_noise"
-        confidence = "MEDIUM"
-    elif high_flip:
-        cause = "top_candidate_rotation"
-        confidence = "MEDIUM"
-    else:
-        cause = "mixed_signal_quality"
-        confidence = "LOW"
-    return {
-        "schema_version": st.SCHEMA_VERSION,
-        "dominant_root_cause": cause,
-        "confidence": confidence,
-        "event_count": len(events),
-        "harmful_event_count": len(harmful),
-        "affected_methods": sorted({_text(row.get("method")) for row in events}),
-        "supporting_evidence": [
-            f"candidate_disagreement_events={len(disagreement)}",
-            f"sideways_choppy_events={len(sideways)}",
-            f"direction_flip_high_events={len(high_flip)}",
-            f"harmful_events={len(harmful)}",
-        ],
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-
-
-def _churn_event_clusters(ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
-    events = _records(ledger.get("signal_events"))
-    clusters: dict[str, list[Mapping[str, Any]]] = {}
-    for row in events:
-        modes = _texts(row.get("failure_modes"))
-        if "candidate_disagreement_high" in modes:
-            key = "candidate_disagreement_high"
-        elif row.get("regime_context") == "sideways_choppy":
-            key = "sideways_noise"
-        elif "direction_flip_high" in modes:
-            key = "top_candidate_rotation"
-        else:
-            key = "mixed_signal_quality"
-        clusters.setdefault(key, []).append(row)
-    return [
-        {
-            "schema_version": st.SCHEMA_VERSION,
-            "cluster_id": _stable_id("churn-cluster", key, len(rows)),
-            "root_cause": key,
-            "event_count": len(rows),
-            "methods": sorted({_text(row.get("method")) for row in rows}),
-            "regime_contexts": sorted({_text(row.get("regime_context")) for row in rows}),
-            "representative_event_ids": [_text(row.get("event_id")) for row in rows[:5]],
-            **st.EXPERIMENT_FACTORY_SAFETY,
-        }
-        for key, rows in sorted(clusters.items())
-    ]
-
-
-def _churn_mitigation_candidates(summary: Mapping[str, Any]) -> dict[str, Any]:
-    cause = _text(summary.get("dominant_root_cause"))
-    if cause == "candidate_disagreement_high":
-        mitigations = [
-            (
-                "high_dispersion_hold_filter",
-                "hold active tilt when candidate dispersion is above pilot threshold",
-            ),
-            ("low_confidence_reduce_tilt_filter", "reduce active tilt under weak consensus"),
-        ]
-    elif cause == "sideways_noise":
-        mitigations = [
-            (
-                "signal_persistence_3d_filter",
-                "require three-day signal persistence before acting on direction changes",
-            ),
-            ("top_candidate_stability_filter", "delay changes when top candidate rotates quickly"),
-        ]
-    else:
-        mitigations = [
-            ("regime_mismatch_filter", "block risk-increasing actions in drawdown regimes"),
-            ("signal_persistence_3d_filter", "require short persistence before changing tilt"),
-        ]
-    return {
-        "schema_version": st.SCHEMA_VERSION,
-        "mitigations": [
-            {
-                "mitigation_id": mitigation_id,
-                "description": description,
-                "screening_status": "PROPOSED_RESEARCH_FILTER",
-                **st.EXPERIMENT_FACTORY_SAFETY,
-            }
-            for mitigation_id, description in mitigations
-        ],
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-
-
-def _regime_mismatch_attribution_events(ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
-    results = []
-    for row in _records(ledger.get("signal_events")):
-        modes = _texts(row.get("failure_modes"))
-        regime = _text(row.get("regime_context"))
-        direction = _text(row.get("signal_direction"))
-        if "regime_mismatch" not in modes and regime not in {
-            "tech_drawdown",
-            "strong_recovery",
-            "semiconductor_pullback",
-        }:
-            continue
-        if regime == "tech_drawdown" and "increase" in direction:
-            mismatch_type = "risk_increase_during_drawdown"
-            expected = "reduce_or_hold_risk_asset"
-        elif regime == "semiconductor_pullback" and "increase" in direction:
-            mismatch_type = "semiconductor_increase_during_pullback"
-            expected = "reduce_or_hold_semiconductor"
-        elif regime == "strong_recovery" and ("reduce" in direction or "hold" in direction):
-            mismatch_type = "lag_in_recovery"
-            expected = "restore_risk_asset"
-        elif regime == "sideways_choppy" and row.get("direction_changed") is True:
-            mismatch_type = "flip_in_sideways"
-            expected = "hold_active_tilt"
-        else:
-            mismatch_type = "mixed_regime_mismatch"
-            expected = "require_owner_review"
-        results.append(
-            {
-                "schema_version": st.SCHEMA_VERSION,
-                "event_id": row.get("event_id"),
-                "date": row.get("date"),
-                "method": row.get("method"),
-                "regime_context": regime,
-                "mismatch_type": mismatch_type,
-                "expected_signal_action": expected,
-                "actual_signal_action": direction,
-                "forward_return_5d": row.get("subsequent_5d_return"),
-                "forward_return_20d": row.get("subsequent_20d_return"),
-                "attribution_confidence": (
-                    "HIGH" if row.get("event_quality") == "HARMFUL" else "MEDIUM"
-                ),
-                "failure_modes": modes,
-                **st.EXPERIMENT_FACTORY_SAFETY,
-            }
-        )
-    return results
-
-
-def _regime_mismatch_summary(events: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    by_type: dict[str, int] = {}
-    for row in events:
-        key = _text(row.get("mismatch_type"), "unknown")
-        by_type[key] = by_type.get(key, 0) + 1
-    return {
-        "schema_version": st.SCHEMA_VERSION,
-        "mismatch_count": len(events),
-        "dominant_mismatch_type": max(by_type, key=by_type.get) if by_type else "none",
-        "by_mismatch_type": by_type,
-        "affected_method_count": len({_text(row.get("method")) for row in events}),
-        "confidence": "HIGH" if len(events) >= 3 else "MEDIUM" if events else "LOW",
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-
-
-def _proposed_quality_filters(
-    root_cause: Mapping[str, Any],
-    mismatch: Mapping[str, Any],
-) -> dict[str, Any]:
-    root_summary = _mapping(root_cause.get("churn_root_cause_summary"))
-    mismatch_summary = _mapping(mismatch.get("regime_mismatch_summary"))
-    filters = [
-        {
-            "filter_id": "high_dispersion_hold_filter",
-            "trigger": f"candidate_dispersion >= {SIGNAL_QUALITY_DISPERSION_THRESHOLD}",
-            "action": "hold_previous_target_or_reduce_active_tilt",
-            "intended_effect": "reduce false active-tilt moves when candidates disagree",
-            "target_failure_modes": ["candidate_disagreement_high", "consensus_dispersion_high"],
-            "complexity": "LOW",
-        },
-        {
-            "filter_id": "signal_persistence_3d_filter",
-            "trigger": (
-                f"direction_changed and persistence_days < {SIGNAL_QUALITY_PERSISTENCE_DAYS}"
-            ),
-            "action": "delay_signal_change",
-            "intended_effect": "reduce churn in sideways or noisy periods",
-            "target_failure_modes": ["signal_churn", "direction_flip_high", "overreact_to_noise"],
-            "complexity": "LOW",
-        },
-        {
-            "filter_id": "regime_mismatch_filter",
-            "trigger": "risk_increase_during_drawdown or lag_in_recovery",
-            "action": "block_or_scale_conflicting_signal",
-            "intended_effect": "align signal action with regime context",
-            "target_failure_modes": ["regime_mismatch", "risk_asset_false_positive"],
-            "complexity": "MEDIUM",
-        },
-        {
-            "filter_id": "top_candidate_stability_filter",
-            "trigger": "unstable_top_candidate or repeated direction flips",
-            "action": "require stable top candidate before switching active tilt",
-            "intended_effect": "reduce top-candidate rotation",
-            "target_failure_modes": ["unstable_top_candidate", "direction_flip_high"],
-            "complexity": "MEDIUM",
-        },
-        {
-            "filter_id": "low_confidence_reduce_tilt_filter",
-            "trigger": "consensus_confidence below 0.85",
-            "action": "scale active tilt toward neutral",
-            "intended_effect": "lower harmful moves while preserving observation signal",
-            "target_failure_modes": ["candidate_disagreement_high", "regime_mismatch"],
-            "complexity": "LOW",
-        },
-    ]
-    return {
-        "schema_version": st.SCHEMA_VERSION,
-        "root_cause_id": root_cause.get("root_cause_id"),
-        "mismatch_id": mismatch.get("mismatch_id"),
-        "dominant_root_cause": root_summary.get("dominant_root_cause"),
-        "dominant_mismatch_type": mismatch_summary.get("dominant_mismatch_type"),
-        "filters": [{**row, **st.EXPERIMENT_FACTORY_SAFETY} for row in filters],
-        **st.EXPERIMENT_FACTORY_SAFETY,
-    }
-
-
-def _filter_design_config(filters: Mapping[str, Any]) -> dict[str, Any]:
-    return {
-        "schema_version": st.SCHEMA_VERSION,
-        "filter_design_id": "",
-        "method": {
-            "mode": "research_screening_only",
-            "policy_status": "pilot_research_baseline",
-            "owner": "system",
-        },
-        "thresholds": {
-            "candidate_dispersion": SIGNAL_QUALITY_DISPERSION_THRESHOLD,
-            "persistence_days": SIGNAL_QUALITY_PERSISTENCE_DAYS,
-            "high_flip_count": SIGNAL_QUALITY_HIGH_FLIP_COUNT,
-            "harmful_event_share": SIGNAL_QUALITY_HARMFUL_EVENT_SHARE,
-        },
-        "filters": _records(filters.get("filters")),
-        "safety": {
-            "research_only": True,
-            "research_screening_only": True,
-            "experiment_only": True,
-            "not_official_target_weights": True,
-            "not_formal_research_method": True,
-            "broker_action_allowed": False,
-            "broker_action_taken": False,
-            "order_ticket_generated": False,
-            "auto_apply": False,
-            "production_effect": st.PRODUCTION_EFFECT,
-        },
     }
 
 

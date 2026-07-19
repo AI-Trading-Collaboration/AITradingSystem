@@ -227,6 +227,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_signal_diagnosis_foundation as dynamic_v3_signal_diagnosis_foundation_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_signal_filter_foundation as dynamic_v3_signal_filter_foundation_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_sim_defensive_validation as dynamic_v3_sim_defensive_validation_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -404,6 +407,7 @@ __all__ = [
     "dynamic_v3_micro_search_foundation_commands",
     "dynamic_v3_research_direction_foundation_commands",
     "dynamic_v3_signal_diagnosis_foundation_commands",
+    "dynamic_v3_signal_filter_foundation_commands",
     "dynamic_v3_sim_interpretation_commands",
     "dynamic_v3_sim_defensive_validation_commands",
     "dynamic_v3_sim_risk_return_commands",

@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import hashlib
 from pathlib import Path
+from typing import Annotated
 
 import pytest
 import typer
@@ -382,6 +383,10 @@ DYNAMIC_V3_RESEARCH_DIRECTION_FOUNDATION_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_research_direction_foundation.py"
 )
+DYNAMIC_V3_SIGNAL_FILTER_FOUNDATION_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_signal_filter_foundation.py"
+)
 DYNAMIC_V3_WEIGHT_BATCH_SEARCH_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/etf_portfolio/dynamic_v3_weight_batch_search.py"
 )
@@ -402,6 +407,9 @@ DYNAMIC_V3_MICRO_SEARCH_FOUNDATION_PATH = (
 )
 DYNAMIC_V3_RESEARCH_DIRECTION_FOUNDATION_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/etf_portfolio/dynamic_v3_research_direction_foundation.py"
+)
+DYNAMIC_V3_SIGNAL_FILTER_FOUNDATION_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/etf_portfolio/dynamic_v3_signal_filter_foundation.py"
 )
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
@@ -553,9 +561,8 @@ def test_g2_1_cli_contract_is_independent_of_checkout_root(tmp_path: Path) -> No
 
         @app.command("run")
         def run(
-            input_path: Path = typer.Option(
-                checkout_root / "data" / "input.json",
-                "--input-path",
+            input_path: Annotated[Path, typer.Option("--input-path")] = (
+                checkout_root / "data" / "input.json"
             ),
         ) -> None:
             pass
@@ -586,7 +593,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 12196
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 11837
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -797,8 +804,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 12196
-    assert len(legacy_names) == 291
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 11837
+    assert len(legacy_names) == 276
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -3411,6 +3418,91 @@ def test_g2_4_research_direction_foundation_domain_leaves_legacy_owner() -> None
         assert isinstance(call, ast.Call)
         assert isinstance(call.func, ast.Name)
         assert call.func.id == "_call_research_direction_foundation"
+        assert isinstance(call.args[0], ast.Constant)
+        assert call.args[0].value == name
+
+
+def test_g2_4_signal_filter_foundation_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_tree = ast.parse(
+        DYNAMIC_V3_SIGNAL_FILTER_FOUNDATION_COMMANDS_PATH.read_text(encoding="utf-8")
+    )
+    canonical_names = _function_names(canonical_tree)
+    callbacks = {
+        "dynamic_v3_signal_failure_taxonomy_validate_command",
+        "dynamic_v3_signal_failure_taxonomy_report_command",
+        "dynamic_v3_validate_signal_failure_taxonomy_command",
+        "dynamic_v3_candidate_signal_ledger_build_command",
+        "dynamic_v3_candidate_signal_ledger_report_command",
+        "dynamic_v3_validate_candidate_signal_ledger_command",
+        "dynamic_v3_signal_churn_root_cause_run_command",
+        "dynamic_v3_signal_churn_root_cause_report_command",
+        "dynamic_v3_validate_signal_churn_root_cause_command",
+        "dynamic_v3_regime_mismatch_attribution_run_command",
+        "dynamic_v3_regime_mismatch_attribution_report_command",
+        "dynamic_v3_validate_regime_mismatch_attribution_command",
+        "dynamic_v3_candidate_quality_filter_design_run_command",
+        "dynamic_v3_candidate_quality_filter_design_report_command",
+        "dynamic_v3_validate_candidate_quality_filter_design_command",
+    }
+    assert len(callbacks) == 15
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert "dynamic_v3_signal_filter_foundation" in _imported_names(canonical_tree)
+
+
+def test_g2_4_signal_filter_foundation_domain_leaves_legacy_owner() -> None:
+    legacy_tree = ast.parse(DYNAMIC_V3_WEIGHT_BATCH_SEARCH_PATH.read_text(encoding="utf-8"))
+    canonical_tree = ast.parse(DYNAMIC_V3_SIGNAL_FILTER_FOUNDATION_PATH.read_text(encoding="utf-8"))
+    entrypoints = {
+        "run_signal_failure_taxonomy_validation",
+        "signal_failure_taxonomy_report_payload",
+        "validate_signal_failure_taxonomy_artifact",
+        "build_candidate_signal_ledger",
+        "candidate_signal_ledger_report_payload",
+        "validate_candidate_signal_ledger_artifact",
+        "run_signal_churn_root_cause_review",
+        "signal_churn_root_cause_report_payload",
+        "validate_signal_churn_root_cause_artifact",
+        "run_regime_mismatch_attribution",
+        "regime_mismatch_attribution_report_payload",
+        "validate_regime_mismatch_attribution_artifact",
+        "run_candidate_quality_filter_design",
+        "candidate_quality_filter_design_report_payload",
+        "validate_candidate_quality_filter_design_artifact",
+    }
+    removed_helpers = {
+        "render_signal_failure_taxonomy_report",
+        "render_candidate_signal_ledger_reader_brief",
+        "render_candidate_signal_ledger_report",
+        "render_signal_churn_root_cause_report",
+        "render_regime_mismatch_report",
+        "render_candidate_quality_filter_reader_brief",
+        "render_candidate_quality_filter_design_report",
+        "_normalized_signal_failure_taxonomy",
+        "_candidate_signal_events",
+        "_candidate_signal_summary",
+        "_churn_root_cause_summary",
+        "_churn_event_clusters",
+        "_regime_mismatch_attribution_events",
+        "_proposed_quality_filters",
+        "_filter_design_config",
+    }
+    legacy_functions = {
+        node.name: node for node in legacy_tree.body if isinstance(node, ast.FunctionDef)
+    }
+    assert entrypoints <= _function_names(canonical_tree)
+    assert removed_helpers.isdisjoint(legacy_functions)
+    assert "dynamic_v3_weight_batch_search" not in _imported_names(canonical_tree)
+    for name in entrypoints:
+        wrapper = legacy_functions[name]
+        assert len(wrapper.body) == 1
+        assert isinstance(wrapper.body[0], ast.Return)
+        call = wrapper.body[0].value
+        assert isinstance(call, ast.Call)
+        assert isinstance(call.func, ast.Name)
+        assert call.func.id == "_call_signal_filter_foundation"
         assert isinstance(call.args[0], ast.Constant)
         assert call.args[0].value == name
 

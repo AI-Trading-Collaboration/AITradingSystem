@@ -263,31 +263,34 @@ def test_tracked_partial_seed_profile_is_valid_and_source_bound(tmp_path: Path) 
     assert profile.partial_seed is False
     assert profile.complete_profile is True
     assert profile.owner == "validation_operations"
-    assert profile.version == 2
+    assert profile.version == 4
     assert profile.source_workers == 16
     assert profile.source_dist == "loadfile"
     assert profile.source_artifact_path == (
-        "outputs/validation_runtime/full_20260718T004439Z/test_runtime_profile.json"
+        "outputs/validation_runtime/full_20260719T032054Z/test_runtime_profile.json"
     )
     assert profile.source_artifact_sha256 == (
-        "58206a1a015be4b24a3419301c27dca44a740409f7bc00f0d51e99ad8ae532c6"
+        "6fe2b097440923b9f9eb9731febf790e3cb7b6ded9ce0b880a3366776e90c24f"
     )
-    assert len(profile.observed_seconds) == 1068
-    assert profile.source_node_count == 6248
-    assert profile.source_file_count == 1068
+    assert len(profile.observed_seconds) == 1069
+    assert profile.source_node_count == 6297
+    assert profile.source_file_count == 1069
     assert profile.source_collection_ordered_sha256 == (
-        "7b7dc4a7838cbf17d68a64b2e3aaf4dfc59267c75109a58139ea1b03986d7322"
+        "e2927d6112d15280964984671490df5b6a1e72b7cb9b2d5aef7ec1691137751f"
     )
     assert profile.source_collection_set_sha256 == (
-        "6e8fee8709c8e781952a29224a8857d01bd6df5c50f9070508ad1dac9c5a18ee"
+        "72400edb5d0d55102d10632e042ad437e0de286ffdfafe53921c3bf5079d8e4d"
     )
     assert profile.source_file_set_sha256 == (
-        "11d3fb989f3f3e0a55141affe2db5b735598afdb06466476e976e82fcdf44e4b"
+        "adf6f3aaf04bf8ab8db4ccefaeda486fc252a642c5bf35940326b6f90812f6d6"
+    )
+    assert profile.source_file_rows_sha256 == (
+        "f61c6c02884b31a95e37d22cce190cc58190932f5205d266cf7a483cb5766210"
     )
     assert profile.expected_scheduled_ordered_sha256 == (
-        "a426c7e9a326fdbabf76f2ad16f4891e47cd8e116ae4eae0e6dd3f267a23d3fd"
+        "11287d8a177593559da4e5b18aabe11968b89ff314d58f08c9460de85a1afe85"
     )
-    assert profile.observed_seconds["tests/test_layer1_meta_policy_readiness.py"] == (436.8188494)
+    assert profile.observed_seconds["tests/test_layer1_meta_policy_readiness.py"] == (652.421763)
 
     legacy = load_duration_profile(_write_legacy_partial_profile(tmp_path / "legacy_partial.yaml"))
     assert legacy.valid is True

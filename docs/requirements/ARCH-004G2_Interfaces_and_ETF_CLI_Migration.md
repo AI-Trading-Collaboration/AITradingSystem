@@ -1,6 +1,6 @@
 # ARCH-004G2 Interfaces 与 ETF CLI 迁移
 
-最后更新：2026-07-17
+最后更新：2026-07-19
 
 ## 任务信息
 
@@ -20,6 +20,24 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-19：owner 已显式授权并完成 G2.4-EB1，15个 Signal Failure / Ledger / Churn /
+  Regime / Filter Design callbacks 与15个对应domain public入口已完成canonical迁移和legacy
+  subtraction。新owner为
+  `etf_portfolio/dynamic_v3_signal_filter_foundation.py` 与
+  `interfaces/cli/etf_portfolio/dynamic_v3_signal_filter_foundation.py`；producer在写出前冻结并
+  验证`signal_failure_taxonomy_input_snapshot.v2`、`candidate_signal_ledger_input_snapshot.v2`、
+  `signal_churn_root_cause_input_snapshot.v2`、`regime_mismatch_attribution_input_snapshot.v2`和
+  `candidate_quality_filter_design_input_snapshot.v2`。五条链都绑定exact live source、policy bytes、
+  chronology与lineage，validator逐byte重建23个materialized views；source/snapshot/policy/output
+  tamper均fail closed。审计同时纠正旧实现把aggregate proxy/default伪造成dated event/forward
+  return的问题：没有validated dated signal rows时`events=[]`，count/return保持null，Churn、Regime
+  和Filter均为`INSUFFICIENT_DATA`且不得生成mitigation/filter。Focused=`15 passed / 71.80s`；
+  callback matrix已刷新为`730 migrated / 237 pending / 0 unresolved / 0 duplicate`，CLI仍为
+  `41 root / 291 groups / 993 leaves / 0 duplicate`。最终architecture/contract=`372/262 passed`；
+  parent-bound Full=`6,295 passed / 2 skipped / 1,066.73s`，profile覆盖`6,297 nodes / 1,069 files`且
+  pytest/profile/telemetry/performance/provenance均PASS，COMPLETE v4 duration profile exact重验PASS。
+  EB1状态=`COMPLETE_G2_4_CONTINUES`；这不是whole G2.4 exit，不触发handoff，EB2仍需新显式指令，
+  ARCH-005/G2.5继续锁定，`production_effect=none`。
 - 2026-07-17：owner 批准 G2.4 剩余阶段改为效率优先的 batch execution。详细关键路径、
   callback分配、timebox、验证频率和停止条件见
   `docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md`。先执行1～3日EB0

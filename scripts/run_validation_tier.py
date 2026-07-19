@@ -695,21 +695,46 @@ def _validated_parent_run_binding(
         ):
             errors.append("parent_run runtime profile inventory hash/size is stale")
 
+    captured_profile_payload: object | None = None
+    if runtime_profile_bytes is not None:
+        try:
+            captured_profile_payload = json.loads(
+                runtime_profile_bytes.decode("utf-8"),
+                object_pairs_hook=_reject_duplicate_json_keys,
+                parse_constant=_reject_non_finite_json_constant,
+            )
+        except (UnicodeError, ValueError, json.JSONDecodeError):
+            captured_profile_payload = None
+
     validated_profile: dict[str, object] | None = None
     if valid_exit_code and resolved_profile_path is not None and runtime_profile_bytes is not None:
-        validated_profile = _read_runtime_profile_payload(
-            resolved_profile_path,
-            pytest_exitstatus=int(exit_code),
-            formal_selection_eligible=True,
-            expected_validation_provenance=(
-                parent_provenance if isinstance(parent_provenance, Mapping) else None
-            ),
-            raw_bytes=runtime_profile_bytes,
+        canonical_persisted_failure = bool(
+            isinstance(parent_provenance, Mapping)
+            and _is_canonical_persisted_runtime_profile_failure(
+                captured_profile_payload,
+                pytest_exitstatus=int(exit_code),
+                expected_validation_provenance=parent_provenance,
+            )
         )
+        if canonical_persisted_failure:
+            validated_profile = dict(captured_profile_payload)  # type: ignore[arg-type]
+        else:
+            validated_profile = _read_runtime_profile_payload(
+                resolved_profile_path,
+                pytest_exitstatus=int(exit_code),
+                formal_selection_eligible=True,
+                expected_validation_provenance=(
+                    parent_provenance if isinstance(parent_provenance, Mapping) else None
+                ),
+                raw_bytes=runtime_profile_bytes,
+            )
         profile_telemetry = validated_profile.get("telemetry")
         if (
-            not isinstance(profile_telemetry, Mapping)
-            or profile_telemetry.get("missing_runtime_profile_artifact") is True
+            not canonical_persisted_failure
+            and (
+                not isinstance(profile_telemetry, Mapping)
+                or profile_telemetry.get("missing_runtime_profile_artifact") is True
+            )
         ):
             errors.append("parent_run runtime profile is missing or invalid")
         else:
@@ -1170,6 +1195,34 @@ def _runtime_profile_failure_payload(
         "broker_action_allowed": False,
         "broker_action_taken": False,
     }
+
+
+def _is_canonical_persisted_runtime_profile_failure(
+    payload: object,
+    *,
+    pytest_exitstatus: int,
+    expected_validation_provenance: Mapping[str, object],
+) -> bool:
+    """Recognize only the exact fail-closed sidecar shape persisted by this runner."""
+
+    if not isinstance(payload, Mapping):
+        return False
+    warnings = payload.get("warnings")
+    if (
+        not isinstance(warnings, list)
+        or len(warnings) != 1
+        or not isinstance(warnings[0], str)
+        or not warnings[0]
+    ):
+        return False
+    expected = _attach_validation_provenance(
+        _runtime_profile_failure_payload(
+            reason=warnings[0],
+            pytest_exitstatus=pytest_exitstatus,
+        ),
+        expected_validation_provenance,
+    )
+    return dict(payload) == expected
 
 
 def _is_non_bool_int(value: object, *, minimum: int = 0) -> bool:

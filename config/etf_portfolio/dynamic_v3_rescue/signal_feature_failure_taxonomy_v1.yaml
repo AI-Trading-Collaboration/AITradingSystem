@@ -1,9 +1,40 @@
-schema_version: 1
+schema_version: dynamic_v3_signal_filter_foundation_policy.v1
+
+policy_metadata:
+  policy_version: signal_filter_foundation_v1
+  owner: etf-research-governance
+  status: pilot_baseline
+  rationale: >-
+    TRADING-326～335必须把validated dated signal evidence与failure taxonomy绑定后才允许形成
+    churn、regime mismatch或quality-filter结论；缺少dated evidence时保持null/INSUFFICIENT_DATA。
+  intended_effect: >-
+    只生成research-screening evidence和owner-review filter prototype，不生成官方目标权重、
+    不自动实施filter、不下单且不产生production effect。
+  validation_evidence: ARCH-004G2.4-EB1 lineage, chronology, rebuild and tamper tests
+  review_condition: >-
+    获得独立validated dated signal ledger、forward returns与owner复核结果后重新校准阈值、
+    failure severity和candidate method universe。
 
 taxonomy_id: signal_feature_failure_taxonomy_v1
 policy_status: pilot_research_baseline
 owner: system
 review_condition: Replace pilot severity labels and thresholds after owner-reviewed signal ledger evidence.
+
+signal_quality_policy:
+  candidate_dispersion_threshold: 0.15
+  persistence_days: 3
+  high_flip_count: 4
+  harmful_event_share: 0.35
+  candidate_methods:
+    - limited_adjustment
+    - smooth_weights_3d_limited_adjustment
+    - smooth_weights_5d_limited_adjustment
+    - median_target_weights
+    - top5_candidate_consensus
+    - cash_buffer_10_plus_smooth_2d_alpha_40
+  missing_dated_signal_status: INSUFFICIENT_DATA
+  missing_dated_signal_action: BUILD_VALIDATED_DATED_SIGNAL_LEDGER
+  automatic_filter_implementation_allowed: false
 
 failure_modes:
   signal_churn:

@@ -99,6 +99,49 @@ def _write_formal_failed_full_parent(
     return raw_parent
 
 
+def _write_formal_runtime_profile_failed_parent(parent_path: Path) -> bytes:
+    parent_path.parent.mkdir(parents=True, exist_ok=True)
+    profile_path = parent_path.parent / RUNTIME_PROFILE_OUTPUT_NAME
+    provenance = _full_provenance_payload()
+    reason = (
+        "runtime profile contract is invalid: runtime complete duration file set "
+        "differs from full test manifest"
+    )
+    profile_payload = validation_tier._attach_validation_provenance(
+        validation_tier._runtime_profile_failure_payload(
+            reason=reason,
+            pytest_exitstatus=0,
+        ),
+        provenance,
+    )
+    profile_path.write_text(json.dumps(profile_payload), encoding="utf-8")
+    profile_bytes = profile_path.read_bytes()
+    parent_payload = {
+        "schema_version": 1,
+        "report_type": "test_runtime_summary",
+        "resolved_tier": "full",
+        "status": "PASS",
+        "exit_code": 0,
+        "print_only": False,
+        "benchmark_mode": False,
+        "production_effect": "none",
+        "validation_provenance_status": "PASS",
+        "validation_provenance": provenance,
+        "output_artifacts": [
+            {
+                "path": str(profile_path),
+                "exists": True,
+                "sha256": hashlib.sha256(profile_bytes).hexdigest(),
+                "size_bytes": len(profile_bytes),
+            }
+        ],
+        **_summarize_runtime_profile(profile_payload, final_path=profile_path),
+    }
+    raw_parent = json.dumps(parent_payload, sort_keys=True).encode()
+    parent_path.write_bytes(raw_parent)
+    return raw_parent
+
+
 def test_validation_tier_print_only_writes_command_summary(tmp_path: Path) -> None:
     report_path = tmp_path / "validation_tier.json"
 
@@ -371,6 +414,106 @@ def test_failure_fix_rerun_binds_failed_full_summary_and_sha256(tmp_path: Path) 
         "failure_basis": "PYTEST_FAIL",
         "production_effect": "none",
     }
+
+
+def test_failure_fix_rerun_binds_canonical_persisted_runtime_profile_failure(
+    tmp_path: Path,
+) -> None:
+    parent_path = (
+        tmp_path
+        / "outputs"
+        / "validation_runtime"
+        / "full_parent_runtime_profile_failure"
+        / "test_runtime_summary.json"
+    )
+    raw_parent = _write_formal_runtime_profile_failed_parent(parent_path)
+    args = validation_tier.parse_args(
+        [
+            "full",
+            "--trigger-reason",
+            "failure_fix_rerun",
+            "--task-id",
+            "ARCH-004G2",
+            "--boundary-id",
+            "rerun-boundary",
+            "--parent-run",
+            parent_path.relative_to(tmp_path).as_posix(),
+        ]
+    )
+
+    provenance = validation_tier._validation_trigger_provenance(
+        args,
+        resolved_tier="full",
+        repo_root=tmp_path,
+    )
+
+    profile_path = parent_path.parent / RUNTIME_PROFILE_OUTPUT_NAME
+    assert provenance["status"] == "PASS"
+    assert provenance["parent_run"] == {
+        "run_id": "full_parent_runtime_profile_failure",
+        "summary_path": (
+            "outputs/validation_runtime/full_parent_runtime_profile_failure/"
+            "test_runtime_summary.json"
+        ),
+        "summary_sha256": hashlib.sha256(raw_parent).hexdigest(),
+        "runtime_profile_sha256": hashlib.sha256(profile_path.read_bytes()).hexdigest(),
+        "report_type": "test_runtime_summary",
+        "resolved_tier": "full",
+        "status": "PASS",
+        "failure_basis": "RUNTIME_PROFILE_FAIL",
+        "production_effect": "none",
+    }
+
+
+def test_failure_fix_rerun_rejects_noncanonical_persisted_failure_shape(
+    tmp_path: Path,
+) -> None:
+    parent_path = (
+        tmp_path
+        / "outputs"
+        / "validation_runtime"
+        / "full_parent_noncanonical_profile_failure"
+        / "test_runtime_summary.json"
+    )
+    _write_formal_runtime_profile_failed_parent(parent_path)
+    profile_path = parent_path.parent / RUNTIME_PROFILE_OUTPUT_NAME
+    profile_payload = json.loads(profile_path.read_text(encoding="utf-8"))
+    profile_payload["unknown_field"] = "must fail closed"
+    profile_path.write_text(json.dumps(profile_payload), encoding="utf-8")
+    profile_bytes = profile_path.read_bytes()
+    parent_payload = json.loads(parent_path.read_text(encoding="utf-8"))
+    parent_payload["output_artifacts"][0].update(
+        {
+            "sha256": hashlib.sha256(profile_bytes).hexdigest(),
+            "size_bytes": len(profile_bytes),
+        }
+    )
+    parent_payload.update(_summarize_runtime_profile(profile_payload, final_path=profile_path))
+    parent_path.write_text(json.dumps(parent_payload), encoding="utf-8")
+    args = validation_tier.parse_args(
+        [
+            "full",
+            "--trigger-reason",
+            "failure_fix_rerun",
+            "--task-id",
+            "ARCH-004G2",
+            "--boundary-id",
+            "rerun-boundary",
+            "--parent-run",
+            parent_path.relative_to(tmp_path).as_posix(),
+        ]
+    )
+
+    provenance = validation_tier._validation_trigger_provenance(
+        args,
+        resolved_tier="full",
+        repo_root=tmp_path,
+    )
+
+    assert provenance["status"] == "FAIL"
+    assert "runtime profile is missing or invalid" in "; ".join(
+        provenance["validation_errors"]
+    )
 
 
 def test_failure_fix_rerun_validates_the_same_profile_bytes_it_hashes(
@@ -1314,6 +1457,9 @@ def _formal_scheduler_profile_payload() -> dict[str, object]:
     ).hexdigest()
     duration_profile = replace(
         load_duration_profile(Path(FULL_DURATION_PROFILE_MANIFEST)),
+        manifest_status="COMPLETE",
+        partial_seed=False,
+        complete_profile=True,
         observed_seconds=observed_seconds,
         file_node_counts=file_node_counts,
         source_node_count=len(nodeids),

@@ -28,9 +28,7 @@ def test_signal_feature_quality_filter_pipeline_builds_and_validates(tmp_path: P
     )
     assert taxonomy_validation["status"] == "PASS"
     assert taxonomy["manifest"]["failure_mode_count"] >= 10
-    modes = {
-        row["mode"] for row in taxonomy["signal_failure_mode_catalog"]["failure_modes"]
-    }
+    modes = {row["mode"] for row in taxonomy["signal_failure_mode_catalog"]["failure_modes"]}
     assert {"signal_churn", "regime_mismatch", "candidate_disagreement_high"} <= modes
     _assert_research_safe(taxonomy["manifest"])
 
@@ -41,7 +39,14 @@ def test_signal_feature_quality_filter_pipeline_builds_and_validates(tmp_path: P
     )
     assert ledger_validation["status"] == "PASS"
     ledger_summary = ledger["candidate_signal_summary"]
-    assert ledger_summary["event_count"] > 0
+    assert ledger_summary["event_count"] == 0
+    assert ledger_summary["evidence_status"] == "INSUFFICIENT_DATA"
+    assert ledger_summary["dominant_failure_mode"] is None
+    assert ledger_summary["unstable_method_count"] is None
+    assert all(
+        row["event_count"] is None and row["signal_quality_status"] == "INSUFFICIENT_DATA"
+        for row in ledger_summary["methods"]
+    )
     assert ledger["manifest"]["data_quality_status"] in {"PASS", "PASS_WITH_WARNINGS"}
     _assert_research_safe(ledger["manifest"])
     assert "Candidate Signal Ledger" in ledger["reader_brief_section"]
@@ -52,7 +57,8 @@ def test_signal_feature_quality_filter_pipeline_builds_and_validates(tmp_path: P
         output_dir=tmp_path / "signal_churn_root_cause",
     )
     assert root_validation["status"] == "PASS"
-    assert root_cause["churn_root_cause_summary"]["dominant_root_cause"]
+    assert root_cause["churn_root_cause_summary"]["dominant_root_cause"] is None
+    assert root_cause["churn_root_cause_summary"]["evidence_status"] == "INSUFFICIENT_DATA"
     _assert_research_safe(root_cause["manifest"])
 
     mismatch = fixture["regime_mismatch_attribution"]
@@ -61,7 +67,9 @@ def test_signal_feature_quality_filter_pipeline_builds_and_validates(tmp_path: P
         output_dir=tmp_path / "regime_mismatch_attribution",
     )
     assert mismatch_validation["status"] == "PASS"
-    assert "mismatch_count" in mismatch["regime_mismatch_summary"]
+    assert mismatch["regime_mismatch_summary"]["mismatch_count"] == 0
+    assert mismatch["regime_mismatch_summary"]["dominant_mismatch_type"] is None
+    assert mismatch["regime_mismatch_summary"]["evidence_status"] == "INSUFFICIENT_DATA"
     _assert_research_safe(mismatch["manifest"])
 
     filter_design = fixture["candidate_quality_filter_design"]
@@ -70,7 +78,8 @@ def test_signal_feature_quality_filter_pipeline_builds_and_validates(tmp_path: P
         output_dir=tmp_path / "candidate_quality_filter_design",
     )
     assert filter_validation["status"] == "PASS"
-    assert len(filter_design["proposed_quality_filters"]["filters"]) >= 4
+    assert filter_design["proposed_quality_filters"]["filters"] == []
+    assert filter_design["proposed_quality_filters"]["evidence_status"] == "INSUFFICIENT_DATA"
     _assert_research_safe(filter_design["manifest"])
     assert "Candidate Quality Filter Design" in filter_design["reader_brief_section"]
 

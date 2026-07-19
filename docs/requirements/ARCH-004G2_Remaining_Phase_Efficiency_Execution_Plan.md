@@ -1,6 +1,6 @@
 # ARCH-004G2 剩余阶段效率优先执行计划
 
-最后更新：2026-07-18
+最后更新：2026-07-19
 
 ## 任务信息
 
@@ -8,7 +8,7 @@
 - parent：`ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`
 - companion：`ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE`
 - priority：`P0`（G2.4 critical path）
-- status：`IN_PROGRESS`（owner 已批准并启动 EB0；EB1 尚未启动）
+- status：`IN_PROGRESS`（EB1 已完成；等待 owner 显式选择下一合法 slice）
 - owner：architecture coordinator / test infrastructure owner
 - production effect：`none`
 
@@ -568,6 +568,94 @@ deprecation/test-manifest freshness漂移fail closed并在刷新后复验PASS；
 不在活跃文档中递归固化，统一由self-excluded `arch_004_compatibility_baseline.yaml` 的S4 validation节点绑定。
 24/24 attribution paths、83 active sources与generated manifests均fresh，Full run count=`0`。状态=`COMPLETE_RUNTIME_TASK_CONTINUES`，当前
 返回G2.4协调点；这不是EB1或下一callback授权。
+
+### EB1 启动授权与 callback freeze
+
+2026-07-19，project owner 指令“继续推进这些任务”被记录为恢复 G2.4 关键路径并启动 EB1 的显式授权；
+不据此越过单batch gate、自动进入 EB2、ARCH-005 或 G2.5。EB1 authority base=`ee604385`，integration
+boundary=`ARCH-004G2.4-EB1`，范围严格冻结为以下15个`PENDING_LEGACY_ROOT` callback：
+
+- `callback_59e09a5bd4d305e4e7de`、`callback_42763d66a1460cf357b1`：candidate quality filter
+  design `report/run`；
+- `callback_e5a0976db6a346347218`、`callback_dc067f1f43c5660e5b74`：candidate signal ledger
+  `build/report`；
+- `callback_2d2e92237fc8009b6d05`、`callback_8591eac5be50c32beea6`：regime mismatch attribution
+  `report/run`；
+- `callback_b6e877d4db6c5b96db92`、`callback_b5d470f0399724d729b4`：signal churn root cause
+  `report/run`；
+- `callback_e41fea89699bd733751d`、`callback_18e09c2328773a74fd0f`：signal failure taxonomy
+  `report/validate`；
+- `callback_1aea1a48447fa7a77b81`、`callback_47bbd11f6f7560e681d6`、
+  `callback_baf265648f98b1dc3b91`、`callback_4f9561804a304fc99358`、
+  `callback_503efec91ab9ca39de34`：5个匹配的`dynamic-v3-rescue validate-*` callback。
+
+EB1同时迁移上述五组domain public entrypoints及其CLI owner，legacy root只保留有明确兼容价值的薄包装，
+不得复制实现或建立第二套app。主要实现路径冻结为新的signal/filter canonical domain与CLI module、legacy
+root subtraction、package registration和architecture contract tests；shared matrix/CLI contract/manifests/
+compatibility/deprecation/source hashes/system flow/task docs只由coordinator在安全集成点刷新。Focused覆盖
+正向、missing/null、lineage/chronology、source/output tamper、全部canonical bytes rebuild和CLI parity；
+正式architecture/contract/Full各只在integration boundary运行一次。Full使用S4
+`validation_trigger_provenance.v1`记录`natural_integration_boundary`、task与boundary；
+`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+
+EB1 canonical实现、legacy subtraction与focused门禁已经闭合并进入`VALIDATING_G2_4_CONTINUES`：
+15 callbacks/15 domain public入口迁移后，matrix=`730 migrated / 237 pending / 0 unresolved /
+0 duplicate`，legacy CLI=`12,196/291/252 -> 11,837/276/237`，legacy weight domain=
+`7,010 -> 5,668 lines`且只保留15个兼容薄包装；新canonical domain/interface分别为
+`2,180/381 lines`。五类v2 snapshots及23个views的正向、missing/null、lineage/chronology、
+source/snapshot/policy/output tamper和CLI parity focused=`15 passed / 71.80s`。无validated dated
+signal rows时当前可信结论为`events=[]`、method count/return=null、Churn/Regime/Filter均
+`INSUFFICIENT_DATA`且0 mitigation/filter；旧aggregate proxy/default生成的dated evidence只作为
+被纠正的历史实现，不得继续解释。正式manifests/compatibility/deprecation/source hashes、architecture/
+contract与单次natural Full仍pending；EB1完成候选不解锁EB2/ARCH-005/G2.5。
+
+EB1安全集成点已刷新manifests/matrix/CLI contract并完成正式architecture=`370 passed /
+57.98s`、contract=`260 passed / 46.40s`。首轮带S4 provenance的natural Full pytest本身
+=`6,293 passed / 2 skipped / 643 warnings / 1,208.23s`，artifact=
+`outputs/validation_runtime/full_20260719T022215Z/test_runtime_summary.json`；但新增
+`tests/test_signal_filter_foundation.py`后当前test manifest为`6,295 nodes / 1,069 files`，既有
+`COMPLETE` duration profile仍绑定`6,248 nodes / 1,068 files`，严格reader因此正确输出
+`profile/telemetry/performance=FAIL`、scheduler fallback，首轮Full不得记为正式证据PASS。runner只持久化
+fail-closed sidecar并删除原始临时telemetry，不能从该失败artifact伪造完整duration。恢复路径固定为：
+保留原PASS source的全部1,068个duration rows并显式降级为`PARTIAL_SEED`；focused验证loader/order/
+strict-reader后，以首轮summary作为`failure_fix_rerun` parent执行唯一一次失败重跑；只有重跑的
+profile/telemetry/performance/provenance均PASS，才从该真实sidecar机械生成当前1,069-file
+`COMPLETE` profile并在tracked state复验architecture/contract。该流程属于既有集合变更bootstrap合同，
+不得用估算duration、局部pytest输出或第三次Full绕过证据链；EB1仍为
+`VALIDATING_G2_4_CONTINUES`，EB2/ARCH-005/G2.5继续锁定，`production_effect=none`。
+
+恢复前runtime focused=`89 passed / 15.40s`，但`failure_fix_rerun --print-only`又暴露S4 parent
+validator的不可达状态：runner已把合同失败转换为固定sibling、已登记SHA/size的canonical fail-closed
+sidecar，parent reader却仅凭其中`missing_runtime_profile_artifact=true`再次拒绝，导致合法的
+`RUNTIME_PROFILE_FAIL`无法绑定。该缺口必须在重跑前直接修复：仅当captured bytes为严格JSON，root/
+collection/scheduler/telemetry/warnings/safety字段精确符合runner canonical失败形状、pytest exit一致、
+embedded provenance与summary完全同源，且fixed-sibling containment与output inventory SHA/size均已通过时，
+才允许作为`RUNTIME_PROFILE_FAIL` parent；缺文件、invalid JSON、未知/缺失字段、summary漂移、字节替换、
+非formal provenance或伪造最小summary继续fail closed。不得改用第二次natural trigger绕过该恢复合同。
+
+parent修复后runtime focused=`91 passed / 15.75s`，dry-run确认首轮parent failure basis=
+`RUNTIME_PROFILE_FAIL`且summary/profile SHA绑定PASS。首个`failure_fix_rerun`随后完整执行为
+`6,292 passed / 3 failed / 2 skipped / 643 warnings / 1,099.89s`，artifact=
+`outputs/validation_runtime/full_20260719T025253Z/test_runtime_summary.json`。本次profile已覆盖
+`6,297 nodes / 1,069 files / 16 workers`，PARTIAL_SEED scheduler applied、order、telemetry和provenance
+均PASS；performance只因pytest exit=1保持FAIL。三个失败全部属于parent修复后未再次刷新的integration
+metadata：module manifest stale、既有S4 source对runtime需求文档的SHA stale、worktree attribution断言仍为
+`27`而当前合法范围已扩为`32`，无EB1业务/callback/tamper失败。该Full不能生成COMPLETE source。
+下一合法步骤是先刷新manifests/compatibility/deprecation/hashes和32-path断言，重新通过focused/
+architecture/contract，再以`025253Z`这个真实pytest FAIL为新parent执行correctness `failure_fix_rerun`。
+这次后续Full用于验证已识别的三项修复，不得复用首轮parent、不得改成natural trigger，也不得在formal
+pre-gates失败时启动；仍不允许为profile生成额外无失败依据的Full。
+
+刷新32-path attribution、module/test/aggregate/fitness、compatibility/deprecation与active source hashes后，
+pre-final architecture=`372 passed / 59.70s`、contract=`262 passed / 46.85s`。以`025253Z`为
+`PYTEST_FAIL` parent的最终Full=`6,295 passed / 2 skipped / 642 warnings / 1,066.73s`，artifact=
+`outputs/validation_runtime/full_20260719T032054Z/test_runtime_summary.json`；严格reader确认
+`6,297 nodes / 1,069 files / 16 workers`、scheduler applied/no fallback、duration order、完整telemetry、
+pytest/profile/performance/provenance均PASS。该PASS sidecar机械生成`COMPLETE v4` duration profile，绑定
+source artifact SHA=`6fe2b097...c24f`、collection set=`72400edb...8e4d`、file set=
+`adf6f3aa...f6d6`、file rows=`f61c6c02...6210`和expected order=`11287d8a...fe85`；离线exact
+collection verifier PASS。EB1状态收口为`COMPLETE_G2_4_CONTINUES`；matrix仍为`730/237/0/0`，
+phase exit未通过，EB2仍需新显式owner指令，ARCH-005/G2.5继续锁定，`production_effect=none`。
 
 ## EB0：最高长尾限时治理
 

@@ -1240,6 +1240,28 @@ artifact allow-root/containment、fixed-sibling profile、output inventory、rec
 binding遇symlink loop或非法解析时统一返回canonical `validation_errors`/exit 2，且pytest不启动、stderr无
 traceback；该回归不扩大Full运行次数。
 
+2026-07-19 / EB1首次真实runtime-profile失败暴露S4恢复合同P1：runner把无效原始telemetry转换并持久化为
+固定sibling canonical fail-closed sidecar后，parent validator又把该形状统一当作artifact missing/invalid，
+使`RUNTIME_PROFILE_FAIL -> failure_fix_rerun`在实现上不可达。修复边界冻结为只接受captured bytes严格匹配
+runner canonical失败schema、pytest exit、embedded PASS provenance、summary派生字段、安全边界与已验证
+output inventory SHA/size的sidecar；普通PASS/FAIL telemetry仍走完整reader，缺失、损坏、替换、minimal forge、
+未知字段或summary/profile漂移仍拒绝。该修复只恢复既有S4语义，不增加trigger enum、不把pytest FAIL改写为
+PASS，也不为EB1增加第三次Full。
+
+同日首个parent-bound Full证明上述恢复路径可达，但真实捕获3项由S4修复扩大tracked path后产生的
+integration freshness FAIL；其formal profile完整覆盖`6,297 nodes / 1,069 files`并保持telemetry/provenance
+PASS，pytest exit=1使performance FAIL。原“无需第三次Full”预期因此被实际失败证据否定：只有先刷新
+module/test/aggregate/fitness、compatibility/deprecation/source hashes及attribution count并通过正式pre-gates，
+才允许用该pytest FAIL summary作为新的`failure_fix_rerun` parent。该运行是S4定义的失败修复验证，不是
+无parent的重复性能采样；若pre-gates不通过则不得启动。
+
+刷新三项integration metadata并通过architecture/contract后，第二个parent-bound修复Full=
+`6,295 passed / 2 skipped / 642 warnings / 1,066.73s`；profile/telemetry/performance/provenance与
+PARTIAL_SEED order全部PASS。该sidecar成为EB1当前`6,297 nodes / 1,069 files`的唯一COMPLETE source，
+机械生成的v4 manifest逐项绑定artifact、collection、file set/rows和expected order hash，offline exact
+collection重验PASS。两次失败与最终PASS完整保留，不把失败运行计入稳定提速样本；本次wall较前一失败
+Full约缩短3%，但单次结果仍不升级`stable_full_improvement_claimed=false`。
+
 ## 验收标准
 
 - 当前 4 个 confirmation 长尾 module 的累计 wall time至少降低70%，最大单shard不超过当前
