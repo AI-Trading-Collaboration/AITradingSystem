@@ -7,15 +7,15 @@ baseline:
   sha256: e6c047d18ad674a19c63c462be7901ae54791be6fc325cb2c1c879e3663108f3
 summary:
   baseline_callback_count: 967
-  migrated_callback_count: 891
-  pending_callback_count: 76
+  migrated_callback_count: 931
+  pending_callback_count: 36
   unresolved_callback_count: 0
   duplicate_callback_count: 0
   pre_g2_4_canonical_callback_count: 26
   current_total_callback_count: 993
   phase_exit_ready: false
   phase_completion_status: IN_PROGRESS
-current_callback_set_sha256: 75c4569fbf8767554037e72e06b18ed91e94b5d2687ef32c697fc42218efa249
+current_callback_set_sha256: 8dbf5d345f1b3838170371501d5d5480066aaca17fa98964aa5f19a0de927a42
 pending_by_app:
   ai_attribution_app: 3
   ai_confirmation_app: 4
@@ -24,28 +24,24 @@ pending_by_app:
   confirmation_app: 1
   credibility_app: 1
   decision_journal_app: 8
-  dynamic_shadow_app: 6
   etf_app: 1
   events_app: 1
-  experiments_app: 7
   forward_app: 5
   governance_app: 2
-  p2_app: 18
   portfolio_app: 1
   regime_app: 1
   relative_strength_app: 1
   report_app: 1
   run_app: 1
-  satellite_app: 6
   signals_app: 1
-  simulation_app: 3
 current_owner_counts:
-  src/ai_trading_system/cli_commands/etf_portfolio.py: 76
+  src/ai_trading_system/cli_commands/etf_portfolio.py: 36
   src/ai_trading_system/interfaces/cli/etf_portfolio/baseline_review.py: 7
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_allocation.py: 3
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_calibration.py: 3
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_rescue.py: 3
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_robustness.py: 2
+  src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_shadow.py: 6
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v2_review.py: 3
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_advisory_outcome.py: 4
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_advisory_proposal_review.py: 3
@@ -157,7 +153,11 @@ current_owner_counts:
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_foundation.py: 10
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_search_targeted.py: 10
   src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_window_audit.py: 4
+  src/ai_trading_system/interfaces/cli/etf_portfolio/experiments.py: 7
+  src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py: 18
+  src/ai_trading_system/interfaces/cli/etf_portfolio/satellite.py: 6
   src/ai_trading_system/interfaces/cli/etf_portfolio/shadow_review.py: 4
+  src/ai_trading_system/interfaces/cli/etf_portfolio/simulation.py: 3
   src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py: 20
   src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py: 20
 callbacks:
@@ -479,48 +479,48 @@ callbacks:
   baseline_function: dynamic_shadow_approve_command
   baseline_line: 28409
   current_function: dynamic_shadow_approve_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_shadow.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_81d72d8b88ad62b8a1c9
   app_name: dynamic_shadow_app
   command_name: enroll-approved
   baseline_function: dynamic_shadow_enroll_approved_command
   baseline_line: 28478
   current_function: dynamic_shadow_enroll_approved_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_shadow.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_bf968ec81bbaf8d55e07
   app_name: dynamic_shadow_app
   command_name: package
   baseline_function: dynamic_shadow_package_command
   baseline_line: 28281
   current_function: dynamic_shadow_package_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_shadow.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_fd30ed074eff46ba04af
   app_name: dynamic_shadow_app
   command_name: update
   baseline_function: dynamic_shadow_update_command
   baseline_line: 28548
   current_function: dynamic_shadow_update_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_shadow.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_d250e4c4b3e9ae73bd83
   app_name: dynamic_shadow_app
   command_name: validate
   baseline_function: dynamic_shadow_validate_command
   baseline_line: 28725
   current_function: dynamic_shadow_validate_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_shadow.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_66f1a04ff37b0596b131
   app_name: dynamic_shadow_app
   command_name: weekly-review
   baseline_function: dynamic_shadow_weekly_review_command
   baseline_line: 28667
   current_function: dynamic_shadow_weekly_review_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_shadow.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_caa648adeab69fb3a721
   app_name: dynamic_v2_review_app
   command_name: package
@@ -7175,56 +7175,56 @@ callbacks:
   baseline_function: experiments_compare_command
   baseline_line: 29755
   current_function: experiments_compare_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/experiments.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_9ecd34513140335825f2
   app_name: experiments_app
   command_name: enroll-shadow
   baseline_function: experiments_enroll_shadow_command
   baseline_line: 29864
   current_function: experiments_enroll_shadow_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/experiments.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_f890b5645edb8ccace89
   app_name: experiments_app
   command_name: register
   baseline_function: experiments_register_command
   baseline_line: 29637
   current_function: experiments_register_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/experiments.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_1ffb74d1a80ced8ff180
   app_name: experiments_app
   command_name: run
   baseline_function: experiments_run_command
   baseline_line: 29663
   current_function: experiments_run_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/experiments.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_08b2c643444a403fe60c
   app_name: experiments_app
   command_name: select-candidates
   baseline_function: experiments_select_candidates_command
   baseline_line: 29824
   current_function: experiments_select_candidates_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/experiments.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_dbd795372e1a2b4d3932
   app_name: experiments_app
   command_name: validate
   baseline_function: experiments_validate_command
   baseline_line: 29975
   current_function: experiments_validate_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/experiments.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_042d02e66c3eb783a036
   app_name: experiments_app
   command_name: weekly-review
   baseline_function: experiments_weekly_review_command
   baseline_line: 29925
   current_function: experiments_weekly_review_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/experiments.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_298591284380ef2e53cc
   app_name: forward_app
   command_name: dashboard
@@ -7287,144 +7287,144 @@ callbacks:
   baseline_function: p2_advanced_risk_command
   baseline_line: 32521
   current_function: p2_advanced_risk_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_f53d9ab3188ff75bd468
   app_name: p2_app
   command_name: derive-edgar-events
   baseline_function: p2_derive_edgar_events_command
   baseline_line: 32016
   current_function: p2_derive_edgar_events_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_ba5f9fd452d49b8aa16a
   app_name: p2_app
   command_name: derive-options-risk
   baseline_function: p2_derive_options_risk_command
   baseline_line: 32428
   current_function: p2_derive_options_risk_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_d7f54a211345bc37ba8d
   app_name: p2_app
   command_name: edgar-text
   baseline_function: p2_edgar_text_command
   baseline_line: 32000
   current_function: p2_edgar_text_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_12149e27ad6dc3ae9813
   app_name: p2_app
   command_name: edgar-topics
   baseline_function: p2_edgar_topics_command
   baseline_line: 32123
   current_function: p2_edgar_topics_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_5d31c76d71718e75f3b1
   app_name: p2_app
   command_name: ensemble
   baseline_function: p2_ensemble_command
   baseline_line: 32640
   current_function: p2_ensemble_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_58e7944d4c0b8c899941
   app_name: p2_app
   command_name: fetch-edgar-text
   baseline_function: p2_fetch_edgar_text_command
   baseline_line: 32061
   current_function: p2_fetch_edgar_text_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_bcee04b9705ff2f1a00d
   app_name: p2_app
   command_name: holdings-lookthrough
   baseline_function: p2_holdings_lookthrough_command
   baseline_line: 32494
   current_function: p2_holdings_lookthrough_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_d929c94ca2b835e36732
   app_name: p2_app
   command_name: import-source
   baseline_function: p2_import_source_command
   baseline_line: 32154
   current_function: p2_import_source_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_4249ff2625b1482908fb
   app_name: p2_app
   command_name: live-preflight
   baseline_function: p2_live_preflight_command
   baseline_line: 32656
   current_function: p2_live_preflight_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_c6db017104dc63472037
   app_name: p2_app
   command_name: ml-ranking
   baseline_function: p2_ml_ranking_command
   baseline_line: 32583
   current_function: p2_ml_ranking_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_dcea328b2ee1003d3628
   app_name: p2_app
   command_name: news-themes
   baseline_function: p2_news_themes_command
   baseline_line: 32259
   current_function: p2_news_themes_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_53bcf4585006b86f99ea
   app_name: p2_app
   command_name: normalize-holdings
   baseline_function: p2_normalize_holdings_command
   baseline_line: 32201
   current_function: p2_normalize_holdings_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_4fdb070ee6bf50b008ac
   app_name: p2_app
   command_name: normalize-news
   baseline_function: p2_normalize_news_command
   baseline_line: 32287
   current_function: p2_normalize_news_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_0fb76fcf1ce1b54f9d02
   app_name: p2_app
   command_name: normalize-options-risk
   baseline_function: p2_normalize_options_risk_command
   baseline_line: 32367
   current_function: p2_normalize_options_risk_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_a67fee4125c541a8ebf6
   app_name: p2_app
   command_name: options-risk
   baseline_function: p2_options_risk_command
   baseline_line: 32348
   current_function: p2_options_risk_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_f1bdbae181351284e50b
   app_name: p2_app
   command_name: walk-forward
   baseline_function: p2_walk_forward_command
   baseline_line: 32556
   current_function: p2_walk_forward_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_f3279146a8c0c77eeda7
   app_name: p2_app
   command_name: weight-optimizer
   baseline_function: p2_weight_optimizer_command
   baseline_line: 32605
   current_function: p2_weight_optimizer_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_367bea197392383e8f29
   app_name: portfolio_app
   command_name: allocate
@@ -7471,48 +7471,48 @@ callbacks:
   baseline_function: satellite_evaluate_command
   baseline_line: 29238
   current_function: satellite_evaluate_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/satellite.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_a4ee2958f56b73d15513
   app_name: satellite_app
   command_name: experiment
   baseline_function: satellite_experiment_command
   baseline_line: 29416
   current_function: satellite_experiment_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/satellite.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_b176cc47cb51af1b7ca6
   app_name: satellite_app
   command_name: features
   baseline_function: satellite_features_command
   baseline_line: 29281
   current_function: satellite_features_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/satellite.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_f5fbdf63a438cd8798ba
   app_name: satellite_app
   command_name: report
   baseline_function: satellite_report_command
   baseline_line: 29340
   current_function: satellite_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/satellite.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_c370b1fd9e305742c292
   app_name: satellite_app
   command_name: run
   baseline_function: satellite_run_command
   baseline_line: 29384
   current_function: satellite_run_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/satellite.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_30fbba00cfc42530cf3c
   app_name: satellite_app
   command_name: validate
   baseline_function: satellite_validate_command
   baseline_line: 29468
   current_function: satellite_validate_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/satellite.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_966954581a35c1c132b6
   app_name: shadow_review_app
   command_name: approve
@@ -7559,24 +7559,24 @@ callbacks:
   baseline_function: simulation_evaluate_command
   baseline_line: 33860
   current_function: simulation_evaluate_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/simulation.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_67be313791464a95980c
   app_name: simulation_app
   command_name: record
   baseline_function: simulation_record_command
   baseline_line: 33835
   current_function: simulation_record_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/simulation.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_bf043621caff5c4d3684
   app_name: simulation_app
   command_name: report
   baseline_function: simulation_report_command
   baseline_line: 33879
   current_function: simulation_report_command
-  current_owner: src/ai_trading_system/cli_commands/etf_portfolio.py
-  migration_status: PENDING_LEGACY_ROOT
+  current_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/simulation.py
+  migration_status: MIGRATED_CANONICAL
 - callback_id: callback_8cf0cc313112106a953d
   app_name: weight_calibration_app
   command_name: aggregate-evidence
@@ -7899,4 +7899,4 @@ callbacks:
   migration_status: MIGRATED_CANONICAL
 production_effect: none
 broker_action: none
-matrix_id: arch_004g2_callback_matrix_c6f5bf4e583ed6d711a9
+matrix_id: arch_004g2_callback_matrix_abfd164fc6a63ecf69ea

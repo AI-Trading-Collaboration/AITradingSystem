@@ -1014,6 +1014,46 @@ tail idle max/total=`0.0162s/0.1549s`。本次PASS profile刷新v13 partial seed
 `891/76/0/0`，CLI仍`41/291/993/0`且tree hash不变。EB6只解锁EB7；whole G2.4 exit、handoff、
 ARCH-005 S0及G2.5仍未触发，`production_effect=none`。
 
+### EB7 启动授权与 callback freeze
+
+2026-07-19，按owner已批准的连续顺序，`ARCH-004G2.4-EB7`从
+base=`4371b419cf9b18c7a8445658c06bddb073eca004`进入`IN_PROGRESS / CONTRACT_FREEZE`。
+入口matrix=`891 migrated / 76 pending / 0 unresolved / 0 duplicate`；本批只迁移以下40个callbacks，
+不吸收EB8：
+
+- `p2_app` 18个：EDGAR text/event/fetch/topic、source import、holdings/news/options normalization与
+  analysis、advanced risk、walk-forward、ML ranking、weight optimizer、ensemble和live preflight；
+- `experiments_app` 7个：register、run、compare、select-candidates、enroll-shadow、weekly-review、validate；
+- `satellite_app` 6个：evaluate、features、report、run、experiment、validate；
+- `dynamic_shadow_app` 6个：package、approve、enroll-approved、update、weekly-review、validate；
+- `simulation_app` 3个：record、evaluate、report。
+
+精确callback id、command name与current function以migration matrix为source of truth。EB7只改变接口归属和
+legacy subtraction，不改变P2数据来源、DQ gate、EDGAR/options/news/holdings计算、experiment ranking、
+satellite policy、dynamic-shadow approval/enrollment、simulation ledger或任何weight/threshold/date/regime/
+promotion语义。现有missing/null、policy/source/output validation与research-only/manual-review边界原样保留；
+不得产生official weight、portfolio、order、broker或production effect。
+
+实现按五个bounded CLI owners拆分，legacy root只保留必要app对象re-export以兼容既有import，不保留callback
+wrapper或第二份实现。退出要求：matrix=`931/36/0/0`、CLI `41/291/993/0`与tree hash保持不变；focused
+positive/missing/source/output/CLI parity、manifests、compatibility、deprecation、source hashes与duration seed
+fresh；formal architecture/contract及本批唯一natural Full PASS；clean attribution后正常commit/push。
+EB7完成只解锁EB8，不等于whole G2.4 phase exit，不触发handoff、ARCH-005 S0或G2.5，
+`production_effect=none`。
+
+2026-07-19，EB7按上述freeze完成。40个callbacks已分别迁入五个canonical owners，legacy root从
+`4,038 lines / 100 functions / 76 decorators`减至`1,781 / 41 / 36`；仅为`etf_compat`保留
+experiments/simulation六个显式callback re-export，不保留wrapper或重复实现。Focused=`257 passed / 32.38s`，
+matrix=`931/36/0/0`，CLI=`41/291/993/0`且tree hash不变；architecture初轮=`402 passed / 43.99s`、
+final tracked state=`402 passed / 36.05s`，
+contract=`265 passed / 198.49s`。本批唯一natural Full=`6377 passed / 2 skipped / 643 warnings / 1286.26s`，
+profile覆盖`6379 nodes / 1072 files / 16 workers`，scheduler、telemetry、performance evidence与provenance
+binding均PASS。Full较EB6最终基准慢约12.9%，但worker busy CV近0、tail idle total由`0.1549s`降至
+`0.0817s`，EB7五个相关测试文件均更快；增量集中在既有Smoothed/Paper-shadow重文件，故记录为历史长链
+运行波动/系统争用风险，不归因为EB7接口拆分，也不宣称稳定性能改善。当前profile刷新为v14 advisory seed；
+generated=`970 modules / 1130 test files / 858 writers / 0 violations`。EB7完成只解锁EB8；whole G2.4
+phase exit、handoff、ARCH-005 S0与G2.5仍未触发，`production_effect=none`。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

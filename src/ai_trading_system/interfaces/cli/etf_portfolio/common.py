@@ -10,10 +10,12 @@ import typer
 
 from ai_trading_system.etf_portfolio.data import (
     latest_price_date,
+    load_standard_prices,
     read_price_frame,
     standardize_price_frame,
     write_quality_report,
 )
+from ai_trading_system.etf_portfolio.features import latest_feature_date
 from ai_trading_system.etf_portfolio.models import DEFAULT_ETF_REPORT_DIR, load_etf_config_bundle
 
 
@@ -94,7 +96,69 @@ def mapping_obj(value: object) -> dict[str, object]:
     return dict(value) if isinstance(value, dict) else {}
 
 
+def resolve_feature_date(value: str | None, features: pd.DataFrame) -> date:
+    if value is not None and value != "latest":
+        return parse_date(value)
+    return latest_feature_date(features)
+
+
+def resolve_frame_date(value: str | None, frame: pd.DataFrame, column: str = "date") -> date:
+    if value is not None and value != "latest":
+        return parse_date(value)
+    if column not in frame.columns:
+        raise typer.BadParameter(f"{column} 字段不存在")
+    parsed = pd.to_datetime(frame[column], errors="coerce").dropna()
+    if parsed.empty:
+        raise typer.BadParameter(f"{column} 没有可用日期")
+    return parsed.max().date()
+
+
+def p1_quality_metadata(
+    prices_path: Path,
+    config,
+    *,
+    include_satellites: bool,
+) -> dict[str, object]:
+    _, report = load_standard_prices(
+        prices_path,
+        config.assets,
+        config.strategy,
+        extra_symbols=satellite_symbols(config) if include_satellites else None,
+    )
+    if not report.passed:
+        typer.echo(f"ETF 数据质量状态：{report.status}，已停止 P1 report。")
+        raise typer.Exit(code=1)
+    return quality_metadata(report)
+
+
+def available_price_symbols(prices: pd.DataFrame, run_date: date) -> set[str]:
+    frame = prices.copy()
+    if "date" not in frame.columns or "symbol" not in frame.columns:
+        return set()
+    parsed_dates = pd.to_datetime(frame["date"], errors="coerce")
+    selected = frame.loc[parsed_dates.notna() & (parsed_dates <= pd.Timestamp(run_date))]
+    return {str(symbol).strip().upper() for symbol in selected["symbol"].dropna()}
+
+
+def price_requested_date_range(prices: pd.DataFrame, run_date: date) -> dict[str, str]:
+    if "date" not in prices.columns:
+        return {"start": "", "end": run_date.isoformat()}
+    parsed_dates = pd.to_datetime(prices["date"], errors="coerce")
+    selected = parsed_dates.loc[parsed_dates.notna() & (parsed_dates <= pd.Timestamp(run_date))]
+    if selected.empty:
+        return {"start": "", "end": run_date.isoformat()}
+    return {
+        "start": selected.min().date().isoformat(),
+        "end": run_date.isoformat(),
+    }
+
+
 __all__ = [
+    "resolve_frame_date",
+    "resolve_feature_date",
+    "price_requested_date_range",
+    "p1_quality_metadata",
+    "available_price_symbols",
     "artifact_stem",
     "latest_json_file",
     "load_optional_json_payload",

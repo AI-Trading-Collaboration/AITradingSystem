@@ -13,6 +13,7 @@ from ai_trading_system.interfaces.cli.etf_portfolio import dynamic_rescue as dyn
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_robustness as dynamic_robustness_commands,
 )
+from ai_trading_system.interfaces.cli.etf_portfolio import dynamic_shadow as dynamic_shadow_commands
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v2_review as dynamic_v2_review_commands,
 )
@@ -346,15 +347,19 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_window_audit as dynamic_v3_window_audit_commands,
 )
+from ai_trading_system.interfaces.cli.etf_portfolio import experiments as experiments_commands
 from ai_trading_system.interfaces.cli.etf_portfolio import operations as operations_commands
+from ai_trading_system.interfaces.cli.etf_portfolio import p2 as p2_commands
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     parameter_review as parameter_review_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import reporting as reporting_commands
+from ai_trading_system.interfaces.cli.etf_portfolio import satellite as satellite_commands
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     satellite_attribution as satellite_attribution_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import shadow_review as shadow_review_commands
+from ai_trading_system.interfaces.cli.etf_portfolio import simulation as simulation_commands
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     trend_calibration as trend_calibration_commands,
 )
@@ -487,6 +492,11 @@ __all__ = [
     "dynamic_v3_rule_calibration_commands",
     "dynamic_v3_rolling_evidence_refresh_commands",
     "etf_app",
+    "dynamic_shadow_commands",
+    "experiments_commands",
+    "p2_commands",
+    "satellite_commands",
+    "simulation_commands",
     "operations_commands",
     "parameter_review_commands",
     "reporting_commands",

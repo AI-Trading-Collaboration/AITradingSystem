@@ -1,19 +1,19 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB6_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB7_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-19
-base_commit: e5fc456c4f2c67466f6f8f78f551e7dc69801644
+base_commit: 4371b419cf9b18c7a8445658c06bddb073eca004
 production_effect: none
 current_staging_authority:
   task_id: ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION
-  increment: ARCH-004G2.4-EB6
+  increment: ARCH-004G2.4-EB7
   status: COMPLETE_G2_4_CONTINUES
-  base_commit: e5fc456c4f2c67466f6f8f78f551e7dc69801644
+  base_commit: 4371b419cf9b18c7a8445658c06bddb073eca004
   declared_path_set_current: true
   owner_authorization:
     instruction: 先按照这个顺序推进到可以考虑开始推进研究策略前把
     authorized_at: 2026-07-19
-    boundary_id: ARCH-004G2.4-EB6
+    boundary_id: ARCH-004G2.4-EB7
   phase_lock:
     next_phase_or_slice_unblocked: true
     eb2_authorized: true
@@ -32,6 +32,9 @@ current_staging_authority:
     eb6_authorized: true
     eb6_complete: true
     eb7_unblocked: true
+    eb7_authorized: true
+    eb7_complete: true
+    eb8_unblocked: true
     formal_arch_005_s0_unblocked: false
     g2_5_unblocked: false
   declared_changed_paths:
@@ -51,32 +54,15 @@ current_staging_authority:
     - src/ai_trading_system/cli_commands/etf_portfolio.py
     - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
     - src/ai_trading_system/interfaces/cli/etf_portfolio/common.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/weight_calibration.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/weight_research.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_shadow.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/experiments.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/satellite.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/simulation.py
     - tests/test_arch_004_refactor_policy.py
     - tests/test_arch_004g2_callback_migration_matrix.py
     - tests/test_arch_004g2_etf_cli_contract.py
     - tests/test_arch_004g_deprecation.py
-    - tests/test_etf_weight_calibration.py
-    - tests/test_etf_weight_calibration_cache.py
-    - tests/test_etf_weight_calibration_profiling.py
-    - tests/test_weight_calibration.py
-    - tests/test_weight_research_b2.py
-    - tests/test_weight_research_b2_b3_v2.py
-    - tests/test_weight_research_b2_control_windows.py
-    - tests/test_weight_research_b2_final_decision.py
-    - tests/test_weight_research_b2_followup.py
-    - tests/test_weight_research_b2_full_diagnostic.py
-    - tests/test_weight_research_b2_targeted_evidence.py
-    - tests/test_weight_research_b3.py
-    - tests/test_weight_research_b4.py
-    - tests/test_weight_research_branching.py
-    - tests/test_weight_research_diagnosis.py
-    - tests/test_weight_research_extended_diagnosis.py
-    - tests/test_weight_research_interfaces.py
-    - tests/test_weight_research_post_branch.py
-    - tests/test_weight_research_program_v1.py
-    - tests/test_weight_research_unblock.py
     - tests/test_validation_runtime_profile.py
 
 integrated_task_ids:

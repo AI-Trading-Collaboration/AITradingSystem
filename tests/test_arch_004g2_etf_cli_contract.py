@@ -27,18 +27,15 @@ REGISTRATION_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/registration.py"
 )
 PAPER_SHADOW_OPERATIONS_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_paper_shadow_operations.py"
 )
 SHADOW_HEALTH_CONTROL_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_shadow_health_control.py"
 )
 SHADOW_DECISION_SUPPORT_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_shadow_decision_support.py"
 )
 WEIGHT_CALIBRATION_COMMANDS_PATH = (
@@ -463,8 +460,7 @@ DYNAMIC_V3_FILTERED_CANDIDATE_READINESS_PIPELINE_PATH = (
     / "src/ai_trading_system/etf_portfolio/dynamic_v3_filtered_candidate_readiness_pipeline.py"
 )
 DYNAMIC_V3_RESEARCH_CONTRACT_LEDGER_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/etf_portfolio/dynamic_v3_research_contract_ledger.py"
+    PROJECT_ROOT / "src/ai_trading_system/etf_portfolio/dynamic_v3_research_contract_ledger.py"
 )
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
@@ -546,6 +542,19 @@ DYNAMIC_V3_PORTFOLIO_RISK_CONTROLS_COMMANDS_PATH = (
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_portfolio_risk_controls.py"
 )
 COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
+DYNAMIC_SHADOW_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_shadow.py"
+)
+EXPERIMENTS_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/experiments.py"
+)
+P2_COMMANDS_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py"
+SATELLITE_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/satellite.py"
+)
+SIMULATION_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/simulation.py"
+)
 
 
 def test_g2_1_etf_cli_contract_matches_frozen_runtime_tree() -> None:
@@ -648,7 +657,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 4038
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 1781
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -859,8 +868,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 4038
-    assert len(legacy_names) == 100
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 1781
+    assert len(legacy_names) == 41
 
 
 def test_g2_4_eb5_shadow_control_callbacks_leave_legacy_root() -> None:
@@ -991,6 +1000,74 @@ def test_g2_4_eb6_weight_callbacks_and_domain_imports_leave_legacy_root() -> Non
     assert legacy_names.isdisjoint(callbacks | {"_echo_weight_shadow_enrollment_summary"})
     assert callbacks <= canonical_names
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
+
+
+def test_g2_4_eb7_residual_callbacks_and_shared_helpers_leave_legacy_root() -> None:
+    legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
+    canonical_names: set[str] = set()
+    for path in (
+        DYNAMIC_SHADOW_COMMANDS_PATH,
+        EXPERIMENTS_COMMANDS_PATH,
+        P2_COMMANDS_PATH,
+        SATELLITE_COMMANDS_PATH,
+        SIMULATION_COMMANDS_PATH,
+    ):
+        canonical_names.update(_function_names(ast.parse(path.read_text(encoding="utf-8"))))
+    callbacks = {
+        "dynamic_shadow_package_command",
+        "dynamic_shadow_approve_command",
+        "dynamic_shadow_enroll_approved_command",
+        "dynamic_shadow_update_command",
+        "dynamic_shadow_weekly_review_command",
+        "dynamic_shadow_validate_command",
+        "satellite_evaluate_command",
+        "satellite_features_command",
+        "satellite_report_command",
+        "satellite_run_command",
+        "satellite_experiment_command",
+        "satellite_validate_command",
+        "experiments_register_command",
+        "experiments_run_command",
+        "experiments_compare_command",
+        "experiments_select_candidates_command",
+        "experiments_enroll_shadow_command",
+        "experiments_weekly_review_command",
+        "experiments_validate_command",
+        "p2_edgar_text_command",
+        "p2_derive_edgar_events_command",
+        "p2_fetch_edgar_text_command",
+        "p2_edgar_topics_command",
+        "p2_import_source_command",
+        "p2_normalize_holdings_command",
+        "p2_news_themes_command",
+        "p2_normalize_news_command",
+        "p2_options_risk_command",
+        "p2_normalize_options_risk_command",
+        "p2_derive_options_risk_command",
+        "p2_holdings_lookthrough_command",
+        "p2_advanced_risk_command",
+        "p2_walk_forward_command",
+        "p2_ml_ranking_command",
+        "p2_weight_optimizer_command",
+        "p2_ensemble_command",
+        "p2_live_preflight_command",
+        "simulation_record_command",
+        "simulation_evaluate_command",
+        "simulation_report_command",
+    }
+    shared_helpers = {
+        "resolve_feature_date",
+        "resolve_frame_date",
+        "p1_quality_metadata",
+        "available_price_symbols",
+        "price_requested_date_range",
+    }
+    common_names = _function_names(ast.parse(COMMON_PATH.read_text(encoding="utf-8")))
+
+    assert len(callbacks) == 40
+    assert legacy_names.isdisjoint(callbacks | {f"_{name}" for name in shared_helpers})
+    assert callbacks <= canonical_names
+    assert shared_helpers <= common_names
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -3974,9 +4051,7 @@ def test_g2_4_eb4_formal_contract_and_ledger_leave_shared_domain_owner() -> None
     legacy_tree = ast.parse(
         DYNAMIC_V3_FILTERED_CANDIDATE_READINESS_PATH.read_text(encoding="utf-8")
     )
-    canonical_tree = ast.parse(
-        DYNAMIC_V3_RESEARCH_CONTRACT_LEDGER_PATH.read_text(encoding="utf-8")
-    )
+    canonical_tree = ast.parse(DYNAMIC_V3_RESEARCH_CONTRACT_LEDGER_PATH.read_text(encoding="utf-8"))
     entrypoints = {
         "build_formal_research_method_contract",
         "formal_research_method_contract_report_payload",
