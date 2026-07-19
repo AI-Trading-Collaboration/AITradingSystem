@@ -57,14 +57,14 @@ def test_tracked_g2_4_callback_matrix_is_current_and_complete_as_inventory() -> 
     assert actual["source_phase"] == "ARCH-004G2.4"
     summary = actual["summary"]
     assert summary["baseline_callback_count"] == 967
-    assert summary["migrated_callback_count"] == 931
-    assert summary["pending_callback_count"] == 36
+    assert summary["migrated_callback_count"] == 967
+    assert summary["pending_callback_count"] == 0
     assert summary["unresolved_callback_count"] == 0
     assert summary["duplicate_callback_count"] == 0
     assert summary["pre_g2_4_canonical_callback_count"] == 26
     assert summary["current_total_callback_count"] == 993
-    assert summary["phase_exit_ready"] is False
-    assert summary["phase_completion_status"] == "IN_PROGRESS"
+    assert summary["phase_exit_ready"] is True
+    assert summary["phase_completion_status"] == "COMPLETE"
     assert len(actual["callbacks"]) == 967
     assert actual["production_effect"] == "none"
     assert actual["broker_action"] == "none"

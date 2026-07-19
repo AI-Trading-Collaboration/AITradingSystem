@@ -1,19 +1,19 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB7_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB8_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-19
-base_commit: 4371b419cf9b18c7a8445658c06bddb073eca004
+base_commit: bfbb38cf1ae0f9fbdd6fcefb10749bc5e59f03dc
 production_effect: none
 current_staging_authority:
   task_id: ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION
-  increment: ARCH-004G2.4-EB7
+  increment: ARCH-004G2.4-EB8
   status: COMPLETE_G2_4_CONTINUES
-  base_commit: 4371b419cf9b18c7a8445658c06bddb073eca004
+  base_commit: bfbb38cf1ae0f9fbdd6fcefb10749bc5e59f03dc
   declared_path_set_current: true
   owner_authorization:
     instruction: 先按照这个顺序推进到可以考虑开始推进研究策略前把
     authorized_at: 2026-07-19
-    boundary_id: ARCH-004G2.4-EB7
+    boundary_id: ARCH-004G2.4-EB8
   phase_lock:
     next_phase_or_slice_unblocked: true
     eb2_authorized: true
@@ -35,6 +35,8 @@ current_staging_authority:
     eb7_authorized: true
     eb7_complete: true
     eb8_unblocked: true
+    eb8_authorized: true
+    eb8_complete: true
     formal_arch_005_s0_unblocked: false
     g2_5_unblocked: false
   declared_changed_paths:
@@ -53,12 +55,13 @@ current_staging_authority:
     - inputs/architecture/arch_004g_deprecation_inventory.yaml
     - src/ai_trading_system/cli_commands/etf_portfolio.py
     - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/common.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_shadow.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/experiments.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/p2.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/satellite.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/simulation.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/ai_attribution.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/ai_confirmation.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/backtest.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/decision_journal.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/forward.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/p1.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/workflow.py
     - tests/test_arch_004_refactor_policy.py
     - tests/test_arch_004g2_callback_migration_matrix.py
     - tests/test_arch_004g2_etf_cli_contract.py

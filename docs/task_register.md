@@ -232,6 +232,13 @@ v13 partial seed绑定`6378 nodes / 1072 files`，final generated=`965/1,130/858
 声明，约`554s`最高单node继续作为runtime-budget长尾。EB7现已解锁；whole phase exit、handoff、
 ARCH-005 S0与G2.5仍锁定，`production_effect=none`。
 
+2026-07-19：EB8 formal integration完成。首轮natural Full=`6371 passed/2 skipped/7 failed/944.47s`，
+准确捕获`cli_direct`兼容符号缺口；补齐纯re-export后，`test_cli_direct=23 passed`、focused=`305 passed`、
+architecture=`403 passed/33.84s`、contract=`265 passed/149.98s`。绑定失败parent的审计rerun=
+`6378 passed/2 skipped/643 warnings/941.19s`，profile=`6380 nodes/1072 files/16 workers`，全部runtime/
+telemetry/performance/provenance gates PASS；v15 duration seed已刷新。EB8 slice完成，下一责任方转whole-G2.4
+phase exit coordinator；handoff、ARCH-005 S0与G2.5仍锁定，`production_effect=none`。
+
 2026-07-19：按owner已批准顺序启动`ARCH-004G2.4-EB7`，base=`4371b419`，状态
 `IN_PROGRESS / CONTRACT_FREEZE`。入口matrix=`891/76/0/0`；本批严格冻结为`p2_app` 18、
 `experiments_app` 7、`satellite_app` 6、`dynamic_shadow_app` 6、`simulation_app` 3，共40 callbacks，
@@ -249,6 +256,20 @@ scheduler/telemetry/performance/provenance PASS。相对EB6约12.9%的Full波动
 重文件；worker CV近0、tail idle更低、EB7相关文件更快，因此不登记为EB7性能回退，不宣称稳定提速。
 v14 advisory seed、manifests、compatibility、deprecation与source hashes已刷新；EB8现解锁，whole phase exit、
 handoff、ARCH-005 S0与G2.5仍锁定，`production_effect=none`。
+
+2026-07-19：按owner已批准顺序启动`ARCH-004G2.4-EB8`，base=`bfbb38cf`，入口matrix=`931/36/0/0`。
+剩余36 callbacks冻结为AI attribution/confirmation 7、decision journal 8、forward 5、backtest 3及其余P1/core
+13，按七个bounded CLI owners迁移。只允许接口归属、legacy subtraction和兼容re-export变化，不改投资、DQ、
+日期/regime、backtest、report或daily-run语义。退出需`967/0/0/0`、CLI frozen parity、focused/formal gates、
+manifests/inventory/hashes与clean attribution全部PASS；随后仍须单独执行whole-G2.4 phase exit gate，不能把
+EB8 slice完成直接当成handoff或ARCH-005 S0启动，`production_effect=none`。
+
+2026-07-19：EB8 implementation完成并进入shared integration；36个callback已迁入7个bounded canonical
+owners，legacy root降至`146 lines / 0 functions / 0 decorators`纯兼容facade；首轮Full捕获并补齐
+`cli_direct`所需forward callbacks与路径常量re-export，不恢复第二份实现。Matrix=`967/0/0/0`、
+`phase_exit_ready=true`，CLI=`41/291/993/0`且tree hash不变，focused=`269 passed / 17.91s`。
+正式architecture/contract/Full及manifests/deprecation/source hashes尚待闭合，故whole phase exit、handoff、
+ARCH-005 S0与G2.5仍锁定，`production_effect=none`。
 
 - 2026-07-19 / `ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION`：owner授权的G2.4-EB1实现与focused验证完成，进入shared integration。15个Signal Failure / Ledger / Churn / Regime / Filter Design callbacks及15个domain public入口已迁canonical并从legacy root减除；五类v2 snapshots绑定live source、policy、chronology与lineage，23个views由validator逐byte重建，tamper fail closed。旧aggregate proxy/default合成dated events/forward returns的错误语义已移除；无validated dated rows时events为空、count/return=null、后续状态为`INSUFFICIENT_DATA`且不产生filter/mitigation。Focused=`15 passed/71.80s`，matrix=`730 migrated / 237 pending / 0 unresolved / 0 duplicate`。当前只闭合manifests/compatibility/deprecation/hashes、architecture/contract与带S4 provenance的单次Full；EB2/ARCH-005/G2.5未授权，`next_phase_or_slice_unblocked=false`、`production_effect=none`。
 - 2026-07-19 / `ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE`：`S4_FULL_TRIGGER_PROVENANCE`已闭合为`COMPLETE_RUNTIME_TASK_CONTINUES`。baseline focused=`81 passed/14.47s`；pre-final fail-closed review修复3个P1后targeted/expanded focused=`89 passed/14.31s`与`136 passed/33.23s`；generated devex=`949 modules/1,126 test-support/0 violations`；正式architecture首轮`354 passed/2 failed`捕获新增module引起的deprecation/test-manifest freshness漂移，刷新及P1 hardening后pre-final integration architecture=`362 passed/50.02s`（`architecture-fitness_20260718T185957Z`）；contract=`254 passed/36.00s`（`contract-validation_20260718T190052Z`）；post-pre-final security review另修复profile双读TOCTOU与外部symlink containment两个P1，要求fixed sibling与same-captured-bytes proof；post-doc final tracked-state artifact/hash由self-excluded compatibility baseline的S4 validation节点canonical绑定，避免活跃文档自引用递归漂移。24/24 changed/declared paths、83 active source hashes和`FRESH_REFRESHED` deprecation inventory闭合。S4 Full run count=`0`，首份真实provenance profile等待下一自然Full；现在返回G2.4协调点，`next_phase_or_slice_unblocked=false`，EB1/下一callback/ARCH-005/G2.5仍需新显式指令，`production_effect=none`。
@@ -1060,7 +1081,7 @@ handoff、ARCH-005 S0与G2.5仍锁定，`production_effect=none`。
 
 |ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
 |---|---|---|---|---|---|---|---|
-|ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION|Architecture / G2.4剩余callback效率优先批次执行|P0|IN_PROGRESS|G2.4 coordinator；推进EB8 residual 36 callbacks|详见 `docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md`。EB1～EB7已迁canonical；EB7 matrix=`931/36/0/0`、CLI tree不变且formal gates PASS。下一批EB8收口剩余36 callbacks；ARCH-005 S0、G2.5与phase handoff仍锁定。|EB8达到`967/0/0/0`并闭合required gates；随后whole phase exit产出`arch_005_bootstrap_handoff.v1` PASS，明确`next_slice_unblocked=false`并停在G2.5前；`production_effect=none`。|2026-07-19：EB7完成并刷新v14 duration seed；唯一Full 1286.26s的增量归因既有Smoothed/Paper-shadow波动而非EB7回退。EB8现解锁，未提前触发phase exit/ARCH-005/G2.5。|
+|ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION|Architecture / G2.4剩余callback效率优先批次执行|P0|IN_PROGRESS|whole-G2.4 phase exit coordinator|详见 `docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md`。EB1～EB8已完成，matrix=`967/0/0/0`、CLI tree不变，EB8 focused/architecture/contract/审计Full全部PASS。下一步独立执行phase exit，刷新最终manifest/deprecation/source hashes并产出handoff；ARCH-005 S0与G2.5仍锁定。|Whole phase exit产出`arch_005_bootstrap_handoff.v1` PASS，明确`next_slice_unblocked=false`并停在G2.5前；`production_effect=none`。|2026-07-19：EB8完成；审计Full rerun 6378 passed/2 skipped/941.19s，v15 seed已刷新。不得把slice completion直接当成handoff。|
 |OPS-003|运行架构/云端持续运行|P1|BASELINE_DONE|系统实现 + 项目 owner|本地基础闭环已完成 `aits ops daily-plan` 与 `aits ops daily-run`；详细拆解见 `docs/requirements/cloud_operations_2026-05-06.md`。后续云 VM、通知、secret 管理和备份策略需 owner 决策时新建或重开任务|每日运行入口必须明确下载、PIT 快照、数据质量门禁、日报、pipeline health、secret hygiene 的顺序和阻断关系；缺少关键凭据或输入时不得静默跳过；云端部署文档必须覆盖 systemd/cron、持久化目录、日志、告警、备份和恢复；运行报告必须显示数据质量状态和 output artifact 路径|2026-05-06: 新增任务，原因：当前持续运行依赖开发机开机；迁移到云 VM 可行但会影响运行链路、质量门禁和 PIT 样本连续性，必须先拆解和登记。2026-05-06: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增每日运行计划命令、报告、系统流图、README 和测试；完整 DONE 仍需 run log、真实调度执行器、云 VM runbook、备份恢复和通知策略。2026-05-08: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：每日自动化真实运行暴露 `daily-plan` 只生成计划、不执行前置依赖和日报评分，owner 同意以能让每日任务正常跑完为目标补齐执行入口。2026-05-08: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits ops daily-run`、脱敏执行报告和关键 artifact 状态检查；自动化改为调用 daily-run；真实 2026-05-08 每日链路 9/9 步通过，验证 `ruff check src tests` 与 `pytest -q` 412 passed。|
 |RISK-012|风险事件/LLM 正式评估准入|P1|BASELINE_DONE|系统验证 + 项目 owner|详细拆解见 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`；已实现 LLM formal assessment 准入；后续如需调整 LLM watch/active 映射或人工复核替代关系，应新建或重开任务|提供命令把 `risk_event_prereview_queue.json` 转换为正式 risk occurrence YAML 与 LLM formal attestation；日报政策/地缘模块必须显示 `llm_formal_assessment` 来源类型，置信度低于人工复核；LLM formal evidence 最高按 B 级处理，默认不能单独触发 position gate；输出保留 model、request id、checksum、status/level suggestion、confidence 和“未人工复核”声明；系统流图、README、测试同步更新|2026-05-10: 新增并进入实现，原因：owner 明确要求参考 LLM 复核结果作为正式评估结果，先不通过人工复核。2026-05-10: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits risk-events apply-llm-formal-assessment`、LLM formal occurrence/attestation 写入、日报 `llm_formal_assessment` 来源类型和较低置信度、系统流图、README、需求文档和测试；真实 2026-05-10 队列写入 5 条 watch occurrence 和 1 条 LLM formal attestation，validate-occurrences PASS；验证通过 `ruff check src tests`、CLI help、完整 `pytest -q` 444 passed。|
 |RISK-011|风险事件/高优先级候选 LLM 风险等级预审|P1|BASELINE_DONE|系统验证 + 项目 owner|详细拆解见 `docs/requirements/risk_event_triaged_llm_precheck_2026-05-10.md`；已实现高优先级候选 OpenAI metadata-only 预审入口；后续采纳为正式 occurrence 或复核声明仍需 owner 复核或独立任务推进|提供命令读取 triage CSV 和官方候选 CSV，按 bucket 过滤后调用现有 OpenAI 风险预审链路；输出必须保存 model、reasoning effort、request id、input/output checksum、`status_suggestion`、`level_suggestion`、matched risk/ticker/node 和人工复核问题；结果强制 `llm_extracted / pending_review`，不得写入正式 occurrence、评分或仓位闸门；系统流图、README 和测试同步更新|2026-05-10: 新增并进入实现，原因：owner 确认高风险源可用 LLM 判断风险等级，但该等级只能作为人工复核建议。2026-05-10: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits risk-events precheck-triaged-official-candidates`、官方候选 CSV loader、triage bucket 过滤、系统流图、README、需求文档和测试；真实 2026-05-10 高优先级候选 8 条送入 OpenAI，生成 5 条 pending_review 预审记录，其中 L2/L3 候选 4 条、active 候选 0 条；验证通过 `ruff check src tests`、CLI help、目标测试 26 passed 和完整 `pytest -q` 438 passed。|

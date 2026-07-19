@@ -1,8 +1,16 @@
+from ai_trading_system.interfaces.cli.etf_portfolio import ai_attribution as ai_attribution_commands
+from ai_trading_system.interfaces.cli.etf_portfolio import (
+    ai_confirmation as ai_confirmation_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import backtest as backtest_commands
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     baseline_review as baseline_review_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import data as data_commands
 from ai_trading_system.interfaces.cli.etf_portfolio import data_quality as data_quality_commands
+from ai_trading_system.interfaces.cli.etf_portfolio import (
+    decision_journal as decision_journal_commands,
+)
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_allocation as dynamic_allocation_commands,
 )
@@ -348,7 +356,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_window_audit as dynamic_v3_window_audit_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import experiments as experiments_commands
+from ai_trading_system.interfaces.cli.etf_portfolio import forward as forward_commands
 from ai_trading_system.interfaces.cli.etf_portfolio import operations as operations_commands
+from ai_trading_system.interfaces.cli.etf_portfolio import p1 as p1_commands
 from ai_trading_system.interfaces.cli.etf_portfolio import p2 as p2_commands
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     parameter_review as parameter_review_commands,
@@ -370,6 +380,7 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     weight_research as weight_research_commands,
 )
+from ai_trading_system.interfaces.cli.etf_portfolio import workflow as workflow_commands
 from ai_trading_system.interfaces.cli.etf_portfolio.registration import etf_app
 
 __all__ = [
@@ -497,6 +508,13 @@ __all__ = [
     "p2_commands",
     "satellite_commands",
     "simulation_commands",
+    "ai_attribution_commands",
+    "ai_confirmation_commands",
+    "backtest_commands",
+    "decision_journal_commands",
+    "forward_commands",
+    "p1_commands",
+    "workflow_commands",
     "operations_commands",
     "parameter_review_commands",
     "reporting_commands",

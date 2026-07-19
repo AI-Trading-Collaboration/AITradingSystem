@@ -450,6 +450,26 @@ owner迁移；跨现有AI/P1命令共用的日期、价格覆盖和DQ metadata h
 weight、threshold、sample、holdout、ranking、recommendation、数据刷新、official/paper/real portfolio、
 order或broker语义，`production_effect=none`；完成后只解锁EB8，不代表whole G2.4 phase exit或handoff。
 
+G2.4-EB8将最后36个AI attribution/confirmation、backtest、decision journal、forward、P1和ETF workflow
+callbacks迁入`interfaces/cli/etf_portfolio/ai_attribution.py`、`ai_confirmation.py`、`backtest.py`、
+`decision_journal.py`、`forward.py`、`p1.py`与`workflow.py`。Legacy
+`cli_commands/etf_portfolio.py`由`1,781 lines / 41 functions / 36 decorators`收敛为
+`146 lines / 0 functions / 0 decorators`的纯兼容facade，只显式re-export注册app、`cli_direct`仍依赖的
+常量及既有import兼容callback；
+callback实现只有canonical owner。Migration matrix达到`967/0/0/0`并标记`phase_exit_ready=true`，公开CLI
+仍为`41 root / 291 groups / 993 leaves / 0 duplicate`，tree hash保持
+`01c78550ae58b38c2d8cca0683376643e2934f93e324710612c87d39eea7302d`。本批只改变接口归属，
+不修改策略、threshold、sample、regime、数据质量、输出schema、official/paper/real portfolio、order或broker
+语义，`production_effect=none`。EB8完成后仍须进入独立whole-G2.4 phase exit gate；在required formal
+validation、manifest/deprecation/source-hash freshness及handoff证据全部PASS前，不得启动ARCH-005 S0或G2.5。
+
+EB8首轮natural Full由`tests/test_cli_direct.py`的7个legacy import contract failures fail closed；facade补齐
+`PROJECT_ROOT`、forward callbacks与路径常量的显式canonical re-export后，定向`23/23`与扩大focused
+`305/305`通过。最终Full以`failure_fix_rerun`绑定首轮失败summary/profile SHA并通过：
+`6378 passed / 2 skipped / 643 warnings / 941.19s`，`6380 nodes / 1072 files / 16 workers`，scheduler、
+telemetry、performance evidence和provenance均PASS；v15 duration seed从该PASS profile刷新。这个修复不新增
+callback实现或数据流，仍为`production_effect=none`，并只允许进入独立whole-G2.4 phase exit review。
+
 S3F只改变test execution fixture，不改变Smoothed生产链。Operations/Evidence测试把既有content-fingerprint、PASS-only validation session延长到单个同步test function，cache仍按validator/kwargs/path/exact bytes绑定并在内容变化时失效，不跨test、worker或进程；Retry/Weekly五个热点改用test-only recorded-owner authority prefix，仍真实运行Promotion、Binding、Switch与Owner `continue_observation`记录，再执行各自完整Weekly/Retry/Refresh producer、validator与tamper路径，旧Operations helper及其他消费者不变。Indicator Family Ablation的28个secondary test outputs与Layer1 Final Gate owner doc均重定向到各test `tmp_path`，因此full不再覆盖tracked research Markdown。三个same-command focused lane墙钟合计`648.19 -> 430.90s`，expanded focused=`134 passed / 1 skipped`；这些是工程验证证据，不改变artifact schema、research conclusion、DQ/PIT/policy、paper-shadow、production或broker状态，完整full收益仍以本批唯一integration-boundary profile为准。
 
 S3F唯一自然integration-boundary profile位于`outputs/validation_runtime/full_20260718T004439Z/`：full=`6,246 passed / 2 skipped / 642 warnings / 1,027.74s`，strict reader确认`6,248 nodes / 1,068 files / 16 workers`、与`231920Z`完全相同的ordered/set collection SHA、scheduler applied、no fallback及profile/telemetry/performance全部PASS。相对`231920Z`，Smoothed 38文件和S3F 17文件worker time分别下降`16.04%/19.00%`，但full墙钟只下降`1.23%`，file P99、worker CV和tail total分别变为`258.01s/1.53%/460.50s`；因此后续瓶颈已转为Layer1、Smoothed Weekly/Refresh、Refined Method和Weight Diagnostics，不能把focused收益当作全局收益。该run使`complete_profile_count=3`，但第1份collection少22 nodes且仍缺complete peak-memory/read-amplification artifact，故`stable_full_improvement_claimed=false`。Tracked research Markdown在full前后byte不变；完整研究数据流、结论语义及production边界均未改变。

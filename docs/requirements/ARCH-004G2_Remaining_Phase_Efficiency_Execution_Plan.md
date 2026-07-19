@@ -1054,6 +1054,49 @@ binding均PASS。Full较EB6最终基准慢约12.9%，但worker busy CV近0、tai
 generated=`970 modules / 1130 test files / 858 writers / 0 violations`。EB7完成只解锁EB8；whole G2.4
 phase exit、handoff、ARCH-005 S0与G2.5仍未触发，`production_effect=none`。
 
+### EB8 启动授权与 callback freeze
+
+2026-07-19，按owner已批准连续顺序，`ARCH-004G2.4-EB8`从
+base=`bfbb38cf1ae0f9fbdd6fcefb10749bc5e59f03dc`进入`IN_PROGRESS / CONTRACT_FREEZE`。
+入口matrix=`931 migrated / 36 pending / 0 unresolved / 0 duplicate`；本批精确收口全部剩余callbacks：
+
+- AI attribution 3、AI confirmation 4；
+- decision journal 8、forward 5、backtest 3；
+- attribution/confirmation/credibility/ETF config/events/portfolio/regime/relative-strength/report/run/signals与
+  governance共13。
+
+实现边界按`ai_attribution`、`ai_confirmation`、`decision_journal`、`forward`、`backtest`、`p1`和
+`workflow`七个bounded CLI owners拆分。Legacy root只保留registration app re-export及`etf_compat`仍需的
+signals/regime/portfolio/report/run callback re-export，不保留wrapper、第二份实现或投资计算。所有AI/P1、
+backtest、forward、journal、DQ、日期/regime、report与daily-run输入输出语义原样保留；不得修改策略、weight、
+threshold、sample、ranking、recommendation、official/paper/real portfolio、order、broker或production行为。
+
+EB8退出要求matrix=`967/0/0/0`且`phase_exit_ready=true`，CLI `41/291/993/0`与tree hash不变；focused、
+manifests、compatibility、deprecation、source hashes、architecture、contract与本批唯一natural Full PASS。
+EB8 slice完成后进入独立whole-G2.4 phase-level exit gate；不得把EB8单批完成直接解释为phase exit、handoff或
+ARCH-005 S0启动，`production_effect=none`。
+
+2026-07-19，EB8 implementation完成并进入shared integration：36个冻结callback已按上述七个bounded
+owners迁移，dead helpers `_records_obj`、`_find_method_obj`与`_texts`删除；legacy root成为
+`146 lines / 0 functions / 0 decorators`纯兼容facade。首轮Full暴露`cli_direct`仍依赖legacy module的
+forward callbacks与路径常量，现以显式re-export保留其导入合同、不恢复任何实现。Post-migration matrix=`967/0/0/0`、
+`phase_exit_ready=true`、CLI=`41/291/993/0`且tree hash不变；首轮focused=`269 passed / 17.91s`。
+当前只证明EB8代码与focused contract闭合，正式architecture/contract/Full、generated manifests、
+deprecation inventory、compatibility/source hashes仍待刷新验证，因此EB8保持`VALIDATING_G2_4_CONTINUES`；
+whole-G2.4 phase exit与handoff尚未通过，ARCH-005 S0和G2.5继续锁定，`production_effect=none`。
+
+2026-07-19，EB8 formal integration闭合。首轮architecture=`403 passed / 33.66s`、contract=
+`265 passed / 149.40s`；唯一natural Full在`6371 passed / 2 skipped / 7 failed / 944.47s`被
+`tests/test_cli_direct.py`正确拦截，根因是纯facade漏掉其仍依赖的legacy `PROJECT_ROOT`、forward callbacks
+与路径常量。修复仅增加canonical symbol re-export，`test_cli_direct=23 passed`、扩大focused=
+`305 passed / 20.70s`，未恢复实现或修改CLI/runtime语义；修复后architecture=`403 passed / 33.84s`、
+contract=`265 passed / 149.98s`。绑定首轮失败summary/profile SHA的`failure_fix_rerun`最终=
+`6378 passed / 2 skipped / 643 warnings / 941.19s`，profile覆盖`6380 nodes / 1072 files / 16 workers`，
+scheduler、telemetry、performance evidence与provenance均PASS。最慢节点`498.63s`与首轮`499.72s`近似，
+tail idle max/total=`0.0076/0.0730s`，未发现EB8性能回退；相对EB7墙钟改善不宣称稳定收益。v15 advisory
+duration seed已由该PASS artifact刷新。EB8只完成slice并解锁独立phase-level exit review；尚未产出
+`arch_005_bootstrap_handoff.v1`，ARCH-005 S0与G2.5仍锁定，`production_effect=none`。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。

@@ -555,6 +555,25 @@ SATELLITE_COMMANDS_PATH = (
 SIMULATION_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/simulation.py"
 )
+AI_ATTRIBUTION_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/ai_attribution.py"
+)
+AI_CONFIRMATION_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/ai_confirmation.py"
+)
+BACKTEST_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/backtest.py"
+)
+DECISION_JOURNAL_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/decision_journal.py"
+)
+FORWARD_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/forward.py"
+)
+P1_COMMANDS_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/p1.py"
+WORKFLOW_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/workflow.py"
+)
 
 
 def test_g2_1_etf_cli_contract_matches_frozen_runtime_tree() -> None:
@@ -657,7 +676,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 1781
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 146
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -868,8 +887,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 1781
-    assert len(legacy_names) == 41
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 146
+    assert len(legacy_names) == 0
 
 
 def test_g2_4_eb5_shadow_control_callbacks_leave_legacy_root() -> None:
@@ -1068,6 +1087,102 @@ def test_g2_4_eb7_residual_callbacks_and_shared_helpers_leave_legacy_root() -> N
     assert legacy_names.isdisjoint(callbacks | {f"_{name}" for name in shared_helpers})
     assert callbacks <= canonical_names
     assert shared_helpers <= common_names
+
+
+def test_g2_4_eb8_final_callbacks_leave_pure_compatibility_facade() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names: set[str] = set()
+    for path in (
+        AI_ATTRIBUTION_COMMANDS_PATH,
+        AI_CONFIRMATION_COMMANDS_PATH,
+        BACKTEST_COMMANDS_PATH,
+        DECISION_JOURNAL_COMMANDS_PATH,
+        FORWARD_COMMANDS_PATH,
+        P1_COMMANDS_PATH,
+        WORKFLOW_COMMANDS_PATH,
+    ):
+        canonical_names.update(_function_names(ast.parse(path.read_text(encoding="utf-8"))))
+    callbacks = {
+        "ai_attribution_build_command",
+        "ai_attribution_report_command",
+        "ai_attribution_validate_command",
+        "ai_confirmation_features_command",
+        "ai_confirmation_report_command",
+        "ai_confirmation_overlay_command",
+        "ai_confirmation_validate_command",
+        "backtest_run_command",
+        "backtest_report_command",
+        "backtest_diagnostics_command",
+        "decision_journal_add_command",
+        "decision_journal_update_command",
+        "decision_journal_list_command",
+        "decision_journal_remove_command",
+        "decision_journal_report_command",
+        "decision_journal_analytics_command",
+        "decision_journal_propose_state_updates_command",
+        "decision_journal_validate_command",
+        "forward_update_command",
+        "forward_dashboard_command",
+        "forward_weekly_review_command",
+        "forward_watchlist_command",
+        "forward_validate_command",
+        "relative_strength_report_command",
+        "confirmation_report_command",
+        "attribution_report_command",
+        "event_risk_flag_command",
+        "governance_status_command",
+        "governance_summary_command",
+        "validate_config_command",
+        "credibility_validate_command",
+        "signals_generate_command",
+        "regime_generate_command",
+        "portfolio_allocate_command",
+        "report_daily_command",
+        "run_daily_command",
+    }
+    compatibility_reexports = {
+        "forward_dashboard_command",
+        "forward_update_command",
+        "forward_watchlist_command",
+        "signals_generate_command",
+        "regime_generate_command",
+        "portfolio_allocate_command",
+        "report_daily_command",
+        "run_daily_command",
+    }
+    compatibility_constants = {
+        "DEFAULT_ETF_DATA_QUALITY_POLICY_CONFIG_PATH",
+        "DEFAULT_ETF_DATA_QUALITY_REPORT_DIR",
+        "DEFAULT_ETF_DATA_QUALITY_VALIDATION_DIR",
+        "DEFAULT_ETF_FORWARD_CONFIG_PATH",
+        "DEFAULT_ETF_FORWARD_DECISION_LEDGER_PATH",
+        "DEFAULT_ETF_FORWARD_REPORT_DIR",
+        "DEFAULT_ETF_PRICE_PATH",
+        "DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH",
+        "DEFAULT_REPORT_REGISTRY_PATH",
+        "PROJECT_ROOT",
+    }
+    imported_names = {
+        alias.asname or alias.name
+        for node in legacy_tree.body
+        if isinstance(node, ast.ImportFrom)
+        for alias in node.names
+    }
+
+    assert len(callbacks) == 36
+    assert not legacy_names
+    assert callbacks <= canonical_names
+    assert compatibility_reexports <= imported_names
+    assert compatibility_constants <= imported_names
+    assert (
+        sum(
+            len(node.decorator_list)
+            for node in ast.walk(legacy_tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+        )
+        == 0
+    )
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
