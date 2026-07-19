@@ -1,7 +1,7 @@
 schema_version: arch_004e_aggregate_shadow_index.v1
 status: SHADOW_COMPATIBILITY_PASS
 policy_id: arch_004e_devex_ownership_policy
-policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
+policy_sha256: dc11a0fcfc5b5a3f83a08b6474b4646400e8a32e436cf8a345fb4ad902f58a23
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
 fragment_count: 13
@@ -31,7 +31,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 12117aa24210c03508bab6660aedba7200c8756cf01a576dab3406fa6dd9fa5d
+  current_sha256: 2d6f33f4f02a1eb185645d4b8c8305e0cdf4a67701001347129cd4429fe27f56
   fragment_root: config/architecture/fragments/flows
   fragment_count: 4
   fragment_paths:

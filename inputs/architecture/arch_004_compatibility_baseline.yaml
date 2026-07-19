@@ -420,6 +420,9 @@ phase_e_devex_ownership_generated_indexes:
   sources:
     - path: config/architecture/devex_ownership_policy.yaml
       sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
+      historical_phase_e_hash: true
+      superseded_by_phase: ARCH-005-PB1
+      current_hash_tracked_in: arch_005_prebootstrap_primitives.sources
     - path: src/ai_trading_system/platform/architecture/devex.py
       sha256: f536638dcdb7c0315fc10d12e0b2d702bc738ff508fbfe086ffd34d7d37d74db
       historical_phase_e_hash: true
@@ -11162,6 +11165,7 @@ phase_g2_4cx1_etf_cli_dynamic_v3_signal_diagnosis_foundation:
   - inputs/architecture/arch_004g2_callback_migration_matrix.yaml
   - inputs/architecture/arch_004g2_etf_cli_contract.yaml
   - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - src/ai_trading_system/platform/architecture/__init__.py
   - src/ai_trading_system/cli_commands/etf_portfolio.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_weight_batch_search.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
@@ -13787,6 +13791,7 @@ integrated_change_arch_004g2_eb0_s3a_weight_search_tail:
   - inputs/architecture/arch_004e_test_manifest.yaml
   - inputs/architecture/arch_004g2_full_duration_profile.yaml
   - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - scripts/run_validation_tier.py
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004g_deprecation.py
   - tests/test_signal_feature_quality_filter_pipeline.py
@@ -13979,6 +13984,7 @@ phase_g2_4eb1_etf_cli_dynamic_v3_signal_filter_foundation:
   - tests/test_arch_004g2_etf_cli_contract.py
   - tests/test_signal_feature_quality_filter_pipeline.py
   - tests/test_validation_runtime_profile.py
+  - scripts/run_validation_tier.py
   sources:
   - path: config/etf_portfolio/dynamic_v3_rescue/signal_feature_failure_taxonomy_v1.yaml
     sha256: eef1e15dc02c0d6dbe5cf7317d7cd3c49f7ca9ba15efb3b00143a1f0aab51907
@@ -14213,6 +14219,23 @@ phase_g2_4eb2_etf_cli_dynamic_v3_filtered_candidate_pipeline:
     eb3_or_formal_arch_005_s0_unblocked: false
     phase_exit_or_handoff_triggered: false
   next_phase_or_slice_unblocked: false
+  superseded_source_paths:
+  - inputs/architecture/arch_004_worktree_attribution.yaml
+  - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+  - docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md
+  - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g2_full_duration_profile.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - scripts/run_validation_tier.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_validation_runtime_profile.py
   sources:
   - {path: inputs/architecture/arch_004_worktree_attribution.yaml, sha256: 8570c6623c0cbef8a8ed0237c06d75fd5793c7c020c5da43329a115b24bee007}
   - {path: docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md, sha256: 71400163b47fb2f96120df128d71da5ecff552544812df386ef988b3aaa572e8}
@@ -14242,3 +14265,115 @@ phase_g2_4eb2_etf_cli_dynamic_v3_filtered_candidate_pipeline:
   - {path: tests/test_filtered_candidate_pipeline_foundation.py, sha256: 2d89f65eccb3a64a26345f8c23ddbece269cd3d4dc40eae6e1e0c472f28c508a}
   - {path: tests/test_signal_feature_quality_filter_pipeline.py, sha256: ed2d04ff715f5ff6f318017623fc0119142656b59cb9a689c2b39138746e177a}
   - {path: tests/test_validation_runtime_profile.py, sha256: c516f935ed6b5aabe5de640033541fc0fdab617902ad99e44d5fdcf2c6b4919e}
+
+arch_005_prebootstrap_primitives:
+  status: COMPLETE_NON_CUTOVER_G2_4_CONTINUES
+  task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+  slice_id: ARCH-005-PB1
+  as_of: 2026-07-19
+  base_commit: fe0e19b943e7ca2f49c091a50536a6b022657566
+  owner_authorization:
+    instruction: 继续按照这个思路实现
+    boundary_id: ARCH-005-PB1
+    formal_s0_authorized: false
+  contracts:
+    change_manifest_schema: change_manifest.v1
+    validation_evidence_schema: validation_evidence.v1
+    lane_plan_schema: lane_plan.v1
+    canonical_serialization_and_hash: true
+    base_drift_fail_closed: true
+    owned_shared_path_conflict: true
+    module_conflict: true
+    contract_access_and_version_conflict: true
+    coordinator_only_guard: true
+    explicit_lane_capacity_required: true
+    deterministic_domain_waves: true
+    coordinator_final_integration_wave: true
+    evidence_manifest_base_tier_status_artifact_binding: true
+  non_cutover_boundary:
+    dispatch_allowed: false
+    lease_acquisition_allowed: false
+    task_registry_mutated: false
+    generated_task_views_written: false
+    markdown_source_of_truth_changed: false
+    production_effect: none
+  phase_lock:
+    eb2_integration_gate_passed: true
+    pre_bootstrap_unblocked: true
+    pre_bootstrap_complete: true
+    eb3_unblocked: false
+    formal_arch_005_s0_unblocked: false
+    g2_5_unblocked: false
+    next_phase_or_slice_unblocked: false
+  validation:
+    focused: {status: PASS, passed: 49, elapsed_seconds: 35.50}
+    runtime_profile: {status: PASS, passed: 23, elapsed_seconds: 15.64}
+    architecture_fitness:
+      status: PASS
+      passed: 395
+      elapsed_seconds: 56.50
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260719T065713Z/test_runtime_summary.json
+      runtime_artifact_sha256: ae705ed4b4ab6c884c732dc43a95dcd1351ea14aab5f2c5c04893b7acff5a87d
+    contract_validation:
+      status: PASS
+      passed: 262
+      elapsed_seconds: 45.21
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260719T065713Z/test_runtime_summary.json
+      runtime_artifact_sha256: c613f8e5f397e2d37a943bf469949327437facbd816e3c70308296ef91804d1d
+    full_validation:
+      status: PASS
+      passed: 6350
+      skipped: 2
+      warnings: 643
+      elapsed_seconds: 912.17
+      runtime_artifact: outputs/validation_runtime/full_20260719T063016Z/test_runtime_summary.json
+      runtime_artifact_sha256: 3ce5d94ba31e8b2ae997b9bdfc3b782e4410d96d40f7f34a74ceee6c890184f9
+      runtime_profile: outputs/validation_runtime/full_20260719T063016Z/test_runtime_profile.json
+      runtime_profile_sha256: 83b058604486be8b36c8364e56b5769f589d79c5baefca77816e08ce2a1606c3
+      scheduler_applied: true
+      scheduler_fallback: false
+      profile_status: PASS
+      telemetry_status: PASS
+      performance_evidence_status: PASS
+      validation_provenance_binding_status: PASS
+      stable_full_improvement_claimed: false
+    complete_duration_profile:
+      status: PASS
+      manifest_status: COMPLETE
+      version: 8
+      source_node_count: 6352
+      source_file_count: 1071
+      source_artifact_sha256: 83b058604486be8b36c8364e56b5769f589d79c5baefca77816e08ce2a1606c3
+      exact_collection_verified: true
+    architecture_devex:
+      status: PASS
+      module_count: 954
+      test_file_count: 1129
+      direct_writer_count: 858
+      violation_count: 0
+    deprecation_inventory:
+      status: FRESH_REFRESHED
+      inventory_id: arch_004g_deprecation_inventory_a2ab38dc563643dacc6e
+      module_count: 954
+      test_file_count: 1129
+  sources:
+  - {path: config/architecture/devex_ownership_policy.yaml, sha256: dc11a0fcfc5b5a3f83a08b6474b4646400e8a32e436cf8a345fb4ad902f58a23}
+  - {path: docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md, sha256: f84432a2888f8f11681d130f8d0ae6261614aafe6a5a2d5d47279b37634a7cef}
+  - {path: docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md, sha256: e0b81cdde59efbd8c1db9e67ff9404d4e742956f1401e682f17654ee1508096b}
+  - {path: docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md, sha256: f9a31b4f944d9d7ac00fc16cdee48bc2abf4f5a83af1da0484499effb0d884ab}
+  - {path: docs/system_flow.md, sha256: 2d6f33f4f02a1eb185645d4b8c8305e0cdf4a67701001347129cd4429fe27f56}
+  - {path: docs/task_register.md, sha256: ad5415c4137e66145ce4d89ca35204c1248cbb8a895554972e076cbee4c661d2}
+  - {path: inputs/architecture/arch_004_worktree_attribution.yaml, sha256: a41ba1e5d83f5e84908693d25736735bb527454474bbfc5149faa3c8c16ba187}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 1934576e1c67802d242872e9d2d8073979aaa51e60b9d266430fa1dc666644b2}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: df5f8b02031110e8b8763bf868bae426f49efdf8a35c963045848fe6931efc6e}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: c862bfaff4d26663976c15ab2e963afc1a06c81ca709c15fac3c6a572e167030}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: f765b4a5fa4100b749dc29f0d4af604a2d7e545332f1b1c04c4283578b85f51b}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: cc440395a6380665a561db791a4dee6bc846537333fcdbf1d71862256271d3ee}
+  - {path: inputs/architecture/arch_004g2_full_duration_profile.yaml, sha256: 5f721ae49d63380b72c779a3b7809fdd1cc77150f166ad00e803b3548ee71fc6}
+  - {path: scripts/run_validation_tier.py, sha256: 61d86b60cdf26a2d345e3e50888473f6e398938bad80fc80926e78db4e250dc1}
+  - {path: src/ai_trading_system/platform/architecture/__init__.py, sha256: 7b75d82cc7352ca3cdfc51f147bc0e4ef22ec4bbb41aabbec5970160784c4ef5}
+  - {path: src/ai_trading_system/platform/architecture/parallel_control.py, sha256: d4a53fa3c25dc7de54b3819048c2651fb4349b6da1e470b9749fdc07ee5e83a6}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: fac37a4775734ba554b33e7d2030fc2fa72140ccf1bc98e55d39b71661d54ecd}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: 2a41827eddfa3b8b807bbd918891b8306d1e2b12316ea0d65af8c25f366da9d5}
+  - {path: tests/test_arch_005_prebootstrap.py, sha256: 804a5336a5ad57b01898fc16e16d64dc19718811dfb52a2d2d5f63b972358e01}
+  - {path: tests/test_validation_runtime_profile.py, sha256: 6e918dd8c4adfc47c63723c47c265ddd0c1136987c020cfcdbf5e202e74b403b}

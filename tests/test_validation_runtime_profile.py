@@ -255,7 +255,7 @@ def _build_comparable_runtime_payload(
     )
 
 
-def test_tracked_complete_profile_is_valid_and_source_bound(tmp_path: Path) -> None:
+def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> None:
     profile = load_duration_profile(PROFILE_PATH)
 
     assert profile.valid is True
@@ -263,36 +263,36 @@ def test_tracked_complete_profile_is_valid_and_source_bound(tmp_path: Path) -> N
     assert profile.partial_seed is False
     assert profile.complete_profile is True
     assert profile.owner == "validation_operations"
-    assert profile.version == 6
+    assert profile.version == 8
     assert profile.source_workers == 16
     assert profile.source_dist == "loadfile"
     assert profile.source_artifact_path == (
-        "outputs/validation_runtime/full_20260719T053635Z/test_runtime_profile.json"
+        "outputs/validation_runtime/full_20260719T063016Z/test_runtime_profile.json"
     )
     assert profile.source_artifact_sha256 == (
-        "3f3e56dd2c25ae9338e4de25b63029687e3e03c4a602512855a63a42d75858d2"
+        "83b058604486be8b36c8364e56b5769f589d79c5baefca77816e08ce2a1606c3"
     )
-    assert len(profile.observed_seconds) == 1070
-    assert profile.source_node_count == 6331
-    assert profile.source_file_count == 1070
+    assert len(profile.observed_seconds) == 1071
+    assert profile.source_node_count == 6352
+    assert profile.source_file_count == 1071
     assert profile.source_collection_ordered_sha256 == (
-        "168618989e0c7d14617bb7691b36349b6aa81222f6be3f72c3700254721c4323"
+        "d7ab832136c124e12bac0351d729b20f28a75ba497614d03b0d5ea1da57de28c"
     )
     assert profile.source_collection_set_sha256 == (
-        "4d63b4bbb446b9bdf3ac75dd206dbcd9eae2bb95fb1af45f059119053c490a89"
+        "e8a5370baf8da68200dcb442381fd2d96783d96d5b73319042baefb9e92271c8"
     )
     assert profile.source_file_set_sha256 == (
-        "550d10f54e3b79783747d259aa98308b63dc1618692ecee1c55bc83132d75947"
+        "5e6ca0b25c5a902302852b727a3d847f5e533650210d17f0f5b8ab25bf43adb0"
     )
     assert profile.source_file_rows_sha256 == (
-        "f8492b8704b9e16ee8f7d2d74b8b57ecc90a52556f5677b3e53c6d8adb17d099"
+        "6d91ebfb7bdcef9ad389ddcf797a7c122342096df89263cee7d154bd1c8fa68c"
     )
     assert profile.expected_scheduled_ordered_sha256 == (
-        "573e8288d1fe1f1225de2b7ac152daa0d603ce8db47c8739ea65f0d35a37b6e2"
+        "368da6f7662f838d5b2fc1b03b29276507bf45c9a6feca4dbac5e88408edab8c"
     )
-    assert profile.source_file_duration_total_seconds == 15386.5174991
+    assert profile.source_file_duration_total_seconds == 14400.3621231
     assert profile.observed_seconds["tests/test_layer1_meta_policy_readiness.py"] == (
-        574.6991303
+        562.2951898
     )
 
     legacy = load_duration_profile(_write_legacy_partial_profile(tmp_path / "legacy_partial.yaml"))

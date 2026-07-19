@@ -12,6 +12,7 @@
 - hard dependency：`ARCH-004C_PLATFORM_CONTRACTS`、`ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES` `DONE`；现有 task-register consistency baseline
 - bootstrap start condition：正式 S0 仍必须等待整个 ARCH-004G2.4 phase exit gate PASS，并收到 `arch_005_bootstrap_handoff.v1`；在此之前保持 `READY` 且 `next_slice_unblocked=false`
 - approved pre-bootstrap boundary：ARCH-004G2.4-EB2 integration gate 已 PASS，owner 批准的下一实现范围为最终可复用、非 cutover 的 manifest/conflict/lane-plan/evidence primitives；它不是 S0，不得迁移 task registry、切换事实源、生成替代 task views、派发任务或获取真实 lease
+- pre-bootstrap status：`COMPLETE_NON_CUTOVER_G2_4_CONTINUES`，slice id=`ARCH-005-PB1`，base=`fe0e19b9`；只新增pure contracts/validators/planner及测试，不生成runtime registry或scheduler state
 - integration milestone：S0～S3 在 G2.4 handoff 后推进；S4 controlled dispatch 与 `ARCH-004G2_PARALLEL_READINESS_GATE` 的三 lane rehearsal 共同验收
 - downstream consumers：ARCH-004 G3/G4/G5 lanes、`PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH`
 - production effect：`none`
@@ -27,6 +28,34 @@ S0 inventory/schema freeze、S1 shadow import/projection 与所有 source-of-tru
 handoff。pre-bootstrap 产物必须使用与后续 S0～S4 相同的 versioned contracts，不得建立临时第二套
 manifest、scheduler 或 lease 语义；若首个受控批次没有可验证收益或出现 shared-path/P0/P1 问题，
 停止使用并保留审计证据，不以降低 G2.4 门禁换取速度。
+
+### ARCH-005-PB1 实施冻结
+
+本slice的输入是显式`change_manifest.v1` records、当前base commit、DevEx coordinator-only paths与
+`validation_evidence.v1` records；输出只允许确定性的conflict report、lane plan和evidence binding result。
+实现必须满足：
+
+- manifest canonical serialization/hash与输入顺序无关，path/base/schema/identity异常fail closed；
+- owned/shared path、module、contract read/write/version conflict均给出稳定reason code；
+- stale base、domain lane触达coordinator-only path、非`production_effect=none`立即阻断；
+- 显式capacity下生成deterministic domain waves，冲突任务不进入同一wave，coordinator只在最终integration wave；
+- evidence必须绑定manifest hash、base、required tier、PASS status与root-contained真实artifact SHA；
+- 输出固定`dispatch_allowed=false`、`lease_acquisition_allowed=false`，不得写task status、Markdown view、
+  registry、lease、production或broker状态。
+
+验收为focused contract tests、DevEx manifests/deprecation/source hashes fresh、architecture/contract/full
+门禁PASS以及clean attribution；PB1完成仍保持正式S0、EB3和G2.5锁定。
+
+2026-07-19，PB1 已按上述边界闭合。实现位于
+`platform/architecture/parallel_control.py`，提供精确schema解析、canonical hash、path/module/contract
+conflict、base/coordinator guard、显式capacity下的确定性domain waves、最终coordinator wave及真实artifact
+SHA evidence binding；所有plan/binding输出继续固定dispatch/lease/registry mutation为false。Focused=
+`49 passed / 35.50s`，runtime-profile=`23 passed / 15.64s`，正式architecture/contract=
+`395/262 passed`；natural Full=`6,350 passed / 2 skipped / 912.17s`，profile/telemetry/performance/
+provenance均PASS、scheduler applied且无fallback。真实sidecar机械生成`COMPLETE v8`，精确绑定
+`6,352 nodes / 1,071 files`；module/test manifests=`954/1,129`、direct writer=`858`、violation=`0`，
+deprecation inventory fresh。该结果不授权S0、registry/view cutover、真实dispatch/lease、EB3或G2.5；
+`next_phase_or_slice_unblocked=false`、`production_effect=none`。
 
 ## 为什么这是基础设施
 

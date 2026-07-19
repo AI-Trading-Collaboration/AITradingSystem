@@ -2,6 +2,33 @@
 
 本文档是系统从数据输入、中间评估到输出结论的流程图。它不是一次性说明文档，而是工程事实的一部分：后续新增命令、数据源、配置、评分模块、回测路径或报告输出时，必须同步维护本文件。
 
+ARCH-005-PB1 在 G2.4 尚未完成 phase-level handoff 时先提供 non-cutover 并行控制原语。调用方把每个候选变更声明为
+`change_manifest.v1`，其中固定 `base_commit`、DOMAIN/COORDINATOR 角色、owned/shared paths、module ids、
+contract 读写/version 以及 required validation tiers。解析器执行精确 schema、canonical POSIX path、40-hex base、
+唯一 scope 与 `production_effect=none` 校验；随后 conflict detector 计算 path/module/contract 冲突，lane planner
+校验 base drift、coordinator-only/shared-path policy 和显式 domain lane capacity。不可序列化冲突直接 `BLOCKED`；
+可序列化冲突进入不同 domain waves，无冲突项按 change id 确定性装箱，唯一 coordinator 只能位于最终 integration
+wave。验证结束后，`validation_evidence.v1` 必须逐 tier 绑定 change id、manifest hash、base、PASS status、仓库内
+artifact path 与实际 SHA-256，缺失、越界或漂移均 fail closed。本节点只生成内存中的 plan/binding 结果，不执行任务、
+不申请真实 lease、不写 task registry 或 generated task views，也不切换 Markdown source of truth；正式 ARCH-005 S0
+仍等待整个 G2.4 的 `arch_005_bootstrap_handoff.v1` PASS。
+
+```mermaid
+flowchart LR
+    OWNER["Owner-approved PB1 boundary"] --> MANIFEST["change_manifest.v1<br/>base / role / paths / modules / contracts / tiers"]
+    MANIFEST --> PARSE["Exact schema + canonical path/hash validation"]
+    PARSE --> CONFLICT["Path / module / contract conflict detection"]
+    CONFLICT --> GUARD["Base drift + coordinator-only + capacity guards"]
+    GUARD -->|"blocking or non-serializable"| BLOCKED["BLOCKED<br/>no waves"]
+    GUARD -->|"safe"| DOMAIN["Deterministic DOMAIN waves"]
+    DOMAIN --> COORD["Final COORDINATOR integration wave"]
+    COORD --> EVIDENCE["validation_evidence.v1<br/>manifest/base/tier/PASS/artifact SHA binding"]
+    EVIDENCE -->|"missing or drift"| FAIL["FAIL / fail closed"]
+    EVIDENCE -->|"all required tiers bound"| PASS["PASS evidence binding"]
+    BLOCKED -.-> BOUNDARY["dispatch=false<br/>lease=false<br/>registry mutation=false<br/>production_effect=none"]
+    PASS -.-> BOUNDARY
+```
+
 ARCH-004G2.4CW1 把 TRADING-306～309 Diagnostics 的12个CLI callback迁至
 `interfaces/cli/etf_portfolio/dynamic_v3_weight_search_diagnostics.py`，并把12个public业务入口迁至
 同名canonical domain。`weight_search_diagnostics_v1.yaml`治理near-miss、gate assessment、

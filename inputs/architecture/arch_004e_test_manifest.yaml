@@ -1,10 +1,10 @@
 schema_version: arch_004e_test_manifest.v1
 status: PASS
 policy_id: arch_004e_devex_ownership_policy
-policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
+policy_sha256: dc11a0fcfc5b5a3f83a08b6474b4646400e8a32e436cf8a345fb4ad902f58a23
 test_root: tests
-test_file_count: 1128
-test_count: 1070
+test_file_count: 1129
+test_count: 1071
 support_file_count: 58
 orphan_count: 0
 specific_overlap_count: 0
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: d6c8e95b1a775883da373e2cb31b763afcbb9935426c898c8a79f4920df55bf0
+  sha256: fac37a4775734ba554b33e7d2030fc2fa72140ccf1bc98e55d39b71661d54ecd
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7641,7 +7641,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 554ebf64843d593517d9b681aae41277768a743abe4bb4476a25fba7ba464d49
+  sha256: 2a41827eddfa3b8b807bbd918891b8306d1e2b12316ea0d65af8c25f366da9d5
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7675,6 +7675,22 @@ tests:
   - src/ai_trading_system/contracts/
   - src/ai_trading_system/platform/
   - src/ai_trading_system/research_framework/
+- test_id: tests.test_arch_005_prebootstrap
+  path: tests/test_arch_005_prebootstrap.py
+  sha256: 804a5336a5ad57b01898fc16e16d64dc19718811dfb52a2d2d5f63b972358e01
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_artifact_lifecycle_inventory
   path: tests/test_artifact_lifecycle_inventory.py
   sha256: 223d95a2b4bf74ceb79b2ee3c1d54a6c0acccb13f0679d458754ef99cec7a21d
@@ -15221,7 +15237,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_validation_runtime_profile
   path: tests/test_validation_runtime_profile.py
-  sha256: c516f935ed6b5aabe5de640033541fc0fdab617902ad99e44d5fdcf2c6b4919e
+  sha256: 6e918dd8c4adfc47c63723c47c265ddd0c1136987c020cfcdbf5e202e74b403b
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

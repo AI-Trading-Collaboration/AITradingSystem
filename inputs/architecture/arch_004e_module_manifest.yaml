@@ -1,9 +1,9 @@
 schema_version: arch_004e_module_manifest.v1
 status: PASS
 policy_id: arch_004e_devex_ownership_policy
-policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
+policy_sha256: dc11a0fcfc5b5a3f83a08b6474b4646400e8a32e436cf8a345fb4ad902f58a23
 source_root: src/ai_trading_system
-module_count: 953
+module_count: 954
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -13116,13 +13116,14 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.__init__
   path: src/ai_trading_system/platform/architecture/__init__.py
-  sha256: 968c5c160c360672fb7c28eeac56059335bf4148c6d8a204fc7fbb550190b6db
+  sha256: 7b75d82cc7352ca3cdfc51f147bc0e4ef22ec4bbb41aabbec5970160784c4ef5
   rule_id: platform
   owner_profile: platform
   owners:
@@ -13138,6 +13139,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13160,6 +13162,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13182,6 +13185,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13204,6 +13208,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13226,6 +13231,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13248,6 +13254,30 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.platform.architecture.parallel_control
+  path: src/ai_trading_system/platform/architecture/parallel_control.py
+  sha256: d4a53fa3c25dc7de54b3819048c2651fb4349b6da1e470b9749fdc07ee5e83a6
+  rule_id: platform
+  owner_profile: platform
+  owners:
+    code_owner: platform_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: platform
+  category: platform_services
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004c_*.py
+  - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13270,6 +13300,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13292,6 +13323,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13314,6 +13346,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13336,6 +13369,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13358,6 +13392,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13380,6 +13415,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13402,6 +13438,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13424,6 +13461,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13446,6 +13484,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13468,6 +13507,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13490,6 +13530,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13512,6 +13553,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13534,6 +13576,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13556,6 +13599,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13578,6 +13622,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
@@ -13600,6 +13645,7 @@ modules:
   test_globs:
   - tests/test_arch_004c_*.py
   - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation

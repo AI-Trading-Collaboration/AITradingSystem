@@ -627,3 +627,11 @@ Entry decision：`ARCH_004_PHASE_A_COMPLETE_PHASE_B_UNBLOCKED`。这只解锁 Se
   并通过离线全集复验。EB2=`COMPLETE_G2_4_CONTINUES`，matrix仍`745/222/0/0`；只解锁owner已批准的
   non-cutover pre-bootstrap primitives，whole G2.4 handoff、EB3、正式ARCH-005 S0与G2.5继续锁定，
   `next_phase_or_slice_unblocked=false`、`production_effect=none`。
+- 2026-07-19：owner批准的`ARCH-005-PB1` non-cutover primitives已闭合。新增versioned change/
+  validation contracts、path/module/contract conflict、base drift/coordinator-only guard、确定性domain waves/
+  final coordinator wave及root-contained artifact SHA binding；所有输出固定不dispatch、不申请lease、不改
+  task registry/view/source of truth。Focused/runtime-profile/architecture/contract=`49/23/395/262 passed`；
+  natural Full=`6,350 passed / 2 skipped / 912.17s`且完整runtime evidence PASS/no fallback，`COMPLETE v8`
+  精确绑定`6,352 nodes / 1,071 files`。该前置能力可供后续G2.4 rehearsal复用，但不把单个PB1完成误判为
+  G2.4 phase exit；EB3、正式ARCH-005 S0、G2.5及handoff仍锁定，`next_phase_or_slice_unblocked=false`、
+  `production_effect=none`。

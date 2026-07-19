@@ -96,7 +96,7 @@ module_rules:
     layer: platform
     category: platform_services
     public_contract: true
-    test_globs: [tests/test_arch_004c_*.py, tests/test_arch_004e_*.py]
+    test_globs: [tests/test_arch_004c_*.py, tests/test_arch_004e_*.py, tests/test_arch_005*.py]
     validation_tiers: [architecture-fitness, contract-validation]
   - rule_id: legacy
     path_prefix: src/ai_trading_system/legacy/
@@ -237,6 +237,12 @@ test_rules:
     category: architecture
     suite: architecture-fitness
     covered_module_prefixes: [src/ai_trading_system/contracts/, src/ai_trading_system/platform/, src/ai_trading_system/research_framework/]
+  - rule_id: parallel_control_tests
+    path_prefix: tests/test_arch_005
+    owner_profile: quality
+    category: architecture
+    suite: architecture-fitness
+    covered_module_prefixes: [src/ai_trading_system/platform/architecture/]
   - rule_id: architecture_control_tests
     exact_paths:
       - tests/test_documentation_contract.py
@@ -284,7 +290,7 @@ change_rules:
   - rule_id: architecture_config
     path_prefix: config/architecture/
     owner_profile: architecture
-    test_globs: [tests/test_arch_004*.py, tests/test_engineering_closeout.py]
+    test_globs: [tests/test_arch_004*.py, tests/test_arch_005*.py, tests/test_engineering_closeout.py]
     validation_tiers: [architecture-fitness, contract-validation]
   - rule_id: research_config
     path_prefix: config/research/
