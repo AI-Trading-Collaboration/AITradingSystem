@@ -97,7 +97,27 @@ Markdown views。source、policy binding、cross-lineage、chronology或任一ou
   后续可把Micro Search validated immutable source bundle提升为module-scoped fixture，但必须保留content-
   fingerprint invalidation、tamper copy-on-write和真实validator，不能缓存FAIL。
 - TRADING-331～335 在后续EB2迁移时必须同步修正“empty filter仍产生候选/结论”的legacy语义，并沿用同一
-  snapshot、lineage、null和all-view rebuild契约。
+  snapshot、lineage、null和all-view rebuild契约；该迁移已在EB2闭合，后续只在真实dated evidence
+  到位时扩展非空路径，不回退到旧合成语义。
+
+## EB2 Canonical Execution Contract
+
+ARCH-004G2.4-EB2 从 base=`9c0025e4` 迁移 TRADING-331～335 的 15 个 producer/report/validator
+callbacks。五段输入、输出与计算边界冻结如下：
+
+|Stage|Validated inputs|Outputs|Fail-closed calculation|
+|---|---|---|---|
+|Filtered Backfill|EB1 Filter Design full bundle + same-ledger Candidate Ledger full bundle + policy binding|specs、performance、signal metrics、manifest/report、v2 snapshot|filter evidence不足或filters为空时三类rows均为空；没有独立filtered outcome evidence时不得用公式合成return/drawdown/churn delta|
+|Comparison|validated Filtered Backfill full bundle|matrix、summary、manifest/report、v2 snapshot|只有可比较且非null的同cohort evidence才允许ranking；空输入时best/confidence=null、recommendation=`INSUFFICIENT_DATA`|
+|Signal Gate Experiment|same Filter Design + Ledger + policy lineage|gate results/summary、Reader Brief、manifest/report、v2 snapshot|只从真实dated events重算gate observations；0 events/0 filters时results为空，不使用`max(1, n)`伪造rate|
+|Promotion Review|validated Comparison + Gate Experiment，且filter/ledger/policy lineage一致|decision、candidate specs、Reader Brief、manifest/report、v2 snapshot|任一源不足时decision=`INSUFFICIENT_DATA`且candidate_variant=null；positive decision仍需formal/forward/owner gate|
+|Owner Roadmap|validated Promotion Review full bundle|summary、checklist、Reader Brief、manifest/report、v2 snapshot|不足证据只允许建议建设validated dated evidence，不得声称存在filtered candidate或继续promotion|
+
+五个 producer 均须在创建 output 目录前完成 source validator、identity/path/hash、cross-lineage、policy
+binding 与 timezone-aware chronology 校验；snapshot 冻结 exact file set 和 view hashes，validator 重验
+live source 并逐byte重建24个views。任何source、snapshot、lineage、chronology、policy或output tamper均FAIL。
+本层不运行上游、不刷新数据、不修改 official gate/filter、target weights、portfolio、paper primary、
+production、order或broker。
 
 ## Progress Notes
 
@@ -112,3 +132,21 @@ Markdown views。source、policy binding、cross-lineage、chronology或任一ou
   COMPLETE duration profile重验PASS。该验证只确认实现/证据链，未把缺失dated evidence改写为正向研究结论。
   Callback matrix由`715/252`更新为`730 migrated/237 pending`；本记录不宣告TRADING-331～335或整个
   G2.4完成，`production_effect=none`。
+- 2026-07-19: ARCH-004G2.4-EB2实现完成并进入`VALIDATING`。TRADING-331～335的15个CLI callbacks与
+  15个public入口已迁至`dynamic_v3_filtered_candidate_pipeline` canonical interface/domain，legacy CLI
+  callback/decorator清零，legacy domain只保留lazy wrappers且删除旧合成计算。五类v2 snapshots绑定
+  validated EB1 Filter/Ledger、同一policy、exact lineage与chronology；24个views由validator逐byte重建，
+  live source、snapshot、output、cross-lineage和chronology drift均fail closed。当前source-backed链为
+  0 filters/0 dated events，故Backfill三类rows、Comparison matrix、Gate results均为空，winner/candidate/
+  confidence/rates为null，Review/Roadmap=`INSUFFICIENT_DATA`并要求建设dated signal与filtered outcome
+  evidence；旧5 variants、公式delta、默认分母、winner和`CONTINUE_TESTING`结论正式失效。Matrix=
+  `745/222/0/0`，CLI=`41/291/993/0`且tree hash不变；正式integration gates仍在进行，
+  `production_effect=none`。
+- 2026-07-19: EB2 integration gate=`COMPLETE_G2_4_CONTINUES`。Focused=`183 passed / 86.69s`，
+  downstream pre-EB2 compatibility=`50 passed / 73.18s`，runtime-profile focused=`91 passed /
+  14.49s`，pre-final architecture/contract=`374/262 passed`。首轮natural Full虽pytest PASS但因集合
+  漂移触发strict profile fallback，未作为promotion evidence；parent-bound recovery Full=`6,329 passed /
+  2 skipped / 1,029.52s`且profile/telemetry/performance/provenance均PASS。由其机械生成的
+  `COMPLETE v6`精确覆盖`6,331 nodes / 1,070 files`并通过离线全集复验。该门只证明工程迁移和
+  fail-closed证据链正确；当前研究输出仍为0 filters/0 dated events及`INSUFFICIENT_DATA`，不产生
+  winner、promotion、official weights、production或broker effect。

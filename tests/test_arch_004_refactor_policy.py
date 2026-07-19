@@ -5112,7 +5112,77 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert eb1["next_work"]["phase_exit_or_handoff_triggered"] is False
     assert eb1["next_phase_or_slice_unblocked"] is False
     assert eb1["sources"]
+    eb1_superseded = set(eb1["superseded_source_paths"])
     for source in eb1["sources"]:
+        if source["path"] in eb1_superseded:
+            continue
+        actual = _source_sha256(source)
+        assert actual == source["sha256"], source["path"]
+
+    eb2 = baseline["phase_g2_4eb2_etf_cli_dynamic_v3_filtered_candidate_pipeline"]
+    assert eb2["status"] in {
+        "VALIDATING_G2_4_CONTINUES",
+        "COMPLETE_G2_4_CONTINUES",
+    }
+    assert eb2["base_commit"] == "9c0025e4"
+    assert eb2["boundary_id"] == "ARCH-004G2.4-EB2"
+    assert eb2["migration"]["callback_count"] == 15
+    assert eb2["migration"]["domain_public_entrypoint_count"] == 15
+    assert len(eb2["migration"]["callback_ids"]) == 15
+    assert len(set(eb2["migration"]["callback_ids"])) == 15
+    assert eb2["contract"]["input_snapshot_schemas"] == [
+        "filtered_candidate_backfill_input_snapshot.v2",
+        "filtered_vs_original_comparison_input_snapshot.v2",
+        "signal_gate_experiment_input_snapshot.v2",
+        "filtered_candidate_promotion_review_input_snapshot.v2",
+        "owner_signal_roadmap_input_snapshot.v2",
+    ]
+    assert eb2["contract"]["materialized_view_count"] == 24
+    assert eb2["contract"]["empty_or_missing_evidence"] == {
+        "variant_rows": "empty",
+        "performance_rows": "empty",
+        "comparison_rows": "empty",
+        "gate_rows": "empty",
+        "winner": None,
+        "candidate": None,
+        "confidence": None,
+        "downstream_status": "INSUFFICIENT_DATA",
+    }
+    assert eb2["contract"]["synthesized_performance_or_denominator_allowed"] is False
+    assert eb2["subtraction"] == {
+        "legacy_cli_lines_before": 11_837,
+        "legacy_cli_lines_after": 11_456,
+        "legacy_cli_top_level_functions_before": 276,
+        "legacy_cli_top_level_functions_after": 261,
+        "legacy_cli_decorators_before": 237,
+        "legacy_cli_decorators_after": 222,
+        "legacy_domain_lines_before": 5_668,
+        "legacy_domain_lines_after": 4_554,
+        "compatibility_wrapper_count": 15,
+        "duplicate_implementation_retained": False,
+    }
+    assert eb2["callback_matrix"] == {
+        "baseline_callback_count": 967,
+        "migrated_callback_count": 745,
+        "pending_callback_count": 222,
+        "unresolved_callback_count": 0,
+        "duplicate_registration_count": 0,
+        "phase_exit_criteria_passed": False,
+    }
+    assert eb2["cli_contract"]["leaf_command_count"] == 993
+    assert eb2["cli_contract"]["duplicate_path_count"] == 0
+    assert eb2["hardening"]["no_fabricated_filtered_outcomes_or_winner"] is True
+    assert eb2["safety"]["production_effect"] == "none"
+    assert eb2["next_work"] == {
+        "pre_bootstrap_requires_eb2_integration_gate": False,
+        "pre_bootstrap_unblocked": True,
+        "eb3_or_formal_arch_005_s0_unblocked": False,
+        "phase_exit_or_handoff_triggered": False,
+    }
+    assert eb2["next_work"]["phase_exit_or_handoff_triggered"] is False
+    assert eb2["next_phase_or_slice_unblocked"] is False
+    assert eb2["sources"]
+    for source in eb2["sources"]:
         actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
 
@@ -5311,31 +5381,35 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "INTEGRATED_WORKTREE_ATTRIBUTION_PROVEN_PHASE_G2_4CX3_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB1_VALIDATING_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB1_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB2_VALIDATING_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB2_COMPLETE_G2_4_CONTINUES",
     }
     current_authority = attribution["current_staging_authority"]
     assert current_authority["task_id"] == (
         "ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION"
     )
-    assert current_authority["increment"] == "EB1_SIGNAL_FILTER_FOUNDATION"
+    assert current_authority["increment"] == "EB2_FILTERED_CANDIDATE_PIPELINE"
     assert current_authority["status"] in {
         "VALIDATING_G2_4_CONTINUES",
         "COMPLETE_G2_4_CONTINUES",
     }
-    assert current_authority["base_commit"] == "ee604385"
+    assert current_authority["base_commit"] == "9c0025e4"
     assert current_authority["declared_path_set_current"] is True
     owner_authorization = current_authority["owner_authorization"]
-    assert owner_authorization["instruction"] == "继续推进这些任务"
+    assert owner_authorization["instruction"] == "继续按照这个思路实现"
     assert str(owner_authorization["authorized_at"]) == "2026-07-19"
-    assert owner_authorization["boundary_id"] == "ARCH-004G2.4-EB1"
+    assert owner_authorization["boundary_id"] == "ARCH-004G2.4-EB2"
     assert current_authority["phase_lock"] == {
         "next_phase_or_slice_unblocked": False,
-        "eb1_requires_new_explicit_owner_instruction": False,
-        "eb1_authorized": True,
-        "eb2_requires_new_explicit_owner_instruction": True,
-        "next_callback_requires_new_explicit_owner_instruction": True,
-        "arch_005_or_g2_5_unblocked": False,
+        "eb2_authorized": True,
+        "eb2_integration_gate_passed": True,
+        "pre_bootstrap_after_integration_gate_authorized": True,
+        "pre_bootstrap_unblocked": True,
+        "eb3_unblocked": False,
+        "formal_arch_005_s0_unblocked": False,
+        "g2_5_unblocked": False,
     }
-    assert len(current_authority["declared_changed_paths"]) == 32
+    assert len(current_authority["declared_changed_paths"]) == 29
     assert (
         attribution["current_staging_authority"]["base_commit"]
         == attribution["base_commit"]

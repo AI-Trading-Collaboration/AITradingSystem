@@ -89,7 +89,10 @@ def test_signal_feature_quality_filter_pipeline_builds_and_validates(tmp_path: P
         output_dir=tmp_path / "filtered_candidate_backfill",
     )
     assert backfill_validation["status"] == "PASS"
-    assert filtered_backfill["filtered_variant_specs"]
+    assert filtered_backfill["filtered_variant_specs"] == []
+    assert filtered_backfill["filtered_variant_performance"] == []
+    assert filtered_backfill["filtered_variant_signal_metrics"] == []
+    assert filtered_backfill["manifest"]["evidence_status"] == "INSUFFICIENT_DATA"
     assert filtered_backfill["manifest"]["data_quality_status"] in {"PASS", "PASS_WITH_WARNINGS"}
     _assert_research_safe(filtered_backfill["manifest"])
 
@@ -99,7 +102,10 @@ def test_signal_feature_quality_filter_pipeline_builds_and_validates(tmp_path: P
         output_dir=tmp_path / "filtered_vs_original_comparison",
     )
     assert comparison_validation["status"] == "PASS"
-    assert comparison["filtered_improvement_summary"]["best_filtered_variant"]
+    assert comparison["filtered_comparison_matrix"] == []
+    assert comparison["filtered_improvement_summary"]["best_filtered_variant"] is None
+    assert comparison["filtered_improvement_summary"]["recommendation"] == "INSUFFICIENT_DATA"
+    assert comparison["filtered_improvement_summary"]["evidence_status"] == "INSUFFICIENT_DATA"
     _assert_research_safe(comparison["manifest"])
 
     gate_experiment = fixture["signal_gate_experiment"]
@@ -108,8 +114,11 @@ def test_signal_feature_quality_filter_pipeline_builds_and_validates(tmp_path: P
         output_dir=tmp_path / "signal_gate_experiment",
     )
     assert gate_validation["status"] == "PASS"
-    gate_types = {row["gate_type"] for row in gate_experiment["signal_gate_experiment_results"]}
-    assert {"disagreement", "persistence"} <= gate_types
+    assert gate_experiment["signal_gate_experiment_results"] == []
+    gate_summary = gate_experiment["signal_gate_experiment_summary"]
+    assert gate_summary["evidence_status"] == "INSUFFICIENT_DATA"
+    assert gate_summary["tested_gate_count"] == 0
+    assert gate_summary["formalization_ready"] is False
     _assert_research_safe(gate_experiment["manifest"])
     assert "Signal Gate Experiment" in gate_experiment["reader_brief_section"]
 
@@ -119,7 +128,9 @@ def test_signal_feature_quality_filter_pipeline_builds_and_validates(tmp_path: P
         output_dir=tmp_path / "filtered_candidate_promotion_review",
     )
     assert review_validation["status"] == "PASS"
-    assert review["filtered_promotion_decision"]["decision"] == "CONTINUE_TESTING"
+    assert review["filtered_promotion_decision"]["decision"] == "INSUFFICIENT_DATA"
+    assert review["filtered_promotion_decision"]["confidence"] is None
+    assert review["filtered_candidate_specs"]["candidate_variant"] is None
     _assert_research_safe(review["manifest"])
 
     roadmap = fixture["owner_signal_roadmap"]
@@ -128,6 +139,12 @@ def test_signal_feature_quality_filter_pipeline_builds_and_validates(tmp_path: P
         output_dir=tmp_path / "owner_signal_roadmap",
     )
     assert roadmap_validation["status"] == "PASS"
-    assert roadmap["owner_signal_roadmap_summary"]["recommended_owner_action"]
+    roadmap_summary = roadmap["owner_signal_roadmap_summary"]
+    assert roadmap_summary["evidence_status"] == "INSUFFICIENT_DATA"
+    assert roadmap_summary["candidate_available"] is False
+    assert (
+        roadmap_summary["recommended_owner_action"]
+        == "BUILD_VALIDATED_DATED_SIGNAL_AND_FILTERED_OUTCOME_EVIDENCE"
+    )
     _assert_research_safe(roadmap["manifest"])
     assert "Owner Signal Roadmap" in roadmap["reader_brief_section"]

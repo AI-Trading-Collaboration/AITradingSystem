@@ -20,6 +20,23 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 分阶段计划
 
+- 2026-07-19：G2.4-EB2=`COMPLETE_G2_4_CONTINUES`。15 callbacks/15 public入口、legacy
+  subtraction、五类v2 snapshots、24-view byte rebuild和tamper fail-close闭合；focused=`183 passed`，
+  architecture/contract=`374/262 passed`，最终parent-bound Full=`6,329 passed / 2 skipped /
+  1,029.52s`且runtime profile/performance/provenance PASS。`COMPLETE v6` duration profile精确覆盖
+  `6,331 nodes / 1,070 files`并通过离线全集复验。Matrix=`745 migrated / 222 pending / 0 unresolved /
+  0 duplicate`，CLI仍`41/291/993/0`。本完成只解锁已获批的非cutover pre-bootstrap primitives，
+  不解锁EB3、正式ARCH-005 S0、G2.5或phase handoff，`production_effect=none`。
+- 2026-07-19：owner 已显式授权 G2.4-EB2，从 base=`9c0025e4` 冻结 Filtered Backfill /
+  Comparison / Signal Gate / Promotion Review / Owner Roadmap 共15个callbacks，canonical owner目标为
+  `etf_portfolio/dynamic_v3_filtered_candidate_pipeline.py` 与
+  `interfaces/cli/etf_portfolio/dynamic_v3_filtered_candidate_pipeline.py`。迁移不是机械搬运：旧实现会在
+  EB1 filter evidence不足、filters为空时仍建立五个候选，以公式合成return/drawdown/churn delta，
+  再选best variant和CONTINUE_TESTING roadmap；EB2必须改为五类v2 snapshots、同ledger/policy
+  lineage、pre-output validation/chronology和24 views逐byte rebuild。无validated dated evidence时所有
+  candidate/performance/comparison/gate rows为空，best/confidence/candidate spec为null，promotion与roadmap
+  明确`INSUFFICIENT_DATA`。本slice不吸收EB3 callbacks，不解锁正式ARCH-005 S0或G2.5，
+  `production_effect=none`。
 - 2026-07-19：owner 已显式授权并完成 G2.4-EB1，15个 Signal Failure / Ledger / Churn /
   Regime / Filter Design callbacks 与15个对应domain public入口已完成canonical迁移和legacy
   subtraction。新owner为
@@ -530,6 +547,7 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 - 2026-07-11：G2.4H Dynamic v0.3 Rescue base slice `COMPLETE`，G2.4继续。最终base/contract组合=`40 passed`、architecture-fitness=`191 passed`，generated=`819 modules / 1,114 tests / 858 direct writers / 0 violations`。Legacy root净减3 callback及157行；v0.4只读、base-policy match、latest只读、dual-owner validation与no-approval/enrollment/promotion/production边界通过。
 - 2026-07-11：G2.4H Dynamic v0.3 Rescue base contract freeze。`dynamic_v3_rescue_app`拥有大量跨阶段命令，本slice只迁TRADING-090 `run/report/validate`，不得整体搬成新god module；real evaluation、failure attribution及后续命令保持原owner待独立slice。输入只读latest/explicit v0.4 review package，base candidate必须匹配reviewed policy；输出仅constraint-aware candidate evaluation/validation治理artifact，latest report只读。禁止approval、enrollment、auto promotion、official target、production和broker；validation同时检查canonical base owner与legacy remaining-command owner。
 - 2026-07-11：G2.4G Dynamic v0.2 Review slice `COMPLETE`，G2.4继续。最终review/contract组合=`39 passed`、architecture-fitness=`190 passed`，generated=`818 modules / 1,114 tests / 858 direct writers / 0 violations`。Legacy root净减3 callback及167行；mandatory/optional source语义、latest只读、canonical CLI visibility和no-backtest/enrollment/approval/promotion/production边界通过。
+- 2026-07-19：G2.4-EB2 Filtered Candidate Pipeline实现完成并进入`VALIDATING`。15 callbacks迁canonical interface，15 public入口迁同名domain，legacy CLI root减去15函数/15 decorators，legacy weight-search domain只保留15个lazy wrappers并删除旧render/合成helper。5类v2 snapshots、24 views、live EB1 source/policy replay、exact lineage/chronology、null/empty evidence与all-view byte rebuild闭合；matrix=`745/222/0/0`，CLI仍`41/291/993/0`且tree hash不变。空filter/无dated evidence不得生成variant、公式performance、default-denominator gate、winner或promotion candidate。正式integration gates尚未宣告PASS，pre-bootstrap/EB3/ARCH-005 S0/G2.5均未启动，`production_effect=none`。
 - 2026-07-11：G2.4G Dynamic v0.2 Review contract freeze。迁`package/report/validate`三callback；package只读existing rescue、candidate robustness和optional shadow artifacts，不重跑market backtest。Rescue/robustness缺失fail closed，optional shadow缺失仅显式warning；保留source DQ/range/lineage、AI-regime policy、eligibility blockers和latest只读。只允许review package/validation治理artifact，禁止approval、shadow enrollment、auto promotion、official target、production和broker；CLI visibility必须切到canonical registration/owner。
 - 2026-07-11：G2.4F Dynamic Rescue slice `COMPLETE`，G2.4继续。最终rescue/contract组合=`37 passed`、architecture-fitness=`189 passed`，generated=`817 modules / 1,114 tests / 858 direct writers / 0 violations`。Legacy root净减3 callback及266行；DQ/price/rescue顺序、fail-closed、canonical CLI visibility和no-enrollment/approval/promotion/production边界通过。
 - 2026-07-11：G2.4F Dynamic Rescue实现完成并进入`VALIDATING`。三callback迁canonical，旧root callback为0；validation从旧root文本探针改查canonical registration/owner。Root=`32,979 -> 32,713 lines / 988 -> 985 functions / 948 -> 945 decorators`，direct writer=858、CLI tree不变。Cached DQ→standard-price validation→bounded rescue顺序、fail-closed、source lineage与no-enrollment/approval/promotion/official-target/broker边界通过focused=25。

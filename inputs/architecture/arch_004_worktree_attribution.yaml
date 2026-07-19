@@ -1,32 +1,33 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB1_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB2_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-19
-base_commit: ee604385
+base_commit: 9c0025e4
 production_effect: none
 current_staging_authority:
   task_id: ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION
-  increment: EB1_SIGNAL_FILTER_FOUNDATION
+  increment: EB2_FILTERED_CANDIDATE_PIPELINE
   status: COMPLETE_G2_4_CONTINUES
-  base_commit: ee604385
+  base_commit: 9c0025e4
   declared_path_set_current: true
   owner_authorization:
-    instruction: 继续推进这些任务
+    instruction: 继续按照这个思路实现
     authorized_at: 2026-07-19
-    boundary_id: ARCH-004G2.4-EB1
+    boundary_id: ARCH-004G2.4-EB2
   phase_lock:
     next_phase_or_slice_unblocked: false
-    eb1_requires_new_explicit_owner_instruction: false
-    eb1_authorized: true
-    eb2_requires_new_explicit_owner_instruction: true
-    next_callback_requires_new_explicit_owner_instruction: true
-    arch_005_or_g2_5_unblocked: false
+    eb2_authorized: true
+    eb2_integration_gate_passed: true
+    pre_bootstrap_after_integration_gate_authorized: true
+    pre_bootstrap_unblocked: true
+    eb3_unblocked: false
+    formal_arch_005_s0_unblocked: false
+    g2_5_unblocked: false
   declared_changed_paths:
-    - config/etf_portfolio/dynamic_v3_rescue/signal_feature_failure_taxonomy_v1.yaml
     - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
     - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
     - docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md
-    - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
+    - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
     - docs/requirements/TRADING-326_to_335_Signal_Feature_Diagnosis_and_Candidate_Quality_Filter_Pipeline.md
     - docs/system_flow.md
     - docs/task_register.md
@@ -40,20 +41,18 @@ current_staging_authority:
     - inputs/architecture/arch_004g2_callback_migration_matrix.yaml
     - inputs/architecture/arch_004g2_etf_cli_contract.yaml
     - inputs/architecture/arch_004g2_full_duration_profile.yaml
-    - scripts/run_validation_tier.py
     - src/ai_trading_system/cli_commands/etf_portfolio.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_signal_filter_foundation.py
+    - src/ai_trading_system/etf_portfolio/dynamic_v3_filtered_candidate_pipeline.py
     - src/ai_trading_system/etf_portfolio/dynamic_v3_weight_batch_search.py
     - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_filter_foundation.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_filtered_candidate_pipeline.py
     - tests/test_arch_004_refactor_policy.py
     - tests/test_arch_004g_deprecation.py
     - tests/test_arch_004g2_callback_migration_matrix.py
     - tests/test_arch_004g2_etf_cli_contract.py
+    - tests/test_filtered_candidate_pipeline_foundation.py
     - tests/test_signal_feature_quality_filter_pipeline.py
-    - tests/test_signal_filter_foundation.py
     - tests/test_validation_runtime_profile.py
-    - tests/test_validation_tier_script.py
 
 integrated_task_ids:
   - ARCH-004

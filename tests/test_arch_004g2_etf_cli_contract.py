@@ -387,6 +387,10 @@ DYNAMIC_V3_SIGNAL_FILTER_FOUNDATION_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_signal_filter_foundation.py"
 )
+DYNAMIC_V3_FILTERED_CANDIDATE_PIPELINE_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_filtered_candidate_pipeline.py"
+)
 DYNAMIC_V3_WEIGHT_BATCH_SEARCH_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/etf_portfolio/dynamic_v3_weight_batch_search.py"
 )
@@ -410,6 +414,9 @@ DYNAMIC_V3_RESEARCH_DIRECTION_FOUNDATION_PATH = (
 )
 DYNAMIC_V3_SIGNAL_FILTER_FOUNDATION_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/etf_portfolio/dynamic_v3_signal_filter_foundation.py"
+)
+DYNAMIC_V3_FILTERED_CANDIDATE_PIPELINE_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/etf_portfolio/dynamic_v3_filtered_candidate_pipeline.py"
 )
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
@@ -593,7 +600,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 11837
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 11456
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -804,8 +811,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 11837
-    assert len(legacy_names) == 276
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 11456
+    assert len(legacy_names) == 261
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -3503,6 +3510,97 @@ def test_g2_4_signal_filter_foundation_domain_leaves_legacy_owner() -> None:
         assert isinstance(call, ast.Call)
         assert isinstance(call.func, ast.Name)
         assert call.func.id == "_call_signal_filter_foundation"
+        assert isinstance(call.args[0], ast.Constant)
+        assert call.args[0].value == name
+
+
+def test_g2_4_filtered_candidate_pipeline_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_tree = ast.parse(
+        DYNAMIC_V3_FILTERED_CANDIDATE_PIPELINE_COMMANDS_PATH.read_text(encoding="utf-8")
+    )
+    canonical_names = _function_names(canonical_tree)
+    callbacks = {
+        "dynamic_v3_filtered_candidate_backfill_run_command",
+        "dynamic_v3_filtered_candidate_backfill_report_command",
+        "dynamic_v3_validate_filtered_candidate_backfill_command",
+        "dynamic_v3_filtered_vs_original_comparison_run_command",
+        "dynamic_v3_filtered_vs_original_comparison_report_command",
+        "dynamic_v3_validate_filtered_vs_original_comparison_command",
+        "dynamic_v3_signal_gate_experiment_run_command",
+        "dynamic_v3_signal_gate_experiment_report_command",
+        "dynamic_v3_validate_signal_gate_experiment_command",
+        "dynamic_v3_filtered_candidate_promotion_review_run_command",
+        "dynamic_v3_filtered_candidate_promotion_review_report_command",
+        "dynamic_v3_validate_filtered_candidate_promotion_review_command",
+        "dynamic_v3_owner_signal_roadmap_build_command",
+        "dynamic_v3_owner_signal_roadmap_report_command",
+        "dynamic_v3_validate_owner_signal_roadmap_command",
+    }
+    assert len(callbacks) == 15
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert "dynamic_v3_filtered_candidate_pipeline" in _imported_names(canonical_tree)
+
+
+def test_g2_4_filtered_candidate_pipeline_domain_leaves_legacy_owner() -> None:
+    legacy_tree = ast.parse(DYNAMIC_V3_WEIGHT_BATCH_SEARCH_PATH.read_text(encoding="utf-8"))
+    canonical_tree = ast.parse(
+        DYNAMIC_V3_FILTERED_CANDIDATE_PIPELINE_PATH.read_text(encoding="utf-8")
+    )
+    entrypoints = {
+        "run_filtered_candidate_backfill",
+        "filtered_candidate_backfill_report_payload",
+        "validate_filtered_candidate_backfill_artifact",
+        "run_filtered_vs_original_comparison",
+        "filtered_vs_original_comparison_report_payload",
+        "validate_filtered_vs_original_comparison_artifact",
+        "run_signal_gate_experiment",
+        "signal_gate_experiment_report_payload",
+        "validate_signal_gate_experiment_artifact",
+        "run_filtered_candidate_promotion_review",
+        "filtered_candidate_promotion_review_report_payload",
+        "validate_filtered_candidate_promotion_review_artifact",
+        "build_owner_signal_roadmap",
+        "owner_signal_roadmap_report_payload",
+        "validate_owner_signal_roadmap_artifact",
+    }
+    removed_helpers = {
+        "render_filtered_candidate_backfill_report",
+        "render_filtered_vs_original_comparison_report",
+        "render_signal_gate_experiment_reader_brief",
+        "render_signal_gate_experiment_report",
+        "render_filtered_promotion_review_reader_brief",
+        "render_filtered_promotion_review_report",
+        "render_owner_signal_roadmap_reader_brief",
+        "render_owner_signal_checklist",
+        "render_owner_signal_roadmap_report",
+        "_filtered_variant_specs",
+        "_filtered_variant_performance",
+        "_filtered_variant_signal_metrics",
+        "_filtered_comparison_matrix",
+        "_filtered_improvement_summary",
+        "_signal_gate_variant_results",
+        "_signal_gate_summary",
+        "_filtered_promotion_decision",
+        "_filtered_candidate_specs",
+        "_owner_signal_roadmap_summary",
+    }
+    legacy_functions = {
+        node.name: node for node in legacy_tree.body if isinstance(node, ast.FunctionDef)
+    }
+    assert entrypoints <= _function_names(canonical_tree)
+    assert removed_helpers.isdisjoint(legacy_functions)
+    assert "dynamic_v3_weight_batch_search" not in _imported_names(canonical_tree)
+    for name in entrypoints:
+        wrapper = legacy_functions[name]
+        assert len(wrapper.body) == 1
+        assert isinstance(wrapper.body[0], ast.Return)
+        call = wrapper.body[0].value
+        assert isinstance(call, ast.Call)
+        assert isinstance(call.func, ast.Name)
+        assert call.func.id == "_call_filtered_candidate_pipeline"
         assert isinstance(call.args[0], ast.Constant)
         assert call.args[0].value == name
 

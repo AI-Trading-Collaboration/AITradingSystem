@@ -1,6 +1,6 @@
 # ARCH-005 Parallel Development Control Plane
 
-最后更新：2026-07-12
+最后更新：2026-07-19
 
 ## 任务信息
 
@@ -10,7 +10,8 @@
 - owner：architecture coordinator / developer platform owner / integration coordinator
 - owner review：project owner 负责 source-of-truth cutover 与调度策略复核
 - hard dependency：`ARCH-004C_PLATFORM_CONTRACTS`、`ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES` `DONE`；现有 task-register consistency baseline
-- bootstrap start condition：整个 ARCH-004G2.4 phase exit gate PASS，并收到 `arch_005_bootstrap_handoff.v1`；在此之前保持 `READY` 但 `next_slice_unblocked=false`
+- bootstrap start condition：正式 S0 仍必须等待整个 ARCH-004G2.4 phase exit gate PASS，并收到 `arch_005_bootstrap_handoff.v1`；在此之前保持 `READY` 且 `next_slice_unblocked=false`
+- approved pre-bootstrap boundary：ARCH-004G2.4-EB2 integration gate 已 PASS，owner 批准的下一实现范围为最终可复用、非 cutover 的 manifest/conflict/lane-plan/evidence primitives；它不是 S0，不得迁移 task registry、切换事实源、生成替代 task views、派发任务或获取真实 lease
 - integration milestone：S0～S3 在 G2.4 handoff 后推进；S4 controlled dispatch 与 `ARCH-004G2_PARALLEL_READINESS_GATE` 的三 lane rehearsal 共同验收
 - downstream consumers：ARCH-004 G3/G4/G5 lanes、`PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH`
 - production effect：`none`
@@ -20,6 +21,12 @@
 后续并行研发不能继续依赖一份由所有 worker 共同编辑的 Markdown 任务表。系统需要一个 Git-native、可审计、可重放、fail-closed 的并行研发控制平面，负责从需求、依赖和资源边界推导可运行任务，分配 execution lane，收集验证证据，并把状态、原因、结果和后续动作投影为人类可读视图。
 
 `docs/task_register.md` 与 `docs/task_register_completed.md` 在显式 cutover 前继续作为权威事实源；cutover 后保留原路径和兼容表格结构，但改为 deterministic generated views，禁止人工双写。任何 source-of-truth 切换必须经过本需求定义的 parity、replay、rollback 和 owner review，不得由 ARCH-004G2 或某个局部实现静默完成。
+
+2026-07-19 的门禁调整只把可直接服务 G2.4 后半程的最终 primitives 提前到 EB2 集成点；正式
+S0 inventory/schema freeze、S1 shadow import/projection 与所有 source-of-truth 行为仍等待 phase-level
+handoff。pre-bootstrap 产物必须使用与后续 S0～S4 相同的 versioned contracts，不得建立临时第二套
+manifest、scheduler 或 lease 语义；若首个受控批次没有可验证收益或出现 shared-path/P0/P1 问题，
+停止使用并保留审计证据，不以降低 G2.4 门禁换取速度。
 
 ## 为什么这是基础设施
 
@@ -407,3 +414,8 @@ ARCH-004 coordinator 生成并验证 `arch_005_bootstrap_handoff.v1`。S0 冻结
 
 - 2026-07-12：project owner 确认并行任务调度系统是后续研发基石并要求高优先级推进。完整 scope、阶段、验收和回滚已冻结，任务以 `P0/READY` 独立立项：它会决定资源冲突、验证证据和集成是否允许通过，属于系统正确性与审计基础设施；需求已 READY，S0 实现等待完整 G2.4 handoff，真实 dispatch 仍受 S4/G2 门禁约束。当前仅建立需求和迁移边界，不改变 runtime、task-register source-of-truth、scheduler、production 或 broker。
 - 2026-07-12：owner 进一步确认不在 G2.4 进行中并发启动 ARCH-005。已向当前 ARCH-004 主任务预置 phase-level handoff 指令：完整 G2.4 exit、validation、commit/push 和 manifest freshness 闭合后生成 `arch_005_bootstrap_handoff.v1`，设置 `next_slice_unblocked=false` 并停止在 G2.5 之前；owner 无需届时手动暂停工作区。
+- 2026-07-19：G2.4-EB2 integration gate 已 PASS，matrix仍为`745/222/0/0`，因此整个phase exit与
+  正式S0仍未通过。Owner已批准的pre-bootstrap primitives现在可开始；其退出必须证明versioned
+  manifest、path/module/contract conflict、base drift、coordinator-only guard、deterministic lane plan
+  与validation evidence binding均fail closed。它不创建registry/view、不dispatch、不发真实lease，
+  `next_slice_unblocked=false`、`production_effect=none`。
