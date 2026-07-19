@@ -1,0 +1,150 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-121_to_125
+  title: null
+  domain: ETF portfolio research/Dynamic v3 Rescue Evidence Gate Diagnosis and Candidate
+    Usability Recovery
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-121_to_125_Evidence_Gate_Diagnosis_and_Candidate_Usability_Recovery.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-121_to_125_Evidence_Gate_Diagnosis_and_Candidate_Usability_Recovery.md`；基于
+    medium_real sweep `sweep_20260607T102300Z_ae5ae1d8` 诊断 300 个 candidate 全部 `review_required`
+    和 `usable_candidates=0` 的证据 gate 原因，已新增 diagnosis、gate impact、gate policy calibration、candidate
+    recovery、observe pool rebuild 和 research decision update 闭环
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 能生成 evidence diagnosis、gate impact matrix、policy apply、candidate recovery、calibrated
+      observe pool 和 research decision update artifacts；hard fail 不被放宽；所有恢复候选只能是 `observe_only`
+      / `manual_review_required`；不生成 production candidate、不触发 shadow enrollment、不触发
+      broker action；focused tests、ruff、compileall、git diff check 和 dynamic-v3 artifact
+      validation PASS；真实 sweep 链路输出可解释 top blocking reasons、scenario recovery counts、go/no-go
+      和 overnight recommendation
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1467
+    row_sha256: cffb002e6c5fdfba7d49f211939519b09ec2820fc82dde0829d150c1096540f2
+    cell_count: 8
+    all_cells:
+    - TRADING-121_to_125
+    - ETF portfolio research/Dynamic v3 Rescue Evidence Gate Diagnosis and Candidate
+      Usability Recovery
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-121_to_125_Evidence_Gate_Diagnosis_and_Candidate_Usability_Recovery.md`；基于
+      medium_real sweep `sweep_20260607T102300Z_ae5ae1d8` 诊断 300 个 candidate 全部 `review_required`
+      和 `usable_candidates=0` 的证据 gate 原因，已新增 diagnosis、gate impact、gate policy calibration、candidate
+      recovery、observe pool rebuild 和 research decision update 闭环
+    - 能生成 evidence diagnosis、gate impact matrix、policy apply、candidate recovery、calibrated
+      observe pool 和 research decision update artifacts；hard fail 不被放宽；所有恢复候选只能是 `observe_only`
+      / `manual_review_required`；不生成 production candidate、不触发 shadow enrollment、不触发
+      broker action；focused tests、ruff、compileall、git diff check 和 dynamic-v3 artifact
+      validation PASS；真实 sweep 链路输出可解释 top blocking reasons、scenario recovery counts、go/no-go
+      和 overnight recommendation
+    - '2026-06-08: 新增并进入 IN_PROGRESS，原因：TRADING-114_to_120 真实 medium_real 已完成但 300/300
+      candidates 全部 `review_required`，evidence summary 业务状态 FAIL 且 observe pool 为
+      0；本阶段先诊断 gate 影响并恢复可人工复核的 observe-only 候选，仍禁止 automatic production candidate。2026-06-08:
+      转入 VALIDATING，真实 workflow 输出 `diagnosis_id=eb8b1c33e26c990d`、`impact_id=16ebb1bf0834db22`、`policy_run_id=0a12556b2d7f9ee2`、`recovery_id=0124f4f6abdd503b`、rebuilt
+      `observe_pool_id=01f0f0056e78f293`、`decision_update_id=e0788af9f403b9c4`；0 hard
+      blocked、300 soft blocked，policy/recovery 恢复 300 个 observe-only/manual-review
+      candidates，research decision update 为 `GO_WITH_LIMITS` / `manual_review_recovered_candidates`；验证通过
+      focused pytest、全量 pytest（2226 passed）、ruff、compileall、git diff check 和 dynamic-v3
+      artifact validation。'
+    raw_line: '|TRADING-121_to_125|ETF portfolio research/Dynamic v3 Rescue Evidence
+      Gate Diagnosis and Candidate Usability Recovery|P0|VALIDATING|项目 owner 人工复核|详细拆解见
+      `docs/requirements/TRADING-121_to_125_Evidence_Gate_Diagnosis_and_Candidate_Usability_Recovery.md`；基于
+      medium_real sweep `sweep_20260607T102300Z_ae5ae1d8` 诊断 300 个 candidate 全部 `review_required`
+      和 `usable_candidates=0` 的证据 gate 原因，已新增 diagnosis、gate impact、gate policy calibration、candidate
+      recovery、observe pool rebuild 和 research decision update 闭环|能生成 evidence diagnosis、gate
+      impact matrix、policy apply、candidate recovery、calibrated observe pool 和 research
+      decision update artifacts；hard fail 不被放宽；所有恢复候选只能是 `observe_only` / `manual_review_required`；不生成
+      production candidate、不触发 shadow enrollment、不触发 broker action；focused tests、ruff、compileall、git
+      diff check 和 dynamic-v3 artifact validation PASS；真实 sweep 链路输出可解释 top blocking
+      reasons、scenario recovery counts、go/no-go 和 overnight recommendation|2026-06-08:
+      新增并进入 IN_PROGRESS，原因：TRADING-114_to_120 真实 medium_real 已完成但 300/300 candidates
+      全部 `review_required`，evidence summary 业务状态 FAIL 且 observe pool 为 0；本阶段先诊断 gate
+      影响并恢复可人工复核的 observe-only 候选，仍禁止 automatic production candidate。2026-06-08: 转入
+      VALIDATING，真实 workflow 输出 `diagnosis_id=eb8b1c33e26c990d`、`impact_id=16ebb1bf0834db22`、`policy_run_id=0a12556b2d7f9ee2`、`recovery_id=0124f4f6abdd503b`、rebuilt
+      `observe_pool_id=01f0f0056e78f293`、`decision_update_id=e0788af9f403b9c4`；0 hard
+      blocked、300 soft blocked，policy/recovery 恢复 300 个 observe-only/manual-review
+      candidates，research decision update 为 `GO_WITH_LIMITS` / `manual_review_recovered_candidates`；验证通过
+      focused pytest、全量 pytest（2226 passed）、ruff、compileall、git diff check 和 dynamic-v3
+      artifact validation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-cffb002e6c5fdfba7d49f211
+  task_id: TRADING-121_to_125
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核
+    notes: '2026-06-08: 新增并进入 IN_PROGRESS，原因：TRADING-114_to_120 真实 medium_real 已完成但
+      300/300 candidates 全部 `review_required`，evidence summary 业务状态 FAIL 且 observe
+      pool 为 0；本阶段先诊断 gate 影响并恢复可人工复核的 observe-only 候选，仍禁止 automatic production candidate。2026-06-08:
+      转入 VALIDATING，真实 workflow 输出 `diagnosis_id=eb8b1c33e26c990d`、`impact_id=16ebb1bf0834db22`、`policy_run_id=0a12556b2d7f9ee2`、`recovery_id=0124f4f6abdd503b`、rebuilt
+      `observe_pool_id=01f0f0056e78f293`、`decision_update_id=e0788af9f403b9c4`；0 hard
+      blocked、300 soft blocked，policy/recovery 恢复 300 个 observe-only/manual-review
+      candidates，research decision update 为 `GO_WITH_LIMITS` / `manual_review_recovered_candidates`；验证通过
+      focused pytest、全量 pytest（2226 passed）、ruff、compileall、git diff check 和 dynamic-v3
+      artifact validation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:cffb002e6c5fdfba7d49f211939519b09ec2820fc82dde0829d150c1096540f2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-121_to_125
+  - ETF portfolio research/Dynamic v3 Rescue Evidence Gate Diagnosis and Candidate
+    Usability Recovery
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-121_to_125_Evidence_Gate_Diagnosis_and_Candidate_Usability_Recovery.md`；基于
+    medium_real sweep `sweep_20260607T102300Z_ae5ae1d8` 诊断 300 个 candidate 全部 `review_required`
+    和 `usable_candidates=0` 的证据 gate 原因，已新增 diagnosis、gate impact、gate policy calibration、candidate
+    recovery、observe pool rebuild 和 research decision update 闭环
+  - 能生成 evidence diagnosis、gate impact matrix、policy apply、candidate recovery、calibrated
+    observe pool 和 research decision update artifacts；hard fail 不被放宽；所有恢复候选只能是 `observe_only`
+    / `manual_review_required`；不生成 production candidate、不触发 shadow enrollment、不触发
+    broker action；focused tests、ruff、compileall、git diff check 和 dynamic-v3 artifact
+    validation PASS；真实 sweep 链路输出可解释 top blocking reasons、scenario recovery counts、go/no-go
+    和 overnight recommendation
+  - '2026-06-08: 新增并进入 IN_PROGRESS，原因：TRADING-114_to_120 真实 medium_real 已完成但 300/300
+    candidates 全部 `review_required`，evidence summary 业务状态 FAIL 且 observe pool 为 0；本阶段先诊断
+    gate 影响并恢复可人工复核的 observe-only 候选，仍禁止 automatic production candidate。2026-06-08:
+    转入 VALIDATING，真实 workflow 输出 `diagnosis_id=eb8b1c33e26c990d`、`impact_id=16ebb1bf0834db22`、`policy_run_id=0a12556b2d7f9ee2`、`recovery_id=0124f4f6abdd503b`、rebuilt
+    `observe_pool_id=01f0f0056e78f293`、`decision_update_id=e0788af9f403b9c4`；0 hard
+    blocked、300 soft blocked，policy/recovery 恢复 300 个 observe-only/manual-review candidates，research
+    decision update 为 `GO_WITH_LIMITS` / `manual_review_recovered_candidates`；验证通过
+    focused pytest、全量 pytest（2226 passed）、ruff、compileall、git diff check 和 dynamic-v3
+    artifact validation。'
+  docs_links:
+  - docs/requirements/TRADING-121_to_125_Evidence_Gate_Diagnosis_and_Candidate_Usability_Recovery.md
+  terminal: false
+  raw_row_sha256: cffb002e6c5fdfba7d49f211939519b09ec2820fc82dde0829d150c1096540f2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d85dff5a2868341d09956e57d8aec26f8c4f274d2c4cf71560bd60b0440ba812

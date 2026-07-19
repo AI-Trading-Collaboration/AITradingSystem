@@ -1,0 +1,134 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ENG-VAL-007_CONTROLLED_STRATEGY_CANDIDATE_BATCH_FIXTURE_REUSE
+  title: null
+  domain: Developer validation / contract-validation runtime optimization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统后续针对 tail-risk independent setup、current subscription CLI smoke、controlled
+    strategy batch CLI smoke、value-surface repeated construction 和单个 CLI smoke 继续优化或转入
+    TRADING-2350
+  requirement_refs:
+  - docs/requirements/ENG-VAL-007_Controlled_Strategy_Candidate_Batch_Fixture_Reuse.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ENG-VAL-007_Controlled_Strategy_Candidate_Batch_Fixture_Reuse.md`；承接
+    ENG-VAL-006 后 `contract-validation_20260704T193021Z` 中 controlled strategy candidate-batch
+    repeated construction 慢项。本任务只优化测试前置 artifact 构造组织，不改变 production builders、CLI
+    smoke 语义、report behavior、tier 覆盖、validation runner 默认策略或生产边界。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`tests/test_controlled_strategy_candidate_batch.py` 复用 module-scoped 只读
+      payload / artifact fixtures，保留原有 schema、safety 和 payload field assertions。验证通过
+      Ruff、compileall、focused pytest `23 passed in 20.20s`、contract-validation `197
+      passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T194035Z/test_runtime_summary.json`）和后续文档
+      / task-register / diff gates。Focused pytest 从 `23 passed in 82.30s` 降到 `23 passed
+      in 20.20s`；完整 tier elapsed 从 `93.19s` 小幅降到 `91.47s`。'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 140
+    row_sha256: a35bca8416064d063e21216f12e35e567be1b3ea353121e8d42765d0bfbb91ac
+    cell_count: 8
+    all_cells:
+    - ENG-VAL-007_CONTROLLED_STRATEGY_CANDIDATE_BATCH_FIXTURE_REUSE
+    - Developer validation / contract-validation runtime optimization
+    - P2
+    - DONE
+    - 系统后续针对 tail-risk independent setup、current subscription CLI smoke、controlled
+      strategy batch CLI smoke、value-surface repeated construction 和单个 CLI smoke 继续优化或转入
+      TRADING-2350
+    - 详见 `docs/requirements/ENG-VAL-007_Controlled_Strategy_Candidate_Batch_Fixture_Reuse.md`；承接
+      ENG-VAL-006 后 `contract-validation_20260704T193021Z` 中 controlled strategy candidate-batch
+      repeated construction 慢项。本任务只优化测试前置 artifact 构造组织，不改变 production builders、CLI
+      smoke 语义、report behavior、tier 覆盖、validation runner 默认策略或生产边界。
+    - '`tests/test_controlled_strategy_candidate_batch.py` 复用 module-scoped 只读 payload
+      / artifact fixtures，保留原有 schema、safety 和 payload field assertions。验证通过 Ruff、compileall、focused
+      pytest `23 passed in 20.20s`、contract-validation `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T194035Z/test_runtime_summary.json`）和后续文档
+      / task-register / diff gates。Focused pytest 从 `23 passed in 82.30s` 降到 `23 passed
+      in 20.20s`；完整 tier elapsed 从 `93.19s` 小幅降到 `91.47s`。'
+    - '2026-07-05: 根据 latest slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05:
+      实现完成并归档 DONE；candidate-batch repeated construction 已不再是完整 tier critical path，当前瓶颈转为
+      tail-risk independent setup、current subscription CLI smoke、controlled strategy
+      batch CLI smoke、value-surface repeated construction 和单个 CLI smoke。'
+    raw_line: '|ENG-VAL-007_CONTROLLED_STRATEGY_CANDIDATE_BATCH_FIXTURE_REUSE|Developer
+      validation / contract-validation runtime optimization|P2|DONE|系统后续针对 tail-risk
+      independent setup、current subscription CLI smoke、controlled strategy batch CLI
+      smoke、value-surface repeated construction 和单个 CLI smoke 继续优化或转入 TRADING-2350|详见
+      `docs/requirements/ENG-VAL-007_Controlled_Strategy_Candidate_Batch_Fixture_Reuse.md`；承接
+      ENG-VAL-006 后 `contract-validation_20260704T193021Z` 中 controlled strategy candidate-batch
+      repeated construction 慢项。本任务只优化测试前置 artifact 构造组织，不改变 production builders、CLI
+      smoke 语义、report behavior、tier 覆盖、validation runner 默认策略或生产边界。|`tests/test_controlled_strategy_candidate_batch.py`
+      复用 module-scoped 只读 payload / artifact fixtures，保留原有 schema、safety 和 payload
+      field assertions。验证通过 Ruff、compileall、focused pytest `23 passed in 20.20s`、contract-validation
+      `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T194035Z/test_runtime_summary.json`）和后续文档
+      / task-register / diff gates。Focused pytest 从 `23 passed in 82.30s` 降到 `23 passed
+      in 20.20s`；完整 tier elapsed 从 `93.19s` 小幅降到 `91.47s`。|2026-07-05: 根据 latest slow-duration
+      evidence 新增并进入 IN_PROGRESS。2026-07-05: 实现完成并归档 DONE；candidate-batch repeated
+      construction 已不再是完整 tier critical path，当前瓶颈转为 tail-risk independent setup、current
+      subscription CLI smoke、controlled strategy batch CLI smoke、value-surface repeated
+      construction 和单个 CLI smoke。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a35bca8416064d063e21216f
+  task_id: ENG-VAL-007_CONTROLLED_STRATEGY_CANDIDATE_BATCH_FIXTURE_REUSE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统后续针对 tail-risk independent setup、current subscription CLI smoke、controlled
+      strategy batch CLI smoke、value-surface repeated construction 和单个 CLI smoke 继续优化或转入
+      TRADING-2350
+    notes: '2026-07-05: 根据 latest slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05:
+      实现完成并归档 DONE；candidate-batch repeated construction 已不再是完整 tier critical path，当前瓶颈转为
+      tail-risk independent setup、current subscription CLI smoke、controlled strategy
+      batch CLI smoke、value-surface repeated construction 和单个 CLI smoke。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a35bca8416064d063e21216f12e35e567be1b3ea353121e8d42765d0bfbb91ac
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ENG-VAL-007_CONTROLLED_STRATEGY_CANDIDATE_BATCH_FIXTURE_REUSE
+  - Developer validation / contract-validation runtime optimization
+  - P2
+  - DONE
+  - 系统后续针对 tail-risk independent setup、current subscription CLI smoke、controlled strategy
+    batch CLI smoke、value-surface repeated construction 和单个 CLI smoke 继续优化或转入 TRADING-2350
+  - 详见 `docs/requirements/ENG-VAL-007_Controlled_Strategy_Candidate_Batch_Fixture_Reuse.md`；承接
+    ENG-VAL-006 后 `contract-validation_20260704T193021Z` 中 controlled strategy candidate-batch
+    repeated construction 慢项。本任务只优化测试前置 artifact 构造组织，不改变 production builders、CLI
+    smoke 语义、report behavior、tier 覆盖、validation runner 默认策略或生产边界。
+  - '`tests/test_controlled_strategy_candidate_batch.py` 复用 module-scoped 只读 payload
+    / artifact fixtures，保留原有 schema、safety 和 payload field assertions。验证通过 Ruff、compileall、focused
+    pytest `23 passed in 20.20s`、contract-validation `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T194035Z/test_runtime_summary.json`）和后续文档
+    / task-register / diff gates。Focused pytest 从 `23 passed in 82.30s` 降到 `23 passed
+    in 20.20s`；完整 tier elapsed 从 `93.19s` 小幅降到 `91.47s`。'
+  - '2026-07-05: 根据 latest slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05: 实现完成并归档
+    DONE；candidate-batch repeated construction 已不再是完整 tier critical path，当前瓶颈转为 tail-risk
+    independent setup、current subscription CLI smoke、controlled strategy batch CLI
+    smoke、value-surface repeated construction 和单个 CLI smoke。'
+  docs_links:
+  - docs/requirements/ENG-VAL-007_Controlled_Strategy_Candidate_Batch_Fixture_Reuse.md
+  terminal: true
+  raw_row_sha256: a35bca8416064d063e21216f12e35e567be1b3ea353121e8d42765d0bfbb91ac
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9e26b54983e0ea4f7e96446747d37d9b8ace10928d239712ed5f1ff996395e2d

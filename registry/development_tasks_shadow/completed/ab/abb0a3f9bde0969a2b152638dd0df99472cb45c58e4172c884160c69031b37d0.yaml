@@ -1,0 +1,143 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-019
+  title: null
+  domain: 市场反馈优化/forward shadow candidate lifecycle
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/forward_shadow_candidate_lifecycle_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/forward_shadow_candidate_lifecycle_2026-05-17.md`；`run-shadow-iteration`
+    幂等、`register-forward-shadow` 状态登记、`evaluate-forward-shadow` 每日评估和 `REVIEW_PENDING`
+    生命周期已完成；长期 outcome 样本成熟度继续由 forward shadow 观察任务承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: forward shadow 候选可从 registry 登记为 `FORWARD_SHADOW_ACTIVE`；每日评估输出 `forward_shadow_evaluation_YYYY-MM-DD.md/json`，按候选类型、primary
+      driver、contract/retirement evidence 和 forward 表现给出 `CONTINUE`、`RETIRE`、`REVIEW_GATE_POLICY`
+      或 `REVIEW_WEIGHT_CANDIDATE`；只有 `weight_only` 且 `primary_driver=weight` 才能进入权重候选复核，`gate_only`
+      只进入 gate policy review，bundle 和非 weight primary driver 不得进入 weight review；重复运行不得产生重复
+      registry 行；实现同步更新系统流图并补测试；生产权重、gate、approved overlay 和正式 prediction ledger 保持隔离
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 281
+    row_sha256: 23f83c200c997c8f4f0f4b2eb8d062bd47df9b3d46907961c012b03b047babda
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-019
+    - 市场反馈优化/forward shadow candidate lifecycle
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/forward_shadow_candidate_lifecycle_2026-05-17.md`；`run-shadow-iteration`
+      幂等、`register-forward-shadow` 状态登记、`evaluate-forward-shadow` 每日评估和 `REVIEW_PENDING`
+      生命周期已完成；长期 outcome 样本成熟度继续由 forward shadow 观察任务承接
+    - forward shadow 候选可从 registry 登记为 `FORWARD_SHADOW_ACTIVE`；每日评估输出 `forward_shadow_evaluation_YYYY-MM-DD.md/json`，按候选类型、primary
+      driver、contract/retirement evidence 和 forward 表现给出 `CONTINUE`、`RETIRE`、`REVIEW_GATE_POLICY`
+      或 `REVIEW_WEIGHT_CANDIDATE`；只有 `weight_only` 且 `primary_driver=weight` 才能进入权重候选复核，`gate_only`
+      只进入 gate policy review，bundle 和非 weight primary driver 不得进入 weight review；重复运行不得产生重复
+      registry 行；实现同步更新系统流图并补测试；生产权重、gate、approved overlay 和正式 prediction ledger 保持隔离
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求 shadow candidate 跨交易日持续观察，而不是每天只输出新的
+      search result。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `aits feedback
+      evaluate-forward-shadow`、`REVIEW_PENDING` registry 生命周期、forward evaluation Markdown/JSON
+      输出、run-shadow registry 幂等保护和 production safety 测试；验证通过 shadow iteration 目标测试、daily
+      task dashboard 相关测试、全量 `ruff check src tests`、全量 `pytest -q` 572 passed 和 `git
+      diff --check`。2026-06-09: 从 VALIDATING 改为 DONE，原因：运行 `aits feedback evaluate-forward-shadow
+      --as-of 2026-05-19` 输出 `forward_shadow_evaluation_2026-05-19.json/md`，状态 `PASS`、evaluated_count=1、`REVIEW_GATE_POLICY=1`、`REVIEW_WEIGHT_CANDIDATE=0`；gate-only
+      candidate 从 `FORWARD_SHADOW_ACTIVE` 进入 `REVIEW_PENDING`，报告声明 `production_effect=none`
+      且 production parameters unchanged；验证通过 `tests/test_shadow_iteration.py` + `tests/test_daily_task_dashboard.py`
+      32 passed、Ruff、repo-wide Black check 和 `compileall`。'
+    raw_line: '|CALIBRATION-019|市场反馈优化/forward shadow candidate lifecycle|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/forward_shadow_candidate_lifecycle_2026-05-17.md`；`run-shadow-iteration`
+      幂等、`register-forward-shadow` 状态登记、`evaluate-forward-shadow` 每日评估和 `REVIEW_PENDING`
+      生命周期已完成；长期 outcome 样本成熟度继续由 forward shadow 观察任务承接|forward shadow 候选可从 registry
+      登记为 `FORWARD_SHADOW_ACTIVE`；每日评估输出 `forward_shadow_evaluation_YYYY-MM-DD.md/json`，按候选类型、primary
+      driver、contract/retirement evidence 和 forward 表现给出 `CONTINUE`、`RETIRE`、`REVIEW_GATE_POLICY`
+      或 `REVIEW_WEIGHT_CANDIDATE`；只有 `weight_only` 且 `primary_driver=weight` 才能进入权重候选复核，`gate_only`
+      只进入 gate policy review，bundle 和非 weight primary driver 不得进入 weight review；重复运行不得产生重复
+      registry 行；实现同步更新系统流图并补测试；生产权重、gate、approved overlay 和正式 prediction ledger 保持隔离|2026-05-17:
+      新增并进入 IN_PROGRESS，原因：owner 要求 shadow candidate 跨交易日持续观察，而不是每天只输出新的 search result。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `aits feedback evaluate-forward-shadow`、`REVIEW_PENDING`
+      registry 生命周期、forward evaluation Markdown/JSON 输出、run-shadow registry 幂等保护和
+      production safety 测试；验证通过 shadow iteration 目标测试、daily task dashboard 相关测试、全量
+      `ruff check src tests`、全量 `pytest -q` 572 passed 和 `git diff --check`。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：运行 `aits feedback evaluate-forward-shadow --as-of 2026-05-19`
+      输出 `forward_shadow_evaluation_2026-05-19.json/md`，状态 `PASS`、evaluated_count=1、`REVIEW_GATE_POLICY=1`、`REVIEW_WEIGHT_CANDIDATE=0`；gate-only
+      candidate 从 `FORWARD_SHADOW_ACTIVE` 进入 `REVIEW_PENDING`，报告声明 `production_effect=none`
+      且 production parameters unchanged；验证通过 `tests/test_shadow_iteration.py` + `tests/test_daily_task_dashboard.py`
+      32 passed、Ruff、repo-wide Black check 和 `compileall`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-23f83c200c997c8f4f0f4b2e
+  task_id: CALIBRATION-019
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求 shadow candidate 跨交易日持续观察，而不是每天只输出新的
+      search result。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `aits feedback
+      evaluate-forward-shadow`、`REVIEW_PENDING` registry 生命周期、forward evaluation Markdown/JSON
+      输出、run-shadow registry 幂等保护和 production safety 测试；验证通过 shadow iteration 目标测试、daily
+      task dashboard 相关测试、全量 `ruff check src tests`、全量 `pytest -q` 572 passed 和 `git
+      diff --check`。2026-06-09: 从 VALIDATING 改为 DONE，原因：运行 `aits feedback evaluate-forward-shadow
+      --as-of 2026-05-19` 输出 `forward_shadow_evaluation_2026-05-19.json/md`，状态 `PASS`、evaluated_count=1、`REVIEW_GATE_POLICY=1`、`REVIEW_WEIGHT_CANDIDATE=0`；gate-only
+      candidate 从 `FORWARD_SHADOW_ACTIVE` 进入 `REVIEW_PENDING`，报告声明 `production_effect=none`
+      且 production parameters unchanged；验证通过 `tests/test_shadow_iteration.py` + `tests/test_daily_task_dashboard.py`
+      32 passed、Ruff、repo-wide Black check 和 `compileall`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:23f83c200c997c8f4f0f4b2eb8d062bd47df9b3d46907961c012b03b047babda
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-019
+  - 市场反馈优化/forward shadow candidate lifecycle
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/forward_shadow_candidate_lifecycle_2026-05-17.md`；`run-shadow-iteration`
+    幂等、`register-forward-shadow` 状态登记、`evaluate-forward-shadow` 每日评估和 `REVIEW_PENDING`
+    生命周期已完成；长期 outcome 样本成熟度继续由 forward shadow 观察任务承接
+  - forward shadow 候选可从 registry 登记为 `FORWARD_SHADOW_ACTIVE`；每日评估输出 `forward_shadow_evaluation_YYYY-MM-DD.md/json`，按候选类型、primary
+    driver、contract/retirement evidence 和 forward 表现给出 `CONTINUE`、`RETIRE`、`REVIEW_GATE_POLICY`
+    或 `REVIEW_WEIGHT_CANDIDATE`；只有 `weight_only` 且 `primary_driver=weight` 才能进入权重候选复核，`gate_only`
+    只进入 gate policy review，bundle 和非 weight primary driver 不得进入 weight review；重复运行不得产生重复
+    registry 行；实现同步更新系统流图并补测试；生产权重、gate、approved overlay 和正式 prediction ledger 保持隔离
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求 shadow candidate 跨交易日持续观察，而不是每天只输出新的
+    search result。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `aits feedback evaluate-forward-shadow`、`REVIEW_PENDING`
+    registry 生命周期、forward evaluation Markdown/JSON 输出、run-shadow registry 幂等保护和 production
+    safety 测试；验证通过 shadow iteration 目标测试、daily task dashboard 相关测试、全量 `ruff check
+    src tests`、全量 `pytest -q` 572 passed 和 `git diff --check`。2026-06-09: 从 VALIDATING
+    改为 DONE，原因：运行 `aits feedback evaluate-forward-shadow --as-of 2026-05-19` 输出 `forward_shadow_evaluation_2026-05-19.json/md`，状态
+    `PASS`、evaluated_count=1、`REVIEW_GATE_POLICY=1`、`REVIEW_WEIGHT_CANDIDATE=0`；gate-only
+    candidate 从 `FORWARD_SHADOW_ACTIVE` 进入 `REVIEW_PENDING`，报告声明 `production_effect=none`
+    且 production parameters unchanged；验证通过 `tests/test_shadow_iteration.py` + `tests/test_daily_task_dashboard.py`
+    32 passed、Ruff、repo-wide Black check 和 `compileall`。'
+  docs_links:
+  - docs/requirements/forward_shadow_candidate_lifecycle_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 23f83c200c997c8f4f0f4b2eb8d062bd47df9b3d46907961c012b03b047babda
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f6f2f11966284febd3e4b8bc79ffff966499fdcd43dcae7031cebbdcc8e6e10b

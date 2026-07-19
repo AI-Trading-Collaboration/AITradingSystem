@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-734_DATA_FOUNDATION_REAL_DATA_ACCEPTANCE
+  title: null
+  domain: Data foundation / real-data acceptance and fail-closed validation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-734_Data_Foundation_Real_Data_Acceptance.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-734_Data_Foundation_Real_Data_Acceptance.md`；对
+    TRADING-726～733 baseline 做 representative universe/date-window 验收，必须保持 validation-only
+    / observe-only
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits data foundation-acceptance run` 可生成 data foundation acceptance report；覆盖
+      pit-feature-store、asset-master、universe、trading-costs、research labels/runs/execution/cases、forward-evidence；输出
+      source qualification、promotion_grade_ready_count、diagnostic_only_count、blocked_until_qualified_count、lookahead_violation_count；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1364
+    row_sha256: 23362dd9ebb7f9a8f7c64da3ad1aebe92b2c44df53753834748c76a23f5ae8d1
+    cell_count: 8
+    all_cells:
+    - TRADING-734_DATA_FOUNDATION_REAL_DATA_ACCEPTANCE
+    - Data foundation / real-data acceptance and fail-closed validation
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-734_Data_Foundation_Real_Data_Acceptance.md`；对
+      TRADING-726～733 baseline 做 representative universe/date-window 验收，必须保持 validation-only
+      / observe-only
+    - '`aits data foundation-acceptance run` 可生成 data foundation acceptance report；覆盖
+      pit-feature-store、asset-master、universe、trading-costs、research labels/runs/execution/cases、forward-evidence；输出
+      source qualification、promotion_grade_ready_count、diagnostic_only_count、blocked_until_qualified_count、lookahead_violation_count；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false'
+    - '2026-06-21: validation-only acceptance runner 已实现并进入 VALIDATING；默认 run 输出 `BLOCKED_UNTIL_QUALIFIED_DATA`、promotion_grade_ready_count=0、diagnostic_only_count=2、blocked_until_qualified_count=3、lookahead_violation_count=0、production_effect=none、broker_action=none，说明本地真实源仍需
+      qualification，不允许 promotion/paper-shadow/production use；focused tests、compileall、Ruff、Black
+      check、fast-unit、contract-validation、report-validation 已通过。'
+    raw_line: '|TRADING-734_DATA_FOUNDATION_REAL_DATA_ACCEPTANCE|Data foundation /
+      real-data acceptance and fail-closed validation|P0|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-734_Data_Foundation_Real_Data_Acceptance.md`；对
+      TRADING-726～733 baseline 做 representative universe/date-window 验收，必须保持 validation-only
+      / observe-only|`aits data foundation-acceptance run` 可生成 data foundation acceptance
+      report；覆盖 pit-feature-store、asset-master、universe、trading-costs、research labels/runs/execution/cases、forward-evidence；输出
+      source qualification、promotion_grade_ready_count、diagnostic_only_count、blocked_until_qualified_count、lookahead_violation_count；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false|2026-06-21:
+      validation-only acceptance runner 已实现并进入 VALIDATING；默认 run 输出 `BLOCKED_UNTIL_QUALIFIED_DATA`、promotion_grade_ready_count=0、diagnostic_only_count=2、blocked_until_qualified_count=3、lookahead_violation_count=0、production_effect=none、broker_action=none，说明本地真实源仍需
+      qualification，不允许 promotion/paper-shadow/production use；focused tests、compileall、Ruff、Black
+      check、fast-unit、contract-validation、report-validation 已通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-23362dd9ebb7f9a8f7c64da3
+  task_id: TRADING-734_DATA_FOUNDATION_REAL_DATA_ACCEPTANCE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-21: validation-only acceptance runner 已实现并进入 VALIDATING；默认 run
+      输出 `BLOCKED_UNTIL_QUALIFIED_DATA`、promotion_grade_ready_count=0、diagnostic_only_count=2、blocked_until_qualified_count=3、lookahead_violation_count=0、production_effect=none、broker_action=none，说明本地真实源仍需
+      qualification，不允许 promotion/paper-shadow/production use；focused tests、compileall、Ruff、Black
+      check、fast-unit、contract-validation、report-validation 已通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:23362dd9ebb7f9a8f7c64da3ad1aebe92b2c44df53753834748c76a23f5ae8d1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-734_DATA_FOUNDATION_REAL_DATA_ACCEPTANCE
+  - Data foundation / real-data acceptance and fail-closed validation
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-734_Data_Foundation_Real_Data_Acceptance.md`；对 TRADING-726～733
+    baseline 做 representative universe/date-window 验收，必须保持 validation-only / observe-only
+  - '`aits data foundation-acceptance run` 可生成 data foundation acceptance report；覆盖
+    pit-feature-store、asset-master、universe、trading-costs、research labels/runs/execution/cases、forward-evidence；输出
+    source qualification、promotion_grade_ready_count、diagnostic_only_count、blocked_until_qualified_count、lookahead_violation_count；所有输出固定
+    production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false'
+  - '2026-06-21: validation-only acceptance runner 已实现并进入 VALIDATING；默认 run 输出 `BLOCKED_UNTIL_QUALIFIED_DATA`、promotion_grade_ready_count=0、diagnostic_only_count=2、blocked_until_qualified_count=3、lookahead_violation_count=0、production_effect=none、broker_action=none，说明本地真实源仍需
+    qualification，不允许 promotion/paper-shadow/production use；focused tests、compileall、Ruff、Black
+    check、fast-unit、contract-validation、report-validation 已通过。'
+  docs_links:
+  - docs/requirements/TRADING-734_Data_Foundation_Real_Data_Acceptance.md
+  terminal: false
+  raw_row_sha256: 23362dd9ebb7f9a8f7c64da3ad1aebe92b2c44df53753834748c76a23f5ae8d1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b4ae004f7182ea4903f13a14d801d57974d4cc05dbf74da22208890a57c447ca

@@ -1,0 +1,221 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-099
+  title: null
+  domain: ETF portfolio research/Dynamic v3 Rescue Scheduled Evaluation Artifact Retention
+    Latest Pointer
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+    v3 rescue scheduled observation / latest pointer workflow 已完成并通过 current canonical
+    artifacts 复核；`artifacts latest` 当前为 PASS，latest pointer directory 包含 48 个 canonical
+    dynamic-v3 pointers；`artifacts validate --family dynamic_v3_rescue` 为 PASS、failed_check_count=0；`artifacts
+    stale --config config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml`
+    为 PASS、stale_after_days=14、stale_count=0；`artifacts repair-latest` 为 PASS，repaired_count=42、skipped_count=0，validation_status=PASS；`schedule
+    observe --as-of 2026-06-05 --force-due --skip-shadow-monitor` 为 PASS、due_status=DUE、pointer_count=48，artifact_validation=PASS、stale_check=PASS、shadow_monitor=SKIPPED。Generated
+    scheduled observe artifact 固定 `production_effect=none`、`broker_action=none`、`production_candidate_generated=false`，schedule_boundary
+    显示 `real_sweep_execution_allowed=false`、`promotion_pack_execution_allowed=false`、`non_daily_research_execution=false`；daily-run
+    中只调用 lightweight gate，weekly / ad hoc research tasks 只在 `config/scheduled_tasks.yaml`
+    登记，不由 daily-run 自动触发
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf dynamic-v3-rescue artifacts latest/validate/repair-latest/stale`
+      可运行；`aits etf dynamic-v3-rescue schedule observe --as-of YYYY-MM-DD` 可作为 daily-run
+      轻量门控节点；latest pointer 只保存指针且默认全局 pointer 必须指向 canonical dynamic-v3 report root；validate
+      能发现空 pointer、broken paths 和 canonical 根外目标；repair-latest 只能从 canonical root
+      重建指针；stale detection 可报告过期 artifact；retention policy 来自 YAML 并文档化；operations
+      runbook 覆盖 overnight sweep、resume、weekly shadow report、promotion pack 和 validation；focused
+      tests、scheduler/daily ops/direct CLI tests、ruff、black、compileall、docs freshness、docs
+      report contract 和 diff check 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 310
+    row_sha256: b4347bf918df693ed758d66e26d47dd244303a8bc88fc381d22007f88540e5f9
+    cell_count: 8
+    all_cells:
+    - TRADING-099
+    - ETF portfolio research/Dynamic v3 Rescue Scheduled Evaluation Artifact Retention
+      Latest Pointer
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+      v3 rescue scheduled observation / latest pointer workflow 已完成并通过 current canonical
+      artifacts 复核；`artifacts latest` 当前为 PASS，latest pointer directory 包含 48 个 canonical
+      dynamic-v3 pointers；`artifacts validate --family dynamic_v3_rescue` 为 PASS、failed_check_count=0；`artifacts
+      stale --config config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml`
+      为 PASS、stale_after_days=14、stale_count=0；`artifacts repair-latest` 为 PASS，repaired_count=42、skipped_count=0，validation_status=PASS；`schedule
+      observe --as-of 2026-06-05 --force-due --skip-shadow-monitor` 为 PASS、due_status=DUE、pointer_count=48，artifact_validation=PASS、stale_check=PASS、shadow_monitor=SKIPPED。Generated
+      scheduled observe artifact 固定 `production_effect=none`、`broker_action=none`、`production_candidate_generated=false`，schedule_boundary
+      显示 `real_sweep_execution_allowed=false`、`promotion_pack_execution_allowed=false`、`non_daily_research_execution=false`；daily-run
+      中只调用 lightweight gate，weekly / ad hoc research tasks 只在 `config/scheduled_tasks.yaml`
+      登记，不由 daily-run 自动触发
+    - '`aits etf dynamic-v3-rescue artifacts latest/validate/repair-latest/stale`
+      可运行；`aits etf dynamic-v3-rescue schedule observe --as-of YYYY-MM-DD` 可作为 daily-run
+      轻量门控节点；latest pointer 只保存指针且默认全局 pointer 必须指向 canonical dynamic-v3 report root；validate
+      能发现空 pointer、broken paths 和 canonical 根外目标；repair-latest 只能从 canonical root
+      重建指针；stale detection 可报告过期 artifact；retention policy 来自 YAML 并文档化；operations
+      runbook 覆盖 overnight sweep、resume、weekly shadow report、promotion pack 和 validation；focused
+      tests、scheduler/daily ops/direct CLI tests、ruff、black、compileall、docs freshness、docs
+      report contract 和 diff check 通过'
+    - '2026-06-06: 新增并进入 IN_PROGRESS，原因：长期参数研究需要可审计 latest pointer、stale 检查和保留策略，而不是散落手工
+      artifacts。2026-06-06: baseline 实现完成并转入 VALIDATING；sample latest/validate/stale
+      PASS，stale_count 0；验证为 focused tests、legacy dynamic-v3 tests、Reader Brief/report
+      index、ruff、compileall、diff check 和全量 pytest 通过。2026-06-07: 从 VALIDATING 改回 IN_PROGRESS，原因：需要把
+      Dynamic v3 rescue research latest/stale/validation 和 small_real 手动研究链登记进统一 scheduled_tasks
+      非 daily cadence，并补充日期/条件门控字段；新增 daily-run lightweight `schedule observe` 门控，但不自动触发
+      real sweep、promotion pack 或 `production_candidate`。2026-06-07: 实现完成并转回 VALIDATING；新增
+      `dynamic-v3-rescue schedule observe`、daily-run observe step、direct CLI dispatch、closed-market/due/not-due/broken-pointer
+      审计、dynamic-v3 scheduled task 日期/条件/质量/人工复核门控和 runbook/system-flow/catalog/README
+      同步；验证通过 scheduler/daily ops/direct CLI/dynamic-v3 focused tests（67 passed）、ruff、black、compileall、docs
+      freshness、docs report contract 和 git diff check。2026-06-07: latest pointer hardening
+      补充完成；测试/临时 output_dir 不再更新默认 latest pointer，`artifacts validate` 拒绝 canonical
+      根外 pointer，`artifacts repair-latest` 当前重建 15 个 canonical pointers 后 PASS，forced
+      `schedule observe` PASS；验证纳入 dynamic-v3 focused tests（16 passed）和 TRADING-099
+      相关测试组（72 passed）。2026-06-09: 从 VALIDATING 改为 DONE，原因：current canonical latest
+      pointer、repair、stale 和 forced daily gate 复核均 PASS，schedule artifact 明确禁止 real
+      sweep / promotion pack / production candidate，scheduler/direct/daily tests 覆盖
+      lightweight gate、closed-market/due/broken-pointer 和 non-daily cadence 隔离。'
+    raw_line: '|TRADING-099|ETF portfolio research/Dynamic v3 Rescue Scheduled Evaluation
+      Artifact Retention Latest Pointer|P1|DONE|系统验证|详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+      v3 rescue scheduled observation / latest pointer workflow 已完成并通过 current canonical
+      artifacts 复核；`artifacts latest` 当前为 PASS，latest pointer directory 包含 48 个 canonical
+      dynamic-v3 pointers；`artifacts validate --family dynamic_v3_rescue` 为 PASS、failed_check_count=0；`artifacts
+      stale --config config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml`
+      为 PASS、stale_after_days=14、stale_count=0；`artifacts repair-latest` 为 PASS，repaired_count=42、skipped_count=0，validation_status=PASS；`schedule
+      observe --as-of 2026-06-05 --force-due --skip-shadow-monitor` 为 PASS、due_status=DUE、pointer_count=48，artifact_validation=PASS、stale_check=PASS、shadow_monitor=SKIPPED。Generated
+      scheduled observe artifact 固定 `production_effect=none`、`broker_action=none`、`production_candidate_generated=false`，schedule_boundary
+      显示 `real_sweep_execution_allowed=false`、`promotion_pack_execution_allowed=false`、`non_daily_research_execution=false`；daily-run
+      中只调用 lightweight gate，weekly / ad hoc research tasks 只在 `config/scheduled_tasks.yaml`
+      登记，不由 daily-run 自动触发|`aits etf dynamic-v3-rescue artifacts latest/validate/repair-latest/stale`
+      可运行；`aits etf dynamic-v3-rescue schedule observe --as-of YYYY-MM-DD` 可作为 daily-run
+      轻量门控节点；latest pointer 只保存指针且默认全局 pointer 必须指向 canonical dynamic-v3 report root；validate
+      能发现空 pointer、broken paths 和 canonical 根外目标；repair-latest 只能从 canonical root
+      重建指针；stale detection 可报告过期 artifact；retention policy 来自 YAML 并文档化；operations
+      runbook 覆盖 overnight sweep、resume、weekly shadow report、promotion pack 和 validation；focused
+      tests、scheduler/daily ops/direct CLI tests、ruff、black、compileall、docs freshness、docs
+      report contract 和 diff check 通过|2026-06-06: 新增并进入 IN_PROGRESS，原因：长期参数研究需要可审计
+      latest pointer、stale 检查和保留策略，而不是散落手工 artifacts。2026-06-06: baseline 实现完成并转入
+      VALIDATING；sample latest/validate/stale PASS，stale_count 0；验证为 focused tests、legacy
+      dynamic-v3 tests、Reader Brief/report index、ruff、compileall、diff check 和全量 pytest
+      通过。2026-06-07: 从 VALIDATING 改回 IN_PROGRESS，原因：需要把 Dynamic v3 rescue research
+      latest/stale/validation 和 small_real 手动研究链登记进统一 scheduled_tasks 非 daily cadence，并补充日期/条件门控字段；新增
+      daily-run lightweight `schedule observe` 门控，但不自动触发 real sweep、promotion pack
+      或 `production_candidate`。2026-06-07: 实现完成并转回 VALIDATING；新增 `dynamic-v3-rescue
+      schedule observe`、daily-run observe step、direct CLI dispatch、closed-market/due/not-due/broken-pointer
+      审计、dynamic-v3 scheduled task 日期/条件/质量/人工复核门控和 runbook/system-flow/catalog/README
+      同步；验证通过 scheduler/daily ops/direct CLI/dynamic-v3 focused tests（67 passed）、ruff、black、compileall、docs
+      freshness、docs report contract 和 git diff check。2026-06-07: latest pointer hardening
+      补充完成；测试/临时 output_dir 不再更新默认 latest pointer，`artifacts validate` 拒绝 canonical
+      根外 pointer，`artifacts repair-latest` 当前重建 15 个 canonical pointers 后 PASS，forced
+      `schedule observe` PASS；验证纳入 dynamic-v3 focused tests（16 passed）和 TRADING-099
+      相关测试组（72 passed）。2026-06-09: 从 VALIDATING 改为 DONE，原因：current canonical latest
+      pointer、repair、stale 和 forced daily gate 复核均 PASS，schedule artifact 明确禁止 real
+      sweep / promotion pack / production candidate，scheduler/direct/daily tests 覆盖
+      lightweight gate、closed-market/due/broken-pointer 和 non-daily cadence 隔离。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b4347bf918df693ed758d66e
+  task_id: TRADING-099
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-06-06: 新增并进入 IN_PROGRESS，原因：长期参数研究需要可审计 latest pointer、stale 检查和保留策略，而不是散落手工
+      artifacts。2026-06-06: baseline 实现完成并转入 VALIDATING；sample latest/validate/stale
+      PASS，stale_count 0；验证为 focused tests、legacy dynamic-v3 tests、Reader Brief/report
+      index、ruff、compileall、diff check 和全量 pytest 通过。2026-06-07: 从 VALIDATING 改回 IN_PROGRESS，原因：需要把
+      Dynamic v3 rescue research latest/stale/validation 和 small_real 手动研究链登记进统一 scheduled_tasks
+      非 daily cadence，并补充日期/条件门控字段；新增 daily-run lightweight `schedule observe` 门控，但不自动触发
+      real sweep、promotion pack 或 `production_candidate`。2026-06-07: 实现完成并转回 VALIDATING；新增
+      `dynamic-v3-rescue schedule observe`、daily-run observe step、direct CLI dispatch、closed-market/due/not-due/broken-pointer
+      审计、dynamic-v3 scheduled task 日期/条件/质量/人工复核门控和 runbook/system-flow/catalog/README
+      同步；验证通过 scheduler/daily ops/direct CLI/dynamic-v3 focused tests（67 passed）、ruff、black、compileall、docs
+      freshness、docs report contract 和 git diff check。2026-06-07: latest pointer hardening
+      补充完成；测试/临时 output_dir 不再更新默认 latest pointer，`artifacts validate` 拒绝 canonical
+      根外 pointer，`artifacts repair-latest` 当前重建 15 个 canonical pointers 后 PASS，forced
+      `schedule observe` PASS；验证纳入 dynamic-v3 focused tests（16 passed）和 TRADING-099
+      相关测试组（72 passed）。2026-06-09: 从 VALIDATING 改为 DONE，原因：current canonical latest
+      pointer、repair、stale 和 forced daily gate 复核均 PASS，schedule artifact 明确禁止 real
+      sweep / promotion pack / production candidate，scheduler/direct/daily tests 覆盖
+      lightweight gate、closed-market/due/broken-pointer 和 non-daily cadence 隔离。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b4347bf918df693ed758d66e26d47dd244303a8bc88fc381d22007f88540e5f9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-099
+  - ETF portfolio research/Dynamic v3 Rescue Scheduled Evaluation Artifact Retention
+    Latest Pointer
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+    v3 rescue scheduled observation / latest pointer workflow 已完成并通过 current canonical
+    artifacts 复核；`artifacts latest` 当前为 PASS，latest pointer directory 包含 48 个 canonical
+    dynamic-v3 pointers；`artifacts validate --family dynamic_v3_rescue` 为 PASS、failed_check_count=0；`artifacts
+    stale --config config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml`
+    为 PASS、stale_after_days=14、stale_count=0；`artifacts repair-latest` 为 PASS，repaired_count=42、skipped_count=0，validation_status=PASS；`schedule
+    observe --as-of 2026-06-05 --force-due --skip-shadow-monitor` 为 PASS、due_status=DUE、pointer_count=48，artifact_validation=PASS、stale_check=PASS、shadow_monitor=SKIPPED。Generated
+    scheduled observe artifact 固定 `production_effect=none`、`broker_action=none`、`production_candidate_generated=false`，schedule_boundary
+    显示 `real_sweep_execution_allowed=false`、`promotion_pack_execution_allowed=false`、`non_daily_research_execution=false`；daily-run
+    中只调用 lightweight gate，weekly / ad hoc research tasks 只在 `config/scheduled_tasks.yaml`
+    登记，不由 daily-run 自动触发
+  - '`aits etf dynamic-v3-rescue artifacts latest/validate/repair-latest/stale` 可运行；`aits
+    etf dynamic-v3-rescue schedule observe --as-of YYYY-MM-DD` 可作为 daily-run 轻量门控节点；latest
+    pointer 只保存指针且默认全局 pointer 必须指向 canonical dynamic-v3 report root；validate 能发现空
+    pointer、broken paths 和 canonical 根外目标；repair-latest 只能从 canonical root 重建指针；stale
+    detection 可报告过期 artifact；retention policy 来自 YAML 并文档化；operations runbook 覆盖 overnight
+    sweep、resume、weekly shadow report、promotion pack 和 validation；focused tests、scheduler/daily
+    ops/direct CLI tests、ruff、black、compileall、docs freshness、docs report contract
+    和 diff check 通过'
+  - '2026-06-06: 新增并进入 IN_PROGRESS，原因：长期参数研究需要可审计 latest pointer、stale 检查和保留策略，而不是散落手工
+    artifacts。2026-06-06: baseline 实现完成并转入 VALIDATING；sample latest/validate/stale
+    PASS，stale_count 0；验证为 focused tests、legacy dynamic-v3 tests、Reader Brief/report
+    index、ruff、compileall、diff check 和全量 pytest 通过。2026-06-07: 从 VALIDATING 改回 IN_PROGRESS，原因：需要把
+    Dynamic v3 rescue research latest/stale/validation 和 small_real 手动研究链登记进统一 scheduled_tasks
+    非 daily cadence，并补充日期/条件门控字段；新增 daily-run lightweight `schedule observe` 门控，但不自动触发
+    real sweep、promotion pack 或 `production_candidate`。2026-06-07: 实现完成并转回 VALIDATING；新增
+    `dynamic-v3-rescue schedule observe`、daily-run observe step、direct CLI dispatch、closed-market/due/not-due/broken-pointer
+    审计、dynamic-v3 scheduled task 日期/条件/质量/人工复核门控和 runbook/system-flow/catalog/README
+    同步；验证通过 scheduler/daily ops/direct CLI/dynamic-v3 focused tests（67 passed）、ruff、black、compileall、docs
+    freshness、docs report contract 和 git diff check。2026-06-07: latest pointer hardening
+    补充完成；测试/临时 output_dir 不再更新默认 latest pointer，`artifacts validate` 拒绝 canonical
+    根外 pointer，`artifacts repair-latest` 当前重建 15 个 canonical pointers 后 PASS，forced
+    `schedule observe` PASS；验证纳入 dynamic-v3 focused tests（16 passed）和 TRADING-099
+    相关测试组（72 passed）。2026-06-09: 从 VALIDATING 改为 DONE，原因：current canonical latest
+    pointer、repair、stale 和 forced daily gate 复核均 PASS，schedule artifact 明确禁止 real
+    sweep / promotion pack / production candidate，scheduler/direct/daily tests 覆盖
+    lightweight gate、closed-market/due/broken-pointer 和 non-daily cadence 隔离。'
+  docs_links:
+  - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
+  terminal: true
+  raw_row_sha256: b4347bf918df693ed758d66e26d47dd244303a8bc88fc381d22007f88540e5f9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 51dc28125b3a7a6b193fe77efba7d2cca76ff8556a7991601b6c5f9f6c791620

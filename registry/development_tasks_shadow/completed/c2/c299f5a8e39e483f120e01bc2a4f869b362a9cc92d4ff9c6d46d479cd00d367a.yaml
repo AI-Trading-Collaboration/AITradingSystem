@@ -1,0 +1,118 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-062B
+  title: null
+  domain: ETF P2/ML weight optimizer baseline
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已在现有
+    P0 signals 和 P2 policy 上新增 candidate-only 权重优化报告
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`p2.yaml` 治理 optimizer lookback、score/return/risk 权重、单标的上限、cash floor、candidate-only
+      和 auto-promotion 边界；`aits etf p2 weight-optimizer` 先复用 ETF price data quality
+      gate，读取 P0 signals 和价格历史，输出候选权重、score components、data quality、config hash、limitation
+      和 `production_effect=none`；不得写入 `data/etf_portfolio/target_weights.csv`、不得调用
+      broker、不得改变日报正式建议；测试覆盖权重合计、CASH 吸收、上限和安全边界'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 365
+    row_sha256: 3a0d5ab92f028b0f50ebf96c926662e5bd6109689b426d189e99a99967bb856b
+    cell_count: 8
+    all_cells:
+    - TRADING-062B
+    - ETF P2/ML weight optimizer baseline
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已在现有
+      P0 signals 和 P2 policy 上新增 candidate-only 权重优化报告
+    - '`p2.yaml` 治理 optimizer lookback、score/return/risk 权重、单标的上限、cash floor、candidate-only
+      和 auto-promotion 边界；`aits etf p2 weight-optimizer` 先复用 ETF price data quality
+      gate，读取 P0 signals 和价格历史，输出候选权重、score components、data quality、config hash、limitation
+      和 `production_effect=none`；不得写入 `data/etf_portfolio/target_weights.csv`、不得调用
+      broker、不得改变日报正式建议；测试覆盖权重合计、CASH 吸收、上限和安全边界'
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 P2 明确包含“机器学习权重优化”，当前已有 `ml-ranking` 仅做排序，尚未输出候选组合权重；本阶段先实现可审计
+      candidate-only baseline，不宣称生产级 ML。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 `weight_optimizer`
+      policy、`aits etf p2 weight-optimizer`、candidate weight builder 和测试；真实 2026-05-29
+      smoke 输出 5 行候选权重，固定 `candidate_only=true`、`auto_promotion=false`、`production_effect=none`，并披露
+      data quality PASS。'
+    raw_line: '|TRADING-062B|ETF P2/ML weight optimizer baseline|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已在现有 P0
+      signals 和 P2 policy 上新增 candidate-only 权重优化报告|`p2.yaml` 治理 optimizer lookback、score/return/risk
+      权重、单标的上限、cash floor、candidate-only 和 auto-promotion 边界；`aits etf p2 weight-optimizer`
+      先复用 ETF price data quality gate，读取 P0 signals 和价格历史，输出候选权重、score components、data
+      quality、config hash、limitation 和 `production_effect=none`；不得写入 `data/etf_portfolio/target_weights.csv`、不得调用
+      broker、不得改变日报正式建议；测试覆盖权重合计、CASH 吸收、上限和安全边界|2026-05-31: 新增并进入 IN_PROGRESS，原因：原文
+      P2 明确包含“机器学习权重优化”，当前已有 `ml-ranking` 仅做排序，尚未输出候选组合权重；本阶段先实现可审计 candidate-only
+      baseline，不宣称生产级 ML。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 `weight_optimizer`
+      policy、`aits etf p2 weight-optimizer`、candidate weight builder 和测试；真实 2026-05-29
+      smoke 输出 5 行候选权重，固定 `candidate_only=true`、`auto_promotion=false`、`production_effect=none`，并披露
+      data quality PASS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3a0d5ab92f028b0f50ebf96c
+  task_id: TRADING-062B
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 P2 明确包含“机器学习权重优化”，当前已有 `ml-ranking`
+      仅做排序，尚未输出候选组合权重；本阶段先实现可审计 candidate-only baseline，不宣称生产级 ML。2026-05-31: 从 IN_PROGRESS
+      改为 DONE，原因：新增 `weight_optimizer` policy、`aits etf p2 weight-optimizer`、candidate
+      weight builder 和测试；真实 2026-05-29 smoke 输出 5 行候选权重，固定 `candidate_only=true`、`auto_promotion=false`、`production_effect=none`，并披露
+      data quality PASS。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3a0d5ab92f028b0f50ebf96c926662e5bd6109689b426d189e99a99967bb856b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062B
+  - ETF P2/ML weight optimizer baseline
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已在现有
+    P0 signals 和 P2 policy 上新增 candidate-only 权重优化报告
+  - '`p2.yaml` 治理 optimizer lookback、score/return/risk 权重、单标的上限、cash floor、candidate-only
+    和 auto-promotion 边界；`aits etf p2 weight-optimizer` 先复用 ETF price data quality
+    gate，读取 P0 signals 和价格历史，输出候选权重、score components、data quality、config hash、limitation
+    和 `production_effect=none`；不得写入 `data/etf_portfolio/target_weights.csv`、不得调用 broker、不得改变日报正式建议；测试覆盖权重合计、CASH
+    吸收、上限和安全边界'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 P2 明确包含“机器学习权重优化”，当前已有 `ml-ranking` 仅做排序，尚未输出候选组合权重；本阶段先实现可审计
+    candidate-only baseline，不宣称生产级 ML。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 `weight_optimizer`
+    policy、`aits etf p2 weight-optimizer`、candidate weight builder 和测试；真实 2026-05-29
+    smoke 输出 5 行候选权重，固定 `candidate_only=true`、`auto_promotion=false`、`production_effect=none`，并披露
+    data quality PASS。'
+  docs_links:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  terminal: true
+  raw_row_sha256: 3a0d5ab92f028b0f50ebf96c926662e5bd6109689b426d189e99a99967bb856b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c71c93014b363105a1920be20b5202e44bae52e237e4d5c5541f66cbbf2268d0

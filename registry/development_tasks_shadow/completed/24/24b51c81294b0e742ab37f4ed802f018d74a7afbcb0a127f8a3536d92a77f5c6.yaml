@@ -1,0 +1,153 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-361_ARTIFACT_LINEAGE_GRAPH
+  title: null
+  domain: Reporting governance / candidate research artifact lineage
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 lineage coverage 和 legacy report cleanup 优先级
+  requirement_refs:
+  - docs/requirements/TRADING-361_Artifact_Lineage_Graph.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-361_Artifact_Lineage_Graph.md`；建立
+    candidate research chain artifact lineage graph，覆盖 data artifacts、cache catalog、refresh
+    audit、PIT manifest、signal artifacts、daily paper-shadow、drift monitor、weekly review、staleness
+    monitor、readiness reports 和 owner reviews；固定只读，不刷新数据、不补造 artifact、不触发 broker/order/production
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/artifact_lineage.py`、`aits reports artifact-lineage`、`aits
+      reports validate-artifact-lineage`、daily-run / scheduled task / direct dispatcher
+      integration、report registry entries、Reader Brief Artifact Lineage Graph 摘要、artifact
+      catalog、README、operations runbook、system flow、requirements 和 focused tests；validation
+      CLI fail closed 检查 required node families、关键依赖边和 unsafe production effect；Reader
+      Brief 只读展示 latest lineage coverage / blocking issue 摘要
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 225
+    row_sha256: 0c48e5d81b32dbcf74935051d8bf5242b1f154e22cbcca7935ebe536523319d9
+    cell_count: 8
+    all_cells:
+    - TRADING-361_ARTIFACT_LINEAGE_GRAPH
+    - Reporting governance / candidate research artifact lineage
+    - P2
+    - DONE
+    - 项目 owner 后续复核 lineage coverage 和 legacy report cleanup 优先级
+    - 详细拆解见 `docs/requirements/TRADING-361_Artifact_Lineage_Graph.md`；建立 candidate
+      research chain artifact lineage graph，覆盖 data artifacts、cache catalog、refresh
+      audit、PIT manifest、signal artifacts、daily paper-shadow、drift monitor、weekly
+      review、staleness monitor、readiness reports 和 owner reviews；固定只读，不刷新数据、不补造 artifact、不触发
+      broker/order/production
+    - 新增 `src/ai_trading_system/reports/artifact_lineage.py`、`aits reports artifact-lineage`、`aits
+      reports validate-artifact-lineage`、daily-run / scheduled task / direct dispatcher
+      integration、report registry entries、Reader Brief Artifact Lineage Graph 摘要、artifact
+      catalog、README、operations runbook、system flow、requirements 和 focused tests；validation
+      CLI fail closed 检查 required node families、关键依赖边和 unsafe production effect；Reader
+      Brief 只读展示 latest lineage coverage / blocking issue 摘要
+    - '2026-06-16: DONE；真实 artifact `outputs/reports/artifact_lineage_graph_2026-06-15.json/md`
+      输出 `lineage_status=PASS`、families=11/11、edges=11/11、blocking=0、warnings=0；`outputs/reports/artifact_lineage_validation_2026-06-15.json/md`
+      输出 `validation_status=PASS`、checks=25、failed=0；`validate-data --as-of 2026-06-15`
+      为 `PASS_WITH_WARNINGS` / errors=0 / warnings=1，lineage 在该门禁后重新生成并验证通过；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief OK，Reader Brief
+      quality OK，documentation contract PASS；focused related pytest 80 passed，validation
+      tiers report-validation 50 passed、contract-validation 61 passed、fast-unit 62
+      passed，Ruff PASS，compileall PASS。保持 read-only / no upstream rerun / no artifact
+      repair / no paper-shadow decision mutation / no owner approval mutation / no
+      official target / no broker / no production mutation。'
+    raw_line: '|TRADING-361_ARTIFACT_LINEAGE_GRAPH|Reporting governance / candidate
+      research artifact lineage|P2|DONE|项目 owner 后续复核 lineage coverage 和 legacy report
+      cleanup 优先级|详细拆解见 `docs/requirements/TRADING-361_Artifact_Lineage_Graph.md`；建立
+      candidate research chain artifact lineage graph，覆盖 data artifacts、cache catalog、refresh
+      audit、PIT manifest、signal artifacts、daily paper-shadow、drift monitor、weekly
+      review、staleness monitor、readiness reports 和 owner reviews；固定只读，不刷新数据、不补造 artifact、不触发
+      broker/order/production|新增 `src/ai_trading_system/reports/artifact_lineage.py`、`aits
+      reports artifact-lineage`、`aits reports validate-artifact-lineage`、daily-run
+      / scheduled task / direct dispatcher integration、report registry entries、Reader
+      Brief Artifact Lineage Graph 摘要、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；validation CLI fail closed 检查 required node
+      families、关键依赖边和 unsafe production effect；Reader Brief 只读展示 latest lineage coverage
+      / blocking issue 摘要|2026-06-16: DONE；真实 artifact `outputs/reports/artifact_lineage_graph_2026-06-15.json/md`
+      输出 `lineage_status=PASS`、families=11/11、edges=11/11、blocking=0、warnings=0；`outputs/reports/artifact_lineage_validation_2026-06-15.json/md`
+      输出 `validation_status=PASS`、checks=25、failed=0；`validate-data --as-of 2026-06-15`
+      为 `PASS_WITH_WARNINGS` / errors=0 / warnings=1，lineage 在该门禁后重新生成并验证通过；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief OK，Reader Brief
+      quality OK，documentation contract PASS；focused related pytest 80 passed，validation
+      tiers report-validation 50 passed、contract-validation 61 passed、fast-unit 62
+      passed，Ruff PASS，compileall PASS。保持 read-only / no upstream rerun / no artifact
+      repair / no paper-shadow decision mutation / no owner approval mutation / no
+      official target / no broker / no production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0c48e5d81b32dbcf74935051
+  task_id: TRADING-361_ARTIFACT_LINEAGE_GRAPH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 项目 owner 后续复核 lineage coverage 和 legacy report cleanup 优先级
+    notes: '2026-06-16: DONE；真实 artifact `outputs/reports/artifact_lineage_graph_2026-06-15.json/md`
+      输出 `lineage_status=PASS`、families=11/11、edges=11/11、blocking=0、warnings=0；`outputs/reports/artifact_lineage_validation_2026-06-15.json/md`
+      输出 `validation_status=PASS`、checks=25、failed=0；`validate-data --as-of 2026-06-15`
+      为 `PASS_WITH_WARNINGS` / errors=0 / warnings=1，lineage 在该门禁后重新生成并验证通过；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief OK，Reader Brief
+      quality OK，documentation contract PASS；focused related pytest 80 passed，validation
+      tiers report-validation 50 passed、contract-validation 61 passed、fast-unit 62
+      passed，Ruff PASS，compileall PASS。保持 read-only / no upstream rerun / no artifact
+      repair / no paper-shadow decision mutation / no owner approval mutation / no
+      official target / no broker / no production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0c48e5d81b32dbcf74935051d8bf5242b1f154e22cbcca7935ebe536523319d9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-361_ARTIFACT_LINEAGE_GRAPH
+  - Reporting governance / candidate research artifact lineage
+  - P2
+  - DONE
+  - 项目 owner 后续复核 lineage coverage 和 legacy report cleanup 优先级
+  - 详细拆解见 `docs/requirements/TRADING-361_Artifact_Lineage_Graph.md`；建立 candidate research
+    chain artifact lineage graph，覆盖 data artifacts、cache catalog、refresh audit、PIT
+    manifest、signal artifacts、daily paper-shadow、drift monitor、weekly review、staleness
+    monitor、readiness reports 和 owner reviews；固定只读，不刷新数据、不补造 artifact、不触发 broker/order/production
+  - 新增 `src/ai_trading_system/reports/artifact_lineage.py`、`aits reports artifact-lineage`、`aits
+    reports validate-artifact-lineage`、daily-run / scheduled task / direct dispatcher
+    integration、report registry entries、Reader Brief Artifact Lineage Graph 摘要、artifact
+    catalog、README、operations runbook、system flow、requirements 和 focused tests；validation
+    CLI fail closed 检查 required node families、关键依赖边和 unsafe production effect；Reader
+    Brief 只读展示 latest lineage coverage / blocking issue 摘要
+  - '2026-06-16: DONE；真实 artifact `outputs/reports/artifact_lineage_graph_2026-06-15.json/md`
+    输出 `lineage_status=PASS`、families=11/11、edges=11/11、blocking=0、warnings=0；`outputs/reports/artifact_lineage_validation_2026-06-15.json/md`
+    输出 `validation_status=PASS`、checks=25、failed=0；`validate-data --as-of 2026-06-15`
+    为 `PASS_WITH_WARNINGS` / errors=0 / warnings=1，lineage 在该门禁后重新生成并验证通过；report index
+    `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief OK，Reader Brief quality
+    OK，documentation contract PASS；focused related pytest 80 passed，validation tiers
+    report-validation 50 passed、contract-validation 61 passed、fast-unit 62 passed，Ruff
+    PASS，compileall PASS。保持 read-only / no upstream rerun / no artifact repair / no
+    paper-shadow decision mutation / no owner approval mutation / no official target
+    / no broker / no production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-361_Artifact_Lineage_Graph.md
+  terminal: true
+  raw_row_sha256: 0c48e5d81b32dbcf74935051d8bf5242b1f154e22cbcca7935ebe536523319d9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b3c953fce9eb7713c98bde991c4bbec507c0fbdcbd1e6c91ceb2e8a1ea2cb501

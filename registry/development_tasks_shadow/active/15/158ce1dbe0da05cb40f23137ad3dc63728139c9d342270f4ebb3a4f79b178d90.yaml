@@ -1,0 +1,94 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-862_PROMOTION_HARD_BLOCK_END_TO_END_PROOF
+  title: null
+  domain: Controlled strategy research / hard-block E2E proof
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；hard
+    blocker 必须从底层传导到最终策略层
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 覆盖 TRADING-827/828/829/830、baseline dominated 和 insufficient sample 场景，最终必须
+      promotion/paper-shadow/production false 且 broker_action=none
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1340
+    row_sha256: 375b61d2bddfdf1731e5b56e8336f6d889334b69d98534359cab3c20560ac947
+    cell_count: 8
+    all_cells:
+    - TRADING-862_PROMOTION_HARD_BLOCK_END_TO_END_PROOF
+    - Controlled strategy research / hard-block E2E proof
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；hard
+      blocker 必须从底层传导到最终策略层
+    - 覆盖 TRADING-827/828/829/830、baseline dominated 和 insufficient sample 场景，最终必须
+      promotion/paper-shadow/production false 且 broker_action=none
+    - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: E2E proof 完成并转入 VALIDATING；输出 `HARD_BLOCK_E2E_PASS`，6
+      个场景最终均保持 promotion/paper-shadow/production=false 且 broker_action=none。'
+    raw_line: '|TRADING-862_PROMOTION_HARD_BLOCK_END_TO_END_PROOF|Controlled strategy
+      research / hard-block E2E proof|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；hard
+      blocker 必须从底层传导到最终策略层|覆盖 TRADING-827/828/829/830、baseline dominated 和 insufficient
+      sample 场景，最终必须 promotion/paper-shadow/production false 且 broker_action=none|2026-06-22:
+      新增并进入 IN_PROGRESS。2026-06-22: E2E proof 完成并转入 VALIDATING；输出 `HARD_BLOCK_E2E_PASS`，6
+      个场景最终均保持 promotion/paper-shadow/production=false 且 broker_action=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-375b61d2bddfdf1731e5b56e
+  task_id: TRADING-862_PROMOTION_HARD_BLOCK_END_TO_END_PROOF
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: E2E proof 完成并转入 VALIDATING；输出
+      `HARD_BLOCK_E2E_PASS`，6 个场景最终均保持 promotion/paper-shadow/production=false 且 broker_action=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:375b61d2bddfdf1731e5b56e8336f6d889334b69d98534359cab3c20560ac947
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-862_PROMOTION_HARD_BLOCK_END_TO_END_PROOF
+  - Controlled strategy research / hard-block E2E proof
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；hard
+    blocker 必须从底层传导到最终策略层
+  - 覆盖 TRADING-827/828/829/830、baseline dominated 和 insufficient sample 场景，最终必须 promotion/paper-shadow/production
+    false 且 broker_action=none
+  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: E2E proof 完成并转入 VALIDATING；输出 `HARD_BLOCK_E2E_PASS`，6
+    个场景最终均保持 promotion/paper-shadow/production=false 且 broker_action=none。'
+  docs_links:
+  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
+  terminal: false
+  raw_row_sha256: 375b61d2bddfdf1731e5b56e8336f6d889334b69d98534359cab3c20560ac947
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 57616623c7bd8b1b75ce5e66cfe00df5c564dba14fc125f40f33b7fca276c991

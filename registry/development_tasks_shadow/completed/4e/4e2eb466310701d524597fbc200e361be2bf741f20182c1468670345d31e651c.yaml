@@ -1,0 +1,161 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-360_REPORT_QUALITY_GATE
+  title: null
+  domain: Reporting governance / report quality gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 代码实现完成；项目 owner 后续复核 legacy report section migration 优先级
+  requirement_refs:
+  - docs/requirements/TRADING-360_Report_Quality_Gate.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-360_Report_Quality_Gate.md`；建立通用
+    report / Reader Brief quality gate，检查普通 report 的 purpose、input artifacts、output
+    decision、safety boundary、limitations、next action，以及 Reader Brief 的 human-readable
+    summary、key result、blocking issues、warnings、recommended next step；固定只读，不修改报告源
+    artifact、不刷新数据、不触发 broker/order/production
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/report_quality_gate.py`、`aits reports
+      quality-gate` CLI、daily-run / scheduled task / direct dispatcher integration、report
+      registry entry、Reader Brief `report_quality_gate` summary、artifact catalog、README、operations
+      runbook、system flow、requirements 和 focused tests；输出 JSON/Markdown report，包含
+      `report_quality_status`、`missing_sections`、`blocking_quality_issues`、`warning_quality_issues`；report
+      index 可跟踪该 artifact；Reader Brief 只读展示 latest quality gate 摘要
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 226
+    row_sha256: 240cbfec72685da34f5de36a991fb571bf6a2859e2d4cd05d112f5604035ba49
+    cell_count: 8
+    all_cells:
+    - TRADING-360_REPORT_QUALITY_GATE
+    - Reporting governance / report quality gate
+    - P2
+    - DONE
+    - 代码实现完成；项目 owner 后续复核 legacy report section migration 优先级
+    - 详细拆解见 `docs/requirements/TRADING-360_Report_Quality_Gate.md`；建立通用 report / Reader
+      Brief quality gate，检查普通 report 的 purpose、input artifacts、output decision、safety
+      boundary、limitations、next action，以及 Reader Brief 的 human-readable summary、key
+      result、blocking issues、warnings、recommended next step；固定只读，不修改报告源 artifact、不刷新数据、不触发
+      broker/order/production
+    - 新增 `src/ai_trading_system/reports/report_quality_gate.py`、`aits reports quality-gate`
+      CLI、daily-run / scheduled task / direct dispatcher integration、report registry
+      entry、Reader Brief `report_quality_gate` summary、artifact catalog、README、operations
+      runbook、system flow、requirements 和 focused tests；输出 JSON/Markdown report，包含
+      `report_quality_status`、`missing_sections`、`blocking_quality_issues`、`warning_quality_issues`；report
+      index 可跟踪该 artifact；Reader Brief 只读展示 latest quality gate 摘要
+    - '2026-06-16: DONE；真实 artifact `outputs/reports/report_quality_gate_2026-06-16.json/md`
+      输出 `report_quality_status=PASS_WITH_WARNINGS`、checked reports=378、checked Reader
+      Brief=1、missing sections=1312、blocking=0、warnings=1320；warnings 主要来自 legacy
+      report templates 尚未显式暴露全部 required sections，不是 production blocker。Reader Brief
+      JSON 暴露 latest quality gate summary；report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / unwaived=0；Reader Brief 使用 explicit 2026-06-15 decision snapshot + 2026-06-16
+      report index 生成 `LIMITED_READER_CONTEXT`，Reader Brief quality `LIMITED_READER_CONTEXT`
+      / failed=0；限制原因是本机缺 2026-06-16 decision snapshot，不是 quality gate blocker。验证通过
+      focused report/CLI/scheduler tests 52 passed、正式 report-validation tier 49 passed、validation
+      tier runner tests 6 passed、Ruff PASS、compileall PASS、git diff check PASS（仅 CRLF
+      warning）、documentation contract PASS。保持 read-only / no report repair / no data
+      refresh / no upstream rerun / no source artifact mutation / no broker / no production。'
+    raw_line: '|TRADING-360_REPORT_QUALITY_GATE|Reporting governance / report quality
+      gate|P2|DONE|代码实现完成；项目 owner 后续复核 legacy report section migration 优先级|详细拆解见
+      `docs/requirements/TRADING-360_Report_Quality_Gate.md`；建立通用 report / Reader
+      Brief quality gate，检查普通 report 的 purpose、input artifacts、output decision、safety
+      boundary、limitations、next action，以及 Reader Brief 的 human-readable summary、key
+      result、blocking issues、warnings、recommended next step；固定只读，不修改报告源 artifact、不刷新数据、不触发
+      broker/order/production|新增 `src/ai_trading_system/reports/report_quality_gate.py`、`aits
+      reports quality-gate` CLI、daily-run / scheduled task / direct dispatcher integration、report
+      registry entry、Reader Brief `report_quality_gate` summary、artifact catalog、README、operations
+      runbook、system flow、requirements 和 focused tests；输出 JSON/Markdown report，包含
+      `report_quality_status`、`missing_sections`、`blocking_quality_issues`、`warning_quality_issues`；report
+      index 可跟踪该 artifact；Reader Brief 只读展示 latest quality gate 摘要|2026-06-16: DONE；真实
+      artifact `outputs/reports/report_quality_gate_2026-06-16.json/md` 输出 `report_quality_status=PASS_WITH_WARNINGS`、checked
+      reports=378、checked Reader Brief=1、missing sections=1312、blocking=0、warnings=1320；warnings
+      主要来自 legacy report templates 尚未显式暴露全部 required sections，不是 production blocker。Reader
+      Brief JSON 暴露 latest quality gate summary；report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / unwaived=0；Reader Brief 使用 explicit 2026-06-15 decision snapshot + 2026-06-16
+      report index 生成 `LIMITED_READER_CONTEXT`，Reader Brief quality `LIMITED_READER_CONTEXT`
+      / failed=0；限制原因是本机缺 2026-06-16 decision snapshot，不是 quality gate blocker。验证通过
+      focused report/CLI/scheduler tests 52 passed、正式 report-validation tier 49 passed、validation
+      tier runner tests 6 passed、Ruff PASS、compileall PASS、git diff check PASS（仅 CRLF
+      warning）、documentation contract PASS。保持 read-only / no report repair / no data
+      refresh / no upstream rerun / no source artifact mutation / no broker / no production。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-240cbfec72685da34f5de36a
+  task_id: TRADING-360_REPORT_QUALITY_GATE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 代码实现完成；项目 owner 后续复核 legacy report section migration 优先级
+    notes: '2026-06-16: DONE；真实 artifact `outputs/reports/report_quality_gate_2026-06-16.json/md`
+      输出 `report_quality_status=PASS_WITH_WARNINGS`、checked reports=378、checked Reader
+      Brief=1、missing sections=1312、blocking=0、warnings=1320；warnings 主要来自 legacy
+      report templates 尚未显式暴露全部 required sections，不是 production blocker。Reader Brief
+      JSON 暴露 latest quality gate summary；report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / unwaived=0；Reader Brief 使用 explicit 2026-06-15 decision snapshot + 2026-06-16
+      report index 生成 `LIMITED_READER_CONTEXT`，Reader Brief quality `LIMITED_READER_CONTEXT`
+      / failed=0；限制原因是本机缺 2026-06-16 decision snapshot，不是 quality gate blocker。验证通过
+      focused report/CLI/scheduler tests 52 passed、正式 report-validation tier 49 passed、validation
+      tier runner tests 6 passed、Ruff PASS、compileall PASS、git diff check PASS（仅 CRLF
+      warning）、documentation contract PASS。保持 read-only / no report repair / no data
+      refresh / no upstream rerun / no source artifact mutation / no broker / no production。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:240cbfec72685da34f5de36a991fb571bf6a2859e2d4cd05d112f5604035ba49
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-360_REPORT_QUALITY_GATE
+  - Reporting governance / report quality gate
+  - P2
+  - DONE
+  - 代码实现完成；项目 owner 后续复核 legacy report section migration 优先级
+  - 详细拆解见 `docs/requirements/TRADING-360_Report_Quality_Gate.md`；建立通用 report / Reader
+    Brief quality gate，检查普通 report 的 purpose、input artifacts、output decision、safety
+    boundary、limitations、next action，以及 Reader Brief 的 human-readable summary、key
+    result、blocking issues、warnings、recommended next step；固定只读，不修改报告源 artifact、不刷新数据、不触发
+    broker/order/production
+  - 新增 `src/ai_trading_system/reports/report_quality_gate.py`、`aits reports quality-gate`
+    CLI、daily-run / scheduled task / direct dispatcher integration、report registry
+    entry、Reader Brief `report_quality_gate` summary、artifact catalog、README、operations
+    runbook、system flow、requirements 和 focused tests；输出 JSON/Markdown report，包含 `report_quality_status`、`missing_sections`、`blocking_quality_issues`、`warning_quality_issues`；report
+    index 可跟踪该 artifact；Reader Brief 只读展示 latest quality gate 摘要
+  - '2026-06-16: DONE；真实 artifact `outputs/reports/report_quality_gate_2026-06-16.json/md`
+    输出 `report_quality_status=PASS_WITH_WARNINGS`、checked reports=378、checked Reader
+    Brief=1、missing sections=1312、blocking=0、warnings=1320；warnings 主要来自 legacy report
+    templates 尚未显式暴露全部 required sections，不是 production blocker。Reader Brief JSON 暴露
+    latest quality gate summary；report index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0；Reader
+    Brief 使用 explicit 2026-06-15 decision snapshot + 2026-06-16 report index 生成 `LIMITED_READER_CONTEXT`，Reader
+    Brief quality `LIMITED_READER_CONTEXT` / failed=0；限制原因是本机缺 2026-06-16 decision
+    snapshot，不是 quality gate blocker。验证通过 focused report/CLI/scheduler tests 52 passed、正式
+    report-validation tier 49 passed、validation tier runner tests 6 passed、Ruff PASS、compileall
+    PASS、git diff check PASS（仅 CRLF warning）、documentation contract PASS。保持 read-only
+    / no report repair / no data refresh / no upstream rerun / no source artifact
+    mutation / no broker / no production。'
+  docs_links:
+  - docs/requirements/TRADING-360_Report_Quality_Gate.md
+  terminal: true
+  raw_row_sha256: 240cbfec72685da34f5de36a991fb571bf6a2859e2d4cd05d112f5604035ba49
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d9b6eff9a0c83d6b10d31e12bbb8cf5fd06cb753c014c5dc36bed719e343ffdd

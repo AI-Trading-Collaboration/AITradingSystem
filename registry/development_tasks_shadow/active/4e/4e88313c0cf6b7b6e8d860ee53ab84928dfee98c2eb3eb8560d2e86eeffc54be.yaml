@@ -1,0 +1,96 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2297_TQQQ_ADJUSTMENT_RATIO_JUMP_WATCHLIST
+  title: null
+  domain: Data quality / corporate action adjustment watchlist
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/research/data_quality_watchlist.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 新增 watchlist 记录后，后续需确认 TQQQ 2025-11-20
+    `prices_adjustment_ratio_jump` 来自真实拆分/分红/复权事件、数据源调整异常、单日异常价格或复权系数跳变
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增或更新 `docs/research/data_quality_watchlist.md` 与 `inputs/data_quality_watchlist/tqqq_adjustment_ratio_jump_2025_11_20.yaml`；当前状态记录为
+      `NON_BLOCKING_WARNING`；如果 TQQQ 未来进入正式 strategy universe，则升级为 `BLOCKING_DATA_QUALITY_REVIEW`；不得静默平滑该
+      warning
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1276
+    row_sha256: 28b5babac59c5771c620459bc08cb414f6a1ac99e832c20f28cb5918b4160424
+    cell_count: 8
+    all_cells:
+    - TRADING-2297_TQQQ_ADJUSTMENT_RATIO_JUMP_WATCHLIST
+    - Data quality / corporate action adjustment watchlist
+    - P2
+    - READY
+    - 系统实现 + 项目 owner 后续复核
+    - 新增 watchlist 记录后，后续需确认 TQQQ 2025-11-20 `prices_adjustment_ratio_jump` 来自真实拆分/分红/复权事件、数据源调整异常、单日异常价格或复权系数跳变
+    - 新增或更新 `docs/research/data_quality_watchlist.md` 与 `inputs/data_quality_watchlist/tqqq_adjustment_ratio_jump_2025_11_20.yaml`；当前状态记录为
+      `NON_BLOCKING_WARNING`；如果 TQQQ 未来进入正式 strategy universe，则升级为 `BLOCKING_DATA_QUALITY_REVIEW`；不得静默平滑该
+      warning
+    - '2026-06-27: 新增低优先级数据质量跟踪；当前未发现其影响 actual-path ranking 的证据，因此不阻断 TRADING-1256～1285。2026-06-29:
+      原 id 不符合 task-register numeric prefix 约束，重新编号为 TRADING-2297。'
+    raw_line: '|TRADING-2297_TQQQ_ADJUSTMENT_RATIO_JUMP_WATCHLIST|Data quality / corporate
+      action adjustment watchlist|P2|READY|系统实现 + 项目 owner 后续复核|新增 watchlist 记录后，后续需确认
+      TQQQ 2025-11-20 `prices_adjustment_ratio_jump` 来自真实拆分/分红/复权事件、数据源调整异常、单日异常价格或复权系数跳变|新增或更新
+      `docs/research/data_quality_watchlist.md` 与 `inputs/data_quality_watchlist/tqqq_adjustment_ratio_jump_2025_11_20.yaml`；当前状态记录为
+      `NON_BLOCKING_WARNING`；如果 TQQQ 未来进入正式 strategy universe，则升级为 `BLOCKING_DATA_QUALITY_REVIEW`；不得静默平滑该
+      warning|2026-06-27: 新增低优先级数据质量跟踪；当前未发现其影响 actual-path ranking 的证据，因此不阻断 TRADING-1256～1285。2026-06-29:
+      原 id 不符合 task-register numeric prefix 约束，重新编号为 TRADING-2297。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-28b5babac59c5771c620459b
+  task_id: TRADING-2297_TQQQ_ADJUSTMENT_RATIO_JUMP_WATCHLIST
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: READY
+  payload:
+    priority: P2
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-27: 新增低优先级数据质量跟踪；当前未发现其影响 actual-path ranking 的证据，因此不阻断 TRADING-1256～1285。2026-06-29:
+      原 id 不符合 task-register numeric prefix 约束，重新编号为 TRADING-2297。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:28b5babac59c5771c620459bc08cb414f6a1ac99e832c20f28cb5918b4160424
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2297_TQQQ_ADJUSTMENT_RATIO_JUMP_WATCHLIST
+  - Data quality / corporate action adjustment watchlist
+  - P2
+  - READY
+  - 系统实现 + 项目 owner 后续复核
+  - 新增 watchlist 记录后，后续需确认 TQQQ 2025-11-20 `prices_adjustment_ratio_jump` 来自真实拆分/分红/复权事件、数据源调整异常、单日异常价格或复权系数跳变
+  - 新增或更新 `docs/research/data_quality_watchlist.md` 与 `inputs/data_quality_watchlist/tqqq_adjustment_ratio_jump_2025_11_20.yaml`；当前状态记录为
+    `NON_BLOCKING_WARNING`；如果 TQQQ 未来进入正式 strategy universe，则升级为 `BLOCKING_DATA_QUALITY_REVIEW`；不得静默平滑该
+    warning
+  - '2026-06-27: 新增低优先级数据质量跟踪；当前未发现其影响 actual-path ranking 的证据，因此不阻断 TRADING-1256～1285。2026-06-29:
+    原 id 不符合 task-register numeric prefix 约束，重新编号为 TRADING-2297。'
+  docs_links:
+  - docs/research/data_quality_watchlist.md
+  terminal: false
+  raw_row_sha256: 28b5babac59c5771c620459bc08cb414f6a1ac99e832c20f28cb5918b4160424
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b15e5f344445b21c890f0030c9b8e8a7bf05556b48447465f36b826921d830c2

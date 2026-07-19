@@ -1,0 +1,178 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-016
+  title: null
+  domain: 交易执行/Weight Candidate Evaluation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/weight_candidate_evaluation_2026-05-18.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/weight_candidate_evaluation_2026-05-18.md`；只读候选权重评估层、policy、standalone
+    script、dashboard 轻量卡片、系统流图、产物目录、测试和当前复验证据已完成；后续真实 TRADING-015 / paper / shadow
+    / replay 输入观察由 `TRADING-017`、`TRADING-018`、`TRADING-018A`、`TRADING-018B` 下游链路继续承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `outputs/reports/weight_candidate_evaluation_YYYY-MM-DD.json/md`；固定 `production_effect=none`、`evaluation_mode=observe_only`；7d/14d/30d
+      窗口输出 candidate_count、evaluable/blocked/insufficient/low-quality 统计、continuous
+      replay availability、synthetic ratio、OHLC coverage、reconciliation PASS、paper/shadow
+      status、replay mode 和可用的 final equity / max drawdown / exposure / concentration
+      delta；candidate 级 `evaluation_status` 只允许保守枚举，gate 覆盖 candidate blocked、manual
+      approval、insufficient sample、low data quality、synthetic ratio、continuous replay
+      missing、shadow impact insufficient、paper signal quality unreliable、reconciliation
+      unreliable、drawdown/exposure/concentration worse；dashboard 只读卡片展示 evaluation_status、candidate_count、evaluable_candidate_count、top_candidate_id、main
+      blocked_by、report link 和 `production_effect=none`；数据质量 gate、目标 pytest、dashboard
+      pytest、`tests/trading_engine`、docs freshness、scoped Ruff/Black 和 GitHub Actions
+      CI 通过；实现期验收记录保留全量 pytest、ruff 和 black check 结果
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 290
+    row_sha256: 39c0d9b78c3c0601a4ed41a11c19110a193ae4eee0cb472d409c2ed3458d6394
+    cell_count: 8
+    all_cells:
+    - TRADING-016
+    - 交易执行/Weight Candidate Evaluation
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/weight_candidate_evaluation_2026-05-18.md`；只读候选权重评估层、policy、standalone
+      script、dashboard 轻量卡片、系统流图、产物目录、测试和当前复验证据已完成；后续真实 TRADING-015 / paper / shadow
+      / replay 输入观察由 `TRADING-017`、`TRADING-018`、`TRADING-018A`、`TRADING-018B` 下游链路继续承接
+    - 新增 `outputs/reports/weight_candidate_evaluation_YYYY-MM-DD.json/md`；固定 `production_effect=none`、`evaluation_mode=observe_only`；7d/14d/30d
+      窗口输出 candidate_count、evaluable/blocked/insufficient/low-quality 统计、continuous
+      replay availability、synthetic ratio、OHLC coverage、reconciliation PASS、paper/shadow
+      status、replay mode 和可用的 final equity / max drawdown / exposure / concentration
+      delta；candidate 级 `evaluation_status` 只允许保守枚举，gate 覆盖 candidate blocked、manual
+      approval、insufficient sample、low data quality、synthetic ratio、continuous replay
+      missing、shadow impact insufficient、paper signal quality unreliable、reconciliation
+      unreliable、drawdown/exposure/concentration worse；dashboard 只读卡片展示 evaluation_status、candidate_count、evaluable_candidate_count、top_candidate_id、main
+      blocked_by、report link 和 `production_effect=none`；数据质量 gate、目标 pytest、dashboard
+      pytest、`tests/trading_engine`、docs freshness、scoped Ruff/Black 和 GitHub Actions
+      CI 通过；实现期验收记录保留全量 pytest、ruff 和 black check 结果
+    - '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-015 后继续推进 Weight Candidate
+      Evaluation；当前阶段只允许 observe-only manual review 入口，不允许自动调参、production promotion、交易触发或
+      dashboard 主结论变更。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `config/weight_candidate_evaluation_policy.yaml`、`scripts/run_weight_candidate_evaluation.py`、`weight_candidate_evaluation_YYYY-MM-DD.json/md`
+      生成器、7/14/30 日窗口 gate、candidate scorecard、dashboard Weight Candidate Evaluation
+      只读卡片、系统流图/产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff
+      和 black check。2026-05-18: GitHub Actions CI run `25996830767` 对 commit `aa84423e756428c2531a58fc77bd2252b379a31e`
+      完成且通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：本轮 `aits validate-data` 为 `PASS_WITH_WARNINGS`
+      / 错误数 0；默认缺输入 smoke 输出 `INSUFFICIENT_DATA`、candidate_count 0、evaluable_candidate_count
+      0、`main_blocked_by=missing_weight_adjustment_candidates`、`production_effect=none`；字段级复核确认
+      `market_regime=ai_after_chatgpt`、`evaluation_mode=observe_only`、7/14/30 日窗口均
+      fail closed 且 safety boundary 不写 production profile、不跑 replay runner、不调用 real
+      broker、不触发交易；目标 + dashboard pytest 32 passed，`tests/trading_engine` 939 passed，scoped
+      safety scan 无敏感输出，归档前代码基线 GitHub Actions run `27178454712` success。'
+    raw_line: '|TRADING-016|交易执行/Weight Candidate Evaluation|P0|DONE|系统验证|详细拆解见 `docs/requirements/weight_candidate_evaluation_2026-05-18.md`；只读候选权重评估层、policy、standalone
+      script、dashboard 轻量卡片、系统流图、产物目录、测试和当前复验证据已完成；后续真实 TRADING-015 / paper / shadow
+      / replay 输入观察由 `TRADING-017`、`TRADING-018`、`TRADING-018A`、`TRADING-018B` 下游链路继续承接|新增
+      `outputs/reports/weight_candidate_evaluation_YYYY-MM-DD.json/md`；固定 `production_effect=none`、`evaluation_mode=observe_only`；7d/14d/30d
+      窗口输出 candidate_count、evaluable/blocked/insufficient/low-quality 统计、continuous
+      replay availability、synthetic ratio、OHLC coverage、reconciliation PASS、paper/shadow
+      status、replay mode 和可用的 final equity / max drawdown / exposure / concentration
+      delta；candidate 级 `evaluation_status` 只允许保守枚举，gate 覆盖 candidate blocked、manual
+      approval、insufficient sample、low data quality、synthetic ratio、continuous replay
+      missing、shadow impact insufficient、paper signal quality unreliable、reconciliation
+      unreliable、drawdown/exposure/concentration worse；dashboard 只读卡片展示 evaluation_status、candidate_count、evaluable_candidate_count、top_candidate_id、main
+      blocked_by、report link 和 `production_effect=none`；数据质量 gate、目标 pytest、dashboard
+      pytest、`tests/trading_engine`、docs freshness、scoped Ruff/Black 和 GitHub Actions
+      CI 通过；实现期验收记录保留全量 pytest、ruff 和 black check 结果|2026-05-18: 新增并进入 IN_PROGRESS，原因：owner
+      要求在 TRADING-015 后继续推进 Weight Candidate Evaluation；当前阶段只允许 observe-only manual
+      review 入口，不允许自动调参、production promotion、交易触发或 dashboard 主结论变更。2026-05-18: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已新增 `config/weight_candidate_evaluation_policy.yaml`、`scripts/run_weight_candidate_evaluation.py`、`weight_candidate_evaluation_YYYY-MM-DD.json/md`
+      生成器、7/14/30 日窗口 gate、candidate scorecard、dashboard Weight Candidate Evaluation
+      只读卡片、系统流图/产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff
+      和 black check。2026-05-18: GitHub Actions CI run `25996830767` 对 commit `aa84423e756428c2531a58fc77bd2252b379a31e`
+      完成且通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：本轮 `aits validate-data` 为 `PASS_WITH_WARNINGS`
+      / 错误数 0；默认缺输入 smoke 输出 `INSUFFICIENT_DATA`、candidate_count 0、evaluable_candidate_count
+      0、`main_blocked_by=missing_weight_adjustment_candidates`、`production_effect=none`；字段级复核确认
+      `market_regime=ai_after_chatgpt`、`evaluation_mode=observe_only`、7/14/30 日窗口均
+      fail closed 且 safety boundary 不写 production profile、不跑 replay runner、不调用 real
+      broker、不触发交易；目标 + dashboard pytest 32 passed，`tests/trading_engine` 939 passed，scoped
+      safety scan 无敏感输出，归档前代码基线 GitHub Actions run `27178454712` success。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-39c0d9b78c3c0601a4ed41a1
+  task_id: TRADING-016
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-015 后继续推进 Weight Candidate
+      Evaluation；当前阶段只允许 observe-only manual review 入口，不允许自动调参、production promotion、交易触发或
+      dashboard 主结论变更。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `config/weight_candidate_evaluation_policy.yaml`、`scripts/run_weight_candidate_evaluation.py`、`weight_candidate_evaluation_YYYY-MM-DD.json/md`
+      生成器、7/14/30 日窗口 gate、candidate scorecard、dashboard Weight Candidate Evaluation
+      只读卡片、系统流图/产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff
+      和 black check。2026-05-18: GitHub Actions CI run `25996830767` 对 commit `aa84423e756428c2531a58fc77bd2252b379a31e`
+      完成且通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：本轮 `aits validate-data` 为 `PASS_WITH_WARNINGS`
+      / 错误数 0；默认缺输入 smoke 输出 `INSUFFICIENT_DATA`、candidate_count 0、evaluable_candidate_count
+      0、`main_blocked_by=missing_weight_adjustment_candidates`、`production_effect=none`；字段级复核确认
+      `market_regime=ai_after_chatgpt`、`evaluation_mode=observe_only`、7/14/30 日窗口均
+      fail closed 且 safety boundary 不写 production profile、不跑 replay runner、不调用 real
+      broker、不触发交易；目标 + dashboard pytest 32 passed，`tests/trading_engine` 939 passed，scoped
+      safety scan 无敏感输出，归档前代码基线 GitHub Actions run `27178454712` success。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:39c0d9b78c3c0601a4ed41a11c19110a193ae4eee0cb472d409c2ed3458d6394
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-016
+  - 交易执行/Weight Candidate Evaluation
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/weight_candidate_evaluation_2026-05-18.md`；只读候选权重评估层、policy、standalone
+    script、dashboard 轻量卡片、系统流图、产物目录、测试和当前复验证据已完成；后续真实 TRADING-015 / paper / shadow
+    / replay 输入观察由 `TRADING-017`、`TRADING-018`、`TRADING-018A`、`TRADING-018B` 下游链路继续承接
+  - 新增 `outputs/reports/weight_candidate_evaluation_YYYY-MM-DD.json/md`；固定 `production_effect=none`、`evaluation_mode=observe_only`；7d/14d/30d
+    窗口输出 candidate_count、evaluable/blocked/insufficient/low-quality 统计、continuous
+    replay availability、synthetic ratio、OHLC coverage、reconciliation PASS、paper/shadow
+    status、replay mode 和可用的 final equity / max drawdown / exposure / concentration
+    delta；candidate 级 `evaluation_status` 只允许保守枚举，gate 覆盖 candidate blocked、manual
+    approval、insufficient sample、low data quality、synthetic ratio、continuous replay
+    missing、shadow impact insufficient、paper signal quality unreliable、reconciliation
+    unreliable、drawdown/exposure/concentration worse；dashboard 只读卡片展示 evaluation_status、candidate_count、evaluable_candidate_count、top_candidate_id、main
+    blocked_by、report link 和 `production_effect=none`；数据质量 gate、目标 pytest、dashboard
+    pytest、`tests/trading_engine`、docs freshness、scoped Ruff/Black 和 GitHub Actions
+    CI 通过；实现期验收记录保留全量 pytest、ruff 和 black check 结果
+  - '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-015 后继续推进 Weight Candidate
+    Evaluation；当前阶段只允许 observe-only manual review 入口，不允许自动调参、production promotion、交易触发或
+    dashboard 主结论变更。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `config/weight_candidate_evaluation_policy.yaml`、`scripts/run_weight_candidate_evaluation.py`、`weight_candidate_evaluation_YYYY-MM-DD.json/md`
+    生成器、7/14/30 日窗口 gate、candidate scorecard、dashboard Weight Candidate Evaluation
+    只读卡片、系统流图/产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff
+    和 black check。2026-05-18: GitHub Actions CI run `25996830767` 对 commit `aa84423e756428c2531a58fc77bd2252b379a31e`
+    完成且通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：本轮 `aits validate-data` 为 `PASS_WITH_WARNINGS`
+    / 错误数 0；默认缺输入 smoke 输出 `INSUFFICIENT_DATA`、candidate_count 0、evaluable_candidate_count
+    0、`main_blocked_by=missing_weight_adjustment_candidates`、`production_effect=none`；字段级复核确认
+    `market_regime=ai_after_chatgpt`、`evaluation_mode=observe_only`、7/14/30 日窗口均 fail
+    closed 且 safety boundary 不写 production profile、不跑 replay runner、不调用 real broker、不触发交易；目标
+    + dashboard pytest 32 passed，`tests/trading_engine` 939 passed，scoped safety scan
+    无敏感输出，归档前代码基线 GitHub Actions run `27178454712` success。'
+  docs_links:
+  - docs/requirements/weight_candidate_evaluation_2026-05-18.md
+  terminal: true
+  raw_row_sha256: 39c0d9b78c3c0601a4ed41a11c19110a193ae4eee0cb472d409c2ed3458d6394
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 97daa685b4d0319f22fecede7c5353f5b9aefd9baae24a990a94a84de7a1dbac

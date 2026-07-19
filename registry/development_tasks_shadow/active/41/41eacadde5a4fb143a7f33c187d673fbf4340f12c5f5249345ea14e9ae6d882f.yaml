@@ -1,0 +1,123 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2318_EVENT_CALENDAR_DATA_FEASIBILITY_AUDIT
+  title: null
+  domain: Research trends / event calendar gating feasibility
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2318_Event_Calendar_Data_Feasibility_Audit.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2318_Event_Calendar_Data_Feasibility_Audit.md`；依赖
+    TRADING-2301 backlog 输出；legacy alias=`TRADING-2298B`，原临时 ID=`TRADING-2306_EVENT_CALENDAR_GATING_FEASIBILITY_AUDIT`
+    已因 post-2302 roadmap 冲突更正。本批只审计 FOMC/CPI/PCE/NFP、major AI earnings、NVDA earnings、TSM
+    monthly revenue 和 semiconductor earnings window 的 PIT / known-at source feasibility。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 形成 event calendar data feasibility audit、PIT source inventory、gating use
+      cases、manual review trigger contract 和 no-promotion safety gates；真实 run status=`EVENT_CALENDAR_FEASIBILITY_AUDIT_READY_SOURCE_AUDIT_ONLY`，data_quality_status=`NOT_APPLICABLE_STATIC_FEASIBILITY_AUDIT`，event_source_count=8，source_audit_required_count=8，pit_ready_source_count=0，source_blocked_count=4，gating_use_case_count=4，validation_route_row_count=12；不得预测
+      event outcome，不得直接生成 return predictor、event gating signal、no-add runtime、manual-review
+      runtime、post-event confirmation runtime 或 broker action。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1222
+    row_sha256: e293149534d416e04f3bb7245630ea0b78aba3a9d2caa5ac76978ec1befa54e0
+    cell_count: 8
+    all_cells:
+    - TRADING-2318_EVENT_CALENDAR_DATA_FEASIBILITY_AUDIT
+    - Research trends / event calendar gating feasibility
+    - P2
+    - VALIDATING
+    - 系统验证 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2318_Event_Calendar_Data_Feasibility_Audit.md`；依赖
+      TRADING-2301 backlog 输出；legacy alias=`TRADING-2298B`，原临时 ID=`TRADING-2306_EVENT_CALENDAR_GATING_FEASIBILITY_AUDIT`
+      已因 post-2302 roadmap 冲突更正。本批只审计 FOMC/CPI/PCE/NFP、major AI earnings、NVDA earnings、TSM
+      monthly revenue 和 semiconductor earnings window 的 PIT / known-at source feasibility。
+    - 形成 event calendar data feasibility audit、PIT source inventory、gating use cases、manual
+      review trigger contract 和 no-promotion safety gates；真实 run status=`EVENT_CALENDAR_FEASIBILITY_AUDIT_READY_SOURCE_AUDIT_ONLY`，data_quality_status=`NOT_APPLICABLE_STATIC_FEASIBILITY_AUDIT`，event_source_count=8，source_audit_required_count=8，pit_ready_source_count=0，source_blocked_count=4，gating_use_case_count=4，validation_route_row_count=12；不得预测
+      event outcome，不得直接生成 return predictor、event gating signal、no-add runtime、manual-review
+      runtime、post-event confirmation runtime 或 broker action。
+    - '2026-07-01: 根据 owner 附件登记；2026-07-01: 迁移到 owner roadmap 的 TRADING-2318。2026-07-01:
+      新增需求文档并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+      实现完成并进入 VALIDATING；验证通过 Ruff、compileall、event focused parallel pytest 7 passed、adjacent
+      focused 26 passed、docs/registry focused 27 passed、真实 CLI run、`contract-validation`
+      193 passed；本命令不读取 cached market / macro data，因此不运行 `aits validate-data` 作为门禁。'
+    raw_line: '|TRADING-2318_EVENT_CALENDAR_DATA_FEASIBILITY_AUDIT|Research trends
+      / event calendar gating feasibility|P2|VALIDATING|系统验证 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2318_Event_Calendar_Data_Feasibility_Audit.md`；依赖
+      TRADING-2301 backlog 输出；legacy alias=`TRADING-2298B`，原临时 ID=`TRADING-2306_EVENT_CALENDAR_GATING_FEASIBILITY_AUDIT`
+      已因 post-2302 roadmap 冲突更正。本批只审计 FOMC/CPI/PCE/NFP、major AI earnings、NVDA earnings、TSM
+      monthly revenue 和 semiconductor earnings window 的 PIT / known-at source feasibility。|形成
+      event calendar data feasibility audit、PIT source inventory、gating use cases、manual
+      review trigger contract 和 no-promotion safety gates；真实 run status=`EVENT_CALENDAR_FEASIBILITY_AUDIT_READY_SOURCE_AUDIT_ONLY`，data_quality_status=`NOT_APPLICABLE_STATIC_FEASIBILITY_AUDIT`，event_source_count=8，source_audit_required_count=8，pit_ready_source_count=0，source_blocked_count=4，gating_use_case_count=4，validation_route_row_count=12；不得预测
+      event outcome，不得直接生成 return predictor、event gating signal、no-add runtime、manual-review
+      runtime、post-event confirmation runtime 或 broker action。|2026-07-01: 根据 owner
+      附件登记；2026-07-01: 迁移到 owner roadmap 的 TRADING-2318。2026-07-01: 新增需求文档并进入 IN_PROGRESS；当前
+      worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+      实现完成并进入 VALIDATING；验证通过 Ruff、compileall、event focused parallel pytest 7 passed、adjacent
+      focused 26 passed、docs/registry focused 27 passed、真实 CLI run、`contract-validation`
+      193 passed；本命令不读取 cached market / macro data，因此不运行 `aits validate-data` 作为门禁。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e293149534d416e04f3bb724
+  task_id: TRADING-2318_EVENT_CALENDAR_DATA_FEASIBILITY_AUDIT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P2
+    next_owner: 系统验证 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 owner 附件登记；2026-07-01: 迁移到 owner roadmap 的 TRADING-2318。2026-07-01:
+      新增需求文档并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+      实现完成并进入 VALIDATING；验证通过 Ruff、compileall、event focused parallel pytest 7 passed、adjacent
+      focused 26 passed、docs/registry focused 27 passed、真实 CLI run、`contract-validation`
+      193 passed；本命令不读取 cached market / macro data，因此不运行 `aits validate-data` 作为门禁。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e293149534d416e04f3bb7245630ea0b78aba3a9d2caa5ac76978ec1befa54e0
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2318_EVENT_CALENDAR_DATA_FEASIBILITY_AUDIT
+  - Research trends / event calendar gating feasibility
+  - P2
+  - VALIDATING
+  - 系统验证 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2318_Event_Calendar_Data_Feasibility_Audit.md`；依赖
+    TRADING-2301 backlog 输出；legacy alias=`TRADING-2298B`，原临时 ID=`TRADING-2306_EVENT_CALENDAR_GATING_FEASIBILITY_AUDIT`
+    已因 post-2302 roadmap 冲突更正。本批只审计 FOMC/CPI/PCE/NFP、major AI earnings、NVDA earnings、TSM
+    monthly revenue 和 semiconductor earnings window 的 PIT / known-at source feasibility。
+  - 形成 event calendar data feasibility audit、PIT source inventory、gating use cases、manual
+    review trigger contract 和 no-promotion safety gates；真实 run status=`EVENT_CALENDAR_FEASIBILITY_AUDIT_READY_SOURCE_AUDIT_ONLY`，data_quality_status=`NOT_APPLICABLE_STATIC_FEASIBILITY_AUDIT`，event_source_count=8，source_audit_required_count=8，pit_ready_source_count=0，source_blocked_count=4，gating_use_case_count=4，validation_route_row_count=12；不得预测
+    event outcome，不得直接生成 return predictor、event gating signal、no-add runtime、manual-review
+    runtime、post-event confirmation runtime 或 broker action。
+  - '2026-07-01: 根据 owner 附件登记；2026-07-01: 迁移到 owner roadmap 的 TRADING-2318。2026-07-01:
+    新增需求文档并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+    实现完成并进入 VALIDATING；验证通过 Ruff、compileall、event focused parallel pytest 7 passed、adjacent
+    focused 26 passed、docs/registry focused 27 passed、真实 CLI run、`contract-validation`
+    193 passed；本命令不读取 cached market / macro data，因此不运行 `aits validate-data` 作为门禁。'
+  docs_links:
+  - docs/requirements/TRADING-2318_Event_Calendar_Data_Feasibility_Audit.md
+  terminal: false
+  raw_row_sha256: e293149534d416e04f3bb7245630ea0b78aba3a9d2caa5ac76978ec1befa54e0
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 062ba8799db835e62232a173a8991ef4b814baaa69947a03098025f857199460

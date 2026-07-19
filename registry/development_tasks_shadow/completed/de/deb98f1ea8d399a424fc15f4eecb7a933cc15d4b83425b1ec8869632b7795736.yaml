@@ -1,0 +1,132 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2391_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_REPORT_WRITER_BOUNDARY
+  title: null
+  domain: Architecture / daily incremental refactor dynamic strategy report writer
+    boundary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+  requirement_refs:
+  - docs/requirements/TRADING-2391_Daily_Incremental_Refactor_Dynamic_Strategy_Report_Writer_Boundary.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2391_Daily_Incremental_Refactor_Dynamic_Strategy_Report_Writer_Boundary.md`；本批只抽取
+    dynamic strategy research-only JSON / Markdown artifact writer helper，并先迁移 TRADING-2388
+    threshold methodology review，不改变外部 CLI、artifact path、report schema、字段内容、阈值、score
+    band、promotion gate、data quality gate、backtest、market-regime interpretation、paper-shadow、production
+    或 broker 边界。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/dynamic_strategy_report_common.py`；`dynamic_strategy_research_filter_threshold_methodology_review.py`
+      复用 `write_json_artifact()` / `write_markdown_artifact()`；新增 helper unit coverage；TRADING-2388
+      builder / CLI / registry docs focused tests 继续通过；验证通过 Ruff、compileall、focused
+      parallel pytest 5 passed、CLI help smoke、docs freshness 574 docs PASS、docs/task
+      focused pytest 11 passed 和 `git diff --check` PASS（仅 CRLF normalization warning）。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 96
+    row_sha256: c5fd4297604e4d3e058eafd68bc223ae4dbf3e6103f5e276c20dcb26724249d1
+    cell_count: 8
+    all_cells:
+    - TRADING-2391_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_REPORT_WRITER_BOUNDARY
+    - Architecture / daily incremental refactor dynamic strategy report writer boundary
+    - P2
+    - DONE
+    - 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+    - 详见 `docs/requirements/TRADING-2391_Daily_Incremental_Refactor_Dynamic_Strategy_Report_Writer_Boundary.md`；本批只抽取
+      dynamic strategy research-only JSON / Markdown artifact writer helper，并先迁移 TRADING-2388
+      threshold methodology review，不改变外部 CLI、artifact path、report schema、字段内容、阈值、score
+      band、promotion gate、data quality gate、backtest、market-regime interpretation、paper-shadow、production
+      或 broker 边界。
+    - 新增 `src/ai_trading_system/dynamic_strategy_report_common.py`；`dynamic_strategy_research_filter_threshold_methodology_review.py`
+      复用 `write_json_artifact()` / `write_markdown_artifact()`；新增 helper unit coverage；TRADING-2388
+      builder / CLI / registry docs focused tests 继续通过；验证通过 Ruff、compileall、focused
+      parallel pytest 5 passed、CLI help smoke、docs freshness 574 docs PASS、docs/task
+      focused pytest 11 passed 和 `git diff --check` PASS（仅 CRLF normalization warning）。
+    - '2026-07-06: 每日增量重构巡检登记，基线为 `2a4b9f222fb55e554e4efce8ff828a49c7f2621d`，HEAD
+      `8a668cd969013425d0724d6aed8217d1f27b6188` 不是重构提交。2026-07-06: 实现完成并归档 DONE；本轮未运行
+      `aits validate-data`，因为只整理 artifact writer，不读取 cached market/macro data，不生成
+      technical features、scoring、backtest 或 daily report 输出；production effect 固定 `none`，未写
+      production weights / active shadow weights，未触发 broker / order / trading action。'
+    raw_line: '|TRADING-2391_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_REPORT_WRITER_BOUNDARY|Architecture
+      / daily incremental refactor dynamic strategy report writer boundary|P2|DONE|系统后续每日增量重构巡检继续从本轮
+      refactor log 回填提交评估|详见 `docs/requirements/TRADING-2391_Daily_Incremental_Refactor_Dynamic_Strategy_Report_Writer_Boundary.md`；本批只抽取
+      dynamic strategy research-only JSON / Markdown artifact writer helper，并先迁移 TRADING-2388
+      threshold methodology review，不改变外部 CLI、artifact path、report schema、字段内容、阈值、score
+      band、promotion gate、data quality gate、backtest、market-regime interpretation、paper-shadow、production
+      或 broker 边界。|新增 `src/ai_trading_system/dynamic_strategy_report_common.py`；`dynamic_strategy_research_filter_threshold_methodology_review.py`
+      复用 `write_json_artifact()` / `write_markdown_artifact()`；新增 helper unit coverage；TRADING-2388
+      builder / CLI / registry docs focused tests 继续通过；验证通过 Ruff、compileall、focused
+      parallel pytest 5 passed、CLI help smoke、docs freshness 574 docs PASS、docs/task
+      focused pytest 11 passed 和 `git diff --check` PASS（仅 CRLF normalization warning）。|2026-07-06:
+      每日增量重构巡检登记，基线为 `2a4b9f222fb55e554e4efce8ff828a49c7f2621d`，HEAD `8a668cd969013425d0724d6aed8217d1f27b6188`
+      不是重构提交。2026-07-06: 实现完成并归档 DONE；本轮未运行 `aits validate-data`，因为只整理 artifact writer，不读取
+      cached market/macro data，不生成 technical features、scoring、backtest 或 daily report
+      输出；production effect 固定 `none`，未写 production weights / active shadow weights，未触发
+      broker / order / trading action。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c5fd4297604e4d3e058eafd6
+  task_id: TRADING-2391_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_REPORT_WRITER_BOUNDARY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+    notes: '2026-07-06: 每日增量重构巡检登记，基线为 `2a4b9f222fb55e554e4efce8ff828a49c7f2621d`，HEAD
+      `8a668cd969013425d0724d6aed8217d1f27b6188` 不是重构提交。2026-07-06: 实现完成并归档 DONE；本轮未运行
+      `aits validate-data`，因为只整理 artifact writer，不读取 cached market/macro data，不生成
+      technical features、scoring、backtest 或 daily report 输出；production effect 固定 `none`，未写
+      production weights / active shadow weights，未触发 broker / order / trading action。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c5fd4297604e4d3e058eafd68bc223ae4dbf3e6103f5e276c20dcb26724249d1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2391_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_REPORT_WRITER_BOUNDARY
+  - Architecture / daily incremental refactor dynamic strategy report writer boundary
+  - P2
+  - DONE
+  - 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+  - 详见 `docs/requirements/TRADING-2391_Daily_Incremental_Refactor_Dynamic_Strategy_Report_Writer_Boundary.md`；本批只抽取
+    dynamic strategy research-only JSON / Markdown artifact writer helper，并先迁移 TRADING-2388
+    threshold methodology review，不改变外部 CLI、artifact path、report schema、字段内容、阈值、score
+    band、promotion gate、data quality gate、backtest、market-regime interpretation、paper-shadow、production
+    或 broker 边界。
+  - 新增 `src/ai_trading_system/dynamic_strategy_report_common.py`；`dynamic_strategy_research_filter_threshold_methodology_review.py`
+    复用 `write_json_artifact()` / `write_markdown_artifact()`；新增 helper unit coverage；TRADING-2388
+    builder / CLI / registry docs focused tests 继续通过；验证通过 Ruff、compileall、focused
+    parallel pytest 5 passed、CLI help smoke、docs freshness 574 docs PASS、docs/task
+    focused pytest 11 passed 和 `git diff --check` PASS（仅 CRLF normalization warning）。
+  - '2026-07-06: 每日增量重构巡检登记，基线为 `2a4b9f222fb55e554e4efce8ff828a49c7f2621d`，HEAD `8a668cd969013425d0724d6aed8217d1f27b6188`
+    不是重构提交。2026-07-06: 实现完成并归档 DONE；本轮未运行 `aits validate-data`，因为只整理 artifact writer，不读取
+    cached market/macro data，不生成 technical features、scoring、backtest 或 daily report
+    输出；production effect 固定 `none`，未写 production weights / active shadow weights，未触发
+    broker / order / trading action。'
+  docs_links:
+  - docs/requirements/TRADING-2391_Daily_Incremental_Refactor_Dynamic_Strategy_Report_Writer_Boundary.md
+  terminal: true
+  raw_row_sha256: c5fd4297604e4d3e058eafd68bc223ae4dbf3e6103f5e276c20dcb26724249d1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b92eeb939925179043da4dc586ae50f60c9c30165649bd5132ae2e063cd85bba

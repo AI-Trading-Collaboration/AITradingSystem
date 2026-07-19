@@ -1,0 +1,175 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-075
+  title: null
+  domain: ETF portfolio data quality/Data Quality and Staleness Governance Upgrade
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner + 后续真实 daily observation / artifact refresh / owner review
+  requirement_refs:
+  - docs/operations/operations_runbook.md
+  - docs/requirements/TRADING-075_Data_Quality_and_Staleness_Governance_Upgrade.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-075_Data_Quality_and_Staleness_Governance_Upgrade.md`；TRADING-075A-K
+    data quality policy / price freshness / calendar coverage / outlier / config drift
+    / evidence completeness / gate freshness / report staleness / report generator
+    / Reader Brief / validation gate 基础设施已完成并复验通过；当前真实 2026-06-08 governance report
+    按 artifact 状态 fail-closed 为 `BLOCKED`，后续需要刷新 required artifacts、观察真实 daily runs
+    和 owner manual review，不自动解除 blockers
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 已按 runbook 先读取 `docs/operations/operations_runbook.md`；`validate-data --as-of
+      2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；`aits etf data-quality validate
+      --as-of 2026-06-08` 输出 `status=PASS`、`failed_check_count=0`；`aits etf data-quality
+      report --as-of 2026-06-08` 生成 governance JSON/Markdown 且 `status=BLOCKED`、blocking
+      failures 7、warnings 24、`commands_executed=false`、`production_state_mutated=false`；Reader
+      Brief `ETF Data Quality` 显示 `availability=AVAILABLE`、status BLOCKED、blocking_failure_count
+      7、warning_count 24、price_freshness WARNING、report_staleness BLOCKED、reader_brief_link_status
+      BLOCKED，并链接详细治理报告；`aits etf ops validate --as-of 2026-06-08` PASS；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；专项
+      pytest 13 passed
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1163
+    row_sha256: 995ffb06e2137d05260b360b65b1f1f8e98e8b03bc3285e5c098c63c87cfab53
+    cell_count: 8
+    all_cells:
+    - TRADING-075
+    - ETF portfolio data quality/Data Quality and Staleness Governance Upgrade
+    - P0
+    - BASELINE_DONE
+    - 项目 owner + 后续真实 daily observation / artifact refresh / owner review
+    - 详细拆解见 `docs/requirements/TRADING-075_Data_Quality_and_Staleness_Governance_Upgrade.md`；TRADING-075A-K
+      data quality policy / price freshness / calendar coverage / outlier / config
+      drift / evidence completeness / gate freshness / report staleness / report generator
+      / Reader Brief / validation gate 基础设施已完成并复验通过；当前真实 2026-06-08 governance report
+      按 artifact 状态 fail-closed 为 `BLOCKED`，后续需要刷新 required artifacts、观察真实 daily runs
+      和 owner manual review，不自动解除 blockers
+    - 已按 runbook 先读取 `docs/operations/operations_runbook.md`；`validate-data --as-of
+      2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；`aits etf data-quality validate
+      --as-of 2026-06-08` 输出 `status=PASS`、`failed_check_count=0`；`aits etf data-quality
+      report --as-of 2026-06-08` 生成 governance JSON/Markdown 且 `status=BLOCKED`、blocking
+      failures 7、warnings 24、`commands_executed=false`、`production_state_mutated=false`；Reader
+      Brief `ETF Data Quality` 显示 `availability=AVAILABLE`、status BLOCKED、blocking_failure_count
+      7、warning_count 24、price_freshness WARNING、report_staleness BLOCKED、reader_brief_link_status
+      BLOCKED，并链接详细治理报告；`aits etf ops validate --as-of 2026-06-08` PASS；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；专项
+      pytest 13 passed
+    - '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-074 operations workflow
+      后新增显式 data quality / staleness governance layer，防止 stale price data、missing
+      bars、config/model drift、incomplete evidence、stale gates/reports 和 Reader Brief
+      旧链接误导 ETF research outputs。2026-06-03: TRADING-075A-K 完成并转入 VALIDATING，新增 data
+      quality policy、freshness/coverage/outlier/drift/evidence/gate/report/link checkers、governance
+      report、validation gate、Reader Brief data-quality section、operations daily graph
+      step、report registry/catalog/system-flow/runbook/README integration 和专项测试；所有
+      outputs 固定 observe-only/candidate-only/manual-review-only。2026-06-09: 从 VALIDATING
+      改为 BASELINE_DONE，原因：复验证明 workflow 和 validation gate 完成，且真实 governance report
+      能显式披露 blockers；后续真实 daily observation、artifact freshness 修复和 owner manual review
+      由运行观察承接。'
+    raw_line: '|TRADING-075|ETF portfolio data quality/Data Quality and Staleness
+      Governance Upgrade|P0|BASELINE_DONE|项目 owner + 后续真实 daily observation / artifact
+      refresh / owner review|详细拆解见 `docs/requirements/TRADING-075_Data_Quality_and_Staleness_Governance_Upgrade.md`；TRADING-075A-K
+      data quality policy / price freshness / calendar coverage / outlier / config
+      drift / evidence completeness / gate freshness / report staleness / report generator
+      / Reader Brief / validation gate 基础设施已完成并复验通过；当前真实 2026-06-08 governance report
+      按 artifact 状态 fail-closed 为 `BLOCKED`，后续需要刷新 required artifacts、观察真实 daily runs
+      和 owner manual review，不自动解除 blockers|已按 runbook 先读取 `docs/operations/operations_runbook.md`；`validate-data
+      --as-of 2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；`aits etf data-quality
+      validate --as-of 2026-06-08` 输出 `status=PASS`、`failed_check_count=0`；`aits etf
+      data-quality report --as-of 2026-06-08` 生成 governance JSON/Markdown 且 `status=BLOCKED`、blocking
+      failures 7、warnings 24、`commands_executed=false`、`production_state_mutated=false`；Reader
+      Brief `ETF Data Quality` 显示 `availability=AVAILABLE`、status BLOCKED、blocking_failure_count
+      7、warning_count 24、price_freshness WARNING、report_staleness BLOCKED、reader_brief_link_status
+      BLOCKED，并链接详细治理报告；`aits etf ops validate --as-of 2026-06-08` PASS；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；专项
+      pytest 13 passed|2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-074 operations
+      workflow 后新增显式 data quality / staleness governance layer，防止 stale price data、missing
+      bars、config/model drift、incomplete evidence、stale gates/reports 和 Reader Brief
+      旧链接误导 ETF research outputs。2026-06-03: TRADING-075A-K 完成并转入 VALIDATING，新增 data
+      quality policy、freshness/coverage/outlier/drift/evidence/gate/report/link checkers、governance
+      report、validation gate、Reader Brief data-quality section、operations daily graph
+      step、report registry/catalog/system-flow/runbook/README integration 和专项测试；所有
+      outputs 固定 observe-only/candidate-only/manual-review-only。2026-06-09: 从 VALIDATING
+      改为 BASELINE_DONE，原因：复验证明 workflow 和 validation gate 完成，且真实 governance report
+      能显式披露 blockers；后续真实 daily observation、artifact freshness 修复和 owner manual review
+      由运行观察承接。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-995ffb06e2137d05260b360b
+  task_id: TRADING-075
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner + 后续真实 daily observation / artifact refresh / owner review
+    notes: '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-074 operations workflow
+      后新增显式 data quality / staleness governance layer，防止 stale price data、missing
+      bars、config/model drift、incomplete evidence、stale gates/reports 和 Reader Brief
+      旧链接误导 ETF research outputs。2026-06-03: TRADING-075A-K 完成并转入 VALIDATING，新增 data
+      quality policy、freshness/coverage/outlier/drift/evidence/gate/report/link checkers、governance
+      report、validation gate、Reader Brief data-quality section、operations daily graph
+      step、report registry/catalog/system-flow/runbook/README integration 和专项测试；所有
+      outputs 固定 observe-only/candidate-only/manual-review-only。2026-06-09: 从 VALIDATING
+      改为 BASELINE_DONE，原因：复验证明 workflow 和 validation gate 完成，且真实 governance report
+      能显式披露 blockers；后续真实 daily observation、artifact freshness 修复和 owner manual review
+      由运行观察承接。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:995ffb06e2137d05260b360b65b1f1f8e98e8b03bc3285e5c098c63c87cfab53
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-075
+  - ETF portfolio data quality/Data Quality and Staleness Governance Upgrade
+  - P0
+  - BASELINE_DONE
+  - 项目 owner + 后续真实 daily observation / artifact refresh / owner review
+  - 详细拆解见 `docs/requirements/TRADING-075_Data_Quality_and_Staleness_Governance_Upgrade.md`；TRADING-075A-K
+    data quality policy / price freshness / calendar coverage / outlier / config drift
+    / evidence completeness / gate freshness / report staleness / report generator
+    / Reader Brief / validation gate 基础设施已完成并复验通过；当前真实 2026-06-08 governance report
+    按 artifact 状态 fail-closed 为 `BLOCKED`，后续需要刷新 required artifacts、观察真实 daily runs
+    和 owner manual review，不自动解除 blockers
+  - 已按 runbook 先读取 `docs/operations/operations_runbook.md`；`validate-data --as-of
+    2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；`aits etf data-quality validate --as-of
+    2026-06-08` 输出 `status=PASS`、`failed_check_count=0`；`aits etf data-quality report
+    --as-of 2026-06-08` 生成 governance JSON/Markdown 且 `status=BLOCKED`、blocking failures
+    7、warnings 24、`commands_executed=false`、`production_state_mutated=false`；Reader
+    Brief `ETF Data Quality` 显示 `availability=AVAILABLE`、status BLOCKED、blocking_failure_count
+    7、warning_count 24、price_freshness WARNING、report_staleness BLOCKED、reader_brief_link_status
+    BLOCKED，并链接详细治理报告；`aits etf ops validate --as-of 2026-06-08` PASS；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；专项
+    pytest 13 passed
+  - '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-074 operations workflow 后新增显式
+    data quality / staleness governance layer，防止 stale price data、missing bars、config/model
+    drift、incomplete evidence、stale gates/reports 和 Reader Brief 旧链接误导 ETF research
+    outputs。2026-06-03: TRADING-075A-K 完成并转入 VALIDATING，新增 data quality policy、freshness/coverage/outlier/drift/evidence/gate/report/link
+    checkers、governance report、validation gate、Reader Brief data-quality section、operations
+    daily graph step、report registry/catalog/system-flow/runbook/README integration
+    和专项测试；所有 outputs 固定 observe-only/candidate-only/manual-review-only。2026-06-09:
+    从 VALIDATING 改为 BASELINE_DONE，原因：复验证明 workflow 和 validation gate 完成，且真实 governance
+    report 能显式披露 blockers；后续真实 daily observation、artifact freshness 修复和 owner manual
+    review 由运行观察承接。'
+  docs_links:
+  - docs/operations/operations_runbook.md
+  - docs/requirements/TRADING-075_Data_Quality_and_Staleness_Governance_Upgrade.md
+  terminal: false
+  raw_row_sha256: 995ffb06e2137d05260b360b65b1f1f8e98e8b03bc3285e5c098c63c87cfab53
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 1eb07ba619096b12b26bbfd451ff04f8202f6b5aa2b3a4c9659e0e190fbf4eec

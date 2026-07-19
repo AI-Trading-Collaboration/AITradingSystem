@@ -1,0 +1,98 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: LLM-005
+  title: null
+  domain: 新闻/LLM 请求成本调参
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner + 系统验证
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: '`risk_event_daily_official_precheck`
+    已降档为成本 pilot；下一步由 owner 明天对照 OpenAI 账单观察成本变化，并在下一次日报后复核候选命中质量'
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 日报默认 OpenAI profile 从高成本 baseline 降为 `reasoning_effort=medium`、`max_candidates=10`、`official_policy_limit=30`；其他
+      LLM profile 不变；provider 权限、cache、审计、`store=false` 和 pending_review 边界不变；配置测试、ruff
+      和 diff check 通过；明日账单/日报预审质量用于决定是否继续降到 6-8 个候选或调整缓存 TTL
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1494
+    row_sha256: 13da823a50ee8ff9ef8b907cdb7e23a0116df21eafd8b95ca71c98c32db62bf8
+    cell_count: 8
+    all_cells:
+    - LLM-005
+    - 新闻/LLM 请求成本调参
+    - P1
+    - VALIDATING
+    - 项目 owner + 系统验证
+    - '`risk_event_daily_official_precheck` 已降档为成本 pilot；下一步由 owner 明天对照 OpenAI 账单观察成本变化，并在下一次日报后复核候选命中质量'
+    - 日报默认 OpenAI profile 从高成本 baseline 降为 `reasoning_effort=medium`、`max_candidates=10`、`official_policy_limit=30`；其他
+      LLM profile 不变；provider 权限、cache、审计、`store=false` 和 pending_review 边界不变；配置测试、ruff
+      和 diff check 通过；明日账单/日报预审质量用于决定是否继续降到 6-8 个候选或调整缓存 TTL
+    - '2026-05-13: 新增并进入 IN_PROGRESS，原因：owner 反馈每日 OpenAI 请求约 5 美元，希望先降低日报默认请求成本并观察明天账单。2026-05-13:
+      从 IN_PROGRESS 改为 VALIDATING，原因：日报 profile 已改为 `medium`、10 个候选、官方来源 limit 30；README、系统流图、架构说明、数据源说明和配置测试同步；验证通过目标
+      pytest 55 passed、`ruff check src tests`、`git diff --check` 和 docs freshness。'
+    raw_line: '|LLM-005|新闻/LLM 请求成本调参|P1|VALIDATING|项目 owner + 系统验证|`risk_event_daily_official_precheck`
+      已降档为成本 pilot；下一步由 owner 明天对照 OpenAI 账单观察成本变化，并在下一次日报后复核候选命中质量|日报默认 OpenAI profile
+      从高成本 baseline 降为 `reasoning_effort=medium`、`max_candidates=10`、`official_policy_limit=30`；其他
+      LLM profile 不变；provider 权限、cache、审计、`store=false` 和 pending_review 边界不变；配置测试、ruff
+      和 diff check 通过；明日账单/日报预审质量用于决定是否继续降到 6-8 个候选或调整缓存 TTL|2026-05-13: 新增并进入 IN_PROGRESS，原因：owner
+      反馈每日 OpenAI 请求约 5 美元，希望先降低日报默认请求成本并观察明天账单。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：日报
+      profile 已改为 `medium`、10 个候选、官方来源 limit 30；README、系统流图、架构说明、数据源说明和配置测试同步；验证通过目标
+      pytest 55 passed、`ruff check src tests`、`git diff --check` 和 docs freshness。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-13da823a50ee8ff9ef8b907c
+  task_id: LLM-005
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 项目 owner + 系统验证
+    notes: '2026-05-13: 新增并进入 IN_PROGRESS，原因：owner 反馈每日 OpenAI 请求约 5 美元，希望先降低日报默认请求成本并观察明天账单。2026-05-13:
+      从 IN_PROGRESS 改为 VALIDATING，原因：日报 profile 已改为 `medium`、10 个候选、官方来源 limit 30；README、系统流图、架构说明、数据源说明和配置测试同步；验证通过目标
+      pytest 55 passed、`ruff check src tests`、`git diff --check` 和 docs freshness。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:13da823a50ee8ff9ef8b907cdb7e23a0116df21eafd8b95ca71c98c32db62bf8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - LLM-005
+  - 新闻/LLM 请求成本调参
+  - P1
+  - VALIDATING
+  - 项目 owner + 系统验证
+  - '`risk_event_daily_official_precheck` 已降档为成本 pilot；下一步由 owner 明天对照 OpenAI 账单观察成本变化，并在下一次日报后复核候选命中质量'
+  - 日报默认 OpenAI profile 从高成本 baseline 降为 `reasoning_effort=medium`、`max_candidates=10`、`official_policy_limit=30`；其他
+    LLM profile 不变；provider 权限、cache、审计、`store=false` 和 pending_review 边界不变；配置测试、ruff
+    和 diff check 通过；明日账单/日报预审质量用于决定是否继续降到 6-8 个候选或调整缓存 TTL
+  - '2026-05-13: 新增并进入 IN_PROGRESS，原因：owner 反馈每日 OpenAI 请求约 5 美元，希望先降低日报默认请求成本并观察明天账单。2026-05-13:
+    从 IN_PROGRESS 改为 VALIDATING，原因：日报 profile 已改为 `medium`、10 个候选、官方来源 limit 30；README、系统流图、架构说明、数据源说明和配置测试同步；验证通过目标
+    pytest 55 passed、`ruff check src tests`、`git diff --check` 和 docs freshness。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 13da823a50ee8ff9ef8b907cdb7e23a0116df21eafd8b95ca71c98c32db62bf8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8e07e053c7a4b61263db637bbd9588a4355973c8ece548df0d9c47d5d2717802

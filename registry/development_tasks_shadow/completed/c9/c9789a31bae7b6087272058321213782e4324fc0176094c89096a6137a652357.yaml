@@ -1,0 +1,163 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-051
+  title: null
+  domain: 报告/Research Governance Summary Cards
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/reader_reporting_improvement_plan_2026-05-28.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；research
+    governance summary cards 已完成并通过 latest 真实 artifact 复核；`research_governance_summary_2026-06-05`
+    为 `PASS_WITH_LIMITATIONS` / `PASS_WITH_WARNINGS`，`promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，cards=19，manual
+    review items=13，production effect risk=0，所有 card/source artifact 均显式 `production_effect=none`；该结果正确阻断
+    promotion 并暴露缺失/受限研究证据，不改变 production
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `outputs/reports/research_governance_summary_YYYY-MM-DD.md/json`；按 `Production-active`、`Approved
+      but inactive`、`Shadow observe-only`、`Candidate / research-only`、`Blocked / insufficient
+      data`、`Rollback / warning` 分组；每个候选或研究结果展示 candidate_id、source task、status、evidence
+      summary、production_effect、manual_review_required、next review date 和 next action；Reader
+      Brief 与 daily task dashboard 可读取同一 summary，避免重复解析多个 artifact；所有 research / shadow
+      项不得改变 production scoring、weights、position gates 或 trading 行为；实现时补系统流图、产物目录和专项测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 322
+    row_sha256: 02b130b573a4a176c6edd7b0b003332e19904e7100951900e1d27456112ba7f3
+    cell_count: 8
+    all_cells:
+    - REPORT-051
+    - 报告/Research Governance Summary Cards
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；research
+      governance summary cards 已完成并通过 latest 真实 artifact 复核；`research_governance_summary_2026-06-05`
+      为 `PASS_WITH_LIMITATIONS` / `PASS_WITH_WARNINGS`，`promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，cards=19，manual
+      review items=13，production effect risk=0，所有 card/source artifact 均显式 `production_effect=none`；该结果正确阻断
+      promotion 并暴露缺失/受限研究证据，不改变 production
+    - 生成 `outputs/reports/research_governance_summary_YYYY-MM-DD.md/json`；按 `Production-active`、`Approved
+      but inactive`、`Shadow observe-only`、`Candidate / research-only`、`Blocked / insufficient
+      data`、`Rollback / warning` 分组；每个候选或研究结果展示 candidate_id、source task、status、evidence
+      summary、production_effect、manual_review_required、next review date 和 next action；Reader
+      Brief 与 daily task dashboard 可读取同一 summary，避免重复解析多个 artifact；所有 research / shadow
+      项不得改变 production scoring、weights、position gates 或 trading 行为；实现时补系统流图、产物目录和专项测试
+    - '2026-05-28: 新增，原因：SEC PIT 与 shadow/weight 链路近期快速扩展，dashboard 卡片越来越多；需要统一治理摘要来防止
+      observe-only / research-only 结果被误读为当日 production 依据。2026-05-28: 从 READY 改为 IN_PROGRESS，原因：开始实现只读
+      research governance summary builder、CLI 和 Reader Brief 接入。2026-05-28: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已完成 summary builder、CLI/direct dispatcher、Markdown/JSON artifact、Reader
+      Brief 接入、daily task dashboard 只读卡片、系统流图、产物目录和专项测试；验证通过 `tests/test_research_governance_summary.py`、`tests/test_reader_brief.py`、`tests/test_daily_task_dashboard.py`
+      以及 report 相关回归。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：latest 字段级验证发现 `weight_adjustment_candidates`
+      与 `daily_weight_adjustment_summary` missing cards 的 `production_effect` 为空字符串；每张治理
+      card 都应显式披露 `production_effect=none`，不能只依赖汇总层。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：missing
+      JSON artifact 现在也显式写入 card/source artifact `production_effect=none`；latest JSON
+      复核 card/source empty production effect=0、production effect risk=0，仍按设计以 `BLOCKED_BY_MISSING_ARTIFACTS`
+      阻断 promotion；focused tests 33 passed，Reader Brief latest/quality、documentation
+      contract、docs freshness 和 diff check 通过。'
+    raw_line: '|REPORT-051|报告/Research Governance Summary Cards|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；research
+      governance summary cards 已完成并通过 latest 真实 artifact 复核；`research_governance_summary_2026-06-05`
+      为 `PASS_WITH_LIMITATIONS` / `PASS_WITH_WARNINGS`，`promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，cards=19，manual
+      review items=13，production effect risk=0，所有 card/source artifact 均显式 `production_effect=none`；该结果正确阻断
+      promotion 并暴露缺失/受限研究证据，不改变 production|生成 `outputs/reports/research_governance_summary_YYYY-MM-DD.md/json`；按
+      `Production-active`、`Approved but inactive`、`Shadow observe-only`、`Candidate
+      / research-only`、`Blocked / insufficient data`、`Rollback / warning` 分组；每个候选或研究结果展示
+      candidate_id、source task、status、evidence summary、production_effect、manual_review_required、next
+      review date 和 next action；Reader Brief 与 daily task dashboard 可读取同一 summary，避免重复解析多个
+      artifact；所有 research / shadow 项不得改变 production scoring、weights、position gates
+      或 trading 行为；实现时补系统流图、产物目录和专项测试|2026-05-28: 新增，原因：SEC PIT 与 shadow/weight 链路近期快速扩展，dashboard
+      卡片越来越多；需要统一治理摘要来防止 observe-only / research-only 结果被误读为当日 production 依据。2026-05-28:
+      从 READY 改为 IN_PROGRESS，原因：开始实现只读 research governance summary builder、CLI 和 Reader
+      Brief 接入。2026-05-28: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 summary builder、CLI/direct
+      dispatcher、Markdown/JSON artifact、Reader Brief 接入、daily task dashboard 只读卡片、系统流图、产物目录和专项测试；验证通过
+      `tests/test_research_governance_summary.py`、`tests/test_reader_brief.py`、`tests/test_daily_task_dashboard.py`
+      以及 report 相关回归。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：latest 字段级验证发现 `weight_adjustment_candidates`
+      与 `daily_weight_adjustment_summary` missing cards 的 `production_effect` 为空字符串；每张治理
+      card 都应显式披露 `production_effect=none`，不能只依赖汇总层。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：missing
+      JSON artifact 现在也显式写入 card/source artifact `production_effect=none`；latest JSON
+      复核 card/source empty production effect=0、production effect risk=0，仍按设计以 `BLOCKED_BY_MISSING_ARTIFACTS`
+      阻断 promotion；focused tests 33 passed，Reader Brief latest/quality、documentation
+      contract、docs freshness 和 diff check 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-02b130b573a4a176c6edd7b0
+  task_id: REPORT-051
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-28: 新增，原因：SEC PIT 与 shadow/weight 链路近期快速扩展，dashboard 卡片越来越多；需要统一治理摘要来防止
+      observe-only / research-only 结果被误读为当日 production 依据。2026-05-28: 从 READY 改为 IN_PROGRESS，原因：开始实现只读
+      research governance summary builder、CLI 和 Reader Brief 接入。2026-05-28: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已完成 summary builder、CLI/direct dispatcher、Markdown/JSON artifact、Reader
+      Brief 接入、daily task dashboard 只读卡片、系统流图、产物目录和专项测试；验证通过 `tests/test_research_governance_summary.py`、`tests/test_reader_brief.py`、`tests/test_daily_task_dashboard.py`
+      以及 report 相关回归。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：latest 字段级验证发现 `weight_adjustment_candidates`
+      与 `daily_weight_adjustment_summary` missing cards 的 `production_effect` 为空字符串；每张治理
+      card 都应显式披露 `production_effect=none`，不能只依赖汇总层。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：missing
+      JSON artifact 现在也显式写入 card/source artifact `production_effect=none`；latest JSON
+      复核 card/source empty production effect=0、production effect risk=0，仍按设计以 `BLOCKED_BY_MISSING_ARTIFACTS`
+      阻断 promotion；focused tests 33 passed，Reader Brief latest/quality、documentation
+      contract、docs freshness 和 diff check 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:02b130b573a4a176c6edd7b0b003332e19904e7100951900e1d27456112ba7f3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-051
+  - 报告/Research Governance Summary Cards
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；research
+    governance summary cards 已完成并通过 latest 真实 artifact 复核；`research_governance_summary_2026-06-05`
+    为 `PASS_WITH_LIMITATIONS` / `PASS_WITH_WARNINGS`，`promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，cards=19，manual
+    review items=13，production effect risk=0，所有 card/source artifact 均显式 `production_effect=none`；该结果正确阻断
+    promotion 并暴露缺失/受限研究证据，不改变 production
+  - 生成 `outputs/reports/research_governance_summary_YYYY-MM-DD.md/json`；按 `Production-active`、`Approved
+    but inactive`、`Shadow observe-only`、`Candidate / research-only`、`Blocked / insufficient
+    data`、`Rollback / warning` 分组；每个候选或研究结果展示 candidate_id、source task、status、evidence
+    summary、production_effect、manual_review_required、next review date 和 next action；Reader
+    Brief 与 daily task dashboard 可读取同一 summary，避免重复解析多个 artifact；所有 research / shadow
+    项不得改变 production scoring、weights、position gates 或 trading 行为；实现时补系统流图、产物目录和专项测试
+  - '2026-05-28: 新增，原因：SEC PIT 与 shadow/weight 链路近期快速扩展，dashboard 卡片越来越多；需要统一治理摘要来防止
+    observe-only / research-only 结果被误读为当日 production 依据。2026-05-28: 从 READY 改为 IN_PROGRESS，原因：开始实现只读
+    research governance summary builder、CLI 和 Reader Brief 接入。2026-05-28: 从 IN_PROGRESS
+    改为 VALIDATING，原因：已完成 summary builder、CLI/direct dispatcher、Markdown/JSON artifact、Reader
+    Brief 接入、daily task dashboard 只读卡片、系统流图、产物目录和专项测试；验证通过 `tests/test_research_governance_summary.py`、`tests/test_reader_brief.py`、`tests/test_daily_task_dashboard.py`
+    以及 report 相关回归。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：latest 字段级验证发现 `weight_adjustment_candidates`
+    与 `daily_weight_adjustment_summary` missing cards 的 `production_effect` 为空字符串；每张治理
+    card 都应显式披露 `production_effect=none`，不能只依赖汇总层。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：missing
+    JSON artifact 现在也显式写入 card/source artifact `production_effect=none`；latest JSON
+    复核 card/source empty production effect=0、production effect risk=0，仍按设计以 `BLOCKED_BY_MISSING_ARTIFACTS`
+    阻断 promotion；focused tests 33 passed，Reader Brief latest/quality、documentation
+    contract、docs freshness 和 diff check 通过。'
+  docs_links:
+  - docs/requirements/reader_reporting_improvement_plan_2026-05-28.md
+  terminal: true
+  raw_row_sha256: 02b130b573a4a176c6edd7b0b003332e19904e7100951900e1d27456112ba7f3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a7671092456a1c938696cefd40f969166eea07d28dfd1992228f182179f709e8

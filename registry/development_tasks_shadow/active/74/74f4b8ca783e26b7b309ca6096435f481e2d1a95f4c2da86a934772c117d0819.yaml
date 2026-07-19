@@ -1,0 +1,146 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-790_to_794_VALUE_SURFACE_FAILURE_ATTRIBUTION
+  title: null
+  domain: Controlled strategy research / value surface failure attribution, horizon
+    ranking stabilization, residual hypothesis triage, forward continuity extension,
+    direction review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-790_to_794_Value_Surface_Failure_Attribution.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-790_to_794_Value_Surface_Failure_Attribution.md`；owner
+    要求解释 value surface `beat rate=0.742565` 但 overall `mean_delta_vs_benchmark=-0.02366`
+    的原因，并基于 failure attribution、horizon cliff、residual hypotheses 和 forward continuity
+    给出方向复核；不得继续扩大样本、直接训练 GBDT 策略、扩展 regret casebook、进入 paper-shadow 或把 high beat rate
+    当作有效策略证据
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI：`aits research strategies value-surface-failure-attribution`、`horizon-cliff-utility-ranking-stabilization-review`、`gbdt-residual-hypothesis-triage`、`value-surface-direction-review`
+      和 `aits forward-evidence continuity-extension`；TRADING-790 必须输出 winning/losing
+      delta、top losing cases、loss concentration、tail/cost/drawdown/downside attribution；TRADING-791
+      不能 validated utility boundary；TRADING-792 只能输出 diagnostic hypotheses；TRADING-793
+      只延续 forward evidence continuity；TRADING-794 决策只能为 `CONTINUE_LOCAL_FIX
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1351
+    row_sha256: 079f08e07da25cb71951ee6e27285c810ee51d89478035302b5b94f11baf4c1e
+    cell_count: 13
+    all_cells:
+    - TRADING-790_to_794_VALUE_SURFACE_FAILURE_ATTRIBUTION
+    - Controlled strategy research / value surface failure attribution, horizon ranking
+      stabilization, residual hypothesis triage, forward continuity extension, direction
+      review
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-790_to_794_Value_Surface_Failure_Attribution.md`；owner
+      要求解释 value surface `beat rate=0.742565` 但 overall `mean_delta_vs_benchmark=-0.02366`
+      的原因，并基于 failure attribution、horizon cliff、residual hypotheses 和 forward continuity
+      给出方向复核；不得继续扩大样本、直接训练 GBDT 策略、扩展 regret casebook、进入 paper-shadow 或把 high beat
+      rate 当作有效策略证据
+    - 新增 CLI：`aits research strategies value-surface-failure-attribution`、`horizon-cliff-utility-ranking-stabilization-review`、`gbdt-residual-hypothesis-triage`、`value-surface-direction-review`
+      和 `aits forward-evidence continuity-extension`；TRADING-790 必须输出 winning/losing
+      delta、top losing cases、loss concentration、tail/cost/drawdown/downside attribution；TRADING-791
+      不能 validated utility boundary；TRADING-792 只能输出 diagnostic hypotheses；TRADING-793
+      只延续 forward evidence continuity；TRADING-794 决策只能为 `CONTINUE_LOCAL_FIX
+    - WATCHLIST
+    - PIVOT_TO_REGIME_CONDITIONED_VALUE_SURFACE
+    - PIVOT_TO_PARETO_FRONTIER_POLICY
+    - PIVOT_TO_TAIL_RISK_FILTER
+    - KILL_CURRENT_VALUE_SURFACE_VERSION`；所有 safety flags false
+    - '2026-06-21: 新增并进入 IN_PROGRESS，原因：TRADING-785 显示 high beat rate 与 negative mean
+      delta 并存，owner 要求暂停继续扩张，优先归因 tail loss / horizon cliff / utility ranking fragility，并给出不默认继续的方向决策。2026-06-21:
+      实现完成并转入 VALIDATING；真实 CLI run 输出 TRADING-790 `FAILURE_ATTRIBUTION_COMPLETE`、case_count=2152、winning_case_count=1598、losing_case_count=554、winning_case_average_delta=0.004858、losing_case_average_delta=-0.105917、overall_mean_delta_vs_benchmark=-0.02366、tail_loss_contribution=0.46771、max_loss_concentration_share=0.923086；TRADING-791
+      `SENSITIVITY_TESTED`、horizon_cliff_count=30、ranking_jump_count=0、utility_profile_cliff_count=30、validated_boundary_count=0；TRADING-792
+      `RESIDUAL_HYPOTHESIS_TRIAGED`、residual_case_count=23672、large_residual_case_count=12363、strategy_signal_generated=false；TRADING-793
+      `PASS_WITH_WARNINGS`、ledger_event_count=1、missing_daily_archive_count=0、append_only_integrity_pass=true；TRADING-794
+      `DIRECTION_REVIEW_COMPLETE`、direction_decision=`PIVOT_TO_REGIME_CONDITIONED_VALUE_SURFACE`、do_not_default_continue=true；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T114501Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T114829Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T115154Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-790_to_794_VALUE_SURFACE_FAILURE_ATTRIBUTION|Controlled strategy
+      research / value surface failure attribution, horizon ranking stabilization,
+      residual hypothesis triage, forward continuity extension, direction review|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-790_to_794_Value_Surface_Failure_Attribution.md`；owner
+      要求解释 value surface `beat rate=0.742565` 但 overall `mean_delta_vs_benchmark=-0.02366`
+      的原因，并基于 failure attribution、horizon cliff、residual hypotheses 和 forward continuity
+      给出方向复核；不得继续扩大样本、直接训练 GBDT 策略、扩展 regret casebook、进入 paper-shadow 或把 high beat
+      rate 当作有效策略证据|新增 CLI：`aits research strategies value-surface-failure-attribution`、`horizon-cliff-utility-ranking-stabilization-review`、`gbdt-residual-hypothesis-triage`、`value-surface-direction-review`
+      和 `aits forward-evidence continuity-extension`；TRADING-790 必须输出 winning/losing
+      delta、top losing cases、loss concentration、tail/cost/drawdown/downside attribution；TRADING-791
+      不能 validated utility boundary；TRADING-792 只能输出 diagnostic hypotheses；TRADING-793
+      只延续 forward evidence continuity；TRADING-794 决策只能为 `CONTINUE_LOCAL_FIX|WATCHLIST|PIVOT_TO_REGIME_CONDITIONED_VALUE_SURFACE|PIVOT_TO_PARETO_FRONTIER_POLICY|PIVOT_TO_TAIL_RISK_FILTER|KILL_CURRENT_VALUE_SURFACE_VERSION`；所有
+      safety flags false|2026-06-21: 新增并进入 IN_PROGRESS，原因：TRADING-785 显示 high beat
+      rate 与 negative mean delta 并存，owner 要求暂停继续扩张，优先归因 tail loss / horizon cliff
+      / utility ranking fragility，并给出不默认继续的方向决策。2026-06-21: 实现完成并转入 VALIDATING；真实
+      CLI run 输出 TRADING-790 `FAILURE_ATTRIBUTION_COMPLETE`、case_count=2152、winning_case_count=1598、losing_case_count=554、winning_case_average_delta=0.004858、losing_case_average_delta=-0.105917、overall_mean_delta_vs_benchmark=-0.02366、tail_loss_contribution=0.46771、max_loss_concentration_share=0.923086；TRADING-791
+      `SENSITIVITY_TESTED`、horizon_cliff_count=30、ranking_jump_count=0、utility_profile_cliff_count=30、validated_boundary_count=0；TRADING-792
+      `RESIDUAL_HYPOTHESIS_TRIAGED`、residual_case_count=23672、large_residual_case_count=12363、strategy_signal_generated=false；TRADING-793
+      `PASS_WITH_WARNINGS`、ledger_event_count=1、missing_daily_archive_count=0、append_only_integrity_pass=true；TRADING-794
+      `DIRECTION_REVIEW_COMPLETE`、direction_decision=`PIVOT_TO_REGIME_CONDITIONED_VALUE_SURFACE`、do_not_default_continue=true；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T114501Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T114829Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T115154Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-079f08e07da25cb71951ee6e
+  task_id: TRADING-790_to_794_VALUE_SURFACE_FAILURE_ATTRIBUTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: WATCHLIST
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:079f08e07da25cb71951ee6e27285c810ee51d89478035302b5b94f11baf4c1e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-790_to_794_VALUE_SURFACE_FAILURE_ATTRIBUTION
+  - Controlled strategy research / value surface failure attribution, horizon ranking
+    stabilization, residual hypothesis triage, forward continuity extension, direction
+    review
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-790_to_794_Value_Surface_Failure_Attribution.md`；owner
+    要求解释 value surface `beat rate=0.742565` 但 overall `mean_delta_vs_benchmark=-0.02366`
+    的原因，并基于 failure attribution、horizon cliff、residual hypotheses 和 forward continuity
+    给出方向复核；不得继续扩大样本、直接训练 GBDT 策略、扩展 regret casebook、进入 paper-shadow 或把 high beat rate
+    当作有效策略证据
+  - 新增 CLI：`aits research strategies value-surface-failure-attribution`、`horizon-cliff-utility-ranking-stabilization-review`、`gbdt-residual-hypothesis-triage`、`value-surface-direction-review`
+    和 `aits forward-evidence continuity-extension`；TRADING-790 必须输出 winning/losing
+    delta、top losing cases、loss concentration、tail/cost/drawdown/downside attribution；TRADING-791
+    不能 validated utility boundary；TRADING-792 只能输出 diagnostic hypotheses；TRADING-793
+    只延续 forward evidence continuity；TRADING-794 决策只能为 `CONTINUE_LOCAL_FIX
+  - WATCHLIST
+  docs_links:
+  - docs/requirements/TRADING-790_to_794_Value_Surface_Failure_Attribution.md
+  terminal: false
+  raw_row_sha256: 079f08e07da25cb71951ee6e27285c810ee51d89478035302b5b94f11baf4c1e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c64f00e5abb1e198e6b5230e1cbc63ddd77258d512954c6f9ff44cd5ac1ee188

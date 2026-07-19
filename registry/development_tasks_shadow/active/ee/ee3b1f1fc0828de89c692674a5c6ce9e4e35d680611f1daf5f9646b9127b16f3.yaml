@@ -1,0 +1,140 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-865_to_878_SIMPLE_BASELINE_PORTFOLIO_CONTROL
+  title: null
+  domain: Research strategies / QQQ-TQQQ-SGOV simple baselines and portfolio control
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-865_to_878_Simple_Baseline_Portfolio_Control.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-865_to_878_Simple_Baseline_Portfolio_Control.md`；tail-risk
+    fallback hard block 继续保留；本批只做 research-only / observe-only，不得 promotion、paper-shadow、production
+    weight、broker/order 或启动 LEAPS/Wheel 研究
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 simple baseline strategy registry、TRADING-865～878 CLI、JSON/Markdown artifacts、report
+      registry、artifact catalog、system flow、Reader Brief safety summary、master review
+      和 options next-stage gate；所有数据依赖命令必须先调用 `validate_data_cache` 并披露质量状态；PIT audit
+      必须确认 signal 使用 t-1 或更早可见字段；paper-shadow readiness 只能输出人工复核建议且 safety fields
+      false/none；focused pytest、CLI smoke、report registry validation、contract validation、report
+      validation、Ruff、compileall 和 `git diff --check` 通过或明确记录阻塞
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1304
+    row_sha256: 0a01cde8ef02604514b6c92d3f793a7cda01f2bd9d04e73fa195ba8507fd56d2
+    cell_count: 8
+    all_cells:
+    - TRADING-865_to_878_SIMPLE_BASELINE_PORTFOLIO_CONTROL
+    - Research strategies / QQQ-TQQQ-SGOV simple baselines and portfolio control
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-865_to_878_Simple_Baseline_Portfolio_Control.md`；tail-risk
+      fallback hard block 继续保留；本批只做 research-only / observe-only，不得 promotion、paper-shadow、production
+      weight、broker/order 或启动 LEAPS/Wheel 研究
+    - 新增 simple baseline strategy registry、TRADING-865～878 CLI、JSON/Markdown artifacts、report
+      registry、artifact catalog、system flow、Reader Brief safety summary、master review
+      和 options next-stage gate；所有数据依赖命令必须先调用 `validate_data_cache` 并披露质量状态；PIT audit
+      必须确认 signal 使用 t-1 或更早可见字段；paper-shadow readiness 只能输出人工复核建议且 safety fields
+      false/none；focused pytest、CLI smoke、report registry validation、contract validation、report
+      validation、Ruff、compileall 和 `git diff --check` 通过或明确记录阻塞
+    - '2026-06-23: 新增并进入 IN_PROGRESS，原因：TRADING-843～864 closeout 后 tail-risk fallback
+      继续 blocked，主线切换为 QQQ / TQQQ / SGOV 简单强基准和动态仓位控制研究；本批必须回答静态 baseline、TQQQ risk-controlled
+      baseline、动态趋势/波动仓位、dominance、成本敏感性、regime robustness、forward aging、paper-shadow
+      reviewability、dry-run mapping、master review 和 LEAPS/Wheel gate，同时保持 production_effect=none、broker_action=none、promotion_allowed=false、paper_shadow_allowed=false、production_allowed=false。2026-06-23:
+      实现完成并转入 VALIDATING；验证通过：focused parallel pytest 4 passed（含 CLI smoke 与 report
+      registry loader）、`contract-validation` 193 passed、`report-validation` 55 passed、`ruff
+      check .`、`python -m compileall src tests scripts` 和 `git diff --check`；仍保留 VALIDATING，等待真实
+      QQQ/TQQQ/SGOV cache 覆盖与 owner 人工复核，不允许 promotion/paper-shadow/production/broker。'
+    raw_line: '|TRADING-865_to_878_SIMPLE_BASELINE_PORTFOLIO_CONTROL|Research strategies
+      / QQQ-TQQQ-SGOV simple baselines and portfolio control|P0|VALIDATING|系统实现 +
+      项目 owner 后续复核|详见 `docs/requirements/TRADING-865_to_878_Simple_Baseline_Portfolio_Control.md`；tail-risk
+      fallback hard block 继续保留；本批只做 research-only / observe-only，不得 promotion、paper-shadow、production
+      weight、broker/order 或启动 LEAPS/Wheel 研究|新增 simple baseline strategy registry、TRADING-865～878
+      CLI、JSON/Markdown artifacts、report registry、artifact catalog、system flow、Reader
+      Brief safety summary、master review 和 options next-stage gate；所有数据依赖命令必须先调用 `validate_data_cache`
+      并披露质量状态；PIT audit 必须确认 signal 使用 t-1 或更早可见字段；paper-shadow readiness 只能输出人工复核建议且
+      safety fields false/none；focused pytest、CLI smoke、report registry validation、contract
+      validation、report validation、Ruff、compileall 和 `git diff --check` 通过或明确记录阻塞|2026-06-23:
+      新增并进入 IN_PROGRESS，原因：TRADING-843～864 closeout 后 tail-risk fallback 继续 blocked，主线切换为
+      QQQ / TQQQ / SGOV 简单强基准和动态仓位控制研究；本批必须回答静态 baseline、TQQQ risk-controlled baseline、动态趋势/波动仓位、dominance、成本敏感性、regime
+      robustness、forward aging、paper-shadow reviewability、dry-run mapping、master review
+      和 LEAPS/Wheel gate，同时保持 production_effect=none、broker_action=none、promotion_allowed=false、paper_shadow_allowed=false、production_allowed=false。2026-06-23:
+      实现完成并转入 VALIDATING；验证通过：focused parallel pytest 4 passed（含 CLI smoke 与 report
+      registry loader）、`contract-validation` 193 passed、`report-validation` 55 passed、`ruff
+      check .`、`python -m compileall src tests scripts` 和 `git diff --check`；仍保留 VALIDATING，等待真实
+      QQQ/TQQQ/SGOV cache 覆盖与 owner 人工复核，不允许 promotion/paper-shadow/production/broker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0a01cde8ef02604514b6c92d
+  task_id: TRADING-865_to_878_SIMPLE_BASELINE_PORTFOLIO_CONTROL
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-23: 新增并进入 IN_PROGRESS，原因：TRADING-843～864 closeout 后 tail-risk
+      fallback 继续 blocked，主线切换为 QQQ / TQQQ / SGOV 简单强基准和动态仓位控制研究；本批必须回答静态 baseline、TQQQ
+      risk-controlled baseline、动态趋势/波动仓位、dominance、成本敏感性、regime robustness、forward
+      aging、paper-shadow reviewability、dry-run mapping、master review 和 LEAPS/Wheel
+      gate，同时保持 production_effect=none、broker_action=none、promotion_allowed=false、paper_shadow_allowed=false、production_allowed=false。2026-06-23:
+      实现完成并转入 VALIDATING；验证通过：focused parallel pytest 4 passed（含 CLI smoke 与 report
+      registry loader）、`contract-validation` 193 passed、`report-validation` 55 passed、`ruff
+      check .`、`python -m compileall src tests scripts` 和 `git diff --check`；仍保留 VALIDATING，等待真实
+      QQQ/TQQQ/SGOV cache 覆盖与 owner 人工复核，不允许 promotion/paper-shadow/production/broker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0a01cde8ef02604514b6c92d3f793a7cda01f2bd9d04e73fa195ba8507fd56d2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-865_to_878_SIMPLE_BASELINE_PORTFOLIO_CONTROL
+  - Research strategies / QQQ-TQQQ-SGOV simple baselines and portfolio control
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-865_to_878_Simple_Baseline_Portfolio_Control.md`；tail-risk
+    fallback hard block 继续保留；本批只做 research-only / observe-only，不得 promotion、paper-shadow、production
+    weight、broker/order 或启动 LEAPS/Wheel 研究
+  - 新增 simple baseline strategy registry、TRADING-865～878 CLI、JSON/Markdown artifacts、report
+    registry、artifact catalog、system flow、Reader Brief safety summary、master review
+    和 options next-stage gate；所有数据依赖命令必须先调用 `validate_data_cache` 并披露质量状态；PIT audit
+    必须确认 signal 使用 t-1 或更早可见字段；paper-shadow readiness 只能输出人工复核建议且 safety fields false/none；focused
+    pytest、CLI smoke、report registry validation、contract validation、report validation、Ruff、compileall
+    和 `git diff --check` 通过或明确记录阻塞
+  - '2026-06-23: 新增并进入 IN_PROGRESS，原因：TRADING-843～864 closeout 后 tail-risk fallback
+    继续 blocked，主线切换为 QQQ / TQQQ / SGOV 简单强基准和动态仓位控制研究；本批必须回答静态 baseline、TQQQ risk-controlled
+    baseline、动态趋势/波动仓位、dominance、成本敏感性、regime robustness、forward aging、paper-shadow
+    reviewability、dry-run mapping、master review 和 LEAPS/Wheel gate，同时保持 production_effect=none、broker_action=none、promotion_allowed=false、paper_shadow_allowed=false、production_allowed=false。2026-06-23:
+    实现完成并转入 VALIDATING；验证通过：focused parallel pytest 4 passed（含 CLI smoke 与 report
+    registry loader）、`contract-validation` 193 passed、`report-validation` 55 passed、`ruff
+    check .`、`python -m compileall src tests scripts` 和 `git diff --check`；仍保留 VALIDATING，等待真实
+    QQQ/TQQQ/SGOV cache 覆盖与 owner 人工复核，不允许 promotion/paper-shadow/production/broker。'
+  docs_links:
+  - docs/requirements/TRADING-865_to_878_Simple_Baseline_Portfolio_Control.md
+  terminal: false
+  raw_row_sha256: 0a01cde8ef02604514b6c92d3f793a7cda01f2bd9d04e73fa195ba8507fd56d2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 90f2b4482954f8745ddf61ce82f9ba54a63ee6db65bf605e873726676eeb904d

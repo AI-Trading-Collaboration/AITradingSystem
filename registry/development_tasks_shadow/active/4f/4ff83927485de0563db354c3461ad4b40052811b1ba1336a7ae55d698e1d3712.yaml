@@ -1,0 +1,135 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-276_to_280_SMOOTHED_FORWARD_DATA_FRESHNESS_AND_LATEST_AVAILABLE_BOOTSTRAP
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue smoothed forward data freshness and latest-available
+    bootstrap
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: research/operations data owner：刷新真实数据并继续积累forward/PIT/DQ/cost/holdout证据；architecture
+    coordinator继续剩余G2.4 slices
+  requirement_refs:
+  - docs/requirements/TRADING-276_to_280_Smoothed_Forward_Data_Freshness_and_Latest_Available_Bootstrap.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-276_to_280_Smoothed_Forward_Data_Freshness_and_Latest_Available_Bootstrap.md`；canonical
+    interface/domain、五类v2 snapshots、live upstream replay和all-view byte rebuild已实现。本阶段仍只增强诊断与恢复编排，不刷新外部数据、不绕过`aits
+    validate-data`、不伪造成熟outcome、不写official target weights、不生成order ticket、不调用broker、不产生production
+    effect。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 五类bounded v2 input snapshots；Preflight写前运行same validate-data path并冻结source
+      checksum/coverage/issues/cutoff；Latest只消费validated Preflight并调用hardened Daily
+      Emission；Explain由same Preflight确定性生成；Refresh要求Preflight/Explain exact lineage且只planning；Retry先验证Preflight，READY绑定validated
+      Weekly，latest-only绑定validated Latest，blocked显式SKIPPED；current null candidate保持0
+      event/NOT_REGISTERED；validators live replay并逐byte重建全部JSON/Markdown/Reader Brief；CLI
+      parity、manifests/deprecation/source hashes及focused/architecture/contract/full闭合；单slice完成仍为`COMPLETE_G2_4_CONTINUES`，不触发handoff、不进入G2.5，`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1438
+    row_sha256: 0b9d6705ca8148455f1d59992c96f9adc28379481beda960b500bdf5abef1cef
+    cell_count: 8
+    all_cells:
+    - TRADING-276_to_280_SMOOTHED_FORWARD_DATA_FRESHNESS_AND_LATEST_AVAILABLE_BOOTSTRAP
+    - ETF portfolio/dynamic v3 rescue smoothed forward data freshness and latest-available
+      bootstrap
+    - P0
+    - BASELINE_DONE
+    - research/operations data owner：刷新真实数据并继续积累forward/PIT/DQ/cost/holdout证据；architecture
+      coordinator继续剩余G2.4 slices
+    - 详细拆解见 `docs/requirements/TRADING-276_to_280_Smoothed_Forward_Data_Freshness_and_Latest_Available_Bootstrap.md`；canonical
+      interface/domain、五类v2 snapshots、live upstream replay和all-view byte rebuild已实现。本阶段仍只增强诊断与恢复编排，不刷新外部数据、不绕过`aits
+      validate-data`、不伪造成熟outcome、不写official target weights、不生成order ticket、不调用broker、不产生production
+      effect。
+    - 五类bounded v2 input snapshots；Preflight写前运行same validate-data path并冻结source checksum/coverage/issues/cutoff；Latest只消费validated
+      Preflight并调用hardened Daily Emission；Explain由same Preflight确定性生成；Refresh要求Preflight/Explain
+      exact lineage且只planning；Retry先验证Preflight，READY绑定validated Weekly，latest-only绑定validated
+      Latest，blocked显式SKIPPED；current null candidate保持0 event/NOT_REGISTERED；validators
+      live replay并逐byte重建全部JSON/Markdown/Reader Brief；CLI parity、manifests/deprecation/source
+      hashes及focused/architecture/contract/full闭合；单slice完成仍为`COMPLETE_G2_4_CONTINUES`，不触发handoff、不进入G2.5，`production_effect=none`。
+    - '2026-06-14 baseline artifacts和`2439 passed`记录保留历史。2026-07-15: G2.4CT contract
+      freeze并重新进入IN_PROGRESS。2026-07-15: implementation完成转VALIDATING。2026-07-15: G2.4CT=`COMPLETE_G2_4_CONTINUES`；focused/architecture/contract/full=`125/281/203/6,018
+      passed`，full=`2,514.64s`；首轮post-refresh lineage缺口已修复，generated=`926/1,124/858/0`，CLI
+      parity不变。'
+    raw_line: '|TRADING-276_to_280_SMOOTHED_FORWARD_DATA_FRESHNESS_AND_LATEST_AVAILABLE_BOOTSTRAP|ETF
+      portfolio/dynamic v3 rescue smoothed forward data freshness and latest-available
+      bootstrap|P0|BASELINE_DONE|research/operations data owner：刷新真实数据并继续积累forward/PIT/DQ/cost/holdout证据；architecture
+      coordinator继续剩余G2.4 slices|详细拆解见 `docs/requirements/TRADING-276_to_280_Smoothed_Forward_Data_Freshness_and_Latest_Available_Bootstrap.md`；canonical
+      interface/domain、五类v2 snapshots、live upstream replay和all-view byte rebuild已实现。本阶段仍只增强诊断与恢复编排，不刷新外部数据、不绕过`aits
+      validate-data`、不伪造成熟outcome、不写official target weights、不生成order ticket、不调用broker、不产生production
+      effect。|五类bounded v2 input snapshots；Preflight写前运行same validate-data path并冻结source
+      checksum/coverage/issues/cutoff；Latest只消费validated Preflight并调用hardened Daily
+      Emission；Explain由same Preflight确定性生成；Refresh要求Preflight/Explain exact lineage且只planning；Retry先验证Preflight，READY绑定validated
+      Weekly，latest-only绑定validated Latest，blocked显式SKIPPED；current null candidate保持0
+      event/NOT_REGISTERED；validators live replay并逐byte重建全部JSON/Markdown/Reader Brief；CLI
+      parity、manifests/deprecation/source hashes及focused/architecture/contract/full闭合；单slice完成仍为`COMPLETE_G2_4_CONTINUES`，不触发handoff、不进入G2.5，`production_effect=none`。|2026-06-14
+      baseline artifacts和`2439 passed`记录保留历史。2026-07-15: G2.4CT contract freeze并重新进入IN_PROGRESS。2026-07-15:
+      implementation完成转VALIDATING。2026-07-15: G2.4CT=`COMPLETE_G2_4_CONTINUES`；focused/architecture/contract/full=`125/281/203/6,018
+      passed`，full=`2,514.64s`；首轮post-refresh lineage缺口已修复，generated=`926/1,124/858/0`，CLI
+      parity不变。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0b9d6705ca8148455f1d5999
+  task_id: TRADING-276_to_280_SMOOTHED_FORWARD_DATA_FRESHNESS_AND_LATEST_AVAILABLE_BOOTSTRAP
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: research/operations data owner：刷新真实数据并继续积累forward/PIT/DQ/cost/holdout证据；architecture
+      coordinator继续剩余G2.4 slices
+    notes: '2026-06-14 baseline artifacts和`2439 passed`记录保留历史。2026-07-15: G2.4CT contract
+      freeze并重新进入IN_PROGRESS。2026-07-15: implementation完成转VALIDATING。2026-07-15: G2.4CT=`COMPLETE_G2_4_CONTINUES`；focused/architecture/contract/full=`125/281/203/6,018
+      passed`，full=`2,514.64s`；首轮post-refresh lineage缺口已修复，generated=`926/1,124/858/0`，CLI
+      parity不变。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0b9d6705ca8148455f1d59992c96f9adc28379481beda960b500bdf5abef1cef
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-276_to_280_SMOOTHED_FORWARD_DATA_FRESHNESS_AND_LATEST_AVAILABLE_BOOTSTRAP
+  - ETF portfolio/dynamic v3 rescue smoothed forward data freshness and latest-available
+    bootstrap
+  - P0
+  - BASELINE_DONE
+  - research/operations data owner：刷新真实数据并继续积累forward/PIT/DQ/cost/holdout证据；architecture
+    coordinator继续剩余G2.4 slices
+  - 详细拆解见 `docs/requirements/TRADING-276_to_280_Smoothed_Forward_Data_Freshness_and_Latest_Available_Bootstrap.md`；canonical
+    interface/domain、五类v2 snapshots、live upstream replay和all-view byte rebuild已实现。本阶段仍只增强诊断与恢复编排，不刷新外部数据、不绕过`aits
+    validate-data`、不伪造成熟outcome、不写official target weights、不生成order ticket、不调用broker、不产生production
+    effect。
+  - 五类bounded v2 input snapshots；Preflight写前运行same validate-data path并冻结source checksum/coverage/issues/cutoff；Latest只消费validated
+    Preflight并调用hardened Daily Emission；Explain由same Preflight确定性生成；Refresh要求Preflight/Explain
+    exact lineage且只planning；Retry先验证Preflight，READY绑定validated Weekly，latest-only绑定validated
+    Latest，blocked显式SKIPPED；current null candidate保持0 event/NOT_REGISTERED；validators
+    live replay并逐byte重建全部JSON/Markdown/Reader Brief；CLI parity、manifests/deprecation/source
+    hashes及focused/architecture/contract/full闭合；单slice完成仍为`COMPLETE_G2_4_CONTINUES`，不触发handoff、不进入G2.5，`production_effect=none`。
+  - '2026-06-14 baseline artifacts和`2439 passed`记录保留历史。2026-07-15: G2.4CT contract
+    freeze并重新进入IN_PROGRESS。2026-07-15: implementation完成转VALIDATING。2026-07-15: G2.4CT=`COMPLETE_G2_4_CONTINUES`；focused/architecture/contract/full=`125/281/203/6,018
+    passed`，full=`2,514.64s`；首轮post-refresh lineage缺口已修复，generated=`926/1,124/858/0`，CLI
+    parity不变。'
+  docs_links:
+  - docs/requirements/TRADING-276_to_280_Smoothed_Forward_Data_Freshness_and_Latest_Available_Bootstrap.md
+  terminal: false
+  raw_row_sha256: 0b9d6705ca8148455f1d59992c96f9adc28379481beda960b500bdf5abef1cef
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 862163b9cc88c35b1d90f9baccc4836609c2eb2a8c6ce18c0fa03ab0a494eb52

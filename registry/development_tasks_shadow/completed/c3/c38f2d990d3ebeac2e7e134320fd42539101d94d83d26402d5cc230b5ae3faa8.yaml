@@ -1,0 +1,172 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-018F
+  title: null
+  domain: 交易执行/Promotion Lifecycle Audit Report
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/shadow_promotion_lifecycle_audit_2026-05-23.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/shadow_promotion_lifecycle_audit_2026-05-23.md`；只读
+    lifecycle audit builder、CLI、JSON/Markdown/run log、artifact chain 校验、安全边界审计、weight
+    lifecycle、dashboard 只读卡片、runbook、system flow / artifact catalog、测试和最终收尾验证已完成；repo
+    既有无关 `tests/test_market_data.py` Black baseline 仍需后续单独处理，不混入本任务
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_shadow_promotion_lifecycle_audit.py`、`src/ai_trading_system/trading_engine/shadow_promotion_lifecycle_audit.py`
+      和 `data/derived/weight_iterations/promotion/audit/shadow_promotion_lifecycle_audit_YYYY-MM-DD.json/md`、`audit/logs/shadow_promotion_lifecycle_audit_run_YYYY-MM-DD.json/md`；报告固定
+      `production_effect=none`、`manual_review_only=true`、`audit_only=true`、`apply_executed_by_audit=false`、`rollback_executed_by_audit=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；只读读取已有
+      018D/018E1/018E2/可选 018E3 artifacts，不重跑 018B/018C/018C2/018D/018E1/018E2/018E3，不执行
+      apply/rollback，不写 production；dashboard 只读读取 latest audit artifact，不触发 018F 或任何上游/交易
+      pipeline
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 408
+    row_sha256: 78b948b7564d6ca1620c5a697c5433858416eeab1a731057cf0e08e9397eb04f
+    cell_count: 8
+    all_cells:
+    - TRADING-018F
+    - 交易执行/Promotion Lifecycle Audit Report
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/shadow_promotion_lifecycle_audit_2026-05-23.md`；只读
+      lifecycle audit builder、CLI、JSON/Markdown/run log、artifact chain 校验、安全边界审计、weight
+      lifecycle、dashboard 只读卡片、runbook、system flow / artifact catalog、测试和最终收尾验证已完成；repo
+      既有无关 `tests/test_market_data.py` Black baseline 仍需后续单独处理，不混入本任务
+    - 新增 `scripts/run_shadow_promotion_lifecycle_audit.py`、`src/ai_trading_system/trading_engine/shadow_promotion_lifecycle_audit.py`
+      和 `data/derived/weight_iterations/promotion/audit/shadow_promotion_lifecycle_audit_YYYY-MM-DD.json/md`、`audit/logs/shadow_promotion_lifecycle_audit_run_YYYY-MM-DD.json/md`；报告固定
+      `production_effect=none`、`manual_review_only=true`、`audit_only=true`、`apply_executed_by_audit=false`、`rollback_executed_by_audit=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；只读读取已有
+      018D/018E1/018E2/可选 018E3 artifacts，不重跑 018B/018C/018C2/018D/018E1/018E2/018E3，不执行
+      apply/rollback，不写 production；dashboard 只读读取 latest audit artifact，不触发 018F 或任何上游/交易
+      pipeline
+    - '2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 018D/018E1/018E2/018E3 安全闭环后补齐只读
+      lifecycle audit report，用于回答 proposal 到 preflight/apply/rollback 的 artifact chain、weight
+      lifecycle 和安全边界是否完整一致；本任务不允许修改 production 或触发任何上游 pipeline。2026-05-23: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已完成 lifecycle audit builder、CLI、JSON/Markdown/run log、dashboard
+      只读展示、runbook、system flow / artifact catalog 更新和测试；repo 外临时 fixture smoke 成功验证
+      `COMPLETE_WITH_ROLLBACK`、`COMPLETE_APPLIED_NO_ROLLBACK` 和 `SAFETY_ANOMALY`，完整生命周期
+      net delta 为 0，broker/replay/trading 均为 false；目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest 和 ruff 通过；全仓 Black check 仍只被既有无关 `tests/test_market_data.py` baseline
+      阻断，未混入无关格式化 diff。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo 外临时 fixture
+      三路径 smoke；`COMPLETE_WITH_ROLLBACK` 输出 artifact_chain PASS、safety_boundary PASS、net
+      delta 全为 0；`COMPLETE_APPLIED_NO_ROLLBACK` 输出 warning 且 after_rollback 为 null，不视为
+      safety anomaly；`SAFETY_ANOMALY` 对 apply artifact `broker_execution=true` 输出
+      critical finding；三路径均确认 audit 顶层 `production_effect=none`、`audit_only=true`、`apply_executed_by_audit=false`、`rollback_executed_by_audit=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+      import guard 验证 Shadow Promotion Lifecycle Audit 卡片只读读取 audit artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/scoring/broker/replay/trading；收尾验证通过目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+      仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。'
+    raw_line: '|TRADING-018F|交易执行/Promotion Lifecycle Audit Report|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/shadow_promotion_lifecycle_audit_2026-05-23.md`；只读 lifecycle
+      audit builder、CLI、JSON/Markdown/run log、artifact chain 校验、安全边界审计、weight lifecycle、dashboard
+      只读卡片、runbook、system flow / artifact catalog、测试和最终收尾验证已完成；repo 既有无关 `tests/test_market_data.py`
+      Black baseline 仍需后续单独处理，不混入本任务|新增 `scripts/run_shadow_promotion_lifecycle_audit.py`、`src/ai_trading_system/trading_engine/shadow_promotion_lifecycle_audit.py`
+      和 `data/derived/weight_iterations/promotion/audit/shadow_promotion_lifecycle_audit_YYYY-MM-DD.json/md`、`audit/logs/shadow_promotion_lifecycle_audit_run_YYYY-MM-DD.json/md`；报告固定
+      `production_effect=none`、`manual_review_only=true`、`audit_only=true`、`apply_executed_by_audit=false`、`rollback_executed_by_audit=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；只读读取已有
+      018D/018E1/018E2/可选 018E3 artifacts，不重跑 018B/018C/018C2/018D/018E1/018E2/018E3，不执行
+      apply/rollback，不写 production；dashboard 只读读取 latest audit artifact，不触发 018F 或任何上游/交易
+      pipeline|2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 018D/018E1/018E2/018E3 安全闭环后补齐只读
+      lifecycle audit report，用于回答 proposal 到 preflight/apply/rollback 的 artifact chain、weight
+      lifecycle 和安全边界是否完整一致；本任务不允许修改 production 或触发任何上游 pipeline。2026-05-23: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已完成 lifecycle audit builder、CLI、JSON/Markdown/run log、dashboard
+      只读展示、runbook、system flow / artifact catalog 更新和测试；repo 外临时 fixture smoke 成功验证
+      `COMPLETE_WITH_ROLLBACK`、`COMPLETE_APPLIED_NO_ROLLBACK` 和 `SAFETY_ANOMALY`，完整生命周期
+      net delta 为 0，broker/replay/trading 均为 false；目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest 和 ruff 通过；全仓 Black check 仍只被既有无关 `tests/test_market_data.py` baseline
+      阻断，未混入无关格式化 diff。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo 外临时 fixture
+      三路径 smoke；`COMPLETE_WITH_ROLLBACK` 输出 artifact_chain PASS、safety_boundary PASS、net
+      delta 全为 0；`COMPLETE_APPLIED_NO_ROLLBACK` 输出 warning 且 after_rollback 为 null，不视为
+      safety anomaly；`SAFETY_ANOMALY` 对 apply artifact `broker_execution=true` 输出
+      critical finding；三路径均确认 audit 顶层 `production_effect=none`、`audit_only=true`、`apply_executed_by_audit=false`、`rollback_executed_by_audit=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+      import guard 验证 Shadow Promotion Lifecycle Audit 卡片只读读取 audit artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/scoring/broker/replay/trading；收尾验证通过目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+      仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-78b948b7564d6ca1620c5a69
+  task_id: TRADING-018F
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 018D/018E1/018E2/018E3 安全闭环后补齐只读
+      lifecycle audit report，用于回答 proposal 到 preflight/apply/rollback 的 artifact chain、weight
+      lifecycle 和安全边界是否完整一致；本任务不允许修改 production 或触发任何上游 pipeline。2026-05-23: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已完成 lifecycle audit builder、CLI、JSON/Markdown/run log、dashboard
+      只读展示、runbook、system flow / artifact catalog 更新和测试；repo 外临时 fixture smoke 成功验证
+      `COMPLETE_WITH_ROLLBACK`、`COMPLETE_APPLIED_NO_ROLLBACK` 和 `SAFETY_ANOMALY`，完整生命周期
+      net delta 为 0，broker/replay/trading 均为 false；目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest 和 ruff 通过；全仓 Black check 仍只被既有无关 `tests/test_market_data.py` baseline
+      阻断，未混入无关格式化 diff。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo 外临时 fixture
+      三路径 smoke；`COMPLETE_WITH_ROLLBACK` 输出 artifact_chain PASS、safety_boundary PASS、net
+      delta 全为 0；`COMPLETE_APPLIED_NO_ROLLBACK` 输出 warning 且 after_rollback 为 null，不视为
+      safety anomaly；`SAFETY_ANOMALY` 对 apply artifact `broker_execution=true` 输出
+      critical finding；三路径均确认 audit 顶层 `production_effect=none`、`audit_only=true`、`apply_executed_by_audit=false`、`rollback_executed_by_audit=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+      import guard 验证 Shadow Promotion Lifecycle Audit 卡片只读读取 audit artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/scoring/broker/replay/trading；收尾验证通过目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+      仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:78b948b7564d6ca1620c5a697c5433858416eeab1a731057cf0e08e9397eb04f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-018F
+  - 交易执行/Promotion Lifecycle Audit Report
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/shadow_promotion_lifecycle_audit_2026-05-23.md`；只读 lifecycle
+    audit builder、CLI、JSON/Markdown/run log、artifact chain 校验、安全边界审计、weight lifecycle、dashboard
+    只读卡片、runbook、system flow / artifact catalog、测试和最终收尾验证已完成；repo 既有无关 `tests/test_market_data.py`
+    Black baseline 仍需后续单独处理，不混入本任务
+  - 新增 `scripts/run_shadow_promotion_lifecycle_audit.py`、`src/ai_trading_system/trading_engine/shadow_promotion_lifecycle_audit.py`
+    和 `data/derived/weight_iterations/promotion/audit/shadow_promotion_lifecycle_audit_YYYY-MM-DD.json/md`、`audit/logs/shadow_promotion_lifecycle_audit_run_YYYY-MM-DD.json/md`；报告固定
+    `production_effect=none`、`manual_review_only=true`、`audit_only=true`、`apply_executed_by_audit=false`、`rollback_executed_by_audit=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；只读读取已有
+    018D/018E1/018E2/可选 018E3 artifacts，不重跑 018B/018C/018C2/018D/018E1/018E2/018E3，不执行
+    apply/rollback，不写 production；dashboard 只读读取 latest audit artifact，不触发 018F 或任何上游/交易
+    pipeline
+  - '2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 018D/018E1/018E2/018E3 安全闭环后补齐只读 lifecycle
+    audit report，用于回答 proposal 到 preflight/apply/rollback 的 artifact chain、weight
+    lifecycle 和安全边界是否完整一致；本任务不允许修改 production 或触发任何上游 pipeline。2026-05-23: 从 IN_PROGRESS
+    改为 VALIDATING，原因：已完成 lifecycle audit builder、CLI、JSON/Markdown/run log、dashboard
+    只读展示、runbook、system flow / artifact catalog 更新和测试；repo 外临时 fixture smoke 成功验证
+    `COMPLETE_WITH_ROLLBACK`、`COMPLETE_APPLIED_NO_ROLLBACK` 和 `SAFETY_ANOMALY`，完整生命周期
+    net delta 为 0，broker/replay/trading 均为 false；目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+    pytest 和 ruff 通过；全仓 Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+    diff。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo 外临时 fixture 三路径 smoke；`COMPLETE_WITH_ROLLBACK`
+    输出 artifact_chain PASS、safety_boundary PASS、net delta 全为 0；`COMPLETE_APPLIED_NO_ROLLBACK`
+    输出 warning 且 after_rollback 为 null，不视为 safety anomaly；`SAFETY_ANOMALY` 对 apply
+    artifact `broker_execution=true` 输出 critical finding；三路径均确认 audit 顶层 `production_effect=none`、`audit_only=true`、`apply_executed_by_audit=false`、`rollback_executed_by_audit=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+    import guard 验证 Shadow Promotion Lifecycle Audit 卡片只读读取 audit artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/scoring/broker/replay/trading；收尾验证通过目标
+    pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+    仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。'
+  docs_links:
+  - docs/requirements/shadow_promotion_lifecycle_audit_2026-05-23.md
+  terminal: true
+  raw_row_sha256: 78b948b7564d6ca1620c5a697c5433858416eeab1a731057cf0e08e9397eb04f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 96177a63e4a55780fe243df0787d682ead99d20064675f1e6684323a360f2bc3

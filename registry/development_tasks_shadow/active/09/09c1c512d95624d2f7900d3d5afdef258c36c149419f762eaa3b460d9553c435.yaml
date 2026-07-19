@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: PROD-004
+  title: null
+  domain: 趋势判断/PIT 估值样本成熟度
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 时间窗口
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: '`DATA-003/BACKTEST-002/BTINPUT-001` 已完成
+    forward-only PIT 快照、回测可信度标签和覆盖诊断；下一步等待自建 PIT 样本自然积累，并用覆盖报告判断何时可提升估值/预期结论可信度'
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits backtest-pit-coverage` 能给出 core universe 的可用样本起始日期、覆盖率和 A/B readiness；`score-daily`
+      对 `eps_revision_90d_pct`、valuation percentile 和 vendor/self-archived PIT 来源的限制声明与实际覆盖一致；历史不足时继续降级，不得用采集日视图伪装
+      signal_date 可见数据'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1500
+    row_sha256: 8cb8a538632f575d50568937ef4fca27dfd15357950cfaea68d626c4947420aa
+    cell_count: 8
+    all_cells:
+    - PROD-004
+    - 趋势判断/PIT 估值样本成熟度
+    - P1
+    - BLOCKED_EXTERNAL
+    - 系统验证 + 时间窗口
+    - '`DATA-003/BACKTEST-002/BTINPUT-001` 已完成 forward-only PIT 快照、回测可信度标签和覆盖诊断；下一步等待自建
+      PIT 样本自然积累，并用覆盖报告判断何时可提升估值/预期结论可信度'
+    - '`aits backtest-pit-coverage` 能给出 core universe 的可用样本起始日期、覆盖率和 A/B readiness；`score-daily`
+      对 `eps_revision_90d_pct`、valuation percentile 和 vendor/self-archived PIT 来源的限制声明与实际覆盖一致；历史不足时继续降级，不得用采集日视图伪装
+      signal_date 可见数据'
+    - '2026-05-06: 从 `PROD-001` 拆出，原因：owner 已决定不购买或伪造历史 PIT；剩余工作是持续验证 forward-only
+      样本成熟度，而不是继续推进总控任务。2026-05-10: owner 再次要求继续积累 forward-only PIT；本轮只刷新覆盖报告和运行状态，不回填历史
+      PIT。2026-05-10: 测试最后交易日流程时确认，若在 2026-05-10 对 2026-05-08 执行 live `pit-snapshots
+      fetch-fmp-forward`，`available_time` 会晚于 as_of 并被 `ops health` 正确阻断；历史交易日应使用
+      `ops replay-day` 的 cache-only/隔离视图，而不是用 live daily-run 伪造 PIT。'
+    raw_line: '|PROD-004|趋势判断/PIT 估值样本成熟度|P1|BLOCKED_EXTERNAL|系统验证 + 时间窗口|`DATA-003/BACKTEST-002/BTINPUT-001`
+      已完成 forward-only PIT 快照、回测可信度标签和覆盖诊断；下一步等待自建 PIT 样本自然积累，并用覆盖报告判断何时可提升估值/预期结论可信度|`aits
+      backtest-pit-coverage` 能给出 core universe 的可用样本起始日期、覆盖率和 A/B readiness；`score-daily`
+      对 `eps_revision_90d_pct`、valuation percentile 和 vendor/self-archived PIT 来源的限制声明与实际覆盖一致；历史不足时继续降级，不得用采集日视图伪装
+      signal_date 可见数据|2026-05-06: 从 `PROD-001` 拆出，原因：owner 已决定不购买或伪造历史 PIT；剩余工作是持续验证
+      forward-only 样本成熟度，而不是继续推进总控任务。2026-05-10: owner 再次要求继续积累 forward-only PIT；本轮只刷新覆盖报告和运行状态，不回填历史
+      PIT。2026-05-10: 测试最后交易日流程时确认，若在 2026-05-10 对 2026-05-08 执行 live `pit-snapshots
+      fetch-fmp-forward`，`available_time` 会晚于 as_of 并被 `ops health` 正确阻断；历史交易日应使用
+      `ops replay-day` 的 cache-only/隔离视图，而不是用 live daily-run 伪造 PIT。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8cb8a538632f575d50568937
+  task_id: PROD-004
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 时间窗口
+    notes: '2026-05-06: 从 `PROD-001` 拆出，原因：owner 已决定不购买或伪造历史 PIT；剩余工作是持续验证 forward-only
+      样本成熟度，而不是继续推进总控任务。2026-05-10: owner 再次要求继续积累 forward-only PIT；本轮只刷新覆盖报告和运行状态，不回填历史
+      PIT。2026-05-10: 测试最后交易日流程时确认，若在 2026-05-10 对 2026-05-08 执行 live `pit-snapshots
+      fetch-fmp-forward`，`available_time` 会晚于 as_of 并被 `ops health` 正确阻断；历史交易日应使用
+      `ops replay-day` 的 cache-only/隔离视图，而不是用 live daily-run 伪造 PIT。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8cb8a538632f575d50568937ef4fca27dfd15357950cfaea68d626c4947420aa
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - PROD-004
+  - 趋势判断/PIT 估值样本成熟度
+  - P1
+  - BLOCKED_EXTERNAL
+  - 系统验证 + 时间窗口
+  - '`DATA-003/BACKTEST-002/BTINPUT-001` 已完成 forward-only PIT 快照、回测可信度标签和覆盖诊断；下一步等待自建
+    PIT 样本自然积累，并用覆盖报告判断何时可提升估值/预期结论可信度'
+  - '`aits backtest-pit-coverage` 能给出 core universe 的可用样本起始日期、覆盖率和 A/B readiness；`score-daily`
+    对 `eps_revision_90d_pct`、valuation percentile 和 vendor/self-archived PIT 来源的限制声明与实际覆盖一致；历史不足时继续降级，不得用采集日视图伪装
+    signal_date 可见数据'
+  - '2026-05-06: 从 `PROD-001` 拆出，原因：owner 已决定不购买或伪造历史 PIT；剩余工作是持续验证 forward-only 样本成熟度，而不是继续推进总控任务。2026-05-10:
+    owner 再次要求继续积累 forward-only PIT；本轮只刷新覆盖报告和运行状态，不回填历史 PIT。2026-05-10: 测试最后交易日流程时确认，若在
+    2026-05-10 对 2026-05-08 执行 live `pit-snapshots fetch-fmp-forward`，`available_time`
+    会晚于 as_of 并被 `ops health` 正确阻断；历史交易日应使用 `ops replay-day` 的 cache-only/隔离视图，而不是用
+    live daily-run 伪造 PIT。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 8cb8a538632f575d50568937ef4fca27dfd15357950cfaea68d626c4947420aa
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7a25362c65aabbf9a40c8f22bbbae5502575ba3b50f935d4119067e276a44943

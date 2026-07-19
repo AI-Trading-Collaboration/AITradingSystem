@@ -1,0 +1,108 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-031A
+  title: null
+  domain: 交易执行/Operator Brief Notification Delivery Preflight Real Artifact Observation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/operator_brief_notification_delivery_preflight_real_artifact_observation_2026-06-09.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 承接 `TRADING-031` 的真实 TRADING-030 artifact
+    观察；阻塞于本机或运行环境产生可审计 `operator_brief_notification_draft_YYYY-MM-DD.json/md` 及 email/chat/mobile
+    draft files；详细拆解见 `docs/requirements/operator_brief_notification_delivery_preflight_real_artifact_observation_2026-06-09.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 至少一个真实 `TRADING-030` artifact 日期完成 delivery preflight 观察，记录 `preflight_status`、`delivery_readiness`、metadata/draft
+      status、approval/channel/safety validation 和 dashboard 只读卡片结果；输出固定 `production_effect=none`、`manual_review_only=true`、`notification_delivery_preflight_only=true`、`read_only=true`，所有
+      sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；缺失或不安全真实输入必须
+      fail closed，不补造草稿、不自动发送
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1485
+    row_sha256: 66d696ee5881e75412570270a9fef5e044eb342d6acad9a49bb14c4542598e9f
+    cell_count: 8
+    all_cells:
+    - TRADING-031A
+    - 交易执行/Operator Brief Notification Delivery Preflight Real Artifact Observation
+    - P0
+    - BLOCKED_EXTERNAL
+    - 系统验证 + 项目 owner
+    - 承接 `TRADING-031` 的真实 TRADING-030 artifact 观察；阻塞于本机或运行环境产生可审计 `operator_brief_notification_draft_YYYY-MM-DD.json/md`
+      及 email/chat/mobile draft files；详细拆解见 `docs/requirements/operator_brief_notification_delivery_preflight_real_artifact_observation_2026-06-09.md`
+    - 至少一个真实 `TRADING-030` artifact 日期完成 delivery preflight 观察，记录 `preflight_status`、`delivery_readiness`、metadata/draft
+      status、approval/channel/safety validation 和 dashboard 只读卡片结果；输出固定 `production_effect=none`、`manual_review_only=true`、`notification_delivery_preflight_only=true`、`read_only=true`，所有
+      sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；缺失或不安全真实输入必须
+      fail closed，不补造草稿、不自动发送
+    - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-031 工程基线、临时 fixture PASS smoke、缺输入
+      fail-closed smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-030 notification
+      draft artifacts，不能把真实 artifact 观察并入 baseline 完成。'
+    raw_line: '|TRADING-031A|交易执行/Operator Brief Notification Delivery Preflight Real
+      Artifact Observation|P0|BLOCKED_EXTERNAL|系统验证 + 项目 owner|承接 `TRADING-031` 的真实
+      TRADING-030 artifact 观察；阻塞于本机或运行环境产生可审计 `operator_brief_notification_draft_YYYY-MM-DD.json/md`
+      及 email/chat/mobile draft files；详细拆解见 `docs/requirements/operator_brief_notification_delivery_preflight_real_artifact_observation_2026-06-09.md`|至少一个真实
+      `TRADING-030` artifact 日期完成 delivery preflight 观察，记录 `preflight_status`、`delivery_readiness`、metadata/draft
+      status、approval/channel/safety validation 和 dashboard 只读卡片结果；输出固定 `production_effect=none`、`manual_review_only=true`、`notification_delivery_preflight_only=true`、`read_only=true`，所有
+      sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；缺失或不安全真实输入必须
+      fail closed，不补造草稿、不自动发送|2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-031 工程基线、临时
+      fixture PASS smoke、缺输入 fail-closed smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实
+      TRADING-030 notification draft artifacts，不能把真实 artifact 观察并入 baseline 完成。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-66d696ee5881e75412570270
+  task_id: TRADING-031A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-031 工程基线、临时 fixture PASS
+      smoke、缺输入 fail-closed smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-030
+      notification draft artifacts，不能把真实 artifact 观察并入 baseline 完成。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:66d696ee5881e75412570270a9fef5e044eb342d6acad9a49bb14c4542598e9f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-031A
+  - 交易执行/Operator Brief Notification Delivery Preflight Real Artifact Observation
+  - P0
+  - BLOCKED_EXTERNAL
+  - 系统验证 + 项目 owner
+  - 承接 `TRADING-031` 的真实 TRADING-030 artifact 观察；阻塞于本机或运行环境产生可审计 `operator_brief_notification_draft_YYYY-MM-DD.json/md`
+    及 email/chat/mobile draft files；详细拆解见 `docs/requirements/operator_brief_notification_delivery_preflight_real_artifact_observation_2026-06-09.md`
+  - 至少一个真实 `TRADING-030` artifact 日期完成 delivery preflight 观察，记录 `preflight_status`、`delivery_readiness`、metadata/draft
+    status、approval/channel/safety validation 和 dashboard 只读卡片结果；输出固定 `production_effect=none`、`manual_review_only=true`、`notification_delivery_preflight_only=true`、`read_only=true`，所有
+    sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；缺失或不安全真实输入必须 fail
+    closed，不补造草稿、不自动发送
+  - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-031 工程基线、临时 fixture PASS smoke、缺输入
+    fail-closed smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-030 notification
+    draft artifacts，不能把真实 artifact 观察并入 baseline 完成。'
+  docs_links:
+  - docs/requirements/operator_brief_notification_delivery_preflight_real_artifact_observation_2026-06-09.md
+  terminal: false
+  raw_row_sha256: 66d696ee5881e75412570270a9fef5e044eb342d6acad9a49bb14c4542598e9f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 312c2493704c242a12232c867055826c197288c9aa1122d9255ae3e9f25eac8f

@@ -1,0 +1,114 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-062G
+  title: null
+  domain: ETF README operator documentation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原始开发文档
+    Definition of Done 中 “README 说明如何运行” 的可验证交付
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: README 必须说明 ETF 主仓配置系统定位、默认 namespace 与 compatibility aliases、P0 daily/backtest/simulation/report
+      命令、P1/P2 observe-only 命令入口、主要 artifact 路径、数据质量门禁、`ai_after_chatgpt` 默认窗口、`production_effect=none`
+      / no broker 边界和已知外部数据源限制；文档不得把 ETF brief 写成自动交易指令或主 daily score 替代品；测试至少覆盖 README
+      包含关键命令和安全边界文本
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 370
+    row_sha256: 6d14cf6d898bd8d7e2fc1d377df6a615594c43c566f53b47f4671c99a29f66e7
+    cell_count: 8
+    all_cells:
+    - TRADING-062G
+    - ETF README operator documentation
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原始开发文档
+      Definition of Done 中 “README 说明如何运行” 的可验证交付
+    - README 必须说明 ETF 主仓配置系统定位、默认 namespace 与 compatibility aliases、P0 daily/backtest/simulation/report
+      命令、P1/P2 observe-only 命令入口、主要 artifact 路径、数据质量门禁、`ai_after_chatgpt` 默认窗口、`production_effect=none`
+      / no broker 边界和已知外部数据源限制；文档不得把 ETF brief 写成自动交易指令或主 daily score 替代品；测试至少覆盖 README
+      包含关键命令和安全边界文本
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文最终 DoD 要求 README 说明如何运行；当前 ETF 实现已有 `IMPLEMENTATION_NOTES.md`
+      和系统流图，但 README 尚未覆盖 ETF workflow、artifact 和安全边界。2026-05-31: 从 IN_PROGRESS 改为
+      DONE，原因：README 新增 ETF workflow、artifact、compatibility alias、`ai_after_chatgpt`、data
+      quality gate、Reader Brief visibility 和 `production_effect=none` / no broker
+      边界；`tests/test_etf_readme.py` 通过。'
+    raw_line: '|TRADING-062G|ETF README operator documentation|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原始开发文档
+      Definition of Done 中 “README 说明如何运行” 的可验证交付|README 必须说明 ETF 主仓配置系统定位、默认 namespace
+      与 compatibility aliases、P0 daily/backtest/simulation/report 命令、P1/P2 observe-only
+      命令入口、主要 artifact 路径、数据质量门禁、`ai_after_chatgpt` 默认窗口、`production_effect=none`
+      / no broker 边界和已知外部数据源限制；文档不得把 ETF brief 写成自动交易指令或主 daily score 替代品；测试至少覆盖 README
+      包含关键命令和安全边界文本|2026-05-31: 新增并进入 IN_PROGRESS，原因：原文最终 DoD 要求 README 说明如何运行；当前
+      ETF 实现已有 `IMPLEMENTATION_NOTES.md` 和系统流图，但 README 尚未覆盖 ETF workflow、artifact
+      和安全边界。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：README 新增 ETF workflow、artifact、compatibility
+      alias、`ai_after_chatgpt`、data quality gate、Reader Brief visibility 和 `production_effect=none`
+      / no broker 边界；`tests/test_etf_readme.py` 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6d14cf6d898bd8d7e2fc1d37
+  task_id: TRADING-062G
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文最终 DoD 要求 README 说明如何运行；当前 ETF 实现已有
+      `IMPLEMENTATION_NOTES.md` 和系统流图，但 README 尚未覆盖 ETF workflow、artifact 和安全边界。2026-05-31:
+      从 IN_PROGRESS 改为 DONE，原因：README 新增 ETF workflow、artifact、compatibility alias、`ai_after_chatgpt`、data
+      quality gate、Reader Brief visibility 和 `production_effect=none` / no broker
+      边界；`tests/test_etf_readme.py` 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6d14cf6d898bd8d7e2fc1d377df6a615594c43c566f53b47f4671c99a29f66e7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062G
+  - ETF README operator documentation
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原始开发文档
+    Definition of Done 中 “README 说明如何运行” 的可验证交付
+  - README 必须说明 ETF 主仓配置系统定位、默认 namespace 与 compatibility aliases、P0 daily/backtest/simulation/report
+    命令、P1/P2 observe-only 命令入口、主要 artifact 路径、数据质量门禁、`ai_after_chatgpt` 默认窗口、`production_effect=none`
+    / no broker 边界和已知外部数据源限制；文档不得把 ETF brief 写成自动交易指令或主 daily score 替代品；测试至少覆盖 README
+    包含关键命令和安全边界文本
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文最终 DoD 要求 README 说明如何运行；当前 ETF 实现已有 `IMPLEMENTATION_NOTES.md`
+    和系统流图，但 README 尚未覆盖 ETF workflow、artifact 和安全边界。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：README
+    新增 ETF workflow、artifact、compatibility alias、`ai_after_chatgpt`、data quality gate、Reader
+    Brief visibility 和 `production_effect=none` / no broker 边界；`tests/test_etf_readme.py`
+    通过。'
+  docs_links:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  terminal: true
+  raw_row_sha256: 6d14cf6d898bd8d7e2fc1d377df6a615594c43c566f53b47f4671c99a29f66e7
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 562de24342d7559cec519f3ba504fa137dfea2e29bed87e7b85002cb5266bcd0

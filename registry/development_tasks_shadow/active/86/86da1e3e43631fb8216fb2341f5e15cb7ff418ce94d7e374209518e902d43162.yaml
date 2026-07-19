@@ -1,0 +1,158 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-114_to_120
+  title: null
+  domain: ETF portfolio research/Dynamic v3 Rescue Medium Real Candidate Discovery
+    and Regime Coverage
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-114_to_120_Medium_Real_Candidate_Discovery_and_Regime_Coverage.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-114_to_120_Medium_Real_Candidate_Discovery_and_Regime_Coverage.md`；真实
+    medium_real workflow 已完成并建议 `fix_evidence_gaps`；下一步由 owner 复核是否先处理 data quality
+    warning、window incomplete 和 overfit review blockers，再决定是否手动启动 `overnight_real`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`medium_real` profile 至少尝试 300 个 real candidates 或明确解释短缺原因；candidate evidence
+      matrix 消费 data/window/weight/attribution/overfit/provenance 证据并 fail closed；regime
+      coverage 披露 AI bull、drawdown、semiconductor stress、sideways/high-vol/recovery
+      覆盖缺口；interpretation pack、observe pool、overnight readiness 和 research decision
+      artifacts 固定 `production_effect=none`、`broker_action=none`、`manual_review_required=true`；Reader
+      Brief 只读 latest evidence/observe/decision，不运行上游；focused tests、ruff、compileall、diff
+      check 和真实 workflow validate PASS'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1466
+    row_sha256: ec4e463c9721e65bb45ae035767b4fc667c3e2db7b52219e252715458b7c060f
+    cell_count: 8
+    all_cells:
+    - TRADING-114_to_120
+    - ETF portfolio research/Dynamic v3 Rescue Medium Real Candidate Discovery and
+      Regime Coverage
+    - P0
+    - VALIDATING
+    - 系统验证 + 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-114_to_120_Medium_Real_Candidate_Discovery_and_Regime_Coverage.md`；真实
+      medium_real workflow 已完成并建议 `fix_evidence_gaps`；下一步由 owner 复核是否先处理 data quality
+      warning、window incomplete 和 overfit review blockers，再决定是否手动启动 `overnight_real`
+    - '`medium_real` profile 至少尝试 300 个 real candidates 或明确解释短缺原因；candidate evidence
+      matrix 消费 data/window/weight/attribution/overfit/provenance 证据并 fail closed；regime
+      coverage 披露 AI bull、drawdown、semiconductor stress、sideways/high-vol/recovery
+      覆盖缺口；interpretation pack、observe pool、overnight readiness 和 research decision
+      artifacts 固定 `production_effect=none`、`broker_action=none`、`manual_review_required=true`；Reader
+      Brief 只读 latest evidence/observe/decision，不运行上游；focused tests、ruff、compileall、diff
+      check 和真实 workflow validate PASS'
+    - '2026-06-07: 新增并进入 IN_PROGRESS，原因：TRADING-111_to_113 已补齐真实研究证据 gate，但仍缺 medium_real
+      候选发现、regime 覆盖解释、观察池、overnight readiness 和统一 owner-readable research decision；本阶段所有新增阈值按
+      requirements 文档登记为 pilot baseline，完成至少一轮真实 medium_real/owner 复核后再迁移到 policy
+      manifest 或重新校准。2026-06-08: medium_real 真实 resume 显示单 candidate 存在小时级风险；本轮实现同等证据的
+      deterministic fixed robustness evidence cache，复用同一数据/date/policy hash 下的 baseline/v0.2/v0.4
+      robustness report，不降低 gate 或 sensitivity/overfit 证据。2026-06-08: 转入 VALIDATING，原因：sweep
+      `sweep_20260607T102300Z_ae5ae1d8` 完成 300/300、0 failures，medium report `89353fbd6d2e9e48`、evidence
+      summary `3d98dd79c7ab6b40`、regime coverage `65bc14b9e740798e`、interpretation
+      pack `291add5a0c664546`、observe pool `1201681d0e290627`、overnight readiness
+      `c0755e2c263b0854`、research decision `81ac692903a4c668` 和 dynamic-v3 artifact
+      validation 均跑通；业务结论为 0 个 observe candidate、research decision 建议 `fix_evidence_gaps`。'
+    raw_line: '|TRADING-114_to_120|ETF portfolio research/Dynamic v3 Rescue Medium
+      Real Candidate Discovery and Regime Coverage|P0|VALIDATING|系统验证 + 项目 owner 人工复核|详细拆解见
+      `docs/requirements/TRADING-114_to_120_Medium_Real_Candidate_Discovery_and_Regime_Coverage.md`；真实
+      medium_real workflow 已完成并建议 `fix_evidence_gaps`；下一步由 owner 复核是否先处理 data quality
+      warning、window incomplete 和 overfit review blockers，再决定是否手动启动 `overnight_real`|`medium_real`
+      profile 至少尝试 300 个 real candidates 或明确解释短缺原因；candidate evidence matrix 消费 data/window/weight/attribution/overfit/provenance
+      证据并 fail closed；regime coverage 披露 AI bull、drawdown、semiconductor stress、sideways/high-vol/recovery
+      覆盖缺口；interpretation pack、observe pool、overnight readiness 和 research decision
+      artifacts 固定 `production_effect=none`、`broker_action=none`、`manual_review_required=true`；Reader
+      Brief 只读 latest evidence/observe/decision，不运行上游；focused tests、ruff、compileall、diff
+      check 和真实 workflow validate PASS|2026-06-07: 新增并进入 IN_PROGRESS，原因：TRADING-111_to_113
+      已补齐真实研究证据 gate，但仍缺 medium_real 候选发现、regime 覆盖解释、观察池、overnight readiness 和统一
+      owner-readable research decision；本阶段所有新增阈值按 requirements 文档登记为 pilot baseline，完成至少一轮真实
+      medium_real/owner 复核后再迁移到 policy manifest 或重新校准。2026-06-08: medium_real 真实 resume
+      显示单 candidate 存在小时级风险；本轮实现同等证据的 deterministic fixed robustness evidence cache，复用同一数据/date/policy
+      hash 下的 baseline/v0.2/v0.4 robustness report，不降低 gate 或 sensitivity/overfit
+      证据。2026-06-08: 转入 VALIDATING，原因：sweep `sweep_20260607T102300Z_ae5ae1d8` 完成 300/300、0
+      failures，medium report `89353fbd6d2e9e48`、evidence summary `3d98dd79c7ab6b40`、regime
+      coverage `65bc14b9e740798e`、interpretation pack `291add5a0c664546`、observe pool
+      `1201681d0e290627`、overnight readiness `c0755e2c263b0854`、research decision
+      `81ac692903a4c668` 和 dynamic-v3 artifact validation 均跑通；业务结论为 0 个 observe candidate、research
+      decision 建议 `fix_evidence_gaps`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ec4e463c9721e65bb45ae035
+  task_id: TRADING-114_to_120
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner 人工复核
+    notes: '2026-06-07: 新增并进入 IN_PROGRESS，原因：TRADING-111_to_113 已补齐真实研究证据 gate，但仍缺
+      medium_real 候选发现、regime 覆盖解释、观察池、overnight readiness 和统一 owner-readable research
+      decision；本阶段所有新增阈值按 requirements 文档登记为 pilot baseline，完成至少一轮真实 medium_real/owner
+      复核后再迁移到 policy manifest 或重新校准。2026-06-08: medium_real 真实 resume 显示单 candidate
+      存在小时级风险；本轮实现同等证据的 deterministic fixed robustness evidence cache，复用同一数据/date/policy
+      hash 下的 baseline/v0.2/v0.4 robustness report，不降低 gate 或 sensitivity/overfit
+      证据。2026-06-08: 转入 VALIDATING，原因：sweep `sweep_20260607T102300Z_ae5ae1d8` 完成 300/300、0
+      failures，medium report `89353fbd6d2e9e48`、evidence summary `3d98dd79c7ab6b40`、regime
+      coverage `65bc14b9e740798e`、interpretation pack `291add5a0c664546`、observe pool
+      `1201681d0e290627`、overnight readiness `c0755e2c263b0854`、research decision
+      `81ac692903a4c668` 和 dynamic-v3 artifact validation 均跑通；业务结论为 0 个 observe candidate、research
+      decision 建议 `fix_evidence_gaps`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ec4e463c9721e65bb45ae035767b4fc667c3e2db7b52219e252715458b7c060f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-114_to_120
+  - ETF portfolio research/Dynamic v3 Rescue Medium Real Candidate Discovery and Regime
+    Coverage
+  - P0
+  - VALIDATING
+  - 系统验证 + 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-114_to_120_Medium_Real_Candidate_Discovery_and_Regime_Coverage.md`；真实
+    medium_real workflow 已完成并建议 `fix_evidence_gaps`；下一步由 owner 复核是否先处理 data quality
+    warning、window incomplete 和 overfit review blockers，再决定是否手动启动 `overnight_real`
+  - '`medium_real` profile 至少尝试 300 个 real candidates 或明确解释短缺原因；candidate evidence
+    matrix 消费 data/window/weight/attribution/overfit/provenance 证据并 fail closed；regime
+    coverage 披露 AI bull、drawdown、semiconductor stress、sideways/high-vol/recovery 覆盖缺口；interpretation
+    pack、observe pool、overnight readiness 和 research decision artifacts 固定 `production_effect=none`、`broker_action=none`、`manual_review_required=true`；Reader
+    Brief 只读 latest evidence/observe/decision，不运行上游；focused tests、ruff、compileall、diff
+    check 和真实 workflow validate PASS'
+  - '2026-06-07: 新增并进入 IN_PROGRESS，原因：TRADING-111_to_113 已补齐真实研究证据 gate，但仍缺 medium_real
+    候选发现、regime 覆盖解释、观察池、overnight readiness 和统一 owner-readable research decision；本阶段所有新增阈值按
+    requirements 文档登记为 pilot baseline，完成至少一轮真实 medium_real/owner 复核后再迁移到 policy manifest
+    或重新校准。2026-06-08: medium_real 真实 resume 显示单 candidate 存在小时级风险；本轮实现同等证据的 deterministic
+    fixed robustness evidence cache，复用同一数据/date/policy hash 下的 baseline/v0.2/v0.4
+    robustness report，不降低 gate 或 sensitivity/overfit 证据。2026-06-08: 转入 VALIDATING，原因：sweep
+    `sweep_20260607T102300Z_ae5ae1d8` 完成 300/300、0 failures，medium report `89353fbd6d2e9e48`、evidence
+    summary `3d98dd79c7ab6b40`、regime coverage `65bc14b9e740798e`、interpretation pack
+    `291add5a0c664546`、observe pool `1201681d0e290627`、overnight readiness `c0755e2c263b0854`、research
+    decision `81ac692903a4c668` 和 dynamic-v3 artifact validation 均跑通；业务结论为 0 个 observe
+    candidate、research decision 建议 `fix_evidence_gaps`。'
+  docs_links:
+  - docs/requirements/TRADING-114_to_120_Medium_Real_Candidate_Discovery_and_Regime_Coverage.md
+  terminal: false
+  raw_row_sha256: ec4e463c9721e65bb45ae035767b4fc667c3e2db7b52219e252715458b7c060f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2fc2bc207d68ddc9f85463d7b44bc193461e7b030767ebb726383f949ad261d1

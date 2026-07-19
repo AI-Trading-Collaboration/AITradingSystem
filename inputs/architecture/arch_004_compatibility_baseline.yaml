@@ -14373,6 +14373,7 @@ arch_005_prebootstrap_primitives:
       module_count: 954
       test_file_count: 1129
   superseded_source_paths:
+  - config/architecture/devex_ownership_policy.yaml
   - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
   - src/ai_trading_system/platform/architecture/__init__.py
   - scripts/run_validation_tier.py
@@ -15855,12 +15856,17 @@ phase_g2_4_phase_exit:
   handoff:
     schema_version: arch_005_bootstrap_handoff.v1
     validator_frozen: true
-    status: PENDING_SOURCE_COMMIT_AND_PUSH
-    artifact_written: false
-    artifact_validated: false
-    artifact_committed: false
-    artifact_pushed: false
-    formal_arch_005_s0_unblocked: false
+    status: PASS_COMMITTED_AND_PUSHED
+    artifact_path: inputs/architecture/arch_005_bootstrap_handoff.yaml
+    source_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+    artifact_commit: f1045634f771955e3ddef721ff5ed39aea795b27
+    tracked_file_hash_basis: source_commit_git_blob_sha256
+    handoff_checksum: 10d3106b08582183aef07989d146d31c0bfed783a59fe273496beaa216afbfa0
+    artifact_written: true
+    artifact_validated: true
+    artifact_committed: true
+    artifact_pushed: true
+    formal_arch_005_s0_unblocked: true
     g2_5_unblocked: false
     next_slice_unblocked: false
   safety:
@@ -15897,3 +15903,139 @@ phase_g2_4_phase_exit:
   - {path: tests/test_arch_004g_deprecation.py, sha256: 923db6941e4c5c6cceb68652fcf88d845ae9f0538eb6f0a87bae96a7299b07bf}
   - {path: tests/test_arch_005_bootstrap_handoff.py, sha256: f13fa918639050c9ef36dedc0d5524b5f4ae909fe254d9c97af71f631208b3ea}
   - {path: tests/test_validation_runtime_profile.py, sha256: d8f203c34d4edb828cc59c822b6184e39c9aaa87391984ffe86774615e293fa3}
+  superseded_by_phase: ARCH-005-S0-S1
+  superseded_source_paths:
+  - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
+  - docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md
+  - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+  - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+  - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - scripts/architecture_arch005_handoff.py
+  - scripts/run_validation_tier.py
+  - src/ai_trading_system/platform/architecture/__init__.py
+  - src/ai_trading_system/platform/architecture/bootstrap_handoff.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_arch_005_bootstrap_handoff.py
+
+phase_arch_005_s0_s1_shadow_registry:
+  status: COMPLETE_S0_S1
+  task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+  as_of: 2026-07-19
+  base_commit: f1045634f771955e3ddef721ff5ed39aea795b27
+  boundary_id: ARCH-005-S0-S1
+  entry_gate:
+    status: PASS
+    handoff_path: inputs/architecture/arch_005_bootstrap_handoff.yaml
+    handoff_sha256: 239f9ee871b1497948af8414dfb389a5b33c0740f788fbaf02c2f0ebf3457f39
+    handoff_checksum: 10d3106b08582183aef07989d146d31c0bfed783a59fe273496beaa216afbfa0
+    source_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+    tracked_file_hash_basis: source_commit_git_blob_sha256
+    next_slice_unblocked: false
+  contracts:
+    task_record_schema: task_record.v1
+    task_event_schema: task_event.v1
+    dependency_schema: task_dependency.v1
+    execution_lease_schema: execution_lease.v1
+    scheduler_decision_schema: scheduler_decision.v1
+    generated_view_schema: task_register_generated_view.v1
+    legacy_parser_version: task_register_markdown_parser.v1_characterized
+    shadow_compiler_version: arch_005_shadow_registry_compiler.v1
+  s0_inventory:
+    status: PASS
+    baseline_path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    baseline_sha256: 35f1627677feaa35e10a60c25cc0cb06ed82fab121e35b36d6a90e882905d197
+    baseline_checksum: 93f70437514b182458e7e4d5764f0208ce340cf33101082a097d1fdd4a883b67
+    active_task_count: 427
+    completed_task_count: 442
+    total_task_count: 869
+    unique_task_count: 869
+    task_id_overlap_count: 0
+    ambiguous_extra_cell_row_count: 55
+    characterized_consumer_count: 125
+  s1_shadow:
+    status: PASS
+    registry_root: registry/development_tasks_shadow
+    shadow_index_path: inputs/architecture/arch_005_task_shadow_index.yaml
+    shadow_index_sha256: 7faab54b8d1f421db45053f4685a3f70c309fd36ce0b0babd9ff1e5fea476549
+    shadow_index_checksum: 0d33cc8d3878e55a68a60ce64702284bf3cb8909451ff8abb26e3da7e5cf5b33
+    fragment_count: 869
+    missing_task_count: 0
+    duplicate_task_count: 0
+    semantic_parity: PASS
+    terminal_projection_parity: PASS
+    docs_link_parity: PASS
+    compatibility_views_byte_identical: true
+    deterministic_replay: true
+  validation:
+    focused: {status: PASS, passed: 43, failed: 0}
+    fast_unit: {status: PASS, passed: 300, artifact: outputs/validation_runtime/fast-unit_20260719T190910Z/test_runtime_summary.json, artifact_sha256: b12e79c82afb55e667775c864c408f2dd028a1ddf09d44458e71e1949247c539}
+    architecture_fitness: {status: PASS, passed: 419, artifact: outputs/validation_runtime/architecture-fitness_20260719T191116Z/test_runtime_summary.json, artifact_sha256: c0c27faa3599b73e78679c89ddd2a27f18e09ec07e8f0b9ca4a59e0456abd1bf}
+    contract_validation: {status: PASS, passed: 265, artifact: outputs/validation_runtime/contract-validation_20260719T191156Z/test_runtime_summary.json, artifact_sha256: 3a192b34b899c321217a3de527ae5e62142561c91bd71c47d11daf7dd04b6cca}
+    reproducibility: {status: PASS, passed: 23, artifact: outputs/validation_runtime/reproducibility_20260719T191439Z/test_runtime_summary.json, artifact_sha256: 0e225500d20aaa7a5a5fc24a9acf4892564c6216279805e2395904dd395247ce}
+    full_validation:
+      status: PASS
+      passed: 6394
+      skipped: 2
+      warnings: 642
+      elapsed_seconds: 961.89
+      artifact: outputs/validation_runtime/full_20260719T191509Z/test_runtime_summary.json
+      artifact_sha256: ec16600e2d11dae370095b7bef2097545053dc9a52dbf0e26ad4ec97e5a39016
+      runtime_profile: outputs/validation_runtime/full_20260719T191509Z/test_runtime_profile.json
+      runtime_profile_sha256: 828a3443dafbda4d9514cb4373f8499007b83becc1da7831d36aa9b949d21665
+      performance_regression: false
+  source_of_truth:
+    legacy_markdown_only: true
+    shadow_registry_writable: false
+    dual_write_allowed: false
+    cutover_performed: false
+  next_work:
+    s2_unblocked: false
+    arch_004_g2_5_unblocked: false
+    new_owner_instruction_required_for_arch_004: true
+  safety:
+    dispatch_allowed: false
+    lease_acquisition_allowed: false
+    task_status_mutation_allowed: false
+    strategy_logic_changed: false
+    cached_data_mutated: false
+    official_weights_changed: false
+    paper_shadow_or_portfolio_mutated: false
+    order_or_broker_action: none
+    production_effect: none
+  sources:
+  - {path: config/architecture/devex_ownership_policy.yaml, sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe}
+  - {path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md, sha256: 0f9f503670f5b8e4b4cf9bf9659d41442909371a0de9a9a82fb5800173ef2731}
+  - {path: docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md, sha256: 755a1b5f1657d6e2fa17cd473ef60aa801f2c94b77098466dc0c4850f0bd2335}
+  - {path: docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md, sha256: c55199e7066948facc70539b520ac27ffcb696ac53a176fe1709492e86c7c54a}
+  - {path: docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md, sha256: 24075baa1fced51d9c49eb211d31dc0d01b6a965c18fbbd8a91f080c3d2e7330}
+  - {path: docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md, sha256: 909f47710c29c636d7115b27fcf96b601669a0c6ca2857baf655e4bc808482ae}
+  - {path: docs/system_flow.md, sha256: 99fcc3ce56bfa03bb311ba584a6b33984db0905024170cab86482aec04a3f183}
+  - {path: docs/task_register.md, sha256: 624a8fca803aa490ac679b1cad9fb8a72bd8fc7dddbaedf38b2d9a335d1c174b}
+  - {path: docs/task_register_completed.md, sha256: 66267cfc879e9fd4c92f78ce7704909e73c54187c58e1d0d73c9d089548a4af2}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 61a10063e579610be02156c7d13ec8934af65cb1ac282e4921fb072139f53328}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 30b4eac13bb43661ad6b7aad76b655be5474b6c761dd63d21bd32759932d6242}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 87a7c64b3d309f42c76c0e0254cda465042e68a380f5dc9ffadaa8d7155badd6}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: b51947e4bb9be0fa811bf5de888faffc139cf6869d66e1a5cc38ef5ccd6bac5e}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: ac6954b9a6e6a7713ac905c82bc0dbe16e0df2e4ae9d12837be97cd176a6d622}
+  - {path: inputs/architecture/arch_005_bootstrap_handoff.yaml, sha256: 239f9ee871b1497948af8414dfb389a5b33c0740f788fbaf02c2f0ebf3457f39}
+  - {path: inputs/architecture/arch_005_s0_s1_attribution.yaml, sha256: 7c97e6917d1f112752568b0e522cf50c8281ca70da6f622e0830332b7f375a72}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 35f1627677feaa35e10a60c25cc0cb06ed82fab121e35b36d6a90e882905d197}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: 7faab54b8d1f421db45053f4685a3f70c309fd36ce0b0babd9ff1e5fea476549}
+  - {path: scripts/architecture_arch005_handoff.py, sha256: 421a1c64ed861c2a5021141d6f3634c308416275843ba1aa727075f1ee16b0c2}
+  - {path: scripts/architecture_arch005_registry.py, sha256: 0be23cc4c7def1d2aa87bebe339d1b29ae0a3f34ee649c4dc2f1b9c422a681db}
+  - {path: scripts/run_validation_tier.py, sha256: 77c972f74ad025f82d8be7922d708c76953c6bc0c21d9d46f5c27cd7bab8753f}
+  - {path: src/ai_trading_system/platform/architecture/__init__.py, sha256: 4a7d1c8c6f990122c045585f3ee813f18e88fc7aa731459f2608f7533d3b75af}
+  - {path: src/ai_trading_system/platform/architecture/bootstrap_handoff.py, sha256: e31fa0f83801c4815706e65bc826e35c30272ae265774b7125ab09b3982c2f41}
+  - {path: src/ai_trading_system/platform/architecture/task_registry_shadow.py, sha256: 51bf9e29da99d108982e4abb14bc3d3ffe35b7d6545146cf9577efbceaf144f6}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: fd46c8d915bb0827297da80ce970bae648caa22491d1ad026b65588bc7e67d68}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: 966ef9f3babe94b0db2f319445d97f3b4872c7e188e589eaf8e41967fde23224}
+  - {path: tests/test_arch_005_bootstrap_handoff.py, sha256: de1f4cdf2fb5df0556565476642c61cc6a5913a5865e1f9456480412fce05a99}
+  - {path: tests/test_arch_005_task_registry_shadow.py, sha256: cc6a05fe5debb67e6d12b8038e37d9866721c62ca40e3e060ff2f48577e5a088}

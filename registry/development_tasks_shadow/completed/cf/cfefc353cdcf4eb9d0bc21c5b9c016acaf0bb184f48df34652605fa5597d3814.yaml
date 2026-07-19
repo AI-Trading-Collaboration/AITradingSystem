@@ -1,0 +1,104 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION
+  title: null
+  domain: Architecture / CLI compatibility / Phase A baseline correctness
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: ARCH-004B 继续使用 compatibility snapshot 与 contract tests
+  requirement_refs:
+  - docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md`；恢复
+    commit `98c976f0` 抽取前的 shared adapter exact contract，不逐命令补丁、不增加 `**kwargs` 或 waiver。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`date_range_kwargs` 恢复 `(as_of,start_date,end_date)` 和 `as_of_date/start_date/end_date`，`as_of_kwargs`
+      恢复 `as_of_date`；新增直接 helper contract tests；原 46 个失败 node 并行 `46 passed`；full
+      parallel `5358 passed / 0 failed / 643 warnings`。'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 22
+    row_sha256: 35dec620cf17f5ffe699ea7f6370a606fd78ff60afa88e23c4e5598ad049d93e
+    cell_count: 8
+    all_cells:
+    - ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION
+    - Architecture / CLI compatibility / Phase A baseline correctness
+    - P0
+    - DONE
+    - ARCH-004B 继续使用 compatibility snapshot 与 contract tests
+    - 详见 `docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md`；恢复
+      commit `98c976f0` 抽取前的 shared adapter exact contract，不逐命令补丁、不增加 `**kwargs` 或
+      waiver。
+    - '`date_range_kwargs` 恢复 `(as_of,start_date,end_date)` 和 `as_of_date/start_date/end_date`，`as_of_kwargs`
+      恢复 `as_of_date`；新增直接 helper contract tests；原 46 个失败 node 并行 `46 passed`；full
+      parallel `5358 passed / 0 failed / 643 warnings`。'
+    - '2026-07-11: baseline artifact=`outputs/validation_runtime/full_20260710T155603Z/test_runtime_summary.json`；exit
+      artifact=`outputs/validation_runtime/full_20260710T162418Z/test_runtime_summary.json`；strategy/threshold/weight/window/artifact
+      schema 未变，production effect=none。'
+    raw_line: '|ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION|Architecture
+      / CLI compatibility / Phase A baseline correctness|P0|DONE|ARCH-004B 继续使用 compatibility
+      snapshot 与 contract tests|详见 `docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md`；恢复
+      commit `98c976f0` 抽取前的 shared adapter exact contract，不逐命令补丁、不增加 `**kwargs` 或
+      waiver。|`date_range_kwargs` 恢复 `(as_of,start_date,end_date)` 和 `as_of_date/start_date/end_date`，`as_of_kwargs`
+      恢复 `as_of_date`；新增直接 helper contract tests；原 46 个失败 node 并行 `46 passed`；full
+      parallel `5358 passed / 0 failed / 643 warnings`。|2026-07-11: baseline artifact=`outputs/validation_runtime/full_20260710T155603Z/test_runtime_summary.json`；exit
+      artifact=`outputs/validation_runtime/full_20260710T162418Z/test_runtime_summary.json`；strategy/threshold/weight/window/artifact
+      schema 未变，production effect=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-35dec620cf17f5ffe699ea7f
+  task_id: ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: ARCH-004B 继续使用 compatibility snapshot 与 contract tests
+    notes: '2026-07-11: baseline artifact=`outputs/validation_runtime/full_20260710T155603Z/test_runtime_summary.json`；exit
+      artifact=`outputs/validation_runtime/full_20260710T162418Z/test_runtime_summary.json`；strategy/threshold/weight/window/artifact
+      schema 未变，production effect=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:35dec620cf17f5ffe699ea7f6370a606fd78ff60afa88e23c4e5598ad049d93e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION
+  - Architecture / CLI compatibility / Phase A baseline correctness
+  - P0
+  - DONE
+  - ARCH-004B 继续使用 compatibility snapshot 与 contract tests
+  - 详见 `docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md`；恢复
+    commit `98c976f0` 抽取前的 shared adapter exact contract，不逐命令补丁、不增加 `**kwargs` 或 waiver。
+  - '`date_range_kwargs` 恢复 `(as_of,start_date,end_date)` 和 `as_of_date/start_date/end_date`，`as_of_kwargs`
+    恢复 `as_of_date`；新增直接 helper contract tests；原 46 个失败 node 并行 `46 passed`；full parallel
+    `5358 passed / 0 failed / 643 warnings`。'
+  - '2026-07-11: baseline artifact=`outputs/validation_runtime/full_20260710T155603Z/test_runtime_summary.json`；exit
+    artifact=`outputs/validation_runtime/full_20260710T162418Z/test_runtime_summary.json`；strategy/threshold/weight/window/artifact
+    schema 未变，production effect=none。'
+  docs_links:
+  - docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md
+  terminal: true
+  raw_row_sha256: 35dec620cf17f5ffe699ea7f6370a606fd78ff60afa88e23c4e5598ad049d93e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 05ca70400089308a9281c1e57a70ec0ddfc1de348f46cd4870071d6aec32b570

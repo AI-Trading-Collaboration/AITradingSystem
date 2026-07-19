@@ -1,0 +1,184 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-214_to_218_PAPER_SHADOW_HISTORICAL_BACKFILL_AND_ROLLING_TARGET_EVALUATION
+  title: null
+  domain: ETF portfolio/system target paper shadow historical evaluation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 + 系统运行观察
+  requirement_refs:
+  - docs/requirements/TRADING-214_to_218_Paper_Shadow_Historical_Backfill_and_Rolling_Target_Evaluation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-214_to_218_Paper_Shadow_Historical_Backfill_and_Rolling_Target_Evaluation.md`；本阶段已把
+    TRADING-209～213 的短窗口 paper shadow 验证扩展为 `2022-12-01` 起的 research-only historical
+    backfill、rolling eval、regime review、stability diagnostics 和 method selection review；固定不接
+    broker、不生成 order ticket、不写 official target weights、不自动 production candidate；historical
+    backfill 披露 `not_pit_safe=true` 和 `BACKTEST_SIMULATION` 限制
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`paper-shadow-backfill config-validate/run/report`、`paper-shadow-rolling-eval
+      run/report`、`paper-shadow-regime-review run/report`、`paper-shadow-stability
+      run/report`、`system-target-selection-review run/report` 及对应 validate CLI 可运行；新增
+      config 和 artifacts 写入 dynamic_v3_rescue runtime roots；报告和 JSON 明确 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation、`validate-data`、report
+      index 和真实链路验收完成'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1448
+    row_sha256: e92a027c05cb0e67000d83134081eeec79d29878e9ac246bb612a5b0d175c7cf
+    cell_count: 8
+    all_cells:
+    - TRADING-214_to_218_PAPER_SHADOW_HISTORICAL_BACKFILL_AND_ROLLING_TARGET_EVALUATION
+    - ETF portfolio/system target paper shadow historical evaluation
+    - P0
+    - VALIDATING
+    - 项目 owner 后续复核 + 系统运行观察
+    - 详细拆解见 `docs/requirements/TRADING-214_to_218_Paper_Shadow_Historical_Backfill_and_Rolling_Target_Evaluation.md`；本阶段已把
+      TRADING-209～213 的短窗口 paper shadow 验证扩展为 `2022-12-01` 起的 research-only historical
+      backfill、rolling eval、regime review、stability diagnostics 和 method selection
+      review；固定不接 broker、不生成 order ticket、不写 official target weights、不自动 production
+      candidate；historical backfill 披露 `not_pit_safe=true` 和 `BACKTEST_SIMULATION`
+      限制
+    - '`paper-shadow-backfill config-validate/run/report`、`paper-shadow-rolling-eval
+      run/report`、`paper-shadow-regime-review run/report`、`paper-shadow-stability
+      run/report`、`system-target-selection-review run/report` 及对应 validate CLI 可运行；新增
+      config 和 artifacts 写入 dynamic_v3_rescue runtime roots；报告和 JSON 明确 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation、`validate-data`、report
+      index 和真实链路验收完成'
+    - '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-214～218；本轮优先交付 P0 historical
+      backfill、rolling/regime/stability diagnostics 与 selection review 闭环，P1/P2 的更细
+      rolling windows/regime buckets、交易成本/slippage sensitivity、图表化和真实账户映射不纳入本轮。2026-06-12:
+      baseline 实现完成并转入 VALIDATING；真实链路输出 backfill `paper-shadow-backfill_2138461d25e686e0`、rolling
+      eval `paper-shadow-rolling-eval_ada0ef48cdc2276f`、regime review `paper-shadow-regime-review_a4af4ee7ab6e1471`、stability
+      `paper-shadow-stability_49010cc0297a0d84`、selection review `system-target-selection-review_83a214b3223d937b`；actual
+      date range 为 `2022-12-01` 到 `2026-06-10`，data quality 为 `PASS_WITH_WARNINGS`，recommended
+      research method=`limited_adjustment`，decision_status=`REVIEW_REQUIRED`；验证通过
+      focused pytest 10 passed、full tier 2372 passed / 643 warnings、ruff、compileall、git
+      diff check、validate-data、dynamic-v3 validation、artifact repair/latest validation、report
+      index 和 Reader Brief latest；下一步为 owner 复核是否继续观察 `limited_adjustment`，以及是否把交易成本/slippage
+      sensitivity 和更细 regime buckets 登记为后续任务。2026-07-13: ARCH-004 G2.4CI hardened
+      migration完成；16 callback及17个旧public实现已迁出legacy owner，五阶段v2 snapshot/live validator、same-Backfill
+      lineage、null semantics、policy regime/rank与reference-only exclusion闭合；33 focused、10
+      core、112 slice+CLI、270 architecture、203 contract通过，generated=903/1,114/858/0。研究任务仍保持VALIDATING等待owner/真实运行观察，不把fixture或workflow
+      PASS提升为投资结论。'
+    raw_line: '|TRADING-214_to_218_PAPER_SHADOW_HISTORICAL_BACKFILL_AND_ROLLING_TARGET_EVALUATION|ETF
+      portfolio/system target paper shadow historical evaluation|P0|VALIDATING|项目
+      owner 后续复核 + 系统运行观察|详细拆解见 `docs/requirements/TRADING-214_to_218_Paper_Shadow_Historical_Backfill_and_Rolling_Target_Evaluation.md`；本阶段已把
+      TRADING-209～213 的短窗口 paper shadow 验证扩展为 `2022-12-01` 起的 research-only historical
+      backfill、rolling eval、regime review、stability diagnostics 和 method selection
+      review；固定不接 broker、不生成 order ticket、不写 official target weights、不自动 production
+      candidate；historical backfill 披露 `not_pit_safe=true` 和 `BACKTEST_SIMULATION`
+      限制|`paper-shadow-backfill config-validate/run/report`、`paper-shadow-rolling-eval
+      run/report`、`paper-shadow-regime-review run/report`、`paper-shadow-stability
+      run/report`、`system-target-selection-review run/report` 及对应 validate CLI 可运行；新增
+      config 和 artifacts 写入 dynamic_v3_rescue runtime roots；报告和 JSON 明确 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation、`validate-data`、report
+      index 和真实链路验收完成|2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-214～218；本轮优先交付
+      P0 historical backfill、rolling/regime/stability diagnostics 与 selection review
+      闭环，P1/P2 的更细 rolling windows/regime buckets、交易成本/slippage sensitivity、图表化和真实账户映射不纳入本轮。2026-06-12:
+      baseline 实现完成并转入 VALIDATING；真实链路输出 backfill `paper-shadow-backfill_2138461d25e686e0`、rolling
+      eval `paper-shadow-rolling-eval_ada0ef48cdc2276f`、regime review `paper-shadow-regime-review_a4af4ee7ab6e1471`、stability
+      `paper-shadow-stability_49010cc0297a0d84`、selection review `system-target-selection-review_83a214b3223d937b`；actual
+      date range 为 `2022-12-01` 到 `2026-06-10`，data quality 为 `PASS_WITH_WARNINGS`，recommended
+      research method=`limited_adjustment`，decision_status=`REVIEW_REQUIRED`；验证通过
+      focused pytest 10 passed、full tier 2372 passed / 643 warnings、ruff、compileall、git
+      diff check、validate-data、dynamic-v3 validation、artifact repair/latest validation、report
+      index 和 Reader Brief latest；下一步为 owner 复核是否继续观察 `limited_adjustment`，以及是否把交易成本/slippage
+      sensitivity 和更细 regime buckets 登记为后续任务。2026-07-13: ARCH-004 G2.4CI hardened
+      migration完成；16 callback及17个旧public实现已迁出legacy owner，五阶段v2 snapshot/live validator、same-Backfill
+      lineage、null semantics、policy regime/rank与reference-only exclusion闭合；33 focused、10
+      core、112 slice+CLI、270 architecture、203 contract通过，generated=903/1,114/858/0。研究任务仍保持VALIDATING等待owner/真实运行观察，不把fixture或workflow
+      PASS提升为投资结论。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e92a027c05cb0e67000d8313
+  task_id: TRADING-214_to_218_PAPER_SHADOW_HISTORICAL_BACKFILL_AND_ROLLING_TARGET_EVALUATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 + 系统运行观察
+    notes: '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-214～218；本轮优先交付
+      P0 historical backfill、rolling/regime/stability diagnostics 与 selection review
+      闭环，P1/P2 的更细 rolling windows/regime buckets、交易成本/slippage sensitivity、图表化和真实账户映射不纳入本轮。2026-06-12:
+      baseline 实现完成并转入 VALIDATING；真实链路输出 backfill `paper-shadow-backfill_2138461d25e686e0`、rolling
+      eval `paper-shadow-rolling-eval_ada0ef48cdc2276f`、regime review `paper-shadow-regime-review_a4af4ee7ab6e1471`、stability
+      `paper-shadow-stability_49010cc0297a0d84`、selection review `system-target-selection-review_83a214b3223d937b`；actual
+      date range 为 `2022-12-01` 到 `2026-06-10`，data quality 为 `PASS_WITH_WARNINGS`，recommended
+      research method=`limited_adjustment`，decision_status=`REVIEW_REQUIRED`；验证通过
+      focused pytest 10 passed、full tier 2372 passed / 643 warnings、ruff、compileall、git
+      diff check、validate-data、dynamic-v3 validation、artifact repair/latest validation、report
+      index 和 Reader Brief latest；下一步为 owner 复核是否继续观察 `limited_adjustment`，以及是否把交易成本/slippage
+      sensitivity 和更细 regime buckets 登记为后续任务。2026-07-13: ARCH-004 G2.4CI hardened
+      migration完成；16 callback及17个旧public实现已迁出legacy owner，五阶段v2 snapshot/live validator、same-Backfill
+      lineage、null semantics、policy regime/rank与reference-only exclusion闭合；33 focused、10
+      core、112 slice+CLI、270 architecture、203 contract通过，generated=903/1,114/858/0。研究任务仍保持VALIDATING等待owner/真实运行观察，不把fixture或workflow
+      PASS提升为投资结论。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e92a027c05cb0e67000d83134081eeec79d29878e9ac246bb612a5b0d175c7cf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-214_to_218_PAPER_SHADOW_HISTORICAL_BACKFILL_AND_ROLLING_TARGET_EVALUATION
+  - ETF portfolio/system target paper shadow historical evaluation
+  - P0
+  - VALIDATING
+  - 项目 owner 后续复核 + 系统运行观察
+  - 详细拆解见 `docs/requirements/TRADING-214_to_218_Paper_Shadow_Historical_Backfill_and_Rolling_Target_Evaluation.md`；本阶段已把
+    TRADING-209～213 的短窗口 paper shadow 验证扩展为 `2022-12-01` 起的 research-only historical
+    backfill、rolling eval、regime review、stability diagnostics 和 method selection review；固定不接
+    broker、不生成 order ticket、不写 official target weights、不自动 production candidate；historical
+    backfill 披露 `not_pit_safe=true` 和 `BACKTEST_SIMULATION` 限制
+  - '`paper-shadow-backfill config-validate/run/report`、`paper-shadow-rolling-eval
+    run/report`、`paper-shadow-regime-review run/report`、`paper-shadow-stability run/report`、`system-target-selection-review
+    run/report` 及对应 validate CLI 可运行；新增 config 和 artifacts 写入 dynamic_v3_rescue runtime
+    roots；报告和 JSON 明确 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`；README、operations
+    runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+    tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation、`validate-data`、report
+    index 和真实链路验收完成'
+  - '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-214～218；本轮优先交付 P0 historical
+    backfill、rolling/regime/stability diagnostics 与 selection review 闭环，P1/P2 的更细
+    rolling windows/regime buckets、交易成本/slippage sensitivity、图表化和真实账户映射不纳入本轮。2026-06-12:
+    baseline 实现完成并转入 VALIDATING；真实链路输出 backfill `paper-shadow-backfill_2138461d25e686e0`、rolling
+    eval `paper-shadow-rolling-eval_ada0ef48cdc2276f`、regime review `paper-shadow-regime-review_a4af4ee7ab6e1471`、stability
+    `paper-shadow-stability_49010cc0297a0d84`、selection review `system-target-selection-review_83a214b3223d937b`；actual
+    date range 为 `2022-12-01` 到 `2026-06-10`，data quality 为 `PASS_WITH_WARNINGS`，recommended
+    research method=`limited_adjustment`，decision_status=`REVIEW_REQUIRED`；验证通过 focused
+    pytest 10 passed、full tier 2372 passed / 643 warnings、ruff、compileall、git diff
+    check、validate-data、dynamic-v3 validation、artifact repair/latest validation、report
+    index 和 Reader Brief latest；下一步为 owner 复核是否继续观察 `limited_adjustment`，以及是否把交易成本/slippage
+    sensitivity 和更细 regime buckets 登记为后续任务。2026-07-13: ARCH-004 G2.4CI hardened migration完成；16
+    callback及17个旧public实现已迁出legacy owner，五阶段v2 snapshot/live validator、same-Backfill
+    lineage、null semantics、policy regime/rank与reference-only exclusion闭合；33 focused、10
+    core、112 slice+CLI、270 architecture、203 contract通过，generated=903/1,114/858/0。研究任务仍保持VALIDATING等待owner/真实运行观察，不把fixture或workflow
+    PASS提升为投资结论。'
+  docs_links:
+  - docs/requirements/TRADING-214_to_218_Paper_Shadow_Historical_Backfill_and_Rolling_Target_Evaluation.md
+  terminal: false
+  raw_row_sha256: e92a027c05cb0e67000d83134081eeec79d29878e9ac246bb612a5b0d175c7cf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3c53d31a04f921310ea83b3814b19c591cd24745cc8dba2db8ac453063263c41

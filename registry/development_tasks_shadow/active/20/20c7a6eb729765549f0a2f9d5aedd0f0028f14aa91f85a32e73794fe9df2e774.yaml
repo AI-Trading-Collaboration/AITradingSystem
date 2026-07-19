@@ -1,0 +1,162 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-816_to_820_TAIL_RISK_FALLBACK_ROBUSTNESS
+  title: null
+  domain: Controlled strategy research / tail-risk benchmark fallback robustness,
+    trigger precision-recall, opportunity cost, forward evidence integration, review
+    board
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-816_to_820_Tail_Risk_Fallback_Robustness.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-816_to_820_Tail_Risk_Fallback_Robustness.md`；owner
+    要求基于 TRADING-815 `CONTINUE` 与 best_variant=`tail_risk_benchmark_fallback`，扩大 best
+    fallback variant 的验证范围，重点证明它降低 tail loss 的同时没有过度牺牲 upside、没有只靠已知窗口过拟合，并能进入 forward
+    dry-run archive；仍不得进入 promotion、paper-shadow、production weights 或 broker/order
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI：`aits research strategies tail-risk-benchmark-fallback-robustness-expansion`、`tail-risk-fallback-trigger-precision-recall-audit`、`tail-risk-opportunity-cost-upside-capture-review`、`tail-risk-forward-evidence-integration`
+      和 `tail-risk-policy-controlled-review-board`；TRADING-816 必须输出 fallback trigger/frequency、tail
+      loss、mean/median delta、upside capture、missed upside、false fallback、turnover/cost/drawdown
+      deltas 和 by asset/horizon/regime/cluster；TRADING-817 必须输出 precision/recall、false
+      positive/negative rates、missed upside from false positive、tail loss from false
+      negative；TRADING-818 必须审计 benchmark upside days、participation、upside capture、missed
+      upside concentration，并判断 tail loss reduction 是否明显大于 missed upside cost；TRADING-819
+      必须把 tail-risk benchmark fallback 纳入 forward dry-run archive，记录 signal、trigger、reason、expected
+      avoided risk 和未来 maturity outcome placeholder；TRADING-820 决策只能为 `CONTROLLED_RESEARCH_CONTINUE
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1346
+    row_sha256: cef64e69c4afe9ba251dae6dfbfb09d950f844a42405426fe19e06eac6840690
+    cell_count: 13
+    all_cells:
+    - TRADING-816_to_820_TAIL_RISK_FALLBACK_ROBUSTNESS
+    - Controlled strategy research / tail-risk benchmark fallback robustness, trigger
+      precision-recall, opportunity cost, forward evidence integration, review board
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-816_to_820_Tail_Risk_Fallback_Robustness.md`；owner
+      要求基于 TRADING-815 `CONTINUE` 与 best_variant=`tail_risk_benchmark_fallback`，扩大
+      best fallback variant 的验证范围，重点证明它降低 tail loss 的同时没有过度牺牲 upside、没有只靠已知窗口过拟合，并能进入
+      forward dry-run archive；仍不得进入 promotion、paper-shadow、production weights 或 broker/order
+    - 新增 CLI：`aits research strategies tail-risk-benchmark-fallback-robustness-expansion`、`tail-risk-fallback-trigger-precision-recall-audit`、`tail-risk-opportunity-cost-upside-capture-review`、`tail-risk-forward-evidence-integration`
+      和 `tail-risk-policy-controlled-review-board`；TRADING-816 必须输出 fallback trigger/frequency、tail
+      loss、mean/median delta、upside capture、missed upside、false fallback、turnover/cost/drawdown
+      deltas 和 by asset/horizon/regime/cluster；TRADING-817 必须输出 precision/recall、false
+      positive/negative rates、missed upside from false positive、tail loss from false
+      negative；TRADING-818 必须审计 benchmark upside days、participation、upside capture、missed
+      upside concentration，并判断 tail loss reduction 是否明显大于 missed upside cost；TRADING-819
+      必须把 tail-risk benchmark fallback 纳入 forward dry-run archive，记录 signal、trigger、reason、expected
+      avoided risk 和未来 maturity outcome placeholder；TRADING-820 决策只能为 `CONTROLLED_RESEARCH_CONTINUE
+    - WATCHLIST_FORWARD_MATURITY
+    - WATCHLIST
+    - PIVOT_OVERCONSERVATIVE
+    - KILL
+    - DATA_REQUIRED`，不能 promotion
+    - '2026-06-22: 新增并进入 IN_PROGRESS，原因：TRADING-815 已初步证明 `tail_risk_benchmark_fallback`
+      能降低 tail loss 且 turnover/cost 不恶化；下一步要验证 fallback 触发质量、机会成本、upside capture、分层稳健性和
+      forward evidence 记录能力。2026-06-22: 实现完成并转入 VALIDATING；真实 CLI run 输出 TRADING-816
+      `TAIL_RISK_FALLBACK_ROBUSTNESS_EXPANDED`、robustness_decision=`CONTINUE`、fallback_trigger_count=554、fallback_frequency=0.257435、tail_loss_reduction=1.0、mean_delta_vs_benchmark=0.003607、median_delta_vs_benchmark=0.0005、upside_capture=1.002927、missed_upside_count=0、false_fallback_count=0、turnover_delta=0、cost_delta=0、max_drawdown_delta=0；TRADING-817
+      `TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_AUDITED`、true_positive=311、false_positive=0、false_negative=0、true_negative=1598、fallback_precision=1.0、fallback_recall=1.0、false_positive_rate=0、false_negative_rate=0、missed_upside_from_false_positive=0、tail_loss_from_false_negative=0；TRADING-818
+      `TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_REVIEWED`、benchmark_upside_case_count=1448、strategy_participation=1.0、upside_capture_ratio=1.002927、missed_upside_cost=0、avoided_tail_loss=58.678235；TRADING-819
+      `TAIL_RISK_FORWARD_EVIDENCE_INTEGRATED`、forward_record_count=250、fallback_trigger_count=67、future_outcome_status=`pending_maturity`、append_only_integrity_pass=true；TRADING-820
+      `TAIL_RISK_POLICY_CONTROLLED_REVIEW_BOARD_COMPLETE`、decision=`CONTROLLED_RESEARCH_CONTINUE`、robustness/trigger_quality/opportunity_cost/forward_integration
+      conditions all true；所有输出固定 production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-22:
+      验证通过：完整 `tests/test_controlled_strategy_batch.py` 并行 pytest 73 passed；Ruff、Black
+      check、compileall、git diff --check 和 task-register DONE/BASELINE_DONE/DROPPED
+      scan 均通过；`fast-unit` 178 passed、`contract-validation` 177 passed、`report-validation`
+      55 passed。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T154905Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T155820Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T160745Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-816_to_820_TAIL_RISK_FALLBACK_ROBUSTNESS|Controlled strategy
+      research / tail-risk benchmark fallback robustness, trigger precision-recall,
+      opportunity cost, forward evidence integration, review board|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-816_to_820_Tail_Risk_Fallback_Robustness.md`；owner
+      要求基于 TRADING-815 `CONTINUE` 与 best_variant=`tail_risk_benchmark_fallback`，扩大
+      best fallback variant 的验证范围，重点证明它降低 tail loss 的同时没有过度牺牲 upside、没有只靠已知窗口过拟合，并能进入
+      forward dry-run archive；仍不得进入 promotion、paper-shadow、production weights 或 broker/order|新增
+      CLI：`aits research strategies tail-risk-benchmark-fallback-robustness-expansion`、`tail-risk-fallback-trigger-precision-recall-audit`、`tail-risk-opportunity-cost-upside-capture-review`、`tail-risk-forward-evidence-integration`
+      和 `tail-risk-policy-controlled-review-board`；TRADING-816 必须输出 fallback trigger/frequency、tail
+      loss、mean/median delta、upside capture、missed upside、false fallback、turnover/cost/drawdown
+      deltas 和 by asset/horizon/regime/cluster；TRADING-817 必须输出 precision/recall、false
+      positive/negative rates、missed upside from false positive、tail loss from false
+      negative；TRADING-818 必须审计 benchmark upside days、participation、upside capture、missed
+      upside concentration，并判断 tail loss reduction 是否明显大于 missed upside cost；TRADING-819
+      必须把 tail-risk benchmark fallback 纳入 forward dry-run archive，记录 signal、trigger、reason、expected
+      avoided risk 和未来 maturity outcome placeholder；TRADING-820 决策只能为 `CONTROLLED_RESEARCH_CONTINUE|WATCHLIST_FORWARD_MATURITY|WATCHLIST|PIVOT_OVERCONSERVATIVE|KILL|DATA_REQUIRED`，不能
+      promotion|2026-06-22: 新增并进入 IN_PROGRESS，原因：TRADING-815 已初步证明 `tail_risk_benchmark_fallback`
+      能降低 tail loss 且 turnover/cost 不恶化；下一步要验证 fallback 触发质量、机会成本、upside capture、分层稳健性和
+      forward evidence 记录能力。2026-06-22: 实现完成并转入 VALIDATING；真实 CLI run 输出 TRADING-816
+      `TAIL_RISK_FALLBACK_ROBUSTNESS_EXPANDED`、robustness_decision=`CONTINUE`、fallback_trigger_count=554、fallback_frequency=0.257435、tail_loss_reduction=1.0、mean_delta_vs_benchmark=0.003607、median_delta_vs_benchmark=0.0005、upside_capture=1.002927、missed_upside_count=0、false_fallback_count=0、turnover_delta=0、cost_delta=0、max_drawdown_delta=0；TRADING-817
+      `TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_AUDITED`、true_positive=311、false_positive=0、false_negative=0、true_negative=1598、fallback_precision=1.0、fallback_recall=1.0、false_positive_rate=0、false_negative_rate=0、missed_upside_from_false_positive=0、tail_loss_from_false_negative=0；TRADING-818
+      `TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_REVIEWED`、benchmark_upside_case_count=1448、strategy_participation=1.0、upside_capture_ratio=1.002927、missed_upside_cost=0、avoided_tail_loss=58.678235；TRADING-819
+      `TAIL_RISK_FORWARD_EVIDENCE_INTEGRATED`、forward_record_count=250、fallback_trigger_count=67、future_outcome_status=`pending_maturity`、append_only_integrity_pass=true；TRADING-820
+      `TAIL_RISK_POLICY_CONTROLLED_REVIEW_BOARD_COMPLETE`、decision=`CONTROLLED_RESEARCH_CONTINUE`、robustness/trigger_quality/opportunity_cost/forward_integration
+      conditions all true；所有输出固定 production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-22:
+      验证通过：完整 `tests/test_controlled_strategy_batch.py` 并行 pytest 73 passed；Ruff、Black
+      check、compileall、git diff --check 和 task-register DONE/BASELINE_DONE/DROPPED
+      scan 均通过；`fast-unit` 178 passed、`contract-validation` 177 passed、`report-validation`
+      55 passed。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T154905Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T155820Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T160745Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-cef64e69c4afe9ba251dae6d
+  task_id: TRADING-816_to_820_TAIL_RISK_FALLBACK_ROBUSTNESS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: WATCHLIST_FORWARD_MATURITY
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:cef64e69c4afe9ba251dae6dfbfb09d950f844a42405426fe19e06eac6840690
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-816_to_820_TAIL_RISK_FALLBACK_ROBUSTNESS
+  - Controlled strategy research / tail-risk benchmark fallback robustness, trigger
+    precision-recall, opportunity cost, forward evidence integration, review board
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-816_to_820_Tail_Risk_Fallback_Robustness.md`；owner
+    要求基于 TRADING-815 `CONTINUE` 与 best_variant=`tail_risk_benchmark_fallback`，扩大 best
+    fallback variant 的验证范围，重点证明它降低 tail loss 的同时没有过度牺牲 upside、没有只靠已知窗口过拟合，并能进入 forward
+    dry-run archive；仍不得进入 promotion、paper-shadow、production weights 或 broker/order
+  - 新增 CLI：`aits research strategies tail-risk-benchmark-fallback-robustness-expansion`、`tail-risk-fallback-trigger-precision-recall-audit`、`tail-risk-opportunity-cost-upside-capture-review`、`tail-risk-forward-evidence-integration`
+    和 `tail-risk-policy-controlled-review-board`；TRADING-816 必须输出 fallback trigger/frequency、tail
+    loss、mean/median delta、upside capture、missed upside、false fallback、turnover/cost/drawdown
+    deltas 和 by asset/horizon/regime/cluster；TRADING-817 必须输出 precision/recall、false
+    positive/negative rates、missed upside from false positive、tail loss from false
+    negative；TRADING-818 必须审计 benchmark upside days、participation、upside capture、missed
+    upside concentration，并判断 tail loss reduction 是否明显大于 missed upside cost；TRADING-819
+    必须把 tail-risk benchmark fallback 纳入 forward dry-run archive，记录 signal、trigger、reason、expected
+    avoided risk 和未来 maturity outcome placeholder；TRADING-820 决策只能为 `CONTROLLED_RESEARCH_CONTINUE
+  - WATCHLIST_FORWARD_MATURITY
+  docs_links:
+  - docs/requirements/TRADING-816_to_820_Tail_Risk_Fallback_Robustness.md
+  terminal: false
+  raw_row_sha256: cef64e69c4afe9ba251dae6dfbfb09d950f844a42405426fe19e06eac6840690
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 43c45d8b028464e9b5d54fd05d4446135fdf1d9c85d52e38a9eca73ce91fabf5

@@ -1,0 +1,112 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: SCORE-006
+  title: null
+  domain: 评分/仓位置信度约束
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/confidence_position_gate_2026-05-08.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/confidence_position_gate_2026-05-08.md`；已把判断置信度上限并入
+    `position_gate` 最严格上限链路；默认 live `score-daily --as-of 2026-05-08` 额外验证在 10 分钟超时内未返回，已终止残留进程，未作为通过证据
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`score-daily`、decision snapshot、belief_state、回测每日评分均使用一致的置信度仓位边界；置信度调整仓位基于评分模型原始仓位计算，并作为独立
+      gate 参与最终仓位约束；最终仓位不得高于置信度 gate 和其他风险 gate 的最严格上限；报告能说明估值、风险、thesis、数据质量和置信度谁是当前最严格限制；测试覆盖无更严格
+      gate 时置信度能压低最终仓位，以及估值极端过热时估值 gate 仍可比置信度更严格'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 458
+    row_sha256: 40fc65c35720d3cedc5f9e150dd6fb3ed6eae9a588cf8cb088e045b0c3db5cc5
+    cell_count: 8
+    all_cells:
+    - SCORE-006
+    - 评分/仓位置信度约束
+    - P0
+    - DONE
+    - 系统实现
+    - 详细拆解见 `docs/requirements/confidence_position_gate_2026-05-08.md`；已把判断置信度上限并入
+      `position_gate` 最严格上限链路；默认 live `score-daily --as-of 2026-05-08` 额外验证在 10 分钟超时内未返回，已终止残留进程，未作为通过证据
+    - '`score-daily`、decision snapshot、belief_state、回测每日评分均使用一致的置信度仓位边界；置信度调整仓位基于评分模型原始仓位计算，并作为独立
+      gate 参与最终仓位约束；最终仓位不得高于置信度 gate 和其他风险 gate 的最严格上限；报告能说明估值、风险、thesis、数据质量和置信度谁是当前最严格限制；测试覆盖无更严格
+      gate 时置信度能压低最终仓位，以及估值极端过热时估值 gate 仍可比置信度更严格'
+    - '2026-05-08: 新增并进入实现，原因：运行观察发现最近日报最终仓位持续 40%-40%，主因是估值 `EXTREME_OVERHEATED`
+      gate；但报告同时显示“置信度调整后建议仓位”34%-34%、最终仓位 40%-40%，暴露置信度展示值未参与最终仓位约束，容易造成错误投资解释。2026-05-08:
+      从 IN_PROGRESS 改为 DONE，原因：`DailyConfidenceAssessment` 改为评分构建时固定计算，基于评分模型原始仓位生成
+      `confidence` position gate，并参与最终仓位最严格上限；日报文案、系统流图和测试同步更新；验证通过 `ruff check src
+      tests`、`pytest -q tests/test_daily_scoring.py tests/test_position_model.py tests/test_alerts.py
+      tests/test_backtest.py` 和完整 `pytest -q` 414 项。'
+    raw_line: '|SCORE-006|评分/仓位置信度约束|P0|DONE|系统实现|详细拆解见 `docs/requirements/confidence_position_gate_2026-05-08.md`；已把判断置信度上限并入
+      `position_gate` 最严格上限链路；默认 live `score-daily --as-of 2026-05-08` 额外验证在 10 分钟超时内未返回，已终止残留进程，未作为通过证据|`score-daily`、decision
+      snapshot、belief_state、回测每日评分均使用一致的置信度仓位边界；置信度调整仓位基于评分模型原始仓位计算，并作为独立 gate 参与最终仓位约束；最终仓位不得高于置信度
+      gate 和其他风险 gate 的最严格上限；报告能说明估值、风险、thesis、数据质量和置信度谁是当前最严格限制；测试覆盖无更严格 gate 时置信度能压低最终仓位，以及估值极端过热时估值
+      gate 仍可比置信度更严格|2026-05-08: 新增并进入实现，原因：运行观察发现最近日报最终仓位持续 40%-40%，主因是估值 `EXTREME_OVERHEATED`
+      gate；但报告同时显示“置信度调整后建议仓位”34%-34%、最终仓位 40%-40%，暴露置信度展示值未参与最终仓位约束，容易造成错误投资解释。2026-05-08:
+      从 IN_PROGRESS 改为 DONE，原因：`DailyConfidenceAssessment` 改为评分构建时固定计算，基于评分模型原始仓位生成
+      `confidence` position gate，并参与最终仓位最严格上限；日报文案、系统流图和测试同步更新；验证通过 `ruff check src
+      tests`、`pytest -q tests/test_daily_scoring.py tests/test_position_model.py tests/test_alerts.py
+      tests/test_backtest.py` 和完整 `pytest -q` 414 项。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-40fc65c35720d3cedc5f9e15
+  task_id: SCORE-006
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-08: 新增并进入实现，原因：运行观察发现最近日报最终仓位持续 40%-40%，主因是估值 `EXTREME_OVERHEATED`
+      gate；但报告同时显示“置信度调整后建议仓位”34%-34%、最终仓位 40%-40%，暴露置信度展示值未参与最终仓位约束，容易造成错误投资解释。2026-05-08:
+      从 IN_PROGRESS 改为 DONE，原因：`DailyConfidenceAssessment` 改为评分构建时固定计算，基于评分模型原始仓位生成
+      `confidence` position gate，并参与最终仓位最严格上限；日报文案、系统流图和测试同步更新；验证通过 `ruff check src
+      tests`、`pytest -q tests/test_daily_scoring.py tests/test_position_model.py tests/test_alerts.py
+      tests/test_backtest.py` 和完整 `pytest -q` 414 项。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:40fc65c35720d3cedc5f9e150dd6fb3ed6eae9a588cf8cb088e045b0c3db5cc5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - SCORE-006
+  - 评分/仓位置信度约束
+  - P0
+  - DONE
+  - 系统实现
+  - 详细拆解见 `docs/requirements/confidence_position_gate_2026-05-08.md`；已把判断置信度上限并入 `position_gate`
+    最严格上限链路；默认 live `score-daily --as-of 2026-05-08` 额外验证在 10 分钟超时内未返回，已终止残留进程，未作为通过证据
+  - '`score-daily`、decision snapshot、belief_state、回测每日评分均使用一致的置信度仓位边界；置信度调整仓位基于评分模型原始仓位计算，并作为独立
+    gate 参与最终仓位约束；最终仓位不得高于置信度 gate 和其他风险 gate 的最严格上限；报告能说明估值、风险、thesis、数据质量和置信度谁是当前最严格限制；测试覆盖无更严格
+    gate 时置信度能压低最终仓位，以及估值极端过热时估值 gate 仍可比置信度更严格'
+  - '2026-05-08: 新增并进入实现，原因：运行观察发现最近日报最终仓位持续 40%-40%，主因是估值 `EXTREME_OVERHEATED` gate；但报告同时显示“置信度调整后建议仓位”34%-34%、最终仓位
+    40%-40%，暴露置信度展示值未参与最终仓位约束，容易造成错误投资解释。2026-05-08: 从 IN_PROGRESS 改为 DONE，原因：`DailyConfidenceAssessment`
+    改为评分构建时固定计算，基于评分模型原始仓位生成 `confidence` position gate，并参与最终仓位最严格上限；日报文案、系统流图和测试同步更新；验证通过
+    `ruff check src tests`、`pytest -q tests/test_daily_scoring.py tests/test_position_model.py
+    tests/test_alerts.py tests/test_backtest.py` 和完整 `pytest -q` 414 项。'
+  docs_links:
+  - docs/requirements/confidence_position_gate_2026-05-08.md
+  terminal: true
+  raw_row_sha256: 40fc65c35720d3cedc5f9e150dd6fb3ed6eae9a588cf8cb088e045b0c3db5cc5
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c07e5a0f00790d3eaafdcb806d6814894b3cc55a30ac1bb3aa9ffaee57eb49de

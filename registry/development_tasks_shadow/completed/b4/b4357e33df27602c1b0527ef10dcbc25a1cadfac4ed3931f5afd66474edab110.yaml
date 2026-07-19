@@ -1,0 +1,94 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION
+  title: null
+  domain: Architecture / G2.4剩余callback效率优先批次执行
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: ARCH-005 S0/S1 coordinator；ARCH-004恢复需owner新指令
+  requirement_refs:
+  - docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md`。EB1～EB8、独立phase
+    exit和`arch_005_bootstrap_handoff.v1`均已完成、提交并推送；ARCH-004停在G2.5前。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Matrix=`967/0/0/0`；focused/architecture/contract/full=`292/411/265/6386
+      passed`；manifests/deprecation/source hashes/clean attribution/handoff均PASS，`next_slice_unblocked=false`、`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 17
+    row_sha256: 5814bff7cedba70343363c181b5b521534ad24e382a521eb1671bd97c6e9f4ea
+    cell_count: 8
+    all_cells:
+    - ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION
+    - Architecture / G2.4剩余callback效率优先批次执行
+    - P0
+    - DONE
+    - ARCH-005 S0/S1 coordinator；ARCH-004恢复需owner新指令
+    - 详见 `docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md`。EB1～EB8、独立phase
+      exit和`arch_005_bootstrap_handoff.v1`均已完成、提交并推送；ARCH-004停在G2.5前。
+    - Matrix=`967/0/0/0`；focused/architecture/contract/full=`292/411/265/6386 passed`；manifests/deprecation/source
+      hashes/clean attribution/handoff均PASS，`next_slice_unblocked=false`、`production_effect=none`。
+    - 2026-07-19：phase-exit source commit=`152f2d33`，handoff commit=`770bf6ff`；Full=`6386
+      passed/2 skipped/643 warnings/946.63s`，无异常性能回退。任务归档，后续只按独立ARCH-005 S0/S1推进。
+    raw_line: '|ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION|Architecture / G2.4剩余callback效率优先批次执行|P0|DONE|ARCH-005
+      S0/S1 coordinator；ARCH-004恢复需owner新指令|详见 `docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md`。EB1～EB8、独立phase
+      exit和`arch_005_bootstrap_handoff.v1`均已完成、提交并推送；ARCH-004停在G2.5前。|Matrix=`967/0/0/0`；focused/architecture/contract/full=`292/411/265/6386
+      passed`；manifests/deprecation/source hashes/clean attribution/handoff均PASS，`next_slice_unblocked=false`、`production_effect=none`。|2026-07-19：phase-exit
+      source commit=`152f2d33`，handoff commit=`770bf6ff`；Full=`6386 passed/2 skipped/643
+      warnings/946.63s`，无异常性能回退。任务归档，后续只按独立ARCH-005 S0/S1推进。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5814bff7cedba70343363c18
+  task_id: ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: ARCH-005 S0/S1 coordinator；ARCH-004恢复需owner新指令
+    notes: 2026-07-19：phase-exit source commit=`152f2d33`，handoff commit=`770bf6ff`；Full=`6386
+      passed/2 skipped/643 warnings/946.63s`，无异常性能回退。任务归档，后续只按独立ARCH-005 S0/S1推进。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5814bff7cedba70343363c181b5b521534ad24e382a521eb1671bd97c6e9f4ea
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION
+  - Architecture / G2.4剩余callback效率优先批次执行
+  - P0
+  - DONE
+  - ARCH-005 S0/S1 coordinator；ARCH-004恢复需owner新指令
+  - 详见 `docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md`。EB1～EB8、独立phase
+    exit和`arch_005_bootstrap_handoff.v1`均已完成、提交并推送；ARCH-004停在G2.5前。
+  - Matrix=`967/0/0/0`；focused/architecture/contract/full=`292/411/265/6386 passed`；manifests/deprecation/source
+    hashes/clean attribution/handoff均PASS，`next_slice_unblocked=false`、`production_effect=none`。
+  - 2026-07-19：phase-exit source commit=`152f2d33`，handoff commit=`770bf6ff`；Full=`6386
+    passed/2 skipped/643 warnings/946.63s`，无异常性能回退。任务归档，后续只按独立ARCH-005 S0/S1推进。
+  docs_links:
+  - docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md
+  terminal: true
+  raw_row_sha256: 5814bff7cedba70343363c181b5b521534ad24e382a521eb1671bd97c6e9f4ea
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4bf55ccadb1682ad4e9253881d2504b08d3fd6d2c0176c05277a5713365dac3d

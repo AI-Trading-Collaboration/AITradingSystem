@@ -1,0 +1,155 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-094
+  title: null
+  domain: ETF portfolio research/Dynamic v3 Rescue Batch Parameter Backtest Runner
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+    v3 rescue batch parameter backtest runner 已完成并通过当前 canonical sweep 复核；`sweep_20260607T102300Z_ae5ae1d8`
+    为 `completed`，`evaluator_mode=real_dynamic_v3_rescue`，candidate_count=300、completed_count=300、failed_count=0、`production_effect=none`；`aits
+    etf dynamic-v3-rescue sweep validate --sweep-id sweep_20260607T102300Z_ae5ae1d8`
+    为 `PASS`、`failed_check_count=0`、`production_candidate_generated=false`；字段级复核确认
+    `sweep_manifest.json`、`sweep_config.normalized.yaml`、`data_manifest.json`、`candidates.jsonl`、`candidate_results.jsonl`、`candidate_errors.jsonl`、`checkpoint.json`、`gate_summary.json`、`leaderboard.json/md`、`sweep_report.md`
+    和 `run.log` 均存在；旧 `sweep_20260606T024119Z_98fa3c81` 仍是历史样例，但因后续 validator 增加 `evaluator_mode`
+    要求，不再作为当前收口证据；该任务只运行 research/observe-only sweep，不生成 production candidate、不修改
+    baseline/production weights、不触发 broker 或 trading 行为
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf dynamic-v3-rescue sweep run/status/validate` 可运行；生成 sweep_manifest、normalized
+      config、data_manifest、candidates/result/error jsonl、checkpoint、gate summary、leaderboard、report
+      和 run.log；data quality FAIL 整体停止；candidate crash 写入 error 且不终止 sweep；resume
+      不重复 completed candidates；latest pointer 不覆盖历史 artifact；tiny fixture tests 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 312
+    row_sha256: e580f5542f78517282092e5c6dc32d938a726ec4151127286520384805920394
+    cell_count: 8
+    all_cells:
+    - TRADING-094
+    - ETF portfolio research/Dynamic v3 Rescue Batch Parameter Backtest Runner
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+      v3 rescue batch parameter backtest runner 已完成并通过当前 canonical sweep 复核；`sweep_20260607T102300Z_ae5ae1d8`
+      为 `completed`，`evaluator_mode=real_dynamic_v3_rescue`，candidate_count=300、completed_count=300、failed_count=0、`production_effect=none`；`aits
+      etf dynamic-v3-rescue sweep validate --sweep-id sweep_20260607T102300Z_ae5ae1d8`
+      为 `PASS`、`failed_check_count=0`、`production_candidate_generated=false`；字段级复核确认
+      `sweep_manifest.json`、`sweep_config.normalized.yaml`、`data_manifest.json`、`candidates.jsonl`、`candidate_results.jsonl`、`candidate_errors.jsonl`、`checkpoint.json`、`gate_summary.json`、`leaderboard.json/md`、`sweep_report.md`
+      和 `run.log` 均存在；旧 `sweep_20260606T024119Z_98fa3c81` 仍是历史样例，但因后续 validator 增加
+      `evaluator_mode` 要求，不再作为当前收口证据；该任务只运行 research/observe-only sweep，不生成 production
+      candidate、不修改 baseline/production weights、不触发 broker 或 trading 行为
+    - '`aits etf dynamic-v3-rescue sweep run/status/validate` 可运行；生成 sweep_manifest、normalized
+      config、data_manifest、candidates/result/error jsonl、checkpoint、gate summary、leaderboard、report
+      和 run.log；data quality FAIL 整体停止；candidate crash 写入 error 且不终止 sweep；resume
+      不重复 completed candidates；latest pointer 不覆盖历史 artifact；tiny fixture tests 通过'
+    - '2026-06-06: 新增并进入 IN_PROGRESS，原因：参数研究需要可恢复批量 runner 和 artifact contract，不能把单次人工回测作为晋级依据。2026-06-06:
+      baseline 实现完成并转入 VALIDATING；sample sweep `sweep_20260606T024119Z_98fa3c81` 完成
+      5000 candidates、0 errors、12 observe_only、4988 rejected；验证为 focused tests、legacy
+      dynamic-v3 tests、Reader Brief/report index、ruff、compileall、diff check 和全量 pytest
+      通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：current validator PASS 的 canonical real
+      sweep、required artifact files、status/validate CLI、checkpoint/resume/error isolation
+      focused tests 均满足验收；`tests/test_etf_dynamic_v3_parameter_research.py -q` 为 16
+      passed，docs freshness、documentation contract 和 diff check 通过。'
+    raw_line: '|TRADING-094|ETF portfolio research/Dynamic v3 Rescue Batch Parameter
+      Backtest Runner|P0|DONE|系统验证|详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+      v3 rescue batch parameter backtest runner 已完成并通过当前 canonical sweep 复核；`sweep_20260607T102300Z_ae5ae1d8`
+      为 `completed`，`evaluator_mode=real_dynamic_v3_rescue`，candidate_count=300、completed_count=300、failed_count=0、`production_effect=none`；`aits
+      etf dynamic-v3-rescue sweep validate --sweep-id sweep_20260607T102300Z_ae5ae1d8`
+      为 `PASS`、`failed_check_count=0`、`production_candidate_generated=false`；字段级复核确认
+      `sweep_manifest.json`、`sweep_config.normalized.yaml`、`data_manifest.json`、`candidates.jsonl`、`candidate_results.jsonl`、`candidate_errors.jsonl`、`checkpoint.json`、`gate_summary.json`、`leaderboard.json/md`、`sweep_report.md`
+      和 `run.log` 均存在；旧 `sweep_20260606T024119Z_98fa3c81` 仍是历史样例，但因后续 validator 增加
+      `evaluator_mode` 要求，不再作为当前收口证据；该任务只运行 research/observe-only sweep，不生成 production
+      candidate、不修改 baseline/production weights、不触发 broker 或 trading 行为|`aits etf
+      dynamic-v3-rescue sweep run/status/validate` 可运行；生成 sweep_manifest、normalized
+      config、data_manifest、candidates/result/error jsonl、checkpoint、gate summary、leaderboard、report
+      和 run.log；data quality FAIL 整体停止；candidate crash 写入 error 且不终止 sweep；resume
+      不重复 completed candidates；latest pointer 不覆盖历史 artifact；tiny fixture tests 通过|2026-06-06:
+      新增并进入 IN_PROGRESS，原因：参数研究需要可恢复批量 runner 和 artifact contract，不能把单次人工回测作为晋级依据。2026-06-06:
+      baseline 实现完成并转入 VALIDATING；sample sweep `sweep_20260606T024119Z_98fa3c81` 完成
+      5000 candidates、0 errors、12 observe_only、4988 rejected；验证为 focused tests、legacy
+      dynamic-v3 tests、Reader Brief/report index、ruff、compileall、diff check 和全量 pytest
+      通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：current validator PASS 的 canonical real
+      sweep、required artifact files、status/validate CLI、checkpoint/resume/error isolation
+      focused tests 均满足验收；`tests/test_etf_dynamic_v3_parameter_research.py -q` 为 16
+      passed，docs freshness、documentation contract 和 diff check 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e580f5542f78517282092e5c
+  task_id: TRADING-094
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-06-06: 新增并进入 IN_PROGRESS，原因：参数研究需要可恢复批量 runner 和 artifact contract，不能把单次人工回测作为晋级依据。2026-06-06:
+      baseline 实现完成并转入 VALIDATING；sample sweep `sweep_20260606T024119Z_98fa3c81` 完成
+      5000 candidates、0 errors、12 observe_only、4988 rejected；验证为 focused tests、legacy
+      dynamic-v3 tests、Reader Brief/report index、ruff、compileall、diff check 和全量 pytest
+      通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：current validator PASS 的 canonical real
+      sweep、required artifact files、status/validate CLI、checkpoint/resume/error isolation
+      focused tests 均满足验收；`tests/test_etf_dynamic_v3_parameter_research.py -q` 为 16
+      passed，docs freshness、documentation contract 和 diff check 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e580f5542f78517282092e5c6dc32d938a726ec4151127286520384805920394
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-094
+  - ETF portfolio research/Dynamic v3 Rescue Batch Parameter Backtest Runner
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+    v3 rescue batch parameter backtest runner 已完成并通过当前 canonical sweep 复核；`sweep_20260607T102300Z_ae5ae1d8`
+    为 `completed`，`evaluator_mode=real_dynamic_v3_rescue`，candidate_count=300、completed_count=300、failed_count=0、`production_effect=none`；`aits
+    etf dynamic-v3-rescue sweep validate --sweep-id sweep_20260607T102300Z_ae5ae1d8`
+    为 `PASS`、`failed_check_count=0`、`production_candidate_generated=false`；字段级复核确认
+    `sweep_manifest.json`、`sweep_config.normalized.yaml`、`data_manifest.json`、`candidates.jsonl`、`candidate_results.jsonl`、`candidate_errors.jsonl`、`checkpoint.json`、`gate_summary.json`、`leaderboard.json/md`、`sweep_report.md`
+    和 `run.log` 均存在；旧 `sweep_20260606T024119Z_98fa3c81` 仍是历史样例，但因后续 validator 增加 `evaluator_mode`
+    要求，不再作为当前收口证据；该任务只运行 research/observe-only sweep，不生成 production candidate、不修改
+    baseline/production weights、不触发 broker 或 trading 行为
+  - '`aits etf dynamic-v3-rescue sweep run/status/validate` 可运行；生成 sweep_manifest、normalized
+    config、data_manifest、candidates/result/error jsonl、checkpoint、gate summary、leaderboard、report
+    和 run.log；data quality FAIL 整体停止；candidate crash 写入 error 且不终止 sweep；resume 不重复
+    completed candidates；latest pointer 不覆盖历史 artifact；tiny fixture tests 通过'
+  - '2026-06-06: 新增并进入 IN_PROGRESS，原因：参数研究需要可恢复批量 runner 和 artifact contract，不能把单次人工回测作为晋级依据。2026-06-06:
+    baseline 实现完成并转入 VALIDATING；sample sweep `sweep_20260606T024119Z_98fa3c81` 完成
+    5000 candidates、0 errors、12 observe_only、4988 rejected；验证为 focused tests、legacy
+    dynamic-v3 tests、Reader Brief/report index、ruff、compileall、diff check 和全量 pytest
+    通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：current validator PASS 的 canonical real
+    sweep、required artifact files、status/validate CLI、checkpoint/resume/error isolation
+    focused tests 均满足验收；`tests/test_etf_dynamic_v3_parameter_research.py -q` 为 16
+    passed，docs freshness、documentation contract 和 diff check 通过。'
+  docs_links:
+  - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
+  terminal: true
+  raw_row_sha256: e580f5542f78517282092e5c6dc32d938a726ec4151127286520384805920394
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2c2e5002aa8c6eae59617b0b6bf5b38c78ed61dcf0b2ce5dcdff99c8910d287b

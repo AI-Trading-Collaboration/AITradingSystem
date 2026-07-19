@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-008
+  title: null
+  domain: 数据源/Cboe VIX 官方源
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/cboe_vix_official_price_source_2026-05-05.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已接入 Cboe VIX official historical data，作为内部
+    ticker `^VIX` 的专用主源；详细边界见 `docs/requirements/cboe_vix_official_price_source_2026-05-05.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 'Baseline 完成：`aits download-data` 在 FMP 股票/ETF 主价格后，如主源缺少 `^VIX`，从 Cboe
+      CSV 补 `^VIX` 并合并写入 `prices_daily.csv`；manifest 单独记录 `cboe_vix_daily_prices`
+      的 provider、endpoint、请求参数、row count 和 checksum；Cboe schema/空结果/请求失败 fail closed，不允许用
+      Yahoo 或本地缓存补写；完整 DONE 仍需真实全量下载后确认 `validate-data` 不再出现 `prices_missing_expected_values:
+      ^VIX`'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1125
+    row_sha256: 0d8941efe0544f0a2a8ec923a6e86c76b6510c6b83176cd86fc163eb4975af17
+    cell_count: 8
+    all_cells:
+    - DATA-008
+    - 数据源/Cboe VIX 官方源
+    - P0
+    - BASELINE_DONE
+    - 系统实现
+    - 已接入 Cboe VIX official historical data，作为内部 ticker `^VIX` 的专用主源；详细边界见 `docs/requirements/cboe_vix_official_price_source_2026-05-05.md`
+    - 'Baseline 完成：`aits download-data` 在 FMP 股票/ETF 主价格后，如主源缺少 `^VIX`，从 Cboe CSV
+      补 `^VIX` 并合并写入 `prices_daily.csv`；manifest 单独记录 `cboe_vix_daily_prices` 的 provider、endpoint、请求参数、row
+      count 和 checksum；Cboe schema/空结果/请求失败 fail closed，不允许用 Yahoo 或本地缓存补写；完整 DONE
+      仍需真实全量下载后确认 `validate-data` 不再出现 `prices_missing_expected_values: ^VIX`'
+    - '2026-05-05: 新增并进入实现，原因：DATA-007 已接入 FMP 主价格源，但 FMP 不覆盖 `^VIX`，质量门禁仍因缺少 VIX
+      阻断；owner 要求提交 FMP 后继续接入 VIX。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      Cboe provider、主缓存合并、manifest 记录、数据源目录、系统流图、README 和测试；Cboe live smoke 返回 2 行
+      `^VIX`，102 项聚焦测试和 Ruff 通过。'
+    raw_line: '|DATA-008|数据源/Cboe VIX 官方源|P0|BASELINE_DONE|系统实现|已接入 Cboe VIX official
+      historical data，作为内部 ticker `^VIX` 的专用主源；详细边界见 `docs/requirements/cboe_vix_official_price_source_2026-05-05.md`|Baseline
+      完成：`aits download-data` 在 FMP 股票/ETF 主价格后，如主源缺少 `^VIX`，从 Cboe CSV 补 `^VIX` 并合并写入
+      `prices_daily.csv`；manifest 单独记录 `cboe_vix_daily_prices` 的 provider、endpoint、请求参数、row
+      count 和 checksum；Cboe schema/空结果/请求失败 fail closed，不允许用 Yahoo 或本地缓存补写；完整 DONE
+      仍需真实全量下载后确认 `validate-data` 不再出现 `prices_missing_expected_values: ^VIX`|2026-05-05:
+      新增并进入实现，原因：DATA-007 已接入 FMP 主价格源，但 FMP 不覆盖 `^VIX`，质量门禁仍因缺少 VIX 阻断；owner 要求提交
+      FMP 后继续接入 VIX。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 Cboe provider、主缓存合并、manifest
+      记录、数据源目录、系统流图、README 和测试；Cboe live smoke 返回 2 行 `^VIX`，102 项聚焦测试和 Ruff 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0d8941efe0544f0a2a8ec923
+  task_id: DATA-008
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增并进入实现，原因：DATA-007 已接入 FMP 主价格源，但 FMP 不覆盖 `^VIX`，质量门禁仍因缺少
+      VIX 阻断；owner 要求提交 FMP 后继续接入 VIX。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      Cboe provider、主缓存合并、manifest 记录、数据源目录、系统流图、README 和测试；Cboe live smoke 返回 2 行
+      `^VIX`，102 项聚焦测试和 Ruff 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0d8941efe0544f0a2a8ec923a6e86c76b6510c6b83176cd86fc163eb4975af17
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-008
+  - 数据源/Cboe VIX 官方源
+  - P0
+  - BASELINE_DONE
+  - 系统实现
+  - 已接入 Cboe VIX official historical data，作为内部 ticker `^VIX` 的专用主源；详细边界见 `docs/requirements/cboe_vix_official_price_source_2026-05-05.md`
+  - 'Baseline 完成：`aits download-data` 在 FMP 股票/ETF 主价格后，如主源缺少 `^VIX`，从 Cboe CSV 补
+    `^VIX` 并合并写入 `prices_daily.csv`；manifest 单独记录 `cboe_vix_daily_prices` 的 provider、endpoint、请求参数、row
+    count 和 checksum；Cboe schema/空结果/请求失败 fail closed，不允许用 Yahoo 或本地缓存补写；完整 DONE 仍需真实全量下载后确认
+    `validate-data` 不再出现 `prices_missing_expected_values: ^VIX`'
+  - '2026-05-05: 新增并进入实现，原因：DATA-007 已接入 FMP 主价格源，但 FMP 不覆盖 `^VIX`，质量门禁仍因缺少 VIX 阻断；owner
+    要求提交 FMP 后继续接入 VIX。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 Cboe provider、主缓存合并、manifest
+    记录、数据源目录、系统流图、README 和测试；Cboe live smoke 返回 2 行 `^VIX`，102 项聚焦测试和 Ruff 通过。'
+  docs_links:
+  - docs/requirements/cboe_vix_official_price_source_2026-05-05.md
+  terminal: false
+  raw_row_sha256: 0d8941efe0544f0a2a8ec923a6e86c76b6510c6b83176cd86fc163eb4975af17
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f02f747f51c2dc18449d1a9937427b1b72c93ab12e020ea0658a7e79cf21e26d

@@ -1,0 +1,158 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-038
+  title: null
+  domain: 交易执行/Manual Approval Record / Retry Execution Dry Run
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/retry_execution_dry_run_2026-05-26.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/retry_execution_dry_run_2026-05-26.md`；只读
+    retry execution dry-run 与 manual approval record 读取链路已通过目标复验，保持 dry-run/report-only
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_retry_execution_dry_run.py` 和 `src/ai_trading_system/trading_engine/retry_execution_dry_run.py`；输出
+      `outputs/retry_execution_dry_run/retry_execution_dry_run_YYYY-MM-DD.json/md/log`；区分
+      `SOURCE_QUEUE_UNAVAILABLE` / `NOTHING_TO_DRY_RUN` / `WAITING_FOR_MANUAL_APPROVAL`
+      / `READY_FOR_DRY_RUN` / `APPROVAL_MISMATCH` / `SAFETY_BLOCKED`；仅 `APPROVED_FOR_DRY_RUN`
+      且 safety constraints 为 dry-run-only 的 `PENDING_APPROVAL` candidate 可生成 simulated
+      retry action，且 `actual_retry_executed=false`、`external_delivery_executed=false`、`state_mutation_executed=false`；dashboard
+      只读读取 TRADING-038 JSON，不运行 dry-run generator、不执行 retry、不发送 notification、不修改 approval
+      record；专项测试覆盖 source missing/malformed、empty、waiting approval、ready、mismatch、rejected、safety
+      blocked、deterministic dry-run action id、Markdown、CLI、dashboard 只读和 fail flags；验证通过
+      `tests/trading_engine/test_retry_execution_dry_run.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest 和 ruff；TRADING-038 触达文件 Black check 通过，全仓 Black check 仍仅被既有无关 `tests/test_market_data.py`
+      baseline 阻断
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 342
+    row_sha256: e212545bf3ea3a67bf8f1c3d09aa2e0c7c1847de8676649a6e8c875519de3319
+    cell_count: 8
+    all_cells:
+    - TRADING-038
+    - 交易执行/Manual Approval Record / Retry Execution Dry Run
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/retry_execution_dry_run_2026-05-26.md`；只读 retry execution
+      dry-run 与 manual approval record 读取链路已通过目标复验，保持 dry-run/report-only
+    - 新增 `scripts/run_retry_execution_dry_run.py` 和 `src/ai_trading_system/trading_engine/retry_execution_dry_run.py`；输出
+      `outputs/retry_execution_dry_run/retry_execution_dry_run_YYYY-MM-DD.json/md/log`；区分
+      `SOURCE_QUEUE_UNAVAILABLE` / `NOTHING_TO_DRY_RUN` / `WAITING_FOR_MANUAL_APPROVAL`
+      / `READY_FOR_DRY_RUN` / `APPROVAL_MISMATCH` / `SAFETY_BLOCKED`；仅 `APPROVED_FOR_DRY_RUN`
+      且 safety constraints 为 dry-run-only 的 `PENDING_APPROVAL` candidate 可生成 simulated
+      retry action，且 `actual_retry_executed=false`、`external_delivery_executed=false`、`state_mutation_executed=false`；dashboard
+      只读读取 TRADING-038 JSON，不运行 dry-run generator、不执行 retry、不发送 notification、不修改 approval
+      record；专项测试覆盖 source missing/malformed、empty、waiting approval、ready、mismatch、rejected、safety
+      blocked、deterministic dry-run action id、Markdown、CLI、dashboard 只读和 fail flags；验证通过
+      `tests/trading_engine/test_retry_execution_dry_run.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest 和 ruff；TRADING-038 触达文件 Black check 通过，全仓 Black check 仍仅被既有无关 `tests/test_market_data.py`
+      baseline 阻断
+    - '2026-05-26: 新增并进入 IN_PROGRESS，原因：TRADING-037 已能生成 `PENDING_APPROVAL` retry
+      candidates，但还缺少可审计人工 approval record 读取和 retry execution dry-run 层；本任务严格 dry-run/report-only，不触达真实通知通道或状态变更。2026-05-26:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 dry-run builder、CLI、JSON/Markdown/log、dashboard
+      只读卡片、runbook、requirements index、system flow、artifact catalog 和专项测试；验证通过目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断，TRADING-038 触达文件 Black 通过。2026-06-07: 从 VALIDATING 改为 DONE，原因：只读
+      retry execution dry-run / manual approval record 实现和安全边界已满足验收；复验通过通知链路目标 pytest
+      97 passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。'
+    raw_line: '|TRADING-038|交易执行/Manual Approval Record / Retry Execution Dry Run|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/retry_execution_dry_run_2026-05-26.md`；只读 retry execution
+      dry-run 与 manual approval record 读取链路已通过目标复验，保持 dry-run/report-only|新增 `scripts/run_retry_execution_dry_run.py`
+      和 `src/ai_trading_system/trading_engine/retry_execution_dry_run.py`；输出 `outputs/retry_execution_dry_run/retry_execution_dry_run_YYYY-MM-DD.json/md/log`；区分
+      `SOURCE_QUEUE_UNAVAILABLE` / `NOTHING_TO_DRY_RUN` / `WAITING_FOR_MANUAL_APPROVAL`
+      / `READY_FOR_DRY_RUN` / `APPROVAL_MISMATCH` / `SAFETY_BLOCKED`；仅 `APPROVED_FOR_DRY_RUN`
+      且 safety constraints 为 dry-run-only 的 `PENDING_APPROVAL` candidate 可生成 simulated
+      retry action，且 `actual_retry_executed=false`、`external_delivery_executed=false`、`state_mutation_executed=false`；dashboard
+      只读读取 TRADING-038 JSON，不运行 dry-run generator、不执行 retry、不发送 notification、不修改 approval
+      record；专项测试覆盖 source missing/malformed、empty、waiting approval、ready、mismatch、rejected、safety
+      blocked、deterministic dry-run action id、Markdown、CLI、dashboard 只读和 fail flags；验证通过
+      `tests/trading_engine/test_retry_execution_dry_run.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest 和 ruff；TRADING-038 触达文件 Black check 通过，全仓 Black check 仍仅被既有无关 `tests/test_market_data.py`
+      baseline 阻断|2026-05-26: 新增并进入 IN_PROGRESS，原因：TRADING-037 已能生成 `PENDING_APPROVAL`
+      retry candidates，但还缺少可审计人工 approval record 读取和 retry execution dry-run 层；本任务严格
+      dry-run/report-only，不触达真实通知通道或状态变更。2026-05-26: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成
+      dry-run builder、CLI、JSON/Markdown/log、dashboard 只读卡片、runbook、requirements index、system
+      flow、artifact catalog 和专项测试；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断，TRADING-038
+      触达文件 Black 通过。2026-06-07: 从 VALIDATING 改为 DONE，原因：只读 retry execution dry-run
+      / manual approval record 实现和安全边界已满足验收；复验通过通知链路目标 pytest 97 passed 和触达文件 ruff，不存在
+      owner、外部时间窗口或生产副作用 blocker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e212545bf3ea3a67bf8f1c3d
+  task_id: TRADING-038
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-26: 新增并进入 IN_PROGRESS，原因：TRADING-037 已能生成 `PENDING_APPROVAL` retry
+      candidates，但还缺少可审计人工 approval record 读取和 retry execution dry-run 层；本任务严格 dry-run/report-only，不触达真实通知通道或状态变更。2026-05-26:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 dry-run builder、CLI、JSON/Markdown/log、dashboard
+      只读卡片、runbook、requirements index、system flow、artifact catalog 和专项测试；验证通过目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断，TRADING-038 触达文件 Black 通过。2026-06-07: 从 VALIDATING 改为 DONE，原因：只读
+      retry execution dry-run / manual approval record 实现和安全边界已满足验收；复验通过通知链路目标 pytest
+      97 passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e212545bf3ea3a67bf8f1c3d09aa2e0c7c1847de8676649a6e8c875519de3319
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-038
+  - 交易执行/Manual Approval Record / Retry Execution Dry Run
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/retry_execution_dry_run_2026-05-26.md`；只读 retry execution
+    dry-run 与 manual approval record 读取链路已通过目标复验，保持 dry-run/report-only
+  - 新增 `scripts/run_retry_execution_dry_run.py` 和 `src/ai_trading_system/trading_engine/retry_execution_dry_run.py`；输出
+    `outputs/retry_execution_dry_run/retry_execution_dry_run_YYYY-MM-DD.json/md/log`；区分
+    `SOURCE_QUEUE_UNAVAILABLE` / `NOTHING_TO_DRY_RUN` / `WAITING_FOR_MANUAL_APPROVAL`
+    / `READY_FOR_DRY_RUN` / `APPROVAL_MISMATCH` / `SAFETY_BLOCKED`；仅 `APPROVED_FOR_DRY_RUN`
+    且 safety constraints 为 dry-run-only 的 `PENDING_APPROVAL` candidate 可生成 simulated
+    retry action，且 `actual_retry_executed=false`、`external_delivery_executed=false`、`state_mutation_executed=false`；dashboard
+    只读读取 TRADING-038 JSON，不运行 dry-run generator、不执行 retry、不发送 notification、不修改 approval
+    record；专项测试覆盖 source missing/malformed、empty、waiting approval、ready、mismatch、rejected、safety
+    blocked、deterministic dry-run action id、Markdown、CLI、dashboard 只读和 fail flags；验证通过
+    `tests/trading_engine/test_retry_execution_dry_run.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+    pytest 和 ruff；TRADING-038 触达文件 Black check 通过，全仓 Black check 仍仅被既有无关 `tests/test_market_data.py`
+    baseline 阻断
+  - '2026-05-26: 新增并进入 IN_PROGRESS，原因：TRADING-037 已能生成 `PENDING_APPROVAL` retry candidates，但还缺少可审计人工
+    approval record 读取和 retry execution dry-run 层；本任务严格 dry-run/report-only，不触达真实通知通道或状态变更。2026-05-26:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已完成 dry-run builder、CLI、JSON/Markdown/log、dashboard
+    只读卡片、runbook、requirements index、system flow、artifact catalog 和专项测试；验证通过目标 pytest、dashboard
+    pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仍只被既有无关 `tests/test_market_data.py`
+    baseline 阻断，TRADING-038 触达文件 Black 通过。2026-06-07: 从 VALIDATING 改为 DONE，原因：只读 retry
+    execution dry-run / manual approval record 实现和安全边界已满足验收；复验通过通知链路目标 pytest 97 passed
+    和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。'
+  docs_links:
+  - docs/requirements/retry_execution_dry_run_2026-05-26.md
+  terminal: true
+  raw_row_sha256: e212545bf3ea3a67bf8f1c3d09aa2e0c7c1847de8676649a6e8c875519de3319
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: adbf1fb9996c5140def1fab6c11e83888f7060e06569c6f37d275a289f4bf748

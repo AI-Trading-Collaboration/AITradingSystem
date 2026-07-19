@@ -1,0 +1,157 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-008
+  title: null
+  domain: 市场反馈优化/shadow weight profiles 长期观察
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/market_feedback_optimization_loop_2026-05-13.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9b-shadow-weight-profile-长期观察`；隔离测试权重
+    manifest、只读主线评分对比 CLI 和独立 observation/prediction 观察链路已完成；后续真实滚动样本观察、表现优选、gate
+    profile、搜索、maturity validation 和 production promotion 由后续独立任务与治理流程承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `config/weights/shadow_weight_profiles.yaml`，所有 profile 必须 `production_effect=none`
+      且权重信号与生产 profile 一致；新增只读 CLI 从 production decision snapshot 计算各 shadow profile
+      的整体分数、模型仓位和受既有 gate 后的观察仓位，并写入独立 observation ledger / 报告；可选写入隔离 prediction ledger
+      以进入 outcome/shadow maturity；不得修改 `weight_profile_current.yaml`、approved overlay、production
+      prediction ledger、score-daily 正式输出或仓位 gate；当前 manifest 保留 alpha tilt、risk/macro
+      tilt 和 guardrail tilt 三套 shadow-only profile，`shadow_weight_profiles_2026-05-14.md`
+      为 PASS / `production_effect=none`，`shadow_weight_profile_observations.csv` 记录
+      score delta、model/gated position、gate cap source 和 source snapshot
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 273
+    row_sha256: 4437af0ea8356aa2e25dac270d0b2dafee3452f56170285de7f11ec09d22d13a
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-008
+    - 市场反馈优化/shadow weight profiles 长期观察
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9b-shadow-weight-profile-长期观察`；隔离测试权重
+      manifest、只读主线评分对比 CLI 和独立 observation/prediction 观察链路已完成；后续真实滚动样本观察、表现优选、gate
+      profile、搜索、maturity validation 和 production promotion 由后续独立任务与治理流程承接
+    - 新增 `config/weights/shadow_weight_profiles.yaml`，所有 profile 必须 `production_effect=none`
+      且权重信号与生产 profile 一致；新增只读 CLI 从 production decision snapshot 计算各 shadow profile
+      的整体分数、模型仓位和受既有 gate 后的观察仓位，并写入独立 observation ledger / 报告；可选写入隔离 prediction ledger
+      以进入 outcome/shadow maturity；不得修改 `weight_profile_current.yaml`、approved overlay、production
+      prediction ledger、score-daily 正式输出或仓位 gate；当前 manifest 保留 alpha tilt、risk/macro
+      tilt 和 guardrail tilt 三套 shadow-only profile，`shadow_weight_profiles_2026-05-14.md`
+      为 PASS / `production_effect=none`，`shadow_weight_profile_observations.csv` 记录
+      score delta、model/gated position、gate cap source 和 source snapshot
+    - '2026-05-15: 新增并进入 IN_PROGRESS，原因：owner 要求把调参后续流程也尝试跑通，并先维护多套隔离测试权重进行长期观察。2026-05-15:
+      从 IN_PROGRESS 改为 VALIDATING，原因：新增 3 套 shadow weight profiles（alpha tilt、risk/macro
+      tilt、guardrail tilt）和 `feedback run-shadow-weight-profiles`；真实 2026-05-14 验证
+      PASS，主线评分 67.79，alpha_tilt=71.46（+3.67）、risk_macro_tilt=63.52（-4.27）、guardrail_tilt=66.18（-1.61），三者
+      gate 后观察仓位均被 valuation gate 压至 40%-40%；隔离 prediction ledger 写入 3 行，outcome 15
+      行（available=0、pending=15、missing=0），shadow maturity PASS_WITH_LIMITATIONS；目标测试
+      23 passed、全量 pytest 537 passed、ruff、diff check 和 secret scan 通过；生产权重、approved
+      overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核
+      shadow weight manifest、report、observation ledger 和后续任务复用情况证明长期观察框架已完成，production
+      边界保持不变；验证通过 `tests/test_shadow_weight_profiles.py` 15 passed、Ruff、repo-wide
+      Black check 和 `compileall`。'
+    raw_line: '|CALIBRATION-008|市场反馈优化/shadow weight profiles 长期观察|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9b-shadow-weight-profile-长期观察`；隔离测试权重
+      manifest、只读主线评分对比 CLI 和独立 observation/prediction 观察链路已完成；后续真实滚动样本观察、表现优选、gate
+      profile、搜索、maturity validation 和 production promotion 由后续独立任务与治理流程承接|新增 `config/weights/shadow_weight_profiles.yaml`，所有
+      profile 必须 `production_effect=none` 且权重信号与生产 profile 一致；新增只读 CLI 从 production
+      decision snapshot 计算各 shadow profile 的整体分数、模型仓位和受既有 gate 后的观察仓位，并写入独立 observation
+      ledger / 报告；可选写入隔离 prediction ledger 以进入 outcome/shadow maturity；不得修改 `weight_profile_current.yaml`、approved
+      overlay、production prediction ledger、score-daily 正式输出或仓位 gate；当前 manifest 保留
+      alpha tilt、risk/macro tilt 和 guardrail tilt 三套 shadow-only profile，`shadow_weight_profiles_2026-05-14.md`
+      为 PASS / `production_effect=none`，`shadow_weight_profile_observations.csv` 记录
+      score delta、model/gated position、gate cap source 和 source snapshot|2026-05-15:
+      新增并进入 IN_PROGRESS，原因：owner 要求把调参后续流程也尝试跑通，并先维护多套隔离测试权重进行长期观察。2026-05-15: 从 IN_PROGRESS
+      改为 VALIDATING，原因：新增 3 套 shadow weight profiles（alpha tilt、risk/macro tilt、guardrail
+      tilt）和 `feedback run-shadow-weight-profiles`；真实 2026-05-14 验证 PASS，主线评分 67.79，alpha_tilt=71.46（+3.67）、risk_macro_tilt=63.52（-4.27）、guardrail_tilt=66.18（-1.61），三者
+      gate 后观察仓位均被 valuation gate 压至 40%-40%；隔离 prediction ledger 写入 3 行，outcome 15
+      行（available=0、pending=15、missing=0），shadow maturity PASS_WITH_LIMITATIONS；目标测试
+      23 passed、全量 pytest 537 passed、ruff、diff check 和 secret scan 通过；生产权重、approved
+      overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核
+      shadow weight manifest、report、observation ledger 和后续任务复用情况证明长期观察框架已完成，production
+      边界保持不变；验证通过 `tests/test_shadow_weight_profiles.py` 15 passed、Ruff、repo-wide
+      Black check 和 `compileall`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4437af0ea8356aa2e25dac27
+  task_id: CALIBRATION-008
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-15: 新增并进入 IN_PROGRESS，原因：owner 要求把调参后续流程也尝试跑通，并先维护多套隔离测试权重进行长期观察。2026-05-15:
+      从 IN_PROGRESS 改为 VALIDATING，原因：新增 3 套 shadow weight profiles（alpha tilt、risk/macro
+      tilt、guardrail tilt）和 `feedback run-shadow-weight-profiles`；真实 2026-05-14 验证
+      PASS，主线评分 67.79，alpha_tilt=71.46（+3.67）、risk_macro_tilt=63.52（-4.27）、guardrail_tilt=66.18（-1.61），三者
+      gate 后观察仓位均被 valuation gate 压至 40%-40%；隔离 prediction ledger 写入 3 行，outcome 15
+      行（available=0、pending=15、missing=0），shadow maturity PASS_WITH_LIMITATIONS；目标测试
+      23 passed、全量 pytest 537 passed、ruff、diff check 和 secret scan 通过；生产权重、approved
+      overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核
+      shadow weight manifest、report、observation ledger 和后续任务复用情况证明长期观察框架已完成，production
+      边界保持不变；验证通过 `tests/test_shadow_weight_profiles.py` 15 passed、Ruff、repo-wide
+      Black check 和 `compileall`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4437af0ea8356aa2e25dac270d0b2dafee3452f56170285de7f11ec09d22d13a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-008
+  - 市场反馈优化/shadow weight profiles 长期观察
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9b-shadow-weight-profile-长期观察`；隔离测试权重
+    manifest、只读主线评分对比 CLI 和独立 observation/prediction 观察链路已完成；后续真实滚动样本观察、表现优选、gate
+    profile、搜索、maturity validation 和 production promotion 由后续独立任务与治理流程承接
+  - 新增 `config/weights/shadow_weight_profiles.yaml`，所有 profile 必须 `production_effect=none`
+    且权重信号与生产 profile 一致；新增只读 CLI 从 production decision snapshot 计算各 shadow profile
+    的整体分数、模型仓位和受既有 gate 后的观察仓位，并写入独立 observation ledger / 报告；可选写入隔离 prediction ledger
+    以进入 outcome/shadow maturity；不得修改 `weight_profile_current.yaml`、approved overlay、production
+    prediction ledger、score-daily 正式输出或仓位 gate；当前 manifest 保留 alpha tilt、risk/macro
+    tilt 和 guardrail tilt 三套 shadow-only profile，`shadow_weight_profiles_2026-05-14.md`
+    为 PASS / `production_effect=none`，`shadow_weight_profile_observations.csv` 记录
+    score delta、model/gated position、gate cap source 和 source snapshot
+  - '2026-05-15: 新增并进入 IN_PROGRESS，原因：owner 要求把调参后续流程也尝试跑通，并先维护多套隔离测试权重进行长期观察。2026-05-15:
+    从 IN_PROGRESS 改为 VALIDATING，原因：新增 3 套 shadow weight profiles（alpha tilt、risk/macro
+    tilt、guardrail tilt）和 `feedback run-shadow-weight-profiles`；真实 2026-05-14 验证 PASS，主线评分
+    67.79，alpha_tilt=71.46（+3.67）、risk_macro_tilt=63.52（-4.27）、guardrail_tilt=66.18（-1.61），三者
+    gate 后观察仓位均被 valuation gate 压至 40%-40%；隔离 prediction ledger 写入 3 行，outcome 15
+    行（available=0、pending=15、missing=0），shadow maturity PASS_WITH_LIMITATIONS；目标测试
+    23 passed、全量 pytest 537 passed、ruff、diff check 和 secret scan 通过；生产权重、approved
+    overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核
+    shadow weight manifest、report、observation ledger 和后续任务复用情况证明长期观察框架已完成，production
+    边界保持不变；验证通过 `tests/test_shadow_weight_profiles.py` 15 passed、Ruff、repo-wide Black
+    check 和 `compileall`。'
+  docs_links:
+  - docs/requirements/market_feedback_optimization_loop_2026-05-13.md
+  terminal: true
+  raw_row_sha256: 4437af0ea8356aa2e25dac270d0b2dafee3452f56170285de7f11ec09d22d13a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b604a944d6a4d7cf11bace591712c75e3794505d13d49921b33befb385f2e51e

@@ -1,0 +1,104 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+  title: null
+  domain: Architecture / auditable parallel development scheduling foundation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner + architecture coordinator；选择S2或与策略研究并行的后续边界
+  requirement_refs:
+  - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`。PB1及正式S0/S1已完成；S2
+    dependency/readiness/conflict/lease kernel、S3 read-only scheduler、S4 controlled
+    dispatch、S5 cutover和S6理解/优化仍待后续显式选择。旧Markdown继续是唯一可写事实源，禁止dual write、真实dispatch或lease。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: S0/S1 baseline与shadow registry可重复生成；869个task、0 overlap/缺失/重复，55个legacy歧义行无损保留；两份compatibility
+      views逐byte一致；fast/architecture/contract/reproducibility/full通过，`production_effect=none`。后续S2须另行冻结lease/readiness
+      policy并保持fail closed。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1174
+    row_sha256: 39abd23abd22f715d1ad0db0992aa0e3c93b6ac516742758f0d1a4b73e3441f6
+    cell_count: 8
+    all_cells:
+    - ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+    - Architecture / auditable parallel development scheduling foundation
+    - P0
+    - BASELINE_DONE
+    - project owner + architecture coordinator；选择S2或与策略研究并行的后续边界
+    - 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`。PB1及正式S0/S1已完成；S2
+      dependency/readiness/conflict/lease kernel、S3 read-only scheduler、S4 controlled
+      dispatch、S5 cutover和S6理解/优化仍待后续显式选择。旧Markdown继续是唯一可写事实源，禁止dual write、真实dispatch或lease。
+    - S0/S1 baseline与shadow registry可重复生成；869个task、0 overlap/缺失/重复，55个legacy歧义行无损保留；两份compatibility
+      views逐byte一致；fast/architecture/contract/reproducibility/full通过，`production_effect=none`。后续S2须另行冻结lease/readiness
+      policy并保持fail closed。
+    - 2026-07-19：S0/S1=`BASELINE_DONE`；验证=`300/419/265/23/6394 passed`，Full另有2 skipped/642
+      warnings、961.89s，相对phase-exit Full约+1.6%，无异常性能回归。ARCH-004 G2.5仍锁定，S2也未自动启动。
+    raw_line: '|ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE|Architecture / auditable
+      parallel development scheduling foundation|P0|BASELINE_DONE|project owner +
+      architecture coordinator；选择S2或与策略研究并行的后续边界|详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`。PB1及正式S0/S1已完成；S2
+      dependency/readiness/conflict/lease kernel、S3 read-only scheduler、S4 controlled
+      dispatch、S5 cutover和S6理解/优化仍待后续显式选择。旧Markdown继续是唯一可写事实源，禁止dual write、真实dispatch或lease。|S0/S1
+      baseline与shadow registry可重复生成；869个task、0 overlap/缺失/重复，55个legacy歧义行无损保留；两份compatibility
+      views逐byte一致；fast/architecture/contract/reproducibility/full通过，`production_effect=none`。后续S2须另行冻结lease/readiness
+      policy并保持fail closed。|2026-07-19：S0/S1=`BASELINE_DONE`；验证=`300/419/265/23/6394
+      passed`，Full另有2 skipped/642 warnings、961.89s，相对phase-exit Full约+1.6%，无异常性能回归。ARCH-004
+      G2.5仍锁定，S2也未自动启动。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-39abd23abd22f715d1ad0db0
+  task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: project owner + architecture coordinator；选择S2或与策略研究并行的后续边界
+    notes: 2026-07-19：S0/S1=`BASELINE_DONE`；验证=`300/419/265/23/6394 passed`，Full另有2
+      skipped/642 warnings、961.89s，相对phase-exit Full约+1.6%，无异常性能回归。ARCH-004 G2.5仍锁定，S2也未自动启动。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:39abd23abd22f715d1ad0db0992aa0e3c93b6ac516742758f0d1a4b73e3441f6
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+  - Architecture / auditable parallel development scheduling foundation
+  - P0
+  - BASELINE_DONE
+  - project owner + architecture coordinator；选择S2或与策略研究并行的后续边界
+  - 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`。PB1及正式S0/S1已完成；S2
+    dependency/readiness/conflict/lease kernel、S3 read-only scheduler、S4 controlled
+    dispatch、S5 cutover和S6理解/优化仍待后续显式选择。旧Markdown继续是唯一可写事实源，禁止dual write、真实dispatch或lease。
+  - S0/S1 baseline与shadow registry可重复生成；869个task、0 overlap/缺失/重复，55个legacy歧义行无损保留；两份compatibility
+    views逐byte一致；fast/architecture/contract/reproducibility/full通过，`production_effect=none`。后续S2须另行冻结lease/readiness
+    policy并保持fail closed。
+  - 2026-07-19：S0/S1=`BASELINE_DONE`；验证=`300/419/265/23/6394 passed`，Full另有2 skipped/642
+    warnings、961.89s，相对phase-exit Full约+1.6%，无异常性能回归。ARCH-004 G2.5仍锁定，S2也未自动启动。
+  docs_links:
+  - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
+  terminal: false
+  raw_row_sha256: 39abd23abd22f715d1ad0db0992aa0e3c93b6ac516742758f0d1a4b73e3441f6
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: de50ec7df7e21d4f8d32e10de01ae95ee09bc5dedc75f6e7f587d0ed72eddc49

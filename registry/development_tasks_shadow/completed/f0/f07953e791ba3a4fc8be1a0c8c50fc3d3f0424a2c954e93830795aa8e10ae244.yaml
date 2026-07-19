@@ -1,0 +1,156 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-018
+  title: null
+  domain: 交易执行/Daily Scheduled Weight Adjustment Job
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/daily_weight_adjustment_job_2026-05-18.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/daily_weight_adjustment_job_2026-05-18.md`；observe-only
+    daily summary、standalone script、dashboard 轻量卡片、runbook、系统流图、产物目录、测试和当前 HEAD CI
+    已完成；后续真实 scheduler 连续观察由 `TRADING-018A` 承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_daily_weight_adjustment.py` 和 `outputs/reports/daily_weight_adjustment_summary_YYYY-MM-DD.json/md`；默认
+      `mode=observe_only`、`production_effect=none`、`manual_review_only=true`；只读取同日
+      `weight_adjustment_candidates_YYYY-MM-DD.json/md`、`weight_candidate_evaluation_YYYY-MM-DD.json/md`、`weight_promotion_gate_YYYY-MM-DD.json/md`；summary
+      至少包含 as_of、production_effect、mode、candidate_status、evaluation_status、promotion_gate_status、candidate_count、evaluable_candidate_count、ready_for_manual_review_count、blocked_count、top_candidate_id、main_blocked_by、warnings、source_artifacts、missing_artifacts、required_manual_review_items
+      和 recommendation；缺任一上游 artifact 时只标记 `LIMITED` / `INSUFFICIENT_DATA`，不补造 improvement，且不得把
+      promotion gate 摘要输出为 `READY_FOR_MANUAL_REVIEW`；daily dashboard 只读读取 summary
+      JSON 展示 candidate_count、evaluation_status、promotion_gate_status、ready_for_manual_review_count、main
+      blocked_by、report link、`production_effect=none` 和 manual_review_only；新增 runbook，说明手动运行和未来调度接入；本地验收通过目标
+      pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff 和 black check；push
+      后 CI 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 334
+    row_sha256: 737d09f572de5aad826cad7f1d8f48d0f749300e9d7fb21df566c2ddba530aa7
+    cell_count: 8
+    all_cells:
+    - TRADING-018
+    - 交易执行/Daily Scheduled Weight Adjustment Job
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/daily_weight_adjustment_job_2026-05-18.md`；observe-only
+      daily summary、standalone script、dashboard 轻量卡片、runbook、系统流图、产物目录、测试和当前 HEAD
+      CI 已完成；后续真实 scheduler 连续观察由 `TRADING-018A` 承接
+    - 新增 `scripts/run_daily_weight_adjustment.py` 和 `outputs/reports/daily_weight_adjustment_summary_YYYY-MM-DD.json/md`；默认
+      `mode=observe_only`、`production_effect=none`、`manual_review_only=true`；只读取同日
+      `weight_adjustment_candidates_YYYY-MM-DD.json/md`、`weight_candidate_evaluation_YYYY-MM-DD.json/md`、`weight_promotion_gate_YYYY-MM-DD.json/md`；summary
+      至少包含 as_of、production_effect、mode、candidate_status、evaluation_status、promotion_gate_status、candidate_count、evaluable_candidate_count、ready_for_manual_review_count、blocked_count、top_candidate_id、main_blocked_by、warnings、source_artifacts、missing_artifacts、required_manual_review_items
+      和 recommendation；缺任一上游 artifact 时只标记 `LIMITED` / `INSUFFICIENT_DATA`，不补造 improvement，且不得把
+      promotion gate 摘要输出为 `READY_FOR_MANUAL_REVIEW`；daily dashboard 只读读取 summary
+      JSON 展示 candidate_count、evaluation_status、promotion_gate_status、ready_for_manual_review_count、main
+      blocked_by、report link、`production_effect=none` 和 manual_review_only；新增 runbook，说明手动运行和未来调度接入；本地验收通过目标
+      pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff 和 black check；push
+      后 CI 通过
+    - '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-015/016/017 完成后串入每日只读权重调节评估流程；本阶段只做
+      observe-only summary 和 dashboard 可见性，不允许任何 production 权重修改、approved profile
+      写入、broker / paper runner / replay runner 调用或 dashboard 主投资结论变更。2026-05-18: 从
+      IN_PROGRESS 改为 VALIDATING，原因：已新增 `scripts/run_daily_weight_adjustment.py`、`daily_weight_adjustment_summary_YYYY-MM-DD.json/md`
+      生成器、缺失输入降级、安全边界、dashboard Daily Weight Adjustment Summary 只读卡片、runbook、系统流图/产物目录和测试；验证通过目标
+      pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff 和 black check。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub Actions CI run `27085392644`
+      completed/success；复验 daily weight adjustment pipeline、交易执行 focused tests 和触达文件
+      ruff 通过；本任务验收闭合，真实 scheduler 观察由 TRADING-018A 继续。'
+    raw_line: '|TRADING-018|交易执行/Daily Scheduled Weight Adjustment Job|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/daily_weight_adjustment_job_2026-05-18.md`；observe-only daily
+      summary、standalone script、dashboard 轻量卡片、runbook、系统流图、产物目录、测试和当前 HEAD CI 已完成；后续真实
+      scheduler 连续观察由 `TRADING-018A` 承接|新增 `scripts/run_daily_weight_adjustment.py`
+      和 `outputs/reports/daily_weight_adjustment_summary_YYYY-MM-DD.json/md`；默认 `mode=observe_only`、`production_effect=none`、`manual_review_only=true`；只读取同日
+      `weight_adjustment_candidates_YYYY-MM-DD.json/md`、`weight_candidate_evaluation_YYYY-MM-DD.json/md`、`weight_promotion_gate_YYYY-MM-DD.json/md`；summary
+      至少包含 as_of、production_effect、mode、candidate_status、evaluation_status、promotion_gate_status、candidate_count、evaluable_candidate_count、ready_for_manual_review_count、blocked_count、top_candidate_id、main_blocked_by、warnings、source_artifacts、missing_artifacts、required_manual_review_items
+      和 recommendation；缺任一上游 artifact 时只标记 `LIMITED` / `INSUFFICIENT_DATA`，不补造 improvement，且不得把
+      promotion gate 摘要输出为 `READY_FOR_MANUAL_REVIEW`；daily dashboard 只读读取 summary
+      JSON 展示 candidate_count、evaluation_status、promotion_gate_status、ready_for_manual_review_count、main
+      blocked_by、report link、`production_effect=none` 和 manual_review_only；新增 runbook，说明手动运行和未来调度接入；本地验收通过目标
+      pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff 和 black check；push
+      后 CI 通过|2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-015/016/017 完成后串入每日只读权重调节评估流程；本阶段只做
+      observe-only summary 和 dashboard 可见性，不允许任何 production 权重修改、approved profile
+      写入、broker / paper runner / replay runner 调用或 dashboard 主投资结论变更。2026-05-18: 从
+      IN_PROGRESS 改为 VALIDATING，原因：已新增 `scripts/run_daily_weight_adjustment.py`、`daily_weight_adjustment_summary_YYYY-MM-DD.json/md`
+      生成器、缺失输入降级、安全边界、dashboard Daily Weight Adjustment Summary 只读卡片、runbook、系统流图/产物目录和测试；验证通过目标
+      pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff 和 black check。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub Actions CI run `27085392644`
+      completed/success；复验 daily weight adjustment pipeline、交易执行 focused tests 和触达文件
+      ruff 通过；本任务验收闭合，真实 scheduler 观察由 TRADING-018A 继续。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-737d09f572de5aad826cad7f
+  task_id: TRADING-018
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-015/016/017 完成后串入每日只读权重调节评估流程；本阶段只做
+      observe-only summary 和 dashboard 可见性，不允许任何 production 权重修改、approved profile
+      写入、broker / paper runner / replay runner 调用或 dashboard 主投资结论变更。2026-05-18: 从
+      IN_PROGRESS 改为 VALIDATING，原因：已新增 `scripts/run_daily_weight_adjustment.py`、`daily_weight_adjustment_summary_YYYY-MM-DD.json/md`
+      生成器、缺失输入降级、安全边界、dashboard Daily Weight Adjustment Summary 只读卡片、runbook、系统流图/产物目录和测试；验证通过目标
+      pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff 和 black check。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub Actions CI run `27085392644`
+      completed/success；复验 daily weight adjustment pipeline、交易执行 focused tests 和触达文件
+      ruff 通过；本任务验收闭合，真实 scheduler 观察由 TRADING-018A 继续。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:737d09f572de5aad826cad7f1d8f48d0f749300e9d7fb21df566c2ddba530aa7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-018
+  - 交易执行/Daily Scheduled Weight Adjustment Job
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/daily_weight_adjustment_job_2026-05-18.md`；observe-only
+    daily summary、standalone script、dashboard 轻量卡片、runbook、系统流图、产物目录、测试和当前 HEAD CI
+    已完成；后续真实 scheduler 连续观察由 `TRADING-018A` 承接
+  - 新增 `scripts/run_daily_weight_adjustment.py` 和 `outputs/reports/daily_weight_adjustment_summary_YYYY-MM-DD.json/md`；默认
+    `mode=observe_only`、`production_effect=none`、`manual_review_only=true`；只读取同日 `weight_adjustment_candidates_YYYY-MM-DD.json/md`、`weight_candidate_evaluation_YYYY-MM-DD.json/md`、`weight_promotion_gate_YYYY-MM-DD.json/md`；summary
+    至少包含 as_of、production_effect、mode、candidate_status、evaluation_status、promotion_gate_status、candidate_count、evaluable_candidate_count、ready_for_manual_review_count、blocked_count、top_candidate_id、main_blocked_by、warnings、source_artifacts、missing_artifacts、required_manual_review_items
+    和 recommendation；缺任一上游 artifact 时只标记 `LIMITED` / `INSUFFICIENT_DATA`，不补造 improvement，且不得把
+    promotion gate 摘要输出为 `READY_FOR_MANUAL_REVIEW`；daily dashboard 只读读取 summary JSON
+    展示 candidate_count、evaluation_status、promotion_gate_status、ready_for_manual_review_count、main
+    blocked_by、report link、`production_effect=none` 和 manual_review_only；新增 runbook，说明手动运行和未来调度接入；本地验收通过目标
+    pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff 和 black check；push 后
+    CI 通过
+  - '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-015/016/017 完成后串入每日只读权重调节评估流程；本阶段只做
+    observe-only summary 和 dashboard 可见性，不允许任何 production 权重修改、approved profile 写入、broker
+    / paper runner / replay runner 调用或 dashboard 主投资结论变更。2026-05-18: 从 IN_PROGRESS
+    改为 VALIDATING，原因：已新增 `scripts/run_daily_weight_adjustment.py`、`daily_weight_adjustment_summary_YYYY-MM-DD.json/md`
+    生成器、缺失输入降级、安全边界、dashboard Daily Weight Adjustment Summary 只读卡片、runbook、系统流图/产物目录和测试；验证通过目标
+    pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff 和 black check。2026-06-07:
+    从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub Actions CI run `27085392644`
+    completed/success；复验 daily weight adjustment pipeline、交易执行 focused tests 和触达文件
+    ruff 通过；本任务验收闭合，真实 scheduler 观察由 TRADING-018A 继续。'
+  docs_links:
+  - docs/requirements/daily_weight_adjustment_job_2026-05-18.md
+  terminal: true
+  raw_row_sha256: 737d09f572de5aad826cad7f1d8f48d0f749300e9d7fb21df566c2ddba530aa7
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7dd924306010b887d00b76756f3e35f9cb6e61dcd8eb1bc0a83929a832542a8b

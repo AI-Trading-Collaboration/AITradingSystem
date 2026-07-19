@@ -1,0 +1,132 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1001_to_1008_LAYER1_SELECTOR_RESULT_REVIEW
+  title: null
+  domain: Research strategies / Layer-1 selector result review and forward-aging gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1001_to_1008_Layer1_Selector_Result_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1001_to_1008_Layer1_Selector_Result_Review.md`；1001～1008
+    baseline 已实现并真实运行；当前结论为 dry-run-only / research-only，下一步为 owner review 是否接受 turnover
+    blocker、recent-regime-only warning 和 history backfill requirement
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 8 个 `aits research strategies ...` CLI/artifacts、report registry entries、artifact
+      catalog/system flow 更新、owner/master docs 和 focused tests；真实 master CLI 输出 `LAYER1_SELECTOR_DRY_RUN_ONLY`，top
+      selector=`trend_200dma_selector`，成本后优于 `always_equal_risk` 但不优于 `always_100_qqq`，history
+      coverage=`RECENT_REGIME_ONLY_WARNING`，recent regime risk=`RECENT_REGIME_RISK_MATERIAL`，watchlist
+      recommendation=`KEEP_SELECTOR_RESEARCH_ONLY`，blocker=`TOO_MUCH_TURNOVER`，dry-run=`LAYER1_SELECTOR_FORWARD_DRY_RUN_WARN`
+      且 `observation_written=false`；所有 outputs 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，继续禁止
+      ML selector、QQQ-plus growth selectable、tail-risk fallback、LEAPS、Wheel 和 Options
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1293
+    row_sha256: 1194a801f00e58f7c6839ab58e7137953c7f0e40ad786d237313063dbbaa4ed7
+    cell_count: 8
+    all_cells:
+    - TRADING-1001_to_1008_LAYER1_SELECTOR_RESULT_REVIEW
+    - Research strategies / Layer-1 selector result review and forward-aging gate
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1001_to_1008_Layer1_Selector_Result_Review.md`；1001～1008
+      baseline 已实现并真实运行；当前结论为 dry-run-only / research-only，下一步为 owner review 是否接受
+      turnover blocker、recent-regime-only warning 和 history backfill requirement
+    - 新增 8 个 `aits research strategies ...` CLI/artifacts、report registry entries、artifact
+      catalog/system flow 更新、owner/master docs 和 focused tests；真实 master CLI 输出 `LAYER1_SELECTOR_DRY_RUN_ONLY`，top
+      selector=`trend_200dma_selector`，成本后优于 `always_equal_risk` 但不优于 `always_100_qqq`，history
+      coverage=`RECENT_REGIME_ONLY_WARNING`，recent regime risk=`RECENT_REGIME_RISK_MATERIAL`，watchlist
+      recommendation=`KEEP_SELECTOR_RESEARCH_ONLY`，blocker=`TOO_MUCH_TURNOVER`，dry-run=`LAYER1_SELECTOR_FORWARD_DRY_RUN_WARN`
+      且 `observation_written=false`；所有 outputs 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，继续禁止
+      ML selector、QQQ-plus growth selectable、tail-risk fallback、LEAPS、Wheel 和 Options
+    - '2026-06-25: 新增并进入 IN_PROGRESS，原因：owner 要求实现 TRADING-1001～1008，对 986～1000 Layer-1
+      simple-rule selector 真实运行结果做审查并判断是否只允许 research-only forward-aging watchlist/dry-run；当前实际研究区间为
+      2022-12-01～2026-06-23，必须显式披露 recent-regime 和 history coverage 限制。2026-06-25:
+      实现完成并转入 VALIDATING；真实 master CLI 保持 paper-shadow/production/broker false/none，watchlist_allowed=false，允许
+      dry-run preview 但不写正式 observation。'
+    raw_line: '|TRADING-1001_to_1008_LAYER1_SELECTOR_RESULT_REVIEW|Research strategies
+      / Layer-1 selector result review and forward-aging gate|P1|VALIDATING|系统实现 +
+      项目 owner 后续复核|详见 `docs/requirements/TRADING-1001_to_1008_Layer1_Selector_Result_Review.md`；1001～1008
+      baseline 已实现并真实运行；当前结论为 dry-run-only / research-only，下一步为 owner review 是否接受
+      turnover blocker、recent-regime-only warning 和 history backfill requirement|新增
+      8 个 `aits research strategies ...` CLI/artifacts、report registry entries、artifact
+      catalog/system flow 更新、owner/master docs 和 focused tests；真实 master CLI 输出 `LAYER1_SELECTOR_DRY_RUN_ONLY`，top
+      selector=`trend_200dma_selector`，成本后优于 `always_equal_risk` 但不优于 `always_100_qqq`，history
+      coverage=`RECENT_REGIME_ONLY_WARNING`，recent regime risk=`RECENT_REGIME_RISK_MATERIAL`，watchlist
+      recommendation=`KEEP_SELECTOR_RESEARCH_ONLY`，blocker=`TOO_MUCH_TURNOVER`，dry-run=`LAYER1_SELECTOR_FORWARD_DRY_RUN_WARN`
+      且 `observation_written=false`；所有 outputs 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，继续禁止
+      ML selector、QQQ-plus growth selectable、tail-risk fallback、LEAPS、Wheel 和 Options|2026-06-25:
+      新增并进入 IN_PROGRESS，原因：owner 要求实现 TRADING-1001～1008，对 986～1000 Layer-1 simple-rule
+      selector 真实运行结果做审查并判断是否只允许 research-only forward-aging watchlist/dry-run；当前实际研究区间为
+      2022-12-01～2026-06-23，必须显式披露 recent-regime 和 history coverage 限制。2026-06-25:
+      实现完成并转入 VALIDATING；真实 master CLI 保持 paper-shadow/production/broker false/none，watchlist_allowed=false，允许
+      dry-run preview 但不写正式 observation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1194a801f00e58f7c6839ab5
+  task_id: TRADING-1001_to_1008_LAYER1_SELECTOR_RESULT_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-25: 新增并进入 IN_PROGRESS，原因：owner 要求实现 TRADING-1001～1008，对 986～1000
+      Layer-1 simple-rule selector 真实运行结果做审查并判断是否只允许 research-only forward-aging watchlist/dry-run；当前实际研究区间为
+      2022-12-01～2026-06-23，必须显式披露 recent-regime 和 history coverage 限制。2026-06-25:
+      实现完成并转入 VALIDATING；真实 master CLI 保持 paper-shadow/production/broker false/none，watchlist_allowed=false，允许
+      dry-run preview 但不写正式 observation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1194a801f00e58f7c6839ab58e7137953c7f0e40ad786d237313063dbbaa4ed7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1001_to_1008_LAYER1_SELECTOR_RESULT_REVIEW
+  - Research strategies / Layer-1 selector result review and forward-aging gate
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1001_to_1008_Layer1_Selector_Result_Review.md`；1001～1008
+    baseline 已实现并真实运行；当前结论为 dry-run-only / research-only，下一步为 owner review 是否接受 turnover
+    blocker、recent-regime-only warning 和 history backfill requirement
+  - 新增 8 个 `aits research strategies ...` CLI/artifacts、report registry entries、artifact
+    catalog/system flow 更新、owner/master docs 和 focused tests；真实 master CLI 输出 `LAYER1_SELECTOR_DRY_RUN_ONLY`，top
+    selector=`trend_200dma_selector`，成本后优于 `always_equal_risk` 但不优于 `always_100_qqq`，history
+    coverage=`RECENT_REGIME_ONLY_WARNING`，recent regime risk=`RECENT_REGIME_RISK_MATERIAL`，watchlist
+    recommendation=`KEEP_SELECTOR_RESEARCH_ONLY`，blocker=`TOO_MUCH_TURNOVER`，dry-run=`LAYER1_SELECTOR_FORWARD_DRY_RUN_WARN`
+    且 `observation_written=false`；所有 outputs 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，继续禁止
+    ML selector、QQQ-plus growth selectable、tail-risk fallback、LEAPS、Wheel 和 Options
+  - '2026-06-25: 新增并进入 IN_PROGRESS，原因：owner 要求实现 TRADING-1001～1008，对 986～1000 Layer-1
+    simple-rule selector 真实运行结果做审查并判断是否只允许 research-only forward-aging watchlist/dry-run；当前实际研究区间为
+    2022-12-01～2026-06-23，必须显式披露 recent-regime 和 history coverage 限制。2026-06-25: 实现完成并转入
+    VALIDATING；真实 master CLI 保持 paper-shadow/production/broker false/none，watchlist_allowed=false，允许
+    dry-run preview 但不写正式 observation。'
+  docs_links:
+  - docs/requirements/TRADING-1001_to_1008_Layer1_Selector_Result_Review.md
+  terminal: false
+  raw_row_sha256: 1194a801f00e58f7c6839ab58e7137953c7f0e40ad786d237313063dbbaa4ed7
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 61dcc3b5f3a989368444752764219447373d2766de0bf6dd070a6eb7060fe3ca

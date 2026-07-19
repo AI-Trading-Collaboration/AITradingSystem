@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-011
+  title: null
+  domain: 数据源/第二源阻断策略
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/price_source_reconciliation_2026-05-05.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: owner 已批准 Marketstack 第二行情源自身异常降级策略；详细记录见
+    `docs/requirements/price_source_reconciliation_2026-05-05.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Baseline 完成：Marketstack 第二源 self-check 的 schema/覆盖/新鲜度/非正价格/OHLC/极端 adjusted
+      close 等异常默认记录为“第二行情源 Marketstack”警告，不覆盖、不平滑、不修正 FMP 主价格缓存，且在 FMP 主源通过时不阻断 `score-daily`；配置
+      `secondary_source_self_check_fail_closed` 可恢复 fail-closed；第二源文件缺失/不可读、主源错误、raw
+      close 跨源未解决冲突和重叠覆盖不足仍按错误阻断；数据质量报告保留 row count、样例、来源和告警状态
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1122
+    row_sha256: b6499682c38bf6616520789a59aed3f24958346e26b20c6dbe9ea1d374c74713
+    cell_count: 8
+    all_cells:
+    - DATA-011
+    - 数据源/第二源阻断策略
+    - P0
+    - BASELINE_DONE
+    - 系统实现
+    - owner 已批准 Marketstack 第二行情源自身异常降级策略；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`
+    - Baseline 完成：Marketstack 第二源 self-check 的 schema/覆盖/新鲜度/非正价格/OHLC/极端 adjusted
+      close 等异常默认记录为“第二行情源 Marketstack”警告，不覆盖、不平滑、不修正 FMP 主价格缓存，且在 FMP 主源通过时不阻断 `score-daily`；配置
+      `secondary_source_self_check_fail_closed` 可恢复 fail-closed；第二源文件缺失/不可读、主源错误、raw
+      close 跨源未解决冲突和重叠覆盖不足仍按错误阻断；数据质量报告保留 row count、样例、来源和告警状态
+    - '2026-05-05: 新增任务，原因：DATA-010 已排除旧历史一致性噪音，但真实 `validate-data` 仍因 2024/2026 Marketstack
+      第二源自身错误 fail closed；这不是代码 bug，而是数据源治理策略选择。2026-05-05: 从 BLOCKED_OWNER_INPUT
+      改为 BASELINE_DONE，原因：owner 明确“记录第二源异常，以主数据源为主，不阻塞后续流程”；实现了配置开关、告警降级、报告归因、文档和测试，主源错误与
+      raw close 跨源冲突仍保持 fail closed。'
+    raw_line: '|DATA-011|数据源/第二源阻断策略|P0|BASELINE_DONE|系统实现|owner 已批准 Marketstack 第二行情源自身异常降级策略；详细记录见
+      `docs/requirements/price_source_reconciliation_2026-05-05.md`|Baseline 完成：Marketstack
+      第二源 self-check 的 schema/覆盖/新鲜度/非正价格/OHLC/极端 adjusted close 等异常默认记录为“第二行情源 Marketstack”警告，不覆盖、不平滑、不修正
+      FMP 主价格缓存，且在 FMP 主源通过时不阻断 `score-daily`；配置 `secondary_source_self_check_fail_closed`
+      可恢复 fail-closed；第二源文件缺失/不可读、主源错误、raw close 跨源未解决冲突和重叠覆盖不足仍按错误阻断；数据质量报告保留 row
+      count、样例、来源和告警状态|2026-05-05: 新增任务，原因：DATA-010 已排除旧历史一致性噪音，但真实 `validate-data`
+      仍因 2024/2026 Marketstack 第二源自身错误 fail closed；这不是代码 bug，而是数据源治理策略选择。2026-05-05:
+      从 BLOCKED_OWNER_INPUT 改为 BASELINE_DONE，原因：owner 明确“记录第二源异常，以主数据源为主，不阻塞后续流程”；实现了配置开关、告警降级、报告归因、文档和测试，主源错误与
+      raw close 跨源冲突仍保持 fail closed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b6499682c38bf6616520789a
+  task_id: DATA-011
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增任务，原因：DATA-010 已排除旧历史一致性噪音，但真实 `validate-data` 仍因 2024/2026
+      Marketstack 第二源自身错误 fail closed；这不是代码 bug，而是数据源治理策略选择。2026-05-05: 从 BLOCKED_OWNER_INPUT
+      改为 BASELINE_DONE，原因：owner 明确“记录第二源异常，以主数据源为主，不阻塞后续流程”；实现了配置开关、告警降级、报告归因、文档和测试，主源错误与
+      raw close 跨源冲突仍保持 fail closed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b6499682c38bf6616520789a59aed3f24958346e26b20c6dbe9ea1d374c74713
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-011
+  - 数据源/第二源阻断策略
+  - P0
+  - BASELINE_DONE
+  - 系统实现
+  - owner 已批准 Marketstack 第二行情源自身异常降级策略；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`
+  - Baseline 完成：Marketstack 第二源 self-check 的 schema/覆盖/新鲜度/非正价格/OHLC/极端 adjusted close
+    等异常默认记录为“第二行情源 Marketstack”警告，不覆盖、不平滑、不修正 FMP 主价格缓存，且在 FMP 主源通过时不阻断 `score-daily`；配置
+    `secondary_source_self_check_fail_closed` 可恢复 fail-closed；第二源文件缺失/不可读、主源错误、raw
+    close 跨源未解决冲突和重叠覆盖不足仍按错误阻断；数据质量报告保留 row count、样例、来源和告警状态
+  - '2026-05-05: 新增任务，原因：DATA-010 已排除旧历史一致性噪音，但真实 `validate-data` 仍因 2024/2026 Marketstack
+    第二源自身错误 fail closed；这不是代码 bug，而是数据源治理策略选择。2026-05-05: 从 BLOCKED_OWNER_INPUT 改为
+    BASELINE_DONE，原因：owner 明确“记录第二源异常，以主数据源为主，不阻塞后续流程”；实现了配置开关、告警降级、报告归因、文档和测试，主源错误与
+    raw close 跨源冲突仍保持 fail closed。'
+  docs_links:
+  - docs/requirements/price_source_reconciliation_2026-05-05.md
+  terminal: false
+  raw_row_sha256: b6499682c38bf6616520789a59aed3f24958346e26b20c6dbe9ea1d374c74713
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6968d2621bf72590735cf53dfc7ee4e90f0c17d55d4c7ec693a46bf35774487d

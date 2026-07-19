@@ -1,0 +1,104 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-734_DAILY_INCREMENTAL_REFACTOR_CLI_BOUNDARY
+  title: null
+  domain: Architecture / daily incremental refactor CLI boundary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/refactor_log.md
+  - docs/requirements/TRADING-734_Daily_Incremental_Refactor_CLI_Boundary.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-734_Daily_Incremental_Refactor_CLI_Boundary.md`；已将
+    data-foundation research CLI 子树从过大的 `cli_commands/research.py` 拆到专用 `cli_commands/research_foundation.py`
+    模块，外部命令和输出保持兼容
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits research labels'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 181
+    row_sha256: 5d24dc3edb28bf472b5f5d41ed98fbe12f424abf31ecc78c2e238817df629604
+    cell_count: 11
+    all_cells:
+    - TRADING-734_DAILY_INCREMENTAL_REFACTOR_CLI_BOUNDARY
+    - Architecture / daily incremental refactor CLI boundary
+    - P2
+    - DONE
+    - 系统验证
+    - 详见 `docs/requirements/TRADING-734_Daily_Incremental_Refactor_CLI_Boundary.md`；已将
+      data-foundation research CLI 子树从过大的 `cli_commands/research.py` 拆到专用 `cli_commands/research_foundation.py`
+      模块，外部命令和输出保持兼容
+    - '`aits research labels'
+    - runs
+    - execution
+    - cases` 命令路径、参数、artifact 输出和退出语义保持兼容；focused xdist pytest、scoped Ruff、compileall、受影响文件
+      Black check、`fast-unit`、`contract-validation` 和 `git diff --check` 通过；`docs/refactor_log.md`
+      记录本轮基线与提交 SHA
+    - '2026-06-21: 每日增量重构自动化新增并完成；边界固定 `production_effect=none`，不改变 threshold、score
+      band、promotion gate、backtest acceptance、仓位约束、数据质量门或投资解释。验证通过 focused pytest
+      10 passed、scoped Ruff、compileall、受影响文件 Black check、`fast-unit` 84 passed、`contract-validation`
+      83 passed、`git diff --check`。'
+    raw_line: '|TRADING-734_DAILY_INCREMENTAL_REFACTOR_CLI_BOUNDARY|Architecture /
+      daily incremental refactor CLI boundary|P2|DONE|系统验证|详见 `docs/requirements/TRADING-734_Daily_Incremental_Refactor_CLI_Boundary.md`；已将
+      data-foundation research CLI 子树从过大的 `cli_commands/research.py` 拆到专用 `cli_commands/research_foundation.py`
+      模块，外部命令和输出保持兼容|`aits research labels|runs|execution|cases` 命令路径、参数、artifact
+      输出和退出语义保持兼容；focused xdist pytest、scoped Ruff、compileall、受影响文件 Black check、`fast-unit`、`contract-validation`
+      和 `git diff --check` 通过；`docs/refactor_log.md` 记录本轮基线与提交 SHA|2026-06-21: 每日增量重构自动化新增并完成；边界固定
+      `production_effect=none`，不改变 threshold、score band、promotion gate、backtest acceptance、仓位约束、数据质量门或投资解释。验证通过
+      focused pytest 10 passed、scoped Ruff、compileall、受影响文件 Black check、`fast-unit`
+      84 passed、`contract-validation` 83 passed、`git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5d24dc3edb28bf472b5f5d41
+  task_id: TRADING-734_DAILY_INCREMENTAL_REFACTOR_CLI_BOUNDARY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: runs
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5d24dc3edb28bf472b5f5d41ed98fbe12f424abf31ecc78c2e238817df629604
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-734_DAILY_INCREMENTAL_REFACTOR_CLI_BOUNDARY
+  - Architecture / daily incremental refactor CLI boundary
+  - P2
+  - DONE
+  - 系统验证
+  - 详见 `docs/requirements/TRADING-734_Daily_Incremental_Refactor_CLI_Boundary.md`；已将
+    data-foundation research CLI 子树从过大的 `cli_commands/research.py` 拆到专用 `cli_commands/research_foundation.py`
+    模块，外部命令和输出保持兼容
+  - '`aits research labels'
+  - runs
+  docs_links:
+  - docs/refactor_log.md
+  - docs/requirements/TRADING-734_Daily_Incremental_Refactor_CLI_Boundary.md
+  terminal: true
+  raw_row_sha256: 5d24dc3edb28bf472b5f5d41ed98fbe12f424abf31ecc78c2e238817df629604
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5854059c41675518c44ca3871fb54c886dad67990c79c9cb1c08a7381daacf57

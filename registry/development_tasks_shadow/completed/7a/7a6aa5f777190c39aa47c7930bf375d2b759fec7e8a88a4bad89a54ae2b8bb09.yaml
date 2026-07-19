@@ -1,0 +1,170 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2337_HIGH_INTENSITY_RISK_CAP_ACTUAL_PATH_OUTCOME_BINDER
+  title: null
+  domain: Research trends / high-intensity risk-cap actual-path outcome binder
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2339 partial outcome readiness review
+  requirement_refs:
+  - docs/requirements/TRADING-2337_High_Intensity_Risk_Cap_Actual_Path_Outcome_Binder.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2337_High_Intensity_Risk_Cap_Actual_Path_Outcome_Binder.md`；承接
+    TRADING-2336 observe-only event logger，读取 2336 event log、cluster registry、pending
+    outcome registry、outcome schedule、TRADING-2335 selected rule context、TRADING-2334
+    actual-path contract 和 canonical market price cache；绑定 actual-path outcome 前执行同源
+    `validate_data_cache` 门禁，真实 `as_of=2026-06-29`。TRADING-2338 已占用 B2 data-quality
+    as-of 修复，因此后续 route 使用 TRADING-2339。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends high-intensity-risk-cap-actual-path-outcome-binder`；生成
+      event-level / cluster-level actual-path outcome matrix、trigger-day context、coverage
+      / horizon quality / data quality report、rebound / stress / false warning / missed
+      upside / downside capture / manual-review usefulness proxy reports、cluster weighting
+      policy、interpretation boundary、2339 readiness checklist、2339 task route、安全边界和
+      research docs；真实 run status=`PARTIAL_OUTCOME_BINDING_WITH_NOT_DUE_HORIZONS`，data_quality_status=`PASS_WITH_WARNINGS`，`validate_data_as_of=2026-06-29`，event_count=`60`，cluster_count=`60`，pending_outcome_count=`240`，event/cluster
+      outcome rows=`240/240`，cluster_outcome_bound_count=`231`，coverage=`PARTIAL_COVERAGE_WITH_NOT_DUE_HORIZONS`，readiness=`PARTIAL_OUTCOME_REVIEW_REQUIRED`，next
+      task=`TRADING-2339_High_Intensity_Risk_Cap_Partial_Outcome_Readiness_Review`；partial
+      status 来自尾部实际交易日 horizon 尚未成熟，不是 data-quality failure；cluster-level 是主分析单位，trigger-day
+      context 不进入主样本；所有 outputs 固定 `outcome_binding_executed=true`、`original_event_log_mutated=false`、promotion/paper-shadow/production
+      false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 17 passed、真实
+      CLI run、`aits validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS / error_count=0、docs
+      freshness、documentation contract、task-register consistency run/validate、contract-validation
+      193 passed、full parallel pytest 4178 passed / 643 warnings 和 `git diff --check`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 158
+    row_sha256: 41ef1de11115f5653ad80a9a198628bc34ca7bb2cc3e4a28fd94a1e8905c697d
+    cell_count: 8
+    all_cells:
+    - TRADING-2337_HIGH_INTENSITY_RISK_CAP_ACTUAL_PATH_OUTCOME_BINDER
+    - Research trends / high-intensity risk-cap actual-path outcome binder
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2339 partial outcome readiness review
+    - 详见 `docs/requirements/TRADING-2337_High_Intensity_Risk_Cap_Actual_Path_Outcome_Binder.md`；承接
+      TRADING-2336 observe-only event logger，读取 2336 event log、cluster registry、pending
+      outcome registry、outcome schedule、TRADING-2335 selected rule context、TRADING-2334
+      actual-path contract 和 canonical market price cache；绑定 actual-path outcome 前执行同源
+      `validate_data_cache` 门禁，真实 `as_of=2026-06-29`。TRADING-2338 已占用 B2 data-quality
+      as-of 修复，因此后续 route 使用 TRADING-2339。
+    - 新增 `aits research trends high-intensity-risk-cap-actual-path-outcome-binder`；生成
+      event-level / cluster-level actual-path outcome matrix、trigger-day context、coverage
+      / horizon quality / data quality report、rebound / stress / false warning / missed
+      upside / downside capture / manual-review usefulness proxy reports、cluster weighting
+      policy、interpretation boundary、2339 readiness checklist、2339 task route、安全边界和
+      research docs；真实 run status=`PARTIAL_OUTCOME_BINDING_WITH_NOT_DUE_HORIZONS`，data_quality_status=`PASS_WITH_WARNINGS`，`validate_data_as_of=2026-06-29`，event_count=`60`，cluster_count=`60`，pending_outcome_count=`240`，event/cluster
+      outcome rows=`240/240`，cluster_outcome_bound_count=`231`，coverage=`PARTIAL_COVERAGE_WITH_NOT_DUE_HORIZONS`，readiness=`PARTIAL_OUTCOME_REVIEW_REQUIRED`，next
+      task=`TRADING-2339_High_Intensity_Risk_Cap_Partial_Outcome_Readiness_Review`；partial
+      status 来自尾部实际交易日 horizon 尚未成熟，不是 data-quality failure；cluster-level 是主分析单位，trigger-day
+      context 不进入主样本；所有 outputs 固定 `outcome_binding_executed=true`、`original_event_log_mutated=false`、promotion/paper-shadow/production
+      false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 17 passed、真实
+      CLI run、`aits validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS / error_count=0、docs
+      freshness、documentation contract、task-register consistency run/validate、contract-validation
+      193 passed、full parallel pytest 4178 passed / 643 warnings 和 `git diff --check`。
+    - '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 TRADING-2336 的 observe-only
+      event / cluster 转成可审计 future outcome evidence pipeline，而不是证明 risk-cap 有效。2026-07-04:
+      实现完成并进入 VALIDATING；真实 CLI run 确认数据质量 PASS_WITH_WARNINGS 且尾部 not-due horizon
+      被区分为 `OUTCOME_NOT_DUE`。2026-07-04: 完整验证通过并归档 DONE；后续进入 TRADING-2339 partial
+      outcome readiness review。'
+    raw_line: '|TRADING-2337_HIGH_INTENSITY_RISK_CAP_ACTUAL_PATH_OUTCOME_BINDER|Research
+      trends / high-intensity risk-cap actual-path outcome binder|P0|DONE|项目 owner
+      后续复核 TRADING-2339 partial outcome readiness review|详见 `docs/requirements/TRADING-2337_High_Intensity_Risk_Cap_Actual_Path_Outcome_Binder.md`；承接
+      TRADING-2336 observe-only event logger，读取 2336 event log、cluster registry、pending
+      outcome registry、outcome schedule、TRADING-2335 selected rule context、TRADING-2334
+      actual-path contract 和 canonical market price cache；绑定 actual-path outcome 前执行同源
+      `validate_data_cache` 门禁，真实 `as_of=2026-06-29`。TRADING-2338 已占用 B2 data-quality
+      as-of 修复，因此后续 route 使用 TRADING-2339。|新增 `aits research trends high-intensity-risk-cap-actual-path-outcome-binder`；生成
+      event-level / cluster-level actual-path outcome matrix、trigger-day context、coverage
+      / horizon quality / data quality report、rebound / stress / false warning / missed
+      upside / downside capture / manual-review usefulness proxy reports、cluster weighting
+      policy、interpretation boundary、2339 readiness checklist、2339 task route、安全边界和
+      research docs；真实 run status=`PARTIAL_OUTCOME_BINDING_WITH_NOT_DUE_HORIZONS`，data_quality_status=`PASS_WITH_WARNINGS`，`validate_data_as_of=2026-06-29`，event_count=`60`，cluster_count=`60`，pending_outcome_count=`240`，event/cluster
+      outcome rows=`240/240`，cluster_outcome_bound_count=`231`，coverage=`PARTIAL_COVERAGE_WITH_NOT_DUE_HORIZONS`，readiness=`PARTIAL_OUTCOME_REVIEW_REQUIRED`，next
+      task=`TRADING-2339_High_Intensity_Risk_Cap_Partial_Outcome_Readiness_Review`；partial
+      status 来自尾部实际交易日 horizon 尚未成熟，不是 data-quality failure；cluster-level 是主分析单位，trigger-day
+      context 不进入主样本；所有 outputs 固定 `outcome_binding_executed=true`、`original_event_log_mutated=false`、promotion/paper-shadow/production
+      false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 17 passed、真实
+      CLI run、`aits validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS / error_count=0、docs
+      freshness、documentation contract、task-register consistency run/validate、contract-validation
+      193 passed、full parallel pytest 4178 passed / 643 warnings 和 `git diff --check`。|2026-07-04:
+      根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 TRADING-2336 的 observe-only event / cluster
+      转成可审计 future outcome evidence pipeline，而不是证明 risk-cap 有效。2026-07-04: 实现完成并进入
+      VALIDATING；真实 CLI run 确认数据质量 PASS_WITH_WARNINGS 且尾部 not-due horizon 被区分为 `OUTCOME_NOT_DUE`。2026-07-04:
+      完整验证通过并归档 DONE；后续进入 TRADING-2339 partial outcome readiness review。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-41ef1de11115f5653ad80a9a
+  task_id: TRADING-2337_HIGH_INTENSITY_RISK_CAP_ACTUAL_PATH_OUTCOME_BINDER
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2339 partial outcome readiness review
+    notes: '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 TRADING-2336 的 observe-only
+      event / cluster 转成可审计 future outcome evidence pipeline，而不是证明 risk-cap 有效。2026-07-04:
+      实现完成并进入 VALIDATING；真实 CLI run 确认数据质量 PASS_WITH_WARNINGS 且尾部 not-due horizon
+      被区分为 `OUTCOME_NOT_DUE`。2026-07-04: 完整验证通过并归档 DONE；后续进入 TRADING-2339 partial
+      outcome readiness review。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:41ef1de11115f5653ad80a9a198628bc34ca7bb2cc3e4a28fd94a1e8905c697d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2337_HIGH_INTENSITY_RISK_CAP_ACTUAL_PATH_OUTCOME_BINDER
+  - Research trends / high-intensity risk-cap actual-path outcome binder
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2339 partial outcome readiness review
+  - 详见 `docs/requirements/TRADING-2337_High_Intensity_Risk_Cap_Actual_Path_Outcome_Binder.md`；承接
+    TRADING-2336 observe-only event logger，读取 2336 event log、cluster registry、pending
+    outcome registry、outcome schedule、TRADING-2335 selected rule context、TRADING-2334
+    actual-path contract 和 canonical market price cache；绑定 actual-path outcome 前执行同源
+    `validate_data_cache` 门禁，真实 `as_of=2026-06-29`。TRADING-2338 已占用 B2 data-quality
+    as-of 修复，因此后续 route 使用 TRADING-2339。
+  - 新增 `aits research trends high-intensity-risk-cap-actual-path-outcome-binder`；生成
+    event-level / cluster-level actual-path outcome matrix、trigger-day context、coverage
+    / horizon quality / data quality report、rebound / stress / false warning / missed
+    upside / downside capture / manual-review usefulness proxy reports、cluster weighting
+    policy、interpretation boundary、2339 readiness checklist、2339 task route、安全边界和
+    research docs；真实 run status=`PARTIAL_OUTCOME_BINDING_WITH_NOT_DUE_HORIZONS`，data_quality_status=`PASS_WITH_WARNINGS`，`validate_data_as_of=2026-06-29`，event_count=`60`，cluster_count=`60`，pending_outcome_count=`240`，event/cluster
+    outcome rows=`240/240`，cluster_outcome_bound_count=`231`，coverage=`PARTIAL_COVERAGE_WITH_NOT_DUE_HORIZONS`，readiness=`PARTIAL_OUTCOME_REVIEW_REQUIRED`，next
+    task=`TRADING-2339_High_Intensity_Risk_Cap_Partial_Outcome_Readiness_Review`；partial
+    status 来自尾部实际交易日 horizon 尚未成熟，不是 data-quality failure；cluster-level 是主分析单位，trigger-day
+    context 不进入主样本；所有 outputs 固定 `outcome_binding_executed=true`、`original_event_log_mutated=false`、promotion/paper-shadow/production
+    false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 17 passed、真实
+    CLI run、`aits validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS / error_count=0、docs
+    freshness、documentation contract、task-register consistency run/validate、contract-validation
+    193 passed、full parallel pytest 4178 passed / 643 warnings 和 `git diff --check`。
+  - '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 TRADING-2336 的 observe-only
+    event / cluster 转成可审计 future outcome evidence pipeline，而不是证明 risk-cap 有效。2026-07-04:
+    实现完成并进入 VALIDATING；真实 CLI run 确认数据质量 PASS_WITH_WARNINGS 且尾部 not-due horizon 被区分为
+    `OUTCOME_NOT_DUE`。2026-07-04: 完整验证通过并归档 DONE；后续进入 TRADING-2339 partial outcome
+    readiness review。'
+  docs_links:
+  - docs/requirements/TRADING-2337_High_Intensity_Risk_Cap_Actual_Path_Outcome_Binder.md
+  terminal: true
+  raw_row_sha256: 41ef1de11115f5653ad80a9a198628bc34ca7bb2cc3e4a28fd94a1e8905c697d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d229999848516d81e2d562beed45652008f1bccf1accdb4fc3b8f9220b9dfa78

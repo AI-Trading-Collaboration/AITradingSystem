@@ -1,0 +1,105 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-001
+  title: null
+  domain: 报告/审计
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/report_traceability.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已按 `docs/requirements/report_traceability.md`
+    第一版实现日报/回测 evidence bundle、run manifest、dataset/quality refs 和 `aits trace lookup`
+    反查入口
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 最终报告的每个核心结论都有稳定 `claim`、`evidence`、`dataset`、`quality` 引用；evidence bundle
+      记录 signal、配置快照、ticker、日期窗口、`ai_after_chatgpt` regime、数据质量门状态和数据集 provider/row
+      count/checksum；可从报告反查原始或标准化数据快照；实现时同步更新 `docs/system_flow.md` 并补充测试或示例报告
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 425
+    row_sha256: 8c4748b3b3645c81c8ca7d2a2ce18db820764fe5b9448669c27c6194b8c7d013
+    cell_count: 8
+    all_cells:
+    - REPORT-001
+    - 报告/审计
+    - P0
+    - DONE
+    - 系统实现
+    - 已按 `docs/requirements/report_traceability.md` 第一版实现日报/回测 evidence bundle、run
+      manifest、dataset/quality refs 和 `aits trace lookup` 反查入口
+    - 最终报告的每个核心结论都有稳定 `claim`、`evidence`、`dataset`、`quality` 引用；evidence bundle 记录
+      signal、配置快照、ticker、日期窗口、`ai_after_chatgpt` regime、数据质量门状态和数据集 provider/row count/checksum；可从报告反查原始或标准化数据快照；实现时同步更新
+      `docs/system_flow.md` 并补充测试或示例报告
+    - '2026-05-04: 从 READY 改为 IN_PROGRESS，原因：创建需求拆解文档并开始实现第一版报告可追溯链路。2026-05-04: 从
+      IN_PROGRESS 改为 DONE，原因：日报和回测已生成 trace bundle 并注入可追溯引用章节，`aits trace lookup`
+      可反查 claim/evidence/dataset/quality/run id；`python -m pytest -q` 通过 203 项测试。'
+    raw_line: '|REPORT-001|报告/审计|P0|DONE|系统实现|已按 `docs/requirements/report_traceability.md`
+      第一版实现日报/回测 evidence bundle、run manifest、dataset/quality refs 和 `aits trace lookup`
+      反查入口|最终报告的每个核心结论都有稳定 `claim`、`evidence`、`dataset`、`quality` 引用；evidence bundle
+      记录 signal、配置快照、ticker、日期窗口、`ai_after_chatgpt` regime、数据质量门状态和数据集 provider/row
+      count/checksum；可从报告反查原始或标准化数据快照；实现时同步更新 `docs/system_flow.md` 并补充测试或示例报告|2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：创建需求拆解文档并开始实现第一版报告可追溯链路。2026-05-04: 从 IN_PROGRESS
+      改为 DONE，原因：日报和回测已生成 trace bundle 并注入可追溯引用章节，`aits trace lookup` 可反查 claim/evidence/dataset/quality/run
+      id；`python -m pytest -q` 通过 203 项测试。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8c4748b3b3645c81c8ca7d2a
+  task_id: REPORT-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-04: 从 READY 改为 IN_PROGRESS，原因：创建需求拆解文档并开始实现第一版报告可追溯链路。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：日报和回测已生成 trace bundle 并注入可追溯引用章节，`aits trace lookup`
+      可反查 claim/evidence/dataset/quality/run id；`python -m pytest -q` 通过 203 项测试。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8c4748b3b3645c81c8ca7d2a2ce18db820764fe5b9448669c27c6194b8c7d013
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-001
+  - 报告/审计
+  - P0
+  - DONE
+  - 系统实现
+  - 已按 `docs/requirements/report_traceability.md` 第一版实现日报/回测 evidence bundle、run manifest、dataset/quality
+    refs 和 `aits trace lookup` 反查入口
+  - 最终报告的每个核心结论都有稳定 `claim`、`evidence`、`dataset`、`quality` 引用；evidence bundle 记录 signal、配置快照、ticker、日期窗口、`ai_after_chatgpt`
+    regime、数据质量门状态和数据集 provider/row count/checksum；可从报告反查原始或标准化数据快照；实现时同步更新 `docs/system_flow.md`
+    并补充测试或示例报告
+  - '2026-05-04: 从 READY 改为 IN_PROGRESS，原因：创建需求拆解文档并开始实现第一版报告可追溯链路。2026-05-04: 从 IN_PROGRESS
+    改为 DONE，原因：日报和回测已生成 trace bundle 并注入可追溯引用章节，`aits trace lookup` 可反查 claim/evidence/dataset/quality/run
+    id；`python -m pytest -q` 通过 203 项测试。'
+  docs_links:
+  - docs/requirements/report_traceability.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: 8c4748b3b3645c81c8ca7d2a2ce18db820764fe5b9448669c27c6194b8c7d013
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 01a70b117e2d29ee1e23b350dae853d313656865dd9b383f35cb5fcf0a9a0f7f

@@ -1,0 +1,180 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-082
+  title: null
+  domain: ETF portfolio research/Shadow-Ready Candidate Review and Enrollment Playbook
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-082_Shadow_Ready_Candidate_Review_and_Enrollment_Playbook.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-082_Shadow_Ready_Candidate_Review_and_Enrollment_Playbook.md`；baseline
+    已实现 shadow-ready review policy、diagnostics artifact loader、shape-level aggregator/ranking、near-shadow
+    summary、owner review package、approval capture、approved-only enrollment、forward
+    tracking linkage、Reader Brief section 和 validation gate；下一步 owner 复核真实 review
+    package，并在批准后观察 forward shadow tracking
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`config/etf_portfolio/shadow_ready_review.yaml` 存在且 safety fields mandatory；`aits
+      etf shadow-review package/approve/enroll-approved/validate` 可运行；diagnostics
+      artifacts、stable shapes 和 near-shadow inputs 可加载并保留 source links；review priority
+      ranking 不只按历史收益，且解释 supporting/blocking evidence；owner approval 是 enrollment
+      前置条件，未批准 candidate 不得 enroll；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；Reader
+      Brief 只读 latest review package/enrollment 状态；system flow、artifact catalog、operations
+      runbook、README、task register、requirement docs 和 tests 同步；focused pytest、ruff、compileall、diff
+      check、`aits etf shadow-review validate` 和全量 `python -m pytest tests -q` 长跑通过；真实
+      owner approval 和 forward observation 仍待运行验证'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1480
+    row_sha256: 6578b343fb07e30155d238f5743db1621ed12558a6b8d07b2ada79ed5ea140e5
+    cell_count: 8
+    all_cells:
+    - TRADING-082
+    - ETF portfolio research/Shadow-Ready Candidate Review and Enrollment Playbook
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-082_Shadow_Ready_Candidate_Review_and_Enrollment_Playbook.md`；baseline
+      已实现 shadow-ready review policy、diagnostics artifact loader、shape-level aggregator/ranking、near-shadow
+      summary、owner review package、approval capture、approved-only enrollment、forward
+      tracking linkage、Reader Brief section 和 validation gate；下一步 owner 复核真实 review
+      package，并在批准后观察 forward shadow tracking
+    - '`config/etf_portfolio/shadow_ready_review.yaml` 存在且 safety fields mandatory；`aits
+      etf shadow-review package/approve/enroll-approved/validate` 可运行；diagnostics
+      artifacts、stable shapes 和 near-shadow inputs 可加载并保留 source links；review priority
+      ranking 不只按历史收益，且解释 supporting/blocking evidence；owner approval 是 enrollment
+      前置条件，未批准 candidate 不得 enroll；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；Reader
+      Brief 只读 latest review package/enrollment 状态；system flow、artifact catalog、operations
+      runbook、README、task register、requirement docs 和 tests 同步；focused pytest、ruff、compileall、diff
+      check、`aits etf shadow-review validate` 和全量 `python -m pytest tests -q` 长跑通过；真实
+      owner approval 和 forward observation 仍待运行验证'
+    - '2026-06-04: 新增并进入 IN_PROGRESS，原因：TRADING-081 production-like profiling evidence
+      显示 cold runtime 已低于 1200s trigger 且 warm/resume cache 问题已解决，下一优先级是把 TRADING-079/080/081
+      产出的 `shadow_ready` observations 转成 owner-reviewed forward shadow enrollment
+      workflow。本阶段只做 review/enrollment governance，不允许 production baseline replacement、broker
+      action、automatic promotion 或 auto-enrollment without approval。2026-06-04: 从
+      IN_PROGRESS 改为 VALIDATING，原因：TRADING-082A~K baseline 实现完成；新增 shadow-ready review
+      policy、`aits etf shadow-review package/approve/enroll-approved/validate`、diagnostics
+      artifact loader、shape aggregation/ranking、near-shadow summary、owner approval
+      capture、approved-only enrollment、forward tracking link、Reader Brief `Shadow
+      Candidate Review` section、report registry/artifact catalog/system flow/runbook/README
+      integration 和 focused tests。验证：相关测试 140 passed，文档契约相关测试 19 passed，ruff、compileall、diff
+      check 和 `aits etf shadow-review validate` 通过。2026-06-05: 全量 `python -m pytest
+      tests -q` 长跑复核通过，结果为 2138 passed、330 warnings、耗时 635.12s；TRADING-082 继续保持 VALIDATING，剩余验证条件是
+      owner 复核真实 review package，并在批准后观察 forward shadow tracking。'
+    raw_line: '|TRADING-082|ETF portfolio research/Shadow-Ready Candidate Review and
+      Enrollment Playbook|P0|VALIDATING|项目 owner 人工复核|详细拆解见 `docs/requirements/TRADING-082_Shadow_Ready_Candidate_Review_and_Enrollment_Playbook.md`；baseline
+      已实现 shadow-ready review policy、diagnostics artifact loader、shape-level aggregator/ranking、near-shadow
+      summary、owner review package、approval capture、approved-only enrollment、forward
+      tracking linkage、Reader Brief section 和 validation gate；下一步 owner 复核真实 review
+      package，并在批准后观察 forward shadow tracking|`config/etf_portfolio/shadow_ready_review.yaml`
+      存在且 safety fields mandatory；`aits etf shadow-review package/approve/enroll-approved/validate`
+      可运行；diagnostics artifacts、stable shapes 和 near-shadow inputs 可加载并保留 source links；review
+      priority ranking 不只按历史收益，且解释 supporting/blocking evidence；owner approval 是 enrollment
+      前置条件，未批准 candidate 不得 enroll；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；Reader
+      Brief 只读 latest review package/enrollment 状态；system flow、artifact catalog、operations
+      runbook、README、task register、requirement docs 和 tests 同步；focused pytest、ruff、compileall、diff
+      check、`aits etf shadow-review validate` 和全量 `python -m pytest tests -q` 长跑通过；真实
+      owner approval 和 forward observation 仍待运行验证|2026-06-04: 新增并进入 IN_PROGRESS，原因：TRADING-081
+      production-like profiling evidence 显示 cold runtime 已低于 1200s trigger 且 warm/resume
+      cache 问题已解决，下一优先级是把 TRADING-079/080/081 产出的 `shadow_ready` observations 转成 owner-reviewed
+      forward shadow enrollment workflow。本阶段只做 review/enrollment governance，不允许 production
+      baseline replacement、broker action、automatic promotion 或 auto-enrollment without
+      approval。2026-06-04: 从 IN_PROGRESS 改为 VALIDATING，原因：TRADING-082A~K baseline
+      实现完成；新增 shadow-ready review policy、`aits etf shadow-review package/approve/enroll-approved/validate`、diagnostics
+      artifact loader、shape aggregation/ranking、near-shadow summary、owner approval
+      capture、approved-only enrollment、forward tracking link、Reader Brief `Shadow
+      Candidate Review` section、report registry/artifact catalog/system flow/runbook/README
+      integration 和 focused tests。验证：相关测试 140 passed，文档契约相关测试 19 passed，ruff、compileall、diff
+      check 和 `aits etf shadow-review validate` 通过。2026-06-05: 全量 `python -m pytest
+      tests -q` 长跑复核通过，结果为 2138 passed、330 warnings、耗时 635.12s；TRADING-082 继续保持 VALIDATING，剩余验证条件是
+      owner 复核真实 review package，并在批准后观察 forward shadow tracking。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6578b343fb07e30155d238f5
+  task_id: TRADING-082
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核
+    notes: '2026-06-04: 新增并进入 IN_PROGRESS，原因：TRADING-081 production-like profiling
+      evidence 显示 cold runtime 已低于 1200s trigger 且 warm/resume cache 问题已解决，下一优先级是把
+      TRADING-079/080/081 产出的 `shadow_ready` observations 转成 owner-reviewed forward
+      shadow enrollment workflow。本阶段只做 review/enrollment governance，不允许 production
+      baseline replacement、broker action、automatic promotion 或 auto-enrollment without
+      approval。2026-06-04: 从 IN_PROGRESS 改为 VALIDATING，原因：TRADING-082A~K baseline
+      实现完成；新增 shadow-ready review policy、`aits etf shadow-review package/approve/enroll-approved/validate`、diagnostics
+      artifact loader、shape aggregation/ranking、near-shadow summary、owner approval
+      capture、approved-only enrollment、forward tracking link、Reader Brief `Shadow
+      Candidate Review` section、report registry/artifact catalog/system flow/runbook/README
+      integration 和 focused tests。验证：相关测试 140 passed，文档契约相关测试 19 passed，ruff、compileall、diff
+      check 和 `aits etf shadow-review validate` 通过。2026-06-05: 全量 `python -m pytest
+      tests -q` 长跑复核通过，结果为 2138 passed、330 warnings、耗时 635.12s；TRADING-082 继续保持 VALIDATING，剩余验证条件是
+      owner 复核真实 review package，并在批准后观察 forward shadow tracking。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6578b343fb07e30155d238f5743db1621ed12558a6b8d07b2ada79ed5ea140e5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-082
+  - ETF portfolio research/Shadow-Ready Candidate Review and Enrollment Playbook
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-082_Shadow_Ready_Candidate_Review_and_Enrollment_Playbook.md`；baseline
+    已实现 shadow-ready review policy、diagnostics artifact loader、shape-level aggregator/ranking、near-shadow
+    summary、owner review package、approval capture、approved-only enrollment、forward
+    tracking linkage、Reader Brief section 和 validation gate；下一步 owner 复核真实 review
+    package，并在批准后观察 forward shadow tracking
+  - '`config/etf_portfolio/shadow_ready_review.yaml` 存在且 safety fields mandatory；`aits
+    etf shadow-review package/approve/enroll-approved/validate` 可运行；diagnostics artifacts、stable
+    shapes 和 near-shadow inputs 可加载并保留 source links；review priority ranking 不只按历史收益，且解释
+    supporting/blocking evidence；owner approval 是 enrollment 前置条件，未批准 candidate 不得
+    enroll；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；Reader
+    Brief 只读 latest review package/enrollment 状态；system flow、artifact catalog、operations
+    runbook、README、task register、requirement docs 和 tests 同步；focused pytest、ruff、compileall、diff
+    check、`aits etf shadow-review validate` 和全量 `python -m pytest tests -q` 长跑通过；真实
+    owner approval 和 forward observation 仍待运行验证'
+  - '2026-06-04: 新增并进入 IN_PROGRESS，原因：TRADING-081 production-like profiling evidence
+    显示 cold runtime 已低于 1200s trigger 且 warm/resume cache 问题已解决，下一优先级是把 TRADING-079/080/081
+    产出的 `shadow_ready` observations 转成 owner-reviewed forward shadow enrollment workflow。本阶段只做
+    review/enrollment governance，不允许 production baseline replacement、broker action、automatic
+    promotion 或 auto-enrollment without approval。2026-06-04: 从 IN_PROGRESS 改为 VALIDATING，原因：TRADING-082A~K
+    baseline 实现完成；新增 shadow-ready review policy、`aits etf shadow-review package/approve/enroll-approved/validate`、diagnostics
+    artifact loader、shape aggregation/ranking、near-shadow summary、owner approval capture、approved-only
+    enrollment、forward tracking link、Reader Brief `Shadow Candidate Review` section、report
+    registry/artifact catalog/system flow/runbook/README integration 和 focused tests。验证：相关测试
+    140 passed，文档契约相关测试 19 passed，ruff、compileall、diff check 和 `aits etf shadow-review
+    validate` 通过。2026-06-05: 全量 `python -m pytest tests -q` 长跑复核通过，结果为 2138 passed、330
+    warnings、耗时 635.12s；TRADING-082 继续保持 VALIDATING，剩余验证条件是 owner 复核真实 review package，并在批准后观察
+    forward shadow tracking。'
+  docs_links:
+  - docs/requirements/TRADING-082_Shadow_Ready_Candidate_Review_and_Enrollment_Playbook.md
+  terminal: false
+  raw_row_sha256: 6578b343fb07e30155d238f5743db1621ed12558a6b8d07b2ada79ed5ea140e5
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 03556f241a787099efef785693884e024f5a6cfb9b48371337995cf2ea18c6b9

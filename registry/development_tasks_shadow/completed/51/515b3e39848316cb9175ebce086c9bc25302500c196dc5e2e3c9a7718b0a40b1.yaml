@@ -1,0 +1,173 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-009
+  title: null
+  domain: 交易执行/IBKR Paper read-only sync
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/ibkr_paper_readonly_sync_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/ibkr_paper_readonly_sync_2026-05-17.md`；只读
+    adapter、默认关闭配置、snapshot JSON/Markdown、PaperPortfolio 对账 scaffold、mock 测试、真实 TWS
+    Paper snapshot 复核和安全边界验证已完成；不提交订单、不接 production account、不读取 broker API key
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `config/ibkr_paper_readonly.yaml` 默认 `enabled=false`、`trading_mode=paper`、`readonly=true`、`production_effect=none`；新增只读
+      adapter 仅允许 connect/disconnect/account summary/positions/open orders/executions/contract
+      details，`submit_order` 抛明确错误；非 paper 或 readonly=false fail closed；account id
+      仅 masked 输出，非 paper/DUP account 至少 LIMITED/BLOCK；snapshot 输出 `outputs/reports/ibkr_paper_account_snapshot_YYYY-MM-DD.json/md`，含
+      connection_status、masked account、summary、positions、open orders、recent executions、contract
+      sample、reconciliation_status、`production_effect=none`、`readonly=true`；mock client
+      测试覆盖默认关闭、安全边界、脱敏、无真实网络和无密钥读取；真实 TWS Paper snapshot 已确认 connected / PASS 且无 submit/cancel/placeOrder
+      痕迹；目标 pytest、全量 pytest、ruff 和触达文件 Black check 通过；全仓 Black 当前仍被无关 repo-wide formatter
+      baseline 阻断并由 TRADING-006 后续治理承接
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 296
+    row_sha256: 6cd208452c3ea77c66d4e9c6add8b3dea3882b94b35de92c5dbd3b122f8ab88f
+    cell_count: 8
+    all_cells:
+    - TRADING-009
+    - 交易执行/IBKR Paper read-only sync
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/ibkr_paper_readonly_sync_2026-05-17.md`；只读 adapter、默认关闭配置、snapshot
+      JSON/Markdown、PaperPortfolio 对账 scaffold、mock 测试、真实 TWS Paper snapshot 复核和安全边界验证已完成；不提交订单、不接
+      production account、不读取 broker API key
+    - 新增 `config/ibkr_paper_readonly.yaml` 默认 `enabled=false`、`trading_mode=paper`、`readonly=true`、`production_effect=none`；新增只读
+      adapter 仅允许 connect/disconnect/account summary/positions/open orders/executions/contract
+      details，`submit_order` 抛明确错误；非 paper 或 readonly=false fail closed；account id
+      仅 masked 输出，非 paper/DUP account 至少 LIMITED/BLOCK；snapshot 输出 `outputs/reports/ibkr_paper_account_snapshot_YYYY-MM-DD.json/md`，含
+      connection_status、masked account、summary、positions、open orders、recent executions、contract
+      sample、reconciliation_status、`production_effect=none`、`readonly=true`；mock client
+      测试覆盖默认关闭、安全边界、脱敏、无真实网络和无密钥读取；真实 TWS Paper snapshot 已确认 connected / PASS 且无 submit/cancel/placeOrder
+      痕迹；目标 pytest、全量 pytest、ruff 和触达文件 Black check 通过；全仓 Black 当前仍被无关 repo-wide formatter
+      baseline 阻断并由 TRADING-006 后续治理承接
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-008A post-merge sanity review
+      和 CI 通过后推进 IBKR Paper 只读同步，用于验证 IB Gateway / TWS Paper 连接、账户状态读取和本地 PaperPortfolio
+      对账能力；本轮不提交订单，保持 read-only、paper-only、`production_effect=none`。2026-05-17: 从
+      IN_PROGRESS 改为 VALIDATING，原因：已新增 `IBKRPaperReadOnlyAdapter`、`config/ibkr_paper_readonly.yaml`、`scripts/run_ibkr_paper_readonly_snapshot.py`、`IBKRPaperReadOnlyReconciliation`
+      scaffold、mock client 测试和系统流图更新；本地验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff
+      和 black check。2026-05-17: 继续保持 VALIDATING，原因：真实 TWS Paper API socket `127.0.0.1:7497`
+      已连接成功，修复 Python 3.14 `ib_insync` event loop 初始化和 AccountValue / Position 序列行解析后，`ibkr_paper_account_snapshot_2026-05-17.json/md`
+      生成且 `snapshot_status=PASS`、`reconciliation_status=PASS`、account id masked、`production_effect=none`、`readonly=true`，未出现
+      submit/cancel/placeOrder。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前 ignored 真实 snapshot
+      字段级复核仍为 `snapshot_status=PASS`、`connection_status=CONNECTED`、`reconciliation_status=PASS`、`production_effect=none`、`readonly=true`、account
+      id masked、account assessment PASS，完整账号、credential 和 order mutation 关键字匹配数为 0；默认
+      config smoke 输出 `DISABLED/BLOCK`，证明无 local config 不连接真实 broker；验证通过 `test_ibkr_paper_readonly.py`
+      15 passed、`tests/trading_engine` 939 passed、全量 pytest 2270 passed、全量 Ruff 和触达文件
+      Black check。'
+    raw_line: '|TRADING-009|交易执行/IBKR Paper read-only sync|P0|DONE|系统验证|详细拆解见 `docs/requirements/ibkr_paper_readonly_sync_2026-05-17.md`；只读
+      adapter、默认关闭配置、snapshot JSON/Markdown、PaperPortfolio 对账 scaffold、mock 测试、真实
+      TWS Paper snapshot 复核和安全边界验证已完成；不提交订单、不接 production account、不读取 broker API key|新增
+      `config/ibkr_paper_readonly.yaml` 默认 `enabled=false`、`trading_mode=paper`、`readonly=true`、`production_effect=none`；新增只读
+      adapter 仅允许 connect/disconnect/account summary/positions/open orders/executions/contract
+      details，`submit_order` 抛明确错误；非 paper 或 readonly=false fail closed；account id
+      仅 masked 输出，非 paper/DUP account 至少 LIMITED/BLOCK；snapshot 输出 `outputs/reports/ibkr_paper_account_snapshot_YYYY-MM-DD.json/md`，含
+      connection_status、masked account、summary、positions、open orders、recent executions、contract
+      sample、reconciliation_status、`production_effect=none`、`readonly=true`；mock client
+      测试覆盖默认关闭、安全边界、脱敏、无真实网络和无密钥读取；真实 TWS Paper snapshot 已确认 connected / PASS 且无 submit/cancel/placeOrder
+      痕迹；目标 pytest、全量 pytest、ruff 和触达文件 Black check 通过；全仓 Black 当前仍被无关 repo-wide formatter
+      baseline 阻断并由 TRADING-006 后续治理承接|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在
+      TRADING-008A post-merge sanity review 和 CI 通过后推进 IBKR Paper 只读同步，用于验证 IB Gateway
+      / TWS Paper 连接、账户状态读取和本地 PaperPortfolio 对账能力；本轮不提交订单，保持 read-only、paper-only、`production_effect=none`。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `IBKRPaperReadOnlyAdapter`、`config/ibkr_paper_readonly.yaml`、`scripts/run_ibkr_paper_readonly_snapshot.py`、`IBKRPaperReadOnlyReconciliation`
+      scaffold、mock client 测试和系统流图更新；本地验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff
+      和 black check。2026-05-17: 继续保持 VALIDATING，原因：真实 TWS Paper API socket `127.0.0.1:7497`
+      已连接成功，修复 Python 3.14 `ib_insync` event loop 初始化和 AccountValue / Position 序列行解析后，`ibkr_paper_account_snapshot_2026-05-17.json/md`
+      生成且 `snapshot_status=PASS`、`reconciliation_status=PASS`、account id masked、`production_effect=none`、`readonly=true`，未出现
+      submit/cancel/placeOrder。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前 ignored 真实 snapshot
+      字段级复核仍为 `snapshot_status=PASS`、`connection_status=CONNECTED`、`reconciliation_status=PASS`、`production_effect=none`、`readonly=true`、account
+      id masked、account assessment PASS，完整账号、credential 和 order mutation 关键字匹配数为 0；默认
+      config smoke 输出 `DISABLED/BLOCK`，证明无 local config 不连接真实 broker；验证通过 `test_ibkr_paper_readonly.py`
+      15 passed、`tests/trading_engine` 939 passed、全量 pytest 2270 passed、全量 Ruff 和触达文件
+      Black check。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6cd208452c3ea77c66d4e9c6
+  task_id: TRADING-009
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-008A post-merge sanity
+      review 和 CI 通过后推进 IBKR Paper 只读同步，用于验证 IB Gateway / TWS Paper 连接、账户状态读取和本地 PaperPortfolio
+      对账能力；本轮不提交订单，保持 read-only、paper-only、`production_effect=none`。2026-05-17: 从
+      IN_PROGRESS 改为 VALIDATING，原因：已新增 `IBKRPaperReadOnlyAdapter`、`config/ibkr_paper_readonly.yaml`、`scripts/run_ibkr_paper_readonly_snapshot.py`、`IBKRPaperReadOnlyReconciliation`
+      scaffold、mock client 测试和系统流图更新；本地验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff
+      和 black check。2026-05-17: 继续保持 VALIDATING，原因：真实 TWS Paper API socket `127.0.0.1:7497`
+      已连接成功，修复 Python 3.14 `ib_insync` event loop 初始化和 AccountValue / Position 序列行解析后，`ibkr_paper_account_snapshot_2026-05-17.json/md`
+      生成且 `snapshot_status=PASS`、`reconciliation_status=PASS`、account id masked、`production_effect=none`、`readonly=true`，未出现
+      submit/cancel/placeOrder。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前 ignored 真实 snapshot
+      字段级复核仍为 `snapshot_status=PASS`、`connection_status=CONNECTED`、`reconciliation_status=PASS`、`production_effect=none`、`readonly=true`、account
+      id masked、account assessment PASS，完整账号、credential 和 order mutation 关键字匹配数为 0；默认
+      config smoke 输出 `DISABLED/BLOCK`，证明无 local config 不连接真实 broker；验证通过 `test_ibkr_paper_readonly.py`
+      15 passed、`tests/trading_engine` 939 passed、全量 pytest 2270 passed、全量 Ruff 和触达文件
+      Black check。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6cd208452c3ea77c66d4e9c6add8b3dea3882b94b35de92c5dbd3b122f8ab88f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-009
+  - 交易执行/IBKR Paper read-only sync
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/ibkr_paper_readonly_sync_2026-05-17.md`；只读 adapter、默认关闭配置、snapshot
+    JSON/Markdown、PaperPortfolio 对账 scaffold、mock 测试、真实 TWS Paper snapshot 复核和安全边界验证已完成；不提交订单、不接
+    production account、不读取 broker API key
+  - 新增 `config/ibkr_paper_readonly.yaml` 默认 `enabled=false`、`trading_mode=paper`、`readonly=true`、`production_effect=none`；新增只读
+    adapter 仅允许 connect/disconnect/account summary/positions/open orders/executions/contract
+    details，`submit_order` 抛明确错误；非 paper 或 readonly=false fail closed；account id 仅
+    masked 输出，非 paper/DUP account 至少 LIMITED/BLOCK；snapshot 输出 `outputs/reports/ibkr_paper_account_snapshot_YYYY-MM-DD.json/md`，含
+    connection_status、masked account、summary、positions、open orders、recent executions、contract
+    sample、reconciliation_status、`production_effect=none`、`readonly=true`；mock client
+    测试覆盖默认关闭、安全边界、脱敏、无真实网络和无密钥读取；真实 TWS Paper snapshot 已确认 connected / PASS 且无 submit/cancel/placeOrder
+    痕迹；目标 pytest、全量 pytest、ruff 和触达文件 Black check 通过；全仓 Black 当前仍被无关 repo-wide formatter
+    baseline 阻断并由 TRADING-006 后续治理承接
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-008A post-merge sanity review
+    和 CI 通过后推进 IBKR Paper 只读同步，用于验证 IB Gateway / TWS Paper 连接、账户状态读取和本地 PaperPortfolio
+    对账能力；本轮不提交订单，保持 read-only、paper-only、`production_effect=none`。2026-05-17: 从 IN_PROGRESS
+    改为 VALIDATING，原因：已新增 `IBKRPaperReadOnlyAdapter`、`config/ibkr_paper_readonly.yaml`、`scripts/run_ibkr_paper_readonly_snapshot.py`、`IBKRPaperReadOnlyReconciliation`
+    scaffold、mock client 测试和系统流图更新；本地验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff
+    和 black check。2026-05-17: 继续保持 VALIDATING，原因：真实 TWS Paper API socket `127.0.0.1:7497`
+    已连接成功，修复 Python 3.14 `ib_insync` event loop 初始化和 AccountValue / Position 序列行解析后，`ibkr_paper_account_snapshot_2026-05-17.json/md`
+    生成且 `snapshot_status=PASS`、`reconciliation_status=PASS`、account id masked、`production_effect=none`、`readonly=true`，未出现
+    submit/cancel/placeOrder。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前 ignored 真实 snapshot
+    字段级复核仍为 `snapshot_status=PASS`、`connection_status=CONNECTED`、`reconciliation_status=PASS`、`production_effect=none`、`readonly=true`、account
+    id masked、account assessment PASS，完整账号、credential 和 order mutation 关键字匹配数为 0；默认
+    config smoke 输出 `DISABLED/BLOCK`，证明无 local config 不连接真实 broker；验证通过 `test_ibkr_paper_readonly.py`
+    15 passed、`tests/trading_engine` 939 passed、全量 pytest 2270 passed、全量 Ruff 和触达文件
+    Black check。'
+  docs_links:
+  - docs/requirements/ibkr_paper_readonly_sync_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 6cd208452c3ea77c66d4e9c6add8b3dea3882b94b35de92c5dbd3b122f8ab88f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 150ef6c424ad2440898f4296c576b2411c4296f40d8f28a84454b49e2616209f

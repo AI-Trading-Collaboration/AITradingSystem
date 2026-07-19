@@ -1,0 +1,138 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ENG-VAL-006_CONTROLLED_STRATEGY_REGIME_HORIZON_FIXTURE_REUSE
+  title: null
+  domain: Developer validation / contract-validation runtime optimization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统后续针对 tail-risk independent setup、current subscription CLI smoke、controlled
+    strategy batch CLI smoke、candidate-batch repeated construction 和 value-surface
+    repeated construction 继续优化
+  requirement_refs:
+  - docs/requirements/ENG-VAL-006_Controlled_Strategy_Regime_Horizon_Fixture_Reuse.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ENG-VAL-006_Controlled_Strategy_Regime_Horizon_Fixture_Reuse.md`；承接
+    ENG-VAL-005 后 `contract-validation_20260704T191536Z` 中 controlled strategy regime/horizon
+    repeated input chain 慢项。本任务只优化测试前置 artifact 构造组织，不改变 production builders、report
+    behavior、tier 覆盖、validation runner 默认策略或生产边界。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`tests/test_controlled_strategy_regime_horizon.py` 复用 module-scoped 只读
+      input fixtures；每个测试仍执行自身目标 builder 并写入独立 `tmp_path`。验证通过 Ruff、compileall、focused
+      pytest `15 passed in 18.86s`、contract-validation `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T193021Z/test_runtime_summary.json`）和后续文档
+      / task-register / diff gates。Focused pytest 从 `15 passed in 128.84s` 降到 `15
+      passed in 18.86s`；完整 tier elapsed 从 `164.33s` 降到 `93.19s`，top20 slow duration
+      total 从 `258.61s` 降到 `185.56s`。'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 141
+    row_sha256: 6a5dd6cd9b5fa9914f394a381a1f99d82dc205a0d97fc33c426f4ec9b3eb93e7
+    cell_count: 8
+    all_cells:
+    - ENG-VAL-006_CONTROLLED_STRATEGY_REGIME_HORIZON_FIXTURE_REUSE
+    - Developer validation / contract-validation runtime optimization
+    - P2
+    - DONE
+    - 系统后续针对 tail-risk independent setup、current subscription CLI smoke、controlled
+      strategy batch CLI smoke、candidate-batch repeated construction 和 value-surface
+      repeated construction 继续优化
+    - 详见 `docs/requirements/ENG-VAL-006_Controlled_Strategy_Regime_Horizon_Fixture_Reuse.md`；承接
+      ENG-VAL-005 后 `contract-validation_20260704T191536Z` 中 controlled strategy regime/horizon
+      repeated input chain 慢项。本任务只优化测试前置 artifact 构造组织，不改变 production builders、report
+      behavior、tier 覆盖、validation runner 默认策略或生产边界。
+    - '`tests/test_controlled_strategy_regime_horizon.py` 复用 module-scoped 只读 input
+      fixtures；每个测试仍执行自身目标 builder 并写入独立 `tmp_path`。验证通过 Ruff、compileall、focused pytest
+      `15 passed in 18.86s`、contract-validation `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T193021Z/test_runtime_summary.json`）和后续文档
+      / task-register / diff gates。Focused pytest 从 `15 passed in 128.84s` 降到 `15
+      passed in 18.86s`；完整 tier elapsed 从 `164.33s` 降到 `93.19s`，top20 slow duration
+      total 从 `258.61s` 降到 `185.56s`。'
+    - '2026-07-05: 根据 latest slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05:
+      实现完成并归档 DONE；regime/horizon repeated input chain bottleneck 已解除，当前最慢项转为 tail-risk
+      independent setup、current subscription CLI smoke、controlled strategy batch CLI
+      smoke、candidate-batch repeated construction 和 value-surface repeated construction。'
+    raw_line: '|ENG-VAL-006_CONTROLLED_STRATEGY_REGIME_HORIZON_FIXTURE_REUSE|Developer
+      validation / contract-validation runtime optimization|P2|DONE|系统后续针对 tail-risk
+      independent setup、current subscription CLI smoke、controlled strategy batch CLI
+      smoke、candidate-batch repeated construction 和 value-surface repeated construction
+      继续优化|详见 `docs/requirements/ENG-VAL-006_Controlled_Strategy_Regime_Horizon_Fixture_Reuse.md`；承接
+      ENG-VAL-005 后 `contract-validation_20260704T191536Z` 中 controlled strategy regime/horizon
+      repeated input chain 慢项。本任务只优化测试前置 artifact 构造组织，不改变 production builders、report
+      behavior、tier 覆盖、validation runner 默认策略或生产边界。|`tests/test_controlled_strategy_regime_horizon.py`
+      复用 module-scoped 只读 input fixtures；每个测试仍执行自身目标 builder 并写入独立 `tmp_path`。验证通过
+      Ruff、compileall、focused pytest `15 passed in 18.86s`、contract-validation `197
+      passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T193021Z/test_runtime_summary.json`）和后续文档
+      / task-register / diff gates。Focused pytest 从 `15 passed in 128.84s` 降到 `15
+      passed in 18.86s`；完整 tier elapsed 从 `164.33s` 降到 `93.19s`，top20 slow duration
+      total 从 `258.61s` 降到 `185.56s`。|2026-07-05: 根据 latest slow-duration evidence
+      新增并进入 IN_PROGRESS。2026-07-05: 实现完成并归档 DONE；regime/horizon repeated input chain
+      bottleneck 已解除，当前最慢项转为 tail-risk independent setup、current subscription CLI
+      smoke、controlled strategy batch CLI smoke、candidate-batch repeated construction
+      和 value-surface repeated construction。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6a5dd6cd9b5fa9914f394a38
+  task_id: ENG-VAL-006_CONTROLLED_STRATEGY_REGIME_HORIZON_FIXTURE_REUSE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统后续针对 tail-risk independent setup、current subscription CLI smoke、controlled
+      strategy batch CLI smoke、candidate-batch repeated construction 和 value-surface
+      repeated construction 继续优化
+    notes: '2026-07-05: 根据 latest slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05:
+      实现完成并归档 DONE；regime/horizon repeated input chain bottleneck 已解除，当前最慢项转为 tail-risk
+      independent setup、current subscription CLI smoke、controlled strategy batch CLI
+      smoke、candidate-batch repeated construction 和 value-surface repeated construction。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6a5dd6cd9b5fa9914f394a381a1f99d82dc205a0d97fc33c426f4ec9b3eb93e7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ENG-VAL-006_CONTROLLED_STRATEGY_REGIME_HORIZON_FIXTURE_REUSE
+  - Developer validation / contract-validation runtime optimization
+  - P2
+  - DONE
+  - 系统后续针对 tail-risk independent setup、current subscription CLI smoke、controlled strategy
+    batch CLI smoke、candidate-batch repeated construction 和 value-surface repeated
+    construction 继续优化
+  - 详见 `docs/requirements/ENG-VAL-006_Controlled_Strategy_Regime_Horizon_Fixture_Reuse.md`；承接
+    ENG-VAL-005 后 `contract-validation_20260704T191536Z` 中 controlled strategy regime/horizon
+    repeated input chain 慢项。本任务只优化测试前置 artifact 构造组织，不改变 production builders、report
+    behavior、tier 覆盖、validation runner 默认策略或生产边界。
+  - '`tests/test_controlled_strategy_regime_horizon.py` 复用 module-scoped 只读 input
+    fixtures；每个测试仍执行自身目标 builder 并写入独立 `tmp_path`。验证通过 Ruff、compileall、focused pytest
+    `15 passed in 18.86s`、contract-validation `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T193021Z/test_runtime_summary.json`）和后续文档
+    / task-register / diff gates。Focused pytest 从 `15 passed in 128.84s` 降到 `15 passed
+    in 18.86s`；完整 tier elapsed 从 `164.33s` 降到 `93.19s`，top20 slow duration total 从
+    `258.61s` 降到 `185.56s`。'
+  - '2026-07-05: 根据 latest slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05: 实现完成并归档
+    DONE；regime/horizon repeated input chain bottleneck 已解除，当前最慢项转为 tail-risk independent
+    setup、current subscription CLI smoke、controlled strategy batch CLI smoke、candidate-batch
+    repeated construction 和 value-surface repeated construction。'
+  docs_links:
+  - docs/requirements/ENG-VAL-006_Controlled_Strategy_Regime_Horizon_Fixture_Reuse.md
+  terminal: true
+  raw_row_sha256: 6a5dd6cd9b5fa9914f394a381a1f99d82dc205a0d97fc33c426f4ec9b3eb93e7
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a2786e9a37f64aa44d0339d5ca32d933401a462e4bf1b4a3c0652e8c655dbd60

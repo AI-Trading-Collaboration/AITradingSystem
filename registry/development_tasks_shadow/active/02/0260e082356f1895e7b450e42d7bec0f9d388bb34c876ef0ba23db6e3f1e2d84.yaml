@@ -1,0 +1,132 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1201_to_1220_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_CLOSEOUT
+  title: null
+  domain: Research strategies / execution semantics actual-path rebacktest closeout
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 + 系统后续验证
+  requirement_refs:
+  - docs/requirements/TRADING-1201_to_1220_Execution_Semantics_Actual_Path_Rebacktest_Closeout.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1201_to_1220_Execution_Semantics_Actual_Path_Rebacktest_Closeout.md`；实现已完成，下一步为
+    owner review `owner_review_pack.md`、确认 lag/staleness materiality、决定哪些策略保留为 research
+    candidates；本批不得解除 dynamic promotion
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`promotion_readiness.json` 使用 `dynamic_promotion_readiness.v1` checklist
+      且 `final_status` 派生；promotion/readiness 决策只读 actual-path metrics，target-path
+      diagnostic-only；每策略 artifact 记录 policy hash；默认多策略 run 输出完整 per-strategy artifacts，以及
+      `index.json`、`leaderboard_actual_path.csv`、`target_vs_actual_gap_summary.csv`、`promotion_readiness_summary.json`、`owner_review_pack.md`；legacy
+      dynamic result 标记为 `PRE_EXECUTION_SEMANTICS_LEGACY_EVIDENCE`；report registry、artifact
+      catalog、system flow、focused tests、Ruff、compileall、parallel pytest 和 `git diff
+      --check` 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1277
+    row_sha256: 4b60722de4716a339caeb007e567170f4037ab0a477b2fed0c7c8d51ae9fe0f8
+    cell_count: 8
+    all_cells:
+    - TRADING-1201_to_1220_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_CLOSEOUT
+    - Research strategies / execution semantics actual-path rebacktest closeout
+    - P0
+    - VALIDATING
+    - 项目 owner 后续复核 + 系统后续验证
+    - 详见 `docs/requirements/TRADING-1201_to_1220_Execution_Semantics_Actual_Path_Rebacktest_Closeout.md`；实现已完成，下一步为
+      owner review `owner_review_pack.md`、确认 lag/staleness materiality、决定哪些策略保留为 research
+      candidates；本批不得解除 dynamic promotion
+    - '`promotion_readiness.json` 使用 `dynamic_promotion_readiness.v1` checklist 且
+      `final_status` 派生；promotion/readiness 决策只读 actual-path metrics，target-path diagnostic-only；每策略
+      artifact 记录 policy hash；默认多策略 run 输出完整 per-strategy artifacts，以及 `index.json`、`leaderboard_actual_path.csv`、`target_vs_actual_gap_summary.csv`、`promotion_readiness_summary.json`、`owner_review_pack.md`；legacy
+      dynamic result 标记为 `PRE_EXECUTION_SEMANTICS_LEGACY_EVIDENCE`；report registry、artifact
+      catalog、system flow、focused tests、Ruff、compileall、parallel pytest 和 `git diff
+      --check` 通过'
+    - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求把 dynamic promotion block 从 warning
+      变成可解释、可测试、可逐项关闭的 readiness checklist，并完成多策略 actual-path rebacktest 聚合闭环；dynamic
+      promotion 仍必须保持 blocked。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI dry-run 完成 8 个策略
+      actual-path rebacktest，`dynamic_promotion_blocked=true`，所有策略 final_status 仍
+      blocked，主要原因是 owner manual review pending，另有 defensive limited staleness fail
+      和 v0.4 lower-turnover lag warn。'
+    raw_line: '|TRADING-1201_to_1220_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_CLOSEOUT|Research
+      strategies / execution semantics actual-path rebacktest closeout|P0|VALIDATING|项目
+      owner 后续复核 + 系统后续验证|详见 `docs/requirements/TRADING-1201_to_1220_Execution_Semantics_Actual_Path_Rebacktest_Closeout.md`；实现已完成，下一步为
+      owner review `owner_review_pack.md`、确认 lag/staleness materiality、决定哪些策略保留为 research
+      candidates；本批不得解除 dynamic promotion|`promotion_readiness.json` 使用 `dynamic_promotion_readiness.v1`
+      checklist 且 `final_status` 派生；promotion/readiness 决策只读 actual-path metrics，target-path
+      diagnostic-only；每策略 artifact 记录 policy hash；默认多策略 run 输出完整 per-strategy artifacts，以及
+      `index.json`、`leaderboard_actual_path.csv`、`target_vs_actual_gap_summary.csv`、`promotion_readiness_summary.json`、`owner_review_pack.md`；legacy
+      dynamic result 标记为 `PRE_EXECUTION_SEMANTICS_LEGACY_EVIDENCE`；report registry、artifact
+      catalog、system flow、focused tests、Ruff、compileall、parallel pytest 和 `git diff
+      --check` 通过|2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求把 dynamic promotion block
+      从 warning 变成可解释、可测试、可逐项关闭的 readiness checklist，并完成多策略 actual-path rebacktest
+      聚合闭环；dynamic promotion 仍必须保持 blocked。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI dry-run
+      完成 8 个策略 actual-path rebacktest，`dynamic_promotion_blocked=true`，所有策略 final_status
+      仍 blocked，主要原因是 owner manual review pending，另有 defensive limited staleness fail
+      和 v0.4 lower-turnover lag warn。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4b60722de4716a339caeb007
+  task_id: TRADING-1201_to_1220_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_CLOSEOUT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 + 系统后续验证
+    notes: '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求把 dynamic promotion block 从
+      warning 变成可解释、可测试、可逐项关闭的 readiness checklist，并完成多策略 actual-path rebacktest 聚合闭环；dynamic
+      promotion 仍必须保持 blocked。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI dry-run 完成 8 个策略
+      actual-path rebacktest，`dynamic_promotion_blocked=true`，所有策略 final_status 仍
+      blocked，主要原因是 owner manual review pending，另有 defensive limited staleness fail
+      和 v0.4 lower-turnover lag warn。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4b60722de4716a339caeb007e567170f4037ab0a477b2fed0c7c8d51ae9fe0f8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1201_to_1220_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_CLOSEOUT
+  - Research strategies / execution semantics actual-path rebacktest closeout
+  - P0
+  - VALIDATING
+  - 项目 owner 后续复核 + 系统后续验证
+  - 详见 `docs/requirements/TRADING-1201_to_1220_Execution_Semantics_Actual_Path_Rebacktest_Closeout.md`；实现已完成，下一步为
+    owner review `owner_review_pack.md`、确认 lag/staleness materiality、决定哪些策略保留为 research
+    candidates；本批不得解除 dynamic promotion
+  - '`promotion_readiness.json` 使用 `dynamic_promotion_readiness.v1` checklist 且 `final_status`
+    派生；promotion/readiness 决策只读 actual-path metrics，target-path diagnostic-only；每策略
+    artifact 记录 policy hash；默认多策略 run 输出完整 per-strategy artifacts，以及 `index.json`、`leaderboard_actual_path.csv`、`target_vs_actual_gap_summary.csv`、`promotion_readiness_summary.json`、`owner_review_pack.md`；legacy
+    dynamic result 标记为 `PRE_EXECUTION_SEMANTICS_LEGACY_EVIDENCE`；report registry、artifact
+    catalog、system flow、focused tests、Ruff、compileall、parallel pytest 和 `git diff
+    --check` 通过'
+  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求把 dynamic promotion block 从 warning
+    变成可解释、可测试、可逐项关闭的 readiness checklist，并完成多策略 actual-path rebacktest 聚合闭环；dynamic
+    promotion 仍必须保持 blocked。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI dry-run 完成 8 个策略
+    actual-path rebacktest，`dynamic_promotion_blocked=true`，所有策略 final_status 仍 blocked，主要原因是
+    owner manual review pending，另有 defensive limited staleness fail 和 v0.4 lower-turnover
+    lag warn。'
+  docs_links:
+  - docs/requirements/TRADING-1201_to_1220_Execution_Semantics_Actual_Path_Rebacktest_Closeout.md
+  terminal: false
+  raw_row_sha256: 4b60722de4716a339caeb007e567170f4037ab0a477b2fed0c7c8d51ae9fe0f8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 974d73896b5873f03506081ff7318903d1d2a832da9c13556d6f9cc2c12ed451

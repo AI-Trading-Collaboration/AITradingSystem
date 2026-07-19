@@ -1,0 +1,146 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2440_GROWTH_TILT_PAPER_SHADOW_CANDIDATE_PROMOTION_REVIEW
+  title: null
+  domain: Strategy research / growth tilt paper-shadow candidate promotion review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2438A replay engine remediation
+  requirement_refs:
+  - docs/requirements/TRADING-2440_Growth_Tilt_Paper_Shadow_Candidate_Promotion_Review.md
+  - docs/tasks/completed/TRADING-2440_Growth_Tilt_Paper_Shadow_Candidate_Promotion_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2440_Growth_Tilt_Paper_Shadow_Candidate_Promotion_Review.md`；承接
+    TRADING-2439，但当前 2439 为 PIT replay gate blocker，未产生 READY forward aging candidate
+    pack，因此本任务 fail-closed，下一跳保持 `TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`；不得输出
+    no-candidate 策略结论或进入 candidate-specific paper-shadow route。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 paper-shadow candidate promotion review builder、`aits research strategies
+      growth-tilt-paper-shadow-candidate-promotion-review`；输出 promotion review result、evidence
+      summary、candidate decision matrix、blocked promotion route、no-effect boundary、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_PAPER_SHADOW_CANDIDATE_PROMOTION_REVIEW_BLOCKED_BY_FORWARD_AGING_GATE`，source_2431_ready=true，source_2432_ready=true，source_2434_ready=true，source_2437_ready=true，source_2438_ready=false，source_2439_forward_aging_ready=false，forward_aging_source_status=`GROWTH_TILT_FORWARD_AGING_CANDIDATE_PACK_BLOCKED_BY_PIT_REPLAY_GATE`，pit_replay_source_status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_BLOCKED_BY_REPLAY_ENGINE_GAP`，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，promotion_review_ready=false，evidence_summary_ready=true，candidate_decision_matrix_ready=true，blocked_promotion_route_ready=true，no_effect_boundary_ready=true，forward_aging_candidate_count=0，review_candidate_count=0，paper_shadow_candidate_found=false，paper_shadow_candidate_count=0，selected_candidates=[]，evidence_gap_count=2，forward_aging_observation_started=false，forward_aging_observation_written=false，candidate_tracking_started=false，paper_shadow_enabled=false，production_enabled=false，broker_enabled=false，next
+      route=`TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 44
+    row_sha256: 1e6a18308dcbfab0bc6665c25d43bc7e9dbe99fc3b7f02310464b53c6915bbd1
+    cell_count: 8
+    all_cells:
+    - TRADING-2440_GROWTH_TILT_PAPER_SHADOW_CANDIDATE_PROMOTION_REVIEW
+    - Strategy research / growth tilt paper-shadow candidate promotion review
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2438A replay engine remediation
+    - 详见 `docs/requirements/TRADING-2440_Growth_Tilt_Paper_Shadow_Candidate_Promotion_Review.md`；承接
+      TRADING-2439，但当前 2439 为 PIT replay gate blocker，未产生 READY forward aging candidate
+      pack，因此本任务 fail-closed，下一跳保持 `TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`；不得输出
+      no-candidate 策略结论或进入 candidate-specific paper-shadow route。
+    - 新增 paper-shadow candidate promotion review builder、`aits research strategies
+      growth-tilt-paper-shadow-candidate-promotion-review`；输出 promotion review result、evidence
+      summary、candidate decision matrix、blocked promotion route、no-effect boundary、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_PAPER_SHADOW_CANDIDATE_PROMOTION_REVIEW_BLOCKED_BY_FORWARD_AGING_GATE`，source_2431_ready=true，source_2432_ready=true，source_2434_ready=true，source_2437_ready=true，source_2438_ready=false，source_2439_forward_aging_ready=false，forward_aging_source_status=`GROWTH_TILT_FORWARD_AGING_CANDIDATE_PACK_BLOCKED_BY_PIT_REPLAY_GATE`，pit_replay_source_status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_BLOCKED_BY_REPLAY_ENGINE_GAP`，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，promotion_review_ready=false，evidence_summary_ready=true，candidate_decision_matrix_ready=true，blocked_promotion_route_ready=true，no_effect_boundary_ready=true，forward_aging_candidate_count=0，review_candidate_count=0，paper_shadow_candidate_found=false，paper_shadow_candidate_count=0，selected_candidates=[]，evidence_gap_count=2，forward_aging_observation_started=false，forward_aging_observation_written=false，candidate_tracking_started=false，paper_shadow_enabled=false，production_enabled=false，broker_enabled=false，next
+      route=`TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`。
+    - '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest、`aits validate-data --as-of 2026-07-08`、真实
+      CLI、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+      和 `git diff --check`。本任务读取 cached market data quality gate 并披露结果，但未生成 paper-shadow
+      candidate、未写 forward observation、未运行 historical screen、PIT replay、backtest、scoring、daily
+      report、outcome binding，不生成 feature/signal/outcome 或交易建议。candidate-specific paper-shadow
+      route、candidate tracking runtime、paper-shadow runtime/schedule、scheduler、event
+      append、real outcome binding、outcome store mutation、production、broker/order、portfolio
+      weight mutation 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2440_Growth_Tilt_Paper_Shadow_Candidate_Promotion_Review.md`。'
+    raw_line: '|TRADING-2440_GROWTH_TILT_PAPER_SHADOW_CANDIDATE_PROMOTION_REVIEW|Strategy
+      research / growth tilt paper-shadow candidate promotion review|P0|DONE|项目 owner
+      后续复核 TRADING-2438A replay engine remediation|详见 `docs/requirements/TRADING-2440_Growth_Tilt_Paper_Shadow_Candidate_Promotion_Review.md`；承接
+      TRADING-2439，但当前 2439 为 PIT replay gate blocker，未产生 READY forward aging candidate
+      pack，因此本任务 fail-closed，下一跳保持 `TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`；不得输出
+      no-candidate 策略结论或进入 candidate-specific paper-shadow route。|新增 paper-shadow
+      candidate promotion review builder、`aits research strategies growth-tilt-paper-shadow-candidate-promotion-review`；输出
+      promotion review result、evidence summary、candidate decision matrix、blocked promotion
+      route、no-effect boundary、research docs、registry、catalog、system flow 和 focused
+      tests；真实 run status=`GROWTH_TILT_PAPER_SHADOW_CANDIDATE_PROMOTION_REVIEW_BLOCKED_BY_FORWARD_AGING_GATE`，source_2431_ready=true，source_2432_ready=true，source_2434_ready=true，source_2437_ready=true，source_2438_ready=false，source_2439_forward_aging_ready=false，forward_aging_source_status=`GROWTH_TILT_FORWARD_AGING_CANDIDATE_PACK_BLOCKED_BY_PIT_REPLAY_GATE`，pit_replay_source_status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_BLOCKED_BY_REPLAY_ENGINE_GAP`，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，promotion_review_ready=false，evidence_summary_ready=true，candidate_decision_matrix_ready=true，blocked_promotion_route_ready=true，no_effect_boundary_ready=true，forward_aging_candidate_count=0，review_candidate_count=0，paper_shadow_candidate_found=false，paper_shadow_candidate_count=0，selected_candidates=[]，evidence_gap_count=2，forward_aging_observation_started=false，forward_aging_observation_written=false，candidate_tracking_started=false，paper_shadow_enabled=false，production_enabled=false，broker_enabled=false，next
+      route=`TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`。|2026-07-09:
+      根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest、`aits validate-data --as-of 2026-07-08`、真实 CLI、docs freshness、documentation
+      contract、task-register consistency run/validate、contract-validation 和 `git diff
+      --check`。本任务读取 cached market data quality gate 并披露结果，但未生成 paper-shadow candidate、未写
+      forward observation、未运行 historical screen、PIT replay、backtest、scoring、daily
+      report、outcome binding，不生成 feature/signal/outcome 或交易建议。candidate-specific paper-shadow
+      route、candidate tracking runtime、paper-shadow runtime/schedule、scheduler、event
+      append、real outcome binding、outcome store mutation、production、broker/order、portfolio
+      weight mutation 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2440_Growth_Tilt_Paper_Shadow_Candidate_Promotion_Review.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1e6a18308dcbfab0bc6665c2
+  task_id: TRADING-2440_GROWTH_TILT_PAPER_SHADOW_CANDIDATE_PROMOTION_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2438A replay engine remediation
+    notes: '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest、`aits validate-data --as-of 2026-07-08`、真实
+      CLI、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+      和 `git diff --check`。本任务读取 cached market data quality gate 并披露结果，但未生成 paper-shadow
+      candidate、未写 forward observation、未运行 historical screen、PIT replay、backtest、scoring、daily
+      report、outcome binding，不生成 feature/signal/outcome 或交易建议。candidate-specific paper-shadow
+      route、candidate tracking runtime、paper-shadow runtime/schedule、scheduler、event
+      append、real outcome binding、outcome store mutation、production、broker/order、portfolio
+      weight mutation 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2440_Growth_Tilt_Paper_Shadow_Candidate_Promotion_Review.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1e6a18308dcbfab0bc6665c25d43bc7e9dbe99fc3b7f02310464b53c6915bbd1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2440_GROWTH_TILT_PAPER_SHADOW_CANDIDATE_PROMOTION_REVIEW
+  - Strategy research / growth tilt paper-shadow candidate promotion review
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2438A replay engine remediation
+  - 详见 `docs/requirements/TRADING-2440_Growth_Tilt_Paper_Shadow_Candidate_Promotion_Review.md`；承接
+    TRADING-2439，但当前 2439 为 PIT replay gate blocker，未产生 READY forward aging candidate
+    pack，因此本任务 fail-closed，下一跳保持 `TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`；不得输出
+    no-candidate 策略结论或进入 candidate-specific paper-shadow route。
+  - 新增 paper-shadow candidate promotion review builder、`aits research strategies growth-tilt-paper-shadow-candidate-promotion-review`；输出
+    promotion review result、evidence summary、candidate decision matrix、blocked promotion
+    route、no-effect boundary、research docs、registry、catalog、system flow 和 focused
+    tests；真实 run status=`GROWTH_TILT_PAPER_SHADOW_CANDIDATE_PROMOTION_REVIEW_BLOCKED_BY_FORWARD_AGING_GATE`，source_2431_ready=true，source_2432_ready=true，source_2434_ready=true，source_2437_ready=true，source_2438_ready=false，source_2439_forward_aging_ready=false，forward_aging_source_status=`GROWTH_TILT_FORWARD_AGING_CANDIDATE_PACK_BLOCKED_BY_PIT_REPLAY_GATE`，pit_replay_source_status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_BLOCKED_BY_REPLAY_ENGINE_GAP`，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，promotion_review_ready=false，evidence_summary_ready=true，candidate_decision_matrix_ready=true，blocked_promotion_route_ready=true，no_effect_boundary_ready=true，forward_aging_candidate_count=0，review_candidate_count=0，paper_shadow_candidate_found=false，paper_shadow_candidate_count=0，selected_candidates=[]，evidence_gap_count=2，forward_aging_observation_started=false，forward_aging_observation_written=false，candidate_tracking_started=false，paper_shadow_enabled=false，production_enabled=false，broker_enabled=false，next
+    route=`TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`。
+  - '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+    Ruff、compileall、focused parallel pytest、`aits validate-data --as-of 2026-07-08`、真实
+    CLI、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+    和 `git diff --check`。本任务读取 cached market data quality gate 并披露结果，但未生成 paper-shadow
+    candidate、未写 forward observation、未运行 historical screen、PIT replay、backtest、scoring、daily
+    report、outcome binding，不生成 feature/signal/outcome 或交易建议。candidate-specific paper-shadow
+    route、candidate tracking runtime、paper-shadow runtime/schedule、scheduler、event
+    append、real outcome binding、outcome store mutation、production、broker/order、portfolio
+    weight mutation 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2440_Growth_Tilt_Paper_Shadow_Candidate_Promotion_Review.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2440_Growth_Tilt_Paper_Shadow_Candidate_Promotion_Review.md
+  - docs/tasks/completed/TRADING-2440_Growth_Tilt_Paper_Shadow_Candidate_Promotion_Review.md
+  terminal: true
+  raw_row_sha256: 1e6a18308dcbfab0bc6665c25d43bc7e9dbe99fc3b7f02310464b53c6915bbd1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 42faed5e1b7bb8fb3d7f89de2c0eb5e1d2acd8808c216d9938ae5abb316ddd24

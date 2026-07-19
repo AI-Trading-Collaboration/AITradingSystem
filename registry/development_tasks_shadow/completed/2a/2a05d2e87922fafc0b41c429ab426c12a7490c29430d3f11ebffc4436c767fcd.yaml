@@ -1,0 +1,162 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-018
+  title: null
+  domain: 市场反馈优化/shadow 参数持续迭代 MVP
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/shadow_parameter_iteration_mvp_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/shadow_parameter_iteration_mvp_2026-05-17.md`；P0/P1
+    已完成，P2 自动 production mutation 项已落实为 guardrails；后续真实 forward outcome 成熟度由生命周期/成熟度任务继续观察
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 基于已有 shadow parameter search output 生成 `data/processed/shadow_iteration_registry.csv`、`outputs/reports/shadow_iteration_YYYY-MM-DD.md/json`
+      和 `outputs/shadow_iterations/<run_id>/*`；候选分类区分 `weight_only`、`gate_only`、`weight_gate_bundle`；只有
+      `weight_only` 可标记为潜在权重迭代候选，`gate_only` 只能进入 gate policy review，bundle 只能 diagnostic；报告披露
+      production 参数未改变、best candidate、primary driver、promotion contract check、blocked
+      reasons、next action、attribution、position change 降级状态和 data lineage；dashboard
+      只读展示 shadow iteration status；`register-forward-shadow` 只更新 registry 状态；retirement
+      规则不写 production；P2 禁止自动改 production weight/profile、approved overlay、approved_hard、gate-only/bundle
+      晋级和 shrinkage proposal；不得写 production weight/scoring/portfolio、approved overlay
+      或正式 prediction ledger
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 280
+    row_sha256: 6ba5d473275708a5f956b26f06e502039ea9a2a40d7ff2197577c99cc793e680
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-018
+    - 市场反馈优化/shadow 参数持续迭代 MVP
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/shadow_parameter_iteration_mvp_2026-05-17.md`；P0/P1
+      已完成，P2 自动 production mutation 项已落实为 guardrails；后续真实 forward outcome 成熟度由生命周期/成熟度任务继续观察
+    - 基于已有 shadow parameter search output 生成 `data/processed/shadow_iteration_registry.csv`、`outputs/reports/shadow_iteration_YYYY-MM-DD.md/json`
+      和 `outputs/shadow_iterations/<run_id>/*`；候选分类区分 `weight_only`、`gate_only`、`weight_gate_bundle`；只有
+      `weight_only` 可标记为潜在权重迭代候选，`gate_only` 只能进入 gate policy review，bundle 只能 diagnostic；报告披露
+      production 参数未改变、best candidate、primary driver、promotion contract check、blocked
+      reasons、next action、attribution、position change 降级状态和 data lineage；dashboard
+      只读展示 shadow iteration status；`register-forward-shadow` 只更新 registry 状态；retirement
+      规则不写 production；P2 禁止自动改 production weight/profile、approved overlay、approved_hard、gate-only/bundle
+      晋级和 shrinkage proposal；不得写 production weight/scoring/portfolio、approved overlay
+      或正式 prediction ledger
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求尽快启动独立 shadow-only 参数持续迭代流程，并为后续权重迭代闭环预留扩展点。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `aits feedback run-shadow-iteration`、registry/report/JSON/run
+      目录输出、candidate 分类和 production safety 测试；当前 search bundle smoke 输出 `PASS_WITH_LIMITATIONS`，结论为
+      gate policy review，不产生权重晋级候选。2026-05-17: 从 VALIDATING 改回 IN_PROGRESS，原因：owner
+      要求继续完成 P1/P2 并通过回测验证后提交；P2 中生产修改项按项目安全边界实现为 guardrails。2026-05-17: 从 IN_PROGRESS
+      改为 VALIDATING，原因：P1 dashboard 只读卡片、register-forward-shadow、retirement 规则、字段字典和
+      P2 guardrails 已完成；目标测试、全量 pytest 569 passed、ruff、mypy、shadow iteration smoke、dashboard
+      smoke 和 ai_after_chatgpt 回测验证通过，production safety 边界保持不变。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：当前 `shadow_iteration_2026-05-17` artifact 仍显示 `PASS_WITH_LIMITATIONS`、`production_effect=none`、production
+      parameters unchanged，gate-only candidate 只进入 forward shadow / gate policy review；验证通过
+      `tests/test_shadow_iteration.py` + `tests/test_daily_task_dashboard.py` 32 passed、Ruff、repo-wide
+      Black check 和 `compileall`。'
+    raw_line: '|CALIBRATION-018|市场反馈优化/shadow 参数持续迭代 MVP|P0|DONE|系统验证|详细拆解见 `docs/requirements/shadow_parameter_iteration_mvp_2026-05-17.md`；P0/P1
+      已完成，P2 自动 production mutation 项已落实为 guardrails；后续真实 forward outcome 成熟度由生命周期/成熟度任务继续观察|基于已有
+      shadow parameter search output 生成 `data/processed/shadow_iteration_registry.csv`、`outputs/reports/shadow_iteration_YYYY-MM-DD.md/json`
+      和 `outputs/shadow_iterations/<run_id>/*`；候选分类区分 `weight_only`、`gate_only`、`weight_gate_bundle`；只有
+      `weight_only` 可标记为潜在权重迭代候选，`gate_only` 只能进入 gate policy review，bundle 只能 diagnostic；报告披露
+      production 参数未改变、best candidate、primary driver、promotion contract check、blocked
+      reasons、next action、attribution、position change 降级状态和 data lineage；dashboard
+      只读展示 shadow iteration status；`register-forward-shadow` 只更新 registry 状态；retirement
+      规则不写 production；P2 禁止自动改 production weight/profile、approved overlay、approved_hard、gate-only/bundle
+      晋级和 shrinkage proposal；不得写 production weight/scoring/portfolio、approved overlay
+      或正式 prediction ledger|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求尽快启动独立 shadow-only
+      参数持续迭代流程，并为后续权重迭代闭环预留扩展点。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `aits
+      feedback run-shadow-iteration`、registry/report/JSON/run 目录输出、candidate 分类和 production
+      safety 测试；当前 search bundle smoke 输出 `PASS_WITH_LIMITATIONS`，结论为 gate policy
+      review，不产生权重晋级候选。2026-05-17: 从 VALIDATING 改回 IN_PROGRESS，原因：owner 要求继续完成 P1/P2
+      并通过回测验证后提交；P2 中生产修改项按项目安全边界实现为 guardrails。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：P1
+      dashboard 只读卡片、register-forward-shadow、retirement 规则、字段字典和 P2 guardrails 已完成；目标测试、全量
+      pytest 569 passed、ruff、mypy、shadow iteration smoke、dashboard smoke 和 ai_after_chatgpt
+      回测验证通过，production safety 边界保持不变。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前 `shadow_iteration_2026-05-17`
+      artifact 仍显示 `PASS_WITH_LIMITATIONS`、`production_effect=none`、production parameters
+      unchanged，gate-only candidate 只进入 forward shadow / gate policy review；验证通过 `tests/test_shadow_iteration.py`
+      + `tests/test_daily_task_dashboard.py` 32 passed、Ruff、repo-wide Black check
+      和 `compileall`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6ba5d473275708a5f956b26f
+  task_id: CALIBRATION-018
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求尽快启动独立 shadow-only 参数持续迭代流程，并为后续权重迭代闭环预留扩展点。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `aits feedback run-shadow-iteration`、registry/report/JSON/run
+      目录输出、candidate 分类和 production safety 测试；当前 search bundle smoke 输出 `PASS_WITH_LIMITATIONS`，结论为
+      gate policy review，不产生权重晋级候选。2026-05-17: 从 VALIDATING 改回 IN_PROGRESS，原因：owner
+      要求继续完成 P1/P2 并通过回测验证后提交；P2 中生产修改项按项目安全边界实现为 guardrails。2026-05-17: 从 IN_PROGRESS
+      改为 VALIDATING，原因：P1 dashboard 只读卡片、register-forward-shadow、retirement 规则、字段字典和
+      P2 guardrails 已完成；目标测试、全量 pytest 569 passed、ruff、mypy、shadow iteration smoke、dashboard
+      smoke 和 ai_after_chatgpt 回测验证通过，production safety 边界保持不变。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：当前 `shadow_iteration_2026-05-17` artifact 仍显示 `PASS_WITH_LIMITATIONS`、`production_effect=none`、production
+      parameters unchanged，gate-only candidate 只进入 forward shadow / gate policy review；验证通过
+      `tests/test_shadow_iteration.py` + `tests/test_daily_task_dashboard.py` 32 passed、Ruff、repo-wide
+      Black check 和 `compileall`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6ba5d473275708a5f956b26f06e502039ea9a2a40d7ff2197577c99cc793e680
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-018
+  - 市场反馈优化/shadow 参数持续迭代 MVP
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/shadow_parameter_iteration_mvp_2026-05-17.md`；P0/P1 已完成，P2
+    自动 production mutation 项已落实为 guardrails；后续真实 forward outcome 成熟度由生命周期/成熟度任务继续观察
+  - 基于已有 shadow parameter search output 生成 `data/processed/shadow_iteration_registry.csv`、`outputs/reports/shadow_iteration_YYYY-MM-DD.md/json`
+    和 `outputs/shadow_iterations/<run_id>/*`；候选分类区分 `weight_only`、`gate_only`、`weight_gate_bundle`；只有
+    `weight_only` 可标记为潜在权重迭代候选，`gate_only` 只能进入 gate policy review，bundle 只能 diagnostic；报告披露
+    production 参数未改变、best candidate、primary driver、promotion contract check、blocked
+    reasons、next action、attribution、position change 降级状态和 data lineage；dashboard 只读展示
+    shadow iteration status；`register-forward-shadow` 只更新 registry 状态；retirement 规则不写
+    production；P2 禁止自动改 production weight/profile、approved overlay、approved_hard、gate-only/bundle
+    晋级和 shrinkage proposal；不得写 production weight/scoring/portfolio、approved overlay
+    或正式 prediction ledger
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求尽快启动独立 shadow-only 参数持续迭代流程，并为后续权重迭代闭环预留扩展点。2026-05-17:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `aits feedback run-shadow-iteration`、registry/report/JSON/run
+    目录输出、candidate 分类和 production safety 测试；当前 search bundle smoke 输出 `PASS_WITH_LIMITATIONS`，结论为
+    gate policy review，不产生权重晋级候选。2026-05-17: 从 VALIDATING 改回 IN_PROGRESS，原因：owner
+    要求继续完成 P1/P2 并通过回测验证后提交；P2 中生产修改项按项目安全边界实现为 guardrails。2026-05-17: 从 IN_PROGRESS
+    改为 VALIDATING，原因：P1 dashboard 只读卡片、register-forward-shadow、retirement 规则、字段字典和
+    P2 guardrails 已完成；目标测试、全量 pytest 569 passed、ruff、mypy、shadow iteration smoke、dashboard
+    smoke 和 ai_after_chatgpt 回测验证通过，production safety 边界保持不变。2026-06-09: 从 VALIDATING
+    改为 DONE，原因：当前 `shadow_iteration_2026-05-17` artifact 仍显示 `PASS_WITH_LIMITATIONS`、`production_effect=none`、production
+    parameters unchanged，gate-only candidate 只进入 forward shadow / gate policy review；验证通过
+    `tests/test_shadow_iteration.py` + `tests/test_daily_task_dashboard.py` 32 passed、Ruff、repo-wide
+    Black check 和 `compileall`。'
+  docs_links:
+  - docs/requirements/shadow_parameter_iteration_mvp_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 6ba5d473275708a5f956b26f06e502039ea9a2a40d7ff2197577c99cc793e680
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: cb01f5bb21073edaf37bf2f5e984f112c479149928dd5c9ab5a9bba23ce5b127

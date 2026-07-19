@@ -1,0 +1,94 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: STORAGE-001
+  title: null
+  domain: Data Foundation / storage, retention, partitioning and typed query layer
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: data platform owner + architecture coordinator
+  requirement_refs:
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`
+    的 D2；作为`DATA-GOV-001`子任务重新打开。本地`data/cache`已约19 GiB/10万级文件，原“尚无实际规模瓶颈”的暂缓前提失效。下一步对weight-calibration/candidate-backtest/regime-robustness做容量、重复率、读写和replay基准，再决定Parquet/DuckDB或等价方案。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 真实workload基准与目标SLO明确；canonical/derived/export分类、retention/GC、schema evolution、portable
+      URI、snapshot/checksum/lineage、CSV兼容期、结果parity和rollback均有证据；不得以格式替换代替immutable
+      publish、DQ或backup。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1177
+    row_sha256: c0ab6b6b6622ef8b5496c2f34a714dfb39d330e26179fe09fa80d726b595173c
+    cell_count: 8
+    all_cells:
+    - STORAGE-001
+    - Data Foundation / storage, retention, partitioning and typed query layer
+    - P1
+    - PROPOSED
+    - data platform owner + architecture coordinator
+    - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md` 的
+      D2；作为`DATA-GOV-001`子任务重新打开。本地`data/cache`已约19 GiB/10万级文件，原“尚无实际规模瓶颈”的暂缓前提失效。下一步对weight-calibration/candidate-backtest/regime-robustness做容量、重复率、读写和replay基准，再决定Parquet/DuckDB或等价方案。
+    - 真实workload基准与目标SLO明确；canonical/derived/export分类、retention/GC、schema evolution、portable
+      URI、snapshot/checksum/lineage、CSV兼容期、结果parity和rollback均有证据；不得以格式替换代替immutable
+      publish、DQ或backup。
+    - '2026-05-06: PROPOSED→DEFERRED，因当时未见瓶颈。2026-07-12: DEFERRED/P3→PROPOSED/P1，因当前容量和文件数已满足重新评估条件；尚未预先决定采用DuckDB/Parquet。'
+    raw_line: '|STORAGE-001|Data Foundation / storage, retention, partitioning and
+      typed query layer|P1|PROPOSED|data platform owner + architecture coordinator|详见
+      `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md` 的 D2；作为`DATA-GOV-001`子任务重新打开。本地`data/cache`已约19
+      GiB/10万级文件，原“尚无实际规模瓶颈”的暂缓前提失效。下一步对weight-calibration/candidate-backtest/regime-robustness做容量、重复率、读写和replay基准，再决定Parquet/DuckDB或等价方案。|真实workload基准与目标SLO明确；canonical/derived/export分类、retention/GC、schema
+      evolution、portable URI、snapshot/checksum/lineage、CSV兼容期、结果parity和rollback均有证据；不得以格式替换代替immutable
+      publish、DQ或backup。|2026-05-06: PROPOSED→DEFERRED，因当时未见瓶颈。2026-07-12: DEFERRED/P3→PROPOSED/P1，因当前容量和文件数已满足重新评估条件；尚未预先决定采用DuckDB/Parquet。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c0ab6b6b6622ef8b5496c2f3
+  task_id: STORAGE-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: data platform owner + architecture coordinator
+    notes: '2026-05-06: PROPOSED→DEFERRED，因当时未见瓶颈。2026-07-12: DEFERRED/P3→PROPOSED/P1，因当前容量和文件数已满足重新评估条件；尚未预先决定采用DuckDB/Parquet。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c0ab6b6b6622ef8b5496c2f34a714dfb39d330e26179fe09fa80d726b595173c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - STORAGE-001
+  - Data Foundation / storage, retention, partitioning and typed query layer
+  - P1
+  - PROPOSED
+  - data platform owner + architecture coordinator
+  - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md` 的 D2；作为`DATA-GOV-001`子任务重新打开。本地`data/cache`已约19
+    GiB/10万级文件，原“尚无实际规模瓶颈”的暂缓前提失效。下一步对weight-calibration/candidate-backtest/regime-robustness做容量、重复率、读写和replay基准，再决定Parquet/DuckDB或等价方案。
+  - 真实workload基准与目标SLO明确；canonical/derived/export分类、retention/GC、schema evolution、portable
+    URI、snapshot/checksum/lineage、CSV兼容期、结果parity和rollback均有证据；不得以格式替换代替immutable
+    publish、DQ或backup。
+  - '2026-05-06: PROPOSED→DEFERRED，因当时未见瓶颈。2026-07-12: DEFERRED/P3→PROPOSED/P1，因当前容量和文件数已满足重新评估条件；尚未预先决定采用DuckDB/Parquet。'
+  docs_links:
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  terminal: false
+  raw_row_sha256: c0ab6b6b6622ef8b5496c2f34a714dfb39d330e26179fe09fa80d726b595173c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ba34195a1c55b7d5f9e341491eb0d6070b531a8ce00e3f77775fd634929d741e

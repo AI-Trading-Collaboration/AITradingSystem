@@ -1,0 +1,187 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-083
+  title: null
+  domain: ETF portfolio research/Trend Signal Weight Calibration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-083_Trend_Signal_Weight_Calibration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-083_Trend_Signal_Weight_Calibration.md`；baseline
+    已实现 two-layer dynamic ETF allocation 的 Layer 1 trend-analysis information weight
+    calibration；下一步 owner 复核真实 trend calibration report，并在 TRADING-084 dynamic allocation
+    policy 前确认 Layer 1 signal config 的可解释性
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`config/etf_portfolio/trend_calibration.yaml` 存在且 safety fields mandatory；`aits
+      etf trend-calibration run/report/validate` 可运行；signal registry、dataset builder、weight
+      config schema、score engine、bounded search runner、bucket forward attribution、redundancy
+      diagnostics、regime stability review、candidate config registry、report 和 Reader
+      Brief section 可用；所有 forward returns 固定 `evaluation_only=true`；从 cached price
+      data 生成 dataset/report 前必须运行 `aits validate-data` 等价质量门禁并在输出披露 status；所有输出固定
+      `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；不得写
+      production weights、baseline config、target weights、broker action 或 automatic
+      promotion；system flow、artifact catalog、operations runbook、README、task register、requirement
+      docs 和 tests 同步；focused pytest、ruff、compileall、diff check 和 `aits etf trend-calibration
+      validate` 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1479
+    row_sha256: 6081ddf21b2fc59d5d602b9fc8da68e44d68f8b2d752a7c7dda5d9760b702214
+    cell_count: 8
+    all_cells:
+    - TRADING-083
+    - ETF portfolio research/Trend Signal Weight Calibration
+    - P0
+    - VALIDATING
+    - 系统验证 + 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-083_Trend_Signal_Weight_Calibration.md`；baseline
+      已实现 two-layer dynamic ETF allocation 的 Layer 1 trend-analysis information weight
+      calibration；下一步 owner 复核真实 trend calibration report，并在 TRADING-084 dynamic allocation
+      policy 前确认 Layer 1 signal config 的可解释性
+    - '`config/etf_portfolio/trend_calibration.yaml` 存在且 safety fields mandatory；`aits
+      etf trend-calibration run/report/validate` 可运行；signal registry、dataset builder、weight
+      config schema、score engine、bounded search runner、bucket forward attribution、redundancy
+      diagnostics、regime stability review、candidate config registry、report 和 Reader
+      Brief section 可用；所有 forward returns 固定 `evaluation_only=true`；从 cached price
+      data 生成 dataset/report 前必须运行 `aits validate-data` 等价质量门禁并在输出披露 status；所有输出固定
+      `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；不得写
+      production weights、baseline config、target weights、broker action 或 automatic
+      promotion；system flow、artifact catalog、operations runbook、README、task register、requirement
+      docs 和 tests 同步；focused pytest、ruff、compileall、diff check 和 `aits etf trend-calibration
+      validate` 通过'
+    - '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-082 已完成工程验证并推送，下一优先级是按 two-layer dynamic
+      ETF allocation roadmap 建立 Layer 1 trend signal calibration workflow，为后续 TRADING-084
+      dynamic allocation policy 提供独立、可解释、candidate-only 的 trend/regime/risk scores。2026-06-05:
+      TRADING-083A-L baseline 实现完成并转入 VALIDATING，原因：新增 trend calibration policy、`aits
+      etf trend-calibration run/report/validate`、data quality gate enforcement、evaluation-only
+      dataset、score computation engine、bounded preset search、bucket forward attribution、redundancy
+      diagnostics、regime stability review、candidate config registry、JSON/Markdown
+      report、Reader Brief `Trend Signal Calibration` section、report registry/artifact
+      catalog/system flow/runbook/README integration 和 focused tests；验证为 14 个相关测试
+      passed，`aits etf trend-calibration validate` PASS，ruff、compileall 和 diff check
+      通过。2026-06-05: 全量 `python -m pytest tests -q` 长跑复核通过，结果为 2141 passed、330 warnings、耗时
+      644.64s。2026-06-05: 真实 cached-data smoke 通过，`run --start 2022-12-01 --end 2026-06-03
+      --top 5` 生成 `validate_data_status=PASS_WITH_WARNINGS`、dataset/report/registry
+      和 `status=PASS`，`report --latest` 显示 `evidence_status=PASS`、`redundancy_risk=high`、`regime_stability=usable`；剩余条件是真实
+      report 的 owner 复核和 TRADING-084 前的 signal config 审查。'
+    raw_line: '|TRADING-083|ETF portfolio research/Trend Signal Weight Calibration|P0|VALIDATING|系统验证
+      + 项目 owner 人工复核|详细拆解见 `docs/requirements/TRADING-083_Trend_Signal_Weight_Calibration.md`；baseline
+      已实现 two-layer dynamic ETF allocation 的 Layer 1 trend-analysis information weight
+      calibration；下一步 owner 复核真实 trend calibration report，并在 TRADING-084 dynamic allocation
+      policy 前确认 Layer 1 signal config 的可解释性|`config/etf_portfolio/trend_calibration.yaml`
+      存在且 safety fields mandatory；`aits etf trend-calibration run/report/validate`
+      可运行；signal registry、dataset builder、weight config schema、score engine、bounded
+      search runner、bucket forward attribution、redundancy diagnostics、regime stability
+      review、candidate config registry、report 和 Reader Brief section 可用；所有 forward
+      returns 固定 `evaluation_only=true`；从 cached price data 生成 dataset/report 前必须运行
+      `aits validate-data` 等价质量门禁并在输出披露 status；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；不得写
+      production weights、baseline config、target weights、broker action 或 automatic
+      promotion；system flow、artifact catalog、operations runbook、README、task register、requirement
+      docs 和 tests 同步；focused pytest、ruff、compileall、diff check 和 `aits etf trend-calibration
+      validate` 通过|2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-082 已完成工程验证并推送，下一优先级是按
+      two-layer dynamic ETF allocation roadmap 建立 Layer 1 trend signal calibration
+      workflow，为后续 TRADING-084 dynamic allocation policy 提供独立、可解释、candidate-only 的
+      trend/regime/risk scores。2026-06-05: TRADING-083A-L baseline 实现完成并转入 VALIDATING，原因：新增
+      trend calibration policy、`aits etf trend-calibration run/report/validate`、data
+      quality gate enforcement、evaluation-only dataset、score computation engine、bounded
+      preset search、bucket forward attribution、redundancy diagnostics、regime stability
+      review、candidate config registry、JSON/Markdown report、Reader Brief `Trend Signal
+      Calibration` section、report registry/artifact catalog/system flow/runbook/README
+      integration 和 focused tests；验证为 14 个相关测试 passed，`aits etf trend-calibration
+      validate` PASS，ruff、compileall 和 diff check 通过。2026-06-05: 全量 `python -m pytest
+      tests -q` 长跑复核通过，结果为 2141 passed、330 warnings、耗时 644.64s。2026-06-05: 真实 cached-data
+      smoke 通过，`run --start 2022-12-01 --end 2026-06-03 --top 5` 生成 `validate_data_status=PASS_WITH_WARNINGS`、dataset/report/registry
+      和 `status=PASS`，`report --latest` 显示 `evidence_status=PASS`、`redundancy_risk=high`、`regime_stability=usable`；剩余条件是真实
+      report 的 owner 复核和 TRADING-084 前的 signal config 审查。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6081ddf21b2fc59d5d602b9f
+  task_id: TRADING-083
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner 人工复核
+    notes: '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-082 已完成工程验证并推送，下一优先级是按 two-layer
+      dynamic ETF allocation roadmap 建立 Layer 1 trend signal calibration workflow，为后续
+      TRADING-084 dynamic allocation policy 提供独立、可解释、candidate-only 的 trend/regime/risk
+      scores。2026-06-05: TRADING-083A-L baseline 实现完成并转入 VALIDATING，原因：新增 trend calibration
+      policy、`aits etf trend-calibration run/report/validate`、data quality gate enforcement、evaluation-only
+      dataset、score computation engine、bounded preset search、bucket forward attribution、redundancy
+      diagnostics、regime stability review、candidate config registry、JSON/Markdown
+      report、Reader Brief `Trend Signal Calibration` section、report registry/artifact
+      catalog/system flow/runbook/README integration 和 focused tests；验证为 14 个相关测试
+      passed，`aits etf trend-calibration validate` PASS，ruff、compileall 和 diff check
+      通过。2026-06-05: 全量 `python -m pytest tests -q` 长跑复核通过，结果为 2141 passed、330 warnings、耗时
+      644.64s。2026-06-05: 真实 cached-data smoke 通过，`run --start 2022-12-01 --end 2026-06-03
+      --top 5` 生成 `validate_data_status=PASS_WITH_WARNINGS`、dataset/report/registry
+      和 `status=PASS`，`report --latest` 显示 `evidence_status=PASS`、`redundancy_risk=high`、`regime_stability=usable`；剩余条件是真实
+      report 的 owner 复核和 TRADING-084 前的 signal config 审查。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6081ddf21b2fc59d5d602b9fc8da68e44d68f8b2d752a7c7dda5d9760b702214
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-083
+  - ETF portfolio research/Trend Signal Weight Calibration
+  - P0
+  - VALIDATING
+  - 系统验证 + 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-083_Trend_Signal_Weight_Calibration.md`；baseline
+    已实现 two-layer dynamic ETF allocation 的 Layer 1 trend-analysis information weight
+    calibration；下一步 owner 复核真实 trend calibration report，并在 TRADING-084 dynamic allocation
+    policy 前确认 Layer 1 signal config 的可解释性
+  - '`config/etf_portfolio/trend_calibration.yaml` 存在且 safety fields mandatory；`aits
+    etf trend-calibration run/report/validate` 可运行；signal registry、dataset builder、weight
+    config schema、score engine、bounded search runner、bucket forward attribution、redundancy
+    diagnostics、regime stability review、candidate config registry、report 和 Reader
+    Brief section 可用；所有 forward returns 固定 `evaluation_only=true`；从 cached price data
+    生成 dataset/report 前必须运行 `aits validate-data` 等价质量门禁并在输出披露 status；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；不得写
+    production weights、baseline config、target weights、broker action 或 automatic promotion；system
+    flow、artifact catalog、operations runbook、README、task register、requirement docs
+    和 tests 同步；focused pytest、ruff、compileall、diff check 和 `aits etf trend-calibration
+    validate` 通过'
+  - '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-082 已完成工程验证并推送，下一优先级是按 two-layer dynamic
+    ETF allocation roadmap 建立 Layer 1 trend signal calibration workflow，为后续 TRADING-084
+    dynamic allocation policy 提供独立、可解释、candidate-only 的 trend/regime/risk scores。2026-06-05:
+    TRADING-083A-L baseline 实现完成并转入 VALIDATING，原因：新增 trend calibration policy、`aits
+    etf trend-calibration run/report/validate`、data quality gate enforcement、evaluation-only
+    dataset、score computation engine、bounded preset search、bucket forward attribution、redundancy
+    diagnostics、regime stability review、candidate config registry、JSON/Markdown report、Reader
+    Brief `Trend Signal Calibration` section、report registry/artifact catalog/system
+    flow/runbook/README integration 和 focused tests；验证为 14 个相关测试 passed，`aits etf
+    trend-calibration validate` PASS，ruff、compileall 和 diff check 通过。2026-06-05: 全量
+    `python -m pytest tests -q` 长跑复核通过，结果为 2141 passed、330 warnings、耗时 644.64s。2026-06-05:
+    真实 cached-data smoke 通过，`run --start 2022-12-01 --end 2026-06-03 --top 5` 生成 `validate_data_status=PASS_WITH_WARNINGS`、dataset/report/registry
+    和 `status=PASS`，`report --latest` 显示 `evidence_status=PASS`、`redundancy_risk=high`、`regime_stability=usable`；剩余条件是真实
+    report 的 owner 复核和 TRADING-084 前的 signal config 审查。'
+  docs_links:
+  - docs/requirements/TRADING-083_Trend_Signal_Weight_Calibration.md
+  terminal: false
+  raw_row_sha256: 6081ddf21b2fc59d5d602b9fc8da68e44d68f8b2d752a7c7dda5d9760b702214
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 1e856e5b63074afbc0782fd579d2d6bb23024ff6c99ba92f9e51c92e5420a703

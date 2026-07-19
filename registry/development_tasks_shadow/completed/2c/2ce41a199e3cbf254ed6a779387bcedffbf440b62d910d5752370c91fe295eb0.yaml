@@ -1,0 +1,106 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-403_CRLF_NORMALIZATION_CLEANUP
+  title: null
+  domain: Docs hygiene / task register line endings
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P3
+  accountable_owner: null
+  next_owner: 无；保持 task register LF 规范
+  requirement_refs:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；清理
+    task register docs CRLF/mixed line-ending normalization warning；不得改变 task status
+    或 governance logic
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`docs/task_register.md` 和 `docs/task_register_completed.md` worktree line
+      endings normalized to LF；现有 `.gitattributes` 已包含 `* text=auto eol=lf` 和 `*.md
+      text diff=markdown`，无需新增规则；`git diff --check` clean'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 192
+    row_sha256: 5391bf9ac6caec401ac75822603186c135f6187a90ccb39eabe6897231fcc78a
+    cell_count: 8
+    all_cells:
+    - TRADING-403_CRLF_NORMALIZATION_CLEANUP
+    - Docs hygiene / task register line endings
+    - P3
+    - DONE
+    - 无；保持 task register LF 规范
+    - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；清理
+      task register docs CRLF/mixed line-ending normalization warning；不得改变 task status
+      或 governance logic
+    - '`docs/task_register.md` 和 `docs/task_register_completed.md` worktree line endings
+      normalized to LF；现有 `.gitattributes` 已包含 `* text=auto eol=lf` 和 `*.md text diff=markdown`，无需新增规则；`git
+      diff --check` clean'
+    - '2026-06-17: DONE；该项仅做 hygiene cleanup 和任务迁移记录，没有修改 scoring、governance logic、data
+      flow、report status 或 safety boundary。'
+    raw_line: '|TRADING-403_CRLF_NORMALIZATION_CLEANUP|Docs hygiene / task register
+      line endings|P3|DONE|无；保持 task register LF 规范|详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；清理
+      task register docs CRLF/mixed line-ending normalization warning；不得改变 task status
+      或 governance logic|`docs/task_register.md` 和 `docs/task_register_completed.md`
+      worktree line endings normalized to LF；现有 `.gitattributes` 已包含 `* text=auto
+      eol=lf` 和 `*.md text diff=markdown`，无需新增规则；`git diff --check` clean|2026-06-17:
+      DONE；该项仅做 hygiene cleanup 和任务迁移记录，没有修改 scoring、governance logic、data flow、report
+      status 或 safety boundary。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5391bf9ac6caec401ac75822
+  task_id: TRADING-403_CRLF_NORMALIZATION_CLEANUP
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P3
+    next_owner: 无；保持 task register LF 规范
+    notes: '2026-06-17: DONE；该项仅做 hygiene cleanup 和任务迁移记录，没有修改 scoring、governance
+      logic、data flow、report status 或 safety boundary。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5391bf9ac6caec401ac75822603186c135f6187a90ccb39eabe6897231fcc78a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-403_CRLF_NORMALIZATION_CLEANUP
+  - Docs hygiene / task register line endings
+  - P3
+  - DONE
+  - 无；保持 task register LF 规范
+  - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；清理
+    task register docs CRLF/mixed line-ending normalization warning；不得改变 task status
+    或 governance logic
+  - '`docs/task_register.md` 和 `docs/task_register_completed.md` worktree line endings
+    normalized to LF；现有 `.gitattributes` 已包含 `* text=auto eol=lf` 和 `*.md text diff=markdown`，无需新增规则；`git
+    diff --check` clean'
+  - '2026-06-17: DONE；该项仅做 hygiene cleanup 和任务迁移记录，没有修改 scoring、governance logic、data
+    flow、report status 或 safety boundary。'
+  docs_links:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  terminal: true
+  raw_row_sha256: 5391bf9ac6caec401ac75822603186c135f6187a90ccb39eabe6897231fcc78a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7328716db21b7d11a306b2fa3985c328d7056bfd85aca2c6193cb56b9457b5ff

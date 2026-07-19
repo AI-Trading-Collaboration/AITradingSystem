@@ -1,0 +1,150 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-351_PAPER_SHADOW_DAILY_RUNNER
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue paper-shadow daily runner
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-351_Paper_Shadow_Daily_Runner.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-351_Paper_Shadow_Daily_Runner.md`；承接
+    TRADING-350 paper-shadow protocol，为 formal research candidate 建立 observation-only
+    daily paper-shadow record，输入 candidate id、date、market panel artifact、latest signal
+    artifact、formal research method contract 和 paper-shadow protocol；不得写 official
+    target weights、paper account state、production state、order ticket、broker action
+    或 automatic position control
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `paper-shadow-daily run/report` 和 `validate-paper-shadow-daily`；daily
+      observation artifact 记录 input artifact path/size/checksum、source contract/protocol
+      id/status、signal output、paper-shadow-only hypothetical weight note、risk state、drawdown/rotation/mismatch/benchmark/manual
+      review fields、Reader Brief section 和 validation artifact；实际产物为 `paper-shadow-daily_c7945bcfdf91cd53`（2026-06-12）；所有输出固定
+      `manual_review_only=true`、`paper_shadow_daily_only=true`、`observation_only=true`、`hypothetical_weight_paper_shadow_only=true`、`not_official_target_weights=true`、`broker_effect=none`、`order_effect=none`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`paper_account_state_mutated=false`、`auto_apply=false`、`production_effect=none`；README、operations
+      runbook、system flow、artifact catalog、report registry、requirements、Reader Brief、focused
+      tests、contract-validation suite、ruff、compileall、documentation contract、report
+      index、Reader Brief quality 和 git diff check 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 251
+    row_sha256: b265019085fda6fc1b9a87d43c47542d2a04feeda7aac1945d6e9434497226d2
+    cell_count: 8
+    all_cells:
+    - TRADING-351_PAPER_SHADOW_DAILY_RUNNER
+    - ETF portfolio/dynamic v3 rescue paper-shadow daily runner
+    - P1
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-351_Paper_Shadow_Daily_Runner.md`；承接 TRADING-350
+      paper-shadow protocol，为 formal research candidate 建立 observation-only daily
+      paper-shadow record，输入 candidate id、date、market panel artifact、latest signal
+      artifact、formal research method contract 和 paper-shadow protocol；不得写 official
+      target weights、paper account state、production state、order ticket、broker action
+      或 automatic position control
+    - 新增 `paper-shadow-daily run/report` 和 `validate-paper-shadow-daily`；daily observation
+      artifact 记录 input artifact path/size/checksum、source contract/protocol id/status、signal
+      output、paper-shadow-only hypothetical weight note、risk state、drawdown/rotation/mismatch/benchmark/manual
+      review fields、Reader Brief section 和 validation artifact；实际产物为 `paper-shadow-daily_c7945bcfdf91cd53`（2026-06-12）；所有输出固定
+      `manual_review_only=true`、`paper_shadow_daily_only=true`、`observation_only=true`、`hypothetical_weight_paper_shadow_only=true`、`not_official_target_weights=true`、`broker_effect=none`、`order_effect=none`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`paper_account_state_mutated=false`、`auto_apply=false`、`production_effect=none`；README、operations
+      runbook、system flow、artifact catalog、report registry、requirements、Reader Brief、focused
+      tests、contract-validation suite、ruff、compileall、documentation contract、report
+      index、Reader Brief quality 和 git diff check 通过
+    - '2026-06-15: DONE；`paper-shadow-daily run` 生成 observation `paper-shadow-daily_c7945bcfdf91cd53`，run/report/validate
+      CLI 均 PASS；focused pytest 7 passed，contract-validation suite 35 passed / 26.84s，documentation
+      contract PASS，report index `PASS_WITH_WARNINGS`（既有 missing/stale visibility），Reader
+      Brief OK，Reader Brief quality OK；该 runner 只记录 manual/date-gated observation，不初始化
+      paper account、不生成 official target weights、不接 broker、不生成 order ticket、不修改 production
+      state。'
+    raw_line: '|TRADING-351_PAPER_SHADOW_DAILY_RUNNER|ETF portfolio/dynamic v3 rescue
+      paper-shadow daily runner|P1|DONE|项目 owner 后续复核；代码实现完成|详细拆解见 `docs/requirements/TRADING-351_Paper_Shadow_Daily_Runner.md`；承接
+      TRADING-350 paper-shadow protocol，为 formal research candidate 建立 observation-only
+      daily paper-shadow record，输入 candidate id、date、market panel artifact、latest
+      signal artifact、formal research method contract 和 paper-shadow protocol；不得写
+      official target weights、paper account state、production state、order ticket、broker
+      action 或 automatic position control|新增 `paper-shadow-daily run/report` 和 `validate-paper-shadow-daily`；daily
+      observation artifact 记录 input artifact path/size/checksum、source contract/protocol
+      id/status、signal output、paper-shadow-only hypothetical weight note、risk state、drawdown/rotation/mismatch/benchmark/manual
+      review fields、Reader Brief section 和 validation artifact；实际产物为 `paper-shadow-daily_c7945bcfdf91cd53`（2026-06-12）；所有输出固定
+      `manual_review_only=true`、`paper_shadow_daily_only=true`、`observation_only=true`、`hypothetical_weight_paper_shadow_only=true`、`not_official_target_weights=true`、`broker_effect=none`、`order_effect=none`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`paper_account_state_mutated=false`、`auto_apply=false`、`production_effect=none`；README、operations
+      runbook、system flow、artifact catalog、report registry、requirements、Reader Brief、focused
+      tests、contract-validation suite、ruff、compileall、documentation contract、report
+      index、Reader Brief quality 和 git diff check 通过|2026-06-15: DONE；`paper-shadow-daily
+      run` 生成 observation `paper-shadow-daily_c7945bcfdf91cd53`，run/report/validate
+      CLI 均 PASS；focused pytest 7 passed，contract-validation suite 35 passed / 26.84s，documentation
+      contract PASS，report index `PASS_WITH_WARNINGS`（既有 missing/stale visibility），Reader
+      Brief OK，Reader Brief quality OK；该 runner 只记录 manual/date-gated observation，不初始化
+      paper account、不生成 official target weights、不接 broker、不生成 order ticket、不修改 production
+      state。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b265019085fda6fc1b9a87d4
+  task_id: TRADING-351_PAPER_SHADOW_DAILY_RUNNER
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: '2026-06-15: DONE；`paper-shadow-daily run` 生成 observation `paper-shadow-daily_c7945bcfdf91cd53`，run/report/validate
+      CLI 均 PASS；focused pytest 7 passed，contract-validation suite 35 passed / 26.84s，documentation
+      contract PASS，report index `PASS_WITH_WARNINGS`（既有 missing/stale visibility），Reader
+      Brief OK，Reader Brief quality OK；该 runner 只记录 manual/date-gated observation，不初始化
+      paper account、不生成 official target weights、不接 broker、不生成 order ticket、不修改 production
+      state。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b265019085fda6fc1b9a87d43c47542d2a04feeda7aac1945d6e9434497226d2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-351_PAPER_SHADOW_DAILY_RUNNER
+  - ETF portfolio/dynamic v3 rescue paper-shadow daily runner
+  - P1
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-351_Paper_Shadow_Daily_Runner.md`；承接 TRADING-350
+    paper-shadow protocol，为 formal research candidate 建立 observation-only daily paper-shadow
+    record，输入 candidate id、date、market panel artifact、latest signal artifact、formal
+    research method contract 和 paper-shadow protocol；不得写 official target weights、paper
+    account state、production state、order ticket、broker action 或 automatic position
+    control
+  - 新增 `paper-shadow-daily run/report` 和 `validate-paper-shadow-daily`；daily observation
+    artifact 记录 input artifact path/size/checksum、source contract/protocol id/status、signal
+    output、paper-shadow-only hypothetical weight note、risk state、drawdown/rotation/mismatch/benchmark/manual
+    review fields、Reader Brief section 和 validation artifact；实际产物为 `paper-shadow-daily_c7945bcfdf91cd53`（2026-06-12）；所有输出固定
+    `manual_review_only=true`、`paper_shadow_daily_only=true`、`observation_only=true`、`hypothetical_weight_paper_shadow_only=true`、`not_official_target_weights=true`、`broker_effect=none`、`order_effect=none`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`paper_account_state_mutated=false`、`auto_apply=false`、`production_effect=none`；README、operations
+    runbook、system flow、artifact catalog、report registry、requirements、Reader Brief、focused
+    tests、contract-validation suite、ruff、compileall、documentation contract、report
+    index、Reader Brief quality 和 git diff check 通过
+  - '2026-06-15: DONE；`paper-shadow-daily run` 生成 observation `paper-shadow-daily_c7945bcfdf91cd53`，run/report/validate
+    CLI 均 PASS；focused pytest 7 passed，contract-validation suite 35 passed / 26.84s，documentation
+    contract PASS，report index `PASS_WITH_WARNINGS`（既有 missing/stale visibility），Reader
+    Brief OK，Reader Brief quality OK；该 runner 只记录 manual/date-gated observation，不初始化
+    paper account、不生成 official target weights、不接 broker、不生成 order ticket、不修改 production
+    state。'
+  docs_links:
+  - docs/requirements/TRADING-351_Paper_Shadow_Daily_Runner.md
+  terminal: true
+  raw_row_sha256: b265019085fda6fc1b9a87d43c47542d2a04feeda7aac1945d6e9434497226d2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: adccc4feea78144ad3d2fb0aed0fa8faafb95827a757c05ee85cf02a27064859

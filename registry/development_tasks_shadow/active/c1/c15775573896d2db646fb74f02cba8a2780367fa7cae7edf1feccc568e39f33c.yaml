@@ -1,0 +1,99 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-856_BASELINE_DOMINANCE_GATE
+  title: null
+  domain: Controlled strategy research / baseline dominance gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；简单
+    baseline 多数占优时阻止继续 promotion research
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies tail-risk-baseline-dominance-gate`，按 return、max
+      drawdown、Sharpe、turnover、false-positive cost 多数占优判定 NOT_BASELINE_DOMINATED/BASELINE_MIXED/BASELINE_DOMINATED_BLOCKED
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1334
+    row_sha256: c819a6ac3a965dad9569eccb0c9c98707854995926e49e19bfe1a402f8b78992
+    cell_count: 8
+    all_cells:
+    - TRADING-856_BASELINE_DOMINANCE_GATE
+    - Controlled strategy research / baseline dominance gate
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；简单
+      baseline 多数占优时阻止继续 promotion research
+    - 新增 `aits research strategies tail-risk-baseline-dominance-gate`，按 return、max
+      drawdown、Sharpe、turnover、false-positive cost 多数占优判定 NOT_BASELINE_DOMINATED/BASELINE_MIXED/BASELINE_DOMINATED_BLOCKED
+    - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+      Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+      tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+    raw_line: '|TRADING-856_BASELINE_DOMINANCE_GATE|Controlled strategy research /
+      baseline dominance gate|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；简单
+      baseline 多数占优时阻止继续 promotion research|新增 `aits research strategies tail-risk-baseline-dominance-gate`，按
+      return、max drawdown、Sharpe、turnover、false-positive cost 多数占优判定 NOT_BASELINE_DOMINATED/BASELINE_MIXED/BASELINE_DOMINATED_BLOCKED|2026-06-22:
+      新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+      Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+      tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c819a6ac3a965dad9569eccb
+  task_id: TRADING-856_BASELINE_DOMINANCE_GATE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up
+      CLI/artifacts、registry/catalog/system-flow/Reader Brief/tests；验证通过 focused parallel
+      pytest、registry/documentation/task-register tests、Ruff、compileall 和 git diff
+      --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c819a6ac3a965dad9569eccb0c9c98707854995926e49e19bfe1a402f8b78992
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-856_BASELINE_DOMINANCE_GATE
+  - Controlled strategy research / baseline dominance gate
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；简单
+    baseline 多数占优时阻止继续 promotion research
+  - 新增 `aits research strategies tail-risk-baseline-dominance-gate`，按 return、max drawdown、Sharpe、turnover、false-positive
+    cost 多数占优判定 NOT_BASELINE_DOMINATED/BASELINE_MIXED/BASELINE_DOMINATED_BLOCKED
+  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+    Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+    tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  docs_links:
+  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
+  terminal: false
+  raw_row_sha256: c819a6ac3a965dad9569eccb0c9c98707854995926e49e19bfe1a402f8b78992
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 84e19a720d91ad33795de31b8d750c978de9572f90098dc71648a643b8fe50e7

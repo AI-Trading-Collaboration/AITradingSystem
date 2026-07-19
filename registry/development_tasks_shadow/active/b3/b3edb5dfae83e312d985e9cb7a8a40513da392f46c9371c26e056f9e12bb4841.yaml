@@ -1,0 +1,95 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR
+  title: null
+  domain: Strategy research / typed mutation candidate generation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 独立 baseline capability owner；仅在新证据令 N2 mutation-ready count>0 后重开
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: typed operators只面向 READY baseline capability；所有
+    candidate ref必须解析，禁止 placeholder、immutable/hard-veto mutation、exposure substitution与
+    structural duplicate；zero candidates有效。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: N2 conditional gate通过；contract refs完整；fingerprint/near-duplicate gate；declaration
+      order不作 ranking；不创建 baseline behavior或新 signal。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1185
+    row_sha256: 34d72cfe806b09381b89a0fdadecdae25f831deb4ceb02b95de7b06b3381dd43
+    cell_count: 8
+    all_cells:
+    - TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR
+    - Strategy research / typed mutation candidate generation
+    - P0
+    - DEFERRED
+    - 独立 baseline capability owner；仅在新证据令 N2 mutation-ready count>0 后重开
+    - typed operators只面向 READY baseline capability；所有 candidate ref必须解析，禁止 placeholder、immutable/hard-veto
+      mutation、exposure substitution与 structural duplicate；zero candidates有效。
+    - N2 conditional gate通过；contract refs完整；fingerprint/near-duplicate gate；declaration
+      order不作 ranking；不创建 baseline behavior或新 signal。
+    - '2026-07-10: N2 strict结果 mutation-ready=0；status=`NOT_STARTED_NO_MUTATION_READY_CAPABILITY`，未实现
+      generator、未生成 candidate。'
+    raw_line: '|TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR|Strategy
+      research / typed mutation candidate generation|P0|DEFERRED|独立 baseline capability
+      owner；仅在新证据令 N2 mutation-ready count>0 后重开|typed operators只面向 READY baseline
+      capability；所有 candidate ref必须解析，禁止 placeholder、immutable/hard-veto mutation、exposure
+      substitution与 structural duplicate；zero candidates有效。|N2 conditional gate通过；contract
+      refs完整；fingerprint/near-duplicate gate；declaration order不作 ranking；不创建 baseline
+      behavior或新 signal。|2026-07-10: N2 strict结果 mutation-ready=0；status=`NOT_STARTED_NO_MUTATION_READY_CAPABILITY`，未实现
+      generator、未生成 candidate。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-34d72cfe806b09381b89a0fd
+  task_id: TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: 独立 baseline capability owner；仅在新证据令 N2 mutation-ready count>0 后重开
+    notes: '2026-07-10: N2 strict结果 mutation-ready=0；status=`NOT_STARTED_NO_MUTATION_READY_CAPABILITY`，未实现
+      generator、未生成 candidate。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:34d72cfe806b09381b89a0fdadecdae25f831deb4ceb02b95de7b06b3381dd43
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR
+  - Strategy research / typed mutation candidate generation
+  - P0
+  - DEFERRED
+  - 独立 baseline capability owner；仅在新证据令 N2 mutation-ready count>0 后重开
+  - typed operators只面向 READY baseline capability；所有 candidate ref必须解析，禁止 placeholder、immutable/hard-veto
+    mutation、exposure substitution与 structural duplicate；zero candidates有效。
+  - N2 conditional gate通过；contract refs完整；fingerprint/near-duplicate gate；declaration
+    order不作 ranking；不创建 baseline behavior或新 signal。
+  - '2026-07-10: N2 strict结果 mutation-ready=0；status=`NOT_STARTED_NO_MUTATION_READY_CAPABILITY`，未实现
+    generator、未生成 candidate。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 34d72cfe806b09381b89a0fdadecdae25f831deb4ceb02b95de7b06b3381dd43
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e9a0f92c89f07058c269319696eb98912c3258049433ebf734fa9e31c2c13014

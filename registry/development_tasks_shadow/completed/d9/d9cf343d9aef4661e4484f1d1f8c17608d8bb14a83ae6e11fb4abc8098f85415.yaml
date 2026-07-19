@@ -1,0 +1,146 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-018D
+  title: null
+  domain: 交易执行/Manual Shadow-to-Production Promotion Proposal Gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/shadow_promotion_proposal_2026-05-20.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/shadow_promotion_proposal_2026-05-20.md`；只读
+    promotion proposal gate、policy、standalone script、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_shadow_promotion_proposal.py` 和 `data/derived/weight_iterations/promotion/proposals/shadow_promotion_proposal_YYYY-MM-DD.json/md`、`logs/shadow_promotion_proposal_run_YYYY-MM-DD.json/md`；读取
+      `current_shadow_weights.json`、production profile snapshot、latest TRADING-018C2
+      review、最近 N 日 018C comparison artifacts 和 018B candidate/history；输出固定 `mode=manual_promotion_proposal_only`、`production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`safe_for_production=false`；proposal
+      decision 只允许 `PROPOSE_FOR_MANUAL_REVIEW`、`CONTINUE_OBSERVATION`、`INSUFFICIENT_HISTORY`、`INSUFFICIENT_DATA`、`SAFETY_BLOCKED`、`REJECT_SHADOW`、`ERROR`；production/shadow
+      weight keys 必须完全一致且 shadow sum 约等于 1.0，不做 alias mapping；dashboard 只读展示 latest
+      proposal artifact，不重跑 018B/018C/018C2/proposal/scoring/broker/replay
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 412
+    row_sha256: 5dc38b869c5b3903bb239f0448c7142b9a49d81a6b32dec34baa712d4d0e8dd9
+    cell_count: 8
+    all_cells:
+    - TRADING-018D
+    - 交易执行/Manual Shadow-to-Production Promotion Proposal Gate
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/shadow_promotion_proposal_2026-05-20.md`；只读 promotion
+      proposal gate、policy、standalone script、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成
+    - 新增 `scripts/run_shadow_promotion_proposal.py` 和 `data/derived/weight_iterations/promotion/proposals/shadow_promotion_proposal_YYYY-MM-DD.json/md`、`logs/shadow_promotion_proposal_run_YYYY-MM-DD.json/md`；读取
+      `current_shadow_weights.json`、production profile snapshot、latest TRADING-018C2
+      review、最近 N 日 018C comparison artifacts 和 018B candidate/history；输出固定 `mode=manual_promotion_proposal_only`、`production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`safe_for_production=false`；proposal
+      decision 只允许 `PROPOSE_FOR_MANUAL_REVIEW`、`CONTINUE_OBSERVATION`、`INSUFFICIENT_HISTORY`、`INSUFFICIENT_DATA`、`SAFETY_BLOCKED`、`REJECT_SHADOW`、`ERROR`；production/shadow
+      weight keys 必须完全一致且 shadow sum 约等于 1.0，不做 alias mapping；dashboard 只读展示 latest
+      proposal artifact，不重跑 018B/018C/018C2/proposal/scoring/broker/replay
+    - '2026-05-20: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018B/018C/018C2 后新增人工 promotion
+      proposal gate；本阶段只生成人工审核 proposal，不允许修改 production profile、不写 production weights、不自动
+      promotion、不触发 broker/replay/交易。2026-05-20: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      policy manifest、核心 proposal builder、CLI、JSON/Markdown proposal 与 run log、dashboard
+      Shadow Promotion Proposal 只读卡片、runbook、系统流图/产物目录和测试；验证通过目标 pytest、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest、ruff 和 black check。2026-05-20: 从 VALIDATING 改为 DONE，原因：最终收尾验证通过手动 CLI
+      smoke（当前本地无 current shadow / latest review artifacts，按真实可用输入生成 `INSUFFICIENT_DATA`
+      proposal JSON/Markdown）、安全边界检查（`production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`safe_for_production=false`）、dashboard
+      只读读取 proposal artifact 且 import guard / artifact mtime / 上游 artifact 列表确认未重跑
+      018B/018C/018C2/018D；收尾验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest、ruff 和 black check。'
+    raw_line: '|TRADING-018D|交易执行/Manual Shadow-to-Production Promotion Proposal Gate|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/shadow_promotion_proposal_2026-05-20.md`；只读 promotion proposal
+      gate、policy、standalone script、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成|新增
+      `scripts/run_shadow_promotion_proposal.py` 和 `data/derived/weight_iterations/promotion/proposals/shadow_promotion_proposal_YYYY-MM-DD.json/md`、`logs/shadow_promotion_proposal_run_YYYY-MM-DD.json/md`；读取
+      `current_shadow_weights.json`、production profile snapshot、latest TRADING-018C2
+      review、最近 N 日 018C comparison artifacts 和 018B candidate/history；输出固定 `mode=manual_promotion_proposal_only`、`production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`safe_for_production=false`；proposal
+      decision 只允许 `PROPOSE_FOR_MANUAL_REVIEW`、`CONTINUE_OBSERVATION`、`INSUFFICIENT_HISTORY`、`INSUFFICIENT_DATA`、`SAFETY_BLOCKED`、`REJECT_SHADOW`、`ERROR`；production/shadow
+      weight keys 必须完全一致且 shadow sum 约等于 1.0，不做 alias mapping；dashboard 只读展示 latest
+      proposal artifact，不重跑 018B/018C/018C2/proposal/scoring/broker/replay|2026-05-20:
+      新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018B/018C/018C2 后新增人工 promotion proposal
+      gate；本阶段只生成人工审核 proposal，不允许修改 production profile、不写 production weights、不自动
+      promotion、不触发 broker/replay/交易。2026-05-20: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      policy manifest、核心 proposal builder、CLI、JSON/Markdown proposal 与 run log、dashboard
+      Shadow Promotion Proposal 只读卡片、runbook、系统流图/产物目录和测试；验证通过目标 pytest、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest、ruff 和 black check。2026-05-20: 从 VALIDATING 改为 DONE，原因：最终收尾验证通过手动 CLI
+      smoke（当前本地无 current shadow / latest review artifacts，按真实可用输入生成 `INSUFFICIENT_DATA`
+      proposal JSON/Markdown）、安全边界检查（`production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`safe_for_production=false`）、dashboard
+      只读读取 proposal artifact 且 import guard / artifact mtime / 上游 artifact 列表确认未重跑
+      018B/018C/018C2/018D；收尾验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest、ruff 和 black check。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5dc38b869c5b3903bb239f04
+  task_id: TRADING-018D
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-20: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018B/018C/018C2 后新增人工
+      promotion proposal gate；本阶段只生成人工审核 proposal，不允许修改 production profile、不写 production
+      weights、不自动 promotion、不触发 broker/replay/交易。2026-05-20: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      policy manifest、核心 proposal builder、CLI、JSON/Markdown proposal 与 run log、dashboard
+      Shadow Promotion Proposal 只读卡片、runbook、系统流图/产物目录和测试；验证通过目标 pytest、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest、ruff 和 black check。2026-05-20: 从 VALIDATING 改为 DONE，原因：最终收尾验证通过手动 CLI
+      smoke（当前本地无 current shadow / latest review artifacts，按真实可用输入生成 `INSUFFICIENT_DATA`
+      proposal JSON/Markdown）、安全边界检查（`production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`safe_for_production=false`）、dashboard
+      只读读取 proposal artifact 且 import guard / artifact mtime / 上游 artifact 列表确认未重跑
+      018B/018C/018C2/018D；收尾验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest、ruff 和 black check。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5dc38b869c5b3903bb239f0448c7142b9a49d81a6b32dec34baa712d4d0e8dd9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-018D
+  - 交易执行/Manual Shadow-to-Production Promotion Proposal Gate
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/shadow_promotion_proposal_2026-05-20.md`；只读 promotion
+    proposal gate、policy、standalone script、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成
+  - 新增 `scripts/run_shadow_promotion_proposal.py` 和 `data/derived/weight_iterations/promotion/proposals/shadow_promotion_proposal_YYYY-MM-DD.json/md`、`logs/shadow_promotion_proposal_run_YYYY-MM-DD.json/md`；读取
+    `current_shadow_weights.json`、production profile snapshot、latest TRADING-018C2
+    review、最近 N 日 018C comparison artifacts 和 018B candidate/history；输出固定 `mode=manual_promotion_proposal_only`、`production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`safe_for_production=false`；proposal
+    decision 只允许 `PROPOSE_FOR_MANUAL_REVIEW`、`CONTINUE_OBSERVATION`、`INSUFFICIENT_HISTORY`、`INSUFFICIENT_DATA`、`SAFETY_BLOCKED`、`REJECT_SHADOW`、`ERROR`；production/shadow
+    weight keys 必须完全一致且 shadow sum 约等于 1.0，不做 alias mapping；dashboard 只读展示 latest
+    proposal artifact，不重跑 018B/018C/018C2/proposal/scoring/broker/replay
+  - '2026-05-20: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018B/018C/018C2 后新增人工 promotion
+    proposal gate；本阶段只生成人工审核 proposal，不允许修改 production profile、不写 production weights、不自动
+    promotion、不触发 broker/replay/交易。2026-05-20: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+    policy manifest、核心 proposal builder、CLI、JSON/Markdown proposal 与 run log、dashboard
+    Shadow Promotion Proposal 只读卡片、runbook、系统流图/产物目录和测试；验证通过目标 pytest、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+    pytest、ruff 和 black check。2026-05-20: 从 VALIDATING 改为 DONE，原因：最终收尾验证通过手动 CLI smoke（当前本地无
+    current shadow / latest review artifacts，按真实可用输入生成 `INSUFFICIENT_DATA` proposal
+    JSON/Markdown）、安全边界检查（`production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`safe_for_production=false`）、dashboard
+    只读读取 proposal artifact 且 import guard / artifact mtime / 上游 artifact 列表确认未重跑 018B/018C/018C2/018D；收尾验证通过目标
+    pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。'
+  docs_links:
+  - docs/requirements/shadow_promotion_proposal_2026-05-20.md
+  terminal: true
+  raw_row_sha256: 5dc38b869c5b3903bb239f0448c7142b9a49d81a6b32dec34baa712d4d0e8dd9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: aef83d2cf83c01d0bcce40ae5c1657169e26d1b392f3d40326d844f7aa9161e2

@@ -1,0 +1,143 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1129_to_1140_EXTERNAL_BACKTEST_VALIDATION_RECONCILIATION
+  title: null
+  domain: Research strategies / external backtest validation and reconciliation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1129_to_1140_External_Backtest_Validation_Reconciliation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1129_to_1140_External_Backtest_Validation_Reconciliation.md`；实现已完成：外部验证范围、静态
+    baseline 对账、动态 weight path 导出与独立 replay、指标定义对齐、SGOV total-return 专项检查、外部平台复现可行性、差异归因、owner/master
+    report 和 Reader Brief safe preview 均已接入；下一步完成 owner 指定 Ruff、compileall、parallel
+    pytest、report/task/documentation pytest 和 diff check；不得把外部平台结果作为唯一真相，不得进入 paper-shadow/production/broker
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 12 个 `aits research strategies ...` CLI/artifacts：external-validation-scope-contract、static-baseline-external-reconciliation、strategy-weight-path-export、external-independent-return-replay、metric-definition-reconciliation、sgov-total-return-external-check、external-platform-feasibility-review、quantconnect-replication-dry-run-plan、external-validation-difference-attribution、external-validation-owner-report、external-validation-master-review、external-validation-reader-brief-safe-preview；输出目录为
+      `outputs/research_strategies/external_validation/` 和 `docs/research/`；weight
+      path CSV 包含 date/strategy/definition hash/target weights/rebalance flag/signal
+      time/execution assumption/data quality；focused fixture 下 static baseline reconciled、dynamic
+      independent replay matched、SGOV total-return reconciled 或 warning-only、owner
+      recommendation accepted/accepted-with-warnings、master pass/pass-with-warnings、Reader
+      Brief preview safe；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；新增
+      `tests/test_external_validation.py`，并发现修复 weight path CSV reader index alignment
+      导致 replay 误读为零权重的问题
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1283
+    row_sha256: a96217e0d9798ca025614000e794d22fd9792a854a612236162732d37469ef0f
+    cell_count: 8
+    all_cells:
+    - TRADING-1129_to_1140_EXTERNAL_BACKTEST_VALIDATION_RECONCILIATION
+    - Research strategies / external backtest validation and reconciliation
+    - P1
+    - VALIDATING
+    - 系统验证 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1129_to_1140_External_Backtest_Validation_Reconciliation.md`；实现已完成：外部验证范围、静态
+      baseline 对账、动态 weight path 导出与独立 replay、指标定义对齐、SGOV total-return 专项检查、外部平台复现可行性、差异归因、owner/master
+      report 和 Reader Brief safe preview 均已接入；下一步完成 owner 指定 Ruff、compileall、parallel
+      pytest、report/task/documentation pytest 和 diff check；不得把外部平台结果作为唯一真相，不得进入 paper-shadow/production/broker
+    - 新增 12 个 `aits research strategies ...` CLI/artifacts：external-validation-scope-contract、static-baseline-external-reconciliation、strategy-weight-path-export、external-independent-return-replay、metric-definition-reconciliation、sgov-total-return-external-check、external-platform-feasibility-review、quantconnect-replication-dry-run-plan、external-validation-difference-attribution、external-validation-owner-report、external-validation-master-review、external-validation-reader-brief-safe-preview；输出目录为
+      `outputs/research_strategies/external_validation/` 和 `docs/research/`；weight
+      path CSV 包含 date/strategy/definition hash/target weights/rebalance flag/signal
+      time/execution assumption/data quality；focused fixture 下 static baseline reconciled、dynamic
+      independent replay matched、SGOV total-return reconciled 或 warning-only、owner
+      recommendation accepted/accepted-with-warnings、master pass/pass-with-warnings、Reader
+      Brief preview safe；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；新增
+      `tests/test_external_validation.py`，并发现修复 weight path CSV reader index alignment
+      导致 replay 误读为零权重的问题
+    - '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 defensive primary 与 balanced core
+      forward-aging 已建立后，增加外部验证与对账流程，确认静态 baselines、动态 weight path replay、指标定义和 SGOV
+      total-return 处理是否可审计一致。2026-06-26: 实现完成并转入 VALIDATING；新增 12 个 CLI/report registry
+      entries、artifact catalog/system flow 文档、external validation builders 和 focused
+      tests；安全边界保持 no paper-shadow / no production / no broker。'
+    raw_line: '|TRADING-1129_to_1140_EXTERNAL_BACKTEST_VALIDATION_RECONCILIATION|Research
+      strategies / external backtest validation and reconciliation|P1|VALIDATING|系统验证
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1129_to_1140_External_Backtest_Validation_Reconciliation.md`；实现已完成：外部验证范围、静态
+      baseline 对账、动态 weight path 导出与独立 replay、指标定义对齐、SGOV total-return 专项检查、外部平台复现可行性、差异归因、owner/master
+      report 和 Reader Brief safe preview 均已接入；下一步完成 owner 指定 Ruff、compileall、parallel
+      pytest、report/task/documentation pytest 和 diff check；不得把外部平台结果作为唯一真相，不得进入 paper-shadow/production/broker|新增
+      12 个 `aits research strategies ...` CLI/artifacts：external-validation-scope-contract、static-baseline-external-reconciliation、strategy-weight-path-export、external-independent-return-replay、metric-definition-reconciliation、sgov-total-return-external-check、external-platform-feasibility-review、quantconnect-replication-dry-run-plan、external-validation-difference-attribution、external-validation-owner-report、external-validation-master-review、external-validation-reader-brief-safe-preview；输出目录为
+      `outputs/research_strategies/external_validation/` 和 `docs/research/`；weight
+      path CSV 包含 date/strategy/definition hash/target weights/rebalance flag/signal
+      time/execution assumption/data quality；focused fixture 下 static baseline reconciled、dynamic
+      independent replay matched、SGOV total-return reconciled 或 warning-only、owner
+      recommendation accepted/accepted-with-warnings、master pass/pass-with-warnings、Reader
+      Brief preview safe；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；新增
+      `tests/test_external_validation.py`，并发现修复 weight path CSV reader index alignment
+      导致 replay 误读为零权重的问题|2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 defensive primary
+      与 balanced core forward-aging 已建立后，增加外部验证与对账流程，确认静态 baselines、动态 weight path
+      replay、指标定义和 SGOV total-return 处理是否可审计一致。2026-06-26: 实现完成并转入 VALIDATING；新增 12
+      个 CLI/report registry entries、artifact catalog/system flow 文档、external validation
+      builders 和 focused tests；安全边界保持 no paper-shadow / no production / no broker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a96217e0d9798ca025614000
+  task_id: TRADING-1129_to_1140_EXTERNAL_BACKTEST_VALIDATION_RECONCILIATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 项目 owner 后续复核
+    notes: '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 defensive primary 与 balanced
+      core forward-aging 已建立后，增加外部验证与对账流程，确认静态 baselines、动态 weight path replay、指标定义和
+      SGOV total-return 处理是否可审计一致。2026-06-26: 实现完成并转入 VALIDATING；新增 12 个 CLI/report
+      registry entries、artifact catalog/system flow 文档、external validation builders
+      和 focused tests；安全边界保持 no paper-shadow / no production / no broker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a96217e0d9798ca025614000e794d22fd9792a854a612236162732d37469ef0f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1129_to_1140_EXTERNAL_BACKTEST_VALIDATION_RECONCILIATION
+  - Research strategies / external backtest validation and reconciliation
+  - P1
+  - VALIDATING
+  - 系统验证 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1129_to_1140_External_Backtest_Validation_Reconciliation.md`；实现已完成：外部验证范围、静态
+    baseline 对账、动态 weight path 导出与独立 replay、指标定义对齐、SGOV total-return 专项检查、外部平台复现可行性、差异归因、owner/master
+    report 和 Reader Brief safe preview 均已接入；下一步完成 owner 指定 Ruff、compileall、parallel
+    pytest、report/task/documentation pytest 和 diff check；不得把外部平台结果作为唯一真相，不得进入 paper-shadow/production/broker
+  - 新增 12 个 `aits research strategies ...` CLI/artifacts：external-validation-scope-contract、static-baseline-external-reconciliation、strategy-weight-path-export、external-independent-return-replay、metric-definition-reconciliation、sgov-total-return-external-check、external-platform-feasibility-review、quantconnect-replication-dry-run-plan、external-validation-difference-attribution、external-validation-owner-report、external-validation-master-review、external-validation-reader-brief-safe-preview；输出目录为
+    `outputs/research_strategies/external_validation/` 和 `docs/research/`；weight path
+    CSV 包含 date/strategy/definition hash/target weights/rebalance flag/signal time/execution
+    assumption/data quality；focused fixture 下 static baseline reconciled、dynamic independent
+    replay matched、SGOV total-return reconciled 或 warning-only、owner recommendation
+    accepted/accepted-with-warnings、master pass/pass-with-warnings、Reader Brief preview
+    safe；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；新增
+    `tests/test_external_validation.py`，并发现修复 weight path CSV reader index alignment
+    导致 replay 误读为零权重的问题
+  - '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 defensive primary 与 balanced core
+    forward-aging 已建立后，增加外部验证与对账流程，确认静态 baselines、动态 weight path replay、指标定义和 SGOV
+    total-return 处理是否可审计一致。2026-06-26: 实现完成并转入 VALIDATING；新增 12 个 CLI/report registry
+    entries、artifact catalog/system flow 文档、external validation builders 和 focused
+    tests；安全边界保持 no paper-shadow / no production / no broker。'
+  docs_links:
+  - docs/requirements/TRADING-1129_to_1140_External_Backtest_Validation_Reconciliation.md
+  terminal: false
+  raw_row_sha256: a96217e0d9798ca025614000e794d22fd9792a854a612236162732d37469ef0f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d16205d6afc4570622ab7ee84854010663f084cf86de809b3b0e9f469db53f80

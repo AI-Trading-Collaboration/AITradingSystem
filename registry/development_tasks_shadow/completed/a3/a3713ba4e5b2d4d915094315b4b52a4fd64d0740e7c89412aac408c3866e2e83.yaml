@@ -1,0 +1,177 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2340_HIGH_INTENSITY_RISK_CAP_FORWARD_OUTCOME_REVIEW_WITH_PARTIAL_COVERAGE_CAVEAT
+  title: null
+  domain: Research trends / high-intensity risk-cap forward outcome review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2341 continue forward observe decision route
+  requirement_refs:
+  - docs/requirements/TRADING-2340_High_Intensity_Risk_Cap_Forward_Outcome_Review_With_Partial_Coverage_Caveat.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2340_High_Intensity_Risk_Cap_Forward_Outcome_Review_With_Partial_Coverage_Caveat.md`；承接
+    TRADING-2339 partial coverage readiness，读取 2337/2339 prior validated artifacts、2336
+    event logger lineage、2335 selected rule context 和 2334 stop/continue/archive context；本任务只做
+    forward outcome review 和 2341 routing，不重新绑定 outcome、不重新读取 market data、不判断可以上线。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends high-intensity-risk-cap-forward-outcome-review`；生成
+      forward outcome review summary、cluster/horizon outcome review matrices、false
+      warning / missed upside / downside capture / manual-review usefulness / rebound-stress
+      reviews、partial coverage caveat、monthly concentration effect、cluster weighted
+      evidence、selected rule outcome assessment、continue/refine/archive decision matrix、2341
+      readiness / route、interpretation boundary、安全边界和 research docs；真实 run status=`FORWARD_OUTCOME_REVIEW_COMPLETE_WITH_PARTIAL_COVERAGE_CAVEAT`，source
+      validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，coverage=`231/240`，not_due=`9`，critical_clusters_with_not_due=`0`，false
+      warning=`0.383333` / `FALSE_WARNING_MODERATE`，missed upside=`0.466667` / `MISSED_UPSIDE_MODERATE`，downside
+      capture=`0.35` / `DOWNSIDE_CAPTURE_MODERATE`，manual-review proxy=`0.583333`
+      / `MANUAL_REVIEW_CONTEXT_USEFUL_PROXY`，monthly concentration effect=`CONCENTRATION_MODERATE_IMPACT`，partial
+      coverage caveat=`PARTIAL_COVERAGE_LOW_IMPACT`，overall recommendation=`CONTINUE_HIGH_INTENSITY_FORWARD_OBSERVE`，next
+      task=`TRADING-2341_High_Intensity_Risk_Cap_Continue_Forward_Observe_Decision`；所有
+      outputs 固定 `outcome_binding_executed=false`、`original_event_log_mutated=false`、`runtime_scheduler_enabled=false`、promotion/paper-shadow/production
+      false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 17 passed、真实
+      CLI run、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+      193 passed、full parallel pytest 4213 passed / 643 warnings 和 `git diff --check`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 156
+    row_sha256: 1a6dcc6c6c0deedeb1d74425da86f4e4721761215756a0acd6f2c25442016a6a
+    cell_count: 8
+    all_cells:
+    - TRADING-2340_HIGH_INTENSITY_RISK_CAP_FORWARD_OUTCOME_REVIEW_WITH_PARTIAL_COVERAGE_CAVEAT
+    - Research trends / high-intensity risk-cap forward outcome review
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2341 continue forward observe decision route
+    - 详见 `docs/requirements/TRADING-2340_High_Intensity_Risk_Cap_Forward_Outcome_Review_With_Partial_Coverage_Caveat.md`；承接
+      TRADING-2339 partial coverage readiness，读取 2337/2339 prior validated artifacts、2336
+      event logger lineage、2335 selected rule context 和 2334 stop/continue/archive
+      context；本任务只做 forward outcome review 和 2341 routing，不重新绑定 outcome、不重新读取 market
+      data、不判断可以上线。
+    - 新增 `aits research trends high-intensity-risk-cap-forward-outcome-review`；生成
+      forward outcome review summary、cluster/horizon outcome review matrices、false
+      warning / missed upside / downside capture / manual-review usefulness / rebound-stress
+      reviews、partial coverage caveat、monthly concentration effect、cluster weighted
+      evidence、selected rule outcome assessment、continue/refine/archive decision matrix、2341
+      readiness / route、interpretation boundary、安全边界和 research docs；真实 run status=`FORWARD_OUTCOME_REVIEW_COMPLETE_WITH_PARTIAL_COVERAGE_CAVEAT`，source
+      validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，coverage=`231/240`，not_due=`9`，critical_clusters_with_not_due=`0`，false
+      warning=`0.383333` / `FALSE_WARNING_MODERATE`，missed upside=`0.466667` / `MISSED_UPSIDE_MODERATE`，downside
+      capture=`0.35` / `DOWNSIDE_CAPTURE_MODERATE`，manual-review proxy=`0.583333`
+      / `MANUAL_REVIEW_CONTEXT_USEFUL_PROXY`，monthly concentration effect=`CONCENTRATION_MODERATE_IMPACT`，partial
+      coverage caveat=`PARTIAL_COVERAGE_LOW_IMPACT`，overall recommendation=`CONTINUE_HIGH_INTENSITY_FORWARD_OBSERVE`，next
+      task=`TRADING-2341_High_Intensity_Risk_Cap_Continue_Forward_Observe_Decision`；所有
+      outputs 固定 `outcome_binding_executed=false`、`original_event_log_mutated=false`、`runtime_scheduler_enabled=false`、promotion/paper-shadow/production
+      false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 17 passed、真实
+      CLI run、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+      193 passed、full parallel pytest 4213 passed / 643 warnings 和 `git diff --check`。
+    - '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是基于 60 个 high-intensity clusters
+      的 partial-covered actual path 证据给出 continue / refine / manual-review-only /
+      wait / archive route，而不是证明 high-intensity risk-cap 可以 paper-shadow、production
+      或真实减仓。2026-07-04: 实现完成并进入 VALIDATING；未重跑 `aits validate-data`，因为本任务只读取 prior
+      validated TRADING-2337 / TRADING-2339 artifacts，不直接读取 cached market data。2026-07-04:
+      完整验证通过并归档 DONE；后续进入 TRADING-2341 continue forward observe decision route。'
+    raw_line: '|TRADING-2340_HIGH_INTENSITY_RISK_CAP_FORWARD_OUTCOME_REVIEW_WITH_PARTIAL_COVERAGE_CAVEAT|Research
+      trends / high-intensity risk-cap forward outcome review|P0|DONE|项目 owner 后续复核
+      TRADING-2341 continue forward observe decision route|详见 `docs/requirements/TRADING-2340_High_Intensity_Risk_Cap_Forward_Outcome_Review_With_Partial_Coverage_Caveat.md`；承接
+      TRADING-2339 partial coverage readiness，读取 2337/2339 prior validated artifacts、2336
+      event logger lineage、2335 selected rule context 和 2334 stop/continue/archive
+      context；本任务只做 forward outcome review 和 2341 routing，不重新绑定 outcome、不重新读取 market
+      data、不判断可以上线。|新增 `aits research trends high-intensity-risk-cap-forward-outcome-review`；生成
+      forward outcome review summary、cluster/horizon outcome review matrices、false
+      warning / missed upside / downside capture / manual-review usefulness / rebound-stress
+      reviews、partial coverage caveat、monthly concentration effect、cluster weighted
+      evidence、selected rule outcome assessment、continue/refine/archive decision matrix、2341
+      readiness / route、interpretation boundary、安全边界和 research docs；真实 run status=`FORWARD_OUTCOME_REVIEW_COMPLETE_WITH_PARTIAL_COVERAGE_CAVEAT`，source
+      validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，coverage=`231/240`，not_due=`9`，critical_clusters_with_not_due=`0`，false
+      warning=`0.383333` / `FALSE_WARNING_MODERATE`，missed upside=`0.466667` / `MISSED_UPSIDE_MODERATE`，downside
+      capture=`0.35` / `DOWNSIDE_CAPTURE_MODERATE`，manual-review proxy=`0.583333`
+      / `MANUAL_REVIEW_CONTEXT_USEFUL_PROXY`，monthly concentration effect=`CONCENTRATION_MODERATE_IMPACT`，partial
+      coverage caveat=`PARTIAL_COVERAGE_LOW_IMPACT`，overall recommendation=`CONTINUE_HIGH_INTENSITY_FORWARD_OBSERVE`，next
+      task=`TRADING-2341_High_Intensity_Risk_Cap_Continue_Forward_Observe_Decision`；所有
+      outputs 固定 `outcome_binding_executed=false`、`original_event_log_mutated=false`、`runtime_scheduler_enabled=false`、promotion/paper-shadow/production
+      false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 17 passed、真实
+      CLI run、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+      193 passed、full parallel pytest 4213 passed / 643 warnings 和 `git diff --check`。|2026-07-04:
+      根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是基于 60 个 high-intensity clusters 的 partial-covered
+      actual path 证据给出 continue / refine / manual-review-only / wait / archive route，而不是证明
+      high-intensity risk-cap 可以 paper-shadow、production 或真实减仓。2026-07-04: 实现完成并进入
+      VALIDATING；未重跑 `aits validate-data`，因为本任务只读取 prior validated TRADING-2337 /
+      TRADING-2339 artifacts，不直接读取 cached market data。2026-07-04: 完整验证通过并归档 DONE；后续进入
+      TRADING-2341 continue forward observe decision route。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1a6dcc6c6c0deedeb1d74425
+  task_id: TRADING-2340_HIGH_INTENSITY_RISK_CAP_FORWARD_OUTCOME_REVIEW_WITH_PARTIAL_COVERAGE_CAVEAT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2341 continue forward observe decision route
+    notes: '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是基于 60 个 high-intensity
+      clusters 的 partial-covered actual path 证据给出 continue / refine / manual-review-only
+      / wait / archive route，而不是证明 high-intensity risk-cap 可以 paper-shadow、production
+      或真实减仓。2026-07-04: 实现完成并进入 VALIDATING；未重跑 `aits validate-data`，因为本任务只读取 prior
+      validated TRADING-2337 / TRADING-2339 artifacts，不直接读取 cached market data。2026-07-04:
+      完整验证通过并归档 DONE；后续进入 TRADING-2341 continue forward observe decision route。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1a6dcc6c6c0deedeb1d74425da86f4e4721761215756a0acd6f2c25442016a6a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2340_HIGH_INTENSITY_RISK_CAP_FORWARD_OUTCOME_REVIEW_WITH_PARTIAL_COVERAGE_CAVEAT
+  - Research trends / high-intensity risk-cap forward outcome review
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2341 continue forward observe decision route
+  - 详见 `docs/requirements/TRADING-2340_High_Intensity_Risk_Cap_Forward_Outcome_Review_With_Partial_Coverage_Caveat.md`；承接
+    TRADING-2339 partial coverage readiness，读取 2337/2339 prior validated artifacts、2336
+    event logger lineage、2335 selected rule context 和 2334 stop/continue/archive context；本任务只做
+    forward outcome review 和 2341 routing，不重新绑定 outcome、不重新读取 market data、不判断可以上线。
+  - 新增 `aits research trends high-intensity-risk-cap-forward-outcome-review`；生成 forward
+    outcome review summary、cluster/horizon outcome review matrices、false warning /
+    missed upside / downside capture / manual-review usefulness / rebound-stress reviews、partial
+    coverage caveat、monthly concentration effect、cluster weighted evidence、selected
+    rule outcome assessment、continue/refine/archive decision matrix、2341 readiness
+    / route、interpretation boundary、安全边界和 research docs；真实 run status=`FORWARD_OUTCOME_REVIEW_COMPLETE_WITH_PARTIAL_COVERAGE_CAVEAT`，source
+    validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，coverage=`231/240`，not_due=`9`，critical_clusters_with_not_due=`0`，false
+    warning=`0.383333` / `FALSE_WARNING_MODERATE`，missed upside=`0.466667` / `MISSED_UPSIDE_MODERATE`，downside
+    capture=`0.35` / `DOWNSIDE_CAPTURE_MODERATE`，manual-review proxy=`0.583333` /
+    `MANUAL_REVIEW_CONTEXT_USEFUL_PROXY`，monthly concentration effect=`CONCENTRATION_MODERATE_IMPACT`，partial
+    coverage caveat=`PARTIAL_COVERAGE_LOW_IMPACT`，overall recommendation=`CONTINUE_HIGH_INTENSITY_FORWARD_OBSERVE`，next
+    task=`TRADING-2341_High_Intensity_Risk_Cap_Continue_Forward_Observe_Decision`；所有
+    outputs 固定 `outcome_binding_executed=false`、`original_event_log_mutated=false`、`runtime_scheduler_enabled=false`、promotion/paper-shadow/production
+    false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 17 passed、真实
+    CLI run、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+    193 passed、full parallel pytest 4213 passed / 643 warnings 和 `git diff --check`。
+  - '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是基于 60 个 high-intensity clusters
+    的 partial-covered actual path 证据给出 continue / refine / manual-review-only / wait
+    / archive route，而不是证明 high-intensity risk-cap 可以 paper-shadow、production 或真实减仓。2026-07-04:
+    实现完成并进入 VALIDATING；未重跑 `aits validate-data`，因为本任务只读取 prior validated TRADING-2337
+    / TRADING-2339 artifacts，不直接读取 cached market data。2026-07-04: 完整验证通过并归档 DONE；后续进入
+    TRADING-2341 continue forward observe decision route。'
+  docs_links:
+  - docs/requirements/TRADING-2340_High_Intensity_Risk_Cap_Forward_Outcome_Review_With_Partial_Coverage_Caveat.md
+  terminal: true
+  raw_row_sha256: 1a6dcc6c6c0deedeb1d74425da86f4e4721761215756a0acd6f2c25442016a6a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 797ba461bf39f9dce67134a464298e7010ea9f1b9d72d12b4468c4881ec53844

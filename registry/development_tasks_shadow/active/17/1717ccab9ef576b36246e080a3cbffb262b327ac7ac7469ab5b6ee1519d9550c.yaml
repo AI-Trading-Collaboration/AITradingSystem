@@ -1,0 +1,124 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT
+  title: null
+  domain: Research trends / two-lane optimization master closeout
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/research/two_lane_optimization_master_closeout.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 基于 owner 附件完整范围、TRADING-1806～1820 lane
+    separation、TRADING-1821～1840 defensive lane、TRADING-1841～1860 return-seeking lane
+    和 Phase 4/5 blocked state，新增总收口 artifact；不得把 Phase 4/5 的 blocked 状态改写成候选验证或 gated
+    overlay 实现
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `docs/research/two_lane_optimization_master_closeout.md` 和 `inputs/research_reviews/two_lane_optimization_master_final_matrix.yaml`，并同步
+      report registry、artifact catalog、system flow、task register 和 guardrail tests；必须逐
+      phase 记录 evidence path、status、gate result、blocked/allowed next action；最终结论应证明不继续
+      gated integration、不进入 candidate validation、dynamic promotion/paper-shadow/production/broker
+      全部 disabled
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1253
+    row_sha256: 2a900809f35732b82939eddd46ff55ea4d24e9c2c83cc7a7dbb5e86206dfd9bf
+    cell_count: 8
+    all_cells:
+    - TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT
+    - Research trends / two-lane optimization master closeout
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 基于 owner 附件完整范围、TRADING-1806～1820 lane separation、TRADING-1821～1840 defensive
+      lane、TRADING-1841～1860 return-seeking lane 和 Phase 4/5 blocked state，新增总收口 artifact；不得把
+      Phase 4/5 的 blocked 状态改写成候选验证或 gated overlay 实现
+    - 新增 `docs/research/two_lane_optimization_master_closeout.md` 和 `inputs/research_reviews/two_lane_optimization_master_final_matrix.yaml`，并同步
+      report registry、artifact catalog、system flow、task register 和 guardrail tests；必须逐
+      phase 记录 evidence path、status、gate result、blocked/allowed next action；最终结论应证明不继续
+      gated integration、不进入 candidate validation、dynamic promotion/paper-shadow/production/broker
+      全部 disabled
+    - '2026-06-28: 新增并进入 IN_PROGRESS；本批只做 master closeout，不实现 Phase 4 gated overlay
+      actual-path 或 Phase 5 validation，因为 Phase 2/3 evidence gates 未满足。2026-06-28:
+      实现完成并转入 VALIDATING；final status=`TWO_LANE_OPTIMIZATION_DIAGNOSTIC_ONLY_INSUFFICIENT_EVIDENCE_PROMOTION_BLOCKED`，最终建议暂停
+      automatic first-layer trend strategy，只保留 diagnostic-only / owner-reviewed future
+      evidence。'
+    raw_line: '|TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT|Research
+      trends / two-lane optimization master closeout|P0|VALIDATING|系统实现 + 项目 owner
+      后续复核|基于 owner 附件完整范围、TRADING-1806～1820 lane separation、TRADING-1821～1840 defensive
+      lane、TRADING-1841～1860 return-seeking lane 和 Phase 4/5 blocked state，新增总收口 artifact；不得把
+      Phase 4/5 的 blocked 状态改写成候选验证或 gated overlay 实现|新增 `docs/research/two_lane_optimization_master_closeout.md`
+      和 `inputs/research_reviews/two_lane_optimization_master_final_matrix.yaml`，并同步
+      report registry、artifact catalog、system flow、task register 和 guardrail tests；必须逐
+      phase 记录 evidence path、status、gate result、blocked/allowed next action；最终结论应证明不继续
+      gated integration、不进入 candidate validation、dynamic promotion/paper-shadow/production/broker
+      全部 disabled|2026-06-28: 新增并进入 IN_PROGRESS；本批只做 master closeout，不实现 Phase 4 gated
+      overlay actual-path 或 Phase 5 validation，因为 Phase 2/3 evidence gates 未满足。2026-06-28:
+      实现完成并转入 VALIDATING；final status=`TWO_LANE_OPTIMIZATION_DIAGNOSTIC_ONLY_INSUFFICIENT_EVIDENCE_PROMOTION_BLOCKED`，最终建议暂停
+      automatic first-layer trend strategy，只保留 diagnostic-only / owner-reviewed future
+      evidence。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2a900809f35732b82939eddd
+  task_id: TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 新增并进入 IN_PROGRESS；本批只做 master closeout，不实现 Phase 4 gated overlay
+      actual-path 或 Phase 5 validation，因为 Phase 2/3 evidence gates 未满足。2026-06-28:
+      实现完成并转入 VALIDATING；final status=`TWO_LANE_OPTIMIZATION_DIAGNOSTIC_ONLY_INSUFFICIENT_EVIDENCE_PROMOTION_BLOCKED`，最终建议暂停
+      automatic first-layer trend strategy，只保留 diagnostic-only / owner-reviewed future
+      evidence。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:2a900809f35732b82939eddd46ff55ea4d24e9c2c83cc7a7dbb5e86206dfd9bf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT
+  - Research trends / two-lane optimization master closeout
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 基于 owner 附件完整范围、TRADING-1806～1820 lane separation、TRADING-1821～1840 defensive
+    lane、TRADING-1841～1860 return-seeking lane 和 Phase 4/5 blocked state，新增总收口 artifact；不得把
+    Phase 4/5 的 blocked 状态改写成候选验证或 gated overlay 实现
+  - 新增 `docs/research/two_lane_optimization_master_closeout.md` 和 `inputs/research_reviews/two_lane_optimization_master_final_matrix.yaml`，并同步
+    report registry、artifact catalog、system flow、task register 和 guardrail tests；必须逐
+    phase 记录 evidence path、status、gate result、blocked/allowed next action；最终结论应证明不继续
+    gated integration、不进入 candidate validation、dynamic promotion/paper-shadow/production/broker
+    全部 disabled
+  - '2026-06-28: 新增并进入 IN_PROGRESS；本批只做 master closeout，不实现 Phase 4 gated overlay
+    actual-path 或 Phase 5 validation，因为 Phase 2/3 evidence gates 未满足。2026-06-28: 实现完成并转入
+    VALIDATING；final status=`TWO_LANE_OPTIMIZATION_DIAGNOSTIC_ONLY_INSUFFICIENT_EVIDENCE_PROMOTION_BLOCKED`，最终建议暂停
+    automatic first-layer trend strategy，只保留 diagnostic-only / owner-reviewed future
+    evidence。'
+  docs_links:
+  - docs/research/two_lane_optimization_master_closeout.md
+  terminal: false
+  raw_row_sha256: 2a900809f35732b82939eddd46ff55ea4d24e9c2c83cc7a7dbb5e86206dfd9bf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c0e27689ed8a93d9765ec6f0a810df27fbf7b637adaeb2b46fafac9b4522d115

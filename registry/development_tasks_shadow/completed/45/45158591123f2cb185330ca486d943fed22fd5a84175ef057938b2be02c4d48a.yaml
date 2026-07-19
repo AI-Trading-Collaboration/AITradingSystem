@@ -1,0 +1,163 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2386_DYNAMIC_STRATEGY_EXPANDED_CANDIDATE_POOL_RETEST_AND_SCREENING
+  title: null
+  domain: Strategy research / execution semantics / expanded candidate pool retest
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2387 expanded candidate owner review and next
+    research decision
+  requirement_refs:
+  - docs/requirements/TRADING-2386_Dynamic_Strategy_Expanded_Candidate_Pool_Retest_And_Screening.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2386_Dynamic_Strategy_Expanded_Candidate_Pool_Retest_And_Screening.md`；承接
+    TRADING-2385 candidate pool expansion plan，读取 TRADING-2365 / 2366 / 2379 / 2383
+    / 2384 / 2385 artifacts，并在通过 cached-data quality gate 后运行 expanded candidate retest
+    / screening。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-expanded-candidate-pool-retest`；生成
+      `expanded_candidate_retest_result.json`、`expanded_candidate_ranking.json`、`signal_family_screening.json`、`time_regime_slice_matrix.json`、`decision_update.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_EXPANDED_CANDIDATE_POOL_RETEST_AND_SCREENING_READY`，data
+      quality=`PASS_WITH_WARNINGS` / errors=0 / warnings=2，reference candidates=5，new
+      candidates tested=12，signal families tested=6，best candidate=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，best
+      decision=`CONTINUE_OPTIMIZATION`，candidate_ready_for_research_only_observation=false，next
+      route=`TRADING-2387_Dynamic_Strategy_Expanded_Candidate_Owner_Review_And_Next_Research_Decision`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 101
+    row_sha256: 768dade0ec7aa764ff4386ead1120b59e9bbd3e2d3c830b98132828d45c71425
+    cell_count: 8
+    all_cells:
+    - TRADING-2386_DYNAMIC_STRATEGY_EXPANDED_CANDIDATE_POOL_RETEST_AND_SCREENING
+    - Strategy research / execution semantics / expanded candidate pool retest
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2387 expanded candidate owner review and next research
+      decision
+    - 详见 `docs/requirements/TRADING-2386_Dynamic_Strategy_Expanded_Candidate_Pool_Retest_And_Screening.md`；承接
+      TRADING-2385 candidate pool expansion plan，读取 TRADING-2365 / 2366 / 2379 / 2383
+      / 2384 / 2385 artifacts，并在通过 cached-data quality gate 后运行 expanded candidate
+      retest / screening。
+    - 新增 `aits research strategies dynamic-strategy-expanded-candidate-pool-retest`；生成
+      `expanded_candidate_retest_result.json`、`expanded_candidate_ranking.json`、`signal_family_screening.json`、`time_regime_slice_matrix.json`、`decision_update.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_EXPANDED_CANDIDATE_POOL_RETEST_AND_SCREENING_READY`，data
+      quality=`PASS_WITH_WARNINGS` / errors=0 / warnings=2，reference candidates=5，new
+      candidates tested=12，signal families tested=6，best candidate=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，best
+      decision=`CONTINUE_OPTIMIZATION`，candidate_ready_for_research_only_observation=false，next
+      route=`TRADING-2387_Dynamic_Strategy_Expanded_Candidate_Owner_Review_And_Next_Research_Decision`。
+    - '2026-07-06: 根据 owner 附件新增并进入 IN_PROGRESS；这是 strategy research actual retest
+      / screening，不是 observation approval、paper-shadow approval、scheduler enablement、daily
+      report、production 或 broker readiness。2026-07-06: 实现完成并归档 DONE；验证通过 `aits validate-data
+      --as-of 2026-07-05` PASS_WITH_WARNINGS / errors=0 / warnings=2、full Ruff、`compileall
+      -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 571
+      docs PASS、documentation contract 1283 reports PASS、task-register consistency
+      run active=319 / completed=445 / failed=0、task-register consistency validate
+      checks=5 / failed=0 / warnings=0、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T170213Z/test_runtime_summary.json`）和
+      `git diff --check`（仅 CRLF normalization warning）。scheduler、event append、outcome
+      binding、paper-shadow、paper trade、shadow position、production、broker/order 和 daily
+      report 全部保持 disabled / false / none。'
+    raw_line: '|TRADING-2386_DYNAMIC_STRATEGY_EXPANDED_CANDIDATE_POOL_RETEST_AND_SCREENING|Strategy
+      research / execution semantics / expanded candidate pool retest|P0|DONE|项目 owner
+      后续复核 TRADING-2387 expanded candidate owner review and next research decision|详见
+      `docs/requirements/TRADING-2386_Dynamic_Strategy_Expanded_Candidate_Pool_Retest_And_Screening.md`；承接
+      TRADING-2385 candidate pool expansion plan，读取 TRADING-2365 / 2366 / 2379 / 2383
+      / 2384 / 2385 artifacts，并在通过 cached-data quality gate 后运行 expanded candidate
+      retest / screening。|新增 `aits research strategies dynamic-strategy-expanded-candidate-pool-retest`；生成
+      `expanded_candidate_retest_result.json`、`expanded_candidate_ranking.json`、`signal_family_screening.json`、`time_regime_slice_matrix.json`、`decision_update.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_EXPANDED_CANDIDATE_POOL_RETEST_AND_SCREENING_READY`，data
+      quality=`PASS_WITH_WARNINGS` / errors=0 / warnings=2，reference candidates=5，new
+      candidates tested=12，signal families tested=6，best candidate=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，best
+      decision=`CONTINUE_OPTIMIZATION`，candidate_ready_for_research_only_observation=false，next
+      route=`TRADING-2387_Dynamic_Strategy_Expanded_Candidate_Owner_Review_And_Next_Research_Decision`。|2026-07-06:
+      根据 owner 附件新增并进入 IN_PROGRESS；这是 strategy research actual retest / screening，不是
+      observation approval、paper-shadow approval、scheduler enablement、daily report、production
+      或 broker readiness。2026-07-06: 实现完成并归档 DONE；验证通过 `aits validate-data --as-of
+      2026-07-05` PASS_WITH_WARNINGS / errors=0 / warnings=2、full Ruff、`compileall
+      -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 571
+      docs PASS、documentation contract 1283 reports PASS、task-register consistency
+      run active=319 / completed=445 / failed=0、task-register consistency validate
+      checks=5 / failed=0 / warnings=0、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T170213Z/test_runtime_summary.json`）和
+      `git diff --check`（仅 CRLF normalization warning）。scheduler、event append、outcome
+      binding、paper-shadow、paper trade、shadow position、production、broker/order 和 daily
+      report 全部保持 disabled / false / none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-768dade0ec7aa764ff4386ea
+  task_id: TRADING-2386_DYNAMIC_STRATEGY_EXPANDED_CANDIDATE_POOL_RETEST_AND_SCREENING
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2387 expanded candidate owner review and next
+      research decision
+    notes: '2026-07-06: 根据 owner 附件新增并进入 IN_PROGRESS；这是 strategy research actual retest
+      / screening，不是 observation approval、paper-shadow approval、scheduler enablement、daily
+      report、production 或 broker readiness。2026-07-06: 实现完成并归档 DONE；验证通过 `aits validate-data
+      --as-of 2026-07-05` PASS_WITH_WARNINGS / errors=0 / warnings=2、full Ruff、`compileall
+      -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 571
+      docs PASS、documentation contract 1283 reports PASS、task-register consistency
+      run active=319 / completed=445 / failed=0、task-register consistency validate
+      checks=5 / failed=0 / warnings=0、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T170213Z/test_runtime_summary.json`）和
+      `git diff --check`（仅 CRLF normalization warning）。scheduler、event append、outcome
+      binding、paper-shadow、paper trade、shadow position、production、broker/order 和 daily
+      report 全部保持 disabled / false / none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:768dade0ec7aa764ff4386ead1120b59e9bbd3e2d3c830b98132828d45c71425
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2386_DYNAMIC_STRATEGY_EXPANDED_CANDIDATE_POOL_RETEST_AND_SCREENING
+  - Strategy research / execution semantics / expanded candidate pool retest
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2387 expanded candidate owner review and next research decision
+  - 详见 `docs/requirements/TRADING-2386_Dynamic_Strategy_Expanded_Candidate_Pool_Retest_And_Screening.md`；承接
+    TRADING-2385 candidate pool expansion plan，读取 TRADING-2365 / 2366 / 2379 / 2383
+    / 2384 / 2385 artifacts，并在通过 cached-data quality gate 后运行 expanded candidate retest
+    / screening。
+  - 新增 `aits research strategies dynamic-strategy-expanded-candidate-pool-retest`；生成
+    `expanded_candidate_retest_result.json`、`expanded_candidate_ranking.json`、`signal_family_screening.json`、`time_regime_slice_matrix.json`、`decision_update.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_EXPANDED_CANDIDATE_POOL_RETEST_AND_SCREENING_READY`，data
+    quality=`PASS_WITH_WARNINGS` / errors=0 / warnings=2，reference candidates=5，new
+    candidates tested=12，signal families tested=6，best candidate=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，best
+    decision=`CONTINUE_OPTIMIZATION`，candidate_ready_for_research_only_observation=false，next
+    route=`TRADING-2387_Dynamic_Strategy_Expanded_Candidate_Owner_Review_And_Next_Research_Decision`。
+  - '2026-07-06: 根据 owner 附件新增并进入 IN_PROGRESS；这是 strategy research actual retest /
+    screening，不是 observation approval、paper-shadow approval、scheduler enablement、daily
+    report、production 或 broker readiness。2026-07-06: 实现完成并归档 DONE；验证通过 `aits validate-data
+    --as-of 2026-07-05` PASS_WITH_WARNINGS / errors=0 / warnings=2、full Ruff、`compileall
+    -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 571 docs
+    PASS、documentation contract 1283 reports PASS、task-register consistency run active=319
+    / completed=445 / failed=0、task-register consistency validate checks=5 / failed=0
+    / warnings=0、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T170213Z/test_runtime_summary.json`）和
+    `git diff --check`（仅 CRLF normalization warning）。scheduler、event append、outcome
+    binding、paper-shadow、paper trade、shadow position、production、broker/order 和 daily
+    report 全部保持 disabled / false / none。'
+  docs_links:
+  - docs/requirements/TRADING-2386_Dynamic_Strategy_Expanded_Candidate_Pool_Retest_And_Screening.md
+  terminal: true
+  raw_row_sha256: 768dade0ec7aa764ff4386ead1120b59e9bbd3e2d3c830b98132828d45c71425
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6417af06ee95bd4cdaefd2190582c7d77ba73b26b37e60429f702bacbe9145b9

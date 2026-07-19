@@ -1,0 +1,190 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-365_RESEARCH_MONTHLY_REVIEW_PACK
+  title: null
+  domain: Research governance / monthly candidate review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续月度复核真实 pack blockers；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-365_Research_Monthly_Review_Pack.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-365_Research_Monthly_Review_Pack.md`；聚合
+    candidate ledger、paper-shadow weekly review、staleness monitor、readiness、safety
+    audit、owner decisions、cost sensitivity、benchmark baseline control、artifact lineage
+    和 data governance artifacts，形成只读月度 research governance pack；不得生成 official target
+    weights、修改 strategy / candidate / paper-shadow / production state、刷新数据、补造 artifact、触发
+    broker/order 或自动 owner approval
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/research_monthly_review_pack.py`、`aits
+      reports research-monthly-review-pack`、`aits reports validate-research-monthly-review-pack`、JSON/Markdown
+      monthly pack、validation artifact、monthly Reader Brief section、report registry、artifact
+      catalog、README、system flow、operations runbook、requirements 和 focused tests；报告披露
+      active/rejected/paper-shadow/needs-evidence candidates、major blockers/warnings、safety
+      audit status、data governance status、owner decision status 和 `production_effect=none`
+      safety boundary；candidate blockers 只作为 manual owner review 输入，不自动 reject/promote
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 217
+    row_sha256: 1549f8b4ea4b6c5b7c5524c1f04f2d7481edb89060c287193d0cb13ea4932919
+    cell_count: 8
+    all_cells:
+    - TRADING-365_RESEARCH_MONTHLY_REVIEW_PACK
+    - Research governance / monthly candidate review
+    - P1
+    - DONE
+    - 项目 owner 后续月度复核真实 pack blockers；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-365_Research_Monthly_Review_Pack.md`；聚合 candidate
+      ledger、paper-shadow weekly review、staleness monitor、readiness、safety audit、owner
+      decisions、cost sensitivity、benchmark baseline control、artifact lineage 和 data
+      governance artifacts，形成只读月度 research governance pack；不得生成 official target weights、修改
+      strategy / candidate / paper-shadow / production state、刷新数据、补造 artifact、触发 broker/order
+      或自动 owner approval
+    - 新增 `src/ai_trading_system/reports/research_monthly_review_pack.py`、`aits reports
+      research-monthly-review-pack`、`aits reports validate-research-monthly-review-pack`、JSON/Markdown
+      monthly pack、validation artifact、monthly Reader Brief section、report registry、artifact
+      catalog、README、system flow、operations runbook、requirements 和 focused tests；报告披露
+      active/rejected/paper-shadow/needs-evidence candidates、major blockers/warnings、safety
+      audit status、data governance status、owner decision status 和 `production_effect=none`
+      safety boundary；candidate blockers 只作为 manual owner review 输入，不自动 reject/promote
+    - '2026-06-16: DONE；真实 2026-06-16 monthly pack `outputs/reports/research_monthly_review_pack_2026-06-16.json/md`
+      输出 `MONTHLY_REVIEW_BLOCKED`、source families=15/15、active candidates=1、paper-shadow
+      candidates=1、needs-evidence candidates=1、major blockers=6、major warnings=6、safety=`SAFETY_PASS_WITH_WARNINGS`、data
+      governance=`BLOCKED`、owner decision=`AUDIT_LOG_EMPTY`；blockers 来自 staleness
+      monitor `BLOCKING`、readiness `BLOCKED_STALE_DATA`、cost sensitivity `INSUFFICIENT_COST_INPUTS`、benchmark
+      baseline `INSUFFICIENT_BASELINE_METRICS`、signal input completeness `BLOCKING`
+      和 paper-shadow health `BLOCKED_SIGNAL_INPUTS`，未补造数据或 owner decision。Validation
+      `outputs/reports/research_monthly_review_pack_validation_2026-06-16.json/md`
+      输出 `PASS_WITH_WARNINGS`、checks=9、failed=0、source blockers=6、source warnings=6；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=396 / missing=20 / stale=10 / waived=30
+      / unwaived=0；Reader Brief latest 使用 2026-06-15 decision snapshot + 2026-06-16
+      report index 展示 monthly pack section，Reader Brief quality OK / failed=0；focused
+      pytest 25 passed，documentation contract PASS，task-register consistency PASS。精确
+      2026-06-16 Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no upstream rerun / no data refresh
+      / no missing artifact fabrication / no strategy, candidate, paper-shadow or
+      production mutation / no official target / no broker / no order ticket。'
+    raw_line: '|TRADING-365_RESEARCH_MONTHLY_REVIEW_PACK|Research governance / monthly
+      candidate review|P1|DONE|项目 owner 后续月度复核真实 pack blockers；代码实现完成|详细拆解见 `docs/requirements/TRADING-365_Research_Monthly_Review_Pack.md`；聚合
+      candidate ledger、paper-shadow weekly review、staleness monitor、readiness、safety
+      audit、owner decisions、cost sensitivity、benchmark baseline control、artifact lineage
+      和 data governance artifacts，形成只读月度 research governance pack；不得生成 official target
+      weights、修改 strategy / candidate / paper-shadow / production state、刷新数据、补造 artifact、触发
+      broker/order 或自动 owner approval|新增 `src/ai_trading_system/reports/research_monthly_review_pack.py`、`aits
+      reports research-monthly-review-pack`、`aits reports validate-research-monthly-review-pack`、JSON/Markdown
+      monthly pack、validation artifact、monthly Reader Brief section、report registry、artifact
+      catalog、README、system flow、operations runbook、requirements 和 focused tests；报告披露
+      active/rejected/paper-shadow/needs-evidence candidates、major blockers/warnings、safety
+      audit status、data governance status、owner decision status 和 `production_effect=none`
+      safety boundary；candidate blockers 只作为 manual owner review 输入，不自动 reject/promote|2026-06-16:
+      DONE；真实 2026-06-16 monthly pack `outputs/reports/research_monthly_review_pack_2026-06-16.json/md`
+      输出 `MONTHLY_REVIEW_BLOCKED`、source families=15/15、active candidates=1、paper-shadow
+      candidates=1、needs-evidence candidates=1、major blockers=6、major warnings=6、safety=`SAFETY_PASS_WITH_WARNINGS`、data
+      governance=`BLOCKED`、owner decision=`AUDIT_LOG_EMPTY`；blockers 来自 staleness
+      monitor `BLOCKING`、readiness `BLOCKED_STALE_DATA`、cost sensitivity `INSUFFICIENT_COST_INPUTS`、benchmark
+      baseline `INSUFFICIENT_BASELINE_METRICS`、signal input completeness `BLOCKING`
+      和 paper-shadow health `BLOCKED_SIGNAL_INPUTS`，未补造数据或 owner decision。Validation
+      `outputs/reports/research_monthly_review_pack_validation_2026-06-16.json/md`
+      输出 `PASS_WITH_WARNINGS`、checks=9、failed=0、source blockers=6、source warnings=6；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=396 / missing=20 / stale=10 / waived=30
+      / unwaived=0；Reader Brief latest 使用 2026-06-15 decision snapshot + 2026-06-16
+      report index 展示 monthly pack section，Reader Brief quality OK / failed=0；focused
+      pytest 25 passed，documentation contract PASS，task-register consistency PASS。精确
+      2026-06-16 Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no upstream rerun / no data refresh
+      / no missing artifact fabrication / no strategy, candidate, paper-shadow or
+      production mutation / no official target / no broker / no order ticket。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1549f8b4ea4b6c5b7c5524c1
+  task_id: TRADING-365_RESEARCH_MONTHLY_REVIEW_PACK
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续月度复核真实 pack blockers；代码实现完成
+    notes: '2026-06-16: DONE；真实 2026-06-16 monthly pack `outputs/reports/research_monthly_review_pack_2026-06-16.json/md`
+      输出 `MONTHLY_REVIEW_BLOCKED`、source families=15/15、active candidates=1、paper-shadow
+      candidates=1、needs-evidence candidates=1、major blockers=6、major warnings=6、safety=`SAFETY_PASS_WITH_WARNINGS`、data
+      governance=`BLOCKED`、owner decision=`AUDIT_LOG_EMPTY`；blockers 来自 staleness
+      monitor `BLOCKING`、readiness `BLOCKED_STALE_DATA`、cost sensitivity `INSUFFICIENT_COST_INPUTS`、benchmark
+      baseline `INSUFFICIENT_BASELINE_METRICS`、signal input completeness `BLOCKING`
+      和 paper-shadow health `BLOCKED_SIGNAL_INPUTS`，未补造数据或 owner decision。Validation
+      `outputs/reports/research_monthly_review_pack_validation_2026-06-16.json/md`
+      输出 `PASS_WITH_WARNINGS`、checks=9、failed=0、source blockers=6、source warnings=6；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=396 / missing=20 / stale=10 / waived=30
+      / unwaived=0；Reader Brief latest 使用 2026-06-15 decision snapshot + 2026-06-16
+      report index 展示 monthly pack section，Reader Brief quality OK / failed=0；focused
+      pytest 25 passed，documentation contract PASS，task-register consistency PASS。精确
+      2026-06-16 Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no upstream rerun / no data refresh
+      / no missing artifact fabrication / no strategy, candidate, paper-shadow or
+      production mutation / no official target / no broker / no order ticket。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1549f8b4ea4b6c5b7c5524c1f04f2d7481edb89060c287193d0cb13ea4932919
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-365_RESEARCH_MONTHLY_REVIEW_PACK
+  - Research governance / monthly candidate review
+  - P1
+  - DONE
+  - 项目 owner 后续月度复核真实 pack blockers；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-365_Research_Monthly_Review_Pack.md`；聚合 candidate
+    ledger、paper-shadow weekly review、staleness monitor、readiness、safety audit、owner
+    decisions、cost sensitivity、benchmark baseline control、artifact lineage 和 data
+    governance artifacts，形成只读月度 research governance pack；不得生成 official target weights、修改
+    strategy / candidate / paper-shadow / production state、刷新数据、补造 artifact、触发 broker/order
+    或自动 owner approval
+  - 新增 `src/ai_trading_system/reports/research_monthly_review_pack.py`、`aits reports
+    research-monthly-review-pack`、`aits reports validate-research-monthly-review-pack`、JSON/Markdown
+    monthly pack、validation artifact、monthly Reader Brief section、report registry、artifact
+    catalog、README、system flow、operations runbook、requirements 和 focused tests；报告披露
+    active/rejected/paper-shadow/needs-evidence candidates、major blockers/warnings、safety
+    audit status、data governance status、owner decision status 和 `production_effect=none`
+    safety boundary；candidate blockers 只作为 manual owner review 输入，不自动 reject/promote
+  - '2026-06-16: DONE；真实 2026-06-16 monthly pack `outputs/reports/research_monthly_review_pack_2026-06-16.json/md`
+    输出 `MONTHLY_REVIEW_BLOCKED`、source families=15/15、active candidates=1、paper-shadow
+    candidates=1、needs-evidence candidates=1、major blockers=6、major warnings=6、safety=`SAFETY_PASS_WITH_WARNINGS`、data
+    governance=`BLOCKED`、owner decision=`AUDIT_LOG_EMPTY`；blockers 来自 staleness monitor
+    `BLOCKING`、readiness `BLOCKED_STALE_DATA`、cost sensitivity `INSUFFICIENT_COST_INPUTS`、benchmark
+    baseline `INSUFFICIENT_BASELINE_METRICS`、signal input completeness `BLOCKING`
+    和 paper-shadow health `BLOCKED_SIGNAL_INPUTS`，未补造数据或 owner decision。Validation
+    `outputs/reports/research_monthly_review_pack_validation_2026-06-16.json/md` 输出
+    `PASS_WITH_WARNINGS`、checks=9、failed=0、source blockers=6、source warnings=6；report
+    index `PASS_WITH_EXPLICIT_WAIVERS` / reports=396 / missing=20 / stale=10 / waived=30
+    / unwaived=0；Reader Brief latest 使用 2026-06-15 decision snapshot + 2026-06-16
+    report index 展示 monthly pack section，Reader Brief quality OK / failed=0；focused
+    pytest 25 passed，documentation contract PASS，task-register consistency PASS。精确
+    2026-06-16 Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+    no snapshot was fabricated. 保持 read-only / no upstream rerun / no data refresh
+    / no missing artifact fabrication / no strategy, candidate, paper-shadow or production
+    mutation / no official target / no broker / no order ticket。'
+  docs_links:
+  - docs/requirements/TRADING-365_Research_Monthly_Review_Pack.md
+  terminal: true
+  raw_row_sha256: 1549f8b4ea4b6c5b7c5524c1f04f2d7481edb89060c287193d0cb13ea4932919
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 40f546c1fb65d2ba4fe6787172577d81f9b8a8d89e552fc9ad6938603bc56761

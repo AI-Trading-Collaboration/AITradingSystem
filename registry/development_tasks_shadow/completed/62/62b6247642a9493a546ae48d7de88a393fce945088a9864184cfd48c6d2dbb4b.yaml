@@ -1,0 +1,82 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DOC-002
+  title: null
+  domain: 文档治理/新鲜度检查
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已新增 `aits docs validate-freshness`、CI
+    门禁和单测，并补齐历史关键需求文档的 `最后更新` 元数据
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 关键 task/requirements 文档必须包含 `最后更新`；文档内部最新状态记录日期不得晚于 `最后更新`；CI 可在无本地数据缓存时执行；检查只验证文档元数据，不推断业务完成度
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 421
+    row_sha256: bd301dc36486f33af63820da055a83f8d33772f4a4de18c0c11c37f4c02e0995
+    cell_count: 8
+    all_cells:
+    - DOC-002
+    - 文档治理/新鲜度检查
+    - P2
+    - DONE
+    - 系统实现
+    - 已新增 `aits docs validate-freshness`、CI 门禁和单测，并补齐历史关键需求文档的 `最后更新` 元数据
+    - 关键 task/requirements 文档必须包含 `最后更新`；文档内部最新状态记录日期不得晚于 `最后更新`；CI 可在无本地数据缓存时执行；检查只验证文档元数据，不推断业务完成度
+    - '2026-05-10: 从 READY 改为 DONE，原因：文档新鲜度 CLI、报告渲染、CI 接入、通过/失败单测和当前仓库文档元数据修复已完成。'
+    raw_line: '|DOC-002|文档治理/新鲜度检查|P2|DONE|系统实现|已新增 `aits docs validate-freshness`、CI
+      门禁和单测，并补齐历史关键需求文档的 `最后更新` 元数据|关键 task/requirements 文档必须包含 `最后更新`；文档内部最新状态记录日期不得晚于
+      `最后更新`；CI 可在无本地数据缓存时执行；检查只验证文档元数据，不推断业务完成度|2026-05-10: 从 READY 改为 DONE，原因：文档新鲜度
+      CLI、报告渲染、CI 接入、通过/失败单测和当前仓库文档元数据修复已完成。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bd301dc36486f33af63820da
+  task_id: DOC-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统实现
+    notes: '2026-05-10: 从 READY 改为 DONE，原因：文档新鲜度 CLI、报告渲染、CI 接入、通过/失败单测和当前仓库文档元数据修复已完成。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bd301dc36486f33af63820da055a83f8d33772f4a4de18c0c11c37f4c02e0995
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DOC-002
+  - 文档治理/新鲜度检查
+  - P2
+  - DONE
+  - 系统实现
+  - 已新增 `aits docs validate-freshness`、CI 门禁和单测，并补齐历史关键需求文档的 `最后更新` 元数据
+  - 关键 task/requirements 文档必须包含 `最后更新`；文档内部最新状态记录日期不得晚于 `最后更新`；CI 可在无本地数据缓存时执行；检查只验证文档元数据，不推断业务完成度
+  - '2026-05-10: 从 READY 改为 DONE，原因：文档新鲜度 CLI、报告渲染、CI 接入、通过/失败单测和当前仓库文档元数据修复已完成。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: bd301dc36486f33af63820da055a83f8d33772f4a4de18c0c11c37f4c02e0995
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f1a5cd518b810fc7b6e0d5d51e997555e63e71b58713f90dcc2530de13db21a6

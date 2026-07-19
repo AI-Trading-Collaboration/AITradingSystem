@@ -1,0 +1,150 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-039
+  title: null
+  domain: 基本面/SEC EDGAR Reconstructed PIT Backfill
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/sec_edgar_reconstructed_pit_backfill_2026-05-26.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/sec_edgar_reconstructed_pit_backfill_2026-05-26.md`；SEC
+    submissions/companyfacts raw fetch、filing timeline、XBRL fact long、metric mapping、PIT
+    intervals/daily panel/feature panel、validation/report、CLI、score-daily/backtest
+    可选接入、配置、数据源目录、feature availability、system flow、artifact catalog、schema、learning
+    path 和测试已完成；任务 ID 因 TRADING-035 至 TRADING-038 已占用按 owner 要求顺延
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `config/sec_pit_backfill.yaml`、`aits sec-pit fetch-raw/build-filing-timeline/build-facts/build-metrics/build-panel/validate/backfill`、`scripts/run_sec_pit_backfill.py`、`data/raw/sec_edgar/...`
+      raw manifest schema、`data/processed/sec_edgar/filing_timeline.csv`、`xbrl_facts_long.csv`、`mapped_metrics_long.csv`、`fundamental_pit_intervals.csv`、`fundamental_pit_daily_panel.csv`、`sec_pit_feature_panel.csv`、`sec_pit_coverage_summary.csv`、`outputs/reports/sec_pit_backfill/*`
+      validation/coverage/leakage/backfill reports；artifact 固定声明 `production_effect=none`、`backtest_data_grade=B_RECONSTRUCTED_SEC_FILING_PIT`、`strict_vendor_archive=false`、`external_side_effects=false`、`broker_access_required=false`、`paid_vendor_required=false`、`retroactive_strict_pit=false`、`manual_review_required_for_grade_upgrade=true`；loader
+      和 score/backtest 可选接入强制 `max_input_available_time_utc <= decision_date` / `available_for_signal_date
+      <= decision_date`；validation 覆盖 checksum、B-grade accession join、future availability
+      leakage、form whitelist、cross-currency ratio block、overlapping intervals、staleness、restatement
+      availability 和 coverage thresholds；验证通过目标 SEC PIT 测试、SEC/FMP/PIT/backtest 回归、全量
+      pytest、ruff 和触达文件 black check
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 394
+    row_sha256: 4ee0fa9c1247271863b4f35a083153c2f75d53a950ccb3ff83af276a3848c278
+    cell_count: 8
+    all_cells:
+    - TRADING-039
+    - 基本面/SEC EDGAR Reconstructed PIT Backfill
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/sec_edgar_reconstructed_pit_backfill_2026-05-26.md`；SEC
+      submissions/companyfacts raw fetch、filing timeline、XBRL fact long、metric mapping、PIT
+      intervals/daily panel/feature panel、validation/report、CLI、score-daily/backtest
+      可选接入、配置、数据源目录、feature availability、system flow、artifact catalog、schema、learning
+      path 和测试已完成；任务 ID 因 TRADING-035 至 TRADING-038 已占用按 owner 要求顺延
+    - 新增 `config/sec_pit_backfill.yaml`、`aits sec-pit fetch-raw/build-filing-timeline/build-facts/build-metrics/build-panel/validate/backfill`、`scripts/run_sec_pit_backfill.py`、`data/raw/sec_edgar/...`
+      raw manifest schema、`data/processed/sec_edgar/filing_timeline.csv`、`xbrl_facts_long.csv`、`mapped_metrics_long.csv`、`fundamental_pit_intervals.csv`、`fundamental_pit_daily_panel.csv`、`sec_pit_feature_panel.csv`、`sec_pit_coverage_summary.csv`、`outputs/reports/sec_pit_backfill/*`
+      validation/coverage/leakage/backfill reports；artifact 固定声明 `production_effect=none`、`backtest_data_grade=B_RECONSTRUCTED_SEC_FILING_PIT`、`strict_vendor_archive=false`、`external_side_effects=false`、`broker_access_required=false`、`paid_vendor_required=false`、`retroactive_strict_pit=false`、`manual_review_required_for_grade_upgrade=true`；loader
+      和 score/backtest 可选接入强制 `max_input_available_time_utc <= decision_date` / `available_for_signal_date
+      <= decision_date`；validation 覆盖 checksum、B-grade accession join、future availability
+      leakage、form whitelist、cross-currency ratio block、overlapping intervals、staleness、restatement
+      availability 和 coverage thresholds；验证通过目标 SEC PIT 测试、SEC/FMP/PIT/backtest 回归、全量
+      pytest、ruff 和触达文件 black check
+    - '2026-05-26: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-035 SEC EDGAR reconstructed
+      PIT backfill 外部需求文档；当前 TRADING-035/036/037/038 已被通知投递审计和 retry 链路占用，本任务按顺延规则使用
+      TRADING-039。2026-05-26: 从 IN_PROGRESS 改为 DONE，原因：已完成 reconstructed filing-time
+      PIT 数据层、SEC fair access/cache provider、manifest/checksum、timeline/facts/metrics/intervals/panel/report/validation、CLI、score-daily/backtest
+      可选接入、治理配置和文档；验证通过 `tests/test_sec_pit_backfill.py`、`tests/test_sec_companyfacts.py`、`tests/test_sec_metrics.py`、`tests/test_sec_features.py`、`tests/test_sec_filings.py`、`tests/test_fmp_forward_pit.py`、`tests/test_pit_snapshots.py`、`tests/test_external_request_cache.py`、`tests/test_backtest.py`、`tests/test_feature_availability.py`、`tests/test_data_sources.py`、全量
+      `python -m pytest -q`（1258 passed, 1 warning）、全量 `python -m ruff check` 和触达文件
+      `python -m black --check ...`。'
+    raw_line: '|TRADING-039|基本面/SEC EDGAR Reconstructed PIT Backfill|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/sec_edgar_reconstructed_pit_backfill_2026-05-26.md`；SEC submissions/companyfacts
+      raw fetch、filing timeline、XBRL fact long、metric mapping、PIT intervals/daily
+      panel/feature panel、validation/report、CLI、score-daily/backtest 可选接入、配置、数据源目录、feature
+      availability、system flow、artifact catalog、schema、learning path 和测试已完成；任务 ID
+      因 TRADING-035 至 TRADING-038 已占用按 owner 要求顺延|新增 `config/sec_pit_backfill.yaml`、`aits
+      sec-pit fetch-raw/build-filing-timeline/build-facts/build-metrics/build-panel/validate/backfill`、`scripts/run_sec_pit_backfill.py`、`data/raw/sec_edgar/...`
+      raw manifest schema、`data/processed/sec_edgar/filing_timeline.csv`、`xbrl_facts_long.csv`、`mapped_metrics_long.csv`、`fundamental_pit_intervals.csv`、`fundamental_pit_daily_panel.csv`、`sec_pit_feature_panel.csv`、`sec_pit_coverage_summary.csv`、`outputs/reports/sec_pit_backfill/*`
+      validation/coverage/leakage/backfill reports；artifact 固定声明 `production_effect=none`、`backtest_data_grade=B_RECONSTRUCTED_SEC_FILING_PIT`、`strict_vendor_archive=false`、`external_side_effects=false`、`broker_access_required=false`、`paid_vendor_required=false`、`retroactive_strict_pit=false`、`manual_review_required_for_grade_upgrade=true`；loader
+      和 score/backtest 可选接入强制 `max_input_available_time_utc <= decision_date` / `available_for_signal_date
+      <= decision_date`；validation 覆盖 checksum、B-grade accession join、future availability
+      leakage、form whitelist、cross-currency ratio block、overlapping intervals、staleness、restatement
+      availability 和 coverage thresholds；验证通过目标 SEC PIT 测试、SEC/FMP/PIT/backtest 回归、全量
+      pytest、ruff 和触达文件 black check|2026-05-26: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-035
+      SEC EDGAR reconstructed PIT backfill 外部需求文档；当前 TRADING-035/036/037/038 已被通知投递审计和
+      retry 链路占用，本任务按顺延规则使用 TRADING-039。2026-05-26: 从 IN_PROGRESS 改为 DONE，原因：已完成 reconstructed
+      filing-time PIT 数据层、SEC fair access/cache provider、manifest/checksum、timeline/facts/metrics/intervals/panel/report/validation、CLI、score-daily/backtest
+      可选接入、治理配置和文档；验证通过 `tests/test_sec_pit_backfill.py`、`tests/test_sec_companyfacts.py`、`tests/test_sec_metrics.py`、`tests/test_sec_features.py`、`tests/test_sec_filings.py`、`tests/test_fmp_forward_pit.py`、`tests/test_pit_snapshots.py`、`tests/test_external_request_cache.py`、`tests/test_backtest.py`、`tests/test_feature_availability.py`、`tests/test_data_sources.py`、全量
+      `python -m pytest -q`（1258 passed, 1 warning）、全量 `python -m ruff check` 和触达文件
+      `python -m black --check ...`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4ee0fa9c1247271863b4f35a
+  task_id: TRADING-039
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-26: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-035 SEC EDGAR reconstructed
+      PIT backfill 外部需求文档；当前 TRADING-035/036/037/038 已被通知投递审计和 retry 链路占用，本任务按顺延规则使用
+      TRADING-039。2026-05-26: 从 IN_PROGRESS 改为 DONE，原因：已完成 reconstructed filing-time
+      PIT 数据层、SEC fair access/cache provider、manifest/checksum、timeline/facts/metrics/intervals/panel/report/validation、CLI、score-daily/backtest
+      可选接入、治理配置和文档；验证通过 `tests/test_sec_pit_backfill.py`、`tests/test_sec_companyfacts.py`、`tests/test_sec_metrics.py`、`tests/test_sec_features.py`、`tests/test_sec_filings.py`、`tests/test_fmp_forward_pit.py`、`tests/test_pit_snapshots.py`、`tests/test_external_request_cache.py`、`tests/test_backtest.py`、`tests/test_feature_availability.py`、`tests/test_data_sources.py`、全量
+      `python -m pytest -q`（1258 passed, 1 warning）、全量 `python -m ruff check` 和触达文件
+      `python -m black --check ...`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4ee0fa9c1247271863b4f35a083153c2f75d53a950ccb3ff83af276a3848c278
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-039
+  - 基本面/SEC EDGAR Reconstructed PIT Backfill
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/sec_edgar_reconstructed_pit_backfill_2026-05-26.md`；SEC
+    submissions/companyfacts raw fetch、filing timeline、XBRL fact long、metric mapping、PIT
+    intervals/daily panel/feature panel、validation/report、CLI、score-daily/backtest
+    可选接入、配置、数据源目录、feature availability、system flow、artifact catalog、schema、learning
+    path 和测试已完成；任务 ID 因 TRADING-035 至 TRADING-038 已占用按 owner 要求顺延
+  - 新增 `config/sec_pit_backfill.yaml`、`aits sec-pit fetch-raw/build-filing-timeline/build-facts/build-metrics/build-panel/validate/backfill`、`scripts/run_sec_pit_backfill.py`、`data/raw/sec_edgar/...`
+    raw manifest schema、`data/processed/sec_edgar/filing_timeline.csv`、`xbrl_facts_long.csv`、`mapped_metrics_long.csv`、`fundamental_pit_intervals.csv`、`fundamental_pit_daily_panel.csv`、`sec_pit_feature_panel.csv`、`sec_pit_coverage_summary.csv`、`outputs/reports/sec_pit_backfill/*`
+    validation/coverage/leakage/backfill reports；artifact 固定声明 `production_effect=none`、`backtest_data_grade=B_RECONSTRUCTED_SEC_FILING_PIT`、`strict_vendor_archive=false`、`external_side_effects=false`、`broker_access_required=false`、`paid_vendor_required=false`、`retroactive_strict_pit=false`、`manual_review_required_for_grade_upgrade=true`；loader
+    和 score/backtest 可选接入强制 `max_input_available_time_utc <= decision_date` / `available_for_signal_date
+    <= decision_date`；validation 覆盖 checksum、B-grade accession join、future availability
+    leakage、form whitelist、cross-currency ratio block、overlapping intervals、staleness、restatement
+    availability 和 coverage thresholds；验证通过目标 SEC PIT 测试、SEC/FMP/PIT/backtest 回归、全量
+    pytest、ruff 和触达文件 black check
+  - '2026-05-26: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-035 SEC EDGAR reconstructed
+    PIT backfill 外部需求文档；当前 TRADING-035/036/037/038 已被通知投递审计和 retry 链路占用，本任务按顺延规则使用
+    TRADING-039。2026-05-26: 从 IN_PROGRESS 改为 DONE，原因：已完成 reconstructed filing-time
+    PIT 数据层、SEC fair access/cache provider、manifest/checksum、timeline/facts/metrics/intervals/panel/report/validation、CLI、score-daily/backtest
+    可选接入、治理配置和文档；验证通过 `tests/test_sec_pit_backfill.py`、`tests/test_sec_companyfacts.py`、`tests/test_sec_metrics.py`、`tests/test_sec_features.py`、`tests/test_sec_filings.py`、`tests/test_fmp_forward_pit.py`、`tests/test_pit_snapshots.py`、`tests/test_external_request_cache.py`、`tests/test_backtest.py`、`tests/test_feature_availability.py`、`tests/test_data_sources.py`、全量
+    `python -m pytest -q`（1258 passed, 1 warning）、全量 `python -m ruff check` 和触达文件
+    `python -m black --check ...`。'
+  docs_links:
+  - docs/requirements/sec_edgar_reconstructed_pit_backfill_2026-05-26.md
+  terminal: true
+  raw_row_sha256: 4ee0fa9c1247271863b4f35a083153c2f75d53a950ccb3ff83af276a3848c278
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ee975c458fbba4cc363765b75af8db67ee57bebb0d22cce63ad6417e35ebb8fb

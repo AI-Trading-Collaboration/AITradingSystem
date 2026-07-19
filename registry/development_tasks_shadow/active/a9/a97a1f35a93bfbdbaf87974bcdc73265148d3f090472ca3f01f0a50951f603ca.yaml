@@ -1,0 +1,145 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1506_to_1525_EXPANDED_QQQ_SGOV_TQQQ_ALLOCATION_SEARCH
+  title: null
+  domain: Research strategies / expanded allocation universe, static simplex frontier,
+    actual-path dynamic candidate search
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1506_to_1525_Expanded_QQQ_SGOV_TQQQ_Allocation_Search.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1506_to_1525_Expanded_QQQ_SGOV_TQQQ_Allocation_Search.md`；本批重新打开
+    QQQ / SGOV / TQQQ expanded universe research，但不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker；TQQQ
+    只能作为 research asset，promotion universe 保持 blocked
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `config/research/expanded_allocation_universe.yaml`、scope/TQQQ review
+      文档、static simplex grid index/metrics/frontier/risk-bucket summary、risk bucket
+      representatives、state portfolio candidates、actual-path rebacktest leaderboard、target-path
+      diagnostic、TQQQ risk attribution、same-risk comparison、survival/walk-forward/net-cost/stress/owner
+      review artifacts；真实 run：static grid size=231、frontier rows=509、actual-path strategy
+      count=11、surviving candidate count=0、data_quality_status=`PASS_WITH_WARNINGS`；所有
+      outputs 声明 `ai_after_chatgpt`、actual requested date range、data quality status、actual-path-only
+      ranking、target-path diagnostic-only、promotion `BLOCKED`、paper-shadow/production/broker
+      disabled；report registry、artifact catalog、system flow、task register 和 focused
+      tests 同步
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1270
+    row_sha256: 07ff15418ef4167c72210980b7e58255c6dec95fd8e3b21c2b0222ebfb32f32c
+    cell_count: 8
+    all_cells:
+    - TRADING-1506_to_1525_EXPANDED_QQQ_SGOV_TQQQ_ALLOCATION_SEARCH
+    - Research strategies / expanded allocation universe, static simplex frontier,
+      actual-path dynamic candidate search
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1506_to_1525_Expanded_QQQ_SGOV_TQQQ_Allocation_Search.md`；本批重新打开
+      QQQ / SGOV / TQQQ expanded universe research，但不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker；TQQQ
+      只能作为 research asset，promotion universe 保持 blocked
+    - 新增 `config/research/expanded_allocation_universe.yaml`、scope/TQQQ review 文档、static
+      simplex grid index/metrics/frontier/risk-bucket summary、risk bucket representatives、state
+      portfolio candidates、actual-path rebacktest leaderboard、target-path diagnostic、TQQQ
+      risk attribution、same-risk comparison、survival/walk-forward/net-cost/stress/owner
+      review artifacts；真实 run：static grid size=231、frontier rows=509、actual-path strategy
+      count=11、surviving candidate count=0、data_quality_status=`PASS_WITH_WARNINGS`；所有
+      outputs 声明 `ai_after_chatgpt`、actual requested date range、data quality status、actual-path-only
+      ranking、target-path diagnostic-only、promotion `BLOCKED`、paper-shadow/production/broker
+      disabled；report registry、artifact catalog、system flow、task register 和 focused
+      tests 同步
+    - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求从二档 `limited_adjustment` 扩展到 QQQ
+      / SGOV / TQQQ 三资产 simplex 与 state-to-portfolio candidate research；本阶段只生成 research
+      evidence，dynamic promotion 继续 `BLOCKED`。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI
+      链路完成 scope/TQQQ review、static grid/frontier、bucket/candidate、actual-path rebacktest
+      和 owner pack，promotion 仍 `BLOCKED`。'
+    raw_line: '|TRADING-1506_to_1525_EXPANDED_QQQ_SGOV_TQQQ_ALLOCATION_SEARCH|Research
+      strategies / expanded allocation universe, static simplex frontier, actual-path
+      dynamic candidate search|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1506_to_1525_Expanded_QQQ_SGOV_TQQQ_Allocation_Search.md`；本批重新打开
+      QQQ / SGOV / TQQQ expanded universe research，但不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker；TQQQ
+      只能作为 research asset，promotion universe 保持 blocked|新增 `config/research/expanded_allocation_universe.yaml`、scope/TQQQ
+      review 文档、static simplex grid index/metrics/frontier/risk-bucket summary、risk
+      bucket representatives、state portfolio candidates、actual-path rebacktest leaderboard、target-path
+      diagnostic、TQQQ risk attribution、same-risk comparison、survival/walk-forward/net-cost/stress/owner
+      review artifacts；真实 run：static grid size=231、frontier rows=509、actual-path strategy
+      count=11、surviving candidate count=0、data_quality_status=`PASS_WITH_WARNINGS`；所有
+      outputs 声明 `ai_after_chatgpt`、actual requested date range、data quality status、actual-path-only
+      ranking、target-path diagnostic-only、promotion `BLOCKED`、paper-shadow/production/broker
+      disabled；report registry、artifact catalog、system flow、task register 和 focused
+      tests 同步|2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求从二档 `limited_adjustment`
+      扩展到 QQQ / SGOV / TQQQ 三资产 simplex 与 state-to-portfolio candidate research；本阶段只生成
+      research evidence，dynamic promotion 继续 `BLOCKED`。2026-06-27: 实现完成并转入 VALIDATING；真实
+      CLI 链路完成 scope/TQQQ review、static grid/frontier、bucket/candidate、actual-path
+      rebacktest 和 owner pack，promotion 仍 `BLOCKED`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-07ff15418ef4167c72210980
+  task_id: TRADING-1506_to_1525_EXPANDED_QQQ_SGOV_TQQQ_ALLOCATION_SEARCH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求从二档 `limited_adjustment` 扩展到
+      QQQ / SGOV / TQQQ 三资产 simplex 与 state-to-portfolio candidate research；本阶段只生成
+      research evidence，dynamic promotion 继续 `BLOCKED`。2026-06-27: 实现完成并转入 VALIDATING；真实
+      CLI 链路完成 scope/TQQQ review、static grid/frontier、bucket/candidate、actual-path
+      rebacktest 和 owner pack，promotion 仍 `BLOCKED`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:07ff15418ef4167c72210980b7e58255c6dec95fd8e3b21c2b0222ebfb32f32c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1506_to_1525_EXPANDED_QQQ_SGOV_TQQQ_ALLOCATION_SEARCH
+  - Research strategies / expanded allocation universe, static simplex frontier, actual-path
+    dynamic candidate search
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1506_to_1525_Expanded_QQQ_SGOV_TQQQ_Allocation_Search.md`；本批重新打开
+    QQQ / SGOV / TQQQ expanded universe research，但不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker；TQQQ
+    只能作为 research asset，promotion universe 保持 blocked
+  - 新增 `config/research/expanded_allocation_universe.yaml`、scope/TQQQ review 文档、static
+    simplex grid index/metrics/frontier/risk-bucket summary、risk bucket representatives、state
+    portfolio candidates、actual-path rebacktest leaderboard、target-path diagnostic、TQQQ
+    risk attribution、same-risk comparison、survival/walk-forward/net-cost/stress/owner
+    review artifacts；真实 run：static grid size=231、frontier rows=509、actual-path strategy
+    count=11、surviving candidate count=0、data_quality_status=`PASS_WITH_WARNINGS`；所有
+    outputs 声明 `ai_after_chatgpt`、actual requested date range、data quality status、actual-path-only
+    ranking、target-path diagnostic-only、promotion `BLOCKED`、paper-shadow/production/broker
+    disabled；report registry、artifact catalog、system flow、task register 和 focused
+    tests 同步
+  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求从二档 `limited_adjustment` 扩展到 QQQ /
+    SGOV / TQQQ 三资产 simplex 与 state-to-portfolio candidate research；本阶段只生成 research
+    evidence，dynamic promotion 继续 `BLOCKED`。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI
+    链路完成 scope/TQQQ review、static grid/frontier、bucket/candidate、actual-path rebacktest
+    和 owner pack，promotion 仍 `BLOCKED`。'
+  docs_links:
+  - docs/requirements/TRADING-1506_to_1525_Expanded_QQQ_SGOV_TQQQ_Allocation_Search.md
+  terminal: false
+  raw_row_sha256: 07ff15418ef4167c72210980b7e58255c6dec95fd8e3b21c2b0222ebfb32f32c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a50173338c02ca462f83c3c6bfb2f7fdaf7cfcc6e6ec5b4b23c740004ff3b121

@@ -1,0 +1,120 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-735_DATA_SOURCE_QUALIFICATION_REMEDIATION
+  title: null
+  domain: Data foundation / source qualification remediation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-735_Data_Source_Qualification_Remediation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-735_Data_Source_Qualification_Remediation.md`；读取
+    TRADING-734 acceptance report，输出 module-level qualification、source qualification
+    matrix、remediation plan 和 updated acceptance summary
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits data source-qualification remediate` 可读取 `outputs/data_quality/data_foundation_acceptance/data_foundation_acceptance_report.json`
+      并生成 `data_source_qualification_matrix.json/md`、`data_foundation_remediation_plan.json/md`、`data_foundation_acceptance_summary_updated.json/md`；逐项列出
+      diagnostic_only / blocked_until_qualified / current-view / research-label 项的
+      blocked_reason、missing_contract、missing_source_manifest、missing_available_time、current_view_only_risk、lineage_gap、PIT_risk、repairable_without_relaxing_gate、required_fix、expected_promotion_grade_gain_if_fixed；所有输出固定
+      lookahead_violation_count=0、production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1363
+    row_sha256: f7e3a82c3919d509d27fed341e65cea8c64f191237bb111123a9a54ace759b50
+    cell_count: 8
+    all_cells:
+    - TRADING-735_DATA_SOURCE_QUALIFICATION_REMEDIATION
+    - Data foundation / source qualification remediation
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-735_Data_Source_Qualification_Remediation.md`；读取
+      TRADING-734 acceptance report，输出 module-level qualification、source qualification
+      matrix、remediation plan 和 updated acceptance summary
+    - '`aits data source-qualification remediate` 可读取 `outputs/data_quality/data_foundation_acceptance/data_foundation_acceptance_report.json`
+      并生成 `data_source_qualification_matrix.json/md`、`data_foundation_remediation_plan.json/md`、`data_foundation_acceptance_summary_updated.json/md`；逐项列出
+      diagnostic_only / blocked_until_qualified / current-view / research-label 项的
+      blocked_reason、missing_contract、missing_source_manifest、missing_available_time、current_view_only_risk、lineage_gap、PIT_risk、repairable_without_relaxing_gate、required_fix、expected_promotion_grade_gain_if_fixed；所有输出固定
+      lookahead_violation_count=0、production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false'
+    - '2026-06-21: validation-only remediation runner 已实现并进入 VALIDATING；默认 run 输出
+      `BLOCKED_UNTIL_QUALIFIED` matrix、9 个 module rows、10 个 remediation items、P0 item
+      count=9、diagnostic_only_count=11、blocked_until_qualified_count=3、current_view_only_count=1、research_label_only_count=2、lookahead_violation_count=0、production_effect=none、broker_action=none，且明确
+      no gate relaxation；focused tests 38 passed，fast-unit 91 passed，contract-validation
+      90 passed，report-validation 55 passed。'
+    raw_line: '|TRADING-735_DATA_SOURCE_QUALIFICATION_REMEDIATION|Data foundation
+      / source qualification remediation|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-735_Data_Source_Qualification_Remediation.md`；读取
+      TRADING-734 acceptance report，输出 module-level qualification、source qualification
+      matrix、remediation plan 和 updated acceptance summary|`aits data source-qualification
+      remediate` 可读取 `outputs/data_quality/data_foundation_acceptance/data_foundation_acceptance_report.json`
+      并生成 `data_source_qualification_matrix.json/md`、`data_foundation_remediation_plan.json/md`、`data_foundation_acceptance_summary_updated.json/md`；逐项列出
+      diagnostic_only / blocked_until_qualified / current-view / research-label 项的
+      blocked_reason、missing_contract、missing_source_manifest、missing_available_time、current_view_only_risk、lineage_gap、PIT_risk、repairable_without_relaxing_gate、required_fix、expected_promotion_grade_gain_if_fixed；所有输出固定
+      lookahead_violation_count=0、production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false|2026-06-21:
+      validation-only remediation runner 已实现并进入 VALIDATING；默认 run 输出 `BLOCKED_UNTIL_QUALIFIED`
+      matrix、9 个 module rows、10 个 remediation items、P0 item count=9、diagnostic_only_count=11、blocked_until_qualified_count=3、current_view_only_count=1、research_label_only_count=2、lookahead_violation_count=0、production_effect=none、broker_action=none，且明确
+      no gate relaxation；focused tests 38 passed，fast-unit 91 passed，contract-validation
+      90 passed，report-validation 55 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f7e3a82c3919d509d27fed34
+  task_id: TRADING-735_DATA_SOURCE_QUALIFICATION_REMEDIATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-21: validation-only remediation runner 已实现并进入 VALIDATING；默认 run
+      输出 `BLOCKED_UNTIL_QUALIFIED` matrix、9 个 module rows、10 个 remediation items、P0
+      item count=9、diagnostic_only_count=11、blocked_until_qualified_count=3、current_view_only_count=1、research_label_only_count=2、lookahead_violation_count=0、production_effect=none、broker_action=none，且明确
+      no gate relaxation；focused tests 38 passed，fast-unit 91 passed，contract-validation
+      90 passed，report-validation 55 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f7e3a82c3919d509d27fed341e65cea8c64f191237bb111123a9a54ace759b50
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-735_DATA_SOURCE_QUALIFICATION_REMEDIATION
+  - Data foundation / source qualification remediation
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-735_Data_Source_Qualification_Remediation.md`；读取
+    TRADING-734 acceptance report，输出 module-level qualification、source qualification
+    matrix、remediation plan 和 updated acceptance summary
+  - '`aits data source-qualification remediate` 可读取 `outputs/data_quality/data_foundation_acceptance/data_foundation_acceptance_report.json`
+    并生成 `data_source_qualification_matrix.json/md`、`data_foundation_remediation_plan.json/md`、`data_foundation_acceptance_summary_updated.json/md`；逐项列出
+    diagnostic_only / blocked_until_qualified / current-view / research-label 项的 blocked_reason、missing_contract、missing_source_manifest、missing_available_time、current_view_only_risk、lineage_gap、PIT_risk、repairable_without_relaxing_gate、required_fix、expected_promotion_grade_gain_if_fixed；所有输出固定
+    lookahead_violation_count=0、production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false'
+  - '2026-06-21: validation-only remediation runner 已实现并进入 VALIDATING；默认 run 输出 `BLOCKED_UNTIL_QUALIFIED`
+    matrix、9 个 module rows、10 个 remediation items、P0 item count=9、diagnostic_only_count=11、blocked_until_qualified_count=3、current_view_only_count=1、research_label_only_count=2、lookahead_violation_count=0、production_effect=none、broker_action=none，且明确
+    no gate relaxation；focused tests 38 passed，fast-unit 91 passed，contract-validation
+    90 passed，report-validation 55 passed。'
+  docs_links:
+  - docs/requirements/TRADING-735_Data_Source_Qualification_Remediation.md
+  terminal: false
+  raw_row_sha256: f7e3a82c3919d509d27fed341e65cea8c64f191237bb111123a9a54ace759b50
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ca7d8332d3aab31b13b55081b869bda774002e7ce3737cc790d807c7a0702a54

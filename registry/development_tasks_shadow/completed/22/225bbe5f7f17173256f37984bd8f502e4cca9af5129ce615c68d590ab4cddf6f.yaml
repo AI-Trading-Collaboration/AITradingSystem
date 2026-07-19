@@ -1,0 +1,167 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2416_GROWTH_TILT_ENGINE_PIT_GATE_REMAINING_BLOCKER_CLOSURE_PLAN
+  title: null
+  domain: Strategy research / growth tilt PIT gate blocker closure planning
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2417 source traceability / upstream artifact closure
+  requirement_refs:
+  - docs/requirements/TRADING-2416_Growth_Tilt_Engine_PIT_Gate_Remaining_Blocker_Closure_Plan.md
+  - docs/tasks/completed/TRADING-2416_Growth_Tilt_Engine_PIT_Gate_Remaining_Blocker_Closure_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2416_Growth_Tilt_Engine_PIT_Gate_Remaining_Blocker_Closure_Plan.md`；承接
+    TRADING-2415 PIT gate readiness snapshot，仅读取 prior artifacts/docs/registry/catalog
+    与 `config/research/dynamic_strategy_pit_input_registry.yaml`；本任务只生成 remaining
+    blocker matrix、source traceability closure plan、as-of evidence closure plan、valid-until
+    dependency closure plan、PIT gate evidence requirements 和 2417 route，不修复 source
+    feature、不实现 `valid_until_window`、不解除或降级 blocker、不运行 candidate search / observation
+    / paper-shadow / scheduler / event append / outcome binding / production / broker，不运行新
+    backtest、scoring、daily report 或生成新 signal/feature。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 reusable closure plan builder、`aits research strategies growth-tilt-engine-pit-gate-remaining-blocker-closure-plan`；输出
+      `closure_plan_result.json`、`remaining_blocker_matrix.json`、`source_traceability_closure_plan.json`、`as_of_evidence_closure_plan.json`、`valid_until_dependency_closure_plan.json`、`pit_gate_evidence_requirements.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_PIT_GATE_REMAINING_BLOCKER_CLOSURE_PLAN_READY`，source
+      feature count=10，PIT gate ready count=0，contract-ready count=0，PIT gate blocked
+      count=10，blocked by source traceability count=5，blocked by valid_until_window
+      count=1，closure plans ready=true，`growth_tilt_engine_blocking_gap_resolved=false`、`growth_tilt_engine_severity_downgraded=false`、`valid_until_window_blocking_gap_resolved=false`、`valid_until_window_severity_downgraded=false`、candidate_search_allowed=false、candidate_search_resumed=false、research_only_observation_approved=false、paper_shadow_enabled=false、event_append_enabled=false、outcome_binding_enabled=false、scheduler_enabled=false、production_enabled=false、broker_action_enabled=false、daily_report_generated=false，next
+      route=`TRADING-2417_Growth_Tilt_Engine_Source_Traceability_And_Upstream_Artifact_Closure`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 68
+    row_sha256: d71dec4d490fd91a2cea5ab5102488988e182b75ff536e66e7193a1b846ff63d
+    cell_count: 8
+    all_cells:
+    - TRADING-2416_GROWTH_TILT_ENGINE_PIT_GATE_REMAINING_BLOCKER_CLOSURE_PLAN
+    - Strategy research / growth tilt PIT gate blocker closure planning
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2417 source traceability / upstream artifact closure
+    - 详见 `docs/requirements/TRADING-2416_Growth_Tilt_Engine_PIT_Gate_Remaining_Blocker_Closure_Plan.md`；承接
+      TRADING-2415 PIT gate readiness snapshot，仅读取 prior artifacts/docs/registry/catalog
+      与 `config/research/dynamic_strategy_pit_input_registry.yaml`；本任务只生成 remaining
+      blocker matrix、source traceability closure plan、as-of evidence closure plan、valid-until
+      dependency closure plan、PIT gate evidence requirements 和 2417 route，不修复 source
+      feature、不实现 `valid_until_window`、不解除或降级 blocker、不运行 candidate search / observation
+      / paper-shadow / scheduler / event append / outcome binding / production / broker，不运行新
+      backtest、scoring、daily report 或生成新 signal/feature。
+    - 新增 reusable closure plan builder、`aits research strategies growth-tilt-engine-pit-gate-remaining-blocker-closure-plan`；输出
+      `closure_plan_result.json`、`remaining_blocker_matrix.json`、`source_traceability_closure_plan.json`、`as_of_evidence_closure_plan.json`、`valid_until_dependency_closure_plan.json`、`pit_gate_evidence_requirements.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_PIT_GATE_REMAINING_BLOCKER_CLOSURE_PLAN_READY`，source
+      feature count=10，PIT gate ready count=0，contract-ready count=0，PIT gate blocked
+      count=10，blocked by source traceability count=5，blocked by valid_until_window
+      count=1，closure plans ready=true，`growth_tilt_engine_blocking_gap_resolved=false`、`growth_tilt_engine_severity_downgraded=false`、`valid_until_window_blocking_gap_resolved=false`、`valid_until_window_severity_downgraded=false`、candidate_search_allowed=false、candidate_search_resumed=false、research_only_observation_approved=false、paper_shadow_enabled=false、event_append_enabled=false、outcome_binding_enabled=false、scheduler_enabled=false、production_enabled=false、broker_action_enabled=false、daily_report_generated=false，next
+      route=`TRADING-2417_Growth_Tilt_Engine_Source_Traceability_And_Upstream_Artifact_Closure`。
+    - '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest 4 passed、真实 CLI、docs freshness、documentation contract、task-register
+      consistency run/validate、contract-validation 197 passed 和 `git diff --check`；本任务未运行
+      `aits validate-data`，因为只读取 TRADING-2415 prior artifacts/docs/registry/catalog
+      和 PIT input registry，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+      report 或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+      binding、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      validation 结果见 `docs/tasks/completed/TRADING-2416_Growth_Tilt_Engine_PIT_Gate_Remaining_Blocker_Closure_Plan.md`。'
+    raw_line: '|TRADING-2416_GROWTH_TILT_ENGINE_PIT_GATE_REMAINING_BLOCKER_CLOSURE_PLAN|Strategy
+      research / growth tilt PIT gate blocker closure planning|P0|DONE|项目 owner 后续复核
+      TRADING-2417 source traceability / upstream artifact closure|详见 `docs/requirements/TRADING-2416_Growth_Tilt_Engine_PIT_Gate_Remaining_Blocker_Closure_Plan.md`；承接
+      TRADING-2415 PIT gate readiness snapshot，仅读取 prior artifacts/docs/registry/catalog
+      与 `config/research/dynamic_strategy_pit_input_registry.yaml`；本任务只生成 remaining
+      blocker matrix、source traceability closure plan、as-of evidence closure plan、valid-until
+      dependency closure plan、PIT gate evidence requirements 和 2417 route，不修复 source
+      feature、不实现 `valid_until_window`、不解除或降级 blocker、不运行 candidate search / observation
+      / paper-shadow / scheduler / event append / outcome binding / production / broker，不运行新
+      backtest、scoring、daily report 或生成新 signal/feature。|新增 reusable closure plan
+      builder、`aits research strategies growth-tilt-engine-pit-gate-remaining-blocker-closure-plan`；输出
+      `closure_plan_result.json`、`remaining_blocker_matrix.json`、`source_traceability_closure_plan.json`、`as_of_evidence_closure_plan.json`、`valid_until_dependency_closure_plan.json`、`pit_gate_evidence_requirements.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_PIT_GATE_REMAINING_BLOCKER_CLOSURE_PLAN_READY`，source
+      feature count=10，PIT gate ready count=0，contract-ready count=0，PIT gate blocked
+      count=10，blocked by source traceability count=5，blocked by valid_until_window
+      count=1，closure plans ready=true，`growth_tilt_engine_blocking_gap_resolved=false`、`growth_tilt_engine_severity_downgraded=false`、`valid_until_window_blocking_gap_resolved=false`、`valid_until_window_severity_downgraded=false`、candidate_search_allowed=false、candidate_search_resumed=false、research_only_observation_approved=false、paper_shadow_enabled=false、event_append_enabled=false、outcome_binding_enabled=false、scheduler_enabled=false、production_enabled=false、broker_action_enabled=false、daily_report_generated=false，next
+      route=`TRADING-2417_Growth_Tilt_Engine_Source_Traceability_And_Upstream_Artifact_Closure`。|2026-07-08:
+      根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest 4 passed、真实 CLI、docs freshness、documentation contract、task-register
+      consistency run/validate、contract-validation 197 passed 和 `git diff --check`；本任务未运行
+      `aits validate-data`，因为只读取 TRADING-2415 prior artifacts/docs/registry/catalog
+      和 PIT input registry，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+      report 或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+      binding、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      validation 结果见 `docs/tasks/completed/TRADING-2416_Growth_Tilt_Engine_PIT_Gate_Remaining_Blocker_Closure_Plan.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d71dec4d490fd91a2cea5ab5
+  task_id: TRADING-2416_GROWTH_TILT_ENGINE_PIT_GATE_REMAINING_BLOCKER_CLOSURE_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2417 source traceability / upstream artifact
+      closure
+    notes: '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest 4 passed、真实 CLI、docs freshness、documentation
+      contract、task-register consistency run/validate、contract-validation 197 passed
+      和 `git diff --check`；本任务未运行 `aits validate-data`，因为只读取 TRADING-2415 prior artifacts/docs/registry/catalog
+      和 PIT input registry，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+      report 或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+      binding、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      validation 结果见 `docs/tasks/completed/TRADING-2416_Growth_Tilt_Engine_PIT_Gate_Remaining_Blocker_Closure_Plan.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d71dec4d490fd91a2cea5ab5102488988e182b75ff536e66e7193a1b846ff63d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2416_GROWTH_TILT_ENGINE_PIT_GATE_REMAINING_BLOCKER_CLOSURE_PLAN
+  - Strategy research / growth tilt PIT gate blocker closure planning
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2417 source traceability / upstream artifact closure
+  - 详见 `docs/requirements/TRADING-2416_Growth_Tilt_Engine_PIT_Gate_Remaining_Blocker_Closure_Plan.md`；承接
+    TRADING-2415 PIT gate readiness snapshot，仅读取 prior artifacts/docs/registry/catalog
+    与 `config/research/dynamic_strategy_pit_input_registry.yaml`；本任务只生成 remaining
+    blocker matrix、source traceability closure plan、as-of evidence closure plan、valid-until
+    dependency closure plan、PIT gate evidence requirements 和 2417 route，不修复 source
+    feature、不实现 `valid_until_window`、不解除或降级 blocker、不运行 candidate search / observation
+    / paper-shadow / scheduler / event append / outcome binding / production / broker，不运行新
+    backtest、scoring、daily report 或生成新 signal/feature。
+  - 新增 reusable closure plan builder、`aits research strategies growth-tilt-engine-pit-gate-remaining-blocker-closure-plan`；输出
+    `closure_plan_result.json`、`remaining_blocker_matrix.json`、`source_traceability_closure_plan.json`、`as_of_evidence_closure_plan.json`、`valid_until_dependency_closure_plan.json`、`pit_gate_evidence_requirements.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_PIT_GATE_REMAINING_BLOCKER_CLOSURE_PLAN_READY`，source
+    feature count=10，PIT gate ready count=0，contract-ready count=0，PIT gate blocked
+    count=10，blocked by source traceability count=5，blocked by valid_until_window
+    count=1，closure plans ready=true，`growth_tilt_engine_blocking_gap_resolved=false`、`growth_tilt_engine_severity_downgraded=false`、`valid_until_window_blocking_gap_resolved=false`、`valid_until_window_severity_downgraded=false`、candidate_search_allowed=false、candidate_search_resumed=false、research_only_observation_approved=false、paper_shadow_enabled=false、event_append_enabled=false、outcome_binding_enabled=false、scheduler_enabled=false、production_enabled=false、broker_action_enabled=false、daily_report_generated=false，next
+    route=`TRADING-2417_Growth_Tilt_Engine_Source_Traceability_And_Upstream_Artifact_Closure`。
+  - '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+    parallel pytest 4 passed、真实 CLI、docs freshness、documentation contract、task-register
+    consistency run/validate、contract-validation 197 passed 和 `git diff --check`；本任务未运行
+    `aits validate-data`，因为只读取 TRADING-2415 prior artifacts/docs/registry/catalog
+    和 PIT input registry，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+    report 或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+    binding、production、broker/order、daily report 全部保持 disabled / false / none；最终 validation
+    结果见 `docs/tasks/completed/TRADING-2416_Growth_Tilt_Engine_PIT_Gate_Remaining_Blocker_Closure_Plan.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2416_Growth_Tilt_Engine_PIT_Gate_Remaining_Blocker_Closure_Plan.md
+  - docs/tasks/completed/TRADING-2416_Growth_Tilt_Engine_PIT_Gate_Remaining_Blocker_Closure_Plan.md
+  terminal: true
+  raw_row_sha256: d71dec4d490fd91a2cea5ab5102488988e182b75ff536e66e7193a1b846ff63d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ba4577d55fa6c0f61404d9a64325d2f4eab0bb5fa9dc9f2fc941cf3b6e138527

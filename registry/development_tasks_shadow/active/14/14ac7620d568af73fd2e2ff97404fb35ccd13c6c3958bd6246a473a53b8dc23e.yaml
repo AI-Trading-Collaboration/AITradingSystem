@@ -1,0 +1,98 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-861_RUN_REAL_TAIL_RISK_GOVERNANCE_CLI_SUITE
+  title: null
+  domain: Controlled strategy research / real CLI run summary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；必须真实运行
+    TRADING-843～858 follow-up CLI，不只依赖 pytest
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `tail_risk_followup_real_run_summary.json/md`，汇总真实 status、blockers、warnings、sample_count、baseline_dominance、readiness_score
+      和 fixture/placeholder 检查
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1339
+    row_sha256: d6e38bc575fea38b7c5ca0dc0ce8abaed3e3585064d6933c4a81b7344ab5fd38
+    cell_count: 8
+    all_cells:
+    - TRADING-861_RUN_REAL_TAIL_RISK_GOVERNANCE_CLI_SUITE
+    - Controlled strategy research / real CLI run summary
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；必须真实运行
+      TRADING-843～858 follow-up CLI，不只依赖 pytest
+    - 生成 `tail_risk_followup_real_run_summary.json/md`，汇总真实 status、blockers、warnings、sample_count、baseline_dominance、readiness_score
+      和 fixture/placeholder 检查
+    - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 真实 CLI suite 完成并转入 VALIDATING；逐条运行
+      TRADING-843～858 follow-up CLI，输出 `REAL_RUN_PASS`、readiness_score=58、baseline_dominance=`BASELINE_DOMINATED_BLOCKED`，确认
+      zero-sample 未被 VALIDATED、daily summary 不暗示策略可用。'
+    raw_line: '|TRADING-861_RUN_REAL_TAIL_RISK_GOVERNANCE_CLI_SUITE|Controlled strategy
+      research / real CLI run summary|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；必须真实运行
+      TRADING-843～858 follow-up CLI，不只依赖 pytest|生成 `tail_risk_followup_real_run_summary.json/md`，汇总真实
+      status、blockers、warnings、sample_count、baseline_dominance、readiness_score 和 fixture/placeholder
+      检查|2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 真实 CLI suite 完成并转入 VALIDATING；逐条运行
+      TRADING-843～858 follow-up CLI，输出 `REAL_RUN_PASS`、readiness_score=58、baseline_dominance=`BASELINE_DOMINATED_BLOCKED`，确认
+      zero-sample 未被 VALIDATED、daily summary 不暗示策略可用。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d6e38bc575fea38b7c5ca0dc
+  task_id: TRADING-861_RUN_REAL_TAIL_RISK_GOVERNANCE_CLI_SUITE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 真实 CLI suite 完成并转入 VALIDATING；逐条运行
+      TRADING-843～858 follow-up CLI，输出 `REAL_RUN_PASS`、readiness_score=58、baseline_dominance=`BASELINE_DOMINATED_BLOCKED`，确认
+      zero-sample 未被 VALIDATED、daily summary 不暗示策略可用。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d6e38bc575fea38b7c5ca0dc0ce8abaed3e3585064d6933c4a81b7344ab5fd38
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-861_RUN_REAL_TAIL_RISK_GOVERNANCE_CLI_SUITE
+  - Controlled strategy research / real CLI run summary
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；必须真实运行
+    TRADING-843～858 follow-up CLI，不只依赖 pytest
+  - 生成 `tail_risk_followup_real_run_summary.json/md`，汇总真实 status、blockers、warnings、sample_count、baseline_dominance、readiness_score
+    和 fixture/placeholder 检查
+  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 真实 CLI suite 完成并转入 VALIDATING；逐条运行
+    TRADING-843～858 follow-up CLI，输出 `REAL_RUN_PASS`、readiness_score=58、baseline_dominance=`BASELINE_DOMINATED_BLOCKED`，确认
+    zero-sample 未被 VALIDATED、daily summary 不暗示策略可用。'
+  docs_links:
+  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
+  terminal: false
+  raw_row_sha256: d6e38bc575fea38b7c5ca0dc0ce8abaed3e3585064d6933c4a81b7344ab5fd38
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3a73c385a9bb02501c89a4170e50a625cff0995d913485bd6a1009c620890df7

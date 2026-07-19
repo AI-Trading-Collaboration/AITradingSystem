@@ -1,0 +1,138 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-386_SIGNAL_INPUT_COMPLETENESS_RECOVERY_RERUN
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue signal input completeness recovery rerun
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核 signal warning
+  requirement_refs:
+  - docs/requirements/TRADING-386_Signal_Input_Completeness_Recovery_Rerun.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-386_Signal_Input_Completeness_Recovery_Rerun.md`；在
+    TRADING-385 后重新运行或读取 signal input completeness monitor，显式检查 required files、schema
+    versions、non-empty signal series、required feature columns、market coverage 和 as-of
+    consistency，并输出恢复状态；不得运行 feature/signal/snapshot builders、刷新数据、补造 signal artifact、放宽
+    policy 或推进 promotion/extended shadow
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_completeness_recovery.py`、`aits
+      etf dynamic-v3-rescue signal-input-completeness-recovery run/report`、`validate-signal-input-completeness-recovery`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；`SIGNAL_INPUTS_STILL_BLOCKED` hard stop，`SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`
+      只允许人工复核和 readiness/health recovery
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 210
+    row_sha256: bcbd52931f0a039279a57c043d03e13c068fcc18f8bf7f6657ed9c02b5505c01
+    cell_count: 8
+    all_cells:
+    - TRADING-386_SIGNAL_INPUT_COMPLETENESS_RECOVERY_RERUN
+    - ETF portfolio/dynamic v3 rescue signal input completeness recovery rerun
+    - P0
+    - DONE
+    - 系统实现 + 项目 owner 后续复核 signal warning
+    - 详细拆解见 `docs/requirements/TRADING-386_Signal_Input_Completeness_Recovery_Rerun.md`；在
+      TRADING-385 后重新运行或读取 signal input completeness monitor，显式检查 required files、schema
+      versions、non-empty signal series、required feature columns、market coverage 和
+      as-of consistency，并输出恢复状态；不得运行 feature/signal/snapshot builders、刷新数据、补造 signal
+      artifact、放宽 policy 或推进 promotion/extended shadow
+    - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_completeness_recovery.py`、`aits
+      etf dynamic-v3-rescue signal-input-completeness-recovery run/report`、`validate-signal-input-completeness-recovery`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；`SIGNAL_INPUTS_STILL_BLOCKED` hard stop，`SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`
+      只允许人工复核和 readiness/health recovery
+    - '2026-06-17: DONE；真实 artifact `signal-input-completeness-recovery_bb5f861bba0db5da`
+      使用 2026-06-17 as-of 重新运行 completeness monitor `signal-input-completeness_227a681c2f632a6d`，输出
+      `SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`、`signal_input_status=WARNING`、blocking=0、warning=1、blocker_list
+      empty、warning_list=`latest_signal_snapshot:warning,latest_signal_snapshot:warning_signal_snapshot_status`，validation
+      PASS；warning 来源为 latest signal snapshot `LIMITED`。Focused tests 覆盖 restored、warning、blocked
+      和 CLI run/report/validate；保持 no upstream generation / no signal fabrication
+      / no policy weakening / no official target / no broker / no production。'
+    raw_line: '|TRADING-386_SIGNAL_INPUT_COMPLETENESS_RECOVERY_RERUN|ETF portfolio/dynamic
+      v3 rescue signal input completeness recovery rerun|P0|DONE|系统实现 + 项目 owner 后续复核
+      signal warning|详细拆解见 `docs/requirements/TRADING-386_Signal_Input_Completeness_Recovery_Rerun.md`；在
+      TRADING-385 后重新运行或读取 signal input completeness monitor，显式检查 required files、schema
+      versions、non-empty signal series、required feature columns、market coverage 和
+      as-of consistency，并输出恢复状态；不得运行 feature/signal/snapshot builders、刷新数据、补造 signal
+      artifact、放宽 policy 或推进 promotion/extended shadow|新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_completeness_recovery.py`、`aits
+      etf dynamic-v3-rescue signal-input-completeness-recovery run/report`、`validate-signal-input-completeness-recovery`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；`SIGNAL_INPUTS_STILL_BLOCKED` hard stop，`SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`
+      只允许人工复核和 readiness/health recovery|2026-06-17: DONE；真实 artifact `signal-input-completeness-recovery_bb5f861bba0db5da`
+      使用 2026-06-17 as-of 重新运行 completeness monitor `signal-input-completeness_227a681c2f632a6d`，输出
+      `SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`、`signal_input_status=WARNING`、blocking=0、warning=1、blocker_list
+      empty、warning_list=`latest_signal_snapshot:warning,latest_signal_snapshot:warning_signal_snapshot_status`，validation
+      PASS；warning 来源为 latest signal snapshot `LIMITED`。Focused tests 覆盖 restored、warning、blocked
+      和 CLI run/report/validate；保持 no upstream generation / no signal fabrication
+      / no policy weakening / no official target / no broker / no production。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bcbd52931f0a039279a57c04
+  task_id: TRADING-386_SIGNAL_INPUT_COMPLETENESS_RECOVERY_RERUN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核 signal warning
+    notes: '2026-06-17: DONE；真实 artifact `signal-input-completeness-recovery_bb5f861bba0db5da`
+      使用 2026-06-17 as-of 重新运行 completeness monitor `signal-input-completeness_227a681c2f632a6d`，输出
+      `SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`、`signal_input_status=WARNING`、blocking=0、warning=1、blocker_list
+      empty、warning_list=`latest_signal_snapshot:warning,latest_signal_snapshot:warning_signal_snapshot_status`，validation
+      PASS；warning 来源为 latest signal snapshot `LIMITED`。Focused tests 覆盖 restored、warning、blocked
+      和 CLI run/report/validate；保持 no upstream generation / no signal fabrication
+      / no policy weakening / no official target / no broker / no production。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bcbd52931f0a039279a57c043d03e13c068fcc18f8bf7f6657ed9c02b5505c01
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-386_SIGNAL_INPUT_COMPLETENESS_RECOVERY_RERUN
+  - ETF portfolio/dynamic v3 rescue signal input completeness recovery rerun
+  - P0
+  - DONE
+  - 系统实现 + 项目 owner 后续复核 signal warning
+  - 详细拆解见 `docs/requirements/TRADING-386_Signal_Input_Completeness_Recovery_Rerun.md`；在
+    TRADING-385 后重新运行或读取 signal input completeness monitor，显式检查 required files、schema
+    versions、non-empty signal series、required feature columns、market coverage 和 as-of
+    consistency，并输出恢复状态；不得运行 feature/signal/snapshot builders、刷新数据、补造 signal artifact、放宽
+    policy 或推进 promotion/extended shadow
+  - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_completeness_recovery.py`、`aits
+    etf dynamic-v3-rescue signal-input-completeness-recovery run/report`、`validate-signal-input-completeness-recovery`、Reader
+    Brief section、report registry、artifact catalog、README、operations runbook、system
+    flow、requirements 和 focused tests；`SIGNAL_INPUTS_STILL_BLOCKED` hard stop，`SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`
+    只允许人工复核和 readiness/health recovery
+  - '2026-06-17: DONE；真实 artifact `signal-input-completeness-recovery_bb5f861bba0db5da`
+    使用 2026-06-17 as-of 重新运行 completeness monitor `signal-input-completeness_227a681c2f632a6d`，输出
+    `SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`、`signal_input_status=WARNING`、blocking=0、warning=1、blocker_list
+    empty、warning_list=`latest_signal_snapshot:warning,latest_signal_snapshot:warning_signal_snapshot_status`，validation
+    PASS；warning 来源为 latest signal snapshot `LIMITED`。Focused tests 覆盖 restored、warning、blocked
+    和 CLI run/report/validate；保持 no upstream generation / no signal fabrication /
+    no policy weakening / no official target / no broker / no production。'
+  docs_links:
+  - docs/requirements/TRADING-386_Signal_Input_Completeness_Recovery_Rerun.md
+  terminal: true
+  raw_row_sha256: bcbd52931f0a039279a57c043d03e13c068fcc18f8bf7f6657ed9c02b5505c01
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3f7301986028fef5896e8a7f38050e0668fcd4790eda078410afea33c378344b

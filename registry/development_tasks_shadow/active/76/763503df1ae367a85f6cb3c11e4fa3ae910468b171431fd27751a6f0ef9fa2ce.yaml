@@ -1,0 +1,159 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-575_to_580_B2_CONTROL_WINDOW_EVIDENCE_COMPLETION
+  title: null
+  domain: ETF portfolio/weight research B2 control-window independent rerun evidence
+    completion
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-575_to_580_B2_Control_Window_Evidence_Completion.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-575_to_580_B2_Control_Window_Evidence_Completion.md`；在
+    TRADING-565~574 后补齐 normal/calm control-window independent B2 rerun evidence，定义
+    rerun contract、生成 control-window rerun artifacts、评价 no-trigger correctness、重跑
+    B2 full diagnostic with control windows、重跑 B2-only gate v3 并输出 B2 path decision
+    snapshot；不得调 B2 threshold/参数，不得使用 B3 slow tilt，不得运行 B4/B5/B6/v3，不得访问 untouched
+    holdout，不得生成 official target weights、paper-shadow activation、extended shadow、broker/order/live/production
+    mutation，不得自动 append owner decision
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 输出 `b2_control_window_rerun_contract.json/md`、`b2_control_window_rerun.json/md`、`b2_no_trigger_correctness_review.json/md`、`b2_full_diagnostic_with_control_windows.json/md`、`b2_only_research_gate_v3.json/md`
+      和 `b2_path_decision_snapshot.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+      date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；只有
+      risk-heavy evidence 与 calm/normal control evidence 均存在且 validated 时，TRADING-578
+      才能为 `B2_FULL_DIAGNOSTIC_COMPLETE`；B4 retest 必须依赖 valid B3，B5 必须依赖 valid non-redundant
+      B4，B6 必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git diff --check`
+      通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1415
+    row_sha256: b518661de36627af6c7a7a51eab0977df56e58b8620149f76795606037ae5960
+    cell_count: 8
+    all_cells:
+    - TRADING-575_to_580_B2_CONTROL_WINDOW_EVIDENCE_COMPLETION
+    - ETF portfolio/weight research B2 control-window independent rerun evidence completion
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-575_to_580_B2_Control_Window_Evidence_Completion.md`；在
+      TRADING-565~574 后补齐 normal/calm control-window independent B2 rerun evidence，定义
+      rerun contract、生成 control-window rerun artifacts、评价 no-trigger correctness、重跑
+      B2 full diagnostic with control windows、重跑 B2-only gate v3 并输出 B2 path decision
+      snapshot；不得调 B2 threshold/参数，不得使用 B3 slow tilt，不得运行 B4/B5/B6/v3，不得访问 untouched
+      holdout，不得生成 official target weights、paper-shadow activation、extended shadow、broker/order/live/production
+      mutation，不得自动 append owner decision
+    - 输出 `b2_control_window_rerun_contract.json/md`、`b2_control_window_rerun.json/md`、`b2_no_trigger_correctness_review.json/md`、`b2_full_diagnostic_with_control_windows.json/md`、`b2_only_research_gate_v3.json/md`
+      和 `b2_path_decision_snapshot.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+      date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；只有
+      risk-heavy evidence 与 calm/normal control evidence 均存在且 validated 时，TRADING-578
+      才能为 `B2_FULL_DIAGNOSTIC_COMPLETE`；B4 retest 必须依赖 valid B3，B5 必须依赖 valid non-redundant
+      B4，B6 必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git diff --check`
+      通过
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：TRADING-567 当前为 `B2_FULL_DIAGNOSTIC_PARTIAL`，normal/calm
+      control windows 只有 normal-market no-trigger reference，尚无 independent B2 control-window
+      signal rerun artifact；当前 TRADING-572=`B2_ONLY_NEEDS_MORE_EVIDENCE`、TRADING-574=`CONTINUE_B2_ONLY_RESEARCH`，且
+      `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19:
+      实现完成并转入 VALIDATING；`b2-control-window-research` 输出 TRADING-575=`B2_CONTROL_WINDOW_RERUN_CONTRACT_READY`、576=`B2_CONTROL_RERUN_COMPLETE`、577=`B2_NO_TRIGGER_CORRECTNESS_PASS`、578=`B2_FULL_DIAGNOSTIC_COMPLETE`、579=`B2_ONLY_NEEDS_MORE_EVIDENCE`、580=`CONTINUE_B2_ONLY_RESEARCH`；control
+      rerun aggregate `window_count=2`、`trigger_count=0`、`false_risk_off_count=0`、`unnecessary_exposure_reduction_count=0`；B2
+      full diagnostic evidence set 已补齐 control rerun evidence，但 research gate 仍因 re-entry
+      lag、drawdown/utility mixed 和 trigger stability weak 保持 more-evidence；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+    raw_line: '|TRADING-575_to_580_B2_CONTROL_WINDOW_EVIDENCE_COMPLETION|ETF portfolio/weight
+      research B2 control-window independent rerun evidence completion|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-575_to_580_B2_Control_Window_Evidence_Completion.md`；在
+      TRADING-565~574 后补齐 normal/calm control-window independent B2 rerun evidence，定义
+      rerun contract、生成 control-window rerun artifacts、评价 no-trigger correctness、重跑
+      B2 full diagnostic with control windows、重跑 B2-only gate v3 并输出 B2 path decision
+      snapshot；不得调 B2 threshold/参数，不得使用 B3 slow tilt，不得运行 B4/B5/B6/v3，不得访问 untouched
+      holdout，不得生成 official target weights、paper-shadow activation、extended shadow、broker/order/live/production
+      mutation，不得自动 append owner decision|输出 `b2_control_window_rerun_contract.json/md`、`b2_control_window_rerun.json/md`、`b2_no_trigger_correctness_review.json/md`、`b2_full_diagnostic_with_control_windows.json/md`、`b2_only_research_gate_v3.json/md`
+      和 `b2_path_decision_snapshot.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+      date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；只有
+      risk-heavy evidence 与 calm/normal control evidence 均存在且 validated 时，TRADING-578
+      才能为 `B2_FULL_DIAGNOSTIC_COMPLETE`；B4 retest 必须依赖 valid B3，B5 必须依赖 valid non-redundant
+      B4，B6 必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git diff --check`
+      通过|2026-06-19: 新增并进入 IN_PROGRESS，原因：TRADING-567 当前为 `B2_FULL_DIAGNOSTIC_PARTIAL`，normal/calm
+      control windows 只有 normal-market no-trigger reference，尚无 independent B2 control-window
+      signal rerun artifact；当前 TRADING-572=`B2_ONLY_NEEDS_MORE_EVIDENCE`、TRADING-574=`CONTINUE_B2_ONLY_RESEARCH`，且
+      `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19:
+      实现完成并转入 VALIDATING；`b2-control-window-research` 输出 TRADING-575=`B2_CONTROL_WINDOW_RERUN_CONTRACT_READY`、576=`B2_CONTROL_RERUN_COMPLETE`、577=`B2_NO_TRIGGER_CORRECTNESS_PASS`、578=`B2_FULL_DIAGNOSTIC_COMPLETE`、579=`B2_ONLY_NEEDS_MORE_EVIDENCE`、580=`CONTINUE_B2_ONLY_RESEARCH`；control
+      rerun aggregate `window_count=2`、`trigger_count=0`、`false_risk_off_count=0`、`unnecessary_exposure_reduction_count=0`；B2
+      full diagnostic evidence set 已补齐 control rerun evidence，但 research gate 仍因 re-entry
+      lag、drawdown/utility mixed 和 trigger stability weak 保持 more-evidence；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b518661de36627af6c7a7a51
+  task_id: TRADING-575_to_580_B2_CONTROL_WINDOW_EVIDENCE_COMPLETION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：TRADING-567 当前为 `B2_FULL_DIAGNOSTIC_PARTIAL`，normal/calm
+      control windows 只有 normal-market no-trigger reference，尚无 independent B2 control-window
+      signal rerun artifact；当前 TRADING-572=`B2_ONLY_NEEDS_MORE_EVIDENCE`、TRADING-574=`CONTINUE_B2_ONLY_RESEARCH`，且
+      `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19:
+      实现完成并转入 VALIDATING；`b2-control-window-research` 输出 TRADING-575=`B2_CONTROL_WINDOW_RERUN_CONTRACT_READY`、576=`B2_CONTROL_RERUN_COMPLETE`、577=`B2_NO_TRIGGER_CORRECTNESS_PASS`、578=`B2_FULL_DIAGNOSTIC_COMPLETE`、579=`B2_ONLY_NEEDS_MORE_EVIDENCE`、580=`CONTINUE_B2_ONLY_RESEARCH`；control
+      rerun aggregate `window_count=2`、`trigger_count=0`、`false_risk_off_count=0`、`unnecessary_exposure_reduction_count=0`；B2
+      full diagnostic evidence set 已补齐 control rerun evidence，但 research gate 仍因 re-entry
+      lag、drawdown/utility mixed 和 trigger stability weak 保持 more-evidence；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b518661de36627af6c7a7a51eab0977df56e58b8620149f76795606037ae5960
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-575_to_580_B2_CONTROL_WINDOW_EVIDENCE_COMPLETION
+  - ETF portfolio/weight research B2 control-window independent rerun evidence completion
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-575_to_580_B2_Control_Window_Evidence_Completion.md`；在
+    TRADING-565~574 后补齐 normal/calm control-window independent B2 rerun evidence，定义
+    rerun contract、生成 control-window rerun artifacts、评价 no-trigger correctness、重跑
+    B2 full diagnostic with control windows、重跑 B2-only gate v3 并输出 B2 path decision
+    snapshot；不得调 B2 threshold/参数，不得使用 B3 slow tilt，不得运行 B4/B5/B6/v3，不得访问 untouched
+    holdout，不得生成 official target weights、paper-shadow activation、extended shadow、broker/order/live/production
+    mutation，不得自动 append owner decision
+  - 输出 `b2_control_window_rerun_contract.json/md`、`b2_control_window_rerun.json/md`、`b2_no_trigger_correctness_review.json/md`、`b2_full_diagnostic_with_control_windows.json/md`、`b2_only_research_gate_v3.json/md`
+    和 `b2_path_decision_snapshot.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+    date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；只有
+    risk-heavy evidence 与 calm/normal control evidence 均存在且 validated 时，TRADING-578
+    才能为 `B2_FULL_DIAGNOSTIC_COMPLETE`；B4 retest 必须依赖 valid B3，B5 必须依赖 valid non-redundant
+    B4，B6 必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git diff --check`
+    通过
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：TRADING-567 当前为 `B2_FULL_DIAGNOSTIC_PARTIAL`，normal/calm
+    control windows 只有 normal-market no-trigger reference，尚无 independent B2 control-window
+    signal rerun artifact；当前 TRADING-572=`B2_ONLY_NEEDS_MORE_EVIDENCE`、TRADING-574=`CONTINUE_B2_ONLY_RESEARCH`，且
+    `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19:
+    实现完成并转入 VALIDATING；`b2-control-window-research` 输出 TRADING-575=`B2_CONTROL_WINDOW_RERUN_CONTRACT_READY`、576=`B2_CONTROL_RERUN_COMPLETE`、577=`B2_NO_TRIGGER_CORRECTNESS_PASS`、578=`B2_FULL_DIAGNOSTIC_COMPLETE`、579=`B2_ONLY_NEEDS_MORE_EVIDENCE`、580=`CONTINUE_B2_ONLY_RESEARCH`；control
+    rerun aggregate `window_count=2`、`trigger_count=0`、`false_risk_off_count=0`、`unnecessary_exposure_reduction_count=0`；B2
+    full diagnostic evidence set 已补齐 control rerun evidence，但 research gate 仍因 re-entry
+    lag、drawdown/utility mixed 和 trigger stability weak 保持 more-evidence；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+  docs_links:
+  - docs/requirements/TRADING-575_to_580_B2_Control_Window_Evidence_Completion.md
+  terminal: false
+  raw_row_sha256: b518661de36627af6c7a7a51eab0977df56e58b8620149f76795606037ae5960
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4b0b35640b40fe1ecd00a37cbeea40f1a43a2823dc66985e4449fe079a97cf1a

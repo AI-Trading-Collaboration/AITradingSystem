@@ -1,0 +1,160 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-079
+  title: null
+  domain: ETF portfolio research/Historical Weight Search Diagnostics and Robust Candidate
+    Discovery
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/TRADING-079_Historical_Weight_Search_Diagnostics_and_Robust_Candidate_Discovery.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-079_Historical_Weight_Search_Diagnostics_and_Robust_Candidate_Discovery.md`；baseline
+    实现已完成，下一步运行完整 multi-preset diagnostics（默认六个 presets，可加 `--include-robust-packs`）并由
+    owner 复核 stable shapes / near-shadow rescue suggestions
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf weight-calibration diagnostics` 或登记的等价 CLI 可运行；报告比较 `last_2y`、`last_3y`、`last_5y`、`post_2022_bear`、`ai_cycle_recent`、`full_available`
+      的 Top-N、overfit risk distribution、shadow-ready count 和稳定权重结构；输出 `cross_preset_stability_score`、`rank_consistency`、`weight_shape_similarity`、`regime_failure_count`、`near_shadow_candidates`
+      和 rescue suggestions；新增 bounded defensive / balanced / moderate AI search pack
+      config；报告说明为什么没有 shadow-ready、哪些条件最常失败，以及是否建议扩大窗口、降低 semiconductor cap、提高 cash
+      floor 或调整 objective；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`，不得写
+      production weights、baseline config、broker action 或 automatic promotion；README、artifact
+      catalog、system flow、task register、requirement docs 和 tests 同步；pytest、ruff、compileall、diff
+      check 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1483
+    row_sha256: e91bbddfc6fafeda86fa059e486d6f03d9e1e066089cfa820dab201e6208278c
+    cell_count: 8
+    all_cells:
+    - TRADING-079
+    - ETF portfolio research/Historical Weight Search Diagnostics and Robust Candidate
+      Discovery
+    - P0
+    - VALIDATING
+    - 系统验证 + 项目 owner
+    - 详细拆解见 `docs/requirements/TRADING-079_Historical_Weight_Search_Diagnostics_and_Robust_Candidate_Discovery.md`；baseline
+      实现已完成，下一步运行完整 multi-preset diagnostics（默认六个 presets，可加 `--include-robust-packs`）并由
+      owner 复核 stable shapes / near-shadow rescue suggestions
+    - '`aits etf weight-calibration diagnostics` 或登记的等价 CLI 可运行；报告比较 `last_2y`、`last_3y`、`last_5y`、`post_2022_bear`、`ai_cycle_recent`、`full_available`
+      的 Top-N、overfit risk distribution、shadow-ready count 和稳定权重结构；输出 `cross_preset_stability_score`、`rank_consistency`、`weight_shape_similarity`、`regime_failure_count`、`near_shadow_candidates`
+      和 rescue suggestions；新增 bounded defensive / balanced / moderate AI search pack
+      config；报告说明为什么没有 shadow-ready、哪些条件最常失败，以及是否建议扩大窗口、降低 semiconductor cap、提高 cash
+      floor 或调整 objective；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`，不得写
+      production weights、baseline config、broker action 或 automatic promotion；README、artifact
+      catalog、system flow、task register、requirement docs 和 tests 同步；pytest、ruff、compileall、diff
+      check 通过'
+    - '2026-06-03: 新增并进入 IN_PROGRESS，原因：真实 TRADING-078 `ai_cycle_recent` run 的 Top
+      10 全部被 `blocked_by_overfit_risk` 阻断，`enroll-top` 正确 fail closed；owner 要求下一阶段诊断为什么没有
+      shadow-ready，并通过多 preset 稳定性、near-shadow rescue 和更保守搜索包寻找更可靠的 candidate-only
+      初始 ETF 权重。2026-06-03: 从 IN_PROGRESS 改为 VALIDATING，原因：新增 `weight-calibration
+      diagnostics` CLI、multi-preset diagnostics builder/writer、cross-preset stability
+      score、near-shadow rescue diagnostics、shadow minimum criteria report、三组 lower-semiconductor
+      robust search packs、report registry/artifact catalog/system flow/README integration
+      和专项测试；全量 pytest（2110 passed）、ruff、compileall、diff check、TRADING-078 usability
+      gate 均通过；小规模真实 smoke `--preset ai_cycle_recent --include-robust-packs --top
+      3 --max-candidates 4` 成功生成 diagnostics artifacts，完整六 preset 运行和 owner manual
+      review 仍是验证条件。'
+    raw_line: '|TRADING-079|ETF portfolio research/Historical Weight Search Diagnostics
+      and Robust Candidate Discovery|P0|VALIDATING|系统验证 + 项目 owner|详细拆解见 `docs/requirements/TRADING-079_Historical_Weight_Search_Diagnostics_and_Robust_Candidate_Discovery.md`；baseline
+      实现已完成，下一步运行完整 multi-preset diagnostics（默认六个 presets，可加 `--include-robust-packs`）并由
+      owner 复核 stable shapes / near-shadow rescue suggestions|`aits etf weight-calibration
+      diagnostics` 或登记的等价 CLI 可运行；报告比较 `last_2y`、`last_3y`、`last_5y`、`post_2022_bear`、`ai_cycle_recent`、`full_available`
+      的 Top-N、overfit risk distribution、shadow-ready count 和稳定权重结构；输出 `cross_preset_stability_score`、`rank_consistency`、`weight_shape_similarity`、`regime_failure_count`、`near_shadow_candidates`
+      和 rescue suggestions；新增 bounded defensive / balanced / moderate AI search pack
+      config；报告说明为什么没有 shadow-ready、哪些条件最常失败，以及是否建议扩大窗口、降低 semiconductor cap、提高 cash
+      floor 或调整 objective；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`，不得写
+      production weights、baseline config、broker action 或 automatic promotion；README、artifact
+      catalog、system flow、task register、requirement docs 和 tests 同步；pytest、ruff、compileall、diff
+      check 通过|2026-06-03: 新增并进入 IN_PROGRESS，原因：真实 TRADING-078 `ai_cycle_recent` run
+      的 Top 10 全部被 `blocked_by_overfit_risk` 阻断，`enroll-top` 正确 fail closed；owner
+      要求下一阶段诊断为什么没有 shadow-ready，并通过多 preset 稳定性、near-shadow rescue 和更保守搜索包寻找更可靠的
+      candidate-only 初始 ETF 权重。2026-06-03: 从 IN_PROGRESS 改为 VALIDATING，原因：新增 `weight-calibration
+      diagnostics` CLI、multi-preset diagnostics builder/writer、cross-preset stability
+      score、near-shadow rescue diagnostics、shadow minimum criteria report、三组 lower-semiconductor
+      robust search packs、report registry/artifact catalog/system flow/README integration
+      和专项测试；全量 pytest（2110 passed）、ruff、compileall、diff check、TRADING-078 usability
+      gate 均通过；小规模真实 smoke `--preset ai_cycle_recent --include-robust-packs --top
+      3 --max-candidates 4` 成功生成 diagnostics artifacts，完整六 preset 运行和 owner manual
+      review 仍是验证条件。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e91bbddfc6fafeda86fa059e
+  task_id: TRADING-079
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-06-03: 新增并进入 IN_PROGRESS，原因：真实 TRADING-078 `ai_cycle_recent` run
+      的 Top 10 全部被 `blocked_by_overfit_risk` 阻断，`enroll-top` 正确 fail closed；owner
+      要求下一阶段诊断为什么没有 shadow-ready，并通过多 preset 稳定性、near-shadow rescue 和更保守搜索包寻找更可靠的
+      candidate-only 初始 ETF 权重。2026-06-03: 从 IN_PROGRESS 改为 VALIDATING，原因：新增 `weight-calibration
+      diagnostics` CLI、multi-preset diagnostics builder/writer、cross-preset stability
+      score、near-shadow rescue diagnostics、shadow minimum criteria report、三组 lower-semiconductor
+      robust search packs、report registry/artifact catalog/system flow/README integration
+      和专项测试；全量 pytest（2110 passed）、ruff、compileall、diff check、TRADING-078 usability
+      gate 均通过；小规模真实 smoke `--preset ai_cycle_recent --include-robust-packs --top
+      3 --max-candidates 4` 成功生成 diagnostics artifacts，完整六 preset 运行和 owner manual
+      review 仍是验证条件。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e91bbddfc6fafeda86fa059e486d6f03d9e1e066089cfa820dab201e6208278c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-079
+  - ETF portfolio research/Historical Weight Search Diagnostics and Robust Candidate
+    Discovery
+  - P0
+  - VALIDATING
+  - 系统验证 + 项目 owner
+  - 详细拆解见 `docs/requirements/TRADING-079_Historical_Weight_Search_Diagnostics_and_Robust_Candidate_Discovery.md`；baseline
+    实现已完成，下一步运行完整 multi-preset diagnostics（默认六个 presets，可加 `--include-robust-packs`）并由
+    owner 复核 stable shapes / near-shadow rescue suggestions
+  - '`aits etf weight-calibration diagnostics` 或登记的等价 CLI 可运行；报告比较 `last_2y`、`last_3y`、`last_5y`、`post_2022_bear`、`ai_cycle_recent`、`full_available`
+    的 Top-N、overfit risk distribution、shadow-ready count 和稳定权重结构；输出 `cross_preset_stability_score`、`rank_consistency`、`weight_shape_similarity`、`regime_failure_count`、`near_shadow_candidates`
+    和 rescue suggestions；新增 bounded defensive / balanced / moderate AI search pack
+    config；报告说明为什么没有 shadow-ready、哪些条件最常失败，以及是否建议扩大窗口、降低 semiconductor cap、提高 cash
+    floor 或调整 objective；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`，不得写
+    production weights、baseline config、broker action 或 automatic promotion；README、artifact
+    catalog、system flow、task register、requirement docs 和 tests 同步；pytest、ruff、compileall、diff
+    check 通过'
+  - '2026-06-03: 新增并进入 IN_PROGRESS，原因：真实 TRADING-078 `ai_cycle_recent` run 的 Top 10
+    全部被 `blocked_by_overfit_risk` 阻断，`enroll-top` 正确 fail closed；owner 要求下一阶段诊断为什么没有
+    shadow-ready，并通过多 preset 稳定性、near-shadow rescue 和更保守搜索包寻找更可靠的 candidate-only 初始
+    ETF 权重。2026-06-03: 从 IN_PROGRESS 改为 VALIDATING，原因：新增 `weight-calibration diagnostics`
+    CLI、multi-preset diagnostics builder/writer、cross-preset stability score、near-shadow
+    rescue diagnostics、shadow minimum criteria report、三组 lower-semiconductor robust
+    search packs、report registry/artifact catalog/system flow/README integration 和专项测试；全量
+    pytest（2110 passed）、ruff、compileall、diff check、TRADING-078 usability gate 均通过；小规模真实
+    smoke `--preset ai_cycle_recent --include-robust-packs --top 3 --max-candidates
+    4` 成功生成 diagnostics artifacts，完整六 preset 运行和 owner manual review 仍是验证条件。'
+  docs_links:
+  - docs/requirements/TRADING-079_Historical_Weight_Search_Diagnostics_and_Robust_Candidate_Discovery.md
+  terminal: false
+  raw_row_sha256: e91bbddfc6fafeda86fa059e486d6f03d9e1e066089cfa820dab201e6208278c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 71173b34f61b1385ed1fb95eb3a748561dd1baf368ebc6ea0fc98be70b0138b0

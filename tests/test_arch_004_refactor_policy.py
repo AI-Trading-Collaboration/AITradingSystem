@@ -5696,8 +5696,12 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     }
     assert phase_exit["handoff"]["schema_version"] == "arch_005_bootstrap_handoff.v1"
     assert phase_exit["handoff"]["validator_frozen"] is True
+    assert phase_exit["handoff"]["status"] == "PASS_COMMITTED_AND_PUSHED"
+    assert phase_exit["handoff"]["tracked_file_hash_basis"] == (
+        "source_commit_git_blob_sha256"
+    )
     assert phase_exit["handoff"]["next_slice_unblocked"] is False
-    assert phase_exit["handoff"]["formal_arch_005_s0_unblocked"] is False
+    assert phase_exit["handoff"]["formal_arch_005_s0_unblocked"] is True
     assert phase_exit["handoff"]["g2_5_unblocked"] is False
     assert phase_exit["safety"]["production_effect"] == "none"
     if phase_exit["status"] == "VALIDATING_PHASE_EXIT":
@@ -5711,7 +5715,54 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             record["status"] == "PASS"
             for record in phase_exit["required_validation"].values()
         )
+        superseded = set(phase_exit.get("superseded_source_paths", []))
+        assert phase_exit.get("superseded_by_phase") == "ARCH-005-S0-S1"
         for source in phase_exit["sources"]:
+            if source["path"] in superseded:
+                continue
+            actual = _source_sha256(source)
+            assert actual == source["sha256"], source["path"]
+
+    s0_s1 = baseline["phase_arch_005_s0_s1_shadow_registry"]
+    assert s0_s1["status"] in {"VALIDATING_S0_S1", "COMPLETE_S0_S1"}
+    assert s0_s1["task_id"] == "ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE"
+    assert s0_s1["base_commit"] == "f1045634f771955e3ddef721ff5ed39aea795b27"
+    assert s0_s1["entry_gate"]["status"] == "PASS"
+    assert s0_s1["entry_gate"]["tracked_file_hash_basis"] == (
+        "source_commit_git_blob_sha256"
+    )
+    assert s0_s1["entry_gate"]["next_slice_unblocked"] is False
+    assert s0_s1["contracts"] == {
+        "task_record_schema": "task_record.v1",
+        "task_event_schema": "task_event.v1",
+        "dependency_schema": "task_dependency.v1",
+        "execution_lease_schema": "execution_lease.v1",
+        "scheduler_decision_schema": "scheduler_decision.v1",
+        "generated_view_schema": "task_register_generated_view.v1",
+        "legacy_parser_version": "task_register_markdown_parser.v1_characterized",
+        "shadow_compiler_version": "arch_005_shadow_registry_compiler.v1",
+    }
+    assert s0_s1["s0_inventory"]["active_task_count"] == 427
+    assert s0_s1["s0_inventory"]["completed_task_count"] == 442
+    assert s0_s1["s0_inventory"]["unique_task_count"] == 869
+    assert s0_s1["s0_inventory"]["task_id_overlap_count"] == 0
+    assert s0_s1["s0_inventory"]["ambiguous_extra_cell_row_count"] == 55
+    assert s0_s1["s1_shadow"]["fragment_count"] == 869
+    assert s0_s1["s1_shadow"]["missing_task_count"] == 0
+    assert s0_s1["s1_shadow"]["duplicate_task_count"] == 0
+    assert s0_s1["s1_shadow"]["compatibility_views_byte_identical"] is True
+    assert s0_s1["source_of_truth"]["legacy_markdown_only"] is True
+    assert s0_s1["source_of_truth"]["dual_write_allowed"] is False
+    assert s0_s1["next_work"]["s2_unblocked"] is False
+    assert s0_s1["next_work"]["arch_004_g2_5_unblocked"] is False
+    assert s0_s1["safety"]["dispatch_allowed"] is False
+    assert s0_s1["safety"]["lease_acquisition_allowed"] is False
+    assert s0_s1["safety"]["production_effect"] == "none"
+    if s0_s1["status"] == "VALIDATING_S0_S1":
+        assert all(source["sha256"] == 0 for source in s0_s1["sources"])
+    else:
+        assert all(record["status"] == "PASS" for record in s0_s1["validation"].values())
+        for source in s0_s1["sources"]:
             actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 

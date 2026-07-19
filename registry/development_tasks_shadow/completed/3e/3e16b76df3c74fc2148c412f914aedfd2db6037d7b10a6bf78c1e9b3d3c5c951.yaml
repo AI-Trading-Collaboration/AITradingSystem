@@ -1,0 +1,174 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-018E2
+  title: null
+  domain: 交易执行/Explicit Approved Shadow Promotion Apply Command
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/shadow_promotion_apply_2026-05-23.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/shadow_promotion_apply_2026-05-23.md`；explicit
+    apply command、单独 apply approval、danger flag、target profile hash gate、rollback
+    snapshot、post-apply validation、dashboard 只读卡片、runbook、system flow、artifact catalog、测试和最终收尾验证已完成；repo
+    既有无关 `tests/test_market_data.py` Black baseline 仍需后续单独处理，不混入本任务
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_shadow_promotion_apply.py`、`src/ai_trading_system/trading_engine/shadow_promotion_apply.py`
+      和 `data/derived/weight_iterations/promotion/apply/shadow_promotion_apply_result_YYYY-MM-DD.json/md`、`apply/logs/shadow_promotion_apply_run_YYYY-MM-DD.json/md`、`promotion/rollback/production_profile_before_shadow_promotion_YYYY-MM-DD.json/.sha256`；成功
+      apply 仅修改目标 production profile 的 weights，失败生成 result artifact 且 `production_effect=none`；所有输出固定
+      `manual_review_only=true`、`safe_for_scheduler=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+      只读展示 latest apply result artifact，不重跑 018B/018C/018C2/018D/018E1/018E2/scoring/broker/replay/trading；rollback
+      command 留给 TRADING-018E3
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 410
+    row_sha256: 8b8d8caaf93b24fc10f8ab72dd1f16f1a66828368d1bf8f64b8aa2c6497d389a
+    cell_count: 8
+    all_cells:
+    - TRADING-018E2
+    - 交易执行/Explicit Approved Shadow Promotion Apply Command
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/shadow_promotion_apply_2026-05-23.md`；explicit apply
+      command、单独 apply approval、danger flag、target profile hash gate、rollback snapshot、post-apply
+      validation、dashboard 只读卡片、runbook、system flow、artifact catalog、测试和最终收尾验证已完成；repo
+      既有无关 `tests/test_market_data.py` Black baseline 仍需后续单独处理，不混入本任务
+    - 新增 `scripts/run_shadow_promotion_apply.py`、`src/ai_trading_system/trading_engine/shadow_promotion_apply.py`
+      和 `data/derived/weight_iterations/promotion/apply/shadow_promotion_apply_result_YYYY-MM-DD.json/md`、`apply/logs/shadow_promotion_apply_run_YYYY-MM-DD.json/md`、`promotion/rollback/production_profile_before_shadow_promotion_YYYY-MM-DD.json/.sha256`；成功
+      apply 仅修改目标 production profile 的 weights，失败生成 result artifact 且 `production_effect=none`；所有输出固定
+      `manual_review_only=true`、`safe_for_scheduler=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+      只读展示 latest apply result artifact，不重跑 018B/018C/018C2/018D/018E1/018E2/scoring/broker/replay/trading；rollback
+      command 留给 TRADING-018E3
+    - '2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 018E1 preflight-only 后实现首次严格人工授权下的
+      production profile weights apply；本任务不实现 rollback command，rollback 留给 TRADING-018E3。2026-05-23:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 explicit apply builder、CLI、JSON/Markdown/run
+      log、rollback snapshot、approval/preflight/danger/target/post-apply validation、dashboard
+      只读展示、runbook、system flow / artifact catalog 更新和测试；repo 外 smoke 成功验证 `APPLIED`
+      写入 weights 并生成 rollback，缺 danger flag 输出 `DANGER_FLAG_MISSING` 且 target profile
+      hash 不变；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；全仓
+      black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断。2026-05-23: 从 VALIDATING
+      改为 DONE，原因：最终收尾验证通过 repo 外临时 fixture 成功/失败 smoke；成功路径输出 `apply_decision=APPLIED`，production
+      profile sha256 发生变化、production weights 等于 expected weights、rollback snapshot
+      已生成、rollback snapshot sha256 等于 apply 前 production profile sha256、`only_allowed_fields_changed=true`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；失败路径缺
+      danger flag 输出 `apply_decision=DANGER_FLAG_MISSING`、`apply_executed=false`、`promotion_executed=false`、`production_effect=none`
+      且 production profile sha256 不变；dashboard import guard 验证只读读取 apply result artifact，不触发
+      018B/018C/018C2/018D/018E1/018E2/scoring/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未混入无关格式化 diff。'
+    raw_line: '|TRADING-018E2|交易执行/Explicit Approved Shadow Promotion Apply Command|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/shadow_promotion_apply_2026-05-23.md`；explicit apply command、单独
+      apply approval、danger flag、target profile hash gate、rollback snapshot、post-apply
+      validation、dashboard 只读卡片、runbook、system flow、artifact catalog、测试和最终收尾验证已完成；repo
+      既有无关 `tests/test_market_data.py` Black baseline 仍需后续单独处理，不混入本任务|新增 `scripts/run_shadow_promotion_apply.py`、`src/ai_trading_system/trading_engine/shadow_promotion_apply.py`
+      和 `data/derived/weight_iterations/promotion/apply/shadow_promotion_apply_result_YYYY-MM-DD.json/md`、`apply/logs/shadow_promotion_apply_run_YYYY-MM-DD.json/md`、`promotion/rollback/production_profile_before_shadow_promotion_YYYY-MM-DD.json/.sha256`；成功
+      apply 仅修改目标 production profile 的 weights，失败生成 result artifact 且 `production_effect=none`；所有输出固定
+      `manual_review_only=true`、`safe_for_scheduler=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+      只读展示 latest apply result artifact，不重跑 018B/018C/018C2/018D/018E1/018E2/scoring/broker/replay/trading；rollback
+      command 留给 TRADING-018E3|2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 018E1 preflight-only
+      后实现首次严格人工授权下的 production profile weights apply；本任务不实现 rollback command，rollback
+      留给 TRADING-018E3。2026-05-23: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 explicit apply
+      builder、CLI、JSON/Markdown/run log、rollback snapshot、approval/preflight/danger/target/post-apply
+      validation、dashboard 只读展示、runbook、system flow / artifact catalog 更新和测试；repo
+      外 smoke 成功验证 `APPLIED` 写入 weights 并生成 rollback，缺 danger flag 输出 `DANGER_FLAG_MISSING`
+      且 target profile hash 不变；目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest 和 ruff 通过；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline
+      阻断。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证通过 repo 外临时 fixture 成功/失败 smoke；成功路径输出
+      `apply_decision=APPLIED`，production profile sha256 发生变化、production weights 等于
+      expected weights、rollback snapshot 已生成、rollback snapshot sha256 等于 apply 前 production
+      profile sha256、`only_allowed_fields_changed=true`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；失败路径缺
+      danger flag 输出 `apply_decision=DANGER_FLAG_MISSING`、`apply_executed=false`、`promotion_executed=false`、`production_effect=none`
+      且 production profile sha256 不变；dashboard import guard 验证只读读取 apply result artifact，不触发
+      018B/018C/018C2/018D/018E1/018E2/scoring/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未混入无关格式化 diff。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8b8d8caaf93b24fc10f8ab72
+  task_id: TRADING-018E2
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 018E1 preflight-only 后实现首次严格人工授权下的
+      production profile weights apply；本任务不实现 rollback command，rollback 留给 TRADING-018E3。2026-05-23:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 explicit apply builder、CLI、JSON/Markdown/run
+      log、rollback snapshot、approval/preflight/danger/target/post-apply validation、dashboard
+      只读展示、runbook、system flow / artifact catalog 更新和测试；repo 外 smoke 成功验证 `APPLIED`
+      写入 weights 并生成 rollback，缺 danger flag 输出 `DANGER_FLAG_MISSING` 且 target profile
+      hash 不变；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；全仓
+      black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断。2026-05-23: 从 VALIDATING
+      改为 DONE，原因：最终收尾验证通过 repo 外临时 fixture 成功/失败 smoke；成功路径输出 `apply_decision=APPLIED`，production
+      profile sha256 发生变化、production weights 等于 expected weights、rollback snapshot
+      已生成、rollback snapshot sha256 等于 apply 前 production profile sha256、`only_allowed_fields_changed=true`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；失败路径缺
+      danger flag 输出 `apply_decision=DANGER_FLAG_MISSING`、`apply_executed=false`、`promotion_executed=false`、`production_effect=none`
+      且 production profile sha256 不变；dashboard import guard 验证只读读取 apply result artifact，不触发
+      018B/018C/018C2/018D/018E1/018E2/scoring/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未混入无关格式化 diff。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8b8d8caaf93b24fc10f8ab72dd1f16f1a66828368d1bf8f64b8aa2c6497d389a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-018E2
+  - 交易执行/Explicit Approved Shadow Promotion Apply Command
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/shadow_promotion_apply_2026-05-23.md`；explicit apply
+    command、单独 apply approval、danger flag、target profile hash gate、rollback snapshot、post-apply
+    validation、dashboard 只读卡片、runbook、system flow、artifact catalog、测试和最终收尾验证已完成；repo
+    既有无关 `tests/test_market_data.py` Black baseline 仍需后续单独处理，不混入本任务
+  - 新增 `scripts/run_shadow_promotion_apply.py`、`src/ai_trading_system/trading_engine/shadow_promotion_apply.py`
+    和 `data/derived/weight_iterations/promotion/apply/shadow_promotion_apply_result_YYYY-MM-DD.json/md`、`apply/logs/shadow_promotion_apply_run_YYYY-MM-DD.json/md`、`promotion/rollback/production_profile_before_shadow_promotion_YYYY-MM-DD.json/.sha256`；成功
+    apply 仅修改目标 production profile 的 weights，失败生成 result artifact 且 `production_effect=none`；所有输出固定
+    `manual_review_only=true`、`safe_for_scheduler=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+    只读展示 latest apply result artifact，不重跑 018B/018C/018C2/018D/018E1/018E2/scoring/broker/replay/trading；rollback
+    command 留给 TRADING-018E3
+  - '2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 018E1 preflight-only 后实现首次严格人工授权下的
+    production profile weights apply；本任务不实现 rollback command，rollback 留给 TRADING-018E3。2026-05-23:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已完成 explicit apply builder、CLI、JSON/Markdown/run
+    log、rollback snapshot、approval/preflight/danger/target/post-apply validation、dashboard
+    只读展示、runbook、system flow / artifact catalog 更新和测试；repo 外 smoke 成功验证 `APPLIED`
+    写入 weights 并生成 rollback，缺 danger flag 输出 `DANGER_FLAG_MISSING` 且 target profile
+    hash 不变；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；全仓
+    black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断。2026-05-23: 从 VALIDATING
+    改为 DONE，原因：最终收尾验证通过 repo 外临时 fixture 成功/失败 smoke；成功路径输出 `apply_decision=APPLIED`，production
+    profile sha256 发生变化、production weights 等于 expected weights、rollback snapshot 已生成、rollback
+    snapshot sha256 等于 apply 前 production profile sha256、`only_allowed_fields_changed=true`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；失败路径缺
+    danger flag 输出 `apply_decision=DANGER_FLAG_MISSING`、`apply_executed=false`、`promotion_executed=false`、`production_effect=none`
+    且 production profile sha256 不变；dashboard import guard 验证只读读取 apply result artifact，不触发
+    018B/018C/018C2/018D/018E1/018E2/scoring/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+    pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+    baseline 阻断，未混入无关格式化 diff。'
+  docs_links:
+  - docs/requirements/shadow_promotion_apply_2026-05-23.md
+  terminal: true
+  raw_row_sha256: 8b8d8caaf93b24fc10f8ab72dd1f16f1a66828368d1bf8f64b8aa2c6497d389a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0b4f62681ab50cc152d48a8326cea7d580567b46fa7d5326299afbbf24fe66f6

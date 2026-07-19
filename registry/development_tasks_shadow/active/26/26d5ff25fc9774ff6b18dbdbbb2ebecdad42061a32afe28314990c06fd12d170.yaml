@@ -1,0 +1,150 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-623_to_630_RESEARCH_CAMPAIGN_STAGE_ADAPTERS
+  title: null
+  domain: ETF portfolio/weight research campaign adapter integration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-623_to_630_Research_Campaign_Stage_Adapters.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-623_to_630_Research_Campaign_Stage_Adapters.md`；在
+    TRADING-605~622 控制面基础上定义通用 stage adapter contract，接入 B2 diagnostic/backfill/gate
+    parity adapter、B3 signal-precheck adapter，强化 evidence budget，并形成 next-action parity
+    review 与 Control Plane v1 validation pack；不得调 B2 参数、不得生成 B3 weights 或 backfill、不得新增
+    B4/B5/B6/v3 研究、不得访问 untouched holdout、不得进入 paper-shadow/live/broker/order/production
+    mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits research campaign run` 能通过真实 adapter 表达 B2/B3 当前状态；adapter contract、B2
+      parity map、B2 adapter smoke、B2 parity validation、B3 signal adapter smoke、budget
+      enforcement、next-action parity review 和 validation pack 可解析；未配置/缺输入/holdout
+      越权/输出 invalid 均 fail-closed；B4/B5/B6/v3、paper-shadow、official target weights、broker/order
+      均保持 blocked；Reader Brief、system flow、artifact catalog、focused tests、ruff、compileall、JSON
+      parse 和 `git diff --check` 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1410
+    row_sha256: f4482d67445cb4b516878090fb0799a4bba2ecc9b34b1e818d1fc8ae75a517bf
+    cell_count: 8
+    all_cells:
+    - TRADING-623_to_630_RESEARCH_CAMPAIGN_STAGE_ADAPTERS
+    - ETF portfolio/weight research campaign adapter integration
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-623_to_630_Research_Campaign_Stage_Adapters.md`；在
+      TRADING-605~622 控制面基础上定义通用 stage adapter contract，接入 B2 diagnostic/backfill/gate
+      parity adapter、B3 signal-precheck adapter，强化 evidence budget，并形成 next-action
+      parity review 与 Control Plane v1 validation pack；不得调 B2 参数、不得生成 B3 weights 或
+      backfill、不得新增 B4/B5/B6/v3 研究、不得访问 untouched holdout、不得进入 paper-shadow/live/broker/order/production
+      mutation
+    - '`aits research campaign run` 能通过真实 adapter 表达 B2/B3 当前状态；adapter contract、B2
+      parity map、B2 adapter smoke、B2 parity validation、B3 signal adapter smoke、budget
+      enforcement、next-action parity review 和 validation pack 可解析；未配置/缺输入/holdout
+      越权/输出 invalid 均 fail-closed；B4/B5/B6/v3、paper-shadow、official target weights、broker/order
+      均保持 blocked；Reader Brief、system flow、artifact catalog、focused tests、ruff、compileall、JSON
+      parse 和 `git diff --check` 通过'
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求把 Research Campaign 从控制面可管理推进到至少能通过 adapter
+      接入真实 B2/B3 研究计算，并验证迁移结果与旧 artifact 一致；本阶段只做 adapter 接入和 parity validation，不扩大研究范围。2026-06-19:
+      实现完成并转入 VALIDATING；新增 `campaign_stage_adapters.yaml`、adapter contract validation、B2
+      audited-artifact adapter、B3 signal-precheck adapter、B2 parity map/validation、budget
+      enforcement report、next-action parity review、Control Plane v1 validation pack、system
+      flow、artifact catalog、release note 和 focused tests；验证通过 adapter CLI smoke、B2/B3
+      Campaign validate、JSON parse、focused pytest 15 passed、Ruff、compileall 和 `git
+      diff --check`。'
+    raw_line: '|TRADING-623_to_630_RESEARCH_CAMPAIGN_STAGE_ADAPTERS|ETF portfolio/weight
+      research campaign adapter integration|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详细拆解见
+      `docs/requirements/TRADING-623_to_630_Research_Campaign_Stage_Adapters.md`；在
+      TRADING-605~622 控制面基础上定义通用 stage adapter contract，接入 B2 diagnostic/backfill/gate
+      parity adapter、B3 signal-precheck adapter，强化 evidence budget，并形成 next-action
+      parity review 与 Control Plane v1 validation pack；不得调 B2 参数、不得生成 B3 weights 或
+      backfill、不得新增 B4/B5/B6/v3 研究、不得访问 untouched holdout、不得进入 paper-shadow/live/broker/order/production
+      mutation|`aits research campaign run` 能通过真实 adapter 表达 B2/B3 当前状态；adapter contract、B2
+      parity map、B2 adapter smoke、B2 parity validation、B3 signal adapter smoke、budget
+      enforcement、next-action parity review 和 validation pack 可解析；未配置/缺输入/holdout
+      越权/输出 invalid 均 fail-closed；B4/B5/B6/v3、paper-shadow、official target weights、broker/order
+      均保持 blocked；Reader Brief、system flow、artifact catalog、focused tests、ruff、compileall、JSON
+      parse 和 `git diff --check` 通过|2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求把 Research
+      Campaign 从控制面可管理推进到至少能通过 adapter 接入真实 B2/B3 研究计算，并验证迁移结果与旧 artifact 一致；本阶段只做
+      adapter 接入和 parity validation，不扩大研究范围。2026-06-19: 实现完成并转入 VALIDATING；新增 `campaign_stage_adapters.yaml`、adapter
+      contract validation、B2 audited-artifact adapter、B3 signal-precheck adapter、B2
+      parity map/validation、budget enforcement report、next-action parity review、Control
+      Plane v1 validation pack、system flow、artifact catalog、release note 和 focused
+      tests；验证通过 adapter CLI smoke、B2/B3 Campaign validate、JSON parse、focused pytest
+      15 passed、Ruff、compileall 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f4482d67445cb4b516878090
+  task_id: TRADING-623_to_630_RESEARCH_CAMPAIGN_STAGE_ADAPTERS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求把 Research Campaign 从控制面可管理推进到至少能通过
+      adapter 接入真实 B2/B3 研究计算，并验证迁移结果与旧 artifact 一致；本阶段只做 adapter 接入和 parity validation，不扩大研究范围。2026-06-19:
+      实现完成并转入 VALIDATING；新增 `campaign_stage_adapters.yaml`、adapter contract validation、B2
+      audited-artifact adapter、B3 signal-precheck adapter、B2 parity map/validation、budget
+      enforcement report、next-action parity review、Control Plane v1 validation pack、system
+      flow、artifact catalog、release note 和 focused tests；验证通过 adapter CLI smoke、B2/B3
+      Campaign validate、JSON parse、focused pytest 15 passed、Ruff、compileall 和 `git
+      diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f4482d67445cb4b516878090fb0799a4bba2ecc9b34b1e818d1fc8ae75a517bf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-623_to_630_RESEARCH_CAMPAIGN_STAGE_ADAPTERS
+  - ETF portfolio/weight research campaign adapter integration
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-623_to_630_Research_Campaign_Stage_Adapters.md`；在
+    TRADING-605~622 控制面基础上定义通用 stage adapter contract，接入 B2 diagnostic/backfill/gate
+    parity adapter、B3 signal-precheck adapter，强化 evidence budget，并形成 next-action parity
+    review 与 Control Plane v1 validation pack；不得调 B2 参数、不得生成 B3 weights 或 backfill、不得新增
+    B4/B5/B6/v3 研究、不得访问 untouched holdout、不得进入 paper-shadow/live/broker/order/production
+    mutation
+  - '`aits research campaign run` 能通过真实 adapter 表达 B2/B3 当前状态；adapter contract、B2
+    parity map、B2 adapter smoke、B2 parity validation、B3 signal adapter smoke、budget
+    enforcement、next-action parity review 和 validation pack 可解析；未配置/缺输入/holdout 越权/输出
+    invalid 均 fail-closed；B4/B5/B6/v3、paper-shadow、official target weights、broker/order
+    均保持 blocked；Reader Brief、system flow、artifact catalog、focused tests、ruff、compileall、JSON
+    parse 和 `git diff --check` 通过'
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求把 Research Campaign 从控制面可管理推进到至少能通过 adapter
+    接入真实 B2/B3 研究计算，并验证迁移结果与旧 artifact 一致；本阶段只做 adapter 接入和 parity validation，不扩大研究范围。2026-06-19:
+    实现完成并转入 VALIDATING；新增 `campaign_stage_adapters.yaml`、adapter contract validation、B2
+    audited-artifact adapter、B3 signal-precheck adapter、B2 parity map/validation、budget
+    enforcement report、next-action parity review、Control Plane v1 validation pack、system
+    flow、artifact catalog、release note 和 focused tests；验证通过 adapter CLI smoke、B2/B3
+    Campaign validate、JSON parse、focused pytest 15 passed、Ruff、compileall 和 `git diff
+    --check`。'
+  docs_links:
+  - docs/requirements/TRADING-623_to_630_Research_Campaign_Stage_Adapters.md
+  terminal: false
+  raw_row_sha256: f4482d67445cb4b516878090fb0799a4bba2ecc9b34b1e818d1fc8ae75a517bf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: fccbfceaec4300e17731a94f0dbbce9aea78e3682482880f1426746151508ca2

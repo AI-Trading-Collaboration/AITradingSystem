@@ -1,0 +1,152 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-012
+  title: null
+  domain: 交易执行/PaperBroker Fill Model Calibration Diagnostics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/paperbroker_fill_model_calibration_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/paperbroker_fill_model_calibration_2026-05-17.md`；diagnostic-only
+    calibration report、policy manifest、standalone script、系统流图、artifact catalog、测试和当前
+    HEAD CI 已完成；fill model 仍保持 unvalidated 语义
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `outputs/reports/paperbroker_fill_model_calibration_YYYY-MM-DD.json/md`
+      和 `scripts/run_paperbroker_fill_model_calibration.py`；只读读取最近 N 个 `paperbroker_vs_ibkr_paper_comparison_*.json`、可选
+      replay `quality_flags` 和可选 `paper_signal_quality`；统计 comparison/lifecycle/status/fill/cancel/local
+      optimistic/broker rejection/market data/synthetic/no-fill lifecycle 指标；`calibration_status`
+      只允许 `INSUFFICIENT_SAMPLE`、`LIFECYCLE_ALIGNED_FILL_UNTESTED`、`LOCAL_SIM_TOO_OPTIMISTIC`、`BROKER_REJECTION_GAP`、`OBSERVE_ONLY`，禁止
+      live/trade/promotion/approval 语义；报告固定 `production_effect=none`、`calibration_mode=diagnostic_only`，并声明不影响
+      replay、paper signal quality、shadow impact、production conclusion 或交易建议；目标 pytest、trading_engine、全量
+      pytest、ruff、black、commit、push 后 CI 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 337
+    row_sha256: 61af33585c51d5e49b0c241ef5828eb1942b2d51fd8096a861170a139546c87a
+    cell_count: 8
+    all_cells:
+    - TRADING-012
+    - 交易执行/PaperBroker Fill Model Calibration Diagnostics
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/paperbroker_fill_model_calibration_2026-05-17.md`；diagnostic-only
+      calibration report、policy manifest、standalone script、系统流图、artifact catalog、测试和当前
+      HEAD CI 已完成；fill model 仍保持 unvalidated 语义
+    - 新增 `outputs/reports/paperbroker_fill_model_calibration_YYYY-MM-DD.json/md` 和
+      `scripts/run_paperbroker_fill_model_calibration.py`；只读读取最近 N 个 `paperbroker_vs_ibkr_paper_comparison_*.json`、可选
+      replay `quality_flags` 和可选 `paper_signal_quality`；统计 comparison/lifecycle/status/fill/cancel/local
+      optimistic/broker rejection/market data/synthetic/no-fill lifecycle 指标；`calibration_status`
+      只允许 `INSUFFICIENT_SAMPLE`、`LIFECYCLE_ALIGNED_FILL_UNTESTED`、`LOCAL_SIM_TOO_OPTIMISTIC`、`BROKER_REJECTION_GAP`、`OBSERVE_ONLY`，禁止
+      live/trade/promotion/approval 语义；报告固定 `production_effect=none`、`calibration_mode=diagnostic_only`，并声明不影响
+      replay、paper signal quality、shadow impact、production conclusion 或交易建议；目标 pytest、trading_engine、全量
+      pytest、ruff、black、commit、push 后 CI 通过
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-011/011A 完成本机 no-fill lifecycle
+      comparison 后，先建立 `PaperBroker` fill model calibration diagnostics，用于解释本地模拟与
+      IBKR Paper 差异；本任务只收集和解释证据，不调整 fill model。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      calibration policy、report builder、CLI、JSON/Markdown 输出、系统流图/产物目录和安全边界测试；本机报告为
+      `LIFECYCLE_ALIGNED_FILL_UNTESTED`、`comparison_count=1`、`lifecycle_match_ratio=100%`、`fill_tested=false`，recommendations
+      明确不修改 fill model；验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff 和 black
+      check。2026-06-07: 从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub Actions
+      CI run `27085392644` completed/success；复验 fill model calibration、controlled
+      fill / comparison focused tests 和触达文件 ruff 通过；diagnostic-only / fill-model-unvalidated
+      语义保持不变。'
+    raw_line: '|TRADING-012|交易执行/PaperBroker Fill Model Calibration Diagnostics|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/paperbroker_fill_model_calibration_2026-05-17.md`；diagnostic-only
+      calibration report、policy manifest、standalone script、系统流图、artifact catalog、测试和当前
+      HEAD CI 已完成；fill model 仍保持 unvalidated 语义|新增 `outputs/reports/paperbroker_fill_model_calibration_YYYY-MM-DD.json/md`
+      和 `scripts/run_paperbroker_fill_model_calibration.py`；只读读取最近 N 个 `paperbroker_vs_ibkr_paper_comparison_*.json`、可选
+      replay `quality_flags` 和可选 `paper_signal_quality`；统计 comparison/lifecycle/status/fill/cancel/local
+      optimistic/broker rejection/market data/synthetic/no-fill lifecycle 指标；`calibration_status`
+      只允许 `INSUFFICIENT_SAMPLE`、`LIFECYCLE_ALIGNED_FILL_UNTESTED`、`LOCAL_SIM_TOO_OPTIMISTIC`、`BROKER_REJECTION_GAP`、`OBSERVE_ONLY`，禁止
+      live/trade/promotion/approval 语义；报告固定 `production_effect=none`、`calibration_mode=diagnostic_only`，并声明不影响
+      replay、paper signal quality、shadow impact、production conclusion 或交易建议；目标 pytest、trading_engine、全量
+      pytest、ruff、black、commit、push 后 CI 通过|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner
+      要求在 TRADING-011/011A 完成本机 no-fill lifecycle comparison 后，先建立 `PaperBroker` fill
+      model calibration diagnostics，用于解释本地模拟与 IBKR Paper 差异；本任务只收集和解释证据，不调整 fill model。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 calibration policy、report builder、CLI、JSON/Markdown
+      输出、系统流图/产物目录和安全边界测试；本机报告为 `LIFECYCLE_ALIGNED_FILL_UNTESTED`、`comparison_count=1`、`lifecycle_match_ratio=100%`、`fill_tested=false`，recommendations
+      明确不修改 fill model；验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff 和 black
+      check。2026-06-07: 从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub Actions
+      CI run `27085392644` completed/success；复验 fill model calibration、controlled
+      fill / comparison focused tests 和触达文件 ruff 通过；diagnostic-only / fill-model-unvalidated
+      语义保持不变。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-61af33585c51d5e49b0c241e
+  task_id: TRADING-012
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-011/011A 完成本机 no-fill
+      lifecycle comparison 后，先建立 `PaperBroker` fill model calibration diagnostics，用于解释本地模拟与
+      IBKR Paper 差异；本任务只收集和解释证据，不调整 fill model。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      calibration policy、report builder、CLI、JSON/Markdown 输出、系统流图/产物目录和安全边界测试；本机报告为
+      `LIFECYCLE_ALIGNED_FILL_UNTESTED`、`comparison_count=1`、`lifecycle_match_ratio=100%`、`fill_tested=false`，recommendations
+      明确不修改 fill model；验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff 和 black
+      check。2026-06-07: 从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub Actions
+      CI run `27085392644` completed/success；复验 fill model calibration、controlled
+      fill / comparison focused tests 和触达文件 ruff 通过；diagnostic-only / fill-model-unvalidated
+      语义保持不变。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:61af33585c51d5e49b0c241ef5828eb1942b2d51fd8096a861170a139546c87a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-012
+  - 交易执行/PaperBroker Fill Model Calibration Diagnostics
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/paperbroker_fill_model_calibration_2026-05-17.md`；diagnostic-only
+    calibration report、policy manifest、standalone script、系统流图、artifact catalog、测试和当前
+    HEAD CI 已完成；fill model 仍保持 unvalidated 语义
+  - 新增 `outputs/reports/paperbroker_fill_model_calibration_YYYY-MM-DD.json/md` 和 `scripts/run_paperbroker_fill_model_calibration.py`；只读读取最近
+    N 个 `paperbroker_vs_ibkr_paper_comparison_*.json`、可选 replay `quality_flags` 和可选
+    `paper_signal_quality`；统计 comparison/lifecycle/status/fill/cancel/local optimistic/broker
+    rejection/market data/synthetic/no-fill lifecycle 指标；`calibration_status` 只允许
+    `INSUFFICIENT_SAMPLE`、`LIFECYCLE_ALIGNED_FILL_UNTESTED`、`LOCAL_SIM_TOO_OPTIMISTIC`、`BROKER_REJECTION_GAP`、`OBSERVE_ONLY`，禁止
+    live/trade/promotion/approval 语义；报告固定 `production_effect=none`、`calibration_mode=diagnostic_only`，并声明不影响
+    replay、paper signal quality、shadow impact、production conclusion 或交易建议；目标 pytest、trading_engine、全量
+    pytest、ruff、black、commit、push 后 CI 通过
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-011/011A 完成本机 no-fill lifecycle
+    comparison 后，先建立 `PaperBroker` fill model calibration diagnostics，用于解释本地模拟与 IBKR
+    Paper 差异；本任务只收集和解释证据，不调整 fill model。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+    calibration policy、report builder、CLI、JSON/Markdown 输出、系统流图/产物目录和安全边界测试；本机报告为
+    `LIFECYCLE_ALIGNED_FILL_UNTESTED`、`comparison_count=1`、`lifecycle_match_ratio=100%`、`fill_tested=false`，recommendations
+    明确不修改 fill model；验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。2026-06-07:
+    从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub Actions CI run `27085392644`
+    completed/success；复验 fill model calibration、controlled fill / comparison focused
+    tests 和触达文件 ruff 通过；diagnostic-only / fill-model-unvalidated 语义保持不变。'
+  docs_links:
+  - docs/requirements/paperbroker_fill_model_calibration_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 61af33585c51d5e49b0c241ef5828eb1942b2d51fd8096a861170a139546c87a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9a24e37a9558d6bc7c71a450d0f8672e8165819ca83c3ef511a245765ccb203b

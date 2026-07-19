@@ -1,0 +1,161 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-047
+  title: null
+  domain: 报告/Unified Reader Brief
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/artifact_catalog.md
+  - docs/requirements/reader_reporting_improvement_plan_2026-05-28.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；Unified
+    Reader Brief 首版已完成并通过 latest 真实 artifact 复核；`aits reports reader-brief --as-of
+    2026-06-05` 与 `--latest` 均生成 `reader_brief_2026-06-05.html/json`，状态 `OK`、warnings=0、`production_effect=none`、`reader_entry_role=daily_reading_home`；Reader
+    Brief 只读消费 daily decision summary、daily score、evidence dashboard、daily task dashboard、calculation
+    explainers、decision snapshot、trace bundle 及后续治理/registry artifact；JSON 字段级复核确认
+    run context、executive decision、Data/PIT safety、Score-to-Position funnel、component
+    explainability、binding gate ladder、research governance、manual review queue 和 appendix/source
+    links 均存在；该任务不迁移输出目录、不重算 score、不改变 production scoring、weights、position gates 或
+    trading 行为
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `outputs/reports/reader_brief_YYYY-MM-DD.html/json`；首屏展示 run context、市场状态、核心结论、仓位语言、置信度、binding
+      gate、Data Gate 和人工复核状态；正文展示 score-to-position funnel、component 贡献、gate ladder、data/PIT
+      safety、backtest/shadow/weight/SEC PIT 摘要、manual review queue 和 trace links；所有输出固定
+      `production_effect=none`，缺少可选 artifact 只能标记 `MISSING` / `LIMITED` / `INSUFFICIENT_DATA`；实现时同步更新
+      `docs/system_flow.md`、`docs/artifact_catalog.md` 和专项测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 317
+    row_sha256: bf3e8933ef2d0bb52b1780bec5b95e24b2791a1e378c29a47297ddc6897a62cc
+    cell_count: 8
+    all_cells:
+    - REPORT-047
+    - 报告/Unified Reader Brief
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；Unified
+      Reader Brief 首版已完成并通过 latest 真实 artifact 复核；`aits reports reader-brief --as-of
+      2026-06-05` 与 `--latest` 均生成 `reader_brief_2026-06-05.html/json`，状态 `OK`、warnings=0、`production_effect=none`、`reader_entry_role=daily_reading_home`；Reader
+      Brief 只读消费 daily decision summary、daily score、evidence dashboard、daily task
+      dashboard、calculation explainers、decision snapshot、trace bundle 及后续治理/registry
+      artifact；JSON 字段级复核确认 run context、executive decision、Data/PIT safety、Score-to-Position
+      funnel、component explainability、binding gate ladder、research governance、manual
+      review queue 和 appendix/source links 均存在；该任务不迁移输出目录、不重算 score、不改变 production
+      scoring、weights、position gates 或 trading 行为
+    - 生成 `outputs/reports/reader_brief_YYYY-MM-DD.html/json`；首屏展示 run context、市场状态、核心结论、仓位语言、置信度、binding
+      gate、Data Gate 和人工复核状态；正文展示 score-to-position funnel、component 贡献、gate ladder、data/PIT
+      safety、backtest/shadow/weight/SEC PIT 摘要、manual review queue 和 trace links；所有输出固定
+      `production_effect=none`，缺少可选 artifact 只能标记 `MISSING` / `LIMITED` / `INSUFFICIENT_DATA`；实现时同步更新
+      `docs/system_flow.md`、`docs/artifact_catalog.md` 和专项测试
+    - '2026-05-28: 新增，原因：外部读者视角改进方案指出当前 Markdown 日报、evidence dashboard 和 daily task
+      dashboard 职责都正确但入口不统一；本任务作为只读阅读首页，不替代现有审计 artifact。2026-05-28: 从 READY 改为 VALIDATING，原因：已完成
+      Reader Brief builder、HTML/JSON writer、CLI/direct dispatcher、trace links、artifact
+      catalog、system flow 和专项测试；验证通过 `tests/test_reader_brief.py`、触达文件 ruff/black，后续观察真实
+      daily-run artifacts。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest 字段级复核确认基础 Reader
+      Brief 首版满足验收，funnel steps=7、components=6、gates=8、manual review items=53、appendix
+      links=12；`tests/test_reader_brief.py` 为 7 passed，Reader Brief latest/as-of、Reader
+      Brief quality、documentation contract 和 docs freshness 均通过。'
+    raw_line: '|REPORT-047|报告/Unified Reader Brief|P1|DONE|系统验证|详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；Unified
+      Reader Brief 首版已完成并通过 latest 真实 artifact 复核；`aits reports reader-brief --as-of
+      2026-06-05` 与 `--latest` 均生成 `reader_brief_2026-06-05.html/json`，状态 `OK`、warnings=0、`production_effect=none`、`reader_entry_role=daily_reading_home`；Reader
+      Brief 只读消费 daily decision summary、daily score、evidence dashboard、daily task
+      dashboard、calculation explainers、decision snapshot、trace bundle 及后续治理/registry
+      artifact；JSON 字段级复核确认 run context、executive decision、Data/PIT safety、Score-to-Position
+      funnel、component explainability、binding gate ladder、research governance、manual
+      review queue 和 appendix/source links 均存在；该任务不迁移输出目录、不重算 score、不改变 production
+      scoring、weights、position gates 或 trading 行为|生成 `outputs/reports/reader_brief_YYYY-MM-DD.html/json`；首屏展示
+      run context、市场状态、核心结论、仓位语言、置信度、binding gate、Data Gate 和人工复核状态；正文展示 score-to-position
+      funnel、component 贡献、gate ladder、data/PIT safety、backtest/shadow/weight/SEC PIT
+      摘要、manual review queue 和 trace links；所有输出固定 `production_effect=none`，缺少可选 artifact
+      只能标记 `MISSING` / `LIMITED` / `INSUFFICIENT_DATA`；实现时同步更新 `docs/system_flow.md`、`docs/artifact_catalog.md`
+      和专项测试|2026-05-28: 新增，原因：外部读者视角改进方案指出当前 Markdown 日报、evidence dashboard 和 daily
+      task dashboard 职责都正确但入口不统一；本任务作为只读阅读首页，不替代现有审计 artifact。2026-05-28: 从 READY
+      改为 VALIDATING，原因：已完成 Reader Brief builder、HTML/JSON writer、CLI/direct dispatcher、trace
+      links、artifact catalog、system flow 和专项测试；验证通过 `tests/test_reader_brief.py`、触达文件
+      ruff/black，后续观察真实 daily-run artifacts。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest
+      字段级复核确认基础 Reader Brief 首版满足验收，funnel steps=7、components=6、gates=8、manual review
+      items=53、appendix links=12；`tests/test_reader_brief.py` 为 7 passed，Reader Brief
+      latest/as-of、Reader Brief quality、documentation contract 和 docs freshness 均通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bf3e8933ef2d0bb52b1780be
+  task_id: REPORT-047
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-28: 新增，原因：外部读者视角改进方案指出当前 Markdown 日报、evidence dashboard 和 daily
+      task dashboard 职责都正确但入口不统一；本任务作为只读阅读首页，不替代现有审计 artifact。2026-05-28: 从 READY
+      改为 VALIDATING，原因：已完成 Reader Brief builder、HTML/JSON writer、CLI/direct dispatcher、trace
+      links、artifact catalog、system flow 和专项测试；验证通过 `tests/test_reader_brief.py`、触达文件
+      ruff/black，后续观察真实 daily-run artifacts。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest
+      字段级复核确认基础 Reader Brief 首版满足验收，funnel steps=7、components=6、gates=8、manual review
+      items=53、appendix links=12；`tests/test_reader_brief.py` 为 7 passed，Reader Brief
+      latest/as-of、Reader Brief quality、documentation contract 和 docs freshness 均通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bf3e8933ef2d0bb52b1780bec5b95e24b2791a1e378c29a47297ddc6897a62cc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-047
+  - 报告/Unified Reader Brief
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；Unified
+    Reader Brief 首版已完成并通过 latest 真实 artifact 复核；`aits reports reader-brief --as-of
+    2026-06-05` 与 `--latest` 均生成 `reader_brief_2026-06-05.html/json`，状态 `OK`、warnings=0、`production_effect=none`、`reader_entry_role=daily_reading_home`；Reader
+    Brief 只读消费 daily decision summary、daily score、evidence dashboard、daily task dashboard、calculation
+    explainers、decision snapshot、trace bundle 及后续治理/registry artifact；JSON 字段级复核确认
+    run context、executive decision、Data/PIT safety、Score-to-Position funnel、component
+    explainability、binding gate ladder、research governance、manual review queue 和 appendix/source
+    links 均存在；该任务不迁移输出目录、不重算 score、不改变 production scoring、weights、position gates 或
+    trading 行为
+  - 生成 `outputs/reports/reader_brief_YYYY-MM-DD.html/json`；首屏展示 run context、市场状态、核心结论、仓位语言、置信度、binding
+    gate、Data Gate 和人工复核状态；正文展示 score-to-position funnel、component 贡献、gate ladder、data/PIT
+    safety、backtest/shadow/weight/SEC PIT 摘要、manual review queue 和 trace links；所有输出固定
+    `production_effect=none`，缺少可选 artifact 只能标记 `MISSING` / `LIMITED` / `INSUFFICIENT_DATA`；实现时同步更新
+    `docs/system_flow.md`、`docs/artifact_catalog.md` 和专项测试
+  - '2026-05-28: 新增，原因：外部读者视角改进方案指出当前 Markdown 日报、evidence dashboard 和 daily task
+    dashboard 职责都正确但入口不统一；本任务作为只读阅读首页，不替代现有审计 artifact。2026-05-28: 从 READY 改为 VALIDATING，原因：已完成
+    Reader Brief builder、HTML/JSON writer、CLI/direct dispatcher、trace links、artifact
+    catalog、system flow 和专项测试；验证通过 `tests/test_reader_brief.py`、触达文件 ruff/black，后续观察真实
+    daily-run artifacts。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest 字段级复核确认基础 Reader
+    Brief 首版满足验收，funnel steps=7、components=6、gates=8、manual review items=53、appendix
+    links=12；`tests/test_reader_brief.py` 为 7 passed，Reader Brief latest/as-of、Reader
+    Brief quality、documentation contract 和 docs freshness 均通过。'
+  docs_links:
+  - docs/artifact_catalog.md
+  - docs/requirements/reader_reporting_improvement_plan_2026-05-28.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: bf3e8933ef2d0bb52b1780bec5b95e24b2791a1e378c29a47297ddc6897a62cc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 83c617fcf4b84fe66ad8ad32f9f655c994d8b3c74bc63ba281f108a6ab72488d

@@ -1,0 +1,182 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-053
+  title: null
+  domain: 回测输入/Portfolio Sensitivity Diagnostics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/portfolio_sensitivity_diagnostics_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/portfolio_sensitivity_diagnostics_2026-05-30.md`；score
+    -> target allocation -> actual weight -> performance 传导诊断框架、报告、Dashboard/Reader
+    Brief 和 shadow promotion 只读引用已完成；2026-06-05 latest 真实链路确认 data gate 已恢复为 OK，当前
+    sensitivity 结论为 `LIMITED`，primary bottleneck 为 `rebalance_threshold`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits portfolio sensitivity --latest` 生成 `artifacts/portfolio_sensitivity/YYYY-MM-DD/portfolio_sensitivity_summary.json/md`
+      和 recommended profile；`aits reports portfolio-sensitivity --latest` 可读取 latest
+      报告；`aits portfolio validate-sensitivity --latest` 输出 `status=LIMITED`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；Dashboard/Reader
+      Brief 展示 sensitivity 摘要；shadow promotion reason 引用 sensitivity artifact 但仍保持
+      rejected/observe-only；不修改 `config/parameters/production/current.yaml`；专项测试、ruff、compileall、docs
+      freshness 和 diff check 通过；真实 latest data_gate 为 OK，latest_resolution 为 OK，`portfolio_is_too_insensitive=True`，`can_support_candidate_promotion=false`'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 285
+    row_sha256: 32319988b466ef1e714f200a39c712f0983f93389020e890ab4916a8f28f2cb1
+    cell_count: 8
+    all_cells:
+    - TRADING-053
+    - 回测输入/Portfolio Sensitivity Diagnostics
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/portfolio_sensitivity_diagnostics_2026-05-30.md`；score
+      -> target allocation -> actual weight -> performance 传导诊断框架、报告、Dashboard/Reader
+      Brief 和 shadow promotion 只读引用已完成；2026-06-05 latest 真实链路确认 data gate 已恢复为 OK，当前
+      sensitivity 结论为 `LIMITED`，primary bottleneck 为 `rebalance_threshold`
+    - '`aits portfolio sensitivity --latest` 生成 `artifacts/portfolio_sensitivity/YYYY-MM-DD/portfolio_sensitivity_summary.json/md`
+      和 recommended profile；`aits reports portfolio-sensitivity --latest` 可读取 latest
+      报告；`aits portfolio validate-sensitivity --latest` 输出 `status=LIMITED`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；Dashboard/Reader
+      Brief 展示 sensitivity 摘要；shadow promotion reason 引用 sensitivity artifact 但仍保持
+      rejected/observe-only；不修改 `config/parameters/production/current.yaml`；专项测试、ruff、compileall、docs
+      freshness 和 diff check 通过；真实 latest data_gate 为 OK，latest_resolution 为 OK，`portfolio_is_too_insensitive=True`，`can_support_candidate_promotion=false`'
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-052 真实结果显示 best_profile=trend_long_bias
+      但仍 LIMITED，需要先判断 score 改善是否被 rebalance threshold、position cap、sector cap、cash
+      floor 或 score-to-weight mapping 压制，再决定后续优化 portfolio construction 还是继续补 signal
+      quality。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：TRADING-053 框架、测试和文档已完成；全量
+      pytest/ruff/compileall/diff check 通过；真实 `aits portfolio sensitivity --latest`
+      写出 2026-05-29 artifact 但因 `aits validate-data` 缺 `GOOGL`、`BRK.B`、`SGOV` 停在 FAILED/blocked，未做临时补数。2026-05-30:
+      TRADING-053A 后复验，`aits portfolio sensitivity --latest` 改为写出 latest valid manifest
+      date `2026-05-28` artifact，并明确 `data_gate.error_code=MANIFEST_PRICE_CACHE_MISMATCH`、`latest_resolution=MISMATCH`；candidate
+      promotion 仍 disabled。2026-05-30: TRADING-053B 后复验，`aits portfolio sensitivity
+      --latest` 通过 data_gate，输出 `status=LIMITED`、`primary_bottleneck=rebalance_threshold`、`portfolio_is_too_insensitive=True`；signal
+      quality 仍 LIMITED，promotion disabled。2026-06-09: 从 VALIDATING 改为 DONE，原因：真实
+      latest 复验已完成；`validate-data` 为 `PASS_WITH_WARNINGS` / 错误数 0，`portfolio sensitivity
+      --latest` 生成 2026-06-05 summary 和 recommended profile，`data_gate=OK`、`latest_resolution=OK`、`data_registry_consistency=OK`、`status=LIMITED`、`best_profile=lower_rebalance_threshold`、`primary_bottleneck=rebalance_threshold`、`portfolio_is_too_insensitive=True`；`portfolio
+      validate-sensitivity --latest` 与 `reports portfolio-sensitivity --latest` 均可读取该
+      summary 并保留 production safety fields；`parameters shadow-backtest --latest --dry-run`
+      继续 `promotion_status=rejected`，supporting artifacts 引用 portfolio sensitivity
+      summary，production/broker/trading action 均为 false；Dashboard 和 Reader Brief 已展示
+      Portfolio Sensitivity 摘要。'
+    raw_line: '|TRADING-053|回测输入/Portfolio Sensitivity Diagnostics|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/portfolio_sensitivity_diagnostics_2026-05-30.md`；score ->
+      target allocation -> actual weight -> performance 传导诊断框架、报告、Dashboard/Reader
+      Brief 和 shadow promotion 只读引用已完成；2026-06-05 latest 真实链路确认 data gate 已恢复为 OK，当前
+      sensitivity 结论为 `LIMITED`，primary bottleneck 为 `rebalance_threshold`|`aits portfolio
+      sensitivity --latest` 生成 `artifacts/portfolio_sensitivity/YYYY-MM-DD/portfolio_sensitivity_summary.json/md`
+      和 recommended profile；`aits reports portfolio-sensitivity --latest` 可读取 latest
+      报告；`aits portfolio validate-sensitivity --latest` 输出 `status=LIMITED`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；Dashboard/Reader
+      Brief 展示 sensitivity 摘要；shadow promotion reason 引用 sensitivity artifact 但仍保持
+      rejected/observe-only；不修改 `config/parameters/production/current.yaml`；专项测试、ruff、compileall、docs
+      freshness 和 diff check 通过；真实 latest data_gate 为 OK，latest_resolution 为 OK，`portfolio_is_too_insensitive=True`，`can_support_candidate_promotion=false`|2026-05-30:
+      新增并进入 IN_PROGRESS，原因：TRADING-052 真实结果显示 best_profile=trend_long_bias 但仍 LIMITED，需要先判断
+      score 改善是否被 rebalance threshold、position cap、sector cap、cash floor 或 score-to-weight
+      mapping 压制，再决定后续优化 portfolio construction 还是继续补 signal quality。2026-05-30: 从
+      IN_PROGRESS 改为 VALIDATING，原因：TRADING-053 框架、测试和文档已完成；全量 pytest/ruff/compileall/diff
+      check 通过；真实 `aits portfolio sensitivity --latest` 写出 2026-05-29 artifact 但因
+      `aits validate-data` 缺 `GOOGL`、`BRK.B`、`SGOV` 停在 FAILED/blocked，未做临时补数。2026-05-30:
+      TRADING-053A 后复验，`aits portfolio sensitivity --latest` 改为写出 latest valid manifest
+      date `2026-05-28` artifact，并明确 `data_gate.error_code=MANIFEST_PRICE_CACHE_MISMATCH`、`latest_resolution=MISMATCH`；candidate
+      promotion 仍 disabled。2026-05-30: TRADING-053B 后复验，`aits portfolio sensitivity
+      --latest` 通过 data_gate，输出 `status=LIMITED`、`primary_bottleneck=rebalance_threshold`、`portfolio_is_too_insensitive=True`；signal
+      quality 仍 LIMITED，promotion disabled。2026-06-09: 从 VALIDATING 改为 DONE，原因：真实
+      latest 复验已完成；`validate-data` 为 `PASS_WITH_WARNINGS` / 错误数 0，`portfolio sensitivity
+      --latest` 生成 2026-06-05 summary 和 recommended profile，`data_gate=OK`、`latest_resolution=OK`、`data_registry_consistency=OK`、`status=LIMITED`、`best_profile=lower_rebalance_threshold`、`primary_bottleneck=rebalance_threshold`、`portfolio_is_too_insensitive=True`；`portfolio
+      validate-sensitivity --latest` 与 `reports portfolio-sensitivity --latest` 均可读取该
+      summary 并保留 production safety fields；`parameters shadow-backtest --latest --dry-run`
+      继续 `promotion_status=rejected`，supporting artifacts 引用 portfolio sensitivity
+      summary，production/broker/trading action 均为 false；Dashboard 和 Reader Brief 已展示
+      Portfolio Sensitivity 摘要。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-32319988b466ef1e714f200a
+  task_id: TRADING-053
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-052 真实结果显示 best_profile=trend_long_bias
+      但仍 LIMITED，需要先判断 score 改善是否被 rebalance threshold、position cap、sector cap、cash
+      floor 或 score-to-weight mapping 压制，再决定后续优化 portfolio construction 还是继续补 signal
+      quality。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：TRADING-053 框架、测试和文档已完成；全量
+      pytest/ruff/compileall/diff check 通过；真实 `aits portfolio sensitivity --latest`
+      写出 2026-05-29 artifact 但因 `aits validate-data` 缺 `GOOGL`、`BRK.B`、`SGOV` 停在 FAILED/blocked，未做临时补数。2026-05-30:
+      TRADING-053A 后复验，`aits portfolio sensitivity --latest` 改为写出 latest valid manifest
+      date `2026-05-28` artifact，并明确 `data_gate.error_code=MANIFEST_PRICE_CACHE_MISMATCH`、`latest_resolution=MISMATCH`；candidate
+      promotion 仍 disabled。2026-05-30: TRADING-053B 后复验，`aits portfolio sensitivity
+      --latest` 通过 data_gate，输出 `status=LIMITED`、`primary_bottleneck=rebalance_threshold`、`portfolio_is_too_insensitive=True`；signal
+      quality 仍 LIMITED，promotion disabled。2026-06-09: 从 VALIDATING 改为 DONE，原因：真实
+      latest 复验已完成；`validate-data` 为 `PASS_WITH_WARNINGS` / 错误数 0，`portfolio sensitivity
+      --latest` 生成 2026-06-05 summary 和 recommended profile，`data_gate=OK`、`latest_resolution=OK`、`data_registry_consistency=OK`、`status=LIMITED`、`best_profile=lower_rebalance_threshold`、`primary_bottleneck=rebalance_threshold`、`portfolio_is_too_insensitive=True`；`portfolio
+      validate-sensitivity --latest` 与 `reports portfolio-sensitivity --latest` 均可读取该
+      summary 并保留 production safety fields；`parameters shadow-backtest --latest --dry-run`
+      继续 `promotion_status=rejected`，supporting artifacts 引用 portfolio sensitivity
+      summary，production/broker/trading action 均为 false；Dashboard 和 Reader Brief 已展示
+      Portfolio Sensitivity 摘要。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:32319988b466ef1e714f200a39c712f0983f93389020e890ab4916a8f28f2cb1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-053
+  - 回测输入/Portfolio Sensitivity Diagnostics
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/portfolio_sensitivity_diagnostics_2026-05-30.md`；score
+    -> target allocation -> actual weight -> performance 传导诊断框架、报告、Dashboard/Reader
+    Brief 和 shadow promotion 只读引用已完成；2026-06-05 latest 真实链路确认 data gate 已恢复为 OK，当前
+    sensitivity 结论为 `LIMITED`，primary bottleneck 为 `rebalance_threshold`
+  - '`aits portfolio sensitivity --latest` 生成 `artifacts/portfolio_sensitivity/YYYY-MM-DD/portfolio_sensitivity_summary.json/md`
+    和 recommended profile；`aits reports portfolio-sensitivity --latest` 可读取 latest
+    报告；`aits portfolio validate-sensitivity --latest` 输出 `status=LIMITED`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；Dashboard/Reader
+    Brief 展示 sensitivity 摘要；shadow promotion reason 引用 sensitivity artifact 但仍保持 rejected/observe-only；不修改
+    `config/parameters/production/current.yaml`；专项测试、ruff、compileall、docs freshness
+    和 diff check 通过；真实 latest data_gate 为 OK，latest_resolution 为 OK，`portfolio_is_too_insensitive=True`，`can_support_candidate_promotion=false`'
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-052 真实结果显示 best_profile=trend_long_bias
+    但仍 LIMITED，需要先判断 score 改善是否被 rebalance threshold、position cap、sector cap、cash
+    floor 或 score-to-weight mapping 压制，再决定后续优化 portfolio construction 还是继续补 signal
+    quality。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：TRADING-053 框架、测试和文档已完成；全量
+    pytest/ruff/compileall/diff check 通过；真实 `aits portfolio sensitivity --latest`
+    写出 2026-05-29 artifact 但因 `aits validate-data` 缺 `GOOGL`、`BRK.B`、`SGOV` 停在 FAILED/blocked，未做临时补数。2026-05-30:
+    TRADING-053A 后复验，`aits portfolio sensitivity --latest` 改为写出 latest valid manifest
+    date `2026-05-28` artifact，并明确 `data_gate.error_code=MANIFEST_PRICE_CACHE_MISMATCH`、`latest_resolution=MISMATCH`；candidate
+    promotion 仍 disabled。2026-05-30: TRADING-053B 后复验，`aits portfolio sensitivity
+    --latest` 通过 data_gate，输出 `status=LIMITED`、`primary_bottleneck=rebalance_threshold`、`portfolio_is_too_insensitive=True`；signal
+    quality 仍 LIMITED，promotion disabled。2026-06-09: 从 VALIDATING 改为 DONE，原因：真实 latest
+    复验已完成；`validate-data` 为 `PASS_WITH_WARNINGS` / 错误数 0，`portfolio sensitivity --latest`
+    生成 2026-06-05 summary 和 recommended profile，`data_gate=OK`、`latest_resolution=OK`、`data_registry_consistency=OK`、`status=LIMITED`、`best_profile=lower_rebalance_threshold`、`primary_bottleneck=rebalance_threshold`、`portfolio_is_too_insensitive=True`；`portfolio
+    validate-sensitivity --latest` 与 `reports portfolio-sensitivity --latest` 均可读取该
+    summary 并保留 production safety fields；`parameters shadow-backtest --latest --dry-run`
+    继续 `promotion_status=rejected`，supporting artifacts 引用 portfolio sensitivity summary，production/broker/trading
+    action 均为 false；Dashboard 和 Reader Brief 已展示 Portfolio Sensitivity 摘要。'
+  docs_links:
+  - docs/requirements/portfolio_sensitivity_diagnostics_2026-05-30.md
+  terminal: true
+  raw_row_sha256: 32319988b466ef1e714f200a39c712f0983f93389020e890ab4916a8f28f2cb1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 399cc0e7459fa606ba29fbadbb8f31239b7ef3c478a18811bffc598392a1fb3c

@@ -1,0 +1,152 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION
+  title: null
+  domain: ETF portfolio research/Pressure Regime Sample Expansion and Defensive Rule
+    Validation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核 + 系统运行观察
+  requirement_refs:
+  - docs/requirements/TRADING-184_to_188_Pressure_Regime_Sample_Expansion_and_Defensive_Rule_Validation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-184_to_188_Pressure_Regime_Sample_Expansion_and_Defensive_Rule_Validation.md`；baseline
+    实现已完成并生成真实 artifacts：diagnosis `ca86a051c36a9e14`、pressure backfill `af2d09c3b5aabc6e`、defensive
+    comparison `6d3ea9b43618c7db`、rule review `1eee7bc87fd3acab`、weekly ops decision
+    update `5d43a54bbe2d8a5f`；当前 source mix 为 forward=0、historical replay=0、backtest
+    simulation=116，defensive validation relevant=87；继续固定 no broker / no production
+    / no auto policy apply
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`pressure-tag-diagnosis run/report`、`pressure-outcome-backfill run/report`、`defensive-pressure-compare
+      run/report`、`defensive-rule-review run/report`、`weekly-ops-decision-update run/report`
+      及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；source mode
+      明确标记 `FORWARD_OUTCOME` / `HISTORICAL_REPLAY` / `BACKTEST_SIMULATION`；simulation
+      evidence 标记 `SIMULATION_NOT_PIT` 且 `can_support_production=false`；`rule_approval_allowed=false`
+      unless forward/PIT evidence sufficient；Reader Brief、README、operations runbook、system
+      flow、report registry、artifact catalog、requirements、focused tests、ruff、compileall、git
+      diff check 和 dynamic-v3 validation 完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1453
+    row_sha256: 3b775782422d42b9530dc0fcbab7a9fc4d525e4777311d50822c6e137fc10444
+    cell_count: 8
+    all_cells:
+    - TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION
+    - ETF portfolio research/Pressure Regime Sample Expansion and Defensive Rule Validation
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核 + 系统运行观察
+    - 详细拆解见 `docs/requirements/TRADING-184_to_188_Pressure_Regime_Sample_Expansion_and_Defensive_Rule_Validation.md`；baseline
+      实现已完成并生成真实 artifacts：diagnosis `ca86a051c36a9e14`、pressure backfill `af2d09c3b5aabc6e`、defensive
+      comparison `6d3ea9b43618c7db`、rule review `1eee7bc87fd3acab`、weekly ops decision
+      update `5d43a54bbe2d8a5f`；当前 source mix 为 forward=0、historical replay=0、backtest
+      simulation=116，defensive validation relevant=87；继续固定 no broker / no production
+      / no auto policy apply
+    - '`pressure-tag-diagnosis run/report`、`pressure-outcome-backfill run/report`、`defensive-pressure-compare
+      run/report`、`defensive-rule-review run/report`、`weekly-ops-decision-update run/report`
+      及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；source mode
+      明确标记 `FORWARD_OUTCOME` / `HISTORICAL_REPLAY` / `BACKTEST_SIMULATION`；simulation
+      evidence 标记 `SIMULATION_NOT_PIT` 且 `can_support_production=false`；`rule_approval_allowed=false`
+      unless forward/PIT evidence sufficient；Reader Brief、README、operations runbook、system
+      flow、report registry、artifact catalog、requirements、focused tests、ruff、compileall、git
+      diff check 和 dynamic-v3 validation 完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`'
+    - '2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-184～188；当前 pressure
+      tag artifact `1bc4775787a6606d` 已有 pressure windows 但 `defensive_validation_relevant_outcomes=0`，需要解释
+      forward outcome mapping 缺口并把 simulation/replay 样本作为 research-only pressure evidence
+      纳入防守规则验证。2026-06-11: baseline 实现完成并转入 VALIDATING；simulation-only evidence 不能支持
+      defensive label approval，下一步为 owner 复核 `RESEARCH_ONLY` / `continue_tracking`
+      结论并等待更多 forward pressure samples。'
+    raw_line: '|TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION|ETF portfolio
+      research/Pressure Regime Sample Expansion and Defensive Rule Validation|P0|VALIDATING|项目
+      owner 人工复核 + 系统运行观察|详细拆解见 `docs/requirements/TRADING-184_to_188_Pressure_Regime_Sample_Expansion_and_Defensive_Rule_Validation.md`；baseline
+      实现已完成并生成真实 artifacts：diagnosis `ca86a051c36a9e14`、pressure backfill `af2d09c3b5aabc6e`、defensive
+      comparison `6d3ea9b43618c7db`、rule review `1eee7bc87fd3acab`、weekly ops decision
+      update `5d43a54bbe2d8a5f`；当前 source mix 为 forward=0、historical replay=0、backtest
+      simulation=116，defensive validation relevant=87；继续固定 no broker / no production
+      / no auto policy apply|`pressure-tag-diagnosis run/report`、`pressure-outcome-backfill
+      run/report`、`defensive-pressure-compare run/report`、`defensive-rule-review run/report`、`weekly-ops-decision-update
+      run/report` 及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；source
+      mode 明确标记 `FORWARD_OUTCOME` / `HISTORICAL_REPLAY` / `BACKTEST_SIMULATION`；simulation
+      evidence 标记 `SIMULATION_NOT_PIT` 且 `can_support_production=false`；`rule_approval_allowed=false`
+      unless forward/PIT evidence sufficient；Reader Brief、README、operations runbook、system
+      flow、report registry、artifact catalog、requirements、focused tests、ruff、compileall、git
+      diff check 和 dynamic-v3 validation 完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`|2026-06-11:
+      新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-184～188；当前 pressure tag artifact
+      `1bc4775787a6606d` 已有 pressure windows 但 `defensive_validation_relevant_outcomes=0`，需要解释
+      forward outcome mapping 缺口并把 simulation/replay 样本作为 research-only pressure evidence
+      纳入防守规则验证。2026-06-11: baseline 实现完成并转入 VALIDATING；simulation-only evidence 不能支持
+      defensive label approval，下一步为 owner 复核 `RESEARCH_ONLY` / `continue_tracking`
+      结论并等待更多 forward pressure samples。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3b775782422d42b9530dc0fc
+  task_id: TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核 + 系统运行观察
+    notes: '2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-184～188；当前 pressure
+      tag artifact `1bc4775787a6606d` 已有 pressure windows 但 `defensive_validation_relevant_outcomes=0`，需要解释
+      forward outcome mapping 缺口并把 simulation/replay 样本作为 research-only pressure evidence
+      纳入防守规则验证。2026-06-11: baseline 实现完成并转入 VALIDATING；simulation-only evidence 不能支持
+      defensive label approval，下一步为 owner 复核 `RESEARCH_ONLY` / `continue_tracking`
+      结论并等待更多 forward pressure samples。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3b775782422d42b9530dc0fcbab7a9fc4d525e4777311d50822c6e137fc10444
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION
+  - ETF portfolio research/Pressure Regime Sample Expansion and Defensive Rule Validation
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核 + 系统运行观察
+  - 详细拆解见 `docs/requirements/TRADING-184_to_188_Pressure_Regime_Sample_Expansion_and_Defensive_Rule_Validation.md`；baseline
+    实现已完成并生成真实 artifacts：diagnosis `ca86a051c36a9e14`、pressure backfill `af2d09c3b5aabc6e`、defensive
+    comparison `6d3ea9b43618c7db`、rule review `1eee7bc87fd3acab`、weekly ops decision
+    update `5d43a54bbe2d8a5f`；当前 source mix 为 forward=0、historical replay=0、backtest
+    simulation=116，defensive validation relevant=87；继续固定 no broker / no production
+    / no auto policy apply
+  - '`pressure-tag-diagnosis run/report`、`pressure-outcome-backfill run/report`、`defensive-pressure-compare
+    run/report`、`defensive-rule-review run/report`、`weekly-ops-decision-update run/report`
+    及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；source mode
+    明确标记 `FORWARD_OUTCOME` / `HISTORICAL_REPLAY` / `BACKTEST_SIMULATION`；simulation
+    evidence 标记 `SIMULATION_NOT_PIT` 且 `can_support_production=false`；`rule_approval_allowed=false`
+    unless forward/PIT evidence sufficient；Reader Brief、README、operations runbook、system
+    flow、report registry、artifact catalog、requirements、focused tests、ruff、compileall、git
+    diff check 和 dynamic-v3 validation 完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`'
+  - '2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-184～188；当前 pressure tag
+    artifact `1bc4775787a6606d` 已有 pressure windows 但 `defensive_validation_relevant_outcomes=0`，需要解释
+    forward outcome mapping 缺口并把 simulation/replay 样本作为 research-only pressure evidence
+    纳入防守规则验证。2026-06-11: baseline 实现完成并转入 VALIDATING；simulation-only evidence 不能支持
+    defensive label approval，下一步为 owner 复核 `RESEARCH_ONLY` / `continue_tracking` 结论并等待更多
+    forward pressure samples。'
+  docs_links:
+  - docs/requirements/TRADING-184_to_188_Pressure_Regime_Sample_Expansion_and_Defensive_Rule_Validation.md
+  terminal: false
+  raw_row_sha256: 3b775782422d42b9530dc0fcbab7a9fc4d525e4777311d50822c6e137fc10444
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 42179e02076e0b690b96266ff0a40225bdd56557cb76b82ee925bb0374119646

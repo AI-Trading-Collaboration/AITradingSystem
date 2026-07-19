@@ -1,0 +1,93 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438M3_GROWTH_TILT_METRIC_AND_THRESHOLD_RESOLUTION
+  title: null
+  domain: Strategy research / runtime evidence resolution
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现；依赖 M2B artifacts
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 按 versioned shared contract materialize
+    六项 runtime metrics，并执行预注册 screening policy；PENDING/BLOCKED/FAIL/PASS 语义严格分离。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: null/NaN/Inf、missing denominator、empty event set、unit/window/cost mismatch、event_count<5
+      或 expired policy 均 BLOCKED；完整证据但 threshold fail 才 FAIL；全部 screening threshold
+      pass 才 PASS；PASS 不启用 promotion/paper-shadow/production。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1191
+    row_sha256: 4d312267ecf77477dd7cdcd5da1a0c16242979c0e6c65185079034d817a96a64
+    cell_count: 8
+    all_cells:
+    - TRADING-2438M3_GROWTH_TILT_METRIC_AND_THRESHOLD_RESOLUTION
+    - Strategy research / runtime evidence resolution
+    - P0
+    - PROPOSED
+    - 系统实现；依赖 M2B artifacts
+    - 按 versioned shared contract materialize 六项 runtime metrics，并执行预注册 screening
+      policy；PENDING/BLOCKED/FAIL/PASS 语义严格分离。
+    - null/NaN/Inf、missing denominator、empty event set、unit/window/cost mismatch、event_count<5
+      或 expired policy 均 BLOCKED；完整证据但 threshold fail 才 FAIL；全部 screening threshold
+      pass 才 PASS；PASS 不启用 promotion/paper-shadow/production。
+    - '2026-07-10: 等待真实 M2 replay outputs。'
+    raw_line: '|TRADING-2438M3_GROWTH_TILT_METRIC_AND_THRESHOLD_RESOLUTION|Strategy
+      research / runtime evidence resolution|P0|PROPOSED|系统实现；依赖 M2B artifacts|按 versioned
+      shared contract materialize 六项 runtime metrics，并执行预注册 screening policy；PENDING/BLOCKED/FAIL/PASS
+      语义严格分离。|null/NaN/Inf、missing denominator、empty event set、unit/window/cost mismatch、event_count<5
+      或 expired policy 均 BLOCKED；完整证据但 threshold fail 才 FAIL；全部 screening threshold
+      pass 才 PASS；PASS 不启用 promotion/paper-shadow/production。|2026-07-10: 等待真实 M2
+      replay outputs。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4d312267ecf77477dd7cdcd5
+  task_id: TRADING-2438M3_GROWTH_TILT_METRIC_AND_THRESHOLD_RESOLUTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P0
+    next_owner: 系统实现；依赖 M2B artifacts
+    notes: '2026-07-10: 等待真实 M2 replay outputs。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4d312267ecf77477dd7cdcd5da1a0c16242979c0e6c65185079034d817a96a64
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438M3_GROWTH_TILT_METRIC_AND_THRESHOLD_RESOLUTION
+  - Strategy research / runtime evidence resolution
+  - P0
+  - PROPOSED
+  - 系统实现；依赖 M2B artifacts
+  - 按 versioned shared contract materialize 六项 runtime metrics，并执行预注册 screening policy；PENDING/BLOCKED/FAIL/PASS
+    语义严格分离。
+  - null/NaN/Inf、missing denominator、empty event set、unit/window/cost mismatch、event_count<5
+    或 expired policy 均 BLOCKED；完整证据但 threshold fail 才 FAIL；全部 screening threshold
+    pass 才 PASS；PASS 不启用 promotion/paper-shadow/production。
+  - '2026-07-10: 等待真实 M2 replay outputs。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 4d312267ecf77477dd7cdcd5da1a0c16242979c0e6c65185079034d817a96a64
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6cecb1d8d62833768f45190621d944fa16d3539a09aee0491b5eea803d4369e9

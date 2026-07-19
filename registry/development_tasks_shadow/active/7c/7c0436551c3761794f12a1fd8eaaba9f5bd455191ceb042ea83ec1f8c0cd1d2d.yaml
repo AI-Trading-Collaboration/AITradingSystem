@@ -1,0 +1,124 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2270_FIRST_LAYER_CURRENT_STATE_AND_FAILURE_TAXONOMY
+  title: null
+  domain: Research trends / first-layer current state and failure taxonomy
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2270_First_Layer_Current_State_And_Failure_Taxonomy.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2270_First_Layer_Current_State_And_Failure_Taxonomy.md`；附件要求在
+    proxy audit、objective redesign 和 challenger experiments 前，先把当前 first-layer baseline
+    的 false risk-on/off、late risk-on/off、regime flip、benchmark consistency 和 regime
+    slices 变成可审计 artifacts。本批已生成 artifacts，下一步是 owner 复核并推进 TRADING-2271～2273。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends first-layer-current-state`、pilot taxonomy policy、`first_layer_current_state_report.md`、`first_layer_failure_taxonomy.json`、`benchmark_consistency_report.json`、`regime_slice_summary.md`、summary
+      YAML、report registry、artifact catalog、system flow 和 focused tests；已披露 `ai_after_chatgpt`、requested/actual
+      date range、data quality status、QQQ/SPY/SMH core benchmark coverage、IWM/RSP availability；2022
+      slice 无 signal coverage 已显式记录；所有 gate fields 固定 false/none/BLOCKED。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1247
+    row_sha256: db8682637760725870dbf3edc9da429bacfaabe2fd05405c5aabc1396bea693e
+    cell_count: 8
+    all_cells:
+    - TRADING-2270_FIRST_LAYER_CURRENT_STATE_AND_FAILURE_TAXONOMY
+    - Research trends / first-layer current state and failure taxonomy
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2270_First_Layer_Current_State_And_Failure_Taxonomy.md`；附件要求在
+      proxy audit、objective redesign 和 challenger experiments 前，先把当前 first-layer baseline
+      的 false risk-on/off、late risk-on/off、regime flip、benchmark consistency 和 regime
+      slices 变成可审计 artifacts。本批已生成 artifacts，下一步是 owner 复核并推进 TRADING-2271～2273。
+    - 新增 `aits research trends first-layer-current-state`、pilot taxonomy policy、`first_layer_current_state_report.md`、`first_layer_failure_taxonomy.json`、`benchmark_consistency_report.json`、`regime_slice_summary.md`、summary
+      YAML、report registry、artifact catalog、system flow 和 focused tests；已披露 `ai_after_chatgpt`、requested/actual
+      date range、data quality status、QQQ/SPY/SMH core benchmark coverage、IWM/RSP availability；2022
+      slice 无 signal coverage 已显式记录；所有 gate fields 固定 false/none/BLOCKED。
+    - '2026-06-28: 新增并进入 IN_PROGRESS；本批只做 current-state diagnostic，不允许 training、allocation、Norgate
+      purchase、reopen gate、paper-shadow、production 或 broker。2026-06-28: 实现完成并转入 VALIDATING；真实
+      run data_quality_status=`PASS_WITH_WARNINGS`，duplicate rows removed=1428，failure_event_count=1089，benchmark_consistency_score=`0.392621`，2022
+      slice=`NO_SIGNAL_COVERAGE`。2026-06-28: 验证通过 focused / governance / contract-validation，runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260628T120609Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-2270_FIRST_LAYER_CURRENT_STATE_AND_FAILURE_TAXONOMY|Research
+      trends / first-layer current state and failure taxonomy|P0|VALIDATING|系统实现 +
+      项目 owner 后续复核|详见 `docs/requirements/TRADING-2270_First_Layer_Current_State_And_Failure_Taxonomy.md`；附件要求在
+      proxy audit、objective redesign 和 challenger experiments 前，先把当前 first-layer baseline
+      的 false risk-on/off、late risk-on/off、regime flip、benchmark consistency 和 regime
+      slices 变成可审计 artifacts。本批已生成 artifacts，下一步是 owner 复核并推进 TRADING-2271～2273。|新增
+      `aits research trends first-layer-current-state`、pilot taxonomy policy、`first_layer_current_state_report.md`、`first_layer_failure_taxonomy.json`、`benchmark_consistency_report.json`、`regime_slice_summary.md`、summary
+      YAML、report registry、artifact catalog、system flow 和 focused tests；已披露 `ai_after_chatgpt`、requested/actual
+      date range、data quality status、QQQ/SPY/SMH core benchmark coverage、IWM/RSP availability；2022
+      slice 无 signal coverage 已显式记录；所有 gate fields 固定 false/none/BLOCKED。|2026-06-28:
+      新增并进入 IN_PROGRESS；本批只做 current-state diagnostic，不允许 training、allocation、Norgate
+      purchase、reopen gate、paper-shadow、production 或 broker。2026-06-28: 实现完成并转入 VALIDATING；真实
+      run data_quality_status=`PASS_WITH_WARNINGS`，duplicate rows removed=1428，failure_event_count=1089，benchmark_consistency_score=`0.392621`，2022
+      slice=`NO_SIGNAL_COVERAGE`。2026-06-28: 验证通过 focused / governance / contract-validation，runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260628T120609Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-db8682637760725870dbf3ed
+  task_id: TRADING-2270_FIRST_LAYER_CURRENT_STATE_AND_FAILURE_TAXONOMY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 新增并进入 IN_PROGRESS；本批只做 current-state diagnostic，不允许 training、allocation、Norgate
+      purchase、reopen gate、paper-shadow、production 或 broker。2026-06-28: 实现完成并转入 VALIDATING；真实
+      run data_quality_status=`PASS_WITH_WARNINGS`，duplicate rows removed=1428，failure_event_count=1089，benchmark_consistency_score=`0.392621`，2022
+      slice=`NO_SIGNAL_COVERAGE`。2026-06-28: 验证通过 focused / governance / contract-validation，runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260628T120609Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:db8682637760725870dbf3edc9da429bacfaabe2fd05405c5aabc1396bea693e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2270_FIRST_LAYER_CURRENT_STATE_AND_FAILURE_TAXONOMY
+  - Research trends / first-layer current state and failure taxonomy
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2270_First_Layer_Current_State_And_Failure_Taxonomy.md`；附件要求在
+    proxy audit、objective redesign 和 challenger experiments 前，先把当前 first-layer baseline
+    的 false risk-on/off、late risk-on/off、regime flip、benchmark consistency 和 regime
+    slices 变成可审计 artifacts。本批已生成 artifacts，下一步是 owner 复核并推进 TRADING-2271～2273。
+  - 新增 `aits research trends first-layer-current-state`、pilot taxonomy policy、`first_layer_current_state_report.md`、`first_layer_failure_taxonomy.json`、`benchmark_consistency_report.json`、`regime_slice_summary.md`、summary
+    YAML、report registry、artifact catalog、system flow 和 focused tests；已披露 `ai_after_chatgpt`、requested/actual
+    date range、data quality status、QQQ/SPY/SMH core benchmark coverage、IWM/RSP availability；2022
+    slice 无 signal coverage 已显式记录；所有 gate fields 固定 false/none/BLOCKED。
+  - '2026-06-28: 新增并进入 IN_PROGRESS；本批只做 current-state diagnostic，不允许 training、allocation、Norgate
+    purchase、reopen gate、paper-shadow、production 或 broker。2026-06-28: 实现完成并转入 VALIDATING；真实
+    run data_quality_status=`PASS_WITH_WARNINGS`，duplicate rows removed=1428，failure_event_count=1089，benchmark_consistency_score=`0.392621`，2022
+    slice=`NO_SIGNAL_COVERAGE`。2026-06-28: 验证通过 focused / governance / contract-validation，runtime
+    artifact=`outputs/validation_runtime/contract-validation_20260628T120609Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-2270_First_Layer_Current_State_And_Failure_Taxonomy.md
+  terminal: false
+  raw_row_sha256: db8682637760725870dbf3edc9da429bacfaabe2fd05405c5aabc1396bea693e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f3a5395e46bba7c7560b82fa3b9cc339f130d7cd5ddc9a541f6c88c8978bd98b

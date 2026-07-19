@@ -1,0 +1,206 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-420_to_428_TARGETED_RECOVERY_AFTER_408_419
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue targeted recovery after TRADING-408~419
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-420_to_428_Targeted_Recovery_After_408_419.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-420_to_428_Targeted_Recovery_After_408_419.md`；TRADING-420～427
+    工程恢复链已完成，TRADING-428 因 owner action 仍为 `hold` 阻塞；不得削弱 policy、silent waiver、伪造
+    data/snapshot/metrics、创建 official target weights、broker/order、paper-shadow state
+    mutation、production mutation、extended shadow 或 live trading
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 当前验收：TRADING-420 已提交推送；TRADING-421～427 已新增/更新对应 CLI/report/validation artifact、Reader
+      Brief section、report registry、artifact catalog、system flow、operations runbook、README、需求文档和
+      focused tests；最终 recovery chain 输出 remaining blockers=8、warnings=9、report-index
+      unwaived=0、normal paper-shadow=false、extended/live forbidden=true。解除阻塞条件：owner
+      明确记录 `continue_normal_shadow` 且 normal resumption gate non-blocked 后，才可生成 normal
+      paper-shadow owner signoff packet；不得自动追加 owner decision。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1426
+    row_sha256: db2bb0baade51b6299091f8ef051629dda0f7d874763efebb209dacc87b2b670
+    cell_count: 8
+    all_cells:
+    - TRADING-420_to_428_TARGETED_RECOVERY_AFTER_408_419
+    - ETF portfolio/dynamic v3 rescue targeted recovery after TRADING-408~419
+    - P0
+    - BLOCKED_OWNER_INPUT
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-420_to_428_Targeted_Recovery_After_408_419.md`；TRADING-420～427
+      工程恢复链已完成，TRADING-428 因 owner action 仍为 `hold` 阻塞；不得削弱 policy、silent waiver、伪造
+      data/snapshot/metrics、创建 official target weights、broker/order、paper-shadow state
+      mutation、production mutation、extended shadow 或 live trading
+    - 当前验收：TRADING-420 已提交推送；TRADING-421～427 已新增/更新对应 CLI/report/validation artifact、Reader
+      Brief section、report registry、artifact catalog、system flow、operations runbook、README、需求文档和
+      focused tests；最终 recovery chain 输出 remaining blockers=8、warnings=9、report-index
+      unwaived=0、normal paper-shadow=false、extended/live forbidden=true。解除阻塞条件：owner
+      明确记录 `continue_normal_shadow` 且 normal resumption gate non-blocked 后，才可生成 normal
+      paper-shadow owner signoff packet；不得自动追加 owner decision。
+    - '2026-06-17: 新增并进入 IN_PROGRESS，原因：owner 附件要求完成 TRADING-420～428 targeted recovery；TRADING-420
+      已完成，提交 `550dd98a` 推送 `origin/main`，known limitations 保持 recovery blocked、normal
+      paper-shadow false、report index unwaived=9、同日 decision snapshot missing、extended/live
+      forbidden。2026-06-17: TRADING-421 实现完成并转入 VALIDATING；真实 artifact `exact_blocker_warning_inventory_2026-06-17`
+      输出 `EXACT_INVENTORY_BLOCKED`、blockers=9、recovery warnings=10、report-index warnings=9、normal=false、extended/live
+      forbidden=true，validation `PASS_WITH_WARNINGS`，focused pytest 2 passed，scoped
+      ruff/compileall passed。2026-06-17: TRADING-422 按 canonical order 重建 signal inputs，输出
+      `etf_feature_matrix:2026-06-16:dae1c63502c1`、`etf_signal_series:2026-06-16:107d24331e83`、monitor
+      `signal-input-completeness_172dfeae0ce29c54`、recovery `signal-input-recovery_44fd18f00827b38b`、completeness
+      recovery `signal-input-completeness-recovery_4cddf282d5c1742a`；blocking=0、hard_stop=false，仍有
+      latest signal snapshot `LIMITED` warning。2026-06-17: TRADING-423 用真实 `score-daily`
+      生成同日 decision snapshot，lifecycle policy 为 `SNAPSHOT_AVAILABLE`，validation PASS，quality
+      gate 转 `PASS_WITH_WARNINGS`。2026-06-17: TRADING-424 重跑真实 stale report families
+      后 report index unwaived=0、`PASS_WITH_EXPLICIT_WAIVERS`，market data freshness
+      仍披露 latest manifest 2026-06-15 的真实限制。2026-06-17: TRADING-425 新增 metric source
+      map CLI/report/validation，artifact `metric-source-map_287f37a56b0abd0a` 为 `METRIC_SOURCE_MAP_READY`、11/11
+      metrics derivable、validation PASS。2026-06-17: TRADING-426 已 materialize source-map
+      证明可派生 metrics；cost metrics `COST_INPUTS_AVAILABLE` 但 review `NOT_MEANINGFUL_UNDER_COSTS`，benchmark
+      metrics `BASELINE_METRICS_AVAILABLE` 但 control `CANDIDATE_UNDERPERFORMS_BASELINES`，validation
+      PASS。2026-06-17: TRADING-427 已重跑 recovery chain，最终 `RECOVERY_GOVERNANCE_BLOCKED`、remaining
+      blockers=8、warnings=9、report-index unwaived=0、normal paper-shadow=false、extended/live
+      forbidden=true；从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：TRADING-428 hard stop，未生成
+      signoff packet，normal gate `RESUME_NORMAL_SHADOW_BLOCKED` 且 owner action 仍为
+      `hold`。'
+    raw_line: '|TRADING-420_to_428_TARGETED_RECOVERY_AFTER_408_419|ETF portfolio/dynamic
+      v3 rescue targeted recovery after TRADING-408~419|P0|BLOCKED_OWNER_INPUT|系统实现
+      + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-420_to_428_Targeted_Recovery_After_408_419.md`；TRADING-420～427
+      工程恢复链已完成，TRADING-428 因 owner action 仍为 `hold` 阻塞；不得削弱 policy、silent waiver、伪造
+      data/snapshot/metrics、创建 official target weights、broker/order、paper-shadow state
+      mutation、production mutation、extended shadow 或 live trading|当前验收：TRADING-420
+      已提交推送；TRADING-421～427 已新增/更新对应 CLI/report/validation artifact、Reader Brief section、report
+      registry、artifact catalog、system flow、operations runbook、README、需求文档和 focused
+      tests；最终 recovery chain 输出 remaining blockers=8、warnings=9、report-index unwaived=0、normal
+      paper-shadow=false、extended/live forbidden=true。解除阻塞条件：owner 明确记录 `continue_normal_shadow`
+      且 normal resumption gate non-blocked 后，才可生成 normal paper-shadow owner signoff
+      packet；不得自动追加 owner decision。|2026-06-17: 新增并进入 IN_PROGRESS，原因：owner 附件要求完成
+      TRADING-420～428 targeted recovery；TRADING-420 已完成，提交 `550dd98a` 推送 `origin/main`，known
+      limitations 保持 recovery blocked、normal paper-shadow false、report index unwaived=9、同日
+      decision snapshot missing、extended/live forbidden。2026-06-17: TRADING-421 实现完成并转入
+      VALIDATING；真实 artifact `exact_blocker_warning_inventory_2026-06-17` 输出 `EXACT_INVENTORY_BLOCKED`、blockers=9、recovery
+      warnings=10、report-index warnings=9、normal=false、extended/live forbidden=true，validation
+      `PASS_WITH_WARNINGS`，focused pytest 2 passed，scoped ruff/compileall passed。2026-06-17:
+      TRADING-422 按 canonical order 重建 signal inputs，输出 `etf_feature_matrix:2026-06-16:dae1c63502c1`、`etf_signal_series:2026-06-16:107d24331e83`、monitor
+      `signal-input-completeness_172dfeae0ce29c54`、recovery `signal-input-recovery_44fd18f00827b38b`、completeness
+      recovery `signal-input-completeness-recovery_4cddf282d5c1742a`；blocking=0、hard_stop=false，仍有
+      latest signal snapshot `LIMITED` warning。2026-06-17: TRADING-423 用真实 `score-daily`
+      生成同日 decision snapshot，lifecycle policy 为 `SNAPSHOT_AVAILABLE`，validation PASS，quality
+      gate 转 `PASS_WITH_WARNINGS`。2026-06-17: TRADING-424 重跑真实 stale report families
+      后 report index unwaived=0、`PASS_WITH_EXPLICIT_WAIVERS`，market data freshness
+      仍披露 latest manifest 2026-06-15 的真实限制。2026-06-17: TRADING-425 新增 metric source
+      map CLI/report/validation，artifact `metric-source-map_287f37a56b0abd0a` 为 `METRIC_SOURCE_MAP_READY`、11/11
+      metrics derivable、validation PASS。2026-06-17: TRADING-426 已 materialize source-map
+      证明可派生 metrics；cost metrics `COST_INPUTS_AVAILABLE` 但 review `NOT_MEANINGFUL_UNDER_COSTS`，benchmark
+      metrics `BASELINE_METRICS_AVAILABLE` 但 control `CANDIDATE_UNDERPERFORMS_BASELINES`，validation
+      PASS。2026-06-17: TRADING-427 已重跑 recovery chain，最终 `RECOVERY_GOVERNANCE_BLOCKED`、remaining
+      blockers=8、warnings=9、report-index unwaived=0、normal paper-shadow=false、extended/live
+      forbidden=true；从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：TRADING-428 hard stop，未生成
+      signoff packet，normal gate `RESUME_NORMAL_SHADOW_BLOCKED` 且 owner action 仍为
+      `hold`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-db2bb0baade51b6299091f8e
+  task_id: TRADING-420_to_428_TARGETED_RECOVERY_AFTER_408_419
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-17: 新增并进入 IN_PROGRESS，原因：owner 附件要求完成 TRADING-420～428 targeted
+      recovery；TRADING-420 已完成，提交 `550dd98a` 推送 `origin/main`，known limitations 保持
+      recovery blocked、normal paper-shadow false、report index unwaived=9、同日 decision
+      snapshot missing、extended/live forbidden。2026-06-17: TRADING-421 实现完成并转入 VALIDATING；真实
+      artifact `exact_blocker_warning_inventory_2026-06-17` 输出 `EXACT_INVENTORY_BLOCKED`、blockers=9、recovery
+      warnings=10、report-index warnings=9、normal=false、extended/live forbidden=true，validation
+      `PASS_WITH_WARNINGS`，focused pytest 2 passed，scoped ruff/compileall passed。2026-06-17:
+      TRADING-422 按 canonical order 重建 signal inputs，输出 `etf_feature_matrix:2026-06-16:dae1c63502c1`、`etf_signal_series:2026-06-16:107d24331e83`、monitor
+      `signal-input-completeness_172dfeae0ce29c54`、recovery `signal-input-recovery_44fd18f00827b38b`、completeness
+      recovery `signal-input-completeness-recovery_4cddf282d5c1742a`；blocking=0、hard_stop=false，仍有
+      latest signal snapshot `LIMITED` warning。2026-06-17: TRADING-423 用真实 `score-daily`
+      生成同日 decision snapshot，lifecycle policy 为 `SNAPSHOT_AVAILABLE`，validation PASS，quality
+      gate 转 `PASS_WITH_WARNINGS`。2026-06-17: TRADING-424 重跑真实 stale report families
+      后 report index unwaived=0、`PASS_WITH_EXPLICIT_WAIVERS`，market data freshness
+      仍披露 latest manifest 2026-06-15 的真实限制。2026-06-17: TRADING-425 新增 metric source
+      map CLI/report/validation，artifact `metric-source-map_287f37a56b0abd0a` 为 `METRIC_SOURCE_MAP_READY`、11/11
+      metrics derivable、validation PASS。2026-06-17: TRADING-426 已 materialize source-map
+      证明可派生 metrics；cost metrics `COST_INPUTS_AVAILABLE` 但 review `NOT_MEANINGFUL_UNDER_COSTS`，benchmark
+      metrics `BASELINE_METRICS_AVAILABLE` 但 control `CANDIDATE_UNDERPERFORMS_BASELINES`，validation
+      PASS。2026-06-17: TRADING-427 已重跑 recovery chain，最终 `RECOVERY_GOVERNANCE_BLOCKED`、remaining
+      blockers=8、warnings=9、report-index unwaived=0、normal paper-shadow=false、extended/live
+      forbidden=true；从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：TRADING-428 hard stop，未生成
+      signoff packet，normal gate `RESUME_NORMAL_SHADOW_BLOCKED` 且 owner action 仍为
+      `hold`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:db2bb0baade51b6299091f8ef051629dda0f7d874763efebb209dacc87b2b670
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-420_to_428_TARGETED_RECOVERY_AFTER_408_419
+  - ETF portfolio/dynamic v3 rescue targeted recovery after TRADING-408~419
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-420_to_428_Targeted_Recovery_After_408_419.md`；TRADING-420～427
+    工程恢复链已完成，TRADING-428 因 owner action 仍为 `hold` 阻塞；不得削弱 policy、silent waiver、伪造
+    data/snapshot/metrics、创建 official target weights、broker/order、paper-shadow state
+    mutation、production mutation、extended shadow 或 live trading
+  - 当前验收：TRADING-420 已提交推送；TRADING-421～427 已新增/更新对应 CLI/report/validation artifact、Reader
+    Brief section、report registry、artifact catalog、system flow、operations runbook、README、需求文档和
+    focused tests；最终 recovery chain 输出 remaining blockers=8、warnings=9、report-index
+    unwaived=0、normal paper-shadow=false、extended/live forbidden=true。解除阻塞条件：owner
+    明确记录 `continue_normal_shadow` 且 normal resumption gate non-blocked 后，才可生成 normal
+    paper-shadow owner signoff packet；不得自动追加 owner decision。
+  - '2026-06-17: 新增并进入 IN_PROGRESS，原因：owner 附件要求完成 TRADING-420～428 targeted recovery；TRADING-420
+    已完成，提交 `550dd98a` 推送 `origin/main`，known limitations 保持 recovery blocked、normal
+    paper-shadow false、report index unwaived=9、同日 decision snapshot missing、extended/live
+    forbidden。2026-06-17: TRADING-421 实现完成并转入 VALIDATING；真实 artifact `exact_blocker_warning_inventory_2026-06-17`
+    输出 `EXACT_INVENTORY_BLOCKED`、blockers=9、recovery warnings=10、report-index warnings=9、normal=false、extended/live
+    forbidden=true，validation `PASS_WITH_WARNINGS`，focused pytest 2 passed，scoped
+    ruff/compileall passed。2026-06-17: TRADING-422 按 canonical order 重建 signal inputs，输出
+    `etf_feature_matrix:2026-06-16:dae1c63502c1`、`etf_signal_series:2026-06-16:107d24331e83`、monitor
+    `signal-input-completeness_172dfeae0ce29c54`、recovery `signal-input-recovery_44fd18f00827b38b`、completeness
+    recovery `signal-input-completeness-recovery_4cddf282d5c1742a`；blocking=0、hard_stop=false，仍有
+    latest signal snapshot `LIMITED` warning。2026-06-17: TRADING-423 用真实 `score-daily`
+    生成同日 decision snapshot，lifecycle policy 为 `SNAPSHOT_AVAILABLE`，validation PASS，quality
+    gate 转 `PASS_WITH_WARNINGS`。2026-06-17: TRADING-424 重跑真实 stale report families
+    后 report index unwaived=0、`PASS_WITH_EXPLICIT_WAIVERS`，market data freshness 仍披露
+    latest manifest 2026-06-15 的真实限制。2026-06-17: TRADING-425 新增 metric source map
+    CLI/report/validation，artifact `metric-source-map_287f37a56b0abd0a` 为 `METRIC_SOURCE_MAP_READY`、11/11
+    metrics derivable、validation PASS。2026-06-17: TRADING-426 已 materialize source-map
+    证明可派生 metrics；cost metrics `COST_INPUTS_AVAILABLE` 但 review `NOT_MEANINGFUL_UNDER_COSTS`，benchmark
+    metrics `BASELINE_METRICS_AVAILABLE` 但 control `CANDIDATE_UNDERPERFORMS_BASELINES`，validation
+    PASS。2026-06-17: TRADING-427 已重跑 recovery chain，最终 `RECOVERY_GOVERNANCE_BLOCKED`、remaining
+    blockers=8、warnings=9、report-index unwaived=0、normal paper-shadow=false、extended/live
+    forbidden=true；从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：TRADING-428 hard stop，未生成
+    signoff packet，normal gate `RESUME_NORMAL_SHADOW_BLOCKED` 且 owner action 仍为 `hold`。'
+  docs_links:
+  - docs/requirements/TRADING-420_to_428_Targeted_Recovery_After_408_419.md
+  terminal: false
+  raw_row_sha256: db2bb0baade51b6299091f8ef051629dda0f7d874763efebb209dacc87b2b670
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: dea90b7a3aab28ce367b116580dabf90b473e3ddfc23e2f47d5f7deede86ee9a

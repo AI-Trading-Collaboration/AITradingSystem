@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-006B
+  title: null
+  domain: 交易执行/Paper Signal Quality Forward Observation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/paper_signal_quality_forward_observation_2026-06-09.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 承接 `TRADING-006/006A` 的真实 daily flow 观察；阻塞于连续
+    3～7 个已完成美股交易日或等价人工 daily-run 样本产生 paper signal quality 与 dashboard artifacts；详细拆解见
+    `docs/requirements/paper_signal_quality_forward_observation_2026-06-09.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 连续样本记录 `paper_signal_quality_YYYY-MM-DD.json/md` 生成情况、`evaluation_status`、主要
+      `blocked_by`、sample/filled/candidate count、synthetic snapshot ratio、OHLC coverage、reconciliation
+      ratio、dashboard 卡片一致性和 safety flags；缺输入或低质量输入必须保持 fail-closed，不补造样本、不触发 paper
+      runner/replay/broker、不改变 production 仓位建议或参数晋级；完成后补充 requirement/任务登记/归档证据
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1493
+    row_sha256: 55d67fad2da9a4df93c109fdd0e88b1020d78e20399667100607d44ed81ed85a
+    cell_count: 8
+    all_cells:
+    - TRADING-006B
+    - 交易执行/Paper Signal Quality Forward Observation
+    - P0
+    - BLOCKED_EXTERNAL
+    - 系统验证 + 项目 owner
+    - 承接 `TRADING-006/006A` 的真实 daily flow 观察；阻塞于连续 3～7 个已完成美股交易日或等价人工 daily-run 样本产生
+      paper signal quality 与 dashboard artifacts；详细拆解见 `docs/requirements/paper_signal_quality_forward_observation_2026-06-09.md`
+    - 连续样本记录 `paper_signal_quality_YYYY-MM-DD.json/md` 生成情况、`evaluation_status`、主要
+      `blocked_by`、sample/filled/candidate count、synthetic snapshot ratio、OHLC coverage、reconciliation
+      ratio、dashboard 卡片一致性和 safety flags；缺输入或低质量输入必须保持 fail-closed，不补造样本、不触发 paper
+      runner/replay/broker、不改变 production 仓位建议或参数晋级；完成后补充 requirement/任务登记/归档证据
+    - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-006/006A 工程基线已通过数据质量门、isolated
+      smoke、目标 pytest、Ruff 和 scoped Black，但当前没有连续真实 daily dashboard / paper signal
+      quality forward 样本，不能把运行期稳定性并入基线完成。'
+    raw_line: '|TRADING-006B|交易执行/Paper Signal Quality Forward Observation|P0|BLOCKED_EXTERNAL|系统验证
+      + 项目 owner|承接 `TRADING-006/006A` 的真实 daily flow 观察；阻塞于连续 3～7 个已完成美股交易日或等价人工
+      daily-run 样本产生 paper signal quality 与 dashboard artifacts；详细拆解见 `docs/requirements/paper_signal_quality_forward_observation_2026-06-09.md`|连续样本记录
+      `paper_signal_quality_YYYY-MM-DD.json/md` 生成情况、`evaluation_status`、主要 `blocked_by`、sample/filled/candidate
+      count、synthetic snapshot ratio、OHLC coverage、reconciliation ratio、dashboard
+      卡片一致性和 safety flags；缺输入或低质量输入必须保持 fail-closed，不补造样本、不触发 paper runner/replay/broker、不改变
+      production 仓位建议或参数晋级；完成后补充 requirement/任务登记/归档证据|2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-006/006A
+      工程基线已通过数据质量门、isolated smoke、目标 pytest、Ruff 和 scoped Black，但当前没有连续真实 daily dashboard
+      / paper signal quality forward 样本，不能把运行期稳定性并入基线完成。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-55d67fad2da9a4df93c109fd
+  task_id: TRADING-006B
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-006/006A 工程基线已通过数据质量门、isolated
+      smoke、目标 pytest、Ruff 和 scoped Black，但当前没有连续真实 daily dashboard / paper signal
+      quality forward 样本，不能把运行期稳定性并入基线完成。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:55d67fad2da9a4df93c109fdd0e88b1020d78e20399667100607d44ed81ed85a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-006B
+  - 交易执行/Paper Signal Quality Forward Observation
+  - P0
+  - BLOCKED_EXTERNAL
+  - 系统验证 + 项目 owner
+  - 承接 `TRADING-006/006A` 的真实 daily flow 观察；阻塞于连续 3～7 个已完成美股交易日或等价人工 daily-run 样本产生
+    paper signal quality 与 dashboard artifacts；详细拆解见 `docs/requirements/paper_signal_quality_forward_observation_2026-06-09.md`
+  - 连续样本记录 `paper_signal_quality_YYYY-MM-DD.json/md` 生成情况、`evaluation_status`、主要 `blocked_by`、sample/filled/candidate
+    count、synthetic snapshot ratio、OHLC coverage、reconciliation ratio、dashboard 卡片一致性和
+    safety flags；缺输入或低质量输入必须保持 fail-closed，不补造样本、不触发 paper runner/replay/broker、不改变
+    production 仓位建议或参数晋级；完成后补充 requirement/任务登记/归档证据
+  - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-006/006A 工程基线已通过数据质量门、isolated
+    smoke、目标 pytest、Ruff 和 scoped Black，但当前没有连续真实 daily dashboard / paper signal quality
+    forward 样本，不能把运行期稳定性并入基线完成。'
+  docs_links:
+  - docs/requirements/paper_signal_quality_forward_observation_2026-06-09.md
+  terminal: false
+  raw_row_sha256: 55d67fad2da9a4df93c109fdd0e88b1020d78e20399667100607d44ed81ed85a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a516ae24a824c06e3552d5ec4c39d3b1461d793519d2b79013e32825181e0414

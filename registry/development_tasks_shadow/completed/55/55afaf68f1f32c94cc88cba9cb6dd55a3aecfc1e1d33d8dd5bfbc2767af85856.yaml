@@ -1,0 +1,138 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-499A_SECRET_HYGIENE_GENERATED_REPORT_FALSE_POSITIVE_RESOLUTION
+  title: null
+  domain: Operations/secret hygiene generated report false positive resolution
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/secret_hygiene_generated_report_false_positive_2026-06-19.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/secret_hygiene_generated_report_false_positive_2026-06-19.md`；正式分类为
+    generated-report false positive + scanner rule issue，不是真实 credential exposure；后续仅需
+    owner 复核本次分类和 rc2 closeout evidence
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Secret scanner 对 known generated governance report metadata source-location
+      token 使用窄范围 allowlist；真实 `api_key`、`secret_key`、token、password、authorization
+      和 bearer literal 仍 fail closed；`aits security scan-secrets --as-of 2026-06-18`
+      对同一默认 artifact 集合 PASS；未 broad allowlist `outputs/`，未删除历史报告，未激活 paper-shadow/live/broker/order/official
+      weights
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 182
+    row_sha256: 1c6728d8e7a34de12f4d10c0cbde9563a18232435aceb2dc4a47a8cffecdbcd5
+    cell_count: 8
+    all_cells:
+    - TRADING-499A_SECRET_HYGIENE_GENERATED_REPORT_FALSE_POSITIVE_RESOLUTION
+    - Operations/secret hygiene generated report false positive resolution
+    - P0
+    - DONE
+    - 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/secret_hygiene_generated_report_false_positive_2026-06-19.md`；正式分类为
+      generated-report false positive + scanner rule issue，不是真实 credential exposure；后续仅需
+      owner 复核本次分类和 rc2 closeout evidence
+    - Secret scanner 对 known generated governance report metadata source-location
+      token 使用窄范围 allowlist；真实 `api_key`、`secret_key`、token、password、authorization
+      和 bearer literal 仍 fail closed；`aits security scan-secrets --as-of 2026-06-18`
+      对同一默认 artifact 集合 PASS；未 broad allowlist `outputs/`，未删除历史报告，未激活 paper-shadow/live/broker/order/official
+      weights
+    - '2026-06-19: DONE；实现 `src/ai_trading_system/secret_hygiene.py` 窄范围 generated
+      metadata allowlist，覆盖 safety audit finding id / warning summary、Markdown warnings、next-cycle
+      snapshot warnings 和 Reader Brief consistency `decision_state` 嵌入；同时增强 quoted
+      JSON secret key/value 和 `secret_key` 检测。验证：focused tests `tests/test_secret_hygiene.py`
+      6 passed；secret scan PASS，scanned files=9777、errors=0、warnings=0；task-register
+      consistency run/validate PASS；report index PASS，reports=530、unwaived=0；system
+      doctor PASS，checks=9、failed=0、warnings=0；validation tiers `fast-unit` 74 passed、`contract-validation`
+      73 passed、`report-validation` 55 passed、`reproducibility` 23 passed；scoped Ruff、compileall
+      和 `git diff --check` PASS。'
+    raw_line: '|TRADING-499A_SECRET_HYGIENE_GENERATED_REPORT_FALSE_POSITIVE_RESOLUTION|Operations/secret
+      hygiene generated report false positive resolution|P0|DONE|项目 owner 后续复核|详细拆解见
+      `docs/requirements/secret_hygiene_generated_report_false_positive_2026-06-19.md`；正式分类为
+      generated-report false positive + scanner rule issue，不是真实 credential exposure；后续仅需
+      owner 复核本次分类和 rc2 closeout evidence|Secret scanner 对 known generated governance
+      report metadata source-location token 使用窄范围 allowlist；真实 `api_key`、`secret_key`、token、password、authorization
+      和 bearer literal 仍 fail closed；`aits security scan-secrets --as-of 2026-06-18`
+      对同一默认 artifact 集合 PASS；未 broad allowlist `outputs/`，未删除历史报告，未激活 paper-shadow/live/broker/order/official
+      weights|2026-06-19: DONE；实现 `src/ai_trading_system/secret_hygiene.py` 窄范围 generated
+      metadata allowlist，覆盖 safety audit finding id / warning summary、Markdown warnings、next-cycle
+      snapshot warnings 和 Reader Brief consistency `decision_state` 嵌入；同时增强 quoted
+      JSON secret key/value 和 `secret_key` 检测。验证：focused tests `tests/test_secret_hygiene.py`
+      6 passed；secret scan PASS，scanned files=9777、errors=0、warnings=0；task-register
+      consistency run/validate PASS；report index PASS，reports=530、unwaived=0；system
+      doctor PASS，checks=9、failed=0、warnings=0；validation tiers `fast-unit` 74 passed、`contract-validation`
+      73 passed、`report-validation` 55 passed、`reproducibility` 23 passed；scoped Ruff、compileall
+      和 `git diff --check` PASS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1c6728d8e7a34de12f4d10c0
+  task_id: TRADING-499A_SECRET_HYGIENE_GENERATED_REPORT_FALSE_POSITIVE_RESOLUTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核
+    notes: '2026-06-19: DONE；实现 `src/ai_trading_system/secret_hygiene.py` 窄范围 generated
+      metadata allowlist，覆盖 safety audit finding id / warning summary、Markdown warnings、next-cycle
+      snapshot warnings 和 Reader Brief consistency `decision_state` 嵌入；同时增强 quoted
+      JSON secret key/value 和 `secret_key` 检测。验证：focused tests `tests/test_secret_hygiene.py`
+      6 passed；secret scan PASS，scanned files=9777、errors=0、warnings=0；task-register
+      consistency run/validate PASS；report index PASS，reports=530、unwaived=0；system
+      doctor PASS，checks=9、failed=0、warnings=0；validation tiers `fast-unit` 74 passed、`contract-validation`
+      73 passed、`report-validation` 55 passed、`reproducibility` 23 passed；scoped Ruff、compileall
+      和 `git diff --check` PASS。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1c6728d8e7a34de12f4d10c0cbde9563a18232435aceb2dc4a47a8cffecdbcd5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-499A_SECRET_HYGIENE_GENERATED_REPORT_FALSE_POSITIVE_RESOLUTION
+  - Operations/secret hygiene generated report false positive resolution
+  - P0
+  - DONE
+  - 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/secret_hygiene_generated_report_false_positive_2026-06-19.md`；正式分类为
+    generated-report false positive + scanner rule issue，不是真实 credential exposure；后续仅需
+    owner 复核本次分类和 rc2 closeout evidence
+  - Secret scanner 对 known generated governance report metadata source-location token
+    使用窄范围 allowlist；真实 `api_key`、`secret_key`、token、password、authorization 和 bearer
+    literal 仍 fail closed；`aits security scan-secrets --as-of 2026-06-18` 对同一默认 artifact
+    集合 PASS；未 broad allowlist `outputs/`，未删除历史报告，未激活 paper-shadow/live/broker/order/official
+    weights
+  - '2026-06-19: DONE；实现 `src/ai_trading_system/secret_hygiene.py` 窄范围 generated metadata
+    allowlist，覆盖 safety audit finding id / warning summary、Markdown warnings、next-cycle
+    snapshot warnings 和 Reader Brief consistency `decision_state` 嵌入；同时增强 quoted JSON
+    secret key/value 和 `secret_key` 检测。验证：focused tests `tests/test_secret_hygiene.py`
+    6 passed；secret scan PASS，scanned files=9777、errors=0、warnings=0；task-register
+    consistency run/validate PASS；report index PASS，reports=530、unwaived=0；system
+    doctor PASS，checks=9、failed=0、warnings=0；validation tiers `fast-unit` 74 passed、`contract-validation`
+    73 passed、`report-validation` 55 passed、`reproducibility` 23 passed；scoped Ruff、compileall
+    和 `git diff --check` PASS。'
+  docs_links:
+  - docs/requirements/secret_hygiene_generated_report_false_positive_2026-06-19.md
+  terminal: true
+  raw_row_sha256: 1c6728d8e7a34de12f4d10c0cbde9563a18232435aceb2dc4a47a8cffecdbcd5
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a86f2c0e5a171a7c99c23546052accca14325a72ff04f9c42c17dfa0a5b236cc

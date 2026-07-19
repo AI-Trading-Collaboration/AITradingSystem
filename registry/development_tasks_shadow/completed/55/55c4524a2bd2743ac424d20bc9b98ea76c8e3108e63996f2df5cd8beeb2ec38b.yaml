@@ -1,0 +1,131 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2352_DAILY_INCREMENTAL_REFACTOR_HIGH_INTENSITY_SCHEDULER_SAFETY_HELPERS
+  title: null
+  domain: Daily incremental refactor / high-intensity scheduler safety helper boundary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+  requirement_refs:
+  - docs/requirements/TRADING-2352_Daily_Incremental_Refactor_High_Intensity_Scheduler_Safety_Helpers.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2352_Daily_Incremental_Refactor_High_Intensity_Scheduler_Safety_Helpers.md`；本批只抽取
+    TRADING-2347～2350 scheduler dry-run / disabled wiring / manual review / manual-run
+    dry-run 中重复的 unsafe-field、real-scheduler 和 forbidden-action 扫描 helper，不实现 TRADING-2351，不启用
+    scheduler，不运行 fresh market data path。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/high_intensity_risk_cap_scheduler_common.py`；TRADING-2347
+      disabled wiring 和 TRADING-2348 smoke dry-run 复用 common helper，TRADING-2349 manual
+      review gate 与 TRADING-2350 manual-run dry-run 通过 smoke dry-run wrapper 继承同一安全扫描行为；保留所有外部
+      CLI、artifact path、JSON key、Markdown 文案、status/readiness、safety fields、data quality
+      disclosure、promotion / paper-shadow / production / broker false/none 语义。验证通过
+      Ruff、compileall、focused high-intensity scheduler parallel pytest 44 passed、docs
+      freshness、task-register checks 和 `git diff --check`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 137
+    row_sha256: 501e7f5c0f0f138da569e542003bbd26fafa0f0757c585077ee7a34e0c4eab20
+    cell_count: 8
+    all_cells:
+    - TRADING-2352_DAILY_INCREMENTAL_REFACTOR_HIGH_INTENSITY_SCHEDULER_SAFETY_HELPERS
+    - Daily incremental refactor / high-intensity scheduler safety helper boundary
+    - P2
+    - DONE
+    - 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+    - 详见 `docs/requirements/TRADING-2352_Daily_Incremental_Refactor_High_Intensity_Scheduler_Safety_Helpers.md`；本批只抽取
+      TRADING-2347～2350 scheduler dry-run / disabled wiring / manual review / manual-run
+      dry-run 中重复的 unsafe-field、real-scheduler 和 forbidden-action 扫描 helper，不实现 TRADING-2351，不启用
+      scheduler，不运行 fresh market data path。
+    - 新增 `src/ai_trading_system/high_intensity_risk_cap_scheduler_common.py`；TRADING-2347
+      disabled wiring 和 TRADING-2348 smoke dry-run 复用 common helper，TRADING-2349 manual
+      review gate 与 TRADING-2350 manual-run dry-run 通过 smoke dry-run wrapper 继承同一安全扫描行为；保留所有外部
+      CLI、artifact path、JSON key、Markdown 文案、status/readiness、safety fields、data quality
+      disclosure、promotion / paper-shadow / production / broker false/none 语义。验证通过
+      Ruff、compileall、focused high-intensity scheduler parallel pytest 44 passed、docs
+      freshness、task-register checks 和 `git diff --check`。
+    - '2026-07-05: 每日增量重构巡检登记，基线为 `c1224b51a38036c03578da4687736649fa9dea07`，HEAD
+      `1d603195d2147c523d6a70d27389dc35d4106561` 不是重构提交。2026-07-05: 实现完成并归档 DONE；本轮未运行
+      `aits validate-data`，因为只整理 observe-only scheduler 安全扫描内部 helper，不读取 cached market/macro
+      data，不生成 technical features、scoring、backtest 或 daily report 输出。'
+    raw_line: '|TRADING-2352_DAILY_INCREMENTAL_REFACTOR_HIGH_INTENSITY_SCHEDULER_SAFETY_HELPERS|Daily
+      incremental refactor / high-intensity scheduler safety helper boundary|P2|DONE|系统后续每日增量重构巡检继续从本轮
+      refactor log 回填提交评估|详见 `docs/requirements/TRADING-2352_Daily_Incremental_Refactor_High_Intensity_Scheduler_Safety_Helpers.md`；本批只抽取
+      TRADING-2347～2350 scheduler dry-run / disabled wiring / manual review / manual-run
+      dry-run 中重复的 unsafe-field、real-scheduler 和 forbidden-action 扫描 helper，不实现 TRADING-2351，不启用
+      scheduler，不运行 fresh market data path。|新增 `src/ai_trading_system/high_intensity_risk_cap_scheduler_common.py`；TRADING-2347
+      disabled wiring 和 TRADING-2348 smoke dry-run 复用 common helper，TRADING-2349 manual
+      review gate 与 TRADING-2350 manual-run dry-run 通过 smoke dry-run wrapper 继承同一安全扫描行为；保留所有外部
+      CLI、artifact path、JSON key、Markdown 文案、status/readiness、safety fields、data quality
+      disclosure、promotion / paper-shadow / production / broker false/none 语义。验证通过
+      Ruff、compileall、focused high-intensity scheduler parallel pytest 44 passed、docs
+      freshness、task-register checks 和 `git diff --check`。|2026-07-05: 每日增量重构巡检登记，基线为
+      `c1224b51a38036c03578da4687736649fa9dea07`，HEAD `1d603195d2147c523d6a70d27389dc35d4106561`
+      不是重构提交。2026-07-05: 实现完成并归档 DONE；本轮未运行 `aits validate-data`，因为只整理 observe-only
+      scheduler 安全扫描内部 helper，不读取 cached market/macro data，不生成 technical features、scoring、backtest
+      或 daily report 输出。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-501e7f5c0f0f138da569e542
+  task_id: TRADING-2352_DAILY_INCREMENTAL_REFACTOR_HIGH_INTENSITY_SCHEDULER_SAFETY_HELPERS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+    notes: '2026-07-05: 每日增量重构巡检登记，基线为 `c1224b51a38036c03578da4687736649fa9dea07`，HEAD
+      `1d603195d2147c523d6a70d27389dc35d4106561` 不是重构提交。2026-07-05: 实现完成并归档 DONE；本轮未运行
+      `aits validate-data`，因为只整理 observe-only scheduler 安全扫描内部 helper，不读取 cached market/macro
+      data，不生成 technical features、scoring、backtest 或 daily report 输出。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:501e7f5c0f0f138da569e542003bbd26fafa0f0757c585077ee7a34e0c4eab20
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2352_DAILY_INCREMENTAL_REFACTOR_HIGH_INTENSITY_SCHEDULER_SAFETY_HELPERS
+  - Daily incremental refactor / high-intensity scheduler safety helper boundary
+  - P2
+  - DONE
+  - 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+  - 详见 `docs/requirements/TRADING-2352_Daily_Incremental_Refactor_High_Intensity_Scheduler_Safety_Helpers.md`；本批只抽取
+    TRADING-2347～2350 scheduler dry-run / disabled wiring / manual review / manual-run
+    dry-run 中重复的 unsafe-field、real-scheduler 和 forbidden-action 扫描 helper，不实现 TRADING-2351，不启用
+    scheduler，不运行 fresh market data path。
+  - 新增 `src/ai_trading_system/high_intensity_risk_cap_scheduler_common.py`；TRADING-2347
+    disabled wiring 和 TRADING-2348 smoke dry-run 复用 common helper，TRADING-2349 manual
+    review gate 与 TRADING-2350 manual-run dry-run 通过 smoke dry-run wrapper 继承同一安全扫描行为；保留所有外部
+    CLI、artifact path、JSON key、Markdown 文案、status/readiness、safety fields、data quality
+    disclosure、promotion / paper-shadow / production / broker false/none 语义。验证通过 Ruff、compileall、focused
+    high-intensity scheduler parallel pytest 44 passed、docs freshness、task-register
+    checks 和 `git diff --check`。
+  - '2026-07-05: 每日增量重构巡检登记，基线为 `c1224b51a38036c03578da4687736649fa9dea07`，HEAD `1d603195d2147c523d6a70d27389dc35d4106561`
+    不是重构提交。2026-07-05: 实现完成并归档 DONE；本轮未运行 `aits validate-data`，因为只整理 observe-only
+    scheduler 安全扫描内部 helper，不读取 cached market/macro data，不生成 technical features、scoring、backtest
+    或 daily report 输出。'
+  docs_links:
+  - docs/requirements/TRADING-2352_Daily_Incremental_Refactor_High_Intensity_Scheduler_Safety_Helpers.md
+  terminal: true
+  raw_row_sha256: 501e7f5c0f0f138da569e542003bbd26fafa0f0757c585077ee7a34e0c4eab20
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 902aabb68f878b310f45342141a122a15b39097e9e7e69ac4f23eabbb76f115b

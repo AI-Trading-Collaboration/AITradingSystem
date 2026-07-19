@@ -1,0 +1,159 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-055
+  title: null
+  domain: 报告/Score Change Attribution & Market Panel for Reader Brief
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/score_change_market_panel_reader_brief_2026-05-29.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/score_change_market_panel_reader_brief_2026-05-29.md`；Score
+    Change Attribution & Market Panel 已完成并通过 latest 真实 artifact 复核；`score_change_attribution_2026-06-05.md/json`
+    为 `PASS`、`production_effect=none`、warnings=0，比较 2026-06-04 -> 2026-06-05，含 6 个
+    component attribution、8 个 gate attribution，且不重算 score；`market_panel_2026-06-05.md/json`
+    为 `PASS_WITH_WARNINGS`、`production_effect=none`、available=6/6，覆盖 SPY/QQQ/SMH/SOXX/^VIX/DGS10；Reader
+    Brief 已消费两类 artifact，score attribution 与 market situation 均为 `AVAILABLE`，市场变化句展示
+    SPY/SMH/^VIX/DGS10 movement，Missing Artifact Impact 的 `important_count=0` 且未把已生成
+    artifact 计为缺口；该任务只读生成和消费报告，不改变 production scoring、weights、position gates 或 trading
+    行为
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits reports score-change-attribution --date/--latest` 与 `aits reports
+      market-panel --date/--latest` 可输出 `score_change_attribution_YYYY-MM-DD.md/json`
+      和 `market_panel_YYYY-MM-DD.md/json`；Reader Brief 消费两类 artifact，Executive Summary
+      增加市场变化一句话，缺失影响层不再把已生成 artifact 列为 IMPORTANT；缺市场数据时输出 `MISSING_MARKET_PRICE_DATA`
+      且不编造涨跌；所有输出固定 `production_effect=none`；测试覆盖 schema、Markdown、降级、Reader Brief
+      只读消费和 production_effect'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 318
+    row_sha256: dd91a3521152972ad84b8fa09186a9001e662891c6598ed0ca15a0cd37fd3ca5
+    cell_count: 8
+    all_cells:
+    - REPORT-055
+    - 报告/Score Change Attribution & Market Panel for Reader Brief
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/score_change_market_panel_reader_brief_2026-05-29.md`；Score
+      Change Attribution & Market Panel 已完成并通过 latest 真实 artifact 复核；`score_change_attribution_2026-06-05.md/json`
+      为 `PASS`、`production_effect=none`、warnings=0，比较 2026-06-04 -> 2026-06-05，含 6
+      个 component attribution、8 个 gate attribution，且不重算 score；`market_panel_2026-06-05.md/json`
+      为 `PASS_WITH_WARNINGS`、`production_effect=none`、available=6/6，覆盖 SPY/QQQ/SMH/SOXX/^VIX/DGS10；Reader
+      Brief 已消费两类 artifact，score attribution 与 market situation 均为 `AVAILABLE`，市场变化句展示
+      SPY/SMH/^VIX/DGS10 movement，Missing Artifact Impact 的 `important_count=0` 且未把已生成
+      artifact 计为缺口；该任务只读生成和消费报告，不改变 production scoring、weights、position gates 或 trading
+      行为
+    - '`aits reports score-change-attribution --date/--latest` 与 `aits reports market-panel
+      --date/--latest` 可输出 `score_change_attribution_YYYY-MM-DD.md/json` 和 `market_panel_YYYY-MM-DD.md/json`；Reader
+      Brief 消费两类 artifact，Executive Summary 增加市场变化一句话，缺失影响层不再把已生成 artifact 列为 IMPORTANT；缺市场数据时输出
+      `MISSING_MARKET_PRICE_DATA` 且不编造涨跌；所有输出固定 `production_effect=none`；测试覆盖 schema、Markdown、降级、Reader
+      Brief 只读消费和 production_effect'
+    - '2026-05-29: 新增并进入 IN_PROGRESS，原因：REPORT-054 之后 Reader Brief 仍缺“为什么今天变了”和“市场实际涨跌”两类核心读者上下文。2026-05-29:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 score change attribution 字段/Markdown/CLI
+      增强、market panel artifact、Reader Brief 集成、registry/catalog/system flow 和专项测试；验证通过
+      report/Reader Brief/documentation contract 目标 pytest、触达文件 ruff、black 和 diff
+      check。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest 字段级复核确认 score change attribution、market
+      panel 和 Reader Brief 消费链路均满足验收；`tests/test_score_change_attribution.py tests/test_market_panel.py
+      tests/test_reader_brief.py -q` 为 16 passed，`reader-brief --latest`、`validate-reader-brief
+      --latest` 和 `docs report-contract --latest` 均通过。'
+    raw_line: '|REPORT-055|报告/Score Change Attribution & Market Panel for Reader Brief|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/score_change_market_panel_reader_brief_2026-05-29.md`；Score
+      Change Attribution & Market Panel 已完成并通过 latest 真实 artifact 复核；`score_change_attribution_2026-06-05.md/json`
+      为 `PASS`、`production_effect=none`、warnings=0，比较 2026-06-04 -> 2026-06-05，含 6
+      个 component attribution、8 个 gate attribution，且不重算 score；`market_panel_2026-06-05.md/json`
+      为 `PASS_WITH_WARNINGS`、`production_effect=none`、available=6/6，覆盖 SPY/QQQ/SMH/SOXX/^VIX/DGS10；Reader
+      Brief 已消费两类 artifact，score attribution 与 market situation 均为 `AVAILABLE`，市场变化句展示
+      SPY/SMH/^VIX/DGS10 movement，Missing Artifact Impact 的 `important_count=0` 且未把已生成
+      artifact 计为缺口；该任务只读生成和消费报告，不改变 production scoring、weights、position gates 或 trading
+      行为|`aits reports score-change-attribution --date/--latest` 与 `aits reports market-panel
+      --date/--latest` 可输出 `score_change_attribution_YYYY-MM-DD.md/json` 和 `market_panel_YYYY-MM-DD.md/json`；Reader
+      Brief 消费两类 artifact，Executive Summary 增加市场变化一句话，缺失影响层不再把已生成 artifact 列为 IMPORTANT；缺市场数据时输出
+      `MISSING_MARKET_PRICE_DATA` 且不编造涨跌；所有输出固定 `production_effect=none`；测试覆盖 schema、Markdown、降级、Reader
+      Brief 只读消费和 production_effect|2026-05-29: 新增并进入 IN_PROGRESS，原因：REPORT-054 之后
+      Reader Brief 仍缺“为什么今天变了”和“市场实际涨跌”两类核心读者上下文。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成
+      score change attribution 字段/Markdown/CLI 增强、market panel artifact、Reader Brief
+      集成、registry/catalog/system flow 和专项测试；验证通过 report/Reader Brief/documentation
+      contract 目标 pytest、触达文件 ruff、black 和 diff check。2026-06-09: 从 VALIDATING 改为
+      DONE，原因：latest 字段级复核确认 score change attribution、market panel 和 Reader Brief
+      消费链路均满足验收；`tests/test_score_change_attribution.py tests/test_market_panel.py
+      tests/test_reader_brief.py -q` 为 16 passed，`reader-brief --latest`、`validate-reader-brief
+      --latest` 和 `docs report-contract --latest` 均通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-dd91a3521152972ad84b8fa0
+  task_id: REPORT-055
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：REPORT-054 之后 Reader Brief 仍缺“为什么今天变了”和“市场实际涨跌”两类核心读者上下文。2026-05-29:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 score change attribution 字段/Markdown/CLI
+      增强、market panel artifact、Reader Brief 集成、registry/catalog/system flow 和专项测试；验证通过
+      report/Reader Brief/documentation contract 目标 pytest、触达文件 ruff、black 和 diff
+      check。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest 字段级复核确认 score change attribution、market
+      panel 和 Reader Brief 消费链路均满足验收；`tests/test_score_change_attribution.py tests/test_market_panel.py
+      tests/test_reader_brief.py -q` 为 16 passed，`reader-brief --latest`、`validate-reader-brief
+      --latest` 和 `docs report-contract --latest` 均通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:dd91a3521152972ad84b8fa09186a9001e662891c6598ed0ca15a0cd37fd3ca5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-055
+  - 报告/Score Change Attribution & Market Panel for Reader Brief
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/score_change_market_panel_reader_brief_2026-05-29.md`；Score
+    Change Attribution & Market Panel 已完成并通过 latest 真实 artifact 复核；`score_change_attribution_2026-06-05.md/json`
+    为 `PASS`、`production_effect=none`、warnings=0，比较 2026-06-04 -> 2026-06-05，含 6 个
+    component attribution、8 个 gate attribution，且不重算 score；`market_panel_2026-06-05.md/json`
+    为 `PASS_WITH_WARNINGS`、`production_effect=none`、available=6/6，覆盖 SPY/QQQ/SMH/SOXX/^VIX/DGS10；Reader
+    Brief 已消费两类 artifact，score attribution 与 market situation 均为 `AVAILABLE`，市场变化句展示
+    SPY/SMH/^VIX/DGS10 movement，Missing Artifact Impact 的 `important_count=0` 且未把已生成
+    artifact 计为缺口；该任务只读生成和消费报告，不改变 production scoring、weights、position gates 或 trading
+    行为
+  - '`aits reports score-change-attribution --date/--latest` 与 `aits reports market-panel
+    --date/--latest` 可输出 `score_change_attribution_YYYY-MM-DD.md/json` 和 `market_panel_YYYY-MM-DD.md/json`；Reader
+    Brief 消费两类 artifact，Executive Summary 增加市场变化一句话，缺失影响层不再把已生成 artifact 列为 IMPORTANT；缺市场数据时输出
+    `MISSING_MARKET_PRICE_DATA` 且不编造涨跌；所有输出固定 `production_effect=none`；测试覆盖 schema、Markdown、降级、Reader
+    Brief 只读消费和 production_effect'
+  - '2026-05-29: 新增并进入 IN_PROGRESS，原因：REPORT-054 之后 Reader Brief 仍缺“为什么今天变了”和“市场实际涨跌”两类核心读者上下文。2026-05-29:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已完成 score change attribution 字段/Markdown/CLI 增强、market
+    panel artifact、Reader Brief 集成、registry/catalog/system flow 和专项测试；验证通过 report/Reader
+    Brief/documentation contract 目标 pytest、触达文件 ruff、black 和 diff check。2026-06-09:
+    从 VALIDATING 改为 DONE，原因：latest 字段级复核确认 score change attribution、market panel 和
+    Reader Brief 消费链路均满足验收；`tests/test_score_change_attribution.py tests/test_market_panel.py
+    tests/test_reader_brief.py -q` 为 16 passed，`reader-brief --latest`、`validate-reader-brief
+    --latest` 和 `docs report-contract --latest` 均通过。'
+  docs_links:
+  - docs/requirements/score_change_market_panel_reader_brief_2026-05-29.md
+  terminal: true
+  raw_row_sha256: dd91a3521152972ad84b8fa09186a9001e662891c6598ed0ca15a0cd37fd3ca5
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 772f7e89e25cdf0f071df516f70e2c8df443a2055f7a74461bc4506e6d644f94

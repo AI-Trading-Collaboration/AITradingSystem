@@ -1,0 +1,118 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2268_NORGATE_2Y_PARTIAL_EVIDENCE_REVIEW_AND_PLATINUM_DECISION_MEMO
+  title: null
+  domain: Norgate trial / partial evidence review / Platinum owner decision memo
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner
+  requirement_refs:
+  - docs/requirements/TRADING-2268_Norgate_2Y_Partial_Evidence_Review_And_Platinum_Decision_Memo.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 见 `docs/requirements/TRADING-2268_Norgate_2Y_Partial_Evidence_Review_And_Platinum_Decision_Memo.md`；实现和验证已完成，TRADING-2269
+    已把 owner 复核语义改为 `trial_based_purchase_recommendation=no` / `stress_window_paid_experiment_recommendation=conditional_yes`；等待
+    owner 决定是否接受 paid stress-window experiment
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 输出 `norgate_2y_partial_evidence_review.md`、`norgate_platinum_decision_memo.md`、更新后的
+      conclusion matrix 和 review inputs；检查 feature variation、bucket imbalance、outlier
+      dominance、event count、baseline incremental value、QQQ/SPY/SMH consistency 和 2022
+      stress absence；结论字段包含 `local_signal_evidence_reason`、`trial_2y_feature_value`、`full_history_needed_for_final_answer`、split
+      purchase fields、`purchase_allowed=false`；所有 gates 保持 false；focused/contract
+      validation 完成
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1533
+    row_sha256: 9d5f4fa0acc5bf6c23d5207b5e77b108f591c2df0a00509302a0b476afaf196b
+    cell_count: 8
+    all_cells:
+    - TRADING-2268_NORGATE_2Y_PARTIAL_EVIDENCE_REVIEW_AND_PLATINUM_DECISION_MEMO
+    - Norgate trial / partial evidence review / Platinum owner decision memo
+    - P1
+    - VALIDATING
+    - 项目 owner
+    - 见 `docs/requirements/TRADING-2268_Norgate_2Y_Partial_Evidence_Review_And_Platinum_Decision_Memo.md`；实现和验证已完成，TRADING-2269
+      已把 owner 复核语义改为 `trial_based_purchase_recommendation=no` / `stress_window_paid_experiment_recommendation=conditional_yes`；等待
+      owner 决定是否接受 paid stress-window experiment
+    - 输出 `norgate_2y_partial_evidence_review.md`、`norgate_platinum_decision_memo.md`、更新后的
+      conclusion matrix 和 review inputs；检查 feature variation、bucket imbalance、outlier
+      dominance、event count、baseline incremental value、QQQ/SPY/SMH consistency 和 2022
+      stress absence；结论字段包含 `local_signal_evidence_reason`、`trial_2y_feature_value`、`full_history_needed_for_final_answer`、split
+      purchase fields、`purchase_allowed=false`；所有 gates 保持 false；focused/contract
+      validation 完成
+    - '2026-06-28: 真实 run 归因为 `no_incremental_value`，2Y feature value=`weak`，full-history
+      needed for final answer=true；TRADING-2269 后 trial-based purchase recommendation=`no`，paid
+      stress-window experiment=`conditional_yes`，不是自动购买或策略验收。'
+    raw_line: '|TRADING-2268_NORGATE_2Y_PARTIAL_EVIDENCE_REVIEW_AND_PLATINUM_DECISION_MEMO|Norgate
+      trial / partial evidence review / Platinum owner decision memo|P1|VALIDATING|项目
+      owner|见 `docs/requirements/TRADING-2268_Norgate_2Y_Partial_Evidence_Review_And_Platinum_Decision_Memo.md`；实现和验证已完成，TRADING-2269
+      已把 owner 复核语义改为 `trial_based_purchase_recommendation=no` / `stress_window_paid_experiment_recommendation=conditional_yes`；等待
+      owner 决定是否接受 paid stress-window experiment|输出 `norgate_2y_partial_evidence_review.md`、`norgate_platinum_decision_memo.md`、更新后的
+      conclusion matrix 和 review inputs；检查 feature variation、bucket imbalance、outlier
+      dominance、event count、baseline incremental value、QQQ/SPY/SMH consistency 和 2022
+      stress absence；结论字段包含 `local_signal_evidence_reason`、`trial_2y_feature_value`、`full_history_needed_for_final_answer`、split
+      purchase fields、`purchase_allowed=false`；所有 gates 保持 false；focused/contract
+      validation 完成|2026-06-28: 真实 run 归因为 `no_incremental_value`，2Y feature value=`weak`，full-history
+      needed for final answer=true；TRADING-2269 后 trial-based purchase recommendation=`no`，paid
+      stress-window experiment=`conditional_yes`，不是自动购买或策略验收。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-9d5f4fa0acc5bf6c23d5207b
+  task_id: TRADING-2268_NORGATE_2Y_PARTIAL_EVIDENCE_REVIEW_AND_PLATINUM_DECISION_MEMO
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 项目 owner
+    notes: '2026-06-28: 真实 run 归因为 `no_incremental_value`，2Y feature value=`weak`，full-history
+      needed for final answer=true；TRADING-2269 后 trial-based purchase recommendation=`no`，paid
+      stress-window experiment=`conditional_yes`，不是自动购买或策略验收。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:9d5f4fa0acc5bf6c23d5207b5e77b108f591c2df0a00509302a0b476afaf196b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2268_NORGATE_2Y_PARTIAL_EVIDENCE_REVIEW_AND_PLATINUM_DECISION_MEMO
+  - Norgate trial / partial evidence review / Platinum owner decision memo
+  - P1
+  - VALIDATING
+  - 项目 owner
+  - 见 `docs/requirements/TRADING-2268_Norgate_2Y_Partial_Evidence_Review_And_Platinum_Decision_Memo.md`；实现和验证已完成，TRADING-2269
+    已把 owner 复核语义改为 `trial_based_purchase_recommendation=no` / `stress_window_paid_experiment_recommendation=conditional_yes`；等待
+    owner 决定是否接受 paid stress-window experiment
+  - 输出 `norgate_2y_partial_evidence_review.md`、`norgate_platinum_decision_memo.md`、更新后的
+    conclusion matrix 和 review inputs；检查 feature variation、bucket imbalance、outlier
+    dominance、event count、baseline incremental value、QQQ/SPY/SMH consistency 和 2022
+    stress absence；结论字段包含 `local_signal_evidence_reason`、`trial_2y_feature_value`、`full_history_needed_for_final_answer`、split
+    purchase fields、`purchase_allowed=false`；所有 gates 保持 false；focused/contract validation
+    完成
+  - '2026-06-28: 真实 run 归因为 `no_incremental_value`，2Y feature value=`weak`，full-history
+    needed for final answer=true；TRADING-2269 后 trial-based purchase recommendation=`no`，paid
+    stress-window experiment=`conditional_yes`，不是自动购买或策略验收。'
+  docs_links:
+  - docs/requirements/TRADING-2268_Norgate_2Y_Partial_Evidence_Review_And_Platinum_Decision_Memo.md
+  terminal: false
+  raw_row_sha256: 9d5f4fa0acc5bf6c23d5207b5e77b108f591c2df0a00509302a0b476afaf196b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 67d350a0aacbbdd426c21b11a855f1cdfa559fcd30d59ab7525546a1cafce3f1

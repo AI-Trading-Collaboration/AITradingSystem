@@ -1,0 +1,161 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-003
+  title: null
+  domain: 交易执行/paper trading flow validation & replay
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/paper_trading_flow_validation_replay_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/paper_trading_flow_validation_replay_2026-05-17.md`；多日
+    paper replay、replay 汇总产物、dashboard Paper Trading Trend、测试和文档已完成并通过当前系统验证；后续真实
+    daily flow observation、continuous-portfolio replay、paper signal quality 和 dashboard
+    深化由 TRADING-004+ / TRADING-007+ 任务承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`scripts/run_paper_trading_replay.py --start YYYY-MM-DD --end YYYY-MM-DD`
+      逐日复用 candidate runner；候选文件缺失时生成 limited upstream artifacts；输出 `paper_trading_replay_START_END.json/md`，汇总
+      candidate_count、blocked_candidates、generated_intents、approved/rejected、submitted、filled/open/cancelled、realized/unrealized
+      PnL、reconciliation_status 分布，并按 symbol / strategy_id / reason_code / blocked_by
+      聚合；daily task dashboard 可读取最近 7/14/30 日 paper summary trend，缺数据显示 `LIMITED`；replay
+      和 dashboard trend 均 `production_effect=none`，不得读取真实 broker API key、调用真实 broker
+      或改变 production 仓位建议；target tests、完整 `tests/trading_engine`、Ruff、diff check 和
+      runner/replay smoke 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 303
+    row_sha256: 91083a63c47d3a3b86d5d4d6568e7abcbaac2880e53c3f371ee60e2a05dca591
+    cell_count: 8
+    all_cells:
+    - TRADING-003
+    - 交易执行/paper trading flow validation & replay
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/paper_trading_flow_validation_replay_2026-05-17.md`；多日
+      paper replay、replay 汇总产物、dashboard Paper Trading Trend、测试和文档已完成并通过当前系统验证；后续真实
+      daily flow observation、continuous-portfolio replay、paper signal quality 和 dashboard
+      深化由 TRADING-004+ / TRADING-007+ 任务承接
+    - '`scripts/run_paper_trading_replay.py --start YYYY-MM-DD --end YYYY-MM-DD` 逐日复用
+      candidate runner；候选文件缺失时生成 limited upstream artifacts；输出 `paper_trading_replay_START_END.json/md`，汇总
+      candidate_count、blocked_candidates、generated_intents、approved/rejected、submitted、filled/open/cancelled、realized/unrealized
+      PnL、reconciliation_status 分布，并按 symbol / strategy_id / reason_code / blocked_by
+      聚合；daily task dashboard 可读取最近 7/14/30 日 paper summary trend，缺数据显示 `LIMITED`；replay
+      和 dashboard trend 均 `production_effect=none`，不得读取真实 broker API key、调用真实 broker
+      或改变 production 仓位建议；target tests、完整 `tests/trading_engine`、Ruff、diff check 和
+      runner/replay smoke 通过'
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进 paper trading daily flow validation
+      和多日 replay；当前目标是验证 paper-only 连续运行、可复盘和 dashboard 历史趋势，不扩展真实券商能力。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增多日 replay 脚本、replay JSON/Markdown 汇总、按 symbol/strategy_id/reason_code/blocked_by
+      聚合、dashboard Paper Trading Trend 和目标测试；验证通过 `python -m pytest tests/trading_engine`、`python
+      -m pytest`、`python -m ruff check scripts src tests`、`git diff --check`、`python
+      scripts/run_paper_trading_from_candidates.py --date 2026-05-17` 和 `python scripts/run_paper_trading_replay.py
+      --start 2026-05-01 --end 2026-05-17`。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前
+      candidate runner smoke 为 `LIMITED` / reconciliation PASS，multi-day replay smoke
+      为 `LIMITED`、17 天、17 candidates 并生成 JSON/Markdown；该 LIMITED 是缺少真实上游候选的 fail-closed
+      降级，不补造投资结论；目标 tests 29 passed，完整 `tests/trading_engine` 939 passed，scoped Ruff
+      和 diff check 通过。'
+    raw_line: '|TRADING-003|交易执行/paper trading flow validation & replay|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/paper_trading_flow_validation_replay_2026-05-17.md`；多日 paper
+      replay、replay 汇总产物、dashboard Paper Trading Trend、测试和文档已完成并通过当前系统验证；后续真实 daily
+      flow observation、continuous-portfolio replay、paper signal quality 和 dashboard
+      深化由 TRADING-004+ / TRADING-007+ 任务承接|`scripts/run_paper_trading_replay.py --start
+      YYYY-MM-DD --end YYYY-MM-DD` 逐日复用 candidate runner；候选文件缺失时生成 limited upstream
+      artifacts；输出 `paper_trading_replay_START_END.json/md`，汇总 candidate_count、blocked_candidates、generated_intents、approved/rejected、submitted、filled/open/cancelled、realized/unrealized
+      PnL、reconciliation_status 分布，并按 symbol / strategy_id / reason_code / blocked_by
+      聚合；daily task dashboard 可读取最近 7/14/30 日 paper summary trend，缺数据显示 `LIMITED`；replay
+      和 dashboard trend 均 `production_effect=none`，不得读取真实 broker API key、调用真实 broker
+      或改变 production 仓位建议；target tests、完整 `tests/trading_engine`、Ruff、diff check 和
+      runner/replay smoke 通过|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进 paper trading
+      daily flow validation 和多日 replay；当前目标是验证 paper-only 连续运行、可复盘和 dashboard 历史趋势，不扩展真实券商能力。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增多日 replay 脚本、replay JSON/Markdown 汇总、按 symbol/strategy_id/reason_code/blocked_by
+      聚合、dashboard Paper Trading Trend 和目标测试；验证通过 `python -m pytest tests/trading_engine`、`python
+      -m pytest`、`python -m ruff check scripts src tests`、`git diff --check`、`python
+      scripts/run_paper_trading_from_candidates.py --date 2026-05-17` 和 `python scripts/run_paper_trading_replay.py
+      --start 2026-05-01 --end 2026-05-17`。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前
+      candidate runner smoke 为 `LIMITED` / reconciliation PASS，multi-day replay smoke
+      为 `LIMITED`、17 天、17 candidates 并生成 JSON/Markdown；该 LIMITED 是缺少真实上游候选的 fail-closed
+      降级，不补造投资结论；目标 tests 29 passed，完整 `tests/trading_engine` 939 passed，scoped Ruff
+      和 diff check 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-91083a63c47d3a3b86d5d4d6
+  task_id: TRADING-003
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进 paper trading daily flow
+      validation 和多日 replay；当前目标是验证 paper-only 连续运行、可复盘和 dashboard 历史趋势，不扩展真实券商能力。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增多日 replay 脚本、replay JSON/Markdown 汇总、按 symbol/strategy_id/reason_code/blocked_by
+      聚合、dashboard Paper Trading Trend 和目标测试；验证通过 `python -m pytest tests/trading_engine`、`python
+      -m pytest`、`python -m ruff check scripts src tests`、`git diff --check`、`python
+      scripts/run_paper_trading_from_candidates.py --date 2026-05-17` 和 `python scripts/run_paper_trading_replay.py
+      --start 2026-05-01 --end 2026-05-17`。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前
+      candidate runner smoke 为 `LIMITED` / reconciliation PASS，multi-day replay smoke
+      为 `LIMITED`、17 天、17 candidates 并生成 JSON/Markdown；该 LIMITED 是缺少真实上游候选的 fail-closed
+      降级，不补造投资结论；目标 tests 29 passed，完整 `tests/trading_engine` 939 passed，scoped Ruff
+      和 diff check 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:91083a63c47d3a3b86d5d4d6568e7abcbaac2880e53c3f371ee60e2a05dca591
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-003
+  - 交易执行/paper trading flow validation & replay
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/paper_trading_flow_validation_replay_2026-05-17.md`；多日
+    paper replay、replay 汇总产物、dashboard Paper Trading Trend、测试和文档已完成并通过当前系统验证；后续真实
+    daily flow observation、continuous-portfolio replay、paper signal quality 和 dashboard
+    深化由 TRADING-004+ / TRADING-007+ 任务承接
+  - '`scripts/run_paper_trading_replay.py --start YYYY-MM-DD --end YYYY-MM-DD` 逐日复用
+    candidate runner；候选文件缺失时生成 limited upstream artifacts；输出 `paper_trading_replay_START_END.json/md`，汇总
+    candidate_count、blocked_candidates、generated_intents、approved/rejected、submitted、filled/open/cancelled、realized/unrealized
+    PnL、reconciliation_status 分布，并按 symbol / strategy_id / reason_code / blocked_by
+    聚合；daily task dashboard 可读取最近 7/14/30 日 paper summary trend，缺数据显示 `LIMITED`；replay
+    和 dashboard trend 均 `production_effect=none`，不得读取真实 broker API key、调用真实 broker
+    或改变 production 仓位建议；target tests、完整 `tests/trading_engine`、Ruff、diff check 和 runner/replay
+    smoke 通过'
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进 paper trading daily flow validation
+    和多日 replay；当前目标是验证 paper-only 连续运行、可复盘和 dashboard 历史趋势，不扩展真实券商能力。2026-05-17: 从
+    IN_PROGRESS 改为 VALIDATING，原因：已新增多日 replay 脚本、replay JSON/Markdown 汇总、按 symbol/strategy_id/reason_code/blocked_by
+    聚合、dashboard Paper Trading Trend 和目标测试；验证通过 `python -m pytest tests/trading_engine`、`python
+    -m pytest`、`python -m ruff check scripts src tests`、`git diff --check`、`python
+    scripts/run_paper_trading_from_candidates.py --date 2026-05-17` 和 `python scripts/run_paper_trading_replay.py
+    --start 2026-05-01 --end 2026-05-17`。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前 candidate
+    runner smoke 为 `LIMITED` / reconciliation PASS，multi-day replay smoke 为 `LIMITED`、17
+    天、17 candidates 并生成 JSON/Markdown；该 LIMITED 是缺少真实上游候选的 fail-closed 降级，不补造投资结论；目标
+    tests 29 passed，完整 `tests/trading_engine` 939 passed，scoped Ruff 和 diff check
+    通过。'
+  docs_links:
+  - docs/requirements/paper_trading_flow_validation_replay_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 91083a63c47d3a3b86d5d4d6568e7abcbaac2880e53c3f371ee60e2a05dca591
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9b8a43dcac235783deee80fbb907239df5ed1a28e94d301514ab3ead40146992

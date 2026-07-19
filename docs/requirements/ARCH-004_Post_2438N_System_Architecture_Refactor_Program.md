@@ -6,14 +6,14 @@
 
 - 任务 ID：`ARCH-004`
 - 优先级：`P0`
-- 当前状态：`G2_4_COMPLETE_ARCH_005_HANDOFF_PENDING`
+- 当前状态：`G2_4_COMPLETE_HANDOFF_PASS_STOPPED_BEFORE_G2_5`
 - 触发顺序：`TRADING-2438N` 完整收口之后
 - 责任方：系统架构协调者 + 各 bounded context owner + 项目 owner
 - 变更性质：系统级、行为保持优先、渐进迁移
 - 默认 production effect：`none`
 - 正式前序任务：`ARCH-001`、`ARCH-002`、`ARCH-003`、`TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN`
 - 后续执行任务：`ARCH-004G2_PARALLEL_READINESS_GATE`、`ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL`
-- 并行研发基础设施：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`需求已`READY`；owner 已批准在 EB2 integration gate 后提前实现非 cutover 的 manifest/conflict/lane-plan/evidence primitives，但正式 S0 registry/inventory 实现仍必须等待整个G2 phase-level `arch_005_bootstrap_handoff.v1` PASS；handoff后`next_slice_unblocked=false`，ARCH-004停在G2.5之前
+- 并行研发基础设施：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE` S0/S1已`BASELINE_DONE`；G2.4 phase exit与`arch_005_bootstrap_handoff.v1`均PASS并推送。handoff后`next_slice_unblocked=false`，ARCH-004仍停在G2.5之前并转`BLOCKED_OWNER_INPUT`；只有owner新的显式指令才可恢复ARCH-004
 
 ## Owner Intent
 
@@ -670,3 +670,7 @@ Entry decision：`ARCH_004_PHASE_A_COMPLETE_PHASE_B_UNBLOCKED`。这只解锁 Se
   callback/CLI/source hashes与clean attribution均闭合，shared-path active owner/lease/integration=
   `0/0/0`。ARCH-004当前只执行bootstrap handoff，不选择G2.5或其他slice；handoff必须继续保持
   `next_slice_unblocked=false`。
+- 2026-07-19：ARCH-005 S0/S1以869个task shadow、0 overlap/missing/duplicate、55个诚实保留的
+  legacy歧义行及两份byte-identical compatibility views闭合；fast/architecture/contract/
+  reproducibility/full=`300/419/265/23/6394 passed`，`production_effect=none`。ARCH-004技术前置已满足，
+  但handoff停止条件不变，当前状态转为`BLOCKED_OWNER_INPUT`并停在G2.5前。

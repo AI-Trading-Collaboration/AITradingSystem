@@ -1,0 +1,110 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: PIT-001
+  title: null
+  domain: 特征/PIT 可见时间
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已建立 `config/feature_availability.yaml`
+    和 PIT feature availability 报告；`build-features`、`score-daily`、`backtest` 写入可见时间报告，并把摘要纳入
+    report trace bundle；剩余缺口是把单个新特征族的真实 `available_time` 字段校验继续下沉到各数据源 schema；详细拆解见
+    `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#pit-001全系统-feature-availability-policy`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 所有用于评分、回测、校准和日报核心结论的特征族都有明确 availability rule；缺少 `available_time` 或只有 `event_time`
+      的新特征默认不得进入 A/B 级回测主结论；回测报告和 trace bundle 能显示特征可见时间规则、实际 `feature_as_of` 和数据可信度等级；实现时同步更新
+      `docs/system_flow.md` 并补充未来快照、未来公告、未来 universe 和未来宏观修订防护测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1100
+    row_sha256: 54e0a5e6c1014d433f0a8d8a6b7ac3d17f9bd2da52d414cc0ce91cb600199921
+    cell_count: 8
+    all_cells:
+    - PIT-001
+    - 特征/PIT 可见时间
+    - P0
+    - BASELINE_DONE
+    - 系统实现
+    - 已建立 `config/feature_availability.yaml` 和 PIT feature availability 报告；`build-features`、`score-daily`、`backtest`
+      写入可见时间报告，并把摘要纳入 report trace bundle；剩余缺口是把单个新特征族的真实 `available_time` 字段校验继续下沉到各数据源
+      schema；详细拆解见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#pit-001全系统-feature-availability-policy`
+    - 所有用于评分、回测、校准和日报核心结论的特征族都有明确 availability rule；缺少 `available_time` 或只有 `event_time`
+      的新特征默认不得进入 A/B 级回测主结论；回测报告和 trace bundle 能显示特征可见时间规则、实际 `feature_as_of` 和数据可信度等级；实现时同步更新
+      `docs/system_flow.md` 并补充未来快照、未来公告、未来 universe 和未来宏观修订防护测试
+    - '2026-05-05: 新增任务，原因：PIT 讨论确认下一阶段应把 `available_time <= decision_time` 从估值/风险/SEC/观察池扩展为全系统特征规则，避免新增特征族重新引入未来函数。2026-05-05:
+      从 READY 改为 BASELINE_DONE，原因：新增 feature availability catalog、校验/报告模块、CLI 接入、trace
+      引用和测试；完整 DONE 仍需各数据源级别的可见时间字段强校验。'
+    raw_line: '|PIT-001|特征/PIT 可见时间|P0|BASELINE_DONE|系统实现|已建立 `config/feature_availability.yaml`
+      和 PIT feature availability 报告；`build-features`、`score-daily`、`backtest` 写入可见时间报告，并把摘要纳入
+      report trace bundle；剩余缺口是把单个新特征族的真实 `available_time` 字段校验继续下沉到各数据源 schema；详细拆解见
+      `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#pit-001全系统-feature-availability-policy`|所有用于评分、回测、校准和日报核心结论的特征族都有明确
+      availability rule；缺少 `available_time` 或只有 `event_time` 的新特征默认不得进入 A/B 级回测主结论；回测报告和
+      trace bundle 能显示特征可见时间规则、实际 `feature_as_of` 和数据可信度等级；实现时同步更新 `docs/system_flow.md`
+      并补充未来快照、未来公告、未来 universe 和未来宏观修订防护测试|2026-05-05: 新增任务，原因：PIT 讨论确认下一阶段应把 `available_time
+      <= decision_time` 从估值/风险/SEC/观察池扩展为全系统特征规则，避免新增特征族重新引入未来函数。2026-05-05: 从 READY
+      改为 BASELINE_DONE，原因：新增 feature availability catalog、校验/报告模块、CLI 接入、trace 引用和测试；完整
+      DONE 仍需各数据源级别的可见时间字段强校验。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-54e0a5e6c1014d433f0a8d8a
+  task_id: PIT-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增任务，原因：PIT 讨论确认下一阶段应把 `available_time <= decision_time` 从估值/风险/SEC/观察池扩展为全系统特征规则，避免新增特征族重新引入未来函数。2026-05-05:
+      从 READY 改为 BASELINE_DONE，原因：新增 feature availability catalog、校验/报告模块、CLI 接入、trace
+      引用和测试；完整 DONE 仍需各数据源级别的可见时间字段强校验。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:54e0a5e6c1014d433f0a8d8a6b7ac3d17f9bd2da52d414cc0ce91cb600199921
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - PIT-001
+  - 特征/PIT 可见时间
+  - P0
+  - BASELINE_DONE
+  - 系统实现
+  - 已建立 `config/feature_availability.yaml` 和 PIT feature availability 报告；`build-features`、`score-daily`、`backtest`
+    写入可见时间报告，并把摘要纳入 report trace bundle；剩余缺口是把单个新特征族的真实 `available_time` 字段校验继续下沉到各数据源
+    schema；详细拆解见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#pit-001全系统-feature-availability-policy`
+  - 所有用于评分、回测、校准和日报核心结论的特征族都有明确 availability rule；缺少 `available_time` 或只有 `event_time`
+    的新特征默认不得进入 A/B 级回测主结论；回测报告和 trace bundle 能显示特征可见时间规则、实际 `feature_as_of` 和数据可信度等级；实现时同步更新
+    `docs/system_flow.md` 并补充未来快照、未来公告、未来 universe 和未来宏观修订防护测试
+  - '2026-05-05: 新增任务，原因：PIT 讨论确认下一阶段应把 `available_time <= decision_time` 从估值/风险/SEC/观察池扩展为全系统特征规则，避免新增特征族重新引入未来函数。2026-05-05:
+    从 READY 改为 BASELINE_DONE，原因：新增 feature availability catalog、校验/报告模块、CLI 接入、trace
+    引用和测试；完整 DONE 仍需各数据源级别的可见时间字段强校验。'
+  docs_links:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: 54e0a5e6c1014d433f0a8d8a6b7ac3d17f9bd2da52d414cc0ce91cb600199921
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b1aa00bc523d5bf5591f08b8f91d5c85a48ab0466f10dac9879b2bc0a8e8e44b

@@ -1,0 +1,170 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438J_GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ESCALATION
+  title: null
+  domain: Strategy research / growth tilt persistent candidate PIT replay blocker
+    escalation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2438K persistent candidate PIT replay blocker
+    root-cause remediation
+  requirement_refs:
+  - docs/requirements/TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation.md
+  - docs/tasks/completed/TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation.md`；承接
+    TRADING-2438I blocked recheck artifact 和 persistent blocker summary，读取 TRADING-2438H
+    / TRADING-2438F / TRADING-2438D / TRADING-2438B closure artifacts，确认 repeated
+    closure history 后仍为 pass/fail/blocked=`0/0/3`，并升级为 persistent root-cause remediation
+    route。READY 只表示 escalation/root-cause classification 完成，不表示 replay PASS/FAIL、NO_PASSING_CANDIDATE、forward-aging
+    ready、paper-shadow candidate 或 2440 no-candidate。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 persistent candidate PIT replay blocker escalation builder、`aits research
+      strategies growth-tilt-persistent-candidate-pit-replay-blocker-escalation`；输出
+      escalation result、candidate persistent blocker root-cause matrix、repeated closure
+      failure summary、recommended remediation route、no-forward-aging safety decision、2438K
+      route、research docs、registry、catalog、system flow 和 18 项 focused tests；真实 run
+      status=`GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ESCALATION_READY`，prior_status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_RECHECK_AFTER_REMAINING_BLOCKER_CLOSURE_BLOCKED`，source_2438i_blocked_recheck_ready=true，persistent_blocker_escalation_required=true，persistent_blocker_escalation_ready=true，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，candidate_replay_outputs_complete=true，candidate_replay_output_record_count=3，candidate_replay_pass_count=0，candidate_replay_fail_count=0，candidate_replay_blocked_count=3，persistent_blocked_candidate_count=3，persistent_candidate_replay_blocker_count=3，closure_history_confirmed=true，2438B/D/F/H
+      closure readiness 全部 true，all escalation record requirements=true，registry_catalog_docs_alignment=true，evidence_gap_count=0，primary
+      root cause 全部为 `replay_engine_contract_ready_but_runtime_not_executable`，recommended
+      action 全部为 `replay_runtime_materialization_remediation`，forward_aging_handoff_ready=false，next
+      route=`TRADING-2438K_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Root_Cause_Remediation`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 33
+    row_sha256: bc0fe7ccbabf881ff010ae9f639ac3fe9b0db9de1c3813e11e1f45e6b006380b
+    cell_count: 8
+    all_cells:
+    - TRADING-2438J_GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ESCALATION
+    - Strategy research / growth tilt persistent candidate PIT replay blocker escalation
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2438K persistent candidate PIT replay blocker root-cause
+      remediation
+    - 详见 `docs/requirements/TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation.md`；承接
+      TRADING-2438I blocked recheck artifact 和 persistent blocker summary，读取 TRADING-2438H
+      / TRADING-2438F / TRADING-2438D / TRADING-2438B closure artifacts，确认 repeated
+      closure history 后仍为 pass/fail/blocked=`0/0/3`，并升级为 persistent root-cause remediation
+      route。READY 只表示 escalation/root-cause classification 完成，不表示 replay PASS/FAIL、NO_PASSING_CANDIDATE、forward-aging
+      ready、paper-shadow candidate 或 2440 no-candidate。
+    - 新增 persistent candidate PIT replay blocker escalation builder、`aits research
+      strategies growth-tilt-persistent-candidate-pit-replay-blocker-escalation`；输出
+      escalation result、candidate persistent blocker root-cause matrix、repeated closure
+      failure summary、recommended remediation route、no-forward-aging safety decision、2438K
+      route、research docs、registry、catalog、system flow 和 18 项 focused tests；真实 run
+      status=`GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ESCALATION_READY`，prior_status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_RECHECK_AFTER_REMAINING_BLOCKER_CLOSURE_BLOCKED`，source_2438i_blocked_recheck_ready=true，persistent_blocker_escalation_required=true，persistent_blocker_escalation_ready=true，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，candidate_replay_outputs_complete=true，candidate_replay_output_record_count=3，candidate_replay_pass_count=0，candidate_replay_fail_count=0，candidate_replay_blocked_count=3，persistent_blocked_candidate_count=3，persistent_candidate_replay_blocker_count=3，closure_history_confirmed=true，2438B/D/F/H
+      closure readiness 全部 true，all escalation record requirements=true，registry_catalog_docs_alignment=true，evidence_gap_count=0，primary
+      root cause 全部为 `replay_engine_contract_ready_but_runtime_not_executable`，recommended
+      action 全部为 `replay_runtime_materialization_remediation`，forward_aging_handoff_ready=false，next
+      route=`TRADING-2438K_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Root_Cause_Remediation`。
+    - '2026-07-10: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-10: 实现完成并归档 DONE；验证通过
+      Ruff、focused parallel pytest、`aits validate-data --as-of 2026-07-08` 和真实 CLI，最终
+      closeout validation 结果见 `docs/tasks/completed/TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation.md`。2438J
+      只做 root-cause escalation，不运行新的 replay/backtest/scoring/daily report/outcome
+      binding，不生成 feature/signal/outcome 或交易建议；3 条真实 candidate 仍保持 `BLOCKED`，pass/fail/blocked=0/0/3。forward-aging、paper-shadow
+      runtime/schedule、scheduler、event append、real outcome binding、outcome store mutation、production、broker/order、portfolio
+      weight mutation 全部保持 disabled / false / none。'
+    raw_line: '|TRADING-2438J_GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ESCALATION|Strategy
+      research / growth tilt persistent candidate PIT replay blocker escalation|P0|DONE|项目
+      owner 后续复核 TRADING-2438K persistent candidate PIT replay blocker root-cause
+      remediation|详见 `docs/requirements/TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation.md`；承接
+      TRADING-2438I blocked recheck artifact 和 persistent blocker summary，读取 TRADING-2438H
+      / TRADING-2438F / TRADING-2438D / TRADING-2438B closure artifacts，确认 repeated
+      closure history 后仍为 pass/fail/blocked=`0/0/3`，并升级为 persistent root-cause remediation
+      route。READY 只表示 escalation/root-cause classification 完成，不表示 replay PASS/FAIL、NO_PASSING_CANDIDATE、forward-aging
+      ready、paper-shadow candidate 或 2440 no-candidate。|新增 persistent candidate PIT
+      replay blocker escalation builder、`aits research strategies growth-tilt-persistent-candidate-pit-replay-blocker-escalation`；输出
+      escalation result、candidate persistent blocker root-cause matrix、repeated closure
+      failure summary、recommended remediation route、no-forward-aging safety decision、2438K
+      route、research docs、registry、catalog、system flow 和 18 项 focused tests；真实 run
+      status=`GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ESCALATION_READY`，prior_status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_RECHECK_AFTER_REMAINING_BLOCKER_CLOSURE_BLOCKED`，source_2438i_blocked_recheck_ready=true，persistent_blocker_escalation_required=true，persistent_blocker_escalation_ready=true，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，candidate_replay_outputs_complete=true，candidate_replay_output_record_count=3，candidate_replay_pass_count=0，candidate_replay_fail_count=0，candidate_replay_blocked_count=3，persistent_blocked_candidate_count=3，persistent_candidate_replay_blocker_count=3，closure_history_confirmed=true，2438B/D/F/H
+      closure readiness 全部 true，all escalation record requirements=true，registry_catalog_docs_alignment=true，evidence_gap_count=0，primary
+      root cause 全部为 `replay_engine_contract_ready_but_runtime_not_executable`，recommended
+      action 全部为 `replay_runtime_materialization_remediation`，forward_aging_handoff_ready=false，next
+      route=`TRADING-2438K_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Root_Cause_Remediation`。|2026-07-10:
+      根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-10: 实现完成并归档 DONE；验证通过 Ruff、focused
+      parallel pytest、`aits validate-data --as-of 2026-07-08` 和真实 CLI，最终 closeout
+      validation 结果见 `docs/tasks/completed/TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation.md`。2438J
+      只做 root-cause escalation，不运行新的 replay/backtest/scoring/daily report/outcome
+      binding，不生成 feature/signal/outcome 或交易建议；3 条真实 candidate 仍保持 `BLOCKED`，pass/fail/blocked=0/0/3。forward-aging、paper-shadow
+      runtime/schedule、scheduler、event append、real outcome binding、outcome store mutation、production、broker/order、portfolio
+      weight mutation 全部保持 disabled / false / none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bc0fe7ccbabf881ff010ae9f
+  task_id: TRADING-2438J_GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ESCALATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2438K persistent candidate PIT replay blocker
+      root-cause remediation
+    notes: '2026-07-10: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-10: 实现完成并归档 DONE；验证通过
+      Ruff、focused parallel pytest、`aits validate-data --as-of 2026-07-08` 和真实 CLI，最终
+      closeout validation 结果见 `docs/tasks/completed/TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation.md`。2438J
+      只做 root-cause escalation，不运行新的 replay/backtest/scoring/daily report/outcome
+      binding，不生成 feature/signal/outcome 或交易建议；3 条真实 candidate 仍保持 `BLOCKED`，pass/fail/blocked=0/0/3。forward-aging、paper-shadow
+      runtime/schedule、scheduler、event append、real outcome binding、outcome store mutation、production、broker/order、portfolio
+      weight mutation 全部保持 disabled / false / none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bc0fe7ccbabf881ff010ae9f639ac3fe9b0db9de1c3813e11e1f45e6b006380b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438J_GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ESCALATION
+  - Strategy research / growth tilt persistent candidate PIT replay blocker escalation
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2438K persistent candidate PIT replay blocker root-cause
+    remediation
+  - 详见 `docs/requirements/TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation.md`；承接
+    TRADING-2438I blocked recheck artifact 和 persistent blocker summary，读取 TRADING-2438H
+    / TRADING-2438F / TRADING-2438D / TRADING-2438B closure artifacts，确认 repeated
+    closure history 后仍为 pass/fail/blocked=`0/0/3`，并升级为 persistent root-cause remediation
+    route。READY 只表示 escalation/root-cause classification 完成，不表示 replay PASS/FAIL、NO_PASSING_CANDIDATE、forward-aging
+    ready、paper-shadow candidate 或 2440 no-candidate。
+  - 新增 persistent candidate PIT replay blocker escalation builder、`aits research strategies
+    growth-tilt-persistent-candidate-pit-replay-blocker-escalation`；输出 escalation
+    result、candidate persistent blocker root-cause matrix、repeated closure failure
+    summary、recommended remediation route、no-forward-aging safety decision、2438K route、research
+    docs、registry、catalog、system flow 和 18 项 focused tests；真实 run status=`GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ESCALATION_READY`，prior_status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_RECHECK_AFTER_REMAINING_BLOCKER_CLOSURE_BLOCKED`，source_2438i_blocked_recheck_ready=true，persistent_blocker_escalation_required=true，persistent_blocker_escalation_ready=true，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，candidate_replay_outputs_complete=true，candidate_replay_output_record_count=3，candidate_replay_pass_count=0，candidate_replay_fail_count=0，candidate_replay_blocked_count=3，persistent_blocked_candidate_count=3，persistent_candidate_replay_blocker_count=3，closure_history_confirmed=true，2438B/D/F/H
+    closure readiness 全部 true，all escalation record requirements=true，registry_catalog_docs_alignment=true，evidence_gap_count=0，primary
+    root cause 全部为 `replay_engine_contract_ready_but_runtime_not_executable`，recommended
+    action 全部为 `replay_runtime_materialization_remediation`，forward_aging_handoff_ready=false，next
+    route=`TRADING-2438K_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Root_Cause_Remediation`。
+  - '2026-07-10: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-10: 实现完成并归档 DONE；验证通过
+    Ruff、focused parallel pytest、`aits validate-data --as-of 2026-07-08` 和真实 CLI，最终
+    closeout validation 结果见 `docs/tasks/completed/TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation.md`。2438J
+    只做 root-cause escalation，不运行新的 replay/backtest/scoring/daily report/outcome binding，不生成
+    feature/signal/outcome 或交易建议；3 条真实 candidate 仍保持 `BLOCKED`，pass/fail/blocked=0/0/3。forward-aging、paper-shadow
+    runtime/schedule、scheduler、event append、real outcome binding、outcome store mutation、production、broker/order、portfolio
+    weight mutation 全部保持 disabled / false / none。'
+  docs_links:
+  - docs/requirements/TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation.md
+  - docs/tasks/completed/TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation.md
+  terminal: true
+  raw_row_sha256: bc0fe7ccbabf881ff010ae9f639ac3fe9b0db9de1c3813e11e1f45e6b006380b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 53ee46489ca2cd60ce66e10271efe9978021431e2265756b74f5b4697af18bf8

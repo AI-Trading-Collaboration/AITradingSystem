@@ -1,0 +1,150 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-821_to_825_TAIL_RISK_FALLBACK_FALSIFICATION_AUDIT
+  title: null
+  domain: Controlled strategy research / tail-risk fallback falsification, leakage
+    audit, sensitivity, regime segmentation, forward maturity scoreboard
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-821_to_825_Tail_Risk_Fallback_Falsification_Audit.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-821_to_825_Tail_Risk_Fallback_Falsification_Audit.md`；当前仓库已有独立
+    `TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT`，本行用 grouped id 记录 owner
+    要求的 TRADING-821～825 fallback 反证型验证批次；本批必须保持 controlled-only，不得 promotion、paper-shadow、production
+    weight 或 broker/order
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI：`aits research strategies tail-risk-fallback-audit-universe-reconciliation`、`tail-risk-fallback-anti-leakage-audit`、`tail-risk-fallback-threshold-sensitivity`、`tail-risk-fallback-regime-segmented-robustness`、`tail-risk-fallback-forward-maturity-scoreboard`；更新
+      `tail-risk-policy-controlled-review-board` 读取五份新报告；必须解释 816/817/818/819 count
+      口径差异，识别 leakage 和 label coupling，诊断 threshold/lag/horizon/benchmark/cost 敏感性，检查
+      regime concentration，区分 forward matured/pending/missing/invalid records；所有 artifact/stdout
+      固定 controlled-only safety fields，且不得输出 promotion-ready
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1344
+    row_sha256: 8ff0d83196ad4917a08c925c59a5aa50acc7b73648b658d564990702cf88a3c7
+    cell_count: 8
+    all_cells:
+    - TRADING-821_to_825_TAIL_RISK_FALLBACK_FALSIFICATION_AUDIT
+    - Controlled strategy research / tail-risk fallback falsification, leakage audit,
+      sensitivity, regime segmentation, forward maturity scoreboard
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-821_to_825_Tail_Risk_Fallback_Falsification_Audit.md`；当前仓库已有独立
+      `TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT`，本行用 grouped id 记录
+      owner 要求的 TRADING-821～825 fallback 反证型验证批次；本批必须保持 controlled-only，不得 promotion、paper-shadow、production
+      weight 或 broker/order
+    - 新增 CLI：`aits research strategies tail-risk-fallback-audit-universe-reconciliation`、`tail-risk-fallback-anti-leakage-audit`、`tail-risk-fallback-threshold-sensitivity`、`tail-risk-fallback-regime-segmented-robustness`、`tail-risk-fallback-forward-maturity-scoreboard`；更新
+      `tail-risk-policy-controlled-review-board` 读取五份新报告；必须解释 816/817/818/819 count
+      口径差异，识别 leakage 和 label coupling，诊断 threshold/lag/horizon/benchmark/cost 敏感性，检查
+      regime concentration，区分 forward matured/pending/missing/invalid records；所有 artifact/stdout
+      固定 controlled-only safety fields，且不得输出 promotion-ready
+    - '2026-06-22: 新增并进入 IN_PROGRESS，原因：TRADING-816～820 controlled audit 结果过强，需要从证明有效切换为主动反证，暴露或排除
+      count universe 混淆、标签泄露、后验同源、参数脆弱、样本集中和 forward evidence 未成熟风险；本批即使结果良好也继续阻止
+      promotion、paper-shadow 和 production。2026-06-22: 实现完成并转入 VALIDATING；新增五个 controlled-only
+      CLI/artifact，review board 已读取 TRADING-821～825 报告并在 denominator incomplete、anti-leakage
+      blocked、sensitivity fragile、segment insufficient 或 forward evidence immature
+      时 fail closed 到 `CONTROLLED_RESEARCH_BLOCKED` 或 `NEEDS_MORE_FORWARD_EVIDENCE`；验证通过：focused
+      pytest 10 passed、`fast-unit` 185 passed、`contract-validation` 184 passed、`report-validation`
+      55 passed、`ruff check .`、`python -m compileall .`、`git diff --check` 和本次改动 Python
+      文件 Black check 均通过；完整 `python -m black --check .` 仍报告 204 个既有无关文件需格式化，因此本批保留
+      owner 复核状态而不归档 DONE。'
+    raw_line: '|TRADING-821_to_825_TAIL_RISK_FALLBACK_FALSIFICATION_AUDIT|Controlled
+      strategy research / tail-risk fallback falsification, leakage audit, sensitivity,
+      regime segmentation, forward maturity scoreboard|P0|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-821_to_825_Tail_Risk_Fallback_Falsification_Audit.md`；当前仓库已有独立
+      `TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT`，本行用 grouped id 记录
+      owner 要求的 TRADING-821～825 fallback 反证型验证批次；本批必须保持 controlled-only，不得 promotion、paper-shadow、production
+      weight 或 broker/order|新增 CLI：`aits research strategies tail-risk-fallback-audit-universe-reconciliation`、`tail-risk-fallback-anti-leakage-audit`、`tail-risk-fallback-threshold-sensitivity`、`tail-risk-fallback-regime-segmented-robustness`、`tail-risk-fallback-forward-maturity-scoreboard`；更新
+      `tail-risk-policy-controlled-review-board` 读取五份新报告；必须解释 816/817/818/819 count
+      口径差异，识别 leakage 和 label coupling，诊断 threshold/lag/horizon/benchmark/cost 敏感性，检查
+      regime concentration，区分 forward matured/pending/missing/invalid records；所有 artifact/stdout
+      固定 controlled-only safety fields，且不得输出 promotion-ready|2026-06-22: 新增并进入 IN_PROGRESS，原因：TRADING-816～820
+      controlled audit 结果过强，需要从证明有效切换为主动反证，暴露或排除 count universe 混淆、标签泄露、后验同源、参数脆弱、样本集中和
+      forward evidence 未成熟风险；本批即使结果良好也继续阻止 promotion、paper-shadow 和 production。2026-06-22:
+      实现完成并转入 VALIDATING；新增五个 controlled-only CLI/artifact，review board 已读取 TRADING-821～825
+      报告并在 denominator incomplete、anti-leakage blocked、sensitivity fragile、segment
+      insufficient 或 forward evidence immature 时 fail closed 到 `CONTROLLED_RESEARCH_BLOCKED`
+      或 `NEEDS_MORE_FORWARD_EVIDENCE`；验证通过：focused pytest 10 passed、`fast-unit` 185
+      passed、`contract-validation` 184 passed、`report-validation` 55 passed、`ruff
+      check .`、`python -m compileall .`、`git diff --check` 和本次改动 Python 文件 Black check
+      均通过；完整 `python -m black --check .` 仍报告 204 个既有无关文件需格式化，因此本批保留 owner 复核状态而不归档
+      DONE。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8ff0d83196ad4917a08c925c
+  task_id: TRADING-821_to_825_TAIL_RISK_FALLBACK_FALSIFICATION_AUDIT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 新增并进入 IN_PROGRESS，原因：TRADING-816～820 controlled audit 结果过强，需要从证明有效切换为主动反证，暴露或排除
+      count universe 混淆、标签泄露、后验同源、参数脆弱、样本集中和 forward evidence 未成熟风险；本批即使结果良好也继续阻止
+      promotion、paper-shadow 和 production。2026-06-22: 实现完成并转入 VALIDATING；新增五个 controlled-only
+      CLI/artifact，review board 已读取 TRADING-821～825 报告并在 denominator incomplete、anti-leakage
+      blocked、sensitivity fragile、segment insufficient 或 forward evidence immature
+      时 fail closed 到 `CONTROLLED_RESEARCH_BLOCKED` 或 `NEEDS_MORE_FORWARD_EVIDENCE`；验证通过：focused
+      pytest 10 passed、`fast-unit` 185 passed、`contract-validation` 184 passed、`report-validation`
+      55 passed、`ruff check .`、`python -m compileall .`、`git diff --check` 和本次改动 Python
+      文件 Black check 均通过；完整 `python -m black --check .` 仍报告 204 个既有无关文件需格式化，因此本批保留
+      owner 复核状态而不归档 DONE。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8ff0d83196ad4917a08c925c59a5aa50acc7b73648b658d564990702cf88a3c7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-821_to_825_TAIL_RISK_FALLBACK_FALSIFICATION_AUDIT
+  - Controlled strategy research / tail-risk fallback falsification, leakage audit,
+    sensitivity, regime segmentation, forward maturity scoreboard
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-821_to_825_Tail_Risk_Fallback_Falsification_Audit.md`；当前仓库已有独立
+    `TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT`，本行用 grouped id 记录 owner
+    要求的 TRADING-821～825 fallback 反证型验证批次；本批必须保持 controlled-only，不得 promotion、paper-shadow、production
+    weight 或 broker/order
+  - 新增 CLI：`aits research strategies tail-risk-fallback-audit-universe-reconciliation`、`tail-risk-fallback-anti-leakage-audit`、`tail-risk-fallback-threshold-sensitivity`、`tail-risk-fallback-regime-segmented-robustness`、`tail-risk-fallback-forward-maturity-scoreboard`；更新
+    `tail-risk-policy-controlled-review-board` 读取五份新报告；必须解释 816/817/818/819 count
+    口径差异，识别 leakage 和 label coupling，诊断 threshold/lag/horizon/benchmark/cost 敏感性，检查
+    regime concentration，区分 forward matured/pending/missing/invalid records；所有 artifact/stdout
+    固定 controlled-only safety fields，且不得输出 promotion-ready
+  - '2026-06-22: 新增并进入 IN_PROGRESS，原因：TRADING-816～820 controlled audit 结果过强，需要从证明有效切换为主动反证，暴露或排除
+    count universe 混淆、标签泄露、后验同源、参数脆弱、样本集中和 forward evidence 未成熟风险；本批即使结果良好也继续阻止 promotion、paper-shadow
+    和 production。2026-06-22: 实现完成并转入 VALIDATING；新增五个 controlled-only CLI/artifact，review
+    board 已读取 TRADING-821～825 报告并在 denominator incomplete、anti-leakage blocked、sensitivity
+    fragile、segment insufficient 或 forward evidence immature 时 fail closed 到 `CONTROLLED_RESEARCH_BLOCKED`
+    或 `NEEDS_MORE_FORWARD_EVIDENCE`；验证通过：focused pytest 10 passed、`fast-unit` 185
+    passed、`contract-validation` 184 passed、`report-validation` 55 passed、`ruff check
+    .`、`python -m compileall .`、`git diff --check` 和本次改动 Python 文件 Black check 均通过；完整
+    `python -m black --check .` 仍报告 204 个既有无关文件需格式化，因此本批保留 owner 复核状态而不归档 DONE。'
+  docs_links:
+  - docs/requirements/TRADING-821_to_825_Tail_Risk_Fallback_Falsification_Audit.md
+  terminal: false
+  raw_row_sha256: 8ff0d83196ad4917a08c925c59a5aa50acc7b73648b658d564990702cf88a3c7
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c2af7d9d4404cfd00f96d60b21f3fee3412f97283eb85d7ad3053b74ce682f35

@@ -1,0 +1,103 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438P_CURRENT_RESEARCH_STRATEGY_AND_PERIODIC_OPTIMIZATION_REVIEW
+  title: null
+  domain: Strategy research / current approach and periodic optimization review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统研究治理后续按 cadence 更新证据
+  requirement_refs:
+  - docs/research/current_research_strategy_and_periodic_optimization_review_2026-07-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 见 `docs/research/current_research_strategy_and_periodic_optimization_review_2026-07-10.md`；汇总当前研究方法、定期复核
+    cadence、证据触发调整原则与最新结果，不改变 CLI、配置、数据流、阈值、候选、权重或 production state。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 文档区分项目级 `ai_after_chatgpt` regime 起点 `2022-12-01` 与 QQQ/SGOV/TQQQ primary
+      validated research window `2021-02-22`；明确 2022 legacy comparison 和 2020 caveated
+      sensitivity；覆盖历史 weight/two-lane 结果、最新 growth-tilt closure、允许/禁止动作及下一路径。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 25
+    row_sha256: e6f5c1d9059c020f846ce63923d4b504d0fe9fdf2725a3d35b2d86d5ece40144
+    cell_count: 8
+    all_cells:
+    - TRADING-2438P_CURRENT_RESEARCH_STRATEGY_AND_PERIODIC_OPTIMIZATION_REVIEW
+    - Strategy research / current approach and periodic optimization review
+    - P1
+    - DONE
+    - 系统研究治理后续按 cadence 更新证据
+    - 见 `docs/research/current_research_strategy_and_periodic_optimization_review_2026-07-10.md`；汇总当前研究方法、定期复核
+      cadence、证据触发调整原则与最新结果，不改变 CLI、配置、数据流、阈值、候选、权重或 production state。
+    - 文档区分项目级 `ai_after_chatgpt` regime 起点 `2022-12-01` 与 QQQ/SGOV/TQQQ primary validated
+      research window `2021-02-22`；明确 2022 legacy comparison 和 2020 caveated sensitivity；覆盖历史
+      weight/two-lane 结果、最新 growth-tilt closure、允许/禁止动作及下一路径。
+    - '2026-07-10: 文档完成；当前建议保持旧 candidate family 关闭，先做 baseline capability graph。2026-07-11:
+      修正原“默认结论窗口 2022-12-01”的层级混淆；0 个 PIT tested 不解释为回测 FAIL，promotion/paper-shadow/production/broker
+      均禁用。'
+    raw_line: '|TRADING-2438P_CURRENT_RESEARCH_STRATEGY_AND_PERIODIC_OPTIMIZATION_REVIEW|Strategy
+      research / current approach and periodic optimization review|P1|DONE|系统研究治理后续按
+      cadence 更新证据|见 `docs/research/current_research_strategy_and_periodic_optimization_review_2026-07-10.md`；汇总当前研究方法、定期复核
+      cadence、证据触发调整原则与最新结果，不改变 CLI、配置、数据流、阈值、候选、权重或 production state。|文档区分项目级 `ai_after_chatgpt`
+      regime 起点 `2022-12-01` 与 QQQ/SGOV/TQQQ primary validated research window `2021-02-22`；明确
+      2022 legacy comparison 和 2020 caveated sensitivity；覆盖历史 weight/two-lane 结果、最新
+      growth-tilt closure、允许/禁止动作及下一路径。|2026-07-10: 文档完成；当前建议保持旧 candidate family
+      关闭，先做 baseline capability graph。2026-07-11: 修正原“默认结论窗口 2022-12-01”的层级混淆；0 个
+      PIT tested 不解释为回测 FAIL，promotion/paper-shadow/production/broker 均禁用。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e6f5c1d9059c020f846ce639
+  task_id: TRADING-2438P_CURRENT_RESEARCH_STRATEGY_AND_PERIODIC_OPTIMIZATION_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统研究治理后续按 cadence 更新证据
+    notes: '2026-07-10: 文档完成；当前建议保持旧 candidate family 关闭，先做 baseline capability graph。2026-07-11:
+      修正原“默认结论窗口 2022-12-01”的层级混淆；0 个 PIT tested 不解释为回测 FAIL，promotion/paper-shadow/production/broker
+      均禁用。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e6f5c1d9059c020f846ce63923d4b504d0fe9fdf2725a3d35b2d86d5ece40144
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438P_CURRENT_RESEARCH_STRATEGY_AND_PERIODIC_OPTIMIZATION_REVIEW
+  - Strategy research / current approach and periodic optimization review
+  - P1
+  - DONE
+  - 系统研究治理后续按 cadence 更新证据
+  - 见 `docs/research/current_research_strategy_and_periodic_optimization_review_2026-07-10.md`；汇总当前研究方法、定期复核
+    cadence、证据触发调整原则与最新结果，不改变 CLI、配置、数据流、阈值、候选、权重或 production state。
+  - 文档区分项目级 `ai_after_chatgpt` regime 起点 `2022-12-01` 与 QQQ/SGOV/TQQQ primary validated
+    research window `2021-02-22`；明确 2022 legacy comparison 和 2020 caveated sensitivity；覆盖历史
+    weight/two-lane 结果、最新 growth-tilt closure、允许/禁止动作及下一路径。
+  - '2026-07-10: 文档完成；当前建议保持旧 candidate family 关闭，先做 baseline capability graph。2026-07-11:
+    修正原“默认结论窗口 2022-12-01”的层级混淆；0 个 PIT tested 不解释为回测 FAIL，promotion/paper-shadow/production/broker
+    均禁用。'
+  docs_links:
+  - docs/research/current_research_strategy_and_periodic_optimization_review_2026-07-10.md
+  terminal: true
+  raw_row_sha256: e6f5c1d9059c020f846ce63923d4b504d0fe9fdf2725a3d35b2d86d5ece40144
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d535d8a1d4ca07ffaffb8db0d2ba0095b35cf48416a149a5c64d6a9a12eace2c

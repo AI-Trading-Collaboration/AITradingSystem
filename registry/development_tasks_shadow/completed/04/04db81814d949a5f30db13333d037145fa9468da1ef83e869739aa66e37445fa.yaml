@@ -1,0 +1,129 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-047
+  title: null
+  domain: 基本面/SEC PIT Daily Shadow Baseline Contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/sec_pit_shadow_daily_run_baseline_contract_2026-05-29.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/sec_pit_shadow_daily_run_baseline_contract_2026-05-29.md`；SEC
+    PIT shadow observe/monitor 默认 baseline contract 已收敛到 research-only baseline，真实
+    daily-run 通过
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`shadow-observe --latest` 在默认 baseline dir 下优先使用 research-only `data/processed/research/scores_daily_backfill_sec_pit_2023_2026.csv`，显式
+      `--baseline-score-path` 仍优先；production `data/processed/scores_daily.csv` 仅作为兼容
+      fallback；observe/monitor/coverage audit 的 baseline contract 一致；目标测试和真实 `aits
+      ops daily-run` 通过或报告新的真实门禁原因'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 349
+    row_sha256: 973d2ccc2b309ca40b60a6de4e809120adfaeac4332f3ac13bbdfcfc8f374e7c
+    cell_count: 8
+    all_cells:
+    - TRADING-047
+    - 基本面/SEC PIT Daily Shadow Baseline Contract
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/sec_pit_shadow_daily_run_baseline_contract_2026-05-29.md`；SEC
+      PIT shadow observe/monitor 默认 baseline contract 已收敛到 research-only baseline，真实
+      daily-run 通过
+    - '`shadow-observe --latest` 在默认 baseline dir 下优先使用 research-only `data/processed/research/scores_daily_backfill_sec_pit_2023_2026.csv`，显式
+      `--baseline-score-path` 仍优先；production `data/processed/scores_daily.csv` 仅作为兼容
+      fallback；observe/monitor/coverage audit 的 baseline contract 一致；目标测试和真实 `aits
+      ops daily-run` 通过或报告新的真实门禁原因'
+    - '2026-05-29: 新增并进入 IN_PROGRESS，原因：`RISK-016` 修复后重跑 daily-run 已通过 `score_daily`，但
+      `sec_pit_shadow_monitor` 失败；诊断显示同日 baseline coverage audit 为 OK，而 shadow observe
+      summary 因 fallback 到 production scores 仅约 2.1% 覆盖。2026-05-29: 从 IN_PROGRESS
+      改为 VALIDATING，原因：默认 baseline contract 修复通过目标测试/ruff/black/diff check，真实 `aits
+      ops daily-run` as-of 2026-05-28 中 `sec_pit_shadow_observe` 和 `sec_pit_shadow_monitor`
+      均 PASS。2026-06-07: 从 VALIDATING 改为 DONE，原因：默认 baseline contract 修复已有目标测试和真实
+      daily-run PASS 证据，后续 SEC PIT shadow observe/monitor 链路未再因 production score fallback
+      drift 阻断。'
+    raw_line: '|TRADING-047|基本面/SEC PIT Daily Shadow Baseline Contract|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/sec_pit_shadow_daily_run_baseline_contract_2026-05-29.md`；SEC
+      PIT shadow observe/monitor 默认 baseline contract 已收敛到 research-only baseline，真实
+      daily-run 通过|`shadow-observe --latest` 在默认 baseline dir 下优先使用 research-only
+      `data/processed/research/scores_daily_backfill_sec_pit_2023_2026.csv`，显式 `--baseline-score-path`
+      仍优先；production `data/processed/scores_daily.csv` 仅作为兼容 fallback；observe/monitor/coverage
+      audit 的 baseline contract 一致；目标测试和真实 `aits ops daily-run` 通过或报告新的真实门禁原因|2026-05-29:
+      新增并进入 IN_PROGRESS，原因：`RISK-016` 修复后重跑 daily-run 已通过 `score_daily`，但 `sec_pit_shadow_monitor`
+      失败；诊断显示同日 baseline coverage audit 为 OK，而 shadow observe summary 因 fallback 到
+      production scores 仅约 2.1% 覆盖。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：默认 baseline
+      contract 修复通过目标测试/ruff/black/diff check，真实 `aits ops daily-run` as-of 2026-05-28
+      中 `sec_pit_shadow_observe` 和 `sec_pit_shadow_monitor` 均 PASS。2026-06-07: 从 VALIDATING
+      改为 DONE，原因：默认 baseline contract 修复已有目标测试和真实 daily-run PASS 证据，后续 SEC PIT shadow
+      observe/monitor 链路未再因 production score fallback drift 阻断。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-973d2ccc2b309ca40b60a6de
+  task_id: TRADING-047
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：`RISK-016` 修复后重跑 daily-run 已通过 `score_daily`，但
+      `sec_pit_shadow_monitor` 失败；诊断显示同日 baseline coverage audit 为 OK，而 shadow observe
+      summary 因 fallback 到 production scores 仅约 2.1% 覆盖。2026-05-29: 从 IN_PROGRESS
+      改为 VALIDATING，原因：默认 baseline contract 修复通过目标测试/ruff/black/diff check，真实 `aits
+      ops daily-run` as-of 2026-05-28 中 `sec_pit_shadow_observe` 和 `sec_pit_shadow_monitor`
+      均 PASS。2026-06-07: 从 VALIDATING 改为 DONE，原因：默认 baseline contract 修复已有目标测试和真实
+      daily-run PASS 证据，后续 SEC PIT shadow observe/monitor 链路未再因 production score fallback
+      drift 阻断。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:973d2ccc2b309ca40b60a6de4e809120adfaeac4332f3ac13bbdfcfc8f374e7c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-047
+  - 基本面/SEC PIT Daily Shadow Baseline Contract
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/sec_pit_shadow_daily_run_baseline_contract_2026-05-29.md`；SEC
+    PIT shadow observe/monitor 默认 baseline contract 已收敛到 research-only baseline，真实
+    daily-run 通过
+  - '`shadow-observe --latest` 在默认 baseline dir 下优先使用 research-only `data/processed/research/scores_daily_backfill_sec_pit_2023_2026.csv`，显式
+    `--baseline-score-path` 仍优先；production `data/processed/scores_daily.csv` 仅作为兼容
+    fallback；observe/monitor/coverage audit 的 baseline contract 一致；目标测试和真实 `aits ops
+    daily-run` 通过或报告新的真实门禁原因'
+  - '2026-05-29: 新增并进入 IN_PROGRESS，原因：`RISK-016` 修复后重跑 daily-run 已通过 `score_daily`，但
+    `sec_pit_shadow_monitor` 失败；诊断显示同日 baseline coverage audit 为 OK，而 shadow observe
+    summary 因 fallback 到 production scores 仅约 2.1% 覆盖。2026-05-29: 从 IN_PROGRESS 改为
+    VALIDATING，原因：默认 baseline contract 修复通过目标测试/ruff/black/diff check，真实 `aits ops
+    daily-run` as-of 2026-05-28 中 `sec_pit_shadow_observe` 和 `sec_pit_shadow_monitor`
+    均 PASS。2026-06-07: 从 VALIDATING 改为 DONE，原因：默认 baseline contract 修复已有目标测试和真实 daily-run
+    PASS 证据，后续 SEC PIT shadow observe/monitor 链路未再因 production score fallback drift
+    阻断。'
+  docs_links:
+  - docs/requirements/sec_pit_shadow_daily_run_baseline_contract_2026-05-29.md
+  terminal: true
+  raw_row_sha256: 973d2ccc2b309ca40b60a6de4e809120adfaeac4332f3ac13bbdfcfc8f374e7c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2e5a03f7b5de03138c19741f0797655a340216bd45f3b7c4959dfab780c6af4c

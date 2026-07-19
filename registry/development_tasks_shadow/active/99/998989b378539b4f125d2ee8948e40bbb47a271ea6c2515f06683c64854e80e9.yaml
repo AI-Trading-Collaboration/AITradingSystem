@@ -1,0 +1,137 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-002
+  title: null
+  domain: 数据源/质量
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成低成本初版：基于现有数据源目录和 download manifest
+    建立 provider health score、cache/manifest 检查和 reconciliation 覆盖报告；趋势判断继续使用现有 FMP
+    + Cboe VIX + Marketstack + FRED，并显式披露 `macro_rates` 单源限制；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#data-002`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 初版可验收为 `BASELINE_DONE`：对价格、估值、财报和宏观数据输出 provider 新鲜度、字段漂移、row count 异常、checksum
+      变化、ticker alias 风险和可用来源差异；跨供应商冲突进入调查项而不是自动平滑；无合格第二来源的域必须标记 reconciliation 未覆盖；严重问题能停止下游或降级结论；完整生产级双源核验仍需要市场价格和宏观利率明确第二
+      qualified source、授权/成本/限制、缓存审计字段和 checksum，但该方向按 2026-05-10 owner 决策暂缓；实现时同步更新
+      `docs/system_flow.md` 并补充数据源健康测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1128
+    row_sha256: f2add92edadcc86df8a0f9923a368cbdf4b4643bbc0bcc4cdb5c2f799a7b54db
+    cell_count: 8
+    all_cells:
+    - DATA-002
+    - 数据源/质量
+    - P1
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已完成低成本初版：基于现有数据源目录和 download manifest 建立 provider health score、cache/manifest
+      检查和 reconciliation 覆盖报告；趋势判断继续使用现有 FMP + Cboe VIX + Marketstack + FRED，并显式披露
+      `macro_rates` 单源限制；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#data-002`
+    - 初版可验收为 `BASELINE_DONE`：对价格、估值、财报和宏观数据输出 provider 新鲜度、字段漂移、row count 异常、checksum
+      变化、ticker alias 风险和可用来源差异；跨供应商冲突进入调查项而不是自动平滑；无合格第二来源的域必须标记 reconciliation 未覆盖；严重问题能停止下游或降级结论；完整生产级双源核验仍需要市场价格和宏观利率明确第二
+      qualified source、授权/成本/限制、缓存审计字段和 checksum，但该方向按 2026-05-10 owner 决策暂缓；实现时同步更新
+      `docs/system_flow.md` 并补充数据源健康测试
+    - '2026-05-04: 从 BLOCKED_OWNER_INPUT 改为 READY，原因：owner 确认先搭低成本框架版，后续再按需订阅 Intrinio、Sharadar、Databento
+      等生产级来源。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始实现 `aits data-sources health`、provider
+      health score、cache/manifest 检查和 reconciliation 未覆盖声明。2026-05-04: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：新增数据源健康报告、checksum mismatch 失败、cache/manifest/freshness
+      检查、qualified source 覆盖表和测试。2026-05-04: owner 已提供并验证低成本初版权限：SEC User-Agent、FMP、FRED、Tiingo
+      EOD 和 EODHD Fundamentals 可访问；EODHD EOD 价格未订阅，价格核验使用 Tiingo。完整 `DONE` 仍依赖生产级第二来源、商业授权/再分发限制和长期口径策略。2026-05-04:
+      更新趋势判断口径，原因：owner 明确当前系统只做趋势判断，`market_prices` 与 `macro_rates` 的 reconciliation
+      缺口仍直接影响趋势可信度，继续作为 P1 后续推进。2026-05-10: owner 确认继续使用现有 FMP + Marketstack + FRED，暂无引入第二个更可靠
+      macro/price qualified source 计划；后续由 `PROD-003` 暂缓登记承接限制披露。'
+    raw_line: '|DATA-002|数据源/质量|P1|BASELINE_DONE|系统实现 + 项目 owner|已完成低成本初版：基于现有数据源目录和
+      download manifest 建立 provider health score、cache/manifest 检查和 reconciliation
+      覆盖报告；趋势判断继续使用现有 FMP + Cboe VIX + Marketstack + FRED，并显式披露 `macro_rates` 单源限制；详细拆解见
+      `docs/requirements/feedback_loop_governance_2026-05-04.md#data-002`|初版可验收为 `BASELINE_DONE`：对价格、估值、财报和宏观数据输出
+      provider 新鲜度、字段漂移、row count 异常、checksum 变化、ticker alias 风险和可用来源差异；跨供应商冲突进入调查项而不是自动平滑；无合格第二来源的域必须标记
+      reconciliation 未覆盖；严重问题能停止下游或降级结论；完整生产级双源核验仍需要市场价格和宏观利率明确第二 qualified source、授权/成本/限制、缓存审计字段和
+      checksum，但该方向按 2026-05-10 owner 决策暂缓；实现时同步更新 `docs/system_flow.md` 并补充数据源健康测试|2026-05-04:
+      从 BLOCKED_OWNER_INPUT 改为 READY，原因：owner 确认先搭低成本框架版，后续再按需订阅 Intrinio、Sharadar、Databento
+      等生产级来源。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始实现 `aits data-sources health`、provider
+      health score、cache/manifest 检查和 reconciliation 未覆盖声明。2026-05-04: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：新增数据源健康报告、checksum mismatch 失败、cache/manifest/freshness
+      检查、qualified source 覆盖表和测试。2026-05-04: owner 已提供并验证低成本初版权限：SEC User-Agent、FMP、FRED、Tiingo
+      EOD 和 EODHD Fundamentals 可访问；EODHD EOD 价格未订阅，价格核验使用 Tiingo。完整 `DONE` 仍依赖生产级第二来源、商业授权/再分发限制和长期口径策略。2026-05-04:
+      更新趋势判断口径，原因：owner 明确当前系统只做趋势判断，`market_prices` 与 `macro_rates` 的 reconciliation
+      缺口仍直接影响趋势可信度，继续作为 P1 后续推进。2026-05-10: owner 确认继续使用现有 FMP + Marketstack + FRED，暂无引入第二个更可靠
+      macro/price qualified source 计划；后续由 `PROD-003` 暂缓登记承接限制披露。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f2add92edadcc86df8a0f992
+  task_id: DATA-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner
+    notes: '2026-05-04: 从 BLOCKED_OWNER_INPUT 改为 READY，原因：owner 确认先搭低成本框架版，后续再按需订阅
+      Intrinio、Sharadar、Databento 等生产级来源。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始实现
+      `aits data-sources health`、provider health score、cache/manifest 检查和 reconciliation
+      未覆盖声明。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增数据源健康报告、checksum mismatch
+      失败、cache/manifest/freshness 检查、qualified source 覆盖表和测试。2026-05-04: owner 已提供并验证低成本初版权限：SEC
+      User-Agent、FMP、FRED、Tiingo EOD 和 EODHD Fundamentals 可访问；EODHD EOD 价格未订阅，价格核验使用
+      Tiingo。完整 `DONE` 仍依赖生产级第二来源、商业授权/再分发限制和长期口径策略。2026-05-04: 更新趋势判断口径，原因：owner
+      明确当前系统只做趋势判断，`market_prices` 与 `macro_rates` 的 reconciliation 缺口仍直接影响趋势可信度，继续作为
+      P1 后续推进。2026-05-10: owner 确认继续使用现有 FMP + Marketstack + FRED，暂无引入第二个更可靠 macro/price
+      qualified source 计划；后续由 `PROD-003` 暂缓登记承接限制披露。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f2add92edadcc86df8a0f9923a368cbdf4b4643bbc0bcc4cdb5c2f799a7b54db
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-002
+  - 数据源/质量
+  - P1
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已完成低成本初版：基于现有数据源目录和 download manifest 建立 provider health score、cache/manifest
+    检查和 reconciliation 覆盖报告；趋势判断继续使用现有 FMP + Cboe VIX + Marketstack + FRED，并显式披露 `macro_rates`
+    单源限制；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#data-002`
+  - 初版可验收为 `BASELINE_DONE`：对价格、估值、财报和宏观数据输出 provider 新鲜度、字段漂移、row count 异常、checksum
+    变化、ticker alias 风险和可用来源差异；跨供应商冲突进入调查项而不是自动平滑；无合格第二来源的域必须标记 reconciliation 未覆盖；严重问题能停止下游或降级结论；完整生产级双源核验仍需要市场价格和宏观利率明确第二
+    qualified source、授权/成本/限制、缓存审计字段和 checksum，但该方向按 2026-05-10 owner 决策暂缓；实现时同步更新
+    `docs/system_flow.md` 并补充数据源健康测试
+  - '2026-05-04: 从 BLOCKED_OWNER_INPUT 改为 READY，原因：owner 确认先搭低成本框架版，后续再按需订阅 Intrinio、Sharadar、Databento
+    等生产级来源。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始实现 `aits data-sources health`、provider
+    health score、cache/manifest 检查和 reconciliation 未覆盖声明。2026-05-04: 从 IN_PROGRESS
+    改为 BASELINE_DONE，原因：新增数据源健康报告、checksum mismatch 失败、cache/manifest/freshness 检查、qualified
+    source 覆盖表和测试。2026-05-04: owner 已提供并验证低成本初版权限：SEC User-Agent、FMP、FRED、Tiingo EOD
+    和 EODHD Fundamentals 可访问；EODHD EOD 价格未订阅，价格核验使用 Tiingo。完整 `DONE` 仍依赖生产级第二来源、商业授权/再分发限制和长期口径策略。2026-05-04:
+    更新趋势判断口径，原因：owner 明确当前系统只做趋势判断，`market_prices` 与 `macro_rates` 的 reconciliation
+    缺口仍直接影响趋势可信度，继续作为 P1 后续推进。2026-05-10: owner 确认继续使用现有 FMP + Marketstack + FRED，暂无引入第二个更可靠
+    macro/price qualified source 计划；后续由 `PROD-003` 暂缓登记承接限制披露。'
+  docs_links:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: f2add92edadcc86df8a0f9923a368cbdf4b4643bbc0bcc4cdb5c2f799a7b54db
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c3582cfaaa8c662edbbc05efc0c9004398d6aa2dba26ee17dd6631a1f5e86b6c

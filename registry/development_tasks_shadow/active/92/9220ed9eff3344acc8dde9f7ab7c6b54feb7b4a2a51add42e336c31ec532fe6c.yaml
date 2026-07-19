@@ -1,0 +1,103 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: SECURITY-001
+  title: null
+  domain: 安全/密钥
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段 secret hygiene 扫描：本地 CLI 扫描配置、文档、报告、manifest
+    和 trace bundle 中的疑似 secret，并输出脱敏报告；剩余缺口是供应商权限治理、日志脱敏策略、pre-commit/CI 集成和 owner
+    审批流程；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#security-001`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: API key 不进入报告、日志、manifest、trace bundle 或错误输出；支持 secret scan 或等价检查；供应商权限、缓存限制、再分发限制和
+      LLM 处理限制记录在 data source catalog；新数据源接入必须通过安全与权限检查
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1108
+    row_sha256: b2ca786790db02806c73319fded2d2063ea1b9a877c8a68ee7a2cd352a261290
+    cell_count: 8
+    all_cells:
+    - SECURITY-001
+    - 安全/密钥
+    - P2
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已完成第一阶段 secret hygiene 扫描：本地 CLI 扫描配置、文档、报告、manifest 和 trace bundle 中的疑似 secret，并输出脱敏报告；剩余缺口是供应商权限治理、日志脱敏策略、pre-commit/CI
+      集成和 owner 审批流程；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#security-001`
+    - API key 不进入报告、日志、manifest、trace bundle 或错误输出；支持 secret scan 或等价检查；供应商权限、缓存限制、再分发限制和
+      LLM 处理限制记录在 data source catalog；新数据源接入必须通过安全与权限检查
+    - '当前已有 FMP key 从环境变量读取且不写入报告的基础约束；扩展供应商后需要系统化治理。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段
+      secret hygiene 扫描报告和 CLI，检查配置、文档、报告、manifest、trace bundle 中的疑似 secret。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `secret_hygiene` 模块、`aits security scan-secrets`
+      和 `outputs/reports/secret_hygiene_YYYY-MM-DD.md`；报告只输出脱敏片段，不输出完整疑似密钥。'
+    raw_line: '|SECURITY-001|安全/密钥|P2|BASELINE_DONE|系统实现 + 项目 owner|已完成第一阶段 secret
+      hygiene 扫描：本地 CLI 扫描配置、文档、报告、manifest 和 trace bundle 中的疑似 secret，并输出脱敏报告；剩余缺口是供应商权限治理、日志脱敏策略、pre-commit/CI
+      集成和 owner 审批流程；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#security-001`|API
+      key 不进入报告、日志、manifest、trace bundle 或错误输出；支持 secret scan 或等价检查；供应商权限、缓存限制、再分发限制和
+      LLM 处理限制记录在 data source catalog；新数据源接入必须通过安全与权限检查|当前已有 FMP key 从环境变量读取且不写入报告的基础约束；扩展供应商后需要系统化治理。2026-05-04:
+      从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段 secret hygiene 扫描报告和 CLI，检查配置、文档、报告、manifest、trace
+      bundle 中的疑似 secret。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `secret_hygiene`
+      模块、`aits security scan-secrets` 和 `outputs/reports/secret_hygiene_YYYY-MM-DD.md`；报告只输出脱敏片段，不输出完整疑似密钥。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b2ca786790db02806c73319f
+  task_id: SECURITY-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P2
+    next_owner: 系统实现 + 项目 owner
+    notes: '当前已有 FMP key 从环境变量读取且不写入报告的基础约束；扩展供应商后需要系统化治理。2026-05-04: 从 PROPOSED 改为
+      IN_PROGRESS，原因：开始实现第一阶段 secret hygiene 扫描报告和 CLI，检查配置、文档、报告、manifest、trace bundle
+      中的疑似 secret。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `secret_hygiene`
+      模块、`aits security scan-secrets` 和 `outputs/reports/secret_hygiene_YYYY-MM-DD.md`；报告只输出脱敏片段，不输出完整疑似密钥。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b2ca786790db02806c73319fded2d2063ea1b9a877c8a68ee7a2cd352a261290
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - SECURITY-001
+  - 安全/密钥
+  - P2
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已完成第一阶段 secret hygiene 扫描：本地 CLI 扫描配置、文档、报告、manifest 和 trace bundle 中的疑似 secret，并输出脱敏报告；剩余缺口是供应商权限治理、日志脱敏策略、pre-commit/CI
+    集成和 owner 审批流程；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#security-001`
+  - API key 不进入报告、日志、manifest、trace bundle 或错误输出；支持 secret scan 或等价检查；供应商权限、缓存限制、再分发限制和
+    LLM 处理限制记录在 data source catalog；新数据源接入必须通过安全与权限检查
+  - '当前已有 FMP key 从环境变量读取且不写入报告的基础约束；扩展供应商后需要系统化治理。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段
+    secret hygiene 扫描报告和 CLI，检查配置、文档、报告、manifest、trace bundle 中的疑似 secret。2026-05-04:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `secret_hygiene` 模块、`aits security scan-secrets`
+    和 `outputs/reports/secret_hygiene_YYYY-MM-DD.md`；报告只输出脱敏片段，不输出完整疑似密钥。'
+  docs_links:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  terminal: false
+  raw_row_sha256: b2ca786790db02806c73319fded2d2063ea1b9a877c8a68ee7a2cd352a261290
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: daa19daa7b017cdbe7090a78eced29ffefeb0fb4a99d28a3f9ae57373c69a031

@@ -1,0 +1,88 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: RISK-001
+  title: null
+  domain: 风险事件
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已扩展 `risk_event_occurrence` schema，增加
+    `evidence_grade`、`severity`、`probability`、`scope`、`time_sensitivity`、`reversibility`、`action_class`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 校验报告显示来源可信度和风险本体分层；低可信高严重事件进入人工复核但不自动大幅扣分；高可信高严重事件可触发 position gate
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 442
+    row_sha256: 7a3a8a9011656a1b6522d2dfe1ae33eaaba39972c46477f69a8d466878e826d5
+    cell_count: 8
+    all_cells:
+    - RISK-001
+    - 风险事件
+    - P1
+    - DONE
+    - 系统实现
+    - 已扩展 `risk_event_occurrence` schema，增加 `evidence_grade`、`severity`、`probability`、`scope`、`time_sensitivity`、`reversibility`、`action_class`
+    - 校验报告显示来源可信度和风险本体分层；低可信高严重事件进入人工复核但不自动大幅扣分；高可信高严重事件可触发 position gate
+    - '保持向后兼容或提供迁移模板。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始扩展 occurrence schema、导入模板、校验报告和评分资格规则。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：schema、CSV 导入、模板、校验/复核报告、评分资格规则和测试均已完成；`python -m pytest
+      -q` 通过 220 项测试。'
+    raw_line: '|RISK-001|风险事件|P1|DONE|系统实现|已扩展 `risk_event_occurrence` schema，增加 `evidence_grade`、`severity`、`probability`、`scope`、`time_sensitivity`、`reversibility`、`action_class`|校验报告显示来源可信度和风险本体分层；低可信高严重事件进入人工复核但不自动大幅扣分；高可信高严重事件可触发
+      position gate|保持向后兼容或提供迁移模板。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始扩展 occurrence
+      schema、导入模板、校验报告和评分资格规则。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：schema、CSV 导入、模板、校验/复核报告、评分资格规则和测试均已完成；`python
+      -m pytest -q` 通过 220 项测试。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7a3a8a9011656a1b6522d2df
+  task_id: RISK-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '保持向后兼容或提供迁移模板。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始扩展 occurrence schema、导入模板、校验报告和评分资格规则。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：schema、CSV 导入、模板、校验/复核报告、评分资格规则和测试均已完成；`python -m pytest
+      -q` 通过 220 项测试。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7a3a8a9011656a1b6522d2dfe1ae33eaaba39972c46477f69a8d466878e826d5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - RISK-001
+  - 风险事件
+  - P1
+  - DONE
+  - 系统实现
+  - 已扩展 `risk_event_occurrence` schema，增加 `evidence_grade`、`severity`、`probability`、`scope`、`time_sensitivity`、`reversibility`、`action_class`
+  - 校验报告显示来源可信度和风险本体分层；低可信高严重事件进入人工复核但不自动大幅扣分；高可信高严重事件可触发 position gate
+  - '保持向后兼容或提供迁移模板。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始扩展 occurrence schema、导入模板、校验报告和评分资格规则。2026-05-04:
+    从 IN_PROGRESS 改为 DONE，原因：schema、CSV 导入、模板、校验/复核报告、评分资格规则和测试均已完成；`python -m pytest
+    -q` 通过 220 项测试。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: 7a3a8a9011656a1b6522d2dfe1ae33eaaba39972c46477f69a8d466878e826d5
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 635e59e158089eec28943c6d1c5b5f7b74d851edd2f50a33ab65d57319b1750a

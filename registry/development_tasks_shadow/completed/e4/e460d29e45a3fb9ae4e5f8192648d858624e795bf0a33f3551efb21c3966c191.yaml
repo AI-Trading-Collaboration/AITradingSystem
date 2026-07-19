@@ -1,0 +1,169 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-378_OWNER_DECISION_AUDIT_LOG
+  title: null
+  domain: Research governance / owner decisions
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续在 manual review 后 append 真实 owner decision；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-378_Owner_Decision_Audit_Log.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-378_Owner_Decision_Audit_Log.md`；承接
+    TRADING-364 owner review template v2，建立 append-only owner decision audit log，记录
+    decision id、timestamp、candidate id、input artifacts、owner action、reason summary、safety
+    status 和 next action；本任务不推进候选、不批准 promotion、不修改 strategy outputs、candidate/paper-shadow/production
+    state、official target weights、order ticket 或 broker workflow
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/owner_decision_audit_log.py`、`aits reports
+      owner-decision-audit-log append/report/validate`、append-only JSONL schema、duplicate
+      decision id / malformed JSONL / required field / safety invariant validation、Reader
+      Brief 摘要、monthly review pack input、promotion board input、report registry、artifact
+      catalog、README、system flow、operations runbook、requirements 和 focused tests；empty
+      log 作为 no-owner-decision-yet 状态可通过 validation；所有输出固定 `production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 218
+    row_sha256: ac7be48728f2a6cac14d60edc41220430714b8dfbd73119a49cbebf40667507d
+    cell_count: 8
+    all_cells:
+    - TRADING-378_OWNER_DECISION_AUDIT_LOG
+    - Research governance / owner decisions
+    - P1
+    - DONE
+    - 项目 owner 后续在 manual review 后 append 真实 owner decision；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-378_Owner_Decision_Audit_Log.md`；承接 TRADING-364
+      owner review template v2，建立 append-only owner decision audit log，记录 decision
+      id、timestamp、candidate id、input artifacts、owner action、reason summary、safety
+      status 和 next action；本任务不推进候选、不批准 promotion、不修改 strategy outputs、candidate/paper-shadow/production
+      state、official target weights、order ticket 或 broker workflow
+    - 新增 `src/ai_trading_system/reports/owner_decision_audit_log.py`、`aits reports
+      owner-decision-audit-log append/report/validate`、append-only JSONL schema、duplicate
+      decision id / malformed JSONL / required field / safety invariant validation、Reader
+      Brief 摘要、monthly review pack input、promotion board input、report registry、artifact
+      catalog、README、system flow、operations runbook、requirements 和 focused tests；empty
+      log 作为 no-owner-decision-yet 状态可通过 validation；所有输出固定 `production_effect=none`
+    - '2026-06-16: DONE；当前没有真实 owner decision record，未补造或 append 示例 decision。真实 2026-06-16
+      report `outputs/reports/owner_decision_audit_log_2026-06-16.json/md` 输出 `audit_log_status=AUDIT_LOG_EMPTY`、records=0、monthly_review_pack_input=`NO_OWNER_DECISIONS_RECORDED`、promotion_board_input=`NO_OWNER_DECISIONS_RECORDED`；validation
+      `outputs/reports/owner_decision_audit_log_validation_2026-06-16.json/md` 输出
+      `validation_status=PASS`、checks=12、failed=0、empty_log_allowed=true；report index
+      `PASS_WITH_EXPLICIT_WAIVERS` / reports=394 / missing=20 / stale=10 / waived=30
+      / unwaived=0；documentation contract PASS / reports=394 / errors=0 / warnings=0；Reader
+      Brief latest 使用 2026-06-15 snapshot + 2026-06-16 report index 验证，section 展示
+      `AUDIT_LOG_EMPTY`、validation=`PASS`、next action=`append_owner_decision_after_next_manual_owner_review`，Reader
+      Brief quality OK / failed=0；focused pytest 38 passed，Ruff PASS，compileall PASS。精确
+      2026-06-16 Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 append-only / governance-only / no upstream evidence
+      collection / no data refresh / no strategy output mutation / no candidate or
+      paper-shadow mutation / no official target / no broker / no order ticket / no
+      production mutation。'
+    raw_line: '|TRADING-378_OWNER_DECISION_AUDIT_LOG|Research governance / owner decisions|P1|DONE|项目
+      owner 后续在 manual review 后 append 真实 owner decision；代码实现完成|详细拆解见 `docs/requirements/TRADING-378_Owner_Decision_Audit_Log.md`；承接
+      TRADING-364 owner review template v2，建立 append-only owner decision audit log，记录
+      decision id、timestamp、candidate id、input artifacts、owner action、reason summary、safety
+      status 和 next action；本任务不推进候选、不批准 promotion、不修改 strategy outputs、candidate/paper-shadow/production
+      state、official target weights、order ticket 或 broker workflow|新增 `src/ai_trading_system/reports/owner_decision_audit_log.py`、`aits
+      reports owner-decision-audit-log append/report/validate`、append-only JSONL schema、duplicate
+      decision id / malformed JSONL / required field / safety invariant validation、Reader
+      Brief 摘要、monthly review pack input、promotion board input、report registry、artifact
+      catalog、README、system flow、operations runbook、requirements 和 focused tests；empty
+      log 作为 no-owner-decision-yet 状态可通过 validation；所有输出固定 `production_effect=none`|2026-06-16:
+      DONE；当前没有真实 owner decision record，未补造或 append 示例 decision。真实 2026-06-16 report
+      `outputs/reports/owner_decision_audit_log_2026-06-16.json/md` 输出 `audit_log_status=AUDIT_LOG_EMPTY`、records=0、monthly_review_pack_input=`NO_OWNER_DECISIONS_RECORDED`、promotion_board_input=`NO_OWNER_DECISIONS_RECORDED`；validation
+      `outputs/reports/owner_decision_audit_log_validation_2026-06-16.json/md` 输出
+      `validation_status=PASS`、checks=12、failed=0、empty_log_allowed=true；report index
+      `PASS_WITH_EXPLICIT_WAIVERS` / reports=394 / missing=20 / stale=10 / waived=30
+      / unwaived=0；documentation contract PASS / reports=394 / errors=0 / warnings=0；Reader
+      Brief latest 使用 2026-06-15 snapshot + 2026-06-16 report index 验证，section 展示
+      `AUDIT_LOG_EMPTY`、validation=`PASS`、next action=`append_owner_decision_after_next_manual_owner_review`，Reader
+      Brief quality OK / failed=0；focused pytest 38 passed，Ruff PASS，compileall PASS。精确
+      2026-06-16 Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 append-only / governance-only / no upstream evidence
+      collection / no data refresh / no strategy output mutation / no candidate or
+      paper-shadow mutation / no official target / no broker / no order ticket / no
+      production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ac7be48728f2a6cac14d60ed
+  task_id: TRADING-378_OWNER_DECISION_AUDIT_LOG
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续在 manual review 后 append 真实 owner decision；代码实现完成
+    notes: '2026-06-16: DONE；当前没有真实 owner decision record，未补造或 append 示例 decision。真实
+      2026-06-16 report `outputs/reports/owner_decision_audit_log_2026-06-16.json/md`
+      输出 `audit_log_status=AUDIT_LOG_EMPTY`、records=0、monthly_review_pack_input=`NO_OWNER_DECISIONS_RECORDED`、promotion_board_input=`NO_OWNER_DECISIONS_RECORDED`；validation
+      `outputs/reports/owner_decision_audit_log_validation_2026-06-16.json/md` 输出
+      `validation_status=PASS`、checks=12、failed=0、empty_log_allowed=true；report index
+      `PASS_WITH_EXPLICIT_WAIVERS` / reports=394 / missing=20 / stale=10 / waived=30
+      / unwaived=0；documentation contract PASS / reports=394 / errors=0 / warnings=0；Reader
+      Brief latest 使用 2026-06-15 snapshot + 2026-06-16 report index 验证，section 展示
+      `AUDIT_LOG_EMPTY`、validation=`PASS`、next action=`append_owner_decision_after_next_manual_owner_review`，Reader
+      Brief quality OK / failed=0；focused pytest 38 passed，Ruff PASS，compileall PASS。精确
+      2026-06-16 Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 append-only / governance-only / no upstream evidence
+      collection / no data refresh / no strategy output mutation / no candidate or
+      paper-shadow mutation / no official target / no broker / no order ticket / no
+      production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ac7be48728f2a6cac14d60edc41220430714b8dfbd73119a49cbebf40667507d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-378_OWNER_DECISION_AUDIT_LOG
+  - Research governance / owner decisions
+  - P1
+  - DONE
+  - 项目 owner 后续在 manual review 后 append 真实 owner decision；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-378_Owner_Decision_Audit_Log.md`；承接 TRADING-364
+    owner review template v2，建立 append-only owner decision audit log，记录 decision id、timestamp、candidate
+    id、input artifacts、owner action、reason summary、safety status 和 next action；本任务不推进候选、不批准
+    promotion、不修改 strategy outputs、candidate/paper-shadow/production state、official
+    target weights、order ticket 或 broker workflow
+  - 新增 `src/ai_trading_system/reports/owner_decision_audit_log.py`、`aits reports owner-decision-audit-log
+    append/report/validate`、append-only JSONL schema、duplicate decision id / malformed
+    JSONL / required field / safety invariant validation、Reader Brief 摘要、monthly review
+    pack input、promotion board input、report registry、artifact catalog、README、system
+    flow、operations runbook、requirements 和 focused tests；empty log 作为 no-owner-decision-yet
+    状态可通过 validation；所有输出固定 `production_effect=none`
+  - '2026-06-16: DONE；当前没有真实 owner decision record，未补造或 append 示例 decision。真实 2026-06-16
+    report `outputs/reports/owner_decision_audit_log_2026-06-16.json/md` 输出 `audit_log_status=AUDIT_LOG_EMPTY`、records=0、monthly_review_pack_input=`NO_OWNER_DECISIONS_RECORDED`、promotion_board_input=`NO_OWNER_DECISIONS_RECORDED`；validation
+    `outputs/reports/owner_decision_audit_log_validation_2026-06-16.json/md` 输出 `validation_status=PASS`、checks=12、failed=0、empty_log_allowed=true；report
+    index `PASS_WITH_EXPLICIT_WAIVERS` / reports=394 / missing=20 / stale=10 / waived=30
+    / unwaived=0；documentation contract PASS / reports=394 / errors=0 / warnings=0；Reader
+    Brief latest 使用 2026-06-15 snapshot + 2026-06-16 report index 验证，section 展示 `AUDIT_LOG_EMPTY`、validation=`PASS`、next
+    action=`append_owner_decision_after_next_manual_owner_review`，Reader Brief quality
+    OK / failed=0；focused pytest 38 passed，Ruff PASS，compileall PASS。精确 2026-06-16
+    Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+    no snapshot was fabricated. 保持 append-only / governance-only / no upstream evidence
+    collection / no data refresh / no strategy output mutation / no candidate or paper-shadow
+    mutation / no official target / no broker / no order ticket / no production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-378_Owner_Decision_Audit_Log.md
+  terminal: true
+  raw_row_sha256: ac7be48728f2a6cac14d60edc41220430714b8dfbd73119a49cbebf40667507d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 88d487dc79b15db6806c8474ca40a13b9b331c3dba233e96bf5c6c88f04f486d

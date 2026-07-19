@@ -1,0 +1,113 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-006
+  title: null
+  domain: 数据源/广义美元指数
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/broad_usd_index_replacement_2026-05-05.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已用 FRED `DTWEXBGS` 替换生产路径中的 Yahoo `DX-Y.NYB`；详细记录见
+    `docs/requirements/broad_usd_index_replacement_2026-05-05.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 验收完成：`configured_price_tickers` 不再包含 `DX-Y.NYB`；`configured_rate_series`
+      包含 `DTWEXBGS`；`aits download-data` 已将 `DTWEXBGS` 写入 `rates_daily.csv` 和 manifest；`validate-data`
+      对 `DTWEXBGS` 使用 series 级数值范围和单日变化阈值，不再因 Yahoo `DX-Y.NYB` OHLC 异常阻断；`score-daily`
+      宏观流动性评分和 `macro_risk_asset_budget` 使用 `DTWEXBGS.return_20d`；报告和文档明确这是广义美元指数，不是
+      ICE DXY；已同步更新 `docs/system_flow.md` 和测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 437
+    row_sha256: 2a91d27e8572e31183efae7503446c7ba1e7ccf8e9af4e5c30eba406e020004e
+    cell_count: 8
+    all_cells:
+    - DATA-006
+    - 数据源/广义美元指数
+    - P0
+    - DONE
+    - 系统实现
+    - 已用 FRED `DTWEXBGS` 替换生产路径中的 Yahoo `DX-Y.NYB`；详细记录见 `docs/requirements/broad_usd_index_replacement_2026-05-05.md`
+    - 验收完成：`configured_price_tickers` 不再包含 `DX-Y.NYB`；`configured_rate_series` 包含
+      `DTWEXBGS`；`aits download-data` 已将 `DTWEXBGS` 写入 `rates_daily.csv` 和 manifest；`validate-data`
+      对 `DTWEXBGS` 使用 series 级数值范围和单日变化阈值，不再因 Yahoo `DX-Y.NYB` OHLC 异常阻断；`score-daily`
+      宏观流动性评分和 `macro_risk_asset_budget` 使用 `DTWEXBGS.return_20d`；报告和文档明确这是广义美元指数，不是
+      ICE DXY；已同步更新 `docs/system_flow.md` 和测试
+    - '2026-05-05: 新增并进入实现，原因：Yahoo `DX-Y.NYB` 在数据质量门禁中出现 OHLC 异常，ICE DXY 商务接入较慢；owner
+      批准使用 FRED 官方 `DTWEXBGS` 作为可审计、低成本、daily 的广义美元指数生产输入。2026-05-05: 从 IN_PROGRESS
+      改为 DONE，原因：配置、下载、质量门禁、特征、评分规则、宏观预算、文档和测试已切换到 `DTWEXBGS`；真实 `validate-data` 不再出现
+      `DX-Y.NYB`，但仍因 SPY/Yahoo OHLC、SOXX 异常和 Yahoo/Marketstack GOOG/SMH 口径差异等价格问题失败。'
+    raw_line: '|DATA-006|数据源/广义美元指数|P0|DONE|系统实现|已用 FRED `DTWEXBGS` 替换生产路径中的 Yahoo
+      `DX-Y.NYB`；详细记录见 `docs/requirements/broad_usd_index_replacement_2026-05-05.md`|验收完成：`configured_price_tickers`
+      不再包含 `DX-Y.NYB`；`configured_rate_series` 包含 `DTWEXBGS`；`aits download-data`
+      已将 `DTWEXBGS` 写入 `rates_daily.csv` 和 manifest；`validate-data` 对 `DTWEXBGS` 使用
+      series 级数值范围和单日变化阈值，不再因 Yahoo `DX-Y.NYB` OHLC 异常阻断；`score-daily` 宏观流动性评分和 `macro_risk_asset_budget`
+      使用 `DTWEXBGS.return_20d`；报告和文档明确这是广义美元指数，不是 ICE DXY；已同步更新 `docs/system_flow.md`
+      和测试|2026-05-05: 新增并进入实现，原因：Yahoo `DX-Y.NYB` 在数据质量门禁中出现 OHLC 异常，ICE DXY 商务接入较慢；owner
+      批准使用 FRED 官方 `DTWEXBGS` 作为可审计、低成本、daily 的广义美元指数生产输入。2026-05-05: 从 IN_PROGRESS
+      改为 DONE，原因：配置、下载、质量门禁、特征、评分规则、宏观预算、文档和测试已切换到 `DTWEXBGS`；真实 `validate-data` 不再出现
+      `DX-Y.NYB`，但仍因 SPY/Yahoo OHLC、SOXX 异常和 Yahoo/Marketstack GOOG/SMH 口径差异等价格问题失败。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2a91d27e8572e31183efae75
+  task_id: DATA-006
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增并进入实现，原因：Yahoo `DX-Y.NYB` 在数据质量门禁中出现 OHLC 异常，ICE DXY 商务接入较慢；owner
+      批准使用 FRED 官方 `DTWEXBGS` 作为可审计、低成本、daily 的广义美元指数生产输入。2026-05-05: 从 IN_PROGRESS
+      改为 DONE，原因：配置、下载、质量门禁、特征、评分规则、宏观预算、文档和测试已切换到 `DTWEXBGS`；真实 `validate-data` 不再出现
+      `DX-Y.NYB`，但仍因 SPY/Yahoo OHLC、SOXX 异常和 Yahoo/Marketstack GOOG/SMH 口径差异等价格问题失败。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:2a91d27e8572e31183efae7503446c7ba1e7ccf8e9af4e5c30eba406e020004e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-006
+  - 数据源/广义美元指数
+  - P0
+  - DONE
+  - 系统实现
+  - 已用 FRED `DTWEXBGS` 替换生产路径中的 Yahoo `DX-Y.NYB`；详细记录见 `docs/requirements/broad_usd_index_replacement_2026-05-05.md`
+  - 验收完成：`configured_price_tickers` 不再包含 `DX-Y.NYB`；`configured_rate_series` 包含 `DTWEXBGS`；`aits
+    download-data` 已将 `DTWEXBGS` 写入 `rates_daily.csv` 和 manifest；`validate-data` 对
+    `DTWEXBGS` 使用 series 级数值范围和单日变化阈值，不再因 Yahoo `DX-Y.NYB` OHLC 异常阻断；`score-daily`
+    宏观流动性评分和 `macro_risk_asset_budget` 使用 `DTWEXBGS.return_20d`；报告和文档明确这是广义美元指数，不是
+    ICE DXY；已同步更新 `docs/system_flow.md` 和测试
+  - '2026-05-05: 新增并进入实现，原因：Yahoo `DX-Y.NYB` 在数据质量门禁中出现 OHLC 异常，ICE DXY 商务接入较慢；owner
+    批准使用 FRED 官方 `DTWEXBGS` 作为可审计、低成本、daily 的广义美元指数生产输入。2026-05-05: 从 IN_PROGRESS
+    改为 DONE，原因：配置、下载、质量门禁、特征、评分规则、宏观预算、文档和测试已切换到 `DTWEXBGS`；真实 `validate-data` 不再出现
+    `DX-Y.NYB`，但仍因 SPY/Yahoo OHLC、SOXX 异常和 Yahoo/Marketstack GOOG/SMH 口径差异等价格问题失败。'
+  docs_links:
+  - docs/requirements/broad_usd_index_replacement_2026-05-05.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: 2a91d27e8572e31183efae7503446c7ba1e7ccf8e9af4e5c30eba406e020004e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 564b93cdce0e00c26c6bfd297036184b164ba564dde09adf9ff30ebed8b6a8de

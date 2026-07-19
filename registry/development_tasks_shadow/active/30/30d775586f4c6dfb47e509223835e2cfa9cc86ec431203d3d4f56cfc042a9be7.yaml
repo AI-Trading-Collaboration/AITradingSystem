@@ -1,0 +1,166 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-179_to_183_CONFIRMATION_CYCLE_WEEKLY_OPS
+  title: null
+  domain: ETF portfolio research/Confirmation Cycle Scheduling and Weekly Evidence
+    Operations
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核 + 系统运行观察
+  requirement_refs:
+  - docs/requirements/TRADING-179_to_183_Confirmation_Cycle_Scheduling_and_Weekly_Evidence_Operations.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-179_to_183_Confirmation_Cycle_Scheduling_and_Weekly_Evidence_Operations.md`；baseline
+    实现已完成并生成真实 artifacts：plan `46dbf3d3f799b570`、weekly dry-run cycle `efc5b421b9fe3f32`、pressure
+    regime tag `1bc4775787a6606d`、confirmation dashboard `583f2901ecec9d0c`、rule review
+    queue `67ad255aeb9085b1`；weekly run 保持 dry-run，updated_windows=0，ready_for_evaluation=0，rule_review_recommendation=`continue_tracking`；pressure
+    tagging status=`PASS_WITH_WARNINGS` 且 defensive_validation_relevant_outcomes=0，因此
+    `defensive_limited_adjustment_drawdown` 仍是 evidence blocker；仍固定 no broker / no
+    production / no auto policy apply
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`confirmation-cycle plan/runbook/validate-config/weekly-run/weekly-report`、`pressure-regime-tag
+      validate-config/run/report`、`confirmation-dashboard build/report`、`rule-review-queue
+      build/report` 及对应 validate CLI 可运行；新增 schedule/tagging config；artifacts 写入 dynamic_v3_rescue
+      runtime roots；weekly runner 默认 dry-run 且不修改 outcome；pressure thresholds 全部来自配置；dashboard
+      和 queue 清楚披露 target progress、pressure samples、ready/not_ready、owner action 和
+      safety；README、operations runbook、system flow、report registry、artifact catalog、requirements、Reader
+      Brief、focused tests、ruff、compileall、git diff check、dynamic-v3 validation、family
+      artifact validation、report index、Reader Brief quality 和 full validation tier
+      完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1454
+    row_sha256: 77b6b7343515dceae6f9174466633b8316c73ce5f50e5cbd81cd1c0bf041a4b8
+    cell_count: 8
+    all_cells:
+    - TRADING-179_to_183_CONFIRMATION_CYCLE_WEEKLY_OPS
+    - ETF portfolio research/Confirmation Cycle Scheduling and Weekly Evidence Operations
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核 + 系统运行观察
+    - 详细拆解见 `docs/requirements/TRADING-179_to_183_Confirmation_Cycle_Scheduling_and_Weekly_Evidence_Operations.md`；baseline
+      实现已完成并生成真实 artifacts：plan `46dbf3d3f799b570`、weekly dry-run cycle `efc5b421b9fe3f32`、pressure
+      regime tag `1bc4775787a6606d`、confirmation dashboard `583f2901ecec9d0c`、rule
+      review queue `67ad255aeb9085b1`；weekly run 保持 dry-run，updated_windows=0，ready_for_evaluation=0，rule_review_recommendation=`continue_tracking`；pressure
+      tagging status=`PASS_WITH_WARNINGS` 且 defensive_validation_relevant_outcomes=0，因此
+      `defensive_limited_adjustment_drawdown` 仍是 evidence blocker；仍固定 no broker /
+      no production / no auto policy apply
+    - '`confirmation-cycle plan/runbook/validate-config/weekly-run/weekly-report`、`pressure-regime-tag
+      validate-config/run/report`、`confirmation-dashboard build/report`、`rule-review-queue
+      build/report` 及对应 validate CLI 可运行；新增 schedule/tagging config；artifacts 写入 dynamic_v3_rescue
+      runtime roots；weekly runner 默认 dry-run 且不修改 outcome；pressure thresholds 全部来自配置；dashboard
+      和 queue 清楚披露 target progress、pressure samples、ready/not_ready、owner action 和
+      safety；README、operations runbook、system flow、report registry、artifact catalog、requirements、Reader
+      Brief、focused tests、ruff、compileall、git diff check、dynamic-v3 validation、family
+      artifact validation、report index、Reader Brief quality 和 full validation tier
+      完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`'
+    - '2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-179～183；本轮优先交付 P0 周度操作闭环和可审计
+      artifacts，P1/P2 的更精细标签、图表化 dashboard 和自动提醒后续再按样本和 owner 决策推进。2026-06-11: baseline
+      实现完成并转入 VALIDATING；验证通过 schedule config validate、pressure config validate、四个
+      artifact validators、dynamic-v3 root validation、dynamic-v3 family artifact validation、report
+      index latest、Reader Brief latest、Reader Brief quality、focused pytest 5 passed、ruff、compileall、git
+      diff check 和 full validation tier 2325 passed / 641 warnings / 124.72s；当前 owner
+      queue ready=0，下一步是 owner 复核 weekly dashboard/queue 并等待更多 defensive pressure
+      outcome。'
+    raw_line: '|TRADING-179_to_183_CONFIRMATION_CYCLE_WEEKLY_OPS|ETF portfolio research/Confirmation
+      Cycle Scheduling and Weekly Evidence Operations|P0|VALIDATING|项目 owner 人工复核
+      + 系统运行观察|详细拆解见 `docs/requirements/TRADING-179_to_183_Confirmation_Cycle_Scheduling_and_Weekly_Evidence_Operations.md`；baseline
+      实现已完成并生成真实 artifacts：plan `46dbf3d3f799b570`、weekly dry-run cycle `efc5b421b9fe3f32`、pressure
+      regime tag `1bc4775787a6606d`、confirmation dashboard `583f2901ecec9d0c`、rule
+      review queue `67ad255aeb9085b1`；weekly run 保持 dry-run，updated_windows=0，ready_for_evaluation=0，rule_review_recommendation=`continue_tracking`；pressure
+      tagging status=`PASS_WITH_WARNINGS` 且 defensive_validation_relevant_outcomes=0，因此
+      `defensive_limited_adjustment_drawdown` 仍是 evidence blocker；仍固定 no broker /
+      no production / no auto policy apply|`confirmation-cycle plan/runbook/validate-config/weekly-run/weekly-report`、`pressure-regime-tag
+      validate-config/run/report`、`confirmation-dashboard build/report`、`rule-review-queue
+      build/report` 及对应 validate CLI 可运行；新增 schedule/tagging config；artifacts 写入 dynamic_v3_rescue
+      runtime roots；weekly runner 默认 dry-run 且不修改 outcome；pressure thresholds 全部来自配置；dashboard
+      和 queue 清楚披露 target progress、pressure samples、ready/not_ready、owner action 和
+      safety；README、operations runbook、system flow、report registry、artifact catalog、requirements、Reader
+      Brief、focused tests、ruff、compileall、git diff check、dynamic-v3 validation、family
+      artifact validation、report index、Reader Brief quality 和 full validation tier
+      完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`|2026-06-11:
+      新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-179～183；本轮优先交付 P0 周度操作闭环和可审计 artifacts，P1/P2
+      的更精细标签、图表化 dashboard 和自动提醒后续再按样本和 owner 决策推进。2026-06-11: baseline 实现完成并转入 VALIDATING；验证通过
+      schedule config validate、pressure config validate、四个 artifact validators、dynamic-v3
+      root validation、dynamic-v3 family artifact validation、report index latest、Reader
+      Brief latest、Reader Brief quality、focused pytest 5 passed、ruff、compileall、git
+      diff check 和 full validation tier 2325 passed / 641 warnings / 124.72s；当前 owner
+      queue ready=0，下一步是 owner 复核 weekly dashboard/queue 并等待更多 defensive pressure
+      outcome。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-77b6b7343515dceae6f91744
+  task_id: TRADING-179_to_183_CONFIRMATION_CYCLE_WEEKLY_OPS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核 + 系统运行观察
+    notes: '2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-179～183；本轮优先交付
+      P0 周度操作闭环和可审计 artifacts，P1/P2 的更精细标签、图表化 dashboard 和自动提醒后续再按样本和 owner 决策推进。2026-06-11:
+      baseline 实现完成并转入 VALIDATING；验证通过 schedule config validate、pressure config validate、四个
+      artifact validators、dynamic-v3 root validation、dynamic-v3 family artifact validation、report
+      index latest、Reader Brief latest、Reader Brief quality、focused pytest 5 passed、ruff、compileall、git
+      diff check 和 full validation tier 2325 passed / 641 warnings / 124.72s；当前 owner
+      queue ready=0，下一步是 owner 复核 weekly dashboard/queue 并等待更多 defensive pressure
+      outcome。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:77b6b7343515dceae6f9174466633b8316c73ce5f50e5cbd81cd1c0bf041a4b8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-179_to_183_CONFIRMATION_CYCLE_WEEKLY_OPS
+  - ETF portfolio research/Confirmation Cycle Scheduling and Weekly Evidence Operations
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核 + 系统运行观察
+  - 详细拆解见 `docs/requirements/TRADING-179_to_183_Confirmation_Cycle_Scheduling_and_Weekly_Evidence_Operations.md`；baseline
+    实现已完成并生成真实 artifacts：plan `46dbf3d3f799b570`、weekly dry-run cycle `efc5b421b9fe3f32`、pressure
+    regime tag `1bc4775787a6606d`、confirmation dashboard `583f2901ecec9d0c`、rule review
+    queue `67ad255aeb9085b1`；weekly run 保持 dry-run，updated_windows=0，ready_for_evaluation=0，rule_review_recommendation=`continue_tracking`；pressure
+    tagging status=`PASS_WITH_WARNINGS` 且 defensive_validation_relevant_outcomes=0，因此
+    `defensive_limited_adjustment_drawdown` 仍是 evidence blocker；仍固定 no broker / no
+    production / no auto policy apply
+  - '`confirmation-cycle plan/runbook/validate-config/weekly-run/weekly-report`、`pressure-regime-tag
+    validate-config/run/report`、`confirmation-dashboard build/report`、`rule-review-queue
+    build/report` 及对应 validate CLI 可运行；新增 schedule/tagging config；artifacts 写入 dynamic_v3_rescue
+    runtime roots；weekly runner 默认 dry-run 且不修改 outcome；pressure thresholds 全部来自配置；dashboard
+    和 queue 清楚披露 target progress、pressure samples、ready/not_ready、owner action 和 safety；README、operations
+    runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+    tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation、report
+    index、Reader Brief quality 和 full validation tier 完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`'
+  - '2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-179～183；本轮优先交付 P0 周度操作闭环和可审计
+    artifacts，P1/P2 的更精细标签、图表化 dashboard 和自动提醒后续再按样本和 owner 决策推进。2026-06-11: baseline
+    实现完成并转入 VALIDATING；验证通过 schedule config validate、pressure config validate、四个 artifact
+    validators、dynamic-v3 root validation、dynamic-v3 family artifact validation、report
+    index latest、Reader Brief latest、Reader Brief quality、focused pytest 5 passed、ruff、compileall、git
+    diff check 和 full validation tier 2325 passed / 641 warnings / 124.72s；当前 owner
+    queue ready=0，下一步是 owner 复核 weekly dashboard/queue 并等待更多 defensive pressure outcome。'
+  docs_links:
+  - docs/requirements/TRADING-179_to_183_Confirmation_Cycle_Scheduling_and_Weekly_Evidence_Operations.md
+  terminal: false
+  raw_row_sha256: 77b6b7343515dceae6f9174466633b8316c73ce5f50e5cbd81cd1c0bf041a4b8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 99d8f3755537429b16c180f48af29569852d49f866d583083ec8752a751176d8

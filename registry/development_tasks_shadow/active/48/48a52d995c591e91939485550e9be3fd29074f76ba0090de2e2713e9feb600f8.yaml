@@ -1,0 +1,139 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-271_to_275_SMOOTHED_FORWARD_SAMPLE_BOOTSTRAP_AND_DAILY_EVIDENCE_COLLECTION
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue smoothed forward sample bootstrap and daily
+    evidence collection
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 研究流程：积累独立forward/PIT/DQ/cost/holdout证据；architecture coordinator：继续剩余G2.4
+    matrix
+  requirement_refs:
+  - docs/requirements/TRADING-271_to_275_Smoothed_Forward_Sample_Bootstrap_and_Daily_Evidence_Collection.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-271_to_275_Smoothed_Forward_Sample_Bootstrap_and_Daily_Evidence_Collection.md`；G2.4CS
+    canonical closeout已完成。旧固定3d candidate/roles、10/5/5 requirements与全目录emission扫描已被CQ/CR
+    source truth取代；当前candidate=null、Binding=`targets=[]/NOT_REGISTERED`，0 target必须保持0
+    sample，不得补造method/event。真实candidate/targets与独立forward证据出现后再扩展非空业务路径；仍不得写official
+    target weights、修改`position_advisory_v1.yaml`、自动切换primary candidate、生成order ticket、调用broker或产生production
+    effect。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 五类bounded v2 input snapshots；producer写前重验Binding/Model Target/Due/Update/Operations
+      live source、same validate-data path、semantic cutoff与exact lineage；Due只消费明确绑定且validator
+      PASS的同Binding emissions；Update从frozen price slice复算weighted return/drawdown且missing保持null；Classification重算regime/turnover/lag并披露reporting-only
+      threshold；Weekly精确绑定九段artifact；validators逐byte重建全部JSON/JSONL/Markdown/Reader
+      Brief，source/output tamper/future/duplicate/cross-lineage/non-finite fail closed；CLI
+      parity、manifests/deprecation/source hashes及focused/architecture/contract/full
+      validation闭合；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1439
+    row_sha256: 476aa6d823a149c337f884ec4762e005e5d43d028de4f2538f65477b44a60bc7
+    cell_count: 8
+    all_cells:
+    - TRADING-271_to_275_SMOOTHED_FORWARD_SAMPLE_BOOTSTRAP_AND_DAILY_EVIDENCE_COLLECTION
+    - ETF portfolio/dynamic v3 rescue smoothed forward sample bootstrap and daily
+      evidence collection
+    - P0
+    - BASELINE_DONE
+    - 研究流程：积累独立forward/PIT/DQ/cost/holdout证据；architecture coordinator：继续剩余G2.4 matrix
+    - 详细拆解见 `docs/requirements/TRADING-271_to_275_Smoothed_Forward_Sample_Bootstrap_and_Daily_Evidence_Collection.md`；G2.4CS
+      canonical closeout已完成。旧固定3d candidate/roles、10/5/5 requirements与全目录emission扫描已被CQ/CR
+      source truth取代；当前candidate=null、Binding=`targets=[]/NOT_REGISTERED`，0 target必须保持0
+      sample，不得补造method/event。真实candidate/targets与独立forward证据出现后再扩展非空业务路径；仍不得写official
+      target weights、修改`position_advisory_v1.yaml`、自动切换primary candidate、生成order ticket、调用broker或产生production
+      effect。
+    - 五类bounded v2 input snapshots；producer写前重验Binding/Model Target/Due/Update/Operations
+      live source、same validate-data path、semantic cutoff与exact lineage；Due只消费明确绑定且validator
+      PASS的同Binding emissions；Update从frozen price slice复算weighted return/drawdown且missing保持null；Classification重算regime/turnover/lag并披露reporting-only
+      threshold；Weekly精确绑定九段artifact；validators逐byte重建全部JSON/JSONL/Markdown/Reader
+      Brief，source/output tamper/future/duplicate/cross-lineage/non-finite fail closed；CLI
+      parity、manifests/deprecation/source hashes及focused/architecture/contract/full
+      validation闭合；`production_effect=none`。
+    - '2026-07-14: G2.4CS=`COMPLETE_G2_4_CONTINUES`。当前emitted/due/updated/classified=0、Progress/Dashboard/Monitor=`NOT_REGISTERED`、Recheck=`NO_ELIGIBLE_CANDIDATE`、Renewal=`request_more_forward_data`、switch=false。Smoothed
+      regression/readiness分别`270.04s→100.98s`与`245.98s→86.34s`；focused/formula+smoothed/docs/CLI/architecture/contract/full=`15/41/19/123/280/203/6,012
+      passed`，generated=`924/1,123/858/0`。单slice不触发ARCH-005 handoff，不进入G2.5。'
+    raw_line: '|TRADING-271_to_275_SMOOTHED_FORWARD_SAMPLE_BOOTSTRAP_AND_DAILY_EVIDENCE_COLLECTION|ETF
+      portfolio/dynamic v3 rescue smoothed forward sample bootstrap and daily evidence
+      collection|P0|BASELINE_DONE|研究流程：积累独立forward/PIT/DQ/cost/holdout证据；architecture
+      coordinator：继续剩余G2.4 matrix|详细拆解见 `docs/requirements/TRADING-271_to_275_Smoothed_Forward_Sample_Bootstrap_and_Daily_Evidence_Collection.md`；G2.4CS
+      canonical closeout已完成。旧固定3d candidate/roles、10/5/5 requirements与全目录emission扫描已被CQ/CR
+      source truth取代；当前candidate=null、Binding=`targets=[]/NOT_REGISTERED`，0 target必须保持0
+      sample，不得补造method/event。真实candidate/targets与独立forward证据出现后再扩展非空业务路径；仍不得写official
+      target weights、修改`position_advisory_v1.yaml`、自动切换primary candidate、生成order ticket、调用broker或产生production
+      effect。|五类bounded v2 input snapshots；producer写前重验Binding/Model Target/Due/Update/Operations
+      live source、same validate-data path、semantic cutoff与exact lineage；Due只消费明确绑定且validator
+      PASS的同Binding emissions；Update从frozen price slice复算weighted return/drawdown且missing保持null；Classification重算regime/turnover/lag并披露reporting-only
+      threshold；Weekly精确绑定九段artifact；validators逐byte重建全部JSON/JSONL/Markdown/Reader
+      Brief，source/output tamper/future/duplicate/cross-lineage/non-finite fail closed；CLI
+      parity、manifests/deprecation/source hashes及focused/architecture/contract/full
+      validation闭合；`production_effect=none`。|2026-07-14: G2.4CS=`COMPLETE_G2_4_CONTINUES`。当前emitted/due/updated/classified=0、Progress/Dashboard/Monitor=`NOT_REGISTERED`、Recheck=`NO_ELIGIBLE_CANDIDATE`、Renewal=`request_more_forward_data`、switch=false。Smoothed
+      regression/readiness分别`270.04s→100.98s`与`245.98s→86.34s`；focused/formula+smoothed/docs/CLI/architecture/contract/full=`15/41/19/123/280/203/6,012
+      passed`，generated=`924/1,123/858/0`。单slice不触发ARCH-005 handoff，不进入G2.5。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-476aa6d823a149c337f884ec
+  task_id: TRADING-271_to_275_SMOOTHED_FORWARD_SAMPLE_BOOTSTRAP_AND_DAILY_EVIDENCE_COLLECTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 研究流程：积累独立forward/PIT/DQ/cost/holdout证据；architecture coordinator：继续剩余G2.4
+      matrix
+    notes: '2026-07-14: G2.4CS=`COMPLETE_G2_4_CONTINUES`。当前emitted/due/updated/classified=0、Progress/Dashboard/Monitor=`NOT_REGISTERED`、Recheck=`NO_ELIGIBLE_CANDIDATE`、Renewal=`request_more_forward_data`、switch=false。Smoothed
+      regression/readiness分别`270.04s→100.98s`与`245.98s→86.34s`；focused/formula+smoothed/docs/CLI/architecture/contract/full=`15/41/19/123/280/203/6,012
+      passed`，generated=`924/1,123/858/0`。单slice不触发ARCH-005 handoff，不进入G2.5。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:476aa6d823a149c337f884ec4762e005e5d43d028de4f2538f65477b44a60bc7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-271_to_275_SMOOTHED_FORWARD_SAMPLE_BOOTSTRAP_AND_DAILY_EVIDENCE_COLLECTION
+  - ETF portfolio/dynamic v3 rescue smoothed forward sample bootstrap and daily evidence
+    collection
+  - P0
+  - BASELINE_DONE
+  - 研究流程：积累独立forward/PIT/DQ/cost/holdout证据；architecture coordinator：继续剩余G2.4 matrix
+  - 详细拆解见 `docs/requirements/TRADING-271_to_275_Smoothed_Forward_Sample_Bootstrap_and_Daily_Evidence_Collection.md`；G2.4CS
+    canonical closeout已完成。旧固定3d candidate/roles、10/5/5 requirements与全目录emission扫描已被CQ/CR
+    source truth取代；当前candidate=null、Binding=`targets=[]/NOT_REGISTERED`，0 target必须保持0
+    sample，不得补造method/event。真实candidate/targets与独立forward证据出现后再扩展非空业务路径；仍不得写official
+    target weights、修改`position_advisory_v1.yaml`、自动切换primary candidate、生成order ticket、调用broker或产生production
+    effect。
+  - 五类bounded v2 input snapshots；producer写前重验Binding/Model Target/Due/Update/Operations
+    live source、same validate-data path、semantic cutoff与exact lineage；Due只消费明确绑定且validator
+    PASS的同Binding emissions；Update从frozen price slice复算weighted return/drawdown且missing保持null；Classification重算regime/turnover/lag并披露reporting-only
+    threshold；Weekly精确绑定九段artifact；validators逐byte重建全部JSON/JSONL/Markdown/Reader Brief，source/output
+    tamper/future/duplicate/cross-lineage/non-finite fail closed；CLI parity、manifests/deprecation/source
+    hashes及focused/architecture/contract/full validation闭合；`production_effect=none`。
+  - '2026-07-14: G2.4CS=`COMPLETE_G2_4_CONTINUES`。当前emitted/due/updated/classified=0、Progress/Dashboard/Monitor=`NOT_REGISTERED`、Recheck=`NO_ELIGIBLE_CANDIDATE`、Renewal=`request_more_forward_data`、switch=false。Smoothed
+    regression/readiness分别`270.04s→100.98s`与`245.98s→86.34s`；focused/formula+smoothed/docs/CLI/architecture/contract/full=`15/41/19/123/280/203/6,012
+    passed`，generated=`924/1,123/858/0`。单slice不触发ARCH-005 handoff，不进入G2.5。'
+  docs_links:
+  - docs/requirements/TRADING-271_to_275_Smoothed_Forward_Sample_Bootstrap_and_Daily_Evidence_Collection.md
+  terminal: false
+  raw_row_sha256: 476aa6d823a149c337f884ec4762e005e5d43d028de4f2538f65477b44a60bc7
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: bfad4d30d2c0ff91c6809ecf769fa06e58c36c682b6b50ff1139a3b0a5b9e877

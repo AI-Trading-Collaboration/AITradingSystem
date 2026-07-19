@@ -1,0 +1,125 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-246_to_250_SMOOTHED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue smoothed limited adjustment research method
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据；architecture coordinator：继续
+    G2.4 matrix
+  requirement_refs:
+  - docs/requirements/TRADING-246_to_250_Smoothed_Limited_Adjustment_Research_Method.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-246_to_250_Smoothed_Limited_Adjustment_Research_Method.md`；3d/5d
+    formal research-only methods 与 canonical Config→Target→Backfill→Comparison→Review
+    链已实现并经 G2.4CN hardened；不预设 primary/secondary，不写 official target weights、不修改 `position_advisory_v1.yaml`、不触发
+    broker/order/production
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 五类 bounded v2 snapshots；pre-output live source/config/cache/DQ/cutoff；canonical
+      Paper Backfill 显式编排；Smoothed/Baseline/Risk exact same-lineage；unique method/date；missing/null；reviewed
+      evaluation policy；evidence-driven method selection；全部 views byte rebuild；CLI/tree/manifests/deprecation/docs/Ruff/compileall/focused/architecture/contract
+      PASS；当前 workflow 只允许 research observation
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1442
+    row_sha256: bdcdf41019f05deecb3ce0cb25e0a69b2fc593a37eeb78f51821ab7368b5a42c
+    cell_count: 8
+    all_cells:
+    - TRADING-246_to_250_SMOOTHED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
+    - ETF portfolio/dynamic v3 rescue smoothed limited adjustment research method
+    - P0
+    - BASELINE_DONE
+    - 研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据；architecture coordinator：继续 G2.4
+      matrix
+    - 详细拆解见 `docs/requirements/TRADING-246_to_250_Smoothed_Limited_Adjustment_Research_Method.md`；3d/5d
+      formal research-only methods 与 canonical Config→Target→Backfill→Comparison→Review
+      链已实现并经 G2.4CN hardened；不预设 primary/secondary，不写 official target weights、不修改
+      `position_advisory_v1.yaml`、不触发 broker/order/production
+    - 五类 bounded v2 snapshots；pre-output live source/config/cache/DQ/cutoff；canonical
+      Paper Backfill 显式编排；Smoothed/Baseline/Risk exact same-lineage；unique method/date；missing/null；reviewed
+      evaluation policy；evidence-driven method selection；全部 views byte rebuild；CLI/tree/manifests/deprecation/docs/Ruff/compileall/focused/architecture/contract
+      PASS；当前 workflow 只允许 research observation
+    - 2026-06-13 baseline 的固定 3d/5d role、跨 Backfill 与 missing-to-zero 风险已被 2026-07-14
+      G2.4CN supersede。当前 fixture=`2022-12-01..2024-02-29`、63 rebalances、326 common
+      return observations；3d/5d相对limited return/drawdown/turnover/jump delta分别为`-0.0012239743/-0.0000650563/-0.0962240287/+1`与`-0.0017790195/-0.0000172701/-0.1151699146/-1`，decision=`CONTINUE_OBSERVATION/LOW`，recommended/secondary=`null`。Focused/slice+CLI/architecture/contract=`45/152/275/203
+      passed`，generated=`913/1,117/858/0`；`production_effect=none`。
+    raw_line: '|TRADING-246_to_250_SMOOTHED_LIMITED_ADJUSTMENT_RESEARCH_METHOD|ETF
+      portfolio/dynamic v3 rescue smoothed limited adjustment research method|P0|BASELINE_DONE|研究
+      owner：积累独立 forward/PIT/DQ/cost/holdout 证据；architecture coordinator：继续 G2.4 matrix|详细拆解见
+      `docs/requirements/TRADING-246_to_250_Smoothed_Limited_Adjustment_Research_Method.md`；3d/5d
+      formal research-only methods 与 canonical Config→Target→Backfill→Comparison→Review
+      链已实现并经 G2.4CN hardened；不预设 primary/secondary，不写 official target weights、不修改
+      `position_advisory_v1.yaml`、不触发 broker/order/production|五类 bounded v2 snapshots；pre-output
+      live source/config/cache/DQ/cutoff；canonical Paper Backfill 显式编排；Smoothed/Baseline/Risk
+      exact same-lineage；unique method/date；missing/null；reviewed evaluation policy；evidence-driven
+      method selection；全部 views byte rebuild；CLI/tree/manifests/deprecation/docs/Ruff/compileall/focused/architecture/contract
+      PASS；当前 workflow 只允许 research observation|2026-06-13 baseline 的固定 3d/5d role、跨
+      Backfill 与 missing-to-zero 风险已被 2026-07-14 G2.4CN supersede。当前 fixture=`2022-12-01..2024-02-29`、63
+      rebalances、326 common return observations；3d/5d相对limited return/drawdown/turnover/jump
+      delta分别为`-0.0012239743/-0.0000650563/-0.0962240287/+1`与`-0.0017790195/-0.0000172701/-0.1151699146/-1`，decision=`CONTINUE_OBSERVATION/LOW`，recommended/secondary=`null`。Focused/slice+CLI/architecture/contract=`45/152/275/203
+      passed`，generated=`913/1,117/858/0`；`production_effect=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bdcdf41019f05deecb3ce0cb
+  task_id: TRADING-246_to_250_SMOOTHED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据；architecture coordinator：继续
+      G2.4 matrix
+    notes: 2026-06-13 baseline 的固定 3d/5d role、跨 Backfill 与 missing-to-zero 风险已被 2026-07-14
+      G2.4CN supersede。当前 fixture=`2022-12-01..2024-02-29`、63 rebalances、326 common
+      return observations；3d/5d相对limited return/drawdown/turnover/jump delta分别为`-0.0012239743/-0.0000650563/-0.0962240287/+1`与`-0.0017790195/-0.0000172701/-0.1151699146/-1`，decision=`CONTINUE_OBSERVATION/LOW`，recommended/secondary=`null`。Focused/slice+CLI/architecture/contract=`45/152/275/203
+      passed`，generated=`913/1,117/858/0`；`production_effect=none`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bdcdf41019f05deecb3ce0cb25e0a69b2fc593a37eeb78f51821ab7368b5a42c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-246_to_250_SMOOTHED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
+  - ETF portfolio/dynamic v3 rescue smoothed limited adjustment research method
+  - P0
+  - BASELINE_DONE
+  - 研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据；architecture coordinator：继续 G2.4
+    matrix
+  - 详细拆解见 `docs/requirements/TRADING-246_to_250_Smoothed_Limited_Adjustment_Research_Method.md`；3d/5d
+    formal research-only methods 与 canonical Config→Target→Backfill→Comparison→Review
+    链已实现并经 G2.4CN hardened；不预设 primary/secondary，不写 official target weights、不修改 `position_advisory_v1.yaml`、不触发
+    broker/order/production
+  - 五类 bounded v2 snapshots；pre-output live source/config/cache/DQ/cutoff；canonical
+    Paper Backfill 显式编排；Smoothed/Baseline/Risk exact same-lineage；unique method/date；missing/null；reviewed
+    evaluation policy；evidence-driven method selection；全部 views byte rebuild；CLI/tree/manifests/deprecation/docs/Ruff/compileall/focused/architecture/contract
+    PASS；当前 workflow 只允许 research observation
+  - 2026-06-13 baseline 的固定 3d/5d role、跨 Backfill 与 missing-to-zero 风险已被 2026-07-14
+    G2.4CN supersede。当前 fixture=`2022-12-01..2024-02-29`、63 rebalances、326 common
+    return observations；3d/5d相对limited return/drawdown/turnover/jump delta分别为`-0.0012239743/-0.0000650563/-0.0962240287/+1`与`-0.0017790195/-0.0000172701/-0.1151699146/-1`，decision=`CONTINUE_OBSERVATION/LOW`，recommended/secondary=`null`。Focused/slice+CLI/architecture/contract=`45/152/275/203
+    passed`，generated=`913/1,117/858/0`；`production_effect=none`。
+  docs_links:
+  - docs/requirements/TRADING-246_to_250_Smoothed_Limited_Adjustment_Research_Method.md
+  terminal: false
+  raw_row_sha256: bdcdf41019f05deecb3ce0cb25e0a69b2fc593a37eeb78f51821ab7368b5a42c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a65fca61cb8cd4804ecca96c91490cee68c27fa0d2469d1ce6fe5e0d8b390b2d

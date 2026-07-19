@@ -1,0 +1,144 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-052
+  title: null
+  domain: 报告/Documentation Hygiene & Generated Catalog
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/documentation_hygiene_generated_catalog_2026-05-28.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/documentation_hygiene_generated_catalog_2026-05-28.md`；documentation
+    contract 第一阶段已完成并通过最新 registry/catalog 契约复核；`documentation_contract_2026-06-05`
+    为 PASS、production_effect=none、166 个 registry reports 全部 DOCUMENTED、missing catalog/errors/warnings
+    均为 0；后续 docs/artifacts 生成索引、completed task 月度归档和格式/新鲜度组合检查保留为 PROPOSED 增强，不阻塞本任务收口
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `outputs/reports/documentation_contract_YYYY-MM-DD.md/json`；每个 registry
+      report 必须能映射到 artifact catalog 行，并保留 command、source artifact、schema/status、production_effect
+      和 common misread 摘要；缺少 catalog 覆盖、production_effect 或 common misread 时 fail
+      closed；命令或 schema/status 术语不完整先 warning；输出固定 `production_effect=none`，不运行上游报告、不修改
+      production；实现时同步更新系统流图、产物目录和专项测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 325
+    row_sha256: ae382395c4b7861436ad4da9e1ee9fd3edee4927cb330aba0950ce3e2c277f6e
+    cell_count: 8
+    all_cells:
+    - REPORT-052
+    - 报告/Documentation Hygiene & Generated Catalog
+    - P2
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/documentation_hygiene_generated_catalog_2026-05-28.md`；documentation
+      contract 第一阶段已完成并通过最新 registry/catalog 契约复核；`documentation_contract_2026-06-05`
+      为 PASS、production_effect=none、166 个 registry reports 全部 DOCUMENTED、missing catalog/errors/warnings
+      均为 0；后续 docs/artifacts 生成索引、completed task 月度归档和格式/新鲜度组合检查保留为 PROPOSED 增强，不阻塞本任务收口
+    - 生成 `outputs/reports/documentation_contract_YYYY-MM-DD.md/json`；每个 registry report
+      必须能映射到 artifact catalog 行，并保留 command、source artifact、schema/status、production_effect
+      和 common misread 摘要；缺少 catalog 覆盖、production_effect 或 common misread 时 fail
+      closed；命令或 schema/status 术语不完整先 warning；输出固定 `production_effect=none`，不运行上游报告、不修改
+      production；实现时同步更新系统流图、产物目录和专项测试
+    - '2026-05-28: 新增为 PROPOSED，原因：长文档维护压力真实存在，但范围较大且依赖 report registry 设计，适合后置规划而不是与
+      Reader Brief 首版捆绑。2026-05-28: 从 PROPOSED 改为 IN_PROGRESS，原因：REPORT-049 registry
+      首版已进入 VALIDATING，开始实现只读 documentation contract 第一阶段，先做生成/校验链路而不是拆分大文档。2026-05-28:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 documentation contract builder、CLI、Markdown/JSON
+      writer、report registry 登记、artifact catalog 缺口修复、系统流图和专项测试；验证通过 report/docs 相关目标
+      pytest 75 passed、ruff、black。2026-06-09: 从 VALIDATING 改为 DONE，原因：最新 `aits docs
+      report-contract --latest` 输出 `documentation_contract_2026-06-05.md/json`，状态
+      PASS、`production_effect=none`、registry reports=166、missing catalog=0、errors=0、warnings=0；JSON
+      字段级复核 `summary.report_count=166`、`catalog_documented_count=166`、`issues=0`、non-documented
+      records=0；阶段 2-4 仍为 PROPOSED 后续增强。'
+    raw_line: '|REPORT-052|报告/Documentation Hygiene & Generated Catalog|P2|DONE|系统验证|详细拆解见
+      `docs/requirements/documentation_hygiene_generated_catalog_2026-05-28.md`；documentation
+      contract 第一阶段已完成并通过最新 registry/catalog 契约复核；`documentation_contract_2026-06-05`
+      为 PASS、production_effect=none、166 个 registry reports 全部 DOCUMENTED、missing catalog/errors/warnings
+      均为 0；后续 docs/artifacts 生成索引、completed task 月度归档和格式/新鲜度组合检查保留为 PROPOSED 增强，不阻塞本任务收口|生成
+      `outputs/reports/documentation_contract_YYYY-MM-DD.md/json`；每个 registry report
+      必须能映射到 artifact catalog 行，并保留 command、source artifact、schema/status、production_effect
+      和 common misread 摘要；缺少 catalog 覆盖、production_effect 或 common misread 时 fail
+      closed；命令或 schema/status 术语不完整先 warning；输出固定 `production_effect=none`，不运行上游报告、不修改
+      production；实现时同步更新系统流图、产物目录和专项测试|2026-05-28: 新增为 PROPOSED，原因：长文档维护压力真实存在，但范围较大且依赖
+      report registry 设计，适合后置规划而不是与 Reader Brief 首版捆绑。2026-05-28: 从 PROPOSED 改为 IN_PROGRESS，原因：REPORT-049
+      registry 首版已进入 VALIDATING，开始实现只读 documentation contract 第一阶段，先做生成/校验链路而不是拆分大文档。2026-05-28:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 documentation contract builder、CLI、Markdown/JSON
+      writer、report registry 登记、artifact catalog 缺口修复、系统流图和专项测试；验证通过 report/docs 相关目标
+      pytest 75 passed、ruff、black。2026-06-09: 从 VALIDATING 改为 DONE，原因：最新 `aits docs
+      report-contract --latest` 输出 `documentation_contract_2026-06-05.md/json`，状态
+      PASS、`production_effect=none`、registry reports=166、missing catalog=0、errors=0、warnings=0；JSON
+      字段级复核 `summary.report_count=166`、`catalog_documented_count=166`、`issues=0`、non-documented
+      records=0；阶段 2-4 仍为 PROPOSED 后续增强。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ae382395c4b7861436ad4da9
+  task_id: REPORT-052
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: '2026-05-28: 新增为 PROPOSED，原因：长文档维护压力真实存在，但范围较大且依赖 report registry 设计，适合后置规划而不是与
+      Reader Brief 首版捆绑。2026-05-28: 从 PROPOSED 改为 IN_PROGRESS，原因：REPORT-049 registry
+      首版已进入 VALIDATING，开始实现只读 documentation contract 第一阶段，先做生成/校验链路而不是拆分大文档。2026-05-28:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 documentation contract builder、CLI、Markdown/JSON
+      writer、report registry 登记、artifact catalog 缺口修复、系统流图和专项测试；验证通过 report/docs 相关目标
+      pytest 75 passed、ruff、black。2026-06-09: 从 VALIDATING 改为 DONE，原因：最新 `aits docs
+      report-contract --latest` 输出 `documentation_contract_2026-06-05.md/json`，状态
+      PASS、`production_effect=none`、registry reports=166、missing catalog=0、errors=0、warnings=0；JSON
+      字段级复核 `summary.report_count=166`、`catalog_documented_count=166`、`issues=0`、non-documented
+      records=0；阶段 2-4 仍为 PROPOSED 后续增强。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ae382395c4b7861436ad4da9e1ee9fd3edee4927cb330aba0950ce3e2c277f6e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-052
+  - 报告/Documentation Hygiene & Generated Catalog
+  - P2
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/documentation_hygiene_generated_catalog_2026-05-28.md`；documentation
+    contract 第一阶段已完成并通过最新 registry/catalog 契约复核；`documentation_contract_2026-06-05`
+    为 PASS、production_effect=none、166 个 registry reports 全部 DOCUMENTED、missing catalog/errors/warnings
+    均为 0；后续 docs/artifacts 生成索引、completed task 月度归档和格式/新鲜度组合检查保留为 PROPOSED 增强，不阻塞本任务收口
+  - 生成 `outputs/reports/documentation_contract_YYYY-MM-DD.md/json`；每个 registry report
+    必须能映射到 artifact catalog 行，并保留 command、source artifact、schema/status、production_effect
+    和 common misread 摘要；缺少 catalog 覆盖、production_effect 或 common misread 时 fail closed；命令或
+    schema/status 术语不完整先 warning；输出固定 `production_effect=none`，不运行上游报告、不修改 production；实现时同步更新系统流图、产物目录和专项测试
+  - '2026-05-28: 新增为 PROPOSED，原因：长文档维护压力真实存在，但范围较大且依赖 report registry 设计，适合后置规划而不是与
+    Reader Brief 首版捆绑。2026-05-28: 从 PROPOSED 改为 IN_PROGRESS，原因：REPORT-049 registry
+    首版已进入 VALIDATING，开始实现只读 documentation contract 第一阶段，先做生成/校验链路而不是拆分大文档。2026-05-28:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已完成 documentation contract builder、CLI、Markdown/JSON
+    writer、report registry 登记、artifact catalog 缺口修复、系统流图和专项测试；验证通过 report/docs 相关目标
+    pytest 75 passed、ruff、black。2026-06-09: 从 VALIDATING 改为 DONE，原因：最新 `aits docs
+    report-contract --latest` 输出 `documentation_contract_2026-06-05.md/json`，状态 PASS、`production_effect=none`、registry
+    reports=166、missing catalog=0、errors=0、warnings=0；JSON 字段级复核 `summary.report_count=166`、`catalog_documented_count=166`、`issues=0`、non-documented
+    records=0；阶段 2-4 仍为 PROPOSED 后续增强。'
+  docs_links:
+  - docs/requirements/documentation_hygiene_generated_catalog_2026-05-28.md
+  terminal: true
+  raw_row_sha256: ae382395c4b7861436ad4da9e1ee9fd3edee4927cb330aba0950ce3e2c277f6e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4ac5ebc11eabc0cdad15df91e722c66f1337e84afe0dd26d1f51eae15ef1d872

@@ -1,0 +1,178 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-131_to_135
+  title: null
+  domain: ETF portfolio research/Dynamic v3 Rescue Shadow Monitoring and Manual Position
+    Advisory Integration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-131_to_135_Shadow_Monitoring_and_Manual_Position_Advisory_Integration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-131_to_135_Shadow_Monitoring_and_Manual_Position_Advisory_Integration.md`；基于
+    TRADING-126_to_130 已生成的 shadow shortlist / position advisory / position review
+    pack，已接入持续 shadow monitor、manual portfolio snapshot validation、daily position
+    advisory、consensus drift gate 和 owner review journal；下一步由 owner 复核真实 monitor/advisory/drift/review
+    artifacts；本阶段仍禁止 production candidate、owner auto approval、official target weight
+    mutation、baseline/production state mutation、broker action 和自动实盘执行
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`shadow-monitor activate/run/report` 可生成 daily / weekly monitor artifact
+      且 `validate-shadow-monitor-run` PASS；`portfolio-snapshot validate/report/normalize`
+      支持 manual YAML 并 fail closed 处理无效权重、重复 symbol、负值、未知 currency 和 `broker_imported=true`；`position-advisory
+      daily-run` 在 TARGET_ONLY 与 SNAPSHOT_DELTA 两种模式下均固定 `broker_action_allowed=false`、`owner_approval_required=true`
+      并生成 Reader Brief section；`consensus-drift run` 能计算 candidate disagreement 且
+      HIGH_DISAGREEMENT 强制 daily advisory `manual_review`；`owner-review create/list/report/record-decision`
+      能记录 owner decision 和 paper-only action 且 `broker_action_taken=false`；相关 README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、documentation contract、ruff、compileall、git diff check、dynamic-v3 root
+      validation 和 dynamic-v3 artifact validation 完成'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1464
+    row_sha256: 85c19611e951f048b3209c650b9ff5099491aa093e0a481e9285bcc5b2370409
+    cell_count: 8
+    all_cells:
+    - TRADING-131_to_135
+    - ETF portfolio research/Dynamic v3 Rescue Shadow Monitoring and Manual Position
+      Advisory Integration
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-131_to_135_Shadow_Monitoring_and_Manual_Position_Advisory_Integration.md`；基于
+      TRADING-126_to_130 已生成的 shadow shortlist / position advisory / position review
+      pack，已接入持续 shadow monitor、manual portfolio snapshot validation、daily position
+      advisory、consensus drift gate 和 owner review journal；下一步由 owner 复核真实 monitor/advisory/drift/review
+      artifacts；本阶段仍禁止 production candidate、owner auto approval、official target weight
+      mutation、baseline/production state mutation、broker action 和自动实盘执行
+    - '`shadow-monitor activate/run/report` 可生成 daily / weekly monitor artifact 且
+      `validate-shadow-monitor-run` PASS；`portfolio-snapshot validate/report/normalize`
+      支持 manual YAML 并 fail closed 处理无效权重、重复 symbol、负值、未知 currency 和 `broker_imported=true`；`position-advisory
+      daily-run` 在 TARGET_ONLY 与 SNAPSHOT_DELTA 两种模式下均固定 `broker_action_allowed=false`、`owner_approval_required=true`
+      并生成 Reader Brief section；`consensus-drift run` 能计算 candidate disagreement 且
+      HIGH_DISAGREEMENT 强制 daily advisory `manual_review`；`owner-review create/list/report/record-decision`
+      能记录 owner decision 和 paper-only action 且 `broker_action_taken=false`；相关 README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、documentation contract、ruff、compileall、git diff check、dynamic-v3 root
+      validation 和 dynamic-v3 artifact validation 完成'
+    - '2026-06-08: 新增并进入 IN_PROGRESS，原因：TRADING-126_to_130 已完成一次性 shadow shortlist
+      / position advisory review pack，但尚未进入持续 shadow monitoring、daily position advisory
+      observation、candidate disagreement tracking 和 owner review journal；本阶段以 `shadow_shortlist_id=4378b3ed3fc1be41`
+      的链路为真实验收参考，并继续保留 no broker / no production / no auto approval 安全边界。2026-06-08:
+      转入 VALIDATING；真实链路输出 activation `6df9887ad3ea5a5e`、monitor run `531f27b63a4c199d`、TARGET_ONLY
+      advisory `45d89cf5b6315131`、SNAPSHOT_DELTA advisory `a3a1baf604a03ee9`、consensus
+      drift `a365c32cc64b8005`、owner review `5e73e18e63e5920a`，latest snapshot validation
+      `e5a86f456fe71738`；验证通过 focused pytest、existing dynamic-v3 tests、documentation
+      contract、全量 pytest（2244 passed）、ruff、compileall、git diff check、dynamic-v3 root
+      validation 和 dynamic-v3 family artifact validation。'
+    raw_line: '|TRADING-131_to_135|ETF portfolio research/Dynamic v3 Rescue Shadow
+      Monitoring and Manual Position Advisory Integration|P0|VALIDATING|项目 owner 人工复核|详细拆解见
+      `docs/requirements/TRADING-131_to_135_Shadow_Monitoring_and_Manual_Position_Advisory_Integration.md`；基于
+      TRADING-126_to_130 已生成的 shadow shortlist / position advisory / position review
+      pack，已接入持续 shadow monitor、manual portfolio snapshot validation、daily position
+      advisory、consensus drift gate 和 owner review journal；下一步由 owner 复核真实 monitor/advisory/drift/review
+      artifacts；本阶段仍禁止 production candidate、owner auto approval、official target weight
+      mutation、baseline/production state mutation、broker action 和自动实盘执行|`shadow-monitor
+      activate/run/report` 可生成 daily / weekly monitor artifact 且 `validate-shadow-monitor-run`
+      PASS；`portfolio-snapshot validate/report/normalize` 支持 manual YAML 并 fail closed
+      处理无效权重、重复 symbol、负值、未知 currency 和 `broker_imported=true`；`position-advisory
+      daily-run` 在 TARGET_ONLY 与 SNAPSHOT_DELTA 两种模式下均固定 `broker_action_allowed=false`、`owner_approval_required=true`
+      并生成 Reader Brief section；`consensus-drift run` 能计算 candidate disagreement 且
+      HIGH_DISAGREEMENT 强制 daily advisory `manual_review`；`owner-review create/list/report/record-decision`
+      能记录 owner decision 和 paper-only action 且 `broker_action_taken=false`；相关 README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、documentation contract、ruff、compileall、git diff check、dynamic-v3 root
+      validation 和 dynamic-v3 artifact validation 完成|2026-06-08: 新增并进入 IN_PROGRESS，原因：TRADING-126_to_130
+      已完成一次性 shadow shortlist / position advisory review pack，但尚未进入持续 shadow monitoring、daily
+      position advisory observation、candidate disagreement tracking 和 owner review
+      journal；本阶段以 `shadow_shortlist_id=4378b3ed3fc1be41` 的链路为真实验收参考，并继续保留 no broker
+      / no production / no auto approval 安全边界。2026-06-08: 转入 VALIDATING；真实链路输出 activation
+      `6df9887ad3ea5a5e`、monitor run `531f27b63a4c199d`、TARGET_ONLY advisory `45d89cf5b6315131`、SNAPSHOT_DELTA
+      advisory `a3a1baf604a03ee9`、consensus drift `a365c32cc64b8005`、owner review
+      `5e73e18e63e5920a`，latest snapshot validation `e5a86f456fe71738`；验证通过 focused
+      pytest、existing dynamic-v3 tests、documentation contract、全量 pytest（2244 passed）、ruff、compileall、git
+      diff check、dynamic-v3 root validation 和 dynamic-v3 family artifact validation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-85c19611e951f048b3209c65
+  task_id: TRADING-131_to_135
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核
+    notes: '2026-06-08: 新增并进入 IN_PROGRESS，原因：TRADING-126_to_130 已完成一次性 shadow shortlist
+      / position advisory review pack，但尚未进入持续 shadow monitoring、daily position advisory
+      observation、candidate disagreement tracking 和 owner review journal；本阶段以 `shadow_shortlist_id=4378b3ed3fc1be41`
+      的链路为真实验收参考，并继续保留 no broker / no production / no auto approval 安全边界。2026-06-08:
+      转入 VALIDATING；真实链路输出 activation `6df9887ad3ea5a5e`、monitor run `531f27b63a4c199d`、TARGET_ONLY
+      advisory `45d89cf5b6315131`、SNAPSHOT_DELTA advisory `a3a1baf604a03ee9`、consensus
+      drift `a365c32cc64b8005`、owner review `5e73e18e63e5920a`，latest snapshot validation
+      `e5a86f456fe71738`；验证通过 focused pytest、existing dynamic-v3 tests、documentation
+      contract、全量 pytest（2244 passed）、ruff、compileall、git diff check、dynamic-v3 root
+      validation 和 dynamic-v3 family artifact validation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:85c19611e951f048b3209c650b9ff5099491aa093e0a481e9285bcc5b2370409
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-131_to_135
+  - ETF portfolio research/Dynamic v3 Rescue Shadow Monitoring and Manual Position
+    Advisory Integration
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-131_to_135_Shadow_Monitoring_and_Manual_Position_Advisory_Integration.md`；基于
+    TRADING-126_to_130 已生成的 shadow shortlist / position advisory / position review
+    pack，已接入持续 shadow monitor、manual portfolio snapshot validation、daily position
+    advisory、consensus drift gate 和 owner review journal；下一步由 owner 复核真实 monitor/advisory/drift/review
+    artifacts；本阶段仍禁止 production candidate、owner auto approval、official target weight
+    mutation、baseline/production state mutation、broker action 和自动实盘执行
+  - '`shadow-monitor activate/run/report` 可生成 daily / weekly monitor artifact 且 `validate-shadow-monitor-run`
+    PASS；`portfolio-snapshot validate/report/normalize` 支持 manual YAML 并 fail closed
+    处理无效权重、重复 symbol、负值、未知 currency 和 `broker_imported=true`；`position-advisory daily-run`
+    在 TARGET_ONLY 与 SNAPSHOT_DELTA 两种模式下均固定 `broker_action_allowed=false`、`owner_approval_required=true`
+    并生成 Reader Brief section；`consensus-drift run` 能计算 candidate disagreement 且 HIGH_DISAGREEMENT
+    强制 daily advisory `manual_review`；`owner-review create/list/report/record-decision`
+    能记录 owner decision 和 paper-only action 且 `broker_action_taken=false`；相关 README、operations
+    runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+    tests、documentation contract、ruff、compileall、git diff check、dynamic-v3 root validation
+    和 dynamic-v3 artifact validation 完成'
+  - '2026-06-08: 新增并进入 IN_PROGRESS，原因：TRADING-126_to_130 已完成一次性 shadow shortlist /
+    position advisory review pack，但尚未进入持续 shadow monitoring、daily position advisory
+    observation、candidate disagreement tracking 和 owner review journal；本阶段以 `shadow_shortlist_id=4378b3ed3fc1be41`
+    的链路为真实验收参考，并继续保留 no broker / no production / no auto approval 安全边界。2026-06-08:
+    转入 VALIDATING；真实链路输出 activation `6df9887ad3ea5a5e`、monitor run `531f27b63a4c199d`、TARGET_ONLY
+    advisory `45d89cf5b6315131`、SNAPSHOT_DELTA advisory `a3a1baf604a03ee9`、consensus
+    drift `a365c32cc64b8005`、owner review `5e73e18e63e5920a`，latest snapshot validation
+    `e5a86f456fe71738`；验证通过 focused pytest、existing dynamic-v3 tests、documentation
+    contract、全量 pytest（2244 passed）、ruff、compileall、git diff check、dynamic-v3 root
+    validation 和 dynamic-v3 family artifact validation。'
+  docs_links:
+  - docs/requirements/TRADING-131_to_135_Shadow_Monitoring_and_Manual_Position_Advisory_Integration.md
+  terminal: false
+  raw_row_sha256: 85c19611e951f048b3209c650b9ff5099491aa093e0a481e9285bcc5b2370409
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8e2c962b65a4b31a6e8bdc493502d170282fc18d412bba4ee1d01bf2692c95b3

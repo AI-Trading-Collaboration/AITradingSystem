@@ -1,0 +1,162 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-053B
+  title: null
+  domain: 数据质量/Price Cache Reconcile & Backtest Manifest Refresh
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/price_cache_reconcile_manifest_refresh_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/price_cache_reconcile_manifest_refresh_2026-05-30.md`；TRADING-053A
+    dry-run reconcile 已推进为可执行，latest manifest / registry lifecycle 已收敛，当前 latest reconcile
+    为 idempotent `NOT_REQUIRED`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits data reconcile-price-cache --latest` 生成 `price_cache_reconcile_summary.json/md`；支持
+      `--refresh-manifest-only`、`--register-repaired-only`、`--symbols` 和 dry-run；新增
+      `aits data refresh-backtest-manifest --latest`；可审计 repaired rows 已注册 `GOOGL`、`BRK.B
+      via BRK-B`、`SGOV`；若 repaired rows 未覆盖全局最新交易日，latest resolution 回到 required-asset
+      common date 而不是补造价格；`NOT_REQUIRED` / OK after-state 的 impact summary 不再误写为 blocked；不修改
+      `config/parameters/production/current.yaml`，不降低 data quality gate，不生成伪价格；专项测试、全量
+      pytest、ruff、compileall 和 diff check 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 287
+    row_sha256: 7d14329c153ce5fdeac1bdc0b56838cdb2224b0bf3e30e5c88c2d6a35d2262ee
+    cell_count: 8
+    all_cells:
+    - TRADING-053B
+    - 数据质量/Price Cache Reconcile & Backtest Manifest Refresh
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/price_cache_reconcile_manifest_refresh_2026-05-30.md`；TRADING-053A
+      dry-run reconcile 已推进为可执行，latest manifest / registry lifecycle 已收敛，当前 latest
+      reconcile 为 idempotent `NOT_REQUIRED`
+    - '`aits data reconcile-price-cache --latest` 生成 `price_cache_reconcile_summary.json/md`；支持
+      `--refresh-manifest-only`、`--register-repaired-only`、`--symbols` 和 dry-run；新增
+      `aits data refresh-backtest-manifest --latest`；可审计 repaired rows 已注册 `GOOGL`、`BRK.B
+      via BRK-B`、`SGOV`；若 repaired rows 未覆盖全局最新交易日，latest resolution 回到 required-asset
+      common date 而不是补造价格；`NOT_REQUIRED` / OK after-state 的 impact summary 不再误写为 blocked；不修改
+      `config/parameters/production/current.yaml`，不降低 data quality gate，不生成伪价格；专项测试、全量
+      pytest、ruff、compileall 和 diff check 通过'
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-053A 已确认真实 blocker 是 primary cache
+      与 backtest manifest/latest resolution 不一致；下一步需要正式实现 reconcile/manifest refresh，才能让
+      portfolio sensitivity 在真实数据门禁下运行。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实际
+      reconcile 已从 audited FMP raw cache 恢复并注册 `GOOGL`、`BRK.B via BRK-B`、`SGOV` 各
+      1008 行，生成 `price_cache_registry.json` 和 reconcile summary；因可审计 rows 只覆盖到 2026-05-28，未伪造
+      2026-05-29 行，latest resolution 改为 required-asset common date `2026-05-28` OK；portfolio
+      sensitivity data_gate 已通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：真实 latest `reconcile-price-cache
+      --latest --dry-run` 输出 `after=latest_resolution=OK`，实际 `reconcile-price-cache
+      --latest` 输出 `NOT_REQUIRED` 并写出 `artifacts/data_quality/2026-06-05/price_cache_reconcile_summary.json/md`；`market_data_date=2026-06-05`、`manifest_date=2026-06-05`、before/after
+      asset_status 全部 OK；修复并测试 idempotent `NOT_REQUIRED` 下 `impact_on_portfolio_sensitivity`
+      / `impact_on_shadow_backtest` 文案，避免 OK after-state 被误解释为 blocked；`parameters
+      shadow-backtest --latest --dry-run` 仍为 `LIMITED` / `promotion_status=rejected`，所有
+      production/promotion safety fields 保持 false/none。'
+    raw_line: '|TRADING-053B|数据质量/Price Cache Reconcile & Backtest Manifest Refresh|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/price_cache_reconcile_manifest_refresh_2026-05-30.md`；TRADING-053A
+      dry-run reconcile 已推进为可执行，latest manifest / registry lifecycle 已收敛，当前 latest
+      reconcile 为 idempotent `NOT_REQUIRED`|`aits data reconcile-price-cache --latest`
+      生成 `price_cache_reconcile_summary.json/md`；支持 `--refresh-manifest-only`、`--register-repaired-only`、`--symbols`
+      和 dry-run；新增 `aits data refresh-backtest-manifest --latest`；可审计 repaired rows
+      已注册 `GOOGL`、`BRK.B via BRK-B`、`SGOV`；若 repaired rows 未覆盖全局最新交易日，latest resolution
+      回到 required-asset common date 而不是补造价格；`NOT_REQUIRED` / OK after-state 的 impact
+      summary 不再误写为 blocked；不修改 `config/parameters/production/current.yaml`，不降低 data
+      quality gate，不生成伪价格；专项测试、全量 pytest、ruff、compileall 和 diff check 通过|2026-05-30:
+      新增并进入 IN_PROGRESS，原因：TRADING-053A 已确认真实 blocker 是 primary cache 与 backtest manifest/latest
+      resolution 不一致；下一步需要正式实现 reconcile/manifest refresh，才能让 portfolio sensitivity
+      在真实数据门禁下运行。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实际 reconcile 已从 audited
+      FMP raw cache 恢复并注册 `GOOGL`、`BRK.B via BRK-B`、`SGOV` 各 1008 行，生成 `price_cache_registry.json`
+      和 reconcile summary；因可审计 rows 只覆盖到 2026-05-28，未伪造 2026-05-29 行，latest resolution
+      改为 required-asset common date `2026-05-28` OK；portfolio sensitivity data_gate
+      已通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：真实 latest `reconcile-price-cache --latest
+      --dry-run` 输出 `after=latest_resolution=OK`，实际 `reconcile-price-cache --latest`
+      输出 `NOT_REQUIRED` 并写出 `artifacts/data_quality/2026-06-05/price_cache_reconcile_summary.json/md`；`market_data_date=2026-06-05`、`manifest_date=2026-06-05`、before/after
+      asset_status 全部 OK；修复并测试 idempotent `NOT_REQUIRED` 下 `impact_on_portfolio_sensitivity`
+      / `impact_on_shadow_backtest` 文案，避免 OK after-state 被误解释为 blocked；`parameters
+      shadow-backtest --latest --dry-run` 仍为 `LIMITED` / `promotion_status=rejected`，所有
+      production/promotion safety fields 保持 false/none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7d14329c153ce5fdeac1bdc0
+  task_id: TRADING-053B
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-053A 已确认真实 blocker 是 primary
+      cache 与 backtest manifest/latest resolution 不一致；下一步需要正式实现 reconcile/manifest
+      refresh，才能让 portfolio sensitivity 在真实数据门禁下运行。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实际
+      reconcile 已从 audited FMP raw cache 恢复并注册 `GOOGL`、`BRK.B via BRK-B`、`SGOV` 各
+      1008 行，生成 `price_cache_registry.json` 和 reconcile summary；因可审计 rows 只覆盖到 2026-05-28，未伪造
+      2026-05-29 行，latest resolution 改为 required-asset common date `2026-05-28` OK；portfolio
+      sensitivity data_gate 已通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：真实 latest `reconcile-price-cache
+      --latest --dry-run` 输出 `after=latest_resolution=OK`，实际 `reconcile-price-cache
+      --latest` 输出 `NOT_REQUIRED` 并写出 `artifacts/data_quality/2026-06-05/price_cache_reconcile_summary.json/md`；`market_data_date=2026-06-05`、`manifest_date=2026-06-05`、before/after
+      asset_status 全部 OK；修复并测试 idempotent `NOT_REQUIRED` 下 `impact_on_portfolio_sensitivity`
+      / `impact_on_shadow_backtest` 文案，避免 OK after-state 被误解释为 blocked；`parameters
+      shadow-backtest --latest --dry-run` 仍为 `LIMITED` / `promotion_status=rejected`，所有
+      production/promotion safety fields 保持 false/none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7d14329c153ce5fdeac1bdc0b56838cdb2224b0bf3e30e5c88c2d6a35d2262ee
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-053B
+  - 数据质量/Price Cache Reconcile & Backtest Manifest Refresh
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/price_cache_reconcile_manifest_refresh_2026-05-30.md`；TRADING-053A
+    dry-run reconcile 已推进为可执行，latest manifest / registry lifecycle 已收敛，当前 latest reconcile
+    为 idempotent `NOT_REQUIRED`
+  - '`aits data reconcile-price-cache --latest` 生成 `price_cache_reconcile_summary.json/md`；支持
+    `--refresh-manifest-only`、`--register-repaired-only`、`--symbols` 和 dry-run；新增
+    `aits data refresh-backtest-manifest --latest`；可审计 repaired rows 已注册 `GOOGL`、`BRK.B
+    via BRK-B`、`SGOV`；若 repaired rows 未覆盖全局最新交易日，latest resolution 回到 required-asset
+    common date 而不是补造价格；`NOT_REQUIRED` / OK after-state 的 impact summary 不再误写为 blocked；不修改
+    `config/parameters/production/current.yaml`，不降低 data quality gate，不生成伪价格；专项测试、全量
+    pytest、ruff、compileall 和 diff check 通过'
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-053A 已确认真实 blocker 是 primary cache 与
+    backtest manifest/latest resolution 不一致；下一步需要正式实现 reconcile/manifest refresh，才能让
+    portfolio sensitivity 在真实数据门禁下运行。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实际
+    reconcile 已从 audited FMP raw cache 恢复并注册 `GOOGL`、`BRK.B via BRK-B`、`SGOV` 各 1008
+    行，生成 `price_cache_registry.json` 和 reconcile summary；因可审计 rows 只覆盖到 2026-05-28，未伪造
+    2026-05-29 行，latest resolution 改为 required-asset common date `2026-05-28` OK；portfolio
+    sensitivity data_gate 已通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：真实 latest `reconcile-price-cache
+    --latest --dry-run` 输出 `after=latest_resolution=OK`，实际 `reconcile-price-cache
+    --latest` 输出 `NOT_REQUIRED` 并写出 `artifacts/data_quality/2026-06-05/price_cache_reconcile_summary.json/md`；`market_data_date=2026-06-05`、`manifest_date=2026-06-05`、before/after
+    asset_status 全部 OK；修复并测试 idempotent `NOT_REQUIRED` 下 `impact_on_portfolio_sensitivity`
+    / `impact_on_shadow_backtest` 文案，避免 OK after-state 被误解释为 blocked；`parameters shadow-backtest
+    --latest --dry-run` 仍为 `LIMITED` / `promotion_status=rejected`，所有 production/promotion
+    safety fields 保持 false/none。'
+  docs_links:
+  - docs/requirements/price_cache_reconcile_manifest_refresh_2026-05-30.md
+  terminal: true
+  raw_row_sha256: 7d14329c153ce5fdeac1bdc0b56838cdb2224b0bf3e30e5c88c2d6a35d2262ee
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: bf99c1bcee021986894bfca85aceadea180386c7e195b03419ce9cc51c20d467

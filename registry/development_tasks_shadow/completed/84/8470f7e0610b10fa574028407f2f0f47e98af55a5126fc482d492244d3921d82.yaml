@@ -1,0 +1,133 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-387_READINESS_AND_HEALTH_RECOVERY_CHAIN
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue readiness and health recovery chain
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 复核 normal paper-shadow 是否继续保持 hold
+  requirement_refs:
+  - docs/requirements/TRADING-387_Readiness_And_Health_Recovery_Chain.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-387_Readiness_And_Health_Recovery_Chain.md`；在
+    TRADING-385/386 signal input recovery 后重跑 evidence staleness monitor、shadow continuation
+    readiness 和 canonical paper-shadow health，并输出 normal paper-shadow observation
+    recovery 状态；不得运行 promotion board、执行 extended-shadow protocol、写 official target
+    weights、触发 broker/order、补造 source artifact 或修改 paper account/production state
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_readiness_health_recovery.py`、`aits
+      etf dynamic-v3-rescue readiness-health-recovery run/report`、`validate-readiness-health-recovery`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；final status 限定为 `PAPER_SHADOW_CAN_RESUME_NORMAL_OBSERVATION
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 209
+    row_sha256: 629a5b2c448ca246fda522f2c9a82c7f54a99e8a5f474ce3651f80ade0071bcc
+    cell_count: 10
+    all_cells:
+    - TRADING-387_READINESS_AND_HEALTH_RECOVERY_CHAIN
+    - ETF portfolio/dynamic v3 rescue readiness and health recovery chain
+    - P0
+    - DONE
+    - 项目 owner 复核 normal paper-shadow 是否继续保持 hold
+    - 详细拆解见 `docs/requirements/TRADING-387_Readiness_And_Health_Recovery_Chain.md`；在
+      TRADING-385/386 signal input recovery 后重跑 evidence staleness monitor、shadow
+      continuation readiness 和 canonical paper-shadow health，并输出 normal paper-shadow
+      observation recovery 状态；不得运行 promotion board、执行 extended-shadow protocol、写 official
+      target weights、触发 broker/order、补造 source artifact 或修改 paper account/production
+      state
+    - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_readiness_health_recovery.py`、`aits
+      etf dynamic-v3-rescue readiness-health-recovery run/report`、`validate-readiness-health-recovery`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；final status 限定为 `PAPER_SHADOW_CAN_RESUME_NORMAL_OBSERVATION
+    - PAPER_SHADOW_STILL_BLOCKED
+    - MANUAL_REVIEW_REQUIRED`；warning-only source state 必须保持 manual review，不得升级为 promotion/extended-shadow/official
+      target/live approval
+    - '2026-06-17: DONE；真实 artifact `readiness-health-recovery_4c4fa150becc7305` 使用
+      restored signal monitor `signal-input-completeness_227a681c2f632a6d` 重跑 source
+      chain，生成 staleness `evidence-staleness-monitor_7d34cee566379931`、readiness `shadow-continuation-readiness_332c166162e75c1c`
+      和 health `paper-shadow-health_6b0b66768b4a1c59`；final status=`MANUAL_REVIEW_REQUIRED`、normal_paper_shadow_may_resume=false、hard_stop=false、signal_input_status=`WARNING`、evidence_freshness_status=`ACCEPTABLE`、readiness=`MANUAL_REVIEW_REQUIRED`、health=`MANUAL_REVIEW_REQUIRED`、blocking_reasons
+      empty、warnings include signal input warning, weekly coverage manual review,
+      data refresh audit warnings and shadow continuation manual review；all source
+      validations and recovery validation PASS。该状态不是 normal resumption、promotion、extended
+      shadow 或 live approval；后续 TRADING-388 必须保持 resumption gate manual/hold until
+      owner review。'
+    raw_line: '|TRADING-387_READINESS_AND_HEALTH_RECOVERY_CHAIN|ETF portfolio/dynamic
+      v3 rescue readiness and health recovery chain|P0|DONE|项目 owner 复核 normal paper-shadow
+      是否继续保持 hold|详细拆解见 `docs/requirements/TRADING-387_Readiness_And_Health_Recovery_Chain.md`；在
+      TRADING-385/386 signal input recovery 后重跑 evidence staleness monitor、shadow
+      continuation readiness 和 canonical paper-shadow health，并输出 normal paper-shadow
+      observation recovery 状态；不得运行 promotion board、执行 extended-shadow protocol、写 official
+      target weights、触发 broker/order、补造 source artifact 或修改 paper account/production
+      state|新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_readiness_health_recovery.py`、`aits
+      etf dynamic-v3-rescue readiness-health-recovery run/report`、`validate-readiness-health-recovery`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；final status 限定为 `PAPER_SHADOW_CAN_RESUME_NORMAL_OBSERVATION|PAPER_SHADOW_STILL_BLOCKED|MANUAL_REVIEW_REQUIRED`；warning-only
+      source state 必须保持 manual review，不得升级为 promotion/extended-shadow/official target/live
+      approval|2026-06-17: DONE；真实 artifact `readiness-health-recovery_4c4fa150becc7305`
+      使用 restored signal monitor `signal-input-completeness_227a681c2f632a6d` 重跑 source
+      chain，生成 staleness `evidence-staleness-monitor_7d34cee566379931`、readiness `shadow-continuation-readiness_332c166162e75c1c`
+      和 health `paper-shadow-health_6b0b66768b4a1c59`；final status=`MANUAL_REVIEW_REQUIRED`、normal_paper_shadow_may_resume=false、hard_stop=false、signal_input_status=`WARNING`、evidence_freshness_status=`ACCEPTABLE`、readiness=`MANUAL_REVIEW_REQUIRED`、health=`MANUAL_REVIEW_REQUIRED`、blocking_reasons
+      empty、warnings include signal input warning, weekly coverage manual review,
+      data refresh audit warnings and shadow continuation manual review；all source
+      validations and recovery validation PASS。该状态不是 normal resumption、promotion、extended
+      shadow 或 live approval；后续 TRADING-388 必须保持 resumption gate manual/hold until
+      owner review。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-629a5b2c448ca246fda522f2
+  task_id: TRADING-387_READINESS_AND_HEALTH_RECOVERY_CHAIN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 复核 normal paper-shadow 是否继续保持 hold
+    notes: PAPER_SHADOW_STILL_BLOCKED
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:629a5b2c448ca246fda522f2c9a82c7f54a99e8a5f474ce3651f80ade0071bcc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-387_READINESS_AND_HEALTH_RECOVERY_CHAIN
+  - ETF portfolio/dynamic v3 rescue readiness and health recovery chain
+  - P0
+  - DONE
+  - 项目 owner 复核 normal paper-shadow 是否继续保持 hold
+  - 详细拆解见 `docs/requirements/TRADING-387_Readiness_And_Health_Recovery_Chain.md`；在
+    TRADING-385/386 signal input recovery 后重跑 evidence staleness monitor、shadow continuation
+    readiness 和 canonical paper-shadow health，并输出 normal paper-shadow observation
+    recovery 状态；不得运行 promotion board、执行 extended-shadow protocol、写 official target
+    weights、触发 broker/order、补造 source artifact 或修改 paper account/production state
+  - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_readiness_health_recovery.py`、`aits
+    etf dynamic-v3-rescue readiness-health-recovery run/report`、`validate-readiness-health-recovery`、Reader
+    Brief section、report registry、artifact catalog、README、operations runbook、system
+    flow、requirements 和 focused tests；final status 限定为 `PAPER_SHADOW_CAN_RESUME_NORMAL_OBSERVATION
+  - PAPER_SHADOW_STILL_BLOCKED
+  docs_links:
+  - docs/requirements/TRADING-387_Readiness_And_Health_Recovery_Chain.md
+  terminal: true
+  raw_row_sha256: 629a5b2c448ca246fda522f2c9a82c7f54a99e8a5f474ce3651f80ade0071bcc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0dff33e25297d2a413784fab6dc5da86ae1f0b14e65b7f5e727627de753925e8

@@ -1,0 +1,298 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-078
+  title: null
+  domain: ETF portfolio research/Historical Weight Calibration Usability Upgrade
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/TRADING-078_Historical_Weight_Calibration_Usability_Upgrade.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-078_Historical_Weight_Calibration_Usability_Upgrade.md`；TRADING-078A/B/C/D/E/F/G/H/I
+    已完成；下一步观察真实 recommendation artifacts、shadow enrollment records 和 forward shadow
+    samples
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Historical range presets 存在且安全字段 mandatory；`aits etf weight-calibration
+      export-top/comparison/regime-robustness/overfit-explain/enroll-top/recommendation/usability-validate`
+      或登记的等价 CLI 可运行；candidate comparison 必须包含 current ETF baseline、Buy & Hold QQQ/SPY/SMH、static
+      references 和 top-N candidates；所有 top candidates 包含 benchmark comparison、overfit
+      risk explanation、forward readiness status、blockers/warnings 和 safety fields；shadow
+      enrollment 只允许 safe candidates 且不写 production weights、baseline config、broker
+      action 或 automatic promotion；Reader Brief 只读 latest recommendation report；system
+      flow、artifact catalog、operations runbook、README、task register 和 tests 同步；final
+      usability validation gate、pytest、ruff、compileall、diff check 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1484
+    row_sha256: d6ab37bc3c10b8f237da830e008763b8443baaa78721079b4ece3c0f7389a3fb
+    cell_count: 8
+    all_cells:
+    - TRADING-078
+    - ETF portfolio research/Historical Weight Calibration Usability Upgrade
+    - P0
+    - VALIDATING
+    - 系统验证 + 项目 owner
+    - 详细拆解见 `docs/requirements/TRADING-078_Historical_Weight_Calibration_Usability_Upgrade.md`；TRADING-078A/B/C/D/E/F/G/H/I
+      已完成；下一步观察真实 recommendation artifacts、shadow enrollment records 和 forward shadow
+      samples
+    - Historical range presets 存在且安全字段 mandatory；`aits etf weight-calibration export-top/comparison/regime-robustness/overfit-explain/enroll-top/recommendation/usability-validate`
+      或登记的等价 CLI 可运行；candidate comparison 必须包含 current ETF baseline、Buy & Hold QQQ/SPY/SMH、static
+      references 和 top-N candidates；所有 top candidates 包含 benchmark comparison、overfit
+      risk explanation、forward readiness status、blockers/warnings 和 safety fields；shadow
+      enrollment 只允许 safe candidates 且不写 production weights、baseline config、broker
+      action 或 automatic promotion；Reader Brief 只读 latest recommendation report；system
+      flow、artifact catalog、operations runbook、README、task register 和 tests 同步；final
+      usability validation gate、pytest、ruff、compileall、diff check 通过
+    - '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-078 计划，要求把 TRADING-071 dual-track
+      historical calibration 能力升级为 practical candidate selection workflow；本阶段只输出 observe-only
+      / candidate-only historical candidate artifacts、comparison/recommendation/report
+      和 shadow enrollment suggestion，不允许 production mutation、broker action 或 automatic
+      promotion。2026-06-03: TRADING-078A 完成，原因：新增 historical data range presets config、preset
+      schema/loader/resolver、`search --preset` CLI 接入、search payload `historical_range_preset`
+      metadata、README/artifact catalog/system flow/operations runbook/requirement
+      docs 和专项测试；focused `tests/test_etf_weight_calibration.py` 通过。2026-06-03: TRADING-078B
+      完成，原因：新增 Top-N export schema/builder/writer/Markdown renderer、`export-top --latest/--run-id
+      --top N` CLI、JSON/CSV/Markdown runtime artifacts、overfit/readiness/blocker/warning
+      fields 和专项测试；focused `tests/test_etf_weight_calibration.py` 通过。2026-06-03: TRADING-078C
+      完成，原因：新增 candidate comparison schema/builder/writer/Markdown renderer、`comparison
+      --latest/--run-id --top N` CLI、baseline/QQQ/SPY/SMH/static reference/Top-N rows、metric
+      null reasons 和专项测试；focused `tests/test_etf_weight_calibration.py` 通过。2026-06-03:
+      TRADING-078D 完成，原因：新增 regime robustness heatmap schema/builder/writer/Markdown
+      renderer、`regime-robustness --latest/--run-id --top N` CLI、candidate/regime
+      matrix、missing regime warnings 和专项测试；focused `tests/test_etf_weight_calibration.py`
+      通过。2026-06-03: TRADING-078E 进入 IN_PROGRESS，原因：基于 TRADING-071G diagnostics 增加
+      human-readable overfit explanation artifact，用于解释 performance concentration、regime
+      fragility、turnover/constraint instability、extreme weights、benchmark dependency
+      和 forward divergence 风险。2026-06-03: TRADING-078E 完成，原因：新增 overfit explanation
+      schema/builder/writer/Markdown renderer、`overfit-explain --latest/--run-id --top
+      N` CLI、top reasons/supporting metrics/blocking metrics/manual review note 和专项测试；focused
+      `tests/test_etf_weight_calibration.py`、ruff、compileall、diff check 通过。2026-06-03:
+      TRADING-078F 进入 IN_PROGRESS，原因：在现有 forward enrollment ledger 上增加 Top-N/weight_set_id
+      驱动的 shadow enrollment workflow，并要求只允许 `shadow_ready` candidates、保留 source links、继续禁止
+      production mutation。2026-06-03: TRADING-078F 完成，原因：新增 `enroll_top_weight_candidates_forward`、`enroll-top
+      --latest/--run-id --top N`、`enroll --latest/--run-id --weight-set <id>`、source-linked
+      enrollment results 和专项测试；blocked/non-shadow-ready candidates fail closed，forward
+      enrollment ledger 固定 production_effect=none / broker_action=none。2026-06-03:
+      TRADING-078G 进入 IN_PROGRESS，原因：汇总 A-F 产物生成 candidate-only initial weight recommendation
+      report，供人工 review 选择 forward shadow candidates。2026-06-03: TRADING-078G 完成，原因：新增
+      recommendation report schema/builder/writer/Markdown renderer、`recommendation
+      --latest/--run-id --top N` CLI、A-F artifact summary sections、shadow enrollment
+      recommendation 和专项测试；focused `tests/test_etf_weight_calibration.py`、ruff、compileall、diff
+      check 通过。2026-06-03: TRADING-078H 进入 IN_PROGRESS，原因：Reader Brief 需要只读 latest
+      initial recommendation report，展示 Top candidate、shadow action、overfit risk、blocked
+      count、safety 和 detail link。2026-06-03: TRADING-078H 完成，原因：新增 Reader Brief `ETF
+      Initial Weight Candidates` payload/HTML section、`etf_initial_weight_recommendation_report`
+      registry entry、fixture 和专项断言；区块只读 latest recommendation report，缺失时显示 `MISSING`，不运行上游。2026-06-03:
+      TRADING-078I 进入 IN_PROGRESS，原因：需要新增 historical calibration usability validation
+      gate，统一校验 A-H workflow availability、bounded search 和 safety boundary。2026-06-03:
+      TRADING-078I 完成，原因：新增 historical calibration usability validation builder/writer/Markdown
+      renderer、`usability-validate` CLI、registry/docs 和专项测试；实际 CLI status=PASS、failed_check_count=0；父任务转为
+      VALIDATING，等待真实 selected candidates 的 forward shadow samples 和 owner manual
+      review。'
+    raw_line: '|TRADING-078|ETF portfolio research/Historical Weight Calibration Usability
+      Upgrade|P0|VALIDATING|系统验证 + 项目 owner|详细拆解见 `docs/requirements/TRADING-078_Historical_Weight_Calibration_Usability_Upgrade.md`；TRADING-078A/B/C/D/E/F/G/H/I
+      已完成；下一步观察真实 recommendation artifacts、shadow enrollment records 和 forward shadow
+      samples|Historical range presets 存在且安全字段 mandatory；`aits etf weight-calibration
+      export-top/comparison/regime-robustness/overfit-explain/enroll-top/recommendation/usability-validate`
+      或登记的等价 CLI 可运行；candidate comparison 必须包含 current ETF baseline、Buy & Hold QQQ/SPY/SMH、static
+      references 和 top-N candidates；所有 top candidates 包含 benchmark comparison、overfit
+      risk explanation、forward readiness status、blockers/warnings 和 safety fields；shadow
+      enrollment 只允许 safe candidates 且不写 production weights、baseline config、broker
+      action 或 automatic promotion；Reader Brief 只读 latest recommendation report；system
+      flow、artifact catalog、operations runbook、README、task register 和 tests 同步；final
+      usability validation gate、pytest、ruff、compileall、diff check 通过|2026-06-03: 新增并进入
+      IN_PROGRESS，原因：owner 提供 TRADING-078 计划，要求把 TRADING-071 dual-track historical
+      calibration 能力升级为 practical candidate selection workflow；本阶段只输出 observe-only
+      / candidate-only historical candidate artifacts、comparison/recommendation/report
+      和 shadow enrollment suggestion，不允许 production mutation、broker action 或 automatic
+      promotion。2026-06-03: TRADING-078A 完成，原因：新增 historical data range presets config、preset
+      schema/loader/resolver、`search --preset` CLI 接入、search payload `historical_range_preset`
+      metadata、README/artifact catalog/system flow/operations runbook/requirement
+      docs 和专项测试；focused `tests/test_etf_weight_calibration.py` 通过。2026-06-03: TRADING-078B
+      完成，原因：新增 Top-N export schema/builder/writer/Markdown renderer、`export-top --latest/--run-id
+      --top N` CLI、JSON/CSV/Markdown runtime artifacts、overfit/readiness/blocker/warning
+      fields 和专项测试；focused `tests/test_etf_weight_calibration.py` 通过。2026-06-03: TRADING-078C
+      完成，原因：新增 candidate comparison schema/builder/writer/Markdown renderer、`comparison
+      --latest/--run-id --top N` CLI、baseline/QQQ/SPY/SMH/static reference/Top-N rows、metric
+      null reasons 和专项测试；focused `tests/test_etf_weight_calibration.py` 通过。2026-06-03:
+      TRADING-078D 完成，原因：新增 regime robustness heatmap schema/builder/writer/Markdown
+      renderer、`regime-robustness --latest/--run-id --top N` CLI、candidate/regime
+      matrix、missing regime warnings 和专项测试；focused `tests/test_etf_weight_calibration.py`
+      通过。2026-06-03: TRADING-078E 进入 IN_PROGRESS，原因：基于 TRADING-071G diagnostics 增加
+      human-readable overfit explanation artifact，用于解释 performance concentration、regime
+      fragility、turnover/constraint instability、extreme weights、benchmark dependency
+      和 forward divergence 风险。2026-06-03: TRADING-078E 完成，原因：新增 overfit explanation
+      schema/builder/writer/Markdown renderer、`overfit-explain --latest/--run-id --top
+      N` CLI、top reasons/supporting metrics/blocking metrics/manual review note 和专项测试；focused
+      `tests/test_etf_weight_calibration.py`、ruff、compileall、diff check 通过。2026-06-03:
+      TRADING-078F 进入 IN_PROGRESS，原因：在现有 forward enrollment ledger 上增加 Top-N/weight_set_id
+      驱动的 shadow enrollment workflow，并要求只允许 `shadow_ready` candidates、保留 source links、继续禁止
+      production mutation。2026-06-03: TRADING-078F 完成，原因：新增 `enroll_top_weight_candidates_forward`、`enroll-top
+      --latest/--run-id --top N`、`enroll --latest/--run-id --weight-set <id>`、source-linked
+      enrollment results 和专项测试；blocked/non-shadow-ready candidates fail closed，forward
+      enrollment ledger 固定 production_effect=none / broker_action=none。2026-06-03:
+      TRADING-078G 进入 IN_PROGRESS，原因：汇总 A-F 产物生成 candidate-only initial weight recommendation
+      report，供人工 review 选择 forward shadow candidates。2026-06-03: TRADING-078G 完成，原因：新增
+      recommendation report schema/builder/writer/Markdown renderer、`recommendation
+      --latest/--run-id --top N` CLI、A-F artifact summary sections、shadow enrollment
+      recommendation 和专项测试；focused `tests/test_etf_weight_calibration.py`、ruff、compileall、diff
+      check 通过。2026-06-03: TRADING-078H 进入 IN_PROGRESS，原因：Reader Brief 需要只读 latest
+      initial recommendation report，展示 Top candidate、shadow action、overfit risk、blocked
+      count、safety 和 detail link。2026-06-03: TRADING-078H 完成，原因：新增 Reader Brief `ETF
+      Initial Weight Candidates` payload/HTML section、`etf_initial_weight_recommendation_report`
+      registry entry、fixture 和专项断言；区块只读 latest recommendation report，缺失时显示 `MISSING`，不运行上游。2026-06-03:
+      TRADING-078I 进入 IN_PROGRESS，原因：需要新增 historical calibration usability validation
+      gate，统一校验 A-H workflow availability、bounded search 和 safety boundary。2026-06-03:
+      TRADING-078I 完成，原因：新增 historical calibration usability validation builder/writer/Markdown
+      renderer、`usability-validate` CLI、registry/docs 和专项测试；实际 CLI status=PASS、failed_check_count=0；父任务转为
+      VALIDATING，等待真实 selected candidates 的 forward shadow samples 和 owner manual
+      review。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d6ab37bc3c10b8f237da830e
+  task_id: TRADING-078
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-078 计划，要求把 TRADING-071
+      dual-track historical calibration 能力升级为 practical candidate selection workflow；本阶段只输出
+      observe-only / candidate-only historical candidate artifacts、comparison/recommendation/report
+      和 shadow enrollment suggestion，不允许 production mutation、broker action 或 automatic
+      promotion。2026-06-03: TRADING-078A 完成，原因：新增 historical data range presets config、preset
+      schema/loader/resolver、`search --preset` CLI 接入、search payload `historical_range_preset`
+      metadata、README/artifact catalog/system flow/operations runbook/requirement
+      docs 和专项测试；focused `tests/test_etf_weight_calibration.py` 通过。2026-06-03: TRADING-078B
+      完成，原因：新增 Top-N export schema/builder/writer/Markdown renderer、`export-top --latest/--run-id
+      --top N` CLI、JSON/CSV/Markdown runtime artifacts、overfit/readiness/blocker/warning
+      fields 和专项测试；focused `tests/test_etf_weight_calibration.py` 通过。2026-06-03: TRADING-078C
+      完成，原因：新增 candidate comparison schema/builder/writer/Markdown renderer、`comparison
+      --latest/--run-id --top N` CLI、baseline/QQQ/SPY/SMH/static reference/Top-N rows、metric
+      null reasons 和专项测试；focused `tests/test_etf_weight_calibration.py` 通过。2026-06-03:
+      TRADING-078D 完成，原因：新增 regime robustness heatmap schema/builder/writer/Markdown
+      renderer、`regime-robustness --latest/--run-id --top N` CLI、candidate/regime
+      matrix、missing regime warnings 和专项测试；focused `tests/test_etf_weight_calibration.py`
+      通过。2026-06-03: TRADING-078E 进入 IN_PROGRESS，原因：基于 TRADING-071G diagnostics 增加
+      human-readable overfit explanation artifact，用于解释 performance concentration、regime
+      fragility、turnover/constraint instability、extreme weights、benchmark dependency
+      和 forward divergence 风险。2026-06-03: TRADING-078E 完成，原因：新增 overfit explanation
+      schema/builder/writer/Markdown renderer、`overfit-explain --latest/--run-id --top
+      N` CLI、top reasons/supporting metrics/blocking metrics/manual review note 和专项测试；focused
+      `tests/test_etf_weight_calibration.py`、ruff、compileall、diff check 通过。2026-06-03:
+      TRADING-078F 进入 IN_PROGRESS，原因：在现有 forward enrollment ledger 上增加 Top-N/weight_set_id
+      驱动的 shadow enrollment workflow，并要求只允许 `shadow_ready` candidates、保留 source links、继续禁止
+      production mutation。2026-06-03: TRADING-078F 完成，原因：新增 `enroll_top_weight_candidates_forward`、`enroll-top
+      --latest/--run-id --top N`、`enroll --latest/--run-id --weight-set <id>`、source-linked
+      enrollment results 和专项测试；blocked/non-shadow-ready candidates fail closed，forward
+      enrollment ledger 固定 production_effect=none / broker_action=none。2026-06-03:
+      TRADING-078G 进入 IN_PROGRESS，原因：汇总 A-F 产物生成 candidate-only initial weight recommendation
+      report，供人工 review 选择 forward shadow candidates。2026-06-03: TRADING-078G 完成，原因：新增
+      recommendation report schema/builder/writer/Markdown renderer、`recommendation
+      --latest/--run-id --top N` CLI、A-F artifact summary sections、shadow enrollment
+      recommendation 和专项测试；focused `tests/test_etf_weight_calibration.py`、ruff、compileall、diff
+      check 通过。2026-06-03: TRADING-078H 进入 IN_PROGRESS，原因：Reader Brief 需要只读 latest
+      initial recommendation report，展示 Top candidate、shadow action、overfit risk、blocked
+      count、safety 和 detail link。2026-06-03: TRADING-078H 完成，原因：新增 Reader Brief `ETF
+      Initial Weight Candidates` payload/HTML section、`etf_initial_weight_recommendation_report`
+      registry entry、fixture 和专项断言；区块只读 latest recommendation report，缺失时显示 `MISSING`，不运行上游。2026-06-03:
+      TRADING-078I 进入 IN_PROGRESS，原因：需要新增 historical calibration usability validation
+      gate，统一校验 A-H workflow availability、bounded search 和 safety boundary。2026-06-03:
+      TRADING-078I 完成，原因：新增 historical calibration usability validation builder/writer/Markdown
+      renderer、`usability-validate` CLI、registry/docs 和专项测试；实际 CLI status=PASS、failed_check_count=0；父任务转为
+      VALIDATING，等待真实 selected candidates 的 forward shadow samples 和 owner manual
+      review。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d6ab37bc3c10b8f237da830e008763b8443baaa78721079b4ece3c0f7389a3fb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-078
+  - ETF portfolio research/Historical Weight Calibration Usability Upgrade
+  - P0
+  - VALIDATING
+  - 系统验证 + 项目 owner
+  - 详细拆解见 `docs/requirements/TRADING-078_Historical_Weight_Calibration_Usability_Upgrade.md`；TRADING-078A/B/C/D/E/F/G/H/I
+    已完成；下一步观察真实 recommendation artifacts、shadow enrollment records 和 forward shadow
+    samples
+  - Historical range presets 存在且安全字段 mandatory；`aits etf weight-calibration export-top/comparison/regime-robustness/overfit-explain/enroll-top/recommendation/usability-validate`
+    或登记的等价 CLI 可运行；candidate comparison 必须包含 current ETF baseline、Buy & Hold QQQ/SPY/SMH、static
+    references 和 top-N candidates；所有 top candidates 包含 benchmark comparison、overfit
+    risk explanation、forward readiness status、blockers/warnings 和 safety fields；shadow
+    enrollment 只允许 safe candidates 且不写 production weights、baseline config、broker action
+    或 automatic promotion；Reader Brief 只读 latest recommendation report；system flow、artifact
+    catalog、operations runbook、README、task register 和 tests 同步；final usability validation
+    gate、pytest、ruff、compileall、diff check 通过
+  - '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-078 计划，要求把 TRADING-071 dual-track
+    historical calibration 能力升级为 practical candidate selection workflow；本阶段只输出 observe-only
+    / candidate-only historical candidate artifacts、comparison/recommendation/report
+    和 shadow enrollment suggestion，不允许 production mutation、broker action 或 automatic
+    promotion。2026-06-03: TRADING-078A 完成，原因：新增 historical data range presets config、preset
+    schema/loader/resolver、`search --preset` CLI 接入、search payload `historical_range_preset`
+    metadata、README/artifact catalog/system flow/operations runbook/requirement docs
+    和专项测试；focused `tests/test_etf_weight_calibration.py` 通过。2026-06-03: TRADING-078B
+    完成，原因：新增 Top-N export schema/builder/writer/Markdown renderer、`export-top --latest/--run-id
+    --top N` CLI、JSON/CSV/Markdown runtime artifacts、overfit/readiness/blocker/warning
+    fields 和专项测试；focused `tests/test_etf_weight_calibration.py` 通过。2026-06-03: TRADING-078C
+    完成，原因：新增 candidate comparison schema/builder/writer/Markdown renderer、`comparison
+    --latest/--run-id --top N` CLI、baseline/QQQ/SPY/SMH/static reference/Top-N rows、metric
+    null reasons 和专项测试；focused `tests/test_etf_weight_calibration.py` 通过。2026-06-03:
+    TRADING-078D 完成，原因：新增 regime robustness heatmap schema/builder/writer/Markdown
+    renderer、`regime-robustness --latest/--run-id --top N` CLI、candidate/regime matrix、missing
+    regime warnings 和专项测试；focused `tests/test_etf_weight_calibration.py` 通过。2026-06-03:
+    TRADING-078E 进入 IN_PROGRESS，原因：基于 TRADING-071G diagnostics 增加 human-readable overfit
+    explanation artifact，用于解释 performance concentration、regime fragility、turnover/constraint
+    instability、extreme weights、benchmark dependency 和 forward divergence 风险。2026-06-03:
+    TRADING-078E 完成，原因：新增 overfit explanation schema/builder/writer/Markdown renderer、`overfit-explain
+    --latest/--run-id --top N` CLI、top reasons/supporting metrics/blocking metrics/manual
+    review note 和专项测试；focused `tests/test_etf_weight_calibration.py`、ruff、compileall、diff
+    check 通过。2026-06-03: TRADING-078F 进入 IN_PROGRESS，原因：在现有 forward enrollment ledger
+    上增加 Top-N/weight_set_id 驱动的 shadow enrollment workflow，并要求只允许 `shadow_ready` candidates、保留
+    source links、继续禁止 production mutation。2026-06-03: TRADING-078F 完成，原因：新增 `enroll_top_weight_candidates_forward`、`enroll-top
+    --latest/--run-id --top N`、`enroll --latest/--run-id --weight-set <id>`、source-linked
+    enrollment results 和专项测试；blocked/non-shadow-ready candidates fail closed，forward
+    enrollment ledger 固定 production_effect=none / broker_action=none。2026-06-03: TRADING-078G
+    进入 IN_PROGRESS，原因：汇总 A-F 产物生成 candidate-only initial weight recommendation report，供人工
+    review 选择 forward shadow candidates。2026-06-03: TRADING-078G 完成，原因：新增 recommendation
+    report schema/builder/writer/Markdown renderer、`recommendation --latest/--run-id
+    --top N` CLI、A-F artifact summary sections、shadow enrollment recommendation 和专项测试；focused
+    `tests/test_etf_weight_calibration.py`、ruff、compileall、diff check 通过。2026-06-03:
+    TRADING-078H 进入 IN_PROGRESS，原因：Reader Brief 需要只读 latest initial recommendation
+    report，展示 Top candidate、shadow action、overfit risk、blocked count、safety 和 detail
+    link。2026-06-03: TRADING-078H 完成，原因：新增 Reader Brief `ETF Initial Weight Candidates`
+    payload/HTML section、`etf_initial_weight_recommendation_report` registry entry、fixture
+    和专项断言；区块只读 latest recommendation report，缺失时显示 `MISSING`，不运行上游。2026-06-03: TRADING-078I
+    进入 IN_PROGRESS，原因：需要新增 historical calibration usability validation gate，统一校验 A-H
+    workflow availability、bounded search 和 safety boundary。2026-06-03: TRADING-078I
+    完成，原因：新增 historical calibration usability validation builder/writer/Markdown renderer、`usability-validate`
+    CLI、registry/docs 和专项测试；实际 CLI status=PASS、failed_check_count=0；父任务转为 VALIDATING，等待真实
+    selected candidates 的 forward shadow samples 和 owner manual review。'
+  docs_links:
+  - docs/requirements/TRADING-078_Historical_Weight_Calibration_Usability_Upgrade.md
+  terminal: false
+  raw_row_sha256: d6ab37bc3c10b8f237da830e008763b8443baaa78721079b4ece3c0f7389a3fb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 80fe691254cea7b76b76c76ecfeccd57bb462287b5d1c971d1555704ac410879

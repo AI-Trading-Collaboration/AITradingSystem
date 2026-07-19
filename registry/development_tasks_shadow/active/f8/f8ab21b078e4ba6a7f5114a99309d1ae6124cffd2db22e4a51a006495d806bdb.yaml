@@ -1,0 +1,153 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-582_to_587_B2_COMPLETE_DIAGNOSTIC_FOLLOWUP
+  title: null
+  domain: ETF portfolio/weight research B2 complete diagnostic follow-up and sharper
+    B2 decision plan
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-582_to_587_B2_Complete_Diagnostic_Followup.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-582_to_587_B2_Complete_Diagnostic_Followup.md`；在
+    TRADING-575~580 已完成 B2 full diagnostic 和 control-window clean evidence 后，解释为什么
+    B2 gate 仍为 `B2_ONLY_NEEDS_MORE_EVIDENCE`，生成 root-cause drilldown、per-window utility
+    scorecard、trigger/re-entry design assessment、next evidence plan、B2 gate v4 和 research
+    branch snapshot；不得调 B2 threshold/参数，不得使用 B3 slow tilt，不得运行 B3/B4/B5/B6/v3，不得访问
+    untouched holdout，不得生成 official target weights、paper-shadow activation、extended
+    shadow、broker/order/live/production mutation，不得自动 append owner decision
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 输出 `b2_needs_more_evidence_root_cause_drilldown.json/md`、`b2_per_window_utility_scorecard.json/md`、`b2_trigger_reentry_design_assessment.json/md`、`b2_next_evidence_plan.json/md`、`b2_gate_v4_decision.json/md`
+      和 `b2_research_branch_snapshot.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+      date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；B2
+      gate v4 只能在 clear drawdown protection、acceptable re-entry cost、acceptable utility
+      和 stable trigger behavior 同时成立时为 promising；B4 retest 必须依赖 valid B3，B5 必须依赖 valid
+      non-redundant B4，B6 必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git
+      diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1414
+    row_sha256: 77ea5063f3b8e871d7a87ebf86eb68f0bf7a18c9b731864e4a232d465f3c09ce
+    cell_count: 8
+    all_cells:
+    - TRADING-582_to_587_B2_COMPLETE_DIAGNOSTIC_FOLLOWUP
+    - ETF portfolio/weight research B2 complete diagnostic follow-up and sharper B2
+      decision plan
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-582_to_587_B2_Complete_Diagnostic_Followup.md`；在
+      TRADING-575~580 已完成 B2 full diagnostic 和 control-window clean evidence 后，解释为什么
+      B2 gate 仍为 `B2_ONLY_NEEDS_MORE_EVIDENCE`，生成 root-cause drilldown、per-window
+      utility scorecard、trigger/re-entry design assessment、next evidence plan、B2 gate
+      v4 和 research branch snapshot；不得调 B2 threshold/参数，不得使用 B3 slow tilt，不得运行 B3/B4/B5/B6/v3，不得访问
+      untouched holdout，不得生成 official target weights、paper-shadow activation、extended
+      shadow、broker/order/live/production mutation，不得自动 append owner decision
+    - 输出 `b2_needs_more_evidence_root_cause_drilldown.json/md`、`b2_per_window_utility_scorecard.json/md`、`b2_trigger_reentry_design_assessment.json/md`、`b2_next_evidence_plan.json/md`、`b2_gate_v4_decision.json/md`
+      和 `b2_research_branch_snapshot.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+      date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；B2
+      gate v4 只能在 clear drawdown protection、acceptable re-entry cost、acceptable utility
+      和 stable trigger behavior 同时成立时为 promising；B4 retest 必须依赖 valid B3，B5 必须依赖 valid
+      non-redundant B4，B6 必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git
+      diff --check` 通过
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：TRADING-575~580 已使 B2 full diagnostic complete
+      且 control-window behavior clean，但 TRADING-579 仍为 `B2_ONLY_NEEDS_MORE_EVIDENCE`；本批次需要把剩余问题转为可执行
+      targeted evidence plan，并继续保持 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、paper-shadow
+      blocked。2026-06-19: 实现完成并转入 VALIDATING；`b2-followup-research` 输出 TRADING-582=`B2_NEEDS_MORE_EVIDENCE_BUT_NO_STRUCTURAL_BLOCKER`、583=`B2_WINDOW_UTILITY_MIXED`、584=`B2_DESIGN_ACCEPTABLE_NEEDS_MORE_EVIDENCE`、585=`RUN_MORE_B2_RISK_WINDOWS`、586=`B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN`、587=`CONTINUE_B2_ONLY_WITH_TARGETED_EVIDENCE`；主要剩余问题为
+      trigger evidence 集中在 slow_drawdown、rapid_drawdown / volatility_spike 未触发、re-entry
+      lag 高、utility mixed；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。'
+    raw_line: '|TRADING-582_to_587_B2_COMPLETE_DIAGNOSTIC_FOLLOWUP|ETF portfolio/weight
+      research B2 complete diagnostic follow-up and sharper B2 decision plan|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-582_to_587_B2_Complete_Diagnostic_Followup.md`；在
+      TRADING-575~580 已完成 B2 full diagnostic 和 control-window clean evidence 后，解释为什么
+      B2 gate 仍为 `B2_ONLY_NEEDS_MORE_EVIDENCE`，生成 root-cause drilldown、per-window
+      utility scorecard、trigger/re-entry design assessment、next evidence plan、B2 gate
+      v4 和 research branch snapshot；不得调 B2 threshold/参数，不得使用 B3 slow tilt，不得运行 B3/B4/B5/B6/v3，不得访问
+      untouched holdout，不得生成 official target weights、paper-shadow activation、extended
+      shadow、broker/order/live/production mutation，不得自动 append owner decision|输出 `b2_needs_more_evidence_root_cause_drilldown.json/md`、`b2_per_window_utility_scorecard.json/md`、`b2_trigger_reentry_design_assessment.json/md`、`b2_next_evidence_plan.json/md`、`b2_gate_v4_decision.json/md`
+      和 `b2_research_branch_snapshot.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+      date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；B2
+      gate v4 只能在 clear drawdown protection、acceptable re-entry cost、acceptable utility
+      和 stable trigger behavior 同时成立时为 promising；B4 retest 必须依赖 valid B3，B5 必须依赖 valid
+      non-redundant B4，B6 必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git
+      diff --check` 通过|2026-06-19: 新增并进入 IN_PROGRESS，原因：TRADING-575~580 已使 B2 full
+      diagnostic complete 且 control-window behavior clean，但 TRADING-579 仍为 `B2_ONLY_NEEDS_MORE_EVIDENCE`；本批次需要把剩余问题转为可执行
+      targeted evidence plan，并继续保持 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、paper-shadow
+      blocked。2026-06-19: 实现完成并转入 VALIDATING；`b2-followup-research` 输出 TRADING-582=`B2_NEEDS_MORE_EVIDENCE_BUT_NO_STRUCTURAL_BLOCKER`、583=`B2_WINDOW_UTILITY_MIXED`、584=`B2_DESIGN_ACCEPTABLE_NEEDS_MORE_EVIDENCE`、585=`RUN_MORE_B2_RISK_WINDOWS`、586=`B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN`、587=`CONTINUE_B2_ONLY_WITH_TARGETED_EVIDENCE`；主要剩余问题为
+      trigger evidence 集中在 slow_drawdown、rapid_drawdown / volatility_spike 未触发、re-entry
+      lag 高、utility mixed；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-77ea5063f3b8e871d7a87ebf
+  task_id: TRADING-582_to_587_B2_COMPLETE_DIAGNOSTIC_FOLLOWUP
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：TRADING-575~580 已使 B2 full diagnostic
+      complete 且 control-window behavior clean，但 TRADING-579 仍为 `B2_ONLY_NEEDS_MORE_EVIDENCE`；本批次需要把剩余问题转为可执行
+      targeted evidence plan，并继续保持 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、paper-shadow
+      blocked。2026-06-19: 实现完成并转入 VALIDATING；`b2-followup-research` 输出 TRADING-582=`B2_NEEDS_MORE_EVIDENCE_BUT_NO_STRUCTURAL_BLOCKER`、583=`B2_WINDOW_UTILITY_MIXED`、584=`B2_DESIGN_ACCEPTABLE_NEEDS_MORE_EVIDENCE`、585=`RUN_MORE_B2_RISK_WINDOWS`、586=`B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN`、587=`CONTINUE_B2_ONLY_WITH_TARGETED_EVIDENCE`；主要剩余问题为
+      trigger evidence 集中在 slow_drawdown、rapid_drawdown / volatility_spike 未触发、re-entry
+      lag 高、utility mixed；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:77ea5063f3b8e871d7a87ebf86eb68f0bf7a18c9b731864e4a232d465f3c09ce
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-582_to_587_B2_COMPLETE_DIAGNOSTIC_FOLLOWUP
+  - ETF portfolio/weight research B2 complete diagnostic follow-up and sharper B2
+    decision plan
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-582_to_587_B2_Complete_Diagnostic_Followup.md`；在
+    TRADING-575~580 已完成 B2 full diagnostic 和 control-window clean evidence 后，解释为什么
+    B2 gate 仍为 `B2_ONLY_NEEDS_MORE_EVIDENCE`，生成 root-cause drilldown、per-window utility
+    scorecard、trigger/re-entry design assessment、next evidence plan、B2 gate v4 和 research
+    branch snapshot；不得调 B2 threshold/参数，不得使用 B3 slow tilt，不得运行 B3/B4/B5/B6/v3，不得访问
+    untouched holdout，不得生成 official target weights、paper-shadow activation、extended
+    shadow、broker/order/live/production mutation，不得自动 append owner decision
+  - 输出 `b2_needs_more_evidence_root_cause_drilldown.json/md`、`b2_per_window_utility_scorecard.json/md`、`b2_trigger_reentry_design_assessment.json/md`、`b2_next_evidence_plan.json/md`、`b2_gate_v4_decision.json/md`
+    和 `b2_research_branch_snapshot.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+    date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；B2
+    gate v4 只能在 clear drawdown protection、acceptable re-entry cost、acceptable utility
+    和 stable trigger behavior 同时成立时为 promising；B4 retest 必须依赖 valid B3，B5 必须依赖 valid
+    non-redundant B4，B6 必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git
+    diff --check` 通过
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：TRADING-575~580 已使 B2 full diagnostic complete
+    且 control-window behavior clean，但 TRADING-579 仍为 `B2_ONLY_NEEDS_MORE_EVIDENCE`；本批次需要把剩余问题转为可执行
+    targeted evidence plan，并继续保持 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、paper-shadow
+    blocked。2026-06-19: 实现完成并转入 VALIDATING；`b2-followup-research` 输出 TRADING-582=`B2_NEEDS_MORE_EVIDENCE_BUT_NO_STRUCTURAL_BLOCKER`、583=`B2_WINDOW_UTILITY_MIXED`、584=`B2_DESIGN_ACCEPTABLE_NEEDS_MORE_EVIDENCE`、585=`RUN_MORE_B2_RISK_WINDOWS`、586=`B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN`、587=`CONTINUE_B2_ONLY_WITH_TARGETED_EVIDENCE`；主要剩余问题为
+    trigger evidence 集中在 slow_drawdown、rapid_drawdown / volatility_spike 未触发、re-entry
+    lag 高、utility mixed；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。'
+  docs_links:
+  - docs/requirements/TRADING-582_to_587_B2_Complete_Diagnostic_Followup.md
+  terminal: false
+  raw_row_sha256: 77ea5063f3b8e871d7a87ebf86eb68f0bf7a18c9b731864e4a232d465f3c09ce
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 171f1a88a85f7e464f677024f191b9b8d3d2bd261659f23f6bcd1cd185577af3

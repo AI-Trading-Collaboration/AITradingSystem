@@ -1,0 +1,109 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2246_to_2265_PAID_DATA_DUE_DILIGENCE_TRUE_BREADTH
+  title: null
+  domain: paid data due diligence / true breadth / historical constituents
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner
+  requirement_refs:
+  - docs/requirements/TRADING-2246_to_2265_Paid_Data_Due_Diligence_True_Breadth_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 见 `docs/requirements/TRADING-2246_to_2265_Paid_Data_Due_Diligence_True_Breadth_Plan.md`；实现和验证已完成，等待
+    owner 复核 Norgate trial 是否批准、license/local cache/Python membership query 是否可接受，以及
+    EODHD 是否作为备选
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: due-diligence-only scope、true breadth data contract、paid vendor registry、各
+      vendor review、scoring matrix、trial decision gate、owner packet、final matrix、report
+      registry、artifact catalog、system flow 和 focused/contract validation 完成；owner
+      manual approval before trial/purchase 明确；promotion/paper-shadow/production/broker
+      保持 disabled
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1536
+    row_sha256: ee90b7517bf67052f95c84f90a0bae8c654009a0f62cb8f27f54cd86c4f8f10c
+    cell_count: 8
+    all_cells:
+    - TRADING-2246_to_2265_PAID_DATA_DUE_DILIGENCE_TRUE_BREADTH
+    - paid data due diligence / true breadth / historical constituents
+    - P1
+    - VALIDATING
+    - 项目 owner
+    - 见 `docs/requirements/TRADING-2246_to_2265_Paid_Data_Due_Diligence_True_Breadth_Plan.md`；实现和验证已完成，等待
+      owner 复核 Norgate trial 是否批准、license/local cache/Python membership query 是否可接受，以及
+      EODHD 是否作为备选
+    - due-diligence-only scope、true breadth data contract、paid vendor registry、各 vendor
+      review、scoring matrix、trial decision gate、owner packet、final matrix、report registry、artifact
+      catalog、system flow 和 focused/contract validation 完成；owner manual approval before
+      trial/purchase 明确；promotion/paper-shadow/production/broker 保持 disabled
+    - '2026-06-28: Final decision=`NORGATE_TRIAL_RECOMMENDED`，但不购买、不升级 provider、不恢复策略研究；FMP
+      holdings endpoint 当前 HTTP 402，price-only sources 不是 true breadth'
+    raw_line: '|TRADING-2246_to_2265_PAID_DATA_DUE_DILIGENCE_TRUE_BREADTH|paid data
+      due diligence / true breadth / historical constituents|P1|VALIDATING|项目 owner|见
+      `docs/requirements/TRADING-2246_to_2265_Paid_Data_Due_Diligence_True_Breadth_Plan.md`；实现和验证已完成，等待
+      owner 复核 Norgate trial 是否批准、license/local cache/Python membership query 是否可接受，以及
+      EODHD 是否作为备选|due-diligence-only scope、true breadth data contract、paid vendor
+      registry、各 vendor review、scoring matrix、trial decision gate、owner packet、final
+      matrix、report registry、artifact catalog、system flow 和 focused/contract validation
+      完成；owner manual approval before trial/purchase 明确；promotion/paper-shadow/production/broker
+      保持 disabled|2026-06-28: Final decision=`NORGATE_TRIAL_RECOMMENDED`，但不购买、不升级
+      provider、不恢复策略研究；FMP holdings endpoint 当前 HTTP 402，price-only sources 不是 true
+      breadth|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ee90b7517bf67052f95c84f9
+  task_id: TRADING-2246_to_2265_PAID_DATA_DUE_DILIGENCE_TRUE_BREADTH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 项目 owner
+    notes: '2026-06-28: Final decision=`NORGATE_TRIAL_RECOMMENDED`，但不购买、不升级 provider、不恢复策略研究；FMP
+      holdings endpoint 当前 HTTP 402，price-only sources 不是 true breadth'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ee90b7517bf67052f95c84f90a0bae8c654009a0f62cb8f27f54cd86c4f8f10c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2246_to_2265_PAID_DATA_DUE_DILIGENCE_TRUE_BREADTH
+  - paid data due diligence / true breadth / historical constituents
+  - P1
+  - VALIDATING
+  - 项目 owner
+  - 见 `docs/requirements/TRADING-2246_to_2265_Paid_Data_Due_Diligence_True_Breadth_Plan.md`；实现和验证已完成，等待
+    owner 复核 Norgate trial 是否批准、license/local cache/Python membership query 是否可接受，以及
+    EODHD 是否作为备选
+  - due-diligence-only scope、true breadth data contract、paid vendor registry、各 vendor
+    review、scoring matrix、trial decision gate、owner packet、final matrix、report registry、artifact
+    catalog、system flow 和 focused/contract validation 完成；owner manual approval before
+    trial/purchase 明确；promotion/paper-shadow/production/broker 保持 disabled
+  - '2026-06-28: Final decision=`NORGATE_TRIAL_RECOMMENDED`，但不购买、不升级 provider、不恢复策略研究；FMP
+    holdings endpoint 当前 HTTP 402，price-only sources 不是 true breadth'
+  docs_links:
+  - docs/requirements/TRADING-2246_to_2265_Paid_Data_Due_Diligence_True_Breadth_Plan.md
+  terminal: false
+  raw_row_sha256: ee90b7517bf67052f95c84f90a0bae8c654009a0f62cb8f27f54cd86c4f8f10c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0327680da455d4f16e576b3d16189e63c5dabe2ecfff93dbb1724f98b756d0cf

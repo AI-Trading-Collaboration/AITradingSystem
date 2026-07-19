@@ -1,0 +1,151 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-049
+  title: null
+  domain: 报告/Report Registry & Cadence Calendar
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/reader_reporting_improvement_plan_2026-05-28.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；report
+    registry / cadence index 已完成并通过最新真实产物复核；`report_index_2026-06-05` 为 `PASS_WITH_WARNINGS`、`production_effect=none`、registry
+    reports=166、required missing=0、production effect risk=0、bad SLA=0；warnings 仅暴露可选/ad
+    hoc missing 与 stale artifacts，Reader Brief 生成和质量校验均为 OK
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `outputs/reports/report_index_YYYY-MM-DD.html/json`；registry 记录 report_id、title、cadence、owner、audience、command、input/output
+      artifacts、freshness SLA、production_effect、是否进入 Reader Brief / daily task dashboard、fallback
+      status；报告 index 展示最新 artifact、freshness、status、是否影响 production、是否需要人工复核和链接；Reader
+      Brief 只展示摘要和过期/缺失状态；实现时补系统流图、产物目录、schema 和 contract 测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 324
+    row_sha256: d4fd05ccdb6fbd5f5453b2947f33cc81f974fa2794b5f6558a870893d6d0d1bf
+    cell_count: 8
+    all_cells:
+    - REPORT-049
+    - 报告/Report Registry & Cadence Calendar
+    - P2
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；report
+      registry / cadence index 已完成并通过最新真实产物复核；`report_index_2026-06-05` 为 `PASS_WITH_WARNINGS`、`production_effect=none`、registry
+      reports=166、required missing=0、production effect risk=0、bad SLA=0；warnings 仅暴露可选/ad
+      hoc missing 与 stale artifacts，Reader Brief 生成和质量校验均为 OK
+    - 生成 `outputs/reports/report_index_YYYY-MM-DD.html/json`；registry 记录 report_id、title、cadence、owner、audience、command、input/output
+      artifacts、freshness SLA、production_effect、是否进入 Reader Brief / daily task dashboard、fallback
+      status；报告 index 展示最新 artifact、freshness、status、是否影响 production、是否需要人工复核和链接；Reader
+      Brief 只展示摘要和过期/缺失状态；实现时补系统流图、产物目录、schema 和 contract 测试
+    - '2026-05-28: 新增，原因：当前报告和周期任务增长很快，靠 dashboard cards、task register 和 artifact
+      catalog 拼上下文的维护成本上升；但该项不应阻塞 Reader Brief 首版。2026-05-28: 从 READY 改为 IN_PROGRESS，原因：开始实现只读
+      report registry / cadence index 首版。2026-05-28: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成
+      registry、report index builder、HTML/JSON artifact、CLI/direct dispatcher、Reader
+      Brief freshness 摘要、系统流图、产物目录和专项测试；验证通过 `tests/test_report_index.py`、`tests/test_reader_brief.py`
+      和 `tests/test_cli_direct.py`。2026-06-09: latest 验证发现 `etf_shadow_candidates`
+      的 `freshness_sla_days` 为 null，先补显式 90 天审计 SLA，并让默认 registry 契约测试与 loader 对缺失或非整数
+      SLA fail closed。2026-06-09: 从 VALIDATING 改为 DONE，原因：最新 `aits reports index --latest`
+      输出 `report_index_2026-06-05.html/json`，状态 `PASS_WITH_WARNINGS`、`production_effect=none`、registry
+      reports=166、required missing=0、production effect risk=0、bad SLA=0；`aits docs
+      report-contract --latest` 为 PASS；`aits reports reader-brief --latest` 和 `aits
+      reports validate-reader-brief --latest` 均为 OK。'
+    raw_line: '|REPORT-049|报告/Report Registry & Cadence Calendar|P2|DONE|系统验证|详细拆解见
+      `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；report registry
+      / cadence index 已完成并通过最新真实产物复核；`report_index_2026-06-05` 为 `PASS_WITH_WARNINGS`、`production_effect=none`、registry
+      reports=166、required missing=0、production effect risk=0、bad SLA=0；warnings 仅暴露可选/ad
+      hoc missing 与 stale artifacts，Reader Brief 生成和质量校验均为 OK|生成 `outputs/reports/report_index_YYYY-MM-DD.html/json`；registry
+      记录 report_id、title、cadence、owner、audience、command、input/output artifacts、freshness
+      SLA、production_effect、是否进入 Reader Brief / daily task dashboard、fallback status；报告
+      index 展示最新 artifact、freshness、status、是否影响 production、是否需要人工复核和链接；Reader Brief
+      只展示摘要和过期/缺失状态；实现时补系统流图、产物目录、schema 和 contract 测试|2026-05-28: 新增，原因：当前报告和周期任务增长很快，靠
+      dashboard cards、task register 和 artifact catalog 拼上下文的维护成本上升；但该项不应阻塞 Reader
+      Brief 首版。2026-05-28: 从 READY 改为 IN_PROGRESS，原因：开始实现只读 report registry / cadence
+      index 首版。2026-05-28: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 registry、report index
+      builder、HTML/JSON artifact、CLI/direct dispatcher、Reader Brief freshness 摘要、系统流图、产物目录和专项测试；验证通过
+      `tests/test_report_index.py`、`tests/test_reader_brief.py` 和 `tests/test_cli_direct.py`。2026-06-09:
+      latest 验证发现 `etf_shadow_candidates` 的 `freshness_sla_days` 为 null，先补显式 90 天审计
+      SLA，并让默认 registry 契约测试与 loader 对缺失或非整数 SLA fail closed。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：最新 `aits reports index --latest` 输出 `report_index_2026-06-05.html/json`，状态
+      `PASS_WITH_WARNINGS`、`production_effect=none`、registry reports=166、required
+      missing=0、production effect risk=0、bad SLA=0；`aits docs report-contract --latest`
+      为 PASS；`aits reports reader-brief --latest` 和 `aits reports validate-reader-brief
+      --latest` 均为 OK。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d4fd05ccdb6fbd5f5453b294
+  task_id: REPORT-049
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: '2026-05-28: 新增，原因：当前报告和周期任务增长很快，靠 dashboard cards、task register 和 artifact
+      catalog 拼上下文的维护成本上升；但该项不应阻塞 Reader Brief 首版。2026-05-28: 从 READY 改为 IN_PROGRESS，原因：开始实现只读
+      report registry / cadence index 首版。2026-05-28: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成
+      registry、report index builder、HTML/JSON artifact、CLI/direct dispatcher、Reader
+      Brief freshness 摘要、系统流图、产物目录和专项测试；验证通过 `tests/test_report_index.py`、`tests/test_reader_brief.py`
+      和 `tests/test_cli_direct.py`。2026-06-09: latest 验证发现 `etf_shadow_candidates`
+      的 `freshness_sla_days` 为 null，先补显式 90 天审计 SLA，并让默认 registry 契约测试与 loader 对缺失或非整数
+      SLA fail closed。2026-06-09: 从 VALIDATING 改为 DONE，原因：最新 `aits reports index --latest`
+      输出 `report_index_2026-06-05.html/json`，状态 `PASS_WITH_WARNINGS`、`production_effect=none`、registry
+      reports=166、required missing=0、production effect risk=0、bad SLA=0；`aits docs
+      report-contract --latest` 为 PASS；`aits reports reader-brief --latest` 和 `aits
+      reports validate-reader-brief --latest` 均为 OK。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d4fd05ccdb6fbd5f5453b2947f33cc81f974fa2794b5f6558a870893d6d0d1bf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-049
+  - 报告/Report Registry & Cadence Calendar
+  - P2
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；report
+    registry / cadence index 已完成并通过最新真实产物复核；`report_index_2026-06-05` 为 `PASS_WITH_WARNINGS`、`production_effect=none`、registry
+    reports=166、required missing=0、production effect risk=0、bad SLA=0；warnings 仅暴露可选/ad
+    hoc missing 与 stale artifacts，Reader Brief 生成和质量校验均为 OK
+  - 生成 `outputs/reports/report_index_YYYY-MM-DD.html/json`；registry 记录 report_id、title、cadence、owner、audience、command、input/output
+    artifacts、freshness SLA、production_effect、是否进入 Reader Brief / daily task dashboard、fallback
+    status；报告 index 展示最新 artifact、freshness、status、是否影响 production、是否需要人工复核和链接；Reader
+    Brief 只展示摘要和过期/缺失状态；实现时补系统流图、产物目录、schema 和 contract 测试
+  - '2026-05-28: 新增，原因：当前报告和周期任务增长很快，靠 dashboard cards、task register 和 artifact catalog
+    拼上下文的维护成本上升；但该项不应阻塞 Reader Brief 首版。2026-05-28: 从 READY 改为 IN_PROGRESS，原因：开始实现只读
+    report registry / cadence index 首版。2026-05-28: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成
+    registry、report index builder、HTML/JSON artifact、CLI/direct dispatcher、Reader
+    Brief freshness 摘要、系统流图、产物目录和专项测试；验证通过 `tests/test_report_index.py`、`tests/test_reader_brief.py`
+    和 `tests/test_cli_direct.py`。2026-06-09: latest 验证发现 `etf_shadow_candidates` 的
+    `freshness_sla_days` 为 null，先补显式 90 天审计 SLA，并让默认 registry 契约测试与 loader 对缺失或非整数
+    SLA fail closed。2026-06-09: 从 VALIDATING 改为 DONE，原因：最新 `aits reports index --latest`
+    输出 `report_index_2026-06-05.html/json`，状态 `PASS_WITH_WARNINGS`、`production_effect=none`、registry
+    reports=166、required missing=0、production effect risk=0、bad SLA=0；`aits docs report-contract
+    --latest` 为 PASS；`aits reports reader-brief --latest` 和 `aits reports validate-reader-brief
+    --latest` 均为 OK。'
+  docs_links:
+  - docs/requirements/reader_reporting_improvement_plan_2026-05-28.md
+  terminal: true
+  raw_row_sha256: d4fd05ccdb6fbd5f5453b2947f33cc81f974fa2794b5f6558a870893d6d0d1bf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 206b4c14890f55b35ddf5013dc8e132854d77b30c9d5cd6f085ed3ac196e4eed

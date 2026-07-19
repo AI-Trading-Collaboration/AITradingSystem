@@ -1,0 +1,109 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: RISK-010
+  title: null
+  domain: 风险事件/官方候选 AI 模块 triage
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/risk_event_candidate_triage_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/risk_event_candidate_triage_2026-05-10.md`；已实现确定性
+    triage 命令和报告；后续如 owner 真实复核发现 bucket 误判，应新建或重开任务调整关键词/抽样策略
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 提供确定性 triage 命令和报告，读取 `official_policy_source_candidates_YYYY-MM-DD.csv`
+      后输出 `official_policy_candidate_triage_YYYY-MM-DD.csv` 与中文报告；分类必须优先保留 AI/半导体/先进计算/出口管制/相关
+      ticker 的直接命中项，并把无明显 AI 模块联系的 sanctions/geopolitics 候选降为低优先级；输出强制 `production_effect=none`，不得写入正式
+      occurrence、评分或仓位闸门；系统流图、README 和测试同步更新
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1087
+    row_sha256: 3672877f82daad9f640413c42d9e33e65a85f166ac4b0713e848edcc1d39ec32
+    cell_count: 8
+    all_cells:
+    - RISK-010
+    - 风险事件/官方候选 AI 模块 triage
+    - P1
+    - BASELINE_DONE
+    - 系统验证 + 项目 owner
+    - 详细拆解见 `docs/requirements/risk_event_candidate_triage_2026-05-10.md`；已实现确定性 triage
+      命令和报告；后续如 owner 真实复核发现 bucket 误判，应新建或重开任务调整关键词/抽样策略
+    - 提供确定性 triage 命令和报告，读取 `official_policy_source_candidates_YYYY-MM-DD.csv` 后输出
+      `official_policy_candidate_triage_YYYY-MM-DD.csv` 与中文报告；分类必须优先保留 AI/半导体/先进计算/出口管制/相关
+      ticker 的直接命中项，并把无明显 AI 模块联系的 sanctions/geopolitics 候选降为低优先级；输出强制 `production_effect=none`，不得写入正式
+      occurrence、评分或仓位闸门；系统流图、README 和测试同步更新
+    - '2026-05-10: 新增并进入实现，原因：owner 确认“先分类”，关注 AI 模块，无明显联系的官方政策/地缘候选降低复核优先级。2026-05-10:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits risk-events triage-official-candidates`、triage
+      CSV/报告、系统流图、README、需求文档和测试；真实 2026-05-10 官方候选 403 条分类为 must_review=7、review_next=1、sample_review=94、auto_low_relevance=297、duplicate_or_noise=4；验证通过
+      `ruff check src tests`、目标测试 24 passed 和完整 `pytest -q` 436 passed。'
+    raw_line: '|RISK-010|风险事件/官方候选 AI 模块 triage|P1|BASELINE_DONE|系统验证 + 项目 owner|详细拆解见
+      `docs/requirements/risk_event_candidate_triage_2026-05-10.md`；已实现确定性 triage
+      命令和报告；后续如 owner 真实复核发现 bucket 误判，应新建或重开任务调整关键词/抽样策略|提供确定性 triage 命令和报告，读取 `official_policy_source_candidates_YYYY-MM-DD.csv`
+      后输出 `official_policy_candidate_triage_YYYY-MM-DD.csv` 与中文报告；分类必须优先保留 AI/半导体/先进计算/出口管制/相关
+      ticker 的直接命中项，并把无明显 AI 模块联系的 sanctions/geopolitics 候选降为低优先级；输出强制 `production_effect=none`，不得写入正式
+      occurrence、评分或仓位闸门；系统流图、README 和测试同步更新|2026-05-10: 新增并进入实现，原因：owner 确认“先分类”，关注
+      AI 模块，无明显联系的官方政策/地缘候选降低复核优先级。2026-05-10: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      `aits risk-events triage-official-candidates`、triage CSV/报告、系统流图、README、需求文档和测试；真实
+      2026-05-10 官方候选 403 条分类为 must_review=7、review_next=1、sample_review=94、auto_low_relevance=297、duplicate_or_noise=4；验证通过
+      `ruff check src tests`、目标测试 24 passed 和完整 `pytest -q` 436 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3672877f82daad9f640413c4
+  task_id: RISK-010
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-05-10: 新增并进入实现，原因：owner 确认“先分类”，关注 AI 模块，无明显联系的官方政策/地缘候选降低复核优先级。2026-05-10:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits risk-events triage-official-candidates`、triage
+      CSV/报告、系统流图、README、需求文档和测试；真实 2026-05-10 官方候选 403 条分类为 must_review=7、review_next=1、sample_review=94、auto_low_relevance=297、duplicate_or_noise=4；验证通过
+      `ruff check src tests`、目标测试 24 passed 和完整 `pytest -q` 436 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3672877f82daad9f640413c42d9e33e65a85f166ac4b0713e848edcc1d39ec32
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - RISK-010
+  - 风险事件/官方候选 AI 模块 triage
+  - P1
+  - BASELINE_DONE
+  - 系统验证 + 项目 owner
+  - 详细拆解见 `docs/requirements/risk_event_candidate_triage_2026-05-10.md`；已实现确定性 triage
+    命令和报告；后续如 owner 真实复核发现 bucket 误判，应新建或重开任务调整关键词/抽样策略
+  - 提供确定性 triage 命令和报告，读取 `official_policy_source_candidates_YYYY-MM-DD.csv` 后输出 `official_policy_candidate_triage_YYYY-MM-DD.csv`
+    与中文报告；分类必须优先保留 AI/半导体/先进计算/出口管制/相关 ticker 的直接命中项，并把无明显 AI 模块联系的 sanctions/geopolitics
+    候选降为低优先级；输出强制 `production_effect=none`，不得写入正式 occurrence、评分或仓位闸门；系统流图、README 和测试同步更新
+  - '2026-05-10: 新增并进入实现，原因：owner 确认“先分类”，关注 AI 模块，无明显联系的官方政策/地缘候选降低复核优先级。2026-05-10:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits risk-events triage-official-candidates`、triage
+    CSV/报告、系统流图、README、需求文档和测试；真实 2026-05-10 官方候选 403 条分类为 must_review=7、review_next=1、sample_review=94、auto_low_relevance=297、duplicate_or_noise=4；验证通过
+    `ruff check src tests`、目标测试 24 passed 和完整 `pytest -q` 436 passed。'
+  docs_links:
+  - docs/requirements/risk_event_candidate_triage_2026-05-10.md
+  terminal: false
+  raw_row_sha256: 3672877f82daad9f640413c42d9e33e65a85f166ac4b0713e848edcc1d39ec32
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9f649e3388b865cc37f5ea3799e738fc4adcbc21968e80e7e18f1da7d73dfb5f

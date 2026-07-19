@@ -1,0 +1,117 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-014
+  title: null
+  domain: 运行健康/PIT production visibility cutoff
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2026-06-05 最新 production daily-run 的 `ops
+    health` / pipeline health 已通过，PIT freshness、checksum、normalized row count 均 OK，告警
+    0
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits ops health --as-of <latest_completed_us_trading_day>` 对本轮 forward-only
+      PIT 应要求 `available_time <= visibility_cutoff`，而不是要求 `available_time.date <=
+      as_of`；历史 as-of 未进入 production cutoff 时仍按 as-of 严格阻断未来 `available_time`；pipeline
+      health、alerts、daily-run 和 replay 语义不得混淆；相关测试、文档和真实 daily-run 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 355
+    row_sha256: 11ec1547437016e3c58b5cf66c099aa4450714d8ece72b65de3bef729e3377a7
+    cell_count: 8
+    all_cells:
+    - OPS-014
+    - 运行健康/PIT production visibility cutoff
+    - P0
+    - DONE
+    - 系统验证
+    - 2026-06-05 最新 production daily-run 的 `ops health` / pipeline health 已通过，PIT
+      freshness、checksum、normalized row count 均 OK，告警 0
+    - '`aits ops health --as-of <latest_completed_us_trading_day>` 对本轮 forward-only
+      PIT 应要求 `available_time <= visibility_cutoff`，而不是要求 `available_time.date <=
+      as_of`；历史 as-of 未进入 production cutoff 时仍按 as-of 严格阻断未来 `available_time`；pipeline
+      health、alerts、daily-run 和 replay 语义不得混淆；相关测试、文档和真实 daily-run 通过'
+    - '2026-05-13: 新增并进入 VALIDATING，原因：`daily_run:2026-05-11:20260512T164618Z` 已完成评分和
+      dashboard，但 `ops health` 因 PIT latest_available_time=2026-05-12 晚于 as_of=2026-05-11
+      失败；修复后单独 `ops health --as-of 2026-05-11` PASS，真实 `daily-run` 11/11 PASS。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      31/31 PASS，`pipeline_health_2026-06-05.md` 状态 PASS，PIT 相关 health checks OK，`pipeline_health_alerts_2026-06-05.md`
+      告警 0。'
+    raw_line: '|OPS-014|运行健康/PIT production visibility cutoff|P0|DONE|系统验证|2026-06-05
+      最新 production daily-run 的 `ops health` / pipeline health 已通过，PIT freshness、checksum、normalized
+      row count 均 OK，告警 0|`aits ops health --as-of <latest_completed_us_trading_day>`
+      对本轮 forward-only PIT 应要求 `available_time <= visibility_cutoff`，而不是要求 `available_time.date
+      <= as_of`；历史 as-of 未进入 production cutoff 时仍按 as-of 严格阻断未来 `available_time`；pipeline
+      health、alerts、daily-run 和 replay 语义不得混淆；相关测试、文档和真实 daily-run 通过|2026-05-13:
+      新增并进入 VALIDATING，原因：`daily_run:2026-05-11:20260512T164618Z` 已完成评分和 dashboard，但
+      `ops health` 因 PIT latest_available_time=2026-05-12 晚于 as_of=2026-05-11 失败；修复后单独
+      `ops health --as-of 2026-05-11` PASS，真实 `daily-run` 11/11 PASS。2026-06-07: 从
+      VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      31/31 PASS，`pipeline_health_2026-06-05.md` 状态 PASS，PIT 相关 health checks OK，`pipeline_health_alerts_2026-06-05.md`
+      告警 0。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-11ec1547437016e3c58b5cf6
+  task_id: OPS-014
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-13: 新增并进入 VALIDATING，原因：`daily_run:2026-05-11:20260512T164618Z`
+      已完成评分和 dashboard，但 `ops health` 因 PIT latest_available_time=2026-05-12 晚于 as_of=2026-05-11
+      失败；修复后单独 `ops health --as-of 2026-05-11` PASS，真实 `daily-run` 11/11 PASS。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      31/31 PASS，`pipeline_health_2026-06-05.md` 状态 PASS，PIT 相关 health checks OK，`pipeline_health_alerts_2026-06-05.md`
+      告警 0。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:11ec1547437016e3c58b5cf66c099aa4450714d8ece72b65de3bef729e3377a7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-014
+  - 运行健康/PIT production visibility cutoff
+  - P0
+  - DONE
+  - 系统验证
+  - 2026-06-05 最新 production daily-run 的 `ops health` / pipeline health 已通过，PIT freshness、checksum、normalized
+    row count 均 OK，告警 0
+  - '`aits ops health --as-of <latest_completed_us_trading_day>` 对本轮 forward-only
+    PIT 应要求 `available_time <= visibility_cutoff`，而不是要求 `available_time.date <= as_of`；历史
+    as-of 未进入 production cutoff 时仍按 as-of 严格阻断未来 `available_time`；pipeline health、alerts、daily-run
+    和 replay 语义不得混淆；相关测试、文档和真实 daily-run 通过'
+  - '2026-05-13: 新增并进入 VALIDATING，原因：`daily_run:2026-05-11:20260512T164618Z` 已完成评分和
+    dashboard，但 `ops health` 因 PIT latest_available_time=2026-05-12 晚于 as_of=2026-05-11
+    失败；修复后单独 `ops health --as-of 2026-05-11` PASS，真实 `daily-run` 11/11 PASS。2026-06-07:
+    从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+    31/31 PASS，`pipeline_health_2026-06-05.md` 状态 PASS，PIT 相关 health checks OK，`pipeline_health_alerts_2026-06-05.md`
+    告警 0。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: 11ec1547437016e3c58b5cf66c099aa4450714d8ece72b65de3bef729e3377a7
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7621e1c8eb454ba0ada341570cc480faad1e065276f324d3497b3733ffda7285

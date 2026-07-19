@@ -1,0 +1,165 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2369_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN
+  title: null
+  domain: Strategy research / execution semantics / research-only shadow observation
+    dry-run
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2370 research-only shadow observation replay no-side-effect
+    validation route
+  requirement_refs:
+  - docs/requirements/TRADING-2369_Dynamic_Strategy_Research_Only_Shadow_Observation_Dry_Run.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2369_Dynamic_Strategy_Research_Only_Shadow_Observation_Dry_Run.md`；承接
+    TRADING-2368 protocol `READY` 结论。本任务已完成 `dynamic_regime_overlay_v0_4_lower_turnover`
+    的 research-only observation dry-run record、static baseline / ranking top / robustness
+    top comparison、review flag 和 no-side-effect evidence；后续只能进入 `TRADING-2370_Dynamic_Strategy_Research_Only_Shadow_Observation_Replay_No_Side_Effect_Validation`
+    或 owner review，不得直接启用 scheduler、paper-shadow execution、paper trade、shadow position、production
+    或 broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-research-only-shadow-observation-dry-run`；生成
+      `observation_dry_run_result.json`、`observation_dry_run_record.json`、`no_side_effect_evidence.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN_READY`，observation_mode=`RESEARCH_ONLY_DRY_RUN`，primary_observation_candidate=`dynamic_regime_overlay_v0_4_lower_turnover`，ranking_top_from_2365=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，robustness_top_from_2366=`dynamic_regime_overlay_v0_4_lower_turnover`，observation_decision=`OWNER_REVIEW_REQUIRED`，owner_review_required=true，data_quality_gate_executed=false，data_quality_gate_reason=`NOT_APPLICABLE_PRIOR_ARTIFACT_DRY_RUN_ONLY_NO_FRESH_MARKET_DATA`，next
+      route=`TRADING-2370_Dynamic_Strategy_Research_Only_Shadow_Observation_Replay_No_Side_Effect_Validation`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 118
+    row_sha256: 61a9b4c64e13ea65c8a22dc3b42e120443d3815b26d7c2bcb56021ad39a0e1e6
+    cell_count: 8
+    all_cells:
+    - TRADING-2369_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN
+    - Strategy research / execution semantics / research-only shadow observation dry-run
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2370 research-only shadow observation replay no-side-effect
+      validation route
+    - 详见 `docs/requirements/TRADING-2369_Dynamic_Strategy_Research_Only_Shadow_Observation_Dry_Run.md`；承接
+      TRADING-2368 protocol `READY` 结论。本任务已完成 `dynamic_regime_overlay_v0_4_lower_turnover`
+      的 research-only observation dry-run record、static baseline / ranking top / robustness
+      top comparison、review flag 和 no-side-effect evidence；后续只能进入 `TRADING-2370_Dynamic_Strategy_Research_Only_Shadow_Observation_Replay_No_Side_Effect_Validation`
+      或 owner review，不得直接启用 scheduler、paper-shadow execution、paper trade、shadow position、production
+      或 broker。
+    - 新增 `aits research strategies dynamic-strategy-research-only-shadow-observation-dry-run`；生成
+      `observation_dry_run_result.json`、`observation_dry_run_record.json`、`no_side_effect_evidence.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN_READY`，observation_mode=`RESEARCH_ONLY_DRY_RUN`，primary_observation_candidate=`dynamic_regime_overlay_v0_4_lower_turnover`，ranking_top_from_2365=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，robustness_top_from_2366=`dynamic_regime_overlay_v0_4_lower_turnover`，observation_decision=`OWNER_REVIEW_REQUIRED`，owner_review_required=true，data_quality_gate_executed=false，data_quality_gate_reason=`NOT_APPLICABLE_PRIOR_ARTIFACT_DRY_RUN_ONLY_NO_FRESH_MARKET_DATA`，next
+      route=`TRADING-2370_Dynamic_Strategy_Research_Only_Shadow_Observation_Replay_No_Side_Effect_Validation`。
+    - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；这是 strategy research dry-run task，不是
+      scheduler / execution / paper-shadow / trading task。2026-07-05: 实现完成并归档 DONE；验证通过
+      full Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、adjacent
+      execution semantics parallel pytest 3 passed、真实 CLI run、docs freshness PASS、documentation
+      contract PASS、task-register consistency run/validate PASS、contract-validation
+      197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T112237Z/test_runtime_summary.json`）和
+      `git diff --check`。本任务未重跑 `aits validate-data`，因为只读取 prior validated TRADING-2365
+      / TRADING-2366 / TRADING-2367 / TRADING-2368 artifacts，不读取 fresh cached market
+      data、不运行新 backtest、不生成 technical features、scoring、daily report 或交易建议。Scheduler、scheduled
+      task、event append、historical event log mutation、outcome binding、outcome store
+      mutation、paper-shadow execution、paper trade、shadow position、production、daily
+      report、broker/order 全部保持 disabled / false / none。'
+    raw_line: '|TRADING-2369_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN|Strategy
+      research / execution semantics / research-only shadow observation dry-run|P0|DONE|项目
+      owner 后续复核 TRADING-2370 research-only shadow observation replay no-side-effect
+      validation route|详见 `docs/requirements/TRADING-2369_Dynamic_Strategy_Research_Only_Shadow_Observation_Dry_Run.md`；承接
+      TRADING-2368 protocol `READY` 结论。本任务已完成 `dynamic_regime_overlay_v0_4_lower_turnover`
+      的 research-only observation dry-run record、static baseline / ranking top / robustness
+      top comparison、review flag 和 no-side-effect evidence；后续只能进入 `TRADING-2370_Dynamic_Strategy_Research_Only_Shadow_Observation_Replay_No_Side_Effect_Validation`
+      或 owner review，不得直接启用 scheduler、paper-shadow execution、paper trade、shadow position、production
+      或 broker。|新增 `aits research strategies dynamic-strategy-research-only-shadow-observation-dry-run`；生成
+      `observation_dry_run_result.json`、`observation_dry_run_record.json`、`no_side_effect_evidence.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN_READY`，observation_mode=`RESEARCH_ONLY_DRY_RUN`，primary_observation_candidate=`dynamic_regime_overlay_v0_4_lower_turnover`，ranking_top_from_2365=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，robustness_top_from_2366=`dynamic_regime_overlay_v0_4_lower_turnover`，observation_decision=`OWNER_REVIEW_REQUIRED`，owner_review_required=true，data_quality_gate_executed=false，data_quality_gate_reason=`NOT_APPLICABLE_PRIOR_ARTIFACT_DRY_RUN_ONLY_NO_FRESH_MARKET_DATA`，next
+      route=`TRADING-2370_Dynamic_Strategy_Research_Only_Shadow_Observation_Replay_No_Side_Effect_Validation`。|2026-07-05:
+      根据 owner 附件新增并进入 IN_PROGRESS；这是 strategy research dry-run task，不是 scheduler
+      / execution / paper-shadow / trading task。2026-07-05: 实现完成并归档 DONE；验证通过 full
+      Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、adjacent execution
+      semantics parallel pytest 3 passed、真实 CLI run、docs freshness PASS、documentation
+      contract PASS、task-register consistency run/validate PASS、contract-validation
+      197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T112237Z/test_runtime_summary.json`）和
+      `git diff --check`。本任务未重跑 `aits validate-data`，因为只读取 prior validated TRADING-2365
+      / TRADING-2366 / TRADING-2367 / TRADING-2368 artifacts，不读取 fresh cached market
+      data、不运行新 backtest、不生成 technical features、scoring、daily report 或交易建议。Scheduler、scheduled
+      task、event append、historical event log mutation、outcome binding、outcome store
+      mutation、paper-shadow execution、paper trade、shadow position、production、daily
+      report、broker/order 全部保持 disabled / false / none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-61a9b4c64e13ea65c8a22dc3
+  task_id: TRADING-2369_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2370 research-only shadow observation replay
+      no-side-effect validation route
+    notes: '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；这是 strategy research dry-run
+      task，不是 scheduler / execution / paper-shadow / trading task。2026-07-05: 实现完成并归档
+      DONE；验证通过 full Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、adjacent
+      execution semantics parallel pytest 3 passed、真实 CLI run、docs freshness PASS、documentation
+      contract PASS、task-register consistency run/validate PASS、contract-validation
+      197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T112237Z/test_runtime_summary.json`）和
+      `git diff --check`。本任务未重跑 `aits validate-data`，因为只读取 prior validated TRADING-2365
+      / TRADING-2366 / TRADING-2367 / TRADING-2368 artifacts，不读取 fresh cached market
+      data、不运行新 backtest、不生成 technical features、scoring、daily report 或交易建议。Scheduler、scheduled
+      task、event append、historical event log mutation、outcome binding、outcome store
+      mutation、paper-shadow execution、paper trade、shadow position、production、daily
+      report、broker/order 全部保持 disabled / false / none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:61a9b4c64e13ea65c8a22dc3b42e120443d3815b26d7c2bcb56021ad39a0e1e6
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2369_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN
+  - Strategy research / execution semantics / research-only shadow observation dry-run
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2370 research-only shadow observation replay no-side-effect
+    validation route
+  - 详见 `docs/requirements/TRADING-2369_Dynamic_Strategy_Research_Only_Shadow_Observation_Dry_Run.md`；承接
+    TRADING-2368 protocol `READY` 结论。本任务已完成 `dynamic_regime_overlay_v0_4_lower_turnover`
+    的 research-only observation dry-run record、static baseline / ranking top / robustness
+    top comparison、review flag 和 no-side-effect evidence；后续只能进入 `TRADING-2370_Dynamic_Strategy_Research_Only_Shadow_Observation_Replay_No_Side_Effect_Validation`
+    或 owner review，不得直接启用 scheduler、paper-shadow execution、paper trade、shadow position、production
+    或 broker。
+  - 新增 `aits research strategies dynamic-strategy-research-only-shadow-observation-dry-run`；生成
+    `observation_dry_run_result.json`、`observation_dry_run_record.json`、`no_side_effect_evidence.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN_READY`，observation_mode=`RESEARCH_ONLY_DRY_RUN`，primary_observation_candidate=`dynamic_regime_overlay_v0_4_lower_turnover`，ranking_top_from_2365=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，robustness_top_from_2366=`dynamic_regime_overlay_v0_4_lower_turnover`，observation_decision=`OWNER_REVIEW_REQUIRED`，owner_review_required=true，data_quality_gate_executed=false，data_quality_gate_reason=`NOT_APPLICABLE_PRIOR_ARTIFACT_DRY_RUN_ONLY_NO_FRESH_MARKET_DATA`，next
+    route=`TRADING-2370_Dynamic_Strategy_Research_Only_Shadow_Observation_Replay_No_Side_Effect_Validation`。
+  - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；这是 strategy research dry-run task，不是
+    scheduler / execution / paper-shadow / trading task。2026-07-05: 实现完成并归档 DONE；验证通过
+    full Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、adjacent
+    execution semantics parallel pytest 3 passed、真实 CLI run、docs freshness PASS、documentation
+    contract PASS、task-register consistency run/validate PASS、contract-validation
+    197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T112237Z/test_runtime_summary.json`）和
+    `git diff --check`。本任务未重跑 `aits validate-data`，因为只读取 prior validated TRADING-2365
+    / TRADING-2366 / TRADING-2367 / TRADING-2368 artifacts，不读取 fresh cached market
+    data、不运行新 backtest、不生成 technical features、scoring、daily report 或交易建议。Scheduler、scheduled
+    task、event append、historical event log mutation、outcome binding、outcome store
+    mutation、paper-shadow execution、paper trade、shadow position、production、daily report、broker/order
+    全部保持 disabled / false / none。'
+  docs_links:
+  - docs/requirements/TRADING-2369_Dynamic_Strategy_Research_Only_Shadow_Observation_Dry_Run.md
+  terminal: true
+  raw_row_sha256: 61a9b4c64e13ea65c8a22dc3b42e120443d3815b26d7c2bcb56021ad39a0e1e6
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 49acae8c99945898030c3cf6d5120f03f7565927df6eb0d6f1b73d27cfea07c5

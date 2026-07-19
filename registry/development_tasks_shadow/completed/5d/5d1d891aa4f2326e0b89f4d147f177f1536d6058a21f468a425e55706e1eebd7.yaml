@@ -1,0 +1,123 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-013
+  title: null
+  domain: 运行架构/daily-run direct dispatcher
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2026-06-05 最新 production daily-run 已验证
+    direct dispatcher 的 `score-daily` 映射未再因 CLI 签名漂移阻断
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`.venv\\Scripts\\python.exe -m ai_trading_system.cli_direct score-daily
+      ...` 必须把 `--risk-event-openai-precheck/--skip-risk-event-openai-precheck` 正确映射到当前
+      `score_daily(risk_event_openai_precheck=...)`；daily-run 不得因 direct dispatcher
+      与主 CLI 签名漂移阻断；目标单测、ruff、`git diff --check` 和真实 daily-run 复测通过或报告新的真实门禁原因'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 356
+    row_sha256: ebed2f9cbf812c9aa1f174a7009e0c670732fa2aa462842d0f67ec1fdabf1cdf
+    cell_count: 8
+    all_cells:
+    - OPS-013
+    - 运行架构/daily-run direct dispatcher
+    - P0
+    - DONE
+    - 系统验证
+    - 2026-06-05 最新 production daily-run 已验证 direct dispatcher 的 `score-daily` 映射未再因
+      CLI 签名漂移阻断
+    - '`.venv\\Scripts\\python.exe -m ai_trading_system.cli_direct score-daily ...`
+      必须把 `--risk-event-openai-precheck/--skip-risk-event-openai-precheck` 正确映射到当前
+      `score_daily(risk_event_openai_precheck=...)`；daily-run 不得因 direct dispatcher
+      与主 CLI 签名漂移阻断；目标单测、ruff、`git diff --check` 和真实 daily-run 复测通过或报告新的真实门禁原因'
+    - '2026-05-13: 新增并进入 IN_PROGRESS，原因：修复 FRED 无响应重试后，真实 `daily-run` 的 `score_daily`
+      子步骤失败于 `TypeError: score_daily() got an unexpected keyword argument ''skip_risk_event_openai_precheck''`，属于
+      daily-run 入口 wiring bug。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：`cli_direct`
+      已改为传 `risk_event_openai_precheck=not --skip-risk-event-openai-precheck`；新增 direct
+      dispatcher 单测；真实 `daily-run` 已越过 `score_daily` 并最终 11/11 PASS。2026-06-07: 从
+      VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      中 `score_daily` step PASS，命令包含 OpenAI precheck profile 与显式 visibility cutoff，未出现
+      direct dispatcher signature drift。'
+    raw_line: '|OPS-013|运行架构/daily-run direct dispatcher|P0|DONE|系统验证|2026-06-05 最新
+      production daily-run 已验证 direct dispatcher 的 `score-daily` 映射未再因 CLI 签名漂移阻断|`.venv\\Scripts\\python.exe
+      -m ai_trading_system.cli_direct score-daily ...` 必须把 `--risk-event-openai-precheck/--skip-risk-event-openai-precheck`
+      正确映射到当前 `score_daily(risk_event_openai_precheck=...)`；daily-run 不得因 direct dispatcher
+      与主 CLI 签名漂移阻断；目标单测、ruff、`git diff --check` 和真实 daily-run 复测通过或报告新的真实门禁原因|2026-05-13:
+      新增并进入 IN_PROGRESS，原因：修复 FRED 无响应重试后，真实 `daily-run` 的 `score_daily` 子步骤失败于 `TypeError:
+      score_daily() got an unexpected keyword argument ''skip_risk_event_openai_precheck''`，属于
+      daily-run 入口 wiring bug。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：`cli_direct`
+      已改为传 `risk_event_openai_precheck=not --skip-risk-event-openai-precheck`；新增 direct
+      dispatcher 单测；真实 `daily-run` 已越过 `score_daily` 并最终 11/11 PASS。2026-06-07: 从
+      VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      中 `score_daily` step PASS，命令包含 OpenAI precheck profile 与显式 visibility cutoff，未出现
+      direct dispatcher signature drift。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ebed2f9cbf812c9aa1f174a7
+  task_id: OPS-013
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-13: 新增并进入 IN_PROGRESS，原因：修复 FRED 无响应重试后，真实 `daily-run` 的 `score_daily`
+      子步骤失败于 `TypeError: score_daily() got an unexpected keyword argument ''skip_risk_event_openai_precheck''`，属于
+      daily-run 入口 wiring bug。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：`cli_direct`
+      已改为传 `risk_event_openai_precheck=not --skip-risk-event-openai-precheck`；新增 direct
+      dispatcher 单测；真实 `daily-run` 已越过 `score_daily` 并最终 11/11 PASS。2026-06-07: 从
+      VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      中 `score_daily` step PASS，命令包含 OpenAI precheck profile 与显式 visibility cutoff，未出现
+      direct dispatcher signature drift。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ebed2f9cbf812c9aa1f174a7009e0c670732fa2aa462842d0f67ec1fdabf1cdf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-013
+  - 运行架构/daily-run direct dispatcher
+  - P0
+  - DONE
+  - 系统验证
+  - 2026-06-05 最新 production daily-run 已验证 direct dispatcher 的 `score-daily` 映射未再因
+    CLI 签名漂移阻断
+  - '`.venv\\Scripts\\python.exe -m ai_trading_system.cli_direct score-daily ...`
+    必须把 `--risk-event-openai-precheck/--skip-risk-event-openai-precheck` 正确映射到当前 `score_daily(risk_event_openai_precheck=...)`；daily-run
+    不得因 direct dispatcher 与主 CLI 签名漂移阻断；目标单测、ruff、`git diff --check` 和真实 daily-run
+    复测通过或报告新的真实门禁原因'
+  - '2026-05-13: 新增并进入 IN_PROGRESS，原因：修复 FRED 无响应重试后，真实 `daily-run` 的 `score_daily`
+    子步骤失败于 `TypeError: score_daily() got an unexpected keyword argument ''skip_risk_event_openai_precheck''`，属于
+    daily-run 入口 wiring bug。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：`cli_direct`
+    已改为传 `risk_event_openai_precheck=not --skip-risk-event-openai-precheck`；新增 direct
+    dispatcher 单测；真实 `daily-run` 已越过 `score_daily` 并最终 11/11 PASS。2026-06-07: 从 VALIDATING
+    改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+    中 `score_daily` step PASS，命令包含 OpenAI precheck profile 与显式 visibility cutoff，未出现
+    direct dispatcher signature drift。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: ebed2f9cbf812c9aa1f174a7009e0c670732fa2aa462842d0f67ec1fdabf1cdf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d8de7fd026944f5b65cdfd56defd9f7b6a3709441115c751bbc7c4e08aaf1d77

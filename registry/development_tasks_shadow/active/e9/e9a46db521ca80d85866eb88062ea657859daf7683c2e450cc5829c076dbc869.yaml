@@ -1,0 +1,144 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2293_SCOPE_NARROWED_FORWARD_OBSERVE_READINESS_REVIEW
+  title: null
+  domain: Research trends / scope-narrowed forward observe readiness review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review.md`；依赖
+    TRADING-2292 scope-narrowed actual-path validation outputs、TRADING-2291 risk-cap
+    scope-narrowed generator artifacts、TRADING-2290 scope review outputs 和 validated
+    carry-forward safety context。本批只做 readiness review 和 observe-only evidence collection
+    design，不启动 runtime、不接日报生产链路、不生成 owner review package、不做 paper-shadow/production/broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends scope-narrowed-forward-observe-readiness-review`；生成
+      readiness summary、candidate readiness matrix、gate checklist、evidence collection
+      spec、daily/weekly report contract、stop/continue rules、operational boundary、risk-cap
+      metric spec、trigger interpretation spec、rejected/archived carry-forward matrix、next-task
+      recommendation 和 research docs；input/output safety gates fail closed；所有 outputs
+      固定 promotion/paper-shadow/production/broker false/none、`forward_observe_started=false`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1228
+    row_sha256: 2d55c3b91b2d9e213f7022844d69949f3c12ff5d02463389146eaf28acbebd7f
+    cell_count: 8
+    all_cells:
+    - TRADING-2293_SCOPE_NARROWED_FORWARD_OBSERVE_READINESS_REVIEW
+    - Research trends / scope-narrowed forward observe readiness review
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review.md`；依赖
+      TRADING-2292 scope-narrowed actual-path validation outputs、TRADING-2291 risk-cap
+      scope-narrowed generator artifacts、TRADING-2290 scope review outputs 和 validated
+      carry-forward safety context。本批只做 readiness review 和 observe-only evidence collection
+      design，不启动 runtime、不接日报生产链路、不生成 owner review package、不做 paper-shadow/production/broker。
+    - 新增 `aits research trends scope-narrowed-forward-observe-readiness-review`；生成
+      readiness summary、candidate readiness matrix、gate checklist、evidence collection
+      spec、daily/weekly report contract、stop/continue rules、operational boundary、risk-cap
+      metric spec、trigger interpretation spec、rejected/archived carry-forward matrix、next-task
+      recommendation 和 research docs；input/output safety gates fail closed；所有 outputs
+      固定 promotion/paper-shadow/production/broker false/none、`forward_observe_started=false`。
+    - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；pre-flight 已确认 worktree 中存在 TRADING-1087
+      / ops / docs 相关既有未提交改动，TRADING-2293 必须 selective staging 且最终 commit 不纳入这些无关改动。2026-06-30:
+      实现完成并转入 VALIDATING；真实 run readiness gate=`FORWARD_OBSERVE_READY_WITH_WARNINGS`，warnings=`DATA_QUALITY_PASS_WITH_WARNINGS`
+      / `TRIGGER_DIRECTION_SAMPLE_SPARSE`，next task=`TRADING-2294_Evidence_Accumulation_Extension_Plan`；验证通过
+      Ruff、compileall、focused parallel pytest 30 passed、full parallel pytest 3742
+      passed、docs freshness、report contract、contract-validation 193 passed、task-register
+      consistency run/validate 和 `git diff --check`。'
+    raw_line: '|TRADING-2293_SCOPE_NARROWED_FORWARD_OBSERVE_READINESS_REVIEW|Research
+      trends / scope-narrowed forward observe readiness review|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review.md`；依赖
+      TRADING-2292 scope-narrowed actual-path validation outputs、TRADING-2291 risk-cap
+      scope-narrowed generator artifacts、TRADING-2290 scope review outputs 和 validated
+      carry-forward safety context。本批只做 readiness review 和 observe-only evidence collection
+      design，不启动 runtime、不接日报生产链路、不生成 owner review package、不做 paper-shadow/production/broker。|新增
+      `aits research trends scope-narrowed-forward-observe-readiness-review`；生成 readiness
+      summary、candidate readiness matrix、gate checklist、evidence collection spec、daily/weekly
+      report contract、stop/continue rules、operational boundary、risk-cap metric spec、trigger
+      interpretation spec、rejected/archived carry-forward matrix、next-task recommendation
+      和 research docs；input/output safety gates fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker
+      false/none、`forward_observe_started=false`。|2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；pre-flight
+      已确认 worktree 中存在 TRADING-1087 / ops / docs 相关既有未提交改动，TRADING-2293 必须 selective
+      staging 且最终 commit 不纳入这些无关改动。2026-06-30: 实现完成并转入 VALIDATING；真实 run readiness
+      gate=`FORWARD_OBSERVE_READY_WITH_WARNINGS`，warnings=`DATA_QUALITY_PASS_WITH_WARNINGS`
+      / `TRIGGER_DIRECTION_SAMPLE_SPARSE`，next task=`TRADING-2294_Evidence_Accumulation_Extension_Plan`；验证通过
+      Ruff、compileall、focused parallel pytest 30 passed、full parallel pytest 3742
+      passed、docs freshness、report contract、contract-validation 193 passed、task-register
+      consistency run/validate 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2d55c3b91b2d9e213f702284
+  task_id: TRADING-2293_SCOPE_NARROWED_FORWARD_OBSERVE_READINESS_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；pre-flight 已确认 worktree 中存在 TRADING-1087
+      / ops / docs 相关既有未提交改动，TRADING-2293 必须 selective staging 且最终 commit 不纳入这些无关改动。2026-06-30:
+      实现完成并转入 VALIDATING；真实 run readiness gate=`FORWARD_OBSERVE_READY_WITH_WARNINGS`，warnings=`DATA_QUALITY_PASS_WITH_WARNINGS`
+      / `TRIGGER_DIRECTION_SAMPLE_SPARSE`，next task=`TRADING-2294_Evidence_Accumulation_Extension_Plan`；验证通过
+      Ruff、compileall、focused parallel pytest 30 passed、full parallel pytest 3742
+      passed、docs freshness、report contract、contract-validation 193 passed、task-register
+      consistency run/validate 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:2d55c3b91b2d9e213f7022844d69949f3c12ff5d02463389146eaf28acbebd7f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2293_SCOPE_NARROWED_FORWARD_OBSERVE_READINESS_REVIEW
+  - Research trends / scope-narrowed forward observe readiness review
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review.md`；依赖
+    TRADING-2292 scope-narrowed actual-path validation outputs、TRADING-2291 risk-cap
+    scope-narrowed generator artifacts、TRADING-2290 scope review outputs 和 validated
+    carry-forward safety context。本批只做 readiness review 和 observe-only evidence collection
+    design，不启动 runtime、不接日报生产链路、不生成 owner review package、不做 paper-shadow/production/broker。
+  - 新增 `aits research trends scope-narrowed-forward-observe-readiness-review`；生成 readiness
+    summary、candidate readiness matrix、gate checklist、evidence collection spec、daily/weekly
+    report contract、stop/continue rules、operational boundary、risk-cap metric spec、trigger
+    interpretation spec、rejected/archived carry-forward matrix、next-task recommendation
+    和 research docs；input/output safety gates fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker
+    false/none、`forward_observe_started=false`。
+  - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；pre-flight 已确认 worktree 中存在 TRADING-1087
+    / ops / docs 相关既有未提交改动，TRADING-2293 必须 selective staging 且最终 commit 不纳入这些无关改动。2026-06-30:
+    实现完成并转入 VALIDATING；真实 run readiness gate=`FORWARD_OBSERVE_READY_WITH_WARNINGS`，warnings=`DATA_QUALITY_PASS_WITH_WARNINGS`
+    / `TRIGGER_DIRECTION_SAMPLE_SPARSE`，next task=`TRADING-2294_Evidence_Accumulation_Extension_Plan`；验证通过
+    Ruff、compileall、focused parallel pytest 30 passed、full parallel pytest 3742 passed、docs
+    freshness、report contract、contract-validation 193 passed、task-register consistency
+    run/validate 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review.md
+  terminal: false
+  raw_row_sha256: 2d55c3b91b2d9e213f7022844d69949f3c12ff5d02463389146eaf28acbebd7f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 1a6319fb71fc2d5a03dfbdb6af2a9f1baaccb9de7e3b4371591619f76b40f262

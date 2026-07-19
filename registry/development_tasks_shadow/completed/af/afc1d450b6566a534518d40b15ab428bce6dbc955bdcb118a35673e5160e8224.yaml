@@ -1,0 +1,177 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-381_EXTENDED_SHADOW_PROTOCOL
+  title: null
+  domain: Research governance / extended paper-shadow protocol
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核真实 blocker；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-381_Extended_Shadow_Protocol.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-381_Extended_Shadow_Protocol.md`；建立
+    extended shadow protocol eligibility report，要求 no blocking stale data、no unresolved
+    safety warnings、stable weekly review coverage、acceptable cost sensitivity、benchmark
+    comparison available、owner review complete、lineage graph available 和满足最低观察期；本任务不得推进
+    live trading、official allocation、production state、broker/order 或 candidate state
+    mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/extended_shadow_protocol.py`、`aits reports
+      extended-shadow-protocol`、`aits reports validate-extended-shadow-protocol`、eligibility
+      checklist、minimum observation period disclosure、blocking reasons、JSON/Markdown
+      report、validation artifact、Reader Brief section、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；所有输出固定 `production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 214
+    row_sha256: e7691fdd7f114a5418b848eac92201eb20f1b531c3fb81426daff2fde06aa3cf
+    cell_count: 8
+    all_cells:
+    - TRADING-381_EXTENDED_SHADOW_PROTOCOL
+    - Research governance / extended paper-shadow protocol
+    - P1
+    - DONE
+    - 项目 owner 后续复核真实 blocker；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-381_Extended_Shadow_Protocol.md`；建立 extended
+      shadow protocol eligibility report，要求 no blocking stale data、no unresolved safety
+      warnings、stable weekly review coverage、acceptable cost sensitivity、benchmark
+      comparison available、owner review complete、lineage graph available 和满足最低观察期；本任务不得推进
+      live trading、official allocation、production state、broker/order 或 candidate state
+      mutation
+    - 新增 `src/ai_trading_system/reports/extended_shadow_protocol.py`、`aits reports
+      extended-shadow-protocol`、`aits reports validate-extended-shadow-protocol`、eligibility
+      checklist、minimum observation period disclosure、blocking reasons、JSON/Markdown
+      report、validation artifact、Reader Brief section、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；所有输出固定 `production_effect=none`
+    - '2026-06-16: DONE；真实 2026-06-16 protocol `outputs/reports/extended_shadow_protocol_2026-06-16.json/md`
+      输出 `EXTENDED_SHADOW_BLOCKED`、candidate=`median_plus_regime_mismatch_filter`、observed/minimum
+      days=`0/20`、checks=10、passed=2、blocked=7、warnings=1、readiness=`BLOCKED_STALE_DATA`、safety=`SAFETY_PASS_WITH_WARNINGS`、owner
+      decision=`AUDIT_LOG_EMPTY`、lineage=`PASS`；blockers 来自 promotion board `HOLD_FOR_MORE_DATA`、readiness
+      stale data、unresolved safety warnings、cost sensitivity insufficient inputs、benchmark
+      baseline insufficient metrics、owner decision audit log empty 和 minimum observation
+      period 0/20；未补造 observation days、owner decision 或 metrics。Validation `outputs/reports/extended_shadow_protocol_validation_2026-06-16.json/md`
+      输出 `PASS_WITH_WARNINGS`、checks=7、failed=0、source blockers=7、source warnings=1；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=402 / missing=20 / stale=10 / waived=30
+      / unwaived=0；documentation contract PASS；Reader Brief latest 使用 2026-06-15 decision
+      snapshot + 2026-06-16 report index 展示 extended shadow section，Reader Brief quality
+      OK / failed=0；focused pytest 36 passed，Ruff PASS，compileall PASS。精确 2026-06-16
+      Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no upstream rerun / no data refresh
+      / no observation/owner/metrics fabrication / no candidate, paper-shadow or production
+      mutation / no official target / no broker / no order ticket。'
+    raw_line: '|TRADING-381_EXTENDED_SHADOW_PROTOCOL|Research governance / extended
+      paper-shadow protocol|P1|DONE|项目 owner 后续复核真实 blocker；代码实现完成|详细拆解见 `docs/requirements/TRADING-381_Extended_Shadow_Protocol.md`；建立
+      extended shadow protocol eligibility report，要求 no blocking stale data、no unresolved
+      safety warnings、stable weekly review coverage、acceptable cost sensitivity、benchmark
+      comparison available、owner review complete、lineage graph available 和满足最低观察期；本任务不得推进
+      live trading、official allocation、production state、broker/order 或 candidate state
+      mutation|新增 `src/ai_trading_system/reports/extended_shadow_protocol.py`、`aits
+      reports extended-shadow-protocol`、`aits reports validate-extended-shadow-protocol`、eligibility
+      checklist、minimum observation period disclosure、blocking reasons、JSON/Markdown
+      report、validation artifact、Reader Brief section、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；所有输出固定 `production_effect=none`|2026-06-16:
+      DONE；真实 2026-06-16 protocol `outputs/reports/extended_shadow_protocol_2026-06-16.json/md`
+      输出 `EXTENDED_SHADOW_BLOCKED`、candidate=`median_plus_regime_mismatch_filter`、observed/minimum
+      days=`0/20`、checks=10、passed=2、blocked=7、warnings=1、readiness=`BLOCKED_STALE_DATA`、safety=`SAFETY_PASS_WITH_WARNINGS`、owner
+      decision=`AUDIT_LOG_EMPTY`、lineage=`PASS`；blockers 来自 promotion board `HOLD_FOR_MORE_DATA`、readiness
+      stale data、unresolved safety warnings、cost sensitivity insufficient inputs、benchmark
+      baseline insufficient metrics、owner decision audit log empty 和 minimum observation
+      period 0/20；未补造 observation days、owner decision 或 metrics。Validation `outputs/reports/extended_shadow_protocol_validation_2026-06-16.json/md`
+      输出 `PASS_WITH_WARNINGS`、checks=7、failed=0、source blockers=7、source warnings=1；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=402 / missing=20 / stale=10 / waived=30
+      / unwaived=0；documentation contract PASS；Reader Brief latest 使用 2026-06-15 decision
+      snapshot + 2026-06-16 report index 展示 extended shadow section，Reader Brief quality
+      OK / failed=0；focused pytest 36 passed，Ruff PASS，compileall PASS。精确 2026-06-16
+      Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no upstream rerun / no data refresh
+      / no observation/owner/metrics fabrication / no candidate, paper-shadow or production
+      mutation / no official target / no broker / no order ticket。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e7691fdd7f114a5418b848ea
+  task_id: TRADING-381_EXTENDED_SHADOW_PROTOCOL
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核真实 blocker；代码实现完成
+    notes: '2026-06-16: DONE；真实 2026-06-16 protocol `outputs/reports/extended_shadow_protocol_2026-06-16.json/md`
+      输出 `EXTENDED_SHADOW_BLOCKED`、candidate=`median_plus_regime_mismatch_filter`、observed/minimum
+      days=`0/20`、checks=10、passed=2、blocked=7、warnings=1、readiness=`BLOCKED_STALE_DATA`、safety=`SAFETY_PASS_WITH_WARNINGS`、owner
+      decision=`AUDIT_LOG_EMPTY`、lineage=`PASS`；blockers 来自 promotion board `HOLD_FOR_MORE_DATA`、readiness
+      stale data、unresolved safety warnings、cost sensitivity insufficient inputs、benchmark
+      baseline insufficient metrics、owner decision audit log empty 和 minimum observation
+      period 0/20；未补造 observation days、owner decision 或 metrics。Validation `outputs/reports/extended_shadow_protocol_validation_2026-06-16.json/md`
+      输出 `PASS_WITH_WARNINGS`、checks=7、failed=0、source blockers=7、source warnings=1；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=402 / missing=20 / stale=10 / waived=30
+      / unwaived=0；documentation contract PASS；Reader Brief latest 使用 2026-06-15 decision
+      snapshot + 2026-06-16 report index 展示 extended shadow section，Reader Brief quality
+      OK / failed=0；focused pytest 36 passed，Ruff PASS，compileall PASS。精确 2026-06-16
+      Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no upstream rerun / no data refresh
+      / no observation/owner/metrics fabrication / no candidate, paper-shadow or production
+      mutation / no official target / no broker / no order ticket。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e7691fdd7f114a5418b848eac92201eb20f1b531c3fb81426daff2fde06aa3cf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-381_EXTENDED_SHADOW_PROTOCOL
+  - Research governance / extended paper-shadow protocol
+  - P1
+  - DONE
+  - 项目 owner 后续复核真实 blocker；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-381_Extended_Shadow_Protocol.md`；建立 extended
+    shadow protocol eligibility report，要求 no blocking stale data、no unresolved safety
+    warnings、stable weekly review coverage、acceptable cost sensitivity、benchmark comparison
+    available、owner review complete、lineage graph available 和满足最低观察期；本任务不得推进 live
+    trading、official allocation、production state、broker/order 或 candidate state mutation
+  - 新增 `src/ai_trading_system/reports/extended_shadow_protocol.py`、`aits reports extended-shadow-protocol`、`aits
+    reports validate-extended-shadow-protocol`、eligibility checklist、minimum observation
+    period disclosure、blocking reasons、JSON/Markdown report、validation artifact、Reader
+    Brief section、report registry、artifact catalog、README、system flow、operations runbook、requirements
+    和 focused tests；所有输出固定 `production_effect=none`
+  - '2026-06-16: DONE；真实 2026-06-16 protocol `outputs/reports/extended_shadow_protocol_2026-06-16.json/md`
+    输出 `EXTENDED_SHADOW_BLOCKED`、candidate=`median_plus_regime_mismatch_filter`、observed/minimum
+    days=`0/20`、checks=10、passed=2、blocked=7、warnings=1、readiness=`BLOCKED_STALE_DATA`、safety=`SAFETY_PASS_WITH_WARNINGS`、owner
+    decision=`AUDIT_LOG_EMPTY`、lineage=`PASS`；blockers 来自 promotion board `HOLD_FOR_MORE_DATA`、readiness
+    stale data、unresolved safety warnings、cost sensitivity insufficient inputs、benchmark
+    baseline insufficient metrics、owner decision audit log empty 和 minimum observation
+    period 0/20；未补造 observation days、owner decision 或 metrics。Validation `outputs/reports/extended_shadow_protocol_validation_2026-06-16.json/md`
+    输出 `PASS_WITH_WARNINGS`、checks=7、failed=0、source blockers=7、source warnings=1；report
+    index `PASS_WITH_EXPLICIT_WAIVERS` / reports=402 / missing=20 / stale=10 / waived=30
+    / unwaived=0；documentation contract PASS；Reader Brief latest 使用 2026-06-15 decision
+    snapshot + 2026-06-16 report index 展示 extended shadow section，Reader Brief quality
+    OK / failed=0；focused pytest 36 passed，Ruff PASS，compileall PASS。精确 2026-06-16
+    Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+    no snapshot was fabricated. 保持 read-only / no upstream rerun / no data refresh
+    / no observation/owner/metrics fabrication / no candidate, paper-shadow or production
+    mutation / no official target / no broker / no order ticket。'
+  docs_links:
+  - docs/requirements/TRADING-381_Extended_Shadow_Protocol.md
+  terminal: true
+  raw_row_sha256: e7691fdd7f114a5418b848eac92201eb20f1b531c3fb81426daff2fde06aa3cf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a178b4ca84cebfe5a4ccf29469a39bd7ef9f2aae8b922119782d417b2f24b896

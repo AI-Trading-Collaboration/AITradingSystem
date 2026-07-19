@@ -1,0 +1,90 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-008
+  title: null
+  domain: 报告/Decision Card v2
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已在现有“今日结论卡”补充 Data Gate、Run ID / Trace、Main
+    Invalidator 和 Next Checks，并补充文本顺序/CLI 测试
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 日报顶部结论卡继续先于数据门禁、模块评分和审计明细；新增字段不改变 scoring、position gate、execution policy
+      或回测仓位；报告能一眼看到数据质量状态、run id、trace 入口、主要反证和下一观察项
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 420
+    row_sha256: fab7fd0d379babedca0fc37922b52eb2ebb3eff1ff96322261a285d6797dd3ba
+    cell_count: 8
+    all_cells:
+    - REPORT-008
+    - 报告/Decision Card v2
+    - P2
+    - DONE
+    - 系统实现
+    - 已在现有“今日结论卡”补充 Data Gate、Run ID / Trace、Main Invalidator 和 Next Checks，并补充文本顺序/CLI
+      测试
+    - 日报顶部结论卡继续先于数据门禁、模块评分和审计明细；新增字段不改变 scoring、position gate、execution policy 或回测仓位；报告能一眼看到数据质量状态、run
+      id、trace 入口、主要反证和下一观察项
+    - '2026-05-10: 从 READY 改为 DONE，原因：Decision Card v2 字段和 `score-daily --run-id`
+      trace 引用已实现，正式评分和仓位语义未改变。'
+    raw_line: '|REPORT-008|报告/Decision Card v2|P2|DONE|系统实现|已在现有“今日结论卡”补充 Data Gate、Run
+      ID / Trace、Main Invalidator 和 Next Checks，并补充文本顺序/CLI 测试|日报顶部结论卡继续先于数据门禁、模块评分和审计明细；新增字段不改变
+      scoring、position gate、execution policy 或回测仓位；报告能一眼看到数据质量状态、run id、trace 入口、主要反证和下一观察项|2026-05-10:
+      从 READY 改为 DONE，原因：Decision Card v2 字段和 `score-daily --run-id` trace 引用已实现，正式评分和仓位语义未改变。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fab7fd0d379babedca0fc379
+  task_id: REPORT-008
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统实现
+    notes: '2026-05-10: 从 READY 改为 DONE，原因：Decision Card v2 字段和 `score-daily --run-id`
+      trace 引用已实现，正式评分和仓位语义未改变。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:fab7fd0d379babedca0fc37922b52eb2ebb3eff1ff96322261a285d6797dd3ba
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-008
+  - 报告/Decision Card v2
+  - P2
+  - DONE
+  - 系统实现
+  - 已在现有“今日结论卡”补充 Data Gate、Run ID / Trace、Main Invalidator 和 Next Checks，并补充文本顺序/CLI
+    测试
+  - 日报顶部结论卡继续先于数据门禁、模块评分和审计明细；新增字段不改变 scoring、position gate、execution policy 或回测仓位；报告能一眼看到数据质量状态、run
+    id、trace 入口、主要反证和下一观察项
+  - '2026-05-10: 从 READY 改为 DONE，原因：Decision Card v2 字段和 `score-daily --run-id` trace
+    引用已实现，正式评分和仓位语义未改变。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: fab7fd0d379babedca0fc37922b52eb2ebb3eff1ff96322261a285d6797dd3ba
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8f8b10b559c31a14f62159a6cf3dcad5b429865766c6da3adff4d0594dcdcff1

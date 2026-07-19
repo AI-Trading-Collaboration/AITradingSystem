@@ -1,0 +1,110 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-723_RESEARCH_OPS_DASHBOARD_WIP_GOVERNANCE
+  title: null
+  domain: Research ops / dashboard and WIP governance
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；展示 WIP、blocked、stalled
+    和 next batch
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`dashboard` 可运行；wip_by_lane_visible=true；repeated_blocker_counts_visible=true；research_idle_or_stalled_items_visible=true'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1393
+    row_sha256: fe5035040d996f07ff76cb9b558fa24d91ea5023d42ad956577022f1b9a33663
+    cell_count: 8
+    all_cells:
+    - TRADING-723_RESEARCH_OPS_DASHBOARD_WIP_GOVERNANCE
+    - Research ops / dashboard and WIP governance
+    - P2
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 TRADING-703_to_725 总需求文档；展示 WIP、blocked、stalled 和 next batch
+    - '`dashboard` 可运行；wip_by_lane_visible=true；repeated_blocker_counts_visible=true；research_idle_or_stalled_items_visible=true'
+    - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。2026-06-21: 继续 VALIDATING；`queue-status`、`batch-plan`、`batch-run`、`batch-rollup`、`review-board`
+      和 `dashboard` CLI 增加 artifact 写入，`research_ops_dashboard` 已进入 report registry
+      / artifact catalog。'
+    raw_line: '|TRADING-723_RESEARCH_OPS_DASHBOARD_WIP_GOVERNANCE|Research ops / dashboard
+      and WIP governance|P2|VALIDATING|系统实现 + 项目 owner 后续复核|详见 TRADING-703_to_725
+      总需求文档；展示 WIP、blocked、stalled 和 next batch|`dashboard` 可运行；wip_by_lane_visible=true；repeated_blocker_counts_visible=true；research_idle_or_stalled_items_visible=true|2026-06-21:
+      按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+      schema/config/protocol、research governance / acceleration / portfolio decision
+      / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+      / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+      production_effect=none，不修改 production / paper-shadow / official weights，不触发
+      broker/order。2026-06-21: 继续 VALIDATING；`queue-status`、`batch-plan`、`batch-run`、`batch-rollup`、`review-board`
+      和 `dashboard` CLI 增加 artifact 写入，`research_ops_dashboard` 已进入 report registry
+      / artifact catalog。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fe5035040d996f07ff76cb9b
+  task_id: TRADING-723_RESEARCH_OPS_DASHBOARD_WIP_GOVERNANCE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P2
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。2026-06-21: 继续 VALIDATING；`queue-status`、`batch-plan`、`batch-run`、`batch-rollup`、`review-board`
+      和 `dashboard` CLI 增加 artifact 写入，`research_ops_dashboard` 已进入 report registry
+      / artifact catalog。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:fe5035040d996f07ff76cb9b558fa24d91ea5023d42ad956577022f1b9a33663
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-723_RESEARCH_OPS_DASHBOARD_WIP_GOVERNANCE
+  - Research ops / dashboard and WIP governance
+  - P2
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-703_to_725 总需求文档；展示 WIP、blocked、stalled 和 next batch
+  - '`dashboard` 可运行；wip_by_lane_visible=true；repeated_blocker_counts_visible=true；research_idle_or_stalled_items_visible=true'
+  - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入
+    VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio
+    decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+    / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+    production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。2026-06-21:
+    继续 VALIDATING；`queue-status`、`batch-plan`、`batch-run`、`batch-rollup`、`review-board`
+    和 `dashboard` CLI 增加 artifact 写入，`research_ops_dashboard` 已进入 report registry
+    / artifact catalog。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: fe5035040d996f07ff76cb9b558fa24d91ea5023d42ad956577022f1b9a33663
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7849e01cfbbaa9ed427060bd9b08eb76753242ea329e5313bea7fa30dbb5883d

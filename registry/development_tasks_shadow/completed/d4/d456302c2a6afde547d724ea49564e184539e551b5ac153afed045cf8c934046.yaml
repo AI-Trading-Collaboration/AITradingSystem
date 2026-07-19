@@ -1,0 +1,142 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-393_OWNER_REVIEW_TEMPLATE_V2_INSTANTIATION
+  title: null
+  domain: Research governance / owner review template v2 instantiation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 复核 structured owner review；后续 TRADING-394 rerun monthly review
+    recovery，promotion/extended/live 仍 blocked until gates clear
+  requirement_refs:
+  - docs/requirements/TRADING-393_Owner_Review_Template_V2_Instantiation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-393_Owner_Review_Template_V2_Instantiation.md`；使用
+    latest owner review `outputs/reports/TRADING-384_owner_review_2026-06-17.md` 和
+    TRADING-391/392 recovery evidence + owner hold decision 生成 filled owner review
+    template v2 JSON；final owner action 保持 `hold`；不得记录新的 owner decision、resume paper-shadow、approve
+    promotion/extended shadow/live、生成 official target weights、触发 broker/order 或 production
+    mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 filled owner review JSON `docs/owner_reviews/TRADING-393_owner_review_template_v2_2026-06-17.json`
+      和 focused fixture regression；现有 `aits reports owner-review-template-v2 --as-of
+      2026-06-17` 输出 `TEMPLATE_READY`，`validate-owner-review-template-v2 --latest
+      --review-json-path ...` 输出 `PASS`；structured artifact 链接输入证据且安全字段保持 production_effect=none/no
+      mutation
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 203
+    row_sha256: 1b9767b58444366f20f832dd12c999f3c6e41eae2b8439f825c881bbae5a1628
+    cell_count: 8
+    all_cells:
+    - TRADING-393_OWNER_REVIEW_TEMPLATE_V2_INSTANTIATION
+    - Research governance / owner review template v2 instantiation
+    - P1
+    - DONE
+    - 项目 owner 复核 structured owner review；后续 TRADING-394 rerun monthly review recovery，promotion/extended/live
+      仍 blocked until gates clear
+    - 详细拆解见 `docs/requirements/TRADING-393_Owner_Review_Template_V2_Instantiation.md`；使用
+      latest owner review `outputs/reports/TRADING-384_owner_review_2026-06-17.md`
+      和 TRADING-391/392 recovery evidence + owner hold decision 生成 filled owner review
+      template v2 JSON；final owner action 保持 `hold`；不得记录新的 owner decision、resume paper-shadow、approve
+      promotion/extended shadow/live、生成 official target weights、触发 broker/order 或
+      production mutation
+    - 新增 filled owner review JSON `docs/owner_reviews/TRADING-393_owner_review_template_v2_2026-06-17.json`
+      和 focused fixture regression；现有 `aits reports owner-review-template-v2 --as-of
+      2026-06-17` 输出 `TEMPLATE_READY`，`validate-owner-review-template-v2 --latest
+      --review-json-path ...` 输出 `PASS`；structured artifact 链接输入证据且安全字段保持 production_effect=none/no
+      mutation
+    - '2026-06-17: DONE；真实 template artifacts `outputs/reports/owner_review_template_v2_2026-06-17.json/md`
+      输出 `TEMPLATE_READY`、fields=9、owner_actions=6。Validation `outputs/reports/owner_review_template_v2_validation_2026-06-17.json/md`
+      输出 `PASS`、checks=22、failed=0、review_record_provided=true、review_record_failed=0；report
+      index 中 template/validation 均 `AVAILABLE/FRESH`。Filled review final action=`hold`、safety=`SAFETY_PASS_WITH_WARNINGS`；该
+      artifact 不 append audit log、不恢复 paper-shadow、不批准 promotion/extended shadow/live、official
+      target、broker/order 或 production mutation。'
+    raw_line: '|TRADING-393_OWNER_REVIEW_TEMPLATE_V2_INSTANTIATION|Research governance
+      / owner review template v2 instantiation|P1|DONE|项目 owner 复核 structured owner
+      review；后续 TRADING-394 rerun monthly review recovery，promotion/extended/live
+      仍 blocked until gates clear|详细拆解见 `docs/requirements/TRADING-393_Owner_Review_Template_V2_Instantiation.md`；使用
+      latest owner review `outputs/reports/TRADING-384_owner_review_2026-06-17.md`
+      和 TRADING-391/392 recovery evidence + owner hold decision 生成 filled owner review
+      template v2 JSON；final owner action 保持 `hold`；不得记录新的 owner decision、resume paper-shadow、approve
+      promotion/extended shadow/live、生成 official target weights、触发 broker/order 或
+      production mutation|新增 filled owner review JSON `docs/owner_reviews/TRADING-393_owner_review_template_v2_2026-06-17.json`
+      和 focused fixture regression；现有 `aits reports owner-review-template-v2 --as-of
+      2026-06-17` 输出 `TEMPLATE_READY`，`validate-owner-review-template-v2 --latest
+      --review-json-path ...` 输出 `PASS`；structured artifact 链接输入证据且安全字段保持 production_effect=none/no
+      mutation|2026-06-17: DONE；真实 template artifacts `outputs/reports/owner_review_template_v2_2026-06-17.json/md`
+      输出 `TEMPLATE_READY`、fields=9、owner_actions=6。Validation `outputs/reports/owner_review_template_v2_validation_2026-06-17.json/md`
+      输出 `PASS`、checks=22、failed=0、review_record_provided=true、review_record_failed=0；report
+      index 中 template/validation 均 `AVAILABLE/FRESH`。Filled review final action=`hold`、safety=`SAFETY_PASS_WITH_WARNINGS`；该
+      artifact 不 append audit log、不恢复 paper-shadow、不批准 promotion/extended shadow/live、official
+      target、broker/order 或 production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1b9767b58444366f20f832dd
+  task_id: TRADING-393_OWNER_REVIEW_TEMPLATE_V2_INSTANTIATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 复核 structured owner review；后续 TRADING-394 rerun monthly review
+      recovery，promotion/extended/live 仍 blocked until gates clear
+    notes: '2026-06-17: DONE；真实 template artifacts `outputs/reports/owner_review_template_v2_2026-06-17.json/md`
+      输出 `TEMPLATE_READY`、fields=9、owner_actions=6。Validation `outputs/reports/owner_review_template_v2_validation_2026-06-17.json/md`
+      输出 `PASS`、checks=22、failed=0、review_record_provided=true、review_record_failed=0；report
+      index 中 template/validation 均 `AVAILABLE/FRESH`。Filled review final action=`hold`、safety=`SAFETY_PASS_WITH_WARNINGS`；该
+      artifact 不 append audit log、不恢复 paper-shadow、不批准 promotion/extended shadow/live、official
+      target、broker/order 或 production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1b9767b58444366f20f832dd12c999f3c6e41eae2b8439f825c881bbae5a1628
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-393_OWNER_REVIEW_TEMPLATE_V2_INSTANTIATION
+  - Research governance / owner review template v2 instantiation
+  - P1
+  - DONE
+  - 项目 owner 复核 structured owner review；后续 TRADING-394 rerun monthly review recovery，promotion/extended/live
+    仍 blocked until gates clear
+  - 详细拆解见 `docs/requirements/TRADING-393_Owner_Review_Template_V2_Instantiation.md`；使用
+    latest owner review `outputs/reports/TRADING-384_owner_review_2026-06-17.md` 和
+    TRADING-391/392 recovery evidence + owner hold decision 生成 filled owner review
+    template v2 JSON；final owner action 保持 `hold`；不得记录新的 owner decision、resume paper-shadow、approve
+    promotion/extended shadow/live、生成 official target weights、触发 broker/order 或 production
+    mutation
+  - 新增 filled owner review JSON `docs/owner_reviews/TRADING-393_owner_review_template_v2_2026-06-17.json`
+    和 focused fixture regression；现有 `aits reports owner-review-template-v2 --as-of
+    2026-06-17` 输出 `TEMPLATE_READY`，`validate-owner-review-template-v2 --latest --review-json-path
+    ...` 输出 `PASS`；structured artifact 链接输入证据且安全字段保持 production_effect=none/no mutation
+  - '2026-06-17: DONE；真实 template artifacts `outputs/reports/owner_review_template_v2_2026-06-17.json/md`
+    输出 `TEMPLATE_READY`、fields=9、owner_actions=6。Validation `outputs/reports/owner_review_template_v2_validation_2026-06-17.json/md`
+    输出 `PASS`、checks=22、failed=0、review_record_provided=true、review_record_failed=0；report
+    index 中 template/validation 均 `AVAILABLE/FRESH`。Filled review final action=`hold`、safety=`SAFETY_PASS_WITH_WARNINGS`；该
+    artifact 不 append audit log、不恢复 paper-shadow、不批准 promotion/extended shadow/live、official
+    target、broker/order 或 production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-393_Owner_Review_Template_V2_Instantiation.md
+  terminal: true
+  raw_row_sha256: 1b9767b58444366f20f832dd12c999f3c6e41eae2b8439f825c881bbae5a1628
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0f2b99665a7eb49f9d3d2bee1bb8a4c345cc77732f6b600822154bd9ad664935

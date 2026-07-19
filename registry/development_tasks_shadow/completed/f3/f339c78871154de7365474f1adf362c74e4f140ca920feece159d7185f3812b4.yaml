@@ -1,0 +1,145 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2442_DAILY_INCREMENTAL_REFACTOR_GROWTH_TILT_PIT_REPLAY_CLI_BOUNDARY
+  title: null
+  domain: Engineering maintenance / growth tilt PIT replay CLI boundary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 项目 owner 按需复核 growth tilt PIT replay CLI 模块边界
+  requirement_refs:
+  - docs/refactor_log.md
+  - docs/requirements/TRADING-2442_Daily_Incremental_Refactor_Growth_Tilt_PIT_Replay_CLI_Boundary.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2442_Daily_Incremental_Refactor_Growth_Tilt_PIT_Replay_CLI_Boundary.md`；每日增量重构巡检以
+    `e6028e05dd0c2aa62d5ff0a8de96f08e08184bb9` 为最近一次合格重构基线，评估 TRADING-2438A-L 后发现
+    PIT replay、blocker closure、persistent blocker escalation 和 runtime remediation
+    command adapters 重新集中在 `research_execution_growth_tilt.py`，使该聚合模块膨胀到 6000 行以上。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/cli_commands/research_execution_growth_tilt_pit_replay.py`，将
+      TRADING-2438 至 TRADING-2438L command registration 和 Typer adapter functions
+      拆出；`research_execution_growth_tilt.py` 保留 growth tilt 聚合入口并委托新模块注册。外部 `aits
+      research strategies ...` 命令名、参数、默认路径、artifact path、report output contract、status
+      enum、data-quality gate requirement、market-regime interpretation 和 no-effect
+      production boundary 保持兼容；同步更新 `docs/system_flow.md` 和 `docs/refactor_log.md`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 30
+    row_sha256: f8b2f12f09fc03be257e1ffd12718e43d1e594811268df386005cf91142a732d
+    cell_count: 8
+    all_cells:
+    - TRADING-2442_DAILY_INCREMENTAL_REFACTOR_GROWTH_TILT_PIT_REPLAY_CLI_BOUNDARY
+    - Engineering maintenance / growth tilt PIT replay CLI boundary
+    - P2
+    - DONE
+    - 项目 owner 按需复核 growth tilt PIT replay CLI 模块边界
+    - 详见 `docs/requirements/TRADING-2442_Daily_Incremental_Refactor_Growth_Tilt_PIT_Replay_CLI_Boundary.md`；每日增量重构巡检以
+      `e6028e05dd0c2aa62d5ff0a8de96f08e08184bb9` 为最近一次合格重构基线，评估 TRADING-2438A-L 后发现
+      PIT replay、blocker closure、persistent blocker escalation 和 runtime remediation
+      command adapters 重新集中在 `research_execution_growth_tilt.py`，使该聚合模块膨胀到 6000 行以上。
+    - 新增 `src/ai_trading_system/cli_commands/research_execution_growth_tilt_pit_replay.py`，将
+      TRADING-2438 至 TRADING-2438L command registration 和 Typer adapter functions
+      拆出；`research_execution_growth_tilt.py` 保留 growth tilt 聚合入口并委托新模块注册。外部 `aits
+      research strategies ...` 命令名、参数、默认路径、artifact path、report output contract、status
+      enum、data-quality gate requirement、market-regime interpretation 和 no-effect
+      production boundary 保持兼容；同步更新 `docs/system_flow.md` 和 `docs/refactor_log.md`。
+    - '2026-07-10: 根据每日增量重构巡检新增并进入 IN_PROGRESS。2026-07-10: 实现完成并归档 DONE；验证覆盖 Ruff、compileall、TRADING-2438
+      至 TRADING-2438L focused parallel pytest、16 个 CLI help smoke、docs freshness、documentation/task-register
+      consistency、contract-validation 和 `git diff --check`。本任务未运行 `aits validate-data`，因为只拆分
+      CLI adapter 边界，未生成 cached market/macro data dependent technical features、scoring、backtest
+      或 daily report 输出；既有 data-dependent commands 仍按原路径调用同源 data-quality gate。未改变
+      threshold、score band、promotion gate、backtest acceptance、market-regime interpretation、paper-shadow、production、broker/order
+      或 portfolio weights。'
+    raw_line: '|TRADING-2442_DAILY_INCREMENTAL_REFACTOR_GROWTH_TILT_PIT_REPLAY_CLI_BOUNDARY|Engineering
+      maintenance / growth tilt PIT replay CLI boundary|P2|DONE|项目 owner 按需复核 growth
+      tilt PIT replay CLI 模块边界|详见 `docs/requirements/TRADING-2442_Daily_Incremental_Refactor_Growth_Tilt_PIT_Replay_CLI_Boundary.md`；每日增量重构巡检以
+      `e6028e05dd0c2aa62d5ff0a8de96f08e08184bb9` 为最近一次合格重构基线，评估 TRADING-2438A-L 后发现
+      PIT replay、blocker closure、persistent blocker escalation 和 runtime remediation
+      command adapters 重新集中在 `research_execution_growth_tilt.py`，使该聚合模块膨胀到 6000 行以上。|新增
+      `src/ai_trading_system/cli_commands/research_execution_growth_tilt_pit_replay.py`，将
+      TRADING-2438 至 TRADING-2438L command registration 和 Typer adapter functions
+      拆出；`research_execution_growth_tilt.py` 保留 growth tilt 聚合入口并委托新模块注册。外部 `aits
+      research strategies ...` 命令名、参数、默认路径、artifact path、report output contract、status
+      enum、data-quality gate requirement、market-regime interpretation 和 no-effect
+      production boundary 保持兼容；同步更新 `docs/system_flow.md` 和 `docs/refactor_log.md`。|2026-07-10:
+      根据每日增量重构巡检新增并进入 IN_PROGRESS。2026-07-10: 实现完成并归档 DONE；验证覆盖 Ruff、compileall、TRADING-2438
+      至 TRADING-2438L focused parallel pytest、16 个 CLI help smoke、docs freshness、documentation/task-register
+      consistency、contract-validation 和 `git diff --check`。本任务未运行 `aits validate-data`，因为只拆分
+      CLI adapter 边界，未生成 cached market/macro data dependent technical features、scoring、backtest
+      或 daily report 输出；既有 data-dependent commands 仍按原路径调用同源 data-quality gate。未改变
+      threshold、score band、promotion gate、backtest acceptance、market-regime interpretation、paper-shadow、production、broker/order
+      或 portfolio weights。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f8b2f12f09fc03be257e1ffd
+  task_id: TRADING-2442_DAILY_INCREMENTAL_REFACTOR_GROWTH_TILT_PIT_REPLAY_CLI_BOUNDARY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 项目 owner 按需复核 growth tilt PIT replay CLI 模块边界
+    notes: '2026-07-10: 根据每日增量重构巡检新增并进入 IN_PROGRESS。2026-07-10: 实现完成并归档 DONE；验证覆盖
+      Ruff、compileall、TRADING-2438 至 TRADING-2438L focused parallel pytest、16 个 CLI
+      help smoke、docs freshness、documentation/task-register consistency、contract-validation
+      和 `git diff --check`。本任务未运行 `aits validate-data`，因为只拆分 CLI adapter 边界，未生成 cached
+      market/macro data dependent technical features、scoring、backtest 或 daily report
+      输出；既有 data-dependent commands 仍按原路径调用同源 data-quality gate。未改变 threshold、score
+      band、promotion gate、backtest acceptance、market-regime interpretation、paper-shadow、production、broker/order
+      或 portfolio weights。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f8b2f12f09fc03be257e1ffd12718e43d1e594811268df386005cf91142a732d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2442_DAILY_INCREMENTAL_REFACTOR_GROWTH_TILT_PIT_REPLAY_CLI_BOUNDARY
+  - Engineering maintenance / growth tilt PIT replay CLI boundary
+  - P2
+  - DONE
+  - 项目 owner 按需复核 growth tilt PIT replay CLI 模块边界
+  - 详见 `docs/requirements/TRADING-2442_Daily_Incremental_Refactor_Growth_Tilt_PIT_Replay_CLI_Boundary.md`；每日增量重构巡检以
+    `e6028e05dd0c2aa62d5ff0a8de96f08e08184bb9` 为最近一次合格重构基线，评估 TRADING-2438A-L 后发现
+    PIT replay、blocker closure、persistent blocker escalation 和 runtime remediation
+    command adapters 重新集中在 `research_execution_growth_tilt.py`，使该聚合模块膨胀到 6000 行以上。
+  - 新增 `src/ai_trading_system/cli_commands/research_execution_growth_tilt_pit_replay.py`，将
+    TRADING-2438 至 TRADING-2438L command registration 和 Typer adapter functions 拆出；`research_execution_growth_tilt.py`
+    保留 growth tilt 聚合入口并委托新模块注册。外部 `aits research strategies ...` 命令名、参数、默认路径、artifact
+    path、report output contract、status enum、data-quality gate requirement、market-regime
+    interpretation 和 no-effect production boundary 保持兼容；同步更新 `docs/system_flow.md`
+    和 `docs/refactor_log.md`。
+  - '2026-07-10: 根据每日增量重构巡检新增并进入 IN_PROGRESS。2026-07-10: 实现完成并归档 DONE；验证覆盖 Ruff、compileall、TRADING-2438
+    至 TRADING-2438L focused parallel pytest、16 个 CLI help smoke、docs freshness、documentation/task-register
+    consistency、contract-validation 和 `git diff --check`。本任务未运行 `aits validate-data`，因为只拆分
+    CLI adapter 边界，未生成 cached market/macro data dependent technical features、scoring、backtest
+    或 daily report 输出；既有 data-dependent commands 仍按原路径调用同源 data-quality gate。未改变 threshold、score
+    band、promotion gate、backtest acceptance、market-regime interpretation、paper-shadow、production、broker/order
+    或 portfolio weights。'
+  docs_links:
+  - docs/refactor_log.md
+  - docs/requirements/TRADING-2442_Daily_Incremental_Refactor_Growth_Tilt_PIT_Replay_CLI_Boundary.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: f8b2f12f09fc03be257e1ffd12718e43d1e594811268df386005cf91142a732d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: cf69cf46073f717aaa84da3ee594a470614cf385f17613c48cc03b554b35d596

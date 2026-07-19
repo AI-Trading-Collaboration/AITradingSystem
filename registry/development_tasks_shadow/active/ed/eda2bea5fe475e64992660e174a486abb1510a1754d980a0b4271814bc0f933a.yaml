@@ -1,0 +1,129 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-007
+  title: null
+  domain: 数据源/FMP 主价格源
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/fmp_primary_price_source_2026-05-05.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已接入 FMP Starter 作为默认股票/ETF 日线价格主源；详细设计和烟测记录见
+    `docs/requirements/fmp_primary_price_source_2026-05-05.md`；`^VIX` 已由 DATA-008
+    Cboe 源补入，价格 alias 和二源归因由 DATA-009 继续收敛，第二源阻断策略由 DATA-011 落地
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Baseline 完成：`aits download-data` 默认读取 `FMP_API_KEY` 并使用 FMP 写入股票/ETF 主价格；manifest
+      主价格 source_id 为 `fmp_eod_daily_prices` 且不泄露 API key；Marketstack 继续作为第二行情源；Yahoo
+      仅保留显式迁移选项，不再默认生产使用；FMP raw OHLC 使用 `non-split-adjusted` endpoint，`adj_close`
+      使用 `dividend-adjusted` endpoint；价格路径直接请求 `GOOG`，估值/PIT alias 独立维护；已同步更新 `docs/system_flow.md`、数据源目录、README
+      和测试。剩余限制：需持续用真实 `download-data`/`validate-data` 确认主价格源清洁度；Marketstack 第二源自检异常按
+      DATA-011 记录为告警，跨源 raw close 未解决冲突仍会阻断下游结论
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1126
+    row_sha256: eb7caf7afc5f51cb7a63f582db1314cd2e0a4d879d0262b2ffdecd933d095c20
+    cell_count: 8
+    all_cells:
+    - DATA-007
+    - 数据源/FMP 主价格源
+    - P0
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已接入 FMP Starter 作为默认股票/ETF 日线价格主源；详细设计和烟测记录见 `docs/requirements/fmp_primary_price_source_2026-05-05.md`；`^VIX`
+      已由 DATA-008 Cboe 源补入，价格 alias 和二源归因由 DATA-009 继续收敛，第二源阻断策略由 DATA-011 落地
+    - Baseline 完成：`aits download-data` 默认读取 `FMP_API_KEY` 并使用 FMP 写入股票/ETF 主价格；manifest
+      主价格 source_id 为 `fmp_eod_daily_prices` 且不泄露 API key；Marketstack 继续作为第二行情源；Yahoo
+      仅保留显式迁移选项，不再默认生产使用；FMP raw OHLC 使用 `non-split-adjusted` endpoint，`adj_close`
+      使用 `dividend-adjusted` endpoint；价格路径直接请求 `GOOG`，估值/PIT alias 独立维护；已同步更新 `docs/system_flow.md`、数据源目录、README
+      和测试。剩余限制：需持续用真实 `download-data`/`validate-data` 确认主价格源清洁度；Marketstack 第二源自检异常按
+      DATA-011 记录为告警，跨源 raw close 未解决冲突仍会阻断下游结论
+    - '2026-05-05: 新增并进入实现，原因：Yahoo 主源质量错误阻断日报，owner 已购买 FMP Starter 作为低成本主价格源；`^VIX`
+      仍需 Cboe 单独接入，FMP 主源不覆盖全系统宏观代理。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：FMP
+      provider、CLI 默认主源、manifest、数据源目录、系统流图、README 和测试已完成；真实烟测下载成功但质量门禁仍失败，不能继续日报评分。2026-05-05:
+      更新剩余 blocker，原因：DATA-008 已用 Cboe official historical data 补 `^VIX`；DATA-009
+      已确认此前部分硬错误主要落在 Marketstack 第二源缓存，后续按来源归因继续验证。2026-05-05: 更新限制，原因：DATA-011 owner
+      已批准第二源自身异常降级为可审计告警，FMP 主源仍是价格权威输入。'
+    raw_line: '|DATA-007|数据源/FMP 主价格源|P0|BASELINE_DONE|系统实现 + 项目 owner|已接入 FMP Starter
+      作为默认股票/ETF 日线价格主源；详细设计和烟测记录见 `docs/requirements/fmp_primary_price_source_2026-05-05.md`；`^VIX`
+      已由 DATA-008 Cboe 源补入，价格 alias 和二源归因由 DATA-009 继续收敛，第二源阻断策略由 DATA-011 落地|Baseline
+      完成：`aits download-data` 默认读取 `FMP_API_KEY` 并使用 FMP 写入股票/ETF 主价格；manifest 主价格
+      source_id 为 `fmp_eod_daily_prices` 且不泄露 API key；Marketstack 继续作为第二行情源；Yahoo
+      仅保留显式迁移选项，不再默认生产使用；FMP raw OHLC 使用 `non-split-adjusted` endpoint，`adj_close`
+      使用 `dividend-adjusted` endpoint；价格路径直接请求 `GOOG`，估值/PIT alias 独立维护；已同步更新 `docs/system_flow.md`、数据源目录、README
+      和测试。剩余限制：需持续用真实 `download-data`/`validate-data` 确认主价格源清洁度；Marketstack 第二源自检异常按
+      DATA-011 记录为告警，跨源 raw close 未解决冲突仍会阻断下游结论|2026-05-05: 新增并进入实现，原因：Yahoo 主源质量错误阻断日报，owner
+      已购买 FMP Starter 作为低成本主价格源；`^VIX` 仍需 Cboe 单独接入，FMP 主源不覆盖全系统宏观代理。2026-05-05: 从
+      IN_PROGRESS 改为 BASELINE_DONE，原因：FMP provider、CLI 默认主源、manifest、数据源目录、系统流图、README
+      和测试已完成；真实烟测下载成功但质量门禁仍失败，不能继续日报评分。2026-05-05: 更新剩余 blocker，原因：DATA-008 已用 Cboe
+      official historical data 补 `^VIX`；DATA-009 已确认此前部分硬错误主要落在 Marketstack 第二源缓存，后续按来源归因继续验证。2026-05-05:
+      更新限制，原因：DATA-011 owner 已批准第二源自身异常降级为可审计告警，FMP 主源仍是价格权威输入。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-eb7caf7afc5f51cb7a63f582
+  task_id: DATA-007
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner
+    notes: '2026-05-05: 新增并进入实现，原因：Yahoo 主源质量错误阻断日报，owner 已购买 FMP Starter 作为低成本主价格源；`^VIX`
+      仍需 Cboe 单独接入，FMP 主源不覆盖全系统宏观代理。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：FMP
+      provider、CLI 默认主源、manifest、数据源目录、系统流图、README 和测试已完成；真实烟测下载成功但质量门禁仍失败，不能继续日报评分。2026-05-05:
+      更新剩余 blocker，原因：DATA-008 已用 Cboe official historical data 补 `^VIX`；DATA-009
+      已确认此前部分硬错误主要落在 Marketstack 第二源缓存，后续按来源归因继续验证。2026-05-05: 更新限制，原因：DATA-011 owner
+      已批准第二源自身异常降级为可审计告警，FMP 主源仍是价格权威输入。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:eb7caf7afc5f51cb7a63f582db1314cd2e0a4d879d0262b2ffdecd933d095c20
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-007
+  - 数据源/FMP 主价格源
+  - P0
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已接入 FMP Starter 作为默认股票/ETF 日线价格主源；详细设计和烟测记录见 `docs/requirements/fmp_primary_price_source_2026-05-05.md`；`^VIX`
+    已由 DATA-008 Cboe 源补入，价格 alias 和二源归因由 DATA-009 继续收敛，第二源阻断策略由 DATA-011 落地
+  - Baseline 完成：`aits download-data` 默认读取 `FMP_API_KEY` 并使用 FMP 写入股票/ETF 主价格；manifest
+    主价格 source_id 为 `fmp_eod_daily_prices` 且不泄露 API key；Marketstack 继续作为第二行情源；Yahoo
+    仅保留显式迁移选项，不再默认生产使用；FMP raw OHLC 使用 `non-split-adjusted` endpoint，`adj_close` 使用
+    `dividend-adjusted` endpoint；价格路径直接请求 `GOOG`，估值/PIT alias 独立维护；已同步更新 `docs/system_flow.md`、数据源目录、README
+    和测试。剩余限制：需持续用真实 `download-data`/`validate-data` 确认主价格源清洁度；Marketstack 第二源自检异常按
+    DATA-011 记录为告警，跨源 raw close 未解决冲突仍会阻断下游结论
+  - '2026-05-05: 新增并进入实现，原因：Yahoo 主源质量错误阻断日报，owner 已购买 FMP Starter 作为低成本主价格源；`^VIX`
+    仍需 Cboe 单独接入，FMP 主源不覆盖全系统宏观代理。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：FMP
+    provider、CLI 默认主源、manifest、数据源目录、系统流图、README 和测试已完成；真实烟测下载成功但质量门禁仍失败，不能继续日报评分。2026-05-05:
+    更新剩余 blocker，原因：DATA-008 已用 Cboe official historical data 补 `^VIX`；DATA-009 已确认此前部分硬错误主要落在
+    Marketstack 第二源缓存，后续按来源归因继续验证。2026-05-05: 更新限制，原因：DATA-011 owner 已批准第二源自身异常降级为可审计告警，FMP
+    主源仍是价格权威输入。'
+  docs_links:
+  - docs/requirements/fmp_primary_price_source_2026-05-05.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: eb7caf7afc5f51cb7a63f582db1314cd2e0a4d879d0262b2ffdecd933d095c20
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ba6a218bc3659e9847afa49d7c1ad844dd9023ff3e926120e7150a211ab6a289

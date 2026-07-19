@@ -1,0 +1,179 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-224_to_228_LIMITED_ADJUSTMENT_WEAKNESS_DIAGNOSIS_AND_RESEARCH_METHOD_REFINEMENT
+  title: null
+  domain: ETF portfolio/limited adjustment weakness diagnosis and refined research
+    method proposal
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-224_to_228_Limited_Adjustment_Weakness_Diagnosis_and_Research_Method_Refinement.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-224_to_228_Limited_Adjustment_Weakness_Diagnosis_and_Research_Method_Refinement.md`；本阶段解释
+    `limited_adjustment` hardening 未通过的 rolling instability、risk worsening 和 data
+    warning blocking 原因，并产出替代 research method review 与 refined proposal pack；固定不实现新
+    target method、不写 official target weights、不修改 `position_advisory_v1.yaml` 或 `model_target_portfolio_v1.yaml`、不触发
+    broker/order/production
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`limited-instability run/report`、`limited-risk-attribution run/report`、`data-warning-repair-plan
+      run/report`、`alternative-method-review run/report`、`refined-method-proposal
+      run/report` 及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；报告明确
+      `research_target_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`、`auto_apply=false`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact
+      validation 完成'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1446
+    row_sha256: dd0e3ba3a2347871b2997ab6845f475bc1924742ee498553cc19833d1812c94e
+    cell_count: 8
+    all_cells:
+    - TRADING-224_to_228_LIMITED_ADJUSTMENT_WEAKNESS_DIAGNOSIS_AND_RESEARCH_METHOD_REFINEMENT
+    - ETF portfolio/limited adjustment weakness diagnosis and refined research method
+      proposal
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-224_to_228_Limited_Adjustment_Weakness_Diagnosis_and_Research_Method_Refinement.md`；本阶段解释
+      `limited_adjustment` hardening 未通过的 rolling instability、risk worsening 和 data
+      warning blocking 原因，并产出替代 research method review 与 refined proposal pack；固定不实现新
+      target method、不写 official target weights、不修改 `position_advisory_v1.yaml` 或 `model_target_portfolio_v1.yaml`、不触发
+      broker/order/production
+    - '`limited-instability run/report`、`limited-risk-attribution run/report`、`data-warning-repair-plan
+      run/report`、`alternative-method-review run/report`、`refined-method-proposal
+      run/report` 及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；报告明确
+      `research_target_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`、`auto_apply=false`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact
+      validation 完成'
+    - '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-224～228；本轮优先交付 P0 limited
+      instability diagnosis、return-improves-risk-worsens attribution、data warning
+      repair plan、alternative method review 和 refined proposal pack，P2 的直接实现 `risk_capped_limited_adjustment`
+      / `regime_gated_limited_adjustment` 与图表化不纳入本阶段。2026-06-12: baseline 实现完成并转入
+      VALIDATING；真实链路输出 instability `limited-instability_122c078b28088f98`、risk attribution
+      `limited-risk-attribution_19631ef9ad2582a3`、repair plan `data-warning-repair-plan_2f308dceca003a5f`、alternative
+      review `alternative-method-review_0e4d3cbfbbf14a95`、refined proposal `refined-method-proposal_2e31f6cb2590ce5d`；instability
+      unstable windows=129、dominant_failure_regime=`sideways_choppy`、recommendation=`consider_risk_cap`；risk_worsening_source=`higher_semiconductor_exposure`，top
+      return contributors=`SOXX,SPY,SMH`，top drawdown contributors=`QQQ,SMH,SOXX`；data
+      warning status=`REVIEW_REQUIRED`、hardening_allowed_after_repair=`UNKNOWN`；refined
+      recommended_next_step=`IMPLEMENT_RISK_CAPPED_RESEARCH_METHOD`，proposed methods=`risk_capped_limited_adjustment,regime_gated_limited_adjustment`，confidence=`LOW`；validate-data
+      为 `PASS_WITH_WARNINGS`，五个新增 report/validate CLI、dynamic-v3 validation、artifact
+      repair/latest validation、family artifact validation、report index、Reader Brief
+      2026-06-12 和 Reader Brief quality 已通过；下一步为 owner 复核是否新开实现 risk-capped research
+      method，仍不得将 conceptual method 视为 production approval 或 official target weights。'
+    raw_line: '|TRADING-224_to_228_LIMITED_ADJUSTMENT_WEAKNESS_DIAGNOSIS_AND_RESEARCH_METHOD_REFINEMENT|ETF
+      portfolio/limited adjustment weakness diagnosis and refined research method
+      proposal|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-224_to_228_Limited_Adjustment_Weakness_Diagnosis_and_Research_Method_Refinement.md`；本阶段解释
+      `limited_adjustment` hardening 未通过的 rolling instability、risk worsening 和 data
+      warning blocking 原因，并产出替代 research method review 与 refined proposal pack；固定不实现新
+      target method、不写 official target weights、不修改 `position_advisory_v1.yaml` 或 `model_target_portfolio_v1.yaml`、不触发
+      broker/order/production|`limited-instability run/report`、`limited-risk-attribution
+      run/report`、`data-warning-repair-plan run/report`、`alternative-method-review
+      run/report`、`refined-method-proposal run/report` 及对应 validate CLI 可运行；artifacts
+      写入 dynamic_v3_rescue runtime roots；报告明确 `research_target_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`、`auto_apply=false`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact
+      validation 完成|2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-224～228；本轮优先交付
+      P0 limited instability diagnosis、return-improves-risk-worsens attribution、data
+      warning repair plan、alternative method review 和 refined proposal pack，P2 的直接实现
+      `risk_capped_limited_adjustment` / `regime_gated_limited_adjustment` 与图表化不纳入本阶段。2026-06-12:
+      baseline 实现完成并转入 VALIDATING；真实链路输出 instability `limited-instability_122c078b28088f98`、risk
+      attribution `limited-risk-attribution_19631ef9ad2582a3`、repair plan `data-warning-repair-plan_2f308dceca003a5f`、alternative
+      review `alternative-method-review_0e4d3cbfbbf14a95`、refined proposal `refined-method-proposal_2e31f6cb2590ce5d`；instability
+      unstable windows=129、dominant_failure_regime=`sideways_choppy`、recommendation=`consider_risk_cap`；risk_worsening_source=`higher_semiconductor_exposure`，top
+      return contributors=`SOXX,SPY,SMH`，top drawdown contributors=`QQQ,SMH,SOXX`；data
+      warning status=`REVIEW_REQUIRED`、hardening_allowed_after_repair=`UNKNOWN`；refined
+      recommended_next_step=`IMPLEMENT_RISK_CAPPED_RESEARCH_METHOD`，proposed methods=`risk_capped_limited_adjustment,regime_gated_limited_adjustment`，confidence=`LOW`；validate-data
+      为 `PASS_WITH_WARNINGS`，五个新增 report/validate CLI、dynamic-v3 validation、artifact
+      repair/latest validation、family artifact validation、report index、Reader Brief
+      2026-06-12 和 Reader Brief quality 已通过；下一步为 owner 复核是否新开实现 risk-capped research
+      method，仍不得将 conceptual method 视为 production approval 或 official target weights。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-dd0e3ba3a2347871b2997ab6
+  task_id: TRADING-224_to_228_LIMITED_ADJUSTMENT_WEAKNESS_DIAGNOSIS_AND_RESEARCH_METHOD_REFINEMENT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-224～228；本轮优先交付
+      P0 limited instability diagnosis、return-improves-risk-worsens attribution、data
+      warning repair plan、alternative method review 和 refined proposal pack，P2 的直接实现
+      `risk_capped_limited_adjustment` / `regime_gated_limited_adjustment` 与图表化不纳入本阶段。2026-06-12:
+      baseline 实现完成并转入 VALIDATING；真实链路输出 instability `limited-instability_122c078b28088f98`、risk
+      attribution `limited-risk-attribution_19631ef9ad2582a3`、repair plan `data-warning-repair-plan_2f308dceca003a5f`、alternative
+      review `alternative-method-review_0e4d3cbfbbf14a95`、refined proposal `refined-method-proposal_2e31f6cb2590ce5d`；instability
+      unstable windows=129、dominant_failure_regime=`sideways_choppy`、recommendation=`consider_risk_cap`；risk_worsening_source=`higher_semiconductor_exposure`，top
+      return contributors=`SOXX,SPY,SMH`，top drawdown contributors=`QQQ,SMH,SOXX`；data
+      warning status=`REVIEW_REQUIRED`、hardening_allowed_after_repair=`UNKNOWN`；refined
+      recommended_next_step=`IMPLEMENT_RISK_CAPPED_RESEARCH_METHOD`，proposed methods=`risk_capped_limited_adjustment,regime_gated_limited_adjustment`，confidence=`LOW`；validate-data
+      为 `PASS_WITH_WARNINGS`，五个新增 report/validate CLI、dynamic-v3 validation、artifact
+      repair/latest validation、family artifact validation、report index、Reader Brief
+      2026-06-12 和 Reader Brief quality 已通过；下一步为 owner 复核是否新开实现 risk-capped research
+      method，仍不得将 conceptual method 视为 production approval 或 official target weights。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:dd0e3ba3a2347871b2997ab6845f475bc1924742ee498553cc19833d1812c94e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-224_to_228_LIMITED_ADJUSTMENT_WEAKNESS_DIAGNOSIS_AND_RESEARCH_METHOD_REFINEMENT
+  - ETF portfolio/limited adjustment weakness diagnosis and refined research method
+    proposal
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-224_to_228_Limited_Adjustment_Weakness_Diagnosis_and_Research_Method_Refinement.md`；本阶段解释
+    `limited_adjustment` hardening 未通过的 rolling instability、risk worsening 和 data
+    warning blocking 原因，并产出替代 research method review 与 refined proposal pack；固定不实现新
+    target method、不写 official target weights、不修改 `position_advisory_v1.yaml` 或 `model_target_portfolio_v1.yaml`、不触发
+    broker/order/production
+  - '`limited-instability run/report`、`limited-risk-attribution run/report`、`data-warning-repair-plan
+    run/report`、`alternative-method-review run/report`、`refined-method-proposal run/report`
+    及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；报告明确 `research_target_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`、`auto_apply=false`；README、operations
+    runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+    tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact validation
+    完成'
+  - '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-224～228；本轮优先交付 P0 limited
+    instability diagnosis、return-improves-risk-worsens attribution、data warning repair
+    plan、alternative method review 和 refined proposal pack，P2 的直接实现 `risk_capped_limited_adjustment`
+    / `regime_gated_limited_adjustment` 与图表化不纳入本阶段。2026-06-12: baseline 实现完成并转入 VALIDATING；真实链路输出
+    instability `limited-instability_122c078b28088f98`、risk attribution `limited-risk-attribution_19631ef9ad2582a3`、repair
+    plan `data-warning-repair-plan_2f308dceca003a5f`、alternative review `alternative-method-review_0e4d3cbfbbf14a95`、refined
+    proposal `refined-method-proposal_2e31f6cb2590ce5d`；instability unstable windows=129、dominant_failure_regime=`sideways_choppy`、recommendation=`consider_risk_cap`；risk_worsening_source=`higher_semiconductor_exposure`，top
+    return contributors=`SOXX,SPY,SMH`，top drawdown contributors=`QQQ,SMH,SOXX`；data
+    warning status=`REVIEW_REQUIRED`、hardening_allowed_after_repair=`UNKNOWN`；refined
+    recommended_next_step=`IMPLEMENT_RISK_CAPPED_RESEARCH_METHOD`，proposed methods=`risk_capped_limited_adjustment,regime_gated_limited_adjustment`，confidence=`LOW`；validate-data
+    为 `PASS_WITH_WARNINGS`，五个新增 report/validate CLI、dynamic-v3 validation、artifact
+    repair/latest validation、family artifact validation、report index、Reader Brief
+    2026-06-12 和 Reader Brief quality 已通过；下一步为 owner 复核是否新开实现 risk-capped research
+    method，仍不得将 conceptual method 视为 production approval 或 official target weights。'
+  docs_links:
+  - docs/requirements/TRADING-224_to_228_Limited_Adjustment_Weakness_Diagnosis_and_Research_Method_Refinement.md
+  terminal: false
+  raw_row_sha256: dd0e3ba3a2347871b2997ab6845f475bc1924742ee498553cc19833d1812c94e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 363210c007c92ec2f90ef5d713d8a175e39f0bfa06bc1a7f1de4d2e0e97d36af

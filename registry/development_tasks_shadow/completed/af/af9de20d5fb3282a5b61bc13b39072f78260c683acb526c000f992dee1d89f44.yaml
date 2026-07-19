@@ -1,0 +1,145 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-391_EVIDENCE_PACK_REBUILD_AFTER_RECOVERY
+  title: null
+  domain: Research governance / recovery evidence pack
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 项目 owner 复核 recovery evidence pack；后续 TRADING-392 记录 owner hold decision，promotion/extended/live
+    仍保持 blocked until owner and evidence gates clear
+  requirement_refs:
+  - docs/requirements/TRADING-391_Evidence_Pack_Rebuild_After_Recovery.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-391_Evidence_Pack_Rebuild_After_Recovery.md`；聚合
+    latest signal input completeness/recovery、evidence staleness、shadow continuation
+    readiness、paper-shadow health、cost metrics materialization、cost-sensitivity review、benchmark
+    baseline metrics materialization、benchmark baseline control 和 research safety
+    boundary audit，输出 post-recovery evidence pack；不得运行上游、刷新数据、补造缺失 artifact、写 owner
+    decision、批准 promotion/extended shadow/live trading、写 official target weights、触发
+    broker/order 或修改 strategy/candidate/paper-shadow/production state
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/recovery_evidence_pack.py`、`aits reports
+      recovery-evidence-pack`、`validate-recovery-evidence-pack`、JSON/Markdown pack、validation
+      artifact、Reader Brief section、report registry、artifact catalog、README、operations
+      runbook、system flow、requirements 和 focused tests；status 限定为 `RECOVERY_EVIDENCE_COMPLETE
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 205
+    row_sha256: 8dc01754a9004fe0b4f2c28dcd2331f5ac47a28bdba0c7854c9905e8d715afd1
+    cell_count: 10
+    all_cells:
+    - TRADING-391_EVIDENCE_PACK_REBUILD_AFTER_RECOVERY
+    - Research governance / recovery evidence pack
+    - P2
+    - DONE
+    - 项目 owner 复核 recovery evidence pack；后续 TRADING-392 记录 owner hold decision，promotion/extended/live
+      仍保持 blocked until owner and evidence gates clear
+    - 详细拆解见 `docs/requirements/TRADING-391_Evidence_Pack_Rebuild_After_Recovery.md`；聚合
+      latest signal input completeness/recovery、evidence staleness、shadow continuation
+      readiness、paper-shadow health、cost metrics materialization、cost-sensitivity
+      review、benchmark baseline metrics materialization、benchmark baseline control
+      和 research safety boundary audit，输出 post-recovery evidence pack；不得运行上游、刷新数据、补造缺失
+      artifact、写 owner decision、批准 promotion/extended shadow/live trading、写 official
+      target weights、触发 broker/order 或修改 strategy/candidate/paper-shadow/production
+      state
+    - 新增 `src/ai_trading_system/reports/recovery_evidence_pack.py`、`aits reports recovery-evidence-pack`、`validate-recovery-evidence-pack`、JSON/Markdown
+      pack、validation artifact、Reader Brief section、report registry、artifact catalog、README、operations
+      runbook、system flow、requirements 和 focused tests；status 限定为 `RECOVERY_EVIDENCE_COMPLETE
+    - RECOVERY_EVIDENCE_PARTIAL
+    - RECOVERY_EVIDENCE_BLOCKED`；complete 只表示 required evidence 可读，不表示 candidate 可
+      promotion
+    - '2026-06-17: DONE；真实 artifact `outputs/reports/recovery_evidence_pack_2026-06-17.json/md`
+      输出 `RECOVERY_EVIDENCE_COMPLETE`、sources=`10/10`、validations=`10/10`、validation
+      pass=9/warning=1、structural blockers=0、partial reasons=0、remaining recovery
+      blockers=2、warnings=5、next action=`return_candidate_to_research_until_net_improvement_survives_costs`。Validation
+      `outputs/reports/recovery_evidence_pack_validation_2026-06-17.json/md` 输出 `PASS_WITH_WARNINGS`
+      / failed=0。Remaining blockers: cost sensitivity `NOT_MEANINGFUL_UNDER_COSTS`
+      and benchmark baseline `CANDIDATE_UNDERPERFORMS_BASELINES`; warnings: signal
+      input restored with warnings, signal input `WARNING`, readiness/health `MANUAL_REVIEW_REQUIRED`,
+      safety `SAFETY_PASS_WITH_WARNINGS`。该 pack advisory-only，不是 promotion、extended
+      shadow、official target、broker/order 或 live approval。'
+    raw_line: '|TRADING-391_EVIDENCE_PACK_REBUILD_AFTER_RECOVERY|Research governance
+      / recovery evidence pack|P2|DONE|项目 owner 复核 recovery evidence pack；后续 TRADING-392
+      记录 owner hold decision，promotion/extended/live 仍保持 blocked until owner and evidence
+      gates clear|详细拆解见 `docs/requirements/TRADING-391_Evidence_Pack_Rebuild_After_Recovery.md`；聚合
+      latest signal input completeness/recovery、evidence staleness、shadow continuation
+      readiness、paper-shadow health、cost metrics materialization、cost-sensitivity
+      review、benchmark baseline metrics materialization、benchmark baseline control
+      和 research safety boundary audit，输出 post-recovery evidence pack；不得运行上游、刷新数据、补造缺失
+      artifact、写 owner decision、批准 promotion/extended shadow/live trading、写 official
+      target weights、触发 broker/order 或修改 strategy/candidate/paper-shadow/production
+      state|新增 `src/ai_trading_system/reports/recovery_evidence_pack.py`、`aits reports
+      recovery-evidence-pack`、`validate-recovery-evidence-pack`、JSON/Markdown pack、validation
+      artifact、Reader Brief section、report registry、artifact catalog、README、operations
+      runbook、system flow、requirements 和 focused tests；status 限定为 `RECOVERY_EVIDENCE_COMPLETE|RECOVERY_EVIDENCE_PARTIAL|RECOVERY_EVIDENCE_BLOCKED`；complete
+      只表示 required evidence 可读，不表示 candidate 可 promotion|2026-06-17: DONE；真实 artifact
+      `outputs/reports/recovery_evidence_pack_2026-06-17.json/md` 输出 `RECOVERY_EVIDENCE_COMPLETE`、sources=`10/10`、validations=`10/10`、validation
+      pass=9/warning=1、structural blockers=0、partial reasons=0、remaining recovery
+      blockers=2、warnings=5、next action=`return_candidate_to_research_until_net_improvement_survives_costs`。Validation
+      `outputs/reports/recovery_evidence_pack_validation_2026-06-17.json/md` 输出 `PASS_WITH_WARNINGS`
+      / failed=0。Remaining blockers: cost sensitivity `NOT_MEANINGFUL_UNDER_COSTS`
+      and benchmark baseline `CANDIDATE_UNDERPERFORMS_BASELINES`; warnings: signal
+      input restored with warnings, signal input `WARNING`, readiness/health `MANUAL_REVIEW_REQUIRED`,
+      safety `SAFETY_PASS_WITH_WARNINGS`。该 pack advisory-only，不是 promotion、extended
+      shadow、official target、broker/order 或 live approval。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8dc01754a9004fe0b4f2c28d
+  task_id: TRADING-391_EVIDENCE_PACK_REBUILD_AFTER_RECOVERY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 项目 owner 复核 recovery evidence pack；后续 TRADING-392 记录 owner hold decision，promotion/extended/live
+      仍保持 blocked until owner and evidence gates clear
+    notes: RECOVERY_EVIDENCE_PARTIAL
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8dc01754a9004fe0b4f2c28dcd2331f5ac47a28bdba0c7854c9905e8d715afd1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-391_EVIDENCE_PACK_REBUILD_AFTER_RECOVERY
+  - Research governance / recovery evidence pack
+  - P2
+  - DONE
+  - 项目 owner 复核 recovery evidence pack；后续 TRADING-392 记录 owner hold decision，promotion/extended/live
+    仍保持 blocked until owner and evidence gates clear
+  - 详细拆解见 `docs/requirements/TRADING-391_Evidence_Pack_Rebuild_After_Recovery.md`；聚合
+    latest signal input completeness/recovery、evidence staleness、shadow continuation
+    readiness、paper-shadow health、cost metrics materialization、cost-sensitivity review、benchmark
+    baseline metrics materialization、benchmark baseline control 和 research safety
+    boundary audit，输出 post-recovery evidence pack；不得运行上游、刷新数据、补造缺失 artifact、写 owner
+    decision、批准 promotion/extended shadow/live trading、写 official target weights、触发
+    broker/order 或修改 strategy/candidate/paper-shadow/production state
+  - 新增 `src/ai_trading_system/reports/recovery_evidence_pack.py`、`aits reports recovery-evidence-pack`、`validate-recovery-evidence-pack`、JSON/Markdown
+    pack、validation artifact、Reader Brief section、report registry、artifact catalog、README、operations
+    runbook、system flow、requirements 和 focused tests；status 限定为 `RECOVERY_EVIDENCE_COMPLETE
+  - RECOVERY_EVIDENCE_PARTIAL
+  docs_links:
+  - docs/requirements/TRADING-391_Evidence_Pack_Rebuild_After_Recovery.md
+  terminal: true
+  raw_row_sha256: 8dc01754a9004fe0b4f2c28dcd2331f5ac47a28bdba0c7854c9905e8d715afd1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9972e89c77f8449562d843b02228eaf8d1b37d5f6ec0d03675280f4a032c2bc3

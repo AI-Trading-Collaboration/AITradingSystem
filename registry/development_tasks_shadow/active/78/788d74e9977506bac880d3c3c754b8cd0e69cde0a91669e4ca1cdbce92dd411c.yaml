@@ -1,0 +1,146 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1326_to_1485_DYNAMIC_STRATEGY_REMAINING_HIDDEN_LIMIT_AUDIT
+  title: null
+  domain: Research strategies / actual-path edge attribution, objective redesign,
+    hidden limit audit
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 + 系统后续验证
+  requirement_refs:
+  - docs/requirements/TRADING-1326_to_1485_Dynamic_Strategy_Remaining_Hidden_Limit_Audit.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1326_to_1485_Dynamic_Strategy_Remaining_Hidden_Limit_Audit.md`；TRADING-1326～1485
+    Batch 1/2/3/4 已实现并真实运行，下一步为 owner 复核 edge/objective、PIT/walk-forward、taxonomy/timing、cost/cash/stress/regime
+    和 artifact governance 结论；不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Batch 1 新增 actual-path edge attribution 与 objective gate v2；Batch 2 新增 PIT
+      data availability CLI/runtime/tracked inventory、walk-forward validation CLI/runtime/matrix；Batch
+      3 新增 event taxonomy policy/snapshot、risk timing policy/runtime/matrix；Batch
+      4 新增 cost/cash/stress/regime policy config、tracked review matrix/snapshot、artifact
+      governance inventory 和 `tests/test_research_artifact_governance.py`。全部报告声明 `ai_after_chatgpt`
+      regime、actual requested date range、actual-path-only ranking、target-path diagnostic-only
+      和 dynamic promotion `BLOCKED`；artifact governance 真实 status=`RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1272
+    row_sha256: e2994624a79bebeab7c4aad6f404a76f6218b95bb15ff0ac47e2e5628a8fddea
+    cell_count: 8
+    all_cells:
+    - TRADING-1326_to_1485_DYNAMIC_STRATEGY_REMAINING_HIDDEN_LIMIT_AUDIT
+    - Research strategies / actual-path edge attribution, objective redesign, hidden
+      limit audit
+    - P0
+    - VALIDATING
+    - 项目 owner 后续复核 + 系统后续验证
+    - 详见 `docs/requirements/TRADING-1326_to_1485_Dynamic_Strategy_Remaining_Hidden_Limit_Audit.md`；TRADING-1326～1485
+      Batch 1/2/3/4 已实现并真实运行，下一步为 owner 复核 edge/objective、PIT/walk-forward、taxonomy/timing、cost/cash/stress/regime
+      和 artifact governance 结论；不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker
+    - Batch 1 新增 actual-path edge attribution 与 objective gate v2；Batch 2 新增 PIT data
+      availability CLI/runtime/tracked inventory、walk-forward validation CLI/runtime/matrix；Batch
+      3 新增 event taxonomy policy/snapshot、risk timing policy/runtime/matrix；Batch
+      4 新增 cost/cash/stress/regime policy config、tracked review matrix/snapshot、artifact
+      governance inventory 和 `tests/test_research_artifact_governance.py`。全部报告声明 `ai_after_chatgpt`
+      regime、actual requested date range、actual-path-only ranking、target-path diagnostic-only
+      和 dynamic promotion `BLOCKED`；artifact governance 真实 status=`RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`
+    - '2026-06-27: 新增并进入 IN_PROGRESS；承接 TRADING-1306～1325 event override 结论。2026-06-27:
+      Batch 1 转入 VALIDATING；真实 run edge attribution=`EDGE_ATTRIBUTION_REVIEW_READY`、objective
+      gate=`OBJECTIVE_GATE_REVIEW_READY`。2026-06-27: Batch 2 转入 VALIDATING；PIT=`PIT_DATA_AVAILABILITY_REVIEW_READY_WITH_CAVEATS`，walk-forward=`WALK_FORWARD_VALIDATION_READY_WITH_BLOCKERS`，`limited_adjustment`
+      verdict=`STABLE_ACROSS_WINDOWS`，其他 dynamic/event variants 为 `REGIME_OVERFITTED`
+      或 `PARAMETER_SENSITIVE`。2026-06-27: Batch 3 转入 VALIDATING；taxonomy=`EVENT_OVERRIDE_EX_ANTE_TAXONOMY_READY_WITH_RUNTIME_GAPS`，timing=`RISK_TIMING_QUALITY_REVIEW_READY_WITH_BLOCKERS`。2026-06-27:
+      Batch 4 转入 VALIDATING；cost/cash=`TRANSACTION_COST_CASH_YIELD_REVIEW_READY_WITH_BLOCKERS`，stress=`STRESS_RISK_METRICS_REVIEW_READY_WITH_BLOCKERS`，regime=`REGIME_BASELINE_EXPANSION_REVIEW_READY_WITH_BLOCKERS`，artifact
+      governance=`RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`；dynamic promotion 继续
+      `BLOCKED`。'
+    raw_line: '|TRADING-1326_to_1485_DYNAMIC_STRATEGY_REMAINING_HIDDEN_LIMIT_AUDIT|Research
+      strategies / actual-path edge attribution, objective redesign, hidden limit
+      audit|P0|VALIDATING|项目 owner 后续复核 + 系统后续验证|详见 `docs/requirements/TRADING-1326_to_1485_Dynamic_Strategy_Remaining_Hidden_Limit_Audit.md`；TRADING-1326～1485
+      Batch 1/2/3/4 已实现并真实运行，下一步为 owner 复核 edge/objective、PIT/walk-forward、taxonomy/timing、cost/cash/stress/regime
+      和 artifact governance 结论；不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker|Batch
+      1 新增 actual-path edge attribution 与 objective gate v2；Batch 2 新增 PIT data availability
+      CLI/runtime/tracked inventory、walk-forward validation CLI/runtime/matrix；Batch
+      3 新增 event taxonomy policy/snapshot、risk timing policy/runtime/matrix；Batch
+      4 新增 cost/cash/stress/regime policy config、tracked review matrix/snapshot、artifact
+      governance inventory 和 `tests/test_research_artifact_governance.py`。全部报告声明 `ai_after_chatgpt`
+      regime、actual requested date range、actual-path-only ranking、target-path diagnostic-only
+      和 dynamic promotion `BLOCKED`；artifact governance 真实 status=`RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`|2026-06-27:
+      新增并进入 IN_PROGRESS；承接 TRADING-1306～1325 event override 结论。2026-06-27: Batch 1
+      转入 VALIDATING；真实 run edge attribution=`EDGE_ATTRIBUTION_REVIEW_READY`、objective
+      gate=`OBJECTIVE_GATE_REVIEW_READY`。2026-06-27: Batch 2 转入 VALIDATING；PIT=`PIT_DATA_AVAILABILITY_REVIEW_READY_WITH_CAVEATS`，walk-forward=`WALK_FORWARD_VALIDATION_READY_WITH_BLOCKERS`，`limited_adjustment`
+      verdict=`STABLE_ACROSS_WINDOWS`，其他 dynamic/event variants 为 `REGIME_OVERFITTED`
+      或 `PARAMETER_SENSITIVE`。2026-06-27: Batch 3 转入 VALIDATING；taxonomy=`EVENT_OVERRIDE_EX_ANTE_TAXONOMY_READY_WITH_RUNTIME_GAPS`，timing=`RISK_TIMING_QUALITY_REVIEW_READY_WITH_BLOCKERS`。2026-06-27:
+      Batch 4 转入 VALIDATING；cost/cash=`TRANSACTION_COST_CASH_YIELD_REVIEW_READY_WITH_BLOCKERS`，stress=`STRESS_RISK_METRICS_REVIEW_READY_WITH_BLOCKERS`，regime=`REGIME_BASELINE_EXPANSION_REVIEW_READY_WITH_BLOCKERS`，artifact
+      governance=`RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`；dynamic promotion 继续
+      `BLOCKED`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e2994624a79bebeab7c4aad6
+  task_id: TRADING-1326_to_1485_DYNAMIC_STRATEGY_REMAINING_HIDDEN_LIMIT_AUDIT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 + 系统后续验证
+    notes: '2026-06-27: 新增并进入 IN_PROGRESS；承接 TRADING-1306～1325 event override 结论。2026-06-27:
+      Batch 1 转入 VALIDATING；真实 run edge attribution=`EDGE_ATTRIBUTION_REVIEW_READY`、objective
+      gate=`OBJECTIVE_GATE_REVIEW_READY`。2026-06-27: Batch 2 转入 VALIDATING；PIT=`PIT_DATA_AVAILABILITY_REVIEW_READY_WITH_CAVEATS`，walk-forward=`WALK_FORWARD_VALIDATION_READY_WITH_BLOCKERS`，`limited_adjustment`
+      verdict=`STABLE_ACROSS_WINDOWS`，其他 dynamic/event variants 为 `REGIME_OVERFITTED`
+      或 `PARAMETER_SENSITIVE`。2026-06-27: Batch 3 转入 VALIDATING；taxonomy=`EVENT_OVERRIDE_EX_ANTE_TAXONOMY_READY_WITH_RUNTIME_GAPS`，timing=`RISK_TIMING_QUALITY_REVIEW_READY_WITH_BLOCKERS`。2026-06-27:
+      Batch 4 转入 VALIDATING；cost/cash=`TRANSACTION_COST_CASH_YIELD_REVIEW_READY_WITH_BLOCKERS`，stress=`STRESS_RISK_METRICS_REVIEW_READY_WITH_BLOCKERS`，regime=`REGIME_BASELINE_EXPANSION_REVIEW_READY_WITH_BLOCKERS`，artifact
+      governance=`RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`；dynamic promotion 继续
+      `BLOCKED`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e2994624a79bebeab7c4aad6f404a76f6218b95bb15ff0ac47e2e5628a8fddea
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1326_to_1485_DYNAMIC_STRATEGY_REMAINING_HIDDEN_LIMIT_AUDIT
+  - Research strategies / actual-path edge attribution, objective redesign, hidden
+    limit audit
+  - P0
+  - VALIDATING
+  - 项目 owner 后续复核 + 系统后续验证
+  - 详见 `docs/requirements/TRADING-1326_to_1485_Dynamic_Strategy_Remaining_Hidden_Limit_Audit.md`；TRADING-1326～1485
+    Batch 1/2/3/4 已实现并真实运行，下一步为 owner 复核 edge/objective、PIT/walk-forward、taxonomy/timing、cost/cash/stress/regime
+    和 artifact governance 结论；不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker
+  - Batch 1 新增 actual-path edge attribution 与 objective gate v2；Batch 2 新增 PIT data
+    availability CLI/runtime/tracked inventory、walk-forward validation CLI/runtime/matrix；Batch
+    3 新增 event taxonomy policy/snapshot、risk timing policy/runtime/matrix；Batch 4
+    新增 cost/cash/stress/regime policy config、tracked review matrix/snapshot、artifact
+    governance inventory 和 `tests/test_research_artifact_governance.py`。全部报告声明 `ai_after_chatgpt`
+    regime、actual requested date range、actual-path-only ranking、target-path diagnostic-only
+    和 dynamic promotion `BLOCKED`；artifact governance 真实 status=`RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`
+  - '2026-06-27: 新增并进入 IN_PROGRESS；承接 TRADING-1306～1325 event override 结论。2026-06-27:
+    Batch 1 转入 VALIDATING；真实 run edge attribution=`EDGE_ATTRIBUTION_REVIEW_READY`、objective
+    gate=`OBJECTIVE_GATE_REVIEW_READY`。2026-06-27: Batch 2 转入 VALIDATING；PIT=`PIT_DATA_AVAILABILITY_REVIEW_READY_WITH_CAVEATS`，walk-forward=`WALK_FORWARD_VALIDATION_READY_WITH_BLOCKERS`，`limited_adjustment`
+    verdict=`STABLE_ACROSS_WINDOWS`，其他 dynamic/event variants 为 `REGIME_OVERFITTED`
+    或 `PARAMETER_SENSITIVE`。2026-06-27: Batch 3 转入 VALIDATING；taxonomy=`EVENT_OVERRIDE_EX_ANTE_TAXONOMY_READY_WITH_RUNTIME_GAPS`，timing=`RISK_TIMING_QUALITY_REVIEW_READY_WITH_BLOCKERS`。2026-06-27:
+    Batch 4 转入 VALIDATING；cost/cash=`TRANSACTION_COST_CASH_YIELD_REVIEW_READY_WITH_BLOCKERS`，stress=`STRESS_RISK_METRICS_REVIEW_READY_WITH_BLOCKERS`，regime=`REGIME_BASELINE_EXPANSION_REVIEW_READY_WITH_BLOCKERS`，artifact
+    governance=`RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`；dynamic promotion 继续 `BLOCKED`。'
+  docs_links:
+  - docs/requirements/TRADING-1326_to_1485_Dynamic_Strategy_Remaining_Hidden_Limit_Audit.md
+  terminal: false
+  raw_row_sha256: e2994624a79bebeab7c4aad6f404a76f6218b95bb15ff0ac47e2e5628a8fddea
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d5a5bd634f8e2912f9c27d64dd19fb7b2be1072d70c9f67736df3b82c65206d8

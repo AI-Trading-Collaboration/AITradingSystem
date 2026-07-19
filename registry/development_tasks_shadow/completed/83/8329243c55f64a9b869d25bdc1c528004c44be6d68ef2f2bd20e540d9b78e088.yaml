@@ -1,0 +1,181 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-012
+  title: null
+  domain: 市场反馈优化/shadow 参数搜索器
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/market_feedback_optimization_loop_2026-05-13.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9f-shadow-参数搜索器`；搜索器基础任务已完成，真实修正版
+    grid search artifact 复核通过；更严格 walk-forward/OOS、objective、promotion 和 forward lifecycle
+    由后续独立任务承接，不阻塞本任务完成
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits feedback search-shadow-parameters`，按指定回测区间、搜索空间和目标函数枚举或采样 shadow
+      weight/gate 组合，输出 run manifest、trial registry、pareto front、best profile YAML
+      和中文报告；必须记录配置 checksum、输入区间、成本假设、seed/算法版本和 production_effect=none；不得修改生产权重、approved
+      overlay、正式 prediction ledger、日报结论或仓位 gate；当前 `current_20260504_20260514_grid_v2`
+      为 `PASS` / `production_effect=none`，204 个 weight candidates、253 个 gate candidates、51,612
+      个 trials、45,288 个 Pareto front trials，best trial 为 `grid_weight_0118__grid_gate_0217`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 277
+    row_sha256: bdf64ba541d204e3a17714c2463842aa563e074a4865aec2344908a56965aefc
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-012
+    - 市场反馈优化/shadow 参数搜索器
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9f-shadow-参数搜索器`；搜索器基础任务已完成，真实修正版
+      grid search artifact 复核通过；更严格 walk-forward/OOS、objective、promotion 和 forward
+      lifecycle 由后续独立任务承接，不阻塞本任务完成
+    - 新增 `aits feedback search-shadow-parameters`，按指定回测区间、搜索空间和目标函数枚举或采样 shadow weight/gate
+      组合，输出 run manifest、trial registry、pareto front、best profile YAML 和中文报告；必须记录配置
+      checksum、输入区间、成本假设、seed/算法版本和 production_effect=none；不得修改生产权重、approved overlay、正式
+      prediction ledger、日报结论或仓位 gate；当前 `current_20260504_20260514_grid_v2` 为 `PASS`
+      / `production_effect=none`，204 个 weight candidates、253 个 gate candidates、51,612
+      个 trials、45,288 个 Pareto front trials，best trial 为 `grid_weight_0118__grid_gate_0217`
+    - '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 希望后续频繁调用该功能来确定特定回测区间最优解，本轮先做第一版并用刚才输入跑出当前样本最优权重策略。2026-05-16:
+      从 IN_PROGRESS 改为 VALIDATING，原因：新增 search-space/objective 配置和 `feedback search-shadow-parameters`；真实
+      2026-05-04 至 2026-05-14 搜索 PASS，共 204 个 weight candidates、4 个 gate candidates、816
+      个 trials、582 个 Pareto front trials，当前最优 trial 为 `source_current__shadow_gate_relaxed_valuation_v1`，shadow
+      total return 8.31%、production total return 4.74%、excess 3.58%、shadow MDD -1.57%、production
+      MDD -1.09%、turnover 0.60、beat rate 75.00%；结果主要来自 relaxed valuation gate，多个权重候选并列，生产权重、approved
+      overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。2026-05-16: 修正实现语义，原因：owner 指出目标不是从几套预设
+      gate profile 里选优，而是用算法拟合最优参数；`shadow_parameter_search_space.yaml` 新增 `gate_grid`，默认关闭预设
+      shadow gate profile 参与最优解选择，`search-shadow-parameters` 改为枚举 weight grid + gate
+      cap grid，并在 manifest/report 记录搜索算法和 grid 启用状态。2026-05-16: 修正版真实搜索 PASS，run id
+      `current_20260504_20260514_grid_v2`；共 204 个 weight candidates、253 个 gate candidates、51,612
+      个 trials，最优 trial `grid_weight_0118__grid_gate_0217`，target weights 为 trend
+      25%、fundamentals 35%、macro_liquidity 10%、risk_sentiment 20%、valuation 5%、policy_geopolitics
+      5%，gate caps 为 valuation 0.70、risk_budget 0.70、thesis 0.70、confidence 0.90、data_confidence
+      0.80；shadow return 9.18%、production return 4.74%、excess 4.45%、shadow MDD -1.70%、turnover
+      0.75。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 `current_20260504_20260514_grid_v2`
+      manifest/report/trials 输出完整，生产边界保持 `production_effect=none`，目标测试覆盖 CLI、gate
+      grid、Pareto front 和 best profile 输出；验证通过 `tests/test_shadow_weight_profiles.py`
+      15 passed、Ruff、repo-wide Black check 和 `compileall`。'
+    raw_line: '|CALIBRATION-012|市场反馈优化/shadow 参数搜索器|P1|DONE|系统验证|详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9f-shadow-参数搜索器`；搜索器基础任务已完成，真实修正版
+      grid search artifact 复核通过；更严格 walk-forward/OOS、objective、promotion 和 forward
+      lifecycle 由后续独立任务承接，不阻塞本任务完成|新增 `aits feedback search-shadow-parameters`，按指定回测区间、搜索空间和目标函数枚举或采样
+      shadow weight/gate 组合，输出 run manifest、trial registry、pareto front、best profile
+      YAML 和中文报告；必须记录配置 checksum、输入区间、成本假设、seed/算法版本和 production_effect=none；不得修改生产权重、approved
+      overlay、正式 prediction ledger、日报结论或仓位 gate；当前 `current_20260504_20260514_grid_v2`
+      为 `PASS` / `production_effect=none`，204 个 weight candidates、253 个 gate candidates、51,612
+      个 trials、45,288 个 Pareto front trials，best trial 为 `grid_weight_0118__grid_gate_0217`|2026-05-16:
+      新增并进入 IN_PROGRESS，原因：owner 希望后续频繁调用该功能来确定特定回测区间最优解，本轮先做第一版并用刚才输入跑出当前样本最优权重策略。2026-05-16:
+      从 IN_PROGRESS 改为 VALIDATING，原因：新增 search-space/objective 配置和 `feedback search-shadow-parameters`；真实
+      2026-05-04 至 2026-05-14 搜索 PASS，共 204 个 weight candidates、4 个 gate candidates、816
+      个 trials、582 个 Pareto front trials，当前最优 trial 为 `source_current__shadow_gate_relaxed_valuation_v1`，shadow
+      total return 8.31%、production total return 4.74%、excess 3.58%、shadow MDD -1.57%、production
+      MDD -1.09%、turnover 0.60、beat rate 75.00%；结果主要来自 relaxed valuation gate，多个权重候选并列，生产权重、approved
+      overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。2026-05-16: 修正实现语义，原因：owner 指出目标不是从几套预设
+      gate profile 里选优，而是用算法拟合最优参数；`shadow_parameter_search_space.yaml` 新增 `gate_grid`，默认关闭预设
+      shadow gate profile 参与最优解选择，`search-shadow-parameters` 改为枚举 weight grid + gate
+      cap grid，并在 manifest/report 记录搜索算法和 grid 启用状态。2026-05-16: 修正版真实搜索 PASS，run id
+      `current_20260504_20260514_grid_v2`；共 204 个 weight candidates、253 个 gate candidates、51,612
+      个 trials，最优 trial `grid_weight_0118__grid_gate_0217`，target weights 为 trend
+      25%、fundamentals 35%、macro_liquidity 10%、risk_sentiment 20%、valuation 5%、policy_geopolitics
+      5%，gate caps 为 valuation 0.70、risk_budget 0.70、thesis 0.70、confidence 0.90、data_confidence
+      0.80；shadow return 9.18%、production return 4.74%、excess 4.45%、shadow MDD -1.70%、turnover
+      0.75。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 `current_20260504_20260514_grid_v2`
+      manifest/report/trials 输出完整，生产边界保持 `production_effect=none`，目标测试覆盖 CLI、gate
+      grid、Pareto front 和 best profile 输出；验证通过 `tests/test_shadow_weight_profiles.py`
+      15 passed、Ruff、repo-wide Black check 和 `compileall`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bdf64ba541d204e3a17714c2
+  task_id: CALIBRATION-012
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 希望后续频繁调用该功能来确定特定回测区间最优解，本轮先做第一版并用刚才输入跑出当前样本最优权重策略。2026-05-16:
+      从 IN_PROGRESS 改为 VALIDATING，原因：新增 search-space/objective 配置和 `feedback search-shadow-parameters`；真实
+      2026-05-04 至 2026-05-14 搜索 PASS，共 204 个 weight candidates、4 个 gate candidates、816
+      个 trials、582 个 Pareto front trials，当前最优 trial 为 `source_current__shadow_gate_relaxed_valuation_v1`，shadow
+      total return 8.31%、production total return 4.74%、excess 3.58%、shadow MDD -1.57%、production
+      MDD -1.09%、turnover 0.60、beat rate 75.00%；结果主要来自 relaxed valuation gate，多个权重候选并列，生产权重、approved
+      overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。2026-05-16: 修正实现语义，原因：owner 指出目标不是从几套预设
+      gate profile 里选优，而是用算法拟合最优参数；`shadow_parameter_search_space.yaml` 新增 `gate_grid`，默认关闭预设
+      shadow gate profile 参与最优解选择，`search-shadow-parameters` 改为枚举 weight grid + gate
+      cap grid，并在 manifest/report 记录搜索算法和 grid 启用状态。2026-05-16: 修正版真实搜索 PASS，run id
+      `current_20260504_20260514_grid_v2`；共 204 个 weight candidates、253 个 gate candidates、51,612
+      个 trials，最优 trial `grid_weight_0118__grid_gate_0217`，target weights 为 trend
+      25%、fundamentals 35%、macro_liquidity 10%、risk_sentiment 20%、valuation 5%、policy_geopolitics
+      5%，gate caps 为 valuation 0.70、risk_budget 0.70、thesis 0.70、confidence 0.90、data_confidence
+      0.80；shadow return 9.18%、production return 4.74%、excess 4.45%、shadow MDD -1.70%、turnover
+      0.75。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 `current_20260504_20260514_grid_v2`
+      manifest/report/trials 输出完整，生产边界保持 `production_effect=none`，目标测试覆盖 CLI、gate
+      grid、Pareto front 和 best profile 输出；验证通过 `tests/test_shadow_weight_profiles.py`
+      15 passed、Ruff、repo-wide Black check 和 `compileall`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bdf64ba541d204e3a17714c2463842aa563e074a4865aec2344908a56965aefc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-012
+  - 市场反馈优化/shadow 参数搜索器
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9f-shadow-参数搜索器`；搜索器基础任务已完成，真实修正版
+    grid search artifact 复核通过；更严格 walk-forward/OOS、objective、promotion 和 forward lifecycle
+    由后续独立任务承接，不阻塞本任务完成
+  - 新增 `aits feedback search-shadow-parameters`，按指定回测区间、搜索空间和目标函数枚举或采样 shadow weight/gate
+    组合，输出 run manifest、trial registry、pareto front、best profile YAML 和中文报告；必须记录配置
+    checksum、输入区间、成本假设、seed/算法版本和 production_effect=none；不得修改生产权重、approved overlay、正式
+    prediction ledger、日报结论或仓位 gate；当前 `current_20260504_20260514_grid_v2` 为 `PASS`
+    / `production_effect=none`，204 个 weight candidates、253 个 gate candidates、51,612
+    个 trials、45,288 个 Pareto front trials，best trial 为 `grid_weight_0118__grid_gate_0217`
+  - '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 希望后续频繁调用该功能来确定特定回测区间最优解，本轮先做第一版并用刚才输入跑出当前样本最优权重策略。2026-05-16:
+    从 IN_PROGRESS 改为 VALIDATING，原因：新增 search-space/objective 配置和 `feedback search-shadow-parameters`；真实
+    2026-05-04 至 2026-05-14 搜索 PASS，共 204 个 weight candidates、4 个 gate candidates、816
+    个 trials、582 个 Pareto front trials，当前最优 trial 为 `source_current__shadow_gate_relaxed_valuation_v1`，shadow
+    total return 8.31%、production total return 4.74%、excess 3.58%、shadow MDD -1.57%、production
+    MDD -1.09%、turnover 0.60、beat rate 75.00%；结果主要来自 relaxed valuation gate，多个权重候选并列，生产权重、approved
+    overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。2026-05-16: 修正实现语义，原因：owner 指出目标不是从几套预设
+    gate profile 里选优，而是用算法拟合最优参数；`shadow_parameter_search_space.yaml` 新增 `gate_grid`，默认关闭预设
+    shadow gate profile 参与最优解选择，`search-shadow-parameters` 改为枚举 weight grid + gate
+    cap grid，并在 manifest/report 记录搜索算法和 grid 启用状态。2026-05-16: 修正版真实搜索 PASS，run id
+    `current_20260504_20260514_grid_v2`；共 204 个 weight candidates、253 个 gate candidates、51,612
+    个 trials，最优 trial `grid_weight_0118__grid_gate_0217`，target weights 为 trend 25%、fundamentals
+    35%、macro_liquidity 10%、risk_sentiment 20%、valuation 5%、policy_geopolitics 5%，gate
+    caps 为 valuation 0.70、risk_budget 0.70、thesis 0.70、confidence 0.90、data_confidence
+    0.80；shadow return 9.18%、production return 4.74%、excess 4.45%、shadow MDD -1.70%、turnover
+    0.75。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 `current_20260504_20260514_grid_v2`
+    manifest/report/trials 输出完整，生产边界保持 `production_effect=none`，目标测试覆盖 CLI、gate grid、Pareto
+    front 和 best profile 输出；验证通过 `tests/test_shadow_weight_profiles.py` 15 passed、Ruff、repo-wide
+    Black check 和 `compileall`。'
+  docs_links:
+  - docs/requirements/market_feedback_optimization_loop_2026-05-13.md
+  terminal: true
+  raw_row_sha256: bdf64ba541d204e3a17714c2463842aa563e074a4865aec2344908a56965aefc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 74af85f738484786b8fbd777cea7ca94110c51239e05bf081f8a7e7b410e76d8

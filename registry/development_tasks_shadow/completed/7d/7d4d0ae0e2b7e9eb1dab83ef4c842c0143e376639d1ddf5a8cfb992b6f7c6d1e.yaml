@@ -1,0 +1,194 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2418_GROWTH_TILT_ENGINE_VALID_UNTIL_DEPENDENCY_EVIDENCE_CLOSURE
+  title: null
+  domain: Strategy research / growth tilt valid-until dependency evidence closure
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2419 PIT gate readiness recheck
+  requirement_refs:
+  - docs/requirements/TRADING-2418_Valid_Until_Window_Dependency_Evidence_Closure.md
+  - docs/tasks/completed/TRADING-2418_Valid_Until_Window_Dependency_Evidence_Closure.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2418_Valid_Until_Window_Dependency_Evidence_Closure.md`；承接
+    TRADING-2417 source traceability / upstream artifact closure、TRADING-2416 remaining
+    blocker closure plan、TRADING-2415 PIT gate readiness snapshot、TRADING-2414 signal
+    validity dependency remediation、TRADING-2411 contract gap remediation 和 TRADING-2407
+    valid-until semantics artifacts，仅读取 prior artifacts/docs/registry/catalog、PIT
+    input registry 与 strategy execution policy registry；本任务只生成 valid-until dependency
+    evidence、signal validity contract evidence、stale signal policy evidence、growth
+    tilt valid-until alignment evidence、remaining blocker summary 和 2419 route，不标记
+    PIT gate ready 或 contract ready、不解除或降级 blocker、不运行 candidate search / observation
+    / paper-shadow / scheduler / event append / outcome binding / production / broker，不运行新
+    backtest、scoring、daily report 或生成新 signal/feature。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 reusable valid-until dependency evidence closure builder、`aits research
+      strategies growth-tilt-engine-valid-until-dependency-evidence-closure`；输出 `closure_result.json`、`valid_until_dependency_evidence.json`、`signal_validity_contract_evidence.json`、`stale_signal_policy_evidence.json`、`growth_tilt_valid_until_alignment_evidence.json`、`remaining_blocker_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_VALID_UNTIL_DEPENDENCY_EVIDENCE_CLOSURE_READY`，source
+      feature count=10，PIT gate ready count=0，contract-ready count=0，PIT gate blocked
+      count=10，blocked by source traceability count=5，blocked by valid_until_window
+      count=1，valid-until dependency evidence row count=1，pre-recheck evidence ready
+      count=1，still blocked valid-until dependency count=0，`growth_tilt_engine_signal_artifact`
+      仍保留 source traceability blocker，`execution_signal_validity_policy` evidence
+      已归档但需 TRADING-2419 单独 recheck，`pit_gate_recheck_required=true`、`auto_mark_pit_gate_ready=false`、`auto_mark_contract_ready=false`、`growth_tilt_engine_blocking_gap_resolved=false`、`growth_tilt_engine_severity_downgraded=false`、`valid_until_window_blocking_gap_resolved=false`、`valid_until_window_severity_downgraded=false`、candidate_search_allowed=false、candidate_search_resumed=false、research_only_observation_approved=false、paper_shadow_enabled=false、event_append_enabled=false、outcome_binding_enabled=false、scheduler_enabled=false、production_enabled=false、broker_action_enabled=false、daily_report_generated=false，next
+      route=`TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 66
+    row_sha256: 60546ec7c576fd6528c7856b5977ec53da1f01cdefaca37f38ce2e533cb43541
+    cell_count: 8
+    all_cells:
+    - TRADING-2418_GROWTH_TILT_ENGINE_VALID_UNTIL_DEPENDENCY_EVIDENCE_CLOSURE
+    - Strategy research / growth tilt valid-until dependency evidence closure
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2419 PIT gate readiness recheck
+    - 详见 `docs/requirements/TRADING-2418_Valid_Until_Window_Dependency_Evidence_Closure.md`；承接
+      TRADING-2417 source traceability / upstream artifact closure、TRADING-2416 remaining
+      blocker closure plan、TRADING-2415 PIT gate readiness snapshot、TRADING-2414 signal
+      validity dependency remediation、TRADING-2411 contract gap remediation 和 TRADING-2407
+      valid-until semantics artifacts，仅读取 prior artifacts/docs/registry/catalog、PIT
+      input registry 与 strategy execution policy registry；本任务只生成 valid-until dependency
+      evidence、signal validity contract evidence、stale signal policy evidence、growth
+      tilt valid-until alignment evidence、remaining blocker summary 和 2419 route，不标记
+      PIT gate ready 或 contract ready、不解除或降级 blocker、不运行 candidate search / observation
+      / paper-shadow / scheduler / event append / outcome binding / production / broker，不运行新
+      backtest、scoring、daily report 或生成新 signal/feature。
+    - 新增 reusable valid-until dependency evidence closure builder、`aits research strategies
+      growth-tilt-engine-valid-until-dependency-evidence-closure`；输出 `closure_result.json`、`valid_until_dependency_evidence.json`、`signal_validity_contract_evidence.json`、`stale_signal_policy_evidence.json`、`growth_tilt_valid_until_alignment_evidence.json`、`remaining_blocker_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_VALID_UNTIL_DEPENDENCY_EVIDENCE_CLOSURE_READY`，source
+      feature count=10，PIT gate ready count=0，contract-ready count=0，PIT gate blocked
+      count=10，blocked by source traceability count=5，blocked by valid_until_window
+      count=1，valid-until dependency evidence row count=1，pre-recheck evidence ready
+      count=1，still blocked valid-until dependency count=0，`growth_tilt_engine_signal_artifact`
+      仍保留 source traceability blocker，`execution_signal_validity_policy` evidence
+      已归档但需 TRADING-2419 单独 recheck，`pit_gate_recheck_required=true`、`auto_mark_pit_gate_ready=false`、`auto_mark_contract_ready=false`、`growth_tilt_engine_blocking_gap_resolved=false`、`growth_tilt_engine_severity_downgraded=false`、`valid_until_window_blocking_gap_resolved=false`、`valid_until_window_severity_downgraded=false`、candidate_search_allowed=false、candidate_search_resumed=false、research_only_observation_approved=false、paper_shadow_enabled=false、event_append_enabled=false、outcome_binding_enabled=false、scheduler_enabled=false、production_enabled=false、broker_action_enabled=false、daily_report_generated=false，next
+      route=`TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck`。
+    - '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest 4 passed、真实 CLI、docs freshness、documentation contract、task-register
+      consistency run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits
+      validate-data`，因为只读取 prior validated TRADING-2407 / 2411 / 2414 / 2415 / 2416
+      / 2417 artifacts/docs/registry/catalog、PIT input registry 和 strategy execution
+      policy registry，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+      report 或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+      binding、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      closeout validation 结果见 `docs/tasks/completed/TRADING-2418_Valid_Until_Window_Dependency_Evidence_Closure.md`。'
+    raw_line: '|TRADING-2418_GROWTH_TILT_ENGINE_VALID_UNTIL_DEPENDENCY_EVIDENCE_CLOSURE|Strategy
+      research / growth tilt valid-until dependency evidence closure|P0|DONE|项目 owner
+      后续复核 TRADING-2419 PIT gate readiness recheck|详见 `docs/requirements/TRADING-2418_Valid_Until_Window_Dependency_Evidence_Closure.md`；承接
+      TRADING-2417 source traceability / upstream artifact closure、TRADING-2416 remaining
+      blocker closure plan、TRADING-2415 PIT gate readiness snapshot、TRADING-2414 signal
+      validity dependency remediation、TRADING-2411 contract gap remediation 和 TRADING-2407
+      valid-until semantics artifacts，仅读取 prior artifacts/docs/registry/catalog、PIT
+      input registry 与 strategy execution policy registry；本任务只生成 valid-until dependency
+      evidence、signal validity contract evidence、stale signal policy evidence、growth
+      tilt valid-until alignment evidence、remaining blocker summary 和 2419 route，不标记
+      PIT gate ready 或 contract ready、不解除或降级 blocker、不运行 candidate search / observation
+      / paper-shadow / scheduler / event append / outcome binding / production / broker，不运行新
+      backtest、scoring、daily report 或生成新 signal/feature。|新增 reusable valid-until dependency
+      evidence closure builder、`aits research strategies growth-tilt-engine-valid-until-dependency-evidence-closure`；输出
+      `closure_result.json`、`valid_until_dependency_evidence.json`、`signal_validity_contract_evidence.json`、`stale_signal_policy_evidence.json`、`growth_tilt_valid_until_alignment_evidence.json`、`remaining_blocker_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_VALID_UNTIL_DEPENDENCY_EVIDENCE_CLOSURE_READY`，source
+      feature count=10，PIT gate ready count=0，contract-ready count=0，PIT gate blocked
+      count=10，blocked by source traceability count=5，blocked by valid_until_window
+      count=1，valid-until dependency evidence row count=1，pre-recheck evidence ready
+      count=1，still blocked valid-until dependency count=0，`growth_tilt_engine_signal_artifact`
+      仍保留 source traceability blocker，`execution_signal_validity_policy` evidence
+      已归档但需 TRADING-2419 单独 recheck，`pit_gate_recheck_required=true`、`auto_mark_pit_gate_ready=false`、`auto_mark_contract_ready=false`、`growth_tilt_engine_blocking_gap_resolved=false`、`growth_tilt_engine_severity_downgraded=false`、`valid_until_window_blocking_gap_resolved=false`、`valid_until_window_severity_downgraded=false`、candidate_search_allowed=false、candidate_search_resumed=false、research_only_observation_approved=false、paper_shadow_enabled=false、event_append_enabled=false、outcome_binding_enabled=false、scheduler_enabled=false、production_enabled=false、broker_action_enabled=false、daily_report_generated=false，next
+      route=`TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck`。|2026-07-08:
+      根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest 4 passed、真实 CLI、docs freshness、documentation contract、task-register
+      consistency run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits
+      validate-data`，因为只读取 prior validated TRADING-2407 / 2411 / 2414 / 2415 / 2416
+      / 2417 artifacts/docs/registry/catalog、PIT input registry 和 strategy execution
+      policy registry，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+      report 或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+      binding、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      closeout validation 结果见 `docs/tasks/completed/TRADING-2418_Valid_Until_Window_Dependency_Evidence_Closure.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-60546ec7c576fd6528c7856b
+  task_id: TRADING-2418_GROWTH_TILT_ENGINE_VALID_UNTIL_DEPENDENCY_EVIDENCE_CLOSURE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2419 PIT gate readiness recheck
+    notes: '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest 4 passed、真实 CLI、docs freshness、documentation
+      contract、task-register consistency run/validate、contract-validation 和 `git diff
+      --check`；本任务未运行 `aits validate-data`，因为只读取 prior validated TRADING-2407 / 2411
+      / 2414 / 2415 / 2416 / 2417 artifacts/docs/registry/catalog、PIT input registry
+      和 strategy execution policy registry，不读取 fresh cached market data、不运行新 backtest、不生成
+      feature/signal/scoring/daily report 或交易建议。candidate search、observation、paper-shadow、scheduler、event
+      append、outcome binding、production、broker/order、daily report 全部保持 disabled /
+      false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2418_Valid_Until_Window_Dependency_Evidence_Closure.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:60546ec7c576fd6528c7856b5977ec53da1f01cdefaca37f38ce2e533cb43541
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2418_GROWTH_TILT_ENGINE_VALID_UNTIL_DEPENDENCY_EVIDENCE_CLOSURE
+  - Strategy research / growth tilt valid-until dependency evidence closure
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2419 PIT gate readiness recheck
+  - 详见 `docs/requirements/TRADING-2418_Valid_Until_Window_Dependency_Evidence_Closure.md`；承接
+    TRADING-2417 source traceability / upstream artifact closure、TRADING-2416 remaining
+    blocker closure plan、TRADING-2415 PIT gate readiness snapshot、TRADING-2414 signal
+    validity dependency remediation、TRADING-2411 contract gap remediation 和 TRADING-2407
+    valid-until semantics artifacts，仅读取 prior artifacts/docs/registry/catalog、PIT
+    input registry 与 strategy execution policy registry；本任务只生成 valid-until dependency
+    evidence、signal validity contract evidence、stale signal policy evidence、growth
+    tilt valid-until alignment evidence、remaining blocker summary 和 2419 route，不标记
+    PIT gate ready 或 contract ready、不解除或降级 blocker、不运行 candidate search / observation
+    / paper-shadow / scheduler / event append / outcome binding / production / broker，不运行新
+    backtest、scoring、daily report 或生成新 signal/feature。
+  - 新增 reusable valid-until dependency evidence closure builder、`aits research strategies
+    growth-tilt-engine-valid-until-dependency-evidence-closure`；输出 `closure_result.json`、`valid_until_dependency_evidence.json`、`signal_validity_contract_evidence.json`、`stale_signal_policy_evidence.json`、`growth_tilt_valid_until_alignment_evidence.json`、`remaining_blocker_summary.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_VALID_UNTIL_DEPENDENCY_EVIDENCE_CLOSURE_READY`，source
+    feature count=10，PIT gate ready count=0，contract-ready count=0，PIT gate blocked
+    count=10，blocked by source traceability count=5，blocked by valid_until_window
+    count=1，valid-until dependency evidence row count=1，pre-recheck evidence ready
+    count=1，still blocked valid-until dependency count=0，`growth_tilt_engine_signal_artifact`
+    仍保留 source traceability blocker，`execution_signal_validity_policy` evidence 已归档但需
+    TRADING-2419 单独 recheck，`pit_gate_recheck_required=true`、`auto_mark_pit_gate_ready=false`、`auto_mark_contract_ready=false`、`growth_tilt_engine_blocking_gap_resolved=false`、`growth_tilt_engine_severity_downgraded=false`、`valid_until_window_blocking_gap_resolved=false`、`valid_until_window_severity_downgraded=false`、candidate_search_allowed=false、candidate_search_resumed=false、research_only_observation_approved=false、paper_shadow_enabled=false、event_append_enabled=false、outcome_binding_enabled=false、scheduler_enabled=false、production_enabled=false、broker_action_enabled=false、daily_report_generated=false，next
+    route=`TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck`。
+  - '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+    parallel pytest 4 passed、真实 CLI、docs freshness、documentation contract、task-register
+    consistency run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits
+    validate-data`，因为只读取 prior validated TRADING-2407 / 2411 / 2414 / 2415 / 2416
+    / 2417 artifacts/docs/registry/catalog、PIT input registry 和 strategy execution
+    policy registry，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+    report 或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+    binding、production、broker/order、daily report 全部保持 disabled / false / none；最终 closeout
+    validation 结果见 `docs/tasks/completed/TRADING-2418_Valid_Until_Window_Dependency_Evidence_Closure.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2418_Valid_Until_Window_Dependency_Evidence_Closure.md
+  - docs/tasks/completed/TRADING-2418_Valid_Until_Window_Dependency_Evidence_Closure.md
+  terminal: true
+  raw_row_sha256: 60546ec7c576fd6528c7856b5977ec53da1f01cdefaca37f38ce2e533cb43541
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7bb71cb46eb9359abd74362e70c295da0811ddb108299e48ba8fc6605e960693

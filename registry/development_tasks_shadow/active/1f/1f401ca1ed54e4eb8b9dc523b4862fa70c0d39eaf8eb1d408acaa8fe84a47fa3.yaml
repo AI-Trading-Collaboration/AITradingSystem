@@ -1,0 +1,105 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-850_TASK_PROVENANCE_AND_COVERAGE_MAP
+  title: null
+  domain: Controlled strategy research / task provenance coverage map
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
+  - docs/research/tail_risk_fallback_governance_task_coverage_map.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；弥补
+    828～842 打包实现的任务级 provenance gap
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 输出 `docs/research/tail_risk_fallback_governance_task_coverage_map.md` 和
+      `tail_risk_task_coverage_map.json`，覆盖 task_id、implemented_files、CLI entrypoints、policy/registry/artifact/test/docs/shared
+      components
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1328
+    row_sha256: 57e0aecbde9c839235b03598d14351157313dba5f326e5074fe12e1a85bcea99
+    cell_count: 8
+    all_cells:
+    - TRADING-850_TASK_PROVENANCE_AND_COVERAGE_MAP
+    - Controlled strategy research / task provenance coverage map
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；弥补
+      828～842 打包实现的任务级 provenance gap
+    - 输出 `docs/research/tail_risk_fallback_governance_task_coverage_map.md` 和 `tail_risk_task_coverage_map.json`，覆盖
+      task_id、implemented_files、CLI entrypoints、policy/registry/artifact/test/docs/shared
+      components
+    - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+      Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+      tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+    raw_line: '|TRADING-850_TASK_PROVENANCE_AND_COVERAGE_MAP|Controlled strategy research
+      / task provenance coverage map|P1|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；弥补
+      828～842 打包实现的任务级 provenance gap|输出 `docs/research/tail_risk_fallback_governance_task_coverage_map.md`
+      和 `tail_risk_task_coverage_map.json`，覆盖 task_id、implemented_files、CLI entrypoints、policy/registry/artifact/test/docs/shared
+      components|2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up
+      CLI/artifacts、registry/catalog/system-flow/Reader Brief/tests；验证通过 focused parallel
+      pytest、registry/documentation/task-register tests、Ruff、compileall 和 git diff
+      --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-57e0aecbde9c839235b03598
+  task_id: TRADING-850_TASK_PROVENANCE_AND_COVERAGE_MAP
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up
+      CLI/artifacts、registry/catalog/system-flow/Reader Brief/tests；验证通过 focused parallel
+      pytest、registry/documentation/task-register tests、Ruff、compileall 和 git diff
+      --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:57e0aecbde9c839235b03598d14351157313dba5f326e5074fe12e1a85bcea99
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-850_TASK_PROVENANCE_AND_COVERAGE_MAP
+  - Controlled strategy research / task provenance coverage map
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；弥补
+    828～842 打包实现的任务级 provenance gap
+  - 输出 `docs/research/tail_risk_fallback_governance_task_coverage_map.md` 和 `tail_risk_task_coverage_map.json`，覆盖
+    task_id、implemented_files、CLI entrypoints、policy/registry/artifact/test/docs/shared
+    components
+  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+    Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+    tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  docs_links:
+  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
+  - docs/research/tail_risk_fallback_governance_task_coverage_map.md
+  terminal: false
+  raw_row_sha256: 57e0aecbde9c839235b03598d14351157313dba5f326e5074fe12e1a85bcea99
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c7aa9d205b5a10ff5c282c794ec255270a1fd20c28b34a3808811b9420226822

@@ -1,0 +1,233 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-018
+  title: null
+  domain: 数据工程/外部供应商请求缓存
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/external_provider_request_cache_2026-05-12.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/external_provider_request_cache_2026-05-12.md`；外部供应商请求级
+    cache、结构化失败诊断、FRED tail refresh、Cboe VIX 可变静态 CSV 窗口身份和 OpenAI request cache 保留语义均已验证；当前
+    cache metadata 覆盖 FMP/Marketstack/Cboe/FRED/SEC/TSMC IR/official policy/Yahoo，真实
+    daily-run 与后续数据质量复验均未再因重复 provider 请求或 FRED 全窗口 timeout 阻断
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 所有外部供应商请求先查询本地请求级 cache；相同 provider/endpoint/参数请求第二次不得访问供应商；FRED daily refresh
+      应优先复用同 series/start 的最近可审计 cache，并只请求最近有效观测日至 as_of 的 tail window；合并输出仍必须来自缓存响应
+      + live/cache tail 响应并交给 `aits validate-data` 判定新鲜度；cache metadata 和失败诊断脱敏且不保存
+      API key/token/Cookie/User-Agent 原文或供应商响应正文；响应体 checksum 可审计；业务 raw cache、manifest、PIT/SEC/valuation
+      报告语义保持不变；相关测试和文档通过，真实 daily-run 通过或报告新的真实门禁原因
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 330
+    row_sha256: e93ecccd7fd56507c266b7064faeb96a1642dd3711bbd1cffdb1823d13ed62e3
+    cell_count: 8
+    all_cells:
+    - DATA-018
+    - 数据工程/外部供应商请求缓存
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/external_provider_request_cache_2026-05-12.md`；外部供应商请求级
+      cache、结构化失败诊断、FRED tail refresh、Cboe VIX 可变静态 CSV 窗口身份和 OpenAI request cache
+      保留语义均已验证；当前 cache metadata 覆盖 FMP/Marketstack/Cboe/FRED/SEC/TSMC IR/official
+      policy/Yahoo，真实 daily-run 与后续数据质量复验均未再因重复 provider 请求或 FRED 全窗口 timeout 阻断
+    - 所有外部供应商请求先查询本地请求级 cache；相同 provider/endpoint/参数请求第二次不得访问供应商；FRED daily refresh
+      应优先复用同 series/start 的最近可审计 cache，并只请求最近有效观测日至 as_of 的 tail window；合并输出仍必须来自缓存响应
+      + live/cache tail 响应并交给 `aits validate-data` 判定新鲜度；cache metadata 和失败诊断脱敏且不保存
+      API key/token/Cookie/User-Agent 原文或供应商响应正文；响应体 checksum 可审计；业务 raw cache、manifest、PIT/SEC/valuation
+      报告语义保持不变；相关测试和文档通过，真实 daily-run 通过或报告新的真实门禁原因
+    - '2026-05-12: 新增并进入 IN_PROGRESS，原因：owner 明确所有外部供应商接口存在调用次数限制，要求所有向外请求的数据都必须 cache，且相同请求不得重复发送。2026-05-12:
+      从 IN_PROGRESS 改为 VALIDATING，原因：新增 `external_request_cache` 并接入主要外部供应商路径；目标测试
+      123 passed，`ruff check src tests` 和 `git diff --check` 通过，仍需真实 daily-run 观察。2026-05-13:
+      从 VALIDATING 改回 IN_PROGRESS，原因：真实 daily-run 两次在 `download_data` 阻断，cache metadata
+      显示 FMP/Cboe/FRED 已有 200 响应但无 Marketstack metadata；需要增强 Marketstack/download-data
+      失败诊断，避免只看到 stderr 行数。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：Marketstack
+      provider 已在 HTTP 前、HTTP status、provider error、JSON/schema 和 normalization 阶段抛出结构化诊断；`aits
+      download-data` 失败时写入脱敏 `download_data_diagnostics_YYYY-MM-DD.md`；daily-run 计划列出该报告；ruff、目标
+      pytest 和 `git diff --check` 通过。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：增强后真实
+      daily-run 诊断把阻断定位到 FRED response 前 `ReadTimeout`，但 FRED provider 尚未提供 series_id/cache/stage
+      结构化诊断，仍需补齐后再重跑确认。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：FRED provider 已在
+      HTTP 前、HTTP status、CSV parse 和 schema 阶段输出结构化诊断，包含 series id、cache key 和预期 metadata
+      path；ruff、目标 pytest 35 passed 和 `git diff --check` 通过。2026-05-13: live daily-run
+      验证确认当前阻断为 FRED `DGS10` 请求 `ReadTimeout`，stage=`http_request`，cache_status=`MISS_NO_RESPONSE`，DGS2
+      同范围已有 cache 200；下游按 fail-closed 未执行。2026-05-13: 实现 FRED 无响应超时韧性：timeout_seconds=60、max_attempts=2、retry_backoff_seconds=3，仅对未获得
+      HTTP response 的网络异常上重试；诊断报告新增 attempt_count、max_attempts 和 timeout_seconds。2026-05-13:
+      修复后真实 `daily-run` 先越过 `download_data`、PIT、SEC 和 valuation，最终复跑 `daily_ops_run:2026-05-11:20260512T170255Z`
+      11/11 步 PASS；外部请求 cache metadata 覆盖 FMP、Marketstack、Cboe、FRED、SEC、TSMC IR 和
+      official policy。2026-06-04: 从 VALIDATING 改回 IN_PROGRESS，原因：`daily_ops_run:2026-06-03:20260603T223206Z`
+      和重跑 `20260603T223626Z` 均在 `download_data` fail closed；诊断定位 FRED `DGS2` exact
+      full-window 请求 response 前 `ReadTimeout`，curl exact URL 约 60 秒后返回 HTTP 504，但
+      `DGS2 2026-06-02..2026-06-03`、`DGS10 2026-06-01..2026-06-03` 和 `DTWEXBGS 2026-05-29..2026-06-03`
+      tail windows 可快速返回真实 FRED CSV；需要实现 FRED tail refresh 合并，避免因 as_of 当日尚未发布观测而每天重拉全量窗口。2026-06-04:
+      从 IN_PROGRESS 改为 VALIDATING，原因：`FredRateProvider` 已改为先查同 series/start 最近 2xx
+      request cache，解析最近有效观测日，再请求 `latest_observation_date..as_of` tail window 并合并去重；非
+      2xx cache 不作为 seed；验证通过目标 pytest/ruff/black/diff check、真实 `download-data --start
+      2018-01-01 --end 2026-06-03`、`validate-data --as-of 2026-06-03` PASS，以及 `daily_ops_run:2026-06-03:20260604T011839Z`
+      31/31 PASS。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前 metadata 覆盖 Cboe 14、FRED 57、FMP
+      1090、Marketstack 963、official policy 80、SEC 31、TSMC IR 2、Yahoo 1，OpenAI agent
+      request cache 本地文件数 514；市场/宏观、估值/PIT、SEC/TSMC IR、官方政策和 OpenAI request cache
+      focused tests 共 117 passed，相关 ruff、Black check、compileall 和 `validate-data --as-of
+      2026-06-05` PASS；同步 Black 格式化 `tests/test_market_data.py` 中 Cboe VIX cache 测试字面量，不改变行为。'
+    raw_line: '|DATA-018|数据工程/外部供应商请求缓存|P0|DONE|系统验证|详细拆解见 `docs/requirements/external_provider_request_cache_2026-05-12.md`；外部供应商请求级
+      cache、结构化失败诊断、FRED tail refresh、Cboe VIX 可变静态 CSV 窗口身份和 OpenAI request cache
+      保留语义均已验证；当前 cache metadata 覆盖 FMP/Marketstack/Cboe/FRED/SEC/TSMC IR/official
+      policy/Yahoo，真实 daily-run 与后续数据质量复验均未再因重复 provider 请求或 FRED 全窗口 timeout 阻断|所有外部供应商请求先查询本地请求级
+      cache；相同 provider/endpoint/参数请求第二次不得访问供应商；FRED daily refresh 应优先复用同 series/start
+      的最近可审计 cache，并只请求最近有效观测日至 as_of 的 tail window；合并输出仍必须来自缓存响应 + live/cache tail
+      响应并交给 `aits validate-data` 判定新鲜度；cache metadata 和失败诊断脱敏且不保存 API key/token/Cookie/User-Agent
+      原文或供应商响应正文；响应体 checksum 可审计；业务 raw cache、manifest、PIT/SEC/valuation 报告语义保持不变；相关测试和文档通过，真实
+      daily-run 通过或报告新的真实门禁原因|2026-05-12: 新增并进入 IN_PROGRESS，原因：owner 明确所有外部供应商接口存在调用次数限制，要求所有向外请求的数据都必须
+      cache，且相同请求不得重复发送。2026-05-12: 从 IN_PROGRESS 改为 VALIDATING，原因：新增 `external_request_cache`
+      并接入主要外部供应商路径；目标测试 123 passed，`ruff check src tests` 和 `git diff --check` 通过，仍需真实
+      daily-run 观察。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：真实 daily-run 两次在 `download_data`
+      阻断，cache metadata 显示 FMP/Cboe/FRED 已有 200 响应但无 Marketstack metadata；需要增强 Marketstack/download-data
+      失败诊断，避免只看到 stderr 行数。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：Marketstack
+      provider 已在 HTTP 前、HTTP status、provider error、JSON/schema 和 normalization 阶段抛出结构化诊断；`aits
+      download-data` 失败时写入脱敏 `download_data_diagnostics_YYYY-MM-DD.md`；daily-run 计划列出该报告；ruff、目标
+      pytest 和 `git diff --check` 通过。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：增强后真实
+      daily-run 诊断把阻断定位到 FRED response 前 `ReadTimeout`，但 FRED provider 尚未提供 series_id/cache/stage
+      结构化诊断，仍需补齐后再重跑确认。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：FRED provider 已在
+      HTTP 前、HTTP status、CSV parse 和 schema 阶段输出结构化诊断，包含 series id、cache key 和预期 metadata
+      path；ruff、目标 pytest 35 passed 和 `git diff --check` 通过。2026-05-13: live daily-run
+      验证确认当前阻断为 FRED `DGS10` 请求 `ReadTimeout`，stage=`http_request`，cache_status=`MISS_NO_RESPONSE`，DGS2
+      同范围已有 cache 200；下游按 fail-closed 未执行。2026-05-13: 实现 FRED 无响应超时韧性：timeout_seconds=60、max_attempts=2、retry_backoff_seconds=3，仅对未获得
+      HTTP response 的网络异常上重试；诊断报告新增 attempt_count、max_attempts 和 timeout_seconds。2026-05-13:
+      修复后真实 `daily-run` 先越过 `download_data`、PIT、SEC 和 valuation，最终复跑 `daily_ops_run:2026-05-11:20260512T170255Z`
+      11/11 步 PASS；外部请求 cache metadata 覆盖 FMP、Marketstack、Cboe、FRED、SEC、TSMC IR 和
+      official policy。2026-06-04: 从 VALIDATING 改回 IN_PROGRESS，原因：`daily_ops_run:2026-06-03:20260603T223206Z`
+      和重跑 `20260603T223626Z` 均在 `download_data` fail closed；诊断定位 FRED `DGS2` exact
+      full-window 请求 response 前 `ReadTimeout`，curl exact URL 约 60 秒后返回 HTTP 504，但
+      `DGS2 2026-06-02..2026-06-03`、`DGS10 2026-06-01..2026-06-03` 和 `DTWEXBGS 2026-05-29..2026-06-03`
+      tail windows 可快速返回真实 FRED CSV；需要实现 FRED tail refresh 合并，避免因 as_of 当日尚未发布观测而每天重拉全量窗口。2026-06-04:
+      从 IN_PROGRESS 改为 VALIDATING，原因：`FredRateProvider` 已改为先查同 series/start 最近 2xx
+      request cache，解析最近有效观测日，再请求 `latest_observation_date..as_of` tail window 并合并去重；非
+      2xx cache 不作为 seed；验证通过目标 pytest/ruff/black/diff check、真实 `download-data --start
+      2018-01-01 --end 2026-06-03`、`validate-data --as-of 2026-06-03` PASS，以及 `daily_ops_run:2026-06-03:20260604T011839Z`
+      31/31 PASS。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前 metadata 覆盖 Cboe 14、FRED 57、FMP
+      1090、Marketstack 963、official policy 80、SEC 31、TSMC IR 2、Yahoo 1，OpenAI agent
+      request cache 本地文件数 514；市场/宏观、估值/PIT、SEC/TSMC IR、官方政策和 OpenAI request cache
+      focused tests 共 117 passed，相关 ruff、Black check、compileall 和 `validate-data --as-of
+      2026-06-05` PASS；同步 Black 格式化 `tests/test_market_data.py` 中 Cboe VIX cache 测试字面量，不改变行为。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e93ecccd7fd56507c266b706
+  task_id: DATA-018
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-12: 新增并进入 IN_PROGRESS，原因：owner 明确所有外部供应商接口存在调用次数限制，要求所有向外请求的数据都必须
+      cache，且相同请求不得重复发送。2026-05-12: 从 IN_PROGRESS 改为 VALIDATING，原因：新增 `external_request_cache`
+      并接入主要外部供应商路径；目标测试 123 passed，`ruff check src tests` 和 `git diff --check` 通过，仍需真实
+      daily-run 观察。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：真实 daily-run 两次在 `download_data`
+      阻断，cache metadata 显示 FMP/Cboe/FRED 已有 200 响应但无 Marketstack metadata；需要增强 Marketstack/download-data
+      失败诊断，避免只看到 stderr 行数。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：Marketstack
+      provider 已在 HTTP 前、HTTP status、provider error、JSON/schema 和 normalization 阶段抛出结构化诊断；`aits
+      download-data` 失败时写入脱敏 `download_data_diagnostics_YYYY-MM-DD.md`；daily-run 计划列出该报告；ruff、目标
+      pytest 和 `git diff --check` 通过。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：增强后真实
+      daily-run 诊断把阻断定位到 FRED response 前 `ReadTimeout`，但 FRED provider 尚未提供 series_id/cache/stage
+      结构化诊断，仍需补齐后再重跑确认。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：FRED provider 已在
+      HTTP 前、HTTP status、CSV parse 和 schema 阶段输出结构化诊断，包含 series id、cache key 和预期 metadata
+      path；ruff、目标 pytest 35 passed 和 `git diff --check` 通过。2026-05-13: live daily-run
+      验证确认当前阻断为 FRED `DGS10` 请求 `ReadTimeout`，stage=`http_request`，cache_status=`MISS_NO_RESPONSE`，DGS2
+      同范围已有 cache 200；下游按 fail-closed 未执行。2026-05-13: 实现 FRED 无响应超时韧性：timeout_seconds=60、max_attempts=2、retry_backoff_seconds=3，仅对未获得
+      HTTP response 的网络异常上重试；诊断报告新增 attempt_count、max_attempts 和 timeout_seconds。2026-05-13:
+      修复后真实 `daily-run` 先越过 `download_data`、PIT、SEC 和 valuation，最终复跑 `daily_ops_run:2026-05-11:20260512T170255Z`
+      11/11 步 PASS；外部请求 cache metadata 覆盖 FMP、Marketstack、Cboe、FRED、SEC、TSMC IR 和
+      official policy。2026-06-04: 从 VALIDATING 改回 IN_PROGRESS，原因：`daily_ops_run:2026-06-03:20260603T223206Z`
+      和重跑 `20260603T223626Z` 均在 `download_data` fail closed；诊断定位 FRED `DGS2` exact
+      full-window 请求 response 前 `ReadTimeout`，curl exact URL 约 60 秒后返回 HTTP 504，但
+      `DGS2 2026-06-02..2026-06-03`、`DGS10 2026-06-01..2026-06-03` 和 `DTWEXBGS 2026-05-29..2026-06-03`
+      tail windows 可快速返回真实 FRED CSV；需要实现 FRED tail refresh 合并，避免因 as_of 当日尚未发布观测而每天重拉全量窗口。2026-06-04:
+      从 IN_PROGRESS 改为 VALIDATING，原因：`FredRateProvider` 已改为先查同 series/start 最近 2xx
+      request cache，解析最近有效观测日，再请求 `latest_observation_date..as_of` tail window 并合并去重；非
+      2xx cache 不作为 seed；验证通过目标 pytest/ruff/black/diff check、真实 `download-data --start
+      2018-01-01 --end 2026-06-03`、`validate-data --as-of 2026-06-03` PASS，以及 `daily_ops_run:2026-06-03:20260604T011839Z`
+      31/31 PASS。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前 metadata 覆盖 Cboe 14、FRED 57、FMP
+      1090、Marketstack 963、official policy 80、SEC 31、TSMC IR 2、Yahoo 1，OpenAI agent
+      request cache 本地文件数 514；市场/宏观、估值/PIT、SEC/TSMC IR、官方政策和 OpenAI request cache
+      focused tests 共 117 passed，相关 ruff、Black check、compileall 和 `validate-data --as-of
+      2026-06-05` PASS；同步 Black 格式化 `tests/test_market_data.py` 中 Cboe VIX cache 测试字面量，不改变行为。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e93ecccd7fd56507c266b7064faeb96a1642dd3711bbd1cffdb1823d13ed62e3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-018
+  - 数据工程/外部供应商请求缓存
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/external_provider_request_cache_2026-05-12.md`；外部供应商请求级
+    cache、结构化失败诊断、FRED tail refresh、Cboe VIX 可变静态 CSV 窗口身份和 OpenAI request cache 保留语义均已验证；当前
+    cache metadata 覆盖 FMP/Marketstack/Cboe/FRED/SEC/TSMC IR/official policy/Yahoo，真实
+    daily-run 与后续数据质量复验均未再因重复 provider 请求或 FRED 全窗口 timeout 阻断
+  - 所有外部供应商请求先查询本地请求级 cache；相同 provider/endpoint/参数请求第二次不得访问供应商；FRED daily refresh
+    应优先复用同 series/start 的最近可审计 cache，并只请求最近有效观测日至 as_of 的 tail window；合并输出仍必须来自缓存响应
+    + live/cache tail 响应并交给 `aits validate-data` 判定新鲜度；cache metadata 和失败诊断脱敏且不保存
+    API key/token/Cookie/User-Agent 原文或供应商响应正文；响应体 checksum 可审计；业务 raw cache、manifest、PIT/SEC/valuation
+    报告语义保持不变；相关测试和文档通过，真实 daily-run 通过或报告新的真实门禁原因
+  - '2026-05-12: 新增并进入 IN_PROGRESS，原因：owner 明确所有外部供应商接口存在调用次数限制，要求所有向外请求的数据都必须 cache，且相同请求不得重复发送。2026-05-12:
+    从 IN_PROGRESS 改为 VALIDATING，原因：新增 `external_request_cache` 并接入主要外部供应商路径；目标测试 123
+    passed，`ruff check src tests` 和 `git diff --check` 通过，仍需真实 daily-run 观察。2026-05-13:
+    从 VALIDATING 改回 IN_PROGRESS，原因：真实 daily-run 两次在 `download_data` 阻断，cache metadata
+    显示 FMP/Cboe/FRED 已有 200 响应但无 Marketstack metadata；需要增强 Marketstack/download-data
+    失败诊断，避免只看到 stderr 行数。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：Marketstack provider
+    已在 HTTP 前、HTTP status、provider error、JSON/schema 和 normalization 阶段抛出结构化诊断；`aits
+    download-data` 失败时写入脱敏 `download_data_diagnostics_YYYY-MM-DD.md`；daily-run 计划列出该报告；ruff、目标
+    pytest 和 `git diff --check` 通过。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：增强后真实
+    daily-run 诊断把阻断定位到 FRED response 前 `ReadTimeout`，但 FRED provider 尚未提供 series_id/cache/stage
+    结构化诊断，仍需补齐后再重跑确认。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：FRED provider 已在 HTTP
+    前、HTTP status、CSV parse 和 schema 阶段输出结构化诊断，包含 series id、cache key 和预期 metadata
+    path；ruff、目标 pytest 35 passed 和 `git diff --check` 通过。2026-05-13: live daily-run
+    验证确认当前阻断为 FRED `DGS10` 请求 `ReadTimeout`，stage=`http_request`，cache_status=`MISS_NO_RESPONSE`，DGS2
+    同范围已有 cache 200；下游按 fail-closed 未执行。2026-05-13: 实现 FRED 无响应超时韧性：timeout_seconds=60、max_attempts=2、retry_backoff_seconds=3，仅对未获得
+    HTTP response 的网络异常上重试；诊断报告新增 attempt_count、max_attempts 和 timeout_seconds。2026-05-13:
+    修复后真实 `daily-run` 先越过 `download_data`、PIT、SEC 和 valuation，最终复跑 `daily_ops_run:2026-05-11:20260512T170255Z`
+    11/11 步 PASS；外部请求 cache metadata 覆盖 FMP、Marketstack、Cboe、FRED、SEC、TSMC IR 和 official
+    policy。2026-06-04: 从 VALIDATING 改回 IN_PROGRESS，原因：`daily_ops_run:2026-06-03:20260603T223206Z`
+    和重跑 `20260603T223626Z` 均在 `download_data` fail closed；诊断定位 FRED `DGS2` exact full-window
+    请求 response 前 `ReadTimeout`，curl exact URL 约 60 秒后返回 HTTP 504，但 `DGS2 2026-06-02..2026-06-03`、`DGS10
+    2026-06-01..2026-06-03` 和 `DTWEXBGS 2026-05-29..2026-06-03` tail windows 可快速返回真实
+    FRED CSV；需要实现 FRED tail refresh 合并，避免因 as_of 当日尚未发布观测而每天重拉全量窗口。2026-06-04: 从 IN_PROGRESS
+    改为 VALIDATING，原因：`FredRateProvider` 已改为先查同 series/start 最近 2xx request cache，解析最近有效观测日，再请求
+    `latest_observation_date..as_of` tail window 并合并去重；非 2xx cache 不作为 seed；验证通过目标
+    pytest/ruff/black/diff check、真实 `download-data --start 2018-01-01 --end 2026-06-03`、`validate-data
+    --as-of 2026-06-03` PASS，以及 `daily_ops_run:2026-06-03:20260604T011839Z` 31/31
+    PASS。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前 metadata 覆盖 Cboe 14、FRED 57、FMP 1090、Marketstack
+    963、official policy 80、SEC 31、TSMC IR 2、Yahoo 1，OpenAI agent request cache 本地文件数
+    514；市场/宏观、估值/PIT、SEC/TSMC IR、官方政策和 OpenAI request cache focused tests 共 117 passed，相关
+    ruff、Black check、compileall 和 `validate-data --as-of 2026-06-05` PASS；同步 Black
+    格式化 `tests/test_market_data.py` 中 Cboe VIX cache 测试字面量，不改变行为。'
+  docs_links:
+  - docs/requirements/external_provider_request_cache_2026-05-12.md
+  terminal: true
+  raw_row_sha256: e93ecccd7fd56507c266b7064faeb96a1642dd3711bbd1cffdb1823d13ed62e3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ff2bb42a85105e943931785e7916d22fa810b092fd675df4a1c76d9c44ac88ed

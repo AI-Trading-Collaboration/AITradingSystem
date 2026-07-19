@@ -1,0 +1,129 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-521_to_524_B1_B4_DIAGNOSIS_BATCH
+  title: null
+  domain: ETF portfolio/weight research B1-B4 attribution and B4 inconclusive diagnosis
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-521_to_524_B1_B4_Diagnosis_Batch.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-521_to_524_B1_B4_Diagnosis_Batch.md`；只读诊断
+    B1-B4 contribution、B4 inconclusive root cause、E0/E1 baseline consistency 和 next
+    decision；不得继续 B5/B6/v3，不得改 strategy logic，不得访问 untouched holdout，不得产生 official
+    target weights、paper-shadow activation、broker/order/live/production mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 输出 `b1_b4_component_result_attribution.json/md`、`b4_interaction_inconclusive_drilldown.json/md`、`e0_e1_baseline_consistency_audit.json/md`
+      和 `b4_next_decision_checkpoint.json/md`；结果必须包含 B1/B2/B3/B4 vs B0、B4 vs B2/B3、return/drawdown/turnover/cost/benchmark-relative
+      delta、stress/window/signal robustness、module usefulness、B4 root-cause classification
+      和 allowed next decision；B4 仍 inconclusive 时不得允许 B5，B5 invalid/blocked 时不得允许
+      B6；focused tests、contract/data-quality visibility、JSON parse、ruff、compileall、`git
+      diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1421
+    row_sha256: c8bd0c7c3f1064e67c36ec2122f0a902d3997be0183dc2464201240fbfd0403b
+    cell_count: 8
+    all_cells:
+    - TRADING-521_to_524_B1_B4_DIAGNOSIS_BATCH
+    - ETF portfolio/weight research B1-B4 attribution and B4 inconclusive diagnosis
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-521_to_524_B1_B4_Diagnosis_Batch.md`；只读诊断 B1-B4
+      contribution、B4 inconclusive root cause、E0/E1 baseline consistency 和 next decision；不得继续
+      B5/B6/v3，不得改 strategy logic，不得访问 untouched holdout，不得产生 official target weights、paper-shadow
+      activation、broker/order/live/production mutation
+    - 输出 `b1_b4_component_result_attribution.json/md`、`b4_interaction_inconclusive_drilldown.json/md`、`e0_e1_baseline_consistency_audit.json/md`
+      和 `b4_next_decision_checkpoint.json/md`；结果必须包含 B1/B2/B3/B4 vs B0、B4 vs B2/B3、return/drawdown/turnover/cost/benchmark-relative
+      delta、stress/window/signal robustness、module usefulness、B4 root-cause classification
+      和 allowed next decision；B4 仍 inconclusive 时不得允许 B5，B5 invalid/blocked 时不得允许
+      B6；focused tests、contract/data-quality visibility、JSON parse、ruff、compileall、`git
+      diff --check` 通过
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 明确确认 511E~520 当前 block 有效，要求不要继续 B5/B6/v3，而是新增
+      TRADING-521~524 diagnosis batch 解释 B1-B4 contribution、B4 inconclusive root cause、E0/E1
+      baseline consistency 和 next action。2026-06-19: 实现完成并转入 VALIDATING；诊断输出 TRADING-521=`B1_B4_COMPONENT_ATTRIBUTION_READY`，TRADING-522=`B4_REQUIRES_MORE_WINDOWS`，TRADING-523=`E0_E1_BASELINE_CONSISTENCY_PASS_WITH_LIMITATIONS`，TRADING-524=`RUN_MORE_B4_WINDOWS`，且
+      `b5_allowed=false`、`b6_allowed=false`。'
+    raw_line: '|TRADING-521_to_524_B1_B4_DIAGNOSIS_BATCH|ETF portfolio/weight research
+      B1-B4 attribution and B4 inconclusive diagnosis|P0|VALIDATING|系统实现 + 项目 owner
+      后续复核|详细拆解见 `docs/requirements/TRADING-521_to_524_B1_B4_Diagnosis_Batch.md`；只读诊断
+      B1-B4 contribution、B4 inconclusive root cause、E0/E1 baseline consistency 和 next
+      decision；不得继续 B5/B6/v3，不得改 strategy logic，不得访问 untouched holdout，不得产生 official
+      target weights、paper-shadow activation、broker/order/live/production mutation|输出
+      `b1_b4_component_result_attribution.json/md`、`b4_interaction_inconclusive_drilldown.json/md`、`e0_e1_baseline_consistency_audit.json/md`
+      和 `b4_next_decision_checkpoint.json/md`；结果必须包含 B1/B2/B3/B4 vs B0、B4 vs B2/B3、return/drawdown/turnover/cost/benchmark-relative
+      delta、stress/window/signal robustness、module usefulness、B4 root-cause classification
+      和 allowed next decision；B4 仍 inconclusive 时不得允许 B5，B5 invalid/blocked 时不得允许
+      B6；focused tests、contract/data-quality visibility、JSON parse、ruff、compileall、`git
+      diff --check` 通过|2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 明确确认 511E~520 当前 block
+      有效，要求不要继续 B5/B6/v3，而是新增 TRADING-521~524 diagnosis batch 解释 B1-B4 contribution、B4
+      inconclusive root cause、E0/E1 baseline consistency 和 next action。2026-06-19:
+      实现完成并转入 VALIDATING；诊断输出 TRADING-521=`B1_B4_COMPONENT_ATTRIBUTION_READY`，TRADING-522=`B4_REQUIRES_MORE_WINDOWS`，TRADING-523=`E0_E1_BASELINE_CONSISTENCY_PASS_WITH_LIMITATIONS`，TRADING-524=`RUN_MORE_B4_WINDOWS`，且
+      `b5_allowed=false`、`b6_allowed=false`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c8bd0c7c3f1064e67c36ec21
+  task_id: TRADING-521_to_524_B1_B4_DIAGNOSIS_BATCH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 明确确认 511E~520 当前 block 有效，要求不要继续
+      B5/B6/v3，而是新增 TRADING-521~524 diagnosis batch 解释 B1-B4 contribution、B4 inconclusive
+      root cause、E0/E1 baseline consistency 和 next action。2026-06-19: 实现完成并转入 VALIDATING；诊断输出
+      TRADING-521=`B1_B4_COMPONENT_ATTRIBUTION_READY`，TRADING-522=`B4_REQUIRES_MORE_WINDOWS`，TRADING-523=`E0_E1_BASELINE_CONSISTENCY_PASS_WITH_LIMITATIONS`，TRADING-524=`RUN_MORE_B4_WINDOWS`，且
+      `b5_allowed=false`、`b6_allowed=false`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c8bd0c7c3f1064e67c36ec2122f0a902d3997be0183dc2464201240fbfd0403b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-521_to_524_B1_B4_DIAGNOSIS_BATCH
+  - ETF portfolio/weight research B1-B4 attribution and B4 inconclusive diagnosis
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-521_to_524_B1_B4_Diagnosis_Batch.md`；只读诊断 B1-B4
+    contribution、B4 inconclusive root cause、E0/E1 baseline consistency 和 next decision；不得继续
+    B5/B6/v3，不得改 strategy logic，不得访问 untouched holdout，不得产生 official target weights、paper-shadow
+    activation、broker/order/live/production mutation
+  - 输出 `b1_b4_component_result_attribution.json/md`、`b4_interaction_inconclusive_drilldown.json/md`、`e0_e1_baseline_consistency_audit.json/md`
+    和 `b4_next_decision_checkpoint.json/md`；结果必须包含 B1/B2/B3/B4 vs B0、B4 vs B2/B3、return/drawdown/turnover/cost/benchmark-relative
+    delta、stress/window/signal robustness、module usefulness、B4 root-cause classification
+    和 allowed next decision；B4 仍 inconclusive 时不得允许 B5，B5 invalid/blocked 时不得允许 B6；focused
+    tests、contract/data-quality visibility、JSON parse、ruff、compileall、`git diff --check`
+    通过
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 明确确认 511E~520 当前 block 有效，要求不要继续 B5/B6/v3，而是新增
+    TRADING-521~524 diagnosis batch 解释 B1-B4 contribution、B4 inconclusive root cause、E0/E1
+    baseline consistency 和 next action。2026-06-19: 实现完成并转入 VALIDATING；诊断输出 TRADING-521=`B1_B4_COMPONENT_ATTRIBUTION_READY`，TRADING-522=`B4_REQUIRES_MORE_WINDOWS`，TRADING-523=`E0_E1_BASELINE_CONSISTENCY_PASS_WITH_LIMITATIONS`，TRADING-524=`RUN_MORE_B4_WINDOWS`，且
+    `b5_allowed=false`、`b6_allowed=false`。'
+  docs_links:
+  - docs/requirements/TRADING-521_to_524_B1_B4_Diagnosis_Batch.md
+  terminal: false
+  raw_row_sha256: c8bd0c7c3f1064e67c36ec2122f0a902d3997be0183dc2464201240fbfd0403b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 23f4ca4021088466d39a3759a851a428d131b29e609918f552ba075c007eded8

@@ -1,0 +1,110 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: SCORE-003
+  title: null
+  domain: 仓位/风险预算
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/risk_budget_model_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成可审计风险预算基础版：保留总分生成基础仓位区间，再由市场压力、真实组合单票/节点/相关性簇集中度、ETF
+    beta 覆盖和已有估值/风险/thesis gate 约束最终建议区间；剩余缺口是真实持仓、参数 replay/shadow、流动性/税费/完整相关性预算和
+    `GOV-001` 批准；详细拆解见 `docs/requirements/risk_budget_model_2026-05-04.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 形成风险预算设计文档或配置方案，明确哪些指标作为硬上限、哪些作为禁止加仓条件、哪些只进入报告解释；`score-daily` 和 `backtest`
+      输出模型基础区间、风险预算后建议区间、总资产折算、主要限制原因和不得加仓条件；回测覆盖同分不同风险状态下最终仓位不同；实现时同步更新 `docs/system_flow.md`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1138
+    row_sha256: 7fb94f1d36662a623f762bbab9b87fd15f0937b3bce4ec79ab22a79253d1bb12
+    cell_count: 8
+    all_cells:
+    - SCORE-003
+    - 仓位/风险预算
+    - P1
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已完成可审计风险预算基础版：保留总分生成基础仓位区间，再由市场压力、真实组合单票/节点/相关性簇集中度、ETF beta 覆盖和已有估值/风险/thesis
+      gate 约束最终建议区间；剩余缺口是真实持仓、参数 replay/shadow、流动性/税费/完整相关性预算和 `GOV-001` 批准；详细拆解见
+      `docs/requirements/risk_budget_model_2026-05-04.md`
+    - 形成风险预算设计文档或配置方案，明确哪些指标作为硬上限、哪些作为禁止加仓条件、哪些只进入报告解释；`score-daily` 和 `backtest`
+      输出模型基础区间、风险预算后建议区间、总资产折算、主要限制原因和不得加仓条件；回测覆盖同分不同风险状态下最终仓位不同；实现时同步更新 `docs/system_flow.md`
+    - '来自 2026-05-04 仓位映射优化讨论。该任务应和 `SCORE-001` 的 `position_gate`、`VALUATION-001`
+      的估值拥挤 gate、`MACRO-001` 的动态风险资产预算协同推进；避免直接引入不可审计黑箱优化器。2026-05-04: 从 PROPOSED
+      改为 IN_PROGRESS，原因：`PORTFOLIO-002` 已完成基础暴露输入，开始实现第一阶段 `risk_budget` position
+      gate、配置 schema、日报/回测输出和测试。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `config/portfolio.yaml:risk_budget`、共享
+      `risk_budget` gate、日报真实持仓集中度约束、回测市场压力约束、执行纪律禁止主动加仓语义、系统流图和测试；完整 `DONE` 仍需真实持仓和长期验证。'
+    raw_line: '|SCORE-003|仓位/风险预算|P1|BASELINE_DONE|系统实现 + 项目 owner|已完成可审计风险预算基础版：保留总分生成基础仓位区间，再由市场压力、真实组合单票/节点/相关性簇集中度、ETF
+      beta 覆盖和已有估值/风险/thesis gate 约束最终建议区间；剩余缺口是真实持仓、参数 replay/shadow、流动性/税费/完整相关性预算和
+      `GOV-001` 批准；详细拆解见 `docs/requirements/risk_budget_model_2026-05-04.md`|形成风险预算设计文档或配置方案，明确哪些指标作为硬上限、哪些作为禁止加仓条件、哪些只进入报告解释；`score-daily`
+      和 `backtest` 输出模型基础区间、风险预算后建议区间、总资产折算、主要限制原因和不得加仓条件；回测覆盖同分不同风险状态下最终仓位不同；实现时同步更新
+      `docs/system_flow.md`|来自 2026-05-04 仓位映射优化讨论。该任务应和 `SCORE-001` 的 `position_gate`、`VALUATION-001`
+      的估值拥挤 gate、`MACRO-001` 的动态风险资产预算协同推进；避免直接引入不可审计黑箱优化器。2026-05-04: 从 PROPOSED
+      改为 IN_PROGRESS，原因：`PORTFOLIO-002` 已完成基础暴露输入，开始实现第一阶段 `risk_budget` position
+      gate、配置 schema、日报/回测输出和测试。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `config/portfolio.yaml:risk_budget`、共享
+      `risk_budget` gate、日报真实持仓集中度约束、回测市场压力约束、执行纪律禁止主动加仓语义、系统流图和测试；完整 `DONE` 仍需真实持仓和长期验证。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7fb94f1d36662a623f762bba
+  task_id: SCORE-003
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner
+    notes: '来自 2026-05-04 仓位映射优化讨论。该任务应和 `SCORE-001` 的 `position_gate`、`VALUATION-001`
+      的估值拥挤 gate、`MACRO-001` 的动态风险资产预算协同推进；避免直接引入不可审计黑箱优化器。2026-05-04: 从 PROPOSED
+      改为 IN_PROGRESS，原因：`PORTFOLIO-002` 已完成基础暴露输入，开始实现第一阶段 `risk_budget` position
+      gate、配置 schema、日报/回测输出和测试。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `config/portfolio.yaml:risk_budget`、共享
+      `risk_budget` gate、日报真实持仓集中度约束、回测市场压力约束、执行纪律禁止主动加仓语义、系统流图和测试；完整 `DONE` 仍需真实持仓和长期验证。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7fb94f1d36662a623f762bbab9b87fd15f0937b3bce4ec79ab22a79253d1bb12
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - SCORE-003
+  - 仓位/风险预算
+  - P1
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已完成可审计风险预算基础版：保留总分生成基础仓位区间，再由市场压力、真实组合单票/节点/相关性簇集中度、ETF beta 覆盖和已有估值/风险/thesis
+    gate 约束最终建议区间；剩余缺口是真实持仓、参数 replay/shadow、流动性/税费/完整相关性预算和 `GOV-001` 批准；详细拆解见 `docs/requirements/risk_budget_model_2026-05-04.md`
+  - 形成风险预算设计文档或配置方案，明确哪些指标作为硬上限、哪些作为禁止加仓条件、哪些只进入报告解释；`score-daily` 和 `backtest` 输出模型基础区间、风险预算后建议区间、总资产折算、主要限制原因和不得加仓条件；回测覆盖同分不同风险状态下最终仓位不同；实现时同步更新
+    `docs/system_flow.md`
+  - '来自 2026-05-04 仓位映射优化讨论。该任务应和 `SCORE-001` 的 `position_gate`、`VALUATION-001` 的估值拥挤
+    gate、`MACRO-001` 的动态风险资产预算协同推进；避免直接引入不可审计黑箱优化器。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：`PORTFOLIO-002`
+    已完成基础暴露输入，开始实现第一阶段 `risk_budget` position gate、配置 schema、日报/回测输出和测试。2026-05-04:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `config/portfolio.yaml:risk_budget`、共享 `risk_budget`
+    gate、日报真实持仓集中度约束、回测市场压力约束、执行纪律禁止主动加仓语义、系统流图和测试；完整 `DONE` 仍需真实持仓和长期验证。'
+  docs_links:
+  - docs/requirements/risk_budget_model_2026-05-04.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: 7fb94f1d36662a623f762bbab9b87fd15f0937b3bce4ec79ab22a79253d1bb12
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6d020f202ecb75535f9aeded6911cb0a3a781cd551b7e8439a6d04d805947ad4

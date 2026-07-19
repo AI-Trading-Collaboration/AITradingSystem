@@ -1,0 +1,144 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-169_to_173
+  title: null
+  domain: ETF portfolio research/Simulation Result Interpretation and Advisory Rule
+    Review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-169_to_173_Simulation_Result_Interpretation_and_Advisory_Rule_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-169_to_173_Simulation_Result_Interpretation_and_Advisory_Rule_Review.md`；baseline
+    实现已完成并生成真实 artifacts：interpretation `a629c036f1ea3129`、risk_return `c61b1b9ca357cba1`、defensive_validation
+    `b79486b62042b702`、proposal_review `f5dc442131f3740c`、confirmation_plan `808e55a74ca6951f`；下一步由
+    owner 复核 proposal decisions、defensive label 和 forward confirmation 条件；继续固定 `BACKTEST_SIMULATION_NOT_PIT`，不自动修改
+    `position_advisory_v1.yaml`，不生成 production candidate，不允许 broker action 或 policy
+    auto apply
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`sim-interpretation run/report`、`sim-risk-return run/report`、`sim-defensive-validation
+      run/report`、`advisory-proposal-review run/report`、`forward-confirmation-plan
+      run/report` 及对应 validate CLI 可运行；新增 artifacts 写入 `reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1457
+    row_sha256: 4daf895373f565ddf82c5dc8e9bf770a30dc0dfad7e4401133d3a4c95a47022c
+    cell_count: 12
+    all_cells:
+    - TRADING-169_to_173
+    - ETF portfolio research/Simulation Result Interpretation and Advisory Rule Review
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-169_to_173_Simulation_Result_Interpretation_and_Advisory_Rule_Review.md`；baseline
+      实现已完成并生成真实 artifacts：interpretation `a629c036f1ea3129`、risk_return `c61b1b9ca357cba1`、defensive_validation
+      `b79486b62042b702`、proposal_review `f5dc442131f3740c`、confirmation_plan `808e55a74ca6951f`；下一步由
+      owner 复核 proposal decisions、defensive label 和 forward confirmation 条件；继续固定 `BACKTEST_SIMULATION_NOT_PIT`，不自动修改
+      `position_advisory_v1.yaml`，不生成 production candidate，不允许 broker action 或 policy
+      auto apply
+    - '`sim-interpretation run/report`、`sim-risk-return run/report`、`sim-defensive-validation
+      run/report`、`advisory-proposal-review run/report`、`forward-confirmation-plan
+      run/report` 及对应 validate CLI 可运行；新增 artifacts 写入 `reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation'
+    - sim_risk_return
+    - sim_defensive_validation
+    - advisory_proposal_review
+    - forward_confirmation_plan/`；报告明确回答 limited_adjustment 的中期收益与回撤代价、consensus_target
+      的 upper-bound reference 定位、defensive_limited_adjustment 未被证明 defensive、为何不自动改规则、forward
+      tracking 成功/失败条件；README、operations runbook、system flow、report registry、artifact
+      catalog、requirements、Reader Brief、focused tests、ruff、compileall、git diff check、dynamic-v3
+      root validation 和 family artifact validation 完成；full pytest 已尝试 15 分钟超时无失败明细，相关
+      34-test subset PASS
+    - '2026-06-10: 新增并进入 IN_PROGRESS，原因：TRADING-161_to_168 已证明 active variants 在 5/10/20d
+      有收益增强迹象但伴随更深 drawdown，且 defensive_limited_adjustment overall best 不能自动解释为防守有效；本阶段优先生成人工可读、可审计、不可自动生产化的
+      advisory rule review 和 forward confirmation plan。2026-06-10: baseline 实现完成并转入
+      VALIDATING；真实链路 interpretation `a629c036f1ea3129` 解释 5 个 variants，risk-return
+      `c61b1b9ca357cba1` 输出 3 个 active variant tradeoff rows，defensive validation
+      `b79486b62042b702` 结论为 `PARTIALLY_DEFENSIVE`，proposal review `f5dc442131f3740c`
+      输出 2 个 manual proposals 且 `auto_apply=false` / `owner_approval_required=true`，confirmation
+      plan `808e55a74ca6951f` 输出 3 个 targets；五个 validate CLI、五个 report CLI、Dynamic
+      v3 root validation、family artifact validation、report index、Reader Brief 和 Reader
+      Brief quality 均 PASS/OK，ruff、compileall、git diff check、focused 5 tests 和相关 34-test
+      subset 通过；全量 pytest 15 分钟超时未返回失败用例。'
+    raw_line: '|TRADING-169_to_173|ETF portfolio research/Simulation Result Interpretation
+      and Advisory Rule Review|P0|VALIDATING|项目 owner 人工复核|详细拆解见 `docs/requirements/TRADING-169_to_173_Simulation_Result_Interpretation_and_Advisory_Rule_Review.md`；baseline
+      实现已完成并生成真实 artifacts：interpretation `a629c036f1ea3129`、risk_return `c61b1b9ca357cba1`、defensive_validation
+      `b79486b62042b702`、proposal_review `f5dc442131f3740c`、confirmation_plan `808e55a74ca6951f`；下一步由
+      owner 复核 proposal decisions、defensive label 和 forward confirmation 条件；继续固定 `BACKTEST_SIMULATION_NOT_PIT`，不自动修改
+      `position_advisory_v1.yaml`，不生成 production candidate，不允许 broker action 或 policy
+      auto apply|`sim-interpretation run/report`、`sim-risk-return run/report`、`sim-defensive-validation
+      run/report`、`advisory-proposal-review run/report`、`forward-confirmation-plan
+      run/report` 及对应 validate CLI 可运行；新增 artifacts 写入 `reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation|sim_risk_return|sim_defensive_validation|advisory_proposal_review|forward_confirmation_plan/`；报告明确回答
+      limited_adjustment 的中期收益与回撤代价、consensus_target 的 upper-bound reference 定位、defensive_limited_adjustment
+      未被证明 defensive、为何不自动改规则、forward tracking 成功/失败条件；README、operations runbook、system
+      flow、report registry、artifact catalog、requirements、Reader Brief、focused tests、ruff、compileall、git
+      diff check、dynamic-v3 root validation 和 family artifact validation 完成；full pytest
+      已尝试 15 分钟超时无失败明细，相关 34-test subset PASS|2026-06-10: 新增并进入 IN_PROGRESS，原因：TRADING-161_to_168
+      已证明 active variants 在 5/10/20d 有收益增强迹象但伴随更深 drawdown，且 defensive_limited_adjustment
+      overall best 不能自动解释为防守有效；本阶段优先生成人工可读、可审计、不可自动生产化的 advisory rule review 和 forward
+      confirmation plan。2026-06-10: baseline 实现完成并转入 VALIDATING；真实链路 interpretation
+      `a629c036f1ea3129` 解释 5 个 variants，risk-return `c61b1b9ca357cba1` 输出 3 个 active
+      variant tradeoff rows，defensive validation `b79486b62042b702` 结论为 `PARTIALLY_DEFENSIVE`，proposal
+      review `f5dc442131f3740c` 输出 2 个 manual proposals 且 `auto_apply=false` / `owner_approval_required=true`，confirmation
+      plan `808e55a74ca6951f` 输出 3 个 targets；五个 validate CLI、五个 report CLI、Dynamic
+      v3 root validation、family artifact validation、report index、Reader Brief 和 Reader
+      Brief quality 均 PASS/OK，ruff、compileall、git diff check、focused 5 tests 和相关 34-test
+      subset 通过；全量 pytest 15 分钟超时未返回失败用例。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4daf895373f565ddf82c5dc8
+  task_id: TRADING-169_to_173
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核
+    notes: sim_risk_return
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4daf895373f565ddf82c5dc8e9bf770a30dc0dfad7e4401133d3a4c95a47022c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-169_to_173
+  - ETF portfolio research/Simulation Result Interpretation and Advisory Rule Review
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-169_to_173_Simulation_Result_Interpretation_and_Advisory_Rule_Review.md`；baseline
+    实现已完成并生成真实 artifacts：interpretation `a629c036f1ea3129`、risk_return `c61b1b9ca357cba1`、defensive_validation
+    `b79486b62042b702`、proposal_review `f5dc442131f3740c`、confirmation_plan `808e55a74ca6951f`；下一步由
+    owner 复核 proposal decisions、defensive label 和 forward confirmation 条件；继续固定 `BACKTEST_SIMULATION_NOT_PIT`，不自动修改
+    `position_advisory_v1.yaml`，不生成 production candidate，不允许 broker action 或 policy
+    auto apply
+  - '`sim-interpretation run/report`、`sim-risk-return run/report`、`sim-defensive-validation
+    run/report`、`advisory-proposal-review run/report`、`forward-confirmation-plan run/report`
+    及对应 validate CLI 可运行；新增 artifacts 写入 `reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation'
+  - sim_risk_return
+  docs_links:
+  - docs/requirements/TRADING-169_to_173_Simulation_Result_Interpretation_and_Advisory_Rule_Review.md
+  terminal: false
+  raw_row_sha256: 4daf895373f565ddf82c5dc8e9bf770a30dc0dfad7e4401133d3a4c95a47022c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 03f57f22322febcd3a70f3519d1c4535fd72ff51d8fa65fded3f0cfa8c0e3e51

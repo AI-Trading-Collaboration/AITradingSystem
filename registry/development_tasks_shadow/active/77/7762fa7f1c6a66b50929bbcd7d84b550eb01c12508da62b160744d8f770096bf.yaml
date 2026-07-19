@@ -1,0 +1,135 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2282_CANDIDATE_SIGNAL_BINDING_SCHEMA_BASELINE_REWRAP_POC
+  title: null
+  domain: Research trends / candidate signal binding schema and baseline rewrap POC
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2282_Candidate_Signal_Binding_Schema_Baseline_Rewrap_POC.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2282_Candidate_Signal_Binding_Schema_Baseline_Rewrap_POC.md`；依赖
+    TRADING-2281 的 provenance audit。本批只定义 schema/contract，并把 `baseline` frozen composer
+    predictions 作为 source evidence 事后 rewrap 成 schema migration POC artifact；不得恢复
+    historical executable candidate artifact 或改变 permanently inconclusive 状态。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 candidate signal binding schema、candidate-bound signal series contract、candidate-bound
+      prediction artifact contract、baseline rewrapped signal series CSV、baseline rewrapped
+      prediction artifact JSON、baseline rewrap provenance report、validation summary
+      和三份 Markdown 文档；validator 必须覆盖 required binding/PIT/schema/provenance/hash fields，并强制
+      schema migration POC promotion/paper-shadow/production/broker 全部 false/none；report
+      registry 不得把 POC 标为 promotion artifact。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1234
+    row_sha256: 0f0b79fb83f74ebe2f7f10a0659748de28694ad8c50bcd1f7e606ef2df381c2a
+    cell_count: 8
+    all_cells:
+    - TRADING-2282_CANDIDATE_SIGNAL_BINDING_SCHEMA_BASELINE_REWRAP_POC
+    - Research trends / candidate signal binding schema and baseline rewrap POC
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2282_Candidate_Signal_Binding_Schema_Baseline_Rewrap_POC.md`；依赖
+      TRADING-2281 的 provenance audit。本批只定义 schema/contract，并把 `baseline` frozen composer
+      predictions 作为 source evidence 事后 rewrap 成 schema migration POC artifact；不得恢复
+      historical executable candidate artifact 或改变 permanently inconclusive 状态。
+    - 生成 candidate signal binding schema、candidate-bound signal series contract、candidate-bound
+      prediction artifact contract、baseline rewrapped signal series CSV、baseline rewrapped
+      prediction artifact JSON、baseline rewrap provenance report、validation summary
+      和三份 Markdown 文档；validator 必须覆盖 required binding/PIT/schema/provenance/hash fields，并强制
+      schema migration POC promotion/paper-shadow/production/broker 全部 false/none；report
+      registry 不得把 POC 标为 promotion artifact。
+    - '2026-06-29: 新增并进入 IN_PROGRESS；先建立 schema / provenance POC 和 safety gate，不训练模型、不运行
+      actual-path validation、不打开 promotion/paper-shadow/production/broker。2026-06-29:
+      实现完成并转入 VALIDATING；真实 run source_row_count=2205、rewrapped_signal_record_count=2205、rewrapped_prediction_record_count=2205、validation_status=PASS，source
+      hash=`c9a8a288f483cb3a37a84383d465e35a5b76ac890e120e5d913468e51a98cde9`。验证通过
+      Ruff、compileall、focused parallel pytest 12 passed、docs freshness、documentation/task
+      consistency 14 passed、diff check 和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T163658Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-2282_CANDIDATE_SIGNAL_BINDING_SCHEMA_BASELINE_REWRAP_POC|Research
+      trends / candidate signal binding schema and baseline rewrap POC|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2282_Candidate_Signal_Binding_Schema_Baseline_Rewrap_POC.md`；依赖
+      TRADING-2281 的 provenance audit。本批只定义 schema/contract，并把 `baseline` frozen composer
+      predictions 作为 source evidence 事后 rewrap 成 schema migration POC artifact；不得恢复
+      historical executable candidate artifact 或改变 permanently inconclusive 状态。|生成
+      candidate signal binding schema、candidate-bound signal series contract、candidate-bound
+      prediction artifact contract、baseline rewrapped signal series CSV、baseline rewrapped
+      prediction artifact JSON、baseline rewrap provenance report、validation summary
+      和三份 Markdown 文档；validator 必须覆盖 required binding/PIT/schema/provenance/hash fields，并强制
+      schema migration POC promotion/paper-shadow/production/broker 全部 false/none；report
+      registry 不得把 POC 标为 promotion artifact。|2026-06-29: 新增并进入 IN_PROGRESS；先建立 schema
+      / provenance POC 和 safety gate，不训练模型、不运行 actual-path validation、不打开 promotion/paper-shadow/production/broker。2026-06-29:
+      实现完成并转入 VALIDATING；真实 run source_row_count=2205、rewrapped_signal_record_count=2205、rewrapped_prediction_record_count=2205、validation_status=PASS，source
+      hash=`c9a8a288f483cb3a37a84383d465e35a5b76ac890e120e5d913468e51a98cde9`。验证通过
+      Ruff、compileall、focused parallel pytest 12 passed、docs freshness、documentation/task
+      consistency 14 passed、diff check 和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T163658Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0f0b79fb83f74ebe2f7f10a0
+  task_id: TRADING-2282_CANDIDATE_SIGNAL_BINDING_SCHEMA_BASELINE_REWRAP_POC
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-29: 新增并进入 IN_PROGRESS；先建立 schema / provenance POC 和 safety gate，不训练模型、不运行
+      actual-path validation、不打开 promotion/paper-shadow/production/broker。2026-06-29:
+      实现完成并转入 VALIDATING；真实 run source_row_count=2205、rewrapped_signal_record_count=2205、rewrapped_prediction_record_count=2205、validation_status=PASS，source
+      hash=`c9a8a288f483cb3a37a84383d465e35a5b76ac890e120e5d913468e51a98cde9`。验证通过
+      Ruff、compileall、focused parallel pytest 12 passed、docs freshness、documentation/task
+      consistency 14 passed、diff check 和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T163658Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0f0b79fb83f74ebe2f7f10a0659748de28694ad8c50bcd1f7e606ef2df381c2a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2282_CANDIDATE_SIGNAL_BINDING_SCHEMA_BASELINE_REWRAP_POC
+  - Research trends / candidate signal binding schema and baseline rewrap POC
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2282_Candidate_Signal_Binding_Schema_Baseline_Rewrap_POC.md`；依赖
+    TRADING-2281 的 provenance audit。本批只定义 schema/contract，并把 `baseline` frozen composer
+    predictions 作为 source evidence 事后 rewrap 成 schema migration POC artifact；不得恢复
+    historical executable candidate artifact 或改变 permanently inconclusive 状态。
+  - 生成 candidate signal binding schema、candidate-bound signal series contract、candidate-bound
+    prediction artifact contract、baseline rewrapped signal series CSV、baseline rewrapped
+    prediction artifact JSON、baseline rewrap provenance report、validation summary
+    和三份 Markdown 文档；validator 必须覆盖 required binding/PIT/schema/provenance/hash fields，并强制
+    schema migration POC promotion/paper-shadow/production/broker 全部 false/none；report
+    registry 不得把 POC 标为 promotion artifact。
+  - '2026-06-29: 新增并进入 IN_PROGRESS；先建立 schema / provenance POC 和 safety gate，不训练模型、不运行
+    actual-path validation、不打开 promotion/paper-shadow/production/broker。2026-06-29:
+    实现完成并转入 VALIDATING；真实 run source_row_count=2205、rewrapped_signal_record_count=2205、rewrapped_prediction_record_count=2205、validation_status=PASS，source
+    hash=`c9a8a288f483cb3a37a84383d465e35a5b76ac890e120e5d913468e51a98cde9`。验证通过 Ruff、compileall、focused
+    parallel pytest 12 passed、docs freshness、documentation/task consistency 14 passed、diff
+    check 和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T163658Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-2282_Candidate_Signal_Binding_Schema_Baseline_Rewrap_POC.md
+  terminal: false
+  raw_row_sha256: 0f0b79fb83f74ebe2f7f10a0659748de28694ad8c50bcd1f7e606ef2df381c2a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 063cf23b90a453d53b8b6ac5c1a2785c254c91ad501989f3a2cb14213631301a

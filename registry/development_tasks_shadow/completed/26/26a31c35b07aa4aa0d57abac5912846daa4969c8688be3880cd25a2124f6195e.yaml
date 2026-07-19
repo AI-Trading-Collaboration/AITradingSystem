@@ -1,0 +1,133 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-058
+  title: null
+  domain: 回测输入/Shadow Candidate Performance Review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/portfolio_tracking_review_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/portfolio_tracking_review_2026-05-30.md`；active
+    shadow candidate rolling performance review、recommendation、CLI/report/Dashboard/Reader
+    Brief 和 shadow backtest 只读引用已完成；latest 已满足 short-window done condition，但结论仍是 continue
+    tracking，不代表 production approval
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits portfolio review-tracking --latest` 生成 tracking review summary；`validate-tracking-review
+      --latest` 与 `reports portfolio-tracking-review --latest` 可读；review summary 披露
+      recommendation、安全字段、data readiness 和 window status；shadow backtest dry-run 只读引用
+      review summary 且保持 rejected；不修改 production config、不降低 data gate、不自动 promotion'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 259
+    row_sha256: 45e52ee48081894f886edc52c8963d4dfd001b2d30d3636bcfa28c8ea3f1464a
+    cell_count: 8
+    all_cells:
+    - TRADING-058
+    - 回测输入/Shadow Candidate Performance Review
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/portfolio_tracking_review_2026-05-30.md`；active shadow
+      candidate rolling performance review、recommendation、CLI/report/Dashboard/Reader
+      Brief 和 shadow backtest 只读引用已完成；latest 已满足 short-window done condition，但结论仍是
+      continue tracking，不代表 production approval
+    - '`aits portfolio review-tracking --latest` 生成 tracking review summary；`validate-tracking-review
+      --latest` 与 `reports portfolio-tracking-review --latest` 可读；review summary 披露
+      recommendation、安全字段、data readiness 和 window status；shadow backtest dry-run 只读引用
+      review summary 且保持 rejected；不修改 production config、不降低 data gate、不自动 promotion'
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-057A 已恢复 freshness 和 active shadow
+      tracking，需要 rolling performance review 框架。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实现和真实
+      CLI 验收完成，但仅 1 个 tracking day。2026-05-30: TRADING-058A 后继续 VALIDATING，原因：窗口仍为
+      initial observation。2026-06-09：从 VALIDATING 改为 DONE，原因：latest `portfolio_tracking_reviews/2026-06-08`
+      为 OK，`tracking_days=7`、`stage=short_window_review`、`recommendation=continue_tracking`、`done_condition_met=true`，promotion
+      impact 仍不可支持 candidate promotion；验证通过 focused pytest 52 passed、相关 CLI/report
+      smoke、shadow backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall` 和
+      `git diff --check`。'
+    raw_line: '|TRADING-058|回测输入/Shadow Candidate Performance Review|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/portfolio_tracking_review_2026-05-30.md`；active shadow candidate
+      rolling performance review、recommendation、CLI/report/Dashboard/Reader Brief
+      和 shadow backtest 只读引用已完成；latest 已满足 short-window done condition，但结论仍是 continue
+      tracking，不代表 production approval|`aits portfolio review-tracking --latest` 生成
+      tracking review summary；`validate-tracking-review --latest` 与 `reports portfolio-tracking-review
+      --latest` 可读；review summary 披露 recommendation、安全字段、data readiness 和 window status；shadow
+      backtest dry-run 只读引用 review summary 且保持 rejected；不修改 production config、不降低
+      data gate、不自动 promotion|2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-057A 已恢复 freshness
+      和 active shadow tracking，需要 rolling performance review 框架。2026-05-30: 从 IN_PROGRESS
+      改为 VALIDATING，原因：实现和真实 CLI 验收完成，但仅 1 个 tracking day。2026-05-30: TRADING-058A
+      后继续 VALIDATING，原因：窗口仍为 initial observation。2026-06-09：从 VALIDATING 改为 DONE，原因：latest
+      `portfolio_tracking_reviews/2026-06-08` 为 OK，`tracking_days=7`、`stage=short_window_review`、`recommendation=continue_tracking`、`done_condition_met=true`，promotion
+      impact 仍不可支持 candidate promotion；验证通过 focused pytest 52 passed、相关 CLI/report
+      smoke、shadow backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall` 和
+      `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-45e52ee48081894f886edc52
+  task_id: TRADING-058
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-057A 已恢复 freshness 和 active shadow
+      tracking，需要 rolling performance review 框架。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实现和真实
+      CLI 验收完成，但仅 1 个 tracking day。2026-05-30: TRADING-058A 后继续 VALIDATING，原因：窗口仍为
+      initial observation。2026-06-09：从 VALIDATING 改为 DONE，原因：latest `portfolio_tracking_reviews/2026-06-08`
+      为 OK，`tracking_days=7`、`stage=short_window_review`、`recommendation=continue_tracking`、`done_condition_met=true`，promotion
+      impact 仍不可支持 candidate promotion；验证通过 focused pytest 52 passed、相关 CLI/report
+      smoke、shadow backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall` 和
+      `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:45e52ee48081894f886edc52c8963d4dfd001b2d30d3636bcfa28c8ea3f1464a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-058
+  - 回测输入/Shadow Candidate Performance Review
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/portfolio_tracking_review_2026-05-30.md`；active shadow
+    candidate rolling performance review、recommendation、CLI/report/Dashboard/Reader
+    Brief 和 shadow backtest 只读引用已完成；latest 已满足 short-window done condition，但结论仍是 continue
+    tracking，不代表 production approval
+  - '`aits portfolio review-tracking --latest` 生成 tracking review summary；`validate-tracking-review
+    --latest` 与 `reports portfolio-tracking-review --latest` 可读；review summary 披露
+    recommendation、安全字段、data readiness 和 window status；shadow backtest dry-run 只读引用
+    review summary 且保持 rejected；不修改 production config、不降低 data gate、不自动 promotion'
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-057A 已恢复 freshness 和 active shadow tracking，需要
+    rolling performance review 框架。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实现和真实
+    CLI 验收完成，但仅 1 个 tracking day。2026-05-30: TRADING-058A 后继续 VALIDATING，原因：窗口仍为 initial
+    observation。2026-06-09：从 VALIDATING 改为 DONE，原因：latest `portfolio_tracking_reviews/2026-06-08`
+    为 OK，`tracking_days=7`、`stage=short_window_review`、`recommendation=continue_tracking`、`done_condition_met=true`，promotion
+    impact 仍不可支持 candidate promotion；验证通过 focused pytest 52 passed、相关 CLI/report smoke、shadow
+    backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/portfolio_tracking_review_2026-05-30.md
+  terminal: true
+  raw_row_sha256: 45e52ee48081894f886edc52c8963d4dfd001b2d30d3636bcfa28c8ea3f1464a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 909da4347b5e5d5c73fa4dca1f40f4a3c67ec2249cea8f5e9195e6ef1dbf38b8

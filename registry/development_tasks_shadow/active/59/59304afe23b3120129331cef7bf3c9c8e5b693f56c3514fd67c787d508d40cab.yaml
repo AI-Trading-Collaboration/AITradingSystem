@@ -1,0 +1,156 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-654_to_660_B2_OWNER_DECISION_AND_REDESIGN_PLAN
+  title: null
+  domain: ETF portfolio/weight research campaign B2 owner decision and redesign plan
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-654_to_660_B2_Owner_Decision_And_Redesign_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-654_to_660_B2_Owner_Decision_And_Redesign_Plan.md`；在
+    TRADING-649~653 owner-review-required 结果后记录 B2 owner decision，归档 current B2 campaign，抽取
+    reusable evidence，并生成 slow-drawdown defensive overlay RFC、re-entry policy design
+    contract、fast-shock trigger feasibility RFC 和 post-B2 program snapshot；不得批准 paper-shadow/extended
+    shadow/live trading/B4/B5/B6/v3，不得生成 official target weights、broker/order artifacts
+    或 production mutation，不得访问 untouched holdout
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Owner decision audit entry 记录 `owner_action=return_to_design`、reason summary
+      和 next action；Campaign state 反映 owner decision 和 archived/returned-to-design
+      status 且 evidence 不删除；archive summary、reusable evidence report、slow-drawdown
+      overlay RFC、re-entry policy contract、fast-shock trigger RFC 和 post-B2 snapshot
+      均输出 JSON/Markdown/Reader Brief；snapshot 披露 B3 status、B4/B5/B6/v3/paper-shadow
+      allowed flags 全部关闭；focused tests、Ruff、compileall、B2/B3 campaign validate、validation-pack、task-register
+      consistency 和 `git diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1406
+    row_sha256: cde682b7cbac475cebe8e728ff158adcdb79c5e018509c7f447dc8252e07d2c9
+    cell_count: 8
+    all_cells:
+    - TRADING-654_to_660_B2_OWNER_DECISION_AND_REDESIGN_PLAN
+    - ETF portfolio/weight research campaign B2 owner decision and redesign plan
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-654_to_660_B2_Owner_Decision_And_Redesign_Plan.md`；在
+      TRADING-649~653 owner-review-required 结果后记录 B2 owner decision，归档 current B2
+      campaign，抽取 reusable evidence，并生成 slow-drawdown defensive overlay RFC、re-entry
+      policy design contract、fast-shock trigger feasibility RFC 和 post-B2 program
+      snapshot；不得批准 paper-shadow/extended shadow/live trading/B4/B5/B6/v3，不得生成 official
+      target weights、broker/order artifacts 或 production mutation，不得访问 untouched holdout
+    - Owner decision audit entry 记录 `owner_action=return_to_design`、reason summary
+      和 next action；Campaign state 反映 owner decision 和 archived/returned-to-design
+      status 且 evidence 不删除；archive summary、reusable evidence report、slow-drawdown
+      overlay RFC、re-entry policy contract、fast-shock trigger RFC 和 post-B2 snapshot
+      均输出 JSON/Markdown/Reader Brief；snapshot 披露 B3 status、B4/B5/B6/v3/paper-shadow
+      allowed flags 全部关闭；focused tests、Ruff、compileall、B2/B3 campaign validate、validation-pack、task-register
+      consistency 和 `git diff --check` 通过
+    - '2026-06-20: 新增并进入 IN_PROGRESS，原因：当前 B2 Campaign final gate 为 `OWNER_OVERRIDE_REQUIRED`，需要记录
+      owner `return_to_design` 决策、归档 current form，并把可复用 evidence 转入窄化 redesign planning，同时保持所有
+      promotion/production/broker/order 边界关闭。2026-06-20: 实现完成并转入 VALIDATING；真实 B2
+      owner decision 已 append，state 已更新为 `ARCHIVED` + `RETURNED_TO_DESIGN`，evidence
+      保留；新增 rc5 validation pack 30 artifacts、archive/reusable evidence/RFC/contract/snapshot
+      builders 和 archived no-op runner。验证通过 focused pytest 20 passed、Ruff、compileall、B2/B3
+      campaign validate、adapter validation、rc5 validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`、task-register
+      consistency run/validate 和 `git diff --check`。'
+    raw_line: '|TRADING-654_to_660_B2_OWNER_DECISION_AND_REDESIGN_PLAN|ETF portfolio/weight
+      research campaign B2 owner decision and redesign plan|P0|VALIDATING|系统实现 + 项目
+      owner 后续复核|详细拆解见 `docs/requirements/TRADING-654_to_660_B2_Owner_Decision_And_Redesign_Plan.md`；在
+      TRADING-649~653 owner-review-required 结果后记录 B2 owner decision，归档 current B2
+      campaign，抽取 reusable evidence，并生成 slow-drawdown defensive overlay RFC、re-entry
+      policy design contract、fast-shock trigger feasibility RFC 和 post-B2 program
+      snapshot；不得批准 paper-shadow/extended shadow/live trading/B4/B5/B6/v3，不得生成 official
+      target weights、broker/order artifacts 或 production mutation，不得访问 untouched holdout|Owner
+      decision audit entry 记录 `owner_action=return_to_design`、reason summary 和 next
+      action；Campaign state 反映 owner decision 和 archived/returned-to-design status
+      且 evidence 不删除；archive summary、reusable evidence report、slow-drawdown overlay
+      RFC、re-entry policy contract、fast-shock trigger RFC 和 post-B2 snapshot 均输出 JSON/Markdown/Reader
+      Brief；snapshot 披露 B3 status、B4/B5/B6/v3/paper-shadow allowed flags 全部关闭；focused
+      tests、Ruff、compileall、B2/B3 campaign validate、validation-pack、task-register
+      consistency 和 `git diff --check` 通过|2026-06-20: 新增并进入 IN_PROGRESS，原因：当前 B2 Campaign
+      final gate 为 `OWNER_OVERRIDE_REQUIRED`，需要记录 owner `return_to_design` 决策、归档 current
+      form，并把可复用 evidence 转入窄化 redesign planning，同时保持所有 promotion/production/broker/order
+      边界关闭。2026-06-20: 实现完成并转入 VALIDATING；真实 B2 owner decision 已 append，state 已更新为
+      `ARCHIVED` + `RETURNED_TO_DESIGN`，evidence 保留；新增 rc5 validation pack 30 artifacts、archive/reusable
+      evidence/RFC/contract/snapshot builders 和 archived no-op runner。验证通过 focused
+      pytest 20 passed、Ruff、compileall、B2/B3 campaign validate、adapter validation、rc5
+      validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`、task-register
+      consistency run/validate 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-cde682b7cbac475cebe8e728
+  task_id: TRADING-654_to_660_B2_OWNER_DECISION_AND_REDESIGN_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-20: 新增并进入 IN_PROGRESS，原因：当前 B2 Campaign final gate 为 `OWNER_OVERRIDE_REQUIRED`，需要记录
+      owner `return_to_design` 决策、归档 current form，并把可复用 evidence 转入窄化 redesign planning，同时保持所有
+      promotion/production/broker/order 边界关闭。2026-06-20: 实现完成并转入 VALIDATING；真实 B2
+      owner decision 已 append，state 已更新为 `ARCHIVED` + `RETURNED_TO_DESIGN`，evidence
+      保留；新增 rc5 validation pack 30 artifacts、archive/reusable evidence/RFC/contract/snapshot
+      builders 和 archived no-op runner。验证通过 focused pytest 20 passed、Ruff、compileall、B2/B3
+      campaign validate、adapter validation、rc5 validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`、task-register
+      consistency run/validate 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:cde682b7cbac475cebe8e728ff158adcdb79c5e018509c7f447dc8252e07d2c9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-654_to_660_B2_OWNER_DECISION_AND_REDESIGN_PLAN
+  - ETF portfolio/weight research campaign B2 owner decision and redesign plan
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-654_to_660_B2_Owner_Decision_And_Redesign_Plan.md`；在
+    TRADING-649~653 owner-review-required 结果后记录 B2 owner decision，归档 current B2 campaign，抽取
+    reusable evidence，并生成 slow-drawdown defensive overlay RFC、re-entry policy design
+    contract、fast-shock trigger feasibility RFC 和 post-B2 program snapshot；不得批准 paper-shadow/extended
+    shadow/live trading/B4/B5/B6/v3，不得生成 official target weights、broker/order artifacts
+    或 production mutation，不得访问 untouched holdout
+  - Owner decision audit entry 记录 `owner_action=return_to_design`、reason summary 和
+    next action；Campaign state 反映 owner decision 和 archived/returned-to-design status
+    且 evidence 不删除；archive summary、reusable evidence report、slow-drawdown overlay
+    RFC、re-entry policy contract、fast-shock trigger RFC 和 post-B2 snapshot 均输出 JSON/Markdown/Reader
+    Brief；snapshot 披露 B3 status、B4/B5/B6/v3/paper-shadow allowed flags 全部关闭；focused
+    tests、Ruff、compileall、B2/B3 campaign validate、validation-pack、task-register consistency
+    和 `git diff --check` 通过
+  - '2026-06-20: 新增并进入 IN_PROGRESS，原因：当前 B2 Campaign final gate 为 `OWNER_OVERRIDE_REQUIRED`，需要记录
+    owner `return_to_design` 决策、归档 current form，并把可复用 evidence 转入窄化 redesign planning，同时保持所有
+    promotion/production/broker/order 边界关闭。2026-06-20: 实现完成并转入 VALIDATING；真实 B2 owner
+    decision 已 append，state 已更新为 `ARCHIVED` + `RETURNED_TO_DESIGN`，evidence 保留；新增
+    rc5 validation pack 30 artifacts、archive/reusable evidence/RFC/contract/snapshot
+    builders 和 archived no-op runner。验证通过 focused pytest 20 passed、Ruff、compileall、B2/B3
+    campaign validate、adapter validation、rc5 validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`、task-register
+    consistency run/validate 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-654_to_660_B2_Owner_Decision_And_Redesign_Plan.md
+  terminal: false
+  raw_row_sha256: cde682b7cbac475cebe8e728ff158adcdb79c5e018509c7f447dc8252e07d2c9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e51ef1d1a502b1af065121f3e99115bd202454d2f77900f0c870f92f9dcb9c3d

@@ -1,0 +1,152 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-035
+  title: null
+  domain: 交易执行/Notification Delivery Audit Summary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/notification_delivery_audit_summary_2026-05-25.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/notification_delivery_audit_summary_2026-05-25.md`；只读
+    notification delivery audit summary 已通过目标复验，不触发任何通知、交易或上游路径
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_notification_delivery_audit_summary.py` 和 `src/ai_trading_system/trading_engine/notification_delivery_audit_summary.py`；读取
+      latest TRADING-030 notification draft metadata、latest TRADING-031 delivery preflight、TRADING-034
+      `draft_dispatch/latest.json` 和 dispatch artifact，校验 task_id/status/safety boundaries、draft/preflight/dispatch
+      path/hash/date/latest 一致性、external side effects 和 lifecycle；输出 `audit_status`、`notification_lifecycle_status`、artifact
+      chain、draft/preflight/dispatch summary、external side effect audit、safety validation、alerts、recommended
+      next steps、manual review instructions 和 run log；dashboard 只读读取 TRADING-035 audit
+      artifact，不触发 018B-034、035 script、operator brief、notification generator、preflight、dispatch
+      或任何发送/交易路径；测试覆盖 PASS、INCOMPLETE、MISMATCH、SAFETY_BLOCKED、Markdown banners、dashboard
+      只读和 output safety invariants；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+      diff
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 345
+    row_sha256: f020f59d5dcef7694a336fbd2ce8c57c72e126e8425dd426a73b75c8d7531f01
+    cell_count: 8
+    all_cells:
+    - TRADING-035
+    - 交易执行/Notification Delivery Audit Summary
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/notification_delivery_audit_summary_2026-05-25.md`；只读
+      notification delivery audit summary 已通过目标复验，不触发任何通知、交易或上游路径
+    - 新增 `scripts/run_notification_delivery_audit_summary.py` 和 `src/ai_trading_system/trading_engine/notification_delivery_audit_summary.py`；读取
+      latest TRADING-030 notification draft metadata、latest TRADING-031 delivery preflight、TRADING-034
+      `draft_dispatch/latest.json` 和 dispatch artifact，校验 task_id/status/safety boundaries、draft/preflight/dispatch
+      path/hash/date/latest 一致性、external side effects 和 lifecycle；输出 `audit_status`、`notification_lifecycle_status`、artifact
+      chain、draft/preflight/dispatch summary、external side effect audit、safety validation、alerts、recommended
+      next steps、manual review instructions 和 run log；dashboard 只读读取 TRADING-035 audit
+      artifact，不触发 018B-034、035 script、operator brief、notification generator、preflight、dispatch
+      或任何发送/交易路径；测试覆盖 PASS、INCOMPLETE、MISMATCH、SAFETY_BLOCKED、Markdown banners、dashboard
+      只读和 output safety invariants；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+      diff
+    - '2026-05-25: 新增并进入 IN_PROGRESS，原因：TRADING-030/031/034 已能形成通知草稿、delivery preflight
+      和 draft dispatch，但缺少统一只读审计摘要来记录生命周期完整性、hash/latest 一致性和外部副作用为 false；本任务严格 audit-only/read-only，不执行任何上游或发送动作。2026-05-25:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 audit summary builder、CLI、JSON/Markdown/run
+      log、dashboard 只读卡片、runbook、system flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_notification_delivery_audit_summary.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：只读 audit summary 实现、文档和安全边界已满足验收；复验通过通知链路目标 pytest 97
+      passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。'
+    raw_line: '|TRADING-035|交易执行/Notification Delivery Audit Summary|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/notification_delivery_audit_summary_2026-05-25.md`；只读 notification
+      delivery audit summary 已通过目标复验，不触发任何通知、交易或上游路径|新增 `scripts/run_notification_delivery_audit_summary.py`
+      和 `src/ai_trading_system/trading_engine/notification_delivery_audit_summary.py`；读取
+      latest TRADING-030 notification draft metadata、latest TRADING-031 delivery preflight、TRADING-034
+      `draft_dispatch/latest.json` 和 dispatch artifact，校验 task_id/status/safety boundaries、draft/preflight/dispatch
+      path/hash/date/latest 一致性、external side effects 和 lifecycle；输出 `audit_status`、`notification_lifecycle_status`、artifact
+      chain、draft/preflight/dispatch summary、external side effect audit、safety validation、alerts、recommended
+      next steps、manual review instructions 和 run log；dashboard 只读读取 TRADING-035 audit
+      artifact，不触发 018B-034、035 script、operator brief、notification generator、preflight、dispatch
+      或任何发送/交易路径；测试覆盖 PASS、INCOMPLETE、MISMATCH、SAFETY_BLOCKED、Markdown banners、dashboard
+      只读和 output safety invariants；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+      diff|2026-05-25: 新增并进入 IN_PROGRESS，原因：TRADING-030/031/034 已能形成通知草稿、delivery
+      preflight 和 draft dispatch，但缺少统一只读审计摘要来记录生命周期完整性、hash/latest 一致性和外部副作用为 false；本任务严格
+      audit-only/read-only，不执行任何上游或发送动作。2026-05-25: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成
+      audit summary builder、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、system
+      flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_notification_delivery_audit_summary.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：只读 audit summary 实现、文档和安全边界已满足验收；复验通过通知链路目标 pytest 97
+      passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f020f59d5dcef7694a336fbd
+  task_id: TRADING-035
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-25: 新增并进入 IN_PROGRESS，原因：TRADING-030/031/034 已能形成通知草稿、delivery
+      preflight 和 draft dispatch，但缺少统一只读审计摘要来记录生命周期完整性、hash/latest 一致性和外部副作用为 false；本任务严格
+      audit-only/read-only，不执行任何上游或发送动作。2026-05-25: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成
+      audit summary builder、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、system
+      flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_notification_delivery_audit_summary.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：只读 audit summary 实现、文档和安全边界已满足验收；复验通过通知链路目标 pytest 97
+      passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f020f59d5dcef7694a336fbd2ce8c57c72e126e8425dd426a73b75c8d7531f01
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-035
+  - 交易执行/Notification Delivery Audit Summary
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/notification_delivery_audit_summary_2026-05-25.md`；只读
+    notification delivery audit summary 已通过目标复验，不触发任何通知、交易或上游路径
+  - 新增 `scripts/run_notification_delivery_audit_summary.py` 和 `src/ai_trading_system/trading_engine/notification_delivery_audit_summary.py`；读取
+    latest TRADING-030 notification draft metadata、latest TRADING-031 delivery preflight、TRADING-034
+    `draft_dispatch/latest.json` 和 dispatch artifact，校验 task_id/status/safety boundaries、draft/preflight/dispatch
+    path/hash/date/latest 一致性、external side effects 和 lifecycle；输出 `audit_status`、`notification_lifecycle_status`、artifact
+    chain、draft/preflight/dispatch summary、external side effect audit、safety validation、alerts、recommended
+    next steps、manual review instructions 和 run log；dashboard 只读读取 TRADING-035 audit
+    artifact，不触发 018B-034、035 script、operator brief、notification generator、preflight、dispatch
+    或任何发送/交易路径；测试覆盖 PASS、INCOMPLETE、MISMATCH、SAFETY_BLOCKED、Markdown banners、dashboard
+    只读和 output safety invariants；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+    pytest 和 ruff；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+    diff
+  - '2026-05-25: 新增并进入 IN_PROGRESS，原因：TRADING-030/031/034 已能形成通知草稿、delivery preflight
+    和 draft dispatch，但缺少统一只读审计摘要来记录生命周期完整性、hash/latest 一致性和外部副作用为 false；本任务严格 audit-only/read-only，不执行任何上游或发送动作。2026-05-25:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已完成 audit summary builder、CLI、JSON/Markdown/run
+    log、dashboard 只读卡片、runbook、system flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_notification_delivery_audit_summary.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+    pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-06-07:
+    从 VALIDATING 改为 DONE，原因：只读 audit summary 实现、文档和安全边界已满足验收；复验通过通知链路目标 pytest 97
+    passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。'
+  docs_links:
+  - docs/requirements/notification_delivery_audit_summary_2026-05-25.md
+  terminal: true
+  raw_row_sha256: f020f59d5dcef7694a336fbd2ce8c57c72e126e8425dd426a73b75c8d7531f01
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d3d1889e4997013bdf06620f038967244e875d990b4a65dd4c49a742c3d5be1b

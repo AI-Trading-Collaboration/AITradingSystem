@@ -1,0 +1,116 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-102_to_110
+  title: null
+  domain: ETF portfolio research/Dynamic v3 Rescue Stable Real Parameter Iteration
+    Backtest Loop
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md`；baseline
+    已完成 data audit、small_real profile、candidate attribution、true walk-forward selection、overfit
+    control、parameter governance、research index、shadow monitor和promotion pack；G2.4P已完成injection
+    audit OFAT matched-pair正确性修复，下一步需在当前真实cache上运行完整20-candidate audit重建逐参数证据，再由owner复核0.65
+    workflow-smoke gate、provenance warning与attribution/overfit限制
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 默认候选前8项必须为共同base+7个逐轴pair，effect只由其他required轴相同的pair计算，独立parameter effect
+      artifact存在；无pair不得形成有效结论且validation FAIL；当前真实20-candidate重跑及对应validation PASS后，方可恢复逐参数效果结论；其余第13.2
+      gates、文档、focused/architecture继续PASS
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1469
+    row_sha256: ad1454b18044cb6d2989d8e2b15288b07dbfe79910b62a774b115e379022697b
+    cell_count: 8
+    all_cells:
+    - TRADING-102_to_110
+    - ETF portfolio research/Dynamic v3 Rescue Stable Real Parameter Iteration Backtest
+      Loop
+    - P0
+    - VALIDATING
+    - 系统验证 + 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md`；baseline
+      已完成 data audit、small_real profile、candidate attribution、true walk-forward selection、overfit
+      control、parameter governance、research index、shadow monitor和promotion pack；G2.4P已完成injection
+      audit OFAT matched-pair正确性修复，下一步需在当前真实cache上运行完整20-candidate audit重建逐参数证据，再由owner复核0.65
+      workflow-smoke gate、provenance warning与attribution/overfit限制
+    - 默认候选前8项必须为共同base+7个逐轴pair，effect只由其他required轴相同的pair计算，独立parameter effect artifact存在；无pair不得形成有效结论且validation
+      FAIL；当前真实20-candidate重跑及对应validation PASS后，方可恢复逐参数效果结论；其余第13.2 gates、文档、focused/architecture继续PASS
+    - '2026-06-06: 实现完成并进入 VALIDATING，既有small_real artifacts生成且promotion保持incomplete。2026-07-11:
+      G2.4P发现旧effect summary跨参数混杂和grid轴覆盖风险，旧artifact降级为workflow-only证据。2026-07-11:
+      OFAT修复、CLI迁移、独立summary与fail-closed validation完成；保持VALIDATING，等待当前真实cache 20-candidate重跑。'
+    raw_line: '|TRADING-102_to_110|ETF portfolio research/Dynamic v3 Rescue Stable
+      Real Parameter Iteration Backtest Loop|P0|VALIDATING|系统验证 + 项目 owner 人工复核|详细拆解见
+      `docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md`；baseline
+      已完成 data audit、small_real profile、candidate attribution、true walk-forward selection、overfit
+      control、parameter governance、research index、shadow monitor和promotion pack；G2.4P已完成injection
+      audit OFAT matched-pair正确性修复，下一步需在当前真实cache上运行完整20-candidate audit重建逐参数证据，再由owner复核0.65
+      workflow-smoke gate、provenance warning与attribution/overfit限制|默认候选前8项必须为共同base+7个逐轴pair，effect只由其他required轴相同的pair计算，独立parameter
+      effect artifact存在；无pair不得形成有效结论且validation FAIL；当前真实20-candidate重跑及对应validation
+      PASS后，方可恢复逐参数效果结论；其余第13.2 gates、文档、focused/architecture继续PASS|2026-06-06: 实现完成并进入
+      VALIDATING，既有small_real artifacts生成且promotion保持incomplete。2026-07-11: G2.4P发现旧effect
+      summary跨参数混杂和grid轴覆盖风险，旧artifact降级为workflow-only证据。2026-07-11: OFAT修复、CLI迁移、独立summary与fail-closed
+      validation完成；保持VALIDATING，等待当前真实cache 20-candidate重跑。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ad1454b18044cb6d2989d8e2
+  task_id: TRADING-102_to_110
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner 人工复核
+    notes: '2026-06-06: 实现完成并进入 VALIDATING，既有small_real artifacts生成且promotion保持incomplete。2026-07-11:
+      G2.4P发现旧effect summary跨参数混杂和grid轴覆盖风险，旧artifact降级为workflow-only证据。2026-07-11:
+      OFAT修复、CLI迁移、独立summary与fail-closed validation完成；保持VALIDATING，等待当前真实cache 20-candidate重跑。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ad1454b18044cb6d2989d8e2b15288b07dbfe79910b62a774b115e379022697b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-102_to_110
+  - ETF portfolio research/Dynamic v3 Rescue Stable Real Parameter Iteration Backtest
+    Loop
+  - P0
+  - VALIDATING
+  - 系统验证 + 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md`；baseline
+    已完成 data audit、small_real profile、candidate attribution、true walk-forward selection、overfit
+    control、parameter governance、research index、shadow monitor和promotion pack；G2.4P已完成injection
+    audit OFAT matched-pair正确性修复，下一步需在当前真实cache上运行完整20-candidate audit重建逐参数证据，再由owner复核0.65
+    workflow-smoke gate、provenance warning与attribution/overfit限制
+  - 默认候选前8项必须为共同base+7个逐轴pair，effect只由其他required轴相同的pair计算，独立parameter effect artifact存在；无pair不得形成有效结论且validation
+    FAIL；当前真实20-candidate重跑及对应validation PASS后，方可恢复逐参数效果结论；其余第13.2 gates、文档、focused/architecture继续PASS
+  - '2026-06-06: 实现完成并进入 VALIDATING，既有small_real artifacts生成且promotion保持incomplete。2026-07-11:
+    G2.4P发现旧effect summary跨参数混杂和grid轴覆盖风险，旧artifact降级为workflow-only证据。2026-07-11:
+    OFAT修复、CLI迁移、独立summary与fail-closed validation完成；保持VALIDATING，等待当前真实cache 20-candidate重跑。'
+  docs_links:
+  - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
+  terminal: false
+  raw_row_sha256: ad1454b18044cb6d2989d8e2b15288b07dbfe79910b62a774b115e379022697b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 835e55f1956eba14f2f6c4cadfcfee3948205c8e3e1986bc65a562dd34d7f512

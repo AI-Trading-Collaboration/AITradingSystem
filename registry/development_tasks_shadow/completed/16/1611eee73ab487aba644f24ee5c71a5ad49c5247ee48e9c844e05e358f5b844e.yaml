@@ -1,0 +1,133 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-051A
+  title: null
+  domain: 回测输入/Ablation Validation & Signal Contribution Diagnostics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/signal_ablation_diagnostics_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/signal_ablation_diagnostics_2026-05-30.md`；signal
+    usage、score impact、portfolio impact、threshold diagnostics、classification reason、debug/explain
+    CLI、Dashboard 和 Reader Brief no-credit reason 已完成；该诊断已支撑 TRADING-052 进入 signal
+    calibration
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 每个 signal contribution 输出 `diagnostic_status`、`classification_reason`、`signal_usage_diagnostics`、`score_impact`、`portfolio_impact`
+      和 `threshold_diagnostics`；`aits signals explain-ablation --latest` 输出诊断链路；`validate-ablation`
+      显示 diagnostics present、real signals used in score、classification reasons present；不修改
+      production 参数、不解除 candidate promotion
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 263
+    row_sha256: ab76683dbf464c83386ea6db1f727df143d001d94a77924e60fbd6dc54b0c8e1
+    cell_count: 8
+    all_cells:
+    - TRADING-051A
+    - 回测输入/Ablation Validation & Signal Contribution Diagnostics
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/signal_ablation_diagnostics_2026-05-30.md`；signal usage、score
+      impact、portfolio impact、threshold diagnostics、classification reason、debug/explain
+      CLI、Dashboard 和 Reader Brief no-credit reason 已完成；该诊断已支撑 TRADING-052 进入 signal
+      calibration
+    - 每个 signal contribution 输出 `diagnostic_status`、`classification_reason`、`signal_usage_diagnostics`、`score_impact`、`portfolio_impact`
+      和 `threshold_diagnostics`；`aits signals explain-ablation --latest` 输出诊断链路；`validate-ablation`
+      显示 diagnostics present、real signals used in score、classification reasons present；不修改
+      production 参数、不解除 candidate promotion
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-051 真实结果为 `promotion_credit_signals=0`，需要解释原因。2026-05-30:
+      从 IN_PROGRESS 改为 VALIDATING，原因：真实 2026-05-28 ablation 已确认 real signals used
+      in score、ablation changed scores 和 portfolio，主要原因为 real signal contributions
+      below threshold。2026-06-09: 从 VALIDATING 改为 DONE，原因：`signals explain-ablation
+      --latest` 可输出 snapshot -> score -> portfolio -> metrics -> classification 诊断链路，`trend_momentum`
+      与 `sector_strength` 仍为 `BELOW_THRESHOLD` 而非接线缺失；后续 TRADING-052/053/054 已完成下一阶段判断；验证通过
+      focused pytest 54 passed、shadow backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall`
+      和 `git diff --check`。'
+    raw_line: '|TRADING-051A|回测输入/Ablation Validation & Signal Contribution Diagnostics|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/signal_ablation_diagnostics_2026-05-30.md`；signal usage、score
+      impact、portfolio impact、threshold diagnostics、classification reason、debug/explain
+      CLI、Dashboard 和 Reader Brief no-credit reason 已完成；该诊断已支撑 TRADING-052 进入 signal
+      calibration|每个 signal contribution 输出 `diagnostic_status`、`classification_reason`、`signal_usage_diagnostics`、`score_impact`、`portfolio_impact`
+      和 `threshold_diagnostics`；`aits signals explain-ablation --latest` 输出诊断链路；`validate-ablation`
+      显示 diagnostics present、real signals used in score、classification reasons present；不修改
+      production 参数、不解除 candidate promotion|2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-051
+      真实结果为 `promotion_credit_signals=0`，需要解释原因。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：真实
+      2026-05-28 ablation 已确认 real signals used in score、ablation changed scores 和
+      portfolio，主要原因为 real signal contributions below threshold。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：`signals explain-ablation --latest` 可输出 snapshot -> score -> portfolio
+      -> metrics -> classification 诊断链路，`trend_momentum` 与 `sector_strength` 仍为 `BELOW_THRESHOLD`
+      而非接线缺失；后续 TRADING-052/053/054 已完成下一阶段判断；验证通过 focused pytest 54 passed、shadow
+      backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ab76683dbf464c83386ea6db
+  task_id: TRADING-051A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-051 真实结果为 `promotion_credit_signals=0`，需要解释原因。2026-05-30:
+      从 IN_PROGRESS 改为 VALIDATING，原因：真实 2026-05-28 ablation 已确认 real signals used
+      in score、ablation changed scores 和 portfolio，主要原因为 real signal contributions
+      below threshold。2026-06-09: 从 VALIDATING 改为 DONE，原因：`signals explain-ablation
+      --latest` 可输出 snapshot -> score -> portfolio -> metrics -> classification 诊断链路，`trend_momentum`
+      与 `sector_strength` 仍为 `BELOW_THRESHOLD` 而非接线缺失；后续 TRADING-052/053/054 已完成下一阶段判断；验证通过
+      focused pytest 54 passed、shadow backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall`
+      和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ab76683dbf464c83386ea6db1f727df143d001d94a77924e60fbd6dc54b0c8e1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-051A
+  - 回测输入/Ablation Validation & Signal Contribution Diagnostics
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/signal_ablation_diagnostics_2026-05-30.md`；signal usage、score
+    impact、portfolio impact、threshold diagnostics、classification reason、debug/explain
+    CLI、Dashboard 和 Reader Brief no-credit reason 已完成；该诊断已支撑 TRADING-052 进入 signal
+    calibration
+  - 每个 signal contribution 输出 `diagnostic_status`、`classification_reason`、`signal_usage_diagnostics`、`score_impact`、`portfolio_impact`
+    和 `threshold_diagnostics`；`aits signals explain-ablation --latest` 输出诊断链路；`validate-ablation`
+    显示 diagnostics present、real signals used in score、classification reasons present；不修改
+    production 参数、不解除 candidate promotion
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-051 真实结果为 `promotion_credit_signals=0`，需要解释原因。2026-05-30:
+    从 IN_PROGRESS 改为 VALIDATING，原因：真实 2026-05-28 ablation 已确认 real signals used in
+    score、ablation changed scores 和 portfolio，主要原因为 real signal contributions below
+    threshold。2026-06-09: 从 VALIDATING 改为 DONE，原因：`signals explain-ablation --latest`
+    可输出 snapshot -> score -> portfolio -> metrics -> classification 诊断链路，`trend_momentum`
+    与 `sector_strength` 仍为 `BELOW_THRESHOLD` 而非接线缺失；后续 TRADING-052/053/054 已完成下一阶段判断；验证通过
+    focused pytest 54 passed、shadow backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall`
+    和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/signal_ablation_diagnostics_2026-05-30.md
+  terminal: true
+  raw_row_sha256: ab76683dbf464c83386ea6db1f727df143d001d94a77924e60fbd6dc54b0c8e1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7d354e620cd621afd7d0aa04f2f9f925d2bccead3bccc495eb1363f8df72b017

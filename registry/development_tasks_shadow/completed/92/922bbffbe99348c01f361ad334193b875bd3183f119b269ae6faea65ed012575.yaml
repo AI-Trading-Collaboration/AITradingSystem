@@ -1,0 +1,139 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-055
+  title: null
+  domain: 回测输入/Portfolio Candidate Manual Review Workflow
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/portfolio_candidate_manual_review_workflow_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/portfolio_candidate_manual_review_workflow_2026-05-30.md`；Portfolio
+    Candidate manual review package、decision artifact、状态流转、production hash、rollback
+    reference、Dashboard/Reader Brief 和 shadow promotion 只读引用已完成；watch decision 只允许
+    shadow tracking，不代表 production approval
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits portfolio review-candidate --latest` 与 `decide-candidate --latest
+      --decision watch` 生成 review package/decision；`validate-review --latest` 与 `reports
+      portfolio-candidate-review --latest` 可读；shadow backtest dry-run 可引用 review decision
+      但仍 rejected；不修改 production config、不降低 data quality gate、不绕过 signal quality LIMITED、不自动启用
+      recommended profile'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 261
+    row_sha256: 1954ab792f0a4e6152c4e1e8279ab4f80b9f5e3010bfdd1d02910778b79448f8
+    cell_count: 8
+    all_cells:
+    - TRADING-055
+    - 回测输入/Portfolio Candidate Manual Review Workflow
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/portfolio_candidate_manual_review_workflow_2026-05-30.md`；Portfolio
+      Candidate manual review package、decision artifact、状态流转、production hash、rollback
+      reference、Dashboard/Reader Brief 和 shadow promotion 只读引用已完成；watch decision 只允许
+      shadow tracking，不代表 production approval
+    - '`aits portfolio review-candidate --latest` 与 `decide-candidate --latest --decision
+      watch` 生成 review package/decision；`validate-review --latest` 与 `reports portfolio-candidate-review
+      --latest` 可读；shadow backtest dry-run 可引用 review decision 但仍 rejected；不修改 production
+      config、不降低 data quality gate、不绕过 signal quality LIMITED、不自动启用 recommended profile'
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-054 已生成 advisory recommended candidate，但缺少人工
+      review/watch/shadow tracking 审计流程。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：review
+      package/decision 2026-05-28 artifact 生成，decision 为 `watch`，production config
+      hash 前后一致。2026-06-09：从 VALIDATING 改为 DONE，原因：复验 latest review decision 仍为 `watch`
+      / `allowed_next_step=continue_shadow_tracking`，`portfolio validate-review --latest`、`reports
+      portfolio-candidate-review --latest` 和 shadow backtest dry-run 均保持 no production
+      effect、manual review required、no auto promotion 且 promotion rejected；验证通过 focused
+      pytest 52 passed、相关 CLI/report smoke、文档检查、Ruff、repo-wide Black check、`compileall`
+      和 `git diff --check`。'
+    raw_line: '|TRADING-055|回测输入/Portfolio Candidate Manual Review Workflow|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/portfolio_candidate_manual_review_workflow_2026-05-30.md`；Portfolio
+      Candidate manual review package、decision artifact、状态流转、production hash、rollback
+      reference、Dashboard/Reader Brief 和 shadow promotion 只读引用已完成；watch decision 只允许
+      shadow tracking，不代表 production approval|`aits portfolio review-candidate --latest`
+      与 `decide-candidate --latest --decision watch` 生成 review package/decision；`validate-review
+      --latest` 与 `reports portfolio-candidate-review --latest` 可读；shadow backtest
+      dry-run 可引用 review decision 但仍 rejected；不修改 production config、不降低 data quality
+      gate、不绕过 signal quality LIMITED、不自动启用 recommended profile|2026-05-30: 新增并进入
+      IN_PROGRESS，原因：TRADING-054 已生成 advisory recommended candidate，但缺少人工 review/watch/shadow
+      tracking 审计流程。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：review package/decision
+      2026-05-28 artifact 生成，decision 为 `watch`，production config hash 前后一致。2026-06-09：从
+      VALIDATING 改为 DONE，原因：复验 latest review decision 仍为 `watch` / `allowed_next_step=continue_shadow_tracking`，`portfolio
+      validate-review --latest`、`reports portfolio-candidate-review --latest` 和 shadow
+      backtest dry-run 均保持 no production effect、manual review required、no auto promotion
+      且 promotion rejected；验证通过 focused pytest 52 passed、相关 CLI/report smoke、文档检查、Ruff、repo-wide
+      Black check、`compileall` 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1954ab792f0a4e6152c4e1e8
+  task_id: TRADING-055
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-054 已生成 advisory recommended
+      candidate，但缺少人工 review/watch/shadow tracking 审计流程。2026-05-30: 从 IN_PROGRESS
+      改为 VALIDATING，原因：review package/decision 2026-05-28 artifact 生成，decision 为 `watch`，production
+      config hash 前后一致。2026-06-09：从 VALIDATING 改为 DONE，原因：复验 latest review decision
+      仍为 `watch` / `allowed_next_step=continue_shadow_tracking`，`portfolio validate-review
+      --latest`、`reports portfolio-candidate-review --latest` 和 shadow backtest dry-run
+      均保持 no production effect、manual review required、no auto promotion 且 promotion
+      rejected；验证通过 focused pytest 52 passed、相关 CLI/report smoke、文档检查、Ruff、repo-wide
+      Black check、`compileall` 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1954ab792f0a4e6152c4e1e8279ab4f80b9f5e3010bfdd1d02910778b79448f8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-055
+  - 回测输入/Portfolio Candidate Manual Review Workflow
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/portfolio_candidate_manual_review_workflow_2026-05-30.md`；Portfolio
+    Candidate manual review package、decision artifact、状态流转、production hash、rollback
+    reference、Dashboard/Reader Brief 和 shadow promotion 只读引用已完成；watch decision 只允许
+    shadow tracking，不代表 production approval
+  - '`aits portfolio review-candidate --latest` 与 `decide-candidate --latest --decision
+    watch` 生成 review package/decision；`validate-review --latest` 与 `reports portfolio-candidate-review
+    --latest` 可读；shadow backtest dry-run 可引用 review decision 但仍 rejected；不修改 production
+    config、不降低 data quality gate、不绕过 signal quality LIMITED、不自动启用 recommended profile'
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-054 已生成 advisory recommended candidate，但缺少人工
+    review/watch/shadow tracking 审计流程。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：review
+    package/decision 2026-05-28 artifact 生成，decision 为 `watch`，production config hash
+    前后一致。2026-06-09：从 VALIDATING 改为 DONE，原因：复验 latest review decision 仍为 `watch` /
+    `allowed_next_step=continue_shadow_tracking`，`portfolio validate-review --latest`、`reports
+    portfolio-candidate-review --latest` 和 shadow backtest dry-run 均保持 no production
+    effect、manual review required、no auto promotion 且 promotion rejected；验证通过 focused
+    pytest 52 passed、相关 CLI/report smoke、文档检查、Ruff、repo-wide Black check、`compileall`
+    和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/portfolio_candidate_manual_review_workflow_2026-05-30.md
+  terminal: true
+  raw_row_sha256: 1954ab792f0a4e6152c4e1e8279ab4f80b9f5e3010bfdd1d02910778b79448f8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: fd285d2ddee44303e1d8df3a537dce0f19d0f19455f3134339cc6128d0c91c35

@@ -1,0 +1,159 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-251_to_255_SMOOTHED_METHOD_EVIDENCE_DRILLDOWN_AND_FORWARD_CONFIRMATION
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue smoothed method evidence drilldown and forward
+    confirmation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: architecture coordinator 继续 G2.4；项目 owner / forward evidence workflow
+    负责证据成熟复核
+  requirement_refs:
+  - docs/requirements/TRADING-251_to_255_Smoothed_Method_Evidence_Drilldown_and_Forward_Confirmation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-251_to_255_Smoothed_Method_Evidence_Drilldown_and_Forward_Confirmation.md`；G2.4CO
+    正在把旧 baseline 迁为 canonical interface/domain 与五类 bounded v2 snapshots。当前 source-backed
+    fixture 仍无 eligible recommended method，故 confirmation 必须为 `candidate_method=null`、`targets=[]`、`INSUFFICIENT_EVIDENCE`；后续
+    blocker 为独立 forward/PIT samples、DQ repair、cost/holdout 和 owner review，不得把局部 favorable
+    tradeoff 当 promotion approval
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 15 个 callback 迁出 legacy root且 CLI path/help/exit parity不变；Attribution/Benefit-Lag/Regime/Confirmation/Watch
+      在写前重验 live source/config、timezone chronology 与 Review→Comparison→Smoothed/Baseline
+      exact lineage；reviewed evidence policy 治理 sample/metric/target floors；missing/non-finite
+      保持 null/insufficient；只有唯一 eligible recommended method 才登记 targets；validator
+      逐 byte 重建全部 JSON/Markdown/checklist/Reader Brief；README、研究执行链、runbook、system
+      flow、registry/catalog、requirements/task register、module/test manifests、compatibility/deprecation
+      inventories 和 focused/architecture/contract/full validation 完成；全部输出 `production_effect=none`，不改
+      policy/weights/portfolio/production/order/broker
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1441
+    row_sha256: 7eb01ceaca883e4793636b90dfd9b5c6228313bb223d9c34e1117d01284d6229
+    cell_count: 8
+    all_cells:
+    - TRADING-251_to_255_SMOOTHED_METHOD_EVIDENCE_DRILLDOWN_AND_FORWARD_CONFIRMATION
+    - ETF portfolio/dynamic v3 rescue smoothed method evidence drilldown and forward
+      confirmation
+    - P0
+    - BASELINE_DONE
+    - architecture coordinator 继续 G2.4；项目 owner / forward evidence workflow 负责证据成熟复核
+    - 详细拆解见 `docs/requirements/TRADING-251_to_255_Smoothed_Method_Evidence_Drilldown_and_Forward_Confirmation.md`；G2.4CO
+      正在把旧 baseline 迁为 canonical interface/domain 与五类 bounded v2 snapshots。当前 source-backed
+      fixture 仍无 eligible recommended method，故 confirmation 必须为 `candidate_method=null`、`targets=[]`、`INSUFFICIENT_EVIDENCE`；后续
+      blocker 为独立 forward/PIT samples、DQ repair、cost/holdout 和 owner review，不得把局部
+      favorable tradeoff 当 promotion approval
+    - 15 个 callback 迁出 legacy root且 CLI path/help/exit parity不变；Attribution/Benefit-Lag/Regime/Confirmation/Watch
+      在写前重验 live source/config、timezone chronology 与 Review→Comparison→Smoothed/Baseline
+      exact lineage；reviewed evidence policy 治理 sample/metric/target floors；missing/non-finite
+      保持 null/insufficient；只有唯一 eligible recommended method 才登记 targets；validator
+      逐 byte 重建全部 JSON/Markdown/checklist/Reader Brief；README、研究执行链、runbook、system
+      flow、registry/catalog、requirements/task register、module/test manifests、compatibility/deprecation
+      inventories 和 focused/architecture/contract/full validation 完成；全部输出 `production_effect=none`，不改
+      policy/weights/portfolio/production/order/broker
+    - '2026-07-14: G2.4CO contract freeze并进入 IN_PROGRESS；旧固定3d candidate、跨lineage、补0与浅validator语义失效。当前
+      hardened fixture：3d/5d common return observations=326，benefit=`MODERATE/MODERATE`、tradeoff=`FAVORABLE/FAVORABLE`；sideways
+      samples=283、status=`MIXED/IMPROVED`；recovery samples=7、lag=`LOW/LOW`；Review=`CONTINUE_OBSERVATION/LOW`、candidate=null，Confirmation=`INSUFFICIENT_EVIDENCE`且0
+      targets，Watch forward=`NOT_REGISTERED`。15 callbacks、v2 snapshots、live replay
+      与候选驱动 target 已实现，current-slice/CLI contract 120 tests、downstream compatibility
+      1 test PASS；architecture-fitness 276 与 contract-validation 203 已 PASS，canonical
+      baseline closeout 完成，整个 G2.4 继续且不触发 ARCH-005 handoff；后续仍需独立 forward/PIT/DQ/cost/holdout
+      与 owner review。'
+    raw_line: '|TRADING-251_to_255_SMOOTHED_METHOD_EVIDENCE_DRILLDOWN_AND_FORWARD_CONFIRMATION|ETF
+      portfolio/dynamic v3 rescue smoothed method evidence drilldown and forward confirmation|P0|BASELINE_DONE|architecture
+      coordinator 继续 G2.4；项目 owner / forward evidence workflow 负责证据成熟复核|详细拆解见 `docs/requirements/TRADING-251_to_255_Smoothed_Method_Evidence_Drilldown_and_Forward_Confirmation.md`；G2.4CO
+      正在把旧 baseline 迁为 canonical interface/domain 与五类 bounded v2 snapshots。当前 source-backed
+      fixture 仍无 eligible recommended method，故 confirmation 必须为 `candidate_method=null`、`targets=[]`、`INSUFFICIENT_EVIDENCE`；后续
+      blocker 为独立 forward/PIT samples、DQ repair、cost/holdout 和 owner review，不得把局部
+      favorable tradeoff 当 promotion approval|15 个 callback 迁出 legacy root且 CLI path/help/exit
+      parity不变；Attribution/Benefit-Lag/Regime/Confirmation/Watch 在写前重验 live source/config、timezone
+      chronology 与 Review→Comparison→Smoothed/Baseline exact lineage；reviewed evidence
+      policy 治理 sample/metric/target floors；missing/non-finite 保持 null/insufficient；只有唯一
+      eligible recommended method 才登记 targets；validator 逐 byte 重建全部 JSON/Markdown/checklist/Reader
+      Brief；README、研究执行链、runbook、system flow、registry/catalog、requirements/task register、module/test
+      manifests、compatibility/deprecation inventories 和 focused/architecture/contract/full
+      validation 完成；全部输出 `production_effect=none`，不改 policy/weights/portfolio/production/order/broker|2026-07-14:
+      G2.4CO contract freeze并进入 IN_PROGRESS；旧固定3d candidate、跨lineage、补0与浅validator语义失效。当前
+      hardened fixture：3d/5d common return observations=326，benefit=`MODERATE/MODERATE`、tradeoff=`FAVORABLE/FAVORABLE`；sideways
+      samples=283、status=`MIXED/IMPROVED`；recovery samples=7、lag=`LOW/LOW`；Review=`CONTINUE_OBSERVATION/LOW`、candidate=null，Confirmation=`INSUFFICIENT_EVIDENCE`且0
+      targets，Watch forward=`NOT_REGISTERED`。15 callbacks、v2 snapshots、live replay
+      与候选驱动 target 已实现，current-slice/CLI contract 120 tests、downstream compatibility
+      1 test PASS；architecture-fitness 276 与 contract-validation 203 已 PASS，canonical
+      baseline closeout 完成，整个 G2.4 继续且不触发 ARCH-005 handoff；后续仍需独立 forward/PIT/DQ/cost/holdout
+      与 owner review。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7eb01ceaca883e4793636b90
+  task_id: TRADING-251_to_255_SMOOTHED_METHOD_EVIDENCE_DRILLDOWN_AND_FORWARD_CONFIRMATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: architecture coordinator 继续 G2.4；项目 owner / forward evidence workflow
+      负责证据成熟复核
+    notes: '2026-07-14: G2.4CO contract freeze并进入 IN_PROGRESS；旧固定3d candidate、跨lineage、补0与浅validator语义失效。当前
+      hardened fixture：3d/5d common return observations=326，benefit=`MODERATE/MODERATE`、tradeoff=`FAVORABLE/FAVORABLE`；sideways
+      samples=283、status=`MIXED/IMPROVED`；recovery samples=7、lag=`LOW/LOW`；Review=`CONTINUE_OBSERVATION/LOW`、candidate=null，Confirmation=`INSUFFICIENT_EVIDENCE`且0
+      targets，Watch forward=`NOT_REGISTERED`。15 callbacks、v2 snapshots、live replay
+      与候选驱动 target 已实现，current-slice/CLI contract 120 tests、downstream compatibility
+      1 test PASS；architecture-fitness 276 与 contract-validation 203 已 PASS，canonical
+      baseline closeout 完成，整个 G2.4 继续且不触发 ARCH-005 handoff；后续仍需独立 forward/PIT/DQ/cost/holdout
+      与 owner review。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7eb01ceaca883e4793636b90dfd9b5c6228313bb223d9c34e1117d01284d6229
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-251_to_255_SMOOTHED_METHOD_EVIDENCE_DRILLDOWN_AND_FORWARD_CONFIRMATION
+  - ETF portfolio/dynamic v3 rescue smoothed method evidence drilldown and forward
+    confirmation
+  - P0
+  - BASELINE_DONE
+  - architecture coordinator 继续 G2.4；项目 owner / forward evidence workflow 负责证据成熟复核
+  - 详细拆解见 `docs/requirements/TRADING-251_to_255_Smoothed_Method_Evidence_Drilldown_and_Forward_Confirmation.md`；G2.4CO
+    正在把旧 baseline 迁为 canonical interface/domain 与五类 bounded v2 snapshots。当前 source-backed
+    fixture 仍无 eligible recommended method，故 confirmation 必须为 `candidate_method=null`、`targets=[]`、`INSUFFICIENT_EVIDENCE`；后续
+    blocker 为独立 forward/PIT samples、DQ repair、cost/holdout 和 owner review，不得把局部 favorable
+    tradeoff 当 promotion approval
+  - 15 个 callback 迁出 legacy root且 CLI path/help/exit parity不变；Attribution/Benefit-Lag/Regime/Confirmation/Watch
+    在写前重验 live source/config、timezone chronology 与 Review→Comparison→Smoothed/Baseline
+    exact lineage；reviewed evidence policy 治理 sample/metric/target floors；missing/non-finite
+    保持 null/insufficient；只有唯一 eligible recommended method 才登记 targets；validator 逐
+    byte 重建全部 JSON/Markdown/checklist/Reader Brief；README、研究执行链、runbook、system flow、registry/catalog、requirements/task
+    register、module/test manifests、compatibility/deprecation inventories 和 focused/architecture/contract/full
+    validation 完成；全部输出 `production_effect=none`，不改 policy/weights/portfolio/production/order/broker
+  - '2026-07-14: G2.4CO contract freeze并进入 IN_PROGRESS；旧固定3d candidate、跨lineage、补0与浅validator语义失效。当前
+    hardened fixture：3d/5d common return observations=326，benefit=`MODERATE/MODERATE`、tradeoff=`FAVORABLE/FAVORABLE`；sideways
+    samples=283、status=`MIXED/IMPROVED`；recovery samples=7、lag=`LOW/LOW`；Review=`CONTINUE_OBSERVATION/LOW`、candidate=null，Confirmation=`INSUFFICIENT_EVIDENCE`且0
+    targets，Watch forward=`NOT_REGISTERED`。15 callbacks、v2 snapshots、live replay 与候选驱动
+    target 已实现，current-slice/CLI contract 120 tests、downstream compatibility 1 test
+    PASS；architecture-fitness 276 与 contract-validation 203 已 PASS，canonical baseline
+    closeout 完成，整个 G2.4 继续且不触发 ARCH-005 handoff；后续仍需独立 forward/PIT/DQ/cost/holdout
+    与 owner review。'
+  docs_links:
+  - docs/requirements/TRADING-251_to_255_Smoothed_Method_Evidence_Drilldown_and_Forward_Confirmation.md
+  terminal: false
+  raw_row_sha256: 7eb01ceaca883e4793636b90dfd9b5c6228313bb223d9c34e1117d01284d6229
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 90a1530826e59e7b41c7b24716edabb67d1fafda4a12489b6d4b7f0e38716eab

@@ -1,0 +1,144 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2374_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_OWNER_REASSESSMENT_CHECKPOINT
+  title: null
+  domain: Strategy research / execution semantics / research-only observation owner
+    reassessment checkpoint
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 重新决策后续路线；系统不得自动继续 TRADING-2375
+  requirement_refs:
+  - docs/requirements/TRADING-2371_to_2374_Research_Only_Observation_Closure_Pack.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2371_to_2374_Research_Only_Observation_Closure_Pack.md`；承接
+    TRADING-2373 manual report dry-run `READY` 结论。本任务已记录 owner reassessment checkpoint，默认
+    `OWNER_REASSESSMENT_REQUIRED_BEFORE_CONTINUING_DYNAMIC_STRATEGY_OBSERVATION_LINE`，并停止自动线性推进；不自动创建
+    2375、不批准 paper-shadow、event append、outcome binding、scheduler、production 或 broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-research-only-observation-owner-reassessment`；生成
+      `owner_reassessment_result.json`、`owner_reassessment_checkpoint.json`、`no_side_effect_evidence.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_OWNER_REASSESSMENT_CHECKPOINT_READY`，owner_reassessment_checkpoint_ready=true，research_only_observation_line_closed_for_reassessment=true，continue_linear_observation_tasks=false，next_task_auto_generated=false，trading_2375_auto_created=false，data_quality_gate_executed=false，data_quality_gate_reason=`NOT_APPLICABLE_PRIOR_ARTIFACT_OWNER_REASSESSMENT_ONLY_NO_FRESH_MARKET_DATA`，final
+      route=`OWNER_REASSESSMENT_REQUIRED_BEFORE_TRADING_2375`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 113
+    row_sha256: 5a2d29caf3773b4f25eda1d76cf8707a959ca84b4ce9b2efb2744d4bcc375b6e
+    cell_count: 8
+    all_cells:
+    - TRADING-2374_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_OWNER_REASSESSMENT_CHECKPOINT
+    - Strategy research / execution semantics / research-only observation owner reassessment
+      checkpoint
+    - P0
+    - DONE
+    - 项目 owner 重新决策后续路线；系统不得自动继续 TRADING-2375
+    - 详见 `docs/requirements/TRADING-2371_to_2374_Research_Only_Observation_Closure_Pack.md`；承接
+      TRADING-2373 manual report dry-run `READY` 结论。本任务已记录 owner reassessment checkpoint，默认
+      `OWNER_REASSESSMENT_REQUIRED_BEFORE_CONTINUING_DYNAMIC_STRATEGY_OBSERVATION_LINE`，并停止自动线性推进；不自动创建
+      2375、不批准 paper-shadow、event append、outcome binding、scheduler、production 或 broker。
+    - 新增 `aits research strategies dynamic-strategy-research-only-observation-owner-reassessment`；生成
+      `owner_reassessment_result.json`、`owner_reassessment_checkpoint.json`、`no_side_effect_evidence.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_OWNER_REASSESSMENT_CHECKPOINT_READY`，owner_reassessment_checkpoint_ready=true，research_only_observation_line_closed_for_reassessment=true，continue_linear_observation_tasks=false，next_task_auto_generated=false，trading_2375_auto_created=false，data_quality_gate_executed=false，data_quality_gate_reason=`NOT_APPLICABLE_PRIOR_ARTIFACT_OWNER_REASSESSMENT_ONLY_NO_FRESH_MARKET_DATA`，final
+      route=`OWNER_REASSESSMENT_REQUIRED_BEFORE_TRADING_2375`。
+    - '2026-07-05: 根据 closure pack 新增为 READY；依赖 2373 完成后实施。2026-07-05: 实现完成并归档 DONE；验证通过
+      full Ruff、`compileall -q src tests`、focused+adjacent execution semantics parallel
+      pytest 6 passed、真实 CLI run、docs freshness PASS、documentation contract PASS、task-register
+      consistency run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T122729Z/test_runtime_summary.json`）和
+      `git diff --check`。本任务未重跑 `aits validate-data`，因为只读取 prior validated TRADING-2373
+      artifact，不读取 fresh cached market data、不运行新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。Scheduler、scheduled task、event append、historical event log mutation、outcome
+      binding、outcome store mutation、paper-shadow execution、paper trade、shadow position、production、daily
+      report、broker/order 全部保持 disabled / false / none。'
+    raw_line: '|TRADING-2374_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_OWNER_REASSESSMENT_CHECKPOINT|Strategy
+      research / execution semantics / research-only observation owner reassessment
+      checkpoint|P0|DONE|项目 owner 重新决策后续路线；系统不得自动继续 TRADING-2375|详见 `docs/requirements/TRADING-2371_to_2374_Research_Only_Observation_Closure_Pack.md`；承接
+      TRADING-2373 manual report dry-run `READY` 结论。本任务已记录 owner reassessment checkpoint，默认
+      `OWNER_REASSESSMENT_REQUIRED_BEFORE_CONTINUING_DYNAMIC_STRATEGY_OBSERVATION_LINE`，并停止自动线性推进；不自动创建
+      2375、不批准 paper-shadow、event append、outcome binding、scheduler、production 或 broker。|新增
+      `aits research strategies dynamic-strategy-research-only-observation-owner-reassessment`；生成
+      `owner_reassessment_result.json`、`owner_reassessment_checkpoint.json`、`no_side_effect_evidence.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_OWNER_REASSESSMENT_CHECKPOINT_READY`，owner_reassessment_checkpoint_ready=true，research_only_observation_line_closed_for_reassessment=true，continue_linear_observation_tasks=false，next_task_auto_generated=false，trading_2375_auto_created=false，data_quality_gate_executed=false，data_quality_gate_reason=`NOT_APPLICABLE_PRIOR_ARTIFACT_OWNER_REASSESSMENT_ONLY_NO_FRESH_MARKET_DATA`，final
+      route=`OWNER_REASSESSMENT_REQUIRED_BEFORE_TRADING_2375`。|2026-07-05: 根据 closure
+      pack 新增为 READY；依赖 2373 完成后实施。2026-07-05: 实现完成并归档 DONE；验证通过 full Ruff、`compileall
+      -q src tests`、focused+adjacent execution semantics parallel pytest 6 passed、真实
+      CLI run、docs freshness PASS、documentation contract PASS、task-register consistency
+      run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T122729Z/test_runtime_summary.json`）和
+      `git diff --check`。本任务未重跑 `aits validate-data`，因为只读取 prior validated TRADING-2373
+      artifact，不读取 fresh cached market data、不运行新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。Scheduler、scheduled task、event append、historical event log mutation、outcome
+      binding、outcome store mutation、paper-shadow execution、paper trade、shadow position、production、daily
+      report、broker/order 全部保持 disabled / false / none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5a2d29caf3773b4f25eda1d7
+  task_id: TRADING-2374_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_OWNER_REASSESSMENT_CHECKPOINT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 重新决策后续路线；系统不得自动继续 TRADING-2375
+    notes: '2026-07-05: 根据 closure pack 新增为 READY；依赖 2373 完成后实施。2026-07-05: 实现完成并归档
+      DONE；验证通过 full Ruff、`compileall -q src tests`、focused+adjacent execution semantics
+      parallel pytest 6 passed、真实 CLI run、docs freshness PASS、documentation contract
+      PASS、task-register consistency run/validate PASS、contract-validation 197 passed（runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260705T122729Z/test_runtime_summary.json`）和
+      `git diff --check`。本任务未重跑 `aits validate-data`，因为只读取 prior validated TRADING-2373
+      artifact，不读取 fresh cached market data、不运行新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。Scheduler、scheduled task、event append、historical event log mutation、outcome
+      binding、outcome store mutation、paper-shadow execution、paper trade、shadow position、production、daily
+      report、broker/order 全部保持 disabled / false / none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5a2d29caf3773b4f25eda1d76cf8707a959ca84b4ce9b2efb2744d4bcc375b6e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2374_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_OWNER_REASSESSMENT_CHECKPOINT
+  - Strategy research / execution semantics / research-only observation owner reassessment
+    checkpoint
+  - P0
+  - DONE
+  - 项目 owner 重新决策后续路线；系统不得自动继续 TRADING-2375
+  - 详见 `docs/requirements/TRADING-2371_to_2374_Research_Only_Observation_Closure_Pack.md`；承接
+    TRADING-2373 manual report dry-run `READY` 结论。本任务已记录 owner reassessment checkpoint，默认
+    `OWNER_REASSESSMENT_REQUIRED_BEFORE_CONTINUING_DYNAMIC_STRATEGY_OBSERVATION_LINE`，并停止自动线性推进；不自动创建
+    2375、不批准 paper-shadow、event append、outcome binding、scheduler、production 或 broker。
+  - 新增 `aits research strategies dynamic-strategy-research-only-observation-owner-reassessment`；生成
+    `owner_reassessment_result.json`、`owner_reassessment_checkpoint.json`、`no_side_effect_evidence.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_OWNER_REASSESSMENT_CHECKPOINT_READY`，owner_reassessment_checkpoint_ready=true，research_only_observation_line_closed_for_reassessment=true，continue_linear_observation_tasks=false，next_task_auto_generated=false，trading_2375_auto_created=false，data_quality_gate_executed=false，data_quality_gate_reason=`NOT_APPLICABLE_PRIOR_ARTIFACT_OWNER_REASSESSMENT_ONLY_NO_FRESH_MARKET_DATA`，final
+    route=`OWNER_REASSESSMENT_REQUIRED_BEFORE_TRADING_2375`。
+  - '2026-07-05: 根据 closure pack 新增为 READY；依赖 2373 完成后实施。2026-07-05: 实现完成并归档 DONE；验证通过
+    full Ruff、`compileall -q src tests`、focused+adjacent execution semantics parallel
+    pytest 6 passed、真实 CLI run、docs freshness PASS、documentation contract PASS、task-register
+    consistency run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T122729Z/test_runtime_summary.json`）和
+    `git diff --check`。本任务未重跑 `aits validate-data`，因为只读取 prior validated TRADING-2373
+    artifact，不读取 fresh cached market data、不运行新 backtest、不生成 technical features、scoring、daily
+    report 或交易建议。Scheduler、scheduled task、event append、historical event log mutation、outcome
+    binding、outcome store mutation、paper-shadow execution、paper trade、shadow position、production、daily
+    report、broker/order 全部保持 disabled / false / none。'
+  docs_links:
+  - docs/requirements/TRADING-2371_to_2374_Research_Only_Observation_Closure_Pack.md
+  terminal: true
+  raw_row_sha256: 5a2d29caf3773b4f25eda1d76cf8707a959ca84b4ce9b2efb2744d4bcc375b6e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2812ec27e113fc50e1333d43586b1c020171356eb7050ead2614685532fa183f

@@ -1,0 +1,93 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-722_BATCH_EXPERIMENT_PACK_REVIEW_BOARD
+  title: null
+  domain: Research ops / batch experiment pack and review board
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；生成批量实验包和 review
+    board
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`experiment-pack-build'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1392
+    row_sha256: 74c926026bdfe5bbe9e0464b4d20cbd40f2e5ce1fccff85db341a86e0c0fb19b
+    cell_count: 9
+    all_cells:
+    - TRADING-722_BATCH_EXPERIMENT_PACK_REVIEW_BOARD
+    - Research ops / batch experiment pack and review board
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 TRADING-703_to_725 总需求文档；生成批量实验包和 review board
+    - '`experiment-pack-build'
+    - review-board` 可运行；single_variant_manual_loop_reduced=true；batch_rollup_present=true；review_board_actions_present=true
+    - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。'
+    raw_line: '|TRADING-722_BATCH_EXPERIMENT_PACK_REVIEW_BOARD|Research ops / batch
+      experiment pack and review board|P1|VALIDATING|系统实现 + 项目 owner 后续复核|详见 TRADING-703_to_725
+      总需求文档；生成批量实验包和 review board|`experiment-pack-build|review-board` 可运行；single_variant_manual_loop_reduced=true；batch_rollup_present=true；review_board_actions_present=true|2026-06-21:
+      按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+      schema/config/protocol、research governance / acceleration / portfolio decision
+      / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+      / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+      production_effect=none，不修改 production / paper-shadow / official weights，不触发
+      broker/order。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-74c926026bdfe5bbe9e0464b
+  task_id: TRADING-722_BATCH_EXPERIMENT_PACK_REVIEW_BOARD
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: review-board` 可运行；single_variant_manual_loop_reduced=true；batch_rollup_present=true；review_board_actions_present=true
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:74c926026bdfe5bbe9e0464b4d20cbd40f2e5ce1fccff85db341a86e0c0fb19b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-722_BATCH_EXPERIMENT_PACK_REVIEW_BOARD
+  - Research ops / batch experiment pack and review board
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-703_to_725 总需求文档；生成批量实验包和 review board
+  - '`experiment-pack-build'
+  - review-board` 可运行；single_variant_manual_loop_reduced=true；batch_rollup_present=true；review_board_actions_present=true
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 74c926026bdfe5bbe9e0464b4d20cbd40f2e5ce1fccff85db341a86e0c0fb19b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f85a193e734107289541e5a5682a395c0ded5059ef88473f9fd059302532b9f3

@@ -1,0 +1,95 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-713_BENCHMARK_CONTROLS_FALSIFICATION_HARNESS
+  title: null
+  domain: Research acceleration / benchmark zoo, controls, falsification harness
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；复杂策略必须过 benchmark、controls
+    和 leakage trap
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`benchmark-run'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1383
+    row_sha256: 5a0a258822ae1033805a5b30f3136d7b96e1b1da569f25baef3332e45db08abc
+    cell_count: 10
+    all_cells:
+    - TRADING-713_BENCHMARK_CONTROLS_FALSIFICATION_HARNESS
+    - Research acceleration / benchmark zoo, controls, falsification harness
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 TRADING-703_to_725 总需求文档；复杂策略必须过 benchmark、controls 和 leakage trap
+    - '`benchmark-run'
+    - control-audit
+    - falsification-run` 可运行；future_leakage_control_blocked=true；random_control_promotion_count=0；negative_control_false_positive_count=0
+    - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。'
+    raw_line: '|TRADING-713_BENCHMARK_CONTROLS_FALSIFICATION_HARNESS|Research acceleration
+      / benchmark zoo, controls, falsification harness|P1|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 TRADING-703_to_725 总需求文档；复杂策略必须过 benchmark、controls 和 leakage trap|`benchmark-run|control-audit|falsification-run`
+      可运行；future_leakage_control_blocked=true；random_control_promotion_count=0；negative_control_false_positive_count=0|2026-06-21:
+      按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+      schema/config/protocol、research governance / acceleration / portfolio decision
+      / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+      / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+      production_effect=none，不修改 production / paper-shadow / official weights，不触发
+      broker/order。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5a0a258822ae1033805a5b30
+  task_id: TRADING-713_BENCHMARK_CONTROLS_FALSIFICATION_HARNESS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: control-audit
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5a0a258822ae1033805a5b30f3136d7b96e1b1da569f25baef3332e45db08abc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-713_BENCHMARK_CONTROLS_FALSIFICATION_HARNESS
+  - Research acceleration / benchmark zoo, controls, falsification harness
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-703_to_725 总需求文档；复杂策略必须过 benchmark、controls 和 leakage trap
+  - '`benchmark-run'
+  - control-audit
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 5a0a258822ae1033805a5b30f3136d7b96e1b1da569f25baef3332e45db08abc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: bd38cbc15486ed850709ee819550b72938156c6b30eb76634bcb2f9705efa091

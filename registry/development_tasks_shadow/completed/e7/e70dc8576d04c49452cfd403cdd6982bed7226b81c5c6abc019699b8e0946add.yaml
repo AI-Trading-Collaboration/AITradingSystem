@@ -1,0 +1,169 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-007
+  title: null
+  domain: 交易执行/continuous portfolio replay
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/continuous_portfolio_replay_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/continuous_portfolio_replay_2026-05-17.md`；`--mode
+    continuous-portfolio`、连续复用同一个 `PaperPortfolio`、每日 reconciliation、DAY order 到期、连续收益指标、报告语义、测试和系统流图已完成；后续真实
+    daily flow 可见性和持续观察由 TRADING-007A/TRADING-008 等后续任务承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`scripts/run_paper_trading_replay.py --mode continuous-portfolio` 必须输出
+      `replay_mode=continuous_portfolio`、`portfolio_carry_forward=true`、`production_effect=none`；start
+      date 初始化一个 `PaperPortfolio` 并跨日结转持仓和 cash；每日读取 `order_intent_candidates_YYYY-MM-DD.json`、转换可执行
+      candidate、经过 `PreTradeRiskChecker`、用同一个 portfolio 执行并生成带 `date`、`cash`、`positions`、`equity`、`exposure`
+      的 snapshot；DAY 未成交订单当日过期，不支持 GTC，GTC candidate 直接 rejected / limited；输出 equity_curve、daily_equity、daily_cash、daily_exposure、daily_realized_pnl、daily_unrealized_pnl、cumulative_realized_pnl、cumulative_unrealized_pnl、max_drawdown、exposure_peak、position_concentration_peak；任一天
+      reconciliation 非 PASS 时整体 status 至少 LIMITED；Markdown 明确 paper-only、不是实盘、不是真实
+      broker 成交、不读取 broker API key，并写清与 daily-independent 的区别；目标测试、全量 pytest 和两种 replay
+      smoke 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 300
+    row_sha256: 5b2e6d3e2f1b9aadce881100236273b67ad34204e1351ffff3da096108bc0533
+    cell_count: 8
+    all_cells:
+    - TRADING-007
+    - 交易执行/continuous portfolio replay
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/continuous_portfolio_replay_2026-05-17.md`；`--mode
+      continuous-portfolio`、连续复用同一个 `PaperPortfolio`、每日 reconciliation、DAY order 到期、连续收益指标、报告语义、测试和系统流图已完成；后续真实
+      daily flow 可见性和持续观察由 TRADING-007A/TRADING-008 等后续任务承接
+    - '`scripts/run_paper_trading_replay.py --mode continuous-portfolio` 必须输出 `replay_mode=continuous_portfolio`、`portfolio_carry_forward=true`、`production_effect=none`；start
+      date 初始化一个 `PaperPortfolio` 并跨日结转持仓和 cash；每日读取 `order_intent_candidates_YYYY-MM-DD.json`、转换可执行
+      candidate、经过 `PreTradeRiskChecker`、用同一个 portfolio 执行并生成带 `date`、`cash`、`positions`、`equity`、`exposure`
+      的 snapshot；DAY 未成交订单当日过期，不支持 GTC，GTC candidate 直接 rejected / limited；输出 equity_curve、daily_equity、daily_cash、daily_exposure、daily_realized_pnl、daily_unrealized_pnl、cumulative_realized_pnl、cumulative_unrealized_pnl、max_drawdown、exposure_peak、position_concentration_peak；任一天
+      reconciliation 非 PASS 时整体 status 至少 LIMITED；Markdown 明确 paper-only、不是实盘、不是真实
+      broker 成交、不读取 broker API key，并写清与 daily-independent 的区别；目标测试、全量 pytest 和两种 replay
+      smoke 通过'
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 明确要求推进 TRADING-007，在现有 paper trading
+      engine 上实现真正的 continuous-portfolio replay，同时保持 paper-only、`production_effect=none`
+      和真实 broker 隔离边界。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已实现 continuous replay
+      orchestration、同一 `PaperPortfolio` 跨日结转、每日 `PortfolioState` snapshot、DAY open
+      order 过期、GTC candidate rejected / limited、每日 reconciliation、连续收益指标和 Markdown
+      边界说明；验证通过 `python -m pytest tests/trading_engine`、`python -m pytest`、`python
+      -m ruff check scripts src tests`、`python scripts/run_paper_trading_replay.py
+      --start 2026-05-01 --end 2026-05-17 --mode daily-independent` 和 `python scripts/run_paper_trading_replay.py
+      --start 2026-05-01 --end 2026-05-17 --mode continuous-portfolio`。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：字段级复核确认 daily-independent smoke 输出 `replay_mode=daily_independent`、`portfolio_carry_forward=false`、`production_effect=none`
+      且无 continuous metrics，continuous-portfolio smoke 输出 `replay_mode=continuous_portfolio`、`portfolio_carry_forward=true`、`production_effect=none`、17
+      条 equity/cash/exposure 序列和连续指标；当前 smoke 无可执行订单，收益/exposure 为 0 是 fail-closed
+      样本状态，专项测试覆盖真实结转、DAY/GTC、PnL、max drawdown 和 paper-only 边界；验证通过 continuous replay
+      目标测试 4 passed、完整 `tests/trading_engine` 939 passed、全量 pytest 2270 passed、scoped
+      Black/Ruff 和两种 replay smoke。'
+    raw_line: '|TRADING-007|交易执行/continuous portfolio replay|P0|DONE|系统验证|详细拆解见 `docs/requirements/continuous_portfolio_replay_2026-05-17.md`；`--mode
+      continuous-portfolio`、连续复用同一个 `PaperPortfolio`、每日 reconciliation、DAY order 到期、连续收益指标、报告语义、测试和系统流图已完成；后续真实
+      daily flow 可见性和持续观察由 TRADING-007A/TRADING-008 等后续任务承接|`scripts/run_paper_trading_replay.py
+      --mode continuous-portfolio` 必须输出 `replay_mode=continuous_portfolio`、`portfolio_carry_forward=true`、`production_effect=none`；start
+      date 初始化一个 `PaperPortfolio` 并跨日结转持仓和 cash；每日读取 `order_intent_candidates_YYYY-MM-DD.json`、转换可执行
+      candidate、经过 `PreTradeRiskChecker`、用同一个 portfolio 执行并生成带 `date`、`cash`、`positions`、`equity`、`exposure`
+      的 snapshot；DAY 未成交订单当日过期，不支持 GTC，GTC candidate 直接 rejected / limited；输出 equity_curve、daily_equity、daily_cash、daily_exposure、daily_realized_pnl、daily_unrealized_pnl、cumulative_realized_pnl、cumulative_unrealized_pnl、max_drawdown、exposure_peak、position_concentration_peak；任一天
+      reconciliation 非 PASS 时整体 status 至少 LIMITED；Markdown 明确 paper-only、不是实盘、不是真实
+      broker 成交、不读取 broker API key，并写清与 daily-independent 的区别；目标测试、全量 pytest 和两种 replay
+      smoke 通过|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 明确要求推进 TRADING-007，在现有 paper
+      trading engine 上实现真正的 continuous-portfolio replay，同时保持 paper-only、`production_effect=none`
+      和真实 broker 隔离边界。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已实现 continuous replay
+      orchestration、同一 `PaperPortfolio` 跨日结转、每日 `PortfolioState` snapshot、DAY open
+      order 过期、GTC candidate rejected / limited、每日 reconciliation、连续收益指标和 Markdown
+      边界说明；验证通过 `python -m pytest tests/trading_engine`、`python -m pytest`、`python
+      -m ruff check scripts src tests`、`python scripts/run_paper_trading_replay.py
+      --start 2026-05-01 --end 2026-05-17 --mode daily-independent` 和 `python scripts/run_paper_trading_replay.py
+      --start 2026-05-01 --end 2026-05-17 --mode continuous-portfolio`。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：字段级复核确认 daily-independent smoke 输出 `replay_mode=daily_independent`、`portfolio_carry_forward=false`、`production_effect=none`
+      且无 continuous metrics，continuous-portfolio smoke 输出 `replay_mode=continuous_portfolio`、`portfolio_carry_forward=true`、`production_effect=none`、17
+      条 equity/cash/exposure 序列和连续指标；当前 smoke 无可执行订单，收益/exposure 为 0 是 fail-closed
+      样本状态，专项测试覆盖真实结转、DAY/GTC、PnL、max drawdown 和 paper-only 边界；验证通过 continuous replay
+      目标测试 4 passed、完整 `tests/trading_engine` 939 passed、全量 pytest 2270 passed、scoped
+      Black/Ruff 和两种 replay smoke。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5b2e6d3e2f1b9aadce881100
+  task_id: TRADING-007
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 明确要求推进 TRADING-007，在现有 paper trading
+      engine 上实现真正的 continuous-portfolio replay，同时保持 paper-only、`production_effect=none`
+      和真实 broker 隔离边界。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已实现 continuous replay
+      orchestration、同一 `PaperPortfolio` 跨日结转、每日 `PortfolioState` snapshot、DAY open
+      order 过期、GTC candidate rejected / limited、每日 reconciliation、连续收益指标和 Markdown
+      边界说明；验证通过 `python -m pytest tests/trading_engine`、`python -m pytest`、`python
+      -m ruff check scripts src tests`、`python scripts/run_paper_trading_replay.py
+      --start 2026-05-01 --end 2026-05-17 --mode daily-independent` 和 `python scripts/run_paper_trading_replay.py
+      --start 2026-05-01 --end 2026-05-17 --mode continuous-portfolio`。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：字段级复核确认 daily-independent smoke 输出 `replay_mode=daily_independent`、`portfolio_carry_forward=false`、`production_effect=none`
+      且无 continuous metrics，continuous-portfolio smoke 输出 `replay_mode=continuous_portfolio`、`portfolio_carry_forward=true`、`production_effect=none`、17
+      条 equity/cash/exposure 序列和连续指标；当前 smoke 无可执行订单，收益/exposure 为 0 是 fail-closed
+      样本状态，专项测试覆盖真实结转、DAY/GTC、PnL、max drawdown 和 paper-only 边界；验证通过 continuous replay
+      目标测试 4 passed、完整 `tests/trading_engine` 939 passed、全量 pytest 2270 passed、scoped
+      Black/Ruff 和两种 replay smoke。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5b2e6d3e2f1b9aadce881100236273b67ad34204e1351ffff3da096108bc0533
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-007
+  - 交易执行/continuous portfolio replay
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/continuous_portfolio_replay_2026-05-17.md`；`--mode continuous-portfolio`、连续复用同一个
+    `PaperPortfolio`、每日 reconciliation、DAY order 到期、连续收益指标、报告语义、测试和系统流图已完成；后续真实 daily
+    flow 可见性和持续观察由 TRADING-007A/TRADING-008 等后续任务承接
+  - '`scripts/run_paper_trading_replay.py --mode continuous-portfolio` 必须输出 `replay_mode=continuous_portfolio`、`portfolio_carry_forward=true`、`production_effect=none`；start
+    date 初始化一个 `PaperPortfolio` 并跨日结转持仓和 cash；每日读取 `order_intent_candidates_YYYY-MM-DD.json`、转换可执行
+    candidate、经过 `PreTradeRiskChecker`、用同一个 portfolio 执行并生成带 `date`、`cash`、`positions`、`equity`、`exposure`
+    的 snapshot；DAY 未成交订单当日过期，不支持 GTC，GTC candidate 直接 rejected / limited；输出 equity_curve、daily_equity、daily_cash、daily_exposure、daily_realized_pnl、daily_unrealized_pnl、cumulative_realized_pnl、cumulative_unrealized_pnl、max_drawdown、exposure_peak、position_concentration_peak；任一天
+    reconciliation 非 PASS 时整体 status 至少 LIMITED；Markdown 明确 paper-only、不是实盘、不是真实 broker
+    成交、不读取 broker API key，并写清与 daily-independent 的区别；目标测试、全量 pytest 和两种 replay smoke
+    通过'
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 明确要求推进 TRADING-007，在现有 paper trading engine
+    上实现真正的 continuous-portfolio replay，同时保持 paper-only、`production_effect=none` 和真实
+    broker 隔离边界。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已实现 continuous replay orchestration、同一
+    `PaperPortfolio` 跨日结转、每日 `PortfolioState` snapshot、DAY open order 过期、GTC candidate
+    rejected / limited、每日 reconciliation、连续收益指标和 Markdown 边界说明；验证通过 `python -m pytest
+    tests/trading_engine`、`python -m pytest`、`python -m ruff check scripts src tests`、`python
+    scripts/run_paper_trading_replay.py --start 2026-05-01 --end 2026-05-17 --mode
+    daily-independent` 和 `python scripts/run_paper_trading_replay.py --start 2026-05-01
+    --end 2026-05-17 --mode continuous-portfolio`。2026-06-09: 从 VALIDATING 改为 DONE，原因：字段级复核确认
+    daily-independent smoke 输出 `replay_mode=daily_independent`、`portfolio_carry_forward=false`、`production_effect=none`
+    且无 continuous metrics，continuous-portfolio smoke 输出 `replay_mode=continuous_portfolio`、`portfolio_carry_forward=true`、`production_effect=none`、17
+    条 equity/cash/exposure 序列和连续指标；当前 smoke 无可执行订单，收益/exposure 为 0 是 fail-closed 样本状态，专项测试覆盖真实结转、DAY/GTC、PnL、max
+    drawdown 和 paper-only 边界；验证通过 continuous replay 目标测试 4 passed、完整 `tests/trading_engine`
+    939 passed、全量 pytest 2270 passed、scoped Black/Ruff 和两种 replay smoke。'
+  docs_links:
+  - docs/requirements/continuous_portfolio_replay_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 5b2e6d3e2f1b9aadce881100236273b67ad34204e1351ffff3da096108bc0533
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4874a32451ce4ae3db89232b81c2cde140e18ef0157fec3c6494e463ac19aa0c

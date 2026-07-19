@@ -1,0 +1,148 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2372_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_AND_REPORT_PLAN
+  title: null
+  domain: Strategy research / execution semantics / research-only observation schema
+    and report plan
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现继续推进 TRADING-2373 manual report dry-run；项目 owner 后续复核 closure pack
+  requirement_refs:
+  - docs/requirements/TRADING-2371_to_2374_Research_Only_Observation_Closure_Pack.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2371_to_2374_Research_Only_Observation_Closure_Pack.md`；承接
+    TRADING-2371 owner decision `READY` 结论。本任务已定义 research-only observation log schema
+    和 manual report plan；不生成周期性日报、不写 event log、不 bind outcome、不启用 scheduler、paper-shadow、production
+    或 broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-research-only-observation-log-schema-plan`；生成
+      `log_schema_plan_result.json`、`observation_log_schema.json`、`observation_report_plan.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_AND_REPORT_PLAN_READY`，observation_log_schema_ready=true，observation_report_plan_ready=true，schema_only=true，report_plan_only=true，periodic_daily_report_generated=false，event_log_written=false，data_quality_gate_executed=false，data_quality_gate_reason=`NOT_APPLICABLE_PRIOR_ARTIFACT_SCHEMA_PLAN_ONLY_NO_FRESH_MARKET_DATA`，next
+      route=`TRADING-2373_Dynamic_Strategy_Research_Only_Observation_Report_Dry_Run`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 115
+    row_sha256: 92563c67ea59e8db79baa2ef39e81115f7f850b9e722348bc6c34a98a0af14ab
+    cell_count: 8
+    all_cells:
+    - TRADING-2372_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_AND_REPORT_PLAN
+    - Strategy research / execution semantics / research-only observation schema and
+      report plan
+    - P0
+    - DONE
+    - 系统实现继续推进 TRADING-2373 manual report dry-run；项目 owner 后续复核 closure pack
+    - 详见 `docs/requirements/TRADING-2371_to_2374_Research_Only_Observation_Closure_Pack.md`；承接
+      TRADING-2371 owner decision `READY` 结论。本任务已定义 research-only observation log
+      schema 和 manual report plan；不生成周期性日报、不写 event log、不 bind outcome、不启用 scheduler、paper-shadow、production
+      或 broker。
+    - 新增 `aits research strategies dynamic-strategy-research-only-observation-log-schema-plan`；生成
+      `log_schema_plan_result.json`、`observation_log_schema.json`、`observation_report_plan.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_AND_REPORT_PLAN_READY`，observation_log_schema_ready=true，observation_report_plan_ready=true，schema_only=true，report_plan_only=true，periodic_daily_report_generated=false，event_log_written=false，data_quality_gate_executed=false，data_quality_gate_reason=`NOT_APPLICABLE_PRIOR_ARTIFACT_SCHEMA_PLAN_ONLY_NO_FRESH_MARKET_DATA`，next
+      route=`TRADING-2373_Dynamic_Strategy_Research_Only_Observation_Report_Dry_Run`。
+    - '2026-07-05: 根据 closure pack 新增为 READY；依赖 2371 完成后实施。2026-07-05: 实现完成并归档 DONE；验证通过
+      full Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、adjacent
+      execution semantics parallel pytest 3 passed、真实 CLI run、docs freshness PASS、documentation
+      contract PASS、task-register consistency run/validate PASS、contract-validation
+      197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T120525Z/test_runtime_summary.json`）和
+      `git diff --check`。本任务未重跑 `aits validate-data`，因为只读取 prior validated TRADING-2371
+      artifact，不读取 fresh cached market data、不运行新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。Scheduler、scheduled task、event append、historical event log mutation、outcome
+      binding、outcome store mutation、paper-shadow execution、paper trade、shadow position、production、daily
+      report、broker/order 全部保持 disabled / false / none。'
+    raw_line: '|TRADING-2372_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_AND_REPORT_PLAN|Strategy
+      research / execution semantics / research-only observation schema and report
+      plan|P0|DONE|系统实现继续推进 TRADING-2373 manual report dry-run；项目 owner 后续复核 closure
+      pack|详见 `docs/requirements/TRADING-2371_to_2374_Research_Only_Observation_Closure_Pack.md`；承接
+      TRADING-2371 owner decision `READY` 结论。本任务已定义 research-only observation log
+      schema 和 manual report plan；不生成周期性日报、不写 event log、不 bind outcome、不启用 scheduler、paper-shadow、production
+      或 broker。|新增 `aits research strategies dynamic-strategy-research-only-observation-log-schema-plan`；生成
+      `log_schema_plan_result.json`、`observation_log_schema.json`、`observation_report_plan.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_AND_REPORT_PLAN_READY`，observation_log_schema_ready=true，observation_report_plan_ready=true，schema_only=true，report_plan_only=true，periodic_daily_report_generated=false，event_log_written=false，data_quality_gate_executed=false，data_quality_gate_reason=`NOT_APPLICABLE_PRIOR_ARTIFACT_SCHEMA_PLAN_ONLY_NO_FRESH_MARKET_DATA`，next
+      route=`TRADING-2373_Dynamic_Strategy_Research_Only_Observation_Report_Dry_Run`。|2026-07-05:
+      根据 closure pack 新增为 READY；依赖 2371 完成后实施。2026-07-05: 实现完成并归档 DONE；验证通过 full Ruff、`compileall
+      -q src tests`、focused parallel pytest 3 passed、adjacent execution semantics
+      parallel pytest 3 passed、真实 CLI run、docs freshness PASS、documentation contract
+      PASS、task-register consistency run/validate PASS、contract-validation 197 passed（runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260705T120525Z/test_runtime_summary.json`）和
+      `git diff --check`。本任务未重跑 `aits validate-data`，因为只读取 prior validated TRADING-2371
+      artifact，不读取 fresh cached market data、不运行新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。Scheduler、scheduled task、event append、historical event log mutation、outcome
+      binding、outcome store mutation、paper-shadow execution、paper trade、shadow position、production、daily
+      report、broker/order 全部保持 disabled / false / none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-92563c67ea59e8db79baa2ef
+  task_id: TRADING-2372_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_AND_REPORT_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现继续推进 TRADING-2373 manual report dry-run；项目 owner 后续复核 closure
+      pack
+    notes: '2026-07-05: 根据 closure pack 新增为 READY；依赖 2371 完成后实施。2026-07-05: 实现完成并归档
+      DONE；验证通过 full Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、adjacent
+      execution semantics parallel pytest 3 passed、真实 CLI run、docs freshness PASS、documentation
+      contract PASS、task-register consistency run/validate PASS、contract-validation
+      197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T120525Z/test_runtime_summary.json`）和
+      `git diff --check`。本任务未重跑 `aits validate-data`，因为只读取 prior validated TRADING-2371
+      artifact，不读取 fresh cached market data、不运行新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。Scheduler、scheduled task、event append、historical event log mutation、outcome
+      binding、outcome store mutation、paper-shadow execution、paper trade、shadow position、production、daily
+      report、broker/order 全部保持 disabled / false / none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:92563c67ea59e8db79baa2ef39e81115f7f850b9e722348bc6c34a98a0af14ab
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2372_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_AND_REPORT_PLAN
+  - Strategy research / execution semantics / research-only observation schema and
+    report plan
+  - P0
+  - DONE
+  - 系统实现继续推进 TRADING-2373 manual report dry-run；项目 owner 后续复核 closure pack
+  - 详见 `docs/requirements/TRADING-2371_to_2374_Research_Only_Observation_Closure_Pack.md`；承接
+    TRADING-2371 owner decision `READY` 结论。本任务已定义 research-only observation log schema
+    和 manual report plan；不生成周期性日报、不写 event log、不 bind outcome、不启用 scheduler、paper-shadow、production
+    或 broker。
+  - 新增 `aits research strategies dynamic-strategy-research-only-observation-log-schema-plan`；生成
+    `log_schema_plan_result.json`、`observation_log_schema.json`、`observation_report_plan.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_AND_REPORT_PLAN_READY`，observation_log_schema_ready=true，observation_report_plan_ready=true，schema_only=true，report_plan_only=true，periodic_daily_report_generated=false，event_log_written=false，data_quality_gate_executed=false，data_quality_gate_reason=`NOT_APPLICABLE_PRIOR_ARTIFACT_SCHEMA_PLAN_ONLY_NO_FRESH_MARKET_DATA`，next
+    route=`TRADING-2373_Dynamic_Strategy_Research_Only_Observation_Report_Dry_Run`。
+  - '2026-07-05: 根据 closure pack 新增为 READY；依赖 2371 完成后实施。2026-07-05: 实现完成并归档 DONE；验证通过
+    full Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、adjacent
+    execution semantics parallel pytest 3 passed、真实 CLI run、docs freshness PASS、documentation
+    contract PASS、task-register consistency run/validate PASS、contract-validation
+    197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T120525Z/test_runtime_summary.json`）和
+    `git diff --check`。本任务未重跑 `aits validate-data`，因为只读取 prior validated TRADING-2371
+    artifact，不读取 fresh cached market data、不运行新 backtest、不生成 technical features、scoring、daily
+    report 或交易建议。Scheduler、scheduled task、event append、historical event log mutation、outcome
+    binding、outcome store mutation、paper-shadow execution、paper trade、shadow position、production、daily
+    report、broker/order 全部保持 disabled / false / none。'
+  docs_links:
+  - docs/requirements/TRADING-2371_to_2374_Research_Only_Observation_Closure_Pack.md
+  terminal: true
+  raw_row_sha256: 92563c67ea59e8db79baa2ef39e81115f7f850b9e722348bc6c34a98a0af14ab
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: bbecf847e1b48c2caf03ac7321ee42a5900660ebf24d74f21b444a54a485fcea

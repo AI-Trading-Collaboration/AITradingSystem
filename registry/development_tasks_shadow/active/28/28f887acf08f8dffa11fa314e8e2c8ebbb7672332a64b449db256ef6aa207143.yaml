@@ -1,0 +1,126 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1821_to_1840_DEFENSIVE_PRESERVATION_LANE_RESEARCH
+  title: null
+  domain: Research trends / defensive preservation lane
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md`；承接
+    TRADING-1806～1820 lane separation policy，下一步应先实现 defensive preservation lane scope、defensive-only
+    label taxonomy、action-value policy、PIT feature audit、low-complexity defensive
+    models、defensive actual-path probes 和 2022 slice；add-risk / high-confidence risk-on
+    / TQQQ-related signals 必须禁用
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 defensive lane scope/policy、label taxonomy、defensive action-value policy、feature
+      matrix/PIT audit、model review、actual-path matrix、2022 slice review 和 closeout；必须证明
+      defensive probes 不回归、drawdown 不恶化、false risk-off cost 下降或明确无改进；promotion/paper-shadow/production/broker
+      继续 blocked/false/false/none
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1254
+    row_sha256: 4b325b013a3d9718158799cc80f492938a14b319571332abab7ed0913a434805
+    cell_count: 8
+    all_cells:
+    - TRADING-1821_to_1840_DEFENSIVE_PRESERVATION_LANE_RESEARCH
+    - Research trends / defensive preservation lane
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md`；承接
+      TRADING-1806～1820 lane separation policy，下一步应先实现 defensive preservation lane
+      scope、defensive-only label taxonomy、action-value policy、PIT feature audit、low-complexity
+      defensive models、defensive actual-path probes 和 2022 slice；add-risk / high-confidence
+      risk-on / TQQQ-related signals 必须禁用
+    - 新增 defensive lane scope/policy、label taxonomy、defensive action-value policy、feature
+      matrix/PIT audit、model review、actual-path matrix、2022 slice review 和 closeout；必须证明
+      defensive probes 不回归、drawdown 不恶化、false risk-off cost 下降或明确无改进；promotion/paper-shadow/production/broker
+      继续 blocked/false/false/none
+    - '2026-06-28: 从 owner 附件后续阶段登记为 READY；Phase 2 是后续实现的第一优先级，不得被 gated integration
+      跳过。2026-06-28: 进入 IN_PROGRESS，开始实现 defensive-only lane artifacts；本批不允许 add-risk、risk-on、TQQQ
+      或 gated integration。2026-06-28: 实现完成并转入 VALIDATING；真实 final status=`DEFENSIVE_LANE_NO_MATERIAL_IMPROVEMENT`，defensive
+      probes no-regression 且 drawdown 不恶化，但 `false_risk_off_cost_declined=false`；gated
+      integration、owner review、promotion、paper-shadow、production、broker 继续 blocked/false/false/none。'
+    raw_line: '|TRADING-1821_to_1840_DEFENSIVE_PRESERVATION_LANE_RESEARCH|Research
+      trends / defensive preservation lane|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md`；承接
+      TRADING-1806～1820 lane separation policy，下一步应先实现 defensive preservation lane
+      scope、defensive-only label taxonomy、action-value policy、PIT feature audit、low-complexity
+      defensive models、defensive actual-path probes 和 2022 slice；add-risk / high-confidence
+      risk-on / TQQQ-related signals 必须禁用|新增 defensive lane scope/policy、label taxonomy、defensive
+      action-value policy、feature matrix/PIT audit、model review、actual-path matrix、2022
+      slice review 和 closeout；必须证明 defensive probes 不回归、drawdown 不恶化、false risk-off
+      cost 下降或明确无改进；promotion/paper-shadow/production/broker 继续 blocked/false/false/none|2026-06-28:
+      从 owner 附件后续阶段登记为 READY；Phase 2 是后续实现的第一优先级，不得被 gated integration 跳过。2026-06-28:
+      进入 IN_PROGRESS，开始实现 defensive-only lane artifacts；本批不允许 add-risk、risk-on、TQQQ
+      或 gated integration。2026-06-28: 实现完成并转入 VALIDATING；真实 final status=`DEFENSIVE_LANE_NO_MATERIAL_IMPROVEMENT`，defensive
+      probes no-regression 且 drawdown 不恶化，但 `false_risk_off_cost_declined=false`；gated
+      integration、owner review、promotion、paper-shadow、production、broker 继续 blocked/false/false/none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4b325b013a3d9718158799cc
+  task_id: TRADING-1821_to_1840_DEFENSIVE_PRESERVATION_LANE_RESEARCH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 从 owner 附件后续阶段登记为 READY；Phase 2 是后续实现的第一优先级，不得被 gated integration
+      跳过。2026-06-28: 进入 IN_PROGRESS，开始实现 defensive-only lane artifacts；本批不允许 add-risk、risk-on、TQQQ
+      或 gated integration。2026-06-28: 实现完成并转入 VALIDATING；真实 final status=`DEFENSIVE_LANE_NO_MATERIAL_IMPROVEMENT`，defensive
+      probes no-regression 且 drawdown 不恶化，但 `false_risk_off_cost_declined=false`；gated
+      integration、owner review、promotion、paper-shadow、production、broker 继续 blocked/false/false/none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4b325b013a3d9718158799cc80f492938a14b319571332abab7ed0913a434805
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1821_to_1840_DEFENSIVE_PRESERVATION_LANE_RESEARCH
+  - Research trends / defensive preservation lane
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md`；承接
+    TRADING-1806～1820 lane separation policy，下一步应先实现 defensive preservation lane scope、defensive-only
+    label taxonomy、action-value policy、PIT feature audit、low-complexity defensive
+    models、defensive actual-path probes 和 2022 slice；add-risk / high-confidence risk-on
+    / TQQQ-related signals 必须禁用
+  - 新增 defensive lane scope/policy、label taxonomy、defensive action-value policy、feature
+    matrix/PIT audit、model review、actual-path matrix、2022 slice review 和 closeout；必须证明
+    defensive probes 不回归、drawdown 不恶化、false risk-off cost 下降或明确无改进；promotion/paper-shadow/production/broker
+    继续 blocked/false/false/none
+  - '2026-06-28: 从 owner 附件后续阶段登记为 READY；Phase 2 是后续实现的第一优先级，不得被 gated integration
+    跳过。2026-06-28: 进入 IN_PROGRESS，开始实现 defensive-only lane artifacts；本批不允许 add-risk、risk-on、TQQQ
+    或 gated integration。2026-06-28: 实现完成并转入 VALIDATING；真实 final status=`DEFENSIVE_LANE_NO_MATERIAL_IMPROVEMENT`，defensive
+    probes no-regression 且 drawdown 不恶化，但 `false_risk_off_cost_declined=false`；gated
+    integration、owner review、promotion、paper-shadow、production、broker 继续 blocked/false/false/none。'
+  docs_links:
+  - docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md
+  terminal: false
+  raw_row_sha256: 4b325b013a3d9718158799cc80f492938a14b319571332abab7ed0913a434805
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0f1c46df88b1b5f8a80f49340f94e0108cb4a562f15a66762fc54f2f400ecec6

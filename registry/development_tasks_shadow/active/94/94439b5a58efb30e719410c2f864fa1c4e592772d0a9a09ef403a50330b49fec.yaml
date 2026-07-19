@@ -1,0 +1,175 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-018A
+  title: null
+  domain: 交易执行/Daily Weight Adjustment Scheduler Dry Run
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/operations/operations_runbook.md
+  - docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md`；scheduler
+    dry-run wrapper、Windows Task Scheduler runbook、系统流图、产物目录、测试和当前复验证据已完成；真实 3～7 个美股交易日
+    scheduler/manual-run 稳定性观察已拆分到 active `TRADING-018A1`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_daily_weight_adjustment_scheduler_dry_run.py` 和 `outputs/reports/daily_weight_adjustment_scheduler_dry_run_YYYY-MM-DD.json/md`；dry-run
+      固定 `mode=dry_run`、`production_effect=none`、`manual_review_only=true`；封装同日 `run_daily_weight_adjustment.py`
+      summary pipeline；输出 as_of、started_at、completed_at、duration_seconds、dry_run_status、invoked_command、generated_artifacts、missing_artifacts、pipeline_status、candidate_count、promotion_gate_status、ready_for_manual_review_count、blocked_count、warnings
+      和 safety_checks；安全检查证明未写 production profile、未写 approved profile、未调用 IBKR、PaperBroker、replay、controlled
+      fill、lifecycle 或 comparison，且不自动 git commit/push；Windows Task Scheduler runbook
+      说明本地手动运行、每日调度、日志、artifact 检查、GitHub repo 不自动 commit、失败处理、连续 3～7 天观察和 GitHub
+      Actions schedule 暂不建议启用；数据质量 gate、目标 pytest、dashboard pytest、`tests/trading_engine`、docs
+      freshness、scoped Ruff/Black、scoped safety scan 和 GitHub Actions CI 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1147
+    row_sha256: cdd8929de522660408e4f25eb180a412f8d5669d77dd132f738cc2c49e5d40ff
+    cell_count: 8
+    all_cells:
+    - TRADING-018A
+    - 交易执行/Daily Weight Adjustment Scheduler Dry Run
+    - P0
+    - BASELINE_DONE
+    - 系统验证 + 项目 owner
+    - 详细拆解见 `docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md`；scheduler
+      dry-run wrapper、Windows Task Scheduler runbook、系统流图、产物目录、测试和当前复验证据已完成；真实 3～7
+      个美股交易日 scheduler/manual-run 稳定性观察已拆分到 active `TRADING-018A1`
+    - 新增 `scripts/run_daily_weight_adjustment_scheduler_dry_run.py` 和 `outputs/reports/daily_weight_adjustment_scheduler_dry_run_YYYY-MM-DD.json/md`；dry-run
+      固定 `mode=dry_run`、`production_effect=none`、`manual_review_only=true`；封装同日 `run_daily_weight_adjustment.py`
+      summary pipeline；输出 as_of、started_at、completed_at、duration_seconds、dry_run_status、invoked_command、generated_artifacts、missing_artifacts、pipeline_status、candidate_count、promotion_gate_status、ready_for_manual_review_count、blocked_count、warnings
+      和 safety_checks；安全检查证明未写 production profile、未写 approved profile、未调用 IBKR、PaperBroker、replay、controlled
+      fill、lifecycle 或 comparison，且不自动 git commit/push；Windows Task Scheduler runbook
+      说明本地手动运行、每日调度、日志、artifact 检查、GitHub repo 不自动 commit、失败处理、连续 3～7 天观察和 GitHub
+      Actions schedule 暂不建议启用；数据质量 gate、目标 pytest、dashboard pytest、`tests/trading_engine`、docs
+      freshness、scoped Ruff/Black、scoped safety scan 和 GitHub Actions CI 通过
+    - '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-015/016/017/018 完成后推进每日权重调节
+      scheduler dry-run；本阶段只封装和验证调度安全性，不允许自动应用权重、写 approved profile、触发 broker、paper
+      order、replay 或后续 lifecycle/comparison。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      scheduler dry-run 脚本、JSON/Markdown report schema、显式 safety checks、Windows Task
+      Scheduler runbook、GitHub Actions schedule 暂不启用说明、系统流图/产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、`tests/test_daily_task_dashboard.py`、全量
+      pytest、ruff 和 black check。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮先读取
+      `docs/operations/operations_runbook.md` 确认 scheduler validation 边界；`aits validate-data`
+      为 `PASS_WITH_WARNINGS` / 错误数 0；默认缺输入 smoke 输出 `LIMITED`、`pipeline_status=LIMITED`、candidate_count
+      0、`promotion_gate_status=INSUFFICIENT_DATA`、`production_effect=none`、`manual_review_only=true`，并列出
+      6 个缺失上游 JSON/Markdown artifacts；字段级复核确认 safety checks 不写 production/approved
+      profile、不调用 IBKR/PaperBroker/replay/controlled fill/lifecycle/comparison、不自动
+      git commit/push；目标 + dashboard pytest 28 passed，`tests/trading_engine` 939 passed，scoped
+      safety scan 未命中敏感输出或 forbidden production promotion 语义，当前代码基线 GitHub Actions
+      run `27180822758` success；当前无真实 3～7 天多日 scheduler/manual-run 样本，剩余运行期观察已登记为
+      `TRADING-018A1`。'
+    raw_line: '|TRADING-018A|交易执行/Daily Weight Adjustment Scheduler Dry Run|P0|BASELINE_DONE|系统验证
+      + 项目 owner|详细拆解见 `docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md`；scheduler
+      dry-run wrapper、Windows Task Scheduler runbook、系统流图、产物目录、测试和当前复验证据已完成；真实 3～7
+      个美股交易日 scheduler/manual-run 稳定性观察已拆分到 active `TRADING-018A1`|新增 `scripts/run_daily_weight_adjustment_scheduler_dry_run.py`
+      和 `outputs/reports/daily_weight_adjustment_scheduler_dry_run_YYYY-MM-DD.json/md`；dry-run
+      固定 `mode=dry_run`、`production_effect=none`、`manual_review_only=true`；封装同日 `run_daily_weight_adjustment.py`
+      summary pipeline；输出 as_of、started_at、completed_at、duration_seconds、dry_run_status、invoked_command、generated_artifacts、missing_artifacts、pipeline_status、candidate_count、promotion_gate_status、ready_for_manual_review_count、blocked_count、warnings
+      和 safety_checks；安全检查证明未写 production profile、未写 approved profile、未调用 IBKR、PaperBroker、replay、controlled
+      fill、lifecycle 或 comparison，且不自动 git commit/push；Windows Task Scheduler runbook
+      说明本地手动运行、每日调度、日志、artifact 检查、GitHub repo 不自动 commit、失败处理、连续 3～7 天观察和 GitHub
+      Actions schedule 暂不建议启用；数据质量 gate、目标 pytest、dashboard pytest、`tests/trading_engine`、docs
+      freshness、scoped Ruff/Black、scoped safety scan 和 GitHub Actions CI 通过|2026-05-18:
+      新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-015/016/017/018 完成后推进每日权重调节 scheduler
+      dry-run；本阶段只封装和验证调度安全性，不允许自动应用权重、写 approved profile、触发 broker、paper order、replay
+      或后续 lifecycle/comparison。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 scheduler
+      dry-run 脚本、JSON/Markdown report schema、显式 safety checks、Windows Task Scheduler
+      runbook、GitHub Actions schedule 暂不启用说明、系统流图/产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、`tests/test_daily_task_dashboard.py`、全量
+      pytest、ruff 和 black check。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮先读取
+      `docs/operations/operations_runbook.md` 确认 scheduler validation 边界；`aits validate-data`
+      为 `PASS_WITH_WARNINGS` / 错误数 0；默认缺输入 smoke 输出 `LIMITED`、`pipeline_status=LIMITED`、candidate_count
+      0、`promotion_gate_status=INSUFFICIENT_DATA`、`production_effect=none`、`manual_review_only=true`，并列出
+      6 个缺失上游 JSON/Markdown artifacts；字段级复核确认 safety checks 不写 production/approved
+      profile、不调用 IBKR/PaperBroker/replay/controlled fill/lifecycle/comparison、不自动
+      git commit/push；目标 + dashboard pytest 28 passed，`tests/trading_engine` 939 passed，scoped
+      safety scan 未命中敏感输出或 forbidden production promotion 语义，当前代码基线 GitHub Actions
+      run `27180822758` success；当前无真实 3～7 天多日 scheduler/manual-run 样本，剩余运行期观察已登记为
+      `TRADING-018A1`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-cdd8929de522660408e4f25e
+  task_id: TRADING-018A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-015/016/017/018 完成后推进每日权重调节
+      scheduler dry-run；本阶段只封装和验证调度安全性，不允许自动应用权重、写 approved profile、触发 broker、paper
+      order、replay 或后续 lifecycle/comparison。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      scheduler dry-run 脚本、JSON/Markdown report schema、显式 safety checks、Windows Task
+      Scheduler runbook、GitHub Actions schedule 暂不启用说明、系统流图/产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、`tests/test_daily_task_dashboard.py`、全量
+      pytest、ruff 和 black check。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮先读取
+      `docs/operations/operations_runbook.md` 确认 scheduler validation 边界；`aits validate-data`
+      为 `PASS_WITH_WARNINGS` / 错误数 0；默认缺输入 smoke 输出 `LIMITED`、`pipeline_status=LIMITED`、candidate_count
+      0、`promotion_gate_status=INSUFFICIENT_DATA`、`production_effect=none`、`manual_review_only=true`，并列出
+      6 个缺失上游 JSON/Markdown artifacts；字段级复核确认 safety checks 不写 production/approved
+      profile、不调用 IBKR/PaperBroker/replay/controlled fill/lifecycle/comparison、不自动
+      git commit/push；目标 + dashboard pytest 28 passed，`tests/trading_engine` 939 passed，scoped
+      safety scan 未命中敏感输出或 forbidden production promotion 语义，当前代码基线 GitHub Actions
+      run `27180822758` success；当前无真实 3～7 天多日 scheduler/manual-run 样本，剩余运行期观察已登记为
+      `TRADING-018A1`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:cdd8929de522660408e4f25eb180a412f8d5669d77dd132f738cc2c49e5d40ff
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-018A
+  - 交易执行/Daily Weight Adjustment Scheduler Dry Run
+  - P0
+  - BASELINE_DONE
+  - 系统验证 + 项目 owner
+  - 详细拆解见 `docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md`；scheduler
+    dry-run wrapper、Windows Task Scheduler runbook、系统流图、产物目录、测试和当前复验证据已完成；真实 3～7 个美股交易日
+    scheduler/manual-run 稳定性观察已拆分到 active `TRADING-018A1`
+  - 新增 `scripts/run_daily_weight_adjustment_scheduler_dry_run.py` 和 `outputs/reports/daily_weight_adjustment_scheduler_dry_run_YYYY-MM-DD.json/md`；dry-run
+    固定 `mode=dry_run`、`production_effect=none`、`manual_review_only=true`；封装同日 `run_daily_weight_adjustment.py`
+    summary pipeline；输出 as_of、started_at、completed_at、duration_seconds、dry_run_status、invoked_command、generated_artifacts、missing_artifacts、pipeline_status、candidate_count、promotion_gate_status、ready_for_manual_review_count、blocked_count、warnings
+    和 safety_checks；安全检查证明未写 production profile、未写 approved profile、未调用 IBKR、PaperBroker、replay、controlled
+    fill、lifecycle 或 comparison，且不自动 git commit/push；Windows Task Scheduler runbook
+    说明本地手动运行、每日调度、日志、artifact 检查、GitHub repo 不自动 commit、失败处理、连续 3～7 天观察和 GitHub Actions
+    schedule 暂不建议启用；数据质量 gate、目标 pytest、dashboard pytest、`tests/trading_engine`、docs
+    freshness、scoped Ruff/Black、scoped safety scan 和 GitHub Actions CI 通过
+  - '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-015/016/017/018 完成后推进每日权重调节
+    scheduler dry-run；本阶段只封装和验证调度安全性，不允许自动应用权重、写 approved profile、触发 broker、paper
+    order、replay 或后续 lifecycle/comparison。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+    scheduler dry-run 脚本、JSON/Markdown report schema、显式 safety checks、Windows Task
+    Scheduler runbook、GitHub Actions schedule 暂不启用说明、系统流图/产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、`tests/test_daily_task_dashboard.py`、全量
+    pytest、ruff 和 black check。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮先读取 `docs/operations/operations_runbook.md`
+    确认 scheduler validation 边界；`aits validate-data` 为 `PASS_WITH_WARNINGS` / 错误数 0；默认缺输入
+    smoke 输出 `LIMITED`、`pipeline_status=LIMITED`、candidate_count 0、`promotion_gate_status=INSUFFICIENT_DATA`、`production_effect=none`、`manual_review_only=true`，并列出
+    6 个缺失上游 JSON/Markdown artifacts；字段级复核确认 safety checks 不写 production/approved profile、不调用
+    IBKR/PaperBroker/replay/controlled fill/lifecycle/comparison、不自动 git commit/push；目标
+    + dashboard pytest 28 passed，`tests/trading_engine` 939 passed，scoped safety scan
+    未命中敏感输出或 forbidden production promotion 语义，当前代码基线 GitHub Actions run `27180822758`
+    success；当前无真实 3～7 天多日 scheduler/manual-run 样本，剩余运行期观察已登记为 `TRADING-018A1`。'
+  docs_links:
+  - docs/operations/operations_runbook.md
+  - docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md
+  terminal: false
+  raw_row_sha256: cdd8929de522660408e4f25eb180a412f8d5669d77dd132f738cc2c49e5d40ff
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ab9dc57dbccfcbbc2ac6325db07a1213937f2f6d2c7308e5b6cee686ef158031

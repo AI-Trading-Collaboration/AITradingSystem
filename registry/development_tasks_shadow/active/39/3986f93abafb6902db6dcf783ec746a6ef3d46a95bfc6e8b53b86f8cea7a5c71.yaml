@@ -1,0 +1,166 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-071
+  title: null
+  domain: ETF allocation dual-track weight calibration/ETF Allocation Dual-Track Weight
+    Calibration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner + forward observation 后续样本
+  requirement_refs:
+  - docs/requirements/TRADING-071_ETF_Allocation_Dual_Track_Weight_Calibration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-071_ETF_Allocation_Dual_Track_Weight_Calibration.md`；TRADING-071A-K
+    基础设施已完成并复验通过；当前已基于 latest historical search 登记 5 个 candidate-only weight set、3
+    个 forward observation enrollment，真实 evidence 仍为 `needs_more_forward_data`，后续需要
+    forward observation 样本积累和 owner manual review，不能自动 baseline replacement 或 promotion
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf weight-calibration validate-config/search/register-candidates/enroll-forward/aggregate-evidence/overfit-diagnostics/generate-proposals/report/validate`
+      可运行；`validate-data --as-of 2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；latest
+      historical search `etf-weight-search-20260603T144553Z` 可读；candidate registry
+      `candidate_count=5`；forward enrollment `enrollment_count=3` 且 `shared_shadow_registry_mutated=false`、`production_weights_mutated=false`；backtest-forward
+      evidence `evidence_record_count=3`、`status=needs_more_forward_data`；overfit
+      diagnostics `candidate_count=5`、risk_counts medium=2/high=3；proposal-only output
+      `proposal_count=5` 且全部 `defer_until_more_forward_data`；report `status=needs_more_forward_data`、`candidate_count=5`、`proposal_count=5`；Reader
+      Brief 显示 `availability=AVAILABLE`、`candidate_count=5`、`forward_evidence_status=needs_more_forward_data`、`overfit_risk=high`；所有输出固定
+      `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；专项
+      pytest 111 passed'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1159
+    row_sha256: 64ae8bdb758dc0611d7419b990a6b35dcefd6e877bda4642dba252e1766c5821
+    cell_count: 8
+    all_cells:
+    - TRADING-071
+    - ETF allocation dual-track weight calibration/ETF Allocation Dual-Track Weight
+      Calibration
+    - P0
+    - BASELINE_DONE
+    - 项目 owner + forward observation 后续样本
+    - 详细拆解见 `docs/requirements/TRADING-071_ETF_Allocation_Dual_Track_Weight_Calibration.md`；TRADING-071A-K
+      基础设施已完成并复验通过；当前已基于 latest historical search 登记 5 个 candidate-only weight set、3
+      个 forward observation enrollment，真实 evidence 仍为 `needs_more_forward_data`，后续需要
+      forward observation 样本积累和 owner manual review，不能自动 baseline replacement 或 promotion
+    - '`aits etf weight-calibration validate-config/search/register-candidates/enroll-forward/aggregate-evidence/overfit-diagnostics/generate-proposals/report/validate`
+      可运行；`validate-data --as-of 2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；latest
+      historical search `etf-weight-search-20260603T144553Z` 可读；candidate registry
+      `candidate_count=5`；forward enrollment `enrollment_count=3` 且 `shared_shadow_registry_mutated=false`、`production_weights_mutated=false`；backtest-forward
+      evidence `evidence_record_count=3`、`status=needs_more_forward_data`；overfit
+      diagnostics `candidate_count=5`、risk_counts medium=2/high=3；proposal-only output
+      `proposal_count=5` 且全部 `defer_until_more_forward_data`；report `status=needs_more_forward_data`、`candidate_count=5`、`proposal_count=5`；Reader
+      Brief 显示 `availability=AVAILABLE`、`candidate_count=5`、`forward_evidence_status=needs_more_forward_data`、`overfit_risk=high`；所有输出固定
+      `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；专项
+      pytest 111 passed'
+    - '2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-071 计划，要求用 bounded historical
+      backtest search 生成 ETF candidate initial weights，同时用 real forward evidence 防止
+      overfitting；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-02:
+      TRADING-071A-K 完成并转入 VALIDATING，新增 bounded config、historical search、walk-forward/regime
+      robustness、candidate registry、forward enrollment、backtest-forward aggregator、overfit
+      diagnostics、proposal generator、dual-track report、Reader Brief 和 validation gate；所有输出不应用
+      weights、不修改 baseline config、不触发 broker action。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：复验并推进
+      candidate-only 运行态后，双轨基础设施、只读可见性和 fail-closed gate 完成；真实 forward evidence 仍不足，5
+      个 proposal 全部 defer，后续由 forward observation 和 owner manual review 承接。'
+    raw_line: '|TRADING-071|ETF allocation dual-track weight calibration/ETF Allocation
+      Dual-Track Weight Calibration|P0|BASELINE_DONE|项目 owner + forward observation
+      后续样本|详细拆解见 `docs/requirements/TRADING-071_ETF_Allocation_Dual_Track_Weight_Calibration.md`；TRADING-071A-K
+      基础设施已完成并复验通过；当前已基于 latest historical search 登记 5 个 candidate-only weight set、3
+      个 forward observation enrollment，真实 evidence 仍为 `needs_more_forward_data`，后续需要
+      forward observation 样本积累和 owner manual review，不能自动 baseline replacement 或 promotion|`aits
+      etf weight-calibration validate-config/search/register-candidates/enroll-forward/aggregate-evidence/overfit-diagnostics/generate-proposals/report/validate`
+      可运行；`validate-data --as-of 2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；latest
+      historical search `etf-weight-search-20260603T144553Z` 可读；candidate registry
+      `candidate_count=5`；forward enrollment `enrollment_count=3` 且 `shared_shadow_registry_mutated=false`、`production_weights_mutated=false`；backtest-forward
+      evidence `evidence_record_count=3`、`status=needs_more_forward_data`；overfit
+      diagnostics `candidate_count=5`、risk_counts medium=2/high=3；proposal-only output
+      `proposal_count=5` 且全部 `defer_until_more_forward_data`；report `status=needs_more_forward_data`、`candidate_count=5`、`proposal_count=5`；Reader
+      Brief 显示 `availability=AVAILABLE`、`candidate_count=5`、`forward_evidence_status=needs_more_forward_data`、`overfit_risk=high`；所有输出固定
+      `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；专项
+      pytest 111 passed|2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-071 计划，要求用
+      bounded historical backtest search 生成 ETF candidate initial weights，同时用 real
+      forward evidence 防止 overfitting；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-02:
+      TRADING-071A-K 完成并转入 VALIDATING，新增 bounded config、historical search、walk-forward/regime
+      robustness、candidate registry、forward enrollment、backtest-forward aggregator、overfit
+      diagnostics、proposal generator、dual-track report、Reader Brief 和 validation gate；所有输出不应用
+      weights、不修改 baseline config、不触发 broker action。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：复验并推进
+      candidate-only 运行态后，双轨基础设施、只读可见性和 fail-closed gate 完成；真实 forward evidence 仍不足，5
+      个 proposal 全部 defer，后续由 forward observation 和 owner manual review 承接。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-64ae8bdb758dc0611d7419b9
+  task_id: TRADING-071
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner + forward observation 后续样本
+    notes: '2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-071 计划，要求用 bounded historical
+      backtest search 生成 ETF candidate initial weights，同时用 real forward evidence 防止
+      overfitting；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-02:
+      TRADING-071A-K 完成并转入 VALIDATING，新增 bounded config、historical search、walk-forward/regime
+      robustness、candidate registry、forward enrollment、backtest-forward aggregator、overfit
+      diagnostics、proposal generator、dual-track report、Reader Brief 和 validation gate；所有输出不应用
+      weights、不修改 baseline config、不触发 broker action。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：复验并推进
+      candidate-only 运行态后，双轨基础设施、只读可见性和 fail-closed gate 完成；真实 forward evidence 仍不足，5
+      个 proposal 全部 defer，后续由 forward observation 和 owner manual review 承接。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:64ae8bdb758dc0611d7419b990a6b35dcefd6e877bda4642dba252e1766c5821
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-071
+  - ETF allocation dual-track weight calibration/ETF Allocation Dual-Track Weight
+    Calibration
+  - P0
+  - BASELINE_DONE
+  - 项目 owner + forward observation 后续样本
+  - 详细拆解见 `docs/requirements/TRADING-071_ETF_Allocation_Dual_Track_Weight_Calibration.md`；TRADING-071A-K
+    基础设施已完成并复验通过；当前已基于 latest historical search 登记 5 个 candidate-only weight set、3
+    个 forward observation enrollment，真实 evidence 仍为 `needs_more_forward_data`，后续需要
+    forward observation 样本积累和 owner manual review，不能自动 baseline replacement 或 promotion
+  - '`aits etf weight-calibration validate-config/search/register-candidates/enroll-forward/aggregate-evidence/overfit-diagnostics/generate-proposals/report/validate`
+    可运行；`validate-data --as-of 2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；latest
+    historical search `etf-weight-search-20260603T144553Z` 可读；candidate registry `candidate_count=5`；forward
+    enrollment `enrollment_count=3` 且 `shared_shadow_registry_mutated=false`、`production_weights_mutated=false`；backtest-forward
+    evidence `evidence_record_count=3`、`status=needs_more_forward_data`；overfit diagnostics
+    `candidate_count=5`、risk_counts medium=2/high=3；proposal-only output `proposal_count=5`
+    且全部 `defer_until_more_forward_data`；report `status=needs_more_forward_data`、`candidate_count=5`、`proposal_count=5`；Reader
+    Brief 显示 `availability=AVAILABLE`、`candidate_count=5`、`forward_evidence_status=needs_more_forward_data`、`overfit_risk=high`；所有输出固定
+    `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；专项
+    pytest 111 passed'
+  - '2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-071 计划，要求用 bounded historical
+    backtest search 生成 ETF candidate initial weights，同时用 real forward evidence 防止
+    overfitting；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-02: TRADING-071A-K
+    完成并转入 VALIDATING，新增 bounded config、historical search、walk-forward/regime robustness、candidate
+    registry、forward enrollment、backtest-forward aggregator、overfit diagnostics、proposal
+    generator、dual-track report、Reader Brief 和 validation gate；所有输出不应用 weights、不修改
+    baseline config、不触发 broker action。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：复验并推进
+    candidate-only 运行态后，双轨基础设施、只读可见性和 fail-closed gate 完成；真实 forward evidence 仍不足，5
+    个 proposal 全部 defer，后续由 forward observation 和 owner manual review 承接。'
+  docs_links:
+  - docs/requirements/TRADING-071_ETF_Allocation_Dual_Track_Weight_Calibration.md
+  terminal: false
+  raw_row_sha256: 64ae8bdb758dc0611d7419b990a6b35dcefd6e877bda4642dba252e1766c5821
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: edd141cbe7d15607d5f7e7f5dfc6fee39b0817be13d395aafc387e0e4bffa252

@@ -1,0 +1,134 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2427_GROWTH_TILT_ENGINE_MANUAL_REVIEW_PACKET_DRY_RUN
+  title: null
+  domain: Strategy research / growth tilt manual review packet dry-run
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2428 observe-only signal artifact boundary
+  requirement_refs:
+  - docs/requirements/TRADING-2427_Growth_Tilt_Engine_Manual_Review_Packet_Dry_Run.md
+  - docs/tasks/completed/TRADING-2427_Growth_Tilt_Engine_Manual_Review_Packet_Dry_Run.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2427_Growth_Tilt_Engine_Manual_Review_Packet_Dry_Run.md`；承接
+    TRADING-2426 paper-shadow schedule dry-run READY，仅读取 prior artifacts/docs/registry/catalog/system
+    flow；本任务只验证 manual review packet 能否在无副作用状态下生成，不生成真实交易建议。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 manual review packet dry-run builder、`aits research strategies growth-tilt-engine-manual-review-packet-dry-run`；输出
+      `manual_review_packet_dry_run_result.json`、`manual_review_packet.json`、`manual_review_checklist.json`、`no_advice_boundary_summary.json`、`reviewer_handoff_manifest.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_MANUAL_REVIEW_PACKET_DRY_RUN_READY`，`pit_gate_ready=true`，`contract_ready=true`，`paper_shadow_schedule_dry_run_ready=true`，`paper_shadow_dry_run_wiring_ready=true`，enablement_plan_ready=true，manual_review_packet_dry_run_ready=true，manual_review_packet_gap_count=0，manual_review_packet_ready=true，manual_review_checklist_ready=true，no_advice_boundary_ready=true，reviewer_handoff_manifest_ready=true，manual_review_required=true，automatic_execution_allowed=false，trading_advice_generated=false，actionable_allocation_generated=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、paper_shadow_daily_job_run=false、scheduler_enabled=false、scheduled_task_created=false、production_enabled=false、broker_enabled=false、broker_order_generated=false、portfolio_weight_mutated=false、daily_report_run=false、backtest_run=false、scoring_run=false、fresh_market_data_read=false，next
+      route=`TRADING-2428_Growth_Tilt_Engine_Observe_Only_Signal_Artifact_Boundary`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 57
+    row_sha256: 198d33d2bc5d9f0cec314be346e807d170700b704387c2ef98b6d120be1cece8
+    cell_count: 8
+    all_cells:
+    - TRADING-2427_GROWTH_TILT_ENGINE_MANUAL_REVIEW_PACKET_DRY_RUN
+    - Strategy research / growth tilt manual review packet dry-run
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2428 observe-only signal artifact boundary
+    - 详见 `docs/requirements/TRADING-2427_Growth_Tilt_Engine_Manual_Review_Packet_Dry_Run.md`；承接
+      TRADING-2426 paper-shadow schedule dry-run READY，仅读取 prior artifacts/docs/registry/catalog/system
+      flow；本任务只验证 manual review packet 能否在无副作用状态下生成，不生成真实交易建议。
+    - 新增 manual review packet dry-run builder、`aits research strategies growth-tilt-engine-manual-review-packet-dry-run`；输出
+      `manual_review_packet_dry_run_result.json`、`manual_review_packet.json`、`manual_review_checklist.json`、`no_advice_boundary_summary.json`、`reviewer_handoff_manifest.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_MANUAL_REVIEW_PACKET_DRY_RUN_READY`，`pit_gate_ready=true`，`contract_ready=true`，`paper_shadow_schedule_dry_run_ready=true`，`paper_shadow_dry_run_wiring_ready=true`，enablement_plan_ready=true，manual_review_packet_dry_run_ready=true，manual_review_packet_gap_count=0，manual_review_packet_ready=true，manual_review_checklist_ready=true，no_advice_boundary_ready=true，reviewer_handoff_manifest_ready=true，manual_review_required=true，automatic_execution_allowed=false，trading_advice_generated=false，actionable_allocation_generated=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、paper_shadow_daily_job_run=false、scheduler_enabled=false、scheduled_task_created=false、production_enabled=false、broker_enabled=false、broker_order_generated=false、portfolio_weight_mutated=false、daily_report_run=false、backtest_run=false、scoring_run=false、fresh_market_data_read=false，next
+      route=`TRADING-2428_Growth_Tilt_Engine_Observe_Only_Signal_Artifact_Boundary`。
+    - '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest、真实 CLI、docs freshness、documentation
+      contract、task-register consistency run/validate、contract-validation 和 `git diff
+      --check`；本任务未运行 `aits validate-data`，因为只读取 prior validated TRADING-2424 / 2425
+      / 2426 artifacts/docs/registry/catalog/system flow，不读取 fresh cached market data、不运行新
+      backtest、不生成 feature/signal/scoring/daily report 或交易建议。candidate search、observation、paper-shadow
+      runtime/schedule、scheduler、event append、outcome binding、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2427_Growth_Tilt_Engine_Manual_Review_Packet_Dry_Run.md`。'
+    raw_line: '|TRADING-2427_GROWTH_TILT_ENGINE_MANUAL_REVIEW_PACKET_DRY_RUN|Strategy
+      research / growth tilt manual review packet dry-run|P0|DONE|项目 owner 后续复核 TRADING-2428
+      observe-only signal artifact boundary|详见 `docs/requirements/TRADING-2427_Growth_Tilt_Engine_Manual_Review_Packet_Dry_Run.md`；承接
+      TRADING-2426 paper-shadow schedule dry-run READY，仅读取 prior artifacts/docs/registry/catalog/system
+      flow；本任务只验证 manual review packet 能否在无副作用状态下生成，不生成真实交易建议。|新增 manual review packet
+      dry-run builder、`aits research strategies growth-tilt-engine-manual-review-packet-dry-run`；输出
+      `manual_review_packet_dry_run_result.json`、`manual_review_packet.json`、`manual_review_checklist.json`、`no_advice_boundary_summary.json`、`reviewer_handoff_manifest.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_MANUAL_REVIEW_PACKET_DRY_RUN_READY`，`pit_gate_ready=true`，`contract_ready=true`，`paper_shadow_schedule_dry_run_ready=true`，`paper_shadow_dry_run_wiring_ready=true`，enablement_plan_ready=true，manual_review_packet_dry_run_ready=true，manual_review_packet_gap_count=0，manual_review_packet_ready=true，manual_review_checklist_ready=true，no_advice_boundary_ready=true，reviewer_handoff_manifest_ready=true，manual_review_required=true，automatic_execution_allowed=false，trading_advice_generated=false，actionable_allocation_generated=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、paper_shadow_daily_job_run=false、scheduler_enabled=false、scheduled_task_created=false、production_enabled=false、broker_enabled=false、broker_order_generated=false、portfolio_weight_mutated=false、daily_report_run=false、backtest_run=false、scoring_run=false、fresh_market_data_read=false，next
+      route=`TRADING-2428_Growth_Tilt_Engine_Observe_Only_Signal_Artifact_Boundary`。|2026-07-09:
+      根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest、真实 CLI、docs freshness、documentation contract、task-register consistency
+      run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits validate-data`，因为只读取
+      prior validated TRADING-2424 / 2425 / 2426 artifacts/docs/registry/catalog/system
+      flow，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+      report 或交易建议。candidate search、observation、paper-shadow runtime/schedule、scheduler、event
+      append、outcome binding、production、broker/order、daily report 全部保持 disabled /
+      false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2427_Growth_Tilt_Engine_Manual_Review_Packet_Dry_Run.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-198d33d2bc5d9f0cec314be3
+  task_id: TRADING-2427_GROWTH_TILT_ENGINE_MANUAL_REVIEW_PACKET_DRY_RUN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2428 observe-only signal artifact boundary
+    notes: '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest、真实 CLI、docs freshness、documentation
+      contract、task-register consistency run/validate、contract-validation 和 `git diff
+      --check`；本任务未运行 `aits validate-data`，因为只读取 prior validated TRADING-2424 / 2425
+      / 2426 artifacts/docs/registry/catalog/system flow，不读取 fresh cached market data、不运行新
+      backtest、不生成 feature/signal/scoring/daily report 或交易建议。candidate search、observation、paper-shadow
+      runtime/schedule、scheduler、event append、outcome binding、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2427_Growth_Tilt_Engine_Manual_Review_Packet_Dry_Run.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:198d33d2bc5d9f0cec314be346e807d170700b704387c2ef98b6d120be1cece8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2427_GROWTH_TILT_ENGINE_MANUAL_REVIEW_PACKET_DRY_RUN
+  - Strategy research / growth tilt manual review packet dry-run
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2428 observe-only signal artifact boundary
+  - 详见 `docs/requirements/TRADING-2427_Growth_Tilt_Engine_Manual_Review_Packet_Dry_Run.md`；承接
+    TRADING-2426 paper-shadow schedule dry-run READY，仅读取 prior artifacts/docs/registry/catalog/system
+    flow；本任务只验证 manual review packet 能否在无副作用状态下生成，不生成真实交易建议。
+  - 新增 manual review packet dry-run builder、`aits research strategies growth-tilt-engine-manual-review-packet-dry-run`；输出
+    `manual_review_packet_dry_run_result.json`、`manual_review_packet.json`、`manual_review_checklist.json`、`no_advice_boundary_summary.json`、`reviewer_handoff_manifest.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_MANUAL_REVIEW_PACKET_DRY_RUN_READY`，`pit_gate_ready=true`，`contract_ready=true`，`paper_shadow_schedule_dry_run_ready=true`，`paper_shadow_dry_run_wiring_ready=true`，enablement_plan_ready=true，manual_review_packet_dry_run_ready=true，manual_review_packet_gap_count=0，manual_review_packet_ready=true，manual_review_checklist_ready=true，no_advice_boundary_ready=true，reviewer_handoff_manifest_ready=true，manual_review_required=true，automatic_execution_allowed=false，trading_advice_generated=false，actionable_allocation_generated=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、paper_shadow_daily_job_run=false、scheduler_enabled=false、scheduled_task_created=false、production_enabled=false、broker_enabled=false、broker_order_generated=false、portfolio_weight_mutated=false、daily_report_run=false、backtest_run=false、scoring_run=false、fresh_market_data_read=false，next
+    route=`TRADING-2428_Growth_Tilt_Engine_Observe_Only_Signal_Artifact_Boundary`。
+  - '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+    Ruff、compileall、focused parallel pytest、真实 CLI、docs freshness、documentation contract、task-register
+    consistency run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits
+    validate-data`，因为只读取 prior validated TRADING-2424 / 2425 / 2426 artifacts/docs/registry/catalog/system
+    flow，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+    report 或交易建议。candidate search、observation、paper-shadow runtime/schedule、scheduler、event
+    append、outcome binding、production、broker/order、daily report 全部保持 disabled / false
+    / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2427_Growth_Tilt_Engine_Manual_Review_Packet_Dry_Run.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2427_Growth_Tilt_Engine_Manual_Review_Packet_Dry_Run.md
+  - docs/tasks/completed/TRADING-2427_Growth_Tilt_Engine_Manual_Review_Packet_Dry_Run.md
+  terminal: true
+  raw_row_sha256: 198d33d2bc5d9f0cec314be346e807d170700b704387c2ef98b6d120be1cece8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ca314e19210ddb0b0928c7a397c8938a36d4b55e2d31596f5f35aaf1e80d4150

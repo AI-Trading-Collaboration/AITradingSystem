@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CATALYST-001
+  title: null
+  domain: 事件/报告
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段手工/审计 catalyst calendar schema、校验、未来
+    5/20/60 天分桶报告、`upcoming` 报告和查询入口；剩余缺口是真实事件数据源或 owner 手工维护流程、日报摘要接入和事件后复核队列联动
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 日报显示未来 5/20/60 天重要财报、指引、宏观、CapEx、芯片发布、监管、出口管制和行业会议等催化剂；重大事件前可触发 `pre_event_review`、禁止主动加仓或结论降级；事件后要求复核相关
+      thesis、risk event 或 valuation state；实现时同步更新 `docs/system_flow.md` 并补充日历和报告测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1118
+    row_sha256: 18dcf961f3419ef66eec23e091c019513c21f77fe3c31b87554c9eaa3c42ca1f
+    cell_count: 8
+    all_cells:
+    - CATALYST-001
+    - 事件/报告
+    - P1
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已完成第一阶段手工/审计 catalyst calendar schema、校验、未来 5/20/60 天分桶报告、`upcoming` 报告和查询入口；剩余缺口是真实事件数据源或
+      owner 手工维护流程、日报摘要接入和事件后复核队列联动
+    - 日报显示未来 5/20/60 天重要财报、指引、宏观、CapEx、芯片发布、监管、出口管制和行业会议等催化剂；重大事件前可触发 `pre_event_review`、禁止主动加仓或结论降级；事件后要求复核相关
+      thesis、risk event 或 valuation state；实现时同步更新 `docs/system_flow.md` 并补充日历和报告测试
+    - '自动化数据源需 owner 确认；第一版可从人工复核日历开始，但必须记录来源和采集时间。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段手工/审计
+      catalyst calendar schema、校验、未来 5/20/60 天分桶报告和查询入口。2026-05-04: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：新增 `config/catalyst_calendar.yaml`、`catalyst_calendar` 模块、`aits
+      catalysts validate`、`aits catalysts upcoming`、`aits catalysts lookup`、中文日历报告、系统流图和测试；默认日历不编造真实事件日期，当前只提供审计结构和空基线。'
+    raw_line: '|CATALYST-001|事件/报告|P1|BASELINE_DONE|系统实现 + 项目 owner|已完成第一阶段手工/审计 catalyst
+      calendar schema、校验、未来 5/20/60 天分桶报告、`upcoming` 报告和查询入口；剩余缺口是真实事件数据源或 owner 手工维护流程、日报摘要接入和事件后复核队列联动|日报显示未来
+      5/20/60 天重要财报、指引、宏观、CapEx、芯片发布、监管、出口管制和行业会议等催化剂；重大事件前可触发 `pre_event_review`、禁止主动加仓或结论降级；事件后要求复核相关
+      thesis、risk event 或 valuation state；实现时同步更新 `docs/system_flow.md` 并补充日历和报告测试|自动化数据源需
+      owner 确认；第一版可从人工复核日历开始，但必须记录来源和采集时间。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段手工/审计
+      catalyst calendar schema、校验、未来 5/20/60 天分桶报告和查询入口。2026-05-04: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：新增 `config/catalyst_calendar.yaml`、`catalyst_calendar` 模块、`aits
+      catalysts validate`、`aits catalysts upcoming`、`aits catalysts lookup`、中文日历报告、系统流图和测试；默认日历不编造真实事件日期，当前只提供审计结构和空基线。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-18dcf961f3419ef66eec23e0
+  task_id: CATALYST-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner
+    notes: '自动化数据源需 owner 确认；第一版可从人工复核日历开始，但必须记录来源和采集时间。2026-05-04: 从 PROPOSED 改为
+      IN_PROGRESS，原因：开始实现第一阶段手工/审计 catalyst calendar schema、校验、未来 5/20/60 天分桶报告和查询入口。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `config/catalyst_calendar.yaml`、`catalyst_calendar`
+      模块、`aits catalysts validate`、`aits catalysts upcoming`、`aits catalysts lookup`、中文日历报告、系统流图和测试；默认日历不编造真实事件日期，当前只提供审计结构和空基线。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:18dcf961f3419ef66eec23e091c019513c21f77fe3c31b87554c9eaa3c42ca1f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CATALYST-001
+  - 事件/报告
+  - P1
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已完成第一阶段手工/审计 catalyst calendar schema、校验、未来 5/20/60 天分桶报告、`upcoming` 报告和查询入口；剩余缺口是真实事件数据源或
+    owner 手工维护流程、日报摘要接入和事件后复核队列联动
+  - 日报显示未来 5/20/60 天重要财报、指引、宏观、CapEx、芯片发布、监管、出口管制和行业会议等催化剂；重大事件前可触发 `pre_event_review`、禁止主动加仓或结论降级；事件后要求复核相关
+    thesis、risk event 或 valuation state；实现时同步更新 `docs/system_flow.md` 并补充日历和报告测试
+  - '自动化数据源需 owner 确认；第一版可从人工复核日历开始，但必须记录来源和采集时间。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段手工/审计
+    catalyst calendar schema、校验、未来 5/20/60 天分桶报告和查询入口。2026-05-04: 从 IN_PROGRESS 改为
+    BASELINE_DONE，原因：新增 `config/catalyst_calendar.yaml`、`catalyst_calendar` 模块、`aits
+    catalysts validate`、`aits catalysts upcoming`、`aits catalysts lookup`、中文日历报告、系统流图和测试；默认日历不编造真实事件日期，当前只提供审计结构和空基线。'
+  docs_links:
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: 18dcf961f3419ef66eec23e091c019513c21f77fe3c31b87554c9eaa3c42ca1f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 39a299605e32d36a41c4ce805fd5fa9fad787a019befb3c3b568c4a320fd9803

@@ -1,0 +1,104 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2086_to_2245_POST_2085_REABLATION_PROXY_REOPEN_ROADMAP
+  title: null
+  domain: free feature re-ablation / participation proxy / first-layer reopen gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner
+  requirement_refs:
+  - docs/requirements/TRADING-2086_to_2245_Post_2085_Reablation_Proxy_Reopen_Roadmap.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 见 `docs/requirements/TRADING-2086_to_2245_Post_2085_Reablation_Proxy_Reopen_Roadmap.md`；实现和验证已完成，等待
+    owner 复核 proxy 诊断增量、Norgate due diligence 是否继续、以及 reopen gate denied 结论
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: re-ablation dataset/reviews/final matrix、participation proxy feature/PIT/channel
+      validation/final matrix、reopen gate policy/evidence/decision/owner packet/final
+      matrix、conditional v4 guardrails、minimal forward diagnostic disabled CLI、report
+      registry、artifact catalog、system flow 和 focused/contract validation 完成
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1537
+    row_sha256: e992b2a26966f63c1e1a59343b4d5bcd15c3d082c07c7abdde5358e46eabd5c6
+    cell_count: 8
+    all_cells:
+    - TRADING-2086_to_2245_POST_2085_REABLATION_PROXY_REOPEN_ROADMAP
+    - free feature re-ablation / participation proxy / first-layer reopen gate
+    - P1
+    - VALIDATING
+    - 项目 owner
+    - 见 `docs/requirements/TRADING-2086_to_2245_Post_2085_Reablation_Proxy_Reopen_Roadmap.md`；实现和验证已完成，等待
+      owner 复核 proxy 诊断增量、Norgate due diligence 是否继续、以及 reopen gate denied 结论
+    - re-ablation dataset/reviews/final matrix、participation proxy feature/PIT/channel
+      validation/final matrix、reopen gate policy/evidence/decision/owner packet/final
+      matrix、conditional v4 guardrails、minimal forward diagnostic disabled CLI、report
+      registry、artifact catalog、system flow 和 focused/contract validation 完成
+    - '2026-06-28: 真实 run gate denied；v4 fail-closed；minimal forward diagnostic disabled；promotion/paper-shadow/production/broker
+      全程 disabled'
+    raw_line: '|TRADING-2086_to_2245_POST_2085_REABLATION_PROXY_REOPEN_ROADMAP|free
+      feature re-ablation / participation proxy / first-layer reopen gate|P1|VALIDATING|项目
+      owner|见 `docs/requirements/TRADING-2086_to_2245_Post_2085_Reablation_Proxy_Reopen_Roadmap.md`；实现和验证已完成，等待
+      owner 复核 proxy 诊断增量、Norgate due diligence 是否继续、以及 reopen gate denied 结论|re-ablation
+      dataset/reviews/final matrix、participation proxy feature/PIT/channel validation/final
+      matrix、reopen gate policy/evidence/decision/owner packet/final matrix、conditional
+      v4 guardrails、minimal forward diagnostic disabled CLI、report registry、artifact
+      catalog、system flow 和 focused/contract validation 完成|2026-06-28: 真实 run gate
+      denied；v4 fail-closed；minimal forward diagnostic disabled；promotion/paper-shadow/production/broker
+      全程 disabled|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e992b2a26966f63c1e1a5934
+  task_id: TRADING-2086_to_2245_POST_2085_REABLATION_PROXY_REOPEN_ROADMAP
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 项目 owner
+    notes: '2026-06-28: 真实 run gate denied；v4 fail-closed；minimal forward diagnostic
+      disabled；promotion/paper-shadow/production/broker 全程 disabled'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e992b2a26966f63c1e1a59343b4d5bcd15c3d082c07c7abdde5358e46eabd5c6
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2086_to_2245_POST_2085_REABLATION_PROXY_REOPEN_ROADMAP
+  - free feature re-ablation / participation proxy / first-layer reopen gate
+  - P1
+  - VALIDATING
+  - 项目 owner
+  - 见 `docs/requirements/TRADING-2086_to_2245_Post_2085_Reablation_Proxy_Reopen_Roadmap.md`；实现和验证已完成，等待
+    owner 复核 proxy 诊断增量、Norgate due diligence 是否继续、以及 reopen gate denied 结论
+  - re-ablation dataset/reviews/final matrix、participation proxy feature/PIT/channel
+    validation/final matrix、reopen gate policy/evidence/decision/owner packet/final
+    matrix、conditional v4 guardrails、minimal forward diagnostic disabled CLI、report
+    registry、artifact catalog、system flow 和 focused/contract validation 完成
+  - '2026-06-28: 真实 run gate denied；v4 fail-closed；minimal forward diagnostic disabled；promotion/paper-shadow/production/broker
+    全程 disabled'
+  docs_links:
+  - docs/requirements/TRADING-2086_to_2245_Post_2085_Reablation_Proxy_Reopen_Roadmap.md
+  terminal: false
+  raw_row_sha256: e992b2a26966f63c1e1a59343b4d5bcd15c3d082c07c7abdde5358e46eabd5c6
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 80081d6f529e664f601744249448e1151493cd58cb74f7a6e1e4ed0f41704e51

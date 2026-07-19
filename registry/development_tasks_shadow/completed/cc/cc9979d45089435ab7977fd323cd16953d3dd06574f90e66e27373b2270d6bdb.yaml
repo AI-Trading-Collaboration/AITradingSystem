@@ -1,0 +1,112 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438M1E_GROWTH_TILT_REPLACEMENT_CANDIDATE_CONTRACT
+  title: null
+  domain: Strategy research / replacement-A approval gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner仅在新任务中、所有 prerequisites proven后提供 second approval和 policy provenance
+  requirement_refs:
+  - docs/requirements/TRADING-2438M1D1A_Growth_Tilt_Owner_Decision_Resolution_And_Candidate_A_Reframing_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2438M1D1A_Growth_Tilt_Owner_Decision_Resolution_And_Candidate_A_Reframing_Plan.md`；evidence-only
+    gate固定 `capped_recovery_permission_overlay` 十项 prerequisites。当前任一 prerequisite
+    false即 `KEEP_REDEFINED_BLOCKED`，不生成 APPROVE runtime spec/executor binding、policy
+    metadata或 M2 invocation。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 真实 strict status=`GROWTH_TILT_REPLACEMENT_CANDIDATE_CONTRACT_READY_BLOCKED`、prerequisites=`2
+      PASS/8 BLOCKED`、approved=0、M2 eligible=0；source/strict errors=0，policy metadata保持空，不调用
+      replay/runtime metrics或生产路径。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 26
+    row_sha256: 257f17a48983955efd6db7c5c460d1e4e7cd97dfb39d85263d5ac68510c654fb
+    cell_count: 8
+    all_cells:
+    - TRADING-2438M1E_GROWTH_TILT_REPLACEMENT_CANDIDATE_CONTRACT
+    - Strategy research / replacement-A approval gate
+    - P0
+    - DONE
+    - 项目 owner仅在新任务中、所有 prerequisites proven后提供 second approval和 policy provenance
+    - 详见 `docs/requirements/TRADING-2438M1D1A_Growth_Tilt_Owner_Decision_Resolution_And_Candidate_A_Reframing_Plan.md`；evidence-only
+      gate固定 `capped_recovery_permission_overlay` 十项 prerequisites。当前任一 prerequisite
+      false即 `KEEP_REDEFINED_BLOCKED`，不生成 APPROVE runtime spec/executor binding、policy
+      metadata或 M2 invocation。
+    - 真实 strict status=`GROWTH_TILT_REPLACEMENT_CANDIDATE_CONTRACT_READY_BLOCKED`、prerequisites=`2
+      PASS/8 BLOCKED`、approved=0、M2 eligible=0；source/strict errors=0，policy metadata保持空，不调用
+      replay/runtime metrics或生产路径。
+    - '2026-07-10: 实现、真实 run与归档完成。验证：focused 14、combined chain 144、fast-unit 198、contract-validation
+      197、report-validation 55、documentation contract 1356 reports PASS、task-register
+      consistency PASS、Ruff/compileall/diff check PASS。'
+    raw_line: '|TRADING-2438M1E_GROWTH_TILT_REPLACEMENT_CANDIDATE_CONTRACT|Strategy
+      research / replacement-A approval gate|P0|DONE|项目 owner仅在新任务中、所有 prerequisites
+      proven后提供 second approval和 policy provenance|详见 `docs/requirements/TRADING-2438M1D1A_Growth_Tilt_Owner_Decision_Resolution_And_Candidate_A_Reframing_Plan.md`；evidence-only
+      gate固定 `capped_recovery_permission_overlay` 十项 prerequisites。当前任一 prerequisite
+      false即 `KEEP_REDEFINED_BLOCKED`，不生成 APPROVE runtime spec/executor binding、policy
+      metadata或 M2 invocation。|真实 strict status=`GROWTH_TILT_REPLACEMENT_CANDIDATE_CONTRACT_READY_BLOCKED`、prerequisites=`2
+      PASS/8 BLOCKED`、approved=0、M2 eligible=0；source/strict errors=0，policy metadata保持空，不调用
+      replay/runtime metrics或生产路径。|2026-07-10: 实现、真实 run与归档完成。验证：focused 14、combined
+      chain 144、fast-unit 198、contract-validation 197、report-validation 55、documentation
+      contract 1356 reports PASS、task-register consistency PASS、Ruff/compileall/diff
+      check PASS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-257f17a48983955efd6db7c5
+  task_id: TRADING-2438M1E_GROWTH_TILT_REPLACEMENT_CANDIDATE_CONTRACT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner仅在新任务中、所有 prerequisites proven后提供 second approval和 policy
+      provenance
+    notes: '2026-07-10: 实现、真实 run与归档完成。验证：focused 14、combined chain 144、fast-unit
+      198、contract-validation 197、report-validation 55、documentation contract 1356
+      reports PASS、task-register consistency PASS、Ruff/compileall/diff check PASS。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:257f17a48983955efd6db7c5c460d1e4e7cd97dfb39d85263d5ac68510c654fb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438M1E_GROWTH_TILT_REPLACEMENT_CANDIDATE_CONTRACT
+  - Strategy research / replacement-A approval gate
+  - P0
+  - DONE
+  - 项目 owner仅在新任务中、所有 prerequisites proven后提供 second approval和 policy provenance
+  - 详见 `docs/requirements/TRADING-2438M1D1A_Growth_Tilt_Owner_Decision_Resolution_And_Candidate_A_Reframing_Plan.md`；evidence-only
+    gate固定 `capped_recovery_permission_overlay` 十项 prerequisites。当前任一 prerequisite
+    false即 `KEEP_REDEFINED_BLOCKED`，不生成 APPROVE runtime spec/executor binding、policy
+    metadata或 M2 invocation。
+  - 真实 strict status=`GROWTH_TILT_REPLACEMENT_CANDIDATE_CONTRACT_READY_BLOCKED`、prerequisites=`2
+    PASS/8 BLOCKED`、approved=0、M2 eligible=0；source/strict errors=0，policy metadata保持空，不调用
+    replay/runtime metrics或生产路径。
+  - '2026-07-10: 实现、真实 run与归档完成。验证：focused 14、combined chain 144、fast-unit 198、contract-validation
+    197、report-validation 55、documentation contract 1356 reports PASS、task-register
+    consistency PASS、Ruff/compileall/diff check PASS。'
+  docs_links:
+  - docs/requirements/TRADING-2438M1D1A_Growth_Tilt_Owner_Decision_Resolution_And_Candidate_A_Reframing_Plan.md
+  terminal: true
+  raw_row_sha256: 257f17a48983955efd6db7c5c460d1e4e7cd97dfb39d85263d5ac68510c654fb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f7b9a84532392343d3d71e619c69a4deff80c26bf6909071459916f4400e2740

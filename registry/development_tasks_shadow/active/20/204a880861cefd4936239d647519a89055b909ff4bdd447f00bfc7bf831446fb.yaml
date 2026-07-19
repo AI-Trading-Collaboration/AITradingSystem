@@ -1,0 +1,165 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-088
+  title: null
+  domain: ETF portfolio research/Dynamic Strategy Failure Diagnostics and Policy Rescue
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-088_Dynamic_Strategy_Failure_Diagnostics_and_Policy_Rescue.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-088_Dynamic_Strategy_Failure_Diagnostics_and_Policy_Rescue.md`；baseline
+    已实现 dynamic failure diagnostics / bounded rescue workflow；下一步在真实 latest failed
+    dynamic package 上运行 `aits etf dynamic-rescue run --latest-failed-package`，由 owner
+    复核 rescue candidate 是否足以进入 TRADING-089；本阶段不得写 official ETF target weights、production
+    baseline、broker state、owner approval 或 shadow enrollment
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`config/etf_portfolio/dynamic_failure_diagnostics.yaml` 存在且 safety fields
+      mandatory；failure dataset builder、Layer 1 signal attribution、false risk-off/on
+      attribution、Layer 2 allocation attribution、turnover/constraint breakdown、v0.2-v0.5
+      rescue templates、rescue candidate batch runner、rescue evaluation report、Reader
+      Brief section 和 `aits etf dynamic-rescue validate` 可运行；rescue policies 必须 evidence-linked、candidate-only、bounded
+      templates；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs
+      和 tests 同步；focused pytest、ruff、compileall、diff check、`aits etf dynamic-rescue
+      validate` 和全量 pytest 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1474
+    row_sha256: eacd26ce9ca20f90dcd39a14b4e2d7927fb018d13299c22adb12485221871834
+    cell_count: 8
+    all_cells:
+    - TRADING-088
+    - ETF portfolio research/Dynamic Strategy Failure Diagnostics and Policy Rescue
+    - P0
+    - VALIDATING
+    - 系统验证 + 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-088_Dynamic_Strategy_Failure_Diagnostics_and_Policy_Rescue.md`；baseline
+      已实现 dynamic failure diagnostics / bounded rescue workflow；下一步在真实 latest failed
+      dynamic package 上运行 `aits etf dynamic-rescue run --latest-failed-package`，由
+      owner 复核 rescue candidate 是否足以进入 TRADING-089；本阶段不得写 official ETF target weights、production
+      baseline、broker state、owner approval 或 shadow enrollment
+    - '`config/etf_portfolio/dynamic_failure_diagnostics.yaml` 存在且 safety fields mandatory；failure
+      dataset builder、Layer 1 signal attribution、false risk-off/on attribution、Layer
+      2 allocation attribution、turnover/constraint breakdown、v0.2-v0.5 rescue templates、rescue
+      candidate batch runner、rescue evaluation report、Reader Brief section 和 `aits
+      etf dynamic-rescue validate` 可运行；rescue policies 必须 evidence-linked、candidate-only、bounded
+      templates；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs
+      和 tests 同步；focused pytest、ruff、compileall、diff check、`aits etf dynamic-rescue
+      validate` 和全量 pytest 通过'
+    - '2026-06-05: 新增并进入 IN_PROGRESS，原因：真实 dynamic v0.1 shadow review package 未获批准，暴露
+      trend signal quality zero、high redundancy、false risk-off、high turnover、constraint
+      hit rate 和 underperformance；需要先诊断失败来源，再生成 bounded v0.2 rescue candidates。2026-06-05:
+      TRADING-088A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic failure diagnostics
+      policy、`aits etf dynamic-rescue run/report/validate`、failure dataset、Layer 1/Layer
+      2 attribution、false signal attribution、turnover/constraint breakdown、v0.2-v0.5
+      rescue templates、rescue batch comparison、evaluation report、Reader Brief `Dynamic
+      Strategy Rescue` section、report registry integration 和 focused tests；当前已验证 `tests/test_etf_dynamic_rescue.py
+      -q` 4 passed，focused ruff/compileall 通过；剩余条件是真实 latest failed package 上的 rescue
+      run 和 owner 复核。'
+    raw_line: '|TRADING-088|ETF portfolio research/Dynamic Strategy Failure Diagnostics
+      and Policy Rescue|P0|VALIDATING|系统验证 + 项目 owner 人工复核|详细拆解见 `docs/requirements/TRADING-088_Dynamic_Strategy_Failure_Diagnostics_and_Policy_Rescue.md`；baseline
+      已实现 dynamic failure diagnostics / bounded rescue workflow；下一步在真实 latest failed
+      dynamic package 上运行 `aits etf dynamic-rescue run --latest-failed-package`，由
+      owner 复核 rescue candidate 是否足以进入 TRADING-089；本阶段不得写 official ETF target weights、production
+      baseline、broker state、owner approval 或 shadow enrollment|`config/etf_portfolio/dynamic_failure_diagnostics.yaml`
+      存在且 safety fields mandatory；failure dataset builder、Layer 1 signal attribution、false
+      risk-off/on attribution、Layer 2 allocation attribution、turnover/constraint breakdown、v0.2-v0.5
+      rescue templates、rescue candidate batch runner、rescue evaluation report、Reader
+      Brief section 和 `aits etf dynamic-rescue validate` 可运行；rescue policies 必须 evidence-linked、candidate-only、bounded
+      templates；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs
+      和 tests 同步；focused pytest、ruff、compileall、diff check、`aits etf dynamic-rescue
+      validate` 和全量 pytest 通过|2026-06-05: 新增并进入 IN_PROGRESS，原因：真实 dynamic v0.1 shadow
+      review package 未获批准，暴露 trend signal quality zero、high redundancy、false risk-off、high
+      turnover、constraint hit rate 和 underperformance；需要先诊断失败来源，再生成 bounded v0.2 rescue
+      candidates。2026-06-05: TRADING-088A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic
+      failure diagnostics policy、`aits etf dynamic-rescue run/report/validate`、failure
+      dataset、Layer 1/Layer 2 attribution、false signal attribution、turnover/constraint
+      breakdown、v0.2-v0.5 rescue templates、rescue batch comparison、evaluation report、Reader
+      Brief `Dynamic Strategy Rescue` section、report registry integration 和 focused
+      tests；当前已验证 `tests/test_etf_dynamic_rescue.py -q` 4 passed，focused ruff/compileall
+      通过；剩余条件是真实 latest failed package 上的 rescue run 和 owner 复核。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-eacd26ce9ca20f90dcd39a14
+  task_id: TRADING-088
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner 人工复核
+    notes: '2026-06-05: 新增并进入 IN_PROGRESS，原因：真实 dynamic v0.1 shadow review package
+      未获批准，暴露 trend signal quality zero、high redundancy、false risk-off、high turnover、constraint
+      hit rate 和 underperformance；需要先诊断失败来源，再生成 bounded v0.2 rescue candidates。2026-06-05:
+      TRADING-088A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic failure diagnostics
+      policy、`aits etf dynamic-rescue run/report/validate`、failure dataset、Layer 1/Layer
+      2 attribution、false signal attribution、turnover/constraint breakdown、v0.2-v0.5
+      rescue templates、rescue batch comparison、evaluation report、Reader Brief `Dynamic
+      Strategy Rescue` section、report registry integration 和 focused tests；当前已验证 `tests/test_etf_dynamic_rescue.py
+      -q` 4 passed，focused ruff/compileall 通过；剩余条件是真实 latest failed package 上的 rescue
+      run 和 owner 复核。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:eacd26ce9ca20f90dcd39a14b4e2d7927fb018d13299c22adb12485221871834
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-088
+  - ETF portfolio research/Dynamic Strategy Failure Diagnostics and Policy Rescue
+  - P0
+  - VALIDATING
+  - 系统验证 + 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-088_Dynamic_Strategy_Failure_Diagnostics_and_Policy_Rescue.md`；baseline
+    已实现 dynamic failure diagnostics / bounded rescue workflow；下一步在真实 latest failed
+    dynamic package 上运行 `aits etf dynamic-rescue run --latest-failed-package`，由 owner
+    复核 rescue candidate 是否足以进入 TRADING-089；本阶段不得写 official ETF target weights、production
+    baseline、broker state、owner approval 或 shadow enrollment
+  - '`config/etf_portfolio/dynamic_failure_diagnostics.yaml` 存在且 safety fields mandatory；failure
+    dataset builder、Layer 1 signal attribution、false risk-off/on attribution、Layer
+    2 allocation attribution、turnover/constraint breakdown、v0.2-v0.5 rescue templates、rescue
+    candidate batch runner、rescue evaluation report、Reader Brief section 和 `aits etf
+    dynamic-rescue validate` 可运行；rescue policies 必须 evidence-linked、candidate-only、bounded
+    templates；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+    flow、artifact catalog、operations runbook、README、task register、requirement docs
+    和 tests 同步；focused pytest、ruff、compileall、diff check、`aits etf dynamic-rescue
+    validate` 和全量 pytest 通过'
+  - '2026-06-05: 新增并进入 IN_PROGRESS，原因：真实 dynamic v0.1 shadow review package 未获批准，暴露
+    trend signal quality zero、high redundancy、false risk-off、high turnover、constraint
+    hit rate 和 underperformance；需要先诊断失败来源，再生成 bounded v0.2 rescue candidates。2026-06-05:
+    TRADING-088A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic failure diagnostics policy、`aits
+    etf dynamic-rescue run/report/validate`、failure dataset、Layer 1/Layer 2 attribution、false
+    signal attribution、turnover/constraint breakdown、v0.2-v0.5 rescue templates、rescue
+    batch comparison、evaluation report、Reader Brief `Dynamic Strategy Rescue` section、report
+    registry integration 和 focused tests；当前已验证 `tests/test_etf_dynamic_rescue.py -q`
+    4 passed，focused ruff/compileall 通过；剩余条件是真实 latest failed package 上的 rescue run
+    和 owner 复核。'
+  docs_links:
+  - docs/requirements/TRADING-088_Dynamic_Strategy_Failure_Diagnostics_and_Policy_Rescue.md
+  terminal: false
+  raw_row_sha256: eacd26ce9ca20f90dcd39a14b4e2d7927fb018d13299c22adb12485221871834
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6b8261959b88bc652d14cd1554e9180a22e8b0885946ac5401d93b7fcaf7c5ad

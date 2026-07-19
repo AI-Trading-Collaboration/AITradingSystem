@@ -1,0 +1,96 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: RUN-001
+  title: null
+  domain: 运行归档/canonical run bundle
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: '`daily-run` 已默认生成 `outputs/runs/YYYY-MM-DD/<safe_run_id>/`
+    canonical bundle，并保留 legacy mirror；回测和 replay bundle 迁移不在本任务范围'
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`daily-run` 支持 `--run-output-root`、`--run-id` 和 `--legacy-output-mode mirror/off`；run
+      bundle 包含 manifest、reports、traces、metadata；manifest 记录输入/输出路径、checksum、质量状态、legacy
+      mirror、visibility cutoff 和 run id；stdout/stderr 原文、secret 和付费内容不得进入 manifest'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1141
+    row_sha256: d1b50b43f636e1395b25ebc7dcfd1d0c2b43add6f4d22bc747ed0b115b46d7d6
+    cell_count: 8
+    all_cells:
+    - RUN-001
+    - 运行归档/canonical run bundle
+    - P1
+    - BASELINE_DONE
+    - 系统实现
+    - '`daily-run` 已默认生成 `outputs/runs/YYYY-MM-DD/<safe_run_id>/` canonical bundle，并保留
+      legacy mirror；回测和 replay bundle 迁移不在本任务范围'
+    - '`daily-run` 支持 `--run-output-root`、`--run-id` 和 `--legacy-output-mode mirror/off`；run
+      bundle 包含 manifest、reports、traces、metadata；manifest 记录输入/输出路径、checksum、质量状态、legacy
+      mirror、visibility cutoff 和 run id；stdout/stderr 原文、secret 和付费内容不得进入 manifest'
+    - '2026-05-10: 从 READY 改为 BASELINE_DONE，原因：daily-run canonical run bundle、manifest、legacy
+      mirror、run id 贯穿和测试已完成；剩余是后续逐步扩大 canonical bundle 覆盖面。'
+    raw_line: '|RUN-001|运行归档/canonical run bundle|P1|BASELINE_DONE|系统实现|`daily-run`
+      已默认生成 `outputs/runs/YYYY-MM-DD/<safe_run_id>/` canonical bundle，并保留 legacy mirror；回测和
+      replay bundle 迁移不在本任务范围|`daily-run` 支持 `--run-output-root`、`--run-id` 和 `--legacy-output-mode
+      mirror/off`；run bundle 包含 manifest、reports、traces、metadata；manifest 记录输入/输出路径、checksum、质量状态、legacy
+      mirror、visibility cutoff 和 run id；stdout/stderr 原文、secret 和付费内容不得进入 manifest|2026-05-10:
+      从 READY 改为 BASELINE_DONE，原因：daily-run canonical run bundle、manifest、legacy mirror、run
+      id 贯穿和测试已完成；剩余是后续逐步扩大 canonical bundle 覆盖面。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d1b50b43f636e1395b25ebc7
+  task_id: RUN-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-10: 从 READY 改为 BASELINE_DONE，原因：daily-run canonical run bundle、manifest、legacy
+      mirror、run id 贯穿和测试已完成；剩余是后续逐步扩大 canonical bundle 覆盖面。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d1b50b43f636e1395b25ebc7dcfd1d0c2b43add6f4d22bc747ed0b115b46d7d6
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - RUN-001
+  - 运行归档/canonical run bundle
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - '`daily-run` 已默认生成 `outputs/runs/YYYY-MM-DD/<safe_run_id>/` canonical bundle，并保留
+    legacy mirror；回测和 replay bundle 迁移不在本任务范围'
+  - '`daily-run` 支持 `--run-output-root`、`--run-id` 和 `--legacy-output-mode mirror/off`；run
+    bundle 包含 manifest、reports、traces、metadata；manifest 记录输入/输出路径、checksum、质量状态、legacy
+    mirror、visibility cutoff 和 run id；stdout/stderr 原文、secret 和付费内容不得进入 manifest'
+  - '2026-05-10: 从 READY 改为 BASELINE_DONE，原因：daily-run canonical run bundle、manifest、legacy
+    mirror、run id 贯穿和测试已完成；剩余是后续逐步扩大 canonical bundle 覆盖面。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: d1b50b43f636e1395b25ebc7dcfd1d0c2b43add6f4d22bc747ed0b115b46d7d6
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 23b8ebcc49eca65dc2a1bf305cd997c954431760316a6310df6466ee93deaa33

@@ -1,0 +1,174 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-042A
+  title: null
+  domain: 基本面/SEC PIT Provenance and Label Coverage Remediation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/sec_pit_provenance_label_coverage_remediation_2026-05-27.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/sec_pit_provenance_label_coverage_remediation_2026-05-27.md`；已完成
+    TRADING-042 后续修复：重建 SEC PIT metrics/panel/evaluation/comparison/diagnostics，修复
+    feature panel 源头重复观测 deterministic dedupe、baseline comparison `source_lineage`
+    稳定 JSON 汇总、forward max drawdown label 非正数约束、diagnostics tail 20D label 缺失解释、diagnostics
+    summary 推荐语和 ticker CLI 文档示例
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 真实复跑 `aits sec-pit build-metrics --to 2026-05-26`、`aits sec-pit build-panel
+      --from 2023-01-01 --to 2026-05-26`、`aits sec-pit evaluate --start 2023-01-01
+      --end 2026-05-26 --tickers NVDA --tickers MSFT --tickers AMD --tickers AVGO
+      --tickers GOOGL --tickers META --tickers AMZN`、`aits sec-pit compare-baseline
+      --start 2023-01-01 --end 2026-05-26 --tickers NVDA --tickers MSFT --tickers
+      AMD --tickers AVGO --tickers GOOGL --tickers META --tickers AMZN --baseline-score-path
+      data/processed/scores_daily.csv`、`aits sec-pit diagnose-run --latest`；最新 diagnostics
+      为 `OK`，downstream missing provenance 0，first loss stage 空，coverage ratio > 1
+      feature 0，duplicates removed 0，drawdown label coverage 0.9444，tail forward/relative
+      20D label 缺失明确归因为未来价格窗口限制；decision impact `source_lineage` 可解析为 JSON；`max_drawdown_forward_20d`
+      范围为 [-0.0975, 0.0]；`capex_intensity` 只进入 manual-review shadow candidate 输出，`production_effect=none`，未修改
+      production/shadow weights 或 actions
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 391
+    row_sha256: f679133e27303bac2d02c19bf585315b9ae963c26bb32c6ae283c9a18b903d5d
+    cell_count: 8
+    all_cells:
+    - TRADING-042A
+    - 基本面/SEC PIT Provenance and Label Coverage Remediation
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/sec_pit_provenance_label_coverage_remediation_2026-05-27.md`；已完成
+      TRADING-042 后续修复：重建 SEC PIT metrics/panel/evaluation/comparison/diagnostics，修复
+      feature panel 源头重复观测 deterministic dedupe、baseline comparison `source_lineage`
+      稳定 JSON 汇总、forward max drawdown label 非正数约束、diagnostics tail 20D label 缺失解释、diagnostics
+      summary 推荐语和 ticker CLI 文档示例
+    - 真实复跑 `aits sec-pit build-metrics --to 2026-05-26`、`aits sec-pit build-panel
+      --from 2023-01-01 --to 2026-05-26`、`aits sec-pit evaluate --start 2023-01-01
+      --end 2026-05-26 --tickers NVDA --tickers MSFT --tickers AMD --tickers AVGO
+      --tickers GOOGL --tickers META --tickers AMZN`、`aits sec-pit compare-baseline
+      --start 2023-01-01 --end 2026-05-26 --tickers NVDA --tickers MSFT --tickers
+      AMD --tickers AVGO --tickers GOOGL --tickers META --tickers AMZN --baseline-score-path
+      data/processed/scores_daily.csv`、`aits sec-pit diagnose-run --latest`；最新 diagnostics
+      为 `OK`，downstream missing provenance 0，first loss stage 空，coverage ratio > 1
+      feature 0，duplicates removed 0，drawdown label coverage 0.9444，tail forward/relative
+      20D label 缺失明确归因为未来价格窗口限制；decision impact `source_lineage` 可解析为 JSON；`max_drawdown_forward_20d`
+      范围为 [-0.0975, 0.0]；`capex_intensity` 只进入 manual-review shadow candidate 输出，`production_effect=none`，未修改
+      production/shadow weights 或 actions
+    - '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-042 诊断已定位 `first_loss_stage=xbrl_facts_long`、feature
+      panel missing provenance 51,972 行、drawdown label coverage 0、coverage ratio 修正前大于
+      1 和 near-promotion 只受 data quality 阻断的 feature；owner 要求继续修复过程中遇到的所有问题。2026-05-27:
+      从 IN_PROGRESS 改为 DONE，原因：修复、真实复跑和文档完成；验证通过 `python -m pytest tests/test_sec_pit_backfill.py
+      tests/trading_engine/test_sec_pit_evaluation.py tests/trading_engine/test_sec_pit_baseline_comparison.py
+      tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（37 passed）、`python
+      -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量 `python -m pytest
+      -q`（1288 passed, 1 warning）、全量 `python -m ruff check config src tests scripts
+      docs` 和触达 Python 文件 `python -m black --check ...`。'
+    raw_line: '|TRADING-042A|基本面/SEC PIT Provenance and Label Coverage Remediation|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/sec_pit_provenance_label_coverage_remediation_2026-05-27.md`；已完成
+      TRADING-042 后续修复：重建 SEC PIT metrics/panel/evaluation/comparison/diagnostics，修复
+      feature panel 源头重复观测 deterministic dedupe、baseline comparison `source_lineage`
+      稳定 JSON 汇总、forward max drawdown label 非正数约束、diagnostics tail 20D label 缺失解释、diagnostics
+      summary 推荐语和 ticker CLI 文档示例|真实复跑 `aits sec-pit build-metrics --to 2026-05-26`、`aits
+      sec-pit build-panel --from 2023-01-01 --to 2026-05-26`、`aits sec-pit evaluate
+      --start 2023-01-01 --end 2026-05-26 --tickers NVDA --tickers MSFT --tickers
+      AMD --tickers AVGO --tickers GOOGL --tickers META --tickers AMZN`、`aits sec-pit
+      compare-baseline --start 2023-01-01 --end 2026-05-26 --tickers NVDA --tickers
+      MSFT --tickers AMD --tickers AVGO --tickers GOOGL --tickers META --tickers AMZN
+      --baseline-score-path data/processed/scores_daily.csv`、`aits sec-pit diagnose-run
+      --latest`；最新 diagnostics 为 `OK`，downstream missing provenance 0，first loss stage
+      空，coverage ratio > 1 feature 0，duplicates removed 0，drawdown label coverage
+      0.9444，tail forward/relative 20D label 缺失明确归因为未来价格窗口限制；decision impact `source_lineage`
+      可解析为 JSON；`max_drawdown_forward_20d` 范围为 [-0.0975, 0.0]；`capex_intensity` 只进入
+      manual-review shadow candidate 输出，`production_effect=none`，未修改 production/shadow
+      weights 或 actions|2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-042 诊断已定位 `first_loss_stage=xbrl_facts_long`、feature
+      panel missing provenance 51,972 行、drawdown label coverage 0、coverage ratio 修正前大于
+      1 和 near-promotion 只受 data quality 阻断的 feature；owner 要求继续修复过程中遇到的所有问题。2026-05-27:
+      从 IN_PROGRESS 改为 DONE，原因：修复、真实复跑和文档完成；验证通过 `python -m pytest tests/test_sec_pit_backfill.py
+      tests/trading_engine/test_sec_pit_evaluation.py tests/trading_engine/test_sec_pit_baseline_comparison.py
+      tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（37 passed）、`python
+      -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量 `python -m pytest
+      -q`（1288 passed, 1 warning）、全量 `python -m ruff check config src tests scripts
+      docs` 和触达 Python 文件 `python -m black --check ...`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f679133e27303bac2d02c19b
+  task_id: TRADING-042A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-042 诊断已定位 `first_loss_stage=xbrl_facts_long`、feature
+      panel missing provenance 51,972 行、drawdown label coverage 0、coverage ratio 修正前大于
+      1 和 near-promotion 只受 data quality 阻断的 feature；owner 要求继续修复过程中遇到的所有问题。2026-05-27:
+      从 IN_PROGRESS 改为 DONE，原因：修复、真实复跑和文档完成；验证通过 `python -m pytest tests/test_sec_pit_backfill.py
+      tests/trading_engine/test_sec_pit_evaluation.py tests/trading_engine/test_sec_pit_baseline_comparison.py
+      tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（37 passed）、`python
+      -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量 `python -m pytest
+      -q`（1288 passed, 1 warning）、全量 `python -m ruff check config src tests scripts
+      docs` 和触达 Python 文件 `python -m black --check ...`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f679133e27303bac2d02c19bf585315b9ae963c26bb32c6ae283c9a18b903d5d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-042A
+  - 基本面/SEC PIT Provenance and Label Coverage Remediation
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/sec_pit_provenance_label_coverage_remediation_2026-05-27.md`；已完成
+    TRADING-042 后续修复：重建 SEC PIT metrics/panel/evaluation/comparison/diagnostics，修复
+    feature panel 源头重复观测 deterministic dedupe、baseline comparison `source_lineage`
+    稳定 JSON 汇总、forward max drawdown label 非正数约束、diagnostics tail 20D label 缺失解释、diagnostics
+    summary 推荐语和 ticker CLI 文档示例
+  - 真实复跑 `aits sec-pit build-metrics --to 2026-05-26`、`aits sec-pit build-panel --from
+    2023-01-01 --to 2026-05-26`、`aits sec-pit evaluate --start 2023-01-01 --end 2026-05-26
+    --tickers NVDA --tickers MSFT --tickers AMD --tickers AVGO --tickers GOOGL --tickers
+    META --tickers AMZN`、`aits sec-pit compare-baseline --start 2023-01-01 --end 2026-05-26
+    --tickers NVDA --tickers MSFT --tickers AMD --tickers AVGO --tickers GOOGL --tickers
+    META --tickers AMZN --baseline-score-path data/processed/scores_daily.csv`、`aits
+    sec-pit diagnose-run --latest`；最新 diagnostics 为 `OK`，downstream missing provenance
+    0，first loss stage 空，coverage ratio > 1 feature 0，duplicates removed 0，drawdown
+    label coverage 0.9444，tail forward/relative 20D label 缺失明确归因为未来价格窗口限制；decision
+    impact `source_lineage` 可解析为 JSON；`max_drawdown_forward_20d` 范围为 [-0.0975, 0.0]；`capex_intensity`
+    只进入 manual-review shadow candidate 输出，`production_effect=none`，未修改 production/shadow
+    weights 或 actions
+  - '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-042 诊断已定位 `first_loss_stage=xbrl_facts_long`、feature
+    panel missing provenance 51,972 行、drawdown label coverage 0、coverage ratio 修正前大于
+    1 和 near-promotion 只受 data quality 阻断的 feature；owner 要求继续修复过程中遇到的所有问题。2026-05-27:
+    从 IN_PROGRESS 改为 DONE，原因：修复、真实复跑和文档完成；验证通过 `python -m pytest tests/test_sec_pit_backfill.py
+    tests/trading_engine/test_sec_pit_evaluation.py tests/trading_engine/test_sec_pit_baseline_comparison.py
+    tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（37 passed）、`python
+    -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量 `python -m pytest
+    -q`（1288 passed, 1 warning）、全量 `python -m ruff check config src tests scripts
+    docs` 和触达 Python 文件 `python -m black --check ...`。'
+  docs_links:
+  - docs/requirements/sec_pit_provenance_label_coverage_remediation_2026-05-27.md
+  terminal: true
+  raw_row_sha256: f679133e27303bac2d02c19bf585315b9ae963c26bb32c6ae283c9a18b903d5d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 829c9095869e8e1f2c4389521c5764a6ebce0d9b1d63e8e61457c55617af002e

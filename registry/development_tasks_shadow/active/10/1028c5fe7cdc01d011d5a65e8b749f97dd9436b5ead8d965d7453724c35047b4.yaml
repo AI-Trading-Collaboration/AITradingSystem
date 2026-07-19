@@ -1,0 +1,135 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-062
+  title: null
+  domain: ETF 组合配置/Portfolio Allocation System
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner + 后续 provider/API 决策
+  requirement_refs:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md`；P0/P1
+    baseline、P2 observe-only contracts、报告可见性、CLI compatibility、simulation benchmark
+    outcomes、backtest audit artifacts、daily brief simulation summary 和 CLI option
+    compatibility 已完成；P2 live news/LLM sentiment、完整 EDGAR 财报解释、真实 VXN/skew vendor、实时
+    issuer holdings API、多账户/broker route 仍需 owner/provider/API/PIT policy 决策后升级
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf validate-config`、`aits etf data validate`、`aits features build
+      --end latest`、`aits etf signals generate`、`aits etf regime generate`、`aits etf
+      portfolio allocate`、`aits etf backtest run --config config/etf_portfolio/backtest.yaml
+      --fast`、`aits etf simulation record/evaluate/report`、`aits etf report daily`、`aits
+      etf run daily --dry-run`、P1/P2 observe-only commands、Reader Brief/report registry
+      可运行；target weights sum=1；数据质量门禁、no-lookahead、simulation null semantics、报告章节、config
+      schema、P2 source contract、安全边界和 full pytest 通过；不修改 production 参数或真实交易动作'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1144
+    row_sha256: d88620d7488e61633cfa4e026cb983bca9cf3c3c8ad332dabfe232630dbbc2b4
+    cell_count: 8
+    all_cells:
+    - TRADING-062
+    - ETF 组合配置/Portfolio Allocation System
+    - P0
+    - BASELINE_DONE
+    - 项目 owner + 后续 provider/API 决策
+    - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md`；P0/P1
+      baseline、P2 observe-only contracts、报告可见性、CLI compatibility、simulation benchmark
+      outcomes、backtest audit artifacts、daily brief simulation summary 和 CLI option
+      compatibility 已完成；P2 live news/LLM sentiment、完整 EDGAR 财报解释、真实 VXN/skew vendor、实时
+      issuer holdings API、多账户/broker route 仍需 owner/provider/API/PIT policy 决策后升级
+    - '`aits etf validate-config`、`aits etf data validate`、`aits features build --end
+      latest`、`aits etf signals generate`、`aits etf regime generate`、`aits etf portfolio
+      allocate`、`aits etf backtest run --config config/etf_portfolio/backtest.yaml
+      --fast`、`aits etf simulation record/evaluate/report`、`aits etf report daily`、`aits
+      etf run daily --dry-run`、P1/P2 observe-only commands、Reader Brief/report registry
+      可运行；target weights sum=1；数据质量门禁、no-lookahead、simulation null semantics、报告章节、config
+      schema、P2 source contract、安全边界和 full pytest 通过；不修改 production 参数或真实交易动作'
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：owner 提供 ETF 组合配置系统详细开发文档并要求参考实现所有功能。2026-05-31:
+      P0/P1/P2 observe-only baseline 与后续补齐项 TRADING-062A 至 TRADING-062M 完成并验证；从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：原文 DoD 的本地可运行功能、验证、工程说明和安全边界已覆盖；剩余 live/provider 能力依赖 owner/API/PIT
+      policy，不能用临时数据或未批准 broker route 替代。'
+    raw_line: '|TRADING-062|ETF 组合配置/Portfolio Allocation System|P0|BASELINE_DONE|项目
+      owner + 后续 provider/API 决策|详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md`；P0/P1
+      baseline、P2 observe-only contracts、报告可见性、CLI compatibility、simulation benchmark
+      outcomes、backtest audit artifacts、daily brief simulation summary 和 CLI option
+      compatibility 已完成；P2 live news/LLM sentiment、完整 EDGAR 财报解释、真实 VXN/skew vendor、实时
+      issuer holdings API、多账户/broker route 仍需 owner/provider/API/PIT policy 决策后升级|`aits
+      etf validate-config`、`aits etf data validate`、`aits features build --end latest`、`aits
+      etf signals generate`、`aits etf regime generate`、`aits etf portfolio allocate`、`aits
+      etf backtest run --config config/etf_portfolio/backtest.yaml --fast`、`aits etf
+      simulation record/evaluate/report`、`aits etf report daily`、`aits etf run daily
+      --dry-run`、P1/P2 observe-only commands、Reader Brief/report registry 可运行；target
+      weights sum=1；数据质量门禁、no-lookahead、simulation null semantics、报告章节、config schema、P2
+      source contract、安全边界和 full pytest 通过；不修改 production 参数或真实交易动作|2026-05-31: 新增并进入
+      IN_PROGRESS，原因：owner 提供 ETF 组合配置系统详细开发文档并要求参考实现所有功能。2026-05-31: P0/P1/P2 observe-only
+      baseline 与后续补齐项 TRADING-062A 至 TRADING-062M 完成并验证；从 IN_PROGRESS 改为 BASELINE_DONE，原因：原文
+      DoD 的本地可运行功能、验证、工程说明和安全边界已覆盖；剩余 live/provider 能力依赖 owner/API/PIT policy，不能用临时数据或未批准
+      broker route 替代。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d88620d7488e61633cfa4e02
+  task_id: TRADING-062
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner + 后续 provider/API 决策
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：owner 提供 ETF 组合配置系统详细开发文档并要求参考实现所有功能。2026-05-31:
+      P0/P1/P2 observe-only baseline 与后续补齐项 TRADING-062A 至 TRADING-062M 完成并验证；从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：原文 DoD 的本地可运行功能、验证、工程说明和安全边界已覆盖；剩余 live/provider 能力依赖 owner/API/PIT
+      policy，不能用临时数据或未批准 broker route 替代。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d88620d7488e61633cfa4e026cb983bca9cf3c3c8ad332dabfe232630dbbc2b4
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062
+  - ETF 组合配置/Portfolio Allocation System
+  - P0
+  - BASELINE_DONE
+  - 项目 owner + 后续 provider/API 决策
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md`；P0/P1
+    baseline、P2 observe-only contracts、报告可见性、CLI compatibility、simulation benchmark
+    outcomes、backtest audit artifacts、daily brief simulation summary 和 CLI option
+    compatibility 已完成；P2 live news/LLM sentiment、完整 EDGAR 财报解释、真实 VXN/skew vendor、实时
+    issuer holdings API、多账户/broker route 仍需 owner/provider/API/PIT policy 决策后升级
+  - '`aits etf validate-config`、`aits etf data validate`、`aits features build --end
+    latest`、`aits etf signals generate`、`aits etf regime generate`、`aits etf portfolio
+    allocate`、`aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast`、`aits
+    etf simulation record/evaluate/report`、`aits etf report daily`、`aits etf run daily
+    --dry-run`、P1/P2 observe-only commands、Reader Brief/report registry 可运行；target
+    weights sum=1；数据质量门禁、no-lookahead、simulation null semantics、报告章节、config schema、P2
+    source contract、安全边界和 full pytest 通过；不修改 production 参数或真实交易动作'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：owner 提供 ETF 组合配置系统详细开发文档并要求参考实现所有功能。2026-05-31:
+    P0/P1/P2 observe-only baseline 与后续补齐项 TRADING-062A 至 TRADING-062M 完成并验证；从 IN_PROGRESS
+    改为 BASELINE_DONE，原因：原文 DoD 的本地可运行功能、验证、工程说明和安全边界已覆盖；剩余 live/provider 能力依赖 owner/API/PIT
+    policy，不能用临时数据或未批准 broker route 替代。'
+  docs_links:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  terminal: false
+  raw_row_sha256: d88620d7488e61633cfa4e026cb983bca9cf3c3c8ad332dabfe232630dbbc2b4
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e51718a89b0d1a1a4b03251b4e62a8b0f2d257fab28056dc18ff0439da67e8b1

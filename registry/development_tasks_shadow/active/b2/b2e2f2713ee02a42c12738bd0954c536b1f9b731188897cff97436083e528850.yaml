@@ -1,0 +1,270 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-003
+  title: null
+  domain: 市场反馈优化/独立校准闭环
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/market_feedback_optimization_loop_2026-05-13.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md`；本轮已实现权重
+    resolver 接入生产评分/回测审计、approved overlay fail-closed、多目标 candidate gate，以及 OOS/random/coverage
+    veto 汇总；下一步用当前真实 robustness 链路观察新 candidate 状态分布，并等待 owner 对 shadow/overlay 推进节奏做治理确认；不做黑箱权重优化或自动
+    production 晋级
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`score-daily` 和 `backtest` 使用同一个 effective weight resolver 注入模块权重，并在 scores/backtest/trace/报告中写入
+      `weight_profile_version`、matched overlay、effective weights 和审计原因；approved overlay
+      出现未知 signal 必须 fail closed；parameter replay/candidate ledger 必须消费 robustness
+      的 OOS、same-turnover random、signal-family baseline、coverage/data credibility
+      证据，把 baseline-only、OOS 弱化、随机基线未过、coverage 不足等场景降级或阻断，不再只靠 total return 进入 owner
+      review；runbook/系统流图/测试同步；仍保持 candidate-only、`production_effect=none`，不得自动生成
+      approved overlay 或改变 hard gate'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1495
+    row_sha256: cca648f18fd9df24904a0c98a7c52693e645703e8472594a298736f27143b360
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-003
+    - 市场反馈优化/独立校准闭环
+    - P1
+    - VALIDATING
+    - 系统验证 + 项目 owner
+    - 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md`；本轮已实现权重
+      resolver 接入生产评分/回测审计、approved overlay fail-closed、多目标 candidate gate，以及 OOS/random/coverage
+      veto 汇总；下一步用当前真实 robustness 链路观察新 candidate 状态分布，并等待 owner 对 shadow/overlay
+      推进节奏做治理确认；不做黑箱权重优化或自动 production 晋级
+    - '`score-daily` 和 `backtest` 使用同一个 effective weight resolver 注入模块权重，并在 scores/backtest/trace/报告中写入
+      `weight_profile_version`、matched overlay、effective weights 和审计原因；approved overlay
+      出现未知 signal 必须 fail closed；parameter replay/candidate ledger 必须消费 robustness
+      的 OOS、same-turnover random、signal-family baseline、coverage/data credibility
+      证据，把 baseline-only、OOS 弱化、随机基线未过、coverage 不足等场景降级或阻断，不再只靠 total return 进入 owner
+      review；runbook/系统流图/测试同步；仍保持 candidate-only、`production_effect=none`，不得自动生成
+      approved overlay 或改变 hard gate'
+    - '2026-05-13: 新增并进入 IN_PROGRESS，原因：owner 明确要求建立能持续从市场反馈优化判断逻辑的独立系统，避免无依据 if/else。2026-05-13:
+      从 IN_PROGRESS 改为 VALIDATING，原因：需求文档、任务登记、系统流图/runbook 计划、`aits feedback optimize-market-feedback`
+      只读报告入口和单测已完成；后续阶段仍需真实周/月样本、weight diagnostics、as-if replay 和 owner governance。2026-05-13:
+      从 VALIDATING 改回 IN_PROGRESS，原因：owner 追问 30 样本门槛缺少项目内依据，并要求在数据少时先放宽启动后续流程，后续再按观察调整间隔。2026-05-13:
+      从 IN_PROGRESS 改为 VALIDATING，原因：新增 `config/feedback_sample_policy.yaml`，报告读取
+      reporting/pilot/diagnostic/promotion floor；当前 2026-05-12 outcome、因果链、学习队列、规则实验、shadow
+      maturity 和优化报告均已跑通，readiness=`PILOT_DIAGNOSTIC_REVIEW`。2026-05-13: 2026-05-11
+      严格 outcome 刷新因价格缓存包含 2026-05-12 被数据质量门禁阻断；未绕过门禁，后续如需历史 as_of 刷新应补 replay-scoped
+      feedback calibration 输入。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：owner 要求推进整个复盘迭代闭环，当前缺少把参数候选复测收益变化纳入
+      feedback 报告的功能。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：新增 `aits feedback
+      build-parameter-replay`、`parameter_replay_YYYY-MM-DD.md/json`、`optimize-market-feedback`
+      参数 replay 汇总、系统流图/runbook/README 和测试；真实 smoke 已从最新 robustness summary 生成参数 replay
+      报告，因来源 summary 较旧仍披露 module_weight_perturbation 缺口。2026-05-13: 从 VALIDATING
+      改回 IN_PROGRESS，原因：owner 明确要求继续推进到当前数据可测试跑通、并能持续迭代的回测调参闭环。2026-05-13: 从 IN_PROGRESS
+      改为 VALIDATING，原因：新增 `aits feedback build-parameter-candidates`、`data/processed/parameter_candidates.json`
+      和 `parameter_candidates_YYYY-MM-DD.md`；当前数据已跑通 `parameter replay -> candidate
+      ledger -> optimize-market-feedback` 烟测，报告汇总 3 个 trial / 3 个 candidate，因 materiality
+      policy 缺失仍保持 `PASS_WITH_LIMITATIONS` 且不进入 production。2026-05-13: 从 VALIDATING
+      改回 IN_PROGRESS，原因：owner 要求继续排查 materiality policy 阻塞并保证闭环跑通。2026-05-13: 从 IN_PROGRESS
+      改为 VALIDATING，原因：`build-parameter-replay` 已对旧 robustness summary 缺 policy 的情况读取当前
+      `config/backtest_validation_policy.yaml` 并披露 limitation；当前闭环 smoke 显示 Needs
+      materiality policy=0、1 个正向 owner review、1 个负向 risk review、1 个 observe-only，仍保持
+      production_effect=none。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：owner 要求处理所有阻塞点，确保从头开始的回测调参闭环完整跑通；当前阻塞集中在最新
+      `backtest --robustness-report` 超时且不落盘。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：robustness
+      派生场景已复用基础回测已审计行，默认全窗口 `backtest --robustness-report --to 2026-05-12 --quality-as-of
+      2026-05-13` 已完成并写出带 as-run policy 的 summary；随后 parameter replay/candidates/overview
+      默认链路均跑通，replay/candidate 为 PASS，overview 为 PASS_WITH_LIMITATIONS（受 outcome/shadow/overlay
+      样本限制）。2026-05-14: 从 VALIDATING 改回 IN_PROGRESS，原因：owner 认为长期维护“跑一次后复用基础行派生指标”会影响回测正确性，要求不要维护两套计算逻辑；本轮改为缓存
+      PIT feature/report 上下文，但权重扰动、成本压力和窗口切分等调参场景必须继续调用同一评分/回测执行路径。2026-05-14: 从 IN_PROGRESS
+      改为 VALIDATING，原因：`backtest` 已拆出 prepared PIT context，非 lag 调参场景复用缓存输入但仍重走同一
+      `run_daily_score_backtest` 评分/回测路径；默认全窗口真实命令 431 秒完成并写出 41 个 robustness 场景，随后
+      parameter replay/candidates/overview 均读取新产物跑通。验证通过 `ruff check src tests`、目标
+      pytest 32 passed、全量 pytest 513 passed、`git diff --check`。2026-05-14: 从 VALIDATING
+      改回 IN_PROGRESS，原因：外部方案复核确认当前短板是 effective weights 未成为评分/回测单一入口，以及 parameter
+      candidate 仍过度依赖 total return；本轮开始实现 resolver 接入和多目标 veto。2026-05-14: 从 IN_PROGRESS
+      改为 VALIDATING，原因：`score-daily` 与 `backtest` 已接入同一个 effective weight resolver，scores/backtest/trace/report
+      写入 profile、overlay 和 effective weights；approved overlay 未知 signal fail closed；parameter
+      replay/candidates 汇总并使用 OOS、same-turnover random、signal-family baseline、data
+      quality/data credibility 和 drawdown veto，正向收益不再直接进入 owner review。验证通过 `ruff
+      check src tests`、`git diff --check`、目标 pytest 83 passed 和全量 pytest 516 passed。'
+    raw_line: '|CALIBRATION-003|市场反馈优化/独立校准闭环|P1|VALIDATING|系统验证 + 项目 owner|详细拆解见
+      `docs/requirements/market_feedback_optimization_loop_2026-05-13.md`；本轮已实现权重
+      resolver 接入生产评分/回测审计、approved overlay fail-closed、多目标 candidate gate，以及 OOS/random/coverage
+      veto 汇总；下一步用当前真实 robustness 链路观察新 candidate 状态分布，并等待 owner 对 shadow/overlay
+      推进节奏做治理确认；不做黑箱权重优化或自动 production 晋级|`score-daily` 和 `backtest` 使用同一个 effective
+      weight resolver 注入模块权重，并在 scores/backtest/trace/报告中写入 `weight_profile_version`、matched
+      overlay、effective weights 和审计原因；approved overlay 出现未知 signal 必须 fail closed；parameter
+      replay/candidate ledger 必须消费 robustness 的 OOS、same-turnover random、signal-family
+      baseline、coverage/data credibility 证据，把 baseline-only、OOS 弱化、随机基线未过、coverage
+      不足等场景降级或阻断，不再只靠 total return 进入 owner review；runbook/系统流图/测试同步；仍保持 candidate-only、`production_effect=none`，不得自动生成
+      approved overlay 或改变 hard gate|2026-05-13: 新增并进入 IN_PROGRESS，原因：owner 明确要求建立能持续从市场反馈优化判断逻辑的独立系统，避免无依据
+      if/else。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：需求文档、任务登记、系统流图/runbook 计划、`aits
+      feedback optimize-market-feedback` 只读报告入口和单测已完成；后续阶段仍需真实周/月样本、weight diagnostics、as-if
+      replay 和 owner governance。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：owner 追问
+      30 样本门槛缺少项目内依据，并要求在数据少时先放宽启动后续流程，后续再按观察调整间隔。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：新增
+      `config/feedback_sample_policy.yaml`，报告读取 reporting/pilot/diagnostic/promotion
+      floor；当前 2026-05-12 outcome、因果链、学习队列、规则实验、shadow maturity 和优化报告均已跑通，readiness=`PILOT_DIAGNOSTIC_REVIEW`。2026-05-13:
+      2026-05-11 严格 outcome 刷新因价格缓存包含 2026-05-12 被数据质量门禁阻断；未绕过门禁，后续如需历史 as_of 刷新应补
+      replay-scoped feedback calibration 输入。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：owner
+      要求推进整个复盘迭代闭环，当前缺少把参数候选复测收益变化纳入 feedback 报告的功能。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：新增
+      `aits feedback build-parameter-replay`、`parameter_replay_YYYY-MM-DD.md/json`、`optimize-market-feedback`
+      参数 replay 汇总、系统流图/runbook/README 和测试；真实 smoke 已从最新 robustness summary 生成参数 replay
+      报告，因来源 summary 较旧仍披露 module_weight_perturbation 缺口。2026-05-13: 从 VALIDATING
+      改回 IN_PROGRESS，原因：owner 明确要求继续推进到当前数据可测试跑通、并能持续迭代的回测调参闭环。2026-05-13: 从 IN_PROGRESS
+      改为 VALIDATING，原因：新增 `aits feedback build-parameter-candidates`、`data/processed/parameter_candidates.json`
+      和 `parameter_candidates_YYYY-MM-DD.md`；当前数据已跑通 `parameter replay -> candidate
+      ledger -> optimize-market-feedback` 烟测，报告汇总 3 个 trial / 3 个 candidate，因 materiality
+      policy 缺失仍保持 `PASS_WITH_LIMITATIONS` 且不进入 production。2026-05-13: 从 VALIDATING
+      改回 IN_PROGRESS，原因：owner 要求继续排查 materiality policy 阻塞并保证闭环跑通。2026-05-13: 从 IN_PROGRESS
+      改为 VALIDATING，原因：`build-parameter-replay` 已对旧 robustness summary 缺 policy 的情况读取当前
+      `config/backtest_validation_policy.yaml` 并披露 limitation；当前闭环 smoke 显示 Needs
+      materiality policy=0、1 个正向 owner review、1 个负向 risk review、1 个 observe-only，仍保持
+      production_effect=none。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：owner 要求处理所有阻塞点，确保从头开始的回测调参闭环完整跑通；当前阻塞集中在最新
+      `backtest --robustness-report` 超时且不落盘。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：robustness
+      派生场景已复用基础回测已审计行，默认全窗口 `backtest --robustness-report --to 2026-05-12 --quality-as-of
+      2026-05-13` 已完成并写出带 as-run policy 的 summary；随后 parameter replay/candidates/overview
+      默认链路均跑通，replay/candidate 为 PASS，overview 为 PASS_WITH_LIMITATIONS（受 outcome/shadow/overlay
+      样本限制）。2026-05-14: 从 VALIDATING 改回 IN_PROGRESS，原因：owner 认为长期维护“跑一次后复用基础行派生指标”会影响回测正确性，要求不要维护两套计算逻辑；本轮改为缓存
+      PIT feature/report 上下文，但权重扰动、成本压力和窗口切分等调参场景必须继续调用同一评分/回测执行路径。2026-05-14: 从 IN_PROGRESS
+      改为 VALIDATING，原因：`backtest` 已拆出 prepared PIT context，非 lag 调参场景复用缓存输入但仍重走同一
+      `run_daily_score_backtest` 评分/回测路径；默认全窗口真实命令 431 秒完成并写出 41 个 robustness 场景，随后
+      parameter replay/candidates/overview 均读取新产物跑通。验证通过 `ruff check src tests`、目标
+      pytest 32 passed、全量 pytest 513 passed、`git diff --check`。2026-05-14: 从 VALIDATING
+      改回 IN_PROGRESS，原因：外部方案复核确认当前短板是 effective weights 未成为评分/回测单一入口，以及 parameter
+      candidate 仍过度依赖 total return；本轮开始实现 resolver 接入和多目标 veto。2026-05-14: 从 IN_PROGRESS
+      改为 VALIDATING，原因：`score-daily` 与 `backtest` 已接入同一个 effective weight resolver，scores/backtest/trace/report
+      写入 profile、overlay 和 effective weights；approved overlay 未知 signal fail closed；parameter
+      replay/candidates 汇总并使用 OOS、same-turnover random、signal-family baseline、data
+      quality/data credibility 和 drawdown veto，正向收益不再直接进入 owner review。验证通过 `ruff
+      check src tests`、`git diff --check`、目标 pytest 83 passed 和全量 pytest 516 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-cca648f18fd9df24904a0c98
+  task_id: CALIBRATION-003
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-05-13: 新增并进入 IN_PROGRESS，原因：owner 明确要求建立能持续从市场反馈优化判断逻辑的独立系统，避免无依据
+      if/else。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：需求文档、任务登记、系统流图/runbook 计划、`aits
+      feedback optimize-market-feedback` 只读报告入口和单测已完成；后续阶段仍需真实周/月样本、weight diagnostics、as-if
+      replay 和 owner governance。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：owner 追问
+      30 样本门槛缺少项目内依据，并要求在数据少时先放宽启动后续流程，后续再按观察调整间隔。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：新增
+      `config/feedback_sample_policy.yaml`，报告读取 reporting/pilot/diagnostic/promotion
+      floor；当前 2026-05-12 outcome、因果链、学习队列、规则实验、shadow maturity 和优化报告均已跑通，readiness=`PILOT_DIAGNOSTIC_REVIEW`。2026-05-13:
+      2026-05-11 严格 outcome 刷新因价格缓存包含 2026-05-12 被数据质量门禁阻断；未绕过门禁，后续如需历史 as_of 刷新应补
+      replay-scoped feedback calibration 输入。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：owner
+      要求推进整个复盘迭代闭环，当前缺少把参数候选复测收益变化纳入 feedback 报告的功能。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：新增
+      `aits feedback build-parameter-replay`、`parameter_replay_YYYY-MM-DD.md/json`、`optimize-market-feedback`
+      参数 replay 汇总、系统流图/runbook/README 和测试；真实 smoke 已从最新 robustness summary 生成参数 replay
+      报告，因来源 summary 较旧仍披露 module_weight_perturbation 缺口。2026-05-13: 从 VALIDATING
+      改回 IN_PROGRESS，原因：owner 明确要求继续推进到当前数据可测试跑通、并能持续迭代的回测调参闭环。2026-05-13: 从 IN_PROGRESS
+      改为 VALIDATING，原因：新增 `aits feedback build-parameter-candidates`、`data/processed/parameter_candidates.json`
+      和 `parameter_candidates_YYYY-MM-DD.md`；当前数据已跑通 `parameter replay -> candidate
+      ledger -> optimize-market-feedback` 烟测，报告汇总 3 个 trial / 3 个 candidate，因 materiality
+      policy 缺失仍保持 `PASS_WITH_LIMITATIONS` 且不进入 production。2026-05-13: 从 VALIDATING
+      改回 IN_PROGRESS，原因：owner 要求继续排查 materiality policy 阻塞并保证闭环跑通。2026-05-13: 从 IN_PROGRESS
+      改为 VALIDATING，原因：`build-parameter-replay` 已对旧 robustness summary 缺 policy 的情况读取当前
+      `config/backtest_validation_policy.yaml` 并披露 limitation；当前闭环 smoke 显示 Needs
+      materiality policy=0、1 个正向 owner review、1 个负向 risk review、1 个 observe-only，仍保持
+      production_effect=none。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：owner 要求处理所有阻塞点，确保从头开始的回测调参闭环完整跑通；当前阻塞集中在最新
+      `backtest --robustness-report` 超时且不落盘。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：robustness
+      派生场景已复用基础回测已审计行，默认全窗口 `backtest --robustness-report --to 2026-05-12 --quality-as-of
+      2026-05-13` 已完成并写出带 as-run policy 的 summary；随后 parameter replay/candidates/overview
+      默认链路均跑通，replay/candidate 为 PASS，overview 为 PASS_WITH_LIMITATIONS（受 outcome/shadow/overlay
+      样本限制）。2026-05-14: 从 VALIDATING 改回 IN_PROGRESS，原因：owner 认为长期维护“跑一次后复用基础行派生指标”会影响回测正确性，要求不要维护两套计算逻辑；本轮改为缓存
+      PIT feature/report 上下文，但权重扰动、成本压力和窗口切分等调参场景必须继续调用同一评分/回测执行路径。2026-05-14: 从 IN_PROGRESS
+      改为 VALIDATING，原因：`backtest` 已拆出 prepared PIT context，非 lag 调参场景复用缓存输入但仍重走同一
+      `run_daily_score_backtest` 评分/回测路径；默认全窗口真实命令 431 秒完成并写出 41 个 robustness 场景，随后
+      parameter replay/candidates/overview 均读取新产物跑通。验证通过 `ruff check src tests`、目标
+      pytest 32 passed、全量 pytest 513 passed、`git diff --check`。2026-05-14: 从 VALIDATING
+      改回 IN_PROGRESS，原因：外部方案复核确认当前短板是 effective weights 未成为评分/回测单一入口，以及 parameter
+      candidate 仍过度依赖 total return；本轮开始实现 resolver 接入和多目标 veto。2026-05-14: 从 IN_PROGRESS
+      改为 VALIDATING，原因：`score-daily` 与 `backtest` 已接入同一个 effective weight resolver，scores/backtest/trace/report
+      写入 profile、overlay 和 effective weights；approved overlay 未知 signal fail closed；parameter
+      replay/candidates 汇总并使用 OOS、same-turnover random、signal-family baseline、data
+      quality/data credibility 和 drawdown veto，正向收益不再直接进入 owner review。验证通过 `ruff
+      check src tests`、`git diff --check`、目标 pytest 83 passed 和全量 pytest 516 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:cca648f18fd9df24904a0c98a7c52693e645703e8472594a298736f27143b360
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-003
+  - 市场反馈优化/独立校准闭环
+  - P1
+  - VALIDATING
+  - 系统验证 + 项目 owner
+  - 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md`；本轮已实现权重
+    resolver 接入生产评分/回测审计、approved overlay fail-closed、多目标 candidate gate，以及 OOS/random/coverage
+    veto 汇总；下一步用当前真实 robustness 链路观察新 candidate 状态分布，并等待 owner 对 shadow/overlay 推进节奏做治理确认；不做黑箱权重优化或自动
+    production 晋级
+  - '`score-daily` 和 `backtest` 使用同一个 effective weight resolver 注入模块权重，并在 scores/backtest/trace/报告中写入
+    `weight_profile_version`、matched overlay、effective weights 和审计原因；approved overlay
+    出现未知 signal 必须 fail closed；parameter replay/candidate ledger 必须消费 robustness 的
+    OOS、same-turnover random、signal-family baseline、coverage/data credibility 证据，把
+    baseline-only、OOS 弱化、随机基线未过、coverage 不足等场景降级或阻断，不再只靠 total return 进入 owner review；runbook/系统流图/测试同步；仍保持
+    candidate-only、`production_effect=none`，不得自动生成 approved overlay 或改变 hard gate'
+  - '2026-05-13: 新增并进入 IN_PROGRESS，原因：owner 明确要求建立能持续从市场反馈优化判断逻辑的独立系统，避免无依据 if/else。2026-05-13:
+    从 IN_PROGRESS 改为 VALIDATING，原因：需求文档、任务登记、系统流图/runbook 计划、`aits feedback optimize-market-feedback`
+    只读报告入口和单测已完成；后续阶段仍需真实周/月样本、weight diagnostics、as-if replay 和 owner governance。2026-05-13:
+    从 VALIDATING 改回 IN_PROGRESS，原因：owner 追问 30 样本门槛缺少项目内依据，并要求在数据少时先放宽启动后续流程，后续再按观察调整间隔。2026-05-13:
+    从 IN_PROGRESS 改为 VALIDATING，原因：新增 `config/feedback_sample_policy.yaml`，报告读取 reporting/pilot/diagnostic/promotion
+    floor；当前 2026-05-12 outcome、因果链、学习队列、规则实验、shadow maturity 和优化报告均已跑通，readiness=`PILOT_DIAGNOSTIC_REVIEW`。2026-05-13:
+    2026-05-11 严格 outcome 刷新因价格缓存包含 2026-05-12 被数据质量门禁阻断；未绕过门禁，后续如需历史 as_of 刷新应补 replay-scoped
+    feedback calibration 输入。2026-05-13: 从 VALIDATING 改回 IN_PROGRESS，原因：owner 要求推进整个复盘迭代闭环，当前缺少把参数候选复测收益变化纳入
+    feedback 报告的功能。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：新增 `aits feedback build-parameter-replay`、`parameter_replay_YYYY-MM-DD.md/json`、`optimize-market-feedback`
+    参数 replay 汇总、系统流图/runbook/README 和测试；真实 smoke 已从最新 robustness summary 生成参数 replay
+    报告，因来源 summary 较旧仍披露 module_weight_perturbation 缺口。2026-05-13: 从 VALIDATING 改回
+    IN_PROGRESS，原因：owner 明确要求继续推进到当前数据可测试跑通、并能持续迭代的回测调参闭环。2026-05-13: 从 IN_PROGRESS
+    改为 VALIDATING，原因：新增 `aits feedback build-parameter-candidates`、`data/processed/parameter_candidates.json`
+    和 `parameter_candidates_YYYY-MM-DD.md`；当前数据已跑通 `parameter replay -> candidate
+    ledger -> optimize-market-feedback` 烟测，报告汇总 3 个 trial / 3 个 candidate，因 materiality
+    policy 缺失仍保持 `PASS_WITH_LIMITATIONS` 且不进入 production。2026-05-13: 从 VALIDATING
+    改回 IN_PROGRESS，原因：owner 要求继续排查 materiality policy 阻塞并保证闭环跑通。2026-05-13: 从 IN_PROGRESS
+    改为 VALIDATING，原因：`build-parameter-replay` 已对旧 robustness summary 缺 policy 的情况读取当前
+    `config/backtest_validation_policy.yaml` 并披露 limitation；当前闭环 smoke 显示 Needs materiality
+    policy=0、1 个正向 owner review、1 个负向 risk review、1 个 observe-only，仍保持 production_effect=none。2026-05-13:
+    从 VALIDATING 改回 IN_PROGRESS，原因：owner 要求处理所有阻塞点，确保从头开始的回测调参闭环完整跑通；当前阻塞集中在最新 `backtest
+    --robustness-report` 超时且不落盘。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：robustness
+    派生场景已复用基础回测已审计行，默认全窗口 `backtest --robustness-report --to 2026-05-12 --quality-as-of
+    2026-05-13` 已完成并写出带 as-run policy 的 summary；随后 parameter replay/candidates/overview
+    默认链路均跑通，replay/candidate 为 PASS，overview 为 PASS_WITH_LIMITATIONS（受 outcome/shadow/overlay
+    样本限制）。2026-05-14: 从 VALIDATING 改回 IN_PROGRESS，原因：owner 认为长期维护“跑一次后复用基础行派生指标”会影响回测正确性，要求不要维护两套计算逻辑；本轮改为缓存
+    PIT feature/report 上下文，但权重扰动、成本压力和窗口切分等调参场景必须继续调用同一评分/回测执行路径。2026-05-14: 从 IN_PROGRESS
+    改为 VALIDATING，原因：`backtest` 已拆出 prepared PIT context，非 lag 调参场景复用缓存输入但仍重走同一 `run_daily_score_backtest`
+    评分/回测路径；默认全窗口真实命令 431 秒完成并写出 41 个 robustness 场景，随后 parameter replay/candidates/overview
+    均读取新产物跑通。验证通过 `ruff check src tests`、目标 pytest 32 passed、全量 pytest 513 passed、`git
+    diff --check`。2026-05-14: 从 VALIDATING 改回 IN_PROGRESS，原因：外部方案复核确认当前短板是 effective
+    weights 未成为评分/回测单一入口，以及 parameter candidate 仍过度依赖 total return；本轮开始实现 resolver
+    接入和多目标 veto。2026-05-14: 从 IN_PROGRESS 改为 VALIDATING，原因：`score-daily` 与 `backtest`
+    已接入同一个 effective weight resolver，scores/backtest/trace/report 写入 profile、overlay
+    和 effective weights；approved overlay 未知 signal fail closed；parameter replay/candidates
+    汇总并使用 OOS、same-turnover random、signal-family baseline、data quality/data credibility
+    和 drawdown veto，正向收益不再直接进入 owner review。验证通过 `ruff check src tests`、`git diff
+    --check`、目标 pytest 83 passed 和全量 pytest 516 passed。'
+  docs_links:
+  - docs/requirements/market_feedback_optimization_loop_2026-05-13.md
+  terminal: false
+  raw_row_sha256: cca648f18fd9df24904a0c98a7c52693e645703e8472594a298736f27143b360
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0962861ade63e71b73f1be5a9c3d178e5787fb1b8e77ad6eabdb0f3d358a3433

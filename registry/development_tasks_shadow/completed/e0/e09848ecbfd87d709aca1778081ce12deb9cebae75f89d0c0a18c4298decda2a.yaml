@@ -1,0 +1,181 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-023
+  title: null
+  domain: 交易执行/Pipeline Health Summary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/pipeline_health_summary_2026-05-23.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/pipeline_health_summary_2026-05-23.md`；只读
+    pipeline health summary artifact、CLI、dashboard 卡片、runbook、system flow、artifact
+    catalog、测试和最终收尾验证已完成；后续 TRADING-022 如需直接消费该 artifact，应另建只读接入小任务，不混入本任务
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_pipeline_health_summary.py` 和 `data/derived/pipeline_health/pipeline_health_summary_YYYY-MM-DD.json/md`、`pipeline_health/logs/pipeline_health_summary_run_YYYY-MM-DD.json/md`；覆盖
+      TRADING-018B 到 022 的 required/optional artifact registry、missing/stale/status/safety
+      field 扫描、overall health_status、Markdown banners、run log、dashboard 只读卡片、runbook、system
+      flow、artifact catalog 和测试；所有输出固定 `production_effect=none`、`manual_review_only=true`、`pipeline_health_only=true`、`read_only=true`、`pipelines_executed_by_health_check=false`、`apply_executed_by_health_check=false`、`rollback_executed_by_health_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；Dashboard
+      只读读取 TRADING-023 artifact，不触发 018B-022、TRADING-023 script、market/backtest/scoring/broker/replay/trading；最终收尾验证通过
+      repo 外 OK/INCOMPLETE/CRITICAL/STALE smoke、目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+      diff
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 403
+    row_sha256: 5ce515d01b9e474341adbb45e03ad02e1df62bd1d9b3278a7fe03008ba59e99f
+    cell_count: 8
+    all_cells:
+    - TRADING-023
+    - 交易执行/Pipeline Health Summary
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/pipeline_health_summary_2026-05-23.md`；只读 pipeline
+      health summary artifact、CLI、dashboard 卡片、runbook、system flow、artifact catalog、测试和最终收尾验证已完成；后续
+      TRADING-022 如需直接消费该 artifact，应另建只读接入小任务，不混入本任务
+    - 新增 `scripts/run_pipeline_health_summary.py` 和 `data/derived/pipeline_health/pipeline_health_summary_YYYY-MM-DD.json/md`、`pipeline_health/logs/pipeline_health_summary_run_YYYY-MM-DD.json/md`；覆盖
+      TRADING-018B 到 022 的 required/optional artifact registry、missing/stale/status/safety
+      field 扫描、overall health_status、Markdown banners、run log、dashboard 只读卡片、runbook、system
+      flow、artifact catalog 和测试；所有输出固定 `production_effect=none`、`manual_review_only=true`、`pipeline_health_only=true`、`read_only=true`、`pipelines_executed_by_health_check=false`、`apply_executed_by_health_check=false`、`rollback_executed_by_health_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；Dashboard
+      只读读取 TRADING-023 artifact，不触发 018B-022、TRADING-023 script、market/backtest/scoring/broker/replay/trading；最终收尾验证通过
+      repo 外 OK/INCOMPLETE/CRITICAL/STALE smoke、目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+      diff
+    - '2026-05-23: 新增并进入 IN_PROGRESS，原因：TRADING-022 operator brief 的 `pipeline_health`
+      仍可能为 UNKNOWN，需要先补一个独立只读 health artifact；本任务只做 artifact health summary，不运行或补造任何
+      pipeline。2026-05-23: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 pipeline health summary
+      builder、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、system flow、artifact
+      catalog 和专项测试；验证通过新增专项 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff
+      和 repo 外 OK/INCOMPLETE/CRITICAL/STALE smoke；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未格式化无关文件。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo 外临时
+      fixture 四路径 smoke；OK 输出 `OK`，Markdown 包含 `Health Summary`、`Required Pipelines`、`Optional
+      Pipelines`；缺失 required artifact 输出 `INCOMPLETE`；required artifact `broker_execution=true`
+      输出 `CRITICAL`，Markdown 顶部显示 `CRITICAL: Pipeline Health Issue Detected` 且 critical
+      alerts 非空；required artifact stale 输出 `ACTION_REQUIRED`，Markdown 顶部显示 `Action
+      Required` 且 stale required pipelines 非空；`include_optional_pipelines=true` 下
+      optional missing 输出 `WATCH` 而不是 `INCOMPLETE`；所有 smoke 输出和 run log 均确认 `production_effect=none`、`manual_review_only=true`、`pipeline_health_only=true`、`read_only=true`、`pipelines_executed_by_health_check=false`、`apply_executed_by_health_check=false`、`rollback_executed_by_health_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+      import guard 验证 Pipeline Health Summary 卡片只读读取 TRADING-023 artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020/021/022、TRADING-023
+      script、market/backtest/scoring/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未混入无关格式化 diff。'
+    raw_line: '|TRADING-023|交易执行/Pipeline Health Summary|P0|DONE|系统验证|详细拆解见 `docs/requirements/pipeline_health_summary_2026-05-23.md`；只读
+      pipeline health summary artifact、CLI、dashboard 卡片、runbook、system flow、artifact
+      catalog、测试和最终收尾验证已完成；后续 TRADING-022 如需直接消费该 artifact，应另建只读接入小任务，不混入本任务|新增 `scripts/run_pipeline_health_summary.py`
+      和 `data/derived/pipeline_health/pipeline_health_summary_YYYY-MM-DD.json/md`、`pipeline_health/logs/pipeline_health_summary_run_YYYY-MM-DD.json/md`；覆盖
+      TRADING-018B 到 022 的 required/optional artifact registry、missing/stale/status/safety
+      field 扫描、overall health_status、Markdown banners、run log、dashboard 只读卡片、runbook、system
+      flow、artifact catalog 和测试；所有输出固定 `production_effect=none`、`manual_review_only=true`、`pipeline_health_only=true`、`read_only=true`、`pipelines_executed_by_health_check=false`、`apply_executed_by_health_check=false`、`rollback_executed_by_health_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；Dashboard
+      只读读取 TRADING-023 artifact，不触发 018B-022、TRADING-023 script、market/backtest/scoring/broker/replay/trading；最终收尾验证通过
+      repo 外 OK/INCOMPLETE/CRITICAL/STALE smoke、目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+      diff|2026-05-23: 新增并进入 IN_PROGRESS，原因：TRADING-022 operator brief 的 `pipeline_health`
+      仍可能为 UNKNOWN，需要先补一个独立只读 health artifact；本任务只做 artifact health summary，不运行或补造任何
+      pipeline。2026-05-23: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 pipeline health summary
+      builder、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、system flow、artifact
+      catalog 和专项测试；验证通过新增专项 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff
+      和 repo 外 OK/INCOMPLETE/CRITICAL/STALE smoke；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未格式化无关文件。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo 外临时
+      fixture 四路径 smoke；OK 输出 `OK`，Markdown 包含 `Health Summary`、`Required Pipelines`、`Optional
+      Pipelines`；缺失 required artifact 输出 `INCOMPLETE`；required artifact `broker_execution=true`
+      输出 `CRITICAL`，Markdown 顶部显示 `CRITICAL: Pipeline Health Issue Detected` 且 critical
+      alerts 非空；required artifact stale 输出 `ACTION_REQUIRED`，Markdown 顶部显示 `Action
+      Required` 且 stale required pipelines 非空；`include_optional_pipelines=true` 下
+      optional missing 输出 `WATCH` 而不是 `INCOMPLETE`；所有 smoke 输出和 run log 均确认 `production_effect=none`、`manual_review_only=true`、`pipeline_health_only=true`、`read_only=true`、`pipelines_executed_by_health_check=false`、`apply_executed_by_health_check=false`、`rollback_executed_by_health_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+      import guard 验证 Pipeline Health Summary 卡片只读读取 TRADING-023 artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020/021/022、TRADING-023
+      script、market/backtest/scoring/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未混入无关格式化 diff。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5ce515d01b9e474341adbb45
+  task_id: TRADING-023
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-23: 新增并进入 IN_PROGRESS，原因：TRADING-022 operator brief 的 `pipeline_health`
+      仍可能为 UNKNOWN，需要先补一个独立只读 health artifact；本任务只做 artifact health summary，不运行或补造任何
+      pipeline。2026-05-23: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 pipeline health summary
+      builder、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、system flow、artifact
+      catalog 和专项测试；验证通过新增专项 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff
+      和 repo 外 OK/INCOMPLETE/CRITICAL/STALE smoke；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未格式化无关文件。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo 外临时
+      fixture 四路径 smoke；OK 输出 `OK`，Markdown 包含 `Health Summary`、`Required Pipelines`、`Optional
+      Pipelines`；缺失 required artifact 输出 `INCOMPLETE`；required artifact `broker_execution=true`
+      输出 `CRITICAL`，Markdown 顶部显示 `CRITICAL: Pipeline Health Issue Detected` 且 critical
+      alerts 非空；required artifact stale 输出 `ACTION_REQUIRED`，Markdown 顶部显示 `Action
+      Required` 且 stale required pipelines 非空；`include_optional_pipelines=true` 下
+      optional missing 输出 `WATCH` 而不是 `INCOMPLETE`；所有 smoke 输出和 run log 均确认 `production_effect=none`、`manual_review_only=true`、`pipeline_health_only=true`、`read_only=true`、`pipelines_executed_by_health_check=false`、`apply_executed_by_health_check=false`、`rollback_executed_by_health_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+      import guard 验证 Pipeline Health Summary 卡片只读读取 TRADING-023 artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020/021/022、TRADING-023
+      script、market/backtest/scoring/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未混入无关格式化 diff。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5ce515d01b9e474341adbb45e03ad02e1df62bd1d9b3278a7fe03008ba59e99f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-023
+  - 交易执行/Pipeline Health Summary
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/pipeline_health_summary_2026-05-23.md`；只读 pipeline health
+    summary artifact、CLI、dashboard 卡片、runbook、system flow、artifact catalog、测试和最终收尾验证已完成；后续
+    TRADING-022 如需直接消费该 artifact，应另建只读接入小任务，不混入本任务
+  - 新增 `scripts/run_pipeline_health_summary.py` 和 `data/derived/pipeline_health/pipeline_health_summary_YYYY-MM-DD.json/md`、`pipeline_health/logs/pipeline_health_summary_run_YYYY-MM-DD.json/md`；覆盖
+    TRADING-018B 到 022 的 required/optional artifact registry、missing/stale/status/safety
+    field 扫描、overall health_status、Markdown banners、run log、dashboard 只读卡片、runbook、system
+    flow、artifact catalog 和测试；所有输出固定 `production_effect=none`、`manual_review_only=true`、`pipeline_health_only=true`、`read_only=true`、`pipelines_executed_by_health_check=false`、`apply_executed_by_health_check=false`、`rollback_executed_by_health_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；Dashboard
+    只读读取 TRADING-023 artifact，不触发 018B-022、TRADING-023 script、market/backtest/scoring/broker/replay/trading；最终收尾验证通过
+    repo 外 OK/INCOMPLETE/CRITICAL/STALE smoke、目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+    pytest 和 ruff；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+    diff
+  - '2026-05-23: 新增并进入 IN_PROGRESS，原因：TRADING-022 operator brief 的 `pipeline_health`
+    仍可能为 UNKNOWN，需要先补一个独立只读 health artifact；本任务只做 artifact health summary，不运行或补造任何
+    pipeline。2026-05-23: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 pipeline health summary
+    builder、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、system flow、artifact
+    catalog 和专项测试；验证通过新增专项 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff
+    和 repo 外 OK/INCOMPLETE/CRITICAL/STALE smoke；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py`
+    baseline 阻断，未格式化无关文件。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo 外临时 fixture
+    四路径 smoke；OK 输出 `OK`，Markdown 包含 `Health Summary`、`Required Pipelines`、`Optional
+    Pipelines`；缺失 required artifact 输出 `INCOMPLETE`；required artifact `broker_execution=true`
+    输出 `CRITICAL`，Markdown 顶部显示 `CRITICAL: Pipeline Health Issue Detected` 且 critical
+    alerts 非空；required artifact stale 输出 `ACTION_REQUIRED`，Markdown 顶部显示 `Action Required`
+    且 stale required pipelines 非空；`include_optional_pipelines=true` 下 optional missing
+    输出 `WATCH` 而不是 `INCOMPLETE`；所有 smoke 输出和 run log 均确认 `production_effect=none`、`manual_review_only=true`、`pipeline_health_only=true`、`read_only=true`、`pipelines_executed_by_health_check=false`、`apply_executed_by_health_check=false`、`rollback_executed_by_health_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+    import guard 验证 Pipeline Health Summary 卡片只读读取 TRADING-023 artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020/021/022、TRADING-023
+    script、market/backtest/scoring/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+    pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+    baseline 阻断，未混入无关格式化 diff。'
+  docs_links:
+  - docs/requirements/pipeline_health_summary_2026-05-23.md
+  terminal: true
+  raw_row_sha256: 5ce515d01b9e474341adbb45e03ad02e1df62bd1d9b3278a7fe03008ba59e99f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 86588cdf877316b6ce05dc12d5e14a7efa2f4fe570a1aad7b17aeb90ba144899

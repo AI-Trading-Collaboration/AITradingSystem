@@ -1,0 +1,93 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: PROD-001
+  title: null
+  domain: 趋势判断就绪/日报边界
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 总控任务已收口：日报范围已从生产交易依据改为趋势判断和投研复核辅助，阻止趋势判断可靠性的缺口已拆成独立子任务；剩余推进项见
+    `PROD-002`、`PROD-003`、`PROD-004`、`PROD-005`、`PROD-006`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 完成标准为边界固定与任务拆分，而非所有子模块生产成熟：交易执行、券商税费和账户级买卖闭环不作为近期阻塞项；风险复核运行纪律、第二合格数据源、PIT
+      样本成熟度、规则 owner approval 和 forward shadow 成熟度均有独立任务、owner、阻塞条件和验收标准
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 423
+    row_sha256: c2d380f5b79e518f882c7ca0a551429c5e39318b185f777d990d340a138606df
+    cell_count: 8
+    all_cells:
+    - PROD-001
+    - 趋势判断就绪/日报边界
+    - P1
+    - DONE
+    - 系统实现 + 项目 owner
+    - 总控任务已收口：日报范围已从生产交易依据改为趋势判断和投研复核辅助，阻止趋势判断可靠性的缺口已拆成独立子任务；剩余推进项见 `PROD-002`、`PROD-003`、`PROD-004`、`PROD-005`、`PROD-006`
+    - 完成标准为边界固定与任务拆分，而非所有子模块生产成熟：交易执行、券商税费和账户级买卖闭环不作为近期阻塞项；风险复核运行纪律、第二合格数据源、PIT 样本成熟度、规则
+      owner approval 和 forward shadow 成熟度均有独立任务、owner、阻塞条件和验收标准
+    - '2026-05-04: 新增任务，原因：2026-05-04 日报虽成功生成但结论使用等级为 `data_limited`、执行动作为 `observe_only`，需要把生产化不足登记为有序
+      TODO。2026-05-04: 更新口径，原因：owner 明确当前系统不需要实际触发交易，仅作趋势判断。2026-05-06: 从 IN_PROGRESS
+      改为 DONE，原因：owner 决策将牵涉多模块的总控任务收口，后续工作拆为可独立验收的子任务并保留在当前任务登记。'
+    raw_line: '|PROD-001|趋势判断就绪/日报边界|P1|DONE|系统实现 + 项目 owner|总控任务已收口：日报范围已从生产交易依据改为趋势判断和投研复核辅助，阻止趋势判断可靠性的缺口已拆成独立子任务；剩余推进项见
+      `PROD-002`、`PROD-003`、`PROD-004`、`PROD-005`、`PROD-006`|完成标准为边界固定与任务拆分，而非所有子模块生产成熟：交易执行、券商税费和账户级买卖闭环不作为近期阻塞项；风险复核运行纪律、第二合格数据源、PIT
+      样本成熟度、规则 owner approval 和 forward shadow 成熟度均有独立任务、owner、阻塞条件和验收标准|2026-05-04:
+      新增任务，原因：2026-05-04 日报虽成功生成但结论使用等级为 `data_limited`、执行动作为 `observe_only`，需要把生产化不足登记为有序
+      TODO。2026-05-04: 更新口径，原因：owner 明确当前系统不需要实际触发交易，仅作趋势判断。2026-05-06: 从 IN_PROGRESS
+      改为 DONE，原因：owner 决策将牵涉多模块的总控任务收口，后续工作拆为可独立验收的子任务并保留在当前任务登记。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c2d380f5b79e518f882c7ca0
+  task_id: PROD-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner
+    notes: '2026-05-04: 新增任务，原因：2026-05-04 日报虽成功生成但结论使用等级为 `data_limited`、执行动作为 `observe_only`，需要把生产化不足登记为有序
+      TODO。2026-05-04: 更新口径，原因：owner 明确当前系统不需要实际触发交易，仅作趋势判断。2026-05-06: 从 IN_PROGRESS
+      改为 DONE，原因：owner 决策将牵涉多模块的总控任务收口，后续工作拆为可独立验收的子任务并保留在当前任务登记。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c2d380f5b79e518f882c7ca0a551429c5e39318b185f777d990d340a138606df
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - PROD-001
+  - 趋势判断就绪/日报边界
+  - P1
+  - DONE
+  - 系统实现 + 项目 owner
+  - 总控任务已收口：日报范围已从生产交易依据改为趋势判断和投研复核辅助，阻止趋势判断可靠性的缺口已拆成独立子任务；剩余推进项见 `PROD-002`、`PROD-003`、`PROD-004`、`PROD-005`、`PROD-006`
+  - 完成标准为边界固定与任务拆分，而非所有子模块生产成熟：交易执行、券商税费和账户级买卖闭环不作为近期阻塞项；风险复核运行纪律、第二合格数据源、PIT 样本成熟度、规则
+    owner approval 和 forward shadow 成熟度均有独立任务、owner、阻塞条件和验收标准
+  - '2026-05-04: 新增任务，原因：2026-05-04 日报虽成功生成但结论使用等级为 `data_limited`、执行动作为 `observe_only`，需要把生产化不足登记为有序
+    TODO。2026-05-04: 更新口径，原因：owner 明确当前系统不需要实际触发交易，仅作趋势判断。2026-05-06: 从 IN_PROGRESS
+    改为 DONE，原因：owner 决策将牵涉多模块的总控任务收口，后续工作拆为可独立验收的子任务并保留在当前任务登记。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: c2d380f5b79e518f882c7ca0a551429c5e39318b185f777d990d340a138606df
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d5a3a110cf31b7843a947f967189baa5a6ff740ecd2b163cb9a6df0dc87afc61

@@ -1,0 +1,146 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-557_to_564_B2_EVIDENCE_EXPANSION_AND_B3_PRECHECK_V2
+  title: null
+  domain: ETF portfolio/weight research B2-only evidence expansion and B3 signal-direction
+    redesign refinement
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-557_to_564_B2_Evidence_Expansion_and_B3_Precheck_v2.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-557_to_564_B2_Evidence_Expansion_and_B3_Precheck_v2.md`；在
+    TRADING-537~556 后扩展 B2 evidence gap ledger、B2 risk-heavy windows v2、B2 trigger
+    sensitivity、B2 re-entry/opportunity-cost review、B2-only gate v2、B3 signal-direction
+    failure taxonomy、B3 signal-only redesign precheck v2 和最终 branch decision；不得调 B2
+    threshold，不得生成 B3 weights/backfill，不得运行 B4/B5/B6/v3，不得访问 untouched holdout，不得生成
+    official target weights、paper-shadow activation、extended shadow、broker/order/live/production
+    mutation，不得自动 append owner decision
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 输出 `b2_evidence_gap_ledger.json/md`、`b2_risk_heavy_window_expansion_v2.json/md`、`b2_risk_trigger_sensitivity_map.json/md`、`b2_reentry_opportunity_cost_review.json/md`、`b2_only_research_gate_v2.json/md`、`b3_signal_direction_failure_taxonomy.json/md`、`b3_redesign_candidate_precheck_v2.json/md`
+      和 `branch_decision_after_b2_v2_b3_precheck_v2.json/md`；所有输出必须披露 ai_after_chatgpt
+      regime、requested date range、data quality gate、source artifacts、Reader Brief
+      和 safety boundary；B4 retest 必须依赖 valid B3，B5 必须依赖 non-redundant valid B4，B6
+      必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1417
+    row_sha256: 3f0e5b36a4b6da2fdecccf4e4f5f37f25c5fa38f15010afb7de9451759c0d4a7
+    cell_count: 8
+    all_cells:
+    - TRADING-557_to_564_B2_EVIDENCE_EXPANSION_AND_B3_PRECHECK_V2
+    - ETF portfolio/weight research B2-only evidence expansion and B3 signal-direction
+      redesign refinement
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-557_to_564_B2_Evidence_Expansion_and_B3_Precheck_v2.md`；在
+      TRADING-537~556 后扩展 B2 evidence gap ledger、B2 risk-heavy windows v2、B2 trigger
+      sensitivity、B2 re-entry/opportunity-cost review、B2-only gate v2、B3 signal-direction
+      failure taxonomy、B3 signal-only redesign precheck v2 和最终 branch decision；不得调
+      B2 threshold，不得生成 B3 weights/backfill，不得运行 B4/B5/B6/v3，不得访问 untouched holdout，不得生成
+      official target weights、paper-shadow activation、extended shadow、broker/order/live/production
+      mutation，不得自动 append owner decision
+    - 输出 `b2_evidence_gap_ledger.json/md`、`b2_risk_heavy_window_expansion_v2.json/md`、`b2_risk_trigger_sensitivity_map.json/md`、`b2_reentry_opportunity_cost_review.json/md`、`b2_only_research_gate_v2.json/md`、`b3_signal_direction_failure_taxonomy.json/md`、`b3_redesign_candidate_precheck_v2.json/md`
+      和 `branch_decision_after_b2_v2_b3_precheck_v2.json/md`；所有输出必须披露 ai_after_chatgpt
+      regime、requested date range、data quality gate、source artifacts、Reader Brief
+      和 safety boundary；B4 retest 必须依赖 valid B3，B5 必须依赖 non-redundant valid B4，B6
+      必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git diff --check` 通过
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-537~556 后继续 B2-only evidence
+      expansion 和 B3 signal-direction redesign refinement；当前 final branch=`CONTINUE_B2_ONLY_PATH`、B2
+      gate=`B2_ONLY_NEEDS_MORE_EVIDENCE`、B3 precheck=`B3_SIGNAL_DIRECTION_PRECHECK_MIXED`，且
+      `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19: 实现完成并转入
+      VALIDATING；`b2-b3-v2-research` 输出 TRADING-557=`B2_EVIDENCE_GAP_LEDGER_READY`、558=`B2_RISK_HEAVY_WINDOW_EXPANSION_V2_READY`、559=`B2_TRIGGER_COVERAGE_TOO_LOW`、560=`B2_REENTRY_LAG_HIGH`、561=`B2_ONLY_NEEDS_MORE_EVIDENCE`、562=`B3_SIGNAL_DIRECTION_FAILURE_TAXONOMY_READY`、563=`B3_PRECHECK_MIXED`、564=`CONTINUE_B2_ONLY_TO_FULL_DIAGNOSTIC`，且
+      `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+    raw_line: '|TRADING-557_to_564_B2_EVIDENCE_EXPANSION_AND_B3_PRECHECK_V2|ETF portfolio/weight
+      research B2-only evidence expansion and B3 signal-direction redesign refinement|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-557_to_564_B2_Evidence_Expansion_and_B3_Precheck_v2.md`；在
+      TRADING-537~556 后扩展 B2 evidence gap ledger、B2 risk-heavy windows v2、B2 trigger
+      sensitivity、B2 re-entry/opportunity-cost review、B2-only gate v2、B3 signal-direction
+      failure taxonomy、B3 signal-only redesign precheck v2 和最终 branch decision；不得调
+      B2 threshold，不得生成 B3 weights/backfill，不得运行 B4/B5/B6/v3，不得访问 untouched holdout，不得生成
+      official target weights、paper-shadow activation、extended shadow、broker/order/live/production
+      mutation，不得自动 append owner decision|输出 `b2_evidence_gap_ledger.json/md`、`b2_risk_heavy_window_expansion_v2.json/md`、`b2_risk_trigger_sensitivity_map.json/md`、`b2_reentry_opportunity_cost_review.json/md`、`b2_only_research_gate_v2.json/md`、`b3_signal_direction_failure_taxonomy.json/md`、`b3_redesign_candidate_precheck_v2.json/md`
+      和 `branch_decision_after_b2_v2_b3_precheck_v2.json/md`；所有输出必须披露 ai_after_chatgpt
+      regime、requested date range、data quality gate、source artifacts、Reader Brief
+      和 safety boundary；B4 retest 必须依赖 valid B3，B5 必须依赖 non-redundant valid B4，B6
+      必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git diff --check` 通过|2026-06-19:
+      新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-537~556 后继续 B2-only evidence expansion
+      和 B3 signal-direction redesign refinement；当前 final branch=`CONTINUE_B2_ONLY_PATH`、B2
+      gate=`B2_ONLY_NEEDS_MORE_EVIDENCE`、B3 precheck=`B3_SIGNAL_DIRECTION_PRECHECK_MIXED`，且
+      `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19: 实现完成并转入
+      VALIDATING；`b2-b3-v2-research` 输出 TRADING-557=`B2_EVIDENCE_GAP_LEDGER_READY`、558=`B2_RISK_HEAVY_WINDOW_EXPANSION_V2_READY`、559=`B2_TRIGGER_COVERAGE_TOO_LOW`、560=`B2_REENTRY_LAG_HIGH`、561=`B2_ONLY_NEEDS_MORE_EVIDENCE`、562=`B3_SIGNAL_DIRECTION_FAILURE_TAXONOMY_READY`、563=`B3_PRECHECK_MIXED`、564=`CONTINUE_B2_ONLY_TO_FULL_DIAGNOSTIC`，且
+      `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3f0e5b36a4b6da2fdecccf4e
+  task_id: TRADING-557_to_564_B2_EVIDENCE_EXPANSION_AND_B3_PRECHECK_V2
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-537~556 后继续 B2-only
+      evidence expansion 和 B3 signal-direction redesign refinement；当前 final branch=`CONTINUE_B2_ONLY_PATH`、B2
+      gate=`B2_ONLY_NEEDS_MORE_EVIDENCE`、B3 precheck=`B3_SIGNAL_DIRECTION_PRECHECK_MIXED`，且
+      `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19: 实现完成并转入
+      VALIDATING；`b2-b3-v2-research` 输出 TRADING-557=`B2_EVIDENCE_GAP_LEDGER_READY`、558=`B2_RISK_HEAVY_WINDOW_EXPANSION_V2_READY`、559=`B2_TRIGGER_COVERAGE_TOO_LOW`、560=`B2_REENTRY_LAG_HIGH`、561=`B2_ONLY_NEEDS_MORE_EVIDENCE`、562=`B3_SIGNAL_DIRECTION_FAILURE_TAXONOMY_READY`、563=`B3_PRECHECK_MIXED`、564=`CONTINUE_B2_ONLY_TO_FULL_DIAGNOSTIC`，且
+      `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3f0e5b36a4b6da2fdecccf4e4f5f37f25c5fa38f15010afb7de9451759c0d4a7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-557_to_564_B2_EVIDENCE_EXPANSION_AND_B3_PRECHECK_V2
+  - ETF portfolio/weight research B2-only evidence expansion and B3 signal-direction
+    redesign refinement
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-557_to_564_B2_Evidence_Expansion_and_B3_Precheck_v2.md`；在
+    TRADING-537~556 后扩展 B2 evidence gap ledger、B2 risk-heavy windows v2、B2 trigger
+    sensitivity、B2 re-entry/opportunity-cost review、B2-only gate v2、B3 signal-direction
+    failure taxonomy、B3 signal-only redesign precheck v2 和最终 branch decision；不得调 B2
+    threshold，不得生成 B3 weights/backfill，不得运行 B4/B5/B6/v3，不得访问 untouched holdout，不得生成
+    official target weights、paper-shadow activation、extended shadow、broker/order/live/production
+    mutation，不得自动 append owner decision
+  - 输出 `b2_evidence_gap_ledger.json/md`、`b2_risk_heavy_window_expansion_v2.json/md`、`b2_risk_trigger_sensitivity_map.json/md`、`b2_reentry_opportunity_cost_review.json/md`、`b2_only_research_gate_v2.json/md`、`b3_signal_direction_failure_taxonomy.json/md`、`b3_redesign_candidate_precheck_v2.json/md`
+    和 `branch_decision_after_b2_v2_b3_precheck_v2.json/md`；所有输出必须披露 ai_after_chatgpt
+    regime、requested date range、data quality gate、source artifacts、Reader Brief 和
+    safety boundary；B4 retest 必须依赖 valid B3，B5 必须依赖 non-redundant valid B4，B6 必须依赖
+    valid B5；focused tests、JSON parse、ruff、compileall、`git diff --check` 通过
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-537~556 后继续 B2-only evidence
+    expansion 和 B3 signal-direction redesign refinement；当前 final branch=`CONTINUE_B2_ONLY_PATH`、B2
+    gate=`B2_ONLY_NEEDS_MORE_EVIDENCE`、B3 precheck=`B3_SIGNAL_DIRECTION_PRECHECK_MIXED`，且
+    `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19: 实现完成并转入 VALIDATING；`b2-b3-v2-research`
+    输出 TRADING-557=`B2_EVIDENCE_GAP_LEDGER_READY`、558=`B2_RISK_HEAVY_WINDOW_EXPANSION_V2_READY`、559=`B2_TRIGGER_COVERAGE_TOO_LOW`、560=`B2_REENTRY_LAG_HIGH`、561=`B2_ONLY_NEEDS_MORE_EVIDENCE`、562=`B3_SIGNAL_DIRECTION_FAILURE_TAXONOMY_READY`、563=`B3_PRECHECK_MIXED`、564=`CONTINUE_B2_ONLY_TO_FULL_DIAGNOSTIC`，且
+    `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+  docs_links:
+  - docs/requirements/TRADING-557_to_564_B2_Evidence_Expansion_and_B3_Precheck_v2.md
+  terminal: false
+  raw_row_sha256: 3f0e5b36a4b6da2fdecccf4e4f5f37f25c5fa38f15010afb7de9451759c0d4a7
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4deb9c48b5108e984529e41deb74c5ce0e9f09adda21cec246d99ed30f2a0849

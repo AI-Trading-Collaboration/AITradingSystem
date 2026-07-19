@@ -1,0 +1,160 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-395_PROMOTION_BOARD_RECOVERY_RERUN
+  title: null
+  domain: Research governance / paper-shadow promotion board recovery rerun
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 复核 promotion blockers；后续 TRADING-396 建立 observation clock，promotion/extended/live
+    仍 blocked until gates clear
+  requirement_refs:
+  - docs/requirements/TRADING-395_Promotion_Board_Recovery_Rerun.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-395_Promotion_Board_Recovery_Rerun.md`；在
+    TRADING-391~394 recovery evidence、owner hold 和 monthly rerun 后重跑 paper-shadow
+    promotion board，确认 board decision 保持 conservative，且不得在 cost/benchmark/monthly/owner
+    hold blocker 未清除时输出 `EXTEND_SHADOW`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 收紧 promotion board gate：`EXTEND_SHADOW` 必须所有 required extension evidence
+      为 `PASS` 且 owner review 明确请求 extended shadow；promotion checklist 显式读取 monthly
+      review 和 canonical health；新增 validator invariant 和 focused regression；`aits
+      reports paper-shadow-promotion-board --as-of 2026-06-17` 和 `validate-paper-shadow-promotion-board
+      --latest` 运行完成；report index、latest Reader Brief quality、report quality gate、documentation
+      contract、data quality gate、focused tests、ruff、compileall 和 git diff check 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 201
+    row_sha256: 5768a12ec601f211d6c7bd84b82d56a6b6d08e07bf8b8f31bfeb7e8fbb7d71da
+    cell_count: 8
+    all_cells:
+    - TRADING-395_PROMOTION_BOARD_RECOVERY_RERUN
+    - Research governance / paper-shadow promotion board recovery rerun
+    - P1
+    - DONE
+    - 项目 owner 复核 promotion blockers；后续 TRADING-396 建立 observation clock，promotion/extended/live
+      仍 blocked until gates clear
+    - 详细拆解见 `docs/requirements/TRADING-395_Promotion_Board_Recovery_Rerun.md`；在 TRADING-391~394
+      recovery evidence、owner hold 和 monthly rerun 后重跑 paper-shadow promotion board，确认
+      board decision 保持 conservative，且不得在 cost/benchmark/monthly/owner hold blocker
+      未清除时输出 `EXTEND_SHADOW`
+    - 收紧 promotion board gate：`EXTEND_SHADOW` 必须所有 required extension evidence 为 `PASS`
+      且 owner review 明确请求 extended shadow；promotion checklist 显式读取 monthly review
+      和 canonical health；新增 validator invariant 和 focused regression；`aits reports
+      paper-shadow-promotion-board --as-of 2026-06-17` 和 `validate-paper-shadow-promotion-board
+      --latest` 运行完成；report index、latest Reader Brief quality、report quality gate、documentation
+      contract、data quality gate、focused tests、ruff、compileall 和 git diff check 通过
+    - '2026-06-17: DONE；真实 rerun `outputs/reports/paper_shadow_promotion_board_2026-06-17.json/md`
+      输出 `HOLD_FOR_MORE_DATA`、candidate=`median_plus_regime_mismatch_filter`、checks=11、passed=3、blocked=3、warnings=5、safety=`SAFETY_PASS_WITH_WARNINGS`、readiness=`MANUAL_REVIEW_REQUIRED`、owner_decision=`AUDIT_LOG_PASS`。Blockers:
+      monthly review `MONTHLY_REVIEW_BLOCKED` -> `resolve_monthly_review_blockers_or_record_owner_hold_decision`;
+      cost sensitivity `NOT_MEANINGFUL_UNDER_COSTS` -> `return_candidate_to_research_until_net_improvement_survives_costs`;
+      benchmark comparison `CANDIDATE_UNDERPERFORMS_BASELINES` -> `return_candidate_to_research_until_it_outperforms_baseline_controls`。Warnings:
+      paper-shadow health / weekly review / readiness `MANUAL_REVIEW_REQUIRED`、safety
+      `SAFETY_PASS_WITH_WARNINGS`、owner review `monitor`。Validation `outputs/reports/paper_shadow_promotion_board_validation_2026-06-17.json/md`
+      输出 `PASS_WITH_WARNINGS`、checks=9、failed=0、source_blockers=3、source_warnings=5。同日
+      `reader-brief --as-of 2026-06-17` 因缺 `data/processed/decision_snapshots/decision_snapshot_2026-06-17.json`
+      被阻断；未补造 snapshot，后续由 TRADING-399 policy 处理。该 board 不恢复 paper-shadow、不批准 promotion/extended
+      shadow/live、official target、broker/order 或 production mutation。'
+    raw_line: '|TRADING-395_PROMOTION_BOARD_RECOVERY_RERUN|Research governance / paper-shadow
+      promotion board recovery rerun|P1|DONE|项目 owner 复核 promotion blockers；后续 TRADING-396
+      建立 observation clock，promotion/extended/live 仍 blocked until gates clear|详细拆解见
+      `docs/requirements/TRADING-395_Promotion_Board_Recovery_Rerun.md`；在 TRADING-391~394
+      recovery evidence、owner hold 和 monthly rerun 后重跑 paper-shadow promotion board，确认
+      board decision 保持 conservative，且不得在 cost/benchmark/monthly/owner hold blocker
+      未清除时输出 `EXTEND_SHADOW`|收紧 promotion board gate：`EXTEND_SHADOW` 必须所有 required
+      extension evidence 为 `PASS` 且 owner review 明确请求 extended shadow；promotion checklist
+      显式读取 monthly review 和 canonical health；新增 validator invariant 和 focused regression；`aits
+      reports paper-shadow-promotion-board --as-of 2026-06-17` 和 `validate-paper-shadow-promotion-board
+      --latest` 运行完成；report index、latest Reader Brief quality、report quality gate、documentation
+      contract、data quality gate、focused tests、ruff、compileall 和 git diff check 通过|2026-06-17:
+      DONE；真实 rerun `outputs/reports/paper_shadow_promotion_board_2026-06-17.json/md`
+      输出 `HOLD_FOR_MORE_DATA`、candidate=`median_plus_regime_mismatch_filter`、checks=11、passed=3、blocked=3、warnings=5、safety=`SAFETY_PASS_WITH_WARNINGS`、readiness=`MANUAL_REVIEW_REQUIRED`、owner_decision=`AUDIT_LOG_PASS`。Blockers:
+      monthly review `MONTHLY_REVIEW_BLOCKED` -> `resolve_monthly_review_blockers_or_record_owner_hold_decision`;
+      cost sensitivity `NOT_MEANINGFUL_UNDER_COSTS` -> `return_candidate_to_research_until_net_improvement_survives_costs`;
+      benchmark comparison `CANDIDATE_UNDERPERFORMS_BASELINES` -> `return_candidate_to_research_until_it_outperforms_baseline_controls`。Warnings:
+      paper-shadow health / weekly review / readiness `MANUAL_REVIEW_REQUIRED`、safety
+      `SAFETY_PASS_WITH_WARNINGS`、owner review `monitor`。Validation `outputs/reports/paper_shadow_promotion_board_validation_2026-06-17.json/md`
+      输出 `PASS_WITH_WARNINGS`、checks=9、failed=0、source_blockers=3、source_warnings=5。同日
+      `reader-brief --as-of 2026-06-17` 因缺 `data/processed/decision_snapshots/decision_snapshot_2026-06-17.json`
+      被阻断；未补造 snapshot，后续由 TRADING-399 policy 处理。该 board 不恢复 paper-shadow、不批准 promotion/extended
+      shadow/live、official target、broker/order 或 production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5768a12ec601f211d6c7bd84
+  task_id: TRADING-395_PROMOTION_BOARD_RECOVERY_RERUN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 复核 promotion blockers；后续 TRADING-396 建立 observation clock，promotion/extended/live
+      仍 blocked until gates clear
+    notes: '2026-06-17: DONE；真实 rerun `outputs/reports/paper_shadow_promotion_board_2026-06-17.json/md`
+      输出 `HOLD_FOR_MORE_DATA`、candidate=`median_plus_regime_mismatch_filter`、checks=11、passed=3、blocked=3、warnings=5、safety=`SAFETY_PASS_WITH_WARNINGS`、readiness=`MANUAL_REVIEW_REQUIRED`、owner_decision=`AUDIT_LOG_PASS`。Blockers:
+      monthly review `MONTHLY_REVIEW_BLOCKED` -> `resolve_monthly_review_blockers_or_record_owner_hold_decision`;
+      cost sensitivity `NOT_MEANINGFUL_UNDER_COSTS` -> `return_candidate_to_research_until_net_improvement_survives_costs`;
+      benchmark comparison `CANDIDATE_UNDERPERFORMS_BASELINES` -> `return_candidate_to_research_until_it_outperforms_baseline_controls`。Warnings:
+      paper-shadow health / weekly review / readiness `MANUAL_REVIEW_REQUIRED`、safety
+      `SAFETY_PASS_WITH_WARNINGS`、owner review `monitor`。Validation `outputs/reports/paper_shadow_promotion_board_validation_2026-06-17.json/md`
+      输出 `PASS_WITH_WARNINGS`、checks=9、failed=0、source_blockers=3、source_warnings=5。同日
+      `reader-brief --as-of 2026-06-17` 因缺 `data/processed/decision_snapshots/decision_snapshot_2026-06-17.json`
+      被阻断；未补造 snapshot，后续由 TRADING-399 policy 处理。该 board 不恢复 paper-shadow、不批准 promotion/extended
+      shadow/live、official target、broker/order 或 production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5768a12ec601f211d6c7bd84b82d56a6b6d08e07bf8b8f31bfeb7e8fbb7d71da
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-395_PROMOTION_BOARD_RECOVERY_RERUN
+  - Research governance / paper-shadow promotion board recovery rerun
+  - P1
+  - DONE
+  - 项目 owner 复核 promotion blockers；后续 TRADING-396 建立 observation clock，promotion/extended/live
+    仍 blocked until gates clear
+  - 详细拆解见 `docs/requirements/TRADING-395_Promotion_Board_Recovery_Rerun.md`；在 TRADING-391~394
+    recovery evidence、owner hold 和 monthly rerun 后重跑 paper-shadow promotion board，确认
+    board decision 保持 conservative，且不得在 cost/benchmark/monthly/owner hold blocker
+    未清除时输出 `EXTEND_SHADOW`
+  - 收紧 promotion board gate：`EXTEND_SHADOW` 必须所有 required extension evidence 为 `PASS`
+    且 owner review 明确请求 extended shadow；promotion checklist 显式读取 monthly review 和
+    canonical health；新增 validator invariant 和 focused regression；`aits reports paper-shadow-promotion-board
+    --as-of 2026-06-17` 和 `validate-paper-shadow-promotion-board --latest` 运行完成；report
+    index、latest Reader Brief quality、report quality gate、documentation contract、data
+    quality gate、focused tests、ruff、compileall 和 git diff check 通过
+  - '2026-06-17: DONE；真实 rerun `outputs/reports/paper_shadow_promotion_board_2026-06-17.json/md`
+    输出 `HOLD_FOR_MORE_DATA`、candidate=`median_plus_regime_mismatch_filter`、checks=11、passed=3、blocked=3、warnings=5、safety=`SAFETY_PASS_WITH_WARNINGS`、readiness=`MANUAL_REVIEW_REQUIRED`、owner_decision=`AUDIT_LOG_PASS`。Blockers:
+    monthly review `MONTHLY_REVIEW_BLOCKED` -> `resolve_monthly_review_blockers_or_record_owner_hold_decision`;
+    cost sensitivity `NOT_MEANINGFUL_UNDER_COSTS` -> `return_candidate_to_research_until_net_improvement_survives_costs`;
+    benchmark comparison `CANDIDATE_UNDERPERFORMS_BASELINES` -> `return_candidate_to_research_until_it_outperforms_baseline_controls`。Warnings:
+    paper-shadow health / weekly review / readiness `MANUAL_REVIEW_REQUIRED`、safety
+    `SAFETY_PASS_WITH_WARNINGS`、owner review `monitor`。Validation `outputs/reports/paper_shadow_promotion_board_validation_2026-06-17.json/md`
+    输出 `PASS_WITH_WARNINGS`、checks=9、failed=0、source_blockers=3、source_warnings=5。同日
+    `reader-brief --as-of 2026-06-17` 因缺 `data/processed/decision_snapshots/decision_snapshot_2026-06-17.json`
+    被阻断；未补造 snapshot，后续由 TRADING-399 policy 处理。该 board 不恢复 paper-shadow、不批准 promotion/extended
+    shadow/live、official target、broker/order 或 production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-395_Promotion_Board_Recovery_Rerun.md
+  terminal: true
+  raw_row_sha256: 5768a12ec601f211d6c7bd84b82d56a6b6d08e07bf8b8f31bfeb7e8fbb7d71da
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b432d50809f81c25e2d3c214fb37c21b549803064ba9a75ec7bacb6980f5a9c4

@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-062A
+  title: null
+  domain: ETF P2/EDGAR text topic audit baseline
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已在
+    TRADING-062 的 EDGAR text cache 之上新增只读 topic audit baseline
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`p2.yaml` 治理 topic keyword set、min text length、candidate-only 和 auto-promotion
+      边界；`aits etf p2 edgar-topics` 只能读取已缓存 official filing text，输出 topic counts、matched
+      keywords、limitation、policy version 和 `production_effect=none`；不得生成 sentiment、财务结论、权重、交易建议或
+      broker action；测试覆盖 PIT as-of、缺文本、关键词计数和安全边界'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 364
+    row_sha256: d8f21e5bdf8a678ba23995c76d2a0b90f21bc11b4f0ee829e4c44dc4355e9a20
+    cell_count: 8
+    all_cells:
+    - TRADING-062A
+    - ETF P2/EDGAR text topic audit baseline
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已在
+      TRADING-062 的 EDGAR text cache 之上新增只读 topic audit baseline
+    - '`p2.yaml` 治理 topic keyword set、min text length、candidate-only 和 auto-promotion
+      边界；`aits etf p2 edgar-topics` 只能读取已缓存 official filing text，输出 topic counts、matched
+      keywords、limitation、policy version 和 `production_effect=none`；不得生成 sentiment、财务结论、权重、交易建议或
+      broker action；测试覆盖 PIT as-of、缺文本、关键词计数和安全边界'
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：TRADING-062 已具备 official filing text cache，但原
+      P2 文档还要求 EDGAR / 财报文本解释层；本阶段先实现受治理、observe-only 的 topic audit，不接 LLM、不做自动投资解释。2026-05-31:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `edgar_text_analysis` policy、`aits etf p2 edgar-topics`、topic
+      audit builder 和测试；真实 NVDA 10-Q smoke 输出 4 个 topic rows，固定 `candidate_only=true`、`auto_promotion=false`、`production_effect=none`。'
+    raw_line: '|TRADING-062A|ETF P2/EDGAR text topic audit baseline|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已在 TRADING-062
+      的 EDGAR text cache 之上新增只读 topic audit baseline|`p2.yaml` 治理 topic keyword set、min
+      text length、candidate-only 和 auto-promotion 边界；`aits etf p2 edgar-topics` 只能读取已缓存
+      official filing text，输出 topic counts、matched keywords、limitation、policy version
+      和 `production_effect=none`；不得生成 sentiment、财务结论、权重、交易建议或 broker action；测试覆盖 PIT
+      as-of、缺文本、关键词计数和安全边界|2026-05-31: 新增并进入 IN_PROGRESS，原因：TRADING-062 已具备 official
+      filing text cache，但原 P2 文档还要求 EDGAR / 财报文本解释层；本阶段先实现受治理、observe-only 的 topic
+      audit，不接 LLM、不做自动投资解释。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 `edgar_text_analysis`
+      policy、`aits etf p2 edgar-topics`、topic audit builder 和测试；真实 NVDA 10-Q smoke
+      输出 4 个 topic rows，固定 `candidate_only=true`、`auto_promotion=false`、`production_effect=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d8f21e5bdf8a678ba23995c7
+  task_id: TRADING-062A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：TRADING-062 已具备 official filing text
+      cache，但原 P2 文档还要求 EDGAR / 财报文本解释层；本阶段先实现受治理、observe-only 的 topic audit，不接 LLM、不做自动投资解释。2026-05-31:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `edgar_text_analysis` policy、`aits etf p2 edgar-topics`、topic
+      audit builder 和测试；真实 NVDA 10-Q smoke 输出 4 个 topic rows，固定 `candidate_only=true`、`auto_promotion=false`、`production_effect=none`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d8f21e5bdf8a678ba23995c76d2a0b90f21bc11b4f0ee829e4c44dc4355e9a20
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062A
+  - ETF P2/EDGAR text topic audit baseline
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已在
+    TRADING-062 的 EDGAR text cache 之上新增只读 topic audit baseline
+  - '`p2.yaml` 治理 topic keyword set、min text length、candidate-only 和 auto-promotion
+    边界；`aits etf p2 edgar-topics` 只能读取已缓存 official filing text，输出 topic counts、matched
+    keywords、limitation、policy version 和 `production_effect=none`；不得生成 sentiment、财务结论、权重、交易建议或
+    broker action；测试覆盖 PIT as-of、缺文本、关键词计数和安全边界'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：TRADING-062 已具备 official filing text cache，但原
+    P2 文档还要求 EDGAR / 财报文本解释层；本阶段先实现受治理、observe-only 的 topic audit，不接 LLM、不做自动投资解释。2026-05-31:
+    从 IN_PROGRESS 改为 DONE，原因：新增 `edgar_text_analysis` policy、`aits etf p2 edgar-topics`、topic
+    audit builder 和测试；真实 NVDA 10-Q smoke 输出 4 个 topic rows，固定 `candidate_only=true`、`auto_promotion=false`、`production_effect=none`。'
+  docs_links:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  terminal: true
+  raw_row_sha256: d8f21e5bdf8a678ba23995c76d2a0b90f21bc11b4f0ee829e4c44dc4355e9a20
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3df9ee1fa82411a4dcc6e11d6d24066810f0be3eac402ce152084a1c375e0734

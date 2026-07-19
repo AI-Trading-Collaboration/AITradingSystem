@@ -1,0 +1,113 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2275_FIRST_LAYER_GATE_POLICY_V2_RECONCILIATION
+  title: null
+  domain: Research trends / first-layer gate policy v2 reconciliation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2275_First_Layer_Gate_Policy_v2_Reconciliation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2275_First_Layer_Gate_Policy_v2_Reconciliation.md`；依赖
+    TRADING-2274 gate acceptance audit。本批只生成分层 gate policy recommendation，不修改 active
+    selection rule，不训练模型，不恢复 promotion/paper-shadow/production/broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `recommended_gate_policy_v2.yaml`、`gate_policy_v2_reconciliation_report.md`、`owner_review_gate_semantics.md`
+      和 `active_selection_rule_audit_plan.md`；hard research gates 保持不可豁免；`no_major_regression_in_defensive_probe`
+      保持强 performance gate；`not_2023_plus_only` 降为 owner-review risk flag；beta/TQQQ
+      为 inconclusive diagnostic gates；probability thresholds 进入 sensitivity；all-slices
+      gate 进入 review semantics；active selection current accept=`0` 并指向 TRADING-2276。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1235
+    row_sha256: c0f537eb0496ba8e59616a75cba2c414ec1e413d5ecefd8310e13a2fd542c9e4
+    cell_count: 8
+    all_cells:
+    - TRADING-2275_FIRST_LAYER_GATE_POLICY_V2_RECONCILIATION
+    - Research trends / first-layer gate policy v2 reconciliation
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2275_First_Layer_Gate_Policy_v2_Reconciliation.md`；依赖
+      TRADING-2274 gate acceptance audit。本批只生成分层 gate policy recommendation，不修改 active
+      selection rule，不训练模型，不恢复 promotion/paper-shadow/production/broker。
+    - 生成 `recommended_gate_policy_v2.yaml`、`gate_policy_v2_reconciliation_report.md`、`owner_review_gate_semantics.md`
+      和 `active_selection_rule_audit_plan.md`；hard research gates 保持不可豁免；`no_major_regression_in_defensive_probe`
+      保持强 performance gate；`not_2023_plus_only` 降为 owner-review risk flag；beta/TQQQ
+      为 inconclusive diagnostic gates；probability thresholds 进入 sensitivity；all-slices
+      gate 进入 review semantics；active selection current accept=`0` 并指向 TRADING-2276。
+    - '2026-06-28: 实现完成并转入 VALIDATING；验证通过 Ruff、compileall、focused parallel pytest
+      46 passed、docs freshness、diff check 和 contract-validation 193 passed；runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260628T141300Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-2275_FIRST_LAYER_GATE_POLICY_V2_RECONCILIATION|Research trends
+      / first-layer gate policy v2 reconciliation|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-2275_First_Layer_Gate_Policy_v2_Reconciliation.md`；依赖
+      TRADING-2274 gate acceptance audit。本批只生成分层 gate policy recommendation，不修改 active
+      selection rule，不训练模型，不恢复 promotion/paper-shadow/production/broker。|生成 `recommended_gate_policy_v2.yaml`、`gate_policy_v2_reconciliation_report.md`、`owner_review_gate_semantics.md`
+      和 `active_selection_rule_audit_plan.md`；hard research gates 保持不可豁免；`no_major_regression_in_defensive_probe`
+      保持强 performance gate；`not_2023_plus_only` 降为 owner-review risk flag；beta/TQQQ
+      为 inconclusive diagnostic gates；probability thresholds 进入 sensitivity；all-slices
+      gate 进入 review semantics；active selection current accept=`0` 并指向 TRADING-2276。|2026-06-28:
+      实现完成并转入 VALIDATING；验证通过 Ruff、compileall、focused parallel pytest 46 passed、docs
+      freshness、diff check 和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T141300Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c0f537eb0496ba8e59616a75
+  task_id: TRADING-2275_FIRST_LAYER_GATE_POLICY_V2_RECONCILIATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 实现完成并转入 VALIDATING；验证通过 Ruff、compileall、focused parallel pytest
+      46 passed、docs freshness、diff check 和 contract-validation 193 passed；runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260628T141300Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c0f537eb0496ba8e59616a75cba2c414ec1e413d5ecefd8310e13a2fd542c9e4
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2275_FIRST_LAYER_GATE_POLICY_V2_RECONCILIATION
+  - Research trends / first-layer gate policy v2 reconciliation
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2275_First_Layer_Gate_Policy_v2_Reconciliation.md`；依赖
+    TRADING-2274 gate acceptance audit。本批只生成分层 gate policy recommendation，不修改 active
+    selection rule，不训练模型，不恢复 promotion/paper-shadow/production/broker。
+  - 生成 `recommended_gate_policy_v2.yaml`、`gate_policy_v2_reconciliation_report.md`、`owner_review_gate_semantics.md`
+    和 `active_selection_rule_audit_plan.md`；hard research gates 保持不可豁免；`no_major_regression_in_defensive_probe`
+    保持强 performance gate；`not_2023_plus_only` 降为 owner-review risk flag；beta/TQQQ
+    为 inconclusive diagnostic gates；probability thresholds 进入 sensitivity；all-slices
+    gate 进入 review semantics；active selection current accept=`0` 并指向 TRADING-2276。
+  - '2026-06-28: 实现完成并转入 VALIDATING；验证通过 Ruff、compileall、focused parallel pytest 46
+    passed、docs freshness、diff check 和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T141300Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-2275_First_Layer_Gate_Policy_v2_Reconciliation.md
+  terminal: false
+  raw_row_sha256: c0f537eb0496ba8e59616a75cba2c414ec1e413d5ecefd8310e13a2fd542c9e4
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: fe6db3b1d84834b8d70d55737260d6f397c8ab99dc5903ce70e6c12adaf6fe4e

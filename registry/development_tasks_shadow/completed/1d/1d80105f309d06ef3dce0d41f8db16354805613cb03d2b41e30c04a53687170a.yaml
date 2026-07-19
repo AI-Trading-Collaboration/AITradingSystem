@@ -1,0 +1,116 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-407_RECOVERY_GOVERNANCE_RERUN_AFTER_TRIAGE
+  title: null
+  domain: Research governance / recovery rerun after triage
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 复核 final recovery pack；normal paper-shadow、extended shadow、live
+    trading 继续按 fail-closed boundary
+  requirement_refs:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；收集
+    TRADING-401/402/403/404/405/406 输出后只读 rerun research governance recovery pack；不得
+    force healthy
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits reports recovery-governance-rerun-after-triage`；rerun canonical
+      recovery pack / validation 并附带 latest triage context；保持 normal paper-shadow
+      blocked unless all required blockers resolved；extended shadow 和 live trading
+      forbidden
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 196
+    row_sha256: 26f0d60e2cc4fe38b02db467d974e586e3042ce52049ac24d46edbd8ae6bc56e
+    cell_count: 8
+    all_cells:
+    - TRADING-407_RECOVERY_GOVERNANCE_RERUN_AFTER_TRIAGE
+    - Research governance / recovery rerun after triage
+    - P1
+    - DONE
+    - 项目 owner 复核 final recovery pack；normal paper-shadow、extended shadow、live trading
+      继续按 fail-closed boundary
+    - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；收集
+      TRADING-401/402/403/404/405/406 输出后只读 rerun research governance recovery pack；不得
+      force healthy
+    - 新增 `aits reports recovery-governance-rerun-after-triage`；rerun canonical recovery
+      pack / validation 并附带 latest triage context；保持 normal paper-shadow blocked unless
+      all required blockers resolved；extended shadow 和 live trading forbidden
+    - '2026-06-17: DONE；rerun `outputs/reports/research_governance_recovery_pack_2026-06-17.json/md`
+      仍为 `RECOVERY_GOVERNANCE_BLOCKED`、remaining_blockers=9、remaining_warnings=10、normal_paper_shadow_may_resume=false、extended_shadow_remains_forbidden=true、live_trading_remains_forbidden=true；validation
+      `research_governance_recovery_pack_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。未
+      force healthy、未 silent waiver、未修改 production state。'
+    raw_line: '|TRADING-407_RECOVERY_GOVERNANCE_RERUN_AFTER_TRIAGE|Research governance
+      / recovery rerun after triage|P1|DONE|项目 owner 复核 final recovery pack；normal
+      paper-shadow、extended shadow、live trading 继续按 fail-closed boundary|详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；收集
+      TRADING-401/402/403/404/405/406 输出后只读 rerun research governance recovery pack；不得
+      force healthy|新增 `aits reports recovery-governance-rerun-after-triage`；rerun
+      canonical recovery pack / validation 并附带 latest triage context；保持 normal paper-shadow
+      blocked unless all required blockers resolved；extended shadow 和 live trading
+      forbidden|2026-06-17: DONE；rerun `outputs/reports/research_governance_recovery_pack_2026-06-17.json/md`
+      仍为 `RECOVERY_GOVERNANCE_BLOCKED`、remaining_blockers=9、remaining_warnings=10、normal_paper_shadow_may_resume=false、extended_shadow_remains_forbidden=true、live_trading_remains_forbidden=true；validation
+      `research_governance_recovery_pack_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。未
+      force healthy、未 silent waiver、未修改 production state。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-26f0d60e2cc4fe38b02db467
+  task_id: TRADING-407_RECOVERY_GOVERNANCE_RERUN_AFTER_TRIAGE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 复核 final recovery pack；normal paper-shadow、extended shadow、live
+      trading 继续按 fail-closed boundary
+    notes: '2026-06-17: DONE；rerun `outputs/reports/research_governance_recovery_pack_2026-06-17.json/md`
+      仍为 `RECOVERY_GOVERNANCE_BLOCKED`、remaining_blockers=9、remaining_warnings=10、normal_paper_shadow_may_resume=false、extended_shadow_remains_forbidden=true、live_trading_remains_forbidden=true；validation
+      `research_governance_recovery_pack_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。未
+      force healthy、未 silent waiver、未修改 production state。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:26f0d60e2cc4fe38b02db467d974e586e3042ce52049ac24d46edbd8ae6bc56e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-407_RECOVERY_GOVERNANCE_RERUN_AFTER_TRIAGE
+  - Research governance / recovery rerun after triage
+  - P1
+  - DONE
+  - 项目 owner 复核 final recovery pack；normal paper-shadow、extended shadow、live trading
+    继续按 fail-closed boundary
+  - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；收集
+    TRADING-401/402/403/404/405/406 输出后只读 rerun research governance recovery pack；不得
+    force healthy
+  - 新增 `aits reports recovery-governance-rerun-after-triage`；rerun canonical recovery
+    pack / validation 并附带 latest triage context；保持 normal paper-shadow blocked unless
+    all required blockers resolved；extended shadow 和 live trading forbidden
+  - '2026-06-17: DONE；rerun `outputs/reports/research_governance_recovery_pack_2026-06-17.json/md`
+    仍为 `RECOVERY_GOVERNANCE_BLOCKED`、remaining_blockers=9、remaining_warnings=10、normal_paper_shadow_may_resume=false、extended_shadow_remains_forbidden=true、live_trading_remains_forbidden=true；validation
+    `research_governance_recovery_pack_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。未
+    force healthy、未 silent waiver、未修改 production state。'
+  docs_links:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  terminal: true
+  raw_row_sha256: 26f0d60e2cc4fe38b02db467d974e586e3042ce52049ac24d46edbd8ae6bc56e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f815c69fd5aa784afe759d34f63b8b275f73ed30596cca258296d11a33dceb61

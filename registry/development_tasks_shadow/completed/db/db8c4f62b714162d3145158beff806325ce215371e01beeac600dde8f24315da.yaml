@@ -1,0 +1,147 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2288_REFINED_CANDIDATE_REGENERATION_WITH_ADJUSTED_CONFIDENCE_SCALING
+  title: null
+  domain: Research trends / refined candidate regeneration with adjusted confidence
+    scaling
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 refined artifacts；TRADING-2289 执行 refined actual-path
+    validation
+  requirement_refs:
+  - docs/requirements/TRADING-2288_Refined_Candidate_Regeneration_with_Adjusted_Confidence_Scaling.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2288_Refined_Candidate_Regeneration_with_Adjusted_Confidence_Scaling.md`；已读取
+    TRADING-2287 confidence scaling refinement plan 和 TRADING-2284 original regenerated
+    artifacts。本批只生成 refined candidate-bound artifacts，不执行 actual-path validation、不做
+    owner review、promotion、paper-shadow、production 或 broker action，不改变 TRADING-2281
+    permanently inconclusive 或 TRADING-2285 original inconclusive 结论。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends refined-candidate-generators-regenerate`；生成 `baseline_plus_trend_structure_refined_confidence_v1`、`risk_appetite_refined_confidence_v1`
+      和 `volatility_regime_refined_confidence_v1` 的 refined signal spec、signal series、prediction
+      artifact、generation summary、validation summary、parameter application report
+      和 original-vs-refined delta；真实 CLI run 读取 95,220 条 TRADING-2287 input records，其中
+      73,188 条 eligible；selected proposals=9、selected parameter sets=9；top-level validation
+      status=`PASS`；refined high-confidence ratio 分别为 0.349975、0.0 和 0.349988，均未超过
+      guardrail 0.35；所有 outputs 固定 promotion/paper-shadow/production false、broker_action=none、actual_path_validation_ready=false、actual_path_validation_executed=false；focused
+      tests、full pytest、docs freshness、documentation contract、contract-validation、task-register
+      consistency、Ruff、compileall 和 diff check 通过。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 163
+    row_sha256: ac33246094aa395379cec381e298e3d232b30f47c197ca69ddb95d33578e950a
+    cell_count: 8
+    all_cells:
+    - TRADING-2288_REFINED_CANDIDATE_REGENERATION_WITH_ADJUSTED_CONFIDENCE_SCALING
+    - Research trends / refined candidate regeneration with adjusted confidence scaling
+    - P0
+    - DONE
+    - 项目 owner 后续复核 refined artifacts；TRADING-2289 执行 refined actual-path validation
+    - 详见 `docs/requirements/TRADING-2288_Refined_Candidate_Regeneration_with_Adjusted_Confidence_Scaling.md`；已读取
+      TRADING-2287 confidence scaling refinement plan 和 TRADING-2284 original regenerated
+      artifacts。本批只生成 refined candidate-bound artifacts，不执行 actual-path validation、不做
+      owner review、promotion、paper-shadow、production 或 broker action，不改变 TRADING-2281
+      permanently inconclusive 或 TRADING-2285 original inconclusive 结论。
+    - 新增 `aits research trends refined-candidate-generators-regenerate`；生成 `baseline_plus_trend_structure_refined_confidence_v1`、`risk_appetite_refined_confidence_v1`
+      和 `volatility_regime_refined_confidence_v1` 的 refined signal spec、signal series、prediction
+      artifact、generation summary、validation summary、parameter application report
+      和 original-vs-refined delta；真实 CLI run 读取 95,220 条 TRADING-2287 input records，其中
+      73,188 条 eligible；selected proposals=9、selected parameter sets=9；top-level validation
+      status=`PASS`；refined high-confidence ratio 分别为 0.349975、0.0 和 0.349988，均未超过
+      guardrail 0.35；所有 outputs 固定 promotion/paper-shadow/production false、broker_action=none、actual_path_validation_ready=false、actual_path_validation_executed=false；focused
+      tests、full pytest、docs freshness、documentation contract、contract-validation、task-register
+      consistency、Ruff、compileall 和 diff check 通过。
+    - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；范围限定为 adjusted-confidence refined
+      regeneration，TRADING-2289 才执行 refined actual-path validation。2026-06-30: 实现完成并归档为
+      DONE；验证通过 focused parallel pytest 15 passed、full parallel pytest 3591 passed
+      / 643 warnings、contract-validation 193 passed。'
+    raw_line: '|TRADING-2288_REFINED_CANDIDATE_REGENERATION_WITH_ADJUSTED_CONFIDENCE_SCALING|Research
+      trends / refined candidate regeneration with adjusted confidence scaling|P0|DONE|项目
+      owner 后续复核 refined artifacts；TRADING-2289 执行 refined actual-path validation|详见
+      `docs/requirements/TRADING-2288_Refined_Candidate_Regeneration_with_Adjusted_Confidence_Scaling.md`；已读取
+      TRADING-2287 confidence scaling refinement plan 和 TRADING-2284 original regenerated
+      artifacts。本批只生成 refined candidate-bound artifacts，不执行 actual-path validation、不做
+      owner review、promotion、paper-shadow、production 或 broker action，不改变 TRADING-2281
+      permanently inconclusive 或 TRADING-2285 original inconclusive 结论。|新增 `aits research
+      trends refined-candidate-generators-regenerate`；生成 `baseline_plus_trend_structure_refined_confidence_v1`、`risk_appetite_refined_confidence_v1`
+      和 `volatility_regime_refined_confidence_v1` 的 refined signal spec、signal series、prediction
+      artifact、generation summary、validation summary、parameter application report
+      和 original-vs-refined delta；真实 CLI run 读取 95,220 条 TRADING-2287 input records，其中
+      73,188 条 eligible；selected proposals=9、selected parameter sets=9；top-level validation
+      status=`PASS`；refined high-confidence ratio 分别为 0.349975、0.0 和 0.349988，均未超过
+      guardrail 0.35；所有 outputs 固定 promotion/paper-shadow/production false、broker_action=none、actual_path_validation_ready=false、actual_path_validation_executed=false；focused
+      tests、full pytest、docs freshness、documentation contract、contract-validation、task-register
+      consistency、Ruff、compileall 和 diff check 通过。|2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；范围限定为
+      adjusted-confidence refined regeneration，TRADING-2289 才执行 refined actual-path
+      validation。2026-06-30: 实现完成并归档为 DONE；验证通过 focused parallel pytest 15 passed、full
+      parallel pytest 3591 passed / 643 warnings、contract-validation 193 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ac33246094aa395379cec381
+  task_id: TRADING-2288_REFINED_CANDIDATE_REGENERATION_WITH_ADJUSTED_CONFIDENCE_SCALING
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 refined artifacts；TRADING-2289 执行 refined actual-path
+      validation
+    notes: '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；范围限定为 adjusted-confidence refined
+      regeneration，TRADING-2289 才执行 refined actual-path validation。2026-06-30: 实现完成并归档为
+      DONE；验证通过 focused parallel pytest 15 passed、full parallel pytest 3591 passed
+      / 643 warnings、contract-validation 193 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ac33246094aa395379cec381e298e3d232b30f47c197ca69ddb95d33578e950a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2288_REFINED_CANDIDATE_REGENERATION_WITH_ADJUSTED_CONFIDENCE_SCALING
+  - Research trends / refined candidate regeneration with adjusted confidence scaling
+  - P0
+  - DONE
+  - 项目 owner 后续复核 refined artifacts；TRADING-2289 执行 refined actual-path validation
+  - 详见 `docs/requirements/TRADING-2288_Refined_Candidate_Regeneration_with_Adjusted_Confidence_Scaling.md`；已读取
+    TRADING-2287 confidence scaling refinement plan 和 TRADING-2284 original regenerated
+    artifacts。本批只生成 refined candidate-bound artifacts，不执行 actual-path validation、不做
+    owner review、promotion、paper-shadow、production 或 broker action，不改变 TRADING-2281
+    permanently inconclusive 或 TRADING-2285 original inconclusive 结论。
+  - 新增 `aits research trends refined-candidate-generators-regenerate`；生成 `baseline_plus_trend_structure_refined_confidence_v1`、`risk_appetite_refined_confidence_v1`
+    和 `volatility_regime_refined_confidence_v1` 的 refined signal spec、signal series、prediction
+    artifact、generation summary、validation summary、parameter application report 和
+    original-vs-refined delta；真实 CLI run 读取 95,220 条 TRADING-2287 input records，其中
+    73,188 条 eligible；selected proposals=9、selected parameter sets=9；top-level validation
+    status=`PASS`；refined high-confidence ratio 分别为 0.349975、0.0 和 0.349988，均未超过 guardrail
+    0.35；所有 outputs 固定 promotion/paper-shadow/production false、broker_action=none、actual_path_validation_ready=false、actual_path_validation_executed=false；focused
+    tests、full pytest、docs freshness、documentation contract、contract-validation、task-register
+    consistency、Ruff、compileall 和 diff check 通过。
+  - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；范围限定为 adjusted-confidence refined regeneration，TRADING-2289
+    才执行 refined actual-path validation。2026-06-30: 实现完成并归档为 DONE；验证通过 focused parallel
+    pytest 15 passed、full parallel pytest 3591 passed / 643 warnings、contract-validation
+    193 passed。'
+  docs_links:
+  - docs/requirements/TRADING-2288_Refined_Candidate_Regeneration_with_Adjusted_Confidence_Scaling.md
+  terminal: true
+  raw_row_sha256: ac33246094aa395379cec381e298e3d232b30f47c197ca69ddb95d33578e950a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0504c3aa9b26fee38fbe5f1c5f1ee310b3d4b974fae2fb95dbeae78c9db6c9a3

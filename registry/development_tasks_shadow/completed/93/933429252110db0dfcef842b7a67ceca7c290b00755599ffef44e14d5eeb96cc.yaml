@@ -1,0 +1,137 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: RISK-013
+  title: null
+  domain: 风险事件/官方复核闭环
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/confidence_lift_workplan_2026-05-10.md
+  - docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/confidence_lift_workplan_2026-05-10.md`
+    和 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`；日报内自动 LLM
+    formal occurrence/attestation 写入、65% LLM formal 置信度和文档边界已通过最新 production daily-run
+    验证；LLM formal 非人工复核边界继续保留
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 报告能列出官方来源权限状态、OpenAI 预审队列、官方候选分类、已写入 occurrence/attestation 和缺口；`score-daily`
+      在 OpenAI 预审通过后可自动写入 LLM formal assessment，full coverage LLM formal 不再触发低置信模块；LLM
+      formal 仍不得伪装成人工复核、不得单独触发 position gate，且报告必须披露人工复核跳过原因、行为影响、风险、验证覆盖和退出条件；真实人工复核声明仍只能由
+      reviewer 显式写入
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 353
+    row_sha256: d37e91fb8338ea417f8cbdff74ba9ac6de7eae96cf23067544382bb75cf1d49e
+    cell_count: 8
+    all_cells:
+    - RISK-013
+    - 风险事件/官方复核闭环
+    - P1
+    - DONE
+    - 系统验证 + 项目 owner
+    - 详细拆解见 `docs/requirements/confidence_lift_workplan_2026-05-10.md` 和 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`；日报内自动
+      LLM formal occurrence/attestation 写入、65% LLM formal 置信度和文档边界已通过最新 production
+      daily-run 验证；LLM formal 非人工复核边界继续保留
+    - 报告能列出官方来源权限状态、OpenAI 预审队列、官方候选分类、已写入 occurrence/attestation 和缺口；`score-daily`
+      在 OpenAI 预审通过后可自动写入 LLM formal assessment，full coverage LLM formal 不再触发低置信模块；LLM
+      formal 仍不得伪装成人工复核、不得单独触发 position gate，且报告必须披露人工复核跳过原因、行为影响、风险、验证覆盖和退出条件；真实人工复核声明仍只能由
+      reviewer 显式写入
+    - '2026-05-10: 新增并进入实现，原因：owner 要求补风险事件复核闭环以解除 `policy_geopolitics` 的 `insufficient_data`
+      和 data confidence 上限；人工复核不得由系统伪造。2026-05-10: 从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：官方
+      API key 可见、官方来源抓取/triage/occurrence 校验已通过，但当前只有 LLM formal attestation，没有真实人工复核结论，不能写
+      manual_input 声明。2026-05-12: 从 BLOCKED_OWNER_INPUT 改为 IN_PROGRESS，原因：owner 明确允许短期放宽人工复核限制，以
+      LLM formal assessment 作为可信政策/地缘结论，但必须保留审计边界和退出条件。2026-05-12: 从 IN_PROGRESS 改为
+      VALIDATING，原因：`score-daily` 自动 LLM formal 写入、配置化 LLM formal 置信度、报告/系统流图/README/数据源说明和测试已完成；`python
+      -m pytest -q` 通过 467 项。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of
+      2026-06-05 --run-id codex_20260605_20260607103901` 中 OpenAI 预审和 LLM formal 自动写入均
+      PASS，`policy_geopolitics` 覆盖率 100%、置信度 65%，风险事件 gate 未触发；报告继续披露 LLM formal 未人工复核和不得单独触发仓位闸门。'
+    raw_line: '|RISK-013|风险事件/官方复核闭环|P1|DONE|系统验证 + 项目 owner|详细拆解见 `docs/requirements/confidence_lift_workplan_2026-05-10.md`
+      和 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`；日报内自动 LLM
+      formal occurrence/attestation 写入、65% LLM formal 置信度和文档边界已通过最新 production daily-run
+      验证；LLM formal 非人工复核边界继续保留|报告能列出官方来源权限状态、OpenAI 预审队列、官方候选分类、已写入 occurrence/attestation
+      和缺口；`score-daily` 在 OpenAI 预审通过后可自动写入 LLM formal assessment，full coverage LLM
+      formal 不再触发低置信模块；LLM formal 仍不得伪装成人工复核、不得单独触发 position gate，且报告必须披露人工复核跳过原因、行为影响、风险、验证覆盖和退出条件；真实人工复核声明仍只能由
+      reviewer 显式写入|2026-05-10: 新增并进入实现，原因：owner 要求补风险事件复核闭环以解除 `policy_geopolitics`
+      的 `insufficient_data` 和 data confidence 上限；人工复核不得由系统伪造。2026-05-10: 从 IN_PROGRESS
+      改为 BLOCKED_OWNER_INPUT，原因：官方 API key 可见、官方来源抓取/triage/occurrence 校验已通过，但当前只有
+      LLM formal attestation，没有真实人工复核结论，不能写 manual_input 声明。2026-05-12: 从 BLOCKED_OWNER_INPUT
+      改为 IN_PROGRESS，原因：owner 明确允许短期放宽人工复核限制，以 LLM formal assessment 作为可信政策/地缘结论，但必须保留审计边界和退出条件。2026-05-12:
+      从 IN_PROGRESS 改为 VALIDATING，原因：`score-daily` 自动 LLM formal 写入、配置化 LLM formal
+      置信度、报告/系统流图/README/数据源说明和测试已完成；`python -m pytest -q` 通过 467 项。2026-06-07: 从
+      VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      中 OpenAI 预审和 LLM formal 自动写入均 PASS，`policy_geopolitics` 覆盖率 100%、置信度 65%，风险事件
+      gate 未触发；报告继续披露 LLM formal 未人工复核和不得单独触发仓位闸门。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d37e91fb8338ea417f8cbdff
+  task_id: RISK-013
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-05-10: 新增并进入实现，原因：owner 要求补风险事件复核闭环以解除 `policy_geopolitics` 的 `insufficient_data`
+      和 data confidence 上限；人工复核不得由系统伪造。2026-05-10: 从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：官方
+      API key 可见、官方来源抓取/triage/occurrence 校验已通过，但当前只有 LLM formal attestation，没有真实人工复核结论，不能写
+      manual_input 声明。2026-05-12: 从 BLOCKED_OWNER_INPUT 改为 IN_PROGRESS，原因：owner 明确允许短期放宽人工复核限制，以
+      LLM formal assessment 作为可信政策/地缘结论，但必须保留审计边界和退出条件。2026-05-12: 从 IN_PROGRESS 改为
+      VALIDATING，原因：`score-daily` 自动 LLM formal 写入、配置化 LLM formal 置信度、报告/系统流图/README/数据源说明和测试已完成；`python
+      -m pytest -q` 通过 467 项。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of
+      2026-06-05 --run-id codex_20260605_20260607103901` 中 OpenAI 预审和 LLM formal 自动写入均
+      PASS，`policy_geopolitics` 覆盖率 100%、置信度 65%，风险事件 gate 未触发；报告继续披露 LLM formal 未人工复核和不得单独触发仓位闸门。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d37e91fb8338ea417f8cbdff74ba9ac6de7eae96cf23067544382bb75cf1d49e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - RISK-013
+  - 风险事件/官方复核闭环
+  - P1
+  - DONE
+  - 系统验证 + 项目 owner
+  - 详细拆解见 `docs/requirements/confidence_lift_workplan_2026-05-10.md` 和 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`；日报内自动
+    LLM formal occurrence/attestation 写入、65% LLM formal 置信度和文档边界已通过最新 production daily-run
+    验证；LLM formal 非人工复核边界继续保留
+  - 报告能列出官方来源权限状态、OpenAI 预审队列、官方候选分类、已写入 occurrence/attestation 和缺口；`score-daily`
+    在 OpenAI 预审通过后可自动写入 LLM formal assessment，full coverage LLM formal 不再触发低置信模块；LLM
+    formal 仍不得伪装成人工复核、不得单独触发 position gate，且报告必须披露人工复核跳过原因、行为影响、风险、验证覆盖和退出条件；真实人工复核声明仍只能由
+    reviewer 显式写入
+  - '2026-05-10: 新增并进入实现，原因：owner 要求补风险事件复核闭环以解除 `policy_geopolitics` 的 `insufficient_data`
+    和 data confidence 上限；人工复核不得由系统伪造。2026-05-10: 从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：官方
+    API key 可见、官方来源抓取/triage/occurrence 校验已通过，但当前只有 LLM formal attestation，没有真实人工复核结论，不能写
+    manual_input 声明。2026-05-12: 从 BLOCKED_OWNER_INPUT 改为 IN_PROGRESS，原因：owner 明确允许短期放宽人工复核限制，以
+    LLM formal assessment 作为可信政策/地缘结论，但必须保留审计边界和退出条件。2026-05-12: 从 IN_PROGRESS 改为
+    VALIDATING，原因：`score-daily` 自动 LLM formal 写入、配置化 LLM formal 置信度、报告/系统流图/README/数据源说明和测试已完成；`python
+    -m pytest -q` 通过 467 项。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of
+    2026-06-05 --run-id codex_20260605_20260607103901` 中 OpenAI 预审和 LLM formal 自动写入均
+    PASS，`policy_geopolitics` 覆盖率 100%、置信度 65%，风险事件 gate 未触发；报告继续披露 LLM formal 未人工复核和不得单独触发仓位闸门。'
+  docs_links:
+  - docs/requirements/confidence_lift_workplan_2026-05-10.md
+  - docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md
+  terminal: true
+  raw_row_sha256: d37e91fb8338ea417f8cbdff74ba9ac6de7eae96cf23067544382bb75cf1d49e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 042e340fa6f2fc667ebeacfac23377011694b13dae4a8f76e2aeeaaaf3b0dda8

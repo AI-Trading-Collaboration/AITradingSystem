@@ -1,0 +1,159 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2414_GROWTH_TILT_ENGINE_SIGNAL_VALIDITY_DEPENDENCY_REMEDIATION
+  title: null
+  domain: Strategy research / growth tilt signal validity dependency remediation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2415 growth tilt engine PIT gate readiness snapshot
+  requirement_refs:
+  - docs/requirements/TRADING-2414_Growth_Tilt_Engine_Signal_Validity_Dependency_Remediation.md
+  - docs/tasks/completed/TRADING-2414_Growth_Tilt_Engine_Signal_Validity_Dependency_Remediation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2414_Growth_Tilt_Engine_Signal_Validity_Dependency_Remediation.md`；承接
+    TRADING-2411 remediation plan、TRADING-2412 as-of remediation 和 TRADING-2413 source
+    traceability remediation，仅读取 prior artifacts/docs/registry/catalog；本任务只补 signal
+    validity dependency metadata、blocked reason、before/after mapping、updated source
+    feature mapping 和 validation design，不实现 `valid_until_window`，不修改 `growth_tilt_engine`
+    评分逻辑，不生成 feature/signal/scoring/backtest/daily report，不运行 candidate search，不进入
+    observation / paper-shadow / production / broker，不解除或降级任何 blocker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 reusable growth tilt signal validity dependency remediation helper、`aits
+      research strategies growth-tilt-engine-signal-validity-dependency-remediation`；输出
+      `signal_validity_dependency_remediation_result.json`、`signal_validity_dependency_contract_metadata.json`、`before_after_signal_validity_dependency_remediation.json`、`updated_source_feature_mapping.json`、`remaining_blocker_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_SIGNAL_VALIDITY_DEPENDENCY_REMEDIATION_READY_WITH_REMAINING_BLOCKERS`，input
+      gap count=7，validity dependency gap count=8，validity dependency remediated count=2，blocked
+      by valid_until_window count=1，blocked by source traceability count=5，remaining
+      blocked/gap count=7，contract-ready count=0，as-of status rollback count=0，source
+      traceability status rollback count=0，`growth_tilt_engine_blocker_resolved=false`、`growth_tilt_engine_blocker_downgraded=false`、`valid_until_window_blocker_resolved=false`、`valid_until_window_blocker_downgraded=false`、candidate_search_enabled=false、observation_enabled=false、paper_shadow_enabled=false、production_enabled=false、broker_enabled=false，next
+      route=`TRADING-2415_Growth_Tilt_Engine_PIT_Gate_Readiness_Snapshot`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 71
+    row_sha256: 56b885da348c0310e31e3ee95acc262fab894f1eae292fc45b880d2341904997
+    cell_count: 8
+    all_cells:
+    - TRADING-2414_GROWTH_TILT_ENGINE_SIGNAL_VALIDITY_DEPENDENCY_REMEDIATION
+    - Strategy research / growth tilt signal validity dependency remediation
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2415 growth tilt engine PIT gate readiness snapshot
+    - 详见 `docs/requirements/TRADING-2414_Growth_Tilt_Engine_Signal_Validity_Dependency_Remediation.md`；承接
+      TRADING-2411 remediation plan、TRADING-2412 as-of remediation 和 TRADING-2413
+      source traceability remediation，仅读取 prior artifacts/docs/registry/catalog；本任务只补
+      signal validity dependency metadata、blocked reason、before/after mapping、updated
+      source feature mapping 和 validation design，不实现 `valid_until_window`，不修改 `growth_tilt_engine`
+      评分逻辑，不生成 feature/signal/scoring/backtest/daily report，不运行 candidate search，不进入
+      observation / paper-shadow / production / broker，不解除或降级任何 blocker。
+    - 新增 reusable growth tilt signal validity dependency remediation helper、`aits
+      research strategies growth-tilt-engine-signal-validity-dependency-remediation`；输出
+      `signal_validity_dependency_remediation_result.json`、`signal_validity_dependency_contract_metadata.json`、`before_after_signal_validity_dependency_remediation.json`、`updated_source_feature_mapping.json`、`remaining_blocker_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_SIGNAL_VALIDITY_DEPENDENCY_REMEDIATION_READY_WITH_REMAINING_BLOCKERS`，input
+      gap count=7，validity dependency gap count=8，validity dependency remediated count=2，blocked
+      by valid_until_window count=1，blocked by source traceability count=5，remaining
+      blocked/gap count=7，contract-ready count=0，as-of status rollback count=0，source
+      traceability status rollback count=0，`growth_tilt_engine_blocker_resolved=false`、`growth_tilt_engine_blocker_downgraded=false`、`valid_until_window_blocker_resolved=false`、`valid_until_window_blocker_downgraded=false`、candidate_search_enabled=false、observation_enabled=false、paper_shadow_enabled=false、production_enabled=false、broker_enabled=false，next
+      route=`TRADING-2415_Growth_Tilt_Engine_PIT_Gate_Readiness_Snapshot`。
+    - '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；本任务未运行 `aits
+      validate-data`，因为只读取 TRADING-2413 / 2412 / 2411 prior artifacts/docs/registry/catalog，不读取
+      fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily report
+      或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+      binding、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      validation 结果见 `docs/tasks/completed/TRADING-2414_Growth_Tilt_Engine_Signal_Validity_Dependency_Remediation.md`。'
+    raw_line: '|TRADING-2414_GROWTH_TILT_ENGINE_SIGNAL_VALIDITY_DEPENDENCY_REMEDIATION|Strategy
+      research / growth tilt signal validity dependency remediation|P0|DONE|项目 owner
+      后续复核 TRADING-2415 growth tilt engine PIT gate readiness snapshot|详见 `docs/requirements/TRADING-2414_Growth_Tilt_Engine_Signal_Validity_Dependency_Remediation.md`；承接
+      TRADING-2411 remediation plan、TRADING-2412 as-of remediation 和 TRADING-2413
+      source traceability remediation，仅读取 prior artifacts/docs/registry/catalog；本任务只补
+      signal validity dependency metadata、blocked reason、before/after mapping、updated
+      source feature mapping 和 validation design，不实现 `valid_until_window`，不修改 `growth_tilt_engine`
+      评分逻辑，不生成 feature/signal/scoring/backtest/daily report，不运行 candidate search，不进入
+      observation / paper-shadow / production / broker，不解除或降级任何 blocker。|新增 reusable
+      growth tilt signal validity dependency remediation helper、`aits research strategies
+      growth-tilt-engine-signal-validity-dependency-remediation`；输出 `signal_validity_dependency_remediation_result.json`、`signal_validity_dependency_contract_metadata.json`、`before_after_signal_validity_dependency_remediation.json`、`updated_source_feature_mapping.json`、`remaining_blocker_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_SIGNAL_VALIDITY_DEPENDENCY_REMEDIATION_READY_WITH_REMAINING_BLOCKERS`，input
+      gap count=7，validity dependency gap count=8，validity dependency remediated count=2，blocked
+      by valid_until_window count=1，blocked by source traceability count=5，remaining
+      blocked/gap count=7，contract-ready count=0，as-of status rollback count=0，source
+      traceability status rollback count=0，`growth_tilt_engine_blocker_resolved=false`、`growth_tilt_engine_blocker_downgraded=false`、`valid_until_window_blocker_resolved=false`、`valid_until_window_blocker_downgraded=false`、candidate_search_enabled=false、observation_enabled=false、paper_shadow_enabled=false、production_enabled=false、broker_enabled=false，next
+      route=`TRADING-2415_Growth_Tilt_Engine_PIT_Gate_Readiness_Snapshot`。|2026-07-08:
+      根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；本任务未运行 `aits validate-data`，因为只读取
+      TRADING-2413 / 2412 / 2411 prior artifacts/docs/registry/catalog，不读取 fresh cached
+      market data、不运行新 backtest、不生成 feature/signal/scoring/daily report 或交易建议。candidate
+      search、observation、paper-shadow、scheduler、event append、outcome binding、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2414_Growth_Tilt_Engine_Signal_Validity_Dependency_Remediation.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-56b885da348c0310e31e3ee9
+  task_id: TRADING-2414_GROWTH_TILT_ENGINE_SIGNAL_VALIDITY_DEPENDENCY_REMEDIATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2415 growth tilt engine PIT gate readiness snapshot
+    notes: '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；本任务未运行
+      `aits validate-data`，因为只读取 TRADING-2413 / 2412 / 2411 prior artifacts/docs/registry/catalog，不读取
+      fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily report
+      或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+      binding、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      validation 结果见 `docs/tasks/completed/TRADING-2414_Growth_Tilt_Engine_Signal_Validity_Dependency_Remediation.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:56b885da348c0310e31e3ee95acc262fab894f1eae292fc45b880d2341904997
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2414_GROWTH_TILT_ENGINE_SIGNAL_VALIDITY_DEPENDENCY_REMEDIATION
+  - Strategy research / growth tilt signal validity dependency remediation
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2415 growth tilt engine PIT gate readiness snapshot
+  - 详见 `docs/requirements/TRADING-2414_Growth_Tilt_Engine_Signal_Validity_Dependency_Remediation.md`；承接
+    TRADING-2411 remediation plan、TRADING-2412 as-of remediation 和 TRADING-2413 source
+    traceability remediation，仅读取 prior artifacts/docs/registry/catalog；本任务只补 signal
+    validity dependency metadata、blocked reason、before/after mapping、updated source
+    feature mapping 和 validation design，不实现 `valid_until_window`，不修改 `growth_tilt_engine`
+    评分逻辑，不生成 feature/signal/scoring/backtest/daily report，不运行 candidate search，不进入
+    observation / paper-shadow / production / broker，不解除或降级任何 blocker。
+  - 新增 reusable growth tilt signal validity dependency remediation helper、`aits research
+    strategies growth-tilt-engine-signal-validity-dependency-remediation`；输出 `signal_validity_dependency_remediation_result.json`、`signal_validity_dependency_contract_metadata.json`、`before_after_signal_validity_dependency_remediation.json`、`updated_source_feature_mapping.json`、`remaining_blocker_summary.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_SIGNAL_VALIDITY_DEPENDENCY_REMEDIATION_READY_WITH_REMAINING_BLOCKERS`，input
+    gap count=7，validity dependency gap count=8，validity dependency remediated count=2，blocked
+    by valid_until_window count=1，blocked by source traceability count=5，remaining
+    blocked/gap count=7，contract-ready count=0，as-of status rollback count=0，source
+    traceability status rollback count=0，`growth_tilt_engine_blocker_resolved=false`、`growth_tilt_engine_blocker_downgraded=false`、`valid_until_window_blocker_resolved=false`、`valid_until_window_blocker_downgraded=false`、candidate_search_enabled=false、observation_enabled=false、paper_shadow_enabled=false、production_enabled=false、broker_enabled=false，next
+    route=`TRADING-2415_Growth_Tilt_Engine_PIT_Gate_Readiness_Snapshot`。
+  - '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；本任务未运行 `aits
+    validate-data`，因为只读取 TRADING-2413 / 2412 / 2411 prior artifacts/docs/registry/catalog，不读取
+    fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily report
+    或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+    binding、production、broker/order、daily report 全部保持 disabled / false / none；最终 validation
+    结果见 `docs/tasks/completed/TRADING-2414_Growth_Tilt_Engine_Signal_Validity_Dependency_Remediation.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2414_Growth_Tilt_Engine_Signal_Validity_Dependency_Remediation.md
+  - docs/tasks/completed/TRADING-2414_Growth_Tilt_Engine_Signal_Validity_Dependency_Remediation.md
+  terminal: true
+  raw_row_sha256: 56b885da348c0310e31e3ee95acc262fab894f1eae292fc45b880d2341904997
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9cde2855728669340769175131af3e61e86a7e72951c8b726c0207faa8aaf2df

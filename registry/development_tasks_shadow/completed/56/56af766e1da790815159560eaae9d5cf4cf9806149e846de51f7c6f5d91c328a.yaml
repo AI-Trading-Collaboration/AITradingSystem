@@ -1,0 +1,123 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-015
+  title: null
+  domain: PIT/原始快照不可变性
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/pit_raw_payload_immutability_2026-05-09.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/pit_raw_payload_immutability_2026-05-09.md`；已修复
+    `valuation fetch-fmp` 同日多次运行覆盖 `fmp_analyst_estimates` raw JSON，导致 PIT manifest
+    checksum mismatch 的问题
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: PIT manifest 指向的 raw payload 不得被后续日常步骤覆盖；同一 ticker 同一 captured date 多次运行必须写入不同
+      analyst-estimates raw 文件，文件名含下载时间或 checksum；`aits ops daily-run` 的 pipeline
+      health 不再因同日 valuation rerun 产生 PIT checksum mismatch；测试覆盖同日多次写入不覆盖和 CLI raw
+      path 变更
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 457
+    row_sha256: 1b11869daf3bb0d960f07a841a55a1aa3d28bd76c0af2e2c280ba9230f56816f
+    cell_count: 8
+    all_cells:
+    - DATA-015
+    - PIT/原始快照不可变性
+    - P0
+    - DONE
+    - 系统实现
+    - 详细拆解见 `docs/requirements/pit_raw_payload_immutability_2026-05-09.md`；已修复 `valuation
+      fetch-fmp` 同日多次运行覆盖 `fmp_analyst_estimates` raw JSON，导致 PIT manifest checksum
+      mismatch 的问题
+    - PIT manifest 指向的 raw payload 不得被后续日常步骤覆盖；同一 ticker 同一 captured date 多次运行必须写入不同
+      analyst-estimates raw 文件，文件名含下载时间或 checksum；`aits ops daily-run` 的 pipeline
+      health 不再因同日 valuation rerun 产生 PIT checksum mismatch；测试覆盖同日多次写入不覆盖和 CLI raw
+      path 变更
+    - '2026-05-09: 新增并进入实现，原因：验证 `DATA-014` 后真实 `daily-run` 已通过 score_daily，但 pipeline_health
+      失败，报 6 条 PIT raw payload checksum mismatch；根因是 valuation 前置步骤覆盖了 PIT manifest
+      之前记录的同日 analyst-estimates raw 文件。2026-05-09: 从 IN_PROGRESS 改为 DONE，原因：analyst-estimates
+      raw 文件名新增 downloaded_at UTC token 与 checksum 前缀，loader 继续兼容旧 glob；真实 `aits ops
+      daily-run` 9/9 步 PASS，pipeline health PASS，secret scan PASS；目标测试 53 passed，Ruff
+      通过。2026-05-10: 归档时将原登记 ID 从 `DATA-013` 修正为 `DATA-015`，原因：`DATA-013` 已被早期 SEC
+      日报指标缓存任务占用，避免 completed register 出现重复 ID。'
+    raw_line: '|DATA-015|PIT/原始快照不可变性|P0|DONE|系统实现|详细拆解见 `docs/requirements/pit_raw_payload_immutability_2026-05-09.md`；已修复
+      `valuation fetch-fmp` 同日多次运行覆盖 `fmp_analyst_estimates` raw JSON，导致 PIT manifest
+      checksum mismatch 的问题|PIT manifest 指向的 raw payload 不得被后续日常步骤覆盖；同一 ticker 同一
+      captured date 多次运行必须写入不同 analyst-estimates raw 文件，文件名含下载时间或 checksum；`aits ops
+      daily-run` 的 pipeline health 不再因同日 valuation rerun 产生 PIT checksum mismatch；测试覆盖同日多次写入不覆盖和
+      CLI raw path 变更|2026-05-09: 新增并进入实现，原因：验证 `DATA-014` 后真实 `daily-run` 已通过 score_daily，但
+      pipeline_health 失败，报 6 条 PIT raw payload checksum mismatch；根因是 valuation 前置步骤覆盖了
+      PIT manifest 之前记录的同日 analyst-estimates raw 文件。2026-05-09: 从 IN_PROGRESS 改为 DONE，原因：analyst-estimates
+      raw 文件名新增 downloaded_at UTC token 与 checksum 前缀，loader 继续兼容旧 glob；真实 `aits ops
+      daily-run` 9/9 步 PASS，pipeline health PASS，secret scan PASS；目标测试 53 passed，Ruff
+      通过。2026-05-10: 归档时将原登记 ID 从 `DATA-013` 修正为 `DATA-015`，原因：`DATA-013` 已被早期 SEC
+      日报指标缓存任务占用，避免 completed register 出现重复 ID。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1b11869daf3bb0d960f07a84
+  task_id: DATA-015
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-09: 新增并进入实现，原因：验证 `DATA-014` 后真实 `daily-run` 已通过 score_daily，但
+      pipeline_health 失败，报 6 条 PIT raw payload checksum mismatch；根因是 valuation 前置步骤覆盖了
+      PIT manifest 之前记录的同日 analyst-estimates raw 文件。2026-05-09: 从 IN_PROGRESS 改为 DONE，原因：analyst-estimates
+      raw 文件名新增 downloaded_at UTC token 与 checksum 前缀，loader 继续兼容旧 glob；真实 `aits ops
+      daily-run` 9/9 步 PASS，pipeline health PASS，secret scan PASS；目标测试 53 passed，Ruff
+      通过。2026-05-10: 归档时将原登记 ID 从 `DATA-013` 修正为 `DATA-015`，原因：`DATA-013` 已被早期 SEC
+      日报指标缓存任务占用，避免 completed register 出现重复 ID。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1b11869daf3bb0d960f07a841a55a1aa3d28bd76c0af2e2c280ba9230f56816f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-015
+  - PIT/原始快照不可变性
+  - P0
+  - DONE
+  - 系统实现
+  - 详细拆解见 `docs/requirements/pit_raw_payload_immutability_2026-05-09.md`；已修复 `valuation
+    fetch-fmp` 同日多次运行覆盖 `fmp_analyst_estimates` raw JSON，导致 PIT manifest checksum
+    mismatch 的问题
+  - PIT manifest 指向的 raw payload 不得被后续日常步骤覆盖；同一 ticker 同一 captured date 多次运行必须写入不同
+    analyst-estimates raw 文件，文件名含下载时间或 checksum；`aits ops daily-run` 的 pipeline health
+    不再因同日 valuation rerun 产生 PIT checksum mismatch；测试覆盖同日多次写入不覆盖和 CLI raw path 变更
+  - '2026-05-09: 新增并进入实现，原因：验证 `DATA-014` 后真实 `daily-run` 已通过 score_daily，但 pipeline_health
+    失败，报 6 条 PIT raw payload checksum mismatch；根因是 valuation 前置步骤覆盖了 PIT manifest
+    之前记录的同日 analyst-estimates raw 文件。2026-05-09: 从 IN_PROGRESS 改为 DONE，原因：analyst-estimates
+    raw 文件名新增 downloaded_at UTC token 与 checksum 前缀，loader 继续兼容旧 glob；真实 `aits ops
+    daily-run` 9/9 步 PASS，pipeline health PASS，secret scan PASS；目标测试 53 passed，Ruff
+    通过。2026-05-10: 归档时将原登记 ID 从 `DATA-013` 修正为 `DATA-015`，原因：`DATA-013` 已被早期 SEC 日报指标缓存任务占用，避免
+    completed register 出现重复 ID。'
+  docs_links:
+  - docs/requirements/pit_raw_payload_immutability_2026-05-09.md
+  terminal: true
+  raw_row_sha256: 1b11869daf3bb0d960f07a841a55a1aa3d28bd76c0af2e2c280ba9230f56816f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b32d3628b74173149e8f064606fbaee79f57d3911c44d29057beba017c2ae161

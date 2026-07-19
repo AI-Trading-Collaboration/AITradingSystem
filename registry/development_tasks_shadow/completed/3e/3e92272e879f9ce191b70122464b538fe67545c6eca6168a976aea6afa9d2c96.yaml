@@ -1,0 +1,140 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-389_COST_SENSITIVITY_METRICS_MATERIALIZATION
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue cost-sensitivity metrics materialization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 项目 owner 复核 cost review result；后续 TRADING-390 补 benchmark baseline metrics，promotion
+    仍保持 blocked / return to research until evidence improves
+  requirement_refs:
+  - docs/requirements/TRADING-389_Cost_Sensitivity_Metrics_Materialization.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-389_Cost_Sensitivity_Metrics_Materialization.md`；从既有
+    research artifacts materialize cost sensitivity review 所需 numeric turnover/performance/drawdown/rotation
+    inputs，并把生成的 `candidate_cost_metrics.json` 交给 cost-sensitivity review 重新运行；source
+    variant 与 governance candidate 的映射必须显式披露；不得发明 metrics、运行新 optimization/backtest、生成
+    execution model、写 official target weights、触发 broker/order 或修改 paper account/production
+    state
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_cost_metrics_materialization.py`、`aits
+      etf dynamic-v3-rescue cost-sensitivity-metrics-materialization run/report`、`validate-cost-sensitivity-metrics-materialization`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；status 限定为 `COST_INPUTS_AVAILABLE
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 207
+    row_sha256: 382877bf71d99f4108266e69fb5a95c778850a549ab38dea3ea1b8926de1fb22
+    cell_count: 10
+    all_cells:
+    - TRADING-389_COST_SENSITIVITY_METRICS_MATERIALIZATION
+    - ETF portfolio/dynamic v3 rescue cost-sensitivity metrics materialization
+    - P2
+    - DONE
+    - 项目 owner 复核 cost review result；后续 TRADING-390 补 benchmark baseline metrics，promotion
+      仍保持 blocked / return to research until evidence improves
+    - 详细拆解见 `docs/requirements/TRADING-389_Cost_Sensitivity_Metrics_Materialization.md`；从既有
+      research artifacts materialize cost sensitivity review 所需 numeric turnover/performance/drawdown/rotation
+      inputs，并把生成的 `candidate_cost_metrics.json` 交给 cost-sensitivity review 重新运行；source
+      variant 与 governance candidate 的映射必须显式披露；不得发明 metrics、运行新 optimization/backtest、生成
+      execution model、写 official target weights、触发 broker/order 或修改 paper account/production
+      state
+    - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_cost_metrics_materialization.py`、`aits
+      etf dynamic-v3-rescue cost-sensitivity-metrics-materialization run/report`、`validate-cost-sensitivity-metrics-materialization`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；status 限定为 `COST_INPUTS_AVAILABLE
+    - COST_INPUTS_PARTIAL
+    - INSUFFICIENT_COST_INPUTS`；`BACKTEST_SIMULATION` metrics 只能作为 research cost review
+      input，不是 PIT/live execution evidence、promotion approval 或 executable allocation
+    - '2026-06-17: DONE；真实 artifact `cost-metrics-materialization_938cbce979c4f135`
+      读取 backtest sim outcome `57c2eb4e71c3320d` 的 `source_variant=limited_adjustment`，映射到
+      governance candidate `median_plus_regime_mismatch_filter`，materialize turnover=`0.005945`、gross
+      performance proxy=`0.00638`、baseline/no-trade proxy=`0.005236`、gross improvement
+      proxy=`0.001144`、drawdown proxy=`-0.042935`、trade/rotation count=`185`，输出 `COST_INPUTS_AVAILABLE`，validation
+      PASS。Rerun cost review `cost-sensitivity-review_c0ba1c397d10078e` validation
+      PASS，但 status=`NOT_MEANINGFUL_UNDER_COSTS`、worst net improvement proxy=`0.0011291375`、high
+      cost meaningful=false，next action=`return_candidate_to_research_until_net_improvement_survives_costs`；该结果不是
+      promotion、extended shadow、official target、broker/order 或 live approval。'
+    raw_line: '|TRADING-389_COST_SENSITIVITY_METRICS_MATERIALIZATION|ETF portfolio/dynamic
+      v3 rescue cost-sensitivity metrics materialization|P2|DONE|项目 owner 复核 cost
+      review result；后续 TRADING-390 补 benchmark baseline metrics，promotion 仍保持 blocked
+      / return to research until evidence improves|详细拆解见 `docs/requirements/TRADING-389_Cost_Sensitivity_Metrics_Materialization.md`；从既有
+      research artifacts materialize cost sensitivity review 所需 numeric turnover/performance/drawdown/rotation
+      inputs，并把生成的 `candidate_cost_metrics.json` 交给 cost-sensitivity review 重新运行；source
+      variant 与 governance candidate 的映射必须显式披露；不得发明 metrics、运行新 optimization/backtest、生成
+      execution model、写 official target weights、触发 broker/order 或修改 paper account/production
+      state|新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_cost_metrics_materialization.py`、`aits
+      etf dynamic-v3-rescue cost-sensitivity-metrics-materialization run/report`、`validate-cost-sensitivity-metrics-materialization`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；status 限定为 `COST_INPUTS_AVAILABLE|COST_INPUTS_PARTIAL|INSUFFICIENT_COST_INPUTS`；`BACKTEST_SIMULATION`
+      metrics 只能作为 research cost review input，不是 PIT/live execution evidence、promotion
+      approval 或 executable allocation|2026-06-17: DONE；真实 artifact `cost-metrics-materialization_938cbce979c4f135`
+      读取 backtest sim outcome `57c2eb4e71c3320d` 的 `source_variant=limited_adjustment`，映射到
+      governance candidate `median_plus_regime_mismatch_filter`，materialize turnover=`0.005945`、gross
+      performance proxy=`0.00638`、baseline/no-trade proxy=`0.005236`、gross improvement
+      proxy=`0.001144`、drawdown proxy=`-0.042935`、trade/rotation count=`185`，输出 `COST_INPUTS_AVAILABLE`，validation
+      PASS。Rerun cost review `cost-sensitivity-review_c0ba1c397d10078e` validation
+      PASS，但 status=`NOT_MEANINGFUL_UNDER_COSTS`、worst net improvement proxy=`0.0011291375`、high
+      cost meaningful=false，next action=`return_candidate_to_research_until_net_improvement_survives_costs`；该结果不是
+      promotion、extended shadow、official target、broker/order 或 live approval。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-382877bf71d99f4108266e69
+  task_id: TRADING-389_COST_SENSITIVITY_METRICS_MATERIALIZATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 项目 owner 复核 cost review result；后续 TRADING-390 补 benchmark baseline
+      metrics，promotion 仍保持 blocked / return to research until evidence improves
+    notes: COST_INPUTS_PARTIAL
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:382877bf71d99f4108266e69fb5a95c778850a549ab38dea3ea1b8926de1fb22
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-389_COST_SENSITIVITY_METRICS_MATERIALIZATION
+  - ETF portfolio/dynamic v3 rescue cost-sensitivity metrics materialization
+  - P2
+  - DONE
+  - 项目 owner 复核 cost review result；后续 TRADING-390 补 benchmark baseline metrics，promotion
+    仍保持 blocked / return to research until evidence improves
+  - 详细拆解见 `docs/requirements/TRADING-389_Cost_Sensitivity_Metrics_Materialization.md`；从既有
+    research artifacts materialize cost sensitivity review 所需 numeric turnover/performance/drawdown/rotation
+    inputs，并把生成的 `candidate_cost_metrics.json` 交给 cost-sensitivity review 重新运行；source
+    variant 与 governance candidate 的映射必须显式披露；不得发明 metrics、运行新 optimization/backtest、生成
+    execution model、写 official target weights、触发 broker/order 或修改 paper account/production
+    state
+  - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_cost_metrics_materialization.py`、`aits
+    etf dynamic-v3-rescue cost-sensitivity-metrics-materialization run/report`、`validate-cost-sensitivity-metrics-materialization`、Reader
+    Brief section、report registry、artifact catalog、README、operations runbook、system
+    flow、requirements 和 focused tests；status 限定为 `COST_INPUTS_AVAILABLE
+  - COST_INPUTS_PARTIAL
+  docs_links:
+  - docs/requirements/TRADING-389_Cost_Sensitivity_Metrics_Materialization.md
+  terminal: true
+  raw_row_sha256: 382877bf71d99f4108266e69fb5a95c778850a549ab38dea3ea1b8926de1fb22
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 82dd1c92fc0d0012bd111fa44587ec84ed023e3d68a3cbbc7adc98295eb1e16e

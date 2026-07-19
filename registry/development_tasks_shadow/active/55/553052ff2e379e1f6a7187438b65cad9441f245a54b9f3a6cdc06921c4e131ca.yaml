@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: RISK-009
+  title: null
+  domain: 风险事件/生命周期与去重
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统设计 + 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/scoring_architecture_refactor_2026-05-06.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段风险事件 lifecycle/dedup schema 与过期防护：occurrence
+    支持 `lifecycle_state`、`dedup_group`、`primary_channel`、`used_in_alpha`、`used_in_gate`、`decay_half_life_days`、`expiry_time`、`resolution_reason`；详细拆解见
+    `docs/requirements/scoring_architecture_refactor_2026-05-06.md#risk-009风险事件生命周期衰减和去重`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 风险事件支持 extracted、pending_review、confirmed_low、confirmed_medium、confirmed_high、confirmed_thesis_break、resolved、expired、rejected
+      等状态；事件记录包含 dedup_group、primary_channel、used_in_alpha、used_in_gate、decay_half_life、expiry_time、next_review_due
+      和 resolution_reason；回测按 signal_date 只读取当时未过期、已复核且来源合格的事件状态；完整 DONE 仍需按事件类型配置默认半衰期、自动归并建议和
+      owner 复核运行纪律
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1130
+    row_sha256: ad64b900f4dea665890a374d70985aae7447166461bc04968ceabbf8576d8897
+    cell_count: 8
+    all_cells:
+    - RISK-009
+    - 风险事件/生命周期与去重
+    - P1
+    - BASELINE_DONE
+    - 系统设计 + 系统实现 + 项目 owner
+    - 已完成第一阶段风险事件 lifecycle/dedup schema 与过期防护：occurrence 支持 `lifecycle_state`、`dedup_group`、`primary_channel`、`used_in_alpha`、`used_in_gate`、`decay_half_life_days`、`expiry_time`、`resolution_reason`；详细拆解见
+      `docs/requirements/scoring_architecture_refactor_2026-05-06.md#risk-009风险事件生命周期衰减和去重`
+    - 风险事件支持 extracted、pending_review、confirmed_low、confirmed_medium、confirmed_high、confirmed_thesis_break、resolved、expired、rejected
+      等状态；事件记录包含 dedup_group、primary_channel、used_in_alpha、used_in_gate、decay_half_life、expiry_time、next_review_due
+      和 resolution_reason；回测按 signal_date 只读取当时未过期、已复核且来源合格的事件状态；完整 DONE 仍需按事件类型配置默认半衰期、自动归并建议和
+      owner 复核运行纪律
+    - '2026-05-06: 新增任务，原因：消息面风险不适合线性相加；现有 LLM 隔离和人工复核边界已经具备，但还缺事件生命周期、衰减、过期和重复新闻归并机制。2026-05-06:
+      从 PROPOSED 改为 BASELINE_DONE，原因：新增生命周期/去重字段、review report/snapshot 审计、`expiry_time`
+      过期 active/watch 记录不进入自动评分或仓位闸门；仍未实现自动衰减或自动 dedup。'
+    raw_line: '|RISK-009|风险事件/生命周期与去重|P1|BASELINE_DONE|系统设计 + 系统实现 + 项目 owner|已完成第一阶段风险事件
+      lifecycle/dedup schema 与过期防护：occurrence 支持 `lifecycle_state`、`dedup_group`、`primary_channel`、`used_in_alpha`、`used_in_gate`、`decay_half_life_days`、`expiry_time`、`resolution_reason`；详细拆解见
+      `docs/requirements/scoring_architecture_refactor_2026-05-06.md#risk-009风险事件生命周期衰减和去重`|风险事件支持
+      extracted、pending_review、confirmed_low、confirmed_medium、confirmed_high、confirmed_thesis_break、resolved、expired、rejected
+      等状态；事件记录包含 dedup_group、primary_channel、used_in_alpha、used_in_gate、decay_half_life、expiry_time、next_review_due
+      和 resolution_reason；回测按 signal_date 只读取当时未过期、已复核且来源合格的事件状态；完整 DONE 仍需按事件类型配置默认半衰期、自动归并建议和
+      owner 复核运行纪律|2026-05-06: 新增任务，原因：消息面风险不适合线性相加；现有 LLM 隔离和人工复核边界已经具备，但还缺事件生命周期、衰减、过期和重复新闻归并机制。2026-05-06:
+      从 PROPOSED 改为 BASELINE_DONE，原因：新增生命周期/去重字段、review report/snapshot 审计、`expiry_time`
+      过期 active/watch 记录不进入自动评分或仓位闸门；仍未实现自动衰减或自动 dedup。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ad64b900f4dea665890a374d
+  task_id: RISK-009
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统设计 + 系统实现 + 项目 owner
+    notes: '2026-05-06: 新增任务，原因：消息面风险不适合线性相加；现有 LLM 隔离和人工复核边界已经具备，但还缺事件生命周期、衰减、过期和重复新闻归并机制。2026-05-06:
+      从 PROPOSED 改为 BASELINE_DONE，原因：新增生命周期/去重字段、review report/snapshot 审计、`expiry_time`
+      过期 active/watch 记录不进入自动评分或仓位闸门；仍未实现自动衰减或自动 dedup。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ad64b900f4dea665890a374d70985aae7447166461bc04968ceabbf8576d8897
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - RISK-009
+  - 风险事件/生命周期与去重
+  - P1
+  - BASELINE_DONE
+  - 系统设计 + 系统实现 + 项目 owner
+  - 已完成第一阶段风险事件 lifecycle/dedup schema 与过期防护：occurrence 支持 `lifecycle_state`、`dedup_group`、`primary_channel`、`used_in_alpha`、`used_in_gate`、`decay_half_life_days`、`expiry_time`、`resolution_reason`；详细拆解见
+    `docs/requirements/scoring_architecture_refactor_2026-05-06.md#risk-009风险事件生命周期衰减和去重`
+  - 风险事件支持 extracted、pending_review、confirmed_low、confirmed_medium、confirmed_high、confirmed_thesis_break、resolved、expired、rejected
+    等状态；事件记录包含 dedup_group、primary_channel、used_in_alpha、used_in_gate、decay_half_life、expiry_time、next_review_due
+    和 resolution_reason；回测按 signal_date 只读取当时未过期、已复核且来源合格的事件状态；完整 DONE 仍需按事件类型配置默认半衰期、自动归并建议和
+    owner 复核运行纪律
+  - '2026-05-06: 新增任务，原因：消息面风险不适合线性相加；现有 LLM 隔离和人工复核边界已经具备，但还缺事件生命周期、衰减、过期和重复新闻归并机制。2026-05-06:
+    从 PROPOSED 改为 BASELINE_DONE，原因：新增生命周期/去重字段、review report/snapshot 审计、`expiry_time`
+    过期 active/watch 记录不进入自动评分或仓位闸门；仍未实现自动衰减或自动 dedup。'
+  docs_links:
+  - docs/requirements/scoring_architecture_refactor_2026-05-06.md
+  terminal: false
+  raw_row_sha256: ad64b900f4dea665890a374d70985aae7447166461bc04968ceabbf8576d8897
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 459875c873dc0a32fd14d702e4df592f2673ddf8f5df0ce5a99a9e62d22079b5

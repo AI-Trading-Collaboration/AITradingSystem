@@ -1,0 +1,114 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-012
+  title: null
+  domain: 数据源/Yahoo 诊断复查
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/price_source_reconciliation_2026-05-05.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已新增 `aits data-sources yahoo-price-diagnostic`：只针对
+    Marketstack self-check 异常 `ticker/date` 拉取 Yahoo raw OHLC/close，并输出只读诊断报告；详细记录见
+    `docs/requirements/price_source_reconciliation_2026-05-05.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 实现一个只读诊断入口或报告：仅针对质量报告中 Marketstack 第二源 self-check 异常的 ticker/date 附近样本拉取
+      Yahoo raw OHLC/close，记录 provider、endpoint、request parameters、download timestamp、row
+      count、checksum、FMP/Marketstack/Yahoo 对比和 `diagnostic only / production_effect=none`；不得写入
+      `prices_daily.csv` 或 `prices_marketstack_daily.csv`，不得进入评分、仓位闸门或回测真值；Yahoo 失败、空结果或与
+      FMP 不一致只进入调查报告，不阻断 `score-daily`，也不降低 FMP 主源权威性
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1121
+    row_sha256: 0417cdba88a1bc60091f32ec4695520e6ec965db1b50b61f1f7d5fde570f1568
+    cell_count: 8
+    all_cells:
+    - DATA-012
+    - 数据源/Yahoo 诊断复查
+    - P1
+    - BASELINE_DONE
+    - 系统实现
+    - 已新增 `aits data-sources yahoo-price-diagnostic`：只针对 Marketstack self-check 异常
+      `ticker/date` 拉取 Yahoo raw OHLC/close，并输出只读诊断报告；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`
+    - 实现一个只读诊断入口或报告：仅针对质量报告中 Marketstack 第二源 self-check 异常的 ticker/date 附近样本拉取 Yahoo
+      raw OHLC/close，记录 provider、endpoint、request parameters、download timestamp、row
+      count、checksum、FMP/Marketstack/Yahoo 对比和 `diagnostic only / production_effect=none`；不得写入
+      `prices_daily.csv` 或 `prices_marketstack_daily.csv`，不得进入评分、仓位闸门或回测真值；Yahoo 失败、空结果或与
+      FMP 不一致只进入调查报告，不阻断 `score-daily`，也不降低 FMP 主源权威性
+    - '2026-05-05: 新增任务，原因：owner 提出当 Marketstack 第二源明显有问题时，可借助 Yahoo 做简单复查；该来源必须保持
+      public_convenience 诊断定位，不能重新启用为生产主源或形成三源投票自动改价。2026-05-06: 从 READY 改为 IN_PROGRESS，原因：开始实现只读
+      Yahoo 诊断复查入口、报告和隔离测试。2026-05-06: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增诊断模块、CLI、Markdown
+      报告、README、系统流图和测试；命令不写价格缓存、不进入评分/仓位/回测真值。'
+    raw_line: '|DATA-012|数据源/Yahoo 诊断复查|P1|BASELINE_DONE|系统实现|已新增 `aits data-sources
+      yahoo-price-diagnostic`：只针对 Marketstack self-check 异常 `ticker/date` 拉取 Yahoo
+      raw OHLC/close，并输出只读诊断报告；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`|实现一个只读诊断入口或报告：仅针对质量报告中
+      Marketstack 第二源 self-check 异常的 ticker/date 附近样本拉取 Yahoo raw OHLC/close，记录 provider、endpoint、request
+      parameters、download timestamp、row count、checksum、FMP/Marketstack/Yahoo 对比和 `diagnostic
+      only / production_effect=none`；不得写入 `prices_daily.csv` 或 `prices_marketstack_daily.csv`，不得进入评分、仓位闸门或回测真值；Yahoo
+      失败、空结果或与 FMP 不一致只进入调查报告，不阻断 `score-daily`，也不降低 FMP 主源权威性|2026-05-05: 新增任务，原因：owner
+      提出当 Marketstack 第二源明显有问题时，可借助 Yahoo 做简单复查；该来源必须保持 public_convenience 诊断定位，不能重新启用为生产主源或形成三源投票自动改价。2026-05-06:
+      从 READY 改为 IN_PROGRESS，原因：开始实现只读 Yahoo 诊断复查入口、报告和隔离测试。2026-05-06: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：新增诊断模块、CLI、Markdown 报告、README、系统流图和测试；命令不写价格缓存、不进入评分/仓位/回测真值。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0417cdba88a1bc60091f32ec
+  task_id: DATA-012
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增任务，原因：owner 提出当 Marketstack 第二源明显有问题时，可借助 Yahoo 做简单复查；该来源必须保持
+      public_convenience 诊断定位，不能重新启用为生产主源或形成三源投票自动改价。2026-05-06: 从 READY 改为 IN_PROGRESS，原因：开始实现只读
+      Yahoo 诊断复查入口、报告和隔离测试。2026-05-06: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增诊断模块、CLI、Markdown
+      报告、README、系统流图和测试；命令不写价格缓存、不进入评分/仓位/回测真值。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0417cdba88a1bc60091f32ec4695520e6ec965db1b50b61f1f7d5fde570f1568
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-012
+  - 数据源/Yahoo 诊断复查
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - 已新增 `aits data-sources yahoo-price-diagnostic`：只针对 Marketstack self-check 异常 `ticker/date`
+    拉取 Yahoo raw OHLC/close，并输出只读诊断报告；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`
+  - 实现一个只读诊断入口或报告：仅针对质量报告中 Marketstack 第二源 self-check 异常的 ticker/date 附近样本拉取 Yahoo
+    raw OHLC/close，记录 provider、endpoint、request parameters、download timestamp、row
+    count、checksum、FMP/Marketstack/Yahoo 对比和 `diagnostic only / production_effect=none`；不得写入
+    `prices_daily.csv` 或 `prices_marketstack_daily.csv`，不得进入评分、仓位闸门或回测真值；Yahoo 失败、空结果或与
+    FMP 不一致只进入调查报告，不阻断 `score-daily`，也不降低 FMP 主源权威性
+  - '2026-05-05: 新增任务，原因：owner 提出当 Marketstack 第二源明显有问题时，可借助 Yahoo 做简单复查；该来源必须保持 public_convenience
+    诊断定位，不能重新启用为生产主源或形成三源投票自动改价。2026-05-06: 从 READY 改为 IN_PROGRESS，原因：开始实现只读 Yahoo
+    诊断复查入口、报告和隔离测试。2026-05-06: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增诊断模块、CLI、Markdown
+    报告、README、系统流图和测试；命令不写价格缓存、不进入评分/仓位/回测真值。'
+  docs_links:
+  - docs/requirements/price_source_reconciliation_2026-05-05.md
+  terminal: false
+  raw_row_sha256: 0417cdba88a1bc60091f32ec4695520e6ec965db1b50b61f1f7d5fde570f1568
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 1be3021c5eca5c455ad8c936014c1ccabf28f35dec64a09edb1553a78d2db948

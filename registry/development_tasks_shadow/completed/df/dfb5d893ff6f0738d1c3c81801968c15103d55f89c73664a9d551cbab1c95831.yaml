@@ -1,0 +1,120 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ENG-VAL-008_CONTROLLED_STRATEGY_VALUE_SURFACE_FIXTURE_REUSE
+  title: null
+  domain: Developer validation / contract-validation runtime optimization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统后续转入 TRADING-2350；若继续优化，需针对 tail-risk module setup 或真实 CLI smoke 做单独设计评估
+  requirement_refs:
+  - docs/requirements/ENG-VAL-008_Controlled_Strategy_Value_Surface_Fixture_Reuse.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ENG-VAL-008_Controlled_Strategy_Value_Surface_Fixture_Reuse.md`；承接
+    ENG-VAL-007 后 focused baseline 中 controlled strategy value-surface repeated input
+    chain 慢项。本任务只优化测试前置 artifact 构造组织，不改变 production builders、CLI smoke 语义、report
+    behavior、tier 覆盖、validation runner 默认策略或生产边界。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`tests/test_controlled_strategy_value_surface.py` 复用 module-scoped 只读 payload
+      / artifact fixtures，保留 control-failure 变体独立 builder 执行以及原有 schema、safety 和 payload
+      field assertions。验证通过 Ruff、compileall、focused pytest `21 passed in 25.69s`、contract-validation
+      `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T194916Z/test_runtime_summary.json`）和后续文档
+      / task-register / diff gates。Focused pytest 从 `21 passed in 81.14s` 降到 `21 passed
+      in 25.69s`；完整 tier elapsed 从 `91.47s` 降到 `35.70s`。'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 139
+    row_sha256: 007cd35f34831c943135b1b8ed6bdda2f1ebc31882dc1e80af6ca4afce8a6d44
+    cell_count: 8
+    all_cells:
+    - ENG-VAL-008_CONTROLLED_STRATEGY_VALUE_SURFACE_FIXTURE_REUSE
+    - Developer validation / contract-validation runtime optimization
+    - P2
+    - DONE
+    - 系统后续转入 TRADING-2350；若继续优化，需针对 tail-risk module setup 或真实 CLI smoke 做单独设计评估
+    - 详见 `docs/requirements/ENG-VAL-008_Controlled_Strategy_Value_Surface_Fixture_Reuse.md`；承接
+      ENG-VAL-007 后 focused baseline 中 controlled strategy value-surface repeated
+      input chain 慢项。本任务只优化测试前置 artifact 构造组织，不改变 production builders、CLI smoke 语义、report
+      behavior、tier 覆盖、validation runner 默认策略或生产边界。
+    - '`tests/test_controlled_strategy_value_surface.py` 复用 module-scoped 只读 payload
+      / artifact fixtures，保留 control-failure 变体独立 builder 执行以及原有 schema、safety 和 payload
+      field assertions。验证通过 Ruff、compileall、focused pytest `21 passed in 25.69s`、contract-validation
+      `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T194916Z/test_runtime_summary.json`）和后续文档
+      / task-register / diff gates。Focused pytest 从 `21 passed in 81.14s` 降到 `21 passed
+      in 25.69s`；完整 tier elapsed 从 `91.47s` 降到 `35.70s`。'
+    - '2026-07-05: 根据 focused runtime evidence 新增并进入 IN_PROGRESS。2026-07-05: 实现完成并归档
+      DONE；当前剩余 top slow 项主要是 tail-risk module setup 和若干真实 CLI smoke，继续压缩低风险收益已明显变弱。'
+    raw_line: '|ENG-VAL-008_CONTROLLED_STRATEGY_VALUE_SURFACE_FIXTURE_REUSE|Developer
+      validation / contract-validation runtime optimization|P2|DONE|系统后续转入 TRADING-2350；若继续优化，需针对
+      tail-risk module setup 或真实 CLI smoke 做单独设计评估|详见 `docs/requirements/ENG-VAL-008_Controlled_Strategy_Value_Surface_Fixture_Reuse.md`；承接
+      ENG-VAL-007 后 focused baseline 中 controlled strategy value-surface repeated
+      input chain 慢项。本任务只优化测试前置 artifact 构造组织，不改变 production builders、CLI smoke 语义、report
+      behavior、tier 覆盖、validation runner 默认策略或生产边界。|`tests/test_controlled_strategy_value_surface.py`
+      复用 module-scoped 只读 payload / artifact fixtures，保留 control-failure 变体独立 builder
+      执行以及原有 schema、safety 和 payload field assertions。验证通过 Ruff、compileall、focused
+      pytest `21 passed in 25.69s`、contract-validation `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T194916Z/test_runtime_summary.json`）和后续文档
+      / task-register / diff gates。Focused pytest 从 `21 passed in 81.14s` 降到 `21 passed
+      in 25.69s`；完整 tier elapsed 从 `91.47s` 降到 `35.70s`。|2026-07-05: 根据 focused runtime
+      evidence 新增并进入 IN_PROGRESS。2026-07-05: 实现完成并归档 DONE；当前剩余 top slow 项主要是 tail-risk
+      module setup 和若干真实 CLI smoke，继续压缩低风险收益已明显变弱。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-007cd35f34831c943135b1b8
+  task_id: ENG-VAL-008_CONTROLLED_STRATEGY_VALUE_SURFACE_FIXTURE_REUSE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统后续转入 TRADING-2350；若继续优化，需针对 tail-risk module setup 或真实 CLI smoke
+      做单独设计评估
+    notes: '2026-07-05: 根据 focused runtime evidence 新增并进入 IN_PROGRESS。2026-07-05:
+      实现完成并归档 DONE；当前剩余 top slow 项主要是 tail-risk module setup 和若干真实 CLI smoke，继续压缩低风险收益已明显变弱。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:007cd35f34831c943135b1b8ed6bdda2f1ebc31882dc1e80af6ca4afce8a6d44
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ENG-VAL-008_CONTROLLED_STRATEGY_VALUE_SURFACE_FIXTURE_REUSE
+  - Developer validation / contract-validation runtime optimization
+  - P2
+  - DONE
+  - 系统后续转入 TRADING-2350；若继续优化，需针对 tail-risk module setup 或真实 CLI smoke 做单独设计评估
+  - 详见 `docs/requirements/ENG-VAL-008_Controlled_Strategy_Value_Surface_Fixture_Reuse.md`；承接
+    ENG-VAL-007 后 focused baseline 中 controlled strategy value-surface repeated input
+    chain 慢项。本任务只优化测试前置 artifact 构造组织，不改变 production builders、CLI smoke 语义、report
+    behavior、tier 覆盖、validation runner 默认策略或生产边界。
+  - '`tests/test_controlled_strategy_value_surface.py` 复用 module-scoped 只读 payload
+    / artifact fixtures，保留 control-failure 变体独立 builder 执行以及原有 schema、safety 和 payload
+    field assertions。验证通过 Ruff、compileall、focused pytest `21 passed in 25.69s`、contract-validation
+    `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T194916Z/test_runtime_summary.json`）和后续文档
+    / task-register / diff gates。Focused pytest 从 `21 passed in 81.14s` 降到 `21 passed
+    in 25.69s`；完整 tier elapsed 从 `91.47s` 降到 `35.70s`。'
+  - '2026-07-05: 根据 focused runtime evidence 新增并进入 IN_PROGRESS。2026-07-05: 实现完成并归档
+    DONE；当前剩余 top slow 项主要是 tail-risk module setup 和若干真实 CLI smoke，继续压缩低风险收益已明显变弱。'
+  docs_links:
+  - docs/requirements/ENG-VAL-008_Controlled_Strategy_Value_Surface_Fixture_Reuse.md
+  terminal: true
+  raw_row_sha256: 007cd35f34831c943135b1b8ed6bdda2f1ebc31882dc1e80af6ca4afce8a6d44
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 77dd17b561f1b54154049d9bd0ae8e31fe3298c6ad5adc2b064532605975cb01

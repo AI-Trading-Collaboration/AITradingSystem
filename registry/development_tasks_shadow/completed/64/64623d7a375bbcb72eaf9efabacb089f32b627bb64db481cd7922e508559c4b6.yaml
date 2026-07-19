@@ -1,0 +1,142 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2362_OBSERVE_ONLY_CONSOLIDATED_PROMOTION_BLOCKER_AND_SAFETY_EVIDENCE_MATRIX
+  title: null
+  domain: Research trends / high-intensity risk-cap observe-only promotion blocker
+    matrix
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2363 owner decision pause checkpoint
+  requirement_refs:
+  - docs/requirements/TRADING-2362_Observe_Only_Consolidated_Promotion_Blocker_And_Safety_Evidence_Matrix.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2362_Observe_Only_Consolidated_Promotion_Blocker_And_Safety_Evidence_Matrix.md`；承接
+    TRADING-2361 promotion blocker matrix route。本任务只读取 prior validated TRADING-2347～2361
+    guardrail artifacts；不得启用 scheduler、event append、outcome binding、paper-shadow、production
+    或 broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends high-intensity-risk-cap-observe-only-promotion-blocker-matrix`；生成
+      consolidated blocker matrix、safety evidence matrix、future evidence gap、summary、main
+      package、source artifact review、blocked promotion rationale、2363 route、interpretation
+      boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_CONSOLIDATED_PROMOTION_BLOCKER_AND_SAFETY_EVIDENCE_MATRIX_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347..TRADING-2361`，evidence_chain_complete=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，consolidated_blocker_matrix_ready=true，safety_evidence_matrix_ready=true，promotion_decision=`BLOCKED`，promotion_allowed=false，blocker
+      matrix 覆盖 scheduler_enablement、event_append、outcome_binding、paper_shadow、production、broker_action_blocker，readiness=`READY_FOR_2363_WITH_CAVEATS`，next
+      route=`TRADING-2363_Observe_Only_Owner_Decision_And_Pause_Checkpoint`；focused
+      parallel pytest 13 passed。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 125
+    row_sha256: a502fd53ef4d4006f64daea9edb8abbb310650bccf8dde028b0dede15d3c5a1e
+    cell_count: 8
+    all_cells:
+    - TRADING-2362_OBSERVE_ONLY_CONSOLIDATED_PROMOTION_BLOCKER_AND_SAFETY_EVIDENCE_MATRIX
+    - Research trends / high-intensity risk-cap observe-only promotion blocker matrix
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2363 owner decision pause checkpoint
+    - 详见 `docs/requirements/TRADING-2362_Observe_Only_Consolidated_Promotion_Blocker_And_Safety_Evidence_Matrix.md`；承接
+      TRADING-2361 promotion blocker matrix route。本任务只读取 prior validated TRADING-2347～2361
+      guardrail artifacts；不得启用 scheduler、event append、outcome binding、paper-shadow、production
+      或 broker。
+    - 新增 `aits research trends high-intensity-risk-cap-observe-only-promotion-blocker-matrix`；生成
+      consolidated blocker matrix、safety evidence matrix、future evidence gap、summary、main
+      package、source artifact review、blocked promotion rationale、2363 route、interpretation
+      boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_CONSOLIDATED_PROMOTION_BLOCKER_AND_SAFETY_EVIDENCE_MATRIX_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347..TRADING-2361`，evidence_chain_complete=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，consolidated_blocker_matrix_ready=true，safety_evidence_matrix_ready=true，promotion_decision=`BLOCKED`，promotion_allowed=false，blocker
+      matrix 覆盖 scheduler_enablement、event_append、outcome_binding、paper_shadow、production、broker_action_blocker，readiness=`READY_FOR_2363_WITH_CAVEATS`，next
+      route=`TRADING-2363_Observe_Only_Owner_Decision_And_Pause_Checkpoint`；focused
+      parallel pytest 13 passed。
+    - '2026-07-05: 根据 owner closure pack 新增并进入 IN_PROGRESS；依赖 2361 artifact 完成后生成
+      consolidated promotion blocker matrix。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits
+      validate-data`，因为只读取 prior validated TRADING-2347～2361 artifacts，不读取 fresh market
+      data、不 append event、不绑定 outcome、不 mutate outcome store、不启用 paper-shadow、不调用
+      broker API、不生成 technical features、scoring、backtest 或 daily report。`broker_action_blocker`
+      是安全 machine key，语义仍覆盖 broker action blocker。'
+    raw_line: '|TRADING-2362_OBSERVE_ONLY_CONSOLIDATED_PROMOTION_BLOCKER_AND_SAFETY_EVIDENCE_MATRIX|Research
+      trends / high-intensity risk-cap observe-only promotion blocker matrix|P0|DONE|项目
+      owner 后续复核 TRADING-2363 owner decision pause checkpoint|详见 `docs/requirements/TRADING-2362_Observe_Only_Consolidated_Promotion_Blocker_And_Safety_Evidence_Matrix.md`；承接
+      TRADING-2361 promotion blocker matrix route。本任务只读取 prior validated TRADING-2347～2361
+      guardrail artifacts；不得启用 scheduler、event append、outcome binding、paper-shadow、production
+      或 broker。|新增 `aits research trends high-intensity-risk-cap-observe-only-promotion-blocker-matrix`；生成
+      consolidated blocker matrix、safety evidence matrix、future evidence gap、summary、main
+      package、source artifact review、blocked promotion rationale、2363 route、interpretation
+      boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_CONSOLIDATED_PROMOTION_BLOCKER_AND_SAFETY_EVIDENCE_MATRIX_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347..TRADING-2361`，evidence_chain_complete=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，consolidated_blocker_matrix_ready=true，safety_evidence_matrix_ready=true，promotion_decision=`BLOCKED`，promotion_allowed=false，blocker
+      matrix 覆盖 scheduler_enablement、event_append、outcome_binding、paper_shadow、production、broker_action_blocker，readiness=`READY_FOR_2363_WITH_CAVEATS`，next
+      route=`TRADING-2363_Observe_Only_Owner_Decision_And_Pause_Checkpoint`；focused
+      parallel pytest 13 passed。|2026-07-05: 根据 owner closure pack 新增并进入 IN_PROGRESS；依赖
+      2361 artifact 完成后生成 consolidated promotion blocker matrix。2026-07-05: 实现完成并归档
+      DONE；本任务未重跑 `aits validate-data`，因为只读取 prior validated TRADING-2347～2361 artifacts，不读取
+      fresh market data、不 append event、不绑定 outcome、不 mutate outcome store、不启用 paper-shadow、不调用
+      broker API、不生成 technical features、scoring、backtest 或 daily report。`broker_action_blocker`
+      是安全 machine key，语义仍覆盖 broker action blocker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a502fd53ef4d4006f64daea9
+  task_id: TRADING-2362_OBSERVE_ONLY_CONSOLIDATED_PROMOTION_BLOCKER_AND_SAFETY_EVIDENCE_MATRIX
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2363 owner decision pause checkpoint
+    notes: '2026-07-05: 根据 owner closure pack 新增并进入 IN_PROGRESS；依赖 2361 artifact 完成后生成
+      consolidated promotion blocker matrix。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits
+      validate-data`，因为只读取 prior validated TRADING-2347～2361 artifacts，不读取 fresh market
+      data、不 append event、不绑定 outcome、不 mutate outcome store、不启用 paper-shadow、不调用
+      broker API、不生成 technical features、scoring、backtest 或 daily report。`broker_action_blocker`
+      是安全 machine key，语义仍覆盖 broker action blocker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a502fd53ef4d4006f64daea9edb8abbb310650bccf8dde028b0dede15d3c5a1e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2362_OBSERVE_ONLY_CONSOLIDATED_PROMOTION_BLOCKER_AND_SAFETY_EVIDENCE_MATRIX
+  - Research trends / high-intensity risk-cap observe-only promotion blocker matrix
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2363 owner decision pause checkpoint
+  - 详见 `docs/requirements/TRADING-2362_Observe_Only_Consolidated_Promotion_Blocker_And_Safety_Evidence_Matrix.md`；承接
+    TRADING-2361 promotion blocker matrix route。本任务只读取 prior validated TRADING-2347～2361
+    guardrail artifacts；不得启用 scheduler、event append、outcome binding、paper-shadow、production
+    或 broker。
+  - 新增 `aits research trends high-intensity-risk-cap-observe-only-promotion-blocker-matrix`；生成
+    consolidated blocker matrix、safety evidence matrix、future evidence gap、summary、main
+    package、source artifact review、blocked promotion rationale、2363 route、interpretation
+    boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_CONSOLIDATED_PROMOTION_BLOCKER_AND_SAFETY_EVIDENCE_MATRIX_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+    tasks=`TRADING-2347..TRADING-2361`，evidence_chain_complete=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，consolidated_blocker_matrix_ready=true，safety_evidence_matrix_ready=true，promotion_decision=`BLOCKED`，promotion_allowed=false，blocker
+    matrix 覆盖 scheduler_enablement、event_append、outcome_binding、paper_shadow、production、broker_action_blocker，readiness=`READY_FOR_2363_WITH_CAVEATS`，next
+    route=`TRADING-2363_Observe_Only_Owner_Decision_And_Pause_Checkpoint`；focused
+    parallel pytest 13 passed。
+  - '2026-07-05: 根据 owner closure pack 新增并进入 IN_PROGRESS；依赖 2361 artifact 完成后生成 consolidated
+    promotion blocker matrix。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+    prior validated TRADING-2347～2361 artifacts，不读取 fresh market data、不 append event、不绑定
+    outcome、不 mutate outcome store、不启用 paper-shadow、不调用 broker API、不生成 technical features、scoring、backtest
+    或 daily report。`broker_action_blocker` 是安全 machine key，语义仍覆盖 broker action blocker。'
+  docs_links:
+  - docs/requirements/TRADING-2362_Observe_Only_Consolidated_Promotion_Blocker_And_Safety_Evidence_Matrix.md
+  terminal: true
+  raw_row_sha256: a502fd53ef4d4006f64daea9edb8abbb310650bccf8dde028b0dede15d3c5a1e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0ed49d53e6e916e11a9fbdbae19e40d1df6fb5d70f1f77bb5c3c8ecf4838032a

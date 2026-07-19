@@ -1,0 +1,155 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-057A
+  title: null
+  domain: 数据质量/Market Data Refresh & Freshness Recovery Workflow
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/market_data_refresh_freshness_recovery_workflow_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/market_data_refresh_freshness_recovery_workflow_2026-05-30.md`；refresh/recovery
+    链路已通过最新 `validate-refresh --latest` 复验，freshness recovery 保持 `OK`，promotion 仍
+    disabled
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits data refresh-market --latest --dry-run` 生成 refresh plan；`aits data
+      refresh-market --latest` 生成 `artifacts/data_refresh/YYYY-MM-DD/market_data_refresh_summary.json/md`；`aits
+      data recover-freshness --latest` 执行 freshness -> refresh -> reconcile/manifest
+      -> freshness -> tracking；可用时 freshness 恢复 `OK` 且 tracking 为 `active_tracking`；source
+      delayed 时 refresh 输出 `SOURCE_DELAYED`、freshness 保持 `STALE`、tracking 保持 `tracking_blocked`
+      并说明原因；Dashboard/Reader Brief/shadow backtest 引用 refresh artifact；不修改 `config/parameters/production/current.yaml`，不降低
+      data gate，不使用 mock 数据，不生成 synthetic latest bar，不解除 promotion；专项测试、全量 pytest、ruff、compileall
+      和 diff check 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 346
+    row_sha256: f57d3b996293c2a2f424c25eba8ef85456bd7566f77c8cfc9db970711f2498ae
+    cell_count: 8
+    all_cells:
+    - TRADING-057A
+    - 数据质量/Market Data Refresh & Freshness Recovery Workflow
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/market_data_refresh_freshness_recovery_workflow_2026-05-30.md`；refresh/recovery
+      链路已通过最新 `validate-refresh --latest` 复验，freshness recovery 保持 `OK`，promotion
+      仍 disabled
+    - '`aits data refresh-market --latest --dry-run` 生成 refresh plan；`aits data refresh-market
+      --latest` 生成 `artifacts/data_refresh/YYYY-MM-DD/market_data_refresh_summary.json/md`；`aits
+      data recover-freshness --latest` 执行 freshness -> refresh -> reconcile/manifest
+      -> freshness -> tracking；可用时 freshness 恢复 `OK` 且 tracking 为 `active_tracking`；source
+      delayed 时 refresh 输出 `SOURCE_DELAYED`、freshness 保持 `STALE`、tracking 保持 `tracking_blocked`
+      并说明原因；Dashboard/Reader Brief/shadow backtest 引用 refresh artifact；不修改 `config/parameters/production/current.yaml`，不降低
+      data gate，不使用 mock 数据，不生成 synthetic latest bar，不解除 promotion；专项测试、全量 pytest、ruff、compileall
+      和 diff check 通过'
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-057 已把 stale market data 正确阻断为 `tracking_blocked`，但缺少正式
+      refresh/recovery workflow 来安全刷新 required assets、更新 registry/manifest 并区分可恢复
+      stale cache 与 `SOURCE_DELAYED`。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：refresh
+      workflow、CLI、报告、Dashboard/Reader Brief、candidate tracking 和 shadow backtest
+      集成已完成；真实 refresh 从数据源恢复 `GOOGL`、`BRK.B via BRK-B`、`SGOV` 的 2026-05-29 日线后，freshness
+      为 `OK`，candidate tracking 为 `active_tracking`，shadow backtest 仍 `promotion_status=rejected`；全量
+      pytest、ruff、compileall 和 diff check 通过，`production/current.yaml` 无 diff。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：最新 `aits data validate-refresh --latest` 读取 `artifacts/data_refresh/2026-06-05/market_data_refresh_summary.json`
+      并返回 `refresh_status=OK`、`production_effect=none`、`manual_review_required=true`
+      和 `auto_promotion=false`；refresh/recovery 链路验收已闭合，promotion 仍保持禁用。'
+    raw_line: '|TRADING-057A|数据质量/Market Data Refresh & Freshness Recovery Workflow|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/market_data_refresh_freshness_recovery_workflow_2026-05-30.md`；refresh/recovery
+      链路已通过最新 `validate-refresh --latest` 复验，freshness recovery 保持 `OK`，promotion
+      仍 disabled|`aits data refresh-market --latest --dry-run` 生成 refresh plan；`aits
+      data refresh-market --latest` 生成 `artifacts/data_refresh/YYYY-MM-DD/market_data_refresh_summary.json/md`；`aits
+      data recover-freshness --latest` 执行 freshness -> refresh -> reconcile/manifest
+      -> freshness -> tracking；可用时 freshness 恢复 `OK` 且 tracking 为 `active_tracking`；source
+      delayed 时 refresh 输出 `SOURCE_DELAYED`、freshness 保持 `STALE`、tracking 保持 `tracking_blocked`
+      并说明原因；Dashboard/Reader Brief/shadow backtest 引用 refresh artifact；不修改 `config/parameters/production/current.yaml`，不降低
+      data gate，不使用 mock 数据，不生成 synthetic latest bar，不解除 promotion；专项测试、全量 pytest、ruff、compileall
+      和 diff check 通过|2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-057 已把 stale market
+      data 正确阻断为 `tracking_blocked`，但缺少正式 refresh/recovery workflow 来安全刷新 required
+      assets、更新 registry/manifest 并区分可恢复 stale cache 与 `SOURCE_DELAYED`。2026-05-30:
+      从 IN_PROGRESS 改为 VALIDATING，原因：refresh workflow、CLI、报告、Dashboard/Reader Brief、candidate
+      tracking 和 shadow backtest 集成已完成；真实 refresh 从数据源恢复 `GOOGL`、`BRK.B via BRK-B`、`SGOV`
+      的 2026-05-29 日线后，freshness 为 `OK`，candidate tracking 为 `active_tracking`，shadow
+      backtest 仍 `promotion_status=rejected`；全量 pytest、ruff、compileall 和 diff check
+      通过，`production/current.yaml` 无 diff。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新 `aits
+      data validate-refresh --latest` 读取 `artifacts/data_refresh/2026-06-05/market_data_refresh_summary.json`
+      并返回 `refresh_status=OK`、`production_effect=none`、`manual_review_required=true`
+      和 `auto_promotion=false`；refresh/recovery 链路验收已闭合，promotion 仍保持禁用。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f57d3b996293c2a2f424c25e
+  task_id: TRADING-057A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-057 已把 stale market data 正确阻断为
+      `tracking_blocked`，但缺少正式 refresh/recovery workflow 来安全刷新 required assets、更新
+      registry/manifest 并区分可恢复 stale cache 与 `SOURCE_DELAYED`。2026-05-30: 从 IN_PROGRESS
+      改为 VALIDATING，原因：refresh workflow、CLI、报告、Dashboard/Reader Brief、candidate tracking
+      和 shadow backtest 集成已完成；真实 refresh 从数据源恢复 `GOOGL`、`BRK.B via BRK-B`、`SGOV` 的
+      2026-05-29 日线后，freshness 为 `OK`，candidate tracking 为 `active_tracking`，shadow
+      backtest 仍 `promotion_status=rejected`；全量 pytest、ruff、compileall 和 diff check
+      通过，`production/current.yaml` 无 diff。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新 `aits
+      data validate-refresh --latest` 读取 `artifacts/data_refresh/2026-06-05/market_data_refresh_summary.json`
+      并返回 `refresh_status=OK`、`production_effect=none`、`manual_review_required=true`
+      和 `auto_promotion=false`；refresh/recovery 链路验收已闭合，promotion 仍保持禁用。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f57d3b996293c2a2f424c25eba8ef85456bd7566f77c8cfc9db970711f2498ae
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-057A
+  - 数据质量/Market Data Refresh & Freshness Recovery Workflow
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/market_data_refresh_freshness_recovery_workflow_2026-05-30.md`；refresh/recovery
+    链路已通过最新 `validate-refresh --latest` 复验，freshness recovery 保持 `OK`，promotion 仍
+    disabled
+  - '`aits data refresh-market --latest --dry-run` 生成 refresh plan；`aits data refresh-market
+    --latest` 生成 `artifacts/data_refresh/YYYY-MM-DD/market_data_refresh_summary.json/md`；`aits
+    data recover-freshness --latest` 执行 freshness -> refresh -> reconcile/manifest
+    -> freshness -> tracking；可用时 freshness 恢复 `OK` 且 tracking 为 `active_tracking`；source
+    delayed 时 refresh 输出 `SOURCE_DELAYED`、freshness 保持 `STALE`、tracking 保持 `tracking_blocked`
+    并说明原因；Dashboard/Reader Brief/shadow backtest 引用 refresh artifact；不修改 `config/parameters/production/current.yaml`，不降低
+    data gate，不使用 mock 数据，不生成 synthetic latest bar，不解除 promotion；专项测试、全量 pytest、ruff、compileall
+    和 diff check 通过'
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-057 已把 stale market data 正确阻断为 `tracking_blocked`，但缺少正式
+    refresh/recovery workflow 来安全刷新 required assets、更新 registry/manifest 并区分可恢复 stale
+    cache 与 `SOURCE_DELAYED`。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：refresh workflow、CLI、报告、Dashboard/Reader
+    Brief、candidate tracking 和 shadow backtest 集成已完成；真实 refresh 从数据源恢复 `GOOGL`、`BRK.B
+    via BRK-B`、`SGOV` 的 2026-05-29 日线后，freshness 为 `OK`，candidate tracking 为 `active_tracking`，shadow
+    backtest 仍 `promotion_status=rejected`；全量 pytest、ruff、compileall 和 diff check
+    通过，`production/current.yaml` 无 diff。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新 `aits
+    data validate-refresh --latest` 读取 `artifacts/data_refresh/2026-06-05/market_data_refresh_summary.json`
+    并返回 `refresh_status=OK`、`production_effect=none`、`manual_review_required=true`
+    和 `auto_promotion=false`；refresh/recovery 链路验收已闭合，promotion 仍保持禁用。'
+  docs_links:
+  - docs/requirements/market_data_refresh_freshness_recovery_workflow_2026-05-30.md
+  terminal: true
+  raw_row_sha256: f57d3b996293c2a2f424c25eba8ef85456bd7566f77c8cfc9db970711f2498ae
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: baea2140ceb07cfe8c46b77af7f933bd01c999fb81ebe96587ae61c85f47bd5a

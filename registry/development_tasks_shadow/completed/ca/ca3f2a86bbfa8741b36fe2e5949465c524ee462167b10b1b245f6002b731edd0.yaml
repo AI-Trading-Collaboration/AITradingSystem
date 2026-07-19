@@ -1,0 +1,182 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: BACKTEST-001
+  title: null
+  domain: 回测/稳健性
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/decision_support_improvements_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成回测稳健性报告：覆盖成本压力、起点后移、固定仓位、再平衡频率、趋势信号族基线、模块权重扰动、同换手率随机策略和时间顺序样本外验证；详细拆解见
+    `docs/requirements/decision_support_improvements_2026-05-04.md#backtest-001`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 报告声明市场阶段、实际请求日期范围和数据质量状态；所有实验使用相同 point-in-time 输入和交易成本假设，且不引入未来函数；Markdown
+      和机器可读摘要都能说明动态系统相对固定仓位/买入持有基准的收益、回撤、换手和纪律差异；实现时同步更新 `docs/system_flow.md` 并补充
+      baseline 和摘要测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 447
+    row_sha256: 0443919ade5531a66d883e476da95b77782f320a9b70fef910e640ca4064598d
+    cell_count: 8
+    all_cells:
+    - BACKTEST-001
+    - 回测/稳健性
+    - P1
+    - DONE
+    - 系统实现
+    - 已完成回测稳健性报告：覆盖成本压力、起点后移、固定仓位、再平衡频率、趋势信号族基线、模块权重扰动、同换手率随机策略和时间顺序样本外验证；详细拆解见 `docs/requirements/decision_support_improvements_2026-05-04.md#backtest-001`
+    - 报告声明市场阶段、实际请求日期范围和数据质量状态；所有实验使用相同 point-in-time 输入和交易成本假设，且不引入未来函数；Markdown
+      和机器可读摘要都能说明动态系统相对固定仓位/买入持有基准的收益、回撤、换手和纪律差异；实现时同步更新 `docs/system_flow.md` 并补充
+      baseline 和摘要测试
+    - '来自 2026-05-04 回测防过拟合讨论；优先默认使用 `ai_after_chatgpt` 窗口。2026-05-04: 从 READY 改为
+      IN_PROGRESS，原因：`SCORE-003` 和 `COST-001` 已具备基础输入，开始实现第一阶段 backtest robustness
+      report。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `backtest.robustness`
+      模块、`--robustness-report`/`--robustness-report-path`、中文稳健性报告、系统流图和 CLI 测试；完整
+      `DONE` 仍需完整扰动/随机/样本外实验。2026-05-04: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：开始补第二阶段固定
+      60% 基线和机器可读稳健性摘要。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增固定 60% 总资产
+      AI exposure 基线、`--robustness-summary-path` JSON 摘要、系统流图和测试；真实短区间回测已验证摘要生成，固定仓位在短样本中优于动态策略，结论仍需更多稳健性实验。2026-05-05:
+      从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续按回测开发优先顺序补充再平衡频率稳健性场景，复用同一 PIT 输入、收益生效规则和显式成本假设。2026-05-05:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `rebalance_every_5d` 和 `rebalance_every_21d`
+      稳健性场景，JSON 剩余缺口移除 `rebalance_frequency`；`ruff check src tests` 和 `.venv\Scripts\python.exe
+      -m pytest -q` 通过 371 项测试。2026-05-05: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续补趋势-only
+      与趋势+风险情绪基线，评估复杂基本面/估值模块相对简化信号族的增量。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      `trend_only_baseline` 和 `trend_plus_risk_sentiment_baseline` 稳健性场景，JSON 剩余缺口移除趋势基线；`ruff
+      check src tests` 和 `tests/test_backtest.py` 通过。2026-05-05: 从 BASELINE_DONE 改为
+      IN_PROGRESS，原因：继续补模块权重扰动，使用扰动后的评分规则重新运行同一 PIT 输入，避免近似复用 gate 上限。2026-05-05:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增每个评分模块上下扰动场景、`--robustness-weight-perturbation-pct`、权重敏感性解释和
+      JSON 字段，剩余缺口移除 `module_weight_perturbation`；`ruff check src tests` 和 `tests/test_backtest.py`
+      通过。2026-05-05: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续补同换手率随机策略，判断信号方向是否优于相同交易频率下的随机方向。2026-05-05:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增同换手率随机策略、`--robustness-random-seed-start`、`--robustness-random-seed-count`、随机基线解释和
+      JSON 字段，剩余缺口移除 `same_turnover_random_strategy`；`ruff check src tests` 和 `tests/test_backtest.py`
+      通过。2026-05-05: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续补时间顺序样本外验证，避免只看全样本和单一起点后移。2026-05-05:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `in_sample_window` 和 `out_of_sample_holdout` 场景、`--robustness-oos-split-ratio`、样本外解释和
+      JSON 字段，`remaining_gaps` 为空；`ruff check src tests` 和 `.venv\Scripts\python.exe
+      -m pytest -q` 通过 371 项测试。'
+    raw_line: '|BACKTEST-001|回测/稳健性|P1|DONE|系统实现|已完成回测稳健性报告：覆盖成本压力、起点后移、固定仓位、再平衡频率、趋势信号族基线、模块权重扰动、同换手率随机策略和时间顺序样本外验证；详细拆解见
+      `docs/requirements/decision_support_improvements_2026-05-04.md#backtest-001`|报告声明市场阶段、实际请求日期范围和数据质量状态；所有实验使用相同
+      point-in-time 输入和交易成本假设，且不引入未来函数；Markdown 和机器可读摘要都能说明动态系统相对固定仓位/买入持有基准的收益、回撤、换手和纪律差异；实现时同步更新
+      `docs/system_flow.md` 并补充 baseline 和摘要测试|来自 2026-05-04 回测防过拟合讨论；优先默认使用 `ai_after_chatgpt`
+      窗口。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：`SCORE-003` 和 `COST-001` 已具备基础输入，开始实现第一阶段
+      backtest robustness report。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      `backtest.robustness` 模块、`--robustness-report`/`--robustness-report-path`、中文稳健性报告、系统流图和
+      CLI 测试；完整 `DONE` 仍需完整扰动/随机/样本外实验。2026-05-04: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：开始补第二阶段固定
+      60% 基线和机器可读稳健性摘要。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增固定 60% 总资产
+      AI exposure 基线、`--robustness-summary-path` JSON 摘要、系统流图和测试；真实短区间回测已验证摘要生成，固定仓位在短样本中优于动态策略，结论仍需更多稳健性实验。2026-05-05:
+      从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续按回测开发优先顺序补充再平衡频率稳健性场景，复用同一 PIT 输入、收益生效规则和显式成本假设。2026-05-05:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `rebalance_every_5d` 和 `rebalance_every_21d`
+      稳健性场景，JSON 剩余缺口移除 `rebalance_frequency`；`ruff check src tests` 和 `.venv\Scripts\python.exe
+      -m pytest -q` 通过 371 项测试。2026-05-05: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续补趋势-only
+      与趋势+风险情绪基线，评估复杂基本面/估值模块相对简化信号族的增量。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      `trend_only_baseline` 和 `trend_plus_risk_sentiment_baseline` 稳健性场景，JSON 剩余缺口移除趋势基线；`ruff
+      check src tests` 和 `tests/test_backtest.py` 通过。2026-05-05: 从 BASELINE_DONE 改为
+      IN_PROGRESS，原因：继续补模块权重扰动，使用扰动后的评分规则重新运行同一 PIT 输入，避免近似复用 gate 上限。2026-05-05:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增每个评分模块上下扰动场景、`--robustness-weight-perturbation-pct`、权重敏感性解释和
+      JSON 字段，剩余缺口移除 `module_weight_perturbation`；`ruff check src tests` 和 `tests/test_backtest.py`
+      通过。2026-05-05: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续补同换手率随机策略，判断信号方向是否优于相同交易频率下的随机方向。2026-05-05:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增同换手率随机策略、`--robustness-random-seed-start`、`--robustness-random-seed-count`、随机基线解释和
+      JSON 字段，剩余缺口移除 `same_turnover_random_strategy`；`ruff check src tests` 和 `tests/test_backtest.py`
+      通过。2026-05-05: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续补时间顺序样本外验证，避免只看全样本和单一起点后移。2026-05-05:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `in_sample_window` 和 `out_of_sample_holdout` 场景、`--robustness-oos-split-ratio`、样本外解释和
+      JSON 字段，`remaining_gaps` 为空；`ruff check src tests` 和 `.venv\Scripts\python.exe
+      -m pytest -q` 通过 371 项测试。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0443919ade5531a66d883e47
+  task_id: BACKTEST-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '来自 2026-05-04 回测防过拟合讨论；优先默认使用 `ai_after_chatgpt` 窗口。2026-05-04: 从 READY
+      改为 IN_PROGRESS，原因：`SCORE-003` 和 `COST-001` 已具备基础输入，开始实现第一阶段 backtest robustness
+      report。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `backtest.robustness`
+      模块、`--robustness-report`/`--robustness-report-path`、中文稳健性报告、系统流图和 CLI 测试；完整
+      `DONE` 仍需完整扰动/随机/样本外实验。2026-05-04: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：开始补第二阶段固定
+      60% 基线和机器可读稳健性摘要。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增固定 60% 总资产
+      AI exposure 基线、`--robustness-summary-path` JSON 摘要、系统流图和测试；真实短区间回测已验证摘要生成，固定仓位在短样本中优于动态策略，结论仍需更多稳健性实验。2026-05-05:
+      从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续按回测开发优先顺序补充再平衡频率稳健性场景，复用同一 PIT 输入、收益生效规则和显式成本假设。2026-05-05:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `rebalance_every_5d` 和 `rebalance_every_21d`
+      稳健性场景，JSON 剩余缺口移除 `rebalance_frequency`；`ruff check src tests` 和 `.venv\Scripts\python.exe
+      -m pytest -q` 通过 371 项测试。2026-05-05: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续补趋势-only
+      与趋势+风险情绪基线，评估复杂基本面/估值模块相对简化信号族的增量。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      `trend_only_baseline` 和 `trend_plus_risk_sentiment_baseline` 稳健性场景，JSON 剩余缺口移除趋势基线；`ruff
+      check src tests` 和 `tests/test_backtest.py` 通过。2026-05-05: 从 BASELINE_DONE 改为
+      IN_PROGRESS，原因：继续补模块权重扰动，使用扰动后的评分规则重新运行同一 PIT 输入，避免近似复用 gate 上限。2026-05-05:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增每个评分模块上下扰动场景、`--robustness-weight-perturbation-pct`、权重敏感性解释和
+      JSON 字段，剩余缺口移除 `module_weight_perturbation`；`ruff check src tests` 和 `tests/test_backtest.py`
+      通过。2026-05-05: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续补同换手率随机策略，判断信号方向是否优于相同交易频率下的随机方向。2026-05-05:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增同换手率随机策略、`--robustness-random-seed-start`、`--robustness-random-seed-count`、随机基线解释和
+      JSON 字段，剩余缺口移除 `same_turnover_random_strategy`；`ruff check src tests` 和 `tests/test_backtest.py`
+      通过。2026-05-05: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续补时间顺序样本外验证，避免只看全样本和单一起点后移。2026-05-05:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `in_sample_window` 和 `out_of_sample_holdout` 场景、`--robustness-oos-split-ratio`、样本外解释和
+      JSON 字段，`remaining_gaps` 为空；`ruff check src tests` 和 `.venv\Scripts\python.exe
+      -m pytest -q` 通过 371 项测试。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0443919ade5531a66d883e476da95b77782f320a9b70fef910e640ca4064598d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - BACKTEST-001
+  - 回测/稳健性
+  - P1
+  - DONE
+  - 系统实现
+  - 已完成回测稳健性报告：覆盖成本压力、起点后移、固定仓位、再平衡频率、趋势信号族基线、模块权重扰动、同换手率随机策略和时间顺序样本外验证；详细拆解见 `docs/requirements/decision_support_improvements_2026-05-04.md#backtest-001`
+  - 报告声明市场阶段、实际请求日期范围和数据质量状态；所有实验使用相同 point-in-time 输入和交易成本假设，且不引入未来函数；Markdown 和机器可读摘要都能说明动态系统相对固定仓位/买入持有基准的收益、回撤、换手和纪律差异；实现时同步更新
+    `docs/system_flow.md` 并补充 baseline 和摘要测试
+  - '来自 2026-05-04 回测防过拟合讨论；优先默认使用 `ai_after_chatgpt` 窗口。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：`SCORE-003`
+    和 `COST-001` 已具备基础输入，开始实现第一阶段 backtest robustness report。2026-05-04: 从 IN_PROGRESS
+    改为 BASELINE_DONE，原因：新增 `backtest.robustness` 模块、`--robustness-report`/`--robustness-report-path`、中文稳健性报告、系统流图和
+    CLI 测试；完整 `DONE` 仍需完整扰动/随机/样本外实验。2026-05-04: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：开始补第二阶段固定
+    60% 基线和机器可读稳健性摘要。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增固定 60% 总资产 AI
+    exposure 基线、`--robustness-summary-path` JSON 摘要、系统流图和测试；真实短区间回测已验证摘要生成，固定仓位在短样本中优于动态策略，结论仍需更多稳健性实验。2026-05-05:
+    从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续按回测开发优先顺序补充再平衡频率稳健性场景，复用同一 PIT 输入、收益生效规则和显式成本假设。2026-05-05:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `rebalance_every_5d` 和 `rebalance_every_21d`
+    稳健性场景，JSON 剩余缺口移除 `rebalance_frequency`；`ruff check src tests` 和 `.venv\Scripts\python.exe
+    -m pytest -q` 通过 371 项测试。2026-05-05: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续补趋势-only
+    与趋势+风险情绪基线，评估复杂基本面/估值模块相对简化信号族的增量。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+    `trend_only_baseline` 和 `trend_plus_risk_sentiment_baseline` 稳健性场景，JSON 剩余缺口移除趋势基线；`ruff
+    check src tests` 和 `tests/test_backtest.py` 通过。2026-05-05: 从 BASELINE_DONE 改为
+    IN_PROGRESS，原因：继续补模块权重扰动，使用扰动后的评分规则重新运行同一 PIT 输入，避免近似复用 gate 上限。2026-05-05: 从
+    IN_PROGRESS 改为 BASELINE_DONE，原因：新增每个评分模块上下扰动场景、`--robustness-weight-perturbation-pct`、权重敏感性解释和
+    JSON 字段，剩余缺口移除 `module_weight_perturbation`；`ruff check src tests` 和 `tests/test_backtest.py`
+    通过。2026-05-05: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续补同换手率随机策略，判断信号方向是否优于相同交易频率下的随机方向。2026-05-05:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增同换手率随机策略、`--robustness-random-seed-start`、`--robustness-random-seed-count`、随机基线解释和
+    JSON 字段，剩余缺口移除 `same_turnover_random_strategy`；`ruff check src tests` 和 `tests/test_backtest.py`
+    通过。2026-05-05: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续补时间顺序样本外验证，避免只看全样本和单一起点后移。2026-05-05:
+    从 IN_PROGRESS 改为 DONE，原因：新增 `in_sample_window` 和 `out_of_sample_holdout` 场景、`--robustness-oos-split-ratio`、样本外解释和
+    JSON 字段，`remaining_gaps` 为空；`ruff check src tests` 和 `.venv\Scripts\python.exe
+    -m pytest -q` 通过 371 项测试。'
+  docs_links:
+  - docs/requirements/decision_support_improvements_2026-05-04.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: 0443919ade5531a66d883e476da95b77782f320a9b70fef910e640ca4064598d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: aabaf3215e6ca26c5485f695a1314c62c7061bbd80e9aa9f9063bd0ef10cd807

@@ -1,0 +1,90 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE
+  title: null
+  domain: Knowledge & Insight Core / carrier-independent explanation and research
+    knowledge
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: project owner + knowledge owner + architecture coordinator
+  requirement_refs:
+  - docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md`；先做K0资产/受众/current-history
+    inventory和K1 Knowledge Object/lifecycle/evidence contract，复用DOCS-LEARN-001、DOC-001、REPORT-048/049/052与ARCH-004F2/F3，不创建第二套status/catalog/registry。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: versioned knowledge object覆盖concept/explanation/claim/limitation/evidence/as-of/regime/range/owner/status/supersedes；机器事实与人工解释分离；CURRENT可追溯source/DQ/PIT/policy；stale/orphan/duplicate/broken/current-history误读可检测；实现阶段同步flow/catalog/tests。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1178
+    row_sha256: afceef1d9e71c3108737c5a953a5782722cc21c754b8106f5cae2bf88c419e15
+    cell_count: 8
+    all_cells:
+    - KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE
+    - Knowledge & Insight Core / carrier-independent explanation and research knowledge
+    - P1
+    - PROPOSED
+    - project owner + knowledge owner + architecture coordinator
+    - 详见 `docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md`；先做K0资产/受众/current-history
+      inventory和K1 Knowledge Object/lifecycle/evidence contract，复用DOCS-LEARN-001、DOC-001、REPORT-048/049/052与ARCH-004F2/F3，不创建第二套status/catalog/registry。
+    - versioned knowledge object覆盖concept/explanation/claim/limitation/evidence/as-of/regime/range/owner/status/supersedes；机器事实与人工解释分离；CURRENT可追溯source/DQ/PIT/policy；stale/orphan/duplicate/broken/current-history误读可检测；实现阶段同步flow/catalog/tests。
+    - '2026-07-12: owner确认“文档管理”上位抽象应为知识解释系统；本次登记PROPOSED，等待K0/K1范围与ARCH-004 lane协调。'
+    raw_line: '|KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE|Knowledge & Insight Core
+      / carrier-independent explanation and research knowledge|P1|PROPOSED|project
+      owner + knowledge owner + architecture coordinator|详见 `docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md`；先做K0资产/受众/current-history
+      inventory和K1 Knowledge Object/lifecycle/evidence contract，复用DOCS-LEARN-001、DOC-001、REPORT-048/049/052与ARCH-004F2/F3，不创建第二套status/catalog/registry。|versioned
+      knowledge object覆盖concept/explanation/claim/limitation/evidence/as-of/regime/range/owner/status/supersedes；机器事实与人工解释分离；CURRENT可追溯source/DQ/PIT/policy；stale/orphan/duplicate/broken/current-history误读可检测；实现阶段同步flow/catalog/tests。|2026-07-12:
+      owner确认“文档管理”上位抽象应为知识解释系统；本次登记PROPOSED，等待K0/K1范围与ARCH-004 lane协调。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-afceef1d9e71c3108737c5a9
+  task_id: KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: project owner + knowledge owner + architecture coordinator
+    notes: '2026-07-12: owner确认“文档管理”上位抽象应为知识解释系统；本次登记PROPOSED，等待K0/K1范围与ARCH-004
+      lane协调。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:afceef1d9e71c3108737c5a953a5782722cc21c754b8106f5cae2bf88c419e15
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE
+  - Knowledge & Insight Core / carrier-independent explanation and research knowledge
+  - P1
+  - PROPOSED
+  - project owner + knowledge owner + architecture coordinator
+  - 详见 `docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md`；先做K0资产/受众/current-history
+    inventory和K1 Knowledge Object/lifecycle/evidence contract，复用DOCS-LEARN-001、DOC-001、REPORT-048/049/052与ARCH-004F2/F3，不创建第二套status/catalog/registry。
+  - versioned knowledge object覆盖concept/explanation/claim/limitation/evidence/as-of/regime/range/owner/status/supersedes；机器事实与人工解释分离；CURRENT可追溯source/DQ/PIT/policy；stale/orphan/duplicate/broken/current-history误读可检测；实现阶段同步flow/catalog/tests。
+  - '2026-07-12: owner确认“文档管理”上位抽象应为知识解释系统；本次登记PROPOSED，等待K0/K1范围与ARCH-004 lane协调。'
+  docs_links:
+  - docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md
+  terminal: false
+  raw_row_sha256: afceef1d9e71c3108737c5a953a5782722cc21c754b8106f5cae2bf88c419e15
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 302d753ff36cad32491a8a9029572afd13d45aee01a15d8460d840ed99160808

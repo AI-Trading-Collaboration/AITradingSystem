@@ -1,0 +1,112 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-841_TRIGGER_FEATURE_AVAILABILITY_CATALOG
+  title: null
+  domain: Controlled strategy research / trigger feature availability catalog
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+    TRADING-840 input contract；feature usage permissions 必须区分 trigger 与 outcome
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI `aits research strategies tail-risk-trigger-feature-availability-catalog`；输出
+      feature_name、source、earliest/latest、frequency、decision_time availability、missing
+      periods、PIT quality、trigger/outcome permissions 和 FEATURE_CATALOG_* 状态
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1319
+    row_sha256: e13865c4b1272e582c6333071bf42f31c9a09990dee71f444866c25aa364e1c3
+    cell_count: 8
+    all_cells:
+    - TRADING-841_TRIGGER_FEATURE_AVAILABILITY_CATALOG
+    - Controlled strategy research / trigger feature availability catalog
+    - P2
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+      TRADING-840 input contract；feature usage permissions 必须区分 trigger 与 outcome
+    - 新增 CLI `aits research strategies tail-risk-trigger-feature-availability-catalog`；输出
+      feature_name、source、earliest/latest、frequency、decision_time availability、missing
+      periods、PIT quality、trigger/outcome permissions 和 FEATURE_CATALOG_* 状态
+    - '2026-06-22: 按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+      registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
+      pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation
+      190 passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+      和 git diff --check。'
+    raw_line: '|TRADING-841_TRIGGER_FEATURE_AVAILABILITY_CATALOG|Controlled strategy
+      research / trigger feature availability catalog|P2|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+      TRADING-840 input contract；feature usage permissions 必须区分 trigger 与 outcome|新增
+      CLI `aits research strategies tail-risk-trigger-feature-availability-catalog`；输出
+      feature_name、source、earliest/latest、frequency、decision_time availability、missing
+      periods、PIT quality、trigger/outcome permissions 和 FEATURE_CATALOG_* 状态|2026-06-22:
+      按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+      registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
+      pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation
+      190 passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+      和 git diff --check。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e13865c4b1272e582c633307
+  task_id: TRADING-841_TRIGGER_FEATURE_AVAILABILITY_CATALOG
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P2
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD
+      artifacts、report registry、system flow、artifact catalog、focused pytest 和 CLI/registry
+      coverage；验证通过：focused pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation
+      190 passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+      和 git diff --check。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e13865c4b1272e582c6333071bf42f31c9a09990dee71f444866c25aa364e1c3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-841_TRIGGER_FEATURE_AVAILABILITY_CATALOG
+  - Controlled strategy research / trigger feature availability catalog
+  - P2
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+    TRADING-840 input contract；feature usage permissions 必须区分 trigger 与 outcome
+  - 新增 CLI `aits research strategies tail-risk-trigger-feature-availability-catalog`；输出
+    feature_name、source、earliest/latest、frequency、decision_time availability、missing
+    periods、PIT quality、trigger/outcome permissions 和 FEATURE_CATALOG_* 状态
+  - '2026-06-22: 按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+    registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
+    pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation 190
+    passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+    和 git diff --check。'
+  docs_links:
+  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
+  terminal: false
+  raw_row_sha256: e13865c4b1272e582c6333071bf42f31c9a09990dee71f444866c25aa364e1c3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9b072c098b6339367c066324d4e51f12fb508f71f14d68f569a40c1ce69d1ea3

@@ -1,0 +1,113 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-002
+  title: null
+  domain: 调权/防过拟合验证协议
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统设计 + 系统实现
+  requirement_refs:
+  - docs/requirements/backtest_weight_tuning_validation_protocol_2026-05-06.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段 `aits feedback validate-calibration-protocol`：校验
+    protocol manifest 必填字段、占位符、AI regime 日期、nested walk-forward、purging/embargo、benchmark、参数分层、trial、多重测试折扣和
+    production boundary；详细拆解见 `docs/requirements/backtest_weight_tuning_validation_protocol_2026-05-06.md#calibration-002调权防过拟合验证协议`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 任何权重候选不得只因历史最优收益晋级；必须固定数据、特征、成本、执行、切分和验收指标，记录 experiment_id、git_commit、yaml_hash、data_snapshot_hash、tested_parameters、number_of_trials、chosen_config
+      和 in/out sample 指标；OOS 聚合、参数扰动、消融、benchmark、成本压力、稳定区域和更新节奏均达标后才允许进入 shadow 或
+      promotion；完整 DONE 仍需真实调权 trial registry、DSR/PBO 结果、稳定区域和 forward shadow 样本
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1134
+    row_sha256: f8b530de80002d123d917a1fd821c391c7044c679996d4ba25b5fc14b4c52ef7
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-002
+    - 调权/防过拟合验证协议
+    - P1
+    - BASELINE_DONE
+    - 系统设计 + 系统实现
+    - 已完成第一阶段 `aits feedback validate-calibration-protocol`：校验 protocol manifest 必填字段、占位符、AI
+      regime 日期、nested walk-forward、purging/embargo、benchmark、参数分层、trial、多重测试折扣和 production
+      boundary；详细拆解见 `docs/requirements/backtest_weight_tuning_validation_protocol_2026-05-06.md#calibration-002调权防过拟合验证协议`
+    - 任何权重候选不得只因历史最优收益晋级；必须固定数据、特征、成本、执行、切分和验收指标，记录 experiment_id、git_commit、yaml_hash、data_snapshot_hash、tested_parameters、number_of_trials、chosen_config
+      和 in/out sample 指标；OOS 聚合、参数扰动、消融、benchmark、成本压力、稳定区域和更新节奏均达标后才允许进入 shadow 或
+      promotion；完整 DONE 仍需真实调权 trial registry、DSR/PBO 结果、稳定区域和 forward shadow 样本
+    - '2026-05-06: 新增任务，原因：外部复核指出回测调权的主要风险是 data snooping、selection bias 和回测过拟合；现有
+      `BACKTEST-001` 覆盖单次稳健性，但还缺调权试验协议、trial 次数审计和多重测试折扣。2026-05-06: 从 PROPOSED 改为
+      IN_PROGRESS，原因：开始实现不改变 production 的 protocol manifest 校验和中文审计报告基础版。2026-05-06:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增校验模块、CLI、模板、系统流图、README 和测试；命令只输出报告，不批准
+      overlay 或改变生产评分/仓位。'
+    raw_line: '|CALIBRATION-002|调权/防过拟合验证协议|P1|BASELINE_DONE|系统设计 + 系统实现|已完成第一阶段 `aits
+      feedback validate-calibration-protocol`：校验 protocol manifest 必填字段、占位符、AI regime
+      日期、nested walk-forward、purging/embargo、benchmark、参数分层、trial、多重测试折扣和 production
+      boundary；详细拆解见 `docs/requirements/backtest_weight_tuning_validation_protocol_2026-05-06.md#calibration-002调权防过拟合验证协议`|任何权重候选不得只因历史最优收益晋级；必须固定数据、特征、成本、执行、切分和验收指标，记录
+      experiment_id、git_commit、yaml_hash、data_snapshot_hash、tested_parameters、number_of_trials、chosen_config
+      和 in/out sample 指标；OOS 聚合、参数扰动、消融、benchmark、成本压力、稳定区域和更新节奏均达标后才允许进入 shadow 或
+      promotion；完整 DONE 仍需真实调权 trial registry、DSR/PBO 结果、稳定区域和 forward shadow 样本|2026-05-06:
+      新增任务，原因：外部复核指出回测调权的主要风险是 data snooping、selection bias 和回测过拟合；现有 `BACKTEST-001`
+      覆盖单次稳健性，但还缺调权试验协议、trial 次数审计和多重测试折扣。2026-05-06: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现不改变
+      production 的 protocol manifest 校验和中文审计报告基础版。2026-05-06: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增校验模块、CLI、模板、系统流图、README
+      和测试；命令只输出报告，不批准 overlay 或改变生产评分/仓位。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f8b530de80002d123d917a1f
+  task_id: CALIBRATION-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统设计 + 系统实现
+    notes: '2026-05-06: 新增任务，原因：外部复核指出回测调权的主要风险是 data snooping、selection bias 和回测过拟合；现有
+      `BACKTEST-001` 覆盖单次稳健性，但还缺调权试验协议、trial 次数审计和多重测试折扣。2026-05-06: 从 PROPOSED 改为
+      IN_PROGRESS，原因：开始实现不改变 production 的 protocol manifest 校验和中文审计报告基础版。2026-05-06:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增校验模块、CLI、模板、系统流图、README 和测试；命令只输出报告，不批准
+      overlay 或改变生产评分/仓位。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f8b530de80002d123d917a1fd821c391c7044c679996d4ba25b5fc14b4c52ef7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-002
+  - 调权/防过拟合验证协议
+  - P1
+  - BASELINE_DONE
+  - 系统设计 + 系统实现
+  - 已完成第一阶段 `aits feedback validate-calibration-protocol`：校验 protocol manifest 必填字段、占位符、AI
+    regime 日期、nested walk-forward、purging/embargo、benchmark、参数分层、trial、多重测试折扣和 production
+    boundary；详细拆解见 `docs/requirements/backtest_weight_tuning_validation_protocol_2026-05-06.md#calibration-002调权防过拟合验证协议`
+  - 任何权重候选不得只因历史最优收益晋级；必须固定数据、特征、成本、执行、切分和验收指标，记录 experiment_id、git_commit、yaml_hash、data_snapshot_hash、tested_parameters、number_of_trials、chosen_config
+    和 in/out sample 指标；OOS 聚合、参数扰动、消融、benchmark、成本压力、稳定区域和更新节奏均达标后才允许进入 shadow 或 promotion；完整
+    DONE 仍需真实调权 trial registry、DSR/PBO 结果、稳定区域和 forward shadow 样本
+  - '2026-05-06: 新增任务，原因：外部复核指出回测调权的主要风险是 data snooping、selection bias 和回测过拟合；现有 `BACKTEST-001`
+    覆盖单次稳健性，但还缺调权试验协议、trial 次数审计和多重测试折扣。2026-05-06: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现不改变
+    production 的 protocol manifest 校验和中文审计报告基础版。2026-05-06: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增校验模块、CLI、模板、系统流图、README
+    和测试；命令只输出报告，不批准 overlay 或改变生产评分/仓位。'
+  docs_links:
+  - docs/requirements/backtest_weight_tuning_validation_protocol_2026-05-06.md
+  terminal: false
+  raw_row_sha256: f8b530de80002d123d917a1fd821c391c7044c679996d4ba25b5fc14b4c52ef7
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9f2e74bb896fd52b843757656d0ee0accf5a98ce88073d1f0c68851b473041f6

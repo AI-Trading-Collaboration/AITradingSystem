@@ -1,0 +1,143 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-009A
+  title: null
+  domain: 交易执行/IBKR Paper read-only local validation report
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/runbooks/ibkr_paper_readonly_local_validation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 本机验证 runbook、local config / snapshot ignore
+    规则、sanitized fixture、`--config` CLI alias、测试和当前复验证据已完成；后续如 IBKR Paper 本机流程变化，再新建
+    follow-up
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`docs/runbooks/ibkr_paper_readonly_local_validation.md` 说明 TWS / IB Gateway
+      Paper 启动、API socket 开启、推荐 port/client_id、本地 `config/ibkr_paper_readonly.local.yaml`
+      准备、local config 不提交、snapshot 命令和常见错误；`.gitignore` 覆盖 `config/*.local.yaml` 和
+      IBKR snapshot 输出；sanitized fixture 不含完整 account id、真实姓名、邮箱、现金细节或敏感标识；本机 checklist
+      覆盖 masked account、`readonly=true`、`production_effect=none`、`submit_order` 不可用、未读取
+      broker API key、未写入完整账号；测试覆盖 `.local.yaml` 不被测试依赖、fixture 不含完整 DUP 账号格式、snapshot
+      writer 默认 mask account id；目标 pytest、全量 pytest、ruff 和触达文件 Black check 通过；全仓 Black
+      当前仍被无关 repo-wide formatter baseline 阻断并由 TRADING-006 后续治理承接'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 295
+    row_sha256: 0e5350a8f62fab79b68e5e1054cdd37e3fbf08e43e67931b0beb2e9de0d68eeb
+    cell_count: 8
+    all_cells:
+    - TRADING-009A
+    - 交易执行/IBKR Paper read-only local validation report
+    - P0
+    - DONE
+    - 系统验证
+    - 本机验证 runbook、local config / snapshot ignore 规则、sanitized fixture、`--config`
+      CLI alias、测试和当前复验证据已完成；后续如 IBKR Paper 本机流程变化，再新建 follow-up
+    - '`docs/runbooks/ibkr_paper_readonly_local_validation.md` 说明 TWS / IB Gateway
+      Paper 启动、API socket 开启、推荐 port/client_id、本地 `config/ibkr_paper_readonly.local.yaml`
+      准备、local config 不提交、snapshot 命令和常见错误；`.gitignore` 覆盖 `config/*.local.yaml` 和
+      IBKR snapshot 输出；sanitized fixture 不含完整 account id、真实姓名、邮箱、现金细节或敏感标识；本机 checklist
+      覆盖 masked account、`readonly=true`、`production_effect=none`、`submit_order` 不可用、未读取
+      broker API key、未写入完整账号；测试覆盖 `.local.yaml` 不被测试依赖、fixture 不含完整 DUP 账号格式、snapshot
+      writer 默认 mask account id；目标 pytest、全量 pytest、ruff 和触达文件 Black check 通过；全仓 Black
+      当前仍被无关 repo-wide formatter baseline 阻断并由 TRADING-006 后续治理承接'
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-009 完成且 CI 通过后，固化本机 IBKR
+      Paper 只读连接验证流程和安全边界；本阶段只记录/验证 read-only local workflow，不提交敏感配置。2026-05-17: 从
+      IN_PROGRESS 改为 VALIDATING，原因：已新增本机验证 runbook、`.gitignore` local/snapshot 规则、sanitized
+      fixture、`--config` snapshot CLI alias 和安全边界测试；验证通过目标 pytest、`tests/trading_engine`、全量
+      pytest、ruff 和 black check。2026-06-09: 从 VALIDATING 改为 DONE，原因：runbook、ignore
+      规则、sanitized fixture 和 CLI alias 均在当前代码中保留；sanitized fixture 与默认 disabled smoke
+      输出未匹配完整 `DUP` / `U` 账号、凭证或下单/取消关键字；验证通过 `test_ibkr_paper_readonly.py` 15 passed、`tests/trading_engine`
+      939 passed、全量 pytest 2270 passed、全量 Ruff 和触达文件 Black check。'
+    raw_line: '|TRADING-009A|交易执行/IBKR Paper read-only local validation report|P0|DONE|系统验证|本机验证
+      runbook、local config / snapshot ignore 规则、sanitized fixture、`--config` CLI alias、测试和当前复验证据已完成；后续如
+      IBKR Paper 本机流程变化，再新建 follow-up|`docs/runbooks/ibkr_paper_readonly_local_validation.md`
+      说明 TWS / IB Gateway Paper 启动、API socket 开启、推荐 port/client_id、本地 `config/ibkr_paper_readonly.local.yaml`
+      准备、local config 不提交、snapshot 命令和常见错误；`.gitignore` 覆盖 `config/*.local.yaml` 和
+      IBKR snapshot 输出；sanitized fixture 不含完整 account id、真实姓名、邮箱、现金细节或敏感标识；本机 checklist
+      覆盖 masked account、`readonly=true`、`production_effect=none`、`submit_order` 不可用、未读取
+      broker API key、未写入完整账号；测试覆盖 `.local.yaml` 不被测试依赖、fixture 不含完整 DUP 账号格式、snapshot
+      writer 默认 mask account id；目标 pytest、全量 pytest、ruff 和触达文件 Black check 通过；全仓 Black
+      当前仍被无关 repo-wide formatter baseline 阻断并由 TRADING-006 后续治理承接|2026-05-17: 新增并进入
+      IN_PROGRESS，原因：owner 要求在 TRADING-009 完成且 CI 通过后，固化本机 IBKR Paper 只读连接验证流程和安全边界；本阶段只记录/验证
+      read-only local workflow，不提交敏感配置。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增本机验证
+      runbook、`.gitignore` local/snapshot 规则、sanitized fixture、`--config` snapshot
+      CLI alias 和安全边界测试；验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff 和 black
+      check。2026-06-09: 从 VALIDATING 改为 DONE，原因：runbook、ignore 规则、sanitized fixture
+      和 CLI alias 均在当前代码中保留；sanitized fixture 与默认 disabled smoke 输出未匹配完整 `DUP` / `U`
+      账号、凭证或下单/取消关键字；验证通过 `test_ibkr_paper_readonly.py` 15 passed、`tests/trading_engine`
+      939 passed、全量 pytest 2270 passed、全量 Ruff 和触达文件 Black check。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0e5350a8f62fab79b68e5e10
+  task_id: TRADING-009A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-009 完成且 CI 通过后，固化本机
+      IBKR Paper 只读连接验证流程和安全边界；本阶段只记录/验证 read-only local workflow，不提交敏感配置。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增本机验证 runbook、`.gitignore` local/snapshot 规则、sanitized
+      fixture、`--config` snapshot CLI alias 和安全边界测试；验证通过目标 pytest、`tests/trading_engine`、全量
+      pytest、ruff 和 black check。2026-06-09: 从 VALIDATING 改为 DONE，原因：runbook、ignore
+      规则、sanitized fixture 和 CLI alias 均在当前代码中保留；sanitized fixture 与默认 disabled smoke
+      输出未匹配完整 `DUP` / `U` 账号、凭证或下单/取消关键字；验证通过 `test_ibkr_paper_readonly.py` 15 passed、`tests/trading_engine`
+      939 passed、全量 pytest 2270 passed、全量 Ruff 和触达文件 Black check。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0e5350a8f62fab79b68e5e1054cdd37e3fbf08e43e67931b0beb2e9de0d68eeb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-009A
+  - 交易执行/IBKR Paper read-only local validation report
+  - P0
+  - DONE
+  - 系统验证
+  - 本机验证 runbook、local config / snapshot ignore 规则、sanitized fixture、`--config` CLI
+    alias、测试和当前复验证据已完成；后续如 IBKR Paper 本机流程变化，再新建 follow-up
+  - '`docs/runbooks/ibkr_paper_readonly_local_validation.md` 说明 TWS / IB Gateway Paper
+    启动、API socket 开启、推荐 port/client_id、本地 `config/ibkr_paper_readonly.local.yaml`
+    准备、local config 不提交、snapshot 命令和常见错误；`.gitignore` 覆盖 `config/*.local.yaml` 和 IBKR
+    snapshot 输出；sanitized fixture 不含完整 account id、真实姓名、邮箱、现金细节或敏感标识；本机 checklist 覆盖
+    masked account、`readonly=true`、`production_effect=none`、`submit_order` 不可用、未读取
+    broker API key、未写入完整账号；测试覆盖 `.local.yaml` 不被测试依赖、fixture 不含完整 DUP 账号格式、snapshot
+    writer 默认 mask account id；目标 pytest、全量 pytest、ruff 和触达文件 Black check 通过；全仓 Black
+    当前仍被无关 repo-wide formatter baseline 阻断并由 TRADING-006 后续治理承接'
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-009 完成且 CI 通过后，固化本机 IBKR Paper
+    只读连接验证流程和安全边界；本阶段只记录/验证 read-only local workflow，不提交敏感配置。2026-05-17: 从 IN_PROGRESS
+    改为 VALIDATING，原因：已新增本机验证 runbook、`.gitignore` local/snapshot 规则、sanitized fixture、`--config`
+    snapshot CLI alias 和安全边界测试；验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff
+    和 black check。2026-06-09: 从 VALIDATING 改为 DONE，原因：runbook、ignore 规则、sanitized
+    fixture 和 CLI alias 均在当前代码中保留；sanitized fixture 与默认 disabled smoke 输出未匹配完整 `DUP`
+    / `U` 账号、凭证或下单/取消关键字；验证通过 `test_ibkr_paper_readonly.py` 15 passed、`tests/trading_engine`
+    939 passed、全量 pytest 2270 passed、全量 Ruff 和触达文件 Black check。'
+  docs_links:
+  - docs/runbooks/ibkr_paper_readonly_local_validation.md
+  terminal: true
+  raw_row_sha256: 0e5350a8f62fab79b68e5e1054cdd37e3fbf08e43e67931b0beb2e9de0d68eeb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: eca3ee47886b0e2e8280bc855274e2ad991ae7dd36e488859ced6546d02458f8

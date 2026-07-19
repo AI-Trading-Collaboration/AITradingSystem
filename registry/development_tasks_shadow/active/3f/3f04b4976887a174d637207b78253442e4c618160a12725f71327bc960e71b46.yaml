@@ -1,0 +1,189 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-018B
+  title: null
+  domain: 交易执行/Daily Shadow Weight Iteration State
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/operations/operations_runbook.md
+  - docs/requirements/daily_shadow_weight_iteration_2026-05-19.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/daily_shadow_weight_iteration_2026-05-19.md`；shadow-only
+    current state、daily candidate/report/log、policy、standalone script、dashboard 只读卡片、runbook、系统流图、产物目录、测试和当前复验证据已完成；真实
+    TRADING-015/016/017/018/018A artifact 下 UPDATE / NO_UPDATE / SAFETY_BLOCKED 多日观察已拆分到
+    active `TRADING-018B1`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_daily_shadow_weight_iteration.py`、`data/derived/weight_iterations/shadow/current_shadow_weights.json`、history/candidates/logs
+      JSON/Markdown；首次缺 current state 时从 production profile snapshot 复制，缺 production
+      source 时使用 policy conservative default 并披露 `initialization_source`；每日 candidate
+      decision 只允许 `UPDATE`、`NO_UPDATE`、`INSUFFICIENT_DATA`、`SAFETY_BLOCKED`、`ERROR`；缺
+      policy、缺 artifact、scheduler `report_type` 不匹配、scheduler safety 失败或信号不足不得更新 existing
+      current shadow state；成功 UPDATE 必须应用 max abs/relative delta clamp、归一化到 1.0、写
+      history snapshot 并原子替换 current；所有输出固定 `mode=shadow_only`、`production_effect=none`、`manual_review_only=true`；dashboard
+      只读展示 current shadow weights、最近 decision、delta、candidate report link，不重跑 pipeline；数据质量
+      gate、目标 pytest、dashboard pytest、`tests/trading_engine`、docs freshness、scoped
+      Ruff/Black、scoped safety scan 和 GitHub Actions CI 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1148
+    row_sha256: 885def137e89f0158f5c9d4978a70174635e9350d68a555c5e9fb04d521cb9b5
+    cell_count: 8
+    all_cells:
+    - TRADING-018B
+    - 交易执行/Daily Shadow Weight Iteration State
+    - P0
+    - BASELINE_DONE
+    - 系统验证 + 项目 owner
+    - 详细拆解见 `docs/requirements/daily_shadow_weight_iteration_2026-05-19.md`；shadow-only
+      current state、daily candidate/report/log、policy、standalone script、dashboard
+      只读卡片、runbook、系统流图、产物目录、测试和当前复验证据已完成；真实 TRADING-015/016/017/018/018A artifact
+      下 UPDATE / NO_UPDATE / SAFETY_BLOCKED 多日观察已拆分到 active `TRADING-018B1`
+    - 新增 `scripts/run_daily_shadow_weight_iteration.py`、`data/derived/weight_iterations/shadow/current_shadow_weights.json`、history/candidates/logs
+      JSON/Markdown；首次缺 current state 时从 production profile snapshot 复制，缺 production
+      source 时使用 policy conservative default 并披露 `initialization_source`；每日 candidate
+      decision 只允许 `UPDATE`、`NO_UPDATE`、`INSUFFICIENT_DATA`、`SAFETY_BLOCKED`、`ERROR`；缺
+      policy、缺 artifact、scheduler `report_type` 不匹配、scheduler safety 失败或信号不足不得更新 existing
+      current shadow state；成功 UPDATE 必须应用 max abs/relative delta clamp、归一化到 1.0、写
+      history snapshot 并原子替换 current；所有输出固定 `mode=shadow_only`、`production_effect=none`、`manual_review_only=true`；dashboard
+      只读展示 current shadow weights、最近 decision、delta、candidate report link，不重跑 pipeline；数据质量
+      gate、目标 pytest、dashboard pytest、`tests/trading_engine`、docs freshness、scoped
+      Ruff/Black、scoped safety scan 和 GitHub Actions CI 通过
+    - '2026-05-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018/018A 后进入 shadow learn
+      阶段；本阶段只维护独立 shadow 参数状态，禁止 production promotion、production 权重修改、真实交易执行或 dashboard
+      主结论变更。2026-05-19: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 shadow iteration policy、builder、CLI、candidate/current/history/log
+      输出、原子 current 更新、dashboard 只读卡片、runbook、系统流图/产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、dashboard
+      测试、全量 pytest、ruff 和 black check。2026-05-20: 提交前 hardening，原因：policy 缺失和 TRADING-018A
+      scheduler `report_type` 不匹配均阻断 shadow update，confidence 默认值和 conservative 初始化权重纳入
+      policy。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮先读取 `docs/operations/operations_runbook.md`
+      确认 daily/scheduler 边界；`aits validate-data` 为 `PASS_WITH_WARNINGS` / 错误数 0；isolated
+      缺输入 smoke 输出 `INSUFFICIENT_DATA`，缺 `TRADING-015/016/017/018/018A`，`production_effect=none`、`manual_review_only=true`、`mode=shadow_only`、`current_state_updated=false`；首次运行只初始化独立
+      shadow current，`initialization_source=production_profile_snapshot`、权重和为 1.0，未写
+      history UPDATE；字段级复核确认 `pipeline_contract` 不写 production/approved profile、不自动
+      promotion、不改变 dashboard 主结论、不触发交易、不运行上游 pipeline；目标 + dashboard pytest 33 passed，`tests/trading_engine`
+      939 passed，scoped safety scan 未命中敏感输出或 forbidden production promotion 语义，当前代码基线
+      GitHub Actions `7da9850e` public badge/checks success；当前无真实多日 UPDATE/NO_UPDATE/SAFETY_BLOCKED
+      观察样本，剩余运行期观察已登记为 `TRADING-018B1`。'
+    raw_line: '|TRADING-018B|交易执行/Daily Shadow Weight Iteration State|P0|BASELINE_DONE|系统验证
+      + 项目 owner|详细拆解见 `docs/requirements/daily_shadow_weight_iteration_2026-05-19.md`；shadow-only
+      current state、daily candidate/report/log、policy、standalone script、dashboard
+      只读卡片、runbook、系统流图、产物目录、测试和当前复验证据已完成；真实 TRADING-015/016/017/018/018A artifact
+      下 UPDATE / NO_UPDATE / SAFETY_BLOCKED 多日观察已拆分到 active `TRADING-018B1`|新增 `scripts/run_daily_shadow_weight_iteration.py`、`data/derived/weight_iterations/shadow/current_shadow_weights.json`、history/candidates/logs
+      JSON/Markdown；首次缺 current state 时从 production profile snapshot 复制，缺 production
+      source 时使用 policy conservative default 并披露 `initialization_source`；每日 candidate
+      decision 只允许 `UPDATE`、`NO_UPDATE`、`INSUFFICIENT_DATA`、`SAFETY_BLOCKED`、`ERROR`；缺
+      policy、缺 artifact、scheduler `report_type` 不匹配、scheduler safety 失败或信号不足不得更新 existing
+      current shadow state；成功 UPDATE 必须应用 max abs/relative delta clamp、归一化到 1.0、写
+      history snapshot 并原子替换 current；所有输出固定 `mode=shadow_only`、`production_effect=none`、`manual_review_only=true`；dashboard
+      只读展示 current shadow weights、最近 decision、delta、candidate report link，不重跑 pipeline；数据质量
+      gate、目标 pytest、dashboard pytest、`tests/trading_engine`、docs freshness、scoped
+      Ruff/Black、scoped safety scan 和 GitHub Actions CI 通过|2026-05-19: 新增并进入 IN_PROGRESS，原因：owner
+      要求在 TRADING-018/018A 后进入 shadow learn 阶段；本阶段只维护独立 shadow 参数状态，禁止 production
+      promotion、production 权重修改、真实交易执行或 dashboard 主结论变更。2026-05-19: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已新增 shadow iteration policy、builder、CLI、candidate/current/history/log
+      输出、原子 current 更新、dashboard 只读卡片、runbook、系统流图/产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、dashboard
+      测试、全量 pytest、ruff 和 black check。2026-05-20: 提交前 hardening，原因：policy 缺失和 TRADING-018A
+      scheduler `report_type` 不匹配均阻断 shadow update，confidence 默认值和 conservative 初始化权重纳入
+      policy。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮先读取 `docs/operations/operations_runbook.md`
+      确认 daily/scheduler 边界；`aits validate-data` 为 `PASS_WITH_WARNINGS` / 错误数 0；isolated
+      缺输入 smoke 输出 `INSUFFICIENT_DATA`，缺 `TRADING-015/016/017/018/018A`，`production_effect=none`、`manual_review_only=true`、`mode=shadow_only`、`current_state_updated=false`；首次运行只初始化独立
+      shadow current，`initialization_source=production_profile_snapshot`、权重和为 1.0，未写
+      history UPDATE；字段级复核确认 `pipeline_contract` 不写 production/approved profile、不自动
+      promotion、不改变 dashboard 主结论、不触发交易、不运行上游 pipeline；目标 + dashboard pytest 33 passed，`tests/trading_engine`
+      939 passed，scoped safety scan 未命中敏感输出或 forbidden production promotion 语义，当前代码基线
+      GitHub Actions `7da9850e` public badge/checks success；当前无真实多日 UPDATE/NO_UPDATE/SAFETY_BLOCKED
+      观察样本，剩余运行期观察已登记为 `TRADING-018B1`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-885def137e89f0158f5c9d49
+  task_id: TRADING-018B
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-05-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018/018A 后进入 shadow
+      learn 阶段；本阶段只维护独立 shadow 参数状态，禁止 production promotion、production 权重修改、真实交易执行或
+      dashboard 主结论变更。2026-05-19: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 shadow iteration
+      policy、builder、CLI、candidate/current/history/log 输出、原子 current 更新、dashboard
+      只读卡片、runbook、系统流图/产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、dashboard 测试、全量
+      pytest、ruff 和 black check。2026-05-20: 提交前 hardening，原因：policy 缺失和 TRADING-018A
+      scheduler `report_type` 不匹配均阻断 shadow update，confidence 默认值和 conservative 初始化权重纳入
+      policy。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮先读取 `docs/operations/operations_runbook.md`
+      确认 daily/scheduler 边界；`aits validate-data` 为 `PASS_WITH_WARNINGS` / 错误数 0；isolated
+      缺输入 smoke 输出 `INSUFFICIENT_DATA`，缺 `TRADING-015/016/017/018/018A`，`production_effect=none`、`manual_review_only=true`、`mode=shadow_only`、`current_state_updated=false`；首次运行只初始化独立
+      shadow current，`initialization_source=production_profile_snapshot`、权重和为 1.0，未写
+      history UPDATE；字段级复核确认 `pipeline_contract` 不写 production/approved profile、不自动
+      promotion、不改变 dashboard 主结论、不触发交易、不运行上游 pipeline；目标 + dashboard pytest 33 passed，`tests/trading_engine`
+      939 passed，scoped safety scan 未命中敏感输出或 forbidden production promotion 语义，当前代码基线
+      GitHub Actions `7da9850e` public badge/checks success；当前无真实多日 UPDATE/NO_UPDATE/SAFETY_BLOCKED
+      观察样本，剩余运行期观察已登记为 `TRADING-018B1`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:885def137e89f0158f5c9d4978a70174635e9350d68a555c5e9fb04d521cb9b5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-018B
+  - 交易执行/Daily Shadow Weight Iteration State
+  - P0
+  - BASELINE_DONE
+  - 系统验证 + 项目 owner
+  - 详细拆解见 `docs/requirements/daily_shadow_weight_iteration_2026-05-19.md`；shadow-only
+    current state、daily candidate/report/log、policy、standalone script、dashboard 只读卡片、runbook、系统流图、产物目录、测试和当前复验证据已完成；真实
+    TRADING-015/016/017/018/018A artifact 下 UPDATE / NO_UPDATE / SAFETY_BLOCKED 多日观察已拆分到
+    active `TRADING-018B1`
+  - 新增 `scripts/run_daily_shadow_weight_iteration.py`、`data/derived/weight_iterations/shadow/current_shadow_weights.json`、history/candidates/logs
+    JSON/Markdown；首次缺 current state 时从 production profile snapshot 复制，缺 production
+    source 时使用 policy conservative default 并披露 `initialization_source`；每日 candidate
+    decision 只允许 `UPDATE`、`NO_UPDATE`、`INSUFFICIENT_DATA`、`SAFETY_BLOCKED`、`ERROR`；缺
+    policy、缺 artifact、scheduler `report_type` 不匹配、scheduler safety 失败或信号不足不得更新 existing
+    current shadow state；成功 UPDATE 必须应用 max abs/relative delta clamp、归一化到 1.0、写 history
+    snapshot 并原子替换 current；所有输出固定 `mode=shadow_only`、`production_effect=none`、`manual_review_only=true`；dashboard
+    只读展示 current shadow weights、最近 decision、delta、candidate report link，不重跑 pipeline；数据质量
+    gate、目标 pytest、dashboard pytest、`tests/trading_engine`、docs freshness、scoped Ruff/Black、scoped
+    safety scan 和 GitHub Actions CI 通过
+  - '2026-05-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018/018A 后进入 shadow learn
+    阶段；本阶段只维护独立 shadow 参数状态，禁止 production promotion、production 权重修改、真实交易执行或 dashboard
+    主结论变更。2026-05-19: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 shadow iteration policy、builder、CLI、candidate/current/history/log
+    输出、原子 current 更新、dashboard 只读卡片、runbook、系统流图/产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、dashboard
+    测试、全量 pytest、ruff 和 black check。2026-05-20: 提交前 hardening，原因：policy 缺失和 TRADING-018A
+    scheduler `report_type` 不匹配均阻断 shadow update，confidence 默认值和 conservative 初始化权重纳入
+    policy。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮先读取 `docs/operations/operations_runbook.md`
+    确认 daily/scheduler 边界；`aits validate-data` 为 `PASS_WITH_WARNINGS` / 错误数 0；isolated
+    缺输入 smoke 输出 `INSUFFICIENT_DATA`，缺 `TRADING-015/016/017/018/018A`，`production_effect=none`、`manual_review_only=true`、`mode=shadow_only`、`current_state_updated=false`；首次运行只初始化独立
+    shadow current，`initialization_source=production_profile_snapshot`、权重和为 1.0，未写
+    history UPDATE；字段级复核确认 `pipeline_contract` 不写 production/approved profile、不自动
+    promotion、不改变 dashboard 主结论、不触发交易、不运行上游 pipeline；目标 + dashboard pytest 33 passed，`tests/trading_engine`
+    939 passed，scoped safety scan 未命中敏感输出或 forbidden production promotion 语义，当前代码基线
+    GitHub Actions `7da9850e` public badge/checks success；当前无真实多日 UPDATE/NO_UPDATE/SAFETY_BLOCKED
+    观察样本，剩余运行期观察已登记为 `TRADING-018B1`。'
+  docs_links:
+  - docs/operations/operations_runbook.md
+  - docs/requirements/daily_shadow_weight_iteration_2026-05-19.md
+  terminal: false
+  raw_row_sha256: 885def137e89f0158f5c9d4978a70174635e9350d68a555c5e9fb04d521cb9b5
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e9d698d8bb223a51bd6c8ecac806956aeaf3a1046080c6a115234f4575eeb5c0

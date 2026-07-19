@@ -1,0 +1,150 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-362_TASK_REGISTER_CONSISTENCY_CHECK
+  title: null
+  domain: Reporting governance / task register consistency
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-362_Task_Register_Consistency_Check.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-362_Task_Register_Consistency_Check.md`；新增只读
+    task register consistency check，校验 active/completed register、显式 docs links、report
+    registry entry、Reader Brief 可见性和 completed/archive 纪律；不得刷新数据、运行上游、写 official target
+    weights、接 broker/order 或修改 production state
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/task_register_consistency.py`、`aits reports
+      task-register-consistency run/report/validate`、JSON/Markdown consistency report、validation
+      artifact、Reader Brief 摘要、report registry、artifact catalog、README、system flow、operations
+      runbook、requirements 和 focused tests；validation CLI 对 blocking issue fail closed，report
+      index 与 documentation contract 可发现新 artifact family
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 224
+    row_sha256: 26ec96f914776df11f4f5cbc6a6b252543194c95d6f013f98ec6e7cbebded91b
+    cell_count: 8
+    all_cells:
+    - TRADING-362_TASK_REGISTER_CONSISTENCY_CHECK
+    - Reporting governance / task register consistency
+    - P1
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-362_Task_Register_Consistency_Check.md`；新增只读
+      task register consistency check，校验 active/completed register、显式 docs links、report
+      registry entry、Reader Brief 可见性和 completed/archive 纪律；不得刷新数据、运行上游、写 official
+      target weights、接 broker/order 或修改 production state
+    - 新增 `src/ai_trading_system/reports/task_register_consistency.py`、`aits reports
+      task-register-consistency run/report/validate`、JSON/Markdown consistency report、validation
+      artifact、Reader Brief 摘要、report registry、artifact catalog、README、system flow、operations
+      runbook、requirements 和 focused tests；validation CLI 对 blocking issue fail closed，report
+      index 与 documentation contract 可发现新 artifact family
+    - '2026-06-16: DONE；归档后真实 artifact `outputs/reports/task_register_consistency_2026-06-16.json/md`
+      输出 `consistency_status=PASS`、active=77、completed=322、checks=13、failed=0、blocking=0、warnings=0；`outputs/reports/task_register_consistency_validation_2026-06-16.json/md`
+      输出 `validation_status=PASS`、checks=5、failed=0；report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / unwaived=0，documentation contract PASS，Reader Brief latest OK，Reader Brief
+      quality latest OK；focused pytest `tests/test_task_register_consistency.py` 6
+      passed，Reader Brief/report registry/documentation contract focused pytest 9
+      passed，Ruff PASS，compileall PASS，git diff check exit 0。2026-06-16 Reader Brief
+      generation by exact date remains blocked by missing local `decision_snapshot_2026-06-16.json`;
+      latest available Reader Brief `2026-06-15` was regenerated and quality validated.
+      保持 read-only / no task-register repair / no upstream rerun / no data refresh
+      / no official target / no broker / no production mutation。'
+    raw_line: '|TRADING-362_TASK_REGISTER_CONSISTENCY_CHECK|Reporting governance /
+      task register consistency|P1|DONE|项目 owner 后续复核；代码实现完成|详细拆解见 `docs/requirements/TRADING-362_Task_Register_Consistency_Check.md`；新增只读
+      task register consistency check，校验 active/completed register、显式 docs links、report
+      registry entry、Reader Brief 可见性和 completed/archive 纪律；不得刷新数据、运行上游、写 official
+      target weights、接 broker/order 或修改 production state|新增 `src/ai_trading_system/reports/task_register_consistency.py`、`aits
+      reports task-register-consistency run/report/validate`、JSON/Markdown consistency
+      report、validation artifact、Reader Brief 摘要、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；validation CLI 对 blocking
+      issue fail closed，report index 与 documentation contract 可发现新 artifact family|2026-06-16:
+      DONE；归档后真实 artifact `outputs/reports/task_register_consistency_2026-06-16.json/md`
+      输出 `consistency_status=PASS`、active=77、completed=322、checks=13、failed=0、blocking=0、warnings=0；`outputs/reports/task_register_consistency_validation_2026-06-16.json/md`
+      输出 `validation_status=PASS`、checks=5、failed=0；report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / unwaived=0，documentation contract PASS，Reader Brief latest OK，Reader Brief
+      quality latest OK；focused pytest `tests/test_task_register_consistency.py` 6
+      passed，Reader Brief/report registry/documentation contract focused pytest 9
+      passed，Ruff PASS，compileall PASS，git diff check exit 0。2026-06-16 Reader Brief
+      generation by exact date remains blocked by missing local `decision_snapshot_2026-06-16.json`;
+      latest available Reader Brief `2026-06-15` was regenerated and quality validated.
+      保持 read-only / no task-register repair / no upstream rerun / no data refresh
+      / no official target / no broker / no production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-26ec96f914776df11f4f5cbc
+  task_id: TRADING-362_TASK_REGISTER_CONSISTENCY_CHECK
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: '2026-06-16: DONE；归档后真实 artifact `outputs/reports/task_register_consistency_2026-06-16.json/md`
+      输出 `consistency_status=PASS`、active=77、completed=322、checks=13、failed=0、blocking=0、warnings=0；`outputs/reports/task_register_consistency_validation_2026-06-16.json/md`
+      输出 `validation_status=PASS`、checks=5、failed=0；report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / unwaived=0，documentation contract PASS，Reader Brief latest OK，Reader Brief
+      quality latest OK；focused pytest `tests/test_task_register_consistency.py` 6
+      passed，Reader Brief/report registry/documentation contract focused pytest 9
+      passed，Ruff PASS，compileall PASS，git diff check exit 0。2026-06-16 Reader Brief
+      generation by exact date remains blocked by missing local `decision_snapshot_2026-06-16.json`;
+      latest available Reader Brief `2026-06-15` was regenerated and quality validated.
+      保持 read-only / no task-register repair / no upstream rerun / no data refresh
+      / no official target / no broker / no production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:26ec96f914776df11f4f5cbc6a6b252543194c95d6f013f98ec6e7cbebded91b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-362_TASK_REGISTER_CONSISTENCY_CHECK
+  - Reporting governance / task register consistency
+  - P1
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-362_Task_Register_Consistency_Check.md`；新增只读
+    task register consistency check，校验 active/completed register、显式 docs links、report
+    registry entry、Reader Brief 可见性和 completed/archive 纪律；不得刷新数据、运行上游、写 official target
+    weights、接 broker/order 或修改 production state
+  - 新增 `src/ai_trading_system/reports/task_register_consistency.py`、`aits reports
+    task-register-consistency run/report/validate`、JSON/Markdown consistency report、validation
+    artifact、Reader Brief 摘要、report registry、artifact catalog、README、system flow、operations
+    runbook、requirements 和 focused tests；validation CLI 对 blocking issue fail closed，report
+    index 与 documentation contract 可发现新 artifact family
+  - '2026-06-16: DONE；归档后真实 artifact `outputs/reports/task_register_consistency_2026-06-16.json/md`
+    输出 `consistency_status=PASS`、active=77、completed=322、checks=13、failed=0、blocking=0、warnings=0；`outputs/reports/task_register_consistency_validation_2026-06-16.json/md`
+    输出 `validation_status=PASS`、checks=5、failed=0；report index `PASS_WITH_EXPLICIT_WAIVERS`
+    / unwaived=0，documentation contract PASS，Reader Brief latest OK，Reader Brief quality
+    latest OK；focused pytest `tests/test_task_register_consistency.py` 6 passed，Reader
+    Brief/report registry/documentation contract focused pytest 9 passed，Ruff PASS，compileall
+    PASS，git diff check exit 0。2026-06-16 Reader Brief generation by exact date remains
+    blocked by missing local `decision_snapshot_2026-06-16.json`; latest available
+    Reader Brief `2026-06-15` was regenerated and quality validated. 保持 read-only
+    / no task-register repair / no upstream rerun / no data refresh / no official
+    target / no broker / no production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-362_Task_Register_Consistency_Check.md
+  terminal: true
+  raw_row_sha256: 26ec96f914776df11f4f5cbc6a6b252543194c95d6f013f98ec6e7cbebded91b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 955a1f21dddf50e6f8107d33cdcbd2b39e2d408749bbf3b128ee7bcc349e80d3

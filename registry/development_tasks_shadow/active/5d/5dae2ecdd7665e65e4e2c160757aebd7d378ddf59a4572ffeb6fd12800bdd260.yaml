@@ -1,0 +1,129 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CHAIN-001
+  title: null
+  domain: 产业链/报告解释
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/industry_chain_node_state.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成阶段 3 回测历史节点状态追踪：`backtest_daily_*.csv`
+    写入 top 节点、热度、健康等级和节点覆盖缺口，回测报告输出“产业链节点历史状态摘要”；剩余缺口是阶段 4 仓位约束评估，需先经过真实数据观察、回测和规则治理；详细拆解见
+    `docs/requirements/industry_chain_node_state.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`score-daily` 报告按产业链节点展示热度、健康度、覆盖率、集中度和解释；能区分行情是 GPU/HBM 等局部节点交易，还是完整产业链扩散；健康度只使用已通过门禁的基本面、估值、风险事件和
+      thesis 输入，数据不足必须显式标记；报告能按“市场价格信号 -> 产业链节点 -> thesis 状态 -> 评分模块 -> 仓位 gate ->
+      行动影响”解释关键结论；回测或审计能追踪历史节点状态；实现时同步更新 `docs/system_flow.md` 并补充测试'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1137
+    row_sha256: 16d3821f23312e57dc41771c7e09558e7250455f64000dbbfd5b79473283e34b
+    cell_count: 8
+    all_cells:
+    - CHAIN-001
+    - 产业链/报告解释
+    - P1
+    - BASELINE_DONE
+    - 系统实现
+    - 已完成阶段 3 回测历史节点状态追踪：`backtest_daily_*.csv` 写入 top 节点、热度、健康等级和节点覆盖缺口，回测报告输出“产业链节点历史状态摘要”；剩余缺口是阶段
+      4 仓位约束评估，需先经过真实数据观察、回测和规则治理；详细拆解见 `docs/requirements/industry_chain_node_state.md`
+    - '`score-daily` 报告按产业链节点展示热度、健康度、覆盖率、集中度和解释；能区分行情是 GPU/HBM 等局部节点交易，还是完整产业链扩散；健康度只使用已通过门禁的基本面、估值、风险事件和
+      thesis 输入，数据不足必须显式标记；报告能按“市场价格信号 -> 产业链节点 -> thesis 状态 -> 评分模块 -> 仓位 gate ->
+      行动影响”解释关键结论；回测或审计能追踪历史节点状态；实现时同步更新 `docs/system_flow.md` 并补充测试'
+    - '来自 2026-05-04 产业链节点热度/健康度讨论。2026-05-04: 补充最终报告呈现讨论中的产业链因果链模板；第一版定位为解释和诊断层，不直接触发交易；后续可与
+      `SCORE-001`/`SCORE-003` 协同进入仓位限制。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段节点热度基础版、日报章节和文本/覆盖测试。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `industry_node_state` 模块，`score-daily`
+      日报输出产业链节点热度、覆盖率、集中度和主要贡献 ticker；测试覆盖集中/扩散节点和缺失 ticker 覆盖；`production_effect=none`
+      防止节点热度改变 scoring、`position_gate` 或执行建议。2026-05-04: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续实现第二阶段节点健康度基础版，要求保持只读解释层并显式标记基本面、估值、风险和
+      thesis 覆盖缺口。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：日报已接入节点健康度基础版，明确估值拥挤和风险事件不是基本面证伪，并保持
+      `production_effect=none`；剩余缺口转入历史节点状态追踪和仓位约束评估。2026-05-04: 从 BASELINE_DONE 改为
+      IN_PROGRESS，原因：开始实现阶段 3 回测历史节点状态追踪和报告摘要。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：回测每日明细和报告已可按
+      `signal_date` 追踪产业链节点热度/健康度，测试覆盖 CSV 字段和报告摘要；`production_effect=none`，未改变评分、仓位闸门或回测仓位。'
+    raw_line: '|CHAIN-001|产业链/报告解释|P1|BASELINE_DONE|系统实现|已完成阶段 3 回测历史节点状态追踪：`backtest_daily_*.csv`
+      写入 top 节点、热度、健康等级和节点覆盖缺口，回测报告输出“产业链节点历史状态摘要”；剩余缺口是阶段 4 仓位约束评估，需先经过真实数据观察、回测和规则治理；详细拆解见
+      `docs/requirements/industry_chain_node_state.md`|`score-daily` 报告按产业链节点展示热度、健康度、覆盖率、集中度和解释；能区分行情是
+      GPU/HBM 等局部节点交易，还是完整产业链扩散；健康度只使用已通过门禁的基本面、估值、风险事件和 thesis 输入，数据不足必须显式标记；报告能按“市场价格信号
+      -> 产业链节点 -> thesis 状态 -> 评分模块 -> 仓位 gate -> 行动影响”解释关键结论；回测或审计能追踪历史节点状态；实现时同步更新
+      `docs/system_flow.md` 并补充测试|来自 2026-05-04 产业链节点热度/健康度讨论。2026-05-04: 补充最终报告呈现讨论中的产业链因果链模板；第一版定位为解释和诊断层，不直接触发交易；后续可与
+      `SCORE-001`/`SCORE-003` 协同进入仓位限制。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段节点热度基础版、日报章节和文本/覆盖测试。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `industry_node_state` 模块，`score-daily`
+      日报输出产业链节点热度、覆盖率、集中度和主要贡献 ticker；测试覆盖集中/扩散节点和缺失 ticker 覆盖；`production_effect=none`
+      防止节点热度改变 scoring、`position_gate` 或执行建议。2026-05-04: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续实现第二阶段节点健康度基础版，要求保持只读解释层并显式标记基本面、估值、风险和
+      thesis 覆盖缺口。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：日报已接入节点健康度基础版，明确估值拥挤和风险事件不是基本面证伪，并保持
+      `production_effect=none`；剩余缺口转入历史节点状态追踪和仓位约束评估。2026-05-04: 从 BASELINE_DONE 改为
+      IN_PROGRESS，原因：开始实现阶段 3 回测历史节点状态追踪和报告摘要。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：回测每日明细和报告已可按
+      `signal_date` 追踪产业链节点热度/健康度，测试覆盖 CSV 字段和报告摘要；`production_effect=none`，未改变评分、仓位闸门或回测仓位。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-16d3821f23312e57dc41771c
+  task_id: CHAIN-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '来自 2026-05-04 产业链节点热度/健康度讨论。2026-05-04: 补充最终报告呈现讨论中的产业链因果链模板；第一版定位为解释和诊断层，不直接触发交易；后续可与
+      `SCORE-001`/`SCORE-003` 协同进入仓位限制。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段节点热度基础版、日报章节和文本/覆盖测试。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `industry_node_state` 模块，`score-daily`
+      日报输出产业链节点热度、覆盖率、集中度和主要贡献 ticker；测试覆盖集中/扩散节点和缺失 ticker 覆盖；`production_effect=none`
+      防止节点热度改变 scoring、`position_gate` 或执行建议。2026-05-04: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续实现第二阶段节点健康度基础版，要求保持只读解释层并显式标记基本面、估值、风险和
+      thesis 覆盖缺口。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：日报已接入节点健康度基础版，明确估值拥挤和风险事件不是基本面证伪，并保持
+      `production_effect=none`；剩余缺口转入历史节点状态追踪和仓位约束评估。2026-05-04: 从 BASELINE_DONE 改为
+      IN_PROGRESS，原因：开始实现阶段 3 回测历史节点状态追踪和报告摘要。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：回测每日明细和报告已可按
+      `signal_date` 追踪产业链节点热度/健康度，测试覆盖 CSV 字段和报告摘要；`production_effect=none`，未改变评分、仓位闸门或回测仓位。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:16d3821f23312e57dc41771c7e09558e7250455f64000dbbfd5b79473283e34b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CHAIN-001
+  - 产业链/报告解释
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - 已完成阶段 3 回测历史节点状态追踪：`backtest_daily_*.csv` 写入 top 节点、热度、健康等级和节点覆盖缺口，回测报告输出“产业链节点历史状态摘要”；剩余缺口是阶段
+    4 仓位约束评估，需先经过真实数据观察、回测和规则治理；详细拆解见 `docs/requirements/industry_chain_node_state.md`
+  - '`score-daily` 报告按产业链节点展示热度、健康度、覆盖率、集中度和解释；能区分行情是 GPU/HBM 等局部节点交易，还是完整产业链扩散；健康度只使用已通过门禁的基本面、估值、风险事件和
+    thesis 输入，数据不足必须显式标记；报告能按“市场价格信号 -> 产业链节点 -> thesis 状态 -> 评分模块 -> 仓位 gate -> 行动影响”解释关键结论；回测或审计能追踪历史节点状态；实现时同步更新
+    `docs/system_flow.md` 并补充测试'
+  - '来自 2026-05-04 产业链节点热度/健康度讨论。2026-05-04: 补充最终报告呈现讨论中的产业链因果链模板；第一版定位为解释和诊断层，不直接触发交易；后续可与
+    `SCORE-001`/`SCORE-003` 协同进入仓位限制。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段节点热度基础版、日报章节和文本/覆盖测试。2026-05-04:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `industry_node_state` 模块，`score-daily` 日报输出产业链节点热度、覆盖率、集中度和主要贡献
+    ticker；测试覆盖集中/扩散节点和缺失 ticker 覆盖；`production_effect=none` 防止节点热度改变 scoring、`position_gate`
+    或执行建议。2026-05-04: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：继续实现第二阶段节点健康度基础版，要求保持只读解释层并显式标记基本面、估值、风险和
+    thesis 覆盖缺口。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：日报已接入节点健康度基础版，明确估值拥挤和风险事件不是基本面证伪，并保持
+    `production_effect=none`；剩余缺口转入历史节点状态追踪和仓位约束评估。2026-05-04: 从 BASELINE_DONE 改为
+    IN_PROGRESS，原因：开始实现阶段 3 回测历史节点状态追踪和报告摘要。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：回测每日明细和报告已可按
+    `signal_date` 追踪产业链节点热度/健康度，测试覆盖 CSV 字段和报告摘要；`production_effect=none`，未改变评分、仓位闸门或回测仓位。'
+  docs_links:
+  - docs/requirements/industry_chain_node_state.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: 16d3821f23312e57dc41771c7e09558e7250455f64000dbbfd5b79473283e34b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4f180958ca268d13f063ffc2caf5f799ce8e848549e266935a5d26d4b4e97165

@@ -1,0 +1,179 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-091
+  title: null
+  domain: ETF portfolio research/Dynamic v0.3 Rescue Real Evaluation and Promotion
+    Gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-091_Dynamic_v0_3_Rescue_Real_Evaluation_and_Promotion_Gate.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-091_Dynamic_v0_3_Rescue_Real_Evaluation_and_Promotion_Gate.md`；baseline
+    已实现真实历史价格驱动评估、v0.3 vs baseline / v0.2 / v0.4 对比、综合分析、Reader Brief 摘要和 promotion
+    gate；真实评估 best candidate 为 `dynamic_regime_overlay_v0_3a_constraint_smooth`，但
+    gate 判定 `reject`，下一步由 owner 复核是否接受 reject 结论或新开后续 rescue/research task；promotion
+    gate 只能输出 `promote_candidate` / `observe_only` / `reject` 作为人工复核候选资格，不得自动 approval、shadow
+    enrollment、production baseline mutation、official target weights mutation 或 broker
+    action
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`config/etf_portfolio/dynamic_v3_real_evaluation.yaml` 存在且 promotion thresholds
+      / safety fields mandatory；真实评估 workflow 必须先运行 `aits validate-data` 等价 cached
+      market / macro data quality gate 并在输出披露 status/report path；`aits etf dynamic-v3-rescue
+      real-evaluate`、`real-report --latest` 和 `validate-real` 可运行；报告必须包含 v0.3 rescue
+      evaluation report、v0.3 vs baseline / v0.2 / v0.4 对比表、constraint hit / false
+      risk-off / drawdown preservation / turnover / static gap 综合分析、过拟合/区间集中度分析、promotion
+      gate 判定和 Reader Brief 面向读者摘要；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs、report
+      registry、Reader Brief 和 tests 同步；focused pytest、ruff、compileall、diff check、`aits
+      etf dynamic-v3-rescue validate-real` 和全量 pytest 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1471
+    row_sha256: 602222e4402c16228fc2e2760aa4460bdf9fc42a106df37f061dd15ac4e11a06
+    cell_count: 8
+    all_cells:
+    - TRADING-091
+    - ETF portfolio research/Dynamic v0.3 Rescue Real Evaluation and Promotion Gate
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-091_Dynamic_v0_3_Rescue_Real_Evaluation_and_Promotion_Gate.md`；baseline
+      已实现真实历史价格驱动评估、v0.3 vs baseline / v0.2 / v0.4 对比、综合分析、Reader Brief 摘要和 promotion
+      gate；真实评估 best candidate 为 `dynamic_regime_overlay_v0_3a_constraint_smooth`，但
+      gate 判定 `reject`，下一步由 owner 复核是否接受 reject 结论或新开后续 rescue/research task；promotion
+      gate 只能输出 `promote_candidate` / `observe_only` / `reject` 作为人工复核候选资格，不得自动 approval、shadow
+      enrollment、production baseline mutation、official target weights mutation 或 broker
+      action
+    - '`config/etf_portfolio/dynamic_v3_real_evaluation.yaml` 存在且 promotion thresholds
+      / safety fields mandatory；真实评估 workflow 必须先运行 `aits validate-data` 等价 cached
+      market / macro data quality gate 并在输出披露 status/report path；`aits etf dynamic-v3-rescue
+      real-evaluate`、`real-report --latest` 和 `validate-real` 可运行；报告必须包含 v0.3 rescue
+      evaluation report、v0.3 vs baseline / v0.2 / v0.4 对比表、constraint hit / false
+      risk-off / drawdown preservation / turnover / static gap 综合分析、过拟合/区间集中度分析、promotion
+      gate 判定和 Reader Brief 面向读者摘要；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs、report
+      registry、Reader Brief 和 tests 同步；focused pytest、ruff、compileall、diff check、`aits
+      etf dynamic-v3-rescue validate-real` 和全量 pytest 通过'
+    - '2026-06-06: 新增并进入 IN_PROGRESS，原因：TRADING-090 已完成 deterministic v0.3 rescue
+      baseline，但是否具备进入生产候选复核资格必须基于真实历史评估判断；需要验证 v0.3 是否真实降低 constraint hit、改善 dynamic
+      vs static 差距、保持 false risk-off 可控、不明显牺牲 drawdown protection，且没有过拟合某一段市场区间。2026-06-06:
+      TRADING-091A-G baseline 实现完成并转入 VALIDATING；真实 cached-data evaluation `validate_data_status=PASS_WITH_WARNINGS`，报告
+      `dynamic-v3-real-evaluation-report_922c4bccd3e4dff1.json/md`，best v0.3 `dynamic_regime_overlay_v0_3a_constraint_smooth`，constraint
+      hits 568 -> 564、false risk-off delta 0、turnover 0.7983、dynamic-vs-static gap
+      0.2005、drawdown degradation vs v0.4 -0.30pp，但 constraint hit rate 仍超 gate 且
+      full overfit status `REVIEW_REQUIRED`，promotion gate=`reject`；验证为 focused +
+      Reader Brief tests 10 passed，`validate-real` PASS，`real-report --latest` 正常，ruff、compileall、diff
+      check 和全量 pytest 2174 passed / 330 warnings 通过。'
+    raw_line: '|TRADING-091|ETF portfolio research/Dynamic v0.3 Rescue Real Evaluation
+      and Promotion Gate|P0|VALIDATING|项目 owner 人工复核|详细拆解见 `docs/requirements/TRADING-091_Dynamic_v0_3_Rescue_Real_Evaluation_and_Promotion_Gate.md`；baseline
+      已实现真实历史价格驱动评估、v0.3 vs baseline / v0.2 / v0.4 对比、综合分析、Reader Brief 摘要和 promotion
+      gate；真实评估 best candidate 为 `dynamic_regime_overlay_v0_3a_constraint_smooth`，但
+      gate 判定 `reject`，下一步由 owner 复核是否接受 reject 结论或新开后续 rescue/research task；promotion
+      gate 只能输出 `promote_candidate` / `observe_only` / `reject` 作为人工复核候选资格，不得自动 approval、shadow
+      enrollment、production baseline mutation、official target weights mutation 或 broker
+      action|`config/etf_portfolio/dynamic_v3_real_evaluation.yaml` 存在且 promotion
+      thresholds / safety fields mandatory；真实评估 workflow 必须先运行 `aits validate-data`
+      等价 cached market / macro data quality gate 并在输出披露 status/report path；`aits etf
+      dynamic-v3-rescue real-evaluate`、`real-report --latest` 和 `validate-real` 可运行；报告必须包含
+      v0.3 rescue evaluation report、v0.3 vs baseline / v0.2 / v0.4 对比表、constraint
+      hit / false risk-off / drawdown preservation / turnover / static gap 综合分析、过拟合/区间集中度分析、promotion
+      gate 判定和 Reader Brief 面向读者摘要；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs、report
+      registry、Reader Brief 和 tests 同步；focused pytest、ruff、compileall、diff check、`aits
+      etf dynamic-v3-rescue validate-real` 和全量 pytest 通过|2026-06-06: 新增并进入 IN_PROGRESS，原因：TRADING-090
+      已完成 deterministic v0.3 rescue baseline，但是否具备进入生产候选复核资格必须基于真实历史评估判断；需要验证 v0.3
+      是否真实降低 constraint hit、改善 dynamic vs static 差距、保持 false risk-off 可控、不明显牺牲 drawdown
+      protection，且没有过拟合某一段市场区间。2026-06-06: TRADING-091A-G baseline 实现完成并转入 VALIDATING；真实
+      cached-data evaluation `validate_data_status=PASS_WITH_WARNINGS`，报告 `dynamic-v3-real-evaluation-report_922c4bccd3e4dff1.json/md`，best
+      v0.3 `dynamic_regime_overlay_v0_3a_constraint_smooth`，constraint hits 568 ->
+      564、false risk-off delta 0、turnover 0.7983、dynamic-vs-static gap 0.2005、drawdown
+      degradation vs v0.4 -0.30pp，但 constraint hit rate 仍超 gate 且 full overfit status
+      `REVIEW_REQUIRED`，promotion gate=`reject`；验证为 focused + Reader Brief tests 10
+      passed，`validate-real` PASS，`real-report --latest` 正常，ruff、compileall、diff check
+      和全量 pytest 2174 passed / 330 warnings 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-602222e4402c16228fc2e276
+  task_id: TRADING-091
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核
+    notes: '2026-06-06: 新增并进入 IN_PROGRESS，原因：TRADING-090 已完成 deterministic v0.3 rescue
+      baseline，但是否具备进入生产候选复核资格必须基于真实历史评估判断；需要验证 v0.3 是否真实降低 constraint hit、改善 dynamic
+      vs static 差距、保持 false risk-off 可控、不明显牺牲 drawdown protection，且没有过拟合某一段市场区间。2026-06-06:
+      TRADING-091A-G baseline 实现完成并转入 VALIDATING；真实 cached-data evaluation `validate_data_status=PASS_WITH_WARNINGS`，报告
+      `dynamic-v3-real-evaluation-report_922c4bccd3e4dff1.json/md`，best v0.3 `dynamic_regime_overlay_v0_3a_constraint_smooth`，constraint
+      hits 568 -> 564、false risk-off delta 0、turnover 0.7983、dynamic-vs-static gap
+      0.2005、drawdown degradation vs v0.4 -0.30pp，但 constraint hit rate 仍超 gate 且
+      full overfit status `REVIEW_REQUIRED`，promotion gate=`reject`；验证为 focused +
+      Reader Brief tests 10 passed，`validate-real` PASS，`real-report --latest` 正常，ruff、compileall、diff
+      check 和全量 pytest 2174 passed / 330 warnings 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:602222e4402c16228fc2e2760aa4460bdf9fc42a106df37f061dd15ac4e11a06
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-091
+  - ETF portfolio research/Dynamic v0.3 Rescue Real Evaluation and Promotion Gate
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-091_Dynamic_v0_3_Rescue_Real_Evaluation_and_Promotion_Gate.md`；baseline
+    已实现真实历史价格驱动评估、v0.3 vs baseline / v0.2 / v0.4 对比、综合分析、Reader Brief 摘要和 promotion
+    gate；真实评估 best candidate 为 `dynamic_regime_overlay_v0_3a_constraint_smooth`，但
+    gate 判定 `reject`，下一步由 owner 复核是否接受 reject 结论或新开后续 rescue/research task；promotion
+    gate 只能输出 `promote_candidate` / `observe_only` / `reject` 作为人工复核候选资格，不得自动 approval、shadow
+    enrollment、production baseline mutation、official target weights mutation 或 broker
+    action
+  - '`config/etf_portfolio/dynamic_v3_real_evaluation.yaml` 存在且 promotion thresholds
+    / safety fields mandatory；真实评估 workflow 必须先运行 `aits validate-data` 等价 cached market
+    / macro data quality gate 并在输出披露 status/report path；`aits etf dynamic-v3-rescue
+    real-evaluate`、`real-report --latest` 和 `validate-real` 可运行；报告必须包含 v0.3 rescue
+    evaluation report、v0.3 vs baseline / v0.2 / v0.4 对比表、constraint hit / false risk-off
+    / drawdown preservation / turnover / static gap 综合分析、过拟合/区间集中度分析、promotion gate
+    判定和 Reader Brief 面向读者摘要；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+    flow、artifact catalog、operations runbook、README、task register、requirement docs、report
+    registry、Reader Brief 和 tests 同步；focused pytest、ruff、compileall、diff check、`aits
+    etf dynamic-v3-rescue validate-real` 和全量 pytest 通过'
+  - '2026-06-06: 新增并进入 IN_PROGRESS，原因：TRADING-090 已完成 deterministic v0.3 rescue baseline，但是否具备进入生产候选复核资格必须基于真实历史评估判断；需要验证
+    v0.3 是否真实降低 constraint hit、改善 dynamic vs static 差距、保持 false risk-off 可控、不明显牺牲
+    drawdown protection，且没有过拟合某一段市场区间。2026-06-06: TRADING-091A-G baseline 实现完成并转入
+    VALIDATING；真实 cached-data evaluation `validate_data_status=PASS_WITH_WARNINGS`，报告
+    `dynamic-v3-real-evaluation-report_922c4bccd3e4dff1.json/md`，best v0.3 `dynamic_regime_overlay_v0_3a_constraint_smooth`，constraint
+    hits 568 -> 564、false risk-off delta 0、turnover 0.7983、dynamic-vs-static gap 0.2005、drawdown
+    degradation vs v0.4 -0.30pp，但 constraint hit rate 仍超 gate 且 full overfit status
+    `REVIEW_REQUIRED`，promotion gate=`reject`；验证为 focused + Reader Brief tests 10
+    passed，`validate-real` PASS，`real-report --latest` 正常，ruff、compileall、diff check
+    和全量 pytest 2174 passed / 330 warnings 通过。'
+  docs_links:
+  - docs/requirements/TRADING-091_Dynamic_v0_3_Rescue_Real_Evaluation_and_Promotion_Gate.md
+  terminal: false
+  raw_row_sha256: 602222e4402c16228fc2e2760aa4460bdf9fc42a106df37f061dd15ac4e11a06
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 68fb082c862f42735bacded2c7e4d67ebd4852fc66a5050f2b2af43c9cea6b27

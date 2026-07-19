@@ -1,0 +1,130 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-923_to_932_FORWARD_AGING_OBSERVATION_LAUNCH
+  title: null
+  domain: Research strategies / QQQ-TQQQ-SGOV forward-aging observation launch
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-923_to_932_Forward_Aging_Observation_Launch.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-923_to_932_Forward_Aging_Observation_Launch.md`；923～932
+    CLI/artifacts 已实现并真实执行；下一步是让 5d/10d/20d/60d/120d forward-aging 样本自然成熟，paper-shadow/production/broker
+    继续 blocked
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 923～932 CLI/artifacts；证明 TQQQ/SGOV repair 不是本地手工 cache workaround；Marketstack
+      不关闭 SSL；SGOV price-only vs adj_close 差异可见；第一条 observation 仅 research-only 且
+      `broker_action=none`；重复运行不覆盖 target weights/signal inputs/definition hash；scoreboard
+      不输出 ready；Reader Brief 禁止交易建议；scheduler dry-run 交易日/非交易日/data-missing 行为 fail
+      closed；paper-shadow/production 继续 blocked；focused parallel pytest、Ruff、compileall、`git
+      diff --check` 和真实 CLI 运行通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1299
+    row_sha256: 1c15fb8a02752972a72c143fdc723d133e1c2233a7176fa4ed6bbd084ee45f94
+    cell_count: 8
+    all_cells:
+    - TRADING-923_to_932_FORWARD_AGING_OBSERVATION_LAUNCH
+    - Research strategies / QQQ-TQQQ-SGOV forward-aging observation launch
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-923_to_932_Forward_Aging_Observation_Launch.md`；923～932
+      CLI/artifacts 已实现并真实执行；下一步是让 5d/10d/20d/60d/120d forward-aging 样本自然成熟，paper-shadow/production/broker
+      继续 blocked
+    - 新增 923～932 CLI/artifacts；证明 TQQQ/SGOV repair 不是本地手工 cache workaround；Marketstack
+      不关闭 SSL；SGOV price-only vs adj_close 差异可见；第一条 observation 仅 research-only 且
+      `broker_action=none`；重复运行不覆盖 target weights/signal inputs/definition hash；scoreboard
+      不输出 ready；Reader Brief 禁止交易建议；scheduler dry-run 交易日/非交易日/data-missing 行为 fail
+      closed；paper-shadow/production 继续 blocked；focused parallel pytest、Ruff、compileall、`git
+      diff --check` 和真实 CLI 运行通过
+    - '2026-06-24: 新增并进入 IN_PROGRESS，原因：owner 已确认下一阶段不是继续找新策略，而是开始长期 forward-aging
+      验证 `equal_risk_qqq_sgov`，并要求 TRADING-923～932 按三批推进；安全边界固定 `production_effect=none`、`paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`。2026-06-24:
+      实现完成并转入 VALIDATING；真实运行结果：923=`DATA_REPAIR_REPRODUCIBLE`、924=`MARKETSTACK_FAIL_CLOSED_ACCEPTED`、925=`SGOV_PROXY_ACCEPTABLE`、926=`FIRST_OBSERVATION_WRITTEN`（`decision_date=2026-06-22`、`observation_count=5`，替换此前
+      failed placeholder）、927=`FORWARD_IDEMPOTENCY_GUARD_PASS`、928=`FORWARD_SCOREBOARD_INSUFFICIENT`、929=`DAILY_FORWARD_SUMMARY_SAFE`、930=`FORWARD_AGING_SCHEDULER_OBSERVATION_ALREADY_EXISTS`、931=`PAPER_SHADOW_BLOCKED`、932=`FORWARD_AGING_OWNER_LAUNCH_PACK_READY`；`aits
+      validate-data --as-of 2026-06-22` 为 `PASS_WITH_WARNINGS` / 0 errors，paper-shadow/production/broker
+      仍 false/none。'
+    raw_line: '|TRADING-923_to_932_FORWARD_AGING_OBSERVATION_LAUNCH|Research strategies
+      / QQQ-TQQQ-SGOV forward-aging observation launch|P1|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-923_to_932_Forward_Aging_Observation_Launch.md`；923～932
+      CLI/artifacts 已实现并真实执行；下一步是让 5d/10d/20d/60d/120d forward-aging 样本自然成熟，paper-shadow/production/broker
+      继续 blocked|新增 923～932 CLI/artifacts；证明 TQQQ/SGOV repair 不是本地手工 cache workaround；Marketstack
+      不关闭 SSL；SGOV price-only vs adj_close 差异可见；第一条 observation 仅 research-only 且
+      `broker_action=none`；重复运行不覆盖 target weights/signal inputs/definition hash；scoreboard
+      不输出 ready；Reader Brief 禁止交易建议；scheduler dry-run 交易日/非交易日/data-missing 行为 fail
+      closed；paper-shadow/production 继续 blocked；focused parallel pytest、Ruff、compileall、`git
+      diff --check` 和真实 CLI 运行通过|2026-06-24: 新增并进入 IN_PROGRESS，原因：owner 已确认下一阶段不是继续找新策略，而是开始长期
+      forward-aging 验证 `equal_risk_qqq_sgov`，并要求 TRADING-923～932 按三批推进；安全边界固定 `production_effect=none`、`paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`。2026-06-24:
+      实现完成并转入 VALIDATING；真实运行结果：923=`DATA_REPAIR_REPRODUCIBLE`、924=`MARKETSTACK_FAIL_CLOSED_ACCEPTED`、925=`SGOV_PROXY_ACCEPTABLE`、926=`FIRST_OBSERVATION_WRITTEN`（`decision_date=2026-06-22`、`observation_count=5`，替换此前
+      failed placeholder）、927=`FORWARD_IDEMPOTENCY_GUARD_PASS`、928=`FORWARD_SCOREBOARD_INSUFFICIENT`、929=`DAILY_FORWARD_SUMMARY_SAFE`、930=`FORWARD_AGING_SCHEDULER_OBSERVATION_ALREADY_EXISTS`、931=`PAPER_SHADOW_BLOCKED`、932=`FORWARD_AGING_OWNER_LAUNCH_PACK_READY`；`aits
+      validate-data --as-of 2026-06-22` 为 `PASS_WITH_WARNINGS` / 0 errors，paper-shadow/production/broker
+      仍 false/none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1c15fb8a02752972a72c143f
+  task_id: TRADING-923_to_932_FORWARD_AGING_OBSERVATION_LAUNCH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-24: 新增并进入 IN_PROGRESS，原因：owner 已确认下一阶段不是继续找新策略，而是开始长期 forward-aging
+      验证 `equal_risk_qqq_sgov`，并要求 TRADING-923～932 按三批推进；安全边界固定 `production_effect=none`、`paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`。2026-06-24:
+      实现完成并转入 VALIDATING；真实运行结果：923=`DATA_REPAIR_REPRODUCIBLE`、924=`MARKETSTACK_FAIL_CLOSED_ACCEPTED`、925=`SGOV_PROXY_ACCEPTABLE`、926=`FIRST_OBSERVATION_WRITTEN`（`decision_date=2026-06-22`、`observation_count=5`，替换此前
+      failed placeholder）、927=`FORWARD_IDEMPOTENCY_GUARD_PASS`、928=`FORWARD_SCOREBOARD_INSUFFICIENT`、929=`DAILY_FORWARD_SUMMARY_SAFE`、930=`FORWARD_AGING_SCHEDULER_OBSERVATION_ALREADY_EXISTS`、931=`PAPER_SHADOW_BLOCKED`、932=`FORWARD_AGING_OWNER_LAUNCH_PACK_READY`；`aits
+      validate-data --as-of 2026-06-22` 为 `PASS_WITH_WARNINGS` / 0 errors，paper-shadow/production/broker
+      仍 false/none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1c15fb8a02752972a72c143fdc723d133e1c2233a7176fa4ed6bbd084ee45f94
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-923_to_932_FORWARD_AGING_OBSERVATION_LAUNCH
+  - Research strategies / QQQ-TQQQ-SGOV forward-aging observation launch
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-923_to_932_Forward_Aging_Observation_Launch.md`；923～932
+    CLI/artifacts 已实现并真实执行；下一步是让 5d/10d/20d/60d/120d forward-aging 样本自然成熟，paper-shadow/production/broker
+    继续 blocked
+  - 新增 923～932 CLI/artifacts；证明 TQQQ/SGOV repair 不是本地手工 cache workaround；Marketstack
+    不关闭 SSL；SGOV price-only vs adj_close 差异可见；第一条 observation 仅 research-only 且 `broker_action=none`；重复运行不覆盖
+    target weights/signal inputs/definition hash；scoreboard 不输出 ready；Reader Brief
+    禁止交易建议；scheduler dry-run 交易日/非交易日/data-missing 行为 fail closed；paper-shadow/production
+    继续 blocked；focused parallel pytest、Ruff、compileall、`git diff --check` 和真实 CLI
+    运行通过
+  - '2026-06-24: 新增并进入 IN_PROGRESS，原因：owner 已确认下一阶段不是继续找新策略，而是开始长期 forward-aging 验证
+    `equal_risk_qqq_sgov`，并要求 TRADING-923～932 按三批推进；安全边界固定 `production_effect=none`、`paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`。2026-06-24:
+    实现完成并转入 VALIDATING；真实运行结果：923=`DATA_REPAIR_REPRODUCIBLE`、924=`MARKETSTACK_FAIL_CLOSED_ACCEPTED`、925=`SGOV_PROXY_ACCEPTABLE`、926=`FIRST_OBSERVATION_WRITTEN`（`decision_date=2026-06-22`、`observation_count=5`，替换此前
+    failed placeholder）、927=`FORWARD_IDEMPOTENCY_GUARD_PASS`、928=`FORWARD_SCOREBOARD_INSUFFICIENT`、929=`DAILY_FORWARD_SUMMARY_SAFE`、930=`FORWARD_AGING_SCHEDULER_OBSERVATION_ALREADY_EXISTS`、931=`PAPER_SHADOW_BLOCKED`、932=`FORWARD_AGING_OWNER_LAUNCH_PACK_READY`；`aits
+    validate-data --as-of 2026-06-22` 为 `PASS_WITH_WARNINGS` / 0 errors，paper-shadow/production/broker
+    仍 false/none。'
+  docs_links:
+  - docs/requirements/TRADING-923_to_932_Forward_Aging_Observation_Launch.md
+  terminal: false
+  raw_row_sha256: 1c15fb8a02752972a72c143fdc723d133e1c2233a7176fa4ed6bbd084ee45f94
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 361a5d1dbce88940db215bcc65bd4b5fa9857484c26ee66c936dc2b908cc250b

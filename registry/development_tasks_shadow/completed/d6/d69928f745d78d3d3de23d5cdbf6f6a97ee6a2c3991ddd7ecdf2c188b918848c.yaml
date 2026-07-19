@@ -1,0 +1,172 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-044
+  title: null
+  domain: 基本面/SEC PIT Observe-Only Shadow Lane
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/sec_pit_shadow_observe_2026-05-27.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/sec_pit_shadow_observe_2026-05-27.md`；已完成隔离的
+    SEC PIT observe-only lane：`config/sec_pit_shadow_observe.yaml`、`aits sec-pit shadow-observe`
+    / `--latest`、只读核心模块、shadow scores、rank shift、bucket comparison、monitoring plan、safety
+    audit、summary JSON/Markdown、dashboard 只读卡片、artifact catalog、system flow、learning
+    path 和 runbook 更新
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`capex_intensity` 以 `observe_weight=-0.025`、`max_allowed_initial_weight=0.05`
+      进入 `sec_pit_capex_intensity_observe_only`；输出仅写 `outputs/sec_pit_shadow_observe`；所有相关输出固定
+      `manual_review_required=true`、`production_effect=none`；安全 audit 校验 candidate
+      review status、diagnostics、provenance、data quality、drawdown label coverage、weight
+      上限、PIT grade、source lineage、baseline overlap 和输出隔离；critical safety failure 只写
+      safety audit 和 degraded summary；缺 baseline 或 candidate review 明确降级；dashboard
+      只读读取 latest summary，不运行 shadow scoring；不修改 production weights、production actions、active
+      shadow weights 或既有非 SEC shadow lane；真实 `--latest --candidate-feature capex_intensity`
+      已生成 `outputs/sec_pit_shadow_observe/sec_pit_shadow_observe_summary_2026-05-26.*`，`shadow_status=LIMITED_BASELINE_MISSING`，原因是
+      baseline score 覆盖不完整，safety checks 全部通过，`monitoring_status=ROLLBACK_TRIGGERED`
+      暴露 platform bucket 弱期风险但不影响生产'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 389
+    row_sha256: 450f008986fe2dd4d07c61d969e332cb885bb7d531fac198d27c811f3854ed19
+    cell_count: 8
+    all_cells:
+    - TRADING-044
+    - 基本面/SEC PIT Observe-Only Shadow Lane
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/sec_pit_shadow_observe_2026-05-27.md`；已完成隔离的 SEC PIT
+      observe-only lane：`config/sec_pit_shadow_observe.yaml`、`aits sec-pit shadow-observe`
+      / `--latest`、只读核心模块、shadow scores、rank shift、bucket comparison、monitoring plan、safety
+      audit、summary JSON/Markdown、dashboard 只读卡片、artifact catalog、system flow、learning
+      path 和 runbook 更新
+    - '`capex_intensity` 以 `observe_weight=-0.025`、`max_allowed_initial_weight=0.05`
+      进入 `sec_pit_capex_intensity_observe_only`；输出仅写 `outputs/sec_pit_shadow_observe`；所有相关输出固定
+      `manual_review_required=true`、`production_effect=none`；安全 audit 校验 candidate
+      review status、diagnostics、provenance、data quality、drawdown label coverage、weight
+      上限、PIT grade、source lineage、baseline overlap 和输出隔离；critical safety failure 只写
+      safety audit 和 degraded summary；缺 baseline 或 candidate review 明确降级；dashboard
+      只读读取 latest summary，不运行 shadow scoring；不修改 production weights、production actions、active
+      shadow weights 或既有非 SEC shadow lane；真实 `--latest --candidate-feature capex_intensity`
+      已生成 `outputs/sec_pit_shadow_observe/sec_pit_shadow_observe_summary_2026-05-26.*`，`shadow_status=LIMITED_BASELINE_MISSING`，原因是
+      baseline score 覆盖不完整，safety checks 全部通过，`monitoring_status=ROLLBACK_TRIGGERED`
+      暴露 platform bucket 弱期风险但不影响生产'
+    - '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-043 真实 candidate review 将 `capex_intensity`
+      标记为 `READY_FOR_MANUAL_REVIEW`，但存在 mixed regime dependency 和 ticker-level 差异，owner
+      决策为 `APPROVE_OBSERVE_ONLY_SHADOW`，只允许进入隔离观察 lane，不得 promotion 或影响生产。2026-05-27:
+      从 IN_PROGRESS 改为 DONE，原因：实现、真实 observe-only artifacts、dashboard 和文档完成；验证通过 `python
+      -m pytest tests/trading_engine/test_sec_pit_shadow_observe.py -q`（10 passed）、`python
+      -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、`python -m pytest
+      tests/trading_engine/test_sec_pit_candidate_review.py -q`（10 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（10 passed）、全量
+      `python -m pytest -q`（1308 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+    raw_line: '|TRADING-044|基本面/SEC PIT Observe-Only Shadow Lane|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/sec_pit_shadow_observe_2026-05-27.md`；已完成隔离的 SEC PIT observe-only
+      lane：`config/sec_pit_shadow_observe.yaml`、`aits sec-pit shadow-observe` / `--latest`、只读核心模块、shadow
+      scores、rank shift、bucket comparison、monitoring plan、safety audit、summary JSON/Markdown、dashboard
+      只读卡片、artifact catalog、system flow、learning path 和 runbook 更新|`capex_intensity`
+      以 `observe_weight=-0.025`、`max_allowed_initial_weight=0.05` 进入 `sec_pit_capex_intensity_observe_only`；输出仅写
+      `outputs/sec_pit_shadow_observe`；所有相关输出固定 `manual_review_required=true`、`production_effect=none`；安全
+      audit 校验 candidate review status、diagnostics、provenance、data quality、drawdown
+      label coverage、weight 上限、PIT grade、source lineage、baseline overlap 和输出隔离；critical
+      safety failure 只写 safety audit 和 degraded summary；缺 baseline 或 candidate review
+      明确降级；dashboard 只读读取 latest summary，不运行 shadow scoring；不修改 production weights、production
+      actions、active shadow weights 或既有非 SEC shadow lane；真实 `--latest --candidate-feature
+      capex_intensity` 已生成 `outputs/sec_pit_shadow_observe/sec_pit_shadow_observe_summary_2026-05-26.*`，`shadow_status=LIMITED_BASELINE_MISSING`，原因是
+      baseline score 覆盖不完整，safety checks 全部通过，`monitoring_status=ROLLBACK_TRIGGERED`
+      暴露 platform bucket 弱期风险但不影响生产|2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-043 真实
+      candidate review 将 `capex_intensity` 标记为 `READY_FOR_MANUAL_REVIEW`，但存在 mixed
+      regime dependency 和 ticker-level 差异，owner 决策为 `APPROVE_OBSERVE_ONLY_SHADOW`，只允许进入隔离观察
+      lane，不得 promotion 或影响生产。2026-05-27: 从 IN_PROGRESS 改为 DONE，原因：实现、真实 observe-only
+      artifacts、dashboard 和文档完成；验证通过 `python -m pytest tests/trading_engine/test_sec_pit_shadow_observe.py
+      -q`（10 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_candidate_review.py -q`（10 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（10 passed）、全量
+      `python -m pytest -q`（1308 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-450f008986fe2dd4d07c61d9
+  task_id: TRADING-044
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-043 真实 candidate review 将 `capex_intensity`
+      标记为 `READY_FOR_MANUAL_REVIEW`，但存在 mixed regime dependency 和 ticker-level 差异，owner
+      决策为 `APPROVE_OBSERVE_ONLY_SHADOW`，只允许进入隔离观察 lane，不得 promotion 或影响生产。2026-05-27:
+      从 IN_PROGRESS 改为 DONE，原因：实现、真实 observe-only artifacts、dashboard 和文档完成；验证通过 `python
+      -m pytest tests/trading_engine/test_sec_pit_shadow_observe.py -q`（10 passed）、`python
+      -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、`python -m pytest
+      tests/trading_engine/test_sec_pit_candidate_review.py -q`（10 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（10 passed）、全量
+      `python -m pytest -q`（1308 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:450f008986fe2dd4d07c61d969e332cb885bb7d531fac198d27c811f3854ed19
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-044
+  - 基本面/SEC PIT Observe-Only Shadow Lane
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/sec_pit_shadow_observe_2026-05-27.md`；已完成隔离的 SEC PIT
+    observe-only lane：`config/sec_pit_shadow_observe.yaml`、`aits sec-pit shadow-observe`
+    / `--latest`、只读核心模块、shadow scores、rank shift、bucket comparison、monitoring plan、safety
+    audit、summary JSON/Markdown、dashboard 只读卡片、artifact catalog、system flow、learning
+    path 和 runbook 更新
+  - '`capex_intensity` 以 `observe_weight=-0.025`、`max_allowed_initial_weight=0.05`
+    进入 `sec_pit_capex_intensity_observe_only`；输出仅写 `outputs/sec_pit_shadow_observe`；所有相关输出固定
+    `manual_review_required=true`、`production_effect=none`；安全 audit 校验 candidate review
+    status、diagnostics、provenance、data quality、drawdown label coverage、weight 上限、PIT
+    grade、source lineage、baseline overlap 和输出隔离；critical safety failure 只写 safety
+    audit 和 degraded summary；缺 baseline 或 candidate review 明确降级；dashboard 只读读取 latest
+    summary，不运行 shadow scoring；不修改 production weights、production actions、active shadow
+    weights 或既有非 SEC shadow lane；真实 `--latest --candidate-feature capex_intensity`
+    已生成 `outputs/sec_pit_shadow_observe/sec_pit_shadow_observe_summary_2026-05-26.*`，`shadow_status=LIMITED_BASELINE_MISSING`，原因是
+    baseline score 覆盖不完整，safety checks 全部通过，`monitoring_status=ROLLBACK_TRIGGERED`
+    暴露 platform bucket 弱期风险但不影响生产'
+  - '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-043 真实 candidate review 将 `capex_intensity`
+    标记为 `READY_FOR_MANUAL_REVIEW`，但存在 mixed regime dependency 和 ticker-level 差异，owner
+    决策为 `APPROVE_OBSERVE_ONLY_SHADOW`，只允许进入隔离观察 lane，不得 promotion 或影响生产。2026-05-27:
+    从 IN_PROGRESS 改为 DONE，原因：实现、真实 observe-only artifacts、dashboard 和文档完成；验证通过 `python
+    -m pytest tests/trading_engine/test_sec_pit_shadow_observe.py -q`（10 passed）、`python
+    -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、`python -m pytest
+    tests/trading_engine/test_sec_pit_candidate_review.py -q`（10 passed）、`python -m
+    pytest tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（10 passed）、全量
+    `python -m pytest -q`（1308 passed, 1 warning）、全量 `python -m ruff check config
+    src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+  docs_links:
+  - docs/requirements/sec_pit_shadow_observe_2026-05-27.md
+  terminal: true
+  raw_row_sha256: 450f008986fe2dd4d07c61d969e332cb885bb7d531fac198d27c811f3854ed19
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e6228b71a48a55ae7e37b346a56ee6eda51a5c9bd162af94c82beb06c5f369e3

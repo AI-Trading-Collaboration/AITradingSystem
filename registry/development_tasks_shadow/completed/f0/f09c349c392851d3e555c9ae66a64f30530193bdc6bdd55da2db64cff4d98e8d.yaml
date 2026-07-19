@@ -1,0 +1,165 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: VIS-001
+  title: null
+  domain: 数据可见性/PIT 复现契约
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/input_visibility_contract_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/input_visibility_contract_2026-05-10.md`；阶段
+    1-6C 已完成：历史 `daily-run` 前置阻断、cache-only replay dashboard、OpenAI cache-only 可见性过滤、手工输入隔离视图、market/macro
+    raw cache replay 过滤、full-universe replay expected ticker freeze，以及 replay-window
+    失败原因结构化摘要；阶段 7 保持 `READY`，作为未来 artifact/row 级通用可见性 schema 扩展，不阻塞当前 replay 合同归档
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`daily-run` 对历史 `as_of` 在执行任何子命令前 fail closed，并在执行报告/metadata 中说明应改用 `ops
+      replay-day`；`replay-day` 不调用 live provider/OpenAI，按可见窗口过滤 PIT、估值、风险事件、OpenAI
+      cache-only、交易 thesis、交易记录、市场价格、宏观利率和 full-universe 期望 ticker 输入，并生成 replay-scoped
+      dashboard；窗口 replay 报告对失败日汇总 input blockers、failed step 和 blocker artifact/status/reason；测试覆盖历史
+      daily-run 前置阻断、OpenAI cache-only 可见性过滤、手工输入过滤、raw cache 过滤、full-universe replay
+      universe freeze、最近窗口 cache-only replay 全链路、replay-window 失败摘要，以及 OpenAI cache-only
+      report 缺失时 queue 先过滤再 fail closed'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 252
+    row_sha256: 67990601efff69c75941d5ea5ce98bc6c8c8d299f80bb45b42506ae4c4600557
+    cell_count: 8
+    all_cells:
+    - VIS-001
+    - 数据可见性/PIT 复现契约
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/input_visibility_contract_2026-05-10.md`；阶段 1-6C 已完成：历史
+      `daily-run` 前置阻断、cache-only replay dashboard、OpenAI cache-only 可见性过滤、手工输入隔离视图、market/macro
+      raw cache replay 过滤、full-universe replay expected ticker freeze，以及 replay-window
+      失败原因结构化摘要；阶段 7 保持 `READY`，作为未来 artifact/row 级通用可见性 schema 扩展，不阻塞当前 replay 合同归档
+    - '`daily-run` 对历史 `as_of` 在执行任何子命令前 fail closed，并在执行报告/metadata 中说明应改用 `ops replay-day`；`replay-day`
+      不调用 live provider/OpenAI，按可见窗口过滤 PIT、估值、风险事件、OpenAI cache-only、交易 thesis、交易记录、市场价格、宏观利率和
+      full-universe 期望 ticker 输入，并生成 replay-scoped dashboard；窗口 replay 报告对失败日汇总 input
+      blockers、failed step 和 blocker artifact/status/reason；测试覆盖历史 daily-run 前置阻断、OpenAI
+      cache-only 可见性过滤、手工输入过滤、raw cache 过滤、full-universe replay universe freeze、最近窗口
+      cache-only replay 全链路、replay-window 失败摘要，以及 OpenAI cache-only report 缺失时 queue
+      先过滤再 fail closed'
+    - '2026-05-10: 新增并进入 IN_PROGRESS，原因：最近交易日 `daily-run --as-of 2026-05-08` 在 OpenAI
+      预审处被 `risk_event_prereview_request_in_future` 阻断，暴露生产调度、历史复现和研究重建的输入可见性边界不够显式。2026-05-10:
+      阶段 1-5 完成实现并转入 VALIDATING，覆盖历史 daily-run 前置阻断、replay dashboard、OpenAI cache-only
+      row 级过滤和手工 thesis/trades 隔离视图；真实 2026-05-08 replay PASS。2026-05-11: 阶段 6 完成
+      market/macro raw cache replay 过滤，窗口复跑后 2026-05-05 至 2026-05-08 PASS，2026-05-01/04
+      剩余失败确认为归档 PIT/OpenAI/SEC 输入缺口。2026-06-09: 阶段 6B/6C 完成 full-universe expected
+      ticker freeze 和 replay-window 失败摘要；`ASX` 被写入 replay universe exclusion，不补造历史价格、不放宽生产门禁。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：刷新验证确认直接 `validate-data --as-of 2026-05-08` 会被当前生产 market/macro
+      cache 的未来行正确阻断，而 `ops replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy
+      cache-only --compare-to-production --full-universe` 为 PASS；`ops replay-window
+      --start 2026-05-01 --end 2026-05-10 --mode cache-only --openai-replay-policy
+      cache-only --full-universe --continue-on-failure` 仍因 2026-05-01/04 既有归档输入缺口整体
+      FAIL，但窗口报告已结构化披露 5/1 的 7 个 blockers 和 5/4 的 4 个 blockers，5/5-5/8 PASS，周末正确跳过。'
+    raw_line: '|VIS-001|数据可见性/PIT 复现契约|P0|DONE|系统验证|详细拆解见 `docs/requirements/input_visibility_contract_2026-05-10.md`；阶段
+      1-6C 已完成：历史 `daily-run` 前置阻断、cache-only replay dashboard、OpenAI cache-only 可见性过滤、手工输入隔离视图、market/macro
+      raw cache replay 过滤、full-universe replay expected ticker freeze，以及 replay-window
+      失败原因结构化摘要；阶段 7 保持 `READY`，作为未来 artifact/row 级通用可见性 schema 扩展，不阻塞当前 replay 合同归档|`daily-run`
+      对历史 `as_of` 在执行任何子命令前 fail closed，并在执行报告/metadata 中说明应改用 `ops replay-day`；`replay-day`
+      不调用 live provider/OpenAI，按可见窗口过滤 PIT、估值、风险事件、OpenAI cache-only、交易 thesis、交易记录、市场价格、宏观利率和
+      full-universe 期望 ticker 输入，并生成 replay-scoped dashboard；窗口 replay 报告对失败日汇总 input
+      blockers、failed step 和 blocker artifact/status/reason；测试覆盖历史 daily-run 前置阻断、OpenAI
+      cache-only 可见性过滤、手工输入过滤、raw cache 过滤、full-universe replay universe freeze、最近窗口
+      cache-only replay 全链路、replay-window 失败摘要，以及 OpenAI cache-only report 缺失时 queue
+      先过滤再 fail closed|2026-05-10: 新增并进入 IN_PROGRESS，原因：最近交易日 `daily-run --as-of 2026-05-08`
+      在 OpenAI 预审处被 `risk_event_prereview_request_in_future` 阻断，暴露生产调度、历史复现和研究重建的输入可见性边界不够显式。2026-05-10:
+      阶段 1-5 完成实现并转入 VALIDATING，覆盖历史 daily-run 前置阻断、replay dashboard、OpenAI cache-only
+      row 级过滤和手工 thesis/trades 隔离视图；真实 2026-05-08 replay PASS。2026-05-11: 阶段 6 完成
+      market/macro raw cache replay 过滤，窗口复跑后 2026-05-05 至 2026-05-08 PASS，2026-05-01/04
+      剩余失败确认为归档 PIT/OpenAI/SEC 输入缺口。2026-06-09: 阶段 6B/6C 完成 full-universe expected
+      ticker freeze 和 replay-window 失败摘要；`ASX` 被写入 replay universe exclusion，不补造历史价格、不放宽生产门禁。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：刷新验证确认直接 `validate-data --as-of 2026-05-08` 会被当前生产 market/macro
+      cache 的未来行正确阻断，而 `ops replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy
+      cache-only --compare-to-production --full-universe` 为 PASS；`ops replay-window
+      --start 2026-05-01 --end 2026-05-10 --mode cache-only --openai-replay-policy
+      cache-only --full-universe --continue-on-failure` 仍因 2026-05-01/04 既有归档输入缺口整体
+      FAIL，但窗口报告已结构化披露 5/1 的 7 个 blockers 和 5/4 的 4 个 blockers，5/5-5/8 PASS，周末正确跳过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-67990601efff69c75941d5ea
+  task_id: VIS-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-10: 新增并进入 IN_PROGRESS，原因：最近交易日 `daily-run --as-of 2026-05-08`
+      在 OpenAI 预审处被 `risk_event_prereview_request_in_future` 阻断，暴露生产调度、历史复现和研究重建的输入可见性边界不够显式。2026-05-10:
+      阶段 1-5 完成实现并转入 VALIDATING，覆盖历史 daily-run 前置阻断、replay dashboard、OpenAI cache-only
+      row 级过滤和手工 thesis/trades 隔离视图；真实 2026-05-08 replay PASS。2026-05-11: 阶段 6 完成
+      market/macro raw cache replay 过滤，窗口复跑后 2026-05-05 至 2026-05-08 PASS，2026-05-01/04
+      剩余失败确认为归档 PIT/OpenAI/SEC 输入缺口。2026-06-09: 阶段 6B/6C 完成 full-universe expected
+      ticker freeze 和 replay-window 失败摘要；`ASX` 被写入 replay universe exclusion，不补造历史价格、不放宽生产门禁。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：刷新验证确认直接 `validate-data --as-of 2026-05-08` 会被当前生产 market/macro
+      cache 的未来行正确阻断，而 `ops replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy
+      cache-only --compare-to-production --full-universe` 为 PASS；`ops replay-window
+      --start 2026-05-01 --end 2026-05-10 --mode cache-only --openai-replay-policy
+      cache-only --full-universe --continue-on-failure` 仍因 2026-05-01/04 既有归档输入缺口整体
+      FAIL，但窗口报告已结构化披露 5/1 的 7 个 blockers 和 5/4 的 4 个 blockers，5/5-5/8 PASS，周末正确跳过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:67990601efff69c75941d5ea5ce98bc6c8c8d299f80bb45b42506ae4c4600557
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - VIS-001
+  - 数据可见性/PIT 复现契约
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/input_visibility_contract_2026-05-10.md`；阶段 1-6C 已完成：历史
+    `daily-run` 前置阻断、cache-only replay dashboard、OpenAI cache-only 可见性过滤、手工输入隔离视图、market/macro
+    raw cache replay 过滤、full-universe replay expected ticker freeze，以及 replay-window
+    失败原因结构化摘要；阶段 7 保持 `READY`，作为未来 artifact/row 级通用可见性 schema 扩展，不阻塞当前 replay 合同归档
+  - '`daily-run` 对历史 `as_of` 在执行任何子命令前 fail closed，并在执行报告/metadata 中说明应改用 `ops replay-day`；`replay-day`
+    不调用 live provider/OpenAI，按可见窗口过滤 PIT、估值、风险事件、OpenAI cache-only、交易 thesis、交易记录、市场价格、宏观利率和
+    full-universe 期望 ticker 输入，并生成 replay-scoped dashboard；窗口 replay 报告对失败日汇总 input
+    blockers、failed step 和 blocker artifact/status/reason；测试覆盖历史 daily-run 前置阻断、OpenAI
+    cache-only 可见性过滤、手工输入过滤、raw cache 过滤、full-universe replay universe freeze、最近窗口
+    cache-only replay 全链路、replay-window 失败摘要，以及 OpenAI cache-only report 缺失时 queue
+    先过滤再 fail closed'
+  - '2026-05-10: 新增并进入 IN_PROGRESS，原因：最近交易日 `daily-run --as-of 2026-05-08` 在 OpenAI
+    预审处被 `risk_event_prereview_request_in_future` 阻断，暴露生产调度、历史复现和研究重建的输入可见性边界不够显式。2026-05-10:
+    阶段 1-5 完成实现并转入 VALIDATING，覆盖历史 daily-run 前置阻断、replay dashboard、OpenAI cache-only
+    row 级过滤和手工 thesis/trades 隔离视图；真实 2026-05-08 replay PASS。2026-05-11: 阶段 6 完成 market/macro
+    raw cache replay 过滤，窗口复跑后 2026-05-05 至 2026-05-08 PASS，2026-05-01/04 剩余失败确认为归档
+    PIT/OpenAI/SEC 输入缺口。2026-06-09: 阶段 6B/6C 完成 full-universe expected ticker freeze
+    和 replay-window 失败摘要；`ASX` 被写入 replay universe exclusion，不补造历史价格、不放宽生产门禁。2026-06-09:
+    从 VALIDATING 改为 DONE，原因：刷新验证确认直接 `validate-data --as-of 2026-05-08` 会被当前生产 market/macro
+    cache 的未来行正确阻断，而 `ops replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy
+    cache-only --compare-to-production --full-universe` 为 PASS；`ops replay-window
+    --start 2026-05-01 --end 2026-05-10 --mode cache-only --openai-replay-policy cache-only
+    --full-universe --continue-on-failure` 仍因 2026-05-01/04 既有归档输入缺口整体 FAIL，但窗口报告已结构化披露
+    5/1 的 7 个 blockers 和 5/4 的 4 个 blockers，5/5-5/8 PASS，周末正确跳过。'
+  docs_links:
+  - docs/requirements/input_visibility_contract_2026-05-10.md
+  terminal: true
+  raw_row_sha256: 67990601efff69c75941d5ea5ce98bc6c8c8d299f80bb45b42506ae4c4600557
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8104e207abc97782625e4b1d8222a0eb975569aea7a5ce11d6e47b47abe72808

@@ -1,0 +1,98 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-007
+  title: null
+  domain: 报告/Base Signal 与 Risk Caps 拆分
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/scoring_architecture_refactor_2026-05-06.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已在日报结论卡后固定展示 `Base Signal / Risk Caps`：Base
+    Signal、Raw Position、Risk Caps、Final Position 和 Channel Audit；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#report-007基础信号与风险调整后结论拆分`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 报告能一眼区分基础信号弱、基础信号强但风险受限、数据受限和人工复核要求；每个 cap 都有来源、触发状态、上限和证据引用；复用现有 `REPORT-001/002/003`、`SCORE-001/002/003`
+      和 `execution_policy` 输出，不新增独立评分逻辑；完整 DONE 仍需后续 soft gate/非线性映射稳定后统一周/月报模板
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1129
+    row_sha256: 758d4a22d281f76fea10f1d802bfbaa3f776f51c03c42746b7259a8a1532aea4
+    cell_count: 8
+    all_cells:
+    - REPORT-007
+    - 报告/Base Signal 与 Risk Caps 拆分
+    - P1
+    - BASELINE_DONE
+    - 系统实现
+    - 已在日报结论卡后固定展示 `Base Signal / Risk Caps`：Base Signal、Raw Position、Risk Caps、Final
+      Position 和 Channel Audit；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#report-007基础信号与风险调整后结论拆分`
+    - 报告能一眼区分基础信号弱、基础信号强但风险受限、数据受限和人工复核要求；每个 cap 都有来源、触发状态、上限和证据引用；复用现有 `REPORT-001/002/003`、`SCORE-001/002/003`
+      和 `execution_policy` 输出，不新增独立评分逻辑；完整 DONE 仍需后续 soft gate/非线性映射稳定后统一周/月报模板
+    - '2026-05-06: 新增任务，原因：当前日报已有模型仓位和最终仓位，但还未固定为 base signal、raw position、risk caps、final
+      position 的结构化阅读块；该改动能减少把“不看好”和“看好但不能重仓”混淆的风险。2026-05-06: 从 PROPOSED 改为 BASELINE_DONE，原因：日报新增固定结构、trace
+      claim 和测试，且不新增独立评分逻辑。'
+    raw_line: '|REPORT-007|报告/Base Signal 与 Risk Caps 拆分|P1|BASELINE_DONE|系统实现|已在日报结论卡后固定展示
+      `Base Signal / Risk Caps`：Base Signal、Raw Position、Risk Caps、Final Position
+      和 Channel Audit；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#report-007基础信号与风险调整后结论拆分`|报告能一眼区分基础信号弱、基础信号强但风险受限、数据受限和人工复核要求；每个
+      cap 都有来源、触发状态、上限和证据引用；复用现有 `REPORT-001/002/003`、`SCORE-001/002/003` 和 `execution_policy`
+      输出，不新增独立评分逻辑；完整 DONE 仍需后续 soft gate/非线性映射稳定后统一周/月报模板|2026-05-06: 新增任务，原因：当前日报已有模型仓位和最终仓位，但还未固定为
+      base signal、raw position、risk caps、final position 的结构化阅读块；该改动能减少把“不看好”和“看好但不能重仓”混淆的风险。2026-05-06:
+      从 PROPOSED 改为 BASELINE_DONE，原因：日报新增固定结构、trace claim 和测试，且不新增独立评分逻辑。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-758d4a22d281f76fea10f1d8
+  task_id: REPORT-007
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-06: 新增任务，原因：当前日报已有模型仓位和最终仓位，但还未固定为 base signal、raw position、risk
+      caps、final position 的结构化阅读块；该改动能减少把“不看好”和“看好但不能重仓”混淆的风险。2026-05-06: 从 PROPOSED
+      改为 BASELINE_DONE，原因：日报新增固定结构、trace claim 和测试，且不新增独立评分逻辑。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:758d4a22d281f76fea10f1d802bfbaa3f776f51c03c42746b7259a8a1532aea4
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-007
+  - 报告/Base Signal 与 Risk Caps 拆分
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - 已在日报结论卡后固定展示 `Base Signal / Risk Caps`：Base Signal、Raw Position、Risk Caps、Final
+    Position 和 Channel Audit；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#report-007基础信号与风险调整后结论拆分`
+  - 报告能一眼区分基础信号弱、基础信号强但风险受限、数据受限和人工复核要求；每个 cap 都有来源、触发状态、上限和证据引用；复用现有 `REPORT-001/002/003`、`SCORE-001/002/003`
+    和 `execution_policy` 输出，不新增独立评分逻辑；完整 DONE 仍需后续 soft gate/非线性映射稳定后统一周/月报模板
+  - '2026-05-06: 新增任务，原因：当前日报已有模型仓位和最终仓位，但还未固定为 base signal、raw position、risk caps、final
+    position 的结构化阅读块；该改动能减少把“不看好”和“看好但不能重仓”混淆的风险。2026-05-06: 从 PROPOSED 改为 BASELINE_DONE，原因：日报新增固定结构、trace
+    claim 和测试，且不新增独立评分逻辑。'
+  docs_links:
+  - docs/requirements/scoring_architecture_refactor_2026-05-06.md
+  terminal: false
+  raw_row_sha256: 758d4a22d281f76fea10f1d802bfbaa3f776f51c03c42746b7259a8a1532aea4
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3f7955b8968fca492546dee3fb95dd583d626a855d9f106107a6c6d7ce1ccb97

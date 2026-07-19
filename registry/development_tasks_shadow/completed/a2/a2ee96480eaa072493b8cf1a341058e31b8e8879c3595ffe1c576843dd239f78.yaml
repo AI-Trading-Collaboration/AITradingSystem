@@ -1,0 +1,154 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-354A_EVIDENCE_STALENESS_WEEKLY_REVIEW_RECOVERY
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue evidence staleness weekly review recovery
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-354A_Evidence_Staleness_Weekly_Review_Recovery.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-354A_Evidence_Staleness_Weekly_Review_Recovery.md`；承接
+    TRADING-354，真实 monitor `evidence-staleness-monitor_39cc2b41171c8b6d` 因 latest
+    `paper_shadow_weekly_review` 缺失而正确 fail-closed；本任务生成或接入最新完整可用 paper-shadow weekly
+    review artifact，并重新运行 evidence staleness monitor；未使用 waiver、伪造输入、放宽 freshness
+    policy 或修改 production state
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 定位 TRADING-353 weekly review schema/CLI、latest daily observation 和 drift
+      monitor；选用最新完整可用 artifact window `2026-06-12..2026-06-12`，因最新市场周不完整且只有该日 daily/drift
+      artifact 可用；生成 weekly review `paper-shadow-weekly-review_f21aec8c5f94ea48`；staleness
+      monitor 能发现 latest weekly review，重跑后 `paper_shadow_weekly_review` 不再在 `missing_artifacts`；新增
+      focused test 覆盖 latest weekly review discovery；operations runbook 和 requirements
+      记录 recovery flow
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 243
+    row_sha256: 1ca1a62627e366abb32cae38c556553d62a7e2cea443e50063e65d1662b6d45c
+    cell_count: 8
+    all_cells:
+    - TRADING-354A_EVIDENCE_STALENESS_WEEKLY_REVIEW_RECOVERY
+    - ETF portfolio/dynamic v3 rescue evidence staleness weekly review recovery
+    - P1
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-354A_Evidence_Staleness_Weekly_Review_Recovery.md`；承接
+      TRADING-354，真实 monitor `evidence-staleness-monitor_39cc2b41171c8b6d` 因 latest
+      `paper_shadow_weekly_review` 缺失而正确 fail-closed；本任务生成或接入最新完整可用 paper-shadow weekly
+      review artifact，并重新运行 evidence staleness monitor；未使用 waiver、伪造输入、放宽 freshness
+      policy 或修改 production state
+    - 定位 TRADING-353 weekly review schema/CLI、latest daily observation 和 drift monitor；选用最新完整可用
+      artifact window `2026-06-12..2026-06-12`，因最新市场周不完整且只有该日 daily/drift artifact
+      可用；生成 weekly review `paper-shadow-weekly-review_f21aec8c5f94ea48`；staleness
+      monitor 能发现 latest weekly review，重跑后 `paper_shadow_weekly_review` 不再在 `missing_artifacts`；新增
+      focused test 覆盖 latest weekly review discovery；operations runbook 和 requirements
+      记录 recovery flow
+    - '2026-06-16: DONE；真实 weekly review `paper-shadow-weekly-review_f21aec8c5f94ea48`
+      的 `weekly_decision=CONTINUE`、`missing_input_artifacts=none`，weekly report/latest/validate
+      CLI PASS；最终重跑 evidence monitor 生成 `evidence-staleness-monitor_9cb9357aade5728d`，`missing_artifacts=[]`、`blocking_artifacts=[]`，weekly
+      review finding 为 FRESH / missing=false；`safe_to_continue_shadow=false`，因为 `price_data`
+      和 `market_panel_data` 仍为 STALE，不是 weekly review blocker；`validate-data --as-of
+      2026-06-12` 返回 `PASS_WITH_WARNINGS` 且 errors=0、warnings=1；documentation contract
+      PASS，report index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief quality
+      OK，focused pytest 24 passed，ruff PASS，compileall PASS，git diff check PASS；保持
+      manual review only / research and paper-shadow only / no official target / no
+      broker / no order / no production mutation。'
+    raw_line: '|TRADING-354A_EVIDENCE_STALENESS_WEEKLY_REVIEW_RECOVERY|ETF portfolio/dynamic
+      v3 rescue evidence staleness weekly review recovery|P1|DONE|项目 owner 后续复核；代码实现完成|详细拆解见
+      `docs/requirements/TRADING-354A_Evidence_Staleness_Weekly_Review_Recovery.md`；承接
+      TRADING-354，真实 monitor `evidence-staleness-monitor_39cc2b41171c8b6d` 因 latest
+      `paper_shadow_weekly_review` 缺失而正确 fail-closed；本任务生成或接入最新完整可用 paper-shadow weekly
+      review artifact，并重新运行 evidence staleness monitor；未使用 waiver、伪造输入、放宽 freshness
+      policy 或修改 production state|定位 TRADING-353 weekly review schema/CLI、latest daily
+      observation 和 drift monitor；选用最新完整可用 artifact window `2026-06-12..2026-06-12`，因最新市场周不完整且只有该日
+      daily/drift artifact 可用；生成 weekly review `paper-shadow-weekly-review_f21aec8c5f94ea48`；staleness
+      monitor 能发现 latest weekly review，重跑后 `paper_shadow_weekly_review` 不再在 `missing_artifacts`；新增
+      focused test 覆盖 latest weekly review discovery；operations runbook 和 requirements
+      记录 recovery flow|2026-06-16: DONE；真实 weekly review `paper-shadow-weekly-review_f21aec8c5f94ea48`
+      的 `weekly_decision=CONTINUE`、`missing_input_artifacts=none`，weekly report/latest/validate
+      CLI PASS；最终重跑 evidence monitor 生成 `evidence-staleness-monitor_9cb9357aade5728d`，`missing_artifacts=[]`、`blocking_artifacts=[]`，weekly
+      review finding 为 FRESH / missing=false；`safe_to_continue_shadow=false`，因为 `price_data`
+      和 `market_panel_data` 仍为 STALE，不是 weekly review blocker；`validate-data --as-of
+      2026-06-12` 返回 `PASS_WITH_WARNINGS` 且 errors=0、warnings=1；documentation contract
+      PASS，report index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief quality
+      OK，focused pytest 24 passed，ruff PASS，compileall PASS，git diff check PASS；保持
+      manual review only / research and paper-shadow only / no official target / no
+      broker / no order / no production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1ca1a62627e366abb32cae38
+  task_id: TRADING-354A_EVIDENCE_STALENESS_WEEKLY_REVIEW_RECOVERY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: '2026-06-16: DONE；真实 weekly review `paper-shadow-weekly-review_f21aec8c5f94ea48`
+      的 `weekly_decision=CONTINUE`、`missing_input_artifacts=none`，weekly report/latest/validate
+      CLI PASS；最终重跑 evidence monitor 生成 `evidence-staleness-monitor_9cb9357aade5728d`，`missing_artifacts=[]`、`blocking_artifacts=[]`，weekly
+      review finding 为 FRESH / missing=false；`safe_to_continue_shadow=false`，因为 `price_data`
+      和 `market_panel_data` 仍为 STALE，不是 weekly review blocker；`validate-data --as-of
+      2026-06-12` 返回 `PASS_WITH_WARNINGS` 且 errors=0、warnings=1；documentation contract
+      PASS，report index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief quality
+      OK，focused pytest 24 passed，ruff PASS，compileall PASS，git diff check PASS；保持
+      manual review only / research and paper-shadow only / no official target / no
+      broker / no order / no production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1ca1a62627e366abb32cae38c556553d62a7e2cea443e50063e65d1662b6d45c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-354A_EVIDENCE_STALENESS_WEEKLY_REVIEW_RECOVERY
+  - ETF portfolio/dynamic v3 rescue evidence staleness weekly review recovery
+  - P1
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-354A_Evidence_Staleness_Weekly_Review_Recovery.md`；承接
+    TRADING-354，真实 monitor `evidence-staleness-monitor_39cc2b41171c8b6d` 因 latest
+    `paper_shadow_weekly_review` 缺失而正确 fail-closed；本任务生成或接入最新完整可用 paper-shadow weekly
+    review artifact，并重新运行 evidence staleness monitor；未使用 waiver、伪造输入、放宽 freshness
+    policy 或修改 production state
+  - 定位 TRADING-353 weekly review schema/CLI、latest daily observation 和 drift monitor；选用最新完整可用
+    artifact window `2026-06-12..2026-06-12`，因最新市场周不完整且只有该日 daily/drift artifact 可用；生成
+    weekly review `paper-shadow-weekly-review_f21aec8c5f94ea48`；staleness monitor
+    能发现 latest weekly review，重跑后 `paper_shadow_weekly_review` 不再在 `missing_artifacts`；新增
+    focused test 覆盖 latest weekly review discovery；operations runbook 和 requirements
+    记录 recovery flow
+  - '2026-06-16: DONE；真实 weekly review `paper-shadow-weekly-review_f21aec8c5f94ea48`
+    的 `weekly_decision=CONTINUE`、`missing_input_artifacts=none`，weekly report/latest/validate
+    CLI PASS；最终重跑 evidence monitor 生成 `evidence-staleness-monitor_9cb9357aade5728d`，`missing_artifacts=[]`、`blocking_artifacts=[]`，weekly
+    review finding 为 FRESH / missing=false；`safe_to_continue_shadow=false`，因为 `price_data`
+    和 `market_panel_data` 仍为 STALE，不是 weekly review blocker；`validate-data --as-of
+    2026-06-12` 返回 `PASS_WITH_WARNINGS` 且 errors=0、warnings=1；documentation contract
+    PASS，report index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief quality
+    OK，focused pytest 24 passed，ruff PASS，compileall PASS，git diff check PASS；保持 manual
+    review only / research and paper-shadow only / no official target / no broker
+    / no order / no production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-354A_Evidence_Staleness_Weekly_Review_Recovery.md
+  terminal: true
+  raw_row_sha256: 1ca1a62627e366abb32cae38c556553d62a7e2cea443e50063e65d1662b6d45c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 244febc7170ae6e292f6bc00b963aa5311fb54dc3e68c6c909d18f2f0de5b9ba

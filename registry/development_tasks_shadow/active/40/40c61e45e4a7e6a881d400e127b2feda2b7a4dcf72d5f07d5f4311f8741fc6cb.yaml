@@ -1,0 +1,106 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: SCENARIO-001
+  title: null
+  domain: 风险/压力测试
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段 scenario library registry：覆盖首批
+    AI 产业链压力场景、节点/ticker/risk event/position gate 映射、观察条件、证据要求和人工复核要求；剩余缺口是日报/回测当前组合暴露、量化冲击参数和历史压力样本接入
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 每个场景能映射到产业链节点、ticker、thesis、风险事件和仓位 gate；报告输出当前组合在云 CapEx 下修、GPU 毛利压缩、HBM
+      供给、先进封装、出口管制、地缘、利率、估值压缩、电力限制和 AI 应用需求不及预期等场景下的脆弱点、观察条件和人工复核要求；实现时同步更新 `docs/system_flow.md`
+      并补充场景映射测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1119
+    row_sha256: 75e57987262bfeb80ab687490b4fbf08ea5da72aaa5ca527b2fbcd0c4657e776
+    cell_count: 8
+    all_cells:
+    - SCENARIO-001
+    - 风险/压力测试
+    - P1
+    - BASELINE_DONE
+    - 系统实现
+    - 已完成第一阶段 scenario library registry：覆盖首批 AI 产业链压力场景、节点/ticker/risk event/position
+      gate 映射、观察条件、证据要求和人工复核要求；剩余缺口是日报/回测当前组合暴露、量化冲击参数和历史压力样本接入
+    - 每个场景能映射到产业链节点、ticker、thesis、风险事件和仓位 gate；报告输出当前组合在云 CapEx 下修、GPU 毛利压缩、HBM 供给、先进封装、出口管制、地缘、利率、估值压缩、电力限制和
+      AI 应用需求不及预期等场景下的脆弱点、观察条件和人工复核要求；实现时同步更新 `docs/system_flow.md` 并补充场景映射测试
+    - '与 `BACKTEST-001` 互补：回测回答历史表现，场景压力测试回答当前组合在指定冲击下的暴露。2026-05-04: 从 PROPOSED 改为
+      IN_PROGRESS，原因：开始实现第一阶段 scenario library registry、节点/ticker/risk event/gate
+      映射校验、报告和查询入口。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `config/scenario_library.yaml`、`scenario_library`
+      模块、`aits scenarios validate`、`aits scenarios lookup`、中文情景库报告、系统流图和测试；情景库只做压力测试和人工复核提示，不作为概率预测，也不直接修改
+      production 评分、仓位闸门或回测仓位。'
+    raw_line: '|SCENARIO-001|风险/压力测试|P1|BASELINE_DONE|系统实现|已完成第一阶段 scenario library
+      registry：覆盖首批 AI 产业链压力场景、节点/ticker/risk event/position gate 映射、观察条件、证据要求和人工复核要求；剩余缺口是日报/回测当前组合暴露、量化冲击参数和历史压力样本接入|每个场景能映射到产业链节点、ticker、thesis、风险事件和仓位
+      gate；报告输出当前组合在云 CapEx 下修、GPU 毛利压缩、HBM 供给、先进封装、出口管制、地缘、利率、估值压缩、电力限制和 AI 应用需求不及预期等场景下的脆弱点、观察条件和人工复核要求；实现时同步更新
+      `docs/system_flow.md` 并补充场景映射测试|与 `BACKTEST-001` 互补：回测回答历史表现，场景压力测试回答当前组合在指定冲击下的暴露。2026-05-04:
+      从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段 scenario library registry、节点/ticker/risk
+      event/gate 映射校验、报告和查询入口。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `config/scenario_library.yaml`、`scenario_library`
+      模块、`aits scenarios validate`、`aits scenarios lookup`、中文情景库报告、系统流图和测试；情景库只做压力测试和人工复核提示，不作为概率预测，也不直接修改
+      production 评分、仓位闸门或回测仓位。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-75e57987262bfeb80ab68749
+  task_id: SCENARIO-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '与 `BACKTEST-001` 互补：回测回答历史表现，场景压力测试回答当前组合在指定冲击下的暴露。2026-05-04: 从 PROPOSED
+      改为 IN_PROGRESS，原因：开始实现第一阶段 scenario library registry、节点/ticker/risk event/gate
+      映射校验、报告和查询入口。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `config/scenario_library.yaml`、`scenario_library`
+      模块、`aits scenarios validate`、`aits scenarios lookup`、中文情景库报告、系统流图和测试；情景库只做压力测试和人工复核提示，不作为概率预测，也不直接修改
+      production 评分、仓位闸门或回测仓位。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:75e57987262bfeb80ab687490b4fbf08ea5da72aaa5ca527b2fbcd0c4657e776
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - SCENARIO-001
+  - 风险/压力测试
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - 已完成第一阶段 scenario library registry：覆盖首批 AI 产业链压力场景、节点/ticker/risk event/position
+    gate 映射、观察条件、证据要求和人工复核要求；剩余缺口是日报/回测当前组合暴露、量化冲击参数和历史压力样本接入
+  - 每个场景能映射到产业链节点、ticker、thesis、风险事件和仓位 gate；报告输出当前组合在云 CapEx 下修、GPU 毛利压缩、HBM 供给、先进封装、出口管制、地缘、利率、估值压缩、电力限制和
+    AI 应用需求不及预期等场景下的脆弱点、观察条件和人工复核要求；实现时同步更新 `docs/system_flow.md` 并补充场景映射测试
+  - '与 `BACKTEST-001` 互补：回测回答历史表现，场景压力测试回答当前组合在指定冲击下的暴露。2026-05-04: 从 PROPOSED 改为
+    IN_PROGRESS，原因：开始实现第一阶段 scenario library registry、节点/ticker/risk event/gate 映射校验、报告和查询入口。2026-05-04:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `config/scenario_library.yaml`、`scenario_library`
+    模块、`aits scenarios validate`、`aits scenarios lookup`、中文情景库报告、系统流图和测试；情景库只做压力测试和人工复核提示，不作为概率预测，也不直接修改
+    production 评分、仓位闸门或回测仓位。'
+  docs_links:
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: 75e57987262bfeb80ab687490b4fbf08ea5da72aaa5ca527b2fbcd0c4657e776
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 33dd8de373cf4242f2f362afdbed81d3ace551d582f4cfd92d7206753f2a8cf8

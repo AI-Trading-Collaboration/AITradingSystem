@@ -1,0 +1,134 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2311_LIQUIDITY_RATES_PRESSURE_DATA_FEASIBILITY_AUDIT
+  title: null
+  domain: Research trends / liquidity rates pressure candidate family
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2311_Liquidity_Rates_Pressure_Data_Feasibility_Audit.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2311_Liquidity_Rates_Pressure_Data_Feasibility_Audit.md`；依赖
+    TRADING-2301 backlog 输出；legacy alias=`TRADING-2296B`，原临时 ID=`TRADING-2304_LIQUIDITY_RATES_PRESSURE_PROXY_AUDIT_AND_CANDIDATE_SPEC`
+    已因 post-2302 roadmap 冲突更正。真实 run 已生成 feasibility audit；后续仅可在 policy/source gap
+    复核后讨论 TRADING-2312 partial rates-only generator POC。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 形成 liquidity / rates pressure data feasibility audit、rates proxy inventory、candidate
+      family design sketch、price/macro coverage matrix、horizon assumptions、overlap-with-volatility-risk-cap
+      review 和 no-promotion safety gates；真实 run status=`LIQUIDITY_RATES_FEASIBILITY_AUDIT_READY_PARTIAL_PROXY`，data_quality_status=`PASS_WITH_WARNINGS`，`partial_poc_possible=true`，`full_liquidity_pressure_poc_ready=false`；不得作为
+      1d standalone buy/sell signal，不得生成 generator / actual-path validation / scope
+      review。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1215
+    row_sha256: 785c514971af555eda4bfe975288be955d4a484d2f7121097ff05adc8399f1a1
+    cell_count: 8
+    all_cells:
+    - TRADING-2311_LIQUIDITY_RATES_PRESSURE_DATA_FEASIBILITY_AUDIT
+    - Research trends / liquidity rates pressure candidate family
+    - P1
+    - VALIDATING
+    - 系统验证 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2311_Liquidity_Rates_Pressure_Data_Feasibility_Audit.md`；依赖
+      TRADING-2301 backlog 输出；legacy alias=`TRADING-2296B`，原临时 ID=`TRADING-2304_LIQUIDITY_RATES_PRESSURE_PROXY_AUDIT_AND_CANDIDATE_SPEC`
+      已因 post-2302 roadmap 冲突更正。真实 run 已生成 feasibility audit；后续仅可在 policy/source gap
+      复核后讨论 TRADING-2312 partial rates-only generator POC。
+    - 形成 liquidity / rates pressure data feasibility audit、rates proxy inventory、candidate
+      family design sketch、price/macro coverage matrix、horizon assumptions、overlap-with-volatility-risk-cap
+      review 和 no-promotion safety gates；真实 run status=`LIQUIDITY_RATES_FEASIBILITY_AUDIT_READY_PARTIAL_PROXY`，data_quality_status=`PASS_WITH_WARNINGS`，`partial_poc_possible=true`，`full_liquidity_pressure_poc_ready=false`；不得作为
+      1d standalone buy/sell signal，不得生成 generator / actual-path validation / scope
+      review。
+    - '2026-07-01: 根据 owner 附件登记；2026-07-01: 迁移到 owner roadmap 的 TRADING-2311。2026-07-01:
+      进入 IN_PROGRESS；本地缓存初查 `TLT`、`SHY`、`QQQ`、`SMH` 与 `DGS10` / `DGS2` / `DTWEXBGS`
+      可用，`IEF`、`UUP`、`HYG`、`LQD` 和 real-rate proxy 缺失；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging。2026-07-01: 实现完成并进入 VALIDATING；真实 run 记录 `IEF`、`UUP`、`HYG`、`LQD`、`DFII10`、`T10YIE`、`SOFR`
+      为 source gap，所有 promotion/paper-shadow/production/broker gates 仍为 false/none；验证通过
+      Ruff、compileall、focused/docs pytest、validate-data、contract-validation 和 diff
+      check。'
+    raw_line: '|TRADING-2311_LIQUIDITY_RATES_PRESSURE_DATA_FEASIBILITY_AUDIT|Research
+      trends / liquidity rates pressure candidate family|P1|VALIDATING|系统验证 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-2311_Liquidity_Rates_Pressure_Data_Feasibility_Audit.md`；依赖
+      TRADING-2301 backlog 输出；legacy alias=`TRADING-2296B`，原临时 ID=`TRADING-2304_LIQUIDITY_RATES_PRESSURE_PROXY_AUDIT_AND_CANDIDATE_SPEC`
+      已因 post-2302 roadmap 冲突更正。真实 run 已生成 feasibility audit；后续仅可在 policy/source gap
+      复核后讨论 TRADING-2312 partial rates-only generator POC。|形成 liquidity / rates pressure
+      data feasibility audit、rates proxy inventory、candidate family design sketch、price/macro
+      coverage matrix、horizon assumptions、overlap-with-volatility-risk-cap review
+      和 no-promotion safety gates；真实 run status=`LIQUIDITY_RATES_FEASIBILITY_AUDIT_READY_PARTIAL_PROXY`，data_quality_status=`PASS_WITH_WARNINGS`，`partial_poc_possible=true`，`full_liquidity_pressure_poc_ready=false`；不得作为
+      1d standalone buy/sell signal，不得生成 generator / actual-path validation / scope
+      review。|2026-07-01: 根据 owner 附件登记；2026-07-01: 迁移到 owner roadmap 的 TRADING-2311。2026-07-01:
+      进入 IN_PROGRESS；本地缓存初查 `TLT`、`SHY`、`QQQ`、`SMH` 与 `DGS10` / `DGS2` / `DTWEXBGS`
+      可用，`IEF`、`UUP`、`HYG`、`LQD` 和 real-rate proxy 缺失；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging。2026-07-01: 实现完成并进入 VALIDATING；真实 run 记录 `IEF`、`UUP`、`HYG`、`LQD`、`DFII10`、`T10YIE`、`SOFR`
+      为 source gap，所有 promotion/paper-shadow/production/broker gates 仍为 false/none；验证通过
+      Ruff、compileall、focused/docs pytest、validate-data、contract-validation 和 diff
+      check。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-785c514971af555eda4bfe97
+  task_id: TRADING-2311_LIQUIDITY_RATES_PRESSURE_DATA_FEASIBILITY_AUDIT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 owner 附件登记；2026-07-01: 迁移到 owner roadmap 的 TRADING-2311。2026-07-01:
+      进入 IN_PROGRESS；本地缓存初查 `TLT`、`SHY`、`QQQ`、`SMH` 与 `DGS10` / `DGS2` / `DTWEXBGS`
+      可用，`IEF`、`UUP`、`HYG`、`LQD` 和 real-rate proxy 缺失；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging。2026-07-01: 实现完成并进入 VALIDATING；真实 run 记录 `IEF`、`UUP`、`HYG`、`LQD`、`DFII10`、`T10YIE`、`SOFR`
+      为 source gap，所有 promotion/paper-shadow/production/broker gates 仍为 false/none；验证通过
+      Ruff、compileall、focused/docs pytest、validate-data、contract-validation 和 diff
+      check。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:785c514971af555eda4bfe975288be955d4a484d2f7121097ff05adc8399f1a1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2311_LIQUIDITY_RATES_PRESSURE_DATA_FEASIBILITY_AUDIT
+  - Research trends / liquidity rates pressure candidate family
+  - P1
+  - VALIDATING
+  - 系统验证 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2311_Liquidity_Rates_Pressure_Data_Feasibility_Audit.md`；依赖
+    TRADING-2301 backlog 输出；legacy alias=`TRADING-2296B`，原临时 ID=`TRADING-2304_LIQUIDITY_RATES_PRESSURE_PROXY_AUDIT_AND_CANDIDATE_SPEC`
+    已因 post-2302 roadmap 冲突更正。真实 run 已生成 feasibility audit；后续仅可在 policy/source gap
+    复核后讨论 TRADING-2312 partial rates-only generator POC。
+  - 形成 liquidity / rates pressure data feasibility audit、rates proxy inventory、candidate
+    family design sketch、price/macro coverage matrix、horizon assumptions、overlap-with-volatility-risk-cap
+    review 和 no-promotion safety gates；真实 run status=`LIQUIDITY_RATES_FEASIBILITY_AUDIT_READY_PARTIAL_PROXY`，data_quality_status=`PASS_WITH_WARNINGS`，`partial_poc_possible=true`，`full_liquidity_pressure_poc_ready=false`；不得作为
+    1d standalone buy/sell signal，不得生成 generator / actual-path validation / scope
+    review。
+  - '2026-07-01: 根据 owner 附件登记；2026-07-01: 迁移到 owner roadmap 的 TRADING-2311。2026-07-01:
+    进入 IN_PROGRESS；本地缓存初查 `TLT`、`SHY`、`QQQ`、`SMH` 与 `DGS10` / `DGS2` / `DTWEXBGS`
+    可用，`IEF`、`UUP`、`HYG`、`LQD` 和 real-rate proxy 缺失；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+    selective staging。2026-07-01: 实现完成并进入 VALIDATING；真实 run 记录 `IEF`、`UUP`、`HYG`、`LQD`、`DFII10`、`T10YIE`、`SOFR`
+    为 source gap，所有 promotion/paper-shadow/production/broker gates 仍为 false/none；验证通过
+    Ruff、compileall、focused/docs pytest、validate-data、contract-validation 和 diff check。'
+  docs_links:
+  - docs/requirements/TRADING-2311_Liquidity_Rates_Pressure_Data_Feasibility_Audit.md
+  terminal: false
+  raw_row_sha256: 785c514971af555eda4bfe975288be955d4a484d2f7121097ff05adc8399f1a1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 32d23abf91282b37c4d662b1fc954ea2f2bfb64e2e57eeeefc801bc5bb7fa664

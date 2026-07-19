@@ -1,0 +1,153 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2086_CURRENT_DATA_SOURCE_SUBSCRIPTION_INVENTORY
+  title: null
+  domain: Data governance / current data-source subscription inventory
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续按订阅变化复核
+  requirement_refs:
+  - docs/data_source_subscription_inventory.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 新增 `docs/data_source_subscription_inventory.md`；本任务只整理当前已配置、已审计和实际使用的数据源订阅/权限/用途边界，不新增
+    provider、不运行 live provider entitlement probe、不改变数据流、评分、回测、paper-shadow、production
+    或 broker
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 盘点文档覆盖 `config/data_sources.yaml` 中 active/planned/inactive source_id、当前进程
+      env presence、2026-06-21 TRADING-738 entitlement audit、TRADING-759 source qualification
+      batch、FMP/Marketstack/EODHD/FRED/Cboe/SEC/Congress/GovInfo/OpenAI/官方政策源/本地手工输入/TSMC
+      IR/Yahoo/Alpha Vantage/news source TBD 的订阅与使用边界；明确不输出 secret、不升级 source status、所有结论仍为
+      validation-only/observe-only；focused task/docs pytest、docs freshness 和 diff
+      check 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 171
+    row_sha256: 511ec2bdae4cc1f7dd2366104de7ba0f2c932ef71f50db625695ca592a0d74be
+    cell_count: 8
+    all_cells:
+    - TRADING-2086_CURRENT_DATA_SOURCE_SUBSCRIPTION_INVENTORY
+    - Data governance / current data-source subscription inventory
+    - P1
+    - DONE
+    - 项目 owner 后续按订阅变化复核
+    - 新增 `docs/data_source_subscription_inventory.md`；本任务只整理当前已配置、已审计和实际使用的数据源订阅/权限/用途边界，不新增
+      provider、不运行 live provider entitlement probe、不改变数据流、评分、回测、paper-shadow、production
+      或 broker
+    - 盘点文档覆盖 `config/data_sources.yaml` 中 active/planned/inactive source_id、当前进程 env
+      presence、2026-06-21 TRADING-738 entitlement audit、TRADING-759 source qualification
+      batch、FMP/Marketstack/EODHD/FRED/Cboe/SEC/Congress/GovInfo/OpenAI/官方政策源/本地手工输入/TSMC
+      IR/Yahoo/Alpha Vantage/news source TBD 的订阅与使用边界；明确不输出 secret、不升级 source status、所有结论仍为
+      validation-only/observe-only；focused task/docs pytest、docs freshness 和 diff
+      check 通过
+    - '2026-06-28: owner 要求整理当前使用的各数据源具体订阅情况；新增盘点文档并说明当前凭据 presence 与最近一次 live entitlement
+      probe 的差异。初始 key presence 为 `FMP_API_KEY`、`MARKETSTACK_API_KEY`、`EODHD_API_KEY`、`FRED_API_KEY`、`CONGRESS_API_KEY`、`GOVINFO_API_KEY`、`OPENAI_API_KEY`、`SEC_USER_AGENT`
+      可见，FMP 别名不可见；最新 subscription audit 仍以 2026-06-21 artifact 为准。验证通过 `python -m
+      pytest -n 16 --dist loadfile tests/test_task_register_consistency.py tests/test_docs_freshness.py`、`python
+      -m pytest -n 16 --dist loadfile tests/test_documentation_contract.py` 和 `git
+      diff --check`。2026-06-28: owner 新增 `BEA_API_KEY`、`BLS_API_KEY`、`ALPHA_VANTAGE_API_KEY`
+      后完成脱敏最小服务端验证：BEA `GETDATASETLIST` status 200 / dataset_count=13，BLS v2 `LNS14000000`
+      status 200 / `REQUEST_SUCCEEDED`，Alpha Vantage `GLOBAL_QUOTE` / `MSFT` status
+      200 / `Global Quote`；已更新盘点文档，但正式 entitlement matrix 仍需重跑 `aits data source-qualification
+      subscription-audit`。2026-06-28: workspace cleanup 补齐 `TRADING-2006_to_2025`
+      与 `TRADING-2026_to_2045` requirements 的 `最后更新` 元数据后，`python -m ai_trading_system.cli
+      docs validate-freshness` 通过。'
+    raw_line: '|TRADING-2086_CURRENT_DATA_SOURCE_SUBSCRIPTION_INVENTORY|Data governance
+      / current data-source subscription inventory|P1|DONE|项目 owner 后续按订阅变化复核|新增 `docs/data_source_subscription_inventory.md`；本任务只整理当前已配置、已审计和实际使用的数据源订阅/权限/用途边界，不新增
+      provider、不运行 live provider entitlement probe、不改变数据流、评分、回测、paper-shadow、production
+      或 broker|盘点文档覆盖 `config/data_sources.yaml` 中 active/planned/inactive source_id、当前进程
+      env presence、2026-06-21 TRADING-738 entitlement audit、TRADING-759 source qualification
+      batch、FMP/Marketstack/EODHD/FRED/Cboe/SEC/Congress/GovInfo/OpenAI/官方政策源/本地手工输入/TSMC
+      IR/Yahoo/Alpha Vantage/news source TBD 的订阅与使用边界；明确不输出 secret、不升级 source status、所有结论仍为
+      validation-only/observe-only；focused task/docs pytest、docs freshness 和 diff
+      check 通过|2026-06-28: owner 要求整理当前使用的各数据源具体订阅情况；新增盘点文档并说明当前凭据 presence 与最近一次
+      live entitlement probe 的差异。初始 key presence 为 `FMP_API_KEY`、`MARKETSTACK_API_KEY`、`EODHD_API_KEY`、`FRED_API_KEY`、`CONGRESS_API_KEY`、`GOVINFO_API_KEY`、`OPENAI_API_KEY`、`SEC_USER_AGENT`
+      可见，FMP 别名不可见；最新 subscription audit 仍以 2026-06-21 artifact 为准。验证通过 `python -m
+      pytest -n 16 --dist loadfile tests/test_task_register_consistency.py tests/test_docs_freshness.py`、`python
+      -m pytest -n 16 --dist loadfile tests/test_documentation_contract.py` 和 `git
+      diff --check`。2026-06-28: owner 新增 `BEA_API_KEY`、`BLS_API_KEY`、`ALPHA_VANTAGE_API_KEY`
+      后完成脱敏最小服务端验证：BEA `GETDATASETLIST` status 200 / dataset_count=13，BLS v2 `LNS14000000`
+      status 200 / `REQUEST_SUCCEEDED`，Alpha Vantage `GLOBAL_QUOTE` / `MSFT` status
+      200 / `Global Quote`；已更新盘点文档，但正式 entitlement matrix 仍需重跑 `aits data source-qualification
+      subscription-audit`。2026-06-28: workspace cleanup 补齐 `TRADING-2006_to_2025`
+      与 `TRADING-2026_to_2045` requirements 的 `最后更新` 元数据后，`python -m ai_trading_system.cli
+      docs validate-freshness` 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-511ec2bdae4cc1f7dd236610
+  task_id: TRADING-2086_CURRENT_DATA_SOURCE_SUBSCRIPTION_INVENTORY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续按订阅变化复核
+    notes: '2026-06-28: owner 要求整理当前使用的各数据源具体订阅情况；新增盘点文档并说明当前凭据 presence 与最近一次 live
+      entitlement probe 的差异。初始 key presence 为 `FMP_API_KEY`、`MARKETSTACK_API_KEY`、`EODHD_API_KEY`、`FRED_API_KEY`、`CONGRESS_API_KEY`、`GOVINFO_API_KEY`、`OPENAI_API_KEY`、`SEC_USER_AGENT`
+      可见，FMP 别名不可见；最新 subscription audit 仍以 2026-06-21 artifact 为准。验证通过 `python -m
+      pytest -n 16 --dist loadfile tests/test_task_register_consistency.py tests/test_docs_freshness.py`、`python
+      -m pytest -n 16 --dist loadfile tests/test_documentation_contract.py` 和 `git
+      diff --check`。2026-06-28: owner 新增 `BEA_API_KEY`、`BLS_API_KEY`、`ALPHA_VANTAGE_API_KEY`
+      后完成脱敏最小服务端验证：BEA `GETDATASETLIST` status 200 / dataset_count=13，BLS v2 `LNS14000000`
+      status 200 / `REQUEST_SUCCEEDED`，Alpha Vantage `GLOBAL_QUOTE` / `MSFT` status
+      200 / `Global Quote`；已更新盘点文档，但正式 entitlement matrix 仍需重跑 `aits data source-qualification
+      subscription-audit`。2026-06-28: workspace cleanup 补齐 `TRADING-2006_to_2025`
+      与 `TRADING-2026_to_2045` requirements 的 `最后更新` 元数据后，`python -m ai_trading_system.cli
+      docs validate-freshness` 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:511ec2bdae4cc1f7dd2366104de7ba0f2c932ef71f50db625695ca592a0d74be
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2086_CURRENT_DATA_SOURCE_SUBSCRIPTION_INVENTORY
+  - Data governance / current data-source subscription inventory
+  - P1
+  - DONE
+  - 项目 owner 后续按订阅变化复核
+  - 新增 `docs/data_source_subscription_inventory.md`；本任务只整理当前已配置、已审计和实际使用的数据源订阅/权限/用途边界，不新增
+    provider、不运行 live provider entitlement probe、不改变数据流、评分、回测、paper-shadow、production
+    或 broker
+  - 盘点文档覆盖 `config/data_sources.yaml` 中 active/planned/inactive source_id、当前进程 env
+    presence、2026-06-21 TRADING-738 entitlement audit、TRADING-759 source qualification
+    batch、FMP/Marketstack/EODHD/FRED/Cboe/SEC/Congress/GovInfo/OpenAI/官方政策源/本地手工输入/TSMC
+    IR/Yahoo/Alpha Vantage/news source TBD 的订阅与使用边界；明确不输出 secret、不升级 source status、所有结论仍为
+    validation-only/observe-only；focused task/docs pytest、docs freshness 和 diff check
+    通过
+  - '2026-06-28: owner 要求整理当前使用的各数据源具体订阅情况；新增盘点文档并说明当前凭据 presence 与最近一次 live entitlement
+    probe 的差异。初始 key presence 为 `FMP_API_KEY`、`MARKETSTACK_API_KEY`、`EODHD_API_KEY`、`FRED_API_KEY`、`CONGRESS_API_KEY`、`GOVINFO_API_KEY`、`OPENAI_API_KEY`、`SEC_USER_AGENT`
+    可见，FMP 别名不可见；最新 subscription audit 仍以 2026-06-21 artifact 为准。验证通过 `python -m pytest
+    -n 16 --dist loadfile tests/test_task_register_consistency.py tests/test_docs_freshness.py`、`python
+    -m pytest -n 16 --dist loadfile tests/test_documentation_contract.py` 和 `git diff
+    --check`。2026-06-28: owner 新增 `BEA_API_KEY`、`BLS_API_KEY`、`ALPHA_VANTAGE_API_KEY`
+    后完成脱敏最小服务端验证：BEA `GETDATASETLIST` status 200 / dataset_count=13，BLS v2 `LNS14000000`
+    status 200 / `REQUEST_SUCCEEDED`，Alpha Vantage `GLOBAL_QUOTE` / `MSFT` status
+    200 / `Global Quote`；已更新盘点文档，但正式 entitlement matrix 仍需重跑 `aits data source-qualification
+    subscription-audit`。2026-06-28: workspace cleanup 补齐 `TRADING-2006_to_2025` 与
+    `TRADING-2026_to_2045` requirements 的 `最后更新` 元数据后，`python -m ai_trading_system.cli
+    docs validate-freshness` 通过。'
+  docs_links:
+  - docs/data_source_subscription_inventory.md
+  terminal: true
+  raw_row_sha256: 511ec2bdae4cc1f7dd2366104de7ba0f2c932ef71f50db625695ca592a0d74be
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2cb01f93ea4164a7d7a4fdec6e7ef8c502a7aa543c67794fb7327d88e6ef8ecb

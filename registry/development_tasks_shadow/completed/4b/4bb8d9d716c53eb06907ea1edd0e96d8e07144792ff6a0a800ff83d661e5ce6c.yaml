@@ -1,0 +1,183 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-022
+  title: null
+  domain: 交易执行/Daily Trading System Operator Brief
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/daily_trading_system_operator_brief_2026-05-23.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/daily_trading_system_operator_brief_2026-05-23.md`；系统级只读
+    daily operator brief、standalone script、JSON/Markdown/run log、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成；后续
+    pipeline health artifact 可在 TRADING-023 单独推进，不混入本任务
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_daily_trading_system_operator_brief.py` 和 `src/ai_trading_system/trading_engine/daily_trading_system_operator_brief.py`；输出
+      `data/derived/operator_briefs/daily_trading_system_operator_brief_YYYY-MM-DD.json/md`
+      与 `logs/daily_trading_system_operator_brief_run_YYYY-MM-DD.json/md`；只读读取 latest
+      TRADING-021 digest，必须校验 `task_id` 与 digest 安全字段；可选读取 pipeline health、data freshness、market
+      report、backtest / weight iteration artifacts，缺失时只使对应模块 `UNKNOWN`，不得导致 `INPUT_MISSING`；状态覆盖
+      OK/WATCH/ACTION_REQUIRED/URGENT/INPUT_MISSING/INPUT_INVALID/SAFETY_BLOCKED/ERROR；所有输出固定
+      `production_effect=none`、`manual_review_only=true`、`operator_brief_only=true`、`read_only=true`、`apply_executed_by_operator_brief=false`、`rollback_executed_by_operator_brief=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；dashboard
+      只读读取 operator brief artifact，不运行 018B-022、market/backtest/scoring/broker/replay/trading；目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和 repo 外 smoke
+      通过；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 404
+    row_sha256: eeac8e96877f6dd80d9a6793d015f49384aeefb821305cb3c3e9016e2bdbe853
+    cell_count: 8
+    all_cells:
+    - TRADING-022
+    - 交易执行/Daily Trading System Operator Brief
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/daily_trading_system_operator_brief_2026-05-23.md`；系统级只读
+      daily operator brief、standalone script、JSON/Markdown/run log、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成；后续
+      pipeline health artifact 可在 TRADING-023 单独推进，不混入本任务
+    - 新增 `scripts/run_daily_trading_system_operator_brief.py` 和 `src/ai_trading_system/trading_engine/daily_trading_system_operator_brief.py`；输出
+      `data/derived/operator_briefs/daily_trading_system_operator_brief_YYYY-MM-DD.json/md`
+      与 `logs/daily_trading_system_operator_brief_run_YYYY-MM-DD.json/md`；只读读取 latest
+      TRADING-021 digest，必须校验 `task_id` 与 digest 安全字段；可选读取 pipeline health、data freshness、market
+      report、backtest / weight iteration artifacts，缺失时只使对应模块 `UNKNOWN`，不得导致 `INPUT_MISSING`；状态覆盖
+      OK/WATCH/ACTION_REQUIRED/URGENT/INPUT_MISSING/INPUT_INVALID/SAFETY_BLOCKED/ERROR；所有输出固定
+      `production_effect=none`、`manual_review_only=true`、`operator_brief_only=true`、`read_only=true`、`apply_executed_by_operator_brief=false`、`rollback_executed_by_operator_brief=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；dashboard
+      只读读取 operator brief artifact，不运行 018B-022、market/backtest/scoring/broker/replay/trading；目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和 repo 外 smoke
+      通过；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff
+    - '2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-021 参数治理 daily digest 后增加系统级每日运维简报，回答整体交易系统健康、pipeline
+      状态、数据新鲜度、artifact 缺失、人工待处理事项以及当天是否可信任系统输出；本任务只聚合已有状态，不重新运行任何 pipeline。2026-05-23:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 operator brief builder、CLI、dashboard 只读卡片、runbook、system
+      flow、artifact catalog 和专项测试；验证通过 TRADING-022 目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest、ruff 和 repo 外 OK/ACTION_REQUIRED/URGENT/SAFETY_BLOCKED smoke；全仓 black
+      check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。2026-05-23:
+      从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo 外临时 fixture 四路径 smoke；OK 输出 `OK/NORMAL`
+      且 Markdown 包含 `Continue observation`，ACTION_REQUIRED 顶部显示 `Action Required`
+      且 pending manual actions 为 true，URGENT 顶部显示 `URGENT: Manual Attention Required`
+      且 critical alert 非空，SAFETY_BLOCKED 顶部显示 `Operator Brief Safety Blocked`；四路径均确认
+      operator brief 顶层 `production_effect=none`、`manual_review_only=true`、`operator_brief_only=true`、`read_only=true`、`apply_executed_by_operator_brief=false`、`rollback_executed_by_operator_brief=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`，且
+      optional artifacts 缺失时显示 `UNKNOWN` 而不是失败；dashboard import guard 验证 Daily Trading
+      System Operator Brief 卡片只读读取 operator brief artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020/021/022/market/backtest/scoring/broker/replay/trading；收尾验证通过目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+      仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。'
+    raw_line: '|TRADING-022|交易执行/Daily Trading System Operator Brief|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/daily_trading_system_operator_brief_2026-05-23.md`；系统级只读
+      daily operator brief、standalone script、JSON/Markdown/run log、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成；后续
+      pipeline health artifact 可在 TRADING-023 单独推进，不混入本任务|新增 `scripts/run_daily_trading_system_operator_brief.py`
+      和 `src/ai_trading_system/trading_engine/daily_trading_system_operator_brief.py`；输出
+      `data/derived/operator_briefs/daily_trading_system_operator_brief_YYYY-MM-DD.json/md`
+      与 `logs/daily_trading_system_operator_brief_run_YYYY-MM-DD.json/md`；只读读取 latest
+      TRADING-021 digest，必须校验 `task_id` 与 digest 安全字段；可选读取 pipeline health、data freshness、market
+      report、backtest / weight iteration artifacts，缺失时只使对应模块 `UNKNOWN`，不得导致 `INPUT_MISSING`；状态覆盖
+      OK/WATCH/ACTION_REQUIRED/URGENT/INPUT_MISSING/INPUT_INVALID/SAFETY_BLOCKED/ERROR；所有输出固定
+      `production_effect=none`、`manual_review_only=true`、`operator_brief_only=true`、`read_only=true`、`apply_executed_by_operator_brief=false`、`rollback_executed_by_operator_brief=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；dashboard
+      只读读取 operator brief artifact，不运行 018B-022、market/backtest/scoring/broker/replay/trading；目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和 repo 外 smoke
+      通过；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff|2026-05-23:
+      新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-021 参数治理 daily digest 后增加系统级每日运维简报，回答整体交易系统健康、pipeline
+      状态、数据新鲜度、artifact 缺失、人工待处理事项以及当天是否可信任系统输出；本任务只聚合已有状态，不重新运行任何 pipeline。2026-05-23:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 operator brief builder、CLI、dashboard 只读卡片、runbook、system
+      flow、artifact catalog 和专项测试；验证通过 TRADING-022 目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest、ruff 和 repo 外 OK/ACTION_REQUIRED/URGENT/SAFETY_BLOCKED smoke；全仓 black
+      check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。2026-05-23:
+      从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo 外临时 fixture 四路径 smoke；OK 输出 `OK/NORMAL`
+      且 Markdown 包含 `Continue observation`，ACTION_REQUIRED 顶部显示 `Action Required`
+      且 pending manual actions 为 true，URGENT 顶部显示 `URGENT: Manual Attention Required`
+      且 critical alert 非空，SAFETY_BLOCKED 顶部显示 `Operator Brief Safety Blocked`；四路径均确认
+      operator brief 顶层 `production_effect=none`、`manual_review_only=true`、`operator_brief_only=true`、`read_only=true`、`apply_executed_by_operator_brief=false`、`rollback_executed_by_operator_brief=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`，且
+      optional artifacts 缺失时显示 `UNKNOWN` 而不是失败；dashboard import guard 验证 Daily Trading
+      System Operator Brief 卡片只读读取 operator brief artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020/021/022/market/backtest/scoring/broker/replay/trading；收尾验证通过目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+      仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-eeac8e96877f6dd80d9a6793
+  task_id: TRADING-022
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-021 参数治理 daily digest
+      后增加系统级每日运维简报，回答整体交易系统健康、pipeline 状态、数据新鲜度、artifact 缺失、人工待处理事项以及当天是否可信任系统输出；本任务只聚合已有状态，不重新运行任何
+      pipeline。2026-05-23: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 operator brief builder、CLI、dashboard
+      只读卡片、runbook、system flow、artifact catalog 和专项测试；验证通过 TRADING-022 目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest、ruff 和 repo 外 OK/ACTION_REQUIRED/URGENT/SAFETY_BLOCKED
+      smoke；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+      diff。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo 外临时 fixture 四路径 smoke；OK
+      输出 `OK/NORMAL` 且 Markdown 包含 `Continue observation`，ACTION_REQUIRED 顶部显示 `Action
+      Required` 且 pending manual actions 为 true，URGENT 顶部显示 `URGENT: Manual Attention
+      Required` 且 critical alert 非空，SAFETY_BLOCKED 顶部显示 `Operator Brief Safety Blocked`；四路径均确认
+      operator brief 顶层 `production_effect=none`、`manual_review_only=true`、`operator_brief_only=true`、`read_only=true`、`apply_executed_by_operator_brief=false`、`rollback_executed_by_operator_brief=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`，且
+      optional artifacts 缺失时显示 `UNKNOWN` 而不是失败；dashboard import guard 验证 Daily Trading
+      System Operator Brief 卡片只读读取 operator brief artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020/021/022/market/backtest/scoring/broker/replay/trading；收尾验证通过目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+      仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:eeac8e96877f6dd80d9a6793d015f49384aeefb821305cb3c3e9016e2bdbe853
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-022
+  - 交易执行/Daily Trading System Operator Brief
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/daily_trading_system_operator_brief_2026-05-23.md`；系统级只读
+    daily operator brief、standalone script、JSON/Markdown/run log、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成；后续
+    pipeline health artifact 可在 TRADING-023 单独推进，不混入本任务
+  - 新增 `scripts/run_daily_trading_system_operator_brief.py` 和 `src/ai_trading_system/trading_engine/daily_trading_system_operator_brief.py`；输出
+    `data/derived/operator_briefs/daily_trading_system_operator_brief_YYYY-MM-DD.json/md`
+    与 `logs/daily_trading_system_operator_brief_run_YYYY-MM-DD.json/md`；只读读取 latest
+    TRADING-021 digest，必须校验 `task_id` 与 digest 安全字段；可选读取 pipeline health、data freshness、market
+    report、backtest / weight iteration artifacts，缺失时只使对应模块 `UNKNOWN`，不得导致 `INPUT_MISSING`；状态覆盖
+    OK/WATCH/ACTION_REQUIRED/URGENT/INPUT_MISSING/INPUT_INVALID/SAFETY_BLOCKED/ERROR；所有输出固定
+    `production_effect=none`、`manual_review_only=true`、`operator_brief_only=true`、`read_only=true`、`apply_executed_by_operator_brief=false`、`rollback_executed_by_operator_brief=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；dashboard
+    只读读取 operator brief artifact，不运行 018B-022、market/backtest/scoring/broker/replay/trading；目标
+    pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和 repo 外 smoke 通过；全仓
+    black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff
+  - '2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-021 参数治理 daily digest 后增加系统级每日运维简报，回答整体交易系统健康、pipeline
+    状态、数据新鲜度、artifact 缺失、人工待处理事项以及当天是否可信任系统输出；本任务只聚合已有状态，不重新运行任何 pipeline。2026-05-23:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已新增 operator brief builder、CLI、dashboard 只读卡片、runbook、system
+    flow、artifact catalog 和专项测试；验证通过 TRADING-022 目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+    pytest、ruff 和 repo 外 OK/ACTION_REQUIRED/URGENT/SAFETY_BLOCKED smoke；全仓 black check
+    仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。2026-05-23: 从 VALIDATING
+    改为 DONE，原因：最终收尾验证再次通过 repo 外临时 fixture 四路径 smoke；OK 输出 `OK/NORMAL` 且 Markdown
+    包含 `Continue observation`，ACTION_REQUIRED 顶部显示 `Action Required` 且 pending manual
+    actions 为 true，URGENT 顶部显示 `URGENT: Manual Attention Required` 且 critical alert
+    非空，SAFETY_BLOCKED 顶部显示 `Operator Brief Safety Blocked`；四路径均确认 operator brief 顶层
+    `production_effect=none`、`manual_review_only=true`、`operator_brief_only=true`、`read_only=true`、`apply_executed_by_operator_brief=false`、`rollback_executed_by_operator_brief=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`，且
+    optional artifacts 缺失时显示 `UNKNOWN` 而不是失败；dashboard import guard 验证 Daily Trading
+    System Operator Brief 卡片只读读取 operator brief artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020/021/022/market/backtest/scoring/broker/replay/trading；收尾验证通过目标
+    pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+    仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。'
+  docs_links:
+  - docs/requirements/daily_trading_system_operator_brief_2026-05-23.md
+  terminal: true
+  raw_row_sha256: eeac8e96877f6dd80d9a6793d015f49384aeefb821305cb3c3e9016e2bdbe853
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b8a08944708d36ad4676c2f8bc3208d7fb9dc120d4c172b7869f2e5818f26cae

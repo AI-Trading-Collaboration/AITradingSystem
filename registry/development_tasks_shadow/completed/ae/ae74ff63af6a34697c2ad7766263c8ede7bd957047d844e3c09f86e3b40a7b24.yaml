@@ -1,0 +1,174 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-429_to_438_DECISION_STAGE_REVIEW
+  title: null
+  domain: ETF portfolio/dynamic v3 decision-stage governance review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核真实 owner decision；normal paper-shadow、extended shadow、live
+    trading、official target、broker/order 仍按 gate fail-closed
+  requirement_refs:
+  - docs/requirements/TRADING-429_to_438_Decision_Stage_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-429_to_438_Decision_Stage_Review.md`；按
+    TRADING-429～438 顺序生成 exact eight-blocker review、normal gate gap analysis、promotion
+    blocker review、candidate assessment、owner options packet、owner decision dry-run、observation
+    clock readiness plan、post-decision rerun plan、report quality warning drilldown
+    和 final governance snapshot；不得削弱 blocker/gate logic、自动追加 owner decision、生成 normal-shadow
+    signoff packet、启动 observation clock、批准 extended shadow/live trading、创建 official
+    target weights 或 broker/order artifacts
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/decision_stage_review.py` 和 `aits reports
+      decision-stage-review`、`eight-blocker-decision-review`、`validate-eight-blocker-decision-review`、`owner-decision-dry-run`；新增或更新
+      Reader Brief section、report registry、artifact catalog、system flow、README、需求文档和
+      focused tests；真实链路输出 remaining blockers/warnings、normal paper-shadow boundary、extended/live
+      forbidden boundary、owner options allowed status 和 dry-run append-only validation；验证通过
+      focused pytest、documentation contract、task-register consistency、report quality/report
+      index relevant gates 和 data quality gate
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 188
+    row_sha256: 3b5c9e8dd648f8587b65f036dfe8cfa695f2ff62964222f141ffd529eedb19e5
+    cell_count: 8
+    all_cells:
+    - TRADING-429_to_438_DECISION_STAGE_REVIEW
+    - ETF portfolio/dynamic v3 decision-stage governance review
+    - P0
+    - DONE
+    - 项目 owner 后续复核真实 owner decision；normal paper-shadow、extended shadow、live trading、official
+      target、broker/order 仍按 gate fail-closed
+    - 详细拆解见 `docs/requirements/TRADING-429_to_438_Decision_Stage_Review.md`；按 TRADING-429～438
+      顺序生成 exact eight-blocker review、normal gate gap analysis、promotion blocker review、candidate
+      assessment、owner options packet、owner decision dry-run、observation clock readiness
+      plan、post-decision rerun plan、report quality warning drilldown 和 final governance
+      snapshot；不得削弱 blocker/gate logic、自动追加 owner decision、生成 normal-shadow signoff
+      packet、启动 observation clock、批准 extended shadow/live trading、创建 official target
+      weights 或 broker/order artifacts
+    - 新增 `src/ai_trading_system/reports/decision_stage_review.py` 和 `aits reports
+      decision-stage-review`、`eight-blocker-decision-review`、`validate-eight-blocker-decision-review`、`owner-decision-dry-run`；新增或更新
+      Reader Brief section、report registry、artifact catalog、system flow、README、需求文档和
+      focused tests；真实链路输出 remaining blockers/warnings、normal paper-shadow boundary、extended/live
+      forbidden boundary、owner options allowed status 和 dry-run append-only validation；验证通过
+      focused pytest、documentation contract、task-register consistency、report quality/report
+      index relevant gates 和 data quality gate
+    - '2026-06-18: DONE；真实 2026-06-17 artifacts `outputs/reports/eight_blocker_decision_review_2026-06-17.json/md`、`normal_shadow_gate_gap_analysis_2026-06-17.json/md`、`promotion_blocker_after_metrics_review_2026-06-17.json/md`、`candidate_research_return_assessment_2026-06-17.json/md`、`owner_decision_options_packet_2026-06-17.json/md`、`owner_decision_dry_run_2026-06-17.json/md`、`observation_clock_readiness_plan_2026-06-17.json/md`、`post_decision_rerun_plan_2026-06-17.json/md`、`report_quality_warning_drilldown_2026-06-17.json/md`
+      和 `governance_status_snapshot_after_decision_review_2026-06-17.json/md` 已生成；最终
+      snapshot 为 `GOVERNANCE_STATUS_SNAPSHOT_BLOCKED`、blockers=8、warnings=9、recommended_owner_action=`return_to_research`、normal_shadow=false、extended_forbidden=true、live_forbidden=true。Validation
+      `eight_blocker_decision_review_validation_2026-06-17.json/md` PASS、exact_blockers=8、failed=0；owner
+      dry-run `keep_hold` validation PASS 且 `would_append=false`、`real_entry_written=false`。Focused
+      pytest 24 passed，docs/report consistency pytest 35 passed，combined 59 passed，ruff
+      PASS，py_compile PASS，`validate-data --as-of 2026-06-17` PASS，report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / unwaived=0，Reader Brief `LIMITED_READER_CONTEXT`，report quality gate `PASS_WITH_WARNINGS`
+      / blocking=0。未写 owner decision、未生成 signoff、未启动 observation clock、未恢复 normal
+      shadow、未批准 extended/live、未写 official target weights、未触发 broker/order 或 production
+      mutation。'
+    raw_line: '|TRADING-429_to_438_DECISION_STAGE_REVIEW|ETF portfolio/dynamic v3
+      decision-stage governance review|P0|DONE|项目 owner 后续复核真实 owner decision；normal
+      paper-shadow、extended shadow、live trading、official target、broker/order 仍按 gate
+      fail-closed|详细拆解见 `docs/requirements/TRADING-429_to_438_Decision_Stage_Review.md`；按
+      TRADING-429～438 顺序生成 exact eight-blocker review、normal gate gap analysis、promotion
+      blocker review、candidate assessment、owner options packet、owner decision dry-run、observation
+      clock readiness plan、post-decision rerun plan、report quality warning drilldown
+      和 final governance snapshot；不得削弱 blocker/gate logic、自动追加 owner decision、生成 normal-shadow
+      signoff packet、启动 observation clock、批准 extended shadow/live trading、创建 official
+      target weights 或 broker/order artifacts|新增 `src/ai_trading_system/reports/decision_stage_review.py`
+      和 `aits reports decision-stage-review`、`eight-blocker-decision-review`、`validate-eight-blocker-decision-review`、`owner-decision-dry-run`；新增或更新
+      Reader Brief section、report registry、artifact catalog、system flow、README、需求文档和
+      focused tests；真实链路输出 remaining blockers/warnings、normal paper-shadow boundary、extended/live
+      forbidden boundary、owner options allowed status 和 dry-run append-only validation；验证通过
+      focused pytest、documentation contract、task-register consistency、report quality/report
+      index relevant gates 和 data quality gate|2026-06-18: DONE；真实 2026-06-17 artifacts
+      `outputs/reports/eight_blocker_decision_review_2026-06-17.json/md`、`normal_shadow_gate_gap_analysis_2026-06-17.json/md`、`promotion_blocker_after_metrics_review_2026-06-17.json/md`、`candidate_research_return_assessment_2026-06-17.json/md`、`owner_decision_options_packet_2026-06-17.json/md`、`owner_decision_dry_run_2026-06-17.json/md`、`observation_clock_readiness_plan_2026-06-17.json/md`、`post_decision_rerun_plan_2026-06-17.json/md`、`report_quality_warning_drilldown_2026-06-17.json/md`
+      和 `governance_status_snapshot_after_decision_review_2026-06-17.json/md` 已生成；最终
+      snapshot 为 `GOVERNANCE_STATUS_SNAPSHOT_BLOCKED`、blockers=8、warnings=9、recommended_owner_action=`return_to_research`、normal_shadow=false、extended_forbidden=true、live_forbidden=true。Validation
+      `eight_blocker_decision_review_validation_2026-06-17.json/md` PASS、exact_blockers=8、failed=0；owner
+      dry-run `keep_hold` validation PASS 且 `would_append=false`、`real_entry_written=false`。Focused
+      pytest 24 passed，docs/report consistency pytest 35 passed，combined 59 passed，ruff
+      PASS，py_compile PASS，`validate-data --as-of 2026-06-17` PASS，report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / unwaived=0，Reader Brief `LIMITED_READER_CONTEXT`，report quality gate `PASS_WITH_WARNINGS`
+      / blocking=0。未写 owner decision、未生成 signoff、未启动 observation clock、未恢复 normal
+      shadow、未批准 extended/live、未写 official target weights、未触发 broker/order 或 production
+      mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3b5c9e8dd648f8587b65f036
+  task_id: TRADING-429_to_438_DECISION_STAGE_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核真实 owner decision；normal paper-shadow、extended shadow、live
+      trading、official target、broker/order 仍按 gate fail-closed
+    notes: '2026-06-18: DONE；真实 2026-06-17 artifacts `outputs/reports/eight_blocker_decision_review_2026-06-17.json/md`、`normal_shadow_gate_gap_analysis_2026-06-17.json/md`、`promotion_blocker_after_metrics_review_2026-06-17.json/md`、`candidate_research_return_assessment_2026-06-17.json/md`、`owner_decision_options_packet_2026-06-17.json/md`、`owner_decision_dry_run_2026-06-17.json/md`、`observation_clock_readiness_plan_2026-06-17.json/md`、`post_decision_rerun_plan_2026-06-17.json/md`、`report_quality_warning_drilldown_2026-06-17.json/md`
+      和 `governance_status_snapshot_after_decision_review_2026-06-17.json/md` 已生成；最终
+      snapshot 为 `GOVERNANCE_STATUS_SNAPSHOT_BLOCKED`、blockers=8、warnings=9、recommended_owner_action=`return_to_research`、normal_shadow=false、extended_forbidden=true、live_forbidden=true。Validation
+      `eight_blocker_decision_review_validation_2026-06-17.json/md` PASS、exact_blockers=8、failed=0；owner
+      dry-run `keep_hold` validation PASS 且 `would_append=false`、`real_entry_written=false`。Focused
+      pytest 24 passed，docs/report consistency pytest 35 passed，combined 59 passed，ruff
+      PASS，py_compile PASS，`validate-data --as-of 2026-06-17` PASS，report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / unwaived=0，Reader Brief `LIMITED_READER_CONTEXT`，report quality gate `PASS_WITH_WARNINGS`
+      / blocking=0。未写 owner decision、未生成 signoff、未启动 observation clock、未恢复 normal
+      shadow、未批准 extended/live、未写 official target weights、未触发 broker/order 或 production
+      mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3b5c9e8dd648f8587b65f036dfe8cfa695f2ff62964222f141ffd529eedb19e5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-429_to_438_DECISION_STAGE_REVIEW
+  - ETF portfolio/dynamic v3 decision-stage governance review
+  - P0
+  - DONE
+  - 项目 owner 后续复核真实 owner decision；normal paper-shadow、extended shadow、live trading、official
+    target、broker/order 仍按 gate fail-closed
+  - 详细拆解见 `docs/requirements/TRADING-429_to_438_Decision_Stage_Review.md`；按 TRADING-429～438
+    顺序生成 exact eight-blocker review、normal gate gap analysis、promotion blocker review、candidate
+    assessment、owner options packet、owner decision dry-run、observation clock readiness
+    plan、post-decision rerun plan、report quality warning drilldown 和 final governance
+    snapshot；不得削弱 blocker/gate logic、自动追加 owner decision、生成 normal-shadow signoff
+    packet、启动 observation clock、批准 extended shadow/live trading、创建 official target
+    weights 或 broker/order artifacts
+  - 新增 `src/ai_trading_system/reports/decision_stage_review.py` 和 `aits reports decision-stage-review`、`eight-blocker-decision-review`、`validate-eight-blocker-decision-review`、`owner-decision-dry-run`；新增或更新
+    Reader Brief section、report registry、artifact catalog、system flow、README、需求文档和
+    focused tests；真实链路输出 remaining blockers/warnings、normal paper-shadow boundary、extended/live
+    forbidden boundary、owner options allowed status 和 dry-run append-only validation；验证通过
+    focused pytest、documentation contract、task-register consistency、report quality/report
+    index relevant gates 和 data quality gate
+  - '2026-06-18: DONE；真实 2026-06-17 artifacts `outputs/reports/eight_blocker_decision_review_2026-06-17.json/md`、`normal_shadow_gate_gap_analysis_2026-06-17.json/md`、`promotion_blocker_after_metrics_review_2026-06-17.json/md`、`candidate_research_return_assessment_2026-06-17.json/md`、`owner_decision_options_packet_2026-06-17.json/md`、`owner_decision_dry_run_2026-06-17.json/md`、`observation_clock_readiness_plan_2026-06-17.json/md`、`post_decision_rerun_plan_2026-06-17.json/md`、`report_quality_warning_drilldown_2026-06-17.json/md`
+    和 `governance_status_snapshot_after_decision_review_2026-06-17.json/md` 已生成；最终
+    snapshot 为 `GOVERNANCE_STATUS_SNAPSHOT_BLOCKED`、blockers=8、warnings=9、recommended_owner_action=`return_to_research`、normal_shadow=false、extended_forbidden=true、live_forbidden=true。Validation
+    `eight_blocker_decision_review_validation_2026-06-17.json/md` PASS、exact_blockers=8、failed=0；owner
+    dry-run `keep_hold` validation PASS 且 `would_append=false`、`real_entry_written=false`。Focused
+    pytest 24 passed，docs/report consistency pytest 35 passed，combined 59 passed，ruff
+    PASS，py_compile PASS，`validate-data --as-of 2026-06-17` PASS，report index `PASS_WITH_EXPLICIT_WAIVERS`
+    / unwaived=0，Reader Brief `LIMITED_READER_CONTEXT`，report quality gate `PASS_WITH_WARNINGS`
+    / blocking=0。未写 owner decision、未生成 signoff、未启动 observation clock、未恢复 normal shadow、未批准
+    extended/live、未写 official target weights、未触发 broker/order 或 production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-429_to_438_Decision_Stage_Review.md
+  terminal: true
+  raw_row_sha256: 3b5c9e8dd648f8587b65f036dfe8cfa695f2ff62964222f141ffd529eedb19e5
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 669dbb770b895b5c878302b7ea95c181451e77053c374baea90aa2ba9a2e259a

@@ -1,0 +1,129 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: GOV-005
+  title: null
+  domain: 规则治理/逐阈值 rationale map 深化
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/heuristic_threshold_rationale_map_2026-06-09.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/heuristic_threshold_rationale_map_2026-06-09.md`；`config/scoring_rules.yaml`、`config/backtest_validation_policy.yaml`
+    和 `config/feedback_sample_policy.yaml` 已新增 threshold/section-level `threshold_rationale_map`；`aits
+    docs heuristic-audit` 已扩展为只读校验 missing rationale、missing validation、stale target
+    path、numeric policy section 和 map coverage；本任务不改变评分、仓位、回测、promotion、日报或 approved
+    overlay 阈值
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 关键 policy config 提供 threshold/section-level rationale map，覆盖 `position_bands`、`daily_conclusion`、`confidence_policy`、source-type
+      confidence、data credibility、robustness、PIT coverage readiness、gate/event attribution、promotion
+      gate、默认执行成本和 feedback sample floor；审计报告披露 policy/config version、map coverage、missing
+      rationale、missing validation、stale target path 和 `production_effect=none`；目标测试、文档目录和系统流图已同步
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 266
+    row_sha256: 8e95bc6a539c71f671065028c738e20a0ee6c01c1838a0152116d8d2ea30d0bb
+    cell_count: 8
+    all_cells:
+    - GOV-005
+    - 规则治理/逐阈值 rationale map 深化
+    - P2
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/heuristic_threshold_rationale_map_2026-06-09.md`；`config/scoring_rules.yaml`、`config/backtest_validation_policy.yaml`
+      和 `config/feedback_sample_policy.yaml` 已新增 threshold/section-level `threshold_rationale_map`；`aits
+      docs heuristic-audit` 已扩展为只读校验 missing rationale、missing validation、stale target
+      path、numeric policy section 和 map coverage；本任务不改变评分、仓位、回测、promotion、日报或 approved
+      overlay 阈值
+    - 关键 policy config 提供 threshold/section-level rationale map，覆盖 `position_bands`、`daily_conclusion`、`confidence_policy`、source-type
+      confidence、data credibility、robustness、PIT coverage readiness、gate/event attribution、promotion
+      gate、默认执行成本和 feedback sample floor；审计报告披露 policy/config version、map coverage、missing
+      rationale、missing validation、stale target path 和 `production_effect=none`；目标测试、文档目录和系统流图已同步
+    - '2026-06-09: 新增为 READY，原因：`GOV-004` 已完成当前 hardcoded heuristic audit 工具和已配置阈值迁移范围，但逐阈值
+      rationale map 属于更深层治理增强，应独立排期。2026-06-09: 从 READY 进入 IN_PROGRESS，原因：开始实现只读 threshold/section-level
+      rationale map 校验。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：真实 `heuristic-audit --fail-on-warning`
+      PASS，numeric_literals=13、unregistered=0、policy_metadata_failures=0、policy_rationale_map_failures=0、warnings=0、map
+      coverage=100.0%、`production_effect=none`；验证通过 focused pytest 53 passed、文档新鲜度、documentation
+      contract、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'
+    raw_line: '|GOV-005|规则治理/逐阈值 rationale map 深化|P2|DONE|系统验证|详细拆解见 `docs/requirements/heuristic_threshold_rationale_map_2026-06-09.md`；`config/scoring_rules.yaml`、`config/backtest_validation_policy.yaml`
+      和 `config/feedback_sample_policy.yaml` 已新增 threshold/section-level `threshold_rationale_map`；`aits
+      docs heuristic-audit` 已扩展为只读校验 missing rationale、missing validation、stale target
+      path、numeric policy section 和 map coverage；本任务不改变评分、仓位、回测、promotion、日报或 approved
+      overlay 阈值|关键 policy config 提供 threshold/section-level rationale map，覆盖 `position_bands`、`daily_conclusion`、`confidence_policy`、source-type
+      confidence、data credibility、robustness、PIT coverage readiness、gate/event attribution、promotion
+      gate、默认执行成本和 feedback sample floor；审计报告披露 policy/config version、map coverage、missing
+      rationale、missing validation、stale target path 和 `production_effect=none`；目标测试、文档目录和系统流图已同步|2026-06-09:
+      新增为 READY，原因：`GOV-004` 已完成当前 hardcoded heuristic audit 工具和已配置阈值迁移范围，但逐阈值 rationale
+      map 属于更深层治理增强，应独立排期。2026-06-09: 从 READY 进入 IN_PROGRESS，原因：开始实现只读 threshold/section-level
+      rationale map 校验。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：真实 `heuristic-audit --fail-on-warning`
+      PASS，numeric_literals=13、unregistered=0、policy_metadata_failures=0、policy_rationale_map_failures=0、warnings=0、map
+      coverage=100.0%、`production_effect=none`；验证通过 focused pytest 53 passed、文档新鲜度、documentation
+      contract、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8e95bc6a539c71f671065028
+  task_id: GOV-005
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: '2026-06-09: 新增为 READY，原因：`GOV-004` 已完成当前 hardcoded heuristic audit 工具和已配置阈值迁移范围，但逐阈值
+      rationale map 属于更深层治理增强，应独立排期。2026-06-09: 从 READY 进入 IN_PROGRESS，原因：开始实现只读 threshold/section-level
+      rationale map 校验。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：真实 `heuristic-audit --fail-on-warning`
+      PASS，numeric_literals=13、unregistered=0、policy_metadata_failures=0、policy_rationale_map_failures=0、warnings=0、map
+      coverage=100.0%、`production_effect=none`；验证通过 focused pytest 53 passed、文档新鲜度、documentation
+      contract、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8e95bc6a539c71f671065028c738e20a0ee6c01c1838a0152116d8d2ea30d0bb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - GOV-005
+  - 规则治理/逐阈值 rationale map 深化
+  - P2
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/heuristic_threshold_rationale_map_2026-06-09.md`；`config/scoring_rules.yaml`、`config/backtest_validation_policy.yaml`
+    和 `config/feedback_sample_policy.yaml` 已新增 threshold/section-level `threshold_rationale_map`；`aits
+    docs heuristic-audit` 已扩展为只读校验 missing rationale、missing validation、stale target
+    path、numeric policy section 和 map coverage；本任务不改变评分、仓位、回测、promotion、日报或 approved
+    overlay 阈值
+  - 关键 policy config 提供 threshold/section-level rationale map，覆盖 `position_bands`、`daily_conclusion`、`confidence_policy`、source-type
+    confidence、data credibility、robustness、PIT coverage readiness、gate/event attribution、promotion
+    gate、默认执行成本和 feedback sample floor；审计报告披露 policy/config version、map coverage、missing
+    rationale、missing validation、stale target path 和 `production_effect=none`；目标测试、文档目录和系统流图已同步
+  - '2026-06-09: 新增为 READY，原因：`GOV-004` 已完成当前 hardcoded heuristic audit 工具和已配置阈值迁移范围，但逐阈值
+    rationale map 属于更深层治理增强，应独立排期。2026-06-09: 从 READY 进入 IN_PROGRESS，原因：开始实现只读 threshold/section-level
+    rationale map 校验。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：真实 `heuristic-audit --fail-on-warning`
+    PASS，numeric_literals=13、unregistered=0、policy_metadata_failures=0、policy_rationale_map_failures=0、warnings=0、map
+    coverage=100.0%、`production_effect=none`；验证通过 focused pytest 53 passed、文档新鲜度、documentation
+    contract、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/heuristic_threshold_rationale_map_2026-06-09.md
+  terminal: true
+  raw_row_sha256: 8e95bc6a539c71f671065028c738e20a0ee6c01c1838a0152116d8d2ea30d0bb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 40cb94e8f9ad967f87502773a5a289a9cbec87f040e21cce29599810f4153b27

@@ -1,0 +1,159 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-070
+  title: null
+  domain: ETF allocation parameter review/ETF Allocation Parameter Review from Forward
+    Evidence
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner + forward observation / decision journal 后续样本
+  requirement_refs:
+  - docs/requirements/TRADING-070_ETF_Allocation_Parameter_Review_From_Forward_Evidence.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-070_ETF_Allocation_Parameter_Review_From_Forward_Evidence.md`；TRADING-070A~I
+    proposal-only 基础设施已完成并复验通过；当前真实 2026-06-08 evidence 停在 `needs_more_data`，后续需要真实
+    forward evidence、owner decision journal 样本和 proposal quality 观察，不能用历史 backtest
+    或空 journal 补造参数复核结论
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf parameter-review aggregate/report/run/validate` 可运行；2026-06-08
+      aggregate/report/run 均输出 `status=needs_more_data`、`candidate_count=0`、`eligible_for_manual_review_count=0`，aggregation
+      明确 `reason=INSUFFICIENT_FORWARD_EVIDENCE`、`evidence_record_count=0`、source reports=13、warnings=12；`parameter-review
+      validate` 输出 PASS；Reader Brief 显示 `availability=AVAILABLE`、`status=needs_more_data`、`main_reason=INSUFFICIENT_FORWARD_EVIDENCE`；所有输出固定
+      `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；不得写
+      production weights、不得触发 broker action、不得自动 promotion 或 baseline replacement；专项
+      pytest 47 passed'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1158
+    row_sha256: 92be7e1aa155d03038ae8bd5e3ba3ff95016b3db75d31c498293ff49019aff75
+    cell_count: 8
+    all_cells:
+    - TRADING-070
+    - ETF allocation parameter review/ETF Allocation Parameter Review from Forward
+      Evidence
+    - P0
+    - BASELINE_DONE
+    - 项目 owner + forward observation / decision journal 后续样本
+    - 详细拆解见 `docs/requirements/TRADING-070_ETF_Allocation_Parameter_Review_From_Forward_Evidence.md`；TRADING-070A~I
+      proposal-only 基础设施已完成并复验通过；当前真实 2026-06-08 evidence 停在 `needs_more_data`，后续需要真实
+      forward evidence、owner decision journal 样本和 proposal quality 观察，不能用历史 backtest
+      或空 journal 补造参数复核结论
+    - '`aits etf parameter-review aggregate/report/run/validate` 可运行；2026-06-08 aggregate/report/run
+      均输出 `status=needs_more_data`、`candidate_count=0`、`eligible_for_manual_review_count=0`，aggregation
+      明确 `reason=INSUFFICIENT_FORWARD_EVIDENCE`、`evidence_record_count=0`、source reports=13、warnings=12；`parameter-review
+      validate` 输出 PASS；Reader Brief 显示 `availability=AVAILABLE`、`status=needs_more_data`、`main_reason=INSUFFICIENT_FORWARD_EVIDENCE`；所有输出固定
+      `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；不得写
+      production weights、不得触发 broker action、不得自动 promotion 或 baseline replacement；专项
+      pytest 47 passed'
+    - '2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-070 计划，要求把 TRADING-064 historical
+      experiment evidence、TRADING-065 forward dashboard、TRADING-068 weekly review
+      和 TRADING-069 human decision journal 连接成 proposal-only ETF allocation parameter
+      review workflow；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-02:
+      TRADING-070A-I 完成并转入 VALIDATING，新增 parameter review schema、forward evidence
+      aggregation、candidate/baseline comparison、decision journal linker、proposal generator、scorecard/governance
+      gate、report/run、Reader Brief 和 validation gate；报告只展示 evidence/proposal package，不应用参数变更、不写
+      production weights、不触发 broker action。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：真实
+      2026-06-08 复验确认基础设施和 fail-closed gate 可运行，且在缺 forward evidence / owner journal
+      样本时正确输出 `needs_more_data`；后续 proposal quality 观察由 forward observation 和 owner
+      决策链路承接。'
+    raw_line: '|TRADING-070|ETF allocation parameter review/ETF Allocation Parameter
+      Review from Forward Evidence|P0|BASELINE_DONE|项目 owner + forward observation
+      / decision journal 后续样本|详细拆解见 `docs/requirements/TRADING-070_ETF_Allocation_Parameter_Review_From_Forward_Evidence.md`；TRADING-070A~I
+      proposal-only 基础设施已完成并复验通过；当前真实 2026-06-08 evidence 停在 `needs_more_data`，后续需要真实
+      forward evidence、owner decision journal 样本和 proposal quality 观察，不能用历史 backtest
+      或空 journal 补造参数复核结论|`aits etf parameter-review aggregate/report/run/validate`
+      可运行；2026-06-08 aggregate/report/run 均输出 `status=needs_more_data`、`candidate_count=0`、`eligible_for_manual_review_count=0`，aggregation
+      明确 `reason=INSUFFICIENT_FORWARD_EVIDENCE`、`evidence_record_count=0`、source reports=13、warnings=12；`parameter-review
+      validate` 输出 PASS；Reader Brief 显示 `availability=AVAILABLE`、`status=needs_more_data`、`main_reason=INSUFFICIENT_FORWARD_EVIDENCE`；所有输出固定
+      `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；不得写
+      production weights、不得触发 broker action、不得自动 promotion 或 baseline replacement；专项
+      pytest 47 passed|2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-070 计划，要求把
+      TRADING-064 historical experiment evidence、TRADING-065 forward dashboard、TRADING-068
+      weekly review 和 TRADING-069 human decision journal 连接成 proposal-only ETF allocation
+      parameter review workflow；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-02:
+      TRADING-070A-I 完成并转入 VALIDATING，新增 parameter review schema、forward evidence
+      aggregation、candidate/baseline comparison、decision journal linker、proposal generator、scorecard/governance
+      gate、report/run、Reader Brief 和 validation gate；报告只展示 evidence/proposal package，不应用参数变更、不写
+      production weights、不触发 broker action。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：真实
+      2026-06-08 复验确认基础设施和 fail-closed gate 可运行，且在缺 forward evidence / owner journal
+      样本时正确输出 `needs_more_data`；后续 proposal quality 观察由 forward observation 和 owner
+      决策链路承接。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-92be7e1aa155d03038ae8bd5
+  task_id: TRADING-070
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner + forward observation / decision journal 后续样本
+    notes: '2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-070 计划，要求把 TRADING-064
+      historical experiment evidence、TRADING-065 forward dashboard、TRADING-068 weekly
+      review 和 TRADING-069 human decision journal 连接成 proposal-only ETF allocation
+      parameter review workflow；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-02:
+      TRADING-070A-I 完成并转入 VALIDATING，新增 parameter review schema、forward evidence
+      aggregation、candidate/baseline comparison、decision journal linker、proposal generator、scorecard/governance
+      gate、report/run、Reader Brief 和 validation gate；报告只展示 evidence/proposal package，不应用参数变更、不写
+      production weights、不触发 broker action。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：真实
+      2026-06-08 复验确认基础设施和 fail-closed gate 可运行，且在缺 forward evidence / owner journal
+      样本时正确输出 `needs_more_data`；后续 proposal quality 观察由 forward observation 和 owner
+      决策链路承接。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:92be7e1aa155d03038ae8bd5e3ba3ff95016b3db75d31c498293ff49019aff75
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-070
+  - ETF allocation parameter review/ETF Allocation Parameter Review from Forward Evidence
+  - P0
+  - BASELINE_DONE
+  - 项目 owner + forward observation / decision journal 后续样本
+  - 详细拆解见 `docs/requirements/TRADING-070_ETF_Allocation_Parameter_Review_From_Forward_Evidence.md`；TRADING-070A~I
+    proposal-only 基础设施已完成并复验通过；当前真实 2026-06-08 evidence 停在 `needs_more_data`，后续需要真实
+    forward evidence、owner decision journal 样本和 proposal quality 观察，不能用历史 backtest
+    或空 journal 补造参数复核结论
+  - '`aits etf parameter-review aggregate/report/run/validate` 可运行；2026-06-08 aggregate/report/run
+    均输出 `status=needs_more_data`、`candidate_count=0`、`eligible_for_manual_review_count=0`，aggregation
+    明确 `reason=INSUFFICIENT_FORWARD_EVIDENCE`、`evidence_record_count=0`、source reports=13、warnings=12；`parameter-review
+    validate` 输出 PASS；Reader Brief 显示 `availability=AVAILABLE`、`status=needs_more_data`、`main_reason=INSUFFICIENT_FORWARD_EVIDENCE`；所有输出固定
+    `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；不得写
+    production weights、不得触发 broker action、不得自动 promotion 或 baseline replacement；专项
+    pytest 47 passed'
+  - '2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-070 计划，要求把 TRADING-064 historical
+    experiment evidence、TRADING-065 forward dashboard、TRADING-068 weekly review 和
+    TRADING-069 human decision journal 连接成 proposal-only ETF allocation parameter
+    review workflow；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-02:
+    TRADING-070A-I 完成并转入 VALIDATING，新增 parameter review schema、forward evidence aggregation、candidate/baseline
+    comparison、decision journal linker、proposal generator、scorecard/governance gate、report/run、Reader
+    Brief 和 validation gate；报告只展示 evidence/proposal package，不应用参数变更、不写 production
+    weights、不触发 broker action。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：真实 2026-06-08
+    复验确认基础设施和 fail-closed gate 可运行，且在缺 forward evidence / owner journal 样本时正确输出 `needs_more_data`；后续
+    proposal quality 观察由 forward observation 和 owner 决策链路承接。'
+  docs_links:
+  - docs/requirements/TRADING-070_ETF_Allocation_Parameter_Review_From_Forward_Evidence.md
+  terminal: false
+  raw_row_sha256: 92be7e1aa155d03038ae8bd5e3ba3ff95016b3db75d31c498293ff49019aff75
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0090f2d79fb7c8aec05c6ca5634aefe9576b585bf4234b9ac21d5415e6128c49

@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: PROD-003
+  title: null
+  domain: 趋势判断/第二合格数据源准入
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner + 系统验证
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: owner 2026-05-10 决策继续使用现有 FMP + Cboe VIX
+    + Marketstack + FRED，暂无引入额外 macro/price qualified source 计划；系统继续用 provider health、FMP/Marketstack
+    价格 reconciliation、FRED series freshness 和数据质量门禁披露限制
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 重新打开前需 owner 明确新增宏观或价格 source、授权/成本、endpoint、缓存审计字段和长期口径；暂缓期间，趋势判断报告不得把
+      `macro_rates` 单一 FRED 来源写成跨源核验完成，价格仍按 FMP + Marketstack baseline 标识
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1546
+    row_sha256: d8294ed8e4ad2aea19418990e24f3ae6befdb32d2f58ee060cc6e567aedd95d8
+    cell_count: 8
+    all_cells:
+    - PROD-003
+    - 趋势判断/第二合格数据源准入
+    - P1
+    - DEFERRED
+    - 项目 owner + 系统验证
+    - owner 2026-05-10 决策继续使用现有 FMP + Cboe VIX + Marketstack + FRED，暂无引入额外 macro/price
+      qualified source 计划；系统继续用 provider health、FMP/Marketstack 价格 reconciliation、FRED
+      series freshness 和数据质量门禁披露限制
+    - 重新打开前需 owner 明确新增宏观或价格 source、授权/成本、endpoint、缓存审计字段和长期口径；暂缓期间，趋势判断报告不得把 `macro_rates`
+      单一 FRED 来源写成跨源核验完成，价格仍按 FMP + Marketstack baseline 标识
+    - '2026-05-06: 从 `PROD-001` 拆出，原因：市场价格和宏观利率 reconciliation 是趋势判断可信度前置条件，但供应商选择与授权需要独立
+      owner 决策。2026-05-10: 从 BLOCKED_OWNER_INPUT 改为 DEFERRED，原因：owner 确认继续使用现有 FMP
+      + Marketstack + FRED（含 Cboe VIX 专用源）且暂无引入第二个更可靠 macro/price qualified source
+      计划；缺口改为明确限制和报告披露，不再等待供应商选择。'
+    raw_line: '|PROD-003|趋势判断/第二合格数据源准入|P1|DEFERRED|项目 owner + 系统验证|owner 2026-05-10
+      决策继续使用现有 FMP + Cboe VIX + Marketstack + FRED，暂无引入额外 macro/price qualified source
+      计划；系统继续用 provider health、FMP/Marketstack 价格 reconciliation、FRED series freshness
+      和数据质量门禁披露限制|重新打开前需 owner 明确新增宏观或价格 source、授权/成本、endpoint、缓存审计字段和长期口径；暂缓期间，趋势判断报告不得把
+      `macro_rates` 单一 FRED 来源写成跨源核验完成，价格仍按 FMP + Marketstack baseline 标识|2026-05-06:
+      从 `PROD-001` 拆出，原因：市场价格和宏观利率 reconciliation 是趋势判断可信度前置条件，但供应商选择与授权需要独立 owner
+      决策。2026-05-10: 从 BLOCKED_OWNER_INPUT 改为 DEFERRED，原因：owner 确认继续使用现有 FMP + Marketstack
+      + FRED（含 Cboe VIX 专用源）且暂无引入第二个更可靠 macro/price qualified source 计划；缺口改为明确限制和报告披露，不再等待供应商选择。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d8294ed8e4ad2aea19418990
+  task_id: PROD-003
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DEFERRED
+  payload:
+    priority: P1
+    next_owner: 项目 owner + 系统验证
+    notes: '2026-05-06: 从 `PROD-001` 拆出，原因：市场价格和宏观利率 reconciliation 是趋势判断可信度前置条件，但供应商选择与授权需要独立
+      owner 决策。2026-05-10: 从 BLOCKED_OWNER_INPUT 改为 DEFERRED，原因：owner 确认继续使用现有 FMP
+      + Marketstack + FRED（含 Cboe VIX 专用源）且暂无引入第二个更可靠 macro/price qualified source
+      计划；缺口改为明确限制和报告披露，不再等待供应商选择。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d8294ed8e4ad2aea19418990e24f3ae6befdb32d2f58ee060cc6e567aedd95d8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - PROD-003
+  - 趋势判断/第二合格数据源准入
+  - P1
+  - DEFERRED
+  - 项目 owner + 系统验证
+  - owner 2026-05-10 决策继续使用现有 FMP + Cboe VIX + Marketstack + FRED，暂无引入额外 macro/price
+    qualified source 计划；系统继续用 provider health、FMP/Marketstack 价格 reconciliation、FRED
+    series freshness 和数据质量门禁披露限制
+  - 重新打开前需 owner 明确新增宏观或价格 source、授权/成本、endpoint、缓存审计字段和长期口径；暂缓期间，趋势判断报告不得把 `macro_rates`
+    单一 FRED 来源写成跨源核验完成，价格仍按 FMP + Marketstack baseline 标识
+  - '2026-05-06: 从 `PROD-001` 拆出，原因：市场价格和宏观利率 reconciliation 是趋势判断可信度前置条件，但供应商选择与授权需要独立
+    owner 决策。2026-05-10: 从 BLOCKED_OWNER_INPUT 改为 DEFERRED，原因：owner 确认继续使用现有 FMP +
+    Marketstack + FRED（含 Cboe VIX 专用源）且暂无引入第二个更可靠 macro/price qualified source 计划；缺口改为明确限制和报告披露，不再等待供应商选择。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: d8294ed8e4ad2aea19418990e24f3ae6befdb32d2f58ee060cc6e567aedd95d8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 1023235f3e4b2b4384e7addbb59ed4a79b1a265ec73b4773e7ae9a3589dbf7d9

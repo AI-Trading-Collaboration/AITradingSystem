@@ -1,0 +1,105 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-014B
+  title: null
+  domain: 交易执行/Fill Failure Diagnostics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；仅当美股
+    `REGULAR` session controlled fill 仍输出 `fill_seen=false` 时启动；当前等待下一次真实 regular
+    session 样本
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 诊断 regular session no-fill 的 broker rejection、market data / quote stale、limit
+      price 不可成交、order status path 异常、TWS / IB Gateway 连接事件、contract details / liquid
+      hours 解析问题；输出 issue classification、下一步检查建议和脱敏 review；不得把 no-fill 直接归因于 `PaperBroker`
+      fill model；不修改 `PaperBroker` fill 行为
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1489
+    row_sha256: fc7248594223ee9e1f9f01c3eed59573c571b85f7b9d6d7945fc38a8e80bb1dc
+    cell_count: 8
+    all_cells:
+    - TRADING-014B
+    - 交易执行/Fill Failure Diagnostics
+    - P0
+    - BLOCKED_EXTERNAL
+    - 系统验证 + 项目 owner
+    - 详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；仅当美股
+      `REGULAR` session controlled fill 仍输出 `fill_seen=false` 时启动；当前等待下一次真实 regular
+      session 样本
+    - 诊断 regular session no-fill 的 broker rejection、market data / quote stale、limit
+      price 不可成交、order status path 异常、TWS / IB Gateway 连接事件、contract details / liquid
+      hours 解析问题；输出 issue classification、下一步检查建议和脱敏 review；不得把 no-fill 直接归因于 `PaperBroker`
+      fill model；不修改 `PaperBroker` fill 行为
+    - '2026-05-18: 新增并进入 BLOCKED_EXTERNAL，原因：如果 regular session 仍 no-fill，需要先做 failure
+      diagnostics，而不是用失败样本改造 `PaperBroker`。'
+    raw_line: '|TRADING-014B|交易执行/Fill Failure Diagnostics|P0|BLOCKED_EXTERNAL|系统验证
+      + 项目 owner|详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；仅当美股
+      `REGULAR` session controlled fill 仍输出 `fill_seen=false` 时启动；当前等待下一次真实 regular
+      session 样本|诊断 regular session no-fill 的 broker rejection、market data / quote
+      stale、limit price 不可成交、order status path 异常、TWS / IB Gateway 连接事件、contract details
+      / liquid hours 解析问题；输出 issue classification、下一步检查建议和脱敏 review；不得把 no-fill 直接归因于
+      `PaperBroker` fill model；不修改 `PaperBroker` fill 行为|2026-05-18: 新增并进入 BLOCKED_EXTERNAL，原因：如果
+      regular session 仍 no-fill，需要先做 failure diagnostics，而不是用失败样本改造 `PaperBroker`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fc7248594223ee9e1f9f01c3
+  task_id: TRADING-014B
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-05-18: 新增并进入 BLOCKED_EXTERNAL，原因：如果 regular session 仍 no-fill，需要先做
+      failure diagnostics，而不是用失败样本改造 `PaperBroker`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:fc7248594223ee9e1f9f01c3eed59573c571b85f7b9d6d7945fc38a8e80bb1dc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-014B
+  - 交易执行/Fill Failure Diagnostics
+  - P0
+  - BLOCKED_EXTERNAL
+  - 系统验证 + 项目 owner
+  - 详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；仅当美股
+    `REGULAR` session controlled fill 仍输出 `fill_seen=false` 时启动；当前等待下一次真实 regular
+    session 样本
+  - 诊断 regular session no-fill 的 broker rejection、market data / quote stale、limit
+    price 不可成交、order status path 异常、TWS / IB Gateway 连接事件、contract details / liquid
+    hours 解析问题；输出 issue classification、下一步检查建议和脱敏 review；不得把 no-fill 直接归因于 `PaperBroker`
+    fill model；不修改 `PaperBroker` fill 行为
+  - '2026-05-18: 新增并进入 BLOCKED_EXTERNAL，原因：如果 regular session 仍 no-fill，需要先做 failure
+    diagnostics，而不是用失败样本改造 `PaperBroker`。'
+  docs_links:
+  - docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md
+  terminal: false
+  raw_row_sha256: fc7248594223ee9e1f9f01c3eed59573c571b85f7b9d6d7945fc38a8e80bb1dc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: fb4debe11a0f9df6f1ea1a82003bf46c52cb8815f1de678742acb4f54ae11e83

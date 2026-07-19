@@ -1,0 +1,154 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-369_CHECKSUM_AND_CACHE_CATALOG
+  title: null
+  domain: Data governance / checksum and cache catalog
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-369_Checksum_and_Cache_Catalog.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-369_Checksum_and_Cache_Catalog.md`；为
+    price / secondary price / macro / market panel cache 建立只读 catalog，记录 cache path、artifact
+    id、data type、as_of、checksum、row/column count、created/modified timestamp、source
+    lineage、validated timestamp 和 refresh audit id；不得刷新、修复、补造 cache 或绕过 `aits validate-data`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `config/cache_catalog.yaml`、`src/ai_trading_system/cache_catalog.py`、`aits
+      data cache-catalog run/report/validate`、JSON/Markdown/validation/Reader Brief
+      artifact、report registry、artifact catalog、README、system flow、operations runbook、requirements、task
+      register 和 focused tests；missing required、unreadable cache、explicit expected
+      checksum mismatch 或 previous catalog checksum changed without refresh audit
+      必须 fail closed；data refresh audit、PIT source manifest、evidence staleness monitor、shadow
+      continuation readiness 和 Reader Brief 均只读接入 cache catalog summary
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 234
+    row_sha256: 92077f5723909f6e0a11c5767a7fbe2d604a10237962087d29f561bd3b109bef
+    cell_count: 8
+    all_cells:
+    - TRADING-369_CHECKSUM_AND_CACHE_CATALOG
+    - Data governance / checksum and cache catalog
+    - P0
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-369_Checksum_and_Cache_Catalog.md`；为 price
+      / secondary price / macro / market panel cache 建立只读 catalog，记录 cache path、artifact
+      id、data type、as_of、checksum、row/column count、created/modified timestamp、source
+      lineage、validated timestamp 和 refresh audit id；不得刷新、修复、补造 cache 或绕过 `aits validate-data`
+    - 新增 `config/cache_catalog.yaml`、`src/ai_trading_system/cache_catalog.py`、`aits
+      data cache-catalog run/report/validate`、JSON/Markdown/validation/Reader Brief
+      artifact、report registry、artifact catalog、README、system flow、operations runbook、requirements、task
+      register 和 focused tests；missing required、unreadable cache、explicit expected
+      checksum mismatch 或 previous catalog checksum changed without refresh audit
+      必须 fail closed；data refresh audit、PIT source manifest、evidence staleness monitor、shadow
+      continuation readiness 和 Reader Brief 均只读接入 cache catalog summary
+    - '2026-06-16: DONE；真实 cache catalog artifact `cache-catalog_2026-06-16_11d2420c5196cef6`
+      生成成功，`status=PASS`、`cache_integrity_status=OK`、`entry_count=4`、`missing_required_count=0`、`checksum_mismatch_count=0`，`validate
+      --latest` 为 PASS / errors=0 / warnings=0；data refresh audit `data_refresh_audit_2026-06-16_4fa6aa0ac17fca43`
+      和 PIT manifest `pit_source_manifest_2026-06-16_1f5fc6458ef1d88f` 均展示 `cache_catalog=integrity=OK`；focused
+      pytest 20 passed，Ruff PASS，compileall PASS，documentation contract PASS，report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief latest OK，Reader
+      Brief quality latest OK；2026-06-16 Reader Brief 使用真实 2026-06-15 decision snapshot
+      显式验证 catalog section 为 AVAILABLE / OK，但因缺少 2026-06-16 decision snapshot 正确为
+      `LIMITED_READER_CONTEXT`。保持 read-only / no data refresh / no cache repair /
+      no official target / no broker / no production mutation。'
+    raw_line: '|TRADING-369_CHECKSUM_AND_CACHE_CATALOG|Data governance / checksum
+      and cache catalog|P0|DONE|项目 owner 后续复核；代码实现完成|详细拆解见 `docs/requirements/TRADING-369_Checksum_and_Cache_Catalog.md`；为
+      price / secondary price / macro / market panel cache 建立只读 catalog，记录 cache path、artifact
+      id、data type、as_of、checksum、row/column count、created/modified timestamp、source
+      lineage、validated timestamp 和 refresh audit id；不得刷新、修复、补造 cache 或绕过 `aits validate-data`|新增
+      `config/cache_catalog.yaml`、`src/ai_trading_system/cache_catalog.py`、`aits data
+      cache-catalog run/report/validate`、JSON/Markdown/validation/Reader Brief artifact、report
+      registry、artifact catalog、README、system flow、operations runbook、requirements、task
+      register 和 focused tests；missing required、unreadable cache、explicit expected
+      checksum mismatch 或 previous catalog checksum changed without refresh audit
+      必须 fail closed；data refresh audit、PIT source manifest、evidence staleness monitor、shadow
+      continuation readiness 和 Reader Brief 均只读接入 cache catalog summary|2026-06-16:
+      DONE；真实 cache catalog artifact `cache-catalog_2026-06-16_11d2420c5196cef6` 生成成功，`status=PASS`、`cache_integrity_status=OK`、`entry_count=4`、`missing_required_count=0`、`checksum_mismatch_count=0`，`validate
+      --latest` 为 PASS / errors=0 / warnings=0；data refresh audit `data_refresh_audit_2026-06-16_4fa6aa0ac17fca43`
+      和 PIT manifest `pit_source_manifest_2026-06-16_1f5fc6458ef1d88f` 均展示 `cache_catalog=integrity=OK`；focused
+      pytest 20 passed，Ruff PASS，compileall PASS，documentation contract PASS，report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief latest OK，Reader
+      Brief quality latest OK；2026-06-16 Reader Brief 使用真实 2026-06-15 decision snapshot
+      显式验证 catalog section 为 AVAILABLE / OK，但因缺少 2026-06-16 decision snapshot 正确为
+      `LIMITED_READER_CONTEXT`。保持 read-only / no data refresh / no cache repair /
+      no official target / no broker / no production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-92077f5723909f6e0a11c576
+  task_id: TRADING-369_CHECKSUM_AND_CACHE_CATALOG
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: '2026-06-16: DONE；真实 cache catalog artifact `cache-catalog_2026-06-16_11d2420c5196cef6`
+      生成成功，`status=PASS`、`cache_integrity_status=OK`、`entry_count=4`、`missing_required_count=0`、`checksum_mismatch_count=0`，`validate
+      --latest` 为 PASS / errors=0 / warnings=0；data refresh audit `data_refresh_audit_2026-06-16_4fa6aa0ac17fca43`
+      和 PIT manifest `pit_source_manifest_2026-06-16_1f5fc6458ef1d88f` 均展示 `cache_catalog=integrity=OK`；focused
+      pytest 20 passed，Ruff PASS，compileall PASS，documentation contract PASS，report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief latest OK，Reader
+      Brief quality latest OK；2026-06-16 Reader Brief 使用真实 2026-06-15 decision snapshot
+      显式验证 catalog section 为 AVAILABLE / OK，但因缺少 2026-06-16 decision snapshot 正确为
+      `LIMITED_READER_CONTEXT`。保持 read-only / no data refresh / no cache repair /
+      no official target / no broker / no production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:92077f5723909f6e0a11c5767a7fbe2d604a10237962087d29f561bd3b109bef
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-369_CHECKSUM_AND_CACHE_CATALOG
+  - Data governance / checksum and cache catalog
+  - P0
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-369_Checksum_and_Cache_Catalog.md`；为 price /
+    secondary price / macro / market panel cache 建立只读 catalog，记录 cache path、artifact
+    id、data type、as_of、checksum、row/column count、created/modified timestamp、source
+    lineage、validated timestamp 和 refresh audit id；不得刷新、修复、补造 cache 或绕过 `aits validate-data`
+  - 新增 `config/cache_catalog.yaml`、`src/ai_trading_system/cache_catalog.py`、`aits
+    data cache-catalog run/report/validate`、JSON/Markdown/validation/Reader Brief
+    artifact、report registry、artifact catalog、README、system flow、operations runbook、requirements、task
+    register 和 focused tests；missing required、unreadable cache、explicit expected checksum
+    mismatch 或 previous catalog checksum changed without refresh audit 必须 fail closed；data
+    refresh audit、PIT source manifest、evidence staleness monitor、shadow continuation
+    readiness 和 Reader Brief 均只读接入 cache catalog summary
+  - '2026-06-16: DONE；真实 cache catalog artifact `cache-catalog_2026-06-16_11d2420c5196cef6`
+    生成成功，`status=PASS`、`cache_integrity_status=OK`、`entry_count=4`、`missing_required_count=0`、`checksum_mismatch_count=0`，`validate
+    --latest` 为 PASS / errors=0 / warnings=0；data refresh audit `data_refresh_audit_2026-06-16_4fa6aa0ac17fca43`
+    和 PIT manifest `pit_source_manifest_2026-06-16_1f5fc6458ef1d88f` 均展示 `cache_catalog=integrity=OK`；focused
+    pytest 20 passed，Ruff PASS，compileall PASS，documentation contract PASS，report
+    index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief latest OK，Reader
+    Brief quality latest OK；2026-06-16 Reader Brief 使用真实 2026-06-15 decision snapshot
+    显式验证 catalog section 为 AVAILABLE / OK，但因缺少 2026-06-16 decision snapshot 正确为 `LIMITED_READER_CONTEXT`。保持
+    read-only / no data refresh / no cache repair / no official target / no broker
+    / no production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-369_Checksum_and_Cache_Catalog.md
+  terminal: true
+  raw_row_sha256: 92077f5723909f6e0a11c5767a7fbe2d604a10237962087d29f561bd3b109bef
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 690c196d052a7ea3e31ad4df4dbaf9bc2755b8170d9bb5d9e1c1a35ab6a5f927

@@ -1,0 +1,113 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-032A
+  title: null
+  domain: 交易执行/Operator Brief Notification Dispatch Preview Real Artifact Observation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/operator_brief_notification_dispatch_preview_real_artifact_observation_2026-06-09.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 承接 `TRADING-032` 的真实 `TRADING-031` artifact
+    观察；阻塞于本机或运行环境产生可审计 `operator_brief_notification_delivery_preflight_YYYY-MM-DD.json/md`，且能关联同日/匹配
+    `TRADING-022` operator brief 与 `TRADING-030` notification draft metadata/draft
+    files；详细拆解见 `docs/requirements/operator_brief_notification_dispatch_preview_real_artifact_observation_2026-06-09.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 至少一个真实 `TRADING-031` artifact 日期完成 dry-run dispatch preview 观察，记录 `final_status`、`dispatch_status`、`preflight_summary`、channel
+      plan、masked target、message excerpt、safety flags、dashboard 只读卡片结果；输出固定 `production_effect=none`、`manual_review_only=true`、`dispatch_preview_only=true`、`read_only=true`，所有
+      sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；缺失或不安全真实输入必须
+      fail closed 为 `BLOCKED` 或 `SAFETY_BLOCKED`，不补造 upstream artifacts、不自动发送
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1486
+    row_sha256: ce6aefb871dfb93168128820b6788176e45dbbd11ce5ed617aebe2a4a1288db4
+    cell_count: 8
+    all_cells:
+    - TRADING-032A
+    - 交易执行/Operator Brief Notification Dispatch Preview Real Artifact Observation
+    - P0
+    - BLOCKED_EXTERNAL
+    - 系统验证 + 项目 owner
+    - 承接 `TRADING-032` 的真实 `TRADING-031` artifact 观察；阻塞于本机或运行环境产生可审计 `operator_brief_notification_delivery_preflight_YYYY-MM-DD.json/md`，且能关联同日/匹配
+      `TRADING-022` operator brief 与 `TRADING-030` notification draft metadata/draft
+      files；详细拆解见 `docs/requirements/operator_brief_notification_dispatch_preview_real_artifact_observation_2026-06-09.md`
+    - 至少一个真实 `TRADING-031` artifact 日期完成 dry-run dispatch preview 观察，记录 `final_status`、`dispatch_status`、`preflight_summary`、channel
+      plan、masked target、message excerpt、safety flags、dashboard 只读卡片结果；输出固定 `production_effect=none`、`manual_review_only=true`、`dispatch_preview_only=true`、`read_only=true`，所有
+      sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；缺失或不安全真实输入必须
+      fail closed 为 `BLOCKED` 或 `SAFETY_BLOCKED`，不补造 upstream artifacts、不自动发送
+    - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-032 工程基线、临时 fixture WOULD_SEND
+      smoke、缺输入 BLOCKED smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-031 delivery
+      preflight artifacts，不能把真实 artifact dispatch preview 观察并入 baseline 完成。'
+    raw_line: '|TRADING-032A|交易执行/Operator Brief Notification Dispatch Preview Real
+      Artifact Observation|P0|BLOCKED_EXTERNAL|系统验证 + 项目 owner|承接 `TRADING-032` 的真实
+      `TRADING-031` artifact 观察；阻塞于本机或运行环境产生可审计 `operator_brief_notification_delivery_preflight_YYYY-MM-DD.json/md`，且能关联同日/匹配
+      `TRADING-022` operator brief 与 `TRADING-030` notification draft metadata/draft
+      files；详细拆解见 `docs/requirements/operator_brief_notification_dispatch_preview_real_artifact_observation_2026-06-09.md`|至少一个真实
+      `TRADING-031` artifact 日期完成 dry-run dispatch preview 观察，记录 `final_status`、`dispatch_status`、`preflight_summary`、channel
+      plan、masked target、message excerpt、safety flags、dashboard 只读卡片结果；输出固定 `production_effect=none`、`manual_review_only=true`、`dispatch_preview_only=true`、`read_only=true`，所有
+      sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；缺失或不安全真实输入必须
+      fail closed 为 `BLOCKED` 或 `SAFETY_BLOCKED`，不补造 upstream artifacts、不自动发送|2026-06-09:
+      新增并进入 BLOCKED_EXTERNAL，原因：TRADING-032 工程基线、临时 fixture WOULD_SEND smoke、缺输入 BLOCKED
+      smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-031 delivery preflight artifacts，不能把真实
+      artifact dispatch preview 观察并入 baseline 完成。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ce6aefb871dfb93168128820
+  task_id: TRADING-032A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-032 工程基线、临时 fixture WOULD_SEND
+      smoke、缺输入 BLOCKED smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-031 delivery
+      preflight artifacts，不能把真实 artifact dispatch preview 观察并入 baseline 完成。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ce6aefb871dfb93168128820b6788176e45dbbd11ce5ed617aebe2a4a1288db4
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-032A
+  - 交易执行/Operator Brief Notification Dispatch Preview Real Artifact Observation
+  - P0
+  - BLOCKED_EXTERNAL
+  - 系统验证 + 项目 owner
+  - 承接 `TRADING-032` 的真实 `TRADING-031` artifact 观察；阻塞于本机或运行环境产生可审计 `operator_brief_notification_delivery_preflight_YYYY-MM-DD.json/md`，且能关联同日/匹配
+    `TRADING-022` operator brief 与 `TRADING-030` notification draft metadata/draft
+    files；详细拆解见 `docs/requirements/operator_brief_notification_dispatch_preview_real_artifact_observation_2026-06-09.md`
+  - 至少一个真实 `TRADING-031` artifact 日期完成 dry-run dispatch preview 观察，记录 `final_status`、`dispatch_status`、`preflight_summary`、channel
+    plan、masked target、message excerpt、safety flags、dashboard 只读卡片结果；输出固定 `production_effect=none`、`manual_review_only=true`、`dispatch_preview_only=true`、`read_only=true`，所有
+    sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；缺失或不安全真实输入必须 fail
+    closed 为 `BLOCKED` 或 `SAFETY_BLOCKED`，不补造 upstream artifacts、不自动发送
+  - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-032 工程基线、临时 fixture WOULD_SEND
+    smoke、缺输入 BLOCKED smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-031 delivery
+    preflight artifacts，不能把真实 artifact dispatch preview 观察并入 baseline 完成。'
+  docs_links:
+  - docs/requirements/operator_brief_notification_dispatch_preview_real_artifact_observation_2026-06-09.md
+  terminal: false
+  raw_row_sha256: ce6aefb871dfb93168128820b6788176e45dbbd11ce5ed617aebe2a4a1288db4
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 667f8d2c64fbb3bf7633a364971ad7686c0b903fdd32423cf5cfc0b64edca6a1

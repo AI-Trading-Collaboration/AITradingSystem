@@ -1,0 +1,128 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2303_CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_ONLY
+  title: null
+  domain: Research trends / breadth participation proxy diagnostics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2303_Current_Constituents_Proxy_Diagnostics_Only.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2303_Current_Constituents_Proxy_Diagnostics_Only.md`；依赖
+    TRADING-2302 feasibility audit。当前仓库缺少可审计 QQQ / SPY / SMH current constituents
+    snapshot 和 constituent price coverage audit；本批必须 fail closed，只生成 source-blocked
+    diagnostics package，不读取 market cache、不联网、不下载数据。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 current constituents breadth proxy diagnostics report、signal distribution
+      matrix、asset/horizon drilldown、bias warning report、next-step recommendation
+      和 safety boundary；所有 outputs 固定 `pit_status=current_constituents_proxy_only`、`strict_pit_ready=false`、promotion/paper-shadow/production/broker
+      false/none，且 `candidate_artifact_generated=false`、`candidate_signal_series_generated=false`、`actual_path_validation_executed=false`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1207
+    row_sha256: 5783320a7bbe8d01a6ee805cab413233fdf4519beaadd1381d5629caa4af48a1
+    cell_count: 8
+    all_cells:
+    - TRADING-2303_CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_ONLY
+    - Research trends / breadth participation proxy diagnostics
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2303_Current_Constituents_Proxy_Diagnostics_Only.md`；依赖
+      TRADING-2302 feasibility audit。当前仓库缺少可审计 QQQ / SPY / SMH current constituents
+      snapshot 和 constituent price coverage audit；本批必须 fail closed，只生成 source-blocked
+      diagnostics package，不读取 market cache、不联网、不下载数据。
+    - 生成 current constituents breadth proxy diagnostics report、signal distribution
+      matrix、asset/horizon drilldown、bias warning report、next-step recommendation
+      和 safety boundary；所有 outputs 固定 `pit_status=current_constituents_proxy_only`、`strict_pit_ready=false`、promotion/paper-shadow/production/broker
+      false/none，且 `candidate_artifact_generated=false`、`candidate_signal_series_generated=false`、`actual_path_validation_executed=false`。
+    - '2026-07-01: 根据 TRADING-2302 recommended_next_action 和 owner post-2302 roadmap
+      新增并转入 IN_PROGRESS；同时修正旧 backlog 编号冲突，TRADING-2303～2306 保留给 breadth proxy diagnostics
+      / selection / POC / validation。2026-07-01: 实现完成并转入 VALIDATING；真实 run status=`CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_SOURCE_BLOCKED`，source_snapshot_status=`ALL_TARGET_CURRENT_CONSTITUENTS_SNAPSHOTS_MISSING`，7
+      个 signal concepts 和 27 个 asset/horizon rows 均未计算；验证通过 focused parallel pytest
+      16 passed、docs/registry/task-register focused parallel pytest 54 passed、Ruff、compileall
+      和 contract-validation 193 passed。'
+    raw_line: '|TRADING-2303_CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_ONLY|Research
+      trends / breadth participation proxy diagnostics|P1|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-2303_Current_Constituents_Proxy_Diagnostics_Only.md`；依赖
+      TRADING-2302 feasibility audit。当前仓库缺少可审计 QQQ / SPY / SMH current constituents
+      snapshot 和 constituent price coverage audit；本批必须 fail closed，只生成 source-blocked
+      diagnostics package，不读取 market cache、不联网、不下载数据。|生成 current constituents breadth
+      proxy diagnostics report、signal distribution matrix、asset/horizon drilldown、bias
+      warning report、next-step recommendation 和 safety boundary；所有 outputs 固定 `pit_status=current_constituents_proxy_only`、`strict_pit_ready=false`、promotion/paper-shadow/production/broker
+      false/none，且 `candidate_artifact_generated=false`、`candidate_signal_series_generated=false`、`actual_path_validation_executed=false`。|2026-07-01:
+      根据 TRADING-2302 recommended_next_action 和 owner post-2302 roadmap 新增并转入 IN_PROGRESS；同时修正旧
+      backlog 编号冲突，TRADING-2303～2306 保留给 breadth proxy diagnostics / selection / POC
+      / validation。2026-07-01: 实现完成并转入 VALIDATING；真实 run status=`CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_SOURCE_BLOCKED`，source_snapshot_status=`ALL_TARGET_CURRENT_CONSTITUENTS_SNAPSHOTS_MISSING`，7
+      个 signal concepts 和 27 个 asset/horizon rows 均未计算；验证通过 focused parallel pytest
+      16 passed、docs/registry/task-register focused parallel pytest 54 passed、Ruff、compileall
+      和 contract-validation 193 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5783320a7bbe8d01a6ee805c
+  task_id: TRADING-2303_CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_ONLY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 TRADING-2302 recommended_next_action 和 owner post-2302
+      roadmap 新增并转入 IN_PROGRESS；同时修正旧 backlog 编号冲突，TRADING-2303～2306 保留给 breadth proxy
+      diagnostics / selection / POC / validation。2026-07-01: 实现完成并转入 VALIDATING；真实
+      run status=`CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_SOURCE_BLOCKED`，source_snapshot_status=`ALL_TARGET_CURRENT_CONSTITUENTS_SNAPSHOTS_MISSING`，7
+      个 signal concepts 和 27 个 asset/horizon rows 均未计算；验证通过 focused parallel pytest
+      16 passed、docs/registry/task-register focused parallel pytest 54 passed、Ruff、compileall
+      和 contract-validation 193 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5783320a7bbe8d01a6ee805cab413233fdf4519beaadd1381d5629caa4af48a1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2303_CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_ONLY
+  - Research trends / breadth participation proxy diagnostics
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2303_Current_Constituents_Proxy_Diagnostics_Only.md`；依赖
+    TRADING-2302 feasibility audit。当前仓库缺少可审计 QQQ / SPY / SMH current constituents
+    snapshot 和 constituent price coverage audit；本批必须 fail closed，只生成 source-blocked
+    diagnostics package，不读取 market cache、不联网、不下载数据。
+  - 生成 current constituents breadth proxy diagnostics report、signal distribution matrix、asset/horizon
+    drilldown、bias warning report、next-step recommendation 和 safety boundary；所有 outputs
+    固定 `pit_status=current_constituents_proxy_only`、`strict_pit_ready=false`、promotion/paper-shadow/production/broker
+    false/none，且 `candidate_artifact_generated=false`、`candidate_signal_series_generated=false`、`actual_path_validation_executed=false`。
+  - '2026-07-01: 根据 TRADING-2302 recommended_next_action 和 owner post-2302 roadmap
+    新增并转入 IN_PROGRESS；同时修正旧 backlog 编号冲突，TRADING-2303～2306 保留给 breadth proxy diagnostics
+    / selection / POC / validation。2026-07-01: 实现完成并转入 VALIDATING；真实 run status=`CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_SOURCE_BLOCKED`，source_snapshot_status=`ALL_TARGET_CURRENT_CONSTITUENTS_SNAPSHOTS_MISSING`，7
+    个 signal concepts 和 27 个 asset/horizon rows 均未计算；验证通过 focused parallel pytest
+    16 passed、docs/registry/task-register focused parallel pytest 54 passed、Ruff、compileall
+    和 contract-validation 193 passed。'
+  docs_links:
+  - docs/requirements/TRADING-2303_Current_Constituents_Proxy_Diagnostics_Only.md
+  terminal: false
+  raw_row_sha256: 5783320a7bbe8d01a6ee805cab413233fdf4519beaadd1381d5629caa4af48a1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ce124305472b20d66d17aa8f2611399064f231971435ea7a86b245b241122f3c

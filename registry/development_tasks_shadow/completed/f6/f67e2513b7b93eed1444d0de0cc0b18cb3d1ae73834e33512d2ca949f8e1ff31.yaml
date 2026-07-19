@@ -1,0 +1,145 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438_GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY
+  title: null
+  domain: Strategy research / growth tilt top-3 candidate PIT replay
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2438A replay engine remediation
+  requirement_refs:
+  - docs/requirements/TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay.md
+  - docs/tasks/completed/TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay.md`；承接
+    TRADING-2437 READY；本任务已运行 data-quality gate 并完成 top-3 candidate PIT replay readiness
+    attempt，但真实结果 fail-closed。当前 blocker：Growth Tilt candidate-specific PIT replay
+    engine、candidate replay input specs、source traceability manifest、as-of boundary
+    spec、valid-until boundary spec 和 outcome linkage spec 尚未存在；下一跳为 `TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`，不得进入
+    2439。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 top-3 candidate PIT replay builder、`aits research strategies growth-tilt-top3-candidate-pit-replay`；输出
+      top-3 candidate selection、PIT replay evidence、PIT replay blocker summary、no-effect
+      boundary、research docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_BLOCKED_BY_REPLAY_ENGINE_GAP`，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，source_2437_ready=true，source_2433_batch_screen_ready=true，source_2431_existing_candidate_evidence_ready=true，candidate_set_2433_ready=true，pit_candidates_selected=3，pit_candidates_tested=0，pit_replay_pass_count=0，pit_replay_fail_count=0，pit_replay_blocked_count=3，promotion_review_candidate_count=0，candidate_pit_replay_engine_available=false，candidate_replay_input_specs_ready=false，candidate_source_traceability_manifests_ready=false，candidate_as_of_boundary_specs_ready=false，candidate_valid_until_boundary_specs_ready=false，candidate_outcome_linkage_specs_ready=false，source_traceability_verified_count=0，as_of_boundary_verified_count=0，valid_until_boundary_verified_count=0，outcome_linkage_ready_count=0，pit_replay_run=false，pit_replay_executed=false，computed_new_metrics=false，paper_shadow_enabled=false，production_enabled=false，broker_enabled=false，next
+      route=`TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 46
+    row_sha256: c68b5edd7279ef3fbc8f6370fc8c053ae75fc1b395bd10acf133ab41343b088d
+    cell_count: 8
+    all_cells:
+    - TRADING-2438_GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY
+    - Strategy research / growth tilt top-3 candidate PIT replay
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2438A replay engine remediation
+    - 详见 `docs/requirements/TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay.md`；承接
+      TRADING-2437 READY；本任务已运行 data-quality gate 并完成 top-3 candidate PIT replay readiness
+      attempt，但真实结果 fail-closed。当前 blocker：Growth Tilt candidate-specific PIT replay
+      engine、candidate replay input specs、source traceability manifest、as-of boundary
+      spec、valid-until boundary spec 和 outcome linkage spec 尚未存在；下一跳为 `TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`，不得进入
+      2439。
+    - 新增 top-3 candidate PIT replay builder、`aits research strategies growth-tilt-top3-candidate-pit-replay`；输出
+      top-3 candidate selection、PIT replay evidence、PIT replay blocker summary、no-effect
+      boundary、research docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_BLOCKED_BY_REPLAY_ENGINE_GAP`，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，source_2437_ready=true，source_2433_batch_screen_ready=true，source_2431_existing_candidate_evidence_ready=true，candidate_set_2433_ready=true，pit_candidates_selected=3，pit_candidates_tested=0，pit_replay_pass_count=0，pit_replay_fail_count=0，pit_replay_blocked_count=3，promotion_review_candidate_count=0，candidate_pit_replay_engine_available=false，candidate_replay_input_specs_ready=false，candidate_source_traceability_manifests_ready=false，candidate_as_of_boundary_specs_ready=false，candidate_valid_until_boundary_specs_ready=false，candidate_outcome_linkage_specs_ready=false，source_traceability_verified_count=0，as_of_boundary_verified_count=0，valid_until_boundary_verified_count=0，outcome_linkage_ready_count=0，pit_replay_run=false，pit_replay_executed=false，computed_new_metrics=false，paper_shadow_enabled=false，production_enabled=false，broker_enabled=false，next
+      route=`TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`。
+    - '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest、`aits validate-data --as-of 2026-07-08`、真实
+      CLI、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+      和 `git diff --check`。本任务读取 cached market data quality gate 并披露结果，但未运行真实 candidate
+      replay、historical screen、backtest、scoring、daily report、outcome binding，不生成 feature/signal/outcome
+      或交易建议。candidate replay、paper-shadow runtime/schedule、scheduler、event append、real
+      outcome binding、outcome store mutation、production、broker/order、portfolio weight
+      mutation 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay.md`。'
+    raw_line: '|TRADING-2438_GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY|Strategy research
+      / growth tilt top-3 candidate PIT replay|P0|DONE|项目 owner 后续复核 TRADING-2438A
+      replay engine remediation|详见 `docs/requirements/TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay.md`；承接
+      TRADING-2437 READY；本任务已运行 data-quality gate 并完成 top-3 candidate PIT replay readiness
+      attempt，但真实结果 fail-closed。当前 blocker：Growth Tilt candidate-specific PIT replay
+      engine、candidate replay input specs、source traceability manifest、as-of boundary
+      spec、valid-until boundary spec 和 outcome linkage spec 尚未存在；下一跳为 `TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`，不得进入
+      2439。|新增 top-3 candidate PIT replay builder、`aits research strategies growth-tilt-top3-candidate-pit-replay`；输出
+      top-3 candidate selection、PIT replay evidence、PIT replay blocker summary、no-effect
+      boundary、research docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_BLOCKED_BY_REPLAY_ENGINE_GAP`，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，source_2437_ready=true，source_2433_batch_screen_ready=true，source_2431_existing_candidate_evidence_ready=true，candidate_set_2433_ready=true，pit_candidates_selected=3，pit_candidates_tested=0，pit_replay_pass_count=0，pit_replay_fail_count=0，pit_replay_blocked_count=3，promotion_review_candidate_count=0，candidate_pit_replay_engine_available=false，candidate_replay_input_specs_ready=false，candidate_source_traceability_manifests_ready=false，candidate_as_of_boundary_specs_ready=false，candidate_valid_until_boundary_specs_ready=false，candidate_outcome_linkage_specs_ready=false，source_traceability_verified_count=0，as_of_boundary_verified_count=0，valid_until_boundary_verified_count=0，outcome_linkage_ready_count=0，pit_replay_run=false，pit_replay_executed=false，computed_new_metrics=false，paper_shadow_enabled=false，production_enabled=false，broker_enabled=false，next
+      route=`TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`。|2026-07-09:
+      根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest、`aits validate-data --as-of 2026-07-08`、真实 CLI、docs freshness、documentation
+      contract、task-register consistency run/validate、contract-validation 和 `git diff
+      --check`。本任务读取 cached market data quality gate 并披露结果，但未运行真实 candidate replay、historical
+      screen、backtest、scoring、daily report、outcome binding，不生成 feature/signal/outcome
+      或交易建议。candidate replay、paper-shadow runtime/schedule、scheduler、event append、real
+      outcome binding、outcome store mutation、production、broker/order、portfolio weight
+      mutation 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c68b5edd7279ef3fbc8f6370
+  task_id: TRADING-2438_GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2438A replay engine remediation
+    notes: '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest、`aits validate-data --as-of 2026-07-08`、真实
+      CLI、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+      和 `git diff --check`。本任务读取 cached market data quality gate 并披露结果，但未运行真实 candidate
+      replay、historical screen、backtest、scoring、daily report、outcome binding，不生成 feature/signal/outcome
+      或交易建议。candidate replay、paper-shadow runtime/schedule、scheduler、event append、real
+      outcome binding、outcome store mutation、production、broker/order、portfolio weight
+      mutation 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c68b5edd7279ef3fbc8f6370fc8c053ae75fc1b395bd10acf133ab41343b088d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438_GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY
+  - Strategy research / growth tilt top-3 candidate PIT replay
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2438A replay engine remediation
+  - 详见 `docs/requirements/TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay.md`；承接
+    TRADING-2437 READY；本任务已运行 data-quality gate 并完成 top-3 candidate PIT replay readiness
+    attempt，但真实结果 fail-closed。当前 blocker：Growth Tilt candidate-specific PIT replay
+    engine、candidate replay input specs、source traceability manifest、as-of boundary
+    spec、valid-until boundary spec 和 outcome linkage spec 尚未存在；下一跳为 `TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`，不得进入
+    2439。
+  - 新增 top-3 candidate PIT replay builder、`aits research strategies growth-tilt-top3-candidate-pit-replay`；输出
+    top-3 candidate selection、PIT replay evidence、PIT replay blocker summary、no-effect
+    boundary、research docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_BLOCKED_BY_REPLAY_ENGINE_GAP`，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，source_2437_ready=true，source_2433_batch_screen_ready=true，source_2431_existing_candidate_evidence_ready=true，candidate_set_2433_ready=true，pit_candidates_selected=3，pit_candidates_tested=0，pit_replay_pass_count=0，pit_replay_fail_count=0，pit_replay_blocked_count=3，promotion_review_candidate_count=0，candidate_pit_replay_engine_available=false，candidate_replay_input_specs_ready=false，candidate_source_traceability_manifests_ready=false，candidate_as_of_boundary_specs_ready=false，candidate_valid_until_boundary_specs_ready=false，candidate_outcome_linkage_specs_ready=false，source_traceability_verified_count=0，as_of_boundary_verified_count=0，valid_until_boundary_verified_count=0，outcome_linkage_ready_count=0，pit_replay_run=false，pit_replay_executed=false，computed_new_metrics=false，paper_shadow_enabled=false，production_enabled=false，broker_enabled=false，next
+    route=`TRADING-2438A_Growth_Tilt_Top3_Candidate_PIT_Replay_Engine_Remediation`。
+  - '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+    Ruff、compileall、focused parallel pytest、`aits validate-data --as-of 2026-07-08`、真实
+    CLI、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+    和 `git diff --check`。本任务读取 cached market data quality gate 并披露结果，但未运行真实 candidate
+    replay、historical screen、backtest、scoring、daily report、outcome binding，不生成 feature/signal/outcome
+    或交易建议。candidate replay、paper-shadow runtime/schedule、scheduler、event append、real
+    outcome binding、outcome store mutation、production、broker/order、portfolio weight
+    mutation 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay.md
+  - docs/tasks/completed/TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay.md
+  terminal: true
+  raw_row_sha256: c68b5edd7279ef3fbc8f6370fc8c053ae75fc1b395bd10acf133ab41343b088d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e659f10448e2ce07555aa0da8ca68bf3951daa79ad259604a7fce584a926af83

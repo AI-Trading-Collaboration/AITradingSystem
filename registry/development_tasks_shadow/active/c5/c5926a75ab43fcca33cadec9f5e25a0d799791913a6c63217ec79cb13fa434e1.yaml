@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-711_STRATEGY_PAIR_REVERSE_DIAGNOSTICS
+  title: null
+  domain: Research acceleration / strategy pair reverse diagnostics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；teacher/oracle/champion/simple
+    benchmark 仅用于诊断
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`strategy-pair-diagnose` 可运行；oracle_promotion_violation_count=0；decision_delta_trace_complete=true；outcome_attribution_complete=true'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1381
+    row_sha256: 4bd672e3d20404240f8991573b843f10d0a52aa7eac9b7e69025f6a7941ca660
+    cell_count: 8
+    all_cells:
+    - TRADING-711_STRATEGY_PAIR_REVERSE_DIAGNOSTICS
+    - Research acceleration / strategy pair reverse diagnostics
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 TRADING-703_to_725 总需求文档；teacher/oracle/champion/simple benchmark 仅用于诊断
+    - '`strategy-pair-diagnose` 可运行；oracle_promotion_violation_count=0；decision_delta_trace_complete=true；outcome_attribution_complete=true'
+    - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。'
+    raw_line: '|TRADING-711_STRATEGY_PAIR_REVERSE_DIAGNOSTICS|Research acceleration
+      / strategy pair reverse diagnostics|P1|VALIDATING|系统实现 + 项目 owner 后续复核|详见 TRADING-703_to_725
+      总需求文档；teacher/oracle/champion/simple benchmark 仅用于诊断|`strategy-pair-diagnose`
+      可运行；oracle_promotion_violation_count=0；decision_delta_trace_complete=true；outcome_attribution_complete=true|2026-06-21:
+      按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+      schema/config/protocol、research governance / acceleration / portfolio decision
+      / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+      / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+      production_effect=none，不修改 production / paper-shadow / official weights，不触发
+      broker/order。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4bd672e3d20404240f899157
+  task_id: TRADING-711_STRATEGY_PAIR_REVERSE_DIAGNOSTICS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4bd672e3d20404240f8991573b843f10d0a52aa7eac9b7e69025f6a7941ca660
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-711_STRATEGY_PAIR_REVERSE_DIAGNOSTICS
+  - Research acceleration / strategy pair reverse diagnostics
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-703_to_725 总需求文档；teacher/oracle/champion/simple benchmark 仅用于诊断
+  - '`strategy-pair-diagnose` 可运行；oracle_promotion_violation_count=0；decision_delta_trace_complete=true；outcome_attribution_complete=true'
+  - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入
+    VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio
+    decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+    / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+    production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 4bd672e3d20404240f8991573b843f10d0a52aa7eac9b7e69025f6a7941ca660
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 1d6444691c0eb4bd8091efd150bba2075b07cd952a931d28d6e9de5ddf0ddd96

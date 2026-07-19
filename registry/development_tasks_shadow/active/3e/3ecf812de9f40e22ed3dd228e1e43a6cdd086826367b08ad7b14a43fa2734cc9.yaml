@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: SHADOW-003
+  title: null
+  domain: 模型评估/forward shadow 样本成熟度
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 时间窗口
+  requirement_refs:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已新增 `aits feedback shadow-maturity`，按
+    candidate、horizon、market regime 和 `production_effect` 汇总 available/pending/missing、收益、胜率、回撤和
+    benchmark excess，并输出 `READY_FOR_SHADOW` / `READY_FOR_GOV_REVIEW`；真实 promotion
+    结论仍受交易日和 label horizon 限制；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 报告能显示 production vs challenger 可用样本数、胜率、平均收益、最大回撤、benchmark excess return、样本不足原因和预计可评估日期；少于最低样本或
+      horizon 未完成时 promotion gate 必须保持 `READY_FOR_SHADOW` 或 `MISSING`；测试覆盖样本不足不晋级、pending
+      outcome 不算通过、missing data 降级
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1095
+    row_sha256: 4cbf778f6f05fb49bfdfa75a913b61f754b310f354b6b04cb6d4845e0cda77b2
+    cell_count: 8
+    all_cells:
+    - SHADOW-003
+    - 模型评估/forward shadow 样本成熟度
+    - P1
+    - BASELINE_DONE
+    - 系统实现 + 时间窗口
+    - 已新增 `aits feedback shadow-maturity`，按 candidate、horizon、market regime 和 `production_effect`
+      汇总 available/pending/missing、收益、胜率、回撤和 benchmark excess，并输出 `READY_FOR_SHADOW`
+      / `READY_FOR_GOV_REVIEW`；真实 promotion 结论仍受交易日和 label horizon 限制；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+    - 报告能显示 production vs challenger 可用样本数、胜率、平均收益、最大回撤、benchmark excess return、样本不足原因和预计可评估日期；少于最低样本或
+      horizon 未完成时 promotion gate 必须保持 `READY_FOR_SHADOW` 或 `MISSING`；测试覆盖样本不足不晋级、pending
+      outcome 不算通过、missing data 降级
+    - '2026-05-05: 新增任务，原因：前向 shadow 的最大 blocker 是真实时间和 outcome 样本积累；该任务先建立监控和门槛，让样本成熟前不会误晋级。2026-05-05:
+      从 BLOCKED_EXTERNAL 改为 IN_PROGRESS，原因：先实现成熟度监控代码；真实 promotion 结论仍受交易日和 label
+      horizon 限制。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：样本成熟度报告、CLI 和样本不足测试已完成；完整
+      DONE 需要真实 outcome 样本达到门槛。'
+    raw_line: '|SHADOW-003|模型评估/forward shadow 样本成熟度|P1|BASELINE_DONE|系统实现 + 时间窗口|已新增
+      `aits feedback shadow-maturity`，按 candidate、horizon、market regime 和 `production_effect`
+      汇总 available/pending/missing、收益、胜率、回撤和 benchmark excess，并输出 `READY_FOR_SHADOW`
+      / `READY_FOR_GOV_REVIEW`；真实 promotion 结论仍受交易日和 label horizon 限制；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`|报告能显示
+      production vs challenger 可用样本数、胜率、平均收益、最大回撤、benchmark excess return、样本不足原因和预计可评估日期；少于最低样本或
+      horizon 未完成时 promotion gate 必须保持 `READY_FOR_SHADOW` 或 `MISSING`；测试覆盖样本不足不晋级、pending
+      outcome 不算通过、missing data 降级|2026-05-05: 新增任务，原因：前向 shadow 的最大 blocker 是真实时间和
+      outcome 样本积累；该任务先建立监控和门槛，让样本成熟前不会误晋级。2026-05-05: 从 BLOCKED_EXTERNAL 改为 IN_PROGRESS，原因：先实现成熟度监控代码；真实
+      promotion 结论仍受交易日和 label horizon 限制。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：样本成熟度报告、CLI
+      和样本不足测试已完成；完整 DONE 需要真实 outcome 样本达到门槛。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4cbf778f6f05fb49bfdfa75a
+  task_id: SHADOW-003
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 时间窗口
+    notes: '2026-05-05: 新增任务，原因：前向 shadow 的最大 blocker 是真实时间和 outcome 样本积累；该任务先建立监控和门槛，让样本成熟前不会误晋级。2026-05-05:
+      从 BLOCKED_EXTERNAL 改为 IN_PROGRESS，原因：先实现成熟度监控代码；真实 promotion 结论仍受交易日和 label
+      horizon 限制。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：样本成熟度报告、CLI 和样本不足测试已完成；完整
+      DONE 需要真实 outcome 样本达到门槛。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4cbf778f6f05fb49bfdfa75a913b61f754b310f354b6b04cb6d4845e0cda77b2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - SHADOW-003
+  - 模型评估/forward shadow 样本成熟度
+  - P1
+  - BASELINE_DONE
+  - 系统实现 + 时间窗口
+  - 已新增 `aits feedback shadow-maturity`，按 candidate、horizon、market regime 和 `production_effect`
+    汇总 available/pending/missing、收益、胜率、回撤和 benchmark excess，并输出 `READY_FOR_SHADOW`
+    / `READY_FOR_GOV_REVIEW`；真实 promotion 结论仍受交易日和 label horizon 限制；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+  - 报告能显示 production vs challenger 可用样本数、胜率、平均收益、最大回撤、benchmark excess return、样本不足原因和预计可评估日期；少于最低样本或
+    horizon 未完成时 promotion gate 必须保持 `READY_FOR_SHADOW` 或 `MISSING`；测试覆盖样本不足不晋级、pending
+    outcome 不算通过、missing data 降级
+  - '2026-05-05: 新增任务，原因：前向 shadow 的最大 blocker 是真实时间和 outcome 样本积累；该任务先建立监控和门槛，让样本成熟前不会误晋级。2026-05-05:
+    从 BLOCKED_EXTERNAL 改为 IN_PROGRESS，原因：先实现成熟度监控代码；真实 promotion 结论仍受交易日和 label horizon
+    限制。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：样本成熟度报告、CLI 和样本不足测试已完成；完整 DONE
+    需要真实 outcome 样本达到门槛。'
+  docs_links:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  terminal: false
+  raw_row_sha256: 4cbf778f6f05fb49bfdfa75a913b61f754b310f354b6b04cb6d4845e0cda77b2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 34f6a0a9f4a986cefb6d6c0937a29cb07de72944e4a8843707497670a2225d2a

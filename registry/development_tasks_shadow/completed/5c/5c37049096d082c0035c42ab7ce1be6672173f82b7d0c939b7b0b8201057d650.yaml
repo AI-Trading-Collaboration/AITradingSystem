@@ -1,0 +1,184 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2344_HIGH_INTENSITY_RISK_CAP_OBSERVE_ONLY_RUNTIME_SCHEDULER_INTEGRATION_PLAN
+  title: null
+  domain: Research trends / high-intensity risk-cap observe-only scheduler integration
+    plan
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2345 observe-only scheduler dry-run route
+  requirement_refs:
+  - docs/requirements/TRADING-2344_High_Intensity_Risk_Cap_Observe_Only_Runtime_Scheduler_Integration_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2344_High_Intensity_Risk_Cap_Observe_Only_Runtime_Scheduler_Integration_Plan.md`；承接
+    TRADING-2343 observe-only runtime dry-run route。本任务只读取 prior validated TRADING-2343
+    dry-run outputs、TRADING-2342 runtime contracts、TRADING-2341 continuation decision、TRADING-2335
+    selected rule lineage 和 TRADING-2336 event logger lineage；只做 observe-only scheduler
+    integration plan，不启用真实 scheduler、不写入每日自动任务、不生成或 append event、不更新 cluster / pending
+    outcome registry、不绑定 actual-path outcome、不重新读取 market data、不输出 target weight /
+    rebalance / broker action。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends high-intensity-risk-cap-observe-only-runtime-scheduler-integration-plan`；生成
+      scheduler integration plan summary、scope/cadence/input contracts、event detection
+      / append / cluster / pending outcome / outcome update / manual-review / monthly
+      monitoring job contracts、artifact path plan、registry update plan、disabled-by-default
+      policy、dry-run execution plan、failure mode matrix、integration risk register、fail-closed
+      safety gate、2345 readiness / route、interpretation boundary、安全边界和 research docs；真实
+      run status=`OBSERVE_ONLY_SCHEDULER_INTEGRATION_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，selected_rule=`COMPOSITE_HIGH_INTENSITY_RULE`，selected_rule_hash=`c0ade3f13c9d238977b882d062a4d0ba125e05ab1f26ee11dfd9475868dba4ec`，source
+      record_count=`2490`，detected_event_count=`168`，would_append_event_count=`0`，event_logger_trigger_day_count=`168`，event_logger_cluster_count=`60`，source
+      validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，safety_gate=`PASS`，readiness=`READY_FOR_2345_WITH_CAVEATS`，next
+      task=`TRADING-2345_High_Intensity_Risk_Cap_Observe_Only_Scheduler_Dry_Run`；所有
+      outputs 固定 `scheduler_enabled=false`、`scheduler_default_enabled=false`、`scheduler_activation_allowed_in_2344=false`、`event_append_executed=false`、`outcome_binding_executed=false`、promotion/paper-shadow/production
+      false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 32 passed、真实
+      CLI run、docs freshness 523 docs PASS、documentation contract 1241 reports PASS、task-register
+      consistency run/validate PASS、contract-validation 193 passed、full parallel pytest
+      4312 passed / 643 warnings 和 `git diff --check`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 152
+    row_sha256: 1fa53d2849a5fc5bb02990f2664f2a408b6ade6cb6dbd8a81f2be2c45fc0abad
+    cell_count: 8
+    all_cells:
+    - TRADING-2344_HIGH_INTENSITY_RISK_CAP_OBSERVE_ONLY_RUNTIME_SCHEDULER_INTEGRATION_PLAN
+    - Research trends / high-intensity risk-cap observe-only scheduler integration
+      plan
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2345 observe-only scheduler dry-run route
+    - 详见 `docs/requirements/TRADING-2344_High_Intensity_Risk_Cap_Observe_Only_Runtime_Scheduler_Integration_Plan.md`；承接
+      TRADING-2343 observe-only runtime dry-run route。本任务只读取 prior validated TRADING-2343
+      dry-run outputs、TRADING-2342 runtime contracts、TRADING-2341 continuation decision、TRADING-2335
+      selected rule lineage 和 TRADING-2336 event logger lineage；只做 observe-only scheduler
+      integration plan，不启用真实 scheduler、不写入每日自动任务、不生成或 append event、不更新 cluster / pending
+      outcome registry、不绑定 actual-path outcome、不重新读取 market data、不输出 target weight
+      / rebalance / broker action。
+    - 新增 `aits research trends high-intensity-risk-cap-observe-only-runtime-scheduler-integration-plan`；生成
+      scheduler integration plan summary、scope/cadence/input contracts、event detection
+      / append / cluster / pending outcome / outcome update / manual-review / monthly
+      monitoring job contracts、artifact path plan、registry update plan、disabled-by-default
+      policy、dry-run execution plan、failure mode matrix、integration risk register、fail-closed
+      safety gate、2345 readiness / route、interpretation boundary、安全边界和 research docs；真实
+      run status=`OBSERVE_ONLY_SCHEDULER_INTEGRATION_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，selected_rule=`COMPOSITE_HIGH_INTENSITY_RULE`，selected_rule_hash=`c0ade3f13c9d238977b882d062a4d0ba125e05ab1f26ee11dfd9475868dba4ec`，source
+      record_count=`2490`，detected_event_count=`168`，would_append_event_count=`0`，event_logger_trigger_day_count=`168`，event_logger_cluster_count=`60`，source
+      validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，safety_gate=`PASS`，readiness=`READY_FOR_2345_WITH_CAVEATS`，next
+      task=`TRADING-2345_High_Intensity_Risk_Cap_Observe_Only_Scheduler_Dry_Run`；所有
+      outputs 固定 `scheduler_enabled=false`、`scheduler_default_enabled=false`、`scheduler_activation_allowed_in_2344=false`、`event_append_executed=false`、`outcome_binding_executed=false`、promotion/paper-shadow/production
+      false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 32 passed、真实
+      CLI run、docs freshness 523 docs PASS、documentation contract 1241 reports PASS、task-register
+      consistency run/validate PASS、contract-validation 193 passed、full parallel pytest
+      4312 passed / 643 warnings 和 `git diff --check`。
+    - '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 TRADING-2343 dry-run route
+      转成 future observe-only scheduler dry-run 的 contract / cadence / safety plan，而不是启用
+      scheduler、daily task、paper-shadow、production 或 broker action。2026-07-04: 实现完成并进入
+      VALIDATING；未重跑 `aits validate-data`，因为只读取 prior validated 2343 / 2342 artifacts，不直接读取
+      cached market data 或绑定 outcome。2026-07-04: 完整验证通过并归档 DONE；后续只能进入 TRADING-2345
+      observe-only scheduler dry-run with caveats。'
+    raw_line: '|TRADING-2344_HIGH_INTENSITY_RISK_CAP_OBSERVE_ONLY_RUNTIME_SCHEDULER_INTEGRATION_PLAN|Research
+      trends / high-intensity risk-cap observe-only scheduler integration plan|P0|DONE|项目
+      owner 后续复核 TRADING-2345 observe-only scheduler dry-run route|详见 `docs/requirements/TRADING-2344_High_Intensity_Risk_Cap_Observe_Only_Runtime_Scheduler_Integration_Plan.md`；承接
+      TRADING-2343 observe-only runtime dry-run route。本任务只读取 prior validated TRADING-2343
+      dry-run outputs、TRADING-2342 runtime contracts、TRADING-2341 continuation decision、TRADING-2335
+      selected rule lineage 和 TRADING-2336 event logger lineage；只做 observe-only scheduler
+      integration plan，不启用真实 scheduler、不写入每日自动任务、不生成或 append event、不更新 cluster / pending
+      outcome registry、不绑定 actual-path outcome、不重新读取 market data、不输出 target weight
+      / rebalance / broker action。|新增 `aits research trends high-intensity-risk-cap-observe-only-runtime-scheduler-integration-plan`；生成
+      scheduler integration plan summary、scope/cadence/input contracts、event detection
+      / append / cluster / pending outcome / outcome update / manual-review / monthly
+      monitoring job contracts、artifact path plan、registry update plan、disabled-by-default
+      policy、dry-run execution plan、failure mode matrix、integration risk register、fail-closed
+      safety gate、2345 readiness / route、interpretation boundary、安全边界和 research docs；真实
+      run status=`OBSERVE_ONLY_SCHEDULER_INTEGRATION_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，selected_rule=`COMPOSITE_HIGH_INTENSITY_RULE`，selected_rule_hash=`c0ade3f13c9d238977b882d062a4d0ba125e05ab1f26ee11dfd9475868dba4ec`，source
+      record_count=`2490`，detected_event_count=`168`，would_append_event_count=`0`，event_logger_trigger_day_count=`168`，event_logger_cluster_count=`60`，source
+      validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，safety_gate=`PASS`，readiness=`READY_FOR_2345_WITH_CAVEATS`，next
+      task=`TRADING-2345_High_Intensity_Risk_Cap_Observe_Only_Scheduler_Dry_Run`；所有
+      outputs 固定 `scheduler_enabled=false`、`scheduler_default_enabled=false`、`scheduler_activation_allowed_in_2344=false`、`event_append_executed=false`、`outcome_binding_executed=false`、promotion/paper-shadow/production
+      false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 32 passed、真实
+      CLI run、docs freshness 523 docs PASS、documentation contract 1241 reports PASS、task-register
+      consistency run/validate PASS、contract-validation 193 passed、full parallel pytest
+      4312 passed / 643 warnings 和 `git diff --check`。|2026-07-04: 根据 owner 附件新增并进入
+      IN_PROGRESS；核心验收点是把 TRADING-2343 dry-run route 转成 future observe-only scheduler
+      dry-run 的 contract / cadence / safety plan，而不是启用 scheduler、daily task、paper-shadow、production
+      或 broker action。2026-07-04: 实现完成并进入 VALIDATING；未重跑 `aits validate-data`，因为只读取
+      prior validated 2343 / 2342 artifacts，不直接读取 cached market data 或绑定 outcome。2026-07-04:
+      完整验证通过并归档 DONE；后续只能进入 TRADING-2345 observe-only scheduler dry-run with caveats。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1fa53d2849a5fc5bb02990f2
+  task_id: TRADING-2344_HIGH_INTENSITY_RISK_CAP_OBSERVE_ONLY_RUNTIME_SCHEDULER_INTEGRATION_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2345 observe-only scheduler dry-run route
+    notes: '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 TRADING-2343 dry-run
+      route 转成 future observe-only scheduler dry-run 的 contract / cadence / safety
+      plan，而不是启用 scheduler、daily task、paper-shadow、production 或 broker action。2026-07-04:
+      实现完成并进入 VALIDATING；未重跑 `aits validate-data`，因为只读取 prior validated 2343 / 2342
+      artifacts，不直接读取 cached market data 或绑定 outcome。2026-07-04: 完整验证通过并归档 DONE；后续只能进入
+      TRADING-2345 observe-only scheduler dry-run with caveats。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1fa53d2849a5fc5bb02990f2664f2a408b6ade6cb6dbd8a81f2be2c45fc0abad
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2344_HIGH_INTENSITY_RISK_CAP_OBSERVE_ONLY_RUNTIME_SCHEDULER_INTEGRATION_PLAN
+  - Research trends / high-intensity risk-cap observe-only scheduler integration plan
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2345 observe-only scheduler dry-run route
+  - 详见 `docs/requirements/TRADING-2344_High_Intensity_Risk_Cap_Observe_Only_Runtime_Scheduler_Integration_Plan.md`；承接
+    TRADING-2343 observe-only runtime dry-run route。本任务只读取 prior validated TRADING-2343
+    dry-run outputs、TRADING-2342 runtime contracts、TRADING-2341 continuation decision、TRADING-2335
+    selected rule lineage 和 TRADING-2336 event logger lineage；只做 observe-only scheduler
+    integration plan，不启用真实 scheduler、不写入每日自动任务、不生成或 append event、不更新 cluster / pending
+    outcome registry、不绑定 actual-path outcome、不重新读取 market data、不输出 target weight /
+    rebalance / broker action。
+  - 新增 `aits research trends high-intensity-risk-cap-observe-only-runtime-scheduler-integration-plan`；生成
+    scheduler integration plan summary、scope/cadence/input contracts、event detection
+    / append / cluster / pending outcome / outcome update / manual-review / monthly
+    monitoring job contracts、artifact path plan、registry update plan、disabled-by-default
+    policy、dry-run execution plan、failure mode matrix、integration risk register、fail-closed
+    safety gate、2345 readiness / route、interpretation boundary、安全边界和 research docs；真实
+    run status=`OBSERVE_ONLY_SCHEDULER_INTEGRATION_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，selected_rule=`COMPOSITE_HIGH_INTENSITY_RULE`，selected_rule_hash=`c0ade3f13c9d238977b882d062a4d0ba125e05ab1f26ee11dfd9475868dba4ec`，source
+    record_count=`2490`，detected_event_count=`168`，would_append_event_count=`0`，event_logger_trigger_day_count=`168`，event_logger_cluster_count=`60`，source
+    validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，safety_gate=`PASS`，readiness=`READY_FOR_2345_WITH_CAVEATS`，next
+    task=`TRADING-2345_High_Intensity_Risk_Cap_Observe_Only_Scheduler_Dry_Run`；所有
+    outputs 固定 `scheduler_enabled=false`、`scheduler_default_enabled=false`、`scheduler_activation_allowed_in_2344=false`、`event_append_executed=false`、`outcome_binding_executed=false`、promotion/paper-shadow/production
+    false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 32 passed、真实
+    CLI run、docs freshness 523 docs PASS、documentation contract 1241 reports PASS、task-register
+    consistency run/validate PASS、contract-validation 193 passed、full parallel pytest
+    4312 passed / 643 warnings 和 `git diff --check`。
+  - '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 TRADING-2343 dry-run route 转成
+    future observe-only scheduler dry-run 的 contract / cadence / safety plan，而不是启用
+    scheduler、daily task、paper-shadow、production 或 broker action。2026-07-04: 实现完成并进入
+    VALIDATING；未重跑 `aits validate-data`，因为只读取 prior validated 2343 / 2342 artifacts，不直接读取
+    cached market data 或绑定 outcome。2026-07-04: 完整验证通过并归档 DONE；后续只能进入 TRADING-2345
+    observe-only scheduler dry-run with caveats。'
+  docs_links:
+  - docs/requirements/TRADING-2344_High_Intensity_Risk_Cap_Observe_Only_Runtime_Scheduler_Integration_Plan.md
+  terminal: true
+  raw_row_sha256: 1fa53d2849a5fc5bb02990f2664f2a408b6ade6cb6dbd8a81f2be2c45fc0abad
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 1643abd1578f492247781788de9a4a9fdbf6a46ec854ade90b2a68ec7813bce0

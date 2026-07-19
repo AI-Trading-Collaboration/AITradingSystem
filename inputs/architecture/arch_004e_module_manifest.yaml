@@ -1,9 +1,9 @@
 schema_version: arch_004e_module_manifest.v1
 status: PASS
 policy_id: arch_004e_devex_ownership_policy
-policy_sha256: dc11a0fcfc5b5a3f83a08b6474b4646400e8a32e436cf8a345fb4ad902f58a23
+policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 source_root: src/ai_trading_system
-module_count: 978
+module_count: 979
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -13587,7 +13587,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.__init__
   path: src/ai_trading_system/platform/architecture/__init__.py
-  sha256: a20400a9c21a4ce409ba24ee0df884d6be132a9aeffe00f6f246816b9a28a3d3
+  sha256: 4a7d1c8c6f990122c045585f3ee813f18e88fc7aa731459f2608f7533d3b75af
   rule_id: platform
   owner_profile: platform
   owners:
@@ -13610,7 +13610,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.bootstrap_handoff
   path: src/ai_trading_system/platform/architecture/bootstrap_handoff.py
-  sha256: 1ff8d059d0250ed41b59934704ed7df93e68f1902a114807088888c217e5fcb0
+  sha256: e31fa0f83801c4815706e65bc826e35c30272ae265774b7125ab09b3982c2f41
   rule_id: platform
   owner_profile: platform
   owners:
@@ -13772,6 +13772,29 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.scaffold
   path: src/ai_trading_system/platform/architecture/scaffold.py
   sha256: f6df60d5fac025ec7224d3048c9e2887bc610bde7ca7249ecb532efb9d723d03
+  rule_id: platform
+  owner_profile: platform
+  owners:
+    code_owner: platform_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: platform
+  category: platform_services
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004c_*.py
+  - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.platform.architecture.task_registry_shadow
+  path: src/ai_trading_system/platform/architecture/task_registry_shadow.py
+  sha256: 51bf9e29da99d108982e4abb14bc3d3ffe35b7d6545146cf9577efbceaf144f6
   rule_id: platform
   owner_profile: platform
   owners:

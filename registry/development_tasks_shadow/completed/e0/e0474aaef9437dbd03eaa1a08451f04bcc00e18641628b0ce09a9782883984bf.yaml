@@ -1,0 +1,145 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2412_GROWTH_TILT_ENGINE_AS_OF_SEMANTICS_REMEDIATION
+  title: null
+  domain: Strategy research / growth tilt as-of semantics remediation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2413 growth tilt engine source traceability remediation
+  requirement_refs:
+  - docs/requirements/TRADING-2412_Growth_Tilt_Engine_As_Of_Semantics_Remediation.md
+  - docs/tasks/completed/TRADING-2412_Growth_Tilt_Engine_As_Of_Semantics_Remediation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2412_Growth_Tilt_Engine_As_Of_Semantics_Remediation.md`；承接
+    TRADING-2411 remediation plan，仅读取 prior artifacts/docs/registry/catalog；本任务只补
+    `as_of_semantics_required` source features 的 as-of metadata、no-lookahead contract
+    和 before/after mapping，不修复完整 source traceability、validity dependency 或 `valid_until_window`，不做
+    candidate search、observation、paper-shadow、production、broker 或 blocker downgrade。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 reusable growth tilt as-of remediation helper、`aits research strategies
+      growth-tilt-engine-as-of-semantics-remediation`；输出 `as_of_remediation_result.json`、`as_of_contract_metadata.json`、`before_after_remediation.json`、`updated_source_feature_mapping.json`、`remaining_blocker_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_AS_OF_SEMANTICS_REMEDIATION_READY_WITH_REMAINING_BLOCKERS`，input
+      gap count=7，as-of gap count=2，as-of remediated count=2，remaining blocked/gap
+      count=7，contract-ready count=0，lookahead violation count=0，PIT-safe assumed
+      without traceability count=0，`growth_tilt_engine_blocker_resolved=false`、`growth_tilt_engine_blocker_downgraded=false`、`valid_until_window_blocker_resolved=false`、`valid_until_window_blocker_downgraded=false`、candidate_search_enabled=false、observation_enabled=false、paper_shadow_enabled=false、production_enabled=false、broker_enabled=false，next
+      route=`TRADING-2413_Growth_Tilt_Engine_Source_Traceability_Remediation`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 73
+    row_sha256: bbff352dc1a6e04c5c9ba27faa00bd65d94711766088fc444ca846debf4042af
+    cell_count: 8
+    all_cells:
+    - TRADING-2412_GROWTH_TILT_ENGINE_AS_OF_SEMANTICS_REMEDIATION
+    - Strategy research / growth tilt as-of semantics remediation
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2413 growth tilt engine source traceability remediation
+    - 详见 `docs/requirements/TRADING-2412_Growth_Tilt_Engine_As_Of_Semantics_Remediation.md`；承接
+      TRADING-2411 remediation plan，仅读取 prior artifacts/docs/registry/catalog；本任务只补
+      `as_of_semantics_required` source features 的 as-of metadata、no-lookahead contract
+      和 before/after mapping，不修复完整 source traceability、validity dependency 或 `valid_until_window`，不做
+      candidate search、observation、paper-shadow、production、broker 或 blocker downgrade。
+    - 新增 reusable growth tilt as-of remediation helper、`aits research strategies growth-tilt-engine-as-of-semantics-remediation`；输出
+      `as_of_remediation_result.json`、`as_of_contract_metadata.json`、`before_after_remediation.json`、`updated_source_feature_mapping.json`、`remaining_blocker_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_AS_OF_SEMANTICS_REMEDIATION_READY_WITH_REMAINING_BLOCKERS`，input
+      gap count=7，as-of gap count=2，as-of remediated count=2，remaining blocked/gap
+      count=7，contract-ready count=0，lookahead violation count=0，PIT-safe assumed
+      without traceability count=0，`growth_tilt_engine_blocker_resolved=false`、`growth_tilt_engine_blocker_downgraded=false`、`valid_until_window_blocker_resolved=false`、`valid_until_window_blocker_downgraded=false`、candidate_search_enabled=false、observation_enabled=false、paper_shadow_enabled=false、production_enabled=false、broker_enabled=false，next
+      route=`TRADING-2413_Growth_Tilt_Engine_Source_Traceability_Remediation`。
+    - '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；本任务未运行 `aits
+      validate-data`，因为只读取 TRADING-2411 / 2410 prior artifacts/docs/registry/catalog，不读取
+      fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily report
+      或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+      binding、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      validation 结果见 `docs/tasks/completed/TRADING-2412_Growth_Tilt_Engine_As_Of_Semantics_Remediation.md`。'
+    raw_line: '|TRADING-2412_GROWTH_TILT_ENGINE_AS_OF_SEMANTICS_REMEDIATION|Strategy
+      research / growth tilt as-of semantics remediation|P0|DONE|项目 owner 后续复核 TRADING-2413
+      growth tilt engine source traceability remediation|详见 `docs/requirements/TRADING-2412_Growth_Tilt_Engine_As_Of_Semantics_Remediation.md`；承接
+      TRADING-2411 remediation plan，仅读取 prior artifacts/docs/registry/catalog；本任务只补
+      `as_of_semantics_required` source features 的 as-of metadata、no-lookahead contract
+      和 before/after mapping，不修复完整 source traceability、validity dependency 或 `valid_until_window`，不做
+      candidate search、observation、paper-shadow、production、broker 或 blocker downgrade。|新增
+      reusable growth tilt as-of remediation helper、`aits research strategies growth-tilt-engine-as-of-semantics-remediation`；输出
+      `as_of_remediation_result.json`、`as_of_contract_metadata.json`、`before_after_remediation.json`、`updated_source_feature_mapping.json`、`remaining_blocker_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_AS_OF_SEMANTICS_REMEDIATION_READY_WITH_REMAINING_BLOCKERS`，input
+      gap count=7，as-of gap count=2，as-of remediated count=2，remaining blocked/gap
+      count=7，contract-ready count=0，lookahead violation count=0，PIT-safe assumed
+      without traceability count=0，`growth_tilt_engine_blocker_resolved=false`、`growth_tilt_engine_blocker_downgraded=false`、`valid_until_window_blocker_resolved=false`、`valid_until_window_blocker_downgraded=false`、candidate_search_enabled=false、observation_enabled=false、paper_shadow_enabled=false、production_enabled=false、broker_enabled=false，next
+      route=`TRADING-2413_Growth_Tilt_Engine_Source_Traceability_Remediation`。|2026-07-08:
+      根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；本任务未运行 `aits validate-data`，因为只读取
+      TRADING-2411 / 2410 prior artifacts/docs/registry/catalog，不读取 fresh cached market
+      data、不运行新 backtest、不生成 feature/signal/scoring/daily report 或交易建议。candidate search、observation、paper-shadow、scheduler、event
+      append、outcome binding、production、broker/order、daily report 全部保持 disabled /
+      false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2412_Growth_Tilt_Engine_As_Of_Semantics_Remediation.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bbff352dc1a6e04c5c9ba27f
+  task_id: TRADING-2412_GROWTH_TILT_ENGINE_AS_OF_SEMANTICS_REMEDIATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2413 growth tilt engine source traceability
+      remediation
+    notes: '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；本任务未运行
+      `aits validate-data`，因为只读取 TRADING-2411 / 2410 prior artifacts/docs/registry/catalog，不读取
+      fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily report
+      或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+      binding、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      validation 结果见 `docs/tasks/completed/TRADING-2412_Growth_Tilt_Engine_As_Of_Semantics_Remediation.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bbff352dc1a6e04c5c9ba27faa00bd65d94711766088fc444ca846debf4042af
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2412_GROWTH_TILT_ENGINE_AS_OF_SEMANTICS_REMEDIATION
+  - Strategy research / growth tilt as-of semantics remediation
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2413 growth tilt engine source traceability remediation
+  - 详见 `docs/requirements/TRADING-2412_Growth_Tilt_Engine_As_Of_Semantics_Remediation.md`；承接
+    TRADING-2411 remediation plan，仅读取 prior artifacts/docs/registry/catalog；本任务只补
+    `as_of_semantics_required` source features 的 as-of metadata、no-lookahead contract
+    和 before/after mapping，不修复完整 source traceability、validity dependency 或 `valid_until_window`，不做
+    candidate search、observation、paper-shadow、production、broker 或 blocker downgrade。
+  - 新增 reusable growth tilt as-of remediation helper、`aits research strategies growth-tilt-engine-as-of-semantics-remediation`；输出
+    `as_of_remediation_result.json`、`as_of_contract_metadata.json`、`before_after_remediation.json`、`updated_source_feature_mapping.json`、`remaining_blocker_summary.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_AS_OF_SEMANTICS_REMEDIATION_READY_WITH_REMAINING_BLOCKERS`，input
+    gap count=7，as-of gap count=2，as-of remediated count=2，remaining blocked/gap count=7，contract-ready
+    count=0，lookahead violation count=0，PIT-safe assumed without traceability count=0，`growth_tilt_engine_blocker_resolved=false`、`growth_tilt_engine_blocker_downgraded=false`、`valid_until_window_blocker_resolved=false`、`valid_until_window_blocker_downgraded=false`、candidate_search_enabled=false、observation_enabled=false、paper_shadow_enabled=false、production_enabled=false、broker_enabled=false，next
+    route=`TRADING-2413_Growth_Tilt_Engine_Source_Traceability_Remediation`。
+  - '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；本任务未运行 `aits
+    validate-data`，因为只读取 TRADING-2411 / 2410 prior artifacts/docs/registry/catalog，不读取
+    fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily report
+    或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+    binding、production、broker/order、daily report 全部保持 disabled / false / none；最终 validation
+    结果见 `docs/tasks/completed/TRADING-2412_Growth_Tilt_Engine_As_Of_Semantics_Remediation.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2412_Growth_Tilt_Engine_As_Of_Semantics_Remediation.md
+  - docs/tasks/completed/TRADING-2412_Growth_Tilt_Engine_As_Of_Semantics_Remediation.md
+  terminal: true
+  raw_row_sha256: bbff352dc1a6e04c5c9ba27faa00bd65d94711766088fc444ca846debf4042af
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e234a11b573ea7453186e1e3ae7c33c96be5452b0555a00d9cfa605d7bcf89b2

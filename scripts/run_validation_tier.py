@@ -126,6 +126,7 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_validation_tier_script.py",
             "tests/test_arch_005_prebootstrap.py",
             "tests/test_arch_005_bootstrap_handoff.py",
+            "tests/test_arch_005_task_registry_shadow.py",
             "tests/test_arch_004g_deprecation.py",
             "tests/test_documentation_contract.py",
             "tests/test_report_index.py",

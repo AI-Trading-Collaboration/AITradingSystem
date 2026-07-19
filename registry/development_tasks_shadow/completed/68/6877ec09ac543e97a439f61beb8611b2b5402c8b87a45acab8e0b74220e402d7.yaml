@@ -1,0 +1,152 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-348_PROMOTION_GATE_THRESHOLD_CALIBRATION
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue promotion gate threshold calibration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/promotion_gates/threshold_calibration.md
+  - docs/requirements/TRADING-348_Promotion_Gate_Threshold_Calibration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-348_Promotion_Gate_Threshold_Calibration.md`；承接
+    TRADING-346 formal research method contract，把 stress strength、drawdown mismatch
+    reduction、flip/rotation reduction、A/B review confidence 和 confirmation target
+    count 的 pilot threshold bands 移入可审计治理配置；不得为了当前 candidate pass 而调参，不得生成 official
+    target weights、order ticket、broker action 或 production mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `config/research/promotion_gate_thresholds.yaml` 和 `docs/promotion_gates/threshold_calibration.md`；新增
+      `promotion-gate-threshold-calibration report/validate` CLI；calibration artifact
+      记录 source formal contract、policy id/version/status、threshold rows、current threshold
+      interpretation、Reader Brief section 和 validation artifact；实际产物为 `promotion-gate-threshold-calibration_81379cf981004dad`；所有输出固定
+      `governance_only=true`、`threshold_policy_only=true`、`manual_review_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`auto_apply=false`、`production_effect=none`；README、operations
+      runbook、system flow、artifact catalog、report registry、requirements、Reader Brief、focused
+      tests、contract-validation suite、ruff、compileall、documentation contract、report
+      index、Reader Brief quality 和 git diff check 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 250
+    row_sha256: f80412fc79f85f63d37e11f5305c74615ab90e293fa859eaaf58fc8821191024
+    cell_count: 8
+    all_cells:
+    - TRADING-348_PROMOTION_GATE_THRESHOLD_CALIBRATION
+    - ETF portfolio/dynamic v3 rescue promotion gate threshold calibration
+    - P0
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-348_Promotion_Gate_Threshold_Calibration.md`；承接
+      TRADING-346 formal research method contract，把 stress strength、drawdown mismatch
+      reduction、flip/rotation reduction、A/B review confidence 和 confirmation target
+      count 的 pilot threshold bands 移入可审计治理配置；不得为了当前 candidate pass 而调参，不得生成 official
+      target weights、order ticket、broker action 或 production mutation
+    - 新增 `config/research/promotion_gate_thresholds.yaml` 和 `docs/promotion_gates/threshold_calibration.md`；新增
+      `promotion-gate-threshold-calibration report/validate` CLI；calibration artifact
+      记录 source formal contract、policy id/version/status、threshold rows、current threshold
+      interpretation、Reader Brief section 和 validation artifact；实际产物为 `promotion-gate-threshold-calibration_81379cf981004dad`；所有输出固定
+      `governance_only=true`、`threshold_policy_only=true`、`manual_review_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`auto_apply=false`、`production_effect=none`；README、operations
+      runbook、system flow、artifact catalog、report registry、requirements、Reader Brief、focused
+      tests、contract-validation suite、ruff、compileall、documentation contract、report
+      index、Reader Brief quality 和 git diff check 通过
+    - '2026-06-15: DONE；`promotion-gate-threshold-calibration report` 生成 calibration
+      `promotion-gate-threshold-calibration_81379cf981004dad`，policy validate 与 artifact
+      validate 均 PASS；current interpretation 为 `FORMAL_RESEARCH_READY_UNDER_PILOT_THRESHOLDS`，但该报告不改变
+      formal contract decision logic；focused pytest 5 passed，contract-validation suite
+      38 passed / 28.32s，documentation contract PASS，report index `PASS_WITH_WARNINGS`（既有
+      missing/stale visibility），Reader Brief OK，Reader Brief quality OK；保持 governance-only
+      / no threshold tuning to force pass / no official target / no broker / no production。'
+    raw_line: '|TRADING-348_PROMOTION_GATE_THRESHOLD_CALIBRATION|ETF portfolio/dynamic
+      v3 rescue promotion gate threshold calibration|P0|DONE|项目 owner 后续复核；代码实现完成|详细拆解见
+      `docs/requirements/TRADING-348_Promotion_Gate_Threshold_Calibration.md`；承接 TRADING-346
+      formal research method contract，把 stress strength、drawdown mismatch reduction、flip/rotation
+      reduction、A/B review confidence 和 confirmation target count 的 pilot threshold
+      bands 移入可审计治理配置；不得为了当前 candidate pass 而调参，不得生成 official target weights、order
+      ticket、broker action 或 production mutation|新增 `config/research/promotion_gate_thresholds.yaml`
+      和 `docs/promotion_gates/threshold_calibration.md`；新增 `promotion-gate-threshold-calibration
+      report/validate` CLI；calibration artifact 记录 source formal contract、policy id/version/status、threshold
+      rows、current threshold interpretation、Reader Brief section 和 validation artifact；实际产物为
+      `promotion-gate-threshold-calibration_81379cf981004dad`；所有输出固定 `governance_only=true`、`threshold_policy_only=true`、`manual_review_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`auto_apply=false`、`production_effect=none`；README、operations
+      runbook、system flow、artifact catalog、report registry、requirements、Reader Brief、focused
+      tests、contract-validation suite、ruff、compileall、documentation contract、report
+      index、Reader Brief quality 和 git diff check 通过|2026-06-15: DONE；`promotion-gate-threshold-calibration
+      report` 生成 calibration `promotion-gate-threshold-calibration_81379cf981004dad`，policy
+      validate 与 artifact validate 均 PASS；current interpretation 为 `FORMAL_RESEARCH_READY_UNDER_PILOT_THRESHOLDS`，但该报告不改变
+      formal contract decision logic；focused pytest 5 passed，contract-validation suite
+      38 passed / 28.32s，documentation contract PASS，report index `PASS_WITH_WARNINGS`（既有
+      missing/stale visibility），Reader Brief OK，Reader Brief quality OK；保持 governance-only
+      / no threshold tuning to force pass / no official target / no broker / no production。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f80412fc79f85f63d37e11f5
+  task_id: TRADING-348_PROMOTION_GATE_THRESHOLD_CALIBRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: '2026-06-15: DONE；`promotion-gate-threshold-calibration report` 生成 calibration
+      `promotion-gate-threshold-calibration_81379cf981004dad`，policy validate 与 artifact
+      validate 均 PASS；current interpretation 为 `FORMAL_RESEARCH_READY_UNDER_PILOT_THRESHOLDS`，但该报告不改变
+      formal contract decision logic；focused pytest 5 passed，contract-validation suite
+      38 passed / 28.32s，documentation contract PASS，report index `PASS_WITH_WARNINGS`（既有
+      missing/stale visibility），Reader Brief OK，Reader Brief quality OK；保持 governance-only
+      / no threshold tuning to force pass / no official target / no broker / no production。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f80412fc79f85f63d37e11f5305c74615ab90e293fa859eaaf58fc8821191024
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-348_PROMOTION_GATE_THRESHOLD_CALIBRATION
+  - ETF portfolio/dynamic v3 rescue promotion gate threshold calibration
+  - P0
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-348_Promotion_Gate_Threshold_Calibration.md`；承接
+    TRADING-346 formal research method contract，把 stress strength、drawdown mismatch
+    reduction、flip/rotation reduction、A/B review confidence 和 confirmation target
+    count 的 pilot threshold bands 移入可审计治理配置；不得为了当前 candidate pass 而调参，不得生成 official
+    target weights、order ticket、broker action 或 production mutation
+  - 新增 `config/research/promotion_gate_thresholds.yaml` 和 `docs/promotion_gates/threshold_calibration.md`；新增
+    `promotion-gate-threshold-calibration report/validate` CLI；calibration artifact
+    记录 source formal contract、policy id/version/status、threshold rows、current threshold
+    interpretation、Reader Brief section 和 validation artifact；实际产物为 `promotion-gate-threshold-calibration_81379cf981004dad`；所有输出固定
+    `governance_only=true`、`threshold_policy_only=true`、`manual_review_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`auto_apply=false`、`production_effect=none`；README、operations
+    runbook、system flow、artifact catalog、report registry、requirements、Reader Brief、focused
+    tests、contract-validation suite、ruff、compileall、documentation contract、report
+    index、Reader Brief quality 和 git diff check 通过
+  - '2026-06-15: DONE；`promotion-gate-threshold-calibration report` 生成 calibration
+    `promotion-gate-threshold-calibration_81379cf981004dad`，policy validate 与 artifact
+    validate 均 PASS；current interpretation 为 `FORMAL_RESEARCH_READY_UNDER_PILOT_THRESHOLDS`，但该报告不改变
+    formal contract decision logic；focused pytest 5 passed，contract-validation suite
+    38 passed / 28.32s，documentation contract PASS，report index `PASS_WITH_WARNINGS`（既有
+    missing/stale visibility），Reader Brief OK，Reader Brief quality OK；保持 governance-only
+    / no threshold tuning to force pass / no official target / no broker / no production。'
+  docs_links:
+  - docs/promotion_gates/threshold_calibration.md
+  - docs/requirements/TRADING-348_Promotion_Gate_Threshold_Calibration.md
+  terminal: true
+  raw_row_sha256: f80412fc79f85f63d37e11f5305c74615ab90e293fa859eaaf58fc8821191024
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d94f5de47909c100e0997c57342733bd2090397a862b8e8998825dc2717de090

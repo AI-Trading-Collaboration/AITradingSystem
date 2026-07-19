@@ -1,0 +1,119 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2300_DAILY_INCREMENTAL_REFACTOR_CANDIDATE_REPORT_WRITER_BOUNDARY
+  title: null
+  domain: Architecture / daily incremental refactor candidate report writer boundary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/TRADING-2300_Daily_Incremental_Refactor_Candidate_Report_Writer_Boundary.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2300_Daily_Incremental_Refactor_Candidate_Report_Writer_Boundary.md`；已收敛
+    TRADING-2285～2289 research trend candidate/refined report writer 的重复 JSON+CSV
+    matrix / CSV row helper，不改 CLI、artifact path、schema、阈值或投资解释。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`post_2085_research_common` 新增共享 `write_csv_rows` 和 `write_matrix_artifacts`；`regenerated_candidate_actual_path_validation.py`、`refined_candidate_actual_path_validation.py`、`regenerated_candidate_inconclusive_diagnostics.py`、`candidate_confidence_scaling_refinement_plan.py`
+      复用 helper；focused parallel pytest、4 个 CLI help smoke、Ruff、compileall、docs freshness、docs/task
+      focused pytest、terminal 状态扫描和 diff check 通过；本轮未生成 cached-data dependent scoring/backtest/daily
+      report 输出，因此未运行 `aits validate-data`。'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 162
+    row_sha256: 39f464bf3875b3993b44f57b339ff01ce767a5f174a8d9c543b9f76776e575c0
+    cell_count: 8
+    all_cells:
+    - TRADING-2300_DAILY_INCREMENTAL_REFACTOR_CANDIDATE_REPORT_WRITER_BOUNDARY
+    - Architecture / daily incremental refactor candidate report writer boundary
+    - P2
+    - DONE
+    - 系统验证
+    - 详见 `docs/requirements/TRADING-2300_Daily_Incremental_Refactor_Candidate_Report_Writer_Boundary.md`；已收敛
+      TRADING-2285～2289 research trend candidate/refined report writer 的重复 JSON+CSV
+      matrix / CSV row helper，不改 CLI、artifact path、schema、阈值或投资解释。
+    - '`post_2085_research_common` 新增共享 `write_csv_rows` 和 `write_matrix_artifacts`；`regenerated_candidate_actual_path_validation.py`、`refined_candidate_actual_path_validation.py`、`regenerated_candidate_inconclusive_diagnostics.py`、`candidate_confidence_scaling_refinement_plan.py`
+      复用 helper；focused parallel pytest、4 个 CLI help smoke、Ruff、compileall、docs freshness、docs/task
+      focused pytest、terminal 状态扫描和 diff check 通过；本轮未生成 cached-data dependent scoring/backtest/daily
+      report 输出，因此未运行 `aits validate-data`。'
+    - '2026-06-30: 每日增量重构自动化新增并完成；基线为 `656aa565aa63ff37f2e795e72e393c7796981c48`，增量范围显示
+      candidate/refined actual-path、confidence scaling 和 inconclusive diagnostics
+      模块新增多个重复 artifact writer。本切片只整理 serialization helper，不改变 JSON key、CSV column、status/safety
+      fields、threshold、score band、promotion gate、data quality gate、backtest acceptance、market-regime
+      interpretation、paper-shadow/production weights 或 broker/order path。'
+    raw_line: '|TRADING-2300_DAILY_INCREMENTAL_REFACTOR_CANDIDATE_REPORT_WRITER_BOUNDARY|Architecture
+      / daily incremental refactor candidate report writer boundary|P2|DONE|系统验证|详见
+      `docs/requirements/TRADING-2300_Daily_Incremental_Refactor_Candidate_Report_Writer_Boundary.md`；已收敛
+      TRADING-2285～2289 research trend candidate/refined report writer 的重复 JSON+CSV
+      matrix / CSV row helper，不改 CLI、artifact path、schema、阈值或投资解释。|`post_2085_research_common`
+      新增共享 `write_csv_rows` 和 `write_matrix_artifacts`；`regenerated_candidate_actual_path_validation.py`、`refined_candidate_actual_path_validation.py`、`regenerated_candidate_inconclusive_diagnostics.py`、`candidate_confidence_scaling_refinement_plan.py`
+      复用 helper；focused parallel pytest、4 个 CLI help smoke、Ruff、compileall、docs freshness、docs/task
+      focused pytest、terminal 状态扫描和 diff check 通过；本轮未生成 cached-data dependent scoring/backtest/daily
+      report 输出，因此未运行 `aits validate-data`。|2026-06-30: 每日增量重构自动化新增并完成；基线为 `656aa565aa63ff37f2e795e72e393c7796981c48`，增量范围显示
+      candidate/refined actual-path、confidence scaling 和 inconclusive diagnostics
+      模块新增多个重复 artifact writer。本切片只整理 serialization helper，不改变 JSON key、CSV column、status/safety
+      fields、threshold、score band、promotion gate、data quality gate、backtest acceptance、market-regime
+      interpretation、paper-shadow/production weights 或 broker/order path。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-39f464bf3875b3993b44f57b
+  task_id: TRADING-2300_DAILY_INCREMENTAL_REFACTOR_CANDIDATE_REPORT_WRITER_BOUNDARY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: '2026-06-30: 每日增量重构自动化新增并完成；基线为 `656aa565aa63ff37f2e795e72e393c7796981c48`，增量范围显示
+      candidate/refined actual-path、confidence scaling 和 inconclusive diagnostics
+      模块新增多个重复 artifact writer。本切片只整理 serialization helper，不改变 JSON key、CSV column、status/safety
+      fields、threshold、score band、promotion gate、data quality gate、backtest acceptance、market-regime
+      interpretation、paper-shadow/production weights 或 broker/order path。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:39f464bf3875b3993b44f57b339ff01ce767a5f174a8d9c543b9f76776e575c0
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2300_DAILY_INCREMENTAL_REFACTOR_CANDIDATE_REPORT_WRITER_BOUNDARY
+  - Architecture / daily incremental refactor candidate report writer boundary
+  - P2
+  - DONE
+  - 系统验证
+  - 详见 `docs/requirements/TRADING-2300_Daily_Incremental_Refactor_Candidate_Report_Writer_Boundary.md`；已收敛
+    TRADING-2285～2289 research trend candidate/refined report writer 的重复 JSON+CSV
+    matrix / CSV row helper，不改 CLI、artifact path、schema、阈值或投资解释。
+  - '`post_2085_research_common` 新增共享 `write_csv_rows` 和 `write_matrix_artifacts`；`regenerated_candidate_actual_path_validation.py`、`refined_candidate_actual_path_validation.py`、`regenerated_candidate_inconclusive_diagnostics.py`、`candidate_confidence_scaling_refinement_plan.py`
+    复用 helper；focused parallel pytest、4 个 CLI help smoke、Ruff、compileall、docs freshness、docs/task
+    focused pytest、terminal 状态扫描和 diff check 通过；本轮未生成 cached-data dependent scoring/backtest/daily
+    report 输出，因此未运行 `aits validate-data`。'
+  - '2026-06-30: 每日增量重构自动化新增并完成；基线为 `656aa565aa63ff37f2e795e72e393c7796981c48`，增量范围显示
+    candidate/refined actual-path、confidence scaling 和 inconclusive diagnostics 模块新增多个重复
+    artifact writer。本切片只整理 serialization helper，不改变 JSON key、CSV column、status/safety
+    fields、threshold、score band、promotion gate、data quality gate、backtest acceptance、market-regime
+    interpretation、paper-shadow/production weights 或 broker/order path。'
+  docs_links:
+  - docs/requirements/TRADING-2300_Daily_Incremental_Refactor_Candidate_Report_Writer_Boundary.md
+  terminal: true
+  raw_row_sha256: 39f464bf3875b3993b44f57b339ff01ce767a5f174a8d9c543b9f76776e575c0
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ffbd5e4e487beacc5071113eb79a8d98c9a78d21700233afcf90bb003c832fda

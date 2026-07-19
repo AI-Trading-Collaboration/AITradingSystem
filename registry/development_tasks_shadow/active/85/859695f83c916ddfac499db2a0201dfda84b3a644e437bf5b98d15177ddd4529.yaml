@@ -1,0 +1,159 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-511A_to_511D_WEIGHT_RESEARCH_UNBLOCK_BATCH
+  title: null
+  domain: ETF portfolio/weight research ablation unblock batch
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 复核 + 系统验证观察
+  requirement_refs:
+  - docs/requirements/TRADING-511A_to_511D_Weight_Research_Unblock_Batch.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-511A_to_511D_Weight_Research_Unblock_Batch.md`；按
+    owner 指示保留当前 TRADING-511~520 blocker，不直接继续完整 B1-B6 消融；511A-C 已冻结 B1-B6 独立 runner
+    scope、signal robustness entry contract、untouched holdout/final gate policy；511D
+    只实现 B1 execution/no-trade/turnover-control runner；禁止使用现有混合 P0 dynamic strategy
+    作为 B1-B6 替代；禁止 trend/momentum/relative strength/risk/regime/confidence 混入 B1；禁止
+    official target weights、paper-shadow activation、broker/order/live/production mutation；B2-B6
+    需 owner/system 复核后另行推进
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 511A scope freeze、511B signal robustness contract、511C holdout/final
+      gate policy、validation CLI、Reader Brief、B1-only runner、B1 mini-backfill/result/comparison、system
+      flow、artifact catalog、task register 和 focused tests；validation CLI 拒绝 mixed
+      logic、过早使用 holdout、缺 signal robustness contract 或 unsafe safety boundary；B1
+      runner 先通过 511A-C contract validation 和 `aits validate-data`，只读取 B0 weights
+      / price returns / execution-control policy，不调用 P0 allocator/signals/regimes/features；B1
+      输出 research-only mixed evidence 并保持 no official/paper/broker/live/production
+      boundary
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1423
+    row_sha256: 71ee26613c7870bf88b3637e55fcdcaea4dfc54f9dd8043dcb63c41d1e25f238
+    cell_count: 8
+    all_cells:
+    - TRADING-511A_to_511D_WEIGHT_RESEARCH_UNBLOCK_BATCH
+    - ETF portfolio/weight research ablation unblock batch
+    - P0
+    - VALIDATING
+    - 项目 owner 复核 + 系统验证观察
+    - 详细拆解见 `docs/requirements/TRADING-511A_to_511D_Weight_Research_Unblock_Batch.md`；按
+      owner 指示保留当前 TRADING-511~520 blocker，不直接继续完整 B1-B6 消融；511A-C 已冻结 B1-B6 独立 runner
+      scope、signal robustness entry contract、untouched holdout/final gate policy；511D
+      只实现 B1 execution/no-trade/turnover-control runner；禁止使用现有混合 P0 dynamic strategy
+      作为 B1-B6 替代；禁止 trend/momentum/relative strength/risk/regime/confidence 混入 B1；禁止
+      official target weights、paper-shadow activation、broker/order/live/production
+      mutation；B2-B6 需 owner/system 复核后另行推进
+    - 新增 511A scope freeze、511B signal robustness contract、511C holdout/final gate
+      policy、validation CLI、Reader Brief、B1-only runner、B1 mini-backfill/result/comparison、system
+      flow、artifact catalog、task register 和 focused tests；validation CLI 拒绝 mixed
+      logic、过早使用 holdout、缺 signal robustness contract 或 unsafe safety boundary；B1
+      runner 先通过 511A-C contract validation 和 `aits validate-data`，只读取 B0 weights
+      / price returns / execution-control policy，不调用 P0 allocator/signals/regimes/features；B1
+      输出 research-only mixed evidence 并保持 no official/paper/broker/live/production
+      boundary
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 明确要求不要直接继续 TRADING-511~520；B0 完成但 B1-B6
+      不能从混合 P0 dynamic strategy 推导。本轮创建 unblock batch，先冻结 contracts，再只实现 B1。2026-06-19:
+      实现完成并转入 VALIDATING；`aits etf weight-research validate-contracts` PASS，`run-b1`
+      生成 `B1_MINI_BACKFILL_COMPLETE_RESEARCH_ONLY`，data quality=`PASS_WITH_WARNINGS`，B1
+      vs B0 return_delta=0.002862、drawdown_reduction=-0.001205、turnover_delta=0.124318，解释为
+      mixed research-only evidence；B2-B6 未运行。验证通过 focused pytest 64 passed、scoped
+      ruff、compileall、JSON parse、`git diff --check`、CLI validate-contracts 和 CLI run-b1
+      verify。'
+    raw_line: '|TRADING-511A_to_511D_WEIGHT_RESEARCH_UNBLOCK_BATCH|ETF portfolio/weight
+      research ablation unblock batch|P0|VALIDATING|项目 owner 复核 + 系统验证观察|详细拆解见 `docs/requirements/TRADING-511A_to_511D_Weight_Research_Unblock_Batch.md`；按
+      owner 指示保留当前 TRADING-511~520 blocker，不直接继续完整 B1-B6 消融；511A-C 已冻结 B1-B6 独立 runner
+      scope、signal robustness entry contract、untouched holdout/final gate policy；511D
+      只实现 B1 execution/no-trade/turnover-control runner；禁止使用现有混合 P0 dynamic strategy
+      作为 B1-B6 替代；禁止 trend/momentum/relative strength/risk/regime/confidence 混入 B1；禁止
+      official target weights、paper-shadow activation、broker/order/live/production
+      mutation；B2-B6 需 owner/system 复核后另行推进|新增 511A scope freeze、511B signal robustness
+      contract、511C holdout/final gate policy、validation CLI、Reader Brief、B1-only
+      runner、B1 mini-backfill/result/comparison、system flow、artifact catalog、task
+      register 和 focused tests；validation CLI 拒绝 mixed logic、过早使用 holdout、缺 signal
+      robustness contract 或 unsafe safety boundary；B1 runner 先通过 511A-C contract validation
+      和 `aits validate-data`，只读取 B0 weights / price returns / execution-control policy，不调用
+      P0 allocator/signals/regimes/features；B1 输出 research-only mixed evidence 并保持
+      no official/paper/broker/live/production boundary|2026-06-19: 新增并进入 IN_PROGRESS，原因：owner
+      明确要求不要直接继续 TRADING-511~520；B0 完成但 B1-B6 不能从混合 P0 dynamic strategy 推导。本轮创建 unblock
+      batch，先冻结 contracts，再只实现 B1。2026-06-19: 实现完成并转入 VALIDATING；`aits etf weight-research
+      validate-contracts` PASS，`run-b1` 生成 `B1_MINI_BACKFILL_COMPLETE_RESEARCH_ONLY`，data
+      quality=`PASS_WITH_WARNINGS`，B1 vs B0 return_delta=0.002862、drawdown_reduction=-0.001205、turnover_delta=0.124318，解释为
+      mixed research-only evidence；B2-B6 未运行。验证通过 focused pytest 64 passed、scoped
+      ruff、compileall、JSON parse、`git diff --check`、CLI validate-contracts 和 CLI run-b1
+      verify。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-71ee26613c7870bf88b3637e
+  task_id: TRADING-511A_to_511D_WEIGHT_RESEARCH_UNBLOCK_BATCH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 复核 + 系统验证观察
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 明确要求不要直接继续 TRADING-511~520；B0 完成但
+      B1-B6 不能从混合 P0 dynamic strategy 推导。本轮创建 unblock batch，先冻结 contracts，再只实现 B1。2026-06-19:
+      实现完成并转入 VALIDATING；`aits etf weight-research validate-contracts` PASS，`run-b1`
+      生成 `B1_MINI_BACKFILL_COMPLETE_RESEARCH_ONLY`，data quality=`PASS_WITH_WARNINGS`，B1
+      vs B0 return_delta=0.002862、drawdown_reduction=-0.001205、turnover_delta=0.124318，解释为
+      mixed research-only evidence；B2-B6 未运行。验证通过 focused pytest 64 passed、scoped
+      ruff、compileall、JSON parse、`git diff --check`、CLI validate-contracts 和 CLI run-b1
+      verify。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:71ee26613c7870bf88b3637e55fcdcaea4dfc54f9dd8043dcb63c41d1e25f238
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-511A_to_511D_WEIGHT_RESEARCH_UNBLOCK_BATCH
+  - ETF portfolio/weight research ablation unblock batch
+  - P0
+  - VALIDATING
+  - 项目 owner 复核 + 系统验证观察
+  - 详细拆解见 `docs/requirements/TRADING-511A_to_511D_Weight_Research_Unblock_Batch.md`；按
+    owner 指示保留当前 TRADING-511~520 blocker，不直接继续完整 B1-B6 消融；511A-C 已冻结 B1-B6 独立 runner
+    scope、signal robustness entry contract、untouched holdout/final gate policy；511D
+    只实现 B1 execution/no-trade/turnover-control runner；禁止使用现有混合 P0 dynamic strategy
+    作为 B1-B6 替代；禁止 trend/momentum/relative strength/risk/regime/confidence 混入 B1；禁止
+    official target weights、paper-shadow activation、broker/order/live/production mutation；B2-B6
+    需 owner/system 复核后另行推进
+  - 新增 511A scope freeze、511B signal robustness contract、511C holdout/final gate policy、validation
+    CLI、Reader Brief、B1-only runner、B1 mini-backfill/result/comparison、system flow、artifact
+    catalog、task register 和 focused tests；validation CLI 拒绝 mixed logic、过早使用 holdout、缺
+    signal robustness contract 或 unsafe safety boundary；B1 runner 先通过 511A-C contract
+    validation 和 `aits validate-data`，只读取 B0 weights / price returns / execution-control
+    policy，不调用 P0 allocator/signals/regimes/features；B1 输出 research-only mixed evidence
+    并保持 no official/paper/broker/live/production boundary
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 明确要求不要直接继续 TRADING-511~520；B0 完成但 B1-B6
+    不能从混合 P0 dynamic strategy 推导。本轮创建 unblock batch，先冻结 contracts，再只实现 B1。2026-06-19:
+    实现完成并转入 VALIDATING；`aits etf weight-research validate-contracts` PASS，`run-b1`
+    生成 `B1_MINI_BACKFILL_COMPLETE_RESEARCH_ONLY`，data quality=`PASS_WITH_WARNINGS`，B1
+    vs B0 return_delta=0.002862、drawdown_reduction=-0.001205、turnover_delta=0.124318，解释为
+    mixed research-only evidence；B2-B6 未运行。验证通过 focused pytest 64 passed、scoped ruff、compileall、JSON
+    parse、`git diff --check`、CLI validate-contracts 和 CLI run-b1 verify。'
+  docs_links:
+  - docs/requirements/TRADING-511A_to_511D_Weight_Research_Unblock_Batch.md
+  terminal: false
+  raw_row_sha256: 71ee26613c7870bf88b3637e55fcdcaea4dfc54f9dd8043dcb63c41d1e25f238
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 21aa203143dad5eb62dee29e5d858b498e2398a60a0099d26577cabe8ae58c30

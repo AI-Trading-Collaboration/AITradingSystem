@@ -1,0 +1,121 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-062J
+  title: null
+  domain: ETF backtest artifact and benchmark completeness
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文
+    ETF backtest 审计产物和 QQQ 50/200 MA 基准
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf backtest run` 必须输出 `daily.csv`、`weights.csv`、`trades.csv`、`summary.json`、`metrics.json`
+      和 `summary.md`；daily rows 必须包含资产收益和资产贡献 JSON；weights/trades 必须含 signal_date、return_date、symbol、target/current/delta、model_version、config_hash；benchmark
+      metrics 必须包含 `ma_50_200_qqq`，并继续包含 buy-and-hold SPY/QQQ/SMH 与 static default
+      portfolio；summary 必须披露 data quality、AI regime、execution lag、benchmark comparison
+      和 correctness notes；测试覆盖文件输出、权重/交易 schema、MA baseline 和资产贡献口径'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 373
+    row_sha256: 0916ffa3b93061b48e0ea2f858a4f8225072333d4aacdd5708f0677e5bb9c956
+    cell_count: 8
+    all_cells:
+    - TRADING-062J
+    - ETF backtest artifact and benchmark completeness
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文
+      ETF backtest 审计产物和 QQQ 50/200 MA 基准
+    - '`aits etf backtest run` 必须输出 `daily.csv`、`weights.csv`、`trades.csv`、`summary.json`、`metrics.json`
+      和 `summary.md`；daily rows 必须包含资产收益和资产贡献 JSON；weights/trades 必须含 signal_date、return_date、symbol、target/current/delta、model_version、config_hash；benchmark
+      metrics 必须包含 `ma_50_200_qqq`，并继续包含 buy-and-hold SPY/QQQ/SMH 与 static default
+      portfolio；summary 必须披露 data quality、AI regime、execution lag、benchmark comparison
+      和 correctness notes；测试覆盖文件输出、权重/交易 schema、MA baseline 和资产贡献口径'
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 10.1/10.5/10.7 要求权重历史、交易历史、资产级收益归因、结果文件和
+      QQQ 50/200 MA 基准；当前 ETF backtest 只写 `daily.csv`、`summary.json/md` 和 buy-and-hold/static
+      基准。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 weights/trades/metrics artifacts、daily
+      asset return/contribution JSON、扩展指标、benchmark relative return 和 `ma_50_200_qqq`；真实
+      fast backtest smoke 生成完整 run 目录；目标测试、ruff、compileall、diff check 和全量 pytest 1627
+      passed。'
+    raw_line: '|TRADING-062J|ETF backtest artifact and benchmark completeness|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文 ETF
+      backtest 审计产物和 QQQ 50/200 MA 基准|`aits etf backtest run` 必须输出 `daily.csv`、`weights.csv`、`trades.csv`、`summary.json`、`metrics.json`
+      和 `summary.md`；daily rows 必须包含资产收益和资产贡献 JSON；weights/trades 必须含 signal_date、return_date、symbol、target/current/delta、model_version、config_hash；benchmark
+      metrics 必须包含 `ma_50_200_qqq`，并继续包含 buy-and-hold SPY/QQQ/SMH 与 static default
+      portfolio；summary 必须披露 data quality、AI regime、execution lag、benchmark comparison
+      和 correctness notes；测试覆盖文件输出、权重/交易 schema、MA baseline 和资产贡献口径|2026-05-31: 新增并进入
+      IN_PROGRESS，原因：原文 10.1/10.5/10.7 要求权重历史、交易历史、资产级收益归因、结果文件和 QQQ 50/200 MA 基准；当前
+      ETF backtest 只写 `daily.csv`、`summary.json/md` 和 buy-and-hold/static 基准。2026-05-31:
+      从 IN_PROGRESS 改为 DONE，原因：新增 weights/trades/metrics artifacts、daily asset return/contribution
+      JSON、扩展指标、benchmark relative return 和 `ma_50_200_qqq`；真实 fast backtest smoke
+      生成完整 run 目录；目标测试、ruff、compileall、diff check 和全量 pytest 1627 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0916ffa3b93061b48e0ea2f8
+  task_id: TRADING-062J
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 10.1/10.5/10.7 要求权重历史、交易历史、资产级收益归因、结果文件和
+      QQQ 50/200 MA 基准；当前 ETF backtest 只写 `daily.csv`、`summary.json/md` 和 buy-and-hold/static
+      基准。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 weights/trades/metrics artifacts、daily
+      asset return/contribution JSON、扩展指标、benchmark relative return 和 `ma_50_200_qqq`；真实
+      fast backtest smoke 生成完整 run 目录；目标测试、ruff、compileall、diff check 和全量 pytest 1627
+      passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0916ffa3b93061b48e0ea2f858a4f8225072333d4aacdd5708f0677e5bb9c956
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062J
+  - ETF backtest artifact and benchmark completeness
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文
+    ETF backtest 审计产物和 QQQ 50/200 MA 基准
+  - '`aits etf backtest run` 必须输出 `daily.csv`、`weights.csv`、`trades.csv`、`summary.json`、`metrics.json`
+    和 `summary.md`；daily rows 必须包含资产收益和资产贡献 JSON；weights/trades 必须含 signal_date、return_date、symbol、target/current/delta、model_version、config_hash；benchmark
+    metrics 必须包含 `ma_50_200_qqq`，并继续包含 buy-and-hold SPY/QQQ/SMH 与 static default portfolio；summary
+    必须披露 data quality、AI regime、execution lag、benchmark comparison 和 correctness notes；测试覆盖文件输出、权重/交易
+    schema、MA baseline 和资产贡献口径'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 10.1/10.5/10.7 要求权重历史、交易历史、资产级收益归因、结果文件和
+    QQQ 50/200 MA 基准；当前 ETF backtest 只写 `daily.csv`、`summary.json/md` 和 buy-and-hold/static
+    基准。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 weights/trades/metrics artifacts、daily
+    asset return/contribution JSON、扩展指标、benchmark relative return 和 `ma_50_200_qqq`；真实
+    fast backtest smoke 生成完整 run 目录；目标测试、ruff、compileall、diff check 和全量 pytest 1627
+    passed。'
+  docs_links:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  terminal: true
+  raw_row_sha256: 0916ffa3b93061b48e0ea2f858a4f8225072333d4aacdd5708f0677e5bb9c956
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 360da005dcc0d0c14722340d74ac1bb63061c29a13b7ed2ba365ce5dc960382c

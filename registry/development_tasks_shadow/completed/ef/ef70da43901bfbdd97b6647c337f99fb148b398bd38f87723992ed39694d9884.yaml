@@ -1,0 +1,139 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-052
+  title: null
+  domain: 回测输入/Trend/Sector Signal Calibration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/trend_sector_signal_calibration_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/trend_sector_signal_calibration_2026-05-30.md`；多
+    profile trend/sector signal calibration、distribution/correlation diagnostics、profile
+    ranking、报告、Dashboard/Reader Brief 和 shadow promotion 只读引用已完成；best profile 后续仍不足以解除
+    candidate promotion 的判断已由 `TRADING-053/054` 承接并完成
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits signals calibrate --latest` / `--dry-run` 可生成 `signal_calibration_summary.json/md`
+      和 recommended profile；`aits reports signal-calibration --latest` 可读取 latest
+      报告；calibration profile 不写 production 参数，不自动 candidate promotion；shadow promotion
+      reason 可引用 calibration artifact 但仍保持 `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 262
+    row_sha256: 789363e0a16c99b04e4c7b69543952853a45f8c1ed75b749382df0ca3e9f1429
+    cell_count: 8
+    all_cells:
+    - TRADING-052
+    - 回测输入/Trend/Sector Signal Calibration
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/trend_sector_signal_calibration_2026-05-30.md`；多 profile
+      trend/sector signal calibration、distribution/correlation diagnostics、profile
+      ranking、报告、Dashboard/Reader Brief 和 shadow promotion 只读引用已完成；best profile 后续仍不足以解除
+      candidate promotion 的判断已由 `TRADING-053/054` 承接并完成
+    - '`aits signals calibrate --latest` / `--dry-run` 可生成 `signal_calibration_summary.json/md`
+      和 recommended profile；`aits reports signal-calibration --latest` 可读取 latest
+      报告；calibration profile 不写 production 参数，不自动 candidate promotion；shadow promotion
+      reason 可引用 calibration artifact 但仍保持 `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`'
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-051A 已确认 trend/sector 接入和 ablation
+      链路有效但 real signal contribution below threshold。2026-05-30: 从 IN_PROGRESS 改为
+      VALIDATING，原因：v0.1 实现、文档和真实 CLI 验收完成。2026-06-09: 从 VALIDATING 改为 DONE，原因：`reports
+      signal-calibration --latest` 可读，`signals calibrate --latest --dry-run` 输出 `best_profile=trend_long_bias`
+      且 `can_support_candidate_promotion=false`，`parameters shadow-backtest --latest
+      --dry-run` 仍为 `promotion_status=rejected`；后续 portfolio sensitivity / candidate
+      判断已由 TRADING-053/054 完成；验证通过 signal calibration focused pytest 7 passed、signal
+      ablation / dashboard / Reader Brief / CLI direct focused pytest 54 passed、文档检查、Ruff、repo-wide
+      Black check、`compileall` 和 `git diff --check`。'
+    raw_line: '|TRADING-052|回测输入/Trend/Sector Signal Calibration|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/trend_sector_signal_calibration_2026-05-30.md`；多 profile
+      trend/sector signal calibration、distribution/correlation diagnostics、profile
+      ranking、报告、Dashboard/Reader Brief 和 shadow promotion 只读引用已完成；best profile 后续仍不足以解除
+      candidate promotion 的判断已由 `TRADING-053/054` 承接并完成|`aits signals calibrate --latest`
+      / `--dry-run` 可生成 `signal_calibration_summary.json/md` 和 recommended profile；`aits
+      reports signal-calibration --latest` 可读取 latest 报告；calibration profile 不写 production
+      参数，不自动 candidate promotion；shadow promotion reason 可引用 calibration artifact
+      但仍保持 `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`|2026-05-30:
+      新增并进入 IN_PROGRESS，原因：TRADING-051A 已确认 trend/sector 接入和 ablation 链路有效但 real signal
+      contribution below threshold。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：v0.1
+      实现、文档和真实 CLI 验收完成。2026-06-09: 从 VALIDATING 改为 DONE，原因：`reports signal-calibration
+      --latest` 可读，`signals calibrate --latest --dry-run` 输出 `best_profile=trend_long_bias`
+      且 `can_support_candidate_promotion=false`，`parameters shadow-backtest --latest
+      --dry-run` 仍为 `promotion_status=rejected`；后续 portfolio sensitivity / candidate
+      判断已由 TRADING-053/054 完成；验证通过 signal calibration focused pytest 7 passed、signal
+      ablation / dashboard / Reader Brief / CLI direct focused pytest 54 passed、文档检查、Ruff、repo-wide
+      Black check、`compileall` 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-789363e0a16c99b04e4c7b69
+  task_id: TRADING-052
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-051A 已确认 trend/sector 接入和 ablation
+      链路有效但 real signal contribution below threshold。2026-05-30: 从 IN_PROGRESS 改为
+      VALIDATING，原因：v0.1 实现、文档和真实 CLI 验收完成。2026-06-09: 从 VALIDATING 改为 DONE，原因：`reports
+      signal-calibration --latest` 可读，`signals calibrate --latest --dry-run` 输出 `best_profile=trend_long_bias`
+      且 `can_support_candidate_promotion=false`，`parameters shadow-backtest --latest
+      --dry-run` 仍为 `promotion_status=rejected`；后续 portfolio sensitivity / candidate
+      判断已由 TRADING-053/054 完成；验证通过 signal calibration focused pytest 7 passed、signal
+      ablation / dashboard / Reader Brief / CLI direct focused pytest 54 passed、文档检查、Ruff、repo-wide
+      Black check、`compileall` 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:789363e0a16c99b04e4c7b69543952853a45f8c1ed75b749382df0ca3e9f1429
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-052
+  - 回测输入/Trend/Sector Signal Calibration
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/trend_sector_signal_calibration_2026-05-30.md`；多 profile
+    trend/sector signal calibration、distribution/correlation diagnostics、profile ranking、报告、Dashboard/Reader
+    Brief 和 shadow promotion 只读引用已完成；best profile 后续仍不足以解除 candidate promotion 的判断已由
+    `TRADING-053/054` 承接并完成
+  - '`aits signals calibrate --latest` / `--dry-run` 可生成 `signal_calibration_summary.json/md`
+    和 recommended profile；`aits reports signal-calibration --latest` 可读取 latest 报告；calibration
+    profile 不写 production 参数，不自动 candidate promotion；shadow promotion reason 可引用 calibration
+    artifact 但仍保持 `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`'
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-051A 已确认 trend/sector 接入和 ablation 链路有效但
+    real signal contribution below threshold。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：v0.1
+    实现、文档和真实 CLI 验收完成。2026-06-09: 从 VALIDATING 改为 DONE，原因：`reports signal-calibration
+    --latest` 可读，`signals calibrate --latest --dry-run` 输出 `best_profile=trend_long_bias`
+    且 `can_support_candidate_promotion=false`，`parameters shadow-backtest --latest
+    --dry-run` 仍为 `promotion_status=rejected`；后续 portfolio sensitivity / candidate
+    判断已由 TRADING-053/054 完成；验证通过 signal calibration focused pytest 7 passed、signal
+    ablation / dashboard / Reader Brief / CLI direct focused pytest 54 passed、文档检查、Ruff、repo-wide
+    Black check、`compileall` 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/trend_sector_signal_calibration_2026-05-30.md
+  terminal: true
+  raw_row_sha256: 789363e0a16c99b04e4c7b69543952853a45f8c1ed75b749382df0ca3e9f1429
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 605874510e0fd69866448c229a1a7e4453a2323eb1d3ffe211bf1b51c496d28c

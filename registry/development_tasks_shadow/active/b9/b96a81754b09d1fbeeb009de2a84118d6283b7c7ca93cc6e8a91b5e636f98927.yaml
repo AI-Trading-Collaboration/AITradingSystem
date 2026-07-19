@@ -1,0 +1,123 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2310_AI_LEADERSHIP_SCOPE_REVIEW
+  title: null
+  domain: Research trends / AI semiconductor leadership candidate family
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2310_AI_Leadership_Scope_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2310_AI_Leadership_Scope_Review.md`；依赖
+    TRADING-2309 actual-path validation outputs、required-symbol cached price quality
+    gate 和 scope-review policy manifest。Full-universe validation 当前因 `ASX` 缺失 fail-closed，本任务只能声明
+    TRADING-2310 required-symbol scope review readiness，不能声明 full-universe data readiness。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 AI leadership scope review summary、asset scope matrix、horizon scope matrix、use-case
+      scope matrix、recommended scope、safety boundary 和 research report；必须明确 `SMH only`、`QQQ
+      + SMH`、`10d` / `20d`、`confirmation_only` 和 `exposure_cap_modifier` 的 scope decision；所有
+      artifacts 固定 promotion / paper-shadow / production / broker false/none、`dynamic_promotion_status=BLOCKED`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1214
+    row_sha256: 7ac9c15b294342245931de975dd92de85d6e3c01886827d1a327c5f5d461392b
+    cell_count: 8
+    all_cells:
+    - TRADING-2310_AI_LEADERSHIP_SCOPE_REVIEW
+    - Research trends / AI semiconductor leadership candidate family
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2310_AI_Leadership_Scope_Review.md`；依赖 TRADING-2309
+      actual-path validation outputs、required-symbol cached price quality gate 和 scope-review
+      policy manifest。Full-universe validation 当前因 `ASX` 缺失 fail-closed，本任务只能声明 TRADING-2310
+      required-symbol scope review readiness，不能声明 full-universe data readiness。
+    - 生成 AI leadership scope review summary、asset scope matrix、horizon scope matrix、use-case
+      scope matrix、recommended scope、safety boundary 和 research report；必须明确 `SMH only`、`QQQ
+      + SMH`、`10d` / `20d`、`confirmation_only` 和 `exposure_cap_modifier` 的 scope decision；所有
+      artifacts 固定 promotion / paper-shadow / production / broker false/none、`dynamic_promotion_status=BLOCKED`。
+    - '2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2309 next task 新增并进入 IN_PROGRESS；当前
+      worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging。2026-07-01: 实现完成并转入
+      VALIDATING；真实 run status=`AI_LEADERSHIP_SCOPE_REVIEW_READY_RESEARCH_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`；`QQQ
+      + SMH` / `10d` / `confirmation_only` / `exposure_cap_modifier` keep，`SMH only`
+      / `20d` diagnostic，`standalone_alpha` reject。'
+    raw_line: '|TRADING-2310_AI_LEADERSHIP_SCOPE_REVIEW|Research trends / AI semiconductor
+      leadership candidate family|P1|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2310_AI_Leadership_Scope_Review.md`；依赖
+      TRADING-2309 actual-path validation outputs、required-symbol cached price quality
+      gate 和 scope-review policy manifest。Full-universe validation 当前因 `ASX` 缺失 fail-closed，本任务只能声明
+      TRADING-2310 required-symbol scope review readiness，不能声明 full-universe data
+      readiness。|生成 AI leadership scope review summary、asset scope matrix、horizon
+      scope matrix、use-case scope matrix、recommended scope、safety boundary 和 research
+      report；必须明确 `SMH only`、`QQQ + SMH`、`10d` / `20d`、`confirmation_only` 和 `exposure_cap_modifier`
+      的 scope decision；所有 artifacts 固定 promotion / paper-shadow / production / broker
+      false/none、`dynamic_promotion_status=BLOCKED`。|2026-07-01: 根据 owner post-2302
+      roadmap 和 TRADING-2309 next task 新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research
+      文档未提交改动，本任务必须 selective staging。2026-07-01: 实现完成并转入 VALIDATING；真实 run status=`AI_LEADERSHIP_SCOPE_REVIEW_READY_RESEARCH_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`；`QQQ
+      + SMH` / `10d` / `confirmation_only` / `exposure_cap_modifier` keep，`SMH only`
+      / `20d` diagnostic，`standalone_alpha` reject。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7ac9c15b294342245931de97
+  task_id: TRADING-2310_AI_LEADERSHIP_SCOPE_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2309 next task 新增并进入
+      IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging。2026-07-01:
+      实现完成并转入 VALIDATING；真实 run status=`AI_LEADERSHIP_SCOPE_REVIEW_READY_RESEARCH_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`；`QQQ
+      + SMH` / `10d` / `confirmation_only` / `exposure_cap_modifier` keep，`SMH only`
+      / `20d` diagnostic，`standalone_alpha` reject。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7ac9c15b294342245931de975dd92de85d6e3c01886827d1a327c5f5d461392b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2310_AI_LEADERSHIP_SCOPE_REVIEW
+  - Research trends / AI semiconductor leadership candidate family
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2310_AI_Leadership_Scope_Review.md`；依赖 TRADING-2309
+    actual-path validation outputs、required-symbol cached price quality gate 和 scope-review
+    policy manifest。Full-universe validation 当前因 `ASX` 缺失 fail-closed，本任务只能声明 TRADING-2310
+    required-symbol scope review readiness，不能声明 full-universe data readiness。
+  - 生成 AI leadership scope review summary、asset scope matrix、horizon scope matrix、use-case
+    scope matrix、recommended scope、safety boundary 和 research report；必须明确 `SMH only`、`QQQ
+    + SMH`、`10d` / `20d`、`confirmation_only` 和 `exposure_cap_modifier` 的 scope decision；所有
+    artifacts 固定 promotion / paper-shadow / production / broker false/none、`dynamic_promotion_status=BLOCKED`。
+  - '2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2309 next task 新增并进入 IN_PROGRESS；当前
+    worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging。2026-07-01: 实现完成并转入 VALIDATING；真实
+    run status=`AI_LEADERSHIP_SCOPE_REVIEW_READY_RESEARCH_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`；`QQQ
+    + SMH` / `10d` / `confirmation_only` / `exposure_cap_modifier` keep，`SMH only`
+    / `20d` diagnostic，`standalone_alpha` reject。'
+  docs_links:
+  - docs/requirements/TRADING-2310_AI_Leadership_Scope_Review.md
+  terminal: false
+  raw_row_sha256: 7ac9c15b294342245931de975dd92de85d6e3c01886827d1a327c5f5d461392b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 03a62aafce930bcacd97649a7f938a1256e1ea43c09590311e49b4dc892de778

@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-707_THRESHOLD_DEPENDENCY_CALIBRATION_GOVERNANCE
+  title: null
+  domain: Research governance / threshold dependency and calibration governance
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；连接 threshold
+    registry、protocol、promotion policy 和 controls
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`threshold-dependency-audit` 输出 threshold dependency graph；unregistered_high_impact_threshold_reference_count=0；inline_promotion_threshold_count=0；不修改
+      threshold current_value'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1377
+    row_sha256: a99cd7b7be0be36a58963d7fbacf57ab7c30e49520c0f806b3e2c2a25f788b51
+    cell_count: 8
+    all_cells:
+    - TRADING-707_THRESHOLD_DEPENDENCY_CALIBRATION_GOVERNANCE
+    - Research governance / threshold dependency and calibration governance
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 TRADING-703_to_725 总需求文档；连接 threshold registry、protocol、promotion policy
+      和 controls
+    - '`threshold-dependency-audit` 输出 threshold dependency graph；unregistered_high_impact_threshold_reference_count=0；inline_promotion_threshold_count=0；不修改
+      threshold current_value'
+    - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。'
+    raw_line: '|TRADING-707_THRESHOLD_DEPENDENCY_CALIBRATION_GOVERNANCE|Research governance
+      / threshold dependency and calibration governance|P0|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 TRADING-703_to_725 总需求文档；连接 threshold registry、protocol、promotion policy
+      和 controls|`threshold-dependency-audit` 输出 threshold dependency graph；unregistered_high_impact_threshold_reference_count=0；inline_promotion_threshold_count=0；不修改
+      threshold current_value|2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only
+      baseline 并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a99cd7b7be0be36a58963d7f
+  task_id: TRADING-707_THRESHOLD_DEPENDENCY_CALIBRATION_GOVERNANCE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a99cd7b7be0be36a58963d7fbacf57ab7c30e49520c0f806b3e2c2a25f788b51
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-707_THRESHOLD_DEPENDENCY_CALIBRATION_GOVERNANCE
+  - Research governance / threshold dependency and calibration governance
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-703_to_725 总需求文档；连接 threshold registry、protocol、promotion policy 和
+    controls
+  - '`threshold-dependency-audit` 输出 threshold dependency graph；unregistered_high_impact_threshold_reference_count=0；inline_promotion_threshold_count=0；不修改
+    threshold current_value'
+  - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入
+    VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio
+    decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+    / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+    production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: a99cd7b7be0be36a58963d7fbacf57ab7c30e49520c0f806b3e2c2a25f788b51
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: bb3c1b07641db8176c2b1d00c6c11571f3a80e7dd5ac8dae1412903ae7384834

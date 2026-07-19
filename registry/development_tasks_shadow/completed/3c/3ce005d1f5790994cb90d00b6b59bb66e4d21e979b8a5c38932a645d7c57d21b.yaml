@@ -1,0 +1,141 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT
+  title: null
+  domain: Research trends / high-intensity risk-cap observe-only owner decision pause
+    checkpoint
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 重新评估 scheduler guardrail mainline 是否继续
+  requirement_refs:
+  - docs/requirements/TRADING-2363_Observe_Only_Owner_Decision_And_Pause_Checkpoint.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2363_Observe_Only_Owner_Decision_And_Pause_Checkpoint.md`；承接
+    TRADING-2362 owner decision pause route。本任务只读取 prior validated TRADING-2347～2362
+    guardrail artifacts；不自动创建 TRADING-2364，不启动 hardening implementation，不启用 scheduler、event
+    append、outcome binding、paper-shadow、production 或 broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends high-intensity-risk-cap-observe-only-owner-decision-pause-checkpoint`；生成
+      owner decision pause checkpoint、post-2363 owner reassessment plan、summary、main
+      package、source artifact review、blocked promotion rationale、interpretation boundary、安全边界和
+      research docs；真实 run status=`OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT_RECORDED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347..TRADING-2362`，evidence_chain_complete=true，owner_decision_recorded=true，owner_decision=`KEEP_DISABLED_AND_PAUSE_FOR_REASSESSMENT`，promotion_decision=`BLOCKED`，promotion_allowed=false，pause_checkpoint_recorded=true，continue_linear_guardrail_tasks=false，readiness=`PAUSE_FOR_OWNER_REASSESSMENT_WITH_CAVEATS`，next
+      route=`OWNER_REASSESSMENT_REQUIRED_BEFORE_ADDITIONAL_SCHEDULER_GUARDRAIL_TASKS`；focused
+      parallel pytest 13 passed。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 124
+    row_sha256: 8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd
+    cell_count: 8
+    all_cells:
+    - TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT
+    - Research trends / high-intensity risk-cap observe-only owner decision pause
+      checkpoint
+    - P0
+    - DONE
+    - 项目 owner 重新评估 scheduler guardrail mainline 是否继续
+    - 详见 `docs/requirements/TRADING-2363_Observe_Only_Owner_Decision_And_Pause_Checkpoint.md`；承接
+      TRADING-2362 owner decision pause route。本任务只读取 prior validated TRADING-2347～2362
+      guardrail artifacts；不自动创建 TRADING-2364，不启动 hardening implementation，不启用 scheduler、event
+      append、outcome binding、paper-shadow、production 或 broker。
+    - 新增 `aits research trends high-intensity-risk-cap-observe-only-owner-decision-pause-checkpoint`；生成
+      owner decision pause checkpoint、post-2363 owner reassessment plan、summary、main
+      package、source artifact review、blocked promotion rationale、interpretation boundary、安全边界和
+      research docs；真实 run status=`OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT_RECORDED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347..TRADING-2362`，evidence_chain_complete=true，owner_decision_recorded=true，owner_decision=`KEEP_DISABLED_AND_PAUSE_FOR_REASSESSMENT`，promotion_decision=`BLOCKED`，promotion_allowed=false，pause_checkpoint_recorded=true，continue_linear_guardrail_tasks=false，readiness=`PAUSE_FOR_OWNER_REASSESSMENT_WITH_CAVEATS`，next
+      route=`OWNER_REASSESSMENT_REQUIRED_BEFORE_ADDITIONAL_SCHEDULER_GUARDRAIL_TASKS`；focused
+      parallel pytest 13 passed。
+    - '2026-07-05: 根据 owner closure pack 新增并进入 IN_PROGRESS；2363 完成后必须暂停线性 guardrail
+      任务。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取 prior validated
+      TRADING-2347～2362 artifacts，不读取 fresh market data、不 append event、不绑定 outcome、不
+      mutate outcome store、不启用 paper-shadow、不调用 broker API、不生成 technical features、scoring、backtest
+      或 daily report。后续必须先由 owner 重新评估 hardening implementation、paper-shadow proposal
+      或策略研究主线，不能自动继续 2364。'
+    raw_line: '|TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT|Research
+      trends / high-intensity risk-cap observe-only owner decision pause checkpoint|P0|DONE|项目
+      owner 重新评估 scheduler guardrail mainline 是否继续|详见 `docs/requirements/TRADING-2363_Observe_Only_Owner_Decision_And_Pause_Checkpoint.md`；承接
+      TRADING-2362 owner decision pause route。本任务只读取 prior validated TRADING-2347～2362
+      guardrail artifacts；不自动创建 TRADING-2364，不启动 hardening implementation，不启用 scheduler、event
+      append、outcome binding、paper-shadow、production 或 broker。|新增 `aits research trends
+      high-intensity-risk-cap-observe-only-owner-decision-pause-checkpoint`；生成 owner
+      decision pause checkpoint、post-2363 owner reassessment plan、summary、main package、source
+      artifact review、blocked promotion rationale、interpretation boundary、安全边界和 research
+      docs；真实 run status=`OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT_RECORDED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347..TRADING-2362`，evidence_chain_complete=true，owner_decision_recorded=true，owner_decision=`KEEP_DISABLED_AND_PAUSE_FOR_REASSESSMENT`，promotion_decision=`BLOCKED`，promotion_allowed=false，pause_checkpoint_recorded=true，continue_linear_guardrail_tasks=false，readiness=`PAUSE_FOR_OWNER_REASSESSMENT_WITH_CAVEATS`，next
+      route=`OWNER_REASSESSMENT_REQUIRED_BEFORE_ADDITIONAL_SCHEDULER_GUARDRAIL_TASKS`；focused
+      parallel pytest 13 passed。|2026-07-05: 根据 owner closure pack 新增并进入 IN_PROGRESS；2363
+      完成后必须暂停线性 guardrail 任务。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347～2362 artifacts，不读取 fresh market data、不 append event、不绑定
+      outcome、不 mutate outcome store、不启用 paper-shadow、不调用 broker API、不生成 technical
+      features、scoring、backtest 或 daily report。后续必须先由 owner 重新评估 hardening implementation、paper-shadow
+      proposal 或策略研究主线，不能自动继续 2364。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8c78d9e55b8caea1511f4277
+  task_id: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 重新评估 scheduler guardrail mainline 是否继续
+    notes: '2026-07-05: 根据 owner closure pack 新增并进入 IN_PROGRESS；2363 完成后必须暂停线性 guardrail
+      任务。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取 prior validated
+      TRADING-2347～2362 artifacts，不读取 fresh market data、不 append event、不绑定 outcome、不
+      mutate outcome store、不启用 paper-shadow、不调用 broker API、不生成 technical features、scoring、backtest
+      或 daily report。后续必须先由 owner 重新评估 hardening implementation、paper-shadow proposal
+      或策略研究主线，不能自动继续 2364。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT
+  - Research trends / high-intensity risk-cap observe-only owner decision pause checkpoint
+  - P0
+  - DONE
+  - 项目 owner 重新评估 scheduler guardrail mainline 是否继续
+  - 详见 `docs/requirements/TRADING-2363_Observe_Only_Owner_Decision_And_Pause_Checkpoint.md`；承接
+    TRADING-2362 owner decision pause route。本任务只读取 prior validated TRADING-2347～2362
+    guardrail artifacts；不自动创建 TRADING-2364，不启动 hardening implementation，不启用 scheduler、event
+    append、outcome binding、paper-shadow、production 或 broker。
+  - 新增 `aits research trends high-intensity-risk-cap-observe-only-owner-decision-pause-checkpoint`；生成
+    owner decision pause checkpoint、post-2363 owner reassessment plan、summary、main
+    package、source artifact review、blocked promotion rationale、interpretation boundary、安全边界和
+    research docs；真实 run status=`OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT_RECORDED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+    tasks=`TRADING-2347..TRADING-2362`，evidence_chain_complete=true，owner_decision_recorded=true，owner_decision=`KEEP_DISABLED_AND_PAUSE_FOR_REASSESSMENT`，promotion_decision=`BLOCKED`，promotion_allowed=false，pause_checkpoint_recorded=true，continue_linear_guardrail_tasks=false，readiness=`PAUSE_FOR_OWNER_REASSESSMENT_WITH_CAVEATS`，next
+    route=`OWNER_REASSESSMENT_REQUIRED_BEFORE_ADDITIONAL_SCHEDULER_GUARDRAIL_TASKS`；focused
+    parallel pytest 13 passed。
+  - '2026-07-05: 根据 owner closure pack 新增并进入 IN_PROGRESS；2363 完成后必须暂停线性 guardrail
+    任务。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取 prior validated
+    TRADING-2347～2362 artifacts，不读取 fresh market data、不 append event、不绑定 outcome、不
+    mutate outcome store、不启用 paper-shadow、不调用 broker API、不生成 technical features、scoring、backtest
+    或 daily report。后续必须先由 owner 重新评估 hardening implementation、paper-shadow proposal
+    或策略研究主线，不能自动继续 2364。'
+  docs_links:
+  - docs/requirements/TRADING-2363_Observe_Only_Owner_Decision_And_Pause_Checkpoint.md
+  terminal: true
+  raw_row_sha256: 8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 07cb037d3c99b3925ed65c98e91b8b7e519fbd1d2419e8b59ea689d19c2081b8

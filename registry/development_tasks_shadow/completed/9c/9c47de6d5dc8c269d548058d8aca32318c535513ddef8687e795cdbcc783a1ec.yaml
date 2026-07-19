@@ -1,0 +1,114 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-062M
+  title: null
+  domain: ETF features/backtest CLI option compatibility
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文
+    features/backtest CLI 参数兼容
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf features build --end latest` 和根级 `aits features build --end latest`
+      必须使用价格缓存最新日期作为 end；显式 `--end YYYY-MM-DD` 继续按日期过滤；`aits etf backtest run --config
+      config/etf_portfolio/backtest.yaml --fast` 必须读取指定 ETF backtest config；根级 `aits
+      backtest` 不得变成 ETF alias；测试覆盖 help/CLI smoke 和现有主系统 backtest help 不变'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 376
+    row_sha256: 8841750e11511785c2cfe25ee06533f49b2dbe503335d7ee47259dabf9162a8e
+    cell_count: 8
+    all_cells:
+    - TRADING-062M
+    - ETF features/backtest CLI option compatibility
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文
+      features/backtest CLI 参数兼容
+    - '`aits etf features build --end latest` 和根级 `aits features build --end latest`
+      必须使用价格缓存最新日期作为 end；显式 `--end YYYY-MM-DD` 继续按日期过滤；`aits etf backtest run --config
+      config/etf_portfolio/backtest.yaml --fast` 必须读取指定 ETF backtest config；根级 `aits
+      backtest` 不得变成 ETF alias；测试覆盖 help/CLI smoke 和现有主系统 backtest help 不变'
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 16.2 / 16.5 给出 `features build --end latest`
+      和 backtest `--config` 示例，当前 ETF features 对 `latest` 解析失败，ETF backtest run 不暴露
+      `--config`。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：`features build --end latest`、root
+      alias smoke 和 ETF `backtest run --config` 均通过，根级 `aits backtest` 仍为主系统命令；全量
+      pytest 1630 passed。'
+    raw_line: '|TRADING-062M|ETF features/backtest CLI option compatibility|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文 features/backtest
+      CLI 参数兼容|`aits etf features build --end latest` 和根级 `aits features build --end
+      latest` 必须使用价格缓存最新日期作为 end；显式 `--end YYYY-MM-DD` 继续按日期过滤；`aits etf backtest
+      run --config config/etf_portfolio/backtest.yaml --fast` 必须读取指定 ETF backtest
+      config；根级 `aits backtest` 不得变成 ETF alias；测试覆盖 help/CLI smoke 和现有主系统 backtest
+      help 不变|2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 16.2 / 16.5 给出 `features build --end
+      latest` 和 backtest `--config` 示例，当前 ETF features 对 `latest` 解析失败，ETF backtest
+      run 不暴露 `--config`。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：`features build --end
+      latest`、root alias smoke 和 ETF `backtest run --config` 均通过，根级 `aits backtest`
+      仍为主系统命令；全量 pytest 1630 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8841750e11511785c2cfe25e
+  task_id: TRADING-062M
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 16.2 / 16.5 给出 `features build --end
+      latest` 和 backtest `--config` 示例，当前 ETF features 对 `latest` 解析失败，ETF backtest
+      run 不暴露 `--config`。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：`features build --end
+      latest`、root alias smoke 和 ETF `backtest run --config` 均通过，根级 `aits backtest`
+      仍为主系统命令；全量 pytest 1630 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8841750e11511785c2cfe25ee06533f49b2dbe503335d7ee47259dabf9162a8e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062M
+  - ETF features/backtest CLI option compatibility
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文
+    features/backtest CLI 参数兼容
+  - '`aits etf features build --end latest` 和根级 `aits features build --end latest`
+    必须使用价格缓存最新日期作为 end；显式 `--end YYYY-MM-DD` 继续按日期过滤；`aits etf backtest run --config
+    config/etf_portfolio/backtest.yaml --fast` 必须读取指定 ETF backtest config；根级 `aits
+    backtest` 不得变成 ETF alias；测试覆盖 help/CLI smoke 和现有主系统 backtest help 不变'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 16.2 / 16.5 给出 `features build --end latest`
+    和 backtest `--config` 示例，当前 ETF features 对 `latest` 解析失败，ETF backtest run 不暴露
+    `--config`。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：`features build --end latest`、root
+    alias smoke 和 ETF `backtest run --config` 均通过，根级 `aits backtest` 仍为主系统命令；全量 pytest
+    1630 passed。'
+  docs_links:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  terminal: true
+  raw_row_sha256: 8841750e11511785c2cfe25ee06533f49b2dbe503335d7ee47259dabf9162a8e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5e9fa0e8c10439b97094578e8db1870b37655e1967df1cd324c9a6525a3884d3

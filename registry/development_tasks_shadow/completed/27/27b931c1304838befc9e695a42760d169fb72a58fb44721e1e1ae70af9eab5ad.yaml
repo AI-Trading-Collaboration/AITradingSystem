@@ -1,0 +1,153 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2283_FIRST_LAYER_EXECUTABLE_CANDIDATE_SIGNAL_GENERATOR_FRAMEWORK
+  title: null
+  domain: Research trends / first-layer executable candidate generator framework
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 research-only framework outputs
+  requirement_refs:
+  - docs/requirements/TRADING-2283_First_Layer_Executable_Candidate_Signal_Generator_Framework.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2283_First_Layer_Executable_Candidate_Signal_Generator_Framework.md`；已完成
+    native executable generator framework 和 `framework_smoke_candidate`，不得把 baseline
+    rewrap POC 升级为 historical executable artifact，也不得改变 TRADING-2281 permanently inconclusive
+    decisions
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 FirstLayerCandidateSignalGenerator interface、CandidateSignalSpec、generator
+      registry、runtime、framework smoke generator、`aits research trends first-layer-candidate-generator-framework`
+      CLI、candidate signal spec JSON、candidate-bound signal series CSV、candidate-bound
+      prediction artifact JSON、generation summary、validation summary、三份 research/requirements
+      文档和 registry/catalog/system flow 更新；TRADING-2282 validator 已复用并扩展 signal spec
+      / framework smoke safety checks；所有 artifacts 固定 promotion/paper-shadow/production
+      false、broker_action=none、actual_path_validation_ready=false、historical_executable_artifact=false；validation
+      cleanup 后 full parallel pytest、task-register consistency、docs freshness、documentation
+      contract、Ruff、contract-validation 和 `git diff --check` 均通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 168
+    row_sha256: 8d4777ab36a3cc39d4f0a84693c23b76d66f1369d1ca2b019836d9ff92865f96
+    cell_count: 8
+    all_cells:
+    - TRADING-2283_FIRST_LAYER_EXECUTABLE_CANDIDATE_SIGNAL_GENERATOR_FRAMEWORK
+    - Research trends / first-layer executable candidate generator framework
+    - P0
+    - DONE
+    - 项目 owner 后续复核 research-only framework outputs
+    - 详见 `docs/requirements/TRADING-2283_First_Layer_Executable_Candidate_Signal_Generator_Framework.md`；已完成
+      native executable generator framework 和 `framework_smoke_candidate`，不得把 baseline
+      rewrap POC 升级为 historical executable artifact，也不得改变 TRADING-2281 permanently
+      inconclusive decisions
+    - 生成 FirstLayerCandidateSignalGenerator interface、CandidateSignalSpec、generator
+      registry、runtime、framework smoke generator、`aits research trends first-layer-candidate-generator-framework`
+      CLI、candidate signal spec JSON、candidate-bound signal series CSV、candidate-bound
+      prediction artifact JSON、generation summary、validation summary、三份 research/requirements
+      文档和 registry/catalog/system flow 更新；TRADING-2282 validator 已复用并扩展 signal spec
+      / framework smoke safety checks；所有 artifacts 固定 promotion/paper-shadow/production
+      false、broker_action=none、actual_path_validation_ready=false、historical_executable_artifact=false；validation
+      cleanup 后 full parallel pytest、task-register consistency、docs freshness、documentation
+      contract、Ruff、contract-validation 和 `git diff --check` 均通过
+    - '2026-06-29: 新增并进入 IN_PROGRESS；实现完成后转入 VALIDATING，真实 smoke run signal/prediction
+      record count=65、validation_status=PASS、candidate_bound_validator_reused=true。TRADING-2298
+      修复 malformed task id 与 scheduler ordering tests 后，full parallel pytest 3504
+      passed / 643 warnings；task-register consistency run/validate PASS；docs freshness
+      PASS；documentation contract PASS；Ruff PASS；`contract-validation` 193 passed（runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260629T142253Z/test_runtime_summary.json`）；`git
+      diff --check` PASS。任务归档为 DONE；TRADING-2284 trend/risk/volatility executable
+      generators 尚未启动。'
+    raw_line: '|TRADING-2283_FIRST_LAYER_EXECUTABLE_CANDIDATE_SIGNAL_GENERATOR_FRAMEWORK|Research
+      trends / first-layer executable candidate generator framework|P0|DONE|项目 owner
+      后续复核 research-only framework outputs|详见 `docs/requirements/TRADING-2283_First_Layer_Executable_Candidate_Signal_Generator_Framework.md`；已完成
+      native executable generator framework 和 `framework_smoke_candidate`，不得把 baseline
+      rewrap POC 升级为 historical executable artifact，也不得改变 TRADING-2281 permanently
+      inconclusive decisions|生成 FirstLayerCandidateSignalGenerator interface、CandidateSignalSpec、generator
+      registry、runtime、framework smoke generator、`aits research trends first-layer-candidate-generator-framework`
+      CLI、candidate signal spec JSON、candidate-bound signal series CSV、candidate-bound
+      prediction artifact JSON、generation summary、validation summary、三份 research/requirements
+      文档和 registry/catalog/system flow 更新；TRADING-2282 validator 已复用并扩展 signal spec
+      / framework smoke safety checks；所有 artifacts 固定 promotion/paper-shadow/production
+      false、broker_action=none、actual_path_validation_ready=false、historical_executable_artifact=false；validation
+      cleanup 后 full parallel pytest、task-register consistency、docs freshness、documentation
+      contract、Ruff、contract-validation 和 `git diff --check` 均通过|2026-06-29: 新增并进入
+      IN_PROGRESS；实现完成后转入 VALIDATING，真实 smoke run signal/prediction record count=65、validation_status=PASS、candidate_bound_validator_reused=true。TRADING-2298
+      修复 malformed task id 与 scheduler ordering tests 后，full parallel pytest 3504
+      passed / 643 warnings；task-register consistency run/validate PASS；docs freshness
+      PASS；documentation contract PASS；Ruff PASS；`contract-validation` 193 passed（runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260629T142253Z/test_runtime_summary.json`）；`git
+      diff --check` PASS。任务归档为 DONE；TRADING-2284 trend/risk/volatility executable
+      generators 尚未启动。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8d4777ab36a3cc39d4f0a846
+  task_id: TRADING-2283_FIRST_LAYER_EXECUTABLE_CANDIDATE_SIGNAL_GENERATOR_FRAMEWORK
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 research-only framework outputs
+    notes: '2026-06-29: 新增并进入 IN_PROGRESS；实现完成后转入 VALIDATING，真实 smoke run signal/prediction
+      record count=65、validation_status=PASS、candidate_bound_validator_reused=true。TRADING-2298
+      修复 malformed task id 与 scheduler ordering tests 后，full parallel pytest 3504
+      passed / 643 warnings；task-register consistency run/validate PASS；docs freshness
+      PASS；documentation contract PASS；Ruff PASS；`contract-validation` 193 passed（runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260629T142253Z/test_runtime_summary.json`）；`git
+      diff --check` PASS。任务归档为 DONE；TRADING-2284 trend/risk/volatility executable
+      generators 尚未启动。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8d4777ab36a3cc39d4f0a84693c23b76d66f1369d1ca2b019836d9ff92865f96
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2283_FIRST_LAYER_EXECUTABLE_CANDIDATE_SIGNAL_GENERATOR_FRAMEWORK
+  - Research trends / first-layer executable candidate generator framework
+  - P0
+  - DONE
+  - 项目 owner 后续复核 research-only framework outputs
+  - 详见 `docs/requirements/TRADING-2283_First_Layer_Executable_Candidate_Signal_Generator_Framework.md`；已完成
+    native executable generator framework 和 `framework_smoke_candidate`，不得把 baseline
+    rewrap POC 升级为 historical executable artifact，也不得改变 TRADING-2281 permanently inconclusive
+    decisions
+  - 生成 FirstLayerCandidateSignalGenerator interface、CandidateSignalSpec、generator
+    registry、runtime、framework smoke generator、`aits research trends first-layer-candidate-generator-framework`
+    CLI、candidate signal spec JSON、candidate-bound signal series CSV、candidate-bound
+    prediction artifact JSON、generation summary、validation summary、三份 research/requirements
+    文档和 registry/catalog/system flow 更新；TRADING-2282 validator 已复用并扩展 signal spec
+    / framework smoke safety checks；所有 artifacts 固定 promotion/paper-shadow/production
+    false、broker_action=none、actual_path_validation_ready=false、historical_executable_artifact=false；validation
+    cleanup 后 full parallel pytest、task-register consistency、docs freshness、documentation
+    contract、Ruff、contract-validation 和 `git diff --check` 均通过
+  - '2026-06-29: 新增并进入 IN_PROGRESS；实现完成后转入 VALIDATING，真实 smoke run signal/prediction
+    record count=65、validation_status=PASS、candidate_bound_validator_reused=true。TRADING-2298
+    修复 malformed task id 与 scheduler ordering tests 后，full parallel pytest 3504 passed
+    / 643 warnings；task-register consistency run/validate PASS；docs freshness PASS；documentation
+    contract PASS；Ruff PASS；`contract-validation` 193 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260629T142253Z/test_runtime_summary.json`）；`git
+    diff --check` PASS。任务归档为 DONE；TRADING-2284 trend/risk/volatility executable generators
+    尚未启动。'
+  docs_links:
+  - docs/requirements/TRADING-2283_First_Layer_Executable_Candidate_Signal_Generator_Framework.md
+  terminal: true
+  raw_row_sha256: 8d4777ab36a3cc39d4f0a84693c23b76d66f1369d1ca2b019836d9ff92865f96
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 647d6dc0056df400b3b778d050159266a546fb7e49b7856a0fdc14a5fcf49c0b

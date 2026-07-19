@@ -1,0 +1,178 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-068
+  title: null
+  domain: ETF 组合周度复核/ETF Portfolio Weekly Review Workflow
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner + 后续决策日志链路
+  requirement_refs:
+  - docs/requirements/TRADING-068_ETF_Portfolio_Weekly_Review_Workflow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-068_ETF_Portfolio_Weekly_Review_Workflow.md`；TRADING-068A~J
+    基础设施已完成并复验通过：aggregator、portfolio summary、shadow/AI/satellite/risk sections、manual
+    action safety、weekly report、Reader Brief navigation 和 final validation gate；剩余
+    6 个 open weekly action 需要 owner 人工复核并在后续 decision journal 链路记录，不阻塞本周度复核基础设施归档
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf weekly-review generate --as-of YYYY-MM-DD` 可生成 JSON/Markdown；`aits
+      etf weekly-review validate` 输出 PASS；当前缓存窗口 `validate-data --as-of 2026-06-08`
+      为 `PASS_WITH_WARNINGS`（0 errors），`weekly_review_2026-06-08` report status `stable_observe`、aggregation
+      `PASS_WITH_WARNINGS`、source reports=15、loaded sections=11、missing sections=4、manual_review_actions=6
+      且全部 open；Reader Brief 指向 `weekly_review_2026-06-08.json`；输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；只读
+      existing artifacts，不写 production weights、不触发 broker action、不自动 promotion/rejection；专项
+      pytest 6 passed'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1156
+    row_sha256: 479e05d99514db5e6e280c4c9760151d6e6fd1a5bc0ef35d65d29dae76143b6b
+    cell_count: 8
+    all_cells:
+    - TRADING-068
+    - ETF 组合周度复核/ETF Portfolio Weekly Review Workflow
+    - P0
+    - BASELINE_DONE
+    - 项目 owner + 后续决策日志链路
+    - 详细拆解见 `docs/requirements/TRADING-068_ETF_Portfolio_Weekly_Review_Workflow.md`；TRADING-068A~J
+      基础设施已完成并复验通过：aggregator、portfolio summary、shadow/AI/satellite/risk sections、manual
+      action safety、weekly report、Reader Brief navigation 和 final validation gate；剩余
+      6 个 open weekly action 需要 owner 人工复核并在后续 decision journal 链路记录，不阻塞本周度复核基础设施归档
+    - '`aits etf weekly-review generate --as-of YYYY-MM-DD` 可生成 JSON/Markdown；`aits
+      etf weekly-review validate` 输出 PASS；当前缓存窗口 `validate-data --as-of 2026-06-08`
+      为 `PASS_WITH_WARNINGS`（0 errors），`weekly_review_2026-06-08` report status `stable_observe`、aggregation
+      `PASS_WITH_WARNINGS`、source reports=15、loaded sections=11、missing sections=4、manual_review_actions=6
+      且全部 open；Reader Brief 指向 `weekly_review_2026-06-08.json`；输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；只读
+      existing artifacts，不写 production weights、不触发 broker action、不自动 promotion/rejection；专项
+      pytest 6 passed'
+    - '2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-068 ETF Portfolio Weekly
+      Review Workflow 计划，要求把 ETF baseline、forward shadow candidates、AI confirmation、satellite
+      replacement、risk/watchlist 和 validation status 汇总为单一 weekly human-review package；本阶段不新增
+      live trading、broker action、automatic production promotion 或 baseline replacement。2026-06-02:
+      TRADING-068A~J 完成并转入 VALIDATING，原因：新增 `aits etf weekly-review aggregate/generate/run/validate`、weekly
+      review JSON/Markdown、validation gate、Reader Brief `Weekly Portfolio Review`、report
+      registry/artifact catalog/system flow/operations runbook 和测试；验证通过 `python -m
+      pytest tests -q`（1811 passed）、ruff、compileall、diff check、`python -m ai_trading_system.cli
+      etf weekly-review validate`（PASS）和 `python -m ai_trading_system.cli etf weekly-review
+      generate --as-of 2026-05-29`；所有输出固定 observe-only/candidate-only/manual-review-only，不写
+      production weights、不触发 broker action、不允许 automatic promotion/rejection。2026-06-09:
+      生成 2026-06-05 真实 weekly package 后，Reader Brief 已可见，但仍缺 owner 对 6 个 open action
+      的人工复核。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：当前缓存已推进到 2026-06-08，最终复验改用最新交易日质量门禁；`validate-data
+      --as-of 2026-06-08` PASS_WITH_WARNINGS、`weekly-review validate` PASS、`weekly-review
+      generate --as-of 2026-06-08` 生成可见 weekly review package，剩余 owner review / decision
+      journal entry 属于人工决策链依赖，不能由系统伪造。'
+    raw_line: '|TRADING-068|ETF 组合周度复核/ETF Portfolio Weekly Review Workflow|P0|BASELINE_DONE|项目
+      owner + 后续决策日志链路|详细拆解见 `docs/requirements/TRADING-068_ETF_Portfolio_Weekly_Review_Workflow.md`；TRADING-068A~J
+      基础设施已完成并复验通过：aggregator、portfolio summary、shadow/AI/satellite/risk sections、manual
+      action safety、weekly report、Reader Brief navigation 和 final validation gate；剩余
+      6 个 open weekly action 需要 owner 人工复核并在后续 decision journal 链路记录，不阻塞本周度复核基础设施归档|`aits
+      etf weekly-review generate --as-of YYYY-MM-DD` 可生成 JSON/Markdown；`aits etf weekly-review
+      validate` 输出 PASS；当前缓存窗口 `validate-data --as-of 2026-06-08` 为 `PASS_WITH_WARNINGS`（0
+      errors），`weekly_review_2026-06-08` report status `stable_observe`、aggregation
+      `PASS_WITH_WARNINGS`、source reports=15、loaded sections=11、missing sections=4、manual_review_actions=6
+      且全部 open；Reader Brief 指向 `weekly_review_2026-06-08.json`；输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；只读
+      existing artifacts，不写 production weights、不触发 broker action、不自动 promotion/rejection；专项
+      pytest 6 passed|2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-068 ETF Portfolio
+      Weekly Review Workflow 计划，要求把 ETF baseline、forward shadow candidates、AI confirmation、satellite
+      replacement、risk/watchlist 和 validation status 汇总为单一 weekly human-review package；本阶段不新增
+      live trading、broker action、automatic production promotion 或 baseline replacement。2026-06-02:
+      TRADING-068A~J 完成并转入 VALIDATING，原因：新增 `aits etf weekly-review aggregate/generate/run/validate`、weekly
+      review JSON/Markdown、validation gate、Reader Brief `Weekly Portfolio Review`、report
+      registry/artifact catalog/system flow/operations runbook 和测试；验证通过 `python -m
+      pytest tests -q`（1811 passed）、ruff、compileall、diff check、`python -m ai_trading_system.cli
+      etf weekly-review validate`（PASS）和 `python -m ai_trading_system.cli etf weekly-review
+      generate --as-of 2026-05-29`；所有输出固定 observe-only/candidate-only/manual-review-only，不写
+      production weights、不触发 broker action、不允许 automatic promotion/rejection。2026-06-09:
+      生成 2026-06-05 真实 weekly package 后，Reader Brief 已可见，但仍缺 owner 对 6 个 open action
+      的人工复核。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：当前缓存已推进到 2026-06-08，最终复验改用最新交易日质量门禁；`validate-data
+      --as-of 2026-06-08` PASS_WITH_WARNINGS、`weekly-review validate` PASS、`weekly-review
+      generate --as-of 2026-06-08` 生成可见 weekly review package，剩余 owner review / decision
+      journal entry 属于人工决策链依赖，不能由系统伪造。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-479e05d99514db5e6e280c4c
+  task_id: TRADING-068
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner + 后续决策日志链路
+    notes: '2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-068 ETF Portfolio Weekly
+      Review Workflow 计划，要求把 ETF baseline、forward shadow candidates、AI confirmation、satellite
+      replacement、risk/watchlist 和 validation status 汇总为单一 weekly human-review package；本阶段不新增
+      live trading、broker action、automatic production promotion 或 baseline replacement。2026-06-02:
+      TRADING-068A~J 完成并转入 VALIDATING，原因：新增 `aits etf weekly-review aggregate/generate/run/validate`、weekly
+      review JSON/Markdown、validation gate、Reader Brief `Weekly Portfolio Review`、report
+      registry/artifact catalog/system flow/operations runbook 和测试；验证通过 `python -m
+      pytest tests -q`（1811 passed）、ruff、compileall、diff check、`python -m ai_trading_system.cli
+      etf weekly-review validate`（PASS）和 `python -m ai_trading_system.cli etf weekly-review
+      generate --as-of 2026-05-29`；所有输出固定 observe-only/candidate-only/manual-review-only，不写
+      production weights、不触发 broker action、不允许 automatic promotion/rejection。2026-06-09:
+      生成 2026-06-05 真实 weekly package 后，Reader Brief 已可见，但仍缺 owner 对 6 个 open action
+      的人工复核。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：当前缓存已推进到 2026-06-08，最终复验改用最新交易日质量门禁；`validate-data
+      --as-of 2026-06-08` PASS_WITH_WARNINGS、`weekly-review validate` PASS、`weekly-review
+      generate --as-of 2026-06-08` 生成可见 weekly review package，剩余 owner review / decision
+      journal entry 属于人工决策链依赖，不能由系统伪造。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:479e05d99514db5e6e280c4c9760151d6e6fd1a5bc0ef35d65d29dae76143b6b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-068
+  - ETF 组合周度复核/ETF Portfolio Weekly Review Workflow
+  - P0
+  - BASELINE_DONE
+  - 项目 owner + 后续决策日志链路
+  - 详细拆解见 `docs/requirements/TRADING-068_ETF_Portfolio_Weekly_Review_Workflow.md`；TRADING-068A~J
+    基础设施已完成并复验通过：aggregator、portfolio summary、shadow/AI/satellite/risk sections、manual
+    action safety、weekly report、Reader Brief navigation 和 final validation gate；剩余
+    6 个 open weekly action 需要 owner 人工复核并在后续 decision journal 链路记录，不阻塞本周度复核基础设施归档
+  - '`aits etf weekly-review generate --as-of YYYY-MM-DD` 可生成 JSON/Markdown；`aits
+    etf weekly-review validate` 输出 PASS；当前缓存窗口 `validate-data --as-of 2026-06-08`
+    为 `PASS_WITH_WARNINGS`（0 errors），`weekly_review_2026-06-08` report status `stable_observe`、aggregation
+    `PASS_WITH_WARNINGS`、source reports=15、loaded sections=11、missing sections=4、manual_review_actions=6
+    且全部 open；Reader Brief 指向 `weekly_review_2026-06-08.json`；输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；只读
+    existing artifacts，不写 production weights、不触发 broker action、不自动 promotion/rejection；专项
+    pytest 6 passed'
+  - '2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-068 ETF Portfolio Weekly Review
+    Workflow 计划，要求把 ETF baseline、forward shadow candidates、AI confirmation、satellite
+    replacement、risk/watchlist 和 validation status 汇总为单一 weekly human-review package；本阶段不新增
+    live trading、broker action、automatic production promotion 或 baseline replacement。2026-06-02:
+    TRADING-068A~J 完成并转入 VALIDATING，原因：新增 `aits etf weekly-review aggregate/generate/run/validate`、weekly
+    review JSON/Markdown、validation gate、Reader Brief `Weekly Portfolio Review`、report
+    registry/artifact catalog/system flow/operations runbook 和测试；验证通过 `python -m pytest
+    tests -q`（1811 passed）、ruff、compileall、diff check、`python -m ai_trading_system.cli
+    etf weekly-review validate`（PASS）和 `python -m ai_trading_system.cli etf weekly-review
+    generate --as-of 2026-05-29`；所有输出固定 observe-only/candidate-only/manual-review-only，不写
+    production weights、不触发 broker action、不允许 automatic promotion/rejection。2026-06-09:
+    生成 2026-06-05 真实 weekly package 后，Reader Brief 已可见，但仍缺 owner 对 6 个 open action
+    的人工复核。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：当前缓存已推进到 2026-06-08，最终复验改用最新交易日质量门禁；`validate-data
+    --as-of 2026-06-08` PASS_WITH_WARNINGS、`weekly-review validate` PASS、`weekly-review
+    generate --as-of 2026-06-08` 生成可见 weekly review package，剩余 owner review / decision
+    journal entry 属于人工决策链依赖，不能由系统伪造。'
+  docs_links:
+  - docs/requirements/TRADING-068_ETF_Portfolio_Weekly_Review_Workflow.md
+  terminal: false
+  raw_row_sha256: 479e05d99514db5e6e280c4c9760151d6e6fd1a5bc0ef35d65d29dae76143b6b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 234f5410f15c77c48303866577ff17f5fec877bf358728fa350b7000a5082870

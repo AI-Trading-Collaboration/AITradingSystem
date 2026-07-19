@@ -1,0 +1,112 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: SCORE-004
+  title: null
+  domain: 评分架构/Alpha-Risk 解耦
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统设计 + 系统实现
+  requirement_refs:
+  - docs/requirements/scoring_architecture_refactor_2026-05-06.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段审计输出：日报、decision snapshot 和 trace
+    显示 base signal、risk state、risk-adjusted score、组件 semantic role、primary_channel、horizon
+    和 confidence 使用边界；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#score-004alpha风险状态和约束通道解耦`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 为每个评分模块和信号声明 semantic role、horizon、source_type、primary_channel、coverage
+      和 confidence 使用边界；日报、decision snapshot 和 trace 能同时展示 base signal 与 risk-adjusted
+      context；同一 evidence、risk_id、dedup_group 或 source_id 不得在 alpha 和 gate 中静默重复惩罚；第一阶段只做审计输出，不改变
+      production 仓位；完整 DONE 仍需 evidence/dedup_group 级双重计分强校验
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1132
+    row_sha256: 7535e126f7dbe7c92e90e1a41bea651e3f96205bc4784f38b3412fb9ccc35de4
+    cell_count: 8
+    all_cells:
+    - SCORE-004
+    - 评分架构/Alpha-Risk 解耦
+    - P1
+    - BASELINE_DONE
+    - 系统设计 + 系统实现
+    - 已完成第一阶段审计输出：日报、decision snapshot 和 trace 显示 base signal、risk state、risk-adjusted
+      score、组件 semantic role、primary_channel、horizon 和 confidence 使用边界；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#score-004alpha风险状态和约束通道解耦`
+    - 为每个评分模块和信号声明 semantic role、horizon、source_type、primary_channel、coverage 和 confidence
+      使用边界；日报、decision snapshot 和 trace 能同时展示 base signal 与 risk-adjusted context；同一
+      evidence、risk_id、dedup_group 或 source_id 不得在 alpha 和 gate 中静默重复惩罚；第一阶段只做审计输出，不改变
+      production 仓位；完整 DONE 仍需 evidence/dedup_group 级双重计分强校验
+    - '2026-05-06: 新增任务，原因：外部复核建议指出当前总分仍可能把方向信号和风险状态混在一起；现有 `position_gate` 已解决部分问题，但仍需要显式
+      Alpha/Risk/Execution 通道和防双重计分审计。2026-05-06: 从 PROPOSED 改为 BASELINE_DONE，原因：新增
+      `score_architecture` 审计、日报 `Base Signal / Risk Caps` 通道表、decision snapshot 字段和
+      trace claim；未改变 production scoring、position_gate 或回测仓位。'
+    raw_line: '|SCORE-004|评分架构/Alpha-Risk 解耦|P1|BASELINE_DONE|系统设计 + 系统实现|已完成第一阶段审计输出：日报、decision
+      snapshot 和 trace 显示 base signal、risk state、risk-adjusted score、组件 semantic role、primary_channel、horizon
+      和 confidence 使用边界；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#score-004alpha风险状态和约束通道解耦`|为每个评分模块和信号声明
+      semantic role、horizon、source_type、primary_channel、coverage 和 confidence 使用边界；日报、decision
+      snapshot 和 trace 能同时展示 base signal 与 risk-adjusted context；同一 evidence、risk_id、dedup_group
+      或 source_id 不得在 alpha 和 gate 中静默重复惩罚；第一阶段只做审计输出，不改变 production 仓位；完整 DONE 仍需
+      evidence/dedup_group 级双重计分强校验|2026-05-06: 新增任务，原因：外部复核建议指出当前总分仍可能把方向信号和风险状态混在一起；现有
+      `position_gate` 已解决部分问题，但仍需要显式 Alpha/Risk/Execution 通道和防双重计分审计。2026-05-06: 从
+      PROPOSED 改为 BASELINE_DONE，原因：新增 `score_architecture` 审计、日报 `Base Signal / Risk
+      Caps` 通道表、decision snapshot 字段和 trace claim；未改变 production scoring、position_gate
+      或回测仓位。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7535e126f7dbe7c92e90e1a4
+  task_id: SCORE-004
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统设计 + 系统实现
+    notes: '2026-05-06: 新增任务，原因：外部复核建议指出当前总分仍可能把方向信号和风险状态混在一起；现有 `position_gate` 已解决部分问题，但仍需要显式
+      Alpha/Risk/Execution 通道和防双重计分审计。2026-05-06: 从 PROPOSED 改为 BASELINE_DONE，原因：新增
+      `score_architecture` 审计、日报 `Base Signal / Risk Caps` 通道表、decision snapshot 字段和
+      trace claim；未改变 production scoring、position_gate 或回测仓位。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7535e126f7dbe7c92e90e1a41bea651e3f96205bc4784f38b3412fb9ccc35de4
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - SCORE-004
+  - 评分架构/Alpha-Risk 解耦
+  - P1
+  - BASELINE_DONE
+  - 系统设计 + 系统实现
+  - 已完成第一阶段审计输出：日报、decision snapshot 和 trace 显示 base signal、risk state、risk-adjusted
+    score、组件 semantic role、primary_channel、horizon 和 confidence 使用边界；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#score-004alpha风险状态和约束通道解耦`
+  - 为每个评分模块和信号声明 semantic role、horizon、source_type、primary_channel、coverage 和 confidence
+    使用边界；日报、decision snapshot 和 trace 能同时展示 base signal 与 risk-adjusted context；同一
+    evidence、risk_id、dedup_group 或 source_id 不得在 alpha 和 gate 中静默重复惩罚；第一阶段只做审计输出，不改变
+    production 仓位；完整 DONE 仍需 evidence/dedup_group 级双重计分强校验
+  - '2026-05-06: 新增任务，原因：外部复核建议指出当前总分仍可能把方向信号和风险状态混在一起；现有 `position_gate` 已解决部分问题，但仍需要显式
+    Alpha/Risk/Execution 通道和防双重计分审计。2026-05-06: 从 PROPOSED 改为 BASELINE_DONE，原因：新增
+    `score_architecture` 审计、日报 `Base Signal / Risk Caps` 通道表、decision snapshot 字段和
+    trace claim；未改变 production scoring、position_gate 或回测仓位。'
+  docs_links:
+  - docs/requirements/scoring_architecture_refactor_2026-05-06.md
+  terminal: false
+  raw_row_sha256: 7535e126f7dbe7c92e90e1a41bea651e3f96205bc4784f38b3412fb9ccc35de4
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f000917dbd91f3a602733808270d808a2f3ba8b49d883a907bbfb7c0f218ac2d

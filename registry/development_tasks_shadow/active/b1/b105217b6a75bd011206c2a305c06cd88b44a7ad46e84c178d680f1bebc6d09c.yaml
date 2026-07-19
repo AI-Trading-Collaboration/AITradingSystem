@@ -1,0 +1,125 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-004
+  title: null
+  domain: 市场反馈优化/高级证据门禁与分层迁移
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 真实链路已跑通但所有候选被高级证据阻断；production effect
+    仍必须等待 owner-approved overlay。下一步观察数据覆盖、随机基线和架构基线阻断是否随样本/数据源改善而解除，再决定是否进入 forward
+    shadow。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 扩展当前校准闭环：coverage/placeholder veto、approved overlay 的 `target_weights`/priority/conflict
+      处理、更多策略 benchmark、统计证据诊断、有效独立样本/purging 口径，以及 alpha/risk/gate 分层迁移的保守落地。验收：需求文档记录阶段拆解和状态；parameter
+      replay/candidates 在 owner review 前暴露阻断证据；robustness 输出新增 benchmark/statistical
+      evidence；全量 pytest 和目标 CLI replay 通过，或记录真实数据/权限阻塞。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1496
+    row_sha256: bc254fdda7944e56d12024e065b1b5ce38f006a8767645764644228d27198fad
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-004
+    - 市场反馈优化/高级证据门禁与分层迁移
+    - P1
+    - VALIDATING
+    - 系统验证 + 项目 owner
+    - 真实链路已跑通但所有候选被高级证据阻断；production effect 仍必须等待 owner-approved overlay。下一步观察数据覆盖、随机基线和架构基线阻断是否随样本/数据源改善而解除，再决定是否进入
+      forward shadow。
+    - 扩展当前校准闭环：coverage/placeholder veto、approved overlay 的 `target_weights`/priority/conflict
+      处理、更多策略 benchmark、统计证据诊断、有效独立样本/purging 口径，以及 alpha/risk/gate 分层迁移的保守落地。验收：需求文档记录阶段拆解和状态；parameter
+      replay/candidates 在 owner review 前暴露阻断证据；robustness 输出新增 benchmark/statistical
+      evidence；全量 pytest 和目标 CLI replay 通过，或记录真实数据/权限阻塞。
+    - '2026-05-14: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进外部复核中的其余方向，不只停在 resolver 和 total-return
+      gate 修复；保持 candidate-only，不自动批准 overlay 或改变 hard gate。2026-05-14: 从 IN_PROGRESS
+      改为 VALIDATING，原因：coverage/source veto、overlay target_weights/priority/conflict、same-exposure/vol-target/no-gate/architecture
+      benchmarks、bootstrap CI、有效独立窗口和 candidate 高级门禁已实现；验证通过 `ruff check src tests`、目标
+      pytest 26 passed、全量 pytest 524 passed、`git diff --check` 和真实 `backtest robustness
+      -> parameter replay -> parameter candidates -> optimize-market-feedback` 链路。真实
+      replay 66 场景、material delta=2，candidate ledger 16 个 candidate 全部 `BLOCKED_BY_DATA`
+      或附带 random/architecture veto，未进入 forward shadow。'
+    raw_line: '|CALIBRATION-004|市场反馈优化/高级证据门禁与分层迁移|P1|VALIDATING|系统验证 + 项目 owner|真实链路已跑通但所有候选被高级证据阻断；production
+      effect 仍必须等待 owner-approved overlay。下一步观察数据覆盖、随机基线和架构基线阻断是否随样本/数据源改善而解除，再决定是否进入
+      forward shadow。|扩展当前校准闭环：coverage/placeholder veto、approved overlay 的 `target_weights`/priority/conflict
+      处理、更多策略 benchmark、统计证据诊断、有效独立样本/purging 口径，以及 alpha/risk/gate 分层迁移的保守落地。验收：需求文档记录阶段拆解和状态；parameter
+      replay/candidates 在 owner review 前暴露阻断证据；robustness 输出新增 benchmark/statistical
+      evidence；全量 pytest 和目标 CLI replay 通过，或记录真实数据/权限阻塞。|2026-05-14: 新增并进入 IN_PROGRESS，原因：owner
+      要求继续推进外部复核中的其余方向，不只停在 resolver 和 total-return gate 修复；保持 candidate-only，不自动批准
+      overlay 或改变 hard gate。2026-05-14: 从 IN_PROGRESS 改为 VALIDATING，原因：coverage/source
+      veto、overlay target_weights/priority/conflict、same-exposure/vol-target/no-gate/architecture
+      benchmarks、bootstrap CI、有效独立窗口和 candidate 高级门禁已实现；验证通过 `ruff check src tests`、目标
+      pytest 26 passed、全量 pytest 524 passed、`git diff --check` 和真实 `backtest robustness
+      -> parameter replay -> parameter candidates -> optimize-market-feedback` 链路。真实
+      replay 66 场景、material delta=2，candidate ledger 16 个 candidate 全部 `BLOCKED_BY_DATA`
+      或附带 random/architecture veto，未进入 forward shadow。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bc254fdda7944e56d12024e0
+  task_id: CALIBRATION-004
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-05-14: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进外部复核中的其余方向，不只停在 resolver
+      和 total-return gate 修复；保持 candidate-only，不自动批准 overlay 或改变 hard gate。2026-05-14:
+      从 IN_PROGRESS 改为 VALIDATING，原因：coverage/source veto、overlay target_weights/priority/conflict、same-exposure/vol-target/no-gate/architecture
+      benchmarks、bootstrap CI、有效独立窗口和 candidate 高级门禁已实现；验证通过 `ruff check src tests`、目标
+      pytest 26 passed、全量 pytest 524 passed、`git diff --check` 和真实 `backtest robustness
+      -> parameter replay -> parameter candidates -> optimize-market-feedback` 链路。真实
+      replay 66 场景、material delta=2，candidate ledger 16 个 candidate 全部 `BLOCKED_BY_DATA`
+      或附带 random/architecture veto，未进入 forward shadow。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bc254fdda7944e56d12024e065b1b5ce38f006a8767645764644228d27198fad
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-004
+  - 市场反馈优化/高级证据门禁与分层迁移
+  - P1
+  - VALIDATING
+  - 系统验证 + 项目 owner
+  - 真实链路已跑通但所有候选被高级证据阻断；production effect 仍必须等待 owner-approved overlay。下一步观察数据覆盖、随机基线和架构基线阻断是否随样本/数据源改善而解除，再决定是否进入
+    forward shadow。
+  - 扩展当前校准闭环：coverage/placeholder veto、approved overlay 的 `target_weights`/priority/conflict
+    处理、更多策略 benchmark、统计证据诊断、有效独立样本/purging 口径，以及 alpha/risk/gate 分层迁移的保守落地。验收：需求文档记录阶段拆解和状态；parameter
+    replay/candidates 在 owner review 前暴露阻断证据；robustness 输出新增 benchmark/statistical
+    evidence；全量 pytest 和目标 CLI replay 通过，或记录真实数据/权限阻塞。
+  - '2026-05-14: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进外部复核中的其余方向，不只停在 resolver 和 total-return
+    gate 修复；保持 candidate-only，不自动批准 overlay 或改变 hard gate。2026-05-14: 从 IN_PROGRESS
+    改为 VALIDATING，原因：coverage/source veto、overlay target_weights/priority/conflict、same-exposure/vol-target/no-gate/architecture
+    benchmarks、bootstrap CI、有效独立窗口和 candidate 高级门禁已实现；验证通过 `ruff check src tests`、目标
+    pytest 26 passed、全量 pytest 524 passed、`git diff --check` 和真实 `backtest robustness
+    -> parameter replay -> parameter candidates -> optimize-market-feedback` 链路。真实
+    replay 66 场景、material delta=2，candidate ledger 16 个 candidate 全部 `BLOCKED_BY_DATA`
+    或附带 random/architecture veto，未进入 forward shadow。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: bc254fdda7944e56d12024e065b1b5ce38f006a8767645764644228d27198fad
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 619df1bc98b1bd2f6893bf252533fd3e0559ad521ee8238c5024de42da5c5382

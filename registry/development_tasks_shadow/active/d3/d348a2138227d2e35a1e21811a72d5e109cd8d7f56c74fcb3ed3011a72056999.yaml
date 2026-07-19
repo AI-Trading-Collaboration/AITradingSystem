@@ -1,0 +1,101 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: RISK-008
+  title: null
+  domain: 风险事件/OpenAI 无人复核边界
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已明确日报前 OpenAI 预审在 owner 暂无复核精力时采用 backlog-only
+    边界：候选继续保留审计和告警，但不进入 `execution_policy.manual_review_gate_ids`，不要求当天人工复审；正式评分/仓位仍只读取已确认
+    occurrence 或有效复核声明
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 日报必须说明 OpenAI 预审候选是未确认 backlog，不会写 occurrence、复核声明、评分、仓位闸门、thesis 状态，也不会单独把执行动作改成
+      `wait_manual_review`；若没有人工复核能力，policy/geopolitics 仍保持低置信度/数据不足，而不是把 LLM 判断当作风险事实或无风险证明
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1088
+    row_sha256: ab56f6b36007a8b39b7352f3f4da7fb0eac32d0d43351a972fa1fc53af5f9743
+    cell_count: 8
+    all_cells:
+    - RISK-008
+    - 风险事件/OpenAI 无人复核边界
+    - P1
+    - BASELINE_DONE
+    - 系统实现
+    - 已明确日报前 OpenAI 预审在 owner 暂无复核精力时采用 backlog-only 边界：候选继续保留审计和告警，但不进入 `execution_policy.manual_review_gate_ids`，不要求当天人工复审；正式评分/仓位仍只读取已确认
+      occurrence 或有效复核声明
+    - 日报必须说明 OpenAI 预审候选是未确认 backlog，不会写 occurrence、复核声明、评分、仓位闸门、thesis 状态，也不会单独把执行动作改成
+      `wait_manual_review`；若没有人工复核能力，policy/geopolitics 仍保持低置信度/数据不足，而不是把 LLM 判断当作风险事实或无风险证明
+    - '2026-05-05: 新增并进入实现，原因：owner 表示暂时没有精力复审 OpenAI 输出；需要把报告边界从“待当天人工复核”澄清为“未确认
+      backlog”，避免误读为必须处理的人工 SLA，同时保持 source policy 和 LLM 隔离。2026-05-05: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：日报 OpenAI 预审章节、README、数据源目录和系统流图已明确 backlog-only 边界，测试覆盖
+      OpenAI backlog 不单独触发 `wait_manual_review` 文案。'
+    raw_line: '|RISK-008|风险事件/OpenAI 无人复核边界|P1|BASELINE_DONE|系统实现|已明确日报前 OpenAI 预审在
+      owner 暂无复核精力时采用 backlog-only 边界：候选继续保留审计和告警，但不进入 `execution_policy.manual_review_gate_ids`，不要求当天人工复审；正式评分/仓位仍只读取已确认
+      occurrence 或有效复核声明|日报必须说明 OpenAI 预审候选是未确认 backlog，不会写 occurrence、复核声明、评分、仓位闸门、thesis
+      状态，也不会单独把执行动作改成 `wait_manual_review`；若没有人工复核能力，policy/geopolitics 仍保持低置信度/数据不足，而不是把
+      LLM 判断当作风险事实或无风险证明|2026-05-05: 新增并进入实现，原因：owner 表示暂时没有精力复审 OpenAI 输出；需要把报告边界从“待当天人工复核”澄清为“未确认
+      backlog”，避免误读为必须处理的人工 SLA，同时保持 source policy 和 LLM 隔离。2026-05-05: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：日报 OpenAI 预审章节、README、数据源目录和系统流图已明确 backlog-only 边界，测试覆盖
+      OpenAI backlog 不单独触发 `wait_manual_review` 文案。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ab56f6b36007a8b39b7352f3
+  task_id: RISK-008
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增并进入实现，原因：owner 表示暂时没有精力复审 OpenAI 输出；需要把报告边界从“待当天人工复核”澄清为“未确认
+      backlog”，避免误读为必须处理的人工 SLA，同时保持 source policy 和 LLM 隔离。2026-05-05: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：日报 OpenAI 预审章节、README、数据源目录和系统流图已明确 backlog-only 边界，测试覆盖
+      OpenAI backlog 不单独触发 `wait_manual_review` 文案。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ab56f6b36007a8b39b7352f3f4da7fb0eac32d0d43351a972fa1fc53af5f9743
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - RISK-008
+  - 风险事件/OpenAI 无人复核边界
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - 已明确日报前 OpenAI 预审在 owner 暂无复核精力时采用 backlog-only 边界：候选继续保留审计和告警，但不进入 `execution_policy.manual_review_gate_ids`，不要求当天人工复审；正式评分/仓位仍只读取已确认
+    occurrence 或有效复核声明
+  - 日报必须说明 OpenAI 预审候选是未确认 backlog，不会写 occurrence、复核声明、评分、仓位闸门、thesis 状态，也不会单独把执行动作改成
+    `wait_manual_review`；若没有人工复核能力，policy/geopolitics 仍保持低置信度/数据不足，而不是把 LLM 判断当作风险事实或无风险证明
+  - '2026-05-05: 新增并进入实现，原因：owner 表示暂时没有精力复审 OpenAI 输出；需要把报告边界从“待当天人工复核”澄清为“未确认 backlog”，避免误读为必须处理的人工
+    SLA，同时保持 source policy 和 LLM 隔离。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：日报
+    OpenAI 预审章节、README、数据源目录和系统流图已明确 backlog-only 边界，测试覆盖 OpenAI backlog 不单独触发 `wait_manual_review`
+    文案。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: ab56f6b36007a8b39b7352f3f4da7fb0eac32d0d43351a972fa1fc53af5f9743
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4590d44a559a4194f4465db30468bd82b4741424e03878a92989cc55723a3054

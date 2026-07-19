@@ -1,0 +1,246 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN
+  title: null
+  domain: Engineering closeout/platform freeze/weight research turn
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-487_to_504_Engineering_Closeout_and_Weight_Research_Turn.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-487_to_504_Engineering_Closeout_and_Weight_Research_Turn.md`；因
+    `TRADING-486` 已被 secret hygiene P0 占用，附件中的 TRADING-486 工程表面盘点作为本批次 Stage A1 处理；A1-A4
+    baseline、Stage B readiness contract、独立 `reproducibility` tier、central error taxonomy
+    baseline、reports CLI boundary baseline、Stage C documentation IA baseline、Reader
+    Brief effective view-model consistency baseline、legacy waiver cleanup、clean-clone
+    sample/minimal release acceptance runner、release candidate report 和 Stage D weight
+    research RFC baseline 已验证；release-blocking validation tiers、clean-clone release
+    acceptance 和 engineering closeout release candidate validation 均已通过；后续 owner 可复核
+    release candidate 和选择 TRADING-505+ 研究方向
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 工程收尾最终达到 `ENGINEERING_CLOSEOUT_READY` 或 `ENGINEERING_CLOSEOUT_READY_WITH_DOCUMENTED_LIMITATIONS`；新用户有唯一清晰入口，标准研究流程不依赖
+      task ID，系统状态只有一个 canonical source，关键 artifact 可追溯并尽可能复现，CLI/schema/config 有兼容策略，Reader
+      Brief 结构统一，测试层次清晰且 clean clone 可完成最小端到端流程，非研究 warning/orphan 清零；权重研究阶段完成 failure
+      taxonomy、weight-control architecture RFC、ablation baseline protocol、statistical
+      validation/holdout policy 和下一阶段 2-3 个简单候选路线图；全程不得激活 paper-shadow/extended/live、不得生成
+      official target weights、不得触发 broker/order/production mutation
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 184
+    row_sha256: e434371587420aef457059470fbcc2487525d089f2995e7ee11cfa4e997096bb
+    cell_count: 8
+    all_cells:
+    - TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN
+    - Engineering closeout/platform freeze/weight research turn
+    - P0
+    - DONE
+    - 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-487_to_504_Engineering_Closeout_and_Weight_Research_Turn.md`；因
+      `TRADING-486` 已被 secret hygiene P0 占用，附件中的 TRADING-486 工程表面盘点作为本批次 Stage A1
+      处理；A1-A4 baseline、Stage B readiness contract、独立 `reproducibility` tier、central
+      error taxonomy baseline、reports CLI boundary baseline、Stage C documentation
+      IA baseline、Reader Brief effective view-model consistency baseline、legacy waiver
+      cleanup、clean-clone sample/minimal release acceptance runner、release candidate
+      report 和 Stage D weight research RFC baseline 已验证；release-blocking validation
+      tiers、clean-clone release acceptance 和 engineering closeout release candidate
+      validation 均已通过；后续 owner 可复核 release candidate 和选择 TRADING-505+ 研究方向
+    - 工程收尾最终达到 `ENGINEERING_CLOSEOUT_READY` 或 `ENGINEERING_CLOSEOUT_READY_WITH_DOCUMENTED_LIMITATIONS`；新用户有唯一清晰入口，标准研究流程不依赖
+      task ID，系统状态只有一个 canonical source，关键 artifact 可追溯并尽可能复现，CLI/schema/config 有兼容策略，Reader
+      Brief 结构统一，测试层次清晰且 clean clone 可完成最小端到端流程，非研究 warning/orphan 清零；权重研究阶段完成 failure
+      taxonomy、weight-control architecture RFC、ablation baseline protocol、statistical
+      validation/holdout policy 和下一阶段 2-3 个简单候选路线图；全程不得激活 paper-shadow/extended/live、不得生成
+      official target weights、不得触发 broker/order/production mutation
+    - '2026-06-19: 进入 IN_PROGRESS，owner 附件要求在 TRADING-485 后完成工程收尾和权重研究转向。已实现并验证 Stage
+      A1-A4 只读 baseline：`engineering_surface_inventory`、`aits system status` / `aits
+      system doctor`、`aits reports latest`、`artifact_lifecycle_inventory`；真实状态均为 ready-with-limitations
+      或 PASS_WITH_WARNINGS，report index unwaived=0。2026-06-19: Stage B readiness baseline
+      已实现并验证；`engineering_stage_b_readiness` 为 `ENGINEERING_STAGE_B_READY_WITH_LIMITATIONS`，validation=`PASS_WITH_WARNINGS`、failed=0；新增
+      `reproducibility` validation tier 与 `artifact-reproduce` alias。2026-06-19: 新增
+      central error taxonomy baseline，`missing_error_category_count=0`、`error_taxonomy_central_module_exists=true`。2026-06-19:
+      拆分 engineering/report-index CLI adapters 后 `reports_cli_line_count=11920`、`reports_cli_within_budget=true`。2026-06-19:
+      Stage B contract 收口完成，新增 config contract registry，补齐 run manifest / validation
+      runtime / dashboard / ETF runtime artifact contract 字段；`engineering_stage_b_readiness`
+      为 `ENGINEERING_STAGE_B_READY`，validation=`PASS`、failed=0、warnings=0，`reproducibility`
+      tier 23 tests PASS；pre-policy manifests 作为 legacy 指标披露。2026-06-19: Stage C/D
+      baseline 已建立：新增 platform user guide、README 三路径入口、weight research turn RFC 和
+      docs contract tests。2026-06-19: Stage C Reader Brief consistency 已升级为 effective
+      view model，真实 pack 和 validation 均为 `PASS`，missing sections=0、unclear decisions=0、warnings=0，`native_template_gap_count=1599`
+      继续作为源模板迁移审计项；Stage C legacy waiver cleanup 已完成，report index `PASS`、explicit_waiver_count=0、non_current_visibility_count=30，waiver
+      inventory active=0，canonical system status=`ENGINEERING_CONTROL_PLANE_READY`、doctor=`PASS`；release-blocking
+      tiers `fast-unit`、`contract-validation`、`report-validation`、`reproducibility`
+      均已写 runtime artifact 并通过。2026-06-19: 新增 `scripts/run_clean_clone_release_acceptance.py`
+      和 `clean_clone_release_acceptance` report registry / artifact catalog / system
+      flow 入口；dirty-snapshot smoke 真实 artifact 为 `CLEAN_CLONE_ACCEPTANCE_BLOCKED_UNCOMMITTED_CHANGES`，steps=10、failed=0、blocking=1，且包含
+      `artifact_reproduce_validation_tier` PASS，证明 sample/minimal workflow 可跑；提交后真实
+      clean worktree run 输出 `CLEAN_CLONE_ACCEPTANCE_PASS`，steps=11、failed=0、blocking=0。2026-06-19:
+      新增 `engineering_closeout_release_candidate` / validation report family，记录 release
+      version/tag、changelog、stable CLI/schema、compatibility policy、post-freeze change
+      admission rules 和 engineering closeout Reader Brief；dirty worktree 或 clean-clone
+      未 PASS 时必须 fail closed。2026-06-19: release candidate 在 clean worktree 上输出 `ENGINEERING_CLOSEOUT_READY`，checks=11、blocking=0、warnings=0；validation=`PASS`、checks=4、failed=0、warnings=0；工程收尾和权重研究转向附件范围
+      DONE，未激活 paper-shadow/extended/live，未生成 official target weights，未触发 broker/order
+      或 production mutation。'
+    raw_line: '|TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN|Engineering
+      closeout/platform freeze/weight research turn|P0|DONE|项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-487_to_504_Engineering_Closeout_and_Weight_Research_Turn.md`；因
+      `TRADING-486` 已被 secret hygiene P0 占用，附件中的 TRADING-486 工程表面盘点作为本批次 Stage A1
+      处理；A1-A4 baseline、Stage B readiness contract、独立 `reproducibility` tier、central
+      error taxonomy baseline、reports CLI boundary baseline、Stage C documentation
+      IA baseline、Reader Brief effective view-model consistency baseline、legacy waiver
+      cleanup、clean-clone sample/minimal release acceptance runner、release candidate
+      report 和 Stage D weight research RFC baseline 已验证；release-blocking validation
+      tiers、clean-clone release acceptance 和 engineering closeout release candidate
+      validation 均已通过；后续 owner 可复核 release candidate 和选择 TRADING-505+ 研究方向|工程收尾最终达到
+      `ENGINEERING_CLOSEOUT_READY` 或 `ENGINEERING_CLOSEOUT_READY_WITH_DOCUMENTED_LIMITATIONS`；新用户有唯一清晰入口，标准研究流程不依赖
+      task ID，系统状态只有一个 canonical source，关键 artifact 可追溯并尽可能复现，CLI/schema/config 有兼容策略，Reader
+      Brief 结构统一，测试层次清晰且 clean clone 可完成最小端到端流程，非研究 warning/orphan 清零；权重研究阶段完成 failure
+      taxonomy、weight-control architecture RFC、ablation baseline protocol、statistical
+      validation/holdout policy 和下一阶段 2-3 个简单候选路线图；全程不得激活 paper-shadow/extended/live、不得生成
+      official target weights、不得触发 broker/order/production mutation|2026-06-19: 进入
+      IN_PROGRESS，owner 附件要求在 TRADING-485 后完成工程收尾和权重研究转向。已实现并验证 Stage A1-A4 只读 baseline：`engineering_surface_inventory`、`aits
+      system status` / `aits system doctor`、`aits reports latest`、`artifact_lifecycle_inventory`；真实状态均为
+      ready-with-limitations 或 PASS_WITH_WARNINGS，report index unwaived=0。2026-06-19:
+      Stage B readiness baseline 已实现并验证；`engineering_stage_b_readiness` 为 `ENGINEERING_STAGE_B_READY_WITH_LIMITATIONS`，validation=`PASS_WITH_WARNINGS`、failed=0；新增
+      `reproducibility` validation tier 与 `artifact-reproduce` alias。2026-06-19: 新增
+      central error taxonomy baseline，`missing_error_category_count=0`、`error_taxonomy_central_module_exists=true`。2026-06-19:
+      拆分 engineering/report-index CLI adapters 后 `reports_cli_line_count=11920`、`reports_cli_within_budget=true`。2026-06-19:
+      Stage B contract 收口完成，新增 config contract registry，补齐 run manifest / validation
+      runtime / dashboard / ETF runtime artifact contract 字段；`engineering_stage_b_readiness`
+      为 `ENGINEERING_STAGE_B_READY`，validation=`PASS`、failed=0、warnings=0，`reproducibility`
+      tier 23 tests PASS；pre-policy manifests 作为 legacy 指标披露。2026-06-19: Stage C/D
+      baseline 已建立：新增 platform user guide、README 三路径入口、weight research turn RFC 和
+      docs contract tests。2026-06-19: Stage C Reader Brief consistency 已升级为 effective
+      view model，真实 pack 和 validation 均为 `PASS`，missing sections=0、unclear decisions=0、warnings=0，`native_template_gap_count=1599`
+      继续作为源模板迁移审计项；Stage C legacy waiver cleanup 已完成，report index `PASS`、explicit_waiver_count=0、non_current_visibility_count=30，waiver
+      inventory active=0，canonical system status=`ENGINEERING_CONTROL_PLANE_READY`、doctor=`PASS`；release-blocking
+      tiers `fast-unit`、`contract-validation`、`report-validation`、`reproducibility`
+      均已写 runtime artifact 并通过。2026-06-19: 新增 `scripts/run_clean_clone_release_acceptance.py`
+      和 `clean_clone_release_acceptance` report registry / artifact catalog / system
+      flow 入口；dirty-snapshot smoke 真实 artifact 为 `CLEAN_CLONE_ACCEPTANCE_BLOCKED_UNCOMMITTED_CHANGES`，steps=10、failed=0、blocking=1，且包含
+      `artifact_reproduce_validation_tier` PASS，证明 sample/minimal workflow 可跑；提交后真实
+      clean worktree run 输出 `CLEAN_CLONE_ACCEPTANCE_PASS`，steps=11、failed=0、blocking=0。2026-06-19:
+      新增 `engineering_closeout_release_candidate` / validation report family，记录 release
+      version/tag、changelog、stable CLI/schema、compatibility policy、post-freeze change
+      admission rules 和 engineering closeout Reader Brief；dirty worktree 或 clean-clone
+      未 PASS 时必须 fail closed。2026-06-19: release candidate 在 clean worktree 上输出 `ENGINEERING_CLOSEOUT_READY`，checks=11、blocking=0、warnings=0；validation=`PASS`、checks=4、failed=0、warnings=0；工程收尾和权重研究转向附件范围
+      DONE，未激活 paper-shadow/extended/live，未生成 official target weights，未触发 broker/order
+      或 production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e434371587420aef45705947
+  task_id: TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核
+    notes: '2026-06-19: 进入 IN_PROGRESS，owner 附件要求在 TRADING-485 后完成工程收尾和权重研究转向。已实现并验证
+      Stage A1-A4 只读 baseline：`engineering_surface_inventory`、`aits system status`
+      / `aits system doctor`、`aits reports latest`、`artifact_lifecycle_inventory`；真实状态均为
+      ready-with-limitations 或 PASS_WITH_WARNINGS，report index unwaived=0。2026-06-19:
+      Stage B readiness baseline 已实现并验证；`engineering_stage_b_readiness` 为 `ENGINEERING_STAGE_B_READY_WITH_LIMITATIONS`，validation=`PASS_WITH_WARNINGS`、failed=0；新增
+      `reproducibility` validation tier 与 `artifact-reproduce` alias。2026-06-19: 新增
+      central error taxonomy baseline，`missing_error_category_count=0`、`error_taxonomy_central_module_exists=true`。2026-06-19:
+      拆分 engineering/report-index CLI adapters 后 `reports_cli_line_count=11920`、`reports_cli_within_budget=true`。2026-06-19:
+      Stage B contract 收口完成，新增 config contract registry，补齐 run manifest / validation
+      runtime / dashboard / ETF runtime artifact contract 字段；`engineering_stage_b_readiness`
+      为 `ENGINEERING_STAGE_B_READY`，validation=`PASS`、failed=0、warnings=0，`reproducibility`
+      tier 23 tests PASS；pre-policy manifests 作为 legacy 指标披露。2026-06-19: Stage C/D
+      baseline 已建立：新增 platform user guide、README 三路径入口、weight research turn RFC 和
+      docs contract tests。2026-06-19: Stage C Reader Brief consistency 已升级为 effective
+      view model，真实 pack 和 validation 均为 `PASS`，missing sections=0、unclear decisions=0、warnings=0，`native_template_gap_count=1599`
+      继续作为源模板迁移审计项；Stage C legacy waiver cleanup 已完成，report index `PASS`、explicit_waiver_count=0、non_current_visibility_count=30，waiver
+      inventory active=0，canonical system status=`ENGINEERING_CONTROL_PLANE_READY`、doctor=`PASS`；release-blocking
+      tiers `fast-unit`、`contract-validation`、`report-validation`、`reproducibility`
+      均已写 runtime artifact 并通过。2026-06-19: 新增 `scripts/run_clean_clone_release_acceptance.py`
+      和 `clean_clone_release_acceptance` report registry / artifact catalog / system
+      flow 入口；dirty-snapshot smoke 真实 artifact 为 `CLEAN_CLONE_ACCEPTANCE_BLOCKED_UNCOMMITTED_CHANGES`，steps=10、failed=0、blocking=1，且包含
+      `artifact_reproduce_validation_tier` PASS，证明 sample/minimal workflow 可跑；提交后真实
+      clean worktree run 输出 `CLEAN_CLONE_ACCEPTANCE_PASS`，steps=11、failed=0、blocking=0。2026-06-19:
+      新增 `engineering_closeout_release_candidate` / validation report family，记录 release
+      version/tag、changelog、stable CLI/schema、compatibility policy、post-freeze change
+      admission rules 和 engineering closeout Reader Brief；dirty worktree 或 clean-clone
+      未 PASS 时必须 fail closed。2026-06-19: release candidate 在 clean worktree 上输出 `ENGINEERING_CLOSEOUT_READY`，checks=11、blocking=0、warnings=0；validation=`PASS`、checks=4、failed=0、warnings=0；工程收尾和权重研究转向附件范围
+      DONE，未激活 paper-shadow/extended/live，未生成 official target weights，未触发 broker/order
+      或 production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e434371587420aef457059470fbcc2487525d089f2995e7ee11cfa4e997096bb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN
+  - Engineering closeout/platform freeze/weight research turn
+  - P0
+  - DONE
+  - 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-487_to_504_Engineering_Closeout_and_Weight_Research_Turn.md`；因
+    `TRADING-486` 已被 secret hygiene P0 占用，附件中的 TRADING-486 工程表面盘点作为本批次 Stage A1 处理；A1-A4
+    baseline、Stage B readiness contract、独立 `reproducibility` tier、central error taxonomy
+    baseline、reports CLI boundary baseline、Stage C documentation IA baseline、Reader
+    Brief effective view-model consistency baseline、legacy waiver cleanup、clean-clone
+    sample/minimal release acceptance runner、release candidate report 和 Stage D weight
+    research RFC baseline 已验证；release-blocking validation tiers、clean-clone release
+    acceptance 和 engineering closeout release candidate validation 均已通过；后续 owner 可复核
+    release candidate 和选择 TRADING-505+ 研究方向
+  - 工程收尾最终达到 `ENGINEERING_CLOSEOUT_READY` 或 `ENGINEERING_CLOSEOUT_READY_WITH_DOCUMENTED_LIMITATIONS`；新用户有唯一清晰入口，标准研究流程不依赖
+    task ID，系统状态只有一个 canonical source，关键 artifact 可追溯并尽可能复现，CLI/schema/config 有兼容策略，Reader
+    Brief 结构统一，测试层次清晰且 clean clone 可完成最小端到端流程，非研究 warning/orphan 清零；权重研究阶段完成 failure
+    taxonomy、weight-control architecture RFC、ablation baseline protocol、statistical
+    validation/holdout policy 和下一阶段 2-3 个简单候选路线图；全程不得激活 paper-shadow/extended/live、不得生成
+    official target weights、不得触发 broker/order/production mutation
+  - '2026-06-19: 进入 IN_PROGRESS，owner 附件要求在 TRADING-485 后完成工程收尾和权重研究转向。已实现并验证 Stage
+    A1-A4 只读 baseline：`engineering_surface_inventory`、`aits system status` / `aits
+    system doctor`、`aits reports latest`、`artifact_lifecycle_inventory`；真实状态均为 ready-with-limitations
+    或 PASS_WITH_WARNINGS，report index unwaived=0。2026-06-19: Stage B readiness baseline
+    已实现并验证；`engineering_stage_b_readiness` 为 `ENGINEERING_STAGE_B_READY_WITH_LIMITATIONS`，validation=`PASS_WITH_WARNINGS`、failed=0；新增
+    `reproducibility` validation tier 与 `artifact-reproduce` alias。2026-06-19: 新增
+    central error taxonomy baseline，`missing_error_category_count=0`、`error_taxonomy_central_module_exists=true`。2026-06-19:
+    拆分 engineering/report-index CLI adapters 后 `reports_cli_line_count=11920`、`reports_cli_within_budget=true`。2026-06-19:
+    Stage B contract 收口完成，新增 config contract registry，补齐 run manifest / validation
+    runtime / dashboard / ETF runtime artifact contract 字段；`engineering_stage_b_readiness`
+    为 `ENGINEERING_STAGE_B_READY`，validation=`PASS`、failed=0、warnings=0，`reproducibility`
+    tier 23 tests PASS；pre-policy manifests 作为 legacy 指标披露。2026-06-19: Stage C/D baseline
+    已建立：新增 platform user guide、README 三路径入口、weight research turn RFC 和 docs contract
+    tests。2026-06-19: Stage C Reader Brief consistency 已升级为 effective view model，真实
+    pack 和 validation 均为 `PASS`，missing sections=0、unclear decisions=0、warnings=0，`native_template_gap_count=1599`
+    继续作为源模板迁移审计项；Stage C legacy waiver cleanup 已完成，report index `PASS`、explicit_waiver_count=0、non_current_visibility_count=30，waiver
+    inventory active=0，canonical system status=`ENGINEERING_CONTROL_PLANE_READY`、doctor=`PASS`；release-blocking
+    tiers `fast-unit`、`contract-validation`、`report-validation`、`reproducibility`
+    均已写 runtime artifact 并通过。2026-06-19: 新增 `scripts/run_clean_clone_release_acceptance.py`
+    和 `clean_clone_release_acceptance` report registry / artifact catalog / system
+    flow 入口；dirty-snapshot smoke 真实 artifact 为 `CLEAN_CLONE_ACCEPTANCE_BLOCKED_UNCOMMITTED_CHANGES`，steps=10、failed=0、blocking=1，且包含
+    `artifact_reproduce_validation_tier` PASS，证明 sample/minimal workflow 可跑；提交后真实
+    clean worktree run 输出 `CLEAN_CLONE_ACCEPTANCE_PASS`，steps=11、failed=0、blocking=0。2026-06-19:
+    新增 `engineering_closeout_release_candidate` / validation report family，记录 release
+    version/tag、changelog、stable CLI/schema、compatibility policy、post-freeze change
+    admission rules 和 engineering closeout Reader Brief；dirty worktree 或 clean-clone
+    未 PASS 时必须 fail closed。2026-06-19: release candidate 在 clean worktree 上输出 `ENGINEERING_CLOSEOUT_READY`，checks=11、blocking=0、warnings=0；validation=`PASS`、checks=4、failed=0、warnings=0；工程收尾和权重研究转向附件范围
+    DONE，未激活 paper-shadow/extended/live，未生成 official target weights，未触发 broker/order
+    或 production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-487_to_504_Engineering_Closeout_and_Weight_Research_Turn.md
+  terminal: true
+  raw_row_sha256: e434371587420aef457059470fbcc2487525d089f2995e7ee11cfa4e997096bb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6951dd6ce90c551d9d0415c4c2943a8079bb484ab0306fe7697f48786a155387

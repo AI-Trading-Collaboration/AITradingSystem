@@ -1,0 +1,147 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-698_DYNAMIC_TREND_THRESHOLD_SENSITIVITY_REVIEW
+  title: null
+  domain: Threshold governance / dynamic allocation and trend threshold sensitivity
+    review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-698_Dynamic_Trend_Threshold_Sensitivity_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-698_Dynamic_Trend_Threshold_Sensitivity_Review.md`；对
+    TRADING-697 准备的 `dynamic_allocation.risk_off_score_thresholds`、`dynamic_allocation.risk_on_confirmation_thresholds`、`trend_calibration.score_bands`
+    做实际 sensitivity review；继续保持 validation-only，不修改 threshold current value、production
+    / paper-shadow / official weights
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`dynamic_trend_threshold_sensitivity_review.json/md` 覆盖 3 个目标阈值，每个阈值输出
+      current/stricter/relaxed/capped-or-smoothed/no-change variants；每个 variant 输出
+      1d/5d/10d/20d avg_return 与 hit_rate、max_drawdown、drawdown_preservation、turnover、constraint_hit_count、risk_off/on
+      trigger counts、false risk-off/on counts 和 missed_upside_count；分层覆盖 horizon、asset、date、regime、event
+      window、full_advisory_only、component/backtest bridge 和 correlated asset cluster；必须披露
+      mature_date_count、mature_case_count、full_advisory_case_count、cluster_count、regime_count、sample_quality_breakdown；recommendation
+      只能是 validation recommendation，不升级 `VALIDATED_BOUNDARY`，最多 `SENSITIVITY_TESTED`；focused
+      tests、CLI、Ruff、py_compile、`git diff --check` 和 validation tier 通过或明确记录阻塞'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1400
+    row_sha256: 93a5898dbad2de126a2d368614efb6c4218b7947d3f38e124b8714182e8e85f9
+    cell_count: 8
+    all_cells:
+    - TRADING-698_DYNAMIC_TREND_THRESHOLD_SENSITIVITY_REVIEW
+    - Threshold governance / dynamic allocation and trend threshold sensitivity review
+    - P0
+    - VALIDATING
+    - 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-698_Dynamic_Trend_Threshold_Sensitivity_Review.md`；对
+      TRADING-697 准备的 `dynamic_allocation.risk_off_score_thresholds`、`dynamic_allocation.risk_on_confirmation_thresholds`、`trend_calibration.score_bands`
+      做实际 sensitivity review；继续保持 validation-only，不修改 threshold current value、production
+      / paper-shadow / official weights
+    - '`dynamic_trend_threshold_sensitivity_review.json/md` 覆盖 3 个目标阈值，每个阈值输出 current/stricter/relaxed/capped-or-smoothed/no-change
+      variants；每个 variant 输出 1d/5d/10d/20d avg_return 与 hit_rate、max_drawdown、drawdown_preservation、turnover、constraint_hit_count、risk_off/on
+      trigger counts、false risk-off/on counts 和 missed_upside_count；分层覆盖 horizon、asset、date、regime、event
+      window、full_advisory_only、component/backtest bridge 和 correlated asset cluster；必须披露
+      mature_date_count、mature_case_count、full_advisory_case_count、cluster_count、regime_count、sample_quality_breakdown；recommendation
+      只能是 validation recommendation，不升级 `VALIDATED_BOUNDARY`，最多 `SENSITIVITY_TESTED`；focused
+      tests、CLI、Ruff、py_compile、`git diff --check` 和 validation tier 通过或明确记录阻塞'
+    - '2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；范围限定为 second-batch dynamic/trend threshold
+      sensitivity review，不能批准 promotion、paper-shadow、production 或 official weight
+      changes，不能修改当前 threshold value。2026-06-20: 实现完成并进入 VALIDATING；真实 CLI 输出 tested_threshold_count=3、sensitivity_tested_count=3、validated_boundary_count=0、thresholds_changed_count=0、mature_case_count_by_horizon={1d:20,5d:16,10d:11,20d:0}、full_advisory_case_count=22、cluster_count=1、regime_count=1、production_effect=none；3
+      个目标阈值 current_value 仍为 registry 原值，未升级 `VALIDATED_BOUNDARY`。验证通过 py_compile、Ruff、Black
+      check、focused indicator pytest 41 passed、task/docs/config 并行 pytest 27 passed、`git
+      diff --check` 和 full 并行 validation tier 2982 passed / 643 warnings / 159.76s，runtime
+      artifact `outputs/validation_runtime/full_20260620T124053Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-698_DYNAMIC_TREND_THRESHOLD_SENSITIVITY_REVIEW|Threshold governance
+      / dynamic allocation and trend threshold sensitivity review|P0|VALIDATING|项目
+      owner 后续复核|详细拆解见 `docs/requirements/TRADING-698_Dynamic_Trend_Threshold_Sensitivity_Review.md`；对
+      TRADING-697 准备的 `dynamic_allocation.risk_off_score_thresholds`、`dynamic_allocation.risk_on_confirmation_thresholds`、`trend_calibration.score_bands`
+      做实际 sensitivity review；继续保持 validation-only，不修改 threshold current value、production
+      / paper-shadow / official weights|`dynamic_trend_threshold_sensitivity_review.json/md`
+      覆盖 3 个目标阈值，每个阈值输出 current/stricter/relaxed/capped-or-smoothed/no-change variants；每个
+      variant 输出 1d/5d/10d/20d avg_return 与 hit_rate、max_drawdown、drawdown_preservation、turnover、constraint_hit_count、risk_off/on
+      trigger counts、false risk-off/on counts 和 missed_upside_count；分层覆盖 horizon、asset、date、regime、event
+      window、full_advisory_only、component/backtest bridge 和 correlated asset cluster；必须披露
+      mature_date_count、mature_case_count、full_advisory_case_count、cluster_count、regime_count、sample_quality_breakdown；recommendation
+      只能是 validation recommendation，不升级 `VALIDATED_BOUNDARY`，最多 `SENSITIVITY_TESTED`；focused
+      tests、CLI、Ruff、py_compile、`git diff --check` 和 validation tier 通过或明确记录阻塞|2026-06-20:
+      按 owner 指令新增并进入 IN_PROGRESS；范围限定为 second-batch dynamic/trend threshold sensitivity
+      review，不能批准 promotion、paper-shadow、production 或 official weight changes，不能修改当前
+      threshold value。2026-06-20: 实现完成并进入 VALIDATING；真实 CLI 输出 tested_threshold_count=3、sensitivity_tested_count=3、validated_boundary_count=0、thresholds_changed_count=0、mature_case_count_by_horizon={1d:20,5d:16,10d:11,20d:0}、full_advisory_case_count=22、cluster_count=1、regime_count=1、production_effect=none；3
+      个目标阈值 current_value 仍为 registry 原值，未升级 `VALIDATED_BOUNDARY`。验证通过 py_compile、Ruff、Black
+      check、focused indicator pytest 41 passed、task/docs/config 并行 pytest 27 passed、`git
+      diff --check` 和 full 并行 validation tier 2982 passed / 643 warnings / 159.76s，runtime
+      artifact `outputs/validation_runtime/full_20260620T124053Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-93a5898dbad2de126a2d3686
+  task_id: TRADING-698_DYNAMIC_TREND_THRESHOLD_SENSITIVITY_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核
+    notes: '2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；范围限定为 second-batch dynamic/trend
+      threshold sensitivity review，不能批准 promotion、paper-shadow、production 或 official
+      weight changes，不能修改当前 threshold value。2026-06-20: 实现完成并进入 VALIDATING；真实 CLI
+      输出 tested_threshold_count=3、sensitivity_tested_count=3、validated_boundary_count=0、thresholds_changed_count=0、mature_case_count_by_horizon={1d:20,5d:16,10d:11,20d:0}、full_advisory_case_count=22、cluster_count=1、regime_count=1、production_effect=none；3
+      个目标阈值 current_value 仍为 registry 原值，未升级 `VALIDATED_BOUNDARY`。验证通过 py_compile、Ruff、Black
+      check、focused indicator pytest 41 passed、task/docs/config 并行 pytest 27 passed、`git
+      diff --check` 和 full 并行 validation tier 2982 passed / 643 warnings / 159.76s，runtime
+      artifact `outputs/validation_runtime/full_20260620T124053Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:93a5898dbad2de126a2d368614efb6c4218b7947d3f38e124b8714182e8e85f9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-698_DYNAMIC_TREND_THRESHOLD_SENSITIVITY_REVIEW
+  - Threshold governance / dynamic allocation and trend threshold sensitivity review
+  - P0
+  - VALIDATING
+  - 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-698_Dynamic_Trend_Threshold_Sensitivity_Review.md`；对
+    TRADING-697 准备的 `dynamic_allocation.risk_off_score_thresholds`、`dynamic_allocation.risk_on_confirmation_thresholds`、`trend_calibration.score_bands`
+    做实际 sensitivity review；继续保持 validation-only，不修改 threshold current value、production
+    / paper-shadow / official weights
+  - '`dynamic_trend_threshold_sensitivity_review.json/md` 覆盖 3 个目标阈值，每个阈值输出 current/stricter/relaxed/capped-or-smoothed/no-change
+    variants；每个 variant 输出 1d/5d/10d/20d avg_return 与 hit_rate、max_drawdown、drawdown_preservation、turnover、constraint_hit_count、risk_off/on
+    trigger counts、false risk-off/on counts 和 missed_upside_count；分层覆盖 horizon、asset、date、regime、event
+    window、full_advisory_only、component/backtest bridge 和 correlated asset cluster；必须披露
+    mature_date_count、mature_case_count、full_advisory_case_count、cluster_count、regime_count、sample_quality_breakdown；recommendation
+    只能是 validation recommendation，不升级 `VALIDATED_BOUNDARY`，最多 `SENSITIVITY_TESTED`；focused
+    tests、CLI、Ruff、py_compile、`git diff --check` 和 validation tier 通过或明确记录阻塞'
+  - '2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；范围限定为 second-batch dynamic/trend threshold
+    sensitivity review，不能批准 promotion、paper-shadow、production 或 official weight changes，不能修改当前
+    threshold value。2026-06-20: 实现完成并进入 VALIDATING；真实 CLI 输出 tested_threshold_count=3、sensitivity_tested_count=3、validated_boundary_count=0、thresholds_changed_count=0、mature_case_count_by_horizon={1d:20,5d:16,10d:11,20d:0}、full_advisory_case_count=22、cluster_count=1、regime_count=1、production_effect=none；3
+    个目标阈值 current_value 仍为 registry 原值，未升级 `VALIDATED_BOUNDARY`。验证通过 py_compile、Ruff、Black
+    check、focused indicator pytest 41 passed、task/docs/config 并行 pytest 27 passed、`git
+    diff --check` 和 full 并行 validation tier 2982 passed / 643 warnings / 159.76s，runtime
+    artifact `outputs/validation_runtime/full_20260620T124053Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-698_Dynamic_Trend_Threshold_Sensitivity_Review.md
+  terminal: false
+  raw_row_sha256: 93a5898dbad2de126a2d368614efb6c4218b7947d3f38e124b8714182e8e85f9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a73037a214063214d7dcce121909d09bcde3f78324a7fe2b8dd57a7449d34b1f

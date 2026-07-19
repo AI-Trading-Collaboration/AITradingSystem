@@ -1,0 +1,95 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DOCS-PLATFORM-001_OBSIDIAN_AUTHORING_AND_GOVERNANCE
+  title: null
+  domain: Knowledge authoring / Obsidian-compatible Git Markdown governance
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: knowledge/documentation owner + architecture coordinator
+  requirement_refs:
+  - docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md`
+    的 K2；依赖K0/K1分类、metadata与lifecycle contract。Obsidian仅作编辑/导航客户端，Git+standard Markdown保持权威；下一步确定vault
+    root、MOC、`.obsidian`共享/ignore策略和现有freshness validator迁移边界。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 标准Markdown reader可完整阅读；MOC/owner/review/supersedes模板明确；Obsidian专属syntax/plugin不是唯一依赖；`.obsidian`不制造仓库噪音；broken
+      link/orphan/duplicate basename/missing metadata/stale CURRENT可审计；不拆出第二份system-flow真值。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1179
+    row_sha256: 6d23c4305f100279a5816dd754221c21c4f3f5b92f64e5430e3bf8277cded303
+    cell_count: 8
+    all_cells:
+    - DOCS-PLATFORM-001_OBSIDIAN_AUTHORING_AND_GOVERNANCE
+    - Knowledge authoring / Obsidian-compatible Git Markdown governance
+    - P2
+    - PROPOSED
+    - knowledge/documentation owner + architecture coordinator
+    - 详见 `docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md`
+      的 K2；依赖K0/K1分类、metadata与lifecycle contract。Obsidian仅作编辑/导航客户端，Git+standard Markdown保持权威；下一步确定vault
+      root、MOC、`.obsidian`共享/ignore策略和现有freshness validator迁移边界。
+    - 标准Markdown reader可完整阅读；MOC/owner/review/supersedes模板明确；Obsidian专属syntax/plugin不是唯一依赖；`.obsidian`不制造仓库噪音；broken
+      link/orphan/duplicate basename/missing metadata/stale CURRENT可审计；不拆出第二份system-flow真值。
+    - '2026-07-12: 根据owner关于Obsidian长期维护的讨论登记为PROPOSED；未创建vault或同步服务。'
+    raw_line: '|DOCS-PLATFORM-001_OBSIDIAN_AUTHORING_AND_GOVERNANCE|Knowledge authoring
+      / Obsidian-compatible Git Markdown governance|P2|PROPOSED|knowledge/documentation
+      owner + architecture coordinator|详见 `docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md`
+      的 K2；依赖K0/K1分类、metadata与lifecycle contract。Obsidian仅作编辑/导航客户端，Git+standard Markdown保持权威；下一步确定vault
+      root、MOC、`.obsidian`共享/ignore策略和现有freshness validator迁移边界。|标准Markdown reader可完整阅读；MOC/owner/review/supersedes模板明确；Obsidian专属syntax/plugin不是唯一依赖；`.obsidian`不制造仓库噪音；broken
+      link/orphan/duplicate basename/missing metadata/stale CURRENT可审计；不拆出第二份system-flow真值。|2026-07-12:
+      根据owner关于Obsidian长期维护的讨论登记为PROPOSED；未创建vault或同步服务。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6d23c4305f100279a5816dd7
+  task_id: DOCS-PLATFORM-001_OBSIDIAN_AUTHORING_AND_GOVERNANCE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P2
+    next_owner: knowledge/documentation owner + architecture coordinator
+    notes: '2026-07-12: 根据owner关于Obsidian长期维护的讨论登记为PROPOSED；未创建vault或同步服务。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6d23c4305f100279a5816dd754221c21c4f3f5b92f64e5430e3bf8277cded303
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DOCS-PLATFORM-001_OBSIDIAN_AUTHORING_AND_GOVERNANCE
+  - Knowledge authoring / Obsidian-compatible Git Markdown governance
+  - P2
+  - PROPOSED
+  - knowledge/documentation owner + architecture coordinator
+  - 详见 `docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md`
+    的 K2；依赖K0/K1分类、metadata与lifecycle contract。Obsidian仅作编辑/导航客户端，Git+standard Markdown保持权威；下一步确定vault
+    root、MOC、`.obsidian`共享/ignore策略和现有freshness validator迁移边界。
+  - 标准Markdown reader可完整阅读；MOC/owner/review/supersedes模板明确；Obsidian专属syntax/plugin不是唯一依赖；`.obsidian`不制造仓库噪音；broken
+    link/orphan/duplicate basename/missing metadata/stale CURRENT可审计；不拆出第二份system-flow真值。
+  - '2026-07-12: 根据owner关于Obsidian长期维护的讨论登记为PROPOSED；未创建vault或同步服务。'
+  docs_links:
+  - docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md
+  terminal: false
+  raw_row_sha256: 6d23c4305f100279a5816dd754221c21c4f3f5b92f64e5430e3bf8277cded303
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0bde5afb4cf14669d081412e7860381203f699572ec2d93dd2f66e047f227cca

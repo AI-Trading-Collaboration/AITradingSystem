@@ -1,0 +1,154 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-354_EVIDENCE_STALENESS_MONITOR
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue evidence staleness monitor
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-354_Evidence_Staleness_Monitor.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-354_Evidence_Staleness_Monitor.md`；承接
+    TRADING-349 candidate decision ledger，建立只读 evidence staleness monitor，抽取 price
+    data、market panel、signal artifact、stress backfill、A/B review、owner review、paper-shadow
+    daily observation、paper-shadow drift monitor 和 paper-shadow weekly review timestamps，并按
+    policy YAML 评估 FRESH/ACCEPTABLE/STALE/BLOCKING；不得刷新数据、重跑上游、修改 ledger、生成 official
+    target weights、order ticket、broker action 或 production mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 freshness policy、timestamp extraction、staleness report/validation artifact、run/report/validate
+      CLI、Reader Brief fields、report registry、artifact catalog、README、system flow、operations
+      runbook、requirements、task register 和 focused tests；报告必须输出 `evidence_freshness_status`、`stale_artifacts`、`blocking_artifacts`、`missing_artifacts`、`next_refresh_action`、`safe_to_continue_shadow`
+      和 `safety_boundary_status`，缺失 required artifact 时 fail-closed；验证通过 run/report/validate
+      CLI、focused pytest、documentation contract、report index、ruff、compileall、git diff
+      check 和 task-register归档
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 242
+    row_sha256: 8eed448a76ca3343f76a9b47ac1669b09acae0c3cf63feddd390d5e24c41c120
+    cell_count: 8
+    all_cells:
+    - TRADING-354_EVIDENCE_STALENESS_MONITOR
+    - ETF portfolio/dynamic v3 rescue evidence staleness monitor
+    - P2
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-354_Evidence_Staleness_Monitor.md`；承接 TRADING-349
+      candidate decision ledger，建立只读 evidence staleness monitor，抽取 price data、market
+      panel、signal artifact、stress backfill、A/B review、owner review、paper-shadow daily
+      observation、paper-shadow drift monitor 和 paper-shadow weekly review timestamps，并按
+      policy YAML 评估 FRESH/ACCEPTABLE/STALE/BLOCKING；不得刷新数据、重跑上游、修改 ledger、生成 official
+      target weights、order ticket、broker action 或 production mutation
+    - 新增 freshness policy、timestamp extraction、staleness report/validation artifact、run/report/validate
+      CLI、Reader Brief fields、report registry、artifact catalog、README、system flow、operations
+      runbook、requirements、task register 和 focused tests；报告必须输出 `evidence_freshness_status`、`stale_artifacts`、`blocking_artifacts`、`missing_artifacts`、`next_refresh_action`、`safe_to_continue_shadow`
+      和 `safety_boundary_status`，缺失 required artifact 时 fail-closed；验证通过 run/report/validate
+      CLI、focused pytest、documentation contract、report index、ruff、compileall、git diff
+      check 和 task-register归档
+    - '2026-06-16: DONE；补齐附件范围中缺失的 paper-shadow daily/drift/weekly freshness coverage，新增
+      missing artifact detection、safe-to-continue-shadow boundary 和 Reader Brief summary
+      fields；真实只读 run 生成 `evidence-staleness-monitor_39cc2b41171c8b6d`，当前因缺失 latest
+      weekly review 正确输出 `evidence_freshness_status=BLOCKING`、`blocking_artifacts=paper_shadow_weekly_review`、`missing_artifacts=paper_shadow_weekly_review`、`safe_to_continue_shadow=false`，report/validate
+      CLI 均 PASS；`python -m pytest tests/test_evidence_staleness_monitor.py tests/test_etf_dynamic_v3_parameter_research.py
+      tests/test_documentation_contract.py tests/test_report_index.py -q` 36 passed，`python
+      -m ruff check src tests` PASS，`python -m compileall src` PASS，`git diff --check`
+      PASS；保持 read-only / no data refresh / no upstream rerun / no official target
+      / no broker / no production。'
+    raw_line: '|TRADING-354_EVIDENCE_STALENESS_MONITOR|ETF portfolio/dynamic v3 rescue
+      evidence staleness monitor|P2|DONE|项目 owner 后续复核；代码实现完成|详细拆解见 `docs/requirements/TRADING-354_Evidence_Staleness_Monitor.md`；承接
+      TRADING-349 candidate decision ledger，建立只读 evidence staleness monitor，抽取 price
+      data、market panel、signal artifact、stress backfill、A/B review、owner review、paper-shadow
+      daily observation、paper-shadow drift monitor 和 paper-shadow weekly review timestamps，并按
+      policy YAML 评估 FRESH/ACCEPTABLE/STALE/BLOCKING；不得刷新数据、重跑上游、修改 ledger、生成 official
+      target weights、order ticket、broker action 或 production mutation|新增 freshness
+      policy、timestamp extraction、staleness report/validation artifact、run/report/validate
+      CLI、Reader Brief fields、report registry、artifact catalog、README、system flow、operations
+      runbook、requirements、task register 和 focused tests；报告必须输出 `evidence_freshness_status`、`stale_artifacts`、`blocking_artifacts`、`missing_artifacts`、`next_refresh_action`、`safe_to_continue_shadow`
+      和 `safety_boundary_status`，缺失 required artifact 时 fail-closed；验证通过 run/report/validate
+      CLI、focused pytest、documentation contract、report index、ruff、compileall、git diff
+      check 和 task-register归档|2026-06-16: DONE；补齐附件范围中缺失的 paper-shadow daily/drift/weekly
+      freshness coverage，新增 missing artifact detection、safe-to-continue-shadow boundary
+      和 Reader Brief summary fields；真实只读 run 生成 `evidence-staleness-monitor_39cc2b41171c8b6d`，当前因缺失
+      latest weekly review 正确输出 `evidence_freshness_status=BLOCKING`、`blocking_artifacts=paper_shadow_weekly_review`、`missing_artifacts=paper_shadow_weekly_review`、`safe_to_continue_shadow=false`，report/validate
+      CLI 均 PASS；`python -m pytest tests/test_evidence_staleness_monitor.py tests/test_etf_dynamic_v3_parameter_research.py
+      tests/test_documentation_contract.py tests/test_report_index.py -q` 36 passed，`python
+      -m ruff check src tests` PASS，`python -m compileall src` PASS，`git diff --check`
+      PASS；保持 read-only / no data refresh / no upstream rerun / no official target
+      / no broker / no production。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8eed448a76ca3343f76a9b47
+  task_id: TRADING-354_EVIDENCE_STALENESS_MONITOR
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: '2026-06-16: DONE；补齐附件范围中缺失的 paper-shadow daily/drift/weekly freshness
+      coverage，新增 missing artifact detection、safe-to-continue-shadow boundary 和 Reader
+      Brief summary fields；真实只读 run 生成 `evidence-staleness-monitor_39cc2b41171c8b6d`，当前因缺失
+      latest weekly review 正确输出 `evidence_freshness_status=BLOCKING`、`blocking_artifacts=paper_shadow_weekly_review`、`missing_artifacts=paper_shadow_weekly_review`、`safe_to_continue_shadow=false`，report/validate
+      CLI 均 PASS；`python -m pytest tests/test_evidence_staleness_monitor.py tests/test_etf_dynamic_v3_parameter_research.py
+      tests/test_documentation_contract.py tests/test_report_index.py -q` 36 passed，`python
+      -m ruff check src tests` PASS，`python -m compileall src` PASS，`git diff --check`
+      PASS；保持 read-only / no data refresh / no upstream rerun / no official target
+      / no broker / no production。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8eed448a76ca3343f76a9b47ac1669b09acae0c3cf63feddd390d5e24c41c120
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-354_EVIDENCE_STALENESS_MONITOR
+  - ETF portfolio/dynamic v3 rescue evidence staleness monitor
+  - P2
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-354_Evidence_Staleness_Monitor.md`；承接 TRADING-349
+    candidate decision ledger，建立只读 evidence staleness monitor，抽取 price data、market
+    panel、signal artifact、stress backfill、A/B review、owner review、paper-shadow daily
+    observation、paper-shadow drift monitor 和 paper-shadow weekly review timestamps，并按
+    policy YAML 评估 FRESH/ACCEPTABLE/STALE/BLOCKING；不得刷新数据、重跑上游、修改 ledger、生成 official
+    target weights、order ticket、broker action 或 production mutation
+  - 新增 freshness policy、timestamp extraction、staleness report/validation artifact、run/report/validate
+    CLI、Reader Brief fields、report registry、artifact catalog、README、system flow、operations
+    runbook、requirements、task register 和 focused tests；报告必须输出 `evidence_freshness_status`、`stale_artifacts`、`blocking_artifacts`、`missing_artifacts`、`next_refresh_action`、`safe_to_continue_shadow`
+    和 `safety_boundary_status`，缺失 required artifact 时 fail-closed；验证通过 run/report/validate
+    CLI、focused pytest、documentation contract、report index、ruff、compileall、git diff
+    check 和 task-register归档
+  - '2026-06-16: DONE；补齐附件范围中缺失的 paper-shadow daily/drift/weekly freshness coverage，新增
+    missing artifact detection、safe-to-continue-shadow boundary 和 Reader Brief summary
+    fields；真实只读 run 生成 `evidence-staleness-monitor_39cc2b41171c8b6d`，当前因缺失 latest
+    weekly review 正确输出 `evidence_freshness_status=BLOCKING`、`blocking_artifacts=paper_shadow_weekly_review`、`missing_artifacts=paper_shadow_weekly_review`、`safe_to_continue_shadow=false`，report/validate
+    CLI 均 PASS；`python -m pytest tests/test_evidence_staleness_monitor.py tests/test_etf_dynamic_v3_parameter_research.py
+    tests/test_documentation_contract.py tests/test_report_index.py -q` 36 passed，`python
+    -m ruff check src tests` PASS，`python -m compileall src` PASS，`git diff --check`
+    PASS；保持 read-only / no data refresh / no upstream rerun / no official target /
+    no broker / no production。'
+  docs_links:
+  - docs/requirements/TRADING-354_Evidence_Staleness_Monitor.md
+  terminal: true
+  raw_row_sha256: 8eed448a76ca3343f76a9b47ac1669b09acae0c3cf63feddd390d5e24c41c120
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 99d4f7c0876d8651d09f1e640046f47ed1259417be7fe1ed987b070667cb1959

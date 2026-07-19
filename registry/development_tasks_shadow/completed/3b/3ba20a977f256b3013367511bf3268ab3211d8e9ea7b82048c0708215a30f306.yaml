@@ -1,0 +1,156 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-382_RESEARCH_ROADMAP_DASHBOARD
+  title: null
+  domain: Research governance / roadmap dashboard
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 roadmap priorities；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-382_Research_Roadmap_Dashboard.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-382_Research_Roadmap_Dashboard.md`；聚合当前
+    active tasks、completed tasks、open blockers、stale artifacts、active candidates、latest
+    paper-shadow status、latest data governance、latest safety、latest lineage 和 next
+    recommended tasks；本任务只读生成 roadmap dashboard，不修改任务状态、candidate/paper-shadow/production
+    state、official target weights、order ticket 或 broker action
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/research_roadmap_dashboard.py`、`aits reports
+      research-roadmap-dashboard`、`aits reports validate-research-roadmap-dashboard`、JSON/Markdown
+      dashboard、validation artifact、Reader Brief section、report registry、artifact
+      catalog、README、system flow、operations runbook、requirements 和 focused tests；所有输出固定
+      `production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 213
+    row_sha256: 049b679cd315be384f52be2006cfcbcfdbb6aeae20af52a26bdbd289deea81a3
+    cell_count: 8
+    all_cells:
+    - TRADING-382_RESEARCH_ROADMAP_DASHBOARD
+    - Research governance / roadmap dashboard
+    - P1
+    - DONE
+    - 项目 owner 后续复核 roadmap priorities；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-382_Research_Roadmap_Dashboard.md`；聚合当前 active
+      tasks、completed tasks、open blockers、stale artifacts、active candidates、latest
+      paper-shadow status、latest data governance、latest safety、latest lineage 和 next
+      recommended tasks；本任务只读生成 roadmap dashboard，不修改任务状态、candidate/paper-shadow/production
+      state、official target weights、order ticket 或 broker action
+    - 新增 `src/ai_trading_system/reports/research_roadmap_dashboard.py`、`aits reports
+      research-roadmap-dashboard`、`aits reports validate-research-roadmap-dashboard`、JSON/Markdown
+      dashboard、validation artifact、Reader Brief section、report registry、artifact
+      catalog、README、system flow、operations runbook、requirements 和 focused tests；所有输出固定
+      `production_effect=none`
+    - '2026-06-16: DONE；真实 2026-06-16 dashboard `outputs/reports/research_roadmap_dashboard_2026-06-16.json/md`
+      输出 `ROADMAP_BLOCKED`、active_tasks=77、completed_tasks=333、open_blockers=5、stale_artifacts=10、missing_artifacts=20、active_candidates=1、paper_shadow=`HOLD_FOR_MORE_DATA`、data_governance=`BLOCKED`、safety=`SAFETY_PASS_WITH_WARNINGS`、lineage=`PASS`、top_next_task=`active_task_blockers`；validation
+      `outputs/reports/research_roadmap_dashboard_validation_2026-06-16.json/md` 输出
+      `PASS_WITH_WARNINGS`、checks=6、failed=0、dashboard_blockers=5、dashboard_warnings=1；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=404 / missing=20 / stale=10 / waived=30
+      / unwaived=0；documentation contract PASS；Reader Brief latest 使用 2026-06-15 decision
+      snapshot + 2026-06-16 report index 展示 roadmap section，Reader Brief quality OK
+      / failed=0；focused pytest 36 passed，Ruff PASS，compileall PASS。精确 2026-06-16
+      Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 该状态来自既有 task/report blockers 和 stale/missing artifacts，未自动调度任务、未修改
+      task/candidate/paper-shadow/production state、未运行上游、未刷新数据、未补造 artifact、未写 official
+      target weights、order ticket 或 broker。'
+    raw_line: '|TRADING-382_RESEARCH_ROADMAP_DASHBOARD|Research governance / roadmap
+      dashboard|P1|DONE|项目 owner 后续复核 roadmap priorities；代码实现完成|详细拆解见 `docs/requirements/TRADING-382_Research_Roadmap_Dashboard.md`；聚合当前
+      active tasks、completed tasks、open blockers、stale artifacts、active candidates、latest
+      paper-shadow status、latest data governance、latest safety、latest lineage 和 next
+      recommended tasks；本任务只读生成 roadmap dashboard，不修改任务状态、candidate/paper-shadow/production
+      state、official target weights、order ticket 或 broker action|新增 `src/ai_trading_system/reports/research_roadmap_dashboard.py`、`aits
+      reports research-roadmap-dashboard`、`aits reports validate-research-roadmap-dashboard`、JSON/Markdown
+      dashboard、validation artifact、Reader Brief section、report registry、artifact
+      catalog、README、system flow、operations runbook、requirements 和 focused tests；所有输出固定
+      `production_effect=none`|2026-06-16: DONE；真实 2026-06-16 dashboard `outputs/reports/research_roadmap_dashboard_2026-06-16.json/md`
+      输出 `ROADMAP_BLOCKED`、active_tasks=77、completed_tasks=333、open_blockers=5、stale_artifacts=10、missing_artifacts=20、active_candidates=1、paper_shadow=`HOLD_FOR_MORE_DATA`、data_governance=`BLOCKED`、safety=`SAFETY_PASS_WITH_WARNINGS`、lineage=`PASS`、top_next_task=`active_task_blockers`；validation
+      `outputs/reports/research_roadmap_dashboard_validation_2026-06-16.json/md` 输出
+      `PASS_WITH_WARNINGS`、checks=6、failed=0、dashboard_blockers=5、dashboard_warnings=1；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=404 / missing=20 / stale=10 / waived=30
+      / unwaived=0；documentation contract PASS；Reader Brief latest 使用 2026-06-15 decision
+      snapshot + 2026-06-16 report index 展示 roadmap section，Reader Brief quality OK
+      / failed=0；focused pytest 36 passed，Ruff PASS，compileall PASS。精确 2026-06-16
+      Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 该状态来自既有 task/report blockers 和 stale/missing artifacts，未自动调度任务、未修改
+      task/candidate/paper-shadow/production state、未运行上游、未刷新数据、未补造 artifact、未写 official
+      target weights、order ticket 或 broker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-049b679cd315be384f52be20
+  task_id: TRADING-382_RESEARCH_ROADMAP_DASHBOARD
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核 roadmap priorities；代码实现完成
+    notes: '2026-06-16: DONE；真实 2026-06-16 dashboard `outputs/reports/research_roadmap_dashboard_2026-06-16.json/md`
+      输出 `ROADMAP_BLOCKED`、active_tasks=77、completed_tasks=333、open_blockers=5、stale_artifacts=10、missing_artifacts=20、active_candidates=1、paper_shadow=`HOLD_FOR_MORE_DATA`、data_governance=`BLOCKED`、safety=`SAFETY_PASS_WITH_WARNINGS`、lineage=`PASS`、top_next_task=`active_task_blockers`；validation
+      `outputs/reports/research_roadmap_dashboard_validation_2026-06-16.json/md` 输出
+      `PASS_WITH_WARNINGS`、checks=6、failed=0、dashboard_blockers=5、dashboard_warnings=1；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=404 / missing=20 / stale=10 / waived=30
+      / unwaived=0；documentation contract PASS；Reader Brief latest 使用 2026-06-15 decision
+      snapshot + 2026-06-16 report index 展示 roadmap section，Reader Brief quality OK
+      / failed=0；focused pytest 36 passed，Ruff PASS，compileall PASS。精确 2026-06-16
+      Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 该状态来自既有 task/report blockers 和 stale/missing artifacts，未自动调度任务、未修改
+      task/candidate/paper-shadow/production state、未运行上游、未刷新数据、未补造 artifact、未写 official
+      target weights、order ticket 或 broker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:049b679cd315be384f52be2006cfcbcfdbb6aeae20af52a26bdbd289deea81a3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-382_RESEARCH_ROADMAP_DASHBOARD
+  - Research governance / roadmap dashboard
+  - P1
+  - DONE
+  - 项目 owner 后续复核 roadmap priorities；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-382_Research_Roadmap_Dashboard.md`；聚合当前 active
+    tasks、completed tasks、open blockers、stale artifacts、active candidates、latest paper-shadow
+    status、latest data governance、latest safety、latest lineage 和 next recommended
+    tasks；本任务只读生成 roadmap dashboard，不修改任务状态、candidate/paper-shadow/production state、official
+    target weights、order ticket 或 broker action
+  - 新增 `src/ai_trading_system/reports/research_roadmap_dashboard.py`、`aits reports
+    research-roadmap-dashboard`、`aits reports validate-research-roadmap-dashboard`、JSON/Markdown
+    dashboard、validation artifact、Reader Brief section、report registry、artifact catalog、README、system
+    flow、operations runbook、requirements 和 focused tests；所有输出固定 `production_effect=none`
+  - '2026-06-16: DONE；真实 2026-06-16 dashboard `outputs/reports/research_roadmap_dashboard_2026-06-16.json/md`
+    输出 `ROADMAP_BLOCKED`、active_tasks=77、completed_tasks=333、open_blockers=5、stale_artifacts=10、missing_artifacts=20、active_candidates=1、paper_shadow=`HOLD_FOR_MORE_DATA`、data_governance=`BLOCKED`、safety=`SAFETY_PASS_WITH_WARNINGS`、lineage=`PASS`、top_next_task=`active_task_blockers`；validation
+    `outputs/reports/research_roadmap_dashboard_validation_2026-06-16.json/md` 输出
+    `PASS_WITH_WARNINGS`、checks=6、failed=0、dashboard_blockers=5、dashboard_warnings=1；report
+    index `PASS_WITH_EXPLICIT_WAIVERS` / reports=404 / missing=20 / stale=10 / waived=30
+    / unwaived=0；documentation contract PASS；Reader Brief latest 使用 2026-06-15 decision
+    snapshot + 2026-06-16 report index 展示 roadmap section，Reader Brief quality OK
+    / failed=0；focused pytest 36 passed，Ruff PASS，compileall PASS。精确 2026-06-16 Reader
+    Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+    no snapshot was fabricated. 该状态来自既有 task/report blockers 和 stale/missing artifacts，未自动调度任务、未修改
+    task/candidate/paper-shadow/production state、未运行上游、未刷新数据、未补造 artifact、未写 official
+    target weights、order ticket 或 broker。'
+  docs_links:
+  - docs/requirements/TRADING-382_Research_Roadmap_Dashboard.md
+  terminal: true
+  raw_row_sha256: 049b679cd315be384f52be2006cfcbcfdbb6aeae20af52a26bdbd289deea81a3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7e1f499342f31602c05067b6dc47245fe60d541f95fc24468b867d3d998ae2ae

@@ -1,0 +1,138 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-046A
+  title: null
+  domain: 基本面/SEC PIT Shadow Monitor State Normalization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/sec_pit_shadow_monitor_state_normalization_2026-05-28.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/sec_pit_shadow_monitor_state_normalization_2026-05-28.md`；已完成
+    SEC PIT shadow monitor 状态机归一化，把 monitor maturity 与 rolling metrics availability
+    拆开，修正 healthy coverage/sample/days 仍显示 `INSUFFICIENT_MONITORING_SAMPLE` 的误导性状态
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: coverage gate 通过但 minimum evidence 未达标时输出 `MONITORING_ACTIVE`；coverage gate、minimum
+      sample、observation days 达标且无 warning/rollback 时输出 `OK_MONITORING`，rolling metrics
+      暂不完整只阻断 rollback，不再解释为 sample insufficiency；rollback 必须同时满足 coverage、minimum
+      evidence、rolling metrics available 和 factor deterioration RankIC + outcome 双重确认；summary
+      / Markdown / dashboard 展示 `monitor_maturity`、`rolling_metrics_available` 和 `state_transition_reason`；不修改
+      production weights、active shadow weights 或交易动作
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 384
+    row_sha256: f612bc8b8ec19bc1622705db925c63cc310c1f4660724c727fb9397d00c8e792
+    cell_count: 8
+    all_cells:
+    - TRADING-046A
+    - 基本面/SEC PIT Shadow Monitor State Normalization
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/sec_pit_shadow_monitor_state_normalization_2026-05-28.md`；已完成
+      SEC PIT shadow monitor 状态机归一化，把 monitor maturity 与 rolling metrics availability
+      拆开，修正 healthy coverage/sample/days 仍显示 `INSUFFICIENT_MONITORING_SAMPLE` 的误导性状态
+    - coverage gate 通过但 minimum evidence 未达标时输出 `MONITORING_ACTIVE`；coverage gate、minimum
+      sample、observation days 达标且无 warning/rollback 时输出 `OK_MONITORING`，rolling metrics
+      暂不完整只阻断 rollback，不再解释为 sample insufficiency；rollback 必须同时满足 coverage、minimum
+      evidence、rolling metrics available 和 factor deterioration RankIC + outcome 双重确认；summary
+      / Markdown / dashboard 展示 `monitor_maturity`、`rolling_metrics_available` 和 `state_transition_reason`；不修改
+      production weights、active shadow weights 或交易动作
+    - '2026-05-28: 新增并进入 IN_PROGRESS，原因：TRADING-046 latest run 已满足 coverage、样本、观察期和无
+      warning/rollback 条件，但状态仍为 `INSUFFICIENT_MONITORING_SAMPLE`。2026-05-28: 从 IN_PROGRESS
+      改为 DONE，原因：已完成状态机、summary schema 1.1、dashboard 只读展示、runbook/artifact catalog/learning
+      path/system flow 和测试；真实 `python -m ai_trading_system.cli sec-pit shadow-monitor
+      --latest` 输出 `OK_MONITORING`、`monitor_maturity=MINIMUM_EVIDENCE_ACHIEVED`、`rolling_metrics_available=false`、`rollback_recommended=false`、`warning_count=0`；验证通过
+      `python -m pytest tests/trading_engine/test_sec_pit_shadow_monitor.py -q`（9
+      passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量
+      `python -m pytest -q`（1326 passed, 1 warning）、全量 ruff 和触达 Python Black check。'
+    raw_line: '|TRADING-046A|基本面/SEC PIT Shadow Monitor State Normalization|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/sec_pit_shadow_monitor_state_normalization_2026-05-28.md`；已完成
+      SEC PIT shadow monitor 状态机归一化，把 monitor maturity 与 rolling metrics availability
+      拆开，修正 healthy coverage/sample/days 仍显示 `INSUFFICIENT_MONITORING_SAMPLE` 的误导性状态|coverage
+      gate 通过但 minimum evidence 未达标时输出 `MONITORING_ACTIVE`；coverage gate、minimum sample、observation
+      days 达标且无 warning/rollback 时输出 `OK_MONITORING`，rolling metrics 暂不完整只阻断 rollback，不再解释为
+      sample insufficiency；rollback 必须同时满足 coverage、minimum evidence、rolling metrics
+      available 和 factor deterioration RankIC + outcome 双重确认；summary / Markdown /
+      dashboard 展示 `monitor_maturity`、`rolling_metrics_available` 和 `state_transition_reason`；不修改
+      production weights、active shadow weights 或交易动作|2026-05-28: 新增并进入 IN_PROGRESS，原因：TRADING-046
+      latest run 已满足 coverage、样本、观察期和无 warning/rollback 条件，但状态仍为 `INSUFFICIENT_MONITORING_SAMPLE`。2026-05-28:
+      从 IN_PROGRESS 改为 DONE，原因：已完成状态机、summary schema 1.1、dashboard 只读展示、runbook/artifact
+      catalog/learning path/system flow 和测试；真实 `python -m ai_trading_system.cli sec-pit
+      shadow-monitor --latest` 输出 `OK_MONITORING`、`monitor_maturity=MINIMUM_EVIDENCE_ACHIEVED`、`rolling_metrics_available=false`、`rollback_recommended=false`、`warning_count=0`；验证通过
+      `python -m pytest tests/trading_engine/test_sec_pit_shadow_monitor.py -q`（9
+      passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量
+      `python -m pytest -q`（1326 passed, 1 warning）、全量 ruff 和触达 Python Black check。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f612bc8b8ec19bc1622705db
+  task_id: TRADING-046A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-28: 新增并进入 IN_PROGRESS，原因：TRADING-046 latest run 已满足 coverage、样本、观察期和无
+      warning/rollback 条件，但状态仍为 `INSUFFICIENT_MONITORING_SAMPLE`。2026-05-28: 从 IN_PROGRESS
+      改为 DONE，原因：已完成状态机、summary schema 1.1、dashboard 只读展示、runbook/artifact catalog/learning
+      path/system flow 和测试；真实 `python -m ai_trading_system.cli sec-pit shadow-monitor
+      --latest` 输出 `OK_MONITORING`、`monitor_maturity=MINIMUM_EVIDENCE_ACHIEVED`、`rolling_metrics_available=false`、`rollback_recommended=false`、`warning_count=0`；验证通过
+      `python -m pytest tests/trading_engine/test_sec_pit_shadow_monitor.py -q`（9
+      passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量
+      `python -m pytest -q`（1326 passed, 1 warning）、全量 ruff 和触达 Python Black check。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f612bc8b8ec19bc1622705db925c63cc310c1f4660724c727fb9397d00c8e792
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-046A
+  - 基本面/SEC PIT Shadow Monitor State Normalization
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/sec_pit_shadow_monitor_state_normalization_2026-05-28.md`；已完成
+    SEC PIT shadow monitor 状态机归一化，把 monitor maturity 与 rolling metrics availability
+    拆开，修正 healthy coverage/sample/days 仍显示 `INSUFFICIENT_MONITORING_SAMPLE` 的误导性状态
+  - coverage gate 通过但 minimum evidence 未达标时输出 `MONITORING_ACTIVE`；coverage gate、minimum
+    sample、observation days 达标且无 warning/rollback 时输出 `OK_MONITORING`，rolling metrics
+    暂不完整只阻断 rollback，不再解释为 sample insufficiency；rollback 必须同时满足 coverage、minimum evidence、rolling
+    metrics available 和 factor deterioration RankIC + outcome 双重确认；summary / Markdown
+    / dashboard 展示 `monitor_maturity`、`rolling_metrics_available` 和 `state_transition_reason`；不修改
+    production weights、active shadow weights 或交易动作
+  - '2026-05-28: 新增并进入 IN_PROGRESS，原因：TRADING-046 latest run 已满足 coverage、样本、观察期和无
+    warning/rollback 条件，但状态仍为 `INSUFFICIENT_MONITORING_SAMPLE`。2026-05-28: 从 IN_PROGRESS
+    改为 DONE，原因：已完成状态机、summary schema 1.1、dashboard 只读展示、runbook/artifact catalog/learning
+    path/system flow 和测试；真实 `python -m ai_trading_system.cli sec-pit shadow-monitor
+    --latest` 输出 `OK_MONITORING`、`monitor_maturity=MINIMUM_EVIDENCE_ACHIEVED`、`rolling_metrics_available=false`、`rollback_recommended=false`、`warning_count=0`；验证通过
+    `python -m pytest tests/trading_engine/test_sec_pit_shadow_monitor.py -q`（9 passed）、`python
+    -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量 `python -m pytest
+    -q`（1326 passed, 1 warning）、全量 ruff 和触达 Python Black check。'
+  docs_links:
+  - docs/requirements/sec_pit_shadow_monitor_state_normalization_2026-05-28.md
+  terminal: true
+  raw_row_sha256: f612bc8b8ec19bc1622705db925c63cc310c1f4660724c727fb9397d00c8e792
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9ee9572bdf26324828d0c832bfa833dd338836d99da0313d2f01480360dc7acb

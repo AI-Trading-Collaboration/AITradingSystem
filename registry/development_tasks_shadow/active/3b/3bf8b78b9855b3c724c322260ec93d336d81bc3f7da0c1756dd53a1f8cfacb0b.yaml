@@ -1,0 +1,122 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-736_DATA_SOURCE_REMEDIATION_EXECUTION
+  title: null
+  domain: Data foundation / source remediation execution and updated qualification
+    matrix
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-736_Data_Source_Remediation_Execution.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-736_Data_Source_Remediation_Execution.md`；读取
+    TRADING-734 acceptance report 与 TRADING-735 qualification matrix/remediation plan/updated
+    summary，按 P0、blocked、current-view 风险排序并输出逐项 remediation execution result
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits data source-qualification execute-remediation` 可读取 TRADING-735 artifacts，重新运行
+      `aits data foundation-acceptance run` 同一路径，输出每个 remediation item 的 before_status、after_status、blocked_reason、fix_applied、remaining_gap、repairable_without_relaxing_gate、promotion_grade_candidate_after_fix、allowed_uses，并生成
+      updated qualification matrix；current-view 与 research-label-only 项必须显式隔离，所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1362
+    row_sha256: b2e6ee78f42991f84f324616be6c3c8407ab7c33d64673867197f43683dfd106
+    cell_count: 8
+    all_cells:
+    - TRADING-736_DATA_SOURCE_REMEDIATION_EXECUTION
+    - Data foundation / source remediation execution and updated qualification matrix
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-736_Data_Source_Remediation_Execution.md`；读取 TRADING-734
+      acceptance report 与 TRADING-735 qualification matrix/remediation plan/updated
+      summary，按 P0、blocked、current-view 风险排序并输出逐项 remediation execution result
+    - '`aits data source-qualification execute-remediation` 可读取 TRADING-735 artifacts，重新运行
+      `aits data foundation-acceptance run` 同一路径，输出每个 remediation item 的 before_status、after_status、blocked_reason、fix_applied、remaining_gap、repairable_without_relaxing_gate、promotion_grade_candidate_after_fix、allowed_uses，并生成
+      updated qualification matrix；current-view 与 research-label-only 项必须显式隔离，所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false'
+    - '2026-06-21: validation-only remediation execution runner 已实现并进入 VALIDATING；默认
+      run 输出 `BLOCKED_UNTIL_QUALIFIED` matrix、P0_remaining_count=9、P0_resolved_count=0、current_view_only_isolated_count=1、research_label_only_restricted_count=1、lookahead_violation_count=0、production_effect=none、broker_action=none，说明没有真实
+      as-of/source manifest proof 的 P0 source 仍不允许 promotion/strategy input；focused
+      tests 37 passed，fast-unit 94 passed，contract-validation 93 passed，report-validation
+      55 passed。'
+    raw_line: '|TRADING-736_DATA_SOURCE_REMEDIATION_EXECUTION|Data foundation / source
+      remediation execution and updated qualification matrix|P0|VALIDATING|系统实现 +
+      项目 owner 后续复核|详见 `docs/requirements/TRADING-736_Data_Source_Remediation_Execution.md`；读取
+      TRADING-734 acceptance report 与 TRADING-735 qualification matrix/remediation
+      plan/updated summary，按 P0、blocked、current-view 风险排序并输出逐项 remediation execution
+      result|`aits data source-qualification execute-remediation` 可读取 TRADING-735
+      artifacts，重新运行 `aits data foundation-acceptance run` 同一路径，输出每个 remediation item
+      的 before_status、after_status、blocked_reason、fix_applied、remaining_gap、repairable_without_relaxing_gate、promotion_grade_candidate_after_fix、allowed_uses，并生成
+      updated qualification matrix；current-view 与 research-label-only 项必须显式隔离，所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false|2026-06-21:
+      validation-only remediation execution runner 已实现并进入 VALIDATING；默认 run 输出 `BLOCKED_UNTIL_QUALIFIED`
+      matrix、P0_remaining_count=9、P0_resolved_count=0、current_view_only_isolated_count=1、research_label_only_restricted_count=1、lookahead_violation_count=0、production_effect=none、broker_action=none，说明没有真实
+      as-of/source manifest proof 的 P0 source 仍不允许 promotion/strategy input；focused
+      tests 37 passed，fast-unit 94 passed，contract-validation 93 passed，report-validation
+      55 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b2e6ee78f42991f84f324616
+  task_id: TRADING-736_DATA_SOURCE_REMEDIATION_EXECUTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-21: validation-only remediation execution runner 已实现并进入 VALIDATING；默认
+      run 输出 `BLOCKED_UNTIL_QUALIFIED` matrix、P0_remaining_count=9、P0_resolved_count=0、current_view_only_isolated_count=1、research_label_only_restricted_count=1、lookahead_violation_count=0、production_effect=none、broker_action=none，说明没有真实
+      as-of/source manifest proof 的 P0 source 仍不允许 promotion/strategy input；focused
+      tests 37 passed，fast-unit 94 passed，contract-validation 93 passed，report-validation
+      55 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b2e6ee78f42991f84f324616be6c3c8407ab7c33d64673867197f43683dfd106
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-736_DATA_SOURCE_REMEDIATION_EXECUTION
+  - Data foundation / source remediation execution and updated qualification matrix
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-736_Data_Source_Remediation_Execution.md`；读取 TRADING-734
+    acceptance report 与 TRADING-735 qualification matrix/remediation plan/updated
+    summary，按 P0、blocked、current-view 风险排序并输出逐项 remediation execution result
+  - '`aits data source-qualification execute-remediation` 可读取 TRADING-735 artifacts，重新运行
+    `aits data foundation-acceptance run` 同一路径，输出每个 remediation item 的 before_status、after_status、blocked_reason、fix_applied、remaining_gap、repairable_without_relaxing_gate、promotion_grade_candidate_after_fix、allowed_uses，并生成
+    updated qualification matrix；current-view 与 research-label-only 项必须显式隔离，所有输出固定
+    production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false'
+  - '2026-06-21: validation-only remediation execution runner 已实现并进入 VALIDATING；默认
+    run 输出 `BLOCKED_UNTIL_QUALIFIED` matrix、P0_remaining_count=9、P0_resolved_count=0、current_view_only_isolated_count=1、research_label_only_restricted_count=1、lookahead_violation_count=0、production_effect=none、broker_action=none，说明没有真实
+    as-of/source manifest proof 的 P0 source 仍不允许 promotion/strategy input；focused
+    tests 37 passed，fast-unit 94 passed，contract-validation 93 passed，report-validation
+    55 passed。'
+  docs_links:
+  - docs/requirements/TRADING-736_Data_Source_Remediation_Execution.md
+  terminal: false
+  raw_row_sha256: b2e6ee78f42991f84f324616be6c3c8407ab7c33d64673867197f43683dfd106
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 622d185f53ebe57091f84a8937cc5b5b1848b1bbe79dc49210a3f5170ac7297b

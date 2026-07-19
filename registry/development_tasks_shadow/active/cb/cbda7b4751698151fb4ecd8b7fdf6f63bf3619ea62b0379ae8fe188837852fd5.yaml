@@ -1,0 +1,138 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2291_SCOPE_NARROWED_CANDIDATE_REGENERATION
+  title: null
+  domain: Research trends / scope-narrowed candidate regeneration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2291_Scope_Narrowed_Candidate_Regeneration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2291_Scope_Narrowed_Candidate_Regeneration.md`；依赖
+    TRADING-2290 scope review outputs、TRADING-2288 refined candidate artifacts 和 TRADING-2289
+    refined actual-path validation outputs。本批只生成 scope-narrowed candidate-bound artifacts
+    和 risk_appetite current-form archive，不执行 actual-path validation。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends scope-narrowed-candidate-generators-regenerate`；生成
+      `baseline_plus_trend_structure_scope_narrowed_confirmation_v1`、`volatility_regime_scope_narrowed_risk_cap_v1`、scope
+      filter reports、lineage reports、delta summaries、top-level registry/summary 和
+      `risk_appetite_refined_confidence_v1` archive record；input/output safety gates
+      fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker false/none，`actual_path_validation_ready=false`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1230
+    row_sha256: fe5503287d932541562fed2bd016f48fdea23071a6aba58057f3b8d2409a96e8
+    cell_count: 8
+    all_cells:
+    - TRADING-2291_SCOPE_NARROWED_CANDIDATE_REGENERATION
+    - Research trends / scope-narrowed candidate regeneration
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2291_Scope_Narrowed_Candidate_Regeneration.md`；依赖
+      TRADING-2290 scope review outputs、TRADING-2288 refined candidate artifacts 和
+      TRADING-2289 refined actual-path validation outputs。本批只生成 scope-narrowed candidate-bound
+      artifacts 和 risk_appetite current-form archive，不执行 actual-path validation。
+    - 新增 `aits research trends scope-narrowed-candidate-generators-regenerate`；生成
+      `baseline_plus_trend_structure_scope_narrowed_confirmation_v1`、`volatility_regime_scope_narrowed_risk_cap_v1`、scope
+      filter reports、lineage reports、delta summaries、top-level registry/summary 和
+      `risk_appetite_refined_confidence_v1` archive record；input/output safety gates
+      fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker false/none，`actual_path_validation_ready=false`。
+    - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实
+      run 生成 baseline_plus_trend_structure scope-narrowed confirmation active=3,667
+      / inactive=27,761、volatility_regime scope-narrowed risk cap active=373 / inactive=31,991，归档
+      risk_appetite current form，top-level validation status=`PASS`；验证通过 Ruff、compileall、focused
+      parallel pytest 13 passed、full parallel pytest 3677 passed、docs freshness、documentation
+      contract、contract-validation 193 passed、task-register consistency run/validate
+      和 `git diff --check`；TRADING-2292 才允许验证 active scope actual-path evidence，2291
+      不声明 scope-narrowed candidate 有效。'
+    raw_line: '|TRADING-2291_SCOPE_NARROWED_CANDIDATE_REGENERATION|Research trends
+      / scope-narrowed candidate regeneration|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-2291_Scope_Narrowed_Candidate_Regeneration.md`；依赖
+      TRADING-2290 scope review outputs、TRADING-2288 refined candidate artifacts 和
+      TRADING-2289 refined actual-path validation outputs。本批只生成 scope-narrowed candidate-bound
+      artifacts 和 risk_appetite current-form archive，不执行 actual-path validation。|新增
+      `aits research trends scope-narrowed-candidate-generators-regenerate`；生成 `baseline_plus_trend_structure_scope_narrowed_confirmation_v1`、`volatility_regime_scope_narrowed_risk_cap_v1`、scope
+      filter reports、lineage reports、delta summaries、top-level registry/summary 和
+      `risk_appetite_refined_confidence_v1` archive record；input/output safety gates
+      fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker false/none，`actual_path_validation_ready=false`。|2026-06-30:
+      根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实 run 生成 baseline_plus_trend_structure
+      scope-narrowed confirmation active=3,667 / inactive=27,761、volatility_regime
+      scope-narrowed risk cap active=373 / inactive=31,991，归档 risk_appetite current
+      form，top-level validation status=`PASS`；验证通过 Ruff、compileall、focused parallel
+      pytest 13 passed、full parallel pytest 3677 passed、docs freshness、documentation
+      contract、contract-validation 193 passed、task-register consistency run/validate
+      和 `git diff --check`；TRADING-2292 才允许验证 active scope actual-path evidence，2291
+      不声明 scope-narrowed candidate 有效。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fe5503287d932541562fed2b
+  task_id: TRADING-2291_SCOPE_NARROWED_CANDIDATE_REGENERATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实
+      run 生成 baseline_plus_trend_structure scope-narrowed confirmation active=3,667
+      / inactive=27,761、volatility_regime scope-narrowed risk cap active=373 / inactive=31,991，归档
+      risk_appetite current form，top-level validation status=`PASS`；验证通过 Ruff、compileall、focused
+      parallel pytest 13 passed、full parallel pytest 3677 passed、docs freshness、documentation
+      contract、contract-validation 193 passed、task-register consistency run/validate
+      和 `git diff --check`；TRADING-2292 才允许验证 active scope actual-path evidence，2291
+      不声明 scope-narrowed candidate 有效。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:fe5503287d932541562fed2bd016f48fdea23071a6aba58057f3b8d2409a96e8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2291_SCOPE_NARROWED_CANDIDATE_REGENERATION
+  - Research trends / scope-narrowed candidate regeneration
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2291_Scope_Narrowed_Candidate_Regeneration.md`；依赖
+    TRADING-2290 scope review outputs、TRADING-2288 refined candidate artifacts 和 TRADING-2289
+    refined actual-path validation outputs。本批只生成 scope-narrowed candidate-bound artifacts
+    和 risk_appetite current-form archive，不执行 actual-path validation。
+  - 新增 `aits research trends scope-narrowed-candidate-generators-regenerate`；生成 `baseline_plus_trend_structure_scope_narrowed_confirmation_v1`、`volatility_regime_scope_narrowed_risk_cap_v1`、scope
+    filter reports、lineage reports、delta summaries、top-level registry/summary 和 `risk_appetite_refined_confidence_v1`
+    archive record；input/output safety gates fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker
+    false/none，`actual_path_validation_ready=false`。
+  - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实 run
+    生成 baseline_plus_trend_structure scope-narrowed confirmation active=3,667 / inactive=27,761、volatility_regime
+    scope-narrowed risk cap active=373 / inactive=31,991，归档 risk_appetite current
+    form，top-level validation status=`PASS`；验证通过 Ruff、compileall、focused parallel
+    pytest 13 passed、full parallel pytest 3677 passed、docs freshness、documentation
+    contract、contract-validation 193 passed、task-register consistency run/validate
+    和 `git diff --check`；TRADING-2292 才允许验证 active scope actual-path evidence，2291
+    不声明 scope-narrowed candidate 有效。'
+  docs_links:
+  - docs/requirements/TRADING-2291_Scope_Narrowed_Candidate_Regeneration.md
+  terminal: false
+  raw_row_sha256: fe5503287d932541562fed2bd016f48fdea23071a6aba58057f3b8d2409a96e8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6e886588aa2d085ada947b3f2760ce349297d604230d1ecaedb0fef09c6966db

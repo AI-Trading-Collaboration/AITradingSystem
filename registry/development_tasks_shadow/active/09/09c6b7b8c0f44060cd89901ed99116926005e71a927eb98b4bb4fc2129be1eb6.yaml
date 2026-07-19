@@ -1,0 +1,103 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ALERT-001
+  title: null
+  domain: 报告/告警
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成只读 data/system 与 investment/risk 告警基础版：`score-daily`
+    生成结构化告警记录、单独 Markdown 告警报告，并把告警摘要接入日报；剩余缺口是通知渠道、确认/解除流、持久化去重、调度状态和 owner 告警策略；详细拆解见
+    `docs/requirements/feedback_loop_governance_2026-05-04.md#alert-001`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 告警有等级、来源、触发条件、解除条件、对应 claim/evidence 引用和去重策略；覆盖数据源断更、估值快照过期、risk event 升级、L2/L3
+      风险触发、thesis 状态恶化、仓位上限大幅下降和未来重大事件；日报输出告警摘要
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1110
+    row_sha256: a1a5936ab5f05a049379f4f823a6ee475d07a7e9d2efc8c96c9861baa522a731
+    cell_count: 8
+    all_cells:
+    - ALERT-001
+    - 报告/告警
+    - P2
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已完成只读 data/system 与 investment/risk 告警基础版：`score-daily` 生成结构化告警记录、单独 Markdown
+      告警报告，并把告警摘要接入日报；剩余缺口是通知渠道、确认/解除流、持久化去重、调度状态和 owner 告警策略；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#alert-001`
+    - 告警有等级、来源、触发条件、解除条件、对应 claim/evidence 引用和去重策略；覆盖数据源断更、估值快照过期、risk event 升级、L2/L3
+      风险触发、thesis 状态恶化、仓位上限大幅下降和未来重大事件；日报输出告警摘要
+    - '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：报告、risk event、thesis 和 catalyst 基础触发条件已稳定，开始实现不接通知渠道的本地只读告警基线。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `alerts` 模块、`outputs/reports/alerts_YYYY-MM-DD.md`、日报“告警摘要”、告警
+      schema/去重/触发/解除字段和测试；真实 2026-05-04 日报告警状态为 `ACTIVE_WARNINGS`，说明数据质量、政策/地缘输入、估值拥挤和
+      thesis 复核仍需关注。'
+    raw_line: '|ALERT-001|报告/告警|P2|BASELINE_DONE|系统实现 + 项目 owner|已完成只读 data/system
+      与 investment/risk 告警基础版：`score-daily` 生成结构化告警记录、单独 Markdown 告警报告，并把告警摘要接入日报；剩余缺口是通知渠道、确认/解除流、持久化去重、调度状态和
+      owner 告警策略；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#alert-001`|告警有等级、来源、触发条件、解除条件、对应
+      claim/evidence 引用和去重策略；覆盖数据源断更、估值快照过期、risk event 升级、L2/L3 风险触发、thesis 状态恶化、仓位上限大幅下降和未来重大事件；日报输出告警摘要|2026-05-04:
+      从 PROPOSED 改为 IN_PROGRESS，原因：报告、risk event、thesis 和 catalyst 基础触发条件已稳定，开始实现不接通知渠道的本地只读告警基线。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `alerts` 模块、`outputs/reports/alerts_YYYY-MM-DD.md`、日报“告警摘要”、告警
+      schema/去重/触发/解除字段和测试；真实 2026-05-04 日报告警状态为 `ACTIVE_WARNINGS`，说明数据质量、政策/地缘输入、估值拥挤和
+      thesis 复核仍需关注。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a1a5936ab5f05a049379f4f8
+  task_id: ALERT-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P2
+    next_owner: 系统实现 + 项目 owner
+    notes: '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：报告、risk event、thesis 和 catalyst
+      基础触发条件已稳定，开始实现不接通知渠道的本地只读告警基线。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      `alerts` 模块、`outputs/reports/alerts_YYYY-MM-DD.md`、日报“告警摘要”、告警 schema/去重/触发/解除字段和测试；真实
+      2026-05-04 日报告警状态为 `ACTIVE_WARNINGS`，说明数据质量、政策/地缘输入、估值拥挤和 thesis 复核仍需关注。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a1a5936ab5f05a049379f4f823a6ee475d07a7e9d2efc8c96c9861baa522a731
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ALERT-001
+  - 报告/告警
+  - P2
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已完成只读 data/system 与 investment/risk 告警基础版：`score-daily` 生成结构化告警记录、单独 Markdown
+    告警报告，并把告警摘要接入日报；剩余缺口是通知渠道、确认/解除流、持久化去重、调度状态和 owner 告警策略；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#alert-001`
+  - 告警有等级、来源、触发条件、解除条件、对应 claim/evidence 引用和去重策略；覆盖数据源断更、估值快照过期、risk event 升级、L2/L3
+    风险触发、thesis 状态恶化、仓位上限大幅下降和未来重大事件；日报输出告警摘要
+  - '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：报告、risk event、thesis 和 catalyst 基础触发条件已稳定，开始实现不接通知渠道的本地只读告警基线。2026-05-04:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `alerts` 模块、`outputs/reports/alerts_YYYY-MM-DD.md`、日报“告警摘要”、告警
+    schema/去重/触发/解除字段和测试；真实 2026-05-04 日报告警状态为 `ACTIVE_WARNINGS`，说明数据质量、政策/地缘输入、估值拥挤和
+    thesis 复核仍需关注。'
+  docs_links:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  terminal: false
+  raw_row_sha256: a1a5936ab5f05a049379f4f823a6ee475d07a7e9d2efc8c96c9861baa522a731
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 77b8aa4c192326ea887bf5a541c692a574cd81ce8749235c4d2229201523417c

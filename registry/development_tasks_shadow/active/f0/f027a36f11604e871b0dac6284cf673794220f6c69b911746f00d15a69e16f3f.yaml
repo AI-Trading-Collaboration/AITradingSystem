@@ -1,0 +1,138 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-061A
+  title: null
+  domain: 回测输入/Stable Weight Tuning Input Readiness Recovery
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/weight_stability_input_readiness_recovery_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/weight_stability_input_readiness_recovery_2026-05-31.md`；已完成
+    stable tuning upstream freshness、recover-freshness、signal snapshot、backtest manifest
+    和 price coverage blocker 结构化诊断；后续若需自动执行数据恢复，应新增 TRADING-061B，不在本任务内静默改 cache
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits parameters diagnose-weight-stability-inputs --latest`、`aits parameters
+      recover-weight-stability-inputs --latest --dry-run`、`aits parameters validate-weight-stability-readiness
+      --latest`、`aits reports weight-stability-readiness --latest`；生成 `artifacts/weight_stability_readiness/YYYY-MM-DD/weight_stability_readiness_summary.json/md`；`tune-weights-stable`
+      在输入阻塞时引用 readiness artifact 并显示 `reason=input_readiness_blocked`、`candidates_backtested=0`；shadow
+      backtest supporting artifact、Dashboard、Reader Brief 只读引用 readiness；不修改 `config/parameters/production/current.yaml`，不降低
+      data quality gate，不使用 mock 或 synthetic price history；专项测试、全量 pytest、ruff、compileall
+      和 diff check 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1143
+    row_sha256: f35b9b1217379c8ba11863325c120a7059d8c7ea631e585c07508b5ee6814766
+    cell_count: 8
+    all_cells:
+    - TRADING-061A
+    - 回测输入/Stable Weight Tuning Input Readiness Recovery
+    - P1
+    - BASELINE_DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/weight_stability_input_readiness_recovery_2026-05-31.md`；已完成
+      stable tuning upstream freshness、recover-freshness、signal snapshot、backtest
+      manifest 和 price coverage blocker 结构化诊断；后续若需自动执行数据恢复，应新增 TRADING-061B，不在本任务内静默改
+      cache
+    - 新增 `aits parameters diagnose-weight-stability-inputs --latest`、`aits parameters
+      recover-weight-stability-inputs --latest --dry-run`、`aits parameters validate-weight-stability-readiness
+      --latest`、`aits reports weight-stability-readiness --latest`；生成 `artifacts/weight_stability_readiness/YYYY-MM-DD/weight_stability_readiness_summary.json/md`；`tune-weights-stable`
+      在输入阻塞时引用 readiness artifact 并显示 `reason=input_readiness_blocked`、`candidates_backtested=0`；shadow
+      backtest supporting artifact、Dashboard、Reader Brief 只读引用 readiness；不修改 `config/parameters/production/current.yaml`，不降低
+      data quality gate，不使用 mock 或 synthetic price history；专项测试、全量 pytest、ruff、compileall
+      和 diff check 通过
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：owner 明确 TRADING-061 latest 为 `INSUFFICIENT_DATA`
+      / `candidates_backtested=0`，阻塞来自 freshness / signal snapshot / manifest / price
+      coverage readiness；需要先让 stable tuning 明确诊断输入阻塞。2026-05-31: 从 IN_PROGRESS 改为
+      BASELINE_DONE 并归档，原因：已完成 readiness artifact、CLI/report alias、stable tuning 阻塞引用、shadow
+      backtest/Dashboard/Reader Brief 接入和专项/全量验证；真实 latest readiness 为 `RECOVERY_FAILED`，blocking
+      checks 包含 `freshness`、`recover_freshness`、`signal_snapshot`、`backtest_manifest`、`price_coverage`，`tune-weights-stable`
+      仍 `candidates_backtested=0` 但现在明确为 input readiness blocked，不是稳定约束失败。'
+    raw_line: '|TRADING-061A|回测输入/Stable Weight Tuning Input Readiness Recovery|P1|BASELINE_DONE|系统验证|详细拆解见
+      `docs/requirements/weight_stability_input_readiness_recovery_2026-05-31.md`；已完成
+      stable tuning upstream freshness、recover-freshness、signal snapshot、backtest
+      manifest 和 price coverage blocker 结构化诊断；后续若需自动执行数据恢复，应新增 TRADING-061B，不在本任务内静默改
+      cache|新增 `aits parameters diagnose-weight-stability-inputs --latest`、`aits parameters
+      recover-weight-stability-inputs --latest --dry-run`、`aits parameters validate-weight-stability-readiness
+      --latest`、`aits reports weight-stability-readiness --latest`；生成 `artifacts/weight_stability_readiness/YYYY-MM-DD/weight_stability_readiness_summary.json/md`；`tune-weights-stable`
+      在输入阻塞时引用 readiness artifact 并显示 `reason=input_readiness_blocked`、`candidates_backtested=0`；shadow
+      backtest supporting artifact、Dashboard、Reader Brief 只读引用 readiness；不修改 `config/parameters/production/current.yaml`，不降低
+      data quality gate，不使用 mock 或 synthetic price history；专项测试、全量 pytest、ruff、compileall
+      和 diff check 通过|2026-05-31: 新增并进入 IN_PROGRESS，原因：owner 明确 TRADING-061 latest
+      为 `INSUFFICIENT_DATA` / `candidates_backtested=0`，阻塞来自 freshness / signal snapshot
+      / manifest / price coverage readiness；需要先让 stable tuning 明确诊断输入阻塞。2026-05-31:
+      从 IN_PROGRESS 改为 BASELINE_DONE 并归档，原因：已完成 readiness artifact、CLI/report alias、stable
+      tuning 阻塞引用、shadow backtest/Dashboard/Reader Brief 接入和专项/全量验证；真实 latest readiness
+      为 `RECOVERY_FAILED`，blocking checks 包含 `freshness`、`recover_freshness`、`signal_snapshot`、`backtest_manifest`、`price_coverage`，`tune-weights-stable`
+      仍 `candidates_backtested=0` 但现在明确为 input readiness blocked，不是稳定约束失败。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f35b9b1217379c8ba1186332
+  task_id: TRADING-061A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：owner 明确 TRADING-061 latest 为 `INSUFFICIENT_DATA`
+      / `candidates_backtested=0`，阻塞来自 freshness / signal snapshot / manifest / price
+      coverage readiness；需要先让 stable tuning 明确诊断输入阻塞。2026-05-31: 从 IN_PROGRESS 改为
+      BASELINE_DONE 并归档，原因：已完成 readiness artifact、CLI/report alias、stable tuning 阻塞引用、shadow
+      backtest/Dashboard/Reader Brief 接入和专项/全量验证；真实 latest readiness 为 `RECOVERY_FAILED`，blocking
+      checks 包含 `freshness`、`recover_freshness`、`signal_snapshot`、`backtest_manifest`、`price_coverage`，`tune-weights-stable`
+      仍 `candidates_backtested=0` 但现在明确为 input readiness blocked，不是稳定约束失败。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f35b9b1217379c8ba11863325c120a7059d8c7ea631e585c07508b5ee6814766
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-061A
+  - 回测输入/Stable Weight Tuning Input Readiness Recovery
+  - P1
+  - BASELINE_DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/weight_stability_input_readiness_recovery_2026-05-31.md`；已完成
+    stable tuning upstream freshness、recover-freshness、signal snapshot、backtest manifest
+    和 price coverage blocker 结构化诊断；后续若需自动执行数据恢复，应新增 TRADING-061B，不在本任务内静默改 cache
+  - 新增 `aits parameters diagnose-weight-stability-inputs --latest`、`aits parameters
+    recover-weight-stability-inputs --latest --dry-run`、`aits parameters validate-weight-stability-readiness
+    --latest`、`aits reports weight-stability-readiness --latest`；生成 `artifacts/weight_stability_readiness/YYYY-MM-DD/weight_stability_readiness_summary.json/md`；`tune-weights-stable`
+    在输入阻塞时引用 readiness artifact 并显示 `reason=input_readiness_blocked`、`candidates_backtested=0`；shadow
+    backtest supporting artifact、Dashboard、Reader Brief 只读引用 readiness；不修改 `config/parameters/production/current.yaml`，不降低
+    data quality gate，不使用 mock 或 synthetic price history；专项测试、全量 pytest、ruff、compileall
+    和 diff check 通过
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：owner 明确 TRADING-061 latest 为 `INSUFFICIENT_DATA`
+    / `candidates_backtested=0`，阻塞来自 freshness / signal snapshot / manifest / price
+    coverage readiness；需要先让 stable tuning 明确诊断输入阻塞。2026-05-31: 从 IN_PROGRESS 改为 BASELINE_DONE
+    并归档，原因：已完成 readiness artifact、CLI/report alias、stable tuning 阻塞引用、shadow backtest/Dashboard/Reader
+    Brief 接入和专项/全量验证；真实 latest readiness 为 `RECOVERY_FAILED`，blocking checks 包含 `freshness`、`recover_freshness`、`signal_snapshot`、`backtest_manifest`、`price_coverage`，`tune-weights-stable`
+    仍 `candidates_backtested=0` 但现在明确为 input readiness blocked，不是稳定约束失败。'
+  docs_links:
+  - docs/requirements/weight_stability_input_readiness_recovery_2026-05-31.md
+  terminal: false
+  raw_row_sha256: f35b9b1217379c8ba11863325c120a7059d8c7ea631e585c07508b5ee6814766
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: cebf92acc9b8ea8879d4cc0a01cd23bd213ecb1599492474220f762ee36485ec

@@ -1,0 +1,114 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-737_SOURCE_LEVEL_QUALIFICATION_REQUIREMENTS
+  title: null
+  domain: Data foundation / source-level qualification requirements
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-737_Source_Level_Qualification_Requirements.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-737_Source_Level_Qualification_Requirements.md`；读取
+    TRADING-736 remediation execution report、item results 和 updated matrix，对 P0_remaining_count=9
+    的项目逐项生成 source-level requirement matrix
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits data source-qualification requirements` 可生成 `data_source_requirement_matrix.json/md`；每个
+      P0 remaining item 输出 component、current_status、missing_proof、required_raw_source、required_timestamp_fields、required_source_manifest、required_as_of_snapshot、required_corporate_action_revision_policy、can_fix_with_existing_data、requires_new_data_source、can_remain_diagnostic_only、promotion_grade_blocker，并按
+      SOURCE_MANIFEST_REQUIRED、AVAILABLE_TIME_REQUIRED、AS_OF_SNAPSHOT_REQUIRED、CORPORATE_ACTION_POLICY_REQUIRED、VENDOR_CURRENT_VIEW_ONLY、RESEARCH_LABEL_ONLY_BY_DESIGN、TRUE_PIT_LIMITATION、MANUAL_REVIEW_REQUIRED
+      分类；所有输出固定 production_effect=none、promotion_gate_allowed=false，不尝试升级 source 状态'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1361
+    row_sha256: 4440f420dd7da7abd648f95096d818297210219fc3b4ce69e93d0da047872a58
+    cell_count: 8
+    all_cells:
+    - TRADING-737_SOURCE_LEVEL_QUALIFICATION_REQUIREMENTS
+    - Data foundation / source-level qualification requirements
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-737_Source_Level_Qualification_Requirements.md`；读取
+      TRADING-736 remediation execution report、item results 和 updated matrix，对 P0_remaining_count=9
+      的项目逐项生成 source-level requirement matrix
+    - '`aits data source-qualification requirements` 可生成 `data_source_requirement_matrix.json/md`；每个
+      P0 remaining item 输出 component、current_status、missing_proof、required_raw_source、required_timestamp_fields、required_source_manifest、required_as_of_snapshot、required_corporate_action_revision_policy、can_fix_with_existing_data、requires_new_data_source、can_remain_diagnostic_only、promotion_grade_blocker，并按
+      SOURCE_MANIFEST_REQUIRED、AVAILABLE_TIME_REQUIRED、AS_OF_SNAPSHOT_REQUIRED、CORPORATE_ACTION_POLICY_REQUIRED、VENDOR_CURRENT_VIEW_ONLY、RESEARCH_LABEL_ONLY_BY_DESIGN、TRUE_PIT_LIMITATION、MANUAL_REVIEW_REQUIRED
+      分类；所有输出固定 production_effect=none、promotion_gate_allowed=false，不尝试升级 source 状态'
+    - '2026-06-21: validation-only source requirement runner 已实现并进入 VALIDATING；默认
+      run 输出 `REQUIREMENTS_READY_WITH_SOURCE_BLOCKERS`、P0_remaining_count=9、source_requirement_count=9、requires_new_data_source_count=8、can_fix_with_existing_data_count=0、promotion_grade_blocker_count=9、status_upgrade_attempted=false、lookahead_violation_count=0、production_effect=none、broker_action=none；focused
+      tests 40 passed，fast-unit 97 passed，contract-validation 96 passed，report-validation
+      55 passed。'
+    raw_line: '|TRADING-737_SOURCE_LEVEL_QUALIFICATION_REQUIREMENTS|Data foundation
+      / source-level qualification requirements|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-737_Source_Level_Qualification_Requirements.md`；读取
+      TRADING-736 remediation execution report、item results 和 updated matrix，对 P0_remaining_count=9
+      的项目逐项生成 source-level requirement matrix|`aits data source-qualification requirements`
+      可生成 `data_source_requirement_matrix.json/md`；每个 P0 remaining item 输出 component、current_status、missing_proof、required_raw_source、required_timestamp_fields、required_source_manifest、required_as_of_snapshot、required_corporate_action_revision_policy、can_fix_with_existing_data、requires_new_data_source、can_remain_diagnostic_only、promotion_grade_blocker，并按
+      SOURCE_MANIFEST_REQUIRED、AVAILABLE_TIME_REQUIRED、AS_OF_SNAPSHOT_REQUIRED、CORPORATE_ACTION_POLICY_REQUIRED、VENDOR_CURRENT_VIEW_ONLY、RESEARCH_LABEL_ONLY_BY_DESIGN、TRUE_PIT_LIMITATION、MANUAL_REVIEW_REQUIRED
+      分类；所有输出固定 production_effect=none、promotion_gate_allowed=false，不尝试升级 source 状态|2026-06-21:
+      validation-only source requirement runner 已实现并进入 VALIDATING；默认 run 输出 `REQUIREMENTS_READY_WITH_SOURCE_BLOCKERS`、P0_remaining_count=9、source_requirement_count=9、requires_new_data_source_count=8、can_fix_with_existing_data_count=0、promotion_grade_blocker_count=9、status_upgrade_attempted=false、lookahead_violation_count=0、production_effect=none、broker_action=none；focused
+      tests 40 passed，fast-unit 97 passed，contract-validation 96 passed，report-validation
+      55 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4440f420dd7da7abd648f950
+  task_id: TRADING-737_SOURCE_LEVEL_QUALIFICATION_REQUIREMENTS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-21: validation-only source requirement runner 已实现并进入 VALIDATING；默认
+      run 输出 `REQUIREMENTS_READY_WITH_SOURCE_BLOCKERS`、P0_remaining_count=9、source_requirement_count=9、requires_new_data_source_count=8、can_fix_with_existing_data_count=0、promotion_grade_blocker_count=9、status_upgrade_attempted=false、lookahead_violation_count=0、production_effect=none、broker_action=none；focused
+      tests 40 passed，fast-unit 97 passed，contract-validation 96 passed，report-validation
+      55 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4440f420dd7da7abd648f95096d818297210219fc3b4ce69e93d0da047872a58
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-737_SOURCE_LEVEL_QUALIFICATION_REQUIREMENTS
+  - Data foundation / source-level qualification requirements
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-737_Source_Level_Qualification_Requirements.md`；读取
+    TRADING-736 remediation execution report、item results 和 updated matrix，对 P0_remaining_count=9
+    的项目逐项生成 source-level requirement matrix
+  - '`aits data source-qualification requirements` 可生成 `data_source_requirement_matrix.json/md`；每个
+    P0 remaining item 输出 component、current_status、missing_proof、required_raw_source、required_timestamp_fields、required_source_manifest、required_as_of_snapshot、required_corporate_action_revision_policy、can_fix_with_existing_data、requires_new_data_source、can_remain_diagnostic_only、promotion_grade_blocker，并按
+    SOURCE_MANIFEST_REQUIRED、AVAILABLE_TIME_REQUIRED、AS_OF_SNAPSHOT_REQUIRED、CORPORATE_ACTION_POLICY_REQUIRED、VENDOR_CURRENT_VIEW_ONLY、RESEARCH_LABEL_ONLY_BY_DESIGN、TRUE_PIT_LIMITATION、MANUAL_REVIEW_REQUIRED
+    分类；所有输出固定 production_effect=none、promotion_gate_allowed=false，不尝试升级 source 状态'
+  - '2026-06-21: validation-only source requirement runner 已实现并进入 VALIDATING；默认 run
+    输出 `REQUIREMENTS_READY_WITH_SOURCE_BLOCKERS`、P0_remaining_count=9、source_requirement_count=9、requires_new_data_source_count=8、can_fix_with_existing_data_count=0、promotion_grade_blocker_count=9、status_upgrade_attempted=false、lookahead_violation_count=0、production_effect=none、broker_action=none；focused
+    tests 40 passed，fast-unit 97 passed，contract-validation 96 passed，report-validation
+    55 passed。'
+  docs_links:
+  - docs/requirements/TRADING-737_Source_Level_Qualification_Requirements.md
+  terminal: false
+  raw_row_sha256: 4440f420dd7da7abd648f95096d818297210219fc3b4ce69e93d0da047872a58
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 491b2162120023e90c5043f0de3d1e9645cde6aa81519ab39c0183904581b319

@@ -1,0 +1,135 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-059
+  title: null
+  domain: 回测输入/Restricted Backtest Weight Tuning
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/restricted_backtest_weight_tuning_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/restricted_backtest_weight_tuning_2026-05-30.md`；受限
+    signal weight grid search、walk-forward comparison、shadow-only recommended weights、CLI/report/Dashboard/Reader
+    Brief 和 shadow backtest supporting artifact 接入已完成；真实 latest 结果为 `NO_CANDIDATE`，不形成
+    production 或 shadow promotion candidate
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits parameters tune-weights --latest` 可生成 weight tuning artifacts；`validate-weight-tuning
+      --latest`、`reports weight-tuning --latest` 和 `explain-weight-tuning --latest`
+      可读；Reader Brief/Dashboard 展示 weight tuning 摘要；shadow backtest dry-run 引用 weight
+      tuning artifact 且 promotion 仍 rejected；不修改 production config、不降低 data gate、不使用
+      mock 数据、不让 fallback signals 自由调参、不自动 promotion'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1154
+    row_sha256: 68afb99cf828eb53edf552ebf32977d917d50a2b8ea2186326958dfe8cc5ee88
+    cell_count: 8
+    all_cells:
+    - TRADING-059
+    - 回测输入/Restricted Backtest Weight Tuning
+    - P1
+    - BASELINE_DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/restricted_backtest_weight_tuning_2026-05-30.md`；受限
+      signal weight grid search、walk-forward comparison、shadow-only recommended weights、CLI/report/Dashboard/Reader
+      Brief 和 shadow backtest supporting artifact 接入已完成；真实 latest 结果为 `NO_CANDIDATE`，不形成
+      production 或 shadow promotion candidate
+    - '`aits parameters tune-weights --latest` 可生成 weight tuning artifacts；`validate-weight-tuning
+      --latest`、`reports weight-tuning --latest` 和 `explain-weight-tuning --latest`
+      可读；Reader Brief/Dashboard 展示 weight tuning 摘要；shadow backtest dry-run 引用 weight
+      tuning artifact 且 promotion 仍 rejected；不修改 production config、不降低 data gate、不使用
+      mock 数据、不让 fallback signals 自由调参、不自动 promotion'
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：baseline signal weights 主要为人工设定，需要受限 backtest-based
+      tuning 闭环判断是否存在可审计的 shadow weight candidate。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：v0.1
+      实现和真实 CLI 验收完成，latest 为 `NO_CANDIDATE` / `candidate_status=rejected` / `candidates_evaluated=240`
+      / `guardrail_status=FAIL`。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：调参框架和只读报告链路完成，但没有候选通过
+      guardrails，失败原因已由 TRADING-059A/TRADING-060 解释并由 TRADING-061 继续处理；验证通过 tuning
+      validation/report/explain CLI、Reader Brief、shadow backtest dry-run、focused pytest
+      24 passed、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'
+    raw_line: '|TRADING-059|回测输入/Restricted Backtest Weight Tuning|P1|BASELINE_DONE|系统验证|详细拆解见
+      `docs/requirements/restricted_backtest_weight_tuning_2026-05-30.md`；受限 signal
+      weight grid search、walk-forward comparison、shadow-only recommended weights、CLI/report/Dashboard/Reader
+      Brief 和 shadow backtest supporting artifact 接入已完成；真实 latest 结果为 `NO_CANDIDATE`，不形成
+      production 或 shadow promotion candidate|`aits parameters tune-weights --latest`
+      可生成 weight tuning artifacts；`validate-weight-tuning --latest`、`reports weight-tuning
+      --latest` 和 `explain-weight-tuning --latest` 可读；Reader Brief/Dashboard 展示 weight
+      tuning 摘要；shadow backtest dry-run 引用 weight tuning artifact 且 promotion 仍 rejected；不修改
+      production config、不降低 data gate、不使用 mock 数据、不让 fallback signals 自由调参、不自动 promotion|2026-05-30:
+      新增并进入 IN_PROGRESS，原因：baseline signal weights 主要为人工设定，需要受限 backtest-based tuning
+      闭环判断是否存在可审计的 shadow weight candidate。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：v0.1
+      实现和真实 CLI 验收完成，latest 为 `NO_CANDIDATE` / `candidate_status=rejected` / `candidates_evaluated=240`
+      / `guardrail_status=FAIL`。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：调参框架和只读报告链路完成，但没有候选通过
+      guardrails，失败原因已由 TRADING-059A/TRADING-060 解释并由 TRADING-061 继续处理；验证通过 tuning
+      validation/report/explain CLI、Reader Brief、shadow backtest dry-run、focused pytest
+      24 passed、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-68afb99cf828eb53edf552eb
+  task_id: TRADING-059
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：baseline signal weights 主要为人工设定，需要受限
+      backtest-based tuning 闭环判断是否存在可审计的 shadow weight candidate。2026-05-30: 从 IN_PROGRESS
+      改为 VALIDATING，原因：v0.1 实现和真实 CLI 验收完成，latest 为 `NO_CANDIDATE` / `candidate_status=rejected`
+      / `candidates_evaluated=240` / `guardrail_status=FAIL`。2026-06-09: 从 VALIDATING
+      改为 BASELINE_DONE，原因：调参框架和只读报告链路完成，但没有候选通过 guardrails，失败原因已由 TRADING-059A/TRADING-060
+      解释并由 TRADING-061 继续处理；验证通过 tuning validation/report/explain CLI、Reader Brief、shadow
+      backtest dry-run、focused pytest 24 passed、文档检查、Ruff、repo-wide Black check、`compileall`
+      和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:68afb99cf828eb53edf552ebf32977d917d50a2b8ea2186326958dfe8cc5ee88
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-059
+  - 回测输入/Restricted Backtest Weight Tuning
+  - P1
+  - BASELINE_DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/restricted_backtest_weight_tuning_2026-05-30.md`；受限 signal
+    weight grid search、walk-forward comparison、shadow-only recommended weights、CLI/report/Dashboard/Reader
+    Brief 和 shadow backtest supporting artifact 接入已完成；真实 latest 结果为 `NO_CANDIDATE`，不形成
+    production 或 shadow promotion candidate
+  - '`aits parameters tune-weights --latest` 可生成 weight tuning artifacts；`validate-weight-tuning
+    --latest`、`reports weight-tuning --latest` 和 `explain-weight-tuning --latest`
+    可读；Reader Brief/Dashboard 展示 weight tuning 摘要；shadow backtest dry-run 引用 weight
+    tuning artifact 且 promotion 仍 rejected；不修改 production config、不降低 data gate、不使用
+    mock 数据、不让 fallback signals 自由调参、不自动 promotion'
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：baseline signal weights 主要为人工设定，需要受限 backtest-based
+    tuning 闭环判断是否存在可审计的 shadow weight candidate。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：v0.1
+    实现和真实 CLI 验收完成，latest 为 `NO_CANDIDATE` / `candidate_status=rejected` / `candidates_evaluated=240`
+    / `guardrail_status=FAIL`。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：调参框架和只读报告链路完成，但没有候选通过
+    guardrails，失败原因已由 TRADING-059A/TRADING-060 解释并由 TRADING-061 继续处理；验证通过 tuning validation/report/explain
+    CLI、Reader Brief、shadow backtest dry-run、focused pytest 24 passed、文档检查、Ruff、repo-wide
+    Black check、`compileall` 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/restricted_backtest_weight_tuning_2026-05-30.md
+  terminal: false
+  raw_row_sha256: 68afb99cf828eb53edf552ebf32977d917d50a2b8ea2186326958dfe8cc5ee88
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 56fdb2d1dea36d59ad149b2e721310cf2108262cf7e0850da5ba03fdf2f40b01

@@ -1,0 +1,122 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: RISK-016
+  title: null
+  domain: 风险事件/官方政策来源解析韧性
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/official_policy_source_parser_hardening_2026-05-29.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/official_policy_source_parser_hardening_2026-05-29.md`；官方政策来源
+    parser fail-closed 修复已通过目标测试与真实 daily-run 复验，OFAC XML row count 不再裸 traceback
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 官方政策来源每个 source 的 row_count 和候选抽取必须按 source fail closed：raw payload 写入后若解析异常，生成
+      `official_policy_sources_YYYY-MM-DD.md` 和结构化错误，不丢失 checksum/source_id/诊断上下文；OFAC
+      XML row_count 不使用易产生不可审计 traceback 的 generator 路径；`score-daily` 可在正常 OFAC payload
+      下完成官方来源抓取，异常 parser fixture 返回 FAIL 报告而不是裸崩溃；目标测试和真实 `aits ops daily-run` 通过或报告新的真实门禁原因
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 350
+    row_sha256: 4c830a219305f7f8771e0e6c0dcf3ecc15008eba3defa045379cd52e2e59c147
+    cell_count: 8
+    all_cells:
+    - RISK-016
+    - 风险事件/官方政策来源解析韧性
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/official_policy_source_parser_hardening_2026-05-29.md`；官方政策来源
+      parser fail-closed 修复已通过目标测试与真实 daily-run 复验，OFAC XML row count 不再裸 traceback
+    - 官方政策来源每个 source 的 row_count 和候选抽取必须按 source fail closed：raw payload 写入后若解析异常，生成
+      `official_policy_sources_YYYY-MM-DD.md` 和结构化错误，不丢失 checksum/source_id/诊断上下文；OFAC
+      XML row_count 不使用易产生不可审计 traceback 的 generator 路径；`score-daily` 可在正常 OFAC payload
+      下完成官方来源抓取，异常 parser fixture 返回 FAIL 报告而不是裸崩溃；目标测试和真实 `aits ops daily-run` 通过或报告新的真实门禁原因
+    - '2026-05-29: 新增并进入 IN_PROGRESS，原因：自动化 daily-run as-of 2026-05-28 在 `score_daily`
+      的 `official_policy_sources._row_count(..., parser_kind=''ofac_xml'')` 阶段裸 traceback，导致日报、alerts、evidence
+      dashboard、decision snapshot、ops health 和 secret scan 均未生成。2026-05-29: 从 IN_PROGRESS
+      改为 VALIDATING，原因：official policy parser 修复通过目标测试/ruff/black/diff check，真实 `aits
+      ops daily-run` as-of 2026-05-28 中 `score_daily` PASS。2026-06-07: 从 VALIDATING
+      改为 DONE，原因：官方政策来源 parser fail-closed 修复已有目标测试与真实 daily-run 23/23 PASS 证据，后续最新生产
+      daily-run 也稳定越过 `score_daily` 官方来源抓取链路，未再出现 OFAC XML row count 裸 traceback。'
+    raw_line: '|RISK-016|风险事件/官方政策来源解析韧性|P0|DONE|系统验证|详细拆解见 `docs/requirements/official_policy_source_parser_hardening_2026-05-29.md`；官方政策来源
+      parser fail-closed 修复已通过目标测试与真实 daily-run 复验，OFAC XML row count 不再裸 traceback|官方政策来源每个
+      source 的 row_count 和候选抽取必须按 source fail closed：raw payload 写入后若解析异常，生成 `official_policy_sources_YYYY-MM-DD.md`
+      和结构化错误，不丢失 checksum/source_id/诊断上下文；OFAC XML row_count 不使用易产生不可审计 traceback
+      的 generator 路径；`score-daily` 可在正常 OFAC payload 下完成官方来源抓取，异常 parser fixture 返回
+      FAIL 报告而不是裸崩溃；目标测试和真实 `aits ops daily-run` 通过或报告新的真实门禁原因|2026-05-29: 新增并进入 IN_PROGRESS，原因：自动化
+      daily-run as-of 2026-05-28 在 `score_daily` 的 `official_policy_sources._row_count(...,
+      parser_kind=''ofac_xml'')` 阶段裸 traceback，导致日报、alerts、evidence dashboard、decision
+      snapshot、ops health 和 secret scan 均未生成。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：official
+      policy parser 修复通过目标测试/ruff/black/diff check，真实 `aits ops daily-run` as-of 2026-05-28
+      中 `score_daily` PASS。2026-06-07: 从 VALIDATING 改为 DONE，原因：官方政策来源 parser fail-closed
+      修复已有目标测试与真实 daily-run 23/23 PASS 证据，后续最新生产 daily-run 也稳定越过 `score_daily` 官方来源抓取链路，未再出现
+      OFAC XML row count 裸 traceback。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4c830a219305f7f8771e0e6c
+  task_id: RISK-016
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：自动化 daily-run as-of 2026-05-28 在 `score_daily`
+      的 `official_policy_sources._row_count(..., parser_kind=''ofac_xml'')` 阶段裸 traceback，导致日报、alerts、evidence
+      dashboard、decision snapshot、ops health 和 secret scan 均未生成。2026-05-29: 从 IN_PROGRESS
+      改为 VALIDATING，原因：official policy parser 修复通过目标测试/ruff/black/diff check，真实 `aits
+      ops daily-run` as-of 2026-05-28 中 `score_daily` PASS。2026-06-07: 从 VALIDATING
+      改为 DONE，原因：官方政策来源 parser fail-closed 修复已有目标测试与真实 daily-run 23/23 PASS 证据，后续最新生产
+      daily-run 也稳定越过 `score_daily` 官方来源抓取链路，未再出现 OFAC XML row count 裸 traceback。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4c830a219305f7f8771e0e6c0dcf3ecc15008eba3defa045379cd52e2e59c147
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - RISK-016
+  - 风险事件/官方政策来源解析韧性
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/official_policy_source_parser_hardening_2026-05-29.md`；官方政策来源
+    parser fail-closed 修复已通过目标测试与真实 daily-run 复验，OFAC XML row count 不再裸 traceback
+  - 官方政策来源每个 source 的 row_count 和候选抽取必须按 source fail closed：raw payload 写入后若解析异常，生成
+    `official_policy_sources_YYYY-MM-DD.md` 和结构化错误，不丢失 checksum/source_id/诊断上下文；OFAC
+    XML row_count 不使用易产生不可审计 traceback 的 generator 路径；`score-daily` 可在正常 OFAC payload
+    下完成官方来源抓取，异常 parser fixture 返回 FAIL 报告而不是裸崩溃；目标测试和真实 `aits ops daily-run` 通过或报告新的真实门禁原因
+  - '2026-05-29: 新增并进入 IN_PROGRESS，原因：自动化 daily-run as-of 2026-05-28 在 `score_daily`
+    的 `official_policy_sources._row_count(..., parser_kind=''ofac_xml'')` 阶段裸 traceback，导致日报、alerts、evidence
+    dashboard、decision snapshot、ops health 和 secret scan 均未生成。2026-05-29: 从 IN_PROGRESS
+    改为 VALIDATING，原因：official policy parser 修复通过目标测试/ruff/black/diff check，真实 `aits
+    ops daily-run` as-of 2026-05-28 中 `score_daily` PASS。2026-06-07: 从 VALIDATING
+    改为 DONE，原因：官方政策来源 parser fail-closed 修复已有目标测试与真实 daily-run 23/23 PASS 证据，后续最新生产
+    daily-run 也稳定越过 `score_daily` 官方来源抓取链路，未再出现 OFAC XML row count 裸 traceback。'
+  docs_links:
+  - docs/requirements/official_policy_source_parser_hardening_2026-05-29.md
+  terminal: true
+  raw_row_sha256: 4c830a219305f7f8771e0e6c0dcf3ecc15008eba3defa045379cd52e2e59c147
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7272a93d42d3fcead0403a32f632bcb33194c53e3c59d0f9d49e7f539ec04944

@@ -1,0 +1,119 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2274A_EQUAL_WEIGHT_PROXY_DATA_AVAILABILITY_FIX
+  title: null
+  domain: Research trends / equal-weight proxy data availability fix
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2274A_Equal_Weight_Proxy_Data_Availability_Fix.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2274A_Equal_Weight_Proxy_Data_Availability_Fix.md`；承接
+    TRADING-2271 / TRADING-2273 中 `rsp_to_spy` / `qqqe_to_qqq` missing blocker。本批已确认缺失主因是本地价格缓存未下载
+    / 后续 partial repair 历史深度不足，不是 provider 不支持或 symbol mapping 问题；RSP / QQQE 已通过免费
+    yfinance 补齐。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `equal_weight_proxy_data_fix_report.md`、`updated_proxy_coverage_matrix.json`
+      和 `blocked_proxy_resolution_status.json`；产物披露 provider、endpoint、request parameters、download
+      timestamp、row count、checksum、quality gate、root cause、替代方案和 fixed safety fields；所有
+      equal/cap proxy 必须保持 `replacement_for_true_breadth=false`，promotion/paper-shadow/production/broker
+      固定 false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1242
+    row_sha256: c0c0699f178536b424b90ee00d5423154af432ad2d46315e3ae518977fca6554
+    cell_count: 8
+    all_cells:
+    - TRADING-2274A_EQUAL_WEIGHT_PROXY_DATA_AVAILABILITY_FIX
+    - Research trends / equal-weight proxy data availability fix
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2274A_Equal_Weight_Proxy_Data_Availability_Fix.md`；承接
+      TRADING-2271 / TRADING-2273 中 `rsp_to_spy` / `qqqe_to_qqq` missing blocker。本批已确认缺失主因是本地价格缓存未下载
+      / 后续 partial repair 历史深度不足，不是 provider 不支持或 symbol mapping 问题；RSP / QQQE 已通过免费
+      yfinance 补齐。
+    - 生成 `equal_weight_proxy_data_fix_report.md`、`updated_proxy_coverage_matrix.json`
+      和 `blocked_proxy_resolution_status.json`；产物披露 provider、endpoint、request parameters、download
+      timestamp、row count、checksum、quality gate、root cause、替代方案和 fixed safety fields；所有
+      equal/cap proxy 必须保持 `replacement_for_true_breadth=false`，promotion/paper-shadow/production/broker
+      固定 false/none。
+    - '2026-06-28: 新增并进入 IN_PROGRESS；不购买 paid source、不训练模型、不修改 active policy。2026-06-28:
+      实现完成并转入 VALIDATING；真实 run RSP/QQQE 各 2132 行，updated matrix data_available_count=8、primary_window_covered_count=7、replacement_for_true_breadth_count=0。2026-06-28:
+      验证通过 focused / docs / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T134538Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-2274A_EQUAL_WEIGHT_PROXY_DATA_AVAILABILITY_FIX|Research trends
+      / equal-weight proxy data availability fix|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-2274A_Equal_Weight_Proxy_Data_Availability_Fix.md`；承接
+      TRADING-2271 / TRADING-2273 中 `rsp_to_spy` / `qqqe_to_qqq` missing blocker。本批已确认缺失主因是本地价格缓存未下载
+      / 后续 partial repair 历史深度不足，不是 provider 不支持或 symbol mapping 问题；RSP / QQQE 已通过免费
+      yfinance 补齐。|生成 `equal_weight_proxy_data_fix_report.md`、`updated_proxy_coverage_matrix.json`
+      和 `blocked_proxy_resolution_status.json`；产物披露 provider、endpoint、request parameters、download
+      timestamp、row count、checksum、quality gate、root cause、替代方案和 fixed safety fields；所有
+      equal/cap proxy 必须保持 `replacement_for_true_breadth=false`，promotion/paper-shadow/production/broker
+      固定 false/none。|2026-06-28: 新增并进入 IN_PROGRESS；不购买 paid source、不训练模型、不修改 active
+      policy。2026-06-28: 实现完成并转入 VALIDATING；真实 run RSP/QQQE 各 2132 行，updated matrix
+      data_available_count=8、primary_window_covered_count=7、replacement_for_true_breadth_count=0。2026-06-28:
+      验证通过 focused / docs / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T134538Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c0c0699f178536b424b90ee0
+  task_id: TRADING-2274A_EQUAL_WEIGHT_PROXY_DATA_AVAILABILITY_FIX
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 新增并进入 IN_PROGRESS；不购买 paid source、不训练模型、不修改 active policy。2026-06-28:
+      实现完成并转入 VALIDATING；真实 run RSP/QQQE 各 2132 行，updated matrix data_available_count=8、primary_window_covered_count=7、replacement_for_true_breadth_count=0。2026-06-28:
+      验证通过 focused / docs / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T134538Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c0c0699f178536b424b90ee00d5423154af432ad2d46315e3ae518977fca6554
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2274A_EQUAL_WEIGHT_PROXY_DATA_AVAILABILITY_FIX
+  - Research trends / equal-weight proxy data availability fix
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2274A_Equal_Weight_Proxy_Data_Availability_Fix.md`；承接
+    TRADING-2271 / TRADING-2273 中 `rsp_to_spy` / `qqqe_to_qqq` missing blocker。本批已确认缺失主因是本地价格缓存未下载
+    / 后续 partial repair 历史深度不足，不是 provider 不支持或 symbol mapping 问题；RSP / QQQE 已通过免费
+    yfinance 补齐。
+  - 生成 `equal_weight_proxy_data_fix_report.md`、`updated_proxy_coverage_matrix.json`
+    和 `blocked_proxy_resolution_status.json`；产物披露 provider、endpoint、request parameters、download
+    timestamp、row count、checksum、quality gate、root cause、替代方案和 fixed safety fields；所有
+    equal/cap proxy 必须保持 `replacement_for_true_breadth=false`，promotion/paper-shadow/production/broker
+    固定 false/none。
+  - '2026-06-28: 新增并进入 IN_PROGRESS；不购买 paid source、不训练模型、不修改 active policy。2026-06-28:
+    实现完成并转入 VALIDATING；真实 run RSP/QQQE 各 2132 行，updated matrix data_available_count=8、primary_window_covered_count=7、replacement_for_true_breadth_count=0。2026-06-28:
+    验证通过 focused / docs / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T134538Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-2274A_Equal_Weight_Proxy_Data_Availability_Fix.md
+  terminal: false
+  raw_row_sha256: c0c0699f178536b424b90ee00d5423154af432ad2d46315e3ae518977fca6554
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 500402a5418c68ec21c5618838a59838ef359802a1a74cf08cae9df71d0fc0c0

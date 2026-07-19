@@ -1,0 +1,117 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-010
+  title: null
+  domain: 运行架构/replay PIT as-of 截止窗口
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已实现 replay PIT effective cutoff 和从 filtered
+    raw manifest 重建 replay-scoped FMP forward PIT normalized CSV；不调用外部服务、不复用旧 replay
+    输出、不改写生产缓存
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 当 production metadata cutoff 晚于 as-of 时，`replay-day` 的 PIT manifest/normalized
+      输入不包含晚于 as-of 的 `available_time`；若生产 normalized CSV 被补跑覆盖为未来 `available_time`，replay
+      从 filtered raw manifest 中按 ticker 选择 as-of 当天最新 raw payload 重建 normalized；2026-05-08
+      cache-only replay 的 `score_daily`、`ops health`、secret scan 全部 PASS；单测覆盖 cutoff
+      收紧和 raw manifest 重建
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 417
+    row_sha256: 66d3e069204d2501cb72e8550116b15adb86c9459b1b357f93920c107a7438e6
+    cell_count: 8
+    all_cells:
+    - OPS-010
+    - 运行架构/replay PIT as-of 截止窗口
+    - P0
+    - DONE
+    - 系统实现
+    - 已实现 replay PIT effective cutoff 和从 filtered raw manifest 重建 replay-scoped FMP
+      forward PIT normalized CSV；不调用外部服务、不复用旧 replay 输出、不改写生产缓存
+    - 当 production metadata cutoff 晚于 as-of 时，`replay-day` 的 PIT manifest/normalized
+      输入不包含晚于 as-of 的 `available_time`；若生产 normalized CSV 被补跑覆盖为未来 `available_time`，replay
+      从 filtered raw manifest 中按 ticker 选择 as-of 当天最新 raw payload 重建 normalized；2026-05-08
+      cache-only replay 的 `score_daily`、`ops health`、secret scan 全部 PASS；单测覆盖 cutoff
+      收紧和 raw manifest 重建
+    - '2026-05-10: 新增并完成，原因：真实 replay 验证显示 5/8 production metadata 来自 5/10 补跑，直接使用
+      visibility cutoff 会纳入未来 PIT；随后发现生产 normalized CSV 已被 5/10 补跑覆盖，需从 5/8 raw payload
+      重建 replay 输入。验证：`ruff check src/ai_trading_system/historical_replay.py tests/test_historical_replay.py`
+      通过，`pytest -q tests/test_historical_replay.py` 8 passed，真实 `replay-day --as-of
+      2026-05-08 --openai-replay-policy cache-only --compare-to-production` PASS。'
+    raw_line: '|OPS-010|运行架构/replay PIT as-of 截止窗口|P0|DONE|系统实现|已实现 replay PIT effective
+      cutoff 和从 filtered raw manifest 重建 replay-scoped FMP forward PIT normalized
+      CSV；不调用外部服务、不复用旧 replay 输出、不改写生产缓存|当 production metadata cutoff 晚于 as-of 时，`replay-day`
+      的 PIT manifest/normalized 输入不包含晚于 as-of 的 `available_time`；若生产 normalized CSV
+      被补跑覆盖为未来 `available_time`，replay 从 filtered raw manifest 中按 ticker 选择 as-of
+      当天最新 raw payload 重建 normalized；2026-05-08 cache-only replay 的 `score_daily`、`ops
+      health`、secret scan 全部 PASS；单测覆盖 cutoff 收紧和 raw manifest 重建|2026-05-10: 新增并完成，原因：真实
+      replay 验证显示 5/8 production metadata 来自 5/10 补跑，直接使用 visibility cutoff 会纳入未来
+      PIT；随后发现生产 normalized CSV 已被 5/10 补跑覆盖，需从 5/8 raw payload 重建 replay 输入。验证：`ruff
+      check src/ai_trading_system/historical_replay.py tests/test_historical_replay.py`
+      通过，`pytest -q tests/test_historical_replay.py` 8 passed，真实 `replay-day --as-of
+      2026-05-08 --openai-replay-policy cache-only --compare-to-production` PASS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-66d3e069204d2501cb72e855
+  task_id: OPS-010
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-10: 新增并完成，原因：真实 replay 验证显示 5/8 production metadata 来自 5/10 补跑，直接使用
+      visibility cutoff 会纳入未来 PIT；随后发现生产 normalized CSV 已被 5/10 补跑覆盖，需从 5/8 raw payload
+      重建 replay 输入。验证：`ruff check src/ai_trading_system/historical_replay.py tests/test_historical_replay.py`
+      通过，`pytest -q tests/test_historical_replay.py` 8 passed，真实 `replay-day --as-of
+      2026-05-08 --openai-replay-policy cache-only --compare-to-production` PASS。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:66d3e069204d2501cb72e8550116b15adb86c9459b1b357f93920c107a7438e6
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-010
+  - 运行架构/replay PIT as-of 截止窗口
+  - P0
+  - DONE
+  - 系统实现
+  - 已实现 replay PIT effective cutoff 和从 filtered raw manifest 重建 replay-scoped FMP
+    forward PIT normalized CSV；不调用外部服务、不复用旧 replay 输出、不改写生产缓存
+  - 当 production metadata cutoff 晚于 as-of 时，`replay-day` 的 PIT manifest/normalized
+    输入不包含晚于 as-of 的 `available_time`；若生产 normalized CSV 被补跑覆盖为未来 `available_time`，replay
+    从 filtered raw manifest 中按 ticker 选择 as-of 当天最新 raw payload 重建 normalized；2026-05-08
+    cache-only replay 的 `score_daily`、`ops health`、secret scan 全部 PASS；单测覆盖 cutoff
+    收紧和 raw manifest 重建
+  - '2026-05-10: 新增并完成，原因：真实 replay 验证显示 5/8 production metadata 来自 5/10 补跑，直接使用 visibility
+    cutoff 会纳入未来 PIT；随后发现生产 normalized CSV 已被 5/10 补跑覆盖，需从 5/8 raw payload 重建 replay
+    输入。验证：`ruff check src/ai_trading_system/historical_replay.py tests/test_historical_replay.py`
+    通过，`pytest -q tests/test_historical_replay.py` 8 passed，真实 `replay-day --as-of
+    2026-05-08 --openai-replay-policy cache-only --compare-to-production` PASS。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: 66d3e069204d2501cb72e8550116b15adb86c9459b1b357f93920c107a7438e6
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c30e3cc5e1947e2aa38b0b1a868e037cf4a39564dfac21459359d1f8c7c03e06

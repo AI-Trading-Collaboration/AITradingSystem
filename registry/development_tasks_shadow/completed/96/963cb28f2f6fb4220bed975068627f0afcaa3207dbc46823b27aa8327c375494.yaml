@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-063A
+  title: null
+  domain: ETF 组合可信度/Runtime Artifact Hygiene & Fixture Policy
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/etf_portfolio_credibility_validation_2026-06-01.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_credibility_validation_2026-06-01.md`；下一步推进
+    TRADING-063B Benchmark Suite Hardening
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`.gitignore` 忽略 `data/etf_portfolio/`、`data/simulation/` 和 `reports/`；`tests/fixtures/etf_portfolio/`
+      成为 ETF deterministic fixture 目录；artifact catalog 与 system flow 明确 runtime artifacts
+      不属于 source artifacts，daily reports 不提交为源码，test fixtures 不放在 `data/` 或 `reports/`；现有
+      local ETF runtime outputs 不再出现在 `git status --short`；验证通过 `git diff --check`、`python
+      -m pytest tests -q` 和 `python -m ruff check config src tests scripts docs`'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 377
+    row_sha256: 234ba1f2708ca9fb0b8faabe28cd4ce7ed1aa8c00950d651d4a1d57490d184d2
+    cell_count: 8
+    all_cells:
+    - TRADING-063A
+    - ETF 组合可信度/Runtime Artifact Hygiene & Fixture Policy
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/etf_portfolio_credibility_validation_2026-06-01.md`；下一步推进
+      TRADING-063B Benchmark Suite Hardening
+    - '`.gitignore` 忽略 `data/etf_portfolio/`、`data/simulation/` 和 `reports/`；`tests/fixtures/etf_portfolio/`
+      成为 ETF deterministic fixture 目录；artifact catalog 与 system flow 明确 runtime artifacts
+      不属于 source artifacts，daily reports 不提交为源码，test fixtures 不放在 `data/` 或 `reports/`；现有
+      local ETF runtime outputs 不再出现在 `git status --short`；验证通过 `git diff --check`、`python
+      -m pytest tests -q` 和 `python -m ruff check config src tests scripts docs`'
+    - '2026-06-01: 新增并直接归档为 DONE，原因：完成 TRADING-063A runtime artifact hygiene、fixture
+      policy 和文档同步；`git check-ignore` 确认 `data/etf_portfolio/target_weights.csv`、`data/simulation/etf_ledger.csv`、`reports/etf_portfolio/2026-05-29_portfolio_brief.md`
+      均被忽略；`python -m pytest tests -q` 结果为 1630 passed，ruff 和 diff check 通过。'
+    raw_line: '|TRADING-063A|ETF 组合可信度/Runtime Artifact Hygiene & Fixture Policy|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/etf_portfolio_credibility_validation_2026-06-01.md`；下一步推进
+      TRADING-063B Benchmark Suite Hardening|`.gitignore` 忽略 `data/etf_portfolio/`、`data/simulation/`
+      和 `reports/`；`tests/fixtures/etf_portfolio/` 成为 ETF deterministic fixture 目录；artifact
+      catalog 与 system flow 明确 runtime artifacts 不属于 source artifacts，daily reports
+      不提交为源码，test fixtures 不放在 `data/` 或 `reports/`；现有 local ETF runtime outputs 不再出现在
+      `git status --short`；验证通过 `git diff --check`、`python -m pytest tests -q` 和 `python
+      -m ruff check config src tests scripts docs`|2026-06-01: 新增并直接归档为 DONE，原因：完成
+      TRADING-063A runtime artifact hygiene、fixture policy 和文档同步；`git check-ignore`
+      确认 `data/etf_portfolio/target_weights.csv`、`data/simulation/etf_ledger.csv`、`reports/etf_portfolio/2026-05-29_portfolio_brief.md`
+      均被忽略；`python -m pytest tests -q` 结果为 1630 passed，ruff 和 diff check 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-234ba1f2708ca9fb0b8faabe
+  task_id: TRADING-063A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-06-01: 新增并直接归档为 DONE，原因：完成 TRADING-063A runtime artifact hygiene、fixture
+      policy 和文档同步；`git check-ignore` 确认 `data/etf_portfolio/target_weights.csv`、`data/simulation/etf_ledger.csv`、`reports/etf_portfolio/2026-05-29_portfolio_brief.md`
+      均被忽略；`python -m pytest tests -q` 结果为 1630 passed，ruff 和 diff check 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:234ba1f2708ca9fb0b8faabe28cd4ce7ed1aa8c00950d651d4a1d57490d184d2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-063A
+  - ETF 组合可信度/Runtime Artifact Hygiene & Fixture Policy
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_credibility_validation_2026-06-01.md`；下一步推进
+    TRADING-063B Benchmark Suite Hardening
+  - '`.gitignore` 忽略 `data/etf_portfolio/`、`data/simulation/` 和 `reports/`；`tests/fixtures/etf_portfolio/`
+    成为 ETF deterministic fixture 目录；artifact catalog 与 system flow 明确 runtime artifacts
+    不属于 source artifacts，daily reports 不提交为源码，test fixtures 不放在 `data/` 或 `reports/`；现有
+    local ETF runtime outputs 不再出现在 `git status --short`；验证通过 `git diff --check`、`python
+    -m pytest tests -q` 和 `python -m ruff check config src tests scripts docs`'
+  - '2026-06-01: 新增并直接归档为 DONE，原因：完成 TRADING-063A runtime artifact hygiene、fixture
+    policy 和文档同步；`git check-ignore` 确认 `data/etf_portfolio/target_weights.csv`、`data/simulation/etf_ledger.csv`、`reports/etf_portfolio/2026-05-29_portfolio_brief.md`
+    均被忽略；`python -m pytest tests -q` 结果为 1630 passed，ruff 和 diff check 通过。'
+  docs_links:
+  - docs/requirements/etf_portfolio_credibility_validation_2026-06-01.md
+  terminal: true
+  raw_row_sha256: 234ba1f2708ca9fb0b8faabe28cd4ce7ed1aa8c00950d651d4a1d57490d184d2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: edfb86528eba53158c1a60e2624e248af68b6a5737a1cab1193f09dbc0e556ac

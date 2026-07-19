@@ -8,7 +8,7 @@
 - parent：`ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`
 - companion：`ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE`
 - priority：`P0`（G2.4 critical path）
-- status：`COMPLETE_PHASE_EXIT_HANDOFF_PENDING`（EB1～EB8与phase exit已完成）
+- status：`COMPLETE_HANDOFF_PASS_STOPPED`（EB1～EB8、phase exit与handoff已完成）
 - owner：architecture coordinator / test infrastructure owner
 - production effect：`none`
 

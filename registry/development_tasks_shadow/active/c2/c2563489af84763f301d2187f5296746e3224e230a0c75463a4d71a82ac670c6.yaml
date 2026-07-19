@@ -1,0 +1,120 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX
+  title: null
+  domain: Research strategies / expanded allocation failure diagnostics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1526_Expanded_Actual_Path_Candidate_Failure_Matrix.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1526_Expanded_Actual_Path_Candidate_Failure_Matrix.md`；owner
+    要求把 11 个 actual-path candidates 的失败原因拆到候选级别，不得只给 aggregate survival count；本任务只增强
+    research explanation，不改变 promotion state
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies expanded-universe candidate-failure-matrix`
+      和 `candidate_failure_matrix.csv` / `expanded_actual_path_candidate_failure_matrix.yaml`
+      / `expanded_actual_path_candidate_failure_matrix.md`；真实输出 11 行，逐 candidate 输出
+      requested fields：candidate_id、weights_by_state、tqqq_weight_profile、qqq_equivalent_exposure、actual_return、max_dd、sharpe、calmar、same_risk_baseline、delta_vs_same_risk_baseline、failure_reason、next_action，并显式列出
+      verdict、dominating static frontier baseline、TQQQ beta-only、same-risk underperformance、walk-forward
+      blocker、stress risk blocker、net-of-cost blocker；report registry、artifact catalog、system
+      flow 和 focused tests 同步；所有 outputs 保持 dynamic promotion `BLOCKED`、paper-shadow/production/broker
+      false/none
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1269
+    row_sha256: 5cf0e05a054cb961b250bcc432f1f821d509869cc9fc90943acb156cca991338
+    cell_count: 8
+    all_cells:
+    - TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX
+    - Research strategies / expanded allocation failure diagnostics
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1526_Expanded_Actual_Path_Candidate_Failure_Matrix.md`；owner
+      要求把 11 个 actual-path candidates 的失败原因拆到候选级别，不得只给 aggregate survival count；本任务只增强
+      research explanation，不改变 promotion state
+    - 新增 `aits research strategies expanded-universe candidate-failure-matrix` 和 `candidate_failure_matrix.csv`
+      / `expanded_actual_path_candidate_failure_matrix.yaml` / `expanded_actual_path_candidate_failure_matrix.md`；真实输出
+      11 行，逐 candidate 输出 requested fields：candidate_id、weights_by_state、tqqq_weight_profile、qqq_equivalent_exposure、actual_return、max_dd、sharpe、calmar、same_risk_baseline、delta_vs_same_risk_baseline、failure_reason、next_action，并显式列出
+      verdict、dominating static frontier baseline、TQQQ beta-only、same-risk underperformance、walk-forward
+      blocker、stress risk blocker、net-of-cost blocker；report registry、artifact catalog、system
+      flow 和 focused tests 同步；所有 outputs 保持 dynamic promotion `BLOCKED`、paper-shadow/production/broker
+      false/none
+    - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 要求对 11 个 actual-path candidates 的失败原因拆清楚并输出矩阵。2026-06-27:
+      实现完成并转入 VALIDATING；真实 CLI status=`CANDIDATE_FAILURE_MATRIX_READY_PROMOTION_BLOCKED`，candidate_count=11。'
+    raw_line: '|TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX|Research
+      strategies / expanded allocation failure diagnostics|P0|VALIDATING|系统实现 + 项目
+      owner 后续复核|详见 `docs/requirements/TRADING-1526_Expanded_Actual_Path_Candidate_Failure_Matrix.md`；owner
+      要求把 11 个 actual-path candidates 的失败原因拆到候选级别，不得只给 aggregate survival count；本任务只增强
+      research explanation，不改变 promotion state|新增 `aits research strategies expanded-universe
+      candidate-failure-matrix` 和 `candidate_failure_matrix.csv` / `expanded_actual_path_candidate_failure_matrix.yaml`
+      / `expanded_actual_path_candidate_failure_matrix.md`；真实输出 11 行，逐 candidate 输出
+      requested fields：candidate_id、weights_by_state、tqqq_weight_profile、qqq_equivalent_exposure、actual_return、max_dd、sharpe、calmar、same_risk_baseline、delta_vs_same_risk_baseline、failure_reason、next_action，并显式列出
+      verdict、dominating static frontier baseline、TQQQ beta-only、same-risk underperformance、walk-forward
+      blocker、stress risk blocker、net-of-cost blocker；report registry、artifact catalog、system
+      flow 和 focused tests 同步；所有 outputs 保持 dynamic promotion `BLOCKED`、paper-shadow/production/broker
+      false/none|2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 要求对 11 个 actual-path candidates
+      的失败原因拆清楚并输出矩阵。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI status=`CANDIDATE_FAILURE_MATRIX_READY_PROMOTION_BLOCKED`，candidate_count=11。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5cf0e05a054cb961b250bcc4
+  task_id: TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 要求对 11 个 actual-path candidates
+      的失败原因拆清楚并输出矩阵。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI status=`CANDIDATE_FAILURE_MATRIX_READY_PROMOTION_BLOCKED`，candidate_count=11。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5cf0e05a054cb961b250bcc432f1f821d509869cc9fc90943acb156cca991338
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX
+  - Research strategies / expanded allocation failure diagnostics
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1526_Expanded_Actual_Path_Candidate_Failure_Matrix.md`；owner
+    要求把 11 个 actual-path candidates 的失败原因拆到候选级别，不得只给 aggregate survival count；本任务只增强
+    research explanation，不改变 promotion state
+  - 新增 `aits research strategies expanded-universe candidate-failure-matrix` 和 `candidate_failure_matrix.csv`
+    / `expanded_actual_path_candidate_failure_matrix.yaml` / `expanded_actual_path_candidate_failure_matrix.md`；真实输出
+    11 行，逐 candidate 输出 requested fields：candidate_id、weights_by_state、tqqq_weight_profile、qqq_equivalent_exposure、actual_return、max_dd、sharpe、calmar、same_risk_baseline、delta_vs_same_risk_baseline、failure_reason、next_action，并显式列出
+    verdict、dominating static frontier baseline、TQQQ beta-only、same-risk underperformance、walk-forward
+    blocker、stress risk blocker、net-of-cost blocker；report registry、artifact catalog、system
+    flow 和 focused tests 同步；所有 outputs 保持 dynamic promotion `BLOCKED`、paper-shadow/production/broker
+    false/none
+  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 要求对 11 个 actual-path candidates 的失败原因拆清楚并输出矩阵。2026-06-27:
+    实现完成并转入 VALIDATING；真实 CLI status=`CANDIDATE_FAILURE_MATRIX_READY_PROMOTION_BLOCKED`，candidate_count=11。'
+  docs_links:
+  - docs/requirements/TRADING-1526_Expanded_Actual_Path_Candidate_Failure_Matrix.md
+  terminal: false
+  raw_row_sha256: 5cf0e05a054cb961b250bcc432f1f821d509869cc9fc90943acb156cca991338
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 12020fa6c8df4817c1fd251e7267c591476e80cbfb4b7f6e48ad68b01a2539ae

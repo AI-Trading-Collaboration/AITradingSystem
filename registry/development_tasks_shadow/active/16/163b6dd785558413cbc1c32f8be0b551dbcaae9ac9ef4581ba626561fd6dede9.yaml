@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-009
+  title: null
+  domain: 数据源/价格源不一致归因
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/price_source_reconciliation_2026-05-05.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已拆分 FMP 价格 alias 与估值/PIT alias，并让数据质量报告明确标注问题来源；详细记录见
+    `docs/requirements/price_source_reconciliation_2026-05-05.md`；下一步等待真实 `download-data`
+    / `validate-data` 观察
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Baseline 完成：`FmpPriceProvider` 默认直接请求 `GOOG`，manifest 不再记录 `GOOG -> GOOGL`
+      的价格 alias；估值/PIT 路径仍保留独立 alias；数据质量报告问题表包含“来源”列，能区分价格主源、第二行情源 Marketstack、跨源核验、FRED
+      宏观序列和下载审计清单；Marketstack 自身硬错误不再被误读为主源错误；已同步更新 `docs/system_flow.md` 并补充测试。完整
+      DONE 需下一次真实下载确认主源和第二源质量状态
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1124
+    row_sha256: 6c6f8ac6a59339fd53b9c6b63e34d78196e16dde32c9ec3e93c109d9af3981bb
+    cell_count: 8
+    all_cells:
+    - DATA-009
+    - 数据源/价格源不一致归因
+    - P0
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已拆分 FMP 价格 alias 与估值/PIT alias，并让数据质量报告明确标注问题来源；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`；下一步等待真实
+      `download-data` / `validate-data` 观察
+    - Baseline 完成：`FmpPriceProvider` 默认直接请求 `GOOG`，manifest 不再记录 `GOOG -> GOOGL` 的价格
+      alias；估值/PIT 路径仍保留独立 alias；数据质量报告问题表包含“来源”列，能区分价格主源、第二行情源 Marketstack、跨源核验、FRED
+      宏观序列和下载审计清单；Marketstack 自身硬错误不再被误读为主源错误；已同步更新 `docs/system_flow.md` 并补充测试。完整
+      DONE 需下一次真实下载确认主源和第二源质量状态
+    - '2026-05-05: 新增并进入实现，原因：owner 要求继续重点关注股价数据不一致；复核显示 `GOOG` 硬差异来自价格路径错误复用估值 alias，SPY/INTC/MSFT/SOXX
+      硬异常主要落在 Marketstack 第二源缓存，报告缺少来源列导致误读。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：价格路径已直接请求
+      `GOOG`，质量报告来源列和归因测试已完成；定向 Ruff、87 项相关 pytest 和 `aits data-sources validate`
+      通过。'
+    raw_line: '|DATA-009|数据源/价格源不一致归因|P0|BASELINE_DONE|系统实现 + 项目 owner|已拆分 FMP 价格
+      alias 与估值/PIT alias，并让数据质量报告明确标注问题来源；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`；下一步等待真实
+      `download-data` / `validate-data` 观察|Baseline 完成：`FmpPriceProvider` 默认直接请求 `GOOG`，manifest
+      不再记录 `GOOG -> GOOGL` 的价格 alias；估值/PIT 路径仍保留独立 alias；数据质量报告问题表包含“来源”列，能区分价格主源、第二行情源
+      Marketstack、跨源核验、FRED 宏观序列和下载审计清单；Marketstack 自身硬错误不再被误读为主源错误；已同步更新 `docs/system_flow.md`
+      并补充测试。完整 DONE 需下一次真实下载确认主源和第二源质量状态|2026-05-05: 新增并进入实现，原因：owner 要求继续重点关注股价数据不一致；复核显示
+      `GOOG` 硬差异来自价格路径错误复用估值 alias，SPY/INTC/MSFT/SOXX 硬异常主要落在 Marketstack 第二源缓存，报告缺少来源列导致误读。2026-05-05:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：价格路径已直接请求 `GOOG`，质量报告来源列和归因测试已完成；定向 Ruff、87
+      项相关 pytest 和 `aits data-sources validate` 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6c6f8ac6a59339fd53b9c6b6
+  task_id: DATA-009
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner
+    notes: '2026-05-05: 新增并进入实现，原因：owner 要求继续重点关注股价数据不一致；复核显示 `GOOG` 硬差异来自价格路径错误复用估值
+      alias，SPY/INTC/MSFT/SOXX 硬异常主要落在 Marketstack 第二源缓存，报告缺少来源列导致误读。2026-05-05: 从
+      IN_PROGRESS 改为 BASELINE_DONE，原因：价格路径已直接请求 `GOOG`，质量报告来源列和归因测试已完成；定向 Ruff、87
+      项相关 pytest 和 `aits data-sources validate` 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6c6f8ac6a59339fd53b9c6b63e34d78196e16dde32c9ec3e93c109d9af3981bb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-009
+  - 数据源/价格源不一致归因
+  - P0
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已拆分 FMP 价格 alias 与估值/PIT alias，并让数据质量报告明确标注问题来源；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`；下一步等待真实
+    `download-data` / `validate-data` 观察
+  - Baseline 完成：`FmpPriceProvider` 默认直接请求 `GOOG`，manifest 不再记录 `GOOG -> GOOGL` 的价格
+    alias；估值/PIT 路径仍保留独立 alias；数据质量报告问题表包含“来源”列，能区分价格主源、第二行情源 Marketstack、跨源核验、FRED
+    宏观序列和下载审计清单；Marketstack 自身硬错误不再被误读为主源错误；已同步更新 `docs/system_flow.md` 并补充测试。完整 DONE
+    需下一次真实下载确认主源和第二源质量状态
+  - '2026-05-05: 新增并进入实现，原因：owner 要求继续重点关注股价数据不一致；复核显示 `GOOG` 硬差异来自价格路径错误复用估值 alias，SPY/INTC/MSFT/SOXX
+    硬异常主要落在 Marketstack 第二源缓存，报告缺少来源列导致误读。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：价格路径已直接请求
+    `GOOG`，质量报告来源列和归因测试已完成；定向 Ruff、87 项相关 pytest 和 `aits data-sources validate` 通过。'
+  docs_links:
+  - docs/requirements/price_source_reconciliation_2026-05-05.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: 6c6f8ac6a59339fd53b9c6b63e34d78196e16dde32c9ec3e93c109d9af3981bb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 269d2dd4aabe608c2809afa86cfce402a241d1092004a7ed858e21c5dfa172e0

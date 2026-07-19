@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DOC-001
+  title: null
+  domain: 产品边界/解释
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段 recommendation status taxonomy：日报和回测报告输出结论使用等级、适用范围、降级原因、解除条件、证据引用，并与日报投资姿态标签分开；剩余缺口是
+    taxonomy 配置化、未来事件窗口和更完整 owner review policy；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#doc-001`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 每份日报和回测报告都有结论使用等级：`trend_only`、`actionable`、`review_required`、`research_only`、`data_limited`、`backtest_limited`
+      或等价分类；当前 `score-daily` 和回测以 `trend_judgment` 范围运行，干净通过时也只能显示趋势判断、不触发交易；同时引入独立投资姿态标签，如积极进攻、中高配、中高配但受限、中性观察、防守降仓、人工复核；低置信度、数据不足、来源不足、回测覆盖不足和事件前状态自动降级，并说明原因、解除条件和证据引用；实现时同步更新
+      `docs/system_flow.md` 并补充报告测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1107
+    row_sha256: 839e1ad4786fd45648912363130d593eaeb07b4960742860e7e627c110f98737
+    cell_count: 8
+    all_cells:
+    - DOC-001
+    - 产品边界/解释
+    - P2
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已完成第一阶段 recommendation status taxonomy：日报和回测报告输出结论使用等级、适用范围、降级原因、解除条件、证据引用，并与日报投资姿态标签分开；剩余缺口是
+      taxonomy 配置化、未来事件窗口和更完整 owner review policy；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#doc-001`
+    - 每份日报和回测报告都有结论使用等级：`trend_only`、`actionable`、`review_required`、`research_only`、`data_limited`、`backtest_limited`
+      或等价分类；当前 `score-daily` 和回测以 `trend_judgment` 范围运行，干净通过时也只能显示趋势判断、不触发交易；同时引入独立投资姿态标签，如积极进攻、中高配、中高配但受限、中性观察、防守降仓、人工复核；低置信度、数据不足、来源不足、回测覆盖不足和事件前状态自动降级，并说明原因、解除条件和证据引用；实现时同步更新
+      `docs/system_flow.md` 并补充报告测试
+    - '与 `SCORE-002` 置信度拆分、`REPORT-002` 解释输出和 `REPORT-003` 决策链呈现协同；减少用户把市场状态、分数、仓位和结论可靠性混为同一个答案的风险。2026-05-04:
+      从 PROPOSED 改为 IN_PROGRESS，原因：开始实现日报和回测报告的结论使用等级、投资姿态标签、降级原因和解除条件。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `conclusion_boundary` taxonomy，日报与回测报告均输出“结论使用等级”，覆盖
+      `review_required`、`data_limited` 和 `backtest_limited` 降级；报告明确结论等级与投资姿态标签不能互相替代。2026-05-04:
+      补充 `trend_only` 和 `trend_judgment` 适用范围，原因：owner 明确当前系统只做趋势判断，不需要实际触发交易。'
+    raw_line: '|DOC-001|产品边界/解释|P2|BASELINE_DONE|系统实现 + 项目 owner|已完成第一阶段 recommendation
+      status taxonomy：日报和回测报告输出结论使用等级、适用范围、降级原因、解除条件、证据引用，并与日报投资姿态标签分开；剩余缺口是 taxonomy
+      配置化、未来事件窗口和更完整 owner review policy；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#doc-001`|每份日报和回测报告都有结论使用等级：`trend_only`、`actionable`、`review_required`、`research_only`、`data_limited`、`backtest_limited`
+      或等价分类；当前 `score-daily` 和回测以 `trend_judgment` 范围运行，干净通过时也只能显示趋势判断、不触发交易；同时引入独立投资姿态标签，如积极进攻、中高配、中高配但受限、中性观察、防守降仓、人工复核；低置信度、数据不足、来源不足、回测覆盖不足和事件前状态自动降级，并说明原因、解除条件和证据引用；实现时同步更新
+      `docs/system_flow.md` 并补充报告测试|与 `SCORE-002` 置信度拆分、`REPORT-002` 解释输出和 `REPORT-003`
+      决策链呈现协同；减少用户把市场状态、分数、仓位和结论可靠性混为同一个答案的风险。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现日报和回测报告的结论使用等级、投资姿态标签、降级原因和解除条件。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `conclusion_boundary` taxonomy，日报与回测报告均输出“结论使用等级”，覆盖
+      `review_required`、`data_limited` 和 `backtest_limited` 降级；报告明确结论等级与投资姿态标签不能互相替代。2026-05-04:
+      补充 `trend_only` 和 `trend_judgment` 适用范围，原因：owner 明确当前系统只做趋势判断，不需要实际触发交易。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-839e1ad4786fd45648912363
+  task_id: DOC-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P2
+    next_owner: 系统实现 + 项目 owner
+    notes: '与 `SCORE-002` 置信度拆分、`REPORT-002` 解释输出和 `REPORT-003` 决策链呈现协同；减少用户把市场状态、分数、仓位和结论可靠性混为同一个答案的风险。2026-05-04:
+      从 PROPOSED 改为 IN_PROGRESS，原因：开始实现日报和回测报告的结论使用等级、投资姿态标签、降级原因和解除条件。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `conclusion_boundary` taxonomy，日报与回测报告均输出“结论使用等级”，覆盖
+      `review_required`、`data_limited` 和 `backtest_limited` 降级；报告明确结论等级与投资姿态标签不能互相替代。2026-05-04:
+      补充 `trend_only` 和 `trend_judgment` 适用范围，原因：owner 明确当前系统只做趋势判断，不需要实际触发交易。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:839e1ad4786fd45648912363130d593eaeb07b4960742860e7e627c110f98737
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DOC-001
+  - 产品边界/解释
+  - P2
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已完成第一阶段 recommendation status taxonomy：日报和回测报告输出结论使用等级、适用范围、降级原因、解除条件、证据引用，并与日报投资姿态标签分开；剩余缺口是
+    taxonomy 配置化、未来事件窗口和更完整 owner review policy；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#doc-001`
+  - 每份日报和回测报告都有结论使用等级：`trend_only`、`actionable`、`review_required`、`research_only`、`data_limited`、`backtest_limited`
+    或等价分类；当前 `score-daily` 和回测以 `trend_judgment` 范围运行，干净通过时也只能显示趋势判断、不触发交易；同时引入独立投资姿态标签，如积极进攻、中高配、中高配但受限、中性观察、防守降仓、人工复核；低置信度、数据不足、来源不足、回测覆盖不足和事件前状态自动降级，并说明原因、解除条件和证据引用；实现时同步更新
+    `docs/system_flow.md` 并补充报告测试
+  - '与 `SCORE-002` 置信度拆分、`REPORT-002` 解释输出和 `REPORT-003` 决策链呈现协同；减少用户把市场状态、分数、仓位和结论可靠性混为同一个答案的风险。2026-05-04:
+    从 PROPOSED 改为 IN_PROGRESS，原因：开始实现日报和回测报告的结论使用等级、投资姿态标签、降级原因和解除条件。2026-05-04: 从
+    IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `conclusion_boundary` taxonomy，日报与回测报告均输出“结论使用等级”，覆盖
+    `review_required`、`data_limited` 和 `backtest_limited` 降级；报告明确结论等级与投资姿态标签不能互相替代。2026-05-04:
+    补充 `trend_only` 和 `trend_judgment` 适用范围，原因：owner 明确当前系统只做趋势判断，不需要实际触发交易。'
+  docs_links:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: 839e1ad4786fd45648912363130d593eaeb07b4960742860e7e627c110f98737
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: dc6564e8a1e48f82428722f366a1a6411c15d2650ec34bafda7ecb41e15ba430

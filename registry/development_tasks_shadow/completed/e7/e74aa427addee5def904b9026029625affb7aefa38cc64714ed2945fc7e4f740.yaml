@@ -1,0 +1,142 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-101
+  title: null
+  domain: ETF portfolio research/Dynamic v3 Rescue Real Evaluator Sweep Integration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/TRADING-101_Dynamic_v3_Rescue_Real_Evaluator_Sweep_Integration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-101_Dynamic_v3_Rescue_Real_Evaluator_Sweep_Integration.md`；real
+    evaluator sweep integration 已完成并通过全量验证；后续真实参数研究、evidence closure 和 promotion review
+    由 `TRADING-102_to_110`、`TRADING-111_to_113` 继续观察 owner/真实 evidence 结论
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Evaluator mode 仅允许 `tiny_fixture_proxy` / `real_dynamic_v3_rescue`；config
+      或 CLI 可指定 real mode；candidate parameters 注入 dynamic-v3-rescue real evaluation；`candidate_results.jsonl`
+      包含 evaluator mode/version、real artifact path、data_quality 和 metrics_source；tiny
+      reports 标记 not-for-investment 且 promotion pack 不可 `promote_candidate`；real mode
+      metrics 来自真实 evaluation artifact，`validate-sweep` 检查 artifact path；small real
+      sweep smoke、focused tests、ruff、compileall、git diff --check 和 `.venv\Scripts\python.exe
+      -m pytest tests -q` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 362
+    row_sha256: 26673b98fd38fb8b652510434610af904420b3391afcf28d197ade45f94146c2
+    cell_count: 8
+    all_cells:
+    - TRADING-101
+    - ETF portfolio research/Dynamic v3 Rescue Real Evaluator Sweep Integration
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/TRADING-101_Dynamic_v3_Rescue_Real_Evaluator_Sweep_Integration.md`；real
+      evaluator sweep integration 已完成并通过全量验证；后续真实参数研究、evidence closure 和 promotion
+      review 由 `TRADING-102_to_110`、`TRADING-111_to_113` 继续观察 owner/真实 evidence 结论
+    - Evaluator mode 仅允许 `tiny_fixture_proxy` / `real_dynamic_v3_rescue`；config 或
+      CLI 可指定 real mode；candidate parameters 注入 dynamic-v3-rescue real evaluation；`candidate_results.jsonl`
+      包含 evaluator mode/version、real artifact path、data_quality 和 metrics_source；tiny
+      reports 标记 not-for-investment 且 promotion pack 不可 `promote_candidate`；real mode
+      metrics 来自真实 evaluation artifact，`validate-sweep` 检查 artifact path；small real
+      sweep smoke、focused tests、ruff、compileall、git diff --check 和 `.venv\Scripts\python.exe
+      -m pytest tests -q` 通过
+    - '2026-06-06: 新增并进入 IN_PROGRESS，原因：TRADING-093~100 platform MVP 默认 tiny fixture
+      proxy 只能验证平台闭环，不能作为真实 investment evidence；需要把 sweep 平台接入 TRADING-091 price-driven
+      real evaluation pipeline。2026-06-06: 实现完成并进入 VALIDATING；sample real sweep `sweep_20260606T034508Z_ae5ae1d8`
+      以 `real_dynamic_v3_rescue` / workers=1 跑通 2 candidates 且 `validate-sweep` PASS；focused
+      tests 16 passed，ruff、compileall、git diff --check PASS；全量 `pytest tests -q` 首次
+      15 分钟超时未返回失败明细。2026-06-07: 从 VALIDATING 改为 DONE，原因：修复 `score-daily` CLI 模块化后的测试边界引用漂移后，focused
+      regression 通过，`.venv\Scripts\python.exe -m pytest tests -q` 全量验证通过（2197 passed,
+      329 warnings, 2266.75s）。'
+    raw_line: '|TRADING-101|ETF portfolio research/Dynamic v3 Rescue Real Evaluator
+      Sweep Integration|P0|DONE|系统验证|详细拆解见 `docs/requirements/TRADING-101_Dynamic_v3_Rescue_Real_Evaluator_Sweep_Integration.md`；real
+      evaluator sweep integration 已完成并通过全量验证；后续真实参数研究、evidence closure 和 promotion
+      review 由 `TRADING-102_to_110`、`TRADING-111_to_113` 继续观察 owner/真实 evidence 结论|Evaluator
+      mode 仅允许 `tiny_fixture_proxy` / `real_dynamic_v3_rescue`；config 或 CLI 可指定 real
+      mode；candidate parameters 注入 dynamic-v3-rescue real evaluation；`candidate_results.jsonl`
+      包含 evaluator mode/version、real artifact path、data_quality 和 metrics_source；tiny
+      reports 标记 not-for-investment 且 promotion pack 不可 `promote_candidate`；real mode
+      metrics 来自真实 evaluation artifact，`validate-sweep` 检查 artifact path；small real
+      sweep smoke、focused tests、ruff、compileall、git diff --check 和 `.venv\Scripts\python.exe
+      -m pytest tests -q` 通过|2026-06-06: 新增并进入 IN_PROGRESS，原因：TRADING-093~100 platform
+      MVP 默认 tiny fixture proxy 只能验证平台闭环，不能作为真实 investment evidence；需要把 sweep 平台接入
+      TRADING-091 price-driven real evaluation pipeline。2026-06-06: 实现完成并进入 VALIDATING；sample
+      real sweep `sweep_20260606T034508Z_ae5ae1d8` 以 `real_dynamic_v3_rescue` / workers=1
+      跑通 2 candidates 且 `validate-sweep` PASS；focused tests 16 passed，ruff、compileall、git
+      diff --check PASS；全量 `pytest tests -q` 首次 15 分钟超时未返回失败明细。2026-06-07: 从 VALIDATING
+      改为 DONE，原因：修复 `score-daily` CLI 模块化后的测试边界引用漂移后，focused regression 通过，`.venv\Scripts\python.exe
+      -m pytest tests -q` 全量验证通过（2197 passed, 329 warnings, 2266.75s）。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-26673b98fd38fb8b65251043
+  task_id: TRADING-101
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-06-06: 新增并进入 IN_PROGRESS，原因：TRADING-093~100 platform MVP 默认 tiny
+      fixture proxy 只能验证平台闭环，不能作为真实 investment evidence；需要把 sweep 平台接入 TRADING-091
+      price-driven real evaluation pipeline。2026-06-06: 实现完成并进入 VALIDATING；sample
+      real sweep `sweep_20260606T034508Z_ae5ae1d8` 以 `real_dynamic_v3_rescue` / workers=1
+      跑通 2 candidates 且 `validate-sweep` PASS；focused tests 16 passed，ruff、compileall、git
+      diff --check PASS；全量 `pytest tests -q` 首次 15 分钟超时未返回失败明细。2026-06-07: 从 VALIDATING
+      改为 DONE，原因：修复 `score-daily` CLI 模块化后的测试边界引用漂移后，focused regression 通过，`.venv\Scripts\python.exe
+      -m pytest tests -q` 全量验证通过（2197 passed, 329 warnings, 2266.75s）。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:26673b98fd38fb8b652510434610af904420b3391afcf28d197ade45f94146c2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-101
+  - ETF portfolio research/Dynamic v3 Rescue Real Evaluator Sweep Integration
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/TRADING-101_Dynamic_v3_Rescue_Real_Evaluator_Sweep_Integration.md`；real
+    evaluator sweep integration 已完成并通过全量验证；后续真实参数研究、evidence closure 和 promotion review
+    由 `TRADING-102_to_110`、`TRADING-111_to_113` 继续观察 owner/真实 evidence 结论
+  - Evaluator mode 仅允许 `tiny_fixture_proxy` / `real_dynamic_v3_rescue`；config 或 CLI
+    可指定 real mode；candidate parameters 注入 dynamic-v3-rescue real evaluation；`candidate_results.jsonl`
+    包含 evaluator mode/version、real artifact path、data_quality 和 metrics_source；tiny
+    reports 标记 not-for-investment 且 promotion pack 不可 `promote_candidate`；real mode
+    metrics 来自真实 evaluation artifact，`validate-sweep` 检查 artifact path；small real
+    sweep smoke、focused tests、ruff、compileall、git diff --check 和 `.venv\Scripts\python.exe
+    -m pytest tests -q` 通过
+  - '2026-06-06: 新增并进入 IN_PROGRESS，原因：TRADING-093~100 platform MVP 默认 tiny fixture
+    proxy 只能验证平台闭环，不能作为真实 investment evidence；需要把 sweep 平台接入 TRADING-091 price-driven
+    real evaluation pipeline。2026-06-06: 实现完成并进入 VALIDATING；sample real sweep `sweep_20260606T034508Z_ae5ae1d8`
+    以 `real_dynamic_v3_rescue` / workers=1 跑通 2 candidates 且 `validate-sweep` PASS；focused
+    tests 16 passed，ruff、compileall、git diff --check PASS；全量 `pytest tests -q` 首次
+    15 分钟超时未返回失败明细。2026-06-07: 从 VALIDATING 改为 DONE，原因：修复 `score-daily` CLI 模块化后的测试边界引用漂移后，focused
+    regression 通过，`.venv\Scripts\python.exe -m pytest tests -q` 全量验证通过（2197 passed,
+    329 warnings, 2266.75s）。'
+  docs_links:
+  - docs/requirements/TRADING-101_Dynamic_v3_Rescue_Real_Evaluator_Sweep_Integration.md
+  terminal: true
+  raw_row_sha256: 26673b98fd38fb8b652510434610af904420b3391afcf28d197ade45f94146c2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 548c4459fb61c211ec5c457c5a780df4eaa8abf93d5ee0a6717f1b9cae1029c3

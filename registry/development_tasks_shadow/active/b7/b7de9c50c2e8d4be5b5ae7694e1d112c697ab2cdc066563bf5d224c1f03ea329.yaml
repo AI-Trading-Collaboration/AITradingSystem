@@ -1,0 +1,94 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-724_FORWARD_PAPER_SHADOW_COHORT_READINESS
+  title: null
+  domain: Research ops / forward paper-shadow cohort readiness
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；统一准备 paper-shadow
+    cohort，但默认仍需人工复核
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`paper-shadow cohort-prepare'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1394
+    row_sha256: 87ea84764f533c3478d077d29b2199dc9e5d3fb466a8eaf7330f3f4121cb09bd
+    cell_count: 9
+    all_cells:
+    - TRADING-724_FORWARD_PAPER_SHADOW_COHORT_READINESS
+    - Research ops / forward paper-shadow cohort readiness
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 TRADING-703_to_725 总需求文档；统一准备 paper-shadow cohort，但默认仍需人工复核
+    - '`paper-shadow cohort-prepare'
+    - cohort-status` 可运行；paper_shadow_change_allowed=false unless human-review-ready；broker_action=none；rollback_criteria_present=true
+    - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。'
+    raw_line: '|TRADING-724_FORWARD_PAPER_SHADOW_COHORT_READINESS|Research ops / forward
+      paper-shadow cohort readiness|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 TRADING-703_to_725
+      总需求文档；统一准备 paper-shadow cohort，但默认仍需人工复核|`paper-shadow cohort-prepare|cohort-status`
+      可运行；paper_shadow_change_allowed=false unless human-review-ready；broker_action=none；rollback_criteria_present=true|2026-06-21:
+      按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+      schema/config/protocol、research governance / acceleration / portfolio decision
+      / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+      / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+      production_effect=none，不修改 production / paper-shadow / official weights，不触发
+      broker/order。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-87ea84764f533c3478d077d2
+  task_id: TRADING-724_FORWARD_PAPER_SHADOW_COHORT_READINESS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: cohort-status` 可运行；paper_shadow_change_allowed=false unless human-review-ready；broker_action=none；rollback_criteria_present=true
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:87ea84764f533c3478d077d29b2199dc9e5d3fb466a8eaf7330f3f4121cb09bd
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-724_FORWARD_PAPER_SHADOW_COHORT_READINESS
+  - Research ops / forward paper-shadow cohort readiness
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-703_to_725 总需求文档；统一准备 paper-shadow cohort，但默认仍需人工复核
+  - '`paper-shadow cohort-prepare'
+  - cohort-status` 可运行；paper_shadow_change_allowed=false unless human-review-ready；broker_action=none；rollback_criteria_present=true
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 87ea84764f533c3478d077d29b2199dc9e5d3fb466a8eaf7330f3f4121cb09bd
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8d2a200e838b5c530ff70f1828b3360d318ea19ebd6a7a8d116efe02a922c06e

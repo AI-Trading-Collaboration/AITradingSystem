@@ -1,0 +1,113 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: GOV-003
+  title: null
+  domain: 治理/candidate promotion 与 retirement 流程
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已新增受控 `promote-rule-card` / `retire-rule-card`
+    工作流：promotion 必须带 owner、批准理由、promotion report 和 outcome 引用；retirement 必须带退役原因；写出后立即复用
+    rule card validator；真实规则上线仍需要 owner 逐项批准；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 未通过 promotion gate 或缺少 owner approval 的 candidate 不能写入 production rule card；promotion/retirement
+      操作必须更新 rule card registry、生成治理报告、保留旧版本、写明 rollback condition，并被 `score-daily`/`backtest`
+      trace 捕获；测试覆盖未批准不能 promotion、批准后 production rule version 变更可追溯、retired rule
+      不再参与生产
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1094
+    row_sha256: a5ff6239886c835ef603bdeb9857f2a66369abc46d94da541ee53f3c4d8db110
+    cell_count: 8
+    all_cells:
+    - GOV-003
+    - 治理/candidate promotion 与 retirement 流程
+    - P1
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已新增受控 `promote-rule-card` / `retire-rule-card` 工作流：promotion 必须带 owner、批准理由、promotion
+      report 和 outcome 引用；retirement 必须带退役原因；写出后立即复用 rule card validator；真实规则上线仍需要
+      owner 逐项批准；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+    - 未通过 promotion gate 或缺少 owner approval 的 candidate 不能写入 production rule card；promotion/retirement
+      操作必须更新 rule card registry、生成治理报告、保留旧版本、写明 rollback condition，并被 `score-daily`/`backtest`
+      trace 捕获；测试覆盖未批准不能 promotion、批准后 production rule version 变更可追溯、retired rule
+      不再参与生产
+    - '2026-05-05: 新增任务，原因：当前 rule card registry 只是 baseline governance；完整路线需要把通过
+      shadow 的候选规则以 owner 批准方式变成 production rule。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现受控
+      promotion/retirement CLI 和治理报告。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：规则生命周期写入、报告、校验和
+      promotion/retirement 测试已完成；完整 DONE 取决于真实 owner approval 和通过门槛的候选规则。'
+    raw_line: '|GOV-003|治理/candidate promotion 与 retirement 流程|P1|BASELINE_DONE|系统实现
+      + 项目 owner|已新增受控 `promote-rule-card` / `retire-rule-card` 工作流：promotion 必须带
+      owner、批准理由、promotion report 和 outcome 引用；retirement 必须带退役原因；写出后立即复用 rule card
+      validator；真实规则上线仍需要 owner 逐项批准；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`|未通过
+      promotion gate 或缺少 owner approval 的 candidate 不能写入 production rule card；promotion/retirement
+      操作必须更新 rule card registry、生成治理报告、保留旧版本、写明 rollback condition，并被 `score-daily`/`backtest`
+      trace 捕获；测试覆盖未批准不能 promotion、批准后 production rule version 变更可追溯、retired rule
+      不再参与生产|2026-05-05: 新增任务，原因：当前 rule card registry 只是 baseline governance；完整路线需要把通过
+      shadow 的候选规则以 owner 批准方式变成 production rule。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现受控
+      promotion/retirement CLI 和治理报告。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：规则生命周期写入、报告、校验和
+      promotion/retirement 测试已完成；完整 DONE 取决于真实 owner approval 和通过门槛的候选规则。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a5ff6239886c835ef603bdeb
+  task_id: GOV-003
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner
+    notes: '2026-05-05: 新增任务，原因：当前 rule card registry 只是 baseline governance；完整路线需要把通过
+      shadow 的候选规则以 owner 批准方式变成 production rule。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现受控
+      promotion/retirement CLI 和治理报告。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：规则生命周期写入、报告、校验和
+      promotion/retirement 测试已完成；完整 DONE 取决于真实 owner approval 和通过门槛的候选规则。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a5ff6239886c835ef603bdeb9857f2a66369abc46d94da541ee53f3c4d8db110
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - GOV-003
+  - 治理/candidate promotion 与 retirement 流程
+  - P1
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已新增受控 `promote-rule-card` / `retire-rule-card` 工作流：promotion 必须带 owner、批准理由、promotion
+    report 和 outcome 引用；retirement 必须带退役原因；写出后立即复用 rule card validator；真实规则上线仍需要 owner
+    逐项批准；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+  - 未通过 promotion gate 或缺少 owner approval 的 candidate 不能写入 production rule card；promotion/retirement
+    操作必须更新 rule card registry、生成治理报告、保留旧版本、写明 rollback condition，并被 `score-daily`/`backtest`
+    trace 捕获；测试覆盖未批准不能 promotion、批准后 production rule version 变更可追溯、retired rule 不再参与生产
+  - '2026-05-05: 新增任务，原因：当前 rule card registry 只是 baseline governance；完整路线需要把通过 shadow
+    的候选规则以 owner 批准方式变成 production rule。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现受控
+    promotion/retirement CLI 和治理报告。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：规则生命周期写入、报告、校验和
+    promotion/retirement 测试已完成；完整 DONE 取决于真实 owner approval 和通过门槛的候选规则。'
+  docs_links:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  terminal: false
+  raw_row_sha256: a5ff6239886c835ef603bdeb9857f2a66369abc46d94da541ee53f3c4d8db110
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e02bf5c212cf4b4aa426749db76fb88139db4adfa883b1e3f4412159cc3c6fe9

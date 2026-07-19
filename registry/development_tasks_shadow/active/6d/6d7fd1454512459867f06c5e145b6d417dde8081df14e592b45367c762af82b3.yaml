@@ -1,0 +1,110 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: THESIS-002
+  title: null
+  domain: 交易 thesis/初始主动 baseline
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner + 系统验证
+  requirement_refs:
+  - docs/requirements/confidence_lift_workplan_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/confidence_lift_workplan_2026-05-10.md`；原
+    6 个 active baseline thesis 已写入并校验通过；扩展后的新增 ticker 仍为 `watch_only`，暂不要求主动交易 thesis；下一步需要
+    owner/人工复核 pending 业务指标
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 原 6 个主动 baseline ticker 均具备 active thesis、验证指标、证伪条件、复核频率、来源、适用边界和 owner
+      复核状态；校验通过；日报不再因缺少主动交易 thesis 将 `watch_only` 观察池误写成 thesis 失败
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1499
+    row_sha256: afd49e12a4598c9c0955392dd0bcd35346f974a58a6e8cb24c1ee6cbe2062908
+    cell_count: 8
+    all_cells:
+    - THESIS-002
+    - 交易 thesis/初始主动 baseline
+    - P1
+    - BLOCKED_OWNER_INPUT
+    - 项目 owner + 系统验证
+    - 详细拆解见 `docs/requirements/confidence_lift_workplan_2026-05-10.md`；原 6 个 active
+      baseline thesis 已写入并校验通过；扩展后的新增 ticker 仍为 `watch_only`，暂不要求主动交易 thesis；下一步需要
+      owner/人工复核 pending 业务指标
+    - 原 6 个主动 baseline ticker 均具备 active thesis、验证指标、证伪条件、复核频率、来源、适用边界和 owner 复核状态；校验通过；日报不再因缺少主动交易
+      thesis 将 `watch_only` 观察池误写成 thesis 失败
+    - '2026-05-10: 新增并进入实现，原因：owner 要求建立核心 ticker thesis，提高趋势判断到主动交易假设的可解释性。2026-05-10:
+      从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：MSFT/GOOG/TSM/INTC/AMD/NVDA thesis YAML
+      已写入，`thesis validate` PASS；`thesis review` 仍为 WATCH，因部分业务驱动指标需人工复核，系统未伪装为 confirmed。2026-05-11:
+      owner 扩展核心观察池到 17 个代表性 ticker；本任务语义收窄为原 6 个主动 baseline thesis，新纳入 ticker 暂按
+      `watch_only` 处理，不新增 thesis gate 负担。'
+    raw_line: '|THESIS-002|交易 thesis/初始主动 baseline|P1|BLOCKED_OWNER_INPUT|项目 owner
+      + 系统验证|详细拆解见 `docs/requirements/confidence_lift_workplan_2026-05-10.md`；原 6
+      个 active baseline thesis 已写入并校验通过；扩展后的新增 ticker 仍为 `watch_only`，暂不要求主动交易 thesis；下一步需要
+      owner/人工复核 pending 业务指标|原 6 个主动 baseline ticker 均具备 active thesis、验证指标、证伪条件、复核频率、来源、适用边界和
+      owner 复核状态；校验通过；日报不再因缺少主动交易 thesis 将 `watch_only` 观察池误写成 thesis 失败|2026-05-10:
+      新增并进入实现，原因：owner 要求建立核心 ticker thesis，提高趋势判断到主动交易假设的可解释性。2026-05-10: 从 IN_PROGRESS
+      改为 BLOCKED_OWNER_INPUT，原因：MSFT/GOOG/TSM/INTC/AMD/NVDA thesis YAML 已写入，`thesis
+      validate` PASS；`thesis review` 仍为 WATCH，因部分业务驱动指标需人工复核，系统未伪装为 confirmed。2026-05-11:
+      owner 扩展核心观察池到 17 个代表性 ticker；本任务语义收窄为原 6 个主动 baseline thesis，新纳入 ticker 暂按
+      `watch_only` 处理，不新增 thesis gate 负担。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-afd49e12a4598c9c0955392d
+  task_id: THESIS-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P1
+    next_owner: 项目 owner + 系统验证
+    notes: '2026-05-10: 新增并进入实现，原因：owner 要求建立核心 ticker thesis，提高趋势判断到主动交易假设的可解释性。2026-05-10:
+      从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：MSFT/GOOG/TSM/INTC/AMD/NVDA thesis YAML
+      已写入，`thesis validate` PASS；`thesis review` 仍为 WATCH，因部分业务驱动指标需人工复核，系统未伪装为 confirmed。2026-05-11:
+      owner 扩展核心观察池到 17 个代表性 ticker；本任务语义收窄为原 6 个主动 baseline thesis，新纳入 ticker 暂按
+      `watch_only` 处理，不新增 thesis gate 负担。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:afd49e12a4598c9c0955392dd0bcd35346f974a58a6e8cb24c1ee6cbe2062908
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - THESIS-002
+  - 交易 thesis/初始主动 baseline
+  - P1
+  - BLOCKED_OWNER_INPUT
+  - 项目 owner + 系统验证
+  - 详细拆解见 `docs/requirements/confidence_lift_workplan_2026-05-10.md`；原 6 个 active
+    baseline thesis 已写入并校验通过；扩展后的新增 ticker 仍为 `watch_only`，暂不要求主动交易 thesis；下一步需要 owner/人工复核
+    pending 业务指标
+  - 原 6 个主动 baseline ticker 均具备 active thesis、验证指标、证伪条件、复核频率、来源、适用边界和 owner 复核状态；校验通过；日报不再因缺少主动交易
+    thesis 将 `watch_only` 观察池误写成 thesis 失败
+  - '2026-05-10: 新增并进入实现，原因：owner 要求建立核心 ticker thesis，提高趋势判断到主动交易假设的可解释性。2026-05-10:
+    从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：MSFT/GOOG/TSM/INTC/AMD/NVDA thesis YAML
+    已写入，`thesis validate` PASS；`thesis review` 仍为 WATCH，因部分业务驱动指标需人工复核，系统未伪装为 confirmed。2026-05-11:
+    owner 扩展核心观察池到 17 个代表性 ticker；本任务语义收窄为原 6 个主动 baseline thesis，新纳入 ticker 暂按 `watch_only`
+    处理，不新增 thesis gate 负担。'
+  docs_links:
+  - docs/requirements/confidence_lift_workplan_2026-05-10.md
+  terminal: false
+  raw_row_sha256: afd49e12a4598c9c0955392dd0bcd35346f974a58a6e8cb24c1ee6cbe2062908
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 666e17076eda0203436adfafda7d788c1b9ae253e726779039c2a7a744f0ba66

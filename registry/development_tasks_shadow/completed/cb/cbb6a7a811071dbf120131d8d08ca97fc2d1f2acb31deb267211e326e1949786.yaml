@@ -1,0 +1,196 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2356_OBSERVE_ONLY_SCHEDULER_KILL_SWITCH_AND_DISABLED_ENFORCEMENT_EVIDENCE_PLAN
+  title: null
+  domain: Research trends / high-intensity risk-cap observe-only scheduler kill-switch
+    plan
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2357 scheduler idempotency and replay contract
+    plan route
+  requirement_refs:
+  - docs/requirements/TRADING-2356_Observe_Only_Scheduler_Kill_Switch_And_Disabled_Enforcement_Evidence_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2356_Observe_Only_Scheduler_Kill_Switch_And_Disabled_Enforcement_Evidence_Plan.md`；承接
+    TRADING-2355 scheduler kill-switch and disabled-enforcement evidence plan route。本任务只读取
+    prior validated TRADING-2347 disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349
+    manual review gate、TRADING-2350 manual-run dry-run、TRADING-2351 replay validation、TRADING-2352
+    audit package、TRADING-2353 owner review decision、TRADING-2354 gap closure plan
+    和 TRADING-2355 hardening backlog artifacts；不执行 manual run、不启用 scheduler、不创建 automated
+    cadence / cron / Windows Task / GitHub Actions schedule、不 append event、不绑定 outcome、不读取
+    fresh market data、不进入 paper-shadow / production / broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-kill-switch-plan`；生成
+      kill-switch contract、disabled enforcement matrix、no-real-scheduler creation
+      assertion plan、manual-review-required assertion plan、summary、source artifact
+      review、blocked promotion rationale、2357 scheduler idempotency route、interpretation
+      boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_KILL_SWITCH_AND_DISABLED_ENFORCEMENT_EVIDENCE_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347, TRADING-2348, TRADING-2349, TRADING-2350, TRADING-2351,
+      TRADING-2352, TRADING-2353, TRADING-2354, TRADING-2355`，source validation=`2026-06-29`
+      / `PASS_WITH_WARNINGS` / error_count=0，evidence_chain_complete=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，kill_switch_contract_ready=true，disabled_enforcement_evidence_plan_ready=true，no_real_scheduler_creation_assertions_ready=true，manual_review_required_assertions_ready=true，promotion_decision=`BLOCKED`，promotion_allowed=false，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，manual_run_executed=false，event_append_attempted=false，outcome_binding_attempted=false，paper_shadow_attempted=false，production_attempted=false，broker_action_attempted=false，readiness=`READY_FOR_2357_WITH_CAVEATS`，next
+      route=`TRADING-2357_Observe_Only_Scheduler_Idempotency_And_Replay_Contract_Plan`。验证通过
+      Ruff、compileall、focused parallel pytest 7 passed、真实 CLI run、docs freshness 544
+      docs PASS、documentation contract 1253 reports PASS、task-register consistency
+      run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T042635Z/test_runtime_summary.json`）和后续
+      diff gate。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 131
+    row_sha256: 4d7fdd58ca27cd72b9fd5ee4b771bfc1e031526ca8fd6169003676f20e2db186
+    cell_count: 8
+    all_cells:
+    - TRADING-2356_OBSERVE_ONLY_SCHEDULER_KILL_SWITCH_AND_DISABLED_ENFORCEMENT_EVIDENCE_PLAN
+    - Research trends / high-intensity risk-cap observe-only scheduler kill-switch
+      plan
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2357 scheduler idempotency and replay contract plan route
+    - 详见 `docs/requirements/TRADING-2356_Observe_Only_Scheduler_Kill_Switch_And_Disabled_Enforcement_Evidence_Plan.md`；承接
+      TRADING-2355 scheduler kill-switch and disabled-enforcement evidence plan route。本任务只读取
+      prior validated TRADING-2347 disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349
+      manual review gate、TRADING-2350 manual-run dry-run、TRADING-2351 replay validation、TRADING-2352
+      audit package、TRADING-2353 owner review decision、TRADING-2354 gap closure plan
+      和 TRADING-2355 hardening backlog artifacts；不执行 manual run、不启用 scheduler、不创建
+      automated cadence / cron / Windows Task / GitHub Actions schedule、不 append event、不绑定
+      outcome、不读取 fresh market data、不进入 paper-shadow / production / broker。
+    - 新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-kill-switch-plan`；生成
+      kill-switch contract、disabled enforcement matrix、no-real-scheduler creation
+      assertion plan、manual-review-required assertion plan、summary、source artifact
+      review、blocked promotion rationale、2357 scheduler idempotency route、interpretation
+      boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_KILL_SWITCH_AND_DISABLED_ENFORCEMENT_EVIDENCE_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347, TRADING-2348, TRADING-2349, TRADING-2350, TRADING-2351,
+      TRADING-2352, TRADING-2353, TRADING-2354, TRADING-2355`，source validation=`2026-06-29`
+      / `PASS_WITH_WARNINGS` / error_count=0，evidence_chain_complete=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，kill_switch_contract_ready=true，disabled_enforcement_evidence_plan_ready=true，no_real_scheduler_creation_assertions_ready=true，manual_review_required_assertions_ready=true，promotion_decision=`BLOCKED`，promotion_allowed=false，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，manual_run_executed=false，event_append_attempted=false，outcome_binding_attempted=false，paper_shadow_attempted=false，production_attempted=false，broker_action_attempted=false，readiness=`READY_FOR_2357_WITH_CAVEATS`，next
+      route=`TRADING-2357_Observe_Only_Scheduler_Idempotency_And_Replay_Contract_Plan`。验证通过
+      Ruff、compileall、focused parallel pytest 7 passed、真实 CLI run、docs freshness 544
+      docs PASS、documentation contract 1253 reports PASS、task-register consistency
+      run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T042635Z/test_runtime_summary.json`）和后续
+      diff gate。
+    - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 2355 hardening backlog 转成
+      kill-switch / disabled-enforcement evidence plan，并把下一步限定为 TRADING-2357 scheduler
+      idempotency / replay contract plan。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347 disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349
+      manual review gate、TRADING-2350 manual-run dry-run、TRADING-2351 replay validation、TRADING-2352
+      audit package、TRADING-2353 owner review decision、TRADING-2354 gap closure plan
+      和 TRADING-2355 hardening backlog artifacts，不读取 fresh market data、不 append event、不绑定
+      outcome、不生成 technical features、scoring、backtest 或 daily report。后续只能进入 TRADING-2357
+      scheduler idempotency / replay contract plan route，不能直接启用 scheduler。'
+    raw_line: '|TRADING-2356_OBSERVE_ONLY_SCHEDULER_KILL_SWITCH_AND_DISABLED_ENFORCEMENT_EVIDENCE_PLAN|Research
+      trends / high-intensity risk-cap observe-only scheduler kill-switch plan|P0|DONE|项目
+      owner 后续复核 TRADING-2357 scheduler idempotency and replay contract plan route|详见
+      `docs/requirements/TRADING-2356_Observe_Only_Scheduler_Kill_Switch_And_Disabled_Enforcement_Evidence_Plan.md`；承接
+      TRADING-2355 scheduler kill-switch and disabled-enforcement evidence plan route。本任务只读取
+      prior validated TRADING-2347 disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349
+      manual review gate、TRADING-2350 manual-run dry-run、TRADING-2351 replay validation、TRADING-2352
+      audit package、TRADING-2353 owner review decision、TRADING-2354 gap closure plan
+      和 TRADING-2355 hardening backlog artifacts；不执行 manual run、不启用 scheduler、不创建
+      automated cadence / cron / Windows Task / GitHub Actions schedule、不 append event、不绑定
+      outcome、不读取 fresh market data、不进入 paper-shadow / production / broker。|新增 `aits
+      research trends high-intensity-risk-cap-observe-only-scheduler-kill-switch-plan`；生成
+      kill-switch contract、disabled enforcement matrix、no-real-scheduler creation
+      assertion plan、manual-review-required assertion plan、summary、source artifact
+      review、blocked promotion rationale、2357 scheduler idempotency route、interpretation
+      boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_KILL_SWITCH_AND_DISABLED_ENFORCEMENT_EVIDENCE_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347, TRADING-2348, TRADING-2349, TRADING-2350, TRADING-2351,
+      TRADING-2352, TRADING-2353, TRADING-2354, TRADING-2355`，source validation=`2026-06-29`
+      / `PASS_WITH_WARNINGS` / error_count=0，evidence_chain_complete=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，kill_switch_contract_ready=true，disabled_enforcement_evidence_plan_ready=true，no_real_scheduler_creation_assertions_ready=true，manual_review_required_assertions_ready=true，promotion_decision=`BLOCKED`，promotion_allowed=false，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，manual_run_executed=false，event_append_attempted=false，outcome_binding_attempted=false，paper_shadow_attempted=false，production_attempted=false，broker_action_attempted=false，readiness=`READY_FOR_2357_WITH_CAVEATS`，next
+      route=`TRADING-2357_Observe_Only_Scheduler_Idempotency_And_Replay_Contract_Plan`。验证通过
+      Ruff、compileall、focused parallel pytest 7 passed、真实 CLI run、docs freshness 544
+      docs PASS、documentation contract 1253 reports PASS、task-register consistency
+      run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T042635Z/test_runtime_summary.json`）和后续
+      diff gate。|2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 2355 hardening backlog
+      转成 kill-switch / disabled-enforcement evidence plan，并把下一步限定为 TRADING-2357 scheduler
+      idempotency / replay contract plan。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347 disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349
+      manual review gate、TRADING-2350 manual-run dry-run、TRADING-2351 replay validation、TRADING-2352
+      audit package、TRADING-2353 owner review decision、TRADING-2354 gap closure plan
+      和 TRADING-2355 hardening backlog artifacts，不读取 fresh market data、不 append event、不绑定
+      outcome、不生成 technical features、scoring、backtest 或 daily report。后续只能进入 TRADING-2357
+      scheduler idempotency / replay contract plan route，不能直接启用 scheduler。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4d7fdd58ca27cd72b9fd5ee4
+  task_id: TRADING-2356_OBSERVE_ONLY_SCHEDULER_KILL_SWITCH_AND_DISABLED_ENFORCEMENT_EVIDENCE_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2357 scheduler idempotency and replay contract
+      plan route
+    notes: '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 2355 hardening backlog
+      转成 kill-switch / disabled-enforcement evidence plan，并把下一步限定为 TRADING-2357 scheduler
+      idempotency / replay contract plan。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347 disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349
+      manual review gate、TRADING-2350 manual-run dry-run、TRADING-2351 replay validation、TRADING-2352
+      audit package、TRADING-2353 owner review decision、TRADING-2354 gap closure plan
+      和 TRADING-2355 hardening backlog artifacts，不读取 fresh market data、不 append event、不绑定
+      outcome、不生成 technical features、scoring、backtest 或 daily report。后续只能进入 TRADING-2357
+      scheduler idempotency / replay contract plan route，不能直接启用 scheduler。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4d7fdd58ca27cd72b9fd5ee4b771bfc1e031526ca8fd6169003676f20e2db186
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2356_OBSERVE_ONLY_SCHEDULER_KILL_SWITCH_AND_DISABLED_ENFORCEMENT_EVIDENCE_PLAN
+  - Research trends / high-intensity risk-cap observe-only scheduler kill-switch plan
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2357 scheduler idempotency and replay contract plan route
+  - 详见 `docs/requirements/TRADING-2356_Observe_Only_Scheduler_Kill_Switch_And_Disabled_Enforcement_Evidence_Plan.md`；承接
+    TRADING-2355 scheduler kill-switch and disabled-enforcement evidence plan route。本任务只读取
+    prior validated TRADING-2347 disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349
+    manual review gate、TRADING-2350 manual-run dry-run、TRADING-2351 replay validation、TRADING-2352
+    audit package、TRADING-2353 owner review decision、TRADING-2354 gap closure plan
+    和 TRADING-2355 hardening backlog artifacts；不执行 manual run、不启用 scheduler、不创建 automated
+    cadence / cron / Windows Task / GitHub Actions schedule、不 append event、不绑定 outcome、不读取
+    fresh market data、不进入 paper-shadow / production / broker。
+  - 新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-kill-switch-plan`；生成
+    kill-switch contract、disabled enforcement matrix、no-real-scheduler creation assertion
+    plan、manual-review-required assertion plan、summary、source artifact review、blocked
+    promotion rationale、2357 scheduler idempotency route、interpretation boundary、安全边界和
+    research docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_KILL_SWITCH_AND_DISABLED_ENFORCEMENT_EVIDENCE_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+    tasks=`TRADING-2347, TRADING-2348, TRADING-2349, TRADING-2350, TRADING-2351, TRADING-2352,
+    TRADING-2353, TRADING-2354, TRADING-2355`，source validation=`2026-06-29` / `PASS_WITH_WARNINGS`
+    / error_count=0，evidence_chain_complete=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，kill_switch_contract_ready=true，disabled_enforcement_evidence_plan_ready=true，no_real_scheduler_creation_assertions_ready=true，manual_review_required_assertions_ready=true，promotion_decision=`BLOCKED`，promotion_allowed=false，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，manual_run_executed=false，event_append_attempted=false，outcome_binding_attempted=false，paper_shadow_attempted=false，production_attempted=false，broker_action_attempted=false，readiness=`READY_FOR_2357_WITH_CAVEATS`，next
+    route=`TRADING-2357_Observe_Only_Scheduler_Idempotency_And_Replay_Contract_Plan`。验证通过
+    Ruff、compileall、focused parallel pytest 7 passed、真实 CLI run、docs freshness 544
+    docs PASS、documentation contract 1253 reports PASS、task-register consistency run/validate
+    PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T042635Z/test_runtime_summary.json`）和后续
+    diff gate。
+  - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 2355 hardening backlog 转成 kill-switch
+    / disabled-enforcement evidence plan，并把下一步限定为 TRADING-2357 scheduler idempotency
+    / replay contract plan。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+    prior validated TRADING-2347 disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349
+    manual review gate、TRADING-2350 manual-run dry-run、TRADING-2351 replay validation、TRADING-2352
+    audit package、TRADING-2353 owner review decision、TRADING-2354 gap closure plan
+    和 TRADING-2355 hardening backlog artifacts，不读取 fresh market data、不 append event、不绑定
+    outcome、不生成 technical features、scoring、backtest 或 daily report。后续只能进入 TRADING-2357
+    scheduler idempotency / replay contract plan route，不能直接启用 scheduler。'
+  docs_links:
+  - docs/requirements/TRADING-2356_Observe_Only_Scheduler_Kill_Switch_And_Disabled_Enforcement_Evidence_Plan.md
+  terminal: true
+  raw_row_sha256: 4d7fdd58ca27cd72b9fd5ee4b771bfc1e031526ca8fd6169003676f20e2db186
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9fd48a0d0fb93937ee31385da828f7afad214be3ddd896597902efbc77672f67

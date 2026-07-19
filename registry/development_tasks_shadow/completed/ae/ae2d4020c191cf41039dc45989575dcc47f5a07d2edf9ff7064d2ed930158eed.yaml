@@ -1,0 +1,164 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-376_READER_BRIEF_CONSISTENCY_PACK
+  title: null
+  domain: Reader Brief / report governance
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 legacy report section migration 优先级；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-376_Reader_Brief_Consistency_Pack.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-376_Reader_Brief_Consistency_Pack.md`；为
+    research、paper-shadow、data governance 和 safety reports 定义统一 Reader Brief section
+    contract：Summary、Key Result、Blocking Issues、Warnings、Safety Boundary、Next Action；历史
+    artifact 不重写，缺口必须可见
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/reader_brief_consistency.py`、`aits reports
+      reader-brief-consistency`、`aits reports validate-reader-brief-consistency`、标准
+      section extraction/checks、Reader Brief 和 report quality gate safety/next-action
+      checks、Reader Brief consistency 摘要、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；daily Reader Brief core
+      section 缺失 fail closed，legacy report section gap visible warning，所有输出固定 `production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 222
+    row_sha256: b295f4bfc32b165d970d048246e7c05cfdb4eac9cdb6499974dcf97b8ad19621
+    cell_count: 8
+    all_cells:
+    - TRADING-376_READER_BRIEF_CONSISTENCY_PACK
+    - Reader Brief / report governance
+    - P1
+    - DONE
+    - 项目 owner 后续复核 legacy report section migration 优先级；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-376_Reader_Brief_Consistency_Pack.md`；为 research、paper-shadow、data
+      governance 和 safety reports 定义统一 Reader Brief section contract：Summary、Key Result、Blocking
+      Issues、Warnings、Safety Boundary、Next Action；历史 artifact 不重写，缺口必须可见
+    - 新增 `src/ai_trading_system/reports/reader_brief_consistency.py`、`aits reports
+      reader-brief-consistency`、`aits reports validate-reader-brief-consistency`、标准
+      section extraction/checks、Reader Brief 和 report quality gate safety/next-action
+      checks、Reader Brief consistency 摘要、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；daily Reader Brief core
+      section 缺失 fail closed，legacy report section gap visible warning，所有输出固定 `production_effect=none`
+    - '2026-06-16: DONE；真实 artifact `outputs/reports/reader_brief_consistency_pack_2026-06-16.json/md`
+      输出 `consistency_status=PASS_WITH_WARNINGS`、checked reports=366、available=345、full
+      coverage=4、missing sections=1381、unclear decisions=192、blocking=0；`outputs/reports/reader_brief_consistency_validation_2026-06-16.json/md`
+      输出 `validation_status=PASS_WITH_WARNINGS`、checks=7、warning checks=2、blocking=0；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=386 / missing=20 / stale=10 / waived=30
+      / expired_waivers=0 / unwaived=0；Reader Brief latest `2026-06-15` OK，Reader
+      Brief quality OK / checks=13 / failed=0；focused pytest `tests/test_reader_brief_consistency.py
+      tests/test_reader_brief.py tests/test_report_quality_gate.py` 17 passed，focused
+      Ruff PASS。Warnings 来自 legacy Reader Brief-facing artifacts 尚未统一 section contract；本任务不重写历史
+      artifacts、不补造 report、不刷新数据、不运行上游。Exact 2026-06-16 Reader Brief generation remains
+      limited by missing local `decision_snapshot_2026-06-16.json`; latest available
+      Reader Brief was regenerated and validated. 保持 read-only / no historical rewrite
+      / no upstream rerun / no data refresh / no score/weight/gate mutation / no official
+      target / no broker / no production mutation。'
+    raw_line: '|TRADING-376_READER_BRIEF_CONSISTENCY_PACK|Reader Brief / report governance|P1|DONE|项目
+      owner 后续复核 legacy report section migration 优先级；代码实现完成|详细拆解见 `docs/requirements/TRADING-376_Reader_Brief_Consistency_Pack.md`；为
+      research、paper-shadow、data governance 和 safety reports 定义统一 Reader Brief section
+      contract：Summary、Key Result、Blocking Issues、Warnings、Safety Boundary、Next Action；历史
+      artifact 不重写，缺口必须可见|新增 `src/ai_trading_system/reports/reader_brief_consistency.py`、`aits
+      reports reader-brief-consistency`、`aits reports validate-reader-brief-consistency`、标准
+      section extraction/checks、Reader Brief 和 report quality gate safety/next-action
+      checks、Reader Brief consistency 摘要、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；daily Reader Brief core
+      section 缺失 fail closed，legacy report section gap visible warning，所有输出固定 `production_effect=none`|2026-06-16:
+      DONE；真实 artifact `outputs/reports/reader_brief_consistency_pack_2026-06-16.json/md`
+      输出 `consistency_status=PASS_WITH_WARNINGS`、checked reports=366、available=345、full
+      coverage=4、missing sections=1381、unclear decisions=192、blocking=0；`outputs/reports/reader_brief_consistency_validation_2026-06-16.json/md`
+      输出 `validation_status=PASS_WITH_WARNINGS`、checks=7、warning checks=2、blocking=0；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=386 / missing=20 / stale=10 / waived=30
+      / expired_waivers=0 / unwaived=0；Reader Brief latest `2026-06-15` OK，Reader
+      Brief quality OK / checks=13 / failed=0；focused pytest `tests/test_reader_brief_consistency.py
+      tests/test_reader_brief.py tests/test_report_quality_gate.py` 17 passed，focused
+      Ruff PASS。Warnings 来自 legacy Reader Brief-facing artifacts 尚未统一 section contract；本任务不重写历史
+      artifacts、不补造 report、不刷新数据、不运行上游。Exact 2026-06-16 Reader Brief generation remains
+      limited by missing local `decision_snapshot_2026-06-16.json`; latest available
+      Reader Brief was regenerated and validated. 保持 read-only / no historical rewrite
+      / no upstream rerun / no data refresh / no score/weight/gate mutation / no official
+      target / no broker / no production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b295f4bfc32b165d970d0482
+  task_id: TRADING-376_READER_BRIEF_CONSISTENCY_PACK
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核 legacy report section migration 优先级；代码实现完成
+    notes: '2026-06-16: DONE；真实 artifact `outputs/reports/reader_brief_consistency_pack_2026-06-16.json/md`
+      输出 `consistency_status=PASS_WITH_WARNINGS`、checked reports=366、available=345、full
+      coverage=4、missing sections=1381、unclear decisions=192、blocking=0；`outputs/reports/reader_brief_consistency_validation_2026-06-16.json/md`
+      输出 `validation_status=PASS_WITH_WARNINGS`、checks=7、warning checks=2、blocking=0；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=386 / missing=20 / stale=10 / waived=30
+      / expired_waivers=0 / unwaived=0；Reader Brief latest `2026-06-15` OK，Reader
+      Brief quality OK / checks=13 / failed=0；focused pytest `tests/test_reader_brief_consistency.py
+      tests/test_reader_brief.py tests/test_report_quality_gate.py` 17 passed，focused
+      Ruff PASS。Warnings 来自 legacy Reader Brief-facing artifacts 尚未统一 section contract；本任务不重写历史
+      artifacts、不补造 report、不刷新数据、不运行上游。Exact 2026-06-16 Reader Brief generation remains
+      limited by missing local `decision_snapshot_2026-06-16.json`; latest available
+      Reader Brief was regenerated and validated. 保持 read-only / no historical rewrite
+      / no upstream rerun / no data refresh / no score/weight/gate mutation / no official
+      target / no broker / no production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b295f4bfc32b165d970d048246e7c05cfdb4eac9cdb6499974dcf97b8ad19621
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-376_READER_BRIEF_CONSISTENCY_PACK
+  - Reader Brief / report governance
+  - P1
+  - DONE
+  - 项目 owner 后续复核 legacy report section migration 优先级；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-376_Reader_Brief_Consistency_Pack.md`；为 research、paper-shadow、data
+    governance 和 safety reports 定义统一 Reader Brief section contract：Summary、Key Result、Blocking
+    Issues、Warnings、Safety Boundary、Next Action；历史 artifact 不重写，缺口必须可见
+  - 新增 `src/ai_trading_system/reports/reader_brief_consistency.py`、`aits reports reader-brief-consistency`、`aits
+    reports validate-reader-brief-consistency`、标准 section extraction/checks、Reader
+    Brief 和 report quality gate safety/next-action checks、Reader Brief consistency
+    摘要、report registry、artifact catalog、README、system flow、operations runbook、requirements
+    和 focused tests；daily Reader Brief core section 缺失 fail closed，legacy report section
+    gap visible warning，所有输出固定 `production_effect=none`
+  - '2026-06-16: DONE；真实 artifact `outputs/reports/reader_brief_consistency_pack_2026-06-16.json/md`
+    输出 `consistency_status=PASS_WITH_WARNINGS`、checked reports=366、available=345、full
+    coverage=4、missing sections=1381、unclear decisions=192、blocking=0；`outputs/reports/reader_brief_consistency_validation_2026-06-16.json/md`
+    输出 `validation_status=PASS_WITH_WARNINGS`、checks=7、warning checks=2、blocking=0；report
+    index `PASS_WITH_EXPLICIT_WAIVERS` / reports=386 / missing=20 / stale=10 / waived=30
+    / expired_waivers=0 / unwaived=0；Reader Brief latest `2026-06-15` OK，Reader Brief
+    quality OK / checks=13 / failed=0；focused pytest `tests/test_reader_brief_consistency.py
+    tests/test_reader_brief.py tests/test_report_quality_gate.py` 17 passed，focused
+    Ruff PASS。Warnings 来自 legacy Reader Brief-facing artifacts 尚未统一 section contract；本任务不重写历史
+    artifacts、不补造 report、不刷新数据、不运行上游。Exact 2026-06-16 Reader Brief generation remains
+    limited by missing local `decision_snapshot_2026-06-16.json`; latest available
+    Reader Brief was regenerated and validated. 保持 read-only / no historical rewrite
+    / no upstream rerun / no data refresh / no score/weight/gate mutation / no official
+    target / no broker / no production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-376_Reader_Brief_Consistency_Pack.md
+  terminal: true
+  raw_row_sha256: b295f4bfc32b165d970d048246e7c05cfdb4eac9cdb6499974dcf97b8ad19621
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 811ac87b51b86c077011761e087f2856092a8874b0f7632e1b962e01eabfd0c6

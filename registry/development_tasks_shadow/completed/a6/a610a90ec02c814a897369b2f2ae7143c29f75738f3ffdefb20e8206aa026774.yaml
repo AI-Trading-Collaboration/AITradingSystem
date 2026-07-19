@@ -1,0 +1,121 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: RISK-015
+  title: null
+  domain: 风险事件/OpenAI 预审可见时间
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/risk_event_openai_prereview_visibility_cutoff_2026-05-12.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/risk_event_openai_prereview_visibility_cutoff_2026-05-12.md`；2026-06-05
+    最新 production daily-run 已在盘后 UTC 次日生成 OpenAI prereview 并通过可见性校验
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 最新已完成美股交易日的生产 `score-daily` / `daily-run` 可以在收盘后 UTC 次日生成 OpenAI 预审记录并通过校验；历史
+      as_of 未提供生产 cutoff 时仍拒绝晚于评估日的 live OpenAI 请求；报告/文档说明 request timestamp、as_of
+      和 visibility cutoff 的关系
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 358
+    row_sha256: 582ec73da3de18e6a5a802df8b18a4669844e608582eb5065b9584d59d4f219f
+    cell_count: 8
+    all_cells:
+    - RISK-015
+    - 风险事件/OpenAI 预审可见时间
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/risk_event_openai_prereview_visibility_cutoff_2026-05-12.md`；2026-06-05
+      最新 production daily-run 已在盘后 UTC 次日生成 OpenAI prereview 并通过可见性校验
+    - 最新已完成美股交易日的生产 `score-daily` / `daily-run` 可以在收盘后 UTC 次日生成 OpenAI 预审记录并通过校验；历史
+      as_of 未提供生产 cutoff 时仍拒绝晚于评估日的 live OpenAI 请求；报告/文档说明 request timestamp、as_of
+      和 visibility cutoff 的关系
+    - '2026-05-12: 新增并进入实现，原因：最新交易日 `daily-run` 已越过 PIT、SEC 和 valuation，但 `score_daily`
+      在 `risk_event_prereview_request_in_future` 阻塞。2026-06-07: 从 IN_PROGRESS 改为 VALIDATING，原因：新增
+      `score-daily --risk-event-openai-precheck-visibility-cutoff`、daily-run latest
+      production 注入、预审报告 request/as_of/cutoff 披露和 focused tests。2026-06-07: 从 VALIDATING
+      改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      的 `score_daily` step PASS；`risk_event_prereview_openai_2026-06-05.md` 披露 request
+      timestamp 晚于 as_of 但不晚于显式 production cutoff，错误 0；LLM formal 写入 5 条并保持人工复核/position
+      gate 边界。'
+    raw_line: '|RISK-015|风险事件/OpenAI 预审可见时间|P0|DONE|系统验证|详细拆解见 `docs/requirements/risk_event_openai_prereview_visibility_cutoff_2026-05-12.md`；2026-06-05
+      最新 production daily-run 已在盘后 UTC 次日生成 OpenAI prereview 并通过可见性校验|最新已完成美股交易日的生产
+      `score-daily` / `daily-run` 可以在收盘后 UTC 次日生成 OpenAI 预审记录并通过校验；历史 as_of 未提供生产
+      cutoff 时仍拒绝晚于评估日的 live OpenAI 请求；报告/文档说明 request timestamp、as_of 和 visibility
+      cutoff 的关系|2026-05-12: 新增并进入实现，原因：最新交易日 `daily-run` 已越过 PIT、SEC 和 valuation，但
+      `score_daily` 在 `risk_event_prereview_request_in_future` 阻塞。2026-06-07: 从 IN_PROGRESS
+      改为 VALIDATING，原因：新增 `score-daily --risk-event-openai-precheck-visibility-cutoff`、daily-run
+      latest production 注入、预审报告 request/as_of/cutoff 披露和 focused tests。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      的 `score_daily` step PASS；`risk_event_prereview_openai_2026-06-05.md` 披露 request
+      timestamp 晚于 as_of 但不晚于显式 production cutoff，错误 0；LLM formal 写入 5 条并保持人工复核/position
+      gate 边界。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-582ec73da3de18e6a5a802df
+  task_id: RISK-015
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-12: 新增并进入实现，原因：最新交易日 `daily-run` 已越过 PIT、SEC 和 valuation，但 `score_daily`
+      在 `risk_event_prereview_request_in_future` 阻塞。2026-06-07: 从 IN_PROGRESS 改为 VALIDATING，原因：新增
+      `score-daily --risk-event-openai-precheck-visibility-cutoff`、daily-run latest
+      production 注入、预审报告 request/as_of/cutoff 披露和 focused tests。2026-06-07: 从 VALIDATING
+      改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      的 `score_daily` step PASS；`risk_event_prereview_openai_2026-06-05.md` 披露 request
+      timestamp 晚于 as_of 但不晚于显式 production cutoff，错误 0；LLM formal 写入 5 条并保持人工复核/position
+      gate 边界。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:582ec73da3de18e6a5a802df8b18a4669844e608582eb5065b9584d59d4f219f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - RISK-015
+  - 风险事件/OpenAI 预审可见时间
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/risk_event_openai_prereview_visibility_cutoff_2026-05-12.md`；2026-06-05
+    最新 production daily-run 已在盘后 UTC 次日生成 OpenAI prereview 并通过可见性校验
+  - 最新已完成美股交易日的生产 `score-daily` / `daily-run` 可以在收盘后 UTC 次日生成 OpenAI 预审记录并通过校验；历史
+    as_of 未提供生产 cutoff 时仍拒绝晚于评估日的 live OpenAI 请求；报告/文档说明 request timestamp、as_of 和
+    visibility cutoff 的关系
+  - '2026-05-12: 新增并进入实现，原因：最新交易日 `daily-run` 已越过 PIT、SEC 和 valuation，但 `score_daily`
+    在 `risk_event_prereview_request_in_future` 阻塞。2026-06-07: 从 IN_PROGRESS 改为 VALIDATING，原因：新增
+    `score-daily --risk-event-openai-precheck-visibility-cutoff`、daily-run latest
+    production 注入、预审报告 request/as_of/cutoff 披露和 focused tests。2026-06-07: 从 VALIDATING
+    改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+    的 `score_daily` step PASS；`risk_event_prereview_openai_2026-06-05.md` 披露 request
+    timestamp 晚于 as_of 但不晚于显式 production cutoff，错误 0；LLM formal 写入 5 条并保持人工复核/position
+    gate 边界。'
+  docs_links:
+  - docs/requirements/risk_event_openai_prereview_visibility_cutoff_2026-05-12.md
+  terminal: true
+  raw_row_sha256: 582ec73da3de18e6a5a802df8b18a4669844e608582eb5065b9584d59d4f219f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ee1e037e1af62058adccf0c521403c668d37a2c9ede51a17fd557ea0cc435ab1

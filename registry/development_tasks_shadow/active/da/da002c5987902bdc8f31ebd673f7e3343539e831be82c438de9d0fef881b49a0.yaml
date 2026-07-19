@@ -1,0 +1,181 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-089
+  title: null
+  domain: ETF portfolio research/Dynamic v0.2 Robustness and Shadow Review Package
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-089_Dynamic_v0_2_Robustness_and_Shadow_Review_Package.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-089_Dynamic_v0_2_Robustness_and_Shadow_Review_Package.md`；baseline
+    已实现 review-only v0.4 lower_turnover 复核包，明确 constraint hit worsening 和 drawdown
+    preservation failure 是 shadow blockers；真实 latest rescue / robustness artifacts
+    smoke 已生成 package，下一步由 owner 复核是否继续研究；本阶段不得生成 owner approval、shadow enrollment、production
+    baseline mutation、official target weights mutation 或 broker action
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`config/etf_portfolio/dynamic_v2_review.yaml` 存在且 safety fields mandatory；v0.4
+      evidence loader、rescue improvement attribution、constraint hit decomposition、drawdown
+      preservation failure review、regime robustness review、benchmark comparison、shadow
+      review eligibility gate、review package generator、Reader Brief section 和 `aits
+      etf dynamic-v2-review validate` 可运行；v0.4 improvements 必须被识别，但 `constraint_hit_worsened_materially`
+      和 `drawdown_preservation_negative` 必须使 status 保持 `review_candidate / not_shadow_ready`；所有输出固定
+      `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs、report
+      registry、Reader Brief 和 tests 同步；focused pytest、ruff、compileall、diff check、`aits
+      etf dynamic-v2-review validate`、真实 latest package smoke 和全量 pytest 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1473
+    row_sha256: b762e29aff3d7c80b31adffa4514f11e68d1cbe9c656364ca87ccb17aaa59458
+    cell_count: 8
+    all_cells:
+    - TRADING-089
+    - ETF portfolio research/Dynamic v0.2 Robustness and Shadow Review Package
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-089_Dynamic_v0_2_Robustness_and_Shadow_Review_Package.md`；baseline
+      已实现 review-only v0.4 lower_turnover 复核包，明确 constraint hit worsening 和 drawdown
+      preservation failure 是 shadow blockers；真实 latest rescue / robustness artifacts
+      smoke 已生成 package，下一步由 owner 复核是否继续研究；本阶段不得生成 owner approval、shadow enrollment、production
+      baseline mutation、official target weights mutation 或 broker action
+    - '`config/etf_portfolio/dynamic_v2_review.yaml` 存在且 safety fields mandatory；v0.4
+      evidence loader、rescue improvement attribution、constraint hit decomposition、drawdown
+      preservation failure review、regime robustness review、benchmark comparison、shadow
+      review eligibility gate、review package generator、Reader Brief section 和 `aits
+      etf dynamic-v2-review validate` 可运行；v0.4 improvements 必须被识别，但 `constraint_hit_worsened_materially`
+      和 `drawdown_preservation_negative` 必须使 status 保持 `review_candidate / not_shadow_ready`；所有输出固定
+      `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs、report
+      registry、Reader Brief 和 tests 同步；focused pytest、ruff、compileall、diff check、`aits
+      etf dynamic-v2-review validate`、真实 latest package smoke 和全量 pytest 通过'
+    - '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-088 显示 v0.4 lower_turnover false risk-off、turnover
+      和 dynamic vs static 指标显著改善，但 constraint hits 增加、drawdown preservation 为负，不能进入
+      shadow enrollment；需要生成 review-only robustness/shadow review package 供 owner
+      复核。2026-06-05: TRADING-089A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic v0.2
+      review policy、`aits etf dynamic-v2-review package/report/validate`、v0.4 evidence
+      loader、improvement attribution、constraint hit decomposition、drawdown preservation
+      blocker、regime robustness、benchmark comparison、eligibility gate、JSON/Markdown
+      review package、Reader Brief `Dynamic v0.2 Review` section、report registry/artifact
+      catalog/system flow/runbook/README integration 和 focused tests；验证为 dynamic related
+      tests 13 passed，`aits etf dynamic-v2-review validate` PASS，ruff、compileall、diff
+      check 通过；真实 latest package smoke 生成 `dynamic-v2-review-package_8405ad6c02dc.json/md`，`status=not_shadow_ready`、`review_status=review_candidate`、`candidate=v0_4_lower_turnover`、`blockers=CONSTRAINT_HIT_WORSENED,DRAWDOWN_PRESERVATION_FAILED,DRAWDOWN_REVIEW_REQUIRED,SHADOW_ENROLLMENT_NOT_ALLOWED`、`shadow_enrollment_allowed=false`；全量
+      `python -m pytest tests -q` 通过，结果为 2166 passed、330 warnings、耗时 634.90s；剩余条件是
+      owner 复核。'
+    raw_line: '|TRADING-089|ETF portfolio research/Dynamic v0.2 Robustness and Shadow
+      Review Package|P0|VALIDATING|项目 owner 人工复核|详细拆解见 `docs/requirements/TRADING-089_Dynamic_v0_2_Robustness_and_Shadow_Review_Package.md`；baseline
+      已实现 review-only v0.4 lower_turnover 复核包，明确 constraint hit worsening 和 drawdown
+      preservation failure 是 shadow blockers；真实 latest rescue / robustness artifacts
+      smoke 已生成 package，下一步由 owner 复核是否继续研究；本阶段不得生成 owner approval、shadow enrollment、production
+      baseline mutation、official target weights mutation 或 broker action|`config/etf_portfolio/dynamic_v2_review.yaml`
+      存在且 safety fields mandatory；v0.4 evidence loader、rescue improvement attribution、constraint
+      hit decomposition、drawdown preservation failure review、regime robustness review、benchmark
+      comparison、shadow review eligibility gate、review package generator、Reader Brief
+      section 和 `aits etf dynamic-v2-review validate` 可运行；v0.4 improvements 必须被识别，但
+      `constraint_hit_worsened_materially` 和 `drawdown_preservation_negative` 必须使
+      status 保持 `review_candidate / not_shadow_ready`；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs、report
+      registry、Reader Brief 和 tests 同步；focused pytest、ruff、compileall、diff check、`aits
+      etf dynamic-v2-review validate`、真实 latest package smoke 和全量 pytest 通过|2026-06-05:
+      新增并进入 IN_PROGRESS，原因：TRADING-088 显示 v0.4 lower_turnover false risk-off、turnover
+      和 dynamic vs static 指标显著改善，但 constraint hits 增加、drawdown preservation 为负，不能进入
+      shadow enrollment；需要生成 review-only robustness/shadow review package 供 owner
+      复核。2026-06-05: TRADING-089A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic v0.2
+      review policy、`aits etf dynamic-v2-review package/report/validate`、v0.4 evidence
+      loader、improvement attribution、constraint hit decomposition、drawdown preservation
+      blocker、regime robustness、benchmark comparison、eligibility gate、JSON/Markdown
+      review package、Reader Brief `Dynamic v0.2 Review` section、report registry/artifact
+      catalog/system flow/runbook/README integration 和 focused tests；验证为 dynamic related
+      tests 13 passed，`aits etf dynamic-v2-review validate` PASS，ruff、compileall、diff
+      check 通过；真实 latest package smoke 生成 `dynamic-v2-review-package_8405ad6c02dc.json/md`，`status=not_shadow_ready`、`review_status=review_candidate`、`candidate=v0_4_lower_turnover`、`blockers=CONSTRAINT_HIT_WORSENED,DRAWDOWN_PRESERVATION_FAILED,DRAWDOWN_REVIEW_REQUIRED,SHADOW_ENROLLMENT_NOT_ALLOWED`、`shadow_enrollment_allowed=false`；全量
+      `python -m pytest tests -q` 通过，结果为 2166 passed、330 warnings、耗时 634.90s；剩余条件是
+      owner 复核。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b762e29aff3d7c80b31adffa
+  task_id: TRADING-089
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核
+    notes: '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-088 显示 v0.4 lower_turnover false
+      risk-off、turnover 和 dynamic vs static 指标显著改善，但 constraint hits 增加、drawdown preservation
+      为负，不能进入 shadow enrollment；需要生成 review-only robustness/shadow review package
+      供 owner 复核。2026-06-05: TRADING-089A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic
+      v0.2 review policy、`aits etf dynamic-v2-review package/report/validate`、v0.4
+      evidence loader、improvement attribution、constraint hit decomposition、drawdown
+      preservation blocker、regime robustness、benchmark comparison、eligibility gate、JSON/Markdown
+      review package、Reader Brief `Dynamic v0.2 Review` section、report registry/artifact
+      catalog/system flow/runbook/README integration 和 focused tests；验证为 dynamic related
+      tests 13 passed，`aits etf dynamic-v2-review validate` PASS，ruff、compileall、diff
+      check 通过；真实 latest package smoke 生成 `dynamic-v2-review-package_8405ad6c02dc.json/md`，`status=not_shadow_ready`、`review_status=review_candidate`、`candidate=v0_4_lower_turnover`、`blockers=CONSTRAINT_HIT_WORSENED,DRAWDOWN_PRESERVATION_FAILED,DRAWDOWN_REVIEW_REQUIRED,SHADOW_ENROLLMENT_NOT_ALLOWED`、`shadow_enrollment_allowed=false`；全量
+      `python -m pytest tests -q` 通过，结果为 2166 passed、330 warnings、耗时 634.90s；剩余条件是
+      owner 复核。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b762e29aff3d7c80b31adffa4514f11e68d1cbe9c656364ca87ccb17aaa59458
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-089
+  - ETF portfolio research/Dynamic v0.2 Robustness and Shadow Review Package
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-089_Dynamic_v0_2_Robustness_and_Shadow_Review_Package.md`；baseline
+    已实现 review-only v0.4 lower_turnover 复核包，明确 constraint hit worsening 和 drawdown
+    preservation failure 是 shadow blockers；真实 latest rescue / robustness artifacts
+    smoke 已生成 package，下一步由 owner 复核是否继续研究；本阶段不得生成 owner approval、shadow enrollment、production
+    baseline mutation、official target weights mutation 或 broker action
+  - '`config/etf_portfolio/dynamic_v2_review.yaml` 存在且 safety fields mandatory；v0.4
+    evidence loader、rescue improvement attribution、constraint hit decomposition、drawdown
+    preservation failure review、regime robustness review、benchmark comparison、shadow
+    review eligibility gate、review package generator、Reader Brief section 和 `aits
+    etf dynamic-v2-review validate` 可运行；v0.4 improvements 必须被识别，但 `constraint_hit_worsened_materially`
+    和 `drawdown_preservation_negative` 必须使 status 保持 `review_candidate / not_shadow_ready`；所有输出固定
+    `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+    flow、artifact catalog、operations runbook、README、task register、requirement docs、report
+    registry、Reader Brief 和 tests 同步；focused pytest、ruff、compileall、diff check、`aits
+    etf dynamic-v2-review validate`、真实 latest package smoke 和全量 pytest 通过'
+  - '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-088 显示 v0.4 lower_turnover false risk-off、turnover
+    和 dynamic vs static 指标显著改善，但 constraint hits 增加、drawdown preservation 为负，不能进入
+    shadow enrollment；需要生成 review-only robustness/shadow review package 供 owner 复核。2026-06-05:
+    TRADING-089A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic v0.2 review policy、`aits
+    etf dynamic-v2-review package/report/validate`、v0.4 evidence loader、improvement
+    attribution、constraint hit decomposition、drawdown preservation blocker、regime
+    robustness、benchmark comparison、eligibility gate、JSON/Markdown review package、Reader
+    Brief `Dynamic v0.2 Review` section、report registry/artifact catalog/system flow/runbook/README
+    integration 和 focused tests；验证为 dynamic related tests 13 passed，`aits etf dynamic-v2-review
+    validate` PASS，ruff、compileall、diff check 通过；真实 latest package smoke 生成 `dynamic-v2-review-package_8405ad6c02dc.json/md`，`status=not_shadow_ready`、`review_status=review_candidate`、`candidate=v0_4_lower_turnover`、`blockers=CONSTRAINT_HIT_WORSENED,DRAWDOWN_PRESERVATION_FAILED,DRAWDOWN_REVIEW_REQUIRED,SHADOW_ENROLLMENT_NOT_ALLOWED`、`shadow_enrollment_allowed=false`；全量
+    `python -m pytest tests -q` 通过，结果为 2166 passed、330 warnings、耗时 634.90s；剩余条件是 owner
+    复核。'
+  docs_links:
+  - docs/requirements/TRADING-089_Dynamic_v0_2_Robustness_and_Shadow_Review_Package.md
+  terminal: false
+  raw_row_sha256: b762e29aff3d7c80b31adffa4514f11e68d1cbe9c656364ca87ccb17aaa59458
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5af0abf0a62ef820663477870f0e37e03f45d6fd06358d80a080a7cbf5882173

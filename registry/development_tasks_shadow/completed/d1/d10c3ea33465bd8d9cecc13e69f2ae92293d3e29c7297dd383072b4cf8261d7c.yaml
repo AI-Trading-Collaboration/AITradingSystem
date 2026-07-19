@@ -1,0 +1,181 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-015
+  title: null
+  domain: 交易执行/Weight Adjustment Candidate Generator
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/weight_adjustment_candidate_generator_2026-05-18.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/weight_adjustment_candidate_generator_2026-05-18.md`；observe-only
+    候选生成层、policy、standalone script、dashboard 只读卡片、系统流图、产物目录、测试和当前复验证据已完成；后续真实 daily/paper/shadow
+    输入观察由 `TRADING-016`、`TRADING-017`、`TRADING-018`、`TRADING-018A`、`TRADING-018B`
+    链路继续承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `outputs/reports/weight_adjustment_candidates_YYYY-MM-DD.json/md`；输入只读读取
+      daily decision summary、paper signal quality、shadow parameter impact、可选 continuous
+      replay、parameter governance、current production profile 和 existing shadow profile；每个
+      candidate 包含 source/target profile、parameter_changes、reason_codes、expected_effect、risk_notes、blocked_by、required_validations
+      和 `production_effect=none`；第一版只允许小幅权重调整、单日最大变化受 policy 限制、总权重不失衡、不删除 core risk
+      gate、不绕过 data quality gate、不根据单日 PnL 调高权重；candidate gate 覆盖 insufficient sample、low
+      data quality、synthetic snapshot ratio too high、continuous replay missing、shadow
+      impact insufficient、paper signal quality unreliable 和 manual approval required；daily
+      dashboard 只读展示 candidate_count、top_candidate_id、gate_status、main blocked_by、report
+      link 和 `production_effect=none`，不触发候选生成、调参应用或交易；数据质量 gate、目标 pytest、dashboard
+      pytest、docs freshness、scoped Ruff/Black 和 GitHub Actions CI 通过；实现期验收记录保留 `tests/trading_engine`、全量
+      pytest、ruff 和 black check 结果
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 291
+    row_sha256: 84e5e573e772df6701ad30664c842228df966352c838d41e5f8cec06370f01ed
+    cell_count: 8
+    all_cells:
+    - TRADING-015
+    - 交易执行/Weight Adjustment Candidate Generator
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/weight_adjustment_candidate_generator_2026-05-18.md`；observe-only
+      候选生成层、policy、standalone script、dashboard 只读卡片、系统流图、产物目录、测试和当前复验证据已完成；后续真实 daily/paper/shadow
+      输入观察由 `TRADING-016`、`TRADING-017`、`TRADING-018`、`TRADING-018A`、`TRADING-018B`
+      链路继续承接
+    - 新增 `outputs/reports/weight_adjustment_candidates_YYYY-MM-DD.json/md`；输入只读读取
+      daily decision summary、paper signal quality、shadow parameter impact、可选 continuous
+      replay、parameter governance、current production profile 和 existing shadow profile；每个
+      candidate 包含 source/target profile、parameter_changes、reason_codes、expected_effect、risk_notes、blocked_by、required_validations
+      和 `production_effect=none`；第一版只允许小幅权重调整、单日最大变化受 policy 限制、总权重不失衡、不删除 core risk
+      gate、不绕过 data quality gate、不根据单日 PnL 调高权重；candidate gate 覆盖 insufficient sample、low
+      data quality、synthetic snapshot ratio too high、continuous replay missing、shadow
+      impact insufficient、paper signal quality unreliable 和 manual approval required；daily
+      dashboard 只读展示 candidate_count、top_candidate_id、gate_status、main blocked_by、report
+      link 和 `production_effect=none`，不触发候选生成、调参应用或交易；数据质量 gate、目标 pytest、dashboard
+      pytest、docs freshness、scoped Ruff/Black 和 GitHub Actions CI 通过；实现期验收记录保留 `tests/trading_engine`、全量
+      pytest、ruff 和 black check 结果
+    - '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求新增每日权重调节候选生成层，当前目标不是自动修改 production
+      权重、启动定时任务、改变 dashboard 主结论或触发交易。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      `config/weight_adjustment_candidate_policy.yaml`、`scripts/run_weight_adjustment_candidates.py`、`weight_adjustment_candidates_YYYY-MM-DD.json/md`
+      生成器、保守 candidate gate、单日权重变化上限、dashboard Weight Adjustment Candidate 只读卡片、系统流图/产物目录和测试；验证通过目标
+      pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff 和 black check。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：本轮 `aits validate-data` 为 `PASS_WITH_WARNINGS` / 错误数
+      0；默认缺输入 smoke 输出 `LIMITED`、candidate_count 1、top candidate `weight_adjustment_candidate:2026-05-18:limited_input`、`main_blocked_by=missing_daily_decision_summary`、`production_effect=none`；字段级复核确认
+      `market_regime=ai_after_chatgpt`、candidate blocked、candidate `production_effect=none`、缺
+      daily / paper quality / shadow impact / continuous replay / manual approval
+      均 blocked，且 safety boundary 不写 production profile、不跑 replay、不调用 real broker、不触发交易；目标
+      + dashboard pytest 29 passed，scoped safety scan 无敏感输出，归档前代码基线 GitHub Actions
+      run `27177416285` success。'
+    raw_line: '|TRADING-015|交易执行/Weight Adjustment Candidate Generator|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/weight_adjustment_candidate_generator_2026-05-18.md`；observe-only
+      候选生成层、policy、standalone script、dashboard 只读卡片、系统流图、产物目录、测试和当前复验证据已完成；后续真实 daily/paper/shadow
+      输入观察由 `TRADING-016`、`TRADING-017`、`TRADING-018`、`TRADING-018A`、`TRADING-018B`
+      链路继续承接|新增 `outputs/reports/weight_adjustment_candidates_YYYY-MM-DD.json/md`；输入只读读取
+      daily decision summary、paper signal quality、shadow parameter impact、可选 continuous
+      replay、parameter governance、current production profile 和 existing shadow profile；每个
+      candidate 包含 source/target profile、parameter_changes、reason_codes、expected_effect、risk_notes、blocked_by、required_validations
+      和 `production_effect=none`；第一版只允许小幅权重调整、单日最大变化受 policy 限制、总权重不失衡、不删除 core risk
+      gate、不绕过 data quality gate、不根据单日 PnL 调高权重；candidate gate 覆盖 insufficient sample、low
+      data quality、synthetic snapshot ratio too high、continuous replay missing、shadow
+      impact insufficient、paper signal quality unreliable 和 manual approval required；daily
+      dashboard 只读展示 candidate_count、top_candidate_id、gate_status、main blocked_by、report
+      link 和 `production_effect=none`，不触发候选生成、调参应用或交易；数据质量 gate、目标 pytest、dashboard
+      pytest、docs freshness、scoped Ruff/Black 和 GitHub Actions CI 通过；实现期验收记录保留 `tests/trading_engine`、全量
+      pytest、ruff 和 black check 结果|2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求新增每日权重调节候选生成层，当前目标不是自动修改
+      production 权重、启动定时任务、改变 dashboard 主结论或触发交易。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      `config/weight_adjustment_candidate_policy.yaml`、`scripts/run_weight_adjustment_candidates.py`、`weight_adjustment_candidates_YYYY-MM-DD.json/md`
+      生成器、保守 candidate gate、单日权重变化上限、dashboard Weight Adjustment Candidate 只读卡片、系统流图/产物目录和测试；验证通过目标
+      pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff 和 black check。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：本轮 `aits validate-data` 为 `PASS_WITH_WARNINGS` / 错误数
+      0；默认缺输入 smoke 输出 `LIMITED`、candidate_count 1、top candidate `weight_adjustment_candidate:2026-05-18:limited_input`、`main_blocked_by=missing_daily_decision_summary`、`production_effect=none`；字段级复核确认
+      `market_regime=ai_after_chatgpt`、candidate blocked、candidate `production_effect=none`、缺
+      daily / paper quality / shadow impact / continuous replay / manual approval
+      均 blocked，且 safety boundary 不写 production profile、不跑 replay、不调用 real broker、不触发交易；目标
+      + dashboard pytest 29 passed，scoped safety scan 无敏感输出，归档前代码基线 GitHub Actions
+      run `27177416285` success。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-84e5e573e772df6701ad3066
+  task_id: TRADING-015
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求新增每日权重调节候选生成层，当前目标不是自动修改 production
+      权重、启动定时任务、改变 dashboard 主结论或触发交易。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      `config/weight_adjustment_candidate_policy.yaml`、`scripts/run_weight_adjustment_candidates.py`、`weight_adjustment_candidates_YYYY-MM-DD.json/md`
+      生成器、保守 candidate gate、单日权重变化上限、dashboard Weight Adjustment Candidate 只读卡片、系统流图/产物目录和测试；验证通过目标
+      pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff 和 black check。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：本轮 `aits validate-data` 为 `PASS_WITH_WARNINGS` / 错误数
+      0；默认缺输入 smoke 输出 `LIMITED`、candidate_count 1、top candidate `weight_adjustment_candidate:2026-05-18:limited_input`、`main_blocked_by=missing_daily_decision_summary`、`production_effect=none`；字段级复核确认
+      `market_regime=ai_after_chatgpt`、candidate blocked、candidate `production_effect=none`、缺
+      daily / paper quality / shadow impact / continuous replay / manual approval
+      均 blocked，且 safety boundary 不写 production profile、不跑 replay、不调用 real broker、不触发交易；目标
+      + dashboard pytest 29 passed，scoped safety scan 无敏感输出，归档前代码基线 GitHub Actions
+      run `27177416285` success。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:84e5e573e772df6701ad30664c842228df966352c838d41e5f8cec06370f01ed
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-015
+  - 交易执行/Weight Adjustment Candidate Generator
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/weight_adjustment_candidate_generator_2026-05-18.md`；observe-only
+    候选生成层、policy、standalone script、dashboard 只读卡片、系统流图、产物目录、测试和当前复验证据已完成；后续真实 daily/paper/shadow
+    输入观察由 `TRADING-016`、`TRADING-017`、`TRADING-018`、`TRADING-018A`、`TRADING-018B`
+    链路继续承接
+  - 新增 `outputs/reports/weight_adjustment_candidates_YYYY-MM-DD.json/md`；输入只读读取 daily
+    decision summary、paper signal quality、shadow parameter impact、可选 continuous replay、parameter
+    governance、current production profile 和 existing shadow profile；每个 candidate 包含
+    source/target profile、parameter_changes、reason_codes、expected_effect、risk_notes、blocked_by、required_validations
+    和 `production_effect=none`；第一版只允许小幅权重调整、单日最大变化受 policy 限制、总权重不失衡、不删除 core risk
+    gate、不绕过 data quality gate、不根据单日 PnL 调高权重；candidate gate 覆盖 insufficient sample、low
+    data quality、synthetic snapshot ratio too high、continuous replay missing、shadow
+    impact insufficient、paper signal quality unreliable 和 manual approval required；daily
+    dashboard 只读展示 candidate_count、top_candidate_id、gate_status、main blocked_by、report
+    link 和 `production_effect=none`，不触发候选生成、调参应用或交易；数据质量 gate、目标 pytest、dashboard
+    pytest、docs freshness、scoped Ruff/Black 和 GitHub Actions CI 通过；实现期验收记录保留 `tests/trading_engine`、全量
+    pytest、ruff 和 black check 结果
+  - '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求新增每日权重调节候选生成层，当前目标不是自动修改 production
+    权重、启动定时任务、改变 dashboard 主结论或触发交易。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+    `config/weight_adjustment_candidate_policy.yaml`、`scripts/run_weight_adjustment_candidates.py`、`weight_adjustment_candidates_YYYY-MM-DD.json/md`
+    生成器、保守 candidate gate、单日权重变化上限、dashboard Weight Adjustment Candidate 只读卡片、系统流图/产物目录和测试；验证通过目标
+    pytest、`tests/trading_engine`、dashboard 测试、全量 pytest、ruff 和 black check。2026-06-09:
+    从 VALIDATING 改为 DONE，原因：本轮 `aits validate-data` 为 `PASS_WITH_WARNINGS` / 错误数 0；默认缺输入
+    smoke 输出 `LIMITED`、candidate_count 1、top candidate `weight_adjustment_candidate:2026-05-18:limited_input`、`main_blocked_by=missing_daily_decision_summary`、`production_effect=none`；字段级复核确认
+    `market_regime=ai_after_chatgpt`、candidate blocked、candidate `production_effect=none`、缺
+    daily / paper quality / shadow impact / continuous replay / manual approval 均
+    blocked，且 safety boundary 不写 production profile、不跑 replay、不调用 real broker、不触发交易；目标
+    + dashboard pytest 29 passed，scoped safety scan 无敏感输出，归档前代码基线 GitHub Actions run
+    `27177416285` success。'
+  docs_links:
+  - docs/requirements/weight_adjustment_candidate_generator_2026-05-18.md
+  terminal: true
+  raw_row_sha256: 84e5e573e772df6701ad30664c842228df966352c838d41e5f8cec06370f01ed
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 19418c76c058f637253a6f2745efcdeff3d950c995912c072430a7574ff79f5a

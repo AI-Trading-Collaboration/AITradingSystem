@@ -287,6 +287,11 @@ test_rules:
     covered_module_prefixes: [src/ai_trading_system/]
 
 change_rules:
+  - rule_id: development_task_registry_shadow
+    path_prefix: registry/development_tasks_shadow/
+    owner_profile: architecture
+    test_globs: [tests/test_arch_005*.py, tests/test_task_register_consistency.py]
+    validation_tiers: [architecture-fitness, contract-validation, reproducibility]
   - rule_id: architecture_config
     path_prefix: config/architecture/
     owner_profile: architecture
@@ -325,6 +330,7 @@ shared_integration_paths:
   - docs/artifact_catalog.md
   - docs/system_flow.md
   - docs/task_register.md
+  - docs/task_register_completed.md
   - config/architecture/arch_004_refactor_policy.yaml
   - inputs/architecture/arch_004_compatibility_baseline.yaml
 

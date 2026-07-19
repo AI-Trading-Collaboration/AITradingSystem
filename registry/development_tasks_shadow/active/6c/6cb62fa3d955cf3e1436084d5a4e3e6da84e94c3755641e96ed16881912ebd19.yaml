@@ -1,0 +1,114 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-003
+  title: null
+  domain: 运行架构/云端持续运行
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/cloud_operations_2026-05-06.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 本地基础闭环已完成 `aits ops daily-plan` 与 `aits
+    ops daily-run`；详细拆解见 `docs/requirements/cloud_operations_2026-05-06.md`。后续云 VM、通知、secret
+    管理和备份策略需 owner 决策时新建或重开任务
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 每日运行入口必须明确下载、PIT 快照、数据质量门禁、日报、pipeline health、secret hygiene 的顺序和阻断关系；缺少关键凭据或输入时不得静默跳过；云端部署文档必须覆盖
+      systemd/cron、持久化目录、日志、告警、备份和恢复；运行报告必须显示数据质量状态和 output artifact 路径
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1084
+    row_sha256: 20b8a2627c3c4704326415a2c5de5f7866ad3faa4b19b9d3039bd9fb97b8501b
+    cell_count: 8
+    all_cells:
+    - OPS-003
+    - 运行架构/云端持续运行
+    - P1
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 本地基础闭环已完成 `aits ops daily-plan` 与 `aits ops daily-run`；详细拆解见 `docs/requirements/cloud_operations_2026-05-06.md`。后续云
+      VM、通知、secret 管理和备份策略需 owner 决策时新建或重开任务
+    - 每日运行入口必须明确下载、PIT 快照、数据质量门禁、日报、pipeline health、secret hygiene 的顺序和阻断关系；缺少关键凭据或输入时不得静默跳过；云端部署文档必须覆盖
+      systemd/cron、持久化目录、日志、告警、备份和恢复；运行报告必须显示数据质量状态和 output artifact 路径
+    - '2026-05-06: 新增任务，原因：当前持续运行依赖开发机开机；迁移到云 VM 可行但会影响运行链路、质量门禁和 PIT 样本连续性，必须先拆解和登记。2026-05-06:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增每日运行计划命令、报告、系统流图、README 和测试；完整 DONE 仍需 run
+      log、真实调度执行器、云 VM runbook、备份恢复和通知策略。2026-05-08: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：每日自动化真实运行暴露
+      `daily-plan` 只生成计划、不执行前置依赖和日报评分，owner 同意以能让每日任务正常跑完为目标补齐执行入口。2026-05-08: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：新增 `aits ops daily-run`、脱敏执行报告和关键 artifact 状态检查；自动化改为调用
+      daily-run；真实 2026-05-08 每日链路 9/9 步通过，验证 `ruff check src tests` 与 `pytest -q`
+      412 passed。'
+    raw_line: '|OPS-003|运行架构/云端持续运行|P1|BASELINE_DONE|系统实现 + 项目 owner|本地基础闭环已完成 `aits
+      ops daily-plan` 与 `aits ops daily-run`；详细拆解见 `docs/requirements/cloud_operations_2026-05-06.md`。后续云
+      VM、通知、secret 管理和备份策略需 owner 决策时新建或重开任务|每日运行入口必须明确下载、PIT 快照、数据质量门禁、日报、pipeline
+      health、secret hygiene 的顺序和阻断关系；缺少关键凭据或输入时不得静默跳过；云端部署文档必须覆盖 systemd/cron、持久化目录、日志、告警、备份和恢复；运行报告必须显示数据质量状态和
+      output artifact 路径|2026-05-06: 新增任务，原因：当前持续运行依赖开发机开机；迁移到云 VM 可行但会影响运行链路、质量门禁和
+      PIT 样本连续性，必须先拆解和登记。2026-05-06: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增每日运行计划命令、报告、系统流图、README
+      和测试；完整 DONE 仍需 run log、真实调度执行器、云 VM runbook、备份恢复和通知策略。2026-05-08: 从 BASELINE_DONE
+      改为 IN_PROGRESS，原因：每日自动化真实运行暴露 `daily-plan` 只生成计划、不执行前置依赖和日报评分，owner 同意以能让每日任务正常跑完为目标补齐执行入口。2026-05-08:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits ops daily-run`、脱敏执行报告和关键 artifact
+      状态检查；自动化改为调用 daily-run；真实 2026-05-08 每日链路 9/9 步通过，验证 `ruff check src tests`
+      与 `pytest -q` 412 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-20b8a2627c3c4704326415a2
+  task_id: OPS-003
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner
+    notes: '2026-05-06: 新增任务，原因：当前持续运行依赖开发机开机；迁移到云 VM 可行但会影响运行链路、质量门禁和 PIT 样本连续性，必须先拆解和登记。2026-05-06:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增每日运行计划命令、报告、系统流图、README 和测试；完整 DONE 仍需 run
+      log、真实调度执行器、云 VM runbook、备份恢复和通知策略。2026-05-08: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：每日自动化真实运行暴露
+      `daily-plan` 只生成计划、不执行前置依赖和日报评分，owner 同意以能让每日任务正常跑完为目标补齐执行入口。2026-05-08: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：新增 `aits ops daily-run`、脱敏执行报告和关键 artifact 状态检查；自动化改为调用
+      daily-run；真实 2026-05-08 每日链路 9/9 步通过，验证 `ruff check src tests` 与 `pytest -q`
+      412 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:20b8a2627c3c4704326415a2c5de5f7866ad3faa4b19b9d3039bd9fb97b8501b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-003
+  - 运行架构/云端持续运行
+  - P1
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 本地基础闭环已完成 `aits ops daily-plan` 与 `aits ops daily-run`；详细拆解见 `docs/requirements/cloud_operations_2026-05-06.md`。后续云
+    VM、通知、secret 管理和备份策略需 owner 决策时新建或重开任务
+  - 每日运行入口必须明确下载、PIT 快照、数据质量门禁、日报、pipeline health、secret hygiene 的顺序和阻断关系；缺少关键凭据或输入时不得静默跳过；云端部署文档必须覆盖
+    systemd/cron、持久化目录、日志、告警、备份和恢复；运行报告必须显示数据质量状态和 output artifact 路径
+  - '2026-05-06: 新增任务，原因：当前持续运行依赖开发机开机；迁移到云 VM 可行但会影响运行链路、质量门禁和 PIT 样本连续性，必须先拆解和登记。2026-05-06:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增每日运行计划命令、报告、系统流图、README 和测试；完整 DONE 仍需 run
+    log、真实调度执行器、云 VM runbook、备份恢复和通知策略。2026-05-08: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：每日自动化真实运行暴露
+    `daily-plan` 只生成计划、不执行前置依赖和日报评分，owner 同意以能让每日任务正常跑完为目标补齐执行入口。2026-05-08: 从 IN_PROGRESS
+    改为 BASELINE_DONE，原因：新增 `aits ops daily-run`、脱敏执行报告和关键 artifact 状态检查；自动化改为调用 daily-run；真实
+    2026-05-08 每日链路 9/9 步通过，验证 `ruff check src tests` 与 `pytest -q` 412 passed。'
+  docs_links:
+  - docs/requirements/cloud_operations_2026-05-06.md
+  terminal: false
+  raw_row_sha256: 20b8a2627c3c4704326415a2c5de5f7866ad3faa4b19b9d3039bd9fb97b8501b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 93ff4db33d934ac9cee4a8f88d75a7e00c9434829810a13b455f434a71058b28

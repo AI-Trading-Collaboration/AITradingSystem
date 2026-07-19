@@ -1,0 +1,185 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-007
+  title: null
+  domain: 运行架构/历史交易日归档回放
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/historical_day_replay_infrastructure_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细设计见 `docs/requirements/historical_day_replay_infrastructure_2026-05-10.md`；单日
+    cache-only replay、批量 `replay-window`、production diff、production `daily-run` 脱敏
+    metadata sidecar、OpenAI 历史缓存策略、pre-run input checksum 和 production visibility
+    cutoff 归档均已完成
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 必须提供 cache-only 历史交易日回放入口，冻结 as-of 可见输入窗口，隔离 replay 输出，不改写生产 artifacts，不调用
+      live provider；PIT/valuation/SEC/market/macro/risk/rule card 均需按 as-of 门禁 fail
+      closed；输出 replay bundle、input freeze manifest、结构化脱敏 run log 和可选 production diff；5/8
+      回放应能自动排除 5/9/5/10 valuation 与未来 PIT manifest 行并通过 `score_daily`、`ops health`、secret
+      scan；批量回放必须按交易日枚举并生成结构化窗口报告；production daily-run 必须归档 run id、git/config/rule
+      hash、命令清单、env presence、pre-run input checksum、produced artifact checksum 和 visibility
+      cutoff；OpenAI replay 不得调用 live API，只能 disabled 或 cache-only
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 455
+    row_sha256: 9261313057be51042156ecfd14803fd52e12d87ff341c270f6bdfe1a166148f6
+    cell_count: 9
+    all_cells:
+    - OPS-007
+    - 运行架构/历史交易日归档回放
+    - P0
+    - DONE
+    - 系统实现
+    - 详细设计见 `docs/requirements/historical_day_replay_infrastructure_2026-05-10.md`；单日
+      cache-only replay、批量 `replay-window`、production diff、production `daily-run`
+      脱敏 metadata sidecar、OpenAI 历史缓存策略、pre-run input checksum 和 production visibility
+      cutoff 归档均已完成
+    - 必须提供 cache-only 历史交易日回放入口，冻结 as-of 可见输入窗口，隔离 replay 输出，不改写生产 artifacts，不调用 live
+      provider；PIT/valuation/SEC/market/macro/risk/rule card 均需按 as-of 门禁 fail closed；输出
+      replay bundle、input freeze manifest、结构化脱敏 run log 和可选 production diff；5/8 回放应能自动排除
+      5/9/5/10 valuation 与未来 PIT manifest 行并通过 `score_daily`、`ops health`、secret scan；批量回放必须按交易日枚举并生成结构化窗口报告；production
+      daily-run 必须归档 run id、git/config/rule hash、命令清单、env presence、pre-run input checksum、produced
+      artifact checksum 和 visibility cutoff；OpenAI replay 不得调用 live API，只能 disabled
+      或 cache-only
+    - '2026-05-10: 新增 PROPOSED，原因：owner 确认历史交易日分析产出回放会成为模型调优重点基础设施；当前只能通过手工 backup/filter/restore
+      做归档回放，无法支撑高频、安全、可审计 replay。2026-05-10: 从 PROPOSED 改为 IN_PROGRESS，原因：owner 确认按设计实现；第一阶段聚焦单日
+      cache-only replay MVP，不覆盖批量回放和 production replay 元数据强化。2026-05-10: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：新增 `aits ops replay-day`、input freeze manifest、隔离 replay
+      bundle、PIT/valuation 可见窗口冻结、replay-scoped `score-daily`/`ops health`/secret
+      scan；真实 2026-05-08 cache-only replay PASS，验证 `ruff check src tests` 通过、`pytest
+      -q` 426 passed。2026-05-10: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：owner 要求后续任务依次开发，先推进阶段
+      5 的批量窗口回放和 production diff，仍不进入 production daily-run 元数据强化阶段。2026-05-10: 阶段
+      5 完成并继续阶段 6，原因：`replay-window` 真实 inventory-only 验证 2026-05-07 到 2026-05-10
+      通过且跳过周末，`replay-day --compare-to-production` 真实 2026-05-08 完整回放通过并生成 diff；下一步补
+      production `daily-run` metadata sidecar。2026-05-10: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      `daily_ops_run_metadata_YYYY-MM-DD.json`，记录 run id、git/config/rule hash、命令清单、env
+      presence、step result 和 produced artifact checksum；阶段 5/6 验证通过 `ruff check src
+      tests`、`pytest -q` 430 passed、真实 5/8 replay diff PASS 和 5/7-5/10 window inventory
+      PASS。2026-05-10: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：owner 要求完成剩余重点任务并提交，范围收敛为
+      OpenAI 历史缓存策略、pre-run input checksum 和 production visibility cutoff 归档。2026-05-10:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `--openai-replay-policy disabled'
+    - cache-only`、production metadata cutoff 推导、pre-run input artifact checksum；真实
+      5/8 OpenAI cache-only inventory replay PASS，验证 `ruff check src tests`、`pytest
+      -q` 431 passed 和 CLI help 均通过。
+    raw_line: '|OPS-007|运行架构/历史交易日归档回放|P0|DONE|系统实现|详细设计见 `docs/requirements/historical_day_replay_infrastructure_2026-05-10.md`；单日
+      cache-only replay、批量 `replay-window`、production diff、production `daily-run`
+      脱敏 metadata sidecar、OpenAI 历史缓存策略、pre-run input checksum 和 production visibility
+      cutoff 归档均已完成|必须提供 cache-only 历史交易日回放入口，冻结 as-of 可见输入窗口，隔离 replay 输出，不改写生产 artifacts，不调用
+      live provider；PIT/valuation/SEC/market/macro/risk/rule card 均需按 as-of 门禁 fail
+      closed；输出 replay bundle、input freeze manifest、结构化脱敏 run log 和可选 production diff；5/8
+      回放应能自动排除 5/9/5/10 valuation 与未来 PIT manifest 行并通过 `score_daily`、`ops health`、secret
+      scan；批量回放必须按交易日枚举并生成结构化窗口报告；production daily-run 必须归档 run id、git/config/rule
+      hash、命令清单、env presence、pre-run input checksum、produced artifact checksum 和 visibility
+      cutoff；OpenAI replay 不得调用 live API，只能 disabled 或 cache-only|2026-05-10: 新增 PROPOSED，原因：owner
+      确认历史交易日分析产出回放会成为模型调优重点基础设施；当前只能通过手工 backup/filter/restore 做归档回放，无法支撑高频、安全、可审计
+      replay。2026-05-10: 从 PROPOSED 改为 IN_PROGRESS，原因：owner 确认按设计实现；第一阶段聚焦单日 cache-only
+      replay MVP，不覆盖批量回放和 production replay 元数据强化。2026-05-10: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      `aits ops replay-day`、input freeze manifest、隔离 replay bundle、PIT/valuation 可见窗口冻结、replay-scoped
+      `score-daily`/`ops health`/secret scan；真实 2026-05-08 cache-only replay PASS，验证
+      `ruff check src tests` 通过、`pytest -q` 426 passed。2026-05-10: 从 BASELINE_DONE
+      改为 IN_PROGRESS，原因：owner 要求后续任务依次开发，先推进阶段 5 的批量窗口回放和 production diff，仍不进入 production
+      daily-run 元数据强化阶段。2026-05-10: 阶段 5 完成并继续阶段 6，原因：`replay-window` 真实 inventory-only
+      验证 2026-05-07 到 2026-05-10 通过且跳过周末，`replay-day --compare-to-production` 真实 2026-05-08
+      完整回放通过并生成 diff；下一步补 production `daily-run` metadata sidecar。2026-05-10: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：新增 `daily_ops_run_metadata_YYYY-MM-DD.json`，记录 run id、git/config/rule
+      hash、命令清单、env presence、step result 和 produced artifact checksum；阶段 5/6 验证通过
+      `ruff check src tests`、`pytest -q` 430 passed、真实 5/8 replay diff PASS 和 5/7-5/10
+      window inventory PASS。2026-05-10: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：owner 要求完成剩余重点任务并提交，范围收敛为
+      OpenAI 历史缓存策略、pre-run input checksum 和 production visibility cutoff 归档。2026-05-10:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `--openai-replay-policy disabled|cache-only`、production
+      metadata cutoff 推导、pre-run input artifact checksum；真实 5/8 OpenAI cache-only
+      inventory replay PASS，验证 `ruff check src tests`、`pytest -q` 431 passed 和 CLI
+      help 均通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-9261313057be51042156ecfd
+  task_id: OPS-007
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-10: 新增 PROPOSED，原因：owner 确认历史交易日分析产出回放会成为模型调优重点基础设施；当前只能通过手工 backup/filter/restore
+      做归档回放，无法支撑高频、安全、可审计 replay。2026-05-10: 从 PROPOSED 改为 IN_PROGRESS，原因：owner 确认按设计实现；第一阶段聚焦单日
+      cache-only replay MVP，不覆盖批量回放和 production replay 元数据强化。2026-05-10: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：新增 `aits ops replay-day`、input freeze manifest、隔离 replay
+      bundle、PIT/valuation 可见窗口冻结、replay-scoped `score-daily`/`ops health`/secret
+      scan；真实 2026-05-08 cache-only replay PASS，验证 `ruff check src tests` 通过、`pytest
+      -q` 426 passed。2026-05-10: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：owner 要求后续任务依次开发，先推进阶段
+      5 的批量窗口回放和 production diff，仍不进入 production daily-run 元数据强化阶段。2026-05-10: 阶段
+      5 完成并继续阶段 6，原因：`replay-window` 真实 inventory-only 验证 2026-05-07 到 2026-05-10
+      通过且跳过周末，`replay-day --compare-to-production` 真实 2026-05-08 完整回放通过并生成 diff；下一步补
+      production `daily-run` metadata sidecar。2026-05-10: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      `daily_ops_run_metadata_YYYY-MM-DD.json`，记录 run id、git/config/rule hash、命令清单、env
+      presence、step result 和 produced artifact checksum；阶段 5/6 验证通过 `ruff check src
+      tests`、`pytest -q` 430 passed、真实 5/8 replay diff PASS 和 5/7-5/10 window inventory
+      PASS。2026-05-10: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：owner 要求完成剩余重点任务并提交，范围收敛为
+      OpenAI 历史缓存策略、pre-run input checksum 和 production visibility cutoff 归档。2026-05-10:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `--openai-replay-policy disabled'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:9261313057be51042156ecfd14803fd52e12d87ff341c270f6bdfe1a166148f6
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-007
+  - 运行架构/历史交易日归档回放
+  - P0
+  - DONE
+  - 系统实现
+  - 详细设计见 `docs/requirements/historical_day_replay_infrastructure_2026-05-10.md`；单日
+    cache-only replay、批量 `replay-window`、production diff、production `daily-run` 脱敏
+    metadata sidecar、OpenAI 历史缓存策略、pre-run input checksum 和 production visibility
+    cutoff 归档均已完成
+  - 必须提供 cache-only 历史交易日回放入口，冻结 as-of 可见输入窗口，隔离 replay 输出，不改写生产 artifacts，不调用 live
+    provider；PIT/valuation/SEC/market/macro/risk/rule card 均需按 as-of 门禁 fail closed；输出
+    replay bundle、input freeze manifest、结构化脱敏 run log 和可选 production diff；5/8 回放应能自动排除
+    5/9/5/10 valuation 与未来 PIT manifest 行并通过 `score_daily`、`ops health`、secret scan；批量回放必须按交易日枚举并生成结构化窗口报告；production
+    daily-run 必须归档 run id、git/config/rule hash、命令清单、env presence、pre-run input checksum、produced
+    artifact checksum 和 visibility cutoff；OpenAI replay 不得调用 live API，只能 disabled
+    或 cache-only
+  - '2026-05-10: 新增 PROPOSED，原因：owner 确认历史交易日分析产出回放会成为模型调优重点基础设施；当前只能通过手工 backup/filter/restore
+    做归档回放，无法支撑高频、安全、可审计 replay。2026-05-10: 从 PROPOSED 改为 IN_PROGRESS，原因：owner 确认按设计实现；第一阶段聚焦单日
+    cache-only replay MVP，不覆盖批量回放和 production replay 元数据强化。2026-05-10: 从 IN_PROGRESS
+    改为 BASELINE_DONE，原因：新增 `aits ops replay-day`、input freeze manifest、隔离 replay bundle、PIT/valuation
+    可见窗口冻结、replay-scoped `score-daily`/`ops health`/secret scan；真实 2026-05-08 cache-only
+    replay PASS，验证 `ruff check src tests` 通过、`pytest -q` 426 passed。2026-05-10: 从
+    BASELINE_DONE 改为 IN_PROGRESS，原因：owner 要求后续任务依次开发，先推进阶段 5 的批量窗口回放和 production diff，仍不进入
+    production daily-run 元数据强化阶段。2026-05-10: 阶段 5 完成并继续阶段 6，原因：`replay-window` 真实
+    inventory-only 验证 2026-05-07 到 2026-05-10 通过且跳过周末，`replay-day --compare-to-production`
+    真实 2026-05-08 完整回放通过并生成 diff；下一步补 production `daily-run` metadata sidecar。2026-05-10:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `daily_ops_run_metadata_YYYY-MM-DD.json`，记录
+    run id、git/config/rule hash、命令清单、env presence、step result 和 produced artifact
+    checksum；阶段 5/6 验证通过 `ruff check src tests`、`pytest -q` 430 passed、真实 5/8 replay
+    diff PASS 和 5/7-5/10 window inventory PASS。2026-05-10: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：owner
+    要求完成剩余重点任务并提交，范围收敛为 OpenAI 历史缓存策略、pre-run input checksum 和 production visibility
+    cutoff 归档。2026-05-10: 从 IN_PROGRESS 改为 DONE，原因：新增 `--openai-replay-policy disabled'
+  docs_links:
+  - docs/requirements/historical_day_replay_infrastructure_2026-05-10.md
+  terminal: true
+  raw_row_sha256: 9261313057be51042156ecfd14803fd52e12d87ff341c270f6bdfe1a166148f6
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0543b7e590a0ed4a705c0e3e94313786973f62d676ad49a467c1a382c3206bbf

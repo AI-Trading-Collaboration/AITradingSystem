@@ -1,0 +1,97 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438N4_GROWTH_TILT_MULTI_FIDELITY_CANDIDATE_SCREENING
+  title: null
+  domain: Strategy research / contract-first multi-fidelity screening
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 独立 baseline capability owner；N2>0且 N3 有 screening-eligible candidate
+    后重开
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: F0 contract screen、F1 preregistered casebook、F2
+    actual-path slices、F3 survivor-only full PIT；return不能覆盖 hard-risk failure，F1不能
+    promotion。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: N3 candidate contract-ready；policy/metrics/PIT/runner/dependencies/duplicate
+      gates全部通过；null/empty-event fail-closed；F1/F2 rejected candidate不得调用F3。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1186
+    row_sha256: acbdf505ac7dcfd4b631fbd4a7e61d138c0e349b52fe59b54306d26d4b1c535d
+    cell_count: 8
+    all_cells:
+    - TRADING-2438N4_GROWTH_TILT_MULTI_FIDELITY_CANDIDATE_SCREENING
+    - Strategy research / contract-first multi-fidelity screening
+    - P0
+    - DEFERRED
+    - 独立 baseline capability owner；N2>0且 N3 有 screening-eligible candidate 后重开
+    - F0 contract screen、F1 preregistered casebook、F2 actual-path slices、F3 survivor-only
+      full PIT；return不能覆盖 hard-risk failure，F1不能 promotion。
+    - N3 candidate contract-ready；policy/metrics/PIT/runner/dependencies/duplicate
+      gates全部通过；null/empty-event fail-closed；F1/F2 rejected candidate不得调用F3。
+    - '2026-07-10: N3 未启动且 candidate=0；status=`NOT_STARTED_NO_CONTRACT_READY_CANDIDATE`，未运行
+      F0/F1/F2/F3 或 PIT replay。'
+    raw_line: '|TRADING-2438N4_GROWTH_TILT_MULTI_FIDELITY_CANDIDATE_SCREENING|Strategy
+      research / contract-first multi-fidelity screening|P0|DEFERRED|独立 baseline capability
+      owner；N2>0且 N3 有 screening-eligible candidate 后重开|F0 contract screen、F1 preregistered
+      casebook、F2 actual-path slices、F3 survivor-only full PIT；return不能覆盖 hard-risk
+      failure，F1不能 promotion。|N3 candidate contract-ready；policy/metrics/PIT/runner/dependencies/duplicate
+      gates全部通过；null/empty-event fail-closed；F1/F2 rejected candidate不得调用F3。|2026-07-10:
+      N3 未启动且 candidate=0；status=`NOT_STARTED_NO_CONTRACT_READY_CANDIDATE`，未运行 F0/F1/F2/F3
+      或 PIT replay。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-acbdf505ac7dcfd4b631fbd4
+  task_id: TRADING-2438N4_GROWTH_TILT_MULTI_FIDELITY_CANDIDATE_SCREENING
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: 独立 baseline capability owner；N2>0且 N3 有 screening-eligible candidate
+      后重开
+    notes: '2026-07-10: N3 未启动且 candidate=0；status=`NOT_STARTED_NO_CONTRACT_READY_CANDIDATE`，未运行
+      F0/F1/F2/F3 或 PIT replay。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:acbdf505ac7dcfd4b631fbd4a7e61d138c0e349b52fe59b54306d26d4b1c535d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438N4_GROWTH_TILT_MULTI_FIDELITY_CANDIDATE_SCREENING
+  - Strategy research / contract-first multi-fidelity screening
+  - P0
+  - DEFERRED
+  - 独立 baseline capability owner；N2>0且 N3 有 screening-eligible candidate 后重开
+  - F0 contract screen、F1 preregistered casebook、F2 actual-path slices、F3 survivor-only
+    full PIT；return不能覆盖 hard-risk failure，F1不能 promotion。
+  - N3 candidate contract-ready；policy/metrics/PIT/runner/dependencies/duplicate gates全部通过；null/empty-event
+    fail-closed；F1/F2 rejected candidate不得调用F3。
+  - '2026-07-10: N3 未启动且 candidate=0；status=`NOT_STARTED_NO_CONTRACT_READY_CANDIDATE`，未运行
+    F0/F1/F2/F3 或 PIT replay。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: acbdf505ac7dcfd4b631fbd4a7e61d138c0e349b52fe59b54306d26d4b1c535d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d59be2f3bc21cb581596c7ff642cc9c3aa56f20d3e47180de8099642e9d993bf

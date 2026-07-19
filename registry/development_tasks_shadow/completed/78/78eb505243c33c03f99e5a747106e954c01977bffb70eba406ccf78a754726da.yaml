@@ -1,0 +1,159 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-377_PRODUCTION_BOUNDARY_STATIC_SCANNER
+  title: null
+  domain: Research governance / production boundary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 warning finding review 优先级；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-377_Production_Boundary_Static_Scanner.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-377_Production_Boundary_Static_Scanner.md`；新增只读
+    production boundary static scanner，扫描 source/config/docs/scripts 中 broker、order
+    ticket、live allocation、official target weight、production mutation、auto execute、live
+    order、account id、API key 等 production-facing terms，并支持 documentation-only/safety-boundary
+    allowlist；不得自动修改命中位置或隐藏 suspicious location
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/production_boundary_static_scan.py`、`aits
+      reports production-boundary-static-scan`、`aits reports validate-production-boundary-static-scan`、allowlist
+      policy、suspicious location report、OK/WARNING/BLOCKING severity、Reader Brief
+      摘要、report registry、artifact catalog、README、system flow、operations runbook、requirements
+      和 focused tests；dangerous production-like source/config additions fail closed，documentation-only
+      safety mentions 保持可见 warning；所有输出固定 `production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 220
+    row_sha256: 46e4a857149e41b6c46328b127b28204d5836cb8ed03160c0e9eeb5c5e418840
+    cell_count: 8
+    all_cells:
+    - TRADING-377_PRODUCTION_BOUNDARY_STATIC_SCANNER
+    - Research governance / production boundary
+    - P1
+    - DONE
+    - 项目 owner 后续复核 warning finding review 优先级；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-377_Production_Boundary_Static_Scanner.md`；新增只读
+      production boundary static scanner，扫描 source/config/docs/scripts 中 broker、order
+      ticket、live allocation、official target weight、production mutation、auto execute、live
+      order、account id、API key 等 production-facing terms，并支持 documentation-only/safety-boundary
+      allowlist；不得自动修改命中位置或隐藏 suspicious location
+    - 新增 `src/ai_trading_system/reports/production_boundary_static_scan.py`、`aits
+      reports production-boundary-static-scan`、`aits reports validate-production-boundary-static-scan`、allowlist
+      policy、suspicious location report、OK/WARNING/BLOCKING severity、Reader Brief
+      摘要、report registry、artifact catalog、README、system flow、operations runbook、requirements
+      和 focused tests；dangerous production-like source/config additions fail closed，documentation-only
+      safety mentions 保持可见 warning；所有输出固定 `production_effect=none`
+    - '2026-06-16: DONE；真实 2026-06-16 static scan `outputs/reports/production_boundary_static_scan_2026-06-16.json/md`
+      输出 `scan_status=WARNING`、scanned files=868、findings=1537、blocking=0、warnings=1537、allowed
+      matches=6798、covered term families=9/9；validation `outputs/reports/production_boundary_static_scan_validation_2026-06-16.json/md`
+      输出 `validation_status=WARNING`、checks=6、failed=0、warnings=1；warnings 来自 legacy/paper/documentation-only
+      production-boundary mentions，未静默删除或自动修复。Reader Brief latest section 用 2026-06-15
+      local latest artifact 验证，section 展示 static scan status、finding counts、validation
+      status 和 next action；exact 2026-06-16 Reader Brief generation remains limited
+      by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no source mutation / no data refresh
+      / no upstream rerun / no official target / no broker / no order ticket / no
+      account/API secret disclosure / no production mutation。'
+    raw_line: '|TRADING-377_PRODUCTION_BOUNDARY_STATIC_SCANNER|Research governance
+      / production boundary|P1|DONE|项目 owner 后续复核 warning finding review 优先级；代码实现完成|详细拆解见
+      `docs/requirements/TRADING-377_Production_Boundary_Static_Scanner.md`；新增只读 production
+      boundary static scanner，扫描 source/config/docs/scripts 中 broker、order ticket、live
+      allocation、official target weight、production mutation、auto execute、live order、account
+      id、API key 等 production-facing terms，并支持 documentation-only/safety-boundary
+      allowlist；不得自动修改命中位置或隐藏 suspicious location|新增 `src/ai_trading_system/reports/production_boundary_static_scan.py`、`aits
+      reports production-boundary-static-scan`、`aits reports validate-production-boundary-static-scan`、allowlist
+      policy、suspicious location report、OK/WARNING/BLOCKING severity、Reader Brief
+      摘要、report registry、artifact catalog、README、system flow、operations runbook、requirements
+      和 focused tests；dangerous production-like source/config additions fail closed，documentation-only
+      safety mentions 保持可见 warning；所有输出固定 `production_effect=none`|2026-06-16: DONE；真实
+      2026-06-16 static scan `outputs/reports/production_boundary_static_scan_2026-06-16.json/md`
+      输出 `scan_status=WARNING`、scanned files=868、findings=1537、blocking=0、warnings=1537、allowed
+      matches=6798、covered term families=9/9；validation `outputs/reports/production_boundary_static_scan_validation_2026-06-16.json/md`
+      输出 `validation_status=WARNING`、checks=6、failed=0、warnings=1；warnings 来自 legacy/paper/documentation-only
+      production-boundary mentions，未静默删除或自动修复。Reader Brief latest section 用 2026-06-15
+      local latest artifact 验证，section 展示 static scan status、finding counts、validation
+      status 和 next action；exact 2026-06-16 Reader Brief generation remains limited
+      by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no source mutation / no data refresh
+      / no upstream rerun / no official target / no broker / no order ticket / no
+      account/API secret disclosure / no production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-46e4a857149e41b6c46328b1
+  task_id: TRADING-377_PRODUCTION_BOUNDARY_STATIC_SCANNER
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核 warning finding review 优先级；代码实现完成
+    notes: '2026-06-16: DONE；真实 2026-06-16 static scan `outputs/reports/production_boundary_static_scan_2026-06-16.json/md`
+      输出 `scan_status=WARNING`、scanned files=868、findings=1537、blocking=0、warnings=1537、allowed
+      matches=6798、covered term families=9/9；validation `outputs/reports/production_boundary_static_scan_validation_2026-06-16.json/md`
+      输出 `validation_status=WARNING`、checks=6、failed=0、warnings=1；warnings 来自 legacy/paper/documentation-only
+      production-boundary mentions，未静默删除或自动修复。Reader Brief latest section 用 2026-06-15
+      local latest artifact 验证，section 展示 static scan status、finding counts、validation
+      status 和 next action；exact 2026-06-16 Reader Brief generation remains limited
+      by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no source mutation / no data refresh
+      / no upstream rerun / no official target / no broker / no order ticket / no
+      account/API secret disclosure / no production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:46e4a857149e41b6c46328b127b28204d5836cb8ed03160c0e9eeb5c5e418840
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-377_PRODUCTION_BOUNDARY_STATIC_SCANNER
+  - Research governance / production boundary
+  - P1
+  - DONE
+  - 项目 owner 后续复核 warning finding review 优先级；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-377_Production_Boundary_Static_Scanner.md`；新增只读
+    production boundary static scanner，扫描 source/config/docs/scripts 中 broker、order
+    ticket、live allocation、official target weight、production mutation、auto execute、live
+    order、account id、API key 等 production-facing terms，并支持 documentation-only/safety-boundary
+    allowlist；不得自动修改命中位置或隐藏 suspicious location
+  - 新增 `src/ai_trading_system/reports/production_boundary_static_scan.py`、`aits reports
+    production-boundary-static-scan`、`aits reports validate-production-boundary-static-scan`、allowlist
+    policy、suspicious location report、OK/WARNING/BLOCKING severity、Reader Brief 摘要、report
+    registry、artifact catalog、README、system flow、operations runbook、requirements 和
+    focused tests；dangerous production-like source/config additions fail closed，documentation-only
+    safety mentions 保持可见 warning；所有输出固定 `production_effect=none`
+  - '2026-06-16: DONE；真实 2026-06-16 static scan `outputs/reports/production_boundary_static_scan_2026-06-16.json/md`
+    输出 `scan_status=WARNING`、scanned files=868、findings=1537、blocking=0、warnings=1537、allowed
+    matches=6798、covered term families=9/9；validation `outputs/reports/production_boundary_static_scan_validation_2026-06-16.json/md`
+    输出 `validation_status=WARNING`、checks=6、failed=0、warnings=1；warnings 来自 legacy/paper/documentation-only
+    production-boundary mentions，未静默删除或自动修复。Reader Brief latest section 用 2026-06-15
+    local latest artifact 验证，section 展示 static scan status、finding counts、validation
+    status 和 next action；exact 2026-06-16 Reader Brief generation remains limited
+    by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+    no snapshot was fabricated. 保持 read-only / no source mutation / no data refresh
+    / no upstream rerun / no official target / no broker / no order ticket / no account/API
+    secret disclosure / no production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-377_Production_Boundary_Static_Scanner.md
+  terminal: true
+  raw_row_sha256: 46e4a857149e41b6c46328b127b28204d5836cb8ed03160c0e9eeb5c5e418840
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d18c8ef6f711c6013be66a71b3e9b1f72b8a1ef62afec3f44fe6c14b08bbf8bc

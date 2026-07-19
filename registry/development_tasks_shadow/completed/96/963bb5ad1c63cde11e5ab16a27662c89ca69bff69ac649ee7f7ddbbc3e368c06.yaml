@@ -1,0 +1,118 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1085_DAILY_INCREMENTAL_REFACTOR_GROWTH_TILT_CLI_BOUNDARY
+  title: null
+  domain: Architecture / daily incremental refactor growth-tilt CLI boundary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/refactor_log.md
+  - docs/requirements/TRADING-1085_Daily_Incremental_Refactor_Growth_Tilt_CLI_Boundary.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1085_Daily_Incremental_Refactor_Growth_Tilt_CLI_Boundary.md`；已将
+    TRADING-1065～1084 growth-tilt command adapters 拆到 `cli_commands/research_growth_tilt.py`，`research_simple_baselines.py`
+    继续委托注册到同一 `strategies_app`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: growth-tilt 20 个 `aits research strategies ...` CLI 命令路径、参数、artifact path、report
+      schema、data quality gate、status/safety fields 和投资解释保持兼容；focused xdist pytest、CLI
+      help smoke、Ruff、compileall、docs/task consistency 和 `git diff --check` 通过；`docs/system_flow.md`
+      和 `docs/refactor_log.md` 记录本轮边界调整
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 175
+    row_sha256: caabb97085e99a7fc8c253428694107fa9052b354989786c94a8d6fe9f5483c9
+    cell_count: 8
+    all_cells:
+    - TRADING-1085_DAILY_INCREMENTAL_REFACTOR_GROWTH_TILT_CLI_BOUNDARY
+    - Architecture / daily incremental refactor growth-tilt CLI boundary
+    - P2
+    - DONE
+    - 系统验证
+    - 详见 `docs/requirements/TRADING-1085_Daily_Incremental_Refactor_Growth_Tilt_CLI_Boundary.md`；已将
+      TRADING-1065～1084 growth-tilt command adapters 拆到 `cli_commands/research_growth_tilt.py`，`research_simple_baselines.py`
+      继续委托注册到同一 `strategies_app`
+    - growth-tilt 20 个 `aits research strategies ...` CLI 命令路径、参数、artifact path、report
+      schema、data quality gate、status/safety fields 和投资解释保持兼容；focused xdist pytest、CLI
+      help smoke、Ruff、compileall、docs/task consistency 和 `git diff --check` 通过；`docs/system_flow.md`
+      和 `docs/refactor_log.md` 记录本轮边界调整
+    - '2026-06-26: 每日增量重构自动化新增并完成；边界固定 `production_effect=none`，不改变 threshold、score
+      band、promotion gate、backtest acceptance、仓位约束、data quality gate、market-regime
+      interpretation、paper-shadow/production weights 或 broker/order path。验证通过 focused
+      pytest 17 passed、growth-tilt CLI help smoke、Ruff、compileall 和 `git diff --check`。'
+    raw_line: '|TRADING-1085_DAILY_INCREMENTAL_REFACTOR_GROWTH_TILT_CLI_BOUNDARY|Architecture
+      / daily incremental refactor growth-tilt CLI boundary|P2|DONE|系统验证|详见 `docs/requirements/TRADING-1085_Daily_Incremental_Refactor_Growth_Tilt_CLI_Boundary.md`；已将
+      TRADING-1065～1084 growth-tilt command adapters 拆到 `cli_commands/research_growth_tilt.py`，`research_simple_baselines.py`
+      继续委托注册到同一 `strategies_app`|growth-tilt 20 个 `aits research strategies ...` CLI
+      命令路径、参数、artifact path、report schema、data quality gate、status/safety fields 和投资解释保持兼容；focused
+      xdist pytest、CLI help smoke、Ruff、compileall、docs/task consistency 和 `git diff
+      --check` 通过；`docs/system_flow.md` 和 `docs/refactor_log.md` 记录本轮边界调整|2026-06-26:
+      每日增量重构自动化新增并完成；边界固定 `production_effect=none`，不改变 threshold、score band、promotion
+      gate、backtest acceptance、仓位约束、data quality gate、market-regime interpretation、paper-shadow/production
+      weights 或 broker/order path。验证通过 focused pytest 17 passed、growth-tilt CLI help
+      smoke、Ruff、compileall 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-caabb97085e99a7fc8c25342
+  task_id: TRADING-1085_DAILY_INCREMENTAL_REFACTOR_GROWTH_TILT_CLI_BOUNDARY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: '2026-06-26: 每日增量重构自动化新增并完成；边界固定 `production_effect=none`，不改变 threshold、score
+      band、promotion gate、backtest acceptance、仓位约束、data quality gate、market-regime
+      interpretation、paper-shadow/production weights 或 broker/order path。验证通过 focused
+      pytest 17 passed、growth-tilt CLI help smoke、Ruff、compileall 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:caabb97085e99a7fc8c253428694107fa9052b354989786c94a8d6fe9f5483c9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1085_DAILY_INCREMENTAL_REFACTOR_GROWTH_TILT_CLI_BOUNDARY
+  - Architecture / daily incremental refactor growth-tilt CLI boundary
+  - P2
+  - DONE
+  - 系统验证
+  - 详见 `docs/requirements/TRADING-1085_Daily_Incremental_Refactor_Growth_Tilt_CLI_Boundary.md`；已将
+    TRADING-1065～1084 growth-tilt command adapters 拆到 `cli_commands/research_growth_tilt.py`，`research_simple_baselines.py`
+    继续委托注册到同一 `strategies_app`
+  - growth-tilt 20 个 `aits research strategies ...` CLI 命令路径、参数、artifact path、report
+    schema、data quality gate、status/safety fields 和投资解释保持兼容；focused xdist pytest、CLI
+    help smoke、Ruff、compileall、docs/task consistency 和 `git diff --check` 通过；`docs/system_flow.md`
+    和 `docs/refactor_log.md` 记录本轮边界调整
+  - '2026-06-26: 每日增量重构自动化新增并完成；边界固定 `production_effect=none`，不改变 threshold、score
+    band、promotion gate、backtest acceptance、仓位约束、data quality gate、market-regime interpretation、paper-shadow/production
+    weights 或 broker/order path。验证通过 focused pytest 17 passed、growth-tilt CLI help
+    smoke、Ruff、compileall 和 `git diff --check`。'
+  docs_links:
+  - docs/refactor_log.md
+  - docs/requirements/TRADING-1085_Daily_Incremental_Refactor_Growth_Tilt_CLI_Boundary.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: caabb97085e99a7fc8c253428694107fa9052b354989786c94a8d6fe9f5483c9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7aa00d6ac485748f522cf897ac246b90e16c179f0bd83108d1f0f47140d4878f

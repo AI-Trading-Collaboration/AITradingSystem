@@ -1,0 +1,104 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438M1D2_GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_AND_READINESS
+  title: null
+  domain: Strategy research / governed baseline adapters and readiness
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner如要解除 blocker需另开 governed baseline contract任务；不得直接修改本归档结论
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 承接 M1D1A；四个 versioned existing-behavior
+    adapters覆盖 hard-veto aggregate、current/requested/applied transition trace、native
+    scalar binding、recovery semantic/PIT lineage。禁止 raw indicator/name inference、QQQ/TQQQ
+    substitution、默认阈值、baseline/candidate behavior或 replay。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 真实 strict status=`GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_READY_WITH_BLOCKERS`、implemented/ready/blocked=`4/0/4`；hard-veto
+      unresolved BLOCKED-not-false，transition不做相邻行/same-step推断，native scalar exact
+      blocked，recovery=`UNSCALED_SCORE`且无 trigger；M2=0。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 27
+    row_sha256: 7fbffd15afb3d136e458543bb9b89f6ff5703c408d335932fbd2d5433f7697a8
+    cell_count: 8
+    all_cells:
+    - TRADING-2438M1D2_GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_AND_READINESS
+    - Strategy research / governed baseline adapters and readiness
+    - P0
+    - DONE
+    - 项目 owner如要解除 blocker需另开 governed baseline contract任务；不得直接修改本归档结论
+    - 承接 M1D1A；四个 versioned existing-behavior adapters覆盖 hard-veto aggregate、current/requested/applied
+      transition trace、native scalar binding、recovery semantic/PIT lineage。禁止 raw
+      indicator/name inference、QQQ/TQQQ substitution、默认阈值、baseline/candidate behavior或
+      replay。
+    - 真实 strict status=`GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_READY_WITH_BLOCKERS`、implemented/ready/blocked=`4/0/4`；hard-veto
+      unresolved BLOCKED-not-false，transition不做相邻行/same-step推断，native scalar exact
+      blocked，recovery=`UNSCALED_SCORE`且无 trigger；M2=0。
+    - '2026-07-10: 实现、真实 run与归档完成。验证：focused 22、combined chain 144、fast-unit 198、contract-validation
+      197、report-validation 55及治理检查全部 PASS。'
+    raw_line: '|TRADING-2438M1D2_GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_AND_READINESS|Strategy
+      research / governed baseline adapters and readiness|P0|DONE|项目 owner如要解除 blocker需另开
+      governed baseline contract任务；不得直接修改本归档结论|承接 M1D1A；四个 versioned existing-behavior
+      adapters覆盖 hard-veto aggregate、current/requested/applied transition trace、native
+      scalar binding、recovery semantic/PIT lineage。禁止 raw indicator/name inference、QQQ/TQQQ
+      substitution、默认阈值、baseline/candidate behavior或 replay。|真实 strict status=`GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_READY_WITH_BLOCKERS`、implemented/ready/blocked=`4/0/4`；hard-veto
+      unresolved BLOCKED-not-false，transition不做相邻行/same-step推断，native scalar exact
+      blocked，recovery=`UNSCALED_SCORE`且无 trigger；M2=0。|2026-07-10: 实现、真实 run与归档完成。验证：focused
+      22、combined chain 144、fast-unit 198、contract-validation 197、report-validation
+      55及治理检查全部 PASS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7fbffd15afb3d136e458543b
+  task_id: TRADING-2438M1D2_GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_AND_READINESS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner如要解除 blocker需另开 governed baseline contract任务；不得直接修改本归档结论
+    notes: '2026-07-10: 实现、真实 run与归档完成。验证：focused 22、combined chain 144、fast-unit
+      198、contract-validation 197、report-validation 55及治理检查全部 PASS。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7fbffd15afb3d136e458543bb9b89f6ff5703c408d335932fbd2d5433f7697a8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438M1D2_GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_AND_READINESS
+  - Strategy research / governed baseline adapters and readiness
+  - P0
+  - DONE
+  - 项目 owner如要解除 blocker需另开 governed baseline contract任务；不得直接修改本归档结论
+  - 承接 M1D1A；四个 versioned existing-behavior adapters覆盖 hard-veto aggregate、current/requested/applied
+    transition trace、native scalar binding、recovery semantic/PIT lineage。禁止 raw indicator/name
+    inference、QQQ/TQQQ substitution、默认阈值、baseline/candidate behavior或 replay。
+  - 真实 strict status=`GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_READY_WITH_BLOCKERS`、implemented/ready/blocked=`4/0/4`；hard-veto
+    unresolved BLOCKED-not-false，transition不做相邻行/same-step推断，native scalar exact blocked，recovery=`UNSCALED_SCORE`且无
+    trigger；M2=0。
+  - '2026-07-10: 实现、真实 run与归档完成。验证：focused 22、combined chain 144、fast-unit 198、contract-validation
+    197、report-validation 55及治理检查全部 PASS。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: 7fbffd15afb3d136e458543bb9b89f6ff5703c408d335932fbd2d5433f7697a8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ece2ab6bdbd2c07dd6eef2f5f3046094f8eb0857e027c77fa81e5fe03ab93fe1

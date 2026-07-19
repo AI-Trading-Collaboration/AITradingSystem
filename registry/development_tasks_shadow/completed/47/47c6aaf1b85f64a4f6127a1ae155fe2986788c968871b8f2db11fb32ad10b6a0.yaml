@@ -1,0 +1,152 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: GOV-004
+  title: null
+  domain: 规则治理/启发式硬编码审计
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/heuristic_hardcoding_governance_2026-05-13.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/heuristic_hardcoding_governance_2026-05-13.md`；项目规则、初版静态审计、P1-A/P1-B/P1-C
+    和 feature coverage 第一批迁移、只读 `aits docs heuristic-audit`、关键 policy metadata 校验、函数默认参数
+    numeric literal 审计，以及 PIT coverage / gate attribution 等漏检阈值迁移均已完成；逐阈值 rationale
+    map 深化已拆分为 active `GOV-005`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 影响评分、仓位、置信度、反馈校准、回测晋级、readiness 或报告结论的阈值必须配置化或有命名 policy/rationale；样本 floor
+      已迁移到统一 sample policy；score/position band、日报结论边界、confidence/source-type policy、backtest
+      data credibility coverage 和 backtest validation/promotion policy 已配置化；自动审计工具阻断未登记的投资解释
+      numeric literal，包括比较表达式和函数默认参数，并校验关键 policy metadata；decision outcome score
+      bucket、lag sensitivity min days、PIT coverage readiness 默认阈值和 gate/event attribution
+      左尾阈值均读取对应 policy 配置；当前审计 PASS 且 `production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 269
+    row_sha256: 72e84529e94a5382f9793340d0ff38474df07b1a0a0bea6de22fb69a774fd3e1
+    cell_count: 8
+    all_cells:
+    - GOV-004
+    - 规则治理/启发式硬编码审计
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/heuristic_hardcoding_governance_2026-05-13.md`；项目规则、初版静态审计、P1-A/P1-B/P1-C
+      和 feature coverage 第一批迁移、只读 `aits docs heuristic-audit`、关键 policy metadata 校验、函数默认参数
+      numeric literal 审计，以及 PIT coverage / gate attribution 等漏检阈值迁移均已完成；逐阈值 rationale
+      map 深化已拆分为 active `GOV-005`
+    - 影响评分、仓位、置信度、反馈校准、回测晋级、readiness 或报告结论的阈值必须配置化或有命名 policy/rationale；样本 floor
+      已迁移到统一 sample policy；score/position band、日报结论边界、confidence/source-type policy、backtest
+      data credibility coverage 和 backtest validation/promotion policy 已配置化；自动审计工具阻断未登记的投资解释
+      numeric literal，包括比较表达式和函数默认参数，并校验关键 policy metadata；decision outcome score
+      bucket、lag sensitivity min days、PIT coverage readiness 默认阈值和 gate/event attribution
+      左尾阈值均读取对应 policy 配置；当前审计 PASS 且 `production_effect=none`
+    - '2026-05-13: 新增并进入 VALIDATING，原因：owner 指出 `30` 样本门槛属于类似启发式硬编码风险，要求 review 当前项目中类似逻辑，并加入项目规则。2026-05-13:
+      完成 P1-A 第一批迁移，样本 floor 迁移到 `config/feedback_sample_policy.yaml`。2026-05-13:
+      完成 P1-B/P1-C 和 feature coverage 第一批迁移，评分、日报、confidence、source-type policy、backtest
+      coverage、robustness 和 promotion gate 改为 policy 驱动。2026-06-07: 完成 P2 自动审计工具，新增
+      `config/heuristic_governance.yaml`、`src/ai_trading_system/heuristic_governance.py`、`aits
+      docs heuristic-audit`、CLI direct dispatcher 和 tests；默认审计 PASS。2026-06-07: 扩展
+      default-argument audit，并把 PIT coverage readiness、gate/event attribution 左尾阈值和默认执行成本迁入
+      `config/backtest_validation_policy.yaml`。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核
+      `aits docs heuristic-audit --fail-on-warning` 仍为 PASS（numeric_literals=13、unregistered=0、policy_metadata_failures=0、warnings=0、`production_effect=none`），未完成的逐阈值
+      rationale map 深化已拆分为 `GOV-005`；验证通过 focused pytest 33 passed、文档新鲜度、documentation
+      contract、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'
+    raw_line: '|GOV-004|规则治理/启发式硬编码审计|P1|DONE|系统验证|详细拆解见 `docs/requirements/heuristic_hardcoding_governance_2026-05-13.md`；项目规则、初版静态审计、P1-A/P1-B/P1-C
+      和 feature coverage 第一批迁移、只读 `aits docs heuristic-audit`、关键 policy metadata 校验、函数默认参数
+      numeric literal 审计，以及 PIT coverage / gate attribution 等漏检阈值迁移均已完成；逐阈值 rationale
+      map 深化已拆分为 active `GOV-005`|影响评分、仓位、置信度、反馈校准、回测晋级、readiness 或报告结论的阈值必须配置化或有命名
+      policy/rationale；样本 floor 已迁移到统一 sample policy；score/position band、日报结论边界、confidence/source-type
+      policy、backtest data credibility coverage 和 backtest validation/promotion policy
+      已配置化；自动审计工具阻断未登记的投资解释 numeric literal，包括比较表达式和函数默认参数，并校验关键 policy metadata；decision
+      outcome score bucket、lag sensitivity min days、PIT coverage readiness 默认阈值和 gate/event
+      attribution 左尾阈值均读取对应 policy 配置；当前审计 PASS 且 `production_effect=none`|2026-05-13:
+      新增并进入 VALIDATING，原因：owner 指出 `30` 样本门槛属于类似启发式硬编码风险，要求 review 当前项目中类似逻辑，并加入项目规则。2026-05-13:
+      完成 P1-A 第一批迁移，样本 floor 迁移到 `config/feedback_sample_policy.yaml`。2026-05-13:
+      完成 P1-B/P1-C 和 feature coverage 第一批迁移，评分、日报、confidence、source-type policy、backtest
+      coverage、robustness 和 promotion gate 改为 policy 驱动。2026-06-07: 完成 P2 自动审计工具，新增
+      `config/heuristic_governance.yaml`、`src/ai_trading_system/heuristic_governance.py`、`aits
+      docs heuristic-audit`、CLI direct dispatcher 和 tests；默认审计 PASS。2026-06-07: 扩展
+      default-argument audit，并把 PIT coverage readiness、gate/event attribution 左尾阈值和默认执行成本迁入
+      `config/backtest_validation_policy.yaml`。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核
+      `aits docs heuristic-audit --fail-on-warning` 仍为 PASS（numeric_literals=13、unregistered=0、policy_metadata_failures=0、warnings=0、`production_effect=none`），未完成的逐阈值
+      rationale map 深化已拆分为 `GOV-005`；验证通过 focused pytest 33 passed、文档新鲜度、documentation
+      contract、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-72e84529e94a5382f9793340
+  task_id: GOV-004
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-13: 新增并进入 VALIDATING，原因：owner 指出 `30` 样本门槛属于类似启发式硬编码风险，要求 review
+      当前项目中类似逻辑，并加入项目规则。2026-05-13: 完成 P1-A 第一批迁移，样本 floor 迁移到 `config/feedback_sample_policy.yaml`。2026-05-13:
+      完成 P1-B/P1-C 和 feature coverage 第一批迁移，评分、日报、confidence、source-type policy、backtest
+      coverage、robustness 和 promotion gate 改为 policy 驱动。2026-06-07: 完成 P2 自动审计工具，新增
+      `config/heuristic_governance.yaml`、`src/ai_trading_system/heuristic_governance.py`、`aits
+      docs heuristic-audit`、CLI direct dispatcher 和 tests；默认审计 PASS。2026-06-07: 扩展
+      default-argument audit，并把 PIT coverage readiness、gate/event attribution 左尾阈值和默认执行成本迁入
+      `config/backtest_validation_policy.yaml`。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核
+      `aits docs heuristic-audit --fail-on-warning` 仍为 PASS（numeric_literals=13、unregistered=0、policy_metadata_failures=0、warnings=0、`production_effect=none`），未完成的逐阈值
+      rationale map 深化已拆分为 `GOV-005`；验证通过 focused pytest 33 passed、文档新鲜度、documentation
+      contract、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:72e84529e94a5382f9793340d0ff38474df07b1a0a0bea6de22fb69a774fd3e1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - GOV-004
+  - 规则治理/启发式硬编码审计
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/heuristic_hardcoding_governance_2026-05-13.md`；项目规则、初版静态审计、P1-A/P1-B/P1-C
+    和 feature coverage 第一批迁移、只读 `aits docs heuristic-audit`、关键 policy metadata 校验、函数默认参数
+    numeric literal 审计，以及 PIT coverage / gate attribution 等漏检阈值迁移均已完成；逐阈值 rationale
+    map 深化已拆分为 active `GOV-005`
+  - 影响评分、仓位、置信度、反馈校准、回测晋级、readiness 或报告结论的阈值必须配置化或有命名 policy/rationale；样本 floor 已迁移到统一
+    sample policy；score/position band、日报结论边界、confidence/source-type policy、backtest
+    data credibility coverage 和 backtest validation/promotion policy 已配置化；自动审计工具阻断未登记的投资解释
+    numeric literal，包括比较表达式和函数默认参数，并校验关键 policy metadata；decision outcome score bucket、lag
+    sensitivity min days、PIT coverage readiness 默认阈值和 gate/event attribution 左尾阈值均读取对应
+    policy 配置；当前审计 PASS 且 `production_effect=none`
+  - '2026-05-13: 新增并进入 VALIDATING，原因：owner 指出 `30` 样本门槛属于类似启发式硬编码风险，要求 review 当前项目中类似逻辑，并加入项目规则。2026-05-13:
+    完成 P1-A 第一批迁移，样本 floor 迁移到 `config/feedback_sample_policy.yaml`。2026-05-13: 完成
+    P1-B/P1-C 和 feature coverage 第一批迁移，评分、日报、confidence、source-type policy、backtest
+    coverage、robustness 和 promotion gate 改为 policy 驱动。2026-06-07: 完成 P2 自动审计工具，新增
+    `config/heuristic_governance.yaml`、`src/ai_trading_system/heuristic_governance.py`、`aits
+    docs heuristic-audit`、CLI direct dispatcher 和 tests；默认审计 PASS。2026-06-07: 扩展 default-argument
+    audit，并把 PIT coverage readiness、gate/event attribution 左尾阈值和默认执行成本迁入 `config/backtest_validation_policy.yaml`。2026-06-09:
+    从 VALIDATING 改为 DONE，原因：复核 `aits docs heuristic-audit --fail-on-warning` 仍为 PASS（numeric_literals=13、unregistered=0、policy_metadata_failures=0、warnings=0、`production_effect=none`），未完成的逐阈值
+    rationale map 深化已拆分为 `GOV-005`；验证通过 focused pytest 33 passed、文档新鲜度、documentation
+    contract、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/heuristic_hardcoding_governance_2026-05-13.md
+  terminal: true
+  raw_row_sha256: 72e84529e94a5382f9793340d0ff38474df07b1a0a0bea6de22fb69a774fd3e1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5c20854fdd4352d3455f3483e0ba1dcb9462b83e2495ef3da45428c28d8dae31

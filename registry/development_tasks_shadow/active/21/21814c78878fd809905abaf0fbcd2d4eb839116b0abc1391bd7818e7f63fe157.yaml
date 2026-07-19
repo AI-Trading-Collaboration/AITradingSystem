@@ -1,0 +1,130 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1049_to_1056_EQUAL_RISK_GROWTH_V2_REAL_RUN_RESULT_CONVERGENCE
+  title: null
+  domain: Research strategies / equal-risk forward-aging and controlled growth v2
+    real-run convergence
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1049_to_1056_Equal_Risk_Growth_V2_Real_Run_Result_Convergence.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1049_to_1056_Equal_Risk_Growth_V2_Real_Run_Result_Convergence.md`；实现和验证已完成，下一步为
+    owner 复核 real-run summary、equal-risk health、growth final gate、dual-track owner
+    pack 和 master review；不得恢复 Layer-1 selector、tail-risk fallback、TQQQ-heavy、LEAPS、Wheel、Options、paper-shadow、production
+    或 broker
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 8 个 `aits research strategies ...` CLI/artifacts：real CLI suite summary、equal-risk
+      live health summary、controlled growth v2 candidate summary、beta-adjusted edge
+      review、period/drawdown/cost triage、growth final gate、dual-track owner decision
+      pack、roadmap v2 real-result master review；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、requirements 文档、focused pytest、Layer-1/Layer-2
+      regression pytest、Ruff、compileall 和 `git diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1288
+    row_sha256: 0fb0be3139ff072f6d0ad1714b14a709e4587fc2076069de4d20918d7d7f355e
+    cell_count: 8
+    all_cells:
+    - TRADING-1049_to_1056_EQUAL_RISK_GROWTH_V2_REAL_RUN_RESULT_CONVERGENCE
+    - Research strategies / equal-risk forward-aging and controlled growth v2 real-run
+      convergence
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1049_to_1056_Equal_Risk_Growth_V2_Real_Run_Result_Convergence.md`；实现和验证已完成，下一步为
+      owner 复核 real-run summary、equal-risk health、growth final gate、dual-track owner
+      pack 和 master review；不得恢复 Layer-1 selector、tail-risk fallback、TQQQ-heavy、LEAPS、Wheel、Options、paper-shadow、production
+      或 broker
+    - 新增 8 个 `aits research strategies ...` CLI/artifacts：real CLI suite summary、equal-risk
+      live health summary、controlled growth v2 candidate summary、beta-adjusted edge
+      review、period/drawdown/cost triage、growth final gate、dual-track owner decision
+      pack、roadmap v2 real-result master review；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、requirements 文档、focused pytest、Layer-1/Layer-2
+      regression pytest、Ruff、compileall 和 `git diff --check` 通过
+    - '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1049～1056；范围仅为 research-only
+      真实运行结果收敛和 owner 决策包，不改变 production config 或正式 Reader Brief 交易内容。2026-06-26:
+      实现完成并转入 VALIDATING；验证通过 Ruff、compileall、focused equal-risk/growth pytest、Layer-1/Layer-2
+      readiness regression pytest、report/task/documentation pytest 和 `git diff --check`。'
+    raw_line: '|TRADING-1049_to_1056_EQUAL_RISK_GROWTH_V2_REAL_RUN_RESULT_CONVERGENCE|Research
+      strategies / equal-risk forward-aging and controlled growth v2 real-run convergence|P1|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1049_to_1056_Equal_Risk_Growth_V2_Real_Run_Result_Convergence.md`；实现和验证已完成，下一步为
+      owner 复核 real-run summary、equal-risk health、growth final gate、dual-track owner
+      pack 和 master review；不得恢复 Layer-1 selector、tail-risk fallback、TQQQ-heavy、LEAPS、Wheel、Options、paper-shadow、production
+      或 broker|新增 8 个 `aits research strategies ...` CLI/artifacts：real CLI suite
+      summary、equal-risk live health summary、controlled growth v2 candidate summary、beta-adjusted
+      edge review、period/drawdown/cost triage、growth final gate、dual-track owner decision
+      pack、roadmap v2 real-result master review；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、requirements 文档、focused pytest、Layer-1/Layer-2
+      regression pytest、Ruff、compileall 和 `git diff --check` 通过|2026-06-26: 新增并进入
+      IN_PROGRESS，原因：owner 要求完成 TRADING-1049～1056；范围仅为 research-only 真实运行结果收敛和 owner
+      决策包，不改变 production config 或正式 Reader Brief 交易内容。2026-06-26: 实现完成并转入 VALIDATING；验证通过
+      Ruff、compileall、focused equal-risk/growth pytest、Layer-1/Layer-2 readiness regression
+      pytest、report/task/documentation pytest 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0fb0be3139ff072f6d0ad171
+  task_id: TRADING-1049_to_1056_EQUAL_RISK_GROWTH_V2_REAL_RUN_RESULT_CONVERGENCE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1049～1056；范围仅为 research-only
+      真实运行结果收敛和 owner 决策包，不改变 production config 或正式 Reader Brief 交易内容。2026-06-26:
+      实现完成并转入 VALIDATING；验证通过 Ruff、compileall、focused equal-risk/growth pytest、Layer-1/Layer-2
+      readiness regression pytest、report/task/documentation pytest 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0fb0be3139ff072f6d0ad1714b14a709e4587fc2076069de4d20918d7d7f355e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1049_to_1056_EQUAL_RISK_GROWTH_V2_REAL_RUN_RESULT_CONVERGENCE
+  - Research strategies / equal-risk forward-aging and controlled growth v2 real-run
+    convergence
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1049_to_1056_Equal_Risk_Growth_V2_Real_Run_Result_Convergence.md`；实现和验证已完成，下一步为
+    owner 复核 real-run summary、equal-risk health、growth final gate、dual-track owner
+    pack 和 master review；不得恢复 Layer-1 selector、tail-risk fallback、TQQQ-heavy、LEAPS、Wheel、Options、paper-shadow、production
+    或 broker
+  - 新增 8 个 `aits research strategies ...` CLI/artifacts：real CLI suite summary、equal-risk
+    live health summary、controlled growth v2 candidate summary、beta-adjusted edge
+    review、period/drawdown/cost triage、growth final gate、dual-track owner decision
+    pack、roadmap v2 real-result master review；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+    registry、artifact catalog、system flow、requirements 文档、focused pytest、Layer-1/Layer-2
+    regression pytest、Ruff、compileall 和 `git diff --check` 通过
+  - '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1049～1056；范围仅为 research-only
+    真实运行结果收敛和 owner 决策包，不改变 production config 或正式 Reader Brief 交易内容。2026-06-26: 实现完成并转入
+    VALIDATING；验证通过 Ruff、compileall、focused equal-risk/growth pytest、Layer-1/Layer-2
+    readiness regression pytest、report/task/documentation pytest 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-1049_to_1056_Equal_Risk_Growth_V2_Real_Run_Result_Convergence.md
+  terminal: false
+  raw_row_sha256: 0fb0be3139ff072f6d0ad1714b14a709e4587fc2076069de4d20918d7d7f355e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 47c1a8f7286e0e4a059ece67c8407ce6df992b1c0e06cf37a3361eb112ce2cf2

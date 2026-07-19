@@ -1,0 +1,141 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-058
+  title: null
+  domain: 报告/Reader Brief Decision View
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/reader_brief_decision_view_2026-05-29.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/reader_brief_decision_view_2026-05-29.md`；Reader
+    Brief decision view 已完成并通过 latest 真实 artifact 复核；`reader_brief_2026-06-05.html/json`
+    为 `OK`、`production_effect=none`，状态面板明确区分 `build_status=OK`、`decision_usability=MANUAL_REVIEW_REQUIRED`
+    和 `research_promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，Action Checklist、artifact
+    三链路影响、score change 叙事、funnel 人读值/审计值、Top 3 Review Items 和影响类型分组均存在；该结果把 build
+    OK 与投资可用性分开，不改变 production scoring、weights、position gates 或 trading 行为
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Reader Brief 顶部必须拆分 Build Status / Decision Usability / Research Promotion
+      Status；manual review 或 promotion blocker 存在时不能用单一 OK 暗示结论可直接执行；缺失 artifact 必须区分
+      daily score、reader context 和 promotion chain 影响；首页包含 Action Checklist、Top Review
+      Items Today、自然语言 score change、降噪 funnel 和明确 cadence；输出仍 `production_effect=none`，不重算
+      score、不改 weights/gates、不触发交易；专项测试、真实 `reader-brief --latest` 与 `validate-reader-brief
+      --latest` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 321
+    row_sha256: fc99db37f7f7a66c2bdb88b0d11e9f3df7501b63a75accf610d74c28fa1c50c3
+    cell_count: 8
+    all_cells:
+    - REPORT-058
+    - 报告/Reader Brief Decision View
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/reader_brief_decision_view_2026-05-29.md`；Reader Brief
+      decision view 已完成并通过 latest 真实 artifact 复核；`reader_brief_2026-06-05.html/json`
+      为 `OK`、`production_effect=none`，状态面板明确区分 `build_status=OK`、`decision_usability=MANUAL_REVIEW_REQUIRED`
+      和 `research_promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，Action Checklist、artifact
+      三链路影响、score change 叙事、funnel 人读值/审计值、Top 3 Review Items 和影响类型分组均存在；该结果把 build
+      OK 与投资可用性分开，不改变 production scoring、weights、position gates 或 trading 行为
+    - Reader Brief 顶部必须拆分 Build Status / Decision Usability / Research Promotion Status；manual
+      review 或 promotion blocker 存在时不能用单一 OK 暗示结论可直接执行；缺失 artifact 必须区分 daily score、reader
+      context 和 promotion chain 影响；首页包含 Action Checklist、Top Review Items Today、自然语言
+      score change、降噪 funnel 和明确 cadence；输出仍 `production_effect=none`，不重算 score、不改
+      weights/gates、不触发交易；专项测试、真实 `reader-brief --latest` 与 `validate-reader-brief
+      --latest` 通过
+    - '2026-05-29: 新增并进入 IN_PROGRESS；同日进入 VALIDATING；专项测试、reader-brief latest、validate-reader-brief
+      latest、documentation contract 均已通过，当前 daily run bundle 已更新；浏览器自动化被本地 file URL
+      安全策略拦截，已用 HTML 结构校验替代自动视觉截图。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest 字段级复核确认三层状态、5
+      项 Action Checklist、三链路 impact summary、Top 3 review items、3 个 manual review impact
+      groups 和 7 个带 `current_value`/`audit_value` 的 funnel steps 均存在；`reader-brief
+      --latest`、`validate-reader-brief --latest` 和 documentation contract 通过，`production_effect=none`。'
+    raw_line: '|REPORT-058|报告/Reader Brief Decision View|P1|DONE|系统验证|详细拆解见 `docs/requirements/reader_brief_decision_view_2026-05-29.md`；Reader
+      Brief decision view 已完成并通过 latest 真实 artifact 复核；`reader_brief_2026-06-05.html/json`
+      为 `OK`、`production_effect=none`，状态面板明确区分 `build_status=OK`、`decision_usability=MANUAL_REVIEW_REQUIRED`
+      和 `research_promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，Action Checklist、artifact
+      三链路影响、score change 叙事、funnel 人读值/审计值、Top 3 Review Items 和影响类型分组均存在；该结果把 build
+      OK 与投资可用性分开，不改变 production scoring、weights、position gates 或 trading 行为|Reader
+      Brief 顶部必须拆分 Build Status / Decision Usability / Research Promotion Status；manual
+      review 或 promotion blocker 存在时不能用单一 OK 暗示结论可直接执行；缺失 artifact 必须区分 daily score、reader
+      context 和 promotion chain 影响；首页包含 Action Checklist、Top Review Items Today、自然语言
+      score change、降噪 funnel 和明确 cadence；输出仍 `production_effect=none`，不重算 score、不改
+      weights/gates、不触发交易；专项测试、真实 `reader-brief --latest` 与 `validate-reader-brief
+      --latest` 通过|2026-05-29: 新增并进入 IN_PROGRESS；同日进入 VALIDATING；专项测试、reader-brief
+      latest、validate-reader-brief latest、documentation contract 均已通过，当前 daily run
+      bundle 已更新；浏览器自动化被本地 file URL 安全策略拦截，已用 HTML 结构校验替代自动视觉截图。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：latest 字段级复核确认三层状态、5 项 Action Checklist、三链路 impact summary、Top 3
+      review items、3 个 manual review impact groups 和 7 个带 `current_value`/`audit_value`
+      的 funnel steps 均存在；`reader-brief --latest`、`validate-reader-brief --latest`
+      和 documentation contract 通过，`production_effect=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fc99db37f7f7a66c2bdb88b0
+  task_id: REPORT-058
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-29: 新增并进入 IN_PROGRESS；同日进入 VALIDATING；专项测试、reader-brief latest、validate-reader-brief
+      latest、documentation contract 均已通过，当前 daily run bundle 已更新；浏览器自动化被本地 file URL
+      安全策略拦截，已用 HTML 结构校验替代自动视觉截图。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest 字段级复核确认三层状态、5
+      项 Action Checklist、三链路 impact summary、Top 3 review items、3 个 manual review impact
+      groups 和 7 个带 `current_value`/`audit_value` 的 funnel steps 均存在；`reader-brief
+      --latest`、`validate-reader-brief --latest` 和 documentation contract 通过，`production_effect=none`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:fc99db37f7f7a66c2bdb88b0d11e9f3df7501b63a75accf610d74c28fa1c50c3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-058
+  - 报告/Reader Brief Decision View
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/reader_brief_decision_view_2026-05-29.md`；Reader Brief
+    decision view 已完成并通过 latest 真实 artifact 复核；`reader_brief_2026-06-05.html/json`
+    为 `OK`、`production_effect=none`，状态面板明确区分 `build_status=OK`、`decision_usability=MANUAL_REVIEW_REQUIRED`
+    和 `research_promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，Action Checklist、artifact
+    三链路影响、score change 叙事、funnel 人读值/审计值、Top 3 Review Items 和影响类型分组均存在；该结果把 build
+    OK 与投资可用性分开，不改变 production scoring、weights、position gates 或 trading 行为
+  - Reader Brief 顶部必须拆分 Build Status / Decision Usability / Research Promotion Status；manual
+    review 或 promotion blocker 存在时不能用单一 OK 暗示结论可直接执行；缺失 artifact 必须区分 daily score、reader
+    context 和 promotion chain 影响；首页包含 Action Checklist、Top Review Items Today、自然语言
+    score change、降噪 funnel 和明确 cadence；输出仍 `production_effect=none`，不重算 score、不改 weights/gates、不触发交易；专项测试、真实
+    `reader-brief --latest` 与 `validate-reader-brief --latest` 通过
+  - '2026-05-29: 新增并进入 IN_PROGRESS；同日进入 VALIDATING；专项测试、reader-brief latest、validate-reader-brief
+    latest、documentation contract 均已通过，当前 daily run bundle 已更新；浏览器自动化被本地 file URL
+    安全策略拦截，已用 HTML 结构校验替代自动视觉截图。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest 字段级复核确认三层状态、5
+    项 Action Checklist、三链路 impact summary、Top 3 review items、3 个 manual review impact
+    groups 和 7 个带 `current_value`/`audit_value` 的 funnel steps 均存在；`reader-brief --latest`、`validate-reader-brief
+    --latest` 和 documentation contract 通过，`production_effect=none`。'
+  docs_links:
+  - docs/requirements/reader_brief_decision_view_2026-05-29.md
+  terminal: true
+  raw_row_sha256: fc99db37f7f7a66c2bdb88b0d11e9f3df7501b63a75accf610d74c28fa1c50c3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e7692a7edb79ca2e952f5bb432e42d860007c7e6454684a52ba573305b82384c

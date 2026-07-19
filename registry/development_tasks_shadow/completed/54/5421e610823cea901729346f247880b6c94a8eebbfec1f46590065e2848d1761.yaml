@@ -1,0 +1,149 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-011
+  title: null
+  domain: 运行架构/daily-run 生产 as-of 时区
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/daily_run_market_timezone_asof_2026-05-12.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/daily_run_market_timezone_asof_2026-05-12.md`；默认
+    as-of 和 visibility check 已改为按美股市场日期/收盘后可见窗口解析；默认 `daily-plan` smoke 和默认 `daily-run`
+    全链路 smoke 均已验证选择最近完整美股交易日；本轮无 `--as-of` 执行 `aits ops daily-run --run-id ops-011-default-smoke-20260609`，run
+    bundle `outputs/runs/daily/20260608T174358Z/as_of_2026-06-05__ops-011-default-smoke-20260609`
+    返回 `PASS`，32/32 steps 通过，manifest/metadata 均 `PASS`、`failed_step=None`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 未显式传入 `--as-of` 时，`daily-plan` 和 `daily-run` 默认选择 `America/New_York` 美股常规收盘后
+      30 分钟可见的最新完整交易日；`daily-run` 输入可见性预检查对交易日使用最新已完成交易日，对显式休市日使用当前美东日期；显式未来 as-of
+      仍 fail closed，显式历史 as-of 仍提示使用 cache-only replay；测试、README、runbook 和系统流图同步更新
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 331
+    row_sha256: b26f4cd112021e8c9ec5de36d797d378fa8f4a60da6e0f5e3d64fe5caea832a6
+    cell_count: 8
+    all_cells:
+    - OPS-011
+    - 运行架构/daily-run 生产 as-of 时区
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/daily_run_market_timezone_asof_2026-05-12.md`；默认 as-of
+      和 visibility check 已改为按美股市场日期/收盘后可见窗口解析；默认 `daily-plan` smoke 和默认 `daily-run`
+      全链路 smoke 均已验证选择最近完整美股交易日；本轮无 `--as-of` 执行 `aits ops daily-run --run-id ops-011-default-smoke-20260609`，run
+      bundle `outputs/runs/daily/20260608T174358Z/as_of_2026-06-05__ops-011-default-smoke-20260609`
+      返回 `PASS`，32/32 steps 通过，manifest/metadata 均 `PASS`、`failed_step=None`
+    - 未显式传入 `--as-of` 时，`daily-plan` 和 `daily-run` 默认选择 `America/New_York` 美股常规收盘后
+      30 分钟可见的最新完整交易日；`daily-run` 输入可见性预检查对交易日使用最新已完成交易日，对显式休市日使用当前美东日期；显式未来 as-of
+      仍 fail closed，显式历史 as-of 仍提示使用 cache-only replay；测试、README、runbook 和系统流图同步更新
+    - '2026-05-12: 新增并进入实现，原因：自动化在日本时间早晨默认取本机日期 `2026-05-12`，而 visibility check 使用
+      UTC 日期，未按 U.S. equity market 交易日/收盘后可见窗口解析，导致生产 daily-run 日期边界不可靠。2026-05-12:
+      从 IN_PROGRESS 改为 VALIDATING，原因：美东市场日期 resolver、daily-plan/daily-run 默认日期、交易日/休市日
+      visibility check、文档和测试已完成；`daily-plan` smoke 默认评估日期为 `2026-05-11`。2026-06-09:
+      继续保持 VALIDATING，原因：默认 `daily-plan --fail-on-missing-env` smoke 生成 READY 计划，报告生成时间
+      `2026-06-08T17:04:32.336059+00:00`，默认评估日期 `2026-06-05`，计划命令均使用 `--end 2026-06-05`
+      / `--as-of 2026-06-05`，覆盖美股 2026-06-08 常规交易日 16:30 ET 前选择上一完整交易日的解析语义；尚未执行默认
+      `daily-run` 全链路 smoke，因此继续观察而非归档。2026-06-09: 从 VALIDATING 改为 DONE，原因：默认 daily-run
+      全链路 smoke 已完成；`aits ops daily-run --run-id ops-011-default-smoke-20260609` 未传
+      `--as-of`，解析为 `as_of=2026-06-05`，市场日状态 `TRADING_DAY`，上一交易日 `2026-06-04`，执行报告
+      `daily_ops_run_2026-06-05.md` 返回 `PASS`，32/32 steps 通过；run manifest 和 metadata
+      均为 `PASS`、`failed_step=None`，证明生产默认日期解析与 daily-run visibility/check 执行链路一致。'
+    raw_line: '|OPS-011|运行架构/daily-run 生产 as-of 时区|P0|DONE|系统验证|详细拆解见 `docs/requirements/daily_run_market_timezone_asof_2026-05-12.md`；默认
+      as-of 和 visibility check 已改为按美股市场日期/收盘后可见窗口解析；默认 `daily-plan` smoke 和默认 `daily-run`
+      全链路 smoke 均已验证选择最近完整美股交易日；本轮无 `--as-of` 执行 `aits ops daily-run --run-id ops-011-default-smoke-20260609`，run
+      bundle `outputs/runs/daily/20260608T174358Z/as_of_2026-06-05__ops-011-default-smoke-20260609`
+      返回 `PASS`，32/32 steps 通过，manifest/metadata 均 `PASS`、`failed_step=None`|未显式传入
+      `--as-of` 时，`daily-plan` 和 `daily-run` 默认选择 `America/New_York` 美股常规收盘后 30 分钟可见的最新完整交易日；`daily-run`
+      输入可见性预检查对交易日使用最新已完成交易日，对显式休市日使用当前美东日期；显式未来 as-of 仍 fail closed，显式历史 as-of 仍提示使用
+      cache-only replay；测试、README、runbook 和系统流图同步更新|2026-05-12: 新增并进入实现，原因：自动化在日本时间早晨默认取本机日期
+      `2026-05-12`，而 visibility check 使用 UTC 日期，未按 U.S. equity market 交易日/收盘后可见窗口解析，导致生产
+      daily-run 日期边界不可靠。2026-05-12: 从 IN_PROGRESS 改为 VALIDATING，原因：美东市场日期 resolver、daily-plan/daily-run
+      默认日期、交易日/休市日 visibility check、文档和测试已完成；`daily-plan` smoke 默认评估日期为 `2026-05-11`。2026-06-09:
+      继续保持 VALIDATING，原因：默认 `daily-plan --fail-on-missing-env` smoke 生成 READY 计划，报告生成时间
+      `2026-06-08T17:04:32.336059+00:00`，默认评估日期 `2026-06-05`，计划命令均使用 `--end 2026-06-05`
+      / `--as-of 2026-06-05`，覆盖美股 2026-06-08 常规交易日 16:30 ET 前选择上一完整交易日的解析语义；尚未执行默认
+      `daily-run` 全链路 smoke，因此继续观察而非归档。2026-06-09: 从 VALIDATING 改为 DONE，原因：默认 daily-run
+      全链路 smoke 已完成；`aits ops daily-run --run-id ops-011-default-smoke-20260609` 未传
+      `--as-of`，解析为 `as_of=2026-06-05`，市场日状态 `TRADING_DAY`，上一交易日 `2026-06-04`，执行报告
+      `daily_ops_run_2026-06-05.md` 返回 `PASS`，32/32 steps 通过；run manifest 和 metadata
+      均为 `PASS`、`failed_step=None`，证明生产默认日期解析与 daily-run visibility/check 执行链路一致。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b26f4cd112021e8c9ec5de36
+  task_id: OPS-011
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-12: 新增并进入实现，原因：自动化在日本时间早晨默认取本机日期 `2026-05-12`，而 visibility check
+      使用 UTC 日期，未按 U.S. equity market 交易日/收盘后可见窗口解析，导致生产 daily-run 日期边界不可靠。2026-05-12:
+      从 IN_PROGRESS 改为 VALIDATING，原因：美东市场日期 resolver、daily-plan/daily-run 默认日期、交易日/休市日
+      visibility check、文档和测试已完成；`daily-plan` smoke 默认评估日期为 `2026-05-11`。2026-06-09:
+      继续保持 VALIDATING，原因：默认 `daily-plan --fail-on-missing-env` smoke 生成 READY 计划，报告生成时间
+      `2026-06-08T17:04:32.336059+00:00`，默认评估日期 `2026-06-05`，计划命令均使用 `--end 2026-06-05`
+      / `--as-of 2026-06-05`，覆盖美股 2026-06-08 常规交易日 16:30 ET 前选择上一完整交易日的解析语义；尚未执行默认
+      `daily-run` 全链路 smoke，因此继续观察而非归档。2026-06-09: 从 VALIDATING 改为 DONE，原因：默认 daily-run
+      全链路 smoke 已完成；`aits ops daily-run --run-id ops-011-default-smoke-20260609` 未传
+      `--as-of`，解析为 `as_of=2026-06-05`，市场日状态 `TRADING_DAY`，上一交易日 `2026-06-04`，执行报告
+      `daily_ops_run_2026-06-05.md` 返回 `PASS`，32/32 steps 通过；run manifest 和 metadata
+      均为 `PASS`、`failed_step=None`，证明生产默认日期解析与 daily-run visibility/check 执行链路一致。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b26f4cd112021e8c9ec5de36d797d378fa8f4a60da6e0f5e3d64fe5caea832a6
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-011
+  - 运行架构/daily-run 生产 as-of 时区
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/daily_run_market_timezone_asof_2026-05-12.md`；默认 as-of
+    和 visibility check 已改为按美股市场日期/收盘后可见窗口解析；默认 `daily-plan` smoke 和默认 `daily-run`
+    全链路 smoke 均已验证选择最近完整美股交易日；本轮无 `--as-of` 执行 `aits ops daily-run --run-id ops-011-default-smoke-20260609`，run
+    bundle `outputs/runs/daily/20260608T174358Z/as_of_2026-06-05__ops-011-default-smoke-20260609`
+    返回 `PASS`，32/32 steps 通过，manifest/metadata 均 `PASS`、`failed_step=None`
+  - 未显式传入 `--as-of` 时，`daily-plan` 和 `daily-run` 默认选择 `America/New_York` 美股常规收盘后 30
+    分钟可见的最新完整交易日；`daily-run` 输入可见性预检查对交易日使用最新已完成交易日，对显式休市日使用当前美东日期；显式未来 as-of 仍 fail
+    closed，显式历史 as-of 仍提示使用 cache-only replay；测试、README、runbook 和系统流图同步更新
+  - '2026-05-12: 新增并进入实现，原因：自动化在日本时间早晨默认取本机日期 `2026-05-12`，而 visibility check 使用 UTC
+    日期，未按 U.S. equity market 交易日/收盘后可见窗口解析，导致生产 daily-run 日期边界不可靠。2026-05-12: 从 IN_PROGRESS
+    改为 VALIDATING，原因：美东市场日期 resolver、daily-plan/daily-run 默认日期、交易日/休市日 visibility
+    check、文档和测试已完成；`daily-plan` smoke 默认评估日期为 `2026-05-11`。2026-06-09: 继续保持 VALIDATING，原因：默认
+    `daily-plan --fail-on-missing-env` smoke 生成 READY 计划，报告生成时间 `2026-06-08T17:04:32.336059+00:00`，默认评估日期
+    `2026-06-05`，计划命令均使用 `--end 2026-06-05` / `--as-of 2026-06-05`，覆盖美股 2026-06-08
+    常规交易日 16:30 ET 前选择上一完整交易日的解析语义；尚未执行默认 `daily-run` 全链路 smoke，因此继续观察而非归档。2026-06-09:
+    从 VALIDATING 改为 DONE，原因：默认 daily-run 全链路 smoke 已完成；`aits ops daily-run --run-id
+    ops-011-default-smoke-20260609` 未传 `--as-of`，解析为 `as_of=2026-06-05`，市场日状态 `TRADING_DAY`，上一交易日
+    `2026-06-04`，执行报告 `daily_ops_run_2026-06-05.md` 返回 `PASS`，32/32 steps 通过；run manifest
+    和 metadata 均为 `PASS`、`failed_step=None`，证明生产默认日期解析与 daily-run visibility/check
+    执行链路一致。'
+  docs_links:
+  - docs/requirements/daily_run_market_timezone_asof_2026-05-12.md
+  terminal: true
+  raw_row_sha256: b26f4cd112021e8c9ec5de36d797d378fa8f4a60da6e0f5e3d64fe5caea832a6
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 96ca0fe45de3829099e36006fa124b70d62634c11d6900ec97c976f6b3209142

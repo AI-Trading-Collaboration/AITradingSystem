@@ -1,0 +1,123 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2443_MARKETSTACK_QUOTA_CYCLE_RECOVERY
+  title: null
+  domain: Data pipeline / Marketstack quota cycle recovery
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: System operations：后续 provider billing-cycle governance
+  requirement_refs:
+  - docs/requirements/TRADING-2443_Marketstack_Quota_Cycle_Recovery.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2443_Marketstack_Quota_Cycle_Recovery.md`。Owner
+    Dashboard evidence 确认 billing period=`2026-07-12..2026-08-11`、renewal=`2026-08-12`、current
+    usage=0，旧负 quota header 属上一周期；实现 reviewed bounded cycle bootstrap 与 config-governed
+    download retry，不改变原 10% overage cap。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Full-history/new ticker/mixed stale/当前周期负 header/超边界继续 fail closed；首个 live
+      response 刷新 quota evidence；旧 run-control state/ledger 保留且新 spec 第二次失败后 hard
+      stop；真实 `aits ops daily-run` 36/36 PASS，DQ/PIT/Reader Brief gates 完成，无 production/active
+      shadow weights 或 broker/order/trading action。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 20
+    row_sha256: 35968f1a0bb83c61436edc6c3a469cdd48af6352e2c3ab7e8725f84be45d3347
+    cell_count: 8
+    all_cells:
+    - TRADING-2443_MARKETSTACK_QUOTA_CYCLE_RECOVERY
+    - Data pipeline / Marketstack quota cycle recovery
+    - P0
+    - DONE
+    - System operations：后续 provider billing-cycle governance
+    - 详见 `docs/requirements/TRADING-2443_Marketstack_Quota_Cycle_Recovery.md`。Owner
+      Dashboard evidence 确认 billing period=`2026-07-12..2026-08-11`、renewal=`2026-08-12`、current
+      usage=0，旧负 quota header 属上一周期；实现 reviewed bounded cycle bootstrap 与 config-governed
+      download retry，不改变原 10% overage cap。
+    - Full-history/new ticker/mixed stale/当前周期负 header/超边界继续 fail closed；首个 live response
+      刷新 quota evidence；旧 run-control state/ledger 保留且新 spec 第二次失败后 hard stop；真实 `aits
+      ops daily-run` 36/36 PASS，DQ/PIT/Reader Brief gates 完成，无 production/active shadow
+      weights 或 broker/order/trading action。
+    - '2026-07-16: 初始 quota blocker 与 run-control retry-exhausted blocker均按 no-silent-workaround
+      流程修复；focused parallel=`101 passed`，Ruff/compileall/docs/task/diff checks PASS。最终
+      run id=`daily_ops_run:2026-07-15:20260716T022111Z`；Marketstack one range request
+      estimated/increment usage=25、live quota remaining=10000；DQ=`PASS_WITH_WARNINGS`、PIT=`PASS`、Reader
+      Brief validation=13/13 PASS、manifest `production_effect=none`。'
+    raw_line: '|TRADING-2443_MARKETSTACK_QUOTA_CYCLE_RECOVERY|Data pipeline / Marketstack
+      quota cycle recovery|P0|DONE|System operations：后续 provider billing-cycle governance|详见
+      `docs/requirements/TRADING-2443_Marketstack_Quota_Cycle_Recovery.md`。Owner Dashboard
+      evidence 确认 billing period=`2026-07-12..2026-08-11`、renewal=`2026-08-12`、current
+      usage=0，旧负 quota header 属上一周期；实现 reviewed bounded cycle bootstrap 与 config-governed
+      download retry，不改变原 10% overage cap。|Full-history/new ticker/mixed stale/当前周期负
+      header/超边界继续 fail closed；首个 live response 刷新 quota evidence；旧 run-control state/ledger
+      保留且新 spec 第二次失败后 hard stop；真实 `aits ops daily-run` 36/36 PASS，DQ/PIT/Reader
+      Brief gates 完成，无 production/active shadow weights 或 broker/order/trading action。|2026-07-16:
+      初始 quota blocker 与 run-control retry-exhausted blocker均按 no-silent-workaround
+      流程修复；focused parallel=`101 passed`，Ruff/compileall/docs/task/diff checks PASS。最终
+      run id=`daily_ops_run:2026-07-15:20260716T022111Z`；Marketstack one range request
+      estimated/increment usage=25、live quota remaining=10000；DQ=`PASS_WITH_WARNINGS`、PIT=`PASS`、Reader
+      Brief validation=13/13 PASS、manifest `production_effect=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-35968f1a0bb83c61436edc6c
+  task_id: TRADING-2443_MARKETSTACK_QUOTA_CYCLE_RECOVERY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: System operations：后续 provider billing-cycle governance
+    notes: '2026-07-16: 初始 quota blocker 与 run-control retry-exhausted blocker均按 no-silent-workaround
+      流程修复；focused parallel=`101 passed`，Ruff/compileall/docs/task/diff checks PASS。最终
+      run id=`daily_ops_run:2026-07-15:20260716T022111Z`；Marketstack one range request
+      estimated/increment usage=25、live quota remaining=10000；DQ=`PASS_WITH_WARNINGS`、PIT=`PASS`、Reader
+      Brief validation=13/13 PASS、manifest `production_effect=none`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:35968f1a0bb83c61436edc6c3a469cdd48af6352e2c3ab7e8725f84be45d3347
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2443_MARKETSTACK_QUOTA_CYCLE_RECOVERY
+  - Data pipeline / Marketstack quota cycle recovery
+  - P0
+  - DONE
+  - System operations：后续 provider billing-cycle governance
+  - 详见 `docs/requirements/TRADING-2443_Marketstack_Quota_Cycle_Recovery.md`。Owner
+    Dashboard evidence 确认 billing period=`2026-07-12..2026-08-11`、renewal=`2026-08-12`、current
+    usage=0，旧负 quota header 属上一周期；实现 reviewed bounded cycle bootstrap 与 config-governed
+    download retry，不改变原 10% overage cap。
+  - Full-history/new ticker/mixed stale/当前周期负 header/超边界继续 fail closed；首个 live response
+    刷新 quota evidence；旧 run-control state/ledger 保留且新 spec 第二次失败后 hard stop；真实 `aits
+    ops daily-run` 36/36 PASS，DQ/PIT/Reader Brief gates 完成，无 production/active shadow
+    weights 或 broker/order/trading action。
+  - '2026-07-16: 初始 quota blocker 与 run-control retry-exhausted blocker均按 no-silent-workaround
+    流程修复；focused parallel=`101 passed`，Ruff/compileall/docs/task/diff checks PASS。最终
+    run id=`daily_ops_run:2026-07-15:20260716T022111Z`；Marketstack one range request
+    estimated/increment usage=25、live quota remaining=10000；DQ=`PASS_WITH_WARNINGS`、PIT=`PASS`、Reader
+    Brief validation=13/13 PASS、manifest `production_effect=none`。'
+  docs_links:
+  - docs/requirements/TRADING-2443_Marketstack_Quota_Cycle_Recovery.md
+  terminal: true
+  raw_row_sha256: 35968f1a0bb83c61436edc6c3a469cdd48af6352e2c3ab7e8725f84be45d3347
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4ff295695f5b2ad7bbb4293e4cda47413ab7754349b057ecee2c479a3909929c

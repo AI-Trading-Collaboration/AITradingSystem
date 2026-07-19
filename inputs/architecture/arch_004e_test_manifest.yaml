@@ -1,10 +1,10 @@
 schema_version: arch_004e_test_manifest.v1
 status: PASS
 policy_id: arch_004e_devex_ownership_policy
-policy_sha256: dc11a0fcfc5b5a3f83a08b6474b4646400e8a32e436cf8a345fb4ad902f58a23
+policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 test_root: tests
-test_file_count: 1131
-test_count: 1073
+test_file_count: 1132
+test_count: 1074
 support_file_count: 58
 orphan_count: 0
 specific_overlap_count: 0
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 878c717a659dcff7632223b220283ac120dee858cf27770dffaab9d1ed671872
+  sha256: fd46c8d915bb0827297da80ce970bae648caa22491d1ad026b65588bc7e67d68
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7641,7 +7641,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 923db6941e4c5c6cceb68652fcf88d845ae9f0538eb6f0a87bae96a7299b07bf
+  sha256: 966ef9f3babe94b0db2f319445d97f3b4872c7e188e589eaf8e41967fde23224
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7677,7 +7677,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_005_bootstrap_handoff
   path: tests/test_arch_005_bootstrap_handoff.py
-  sha256: f13fa918639050c9ef36dedc0d5524b5f4ae909fe254d9c97af71f631208b3ea
+  sha256: de1f4cdf2fb5df0556565476642c61cc6a5913a5865e1f9456480412fce05a99
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -7694,6 +7694,22 @@ tests:
 - test_id: tests.test_arch_005_prebootstrap
   path: tests/test_arch_005_prebootstrap.py
   sha256: 804a5336a5ad57b01898fc16e16d64dc19718811dfb52a2d2d5f63b972358e01
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_task_registry_shadow
+  path: tests/test_arch_005_task_registry_shadow.py
+  sha256: cc6a05fe5debb67e6d12b8038e37d9866721c62ca40e3e060ff2f48577e5a088
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality

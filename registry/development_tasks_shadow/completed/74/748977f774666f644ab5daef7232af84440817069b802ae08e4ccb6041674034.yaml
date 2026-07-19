@@ -1,0 +1,131 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ENG-VAL-003_DATA_FOUNDATION_CLI_SMOKE_SPLIT
+  title: null
+  domain: Developer validation / contract-validation runtime optimization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统后续针对 docs contract / tail-risk fixtures / current subscription CLI
+    smoke 继续优化
+  requirement_refs:
+  - docs/requirements/ENG-VAL-003_Data_Foundation_CLI_Smoke_Split.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ENG-VAL-003_Data_Foundation_CLI_Smoke_Split.md`；承接
+    ENG-VAL-002 runtime profiling 后新的最慢单测 `test_data_foundation_cli_smoke`。本任务只优化测试执行组织，不改变
+    data foundation runtime behavior、data quality gate、report contract、tier path 覆盖、默认
+    xdist 策略或生产边界。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`test_data_foundation_cli_smoke` 保留 6 条跨 root group 核心 CLI 真实执行，其余 data
+      foundation command surface 使用 Typer command-tree introspection 验证注册；direct API
+      tests 继续覆盖 schema / safety / artifact 行为。验证通过 focused parallel pytest `4 passed
+      in 16.35s`、Ruff、compileall、docs freshness scoped PASS、contract-validation `196
+      passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T180921Z/test_runtime_summary.json`）、documentation
+      contract、task-register consistency run/validate 和 `git diff --check`。目标单测 call
+      duration 从 ENG-VAL-002 artifact 的 `64.67s` 降到 `10.59s`；完整 tier elapsed 从 `213.73s`
+      降到 `191.61s`，top20 slow duration total 从 `474.64s` 降到 `394.89s`。'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 146
+    row_sha256: 5e6e3d5a23a286d1fe1671b8c63419547f7676d4cc2417cc87885a6661b84197
+    cell_count: 8
+    all_cells:
+    - ENG-VAL-003_DATA_FOUNDATION_CLI_SMOKE_SPLIT
+    - Developer validation / contract-validation runtime optimization
+    - P2
+    - DONE
+    - 系统后续针对 docs contract / tail-risk fixtures / current subscription CLI smoke 继续优化
+    - 详见 `docs/requirements/ENG-VAL-003_Data_Foundation_CLI_Smoke_Split.md`；承接 ENG-VAL-002
+      runtime profiling 后新的最慢单测 `test_data_foundation_cli_smoke`。本任务只优化测试执行组织，不改变
+      data foundation runtime behavior、data quality gate、report contract、tier path
+      覆盖、默认 xdist 策略或生产边界。
+    - '`test_data_foundation_cli_smoke` 保留 6 条跨 root group 核心 CLI 真实执行，其余 data foundation
+      command surface 使用 Typer command-tree introspection 验证注册；direct API tests 继续覆盖
+      schema / safety / artifact 行为。验证通过 focused parallel pytest `4 passed in 16.35s`、Ruff、compileall、docs
+      freshness scoped PASS、contract-validation `196 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T180921Z/test_runtime_summary.json`）、documentation
+      contract、task-register consistency run/validate 和 `git diff --check`。目标单测 call
+      duration 从 ENG-VAL-002 artifact 的 `64.67s` 降到 `10.59s`；完整 tier elapsed 从 `213.73s`
+      降到 `191.61s`，top20 slow duration total 从 `474.64s` 降到 `394.89s`。'
+    - '2026-07-05: 根据 ENG-VAL-002 slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05:
+      实现完成并归档 DONE；data foundation 已退出 top bottleneck，当前最慢项转为 docs contract full registry
+      scan、tail-risk fixture/setup 和 current subscription CLI smoke。'
+    raw_line: '|ENG-VAL-003_DATA_FOUNDATION_CLI_SMOKE_SPLIT|Developer validation /
+      contract-validation runtime optimization|P2|DONE|系统后续针对 docs contract / tail-risk
+      fixtures / current subscription CLI smoke 继续优化|详见 `docs/requirements/ENG-VAL-003_Data_Foundation_CLI_Smoke_Split.md`；承接
+      ENG-VAL-002 runtime profiling 后新的最慢单测 `test_data_foundation_cli_smoke`。本任务只优化测试执行组织，不改变
+      data foundation runtime behavior、data quality gate、report contract、tier path
+      覆盖、默认 xdist 策略或生产边界。|`test_data_foundation_cli_smoke` 保留 6 条跨 root group 核心
+      CLI 真实执行，其余 data foundation command surface 使用 Typer command-tree introspection
+      验证注册；direct API tests 继续覆盖 schema / safety / artifact 行为。验证通过 focused parallel
+      pytest `4 passed in 16.35s`、Ruff、compileall、docs freshness scoped PASS、contract-validation
+      `196 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T180921Z/test_runtime_summary.json`）、documentation
+      contract、task-register consistency run/validate 和 `git diff --check`。目标单测 call
+      duration 从 ENG-VAL-002 artifact 的 `64.67s` 降到 `10.59s`；完整 tier elapsed 从 `213.73s`
+      降到 `191.61s`，top20 slow duration total 从 `474.64s` 降到 `394.89s`。|2026-07-05:
+      根据 ENG-VAL-002 slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05: 实现完成并归档
+      DONE；data foundation 已退出 top bottleneck，当前最慢项转为 docs contract full registry
+      scan、tail-risk fixture/setup 和 current subscription CLI smoke。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5e6e3d5a23a286d1fe1671b8
+  task_id: ENG-VAL-003_DATA_FOUNDATION_CLI_SMOKE_SPLIT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统后续针对 docs contract / tail-risk fixtures / current subscription CLI
+      smoke 继续优化
+    notes: '2026-07-05: 根据 ENG-VAL-002 slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05:
+      实现完成并归档 DONE；data foundation 已退出 top bottleneck，当前最慢项转为 docs contract full registry
+      scan、tail-risk fixture/setup 和 current subscription CLI smoke。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5e6e3d5a23a286d1fe1671b8c63419547f7676d4cc2417cc87885a6661b84197
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ENG-VAL-003_DATA_FOUNDATION_CLI_SMOKE_SPLIT
+  - Developer validation / contract-validation runtime optimization
+  - P2
+  - DONE
+  - 系统后续针对 docs contract / tail-risk fixtures / current subscription CLI smoke 继续优化
+  - 详见 `docs/requirements/ENG-VAL-003_Data_Foundation_CLI_Smoke_Split.md`；承接 ENG-VAL-002
+    runtime profiling 后新的最慢单测 `test_data_foundation_cli_smoke`。本任务只优化测试执行组织，不改变 data
+    foundation runtime behavior、data quality gate、report contract、tier path 覆盖、默认
+    xdist 策略或生产边界。
+  - '`test_data_foundation_cli_smoke` 保留 6 条跨 root group 核心 CLI 真实执行，其余 data foundation
+    command surface 使用 Typer command-tree introspection 验证注册；direct API tests 继续覆盖
+    schema / safety / artifact 行为。验证通过 focused parallel pytest `4 passed in 16.35s`、Ruff、compileall、docs
+    freshness scoped PASS、contract-validation `196 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T180921Z/test_runtime_summary.json`）、documentation
+    contract、task-register consistency run/validate 和 `git diff --check`。目标单测 call
+    duration 从 ENG-VAL-002 artifact 的 `64.67s` 降到 `10.59s`；完整 tier elapsed 从 `213.73s`
+    降到 `191.61s`，top20 slow duration total 从 `474.64s` 降到 `394.89s`。'
+  - '2026-07-05: 根据 ENG-VAL-002 slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05:
+    实现完成并归档 DONE；data foundation 已退出 top bottleneck，当前最慢项转为 docs contract full registry
+    scan、tail-risk fixture/setup 和 current subscription CLI smoke。'
+  docs_links:
+  - docs/requirements/ENG-VAL-003_Data_Foundation_CLI_Smoke_Split.md
+  terminal: true
+  raw_row_sha256: 5e6e3d5a23a286d1fe1671b8c63419547f7676d4cc2417cc87885a6661b84197
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 172bebcbd3b20ed82a477fe4de22ec59cadacbc092a65ad7a9995bf64af9b1b4

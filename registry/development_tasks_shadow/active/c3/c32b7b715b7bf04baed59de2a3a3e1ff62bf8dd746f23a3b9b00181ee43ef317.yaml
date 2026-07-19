@@ -1,0 +1,196 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-156_to_160
+  title: null
+  domain: ETF portfolio research/Outcome Update Loop and Rolling Advisory Evidence
+    Refresh
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner + 2026-06-14 后复验
+  requirement_refs:
+  - docs/requirements/TRADING-156_to_160_Outcome_Update_Loop_and_Rolling_Advisory_Evidence_Refresh.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-156_to_160_Outcome_Update_Loop_and_Rolling_Advisory_Evidence_Refresh.md`；baseline
+    实现已完成；canonical due artifact `9d344a0a7c24b676` 记录 `as_of=2026-06-14`，当前 2026-06-10
+    运行 safe update 时底层 `update_advisory_outcome` 正确触发 future-as-of 防护，`data_quality_status=NOT_RUN_FUTURE_AS_OF`，因此真实
+    forward window 尚不能从 `PENDING` 推进到 `AVAILABLE`；解除条件是在 2026-06-14 不再是未来日期且 price/rate
+    cache 通过质量门禁后复跑 outcome-update / rolling refresh / decision chain；本阶段仍禁止 broker
+    API、自动下单、automatic production candidate、owner auto approval、真实仓位自动修改、official
+    target weight mutation、`position_advisory_v1.yaml` 自动修改和 policy auto apply
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`outcome-update-review run/report` 和 `validate-outcome-update-review` 可运行，所有
+      due window 均有 `review_status` 且 `future_data_used_in_decision=false`；`outcome-update
+      run/report` 和 `validate-outcome-update` 可运行，只更新 `READY_TO_UPDATE` windows 并生成
+      update audit、before/after status delta；`rolling-evidence-refresh run/report`
+      和 `validate-rolling-evidence-refresh` 可运行，刷新 outcome dashboard、limited-vs-notrade、consensus-risk、owner-attribution、shadow-aging、weekly-advisory-review
+      和 Reader Brief section；`evidence-trend run/report` 和 `validate-evidence-trend`
+      可运行，样本不足时标记 `INSUFFICIENT_HISTORY`；`forward-outcome-decision run/report` 和 `validate-forward-outcome-decision`
+      可运行，rule calibration readiness 不足时不得建议自动调规则，`broker_action_allowed=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 root validation 和 dynamic-v3
+      family artifact validation 完成；full pytest 已尝试但 15 分钟超时无失败明细'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1459
+    row_sha256: 6d7c939ba00dcf8372e25a1035d2cae865c26792e2e966159c45c4f3514ec1a1
+    cell_count: 8
+    all_cells:
+    - TRADING-156_to_160
+    - ETF portfolio research/Outcome Update Loop and Rolling Advisory Evidence Refresh
+    - P0
+    - VALIDATING
+    - 项目 owner + 2026-06-14 后复验
+    - 详细拆解见 `docs/requirements/TRADING-156_to_160_Outcome_Update_Loop_and_Rolling_Advisory_Evidence_Refresh.md`；baseline
+      实现已完成；canonical due artifact `9d344a0a7c24b676` 记录 `as_of=2026-06-14`，当前 2026-06-10
+      运行 safe update 时底层 `update_advisory_outcome` 正确触发 future-as-of 防护，`data_quality_status=NOT_RUN_FUTURE_AS_OF`，因此真实
+      forward window 尚不能从 `PENDING` 推进到 `AVAILABLE`；解除条件是在 2026-06-14 不再是未来日期且 price/rate
+      cache 通过质量门禁后复跑 outcome-update / rolling refresh / decision chain；本阶段仍禁止 broker
+      API、自动下单、automatic production candidate、owner auto approval、真实仓位自动修改、official
+      target weight mutation、`position_advisory_v1.yaml` 自动修改和 policy auto apply
+    - '`outcome-update-review run/report` 和 `validate-outcome-update-review` 可运行，所有
+      due window 均有 `review_status` 且 `future_data_used_in_decision=false`；`outcome-update
+      run/report` 和 `validate-outcome-update` 可运行，只更新 `READY_TO_UPDATE` windows 并生成
+      update audit、before/after status delta；`rolling-evidence-refresh run/report`
+      和 `validate-rolling-evidence-refresh` 可运行，刷新 outcome dashboard、limited-vs-notrade、consensus-risk、owner-attribution、shadow-aging、weekly-advisory-review
+      和 Reader Brief section；`evidence-trend run/report` 和 `validate-evidence-trend`
+      可运行，样本不足时标记 `INSUFFICIENT_HISTORY`；`forward-outcome-decision run/report` 和 `validate-forward-outcome-decision`
+      可运行，rule calibration readiness 不足时不得建议自动调规则，`broker_action_allowed=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 root validation 和 dynamic-v3
+      family artifact validation 完成；full pytest 已尝试但 15 分钟超时无失败明细'
+    - '2026-06-10: 新增并进入 IN_PROGRESS，原因：TRADING-151_to_155 已能扫描 due outcome、扩展 replay
+      样本并输出 dashboard/focused/risk evidence，但尚未通过人工 review pack 安全执行真实 outcome 更新，也未把更新后的
+      evidence refresh、trend 和 weekly decision pack 串成可重复闭环；本阶段优先把 due window 从 `PENDING`
+      安全推进到 `AVAILABLE`，同时继续保持 no broker / no production / no auto policy mutation。2026-06-10:
+      baseline 实现完成并转入 VALIDATING；新增 `outcome-update-review`、`outcome-update`、`rolling-evidence-refresh`、`evidence-trend`、`forward-outcome-decision`
+      CLI/report/validators、report registry、artifact catalog、system flow、operations
+      runbook、README、Reader Brief summary fields 和 focused tests；修复 paper tracking
+      return path 对 `CASH` 无价格行时的零收益处理。真实链路在 existing due artifact 上生成 review `3afeeb97f9be39e9`（ready=1、blocked=0、future_data=false），safe
+      update `aaa8a4781e74934d` 因 `as_of=2026-06-14` 对当前日期仍为 future 而保持 updated=0/skipped=4、forward
+      0/4 不变；随后 no-update refresh `e3fda052b073d586`、trend `d3f74685ebf39711` 和 decision
+      `f2a5bd5b43036fa6` 均生成并 validate PASS，decision=`wait_for_more_outcomes`、readiness=`NOT_READY`、next_due_scan=`2026-06-21`；focused
+      pytest 8 passed，root validation PASS，family artifact validation PASS，ruff/compileall/git
+      diff check PASS，full pytest 15 分钟超时。'
+    raw_line: '|TRADING-156_to_160|ETF portfolio research/Outcome Update Loop and
+      Rolling Advisory Evidence Refresh|P0|VALIDATING|项目 owner + 2026-06-14 后复验|详细拆解见
+      `docs/requirements/TRADING-156_to_160_Outcome_Update_Loop_and_Rolling_Advisory_Evidence_Refresh.md`；baseline
+      实现已完成；canonical due artifact `9d344a0a7c24b676` 记录 `as_of=2026-06-14`，当前 2026-06-10
+      运行 safe update 时底层 `update_advisory_outcome` 正确触发 future-as-of 防护，`data_quality_status=NOT_RUN_FUTURE_AS_OF`，因此真实
+      forward window 尚不能从 `PENDING` 推进到 `AVAILABLE`；解除条件是在 2026-06-14 不再是未来日期且 price/rate
+      cache 通过质量门禁后复跑 outcome-update / rolling refresh / decision chain；本阶段仍禁止 broker
+      API、自动下单、automatic production candidate、owner auto approval、真实仓位自动修改、official
+      target weight mutation、`position_advisory_v1.yaml` 自动修改和 policy auto apply|`outcome-update-review
+      run/report` 和 `validate-outcome-update-review` 可运行，所有 due window 均有 `review_status`
+      且 `future_data_used_in_decision=false`；`outcome-update run/report` 和 `validate-outcome-update`
+      可运行，只更新 `READY_TO_UPDATE` windows 并生成 update audit、before/after status delta；`rolling-evidence-refresh
+      run/report` 和 `validate-rolling-evidence-refresh` 可运行，刷新 outcome dashboard、limited-vs-notrade、consensus-risk、owner-attribution、shadow-aging、weekly-advisory-review
+      和 Reader Brief section；`evidence-trend run/report` 和 `validate-evidence-trend`
+      可运行，样本不足时标记 `INSUFFICIENT_HISTORY`；`forward-outcome-decision run/report` 和 `validate-forward-outcome-decision`
+      可运行，rule calibration readiness 不足时不得建议自动调规则，`broker_action_allowed=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 root validation 和 dynamic-v3
+      family artifact validation 完成；full pytest 已尝试但 15 分钟超时无失败明细|2026-06-10: 新增并进入
+      IN_PROGRESS，原因：TRADING-151_to_155 已能扫描 due outcome、扩展 replay 样本并输出 dashboard/focused/risk
+      evidence，但尚未通过人工 review pack 安全执行真实 outcome 更新，也未把更新后的 evidence refresh、trend
+      和 weekly decision pack 串成可重复闭环；本阶段优先把 due window 从 `PENDING` 安全推进到 `AVAILABLE`，同时继续保持
+      no broker / no production / no auto policy mutation。2026-06-10: baseline 实现完成并转入
+      VALIDATING；新增 `outcome-update-review`、`outcome-update`、`rolling-evidence-refresh`、`evidence-trend`、`forward-outcome-decision`
+      CLI/report/validators、report registry、artifact catalog、system flow、operations
+      runbook、README、Reader Brief summary fields 和 focused tests；修复 paper tracking
+      return path 对 `CASH` 无价格行时的零收益处理。真实链路在 existing due artifact 上生成 review `3afeeb97f9be39e9`（ready=1、blocked=0、future_data=false），safe
+      update `aaa8a4781e74934d` 因 `as_of=2026-06-14` 对当前日期仍为 future 而保持 updated=0/skipped=4、forward
+      0/4 不变；随后 no-update refresh `e3fda052b073d586`、trend `d3f74685ebf39711` 和 decision
+      `f2a5bd5b43036fa6` 均生成并 validate PASS，decision=`wait_for_more_outcomes`、readiness=`NOT_READY`、next_due_scan=`2026-06-21`；focused
+      pytest 8 passed，root validation PASS，family artifact validation PASS，ruff/compileall/git
+      diff check PASS，full pytest 15 分钟超时。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6d7c939ba00dcf8372e25a10
+  task_id: TRADING-156_to_160
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner + 2026-06-14 后复验
+    notes: '2026-06-10: 新增并进入 IN_PROGRESS，原因：TRADING-151_to_155 已能扫描 due outcome、扩展
+      replay 样本并输出 dashboard/focused/risk evidence，但尚未通过人工 review pack 安全执行真实 outcome
+      更新，也未把更新后的 evidence refresh、trend 和 weekly decision pack 串成可重复闭环；本阶段优先把 due
+      window 从 `PENDING` 安全推进到 `AVAILABLE`，同时继续保持 no broker / no production / no auto
+      policy mutation。2026-06-10: baseline 实现完成并转入 VALIDATING；新增 `outcome-update-review`、`outcome-update`、`rolling-evidence-refresh`、`evidence-trend`、`forward-outcome-decision`
+      CLI/report/validators、report registry、artifact catalog、system flow、operations
+      runbook、README、Reader Brief summary fields 和 focused tests；修复 paper tracking
+      return path 对 `CASH` 无价格行时的零收益处理。真实链路在 existing due artifact 上生成 review `3afeeb97f9be39e9`（ready=1、blocked=0、future_data=false），safe
+      update `aaa8a4781e74934d` 因 `as_of=2026-06-14` 对当前日期仍为 future 而保持 updated=0/skipped=4、forward
+      0/4 不变；随后 no-update refresh `e3fda052b073d586`、trend `d3f74685ebf39711` 和 decision
+      `f2a5bd5b43036fa6` 均生成并 validate PASS，decision=`wait_for_more_outcomes`、readiness=`NOT_READY`、next_due_scan=`2026-06-21`；focused
+      pytest 8 passed，root validation PASS，family artifact validation PASS，ruff/compileall/git
+      diff check PASS，full pytest 15 分钟超时。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6d7c939ba00dcf8372e25a1035d2cae865c26792e2e966159c45c4f3514ec1a1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-156_to_160
+  - ETF portfolio research/Outcome Update Loop and Rolling Advisory Evidence Refresh
+  - P0
+  - VALIDATING
+  - 项目 owner + 2026-06-14 后复验
+  - 详细拆解见 `docs/requirements/TRADING-156_to_160_Outcome_Update_Loop_and_Rolling_Advisory_Evidence_Refresh.md`；baseline
+    实现已完成；canonical due artifact `9d344a0a7c24b676` 记录 `as_of=2026-06-14`，当前 2026-06-10
+    运行 safe update 时底层 `update_advisory_outcome` 正确触发 future-as-of 防护，`data_quality_status=NOT_RUN_FUTURE_AS_OF`，因此真实
+    forward window 尚不能从 `PENDING` 推进到 `AVAILABLE`；解除条件是在 2026-06-14 不再是未来日期且 price/rate
+    cache 通过质量门禁后复跑 outcome-update / rolling refresh / decision chain；本阶段仍禁止 broker
+    API、自动下单、automatic production candidate、owner auto approval、真实仓位自动修改、official
+    target weight mutation、`position_advisory_v1.yaml` 自动修改和 policy auto apply
+  - '`outcome-update-review run/report` 和 `validate-outcome-update-review` 可运行，所有
+    due window 均有 `review_status` 且 `future_data_used_in_decision=false`；`outcome-update
+    run/report` 和 `validate-outcome-update` 可运行，只更新 `READY_TO_UPDATE` windows 并生成
+    update audit、before/after status delta；`rolling-evidence-refresh run/report` 和
+    `validate-rolling-evidence-refresh` 可运行，刷新 outcome dashboard、limited-vs-notrade、consensus-risk、owner-attribution、shadow-aging、weekly-advisory-review
+    和 Reader Brief section；`evidence-trend run/report` 和 `validate-evidence-trend`
+    可运行，样本不足时标记 `INSUFFICIENT_HISTORY`；`forward-outcome-decision run/report` 和 `validate-forward-outcome-decision`
+    可运行，rule calibration readiness 不足时不得建议自动调规则，`broker_action_allowed=false`、`production_effect=none`；README、operations
+    runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+    tests、ruff、compileall、git diff check、dynamic-v3 root validation 和 dynamic-v3 family
+    artifact validation 完成；full pytest 已尝试但 15 分钟超时无失败明细'
+  - '2026-06-10: 新增并进入 IN_PROGRESS，原因：TRADING-151_to_155 已能扫描 due outcome、扩展 replay
+    样本并输出 dashboard/focused/risk evidence，但尚未通过人工 review pack 安全执行真实 outcome 更新，也未把更新后的
+    evidence refresh、trend 和 weekly decision pack 串成可重复闭环；本阶段优先把 due window 从 `PENDING`
+    安全推进到 `AVAILABLE`，同时继续保持 no broker / no production / no auto policy mutation。2026-06-10:
+    baseline 实现完成并转入 VALIDATING；新增 `outcome-update-review`、`outcome-update`、`rolling-evidence-refresh`、`evidence-trend`、`forward-outcome-decision`
+    CLI/report/validators、report registry、artifact catalog、system flow、operations
+    runbook、README、Reader Brief summary fields 和 focused tests；修复 paper tracking return
+    path 对 `CASH` 无价格行时的零收益处理。真实链路在 existing due artifact 上生成 review `3afeeb97f9be39e9`（ready=1、blocked=0、future_data=false），safe
+    update `aaa8a4781e74934d` 因 `as_of=2026-06-14` 对当前日期仍为 future 而保持 updated=0/skipped=4、forward
+    0/4 不变；随后 no-update refresh `e3fda052b073d586`、trend `d3f74685ebf39711` 和 decision
+    `f2a5bd5b43036fa6` 均生成并 validate PASS，decision=`wait_for_more_outcomes`、readiness=`NOT_READY`、next_due_scan=`2026-06-21`；focused
+    pytest 8 passed，root validation PASS，family artifact validation PASS，ruff/compileall/git
+    diff check PASS，full pytest 15 分钟超时。'
+  docs_links:
+  - docs/requirements/TRADING-156_to_160_Outcome_Update_Loop_and_Rolling_Advisory_Evidence_Refresh.md
+  terminal: false
+  raw_row_sha256: 6d7c939ba00dcf8372e25a1035d2cae865c26792e2e966159c45c4f3514ec1a1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7cb02ea2b9d584f72b0570a28f159f91bd3590d003fc228ca126d9717d3e68e2

@@ -1,0 +1,116 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-406_RECOVERY_VALIDATION_TIER_EXPANSION
+  title: null
+  domain: Research governance / recovery validation expansion
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 无；后续 recovery-governance changes 必须保留 expanded safety/status coverage
+  requirement_refs:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；扩展
+    TRADING-400 recovery governance pack focused tests，覆盖 blocked、healthy-with-warnings、missing
+    source、unwaived warning、paper-shadow false、extended forbidden、live forbidden 等状态
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 realistic TRADING-400-style fixtures 和 `tests/test_recovery_triage_reports.py`；扩展
+      `tests/test_research_governance_recovery_pack.py`；focused pytest 数量从 5 materially
+      增加到 14；validation deterministic and fast；Ruff、compileall、documentation/report
+      quality gates 通过或既有 warning 可见披露
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 195
+    row_sha256: 4d711e665bb67dd8f2019f42b8b447333217ffbdf59cf5a3aed964d64b8a26e3
+    cell_count: 8
+    all_cells:
+    - TRADING-406_RECOVERY_VALIDATION_TIER_EXPANSION
+    - Research governance / recovery validation expansion
+    - P1
+    - DONE
+    - 无；后续 recovery-governance changes 必须保留 expanded safety/status coverage
+    - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；扩展
+      TRADING-400 recovery governance pack focused tests，覆盖 blocked、healthy-with-warnings、missing
+      source、unwaived warning、paper-shadow false、extended forbidden、live forbidden
+      等状态
+    - 新增 realistic TRADING-400-style fixtures 和 `tests/test_recovery_triage_reports.py`；扩展
+      `tests/test_research_governance_recovery_pack.py`；focused pytest 数量从 5 materially
+      增加到 14；validation deterministic and fast；Ruff、compileall、documentation/report
+      quality gates 通过或既有 warning 可见披露
+    - '2026-06-17: DONE；focused pytest `tests/test_research_governance_recovery_pack.py
+      tests/test_recovery_triage_reports.py -q` 输出 14 passed；新增测试覆盖 blocked state、healthy-with-warnings
+      state、missing source state、unwaived report-index warning state、paper-shadow
+      resume false、extended forbidden、live trading forbidden 和 triage CLIs。'
+    raw_line: '|TRADING-406_RECOVERY_VALIDATION_TIER_EXPANSION|Research governance
+      / recovery validation expansion|P1|DONE|无；后续 recovery-governance changes 必须保留
+      expanded safety/status coverage|详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；扩展
+      TRADING-400 recovery governance pack focused tests，覆盖 blocked、healthy-with-warnings、missing
+      source、unwaived warning、paper-shadow false、extended forbidden、live forbidden
+      等状态|新增 realistic TRADING-400-style fixtures 和 `tests/test_recovery_triage_reports.py`；扩展
+      `tests/test_research_governance_recovery_pack.py`；focused pytest 数量从 5 materially
+      增加到 14；validation deterministic and fast；Ruff、compileall、documentation/report
+      quality gates 通过或既有 warning 可见披露|2026-06-17: DONE；focused pytest `tests/test_research_governance_recovery_pack.py
+      tests/test_recovery_triage_reports.py -q` 输出 14 passed；新增测试覆盖 blocked state、healthy-with-warnings
+      state、missing source state、unwaived report-index warning state、paper-shadow
+      resume false、extended forbidden、live trading forbidden 和 triage CLIs。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4d711e665bb67dd8f2019f42
+  task_id: TRADING-406_RECOVERY_VALIDATION_TIER_EXPANSION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 无；后续 recovery-governance changes 必须保留 expanded safety/status coverage
+    notes: '2026-06-17: DONE；focused pytest `tests/test_research_governance_recovery_pack.py
+      tests/test_recovery_triage_reports.py -q` 输出 14 passed；新增测试覆盖 blocked state、healthy-with-warnings
+      state、missing source state、unwaived report-index warning state、paper-shadow
+      resume false、extended forbidden、live trading forbidden 和 triage CLIs。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4d711e665bb67dd8f2019f42b8b447333217ffbdf59cf5a3aed964d64b8a26e3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-406_RECOVERY_VALIDATION_TIER_EXPANSION
+  - Research governance / recovery validation expansion
+  - P1
+  - DONE
+  - 无；后续 recovery-governance changes 必须保留 expanded safety/status coverage
+  - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；扩展
+    TRADING-400 recovery governance pack focused tests，覆盖 blocked、healthy-with-warnings、missing
+    source、unwaived warning、paper-shadow false、extended forbidden、live forbidden 等状态
+  - 新增 realistic TRADING-400-style fixtures 和 `tests/test_recovery_triage_reports.py`；扩展
+    `tests/test_research_governance_recovery_pack.py`；focused pytest 数量从 5 materially
+    增加到 14；validation deterministic and fast；Ruff、compileall、documentation/report
+    quality gates 通过或既有 warning 可见披露
+  - '2026-06-17: DONE；focused pytest `tests/test_research_governance_recovery_pack.py
+    tests/test_recovery_triage_reports.py -q` 输出 14 passed；新增测试覆盖 blocked state、healthy-with-warnings
+    state、missing source state、unwaived report-index warning state、paper-shadow resume
+    false、extended forbidden、live trading forbidden 和 triage CLIs。'
+  docs_links:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  terminal: true
+  raw_row_sha256: 4d711e665bb67dd8f2019f42b8b447333217ffbdf59cf5a3aed964d64b8a26e3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 84b4e218c8655015073dbe18f04fa5fad8d89e0a64a2177507a8a641b12a0f3b

@@ -1,0 +1,120 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-045B
+  title: null
+  domain: 基本面/SEC PIT Shadow Status Coverage Gate Alignment
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: TRADING-045 实跑后修正 shadow observe 顶层状态口径：baseline
+    coverage gate 已通过时，少量 baseline gap 只进入 limitations，不再把 `shadow_status` 降级为 `LIMITED_BASELINE_MISSING`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 当 `baseline_coverage_ratio >= min_baseline_coverage_ratio` 时，少量 missing
+      baseline rows 不触发 `LIMITED_BASELINE_MISSING`；只有 coverage gate 未通过或 baseline
+      全量缺失时才输出 `LIMITED_BASELINE_MISSING`；新增专项测试覆盖 coverage gate pass with partial
+      baseline gaps；重新跑 shadow-observe 后预期不再因 7 行 tail baseline gap 误报 baseline limited
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 386
+    row_sha256: baf7e8671f780c563fe49453d9019823a8e8bcaa7ab49d91f384f3e2ab7a6302
+    cell_count: 8
+    all_cells:
+    - TRADING-045B
+    - 基本面/SEC PIT Shadow Status Coverage Gate Alignment
+    - P0
+    - DONE
+    - 系统验证
+    - TRADING-045 实跑后修正 shadow observe 顶层状态口径：baseline coverage gate 已通过时，少量 baseline
+      gap 只进入 limitations，不再把 `shadow_status` 降级为 `LIMITED_BASELINE_MISSING`
+    - 当 `baseline_coverage_ratio >= min_baseline_coverage_ratio` 时，少量 missing baseline
+      rows 不触发 `LIMITED_BASELINE_MISSING`；只有 coverage gate 未通过或 baseline 全量缺失时才输出
+      `LIMITED_BASELINE_MISSING`；新增专项测试覆盖 coverage gate pass with partial baseline
+      gaps；重新跑 shadow-observe 后预期不再因 7 行 tail baseline gap 误报 baseline limited
+    - '2026-05-27: 新增并进入 IN_PROGRESS，原因：按 TRADING-045 链路实跑，baseline coverage audit
+      `OK`、shadow summary `baseline_coverage_status=OK` 且 `monitoring_status=INSUFFICIENT_MONITORING_SAMPLE`，但
+      `shadow_status=LIMITED_BASELINE_MISSING`，说明顶层状态仍沿用旧 any-missing baseline 口径。2026-05-27:
+      从 IN_PROGRESS 改为 DONE，原因：已修正 shadow_status coverage gate 口径并新增测试；验证通过 `python
+      -m pytest tests/trading_engine/test_sec_pit_shadow_observe.py -q`（12 passed）、全量
+      `python -m pytest -q`（1317 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+    raw_line: '|TRADING-045B|基本面/SEC PIT Shadow Status Coverage Gate Alignment|P0|DONE|系统验证|TRADING-045
+      实跑后修正 shadow observe 顶层状态口径：baseline coverage gate 已通过时，少量 baseline gap 只进入
+      limitations，不再把 `shadow_status` 降级为 `LIMITED_BASELINE_MISSING`|当 `baseline_coverage_ratio
+      >= min_baseline_coverage_ratio` 时，少量 missing baseline rows 不触发 `LIMITED_BASELINE_MISSING`；只有
+      coverage gate 未通过或 baseline 全量缺失时才输出 `LIMITED_BASELINE_MISSING`；新增专项测试覆盖 coverage
+      gate pass with partial baseline gaps；重新跑 shadow-observe 后预期不再因 7 行 tail baseline
+      gap 误报 baseline limited|2026-05-27: 新增并进入 IN_PROGRESS，原因：按 TRADING-045 链路实跑，baseline
+      coverage audit `OK`、shadow summary `baseline_coverage_status=OK` 且 `monitoring_status=INSUFFICIENT_MONITORING_SAMPLE`，但
+      `shadow_status=LIMITED_BASELINE_MISSING`，说明顶层状态仍沿用旧 any-missing baseline 口径。2026-05-27:
+      从 IN_PROGRESS 改为 DONE，原因：已修正 shadow_status coverage gate 口径并新增测试；验证通过 `python
+      -m pytest tests/trading_engine/test_sec_pit_shadow_observe.py -q`（12 passed）、全量
+      `python -m pytest -q`（1317 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-baf7e8671f780c563fe49453
+  task_id: TRADING-045B
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-27: 新增并进入 IN_PROGRESS，原因：按 TRADING-045 链路实跑，baseline coverage
+      audit `OK`、shadow summary `baseline_coverage_status=OK` 且 `monitoring_status=INSUFFICIENT_MONITORING_SAMPLE`，但
+      `shadow_status=LIMITED_BASELINE_MISSING`，说明顶层状态仍沿用旧 any-missing baseline 口径。2026-05-27:
+      从 IN_PROGRESS 改为 DONE，原因：已修正 shadow_status coverage gate 口径并新增测试；验证通过 `python
+      -m pytest tests/trading_engine/test_sec_pit_shadow_observe.py -q`（12 passed）、全量
+      `python -m pytest -q`（1317 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:baf7e8671f780c563fe49453d9019823a8e8bcaa7ab49d91f384f3e2ab7a6302
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-045B
+  - 基本面/SEC PIT Shadow Status Coverage Gate Alignment
+  - P0
+  - DONE
+  - 系统验证
+  - TRADING-045 实跑后修正 shadow observe 顶层状态口径：baseline coverage gate 已通过时，少量 baseline
+    gap 只进入 limitations，不再把 `shadow_status` 降级为 `LIMITED_BASELINE_MISSING`
+  - 当 `baseline_coverage_ratio >= min_baseline_coverage_ratio` 时，少量 missing baseline
+    rows 不触发 `LIMITED_BASELINE_MISSING`；只有 coverage gate 未通过或 baseline 全量缺失时才输出 `LIMITED_BASELINE_MISSING`；新增专项测试覆盖
+    coverage gate pass with partial baseline gaps；重新跑 shadow-observe 后预期不再因 7 行 tail
+    baseline gap 误报 baseline limited
+  - '2026-05-27: 新增并进入 IN_PROGRESS，原因：按 TRADING-045 链路实跑，baseline coverage audit `OK`、shadow
+    summary `baseline_coverage_status=OK` 且 `monitoring_status=INSUFFICIENT_MONITORING_SAMPLE`，但
+    `shadow_status=LIMITED_BASELINE_MISSING`，说明顶层状态仍沿用旧 any-missing baseline 口径。2026-05-27:
+    从 IN_PROGRESS 改为 DONE，原因：已修正 shadow_status coverage gate 口径并新增测试；验证通过 `python
+    -m pytest tests/trading_engine/test_sec_pit_shadow_observe.py -q`（12 passed）、全量
+    `python -m pytest -q`（1317 passed, 1 warning）、全量 `python -m ruff check config
+    src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: baf7e8671f780c563fe49453d9019823a8e8bcaa7ab49d91f384f3e2ab7a6302
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ded9e5f8e443dbefc62f266cd30f052aece2339a31ccb90480e3598d7ab6e2bf

@@ -1,0 +1,137 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1306_to_1325_PENDING_PLAN_SUPERSEDE_EVENT_OVERRIDE
+  title: null
+  domain: Research strategies / pending plan state machine, event override execution
+    semantics, actual-path watch-only rebacktest
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 + 系统后续验证
+  requirement_refs:
+  - docs/requirements/TRADING-1306_to_1325_Pending_Plan_Supersede_Event_Override.md
+  - docs/research/event_override_execution_semantics_review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1306_to_1325_Pending_Plan_Supersede_Event_Override.md`；实现已完成，下一步为
+    owner 复核 event override survival matrix、turnover impact、是否继续 watch event override
+    candidates；本批不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `config/research/event_override_policy.yaml`；CLI 支持 `--enable-event-override`、`--event-override-policy`、`--event-override-mode
+      event_override_t_plus_1` 和 trace/ledger flags；per-strategy 输出 `event_override_trace.json`、`pending_plan_ledger.csv`、`supersede_log.csv`、`event_override_summary.json`、`no_lookahead_evidence.json`；聚合输出
+      leaderboard / vs-base / summary / gate 与 `inputs/research_reviews/event_override_survival_matrix.yaml`；新增
+      `docs/research/event_override_execution_semantics_review.md`；fast override 默认
+      risk-off only；dynamic promotion 继续 `BLOCKED`；focused tests、Ruff、compileall、parallel
+      pytest、CLI dry-run 和 `git diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1273
+    row_sha256: e2142a7ca94972b0fd1f716383f5deab5549ed322597a2359b22487e213a3e77
+    cell_count: 8
+    all_cells:
+    - TRADING-1306_to_1325_PENDING_PLAN_SUPERSEDE_EVENT_OVERRIDE
+    - Research strategies / pending plan state machine, event override execution semantics,
+      actual-path watch-only rebacktest
+    - P0
+    - VALIDATING
+    - 项目 owner 后续复核 + 系统后续验证
+    - 详见 `docs/requirements/TRADING-1306_to_1325_Pending_Plan_Supersede_Event_Override.md`；实现已完成，下一步为
+      owner 复核 event override survival matrix、turnover impact、是否继续 watch event override
+      candidates；本批不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker
+    - 新增 `config/research/event_override_policy.yaml`；CLI 支持 `--enable-event-override`、`--event-override-policy`、`--event-override-mode
+      event_override_t_plus_1` 和 trace/ledger flags；per-strategy 输出 `event_override_trace.json`、`pending_plan_ledger.csv`、`supersede_log.csv`、`event_override_summary.json`、`no_lookahead_evidence.json`；聚合输出
+      leaderboard / vs-base / summary / gate 与 `inputs/research_reviews/event_override_survival_matrix.yaml`；新增
+      `docs/research/event_override_execution_semantics_review.md`；fast override 默认
+      risk-off only；dynamic promotion 继续 `BLOCKED`；focused tests、Ruff、compileall、parallel
+      pytest、CLI dry-run 和 `git diff --check` 通过
+    - '2026-06-27: 新增并进入 IN_PROGRESS，原因：staleness-aware repair 结论为 `NO_MATERIAL_IMPROVEMENT`，剩余问题转向
+      actual-path edge insufficiency 与 event-response execution semantics。2026-06-27:
+      实现完成并转入 VALIDATING；真实 dry-run event reviews/triggers/supersedes/T+1 executions=`36/36/36/36`、blocked
+      overrides=`0`；`limited_adjustment_event_override_v1` verdict=`EVENT_OVERRIDE_INCREASES_TURNOVER_TOO_MUCH`，`dynamic_v0_5_ai_trend_confirmed_event_override_v1`
+      verdict=`EVENT_OVERRIDE_TOO_NOISY`，paper_shadow_preflight_candidate=`NOT_IDENTIFIED`，dynamic
+      promotion 继续 `BLOCKED`。'
+    raw_line: '|TRADING-1306_to_1325_PENDING_PLAN_SUPERSEDE_EVENT_OVERRIDE|Research
+      strategies / pending plan state machine, event override execution semantics,
+      actual-path watch-only rebacktest|P0|VALIDATING|项目 owner 后续复核 + 系统后续验证|详见 `docs/requirements/TRADING-1306_to_1325_Pending_Plan_Supersede_Event_Override.md`；实现已完成，下一步为
+      owner 复核 event override survival matrix、turnover impact、是否继续 watch event override
+      candidates；本批不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker|新增 `config/research/event_override_policy.yaml`；CLI
+      支持 `--enable-event-override`、`--event-override-policy`、`--event-override-mode
+      event_override_t_plus_1` 和 trace/ledger flags；per-strategy 输出 `event_override_trace.json`、`pending_plan_ledger.csv`、`supersede_log.csv`、`event_override_summary.json`、`no_lookahead_evidence.json`；聚合输出
+      leaderboard / vs-base / summary / gate 与 `inputs/research_reviews/event_override_survival_matrix.yaml`；新增
+      `docs/research/event_override_execution_semantics_review.md`；fast override 默认
+      risk-off only；dynamic promotion 继续 `BLOCKED`；focused tests、Ruff、compileall、parallel
+      pytest、CLI dry-run 和 `git diff --check` 通过|2026-06-27: 新增并进入 IN_PROGRESS，原因：staleness-aware
+      repair 结论为 `NO_MATERIAL_IMPROVEMENT`，剩余问题转向 actual-path edge insufficiency 与
+      event-response execution semantics。2026-06-27: 实现完成并转入 VALIDATING；真实 dry-run
+      event reviews/triggers/supersedes/T+1 executions=`36/36/36/36`、blocked overrides=`0`；`limited_adjustment_event_override_v1`
+      verdict=`EVENT_OVERRIDE_INCREASES_TURNOVER_TOO_MUCH`，`dynamic_v0_5_ai_trend_confirmed_event_override_v1`
+      verdict=`EVENT_OVERRIDE_TOO_NOISY`，paper_shadow_preflight_candidate=`NOT_IDENTIFIED`，dynamic
+      promotion 继续 `BLOCKED`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e2142a7ca94972b0fd1f7163
+  task_id: TRADING-1306_to_1325_PENDING_PLAN_SUPERSEDE_EVENT_OVERRIDE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 + 系统后续验证
+    notes: '2026-06-27: 新增并进入 IN_PROGRESS，原因：staleness-aware repair 结论为 `NO_MATERIAL_IMPROVEMENT`，剩余问题转向
+      actual-path edge insufficiency 与 event-response execution semantics。2026-06-27:
+      实现完成并转入 VALIDATING；真实 dry-run event reviews/triggers/supersedes/T+1 executions=`36/36/36/36`、blocked
+      overrides=`0`；`limited_adjustment_event_override_v1` verdict=`EVENT_OVERRIDE_INCREASES_TURNOVER_TOO_MUCH`，`dynamic_v0_5_ai_trend_confirmed_event_override_v1`
+      verdict=`EVENT_OVERRIDE_TOO_NOISY`，paper_shadow_preflight_candidate=`NOT_IDENTIFIED`，dynamic
+      promotion 继续 `BLOCKED`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e2142a7ca94972b0fd1f716383f5deab5549ed322597a2359b22487e213a3e77
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1306_to_1325_PENDING_PLAN_SUPERSEDE_EVENT_OVERRIDE
+  - Research strategies / pending plan state machine, event override execution semantics,
+    actual-path watch-only rebacktest
+  - P0
+  - VALIDATING
+  - 项目 owner 后续复核 + 系统后续验证
+  - 详见 `docs/requirements/TRADING-1306_to_1325_Pending_Plan_Supersede_Event_Override.md`；实现已完成，下一步为
+    owner 复核 event override survival matrix、turnover impact、是否继续 watch event override
+    candidates；本批不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker
+  - 新增 `config/research/event_override_policy.yaml`；CLI 支持 `--enable-event-override`、`--event-override-policy`、`--event-override-mode
+    event_override_t_plus_1` 和 trace/ledger flags；per-strategy 输出 `event_override_trace.json`、`pending_plan_ledger.csv`、`supersede_log.csv`、`event_override_summary.json`、`no_lookahead_evidence.json`；聚合输出
+    leaderboard / vs-base / summary / gate 与 `inputs/research_reviews/event_override_survival_matrix.yaml`；新增
+    `docs/research/event_override_execution_semantics_review.md`；fast override 默认
+    risk-off only；dynamic promotion 继续 `BLOCKED`；focused tests、Ruff、compileall、parallel
+    pytest、CLI dry-run 和 `git diff --check` 通过
+  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：staleness-aware repair 结论为 `NO_MATERIAL_IMPROVEMENT`，剩余问题转向
+    actual-path edge insufficiency 与 event-response execution semantics。2026-06-27:
+    实现完成并转入 VALIDATING；真实 dry-run event reviews/triggers/supersedes/T+1 executions=`36/36/36/36`、blocked
+    overrides=`0`；`limited_adjustment_event_override_v1` verdict=`EVENT_OVERRIDE_INCREASES_TURNOVER_TOO_MUCH`，`dynamic_v0_5_ai_trend_confirmed_event_override_v1`
+    verdict=`EVENT_OVERRIDE_TOO_NOISY`，paper_shadow_preflight_candidate=`NOT_IDENTIFIED`，dynamic
+    promotion 继续 `BLOCKED`。'
+  docs_links:
+  - docs/requirements/TRADING-1306_to_1325_Pending_Plan_Supersede_Event_Override.md
+  - docs/research/event_override_execution_semantics_review.md
+  terminal: false
+  raw_row_sha256: e2142a7ca94972b0fd1f716383f5deab5549ed322597a2359b22487e213a3e77
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d0d3109f6a70d3b18b098c0fcf48ed835a9bf446c4d8602437abdaba5603d219

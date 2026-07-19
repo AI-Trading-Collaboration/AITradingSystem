@@ -1,0 +1,142 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2395_DYNAMIC_STRATEGY_COMPONENT_RECOMBINATION_CANDIDATE_PLAN
+  title: null
+  domain: Strategy research / component recombination candidate plan
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2396 component recombination candidate retest
+  requirement_refs:
+  - docs/requirements/TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan.md
+  - docs/tasks/completed/TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan.md`；承接
+    TRADING-2394 component ablation owner review and recombination decision，仅读取 TRADING-2390
+    / 2391 / 2392 / 2393 / 2394 prior validated artifacts，生成 recombination candidate
+    plan；本任务不运行新 backtest、不生成新 signal、不重新读取 cached market data。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-component-recombination-candidate-plan`；输出
+      `recombination_candidate_plan.json`、`recombination_candidate_definitions.json`、`retest_plan_2396.json`、`recombination_acceptance_criteria.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_RECOMBINATION_CANDIDATE_PLAN_READY`，owner
+      decision from 2394=`APPROVE_COMPONENT_RECOMBINATION_PLAN_WITH_NO_OBSERVATION_APPROVAL`，return
+      engine=`growth_tilt_engine`，guardrail components 包含 `lower_turnover_guardrail`
+      / `valid_until_window` / `no_stale_signal_carry_forward`，owner-review component=`guarded_turnover_transfer`，planned
+      recombination candidates=6，next route=`TRADING-2396_Dynamic_Strategy_Component_Recombination_Candidate_Retest`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 91
+    row_sha256: c1dda312140116141656784771499d6df373d30d10380c5bce2b4b856d18c316
+    cell_count: 8
+    all_cells:
+    - TRADING-2395_DYNAMIC_STRATEGY_COMPONENT_RECOMBINATION_CANDIDATE_PLAN
+    - Strategy research / component recombination candidate plan
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2396 component recombination candidate retest
+    - 详见 `docs/requirements/TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan.md`；承接
+      TRADING-2394 component ablation owner review and recombination decision，仅读取
+      TRADING-2390 / 2391 / 2392 / 2393 / 2394 prior validated artifacts，生成 recombination
+      candidate plan；本任务不运行新 backtest、不生成新 signal、不重新读取 cached market data。
+    - 新增 `aits research strategies dynamic-strategy-component-recombination-candidate-plan`；输出
+      `recombination_candidate_plan.json`、`recombination_candidate_definitions.json`、`retest_plan_2396.json`、`recombination_acceptance_criteria.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_RECOMBINATION_CANDIDATE_PLAN_READY`，owner
+      decision from 2394=`APPROVE_COMPONENT_RECOMBINATION_PLAN_WITH_NO_OBSERVATION_APPROVAL`，return
+      engine=`growth_tilt_engine`，guardrail components 包含 `lower_turnover_guardrail`
+      / `valid_until_window` / `no_stale_signal_carry_forward`，owner-review component=`guarded_turnover_transfer`，planned
+      recombination candidates=6，next route=`TRADING-2396_Dynamic_Strategy_Component_Recombination_Candidate_Retest`。
+    - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务未运行 `aits
+      validate-data --as-of 2026-07-05`，因为只读取 prior validated TRADING-2390 / 2391
+      / 2392 / 2393 / 2394 artifacts，不读取 fresh cached market data、不运行新 backtest、不生成新
+      signal/scoring、daily report 或交易建议。candidate auto-accept、research-only observation、scheduler、event
+      append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan.md`。'
+    raw_line: '|TRADING-2395_DYNAMIC_STRATEGY_COMPONENT_RECOMBINATION_CANDIDATE_PLAN|Strategy
+      research / component recombination candidate plan|P0|DONE|项目 owner 后续复核 TRADING-2396
+      component recombination candidate retest|详见 `docs/requirements/TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan.md`；承接
+      TRADING-2394 component ablation owner review and recombination decision，仅读取
+      TRADING-2390 / 2391 / 2392 / 2393 / 2394 prior validated artifacts，生成 recombination
+      candidate plan；本任务不运行新 backtest、不生成新 signal、不重新读取 cached market data。|新增 `aits
+      research strategies dynamic-strategy-component-recombination-candidate-plan`；输出
+      `recombination_candidate_plan.json`、`recombination_candidate_definitions.json`、`retest_plan_2396.json`、`recombination_acceptance_criteria.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_RECOMBINATION_CANDIDATE_PLAN_READY`，owner
+      decision from 2394=`APPROVE_COMPONENT_RECOMBINATION_PLAN_WITH_NO_OBSERVATION_APPROVAL`，return
+      engine=`growth_tilt_engine`，guardrail components 包含 `lower_turnover_guardrail`
+      / `valid_until_window` / `no_stale_signal_carry_forward`，owner-review component=`guarded_turnover_transfer`，planned
+      recombination candidates=6，next route=`TRADING-2396_Dynamic_Strategy_Component_Recombination_Candidate_Retest`。|2026-07-07:
+      根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务未运行 `aits validate-data
+      --as-of 2026-07-05`，因为只读取 prior validated TRADING-2390 / 2391 / 2392 / 2393
+      / 2394 artifacts，不读取 fresh cached market data、不运行新 backtest、不生成新 signal/scoring、daily
+      report 或交易建议。candidate auto-accept、research-only observation、scheduler、event
+      append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c1dda3121401161416567847
+  task_id: TRADING-2395_DYNAMIC_STRATEGY_COMPONENT_RECOMBINATION_CANDIDATE_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2396 component recombination candidate retest
+    notes: '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务未运行
+      `aits validate-data --as-of 2026-07-05`，因为只读取 prior validated TRADING-2390 /
+      2391 / 2392 / 2393 / 2394 artifacts，不读取 fresh cached market data、不运行新 backtest、不生成新
+      signal/scoring、daily report 或交易建议。candidate auto-accept、research-only observation、scheduler、event
+      append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c1dda312140116141656784771499d6df373d30d10380c5bce2b4b856d18c316
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2395_DYNAMIC_STRATEGY_COMPONENT_RECOMBINATION_CANDIDATE_PLAN
+  - Strategy research / component recombination candidate plan
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2396 component recombination candidate retest
+  - 详见 `docs/requirements/TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan.md`；承接
+    TRADING-2394 component ablation owner review and recombination decision，仅读取 TRADING-2390
+    / 2391 / 2392 / 2393 / 2394 prior validated artifacts，生成 recombination candidate
+    plan；本任务不运行新 backtest、不生成新 signal、不重新读取 cached market data。
+  - 新增 `aits research strategies dynamic-strategy-component-recombination-candidate-plan`；输出
+    `recombination_candidate_plan.json`、`recombination_candidate_definitions.json`、`retest_plan_2396.json`、`recombination_acceptance_criteria.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_RECOMBINATION_CANDIDATE_PLAN_READY`，owner
+    decision from 2394=`APPROVE_COMPONENT_RECOMBINATION_PLAN_WITH_NO_OBSERVATION_APPROVAL`，return
+    engine=`growth_tilt_engine`，guardrail components 包含 `lower_turnover_guardrail`
+    / `valid_until_window` / `no_stale_signal_carry_forward`，owner-review component=`guarded_turnover_transfer`，planned
+    recombination candidates=6，next route=`TRADING-2396_Dynamic_Strategy_Component_Recombination_Candidate_Retest`。
+  - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务未运行 `aits
+    validate-data --as-of 2026-07-05`，因为只读取 prior validated TRADING-2390 / 2391 /
+    2392 / 2393 / 2394 artifacts，不读取 fresh cached market data、不运行新 backtest、不生成新 signal/scoring、daily
+    report 或交易建议。candidate auto-accept、research-only observation、scheduler、event append、outcome
+    binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+    report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan.md
+  - docs/tasks/completed/TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan.md
+  terminal: true
+  raw_row_sha256: c1dda312140116141656784771499d6df373d30d10380c5bce2b4b856d18c316
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 65dd85ec82fdd8c97a492eda4bb85967b469199dc0be7a57d3d908d58ed28b37

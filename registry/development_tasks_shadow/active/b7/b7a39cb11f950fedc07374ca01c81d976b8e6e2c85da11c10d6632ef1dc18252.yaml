@@ -1,0 +1,145 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-696_THRESHOLD_CALIBRATION_FOLLOW_UP_PLAN
+  title: null
+  domain: Threshold governance / calibration follow-up planning
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-696_Threshold_Calibration_Follow_Up_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-696_Threshold_Calibration_Follow_Up_Plan.md`；从
+    TRADING-695 `threshold_calibration_report` 抽取 5 个阈值逐项结果，输出 insufficient-data data
+    gap plan 和 keep-current sensitivity-tested 状态；更新 threshold registry validation-only
+    summary metadata；不修改任何 threshold current value，不修改 production / paper-shadow /
+    official weights
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`threshold_calibration_followup_plan.json/md` 覆盖 5 个阈值，逐项输出 current/tested
+      values、recommendation、reason、evidence strength、recommendation_changed 和 remaining_data_gap；2
+      个 insufficient-data 阈值输出缺样本、缺 horizon、full_advisory/component/backtest 缺口、PIT
+      gate、forward maturity 和 earlier historical replay feasibility；3 个 keep-current
+      阈值明确 `calibration_status=SENSITIVITY_TESTED`、`not_validated_statistical_boundary=true`、no
+      production/promotion effect；registry summary 披露 sensitivity_tested=5、validated_boundary=0、still_uncalibrated_high_impact=31、still_blocking_promotion=36；focused
+      tests、CLI、Ruff、py_compile、`git diff --check` 和 validation tier 通过或明确记录阻塞'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1402
+    row_sha256: 68edef8e837f2b714e979d13d9bf980a5aa2cc4413bafa43156e76abab7bc9c6
+    cell_count: 8
+    all_cells:
+    - TRADING-696_THRESHOLD_CALIBRATION_FOLLOW_UP_PLAN
+    - Threshold governance / calibration follow-up planning
+    - P0
+    - VALIDATING
+    - 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-696_Threshold_Calibration_Follow_Up_Plan.md`；从
+      TRADING-695 `threshold_calibration_report` 抽取 5 个阈值逐项结果，输出 insufficient-data
+      data gap plan 和 keep-current sensitivity-tested 状态；更新 threshold registry validation-only
+      summary metadata；不修改任何 threshold current value，不修改 production / paper-shadow
+      / official weights
+    - '`threshold_calibration_followup_plan.json/md` 覆盖 5 个阈值，逐项输出 current/tested
+      values、recommendation、reason、evidence strength、recommendation_changed 和 remaining_data_gap；2
+      个 insufficient-data 阈值输出缺样本、缺 horizon、full_advisory/component/backtest 缺口、PIT
+      gate、forward maturity 和 earlier historical replay feasibility；3 个 keep-current
+      阈值明确 `calibration_status=SENSITIVITY_TESTED`、`not_validated_statistical_boundary=true`、no
+      production/promotion effect；registry summary 披露 sensitivity_tested=5、validated_boundary=0、still_uncalibrated_high_impact=31、still_blocking_promotion=36；focused
+      tests、CLI、Ruff、py_compile、`git diff --check` 和 validation tier 通过或明确记录阻塞'
+    - '2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；范围限定为 calibration follow-up planning
+      和 registry summary metadata，不能改阈值当前值、不能批准 promotion、paper-shadow、production
+      或 official weight changes。2026-06-20: 实现完成并进入 VALIDATING；真实 CLI 输出 threshold_count=5、insufficient_data_threshold_count=2、keep_current_value_threshold_count=3、recommendation_changed_count=2、thresholds_changed_count=0、validated_boundary_count=0、production_effect=none；registry
+      summary 已写 sensitivity_tested=5、validated_boundary=0、still_uncalibrated_high_impact=31、thresholds_still_blocking_promotion=36，目标阈值
+      current_value 仍为 50/0.4/0.5/0.6/0.3。验证通过 Black、py_compile、Ruff、focused indicator
+      pytest 39 passed、task/docs/config 并行 pytest 27 passed、`git diff --check` 和 full
+      并行 validation tier 2980 passed / 642 warnings / 135.64s，runtime artifact `outputs/validation_runtime/full_20260620T114551Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-696_THRESHOLD_CALIBRATION_FOLLOW_UP_PLAN|Threshold governance
+      / calibration follow-up planning|P0|VALIDATING|项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-696_Threshold_Calibration_Follow_Up_Plan.md`；从
+      TRADING-695 `threshold_calibration_report` 抽取 5 个阈值逐项结果，输出 insufficient-data
+      data gap plan 和 keep-current sensitivity-tested 状态；更新 threshold registry validation-only
+      summary metadata；不修改任何 threshold current value，不修改 production / paper-shadow
+      / official weights|`threshold_calibration_followup_plan.json/md` 覆盖 5 个阈值，逐项输出
+      current/tested values、recommendation、reason、evidence strength、recommendation_changed
+      和 remaining_data_gap；2 个 insufficient-data 阈值输出缺样本、缺 horizon、full_advisory/component/backtest
+      缺口、PIT gate、forward maturity 和 earlier historical replay feasibility；3 个 keep-current
+      阈值明确 `calibration_status=SENSITIVITY_TESTED`、`not_validated_statistical_boundary=true`、no
+      production/promotion effect；registry summary 披露 sensitivity_tested=5、validated_boundary=0、still_uncalibrated_high_impact=31、still_blocking_promotion=36；focused
+      tests、CLI、Ruff、py_compile、`git diff --check` 和 validation tier 通过或明确记录阻塞|2026-06-20:
+      按 owner 指令新增并进入 IN_PROGRESS；范围限定为 calibration follow-up planning 和 registry
+      summary metadata，不能改阈值当前值、不能批准 promotion、paper-shadow、production 或 official
+      weight changes。2026-06-20: 实现完成并进入 VALIDATING；真实 CLI 输出 threshold_count=5、insufficient_data_threshold_count=2、keep_current_value_threshold_count=3、recommendation_changed_count=2、thresholds_changed_count=0、validated_boundary_count=0、production_effect=none；registry
+      summary 已写 sensitivity_tested=5、validated_boundary=0、still_uncalibrated_high_impact=31、thresholds_still_blocking_promotion=36，目标阈值
+      current_value 仍为 50/0.4/0.5/0.6/0.3。验证通过 Black、py_compile、Ruff、focused indicator
+      pytest 39 passed、task/docs/config 并行 pytest 27 passed、`git diff --check` 和 full
+      并行 validation tier 2980 passed / 642 warnings / 135.64s，runtime artifact `outputs/validation_runtime/full_20260620T114551Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-68edef8e837f2b714e979d13
+  task_id: TRADING-696_THRESHOLD_CALIBRATION_FOLLOW_UP_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核
+    notes: '2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；范围限定为 calibration follow-up planning
+      和 registry summary metadata，不能改阈值当前值、不能批准 promotion、paper-shadow、production
+      或 official weight changes。2026-06-20: 实现完成并进入 VALIDATING；真实 CLI 输出 threshold_count=5、insufficient_data_threshold_count=2、keep_current_value_threshold_count=3、recommendation_changed_count=2、thresholds_changed_count=0、validated_boundary_count=0、production_effect=none；registry
+      summary 已写 sensitivity_tested=5、validated_boundary=0、still_uncalibrated_high_impact=31、thresholds_still_blocking_promotion=36，目标阈值
+      current_value 仍为 50/0.4/0.5/0.6/0.3。验证通过 Black、py_compile、Ruff、focused indicator
+      pytest 39 passed、task/docs/config 并行 pytest 27 passed、`git diff --check` 和 full
+      并行 validation tier 2980 passed / 642 warnings / 135.64s，runtime artifact `outputs/validation_runtime/full_20260620T114551Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:68edef8e837f2b714e979d13d9bf980a5aa2cc4413bafa43156e76abab7bc9c6
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-696_THRESHOLD_CALIBRATION_FOLLOW_UP_PLAN
+  - Threshold governance / calibration follow-up planning
+  - P0
+  - VALIDATING
+  - 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-696_Threshold_Calibration_Follow_Up_Plan.md`；从
+    TRADING-695 `threshold_calibration_report` 抽取 5 个阈值逐项结果，输出 insufficient-data data
+    gap plan 和 keep-current sensitivity-tested 状态；更新 threshold registry validation-only
+    summary metadata；不修改任何 threshold current value，不修改 production / paper-shadow /
+    official weights
+  - '`threshold_calibration_followup_plan.json/md` 覆盖 5 个阈值，逐项输出 current/tested values、recommendation、reason、evidence
+    strength、recommendation_changed 和 remaining_data_gap；2 个 insufficient-data 阈值输出缺样本、缺
+    horizon、full_advisory/component/backtest 缺口、PIT gate、forward maturity 和 earlier
+    historical replay feasibility；3 个 keep-current 阈值明确 `calibration_status=SENSITIVITY_TESTED`、`not_validated_statistical_boundary=true`、no
+    production/promotion effect；registry summary 披露 sensitivity_tested=5、validated_boundary=0、still_uncalibrated_high_impact=31、still_blocking_promotion=36；focused
+    tests、CLI、Ruff、py_compile、`git diff --check` 和 validation tier 通过或明确记录阻塞'
+  - '2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；范围限定为 calibration follow-up planning
+    和 registry summary metadata，不能改阈值当前值、不能批准 promotion、paper-shadow、production 或
+    official weight changes。2026-06-20: 实现完成并进入 VALIDATING；真实 CLI 输出 threshold_count=5、insufficient_data_threshold_count=2、keep_current_value_threshold_count=3、recommendation_changed_count=2、thresholds_changed_count=0、validated_boundary_count=0、production_effect=none；registry
+    summary 已写 sensitivity_tested=5、validated_boundary=0、still_uncalibrated_high_impact=31、thresholds_still_blocking_promotion=36，目标阈值
+    current_value 仍为 50/0.4/0.5/0.6/0.3。验证通过 Black、py_compile、Ruff、focused indicator
+    pytest 39 passed、task/docs/config 并行 pytest 27 passed、`git diff --check` 和 full
+    并行 validation tier 2980 passed / 642 warnings / 135.64s，runtime artifact `outputs/validation_runtime/full_20260620T114551Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-696_Threshold_Calibration_Follow_Up_Plan.md
+  terminal: false
+  raw_row_sha256: 68edef8e837f2b714e979d13d9bf980a5aa2cc4413bafa43156e76abab7bc9c6
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: cca5b4a35383dda4b88db59967c4d02c29cce3b2a100d8736819311be38fd88c

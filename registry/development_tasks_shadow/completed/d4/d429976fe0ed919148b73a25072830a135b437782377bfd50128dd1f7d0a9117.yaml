@@ -1,0 +1,127 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-383_CANONICAL_PAPER_SHADOW_HEALTH_RERUN
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue canonical paper-shadow health rerun
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-383_Canonical_Paper_Shadow_Health_Rerun.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-383_Canonical_Paper_Shadow_Health_Rerun.md`；在
+    TRADING-368/369/371 后聚合 latest fallback/cache/signal/daily/drift/weekly/staleness/readiness/data-refresh/market-panel/price
+    data 状态，生成单一 canonical paper-shadow health report；不得刷新数据、补造 artifact、运行上游、写 official
+    target weights、触发 broker/order、修改 paper account 或 production state
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_health.py`、`paper-shadow-health
+      run/report` CLI、`validate-paper-shadow-health`、canonical `HEALTHY
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 232
+    row_sha256: a78f72605ce0b9e62bae197c6ee3954e81c4ebdd0c8f1e77a05a2ab4f550ee5e
+    cell_count: 14
+    all_cells:
+    - TRADING-383_CANONICAL_PAPER_SHADOW_HEALTH_RERUN
+    - ETF portfolio/dynamic v3 rescue canonical paper-shadow health rerun
+    - P0
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-383_Canonical_Paper_Shadow_Health_Rerun.md`；在
+      TRADING-368/369/371 后聚合 latest fallback/cache/signal/daily/drift/weekly/staleness/readiness/data-refresh/market-panel/price
+      data 状态，生成单一 canonical paper-shadow health report；不得刷新数据、补造 artifact、运行上游、写
+      official target weights、触发 broker/order、修改 paper account 或 production state
+    - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_health.py`、`paper-shadow-health
+      run/report` CLI、`validate-paper-shadow-health`、canonical `HEALTHY
+    - HEALTHY_WITH_WARNINGS
+    - MANUAL_REVIEW_REQUIRED
+    - BLOCKED_DATA
+    - BLOCKED_SIGNAL_INPUTS
+    - BLOCKED_DRIFT
+    - BLOCKED_SAFETY` status policy、source artifact aggregation、Reader Brief fields、artifact
+      family、report registry、artifact catalog、README、operations runbook、system flow、requirements
+      和 focused tests；signal/fallback/cache/data/drift/safety blockers 必须 fail closed，不得由
+      health 层补造或 waiver
+    - '2026-06-16: DONE；真实 artifact `paper-shadow-health_6389f9f8f0254c06` 输出 `paper_shadow_health_status=BLOCKED_SIGNAL_INPUTS`、`safe_to_continue_shadow=False`、`data_freshness_status=BLOCKING`、`signal_input_status=BLOCKING`、`fallback_status=PRIMARY_OK`、`cache_integrity_status=OK`、`weekly_review_coverage_status=MANUAL_REVIEW_REQUIRED`、`drift_status=NONE`、`readiness_status=BLOCKED_STALE_DATA`、`data_refresh_audit_status=PASS_WITH_WARNINGS`、blocking
+      reason `signal_input_completeness:blocking`、next action `stop_paper_shadow_until_signal_inputs_are_restored`，validation
+      PASS / failed=0；focused pytest 27 passed，Ruff PASS，compileall PASS，documentation
+      contract PASS，report index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0；Reader
+      Brief 使用 latest 2026-06-15 decision snapshot + explicit 2026-06-16 report index
+      生成 OK，并展示 `paper_shadow_health_*` fields；默认 2026-06-16 Reader Brief 因本机缺 `decision_snapshot_2026-06-16.json`
+      正确 fail closed。保持 read-only / no data refresh / no upstream rerun / no official
+      target / no broker / no paper account or production mutation。'
+    raw_line: '|TRADING-383_CANONICAL_PAPER_SHADOW_HEALTH_RERUN|ETF portfolio/dynamic
+      v3 rescue canonical paper-shadow health rerun|P0|DONE|项目 owner 后续复核；代码实现完成|详细拆解见
+      `docs/requirements/TRADING-383_Canonical_Paper_Shadow_Health_Rerun.md`；在 TRADING-368/369/371
+      后聚合 latest fallback/cache/signal/daily/drift/weekly/staleness/readiness/data-refresh/market-panel/price
+      data 状态，生成单一 canonical paper-shadow health report；不得刷新数据、补造 artifact、运行上游、写
+      official target weights、触发 broker/order、修改 paper account 或 production state|新增
+      `src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_health.py`、`paper-shadow-health
+      run/report` CLI、`validate-paper-shadow-health`、canonical `HEALTHY|HEALTHY_WITH_WARNINGS|MANUAL_REVIEW_REQUIRED|BLOCKED_DATA|BLOCKED_SIGNAL_INPUTS|BLOCKED_DRIFT|BLOCKED_SAFETY`
+      status policy、source artifact aggregation、Reader Brief fields、artifact family、report
+      registry、artifact catalog、README、operations runbook、system flow、requirements
+      和 focused tests；signal/fallback/cache/data/drift/safety blockers 必须 fail closed，不得由
+      health 层补造或 waiver|2026-06-16: DONE；真实 artifact `paper-shadow-health_6389f9f8f0254c06`
+      输出 `paper_shadow_health_status=BLOCKED_SIGNAL_INPUTS`、`safe_to_continue_shadow=False`、`data_freshness_status=BLOCKING`、`signal_input_status=BLOCKING`、`fallback_status=PRIMARY_OK`、`cache_integrity_status=OK`、`weekly_review_coverage_status=MANUAL_REVIEW_REQUIRED`、`drift_status=NONE`、`readiness_status=BLOCKED_STALE_DATA`、`data_refresh_audit_status=PASS_WITH_WARNINGS`、blocking
+      reason `signal_input_completeness:blocking`、next action `stop_paper_shadow_until_signal_inputs_are_restored`，validation
+      PASS / failed=0；focused pytest 27 passed，Ruff PASS，compileall PASS，documentation
+      contract PASS，report index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0；Reader
+      Brief 使用 latest 2026-06-15 decision snapshot + explicit 2026-06-16 report index
+      生成 OK，并展示 `paper_shadow_health_*` fields；默认 2026-06-16 Reader Brief 因本机缺 `decision_snapshot_2026-06-16.json`
+      正确 fail closed。保持 read-only / no data refresh / no upstream rerun / no official
+      target / no broker / no paper account or production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a78f72605ce0b9e62bae197c
+  task_id: TRADING-383_CANONICAL_PAPER_SHADOW_HEALTH_RERUN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: HEALTHY_WITH_WARNINGS
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a78f72605ce0b9e62bae197c6ee3954e81c4ebdd0c8f1e77a05a2ab4f550ee5e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-383_CANONICAL_PAPER_SHADOW_HEALTH_RERUN
+  - ETF portfolio/dynamic v3 rescue canonical paper-shadow health rerun
+  - P0
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-383_Canonical_Paper_Shadow_Health_Rerun.md`；在
+    TRADING-368/369/371 后聚合 latest fallback/cache/signal/daily/drift/weekly/staleness/readiness/data-refresh/market-panel/price
+    data 状态，生成单一 canonical paper-shadow health report；不得刷新数据、补造 artifact、运行上游、写 official
+    target weights、触发 broker/order、修改 paper account 或 production state
+  - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_health.py`、`paper-shadow-health
+    run/report` CLI、`validate-paper-shadow-health`、canonical `HEALTHY
+  - HEALTHY_WITH_WARNINGS
+  docs_links:
+  - docs/requirements/TRADING-383_Canonical_Paper_Shadow_Health_Rerun.md
+  terminal: true
+  raw_row_sha256: a78f72605ce0b9e62bae197c6ee3954e81c4ebdd0c8f1e77a05a2ab4f550ee5e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5feb89d4bd138cc94cffede41a9f7c460c13b4ce83a9c01365c4c2eccf6b7c05

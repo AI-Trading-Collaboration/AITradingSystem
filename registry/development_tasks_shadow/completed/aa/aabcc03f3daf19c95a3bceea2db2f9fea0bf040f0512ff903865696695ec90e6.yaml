@@ -1,0 +1,123 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-401_RECOVERY_BLOCKER_TRIAGE
+  title: null
+  domain: Research governance / recovery blocker triage
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 复核 blocker triage；normal paper-shadow 仍 false，extended/live/official/broker/order/production
+    仍 forbidden
+  requirement_refs:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；读取
+    TRADING-400 recovery pack，把 9 个 remaining blockers 展开成 machine-readable blocker
+    triage；本任务只做 triage，不解决 blocker、不放宽 paper/extended/live boundary
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/recovery_triage.py`、`aits reports recovery-blocker-triage`
+      / `validate-recovery-blocker-triage`、Reader Brief section、report registry、artifact
+      catalog、README、operations runbook、system flow 和 focused tests；每个 blocker 记录
+      source report、category、blocking field、related dimension、required artifact/owner
+      action、normal/extended/live impact
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 190
+    row_sha256: f510e9c83d93d400d3d3f6a57b35730660da326c3a7d9bc519677b265b2dfdfb
+    cell_count: 8
+    all_cells:
+    - TRADING-401_RECOVERY_BLOCKER_TRIAGE
+    - Research governance / recovery blocker triage
+    - P1
+    - DONE
+    - 项目 owner 复核 blocker triage；normal paper-shadow 仍 false，extended/live/official/broker/order/production
+      仍 forbidden
+    - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；读取
+      TRADING-400 recovery pack，把 9 个 remaining blockers 展开成 machine-readable blocker
+      triage；本任务只做 triage，不解决 blocker、不放宽 paper/extended/live boundary
+    - 新增 `src/ai_trading_system/reports/recovery_triage.py`、`aits reports recovery-blocker-triage`
+      / `validate-recovery-blocker-triage`、Reader Brief section、report registry、artifact
+      catalog、README、operations runbook、system flow 和 focused tests；每个 blocker 记录
+      source report、category、blocking field、related dimension、required artifact/owner
+      action、normal/extended/live impact
+    - '2026-06-17: DONE；真实 artifact `outputs/reports/recovery_blocker_triage_2026-06-17.json/md`
+      输出 `recovery_blocker_count=9`，normal_paper_shadow_may_resume=false、extended_shadow_remains_forbidden=true、live_trading_remains_forbidden=true；validation
+      `recovery_blocker_triage_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。Blocker
+      未被解决、未 waiver、未 fabricated data。'
+    raw_line: '|TRADING-401_RECOVERY_BLOCKER_TRIAGE|Research governance / recovery
+      blocker triage|P1|DONE|项目 owner 复核 blocker triage；normal paper-shadow 仍 false，extended/live/official/broker/order/production
+      仍 forbidden|详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；读取
+      TRADING-400 recovery pack，把 9 个 remaining blockers 展开成 machine-readable blocker
+      triage；本任务只做 triage，不解决 blocker、不放宽 paper/extended/live boundary|新增 `src/ai_trading_system/reports/recovery_triage.py`、`aits
+      reports recovery-blocker-triage` / `validate-recovery-blocker-triage`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow 和 focused tests；每个 blocker 记录 source report、category、blocking field、related
+      dimension、required artifact/owner action、normal/extended/live impact|2026-06-17:
+      DONE；真实 artifact `outputs/reports/recovery_blocker_triage_2026-06-17.json/md`
+      输出 `recovery_blocker_count=9`，normal_paper_shadow_may_resume=false、extended_shadow_remains_forbidden=true、live_trading_remains_forbidden=true；validation
+      `recovery_blocker_triage_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。Blocker
+      未被解决、未 waiver、未 fabricated data。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f510e9c83d93d400d3d3f6a5
+  task_id: TRADING-401_RECOVERY_BLOCKER_TRIAGE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 复核 blocker triage；normal paper-shadow 仍 false，extended/live/official/broker/order/production
+      仍 forbidden
+    notes: '2026-06-17: DONE；真实 artifact `outputs/reports/recovery_blocker_triage_2026-06-17.json/md`
+      输出 `recovery_blocker_count=9`，normal_paper_shadow_may_resume=false、extended_shadow_remains_forbidden=true、live_trading_remains_forbidden=true；validation
+      `recovery_blocker_triage_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。Blocker
+      未被解决、未 waiver、未 fabricated data。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f510e9c83d93d400d3d3f6a57b35730660da326c3a7d9bc519677b265b2dfdfb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-401_RECOVERY_BLOCKER_TRIAGE
+  - Research governance / recovery blocker triage
+  - P1
+  - DONE
+  - 项目 owner 复核 blocker triage；normal paper-shadow 仍 false，extended/live/official/broker/order/production
+    仍 forbidden
+  - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；读取
+    TRADING-400 recovery pack，把 9 个 remaining blockers 展开成 machine-readable blocker
+    triage；本任务只做 triage，不解决 blocker、不放宽 paper/extended/live boundary
+  - 新增 `src/ai_trading_system/reports/recovery_triage.py`、`aits reports recovery-blocker-triage`
+    / `validate-recovery-blocker-triage`、Reader Brief section、report registry、artifact
+    catalog、README、operations runbook、system flow 和 focused tests；每个 blocker 记录 source
+    report、category、blocking field、related dimension、required artifact/owner action、normal/extended/live
+    impact
+  - '2026-06-17: DONE；真实 artifact `outputs/reports/recovery_blocker_triage_2026-06-17.json/md`
+    输出 `recovery_blocker_count=9`，normal_paper_shadow_may_resume=false、extended_shadow_remains_forbidden=true、live_trading_remains_forbidden=true；validation
+    `recovery_blocker_triage_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。Blocker
+    未被解决、未 waiver、未 fabricated data。'
+  docs_links:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  terminal: true
+  raw_row_sha256: f510e9c83d93d400d3d3f6a57b35730660da326c3a7d9bc519677b265b2dfdfb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 70ed2c7794641aa1b7417183000e2a689fa8ff322074d9fdac60d3d7fed8fe20

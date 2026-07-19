@@ -1,0 +1,106 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: MACRO-001
+  title: null
+  domain: 宏观/仓位
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段独立 `macro_risk_asset_budget` 层：在
+    `config/portfolio.yaml` 静态预算基础上，按 VIX、10Y 利率变化和 FRED `DTWEXBGS` 广义美元指数变化下调总风险资产预算；日报、`scores_daily.csv`、decision
+    snapshot、belief_state、回测每日明细和回测报告均输出静态预算、调整后预算、触发等级和原因；剩余缺口是参数 replay/shadow、更多宏观指标和
+    `GOV-001` 批准
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 当 VIX、利率、美元等触发流动性风险时，总风险资产预算可下调；AI 在风险资产内部的相对权重仍可单独解释；回测实际策略敞口使用总资产内 AI
+      exposure；实现时同步更新 `docs/system_flow.md` 和测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1092
+    row_sha256: 49aeb7ff978a4a08bf4f2f431b8b9488ddc0861c80c6ec60105e422317e2f52d
+    cell_count: 8
+    all_cells:
+    - MACRO-001
+    - 宏观/仓位
+    - P2
+    - BASELINE_DONE
+    - 系统实现
+    - 已完成第一阶段独立 `macro_risk_asset_budget` 层：在 `config/portfolio.yaml` 静态预算基础上，按 VIX、10Y
+      利率变化和 FRED `DTWEXBGS` 广义美元指数变化下调总风险资产预算；日报、`scores_daily.csv`、decision snapshot、belief_state、回测每日明细和回测报告均输出静态预算、调整后预算、触发等级和原因；剩余缺口是参数
+      replay/shadow、更多宏观指标和 `GOV-001` 批准
+    - 当 VIX、利率、美元等触发流动性风险时，总风险资产预算可下调；AI 在风险资产内部的相对权重仍可单独解释；回测实际策略敞口使用总资产内 AI exposure；实现时同步更新
+      `docs/system_flow.md` 和测试
+    - '2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始实现宏观总风险资产预算层，避免宏观流动性只体现在模块分或风险资产内 AI
+      gate。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `macro_risk_asset_budget`
+      配置、计算层、日报/CSV/snapshot/belief_state/回测输出和测试；完整 `DONE` 仍需阈值 replay/shadow 和规则批准。2026-05-05:
+      更新宏观美元输入语义，原因：DATA-006 已将 Yahoo `DX-Y.NYB` 替换为 FRED `DTWEXBGS` 广义美元指数。'
+    raw_line: '|MACRO-001|宏观/仓位|P2|BASELINE_DONE|系统实现|已完成第一阶段独立 `macro_risk_asset_budget`
+      层：在 `config/portfolio.yaml` 静态预算基础上，按 VIX、10Y 利率变化和 FRED `DTWEXBGS` 广义美元指数变化下调总风险资产预算；日报、`scores_daily.csv`、decision
+      snapshot、belief_state、回测每日明细和回测报告均输出静态预算、调整后预算、触发等级和原因；剩余缺口是参数 replay/shadow、更多宏观指标和
+      `GOV-001` 批准|当 VIX、利率、美元等触发流动性风险时，总风险资产预算可下调；AI 在风险资产内部的相对权重仍可单独解释；回测实际策略敞口使用总资产内
+      AI exposure；实现时同步更新 `docs/system_flow.md` 和测试|2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始实现宏观总风险资产预算层，避免宏观流动性只体现在模块分或风险资产内
+      AI gate。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `macro_risk_asset_budget`
+      配置、计算层、日报/CSV/snapshot/belief_state/回测输出和测试；完整 `DONE` 仍需阈值 replay/shadow 和规则批准。2026-05-05:
+      更新宏观美元输入语义，原因：DATA-006 已将 Yahoo `DX-Y.NYB` 替换为 FRED `DTWEXBGS` 广义美元指数。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-49aeb7ff978a4a08bf4f2f43
+  task_id: MACRO-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P2
+    next_owner: 系统实现
+    notes: '2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始实现宏观总风险资产预算层，避免宏观流动性只体现在模块分或风险资产内
+      AI gate。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `macro_risk_asset_budget`
+      配置、计算层、日报/CSV/snapshot/belief_state/回测输出和测试；完整 `DONE` 仍需阈值 replay/shadow 和规则批准。2026-05-05:
+      更新宏观美元输入语义，原因：DATA-006 已将 Yahoo `DX-Y.NYB` 替换为 FRED `DTWEXBGS` 广义美元指数。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:49aeb7ff978a4a08bf4f2f431b8b9488ddc0861c80c6ec60105e422317e2f52d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - MACRO-001
+  - 宏观/仓位
+  - P2
+  - BASELINE_DONE
+  - 系统实现
+  - 已完成第一阶段独立 `macro_risk_asset_budget` 层：在 `config/portfolio.yaml` 静态预算基础上，按 VIX、10Y
+    利率变化和 FRED `DTWEXBGS` 广义美元指数变化下调总风险资产预算；日报、`scores_daily.csv`、decision snapshot、belief_state、回测每日明细和回测报告均输出静态预算、调整后预算、触发等级和原因；剩余缺口是参数
+    replay/shadow、更多宏观指标和 `GOV-001` 批准
+  - 当 VIX、利率、美元等触发流动性风险时，总风险资产预算可下调；AI 在风险资产内部的相对权重仍可单独解释；回测实际策略敞口使用总资产内 AI exposure；实现时同步更新
+    `docs/system_flow.md` 和测试
+  - '2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始实现宏观总风险资产预算层，避免宏观流动性只体现在模块分或风险资产内 AI
+    gate。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `macro_risk_asset_budget`
+    配置、计算层、日报/CSV/snapshot/belief_state/回测输出和测试；完整 `DONE` 仍需阈值 replay/shadow 和规则批准。2026-05-05:
+    更新宏观美元输入语义，原因：DATA-006 已将 Yahoo `DX-Y.NYB` 替换为 FRED `DTWEXBGS` 广义美元指数。'
+  docs_links:
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: 49aeb7ff978a4a08bf4f2f431b8b9488ddc0861c80c6ec60105e422317e2f52d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 363bd400ad163762d2b5abee3a305edb69761f5030e9823656aadf5a0a960546

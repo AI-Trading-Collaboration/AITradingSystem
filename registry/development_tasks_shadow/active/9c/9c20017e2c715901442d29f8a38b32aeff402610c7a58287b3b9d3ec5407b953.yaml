@@ -1,0 +1,112 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-830_DECISION_TIME_BOUNDARY_AUDIT
+  title: null
+  domain: Controlled strategy research / decision-time boundary audit
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+    TRADING-827、829；所有 trigger/feature/policy input 必须 decision_time 可见
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI `aits research strategies tail-risk-decision-time-boundary-audit`；检查
+      latest_available_time、feature availability、t+1/forward return/future vol/drawdown/recovery/rolling-window
+      leakage；输出 TIME_BOUNDARY_* 状态
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1308
+    row_sha256: 10f4f5f70db3d0ebc5da71da54accabec45a2ab4aa9bde84cb99d00c1cada2fe
+    cell_count: 8
+    all_cells:
+    - TRADING-830_DECISION_TIME_BOUNDARY_AUDIT
+    - Controlled strategy research / decision-time boundary audit
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+      TRADING-827、829；所有 trigger/feature/policy input 必须 decision_time 可见
+    - 新增 CLI `aits research strategies tail-risk-decision-time-boundary-audit`；检查
+      latest_available_time、feature availability、t+1/forward return/future vol/drawdown/recovery/rolling-window
+      leakage；输出 TIME_BOUNDARY_* 状态
+    - '2026-06-22: 修正旧 TRADING-830 regime-stratified 占位；当前编号按附件改为 decision-time boundary
+      audit。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report registry、system
+      flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused pytest
+      15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation 190 passed、report-validation
+      55 passed、ruff check .、changed-file Black check、compileall 和 git diff --check。'
+    raw_line: '|TRADING-830_DECISION_TIME_BOUNDARY_AUDIT|Controlled strategy research
+      / decision-time boundary audit|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+      TRADING-827、829；所有 trigger/feature/policy input 必须 decision_time 可见|新增 CLI `aits
+      research strategies tail-risk-decision-time-boundary-audit`；检查 latest_available_time、feature
+      availability、t+1/forward return/future vol/drawdown/recovery/rolling-window
+      leakage；输出 TIME_BOUNDARY_* 状态|2026-06-22: 修正旧 TRADING-830 regime-stratified
+      占位；当前编号按附件改为 decision-time boundary audit。2026-06-22: 实现完成并转入 VALIDATING；新增
+      CLI、JSON/MD artifacts、report registry、system flow、artifact catalog、focused pytest
+      和 CLI/registry coverage；验证通过：focused pytest 15 passed、CLI smoke 1 passed、fast-unit
+      191 passed、contract-validation 190 passed、report-validation 55 passed、ruff check
+      .、changed-file Black check、compileall 和 git diff --check。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-10f4f5f70db3d0ebc5da71da
+  task_id: TRADING-830_DECISION_TIME_BOUNDARY_AUDIT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 修正旧 TRADING-830 regime-stratified 占位；当前编号按附件改为 decision-time
+      boundary audit。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+      registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
+      pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation
+      190 passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+      和 git diff --check。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:10f4f5f70db3d0ebc5da71da54accabec45a2ab4aa9bde84cb99d00c1cada2fe
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-830_DECISION_TIME_BOUNDARY_AUDIT
+  - Controlled strategy research / decision-time boundary audit
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+    TRADING-827、829；所有 trigger/feature/policy input 必须 decision_time 可见
+  - 新增 CLI `aits research strategies tail-risk-decision-time-boundary-audit`；检查 latest_available_time、feature
+    availability、t+1/forward return/future vol/drawdown/recovery/rolling-window leakage；输出
+    TIME_BOUNDARY_* 状态
+  - '2026-06-22: 修正旧 TRADING-830 regime-stratified 占位；当前编号按附件改为 decision-time boundary
+    audit。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report registry、system
+    flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused pytest
+    15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation 190 passed、report-validation
+    55 passed、ruff check .、changed-file Black check、compileall 和 git diff --check。'
+  docs_links:
+  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
+  terminal: false
+  raw_row_sha256: 10f4f5f70db3d0ebc5da71da54accabec45a2ab4aa9bde84cb99d00c1cada2fe
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 1b025ee8c2ceba9f559895b6aa0dd9ead864ee6efc413cfae834f913403ba1c7

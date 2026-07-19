@@ -1,0 +1,175 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-016
+  title: null
+  domain: 数据质量/价格 reconciliation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/confidence_lift_workplan_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/confidence_lift_workplan_2026-05-10.md`；`NOW`
+    2025-12-17/18 拆股窗口 raw close 日期口径差异已按已知 corporate action 归因；2026-06-05 full-universe
+    `download-data` / `validate-data` 已复验，默认缓存覆盖 ASX，companion reconciliation 直接包含
+    NOW/full-universe `known_split_raw_close_basis_difference` 证据，价格 reconciliation
+    收口
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits validate-data` 或独立 reconciliation 报告能列出主源/二源 ticker-date 差异、分类规则、证据字段、主/二源数值、可解释原因和不可解释冲突；能证明是指数
+      volume、已知拆股窗口日期口径或分红复权口径差异的必须降为有证据限制；无法解释的 raw close/OHLC/非正价格仍不得静默通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 332
+    row_sha256: ce81d24178136086e4aeada9f24fb98a4a776abc5669ffb93126abb85007f789
+    cell_count: 8
+    all_cells:
+    - DATA-016
+    - 数据质量/价格 reconciliation
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/confidence_lift_workplan_2026-05-10.md`；`NOW` 2025-12-17/18
+      拆股窗口 raw close 日期口径差异已按已知 corporate action 归因；2026-06-05 full-universe `download-data`
+      / `validate-data` 已复验，默认缓存覆盖 ASX，companion reconciliation 直接包含 NOW/full-universe
+      `known_split_raw_close_basis_difference` 证据，价格 reconciliation 收口
+    - '`aits validate-data` 或独立 reconciliation 报告能列出主源/二源 ticker-date 差异、分类规则、证据字段、主/二源数值、可解释原因和不可解释冲突；能证明是指数
+      volume、已知拆股窗口日期口径或分红复权口径差异的必须降为有证据限制；无法解释的 raw close/OHLC/非正价格仍不得静默通过'
+    - '2026-05-10: 新增并进入实现，原因：owner 指出该项理论上可把日报置信度从 61 提升到约 76；实现必须可审计，不允许静默忽略。2026-05-10:
+      从 IN_PROGRESS 改为 VALIDATING，原因：新增 INFO severity、指数 volume/拆股/Marketstack 自身坏点/adjusted
+      close 口径差异 reconciliation CSV；真实 `validate-data --as-of 2026-05-10` 为 PASS，错误
+      0、警告 0、信息 11。2026-05-11: 从 VALIDATING 改回 IN_PROGRESS，原因：expanded universe 真实价格刷新后，`NOW`
+      官方 5-for-1 split 导致 Marketstack 在拆股窗口提前按 split-adjusted raw close 记录 2025-12-17，当前规则仍按未解释
+      raw close mismatch 阻断，需要补 corporate-action window 归因。2026-05-11: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已补 `NOW` 官方 5-for-1 split 配置和 `known_split_raw_close_basis_difference`
+      reconciliation 分类；`validate-data --as-of 2026-05-10 --full-universe` 与 replay
+      内 `data_quality_2026-05-08` 均为 PASS，错误 0、警告 0。2026-06-07: 继续保持 VALIDATING，原因：最新真实
+      `daily-run --as-of 2026-06-05` 的数据质量门禁 PASS、错误 0、警告 0，但本轮 reconciliation CSV
+      未覆盖 NOW/full-universe 拆股窗口证据；不能仅凭有限 reconciliation 样本归档。2026-06-09: 从 VALIDATING
+      改为 IN_PROGRESS 后收口，原因：直接复跑 `validate-data --as-of 2026-06-05 --full-universe`
+      首次暴露默认 core cache 缺 ASX，正确路径是 full-universe 刷新而非降级缺口；先在 `outputs/tmp/data_full_universe_20260605`
+      跑 `download-data --start 2018-01-01 --end 2026-06-05 --full-universe` 和临时 `validate-data`
+      确认 PASS，再刷新正式 `data/raw` cache。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：正式 `validate-data
+      --as-of 2026-06-05 --full-universe` 为 PASS、错误 0、警告 0、信息 12；报告覆盖 SPY/QQQ/SMH/SOXX/TLT/SHY/^VIX/MSFT/GOOG/TSM/INTC/AMD/NVDA/AMZN/META/AVGO/MRVL/ASML/AMAT/LRCX/MU/PLTR/CRM/NOW/ASX；Marketstack
+      reconciliation CSV 记录 `known_split_raw_close_basis_difference=1`（NOW 2025-12-17，primary_close
+      782.4，secondary_close 156.478，close_diff_pct 0.8000025562372188）、`marketstack_bad_point_primary_available=26`、`adjusted_close_dividend_basis_difference=9349`；同时修正
+      `validate-data` manifest provenance 判定，使历史 reconstructed manifest 行不会在当前 checksum
+      已有更新 provider 记录时污染当前数据质量状态，保留当前 checksum 为 reconstructed 时的 warning。'
+    raw_line: '|DATA-016|数据质量/价格 reconciliation|P0|DONE|系统验证|详细拆解见 `docs/requirements/confidence_lift_workplan_2026-05-10.md`；`NOW`
+      2025-12-17/18 拆股窗口 raw close 日期口径差异已按已知 corporate action 归因；2026-06-05 full-universe
+      `download-data` / `validate-data` 已复验，默认缓存覆盖 ASX，companion reconciliation 直接包含
+      NOW/full-universe `known_split_raw_close_basis_difference` 证据，价格 reconciliation
+      收口|`aits validate-data` 或独立 reconciliation 报告能列出主源/二源 ticker-date 差异、分类规则、证据字段、主/二源数值、可解释原因和不可解释冲突；能证明是指数
+      volume、已知拆股窗口日期口径或分红复权口径差异的必须降为有证据限制；无法解释的 raw close/OHLC/非正价格仍不得静默通过|2026-05-10:
+      新增并进入实现，原因：owner 指出该项理论上可把日报置信度从 61 提升到约 76；实现必须可审计，不允许静默忽略。2026-05-10: 从 IN_PROGRESS
+      改为 VALIDATING，原因：新增 INFO severity、指数 volume/拆股/Marketstack 自身坏点/adjusted close
+      口径差异 reconciliation CSV；真实 `validate-data --as-of 2026-05-10` 为 PASS，错误 0、警告
+      0、信息 11。2026-05-11: 从 VALIDATING 改回 IN_PROGRESS，原因：expanded universe 真实价格刷新后，`NOW`
+      官方 5-for-1 split 导致 Marketstack 在拆股窗口提前按 split-adjusted raw close 记录 2025-12-17，当前规则仍按未解释
+      raw close mismatch 阻断，需要补 corporate-action window 归因。2026-05-11: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已补 `NOW` 官方 5-for-1 split 配置和 `known_split_raw_close_basis_difference`
+      reconciliation 分类；`validate-data --as-of 2026-05-10 --full-universe` 与 replay
+      内 `data_quality_2026-05-08` 均为 PASS，错误 0、警告 0。2026-06-07: 继续保持 VALIDATING，原因：最新真实
+      `daily-run --as-of 2026-06-05` 的数据质量门禁 PASS、错误 0、警告 0，但本轮 reconciliation CSV
+      未覆盖 NOW/full-universe 拆股窗口证据；不能仅凭有限 reconciliation 样本归档。2026-06-09: 从 VALIDATING
+      改为 IN_PROGRESS 后收口，原因：直接复跑 `validate-data --as-of 2026-06-05 --full-universe`
+      首次暴露默认 core cache 缺 ASX，正确路径是 full-universe 刷新而非降级缺口；先在 `outputs/tmp/data_full_universe_20260605`
+      跑 `download-data --start 2018-01-01 --end 2026-06-05 --full-universe` 和临时 `validate-data`
+      确认 PASS，再刷新正式 `data/raw` cache。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：正式 `validate-data
+      --as-of 2026-06-05 --full-universe` 为 PASS、错误 0、警告 0、信息 12；报告覆盖 SPY/QQQ/SMH/SOXX/TLT/SHY/^VIX/MSFT/GOOG/TSM/INTC/AMD/NVDA/AMZN/META/AVGO/MRVL/ASML/AMAT/LRCX/MU/PLTR/CRM/NOW/ASX；Marketstack
+      reconciliation CSV 记录 `known_split_raw_close_basis_difference=1`（NOW 2025-12-17，primary_close
+      782.4，secondary_close 156.478，close_diff_pct 0.8000025562372188）、`marketstack_bad_point_primary_available=26`、`adjusted_close_dividend_basis_difference=9349`；同时修正
+      `validate-data` manifest provenance 判定，使历史 reconstructed manifest 行不会在当前 checksum
+      已有更新 provider 记录时污染当前数据质量状态，保留当前 checksum 为 reconstructed 时的 warning。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ce81d24178136086e4aeada9
+  task_id: DATA-016
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-10: 新增并进入实现，原因：owner 指出该项理论上可把日报置信度从 61 提升到约 76；实现必须可审计，不允许静默忽略。2026-05-10:
+      从 IN_PROGRESS 改为 VALIDATING，原因：新增 INFO severity、指数 volume/拆股/Marketstack 自身坏点/adjusted
+      close 口径差异 reconciliation CSV；真实 `validate-data --as-of 2026-05-10` 为 PASS，错误
+      0、警告 0、信息 11。2026-05-11: 从 VALIDATING 改回 IN_PROGRESS，原因：expanded universe 真实价格刷新后，`NOW`
+      官方 5-for-1 split 导致 Marketstack 在拆股窗口提前按 split-adjusted raw close 记录 2025-12-17，当前规则仍按未解释
+      raw close mismatch 阻断，需要补 corporate-action window 归因。2026-05-11: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已补 `NOW` 官方 5-for-1 split 配置和 `known_split_raw_close_basis_difference`
+      reconciliation 分类；`validate-data --as-of 2026-05-10 --full-universe` 与 replay
+      内 `data_quality_2026-05-08` 均为 PASS，错误 0、警告 0。2026-06-07: 继续保持 VALIDATING，原因：最新真实
+      `daily-run --as-of 2026-06-05` 的数据质量门禁 PASS、错误 0、警告 0，但本轮 reconciliation CSV
+      未覆盖 NOW/full-universe 拆股窗口证据；不能仅凭有限 reconciliation 样本归档。2026-06-09: 从 VALIDATING
+      改为 IN_PROGRESS 后收口，原因：直接复跑 `validate-data --as-of 2026-06-05 --full-universe`
+      首次暴露默认 core cache 缺 ASX，正确路径是 full-universe 刷新而非降级缺口；先在 `outputs/tmp/data_full_universe_20260605`
+      跑 `download-data --start 2018-01-01 --end 2026-06-05 --full-universe` 和临时 `validate-data`
+      确认 PASS，再刷新正式 `data/raw` cache。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：正式 `validate-data
+      --as-of 2026-06-05 --full-universe` 为 PASS、错误 0、警告 0、信息 12；报告覆盖 SPY/QQQ/SMH/SOXX/TLT/SHY/^VIX/MSFT/GOOG/TSM/INTC/AMD/NVDA/AMZN/META/AVGO/MRVL/ASML/AMAT/LRCX/MU/PLTR/CRM/NOW/ASX；Marketstack
+      reconciliation CSV 记录 `known_split_raw_close_basis_difference=1`（NOW 2025-12-17，primary_close
+      782.4，secondary_close 156.478，close_diff_pct 0.8000025562372188）、`marketstack_bad_point_primary_available=26`、`adjusted_close_dividend_basis_difference=9349`；同时修正
+      `validate-data` manifest provenance 判定，使历史 reconstructed manifest 行不会在当前 checksum
+      已有更新 provider 记录时污染当前数据质量状态，保留当前 checksum 为 reconstructed 时的 warning。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ce81d24178136086e4aeada9f24fb98a4a776abc5669ffb93126abb85007f789
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-016
+  - 数据质量/价格 reconciliation
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/confidence_lift_workplan_2026-05-10.md`；`NOW` 2025-12-17/18
+    拆股窗口 raw close 日期口径差异已按已知 corporate action 归因；2026-06-05 full-universe `download-data`
+    / `validate-data` 已复验，默认缓存覆盖 ASX，companion reconciliation 直接包含 NOW/full-universe
+    `known_split_raw_close_basis_difference` 证据，价格 reconciliation 收口
+  - '`aits validate-data` 或独立 reconciliation 报告能列出主源/二源 ticker-date 差异、分类规则、证据字段、主/二源数值、可解释原因和不可解释冲突；能证明是指数
+    volume、已知拆股窗口日期口径或分红复权口径差异的必须降为有证据限制；无法解释的 raw close/OHLC/非正价格仍不得静默通过'
+  - '2026-05-10: 新增并进入实现，原因：owner 指出该项理论上可把日报置信度从 61 提升到约 76；实现必须可审计，不允许静默忽略。2026-05-10:
+    从 IN_PROGRESS 改为 VALIDATING，原因：新增 INFO severity、指数 volume/拆股/Marketstack 自身坏点/adjusted
+    close 口径差异 reconciliation CSV；真实 `validate-data --as-of 2026-05-10` 为 PASS，错误
+    0、警告 0、信息 11。2026-05-11: 从 VALIDATING 改回 IN_PROGRESS，原因：expanded universe 真实价格刷新后，`NOW`
+    官方 5-for-1 split 导致 Marketstack 在拆股窗口提前按 split-adjusted raw close 记录 2025-12-17，当前规则仍按未解释
+    raw close mismatch 阻断，需要补 corporate-action window 归因。2026-05-11: 从 IN_PROGRESS
+    改为 VALIDATING，原因：已补 `NOW` 官方 5-for-1 split 配置和 `known_split_raw_close_basis_difference`
+    reconciliation 分类；`validate-data --as-of 2026-05-10 --full-universe` 与 replay
+    内 `data_quality_2026-05-08` 均为 PASS，错误 0、警告 0。2026-06-07: 继续保持 VALIDATING，原因：最新真实
+    `daily-run --as-of 2026-06-05` 的数据质量门禁 PASS、错误 0、警告 0，但本轮 reconciliation CSV 未覆盖
+    NOW/full-universe 拆股窗口证据；不能仅凭有限 reconciliation 样本归档。2026-06-09: 从 VALIDATING 改为
+    IN_PROGRESS 后收口，原因：直接复跑 `validate-data --as-of 2026-06-05 --full-universe` 首次暴露默认
+    core cache 缺 ASX，正确路径是 full-universe 刷新而非降级缺口；先在 `outputs/tmp/data_full_universe_20260605`
+    跑 `download-data --start 2018-01-01 --end 2026-06-05 --full-universe` 和临时 `validate-data`
+    确认 PASS，再刷新正式 `data/raw` cache。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：正式 `validate-data
+    --as-of 2026-06-05 --full-universe` 为 PASS、错误 0、警告 0、信息 12；报告覆盖 SPY/QQQ/SMH/SOXX/TLT/SHY/^VIX/MSFT/GOOG/TSM/INTC/AMD/NVDA/AMZN/META/AVGO/MRVL/ASML/AMAT/LRCX/MU/PLTR/CRM/NOW/ASX；Marketstack
+    reconciliation CSV 记录 `known_split_raw_close_basis_difference=1`（NOW 2025-12-17，primary_close
+    782.4，secondary_close 156.478，close_diff_pct 0.8000025562372188）、`marketstack_bad_point_primary_available=26`、`adjusted_close_dividend_basis_difference=9349`；同时修正
+    `validate-data` manifest provenance 判定，使历史 reconstructed manifest 行不会在当前 checksum
+    已有更新 provider 记录时污染当前数据质量状态，保留当前 checksum 为 reconstructed 时的 warning。'
+  docs_links:
+  - docs/requirements/confidence_lift_workplan_2026-05-10.md
+  terminal: true
+  raw_row_sha256: ce81d24178136086e4aeada9f24fb98a4a776abc5669ffb93126abb85007f789
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 09f06f7a3219e06f4f06d2ca90a879fcd2230839e88acf9e311f5227e9247924

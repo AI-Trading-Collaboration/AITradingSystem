@@ -1,0 +1,125 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-062H
+  title: null
+  domain: ETF P1 experiment run/compare registry
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原始
+    P1 Experiment Registry 中 `experiments run` / `experiments compare` 的本地治理入口，保持
+    candidate-only / observe-only
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf experiments run --config <candidate.yaml>` 必须读取候选配置、记录 candidate_config_hash、baseline
+      config hash、参数 diff、可选 backtest summary strategy metrics、manual_review_required
+      和 `production_effect=none`，不得写正式配置或目标权重；`aits etf experiments compare --baseline
+      production` 必须只读 registry，输出 candidate/shadow 与 production baseline 的 metric
+      delta 或 `MISSING_METRICS`；不得自动 promotion；测试覆盖 registry record、diff、metrics delta、缺
+      metrics 状态和 CLI smoke'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 371
+    row_sha256: 1685d1a0c0850bc747eeeb70a512048cae914b552fbbc556804efae932be6091
+    cell_count: 8
+    all_cells:
+    - TRADING-062H
+    - ETF P1 experiment run/compare registry
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原始
+      P1 Experiment Registry 中 `experiments run` / `experiments compare` 的本地治理入口，保持
+      candidate-only / observe-only
+    - '`aits etf experiments run --config <candidate.yaml>` 必须读取候选配置、记录 candidate_config_hash、baseline
+      config hash、参数 diff、可选 backtest summary strategy metrics、manual_review_required
+      和 `production_effect=none`，不得写正式配置或目标权重；`aits etf experiments compare --baseline
+      production` 必须只读 registry，输出 candidate/shadow 与 production baseline 的 metric
+      delta 或 `MISSING_METRICS`；不得自动 promotion；测试覆盖 registry record、diff、metrics delta、缺
+      metrics 状态和 CLI smoke'
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 P1 明确列出 `experiments run` / `experiments
+      compare`，当前 ETF CLI 只有 `experiments register`。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增
+      `append_experiment_run`、`build_experiment_comparison`、`aits etf experiments
+      run/compare` 和根级 `aits experiments run/compare/register` alias；真实 smoke `aits
+      experiments compare` 生成 observe-only 比较报告，目标测试通过。'
+    raw_line: '|TRADING-062H|ETF P1 experiment run/compare registry|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原始 P1
+      Experiment Registry 中 `experiments run` / `experiments compare` 的本地治理入口，保持 candidate-only
+      / observe-only|`aits etf experiments run --config <candidate.yaml>` 必须读取候选配置、记录
+      candidate_config_hash、baseline config hash、参数 diff、可选 backtest summary strategy
+      metrics、manual_review_required 和 `production_effect=none`，不得写正式配置或目标权重；`aits
+      etf experiments compare --baseline production` 必须只读 registry，输出 candidate/shadow
+      与 production baseline 的 metric delta 或 `MISSING_METRICS`；不得自动 promotion；测试覆盖
+      registry record、diff、metrics delta、缺 metrics 状态和 CLI smoke|2026-05-31: 新增并进入
+      IN_PROGRESS，原因：原文 P1 明确列出 `experiments run` / `experiments compare`，当前 ETF CLI
+      只有 `experiments register`。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 `append_experiment_run`、`build_experiment_comparison`、`aits
+      etf experiments run/compare` 和根级 `aits experiments run/compare/register` alias；真实
+      smoke `aits experiments compare` 生成 observe-only 比较报告，目标测试通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1685d1a0c0850bc747eeeb70
+  task_id: TRADING-062H
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 P1 明确列出 `experiments run` / `experiments
+      compare`，当前 ETF CLI 只有 `experiments register`。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增
+      `append_experiment_run`、`build_experiment_comparison`、`aits etf experiments
+      run/compare` 和根级 `aits experiments run/compare/register` alias；真实 smoke `aits
+      experiments compare` 生成 observe-only 比较报告，目标测试通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1685d1a0c0850bc747eeeb70a512048cae914b552fbbc556804efae932be6091
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062H
+  - ETF P1 experiment run/compare registry
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原始
+    P1 Experiment Registry 中 `experiments run` / `experiments compare` 的本地治理入口，保持
+    candidate-only / observe-only
+  - '`aits etf experiments run --config <candidate.yaml>` 必须读取候选配置、记录 candidate_config_hash、baseline
+    config hash、参数 diff、可选 backtest summary strategy metrics、manual_review_required
+    和 `production_effect=none`，不得写正式配置或目标权重；`aits etf experiments compare --baseline
+    production` 必须只读 registry，输出 candidate/shadow 与 production baseline 的 metric delta
+    或 `MISSING_METRICS`；不得自动 promotion；测试覆盖 registry record、diff、metrics delta、缺 metrics
+    状态和 CLI smoke'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 P1 明确列出 `experiments run` / `experiments
+    compare`，当前 ETF CLI 只有 `experiments register`。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增
+    `append_experiment_run`、`build_experiment_comparison`、`aits etf experiments run/compare`
+    和根级 `aits experiments run/compare/register` alias；真实 smoke `aits experiments compare`
+    生成 observe-only 比较报告，目标测试通过。'
+  docs_links:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  terminal: true
+  raw_row_sha256: 1685d1a0c0850bc747eeeb70a512048cae914b552fbbc556804efae932be6091
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6c526e11739cedb842f842da3448b543f8f471a97efea230f9334620954d3aa7

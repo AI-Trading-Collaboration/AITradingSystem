@@ -1,0 +1,155 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-352_PAPER_SHADOW_DRIFT_MONITOR
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue paper-shadow drift monitor
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-352_Paper_Shadow_Drift_Monitor.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-352_Paper_Shadow_Drift_Monitor.md`；承接
+    TRADING-351 paper-shadow daily runner，对 current paper-shadow observation 与 historical
+    validation behavior 做只读 drift 检测，覆盖 turnover increase、risk-off frequency、drawdown
+    mismatch regression、flip/rotation regression、benchmark underperformance 和 missing
+    signal inputs；不得刷新数据、重跑上游、修改 paper account/production state、生成 official target
+    weights、order ticket、broker action 或 automatic candidate promotion
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `paper-shadow-drift-monitor report` 和 `validate-paper-shadow-drift-monitor`
+      CLI；drift artifact 记录 source daily observation、formal research contract source、六类
+      drift findings、severity `NONE`/`WATCH`/`WARNING`/`BLOCKING`、next action `continue_shadow`/`needs_manual_review`/`return_to_research`/`reject_candidate`、Reader
+      Brief section 和 validation artifact；实际产物为 `paper-shadow-drift-monitor_c8546a7d24dc68c2`，source
+      observation `paper-shadow-daily_c7945bcfdf91cd53`，candidate `median_plus_regime_mismatch_filter`，`drift_severity=NONE`，`blocking_count=0`，`warning_count=0`，`next_action=continue_shadow`；所有输出固定
+      `manual_review_only=true`、`paper_shadow_drift_monitor_only=true`、`observation_only=true`、`read_only_monitor=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_state_mutated=false`、`paper_account_state_mutated=false`、`automatic_candidate_promotion=false`、`auto_apply=false`、`production_effect=none`；README、operations
+      runbook、system flow、artifact catalog、report registry、requirements、Reader Brief、focused
+      tests、contract-validation suite、ruff、compileall、documentation contract、report
+      index、Reader Brief quality 和 git diff check 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 249
+    row_sha256: 4fd22b76a09f80a5ffaf81c05c8532aba6ce9b74c5c6aa396cafb6e6147c2efd
+    cell_count: 8
+    all_cells:
+    - TRADING-352_PAPER_SHADOW_DRIFT_MONITOR
+    - ETF portfolio/dynamic v3 rescue paper-shadow drift monitor
+    - P1
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-352_Paper_Shadow_Drift_Monitor.md`；承接 TRADING-351
+      paper-shadow daily runner，对 current paper-shadow observation 与 historical validation
+      behavior 做只读 drift 检测，覆盖 turnover increase、risk-off frequency、drawdown mismatch
+      regression、flip/rotation regression、benchmark underperformance 和 missing signal
+      inputs；不得刷新数据、重跑上游、修改 paper account/production state、生成 official target weights、order
+      ticket、broker action 或 automatic candidate promotion
+    - 新增 `paper-shadow-drift-monitor report` 和 `validate-paper-shadow-drift-monitor`
+      CLI；drift artifact 记录 source daily observation、formal research contract source、六类
+      drift findings、severity `NONE`/`WATCH`/`WARNING`/`BLOCKING`、next action `continue_shadow`/`needs_manual_review`/`return_to_research`/`reject_candidate`、Reader
+      Brief section 和 validation artifact；实际产物为 `paper-shadow-drift-monitor_c8546a7d24dc68c2`，source
+      observation `paper-shadow-daily_c7945bcfdf91cd53`，candidate `median_plus_regime_mismatch_filter`，`drift_severity=NONE`，`blocking_count=0`，`warning_count=0`，`next_action=continue_shadow`；所有输出固定
+      `manual_review_only=true`、`paper_shadow_drift_monitor_only=true`、`observation_only=true`、`read_only_monitor=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_state_mutated=false`、`paper_account_state_mutated=false`、`automatic_candidate_promotion=false`、`auto_apply=false`、`production_effect=none`；README、operations
+      runbook、system flow、artifact catalog、report registry、requirements、Reader Brief、focused
+      tests、contract-validation suite、ruff、compileall、documentation contract、report
+      index、Reader Brief quality 和 git diff check 通过
+    - '2026-06-15: DONE；`paper-shadow-drift-monitor report` 生成 monitor `paper-shadow-drift-monitor_c8546a7d24dc68c2`，artifact
+      validate 与 `validate-paper-shadow-drift-monitor --latest` 均 PASS；focused pytest
+      7 passed，contract-validation suite 41 passed / 9.42s，documentation contract
+      PASS，report index `PASS_WITH_WARNINGS`（既有 missing/stale visibility），Reader Brief
+      OK，Reader Brief quality OK；保持 advisory/read-only / no data refresh / no upstream
+      rerun / no paper account mutation / no official target / no broker / no production。'
+    raw_line: '|TRADING-352_PAPER_SHADOW_DRIFT_MONITOR|ETF portfolio/dynamic v3 rescue
+      paper-shadow drift monitor|P1|DONE|项目 owner 后续复核；代码实现完成|详细拆解见 `docs/requirements/TRADING-352_Paper_Shadow_Drift_Monitor.md`；承接
+      TRADING-351 paper-shadow daily runner，对 current paper-shadow observation 与 historical
+      validation behavior 做只读 drift 检测，覆盖 turnover increase、risk-off frequency、drawdown
+      mismatch regression、flip/rotation regression、benchmark underperformance 和 missing
+      signal inputs；不得刷新数据、重跑上游、修改 paper account/production state、生成 official target
+      weights、order ticket、broker action 或 automatic candidate promotion|新增 `paper-shadow-drift-monitor
+      report` 和 `validate-paper-shadow-drift-monitor` CLI；drift artifact 记录 source
+      daily observation、formal research contract source、六类 drift findings、severity
+      `NONE`/`WATCH`/`WARNING`/`BLOCKING`、next action `continue_shadow`/`needs_manual_review`/`return_to_research`/`reject_candidate`、Reader
+      Brief section 和 validation artifact；实际产物为 `paper-shadow-drift-monitor_c8546a7d24dc68c2`，source
+      observation `paper-shadow-daily_c7945bcfdf91cd53`，candidate `median_plus_regime_mismatch_filter`，`drift_severity=NONE`，`blocking_count=0`，`warning_count=0`，`next_action=continue_shadow`；所有输出固定
+      `manual_review_only=true`、`paper_shadow_drift_monitor_only=true`、`observation_only=true`、`read_only_monitor=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_state_mutated=false`、`paper_account_state_mutated=false`、`automatic_candidate_promotion=false`、`auto_apply=false`、`production_effect=none`；README、operations
+      runbook、system flow、artifact catalog、report registry、requirements、Reader Brief、focused
+      tests、contract-validation suite、ruff、compileall、documentation contract、report
+      index、Reader Brief quality 和 git diff check 通过|2026-06-15: DONE；`paper-shadow-drift-monitor
+      report` 生成 monitor `paper-shadow-drift-monitor_c8546a7d24dc68c2`，artifact validate
+      与 `validate-paper-shadow-drift-monitor --latest` 均 PASS；focused pytest 7 passed，contract-validation
+      suite 41 passed / 9.42s，documentation contract PASS，report index `PASS_WITH_WARNINGS`（既有
+      missing/stale visibility），Reader Brief OK，Reader Brief quality OK；保持 advisory/read-only
+      / no data refresh / no upstream rerun / no paper account mutation / no official
+      target / no broker / no production。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4fd22b76a09f80a5ffaf81c0
+  task_id: TRADING-352_PAPER_SHADOW_DRIFT_MONITOR
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: '2026-06-15: DONE；`paper-shadow-drift-monitor report` 生成 monitor `paper-shadow-drift-monitor_c8546a7d24dc68c2`，artifact
+      validate 与 `validate-paper-shadow-drift-monitor --latest` 均 PASS；focused pytest
+      7 passed，contract-validation suite 41 passed / 9.42s，documentation contract
+      PASS，report index `PASS_WITH_WARNINGS`（既有 missing/stale visibility），Reader Brief
+      OK，Reader Brief quality OK；保持 advisory/read-only / no data refresh / no upstream
+      rerun / no paper account mutation / no official target / no broker / no production。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4fd22b76a09f80a5ffaf81c05c8532aba6ce9b74c5c6aa396cafb6e6147c2efd
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-352_PAPER_SHADOW_DRIFT_MONITOR
+  - ETF portfolio/dynamic v3 rescue paper-shadow drift monitor
+  - P1
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-352_Paper_Shadow_Drift_Monitor.md`；承接 TRADING-351
+    paper-shadow daily runner，对 current paper-shadow observation 与 historical validation
+    behavior 做只读 drift 检测，覆盖 turnover increase、risk-off frequency、drawdown mismatch
+    regression、flip/rotation regression、benchmark underperformance 和 missing signal
+    inputs；不得刷新数据、重跑上游、修改 paper account/production state、生成 official target weights、order
+    ticket、broker action 或 automatic candidate promotion
+  - 新增 `paper-shadow-drift-monitor report` 和 `validate-paper-shadow-drift-monitor`
+    CLI；drift artifact 记录 source daily observation、formal research contract source、六类
+    drift findings、severity `NONE`/`WATCH`/`WARNING`/`BLOCKING`、next action `continue_shadow`/`needs_manual_review`/`return_to_research`/`reject_candidate`、Reader
+    Brief section 和 validation artifact；实际产物为 `paper-shadow-drift-monitor_c8546a7d24dc68c2`，source
+    observation `paper-shadow-daily_c7945bcfdf91cd53`，candidate `median_plus_regime_mismatch_filter`，`drift_severity=NONE`，`blocking_count=0`，`warning_count=0`，`next_action=continue_shadow`；所有输出固定
+    `manual_review_only=true`、`paper_shadow_drift_monitor_only=true`、`observation_only=true`、`read_only_monitor=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_state_mutated=false`、`paper_account_state_mutated=false`、`automatic_candidate_promotion=false`、`auto_apply=false`、`production_effect=none`；README、operations
+    runbook、system flow、artifact catalog、report registry、requirements、Reader Brief、focused
+    tests、contract-validation suite、ruff、compileall、documentation contract、report
+    index、Reader Brief quality 和 git diff check 通过
+  - '2026-06-15: DONE；`paper-shadow-drift-monitor report` 生成 monitor `paper-shadow-drift-monitor_c8546a7d24dc68c2`，artifact
+    validate 与 `validate-paper-shadow-drift-monitor --latest` 均 PASS；focused pytest
+    7 passed，contract-validation suite 41 passed / 9.42s，documentation contract PASS，report
+    index `PASS_WITH_WARNINGS`（既有 missing/stale visibility），Reader Brief OK，Reader
+    Brief quality OK；保持 advisory/read-only / no data refresh / no upstream rerun /
+    no paper account mutation / no official target / no broker / no production。'
+  docs_links:
+  - docs/requirements/TRADING-352_Paper_Shadow_Drift_Monitor.md
+  terminal: true
+  raw_row_sha256: 4fd22b76a09f80a5ffaf81c05c8532aba6ce9b74c5c6aa396cafb6e6147c2efd
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3a55000bdd1749c14fcb0e628fad5f5eb227ec532342d29134901e21034aab11

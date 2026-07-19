@@ -1,0 +1,146 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-013A
+  title: null
+  domain: 交易执行/IBKR Paper Controlled Fill Local Validation Report
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/ibkr_paper_controlled_fill_local_validation_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/ibkr_paper_controlled_fill_local_validation_2026-05-17.md`；本机
+    controlled fill no-fill review、sanitized fixture、runbook、calibration 语义、系统流图/产物目录、测试和当前
+    HEAD CI 已完成
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增本机验证 review 和 sanitized fixture，记录 `test_status=LIMITED`、`connection_status=CONNECTED`、NVDA
+      BUY LIMIT DAY 1 @ 224.50、order status path `PendingSubmit -> PreSubmitted ->
+      PendingCancel -> Cancelled`、`fill_seen=false`、`fill_quantity=0`、`commission_report_seen=false`、`cancel_requested=true`、`final_order_status=Cancelled`、`issue=fill_not_seen_timeout`、likely
+      non-regular trading session / remained `PreSubmitted`；runbook 补充非交易时段 no-fill
+      判断和重新运行建议；calibration 读取 controlled fill no-fill artifact 时归类 `NO_FILL_LIFECYCLE_VALIDATED`，但继续输出
+      `fill_tested=false` 和 `LIFECYCLE_ALIGNED_FILL_UNTESTED`；review/fixture 不含完整
+      `DUP` account、真实 broker order id、perm id、execution id、password、token 或 API key；目标
+      pytest、trading_engine、全量 pytest、ruff、black、commit、push 后 CI 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 339
+    row_sha256: 7ef33582cbd57da6f2e82630d1aa95b4a3b7fca86442d78c5cc857e6f7785b30
+    cell_count: 8
+    all_cells:
+    - TRADING-013A
+    - 交易执行/IBKR Paper Controlled Fill Local Validation Report
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/ibkr_paper_controlled_fill_local_validation_2026-05-17.md`；本机
+      controlled fill no-fill review、sanitized fixture、runbook、calibration 语义、系统流图/产物目录、测试和当前
+      HEAD CI 已完成
+    - 新增本机验证 review 和 sanitized fixture，记录 `test_status=LIMITED`、`connection_status=CONNECTED`、NVDA
+      BUY LIMIT DAY 1 @ 224.50、order status path `PendingSubmit -> PreSubmitted ->
+      PendingCancel -> Cancelled`、`fill_seen=false`、`fill_quantity=0`、`commission_report_seen=false`、`cancel_requested=true`、`final_order_status=Cancelled`、`issue=fill_not_seen_timeout`、likely
+      non-regular trading session / remained `PreSubmitted`；runbook 补充非交易时段 no-fill
+      判断和重新运行建议；calibration 读取 controlled fill no-fill artifact 时归类 `NO_FILL_LIFECYCLE_VALIDATED`，但继续输出
+      `fill_tested=false` 和 `LIFECYCLE_ALIGNED_FILL_UNTESTED`；review/fixture 不含完整
+      `DUP` account、真实 broker order id、perm id、execution id、password、token 或 API key；目标
+      pytest、trading_engine、全量 pytest、ruff、black、commit、push 后 CI 通过
+    - '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-013 已完成且 CI 通过后，固化本机真实 controlled
+      fill no-fill evidence，并防止该样本被误解释为 `PaperBroker` fill model 已验证。2026-05-18: 从
+      IN_PROGRESS 改为 VALIDATING，原因：已新增 local validation review、sanitized no-fill fixture、runbook
+      no-fill 判断、calibration `NO_FILL_LIFECYCLE_VALIDATED` 分类、系统流图/产物目录和安全语义测试；本地验证通过目标
+      pytest、`tests/trading_engine`、全量 pytest、ruff、black 和 diff check。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub Actions CI run `27085392644`
+      completed/success；复验 controlled fill local validation、calibration focused tests
+      和触达文件 ruff 通过；no-fill 样本仍只证明 submit/open/cancel 链路，不证明 fill model。'
+    raw_line: '|TRADING-013A|交易执行/IBKR Paper Controlled Fill Local Validation Report|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/ibkr_paper_controlled_fill_local_validation_2026-05-17.md`；本机
+      controlled fill no-fill review、sanitized fixture、runbook、calibration 语义、系统流图/产物目录、测试和当前
+      HEAD CI 已完成|新增本机验证 review 和 sanitized fixture，记录 `test_status=LIMITED`、`connection_status=CONNECTED`、NVDA
+      BUY LIMIT DAY 1 @ 224.50、order status path `PendingSubmit -> PreSubmitted ->
+      PendingCancel -> Cancelled`、`fill_seen=false`、`fill_quantity=0`、`commission_report_seen=false`、`cancel_requested=true`、`final_order_status=Cancelled`、`issue=fill_not_seen_timeout`、likely
+      non-regular trading session / remained `PreSubmitted`；runbook 补充非交易时段 no-fill
+      判断和重新运行建议；calibration 读取 controlled fill no-fill artifact 时归类 `NO_FILL_LIFECYCLE_VALIDATED`，但继续输出
+      `fill_tested=false` 和 `LIFECYCLE_ALIGNED_FILL_UNTESTED`；review/fixture 不含完整
+      `DUP` account、真实 broker order id、perm id、execution id、password、token 或 API key；目标
+      pytest、trading_engine、全量 pytest、ruff、black、commit、push 后 CI 通过|2026-05-18: 新增并进入
+      IN_PROGRESS，原因：owner 要求在 TRADING-013 已完成且 CI 通过后，固化本机真实 controlled fill no-fill
+      evidence，并防止该样本被误解释为 `PaperBroker` fill model 已验证。2026-05-18: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已新增 local validation review、sanitized no-fill fixture、runbook
+      no-fill 判断、calibration `NO_FILL_LIFECYCLE_VALIDATED` 分类、系统流图/产物目录和安全语义测试；本地验证通过目标
+      pytest、`tests/trading_engine`、全量 pytest、ruff、black 和 diff check。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub Actions CI run `27085392644`
+      completed/success；复验 controlled fill local validation、calibration focused tests
+      和触达文件 ruff 通过；no-fill 样本仍只证明 submit/open/cancel 链路，不证明 fill model。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7ef33582cbd57da6f2e82630
+  task_id: TRADING-013A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-013 已完成且 CI 通过后，固化本机真实
+      controlled fill no-fill evidence，并防止该样本被误解释为 `PaperBroker` fill model 已验证。2026-05-18:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 local validation review、sanitized no-fill
+      fixture、runbook no-fill 判断、calibration `NO_FILL_LIFECYCLE_VALIDATED` 分类、系统流图/产物目录和安全语义测试；本地验证通过目标
+      pytest、`tests/trading_engine`、全量 pytest、ruff、black 和 diff check。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub Actions CI run `27085392644`
+      completed/success；复验 controlled fill local validation、calibration focused tests
+      和触达文件 ruff 通过；no-fill 样本仍只证明 submit/open/cancel 链路，不证明 fill model。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7ef33582cbd57da6f2e82630d1aa95b4a3b7fca86442d78c5cc857e6f7785b30
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-013A
+  - 交易执行/IBKR Paper Controlled Fill Local Validation Report
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/ibkr_paper_controlled_fill_local_validation_2026-05-17.md`；本机
+    controlled fill no-fill review、sanitized fixture、runbook、calibration 语义、系统流图/产物目录、测试和当前
+    HEAD CI 已完成
+  - 新增本机验证 review 和 sanitized fixture，记录 `test_status=LIMITED`、`connection_status=CONNECTED`、NVDA
+    BUY LIMIT DAY 1 @ 224.50、order status path `PendingSubmit -> PreSubmitted -> PendingCancel
+    -> Cancelled`、`fill_seen=false`、`fill_quantity=0`、`commission_report_seen=false`、`cancel_requested=true`、`final_order_status=Cancelled`、`issue=fill_not_seen_timeout`、likely
+    non-regular trading session / remained `PreSubmitted`；runbook 补充非交易时段 no-fill
+    判断和重新运行建议；calibration 读取 controlled fill no-fill artifact 时归类 `NO_FILL_LIFECYCLE_VALIDATED`，但继续输出
+    `fill_tested=false` 和 `LIFECYCLE_ALIGNED_FILL_UNTESTED`；review/fixture 不含完整 `DUP`
+    account、真实 broker order id、perm id、execution id、password、token 或 API key；目标 pytest、trading_engine、全量
+    pytest、ruff、black、commit、push 后 CI 通过
+  - '2026-05-18: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-013 已完成且 CI 通过后，固化本机真实 controlled
+    fill no-fill evidence，并防止该样本被误解释为 `PaperBroker` fill model 已验证。2026-05-18: 从 IN_PROGRESS
+    改为 VALIDATING，原因：已新增 local validation review、sanitized no-fill fixture、runbook
+    no-fill 判断、calibration `NO_FILL_LIFECYCLE_VALIDATED` 分类、系统流图/产物目录和安全语义测试；本地验证通过目标
+    pytest、`tests/trading_engine`、全量 pytest、ruff、black 和 diff check。2026-06-07: 从
+    VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub Actions CI run `27085392644` completed/success；复验
+    controlled fill local validation、calibration focused tests 和触达文件 ruff 通过；no-fill
+    样本仍只证明 submit/open/cancel 链路，不证明 fill model。'
+  docs_links:
+  - docs/requirements/ibkr_paper_controlled_fill_local_validation_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 7ef33582cbd57da6f2e82630d1aa95b4a3b7fca86442d78c5cc857e6f7785b30
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 34b955d5d7fb305ee7c60c041dc07565e23e36886a7f79055a660869d45d1acd

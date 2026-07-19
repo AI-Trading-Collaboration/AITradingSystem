@@ -1,0 +1,234 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1087_EXTERNAL_REQUEST_INCREMENTAL_REFRESH_GUARDRAILS
+  title: null
+  domain: Data foundation / 外部请求增量刷新与供应商配额护栏
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1087_External_Request_Incremental_Refresh_Guardrails.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1087_External_Request_Incremental_Refresh_Guardrails.md`；2026-06-27
+    已修复 daily incremental head-gap 误判，`_price_fetch_windows` 只对已有 cache ticker 补尾部窗口，头部历史缺口必须走显式
+    repair/backfill；本地估算从 1950 units 降为 25 units。owner 已接受单日几十级别请求量，并在 2026-06-29
+    明确 projected overage 未超过 Marketstack quota limit 10% 时可继续；当前实现补充 10% ratio cap，并修复
+    cache 已覆盖 / `estimated_increment_usage=0` 的重复 daily-run 不应因负 quota hard stop 阻断；真实
+    no-live-request daily-run 已 36/36 PASS；2026-06-29 daily-run 暴露 Cboe VIX vendor-ready
+    buffer 和周末 tail-window 缺口，本轮已真实复验 2026-06-29 daily-run 36/36 PASS。不得扩展为全历史、多日回补、复用旧
+    VIX 行或永久跳过 Marketstack/Cboe。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits download-data` / daily scheduler 在已有 cache 覆盖到上一交易日时只请求下一美股交易日起的尾部缺口，不因
+      `start=2018-01-01` 非交易日、周末/节假日 tail gap 或 ticker 上市前自然缺口生成全历史/多自然日窗口；Marketstack
+      quota 预估不足时默认 fail closed，只有 `config/data_source_request_budget_policy.yaml`
+      允许的单窗口、单日、estimated usage <= 50 且 projected shortfall <= quota_limit 10% 情况可标记
+      `OWNER_APPROVED_SMALL_DAILY_OVERAGE` 并继续；当 cache 已覆盖请求结束日、`estimated_increment_usage=0`
+      且不会发起 live request 时，命令必须输出可审计 cache-only/no-live-request request-budget 状态并继续进入
+      `aits validate-data`；下游 manifest/report 显示 data-quality status、request budget、cache
+      hit/miss；FMP/Marketstack reconciliation 不被静默关闭；focused parallel pytest、Ruff、compileall、`git
+      diff --check`、真实 no-live-request rerun 和真实 2026-06-29 tail refresh + daily-run
+      复验通过；后续 Marketstack quota 恢复、套餐/供应商政策变更、projected overage 超过 10% 或单日估算超过上限时必须移除/收紧临时批准。'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1287
+    row_sha256: 672184ef62d3bf0811c376d9cad7c7f401a17cc3f31b8a8b7cd58eb8df08937b
+    cell_count: 8
+    all_cells:
+    - TRADING-1087_EXTERNAL_REQUEST_INCREMENTAL_REFRESH_GUARDRAILS
+    - Data foundation / 外部请求增量刷新与供应商配额护栏
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1087_External_Request_Incremental_Refresh_Guardrails.md`；2026-06-27
+      已修复 daily incremental head-gap 误判，`_price_fetch_windows` 只对已有 cache ticker 补尾部窗口，头部历史缺口必须走显式
+      repair/backfill；本地估算从 1950 units 降为 25 units。owner 已接受单日几十级别请求量，并在 2026-06-29
+      明确 projected overage 未超过 Marketstack quota limit 10% 时可继续；当前实现补充 10% ratio cap，并修复
+      cache 已覆盖 / `estimated_increment_usage=0` 的重复 daily-run 不应因负 quota hard stop
+      阻断；真实 no-live-request daily-run 已 36/36 PASS；2026-06-29 daily-run 暴露 Cboe VIX
+      vendor-ready buffer 和周末 tail-window 缺口，本轮已真实复验 2026-06-29 daily-run 36/36 PASS。不得扩展为全历史、多日回补、复用旧
+      VIX 行或永久跳过 Marketstack/Cboe。
+    - '`aits download-data` / daily scheduler 在已有 cache 覆盖到上一交易日时只请求下一美股交易日起的尾部缺口，不因
+      `start=2018-01-01` 非交易日、周末/节假日 tail gap 或 ticker 上市前自然缺口生成全历史/多自然日窗口；Marketstack
+      quota 预估不足时默认 fail closed，只有 `config/data_source_request_budget_policy.yaml`
+      允许的单窗口、单日、estimated usage <= 50 且 projected shortfall <= quota_limit 10% 情况可标记
+      `OWNER_APPROVED_SMALL_DAILY_OVERAGE` 并继续；当 cache 已覆盖请求结束日、`estimated_increment_usage=0`
+      且不会发起 live request 时，命令必须输出可审计 cache-only/no-live-request request-budget 状态并继续进入
+      `aits validate-data`；下游 manifest/report 显示 data-quality status、request budget、cache
+      hit/miss；FMP/Marketstack reconciliation 不被静默关闭；focused parallel pytest、Ruff、compileall、`git
+      diff --check`、真实 no-live-request rerun 和真实 2026-06-29 tail refresh + daily-run
+      复验通过；后续 Marketstack quota 恢复、套餐/供应商政策变更、projected overage 超过 10% 或单日估算超过上限时必须移除/收紧临时批准。'
+    - '2026-06-26: 新增，原因：Marketstack 响应头显示 `x-quota-limit=10000`、`x-quota-remaining=-688`、本地自
+      2026-06-13 起 451 个 Marketstack page request / `x-increment-usage` 合计 10687；根因是每日
+      `download-data --start 2018-01-01 --end <date>` 让 cache identity 随 `date_to`/`to`
+      改变，历史数据重复请求。2026-06-26: owner 要求先推进修复，状态转为 IN_PROGRESS。2026-06-26: 实现完成并转入 VALIDATING；验证通过
+      Ruff、py_compile、focused parallel pytest（data download / external request cache
+      / data quality）；额外 ops/scheduled focused suite 有 2 个与本任务无关的既有 forward-evidence
+      步骤期望失败，未混入调度测试修复。2026-06-27: 从 VALIDATING 改回 IN_PROGRESS，原因：`daily_ops_run:2026-06-26:20260626T223204Z`
+      在 `download_data` fail closed，诊断为 Marketstack preflight `estimated_increment_usage=1950`；复现确认
+      head-gap 误判导致全历史窗口。2026-06-27: 代码修复和验证完成；本地 2026-06-26 Marketstack 窗口为单日 25
+      tickers、estimated usage=25，remaining blocker 为供应商 quota negative，状态转为 BLOCKED_EXTERNAL。2026-06-27:
+      owner 批准单日几十级别请求量，任务重新进入 IN_PROGRESS；本轮新增 request budget policy，仅允许 owner-approved
+      small daily overage，仍阻断大窗口和全历史 refresh。2026-06-27: 真实 `aits ops daily-run --as-of
+      2026-06-26` 通过，Marketstack manifest 记录 single-day tail refresh、`OWNER_APPROVED_SMALL_DAILY_OVERAGE`、live
+      request count=1、increment usage=25；任务转入 VALIDATING。2026-06-28: 从 VALIDATING
+      改回 IN_PROGRESS，原因：重复默认 `aits ops daily-run` 使用同一 `as_of=2026-06-26` 时 `download_data`
+      fail closed，诊断为 `estimated_increment_usage=0`、`quota_remaining=-713`；后续需修复 zero-increment/cache-only
+      rerun policy，证明无 live request 时不得因负 quota 阻断 validate-data。2026-06-29: owner
+      明确 projected overage 未超过 Marketstack quota limit 10% 时可继续；本轮补充 `max_quota_overage_ratio=0.10`，并让
+      `estimated_increment_usage=0` 的 no-live-request preflight 不再进入 owner-overage
+      hard stop。真实 `daily_ops_run:2026-06-26:20260629T012701Z` 36/36 PASS，Marketstack
+      budget `NO_LIVE_REQUEST_NEEDED`，data quality `PASS_WITH_WARNINGS`。2026-06-30:
+      真实 `daily_ops_run:2026-06-29:20260630T014214Z` 36/36 PASS，Marketstack budget
+      `OWNER_APPROVED_SMALL_DAILY_OVERAGE`、estimated usage=25，data quality `PASS_WITH_WARNINGS`，production_effect=`none`。'
+    raw_line: '|TRADING-1087_EXTERNAL_REQUEST_INCREMENTAL_REFRESH_GUARDRAILS|Data
+      foundation / 外部请求增量刷新与供应商配额护栏|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1087_External_Request_Incremental_Refresh_Guardrails.md`；2026-06-27
+      已修复 daily incremental head-gap 误判，`_price_fetch_windows` 只对已有 cache ticker 补尾部窗口，头部历史缺口必须走显式
+      repair/backfill；本地估算从 1950 units 降为 25 units。owner 已接受单日几十级别请求量，并在 2026-06-29
+      明确 projected overage 未超过 Marketstack quota limit 10% 时可继续；当前实现补充 10% ratio cap，并修复
+      cache 已覆盖 / `estimated_increment_usage=0` 的重复 daily-run 不应因负 quota hard stop
+      阻断；真实 no-live-request daily-run 已 36/36 PASS；2026-06-29 daily-run 暴露 Cboe VIX
+      vendor-ready buffer 和周末 tail-window 缺口，本轮已真实复验 2026-06-29 daily-run 36/36 PASS。不得扩展为全历史、多日回补、复用旧
+      VIX 行或永久跳过 Marketstack/Cboe。|`aits download-data` / daily scheduler 在已有 cache
+      覆盖到上一交易日时只请求下一美股交易日起的尾部缺口，不因 `start=2018-01-01` 非交易日、周末/节假日 tail gap 或 ticker
+      上市前自然缺口生成全历史/多自然日窗口；Marketstack quota 预估不足时默认 fail closed，只有 `config/data_source_request_budget_policy.yaml`
+      允许的单窗口、单日、estimated usage <= 50 且 projected shortfall <= quota_limit 10% 情况可标记
+      `OWNER_APPROVED_SMALL_DAILY_OVERAGE` 并继续；当 cache 已覆盖请求结束日、`estimated_increment_usage=0`
+      且不会发起 live request 时，命令必须输出可审计 cache-only/no-live-request request-budget 状态并继续进入
+      `aits validate-data`；下游 manifest/report 显示 data-quality status、request budget、cache
+      hit/miss；FMP/Marketstack reconciliation 不被静默关闭；focused parallel pytest、Ruff、compileall、`git
+      diff --check`、真实 no-live-request rerun 和真实 2026-06-29 tail refresh + daily-run
+      复验通过；后续 Marketstack quota 恢复、套餐/供应商政策变更、projected overage 超过 10% 或单日估算超过上限时必须移除/收紧临时批准。|2026-06-26:
+      新增，原因：Marketstack 响应头显示 `x-quota-limit=10000`、`x-quota-remaining=-688`、本地自 2026-06-13
+      起 451 个 Marketstack page request / `x-increment-usage` 合计 10687；根因是每日 `download-data
+      --start 2018-01-01 --end <date>` 让 cache identity 随 `date_to`/`to` 改变，历史数据重复请求。2026-06-26:
+      owner 要求先推进修复，状态转为 IN_PROGRESS。2026-06-26: 实现完成并转入 VALIDATING；验证通过 Ruff、py_compile、focused
+      parallel pytest（data download / external request cache / data quality）；额外 ops/scheduled
+      focused suite 有 2 个与本任务无关的既有 forward-evidence 步骤期望失败，未混入调度测试修复。2026-06-27: 从
+      VALIDATING 改回 IN_PROGRESS，原因：`daily_ops_run:2026-06-26:20260626T223204Z` 在 `download_data`
+      fail closed，诊断为 Marketstack preflight `estimated_increment_usage=1950`；复现确认
+      head-gap 误判导致全历史窗口。2026-06-27: 代码修复和验证完成；本地 2026-06-26 Marketstack 窗口为单日 25
+      tickers、estimated usage=25，remaining blocker 为供应商 quota negative，状态转为 BLOCKED_EXTERNAL。2026-06-27:
+      owner 批准单日几十级别请求量，任务重新进入 IN_PROGRESS；本轮新增 request budget policy，仅允许 owner-approved
+      small daily overage，仍阻断大窗口和全历史 refresh。2026-06-27: 真实 `aits ops daily-run --as-of
+      2026-06-26` 通过，Marketstack manifest 记录 single-day tail refresh、`OWNER_APPROVED_SMALL_DAILY_OVERAGE`、live
+      request count=1、increment usage=25；任务转入 VALIDATING。2026-06-28: 从 VALIDATING
+      改回 IN_PROGRESS，原因：重复默认 `aits ops daily-run` 使用同一 `as_of=2026-06-26` 时 `download_data`
+      fail closed，诊断为 `estimated_increment_usage=0`、`quota_remaining=-713`；后续需修复 zero-increment/cache-only
+      rerun policy，证明无 live request 时不得因负 quota 阻断 validate-data。2026-06-29: owner
+      明确 projected overage 未超过 Marketstack quota limit 10% 时可继续；本轮补充 `max_quota_overage_ratio=0.10`，并让
+      `estimated_increment_usage=0` 的 no-live-request preflight 不再进入 owner-overage
+      hard stop。真实 `daily_ops_run:2026-06-26:20260629T012701Z` 36/36 PASS，Marketstack
+      budget `NO_LIVE_REQUEST_NEEDED`，data quality `PASS_WITH_WARNINGS`。2026-06-30:
+      真实 `daily_ops_run:2026-06-29:20260630T014214Z` 36/36 PASS，Marketstack budget
+      `OWNER_APPROVED_SMALL_DAILY_OVERAGE`、estimated usage=25，data quality `PASS_WITH_WARNINGS`，production_effect=`none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-672184ef62d3bf0811c376d9
+  task_id: TRADING-1087_EXTERNAL_REQUEST_INCREMENTAL_REFRESH_GUARDRAILS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-26: 新增，原因：Marketstack 响应头显示 `x-quota-limit=10000`、`x-quota-remaining=-688`、本地自
+      2026-06-13 起 451 个 Marketstack page request / `x-increment-usage` 合计 10687；根因是每日
+      `download-data --start 2018-01-01 --end <date>` 让 cache identity 随 `date_to`/`to`
+      改变，历史数据重复请求。2026-06-26: owner 要求先推进修复，状态转为 IN_PROGRESS。2026-06-26: 实现完成并转入 VALIDATING；验证通过
+      Ruff、py_compile、focused parallel pytest（data download / external request cache
+      / data quality）；额外 ops/scheduled focused suite 有 2 个与本任务无关的既有 forward-evidence
+      步骤期望失败，未混入调度测试修复。2026-06-27: 从 VALIDATING 改回 IN_PROGRESS，原因：`daily_ops_run:2026-06-26:20260626T223204Z`
+      在 `download_data` fail closed，诊断为 Marketstack preflight `estimated_increment_usage=1950`；复现确认
+      head-gap 误判导致全历史窗口。2026-06-27: 代码修复和验证完成；本地 2026-06-26 Marketstack 窗口为单日 25
+      tickers、estimated usage=25，remaining blocker 为供应商 quota negative，状态转为 BLOCKED_EXTERNAL。2026-06-27:
+      owner 批准单日几十级别请求量，任务重新进入 IN_PROGRESS；本轮新增 request budget policy，仅允许 owner-approved
+      small daily overage，仍阻断大窗口和全历史 refresh。2026-06-27: 真实 `aits ops daily-run --as-of
+      2026-06-26` 通过，Marketstack manifest 记录 single-day tail refresh、`OWNER_APPROVED_SMALL_DAILY_OVERAGE`、live
+      request count=1、increment usage=25；任务转入 VALIDATING。2026-06-28: 从 VALIDATING
+      改回 IN_PROGRESS，原因：重复默认 `aits ops daily-run` 使用同一 `as_of=2026-06-26` 时 `download_data`
+      fail closed，诊断为 `estimated_increment_usage=0`、`quota_remaining=-713`；后续需修复 zero-increment/cache-only
+      rerun policy，证明无 live request 时不得因负 quota 阻断 validate-data。2026-06-29: owner
+      明确 projected overage 未超过 Marketstack quota limit 10% 时可继续；本轮补充 `max_quota_overage_ratio=0.10`，并让
+      `estimated_increment_usage=0` 的 no-live-request preflight 不再进入 owner-overage
+      hard stop。真实 `daily_ops_run:2026-06-26:20260629T012701Z` 36/36 PASS，Marketstack
+      budget `NO_LIVE_REQUEST_NEEDED`，data quality `PASS_WITH_WARNINGS`。2026-06-30:
+      真实 `daily_ops_run:2026-06-29:20260630T014214Z` 36/36 PASS，Marketstack budget
+      `OWNER_APPROVED_SMALL_DAILY_OVERAGE`、estimated usage=25，data quality `PASS_WITH_WARNINGS`，production_effect=`none`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:672184ef62d3bf0811c376d9cad7c7f401a17cc3f31b8a8b7cd58eb8df08937b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1087_EXTERNAL_REQUEST_INCREMENTAL_REFRESH_GUARDRAILS
+  - Data foundation / 外部请求增量刷新与供应商配额护栏
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1087_External_Request_Incremental_Refresh_Guardrails.md`；2026-06-27
+    已修复 daily incremental head-gap 误判，`_price_fetch_windows` 只对已有 cache ticker 补尾部窗口，头部历史缺口必须走显式
+    repair/backfill；本地估算从 1950 units 降为 25 units。owner 已接受单日几十级别请求量，并在 2026-06-29
+    明确 projected overage 未超过 Marketstack quota limit 10% 时可继续；当前实现补充 10% ratio cap，并修复
+    cache 已覆盖 / `estimated_increment_usage=0` 的重复 daily-run 不应因负 quota hard stop 阻断；真实
+    no-live-request daily-run 已 36/36 PASS；2026-06-29 daily-run 暴露 Cboe VIX vendor-ready
+    buffer 和周末 tail-window 缺口，本轮已真实复验 2026-06-29 daily-run 36/36 PASS。不得扩展为全历史、多日回补、复用旧
+    VIX 行或永久跳过 Marketstack/Cboe。
+  - '`aits download-data` / daily scheduler 在已有 cache 覆盖到上一交易日时只请求下一美股交易日起的尾部缺口，不因
+    `start=2018-01-01` 非交易日、周末/节假日 tail gap 或 ticker 上市前自然缺口生成全历史/多自然日窗口；Marketstack
+    quota 预估不足时默认 fail closed，只有 `config/data_source_request_budget_policy.yaml` 允许的单窗口、单日、estimated
+    usage <= 50 且 projected shortfall <= quota_limit 10% 情况可标记 `OWNER_APPROVED_SMALL_DAILY_OVERAGE`
+    并继续；当 cache 已覆盖请求结束日、`estimated_increment_usage=0` 且不会发起 live request 时，命令必须输出可审计
+    cache-only/no-live-request request-budget 状态并继续进入 `aits validate-data`；下游 manifest/report
+    显示 data-quality status、request budget、cache hit/miss；FMP/Marketstack reconciliation
+    不被静默关闭；focused parallel pytest、Ruff、compileall、`git diff --check`、真实 no-live-request
+    rerun 和真实 2026-06-29 tail refresh + daily-run 复验通过；后续 Marketstack quota 恢复、套餐/供应商政策变更、projected
+    overage 超过 10% 或单日估算超过上限时必须移除/收紧临时批准。'
+  - '2026-06-26: 新增，原因：Marketstack 响应头显示 `x-quota-limit=10000`、`x-quota-remaining=-688`、本地自
+    2026-06-13 起 451 个 Marketstack page request / `x-increment-usage` 合计 10687；根因是每日
+    `download-data --start 2018-01-01 --end <date>` 让 cache identity 随 `date_to`/`to`
+    改变，历史数据重复请求。2026-06-26: owner 要求先推进修复，状态转为 IN_PROGRESS。2026-06-26: 实现完成并转入 VALIDATING；验证通过
+    Ruff、py_compile、focused parallel pytest（data download / external request cache
+    / data quality）；额外 ops/scheduled focused suite 有 2 个与本任务无关的既有 forward-evidence
+    步骤期望失败，未混入调度测试修复。2026-06-27: 从 VALIDATING 改回 IN_PROGRESS，原因：`daily_ops_run:2026-06-26:20260626T223204Z`
+    在 `download_data` fail closed，诊断为 Marketstack preflight `estimated_increment_usage=1950`；复现确认
+    head-gap 误判导致全历史窗口。2026-06-27: 代码修复和验证完成；本地 2026-06-26 Marketstack 窗口为单日 25 tickers、estimated
+    usage=25，remaining blocker 为供应商 quota negative，状态转为 BLOCKED_EXTERNAL。2026-06-27:
+    owner 批准单日几十级别请求量，任务重新进入 IN_PROGRESS；本轮新增 request budget policy，仅允许 owner-approved
+    small daily overage，仍阻断大窗口和全历史 refresh。2026-06-27: 真实 `aits ops daily-run --as-of
+    2026-06-26` 通过，Marketstack manifest 记录 single-day tail refresh、`OWNER_APPROVED_SMALL_DAILY_OVERAGE`、live
+    request count=1、increment usage=25；任务转入 VALIDATING。2026-06-28: 从 VALIDATING 改回
+    IN_PROGRESS，原因：重复默认 `aits ops daily-run` 使用同一 `as_of=2026-06-26` 时 `download_data`
+    fail closed，诊断为 `estimated_increment_usage=0`、`quota_remaining=-713`；后续需修复 zero-increment/cache-only
+    rerun policy，证明无 live request 时不得因负 quota 阻断 validate-data。2026-06-29: owner 明确
+    projected overage 未超过 Marketstack quota limit 10% 时可继续；本轮补充 `max_quota_overage_ratio=0.10`，并让
+    `estimated_increment_usage=0` 的 no-live-request preflight 不再进入 owner-overage hard
+    stop。真实 `daily_ops_run:2026-06-26:20260629T012701Z` 36/36 PASS，Marketstack budget
+    `NO_LIVE_REQUEST_NEEDED`，data quality `PASS_WITH_WARNINGS`。2026-06-30: 真实 `daily_ops_run:2026-06-29:20260630T014214Z`
+    36/36 PASS，Marketstack budget `OWNER_APPROVED_SMALL_DAILY_OVERAGE`、estimated usage=25，data
+    quality `PASS_WITH_WARNINGS`，production_effect=`none`。'
+  docs_links:
+  - docs/requirements/TRADING-1087_External_Request_Incremental_Refresh_Guardrails.md
+  terminal: false
+  raw_row_sha256: 672184ef62d3bf0811c376d9cad7c7f401a17cc3f31b8a8b7cd58eb8df08937b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8ddf093eb0affad8c45ac1a17e7f3403bcd0f444e4f96b698cb2d294011b4485

@@ -1,0 +1,154 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-649_to_653_CAMPAIGN_B2_FINALIZATION
+  title: null
+  domain: ETF portfolio/weight research campaign B2 finalization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-649_to_653_Campaign_B2_Finalization.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-649_to_653_Campaign_B2_Finalization.md`；在
+    TRADING-641~648 rc3 基础上冻结 B2 current Campaign next actions，通过 Campaign-managed
+    `run --stage next` 执行最后一轮 targeted evidence，生成 B2 final gate、owner review packet
+    和 branch finalization snapshot；不得调用旧 B2 task-specific runner 作为 orchestration
+    入口，不得调参、访问 untouched holdout、生成 paper-shadow/official weights/broker/order 或 production
+    mutation，不得启用 B4/B5/B6/v3
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Next-action freeze 输出 current stage/outcome、reason codes、budget、allowed/blocked/owner
+      actions；final repeatability run 使用 Campaign next stage + B2 compute adapter
+      并消耗 budget，输出 complete/partial/blocked；final gate 输出允许 B2 taxonomy 且预算耗尽时不输出
+      generic `NEEDS_MORE_EVIDENCE`；owner packet 汇总 B2 hypothesis、fast-risk、slow-drawdown、control
+      windows、re-entry lag、utility、final gate 和 owner options 且不 append owner decision；branch
+      finalization 输出 allowed branch taxonomy 并固定 B4/B5/B6/v3/paper-shadow false；focused
+      tests、Ruff、compileall、B2/B3 campaign validate、validation-pack 和 `git diff --check`
+      通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1407
+    row_sha256: ce31312a42cf8e8cf1cdb1f2144c6bc3135691150df1dcb9bf0ea3b02ccb7255
+    cell_count: 8
+    all_cells:
+    - TRADING-649_to_653_CAMPAIGN_B2_FINALIZATION
+    - ETF portfolio/weight research campaign B2 finalization
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-649_to_653_Campaign_B2_Finalization.md`；在 TRADING-641~648
+      rc3 基础上冻结 B2 current Campaign next actions，通过 Campaign-managed `run --stage
+      next` 执行最后一轮 targeted evidence，生成 B2 final gate、owner review packet 和 branch
+      finalization snapshot；不得调用旧 B2 task-specific runner 作为 orchestration 入口，不得调参、访问
+      untouched holdout、生成 paper-shadow/official weights/broker/order 或 production
+      mutation，不得启用 B4/B5/B6/v3
+    - Next-action freeze 输出 current stage/outcome、reason codes、budget、allowed/blocked/owner
+      actions；final repeatability run 使用 Campaign next stage + B2 compute adapter
+      并消耗 budget，输出 complete/partial/blocked；final gate 输出允许 B2 taxonomy 且预算耗尽时不输出
+      generic `NEEDS_MORE_EVIDENCE`；owner packet 汇总 B2 hypothesis、fast-risk、slow-drawdown、control
+      windows、re-entry lag、utility、final gate 和 owner options 且不 append owner decision；branch
+      finalization 输出 allowed branch taxonomy 并固定 B4/B5/B6/v3/paper-shadow false；focused
+      tests、Ruff、compileall、B2/B3 campaign validate、validation-pack 和 `git diff --check`
+      通过
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件后续要求把 B2 current-form 研究从 rc3 compute coverage
+      推进到 Campaign-managed final repeatability、final gate、owner packet 和 branch finalization，同时继续保持
+      all production/promotion/broker/order boundaries closed。2026-06-19: 实现完成并转入
+      VALIDATING；新增 B2 next-action freeze、Campaign-managed final repeatability、final
+      gate、owner packet 和 branch finalization；验证通过 focused pytest 19 passed、Ruff、compileall、adapter
+      validation、B2/B3 campaign validate、rc4 validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`
+      artifacts=23、JSON parse 和 `git diff --check`。'
+    raw_line: '|TRADING-649_to_653_CAMPAIGN_B2_FINALIZATION|ETF portfolio/weight research
+      campaign B2 finalization|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-649_to_653_Campaign_B2_Finalization.md`；在
+      TRADING-641~648 rc3 基础上冻结 B2 current Campaign next actions，通过 Campaign-managed
+      `run --stage next` 执行最后一轮 targeted evidence，生成 B2 final gate、owner review packet
+      和 branch finalization snapshot；不得调用旧 B2 task-specific runner 作为 orchestration
+      入口，不得调参、访问 untouched holdout、生成 paper-shadow/official weights/broker/order 或
+      production mutation，不得启用 B4/B5/B6/v3|Next-action freeze 输出 current stage/outcome、reason
+      codes、budget、allowed/blocked/owner actions；final repeatability run 使用 Campaign
+      next stage + B2 compute adapter 并消耗 budget，输出 complete/partial/blocked；final
+      gate 输出允许 B2 taxonomy 且预算耗尽时不输出 generic `NEEDS_MORE_EVIDENCE`；owner packet 汇总
+      B2 hypothesis、fast-risk、slow-drawdown、control windows、re-entry lag、utility、final
+      gate 和 owner options 且不 append owner decision；branch finalization 输出 allowed
+      branch taxonomy 并固定 B4/B5/B6/v3/paper-shadow false；focused tests、Ruff、compileall、B2/B3
+      campaign validate、validation-pack 和 `git diff --check` 通过|2026-06-19: 新增并进入
+      IN_PROGRESS，原因：附件后续要求把 B2 current-form 研究从 rc3 compute coverage 推进到 Campaign-managed
+      final repeatability、final gate、owner packet 和 branch finalization，同时继续保持 all
+      production/promotion/broker/order boundaries closed。2026-06-19: 实现完成并转入 VALIDATING；新增
+      B2 next-action freeze、Campaign-managed final repeatability、final gate、owner
+      packet 和 branch finalization；验证通过 focused pytest 19 passed、Ruff、compileall、adapter
+      validation、B2/B3 campaign validate、rc4 validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`
+      artifacts=23、JSON parse 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ce31312a42cf8e8cf1cdb1f2
+  task_id: TRADING-649_to_653_CAMPAIGN_B2_FINALIZATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件后续要求把 B2 current-form 研究从 rc3 compute
+      coverage 推进到 Campaign-managed final repeatability、final gate、owner packet 和
+      branch finalization，同时继续保持 all production/promotion/broker/order boundaries
+      closed。2026-06-19: 实现完成并转入 VALIDATING；新增 B2 next-action freeze、Campaign-managed
+      final repeatability、final gate、owner packet 和 branch finalization；验证通过 focused
+      pytest 19 passed、Ruff、compileall、adapter validation、B2/B3 campaign validate、rc4
+      validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`
+      artifacts=23、JSON parse 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ce31312a42cf8e8cf1cdb1f2144c6bc3135691150df1dcb9bf0ea3b02ccb7255
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-649_to_653_CAMPAIGN_B2_FINALIZATION
+  - ETF portfolio/weight research campaign B2 finalization
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-649_to_653_Campaign_B2_Finalization.md`；在 TRADING-641~648
+    rc3 基础上冻结 B2 current Campaign next actions，通过 Campaign-managed `run --stage next`
+    执行最后一轮 targeted evidence，生成 B2 final gate、owner review packet 和 branch finalization
+    snapshot；不得调用旧 B2 task-specific runner 作为 orchestration 入口，不得调参、访问 untouched holdout、生成
+    paper-shadow/official weights/broker/order 或 production mutation，不得启用 B4/B5/B6/v3
+  - Next-action freeze 输出 current stage/outcome、reason codes、budget、allowed/blocked/owner
+    actions；final repeatability run 使用 Campaign next stage + B2 compute adapter 并消耗
+    budget，输出 complete/partial/blocked；final gate 输出允许 B2 taxonomy 且预算耗尽时不输出 generic
+    `NEEDS_MORE_EVIDENCE`；owner packet 汇总 B2 hypothesis、fast-risk、slow-drawdown、control
+    windows、re-entry lag、utility、final gate 和 owner options 且不 append owner decision；branch
+    finalization 输出 allowed branch taxonomy 并固定 B4/B5/B6/v3/paper-shadow false；focused
+    tests、Ruff、compileall、B2/B3 campaign validate、validation-pack 和 `git diff --check`
+    通过
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件后续要求把 B2 current-form 研究从 rc3 compute coverage
+    推进到 Campaign-managed final repeatability、final gate、owner packet 和 branch finalization，同时继续保持
+    all production/promotion/broker/order boundaries closed。2026-06-19: 实现完成并转入 VALIDATING；新增
+    B2 next-action freeze、Campaign-managed final repeatability、final gate、owner packet
+    和 branch finalization；验证通过 focused pytest 19 passed、Ruff、compileall、adapter validation、B2/B3
+    campaign validate、rc4 validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`
+    artifacts=23、JSON parse 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-649_to_653_Campaign_B2_Finalization.md
+  terminal: false
+  raw_row_sha256: ce31312a42cf8e8cf1cdb1f2144c6bc3135691150df1dcb9bf0ea3b02ccb7255
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 025ce686837a1dea2b7c2444d43aea236b1883de679cc073b868e38c33def0bf

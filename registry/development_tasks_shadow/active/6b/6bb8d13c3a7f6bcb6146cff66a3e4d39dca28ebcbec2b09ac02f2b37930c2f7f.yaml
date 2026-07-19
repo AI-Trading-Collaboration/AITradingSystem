@@ -1,0 +1,105 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-864_TAIL_RISK_OWNER_REVIEW_PACK
+  title: null
+  domain: Controlled strategy research / owner review pack
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner + 系统实现
+  requirement_refs:
+  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
+  - docs/research/tail_risk_followup_owner_review_pack.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；用于
+    owner 决定接受、提交、继续或暂停
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `docs/research/tail_risk_followup_owner_review_pack.md` 和 `tail_risk_owner_review_pack.json`，回答实现完整性、未提交文件、mixed
+      risk、真实 CLI、blocked/readiness/baseline dominance/trigger v2 和 owner approval
+      项
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1342
+    row_sha256: 3a28519031e5e8753a24a4ad92148eaf40879a19a4b657b8e8ca2f02777a458d
+    cell_count: 8
+    all_cells:
+    - TRADING-864_TAIL_RISK_OWNER_REVIEW_PACK
+    - Controlled strategy research / owner review pack
+    - P1
+    - VALIDATING
+    - 项目 owner + 系统实现
+    - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；用于
+      owner 决定接受、提交、继续或暂停
+    - 生成 `docs/research/tail_risk_followup_owner_review_pack.md` 和 `tail_risk_owner_review_pack.json`，回答实现完整性、未提交文件、mixed
+      risk、真实 CLI、blocked/readiness/baseline dominance/trigger v2 和 owner approval
+      项
+    - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: owner review pack 完成并转入 VALIDATING；输出
+      `OWNER_REVIEW_PACK_READY`，明确当前 fallback 仍 blocked、readiness_score=58、baseline
+      dominated=true、trigger v2 不建议自动继续，owner 需批准 mixed worktree/hunk-level commit
+      边界。'
+    raw_line: '|TRADING-864_TAIL_RISK_OWNER_REVIEW_PACK|Controlled strategy research
+      / owner review pack|P1|VALIDATING|项目 owner + 系统实现|详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；用于
+      owner 决定接受、提交、继续或暂停|生成 `docs/research/tail_risk_followup_owner_review_pack.md`
+      和 `tail_risk_owner_review_pack.json`，回答实现完整性、未提交文件、mixed risk、真实 CLI、blocked/readiness/baseline
+      dominance/trigger v2 和 owner approval 项|2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22:
+      owner review pack 完成并转入 VALIDATING；输出 `OWNER_REVIEW_PACK_READY`，明确当前 fallback
+      仍 blocked、readiness_score=58、baseline dominated=true、trigger v2 不建议自动继续，owner
+      需批准 mixed worktree/hunk-level commit 边界。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3a28519031e5e8753a24a4ad
+  task_id: TRADING-864_TAIL_RISK_OWNER_REVIEW_PACK
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 项目 owner + 系统实现
+    notes: '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: owner review pack 完成并转入 VALIDATING；输出
+      `OWNER_REVIEW_PACK_READY`，明确当前 fallback 仍 blocked、readiness_score=58、baseline
+      dominated=true、trigger v2 不建议自动继续，owner 需批准 mixed worktree/hunk-level commit
+      边界。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3a28519031e5e8753a24a4ad92148eaf40879a19a4b657b8e8ca2f02777a458d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-864_TAIL_RISK_OWNER_REVIEW_PACK
+  - Controlled strategy research / owner review pack
+  - P1
+  - VALIDATING
+  - 项目 owner + 系统实现
+  - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；用于
+    owner 决定接受、提交、继续或暂停
+  - 生成 `docs/research/tail_risk_followup_owner_review_pack.md` 和 `tail_risk_owner_review_pack.json`，回答实现完整性、未提交文件、mixed
+    risk、真实 CLI、blocked/readiness/baseline dominance/trigger v2 和 owner approval 项
+  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: owner review pack 完成并转入 VALIDATING；输出
+    `OWNER_REVIEW_PACK_READY`，明确当前 fallback 仍 blocked、readiness_score=58、baseline
+    dominated=true、trigger v2 不建议自动继续，owner 需批准 mixed worktree/hunk-level commit 边界。'
+  docs_links:
+  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
+  - docs/research/tail_risk_followup_owner_review_pack.md
+  terminal: false
+  raw_row_sha256: 3a28519031e5e8753a24a4ad92148eaf40879a19a4b657b8e8ca2f02777a458d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b82b5f4ff63b2ed03c6c52e478893c74b57ccbbb56b65bf06f0a99bc2aede05b

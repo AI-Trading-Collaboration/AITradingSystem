@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-004
+  title: null
+  domain: 运行架构/PIT 日常抓取韧性
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/pit_daily_run_resilience_2026-05-06.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已修复 `aits pit-snapshots fetch-fmp-forward`
+    静默失败风险；详细边界见 `docs/requirements/pit_daily_run_resilience_2026-05-06.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: FMP PIT 抓取命令遇到供应商、权限、写入或校验失败时会输出并尽量写入脱敏中文失败报告；显式 `--continue-on-failure`
+      可用于每日调度继续执行后续自带质量门禁的步骤；失败或未通过校验的 PIT 快照不得被标记为可用，也不得补写缺跑日期为 strict PIT
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 424
+    row_sha256: c1a945388290560ba32f227f56b71d4c60a8ce0cfafb55a5a84fdaa589d324f2
+    cell_count: 8
+    all_cells:
+    - OPS-004
+    - 运行架构/PIT 日常抓取韧性
+    - P1
+    - DONE
+    - 系统实现
+    - 已修复 `aits pit-snapshots fetch-fmp-forward` 静默失败风险；详细边界见 `docs/requirements/pit_daily_run_resilience_2026-05-06.md`
+    - FMP PIT 抓取命令遇到供应商、权限、写入或校验失败时会输出并尽量写入脱敏中文失败报告；显式 `--continue-on-failure` 可用于每日调度继续执行后续自带质量门禁的步骤；失败或未通过校验的
+      PIT 快照不得被标记为可用，也不得补写缺跑日期为 strict PIT
+    - '2026-05-06: 新增并进入实现，原因：owner 要求修复 PIT 命令静默失败，并避免 PIT 抓取入口层故障阻塞后续日报流程。2026-05-06:
+      从 IN_PROGRESS 改为 DONE，原因：新增 FMP PIT 失败报告构造、未捕获异常脱敏诊断、`--continue-on-failure`
+      非阻断开关、daily-plan 接入、README/系统流图说明和回归测试；真实运行 `aits pit-snapshots fetch-fmp-forward
+      --as-of 2026-05-06 --continue-on-failure` 通过并生成 4956 行 normalized、PIT manifest
+      PASS，随后 `aits score-daily --as-of 2026-05-06` 通过为 PASS_WITH_LIMITATIONS；`ruff
+      check src tests` 与全量 `pytest -q` 407 passed。'
+    raw_line: '|OPS-004|运行架构/PIT 日常抓取韧性|P1|DONE|系统实现|已修复 `aits pit-snapshots fetch-fmp-forward`
+      静默失败风险；详细边界见 `docs/requirements/pit_daily_run_resilience_2026-05-06.md`|FMP
+      PIT 抓取命令遇到供应商、权限、写入或校验失败时会输出并尽量写入脱敏中文失败报告；显式 `--continue-on-failure` 可用于每日调度继续执行后续自带质量门禁的步骤；失败或未通过校验的
+      PIT 快照不得被标记为可用，也不得补写缺跑日期为 strict PIT|2026-05-06: 新增并进入实现，原因：owner 要求修复 PIT 命令静默失败，并避免
+      PIT 抓取入口层故障阻塞后续日报流程。2026-05-06: 从 IN_PROGRESS 改为 DONE，原因：新增 FMP PIT 失败报告构造、未捕获异常脱敏诊断、`--continue-on-failure`
+      非阻断开关、daily-plan 接入、README/系统流图说明和回归测试；真实运行 `aits pit-snapshots fetch-fmp-forward
+      --as-of 2026-05-06 --continue-on-failure` 通过并生成 4956 行 normalized、PIT manifest
+      PASS，随后 `aits score-daily --as-of 2026-05-06` 通过为 PASS_WITH_LIMITATIONS；`ruff
+      check src tests` 与全量 `pytest -q` 407 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c1a945388290560ba32f227f
+  task_id: OPS-004
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-06: 新增并进入实现，原因：owner 要求修复 PIT 命令静默失败，并避免 PIT 抓取入口层故障阻塞后续日报流程。2026-05-06:
+      从 IN_PROGRESS 改为 DONE，原因：新增 FMP PIT 失败报告构造、未捕获异常脱敏诊断、`--continue-on-failure`
+      非阻断开关、daily-plan 接入、README/系统流图说明和回归测试；真实运行 `aits pit-snapshots fetch-fmp-forward
+      --as-of 2026-05-06 --continue-on-failure` 通过并生成 4956 行 normalized、PIT manifest
+      PASS，随后 `aits score-daily --as-of 2026-05-06` 通过为 PASS_WITH_LIMITATIONS；`ruff
+      check src tests` 与全量 `pytest -q` 407 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c1a945388290560ba32f227f56b71d4c60a8ce0cfafb55a5a84fdaa589d324f2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-004
+  - 运行架构/PIT 日常抓取韧性
+  - P1
+  - DONE
+  - 系统实现
+  - 已修复 `aits pit-snapshots fetch-fmp-forward` 静默失败风险；详细边界见 `docs/requirements/pit_daily_run_resilience_2026-05-06.md`
+  - FMP PIT 抓取命令遇到供应商、权限、写入或校验失败时会输出并尽量写入脱敏中文失败报告；显式 `--continue-on-failure` 可用于每日调度继续执行后续自带质量门禁的步骤；失败或未通过校验的
+    PIT 快照不得被标记为可用，也不得补写缺跑日期为 strict PIT
+  - '2026-05-06: 新增并进入实现，原因：owner 要求修复 PIT 命令静默失败，并避免 PIT 抓取入口层故障阻塞后续日报流程。2026-05-06:
+    从 IN_PROGRESS 改为 DONE，原因：新增 FMP PIT 失败报告构造、未捕获异常脱敏诊断、`--continue-on-failure` 非阻断开关、daily-plan
+    接入、README/系统流图说明和回归测试；真实运行 `aits pit-snapshots fetch-fmp-forward --as-of 2026-05-06
+    --continue-on-failure` 通过并生成 4956 行 normalized、PIT manifest PASS，随后 `aits score-daily
+    --as-of 2026-05-06` 通过为 PASS_WITH_LIMITATIONS；`ruff check src tests` 与全量 `pytest
+    -q` 407 passed。'
+  docs_links:
+  - docs/requirements/pit_daily_run_resilience_2026-05-06.md
+  terminal: true
+  raw_row_sha256: c1a945388290560ba32f227f56b71d4c60a8ce0cfafb55a5a84fdaa589d324f2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6d83a12c0b90307236ab848b8f5d026dda9e89eefb0d355109ed08f59776fb3f

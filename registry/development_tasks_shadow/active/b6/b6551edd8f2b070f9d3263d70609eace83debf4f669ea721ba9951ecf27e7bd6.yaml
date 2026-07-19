@@ -1,0 +1,126 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2273_FIRST_LAYER_PROXY_CHALLENGER_EXPERIMENTS
+  title: null
+  domain: Research trends / first-layer proxy challenger experiments
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2273_First_Layer_Proxy_Challenger_Experiments.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2273_First_Layer_Proxy_Challenger_Experiments.md`；附件要求生成
+    baseline、trend structure、volatility regime、risk appetite、equal/cap-weight divergence
+    和 combined proxy challenger experiment matrix。本批已生成 challenger artifacts，下一步是
+    owner 复核或未来 true-breadth data decision。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends first-layer-proxy-challenger-experiments`、challenger
+      policy、JSON/YAML/Markdown artifacts、report registry、artifact catalog、system
+      flow 和 focused tests；每行披露 required proxies、missing inputs、target objective terms、row-level
+      validation_ready scope、promotion blockers 和 fixed safety fields；RSP/QQQE 缺失显式阻塞
+      equal/cap-weight divergence 和 combined proxy；所有 promotion/paper-shadow/production/broker
+      fields 固定 false/none/BLOCKED。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1244
+    row_sha256: e0fa49664303a2608da551b2aec5877c2ecb4f22ac5ad234bb67a6104d3982d8
+    cell_count: 8
+    all_cells:
+    - TRADING-2273_FIRST_LAYER_PROXY_CHALLENGER_EXPERIMENTS
+    - Research trends / first-layer proxy challenger experiments
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2273_First_Layer_Proxy_Challenger_Experiments.md`；附件要求生成
+      baseline、trend structure、volatility regime、risk appetite、equal/cap-weight divergence
+      和 combined proxy challenger experiment matrix。本批已生成 challenger artifacts，下一步是
+      owner 复核或未来 true-breadth data decision。
+    - 新增 `aits research trends first-layer-proxy-challenger-experiments`、challenger
+      policy、JSON/YAML/Markdown artifacts、report registry、artifact catalog、system
+      flow 和 focused tests；每行披露 required proxies、missing inputs、target objective terms、row-level
+      validation_ready scope、promotion blockers 和 fixed safety fields；RSP/QQQE 缺失显式阻塞
+      equal/cap-weight divergence 和 combined proxy；所有 promotion/paper-shadow/production/broker
+      fields 固定 false/none/BLOCKED。
+    - '2026-06-28: 新增并进入 IN_PROGRESS；本批只生成 offline challenger matrix，不训练模型、不恢复 first-layer
+      gates。2026-06-28: 实现完成并转入 VALIDATING；真实 run experiment_count=6、validation_ready_count=4、promotion_allowed_count=0，equal/cap
+      与 combined proxy 被 RSP/QQQE 缺失阻塞。2026-06-28: 验证通过 focused / governance / contract-validation，runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260628T130249Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-2273_FIRST_LAYER_PROXY_CHALLENGER_EXPERIMENTS|Research trends
+      / first-layer proxy challenger experiments|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-2273_First_Layer_Proxy_Challenger_Experiments.md`；附件要求生成
+      baseline、trend structure、volatility regime、risk appetite、equal/cap-weight divergence
+      和 combined proxy challenger experiment matrix。本批已生成 challenger artifacts，下一步是
+      owner 复核或未来 true-breadth data decision。|新增 `aits research trends first-layer-proxy-challenger-experiments`、challenger
+      policy、JSON/YAML/Markdown artifacts、report registry、artifact catalog、system
+      flow 和 focused tests；每行披露 required proxies、missing inputs、target objective terms、row-level
+      validation_ready scope、promotion blockers 和 fixed safety fields；RSP/QQQE 缺失显式阻塞
+      equal/cap-weight divergence 和 combined proxy；所有 promotion/paper-shadow/production/broker
+      fields 固定 false/none/BLOCKED。|2026-06-28: 新增并进入 IN_PROGRESS；本批只生成 offline challenger
+      matrix，不训练模型、不恢复 first-layer gates。2026-06-28: 实现完成并转入 VALIDATING；真实 run experiment_count=6、validation_ready_count=4、promotion_allowed_count=0，equal/cap
+      与 combined proxy 被 RSP/QQQE 缺失阻塞。2026-06-28: 验证通过 focused / governance / contract-validation，runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260628T130249Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e0fa49664303a2608da551b2
+  task_id: TRADING-2273_FIRST_LAYER_PROXY_CHALLENGER_EXPERIMENTS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 新增并进入 IN_PROGRESS；本批只生成 offline challenger matrix，不训练模型、不恢复
+      first-layer gates。2026-06-28: 实现完成并转入 VALIDATING；真实 run experiment_count=6、validation_ready_count=4、promotion_allowed_count=0，equal/cap
+      与 combined proxy 被 RSP/QQQE 缺失阻塞。2026-06-28: 验证通过 focused / governance / contract-validation，runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260628T130249Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e0fa49664303a2608da551b2aec5877c2ecb4f22ac5ad234bb67a6104d3982d8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2273_FIRST_LAYER_PROXY_CHALLENGER_EXPERIMENTS
+  - Research trends / first-layer proxy challenger experiments
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2273_First_Layer_Proxy_Challenger_Experiments.md`；附件要求生成
+    baseline、trend structure、volatility regime、risk appetite、equal/cap-weight divergence
+    和 combined proxy challenger experiment matrix。本批已生成 challenger artifacts，下一步是
+    owner 复核或未来 true-breadth data decision。
+  - 新增 `aits research trends first-layer-proxy-challenger-experiments`、challenger
+    policy、JSON/YAML/Markdown artifacts、report registry、artifact catalog、system flow
+    和 focused tests；每行披露 required proxies、missing inputs、target objective terms、row-level
+    validation_ready scope、promotion blockers 和 fixed safety fields；RSP/QQQE 缺失显式阻塞
+    equal/cap-weight divergence 和 combined proxy；所有 promotion/paper-shadow/production/broker
+    fields 固定 false/none/BLOCKED。
+  - '2026-06-28: 新增并进入 IN_PROGRESS；本批只生成 offline challenger matrix，不训练模型、不恢复 first-layer
+    gates。2026-06-28: 实现完成并转入 VALIDATING；真实 run experiment_count=6、validation_ready_count=4、promotion_allowed_count=0，equal/cap
+    与 combined proxy 被 RSP/QQQE 缺失阻塞。2026-06-28: 验证通过 focused / governance / contract-validation，runtime
+    artifact=`outputs/validation_runtime/contract-validation_20260628T130249Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-2273_First_Layer_Proxy_Challenger_Experiments.md
+  terminal: false
+  raw_row_sha256: e0fa49664303a2608da551b2aec5877c2ecb4f22ac5ad234bb67a6104d3982d8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: eefd3307ac0c0727014a70f6545848f13ebbc0bfe3e815b038b0e1c42d9c70ed

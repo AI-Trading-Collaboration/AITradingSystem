@@ -1,0 +1,118 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: SHADOW-001
+  title: null
+  domain: 模型评估/在线 PIT prediction ledger
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已新增 append-only `prediction_ledger.csv`
+    schema、`score-daily` production 写入和 `aits feedback calibrate-predictions` outcome
+    报告；剩余缺口是把 `EXPERIMENT-001` challenger/shadow 候选自动接入同一 ledger，并让周/月复盘读取 production
+    vs challenger 表现；详细拆解见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#shadow-001在线-pit-prediction--shadow-ledger`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 每个 production/challenger prediction 都能追溯到当时可见的数据快照、特征版本、规则版本和质量状态；challenger
+      行 `production_effect=none`，不得改变正式评分、仓位闸门或日报动作；outcome 追加后不能改写 signal-time 字段；周报/月报能区分
+      production 真实判断和 challenger shadow 表现；实现时同步更新 `docs/system_flow.md` 并补充 append-only、future
+      outcome isolation 和 challenger isolation 测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1099
+    row_sha256: d9f711f7bd7be9ea51307e3cd5840d799e5ea3b8523e202896afcc2e30de1926
+    cell_count: 8
+    all_cells:
+    - SHADOW-001
+    - 模型评估/在线 PIT prediction ledger
+    - P1
+    - BASELINE_DONE
+    - 系统实现
+    - 已新增 append-only `prediction_ledger.csv` schema、`score-daily` production 写入和
+      `aits feedback calibrate-predictions` outcome 报告；剩余缺口是把 `EXPERIMENT-001` challenger/shadow
+      候选自动接入同一 ledger，并让周/月复盘读取 production vs challenger 表现；详细拆解见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#shadow-001在线-pit-prediction--shadow-ledger`
+    - 每个 production/challenger prediction 都能追溯到当时可见的数据快照、特征版本、规则版本和质量状态；challenger
+      行 `production_effect=none`，不得改变正式评分、仓位闸门或日报动作；outcome 追加后不能改写 signal-time 字段；周报/月报能区分
+      production 真实判断和 challenger shadow 表现；实现时同步更新 `docs/system_flow.md` 并补充 append-only、future
+      outcome isolation 和 challenger isolation 测试
+    - '2026-05-05: 新增任务，原因：历史 PIT 不完整时，在线真实 prediction log 是后续模型迭代和晋级最可靠的 PIT 样本；现有
+      `decision_snapshot` 只覆盖 production 判断，不足以比较多个 challenger。2026-05-05: 从 READY
+      改为 BASELINE_DONE，原因：生产日报写入 prediction ledger，prediction outcome 校准命令和报告已实现，测试覆盖
+      append-only、shadow isolation 和 outcome 分桶；完整 DONE 仍需 challenger 自动接入和周期复盘展示。'
+    raw_line: '|SHADOW-001|模型评估/在线 PIT prediction ledger|P1|BASELINE_DONE|系统实现|已新增
+      append-only `prediction_ledger.csv` schema、`score-daily` production 写入和 `aits
+      feedback calibrate-predictions` outcome 报告；剩余缺口是把 `EXPERIMENT-001` challenger/shadow
+      候选自动接入同一 ledger，并让周/月复盘读取 production vs challenger 表现；详细拆解见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#shadow-001在线-pit-prediction--shadow-ledger`|每个
+      production/challenger prediction 都能追溯到当时可见的数据快照、特征版本、规则版本和质量状态；challenger 行
+      `production_effect=none`，不得改变正式评分、仓位闸门或日报动作；outcome 追加后不能改写 signal-time 字段；周报/月报能区分
+      production 真实判断和 challenger shadow 表现；实现时同步更新 `docs/system_flow.md` 并补充 append-only、future
+      outcome isolation 和 challenger isolation 测试|2026-05-05: 新增任务，原因：历史 PIT 不完整时，在线真实
+      prediction log 是后续模型迭代和晋级最可靠的 PIT 样本；现有 `decision_snapshot` 只覆盖 production 判断，不足以比较多个
+      challenger。2026-05-05: 从 READY 改为 BASELINE_DONE，原因：生产日报写入 prediction ledger，prediction
+      outcome 校准命令和报告已实现，测试覆盖 append-only、shadow isolation 和 outcome 分桶；完整 DONE 仍需
+      challenger 自动接入和周期复盘展示。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d9f711f7bd7be9ea51307e3c
+  task_id: SHADOW-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增任务，原因：历史 PIT 不完整时，在线真实 prediction log 是后续模型迭代和晋级最可靠的 PIT
+      样本；现有 `decision_snapshot` 只覆盖 production 判断，不足以比较多个 challenger。2026-05-05: 从
+      READY 改为 BASELINE_DONE，原因：生产日报写入 prediction ledger，prediction outcome 校准命令和报告已实现，测试覆盖
+      append-only、shadow isolation 和 outcome 分桶；完整 DONE 仍需 challenger 自动接入和周期复盘展示。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d9f711f7bd7be9ea51307e3cd5840d799e5ea3b8523e202896afcc2e30de1926
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - SHADOW-001
+  - 模型评估/在线 PIT prediction ledger
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - 已新增 append-only `prediction_ledger.csv` schema、`score-daily` production 写入和 `aits
+    feedback calibrate-predictions` outcome 报告；剩余缺口是把 `EXPERIMENT-001` challenger/shadow
+    候选自动接入同一 ledger，并让周/月复盘读取 production vs challenger 表现；详细拆解见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#shadow-001在线-pit-prediction--shadow-ledger`
+  - 每个 production/challenger prediction 都能追溯到当时可见的数据快照、特征版本、规则版本和质量状态；challenger 行
+    `production_effect=none`，不得改变正式评分、仓位闸门或日报动作；outcome 追加后不能改写 signal-time 字段；周报/月报能区分
+    production 真实判断和 challenger shadow 表现；实现时同步更新 `docs/system_flow.md` 并补充 append-only、future
+    outcome isolation 和 challenger isolation 测试
+  - '2026-05-05: 新增任务，原因：历史 PIT 不完整时，在线真实 prediction log 是后续模型迭代和晋级最可靠的 PIT 样本；现有
+    `decision_snapshot` 只覆盖 production 判断，不足以比较多个 challenger。2026-05-05: 从 READY 改为
+    BASELINE_DONE，原因：生产日报写入 prediction ledger，prediction outcome 校准命令和报告已实现，测试覆盖 append-only、shadow
+    isolation 和 outcome 分桶；完整 DONE 仍需 challenger 自动接入和周期复盘展示。'
+  docs_links:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: d9f711f7bd7be9ea51307e3cd5840d799e5ea3b8523e202896afcc2e30de1926
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3f345cf2b079d26091ee52d9ad74eedb2aa5fa042b08842d0d0746f0500d9e6f

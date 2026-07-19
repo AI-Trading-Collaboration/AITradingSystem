@@ -1,0 +1,144 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-947_to_956_QQQ_PLUS_GROWTH_CLOSEOUT_REAL_RUN
+  title: null
+  domain: Research strategies / QQQ-plus growth challenger closeout and real-run validation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-947_to_956_QQQ_Plus_Growth_Closeout_Real_Run.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-947_to_956_QQQ_Plus_Growth_Closeout_Real_Run.md`；947～956
+    artifacts 已生成，等待 owner review；当前结论不加入 growth watchlist，不进入 paper-shadow/production/broker
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 输出 947～956 指定 JSON/Markdown artifacts 和 owner docs；确认 TRADING-933～946 是否已安全
+      commit/push；真实运行 14 个 QQQ-plus growth CLI；所有 outputs 披露 `data_quality_status`、candidate/blocker/warning
+      和 safety fields；新增或确认 report registry / artifact catalog 条目；最终保持 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、focused
+      pytest、report/doc/task validation 和 `git diff --check` 通过或记录阻塞
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1297
+    row_sha256: 2328f89186b6b689b064b32608e2e448b2a9b23c43417b78a8bd457048321b45
+    cell_count: 8
+    all_cells:
+    - TRADING-947_to_956_QQQ_PLUS_GROWTH_CLOSEOUT_REAL_RUN
+    - Research strategies / QQQ-plus growth challenger closeout and real-run validation
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-947_to_956_QQQ_Plus_Growth_Closeout_Real_Run.md`；947～956
+      artifacts 已生成，等待 owner review；当前结论不加入 growth watchlist，不进入 paper-shadow/production/broker
+    - 输出 947～956 指定 JSON/Markdown artifacts 和 owner docs；确认 TRADING-933～946 是否已安全
+      commit/push；真实运行 14 个 QQQ-plus growth CLI；所有 outputs 披露 `data_quality_status`、candidate/blocker/warning
+      和 safety fields；新增或确认 report registry / artifact catalog 条目；最终保持 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、focused
+      pytest、report/doc/task validation 和 `git diff --check` 通过或记录阻塞
+    - '2026-06-24: 新增并进入 IN_PROGRESS，原因：owner 要求完成 QQQ-plus growth challenger closeout
+      和真实运行验证；初始只读检查显示 `HEAD=358f3ddd` / `origin/main` 已包含 933～946 QQQ outperformance
+      growth challenger research，当前未提交变更属于 pre-existing TRADING-923～932 forward-aging
+      launch 线，必须在 947 attribution 中隔离，不能混入 933～946 safe commit 或本批结论。2026-06-24:
+      实现完成并转入 VALIDATING；947 归因确认 933～946 已在 `358f3ddd` / `origin/main` 且无待提交 933～946
+      dirty change，948 记录 `COMMITTED_AND_PUSHED`；949 真实运行 14 个 QQQ-plus CLI 全部成功，suite=`QQQ_PLUS_REAL_RUN_WARN`
+      且 data quality=`PASS_WITH_WARNINGS`；950 warning review 可接受但需 research-only confidence
+      折扣；951 找到历史收益超过 QQQ 的候选；952 edge materiality 降为 `GROWTH_EDGE_WEAK`；953 attribution=`ATTRIBUTION_READY`
+      且非纯 beta；954 period/drawdown=`PERIOD_DRAWDOWN_INCONCLUSIVE`；955 `NO_GROWTH_WATCHLIST_CANDIDATE`；956
+      owner recommendation=`KEEP_GROWTH_RESEARCH_ONLY`，继续保留 `equal_risk_qqq_sgov`
+      defensive primary、TQQQ-heavy paused、LEAPS/Wheel blocked、tail-risk fallback quarantined、paper-shadow/production/broker
+      全 false/none。'
+    raw_line: '|TRADING-947_to_956_QQQ_PLUS_GROWTH_CLOSEOUT_REAL_RUN|Research strategies
+      / QQQ-plus growth challenger closeout and real-run validation|P1|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-947_to_956_QQQ_Plus_Growth_Closeout_Real_Run.md`；947～956
+      artifacts 已生成，等待 owner review；当前结论不加入 growth watchlist，不进入 paper-shadow/production/broker|输出
+      947～956 指定 JSON/Markdown artifacts 和 owner docs；确认 TRADING-933～946 是否已安全 commit/push；真实运行
+      14 个 QQQ-plus growth CLI；所有 outputs 披露 `data_quality_status`、candidate/blocker/warning
+      和 safety fields；新增或确认 report registry / artifact catalog 条目；最终保持 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、focused
+      pytest、report/doc/task validation 和 `git diff --check` 通过或记录阻塞|2026-06-24: 新增并进入
+      IN_PROGRESS，原因：owner 要求完成 QQQ-plus growth challenger closeout 和真实运行验证；初始只读检查显示
+      `HEAD=358f3ddd` / `origin/main` 已包含 933～946 QQQ outperformance growth challenger
+      research，当前未提交变更属于 pre-existing TRADING-923～932 forward-aging launch 线，必须在 947
+      attribution 中隔离，不能混入 933～946 safe commit 或本批结论。2026-06-24: 实现完成并转入 VALIDATING；947
+      归因确认 933～946 已在 `358f3ddd` / `origin/main` 且无待提交 933～946 dirty change，948 记录
+      `COMMITTED_AND_PUSHED`；949 真实运行 14 个 QQQ-plus CLI 全部成功，suite=`QQQ_PLUS_REAL_RUN_WARN`
+      且 data quality=`PASS_WITH_WARNINGS`；950 warning review 可接受但需 research-only confidence
+      折扣；951 找到历史收益超过 QQQ 的候选；952 edge materiality 降为 `GROWTH_EDGE_WEAK`；953 attribution=`ATTRIBUTION_READY`
+      且非纯 beta；954 period/drawdown=`PERIOD_DRAWDOWN_INCONCLUSIVE`；955 `NO_GROWTH_WATCHLIST_CANDIDATE`；956
+      owner recommendation=`KEEP_GROWTH_RESEARCH_ONLY`，继续保留 `equal_risk_qqq_sgov`
+      defensive primary、TQQQ-heavy paused、LEAPS/Wheel blocked、tail-risk fallback quarantined、paper-shadow/production/broker
+      全 false/none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2328f89186b6b689b064b326
+  task_id: TRADING-947_to_956_QQQ_PLUS_GROWTH_CLOSEOUT_REAL_RUN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-24: 新增并进入 IN_PROGRESS，原因：owner 要求完成 QQQ-plus growth challenger
+      closeout 和真实运行验证；初始只读检查显示 `HEAD=358f3ddd` / `origin/main` 已包含 933～946 QQQ outperformance
+      growth challenger research，当前未提交变更属于 pre-existing TRADING-923～932 forward-aging
+      launch 线，必须在 947 attribution 中隔离，不能混入 933～946 safe commit 或本批结论。2026-06-24:
+      实现完成并转入 VALIDATING；947 归因确认 933～946 已在 `358f3ddd` / `origin/main` 且无待提交 933～946
+      dirty change，948 记录 `COMMITTED_AND_PUSHED`；949 真实运行 14 个 QQQ-plus CLI 全部成功，suite=`QQQ_PLUS_REAL_RUN_WARN`
+      且 data quality=`PASS_WITH_WARNINGS`；950 warning review 可接受但需 research-only confidence
+      折扣；951 找到历史收益超过 QQQ 的候选；952 edge materiality 降为 `GROWTH_EDGE_WEAK`；953 attribution=`ATTRIBUTION_READY`
+      且非纯 beta；954 period/drawdown=`PERIOD_DRAWDOWN_INCONCLUSIVE`；955 `NO_GROWTH_WATCHLIST_CANDIDATE`；956
+      owner recommendation=`KEEP_GROWTH_RESEARCH_ONLY`，继续保留 `equal_risk_qqq_sgov`
+      defensive primary、TQQQ-heavy paused、LEAPS/Wheel blocked、tail-risk fallback quarantined、paper-shadow/production/broker
+      全 false/none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:2328f89186b6b689b064b32608e2e448b2a9b23c43417b78a8bd457048321b45
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-947_to_956_QQQ_PLUS_GROWTH_CLOSEOUT_REAL_RUN
+  - Research strategies / QQQ-plus growth challenger closeout and real-run validation
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-947_to_956_QQQ_Plus_Growth_Closeout_Real_Run.md`；947～956
+    artifacts 已生成，等待 owner review；当前结论不加入 growth watchlist，不进入 paper-shadow/production/broker
+  - 输出 947～956 指定 JSON/Markdown artifacts 和 owner docs；确认 TRADING-933～946 是否已安全 commit/push；真实运行
+    14 个 QQQ-plus growth CLI；所有 outputs 披露 `data_quality_status`、candidate/blocker/warning
+    和 safety fields；新增或确认 report registry / artifact catalog 条目；最终保持 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、focused
+    pytest、report/doc/task validation 和 `git diff --check` 通过或记录阻塞
+  - '2026-06-24: 新增并进入 IN_PROGRESS，原因：owner 要求完成 QQQ-plus growth challenger closeout
+    和真实运行验证；初始只读检查显示 `HEAD=358f3ddd` / `origin/main` 已包含 933～946 QQQ outperformance
+    growth challenger research，当前未提交变更属于 pre-existing TRADING-923～932 forward-aging
+    launch 线，必须在 947 attribution 中隔离，不能混入 933～946 safe commit 或本批结论。2026-06-24: 实现完成并转入
+    VALIDATING；947 归因确认 933～946 已在 `358f3ddd` / `origin/main` 且无待提交 933～946 dirty
+    change，948 记录 `COMMITTED_AND_PUSHED`；949 真实运行 14 个 QQQ-plus CLI 全部成功，suite=`QQQ_PLUS_REAL_RUN_WARN`
+    且 data quality=`PASS_WITH_WARNINGS`；950 warning review 可接受但需 research-only confidence
+    折扣；951 找到历史收益超过 QQQ 的候选；952 edge materiality 降为 `GROWTH_EDGE_WEAK`；953 attribution=`ATTRIBUTION_READY`
+    且非纯 beta；954 period/drawdown=`PERIOD_DRAWDOWN_INCONCLUSIVE`；955 `NO_GROWTH_WATCHLIST_CANDIDATE`；956
+    owner recommendation=`KEEP_GROWTH_RESEARCH_ONLY`，继续保留 `equal_risk_qqq_sgov` defensive
+    primary、TQQQ-heavy paused、LEAPS/Wheel blocked、tail-risk fallback quarantined、paper-shadow/production/broker
+    全 false/none。'
+  docs_links:
+  - docs/requirements/TRADING-947_to_956_QQQ_Plus_Growth_Closeout_Real_Run.md
+  terminal: false
+  raw_row_sha256: 2328f89186b6b689b064b32608e2e448b2a9b23c43417b78a8bd457048321b45
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9f985fab7c11d6239a1daa9155967f6cde4617cd7c315444e40c6f909b417360

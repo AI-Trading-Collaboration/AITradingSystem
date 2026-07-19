@@ -1,0 +1,137 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-392_APPEND_OWNER_HOLD_DECISION
+  title: null
+  domain: Research governance / owner decision audit log
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 复核 recorded hold；后续 TRADING-393 用 latest owner review source
+    实例化 template v2，promotion/extended/live 仍 blocked until gates clear
+  requirement_refs:
+  - docs/requirements/TRADING-392_Append_Owner_Hold_Decision.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-392_Append_Owner_Hold_Decision.md`；把
+    `outputs/reports/TRADING-384_owner_review_2026-06-17.md` 的真实 owner action `hold`
+    追加到 append-only owner decision audit log，链接 TRADING-384 owner review、TRADING-391
+    recovery evidence pack、research safety boundary 和 report index；不得 resume paper-shadow、approve
+    promotion、approve extended shadow、生成 official target weights、触发 broker/order、live
+    trading 或 production mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增源 decision JSON `docs/decisions/TRADING-392_owner_hold_decision_2026-06-17.json`、append-only
+      `data/governance/owner_decision_audit_log.jsonl` 记录、owner decision audit log
+      report/validation 和 focused fixture regression；latest owner action 为 `hold`，downstream
+      input 只表示 governance evidence available，不表示 normal shadow resume/promotion/extended/live
+      approval
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 204
+    row_sha256: 00b37fb6be68e8c493491eddf8d345a0786d217b2defb4718bf09d071c022f3a
+    cell_count: 8
+    all_cells:
+    - TRADING-392_APPEND_OWNER_HOLD_DECISION
+    - Research governance / owner decision audit log
+    - P1
+    - DONE
+    - 项目 owner 复核 recorded hold；后续 TRADING-393 用 latest owner review source 实例化 template
+      v2，promotion/extended/live 仍 blocked until gates clear
+    - 详细拆解见 `docs/requirements/TRADING-392_Append_Owner_Hold_Decision.md`；把 `outputs/reports/TRADING-384_owner_review_2026-06-17.md`
+      的真实 owner action `hold` 追加到 append-only owner decision audit log，链接 TRADING-384
+      owner review、TRADING-391 recovery evidence pack、research safety boundary 和 report
+      index；不得 resume paper-shadow、approve promotion、approve extended shadow、生成 official
+      target weights、触发 broker/order、live trading 或 production mutation
+    - 新增源 decision JSON `docs/decisions/TRADING-392_owner_hold_decision_2026-06-17.json`、append-only
+      `data/governance/owner_decision_audit_log.jsonl` 记录、owner decision audit log
+      report/validation 和 focused fixture regression；latest owner action 为 `hold`，downstream
+      input 只表示 governance evidence available，不表示 normal shadow resume/promotion/extended/live
+      approval
+    - '2026-06-17: DONE；append CLI 输出 PASS，decision_id=`TRADING-392_owner_hold_2026-06-17`、candidate=`median_plus_regime_mismatch_filter`、owner_action=`hold`、safety=`SAFETY_PASS_WITH_WARNINGS`。真实
+      report `outputs/reports/owner_decision_audit_log_2026-06-17.json/md` 输出 `AUDIT_LOG_PASS`、record_count=1、duplicates=0、invalid=0、latest_owner_action=`hold`、monthly_review_pack_input=`AVAILABLE`、promotion_board_input=`AVAILABLE`；validation
+      `outputs/reports/owner_decision_audit_log_validation_2026-06-17.json/md` 输出
+      `PASS` / failed=0。该记录不恢复 paper-shadow、不批准 promotion/extended shadow/live、official
+      target、broker/order 或 production mutation。'
+    raw_line: '|TRADING-392_APPEND_OWNER_HOLD_DECISION|Research governance / owner
+      decision audit log|P1|DONE|项目 owner 复核 recorded hold；后续 TRADING-393 用 latest
+      owner review source 实例化 template v2，promotion/extended/live 仍 blocked until
+      gates clear|详细拆解见 `docs/requirements/TRADING-392_Append_Owner_Hold_Decision.md`；把
+      `outputs/reports/TRADING-384_owner_review_2026-06-17.md` 的真实 owner action `hold`
+      追加到 append-only owner decision audit log，链接 TRADING-384 owner review、TRADING-391
+      recovery evidence pack、research safety boundary 和 report index；不得 resume paper-shadow、approve
+      promotion、approve extended shadow、生成 official target weights、触发 broker/order、live
+      trading 或 production mutation|新增源 decision JSON `docs/decisions/TRADING-392_owner_hold_decision_2026-06-17.json`、append-only
+      `data/governance/owner_decision_audit_log.jsonl` 记录、owner decision audit log
+      report/validation 和 focused fixture regression；latest owner action 为 `hold`，downstream
+      input 只表示 governance evidence available，不表示 normal shadow resume/promotion/extended/live
+      approval|2026-06-17: DONE；append CLI 输出 PASS，decision_id=`TRADING-392_owner_hold_2026-06-17`、candidate=`median_plus_regime_mismatch_filter`、owner_action=`hold`、safety=`SAFETY_PASS_WITH_WARNINGS`。真实
+      report `outputs/reports/owner_decision_audit_log_2026-06-17.json/md` 输出 `AUDIT_LOG_PASS`、record_count=1、duplicates=0、invalid=0、latest_owner_action=`hold`、monthly_review_pack_input=`AVAILABLE`、promotion_board_input=`AVAILABLE`；validation
+      `outputs/reports/owner_decision_audit_log_validation_2026-06-17.json/md` 输出
+      `PASS` / failed=0。该记录不恢复 paper-shadow、不批准 promotion/extended shadow/live、official
+      target、broker/order 或 production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-00b37fb6be68e8c493491edd
+  task_id: TRADING-392_APPEND_OWNER_HOLD_DECISION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 复核 recorded hold；后续 TRADING-393 用 latest owner review source
+      实例化 template v2，promotion/extended/live 仍 blocked until gates clear
+    notes: '2026-06-17: DONE；append CLI 输出 PASS，decision_id=`TRADING-392_owner_hold_2026-06-17`、candidate=`median_plus_regime_mismatch_filter`、owner_action=`hold`、safety=`SAFETY_PASS_WITH_WARNINGS`。真实
+      report `outputs/reports/owner_decision_audit_log_2026-06-17.json/md` 输出 `AUDIT_LOG_PASS`、record_count=1、duplicates=0、invalid=0、latest_owner_action=`hold`、monthly_review_pack_input=`AVAILABLE`、promotion_board_input=`AVAILABLE`；validation
+      `outputs/reports/owner_decision_audit_log_validation_2026-06-17.json/md` 输出
+      `PASS` / failed=0。该记录不恢复 paper-shadow、不批准 promotion/extended shadow/live、official
+      target、broker/order 或 production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:00b37fb6be68e8c493491eddf8d345a0786d217b2defb4718bf09d071c022f3a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-392_APPEND_OWNER_HOLD_DECISION
+  - Research governance / owner decision audit log
+  - P1
+  - DONE
+  - 项目 owner 复核 recorded hold；后续 TRADING-393 用 latest owner review source 实例化 template
+    v2，promotion/extended/live 仍 blocked until gates clear
+  - 详细拆解见 `docs/requirements/TRADING-392_Append_Owner_Hold_Decision.md`；把 `outputs/reports/TRADING-384_owner_review_2026-06-17.md`
+    的真实 owner action `hold` 追加到 append-only owner decision audit log，链接 TRADING-384
+    owner review、TRADING-391 recovery evidence pack、research safety boundary 和 report
+    index；不得 resume paper-shadow、approve promotion、approve extended shadow、生成 official
+    target weights、触发 broker/order、live trading 或 production mutation
+  - 新增源 decision JSON `docs/decisions/TRADING-392_owner_hold_decision_2026-06-17.json`、append-only
+    `data/governance/owner_decision_audit_log.jsonl` 记录、owner decision audit log report/validation
+    和 focused fixture regression；latest owner action 为 `hold`，downstream input 只表示
+    governance evidence available，不表示 normal shadow resume/promotion/extended/live
+    approval
+  - '2026-06-17: DONE；append CLI 输出 PASS，decision_id=`TRADING-392_owner_hold_2026-06-17`、candidate=`median_plus_regime_mismatch_filter`、owner_action=`hold`、safety=`SAFETY_PASS_WITH_WARNINGS`。真实
+    report `outputs/reports/owner_decision_audit_log_2026-06-17.json/md` 输出 `AUDIT_LOG_PASS`、record_count=1、duplicates=0、invalid=0、latest_owner_action=`hold`、monthly_review_pack_input=`AVAILABLE`、promotion_board_input=`AVAILABLE`；validation
+    `outputs/reports/owner_decision_audit_log_validation_2026-06-17.json/md` 输出 `PASS`
+    / failed=0。该记录不恢复 paper-shadow、不批准 promotion/extended shadow/live、official target、broker/order
+    或 production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-392_Append_Owner_Hold_Decision.md
+  terminal: true
+  raw_row_sha256: 00b37fb6be68e8c493491eddf8d345a0786d217b2defb4718bf09d071c022f3a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5ed6f41efd14b40666ff103282678093a50afdd4b3d32aa601ac813f643311c3

@@ -1,0 +1,137 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1946_to_1975_INDICATOR_FAMILY_ABLATION_CHANNEL_SIGNAL_EVIDENCE
+  title: null
+  domain: Research trends / indicator family ablation evidence
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1946_to_1975_Indicator_Family_Ablation_Channel_Signal_Evidence.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1946_to_1975_Indicator_Family_Ablation_Channel_Signal_Evidence.md`；承接
+    TRADING-1906～1945 的 `INDICATOR_FAMILY_ABLATION_READY` 但 registry-only diagnostic
+    结论，本批已对 seven indicator families 生成 PIT / coverage / action-value evidence，并判断
+    family 是否可进入下一轮 channel-specific first-layer model；不得恢复 dynamic promotion、paper-shadow、production、broker，不训练
+    universal first-layer，不改 second-layer weights
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 selection rule、scope、registry validation、PIT coverage audit、action-value
+      by family dataset、family-only model review、do-not-de-risk/stay-constructive/add-risk/risk-on-veto
+      reviews、2022 slice、2023+ dependence、beta/TQQQ dependence、interaction warning、selection
+      matrix、channel-specific feature set、owner pack、closeout/final matrix、report
+      registry、artifact catalog、system flow 和 guardrail tests；已证明 PIT blocked、2023+
+      dependent、beta-only 或 target-path-only family 不能通过 add-risk/allocation selection；promotion/paper-shadow/production/broker
+      固定 blocked/false/false/none
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1251
+    row_sha256: b5db7130fed654baeb6c0f1d099d791ff5e14cb22cd5f217e634a6162f10151b
+    cell_count: 8
+    all_cells:
+    - TRADING-1946_to_1975_INDICATOR_FAMILY_ABLATION_CHANNEL_SIGNAL_EVIDENCE
+    - Research trends / indicator family ablation evidence
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1946_to_1975_Indicator_Family_Ablation_Channel_Signal_Evidence.md`；承接
+      TRADING-1906～1945 的 `INDICATOR_FAMILY_ABLATION_READY` 但 registry-only diagnostic
+      结论，本批已对 seven indicator families 生成 PIT / coverage / action-value evidence，并判断
+      family 是否可进入下一轮 channel-specific first-layer model；不得恢复 dynamic promotion、paper-shadow、production、broker，不训练
+      universal first-layer，不改 second-layer weights
+    - 新增 selection rule、scope、registry validation、PIT coverage audit、action-value
+      by family dataset、family-only model review、do-not-de-risk/stay-constructive/add-risk/risk-on-veto
+      reviews、2022 slice、2023+ dependence、beta/TQQQ dependence、interaction warning、selection
+      matrix、channel-specific feature set、owner pack、closeout/final matrix、report
+      registry、artifact catalog、system flow 和 guardrail tests；已证明 PIT blocked、2023+
+      dependent、beta-only 或 target-path-only family 不能通过 add-risk/allocation selection；promotion/paper-shadow/production/broker
+      固定 blocked/false/false/none
+    - '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 附件要求把 indicator-family ablation 从 registry-only
+      diagnostic 推进到真实 family-level evidence；本批只做 evidence 和 channel selection/rejection，不创建策略候选或
+      allocation 输出。2026-06-28: 实现完成并转入 VALIDATING；真实 final status=`INDICATOR_FAMILY_ABLATION_EVIDENCE_READY`，PIT
+      pass=5、blocked=2，selected channel families 为 do_not_de_risk=`drawdown_recovery`、risk_on_veto=`volatility_compression`/`rates_liquidity`、return_seeking_diagnostic=`trend_persistence`/`relative_strength`，add_risk=[]。'
+    raw_line: '|TRADING-1946_to_1975_INDICATOR_FAMILY_ABLATION_CHANNEL_SIGNAL_EVIDENCE|Research
+      trends / indicator family ablation evidence|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-1946_to_1975_Indicator_Family_Ablation_Channel_Signal_Evidence.md`；承接
+      TRADING-1906～1945 的 `INDICATOR_FAMILY_ABLATION_READY` 但 registry-only diagnostic
+      结论，本批已对 seven indicator families 生成 PIT / coverage / action-value evidence，并判断
+      family 是否可进入下一轮 channel-specific first-layer model；不得恢复 dynamic promotion、paper-shadow、production、broker，不训练
+      universal first-layer，不改 second-layer weights|新增 selection rule、scope、registry
+      validation、PIT coverage audit、action-value by family dataset、family-only model
+      review、do-not-de-risk/stay-constructive/add-risk/risk-on-veto reviews、2022 slice、2023+
+      dependence、beta/TQQQ dependence、interaction warning、selection matrix、channel-specific
+      feature set、owner pack、closeout/final matrix、report registry、artifact catalog、system
+      flow 和 guardrail tests；已证明 PIT blocked、2023+ dependent、beta-only 或 target-path-only
+      family 不能通过 add-risk/allocation selection；promotion/paper-shadow/production/broker
+      固定 blocked/false/false/none|2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 附件要求把 indicator-family
+      ablation 从 registry-only diagnostic 推进到真实 family-level evidence；本批只做 evidence
+      和 channel selection/rejection，不创建策略候选或 allocation 输出。2026-06-28: 实现完成并转入 VALIDATING；真实
+      final status=`INDICATOR_FAMILY_ABLATION_EVIDENCE_READY`，PIT pass=5、blocked=2，selected
+      channel families 为 do_not_de_risk=`drawdown_recovery`、risk_on_veto=`volatility_compression`/`rates_liquidity`、return_seeking_diagnostic=`trend_persistence`/`relative_strength`，add_risk=[]。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b5db7130fed654baeb6c0f1d
+  task_id: TRADING-1946_to_1975_INDICATOR_FAMILY_ABLATION_CHANNEL_SIGNAL_EVIDENCE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 附件要求把 indicator-family ablation
+      从 registry-only diagnostic 推进到真实 family-level evidence；本批只做 evidence 和 channel
+      selection/rejection，不创建策略候选或 allocation 输出。2026-06-28: 实现完成并转入 VALIDATING；真实
+      final status=`INDICATOR_FAMILY_ABLATION_EVIDENCE_READY`，PIT pass=5、blocked=2，selected
+      channel families 为 do_not_de_risk=`drawdown_recovery`、risk_on_veto=`volatility_compression`/`rates_liquidity`、return_seeking_diagnostic=`trend_persistence`/`relative_strength`，add_risk=[]。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b5db7130fed654baeb6c0f1d099d791ff5e14cb22cd5f217e634a6162f10151b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1946_to_1975_INDICATOR_FAMILY_ABLATION_CHANNEL_SIGNAL_EVIDENCE
+  - Research trends / indicator family ablation evidence
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1946_to_1975_Indicator_Family_Ablation_Channel_Signal_Evidence.md`；承接
+    TRADING-1906～1945 的 `INDICATOR_FAMILY_ABLATION_READY` 但 registry-only diagnostic
+    结论，本批已对 seven indicator families 生成 PIT / coverage / action-value evidence，并判断
+    family 是否可进入下一轮 channel-specific first-layer model；不得恢复 dynamic promotion、paper-shadow、production、broker，不训练
+    universal first-layer，不改 second-layer weights
+  - 新增 selection rule、scope、registry validation、PIT coverage audit、action-value by
+    family dataset、family-only model review、do-not-de-risk/stay-constructive/add-risk/risk-on-veto
+    reviews、2022 slice、2023+ dependence、beta/TQQQ dependence、interaction warning、selection
+    matrix、channel-specific feature set、owner pack、closeout/final matrix、report registry、artifact
+    catalog、system flow 和 guardrail tests；已证明 PIT blocked、2023+ dependent、beta-only
+    或 target-path-only family 不能通过 add-risk/allocation selection；promotion/paper-shadow/production/broker
+    固定 blocked/false/false/none
+  - '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 附件要求把 indicator-family ablation 从 registry-only
+    diagnostic 推进到真实 family-level evidence；本批只做 evidence 和 channel selection/rejection，不创建策略候选或
+    allocation 输出。2026-06-28: 实现完成并转入 VALIDATING；真实 final status=`INDICATOR_FAMILY_ABLATION_EVIDENCE_READY`，PIT
+    pass=5、blocked=2，selected channel families 为 do_not_de_risk=`drawdown_recovery`、risk_on_veto=`volatility_compression`/`rates_liquidity`、return_seeking_diagnostic=`trend_persistence`/`relative_strength`，add_risk=[]。'
+  docs_links:
+  - docs/requirements/TRADING-1946_to_1975_Indicator_Family_Ablation_Channel_Signal_Evidence.md
+  terminal: false
+  raw_row_sha256: b5db7130fed654baeb6c0f1d099d791ff5e14cb22cd5f217e634a6162f10151b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e2d93adcb112e90a72d76f07f25cf4d63cd32803988efdaaa21eed939e26fb2b

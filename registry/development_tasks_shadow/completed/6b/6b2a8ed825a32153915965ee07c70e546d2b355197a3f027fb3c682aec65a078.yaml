@@ -1,0 +1,164 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2348_DISABLED_SCHEDULER_WIRING_SMOKE_DRY_RUN_AND_GUARDRAIL_EVIDENCE
+  title: null
+  domain: Research trends / high-intensity risk-cap disabled scheduler wiring smoke
+    dry-run
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2349 manual review / dry-run promotion gate route
+  requirement_refs:
+  - docs/requirements/TRADING-2348_Disabled_Scheduler_Wiring_Smoke_Dry_Run_And_Guardrail_Evidence.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2348_Disabled_Scheduler_Wiring_Smoke_Dry_Run_And_Guardrail_Evidence.md`；承接
+    TRADING-2347 disabled wiring smoke dry-run route。本任务只读取 prior validated TRADING-2347
+    disabled wiring artifacts；只做 CLI smoke dry-run、guardrail evidence、side-effect
+    assertions 和 2349 manual review promotion gate route，不启用 scheduler、不创建真实 cron
+    / Windows Task / GitHub Actions schedule、不 append event、不修改 historical event /
+    cluster / pending registries、不绑定 outcome、不读取 fresh market data、不进入 paper-shadow
+    / production / broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-smoke-dry-run`；生成
+      smoke dry-run summary/evidence、source artifact assertion、guardrail assertions、side-effect
+      assertions、2349 route、interpretation boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_DISABLED_WIRING_SMOKE_DRY_RUN_PASSED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      status=`OBSERVE_ONLY_SCHEDULER_DISABLED_WIRING_IMPLEMENTED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，guardrail_assertions_passed=true，side_effect_assertions_passed=true，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，promotion_allowed=false，real_scheduler_created=false，cron
+      / Windows Task / GitHub Actions schedule false，event_append_attempted=false，outcome_binding_attempted=false，paper_shadow_attempted=false，production_attempted=false，broker_action_attempted=false，readiness=`READY_FOR_2349_WITH_CAVEATS`，next
+      route=`TRADING-2349_Manual_Review_Promotion_Gate_For_Observe_Only_Scheduler`。验证通过
+      Ruff、compileall、focused parallel pytest 8 passed、真实 CLI run、docs freshness 531
+      docs PASS、documentation contract 1245 reports PASS、task-register consistency
+      run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T184626Z/test_runtime_summary.json`）和
+      `git diff --check`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 143
+    row_sha256: 19ef4cf5aeaab9672b49b6e703138c17d736ddc0b989f1f0e06327a82fca842a
+    cell_count: 8
+    all_cells:
+    - TRADING-2348_DISABLED_SCHEDULER_WIRING_SMOKE_DRY_RUN_AND_GUARDRAIL_EVIDENCE
+    - Research trends / high-intensity risk-cap disabled scheduler wiring smoke dry-run
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2349 manual review / dry-run promotion gate route
+    - 详见 `docs/requirements/TRADING-2348_Disabled_Scheduler_Wiring_Smoke_Dry_Run_And_Guardrail_Evidence.md`；承接
+      TRADING-2347 disabled wiring smoke dry-run route。本任务只读取 prior validated TRADING-2347
+      disabled wiring artifacts；只做 CLI smoke dry-run、guardrail evidence、side-effect
+      assertions 和 2349 manual review promotion gate route，不启用 scheduler、不创建真实 cron
+      / Windows Task / GitHub Actions schedule、不 append event、不修改 historical event
+      / cluster / pending registries、不绑定 outcome、不读取 fresh market data、不进入 paper-shadow
+      / production / broker。
+    - 新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-smoke-dry-run`；生成
+      smoke dry-run summary/evidence、source artifact assertion、guardrail assertions、side-effect
+      assertions、2349 route、interpretation boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_DISABLED_WIRING_SMOKE_DRY_RUN_PASSED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      status=`OBSERVE_ONLY_SCHEDULER_DISABLED_WIRING_IMPLEMENTED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，guardrail_assertions_passed=true，side_effect_assertions_passed=true，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，promotion_allowed=false，real_scheduler_created=false，cron
+      / Windows Task / GitHub Actions schedule false，event_append_attempted=false，outcome_binding_attempted=false，paper_shadow_attempted=false，production_attempted=false，broker_action_attempted=false，readiness=`READY_FOR_2349_WITH_CAVEATS`，next
+      route=`TRADING-2349_Manual_Review_Promotion_Gate_For_Observe_Only_Scheduler`。验证通过
+      Ruff、compileall、focused parallel pytest 8 passed、真实 CLI run、docs freshness 531
+      docs PASS、documentation contract 1245 reports PASS、task-register consistency
+      run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T184626Z/test_runtime_summary.json`）和
+      `git diff --check`。
+    - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是证明 2347 disabled wiring 即使被真实
+      CLI 触达也不会产生真实调度或交易副作用。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347 disabled wiring artifacts，不读取 fresh market data、不
+      append event、不绑定 outcome。后续只能进入 TRADING-2349 manual review / dry-run promotion
+      gate with caveats，不能直接启用 scheduler。'
+    raw_line: '|TRADING-2348_DISABLED_SCHEDULER_WIRING_SMOKE_DRY_RUN_AND_GUARDRAIL_EVIDENCE|Research
+      trends / high-intensity risk-cap disabled scheduler wiring smoke dry-run|P0|DONE|项目
+      owner 后续复核 TRADING-2349 manual review / dry-run promotion gate route|详见 `docs/requirements/TRADING-2348_Disabled_Scheduler_Wiring_Smoke_Dry_Run_And_Guardrail_Evidence.md`；承接
+      TRADING-2347 disabled wiring smoke dry-run route。本任务只读取 prior validated TRADING-2347
+      disabled wiring artifacts；只做 CLI smoke dry-run、guardrail evidence、side-effect
+      assertions 和 2349 manual review promotion gate route，不启用 scheduler、不创建真实 cron
+      / Windows Task / GitHub Actions schedule、不 append event、不修改 historical event
+      / cluster / pending registries、不绑定 outcome、不读取 fresh market data、不进入 paper-shadow
+      / production / broker。|新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-smoke-dry-run`；生成
+      smoke dry-run summary/evidence、source artifact assertion、guardrail assertions、side-effect
+      assertions、2349 route、interpretation boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_DISABLED_WIRING_SMOKE_DRY_RUN_PASSED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      status=`OBSERVE_ONLY_SCHEDULER_DISABLED_WIRING_IMPLEMENTED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，guardrail_assertions_passed=true，side_effect_assertions_passed=true，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，promotion_allowed=false，real_scheduler_created=false，cron
+      / Windows Task / GitHub Actions schedule false，event_append_attempted=false，outcome_binding_attempted=false，paper_shadow_attempted=false，production_attempted=false，broker_action_attempted=false，readiness=`READY_FOR_2349_WITH_CAVEATS`，next
+      route=`TRADING-2349_Manual_Review_Promotion_Gate_For_Observe_Only_Scheduler`。验证通过
+      Ruff、compileall、focused parallel pytest 8 passed、真实 CLI run、docs freshness 531
+      docs PASS、documentation contract 1245 reports PASS、task-register consistency
+      run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T184626Z/test_runtime_summary.json`）和
+      `git diff --check`。|2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是证明 2347 disabled
+      wiring 即使被真实 CLI 触达也不会产生真实调度或交易副作用。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347 disabled wiring artifacts，不读取 fresh market data、不
+      append event、不绑定 outcome。后续只能进入 TRADING-2349 manual review / dry-run promotion
+      gate with caveats，不能直接启用 scheduler。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-19ef4cf5aeaab9672b49b6e7
+  task_id: TRADING-2348_DISABLED_SCHEDULER_WIRING_SMOKE_DRY_RUN_AND_GUARDRAIL_EVIDENCE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2349 manual review / dry-run promotion gate
+      route
+    notes: '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是证明 2347 disabled wiring
+      即使被真实 CLI 触达也不会产生真实调度或交易副作用。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347 disabled wiring artifacts，不读取 fresh market data、不
+      append event、不绑定 outcome。后续只能进入 TRADING-2349 manual review / dry-run promotion
+      gate with caveats，不能直接启用 scheduler。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:19ef4cf5aeaab9672b49b6e703138c17d736ddc0b989f1f0e06327a82fca842a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2348_DISABLED_SCHEDULER_WIRING_SMOKE_DRY_RUN_AND_GUARDRAIL_EVIDENCE
+  - Research trends / high-intensity risk-cap disabled scheduler wiring smoke dry-run
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2349 manual review / dry-run promotion gate route
+  - 详见 `docs/requirements/TRADING-2348_Disabled_Scheduler_Wiring_Smoke_Dry_Run_And_Guardrail_Evidence.md`；承接
+    TRADING-2347 disabled wiring smoke dry-run route。本任务只读取 prior validated TRADING-2347
+    disabled wiring artifacts；只做 CLI smoke dry-run、guardrail evidence、side-effect
+    assertions 和 2349 manual review promotion gate route，不启用 scheduler、不创建真实 cron
+    / Windows Task / GitHub Actions schedule、不 append event、不修改 historical event /
+    cluster / pending registries、不绑定 outcome、不读取 fresh market data、不进入 paper-shadow
+    / production / broker。
+  - 新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-smoke-dry-run`；生成
+    smoke dry-run summary/evidence、source artifact assertion、guardrail assertions、side-effect
+    assertions、2349 route、interpretation boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_DISABLED_WIRING_SMOKE_DRY_RUN_PASSED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+    status=`OBSERVE_ONLY_SCHEDULER_DISABLED_WIRING_IMPLEMENTED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+    validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，guardrail_assertions_passed=true，side_effect_assertions_passed=true，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，promotion_allowed=false，real_scheduler_created=false，cron
+    / Windows Task / GitHub Actions schedule false，event_append_attempted=false，outcome_binding_attempted=false，paper_shadow_attempted=false，production_attempted=false，broker_action_attempted=false，readiness=`READY_FOR_2349_WITH_CAVEATS`，next
+    route=`TRADING-2349_Manual_Review_Promotion_Gate_For_Observe_Only_Scheduler`。验证通过
+    Ruff、compileall、focused parallel pytest 8 passed、真实 CLI run、docs freshness 531
+    docs PASS、documentation contract 1245 reports PASS、task-register consistency run/validate
+    PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T184626Z/test_runtime_summary.json`）和
+    `git diff --check`。
+  - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是证明 2347 disabled wiring 即使被真实
+    CLI 触达也不会产生真实调度或交易副作用。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+    prior validated TRADING-2347 disabled wiring artifacts，不读取 fresh market data、不
+    append event、不绑定 outcome。后续只能进入 TRADING-2349 manual review / dry-run promotion
+    gate with caveats，不能直接启用 scheduler。'
+  docs_links:
+  - docs/requirements/TRADING-2348_Disabled_Scheduler_Wiring_Smoke_Dry_Run_And_Guardrail_Evidence.md
+  terminal: true
+  raw_row_sha256: 19ef4cf5aeaab9672b49b6e703138c17d736ddc0b989f1f0e06327a82fca842a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 48275d8424d1116beb63b99aed46c94e3fa886ea6df9733774ead932013ab53f

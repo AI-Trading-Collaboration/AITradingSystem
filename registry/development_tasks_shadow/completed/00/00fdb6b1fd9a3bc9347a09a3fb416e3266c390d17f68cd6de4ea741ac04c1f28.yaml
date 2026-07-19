@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH
+  title: null
+  domain: Strategy research / read-only baseline capability graph
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 独立 baseline capability owner 后续以新任务提供受治理证据
+  requirement_refs:
+  - docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 见 `docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md`；只读消费
+    runtime/config/contracts，生成 21 nodes/15 edges、typed readiness与 mutation-ready
+    gate；不新增 transition、persistence、veto、confirmation、exposure unit、threshold或 baseline
+    behavior。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: strict status=`GROWTH_TILT_BASELINE_CAPABILITY_GRAPH_READY_NO_MUTATION_READY_CAPABILITY`；READY/BLOCKED/DIAGNOSTIC_ONLY/NOT_APPLICABLE=`6/9/2/4`，mutation-ready=0，artifact
+      reload=true，N3/N4未启动，candidate/replay/production/broker=0。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 23
+    row_sha256: bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf
+    cell_count: 8
+    all_cells:
+    - TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH
+    - Strategy research / read-only baseline capability graph
+    - P0
+    - DONE
+    - 独立 baseline capability owner 后续以新任务提供受治理证据
+    - 见 `docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md`；只读消费
+      runtime/config/contracts，生成 21 nodes/15 edges、typed readiness与 mutation-ready
+      gate；不新增 transition、persistence、veto、confirmation、exposure unit、threshold或 baseline
+      behavior。
+    - strict status=`GROWTH_TILT_BASELINE_CAPABILITY_GRAPH_READY_NO_MUTATION_READY_CAPABILITY`；READY/BLOCKED/DIAGNOSTIC_ONLY/NOT_APPLICABLE=`6/9/2/4`，mutation-ready=0，artifact
+      reload=true，N3/N4未启动，candidate/replay/production/broker=0。
+    - '2026-07-10: 实现、真实 strict run与归档完成。验证：N1/N2 focused 29、M1C/D1A/D2/M1E/N1/N2
+      chain 84、fast-unit 198、contract-validation 197、report-validation 55、documentation
+      contract 1358 reports、task-register consistency 13 checks均 PASS；Ruff/compileall/diff
+      check PASS。'
+    raw_line: '|TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH|Strategy research
+      / read-only baseline capability graph|P0|DONE|独立 baseline capability owner 后续以新任务提供受治理证据|见
+      `docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md`；只读消费
+      runtime/config/contracts，生成 21 nodes/15 edges、typed readiness与 mutation-ready
+      gate；不新增 transition、persistence、veto、confirmation、exposure unit、threshold或 baseline
+      behavior。|strict status=`GROWTH_TILT_BASELINE_CAPABILITY_GRAPH_READY_NO_MUTATION_READY_CAPABILITY`；READY/BLOCKED/DIAGNOSTIC_ONLY/NOT_APPLICABLE=`6/9/2/4`，mutation-ready=0，artifact
+      reload=true，N3/N4未启动，candidate/replay/production/broker=0。|2026-07-10: 实现、真实
+      strict run与归档完成。验证：N1/N2 focused 29、M1C/D1A/D2/M1E/N1/N2 chain 84、fast-unit
+      198、contract-validation 197、report-validation 55、documentation contract 1358
+      reports、task-register consistency 13 checks均 PASS；Ruff/compileall/diff check
+      PASS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bc53d78204753607ceebd59a
+  task_id: TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 独立 baseline capability owner 后续以新任务提供受治理证据
+    notes: '2026-07-10: 实现、真实 strict run与归档完成。验证：N1/N2 focused 29、M1C/D1A/D2/M1E/N1/N2
+      chain 84、fast-unit 198、contract-validation 197、report-validation 55、documentation
+      contract 1358 reports、task-register consistency 13 checks均 PASS；Ruff/compileall/diff
+      check PASS。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH
+  - Strategy research / read-only baseline capability graph
+  - P0
+  - DONE
+  - 独立 baseline capability owner 后续以新任务提供受治理证据
+  - 见 `docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md`；只读消费
+    runtime/config/contracts，生成 21 nodes/15 edges、typed readiness与 mutation-ready
+    gate；不新增 transition、persistence、veto、confirmation、exposure unit、threshold或 baseline
+    behavior。
+  - strict status=`GROWTH_TILT_BASELINE_CAPABILITY_GRAPH_READY_NO_MUTATION_READY_CAPABILITY`；READY/BLOCKED/DIAGNOSTIC_ONLY/NOT_APPLICABLE=`6/9/2/4`，mutation-ready=0，artifact
+    reload=true，N3/N4未启动，candidate/replay/production/broker=0。
+  - '2026-07-10: 实现、真实 strict run与归档完成。验证：N1/N2 focused 29、M1C/D1A/D2/M1E/N1/N2 chain
+    84、fast-unit 198、contract-validation 197、report-validation 55、documentation contract
+    1358 reports、task-register consistency 13 checks均 PASS；Ruff/compileall/diff check
+    PASS。'
+  docs_links:
+  - docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md
+  terminal: true
+  raw_row_sha256: bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: eec42be5577339f41ddb29a610db04e672e4ac8254e44fdb83efb59570d9b1d3

@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-010
+  title: null
+  domain: 数据源/一致性研究窗口
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/price_source_reconciliation_2026-05-05.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已把价格一致性、宏观变化和跨源 reconciliation 的默认检查窗口绑定到
+    `ai_after_chatgpt` 研究窗口；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Baseline 完成：默认数据质量门禁的价格波动、复权比例、宏观单日变化和主源/二源 consistency 检查只统计 `2022-12-01`
+      以来样本；早于研究窗口的复权/跨源/宏观变化差异不阻断或提示默认日报；基础 schema、覆盖、新鲜度、重复键、主源硬错误和研究窗口内 raw close
+      跨源真实冲突仍 fail closed；第二源自身硬错误的默认处理由 DATA-011 降级为告警；报告声明一致性检查窗口；已同步更新 `docs/system_flow.md`、配置和测试。完整
+      DONE 需后续按真实日报运行观察确认窗口口径足够稳定
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1123
+    row_sha256: 7ff54686cc6e2387565776aa167aa473959f5818dd377eb7bca5deeffa83cf6c
+    cell_count: 8
+    all_cells:
+    - DATA-010
+    - 数据源/一致性研究窗口
+    - P0
+    - BASELINE_DONE
+    - 系统实现
+    - 已把价格一致性、宏观变化和跨源 reconciliation 的默认检查窗口绑定到 `ai_after_chatgpt` 研究窗口；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`
+    - Baseline 完成：默认数据质量门禁的价格波动、复权比例、宏观单日变化和主源/二源 consistency 检查只统计 `2022-12-01` 以来样本；早于研究窗口的复权/跨源/宏观变化差异不阻断或提示默认日报；基础
+      schema、覆盖、新鲜度、重复键、主源硬错误和研究窗口内 raw close 跨源真实冲突仍 fail closed；第二源自身硬错误的默认处理由 DATA-011
+      降级为告警；报告声明一致性检查窗口；已同步更新 `docs/system_flow.md`、配置和测试。完整 DONE 需后续按真实日报运行观察确认窗口口径足够稳定
+    - '2026-05-05: 新增并进入实现，原因：owner 明确验证数据一致性只考虑研究时间跨度，太久之前的不一致可忽略或降低严重等级；该规则影响质量门禁和日报是否可继续，属于
+      P0 数据解释口径。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：配置、质量报告、价格/宏观窗口过滤和测试已完成；真实
+      `validate-data` warning 从 8 降到 7，2020 年 DTWEXBGS 旧窗口 warning 已移出，4 个研究窗口内 Marketstack
+      错误仍 fail closed；`ruff check .` 和 `pytest -q` 356 项通过。2026-05-05: 更新边界，原因：DATA-011
+      已将第二源自身异常从阻断项改为可审计告警。'
+    raw_line: '|DATA-010|数据源/一致性研究窗口|P0|BASELINE_DONE|系统实现|已把价格一致性、宏观变化和跨源 reconciliation
+      的默认检查窗口绑定到 `ai_after_chatgpt` 研究窗口；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`|Baseline
+      完成：默认数据质量门禁的价格波动、复权比例、宏观单日变化和主源/二源 consistency 检查只统计 `2022-12-01` 以来样本；早于研究窗口的复权/跨源/宏观变化差异不阻断或提示默认日报；基础
+      schema、覆盖、新鲜度、重复键、主源硬错误和研究窗口内 raw close 跨源真实冲突仍 fail closed；第二源自身硬错误的默认处理由 DATA-011
+      降级为告警；报告声明一致性检查窗口；已同步更新 `docs/system_flow.md`、配置和测试。完整 DONE 需后续按真实日报运行观察确认窗口口径足够稳定|2026-05-05:
+      新增并进入实现，原因：owner 明确验证数据一致性只考虑研究时间跨度，太久之前的不一致可忽略或降低严重等级；该规则影响质量门禁和日报是否可继续，属于
+      P0 数据解释口径。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：配置、质量报告、价格/宏观窗口过滤和测试已完成；真实
+      `validate-data` warning 从 8 降到 7，2020 年 DTWEXBGS 旧窗口 warning 已移出，4 个研究窗口内 Marketstack
+      错误仍 fail closed；`ruff check .` 和 `pytest -q` 356 项通过。2026-05-05: 更新边界，原因：DATA-011
+      已将第二源自身异常从阻断项改为可审计告警。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7ff54686cc6e2387565776aa
+  task_id: DATA-010
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增并进入实现，原因：owner 明确验证数据一致性只考虑研究时间跨度，太久之前的不一致可忽略或降低严重等级；该规则影响质量门禁和日报是否可继续，属于
+      P0 数据解释口径。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：配置、质量报告、价格/宏观窗口过滤和测试已完成；真实
+      `validate-data` warning 从 8 降到 7，2020 年 DTWEXBGS 旧窗口 warning 已移出，4 个研究窗口内 Marketstack
+      错误仍 fail closed；`ruff check .` 和 `pytest -q` 356 项通过。2026-05-05: 更新边界，原因：DATA-011
+      已将第二源自身异常从阻断项改为可审计告警。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7ff54686cc6e2387565776aa167aa473959f5818dd377eb7bca5deeffa83cf6c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-010
+  - 数据源/一致性研究窗口
+  - P0
+  - BASELINE_DONE
+  - 系统实现
+  - 已把价格一致性、宏观变化和跨源 reconciliation 的默认检查窗口绑定到 `ai_after_chatgpt` 研究窗口；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`
+  - Baseline 完成：默认数据质量门禁的价格波动、复权比例、宏观单日变化和主源/二源 consistency 检查只统计 `2022-12-01` 以来样本；早于研究窗口的复权/跨源/宏观变化差异不阻断或提示默认日报；基础
+    schema、覆盖、新鲜度、重复键、主源硬错误和研究窗口内 raw close 跨源真实冲突仍 fail closed；第二源自身硬错误的默认处理由 DATA-011
+    降级为告警；报告声明一致性检查窗口；已同步更新 `docs/system_flow.md`、配置和测试。完整 DONE 需后续按真实日报运行观察确认窗口口径足够稳定
+  - '2026-05-05: 新增并进入实现，原因：owner 明确验证数据一致性只考虑研究时间跨度，太久之前的不一致可忽略或降低严重等级；该规则影响质量门禁和日报是否可继续，属于
+    P0 数据解释口径。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：配置、质量报告、价格/宏观窗口过滤和测试已完成；真实
+    `validate-data` warning 从 8 降到 7，2020 年 DTWEXBGS 旧窗口 warning 已移出，4 个研究窗口内 Marketstack
+    错误仍 fail closed；`ruff check .` 和 `pytest -q` 356 项通过。2026-05-05: 更新边界，原因：DATA-011
+    已将第二源自身异常从阻断项改为可审计告警。'
+  docs_links:
+  - docs/requirements/price_source_reconciliation_2026-05-05.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: 7ff54686cc6e2387565776aa167aa473959f5818dd377eb7bca5deeffa83cf6c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b24f70119661024d7d242c95dac7979e3f86ad40a322964b3c7c3a347cff97e0

@@ -1,0 +1,164 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2380_DYNAMIC_STRATEGY_OPTIMIZED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION
+  title: null
+  domain: Strategy research / execution semantics / optimized variant owner review
+    decision
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2381 optimization plateau and next candidate decision
+    route
+  requirement_refs:
+  - docs/requirements/TRADING-2380_Dynamic_Strategy_Optimized_Variant_Owner_Review_And_Observation_Decision.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2380_Dynamic_Strategy_Optimized_Variant_Owner_Review_And_Observation_Decision.md`；承接
+    TRADING-2379 route，读取 TRADING-2376 / 2378 / 2379 artifacts，并记录 optimized variant
+    owner review / observation rejection decision。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-optimized-variant-owner-review-decision`；生成
+      `owner_review_decision.json`、`observation_rejection_rationale.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_OPTIMIZED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION_READY`，best
+      variant from 2379=`dynamic_regime_overlay_v0_4_cooldown_balanced_v1`，best variant
+      decision from 2379=`CONTINUE_OPTIMIZATION`，owner decision=`DO_NOT_APPROVE_OBSERVATION_CONTINUE_OPTIMIZATION_REVIEW_REQUIRED`，research-only
+      observation approved=false，continue optimization allowed=true，optimization plateau
+      review required=true，next route=`TRADING-2381_Dynamic_Strategy_Optimization_Plateau_And_Next_Candidate_Decision`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 107
+    row_sha256: 52c5add6a46d2ee536465b02631b36ea0f85d3d78a07e34c23636bf8ca8bbc4e
+    cell_count: 8
+    all_cells:
+    - TRADING-2380_DYNAMIC_STRATEGY_OPTIMIZED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION
+    - Strategy research / execution semantics / optimized variant owner review decision
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2381 optimization plateau and next candidate decision
+      route
+    - 详见 `docs/requirements/TRADING-2380_Dynamic_Strategy_Optimized_Variant_Owner_Review_And_Observation_Decision.md`；承接
+      TRADING-2379 route，读取 TRADING-2376 / 2378 / 2379 artifacts，并记录 optimized variant
+      owner review / observation rejection decision。
+    - 新增 `aits research strategies dynamic-strategy-optimized-variant-owner-review-decision`；生成
+      `owner_review_decision.json`、`observation_rejection_rationale.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_OPTIMIZED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION_READY`，best
+      variant from 2379=`dynamic_regime_overlay_v0_4_cooldown_balanced_v1`，best variant
+      decision from 2379=`CONTINUE_OPTIMIZATION`，owner decision=`DO_NOT_APPROVE_OBSERVATION_CONTINUE_OPTIMIZATION_REVIEW_REQUIRED`，research-only
+      observation approved=false，continue optimization allowed=true，optimization plateau
+      review required=true，next route=`TRADING-2381_Dynamic_Strategy_Optimization_Plateau_And_Next_Candidate_Decision`。
+    - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；这是 owner review decision record，不是
+      research-only observation approval、paper-shadow approval、scheduler enablement、production
+      或 broker readiness。2026-07-05: 实现完成并归档 DONE；验证通过 full Ruff、`compileall -q src
+      tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 565 docs PASS、documentation
+      contract 1277 reports PASS、task-register consistency run active=319 / completed=439
+      / failed=0、task-register consistency validate checks=5 / failed=0 / warnings=0、contract-validation
+      197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T150254Z/test_runtime_summary.json`）和
+      `git diff --check`（仅 CRLF normalization warning）。本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2376 / 2378 / 2379 artifacts，不读取 fresh cached market
+      data、不重新 backtest、不生成 technical features、scoring、daily report 或交易建议。scheduler、event
+      append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order
+      和 daily report 全部保持 disabled / false / none。'
+    raw_line: '|TRADING-2380_DYNAMIC_STRATEGY_OPTIMIZED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION|Strategy
+      research / execution semantics / optimized variant owner review decision|P0|DONE|项目
+      owner 后续复核 TRADING-2381 optimization plateau and next candidate decision route|详见
+      `docs/requirements/TRADING-2380_Dynamic_Strategy_Optimized_Variant_Owner_Review_And_Observation_Decision.md`；承接
+      TRADING-2379 route，读取 TRADING-2376 / 2378 / 2379 artifacts，并记录 optimized variant
+      owner review / observation rejection decision。|新增 `aits research strategies
+      dynamic-strategy-optimized-variant-owner-review-decision`；生成 `owner_review_decision.json`、`observation_rejection_rationale.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_OPTIMIZED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION_READY`，best
+      variant from 2379=`dynamic_regime_overlay_v0_4_cooldown_balanced_v1`，best variant
+      decision from 2379=`CONTINUE_OPTIMIZATION`，owner decision=`DO_NOT_APPROVE_OBSERVATION_CONTINUE_OPTIMIZATION_REVIEW_REQUIRED`，research-only
+      observation approved=false，continue optimization allowed=true，optimization plateau
+      review required=true，next route=`TRADING-2381_Dynamic_Strategy_Optimization_Plateau_And_Next_Candidate_Decision`。|2026-07-05:
+      根据 owner 附件新增并进入 IN_PROGRESS；这是 owner review decision record，不是 research-only
+      observation approval、paper-shadow approval、scheduler enablement、production 或
+      broker readiness。2026-07-05: 实现完成并归档 DONE；验证通过 full Ruff、`compileall -q src
+      tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 565 docs PASS、documentation
+      contract 1277 reports PASS、task-register consistency run active=319 / completed=439
+      / failed=0、task-register consistency validate checks=5 / failed=0 / warnings=0、contract-validation
+      197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T150254Z/test_runtime_summary.json`）和
+      `git diff --check`（仅 CRLF normalization warning）。本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2376 / 2378 / 2379 artifacts，不读取 fresh cached market
+      data、不重新 backtest、不生成 technical features、scoring、daily report 或交易建议。scheduler、event
+      append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order
+      和 daily report 全部保持 disabled / false / none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-52c5add6a46d2ee536465b02
+  task_id: TRADING-2380_DYNAMIC_STRATEGY_OPTIMIZED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2381 optimization plateau and next candidate
+      decision route
+    notes: '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；这是 owner review decision record，不是
+      research-only observation approval、paper-shadow approval、scheduler enablement、production
+      或 broker readiness。2026-07-05: 实现完成并归档 DONE；验证通过 full Ruff、`compileall -q src
+      tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 565 docs PASS、documentation
+      contract 1277 reports PASS、task-register consistency run active=319 / completed=439
+      / failed=0、task-register consistency validate checks=5 / failed=0 / warnings=0、contract-validation
+      197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T150254Z/test_runtime_summary.json`）和
+      `git diff --check`（仅 CRLF normalization warning）。本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2376 / 2378 / 2379 artifacts，不读取 fresh cached market
+      data、不重新 backtest、不生成 technical features、scoring、daily report 或交易建议。scheduler、event
+      append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order
+      和 daily report 全部保持 disabled / false / none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:52c5add6a46d2ee536465b02631b36ea0f85d3d78a07e34c23636bf8ca8bbc4e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2380_DYNAMIC_STRATEGY_OPTIMIZED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION
+  - Strategy research / execution semantics / optimized variant owner review decision
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2381 optimization plateau and next candidate decision route
+  - 详见 `docs/requirements/TRADING-2380_Dynamic_Strategy_Optimized_Variant_Owner_Review_And_Observation_Decision.md`；承接
+    TRADING-2379 route，读取 TRADING-2376 / 2378 / 2379 artifacts，并记录 optimized variant
+    owner review / observation rejection decision。
+  - 新增 `aits research strategies dynamic-strategy-optimized-variant-owner-review-decision`；生成
+    `owner_review_decision.json`、`observation_rejection_rationale.json`、research docs、registry、catalog、system
+    flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_OPTIMIZED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION_READY`，best
+    variant from 2379=`dynamic_regime_overlay_v0_4_cooldown_balanced_v1`，best variant
+    decision from 2379=`CONTINUE_OPTIMIZATION`，owner decision=`DO_NOT_APPROVE_OBSERVATION_CONTINUE_OPTIMIZATION_REVIEW_REQUIRED`，research-only
+    observation approved=false，continue optimization allowed=true，optimization plateau
+    review required=true，next route=`TRADING-2381_Dynamic_Strategy_Optimization_Plateau_And_Next_Candidate_Decision`。
+  - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；这是 owner review decision record，不是 research-only
+    observation approval、paper-shadow approval、scheduler enablement、production 或 broker
+    readiness。2026-07-05: 实现完成并归档 DONE；验证通过 full Ruff、`compileall -q src tests`、focused
+    parallel pytest 3 passed、真实 CLI run、docs freshness 565 docs PASS、documentation
+    contract 1277 reports PASS、task-register consistency run active=319 / completed=439
+    / failed=0、task-register consistency validate checks=5 / failed=0 / warnings=0、contract-validation
+    197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T150254Z/test_runtime_summary.json`）和
+    `git diff --check`（仅 CRLF normalization warning）。本任务未重跑 `aits validate-data`，因为只读取
+    prior validated TRADING-2376 / 2378 / 2379 artifacts，不读取 fresh cached market data、不重新
+    backtest、不生成 technical features、scoring、daily report 或交易建议。scheduler、event append、outcome
+    binding、paper-shadow、paper trade、shadow position、production、broker/order 和 daily
+    report 全部保持 disabled / false / none。'
+  docs_links:
+  - docs/requirements/TRADING-2380_Dynamic_Strategy_Optimized_Variant_Owner_Review_And_Observation_Decision.md
+  terminal: true
+  raw_row_sha256: 52c5add6a46d2ee536465b02631b36ea0f85d3d78a07e34c23636bf8ca8bbc4e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e136fa3308ee7e041b8504c4cf5f1a70ec87143cc1f52167b9cbd6606722aaca

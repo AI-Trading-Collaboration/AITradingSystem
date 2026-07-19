@@ -1,0 +1,150 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1024_to_1030_LAYER1_ARCHIVE_EQUAL_RISK_FORWARD_AGING_STABILIZATION
+  title: null
+  domain: Research strategies / Layer-1 archive and equal-risk forward-aging stabilization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1024_to_1030_Layer1_Archive_Equal_Risk_Forward_Aging_Stabilization.md
+  - docs/research/layer1_selector_dry_run_archive_report.md
+  - docs/research/research_roadmap_master_review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1024_to_1030_Layer1_Archive_Equal_Risk_Forward_Aging_Stabilization.md`；本批正式归档
+    Layer-1 simple-rule selector 为 dry-run-only，定义未来重启条件，检查 `equal_risk_qqq_sgov`
+    forward-aging observation / maturity / scoreboard 链路，并确认后续增长研究回到 Layer-2 component
+    gap；下一步为 owner 复核 1024～1030 的 research-only roadmap 结论
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 7 个 `aits research strategies ...` CLI/artifacts：1024 archive report、1025
+      restart condition contract、1026 daily run health check、1027 maturity update
+      check、1028 scoreboard first-window review、1029 Layer-2 growth component gap
+      review、1030 research roadmap master review；真实 master CLI 输出 1024=`LAYER1_SELECTOR_ARCHIVED_DRY_RUN_ONLY`、1025=`RESTART_NOT_ALLOWED_NOW`、1026=`EQUAL_RISK_FORWARD_AGING_WARN`、1027=`MATURITY_UPDATE_PENDING`、1028=`EQUAL_RISK_SCOREBOARD_INSUFFICIENT`、1029=`GROWTH_COMPONENT_GAP_CONFIRMED`、1030=`CONTINUE_EQUAL_RISK_FORWARD_AGING`；report
+      registry、artifact catalog、system flow、focused tests 和 docs/research outputs
+      同步更新；所有输出固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，不得把
+      Layer-1 selector 加入 forward-aging watchlist，不得恢复 QQQ-plus growth selectable、tail-risk
+      fallback、TQQQ-heavy、LEAPS、Wheel 或 Options
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1296
+    row_sha256: cb36037735adfa5c5a87ff7e75a31b78229ebafd3139278238cd46f3578ede3b
+    cell_count: 8
+    all_cells:
+    - TRADING-1024_to_1030_LAYER1_ARCHIVE_EQUAL_RISK_FORWARD_AGING_STABILIZATION
+    - Research strategies / Layer-1 archive and equal-risk forward-aging stabilization
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1024_to_1030_Layer1_Archive_Equal_Risk_Forward_Aging_Stabilization.md`；本批正式归档
+      Layer-1 simple-rule selector 为 dry-run-only，定义未来重启条件，检查 `equal_risk_qqq_sgov`
+      forward-aging observation / maturity / scoreboard 链路，并确认后续增长研究回到 Layer-2 component
+      gap；下一步为 owner 复核 1024～1030 的 research-only roadmap 结论
+    - 新增 7 个 `aits research strategies ...` CLI/artifacts：1024 archive report、1025
+      restart condition contract、1026 daily run health check、1027 maturity update
+      check、1028 scoreboard first-window review、1029 Layer-2 growth component gap
+      review、1030 research roadmap master review；真实 master CLI 输出 1024=`LAYER1_SELECTOR_ARCHIVED_DRY_RUN_ONLY`、1025=`RESTART_NOT_ALLOWED_NOW`、1026=`EQUAL_RISK_FORWARD_AGING_WARN`、1027=`MATURITY_UPDATE_PENDING`、1028=`EQUAL_RISK_SCOREBOARD_INSUFFICIENT`、1029=`GROWTH_COMPONENT_GAP_CONFIRMED`、1030=`CONTINUE_EQUAL_RISK_FORWARD_AGING`；report
+      registry、artifact catalog、system flow、focused tests 和 docs/research outputs
+      同步更新；所有输出固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，不得把
+      Layer-1 selector 加入 forward-aging watchlist，不得恢复 QQQ-plus growth selectable、tail-risk
+      fallback、TQQQ-heavy、LEAPS、Wheel 或 Options
+    - '2026-06-25: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 1024～1030 收口任务；当前前置结论为 1015～1023
+      final gate 未通过，主线继续 `equal_risk_qqq_sgov` forward-aging。2026-06-25: 实现完成并转入
+      VALIDATING；真实 master CLI 生成 `docs/research/layer1_selector_dry_run_archive_report.md`
+      与 `docs/research/research_roadmap_master_review.md`，结论为继续 equal-risk forward-aging、暂停
+      Layer-1 selector、回到 Layer-2 growth research，safety fields 仍 false/none；验证通过
+      Ruff、compileall、focused Layer-1 / Layer-2 pytest、task/report/documentation pytest
+      和 `git diff --check`。'
+    raw_line: '|TRADING-1024_to_1030_LAYER1_ARCHIVE_EQUAL_RISK_FORWARD_AGING_STABILIZATION|Research
+      strategies / Layer-1 archive and equal-risk forward-aging stabilization|P1|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1024_to_1030_Layer1_Archive_Equal_Risk_Forward_Aging_Stabilization.md`；本批正式归档
+      Layer-1 simple-rule selector 为 dry-run-only，定义未来重启条件，检查 `equal_risk_qqq_sgov`
+      forward-aging observation / maturity / scoreboard 链路，并确认后续增长研究回到 Layer-2 component
+      gap；下一步为 owner 复核 1024～1030 的 research-only roadmap 结论|新增 7 个 `aits research
+      strategies ...` CLI/artifacts：1024 archive report、1025 restart condition contract、1026
+      daily run health check、1027 maturity update check、1028 scoreboard first-window
+      review、1029 Layer-2 growth component gap review、1030 research roadmap master
+      review；真实 master CLI 输出 1024=`LAYER1_SELECTOR_ARCHIVED_DRY_RUN_ONLY`、1025=`RESTART_NOT_ALLOWED_NOW`、1026=`EQUAL_RISK_FORWARD_AGING_WARN`、1027=`MATURITY_UPDATE_PENDING`、1028=`EQUAL_RISK_SCOREBOARD_INSUFFICIENT`、1029=`GROWTH_COMPONENT_GAP_CONFIRMED`、1030=`CONTINUE_EQUAL_RISK_FORWARD_AGING`；report
+      registry、artifact catalog、system flow、focused tests 和 docs/research outputs
+      同步更新；所有输出固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，不得把
+      Layer-1 selector 加入 forward-aging watchlist，不得恢复 QQQ-plus growth selectable、tail-risk
+      fallback、TQQQ-heavy、LEAPS、Wheel 或 Options|2026-06-25: 新增并进入 IN_PROGRESS，原因：owner
+      要求完成附件中的 1024～1030 收口任务；当前前置结论为 1015～1023 final gate 未通过，主线继续 `equal_risk_qqq_sgov`
+      forward-aging。2026-06-25: 实现完成并转入 VALIDATING；真实 master CLI 生成 `docs/research/layer1_selector_dry_run_archive_report.md`
+      与 `docs/research/research_roadmap_master_review.md`，结论为继续 equal-risk forward-aging、暂停
+      Layer-1 selector、回到 Layer-2 growth research，safety fields 仍 false/none；验证通过
+      Ruff、compileall、focused Layer-1 / Layer-2 pytest、task/report/documentation pytest
+      和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-cb36037735adfa5c5a87ff7e
+  task_id: TRADING-1024_to_1030_LAYER1_ARCHIVE_EQUAL_RISK_FORWARD_AGING_STABILIZATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-25: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 1024～1030 收口任务；当前前置结论为
+      1015～1023 final gate 未通过，主线继续 `equal_risk_qqq_sgov` forward-aging。2026-06-25:
+      实现完成并转入 VALIDATING；真实 master CLI 生成 `docs/research/layer1_selector_dry_run_archive_report.md`
+      与 `docs/research/research_roadmap_master_review.md`，结论为继续 equal-risk forward-aging、暂停
+      Layer-1 selector、回到 Layer-2 growth research，safety fields 仍 false/none；验证通过
+      Ruff、compileall、focused Layer-1 / Layer-2 pytest、task/report/documentation pytest
+      和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:cb36037735adfa5c5a87ff7e75a31b78229ebafd3139278238cd46f3578ede3b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1024_to_1030_LAYER1_ARCHIVE_EQUAL_RISK_FORWARD_AGING_STABILIZATION
+  - Research strategies / Layer-1 archive and equal-risk forward-aging stabilization
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1024_to_1030_Layer1_Archive_Equal_Risk_Forward_Aging_Stabilization.md`；本批正式归档
+    Layer-1 simple-rule selector 为 dry-run-only，定义未来重启条件，检查 `equal_risk_qqq_sgov`
+    forward-aging observation / maturity / scoreboard 链路，并确认后续增长研究回到 Layer-2 component
+    gap；下一步为 owner 复核 1024～1030 的 research-only roadmap 结论
+  - 新增 7 个 `aits research strategies ...` CLI/artifacts：1024 archive report、1025 restart
+    condition contract、1026 daily run health check、1027 maturity update check、1028
+    scoreboard first-window review、1029 Layer-2 growth component gap review、1030 research
+    roadmap master review；真实 master CLI 输出 1024=`LAYER1_SELECTOR_ARCHIVED_DRY_RUN_ONLY`、1025=`RESTART_NOT_ALLOWED_NOW`、1026=`EQUAL_RISK_FORWARD_AGING_WARN`、1027=`MATURITY_UPDATE_PENDING`、1028=`EQUAL_RISK_SCOREBOARD_INSUFFICIENT`、1029=`GROWTH_COMPONENT_GAP_CONFIRMED`、1030=`CONTINUE_EQUAL_RISK_FORWARD_AGING`；report
+    registry、artifact catalog、system flow、focused tests 和 docs/research outputs 同步更新；所有输出固定
+    `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，不得把
+    Layer-1 selector 加入 forward-aging watchlist，不得恢复 QQQ-plus growth selectable、tail-risk
+    fallback、TQQQ-heavy、LEAPS、Wheel 或 Options
+  - '2026-06-25: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 1024～1030 收口任务；当前前置结论为 1015～1023
+    final gate 未通过，主线继续 `equal_risk_qqq_sgov` forward-aging。2026-06-25: 实现完成并转入 VALIDATING；真实
+    master CLI 生成 `docs/research/layer1_selector_dry_run_archive_report.md` 与 `docs/research/research_roadmap_master_review.md`，结论为继续
+    equal-risk forward-aging、暂停 Layer-1 selector、回到 Layer-2 growth research，safety
+    fields 仍 false/none；验证通过 Ruff、compileall、focused Layer-1 / Layer-2 pytest、task/report/documentation
+    pytest 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-1024_to_1030_Layer1_Archive_Equal_Risk_Forward_Aging_Stabilization.md
+  - docs/research/layer1_selector_dry_run_archive_report.md
+  - docs/research/research_roadmap_master_review.md
+  terminal: false
+  raw_row_sha256: cb36037735adfa5c5a87ff7e75a31b78229ebafd3139278238cd46f3578ede3b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b91423acea28b4fe30db96a088e7d8a5ee56566ed924ebc8a02b46d34a89f994

@@ -1,0 +1,176 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-008
+  title: null
+  domain: 交易执行/Shadow Parameter Impact Evaluation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/shadow_parameter_impact_evaluation_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/shadow_parameter_impact_evaluation_2026-05-17.md`；observe-only
+    impact report、policy manifest、standalone script、dashboard 轻量入口、测试、文档和复验证据已完成；当前真实样本仍因
+    shadow sample count 为 0 输出 `INSUFFICIENT_DATA`，不形成 shadow 改善结论
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `outputs/reports/shadow_parameter_impact_YYYY-MM-DD.json/md`，只读读取最近 7/14/30
+      日 `order_intent_candidates`、`paper_trading_summary`、`paper_signal_quality` 和可选已有
+      `paper_trading_replay`；按 `source_profile` / `mode` / `strategy_version` 区分 production
+      / shadow / unknown；比较样本、订单状态、paper PnL、continuous replay final_equity/max_drawdown、snapshot
+      质量、reconciliation、blocked_by/reason_code 和 confidence bucket performance；impact
+      gate 至少覆盖样本不足、低数据质量、synthetic snapshot 过高、daily-independent-only 和 reconciliation
+      不可靠；`impact_status` 只能使用保守状态集合；dashboard 只读展示 Shadow Impact 摘要，不触发 replay /
+      broker / 参数晋级；目标 pytest、全量 pytest、ruff、black、continuous replay smoke 和 shadow
+      impact smoke 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 298
+    row_sha256: 3ce2a13a32082c88f58712c5cb8b59876d93ab296cd57c5750f244e529549d1d
+    cell_count: 8
+    all_cells:
+    - TRADING-008
+    - 交易执行/Shadow Parameter Impact Evaluation
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/shadow_parameter_impact_evaluation_2026-05-17.md`；observe-only
+      impact report、policy manifest、standalone script、dashboard 轻量入口、测试、文档和复验证据已完成；当前真实样本仍因
+      shadow sample count 为 0 输出 `INSUFFICIENT_DATA`，不形成 shadow 改善结论
+    - 新增 `outputs/reports/shadow_parameter_impact_YYYY-MM-DD.json/md`，只读读取最近 7/14/30
+      日 `order_intent_candidates`、`paper_trading_summary`、`paper_signal_quality` 和可选已有
+      `paper_trading_replay`；按 `source_profile` / `mode` / `strategy_version` 区分 production
+      / shadow / unknown；比较样本、订单状态、paper PnL、continuous replay final_equity/max_drawdown、snapshot
+      质量、reconciliation、blocked_by/reason_code 和 confidence bucket performance；impact
+      gate 至少覆盖样本不足、低数据质量、synthetic snapshot 过高、daily-independent-only 和 reconciliation
+      不可靠；`impact_status` 只能使用保守状态集合；dashboard 只读展示 Shadow Impact 摘要，不触发 replay /
+      broker / 参数晋级；目标 pytest、全量 pytest、ruff、black、continuous replay smoke 和 shadow
+      impact smoke 通过
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-007A CI 通过后推进 shadow 参数
+      impact 观察层，目标是判断 shadow 是否真实改善 paper / replay / signal quality 表现，而不是上线参数或扩展交易执行。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `config/shadow_parameter_impact_policy.yaml`、`scripts/run_shadow_parameter_impact.py`、`shadow_parameter_impact_YYYY-MM-DD.json/md`
+      生成器、impact gate、7/14/30 日 production vs shadow/unknown profile 对比、dashboard
+      Shadow Impact 只读卡片、系统流图/产物目录和测试；验证通过目标 pytest、全量 pytest、ruff、continuous replay
+      smoke、shadow impact smoke 和 docs freshness。2026-06-09: 从 VALIDATING 改为 DONE，原因：字段级复核确认
+      observe-only JSON/Markdown 继续输出 `production_effect=none`、policy id/version/thresholds
+      snapshot、7/14/30 日 profile 对比、impact gate explanation 和 continuous replay source
+      artifact；continuous replay smoke 生成 2026-05-01..2026-05-17 `continuous_portfolio`
+      replay，状态 `LIMITED`、17 个日期、17 个 candidates、0 个 generated intents；shadow impact
+      smoke 输出 `INSUFFICIENT_DATA`、production sample count 17、shadow sample count
+      0、`main_blocked_by=insufficient_shadow_sample`，未补造改善结论；验证通过 `test_shadow_parameter_impact.py`
+      6 passed、`test_daily_task_dashboard.py` 22 passed、`tests/trading_engine` 939
+      passed、全量 pytest 2270 passed、scoped Ruff/Black、continuous replay smoke 和 shadow
+      impact smoke。'
+    raw_line: '|TRADING-008|交易执行/Shadow Parameter Impact Evaluation|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/shadow_parameter_impact_evaluation_2026-05-17.md`；observe-only
+      impact report、policy manifest、standalone script、dashboard 轻量入口、测试、文档和复验证据已完成；当前真实样本仍因
+      shadow sample count 为 0 输出 `INSUFFICIENT_DATA`，不形成 shadow 改善结论|新增 `outputs/reports/shadow_parameter_impact_YYYY-MM-DD.json/md`，只读读取最近
+      7/14/30 日 `order_intent_candidates`、`paper_trading_summary`、`paper_signal_quality`
+      和可选已有 `paper_trading_replay`；按 `source_profile` / `mode` / `strategy_version`
+      区分 production / shadow / unknown；比较样本、订单状态、paper PnL、continuous replay final_equity/max_drawdown、snapshot
+      质量、reconciliation、blocked_by/reason_code 和 confidence bucket performance；impact
+      gate 至少覆盖样本不足、低数据质量、synthetic snapshot 过高、daily-independent-only 和 reconciliation
+      不可靠；`impact_status` 只能使用保守状态集合；dashboard 只读展示 Shadow Impact 摘要，不触发 replay /
+      broker / 参数晋级；目标 pytest、全量 pytest、ruff、black、continuous replay smoke 和 shadow
+      impact smoke 通过|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-007A CI 通过后推进
+      shadow 参数 impact 观察层，目标是判断 shadow 是否真实改善 paper / replay / signal quality 表现，而不是上线参数或扩展交易执行。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `config/shadow_parameter_impact_policy.yaml`、`scripts/run_shadow_parameter_impact.py`、`shadow_parameter_impact_YYYY-MM-DD.json/md`
+      生成器、impact gate、7/14/30 日 production vs shadow/unknown profile 对比、dashboard
+      Shadow Impact 只读卡片、系统流图/产物目录和测试；验证通过目标 pytest、全量 pytest、ruff、continuous replay
+      smoke、shadow impact smoke 和 docs freshness。2026-06-09: 从 VALIDATING 改为 DONE，原因：字段级复核确认
+      observe-only JSON/Markdown 继续输出 `production_effect=none`、policy id/version/thresholds
+      snapshot、7/14/30 日 profile 对比、impact gate explanation 和 continuous replay source
+      artifact；continuous replay smoke 生成 2026-05-01..2026-05-17 `continuous_portfolio`
+      replay，状态 `LIMITED`、17 个日期、17 个 candidates、0 个 generated intents；shadow impact
+      smoke 输出 `INSUFFICIENT_DATA`、production sample count 17、shadow sample count
+      0、`main_blocked_by=insufficient_shadow_sample`，未补造改善结论；验证通过 `test_shadow_parameter_impact.py`
+      6 passed、`test_daily_task_dashboard.py` 22 passed、`tests/trading_engine` 939
+      passed、全量 pytest 2270 passed、scoped Ruff/Black、continuous replay smoke 和 shadow
+      impact smoke。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3ce2a13a32082c88f58712c5
+  task_id: TRADING-008
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-007A CI 通过后推进 shadow
+      参数 impact 观察层，目标是判断 shadow 是否真实改善 paper / replay / signal quality 表现，而不是上线参数或扩展交易执行。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `config/shadow_parameter_impact_policy.yaml`、`scripts/run_shadow_parameter_impact.py`、`shadow_parameter_impact_YYYY-MM-DD.json/md`
+      生成器、impact gate、7/14/30 日 production vs shadow/unknown profile 对比、dashboard
+      Shadow Impact 只读卡片、系统流图/产物目录和测试；验证通过目标 pytest、全量 pytest、ruff、continuous replay
+      smoke、shadow impact smoke 和 docs freshness。2026-06-09: 从 VALIDATING 改为 DONE，原因：字段级复核确认
+      observe-only JSON/Markdown 继续输出 `production_effect=none`、policy id/version/thresholds
+      snapshot、7/14/30 日 profile 对比、impact gate explanation 和 continuous replay source
+      artifact；continuous replay smoke 生成 2026-05-01..2026-05-17 `continuous_portfolio`
+      replay，状态 `LIMITED`、17 个日期、17 个 candidates、0 个 generated intents；shadow impact
+      smoke 输出 `INSUFFICIENT_DATA`、production sample count 17、shadow sample count
+      0、`main_blocked_by=insufficient_shadow_sample`，未补造改善结论；验证通过 `test_shadow_parameter_impact.py`
+      6 passed、`test_daily_task_dashboard.py` 22 passed、`tests/trading_engine` 939
+      passed、全量 pytest 2270 passed、scoped Ruff/Black、continuous replay smoke 和 shadow
+      impact smoke。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3ce2a13a32082c88f58712c5cb8b59876d93ab296cd57c5750f244e529549d1d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-008
+  - 交易执行/Shadow Parameter Impact Evaluation
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/shadow_parameter_impact_evaluation_2026-05-17.md`；observe-only
+    impact report、policy manifest、standalone script、dashboard 轻量入口、测试、文档和复验证据已完成；当前真实样本仍因
+    shadow sample count 为 0 输出 `INSUFFICIENT_DATA`，不形成 shadow 改善结论
+  - 新增 `outputs/reports/shadow_parameter_impact_YYYY-MM-DD.json/md`，只读读取最近 7/14/30
+    日 `order_intent_candidates`、`paper_trading_summary`、`paper_signal_quality` 和可选已有
+    `paper_trading_replay`；按 `source_profile` / `mode` / `strategy_version` 区分 production
+    / shadow / unknown；比较样本、订单状态、paper PnL、continuous replay final_equity/max_drawdown、snapshot
+    质量、reconciliation、blocked_by/reason_code 和 confidence bucket performance；impact
+    gate 至少覆盖样本不足、低数据质量、synthetic snapshot 过高、daily-independent-only 和 reconciliation
+    不可靠；`impact_status` 只能使用保守状态集合；dashboard 只读展示 Shadow Impact 摘要，不触发 replay / broker
+    / 参数晋级；目标 pytest、全量 pytest、ruff、black、continuous replay smoke 和 shadow impact
+    smoke 通过
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-007A CI 通过后推进 shadow 参数 impact
+    观察层，目标是判断 shadow 是否真实改善 paper / replay / signal quality 表现，而不是上线参数或扩展交易执行。2026-05-17:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `config/shadow_parameter_impact_policy.yaml`、`scripts/run_shadow_parameter_impact.py`、`shadow_parameter_impact_YYYY-MM-DD.json/md`
+    生成器、impact gate、7/14/30 日 production vs shadow/unknown profile 对比、dashboard Shadow
+    Impact 只读卡片、系统流图/产物目录和测试；验证通过目标 pytest、全量 pytest、ruff、continuous replay smoke、shadow
+    impact smoke 和 docs freshness。2026-06-09: 从 VALIDATING 改为 DONE，原因：字段级复核确认 observe-only
+    JSON/Markdown 继续输出 `production_effect=none`、policy id/version/thresholds snapshot、7/14/30
+    日 profile 对比、impact gate explanation 和 continuous replay source artifact；continuous
+    replay smoke 生成 2026-05-01..2026-05-17 `continuous_portfolio` replay，状态 `LIMITED`、17
+    个日期、17 个 candidates、0 个 generated intents；shadow impact smoke 输出 `INSUFFICIENT_DATA`、production
+    sample count 17、shadow sample count 0、`main_blocked_by=insufficient_shadow_sample`，未补造改善结论；验证通过
+    `test_shadow_parameter_impact.py` 6 passed、`test_daily_task_dashboard.py` 22 passed、`tests/trading_engine`
+    939 passed、全量 pytest 2270 passed、scoped Ruff/Black、continuous replay smoke 和 shadow
+    impact smoke。'
+  docs_links:
+  - docs/requirements/shadow_parameter_impact_evaluation_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 3ce2a13a32082c88f58712c5cb8b59876d93ab296cd57c5750f244e529549d1d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3f580eb50a018801ed728f20a4beb3c9885dad15b41703b51dff9ee02f60d006

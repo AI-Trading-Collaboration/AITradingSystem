@@ -1,0 +1,110 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-003
+  title: null
+  domain: 报告/呈现结构
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/report_decision_chain_presentation_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段日报“今日结论卡”和决策链入口：开头输出状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；剩余缺口是统一所有报告模板、状态标签配置化和核心原因排序策略；详细拆解见
+    `docs/requirements/report_decision_chain_presentation_2026-05-04.md#report-003`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 日报开头输出结论卡，按“状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、一句话主结论、三个核心原因、一个最大限制、一个下一步触发条件”组织；报告章节顺序从“状态
+      -> 原因 -> 约束 -> 行动 -> 证据下钻”展开，评分明细后置；每个核心输出先写判断句再给数字、证据和限制；实现时同步更新 `docs/system_flow.md`
+      并补充日报快照或文本顺序测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1140
+    row_sha256: bb2a6fa2f91b7771b8f6f0f5ed74e5af4024759e63c7cc9673b006c81353f4ca
+    cell_count: 8
+    all_cells:
+    - REPORT-003
+    - 报告/呈现结构
+    - P1
+    - BASELINE_DONE
+    - 系统实现
+    - 已完成第一阶段日报“今日结论卡”和决策链入口：开头输出状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；剩余缺口是统一所有报告模板、状态标签配置化和核心原因排序策略；详细拆解见
+      `docs/requirements/report_decision_chain_presentation_2026-05-04.md#report-003`
+    - 日报开头输出结论卡，按“状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、一句话主结论、三个核心原因、一个最大限制、一个下一步触发条件”组织；报告章节顺序从“状态
+      -> 原因 -> 约束 -> 行动 -> 证据下钻”展开，评分明细后置；每个核心输出先写判断句再给数字、证据和限制；实现时同步更新 `docs/system_flow.md`
+      并补充日报快照或文本顺序测试
+    - '来自 2026-05-04 最终报告呈现讨论。该任务不新增评分信息，而是重排 `REPORT-001/002`、`SCORE-001/002`、`THESIS-001`、`COGNITION-001`
+      和 `position_gate` 已有输出，避免报告退化为模块结果堆叠。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现日报“今日结论卡”、核心原因/限制/触发条件和文本顺序测试。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：`score-daily` 日报开头已生成结论卡，执行动作接入 `execution_policy`
+      输出，测试覆盖结论卡位于变化原因树、数据门禁和模块评分之前；`production scoring`、`position_gate` 和 evidence
+      bundle 语义未改变。'
+    raw_line: '|REPORT-003|报告/呈现结构|P1|BASELINE_DONE|系统实现|已完成第一阶段日报“今日结论卡”和决策链入口：开头输出状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；剩余缺口是统一所有报告模板、状态标签配置化和核心原因排序策略；详细拆解见
+      `docs/requirements/report_decision_chain_presentation_2026-05-04.md#report-003`|日报开头输出结论卡，按“状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、一句话主结论、三个核心原因、一个最大限制、一个下一步触发条件”组织；报告章节顺序从“状态
+      -> 原因 -> 约束 -> 行动 -> 证据下钻”展开，评分明细后置；每个核心输出先写判断句再给数字、证据和限制；实现时同步更新 `docs/system_flow.md`
+      并补充日报快照或文本顺序测试|来自 2026-05-04 最终报告呈现讨论。该任务不新增评分信息，而是重排 `REPORT-001/002`、`SCORE-001/002`、`THESIS-001`、`COGNITION-001`
+      和 `position_gate` 已有输出，避免报告退化为模块结果堆叠。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现日报“今日结论卡”、核心原因/限制/触发条件和文本顺序测试。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：`score-daily` 日报开头已生成结论卡，执行动作接入 `execution_policy`
+      输出，测试覆盖结论卡位于变化原因树、数据门禁和模块评分之前；`production scoring`、`position_gate` 和 evidence
+      bundle 语义未改变。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bb2a6fa2f91b7771b8f6f0f5
+  task_id: REPORT-003
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '来自 2026-05-04 最终报告呈现讨论。该任务不新增评分信息，而是重排 `REPORT-001/002`、`SCORE-001/002`、`THESIS-001`、`COGNITION-001`
+      和 `position_gate` 已有输出，避免报告退化为模块结果堆叠。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现日报“今日结论卡”、核心原因/限制/触发条件和文本顺序测试。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：`score-daily` 日报开头已生成结论卡，执行动作接入 `execution_policy`
+      输出，测试覆盖结论卡位于变化原因树、数据门禁和模块评分之前；`production scoring`、`position_gate` 和 evidence
+      bundle 语义未改变。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bb2a6fa2f91b7771b8f6f0f5ed74e5af4024759e63c7cc9673b006c81353f4ca
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-003
+  - 报告/呈现结构
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - 已完成第一阶段日报“今日结论卡”和决策链入口：开头输出状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；剩余缺口是统一所有报告模板、状态标签配置化和核心原因排序策略；详细拆解见
+    `docs/requirements/report_decision_chain_presentation_2026-05-04.md#report-003`
+  - 日报开头输出结论卡，按“状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、一句话主结论、三个核心原因、一个最大限制、一个下一步触发条件”组织；报告章节顺序从“状态
+    -> 原因 -> 约束 -> 行动 -> 证据下钻”展开，评分明细后置；每个核心输出先写判断句再给数字、证据和限制；实现时同步更新 `docs/system_flow.md`
+    并补充日报快照或文本顺序测试
+  - '来自 2026-05-04 最终报告呈现讨论。该任务不新增评分信息，而是重排 `REPORT-001/002`、`SCORE-001/002`、`THESIS-001`、`COGNITION-001`
+    和 `position_gate` 已有输出，避免报告退化为模块结果堆叠。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现日报“今日结论卡”、核心原因/限制/触发条件和文本顺序测试。2026-05-04:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：`score-daily` 日报开头已生成结论卡，执行动作接入 `execution_policy`
+    输出，测试覆盖结论卡位于变化原因树、数据门禁和模块评分之前；`production scoring`、`position_gate` 和 evidence
+    bundle 语义未改变。'
+  docs_links:
+  - docs/requirements/report_decision_chain_presentation_2026-05-04.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: bb2a6fa2f91b7771b8f6f0f5ed74e5af4024759e63c7cc9673b006c81353f4ca
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e94150cabc0b08e4fdf8d90213096fe60d6c7247e51c8046a0b4f3bee3234c22

@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-404_RECOVERY_PACK_SOURCE_DEPTH_AUDIT
+  title: null
+  domain: Research governance / recovery source depth audit
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 复核 unhealthy sources；后续按 owner/code/data action map 处理
+  requirement_refs:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；验证
+    TRADING-400 `sources=16/16` 是 source actually usable，不只是 present
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits reports recovery-pack-source-depth-audit` / `validate-recovery-pack-source-depth-audit`、JSON/Markdown
+      report、Reader Brief section 和 focused tests；记录 16 个 source 的 artifact id/date/status/freshness/blocking/warning/partial-complete、health
+      summary、unhealthy sources 和 next action
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 193
+    row_sha256: 1e09645522fa3207d88a42373e70132209b2ef16a754f276f8831a7a11404c3e
+    cell_count: 8
+    all_cells:
+    - TRADING-404_RECOVERY_PACK_SOURCE_DEPTH_AUDIT
+    - Research governance / recovery source depth audit
+    - P1
+    - DONE
+    - 项目 owner 复核 unhealthy sources；后续按 owner/code/data action map 处理
+    - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；验证
+      TRADING-400 `sources=16/16` 是 source actually usable，不只是 present
+    - 新增 `aits reports recovery-pack-source-depth-audit` / `validate-recovery-pack-source-depth-audit`、JSON/Markdown
+      report、Reader Brief section 和 focused tests；记录 16 个 source 的 artifact id/date/status/freshness/blocking/warning/partial-complete、health
+      summary、unhealthy sources 和 next action
+    - '2026-06-17: DONE；真实 artifact `outputs/reports/recovery_pack_source_depth_audit_2026-06-17.json/md`
+      输出 source_availability=16/16、unhealthy_sources=13、blocked_sources=9；validation
+      `recovery_pack_source_depth_audit_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。该
+      audit 只披露 source health，不补造 stale/partial/blocked artifact。'
+    raw_line: '|TRADING-404_RECOVERY_PACK_SOURCE_DEPTH_AUDIT|Research governance /
+      recovery source depth audit|P1|DONE|项目 owner 复核 unhealthy sources；后续按 owner/code/data
+      action map 处理|详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；验证
+      TRADING-400 `sources=16/16` 是 source actually usable，不只是 present|新增 `aits reports
+      recovery-pack-source-depth-audit` / `validate-recovery-pack-source-depth-audit`、JSON/Markdown
+      report、Reader Brief section 和 focused tests；记录 16 个 source 的 artifact id/date/status/freshness/blocking/warning/partial-complete、health
+      summary、unhealthy sources 和 next action|2026-06-17: DONE；真实 artifact `outputs/reports/recovery_pack_source_depth_audit_2026-06-17.json/md`
+      输出 source_availability=16/16、unhealthy_sources=13、blocked_sources=9；validation
+      `recovery_pack_source_depth_audit_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。该
+      audit 只披露 source health，不补造 stale/partial/blocked artifact。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1e09645522fa3207d88a4237
+  task_id: TRADING-404_RECOVERY_PACK_SOURCE_DEPTH_AUDIT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 复核 unhealthy sources；后续按 owner/code/data action map 处理
+    notes: '2026-06-17: DONE；真实 artifact `outputs/reports/recovery_pack_source_depth_audit_2026-06-17.json/md`
+      输出 source_availability=16/16、unhealthy_sources=13、blocked_sources=9；validation
+      `recovery_pack_source_depth_audit_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。该
+      audit 只披露 source health，不补造 stale/partial/blocked artifact。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1e09645522fa3207d88a42373e70132209b2ef16a754f276f8831a7a11404c3e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-404_RECOVERY_PACK_SOURCE_DEPTH_AUDIT
+  - Research governance / recovery source depth audit
+  - P1
+  - DONE
+  - 项目 owner 复核 unhealthy sources；后续按 owner/code/data action map 处理
+  - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；验证
+    TRADING-400 `sources=16/16` 是 source actually usable，不只是 present
+  - 新增 `aits reports recovery-pack-source-depth-audit` / `validate-recovery-pack-source-depth-audit`、JSON/Markdown
+    report、Reader Brief section 和 focused tests；记录 16 个 source 的 artifact id/date/status/freshness/blocking/warning/partial-complete、health
+    summary、unhealthy sources 和 next action
+  - '2026-06-17: DONE；真实 artifact `outputs/reports/recovery_pack_source_depth_audit_2026-06-17.json/md`
+    输出 source_availability=16/16、unhealthy_sources=13、blocked_sources=9；validation
+    `recovery_pack_source_depth_audit_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。该
+    audit 只披露 source health，不补造 stale/partial/blocked artifact。'
+  docs_links:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  terminal: true
+  raw_row_sha256: 1e09645522fa3207d88a42373e70132209b2ef16a754f276f8831a7a11404c3e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ca487aea28c0e85152776e441cf15da6683d25074da42553b7935b3e7f965760

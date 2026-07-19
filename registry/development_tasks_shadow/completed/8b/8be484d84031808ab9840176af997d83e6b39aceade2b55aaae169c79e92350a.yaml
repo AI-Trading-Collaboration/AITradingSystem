@@ -1,0 +1,142 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-036
+  title: null
+  domain: 交易执行/Notification Delivery Failure Classification / Retry Readiness
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/notification_delivery_failure_classification_2026-05-26.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/notification_delivery_failure_classification_2026-05-26.md`；只读
+    failure classification / retry readiness 已通过目标复验，不执行通知、重试或状态变更
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_notification_delivery_failure_classification.py` 和 `src/ai_trading_system/trading_engine/notification_delivery_failure_classification.py`；默认读取
+      latest TRADING-035 audit summary，也支持 `--audit-summary` 指定 JSON；输出 failure classification
+      JSON、Markdown 和 run log，覆盖 `PASS`、`INCOMPLETE`、`MISMATCH`、`SAFETY_BLOCKED`、missing/malformed
+      source 和 unknown status；输出 categories、manual review、safe_to_retry、retry blockers、recommended
+      actions 和 safety invariants；dashboard 只读读取 latest TRADING-036 JSON，不运行 classifier、不读取外部通知状态、不发送
+      notification；专项测试覆盖分类、CLI、Markdown、safety invariants、dashboard 只读和 missing report
+      graceful handling；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest
+      和 ruff；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+      diff
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 344
+    row_sha256: 983029937a94eebdaa919d596540d5e0301957a40bde4223e2e5fa0d9dd1a6e8
+    cell_count: 8
+    all_cells:
+    - TRADING-036
+    - 交易执行/Notification Delivery Failure Classification / Retry Readiness
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/notification_delivery_failure_classification_2026-05-26.md`；只读
+      failure classification / retry readiness 已通过目标复验，不执行通知、重试或状态变更
+    - 新增 `scripts/run_notification_delivery_failure_classification.py` 和 `src/ai_trading_system/trading_engine/notification_delivery_failure_classification.py`；默认读取
+      latest TRADING-035 audit summary，也支持 `--audit-summary` 指定 JSON；输出 failure classification
+      JSON、Markdown 和 run log，覆盖 `PASS`、`INCOMPLETE`、`MISMATCH`、`SAFETY_BLOCKED`、missing/malformed
+      source 和 unknown status；输出 categories、manual review、safe_to_retry、retry blockers、recommended
+      actions 和 safety invariants；dashboard 只读读取 latest TRADING-036 JSON，不运行 classifier、不读取外部通知状态、不发送
+      notification；专项测试覆盖分类、CLI、Markdown、safety invariants、dashboard 只读和 missing report
+      graceful handling；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest
+      和 ruff；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+      diff
+    - '2026-05-26: 新增并进入 IN_PROGRESS，原因：TRADING-035 已能回答通知链路审计状态，但还缺少失败类型、重试准备度、人工复核和通知链路阻断判断；本任务严格
+      read-only classify + report，不执行通知、重试、状态变更或 production 参数变更。2026-05-26: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已完成 classifier builder、CLI、JSON/Markdown/log、dashboard 只读卡片、runbook、requirements
+      index、system flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_notification_delivery_failure_classification.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：只读 failure classification / retry readiness 实现和安全边界已满足验收；复验通过通知链路目标
+      pytest 97 passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。'
+    raw_line: '|TRADING-036|交易执行/Notification Delivery Failure Classification / Retry
+      Readiness|P0|DONE|系统验证|详细拆解见 `docs/requirements/notification_delivery_failure_classification_2026-05-26.md`；只读
+      failure classification / retry readiness 已通过目标复验，不执行通知、重试或状态变更|新增 `scripts/run_notification_delivery_failure_classification.py`
+      和 `src/ai_trading_system/trading_engine/notification_delivery_failure_classification.py`；默认读取
+      latest TRADING-035 audit summary，也支持 `--audit-summary` 指定 JSON；输出 failure classification
+      JSON、Markdown 和 run log，覆盖 `PASS`、`INCOMPLETE`、`MISMATCH`、`SAFETY_BLOCKED`、missing/malformed
+      source 和 unknown status；输出 categories、manual review、safe_to_retry、retry blockers、recommended
+      actions 和 safety invariants；dashboard 只读读取 latest TRADING-036 JSON，不运行 classifier、不读取外部通知状态、不发送
+      notification；专项测试覆盖分类、CLI、Markdown、safety invariants、dashboard 只读和 missing report
+      graceful handling；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest
+      和 ruff；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+      diff|2026-05-26: 新增并进入 IN_PROGRESS，原因：TRADING-035 已能回答通知链路审计状态，但还缺少失败类型、重试准备度、人工复核和通知链路阻断判断；本任务严格
+      read-only classify + report，不执行通知、重试、状态变更或 production 参数变更。2026-05-26: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已完成 classifier builder、CLI、JSON/Markdown/log、dashboard 只读卡片、runbook、requirements
+      index、system flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_notification_delivery_failure_classification.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：只读 failure classification / retry readiness 实现和安全边界已满足验收；复验通过通知链路目标
+      pytest 97 passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-983029937a94eebdaa919d59
+  task_id: TRADING-036
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-26: 新增并进入 IN_PROGRESS，原因：TRADING-035 已能回答通知链路审计状态，但还缺少失败类型、重试准备度、人工复核和通知链路阻断判断；本任务严格
+      read-only classify + report，不执行通知、重试、状态变更或 production 参数变更。2026-05-26: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已完成 classifier builder、CLI、JSON/Markdown/log、dashboard 只读卡片、runbook、requirements
+      index、system flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_notification_delivery_failure_classification.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：只读 failure classification / retry readiness 实现和安全边界已满足验收；复验通过通知链路目标
+      pytest 97 passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:983029937a94eebdaa919d596540d5e0301957a40bde4223e2e5fa0d9dd1a6e8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-036
+  - 交易执行/Notification Delivery Failure Classification / Retry Readiness
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/notification_delivery_failure_classification_2026-05-26.md`；只读
+    failure classification / retry readiness 已通过目标复验，不执行通知、重试或状态变更
+  - 新增 `scripts/run_notification_delivery_failure_classification.py` 和 `src/ai_trading_system/trading_engine/notification_delivery_failure_classification.py`；默认读取
+    latest TRADING-035 audit summary，也支持 `--audit-summary` 指定 JSON；输出 failure classification
+    JSON、Markdown 和 run log，覆盖 `PASS`、`INCOMPLETE`、`MISMATCH`、`SAFETY_BLOCKED`、missing/malformed
+    source 和 unknown status；输出 categories、manual review、safe_to_retry、retry blockers、recommended
+    actions 和 safety invariants；dashboard 只读读取 latest TRADING-036 JSON，不运行 classifier、不读取外部通知状态、不发送
+    notification；专项测试覆盖分类、CLI、Markdown、safety invariants、dashboard 只读和 missing report
+    graceful handling；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest
+    和 ruff；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+    diff
+  - '2026-05-26: 新增并进入 IN_PROGRESS，原因：TRADING-035 已能回答通知链路审计状态，但还缺少失败类型、重试准备度、人工复核和通知链路阻断判断；本任务严格
+    read-only classify + report，不执行通知、重试、状态变更或 production 参数变更。2026-05-26: 从 IN_PROGRESS
+    改为 VALIDATING，原因：已完成 classifier builder、CLI、JSON/Markdown/log、dashboard 只读卡片、runbook、requirements
+    index、system flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_notification_delivery_failure_classification.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+    pytest 和 ruff；全仓 black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-06-07:
+    从 VALIDATING 改为 DONE，原因：只读 failure classification / retry readiness 实现和安全边界已满足验收；复验通过通知链路目标
+    pytest 97 passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。'
+  docs_links:
+  - docs/requirements/notification_delivery_failure_classification_2026-05-26.md
+  terminal: true
+  raw_row_sha256: 983029937a94eebdaa919d596540d5e0301957a40bde4223e2e5fa0d9dd1a6e8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a226314a7ad5c920826df6df23525c9f7cc5bcbac515e4e064322043ae5545d8

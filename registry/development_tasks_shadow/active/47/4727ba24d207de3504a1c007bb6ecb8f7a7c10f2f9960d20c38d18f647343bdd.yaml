@@ -1,0 +1,140 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-911_to_922_SIMPLE_BASELINE_DATA_REPAIR_FORWARD_AGING_UNBLOCK
+  title: null
+  domain: Research strategies / QQQ-TQQQ-SGOV data repair and forward-aging unblock
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-911_to_922_Simple_Baseline_Data_Repair_Forward_Aging_Unblock.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-911_to_922_Simple_Baseline_Data_Repair_Forward_Aging_Unblock.md`；TRADING-911～922
+    CLI/artifacts 已实现并真实执行，当前结论为 research-only forward aging 可 `READY_WITH_WARNINGS`，但不允许
+    paper-shadow、production 或 broker action
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 12 个 `aits research strategies ...` CLI/artifacts、report registry entries、artifact
+      catalog/system flow、TQQQ/SGOV 默认 universe 配置、per-strategy data-quality hardening
+      和 tests；TQQQ 通过既有 FMP repair / manifest 补齐；SGOV total-return contract 明确 adjusted-close/分红口径；post-repair
+      run、equal-risk recompute、TQQQ challenger review、dry-run、Reader Brief preview
+      和 owner decision pack 均披露 data quality、market regime、requested date range 和
+      safety fields；Focused parallel pytest、Ruff、py_compile、`git diff --check` 和真实
+      CLI 运行通过或记录 warning
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1300
+    row_sha256: 585acd8c14d61624c432375bde56d26c9c4b3e2759570a1da57bffe82cacca29
+    cell_count: 8
+    all_cells:
+    - TRADING-911_to_922_SIMPLE_BASELINE_DATA_REPAIR_FORWARD_AGING_UNBLOCK
+    - Research strategies / QQQ-TQQQ-SGOV data repair and forward-aging unblock
+    - P0
+    - VALIDATING
+    - 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-911_to_922_Simple_Baseline_Data_Repair_Forward_Aging_Unblock.md`；TRADING-911～922
+      CLI/artifacts 已实现并真实执行，当前结论为 research-only forward aging 可 `READY_WITH_WARNINGS`，但不允许
+      paper-shadow、production 或 broker action
+    - 新增 12 个 `aits research strategies ...` CLI/artifacts、report registry entries、artifact
+      catalog/system flow、TQQQ/SGOV 默认 universe 配置、per-strategy data-quality hardening
+      和 tests；TQQQ 通过既有 FMP repair / manifest 补齐；SGOV total-return contract 明确 adjusted-close/分红口径；post-repair
+      run、equal-risk recompute、TQQQ challenger review、dry-run、Reader Brief preview
+      和 owner decision pack 均披露 data quality、market regime、requested date range 和
+      safety fields；Focused parallel pytest、Ruff、py_compile、`git diff --check` 和真实
+      CLI 运行通过或记录 warning
+    - '2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-911～922；当前本地 cache 已知 TQQQ
+      主价格缺失，Marketstack 缺 TQQQ/SGOV，不能在数据质量至少 `DATA_QUALITY_PASS` 或 `DATA_QUALITY_PASS_WITH_WARNINGS`
+      前进入正式 research-only forward aging。2026-06-23: 实现完成并转入 VALIDATING；真实运行结果：911=`DATA_SOURCE_INVENTORY_PARTIAL`、912=`TQQQ_CACHE_REBUILT`、913=`SGOV_TOTAL_RETURN_CONTRACT_READY`、914=`REPAIR_MANIFEST_WARN`、915=`VALIDATE_DATA_HARDENED`、916=`POST_REPAIR_REAL_RUN_WARN`、917=`EQUAL_RISK_RESULT_RECOMPUTED`
+      且 rank=1、918=`TQQQ_CHALLENGER_STILL_PAUSED`、919=`FORWARD_AGING_READY_WITH_WARNINGS`、920=`FORWARD_OBSERVATION_DRY_RUN_WARN`
+      且 `observation_written=false`、921=`READER_FORWARD_PREVIEW_SAFE`、922=`OWNER_APPROVE_FORWARD_AGING`；`aits
+      validate-data` 为 `PASS_WITH_WARNINGS` / 0 errors，warnings 来自 Marketstack/manifest
+      覆盖限制，safety fields 仍 false/none。'
+    raw_line: '|TRADING-911_to_922_SIMPLE_BASELINE_DATA_REPAIR_FORWARD_AGING_UNBLOCK|Research
+      strategies / QQQ-TQQQ-SGOV data repair and forward-aging unblock|P0|VALIDATING|项目
+      owner 后续复核|详见 `docs/requirements/TRADING-911_to_922_Simple_Baseline_Data_Repair_Forward_Aging_Unblock.md`；TRADING-911～922
+      CLI/artifacts 已实现并真实执行，当前结论为 research-only forward aging 可 `READY_WITH_WARNINGS`，但不允许
+      paper-shadow、production 或 broker action|新增 12 个 `aits research strategies ...`
+      CLI/artifacts、report registry entries、artifact catalog/system flow、TQQQ/SGOV
+      默认 universe 配置、per-strategy data-quality hardening 和 tests；TQQQ 通过既有 FMP repair
+      / manifest 补齐；SGOV total-return contract 明确 adjusted-close/分红口径；post-repair
+      run、equal-risk recompute、TQQQ challenger review、dry-run、Reader Brief preview
+      和 owner decision pack 均披露 data quality、market regime、requested date range 和
+      safety fields；Focused parallel pytest、Ruff、py_compile、`git diff --check` 和真实
+      CLI 运行通过或记录 warning|2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-911～922；当前本地
+      cache 已知 TQQQ 主价格缺失，Marketstack 缺 TQQQ/SGOV，不能在数据质量至少 `DATA_QUALITY_PASS` 或
+      `DATA_QUALITY_PASS_WITH_WARNINGS` 前进入正式 research-only forward aging。2026-06-23:
+      实现完成并转入 VALIDATING；真实运行结果：911=`DATA_SOURCE_INVENTORY_PARTIAL`、912=`TQQQ_CACHE_REBUILT`、913=`SGOV_TOTAL_RETURN_CONTRACT_READY`、914=`REPAIR_MANIFEST_WARN`、915=`VALIDATE_DATA_HARDENED`、916=`POST_REPAIR_REAL_RUN_WARN`、917=`EQUAL_RISK_RESULT_RECOMPUTED`
+      且 rank=1、918=`TQQQ_CHALLENGER_STILL_PAUSED`、919=`FORWARD_AGING_READY_WITH_WARNINGS`、920=`FORWARD_OBSERVATION_DRY_RUN_WARN`
+      且 `observation_written=false`、921=`READER_FORWARD_PREVIEW_SAFE`、922=`OWNER_APPROVE_FORWARD_AGING`；`aits
+      validate-data` 为 `PASS_WITH_WARNINGS` / 0 errors，warnings 来自 Marketstack/manifest
+      覆盖限制，safety fields 仍 false/none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-585acd8c14d61624c432375b
+  task_id: TRADING-911_to_922_SIMPLE_BASELINE_DATA_REPAIR_FORWARD_AGING_UNBLOCK
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核
+    notes: '2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-911～922；当前本地 cache
+      已知 TQQQ 主价格缺失，Marketstack 缺 TQQQ/SGOV，不能在数据质量至少 `DATA_QUALITY_PASS` 或 `DATA_QUALITY_PASS_WITH_WARNINGS`
+      前进入正式 research-only forward aging。2026-06-23: 实现完成并转入 VALIDATING；真实运行结果：911=`DATA_SOURCE_INVENTORY_PARTIAL`、912=`TQQQ_CACHE_REBUILT`、913=`SGOV_TOTAL_RETURN_CONTRACT_READY`、914=`REPAIR_MANIFEST_WARN`、915=`VALIDATE_DATA_HARDENED`、916=`POST_REPAIR_REAL_RUN_WARN`、917=`EQUAL_RISK_RESULT_RECOMPUTED`
+      且 rank=1、918=`TQQQ_CHALLENGER_STILL_PAUSED`、919=`FORWARD_AGING_READY_WITH_WARNINGS`、920=`FORWARD_OBSERVATION_DRY_RUN_WARN`
+      且 `observation_written=false`、921=`READER_FORWARD_PREVIEW_SAFE`、922=`OWNER_APPROVE_FORWARD_AGING`；`aits
+      validate-data` 为 `PASS_WITH_WARNINGS` / 0 errors，warnings 来自 Marketstack/manifest
+      覆盖限制，safety fields 仍 false/none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:585acd8c14d61624c432375bde56d26c9c4b3e2759570a1da57bffe82cacca29
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-911_to_922_SIMPLE_BASELINE_DATA_REPAIR_FORWARD_AGING_UNBLOCK
+  - Research strategies / QQQ-TQQQ-SGOV data repair and forward-aging unblock
+  - P0
+  - VALIDATING
+  - 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-911_to_922_Simple_Baseline_Data_Repair_Forward_Aging_Unblock.md`；TRADING-911～922
+    CLI/artifacts 已实现并真实执行，当前结论为 research-only forward aging 可 `READY_WITH_WARNINGS`，但不允许
+    paper-shadow、production 或 broker action
+  - 新增 12 个 `aits research strategies ...` CLI/artifacts、report registry entries、artifact
+    catalog/system flow、TQQQ/SGOV 默认 universe 配置、per-strategy data-quality hardening
+    和 tests；TQQQ 通过既有 FMP repair / manifest 补齐；SGOV total-return contract 明确 adjusted-close/分红口径；post-repair
+    run、equal-risk recompute、TQQQ challenger review、dry-run、Reader Brief preview 和
+    owner decision pack 均披露 data quality、market regime、requested date range 和 safety
+    fields；Focused parallel pytest、Ruff、py_compile、`git diff --check` 和真实 CLI 运行通过或记录
+    warning
+  - '2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-911～922；当前本地 cache 已知 TQQQ
+    主价格缺失，Marketstack 缺 TQQQ/SGOV，不能在数据质量至少 `DATA_QUALITY_PASS` 或 `DATA_QUALITY_PASS_WITH_WARNINGS`
+    前进入正式 research-only forward aging。2026-06-23: 实现完成并转入 VALIDATING；真实运行结果：911=`DATA_SOURCE_INVENTORY_PARTIAL`、912=`TQQQ_CACHE_REBUILT`、913=`SGOV_TOTAL_RETURN_CONTRACT_READY`、914=`REPAIR_MANIFEST_WARN`、915=`VALIDATE_DATA_HARDENED`、916=`POST_REPAIR_REAL_RUN_WARN`、917=`EQUAL_RISK_RESULT_RECOMPUTED`
+    且 rank=1、918=`TQQQ_CHALLENGER_STILL_PAUSED`、919=`FORWARD_AGING_READY_WITH_WARNINGS`、920=`FORWARD_OBSERVATION_DRY_RUN_WARN`
+    且 `observation_written=false`、921=`READER_FORWARD_PREVIEW_SAFE`、922=`OWNER_APPROVE_FORWARD_AGING`；`aits
+    validate-data` 为 `PASS_WITH_WARNINGS` / 0 errors，warnings 来自 Marketstack/manifest
+    覆盖限制，safety fields 仍 false/none。'
+  docs_links:
+  - docs/requirements/TRADING-911_to_922_Simple_Baseline_Data_Repair_Forward_Aging_Unblock.md
+  terminal: false
+  raw_row_sha256: 585acd8c14d61624c432375bde56d26c9c4b3e2759570a1da57bffe82cacca29
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 81599a260b0e5c1d4a035acccc8a37b33056aa98252679d60747b9bf0459fc1a

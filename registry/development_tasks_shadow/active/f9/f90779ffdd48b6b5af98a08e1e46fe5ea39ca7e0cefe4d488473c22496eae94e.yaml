@@ -1,0 +1,146 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-976_to_985_LAYER1_META_POLICY_READINESS_GATE
+  title: null
+  domain: Research strategies / Layer-1 meta-policy selector readiness gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-976_to_985_Layer1_MetaPolicy_Readiness_Gate.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-976_to_985_Layer1_MetaPolicy_Readiness_Gate.md`；976～985
+    baseline 已实现并真实运行；下一步为 owner review 是否按 `START_LAYER1_SIMPLE_RULE_RESEARCH` 执行
+    research-only simple-rule historical run
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 10 个 `aits research strategies ...` CLI/artifacts；976 审计 Layer-1 dataset
+      lineage/leakage，977 建立 naive selector baselines，978 只做 simple-rule selector
+      search，979 做 cost-adjusted evaluation，980 做 regime/period validation，981 做 failure
+      case review，982 给出 research-only readiness gate，983 生成 owner decision pack，984
+      生成 Reader Brief safety preview，985 生成 master review；真实状态为 leakage `PASS`、naive
+      `READY`、simple-rule `READY`、cost eval `READY`、regime `MIXED`、failure review
+      `READY`、readiness gate `LAYER1_HISTORICAL_RESEARCH_ALLOWED_RESEARCH_ONLY`、owner
+      recommendation `START_LAYER1_SIMPLE_RULE_RESEARCH`、reader preview `SAFE`、master
+      `LAYER1_SIMPLE_RULE_RESEARCH_READY`；所有输出固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，禁止
+      ML selector、QQQ-plus growth selectable、tail-risk fallback/options selectable
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1291
+    row_sha256: dbdc8fe5afdd815334879f3a581078d18e1c521deb1b5d8ca2f44d014d5c07aa
+    cell_count: 8
+    all_cells:
+    - TRADING-976_to_985_LAYER1_META_POLICY_READINESS_GATE
+    - Research strategies / Layer-1 meta-policy selector readiness gate
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-976_to_985_Layer1_MetaPolicy_Readiness_Gate.md`；976～985
+      baseline 已实现并真实运行；下一步为 owner review 是否按 `START_LAYER1_SIMPLE_RULE_RESEARCH`
+      执行 research-only simple-rule historical run
+    - 新增 10 个 `aits research strategies ...` CLI/artifacts；976 审计 Layer-1 dataset
+      lineage/leakage，977 建立 naive selector baselines，978 只做 simple-rule selector
+      search，979 做 cost-adjusted evaluation，980 做 regime/period validation，981 做 failure
+      case review，982 给出 research-only readiness gate，983 生成 owner decision pack，984
+      生成 Reader Brief safety preview，985 生成 master review；真实状态为 leakage `PASS`、naive
+      `READY`、simple-rule `READY`、cost eval `READY`、regime `MIXED`、failure review
+      `READY`、readiness gate `LAYER1_HISTORICAL_RESEARCH_ALLOWED_RESEARCH_ONLY`、owner
+      recommendation `START_LAYER1_SIMPLE_RULE_RESEARCH`、reader preview `SAFE`、master
+      `LAYER1_SIMPLE_RULE_RESEARCH_READY`；所有输出固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，禁止
+      ML selector、QQQ-plus growth selectable、tail-risk fallback/options selectable
+    - '2026-06-24: 新增并进入 IN_PROGRESS，原因：967～970 真实 CLI 输出 `SELECTOR_HEADROOM_MATERIAL`
+      且 components distinct，满足继续推进 simple-rule Layer-1 readiness 的前提；transition cost
+      material 要求 979/982 继续扣成本并保留 owner review。2026-06-24: 976～985 实现完成并转入 VALIDATING；真实
+      CLI 输出 976=`LAYER1_DATASET_LEAKAGE_PASS`、977=`NAIVE_SELECTOR_BASELINES_READY`、978=`SIMPLE_RULE_SELECTOR_SEARCH_READY`、979=`SELECTOR_COST_EVAL_READY`、980=`SELECTOR_REGIME_MIXED`、981=`FAILURE_CASE_REVIEW_READY`、982=`LAYER1_HISTORICAL_RESEARCH_ALLOWED_RESEARCH_ONLY`、983=`LAYER1_OWNER_DECISION_PACK_READY`
+      / `START_LAYER1_SIMPLE_RULE_RESEARCH`、984=`LAYER1_READER_PREVIEW_SAFE`、985=`LAYER1_SIMPLE_RULE_RESEARCH_READY`；safety
+      fields 仍 false/none。'
+    raw_line: '|TRADING-976_to_985_LAYER1_META_POLICY_READINESS_GATE|Research strategies
+      / Layer-1 meta-policy selector readiness gate|P1|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-976_to_985_Layer1_MetaPolicy_Readiness_Gate.md`；976～985
+      baseline 已实现并真实运行；下一步为 owner review 是否按 `START_LAYER1_SIMPLE_RULE_RESEARCH`
+      执行 research-only simple-rule historical run|新增 10 个 `aits research strategies
+      ...` CLI/artifacts；976 审计 Layer-1 dataset lineage/leakage，977 建立 naive selector
+      baselines，978 只做 simple-rule selector search，979 做 cost-adjusted evaluation，980
+      做 regime/period validation，981 做 failure case review，982 给出 research-only readiness
+      gate，983 生成 owner decision pack，984 生成 Reader Brief safety preview，985 生成 master
+      review；真实状态为 leakage `PASS`、naive `READY`、simple-rule `READY`、cost eval `READY`、regime
+      `MIXED`、failure review `READY`、readiness gate `LAYER1_HISTORICAL_RESEARCH_ALLOWED_RESEARCH_ONLY`、owner
+      recommendation `START_LAYER1_SIMPLE_RULE_RESEARCH`、reader preview `SAFE`、master
+      `LAYER1_SIMPLE_RULE_RESEARCH_READY`；所有输出固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，禁止
+      ML selector、QQQ-plus growth selectable、tail-risk fallback/options selectable|2026-06-24:
+      新增并进入 IN_PROGRESS，原因：967～970 真实 CLI 输出 `SELECTOR_HEADROOM_MATERIAL` 且 components
+      distinct，满足继续推进 simple-rule Layer-1 readiness 的前提；transition cost material 要求
+      979/982 继续扣成本并保留 owner review。2026-06-24: 976～985 实现完成并转入 VALIDATING；真实 CLI
+      输出 976=`LAYER1_DATASET_LEAKAGE_PASS`、977=`NAIVE_SELECTOR_BASELINES_READY`、978=`SIMPLE_RULE_SELECTOR_SEARCH_READY`、979=`SELECTOR_COST_EVAL_READY`、980=`SELECTOR_REGIME_MIXED`、981=`FAILURE_CASE_REVIEW_READY`、982=`LAYER1_HISTORICAL_RESEARCH_ALLOWED_RESEARCH_ONLY`、983=`LAYER1_OWNER_DECISION_PACK_READY`
+      / `START_LAYER1_SIMPLE_RULE_RESEARCH`、984=`LAYER1_READER_PREVIEW_SAFE`、985=`LAYER1_SIMPLE_RULE_RESEARCH_READY`；safety
+      fields 仍 false/none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-dbdc8fe5afdd815334879f3a
+  task_id: TRADING-976_to_985_LAYER1_META_POLICY_READINESS_GATE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-24: 新增并进入 IN_PROGRESS，原因：967～970 真实 CLI 输出 `SELECTOR_HEADROOM_MATERIAL`
+      且 components distinct，满足继续推进 simple-rule Layer-1 readiness 的前提；transition cost
+      material 要求 979/982 继续扣成本并保留 owner review。2026-06-24: 976～985 实现完成并转入 VALIDATING；真实
+      CLI 输出 976=`LAYER1_DATASET_LEAKAGE_PASS`、977=`NAIVE_SELECTOR_BASELINES_READY`、978=`SIMPLE_RULE_SELECTOR_SEARCH_READY`、979=`SELECTOR_COST_EVAL_READY`、980=`SELECTOR_REGIME_MIXED`、981=`FAILURE_CASE_REVIEW_READY`、982=`LAYER1_HISTORICAL_RESEARCH_ALLOWED_RESEARCH_ONLY`、983=`LAYER1_OWNER_DECISION_PACK_READY`
+      / `START_LAYER1_SIMPLE_RULE_RESEARCH`、984=`LAYER1_READER_PREVIEW_SAFE`、985=`LAYER1_SIMPLE_RULE_RESEARCH_READY`；safety
+      fields 仍 false/none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:dbdc8fe5afdd815334879f3a581078d18e1c521deb1b5d8ca2f44d014d5c07aa
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-976_to_985_LAYER1_META_POLICY_READINESS_GATE
+  - Research strategies / Layer-1 meta-policy selector readiness gate
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-976_to_985_Layer1_MetaPolicy_Readiness_Gate.md`；976～985
+    baseline 已实现并真实运行；下一步为 owner review 是否按 `START_LAYER1_SIMPLE_RULE_RESEARCH` 执行
+    research-only simple-rule historical run
+  - 新增 10 个 `aits research strategies ...` CLI/artifacts；976 审计 Layer-1 dataset lineage/leakage，977
+    建立 naive selector baselines，978 只做 simple-rule selector search，979 做 cost-adjusted
+    evaluation，980 做 regime/period validation，981 做 failure case review，982 给出 research-only
+    readiness gate，983 生成 owner decision pack，984 生成 Reader Brief safety preview，985
+    生成 master review；真实状态为 leakage `PASS`、naive `READY`、simple-rule `READY`、cost eval
+    `READY`、regime `MIXED`、failure review `READY`、readiness gate `LAYER1_HISTORICAL_RESEARCH_ALLOWED_RESEARCH_ONLY`、owner
+    recommendation `START_LAYER1_SIMPLE_RULE_RESEARCH`、reader preview `SAFE`、master
+    `LAYER1_SIMPLE_RULE_RESEARCH_READY`；所有输出固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，禁止
+    ML selector、QQQ-plus growth selectable、tail-risk fallback/options selectable
+  - '2026-06-24: 新增并进入 IN_PROGRESS，原因：967～970 真实 CLI 输出 `SELECTOR_HEADROOM_MATERIAL`
+    且 components distinct，满足继续推进 simple-rule Layer-1 readiness 的前提；transition cost
+    material 要求 979/982 继续扣成本并保留 owner review。2026-06-24: 976～985 实现完成并转入 VALIDATING；真实
+    CLI 输出 976=`LAYER1_DATASET_LEAKAGE_PASS`、977=`NAIVE_SELECTOR_BASELINES_READY`、978=`SIMPLE_RULE_SELECTOR_SEARCH_READY`、979=`SELECTOR_COST_EVAL_READY`、980=`SELECTOR_REGIME_MIXED`、981=`FAILURE_CASE_REVIEW_READY`、982=`LAYER1_HISTORICAL_RESEARCH_ALLOWED_RESEARCH_ONLY`、983=`LAYER1_OWNER_DECISION_PACK_READY`
+    / `START_LAYER1_SIMPLE_RULE_RESEARCH`、984=`LAYER1_READER_PREVIEW_SAFE`、985=`LAYER1_SIMPLE_RULE_RESEARCH_READY`；safety
+    fields 仍 false/none。'
+  docs_links:
+  - docs/requirements/TRADING-976_to_985_Layer1_MetaPolicy_Readiness_Gate.md
+  terminal: false
+  raw_row_sha256: dbdc8fe5afdd815334879f3a581078d18e1c521deb1b5d8ca2f44d014d5c07aa
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: de80b26a7099e7edd40ce318992535ddf810c8768a318cf3cf767f813ceeb2ed

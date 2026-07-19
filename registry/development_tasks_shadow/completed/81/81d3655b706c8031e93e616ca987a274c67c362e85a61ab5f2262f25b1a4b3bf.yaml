@@ -1,0 +1,110 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-062L
+  title: null
+  domain: ETF simulation record --date compatibility
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐
+    simulation record 的 latest/指定日期选择
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf simulation record --date latest` 必须按 allocation 文件最新日期记录 snapshot；`--date
+      YYYY-MM-DD` 必须只记录该日期 allocation rows；allocation 缺 date column、无有效日期或指定日期缺失必须
+      fail closed；重复运行仍保持 idempotent upsert；根级 `aits simulation record --date latest`
+      同步可用；测试覆盖 latest、指定日期、缺日期失败和 idempotent'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 375
+    row_sha256: de793b77eb3241966d88bde35f6a7e7009b775b5f729b981409f259565460462
+    cell_count: 8
+    all_cells:
+    - TRADING-062L
+    - ETF simulation record --date compatibility
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐
+      simulation record 的 latest/指定日期选择
+    - '`aits etf simulation record --date latest` 必须按 allocation 文件最新日期记录 snapshot；`--date
+      YYYY-MM-DD` 必须只记录该日期 allocation rows；allocation 缺 date column、无有效日期或指定日期缺失必须
+      fail closed；重复运行仍保持 idempotent upsert；根级 `aits simulation record --date latest`
+      同步可用；测试覆盖 latest、指定日期、缺日期失败和 idempotent'
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 11.4 / 16.6 和 README 均给出 `simulation record
+      --date latest`，当前 CLI 未提供 `--date`，文档命令不可运行。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：`simulation
+      record` 新增 `--date`，默认 latest allocation date，指定日期按 allocation rows 过滤，缺日期 fail
+      closed；root alias 同步通过；真实 smoke 和全量 pytest 1629 passed。'
+    raw_line: '|TRADING-062L|ETF simulation record --date compatibility|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐 simulation
+      record 的 latest/指定日期选择|`aits etf simulation record --date latest` 必须按 allocation
+      文件最新日期记录 snapshot；`--date YYYY-MM-DD` 必须只记录该日期 allocation rows；allocation 缺
+      date column、无有效日期或指定日期缺失必须 fail closed；重复运行仍保持 idempotent upsert；根级 `aits simulation
+      record --date latest` 同步可用；测试覆盖 latest、指定日期、缺日期失败和 idempotent|2026-05-31: 新增并进入
+      IN_PROGRESS，原因：原文 11.4 / 16.6 和 README 均给出 `simulation record --date latest`，当前
+      CLI 未提供 `--date`，文档命令不可运行。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：`simulation record`
+      新增 `--date`，默认 latest allocation date，指定日期按 allocation rows 过滤，缺日期 fail closed；root
+      alias 同步通过；真实 smoke 和全量 pytest 1629 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-de793b77eb3241966d88bde3
+  task_id: TRADING-062L
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 11.4 / 16.6 和 README 均给出 `simulation
+      record --date latest`，当前 CLI 未提供 `--date`，文档命令不可运行。2026-05-31: 从 IN_PROGRESS
+      改为 DONE，原因：`simulation record` 新增 `--date`，默认 latest allocation date，指定日期按 allocation
+      rows 过滤，缺日期 fail closed；root alias 同步通过；真实 smoke 和全量 pytest 1629 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:de793b77eb3241966d88bde35f6a7e7009b775b5f729b981409f259565460462
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062L
+  - ETF simulation record --date compatibility
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐
+    simulation record 的 latest/指定日期选择
+  - '`aits etf simulation record --date latest` 必须按 allocation 文件最新日期记录 snapshot；`--date
+    YYYY-MM-DD` 必须只记录该日期 allocation rows；allocation 缺 date column、无有效日期或指定日期缺失必须 fail
+    closed；重复运行仍保持 idempotent upsert；根级 `aits simulation record --date latest` 同步可用；测试覆盖
+    latest、指定日期、缺日期失败和 idempotent'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 11.4 / 16.6 和 README 均给出 `simulation record
+    --date latest`，当前 CLI 未提供 `--date`，文档命令不可运行。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：`simulation
+    record` 新增 `--date`，默认 latest allocation date，指定日期按 allocation rows 过滤，缺日期 fail
+    closed；root alias 同步通过；真实 smoke 和全量 pytest 1629 passed。'
+  docs_links:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  terminal: true
+  raw_row_sha256: de793b77eb3241966d88bde35f6a7e7009b775b5f729b981409f259565460462
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c7b23554facc4d7525b56df02d7f8e8daa1a52e42f8b80d53766b35bcb042cc4

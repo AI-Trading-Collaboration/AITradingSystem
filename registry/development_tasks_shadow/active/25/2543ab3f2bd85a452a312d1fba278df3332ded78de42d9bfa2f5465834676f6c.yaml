@@ -1,0 +1,166 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-033
+  title: null
+  domain: 交易执行/Operator Brief Notification Approval Gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/operator_brief_notification_approval_gate_2026-05-24.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/operator_brief_notification_approval_gate_2026-05-24.md`；只读
+    approval gate 核心模块、CLI、JSON/Markdown/latest/run.log、稳定 preview hash、approval marker
+    校验、dashboard 只读卡片、runbook、system flow、artifact catalog、requirements 索引、专项测试和当前复验证据已完成；真实
+    `TRADING-032` artifact 与人工 marker 观察已拆分到 active `TRADING-033A`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_operator_brief_notification_approval_gate.py` 和 `src/ai_trading_system/trading_engine/operator_brief_notification_approval_gate.py`；输出
+      `data/derived/operator_briefs/notifications/approval_gate/operator_brief_notification_approval_gate_YYYY-MM-DD.json/md`、`latest.json`、`latest.md`、`run.log`；支持
+      `APPROVED` / `APPROVAL_REQUIRED` / `APPROVAL_EXPIRED` / `APPROVAL_MISMATCH`
+      / `SAFETY_BLOCKED` / `BLOCKED` / `NOOP`；dashboard 只读读取 TRADING-033 artifact，不重跑
+      approval gate 或 dispatch；测试覆盖状态映射、hash 稳定性、marker 过期/不匹配/非法、safety block 不可由
+      marker 覆盖、Markdown、CLI 和 dashboard 只读；临时 fixture APPROVED / APPROVAL_REQUIRED
+      / BLOCKED smoke、数据质量门、目标 pytest、Ruff 和 scoped Black 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1151
+    row_sha256: 30acca6001ac6f3664e0a88781aefdf0d918c072b8334dc9b04942dd6db5ed85
+    cell_count: 8
+    all_cells:
+    - TRADING-033
+    - 交易执行/Operator Brief Notification Approval Gate
+    - P0
+    - BASELINE_DONE
+    - 系统验证 + 项目 owner
+    - 详细拆解见 `docs/requirements/operator_brief_notification_approval_gate_2026-05-24.md`；只读
+      approval gate 核心模块、CLI、JSON/Markdown/latest/run.log、稳定 preview hash、approval
+      marker 校验、dashboard 只读卡片、runbook、system flow、artifact catalog、requirements 索引、专项测试和当前复验证据已完成；真实
+      `TRADING-032` artifact 与人工 marker 观察已拆分到 active `TRADING-033A`
+    - 新增 `scripts/run_operator_brief_notification_approval_gate.py` 和 `src/ai_trading_system/trading_engine/operator_brief_notification_approval_gate.py`；输出
+      `data/derived/operator_briefs/notifications/approval_gate/operator_brief_notification_approval_gate_YYYY-MM-DD.json/md`、`latest.json`、`latest.md`、`run.log`；支持
+      `APPROVED` / `APPROVAL_REQUIRED` / `APPROVAL_EXPIRED` / `APPROVAL_MISMATCH`
+      / `SAFETY_BLOCKED` / `BLOCKED` / `NOOP`；dashboard 只读读取 TRADING-033 artifact，不重跑
+      approval gate 或 dispatch；测试覆盖状态映射、hash 稳定性、marker 过期/不匹配/非法、safety block 不可由
+      marker 覆盖、Markdown、CLI 和 dashboard 只读；临时 fixture APPROVED / APPROVAL_REQUIRED
+      / BLOCKED smoke、数据质量门、目标 pytest、Ruff 和 scoped Black 通过
+    - '2026-05-24: 新增并进入 IN_PROGRESS，原因：TRADING-032 已能生成 dry-run dispatch preview，但真实
+      dispatch 前缺少唯一可信人工审批门控 artifact；本任务严格 approval-gate-only/read-only，不执行真实发送、不访问网络、不读取
+      secrets、不自动审批。2026-05-24: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 approval gate builder、CLI、JSON/Markdown/latest/run.log、稳定
+      preview hash、approval marker 校验、dashboard 只读卡片、runbook、system flow、artifact
+      catalog、requirements 索引和专项测试；验证通过 `tests/trading_engine/test_operator_brief_notification_approval_gate.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮读取 operations runbook
+      并运行 `aits validate-data`，状态为 `PASS_WITH_WARNINGS` / 错误数 0；临时真实形态 fixture smoke
+      覆盖 valid marker `APPROVED`、无 marker `APPROVAL_REQUIRED` 和缺 preview `BLOCKED`，均正常写出
+      JSON/Markdown/latest/run.log 审计 artifact；valid marker 场景确认 `allowed_to_enter_dispatch=true`
+      仅作为后续任务审批证据，所有 email/Gmail/webhook/broker/replay/trading flags 为 false；目标 approval
+      gate + dashboard pytest 37 passed，Ruff 和 scoped Black 通过；当前缺真实 TRADING-032 artifacts
+      和真实人工 marker，剩余观察已登记为 `TRADING-033A`。'
+    raw_line: '|TRADING-033|交易执行/Operator Brief Notification Approval Gate|P0|BASELINE_DONE|系统验证
+      + 项目 owner|详细拆解见 `docs/requirements/operator_brief_notification_approval_gate_2026-05-24.md`；只读
+      approval gate 核心模块、CLI、JSON/Markdown/latest/run.log、稳定 preview hash、approval
+      marker 校验、dashboard 只读卡片、runbook、system flow、artifact catalog、requirements 索引、专项测试和当前复验证据已完成；真实
+      `TRADING-032` artifact 与人工 marker 观察已拆分到 active `TRADING-033A`|新增 `scripts/run_operator_brief_notification_approval_gate.py`
+      和 `src/ai_trading_system/trading_engine/operator_brief_notification_approval_gate.py`；输出
+      `data/derived/operator_briefs/notifications/approval_gate/operator_brief_notification_approval_gate_YYYY-MM-DD.json/md`、`latest.json`、`latest.md`、`run.log`；支持
+      `APPROVED` / `APPROVAL_REQUIRED` / `APPROVAL_EXPIRED` / `APPROVAL_MISMATCH`
+      / `SAFETY_BLOCKED` / `BLOCKED` / `NOOP`；dashboard 只读读取 TRADING-033 artifact，不重跑
+      approval gate 或 dispatch；测试覆盖状态映射、hash 稳定性、marker 过期/不匹配/非法、safety block 不可由
+      marker 覆盖、Markdown、CLI 和 dashboard 只读；临时 fixture APPROVED / APPROVAL_REQUIRED
+      / BLOCKED smoke、数据质量门、目标 pytest、Ruff 和 scoped Black 通过|2026-05-24: 新增并进入 IN_PROGRESS，原因：TRADING-032
+      已能生成 dry-run dispatch preview，但真实 dispatch 前缺少唯一可信人工审批门控 artifact；本任务严格 approval-gate-only/read-only，不执行真实发送、不访问网络、不读取
+      secrets、不自动审批。2026-05-24: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 approval gate builder、CLI、JSON/Markdown/latest/run.log、稳定
+      preview hash、approval marker 校验、dashboard 只读卡片、runbook、system flow、artifact
+      catalog、requirements 索引和专项测试；验证通过 `tests/trading_engine/test_operator_brief_notification_approval_gate.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮读取 operations runbook
+      并运行 `aits validate-data`，状态为 `PASS_WITH_WARNINGS` / 错误数 0；临时真实形态 fixture smoke
+      覆盖 valid marker `APPROVED`、无 marker `APPROVAL_REQUIRED` 和缺 preview `BLOCKED`，均正常写出
+      JSON/Markdown/latest/run.log 审计 artifact；valid marker 场景确认 `allowed_to_enter_dispatch=true`
+      仅作为后续任务审批证据，所有 email/Gmail/webhook/broker/replay/trading flags 为 false；目标 approval
+      gate + dashboard pytest 37 passed，Ruff 和 scoped Black 通过；当前缺真实 TRADING-032 artifacts
+      和真实人工 marker，剩余观察已登记为 `TRADING-033A`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-30acca6001ac6f3664e0a887
+  task_id: TRADING-033
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-05-24: 新增并进入 IN_PROGRESS，原因：TRADING-032 已能生成 dry-run dispatch preview，但真实
+      dispatch 前缺少唯一可信人工审批门控 artifact；本任务严格 approval-gate-only/read-only，不执行真实发送、不访问网络、不读取
+      secrets、不自动审批。2026-05-24: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 approval gate builder、CLI、JSON/Markdown/latest/run.log、稳定
+      preview hash、approval marker 校验、dashboard 只读卡片、runbook、system flow、artifact
+      catalog、requirements 索引和专项测试；验证通过 `tests/trading_engine/test_operator_brief_notification_approval_gate.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮读取 operations runbook
+      并运行 `aits validate-data`，状态为 `PASS_WITH_WARNINGS` / 错误数 0；临时真实形态 fixture smoke
+      覆盖 valid marker `APPROVED`、无 marker `APPROVAL_REQUIRED` 和缺 preview `BLOCKED`，均正常写出
+      JSON/Markdown/latest/run.log 审计 artifact；valid marker 场景确认 `allowed_to_enter_dispatch=true`
+      仅作为后续任务审批证据，所有 email/Gmail/webhook/broker/replay/trading flags 为 false；目标 approval
+      gate + dashboard pytest 37 passed，Ruff 和 scoped Black 通过；当前缺真实 TRADING-032 artifacts
+      和真实人工 marker，剩余观察已登记为 `TRADING-033A`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:30acca6001ac6f3664e0a88781aefdf0d918c072b8334dc9b04942dd6db5ed85
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-033
+  - 交易执行/Operator Brief Notification Approval Gate
+  - P0
+  - BASELINE_DONE
+  - 系统验证 + 项目 owner
+  - 详细拆解见 `docs/requirements/operator_brief_notification_approval_gate_2026-05-24.md`；只读
+    approval gate 核心模块、CLI、JSON/Markdown/latest/run.log、稳定 preview hash、approval marker
+    校验、dashboard 只读卡片、runbook、system flow、artifact catalog、requirements 索引、专项测试和当前复验证据已完成；真实
+    `TRADING-032` artifact 与人工 marker 观察已拆分到 active `TRADING-033A`
+  - 新增 `scripts/run_operator_brief_notification_approval_gate.py` 和 `src/ai_trading_system/trading_engine/operator_brief_notification_approval_gate.py`；输出
+    `data/derived/operator_briefs/notifications/approval_gate/operator_brief_notification_approval_gate_YYYY-MM-DD.json/md`、`latest.json`、`latest.md`、`run.log`；支持
+    `APPROVED` / `APPROVAL_REQUIRED` / `APPROVAL_EXPIRED` / `APPROVAL_MISMATCH` /
+    `SAFETY_BLOCKED` / `BLOCKED` / `NOOP`；dashboard 只读读取 TRADING-033 artifact，不重跑
+    approval gate 或 dispatch；测试覆盖状态映射、hash 稳定性、marker 过期/不匹配/非法、safety block 不可由 marker
+    覆盖、Markdown、CLI 和 dashboard 只读；临时 fixture APPROVED / APPROVAL_REQUIRED / BLOCKED
+    smoke、数据质量门、目标 pytest、Ruff 和 scoped Black 通过
+  - '2026-05-24: 新增并进入 IN_PROGRESS，原因：TRADING-032 已能生成 dry-run dispatch preview，但真实
+    dispatch 前缺少唯一可信人工审批门控 artifact；本任务严格 approval-gate-only/read-only，不执行真实发送、不访问网络、不读取
+    secrets、不自动审批。2026-05-24: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 approval gate builder、CLI、JSON/Markdown/latest/run.log、稳定
+    preview hash、approval marker 校验、dashboard 只读卡片、runbook、system flow、artifact catalog、requirements
+    索引和专项测试；验证通过 `tests/trading_engine/test_operator_brief_notification_approval_gate.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+    pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关 `tests/test_market_data.py` baseline
+    阻断。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮读取 operations runbook 并运行 `aits
+    validate-data`，状态为 `PASS_WITH_WARNINGS` / 错误数 0；临时真实形态 fixture smoke 覆盖 valid
+    marker `APPROVED`、无 marker `APPROVAL_REQUIRED` 和缺 preview `BLOCKED`，均正常写出 JSON/Markdown/latest/run.log
+    审计 artifact；valid marker 场景确认 `allowed_to_enter_dispatch=true` 仅作为后续任务审批证据，所有
+    email/Gmail/webhook/broker/replay/trading flags 为 false；目标 approval gate + dashboard
+    pytest 37 passed，Ruff 和 scoped Black 通过；当前缺真实 TRADING-032 artifacts 和真实人工 marker，剩余观察已登记为
+    `TRADING-033A`。'
+  docs_links:
+  - docs/requirements/operator_brief_notification_approval_gate_2026-05-24.md
+  terminal: false
+  raw_row_sha256: 30acca6001ac6f3664e0a88781aefdf0d918c072b8334dc9b04942dd6db5ed85
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5b0beba42d46de8eb4c3bc00c49a27cc652e1ebd996426f1a07fab11888d0d43

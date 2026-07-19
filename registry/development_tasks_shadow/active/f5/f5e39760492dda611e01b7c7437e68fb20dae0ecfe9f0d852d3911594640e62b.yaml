@@ -1,0 +1,131 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-316_to_325_SIGNAL_LEVEL_DIAGNOSIS_AND_GATE_CALIBRATION_WITH_TARGETED_MICRO_SEARCH_V4
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue signal-level diagnosis and gate calibration
+    with targeted micro search v4
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 研究 owner：补齐真实 dated signal ledger/evidence 并复核研究方向；architecture coordinator：继续剩余
+    G2.4 matrix
+  requirement_refs:
+  - docs/requirements/TRADING-316_to_325_Signal_Level_Diagnosis_and_Gate_Calibration_with_Targeted_Micro_Search_v4.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-316_to_325_Signal_Level_Diagnosis_and_Gate_Calibration_with_Targeted_Micro_Search_v4.md`；CX1/CX2/CX3已将10组CLI及30
+    callbacks迁canonical，并修复虚构signal event/consensus fallback、micro-search lineage/cache-role/attribution与unknown
+    direction fallback语义；不得 broker、order、official target weights、production mutation、auto
+    owner approval、auto paper shadow primary switch或修改`position_advisory_v1.yaml`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 10组CLI/validators canonical；bounded snapshots、exact lineage、pre-output validation、live
+      replay与all-view byte rebuild/tamper闭合；无dated ledger不得补造event/count/return/dispersion，当前只允许defer并补证据；README/runbook/system
+      flow/registry/catalog/requirements/Reader Brief及focused/architecture/contract/full全部闭合；单任务完成不触发phase
+      handoff
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1434
+    row_sha256: 64f9391d3b09ae000664517c6e603122293f7c6c973651009f46008dddde52ac
+    cell_count: 8
+    all_cells:
+    - TRADING-316_to_325_SIGNAL_LEVEL_DIAGNOSIS_AND_GATE_CALIBRATION_WITH_TARGETED_MICRO_SEARCH_V4
+    - ETF portfolio/dynamic v3 rescue signal-level diagnosis and gate calibration
+      with targeted micro search v4
+    - P0
+    - BASELINE_DONE
+    - 研究 owner：补齐真实 dated signal ledger/evidence 并复核研究方向；architecture coordinator：继续剩余
+      G2.4 matrix
+    - 详细拆解见 `docs/requirements/TRADING-316_to_325_Signal_Level_Diagnosis_and_Gate_Calibration_with_Targeted_Micro_Search_v4.md`；CX1/CX2/CX3已将10组CLI及30
+      callbacks迁canonical，并修复虚构signal event/consensus fallback、micro-search lineage/cache-role/attribution与unknown
+      direction fallback语义；不得 broker、order、official target weights、production mutation、auto
+      owner approval、auto paper shadow primary switch或修改`position_advisory_v1.yaml`
+    - 10组CLI/validators canonical；bounded snapshots、exact lineage、pre-output validation、live
+      replay与all-view byte rebuild/tamper闭合；无dated ledger不得补造event/count/return/dispersion，当前只允许defer并补证据；README/runbook/system
+      flow/registry/catalog/requirements/Reader Brief及focused/architecture/contract/full全部闭合；单任务完成不触发phase
+      handoff
+    - '2026-07-16: CX1/CX2/CX3均=`COMPLETE_G2_4_CONTINUES`，分片callbacks=`12/12/6`；CX3
+      legacy CLI=`12,196/291/252`，legacy domain=`7,010 lines/6 lazy wrappers`，matrix=`715/252/0/0`；CX3
+      focused/architecture/contract/full=`28/304/203/6,097 passed`，full=`643 warnings
+      / 2,337.22s`，generated=`947/1,125/858/0`。总任务转`BASELINE_DONE`，等待真实dated evidence/owner
+      review；whole G2.4仍`IN_PROGRESS`，不触发ARCH-005 handoff、不进入G2.5，`production_effect=none`。'
+    raw_line: '|TRADING-316_to_325_SIGNAL_LEVEL_DIAGNOSIS_AND_GATE_CALIBRATION_WITH_TARGETED_MICRO_SEARCH_V4|ETF
+      portfolio/dynamic v3 rescue signal-level diagnosis and gate calibration with
+      targeted micro search v4|P0|BASELINE_DONE|研究 owner：补齐真实 dated signal ledger/evidence
+      并复核研究方向；architecture coordinator：继续剩余 G2.4 matrix|详细拆解见 `docs/requirements/TRADING-316_to_325_Signal_Level_Diagnosis_and_Gate_Calibration_with_Targeted_Micro_Search_v4.md`；CX1/CX2/CX3已将10组CLI及30
+      callbacks迁canonical，并修复虚构signal event/consensus fallback、micro-search lineage/cache-role/attribution与unknown
+      direction fallback语义；不得 broker、order、official target weights、production mutation、auto
+      owner approval、auto paper shadow primary switch或修改`position_advisory_v1.yaml`|10组CLI/validators
+      canonical；bounded snapshots、exact lineage、pre-output validation、live replay与all-view
+      byte rebuild/tamper闭合；无dated ledger不得补造event/count/return/dispersion，当前只允许defer并补证据；README/runbook/system
+      flow/registry/catalog/requirements/Reader Brief及focused/architecture/contract/full全部闭合；单任务完成不触发phase
+      handoff|2026-07-16: CX1/CX2/CX3均=`COMPLETE_G2_4_CONTINUES`，分片callbacks=`12/12/6`；CX3
+      legacy CLI=`12,196/291/252`，legacy domain=`7,010 lines/6 lazy wrappers`，matrix=`715/252/0/0`；CX3
+      focused/architecture/contract/full=`28/304/203/6,097 passed`，full=`643 warnings
+      / 2,337.22s`，generated=`947/1,125/858/0`。总任务转`BASELINE_DONE`，等待真实dated evidence/owner
+      review；whole G2.4仍`IN_PROGRESS`，不触发ARCH-005 handoff、不进入G2.5，`production_effect=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-64f9391d3b09ae000664517c
+  task_id: TRADING-316_to_325_SIGNAL_LEVEL_DIAGNOSIS_AND_GATE_CALIBRATION_WITH_TARGETED_MICRO_SEARCH_V4
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 研究 owner：补齐真实 dated signal ledger/evidence 并复核研究方向；architecture coordinator：继续剩余
+      G2.4 matrix
+    notes: '2026-07-16: CX1/CX2/CX3均=`COMPLETE_G2_4_CONTINUES`，分片callbacks=`12/12/6`；CX3
+      legacy CLI=`12,196/291/252`，legacy domain=`7,010 lines/6 lazy wrappers`，matrix=`715/252/0/0`；CX3
+      focused/architecture/contract/full=`28/304/203/6,097 passed`，full=`643 warnings
+      / 2,337.22s`，generated=`947/1,125/858/0`。总任务转`BASELINE_DONE`，等待真实dated evidence/owner
+      review；whole G2.4仍`IN_PROGRESS`，不触发ARCH-005 handoff、不进入G2.5，`production_effect=none`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:64f9391d3b09ae000664517c6e603122293f7c6c973651009f46008dddde52ac
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-316_to_325_SIGNAL_LEVEL_DIAGNOSIS_AND_GATE_CALIBRATION_WITH_TARGETED_MICRO_SEARCH_V4
+  - ETF portfolio/dynamic v3 rescue signal-level diagnosis and gate calibration with
+    targeted micro search v4
+  - P0
+  - BASELINE_DONE
+  - 研究 owner：补齐真实 dated signal ledger/evidence 并复核研究方向；architecture coordinator：继续剩余
+    G2.4 matrix
+  - 详细拆解见 `docs/requirements/TRADING-316_to_325_Signal_Level_Diagnosis_and_Gate_Calibration_with_Targeted_Micro_Search_v4.md`；CX1/CX2/CX3已将10组CLI及30
+    callbacks迁canonical，并修复虚构signal event/consensus fallback、micro-search lineage/cache-role/attribution与unknown
+    direction fallback语义；不得 broker、order、official target weights、production mutation、auto
+    owner approval、auto paper shadow primary switch或修改`position_advisory_v1.yaml`
+  - 10组CLI/validators canonical；bounded snapshots、exact lineage、pre-output validation、live
+    replay与all-view byte rebuild/tamper闭合；无dated ledger不得补造event/count/return/dispersion，当前只允许defer并补证据；README/runbook/system
+    flow/registry/catalog/requirements/Reader Brief及focused/architecture/contract/full全部闭合；单任务完成不触发phase
+    handoff
+  - '2026-07-16: CX1/CX2/CX3均=`COMPLETE_G2_4_CONTINUES`，分片callbacks=`12/12/6`；CX3
+    legacy CLI=`12,196/291/252`，legacy domain=`7,010 lines/6 lazy wrappers`，matrix=`715/252/0/0`；CX3
+    focused/architecture/contract/full=`28/304/203/6,097 passed`，full=`643 warnings
+    / 2,337.22s`，generated=`947/1,125/858/0`。总任务转`BASELINE_DONE`，等待真实dated evidence/owner
+    review；whole G2.4仍`IN_PROGRESS`，不触发ARCH-005 handoff、不进入G2.5，`production_effect=none`。'
+  docs_links:
+  - docs/requirements/TRADING-316_to_325_Signal_Level_Diagnosis_and_Gate_Calibration_with_Targeted_Micro_Search_v4.md
+  terminal: false
+  raw_row_sha256: 64f9391d3b09ae000664517c6e603122293f7c6c973651009f46008dddde52ac
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: df77a0f54fa6903c9a8c0383e1e2f22615e667a672c129d563efb7491974e94c

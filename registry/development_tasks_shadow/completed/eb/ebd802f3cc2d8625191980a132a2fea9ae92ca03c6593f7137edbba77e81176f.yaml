@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1016_DOCS_FRESHNESS_METADATA_RESTORATION
+  title: null
+  domain: Documentation governance / docs freshness metadata restoration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/TRADING-1016_Docs_Freshness_Metadata_Restoration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1016_Docs_Freshness_Metadata_Restoration.md`；docs
+    freshness gate 发现 10 个新增 requirements 文档缺少 `最后更新：YYYY-MM-DD` 元数据；本任务只补齐元数据，不改变系统行为或投资解释
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 10 个缺失元数据的 requirements 文档已补充 `最后更新：2026-06-25`；`python -m ai_trading_system.cli
+      docs validate-freshness`、task/docs focused pytest 和 `git diff --check` 通过；不修改
+      CLI、配置、cache schema、report output、data quality gate、scoring、backtest 或 production
+      boundary
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 178
+    row_sha256: bfad73f3fd669ef85f16e63a6b0b6a8fb7563e8359796c15f77b7ed7b4e94e31
+    cell_count: 8
+    all_cells:
+    - TRADING-1016_DOCS_FRESHNESS_METADATA_RESTORATION
+    - Documentation governance / docs freshness metadata restoration
+    - P2
+    - DONE
+    - 系统验证
+    - 详见 `docs/requirements/TRADING-1016_Docs_Freshness_Metadata_Restoration.md`；docs
+      freshness gate 发现 10 个新增 requirements 文档缺少 `最后更新：YYYY-MM-DD` 元数据；本任务只补齐元数据，不改变系统行为或投资解释
+    - 10 个缺失元数据的 requirements 文档已补充 `最后更新：2026-06-25`；`python -m ai_trading_system.cli
+      docs validate-freshness`、task/docs focused pytest 和 `git diff --check` 通过；不修改
+      CLI、配置、cache schema、report output、data quality gate、scoring、backtest 或 production
+      boundary
+    - '2026-06-25: 本轮重构收尾验证发现 docs freshness FAIL；补齐 TRADING-894_to_910、911_to_922、923_to_932、933_to_946、947_to_956、957_to_975、976_to_985、986_to_1000、1001_to_1008、1009_to_1014
+      requirements 文档元数据后，docs freshness 恢复 PASS。'
+    raw_line: '|TRADING-1016_DOCS_FRESHNESS_METADATA_RESTORATION|Documentation governance
+      / docs freshness metadata restoration|P2|DONE|系统验证|详见 `docs/requirements/TRADING-1016_Docs_Freshness_Metadata_Restoration.md`；docs
+      freshness gate 发现 10 个新增 requirements 文档缺少 `最后更新：YYYY-MM-DD` 元数据；本任务只补齐元数据，不改变系统行为或投资解释|10
+      个缺失元数据的 requirements 文档已补充 `最后更新：2026-06-25`；`python -m ai_trading_system.cli
+      docs validate-freshness`、task/docs focused pytest 和 `git diff --check` 通过；不修改
+      CLI、配置、cache schema、report output、data quality gate、scoring、backtest 或 production
+      boundary|2026-06-25: 本轮重构收尾验证发现 docs freshness FAIL；补齐 TRADING-894_to_910、911_to_922、923_to_932、933_to_946、947_to_956、957_to_975、976_to_985、986_to_1000、1001_to_1008、1009_to_1014
+      requirements 文档元数据后，docs freshness 恢复 PASS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bfad73f3fd669ef85f16e63a
+  task_id: TRADING-1016_DOCS_FRESHNESS_METADATA_RESTORATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: '2026-06-25: 本轮重构收尾验证发现 docs freshness FAIL；补齐 TRADING-894_to_910、911_to_922、923_to_932、933_to_946、947_to_956、957_to_975、976_to_985、986_to_1000、1001_to_1008、1009_to_1014
+      requirements 文档元数据后，docs freshness 恢复 PASS。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bfad73f3fd669ef85f16e63a6b0b6a8fb7563e8359796c15f77b7ed7b4e94e31
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1016_DOCS_FRESHNESS_METADATA_RESTORATION
+  - Documentation governance / docs freshness metadata restoration
+  - P2
+  - DONE
+  - 系统验证
+  - 详见 `docs/requirements/TRADING-1016_Docs_Freshness_Metadata_Restoration.md`；docs
+    freshness gate 发现 10 个新增 requirements 文档缺少 `最后更新：YYYY-MM-DD` 元数据；本任务只补齐元数据，不改变系统行为或投资解释
+  - 10 个缺失元数据的 requirements 文档已补充 `最后更新：2026-06-25`；`python -m ai_trading_system.cli
+    docs validate-freshness`、task/docs focused pytest 和 `git diff --check` 通过；不修改
+    CLI、配置、cache schema、report output、data quality gate、scoring、backtest 或 production
+    boundary
+  - '2026-06-25: 本轮重构收尾验证发现 docs freshness FAIL；补齐 TRADING-894_to_910、911_to_922、923_to_932、933_to_946、947_to_956、957_to_975、976_to_985、986_to_1000、1001_to_1008、1009_to_1014
+    requirements 文档元数据后，docs freshness 恢复 PASS。'
+  docs_links:
+  - docs/requirements/TRADING-1016_Docs_Freshness_Metadata_Restoration.md
+  terminal: true
+  raw_row_sha256: bfad73f3fd669ef85f16e63a6b0b6a8fb7563e8359796c15f77b7ed7b4e94e31
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: cf33ea829796f247d1b4bbef798eaac095235cbde1fff312125bba18b071556e

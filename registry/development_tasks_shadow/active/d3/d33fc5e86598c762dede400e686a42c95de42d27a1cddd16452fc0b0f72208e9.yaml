@@ -1,0 +1,138 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-199_to_203_MANUAL_PORTFOLIO_GUARDRAILS
+  title: null
+  domain: ETF portfolio/manual portfolio snapshot and execution guardrails
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核 + 系统运行观察
+  requirement_refs:
+  - docs/requirements/TRADING-199_to_203_Manual_Portfolio_Snapshot_Hardening_and_Execution_Guardrails.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-199_to_203_Manual_Portfolio_Snapshot_Hardening_and_Execution_Guardrails.md`；baseline
+    实现已完成并生成真实 artifacts：manual snapshot `f2d6dd8cbba63619`、portfolio exposure `562ce5641d143dc8`、position
+    drift `0c5a083d54b21fa1`、execution guardrail `0ea07df8d5414d79`、manual execution
+    review `e8ff7d0d375a216d`；仍不做 broker import、order ticket、自动下单、自动 owner approval、production
+    candidate 或真实仓位 mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`manual-portfolio validate/normalize/report`、`portfolio-exposure validate/report`、`position-drift
+      run/report`、`execution-guardrails check/report`、`manual-execution-review pack/report`
+      及对应 validate CLI 可运行；新增 schema/policy config 和 artifacts 写入 dynamic_v3_rescue
+      runtime roots；报告明确 `order_ticket_generated=false`、`broker_action_allowed=false`、`broker_action_taken=false`、`owner_approval_required=true`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、documentation contract、dynamic-v3 validation、family
+      artifact validation、report index、Reader Brief quality 和 full pytest 完成'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1451
+    row_sha256: d14abaa5058e3530c49845d5a2684022d18957b51a8b07664708f2243d4915e6
+    cell_count: 8
+    all_cells:
+    - TRADING-199_to_203_MANUAL_PORTFOLIO_GUARDRAILS
+    - ETF portfolio/manual portfolio snapshot and execution guardrails
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核 + 系统运行观察
+    - 详细拆解见 `docs/requirements/TRADING-199_to_203_Manual_Portfolio_Snapshot_Hardening_and_Execution_Guardrails.md`；baseline
+      实现已完成并生成真实 artifacts：manual snapshot `f2d6dd8cbba63619`、portfolio exposure `562ce5641d143dc8`、position
+      drift `0c5a083d54b21fa1`、execution guardrail `0ea07df8d5414d79`、manual execution
+      review `e8ff7d0d375a216d`；仍不做 broker import、order ticket、自动下单、自动 owner approval、production
+      candidate 或真实仓位 mutation
+    - '`manual-portfolio validate/normalize/report`、`portfolio-exposure validate/report`、`position-drift
+      run/report`、`execution-guardrails check/report`、`manual-execution-review pack/report`
+      及对应 validate CLI 可运行；新增 schema/policy config 和 artifacts 写入 dynamic_v3_rescue
+      runtime roots；报告明确 `order_ticket_generated=false`、`broker_action_allowed=false`、`broker_action_taken=false`、`owner_approval_required=true`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、documentation contract、dynamic-v3 validation、family
+      artifact validation、report index、Reader Brief quality 和 full pytest 完成'
+    - '2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-199～203；本轮优先交付 P0 manual
+      snapshot hardening、exposure/drift/guardrail/review pack 闭环，P1/P2 的更细行业映射、多币种、broker
+      import、税务和费用估算后续另行登记。2026-06-11: baseline 实现完成并转入 VALIDATING；全量 pytest `2353
+      passed, 640 warnings`，warnings 来自既有 numpy/eventkit warning；下一步为 owner 复核 manual
+      execution review pack。'
+    raw_line: '|TRADING-199_to_203_MANUAL_PORTFOLIO_GUARDRAILS|ETF portfolio/manual
+      portfolio snapshot and execution guardrails|P0|VALIDATING|项目 owner 人工复核 + 系统运行观察|详细拆解见
+      `docs/requirements/TRADING-199_to_203_Manual_Portfolio_Snapshot_Hardening_and_Execution_Guardrails.md`；baseline
+      实现已完成并生成真实 artifacts：manual snapshot `f2d6dd8cbba63619`、portfolio exposure `562ce5641d143dc8`、position
+      drift `0c5a083d54b21fa1`、execution guardrail `0ea07df8d5414d79`、manual execution
+      review `e8ff7d0d375a216d`；仍不做 broker import、order ticket、自动下单、自动 owner approval、production
+      candidate 或真实仓位 mutation|`manual-portfolio validate/normalize/report`、`portfolio-exposure
+      validate/report`、`position-drift run/report`、`execution-guardrails check/report`、`manual-execution-review
+      pack/report` 及对应 validate CLI 可运行；新增 schema/policy config 和 artifacts 写入 dynamic_v3_rescue
+      runtime roots；报告明确 `order_ticket_generated=false`、`broker_action_allowed=false`、`broker_action_taken=false`、`owner_approval_required=true`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、documentation contract、dynamic-v3 validation、family
+      artifact validation、report index、Reader Brief quality 和 full pytest 完成|2026-06-11:
+      新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-199～203；本轮优先交付 P0 manual snapshot
+      hardening、exposure/drift/guardrail/review pack 闭环，P1/P2 的更细行业映射、多币种、broker import、税务和费用估算后续另行登记。2026-06-11:
+      baseline 实现完成并转入 VALIDATING；全量 pytest `2353 passed, 640 warnings`，warnings 来自既有
+      numpy/eventkit warning；下一步为 owner 复核 manual execution review pack。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d14abaa5058e3530c49845d5
+  task_id: TRADING-199_to_203_MANUAL_PORTFOLIO_GUARDRAILS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核 + 系统运行观察
+    notes: '2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-199～203；本轮优先交付
+      P0 manual snapshot hardening、exposure/drift/guardrail/review pack 闭环，P1/P2 的更细行业映射、多币种、broker
+      import、税务和费用估算后续另行登记。2026-06-11: baseline 实现完成并转入 VALIDATING；全量 pytest `2353
+      passed, 640 warnings`，warnings 来自既有 numpy/eventkit warning；下一步为 owner 复核 manual
+      execution review pack。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d14abaa5058e3530c49845d5a2684022d18957b51a8b07664708f2243d4915e6
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-199_to_203_MANUAL_PORTFOLIO_GUARDRAILS
+  - ETF portfolio/manual portfolio snapshot and execution guardrails
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核 + 系统运行观察
+  - 详细拆解见 `docs/requirements/TRADING-199_to_203_Manual_Portfolio_Snapshot_Hardening_and_Execution_Guardrails.md`；baseline
+    实现已完成并生成真实 artifacts：manual snapshot `f2d6dd8cbba63619`、portfolio exposure `562ce5641d143dc8`、position
+    drift `0c5a083d54b21fa1`、execution guardrail `0ea07df8d5414d79`、manual execution
+    review `e8ff7d0d375a216d`；仍不做 broker import、order ticket、自动下单、自动 owner approval、production
+    candidate 或真实仓位 mutation
+  - '`manual-portfolio validate/normalize/report`、`portfolio-exposure validate/report`、`position-drift
+    run/report`、`execution-guardrails check/report`、`manual-execution-review pack/report`
+    及对应 validate CLI 可运行；新增 schema/policy config 和 artifacts 写入 dynamic_v3_rescue
+    runtime roots；报告明确 `order_ticket_generated=false`、`broker_action_allowed=false`、`broker_action_taken=false`、`owner_approval_required=true`、`production_effect=none`；README、operations
+    runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+    tests、ruff、compileall、git diff check、documentation contract、dynamic-v3 validation、family
+    artifact validation、report index、Reader Brief quality 和 full pytest 完成'
+  - '2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-199～203；本轮优先交付 P0 manual
+    snapshot hardening、exposure/drift/guardrail/review pack 闭环，P1/P2 的更细行业映射、多币种、broker
+    import、税务和费用估算后续另行登记。2026-06-11: baseline 实现完成并转入 VALIDATING；全量 pytest `2353 passed,
+    640 warnings`，warnings 来自既有 numpy/eventkit warning；下一步为 owner 复核 manual execution
+    review pack。'
+  docs_links:
+  - docs/requirements/TRADING-199_to_203_Manual_Portfolio_Snapshot_Hardening_and_Execution_Guardrails.md
+  terminal: false
+  raw_row_sha256: d14abaa5058e3530c49845d5a2684022d18957b51a8b07664708f2243d4915e6
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 240b84512f4f0598abb24ae3dac9fbb1b3cb1501e85d9a6a464311bd203a660c

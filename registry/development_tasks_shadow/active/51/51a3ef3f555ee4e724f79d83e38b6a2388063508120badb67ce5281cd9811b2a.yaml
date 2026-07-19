@@ -1,0 +1,194 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-087
+  title: null
+  domain: ETF portfolio research/Dynamic Candidate Shadow Review and Enrollment Workflow
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-087_Dynamic_Candidate_Shadow_Review_and_Enrollment_Workflow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-087_Dynamic_Candidate_Shadow_Review_and_Enrollment_Workflow.md`；baseline
+    已实现 owner-approved-only dynamic shadow workflow；下一步 owner 复核真实 dynamic shadow
+    package，并在批准后运行 enroll-approved/update/weekly-review 观察；本阶段不得写 official ETF target
+    weights、production baseline、broker state 或自动 shadow enrollment
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`config/etf_portfolio/dynamic_shadow.yaml` 存在且 safety fields mandatory；`aits
+      etf dynamic-shadow package --latest --top N`、`approve --package <path> --candidate
+      <candidate_id>`、`enroll-approved --latest`、`update`、`weekly-review` 和 `validate`
+      可运行；dynamic candidate enrollment 必须要求 dynamic calibration validation、dynamic
+      robustness validation、data quality gate、ops validation、owner approval、`production_effect=none`、`broker_action=none`；未批准或前置
+      gate 缺失的 candidate 不得 enroll；forward tracking records 包含 dynamic_candidate_return、static_base_return、current_baseline_return、QQQ_return、SPY_return、SMH_return、excess_vs_static、excess_vs_baseline、drawdown、turnover、regime_switch_count、false_signal_count、constraint_hit_count；weekly
+      review 展示 active_shadow / needs_more_data / watch / reject_pending_review /
+      rejected / archived；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs
+      和 tests 同步；focused pytest、ruff、compileall、diff check、`aits etf dynamic-shadow
+      validate`、真实 latest-package smoke 和全量 pytest 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1475
+    row_sha256: 59b04a82b2ed2456adc3c7d492707073b8f6b1e2ea9ee9c496e281ef6987bff3
+    cell_count: 8
+    all_cells:
+    - TRADING-087
+    - ETF portfolio research/Dynamic Candidate Shadow Review and Enrollment Workflow
+    - P0
+    - VALIDATING
+    - 系统验证 + 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-087_Dynamic_Candidate_Shadow_Review_and_Enrollment_Workflow.md`；baseline
+      已实现 owner-approved-only dynamic shadow workflow；下一步 owner 复核真实 dynamic shadow
+      package，并在批准后运行 enroll-approved/update/weekly-review 观察；本阶段不得写 official ETF
+      target weights、production baseline、broker state 或自动 shadow enrollment
+    - '`config/etf_portfolio/dynamic_shadow.yaml` 存在且 safety fields mandatory；`aits
+      etf dynamic-shadow package --latest --top N`、`approve --package <path> --candidate
+      <candidate_id>`、`enroll-approved --latest`、`update`、`weekly-review` 和 `validate`
+      可运行；dynamic candidate enrollment 必须要求 dynamic calibration validation、dynamic
+      robustness validation、data quality gate、ops validation、owner approval、`production_effect=none`、`broker_action=none`；未批准或前置
+      gate 缺失的 candidate 不得 enroll；forward tracking records 包含 dynamic_candidate_return、static_base_return、current_baseline_return、QQQ_return、SPY_return、SMH_return、excess_vs_static、excess_vs_baseline、drawdown、turnover、regime_switch_count、false_signal_count、constraint_hit_count；weekly
+      review 展示 active_shadow / needs_more_data / watch / reject_pending_review /
+      rejected / archived；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs
+      和 tests 同步；focused pytest、ruff、compileall、diff check、`aits etf dynamic-shadow
+      validate`、真实 latest-package smoke 和全量 pytest 通过'
+    - '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-086 已完成真实价格驱动 dynamic robustness baseline
+      并确认其报告只提供 owner review 前置证据，不自动 enroll；下一优先级是按 roadmap 建立 owner-approved-only
+      dynamic candidate forward shadow observation workflow，补齐 review package、approval、enrollment、tracking、weekly
+      review 和 Reader Brief / evidence visibility。本阶段不允许 production mutation、broker
+      action、automatic promotion 或 auto-enrollment without owner approval。2026-06-05:
+      TRADING-087A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic shadow policy、`aits
+      etf dynamic-shadow package/approve/enroll-approved/update/weekly-review/validate`、owner-approved-only
+      enrollment gate、dynamic shadow registry、forward tracking metrics、weekly review
+      statuses、decision journal reference/proposed entries、Reader Brief `Dynamic Shadow
+      Review` section、Strategy Evidence Dashboard `dynamic_shadow` optional source、report
+      registry/artifact catalog/system flow/runbook/README integration 和 focused tests；验证为
+      19 个相关测试 passed，`aits etf dynamic-shadow validate` PASS，`aits etf evidence-dashboard
+      validate --as-of 2026-06-05` PASS，ruff、compileall、diff check 通过；真实 latest package
+      smoke 生成 `dynamic-shadow-package_4f8d09abd136.json/md`，`status=OWNER_REVIEW_REQUIRED`、`top_candidate=dynamic-candidate-pack_8904048b4dbd`、`ready_after_owner_approval_count=1`、`blocked_count=0`、`automatic_enrollment_allowed=false`；全量
+      `python -m pytest tests -q` 通过，结果为 2157 passed、330 warnings、耗时 645.98s；剩余条件是真实
+      owner approval 后的 enrollment/update/weekly observation 运行复核。'
+    raw_line: '|TRADING-087|ETF portfolio research/Dynamic Candidate Shadow Review
+      and Enrollment Workflow|P0|VALIDATING|系统验证 + 项目 owner 人工复核|详细拆解见 `docs/requirements/TRADING-087_Dynamic_Candidate_Shadow_Review_and_Enrollment_Workflow.md`；baseline
+      已实现 owner-approved-only dynamic shadow workflow；下一步 owner 复核真实 dynamic shadow
+      package，并在批准后运行 enroll-approved/update/weekly-review 观察；本阶段不得写 official ETF
+      target weights、production baseline、broker state 或自动 shadow enrollment|`config/etf_portfolio/dynamic_shadow.yaml`
+      存在且 safety fields mandatory；`aits etf dynamic-shadow package --latest --top
+      N`、`approve --package <path> --candidate <candidate_id>`、`enroll-approved --latest`、`update`、`weekly-review`
+      和 `validate` 可运行；dynamic candidate enrollment 必须要求 dynamic calibration validation、dynamic
+      robustness validation、data quality gate、ops validation、owner approval、`production_effect=none`、`broker_action=none`；未批准或前置
+      gate 缺失的 candidate 不得 enroll；forward tracking records 包含 dynamic_candidate_return、static_base_return、current_baseline_return、QQQ_return、SPY_return、SMH_return、excess_vs_static、excess_vs_baseline、drawdown、turnover、regime_switch_count、false_signal_count、constraint_hit_count；weekly
+      review 展示 active_shadow / needs_more_data / watch / reject_pending_review /
+      rejected / archived；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs
+      和 tests 同步；focused pytest、ruff、compileall、diff check、`aits etf dynamic-shadow
+      validate`、真实 latest-package smoke 和全量 pytest 通过|2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-086
+      已完成真实价格驱动 dynamic robustness baseline 并确认其报告只提供 owner review 前置证据，不自动 enroll；下一优先级是按
+      roadmap 建立 owner-approved-only dynamic candidate forward shadow observation
+      workflow，补齐 review package、approval、enrollment、tracking、weekly review 和 Reader
+      Brief / evidence visibility。本阶段不允许 production mutation、broker action、automatic
+      promotion 或 auto-enrollment without owner approval。2026-06-05: TRADING-087A-K
+      baseline 实现完成并转入 VALIDATING，原因：新增 dynamic shadow policy、`aits etf dynamic-shadow
+      package/approve/enroll-approved/update/weekly-review/validate`、owner-approved-only
+      enrollment gate、dynamic shadow registry、forward tracking metrics、weekly review
+      statuses、decision journal reference/proposed entries、Reader Brief `Dynamic Shadow
+      Review` section、Strategy Evidence Dashboard `dynamic_shadow` optional source、report
+      registry/artifact catalog/system flow/runbook/README integration 和 focused tests；验证为
+      19 个相关测试 passed，`aits etf dynamic-shadow validate` PASS，`aits etf evidence-dashboard
+      validate --as-of 2026-06-05` PASS，ruff、compileall、diff check 通过；真实 latest package
+      smoke 生成 `dynamic-shadow-package_4f8d09abd136.json/md`，`status=OWNER_REVIEW_REQUIRED`、`top_candidate=dynamic-candidate-pack_8904048b4dbd`、`ready_after_owner_approval_count=1`、`blocked_count=0`、`automatic_enrollment_allowed=false`；全量
+      `python -m pytest tests -q` 通过，结果为 2157 passed、330 warnings、耗时 645.98s；剩余条件是真实
+      owner approval 后的 enrollment/update/weekly observation 运行复核。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-59b04a82b2ed2456adc3c7d4
+  task_id: TRADING-087
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner 人工复核
+    notes: '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-086 已完成真实价格驱动 dynamic robustness
+      baseline 并确认其报告只提供 owner review 前置证据，不自动 enroll；下一优先级是按 roadmap 建立 owner-approved-only
+      dynamic candidate forward shadow observation workflow，补齐 review package、approval、enrollment、tracking、weekly
+      review 和 Reader Brief / evidence visibility。本阶段不允许 production mutation、broker
+      action、automatic promotion 或 auto-enrollment without owner approval。2026-06-05:
+      TRADING-087A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic shadow policy、`aits
+      etf dynamic-shadow package/approve/enroll-approved/update/weekly-review/validate`、owner-approved-only
+      enrollment gate、dynamic shadow registry、forward tracking metrics、weekly review
+      statuses、decision journal reference/proposed entries、Reader Brief `Dynamic Shadow
+      Review` section、Strategy Evidence Dashboard `dynamic_shadow` optional source、report
+      registry/artifact catalog/system flow/runbook/README integration 和 focused tests；验证为
+      19 个相关测试 passed，`aits etf dynamic-shadow validate` PASS，`aits etf evidence-dashboard
+      validate --as-of 2026-06-05` PASS，ruff、compileall、diff check 通过；真实 latest package
+      smoke 生成 `dynamic-shadow-package_4f8d09abd136.json/md`，`status=OWNER_REVIEW_REQUIRED`、`top_candidate=dynamic-candidate-pack_8904048b4dbd`、`ready_after_owner_approval_count=1`、`blocked_count=0`、`automatic_enrollment_allowed=false`；全量
+      `python -m pytest tests -q` 通过，结果为 2157 passed、330 warnings、耗时 645.98s；剩余条件是真实
+      owner approval 后的 enrollment/update/weekly observation 运行复核。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:59b04a82b2ed2456adc3c7d492707073b8f6b1e2ea9ee9c496e281ef6987bff3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-087
+  - ETF portfolio research/Dynamic Candidate Shadow Review and Enrollment Workflow
+  - P0
+  - VALIDATING
+  - 系统验证 + 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-087_Dynamic_Candidate_Shadow_Review_and_Enrollment_Workflow.md`；baseline
+    已实现 owner-approved-only dynamic shadow workflow；下一步 owner 复核真实 dynamic shadow
+    package，并在批准后运行 enroll-approved/update/weekly-review 观察；本阶段不得写 official ETF target
+    weights、production baseline、broker state 或自动 shadow enrollment
+  - '`config/etf_portfolio/dynamic_shadow.yaml` 存在且 safety fields mandatory；`aits
+    etf dynamic-shadow package --latest --top N`、`approve --package <path> --candidate
+    <candidate_id>`、`enroll-approved --latest`、`update`、`weekly-review` 和 `validate`
+    可运行；dynamic candidate enrollment 必须要求 dynamic calibration validation、dynamic robustness
+    validation、data quality gate、ops validation、owner approval、`production_effect=none`、`broker_action=none`；未批准或前置
+    gate 缺失的 candidate 不得 enroll；forward tracking records 包含 dynamic_candidate_return、static_base_return、current_baseline_return、QQQ_return、SPY_return、SMH_return、excess_vs_static、excess_vs_baseline、drawdown、turnover、regime_switch_count、false_signal_count、constraint_hit_count；weekly
+    review 展示 active_shadow / needs_more_data / watch / reject_pending_review / rejected
+    / archived；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`；system
+    flow、artifact catalog、operations runbook、README、task register、requirement docs
+    和 tests 同步；focused pytest、ruff、compileall、diff check、`aits etf dynamic-shadow
+    validate`、真实 latest-package smoke 和全量 pytest 通过'
+  - '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-086 已完成真实价格驱动 dynamic robustness baseline
+    并确认其报告只提供 owner review 前置证据，不自动 enroll；下一优先级是按 roadmap 建立 owner-approved-only
+    dynamic candidate forward shadow observation workflow，补齐 review package、approval、enrollment、tracking、weekly
+    review 和 Reader Brief / evidence visibility。本阶段不允许 production mutation、broker
+    action、automatic promotion 或 auto-enrollment without owner approval。2026-06-05:
+    TRADING-087A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic shadow policy、`aits etf
+    dynamic-shadow package/approve/enroll-approved/update/weekly-review/validate`、owner-approved-only
+    enrollment gate、dynamic shadow registry、forward tracking metrics、weekly review
+    statuses、decision journal reference/proposed entries、Reader Brief `Dynamic Shadow
+    Review` section、Strategy Evidence Dashboard `dynamic_shadow` optional source、report
+    registry/artifact catalog/system flow/runbook/README integration 和 focused tests；验证为
+    19 个相关测试 passed，`aits etf dynamic-shadow validate` PASS，`aits etf evidence-dashboard
+    validate --as-of 2026-06-05` PASS，ruff、compileall、diff check 通过；真实 latest package
+    smoke 生成 `dynamic-shadow-package_4f8d09abd136.json/md`，`status=OWNER_REVIEW_REQUIRED`、`top_candidate=dynamic-candidate-pack_8904048b4dbd`、`ready_after_owner_approval_count=1`、`blocked_count=0`、`automatic_enrollment_allowed=false`；全量
+    `python -m pytest tests -q` 通过，结果为 2157 passed、330 warnings、耗时 645.98s；剩余条件是真实
+    owner approval 后的 enrollment/update/weekly observation 运行复核。'
+  docs_links:
+  - docs/requirements/TRADING-087_Dynamic_Candidate_Shadow_Review_and_Enrollment_Workflow.md
+  terminal: false
+  raw_row_sha256: 59b04a82b2ed2456adc3c7d492707073b8f6b1e2ea9ee9c496e281ef6987bff3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 43586439f63e242873c411de444d37c4726f109058afd1bee3621724e61f9b18

@@ -1,0 +1,136 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2313_LIQUIDITY_RATES_ACTUAL_PATH_VALIDATION
+  title: null
+  domain: Research trends / liquidity rates pressure candidate family
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2313_Liquidity_Rates_Actual_Path_Validation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2313_Liquidity_Rates_Actual_Path_Validation.md`；依赖
+    TRADING-2312 generator POC artifacts、required-anchor cached data quality gate
+    和 liquidity/rates actual-path validation policy。当前仅允许 partial rates-only validation；`liquidity_headwind_proxy_v1`
+    因 `UUP` / `HYG` / `LQD` 缺失继续 blocked，不得生成 validation rows。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 liquidity/rates actual-path validation summary、actual-path matrix、prediction/outcome
+      matrix、candidate scorecard、objective coverage matrix、state recommendation、safety
+      boundary 和 research report；真实 run status=`LIQUIDITY_RATES_VALIDATED_INCONCLUSIVE`，data_quality_status=`PASS_WITH_WARNINGS`，actual_path_record_count=31968，validation_eligible_record_count=31248；所有
+      artifacts 固定 scope review / promotion / paper-shadow / production / broker false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1217
+    row_sha256: 2e58e72e4da2d717f16024f5aac897b16491e29d2873505bdb918a250f36d4bf
+    cell_count: 8
+    all_cells:
+    - TRADING-2313_LIQUIDITY_RATES_ACTUAL_PATH_VALIDATION
+    - Research trends / liquidity rates pressure candidate family
+    - P1
+    - VALIDATING
+    - 系统验证 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2313_Liquidity_Rates_Actual_Path_Validation.md`；依赖
+      TRADING-2312 generator POC artifacts、required-anchor cached data quality gate
+      和 liquidity/rates actual-path validation policy。当前仅允许 partial rates-only validation；`liquidity_headwind_proxy_v1`
+      因 `UUP` / `HYG` / `LQD` 缺失继续 blocked，不得生成 validation rows。
+    - 生成 liquidity/rates actual-path validation summary、actual-path matrix、prediction/outcome
+      matrix、candidate scorecard、objective coverage matrix、state recommendation、safety
+      boundary 和 research report；真实 run status=`LIQUIDITY_RATES_VALIDATED_INCONCLUSIVE`，data_quality_status=`PASS_WITH_WARNINGS`，actual_path_record_count=31968，validation_eligible_record_count=31248；所有
+      artifacts 固定 scope review / promotion / paper-shadow / production / broker false/none。
+    - '2026-07-01: 根据 owner 附件和 TRADING-2312 next_required_task 新增并进入 IN_PROGRESS；本任务必须
+      selective staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；`duration_pressure_proxy_v1`
+      为 continue-research，`rates_pressure_exposure_cap_modifier_v1` 为 inconclusive，objective
+      中 risk-on exposure cap PASS、valuation pressure INCONCLUSIVE_OR_WEAK、duration
+      drawdown FAIL；`liquidity_headwind_proxy_v1` 未生成 validation rows；验证通过 Ruff、compileall、TRADING-2313
+      focused parallel pytest 9 passed、liquidity / AI / docs focused parallel pytest
+      85 passed、`aits validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation
+      193 passed 和 `git diff --check`。'
+    raw_line: '|TRADING-2313_LIQUIDITY_RATES_ACTUAL_PATH_VALIDATION|Research trends
+      / liquidity rates pressure candidate family|P1|VALIDATING|系统验证 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-2313_Liquidity_Rates_Actual_Path_Validation.md`；依赖
+      TRADING-2312 generator POC artifacts、required-anchor cached data quality gate
+      和 liquidity/rates actual-path validation policy。当前仅允许 partial rates-only validation；`liquidity_headwind_proxy_v1`
+      因 `UUP` / `HYG` / `LQD` 缺失继续 blocked，不得生成 validation rows。|生成 liquidity/rates
+      actual-path validation summary、actual-path matrix、prediction/outcome matrix、candidate
+      scorecard、objective coverage matrix、state recommendation、safety boundary 和 research
+      report；真实 run status=`LIQUIDITY_RATES_VALIDATED_INCONCLUSIVE`，data_quality_status=`PASS_WITH_WARNINGS`，actual_path_record_count=31968，validation_eligible_record_count=31248；所有
+      artifacts 固定 scope review / promotion / paper-shadow / production / broker false/none。|2026-07-01:
+      根据 owner 附件和 TRADING-2312 next_required_task 新增并进入 IN_PROGRESS；本任务必须 selective
+      staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；`duration_pressure_proxy_v1`
+      为 continue-research，`rates_pressure_exposure_cap_modifier_v1` 为 inconclusive，objective
+      中 risk-on exposure cap PASS、valuation pressure INCONCLUSIVE_OR_WEAK、duration
+      drawdown FAIL；`liquidity_headwind_proxy_v1` 未生成 validation rows；验证通过 Ruff、compileall、TRADING-2313
+      focused parallel pytest 9 passed、liquidity / AI / docs focused parallel pytest
+      85 passed、`aits validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation
+      193 passed 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2e58e72e4da2d717f16024f5
+  task_id: TRADING-2313_LIQUIDITY_RATES_ACTUAL_PATH_VALIDATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 owner 附件和 TRADING-2312 next_required_task 新增并进入 IN_PROGRESS；本任务必须
+      selective staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；`duration_pressure_proxy_v1`
+      为 continue-research，`rates_pressure_exposure_cap_modifier_v1` 为 inconclusive，objective
+      中 risk-on exposure cap PASS、valuation pressure INCONCLUSIVE_OR_WEAK、duration
+      drawdown FAIL；`liquidity_headwind_proxy_v1` 未生成 validation rows；验证通过 Ruff、compileall、TRADING-2313
+      focused parallel pytest 9 passed、liquidity / AI / docs focused parallel pytest
+      85 passed、`aits validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation
+      193 passed 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:2e58e72e4da2d717f16024f5aac897b16491e29d2873505bdb918a250f36d4bf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2313_LIQUIDITY_RATES_ACTUAL_PATH_VALIDATION
+  - Research trends / liquidity rates pressure candidate family
+  - P1
+  - VALIDATING
+  - 系统验证 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2313_Liquidity_Rates_Actual_Path_Validation.md`；依赖
+    TRADING-2312 generator POC artifacts、required-anchor cached data quality gate
+    和 liquidity/rates actual-path validation policy。当前仅允许 partial rates-only validation；`liquidity_headwind_proxy_v1`
+    因 `UUP` / `HYG` / `LQD` 缺失继续 blocked，不得生成 validation rows。
+  - 生成 liquidity/rates actual-path validation summary、actual-path matrix、prediction/outcome
+    matrix、candidate scorecard、objective coverage matrix、state recommendation、safety
+    boundary 和 research report；真实 run status=`LIQUIDITY_RATES_VALIDATED_INCONCLUSIVE`，data_quality_status=`PASS_WITH_WARNINGS`，actual_path_record_count=31968，validation_eligible_record_count=31248；所有
+    artifacts 固定 scope review / promotion / paper-shadow / production / broker false/none。
+  - '2026-07-01: 根据 owner 附件和 TRADING-2312 next_required_task 新增并进入 IN_PROGRESS；本任务必须
+    selective staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；`duration_pressure_proxy_v1`
+    为 continue-research，`rates_pressure_exposure_cap_modifier_v1` 为 inconclusive，objective
+    中 risk-on exposure cap PASS、valuation pressure INCONCLUSIVE_OR_WEAK、duration drawdown
+    FAIL；`liquidity_headwind_proxy_v1` 未生成 validation rows；验证通过 Ruff、compileall、TRADING-2313
+    focused parallel pytest 9 passed、liquidity / AI / docs focused parallel pytest
+    85 passed、`aits validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation
+    193 passed 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-2313_Liquidity_Rates_Actual_Path_Validation.md
+  terminal: false
+  raw_row_sha256: 2e58e72e4da2d717f16024f5aac897b16491e29d2873505bdb918a250f36d4bf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0a57afe5c7c9a96b5c579bf728f9e3b7afa96d552d034c476228b16ad41e69c2

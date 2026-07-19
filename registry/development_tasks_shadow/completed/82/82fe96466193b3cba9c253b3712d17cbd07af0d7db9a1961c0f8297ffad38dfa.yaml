@@ -1,0 +1,148 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DOCS-LEARN-001
+  title: null
+  domain: 报告学习链路/产物目录
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/artifact_catalog.md
+  - docs/calculation_logic.md
+  - docs/learning_path.md
+  - docs/requirements/report_learning_path_and_lineage_2026-05-16.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/report_learning_path_and_lineage_2026-05-16.md`；阶段
+    1-5 已完成并复验通过；`docs/system_flow.md` 暂不拆分已作为设计边界处理，后续若拆分必须先建立生成或校验机制并另建任务
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `docs/learning_path.md`、`docs/artifact_catalog.md` 和 `docs/calculation_logic.md`；日报第一屏附近说明生成命令、关键输入、关键输出、trace
+      和 `production_effect`；日报用学习型漏斗解释 component score -> effective weights -> overall
+      score -> model position -> confidence -> macro risk budget -> position gates
+      -> final position；明确 binding gate 和复核五问；字段字典覆盖核心 CSV/JSON 字段；参数搜索报告有 Trial Card；`aits
+      explain` 可只读反查字段、gate 和 artifact 的来源、上下游、production_effect 和常见误解；学习路径和 dashboard/report
+      下钻入口支持快速读者、投资复核者和系统审计者三层阅读；不改变 production scoring、position gate、approved overlay、正式
+      prediction ledger 或回测仓位
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 268
+    row_sha256: 9eeb089c02f1fe902a95859b1a478cdc86f9817bc25d34280e1a3bf88f667e40
+    cell_count: 8
+    all_cells:
+    - DOCS-LEARN-001
+    - 报告学习链路/产物目录
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/report_learning_path_and_lineage_2026-05-16.md`；阶段
+      1-5 已完成并复验通过；`docs/system_flow.md` 暂不拆分已作为设计边界处理，后续若拆分必须先建立生成或校验机制并另建任务
+    - 新增 `docs/learning_path.md`、`docs/artifact_catalog.md` 和 `docs/calculation_logic.md`；日报第一屏附近说明生成命令、关键输入、关键输出、trace
+      和 `production_effect`；日报用学习型漏斗解释 component score -> effective weights -> overall
+      score -> model position -> confidence -> macro risk budget -> position gates
+      -> final position；明确 binding gate 和复核五问；字段字典覆盖核心 CSV/JSON 字段；参数搜索报告有 Trial Card；`aits
+      explain` 可只读反查字段、gate 和 artifact 的来源、上下游、production_effect 和常见误解；学习路径和 dashboard/report
+      下钻入口支持快速读者、投资复核者和系统审计者三层阅读；不改变 production scoring、position gate、approved overlay、正式
+      prediction ledger 或回测仓位
+    - '2026-05-16: 新增并进入 IN_PROGRESS，原因：系统已有完整审计链路但学习路径不清晰，使用者需要从每日报告和 artifact 反查来源、处理链路、production
+      影响和复核入口。2026-05-16: 阶段 1-3 基础实现进入 VALIDATING，新增 learning path、artifact catalog、字段字典、日报
+      lineage/funnel/gate ladder/复核五问和 parameter search Trial Card。2026-05-16: 阶段
+      4 基础实现进入 VALIDATING，新增 `docs/calculation_logic.md` 并建立入口。2026-06-07: 阶段 5 基础实现进入
+      VALIDATING，新增 `aits explain` 只读入口，确认分层阅读路径，并保留 `docs/system_flow.md` 单一 source-of-truth。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：`aits explain scores_daily.score`、`aits explain --kind
+      gate "binding gate"` 和 `aits explain --kind artifact risk_event_prereview_queue`
+      均能返回来源/上下游/production_effect；验证通过 focused pytest 61 passed、文档新鲜度和 documentation
+      contract。'
+    raw_line: '|DOCS-LEARN-001|报告学习链路/产物目录|P1|DONE|系统验证|详细拆解见 `docs/requirements/report_learning_path_and_lineage_2026-05-16.md`；阶段
+      1-5 已完成并复验通过；`docs/system_flow.md` 暂不拆分已作为设计边界处理，后续若拆分必须先建立生成或校验机制并另建任务|新增 `docs/learning_path.md`、`docs/artifact_catalog.md`
+      和 `docs/calculation_logic.md`；日报第一屏附近说明生成命令、关键输入、关键输出、trace 和 `production_effect`；日报用学习型漏斗解释
+      component score -> effective weights -> overall score -> model position -> confidence
+      -> macro risk budget -> position gates -> final position；明确 binding gate 和复核五问；字段字典覆盖核心
+      CSV/JSON 字段；参数搜索报告有 Trial Card；`aits explain` 可只读反查字段、gate 和 artifact 的来源、上下游、production_effect
+      和常见误解；学习路径和 dashboard/report 下钻入口支持快速读者、投资复核者和系统审计者三层阅读；不改变 production scoring、position
+      gate、approved overlay、正式 prediction ledger 或回测仓位|2026-05-16: 新增并进入 IN_PROGRESS，原因：系统已有完整审计链路但学习路径不清晰，使用者需要从每日报告和
+      artifact 反查来源、处理链路、production 影响和复核入口。2026-05-16: 阶段 1-3 基础实现进入 VALIDATING，新增
+      learning path、artifact catalog、字段字典、日报 lineage/funnel/gate ladder/复核五问和 parameter
+      search Trial Card。2026-05-16: 阶段 4 基础实现进入 VALIDATING，新增 `docs/calculation_logic.md`
+      并建立入口。2026-06-07: 阶段 5 基础实现进入 VALIDATING，新增 `aits explain` 只读入口，确认分层阅读路径，并保留
+      `docs/system_flow.md` 单一 source-of-truth。2026-06-09: 从 VALIDATING 改为 DONE，原因：`aits
+      explain scores_daily.score`、`aits explain --kind gate "binding gate"` 和 `aits
+      explain --kind artifact risk_event_prereview_queue` 均能返回来源/上下游/production_effect；验证通过
+      focused pytest 61 passed、文档新鲜度和 documentation contract。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-9eeb089c02f1fe902a95859b
+  task_id: DOCS-LEARN-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-16: 新增并进入 IN_PROGRESS，原因：系统已有完整审计链路但学习路径不清晰，使用者需要从每日报告和 artifact
+      反查来源、处理链路、production 影响和复核入口。2026-05-16: 阶段 1-3 基础实现进入 VALIDATING，新增 learning
+      path、artifact catalog、字段字典、日报 lineage/funnel/gate ladder/复核五问和 parameter search
+      Trial Card。2026-05-16: 阶段 4 基础实现进入 VALIDATING，新增 `docs/calculation_logic.md`
+      并建立入口。2026-06-07: 阶段 5 基础实现进入 VALIDATING，新增 `aits explain` 只读入口，确认分层阅读路径，并保留
+      `docs/system_flow.md` 单一 source-of-truth。2026-06-09: 从 VALIDATING 改为 DONE，原因：`aits
+      explain scores_daily.score`、`aits explain --kind gate "binding gate"` 和 `aits
+      explain --kind artifact risk_event_prereview_queue` 均能返回来源/上下游/production_effect；验证通过
+      focused pytest 61 passed、文档新鲜度和 documentation contract。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:9eeb089c02f1fe902a95859b1a478cdc86f9817bc25d34280e1a3bf88f667e40
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DOCS-LEARN-001
+  - 报告学习链路/产物目录
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/report_learning_path_and_lineage_2026-05-16.md`；阶段 1-5
+    已完成并复验通过；`docs/system_flow.md` 暂不拆分已作为设计边界处理，后续若拆分必须先建立生成或校验机制并另建任务
+  - 新增 `docs/learning_path.md`、`docs/artifact_catalog.md` 和 `docs/calculation_logic.md`；日报第一屏附近说明生成命令、关键输入、关键输出、trace
+    和 `production_effect`；日报用学习型漏斗解释 component score -> effective weights -> overall
+    score -> model position -> confidence -> macro risk budget -> position gates ->
+    final position；明确 binding gate 和复核五问；字段字典覆盖核心 CSV/JSON 字段；参数搜索报告有 Trial Card；`aits
+    explain` 可只读反查字段、gate 和 artifact 的来源、上下游、production_effect 和常见误解；学习路径和 dashboard/report
+    下钻入口支持快速读者、投资复核者和系统审计者三层阅读；不改变 production scoring、position gate、approved overlay、正式
+    prediction ledger 或回测仓位
+  - '2026-05-16: 新增并进入 IN_PROGRESS，原因：系统已有完整审计链路但学习路径不清晰，使用者需要从每日报告和 artifact 反查来源、处理链路、production
+    影响和复核入口。2026-05-16: 阶段 1-3 基础实现进入 VALIDATING，新增 learning path、artifact catalog、字段字典、日报
+    lineage/funnel/gate ladder/复核五问和 parameter search Trial Card。2026-05-16: 阶段 4
+    基础实现进入 VALIDATING，新增 `docs/calculation_logic.md` 并建立入口。2026-06-07: 阶段 5 基础实现进入
+    VALIDATING，新增 `aits explain` 只读入口，确认分层阅读路径，并保留 `docs/system_flow.md` 单一 source-of-truth。2026-06-09:
+    从 VALIDATING 改为 DONE，原因：`aits explain scores_daily.score`、`aits explain --kind
+    gate "binding gate"` 和 `aits explain --kind artifact risk_event_prereview_queue`
+    均能返回来源/上下游/production_effect；验证通过 focused pytest 61 passed、文档新鲜度和 documentation
+    contract。'
+  docs_links:
+  - docs/artifact_catalog.md
+  - docs/calculation_logic.md
+  - docs/learning_path.md
+  - docs/requirements/report_learning_path_and_lineage_2026-05-16.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: 9eeb089c02f1fe902a95859b1a478cdc86f9817bc25d34280e1a3bf88f667e40
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b8a2e3e3cbd61191c71e263e2646c5d457f6a16dded60a3e2b63beadc459ba5d

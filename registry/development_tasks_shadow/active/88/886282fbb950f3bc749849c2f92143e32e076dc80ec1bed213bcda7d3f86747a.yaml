@@ -1,0 +1,121 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-018B1
+  title: null
+  domain: 交易执行/Daily Shadow Weight Iteration Multi-day Observation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/daily_shadow_weight_iteration_2026-05-19.md
+  - docs/runbooks/daily_shadow_weight_iteration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 承接 `TRADING-018B` 的真实 artifact 观察；阻塞于
+    `TRADING-018A1` 或 operator 连续生成可审计的 018A dry-run artifacts，并且同日 `TRADING-015/016/017/018`
+    上游 artifacts 可用；详细边界见 `docs/requirements/daily_shadow_weight_iteration_2026-05-19.md`
+    和 `docs/runbooks/daily_shadow_weight_iteration.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 连续观察 3～7 个已完成美股交易日或等价手动样本，记录 `decision`、`decision_reason`、missing artifacts、scheduler
+      safety status、confidence、delta、history/current 是否更新；缺输入必须保持 `INSUFFICIENT_DATA`
+      且不更新 existing current，scheduler safety 非 PASS 必须 `SAFETY_BLOCKED`，信号不足必须 `NO_UPDATE`，只有真实输入完整且
+      gate 达标才允许 `UPDATE`；所有输出固定 `mode=shadow_only`、`production_effect=none`、`manual_review_only=true`，不得写
+      production/approved profile、不得调用 broker/replay/交易、不得改变 dashboard 主结论；完成后补充 requirement/review
+      证据并归档
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1491
+    row_sha256: fa70e5f5d41cba89b8d143c959980aab83db2a4b680107a5e9b8f5562ab9c63f
+    cell_count: 8
+    all_cells:
+    - TRADING-018B1
+    - 交易执行/Daily Shadow Weight Iteration Multi-day Observation
+    - P0
+    - BLOCKED_EXTERNAL
+    - 系统验证 + 项目 owner
+    - 承接 `TRADING-018B` 的真实 artifact 观察；阻塞于 `TRADING-018A1` 或 operator 连续生成可审计的 018A
+      dry-run artifacts，并且同日 `TRADING-015/016/017/018` 上游 artifacts 可用；详细边界见 `docs/requirements/daily_shadow_weight_iteration_2026-05-19.md`
+      和 `docs/runbooks/daily_shadow_weight_iteration.md`
+    - 连续观察 3～7 个已完成美股交易日或等价手动样本，记录 `decision`、`decision_reason`、missing artifacts、scheduler
+      safety status、confidence、delta、history/current 是否更新；缺输入必须保持 `INSUFFICIENT_DATA`
+      且不更新 existing current，scheduler safety 非 PASS 必须 `SAFETY_BLOCKED`，信号不足必须 `NO_UPDATE`，只有真实输入完整且
+      gate 达标才允许 `UPDATE`；所有输出固定 `mode=shadow_only`、`production_effect=none`、`manual_review_only=true`，不得写
+      production/approved profile、不得调用 broker/replay/交易、不得改变 dashboard 主结论；完成后补充 requirement/review
+      证据并归档
+    - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018B builder/CLI/policy/dashboard/runbook
+      和测试已通过，本轮 isolated smoke 仅证明缺输入 fail-closed 和首次 shadow current 初始化；当前缺真实 015/016/017/018/018A
+      artifact 下的多日 UPDATE/NO_UPDATE/SAFETY_BLOCKED 样本，不应把运行期观察并入 baseline 完成。'
+    raw_line: '|TRADING-018B1|交易执行/Daily Shadow Weight Iteration Multi-day Observation|P0|BLOCKED_EXTERNAL|系统验证
+      + 项目 owner|承接 `TRADING-018B` 的真实 artifact 观察；阻塞于 `TRADING-018A1` 或 operator
+      连续生成可审计的 018A dry-run artifacts，并且同日 `TRADING-015/016/017/018` 上游 artifacts
+      可用；详细边界见 `docs/requirements/daily_shadow_weight_iteration_2026-05-19.md` 和 `docs/runbooks/daily_shadow_weight_iteration.md`|连续观察
+      3～7 个已完成美股交易日或等价手动样本，记录 `decision`、`decision_reason`、missing artifacts、scheduler
+      safety status、confidence、delta、history/current 是否更新；缺输入必须保持 `INSUFFICIENT_DATA`
+      且不更新 existing current，scheduler safety 非 PASS 必须 `SAFETY_BLOCKED`，信号不足必须 `NO_UPDATE`，只有真实输入完整且
+      gate 达标才允许 `UPDATE`；所有输出固定 `mode=shadow_only`、`production_effect=none`、`manual_review_only=true`，不得写
+      production/approved profile、不得调用 broker/replay/交易、不得改变 dashboard 主结论；完成后补充 requirement/review
+      证据并归档|2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018B builder/CLI/policy/dashboard/runbook
+      和测试已通过，本轮 isolated smoke 仅证明缺输入 fail-closed 和首次 shadow current 初始化；当前缺真实 015/016/017/018/018A
+      artifact 下的多日 UPDATE/NO_UPDATE/SAFETY_BLOCKED 样本，不应把运行期观察并入 baseline 完成。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fa70e5f5d41cba89b8d143c9
+  task_id: TRADING-018B1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018B builder/CLI/policy/dashboard/runbook
+      和测试已通过，本轮 isolated smoke 仅证明缺输入 fail-closed 和首次 shadow current 初始化；当前缺真实 015/016/017/018/018A
+      artifact 下的多日 UPDATE/NO_UPDATE/SAFETY_BLOCKED 样本，不应把运行期观察并入 baseline 完成。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:fa70e5f5d41cba89b8d143c959980aab83db2a4b680107a5e9b8f5562ab9c63f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-018B1
+  - 交易执行/Daily Shadow Weight Iteration Multi-day Observation
+  - P0
+  - BLOCKED_EXTERNAL
+  - 系统验证 + 项目 owner
+  - 承接 `TRADING-018B` 的真实 artifact 观察；阻塞于 `TRADING-018A1` 或 operator 连续生成可审计的 018A
+    dry-run artifacts，并且同日 `TRADING-015/016/017/018` 上游 artifacts 可用；详细边界见 `docs/requirements/daily_shadow_weight_iteration_2026-05-19.md`
+    和 `docs/runbooks/daily_shadow_weight_iteration.md`
+  - 连续观察 3～7 个已完成美股交易日或等价手动样本，记录 `decision`、`decision_reason`、missing artifacts、scheduler
+    safety status、confidence、delta、history/current 是否更新；缺输入必须保持 `INSUFFICIENT_DATA`
+    且不更新 existing current，scheduler safety 非 PASS 必须 `SAFETY_BLOCKED`，信号不足必须 `NO_UPDATE`，只有真实输入完整且
+    gate 达标才允许 `UPDATE`；所有输出固定 `mode=shadow_only`、`production_effect=none`、`manual_review_only=true`，不得写
+    production/approved profile、不得调用 broker/replay/交易、不得改变 dashboard 主结论；完成后补充 requirement/review
+    证据并归档
+  - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018B builder/CLI/policy/dashboard/runbook
+    和测试已通过，本轮 isolated smoke 仅证明缺输入 fail-closed 和首次 shadow current 初始化；当前缺真实 015/016/017/018/018A
+    artifact 下的多日 UPDATE/NO_UPDATE/SAFETY_BLOCKED 样本，不应把运行期观察并入 baseline 完成。'
+  docs_links:
+  - docs/requirements/daily_shadow_weight_iteration_2026-05-19.md
+  - docs/runbooks/daily_shadow_weight_iteration.md
+  terminal: false
+  raw_row_sha256: fa70e5f5d41cba89b8d143c959980aab83db2a4b680107a5e9b8f5562ab9c63f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: bf3191362a41253e6434baec09103315735e7ad9ab872b5659d02dc62a1bb475

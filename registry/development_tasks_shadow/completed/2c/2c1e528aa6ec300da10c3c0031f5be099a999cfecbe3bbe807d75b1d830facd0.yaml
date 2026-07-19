@@ -1,0 +1,116 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-405_RECOVERY_OWNER_ACTION_MAP
+  title: null
+  domain: Research governance / recovery owner action map
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 按 action map 先处理 `record_manual_owner_review_before_normal_shadow_resumption`，code/data
+    后续仍需按 blocked/warning 分类推进
+  requirement_refs:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；汇总
+    TRADING-400、TRADING-401、TRADING-402 和 TRADING-404，生成 owner-action checklist
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits reports recovery-owner-action-map` / `validate-recovery-owner-action-map`、JSON/Markdown
+      report、Reader Brief section 和 focused tests；输出 owner review、code/data rerun、explicit
+      waiver、artifact regeneration、remain blocked 分类、recommended ordering、normal paper-shadow
+      preconditions、extended shadow forbidden reasons 和 `live_trading_forbidden=true`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 194
+    row_sha256: 6e0fec0c2f223090f89b6ae8b71a4ee221ae423709ca70ee6386f8839e50e775
+    cell_count: 8
+    all_cells:
+    - TRADING-405_RECOVERY_OWNER_ACTION_MAP
+    - Research governance / recovery owner action map
+    - P1
+    - DONE
+    - 项目 owner 按 action map 先处理 `record_manual_owner_review_before_normal_shadow_resumption`，code/data
+      后续仍需按 blocked/warning 分类推进
+    - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；汇总
+      TRADING-400、TRADING-401、TRADING-402 和 TRADING-404，生成 owner-action checklist
+    - 新增 `aits reports recovery-owner-action-map` / `validate-recovery-owner-action-map`、JSON/Markdown
+      report、Reader Brief section 和 focused tests；输出 owner review、code/data rerun、explicit
+      waiver、artifact regeneration、remain blocked 分类、recommended ordering、normal paper-shadow
+      preconditions、extended shadow forbidden reasons 和 `live_trading_forbidden=true`
+    - '2026-06-17: DONE；真实 artifact `outputs/reports/recovery_owner_action_map_2026-06-17.json/md`
+      输出 open_actions=34、next_owner_action=`record_manual_owner_review_before_normal_shadow_resumption`、live_trading_forbidden=true；validation
+      `recovery_owner_action_map_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。Action
+      map 未批准 normal/extended/live。'
+    raw_line: '|TRADING-405_RECOVERY_OWNER_ACTION_MAP|Research governance / recovery
+      owner action map|P1|DONE|项目 owner 按 action map 先处理 `record_manual_owner_review_before_normal_shadow_resumption`，code/data
+      后续仍需按 blocked/warning 分类推进|详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；汇总
+      TRADING-400、TRADING-401、TRADING-402 和 TRADING-404，生成 owner-action checklist|新增
+      `aits reports recovery-owner-action-map` / `validate-recovery-owner-action-map`、JSON/Markdown
+      report、Reader Brief section 和 focused tests；输出 owner review、code/data rerun、explicit
+      waiver、artifact regeneration、remain blocked 分类、recommended ordering、normal paper-shadow
+      preconditions、extended shadow forbidden reasons 和 `live_trading_forbidden=true`|2026-06-17:
+      DONE；真实 artifact `outputs/reports/recovery_owner_action_map_2026-06-17.json/md`
+      输出 open_actions=34、next_owner_action=`record_manual_owner_review_before_normal_shadow_resumption`、live_trading_forbidden=true；validation
+      `recovery_owner_action_map_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。Action
+      map 未批准 normal/extended/live。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6e0fec0c2f223090f89b6ae8
+  task_id: TRADING-405_RECOVERY_OWNER_ACTION_MAP
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 按 action map 先处理 `record_manual_owner_review_before_normal_shadow_resumption`，code/data
+      后续仍需按 blocked/warning 分类推进
+    notes: '2026-06-17: DONE；真实 artifact `outputs/reports/recovery_owner_action_map_2026-06-17.json/md`
+      输出 open_actions=34、next_owner_action=`record_manual_owner_review_before_normal_shadow_resumption`、live_trading_forbidden=true；validation
+      `recovery_owner_action_map_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。Action
+      map 未批准 normal/extended/live。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6e0fec0c2f223090f89b6ae8b71a4ee221ae423709ca70ee6386f8839e50e775
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-405_RECOVERY_OWNER_ACTION_MAP
+  - Research governance / recovery owner action map
+  - P1
+  - DONE
+  - 项目 owner 按 action map 先处理 `record_manual_owner_review_before_normal_shadow_resumption`，code/data
+    后续仍需按 blocked/warning 分类推进
+  - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；汇总
+    TRADING-400、TRADING-401、TRADING-402 和 TRADING-404，生成 owner-action checklist
+  - 新增 `aits reports recovery-owner-action-map` / `validate-recovery-owner-action-map`、JSON/Markdown
+    report、Reader Brief section 和 focused tests；输出 owner review、code/data rerun、explicit
+    waiver、artifact regeneration、remain blocked 分类、recommended ordering、normal paper-shadow
+    preconditions、extended shadow forbidden reasons 和 `live_trading_forbidden=true`
+  - '2026-06-17: DONE；真实 artifact `outputs/reports/recovery_owner_action_map_2026-06-17.json/md`
+    输出 open_actions=34、next_owner_action=`record_manual_owner_review_before_normal_shadow_resumption`、live_trading_forbidden=true；validation
+    `recovery_owner_action_map_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。Action
+    map 未批准 normal/extended/live。'
+  docs_links:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  terminal: true
+  raw_row_sha256: 6e0fec0c2f223090f89b6ae8b71a4ee221ae423709ca70ee6386f8839e50e775
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5c1cc5f32aebaa827da76ca79740c09a8c1f1d497b7ea3d49a5649c2bcac6482

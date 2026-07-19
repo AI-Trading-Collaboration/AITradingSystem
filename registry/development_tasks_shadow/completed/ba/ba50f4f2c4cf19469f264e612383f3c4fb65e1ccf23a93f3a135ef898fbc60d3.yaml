@@ -1,0 +1,170 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-449_to_459_NEXT_RESEARCH_CYCLE
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue next research cycle after return-to-research
+    reset
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 next research evidence；paper-shadow、extended shadow、live
+    trading、official target、broker/order 仍 forbidden
+  requirement_refs:
+  - docs/requirements/TRADING-449_to_459_Next_Research_Cycle.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-449_to_459_Next_Research_Cycle.md`；TRADING-449～459
+    已生成 intake、frozen research spec、research-only backfill、stress review、cost/benchmark
+    review、vs-returned comparison、signal robustness、window sensitivity、research gate、owner
+    research review packet 和 final research-cycle snapshot；下一步是 owner 决定是否提供 executable
+    next-candidate signal/weight binding 或修订 hypothesis 后重跑 research validation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/next_research_cycle.py`、`aits reports
+      next-research-cycle-intake` 到 `next-candidate-research-cycle-snapshot` 及对应 `validate-next-*`
+      CLI、JSON/Markdown artifact family、Reader Brief Next Research Cycle Snapshot
+      section、report registry、artifact catalog、system flow、README、需求文档和 focused tests；TRADING-451
+      在 backfill 解释前调用同一 validate-data code path 并披露 data quality；缺 executable binding
+      时 fail closed，不伪造收益/drawdown/turnover/benchmark metrics；验证通过 focused pytest、ruff、py_compile/compileall、documentation
+      contract、task-register consistency、data quality gate、report index、Reader Brief
+      quality 和 `git diff --check`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 186
+    row_sha256: 5403821493b251c22cbfc58f454b2aedd0edc9bcf5b889eacfc456e79c189720
+    cell_count: 8
+    all_cells:
+    - TRADING-449_to_459_NEXT_RESEARCH_CYCLE
+    - ETF portfolio/dynamic v3 rescue next research cycle after return-to-research
+      reset
+    - P0
+    - DONE
+    - 项目 owner 后续复核 next research evidence；paper-shadow、extended shadow、live trading、official
+      target、broker/order 仍 forbidden
+    - 详细拆解见 `docs/requirements/TRADING-449_to_459_Next_Research_Cycle.md`；TRADING-449～459
+      已生成 intake、frozen research spec、research-only backfill、stress review、cost/benchmark
+      review、vs-returned comparison、signal robustness、window sensitivity、research
+      gate、owner research review packet 和 final research-cycle snapshot；下一步是 owner
+      决定是否提供 executable next-candidate signal/weight binding 或修订 hypothesis 后重跑 research
+      validation
+    - 新增 `src/ai_trading_system/reports/next_research_cycle.py`、`aits reports next-research-cycle-intake`
+      到 `next-candidate-research-cycle-snapshot` 及对应 `validate-next-*` CLI、JSON/Markdown
+      artifact family、Reader Brief Next Research Cycle Snapshot section、report registry、artifact
+      catalog、system flow、README、需求文档和 focused tests；TRADING-451 在 backfill 解释前调用同一
+      validate-data code path 并披露 data quality；缺 executable binding 时 fail closed，不伪造收益/drawdown/turnover/benchmark
+      metrics；验证通过 focused pytest、ruff、py_compile/compileall、documentation contract、task-register
+      consistency、data quality gate、report index、Reader Brief quality 和 `git diff
+      --check`
+    - '2026-06-18: DONE；真实 artifacts `outputs/reports/next_research_cycle_intake_2026-06-17.json/md`、`next_candidate_spec_frozen_2026-06-17.json/md`、`next_candidate_backfill_2026-06-17.json/md`、`next_candidate_stress_review_2026-06-17.json/md`、`next_candidate_cost_benchmark_review_2026-06-17.json/md`、`next_candidate_vs_returned_candidate_comparison_2026-06-17.json/md`、`next_candidate_signal_robustness_review_2026-06-17.json/md`、`next_candidate_overfit_window_sensitivity_2026-06-17.json/md`、`next_candidate_research_gate_2026-06-17.json/md`、`next_candidate_owner_research_review_packet_2026-06-17.json/md`、`next_candidate_research_cycle_snapshot_2026-06-17.json/md`
+      及对应 validation artifacts 已生成；data quality `PASS_WITH_WARNINGS`，backfill `CANDIDATE_BACKFILL_NEEDS_EXECUTABLE_BINDING`，stress
+      `WEAK`，cost/benchmark `COST_BENCHMARK_NEEDS_EXECUTABLE_BACKFILL`，comparison
+      `NO_IMPROVEMENT`，signal robustness `SIGNAL_ROBUSTNESS_BLOCKED`，window sensitivity
+      `WINDOW_FRAGILE`，research gate `NEEDS_MORE_EVIDENCE`，owner packet `OWNER_RESEARCH_REVIEW_PACKET_READY`，final
+      snapshot `NEXT_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE`；candidate_id=`median_plus_regime_mismatch_filter_research_redesign_v2`、market_regime=`ai_after_chatgpt`、requested_date_range=`2023-01-03..2025-04-30`、validation
+      PASS。Report index `PASS_WITH_EXPLICIT_WAIVERS`、Reader Brief OK 且 next snapshot
+      section 显示 validation PASS；未创建 paper-shadow candidate、未恢复 normal shadow、未批准
+      extended/live、未写 official target weights、未 append owner decision、未触发 broker/order
+      或 production mutation。'
+    raw_line: '|TRADING-449_to_459_NEXT_RESEARCH_CYCLE|ETF portfolio/dynamic v3 rescue
+      next research cycle after return-to-research reset|P0|DONE|项目 owner 后续复核 next
+      research evidence；paper-shadow、extended shadow、live trading、official target、broker/order
+      仍 forbidden|详细拆解见 `docs/requirements/TRADING-449_to_459_Next_Research_Cycle.md`；TRADING-449～459
+      已生成 intake、frozen research spec、research-only backfill、stress review、cost/benchmark
+      review、vs-returned comparison、signal robustness、window sensitivity、research
+      gate、owner research review packet 和 final research-cycle snapshot；下一步是 owner
+      决定是否提供 executable next-candidate signal/weight binding 或修订 hypothesis 后重跑 research
+      validation|新增 `src/ai_trading_system/reports/next_research_cycle.py`、`aits reports
+      next-research-cycle-intake` 到 `next-candidate-research-cycle-snapshot` 及对应 `validate-next-*`
+      CLI、JSON/Markdown artifact family、Reader Brief Next Research Cycle Snapshot
+      section、report registry、artifact catalog、system flow、README、需求文档和 focused tests；TRADING-451
+      在 backfill 解释前调用同一 validate-data code path 并披露 data quality；缺 executable binding
+      时 fail closed，不伪造收益/drawdown/turnover/benchmark metrics；验证通过 focused pytest、ruff、py_compile/compileall、documentation
+      contract、task-register consistency、data quality gate、report index、Reader Brief
+      quality 和 `git diff --check`|2026-06-18: DONE；真实 artifacts `outputs/reports/next_research_cycle_intake_2026-06-17.json/md`、`next_candidate_spec_frozen_2026-06-17.json/md`、`next_candidate_backfill_2026-06-17.json/md`、`next_candidate_stress_review_2026-06-17.json/md`、`next_candidate_cost_benchmark_review_2026-06-17.json/md`、`next_candidate_vs_returned_candidate_comparison_2026-06-17.json/md`、`next_candidate_signal_robustness_review_2026-06-17.json/md`、`next_candidate_overfit_window_sensitivity_2026-06-17.json/md`、`next_candidate_research_gate_2026-06-17.json/md`、`next_candidate_owner_research_review_packet_2026-06-17.json/md`、`next_candidate_research_cycle_snapshot_2026-06-17.json/md`
+      及对应 validation artifacts 已生成；data quality `PASS_WITH_WARNINGS`，backfill `CANDIDATE_BACKFILL_NEEDS_EXECUTABLE_BINDING`，stress
+      `WEAK`，cost/benchmark `COST_BENCHMARK_NEEDS_EXECUTABLE_BACKFILL`，comparison
+      `NO_IMPROVEMENT`，signal robustness `SIGNAL_ROBUSTNESS_BLOCKED`，window sensitivity
+      `WINDOW_FRAGILE`，research gate `NEEDS_MORE_EVIDENCE`，owner packet `OWNER_RESEARCH_REVIEW_PACKET_READY`，final
+      snapshot `NEXT_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE`；candidate_id=`median_plus_regime_mismatch_filter_research_redesign_v2`、market_regime=`ai_after_chatgpt`、requested_date_range=`2023-01-03..2025-04-30`、validation
+      PASS。Report index `PASS_WITH_EXPLICIT_WAIVERS`、Reader Brief OK 且 next snapshot
+      section 显示 validation PASS；未创建 paper-shadow candidate、未恢复 normal shadow、未批准
+      extended/live、未写 official target weights、未 append owner decision、未触发 broker/order
+      或 production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5403821493b251c22cbfc58f
+  task_id: TRADING-449_to_459_NEXT_RESEARCH_CYCLE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 next research evidence；paper-shadow、extended shadow、live
+      trading、official target、broker/order 仍 forbidden
+    notes: '2026-06-18: DONE；真实 artifacts `outputs/reports/next_research_cycle_intake_2026-06-17.json/md`、`next_candidate_spec_frozen_2026-06-17.json/md`、`next_candidate_backfill_2026-06-17.json/md`、`next_candidate_stress_review_2026-06-17.json/md`、`next_candidate_cost_benchmark_review_2026-06-17.json/md`、`next_candidate_vs_returned_candidate_comparison_2026-06-17.json/md`、`next_candidate_signal_robustness_review_2026-06-17.json/md`、`next_candidate_overfit_window_sensitivity_2026-06-17.json/md`、`next_candidate_research_gate_2026-06-17.json/md`、`next_candidate_owner_research_review_packet_2026-06-17.json/md`、`next_candidate_research_cycle_snapshot_2026-06-17.json/md`
+      及对应 validation artifacts 已生成；data quality `PASS_WITH_WARNINGS`，backfill `CANDIDATE_BACKFILL_NEEDS_EXECUTABLE_BINDING`，stress
+      `WEAK`，cost/benchmark `COST_BENCHMARK_NEEDS_EXECUTABLE_BACKFILL`，comparison
+      `NO_IMPROVEMENT`，signal robustness `SIGNAL_ROBUSTNESS_BLOCKED`，window sensitivity
+      `WINDOW_FRAGILE`，research gate `NEEDS_MORE_EVIDENCE`，owner packet `OWNER_RESEARCH_REVIEW_PACKET_READY`，final
+      snapshot `NEXT_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE`；candidate_id=`median_plus_regime_mismatch_filter_research_redesign_v2`、market_regime=`ai_after_chatgpt`、requested_date_range=`2023-01-03..2025-04-30`、validation
+      PASS。Report index `PASS_WITH_EXPLICIT_WAIVERS`、Reader Brief OK 且 next snapshot
+      section 显示 validation PASS；未创建 paper-shadow candidate、未恢复 normal shadow、未批准
+      extended/live、未写 official target weights、未 append owner decision、未触发 broker/order
+      或 production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5403821493b251c22cbfc58f454b2aedd0edc9bcf5b889eacfc456e79c189720
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-449_to_459_NEXT_RESEARCH_CYCLE
+  - ETF portfolio/dynamic v3 rescue next research cycle after return-to-research reset
+  - P0
+  - DONE
+  - 项目 owner 后续复核 next research evidence；paper-shadow、extended shadow、live trading、official
+    target、broker/order 仍 forbidden
+  - 详细拆解见 `docs/requirements/TRADING-449_to_459_Next_Research_Cycle.md`；TRADING-449～459
+    已生成 intake、frozen research spec、research-only backfill、stress review、cost/benchmark
+    review、vs-returned comparison、signal robustness、window sensitivity、research gate、owner
+    research review packet 和 final research-cycle snapshot；下一步是 owner 决定是否提供 executable
+    next-candidate signal/weight binding 或修订 hypothesis 后重跑 research validation
+  - 新增 `src/ai_trading_system/reports/next_research_cycle.py`、`aits reports next-research-cycle-intake`
+    到 `next-candidate-research-cycle-snapshot` 及对应 `validate-next-*` CLI、JSON/Markdown
+    artifact family、Reader Brief Next Research Cycle Snapshot section、report registry、artifact
+    catalog、system flow、README、需求文档和 focused tests；TRADING-451 在 backfill 解释前调用同一
+    validate-data code path 并披露 data quality；缺 executable binding 时 fail closed，不伪造收益/drawdown/turnover/benchmark
+    metrics；验证通过 focused pytest、ruff、py_compile/compileall、documentation contract、task-register
+    consistency、data quality gate、report index、Reader Brief quality 和 `git diff --check`
+  - '2026-06-18: DONE；真实 artifacts `outputs/reports/next_research_cycle_intake_2026-06-17.json/md`、`next_candidate_spec_frozen_2026-06-17.json/md`、`next_candidate_backfill_2026-06-17.json/md`、`next_candidate_stress_review_2026-06-17.json/md`、`next_candidate_cost_benchmark_review_2026-06-17.json/md`、`next_candidate_vs_returned_candidate_comparison_2026-06-17.json/md`、`next_candidate_signal_robustness_review_2026-06-17.json/md`、`next_candidate_overfit_window_sensitivity_2026-06-17.json/md`、`next_candidate_research_gate_2026-06-17.json/md`、`next_candidate_owner_research_review_packet_2026-06-17.json/md`、`next_candidate_research_cycle_snapshot_2026-06-17.json/md`
+    及对应 validation artifacts 已生成；data quality `PASS_WITH_WARNINGS`，backfill `CANDIDATE_BACKFILL_NEEDS_EXECUTABLE_BINDING`，stress
+    `WEAK`，cost/benchmark `COST_BENCHMARK_NEEDS_EXECUTABLE_BACKFILL`，comparison `NO_IMPROVEMENT`，signal
+    robustness `SIGNAL_ROBUSTNESS_BLOCKED`，window sensitivity `WINDOW_FRAGILE`，research
+    gate `NEEDS_MORE_EVIDENCE`，owner packet `OWNER_RESEARCH_REVIEW_PACKET_READY`，final
+    snapshot `NEXT_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE`；candidate_id=`median_plus_regime_mismatch_filter_research_redesign_v2`、market_regime=`ai_after_chatgpt`、requested_date_range=`2023-01-03..2025-04-30`、validation
+    PASS。Report index `PASS_WITH_EXPLICIT_WAIVERS`、Reader Brief OK 且 next snapshot
+    section 显示 validation PASS；未创建 paper-shadow candidate、未恢复 normal shadow、未批准 extended/live、未写
+    official target weights、未 append owner decision、未触发 broker/order 或 production
+    mutation。'
+  docs_links:
+  - docs/requirements/TRADING-449_to_459_Next_Research_Cycle.md
+  terminal: true
+  raw_row_sha256: 5403821493b251c22cbfc58f454b2aedd0edc9bcf5b889eacfc456e79c189720
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: efe1fe269503adedd6da5053f188b07a354772428e265c5cdee233a6979a3658

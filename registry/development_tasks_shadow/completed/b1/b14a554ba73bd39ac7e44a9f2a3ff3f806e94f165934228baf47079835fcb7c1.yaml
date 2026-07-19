@@ -1,0 +1,114 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-402_REPORT_INDEX_UNWAIVED_WARNING_TRIAGE
+  title: null
+  domain: Research governance / report index warning triage
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 复核 9 个 unwaived report-index warnings；需要显式决定 fix/waiver/archive/blocking
+  requirement_refs:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；读取
+    report index validation output，把 9 个 unwaived warnings 分类并提出处理建议；不得 silently waive
+    warnings
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits reports report-index-warning-triage` / `validate-report-index-warning-triage`、JSON/Markdown
+      report、Reader Brief section 和 focused tests；每个 warning 分类为 true blocker/governance
+      warning/stale artifact/missing metadata/legacy warning candidate/documentation
+      inconsistency，并建议 fix now、explicit expiring waiver、leave blocking 或 archive
+      legacy artifact
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 191
+    row_sha256: 1daa6e2da9a10139865848fd99bd8845714ab7142add5e1850db31616711766b
+    cell_count: 8
+    all_cells:
+    - TRADING-402_REPORT_INDEX_UNWAIVED_WARNING_TRIAGE
+    - Research governance / report index warning triage
+    - P1
+    - DONE
+    - 项目 owner 复核 9 个 unwaived report-index warnings；需要显式决定 fix/waiver/archive/blocking
+    - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；读取
+      report index validation output，把 9 个 unwaived warnings 分类并提出处理建议；不得 silently
+      waive warnings
+    - 新增 `aits reports report-index-warning-triage` / `validate-report-index-warning-triage`、JSON/Markdown
+      report、Reader Brief section 和 focused tests；每个 warning 分类为 true blocker/governance
+      warning/stale artifact/missing metadata/legacy warning candidate/documentation
+      inconsistency，并建议 fix now、explicit expiring waiver、leave blocking 或 archive
+      legacy artifact
+    - '2026-06-17: DONE；真实 artifact `outputs/reports/report_index_warning_triage_2026-06-17.json/md`
+      输出 unwaived_warning_count=9、true_blockers=1、silent_waivers=0；validation `report_index_warning_triage_validation_2026-06-17.json/md`
+      为 `PASS_WITH_WARNINGS`、blocking=0。没有把 warning 静默转成 waiver。'
+    raw_line: '|TRADING-402_REPORT_INDEX_UNWAIVED_WARNING_TRIAGE|Research governance
+      / report index warning triage|P1|DONE|项目 owner 复核 9 个 unwaived report-index
+      warnings；需要显式决定 fix/waiver/archive/blocking|详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；读取
+      report index validation output，把 9 个 unwaived warnings 分类并提出处理建议；不得 silently
+      waive warnings|新增 `aits reports report-index-warning-triage` / `validate-report-index-warning-triage`、JSON/Markdown
+      report、Reader Brief section 和 focused tests；每个 warning 分类为 true blocker/governance
+      warning/stale artifact/missing metadata/legacy warning candidate/documentation
+      inconsistency，并建议 fix now、explicit expiring waiver、leave blocking 或 archive
+      legacy artifact|2026-06-17: DONE；真实 artifact `outputs/reports/report_index_warning_triage_2026-06-17.json/md`
+      输出 unwaived_warning_count=9、true_blockers=1、silent_waivers=0；validation `report_index_warning_triage_validation_2026-06-17.json/md`
+      为 `PASS_WITH_WARNINGS`、blocking=0。没有把 warning 静默转成 waiver。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1daa6e2da9a10139865848fd
+  task_id: TRADING-402_REPORT_INDEX_UNWAIVED_WARNING_TRIAGE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 复核 9 个 unwaived report-index warnings；需要显式决定 fix/waiver/archive/blocking
+    notes: '2026-06-17: DONE；真实 artifact `outputs/reports/report_index_warning_triage_2026-06-17.json/md`
+      输出 unwaived_warning_count=9、true_blockers=1、silent_waivers=0；validation `report_index_warning_triage_validation_2026-06-17.json/md`
+      为 `PASS_WITH_WARNINGS`、blocking=0。没有把 warning 静默转成 waiver。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1daa6e2da9a10139865848fd99bd8845714ab7142add5e1850db31616711766b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-402_REPORT_INDEX_UNWAIVED_WARNING_TRIAGE
+  - Research governance / report index warning triage
+  - P1
+  - DONE
+  - 项目 owner 复核 9 个 unwaived report-index warnings；需要显式决定 fix/waiver/archive/blocking
+  - 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；读取
+    report index validation output，把 9 个 unwaived warnings 分类并提出处理建议；不得 silently waive
+    warnings
+  - 新增 `aits reports report-index-warning-triage` / `validate-report-index-warning-triage`、JSON/Markdown
+    report、Reader Brief section 和 focused tests；每个 warning 分类为 true blocker/governance
+    warning/stale artifact/missing metadata/legacy warning candidate/documentation
+    inconsistency，并建议 fix now、explicit expiring waiver、leave blocking 或 archive legacy
+    artifact
+  - '2026-06-17: DONE；真实 artifact `outputs/reports/report_index_warning_triage_2026-06-17.json/md`
+    输出 unwaived_warning_count=9、true_blockers=1、silent_waivers=0；validation `report_index_warning_triage_validation_2026-06-17.json/md`
+    为 `PASS_WITH_WARNINGS`、blocking=0。没有把 warning 静默转成 waiver。'
+  docs_links:
+  - docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md
+  terminal: true
+  raw_row_sha256: 1daa6e2da9a10139865848fd99bd8845714ab7142add5e1850db31616711766b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a8e552b99b335df8716d0d3223a3cb11283843dbb25b69784d28b7976201ca52

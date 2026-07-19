@@ -1,0 +1,101 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: FEEDBACK-001
+  title: null
+  domain: 反馈闭环/决策记录
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已实现 `decision_snapshot`，`score-daily`
+    通过数据质量门禁后按 signal_date 覆盖写入确定路径，并保存 trace 关联
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 每次评分都保存 market regime、实际请求日期、总分、模块分、置信度、模型仓位区间、最终仓位区间、触发 gate、thesis 状态、风险事件、估值状态、主要解释因子、配置版本、数据质量引用和
+      evidence bundle 引用；重复运行同一 signal_date 具备幂等策略；实现时同步更新 `docs/system_flow.md` 并补充快照测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 434
+    row_sha256: b00b70711e0b34debe090e8b34534de69a75c117994de0262954e1bc8aabca7d
+    cell_count: 8
+    all_cells:
+    - FEEDBACK-001
+    - 反馈闭环/决策记录
+    - P1
+    - DONE
+    - 系统实现
+    - 已实现 `decision_snapshot`，`score-daily` 通过数据质量门禁后按 signal_date 覆盖写入确定路径，并保存 trace
+      关联
+    - 每次评分都保存 market regime、实际请求日期、总分、模块分、置信度、模型仓位区间、最终仓位区间、触发 gate、thesis 状态、风险事件、估值状态、主要解释因子、配置版本、数据质量引用和
+      evidence bundle 引用；重复运行同一 signal_date 具备幂等策略；实现时同步更新 `docs/system_flow.md` 并补充快照测试
+    - '来自 2026-05-04 反馈闭环强化讨论；是 `FEEDBACK-002`、规则校准和后续执行复盘的前置条件。2026-05-04: 从 READY
+      改为 IN_PROGRESS，原因：开始实现 score-daily 决策快照写入、trace 关联和幂等测试。2026-05-04: 从 IN_PROGRESS
+      改为 DONE，原因：score-daily 已写入包含评分、置信度、仓位、gate、质量、估值、风险和 trace 引用的 JSON 快照；`python
+      -m pytest -q` 通过 220 项测试。'
+    raw_line: '|FEEDBACK-001|反馈闭环/决策记录|P1|DONE|系统实现|已实现 `decision_snapshot`，`score-daily`
+      通过数据质量门禁后按 signal_date 覆盖写入确定路径，并保存 trace 关联|每次评分都保存 market regime、实际请求日期、总分、模块分、置信度、模型仓位区间、最终仓位区间、触发
+      gate、thesis 状态、风险事件、估值状态、主要解释因子、配置版本、数据质量引用和 evidence bundle 引用；重复运行同一 signal_date
+      具备幂等策略；实现时同步更新 `docs/system_flow.md` 并补充快照测试|来自 2026-05-04 反馈闭环强化讨论；是 `FEEDBACK-002`、规则校准和后续执行复盘的前置条件。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始实现 score-daily 决策快照写入、trace 关联和幂等测试。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：score-daily 已写入包含评分、置信度、仓位、gate、质量、估值、风险和 trace 引用的
+      JSON 快照；`python -m pytest -q` 通过 220 项测试。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b00b70711e0b34debe090e8b
+  task_id: FEEDBACK-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '来自 2026-05-04 反馈闭环强化讨论；是 `FEEDBACK-002`、规则校准和后续执行复盘的前置条件。2026-05-04: 从
+      READY 改为 IN_PROGRESS，原因：开始实现 score-daily 决策快照写入、trace 关联和幂等测试。2026-05-04: 从
+      IN_PROGRESS 改为 DONE，原因：score-daily 已写入包含评分、置信度、仓位、gate、质量、估值、风险和 trace 引用的 JSON
+      快照；`python -m pytest -q` 通过 220 项测试。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b00b70711e0b34debe090e8b34534de69a75c117994de0262954e1bc8aabca7d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - FEEDBACK-001
+  - 反馈闭环/决策记录
+  - P1
+  - DONE
+  - 系统实现
+  - 已实现 `decision_snapshot`，`score-daily` 通过数据质量门禁后按 signal_date 覆盖写入确定路径，并保存 trace
+    关联
+  - 每次评分都保存 market regime、实际请求日期、总分、模块分、置信度、模型仓位区间、最终仓位区间、触发 gate、thesis 状态、风险事件、估值状态、主要解释因子、配置版本、数据质量引用和
+    evidence bundle 引用；重复运行同一 signal_date 具备幂等策略；实现时同步更新 `docs/system_flow.md` 并补充快照测试
+  - '来自 2026-05-04 反馈闭环强化讨论；是 `FEEDBACK-002`、规则校准和后续执行复盘的前置条件。2026-05-04: 从 READY
+    改为 IN_PROGRESS，原因：开始实现 score-daily 决策快照写入、trace 关联和幂等测试。2026-05-04: 从 IN_PROGRESS
+    改为 DONE，原因：score-daily 已写入包含评分、置信度、仓位、gate、质量、估值、风险和 trace 引用的 JSON 快照；`python
+    -m pytest -q` 通过 220 项测试。'
+  docs_links:
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: b00b70711e0b34debe090e8b34534de69a75c117994de0262954e1bc8aabca7d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2709d3d9e5bea454b7a36e700c6f056404b8c84a7e82ef43d72bc1dc27075ded

@@ -1,0 +1,95 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-001
+  title: null
+  domain: 运维/可靠性
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段只读 pipeline health report：检查关键输入/输出
+    artifact 存在性、mtime、文件大小和排查入口；剩余缺口是结构化 run log、耗时、异常栈、API 错误和自动化调度状态采集；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#ops-001`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 每次运行记录成功/失败、耗时、输入文件版本、质量门禁状态、API 错误、缺失数据和报告生成状态；失败时生成明确排查入口和相关日志引用；运行成功不等于投资结论有效
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1111
+    row_sha256: 182a631e2fa6fd6eb80cfd26c175b30fbfc1231fa346db68b96ed32819030525
+    cell_count: 8
+    all_cells:
+    - OPS-001
+    - 运维/可靠性
+    - P2
+    - BASELINE_DONE
+    - 系统实现
+    - 已完成第一阶段只读 pipeline health report：检查关键输入/输出 artifact 存在性、mtime、文件大小和排查入口；剩余缺口是结构化
+      run log、耗时、异常栈、API 错误和自动化调度状态采集；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#ops-001`
+    - 每次运行记录成功/失败、耗时、输入文件版本、质量门禁状态、API 错误、缺失数据和报告生成状态；失败时生成明确排查入口和相关日志引用；运行成功不等于投资结论有效
+    - '适合在日常自动化运行稳定后推进；当前优先级低于数据质量和投资解释正确性。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段只读
+      pipeline health 报告，检查关键输入/输出存在性、mtime、文件大小和排查入口。2026-05-04: 从 IN_PROGRESS 改为
+      BASELINE_DONE，原因：新增 `pipeline_health` 模块、`aits ops health` 和 `outputs/reports/pipeline_health_YYYY-MM-DD.md`；报告明确运行健康不等于投资结论有效。'
+    raw_line: '|OPS-001|运维/可靠性|P2|BASELINE_DONE|系统实现|已完成第一阶段只读 pipeline health report：检查关键输入/输出
+      artifact 存在性、mtime、文件大小和排查入口；剩余缺口是结构化 run log、耗时、异常栈、API 错误和自动化调度状态采集；详细拆解见
+      `docs/requirements/feedback_loop_governance_2026-05-04.md#ops-001`|每次运行记录成功/失败、耗时、输入文件版本、质量门禁状态、API
+      错误、缺失数据和报告生成状态；失败时生成明确排查入口和相关日志引用；运行成功不等于投资结论有效|适合在日常自动化运行稳定后推进；当前优先级低于数据质量和投资解释正确性。2026-05-04:
+      从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段只读 pipeline health 报告，检查关键输入/输出存在性、mtime、文件大小和排查入口。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `pipeline_health` 模块、`aits ops health`
+      和 `outputs/reports/pipeline_health_YYYY-MM-DD.md`；报告明确运行健康不等于投资结论有效。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-182a631e2fa6fd6eb80cfd26
+  task_id: OPS-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P2
+    next_owner: 系统实现
+    notes: '适合在日常自动化运行稳定后推进；当前优先级低于数据质量和投资解释正确性。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段只读
+      pipeline health 报告，检查关键输入/输出存在性、mtime、文件大小和排查入口。2026-05-04: 从 IN_PROGRESS 改为
+      BASELINE_DONE，原因：新增 `pipeline_health` 模块、`aits ops health` 和 `outputs/reports/pipeline_health_YYYY-MM-DD.md`；报告明确运行健康不等于投资结论有效。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:182a631e2fa6fd6eb80cfd26c175b30fbfc1231fa346db68b96ed32819030525
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-001
+  - 运维/可靠性
+  - P2
+  - BASELINE_DONE
+  - 系统实现
+  - 已完成第一阶段只读 pipeline health report：检查关键输入/输出 artifact 存在性、mtime、文件大小和排查入口；剩余缺口是结构化
+    run log、耗时、异常栈、API 错误和自动化调度状态采集；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#ops-001`
+  - 每次运行记录成功/失败、耗时、输入文件版本、质量门禁状态、API 错误、缺失数据和报告生成状态；失败时生成明确排查入口和相关日志引用；运行成功不等于投资结论有效
+  - '适合在日常自动化运行稳定后推进；当前优先级低于数据质量和投资解释正确性。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段只读
+    pipeline health 报告，检查关键输入/输出存在性、mtime、文件大小和排查入口。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+    `pipeline_health` 模块、`aits ops health` 和 `outputs/reports/pipeline_health_YYYY-MM-DD.md`；报告明确运行健康不等于投资结论有效。'
+  docs_links:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  terminal: false
+  raw_row_sha256: 182a631e2fa6fd6eb80cfd26c175b30fbfc1231fa346db68b96ed32819030525
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5e3cb94d88f0a778a7086f2bcef62ced824bacd932e975170284b018c28ed4f5

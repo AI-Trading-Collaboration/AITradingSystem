@@ -1,0 +1,169 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-136_to_140
+  title: null
+  domain: ETF portfolio research/Paper Portfolio Tracking and Advisory Outcome Evaluation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-136_to_140_Paper_Portfolio_Tracking_and_Advisory_Outcome_Evaluation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-136_to_140_Paper_Portfolio_Tracking_and_Advisory_Outcome_Evaluation.md`；基于
+    TRADING-131_to_135 的 shadow monitor、daily advisory、consensus drift 和 owner review
+    journal，已新增 paper portfolio state/ledger、advisory outcome tracking、owner decision
+    attribution、shadow candidate aging v2 和 weekly advisory review；本阶段仍禁止 broker API、自动下单、automatic
+    production candidate、owner auto approval、真实仓位自动修改、official target weight mutation、baseline/production
+    state mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`paper-portfolio init/apply-review/state/report` 可运行且 `validate-paper-portfolio`
+      PASS，monitor/no_trade/reject 不改变 paper state，paper_adjustment 只改变 paper state
+      且 broker_action_taken=false；advisory outcome 可 track/update/report 并区分 PENDING/AVAILABLE/INSUFFICIENT_DATA，价格收益计算先通过
+      cached data quality gate；owner attribution 可关联 owner review journal 与 outcome，数据不足不伪造结论；shadow
+      aging 可从 monitor/advisory/outcome 聚合 promotion clock v2 和 downgrade recommendation，eligible
+      只进入人工 review；weekly advisory review 可聚合本周 artifacts 并生成 Reader Brief section；相关
+      config、report registry、artifact catalog、system flow、README、operations runbook、requirements、Reader
+      Brief、focused tests、ruff、compileall、git diff check、dynamic-v3 root validation
+      和 dynamic-v3 family artifact validation 完成'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1463
+    row_sha256: 4c7bd7e878e26ad146ee3cb31d631976c8bb621133088ad5ebb65a421eefdf84
+    cell_count: 8
+    all_cells:
+    - TRADING-136_to_140
+    - ETF portfolio research/Paper Portfolio Tracking and Advisory Outcome Evaluation
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-136_to_140_Paper_Portfolio_Tracking_and_Advisory_Outcome_Evaluation.md`；基于
+      TRADING-131_to_135 的 shadow monitor、daily advisory、consensus drift 和 owner review
+      journal，已新增 paper portfolio state/ledger、advisory outcome tracking、owner decision
+      attribution、shadow candidate aging v2 和 weekly advisory review；本阶段仍禁止 broker
+      API、自动下单、automatic production candidate、owner auto approval、真实仓位自动修改、official
+      target weight mutation、baseline/production state mutation
+    - '`paper-portfolio init/apply-review/state/report` 可运行且 `validate-paper-portfolio`
+      PASS，monitor/no_trade/reject 不改变 paper state，paper_adjustment 只改变 paper state
+      且 broker_action_taken=false；advisory outcome 可 track/update/report 并区分 PENDING/AVAILABLE/INSUFFICIENT_DATA，价格收益计算先通过
+      cached data quality gate；owner attribution 可关联 owner review journal 与 outcome，数据不足不伪造结论；shadow
+      aging 可从 monitor/advisory/outcome 聚合 promotion clock v2 和 downgrade recommendation，eligible
+      只进入人工 review；weekly advisory review 可聚合本周 artifacts 并生成 Reader Brief section；相关
+      config、report registry、artifact catalog、system flow、README、operations runbook、requirements、Reader
+      Brief、focused tests、ruff、compileall、git diff check、dynamic-v3 root validation
+      和 dynamic-v3 family artifact validation 完成'
+    - '2026-06-08: 新增并进入 IN_PROGRESS，原因：TRADING-131_to_135 已能持续生成 shadow monitoring、daily
+      advisory、consensus drift 和 owner review，但还不能评估按建议纸面执行后的组合变化、后续表现、owner 决策一致性、candidate
+      aging 或 weekly advisory review；本阶段以 paper-only 模拟和 outcome attribution 建立审计闭环，继续保留
+      no broker / no production / no auto approval 安全边界。2026-06-08: 转入 VALIDATING；真实链路输出
+      paper portfolio `9302bb7ae33b05f1`、paper action `654bafc6a89ff1b2`、advisory
+      outcome `19a6097ce18dbcd8`、owner attribution `ed392c821d7b6e8e`、shadow aging
+      `4c8cb907918d9769`、weekly advisory review `47e497404be6281f`；验证通过 focused pytest、全量
+      pytest（2254 passed）、ruff、compileall、git diff check、documentation contract、dynamic-v3
+      root validation、新增 paper/outcome/attribution/aging/weekly validate 和 dynamic-v3
+      family artifact validation。'
+    raw_line: '|TRADING-136_to_140|ETF portfolio research/Paper Portfolio Tracking
+      and Advisory Outcome Evaluation|P0|VALIDATING|项目 owner 人工复核|详细拆解见 `docs/requirements/TRADING-136_to_140_Paper_Portfolio_Tracking_and_Advisory_Outcome_Evaluation.md`；基于
+      TRADING-131_to_135 的 shadow monitor、daily advisory、consensus drift 和 owner review
+      journal，已新增 paper portfolio state/ledger、advisory outcome tracking、owner decision
+      attribution、shadow candidate aging v2 和 weekly advisory review；本阶段仍禁止 broker
+      API、自动下单、automatic production candidate、owner auto approval、真实仓位自动修改、official
+      target weight mutation、baseline/production state mutation|`paper-portfolio init/apply-review/state/report`
+      可运行且 `validate-paper-portfolio` PASS，monitor/no_trade/reject 不改变 paper state，paper_adjustment
+      只改变 paper state 且 broker_action_taken=false；advisory outcome 可 track/update/report
+      并区分 PENDING/AVAILABLE/INSUFFICIENT_DATA，价格收益计算先通过 cached data quality gate；owner
+      attribution 可关联 owner review journal 与 outcome，数据不足不伪造结论；shadow aging 可从 monitor/advisory/outcome
+      聚合 promotion clock v2 和 downgrade recommendation，eligible 只进入人工 review；weekly
+      advisory review 可聚合本周 artifacts 并生成 Reader Brief section；相关 config、report registry、artifact
+      catalog、system flow、README、operations runbook、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 root validation 和 dynamic-v3
+      family artifact validation 完成|2026-06-08: 新增并进入 IN_PROGRESS，原因：TRADING-131_to_135
+      已能持续生成 shadow monitoring、daily advisory、consensus drift 和 owner review，但还不能评估按建议纸面执行后的组合变化、后续表现、owner
+      决策一致性、candidate aging 或 weekly advisory review；本阶段以 paper-only 模拟和 outcome attribution
+      建立审计闭环，继续保留 no broker / no production / no auto approval 安全边界。2026-06-08: 转入
+      VALIDATING；真实链路输出 paper portfolio `9302bb7ae33b05f1`、paper action `654bafc6a89ff1b2`、advisory
+      outcome `19a6097ce18dbcd8`、owner attribution `ed392c821d7b6e8e`、shadow aging
+      `4c8cb907918d9769`、weekly advisory review `47e497404be6281f`；验证通过 focused pytest、全量
+      pytest（2254 passed）、ruff、compileall、git diff check、documentation contract、dynamic-v3
+      root validation、新增 paper/outcome/attribution/aging/weekly validate 和 dynamic-v3
+      family artifact validation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4c7bd7e878e26ad146ee3cb3
+  task_id: TRADING-136_to_140
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核
+    notes: '2026-06-08: 新增并进入 IN_PROGRESS，原因：TRADING-131_to_135 已能持续生成 shadow monitoring、daily
+      advisory、consensus drift 和 owner review，但还不能评估按建议纸面执行后的组合变化、后续表现、owner 决策一致性、candidate
+      aging 或 weekly advisory review；本阶段以 paper-only 模拟和 outcome attribution 建立审计闭环，继续保留
+      no broker / no production / no auto approval 安全边界。2026-06-08: 转入 VALIDATING；真实链路输出
+      paper portfolio `9302bb7ae33b05f1`、paper action `654bafc6a89ff1b2`、advisory
+      outcome `19a6097ce18dbcd8`、owner attribution `ed392c821d7b6e8e`、shadow aging
+      `4c8cb907918d9769`、weekly advisory review `47e497404be6281f`；验证通过 focused pytest、全量
+      pytest（2254 passed）、ruff、compileall、git diff check、documentation contract、dynamic-v3
+      root validation、新增 paper/outcome/attribution/aging/weekly validate 和 dynamic-v3
+      family artifact validation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4c7bd7e878e26ad146ee3cb31d631976c8bb621133088ad5ebb65a421eefdf84
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-136_to_140
+  - ETF portfolio research/Paper Portfolio Tracking and Advisory Outcome Evaluation
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-136_to_140_Paper_Portfolio_Tracking_and_Advisory_Outcome_Evaluation.md`；基于
+    TRADING-131_to_135 的 shadow monitor、daily advisory、consensus drift 和 owner review
+    journal，已新增 paper portfolio state/ledger、advisory outcome tracking、owner decision
+    attribution、shadow candidate aging v2 和 weekly advisory review；本阶段仍禁止 broker API、自动下单、automatic
+    production candidate、owner auto approval、真实仓位自动修改、official target weight mutation、baseline/production
+    state mutation
+  - '`paper-portfolio init/apply-review/state/report` 可运行且 `validate-paper-portfolio`
+    PASS，monitor/no_trade/reject 不改变 paper state，paper_adjustment 只改变 paper state
+    且 broker_action_taken=false；advisory outcome 可 track/update/report 并区分 PENDING/AVAILABLE/INSUFFICIENT_DATA，价格收益计算先通过
+    cached data quality gate；owner attribution 可关联 owner review journal 与 outcome，数据不足不伪造结论；shadow
+    aging 可从 monitor/advisory/outcome 聚合 promotion clock v2 和 downgrade recommendation，eligible
+    只进入人工 review；weekly advisory review 可聚合本周 artifacts 并生成 Reader Brief section；相关
+    config、report registry、artifact catalog、system flow、README、operations runbook、requirements、Reader
+    Brief、focused tests、ruff、compileall、git diff check、dynamic-v3 root validation
+    和 dynamic-v3 family artifact validation 完成'
+  - '2026-06-08: 新增并进入 IN_PROGRESS，原因：TRADING-131_to_135 已能持续生成 shadow monitoring、daily
+    advisory、consensus drift 和 owner review，但还不能评估按建议纸面执行后的组合变化、后续表现、owner 决策一致性、candidate
+    aging 或 weekly advisory review；本阶段以 paper-only 模拟和 outcome attribution 建立审计闭环，继续保留
+    no broker / no production / no auto approval 安全边界。2026-06-08: 转入 VALIDATING；真实链路输出
+    paper portfolio `9302bb7ae33b05f1`、paper action `654bafc6a89ff1b2`、advisory outcome
+    `19a6097ce18dbcd8`、owner attribution `ed392c821d7b6e8e`、shadow aging `4c8cb907918d9769`、weekly
+    advisory review `47e497404be6281f`；验证通过 focused pytest、全量 pytest（2254 passed）、ruff、compileall、git
+    diff check、documentation contract、dynamic-v3 root validation、新增 paper/outcome/attribution/aging/weekly
+    validate 和 dynamic-v3 family artifact validation。'
+  docs_links:
+  - docs/requirements/TRADING-136_to_140_Paper_Portfolio_Tracking_and_Advisory_Outcome_Evaluation.md
+  terminal: false
+  raw_row_sha256: 4c7bd7e878e26ad146ee3cb31d631976c8bb621133088ad5ebb65a421eefdf84
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ba1e8328533bef3206da2e0c9d8a0b0bd71e0673fd394a3ca6e9d582aa88f4b6

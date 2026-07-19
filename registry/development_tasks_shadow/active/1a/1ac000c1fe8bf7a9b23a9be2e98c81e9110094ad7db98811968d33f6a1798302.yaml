@@ -1,0 +1,119 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-004
+  title: null
+  domain: 报告/周期复盘
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/report_decision_chain_presentation_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成周报/月报投资复盘 CLI：读取 `scores_daily.csv`、decision
+    snapshots、belief_state、outcomes、learning queue 和 rule experiments，输出人类投资复核模板，并显式声明
+    `production_effect=none`；剩余缺口是 catalyst calendar 自动接入、完整产业链节点健康度、真实 outcome/learning/rule
+    experiment 数据积累和更严格的样本充分性校准；详细拆解见 `docs/requirements/report_decision_chain_presentation_2026-05-04.md#report-004`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 周报回答本周结论/仓位是否变化、改变判断的前三个证据、产业链节点热度/健康度变化、thesis/risk 变化、系统判断是否被市场验证和下周观察事件；月报回答系统判断表现、高分信号有效性、gate
+      是否过严或过松、thesis warning 是否有提前量、哪些数据源/模块影响置信度和候选规则是否需要调整；报告声明 `ai_after_chatgpt`
+      regime 和实际日期范围，保留 trace 下钻；实现时同步更新 `docs/system_flow.md` 并补充报告文本测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1139
+    row_sha256: 292d18ee0f56d6512b3b91b5ae3e1da673ad144946d7974d400d898c71a89ff1
+    cell_count: 8
+    all_cells:
+    - REPORT-004
+    - 报告/周期复盘
+    - P2
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已完成周报/月报投资复盘 CLI：读取 `scores_daily.csv`、decision snapshots、belief_state、outcomes、learning
+      queue 和 rule experiments，输出人类投资复核模板，并显式声明 `production_effect=none`；剩余缺口是 catalyst
+      calendar 自动接入、完整产业链节点健康度、真实 outcome/learning/rule experiment 数据积累和更严格的样本充分性校准；详细拆解见
+      `docs/requirements/report_decision_chain_presentation_2026-05-04.md#report-004`
+    - 周报回答本周结论/仓位是否变化、改变判断的前三个证据、产业链节点热度/健康度变化、thesis/risk 变化、系统判断是否被市场验证和下周观察事件；月报回答系统判断表现、高分信号有效性、gate
+      是否过严或过松、thesis warning 是否有提前量、哪些数据源/模块影响置信度和候选规则是否需要调整；报告声明 `ai_after_chatgpt`
+      regime 和实际日期范围，保留 trace 下钻；实现时同步更新 `docs/system_flow.md` 并补充报告文本测试
+    - '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现面向投资复核者的周/月复盘报告入口，区别于 `feedback
+      loop-review` 的系统运营视角。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits
+      reports investment-review`、周/月 Markdown 输出、trace 下钻、outcome/learning/rule experiment
+      覆盖摘要和文本测试；真实本地运行周报/月报均为 `PASS_WITH_LIMITATIONS`，原因是 decision outcomes、learning
+      queue 和 rule experiments 尚未形成有效样本。'
+    raw_line: '|REPORT-004|报告/周期复盘|P2|BASELINE_DONE|系统实现 + 项目 owner|已完成周报/月报投资复盘 CLI：读取
+      `scores_daily.csv`、decision snapshots、belief_state、outcomes、learning queue 和
+      rule experiments，输出人类投资复核模板，并显式声明 `production_effect=none`；剩余缺口是 catalyst calendar
+      自动接入、完整产业链节点健康度、真实 outcome/learning/rule experiment 数据积累和更严格的样本充分性校准；详细拆解见 `docs/requirements/report_decision_chain_presentation_2026-05-04.md#report-004`|周报回答本周结论/仓位是否变化、改变判断的前三个证据、产业链节点热度/健康度变化、thesis/risk
+      变化、系统判断是否被市场验证和下周观察事件；月报回答系统判断表现、高分信号有效性、gate 是否过严或过松、thesis warning 是否有提前量、哪些数据源/模块影响置信度和候选规则是否需要调整；报告声明
+      `ai_after_chatgpt` regime 和实际日期范围，保留 trace 下钻；实现时同步更新 `docs/system_flow.md`
+      并补充报告文本测试|2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现面向投资复核者的周/月复盘报告入口，区别于
+      `feedback loop-review` 的系统运营视角。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      `aits reports investment-review`、周/月 Markdown 输出、trace 下钻、outcome/learning/rule
+      experiment 覆盖摘要和文本测试；真实本地运行周报/月报均为 `PASS_WITH_LIMITATIONS`，原因是 decision outcomes、learning
+      queue 和 rule experiments 尚未形成有效样本。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-292d18ee0f56d6512b3b91b5
+  task_id: REPORT-004
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P2
+    next_owner: 系统实现 + 项目 owner
+    notes: '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现面向投资复核者的周/月复盘报告入口，区别于 `feedback
+      loop-review` 的系统运营视角。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits
+      reports investment-review`、周/月 Markdown 输出、trace 下钻、outcome/learning/rule experiment
+      覆盖摘要和文本测试；真实本地运行周报/月报均为 `PASS_WITH_LIMITATIONS`，原因是 decision outcomes、learning
+      queue 和 rule experiments 尚未形成有效样本。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:292d18ee0f56d6512b3b91b5ae3e1da673ad144946d7974d400d898c71a89ff1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-004
+  - 报告/周期复盘
+  - P2
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已完成周报/月报投资复盘 CLI：读取 `scores_daily.csv`、decision snapshots、belief_state、outcomes、learning
+    queue 和 rule experiments，输出人类投资复核模板，并显式声明 `production_effect=none`；剩余缺口是 catalyst
+    calendar 自动接入、完整产业链节点健康度、真实 outcome/learning/rule experiment 数据积累和更严格的样本充分性校准；详细拆解见
+    `docs/requirements/report_decision_chain_presentation_2026-05-04.md#report-004`
+  - 周报回答本周结论/仓位是否变化、改变判断的前三个证据、产业链节点热度/健康度变化、thesis/risk 变化、系统判断是否被市场验证和下周观察事件；月报回答系统判断表现、高分信号有效性、gate
+    是否过严或过松、thesis warning 是否有提前量、哪些数据源/模块影响置信度和候选规则是否需要调整；报告声明 `ai_after_chatgpt`
+    regime 和实际日期范围，保留 trace 下钻；实现时同步更新 `docs/system_flow.md` 并补充报告文本测试
+  - '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现面向投资复核者的周/月复盘报告入口，区别于 `feedback
+    loop-review` 的系统运营视角。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits reports
+    investment-review`、周/月 Markdown 输出、trace 下钻、outcome/learning/rule experiment 覆盖摘要和文本测试；真实本地运行周报/月报均为
+    `PASS_WITH_LIMITATIONS`，原因是 decision outcomes、learning queue 和 rule experiments
+    尚未形成有效样本。'
+  docs_links:
+  - docs/requirements/report_decision_chain_presentation_2026-05-04.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: 292d18ee0f56d6512b3b91b5ae3e1da673ad144946d7974d400d898c71a89ff1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8b53f191a4c8d4860e04fb30dd8234e5377fcdfecb889f9df04757073cea402a

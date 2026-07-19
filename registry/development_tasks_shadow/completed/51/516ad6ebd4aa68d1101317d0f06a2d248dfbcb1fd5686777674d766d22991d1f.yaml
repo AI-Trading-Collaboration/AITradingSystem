@@ -1,0 +1,87 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-008
+  title: null
+  domain: 运行架构/daily ops runbook
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/runbook_daily_ops.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已新增 `docs/runbook_daily_ops.md`，并同步更新
+    `OPS-003`、系统流图和系统设计 review 需求文档
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新协作者可按 runbook 在本地或云 VM 复现 `aits ops daily-run` 运行；runbook 明确哪些失败必须停止、哪些只能降级披露、哪些报告是正式结论、哪些是审计附录；不新增生产
+      GitHub Actions cron
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 419
+    row_sha256: 34323223df62b2c083ab6459a025f5513e81853246cca3833a85af5e78e971a3
+    cell_count: 8
+    all_cells:
+    - OPS-008
+    - 运行架构/daily ops runbook
+    - P1
+    - DONE
+    - 系统实现
+    - 已新增 `docs/runbook_daily_ops.md`，并同步更新 `OPS-003`、系统流图和系统设计 review 需求文档
+    - 新协作者可按 runbook 在本地或云 VM 复现 `aits ops daily-run` 运行；runbook 明确哪些失败必须停止、哪些只能降级披露、哪些报告是正式结论、哪些是审计附录；不新增生产
+      GitHub Actions cron
+    - '2026-05-10: 新增并完成，原因：系统设计 review 认为当前 daily ops 命令链路已具备基础能力，但缺少可交接运行手册和调度闭环说明。'
+    raw_line: '|OPS-008|运行架构/daily ops runbook|P1|DONE|系统实现|已新增 `docs/runbook_daily_ops.md`，并同步更新
+      `OPS-003`、系统流图和系统设计 review 需求文档|新协作者可按 runbook 在本地或云 VM 复现 `aits ops daily-run`
+      运行；runbook 明确哪些失败必须停止、哪些只能降级披露、哪些报告是正式结论、哪些是审计附录；不新增生产 GitHub Actions cron|2026-05-10:
+      新增并完成，原因：系统设计 review 认为当前 daily ops 命令链路已具备基础能力，但缺少可交接运行手册和调度闭环说明。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-34323223df62b2c083ab6459
+  task_id: OPS-008
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-10: 新增并完成，原因：系统设计 review 认为当前 daily ops 命令链路已具备基础能力，但缺少可交接运行手册和调度闭环说明。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:34323223df62b2c083ab6459a025f5513e81853246cca3833a85af5e78e971a3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-008
+  - 运行架构/daily ops runbook
+  - P1
+  - DONE
+  - 系统实现
+  - 已新增 `docs/runbook_daily_ops.md`，并同步更新 `OPS-003`、系统流图和系统设计 review 需求文档
+  - 新协作者可按 runbook 在本地或云 VM 复现 `aits ops daily-run` 运行；runbook 明确哪些失败必须停止、哪些只能降级披露、哪些报告是正式结论、哪些是审计附录；不新增生产
+    GitHub Actions cron
+  - '2026-05-10: 新增并完成，原因：系统设计 review 认为当前 daily ops 命令链路已具备基础能力，但缺少可交接运行手册和调度闭环说明。'
+  docs_links:
+  - docs/runbook_daily_ops.md
+  terminal: true
+  raw_row_sha256: 34323223df62b2c083ab6459a025f5513e81853246cca3833a85af5e78e971a3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 575236e562cdd77f8b26e8949e554ecfdf3673ef503ec9100ea149efeeb47e85

@@ -1,0 +1,209 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: RUN-002
+  title: null
+  domain: 运行归档/每日输出路径
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/daily_run_output_archive_2026-05-11.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/daily_run_output_archive_2026-05-11.md`；执行时间戳优先
+    canonical bundle、manifest/metadata checksum、legacy mirror、SEC PIT 同日输出和失败专用诊断路径语义均已完成；默认完整
+    daily-run `run-002-manifest-validation-20260609` PASS，32/32 steps 通过，manifest/metadata
+    output produced artifacts 无 `exists=false`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`daily-run` 默认写入 `outputs/runs/daily/<executed_at_utc>/as_of_<YYYY-MM-DD>__<safe_run_id>/`；manifest
+      记录执行时间戳、as_of、run root、输入和输出 artifact checksum；legacy mirror 保持过渡兼容；PASS step
+      的声明输出必须真实存在或在执行报告/manifest 中明确降级，不得出现 step PASS 但本轮声明输出 `exists=false`；`data/raw`/`data/processed`
+      明确作为状态缓存而非每次运行归档副本；休市日 skipped dashboard 不得从 legacy 路径带入本轮 run bundle'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 333
+    row_sha256: 187476b86cc5840c89cd663d582fb749cd26a9adc545951884f573941ca956a6
+    cell_count: 8
+    all_cells:
+    - RUN-002
+    - 运行归档/每日输出路径
+    - P2
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/daily_run_output_archive_2026-05-11.md`；执行时间戳优先 canonical
+      bundle、manifest/metadata checksum、legacy mirror、SEC PIT 同日输出和失败专用诊断路径语义均已完成；默认完整
+      daily-run `run-002-manifest-validation-20260609` PASS，32/32 steps 通过，manifest/metadata
+      output produced artifacts 无 `exists=false`
+    - '`daily-run` 默认写入 `outputs/runs/daily/<executed_at_utc>/as_of_<YYYY-MM-DD>__<safe_run_id>/`；manifest
+      记录执行时间戳、as_of、run root、输入和输出 artifact checksum；legacy mirror 保持过渡兼容；PASS step
+      的声明输出必须真实存在或在执行报告/manifest 中明确降级，不得出现 step PASS 但本轮声明输出 `exists=false`；`data/raw`/`data/processed`
+      明确作为状态缓存而非每次运行归档副本；休市日 skipped dashboard 不得从 legacy 路径带入本轮 run bundle'
+    - '2026-05-11: 新增并进入实现，原因：owner 建议每日输出产物根据执行时间戳整理到统一路径，并进一步明确需要归档记录的数据管理方式。2026-05-11:
+      从 IN_PROGRESS 改为 VALIDATING，原因：路径生成、manifest 字段、runbook、系统流图和单测已更新，仍需后续真实 daily-run
+      观察新目录落盘。2026-06-07: 从 VALIDATING 改回 IN_PROGRESS，原因：最新真实 `daily-run --as-of 2026-06-05
+      --run-id codex_20260605_20260607103901` 的 canonical manifest 路径、execution timestamp、checksum
+      和 legacy mirror 基本正确，但 `sec_pit_shadow_observe` / `sec_pit_shadow_monitor` steps
+      为 PASS 时声明的 2026-06-05 输出不存在，实际最新 shadow artifact 仍为 2026-05-26；需要让 daily-run
+      shadow steps 绑定本轮 as_of 或在缺当日输出时 fail closed。2026-06-07: 从 IN_PROGRESS 改为 VALIDATING，原因：`daily-plan`、`config/scheduled_tasks.yaml`
+      和 `cli_direct` 已改为对 `sec-pit shadow-observe --latest --end {as_of}` / `sec-pit
+      shadow-monitor --latest --as-of {as_of}` 传参；monitor 显式 as_of 模式要求同日 observe
+      summary，不再回退旧 observe artifact；验证通过 focused pytest、`compileall`、`validate-data
+      --as-of 2026-06-05`、真实 `shadow-observe --latest --end 2026-06-05` 和 `shadow-monitor
+      --latest --as-of 2026-06-05`，同日 summary 输出已存在。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：默认完整
+      `daily-run` `ops-011-default-smoke-20260609` 的 SEC PIT shadow observe/monitor
+      同日 JSON/Markdown 输出已存在，但 run manifest 和 metadata 仍将 `outputs/reports/download_data_diagnostics_2026-06-05.md`
+      记录为 `produced_artifacts` / legacy output 且 `exists=false`；本轮 `download_data`
+      为 PASS、`diagnostic_path=null`，说明失败专用诊断路径和正常实际产物路径仍未分离。2026-06-09: 从 IN_PROGRESS
+      改回 VALIDATING，原因：已新增 `DailyOpsStep.failure_diagnostic_paths`，`download_data_diagnostics_YYYY-MM-DD.md`
+      仍显示在 daily plan 失败诊断说明中，但成功步骤不再写入 metadata/manifest `produced_artifacts`；若 `download_data`
+      失败且诊断文件实际生成，metadata 仍记录 checksum；验证通过 `tests/test_ops_daily.py` / `tests/test_run_artifacts.py`
+      focused tests、Ruff、Black check 和 `compileall`。2026-06-09: 从 VALIDATING 改为 DONE，原因：已按
+      operations runbook 执行默认 `daily-plan --fail-on-missing-env`，解析为 `as_of=2026-06-05`
+      且 READY；随后执行默认完整 `aits ops daily-run --run-id run-002-manifest-validation-20260609`，run
+      bundle `outputs/runs/daily/20260608T180032Z/as_of_2026-06-05__run-002-manifest-validation-20260609/`
+      返回 PASS、32/32 steps 通过；manifest/metadata 均 PASS，output_artifacts=50、legacy_output_artifacts=78、produced_artifacts=71
+      且 produced/output/legacy outputs 均无 `exists=false`，`download_data_diagnostics`
+      未进入 produced artifacts；唯一 `exists=false` 为 pre-run input `data/external/trades`，不是
+      PASS step 输出。'
+    raw_line: '|RUN-002|运行归档/每日输出路径|P2|DONE|系统验证|详细拆解见 `docs/requirements/daily_run_output_archive_2026-05-11.md`；执行时间戳优先
+      canonical bundle、manifest/metadata checksum、legacy mirror、SEC PIT 同日输出和失败专用诊断路径语义均已完成；默认完整
+      daily-run `run-002-manifest-validation-20260609` PASS，32/32 steps 通过，manifest/metadata
+      output produced artifacts 无 `exists=false`|`daily-run` 默认写入 `outputs/runs/daily/<executed_at_utc>/as_of_<YYYY-MM-DD>__<safe_run_id>/`；manifest
+      记录执行时间戳、as_of、run root、输入和输出 artifact checksum；legacy mirror 保持过渡兼容；PASS step
+      的声明输出必须真实存在或在执行报告/manifest 中明确降级，不得出现 step PASS 但本轮声明输出 `exists=false`；`data/raw`/`data/processed`
+      明确作为状态缓存而非每次运行归档副本；休市日 skipped dashboard 不得从 legacy 路径带入本轮 run bundle|2026-05-11:
+      新增并进入实现，原因：owner 建议每日输出产物根据执行时间戳整理到统一路径，并进一步明确需要归档记录的数据管理方式。2026-05-11: 从 IN_PROGRESS
+      改为 VALIDATING，原因：路径生成、manifest 字段、runbook、系统流图和单测已更新，仍需后续真实 daily-run 观察新目录落盘。2026-06-07:
+      从 VALIDATING 改回 IN_PROGRESS，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      的 canonical manifest 路径、execution timestamp、checksum 和 legacy mirror 基本正确，但
+      `sec_pit_shadow_observe` / `sec_pit_shadow_monitor` steps 为 PASS 时声明的 2026-06-05
+      输出不存在，实际最新 shadow artifact 仍为 2026-05-26；需要让 daily-run shadow steps 绑定本轮 as_of
+      或在缺当日输出时 fail closed。2026-06-07: 从 IN_PROGRESS 改为 VALIDATING，原因：`daily-plan`、`config/scheduled_tasks.yaml`
+      和 `cli_direct` 已改为对 `sec-pit shadow-observe --latest --end {as_of}` / `sec-pit
+      shadow-monitor --latest --as-of {as_of}` 传参；monitor 显式 as_of 模式要求同日 observe
+      summary，不再回退旧 observe artifact；验证通过 focused pytest、`compileall`、`validate-data
+      --as-of 2026-06-05`、真实 `shadow-observe --latest --end 2026-06-05` 和 `shadow-monitor
+      --latest --as-of 2026-06-05`，同日 summary 输出已存在。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：默认完整
+      `daily-run` `ops-011-default-smoke-20260609` 的 SEC PIT shadow observe/monitor
+      同日 JSON/Markdown 输出已存在，但 run manifest 和 metadata 仍将 `outputs/reports/download_data_diagnostics_2026-06-05.md`
+      记录为 `produced_artifacts` / legacy output 且 `exists=false`；本轮 `download_data`
+      为 PASS、`diagnostic_path=null`，说明失败专用诊断路径和正常实际产物路径仍未分离。2026-06-09: 从 IN_PROGRESS
+      改回 VALIDATING，原因：已新增 `DailyOpsStep.failure_diagnostic_paths`，`download_data_diagnostics_YYYY-MM-DD.md`
+      仍显示在 daily plan 失败诊断说明中，但成功步骤不再写入 metadata/manifest `produced_artifacts`；若 `download_data`
+      失败且诊断文件实际生成，metadata 仍记录 checksum；验证通过 `tests/test_ops_daily.py` / `tests/test_run_artifacts.py`
+      focused tests、Ruff、Black check 和 `compileall`。2026-06-09: 从 VALIDATING 改为 DONE，原因：已按
+      operations runbook 执行默认 `daily-plan --fail-on-missing-env`，解析为 `as_of=2026-06-05`
+      且 READY；随后执行默认完整 `aits ops daily-run --run-id run-002-manifest-validation-20260609`，run
+      bundle `outputs/runs/daily/20260608T180032Z/as_of_2026-06-05__run-002-manifest-validation-20260609/`
+      返回 PASS、32/32 steps 通过；manifest/metadata 均 PASS，output_artifacts=50、legacy_output_artifacts=78、produced_artifacts=71
+      且 produced/output/legacy outputs 均无 `exists=false`，`download_data_diagnostics`
+      未进入 produced artifacts；唯一 `exists=false` 为 pre-run input `data/external/trades`，不是
+      PASS step 输出。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-187476b86cc5840c89cd663d
+  task_id: RUN-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: '2026-05-11: 新增并进入实现，原因：owner 建议每日输出产物根据执行时间戳整理到统一路径，并进一步明确需要归档记录的数据管理方式。2026-05-11:
+      从 IN_PROGRESS 改为 VALIDATING，原因：路径生成、manifest 字段、runbook、系统流图和单测已更新，仍需后续真实 daily-run
+      观察新目录落盘。2026-06-07: 从 VALIDATING 改回 IN_PROGRESS，原因：最新真实 `daily-run --as-of 2026-06-05
+      --run-id codex_20260605_20260607103901` 的 canonical manifest 路径、execution timestamp、checksum
+      和 legacy mirror 基本正确，但 `sec_pit_shadow_observe` / `sec_pit_shadow_monitor` steps
+      为 PASS 时声明的 2026-06-05 输出不存在，实际最新 shadow artifact 仍为 2026-05-26；需要让 daily-run
+      shadow steps 绑定本轮 as_of 或在缺当日输出时 fail closed。2026-06-07: 从 IN_PROGRESS 改为 VALIDATING，原因：`daily-plan`、`config/scheduled_tasks.yaml`
+      和 `cli_direct` 已改为对 `sec-pit shadow-observe --latest --end {as_of}` / `sec-pit
+      shadow-monitor --latest --as-of {as_of}` 传参；monitor 显式 as_of 模式要求同日 observe
+      summary，不再回退旧 observe artifact；验证通过 focused pytest、`compileall`、`validate-data
+      --as-of 2026-06-05`、真实 `shadow-observe --latest --end 2026-06-05` 和 `shadow-monitor
+      --latest --as-of 2026-06-05`，同日 summary 输出已存在。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：默认完整
+      `daily-run` `ops-011-default-smoke-20260609` 的 SEC PIT shadow observe/monitor
+      同日 JSON/Markdown 输出已存在，但 run manifest 和 metadata 仍将 `outputs/reports/download_data_diagnostics_2026-06-05.md`
+      记录为 `produced_artifacts` / legacy output 且 `exists=false`；本轮 `download_data`
+      为 PASS、`diagnostic_path=null`，说明失败专用诊断路径和正常实际产物路径仍未分离。2026-06-09: 从 IN_PROGRESS
+      改回 VALIDATING，原因：已新增 `DailyOpsStep.failure_diagnostic_paths`，`download_data_diagnostics_YYYY-MM-DD.md`
+      仍显示在 daily plan 失败诊断说明中，但成功步骤不再写入 metadata/manifest `produced_artifacts`；若 `download_data`
+      失败且诊断文件实际生成，metadata 仍记录 checksum；验证通过 `tests/test_ops_daily.py` / `tests/test_run_artifacts.py`
+      focused tests、Ruff、Black check 和 `compileall`。2026-06-09: 从 VALIDATING 改为 DONE，原因：已按
+      operations runbook 执行默认 `daily-plan --fail-on-missing-env`，解析为 `as_of=2026-06-05`
+      且 READY；随后执行默认完整 `aits ops daily-run --run-id run-002-manifest-validation-20260609`，run
+      bundle `outputs/runs/daily/20260608T180032Z/as_of_2026-06-05__run-002-manifest-validation-20260609/`
+      返回 PASS、32/32 steps 通过；manifest/metadata 均 PASS，output_artifacts=50、legacy_output_artifacts=78、produced_artifacts=71
+      且 produced/output/legacy outputs 均无 `exists=false`，`download_data_diagnostics`
+      未进入 produced artifacts；唯一 `exists=false` 为 pre-run input `data/external/trades`，不是
+      PASS step 输出。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:187476b86cc5840c89cd663d582fb749cd26a9adc545951884f573941ca956a6
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - RUN-002
+  - 运行归档/每日输出路径
+  - P2
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/daily_run_output_archive_2026-05-11.md`；执行时间戳优先 canonical
+    bundle、manifest/metadata checksum、legacy mirror、SEC PIT 同日输出和失败专用诊断路径语义均已完成；默认完整
+    daily-run `run-002-manifest-validation-20260609` PASS，32/32 steps 通过，manifest/metadata
+    output produced artifacts 无 `exists=false`
+  - '`daily-run` 默认写入 `outputs/runs/daily/<executed_at_utc>/as_of_<YYYY-MM-DD>__<safe_run_id>/`；manifest
+    记录执行时间戳、as_of、run root、输入和输出 artifact checksum；legacy mirror 保持过渡兼容；PASS step
+    的声明输出必须真实存在或在执行报告/manifest 中明确降级，不得出现 step PASS 但本轮声明输出 `exists=false`；`data/raw`/`data/processed`
+    明确作为状态缓存而非每次运行归档副本；休市日 skipped dashboard 不得从 legacy 路径带入本轮 run bundle'
+  - '2026-05-11: 新增并进入实现，原因：owner 建议每日输出产物根据执行时间戳整理到统一路径，并进一步明确需要归档记录的数据管理方式。2026-05-11:
+    从 IN_PROGRESS 改为 VALIDATING，原因：路径生成、manifest 字段、runbook、系统流图和单测已更新，仍需后续真实 daily-run
+    观察新目录落盘。2026-06-07: 从 VALIDATING 改回 IN_PROGRESS，原因：最新真实 `daily-run --as-of 2026-06-05
+    --run-id codex_20260605_20260607103901` 的 canonical manifest 路径、execution timestamp、checksum
+    和 legacy mirror 基本正确，但 `sec_pit_shadow_observe` / `sec_pit_shadow_monitor` steps
+    为 PASS 时声明的 2026-06-05 输出不存在，实际最新 shadow artifact 仍为 2026-05-26；需要让 daily-run
+    shadow steps 绑定本轮 as_of 或在缺当日输出时 fail closed。2026-06-07: 从 IN_PROGRESS 改为 VALIDATING，原因：`daily-plan`、`config/scheduled_tasks.yaml`
+    和 `cli_direct` 已改为对 `sec-pit shadow-observe --latest --end {as_of}` / `sec-pit
+    shadow-monitor --latest --as-of {as_of}` 传参；monitor 显式 as_of 模式要求同日 observe summary，不再回退旧
+    observe artifact；验证通过 focused pytest、`compileall`、`validate-data --as-of 2026-06-05`、真实
+    `shadow-observe --latest --end 2026-06-05` 和 `shadow-monitor --latest --as-of
+    2026-06-05`，同日 summary 输出已存在。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：默认完整 `daily-run`
+    `ops-011-default-smoke-20260609` 的 SEC PIT shadow observe/monitor 同日 JSON/Markdown
+    输出已存在，但 run manifest 和 metadata 仍将 `outputs/reports/download_data_diagnostics_2026-06-05.md`
+    记录为 `produced_artifacts` / legacy output 且 `exists=false`；本轮 `download_data` 为
+    PASS、`diagnostic_path=null`，说明失败专用诊断路径和正常实际产物路径仍未分离。2026-06-09: 从 IN_PROGRESS
+    改回 VALIDATING，原因：已新增 `DailyOpsStep.failure_diagnostic_paths`，`download_data_diagnostics_YYYY-MM-DD.md`
+    仍显示在 daily plan 失败诊断说明中，但成功步骤不再写入 metadata/manifest `produced_artifacts`；若 `download_data`
+    失败且诊断文件实际生成，metadata 仍记录 checksum；验证通过 `tests/test_ops_daily.py` / `tests/test_run_artifacts.py`
+    focused tests、Ruff、Black check 和 `compileall`。2026-06-09: 从 VALIDATING 改为 DONE，原因：已按
+    operations runbook 执行默认 `daily-plan --fail-on-missing-env`，解析为 `as_of=2026-06-05`
+    且 READY；随后执行默认完整 `aits ops daily-run --run-id run-002-manifest-validation-20260609`，run
+    bundle `outputs/runs/daily/20260608T180032Z/as_of_2026-06-05__run-002-manifest-validation-20260609/`
+    返回 PASS、32/32 steps 通过；manifest/metadata 均 PASS，output_artifacts=50、legacy_output_artifacts=78、produced_artifacts=71
+    且 produced/output/legacy outputs 均无 `exists=false`，`download_data_diagnostics`
+    未进入 produced artifacts；唯一 `exists=false` 为 pre-run input `data/external/trades`，不是
+    PASS step 输出。'
+  docs_links:
+  - docs/requirements/daily_run_output_archive_2026-05-11.md
+  terminal: true
+  raw_row_sha256: 187476b86cc5840c89cd663d582fb749cd26a9adc545951884f573941ca956a6
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4908487af024d103416c4458e37b674e989eb7f352342de019d5ab50fee2b704

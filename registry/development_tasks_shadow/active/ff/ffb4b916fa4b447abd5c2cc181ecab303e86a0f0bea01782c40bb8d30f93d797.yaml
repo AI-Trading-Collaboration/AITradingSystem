@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: PIT-002
+  title: null
+  domain: 特征/PIT 字段强校验
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成字段级 source 检查基础版：`feature_availability`
+    报告可列出 `available_time` 覆盖率、缺失行、未来可见时间行和保守 fallback；`build-features`、`score-daily`、`backtest`
+    已对价格/利率输入写入字段级检查；剩余缺口是后续每个新增数据源继续接入专属 `available_time` 字段检查；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增或修改的数据源不能只凭 `event_time` 进入 A/B 级回测、日报主结论或 promotion gate；验证报告需要列出每个输入族的
+      `available_time` 字段覆盖率、缺失处理策略和最早可用时间；测试覆盖未来公告、未来 universe、未来宏观/证据样本不能进入 signal-time
+      结论
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1097
+    row_sha256: 477870e418c1f5dd72b86089c68b8db79799b766681562b3b3f7d6ce5831efce
+    cell_count: 8
+    all_cells:
+    - PIT-002
+    - 特征/PIT 字段强校验
+    - P0
+    - BASELINE_DONE
+    - 系统实现
+    - 已完成字段级 source 检查基础版：`feature_availability` 报告可列出 `available_time` 覆盖率、缺失行、未来可见时间行和保守
+      fallback；`build-features`、`score-daily`、`backtest` 已对价格/利率输入写入字段级检查；剩余缺口是后续每个新增数据源继续接入专属
+      `available_time` 字段检查；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+    - 新增或修改的数据源不能只凭 `event_time` 进入 A/B 级回测、日报主结论或 promotion gate；验证报告需要列出每个输入族的 `available_time`
+      字段覆盖率、缺失处理策略和最早可用时间；测试覆盖未来公告、未来 universe、未来宏观/证据样本不能进入 signal-time 结论
+    - '2026-05-05: 新增任务，原因：`PIT-001` 已完成 catalog 和报告基础版，但最终闭环要求数据源级可见时间强校验，避免新特征绕过
+      `available_time <= decision_time`。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现数据源级
+      `available_time` 字段覆盖、未来可见时间和 report/trace 摘要。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      `FeatureAvailabilitySourceCheck`、字段级报告/summary、市场输入 CLI 接入和未来 `filed_date` 防护测试；完整
+      DONE 仍需随新增数据源继续补专属检查。'
+    raw_line: '|PIT-002|特征/PIT 字段强校验|P0|BASELINE_DONE|系统实现|已完成字段级 source 检查基础版：`feature_availability`
+      报告可列出 `available_time` 覆盖率、缺失行、未来可见时间行和保守 fallback；`build-features`、`score-daily`、`backtest`
+      已对价格/利率输入写入字段级检查；剩余缺口是后续每个新增数据源继续接入专属 `available_time` 字段检查；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`|新增或修改的数据源不能只凭
+      `event_time` 进入 A/B 级回测、日报主结论或 promotion gate；验证报告需要列出每个输入族的 `available_time`
+      字段覆盖率、缺失处理策略和最早可用时间；测试覆盖未来公告、未来 universe、未来宏观/证据样本不能进入 signal-time 结论|2026-05-05:
+      新增任务，原因：`PIT-001` 已完成 catalog 和报告基础版，但最终闭环要求数据源级可见时间强校验，避免新特征绕过 `available_time
+      <= decision_time`。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现数据源级 `available_time`
+      字段覆盖、未来可见时间和 report/trace 摘要。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      `FeatureAvailabilitySourceCheck`、字段级报告/summary、市场输入 CLI 接入和未来 `filed_date` 防护测试；完整
+      DONE 仍需随新增数据源继续补专属检查。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-477870e418c1f5dd72b86089
+  task_id: PIT-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增任务，原因：`PIT-001` 已完成 catalog 和报告基础版，但最终闭环要求数据源级可见时间强校验，避免新特征绕过
+      `available_time <= decision_time`。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现数据源级
+      `available_time` 字段覆盖、未来可见时间和 report/trace 摘要。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+      `FeatureAvailabilitySourceCheck`、字段级报告/summary、市场输入 CLI 接入和未来 `filed_date` 防护测试；完整
+      DONE 仍需随新增数据源继续补专属检查。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:477870e418c1f5dd72b86089c68b8db79799b766681562b3b3f7d6ce5831efce
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - PIT-002
+  - 特征/PIT 字段强校验
+  - P0
+  - BASELINE_DONE
+  - 系统实现
+  - 已完成字段级 source 检查基础版：`feature_availability` 报告可列出 `available_time` 覆盖率、缺失行、未来可见时间行和保守
+    fallback；`build-features`、`score-daily`、`backtest` 已对价格/利率输入写入字段级检查；剩余缺口是后续每个新增数据源继续接入专属
+    `available_time` 字段检查；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+  - 新增或修改的数据源不能只凭 `event_time` 进入 A/B 级回测、日报主结论或 promotion gate；验证报告需要列出每个输入族的 `available_time`
+    字段覆盖率、缺失处理策略和最早可用时间；测试覆盖未来公告、未来 universe、未来宏观/证据样本不能进入 signal-time 结论
+  - '2026-05-05: 新增任务，原因：`PIT-001` 已完成 catalog 和报告基础版，但最终闭环要求数据源级可见时间强校验，避免新特征绕过 `available_time
+    <= decision_time`。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现数据源级 `available_time`
+    字段覆盖、未来可见时间和 report/trace 摘要。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+    `FeatureAvailabilitySourceCheck`、字段级报告/summary、市场输入 CLI 接入和未来 `filed_date` 防护测试；完整
+    DONE 仍需随新增数据源继续补专属检查。'
+  docs_links:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  terminal: false
+  raw_row_sha256: 477870e418c1f5dd72b86089c68b8db79799b766681562b3b3f7d6ce5831efce
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 669e98a6de6e2379df5b882801f4a56c95c15d76b62aaaa96b81f8f2bbaec4c5

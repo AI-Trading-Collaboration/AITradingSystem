@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-350_PAPER_SHADOW_PROTOCOL
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue paper-shadow protocol governance
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核；当前eligibility blocked
+  requirement_refs:
+  - docs/requirements/TRADING-350_Paper_Shadow_Protocol.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-350_Paper_Shadow_Protocol.md`；保留observation-only协议设计，但live
+    eligibility必须承接canonical TRADING-346，不得使用旧READY artifact；不得生成official weights、broker
+    action、order ticket或production mutation。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Protocol build/report/validator在`NEEDS_MORE_EVIDENCE`时必须fail closed为blocked；只有未来validated
+      dated outcomes使formal contract重新合格，才可复核启动观察。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1429
+    row_sha256: d3b4800b6352df08781efae4aec1d602cd1f2e86bcc86afb78491cce7976bc0b
+    cell_count: 8
+    all_cells:
+    - TRADING-350_PAPER_SHADOW_PROTOCOL
+    - ETF portfolio/dynamic v3 rescue paper-shadow protocol governance
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核；当前eligibility blocked
+    - 详细拆解见 `docs/requirements/TRADING-350_Paper_Shadow_Protocol.md`；保留observation-only协议设计，但live
+      eligibility必须承接canonical TRADING-346，不得使用旧READY artifact；不得生成official weights、broker
+      action、order ticket或production mutation。
+    - Protocol build/report/validator在`NEEDS_MORE_EVIDENCE`时必须fail closed为blocked；只有未来validated
+      dated outcomes使formal contract重新合格，才可复核启动观察。
+    - 2026-07-19：ARCH-004G2.4-EB3已将当前formal contract修正为`NOT_READY / NEEDS_MORE_EVIDENCE
+      / NOT_ELIGIBLE`；2026-06-15的`PROTOCOL_READY`结果仅为历史artifact，不能支持daily paper-shadow。Downstream
+      focused验证确认protocol/daily blocked、weekly review返回research；`production_effect=none`。
+    raw_line: '|TRADING-350_PAPER_SHADOW_PROTOCOL|ETF portfolio/dynamic v3 rescue
+      paper-shadow protocol governance|P1|VALIDATING|系统实现 + 项目 owner 后续复核；当前eligibility
+      blocked|详细拆解见 `docs/requirements/TRADING-350_Paper_Shadow_Protocol.md`；保留observation-only协议设计，但live
+      eligibility必须承接canonical TRADING-346，不得使用旧READY artifact；不得生成official weights、broker
+      action、order ticket或production mutation。|Protocol build/report/validator在`NEEDS_MORE_EVIDENCE`时必须fail
+      closed为blocked；只有未来validated dated outcomes使formal contract重新合格，才可复核启动观察。|2026-07-19：ARCH-004G2.4-EB3已将当前formal
+      contract修正为`NOT_READY / NEEDS_MORE_EVIDENCE / NOT_ELIGIBLE`；2026-06-15的`PROTOCOL_READY`结果仅为历史artifact，不能支持daily
+      paper-shadow。Downstream focused验证确认protocol/daily blocked、weekly review返回research；`production_effect=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d3b4800b6352df08781efae4
+  task_id: TRADING-350_PAPER_SHADOW_PROTOCOL
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核；当前eligibility blocked
+    notes: 2026-07-19：ARCH-004G2.4-EB3已将当前formal contract修正为`NOT_READY / NEEDS_MORE_EVIDENCE
+      / NOT_ELIGIBLE`；2026-06-15的`PROTOCOL_READY`结果仅为历史artifact，不能支持daily paper-shadow。Downstream
+      focused验证确认protocol/daily blocked、weekly review返回research；`production_effect=none`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d3b4800b6352df08781efae4aec1d602cd1f2e86bcc86afb78491cce7976bc0b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-350_PAPER_SHADOW_PROTOCOL
+  - ETF portfolio/dynamic v3 rescue paper-shadow protocol governance
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核；当前eligibility blocked
+  - 详细拆解见 `docs/requirements/TRADING-350_Paper_Shadow_Protocol.md`；保留observation-only协议设计，但live
+    eligibility必须承接canonical TRADING-346，不得使用旧READY artifact；不得生成official weights、broker
+    action、order ticket或production mutation。
+  - Protocol build/report/validator在`NEEDS_MORE_EVIDENCE`时必须fail closed为blocked；只有未来validated
+    dated outcomes使formal contract重新合格，才可复核启动观察。
+  - 2026-07-19：ARCH-004G2.4-EB3已将当前formal contract修正为`NOT_READY / NEEDS_MORE_EVIDENCE
+    / NOT_ELIGIBLE`；2026-06-15的`PROTOCOL_READY`结果仅为历史artifact，不能支持daily paper-shadow。Downstream
+    focused验证确认protocol/daily blocked、weekly review返回research；`production_effect=none`。
+  docs_links:
+  - docs/requirements/TRADING-350_Paper_Shadow_Protocol.md
+  terminal: false
+  raw_row_sha256: d3b4800b6352df08781efae4aec1d602cd1f2e86bcc86afb78491cce7976bc0b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e51a58ce009e2802a552fb590d59eb96dcb5b5d744272f6e6b45be1b2d9ac7be

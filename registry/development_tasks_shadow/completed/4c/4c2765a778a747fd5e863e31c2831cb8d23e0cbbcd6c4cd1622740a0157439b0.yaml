@@ -1,0 +1,140 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-093
+  title: null
+  domain: ETF portfolio research/Dynamic v3 Rescue Parameter Sweep Config Schema
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+    v3 rescue parameter sweep config schema 已完成并通过当前默认 config 复核；`config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml`
+    存在，业务阈值集中在 YAML；`aits etf dynamic-v3-rescue sweep-config validate` 为 `PASS`，`candidate_preview_count=5000`、`failed_check_count=0`、`production_candidate_generated=false`、`production_effect=none`；`sweep-config
+    preview --limit 3` 可运行并输出 5000 个候选；重复 `preview --limit 5` 的 candidate_id 序列稳定为
+    `9864fc2ed46ed2e3,c382bc687da707c2,bfb41947bc1e7092,a3091ad304594cee,4c2ccf3a995fd903`；该任务只定义
+    research/observe-only 参数空间和稳定 candidate id contract，不生成 production candidate、不修改
+    baseline/production weights、不触发 broker 或 trading 行为
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml` 存在；所有业务阈值来自
+      YAML；`aits etf dynamic-v3-rescue sweep-config validate/preview` 可运行；candidate_id
+      在相同配置、strategy family、code/data manifest 下稳定；空 parameter_space、缺 hard_constraints、缺
+      scoring 和超过 max_candidates 均 fail closed；focused tests 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 313
+    row_sha256: e4adbf7cec519d6c72e89c2ae9cfc84ad4e3d76f45d411cdea42af7d247bf694
+    cell_count: 8
+    all_cells:
+    - TRADING-093
+    - ETF portfolio research/Dynamic v3 Rescue Parameter Sweep Config Schema
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+      v3 rescue parameter sweep config schema 已完成并通过当前默认 config 复核；`config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml`
+      存在，业务阈值集中在 YAML；`aits etf dynamic-v3-rescue sweep-config validate` 为 `PASS`，`candidate_preview_count=5000`、`failed_check_count=0`、`production_candidate_generated=false`、`production_effect=none`；`sweep-config
+      preview --limit 3` 可运行并输出 5000 个候选；重复 `preview --limit 5` 的 candidate_id 序列稳定为
+      `9864fc2ed46ed2e3,c382bc687da707c2,bfb41947bc1e7092,a3091ad304594cee,4c2ccf3a995fd903`；该任务只定义
+      research/observe-only 参数空间和稳定 candidate id contract，不生成 production candidate、不修改
+      baseline/production weights、不触发 broker 或 trading 行为
+    - '`config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml` 存在；所有业务阈值来自
+      YAML；`aits etf dynamic-v3-rescue sweep-config validate/preview` 可运行；candidate_id
+      在相同配置、strategy family、code/data manifest 下稳定；空 parameter_space、缺 hard_constraints、缺
+      scoring 和超过 max_candidates 均 fail closed；focused tests 通过'
+    - '2026-06-06: 新增并进入 IN_PROGRESS，原因：TRADING-092 已确认不应继续手工迭代单个 rescue 版本，需要先建立可审计参数空间和候选
+      ID contract。2026-06-06: baseline 实现完成并转入 VALIDATING；sample config validation
+      PASS，candidate preview count 5000；验证为 focused tests、legacy dynamic-v3 tests、Reader
+      Brief/report index、ruff、compileall、diff check 和全量 pytest 通过。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：当前默认 config 的 validate/preview、candidate id 稳定性和 fail-closed test
+      coverage 均满足验收；`tests/test_etf_dynamic_v3_parameter_research.py -q` 为 16 passed，docs
+      freshness、documentation contract 和 diff check 通过。'
+    raw_line: '|TRADING-093|ETF portfolio research/Dynamic v3 Rescue Parameter Sweep
+      Config Schema|P0|DONE|系统验证|详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+      v3 rescue parameter sweep config schema 已完成并通过当前默认 config 复核；`config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml`
+      存在，业务阈值集中在 YAML；`aits etf dynamic-v3-rescue sweep-config validate` 为 `PASS`，`candidate_preview_count=5000`、`failed_check_count=0`、`production_candidate_generated=false`、`production_effect=none`；`sweep-config
+      preview --limit 3` 可运行并输出 5000 个候选；重复 `preview --limit 5` 的 candidate_id 序列稳定为
+      `9864fc2ed46ed2e3,c382bc687da707c2,bfb41947bc1e7092,a3091ad304594cee,4c2ccf3a995fd903`；该任务只定义
+      research/observe-only 参数空间和稳定 candidate id contract，不生成 production candidate、不修改
+      baseline/production weights、不触发 broker 或 trading 行为|`config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml`
+      存在；所有业务阈值来自 YAML；`aits etf dynamic-v3-rescue sweep-config validate/preview`
+      可运行；candidate_id 在相同配置、strategy family、code/data manifest 下稳定；空 parameter_space、缺
+      hard_constraints、缺 scoring 和超过 max_candidates 均 fail closed；focused tests 通过|2026-06-06:
+      新增并进入 IN_PROGRESS，原因：TRADING-092 已确认不应继续手工迭代单个 rescue 版本，需要先建立可审计参数空间和候选 ID
+      contract。2026-06-06: baseline 实现完成并转入 VALIDATING；sample config validation PASS，candidate
+      preview count 5000；验证为 focused tests、legacy dynamic-v3 tests、Reader Brief/report
+      index、ruff、compileall、diff check 和全量 pytest 通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前默认
+      config 的 validate/preview、candidate id 稳定性和 fail-closed test coverage 均满足验收；`tests/test_etf_dynamic_v3_parameter_research.py
+      -q` 为 16 passed，docs freshness、documentation contract 和 diff check 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e4adbf7cec519d6c72e89c2a
+  task_id: TRADING-093
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-06-06: 新增并进入 IN_PROGRESS，原因：TRADING-092 已确认不应继续手工迭代单个 rescue 版本，需要先建立可审计参数空间和候选
+      ID contract。2026-06-06: baseline 实现完成并转入 VALIDATING；sample config validation
+      PASS，candidate preview count 5000；验证为 focused tests、legacy dynamic-v3 tests、Reader
+      Brief/report index、ruff、compileall、diff check 和全量 pytest 通过。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：当前默认 config 的 validate/preview、candidate id 稳定性和 fail-closed test
+      coverage 均满足验收；`tests/test_etf_dynamic_v3_parameter_research.py -q` 为 16 passed，docs
+      freshness、documentation contract 和 diff check 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e4adbf7cec519d6c72e89c2ae9cfc84ad4e3d76f45d411cdea42af7d247bf694
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-093
+  - ETF portfolio research/Dynamic v3 Rescue Parameter Sweep Config Schema
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+    v3 rescue parameter sweep config schema 已完成并通过当前默认 config 复核；`config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml`
+    存在，业务阈值集中在 YAML；`aits etf dynamic-v3-rescue sweep-config validate` 为 `PASS`，`candidate_preview_count=5000`、`failed_check_count=0`、`production_candidate_generated=false`、`production_effect=none`；`sweep-config
+    preview --limit 3` 可运行并输出 5000 个候选；重复 `preview --limit 5` 的 candidate_id 序列稳定为
+    `9864fc2ed46ed2e3,c382bc687da707c2,bfb41947bc1e7092,a3091ad304594cee,4c2ccf3a995fd903`；该任务只定义
+    research/observe-only 参数空间和稳定 candidate id contract，不生成 production candidate、不修改
+    baseline/production weights、不触发 broker 或 trading 行为
+  - '`config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml` 存在；所有业务阈值来自
+    YAML；`aits etf dynamic-v3-rescue sweep-config validate/preview` 可运行；candidate_id
+    在相同配置、strategy family、code/data manifest 下稳定；空 parameter_space、缺 hard_constraints、缺
+    scoring 和超过 max_candidates 均 fail closed；focused tests 通过'
+  - '2026-06-06: 新增并进入 IN_PROGRESS，原因：TRADING-092 已确认不应继续手工迭代单个 rescue 版本，需要先建立可审计参数空间和候选
+    ID contract。2026-06-06: baseline 实现完成并转入 VALIDATING；sample config validation PASS，candidate
+    preview count 5000；验证为 focused tests、legacy dynamic-v3 tests、Reader Brief/report
+    index、ruff、compileall、diff check 和全量 pytest 通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前默认
+    config 的 validate/preview、candidate id 稳定性和 fail-closed test coverage 均满足验收；`tests/test_etf_dynamic_v3_parameter_research.py
+    -q` 为 16 passed，docs freshness、documentation contract 和 diff check 通过。'
+  docs_links:
+  - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
+  terminal: true
+  raw_row_sha256: e4adbf7cec519d6c72e89c2ae9cfc84ad4e3d76f45d411cdea42af7d247bf694
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 00b33138ff88a4a1432959e7b03981f0b0a3ff61a6277c68e986a325f9816ffd

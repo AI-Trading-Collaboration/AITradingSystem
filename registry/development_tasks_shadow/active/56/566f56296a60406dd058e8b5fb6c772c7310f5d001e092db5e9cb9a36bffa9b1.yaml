@@ -1,0 +1,167 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-810_to_815_TAIL_RISK_POLICY_FAMILY
+  title: null
+  domain: Controlled strategy research / value-surface policy kill, benchmark-first
+    tail-risk policy contract, classifier prototype, conservative horizon risk filter,
+    drawdown guard, controlled review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-810_to_815_Tail_Risk_Policy_Family.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-810_to_815_Tail_Risk_Policy_Family.md`；owner
+    要求基于 TRADING-809 `KILL_VALUE_SURFACE_AS_ACTION_POLICY` 与 holdout_pass_rate=0，把
+    value surface 正式降级为 diagnostic/residual/tail-loss/horizon-risk/fallback-trigger
+    用途，并把主研究线转向 benchmark-first、tail-risk-aware、low-turnover、fallback-driven conservative
+    horizon filter；不得继续无条件扩大 value surface、微调 horizon selector 或 utility boundary、把
+    GBDT/NN/RL 直接策略化、扩展 regret casebook 或进入 paper-shadow
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI：`aits research strategies value-surface-policy-kill-diagnostic-downgrade`、`benchmark-first-tail-risk-policy-contract`、`tail-loss-avoidance-classifier-prototype`、`conservative-horizon-risk-filter`、`benchmark-fallback-drawdown-guard-prototype`
+      和 `tail-risk-policy-family-controlled-review`；TRADING-810 必须输出 action_policy_allowed=false、promotion_gate_allowed=false
+      和 allowed_uses，只允许 diagnostic/residual_analysis/tail_loss_attribution/horizon_risk_signal/benchmark_fallback_trigger；TRADING-811
+      必须定义 base_policy、allowed_deviation、risk_downshift_condition、risk_recovery_condition、max_turnover_budget、fallback_policy、review_interval；TRADING-812
+      标签只能用于 gate value surface/aggressive action，不能直接决定仓位；TRADING-813 必须把 1d/5d/10d
+      设为默认可用、20d quarantine、60d fallback-only；TRADING-814 必须比较 fallback/drawdown guard
+      的 mean_delta、tail_loss_contribution、losing_avg、max_drawdown、turnover、cost 和
+      beat_rate_retention；TRADING-815 决策只能为 `CONTINUE
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1347
+    row_sha256: d6013591939934b81461dfa29fa72df74fa09ee6d52d1b33a9765b66a294844a
+    cell_count: 12
+    all_cells:
+    - TRADING-810_to_815_TAIL_RISK_POLICY_FAMILY
+    - Controlled strategy research / value-surface policy kill, benchmark-first tail-risk
+      policy contract, classifier prototype, conservative horizon risk filter, drawdown
+      guard, controlled review
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-810_to_815_Tail_Risk_Policy_Family.md`；owner 要求基于
+      TRADING-809 `KILL_VALUE_SURFACE_AS_ACTION_POLICY` 与 holdout_pass_rate=0，把 value
+      surface 正式降级为 diagnostic/residual/tail-loss/horizon-risk/fallback-trigger 用途，并把主研究线转向
+      benchmark-first、tail-risk-aware、low-turnover、fallback-driven conservative horizon
+      filter；不得继续无条件扩大 value surface、微调 horizon selector 或 utility boundary、把 GBDT/NN/RL
+      直接策略化、扩展 regret casebook 或进入 paper-shadow
+    - 新增 CLI：`aits research strategies value-surface-policy-kill-diagnostic-downgrade`、`benchmark-first-tail-risk-policy-contract`、`tail-loss-avoidance-classifier-prototype`、`conservative-horizon-risk-filter`、`benchmark-fallback-drawdown-guard-prototype`
+      和 `tail-risk-policy-family-controlled-review`；TRADING-810 必须输出 action_policy_allowed=false、promotion_gate_allowed=false
+      和 allowed_uses，只允许 diagnostic/residual_analysis/tail_loss_attribution/horizon_risk_signal/benchmark_fallback_trigger；TRADING-811
+      必须定义 base_policy、allowed_deviation、risk_downshift_condition、risk_recovery_condition、max_turnover_budget、fallback_policy、review_interval；TRADING-812
+      标签只能用于 gate value surface/aggressive action，不能直接决定仓位；TRADING-813 必须把 1d/5d/10d
+      设为默认可用、20d quarantine、60d fallback-only；TRADING-814 必须比较 fallback/drawdown guard
+      的 mean_delta、tail_loss_contribution、losing_avg、max_drawdown、turnover、cost 和
+      beat_rate_retention；TRADING-815 决策只能为 `CONTINUE
+    - WATCHLIST
+    - KILL
+    - PIVOT
+    - DATA_REQUIRED`；所有 safety flags false
+    - '2026-06-21: 新增并进入 IN_PROGRESS，原因：TRADING-809 已给出 `KILL_VALUE_SURFACE_AS_ACTION_POLICY`，说明
+      value surface 有诊断价值但不适合作为直接仓位或 horizon action policy；下一步必须把策略问题改写为 benchmark-first
+      tail-risk avoidance / fallback policy family，并通过 controlled review 验证是否降低 tail
+      loss、控制 turnover/cost、保持 holdout 和解释性。2026-06-21: 实现完成并进入 VALIDATING；真实 CLI
+      run 输出 TRADING-810 `VALUE_SURFACE_POLICY_KILLED_DIAGNOSTIC_DOWNGRADE_COMPLETE`、action_policy_allowed=false、allowed_use_count=5、prior_horizon_selector_decision=`KILL_VALUE_SURFACE_AS_ACTION_POLICY`；TRADING-811
+      `BENCHMARK_FIRST_TAIL_RISK_POLICY_CONTRACT_DEFINED`、base_policy=`benchmark_or_simple_trend_static_allocation`、allowed_deviation_count=4、risk_downshift_condition_count=4、fallback_policy=`benchmark_first`、review_interval=`daily`；TRADING-812
+      `TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPED`、case_count=2152、label_case_count=2152、large_loss_case_count=286、tail_loss_case_count=56、benchmark_underperformance_case_count=554、long_horizon_failure_case_count=192、gate_block_count=554、strategy_signal_generated=false；TRADING-813
+      `CONSERVATIVE_HORIZON_RISK_FILTER_REVIEWED`、allowed_horizon_count=3、quarantined_horizon_count=1、fallback_only_horizon_count=1、fallback_count=528、tail_loss_after_filter=0.314787、selector_mode=`risk_filter_not_optimal_horizon_selector`；TRADING-814
+      `BENCHMARK_FALLBACK_DRAWDOWN_GUARD_REVIEWED`、variant_count=5、best_variant_by_tail_loss=`tail_risk_benchmark_fallback`、best_variant_tail_loss_reduction=1.0、best_variant_turnover_cost_not_worse=true、holdout_pass_rate=1.0、best
+      mean_delta_vs_benchmark=0.003607；TRADING-815 `TAIL_RISK_POLICY_FAMILY_CONTROLLED_REVIEW_COMPLETE`、tail_risk_policy_decision=`CONTINUE`、tail_loss_condition_met=true、turnover_cost_condition_met=true、holdout_condition_met=true、explainability_condition_met=true；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、完整 controlled strategy pytest、Ruff、Black check、compileall、fast-unit、contract-validation
+      和 report-validation 均已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T144110Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T144914Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T145722Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-810_to_815_TAIL_RISK_POLICY_FAMILY|Controlled strategy research
+      / value-surface policy kill, benchmark-first tail-risk policy contract, classifier
+      prototype, conservative horizon risk filter, drawdown guard, controlled review|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-810_to_815_Tail_Risk_Policy_Family.md`；owner
+      要求基于 TRADING-809 `KILL_VALUE_SURFACE_AS_ACTION_POLICY` 与 holdout_pass_rate=0，把
+      value surface 正式降级为 diagnostic/residual/tail-loss/horizon-risk/fallback-trigger
+      用途，并把主研究线转向 benchmark-first、tail-risk-aware、low-turnover、fallback-driven conservative
+      horizon filter；不得继续无条件扩大 value surface、微调 horizon selector 或 utility boundary、把
+      GBDT/NN/RL 直接策略化、扩展 regret casebook 或进入 paper-shadow|新增 CLI：`aits research strategies
+      value-surface-policy-kill-diagnostic-downgrade`、`benchmark-first-tail-risk-policy-contract`、`tail-loss-avoidance-classifier-prototype`、`conservative-horizon-risk-filter`、`benchmark-fallback-drawdown-guard-prototype`
+      和 `tail-risk-policy-family-controlled-review`；TRADING-810 必须输出 action_policy_allowed=false、promotion_gate_allowed=false
+      和 allowed_uses，只允许 diagnostic/residual_analysis/tail_loss_attribution/horizon_risk_signal/benchmark_fallback_trigger；TRADING-811
+      必须定义 base_policy、allowed_deviation、risk_downshift_condition、risk_recovery_condition、max_turnover_budget、fallback_policy、review_interval；TRADING-812
+      标签只能用于 gate value surface/aggressive action，不能直接决定仓位；TRADING-813 必须把 1d/5d/10d
+      设为默认可用、20d quarantine、60d fallback-only；TRADING-814 必须比较 fallback/drawdown guard
+      的 mean_delta、tail_loss_contribution、losing_avg、max_drawdown、turnover、cost 和
+      beat_rate_retention；TRADING-815 决策只能为 `CONTINUE|WATCHLIST|KILL|PIVOT|DATA_REQUIRED`；所有
+      safety flags false|2026-06-21: 新增并进入 IN_PROGRESS，原因：TRADING-809 已给出 `KILL_VALUE_SURFACE_AS_ACTION_POLICY`，说明
+      value surface 有诊断价值但不适合作为直接仓位或 horizon action policy；下一步必须把策略问题改写为 benchmark-first
+      tail-risk avoidance / fallback policy family，并通过 controlled review 验证是否降低 tail
+      loss、控制 turnover/cost、保持 holdout 和解释性。2026-06-21: 实现完成并进入 VALIDATING；真实 CLI
+      run 输出 TRADING-810 `VALUE_SURFACE_POLICY_KILLED_DIAGNOSTIC_DOWNGRADE_COMPLETE`、action_policy_allowed=false、allowed_use_count=5、prior_horizon_selector_decision=`KILL_VALUE_SURFACE_AS_ACTION_POLICY`；TRADING-811
+      `BENCHMARK_FIRST_TAIL_RISK_POLICY_CONTRACT_DEFINED`、base_policy=`benchmark_or_simple_trend_static_allocation`、allowed_deviation_count=4、risk_downshift_condition_count=4、fallback_policy=`benchmark_first`、review_interval=`daily`；TRADING-812
+      `TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPED`、case_count=2152、label_case_count=2152、large_loss_case_count=286、tail_loss_case_count=56、benchmark_underperformance_case_count=554、long_horizon_failure_case_count=192、gate_block_count=554、strategy_signal_generated=false；TRADING-813
+      `CONSERVATIVE_HORIZON_RISK_FILTER_REVIEWED`、allowed_horizon_count=3、quarantined_horizon_count=1、fallback_only_horizon_count=1、fallback_count=528、tail_loss_after_filter=0.314787、selector_mode=`risk_filter_not_optimal_horizon_selector`；TRADING-814
+      `BENCHMARK_FALLBACK_DRAWDOWN_GUARD_REVIEWED`、variant_count=5、best_variant_by_tail_loss=`tail_risk_benchmark_fallback`、best_variant_tail_loss_reduction=1.0、best_variant_turnover_cost_not_worse=true、holdout_pass_rate=1.0、best
+      mean_delta_vs_benchmark=0.003607；TRADING-815 `TAIL_RISK_POLICY_FAMILY_CONTROLLED_REVIEW_COMPLETE`、tail_risk_policy_decision=`CONTINUE`、tail_loss_condition_met=true、turnover_cost_condition_met=true、holdout_condition_met=true、explainability_condition_met=true；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、完整 controlled strategy pytest、Ruff、Black check、compileall、fast-unit、contract-validation
+      和 report-validation 均已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T144110Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T144914Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T145722Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d6013591939934b81461dfa2
+  task_id: TRADING-810_to_815_TAIL_RISK_POLICY_FAMILY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: WATCHLIST
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d6013591939934b81461dfa29fa72df74fa09ee6d52d1b33a9765b66a294844a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-810_to_815_TAIL_RISK_POLICY_FAMILY
+  - Controlled strategy research / value-surface policy kill, benchmark-first tail-risk
+    policy contract, classifier prototype, conservative horizon risk filter, drawdown
+    guard, controlled review
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-810_to_815_Tail_Risk_Policy_Family.md`；owner 要求基于
+    TRADING-809 `KILL_VALUE_SURFACE_AS_ACTION_POLICY` 与 holdout_pass_rate=0，把 value
+    surface 正式降级为 diagnostic/residual/tail-loss/horizon-risk/fallback-trigger 用途，并把主研究线转向
+    benchmark-first、tail-risk-aware、low-turnover、fallback-driven conservative horizon
+    filter；不得继续无条件扩大 value surface、微调 horizon selector 或 utility boundary、把 GBDT/NN/RL
+    直接策略化、扩展 regret casebook 或进入 paper-shadow
+  - 新增 CLI：`aits research strategies value-surface-policy-kill-diagnostic-downgrade`、`benchmark-first-tail-risk-policy-contract`、`tail-loss-avoidance-classifier-prototype`、`conservative-horizon-risk-filter`、`benchmark-fallback-drawdown-guard-prototype`
+    和 `tail-risk-policy-family-controlled-review`；TRADING-810 必须输出 action_policy_allowed=false、promotion_gate_allowed=false
+    和 allowed_uses，只允许 diagnostic/residual_analysis/tail_loss_attribution/horizon_risk_signal/benchmark_fallback_trigger；TRADING-811
+    必须定义 base_policy、allowed_deviation、risk_downshift_condition、risk_recovery_condition、max_turnover_budget、fallback_policy、review_interval；TRADING-812
+    标签只能用于 gate value surface/aggressive action，不能直接决定仓位；TRADING-813 必须把 1d/5d/10d
+    设为默认可用、20d quarantine、60d fallback-only；TRADING-814 必须比较 fallback/drawdown guard
+    的 mean_delta、tail_loss_contribution、losing_avg、max_drawdown、turnover、cost 和 beat_rate_retention；TRADING-815
+    决策只能为 `CONTINUE
+  - WATCHLIST
+  docs_links:
+  - docs/requirements/TRADING-810_to_815_Tail_Risk_Policy_Family.md
+  terminal: false
+  raw_row_sha256: d6013591939934b81461dfa29fa72df74fa09ee6d52d1b33a9765b66a294844a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e3baab53b5b62f6e3dae0bd079f2084a1691f82ed53396fc95fbc2131d2d4c94

@@ -1,0 +1,135 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-046
+  title: null
+  domain: 基本面/SEC PIT Shadow Observe Rolling Monitor
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/sec_pit_shadow_monitor_2026-05-27.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/sec_pit_shadow_monitor_2026-05-27.md`；已完成只读
+    rolling monitor，消费 TRADING-044/045 artifacts，为 `capex_intensity` observe-only
+    lane 生成每日/每周滚动状态，不新增因子、不改权重、不触发交易
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits sec-pit shadow-monitor` / `--latest`；输出 summary JSON/Markdown、rolling
+      metrics CSV、warning events CSV；TRADING-046A 后状态口径增加 `MONITORING_ACTIVE`，并把 `INSUFFICIENT_MONITORING_SAMPLE`
+      保留为历史兼容状态；baseline coverage gate 未通过或 factor underperformance 未经 RankIC + outcome
+      双重确认时不得 rollback；所有输出固定 `production_effect=none`、`manual_review_required=true`；daily
+      task dashboard 新增只读 `SEC PIT Shadow Monitor` 卡片；专项测试覆盖 schema、Markdown、rolling
+      metrics、warning events、insufficient/OK/rollback gating、dashboard read-only、determinism
+      和 no production config writes
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 385
+    row_sha256: 337053437f1e016357a984c3c93a7cb1d6fc97fe3e2d125d8af4e780c613e28f
+    cell_count: 8
+    all_cells:
+    - TRADING-046
+    - 基本面/SEC PIT Shadow Observe Rolling Monitor
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/sec_pit_shadow_monitor_2026-05-27.md`；已完成只读 rolling
+      monitor，消费 TRADING-044/045 artifacts，为 `capex_intensity` observe-only lane 生成每日/每周滚动状态，不新增因子、不改权重、不触发交易
+    - 新增 `aits sec-pit shadow-monitor` / `--latest`；输出 summary JSON/Markdown、rolling
+      metrics CSV、warning events CSV；TRADING-046A 后状态口径增加 `MONITORING_ACTIVE`，并把 `INSUFFICIENT_MONITORING_SAMPLE`
+      保留为历史兼容状态；baseline coverage gate 未通过或 factor underperformance 未经 RankIC + outcome
+      双重确认时不得 rollback；所有输出固定 `production_effect=none`、`manual_review_required=true`；daily
+      task dashboard 新增只读 `SEC PIT Shadow Monitor` 卡片；专项测试覆盖 schema、Markdown、rolling
+      metrics、warning events、insufficient/OK/rollback gating、dashboard read-only、determinism
+      和 no production config writes
+    - '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-045 已修正 baseline coverage gate 误判，当前剩余
+      `INSUFFICIENT_MONITORING_SAMPLE` 需要通过持续滚动监控沉淀证据，而不是继续扩展因子或调整权重。2026-05-27: 从
+      IN_PROGRESS 改为 DONE，原因：已完成核心 monitor、CLI、dashboard、runbook、artifact catalog、learning
+      path、system flow 和测试；验证通过 `python -m pytest tests/trading_engine/test_sec_pit_shadow_monitor.py
+      -q`（7 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、TRADING-044/045
+      回归、全量 `python -m pytest -q`（1324 passed, 1 warning）、全量 ruff、触达 Python Black
+      check 和 CLI help smoke。'
+    raw_line: '|TRADING-046|基本面/SEC PIT Shadow Observe Rolling Monitor|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/sec_pit_shadow_monitor_2026-05-27.md`；已完成只读 rolling monitor，消费
+      TRADING-044/045 artifacts，为 `capex_intensity` observe-only lane 生成每日/每周滚动状态，不新增因子、不改权重、不触发交易|新增
+      `aits sec-pit shadow-monitor` / `--latest`；输出 summary JSON/Markdown、rolling
+      metrics CSV、warning events CSV；TRADING-046A 后状态口径增加 `MONITORING_ACTIVE`，并把 `INSUFFICIENT_MONITORING_SAMPLE`
+      保留为历史兼容状态；baseline coverage gate 未通过或 factor underperformance 未经 RankIC + outcome
+      双重确认时不得 rollback；所有输出固定 `production_effect=none`、`manual_review_required=true`；daily
+      task dashboard 新增只读 `SEC PIT Shadow Monitor` 卡片；专项测试覆盖 schema、Markdown、rolling
+      metrics、warning events、insufficient/OK/rollback gating、dashboard read-only、determinism
+      和 no production config writes|2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-045 已修正
+      baseline coverage gate 误判，当前剩余 `INSUFFICIENT_MONITORING_SAMPLE` 需要通过持续滚动监控沉淀证据，而不是继续扩展因子或调整权重。2026-05-27:
+      从 IN_PROGRESS 改为 DONE，原因：已完成核心 monitor、CLI、dashboard、runbook、artifact catalog、learning
+      path、system flow 和测试；验证通过 `python -m pytest tests/trading_engine/test_sec_pit_shadow_monitor.py
+      -q`（7 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、TRADING-044/045
+      回归、全量 `python -m pytest -q`（1324 passed, 1 warning）、全量 ruff、触达 Python Black
+      check 和 CLI help smoke。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-337053437f1e016357a984c3
+  task_id: TRADING-046
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-045 已修正 baseline coverage gate
+      误判，当前剩余 `INSUFFICIENT_MONITORING_SAMPLE` 需要通过持续滚动监控沉淀证据，而不是继续扩展因子或调整权重。2026-05-27:
+      从 IN_PROGRESS 改为 DONE，原因：已完成核心 monitor、CLI、dashboard、runbook、artifact catalog、learning
+      path、system flow 和测试；验证通过 `python -m pytest tests/trading_engine/test_sec_pit_shadow_monitor.py
+      -q`（7 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、TRADING-044/045
+      回归、全量 `python -m pytest -q`（1324 passed, 1 warning）、全量 ruff、触达 Python Black
+      check 和 CLI help smoke。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:337053437f1e016357a984c3c93a7cb1d6fc97fe3e2d125d8af4e780c613e28f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-046
+  - 基本面/SEC PIT Shadow Observe Rolling Monitor
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/sec_pit_shadow_monitor_2026-05-27.md`；已完成只读 rolling monitor，消费
+    TRADING-044/045 artifacts，为 `capex_intensity` observe-only lane 生成每日/每周滚动状态，不新增因子、不改权重、不触发交易
+  - 新增 `aits sec-pit shadow-monitor` / `--latest`；输出 summary JSON/Markdown、rolling
+    metrics CSV、warning events CSV；TRADING-046A 后状态口径增加 `MONITORING_ACTIVE`，并把 `INSUFFICIENT_MONITORING_SAMPLE`
+    保留为历史兼容状态；baseline coverage gate 未通过或 factor underperformance 未经 RankIC + outcome
+    双重确认时不得 rollback；所有输出固定 `production_effect=none`、`manual_review_required=true`；daily
+    task dashboard 新增只读 `SEC PIT Shadow Monitor` 卡片；专项测试覆盖 schema、Markdown、rolling
+    metrics、warning events、insufficient/OK/rollback gating、dashboard read-only、determinism
+    和 no production config writes
+  - '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-045 已修正 baseline coverage gate 误判，当前剩余
+    `INSUFFICIENT_MONITORING_SAMPLE` 需要通过持续滚动监控沉淀证据，而不是继续扩展因子或调整权重。2026-05-27: 从 IN_PROGRESS
+    改为 DONE，原因：已完成核心 monitor、CLI、dashboard、runbook、artifact catalog、learning path、system
+    flow 和测试；验证通过 `python -m pytest tests/trading_engine/test_sec_pit_shadow_monitor.py
+    -q`（7 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、TRADING-044/045
+    回归、全量 `python -m pytest -q`（1324 passed, 1 warning）、全量 ruff、触达 Python Black check
+    和 CLI help smoke。'
+  docs_links:
+  - docs/requirements/sec_pit_shadow_monitor_2026-05-27.md
+  terminal: true
+  raw_row_sha256: 337053437f1e016357a984c3c93a7cb1d6fc97fe3e2d125d8af4e780c613e28f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8fe30bf8c42072ebeb7e6626e54a887c3f9422dae4eeb44a0902cc14866c6d3f

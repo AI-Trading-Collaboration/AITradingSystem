@@ -1,0 +1,150 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2287_CANDIDATE_GENERATOR_CONFIDENCE_SCALING_REFINEMENT_PLAN
+  title: null
+  domain: Research trends / regenerated candidate confidence scaling refinement plan
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 confidence scaling plan；TRADING-2288 执行 adjusted-confidence
+    regenerated artifacts
+  requirement_refs:
+  - docs/requirements/TRADING-2287_Candidate_Generator_Confidence_Scaling_Refinement_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2287_Candidate_Generator_Confidence_Scaling_Refinement_Plan.md`；已读取
+    TRADING-2286 inconclusive diagnostics、TRADING-2285 actual-path validation outputs
+    和 TRADING-2284 generator context。本批只生成 confidence scaling refinement plan，不修改
+    generator、不重新生成 candidate artifacts、不重跑 actual-path validation、不做 owner review、promotion、paper-shadow、production
+    或 broker action。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends candidate-generator-confidence-scaling-refinement-plan`；生成
+      confidence failure diagnosis、confidence distribution retargeting、candidate-specific
+      scaling proposals、bounded parameter grid、guardrails、expected risk impact 和 TRADING-2288
+      implementation plan；真实 run 读取 95,220 条 prediction/outcome records，其中 73,188
+      条 eligible；三类 candidate high confidence ratio 均为 0，dominant failure mode 均为
+      `INSUFFICIENT_HIGH_CONVICTION_RULE`；生成 9 条 proposals 和 27 个 parameter sets；所有
+      outputs 固定 promotion/paper-shadow/production false、broker_action=none、regeneration_executed=false、actual_path_validation_executed=false；focused
+      tests、full pytest、docs freshness、documentation contract、contract-validation、task-register
+      consistency、Ruff、compileall 和 diff check 通过。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 164
+    row_sha256: fc8d2d9d2dd7c5fcee34bec8794543c4d641591b0ce923651a97b88a271d34d3
+    cell_count: 8
+    all_cells:
+    - TRADING-2287_CANDIDATE_GENERATOR_CONFIDENCE_SCALING_REFINEMENT_PLAN
+    - Research trends / regenerated candidate confidence scaling refinement plan
+    - P0
+    - DONE
+    - 项目 owner 后续复核 confidence scaling plan；TRADING-2288 执行 adjusted-confidence regenerated
+      artifacts
+    - 详见 `docs/requirements/TRADING-2287_Candidate_Generator_Confidence_Scaling_Refinement_Plan.md`；已读取
+      TRADING-2286 inconclusive diagnostics、TRADING-2285 actual-path validation outputs
+      和 TRADING-2284 generator context。本批只生成 confidence scaling refinement plan，不修改
+      generator、不重新生成 candidate artifacts、不重跑 actual-path validation、不做 owner review、promotion、paper-shadow、production
+      或 broker action。
+    - 新增 `aits research trends candidate-generator-confidence-scaling-refinement-plan`；生成
+      confidence failure diagnosis、confidence distribution retargeting、candidate-specific
+      scaling proposals、bounded parameter grid、guardrails、expected risk impact 和 TRADING-2288
+      implementation plan；真实 run 读取 95,220 条 prediction/outcome records，其中 73,188
+      条 eligible；三类 candidate high confidence ratio 均为 0，dominant failure mode 均为
+      `INSUFFICIENT_HIGH_CONVICTION_RULE`；生成 9 条 proposals 和 27 个 parameter sets；所有
+      outputs 固定 promotion/paper-shadow/production false、broker_action=none、regeneration_executed=false、actual_path_validation_executed=false；focused
+      tests、full pytest、docs freshness、documentation contract、contract-validation、task-register
+      consistency、Ruff、compileall 和 diff check 通过。
+    - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；范围限定为 confidence scaling refinement
+      plan 和 2288 implementation spec。2026-06-30: 实现完成并归档为 DONE；验证通过 focused parallel
+      pytest 19 passed、full parallel pytest 3576 passed / 643 warnings、contract-validation
+      193 passed；TRADING-2281 permanently inconclusive 和 TRADING-2285 inconclusive
+      结论不变。'
+    raw_line: '|TRADING-2287_CANDIDATE_GENERATOR_CONFIDENCE_SCALING_REFINEMENT_PLAN|Research
+      trends / regenerated candidate confidence scaling refinement plan|P0|DONE|项目
+      owner 后续复核 confidence scaling plan；TRADING-2288 执行 adjusted-confidence regenerated
+      artifacts|详见 `docs/requirements/TRADING-2287_Candidate_Generator_Confidence_Scaling_Refinement_Plan.md`；已读取
+      TRADING-2286 inconclusive diagnostics、TRADING-2285 actual-path validation outputs
+      和 TRADING-2284 generator context。本批只生成 confidence scaling refinement plan，不修改
+      generator、不重新生成 candidate artifacts、不重跑 actual-path validation、不做 owner review、promotion、paper-shadow、production
+      或 broker action。|新增 `aits research trends candidate-generator-confidence-scaling-refinement-plan`；生成
+      confidence failure diagnosis、confidence distribution retargeting、candidate-specific
+      scaling proposals、bounded parameter grid、guardrails、expected risk impact 和 TRADING-2288
+      implementation plan；真实 run 读取 95,220 条 prediction/outcome records，其中 73,188
+      条 eligible；三类 candidate high confidence ratio 均为 0，dominant failure mode 均为
+      `INSUFFICIENT_HIGH_CONVICTION_RULE`；生成 9 条 proposals 和 27 个 parameter sets；所有
+      outputs 固定 promotion/paper-shadow/production false、broker_action=none、regeneration_executed=false、actual_path_validation_executed=false；focused
+      tests、full pytest、docs freshness、documentation contract、contract-validation、task-register
+      consistency、Ruff、compileall 和 diff check 通过。|2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；范围限定为
+      confidence scaling refinement plan 和 2288 implementation spec。2026-06-30: 实现完成并归档为
+      DONE；验证通过 focused parallel pytest 19 passed、full parallel pytest 3576 passed
+      / 643 warnings、contract-validation 193 passed；TRADING-2281 permanently inconclusive
+      和 TRADING-2285 inconclusive 结论不变。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fc8d2d9d2dd7c5fcee34bec8
+  task_id: TRADING-2287_CANDIDATE_GENERATOR_CONFIDENCE_SCALING_REFINEMENT_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 confidence scaling plan；TRADING-2288 执行 adjusted-confidence
+      regenerated artifacts
+    notes: '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；范围限定为 confidence scaling refinement
+      plan 和 2288 implementation spec。2026-06-30: 实现完成并归档为 DONE；验证通过 focused parallel
+      pytest 19 passed、full parallel pytest 3576 passed / 643 warnings、contract-validation
+      193 passed；TRADING-2281 permanently inconclusive 和 TRADING-2285 inconclusive
+      结论不变。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:fc8d2d9d2dd7c5fcee34bec8794543c4d641591b0ce923651a97b88a271d34d3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2287_CANDIDATE_GENERATOR_CONFIDENCE_SCALING_REFINEMENT_PLAN
+  - Research trends / regenerated candidate confidence scaling refinement plan
+  - P0
+  - DONE
+  - 项目 owner 后续复核 confidence scaling plan；TRADING-2288 执行 adjusted-confidence regenerated
+    artifacts
+  - 详见 `docs/requirements/TRADING-2287_Candidate_Generator_Confidence_Scaling_Refinement_Plan.md`；已读取
+    TRADING-2286 inconclusive diagnostics、TRADING-2285 actual-path validation outputs
+    和 TRADING-2284 generator context。本批只生成 confidence scaling refinement plan，不修改
+    generator、不重新生成 candidate artifacts、不重跑 actual-path validation、不做 owner review、promotion、paper-shadow、production
+    或 broker action。
+  - 新增 `aits research trends candidate-generator-confidence-scaling-refinement-plan`；生成
+    confidence failure diagnosis、confidence distribution retargeting、candidate-specific
+    scaling proposals、bounded parameter grid、guardrails、expected risk impact 和 TRADING-2288
+    implementation plan；真实 run 读取 95,220 条 prediction/outcome records，其中 73,188 条
+    eligible；三类 candidate high confidence ratio 均为 0，dominant failure mode 均为 `INSUFFICIENT_HIGH_CONVICTION_RULE`；生成
+    9 条 proposals 和 27 个 parameter sets；所有 outputs 固定 promotion/paper-shadow/production
+    false、broker_action=none、regeneration_executed=false、actual_path_validation_executed=false；focused
+    tests、full pytest、docs freshness、documentation contract、contract-validation、task-register
+    consistency、Ruff、compileall 和 diff check 通过。
+  - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；范围限定为 confidence scaling refinement
+    plan 和 2288 implementation spec。2026-06-30: 实现完成并归档为 DONE；验证通过 focused parallel
+    pytest 19 passed、full parallel pytest 3576 passed / 643 warnings、contract-validation
+    193 passed；TRADING-2281 permanently inconclusive 和 TRADING-2285 inconclusive 结论不变。'
+  docs_links:
+  - docs/requirements/TRADING-2287_Candidate_Generator_Confidence_Scaling_Refinement_Plan.md
+  terminal: true
+  raw_row_sha256: fc8d2d9d2dd7c5fcee34bec8794543c4d641591b0ce923651a97b88a271d34d3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: efa38c96ba4e1698af153a36e5eb4085541b3872c41bda0bc5d0f3af40ab8b8e

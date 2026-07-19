@@ -1,0 +1,122 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-266_to_270_SMOOTHED_FORWARD_EVIDENCE_OPERATIONS_AND_PRIMARY_CANDIDATE_READINESS
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue smoothed progress/dashboard/event monitor/readiness/owner
+    renewal
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 研究流程：积累独立forward/PIT/DQ/cost/holdout证据；architecture coordinator：继续剩余G2.4
+    matrix
+  requirement_refs:
+  - docs/requirements/TRADING-266_to_270_Smoothed_Forward_Evidence_Operations_and_Primary_Candidate_Readiness.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-266_to_270_Smoothed_Forward_Evidence_Operations_and_Primary_Candidate_Readiness.md`。G2.4CR
+    canonical closeout已完成；旧2026-06-13 DONE记录保留历史但已被G2.4CP/CQ source truth supersede。当前candidate=null、Binding=`targets=[]/NOT_REGISTERED`、Switch
+    proposed=null，不得回填固定3d/3 targets/10-5-5 requirements；真实candidate/targets出现后再扩展非空业务路径。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 15 callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output
+      live upstream/cutoff validation；Binding-only candidate/targets；outcome/classification
+      exact target lineage；Dashboard/Monitor同Progress lineage；Recheck与CQ Switch exact
+      candidate；Renewal与Owner journal exact candidate；null/0-target/NOT_REGISTERED；content-derived全部views与byte
+      rebuild；会话缓存键含validator/path/content fingerprint且byte变化必失效；CLI parity、docs/manifests/deprecation/compatibility及focused/architecture/contract；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1166
+    row_sha256: 2e68068df352abbb027060a428fbd8be5acbb86d0faf11d3c21b6183d7ab8755
+    cell_count: 8
+    all_cells:
+    - TRADING-266_to_270_SMOOTHED_FORWARD_EVIDENCE_OPERATIONS_AND_PRIMARY_CANDIDATE_READINESS
+    - ETF portfolio/dynamic v3 rescue smoothed progress/dashboard/event monitor/readiness/owner
+      renewal
+    - P0
+    - BASELINE_DONE
+    - 研究流程：积累独立forward/PIT/DQ/cost/holdout证据；architecture coordinator：继续剩余G2.4 matrix
+    - 详细拆解见 `docs/requirements/TRADING-266_to_270_Smoothed_Forward_Evidence_Operations_and_Primary_Candidate_Readiness.md`。G2.4CR
+      canonical closeout已完成；旧2026-06-13 DONE记录保留历史但已被G2.4CP/CQ source truth supersede。当前candidate=null、Binding=`targets=[]/NOT_REGISTERED`、Switch
+      proposed=null，不得回填固定3d/3 targets/10-5-5 requirements；真实candidate/targets出现后再扩展非空业务路径。
+    - 15 callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output live
+      upstream/cutoff validation；Binding-only candidate/targets；outcome/classification
+      exact target lineage；Dashboard/Monitor同Progress lineage；Recheck与CQ Switch exact
+      candidate；Renewal与Owner journal exact candidate；null/0-target/NOT_REGISTERED；content-derived全部views与byte
+      rebuild；会话缓存键含validator/path/content fingerprint且byte变化必失效；CLI parity、docs/manifests/deprecation/compatibility及focused/architecture/contract；`production_effect=none`。
+    - '2026-07-14: G2.4CR=`COMPLETE_G2_4_CONTINUES`。性能progress`557.27s→13.60s`（-97.56%/40.98x），最大snapshot`633.06MB→9.49MB`（约-98.5%）；当前Progress/Dashboard/Monitor=`NOT_REGISTERED`、Recheck=`NO_ELIGIBLE_CANDIDATE`、Renewal建议`request_more_forward_data`。Focused/CLI
+      baseline/architecture/contract=`147/120/279/203 passed`，generated=`922/1,122/858/0`。单slice不触发ARCH-005
+      handoff，不进入G2.5。'
+    raw_line: '|TRADING-266_to_270_SMOOTHED_FORWARD_EVIDENCE_OPERATIONS_AND_PRIMARY_CANDIDATE_READINESS|ETF
+      portfolio/dynamic v3 rescue smoothed progress/dashboard/event monitor/readiness/owner
+      renewal|P0|BASELINE_DONE|研究流程：积累独立forward/PIT/DQ/cost/holdout证据；architecture
+      coordinator：继续剩余G2.4 matrix|详细拆解见 `docs/requirements/TRADING-266_to_270_Smoothed_Forward_Evidence_Operations_and_Primary_Candidate_Readiness.md`。G2.4CR
+      canonical closeout已完成；旧2026-06-13 DONE记录保留历史但已被G2.4CP/CQ source truth supersede。当前candidate=null、Binding=`targets=[]/NOT_REGISTERED`、Switch
+      proposed=null，不得回填固定3d/3 targets/10-5-5 requirements；真实candidate/targets出现后再扩展非空业务路径。|15
+      callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output live
+      upstream/cutoff validation；Binding-only candidate/targets；outcome/classification
+      exact target lineage；Dashboard/Monitor同Progress lineage；Recheck与CQ Switch exact
+      candidate；Renewal与Owner journal exact candidate；null/0-target/NOT_REGISTERED；content-derived全部views与byte
+      rebuild；会话缓存键含validator/path/content fingerprint且byte变化必失效；CLI parity、docs/manifests/deprecation/compatibility及focused/architecture/contract；`production_effect=none`。|2026-07-14:
+      G2.4CR=`COMPLETE_G2_4_CONTINUES`。性能progress`557.27s→13.60s`（-97.56%/40.98x），最大snapshot`633.06MB→9.49MB`（约-98.5%）；当前Progress/Dashboard/Monitor=`NOT_REGISTERED`、Recheck=`NO_ELIGIBLE_CANDIDATE`、Renewal建议`request_more_forward_data`。Focused/CLI
+      baseline/architecture/contract=`147/120/279/203 passed`，generated=`922/1,122/858/0`。单slice不触发ARCH-005
+      handoff，不进入G2.5。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2e68068df352abbb027060a4
+  task_id: TRADING-266_to_270_SMOOTHED_FORWARD_EVIDENCE_OPERATIONS_AND_PRIMARY_CANDIDATE_READINESS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 研究流程：积累独立forward/PIT/DQ/cost/holdout证据；architecture coordinator：继续剩余G2.4
+      matrix
+    notes: '2026-07-14: G2.4CR=`COMPLETE_G2_4_CONTINUES`。性能progress`557.27s→13.60s`（-97.56%/40.98x），最大snapshot`633.06MB→9.49MB`（约-98.5%）；当前Progress/Dashboard/Monitor=`NOT_REGISTERED`、Recheck=`NO_ELIGIBLE_CANDIDATE`、Renewal建议`request_more_forward_data`。Focused/CLI
+      baseline/architecture/contract=`147/120/279/203 passed`，generated=`922/1,122/858/0`。单slice不触发ARCH-005
+      handoff，不进入G2.5。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:2e68068df352abbb027060a428fbd8be5acbb86d0faf11d3c21b6183d7ab8755
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-266_to_270_SMOOTHED_FORWARD_EVIDENCE_OPERATIONS_AND_PRIMARY_CANDIDATE_READINESS
+  - ETF portfolio/dynamic v3 rescue smoothed progress/dashboard/event monitor/readiness/owner
+    renewal
+  - P0
+  - BASELINE_DONE
+  - 研究流程：积累独立forward/PIT/DQ/cost/holdout证据；architecture coordinator：继续剩余G2.4 matrix
+  - 详细拆解见 `docs/requirements/TRADING-266_to_270_Smoothed_Forward_Evidence_Operations_and_Primary_Candidate_Readiness.md`。G2.4CR
+    canonical closeout已完成；旧2026-06-13 DONE记录保留历史但已被G2.4CP/CQ source truth supersede。当前candidate=null、Binding=`targets=[]/NOT_REGISTERED`、Switch
+    proposed=null，不得回填固定3d/3 targets/10-5-5 requirements；真实candidate/targets出现后再扩展非空业务路径。
+  - 15 callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output live
+    upstream/cutoff validation；Binding-only candidate/targets；outcome/classification
+    exact target lineage；Dashboard/Monitor同Progress lineage；Recheck与CQ Switch exact
+    candidate；Renewal与Owner journal exact candidate；null/0-target/NOT_REGISTERED；content-derived全部views与byte
+    rebuild；会话缓存键含validator/path/content fingerprint且byte变化必失效；CLI parity、docs/manifests/deprecation/compatibility及focused/architecture/contract；`production_effect=none`。
+  - '2026-07-14: G2.4CR=`COMPLETE_G2_4_CONTINUES`。性能progress`557.27s→13.60s`（-97.56%/40.98x），最大snapshot`633.06MB→9.49MB`（约-98.5%）；当前Progress/Dashboard/Monitor=`NOT_REGISTERED`、Recheck=`NO_ELIGIBLE_CANDIDATE`、Renewal建议`request_more_forward_data`。Focused/CLI
+    baseline/architecture/contract=`147/120/279/203 passed`，generated=`922/1,122/858/0`。单slice不触发ARCH-005
+    handoff，不进入G2.5。'
+  docs_links:
+  - docs/requirements/TRADING-266_to_270_Smoothed_Forward_Evidence_Operations_and_Primary_Candidate_Readiness.md
+  terminal: false
+  raw_row_sha256: 2e68068df352abbb027060a428fbd8be5acbb86d0faf11d3c21b6183d7ab8755
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 320074798a929a1f885f51e89eec080fff662072d23bab2e46761bc824908a18

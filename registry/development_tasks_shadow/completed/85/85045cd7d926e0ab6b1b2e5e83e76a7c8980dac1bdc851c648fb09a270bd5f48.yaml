@@ -1,0 +1,112 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-001
+  title: null
+  domain: 架构/CLI 模块化拆分
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/system_design_review_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/system_design_review_2026-05-10.md`；`docs`、`security`、`scenarios`、`catalysts`、`execution`、`watchlist`、`industry-chain`、`trace`、`evidence`、`data-sources`、`thesis`、`valuation`、`pit-snapshots`、`llm`、ETF
+    compatibility alias、`signals`、`fundamentals`、`portfolio`、`parameters`、主系统 `data`、`risk-events`、`ops`、`reports`、`feedback`、根级
+    `download-data` / `validate-data`、根级 utility、`review-trades`、`build-features`、根级
+    `backtest` 命令簇和 `score-daily` 均已迁入 `cli_commands` 或注册 helper；`src/ai_trading_system/cli.py`
+    现在只保留 Typer app 注册和入口 callback
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 形成可分阶段实施的 CLI 分包方案；每阶段有明确命令组、导入边界、测试范围和回滚方式；拆分后 `aits` 命令名、参数和退出码保持兼容；不得改变评分、回测、日报、数据质量门禁、report
+      registry、Reader Brief 或生产投资解释语义
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 265
+    row_sha256: 1ba95012cb8982ba72992041dd8e61c33cb84474f0dbc36602a0bac1ace36fc2
+    cell_count: 8
+    all_cells:
+    - ARCH-001
+    - 架构/CLI 模块化拆分
+    - P2
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/system_design_review_2026-05-10.md`；`docs`、`security`、`scenarios`、`catalysts`、`execution`、`watchlist`、`industry-chain`、`trace`、`evidence`、`data-sources`、`thesis`、`valuation`、`pit-snapshots`、`llm`、ETF
+      compatibility alias、`signals`、`fundamentals`、`portfolio`、`parameters`、主系统 `data`、`risk-events`、`ops`、`reports`、`feedback`、根级
+      `download-data` / `validate-data`、根级 utility、`review-trades`、`build-features`、根级
+      `backtest` 命令簇和 `score-daily` 均已迁入 `cli_commands` 或注册 helper；`src/ai_trading_system/cli.py`
+      现在只保留 Typer app 注册和入口 callback
+    - 形成可分阶段实施的 CLI 分包方案；每阶段有明确命令组、导入边界、测试范围和回滚方式；拆分后 `aits` 命令名、参数和退出码保持兼容；不得改变评分、回测、日报、数据质量门禁、report
+      registry、Reader Brief 或生产投资解释语义
+    - '2026-05-10: 新增，原因：`cli.py` 已超过 400KB，长期维护风险上升。2026-05-17 至 2026-06-07: 分 28
+      批完成低耦合命令组迁移。2026-06-09: 从 VALIDATING 改为 DONE，原因：主入口已收口为注册层，最终复验通过 focused pytest
+      140 passed、CLI help smoke、文档新鲜度、documentation contract、Ruff、repo-wide Black
+      check、`compileall`、active done 检查和 `git diff --check`。'
+    raw_line: '|ARCH-001|架构/CLI 模块化拆分|P2|DONE|系统验证|详细拆解见 `docs/requirements/system_design_review_2026-05-10.md`；`docs`、`security`、`scenarios`、`catalysts`、`execution`、`watchlist`、`industry-chain`、`trace`、`evidence`、`data-sources`、`thesis`、`valuation`、`pit-snapshots`、`llm`、ETF
+      compatibility alias、`signals`、`fundamentals`、`portfolio`、`parameters`、主系统 `data`、`risk-events`、`ops`、`reports`、`feedback`、根级
+      `download-data` / `validate-data`、根级 utility、`review-trades`、`build-features`、根级
+      `backtest` 命令簇和 `score-daily` 均已迁入 `cli_commands` 或注册 helper；`src/ai_trading_system/cli.py`
+      现在只保留 Typer app 注册和入口 callback|形成可分阶段实施的 CLI 分包方案；每阶段有明确命令组、导入边界、测试范围和回滚方式；拆分后
+      `aits` 命令名、参数和退出码保持兼容；不得改变评分、回测、日报、数据质量门禁、report registry、Reader Brief 或生产投资解释语义|2026-05-10:
+      新增，原因：`cli.py` 已超过 400KB，长期维护风险上升。2026-05-17 至 2026-06-07: 分 28 批完成低耦合命令组迁移。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：主入口已收口为注册层，最终复验通过 focused pytest 140 passed、CLI help
+      smoke、文档新鲜度、documentation contract、Ruff、repo-wide Black check、`compileall`、active
+      done 检查和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1ba95012cb8982ba72992041
+  task_id: ARCH-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: '2026-05-10: 新增，原因：`cli.py` 已超过 400KB，长期维护风险上升。2026-05-17 至 2026-06-07:
+      分 28 批完成低耦合命令组迁移。2026-06-09: 从 VALIDATING 改为 DONE，原因：主入口已收口为注册层，最终复验通过 focused
+      pytest 140 passed、CLI help smoke、文档新鲜度、documentation contract、Ruff、repo-wide
+      Black check、`compileall`、active done 检查和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1ba95012cb8982ba72992041dd8e61c33cb84474f0dbc36602a0bac1ace36fc2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-001
+  - 架构/CLI 模块化拆分
+  - P2
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/system_design_review_2026-05-10.md`；`docs`、`security`、`scenarios`、`catalysts`、`execution`、`watchlist`、`industry-chain`、`trace`、`evidence`、`data-sources`、`thesis`、`valuation`、`pit-snapshots`、`llm`、ETF
+    compatibility alias、`signals`、`fundamentals`、`portfolio`、`parameters`、主系统 `data`、`risk-events`、`ops`、`reports`、`feedback`、根级
+    `download-data` / `validate-data`、根级 utility、`review-trades`、`build-features`、根级
+    `backtest` 命令簇和 `score-daily` 均已迁入 `cli_commands` 或注册 helper；`src/ai_trading_system/cli.py`
+    现在只保留 Typer app 注册和入口 callback
+  - 形成可分阶段实施的 CLI 分包方案；每阶段有明确命令组、导入边界、测试范围和回滚方式；拆分后 `aits` 命令名、参数和退出码保持兼容；不得改变评分、回测、日报、数据质量门禁、report
+    registry、Reader Brief 或生产投资解释语义
+  - '2026-05-10: 新增，原因：`cli.py` 已超过 400KB，长期维护风险上升。2026-05-17 至 2026-06-07: 分 28 批完成低耦合命令组迁移。2026-06-09:
+    从 VALIDATING 改为 DONE，原因：主入口已收口为注册层，最终复验通过 focused pytest 140 passed、CLI help smoke、文档新鲜度、documentation
+    contract、Ruff、repo-wide Black check、`compileall`、active done 检查和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/system_design_review_2026-05-10.md
+  terminal: true
+  raw_row_sha256: 1ba95012cb8982ba72992041dd8e61c33cb84474f0dbc36602a0bac1ace36fc2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: bd07f537bd3b540c372ea0a1adfc17c8ede573c255598a5b20d69faa3144034c

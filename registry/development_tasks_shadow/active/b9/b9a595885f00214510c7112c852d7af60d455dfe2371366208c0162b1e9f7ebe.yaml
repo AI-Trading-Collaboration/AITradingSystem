@@ -1,0 +1,143 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1527_to_1546_DEFENSIVE_OVERLAY_GATE_NO_SURVIVOR_DIAGNOSIS
+  title: null
+  domain: Research strategies / defensive overlay gate and expanded no-survivor diagnosis
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1527_to_1546_Defensive_Overlay_Gate_No_Survivor_Diagnosis.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1527_to_1546_Defensive_Overlay_Gate_No_Survivor_Diagnosis.md`；承接
+    `TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX` 的 11 行失败矩阵，拆分 full
+    allocation failure 与 defensive overlay watch-only 诊断；不得恢复 dynamic promotion，不得把
+    overlay watchlist 解释为 paper-shadow/production/broker eligibility
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 defensive overlay gate policy config、no-survivor diagnosis、candidate
+      reclassification matrix、overlay metrics、risk-off attribution、re-risk timing、downside/stress、static
+      frontier interpretation、TQQQ overlay safety、candidate set、survival matrix、net-of-cost/stress/walk-forward
+      split evidence、owner review pack、forward watch plan、report registry、artifact
+      catalog、system flow 和 guardrail tests；真实运行结果：full allocation survivor count=0、overlay
+      gate pass count=0、primary watch pending=`limited_adjustment`、drawdown-control
+      diagnostics=4、TQQQ diagnostic=1；所有 outputs 声明 `ai_after_chatgpt`、actual requested
+      date range、data quality status、promotion `BLOCKED`、paper-shadow/production/broker
+      false/none；target-path metrics 不能通过 overlay gate
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1268
+    row_sha256: 225cfe19f08f047c854df0a9b84cd4671be77db5617880036a0c42f714a08e79
+    cell_count: 8
+    all_cells:
+    - TRADING-1527_to_1546_DEFENSIVE_OVERLAY_GATE_NO_SURVIVOR_DIAGNOSIS
+    - Research strategies / defensive overlay gate and expanded no-survivor diagnosis
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1527_to_1546_Defensive_Overlay_Gate_No_Survivor_Diagnosis.md`；承接
+      `TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX` 的 11 行失败矩阵，拆分 full
+      allocation failure 与 defensive overlay watch-only 诊断；不得恢复 dynamic promotion，不得把
+      overlay watchlist 解释为 paper-shadow/production/broker eligibility
+    - 新增 defensive overlay gate policy config、no-survivor diagnosis、candidate reclassification
+      matrix、overlay metrics、risk-off attribution、re-risk timing、downside/stress、static
+      frontier interpretation、TQQQ overlay safety、candidate set、survival matrix、net-of-cost/stress/walk-forward
+      split evidence、owner review pack、forward watch plan、report registry、artifact
+      catalog、system flow 和 guardrail tests；真实运行结果：full allocation survivor count=0、overlay
+      gate pass count=0、primary watch pending=`limited_adjustment`、drawdown-control
+      diagnostics=4、TQQQ diagnostic=1；所有 outputs 声明 `ai_after_chatgpt`、actual requested
+      date range、data quality status、promotion `BLOCKED`、paper-shadow/production/broker
+      false/none；target-path metrics 不能通过 overlay gate
+    - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 no-survivor 后继续拆解 defensive overlay
+      是否仍有风控观察价值；原附件 TRADING-1526 已由既有 failure matrix 占用，因此本批重编号为 1527～1546。2026-06-27:
+      实现完成并转入 VALIDATING；新增 defensive-overlay CLI/artifacts/guardrails，真实 full-pack
+      status=`DEFENSIVE_OVERLAY_OWNER_REVIEW_PACK_READY_PROMOTION_BLOCKED`，所有安全边界继续
+      false/none。'
+    raw_line: '|TRADING-1527_to_1546_DEFENSIVE_OVERLAY_GATE_NO_SURVIVOR_DIAGNOSIS|Research
+      strategies / defensive overlay gate and expanded no-survivor diagnosis|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1527_to_1546_Defensive_Overlay_Gate_No_Survivor_Diagnosis.md`；承接
+      `TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX` 的 11 行失败矩阵，拆分 full
+      allocation failure 与 defensive overlay watch-only 诊断；不得恢复 dynamic promotion，不得把
+      overlay watchlist 解释为 paper-shadow/production/broker eligibility|新增 defensive
+      overlay gate policy config、no-survivor diagnosis、candidate reclassification
+      matrix、overlay metrics、risk-off attribution、re-risk timing、downside/stress、static
+      frontier interpretation、TQQQ overlay safety、candidate set、survival matrix、net-of-cost/stress/walk-forward
+      split evidence、owner review pack、forward watch plan、report registry、artifact
+      catalog、system flow 和 guardrail tests；真实运行结果：full allocation survivor count=0、overlay
+      gate pass count=0、primary watch pending=`limited_adjustment`、drawdown-control
+      diagnostics=4、TQQQ diagnostic=1；所有 outputs 声明 `ai_after_chatgpt`、actual requested
+      date range、data quality status、promotion `BLOCKED`、paper-shadow/production/broker
+      false/none；target-path metrics 不能通过 overlay gate|2026-06-27: 新增并进入 IN_PROGRESS，原因：owner
+      附件要求在 no-survivor 后继续拆解 defensive overlay 是否仍有风控观察价值；原附件 TRADING-1526 已由既有 failure
+      matrix 占用，因此本批重编号为 1527～1546。2026-06-27: 实现完成并转入 VALIDATING；新增 defensive-overlay
+      CLI/artifacts/guardrails，真实 full-pack status=`DEFENSIVE_OVERLAY_OWNER_REVIEW_PACK_READY_PROMOTION_BLOCKED`，所有安全边界继续
+      false/none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-225cfe19f08f047c854df0a9
+  task_id: TRADING-1527_to_1546_DEFENSIVE_OVERLAY_GATE_NO_SURVIVOR_DIAGNOSIS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 no-survivor 后继续拆解 defensive
+      overlay 是否仍有风控观察价值；原附件 TRADING-1526 已由既有 failure matrix 占用，因此本批重编号为 1527～1546。2026-06-27:
+      实现完成并转入 VALIDATING；新增 defensive-overlay CLI/artifacts/guardrails，真实 full-pack
+      status=`DEFENSIVE_OVERLAY_OWNER_REVIEW_PACK_READY_PROMOTION_BLOCKED`，所有安全边界继续
+      false/none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:225cfe19f08f047c854df0a9b84cd4671be77db5617880036a0c42f714a08e79
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1527_to_1546_DEFENSIVE_OVERLAY_GATE_NO_SURVIVOR_DIAGNOSIS
+  - Research strategies / defensive overlay gate and expanded no-survivor diagnosis
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1527_to_1546_Defensive_Overlay_Gate_No_Survivor_Diagnosis.md`；承接
+    `TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX` 的 11 行失败矩阵，拆分 full
+    allocation failure 与 defensive overlay watch-only 诊断；不得恢复 dynamic promotion，不得把
+    overlay watchlist 解释为 paper-shadow/production/broker eligibility
+  - 新增 defensive overlay gate policy config、no-survivor diagnosis、candidate reclassification
+    matrix、overlay metrics、risk-off attribution、re-risk timing、downside/stress、static
+    frontier interpretation、TQQQ overlay safety、candidate set、survival matrix、net-of-cost/stress/walk-forward
+    split evidence、owner review pack、forward watch plan、report registry、artifact catalog、system
+    flow 和 guardrail tests；真实运行结果：full allocation survivor count=0、overlay gate pass
+    count=0、primary watch pending=`limited_adjustment`、drawdown-control diagnostics=4、TQQQ
+    diagnostic=1；所有 outputs 声明 `ai_after_chatgpt`、actual requested date range、data
+    quality status、promotion `BLOCKED`、paper-shadow/production/broker false/none；target-path
+    metrics 不能通过 overlay gate
+  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 no-survivor 后继续拆解 defensive overlay
+    是否仍有风控观察价值；原附件 TRADING-1526 已由既有 failure matrix 占用，因此本批重编号为 1527～1546。2026-06-27:
+    实现完成并转入 VALIDATING；新增 defensive-overlay CLI/artifacts/guardrails，真实 full-pack
+    status=`DEFENSIVE_OVERLAY_OWNER_REVIEW_PACK_READY_PROMOTION_BLOCKED`，所有安全边界继续
+    false/none。'
+  docs_links:
+  - docs/requirements/TRADING-1527_to_1546_Defensive_Overlay_Gate_No_Survivor_Diagnosis.md
+  terminal: false
+  raw_row_sha256: 225cfe19f08f047c854df0a9b84cd4671be77db5617880036a0c42f714a08e79
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 041ecf41c1258b26de24d36fbebbd3b2378d45d6ee036be4e95edddb58161809

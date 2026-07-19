@@ -1,0 +1,101 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OBS-001
+  title: null
+  domain: 观察池/行业趋势分析语义
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/watch_only_core_observation_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已实现 watch-only 核心 ticker 不要求主动交易 thesis，同时保留关注股票趋势和产业链节点分析；详细拆解见
+    `docs/requirements/watch_only_core_observation_2026-05-10.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 默认核心观察池可被标记为观察阶段；观察阶段 ticker 不因缺少 `data/external/trade_theses/` 触发 thesis
+      gate；active-trade 高风险 ticker 仍必须要求 thesis；日报继续输出核心 ticker 趋势和产业链节点热度/健康度，且明确
+      `production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 416
+    row_sha256: 608560f7596b10840b9fb45b9fd807e492f7085f72e7e46f84852aa26566b1c0
+    cell_count: 8
+    all_cells:
+    - OBS-001
+    - 观察池/行业趋势分析语义
+    - P1
+    - DONE
+    - 系统实现
+    - 已实现 watch-only 核心 ticker 不要求主动交易 thesis，同时保留关注股票趋势和产业链节点分析；详细拆解见 `docs/requirements/watch_only_core_observation_2026-05-10.md`
+    - 默认核心观察池可被标记为观察阶段；观察阶段 ticker 不因缺少 `data/external/trade_theses/` 触发 thesis gate；active-trade
+      高风险 ticker 仍必须要求 thesis；日报继续输出核心 ticker 趋势和产业链节点热度/健康度，且明确 `production_effect=none`
+    - '2026-05-10: 新增，原因：owner 明确当前 6 个核心 ticker 均处于观察阶段，希望系统结合行业趋势给出分析，而不是把缺少主动交易
+      thesis 解释为仓位约束。2026-05-10: 从 IN_PROGRESS 改为 DONE，原因：新增 `decision_stage`、更新核心观察池为
+      `watch_only`、调整 thesis 缺失校验、同步系统流图和测试；验证通过 `ruff check src tests`、`pytest -q`、`watchlist
+      validate`、`thesis review` 和 `watchlist validate-lifecycle`。'
+    raw_line: '|OBS-001|观察池/行业趋势分析语义|P1|DONE|系统实现|已实现 watch-only 核心 ticker 不要求主动交易
+      thesis，同时保留关注股票趋势和产业链节点分析；详细拆解见 `docs/requirements/watch_only_core_observation_2026-05-10.md`|默认核心观察池可被标记为观察阶段；观察阶段
+      ticker 不因缺少 `data/external/trade_theses/` 触发 thesis gate；active-trade 高风险 ticker
+      仍必须要求 thesis；日报继续输出核心 ticker 趋势和产业链节点热度/健康度，且明确 `production_effect=none`|2026-05-10:
+      新增，原因：owner 明确当前 6 个核心 ticker 均处于观察阶段，希望系统结合行业趋势给出分析，而不是把缺少主动交易 thesis 解释为仓位约束。2026-05-10:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `decision_stage`、更新核心观察池为 `watch_only`、调整 thesis
+      缺失校验、同步系统流图和测试；验证通过 `ruff check src tests`、`pytest -q`、`watchlist validate`、`thesis
+      review` 和 `watchlist validate-lifecycle`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-608560f7596b10840b9fb45b
+  task_id: OBS-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-10: 新增，原因：owner 明确当前 6 个核心 ticker 均处于观察阶段，希望系统结合行业趋势给出分析，而不是把缺少主动交易
+      thesis 解释为仓位约束。2026-05-10: 从 IN_PROGRESS 改为 DONE，原因：新增 `decision_stage`、更新核心观察池为
+      `watch_only`、调整 thesis 缺失校验、同步系统流图和测试；验证通过 `ruff check src tests`、`pytest -q`、`watchlist
+      validate`、`thesis review` 和 `watchlist validate-lifecycle`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:608560f7596b10840b9fb45b9fd807e492f7085f72e7e46f84852aa26566b1c0
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OBS-001
+  - 观察池/行业趋势分析语义
+  - P1
+  - DONE
+  - 系统实现
+  - 已实现 watch-only 核心 ticker 不要求主动交易 thesis，同时保留关注股票趋势和产业链节点分析；详细拆解见 `docs/requirements/watch_only_core_observation_2026-05-10.md`
+  - 默认核心观察池可被标记为观察阶段；观察阶段 ticker 不因缺少 `data/external/trade_theses/` 触发 thesis gate；active-trade
+    高风险 ticker 仍必须要求 thesis；日报继续输出核心 ticker 趋势和产业链节点热度/健康度，且明确 `production_effect=none`
+  - '2026-05-10: 新增，原因：owner 明确当前 6 个核心 ticker 均处于观察阶段，希望系统结合行业趋势给出分析，而不是把缺少主动交易 thesis
+    解释为仓位约束。2026-05-10: 从 IN_PROGRESS 改为 DONE，原因：新增 `decision_stage`、更新核心观察池为 `watch_only`、调整
+    thesis 缺失校验、同步系统流图和测试；验证通过 `ruff check src tests`、`pytest -q`、`watchlist validate`、`thesis
+    review` 和 `watchlist validate-lifecycle`。'
+  docs_links:
+  - docs/requirements/watch_only_core_observation_2026-05-10.md
+  terminal: true
+  raw_row_sha256: 608560f7596b10840b9fb45b9fd807e492f7085f72e7e46f84852aa26566b1c0
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: aa421a0b8313fc86a408329cfffc2f42e29ac0675d337f246532498d1ad3e8b6

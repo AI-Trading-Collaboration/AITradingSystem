@@ -1,0 +1,109 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CAUSE-001
+  title: null
+  domain: 决策因果链/审计
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已建立 `decision_causal_chain` ledger、构建命令和查询入口，把
+    evidence、模块变化、gate、decision snapshot、quality、outcome 和预留 rule candidate 串起来；详细拆解见
+    `docs/requirements/feedback_loop_governance_2026-05-04.md#cause-001`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 每个核心仓位变化或结论降级都能对应至少一个 `chain_id`；因果链能连接 evidence、module score/confidence
+      变化、gate、decision snapshot、outcome 和后续规则复核；不允许用未来 outcome 改写 signal_date 当时的
+      causal chain，只能追加后验观察字段；实现时同步更新 `docs/system_flow.md` 并补充因果链和未来函数防护测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 431
+    row_sha256: 834be272a1ea1787b0b10bc64de2c33dff1611cd435ca55406d714c600893128
+    cell_count: 8
+    all_cells:
+    - CAUSE-001
+    - 决策因果链/审计
+    - P1
+    - DONE
+    - 系统实现
+    - 已建立 `decision_causal_chain` ledger、构建命令和查询入口，把 evidence、模块变化、gate、decision snapshot、quality、outcome
+      和预留 rule candidate 串起来；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#cause-001`
+    - 每个核心仓位变化或结论降级都能对应至少一个 `chain_id`；因果链能连接 evidence、module score/confidence 变化、gate、decision
+      snapshot、outcome 和后续规则复核；不允许用未来 outcome 改写 signal_date 当时的 causal chain，只能追加后验观察字段；实现时同步更新
+      `docs/system_flow.md` 并补充因果链和未来函数防护测试
+    - '2026-05-04: 开始实现 `decision_causal_chain` ledger、CLI 构建/查询入口和未来 outcome 隔离测试。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `aits feedback build-causal-chain`、`aits feedback
+      lookup-chain`、`data/processed/decision_causal_chains.json` schema、中文因果链报告、系统流图和测试；后续
+      `linked_rule_candidate` 由 `LEARNING-001/EXPERIMENT-001` 回填。'
+    raw_line: '|CAUSE-001|决策因果链/审计|P1|DONE|系统实现|已建立 `decision_causal_chain` ledger、构建命令和查询入口，把
+      evidence、模块变化、gate、decision snapshot、quality、outcome 和预留 rule candidate 串起来；详细拆解见
+      `docs/requirements/feedback_loop_governance_2026-05-04.md#cause-001`|每个核心仓位变化或结论降级都能对应至少一个
+      `chain_id`；因果链能连接 evidence、module score/confidence 变化、gate、decision snapshot、outcome
+      和后续规则复核；不允许用未来 outcome 改写 signal_date 当时的 causal chain，只能追加后验观察字段；实现时同步更新 `docs/system_flow.md`
+      并补充因果链和未来函数防护测试|2026-05-04: 开始实现 `decision_causal_chain` ledger、CLI 构建/查询入口和未来
+      outcome 隔离测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：新增 `aits feedback build-causal-chain`、`aits
+      feedback lookup-chain`、`data/processed/decision_causal_chains.json` schema、中文因果链报告、系统流图和测试；后续
+      `linked_rule_candidate` 由 `LEARNING-001/EXPERIMENT-001` 回填。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-834be272a1ea1787b0b10bc6
+  task_id: CAUSE-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-04: 开始实现 `decision_causal_chain` ledger、CLI 构建/查询入口和未来 outcome
+      隔离测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：新增 `aits feedback build-causal-chain`、`aits
+      feedback lookup-chain`、`data/processed/decision_causal_chains.json` schema、中文因果链报告、系统流图和测试；后续
+      `linked_rule_candidate` 由 `LEARNING-001/EXPERIMENT-001` 回填。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:834be272a1ea1787b0b10bc64de2c33dff1611cd435ca55406d714c600893128
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CAUSE-001
+  - 决策因果链/审计
+  - P1
+  - DONE
+  - 系统实现
+  - 已建立 `decision_causal_chain` ledger、构建命令和查询入口，把 evidence、模块变化、gate、decision snapshot、quality、outcome
+    和预留 rule candidate 串起来；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#cause-001`
+  - 每个核心仓位变化或结论降级都能对应至少一个 `chain_id`；因果链能连接 evidence、module score/confidence 变化、gate、decision
+    snapshot、outcome 和后续规则复核；不允许用未来 outcome 改写 signal_date 当时的 causal chain，只能追加后验观察字段；实现时同步更新
+    `docs/system_flow.md` 并补充因果链和未来函数防护测试
+  - '2026-05-04: 开始实现 `decision_causal_chain` ledger、CLI 构建/查询入口和未来 outcome 隔离测试。2026-05-04:
+    从 IN_PROGRESS 改为 DONE，原因：新增 `aits feedback build-causal-chain`、`aits feedback
+    lookup-chain`、`data/processed/decision_causal_chains.json` schema、中文因果链报告、系统流图和测试；后续
+    `linked_rule_candidate` 由 `LEARNING-001/EXPERIMENT-001` 回填。'
+  docs_links:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: 834be272a1ea1787b0b10bc64de2c33dff1611cd435ca55406d714c600893128
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e7a4230f0d4be4c6b6e7f39434af4d288f0d03c558ae0f770fd3f33c73c4a424

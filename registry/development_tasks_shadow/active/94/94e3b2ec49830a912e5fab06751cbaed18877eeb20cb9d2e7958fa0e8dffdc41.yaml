@@ -1,0 +1,153 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-770_to_774_CONTROLLED_STRATEGY_CANDIDATE_RESEARCH
+  title: null
+  domain: Controlled strategy research / value surface, regret state machine, simple
+    ensemble, GBDT utility, and batch review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-770_to_774_Controlled_Strategy_Candidate_Research.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-770_to_774_Controlled_Strategy_Candidate_Research.md`；在
+    TRADING-765～769 controlled research expansion 后启动第一批受控策略候选研究；所有候选只能 validation-only
+    / observe-only，不得进入 promotion、paper-shadow、production review、official weight 或
+    broker/order 路径
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI：`aits research strategies value-surface-controlled-prototype`、`regret-state-machine-controlled-prototype`、`simple-strategy-selector-pilot`、`gbdt-action-utility-baseline`
+      和 `aits research ops controlled-strategy-batch-review`；输出附件要求的 JSON/Markdown
+      artifacts；每个候选必须包含 data_foundation_status、evidence_source_mix、control_results、benchmark_comparison、remaining_blockers
+      和 safety flags；value surface 必须有 horizon leakage audit、sample quality 和 benchmark
+      comparison；state machine 必须有可解释 transition、regret mapping、turnover/whipsaw guardrail；selector
+      必须比较 best simple benchmark 并披露 overfit warning；GBDT diagnostic 必须输出 split、negative
+      control、random label、feature importance 和 no future feature audit；review board
+      必须为所有候选给出 `CONTINUE
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1355
+    row_sha256: 9ed6ef3549112b7924291062fe5d7cb5a48fad493e339dc0fa2b4fb7af5a1102
+    cell_count: 14
+    all_cells:
+    - TRADING-770_to_774_CONTROLLED_STRATEGY_CANDIDATE_RESEARCH
+    - Controlled strategy research / value surface, regret state machine, simple ensemble,
+      GBDT utility, and batch review
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-770_to_774_Controlled_Strategy_Candidate_Research.md`；在
+      TRADING-765～769 controlled research expansion 后启动第一批受控策略候选研究；所有候选只能 validation-only
+      / observe-only，不得进入 promotion、paper-shadow、production review、official weight
+      或 broker/order 路径
+    - 新增 CLI：`aits research strategies value-surface-controlled-prototype`、`regret-state-machine-controlled-prototype`、`simple-strategy-selector-pilot`、`gbdt-action-utility-baseline`
+      和 `aits research ops controlled-strategy-batch-review`；输出附件要求的 JSON/Markdown
+      artifacts；每个候选必须包含 data_foundation_status、evidence_source_mix、control_results、benchmark_comparison、remaining_blockers
+      和 safety flags；value surface 必须有 horizon leakage audit、sample quality 和 benchmark
+      comparison；state machine 必须有可解释 transition、regret mapping、turnover/whipsaw guardrail；selector
+      必须比较 best simple benchmark 并披露 overfit warning；GBDT diagnostic 必须输出 split、negative
+      control、random label、feature importance 和 no future feature audit；review board
+      必须为所有候选给出 `CONTINUE
+    - WATCHLIST
+    - DATA_REQUIRED
+    - PAUSE
+    - KILL
+    - PIVOT
+    - INFRA_REVIEW` 决策，且 no promotion / no paper-shadow / no production mutation
+    - '2026-06-21: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件 TRADING-770～774。本批目标是达到 `CONTROLLED_STRATEGY_RESEARCH_BATCH_1_COMPLETE`，不是
+      `PROMOTION_READY`；所有 ranking、selector 和 model utility 均为 heuristic controlled
+      baseline，`not_validated_utility_boundary=true`，后续需真实 forward evidence、source
+      qualification 和 owner review 才能扩大样本或进入下一轮 controlled research。2026-06-21: 实现完成并转入
+      VALIDATING；真实 CLI run 生成 value surface、regret state machine、simple selector、GBDT
+      action utility 和 controlled strategy batch review artifacts。Review board 状态为
+      `CONTROLLED_STRATEGY_RESEARCH_BATCH_1_COMPLETE`；candidate decisions：value_surface
+      `CONTINUE`、regret_state_machine `WATCHLIST`、simple_strategy_selector `KILL`、gbdt_action_utility
+      `PIVOT`；所有输出固定 production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0；focused
+      pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T091321Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T091512Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T091702Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-770_to_774_CONTROLLED_STRATEGY_CANDIDATE_RESEARCH|Controlled
+      strategy research / value surface, regret state machine, simple ensemble, GBDT
+      utility, and batch review|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-770_to_774_Controlled_Strategy_Candidate_Research.md`；在
+      TRADING-765～769 controlled research expansion 后启动第一批受控策略候选研究；所有候选只能 validation-only
+      / observe-only，不得进入 promotion、paper-shadow、production review、official weight
+      或 broker/order 路径|新增 CLI：`aits research strategies value-surface-controlled-prototype`、`regret-state-machine-controlled-prototype`、`simple-strategy-selector-pilot`、`gbdt-action-utility-baseline`
+      和 `aits research ops controlled-strategy-batch-review`；输出附件要求的 JSON/Markdown
+      artifacts；每个候选必须包含 data_foundation_status、evidence_source_mix、control_results、benchmark_comparison、remaining_blockers
+      和 safety flags；value surface 必须有 horizon leakage audit、sample quality 和 benchmark
+      comparison；state machine 必须有可解释 transition、regret mapping、turnover/whipsaw guardrail；selector
+      必须比较 best simple benchmark 并披露 overfit warning；GBDT diagnostic 必须输出 split、negative
+      control、random label、feature importance 和 no future feature audit；review board
+      必须为所有候选给出 `CONTINUE|WATCHLIST|DATA_REQUIRED|PAUSE|KILL|PIVOT|INFRA_REVIEW` 决策，且
+      no promotion / no paper-shadow / no production mutation|2026-06-21: 新增并进入 IN_PROGRESS，原因：owner
+      要求完成附件 TRADING-770～774。本批目标是达到 `CONTROLLED_STRATEGY_RESEARCH_BATCH_1_COMPLETE`，不是
+      `PROMOTION_READY`；所有 ranking、selector 和 model utility 均为 heuristic controlled
+      baseline，`not_validated_utility_boundary=true`，后续需真实 forward evidence、source
+      qualification 和 owner review 才能扩大样本或进入下一轮 controlled research。2026-06-21: 实现完成并转入
+      VALIDATING；真实 CLI run 生成 value surface、regret state machine、simple selector、GBDT
+      action utility 和 controlled strategy batch review artifacts。Review board 状态为
+      `CONTROLLED_STRATEGY_RESEARCH_BATCH_1_COMPLETE`；candidate decisions：value_surface
+      `CONTINUE`、regret_state_machine `WATCHLIST`、simple_strategy_selector `KILL`、gbdt_action_utility
+      `PIVOT`；所有输出固定 production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0；focused
+      pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T091321Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T091512Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T091702Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-9ed6ef3549112b7924291062
+  task_id: TRADING-770_to_774_CONTROLLED_STRATEGY_CANDIDATE_RESEARCH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: WATCHLIST
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:9ed6ef3549112b7924291062fe5d7cb5a48fad493e339dc0fa2b4fb7af5a1102
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-770_to_774_CONTROLLED_STRATEGY_CANDIDATE_RESEARCH
+  - Controlled strategy research / value surface, regret state machine, simple ensemble,
+    GBDT utility, and batch review
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-770_to_774_Controlled_Strategy_Candidate_Research.md`；在
+    TRADING-765～769 controlled research expansion 后启动第一批受控策略候选研究；所有候选只能 validation-only
+    / observe-only，不得进入 promotion、paper-shadow、production review、official weight 或
+    broker/order 路径
+  - 新增 CLI：`aits research strategies value-surface-controlled-prototype`、`regret-state-machine-controlled-prototype`、`simple-strategy-selector-pilot`、`gbdt-action-utility-baseline`
+    和 `aits research ops controlled-strategy-batch-review`；输出附件要求的 JSON/Markdown artifacts；每个候选必须包含
+    data_foundation_status、evidence_source_mix、control_results、benchmark_comparison、remaining_blockers
+    和 safety flags；value surface 必须有 horizon leakage audit、sample quality 和 benchmark
+    comparison；state machine 必须有可解释 transition、regret mapping、turnover/whipsaw guardrail；selector
+    必须比较 best simple benchmark 并披露 overfit warning；GBDT diagnostic 必须输出 split、negative
+    control、random label、feature importance 和 no future feature audit；review board
+    必须为所有候选给出 `CONTINUE
+  - WATCHLIST
+  docs_links:
+  - docs/requirements/TRADING-770_to_774_Controlled_Strategy_Candidate_Research.md
+  terminal: false
+  raw_row_sha256: 9ed6ef3549112b7924291062fe5d7cb5a48fad493e339dc0fa2b4fb7af5a1102
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 712c1a0d304cf596a3a313b3c8846e0ce761d6db0d72114683d2d3a238ca7e74

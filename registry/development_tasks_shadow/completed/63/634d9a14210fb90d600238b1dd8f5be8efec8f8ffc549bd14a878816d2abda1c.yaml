@@ -1,0 +1,206 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-057
+  title: null
+  domain: 数据质量/Market Data Freshness & Tracking Readiness Gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/market_data_freshness_tracking_readiness_gate_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/market_data_freshness_tracking_readiness_gate_2026-05-30.md`；market
+    data freshness/readiness gate 已实现并通过 2026-06-05 latest 验收；market data refresh
+    现按 shadow backtest required history 覆盖补齐 required assets，`GOOGL`、`BRK.B via BRK-B`、`SGOV`
+    均写入 1008 行（2022-05-31 至 2026-06-05）；freshness、validate-freshness、backtest manifest、data
+    registry 和 candidate tracking gates 均 OK；`validate-data --as-of 2026-06-05` 为
+    `PASS_WITH_WARNINGS`（非阻断 warning：`prices_download_manifest_checksum_missing`）；shadow
+    backtest dry-run 仍因 signal snapshot 质量保持 `LIMITED` / `price_only_shadow_backtest`
+    / `promotion_status=rejected`，production promotion 仍禁用
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits data freshness --latest` 生成 `artifacts/data_freshness/YYYY-MM-DD/market_data_freshness_summary.json/md`；`aits
+      data validate-freshness --latest` 输出 freshness status、tracking readiness 和安全字段；freshness
+      status 区分 OK、ACCEPTABLE_LAG、NON_TRADING_DAY、STALE、MISSING、SOURCE_DELAYED、MARKET_CALENDAR_UNKNOWN、FAILED；`aits
+      portfolio track-candidate --latest` 写入 `market_data_freshness_status` 并按 readiness
+      映射 tracking 状态；`aits reports data-freshness --latest` 可读取 latest report；Dashboard/Reader
+      Brief 展示 freshness 摘要；shadow backtest dry-run 可引用 freshness artifact 但仍 rejected；不修改
+      `config/parameters/production/current.yaml`，不降低 data gate，不下载或伪造数据，不自动 promotion；专项测试、全量
+      pytest、ruff、compileall 和 diff check 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 327
+    row_sha256: 21d20efd555e452bb7892cd402a1575d8fee2351e502e455c8970aebe3b7e53c
+    cell_count: 8
+    all_cells:
+    - TRADING-057
+    - 数据质量/Market Data Freshness & Tracking Readiness Gate
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/market_data_freshness_tracking_readiness_gate_2026-05-30.md`；market
+      data freshness/readiness gate 已实现并通过 2026-06-05 latest 验收；market data refresh
+      现按 shadow backtest required history 覆盖补齐 required assets，`GOOGL`、`BRK.B via
+      BRK-B`、`SGOV` 均写入 1008 行（2022-05-31 至 2026-06-05）；freshness、validate-freshness、backtest
+      manifest、data registry 和 candidate tracking gates 均 OK；`validate-data --as-of
+      2026-06-05` 为 `PASS_WITH_WARNINGS`（非阻断 warning：`prices_download_manifest_checksum_missing`）；shadow
+      backtest dry-run 仍因 signal snapshot 质量保持 `LIMITED` / `price_only_shadow_backtest`
+      / `promotion_status=rejected`，production promotion 仍禁用
+    - '`aits data freshness --latest` 生成 `artifacts/data_freshness/YYYY-MM-DD/market_data_freshness_summary.json/md`；`aits
+      data validate-freshness --latest` 输出 freshness status、tracking readiness 和安全字段；freshness
+      status 区分 OK、ACCEPTABLE_LAG、NON_TRADING_DAY、STALE、MISSING、SOURCE_DELAYED、MARKET_CALENDAR_UNKNOWN、FAILED；`aits
+      portfolio track-candidate --latest` 写入 `market_data_freshness_status` 并按 readiness
+      映射 tracking 状态；`aits reports data-freshness --latest` 可读取 latest report；Dashboard/Reader
+      Brief 展示 freshness 摘要；shadow backtest dry-run 可引用 freshness artifact 但仍 rejected；不修改
+      `config/parameters/production/current.yaml`，不降低 data gate，不下载或伪造数据，不自动 promotion；专项测试、全量
+      pytest、ruff、compileall 和 diff check 通过'
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-056 已把 candidate 放入 shadow tracking，但
+      latest `tracking_date=2026-05-29` 与 `effective_data_date=2026-05-28` 的 degraded
+      状态缺少正式 freshness/readiness 判断，无法区分正常延迟、非交易日、stale cache、source delayed 或真实缺失。2026-05-30:
+      从 IN_PROGRESS 改为 VALIDATING，原因：实现、文档和真实 latest 验收完成；`aits data freshness --latest`
+      输出 `freshness_status=STALE`、`tracking_readiness=cannot_track`，`aits portfolio
+      track-candidate --latest` 输出 `tracking_status=tracking_blocked`，shadow backtest
+      dry-run 仍 `promotion_status=rejected` 且引用 freshness/tracking artifacts；全量验证通过，production/current.yaml
+      无 diff。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：`validate-data --as-of 2026-06-05`
+      为 PASS，但 `data freshness --latest` 为 `MISSING`，`tracking_date=2026-06-05`、`latest_raw_price_date=2026-06-05`、`latest_registry_date=2026-06-05`，而
+      `effective_data_date=2026-05-28`、`latest_manifest_date=2026-05-28`；required
+      assets `GOOGL`、`BRK.B via BRK-B`、`SGOV` 缺 effective/expected date 覆盖，`tracking_readiness=cannot_track`。2026-06-09:
+      从 IN_PROGRESS 改为 DONE，原因：recovery 缺陷已修复并完成真实验收；`data recover-freshness --latest`
+      返回 `OK`，`GOOGL`、`BRK.B via BRK-B`、`SGOV` 通过 audited FMP raw cache 历史段+单日段合并补齐
+      1008 行，`required_start_date=2022-05-31`、`target_date=2026-06-05`；`data freshness
+      --latest`、`data validate-freshness --latest`、`data validate-backtest-manifest
+      --latest`、`data inspect-registry --latest`、`portfolio track-candidate --latest`
+      和 `reports data-freshness --latest` 均通过，tracking 恢复 `active_tracking`；focused
+      pytest（16 passed）、ruff、black 和 compileall 通过。'
+    raw_line: '|TRADING-057|数据质量/Market Data Freshness & Tracking Readiness Gate|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/market_data_freshness_tracking_readiness_gate_2026-05-30.md`；market
+      data freshness/readiness gate 已实现并通过 2026-06-05 latest 验收；market data refresh
+      现按 shadow backtest required history 覆盖补齐 required assets，`GOOGL`、`BRK.B via
+      BRK-B`、`SGOV` 均写入 1008 行（2022-05-31 至 2026-06-05）；freshness、validate-freshness、backtest
+      manifest、data registry 和 candidate tracking gates 均 OK；`validate-data --as-of
+      2026-06-05` 为 `PASS_WITH_WARNINGS`（非阻断 warning：`prices_download_manifest_checksum_missing`）；shadow
+      backtest dry-run 仍因 signal snapshot 质量保持 `LIMITED` / `price_only_shadow_backtest`
+      / `promotion_status=rejected`，production promotion 仍禁用|`aits data freshness
+      --latest` 生成 `artifacts/data_freshness/YYYY-MM-DD/market_data_freshness_summary.json/md`；`aits
+      data validate-freshness --latest` 输出 freshness status、tracking readiness 和安全字段；freshness
+      status 区分 OK、ACCEPTABLE_LAG、NON_TRADING_DAY、STALE、MISSING、SOURCE_DELAYED、MARKET_CALENDAR_UNKNOWN、FAILED；`aits
+      portfolio track-candidate --latest` 写入 `market_data_freshness_status` 并按 readiness
+      映射 tracking 状态；`aits reports data-freshness --latest` 可读取 latest report；Dashboard/Reader
+      Brief 展示 freshness 摘要；shadow backtest dry-run 可引用 freshness artifact 但仍 rejected；不修改
+      `config/parameters/production/current.yaml`，不降低 data gate，不下载或伪造数据，不自动 promotion；专项测试、全量
+      pytest、ruff、compileall 和 diff check 通过|2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-056
+      已把 candidate 放入 shadow tracking，但 latest `tracking_date=2026-05-29` 与 `effective_data_date=2026-05-28`
+      的 degraded 状态缺少正式 freshness/readiness 判断，无法区分正常延迟、非交易日、stale cache、source delayed
+      或真实缺失。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实现、文档和真实 latest 验收完成；`aits
+      data freshness --latest` 输出 `freshness_status=STALE`、`tracking_readiness=cannot_track`，`aits
+      portfolio track-candidate --latest` 输出 `tracking_status=tracking_blocked`，shadow
+      backtest dry-run 仍 `promotion_status=rejected` 且引用 freshness/tracking artifacts；全量验证通过，production/current.yaml
+      无 diff。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：`validate-data --as-of 2026-06-05`
+      为 PASS，但 `data freshness --latest` 为 `MISSING`，`tracking_date=2026-06-05`、`latest_raw_price_date=2026-06-05`、`latest_registry_date=2026-06-05`，而
+      `effective_data_date=2026-05-28`、`latest_manifest_date=2026-05-28`；required
+      assets `GOOGL`、`BRK.B via BRK-B`、`SGOV` 缺 effective/expected date 覆盖，`tracking_readiness=cannot_track`。2026-06-09:
+      从 IN_PROGRESS 改为 DONE，原因：recovery 缺陷已修复并完成真实验收；`data recover-freshness --latest`
+      返回 `OK`，`GOOGL`、`BRK.B via BRK-B`、`SGOV` 通过 audited FMP raw cache 历史段+单日段合并补齐
+      1008 行，`required_start_date=2022-05-31`、`target_date=2026-06-05`；`data freshness
+      --latest`、`data validate-freshness --latest`、`data validate-backtest-manifest
+      --latest`、`data inspect-registry --latest`、`portfolio track-candidate --latest`
+      和 `reports data-freshness --latest` 均通过，tracking 恢复 `active_tracking`；focused
+      pytest（16 passed）、ruff、black 和 compileall 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-21d20efd555e452bb7892cd4
+  task_id: TRADING-057
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-056 已把 candidate 放入 shadow tracking，但
+      latest `tracking_date=2026-05-29` 与 `effective_data_date=2026-05-28` 的 degraded
+      状态缺少正式 freshness/readiness 判断，无法区分正常延迟、非交易日、stale cache、source delayed 或真实缺失。2026-05-30:
+      从 IN_PROGRESS 改为 VALIDATING，原因：实现、文档和真实 latest 验收完成；`aits data freshness --latest`
+      输出 `freshness_status=STALE`、`tracking_readiness=cannot_track`，`aits portfolio
+      track-candidate --latest` 输出 `tracking_status=tracking_blocked`，shadow backtest
+      dry-run 仍 `promotion_status=rejected` 且引用 freshness/tracking artifacts；全量验证通过，production/current.yaml
+      无 diff。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：`validate-data --as-of 2026-06-05`
+      为 PASS，但 `data freshness --latest` 为 `MISSING`，`tracking_date=2026-06-05`、`latest_raw_price_date=2026-06-05`、`latest_registry_date=2026-06-05`，而
+      `effective_data_date=2026-05-28`、`latest_manifest_date=2026-05-28`；required
+      assets `GOOGL`、`BRK.B via BRK-B`、`SGOV` 缺 effective/expected date 覆盖，`tracking_readiness=cannot_track`。2026-06-09:
+      从 IN_PROGRESS 改为 DONE，原因：recovery 缺陷已修复并完成真实验收；`data recover-freshness --latest`
+      返回 `OK`，`GOOGL`、`BRK.B via BRK-B`、`SGOV` 通过 audited FMP raw cache 历史段+单日段合并补齐
+      1008 行，`required_start_date=2022-05-31`、`target_date=2026-06-05`；`data freshness
+      --latest`、`data validate-freshness --latest`、`data validate-backtest-manifest
+      --latest`、`data inspect-registry --latest`、`portfolio track-candidate --latest`
+      和 `reports data-freshness --latest` 均通过，tracking 恢复 `active_tracking`；focused
+      pytest（16 passed）、ruff、black 和 compileall 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:21d20efd555e452bb7892cd402a1575d8fee2351e502e455c8970aebe3b7e53c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-057
+  - 数据质量/Market Data Freshness & Tracking Readiness Gate
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/market_data_freshness_tracking_readiness_gate_2026-05-30.md`；market
+    data freshness/readiness gate 已实现并通过 2026-06-05 latest 验收；market data refresh
+    现按 shadow backtest required history 覆盖补齐 required assets，`GOOGL`、`BRK.B via BRK-B`、`SGOV`
+    均写入 1008 行（2022-05-31 至 2026-06-05）；freshness、validate-freshness、backtest manifest、data
+    registry 和 candidate tracking gates 均 OK；`validate-data --as-of 2026-06-05` 为
+    `PASS_WITH_WARNINGS`（非阻断 warning：`prices_download_manifest_checksum_missing`）；shadow
+    backtest dry-run 仍因 signal snapshot 质量保持 `LIMITED` / `price_only_shadow_backtest`
+    / `promotion_status=rejected`，production promotion 仍禁用
+  - '`aits data freshness --latest` 生成 `artifacts/data_freshness/YYYY-MM-DD/market_data_freshness_summary.json/md`；`aits
+    data validate-freshness --latest` 输出 freshness status、tracking readiness 和安全字段；freshness
+    status 区分 OK、ACCEPTABLE_LAG、NON_TRADING_DAY、STALE、MISSING、SOURCE_DELAYED、MARKET_CALENDAR_UNKNOWN、FAILED；`aits
+    portfolio track-candidate --latest` 写入 `market_data_freshness_status` 并按 readiness
+    映射 tracking 状态；`aits reports data-freshness --latest` 可读取 latest report；Dashboard/Reader
+    Brief 展示 freshness 摘要；shadow backtest dry-run 可引用 freshness artifact 但仍 rejected；不修改
+    `config/parameters/production/current.yaml`，不降低 data gate，不下载或伪造数据，不自动 promotion；专项测试、全量
+    pytest、ruff、compileall 和 diff check 通过'
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-056 已把 candidate 放入 shadow tracking，但
+    latest `tracking_date=2026-05-29` 与 `effective_data_date=2026-05-28` 的 degraded
+    状态缺少正式 freshness/readiness 判断，无法区分正常延迟、非交易日、stale cache、source delayed 或真实缺失。2026-05-30:
+    从 IN_PROGRESS 改为 VALIDATING，原因：实现、文档和真实 latest 验收完成；`aits data freshness --latest`
+    输出 `freshness_status=STALE`、`tracking_readiness=cannot_track`，`aits portfolio
+    track-candidate --latest` 输出 `tracking_status=tracking_blocked`，shadow backtest
+    dry-run 仍 `promotion_status=rejected` 且引用 freshness/tracking artifacts；全量验证通过，production/current.yaml
+    无 diff。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：`validate-data --as-of 2026-06-05`
+    为 PASS，但 `data freshness --latest` 为 `MISSING`，`tracking_date=2026-06-05`、`latest_raw_price_date=2026-06-05`、`latest_registry_date=2026-06-05`，而
+    `effective_data_date=2026-05-28`、`latest_manifest_date=2026-05-28`；required assets
+    `GOOGL`、`BRK.B via BRK-B`、`SGOV` 缺 effective/expected date 覆盖，`tracking_readiness=cannot_track`。2026-06-09:
+    从 IN_PROGRESS 改为 DONE，原因：recovery 缺陷已修复并完成真实验收；`data recover-freshness --latest`
+    返回 `OK`，`GOOGL`、`BRK.B via BRK-B`、`SGOV` 通过 audited FMP raw cache 历史段+单日段合并补齐
+    1008 行，`required_start_date=2022-05-31`、`target_date=2026-06-05`；`data freshness
+    --latest`、`data validate-freshness --latest`、`data validate-backtest-manifest
+    --latest`、`data inspect-registry --latest`、`portfolio track-candidate --latest`
+    和 `reports data-freshness --latest` 均通过，tracking 恢复 `active_tracking`；focused
+    pytest（16 passed）、ruff、black 和 compileall 通过。'
+  docs_links:
+  - docs/requirements/market_data_freshness_tracking_readiness_gate_2026-05-30.md
+  terminal: true
+  raw_row_sha256: 21d20efd555e452bb7892cd402a1575d8fee2351e502e455c8970aebe3b7e53c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9c30479c8d1c8aa67752acab38fe6b4ffa1563cfe9468c0e4a9e554b3ff76b2e

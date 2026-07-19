@@ -1,0 +1,138 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2399_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_JSON_HELPER_BOUNDARY
+  title: null
+  domain: Architecture / daily incremental refactor dynamic strategy JSON helper boundary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+  requirement_refs:
+  - docs/requirements/TRADING-2399_Daily_Incremental_Refactor_Dynamic_Strategy_JSON_Helper_Boundary.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2399_Daily_Incremental_Refactor_Dynamic_Strategy_JSON_Helper_Boundary.md`；本批只整理
+    dynamic strategy research-only report modules 的 JSON block formatting / JSON document
+    loading helper 边界，不改变 CLI、artifact path、JSON key、Markdown section、status enum、safety
+    fields、data-quality disclosure、fail-closed semantics、阈值、score band、promotion gate、data
+    quality gate、backtest、market-regime interpretation、paper-shadow、production 或 broker/order
+    path。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`dynamic_strategy_report_common.py` 新增共享 `json_block()`、`load_json_document()`、`load_json_document_or_empty()`、`load_json_document_or_missing_status()`、`load_json_document_or_missing_path()`、`load_json_document_or_missing_flag()`
+      和 `load_json_mapping()`；TRADING-2389～2397 calibrated gate / component attribution
+      / component recombination / recombination owner decision modules 复用 helper；focused
+      parallel pytest、CLI help smoke、Ruff、compileall、docs/task consistency 和 `git
+      diff --check` 通过。'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 88
+    row_sha256: 66b10fc3c22fe8d4d6b2a14651423f5a8184a49c5b483a8d43efcbc75154affa
+    cell_count: 8
+    all_cells:
+    - TRADING-2399_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_JSON_HELPER_BOUNDARY
+    - Architecture / daily incremental refactor dynamic strategy JSON helper boundary
+    - P2
+    - DONE
+    - 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+    - 详见 `docs/requirements/TRADING-2399_Daily_Incremental_Refactor_Dynamic_Strategy_JSON_Helper_Boundary.md`；本批只整理
+      dynamic strategy research-only report modules 的 JSON block formatting / JSON
+      document loading helper 边界，不改变 CLI、artifact path、JSON key、Markdown section、status
+      enum、safety fields、data-quality disclosure、fail-closed semantics、阈值、score band、promotion
+      gate、data quality gate、backtest、market-regime interpretation、paper-shadow、production
+      或 broker/order path。
+    - '`dynamic_strategy_report_common.py` 新增共享 `json_block()`、`load_json_document()`、`load_json_document_or_empty()`、`load_json_document_or_missing_status()`、`load_json_document_or_missing_path()`、`load_json_document_or_missing_flag()`
+      和 `load_json_mapping()`；TRADING-2389～2397 calibrated gate / component attribution
+      / component recombination / recombination owner decision modules 复用 helper；focused
+      parallel pytest、CLI help smoke、Ruff、compileall、docs/task consistency 和 `git
+      diff --check` 通过。'
+    - '2026-07-07: 每日增量重构巡检新增并进入 IN_PROGRESS；最近合格重构基线为 `96855c7e7ce0b628c47b3aacb160bf6efec11341`，HEAD
+      `edda8d0703b919802fee801b5c9c158aa52d497b` 不是重构提交。2026-07-07: 实现完成并归档 DONE；本轮未运行
+      `aits validate-data`，因为只整理 internal JSON helper，不读取 fresh cached market/macro
+      data，不生成 technical features、scoring、backtest 或 daily report 输出；production effect
+      固定 `none`，未写 production weights / active shadow weights，未触发 broker / order /
+      trading action。'
+    raw_line: '|TRADING-2399_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_JSON_HELPER_BOUNDARY|Architecture
+      / daily incremental refactor dynamic strategy JSON helper boundary|P2|DONE|系统后续每日增量重构巡检继续从本轮
+      refactor log 回填提交评估|详见 `docs/requirements/TRADING-2399_Daily_Incremental_Refactor_Dynamic_Strategy_JSON_Helper_Boundary.md`；本批只整理
+      dynamic strategy research-only report modules 的 JSON block formatting / JSON
+      document loading helper 边界，不改变 CLI、artifact path、JSON key、Markdown section、status
+      enum、safety fields、data-quality disclosure、fail-closed semantics、阈值、score band、promotion
+      gate、data quality gate、backtest、market-regime interpretation、paper-shadow、production
+      或 broker/order path。|`dynamic_strategy_report_common.py` 新增共享 `json_block()`、`load_json_document()`、`load_json_document_or_empty()`、`load_json_document_or_missing_status()`、`load_json_document_or_missing_path()`、`load_json_document_or_missing_flag()`
+      和 `load_json_mapping()`；TRADING-2389～2397 calibrated gate / component attribution
+      / component recombination / recombination owner decision modules 复用 helper；focused
+      parallel pytest、CLI help smoke、Ruff、compileall、docs/task consistency 和 `git
+      diff --check` 通过。|2026-07-07: 每日增量重构巡检新增并进入 IN_PROGRESS；最近合格重构基线为 `96855c7e7ce0b628c47b3aacb160bf6efec11341`，HEAD
+      `edda8d0703b919802fee801b5c9c158aa52d497b` 不是重构提交。2026-07-07: 实现完成并归档 DONE；本轮未运行
+      `aits validate-data`，因为只整理 internal JSON helper，不读取 fresh cached market/macro
+      data，不生成 technical features、scoring、backtest 或 daily report 输出；production effect
+      固定 `none`，未写 production weights / active shadow weights，未触发 broker / order /
+      trading action。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-66b10fc3c22fe8d4d6b2a146
+  task_id: TRADING-2399_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_JSON_HELPER_BOUNDARY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+    notes: '2026-07-07: 每日增量重构巡检新增并进入 IN_PROGRESS；最近合格重构基线为 `96855c7e7ce0b628c47b3aacb160bf6efec11341`，HEAD
+      `edda8d0703b919802fee801b5c9c158aa52d497b` 不是重构提交。2026-07-07: 实现完成并归档 DONE；本轮未运行
+      `aits validate-data`，因为只整理 internal JSON helper，不读取 fresh cached market/macro
+      data，不生成 technical features、scoring、backtest 或 daily report 输出；production effect
+      固定 `none`，未写 production weights / active shadow weights，未触发 broker / order /
+      trading action。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:66b10fc3c22fe8d4d6b2a14651423f5a8184a49c5b483a8d43efcbc75154affa
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2399_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_JSON_HELPER_BOUNDARY
+  - Architecture / daily incremental refactor dynamic strategy JSON helper boundary
+  - P2
+  - DONE
+  - 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+  - 详见 `docs/requirements/TRADING-2399_Daily_Incremental_Refactor_Dynamic_Strategy_JSON_Helper_Boundary.md`；本批只整理
+    dynamic strategy research-only report modules 的 JSON block formatting / JSON document
+    loading helper 边界，不改变 CLI、artifact path、JSON key、Markdown section、status enum、safety
+    fields、data-quality disclosure、fail-closed semantics、阈值、score band、promotion gate、data
+    quality gate、backtest、market-regime interpretation、paper-shadow、production 或 broker/order
+    path。
+  - '`dynamic_strategy_report_common.py` 新增共享 `json_block()`、`load_json_document()`、`load_json_document_or_empty()`、`load_json_document_or_missing_status()`、`load_json_document_or_missing_path()`、`load_json_document_or_missing_flag()`
+    和 `load_json_mapping()`；TRADING-2389～2397 calibrated gate / component attribution
+    / component recombination / recombination owner decision modules 复用 helper；focused
+    parallel pytest、CLI help smoke、Ruff、compileall、docs/task consistency 和 `git diff
+    --check` 通过。'
+  - '2026-07-07: 每日增量重构巡检新增并进入 IN_PROGRESS；最近合格重构基线为 `96855c7e7ce0b628c47b3aacb160bf6efec11341`，HEAD
+    `edda8d0703b919802fee801b5c9c158aa52d497b` 不是重构提交。2026-07-07: 实现完成并归档 DONE；本轮未运行
+    `aits validate-data`，因为只整理 internal JSON helper，不读取 fresh cached market/macro
+    data，不生成 technical features、scoring、backtest 或 daily report 输出；production effect
+    固定 `none`，未写 production weights / active shadow weights，未触发 broker / order / trading
+    action。'
+  docs_links:
+  - docs/requirements/TRADING-2399_Daily_Incremental_Refactor_Dynamic_Strategy_JSON_Helper_Boundary.md
+  terminal: true
+  raw_row_sha256: 66b10fc3c22fe8d4d6b2a14651423f5a8184a49c5b483a8d43efcbc75154affa
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ee0b2e124091812e5cce2b9bc5e9d03e42edf1ee0d75468f0d643227eb0af959

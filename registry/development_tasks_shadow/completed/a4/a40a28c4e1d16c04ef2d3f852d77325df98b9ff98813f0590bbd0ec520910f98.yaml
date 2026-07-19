@@ -1,0 +1,155 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-045
+  title: null
+  domain: 基本面/SEC PIT Historical Baseline Score Backfill & Shadow Monitoring Coverage
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/baseline_score_backfill_shadow_monitoring_2026-05-27.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/baseline_score_backfill_shadow_monitoring_2026-05-27.md`；已完成
+    research-only historical baseline score backfill、SEC PIT baseline coverage audit、shadow
+    observe monitoring quality gate、dashboard 只读覆盖展示、artifact catalog、system flow、learning
+    path 和 runbook 更新；完成后可重新跑 TRADING-044 observe-only shadow lane
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits score-daily backfill-baseline` 和 `aits sec-pit audit-baseline-coverage`；baseline
+      backfill 先跑数据质量门禁，默认输出到 research-only 路径，输出 `baseline_score`、`baseline_rank`、`baseline_action`、score
+      source/version、feature completeness、`research_backfill=true`、`production_effect=none`；coverage
+      audit 输出 summary JSON/Markdown、by ticker、by date、gap CSV；shadow observe 区分 `LIMITED_BASELINE_MISSING`、`LIMITED_LABELS_MISSING`、`INSUFFICIENT_MONITORING_SAMPLE`、`ROLLBACK_TRIGGERED_BY_FACTOR`、`ROLLBACK_TRIGGERED_BY_DATA`
+      和 `FAILED_SAFETY_CHECK`，baseline/label/sample gates 未通过时不得标记 factor rollback；dashboard
+      只读读取 baseline coverage 和 shadow observe artifacts，不运行 audit/backfill/shadow-observe，不修改
+      production decisions、active trading behavior、production weights、active shadow
+      weights 或 production scoring config
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 388
+    row_sha256: d8e6de3834cedb240081ea71ff21450fb5286d1ca6e9544db52cd738f456444f
+    cell_count: 8
+    all_cells:
+    - TRADING-045
+    - 基本面/SEC PIT Historical Baseline Score Backfill & Shadow Monitoring Coverage
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/baseline_score_backfill_shadow_monitoring_2026-05-27.md`；已完成
+      research-only historical baseline score backfill、SEC PIT baseline coverage audit、shadow
+      observe monitoring quality gate、dashboard 只读覆盖展示、artifact catalog、system flow、learning
+      path 和 runbook 更新；完成后可重新跑 TRADING-044 observe-only shadow lane
+    - 新增 `aits score-daily backfill-baseline` 和 `aits sec-pit audit-baseline-coverage`；baseline
+      backfill 先跑数据质量门禁，默认输出到 research-only 路径，输出 `baseline_score`、`baseline_rank`、`baseline_action`、score
+      source/version、feature completeness、`research_backfill=true`、`production_effect=none`；coverage
+      audit 输出 summary JSON/Markdown、by ticker、by date、gap CSV；shadow observe 区分 `LIMITED_BASELINE_MISSING`、`LIMITED_LABELS_MISSING`、`INSUFFICIENT_MONITORING_SAMPLE`、`ROLLBACK_TRIGGERED_BY_FACTOR`、`ROLLBACK_TRIGGERED_BY_DATA`
+      和 `FAILED_SAFETY_CHECK`，baseline/label/sample gates 未通过时不得标记 factor rollback；dashboard
+      只读读取 baseline coverage 和 shadow observe artifacts，不运行 audit/backfill/shadow-observe，不修改
+      production decisions、active trading behavior、production weights、active shadow
+      weights 或 production scoring config
+    - '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-044 真实 observe-only run 的 `shadow_status=LIMITED_BASELINE_MISSING`
+      但 `monitoring_status=ROLLBACK_TRIGGERED`，需要修复 historical baseline score 覆盖和
+      monitoring 诊断。2026-05-27: 从 IN_PROGRESS 改为 DONE，原因：实现、文档和验证完成；验证通过 `python -m
+      pytest tests/trading_engine/test_baseline_score_backfill.py -q`（3 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_baseline_coverage.py -q`（3 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_shadow_observe.py -q`（11 passed）、`python
+      -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量 `python -m pytest
+      -q`（1315 passed, 1 warning）、全量 `python -m ruff check config src tests scripts
+      docs`、触达 Python 文件 `python -m black --check ...` 和新增 CLI help smoke。'
+    raw_line: '|TRADING-045|基本面/SEC PIT Historical Baseline Score Backfill & Shadow
+      Monitoring Coverage|P0|DONE|系统验证|详细拆解见 `docs/requirements/baseline_score_backfill_shadow_monitoring_2026-05-27.md`；已完成
+      research-only historical baseline score backfill、SEC PIT baseline coverage audit、shadow
+      observe monitoring quality gate、dashboard 只读覆盖展示、artifact catalog、system flow、learning
+      path 和 runbook 更新；完成后可重新跑 TRADING-044 observe-only shadow lane|新增 `aits score-daily
+      backfill-baseline` 和 `aits sec-pit audit-baseline-coverage`；baseline backfill
+      先跑数据质量门禁，默认输出到 research-only 路径，输出 `baseline_score`、`baseline_rank`、`baseline_action`、score
+      source/version、feature completeness、`research_backfill=true`、`production_effect=none`；coverage
+      audit 输出 summary JSON/Markdown、by ticker、by date、gap CSV；shadow observe 区分 `LIMITED_BASELINE_MISSING`、`LIMITED_LABELS_MISSING`、`INSUFFICIENT_MONITORING_SAMPLE`、`ROLLBACK_TRIGGERED_BY_FACTOR`、`ROLLBACK_TRIGGERED_BY_DATA`
+      和 `FAILED_SAFETY_CHECK`，baseline/label/sample gates 未通过时不得标记 factor rollback；dashboard
+      只读读取 baseline coverage 和 shadow observe artifacts，不运行 audit/backfill/shadow-observe，不修改
+      production decisions、active trading behavior、production weights、active shadow
+      weights 或 production scoring config|2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-044
+      真实 observe-only run 的 `shadow_status=LIMITED_BASELINE_MISSING` 但 `monitoring_status=ROLLBACK_TRIGGERED`，需要修复
+      historical baseline score 覆盖和 monitoring 诊断。2026-05-27: 从 IN_PROGRESS 改为 DONE，原因：实现、文档和验证完成；验证通过
+      `python -m pytest tests/trading_engine/test_baseline_score_backfill.py -q`（3
+      passed）、`python -m pytest tests/trading_engine/test_sec_pit_baseline_coverage.py
+      -q`（3 passed）、`python -m pytest tests/trading_engine/test_sec_pit_shadow_observe.py
+      -q`（11 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量
+      `python -m pytest -q`（1315 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs`、触达 Python 文件 `python -m black --check ...` 和新增 CLI help
+      smoke。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d8e6de3834cedb240081ea71
+  task_id: TRADING-045
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-044 真实 observe-only run 的 `shadow_status=LIMITED_BASELINE_MISSING`
+      但 `monitoring_status=ROLLBACK_TRIGGERED`，需要修复 historical baseline score 覆盖和
+      monitoring 诊断。2026-05-27: 从 IN_PROGRESS 改为 DONE，原因：实现、文档和验证完成；验证通过 `python -m
+      pytest tests/trading_engine/test_baseline_score_backfill.py -q`（3 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_baseline_coverage.py -q`（3 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_shadow_observe.py -q`（11 passed）、`python
+      -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量 `python -m pytest
+      -q`（1315 passed, 1 warning）、全量 `python -m ruff check config src tests scripts
+      docs`、触达 Python 文件 `python -m black --check ...` 和新增 CLI help smoke。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d8e6de3834cedb240081ea71ff21450fb5286d1ca6e9544db52cd738f456444f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-045
+  - 基本面/SEC PIT Historical Baseline Score Backfill & Shadow Monitoring Coverage
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/baseline_score_backfill_shadow_monitoring_2026-05-27.md`；已完成
+    research-only historical baseline score backfill、SEC PIT baseline coverage audit、shadow
+    observe monitoring quality gate、dashboard 只读覆盖展示、artifact catalog、system flow、learning
+    path 和 runbook 更新；完成后可重新跑 TRADING-044 observe-only shadow lane
+  - 新增 `aits score-daily backfill-baseline` 和 `aits sec-pit audit-baseline-coverage`；baseline
+    backfill 先跑数据质量门禁，默认输出到 research-only 路径，输出 `baseline_score`、`baseline_rank`、`baseline_action`、score
+    source/version、feature completeness、`research_backfill=true`、`production_effect=none`；coverage
+    audit 输出 summary JSON/Markdown、by ticker、by date、gap CSV；shadow observe 区分 `LIMITED_BASELINE_MISSING`、`LIMITED_LABELS_MISSING`、`INSUFFICIENT_MONITORING_SAMPLE`、`ROLLBACK_TRIGGERED_BY_FACTOR`、`ROLLBACK_TRIGGERED_BY_DATA`
+    和 `FAILED_SAFETY_CHECK`，baseline/label/sample gates 未通过时不得标记 factor rollback；dashboard
+    只读读取 baseline coverage 和 shadow observe artifacts，不运行 audit/backfill/shadow-observe，不修改
+    production decisions、active trading behavior、production weights、active shadow
+    weights 或 production scoring config
+  - '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-044 真实 observe-only run 的 `shadow_status=LIMITED_BASELINE_MISSING`
+    但 `monitoring_status=ROLLBACK_TRIGGERED`，需要修复 historical baseline score 覆盖和 monitoring
+    诊断。2026-05-27: 从 IN_PROGRESS 改为 DONE，原因：实现、文档和验证完成；验证通过 `python -m pytest tests/trading_engine/test_baseline_score_backfill.py
+    -q`（3 passed）、`python -m pytest tests/trading_engine/test_sec_pit_baseline_coverage.py
+    -q`（3 passed）、`python -m pytest tests/trading_engine/test_sec_pit_shadow_observe.py
+    -q`（11 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量
+    `python -m pytest -q`（1315 passed, 1 warning）、全量 `python -m ruff check config
+    src tests scripts docs`、触达 Python 文件 `python -m black --check ...` 和新增 CLI help
+    smoke。'
+  docs_links:
+  - docs/requirements/baseline_score_backfill_shadow_monitoring_2026-05-27.md
+  terminal: true
+  raw_row_sha256: d8e6de3834cedb240081ea71ff21450fb5286d1ca6e9544db52cd738f456444f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 978a0a32d56609cc9a561744c96aa4df28b65c5935617ba27c60baca1fa78bd3

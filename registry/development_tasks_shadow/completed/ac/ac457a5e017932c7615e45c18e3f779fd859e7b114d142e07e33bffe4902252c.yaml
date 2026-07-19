@@ -1,0 +1,170 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT
+  title: null
+  domain: Research governance / safety boundary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 legacy safety metadata migration 优先级；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-363_Research_Safety_Boundary_Audit.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-363_Research_Safety_Boundary_Audit.md`；新增
+    recurring research safety boundary audit，检查 active/completed task register 和 report
+    index 中既有 artifacts 未引入 official target weights、broker integration、order tickets、production
+    mutation 或 automatic live allocation；legacy artifacts 缺少显式 safety metadata 时必须可见
+    warning，不得重写历史 artifacts
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/research_safety_boundary.py`、`aits reports
+      research-safety-boundary-audit`、`aits reports validate-research-safety-boundary`、task
+      boundary scan、artifact safety metadata scan、Reader Brief 摘要、shadow continuation
+      readiness input、future promotion board input、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；unsafe positive signal
+      fail closed，所有输出固定 `production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 221
+    row_sha256: 8182820f74ba7f1cd9ebcd5a881e5181c53c28d8fa39bc183e910da2f661f4a9
+    cell_count: 8
+    all_cells:
+    - TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT
+    - Research governance / safety boundary
+    - P1
+    - DONE
+    - 项目 owner 后续复核 legacy safety metadata migration 优先级；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-363_Research_Safety_Boundary_Audit.md`；新增 recurring
+      research safety boundary audit，检查 active/completed task register 和 report index
+      中既有 artifacts 未引入 official target weights、broker integration、order tickets、production
+      mutation 或 automatic live allocation；legacy artifacts 缺少显式 safety metadata 时必须可见
+      warning，不得重写历史 artifacts
+    - 新增 `src/ai_trading_system/reports/research_safety_boundary.py`、`aits reports
+      research-safety-boundary-audit`、`aits reports validate-research-safety-boundary`、task
+      boundary scan、artifact safety metadata scan、Reader Brief 摘要、shadow continuation
+      readiness input、future promotion board input、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；unsafe positive signal
+      fail closed，所有输出固定 `production_effect=none`
+    - '2026-06-16: DONE；真实 2026-06-16 audit `outputs/reports/research_safety_boundary_audit_2026-06-16.json/md`
+      输出 `SAFETY_PASS_WITH_WARNINGS`、task checks=418、artifact checks=368、unsafe signals=0、missing
+      metadata=1497、shadow continuation readiness input=`AVAILABLE_WITH_WARNINGS`、future
+      promotion board input=`REQUIRES_WARNING_REVIEW`；validation `outputs/reports/research_safety_boundary_validation_2026-06-16.json/md`
+      输出 `SAFETY_PASS_WITH_WARNINGS`、checks=7、blocking failed=0、warnings=1；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0；为验证 Reader Brief latest section，本地可生成日期
+      2026-06-15 同步生成 audit/validation，Reader Brief section 展示 `SAFETY_PASS_WITH_WARNINGS`、unsafe
+      signals=0、missing metadata=1476，Reader Brief quality OK / failed=0；focused pytest
+      `tests/test_research_safety_boundary.py` 5 passed，Reader Brief/documentation
+      focused pytest 16 passed，Ruff PASS。精确 2026-06-16 Reader Brief generation remains
+      limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no historical rewrite / no upstream
+      rerun / no data refresh / no score/weight/gate/paper account/production mutation
+      / no official target / no broker / no order。'
+    raw_line: '|TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT|Research governance / safety
+      boundary|P1|DONE|项目 owner 后续复核 legacy safety metadata migration 优先级；代码实现完成|详细拆解见
+      `docs/requirements/TRADING-363_Research_Safety_Boundary_Audit.md`；新增 recurring
+      research safety boundary audit，检查 active/completed task register 和 report index
+      中既有 artifacts 未引入 official target weights、broker integration、order tickets、production
+      mutation 或 automatic live allocation；legacy artifacts 缺少显式 safety metadata 时必须可见
+      warning，不得重写历史 artifacts|新增 `src/ai_trading_system/reports/research_safety_boundary.py`、`aits
+      reports research-safety-boundary-audit`、`aits reports validate-research-safety-boundary`、task
+      boundary scan、artifact safety metadata scan、Reader Brief 摘要、shadow continuation
+      readiness input、future promotion board input、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；unsafe positive signal
+      fail closed，所有输出固定 `production_effect=none`|2026-06-16: DONE；真实 2026-06-16 audit
+      `outputs/reports/research_safety_boundary_audit_2026-06-16.json/md` 输出 `SAFETY_PASS_WITH_WARNINGS`、task
+      checks=418、artifact checks=368、unsafe signals=0、missing metadata=1497、shadow
+      continuation readiness input=`AVAILABLE_WITH_WARNINGS`、future promotion board
+      input=`REQUIRES_WARNING_REVIEW`；validation `outputs/reports/research_safety_boundary_validation_2026-06-16.json/md`
+      输出 `SAFETY_PASS_WITH_WARNINGS`、checks=7、blocking failed=0、warnings=1；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0；为验证 Reader Brief latest section，本地可生成日期
+      2026-06-15 同步生成 audit/validation，Reader Brief section 展示 `SAFETY_PASS_WITH_WARNINGS`、unsafe
+      signals=0、missing metadata=1476，Reader Brief quality OK / failed=0；focused pytest
+      `tests/test_research_safety_boundary.py` 5 passed，Reader Brief/documentation
+      focused pytest 16 passed，Ruff PASS。精确 2026-06-16 Reader Brief generation remains
+      limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no historical rewrite / no upstream
+      rerun / no data refresh / no score/weight/gate/paper account/production mutation
+      / no official target / no broker / no order。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8182820f74ba7f1cd9ebcd5a
+  task_id: TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核 legacy safety metadata migration 优先级；代码实现完成
+    notes: '2026-06-16: DONE；真实 2026-06-16 audit `outputs/reports/research_safety_boundary_audit_2026-06-16.json/md`
+      输出 `SAFETY_PASS_WITH_WARNINGS`、task checks=418、artifact checks=368、unsafe signals=0、missing
+      metadata=1497、shadow continuation readiness input=`AVAILABLE_WITH_WARNINGS`、future
+      promotion board input=`REQUIRES_WARNING_REVIEW`；validation `outputs/reports/research_safety_boundary_validation_2026-06-16.json/md`
+      输出 `SAFETY_PASS_WITH_WARNINGS`、checks=7、blocking failed=0、warnings=1；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0；为验证 Reader Brief latest section，本地可生成日期
+      2026-06-15 同步生成 audit/validation，Reader Brief section 展示 `SAFETY_PASS_WITH_WARNINGS`、unsafe
+      signals=0、missing metadata=1476，Reader Brief quality OK / failed=0；focused pytest
+      `tests/test_research_safety_boundary.py` 5 passed，Reader Brief/documentation
+      focused pytest 16 passed，Ruff PASS。精确 2026-06-16 Reader Brief generation remains
+      limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no historical rewrite / no upstream
+      rerun / no data refresh / no score/weight/gate/paper account/production mutation
+      / no official target / no broker / no order。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8182820f74ba7f1cd9ebcd5a881e5181c53c28d8fa39bc183e910da2f661f4a9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT
+  - Research governance / safety boundary
+  - P1
+  - DONE
+  - 项目 owner 后续复核 legacy safety metadata migration 优先级；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-363_Research_Safety_Boundary_Audit.md`；新增 recurring
+    research safety boundary audit，检查 active/completed task register 和 report index
+    中既有 artifacts 未引入 official target weights、broker integration、order tickets、production
+    mutation 或 automatic live allocation；legacy artifacts 缺少显式 safety metadata 时必须可见
+    warning，不得重写历史 artifacts
+  - 新增 `src/ai_trading_system/reports/research_safety_boundary.py`、`aits reports research-safety-boundary-audit`、`aits
+    reports validate-research-safety-boundary`、task boundary scan、artifact safety
+    metadata scan、Reader Brief 摘要、shadow continuation readiness input、future promotion
+    board input、report registry、artifact catalog、README、system flow、operations runbook、requirements
+    和 focused tests；unsafe positive signal fail closed，所有输出固定 `production_effect=none`
+  - '2026-06-16: DONE；真实 2026-06-16 audit `outputs/reports/research_safety_boundary_audit_2026-06-16.json/md`
+    输出 `SAFETY_PASS_WITH_WARNINGS`、task checks=418、artifact checks=368、unsafe signals=0、missing
+    metadata=1497、shadow continuation readiness input=`AVAILABLE_WITH_WARNINGS`、future
+    promotion board input=`REQUIRES_WARNING_REVIEW`；validation `outputs/reports/research_safety_boundary_validation_2026-06-16.json/md`
+    输出 `SAFETY_PASS_WITH_WARNINGS`、checks=7、blocking failed=0、warnings=1；report index
+    `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0；为验证 Reader Brief latest section，本地可生成日期
+    2026-06-15 同步生成 audit/validation，Reader Brief section 展示 `SAFETY_PASS_WITH_WARNINGS`、unsafe
+    signals=0、missing metadata=1476，Reader Brief quality OK / failed=0；focused pytest
+    `tests/test_research_safety_boundary.py` 5 passed，Reader Brief/documentation focused
+    pytest 16 passed，Ruff PASS。精确 2026-06-16 Reader Brief generation remains limited
+    by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+    no snapshot was fabricated. 保持 read-only / no historical rewrite / no upstream
+    rerun / no data refresh / no score/weight/gate/paper account/production mutation
+    / no official target / no broker / no order。'
+  docs_links:
+  - docs/requirements/TRADING-363_Research_Safety_Boundary_Audit.md
+  terminal: true
+  raw_row_sha256: 8182820f74ba7f1cd9ebcd5a881e5181c53c28d8fa39bc183e910da2f661f4a9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 1865fb4d7c3a68a7ddc1e4a6b2f97cc01dd377cc6ebe688d714a52350d88ead0

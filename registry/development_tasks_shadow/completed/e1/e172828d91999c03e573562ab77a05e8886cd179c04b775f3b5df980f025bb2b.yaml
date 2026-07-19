@@ -1,0 +1,147 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-018C
+  title: null
+  domain: 交易执行/Production vs Shadow Weight Comparison
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/daily_shadow_vs_production_comparison_2026-05-19.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/daily_shadow_vs_production_comparison_2026-05-19.md`；离线
+    production/shadow 权重对照报告、standalone script、dashboard 只读卡片、系统流图、产物目录、测试和最终收尾验证已完成
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_daily_shadow_vs_production_comparison.py` 和 `data/derived/weight_iterations/comparison/daily_shadow_vs_production_YYYY-MM-DD.json/md`；读取
+      production profile snapshot、`current_shadow_weights.json`、同日 `decision_snapshot`
+      组件分、TRADING-018B candidate/result 和当日 scoring/backtest/feedback artifacts；同一批输入信号下分别用
+      production/shadow weights 计算 score，比较 decision、score_delta、risk flags、top contributors
+      和 contribution breakdown；所有输出固定 `production_effect=none`、`manual_review_only=true`；不得接
+      broker runner、replay runner、production profile modification、approved profile
+      写入、promotion 或 dashboard 主结论变更；dashboard 只读展示 score_delta、decision_changed、main
+      reason、report link 和安全边界
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 414
+    row_sha256: 874783a6a0a39efae9eb941450e3cadd5597316f7b0988fb02b5cc2c0c567c75
+    cell_count: 8
+    all_cells:
+    - TRADING-018C
+    - 交易执行/Production vs Shadow Weight Comparison
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/daily_shadow_vs_production_comparison_2026-05-19.md`；离线
+      production/shadow 权重对照报告、standalone script、dashboard 只读卡片、系统流图、产物目录、测试和最终收尾验证已完成
+    - 新增 `scripts/run_daily_shadow_vs_production_comparison.py` 和 `data/derived/weight_iterations/comparison/daily_shadow_vs_production_YYYY-MM-DD.json/md`；读取
+      production profile snapshot、`current_shadow_weights.json`、同日 `decision_snapshot`
+      组件分、TRADING-018B candidate/result 和当日 scoring/backtest/feedback artifacts；同一批输入信号下分别用
+      production/shadow weights 计算 score，比较 decision、score_delta、risk flags、top contributors
+      和 contribution breakdown；所有输出固定 `production_effect=none`、`manual_review_only=true`；不得接
+      broker runner、replay runner、production profile modification、approved profile
+      写入、promotion 或 dashboard 主结论变更；dashboard 只读展示 score_delta、decision_changed、main
+      reason、report link 和安全边界
+    - '2026-05-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018B 后新增 production vs shadow
+      离线比较；当前阶段只是比较，不允许采用 shadow、promotion、production profile 修改、broker/replay runner
+      或交易触发。2026-05-19: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 comparison builder、`scripts/run_daily_shadow_vs_production_comparison.py`、JSON/Markdown
+      输出、dashboard Shadow vs Production Comparison 只读卡片、系统流图/产物目录和测试；验证通过 018C 目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。2026-05-19:
+      从 VALIDATING 改为 DONE，原因：最终收尾验证通过手动 CLI smoke（生成 comparison JSON/Markdown）、dashboard
+      只读读取 smoke（删除源输入后仍读取最新 comparison artifact）、目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest、ruff 和 black check；安全边界保持 `production_effect=none`、`manual_review_only=true`、无
+      broker runner、无 replay runner、无 production profile 写入、无 promotion。'
+    raw_line: '|TRADING-018C|交易执行/Production vs Shadow Weight Comparison|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/daily_shadow_vs_production_comparison_2026-05-19.md`；离线 production/shadow
+      权重对照报告、standalone script、dashboard 只读卡片、系统流图、产物目录、测试和最终收尾验证已完成|新增 `scripts/run_daily_shadow_vs_production_comparison.py`
+      和 `data/derived/weight_iterations/comparison/daily_shadow_vs_production_YYYY-MM-DD.json/md`；读取
+      production profile snapshot、`current_shadow_weights.json`、同日 `decision_snapshot`
+      组件分、TRADING-018B candidate/result 和当日 scoring/backtest/feedback artifacts；同一批输入信号下分别用
+      production/shadow weights 计算 score，比较 decision、score_delta、risk flags、top contributors
+      和 contribution breakdown；所有输出固定 `production_effect=none`、`manual_review_only=true`；不得接
+      broker runner、replay runner、production profile modification、approved profile
+      写入、promotion 或 dashboard 主结论变更；dashboard 只读展示 score_delta、decision_changed、main
+      reason、report link 和安全边界|2026-05-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018B
+      后新增 production vs shadow 离线比较；当前阶段只是比较，不允许采用 shadow、promotion、production profile
+      修改、broker/replay runner 或交易触发。2026-05-19: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      comparison builder、`scripts/run_daily_shadow_vs_production_comparison.py`、JSON/Markdown
+      输出、dashboard Shadow vs Production Comparison 只读卡片、系统流图/产物目录和测试；验证通过 018C 目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。2026-05-19:
+      从 VALIDATING 改为 DONE，原因：最终收尾验证通过手动 CLI smoke（生成 comparison JSON/Markdown）、dashboard
+      只读读取 smoke（删除源输入后仍读取最新 comparison artifact）、目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest、ruff 和 black check；安全边界保持 `production_effect=none`、`manual_review_only=true`、无
+      broker runner、无 replay runner、无 production profile 写入、无 promotion。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-874783a6a0a39efae9eb9414
+  task_id: TRADING-018C
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018B 后新增 production
+      vs shadow 离线比较；当前阶段只是比较，不允许采用 shadow、promotion、production profile 修改、broker/replay
+      runner 或交易触发。2026-05-19: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 comparison builder、`scripts/run_daily_shadow_vs_production_comparison.py`、JSON/Markdown
+      输出、dashboard Shadow vs Production Comparison 只读卡片、系统流图/产物目录和测试；验证通过 018C 目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。2026-05-19:
+      从 VALIDATING 改为 DONE，原因：最终收尾验证通过手动 CLI smoke（生成 comparison JSON/Markdown）、dashboard
+      只读读取 smoke（删除源输入后仍读取最新 comparison artifact）、目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest、ruff 和 black check；安全边界保持 `production_effect=none`、`manual_review_only=true`、无
+      broker runner、无 replay runner、无 production profile 写入、无 promotion。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:874783a6a0a39efae9eb941450e3cadd5597316f7b0988fb02b5cc2c0c567c75
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-018C
+  - 交易执行/Production vs Shadow Weight Comparison
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/daily_shadow_vs_production_comparison_2026-05-19.md`；离线
+    production/shadow 权重对照报告、standalone script、dashboard 只读卡片、系统流图、产物目录、测试和最终收尾验证已完成
+  - 新增 `scripts/run_daily_shadow_vs_production_comparison.py` 和 `data/derived/weight_iterations/comparison/daily_shadow_vs_production_YYYY-MM-DD.json/md`；读取
+    production profile snapshot、`current_shadow_weights.json`、同日 `decision_snapshot`
+    组件分、TRADING-018B candidate/result 和当日 scoring/backtest/feedback artifacts；同一批输入信号下分别用
+    production/shadow weights 计算 score，比较 decision、score_delta、risk flags、top contributors
+    和 contribution breakdown；所有输出固定 `production_effect=none`、`manual_review_only=true`；不得接
+    broker runner、replay runner、production profile modification、approved profile 写入、promotion
+    或 dashboard 主结论变更；dashboard 只读展示 score_delta、decision_changed、main reason、report
+    link 和安全边界
+  - '2026-05-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018B 后新增 production vs shadow
+    离线比较；当前阶段只是比较，不允许采用 shadow、promotion、production profile 修改、broker/replay runner
+    或交易触发。2026-05-19: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 comparison builder、`scripts/run_daily_shadow_vs_production_comparison.py`、JSON/Markdown
+    输出、dashboard Shadow vs Production Comparison 只读卡片、系统流图/产物目录和测试；验证通过 018C 目标 pytest、dashboard
+    pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。2026-05-19: 从 VALIDATING
+    改为 DONE，原因：最终收尾验证通过手动 CLI smoke（生成 comparison JSON/Markdown）、dashboard 只读读取 smoke（删除源输入后仍读取最新
+    comparison artifact）、目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff
+    和 black check；安全边界保持 `production_effect=none`、`manual_review_only=true`、无 broker
+    runner、无 replay runner、无 production profile 写入、无 promotion。'
+  docs_links:
+  - docs/requirements/daily_shadow_vs_production_comparison_2026-05-19.md
+  terminal: true
+  raw_row_sha256: 874783a6a0a39efae9eb941450e3cadd5597316f7b0988fb02b5cc2c0c567c75
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b7b704afb8960d52437941a94ea41230277b15206b67f2bd456384a8594562c5

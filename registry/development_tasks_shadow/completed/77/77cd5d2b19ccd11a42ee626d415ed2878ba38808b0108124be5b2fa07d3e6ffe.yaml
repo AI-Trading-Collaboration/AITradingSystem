@@ -1,0 +1,99 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: SCORE-002
+  title: null
+  domain: 评分/报告
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已实现 AI 产业链评分与判断置信度拆分；日报、`scores_daily.csv`、decision
+    snapshot、回测每日明细和回测报告均输出 confidence
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`score-daily` 日报顶部同时输出 AI 产业链评分、判断置信度、模型评分仓位、置信度调整后建议仓位和限制原因；`scores_daily.csv`
+      或等价结构化输出可追踪整体置信度和主要扣减原因；回测每日明细和审计报告能按置信度分桶检查低置信度结论；实现时同步更新 `docs/system_flow.md`
+      并补充评分/报告/回测测试'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 428
+    row_sha256: 015920bca02878287d5cc96d4be6fa825afb4bbb5eb43d559156651080cf3c69
+    cell_count: 8
+    all_cells:
+    - SCORE-002
+    - 评分/报告
+    - P1
+    - DONE
+    - 系统实现
+    - 已实现 AI 产业链评分与判断置信度拆分；日报、`scores_daily.csv`、decision snapshot、回测每日明细和回测报告均输出
+      confidence
+    - '`score-daily` 日报顶部同时输出 AI 产业链评分、判断置信度、模型评分仓位、置信度调整后建议仓位和限制原因；`scores_daily.csv`
+      或等价结构化输出可追踪整体置信度和主要扣减原因；回测每日明细和审计报告能按置信度分桶检查低置信度结论；实现时同步更新 `docs/system_flow.md`
+      并补充评分/报告/回测测试'
+    - '来自 2026-05-04 评分解释讨论。目标是避免用户把 72/100 之类的市场分数误读为同等可靠的交易结论；低置信度不直接否定机会，但必须限制结论解释和仓位使用。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始实现评分/置信度拆分、日报/CSV/回测输出和系统不变量测试。2026-05-04: 从 IN_PROGRESS
+      改为 DONE，原因：已完成组件级和整体置信度、日报/CSV/快照/回测输出、文档和测试；`python -m pytest -q` 通过 220 项测试。'
+    raw_line: '|SCORE-002|评分/报告|P1|DONE|系统实现|已实现 AI 产业链评分与判断置信度拆分；日报、`scores_daily.csv`、decision
+      snapshot、回测每日明细和回测报告均输出 confidence|`score-daily` 日报顶部同时输出 AI 产业链评分、判断置信度、模型评分仓位、置信度调整后建议仓位和限制原因；`scores_daily.csv`
+      或等价结构化输出可追踪整体置信度和主要扣减原因；回测每日明细和审计报告能按置信度分桶检查低置信度结论；实现时同步更新 `docs/system_flow.md`
+      并补充评分/报告/回测测试|来自 2026-05-04 评分解释讨论。目标是避免用户把 72/100 之类的市场分数误读为同等可靠的交易结论；低置信度不直接否定机会，但必须限制结论解释和仓位使用。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始实现评分/置信度拆分、日报/CSV/回测输出和系统不变量测试。2026-05-04: 从 IN_PROGRESS
+      改为 DONE，原因：已完成组件级和整体置信度、日报/CSV/快照/回测输出、文档和测试；`python -m pytest -q` 通过 220 项测试。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-015920bca02878287d5cc96d
+  task_id: SCORE-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '来自 2026-05-04 评分解释讨论。目标是避免用户把 72/100 之类的市场分数误读为同等可靠的交易结论；低置信度不直接否定机会，但必须限制结论解释和仓位使用。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始实现评分/置信度拆分、日报/CSV/回测输出和系统不变量测试。2026-05-04: 从 IN_PROGRESS
+      改为 DONE，原因：已完成组件级和整体置信度、日报/CSV/快照/回测输出、文档和测试；`python -m pytest -q` 通过 220 项测试。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:015920bca02878287d5cc96d4be6fa825afb4bbb5eb43d559156651080cf3c69
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - SCORE-002
+  - 评分/报告
+  - P1
+  - DONE
+  - 系统实现
+  - 已实现 AI 产业链评分与判断置信度拆分；日报、`scores_daily.csv`、decision snapshot、回测每日明细和回测报告均输出 confidence
+  - '`score-daily` 日报顶部同时输出 AI 产业链评分、判断置信度、模型评分仓位、置信度调整后建议仓位和限制原因；`scores_daily.csv`
+    或等价结构化输出可追踪整体置信度和主要扣减原因；回测每日明细和审计报告能按置信度分桶检查低置信度结论；实现时同步更新 `docs/system_flow.md`
+    并补充评分/报告/回测测试'
+  - '来自 2026-05-04 评分解释讨论。目标是避免用户把 72/100 之类的市场分数误读为同等可靠的交易结论；低置信度不直接否定机会，但必须限制结论解释和仓位使用。2026-05-04:
+    从 READY 改为 IN_PROGRESS，原因：开始实现评分/置信度拆分、日报/CSV/回测输出和系统不变量测试。2026-05-04: 从 IN_PROGRESS
+    改为 DONE，原因：已完成组件级和整体置信度、日报/CSV/快照/回测输出、文档和测试；`python -m pytest -q` 通过 220 项测试。'
+  docs_links:
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: 015920bca02878287d5cc96d4be6fa825afb4bbb5eb43d559156651080cf3c69
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 15bbb05699bbb03bdd7f28814132abe12c0ddc08ff88dd1787cce9069f0d1dd6

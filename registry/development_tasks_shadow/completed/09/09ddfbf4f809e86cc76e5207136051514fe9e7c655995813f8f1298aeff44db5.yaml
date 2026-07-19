@@ -1,0 +1,106 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER
+  title: null
+  domain: Strategy research / terminal family closure
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 独立 baseline capability owner 后续以新任务提供 reopen evidence
+  requirement_refs:
+  - docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 见 `docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md`；原样保留
+    M1E prerequisite matrix，关闭旧 A/B/C/replacement-A family并登记 negative-result ledger/reopen
+    policy；不把 null metric推断为FAIL。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: strict status=`GROWTH_TILT_CANDIDATE_FAMILY_CLOSED_NO_EXECUTABLE_PIT_CANDIDATE`；dispositions=0
+      APPROVE/2 REDEFINE/1 WITHDRAW，prerequisites=2 PASS/8 BLOCKED，adapters=0/4，pit
+      tested=0，M2=0；reopen只接受 candidate-independent baseline evidence；production/broker=none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 24
+    row_sha256: e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2
+    cell_count: 8
+    all_cells:
+    - TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER
+    - Strategy research / terminal family closure
+    - P0
+    - DONE
+    - 独立 baseline capability owner 后续以新任务提供 reopen evidence
+    - 见 `docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md`；原样保留
+      M1E prerequisite matrix，关闭旧 A/B/C/replacement-A family并登记 negative-result ledger/reopen
+      policy；不把 null metric推断为FAIL。
+    - strict status=`GROWTH_TILT_CANDIDATE_FAMILY_CLOSED_NO_EXECUTABLE_PIT_CANDIDATE`；dispositions=0
+      APPROVE/2 REDEFINE/1 WITHDRAW，prerequisites=2 PASS/8 BLOCKED，adapters=0/4，pit
+      tested=0，M2=0；reopen只接受 candidate-independent baseline evidence；production/broker=none。
+    - '2026-07-10: 实现、真实 strict run与归档完成。验证同 N2；closed-family M2 route disabled，未生成
+      runtime metrics、candidate behavior、replay、promotion、paper-shadow、production
+      weight或 broker action。'
+    raw_line: '|TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER|Strategy
+      research / terminal family closure|P0|DONE|独立 baseline capability owner 后续以新任务提供
+      reopen evidence|见 `docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md`；原样保留
+      M1E prerequisite matrix，关闭旧 A/B/C/replacement-A family并登记 negative-result ledger/reopen
+      policy；不把 null metric推断为FAIL。|strict status=`GROWTH_TILT_CANDIDATE_FAMILY_CLOSED_NO_EXECUTABLE_PIT_CANDIDATE`；dispositions=0
+      APPROVE/2 REDEFINE/1 WITHDRAW，prerequisites=2 PASS/8 BLOCKED，adapters=0/4，pit
+      tested=0，M2=0；reopen只接受 candidate-independent baseline evidence；production/broker=none。|2026-07-10:
+      实现、真实 strict run与归档完成。验证同 N2；closed-family M2 route disabled，未生成 runtime metrics、candidate
+      behavior、replay、promotion、paper-shadow、production weight或 broker action。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e295362b8294d2b029707e70
+  task_id: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 独立 baseline capability owner 后续以新任务提供 reopen evidence
+    notes: '2026-07-10: 实现、真实 strict run与归档完成。验证同 N2；closed-family M2 route disabled，未生成
+      runtime metrics、candidate behavior、replay、promotion、paper-shadow、production
+      weight或 broker action。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER
+  - Strategy research / terminal family closure
+  - P0
+  - DONE
+  - 独立 baseline capability owner 后续以新任务提供 reopen evidence
+  - 见 `docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md`；原样保留
+    M1E prerequisite matrix，关闭旧 A/B/C/replacement-A family并登记 negative-result ledger/reopen
+    policy；不把 null metric推断为FAIL。
+  - strict status=`GROWTH_TILT_CANDIDATE_FAMILY_CLOSED_NO_EXECUTABLE_PIT_CANDIDATE`；dispositions=0
+    APPROVE/2 REDEFINE/1 WITHDRAW，prerequisites=2 PASS/8 BLOCKED，adapters=0/4，pit
+    tested=0，M2=0；reopen只接受 candidate-independent baseline evidence；production/broker=none。
+  - '2026-07-10: 实现、真实 strict run与归档完成。验证同 N2；closed-family M2 route disabled，未生成
+    runtime metrics、candidate behavior、replay、promotion、paper-shadow、production weight或
+    broker action。'
+  docs_links:
+  - docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md
+  terminal: true
+  raw_row_sha256: e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c1d97d840b365e56036573587496f704fdb95c8f6da6627d79b47d0b19ae3f25

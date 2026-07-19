@@ -1,0 +1,134 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-006
+  title: null
+  domain: 运行架构/休市日每日模式
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/closed_market_daily_mode_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/closed_market_daily_mode_2026-05-10.md`；已实现
+    `daily-plan/daily-run` 的显式休市日模式，避免周末或 NYSE 常规休市日硬跑当日市场下载和 `score-daily`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits ops daily-plan` 与 `aits ops daily-run` 必须识别非交易日并在报告中声明 market session、休市原因和上一交易日；当上一交易日价格缓存已覆盖时不得用休市日作为
+      `download-data --end`；休市日不得生成新的 `daily_score`、decision snapshot、执行动作或 score-derived
+      alerts；仍可运行官方政策来源、PIT、SEC、valuation、ops health 和 secret scan，且 health 不得把缺少休市日日报当作失败；系统流图、README、测试和需求文档同步更新'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 454
+    row_sha256: a6b33aada134377cd39e83f74593416ce1519e99f05a14130bd984914ff03f00
+    cell_count: 8
+    all_cells:
+    - OPS-006
+    - 运行架构/休市日每日模式
+    - P0
+    - DONE
+    - 系统实现
+    - 详细拆解见 `docs/requirements/closed_market_daily_mode_2026-05-10.md`；已实现 `daily-plan/daily-run`
+      的显式休市日模式，避免周末或 NYSE 常规休市日硬跑当日市场下载和 `score-daily`
+    - '`aits ops daily-plan` 与 `aits ops daily-run` 必须识别非交易日并在报告中声明 market session、休市原因和上一交易日；当上一交易日价格缓存已覆盖时不得用休市日作为
+      `download-data --end`；休市日不得生成新的 `daily_score`、decision snapshot、执行动作或 score-derived
+      alerts；仍可运行官方政策来源、PIT、SEC、valuation、ops health 和 secret scan，且 health 不得把缺少休市日日报当作失败；系统流图、README、测试和需求文档同步更新'
+    - '2026-05-10: 新增并进入实现，原因：真实 2026-05-10 daily-run 在周日用 `download-data --end 2026-05-10`
+      失败，owner 决策将休市日运行策略正式记录并实现，避免把休市日缺行情误解释为评分失败或生成伪交易结论。2026-05-10: 从 IN_PROGRESS
+      改为 DONE，原因：新增交易日历模块、closed-market daily-plan/daily-run 步骤调整、`ops health --non-trading-day`、README/系统流图/需求文档和测试；验证
+      `ruff check src tests` 通过，`pytest -q` 424 passed，2026-05-10 daily-plan CLI smoke
+      输出 `READY_WITH_SKIPS`、`CLOSED_MARKET` 和上一交易日 `2026-05-08`。2026-05-10: 追加验证，原因：owner
+      要求清理后复验交易日/非交易日流程；备份并移出 2026-05-10 旧 daily ops 报告后真实 `daily-run --as-of 2026-05-10`
+      通过 `PASS_WITH_SKIPS`，交易日路径用干净临时目录 fake runner 验证 2026-05-08 9/9 步 PASS，并修复 PIT
+      produced_paths 隔离路径问题；复验 `ruff check src tests` 通过、`pytest -q` 424 passed。2026-05-10:
+      补充归档输入回放，5/8 PIT 备份可用，但必须同时冻结 PIT manifest 可见窗口并隔离 5/9/5/10 valuation snapshots；按该边界执行缓存回放
+      `daily-run --as-of 2026-05-08`，`score_daily`、`ops health`、secret scan PASS，整体
+      `PASS_WITH_SKIPS`。'
+    raw_line: '|OPS-006|运行架构/休市日每日模式|P0|DONE|系统实现|详细拆解见 `docs/requirements/closed_market_daily_mode_2026-05-10.md`；已实现
+      `daily-plan/daily-run` 的显式休市日模式，避免周末或 NYSE 常规休市日硬跑当日市场下载和 `score-daily`|`aits
+      ops daily-plan` 与 `aits ops daily-run` 必须识别非交易日并在报告中声明 market session、休市原因和上一交易日；当上一交易日价格缓存已覆盖时不得用休市日作为
+      `download-data --end`；休市日不得生成新的 `daily_score`、decision snapshot、执行动作或 score-derived
+      alerts；仍可运行官方政策来源、PIT、SEC、valuation、ops health 和 secret scan，且 health 不得把缺少休市日日报当作失败；系统流图、README、测试和需求文档同步更新|2026-05-10:
+      新增并进入实现，原因：真实 2026-05-10 daily-run 在周日用 `download-data --end 2026-05-10` 失败，owner
+      决策将休市日运行策略正式记录并实现，避免把休市日缺行情误解释为评分失败或生成伪交易结论。2026-05-10: 从 IN_PROGRESS 改为 DONE，原因：新增交易日历模块、closed-market
+      daily-plan/daily-run 步骤调整、`ops health --non-trading-day`、README/系统流图/需求文档和测试；验证
+      `ruff check src tests` 通过，`pytest -q` 424 passed，2026-05-10 daily-plan CLI smoke
+      输出 `READY_WITH_SKIPS`、`CLOSED_MARKET` 和上一交易日 `2026-05-08`。2026-05-10: 追加验证，原因：owner
+      要求清理后复验交易日/非交易日流程；备份并移出 2026-05-10 旧 daily ops 报告后真实 `daily-run --as-of 2026-05-10`
+      通过 `PASS_WITH_SKIPS`，交易日路径用干净临时目录 fake runner 验证 2026-05-08 9/9 步 PASS，并修复 PIT
+      produced_paths 隔离路径问题；复验 `ruff check src tests` 通过、`pytest -q` 424 passed。2026-05-10:
+      补充归档输入回放，5/8 PIT 备份可用，但必须同时冻结 PIT manifest 可见窗口并隔离 5/9/5/10 valuation snapshots；按该边界执行缓存回放
+      `daily-run --as-of 2026-05-08`，`score_daily`、`ops health`、secret scan PASS，整体
+      `PASS_WITH_SKIPS`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a6b33aada134377cd39e83f7
+  task_id: OPS-006
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-10: 新增并进入实现，原因：真实 2026-05-10 daily-run 在周日用 `download-data --end
+      2026-05-10` 失败，owner 决策将休市日运行策略正式记录并实现，避免把休市日缺行情误解释为评分失败或生成伪交易结论。2026-05-10:
+      从 IN_PROGRESS 改为 DONE，原因：新增交易日历模块、closed-market daily-plan/daily-run 步骤调整、`ops
+      health --non-trading-day`、README/系统流图/需求文档和测试；验证 `ruff check src tests` 通过，`pytest
+      -q` 424 passed，2026-05-10 daily-plan CLI smoke 输出 `READY_WITH_SKIPS`、`CLOSED_MARKET`
+      和上一交易日 `2026-05-08`。2026-05-10: 追加验证，原因：owner 要求清理后复验交易日/非交易日流程；备份并移出 2026-05-10
+      旧 daily ops 报告后真实 `daily-run --as-of 2026-05-10` 通过 `PASS_WITH_SKIPS`，交易日路径用干净临时目录
+      fake runner 验证 2026-05-08 9/9 步 PASS，并修复 PIT produced_paths 隔离路径问题；复验 `ruff
+      check src tests` 通过、`pytest -q` 424 passed。2026-05-10: 补充归档输入回放，5/8 PIT 备份可用，但必须同时冻结
+      PIT manifest 可见窗口并隔离 5/9/5/10 valuation snapshots；按该边界执行缓存回放 `daily-run --as-of
+      2026-05-08`，`score_daily`、`ops health`、secret scan PASS，整体 `PASS_WITH_SKIPS`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a6b33aada134377cd39e83f74593416ce1519e99f05a14130bd984914ff03f00
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-006
+  - 运行架构/休市日每日模式
+  - P0
+  - DONE
+  - 系统实现
+  - 详细拆解见 `docs/requirements/closed_market_daily_mode_2026-05-10.md`；已实现 `daily-plan/daily-run`
+    的显式休市日模式，避免周末或 NYSE 常规休市日硬跑当日市场下载和 `score-daily`
+  - '`aits ops daily-plan` 与 `aits ops daily-run` 必须识别非交易日并在报告中声明 market session、休市原因和上一交易日；当上一交易日价格缓存已覆盖时不得用休市日作为
+    `download-data --end`；休市日不得生成新的 `daily_score`、decision snapshot、执行动作或 score-derived
+    alerts；仍可运行官方政策来源、PIT、SEC、valuation、ops health 和 secret scan，且 health 不得把缺少休市日日报当作失败；系统流图、README、测试和需求文档同步更新'
+  - '2026-05-10: 新增并进入实现，原因：真实 2026-05-10 daily-run 在周日用 `download-data --end 2026-05-10`
+    失败，owner 决策将休市日运行策略正式记录并实现，避免把休市日缺行情误解释为评分失败或生成伪交易结论。2026-05-10: 从 IN_PROGRESS
+    改为 DONE，原因：新增交易日历模块、closed-market daily-plan/daily-run 步骤调整、`ops health --non-trading-day`、README/系统流图/需求文档和测试；验证
+    `ruff check src tests` 通过，`pytest -q` 424 passed，2026-05-10 daily-plan CLI smoke
+    输出 `READY_WITH_SKIPS`、`CLOSED_MARKET` 和上一交易日 `2026-05-08`。2026-05-10: 追加验证，原因：owner
+    要求清理后复验交易日/非交易日流程；备份并移出 2026-05-10 旧 daily ops 报告后真实 `daily-run --as-of 2026-05-10`
+    通过 `PASS_WITH_SKIPS`，交易日路径用干净临时目录 fake runner 验证 2026-05-08 9/9 步 PASS，并修复 PIT
+    produced_paths 隔离路径问题；复验 `ruff check src tests` 通过、`pytest -q` 424 passed。2026-05-10:
+    补充归档输入回放，5/8 PIT 备份可用，但必须同时冻结 PIT manifest 可见窗口并隔离 5/9/5/10 valuation snapshots；按该边界执行缓存回放
+    `daily-run --as-of 2026-05-08`，`score_daily`、`ops health`、secret scan PASS，整体
+    `PASS_WITH_SKIPS`。'
+  docs_links:
+  - docs/requirements/closed_market_daily_mode_2026-05-10.md
+  terminal: true
+  raw_row_sha256: a6b33aada134377cd39e83f74593416ce1519e99f05a14130bd984914ff03f00
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 12807a329daf60cfa302a7618998f1abfe72a89f18c62c7ba2456f6fd209e29d

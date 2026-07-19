@@ -1,0 +1,135 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1141_to_1154_EXTERNAL_VALIDATION_GATE_BALANCED_CORE_FORWARD_AGING_LAUNCH
+  title: null
+  domain: Research strategies / external validation gate and balanced-core forward-aging
+    launch
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1141_to_1154_External_Validation_Gate_Balanced_Core_Forward_Aging_Launch.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1141_to_1154_External_Validation_Gate_Balanced_Core_Forward_Aging_Launch.md`；实现已完成并通过本轮指定验证，下一步为
+    owner 复核 external validation launch gate、balanced-core after-validation observation、dual
+    panel、scoreboard safety、Reader Brief preview、owner/master review 和 monthly monitor
+    contract；不得进入 paper-shadow/production/broker，不得修改 production config，不得覆盖 `equal_risk_qqq_sgov`
+    或同日 balanced-core observation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 14 个 `aits research strategies ...` CLI/artifacts：external-validation-real-result-status-reader、static-baseline-reconciliation-final-check、dynamic-weight-path-replay-final-check、metric-and-sgov-reconciliation-signoff、external-validation-to-launch-gate、balanced-core-launch-preflight、balanced-core-first-observation-write-after-validation、balanced-core-observation-idempotency-proof、dual-forward-aging-comparator-panel-after-launch、dual-forward-aging-scoreboard-safety-review、dual-forward-aging-reader-brief-safe-preview-after-launch、balanced-core-launch-owner-report、external-validation-balanced-core-launch-master-review、dual-forward-aging-monthly-monitor-contract；report
+      registry、artifact catalog、system flow 和 focused tests 同步更新；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、focused
+      parallel pytest、task/register/report/docs parallel pytest 和 `git diff --check`
+      通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1282
+    row_sha256: 03ce299a0f58f6f034c7f953b31e18f0a7880b52edf1bc8fd7351e40ab321b7a
+    cell_count: 8
+    all_cells:
+    - TRADING-1141_to_1154_EXTERNAL_VALIDATION_GATE_BALANCED_CORE_FORWARD_AGING_LAUNCH
+    - Research strategies / external validation gate and balanced-core forward-aging
+      launch
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1141_to_1154_External_Validation_Gate_Balanced_Core_Forward_Aging_Launch.md`；实现已完成并通过本轮指定验证，下一步为
+      owner 复核 external validation launch gate、balanced-core after-validation observation、dual
+      panel、scoreboard safety、Reader Brief preview、owner/master review 和 monthly monitor
+      contract；不得进入 paper-shadow/production/broker，不得修改 production config，不得覆盖 `equal_risk_qqq_sgov`
+      或同日 balanced-core observation
+    - 新增 14 个 `aits research strategies ...` CLI/artifacts：external-validation-real-result-status-reader、static-baseline-reconciliation-final-check、dynamic-weight-path-replay-final-check、metric-and-sgov-reconciliation-signoff、external-validation-to-launch-gate、balanced-core-launch-preflight、balanced-core-first-observation-write-after-validation、balanced-core-observation-idempotency-proof、dual-forward-aging-comparator-panel-after-launch、dual-forward-aging-scoreboard-safety-review、dual-forward-aging-reader-brief-safe-preview-after-launch、balanced-core-launch-owner-report、external-validation-balanced-core-launch-master-review、dual-forward-aging-monthly-monitor-contract；report
+      registry、artifact catalog、system flow 和 focused tests 同步更新；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、focused
+      parallel pytest、task/register/report/docs parallel pytest 和 `git diff --check`
+      通过
+    - '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 1129～1140 external validation 完成后读取真实结果，只有外部验证通过或
+      warning 通过时才允许 balanced-core research-only forward-aging launch，并建立 dual forward-aging
+      after-launch review 与 monthly monitor contract。2026-06-26: 实现完成并转入 VALIDATING；新增
+      external validation final gate、after-validation observation writer、idempotency
+      proof、after-launch dual panel/scoreboard/Reader Brief preview、owner/master review
+      和 monthly monitor contract；安全边界保持 no paper-shadow / no production / no broker。'
+    raw_line: '|TRADING-1141_to_1154_EXTERNAL_VALIDATION_GATE_BALANCED_CORE_FORWARD_AGING_LAUNCH|Research
+      strategies / external validation gate and balanced-core forward-aging launch|P1|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1141_to_1154_External_Validation_Gate_Balanced_Core_Forward_Aging_Launch.md`；实现已完成并通过本轮指定验证，下一步为
+      owner 复核 external validation launch gate、balanced-core after-validation observation、dual
+      panel、scoreboard safety、Reader Brief preview、owner/master review 和 monthly monitor
+      contract；不得进入 paper-shadow/production/broker，不得修改 production config，不得覆盖 `equal_risk_qqq_sgov`
+      或同日 balanced-core observation|新增 14 个 `aits research strategies ...` CLI/artifacts：external-validation-real-result-status-reader、static-baseline-reconciliation-final-check、dynamic-weight-path-replay-final-check、metric-and-sgov-reconciliation-signoff、external-validation-to-launch-gate、balanced-core-launch-preflight、balanced-core-first-observation-write-after-validation、balanced-core-observation-idempotency-proof、dual-forward-aging-comparator-panel-after-launch、dual-forward-aging-scoreboard-safety-review、dual-forward-aging-reader-brief-safe-preview-after-launch、balanced-core-launch-owner-report、external-validation-balanced-core-launch-master-review、dual-forward-aging-monthly-monitor-contract；report
+      registry、artifact catalog、system flow 和 focused tests 同步更新；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、focused
+      parallel pytest、task/register/report/docs parallel pytest 和 `git diff --check`
+      通过|2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 1129～1140 external validation
+      完成后读取真实结果，只有外部验证通过或 warning 通过时才允许 balanced-core research-only forward-aging
+      launch，并建立 dual forward-aging after-launch review 与 monthly monitor contract。2026-06-26:
+      实现完成并转入 VALIDATING；新增 external validation final gate、after-validation observation
+      writer、idempotency proof、after-launch dual panel/scoreboard/Reader Brief preview、owner/master
+      review 和 monthly monitor contract；安全边界保持 no paper-shadow / no production / no
+      broker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-03ce299a0f58f6f034c7f953
+  task_id: TRADING-1141_to_1154_EXTERNAL_VALIDATION_GATE_BALANCED_CORE_FORWARD_AGING_LAUNCH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 1129～1140 external validation
+      完成后读取真实结果，只有外部验证通过或 warning 通过时才允许 balanced-core research-only forward-aging
+      launch，并建立 dual forward-aging after-launch review 与 monthly monitor contract。2026-06-26:
+      实现完成并转入 VALIDATING；新增 external validation final gate、after-validation observation
+      writer、idempotency proof、after-launch dual panel/scoreboard/Reader Brief preview、owner/master
+      review 和 monthly monitor contract；安全边界保持 no paper-shadow / no production / no
+      broker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:03ce299a0f58f6f034c7f953b31e18f0a7880b52edf1bc8fd7351e40ab321b7a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1141_to_1154_EXTERNAL_VALIDATION_GATE_BALANCED_CORE_FORWARD_AGING_LAUNCH
+  - Research strategies / external validation gate and balanced-core forward-aging
+    launch
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1141_to_1154_External_Validation_Gate_Balanced_Core_Forward_Aging_Launch.md`；实现已完成并通过本轮指定验证，下一步为
+    owner 复核 external validation launch gate、balanced-core after-validation observation、dual
+    panel、scoreboard safety、Reader Brief preview、owner/master review 和 monthly monitor
+    contract；不得进入 paper-shadow/production/broker，不得修改 production config，不得覆盖 `equal_risk_qqq_sgov`
+    或同日 balanced-core observation
+  - 新增 14 个 `aits research strategies ...` CLI/artifacts：external-validation-real-result-status-reader、static-baseline-reconciliation-final-check、dynamic-weight-path-replay-final-check、metric-and-sgov-reconciliation-signoff、external-validation-to-launch-gate、balanced-core-launch-preflight、balanced-core-first-observation-write-after-validation、balanced-core-observation-idempotency-proof、dual-forward-aging-comparator-panel-after-launch、dual-forward-aging-scoreboard-safety-review、dual-forward-aging-reader-brief-safe-preview-after-launch、balanced-core-launch-owner-report、external-validation-balanced-core-launch-master-review、dual-forward-aging-monthly-monitor-contract；report
+    registry、artifact catalog、system flow 和 focused tests 同步更新；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、focused
+    parallel pytest、task/register/report/docs parallel pytest 和 `git diff --check`
+    通过
+  - '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 1129～1140 external validation 完成后读取真实结果，只有外部验证通过或
+    warning 通过时才允许 balanced-core research-only forward-aging launch，并建立 dual forward-aging
+    after-launch review 与 monthly monitor contract。2026-06-26: 实现完成并转入 VALIDATING；新增
+    external validation final gate、after-validation observation writer、idempotency
+    proof、after-launch dual panel/scoreboard/Reader Brief preview、owner/master review
+    和 monthly monitor contract；安全边界保持 no paper-shadow / no production / no broker。'
+  docs_links:
+  - docs/requirements/TRADING-1141_to_1154_External_Validation_Gate_Balanced_Core_Forward_Aging_Launch.md
+  terminal: false
+  raw_row_sha256: 03ce299a0f58f6f034c7f953b31e18f0a7880b52edf1bc8fd7351e40ab321b7a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2bbf31ba7922bd71bef84159d8c19411188ea8def4a292e421fb8d22f402eb53

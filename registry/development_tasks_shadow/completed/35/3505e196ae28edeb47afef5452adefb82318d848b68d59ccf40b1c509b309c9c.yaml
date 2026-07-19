@@ -1,0 +1,164 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-027
+  title: null
+  domain: 交易执行/Daily Operator Brief Scheduler Runbook and Manual Installation Guide
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/daily_operator_brief_scheduler_manual_installation_2026-05-24.md
+  - docs/runbooks/daily_operator_brief_scheduler_manual_installation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/daily_operator_brief_scheduler_manual_installation_2026-05-24.md`；Daily
+    Operator Brief scheduler 人工安装 runbook、需求文档、system flow、artifact catalog 和最终收尾验证已完成；本任务只生成文档，不创建
+    Windows Task Scheduler、cron、GitHub Actions workflow 或 scheduler 自动安装脚本，不运行 TRADING-021/022/023/024/026、market/backtest/scoring/data
+    download/broker/replay/trading；后续如需模板生成可另建 TRADING-028，仍不得自动安装 scheduler
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `docs/runbooks/daily_operator_brief_scheduler_manual_installation.md`
+      和需求文档；runbook 覆盖 Windows Task Scheduler 手动安装、cron 手动安装、GitHub Actions 可选示例、pre-installation
+      checklist、safety checklist、dry-run decision 处理、disable / pause scheduler、failure
+      handling 和人工验证；文档固定声明 `production_effect=none`、`manual_review_only=true`、`runbook_only=true`、`scheduler_created=false`、`operator_brief_executed_by_runbook=false`、`pipelines_executed_by_runbook=false`、`data_downloaded_by_runbook=false`、`apply_executed_by_runbook=false`、`rollback_executed_by_runbook=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；明确禁止
+      scheduler 运行 TRADING-018E2 apply、TRADING-018E3 rollback、broker execution、replay
+      runner、trading execution、data download、market/backtest/scoring pipeline，除非未来任务明确审查；最终验证通过目标
+      pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仍仅被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未混入无关格式化 diff
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 399
+    row_sha256: 8741176a6480745a5ac24dd0e38fe68b7a85cb5e38566bb3380a3749de2069fc
+    cell_count: 8
+    all_cells:
+    - TRADING-027
+    - 交易执行/Daily Operator Brief Scheduler Runbook and Manual Installation Guide
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/daily_operator_brief_scheduler_manual_installation_2026-05-24.md`；Daily
+      Operator Brief scheduler 人工安装 runbook、需求文档、system flow、artifact catalog 和最终收尾验证已完成；本任务只生成文档，不创建
+      Windows Task Scheduler、cron、GitHub Actions workflow 或 scheduler 自动安装脚本，不运行 TRADING-021/022/023/024/026、market/backtest/scoring/data
+      download/broker/replay/trading；后续如需模板生成可另建 TRADING-028，仍不得自动安装 scheduler
+    - 新增 `docs/runbooks/daily_operator_brief_scheduler_manual_installation.md` 和需求文档；runbook
+      覆盖 Windows Task Scheduler 手动安装、cron 手动安装、GitHub Actions 可选示例、pre-installation
+      checklist、safety checklist、dry-run decision 处理、disable / pause scheduler、failure
+      handling 和人工验证；文档固定声明 `production_effect=none`、`manual_review_only=true`、`runbook_only=true`、`scheduler_created=false`、`operator_brief_executed_by_runbook=false`、`pipelines_executed_by_runbook=false`、`data_downloaded_by_runbook=false`、`apply_executed_by_runbook=false`、`rollback_executed_by_runbook=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；明确禁止
+      scheduler 运行 TRADING-018E2 apply、TRADING-018E3 rollback、broker execution、replay
+      runner、trading execution、data download、market/backtest/scoring pipeline，除非未来任务明确审查；最终验证通过目标
+      pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仍仅被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未混入无关格式化 diff
+    - '2026-05-24: 新增并进入 IN_PROGRESS，原因：TRADING-026 已能只读判断 operator brief 是否适合被调度，但真实
+      scheduler 启用前缺少人工安装 runbook、平台 checklist 和安全边界说明。本任务为文档 only，不新增执行逻辑或调度配置。2026-05-24:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 manual installation runbook、需求文档、system flow
+      和 artifact catalog；验证通过 `tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest 和 ruff；Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-05-24:
+      从 VALIDATING 改为 DONE，原因：最终人工检查确认 runbook 包含 Windows Task Scheduler、cron、GitHub
+      Actions 示例、pre-installation checklist、safety checklist、dry-run decision、disable
+      / pause、failure handling 和不创建 scheduler 声明；确认本任务未新增 Windows Task Scheduler XML、cron
+      file、GitHub Actions workflow 或 scheduler 自动安装脚本；确认文档明确禁止 scheduler 运行 apply/rollback/broker/replay/trading/data
+      download/market/backtest/scoring pipeline；收尾验证通过目标 pytest、`tests/trading_engine`、全量
+      pytest 和 ruff；Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。'
+    raw_line: '|TRADING-027|交易执行/Daily Operator Brief Scheduler Runbook and Manual
+      Installation Guide|P0|DONE|系统验证|详细拆解见 `docs/requirements/daily_operator_brief_scheduler_manual_installation_2026-05-24.md`；Daily
+      Operator Brief scheduler 人工安装 runbook、需求文档、system flow、artifact catalog 和最终收尾验证已完成；本任务只生成文档，不创建
+      Windows Task Scheduler、cron、GitHub Actions workflow 或 scheduler 自动安装脚本，不运行 TRADING-021/022/023/024/026、market/backtest/scoring/data
+      download/broker/replay/trading；后续如需模板生成可另建 TRADING-028，仍不得自动安装 scheduler|新增
+      `docs/runbooks/daily_operator_brief_scheduler_manual_installation.md` 和需求文档；runbook
+      覆盖 Windows Task Scheduler 手动安装、cron 手动安装、GitHub Actions 可选示例、pre-installation
+      checklist、safety checklist、dry-run decision 处理、disable / pause scheduler、failure
+      handling 和人工验证；文档固定声明 `production_effect=none`、`manual_review_only=true`、`runbook_only=true`、`scheduler_created=false`、`operator_brief_executed_by_runbook=false`、`pipelines_executed_by_runbook=false`、`data_downloaded_by_runbook=false`、`apply_executed_by_runbook=false`、`rollback_executed_by_runbook=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；明确禁止
+      scheduler 运行 TRADING-018E2 apply、TRADING-018E3 rollback、broker execution、replay
+      runner、trading execution、data download、market/backtest/scoring pipeline，除非未来任务明确审查；最终验证通过目标
+      pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仍仅被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未混入无关格式化 diff|2026-05-24: 新增并进入 IN_PROGRESS，原因：TRADING-026 已能只读判断
+      operator brief 是否适合被调度，但真实 scheduler 启用前缺少人工安装 runbook、平台 checklist 和安全边界说明。本任务为文档
+      only，不新增执行逻辑或调度配置。2026-05-24: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 manual installation
+      runbook、需求文档、system flow 和 artifact catalog；验证通过 `tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest 和 ruff；Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-05-24:
+      从 VALIDATING 改为 DONE，原因：最终人工检查确认 runbook 包含 Windows Task Scheduler、cron、GitHub
+      Actions 示例、pre-installation checklist、safety checklist、dry-run decision、disable
+      / pause、failure handling 和不创建 scheduler 声明；确认本任务未新增 Windows Task Scheduler XML、cron
+      file、GitHub Actions workflow 或 scheduler 自动安装脚本；确认文档明确禁止 scheduler 运行 apply/rollback/broker/replay/trading/data
+      download/market/backtest/scoring pipeline；收尾验证通过目标 pytest、`tests/trading_engine`、全量
+      pytest 和 ruff；Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8741176a6480745a5ac24dd0
+  task_id: TRADING-027
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-24: 新增并进入 IN_PROGRESS，原因：TRADING-026 已能只读判断 operator brief 是否适合被调度，但真实
+      scheduler 启用前缺少人工安装 runbook、平台 checklist 和安全边界说明。本任务为文档 only，不新增执行逻辑或调度配置。2026-05-24:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 manual installation runbook、需求文档、system flow
+      和 artifact catalog；验证通过 `tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest 和 ruff；Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-05-24:
+      从 VALIDATING 改为 DONE，原因：最终人工检查确认 runbook 包含 Windows Task Scheduler、cron、GitHub
+      Actions 示例、pre-installation checklist、safety checklist、dry-run decision、disable
+      / pause、failure handling 和不创建 scheduler 声明；确认本任务未新增 Windows Task Scheduler XML、cron
+      file、GitHub Actions workflow 或 scheduler 自动安装脚本；确认文档明确禁止 scheduler 运行 apply/rollback/broker/replay/trading/data
+      download/market/backtest/scoring pipeline；收尾验证通过目标 pytest、`tests/trading_engine`、全量
+      pytest 和 ruff；Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8741176a6480745a5ac24dd0e38fe68b7a85cb5e38566bb3380a3749de2069fc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-027
+  - 交易执行/Daily Operator Brief Scheduler Runbook and Manual Installation Guide
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/daily_operator_brief_scheduler_manual_installation_2026-05-24.md`；Daily
+    Operator Brief scheduler 人工安装 runbook、需求文档、system flow、artifact catalog 和最终收尾验证已完成；本任务只生成文档，不创建
+    Windows Task Scheduler、cron、GitHub Actions workflow 或 scheduler 自动安装脚本，不运行 TRADING-021/022/023/024/026、market/backtest/scoring/data
+    download/broker/replay/trading；后续如需模板生成可另建 TRADING-028，仍不得自动安装 scheduler
+  - 新增 `docs/runbooks/daily_operator_brief_scheduler_manual_installation.md` 和需求文档；runbook
+    覆盖 Windows Task Scheduler 手动安装、cron 手动安装、GitHub Actions 可选示例、pre-installation
+    checklist、safety checklist、dry-run decision 处理、disable / pause scheduler、failure
+    handling 和人工验证；文档固定声明 `production_effect=none`、`manual_review_only=true`、`runbook_only=true`、`scheduler_created=false`、`operator_brief_executed_by_runbook=false`、`pipelines_executed_by_runbook=false`、`data_downloaded_by_runbook=false`、`apply_executed_by_runbook=false`、`rollback_executed_by_runbook=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；明确禁止
+    scheduler 运行 TRADING-018E2 apply、TRADING-018E3 rollback、broker execution、replay
+    runner、trading execution、data download、market/backtest/scoring pipeline，除非未来任务明确审查；最终验证通过目标
+    pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仍仅被既有无关 `tests/test_market_data.py`
+    baseline 阻断，未混入无关格式化 diff
+  - '2026-05-24: 新增并进入 IN_PROGRESS，原因：TRADING-026 已能只读判断 operator brief 是否适合被调度，但真实
+    scheduler 启用前缺少人工安装 runbook、平台 checklist 和安全边界说明。本任务为文档 only，不新增执行逻辑或调度配置。2026-05-24:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已完成 manual installation runbook、需求文档、system flow
+    和 artifact catalog；验证通过 `tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+    pytest 和 ruff；Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-05-24:
+    从 VALIDATING 改为 DONE，原因：最终人工检查确认 runbook 包含 Windows Task Scheduler、cron、GitHub
+    Actions 示例、pre-installation checklist、safety checklist、dry-run decision、disable
+    / pause、failure handling 和不创建 scheduler 声明；确认本任务未新增 Windows Task Scheduler XML、cron
+    file、GitHub Actions workflow 或 scheduler 自动安装脚本；确认文档明确禁止 scheduler 运行 apply/rollback/broker/replay/trading/data
+    download/market/backtest/scoring pipeline；收尾验证通过目标 pytest、`tests/trading_engine`、全量
+    pytest 和 ruff；Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。'
+  docs_links:
+  - docs/requirements/daily_operator_brief_scheduler_manual_installation_2026-05-24.md
+  - docs/runbooks/daily_operator_brief_scheduler_manual_installation.md
+  terminal: true
+  raw_row_sha256: 8741176a6480745a5ac24dd0e38fe68b7a85cb5e38566bb3380a3749de2069fc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b12292cb843a740eb6633268ce5f477e294f3c801a15d07ebb552962bc51949f

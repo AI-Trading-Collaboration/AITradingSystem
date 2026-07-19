@@ -1,0 +1,160 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-009
+  title: null
+  domain: 市场反馈优化/当前样本 validation 门槛
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/market_feedback_optimization_loop_2026-05-13.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9c-当前样本-validation-门槛`；当前样本
+    validation floor 已完成并跑通；后续真实滚动样本观察、production promotion、approved overlay 和正式仓位
+    gate 放宽由长期 shadow/promotion 治理任务承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 样本政策明确当前 pilot diagnostic floor 的依据，生产晋级仍使用 promotion floor；shadow maturity
+      区分 validation 与 promotion 模式，validation 达标只能进入 `READY_FOR_VALIDATION_REVIEW`，不得误写为
+      owner production approval；用现有 decision snapshots / outcomes 跑通 shadow weight
+      后续验证链路；当前 `feedback_sample_policy_v2` decision/prediction diagnostic floor 为
+      14/13，promotion floor 保持 60/30，`shadow_weight_profile_maturity_validation_2026-05-14.md`
+      为 PASS / `production_effect=none`，生产 prediction ledger、approved overlay、日报结论和仓位
+      gate 未改变
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 274
+    row_sha256: 2466a4b62afc796d5d4c9a0bb25dda5eea2d9cd8b3fab14e141231f07edc24d1
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-009
+    - 市场反馈优化/当前样本 validation 门槛
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9c-当前样本-validation-门槛`；当前样本
+      validation floor 已完成并跑通；后续真实滚动样本观察、production promotion、approved overlay 和正式仓位
+      gate 放宽由长期 shadow/promotion 治理任务承接
+    - 样本政策明确当前 pilot diagnostic floor 的依据，生产晋级仍使用 promotion floor；shadow maturity
+      区分 validation 与 promotion 模式，validation 达标只能进入 `READY_FOR_VALIDATION_REVIEW`，不得误写为
+      owner production approval；用现有 decision snapshots / outcomes 跑通 shadow weight
+      后续验证链路；当前 `feedback_sample_policy_v2` decision/prediction diagnostic floor 为
+      14/13，promotion floor 保持 60/30，`shadow_weight_profile_maturity_validation_2026-05-14.md`
+      为 PASS / `production_effect=none`，生产 prediction ledger、approved overlay、日报结论和仓位
+      gate 未改变
+    - '2026-05-16: 新增并进入 IN_PROGRESS，原因：shadow weight 工程链路已跑通，但默认 20D / promotion
+      口径导致当前样本只能 pending 或停留观察；owner 要求在不改变生产边界的前提下，把当前积累样本用于启动后续验证。2026-05-16: 从
+      IN_PROGRESS 改为 VALIDATING，原因：`feedback_sample_policy_v2` 将 decision/prediction
+      diagnostic floor 下调为 14/13，promotion floor 仍为 60/30；`feedback shadow-maturity
+      --review-mode validation` 使用 pilot floor 并输出 `READY_FOR_VALIDATION_REVIEW`，不再把低样本验证误写成
+      `READY_FOR_GOV_REVIEW`。真实 2026-05-14 验证使用 2026-05-04 至 2026-05-14 可追溯 decision
+      snapshots 回填隔离 shadow-weight ledger，`calibrate-predictions --horizons 1,5` 生成
+      66 行 shadow weight outcome（available=36、pending=18、missing=12），validation maturity
+      PASS，market feedback readiness 进入 `READY_FOR_WEIGHT_DIAGNOSTIC_REVIEW`；全量 pytest
+      538 passed、ruff 和 diff check 通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 sample
+      policy、validation maturity artifact 和生产边界证明 validation floor 任务已完成；验证通过 `tests/test_prediction_ledger.py`、`tests/test_market_feedback_optimization.py`、`tests/test_decision_outcomes.py`
+      和 `tests/test_feedback_loop_review.py` 共 13 passed，以及 Ruff、repo-wide Black check
+      和 `compileall`。'
+    raw_line: '|CALIBRATION-009|市场反馈优化/当前样本 validation 门槛|P1|DONE|系统验证|详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9c-当前样本-validation-门槛`；当前样本
+      validation floor 已完成并跑通；后续真实滚动样本观察、production promotion、approved overlay 和正式仓位
+      gate 放宽由长期 shadow/promotion 治理任务承接|样本政策明确当前 pilot diagnostic floor 的依据，生产晋级仍使用
+      promotion floor；shadow maturity 区分 validation 与 promotion 模式，validation 达标只能进入
+      `READY_FOR_VALIDATION_REVIEW`，不得误写为 owner production approval；用现有 decision snapshots
+      / outcomes 跑通 shadow weight 后续验证链路；当前 `feedback_sample_policy_v2` decision/prediction
+      diagnostic floor 为 14/13，promotion floor 保持 60/30，`shadow_weight_profile_maturity_validation_2026-05-14.md`
+      为 PASS / `production_effect=none`，生产 prediction ledger、approved overlay、日报结论和仓位
+      gate 未改变|2026-05-16: 新增并进入 IN_PROGRESS，原因：shadow weight 工程链路已跑通，但默认 20D / promotion
+      口径导致当前样本只能 pending 或停留观察；owner 要求在不改变生产边界的前提下，把当前积累样本用于启动后续验证。2026-05-16: 从
+      IN_PROGRESS 改为 VALIDATING，原因：`feedback_sample_policy_v2` 将 decision/prediction
+      diagnostic floor 下调为 14/13，promotion floor 仍为 60/30；`feedback shadow-maturity
+      --review-mode validation` 使用 pilot floor 并输出 `READY_FOR_VALIDATION_REVIEW`，不再把低样本验证误写成
+      `READY_FOR_GOV_REVIEW`。真实 2026-05-14 验证使用 2026-05-04 至 2026-05-14 可追溯 decision
+      snapshots 回填隔离 shadow-weight ledger，`calibrate-predictions --horizons 1,5` 生成
+      66 行 shadow weight outcome（available=36、pending=18、missing=12），validation maturity
+      PASS，market feedback readiness 进入 `READY_FOR_WEIGHT_DIAGNOSTIC_REVIEW`；全量 pytest
+      538 passed、ruff 和 diff check 通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 sample
+      policy、validation maturity artifact 和生产边界证明 validation floor 任务已完成；验证通过 `tests/test_prediction_ledger.py`、`tests/test_market_feedback_optimization.py`、`tests/test_decision_outcomes.py`
+      和 `tests/test_feedback_loop_review.py` 共 13 passed，以及 Ruff、repo-wide Black check
+      和 `compileall`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2466a4b62afc796d5d4c9a0b
+  task_id: CALIBRATION-009
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-16: 新增并进入 IN_PROGRESS，原因：shadow weight 工程链路已跑通，但默认 20D / promotion
+      口径导致当前样本只能 pending 或停留观察；owner 要求在不改变生产边界的前提下，把当前积累样本用于启动后续验证。2026-05-16: 从
+      IN_PROGRESS 改为 VALIDATING，原因：`feedback_sample_policy_v2` 将 decision/prediction
+      diagnostic floor 下调为 14/13，promotion floor 仍为 60/30；`feedback shadow-maturity
+      --review-mode validation` 使用 pilot floor 并输出 `READY_FOR_VALIDATION_REVIEW`，不再把低样本验证误写成
+      `READY_FOR_GOV_REVIEW`。真实 2026-05-14 验证使用 2026-05-04 至 2026-05-14 可追溯 decision
+      snapshots 回填隔离 shadow-weight ledger，`calibrate-predictions --horizons 1,5` 生成
+      66 行 shadow weight outcome（available=36、pending=18、missing=12），validation maturity
+      PASS，market feedback readiness 进入 `READY_FOR_WEIGHT_DIAGNOSTIC_REVIEW`；全量 pytest
+      538 passed、ruff 和 diff check 通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 sample
+      policy、validation maturity artifact 和生产边界证明 validation floor 任务已完成；验证通过 `tests/test_prediction_ledger.py`、`tests/test_market_feedback_optimization.py`、`tests/test_decision_outcomes.py`
+      和 `tests/test_feedback_loop_review.py` 共 13 passed，以及 Ruff、repo-wide Black check
+      和 `compileall`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:2466a4b62afc796d5d4c9a0bb25dda5eea2d9cd8b3fab14e141231f07edc24d1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-009
+  - 市场反馈优化/当前样本 validation 门槛
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9c-当前样本-validation-门槛`；当前样本
+    validation floor 已完成并跑通；后续真实滚动样本观察、production promotion、approved overlay 和正式仓位
+    gate 放宽由长期 shadow/promotion 治理任务承接
+  - 样本政策明确当前 pilot diagnostic floor 的依据，生产晋级仍使用 promotion floor；shadow maturity 区分
+    validation 与 promotion 模式，validation 达标只能进入 `READY_FOR_VALIDATION_REVIEW`，不得误写为
+    owner production approval；用现有 decision snapshots / outcomes 跑通 shadow weight 后续验证链路；当前
+    `feedback_sample_policy_v2` decision/prediction diagnostic floor 为 14/13，promotion
+    floor 保持 60/30，`shadow_weight_profile_maturity_validation_2026-05-14.md` 为 PASS
+    / `production_effect=none`，生产 prediction ledger、approved overlay、日报结论和仓位 gate
+    未改变
+  - '2026-05-16: 新增并进入 IN_PROGRESS，原因：shadow weight 工程链路已跑通，但默认 20D / promotion 口径导致当前样本只能
+    pending 或停留观察；owner 要求在不改变生产边界的前提下，把当前积累样本用于启动后续验证。2026-05-16: 从 IN_PROGRESS 改为
+    VALIDATING，原因：`feedback_sample_policy_v2` 将 decision/prediction diagnostic floor
+    下调为 14/13，promotion floor 仍为 60/30；`feedback shadow-maturity --review-mode validation`
+    使用 pilot floor 并输出 `READY_FOR_VALIDATION_REVIEW`，不再把低样本验证误写成 `READY_FOR_GOV_REVIEW`。真实
+    2026-05-14 验证使用 2026-05-04 至 2026-05-14 可追溯 decision snapshots 回填隔离 shadow-weight
+    ledger，`calibrate-predictions --horizons 1,5` 生成 66 行 shadow weight outcome（available=36、pending=18、missing=12），validation
+    maturity PASS，market feedback readiness 进入 `READY_FOR_WEIGHT_DIAGNOSTIC_REVIEW`；全量
+    pytest 538 passed、ruff 和 diff check 通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核
+    sample policy、validation maturity artifact 和生产边界证明 validation floor 任务已完成；验证通过
+    `tests/test_prediction_ledger.py`、`tests/test_market_feedback_optimization.py`、`tests/test_decision_outcomes.py`
+    和 `tests/test_feedback_loop_review.py` 共 13 passed，以及 Ruff、repo-wide Black check
+    和 `compileall`。'
+  docs_links:
+  - docs/requirements/market_feedback_optimization_loop_2026-05-13.md
+  terminal: true
+  raw_row_sha256: 2466a4b62afc796d5d4c9a0bb25dda5eea2d9cd8b3fab14e141231f07edc24d1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 68e6d8eb701a42fa8935c2fea8dce030e869c15a09732f3a74bf88f756fa5b00

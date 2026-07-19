@@ -1,0 +1,137 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-780_to_784_CONTROLLED_VALUE_SURFACE_REVIEW
+  title: null
+  domain: Controlled strategy research / value surface warning triage, ranking robustness,
+    forward continuity, GBDT pivot direction, regret activation inputs
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-780_to_784_Controlled_Value_Surface_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-780_to_784_Controlled_Value_Surface_Review.md`；owner
+    要求优先解释 TRADING-775 `PASS_WITH_WARNINGS`，判断 value surface 是否继续扩大，并为 utility robustness、forward
+    continuity、GBDT pivot direction 和 regret activation inputs 建立受控审计；不得 promotion、paper-shadow、production
+    review、official weight 或 broker/order
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI：`aits research strategies value-surface-warning-triage-review`、`utility-ranking-robustness-pareto-audit`、`gbdt-pivot-direction-selection`、`regret-activation-inputs-from-value-surface-failures`
+      和 `aits forward-evidence daily-continuity-maturity-tracker`；TRADING-780 决策只能为
+      `CONTINUE
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1353
+    row_sha256: 87dddd59ba212e84cfcff830f87f3737fe77bc42422537a060ce383cb71e3ea1
+    cell_count: 12
+    all_cells:
+    - TRADING-780_to_784_CONTROLLED_VALUE_SURFACE_REVIEW
+    - Controlled strategy research / value surface warning triage, ranking robustness,
+      forward continuity, GBDT pivot direction, regret activation inputs
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-780_to_784_Controlled_Value_Surface_Review.md`；owner
+      要求优先解释 TRADING-775 `PASS_WITH_WARNINGS`，判断 value surface 是否继续扩大，并为 utility robustness、forward
+      continuity、GBDT pivot direction 和 regret activation inputs 建立受控审计；不得 promotion、paper-shadow、production
+      review、official weight 或 broker/order
+    - 新增 CLI：`aits research strategies value-surface-warning-triage-review`、`utility-ranking-robustness-pareto-audit`、`gbdt-pivot-direction-selection`、`regret-activation-inputs-from-value-surface-failures`
+      和 `aits forward-evidence daily-continuity-maturity-tracker`；TRADING-780 决策只能为
+      `CONTINUE
+    - WATCHLIST
+    - DATA_REQUIRED
+    - PAUSE
+    - KILL`；TRADING-781 最多 `SENSITIVITY_TESTED` 且 `not_validated_utility_boundary=true`；TRADING-782
+      必须检查 missing daily archive、append-only integrity、horizon maturity 和 output coverage；TRADING-783
+      不训练模型，只选择 pivot 方向并记录 MVE/required data/failure mode/kill criteria/difference；TRADING-784
+      条件不足时保持 watchlist；所有 safety flags false
+    - '2026-06-21: 新增并进入 IN_PROGRESS，原因：owner 明确 TRADING-780 为当前最高优先级，并要求 781～784
+      作为后续 controlled review / diagnostic gate。本批只解释 warnings、稳定 ranking audit、追踪
+      forward continuity、选择 GBDT pivot 方向、定义 regret activation inputs，不允许把 utility
+      boundary 或 forward maturity 解释为 strategy promotion evidence。2026-06-21: 实现完成并转入
+      VALIDATING；真实 CLI run 输出 TRADING-780 `CONTROLLED_REVIEW_COMPLETE`、`controlled_expansion_review_decision=CONTINUE`、`warning_count=5`；TRADING-781
+      `SENSITIVITY_TESTED`、`validated_boundary_count=0`；TRADING-782 `PASS_WITH_WARNINGS`、`ledger_event_count=1`、`missing_daily_archive_count=0`、`append_only_integrity_pass=true`；TRADING-783
+      `PIVOT_DIRECTION_SELECTED`、`selected_pivot_direction=gbdt_value_surface_residual_model`、`model_run_executed=false`；TRADING-784
+      `WATCHLIST_NOT_READY`、`value_surface_losing_case_count=692`、`benchmark_disagreement_case_count=830`、`regret_activation_ready=false`；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T102929Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T103150Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T103406Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-780_to_784_CONTROLLED_VALUE_SURFACE_REVIEW|Controlled strategy
+      research / value surface warning triage, ranking robustness, forward continuity,
+      GBDT pivot direction, regret activation inputs|P0|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-780_to_784_Controlled_Value_Surface_Review.md`；owner
+      要求优先解释 TRADING-775 `PASS_WITH_WARNINGS`，判断 value surface 是否继续扩大，并为 utility robustness、forward
+      continuity、GBDT pivot direction 和 regret activation inputs 建立受控审计；不得 promotion、paper-shadow、production
+      review、official weight 或 broker/order|新增 CLI：`aits research strategies value-surface-warning-triage-review`、`utility-ranking-robustness-pareto-audit`、`gbdt-pivot-direction-selection`、`regret-activation-inputs-from-value-surface-failures`
+      和 `aits forward-evidence daily-continuity-maturity-tracker`；TRADING-780 决策只能为
+      `CONTINUE|WATCHLIST|DATA_REQUIRED|PAUSE|KILL`；TRADING-781 最多 `SENSITIVITY_TESTED`
+      且 `not_validated_utility_boundary=true`；TRADING-782 必须检查 missing daily archive、append-only
+      integrity、horizon maturity 和 output coverage；TRADING-783 不训练模型，只选择 pivot 方向并记录
+      MVE/required data/failure mode/kill criteria/difference；TRADING-784 条件不足时保持
+      watchlist；所有 safety flags false|2026-06-21: 新增并进入 IN_PROGRESS，原因：owner 明确 TRADING-780
+      为当前最高优先级，并要求 781～784 作为后续 controlled review / diagnostic gate。本批只解释 warnings、稳定
+      ranking audit、追踪 forward continuity、选择 GBDT pivot 方向、定义 regret activation inputs，不允许把
+      utility boundary 或 forward maturity 解释为 strategy promotion evidence。2026-06-21:
+      实现完成并转入 VALIDATING；真实 CLI run 输出 TRADING-780 `CONTROLLED_REVIEW_COMPLETE`、`controlled_expansion_review_decision=CONTINUE`、`warning_count=5`；TRADING-781
+      `SENSITIVITY_TESTED`、`validated_boundary_count=0`；TRADING-782 `PASS_WITH_WARNINGS`、`ledger_event_count=1`、`missing_daily_archive_count=0`、`append_only_integrity_pass=true`；TRADING-783
+      `PIVOT_DIRECTION_SELECTED`、`selected_pivot_direction=gbdt_value_surface_residual_model`、`model_run_executed=false`；TRADING-784
+      `WATCHLIST_NOT_READY`、`value_surface_losing_case_count=692`、`benchmark_disagreement_case_count=830`、`regret_activation_ready=false`；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T102929Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T103150Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T103406Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-87dddd59ba212e84cfcff830
+  task_id: TRADING-780_to_784_CONTROLLED_VALUE_SURFACE_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: WATCHLIST
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:87dddd59ba212e84cfcff830f87f3737fe77bc42422537a060ce383cb71e3ea1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-780_to_784_CONTROLLED_VALUE_SURFACE_REVIEW
+  - Controlled strategy research / value surface warning triage, ranking robustness,
+    forward continuity, GBDT pivot direction, regret activation inputs
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-780_to_784_Controlled_Value_Surface_Review.md`；owner
+    要求优先解释 TRADING-775 `PASS_WITH_WARNINGS`，判断 value surface 是否继续扩大，并为 utility robustness、forward
+    continuity、GBDT pivot direction 和 regret activation inputs 建立受控审计；不得 promotion、paper-shadow、production
+    review、official weight 或 broker/order
+  - 新增 CLI：`aits research strategies value-surface-warning-triage-review`、`utility-ranking-robustness-pareto-audit`、`gbdt-pivot-direction-selection`、`regret-activation-inputs-from-value-surface-failures`
+    和 `aits forward-evidence daily-continuity-maturity-tracker`；TRADING-780 决策只能为
+    `CONTINUE
+  - WATCHLIST
+  docs_links:
+  - docs/requirements/TRADING-780_to_784_Controlled_Value_Surface_Review.md
+  terminal: false
+  raw_row_sha256: 87dddd59ba212e84cfcff830f87f3737fe77bc42422537a060ce383cb71e3ea1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 1f781e3af03f0b23da36d9361750635b251426677c1645afa21e5fb49f53f595

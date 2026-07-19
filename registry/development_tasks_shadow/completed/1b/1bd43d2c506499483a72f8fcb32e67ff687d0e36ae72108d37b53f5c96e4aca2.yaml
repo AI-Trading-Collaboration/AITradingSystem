@@ -1,0 +1,153 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-011
+  title: null
+  domain: 市场反馈优化/shadow gate 参数实验
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/market_feedback_optimization_loop_2026-05-13.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9e-shadow-gate-参数实验`；shadow
+    gate profile 基线已完成并用当前样本跑通；production gate 是否替换仍需 promotion floor、forward shadow、owner
+    approval 和 rollback condition，由后续治理流程承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增隔离 `shadow_position_gate_profiles` manifest，覆盖 valuation、risk_budget、thesis、confidence、data_confidence
+      等可配置 hard cap 的 validation-only 候选；`run-shadow-weight-profiles` 可组合 shadow weight
+      与 shadow gate profile，写入独立 observation/prediction ledger，所有 profile 必须 `production_effect=none`；报告必须披露
+      observed gate cap、shadow override、gate 后仓位、收益/回撤/换手/成本，不得修改生产 `scoring_rules.yaml`、`portfolio.yaml`、approved
+      overlay、日报结论或正式仓位 gate；当前 `shadow_weight_performance_2026-05-14.md/csv` 为 `PASS`
+      / `production_effect=none`，return-leading profile 为 `shadow_alpha_tilt_v1__shadow_gate_relaxed_valuation_v1`，excess
+      3.58%，available=8、pending=1、missing=2
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 276
+    row_sha256: e5f493a73fa94fad9d65fda3d4a24ac8a5485c21e0b2ee388e52aa50a1858893
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-011
+    - 市场反馈优化/shadow gate 参数实验
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9e-shadow-gate-参数实验`；shadow
+      gate profile 基线已完成并用当前样本跑通；production gate 是否替换仍需 promotion floor、forward shadow、owner
+      approval 和 rollback condition，由后续治理流程承接
+    - 新增隔离 `shadow_position_gate_profiles` manifest，覆盖 valuation、risk_budget、thesis、confidence、data_confidence
+      等可配置 hard cap 的 validation-only 候选；`run-shadow-weight-profiles` 可组合 shadow weight
+      与 shadow gate profile，写入独立 observation/prediction ledger，所有 profile 必须 `production_effect=none`；报告必须披露
+      observed gate cap、shadow override、gate 后仓位、收益/回撤/换手/成本，不得修改生产 `scoring_rules.yaml`、`portfolio.yaml`、approved
+      overlay、日报结论或正式仓位 gate；当前 `shadow_weight_performance_2026-05-14.md/csv` 为 `PASS`
+      / `production_effect=none`，return-leading profile 为 `shadow_alpha_tilt_v1__shadow_gate_relaxed_valuation_v1`，excess
+      3.58%，available=8、pending=1、missing=2
+    - '2026-05-16: 新增并进入 IN_PROGRESS，原因：现有 shadow weight 调参被 valuation/risk/thesis
+      hard gate 压平，owner 明确允许把这些可配置参数也纳入调参观察，但要求做好 shadow 参数隔离。2026-05-16: 从 IN_PROGRESS
+      改为 VALIDATING，原因：新增 `config/weights/shadow_position_gate_profiles.yaml`、`run-shadow-weight-profiles
+      --gate-manifest-path` 组合观察和 gate override 审计字段；真实 2026-05-04 至 2026-05-14 样本已回填
+      9 个 weight/gate 组合/日，performance evaluator 找到 return-leading profile `shadow_alpha_tilt_v1__shadow_gate_relaxed_valuation_v1`，available=8、pending=1、missing=2，shadow
+      total return=8.31%、production total return=4.74%、excess=3.58%、shadow MDD=-1.57%、production
+      MDD=-1.09%、beat rate=75.00%。全量 pytest 542 passed、ruff 和 diff check 通过；生产 scoring、position
+      gate、approved overlay、正式 prediction ledger 和日报结论未改变。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：复核 gate profile manifest、observation ledger 和 performance report
+      证明 validation-only gate profile 链路完整且生产边界未改变；验证通过 `tests/test_shadow_weight_profiles.py`
+      15 passed、Ruff、repo-wide Black check 和 `compileall`。'
+    raw_line: '|CALIBRATION-011|市场反馈优化/shadow gate 参数实验|P1|DONE|系统验证|详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9e-shadow-gate-参数实验`；shadow
+      gate profile 基线已完成并用当前样本跑通；production gate 是否替换仍需 promotion floor、forward shadow、owner
+      approval 和 rollback condition，由后续治理流程承接|新增隔离 `shadow_position_gate_profiles`
+      manifest，覆盖 valuation、risk_budget、thesis、confidence、data_confidence 等可配置 hard
+      cap 的 validation-only 候选；`run-shadow-weight-profiles` 可组合 shadow weight 与 shadow
+      gate profile，写入独立 observation/prediction ledger，所有 profile 必须 `production_effect=none`；报告必须披露
+      observed gate cap、shadow override、gate 后仓位、收益/回撤/换手/成本，不得修改生产 `scoring_rules.yaml`、`portfolio.yaml`、approved
+      overlay、日报结论或正式仓位 gate；当前 `shadow_weight_performance_2026-05-14.md/csv` 为 `PASS`
+      / `production_effect=none`，return-leading profile 为 `shadow_alpha_tilt_v1__shadow_gate_relaxed_valuation_v1`，excess
+      3.58%，available=8、pending=1、missing=2|2026-05-16: 新增并进入 IN_PROGRESS，原因：现有 shadow
+      weight 调参被 valuation/risk/thesis hard gate 压平，owner 明确允许把这些可配置参数也纳入调参观察，但要求做好
+      shadow 参数隔离。2026-05-16: 从 IN_PROGRESS 改为 VALIDATING，原因：新增 `config/weights/shadow_position_gate_profiles.yaml`、`run-shadow-weight-profiles
+      --gate-manifest-path` 组合观察和 gate override 审计字段；真实 2026-05-04 至 2026-05-14 样本已回填
+      9 个 weight/gate 组合/日，performance evaluator 找到 return-leading profile `shadow_alpha_tilt_v1__shadow_gate_relaxed_valuation_v1`，available=8、pending=1、missing=2，shadow
+      total return=8.31%、production total return=4.74%、excess=3.58%、shadow MDD=-1.57%、production
+      MDD=-1.09%、beat rate=75.00%。全量 pytest 542 passed、ruff 和 diff check 通过；生产 scoring、position
+      gate、approved overlay、正式 prediction ledger 和日报结论未改变。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：复核 gate profile manifest、observation ledger 和 performance report
+      证明 validation-only gate profile 链路完整且生产边界未改变；验证通过 `tests/test_shadow_weight_profiles.py`
+      15 passed、Ruff、repo-wide Black check 和 `compileall`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e5f493a73fa94fad9d65fda3
+  task_id: CALIBRATION-011
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-16: 新增并进入 IN_PROGRESS，原因：现有 shadow weight 调参被 valuation/risk/thesis
+      hard gate 压平，owner 明确允许把这些可配置参数也纳入调参观察，但要求做好 shadow 参数隔离。2026-05-16: 从 IN_PROGRESS
+      改为 VALIDATING，原因：新增 `config/weights/shadow_position_gate_profiles.yaml`、`run-shadow-weight-profiles
+      --gate-manifest-path` 组合观察和 gate override 审计字段；真实 2026-05-04 至 2026-05-14 样本已回填
+      9 个 weight/gate 组合/日，performance evaluator 找到 return-leading profile `shadow_alpha_tilt_v1__shadow_gate_relaxed_valuation_v1`，available=8、pending=1、missing=2，shadow
+      total return=8.31%、production total return=4.74%、excess=3.58%、shadow MDD=-1.57%、production
+      MDD=-1.09%、beat rate=75.00%。全量 pytest 542 passed、ruff 和 diff check 通过；生产 scoring、position
+      gate、approved overlay、正式 prediction ledger 和日报结论未改变。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：复核 gate profile manifest、observation ledger 和 performance report
+      证明 validation-only gate profile 链路完整且生产边界未改变；验证通过 `tests/test_shadow_weight_profiles.py`
+      15 passed、Ruff、repo-wide Black check 和 `compileall`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e5f493a73fa94fad9d65fda3d4a24ac8a5485c21e0b2ee388e52aa50a1858893
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-011
+  - 市场反馈优化/shadow gate 参数实验
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9e-shadow-gate-参数实验`；shadow
+    gate profile 基线已完成并用当前样本跑通；production gate 是否替换仍需 promotion floor、forward shadow、owner
+    approval 和 rollback condition，由后续治理流程承接
+  - 新增隔离 `shadow_position_gate_profiles` manifest，覆盖 valuation、risk_budget、thesis、confidence、data_confidence
+    等可配置 hard cap 的 validation-only 候选；`run-shadow-weight-profiles` 可组合 shadow weight
+    与 shadow gate profile，写入独立 observation/prediction ledger，所有 profile 必须 `production_effect=none`；报告必须披露
+    observed gate cap、shadow override、gate 后仓位、收益/回撤/换手/成本，不得修改生产 `scoring_rules.yaml`、`portfolio.yaml`、approved
+    overlay、日报结论或正式仓位 gate；当前 `shadow_weight_performance_2026-05-14.md/csv` 为 `PASS`
+    / `production_effect=none`，return-leading profile 为 `shadow_alpha_tilt_v1__shadow_gate_relaxed_valuation_v1`，excess
+    3.58%，available=8、pending=1、missing=2
+  - '2026-05-16: 新增并进入 IN_PROGRESS，原因：现有 shadow weight 调参被 valuation/risk/thesis hard
+    gate 压平，owner 明确允许把这些可配置参数也纳入调参观察，但要求做好 shadow 参数隔离。2026-05-16: 从 IN_PROGRESS
+    改为 VALIDATING，原因：新增 `config/weights/shadow_position_gate_profiles.yaml`、`run-shadow-weight-profiles
+    --gate-manifest-path` 组合观察和 gate override 审计字段；真实 2026-05-04 至 2026-05-14 样本已回填
+    9 个 weight/gate 组合/日，performance evaluator 找到 return-leading profile `shadow_alpha_tilt_v1__shadow_gate_relaxed_valuation_v1`，available=8、pending=1、missing=2，shadow
+    total return=8.31%、production total return=4.74%、excess=3.58%、shadow MDD=-1.57%、production
+    MDD=-1.09%、beat rate=75.00%。全量 pytest 542 passed、ruff 和 diff check 通过；生产 scoring、position
+    gate、approved overlay、正式 prediction ledger 和日报结论未改变。2026-06-09: 从 VALIDATING 改为
+    DONE，原因：复核 gate profile manifest、observation ledger 和 performance report 证明 validation-only
+    gate profile 链路完整且生产边界未改变；验证通过 `tests/test_shadow_weight_profiles.py` 15 passed、Ruff、repo-wide
+    Black check 和 `compileall`。'
+  docs_links:
+  - docs/requirements/market_feedback_optimization_loop_2026-05-13.md
+  terminal: true
+  raw_row_sha256: e5f493a73fa94fad9d65fda3d4a24ac8a5485c21e0b2ee388e52aa50a1858893
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e7d75c33de35aa2144c0d33dc6c74dafe97edb244881a1ca2d67ace5588f6613

@@ -1,0 +1,125 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-739_to_758_CURRENT_SUBSCRIPTION_FIRST_SOURCE_QUALIFICATION_AND_CONTROLLED_RESEARCH
+  title: null
+  domain: Data foundation + controlled strategy research / current-subscription-first
+    qualification and pilot research
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-739_to_758_Current_Subscription_First_Source_Qualification_and_Controlled_Strategy_Research.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-739_to_758_Current_Subscription_First_Source_Qualification_and_Controlled_Strategy_Research.md`；按附件完成
+    TRADING-739～748 source qualification/readiness 和 TRADING-749～758 controlled strategy
+    research/vendor decision gate baseline；所有输出 validation-only / observe-only
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI：`aits data source-qualification usage-guardrails
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1360
+    row_sha256: 64ed24466ffb77d05d36b98af0b7eb0a541400756fce27f1a9e3b82a69b6f22f
+    cell_count: 15
+    all_cells:
+    - TRADING-739_to_758_CURRENT_SUBSCRIPTION_FIRST_SOURCE_QUALIFICATION_AND_CONTROLLED_RESEARCH
+    - Data foundation + controlled strategy research / current-subscription-first
+      qualification and pilot research
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-739_to_758_Current_Subscription_First_Source_Qualification_and_Controlled_Strategy_Research.md`；按附件完成
+      TRADING-739～748 source qualification/readiness 和 TRADING-749～758 controlled
+      strategy research/vendor decision gate baseline；所有输出 validation-only / observe-only
+    - 新增 CLI：`aits data source-qualification usage-guardrails
+    - fmp-price-corporate-action
+    - marketstack-reconciliation
+    - asset-master
+    - sec-fundamental-pit
+    - macro-risk
+    - vendor-decision-gate`、`aits forward-evidence classify-requirement
+    - validate-capture-contract`、`aits research labels boundary-qualification`、`aits
+      trading-costs qualify-model`、`aits data foundation-acceptance run --include-qualified-sources`、`aits
+      research strategy-pilot ...`；artifacts 必须固定 `production_effect=none`、`broker_action=none`、`promotion_gate_allowed=false`、`lookahead_violation_count=0`；不得把
+      accessible endpoint、oracle/teacher、GBDT、selector、value surface 或 vendor matrix
+      当作 promotion/paper-shadow/production evidence
+    - '2026-06-21: 按 owner 附件新增并实现 validation-only baseline；新增 source qualification
+      configs、current subscription qualification runner、forward capture contract、acceptance
+      v2、controlled strategy pilot artifacts、registry/catalog/system_flow 和 focused
+      tests；默认 run 输出 `CONTROLLED_RESEARCH_READY` 与 `DO_NOT_BUY_NEW_SOURCE_YET`，且
+      `status_upgrade_attempted=false`、`lookahead_violation_count=0`、`production_effect=none`、`broker_action=none`；focused
+      parallel pytest、Ruff、scoped Black check、compileall、`git diff --check`、fast-unit
+      103 passed、contract-validation 102 passed、report-validation 55 passed 已通过；继续
+      VALIDATING，等待真实 source qualification、owner 复核和长期 controlled research evidence。'
+    raw_line: '|TRADING-739_to_758_CURRENT_SUBSCRIPTION_FIRST_SOURCE_QUALIFICATION_AND_CONTROLLED_RESEARCH|Data
+      foundation + controlled strategy research / current-subscription-first qualification
+      and pilot research|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-739_to_758_Current_Subscription_First_Source_Qualification_and_Controlled_Strategy_Research.md`；按附件完成
+      TRADING-739～748 source qualification/readiness 和 TRADING-749～758 controlled
+      strategy research/vendor decision gate baseline；所有输出 validation-only / observe-only|新增
+      CLI：`aits data source-qualification usage-guardrails|fmp-price-corporate-action|marketstack-reconciliation|asset-master|sec-fundamental-pit|macro-risk|vendor-decision-gate`、`aits
+      forward-evidence classify-requirement|validate-capture-contract`、`aits research
+      labels boundary-qualification`、`aits trading-costs qualify-model`、`aits data
+      foundation-acceptance run --include-qualified-sources`、`aits research strategy-pilot
+      ...`；artifacts 必须固定 `production_effect=none`、`broker_action=none`、`promotion_gate_allowed=false`、`lookahead_violation_count=0`；不得把
+      accessible endpoint、oracle/teacher、GBDT、selector、value surface 或 vendor matrix
+      当作 promotion/paper-shadow/production evidence|2026-06-21: 按 owner 附件新增并实现 validation-only
+      baseline；新增 source qualification configs、current subscription qualification
+      runner、forward capture contract、acceptance v2、controlled strategy pilot artifacts、registry/catalog/system_flow
+      和 focused tests；默认 run 输出 `CONTROLLED_RESEARCH_READY` 与 `DO_NOT_BUY_NEW_SOURCE_YET`，且
+      `status_upgrade_attempted=false`、`lookahead_violation_count=0`、`production_effect=none`、`broker_action=none`；focused
+      parallel pytest、Ruff、scoped Black check、compileall、`git diff --check`、fast-unit
+      103 passed、contract-validation 102 passed、report-validation 55 passed 已通过；继续
+      VALIDATING，等待真实 source qualification、owner 复核和长期 controlled research evidence。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-64ed24466ffb77d05d36b98a
+  task_id: TRADING-739_to_758_CURRENT_SUBSCRIPTION_FIRST_SOURCE_QUALIFICATION_AND_CONTROLLED_RESEARCH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: fmp-price-corporate-action
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:64ed24466ffb77d05d36b98af0b7eb0a541400756fce27f1a9e3b82a69b6f22f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-739_to_758_CURRENT_SUBSCRIPTION_FIRST_SOURCE_QUALIFICATION_AND_CONTROLLED_RESEARCH
+  - Data foundation + controlled strategy research / current-subscription-first qualification
+    and pilot research
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-739_to_758_Current_Subscription_First_Source_Qualification_and_Controlled_Strategy_Research.md`；按附件完成
+    TRADING-739～748 source qualification/readiness 和 TRADING-749～758 controlled strategy
+    research/vendor decision gate baseline；所有输出 validation-only / observe-only
+  - 新增 CLI：`aits data source-qualification usage-guardrails
+  - fmp-price-corporate-action
+  docs_links:
+  - docs/requirements/TRADING-739_to_758_Current_Subscription_First_Source_Qualification_and_Controlled_Strategy_Research.md
+  terminal: false
+  raw_row_sha256: 64ed24466ffb77d05d36b98af0b7eb0a541400756fce27f1a9e3b82a69b6f22f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 56d1170d9c572a9495af2fa35a371565d58ca5c2be8f6a06c01983311f2ab438

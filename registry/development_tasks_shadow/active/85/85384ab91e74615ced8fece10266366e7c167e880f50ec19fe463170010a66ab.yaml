@@ -1,0 +1,142 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2272_FIRST_LAYER_OBJECTIVE_AND_VALIDATION_REDESIGN
+  title: null
+  domain: Research trends / first-layer objective and validation redesign
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2272_First_Layer_Objective_And_Validation_Redesign.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2272_First_Layer_Objective_And_Validation_Redesign.md`；附件要求把
+    TRADING-2270 failure taxonomy 和 TRADING-2271 proxy blocker 转成 objective / validation
+    contract，并审计 current first-layer performance gates 的 actual-path marginal utility。本批已生成
+    objective artifacts 和 gate audit artifacts，下一步是 owner 复核 recommended gate policy。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends first-layer-objective-validation-redesign`、`aits
+      research trends first-layer-performance-gate-audit`、objective validation policy、performance
+      gate audit policy、JSON/YAML/Markdown artifacts、report registry、artifact catalog、system
+      flow 和 focused tests；每个 objective term 定义 measurement source、direction、current
+      baseline、validation role 和 promotion interpretation；gate audit 每个 gate 披露 marginal
+      utility、failure mode、opportunity cost 和 recommended action；所有 gate fields 固定
+      false/none/BLOCKED。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1245
+    row_sha256: 56a643f5dba5c576af0d476c51dced25a9a1e7af985b60067543016b6717a77d
+    cell_count: 8
+    all_cells:
+    - TRADING-2272_FIRST_LAYER_OBJECTIVE_AND_VALIDATION_REDESIGN
+    - Research trends / first-layer objective and validation redesign
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2272_First_Layer_Objective_And_Validation_Redesign.md`；附件要求把
+      TRADING-2270 failure taxonomy 和 TRADING-2271 proxy blocker 转成 objective / validation
+      contract，并审计 current first-layer performance gates 的 actual-path marginal utility。本批已生成
+      objective artifacts 和 gate audit artifacts，下一步是 owner 复核 recommended gate policy。
+    - 新增 `aits research trends first-layer-objective-validation-redesign`、`aits research
+      trends first-layer-performance-gate-audit`、objective validation policy、performance
+      gate audit policy、JSON/YAML/Markdown artifacts、report registry、artifact catalog、system
+      flow 和 focused tests；每个 objective term 定义 measurement source、direction、current
+      baseline、validation role 和 promotion interpretation；gate audit 每个 gate 披露 marginal
+      utility、failure mode、opportunity cost 和 recommended action；所有 gate fields 固定
+      false/none/BLOCKED。
+    - '2026-06-28: 调整并进入 IN_PROGRESS；本批只定义 objective / validation contract，不训练模型、不改变
+      active gates。2026-06-28: 实现完成并转入 VALIDATING；真实 run objective_term_count=7、stress
+      slice coverage=`3/4 slices covered`、true_breadth_replaced=false。2026-06-28:
+      验证通过 focused / governance / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T124530Z/test_runtime_summary.json`。2026-06-28:
+      追加 gate audit；current_gate_accept_count=0，coverage gate negative、defensive regression
+      gate positive，其余 gates neutral/audit-only；验证通过 focused parallel pytest（50 passed）、docs
+      freshness 和 diff checks。'
+    raw_line: '|TRADING-2272_FIRST_LAYER_OBJECTIVE_AND_VALIDATION_REDESIGN|Research
+      trends / first-layer objective and validation redesign|P0|VALIDATING|系统实现 +
+      项目 owner 后续复核|详见 `docs/requirements/TRADING-2272_First_Layer_Objective_And_Validation_Redesign.md`；附件要求把
+      TRADING-2270 failure taxonomy 和 TRADING-2271 proxy blocker 转成 objective / validation
+      contract，并审计 current first-layer performance gates 的 actual-path marginal utility。本批已生成
+      objective artifacts 和 gate audit artifacts，下一步是 owner 复核 recommended gate policy。|新增
+      `aits research trends first-layer-objective-validation-redesign`、`aits research
+      trends first-layer-performance-gate-audit`、objective validation policy、performance
+      gate audit policy、JSON/YAML/Markdown artifacts、report registry、artifact catalog、system
+      flow 和 focused tests；每个 objective term 定义 measurement source、direction、current
+      baseline、validation role 和 promotion interpretation；gate audit 每个 gate 披露 marginal
+      utility、failure mode、opportunity cost 和 recommended action；所有 gate fields 固定
+      false/none/BLOCKED。|2026-06-28: 调整并进入 IN_PROGRESS；本批只定义 objective / validation
+      contract，不训练模型、不改变 active gates。2026-06-28: 实现完成并转入 VALIDATING；真实 run objective_term_count=7、stress
+      slice coverage=`3/4 slices covered`、true_breadth_replaced=false。2026-06-28:
+      验证通过 focused / governance / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T124530Z/test_runtime_summary.json`。2026-06-28:
+      追加 gate audit；current_gate_accept_count=0，coverage gate negative、defensive regression
+      gate positive，其余 gates neutral/audit-only；验证通过 focused parallel pytest（50 passed）、docs
+      freshness 和 diff checks。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-56a643f5dba5c576af0d476c
+  task_id: TRADING-2272_FIRST_LAYER_OBJECTIVE_AND_VALIDATION_REDESIGN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 调整并进入 IN_PROGRESS；本批只定义 objective / validation contract，不训练模型、不改变
+      active gates。2026-06-28: 实现完成并转入 VALIDATING；真实 run objective_term_count=7、stress
+      slice coverage=`3/4 slices covered`、true_breadth_replaced=false。2026-06-28:
+      验证通过 focused / governance / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T124530Z/test_runtime_summary.json`。2026-06-28:
+      追加 gate audit；current_gate_accept_count=0，coverage gate negative、defensive regression
+      gate positive，其余 gates neutral/audit-only；验证通过 focused parallel pytest（50 passed）、docs
+      freshness 和 diff checks。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:56a643f5dba5c576af0d476c51dced25a9a1e7af985b60067543016b6717a77d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2272_FIRST_LAYER_OBJECTIVE_AND_VALIDATION_REDESIGN
+  - Research trends / first-layer objective and validation redesign
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2272_First_Layer_Objective_And_Validation_Redesign.md`；附件要求把
+    TRADING-2270 failure taxonomy 和 TRADING-2271 proxy blocker 转成 objective / validation
+    contract，并审计 current first-layer performance gates 的 actual-path marginal utility。本批已生成
+    objective artifacts 和 gate audit artifacts，下一步是 owner 复核 recommended gate policy。
+  - 新增 `aits research trends first-layer-objective-validation-redesign`、`aits research
+    trends first-layer-performance-gate-audit`、objective validation policy、performance
+    gate audit policy、JSON/YAML/Markdown artifacts、report registry、artifact catalog、system
+    flow 和 focused tests；每个 objective term 定义 measurement source、direction、current
+    baseline、validation role 和 promotion interpretation；gate audit 每个 gate 披露 marginal
+    utility、failure mode、opportunity cost 和 recommended action；所有 gate fields 固定 false/none/BLOCKED。
+  - '2026-06-28: 调整并进入 IN_PROGRESS；本批只定义 objective / validation contract，不训练模型、不改变
+    active gates。2026-06-28: 实现完成并转入 VALIDATING；真实 run objective_term_count=7、stress
+    slice coverage=`3/4 slices covered`、true_breadth_replaced=false。2026-06-28: 验证通过
+    focused / governance / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T124530Z/test_runtime_summary.json`。2026-06-28:
+    追加 gate audit；current_gate_accept_count=0，coverage gate negative、defensive regression
+    gate positive，其余 gates neutral/audit-only；验证通过 focused parallel pytest（50 passed）、docs
+    freshness 和 diff checks。'
+  docs_links:
+  - docs/requirements/TRADING-2272_First_Layer_Objective_And_Validation_Redesign.md
+  terminal: false
+  raw_row_sha256: 56a643f5dba5c576af0d476c51dced25a9a1e7af985b60067543016b6717a77d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ea10d5c2dcbb045b0177c72ced69860ba3ff978fc4f7c3993a20a09e0165a0e5

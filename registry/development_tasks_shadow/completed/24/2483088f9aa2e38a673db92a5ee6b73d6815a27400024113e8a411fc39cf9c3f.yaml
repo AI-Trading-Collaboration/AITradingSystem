@@ -1,0 +1,150 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-366_MARKET_CALENDAR_FRESHNESS_POLICY
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue market-data freshness governance
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-366_Market_Calendar_Freshness_Policy.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-366_Market_Calendar_Freshness_Policy.md`；承接
+    TRADING-354B，把 market-data freshness calendar adjustment 从 evidence staleness
+    monitor 内部提升为共享 resolver；不得用 calendar policy 隐藏真实 stale data、不得放宽 threshold、不得刷新或补造数据、不得触发
+    broker/order/production mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/market_calendar_freshness.py`；`trading_calendar.py`
+      增加 scheduled partial trading day、early close time、session kind 和 partial-day-aware
+      latest completed trading day；evidence staleness monitor 接入 shared resolver并输出
+      `latest_complete_market_date`、`freshness_reference_date`、`market_session_kind`、`calendar_adjustment_reason`、`calendar_adjusted_staleness`
+      和 per-source `stale_reason`；覆盖 normal trading day、weekend、U.S. market holiday、partial
+      trading day、vendor delay 和真实 stale 不被隐藏；README、operations runbook、system flow、artifact
+      catalog、policy docs、requirements、task register 和 focused tests 同步
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 237
+    row_sha256: 3174d06344af8117d8108bdbd379a2d29ed268f38b81c0179e0338c1e29c863c
+    cell_count: 8
+    all_cells:
+    - TRADING-366_MARKET_CALENDAR_FRESHNESS_POLICY
+    - ETF portfolio/dynamic v3 rescue market-data freshness governance
+    - P1
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-366_Market_Calendar_Freshness_Policy.md`；承接
+      TRADING-354B，把 market-data freshness calendar adjustment 从 evidence staleness
+      monitor 内部提升为共享 resolver；不得用 calendar policy 隐藏真实 stale data、不得放宽 threshold、不得刷新或补造数据、不得触发
+      broker/order/production mutation
+    - 新增 `src/ai_trading_system/market_calendar_freshness.py`；`trading_calendar.py`
+      增加 scheduled partial trading day、early close time、session kind 和 partial-day-aware
+      latest completed trading day；evidence staleness monitor 接入 shared resolver并输出
+      `latest_complete_market_date`、`freshness_reference_date`、`market_session_kind`、`calendar_adjustment_reason`、`calendar_adjusted_staleness`
+      和 per-source `stale_reason`；覆盖 normal trading day、weekend、U.S. market holiday、partial
+      trading day、vendor delay 和真实 stale 不被隐藏；README、operations runbook、system flow、artifact
+      catalog、policy docs、requirements、task register 和 focused tests 同步
+    - '2026-06-16: DONE；真实 monitor `evidence-staleness-monitor_ab047a679762dda0` 输出
+      `evidence_freshness_status=ACCEPTABLE`、`requested_as_of=2026-06-16`、`freshness_reference_date=2026-06-12`、`latest_complete_market_date=2026-06-12`、`calendar_adjusted_staleness=true`、`calendar_adjustment_reason=requested_as_of_after_latest_complete_market_date`、`stale_artifacts=[]`、`blocking_artifacts=[]`、`missing_artifacts=[]`；price
+      / market panel findings 为 FRESH，真实 stale fixture 仍 BLOCKING；weekly coverage
+      为 `RECOVERY_MODE_REVIEW`，因此 `safe_to_continue_shadow=false` 且需要 manual review。Focused
+      pytest 57 passed，Ruff PASS，compileall PASS，documentation contract PASS，report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief OK，Reader Brief
+      quality OK，git diff check PASS（仅 task register CRLF notice）；保持 no waiver / no
+      threshold relaxation / no data refresh / no official target / no broker / no
+      production mutation。'
+    raw_line: '|TRADING-366_MARKET_CALENDAR_FRESHNESS_POLICY|ETF portfolio/dynamic
+      v3 rescue market-data freshness governance|P1|DONE|项目 owner 后续复核；代码实现完成|详细拆解见
+      `docs/requirements/TRADING-366_Market_Calendar_Freshness_Policy.md`；承接 TRADING-354B，把
+      market-data freshness calendar adjustment 从 evidence staleness monitor 内部提升为共享
+      resolver；不得用 calendar policy 隐藏真实 stale data、不得放宽 threshold、不得刷新或补造数据、不得触发 broker/order/production
+      mutation|新增 `src/ai_trading_system/market_calendar_freshness.py`；`trading_calendar.py`
+      增加 scheduled partial trading day、early close time、session kind 和 partial-day-aware
+      latest completed trading day；evidence staleness monitor 接入 shared resolver并输出
+      `latest_complete_market_date`、`freshness_reference_date`、`market_session_kind`、`calendar_adjustment_reason`、`calendar_adjusted_staleness`
+      和 per-source `stale_reason`；覆盖 normal trading day、weekend、U.S. market holiday、partial
+      trading day、vendor delay 和真实 stale 不被隐藏；README、operations runbook、system flow、artifact
+      catalog、policy docs、requirements、task register 和 focused tests 同步|2026-06-16:
+      DONE；真实 monitor `evidence-staleness-monitor_ab047a679762dda0` 输出 `evidence_freshness_status=ACCEPTABLE`、`requested_as_of=2026-06-16`、`freshness_reference_date=2026-06-12`、`latest_complete_market_date=2026-06-12`、`calendar_adjusted_staleness=true`、`calendar_adjustment_reason=requested_as_of_after_latest_complete_market_date`、`stale_artifacts=[]`、`blocking_artifacts=[]`、`missing_artifacts=[]`；price
+      / market panel findings 为 FRESH，真实 stale fixture 仍 BLOCKING；weekly coverage
+      为 `RECOVERY_MODE_REVIEW`，因此 `safe_to_continue_shadow=false` 且需要 manual review。Focused
+      pytest 57 passed，Ruff PASS，compileall PASS，documentation contract PASS，report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief OK，Reader Brief
+      quality OK，git diff check PASS（仅 task register CRLF notice）；保持 no waiver / no
+      threshold relaxation / no data refresh / no official target / no broker / no
+      production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3174d06344af8117d8108bdb
+  task_id: TRADING-366_MARKET_CALENDAR_FRESHNESS_POLICY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: '2026-06-16: DONE；真实 monitor `evidence-staleness-monitor_ab047a679762dda0`
+      输出 `evidence_freshness_status=ACCEPTABLE`、`requested_as_of=2026-06-16`、`freshness_reference_date=2026-06-12`、`latest_complete_market_date=2026-06-12`、`calendar_adjusted_staleness=true`、`calendar_adjustment_reason=requested_as_of_after_latest_complete_market_date`、`stale_artifacts=[]`、`blocking_artifacts=[]`、`missing_artifacts=[]`；price
+      / market panel findings 为 FRESH，真实 stale fixture 仍 BLOCKING；weekly coverage
+      为 `RECOVERY_MODE_REVIEW`，因此 `safe_to_continue_shadow=false` 且需要 manual review。Focused
+      pytest 57 passed，Ruff PASS，compileall PASS，documentation contract PASS，report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief OK，Reader Brief
+      quality OK，git diff check PASS（仅 task register CRLF notice）；保持 no waiver / no
+      threshold relaxation / no data refresh / no official target / no broker / no
+      production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3174d06344af8117d8108bdbd379a2d29ed268f38b81c0179e0338c1e29c863c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-366_MARKET_CALENDAR_FRESHNESS_POLICY
+  - ETF portfolio/dynamic v3 rescue market-data freshness governance
+  - P1
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-366_Market_Calendar_Freshness_Policy.md`；承接 TRADING-354B，把
+    market-data freshness calendar adjustment 从 evidence staleness monitor 内部提升为共享
+    resolver；不得用 calendar policy 隐藏真实 stale data、不得放宽 threshold、不得刷新或补造数据、不得触发 broker/order/production
+    mutation
+  - 新增 `src/ai_trading_system/market_calendar_freshness.py`；`trading_calendar.py`
+    增加 scheduled partial trading day、early close time、session kind 和 partial-day-aware
+    latest completed trading day；evidence staleness monitor 接入 shared resolver并输出
+    `latest_complete_market_date`、`freshness_reference_date`、`market_session_kind`、`calendar_adjustment_reason`、`calendar_adjusted_staleness`
+    和 per-source `stale_reason`；覆盖 normal trading day、weekend、U.S. market holiday、partial
+    trading day、vendor delay 和真实 stale 不被隐藏；README、operations runbook、system flow、artifact
+    catalog、policy docs、requirements、task register 和 focused tests 同步
+  - '2026-06-16: DONE；真实 monitor `evidence-staleness-monitor_ab047a679762dda0` 输出
+    `evidence_freshness_status=ACCEPTABLE`、`requested_as_of=2026-06-16`、`freshness_reference_date=2026-06-12`、`latest_complete_market_date=2026-06-12`、`calendar_adjusted_staleness=true`、`calendar_adjustment_reason=requested_as_of_after_latest_complete_market_date`、`stale_artifacts=[]`、`blocking_artifacts=[]`、`missing_artifacts=[]`；price
+    / market panel findings 为 FRESH，真实 stale fixture 仍 BLOCKING；weekly coverage 为
+    `RECOVERY_MODE_REVIEW`，因此 `safe_to_continue_shadow=false` 且需要 manual review。Focused
+    pytest 57 passed，Ruff PASS，compileall PASS，documentation contract PASS，report
+    index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief OK，Reader Brief quality
+    OK，git diff check PASS（仅 task register CRLF notice）；保持 no waiver / no threshold
+    relaxation / no data refresh / no official target / no broker / no production
+    mutation。'
+  docs_links:
+  - docs/requirements/TRADING-366_Market_Calendar_Freshness_Policy.md
+  terminal: true
+  raw_row_sha256: 3174d06344af8117d8108bdbd379a2d29ed268f38b81c0179e0338c1e29c863c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 32cf3e511ca426ae1682d3e67a3b1e26ec313d6d8543460e2766714c9f0b765b

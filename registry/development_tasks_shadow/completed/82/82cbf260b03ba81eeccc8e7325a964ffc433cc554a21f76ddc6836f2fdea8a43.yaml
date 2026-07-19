@@ -1,0 +1,98 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438M1D1_GROWTH_TILT_BASELINE_CONTRACT_DECISION_PACK
+  title: null
+  domain: Strategy research / baseline contract owner decision pack
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner后续按 M1D1A/M1D2/M1E 最新 artifacts处理 exact blockers
+  requirement_refs:
+  - docs/requirements/TRADING-2438M1D_Growth_Tilt_Baseline_Contract_Decision_Pack_And_Implementation_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2438M1D_Growth_Tilt_Baseline_Contract_Decision_Pack_And_Implementation_Plan.md`；历史
+    compute-path audit和18项 owner action已由M1D1A resolution闭合，旧 pending disposition被最新
+    A/B/C=`REDEFINE/WITHDRAW/REDEFINE` 取代。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 历史 decision pack artifacts保持可审计并被D1A/D2消费；M2=0，不运行 replay/backtest/scoring/runtime
+      metrics或生产路径。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 29
+    row_sha256: 0396fd030a5e8cd9b1ffdc6a99e20bd021d036dd734f28128e3ef0dba8c11cfe
+    cell_count: 8
+    all_cells:
+    - TRADING-2438M1D1_GROWTH_TILT_BASELINE_CONTRACT_DECISION_PACK
+    - Strategy research / baseline contract owner decision pack
+    - P0
+    - DONE
+    - 项目 owner后续按 M1D1A/M1D2/M1E 最新 artifacts处理 exact blockers
+    - 详见 `docs/requirements/TRADING-2438M1D_Growth_Tilt_Baseline_Contract_Decision_Pack_And_Implementation_Plan.md`；历史
+      compute-path audit和18项 owner action已由M1D1A resolution闭合，旧 pending disposition被最新
+      A/B/C=`REDEFINE/WITHDRAW/REDEFINE` 取代。
+    - 历史 decision pack artifacts保持可审计并被D1A/D2消费；M2=0，不运行 replay/backtest/scoring/runtime
+      metrics或生产路径。
+    - '2026-07-10: D1A owner resolution闭合 pending actions，D2/M1E输出 exact blockers后归档
+      DONE；全链 validation PASS。'
+    raw_line: '|TRADING-2438M1D1_GROWTH_TILT_BASELINE_CONTRACT_DECISION_PACK|Strategy
+      research / baseline contract owner decision pack|P0|DONE|项目 owner后续按 M1D1A/M1D2/M1E
+      最新 artifacts处理 exact blockers|详见 `docs/requirements/TRADING-2438M1D_Growth_Tilt_Baseline_Contract_Decision_Pack_And_Implementation_Plan.md`；历史
+      compute-path audit和18项 owner action已由M1D1A resolution闭合，旧 pending disposition被最新
+      A/B/C=`REDEFINE/WITHDRAW/REDEFINE` 取代。|历史 decision pack artifacts保持可审计并被D1A/D2消费；M2=0，不运行
+      replay/backtest/scoring/runtime metrics或生产路径。|2026-07-10: D1A owner resolution闭合
+      pending actions，D2/M1E输出 exact blockers后归档 DONE；全链 validation PASS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0396fd030a5e8cd9b1ffdc6a
+  task_id: TRADING-2438M1D1_GROWTH_TILT_BASELINE_CONTRACT_DECISION_PACK
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner后续按 M1D1A/M1D2/M1E 最新 artifacts处理 exact blockers
+    notes: '2026-07-10: D1A owner resolution闭合 pending actions，D2/M1E输出 exact blockers后归档
+      DONE；全链 validation PASS。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0396fd030a5e8cd9b1ffdc6a99e20bd021d036dd734f28128e3ef0dba8c11cfe
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438M1D1_GROWTH_TILT_BASELINE_CONTRACT_DECISION_PACK
+  - Strategy research / baseline contract owner decision pack
+  - P0
+  - DONE
+  - 项目 owner后续按 M1D1A/M1D2/M1E 最新 artifacts处理 exact blockers
+  - 详见 `docs/requirements/TRADING-2438M1D_Growth_Tilt_Baseline_Contract_Decision_Pack_And_Implementation_Plan.md`；历史
+    compute-path audit和18项 owner action已由M1D1A resolution闭合，旧 pending disposition被最新
+    A/B/C=`REDEFINE/WITHDRAW/REDEFINE` 取代。
+  - 历史 decision pack artifacts保持可审计并被D1A/D2消费；M2=0，不运行 replay/backtest/scoring/runtime
+    metrics或生产路径。
+  - '2026-07-10: D1A owner resolution闭合 pending actions，D2/M1E输出 exact blockers后归档
+    DONE；全链 validation PASS。'
+  docs_links:
+  - docs/requirements/TRADING-2438M1D_Growth_Tilt_Baseline_Contract_Decision_Pack_And_Implementation_Plan.md
+  terminal: true
+  raw_row_sha256: 0396fd030a5e8cd9b1ffdc6a99e20bd021d036dd734f28128e3ef0dba8c11cfe
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: be998471a2163902b79013f13f655718649f96f422da68b9349b563e81db12ee

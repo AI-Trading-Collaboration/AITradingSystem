@@ -1,0 +1,235 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-665_to_685_INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1
+  title: null
+  domain: Indicator to signal research framework / daily indicator coverage, dependency,
+    masking, and campaign adapter governance
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-665_to_685_Indicator_To_Signal_Research_Framework_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-665_to_685_Indicator_To_Signal_Research_Framework_V1.md`；实现指标/约束
+    ontology、日报指标 inventory、依赖图、multi-stage weight trace contract、role/mapping registry、diagnostics/calibration
+    baseline、conditional/masking/factorial/trial/holdout/gate artifacts、Research Campaign
+    adapter contract、CLI、coverage gap report、validation pack、rerun stability、casebook
+    和 ablation validation；不得修改日报实际权重逻辑、估值拥挤参数、paper-shadow/live/broker/order/official
+    weights 或 production state
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits research indicators inventory'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1405
+    row_sha256: 3daadf08e7ba1faf7ae723bfd0d66bf1a8c0e58dbcf17dc4aab6eecd1342cadf
+    cell_count: 23
+    all_cells:
+    - TRADING-665_to_685_INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1
+    - Indicator to signal research framework / daily indicator coverage, dependency,
+      masking, and campaign adapter governance
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-665_to_685_Indicator_To_Signal_Research_Framework_V1.md`；实现指标/约束
+      ontology、日报指标 inventory、依赖图、multi-stage weight trace contract、role/mapping registry、diagnostics/calibration
+      baseline、conditional/masking/factorial/trial/holdout/gate artifacts、Research
+      Campaign adapter contract、CLI、coverage gap report、validation pack、rerun stability、casebook
+      和 ablation validation；不得修改日报实际权重逻辑、估值拥挤参数、paper-shadow/live/broker/order/official
+      weights 或 production state
+    - '`aits research indicators inventory'
+    - coverage
+    - coverage-gap
+    - graph
+    - diagnose
+    - mapping-plan
+    - masking
+    - gate
+    - masking-casebook
+    - ablation-validation
+    - historical-trace-validation
+    - gate-availability-audit
+    - component-historical-trace
+    - backtest-trace-bridge
+    - validation-pack
+    - validation-pack-stability` 可运行并写出 JSON/Markdown artifacts；默认 inventory 覆盖当前日报评分模块、position
+      gates、confidence/data-quality/manual guardrails，并把 valuation/crowding 标为高影响未验证研究缺口；无
+      multi-stage trace 数据时 masking/dominance 只能输出 trace-required limitation，不伪造影响量；最小日报
+      trace 可覆盖 raw indicator value、normalized score、mapped signal contribution、pre/post
+      constraint signal weight 和 final advisory weight；coverage gap report 列出 registered
+      / unregistered / incomplete / high-impact unvalidated；补齐 `data_quality_gate_indicator`
+      mapping spec；valuation/crowding pilot validation report、masking casebook、ablation
+      validation、historical trace validation、gate availability audit、component-level
+      historical trace 和 backtest trace bridge 均为 read-only；validation pack 输出 `INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1_READY_WITH_LIMITATIONS`
+      或阻断原因；full pytest、focused tests、Ruff、compileall、task-register consistency 和
+      `git diff --check` 通过
+    - '2026-06-20: 新增并进入 IN_PROGRESS，原因：附件要求在继续单指标研究前先建立日报指标全量登记、依赖遮蔽、研究顺序和 validation
+      pack 控制面；本轮范围限定为 research-only/audit-only 框架与 valuation/crowding pilot 覆盖审计，不改变投资参数或运行期仓位行为。2026-06-20:
+      实现完成并转入 VALIDATING；新增 indicator research registry、`ai_trading_system.indicator_research`、`aits
+      research indicators ...` CLI、Campaign validation-only adapter contract、valuation/crowding
+      pilot audit、validation pack 和 docs。验证通过 indicator focused pytest 9 passed、existing
+      research campaign pytest 20 passed、task-register consistency pytest 6 passed、actual
+      task-register consistency PASS/PASS、actual `aits research indicators validation-pack`
+      输出 `INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1_READY_WITH_LIMITATIONS` artifacts=19、Ruff、compileall
+      和 `git diff --check`。2026-06-20: 继续 VALIDATING；按 owner 要求先运行全量 `pytest -q`，collection
+      阶段失败 4 errors，原因是已有 tests 导入 `scripts.*` 时当前 pytest pythonpath 未包含 repo root；已修正
+      pytest pythonpath。2026-06-20: VALIDATING 继续推进；隔离 `score-daily --as-of 2026-06-18
+      --skip-risk-event-openai-precheck --sec-fundamental-source sec_pit_feature_panel`
+      生成 `daily_indicator_weight_trace_2026-06-18.json`，row_count=16、component_row_count=6、constraint_row_count=7、missing_trace_field_record_count=0，所有输出位于
+      `outputs/research_indicators/daily_trace_validation/` 且 prediction `production_effect=none`。重跑
+      masking 后 trend audit `PASS`、trace_required_pair_count=0、valuation/crowding
+      -> trend masking_ratio=0.80、masking_status=`HIGH_MASKING`、conclusion=`B_EFFECT_MASKED_BY_A`；valuation
+      pilot 输出 `VALUATION_CROWDING_RESEARCH_COVERAGE_KNOWN` 且 parameter_mutation=false。coverage
+      gap report `PASS_WITH_WARNINGS`：registered=11、unregistered=0、incomplete=1（`data_quality_gate_indicator`
+      缺 mapping spec）、HIGH_IMPACT_UNVALIDATED=1（`valuation_crowding_indicator`）。validation
+      pack with trace 输出 `INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1_READY_WITH_LIMITATIONS`
+      artifacts=20；validation-pack-stability `PASS` stable=true artifact_count=20。全量
+      pytest 初次完整运行因 Python 3.11 缺 dev optional `pyarrow>=13` 出现 1 failed/2952 passed；安装
+      Python 3.11 `pyarrow 24.0.0` 后目标单测通过，第二次全量 `pytest -q` 2953 passed、639 warnings、1691.75s。2026-06-20:
+      继续 VALIDATING 后续诊断；owner 要求补齐 data quality gate mapping spec、启动 valuation/crowding
+      high-impact pilot validation、扩展 masking casebook、增加只读 counterfactual/ablation、扩展
+      historical trace validation，并保持 production/paper-shadow/live/broker/order/official
+      weights 全部不变。2026-06-20: 后续诊断实现并复验；`data_quality_gate_indicator` 已补 `data_quality_gate_v1`
+      mapping spec，明确为 immutable fail-closed hard block；coverage gap 变为 registered=11、unregistered=0、incomplete=0、HIGH_IMPACT_UNVALIDATED=1。新增
+      pilot validation report、masking casebook、ablation validation、historical trace
+      validation；PIT sliced historical score-daily replay 生成 2026-05-29、2026-06-05、2026-06-12
+      trace，并与 2026-06-18 trace 合并为 64 rows / 4 dates historical trace；casebook case_count=4，ablation
+      scenarios=3，historical validation date_count=4、missing_trace_field_record_count=0，但因低于
+      20 日期稳定窗口仍 `PASS_WITH_WARNINGS`。validation pack artifacts=23；validation-pack-stability
+      `PASS` stable=true，trace fields、coverage unregistered、HIGH_IMPACT_UNVALIDATED、masking
+      diagnostics/casebook 均稳定。更早 2026-04-24、2026-05-01、2026-05-08、2026-05-15 replay
+      被 SEC PIT feature availability gate 阻断，未绕过。2026-06-20: 继续 historical trace expansion；新增
+      gate availability audit、full/component eligibility 拆分、component-level historical
+      trace、backtest_trace_bridge、date range/event window/asset universe 参数和样本质量统计；非
+      full advisory trace 必须标记 trace_source/confidence/promotion_gate_allowed=false，只能用于
+      diagnostic / ablation / sensitivity analysis。2026-06-20: historical trace expansion
+      实现并复验；新增 `gate-availability-audit`、`component-historical-trace`、`backtest-trace-bridge`
+      CLI 和 validation-pack 集成。实际 gate audit audited_date_count=8、full_advisory_trace_eligible_count=3、component_validation_trace_eligible_count=7、not_full_eligible_count=5；component
+      trace trace_row_count=12、date_count=4、partial_component_only_count=4；backtest
+      trace bridge bridge_record_count=4、source_artifact_count=3。validation pack artifacts=26；validation-pack-stability
+      `PASS` stable=true，gate/sample/component/bridge repeatability 均 true。验证通过 focused
+      tests 20 passed、Ruff、compileall、task-register consistency run/validate、`git
+      diff --check` 和全量 `pytest -q` 2961 passed、640 warnings、1805.89s。仍保持 production_effect=none，未修改
+      production weight logic 或任何 paper-shadow/live/broker/order/official weights。'
+    raw_line: '|TRADING-665_to_685_INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1|Indicator
+      to signal research framework / daily indicator coverage, dependency, masking,
+      and campaign adapter governance|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-665_to_685_Indicator_To_Signal_Research_Framework_V1.md`；实现指标/约束
+      ontology、日报指标 inventory、依赖图、multi-stage weight trace contract、role/mapping registry、diagnostics/calibration
+      baseline、conditional/masking/factorial/trial/holdout/gate artifacts、Research
+      Campaign adapter contract、CLI、coverage gap report、validation pack、rerun stability、casebook
+      和 ablation validation；不得修改日报实际权重逻辑、估值拥挤参数、paper-shadow/live/broker/order/official
+      weights 或 production state|`aits research indicators inventory|coverage|coverage-gap|graph|diagnose|mapping-plan|masking|gate|masking-casebook|ablation-validation|historical-trace-validation|gate-availability-audit|component-historical-trace|backtest-trace-bridge|validation-pack|validation-pack-stability`
+      可运行并写出 JSON/Markdown artifacts；默认 inventory 覆盖当前日报评分模块、position gates、confidence/data-quality/manual
+      guardrails，并把 valuation/crowding 标为高影响未验证研究缺口；无 multi-stage trace 数据时 masking/dominance
+      只能输出 trace-required limitation，不伪造影响量；最小日报 trace 可覆盖 raw indicator value、normalized
+      score、mapped signal contribution、pre/post constraint signal weight 和 final advisory
+      weight；coverage gap report 列出 registered / unregistered / incomplete / high-impact
+      unvalidated；补齐 `data_quality_gate_indicator` mapping spec；valuation/crowding
+      pilot validation report、masking casebook、ablation validation、historical trace
+      validation、gate availability audit、component-level historical trace 和 backtest
+      trace bridge 均为 read-only；validation pack 输出 `INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1_READY_WITH_LIMITATIONS`
+      或阻断原因；full pytest、focused tests、Ruff、compileall、task-register consistency 和
+      `git diff --check` 通过|2026-06-20: 新增并进入 IN_PROGRESS，原因：附件要求在继续单指标研究前先建立日报指标全量登记、依赖遮蔽、研究顺序和
+      validation pack 控制面；本轮范围限定为 research-only/audit-only 框架与 valuation/crowding
+      pilot 覆盖审计，不改变投资参数或运行期仓位行为。2026-06-20: 实现完成并转入 VALIDATING；新增 indicator research
+      registry、`ai_trading_system.indicator_research`、`aits research indicators ...`
+      CLI、Campaign validation-only adapter contract、valuation/crowding pilot audit、validation
+      pack 和 docs。验证通过 indicator focused pytest 9 passed、existing research campaign
+      pytest 20 passed、task-register consistency pytest 6 passed、actual task-register
+      consistency PASS/PASS、actual `aits research indicators validation-pack` 输出 `INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1_READY_WITH_LIMITATIONS`
+      artifacts=19、Ruff、compileall 和 `git diff --check`。2026-06-20: 继续 VALIDATING；按
+      owner 要求先运行全量 `pytest -q`，collection 阶段失败 4 errors，原因是已有 tests 导入 `scripts.*`
+      时当前 pytest pythonpath 未包含 repo root；已修正 pytest pythonpath。2026-06-20: VALIDATING
+      继续推进；隔离 `score-daily --as-of 2026-06-18 --skip-risk-event-openai-precheck --sec-fundamental-source
+      sec_pit_feature_panel` 生成 `daily_indicator_weight_trace_2026-06-18.json`，row_count=16、component_row_count=6、constraint_row_count=7、missing_trace_field_record_count=0，所有输出位于
+      `outputs/research_indicators/daily_trace_validation/` 且 prediction `production_effect=none`。重跑
+      masking 后 trend audit `PASS`、trace_required_pair_count=0、valuation/crowding
+      -> trend masking_ratio=0.80、masking_status=`HIGH_MASKING`、conclusion=`B_EFFECT_MASKED_BY_A`；valuation
+      pilot 输出 `VALUATION_CROWDING_RESEARCH_COVERAGE_KNOWN` 且 parameter_mutation=false。coverage
+      gap report `PASS_WITH_WARNINGS`：registered=11、unregistered=0、incomplete=1（`data_quality_gate_indicator`
+      缺 mapping spec）、HIGH_IMPACT_UNVALIDATED=1（`valuation_crowding_indicator`）。validation
+      pack with trace 输出 `INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1_READY_WITH_LIMITATIONS`
+      artifacts=20；validation-pack-stability `PASS` stable=true artifact_count=20。全量
+      pytest 初次完整运行因 Python 3.11 缺 dev optional `pyarrow>=13` 出现 1 failed/2952 passed；安装
+      Python 3.11 `pyarrow 24.0.0` 后目标单测通过，第二次全量 `pytest -q` 2953 passed、639 warnings、1691.75s。2026-06-20:
+      继续 VALIDATING 后续诊断；owner 要求补齐 data quality gate mapping spec、启动 valuation/crowding
+      high-impact pilot validation、扩展 masking casebook、增加只读 counterfactual/ablation、扩展
+      historical trace validation，并保持 production/paper-shadow/live/broker/order/official
+      weights 全部不变。2026-06-20: 后续诊断实现并复验；`data_quality_gate_indicator` 已补 `data_quality_gate_v1`
+      mapping spec，明确为 immutable fail-closed hard block；coverage gap 变为 registered=11、unregistered=0、incomplete=0、HIGH_IMPACT_UNVALIDATED=1。新增
+      pilot validation report、masking casebook、ablation validation、historical trace
+      validation；PIT sliced historical score-daily replay 生成 2026-05-29、2026-06-05、2026-06-12
+      trace，并与 2026-06-18 trace 合并为 64 rows / 4 dates historical trace；casebook case_count=4，ablation
+      scenarios=3，historical validation date_count=4、missing_trace_field_record_count=0，但因低于
+      20 日期稳定窗口仍 `PASS_WITH_WARNINGS`。validation pack artifacts=23；validation-pack-stability
+      `PASS` stable=true，trace fields、coverage unregistered、HIGH_IMPACT_UNVALIDATED、masking
+      diagnostics/casebook 均稳定。更早 2026-04-24、2026-05-01、2026-05-08、2026-05-15 replay
+      被 SEC PIT feature availability gate 阻断，未绕过。2026-06-20: 继续 historical trace expansion；新增
+      gate availability audit、full/component eligibility 拆分、component-level historical
+      trace、backtest_trace_bridge、date range/event window/asset universe 参数和样本质量统计；非
+      full advisory trace 必须标记 trace_source/confidence/promotion_gate_allowed=false，只能用于
+      diagnostic / ablation / sensitivity analysis。2026-06-20: historical trace expansion
+      实现并复验；新增 `gate-availability-audit`、`component-historical-trace`、`backtest-trace-bridge`
+      CLI 和 validation-pack 集成。实际 gate audit audited_date_count=8、full_advisory_trace_eligible_count=3、component_validation_trace_eligible_count=7、not_full_eligible_count=5；component
+      trace trace_row_count=12、date_count=4、partial_component_only_count=4；backtest
+      trace bridge bridge_record_count=4、source_artifact_count=3。validation pack artifacts=26；validation-pack-stability
+      `PASS` stable=true，gate/sample/component/bridge repeatability 均 true。验证通过 focused
+      tests 20 passed、Ruff、compileall、task-register consistency run/validate、`git
+      diff --check` 和全量 `pytest -q` 2961 passed、640 warnings、1805.89s。仍保持 production_effect=none，未修改
+      production weight logic 或任何 paper-shadow/live/broker/order/official weights。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3daadf08e7ba1faf7ae723bf
+  task_id: TRADING-665_to_685_INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: coverage
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3daadf08e7ba1faf7ae723bfd0d66bf1a8c0e58dbcf17dc4aab6eecd1342cadf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-665_to_685_INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1
+  - Indicator to signal research framework / daily indicator coverage, dependency,
+    masking, and campaign adapter governance
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-665_to_685_Indicator_To_Signal_Research_Framework_V1.md`；实现指标/约束
+    ontology、日报指标 inventory、依赖图、multi-stage weight trace contract、role/mapping registry、diagnostics/calibration
+    baseline、conditional/masking/factorial/trial/holdout/gate artifacts、Research Campaign
+    adapter contract、CLI、coverage gap report、validation pack、rerun stability、casebook
+    和 ablation validation；不得修改日报实际权重逻辑、估值拥挤参数、paper-shadow/live/broker/order/official
+    weights 或 production state
+  - '`aits research indicators inventory'
+  - coverage
+  docs_links:
+  - docs/requirements/TRADING-665_to_685_Indicator_To_Signal_Research_Framework_V1.md
+  terminal: false
+  raw_row_sha256: 3daadf08e7ba1faf7ae723bfd0d66bf1a8c0e58dbcf17dc4aab6eecd1342cadf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3846028e7e9319f537af04bc1954494b9ffaff670806852e90f49cdca6c9b71f

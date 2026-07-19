@@ -1,0 +1,159 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-805_to_809_HORIZON_SELECTOR_CONTROLLED_RESEARCH
+  title: null
+  domain: Controlled strategy research / horizon selector contract, long-horizon quarantine/fallback,
+    controlled prototype, cost-aware hysteresis, holdout review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-805_to_809_Horizon_Selector_Controlled_Research.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-805_to_809_Horizon_Selector_Controlled_Research.md`；owner
+    要求基于 TRADING-804 `PIVOT_TO_HORIZON_SELECTOR` 与 holdout_pass_rate=0，把 value surface
+    从直接主策略降级为 action scoring submodule，新增 horizon selector + long-horizon quarantine
+    + cost-aware fallback 主线；不得继续无条件扩大 value surface、把 regime-conditioned mean_delta≈0
+    当成功、直接上 GBDT/NN/RL、继续微调 utility boundary 或进入 paper-shadow
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI：`aits research strategies horizon-selector-problem-contract`、`long-horizon-quarantine-fallback-review`、`horizon-selector-controlled-prototype`、`cost-aware-horizon-hysteresis`
+      和 `horizon-selector-holdout-review`；TRADING-805 必须定义 candidate horizons、horizon
+      status、selector output、review_interval 与 invalidation_condition，且说明 target_horizon
+      不是持有期承诺；TRADING-806 必须对比 baseline/disable 60d/disable 20d60d/confirmation/fallback
+      5d10d/fallback benchmark 并输出收益、尾损、beat retention、turnover/cost/drawdown、holdout
+      pass rate；TRADING-807 必须输出 horizon_decision_by_date、horizon_confidence、quarantined_horizon_count、fallback_count、tail_loss_after_selector、cost_after_selector；TRADING-808
+      必须输出 horizon_switch_count、action_flip_count、turnover_delta、cost_delta、utility_lost_to_hysteresis、tail_loss_reduction；TRADING-809
+      必须做 leave-one-regime/horizon/asset-cluster/date-window-out，决策只能为 `CONTINUE
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1348
+    row_sha256: 163cfc34c9708e1d4907e5bf8e84dd566e990f8aac201d27f688c47fc4ca869a
+    cell_count: 13
+    all_cells:
+    - TRADING-805_to_809_HORIZON_SELECTOR_CONTROLLED_RESEARCH
+    - Controlled strategy research / horizon selector contract, long-horizon quarantine/fallback,
+      controlled prototype, cost-aware hysteresis, holdout review
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-805_to_809_Horizon_Selector_Controlled_Research.md`；owner
+      要求基于 TRADING-804 `PIVOT_TO_HORIZON_SELECTOR` 与 holdout_pass_rate=0，把 value surface
+      从直接主策略降级为 action scoring submodule，新增 horizon selector + long-horizon quarantine
+      + cost-aware fallback 主线；不得继续无条件扩大 value surface、把 regime-conditioned mean_delta≈0
+      当成功、直接上 GBDT/NN/RL、继续微调 utility boundary 或进入 paper-shadow
+    - 新增 CLI：`aits research strategies horizon-selector-problem-contract`、`long-horizon-quarantine-fallback-review`、`horizon-selector-controlled-prototype`、`cost-aware-horizon-hysteresis`
+      和 `horizon-selector-holdout-review`；TRADING-805 必须定义 candidate horizons、horizon
+      status、selector output、review_interval 与 invalidation_condition，且说明 target_horizon
+      不是持有期承诺；TRADING-806 必须对比 baseline/disable 60d/disable 20d60d/confirmation/fallback
+      5d10d/fallback benchmark 并输出收益、尾损、beat retention、turnover/cost/drawdown、holdout
+      pass rate；TRADING-807 必须输出 horizon_decision_by_date、horizon_confidence、quarantined_horizon_count、fallback_count、tail_loss_after_selector、cost_after_selector；TRADING-808
+      必须输出 horizon_switch_count、action_flip_count、turnover_delta、cost_delta、utility_lost_to_hysteresis、tail_loss_reduction；TRADING-809
+      必须做 leave-one-regime/horizon/asset-cluster/date-window-out，决策只能为 `CONTINUE
+    - WATCHLIST
+    - PIVOT_TO_TAIL_RISK_POLICY
+    - PIVOT_TO_BENCHMARK_SELECTOR
+    - KILL_VALUE_SURFACE_AS_ACTION_POLICY
+    - DATA_REQUIRED`；所有 safety flags false
+    - '2026-06-21: 新增并进入 IN_PROGRESS，原因：TRADING-804 显示 value surface v2 收益和尾损可改善，但
+      turnover_cost_not_worse=false 且 holdout_pass_rate=0；下一步必须验证 horizon selector
+      是否能稳定过滤 20d/60d 大亏窗口，同时让 turnover/cost 不恶化。2026-06-21: 实现完成并进入 VALIDATING；真实
+      CLI run 输出 TRADING-805 `HORIZON_SELECTOR_CONTRACT_DEFINED`、candidate_horizon_count=5、allowed_horizon_count=3、preferred_horizon=5d、fallback_horizon=5d、target_horizon_is_holding_commitment=false、regime_change_can_invalidate_horizon=true；TRADING-806
+      `LONG_HORIZON_FALLBACK_REVIEW_COMPLETE`、case_count=2152、variant_count=6、best_variant_by_tail_loss=`long_horizon_fallback_to_5d_10d`、tail_loss_reduction=0.33586、beat_rate_retention=1.047559、mean_delta_vs_benchmark=-0.006597、turnover_delta=7、cost_delta=0.0035、holdout_pass_rate=0、horizon_selector_problem_supported=true
+      但 best_variant_turnover_cost_not_worse=false；TRADING-807 `HORIZON_SELECTOR_PROTOTYPE_REVIEWED`、decision_row_count=250、quarantined_horizon_count=528、fallback_count=1159、tail_loss_after_selector=0.271052、cost_after_selector=0.427、model_run_executed=false；TRADING-808
+      `COST_AWARE_HORIZON_HYSTERESIS_REVIEWED`、horizon_switch_count=1592、action_flip_count=693、turnover_delta=1009、cost_delta=0.5045、utility_lost_to_hysteresis=2.3166、tail_loss_reduction=-0.006032；TRADING-809
+      `HORIZON_SELECTOR_HOLDOUT_REVIEW_COMPLETE`、horizon_selector_decision=`KILL_VALUE_SURFACE_AS_ACTION_POLICY`、holdout_case_count=14、holdout_pass_count=0、holdout_pass_rate=0、tail_loss_condition_met=false、turnover_cost_condition_met=false；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、完整 controlled strategy pytest、docs/registry contract
+      pytest、Ruff、Black check、compileall、fast-unit、contract-validation 和 report-validation
+      均已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T135746Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T140328Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T140912Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-805_to_809_HORIZON_SELECTOR_CONTROLLED_RESEARCH|Controlled
+      strategy research / horizon selector contract, long-horizon quarantine/fallback,
+      controlled prototype, cost-aware hysteresis, holdout review|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-805_to_809_Horizon_Selector_Controlled_Research.md`；owner
+      要求基于 TRADING-804 `PIVOT_TO_HORIZON_SELECTOR` 与 holdout_pass_rate=0，把 value surface
+      从直接主策略降级为 action scoring submodule，新增 horizon selector + long-horizon quarantine
+      + cost-aware fallback 主线；不得继续无条件扩大 value surface、把 regime-conditioned mean_delta≈0
+      当成功、直接上 GBDT/NN/RL、继续微调 utility boundary 或进入 paper-shadow|新增 CLI：`aits research
+      strategies horizon-selector-problem-contract`、`long-horizon-quarantine-fallback-review`、`horizon-selector-controlled-prototype`、`cost-aware-horizon-hysteresis`
+      和 `horizon-selector-holdout-review`；TRADING-805 必须定义 candidate horizons、horizon
+      status、selector output、review_interval 与 invalidation_condition，且说明 target_horizon
+      不是持有期承诺；TRADING-806 必须对比 baseline/disable 60d/disable 20d60d/confirmation/fallback
+      5d10d/fallback benchmark 并输出收益、尾损、beat retention、turnover/cost/drawdown、holdout
+      pass rate；TRADING-807 必须输出 horizon_decision_by_date、horizon_confidence、quarantined_horizon_count、fallback_count、tail_loss_after_selector、cost_after_selector；TRADING-808
+      必须输出 horizon_switch_count、action_flip_count、turnover_delta、cost_delta、utility_lost_to_hysteresis、tail_loss_reduction；TRADING-809
+      必须做 leave-one-regime/horizon/asset-cluster/date-window-out，决策只能为 `CONTINUE|WATCHLIST|PIVOT_TO_TAIL_RISK_POLICY|PIVOT_TO_BENCHMARK_SELECTOR|KILL_VALUE_SURFACE_AS_ACTION_POLICY|DATA_REQUIRED`；所有
+      safety flags false|2026-06-21: 新增并进入 IN_PROGRESS，原因：TRADING-804 显示 value surface
+      v2 收益和尾损可改善，但 turnover_cost_not_worse=false 且 holdout_pass_rate=0；下一步必须验证 horizon
+      selector 是否能稳定过滤 20d/60d 大亏窗口，同时让 turnover/cost 不恶化。2026-06-21: 实现完成并进入 VALIDATING；真实
+      CLI run 输出 TRADING-805 `HORIZON_SELECTOR_CONTRACT_DEFINED`、candidate_horizon_count=5、allowed_horizon_count=3、preferred_horizon=5d、fallback_horizon=5d、target_horizon_is_holding_commitment=false、regime_change_can_invalidate_horizon=true；TRADING-806
+      `LONG_HORIZON_FALLBACK_REVIEW_COMPLETE`、case_count=2152、variant_count=6、best_variant_by_tail_loss=`long_horizon_fallback_to_5d_10d`、tail_loss_reduction=0.33586、beat_rate_retention=1.047559、mean_delta_vs_benchmark=-0.006597、turnover_delta=7、cost_delta=0.0035、holdout_pass_rate=0、horizon_selector_problem_supported=true
+      但 best_variant_turnover_cost_not_worse=false；TRADING-807 `HORIZON_SELECTOR_PROTOTYPE_REVIEWED`、decision_row_count=250、quarantined_horizon_count=528、fallback_count=1159、tail_loss_after_selector=0.271052、cost_after_selector=0.427、model_run_executed=false；TRADING-808
+      `COST_AWARE_HORIZON_HYSTERESIS_REVIEWED`、horizon_switch_count=1592、action_flip_count=693、turnover_delta=1009、cost_delta=0.5045、utility_lost_to_hysteresis=2.3166、tail_loss_reduction=-0.006032；TRADING-809
+      `HORIZON_SELECTOR_HOLDOUT_REVIEW_COMPLETE`、horizon_selector_decision=`KILL_VALUE_SURFACE_AS_ACTION_POLICY`、holdout_case_count=14、holdout_pass_count=0、holdout_pass_rate=0、tail_loss_condition_met=false、turnover_cost_condition_met=false；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、完整 controlled strategy pytest、docs/registry contract
+      pytest、Ruff、Black check、compileall、fast-unit、contract-validation 和 report-validation
+      均已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T135746Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T140328Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T140912Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-163cfc34c9708e1d4907e5bf
+  task_id: TRADING-805_to_809_HORIZON_SELECTOR_CONTROLLED_RESEARCH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: WATCHLIST
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:163cfc34c9708e1d4907e5bf8e84dd566e990f8aac201d27f688c47fc4ca869a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-805_to_809_HORIZON_SELECTOR_CONTROLLED_RESEARCH
+  - Controlled strategy research / horizon selector contract, long-horizon quarantine/fallback,
+    controlled prototype, cost-aware hysteresis, holdout review
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-805_to_809_Horizon_Selector_Controlled_Research.md`；owner
+    要求基于 TRADING-804 `PIVOT_TO_HORIZON_SELECTOR` 与 holdout_pass_rate=0，把 value surface
+    从直接主策略降级为 action scoring submodule，新增 horizon selector + long-horizon quarantine
+    + cost-aware fallback 主线；不得继续无条件扩大 value surface、把 regime-conditioned mean_delta≈0
+    当成功、直接上 GBDT/NN/RL、继续微调 utility boundary 或进入 paper-shadow
+  - 新增 CLI：`aits research strategies horizon-selector-problem-contract`、`long-horizon-quarantine-fallback-review`、`horizon-selector-controlled-prototype`、`cost-aware-horizon-hysteresis`
+    和 `horizon-selector-holdout-review`；TRADING-805 必须定义 candidate horizons、horizon
+    status、selector output、review_interval 与 invalidation_condition，且说明 target_horizon
+    不是持有期承诺；TRADING-806 必须对比 baseline/disable 60d/disable 20d60d/confirmation/fallback
+    5d10d/fallback benchmark 并输出收益、尾损、beat retention、turnover/cost/drawdown、holdout
+    pass rate；TRADING-807 必须输出 horizon_decision_by_date、horizon_confidence、quarantined_horizon_count、fallback_count、tail_loss_after_selector、cost_after_selector；TRADING-808
+    必须输出 horizon_switch_count、action_flip_count、turnover_delta、cost_delta、utility_lost_to_hysteresis、tail_loss_reduction；TRADING-809
+    必须做 leave-one-regime/horizon/asset-cluster/date-window-out，决策只能为 `CONTINUE
+  - WATCHLIST
+  docs_links:
+  - docs/requirements/TRADING-805_to_809_Horizon_Selector_Controlled_Research.md
+  terminal: false
+  raw_row_sha256: 163cfc34c9708e1d4907e5bf8e84dd566e990f8aac201d27f688c47fc4ca869a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0e4857e4c843115c4fcada5bae17d381d1494251a147e5cee18f6578294d9e11

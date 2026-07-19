@@ -1,0 +1,104 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: LEARNING-001
+  title: null
+  domain: 反馈闭环/错误归因
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已建立结果归因、错误分类与学习队列；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#learning-001`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 校准报告和重大偏差样本能生成 review queue，记录 `data_issue`、`rule_issue`、`thesis_issue`、`execution_issue`、`universe_or_proxy_issue`、`exogenous_unforecastable`、`sample_limited`
+      等归因分类、证据、owner、下一步和是否需要规则候选；成功样本也能归因；样本不足不得强行生成规则修改建议；实现时同步更新 `docs/system_flow.md`
+      并补充归因分类测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 432
+    row_sha256: 7f15d00f2f4da504fb8d9c5587abae7fb76a3572b041ad6e405f7546152c8bcd
+    cell_count: 8
+    all_cells:
+    - LEARNING-001
+    - 反馈闭环/错误归因
+    - P1
+    - DONE
+    - 系统实现 + 项目 owner
+    - 已建立结果归因、错误分类与学习队列；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#learning-001`
+    - 校准报告和重大偏差样本能生成 review queue，记录 `data_issue`、`rule_issue`、`thesis_issue`、`execution_issue`、`universe_or_proxy_issue`、`exogenous_unforecastable`、`sample_limited`
+      等归因分类、证据、owner、下一步和是否需要规则候选；成功样本也能归因；样本不足不得强行生成规则修改建议；实现时同步更新 `docs/system_flow.md`
+      并补充归因分类测试
+    - '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：`FEEDBACK-002` 和 `CAUSE-001` 已具备基础产物，开始实现
+      learning queue、归因分类、CLI 和样本不足防护测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：新增 `decision_learning_queue`、`aits
+      feedback build-learning-queue`、`aits feedback lookup-learning`、中文报告、系统流图和测试；样本不足项不生成规则候选，规则候选仍需
+      `EXPERIMENT-001/GOV-001`。'
+    raw_line: '|LEARNING-001|反馈闭环/错误归因|P1|DONE|系统实现 + 项目 owner|已建立结果归因、错误分类与学习队列；详细拆解见
+      `docs/requirements/feedback_loop_governance_2026-05-04.md#learning-001`|校准报告和重大偏差样本能生成
+      review queue，记录 `data_issue`、`rule_issue`、`thesis_issue`、`execution_issue`、`universe_or_proxy_issue`、`exogenous_unforecastable`、`sample_limited`
+      等归因分类、证据、owner、下一步和是否需要规则候选；成功样本也能归因；样本不足不得强行生成规则修改建议；实现时同步更新 `docs/system_flow.md`
+      并补充归因分类测试|2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：`FEEDBACK-002` 和 `CAUSE-001`
+      已具备基础产物，开始实现 learning queue、归因分类、CLI 和样本不足防护测试。2026-05-04: 从 IN_PROGRESS 改为
+      DONE，原因：新增 `decision_learning_queue`、`aits feedback build-learning-queue`、`aits
+      feedback lookup-learning`、中文报告、系统流图和测试；样本不足项不生成规则候选，规则候选仍需 `EXPERIMENT-001/GOV-001`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7f15d00f2f4da504fb8d9c55
+  task_id: LEARNING-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner
+    notes: '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：`FEEDBACK-002` 和 `CAUSE-001`
+      已具备基础产物，开始实现 learning queue、归因分类、CLI 和样本不足防护测试。2026-05-04: 从 IN_PROGRESS 改为
+      DONE，原因：新增 `decision_learning_queue`、`aits feedback build-learning-queue`、`aits
+      feedback lookup-learning`、中文报告、系统流图和测试；样本不足项不生成规则候选，规则候选仍需 `EXPERIMENT-001/GOV-001`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7f15d00f2f4da504fb8d9c5587abae7fb76a3572b041ad6e405f7546152c8bcd
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - LEARNING-001
+  - 反馈闭环/错误归因
+  - P1
+  - DONE
+  - 系统实现 + 项目 owner
+  - 已建立结果归因、错误分类与学习队列；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#learning-001`
+  - 校准报告和重大偏差样本能生成 review queue，记录 `data_issue`、`rule_issue`、`thesis_issue`、`execution_issue`、`universe_or_proxy_issue`、`exogenous_unforecastable`、`sample_limited`
+    等归因分类、证据、owner、下一步和是否需要规则候选；成功样本也能归因；样本不足不得强行生成规则修改建议；实现时同步更新 `docs/system_flow.md`
+    并补充归因分类测试
+  - '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：`FEEDBACK-002` 和 `CAUSE-001` 已具备基础产物，开始实现
+    learning queue、归因分类、CLI 和样本不足防护测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：新增 `decision_learning_queue`、`aits
+    feedback build-learning-queue`、`aits feedback lookup-learning`、中文报告、系统流图和测试；样本不足项不生成规则候选，规则候选仍需
+    `EXPERIMENT-001/GOV-001`。'
+  docs_links:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: 7f15d00f2f4da504fb8d9c5587abae7fb76a3572b041ad6e405f7546152c8bcd
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b0a59f3ce82a50fa8b82123f73f7e1c9bd44bd70fb35ed66d2c607b1317ef540

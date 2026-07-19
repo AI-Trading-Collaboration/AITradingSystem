@@ -1,0 +1,162 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-073
+  title: null
+  domain: ETF satellite replacement forward attribution/Satellite Replacement Forward
+    Attribution Review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner + 后续真实 satellite forward samples / policy review
+  requirement_refs:
+  - docs/requirements/TRADING-073_Satellite_Replacement_Forward_Attribution_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-073_Satellite_Replacement_Forward_Attribution_Review.md`；TRADING-073A-L
+    attribution-only 基础设施已完成并复验通过；当前真实 2026-06-08 dataset `record_count=0`、`available_sample_count=0`，report
+    正确停在 `needs_more_data`，后续需要真实 satellite forward samples 和 owner policy review，不能自动扩大
+    satellite replacement 或形成交易结论
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf satellite-attribution build/report/validate` 可运行；`validate-data
+      --as-of 2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；dataset 固定 `evaluation_only=true`、`production_effect=none`、`broker_action=none`，`data_quality_status=PASS_WITH_WARNINGS`；report
+      披露 market regime `ai_after_chatgpt`、forward returns attribution/evaluation only、status
+      `needs_more_data`、fallback / role / risk evidence 样本不足；validation gate PASS；Reader
+      Brief 显示 `availability=AVAILABLE`、`status=needs_more_data`、`eligible_evidence=unknown`、`fallback_evidence=unknown`
+      和继续收集 forward samples 文案；不得写 production weights、不得自动 promotion、不得触发 broker action；专项
+      pytest 9 passed'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1161
+    row_sha256: d508a0a0ba69bd7efa89d3faaba5faf199ee39571e1e7cf8eac59aad14476ef2
+    cell_count: 8
+    all_cells:
+    - TRADING-073
+    - ETF satellite replacement forward attribution/Satellite Replacement Forward
+      Attribution Review
+    - P0
+    - BASELINE_DONE
+    - 项目 owner + 后续真实 satellite forward samples / policy review
+    - 详细拆解见 `docs/requirements/TRADING-073_Satellite_Replacement_Forward_Attribution_Review.md`；TRADING-073A-L
+      attribution-only 基础设施已完成并复验通过；当前真实 2026-06-08 dataset `record_count=0`、`available_sample_count=0`，report
+      正确停在 `needs_more_data`，后续需要真实 satellite forward samples 和 owner policy review，不能自动扩大
+      satellite replacement 或形成交易结论
+    - '`aits etf satellite-attribution build/report/validate` 可运行；`validate-data --as-of
+      2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；dataset 固定 `evaluation_only=true`、`production_effect=none`、`broker_action=none`，`data_quality_status=PASS_WITH_WARNINGS`；report
+      披露 market regime `ai_after_chatgpt`、forward returns attribution/evaluation only、status
+      `needs_more_data`、fallback / role / risk evidence 样本不足；validation gate PASS；Reader
+      Brief 显示 `availability=AVAILABLE`、`status=needs_more_data`、`eligible_evidence=unknown`、`fallback_evidence=unknown`
+      和继续收集 forward samples 文案；不得写 production weights、不得自动 promotion、不得触发 broker action；专项
+      pytest 9 passed'
+    - '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求继续 TRADING-073 计划，验证 satellite replacement
+      decisions 是否相对 ETF-first exposure 改善 forward performance，并检查 eligible stock
+      outperformance、fallback protection、SatelliteCandidateScore ranking power、risk/drawdown/volatility、role/group
+      与 AI confirmation interaction；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-03:
+      TRADING-073A-L 完成并转入 VALIDATING，新增 satellite attribution dataset、eligibility
+      bucket/stock-vs-ETF/fallback/score/risk/role/group/AI interaction analysis、evidence
+      scorecard、JSON/Markdown report、Reader Brief `Satellite Attribution Review`、report
+      registry/artifact catalog/system flow/operations runbook/README integration
+      和 fail-closed validation gate。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：真实
+      2026-06-08 复验确认基础设施和 fail-closed gate 可运行，且在 forward sample 为 0 时正确输出 `needs_more_data`
+      并保持 evaluation-only；后续由 satellite forward samples 和 owner policy review 承接。'
+    raw_line: '|TRADING-073|ETF satellite replacement forward attribution/Satellite
+      Replacement Forward Attribution Review|P0|BASELINE_DONE|项目 owner + 后续真实 satellite
+      forward samples / policy review|详细拆解见 `docs/requirements/TRADING-073_Satellite_Replacement_Forward_Attribution_Review.md`；TRADING-073A-L
+      attribution-only 基础设施已完成并复验通过；当前真实 2026-06-08 dataset `record_count=0`、`available_sample_count=0`，report
+      正确停在 `needs_more_data`，后续需要真实 satellite forward samples 和 owner policy review，不能自动扩大
+      satellite replacement 或形成交易结论|`aits etf satellite-attribution build/report/validate`
+      可运行；`validate-data --as-of 2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；dataset
+      固定 `evaluation_only=true`、`production_effect=none`、`broker_action=none`，`data_quality_status=PASS_WITH_WARNINGS`；report
+      披露 market regime `ai_after_chatgpt`、forward returns attribution/evaluation only、status
+      `needs_more_data`、fallback / role / risk evidence 样本不足；validation gate PASS；Reader
+      Brief 显示 `availability=AVAILABLE`、`status=needs_more_data`、`eligible_evidence=unknown`、`fallback_evidence=unknown`
+      和继续收集 forward samples 文案；不得写 production weights、不得自动 promotion、不得触发 broker action；专项
+      pytest 9 passed|2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求继续 TRADING-073 计划，验证
+      satellite replacement decisions 是否相对 ETF-first exposure 改善 forward performance，并检查
+      eligible stock outperformance、fallback protection、SatelliteCandidateScore ranking
+      power、risk/drawdown/volatility、role/group 与 AI confirmation interaction；本阶段保持
+      observe-only/candidate-only/manual-review-only。2026-06-03: TRADING-073A-L 完成并转入
+      VALIDATING，新增 satellite attribution dataset、eligibility bucket/stock-vs-ETF/fallback/score/risk/role/group/AI
+      interaction analysis、evidence scorecard、JSON/Markdown report、Reader Brief `Satellite
+      Attribution Review`、report registry/artifact catalog/system flow/operations
+      runbook/README integration 和 fail-closed validation gate。2026-06-09: 从 VALIDATING
+      改为 BASELINE_DONE，原因：真实 2026-06-08 复验确认基础设施和 fail-closed gate 可运行，且在 forward
+      sample 为 0 时正确输出 `needs_more_data` 并保持 evaluation-only；后续由 satellite forward
+      samples 和 owner policy review 承接。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d508a0a0ba69bd7efa89d3fa
+  task_id: TRADING-073
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner + 后续真实 satellite forward samples / policy review
+    notes: '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求继续 TRADING-073 计划，验证 satellite
+      replacement decisions 是否相对 ETF-first exposure 改善 forward performance，并检查 eligible
+      stock outperformance、fallback protection、SatelliteCandidateScore ranking power、risk/drawdown/volatility、role/group
+      与 AI confirmation interaction；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-03:
+      TRADING-073A-L 完成并转入 VALIDATING，新增 satellite attribution dataset、eligibility
+      bucket/stock-vs-ETF/fallback/score/risk/role/group/AI interaction analysis、evidence
+      scorecard、JSON/Markdown report、Reader Brief `Satellite Attribution Review`、report
+      registry/artifact catalog/system flow/operations runbook/README integration
+      和 fail-closed validation gate。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：真实
+      2026-06-08 复验确认基础设施和 fail-closed gate 可运行，且在 forward sample 为 0 时正确输出 `needs_more_data`
+      并保持 evaluation-only；后续由 satellite forward samples 和 owner policy review 承接。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d508a0a0ba69bd7efa89d3faaba5faf199ee39571e1e7cf8eac59aad14476ef2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-073
+  - ETF satellite replacement forward attribution/Satellite Replacement Forward Attribution
+    Review
+  - P0
+  - BASELINE_DONE
+  - 项目 owner + 后续真实 satellite forward samples / policy review
+  - 详细拆解见 `docs/requirements/TRADING-073_Satellite_Replacement_Forward_Attribution_Review.md`；TRADING-073A-L
+    attribution-only 基础设施已完成并复验通过；当前真实 2026-06-08 dataset `record_count=0`、`available_sample_count=0`，report
+    正确停在 `needs_more_data`，后续需要真实 satellite forward samples 和 owner policy review，不能自动扩大
+    satellite replacement 或形成交易结论
+  - '`aits etf satellite-attribution build/report/validate` 可运行；`validate-data --as-of
+    2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；dataset 固定 `evaluation_only=true`、`production_effect=none`、`broker_action=none`，`data_quality_status=PASS_WITH_WARNINGS`；report
+    披露 market regime `ai_after_chatgpt`、forward returns attribution/evaluation only、status
+    `needs_more_data`、fallback / role / risk evidence 样本不足；validation gate PASS；Reader
+    Brief 显示 `availability=AVAILABLE`、`status=needs_more_data`、`eligible_evidence=unknown`、`fallback_evidence=unknown`
+    和继续收集 forward samples 文案；不得写 production weights、不得自动 promotion、不得触发 broker action；专项
+    pytest 9 passed'
+  - '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求继续 TRADING-073 计划，验证 satellite replacement
+    decisions 是否相对 ETF-first exposure 改善 forward performance，并检查 eligible stock outperformance、fallback
+    protection、SatelliteCandidateScore ranking power、risk/drawdown/volatility、role/group
+    与 AI confirmation interaction；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-03:
+    TRADING-073A-L 完成并转入 VALIDATING，新增 satellite attribution dataset、eligibility bucket/stock-vs-ETF/fallback/score/risk/role/group/AI
+    interaction analysis、evidence scorecard、JSON/Markdown report、Reader Brief `Satellite
+    Attribution Review`、report registry/artifact catalog/system flow/operations runbook/README
+    integration 和 fail-closed validation gate。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：真实
+    2026-06-08 复验确认基础设施和 fail-closed gate 可运行，且在 forward sample 为 0 时正确输出 `needs_more_data`
+    并保持 evaluation-only；后续由 satellite forward samples 和 owner policy review 承接。'
+  docs_links:
+  - docs/requirements/TRADING-073_Satellite_Replacement_Forward_Attribution_Review.md
+  terminal: false
+  raw_row_sha256: d508a0a0ba69bd7efa89d3faaba5faf199ee39571e1e7cf8eac59aad14476ef2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3eaf3d4cb5615d67a6b904e9cf4e1a8167ec6cdfecef81a900d833d80ef821f3

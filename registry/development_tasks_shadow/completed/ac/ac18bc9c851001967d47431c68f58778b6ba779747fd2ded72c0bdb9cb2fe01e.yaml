@@ -1,0 +1,150 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-010A
+  title: null
+  domain: 交易执行/IBKR Paper order lifecycle local validation report
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/reviews/ibkr_paper_order_lifecycle_local_validation_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 本机 TWS Paper order lifecycle 验证结果、sanitized
+    fixture、runbook 成功后/意外成交/live boundary 检查、安全语义测试和当前复验证据已完成；后续如 IBKR Paper lifecycle
+    流程变化，再新建 follow-up
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `docs/reviews/ibkr_paper_order_lifecycle_local_validation_2026-05-17.md`
+      记录本机验证状态、TWS Paper / IB Gateway Paper 连接说明、`LIMIT DAY` stock 订单字段、submitted/openOrder/orderStatus/cancel/final
+      cancelled 状态、是否 fill、`production_effect=none` 和无 production surface 影响；新增 `tests/fixtures/ibkr_paper_order_lifecycle_sanitized.json`，account
+      id masked、broker order id redacted、不含凭证值；runbook 增加验证成功后检查清单、意外成交处理和确认无 live
+      account / production effect 的步骤；测试覆盖 fixture 不含完整 `DUP` account、review 固定 `production_effect=none`、不含凭证字段、明确
+      paper-only，且不含 live/trade/promotion 危险语义；目标 pytest、`tests/trading_engine`、ruff、触达文件
+      Black 和 GitHub Actions CI 通过；全仓 Black 当前仍被无关 repo-wide formatter baseline 阻断并由
+      TRADING-006 后续治理承接
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 293
+    row_sha256: ee38c1c8492cf89c4218263bfa97c37d1560474dffa5c74f0db6ce92bf7fa775
+    cell_count: 8
+    all_cells:
+    - TRADING-010A
+    - 交易执行/IBKR Paper order lifecycle local validation report
+    - P0
+    - DONE
+    - 系统验证
+    - 本机 TWS Paper order lifecycle 验证结果、sanitized fixture、runbook 成功后/意外成交/live boundary
+      检查、安全语义测试和当前复验证据已完成；后续如 IBKR Paper lifecycle 流程变化，再新建 follow-up
+    - 新增 `docs/reviews/ibkr_paper_order_lifecycle_local_validation_2026-05-17.md`
+      记录本机验证状态、TWS Paper / IB Gateway Paper 连接说明、`LIMIT DAY` stock 订单字段、submitted/openOrder/orderStatus/cancel/final
+      cancelled 状态、是否 fill、`production_effect=none` 和无 production surface 影响；新增 `tests/fixtures/ibkr_paper_order_lifecycle_sanitized.json`，account
+      id masked、broker order id redacted、不含凭证值；runbook 增加验证成功后检查清单、意外成交处理和确认无 live
+      account / production effect 的步骤；测试覆盖 fixture 不含完整 `DUP` account、review 固定 `production_effect=none`、不含凭证字段、明确
+      paper-only，且不含 live/trade/promotion 危险语义；目标 pytest、`tests/trading_engine`、ruff、触达文件
+      Black 和 GitHub Actions CI 通过；全仓 Black 当前仍被无关 repo-wide formatter baseline 阻断并由
+      TRADING-006 后续治理承接
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-010 Paper lifecycle 本机运行后，固化本机验证结果和安全边界，确保
+      committed artifact 只保留脱敏、paper-only、无生产效果的审计证据。2026-05-17: 从 IN_PROGRESS 改为
+      VALIDATING，原因：已新增本机验证 review、sanitized fixture、runbook 检查清单和报告/fixture 安全边界测试；本地验证通过目标
+      pytest、`tests/trading_engine`、全量 pytest、dashboard 目标测试、ruff 和 black check。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：本机真实 lifecycle 样本字段级复核仍为 `PASS/CONNECTED`、`production_effect=none`、`trading_mode=paper`、`LIMIT
+      DAY`、quantity 1、open order seen、cancel requested、final `ApiCancelled`、cancel
+      confirmed、no fill、0 issues，完整 account id / credential / forbidden production
+      semantics 匹配数为 0；sanitized fixture 与 review 继续保留 paper-only 和 redaction 语义；验证通过
+      `test_ibkr_paper_order_lifecycle.py` 24 passed、`tests/trading_engine` 939 passed、触达文件
+      Ruff/Black 和 GitHub Actions run `27174292737` success。'
+    raw_line: '|TRADING-010A|交易执行/IBKR Paper order lifecycle local validation report|P0|DONE|系统验证|本机
+      TWS Paper order lifecycle 验证结果、sanitized fixture、runbook 成功后/意外成交/live boundary
+      检查、安全语义测试和当前复验证据已完成；后续如 IBKR Paper lifecycle 流程变化，再新建 follow-up|新增 `docs/reviews/ibkr_paper_order_lifecycle_local_validation_2026-05-17.md`
+      记录本机验证状态、TWS Paper / IB Gateway Paper 连接说明、`LIMIT DAY` stock 订单字段、submitted/openOrder/orderStatus/cancel/final
+      cancelled 状态、是否 fill、`production_effect=none` 和无 production surface 影响；新增 `tests/fixtures/ibkr_paper_order_lifecycle_sanitized.json`，account
+      id masked、broker order id redacted、不含凭证值；runbook 增加验证成功后检查清单、意外成交处理和确认无 live
+      account / production effect 的步骤；测试覆盖 fixture 不含完整 `DUP` account、review 固定 `production_effect=none`、不含凭证字段、明确
+      paper-only，且不含 live/trade/promotion 危险语义；目标 pytest、`tests/trading_engine`、ruff、触达文件
+      Black 和 GitHub Actions CI 通过；全仓 Black 当前仍被无关 repo-wide formatter baseline 阻断并由
+      TRADING-006 后续治理承接|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-010 Paper
+      lifecycle 本机运行后，固化本机验证结果和安全边界，确保 committed artifact 只保留脱敏、paper-only、无生产效果的审计证据。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增本机验证 review、sanitized fixture、runbook 检查清单和报告/fixture
+      安全边界测试；本地验证通过目标 pytest、`tests/trading_engine`、全量 pytest、dashboard 目标测试、ruff
+      和 black check。2026-06-09: 从 VALIDATING 改为 DONE，原因：本机真实 lifecycle 样本字段级复核仍为 `PASS/CONNECTED`、`production_effect=none`、`trading_mode=paper`、`LIMIT
+      DAY`、quantity 1、open order seen、cancel requested、final `ApiCancelled`、cancel
+      confirmed、no fill、0 issues，完整 account id / credential / forbidden production
+      semantics 匹配数为 0；sanitized fixture 与 review 继续保留 paper-only 和 redaction 语义；验证通过
+      `test_ibkr_paper_order_lifecycle.py` 24 passed、`tests/trading_engine` 939 passed、触达文件
+      Ruff/Black 和 GitHub Actions run `27174292737` success。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ee38c1c8492cf89c4218263b
+  task_id: TRADING-010A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-010 Paper lifecycle
+      本机运行后，固化本机验证结果和安全边界，确保 committed artifact 只保留脱敏、paper-only、无生产效果的审计证据。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增本机验证 review、sanitized fixture、runbook 检查清单和报告/fixture
+      安全边界测试；本地验证通过目标 pytest、`tests/trading_engine`、全量 pytest、dashboard 目标测试、ruff
+      和 black check。2026-06-09: 从 VALIDATING 改为 DONE，原因：本机真实 lifecycle 样本字段级复核仍为 `PASS/CONNECTED`、`production_effect=none`、`trading_mode=paper`、`LIMIT
+      DAY`、quantity 1、open order seen、cancel requested、final `ApiCancelled`、cancel
+      confirmed、no fill、0 issues，完整 account id / credential / forbidden production
+      semantics 匹配数为 0；sanitized fixture 与 review 继续保留 paper-only 和 redaction 语义；验证通过
+      `test_ibkr_paper_order_lifecycle.py` 24 passed、`tests/trading_engine` 939 passed、触达文件
+      Ruff/Black 和 GitHub Actions run `27174292737` success。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ee38c1c8492cf89c4218263bfa97c37d1560474dffa5c74f0db6ce92bf7fa775
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-010A
+  - 交易执行/IBKR Paper order lifecycle local validation report
+  - P0
+  - DONE
+  - 系统验证
+  - 本机 TWS Paper order lifecycle 验证结果、sanitized fixture、runbook 成功后/意外成交/live boundary
+    检查、安全语义测试和当前复验证据已完成；后续如 IBKR Paper lifecycle 流程变化，再新建 follow-up
+  - 新增 `docs/reviews/ibkr_paper_order_lifecycle_local_validation_2026-05-17.md` 记录本机验证状态、TWS
+    Paper / IB Gateway Paper 连接说明、`LIMIT DAY` stock 订单字段、submitted/openOrder/orderStatus/cancel/final
+    cancelled 状态、是否 fill、`production_effect=none` 和无 production surface 影响；新增 `tests/fixtures/ibkr_paper_order_lifecycle_sanitized.json`，account
+    id masked、broker order id redacted、不含凭证值；runbook 增加验证成功后检查清单、意外成交处理和确认无 live account
+    / production effect 的步骤；测试覆盖 fixture 不含完整 `DUP` account、review 固定 `production_effect=none`、不含凭证字段、明确
+    paper-only，且不含 live/trade/promotion 危险语义；目标 pytest、`tests/trading_engine`、ruff、触达文件
+    Black 和 GitHub Actions CI 通过；全仓 Black 当前仍被无关 repo-wide formatter baseline 阻断并由
+    TRADING-006 后续治理承接
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-010 Paper lifecycle 本机运行后，固化本机验证结果和安全边界，确保
+    committed artifact 只保留脱敏、paper-only、无生产效果的审计证据。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增本机验证
+    review、sanitized fixture、runbook 检查清单和报告/fixture 安全边界测试；本地验证通过目标 pytest、`tests/trading_engine`、全量
+    pytest、dashboard 目标测试、ruff 和 black check。2026-06-09: 从 VALIDATING 改为 DONE，原因：本机真实
+    lifecycle 样本字段级复核仍为 `PASS/CONNECTED`、`production_effect=none`、`trading_mode=paper`、`LIMIT
+    DAY`、quantity 1、open order seen、cancel requested、final `ApiCancelled`、cancel confirmed、no
+    fill、0 issues，完整 account id / credential / forbidden production semantics 匹配数为
+    0；sanitized fixture 与 review 继续保留 paper-only 和 redaction 语义；验证通过 `test_ibkr_paper_order_lifecycle.py`
+    24 passed、`tests/trading_engine` 939 passed、触达文件 Ruff/Black 和 GitHub Actions run
+    `27174292737` success。'
+  docs_links:
+  - docs/reviews/ibkr_paper_order_lifecycle_local_validation_2026-05-17.md
+  terminal: true
+  raw_row_sha256: ee38c1c8492cf89c4218263bfa97c37d1560474dffa5c74f0db6ce92bf7fa775
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4345a650c33bc3f54b7f95567c11aabb9ca2649b3d6c8ad0e4f9c4e30b92e11f

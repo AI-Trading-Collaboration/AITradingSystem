@@ -1,0 +1,129 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-056
+  title: null
+  domain: 回测输入/Shadow Candidate Tracking & Daily Roll-forward
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/portfolio_candidate_shadow_tracking_daily_rollforward_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/portfolio_candidate_shadow_tracking_daily_rollforward_2026-05-30.md`；shadow
+    candidate tracking、daily roll-forward、tracking summary/state、Dashboard/Reader
+    Brief 和 shadow backtest 只读引用已完成；latest 已从早期 degraded tracking 推进为 active tracking
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits portfolio track-candidate --latest` 生成 tracking summary 和 active
+      shadow candidate state；`validate-tracking --latest` 与 `reports portfolio-candidate-tracking
+      --latest` 可读；shadow backtest dry-run 引用 tracking summary 且保持 rejected；安全字段保持
+      `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；不修改
+      production config、不降低 data gate、不自动 promotion、不使用 mock 数据'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 260
+    row_sha256: 008908236ec2dc7e08b667a32f5b52e43b13927fc296883b434ee944ed314840
+    cell_count: 8
+    all_cells:
+    - TRADING-056
+    - 回测输入/Shadow Candidate Tracking & Daily Roll-forward
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/portfolio_candidate_shadow_tracking_daily_rollforward_2026-05-30.md`；shadow
+      candidate tracking、daily roll-forward、tracking summary/state、Dashboard/Reader
+      Brief 和 shadow backtest 只读引用已完成；latest 已从早期 degraded tracking 推进为 active tracking
+    - '`aits portfolio track-candidate --latest` 生成 tracking summary 和 active shadow
+      candidate state；`validate-tracking --latest` 与 `reports portfolio-candidate-tracking
+      --latest` 可读；shadow backtest dry-run 引用 tracking summary 且保持 rejected；安全字段保持
+      `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；不修改
+      production config、不降低 data gate、不自动 promotion、不使用 mock 数据'
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-055 已产出 `watch` decision，需要正式 shadow
+      tracking 机制承接 candidate watched -> candidate tracked。2026-05-30: 从 IN_PROGRESS
+      改为 VALIDATING，原因：实现和真实 CLI smoke 完成，但 latest 因 date mismatch 为 degraded tracking。2026-06-09：从
+      VALIDATING 改为 DONE，原因：latest `portfolio_candidate_tracking/2026-06-08` 为 `active_tracking`，`market_data_freshness_status=OK`，报告和
+      validation CLI 均可读，shadow backtest dry-run 仍 `promotion_status=rejected`；验证通过
+      focused pytest 52 passed、相关 CLI/report smoke、文档检查、Ruff、repo-wide Black check、`compileall`
+      和 `git diff --check`。'
+    raw_line: '|TRADING-056|回测输入/Shadow Candidate Tracking & Daily Roll-forward|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/portfolio_candidate_shadow_tracking_daily_rollforward_2026-05-30.md`；shadow
+      candidate tracking、daily roll-forward、tracking summary/state、Dashboard/Reader
+      Brief 和 shadow backtest 只读引用已完成；latest 已从早期 degraded tracking 推进为 active tracking|`aits
+      portfolio track-candidate --latest` 生成 tracking summary 和 active shadow candidate
+      state；`validate-tracking --latest` 与 `reports portfolio-candidate-tracking --latest`
+      可读；shadow backtest dry-run 引用 tracking summary 且保持 rejected；安全字段保持 `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；不修改
+      production config、不降低 data gate、不自动 promotion、不使用 mock 数据|2026-05-30: 新增并进入
+      IN_PROGRESS，原因：TRADING-055 已产出 `watch` decision，需要正式 shadow tracking 机制承接 candidate
+      watched -> candidate tracked。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实现和真实
+      CLI smoke 完成，但 latest 因 date mismatch 为 degraded tracking。2026-06-09：从 VALIDATING
+      改为 DONE，原因：latest `portfolio_candidate_tracking/2026-06-08` 为 `active_tracking`，`market_data_freshness_status=OK`，报告和
+      validation CLI 均可读，shadow backtest dry-run 仍 `promotion_status=rejected`；验证通过
+      focused pytest 52 passed、相关 CLI/report smoke、文档检查、Ruff、repo-wide Black check、`compileall`
+      和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-008908236ec2dc7e08b667a3
+  task_id: TRADING-056
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-055 已产出 `watch` decision，需要正式
+      shadow tracking 机制承接 candidate watched -> candidate tracked。2026-05-30: 从 IN_PROGRESS
+      改为 VALIDATING，原因：实现和真实 CLI smoke 完成，但 latest 因 date mismatch 为 degraded tracking。2026-06-09：从
+      VALIDATING 改为 DONE，原因：latest `portfolio_candidate_tracking/2026-06-08` 为 `active_tracking`，`market_data_freshness_status=OK`，报告和
+      validation CLI 均可读，shadow backtest dry-run 仍 `promotion_status=rejected`；验证通过
+      focused pytest 52 passed、相关 CLI/report smoke、文档检查、Ruff、repo-wide Black check、`compileall`
+      和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:008908236ec2dc7e08b667a32f5b52e43b13927fc296883b434ee944ed314840
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-056
+  - 回测输入/Shadow Candidate Tracking & Daily Roll-forward
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/portfolio_candidate_shadow_tracking_daily_rollforward_2026-05-30.md`；shadow
+    candidate tracking、daily roll-forward、tracking summary/state、Dashboard/Reader
+    Brief 和 shadow backtest 只读引用已完成；latest 已从早期 degraded tracking 推进为 active tracking
+  - '`aits portfolio track-candidate --latest` 生成 tracking summary 和 active shadow
+    candidate state；`validate-tracking --latest` 与 `reports portfolio-candidate-tracking
+    --latest` 可读；shadow backtest dry-run 引用 tracking summary 且保持 rejected；安全字段保持 `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；不修改
+    production config、不降低 data gate、不自动 promotion、不使用 mock 数据'
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-055 已产出 `watch` decision，需要正式 shadow
+    tracking 机制承接 candidate watched -> candidate tracked。2026-05-30: 从 IN_PROGRESS
+    改为 VALIDATING，原因：实现和真实 CLI smoke 完成，但 latest 因 date mismatch 为 degraded tracking。2026-06-09：从
+    VALIDATING 改为 DONE，原因：latest `portfolio_candidate_tracking/2026-06-08` 为 `active_tracking`，`market_data_freshness_status=OK`，报告和
+    validation CLI 均可读，shadow backtest dry-run 仍 `promotion_status=rejected`；验证通过
+    focused pytest 52 passed、相关 CLI/report smoke、文档检查、Ruff、repo-wide Black check、`compileall`
+    和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/portfolio_candidate_shadow_tracking_daily_rollforward_2026-05-30.md
+  terminal: true
+  raw_row_sha256: 008908236ec2dc7e08b667a32f5b52e43b13927fc296883b434ee944ed314840
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f96f4ca4098e53644c61220f029cac247ea660184b6986151fedbf3597fce4bb

@@ -1,0 +1,97 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: FEEDBACK-002
+  title: null
+  domain: 反馈闭环/评分校准
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 基于 `decision_snapshot` 生成 1D/5D/20D/60D/120D
+    结果观察和评分校准报告；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#feedback-002`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 输出 `decision_outcomes` 和校准报告，按总分分桶、置信度分桶、gate 状态、thesis 状态、风险等级和估值状态统计未来收益、回撤、波动、胜率和相对
+      SPY/QQQ/SMH/SOXX 或 AI proxy 的超额收益；报告声明样本数量、市场阶段、数据质量状态和样本不足限制；实现时同步更新 `docs/system_flow.md`
+      并补充 outcome 计算测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 435
+    row_sha256: 478bdfb76f9bcf4aaf62a81267fc439106a37b0f0056221bd0bd183166d173c5
+    cell_count: 8
+    all_cells:
+    - FEEDBACK-002
+    - 反馈闭环/评分校准
+    - P1
+    - DONE
+    - 系统实现
+    - 基于 `decision_snapshot` 生成 1D/5D/20D/60D/120D 结果观察和评分校准报告；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#feedback-002`
+    - 输出 `decision_outcomes` 和校准报告，按总分分桶、置信度分桶、gate 状态、thesis 状态、风险等级和估值状态统计未来收益、回撤、波动、胜率和相对
+      SPY/QQQ/SMH/SOXX 或 AI proxy 的超额收益；报告声明样本数量、市场阶段、数据质量状态和样本不足限制；实现时同步更新 `docs/system_flow.md`
+      并补充 outcome 计算测试
+    - '2026-05-04: 已完成首版实现，新增 `aits feedback calibrate`，复用数据质量门禁，从本地 decision snapshot
+      与 prices_daily 生成 outcome CSV 和中文校准报告；支持总分/置信度/gate/thesis/风险/估值分桶，并明确样本不足、窗口重叠和不得自动修改生产规则。'
+    raw_line: '|FEEDBACK-002|反馈闭环/评分校准|P1|DONE|系统实现|基于 `decision_snapshot` 生成 1D/5D/20D/60D/120D
+      结果观察和评分校准报告；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#feedback-002`|输出
+      `decision_outcomes` 和校准报告，按总分分桶、置信度分桶、gate 状态、thesis 状态、风险等级和估值状态统计未来收益、回撤、波动、胜率和相对
+      SPY/QQQ/SMH/SOXX 或 AI proxy 的超额收益；报告声明样本数量、市场阶段、数据质量状态和样本不足限制；实现时同步更新 `docs/system_flow.md`
+      并补充 outcome 计算测试|2026-05-04: 已完成首版实现，新增 `aits feedback calibrate`，复用数据质量门禁，从本地
+      decision snapshot 与 prices_daily 生成 outcome CSV 和中文校准报告；支持总分/置信度/gate/thesis/风险/估值分桶，并明确样本不足、窗口重叠和不得自动修改生产规则。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-478bdfb76f9bcf4aaf62a812
+  task_id: FEEDBACK-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-04: 已完成首版实现，新增 `aits feedback calibrate`，复用数据质量门禁，从本地 decision
+      snapshot 与 prices_daily 生成 outcome CSV 和中文校准报告；支持总分/置信度/gate/thesis/风险/估值分桶，并明确样本不足、窗口重叠和不得自动修改生产规则。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:478bdfb76f9bcf4aaf62a81267fc439106a37b0f0056221bd0bd183166d173c5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - FEEDBACK-002
+  - 反馈闭环/评分校准
+  - P1
+  - DONE
+  - 系统实现
+  - 基于 `decision_snapshot` 生成 1D/5D/20D/60D/120D 结果观察和评分校准报告；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#feedback-002`
+  - 输出 `decision_outcomes` 和校准报告，按总分分桶、置信度分桶、gate 状态、thesis 状态、风险等级和估值状态统计未来收益、回撤、波动、胜率和相对
+    SPY/QQQ/SMH/SOXX 或 AI proxy 的超额收益；报告声明样本数量、市场阶段、数据质量状态和样本不足限制；实现时同步更新 `docs/system_flow.md`
+    并补充 outcome 计算测试
+  - '2026-05-04: 已完成首版实现，新增 `aits feedback calibrate`，复用数据质量门禁，从本地 decision snapshot
+    与 prices_daily 生成 outcome CSV 和中文校准报告；支持总分/置信度/gate/thesis/风险/估值分桶，并明确样本不足、窗口重叠和不得自动修改生产规则。'
+  docs_links:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: 478bdfb76f9bcf4aaf62a81267fc439106a37b0f0056221bd0bd183166d173c5
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4a66c6a78cc3ca4c16f40fbaacffa1b05abf288b2ef1336958c1eb552a4dc703

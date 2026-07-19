@@ -1,0 +1,142 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: LLM-002
+  title: null
+  domain: OpenAI 请求发送链路诊断
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/openai_transport_diagnostics_2026-05-05.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成生产默认链路修复：OpenAI Responses API 默认 HTTP
+    client 改为 `requests`，保留 `--openai-http-client urllib` 做本机对照；失败/重试报告输出 sanitized
+    diagnostics；所有 5xx（含 HTTP 520）按瞬时错误重试 2 次；剩余增强是独立 dry-run/debug 命令和 SDK/httpx
+    后续评估；详细拆解见 `docs/requirements/openai_transport_diagnostics_2026-05-05.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 失败报告或 debug 输出应记录 sanitized attempt 诊断：attempt count、HTTP client、每次 attempt
+      的 client request id、candidate/precheck id、endpoint host、payload byte size、input
+      checksum、exception type、errno/reason、HTTP status 和 OpenAI x-request-id（如有）；不得输出
+      API key、Authorization header 或未授权付费全文；单次请求失败仍按 RISK-007 重试 2 次，第 3 次失败整批 fail
+      closed；默认链路必须能用真实 `score-daily` 跑通日报前 OpenAI 预审
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1102
+    row_sha256: ac2325d733d2cf036f8b497b568df5fde53ae86b977349403b13f4f5426c2e43
+    cell_count: 8
+    all_cells:
+    - LLM-002
+    - OpenAI 请求发送链路诊断
+    - P1
+    - BASELINE_DONE
+    - 系统实现
+    - 已完成生产默认链路修复：OpenAI Responses API 默认 HTTP client 改为 `requests`，保留 `--openai-http-client
+      urllib` 做本机对照；失败/重试报告输出 sanitized diagnostics；所有 5xx（含 HTTP 520）按瞬时错误重试 2 次；剩余增强是独立
+      dry-run/debug 命令和 SDK/httpx 后续评估；详细拆解见 `docs/requirements/openai_transport_diagnostics_2026-05-05.md`
+    - 失败报告或 debug 输出应记录 sanitized attempt 诊断：attempt count、HTTP client、每次 attempt
+      的 client request id、candidate/precheck id、endpoint host、payload byte size、input
+      checksum、exception type、errno/reason、HTTP status 和 OpenAI x-request-id（如有）；不得输出
+      API key、Authorization header 或未授权付费全文；单次请求失败仍按 RISK-007 重试 2 次，第 3 次失败整批 fail
+      closed；默认链路必须能用真实 `score-daily` 跑通日报前 OpenAI 预审
+    - '2026-05-05: 新增任务，原因：默认 20 条日报前 OpenAI 预审样本出现间歇性 `URLError`；同一失败候选用相同 payload
+      builder 单独重跑约 20 秒成功，说明候选内容和模型判断不是主要 blocker，需先补请求发送链路可观测性和客户端稳定性验证。2026-05-05:
+      从 READY 改为 IN_PROGRESS，原因：已在 OpenAI 重试层记录每次 attempt 的 sanitized diagnostics，并在
+      LLM claim/risk event Markdown 报告输出“请求诊断”；验证 `ruff check src tests` 和目标测试 22
+      passed。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：默认 OpenAI HTTP client 切换为
+      `requests` 并补 CLI 参数、文档、数据源目录和测试；真实 USTR 单候选 dry-run 约 20 秒 PASS、record_count
+      0；完整默认 `score-daily --as-of 2026-05-05` 在补齐 HTTP 520 作为 5xx 重试后通过，OpenAI 预审
+      PASS_WITH_WARNINGS、官方候选 402、上限 20、LLM claim 24、待复核队列 7、L2/L3 候选 6、active 候选
+      0，日报 PASS_WITH_LIMITATIONS；验证 `ruff check src tests`、目标测试 45 passed、完整 `pytest
+      -q` 369 passed。'
+    raw_line: '|LLM-002|OpenAI 请求发送链路诊断|P1|BASELINE_DONE|系统实现|已完成生产默认链路修复：OpenAI Responses
+      API 默认 HTTP client 改为 `requests`，保留 `--openai-http-client urllib` 做本机对照；失败/重试报告输出
+      sanitized diagnostics；所有 5xx（含 HTTP 520）按瞬时错误重试 2 次；剩余增强是独立 dry-run/debug 命令和
+      SDK/httpx 后续评估；详细拆解见 `docs/requirements/openai_transport_diagnostics_2026-05-05.md`|失败报告或
+      debug 输出应记录 sanitized attempt 诊断：attempt count、HTTP client、每次 attempt 的 client
+      request id、candidate/precheck id、endpoint host、payload byte size、input checksum、exception
+      type、errno/reason、HTTP status 和 OpenAI x-request-id（如有）；不得输出 API key、Authorization
+      header 或未授权付费全文；单次请求失败仍按 RISK-007 重试 2 次，第 3 次失败整批 fail closed；默认链路必须能用真实 `score-daily`
+      跑通日报前 OpenAI 预审|2026-05-05: 新增任务，原因：默认 20 条日报前 OpenAI 预审样本出现间歇性 `URLError`；同一失败候选用相同
+      payload builder 单独重跑约 20 秒成功，说明候选内容和模型判断不是主要 blocker，需先补请求发送链路可观测性和客户端稳定性验证。2026-05-05:
+      从 READY 改为 IN_PROGRESS，原因：已在 OpenAI 重试层记录每次 attempt 的 sanitized diagnostics，并在
+      LLM claim/risk event Markdown 报告输出“请求诊断”；验证 `ruff check src tests` 和目标测试 22
+      passed。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：默认 OpenAI HTTP client 切换为
+      `requests` 并补 CLI 参数、文档、数据源目录和测试；真实 USTR 单候选 dry-run 约 20 秒 PASS、record_count
+      0；完整默认 `score-daily --as-of 2026-05-05` 在补齐 HTTP 520 作为 5xx 重试后通过，OpenAI 预审
+      PASS_WITH_WARNINGS、官方候选 402、上限 20、LLM claim 24、待复核队列 7、L2/L3 候选 6、active 候选
+      0，日报 PASS_WITH_LIMITATIONS；验证 `ruff check src tests`、目标测试 45 passed、完整 `pytest
+      -q` 369 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ac2325d733d2cf036f8b497b
+  task_id: LLM-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增任务，原因：默认 20 条日报前 OpenAI 预审样本出现间歇性 `URLError`；同一失败候选用相同 payload
+      builder 单独重跑约 20 秒成功，说明候选内容和模型判断不是主要 blocker，需先补请求发送链路可观测性和客户端稳定性验证。2026-05-05:
+      从 READY 改为 IN_PROGRESS，原因：已在 OpenAI 重试层记录每次 attempt 的 sanitized diagnostics，并在
+      LLM claim/risk event Markdown 报告输出“请求诊断”；验证 `ruff check src tests` 和目标测试 22
+      passed。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：默认 OpenAI HTTP client 切换为
+      `requests` 并补 CLI 参数、文档、数据源目录和测试；真实 USTR 单候选 dry-run 约 20 秒 PASS、record_count
+      0；完整默认 `score-daily --as-of 2026-05-05` 在补齐 HTTP 520 作为 5xx 重试后通过，OpenAI 预审
+      PASS_WITH_WARNINGS、官方候选 402、上限 20、LLM claim 24、待复核队列 7、L2/L3 候选 6、active 候选
+      0，日报 PASS_WITH_LIMITATIONS；验证 `ruff check src tests`、目标测试 45 passed、完整 `pytest
+      -q` 369 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ac2325d733d2cf036f8b497b568df5fde53ae86b977349403b13f4f5426c2e43
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - LLM-002
+  - OpenAI 请求发送链路诊断
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - 已完成生产默认链路修复：OpenAI Responses API 默认 HTTP client 改为 `requests`，保留 `--openai-http-client
+    urllib` 做本机对照；失败/重试报告输出 sanitized diagnostics；所有 5xx（含 HTTP 520）按瞬时错误重试 2 次；剩余增强是独立
+    dry-run/debug 命令和 SDK/httpx 后续评估；详细拆解见 `docs/requirements/openai_transport_diagnostics_2026-05-05.md`
+  - 失败报告或 debug 输出应记录 sanitized attempt 诊断：attempt count、HTTP client、每次 attempt 的
+    client request id、candidate/precheck id、endpoint host、payload byte size、input
+    checksum、exception type、errno/reason、HTTP status 和 OpenAI x-request-id（如有）；不得输出
+    API key、Authorization header 或未授权付费全文；单次请求失败仍按 RISK-007 重试 2 次，第 3 次失败整批 fail
+    closed；默认链路必须能用真实 `score-daily` 跑通日报前 OpenAI 预审
+  - '2026-05-05: 新增任务，原因：默认 20 条日报前 OpenAI 预审样本出现间歇性 `URLError`；同一失败候选用相同 payload
+    builder 单独重跑约 20 秒成功，说明候选内容和模型判断不是主要 blocker，需先补请求发送链路可观测性和客户端稳定性验证。2026-05-05:
+    从 READY 改为 IN_PROGRESS，原因：已在 OpenAI 重试层记录每次 attempt 的 sanitized diagnostics，并在
+    LLM claim/risk event Markdown 报告输出“请求诊断”；验证 `ruff check src tests` 和目标测试 22 passed。2026-05-05:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：默认 OpenAI HTTP client 切换为 `requests` 并补 CLI
+    参数、文档、数据源目录和测试；真实 USTR 单候选 dry-run 约 20 秒 PASS、record_count 0；完整默认 `score-daily
+    --as-of 2026-05-05` 在补齐 HTTP 520 作为 5xx 重试后通过，OpenAI 预审 PASS_WITH_WARNINGS、官方候选
+    402、上限 20、LLM claim 24、待复核队列 7、L2/L3 候选 6、active 候选 0，日报 PASS_WITH_LIMITATIONS；验证
+    `ruff check src tests`、目标测试 45 passed、完整 `pytest -q` 369 passed。'
+  docs_links:
+  - docs/requirements/openai_transport_diagnostics_2026-05-05.md
+  terminal: false
+  raw_row_sha256: ac2325d733d2cf036f8b497b568df5fde53ae86b977349403b13f4f5426c2e43
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e60afd8a8e1f2840a3533a25fdf77cc74a2ce700839c7831a97e9c64643f3491

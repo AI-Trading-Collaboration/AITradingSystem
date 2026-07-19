@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: LOOP-001
+  title: null
+  domain: 反馈闭环/周期复核
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已建立闭环复核编排与周期报告；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#loop-001`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成闭环复核报告，覆盖 new evidence、decision snapshots、due outcomes、calibration findings、causal
+      chains、learning queue、rule candidates、blocked owner inputs 和 task register 状态变化；报告声明市场阶段，默认以
+      `ai_after_chatgpt` 作为主要结论窗口；明确哪些结论可执行、哪些仅研究、哪些因数据或样本不足降级；实现时同步更新 `docs/system_flow.md`
+      并补充周期报告测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 433
+    row_sha256: e1f1591b2cbbb8e02bb8ffc8085695c79156747768f4a6e5c94b35996a31a0e9
+    cell_count: 8
+    all_cells:
+    - LOOP-001
+    - 反馈闭环/周期复核
+    - P1
+    - DONE
+    - 系统实现
+    - 已建立闭环复核编排与周期报告；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#loop-001`
+    - 生成闭环复核报告，覆盖 new evidence、decision snapshots、due outcomes、calibration findings、causal
+      chains、learning queue、rule candidates、blocked owner inputs 和 task register 状态变化；报告声明市场阶段，默认以
+      `ai_after_chatgpt` 作为主要结论窗口；明确哪些结论可执行、哪些仅研究、哪些因数据或样本不足降级；实现时同步更新 `docs/system_flow.md`
+      并补充周期报告测试
+    - '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：反馈产物已具备，开始实现 `aits feedback loop-review`
+      周期复核报告，把证据、快照、outcome、因果链、学习队列和 task register 状态串成运营入口。2026-05-04: 从 IN_PROGRESS
+      改为 DONE，原因：新增 `feedback_loop_review`、`aits feedback loop-review`、中文周期复核报告、系统流图和测试；rule
+      candidate 暂标 `NOT_CONNECTED` 等待 `EXPERIMENT-001/GOV-001`。'
+    raw_line: '|LOOP-001|反馈闭环/周期复核|P1|DONE|系统实现|已建立闭环复核编排与周期报告；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#loop-001`|生成闭环复核报告，覆盖
+      new evidence、decision snapshots、due outcomes、calibration findings、causal chains、learning
+      queue、rule candidates、blocked owner inputs 和 task register 状态变化；报告声明市场阶段，默认以
+      `ai_after_chatgpt` 作为主要结论窗口；明确哪些结论可执行、哪些仅研究、哪些因数据或样本不足降级；实现时同步更新 `docs/system_flow.md`
+      并补充周期报告测试|2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：反馈产物已具备，开始实现 `aits feedback
+      loop-review` 周期复核报告，把证据、快照、outcome、因果链、学习队列和 task register 状态串成运营入口。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `feedback_loop_review`、`aits feedback loop-review`、中文周期复核报告、系统流图和测试；rule
+      candidate 暂标 `NOT_CONNECTED` 等待 `EXPERIMENT-001/GOV-001`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e1f1591b2cbbb8e02bb8ffc8
+  task_id: LOOP-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：反馈产物已具备，开始实现 `aits feedback loop-review`
+      周期复核报告，把证据、快照、outcome、因果链、学习队列和 task register 状态串成运营入口。2026-05-04: 从 IN_PROGRESS
+      改为 DONE，原因：新增 `feedback_loop_review`、`aits feedback loop-review`、中文周期复核报告、系统流图和测试；rule
+      candidate 暂标 `NOT_CONNECTED` 等待 `EXPERIMENT-001/GOV-001`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e1f1591b2cbbb8e02bb8ffc8085695c79156747768f4a6e5c94b35996a31a0e9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - LOOP-001
+  - 反馈闭环/周期复核
+  - P1
+  - DONE
+  - 系统实现
+  - 已建立闭环复核编排与周期报告；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#loop-001`
+  - 生成闭环复核报告，覆盖 new evidence、decision snapshots、due outcomes、calibration findings、causal
+    chains、learning queue、rule candidates、blocked owner inputs 和 task register 状态变化；报告声明市场阶段，默认以
+    `ai_after_chatgpt` 作为主要结论窗口；明确哪些结论可执行、哪些仅研究、哪些因数据或样本不足降级；实现时同步更新 `docs/system_flow.md`
+    并补充周期报告测试
+  - '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：反馈产物已具备，开始实现 `aits feedback loop-review`
+    周期复核报告，把证据、快照、outcome、因果链、学习队列和 task register 状态串成运营入口。2026-05-04: 从 IN_PROGRESS
+    改为 DONE，原因：新增 `feedback_loop_review`、`aits feedback loop-review`、中文周期复核报告、系统流图和测试；rule
+    candidate 暂标 `NOT_CONNECTED` 等待 `EXPERIMENT-001/GOV-001`。'
+  docs_links:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: e1f1591b2cbbb8e02bb8ffc8085695c79156747768f4a6e5c94b35996a31a0e9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 897b8db561d6e0140e5cb894cb03ea3fa6635fa2afba5df9e4cdf34f43c27215

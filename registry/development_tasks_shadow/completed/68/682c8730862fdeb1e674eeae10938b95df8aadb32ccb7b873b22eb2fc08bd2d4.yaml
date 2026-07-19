@@ -1,0 +1,114 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-002
+  title: null
+  domain: 数据源健康/Yahoo inactive manifest
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已把 inactive/diagnostic-only manifest checksum
+    漂移降为调查警告，active source checksum mismatch 仍 fail closed
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Inactive 或 diagnostic-only 数据源的历史 manifest checksum 与当前共享缓存不一致时，不应让 provider
+      health 进入 FAIL；应记录为 inactive/diagnostic stale manifest warning 或忽略硬错误，同时 active
+      source 的 checksum mismatch 仍必须 fail closed；补充测试、更新系统流图或数据源健康文档，并验证 `aits data-sources
+      health` 不再因 inactive Yahoo 旧 manifest 阻断
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 439
+    row_sha256: ac9d8fcbcdcb8f011b5e7876d375a4f0a955fa51f154766cafc0eff70f7f5176
+    cell_count: 8
+    all_cells:
+    - OPS-002
+    - 数据源健康/Yahoo inactive manifest
+    - P1
+    - DONE
+    - 系统实现
+    - 已把 inactive/diagnostic-only manifest checksum 漂移降为调查警告，active source checksum
+      mismatch 仍 fail closed
+    - Inactive 或 diagnostic-only 数据源的历史 manifest checksum 与当前共享缓存不一致时，不应让 provider
+      health 进入 FAIL；应记录为 inactive/diagnostic stale manifest warning 或忽略硬错误，同时 active
+      source 的 checksum mismatch 仍必须 fail closed；补充测试、更新系统流图或数据源健康文档，并验证 `aits data-sources
+      health` 不再因 inactive Yahoo 旧 manifest 阻断
+    - '2026-05-05: 新增任务，原因：FMP/Cboe 已成为主价格缓存来源后，inactive `yahoo_finance_daily_prices`
+      的历史 manifest 仍指向同一个 `prices_daily.csv` 并触发 checksum mismatch，造成 data-sources
+      health FAIL；这是 health 语义问题，不应恢复 Yahoo 为主源或改写缓存。2026-05-05: 从 READY 改为 DONE，原因：新增
+      `inactive_manifest_checksum_mismatch` warning，`tests/test_data_sources.py` 覆盖
+      inactive 降级和 active 硬失败，`aits data-sources health --as-of 2026-05-05` 已转为 PASS_WITH_WARNINGS、0
+      错误。'
+    raw_line: '|OPS-002|数据源健康/Yahoo inactive manifest|P1|DONE|系统实现|已把 inactive/diagnostic-only
+      manifest checksum 漂移降为调查警告，active source checksum mismatch 仍 fail closed|Inactive
+      或 diagnostic-only 数据源的历史 manifest checksum 与当前共享缓存不一致时，不应让 provider health 进入
+      FAIL；应记录为 inactive/diagnostic stale manifest warning 或忽略硬错误，同时 active source
+      的 checksum mismatch 仍必须 fail closed；补充测试、更新系统流图或数据源健康文档，并验证 `aits data-sources
+      health` 不再因 inactive Yahoo 旧 manifest 阻断|2026-05-05: 新增任务，原因：FMP/Cboe 已成为主价格缓存来源后，inactive
+      `yahoo_finance_daily_prices` 的历史 manifest 仍指向同一个 `prices_daily.csv` 并触发 checksum
+      mismatch，造成 data-sources health FAIL；这是 health 语义问题，不应恢复 Yahoo 为主源或改写缓存。2026-05-05:
+      从 READY 改为 DONE，原因：新增 `inactive_manifest_checksum_mismatch` warning，`tests/test_data_sources.py`
+      覆盖 inactive 降级和 active 硬失败，`aits data-sources health --as-of 2026-05-05` 已转为
+      PASS_WITH_WARNINGS、0 错误。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ac9d8fcbcdcb8f011b5e7876
+  task_id: OPS-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增任务，原因：FMP/Cboe 已成为主价格缓存来源后，inactive `yahoo_finance_daily_prices`
+      的历史 manifest 仍指向同一个 `prices_daily.csv` 并触发 checksum mismatch，造成 data-sources
+      health FAIL；这是 health 语义问题，不应恢复 Yahoo 为主源或改写缓存。2026-05-05: 从 READY 改为 DONE，原因：新增
+      `inactive_manifest_checksum_mismatch` warning，`tests/test_data_sources.py` 覆盖
+      inactive 降级和 active 硬失败，`aits data-sources health --as-of 2026-05-05` 已转为 PASS_WITH_WARNINGS、0
+      错误。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ac9d8fcbcdcb8f011b5e7876d375a4f0a955fa51f154766cafc0eff70f7f5176
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-002
+  - 数据源健康/Yahoo inactive manifest
+  - P1
+  - DONE
+  - 系统实现
+  - 已把 inactive/diagnostic-only manifest checksum 漂移降为调查警告，active source checksum
+    mismatch 仍 fail closed
+  - Inactive 或 diagnostic-only 数据源的历史 manifest checksum 与当前共享缓存不一致时，不应让 provider health
+    进入 FAIL；应记录为 inactive/diagnostic stale manifest warning 或忽略硬错误，同时 active source
+    的 checksum mismatch 仍必须 fail closed；补充测试、更新系统流图或数据源健康文档，并验证 `aits data-sources
+    health` 不再因 inactive Yahoo 旧 manifest 阻断
+  - '2026-05-05: 新增任务，原因：FMP/Cboe 已成为主价格缓存来源后，inactive `yahoo_finance_daily_prices`
+    的历史 manifest 仍指向同一个 `prices_daily.csv` 并触发 checksum mismatch，造成 data-sources health
+    FAIL；这是 health 语义问题，不应恢复 Yahoo 为主源或改写缓存。2026-05-05: 从 READY 改为 DONE，原因：新增 `inactive_manifest_checksum_mismatch`
+    warning，`tests/test_data_sources.py` 覆盖 inactive 降级和 active 硬失败，`aits data-sources
+    health --as-of 2026-05-05` 已转为 PASS_WITH_WARNINGS、0 错误。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: ac9d8fcbcdcb8f011b5e7876d375a4f0a955fa51f154766cafc0eff70f7f5176
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e3e8aebeba99c7e5349ff5c87a132c09341f08b97ec6a1c1f300128e3bea7399

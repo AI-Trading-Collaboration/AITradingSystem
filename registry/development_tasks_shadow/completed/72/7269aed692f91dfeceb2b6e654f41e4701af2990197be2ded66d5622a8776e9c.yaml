@@ -1,0 +1,148 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-057
+  title: null
+  domain: 报告/Reader Brief Visual Layout & Priority Styling
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/reader_brief_visual_layout_priority_styling_2026-05-29.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/reader_brief_visual_layout_priority_styling_2026-05-29.md`；Reader
+    Brief visual layout / priority styling 已完成并通过 latest 真实 HTML 复核；`reader_brief_2026-06-05.html/json`
+    为 `OK`、`production_effect=none`，桌面 1440x1200 与移动 390x900 Playwright 截图均可渲染首屏；HTML
+    结构确认 summary cards、status badges、6 个 market proxy cards、funnel binding highlight、manual
+    review severity styling、recommended action、Missing / Limited Artifact Impact summary
+    和 `<details>` 审计块均存在；该任务只改善阅读优先级，不新增数据源、不改变 scoring/backtest/weights/trading 行为
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`reader_brief_YYYY-MM-DD.html` 首屏包含 final action、final AI position、binding
+      gate、market movement、manual review count、`production_effect` cards；主要状态显示 badge；Market
+      Situation 以 SPY/QQQ/SMH/SOXX/VIX/DGS10 compact cards 展示可用 1D/5D/20D 并保留明细表；Score
+      & Decision Funnel 展示可扫描流程并高亮 binding gate；Manual Review Queue 和 Missing / Limited
+      Artifact Impact 按 severity/impact 分区；audit details 仍在 `<details>`；测试覆盖 HTML
+      关键结构、deterministic output 和只读边界；真实 `--latest` 生成和 validate-reader-brief 保持 OK'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 320
+    row_sha256: 283bae3f7918c7085dd836874308b3ae9b1648e97b670310bf24f8900c1ac987
+    cell_count: 8
+    all_cells:
+    - REPORT-057
+    - 报告/Reader Brief Visual Layout & Priority Styling
+    - P2
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/reader_brief_visual_layout_priority_styling_2026-05-29.md`；Reader
+      Brief visual layout / priority styling 已完成并通过 latest 真实 HTML 复核；`reader_brief_2026-06-05.html/json`
+      为 `OK`、`production_effect=none`，桌面 1440x1200 与移动 390x900 Playwright 截图均可渲染首屏；HTML
+      结构确认 summary cards、status badges、6 个 market proxy cards、funnel binding highlight、manual
+      review severity styling、recommended action、Missing / Limited Artifact Impact
+      summary 和 `<details>` 审计块均存在；该任务只改善阅读优先级，不新增数据源、不改变 scoring/backtest/weights/trading
+      行为
+    - '`reader_brief_YYYY-MM-DD.html` 首屏包含 final action、final AI position、binding
+      gate、market movement、manual review count、`production_effect` cards；主要状态显示 badge；Market
+      Situation 以 SPY/QQQ/SMH/SOXX/VIX/DGS10 compact cards 展示可用 1D/5D/20D 并保留明细表；Score
+      & Decision Funnel 展示可扫描流程并高亮 binding gate；Manual Review Queue 和 Missing / Limited
+      Artifact Impact 按 severity/impact 分区；audit details 仍在 `<details>`；测试覆盖 HTML
+      关键结构、deterministic output 和只读边界；真实 `--latest` 生成和 validate-reader-brief 保持 OK'
+    - '2026-05-29: 新增并进入 IN_PROGRESS，原因：REPORT-056 已补齐统一治理 artifact，Reader Brief 内容闭环后需要降低表格感、提升每日投资简报扫描效率。2026-05-29:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 Reader Brief HTML summary cards、status badges、market
+      proxy cards、funnel flow、binding gate highlight、severity/impact grouping、audit
+      details 保留和专项测试；真实 `reader-brief --latest` 与 `validate-reader-brief --latest`
+      均为 OK。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest 浏览器与结构复核通过；status badge count=1547、market
+      cards=6、funnel steps=7、`<details>` count=424，Reader Brief latest/quality 和 documentation
+      contract 均通过。'
+    raw_line: '|REPORT-057|报告/Reader Brief Visual Layout & Priority Styling|P2|DONE|系统验证|详细拆解见
+      `docs/requirements/reader_brief_visual_layout_priority_styling_2026-05-29.md`；Reader
+      Brief visual layout / priority styling 已完成并通过 latest 真实 HTML 复核；`reader_brief_2026-06-05.html/json`
+      为 `OK`、`production_effect=none`，桌面 1440x1200 与移动 390x900 Playwright 截图均可渲染首屏；HTML
+      结构确认 summary cards、status badges、6 个 market proxy cards、funnel binding highlight、manual
+      review severity styling、recommended action、Missing / Limited Artifact Impact
+      summary 和 `<details>` 审计块均存在；该任务只改善阅读优先级，不新增数据源、不改变 scoring/backtest/weights/trading
+      行为|`reader_brief_YYYY-MM-DD.html` 首屏包含 final action、final AI position、binding
+      gate、market movement、manual review count、`production_effect` cards；主要状态显示 badge；Market
+      Situation 以 SPY/QQQ/SMH/SOXX/VIX/DGS10 compact cards 展示可用 1D/5D/20D 并保留明细表；Score
+      & Decision Funnel 展示可扫描流程并高亮 binding gate；Manual Review Queue 和 Missing / Limited
+      Artifact Impact 按 severity/impact 分区；audit details 仍在 `<details>`；测试覆盖 HTML
+      关键结构、deterministic output 和只读边界；真实 `--latest` 生成和 validate-reader-brief 保持 OK|2026-05-29:
+      新增并进入 IN_PROGRESS，原因：REPORT-056 已补齐统一治理 artifact，Reader Brief 内容闭环后需要降低表格感、提升每日投资简报扫描效率。2026-05-29:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 Reader Brief HTML summary cards、status badges、market
+      proxy cards、funnel flow、binding gate highlight、severity/impact grouping、audit
+      details 保留和专项测试；真实 `reader-brief --latest` 与 `validate-reader-brief --latest`
+      均为 OK。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest 浏览器与结构复核通过；status badge count=1547、market
+      cards=6、funnel steps=7、`<details>` count=424，Reader Brief latest/quality 和 documentation
+      contract 均通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-283bae3f7918c7085dd83687
+  task_id: REPORT-057
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：REPORT-056 已补齐统一治理 artifact，Reader Brief
+      内容闭环后需要降低表格感、提升每日投资简报扫描效率。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 Reader
+      Brief HTML summary cards、status badges、market proxy cards、funnel flow、binding
+      gate highlight、severity/impact grouping、audit details 保留和专项测试；真实 `reader-brief
+      --latest` 与 `validate-reader-brief --latest` 均为 OK。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：latest 浏览器与结构复核通过；status badge count=1547、market cards=6、funnel steps=7、`<details>`
+      count=424，Reader Brief latest/quality 和 documentation contract 均通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:283bae3f7918c7085dd836874308b3ae9b1648e97b670310bf24f8900c1ac987
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-057
+  - 报告/Reader Brief Visual Layout & Priority Styling
+  - P2
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/reader_brief_visual_layout_priority_styling_2026-05-29.md`；Reader
+    Brief visual layout / priority styling 已完成并通过 latest 真实 HTML 复核；`reader_brief_2026-06-05.html/json`
+    为 `OK`、`production_effect=none`，桌面 1440x1200 与移动 390x900 Playwright 截图均可渲染首屏；HTML
+    结构确认 summary cards、status badges、6 个 market proxy cards、funnel binding highlight、manual
+    review severity styling、recommended action、Missing / Limited Artifact Impact summary
+    和 `<details>` 审计块均存在；该任务只改善阅读优先级，不新增数据源、不改变 scoring/backtest/weights/trading 行为
+  - '`reader_brief_YYYY-MM-DD.html` 首屏包含 final action、final AI position、binding gate、market
+    movement、manual review count、`production_effect` cards；主要状态显示 badge；Market Situation
+    以 SPY/QQQ/SMH/SOXX/VIX/DGS10 compact cards 展示可用 1D/5D/20D 并保留明细表；Score & Decision
+    Funnel 展示可扫描流程并高亮 binding gate；Manual Review Queue 和 Missing / Limited Artifact
+    Impact 按 severity/impact 分区；audit details 仍在 `<details>`；测试覆盖 HTML 关键结构、deterministic
+    output 和只读边界；真实 `--latest` 生成和 validate-reader-brief 保持 OK'
+  - '2026-05-29: 新增并进入 IN_PROGRESS，原因：REPORT-056 已补齐统一治理 artifact，Reader Brief 内容闭环后需要降低表格感、提升每日投资简报扫描效率。2026-05-29:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已完成 Reader Brief HTML summary cards、status badges、market
+    proxy cards、funnel flow、binding gate highlight、severity/impact grouping、audit
+    details 保留和专项测试；真实 `reader-brief --latest` 与 `validate-reader-brief --latest`
+    均为 OK。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest 浏览器与结构复核通过；status badge count=1547、market
+    cards=6、funnel steps=7、`<details>` count=424，Reader Brief latest/quality 和 documentation
+    contract 均通过。'
+  docs_links:
+  - docs/requirements/reader_brief_visual_layout_priority_styling_2026-05-29.md
+  terminal: true
+  raw_row_sha256: 283bae3f7918c7085dd836874308b3ae9b1648e97b670310bf24f8900c1ac987
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: eb142f7f060c3333befa0a3def12ea4849d64a7ba8afdf584d156fdc01f982db

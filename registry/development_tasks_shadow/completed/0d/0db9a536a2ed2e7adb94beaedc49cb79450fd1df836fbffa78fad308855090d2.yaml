@@ -1,0 +1,170 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-056
+  title: null
+  domain: 报告/Research Governance Summary Aggregator
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/research_governance_summary_aggregator_2026-05-29.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/research_governance_summary_aggregator_2026-05-29.md`；Research
+    Governance Summary Aggregator 已完成并通过 latest 真实 artifact 复核；`research_governance_summary_2026-06-05.md/json`
+    为 `PASS_WITH_LIMITATIONS` / `PASS_WITH_WARNINGS`、`production_effect=none`、`promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，cards=19，source
+    artifacts=19，manual review queue=13，limitations=50，card/source empty production
+    effect=0，unsafe production effect=0；Reader Brief 已消费该 summary，missing important_count=0
+    且未把已生成 summary 计为缺口；Report Navigation 同组 duplicate artifact_id=0，并保留 runtime/registry
+    navigation sources；该任务不运行上游、不改变 production scoring、weights、position gates 或 trading
+    行为
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits reports research-governance-summary --date/--latest` 生成 `research_governance_summary_YYYY-MM-DD.md/json`；JSON
+      覆盖 backtest、weight iteration、shadow observe、SEC PIT、documentation、manual review
+      queue、limitations 和 source artifacts；promotion 默认 `NOT_PROMOTABLE`，缺 promotion
+      gate 阻断 promotion；Reader Brief 消费 summary 后不再把该 artifact 计为 IMPORTANT，Executive
+      Summary 展示 governance/promotion 状态，Manual Review Queue 合并治理复核项；Report Navigation
+      同组 artifact_id 去重且 runtime index 优先；测试覆盖 schema、Markdown、缺失降级、SEC PIT observe-only、documentation、去重、只读和
+      deterministic output'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 319
+    row_sha256: 7d02f3c04e8d4ce70bd95746463c278594610b99699edd4c27365ba4f6b2d767
+    cell_count: 8
+    all_cells:
+    - REPORT-056
+    - 报告/Research Governance Summary Aggregator
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/research_governance_summary_aggregator_2026-05-29.md`；Research
+      Governance Summary Aggregator 已完成并通过 latest 真实 artifact 复核；`research_governance_summary_2026-06-05.md/json`
+      为 `PASS_WITH_LIMITATIONS` / `PASS_WITH_WARNINGS`、`production_effect=none`、`promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，cards=19，source
+      artifacts=19，manual review queue=13，limitations=50，card/source empty production
+      effect=0，unsafe production effect=0；Reader Brief 已消费该 summary，missing important_count=0
+      且未把已生成 summary 计为缺口；Report Navigation 同组 duplicate artifact_id=0，并保留 runtime/registry
+      navigation sources；该任务不运行上游、不改变 production scoring、weights、position gates 或
+      trading 行为
+    - '`aits reports research-governance-summary --date/--latest` 生成 `research_governance_summary_YYYY-MM-DD.md/json`；JSON
+      覆盖 backtest、weight iteration、shadow observe、SEC PIT、documentation、manual review
+      queue、limitations 和 source artifacts；promotion 默认 `NOT_PROMOTABLE`，缺 promotion
+      gate 阻断 promotion；Reader Brief 消费 summary 后不再把该 artifact 计为 IMPORTANT，Executive
+      Summary 展示 governance/promotion 状态，Manual Review Queue 合并治理复核项；Report Navigation
+      同组 artifact_id 去重且 runtime index 优先；测试覆盖 schema、Markdown、缺失降级、SEC PIT observe-only、documentation、去重、只读和
+      deterministic output'
+    - '2026-05-29: 新增并进入 IN_PROGRESS，原因：REPORT-055 后 Reader Brief 剩余重要缺口是 research
+      governance summary，且 Report Navigation 出现 daily_decision_summary 重复行。2026-05-29:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 aggregator schema/CLI、Reader Brief 消费、manual
+      review 合并、navigation 去重、registry/catalog/system flow 和专项测试；验证通过 `tests/trading_engine/test_research_governance_summary.py`、`tests/trading_engine/test_reader_brief.py`、目标
+      report tests、全量 pytest、ruff、black、diff check 和真实 `--latest` 生成，`reader_brief_2026-05-27`
+      状态为 OK 且 missing important_count=0。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest
+      字段级复核确认治理摘要覆盖 backtest/weight/shadow/SEC PIT/documentation/manual review/limitations/source
+      artifacts，SEC PIT observe-only 与 production_effect 边界清晰；Reader Brief 展示 governance/promotion
+      状态并合并 research governance 复核项；Report Navigation 无同组重复 artifact；latest 相关 CLI、Reader
+      Brief quality 和 documentation contract 通过。'
+    raw_line: '|REPORT-056|报告/Research Governance Summary Aggregator|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/research_governance_summary_aggregator_2026-05-29.md`；Research
+      Governance Summary Aggregator 已完成并通过 latest 真实 artifact 复核；`research_governance_summary_2026-06-05.md/json`
+      为 `PASS_WITH_LIMITATIONS` / `PASS_WITH_WARNINGS`、`production_effect=none`、`promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，cards=19，source
+      artifacts=19，manual review queue=13，limitations=50，card/source empty production
+      effect=0，unsafe production effect=0；Reader Brief 已消费该 summary，missing important_count=0
+      且未把已生成 summary 计为缺口；Report Navigation 同组 duplicate artifact_id=0，并保留 runtime/registry
+      navigation sources；该任务不运行上游、不改变 production scoring、weights、position gates 或
+      trading 行为|`aits reports research-governance-summary --date/--latest` 生成 `research_governance_summary_YYYY-MM-DD.md/json`；JSON
+      覆盖 backtest、weight iteration、shadow observe、SEC PIT、documentation、manual review
+      queue、limitations 和 source artifacts；promotion 默认 `NOT_PROMOTABLE`，缺 promotion
+      gate 阻断 promotion；Reader Brief 消费 summary 后不再把该 artifact 计为 IMPORTANT，Executive
+      Summary 展示 governance/promotion 状态，Manual Review Queue 合并治理复核项；Report Navigation
+      同组 artifact_id 去重且 runtime index 优先；测试覆盖 schema、Markdown、缺失降级、SEC PIT observe-only、documentation、去重、只读和
+      deterministic output|2026-05-29: 新增并进入 IN_PROGRESS，原因：REPORT-055 后 Reader Brief
+      剩余重要缺口是 research governance summary，且 Report Navigation 出现 daily_decision_summary
+      重复行。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 aggregator schema/CLI、Reader
+      Brief 消费、manual review 合并、navigation 去重、registry/catalog/system flow 和专项测试；验证通过
+      `tests/trading_engine/test_research_governance_summary.py`、`tests/trading_engine/test_reader_brief.py`、目标
+      report tests、全量 pytest、ruff、black、diff check 和真实 `--latest` 生成，`reader_brief_2026-05-27`
+      状态为 OK 且 missing important_count=0。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest
+      字段级复核确认治理摘要覆盖 backtest/weight/shadow/SEC PIT/documentation/manual review/limitations/source
+      artifacts，SEC PIT observe-only 与 production_effect 边界清晰；Reader Brief 展示 governance/promotion
+      状态并合并 research governance 复核项；Report Navigation 无同组重复 artifact；latest 相关 CLI、Reader
+      Brief quality 和 documentation contract 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7d02f3c04e8d4ce70bd95746
+  task_id: REPORT-056
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：REPORT-055 后 Reader Brief 剩余重要缺口是 research
+      governance summary，且 Report Navigation 出现 daily_decision_summary 重复行。2026-05-29:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 aggregator schema/CLI、Reader Brief 消费、manual
+      review 合并、navigation 去重、registry/catalog/system flow 和专项测试；验证通过 `tests/trading_engine/test_research_governance_summary.py`、`tests/trading_engine/test_reader_brief.py`、目标
+      report tests、全量 pytest、ruff、black、diff check 和真实 `--latest` 生成，`reader_brief_2026-05-27`
+      状态为 OK 且 missing important_count=0。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest
+      字段级复核确认治理摘要覆盖 backtest/weight/shadow/SEC PIT/documentation/manual review/limitations/source
+      artifacts，SEC PIT observe-only 与 production_effect 边界清晰；Reader Brief 展示 governance/promotion
+      状态并合并 research governance 复核项；Report Navigation 无同组重复 artifact；latest 相关 CLI、Reader
+      Brief quality 和 documentation contract 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7d02f3c04e8d4ce70bd95746463c278594610b99699edd4c27365ba4f6b2d767
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-056
+  - 报告/Research Governance Summary Aggregator
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/research_governance_summary_aggregator_2026-05-29.md`；Research
+    Governance Summary Aggregator 已完成并通过 latest 真实 artifact 复核；`research_governance_summary_2026-06-05.md/json`
+    为 `PASS_WITH_LIMITATIONS` / `PASS_WITH_WARNINGS`、`production_effect=none`、`promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，cards=19，source
+    artifacts=19，manual review queue=13，limitations=50，card/source empty production
+    effect=0，unsafe production effect=0；Reader Brief 已消费该 summary，missing important_count=0
+    且未把已生成 summary 计为缺口；Report Navigation 同组 duplicate artifact_id=0，并保留 runtime/registry
+    navigation sources；该任务不运行上游、不改变 production scoring、weights、position gates 或 trading
+    行为
+  - '`aits reports research-governance-summary --date/--latest` 生成 `research_governance_summary_YYYY-MM-DD.md/json`；JSON
+    覆盖 backtest、weight iteration、shadow observe、SEC PIT、documentation、manual review
+    queue、limitations 和 source artifacts；promotion 默认 `NOT_PROMOTABLE`，缺 promotion
+    gate 阻断 promotion；Reader Brief 消费 summary 后不再把该 artifact 计为 IMPORTANT，Executive
+    Summary 展示 governance/promotion 状态，Manual Review Queue 合并治理复核项；Report Navigation
+    同组 artifact_id 去重且 runtime index 优先；测试覆盖 schema、Markdown、缺失降级、SEC PIT observe-only、documentation、去重、只读和
+    deterministic output'
+  - '2026-05-29: 新增并进入 IN_PROGRESS，原因：REPORT-055 后 Reader Brief 剩余重要缺口是 research governance
+    summary，且 Report Navigation 出现 daily_decision_summary 重复行。2026-05-29: 从 IN_PROGRESS
+    改为 VALIDATING，原因：已完成 aggregator schema/CLI、Reader Brief 消费、manual review 合并、navigation
+    去重、registry/catalog/system flow 和专项测试；验证通过 `tests/trading_engine/test_research_governance_summary.py`、`tests/trading_engine/test_reader_brief.py`、目标
+    report tests、全量 pytest、ruff、black、diff check 和真实 `--latest` 生成，`reader_brief_2026-05-27`
+    状态为 OK 且 missing important_count=0。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest
+    字段级复核确认治理摘要覆盖 backtest/weight/shadow/SEC PIT/documentation/manual review/limitations/source
+    artifacts，SEC PIT observe-only 与 production_effect 边界清晰；Reader Brief 展示 governance/promotion
+    状态并合并 research governance 复核项；Report Navigation 无同组重复 artifact；latest 相关 CLI、Reader
+    Brief quality 和 documentation contract 通过。'
+  docs_links:
+  - docs/requirements/research_governance_summary_aggregator_2026-05-29.md
+  terminal: true
+  raw_row_sha256: 7d02f3c04e8d4ce70bd95746463c278594610b99699edd4c27365ba4f6b2d767
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2ee064e604390d7723b8fdeb7aca7de13a5416935c42ed991792e2a849d65526

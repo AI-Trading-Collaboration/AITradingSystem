@@ -1,0 +1,136 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-358_FLIP_ROTATION_EVENT_CASEBOOK
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue flip/rotation event casebook
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-358_Flip_Rotation_Event_Casebook.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-358_Flip_Rotation_Event_Casebook.md`；承接
+    TRADING-357 drawdown event casebook，为 future reviews 建立 signal flip / rotation
+    cluster qualitative casebook，记录 date、previous state、new state、trigger signal、useful/false-positive
+    classification、turnover impact 和 candidate behavior；不得作为 trading signal、自动 candidate
+    promotion、official target weights、order ticket、broker action 或 production mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 flip/rotation event casebook config/schema、normalized event casebook
+      JSON、summary metrics、report/validate CLI、Reader Brief fields、report registry、artifact
+      catalog、README、system flow、operations runbook、requirements、task register 和 focused
+      tests；验证通过 report/validate CLI、focused pytest、documentation contract、report
+      index 和 task-register归档；安全边界固定 research diagnostic only / not trading signal
+      / no data refresh / no signal extraction or backtest executor / no official
+      target / no broker / no production
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 246
+    row_sha256: bc737e7127dbbd988d21df0814a5635e1dfcda159b202de10f3679e9000f7d47
+    cell_count: 8
+    all_cells:
+    - TRADING-358_FLIP_ROTATION_EVENT_CASEBOOK
+    - ETF portfolio/dynamic v3 rescue flip/rotation event casebook
+    - P2
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-358_Flip_Rotation_Event_Casebook.md`；承接 TRADING-357
+      drawdown event casebook，为 future reviews 建立 signal flip / rotation cluster qualitative
+      casebook，记录 date、previous state、new state、trigger signal、useful/false-positive
+      classification、turnover impact 和 candidate behavior；不得作为 trading signal、自动 candidate
+      promotion、official target weights、order ticket、broker action 或 production mutation
+    - 新增 flip/rotation event casebook config/schema、normalized event casebook JSON、summary
+      metrics、report/validate CLI、Reader Brief fields、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements、task register 和 focused tests；验证通过 report/validate
+      CLI、focused pytest、documentation contract、report index 和 task-register归档；安全边界固定
+      research diagnostic only / not trading signal / no data refresh / no signal
+      extraction or backtest executor / no official target / no broker / no production
+    - '2026-06-16: DONE；真实只读 report 生成 `flip-rotation-event-casebook_146c806ccd4bb4b3`，`event_count=5`、`useful_flip_count=3`、`false_positive_count=2`、`dominant_trigger_signal=v_shaped_recovery_confirmation`、`next_review_action=use_casebook_in_next_flip_rotation_review`，`validate-flip-rotation-event-casebook`
+      返回 PASS / failed=0；`python -m pytest tests/test_flip_rotation_event_casebook.py
+      tests/test_etf_dynamic_v3_parameter_research.py tests/test_documentation_contract.py
+      tests/test_report_index.py -q` 36 passed；保持 research diagnostic only / not trading
+      signal / no data refresh / no official target / no broker / no production。'
+    raw_line: '|TRADING-358_FLIP_ROTATION_EVENT_CASEBOOK|ETF portfolio/dynamic v3
+      rescue flip/rotation event casebook|P2|DONE|项目 owner 后续复核；代码实现完成|详细拆解见 `docs/requirements/TRADING-358_Flip_Rotation_Event_Casebook.md`；承接
+      TRADING-357 drawdown event casebook，为 future reviews 建立 signal flip / rotation
+      cluster qualitative casebook，记录 date、previous state、new state、trigger signal、useful/false-positive
+      classification、turnover impact 和 candidate behavior；不得作为 trading signal、自动 candidate
+      promotion、official target weights、order ticket、broker action 或 production mutation|新增
+      flip/rotation event casebook config/schema、normalized event casebook JSON、summary
+      metrics、report/validate CLI、Reader Brief fields、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements、task register 和 focused tests；验证通过 report/validate
+      CLI、focused pytest、documentation contract、report index 和 task-register归档；安全边界固定
+      research diagnostic only / not trading signal / no data refresh / no signal
+      extraction or backtest executor / no official target / no broker / no production|2026-06-16:
+      DONE；真实只读 report 生成 `flip-rotation-event-casebook_146c806ccd4bb4b3`，`event_count=5`、`useful_flip_count=3`、`false_positive_count=2`、`dominant_trigger_signal=v_shaped_recovery_confirmation`、`next_review_action=use_casebook_in_next_flip_rotation_review`，`validate-flip-rotation-event-casebook`
+      返回 PASS / failed=0；`python -m pytest tests/test_flip_rotation_event_casebook.py
+      tests/test_etf_dynamic_v3_parameter_research.py tests/test_documentation_contract.py
+      tests/test_report_index.py -q` 36 passed；保持 research diagnostic only / not trading
+      signal / no data refresh / no official target / no broker / no production。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bc737e7127dbbd988d21df08
+  task_id: TRADING-358_FLIP_ROTATION_EVENT_CASEBOOK
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: '2026-06-16: DONE；真实只读 report 生成 `flip-rotation-event-casebook_146c806ccd4bb4b3`，`event_count=5`、`useful_flip_count=3`、`false_positive_count=2`、`dominant_trigger_signal=v_shaped_recovery_confirmation`、`next_review_action=use_casebook_in_next_flip_rotation_review`，`validate-flip-rotation-event-casebook`
+      返回 PASS / failed=0；`python -m pytest tests/test_flip_rotation_event_casebook.py
+      tests/test_etf_dynamic_v3_parameter_research.py tests/test_documentation_contract.py
+      tests/test_report_index.py -q` 36 passed；保持 research diagnostic only / not trading
+      signal / no data refresh / no official target / no broker / no production。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bc737e7127dbbd988d21df0814a5635e1dfcda159b202de10f3679e9000f7d47
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-358_FLIP_ROTATION_EVENT_CASEBOOK
+  - ETF portfolio/dynamic v3 rescue flip/rotation event casebook
+  - P2
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-358_Flip_Rotation_Event_Casebook.md`；承接 TRADING-357
+    drawdown event casebook，为 future reviews 建立 signal flip / rotation cluster qualitative
+    casebook，记录 date、previous state、new state、trigger signal、useful/false-positive
+    classification、turnover impact 和 candidate behavior；不得作为 trading signal、自动 candidate
+    promotion、official target weights、order ticket、broker action 或 production mutation
+  - 新增 flip/rotation event casebook config/schema、normalized event casebook JSON、summary
+    metrics、report/validate CLI、Reader Brief fields、report registry、artifact catalog、README、system
+    flow、operations runbook、requirements、task register 和 focused tests；验证通过 report/validate
+    CLI、focused pytest、documentation contract、report index 和 task-register归档；安全边界固定
+    research diagnostic only / not trading signal / no data refresh / no signal extraction
+    or backtest executor / no official target / no broker / no production
+  - '2026-06-16: DONE；真实只读 report 生成 `flip-rotation-event-casebook_146c806ccd4bb4b3`，`event_count=5`、`useful_flip_count=3`、`false_positive_count=2`、`dominant_trigger_signal=v_shaped_recovery_confirmation`、`next_review_action=use_casebook_in_next_flip_rotation_review`，`validate-flip-rotation-event-casebook`
+    返回 PASS / failed=0；`python -m pytest tests/test_flip_rotation_event_casebook.py
+    tests/test_etf_dynamic_v3_parameter_research.py tests/test_documentation_contract.py
+    tests/test_report_index.py -q` 36 passed；保持 research diagnostic only / not trading
+    signal / no data refresh / no official target / no broker / no production。'
+  docs_links:
+  - docs/requirements/TRADING-358_Flip_Rotation_Event_Casebook.md
+  terminal: true
+  raw_row_sha256: bc737e7127dbbd988d21df0814a5635e1dfcda159b202de10f3679e9000f7d47
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9ba0dc9ce1915caa28434c01ad3fb6644550937eb80e87460b2ace63e388cd34

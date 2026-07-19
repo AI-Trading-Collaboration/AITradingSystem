@@ -1,0 +1,99 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-004G2_PARALLEL_READINESS_GATE
+  title: null
+  domain: Architecture / G2.5 parallel change and merge readiness
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: architecture coordinator；ARCH-005 S0/S1完成且新显式指令恢复后复核
+  requirement_refs:
+  - docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.5不因G2.4单slice完成或ARCH-005需求READY而解锁；必须先完成整个G2
+    phase gate和`arch_005_bootstrap_handoff.v1` PASS，且handoff保持`next_slice_unblocked=false`。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 接入ARCH-005 versioned `change_manifest.v1`、lease/conflict primitives和scheduler
+      kernel；完成owned/shared-path overlap、base drift、coordinator-only paths、deterministic
+      fragment preview及G3/G4/G5 conflict/non-conflict rehearsal；architecture/contract/focused/full
+      gates通过；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1173
+    row_sha256: 73940ad4e7d797029cb5b6fbce1902a519726d4f68e0b23d841328532bdfe864
+    cell_count: 8
+    all_cells:
+    - ARCH-004G2_PARALLEL_READINESS_GATE
+    - Architecture / G2.5 parallel change and merge readiness
+    - P1
+    - PROPOSED
+    - architecture coordinator；ARCH-005 S0/S1完成且新显式指令恢复后复核
+    - 详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.5不因G2.4单slice完成或ARCH-005需求READY而解锁；必须先完成整个G2
+      phase gate和`arch_005_bootstrap_handoff.v1` PASS，且handoff保持`next_slice_unblocked=false`。
+    - 接入ARCH-005 versioned `change_manifest.v1`、lease/conflict primitives和scheduler
+      kernel；完成owned/shared-path overlap、base drift、coordinator-only paths、deterministic
+      fragment preview及G3/G4/G5 conflict/non-conflict rehearsal；architecture/contract/focused/full
+      gates通过；`production_effect=none`。
+    - '2026-07-12: owner将长期并行研发控制面提升为ARCH-005/P0，后确认必须先在G2.5前停止并完成bootstrap handoff；本任务保持P1/PROPOSED。'
+    raw_line: '|ARCH-004G2_PARALLEL_READINESS_GATE|Architecture / G2.5 parallel change
+      and merge readiness|P1|PROPOSED|architecture coordinator；ARCH-005 S0/S1完成且新显式指令恢复后复核|详见
+      `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.5不因G2.4单slice完成或ARCH-005需求READY而解锁；必须先完成整个G2
+      phase gate和`arch_005_bootstrap_handoff.v1` PASS，且handoff保持`next_slice_unblocked=false`。|接入ARCH-005
+      versioned `change_manifest.v1`、lease/conflict primitives和scheduler kernel；完成owned/shared-path
+      overlap、base drift、coordinator-only paths、deterministic fragment preview及G3/G4/G5
+      conflict/non-conflict rehearsal；architecture/contract/focused/full gates通过；`production_effect=none`。|2026-07-12:
+      owner将长期并行研发控制面提升为ARCH-005/P0，后确认必须先在G2.5前停止并完成bootstrap handoff；本任务保持P1/PROPOSED。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-73940ad4e7d797029cb5b6fb
+  task_id: ARCH-004G2_PARALLEL_READINESS_GATE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: architecture coordinator；ARCH-005 S0/S1完成且新显式指令恢复后复核
+    notes: '2026-07-12: owner将长期并行研发控制面提升为ARCH-005/P0，后确认必须先在G2.5前停止并完成bootstrap handoff；本任务保持P1/PROPOSED。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:73940ad4e7d797029cb5b6fbce1902a519726d4f68e0b23d841328532bdfe864
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004G2_PARALLEL_READINESS_GATE
+  - Architecture / G2.5 parallel change and merge readiness
+  - P1
+  - PROPOSED
+  - architecture coordinator；ARCH-005 S0/S1完成且新显式指令恢复后复核
+  - 详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.5不因G2.4单slice完成或ARCH-005需求READY而解锁；必须先完成整个G2
+    phase gate和`arch_005_bootstrap_handoff.v1` PASS，且handoff保持`next_slice_unblocked=false`。
+  - 接入ARCH-005 versioned `change_manifest.v1`、lease/conflict primitives和scheduler
+    kernel；完成owned/shared-path overlap、base drift、coordinator-only paths、deterministic
+    fragment preview及G3/G4/G5 conflict/non-conflict rehearsal；architecture/contract/focused/full
+    gates通过；`production_effect=none`。
+  - '2026-07-12: owner将长期并行研发控制面提升为ARCH-005/P0，后确认必须先在G2.5前停止并完成bootstrap handoff；本任务保持P1/PROPOSED。'
+  docs_links:
+  - docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md
+  terminal: false
+  raw_row_sha256: 73940ad4e7d797029cb5b6fbce1902a519726d4f68e0b23d841328532bdfe864
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ff26e7fe45d0ab7591e0ccbd7ee3643832f251205bbaaa7be6e5c839246f08eb

@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-336_to_345_FILTERED_SIGNAL_CANDIDATE_EVIDENCE_EXPANSION_AND_FORMALIZATION_READINESS
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue filtered signal candidate evidence expansion
+    and formalization readiness
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner后续复核 + dated evidence collection
+  requirement_refs:
+  - docs/requirements/TRADING-336_to_345_Filtered_Signal_Candidate_Evidence_Expansion_and_Formalization_Readiness.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-336_to_345_Filtered_Signal_Candidate_Evidence_Expansion_and_Formalization_Readiness.md`；10组canonical
+    CLI/validators绑定EB2 source、reviewed policy、lineage与chronology；禁止合成performance、固定stress
+    windows、默认targets或auto formalization。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 10类v2 snapshots与47 views逐byte重建；无dated outcomes时rows/targets为空、metrics/winner/confidence为null、spec=`RESEARCH_SPEC_ONLY`、其余=`INSUFFICIENT_DATA`；focused/architecture/contract/Full闭合且no
+      broker/production。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1432
+    row_sha256: ca473c1bfe0acbcacde6c29dede8734b45ec8701870e9a5e5768586571cdac38
+    cell_count: 8
+    all_cells:
+    - TRADING-336_to_345_FILTERED_SIGNAL_CANDIDATE_EVIDENCE_EXPANSION_AND_FORMALIZATION_READINESS
+    - ETF portfolio/dynamic v3 rescue filtered signal candidate evidence expansion
+      and formalization readiness
+    - P0
+    - BASELINE_DONE
+    - 项目 owner后续复核 + dated evidence collection
+    - 详见 `docs/requirements/TRADING-336_to_345_Filtered_Signal_Candidate_Evidence_Expansion_and_Formalization_Readiness.md`；10组canonical
+      CLI/validators绑定EB2 source、reviewed policy、lineage与chronology；禁止合成performance、固定stress
+      windows、默认targets或auto formalization。
+    - 10类v2 snapshots与47 views逐byte重建；无dated outcomes时rows/targets为空、metrics/winner/confidence为null、spec=`RESEARCH_SPEC_ONLY`、其余=`INSUFFICIENT_DATA`；focused/architecture/contract/Full闭合且no
+      broker/production。
+    - 2026-07-19：EB3已取代2026-06-15 legacy synthetic READY结果；30 callbacks迁canonical，当前next
+      decision=`COLLECT_DATED_EVIDENCE`。正式architecture/contract/Full与runtime evidence全部PASS，剩余为真实dated
+      evidence外部条件。
+    raw_line: '|TRADING-336_to_345_FILTERED_SIGNAL_CANDIDATE_EVIDENCE_EXPANSION_AND_FORMALIZATION_READINESS|ETF
+      portfolio/dynamic v3 rescue filtered signal candidate evidence expansion and
+      formalization readiness|P0|BASELINE_DONE|项目 owner后续复核 + dated evidence collection|详见
+      `docs/requirements/TRADING-336_to_345_Filtered_Signal_Candidate_Evidence_Expansion_and_Formalization_Readiness.md`；10组canonical
+      CLI/validators绑定EB2 source、reviewed policy、lineage与chronology；禁止合成performance、固定stress
+      windows、默认targets或auto formalization。|10类v2 snapshots与47 views逐byte重建；无dated
+      outcomes时rows/targets为空、metrics/winner/confidence为null、spec=`RESEARCH_SPEC_ONLY`、其余=`INSUFFICIENT_DATA`；focused/architecture/contract/Full闭合且no
+      broker/production。|2026-07-19：EB3已取代2026-06-15 legacy synthetic READY结果；30 callbacks迁canonical，当前next
+      decision=`COLLECT_DATED_EVIDENCE`。正式architecture/contract/Full与runtime evidence全部PASS，剩余为真实dated
+      evidence外部条件。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ca473c1bfe0acbcacde6c29d
+  task_id: TRADING-336_to_345_FILTERED_SIGNAL_CANDIDATE_EVIDENCE_EXPANSION_AND_FORMALIZATION_READINESS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner后续复核 + dated evidence collection
+    notes: 2026-07-19：EB3已取代2026-06-15 legacy synthetic READY结果；30 callbacks迁canonical，当前next
+      decision=`COLLECT_DATED_EVIDENCE`。正式architecture/contract/Full与runtime evidence全部PASS，剩余为真实dated
+      evidence外部条件。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ca473c1bfe0acbcacde6c29dede8734b45ec8701870e9a5e5768586571cdac38
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-336_to_345_FILTERED_SIGNAL_CANDIDATE_EVIDENCE_EXPANSION_AND_FORMALIZATION_READINESS
+  - ETF portfolio/dynamic v3 rescue filtered signal candidate evidence expansion and
+    formalization readiness
+  - P0
+  - BASELINE_DONE
+  - 项目 owner后续复核 + dated evidence collection
+  - 详见 `docs/requirements/TRADING-336_to_345_Filtered_Signal_Candidate_Evidence_Expansion_and_Formalization_Readiness.md`；10组canonical
+    CLI/validators绑定EB2 source、reviewed policy、lineage与chronology；禁止合成performance、固定stress
+    windows、默认targets或auto formalization。
+  - 10类v2 snapshots与47 views逐byte重建；无dated outcomes时rows/targets为空、metrics/winner/confidence为null、spec=`RESEARCH_SPEC_ONLY`、其余=`INSUFFICIENT_DATA`；focused/architecture/contract/Full闭合且no
+    broker/production。
+  - 2026-07-19：EB3已取代2026-06-15 legacy synthetic READY结果；30 callbacks迁canonical，当前next
+    decision=`COLLECT_DATED_EVIDENCE`。正式architecture/contract/Full与runtime evidence全部PASS，剩余为真实dated
+    evidence外部条件。
+  docs_links:
+  - docs/requirements/TRADING-336_to_345_Filtered_Signal_Candidate_Evidence_Expansion_and_Formalization_Readiness.md
+  terminal: false
+  raw_row_sha256: ca473c1bfe0acbcacde6c29dede8734b45ec8701870e9a5e5768586571cdac38
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2c4f116c3330b73a025e44243e7c90c9657ef36cf3620c7002f17417f2c2c8e5

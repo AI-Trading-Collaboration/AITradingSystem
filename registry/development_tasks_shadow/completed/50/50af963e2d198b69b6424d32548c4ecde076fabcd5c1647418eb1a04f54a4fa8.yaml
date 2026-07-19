@@ -1,0 +1,118 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-062F
+  title: null
+  domain: ETF CLI compatibility aliases
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐开发文档中更接近无前缀的
+    CLI 入口，同时不覆盖现有主系统根级 backtest/daily scoring 语义
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits data ingest/validate`、`aits features build`、`aits signals generate`、`aits
+      regime generate`、`aits portfolio allocate`、`aits simulation record/evaluate/report`、`aits
+      report daily`、`aits run daily` 作为 ETF workflow compatibility aliases；`aits backtest`
+      保持现有主系统命令，ETF 回测继续为 `aits etf backtest run/report`；alias help 必须说明 ETF 兼容入口和
+      production/trading 边界；测试覆盖 help/command availability，smoke 覆盖至少一个 alias dry-run'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 369
+    row_sha256: 5c93491b6b48f64894cd867834646b8f44bc6f7e6835d357f6845ec52ba48249
+    cell_count: 8
+    all_cells:
+    - TRADING-062F
+    - ETF CLI compatibility aliases
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐开发文档中更接近无前缀的
+      CLI 入口，同时不覆盖现有主系统根级 backtest/daily scoring 语义
+    - '`aits data ingest/validate`、`aits features build`、`aits signals generate`、`aits
+      regime generate`、`aits portfolio allocate`、`aits simulation record/evaluate/report`、`aits
+      report daily`、`aits run daily` 作为 ETF workflow compatibility aliases；`aits backtest`
+      保持现有主系统命令，ETF 回测继续为 `aits etf backtest run/report`；alias help 必须说明 ETF 兼容入口和
+      production/trading 边界；测试覆盖 help/command availability，smoke 覆盖至少一个 alias dry-run'
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原始开发文档 CLI 示例使用 `data/features/signals/regime/portfolio/simulation/report/run`
+      顶层路径，当前只有 `aits etf ...` 隔离入口。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：已新增 root-level
+      ETF compatibility aliases，`aits backtest --help` 保持主系统每日评分回测；`aits run daily
+      --date latest --dry-run` 输出 2026-05-29 ETF brief 且 `data_quality_status=PASS`，目标
+      alias 测试通过。'
+    raw_line: '|TRADING-062F|ETF CLI compatibility aliases|P0|DONE|系统验证|详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐开发文档中更接近无前缀的
+      CLI 入口，同时不覆盖现有主系统根级 backtest/daily scoring 语义|`aits data ingest/validate`、`aits
+      features build`、`aits signals generate`、`aits regime generate`、`aits portfolio
+      allocate`、`aits simulation record/evaluate/report`、`aits report daily`、`aits
+      run daily` 作为 ETF workflow compatibility aliases；`aits backtest` 保持现有主系统命令，ETF
+      回测继续为 `aits etf backtest run/report`；alias help 必须说明 ETF 兼容入口和 production/trading
+      边界；测试覆盖 help/command availability，smoke 覆盖至少一个 alias dry-run|2026-05-31: 新增并进入
+      IN_PROGRESS，原因：原始开发文档 CLI 示例使用 `data/features/signals/regime/portfolio/simulation/report/run`
+      顶层路径，当前只有 `aits etf ...` 隔离入口。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：已新增 root-level
+      ETF compatibility aliases，`aits backtest --help` 保持主系统每日评分回测；`aits run daily
+      --date latest --dry-run` 输出 2026-05-29 ETF brief 且 `data_quality_status=PASS`，目标
+      alias 测试通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5c93491b6b48f64894cd8678
+  task_id: TRADING-062F
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原始开发文档 CLI 示例使用 `data/features/signals/regime/portfolio/simulation/report/run`
+      顶层路径，当前只有 `aits etf ...` 隔离入口。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：已新增 root-level
+      ETF compatibility aliases，`aits backtest --help` 保持主系统每日评分回测；`aits run daily
+      --date latest --dry-run` 输出 2026-05-29 ETF brief 且 `data_quality_status=PASS`，目标
+      alias 测试通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5c93491b6b48f64894cd867834646b8f44bc6f7e6835d357f6845ec52ba48249
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062F
+  - ETF CLI compatibility aliases
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐开发文档中更接近无前缀的
+    CLI 入口，同时不覆盖现有主系统根级 backtest/daily scoring 语义
+  - '`aits data ingest/validate`、`aits features build`、`aits signals generate`、`aits
+    regime generate`、`aits portfolio allocate`、`aits simulation record/evaluate/report`、`aits
+    report daily`、`aits run daily` 作为 ETF workflow compatibility aliases；`aits backtest`
+    保持现有主系统命令，ETF 回测继续为 `aits etf backtest run/report`；alias help 必须说明 ETF 兼容入口和 production/trading
+    边界；测试覆盖 help/command availability，smoke 覆盖至少一个 alias dry-run'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原始开发文档 CLI 示例使用 `data/features/signals/regime/portfolio/simulation/report/run`
+    顶层路径，当前只有 `aits etf ...` 隔离入口。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：已新增 root-level
+    ETF compatibility aliases，`aits backtest --help` 保持主系统每日评分回测；`aits run daily --date
+    latest --dry-run` 输出 2026-05-29 ETF brief 且 `data_quality_status=PASS`，目标 alias
+    测试通过。'
+  docs_links:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  terminal: true
+  raw_row_sha256: 5c93491b6b48f64894cd867834646b8f44bc6f7e6835d357f6845ec52ba48249
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 052fda46042df87737fa29485b20123f5a3a56ad707254cbba17126e42aadb37

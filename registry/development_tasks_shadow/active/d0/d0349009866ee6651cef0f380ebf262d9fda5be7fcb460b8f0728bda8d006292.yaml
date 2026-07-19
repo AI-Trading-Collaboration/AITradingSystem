@@ -1,0 +1,154 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-765_to_769_CONTROLLED_RESEARCH_EXPANSION_AND_FORWARD_SCHEDULE
+  title: null
+  domain: Data foundation + controlled strategy research / benchmark execution expansion,
+    source closure, forward schedule, and activation gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 + 系统运行观察
+  requirement_refs:
+  - docs/requirements/TRADING-765_to_769_Controlled_Research_Expansion_and_Forward_Schedule.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-765_to_769_Controlled_Research_Expansion_and_Forward_Schedule.md`；controlled
+    implementation 已生成真实 artifacts：benchmark/control expansion、Marketstack DATA_REQUIRED
+    closure、FMP WATCHLIST closure、forward evidence daily dry-run archive / ledger
+    和 reverse diagnostics activation gate
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI 输出 benchmark/control gross/net return、turnover、drawdown、cost-aware
+      metrics、by asset / by horizon / by regime；Marketstack 0.125 coverage 与 price/split/dividend
+      DATA_REQUIRED root cause 明确，结论为 `LIMITED_SECOND_SOURCE_ONLY` 且不阻塞主 controlled
+      research；FMP 明确可作为 controlled research 主价格源，provider timestamp / available-time
+      / lineage / delisted gaps 只阻断 promotion；daily dry-run archive 通过统一 daily scheduler
+      path 写入 evidence ledger、outcome append-only、不触发 broker；reverse diagnostics activation
+      gate 仅在 benchmark/control、FMP source status 和 baseline-vs-simple benchmark 差异满足后打开
+      small controlled teacher/oracle batch；所有输出固定 production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1356
+    row_sha256: d8ff1f385393ca51f6428ca4e9c51dc00e27baa2c2713f5df1a007981f01047c
+    cell_count: 8
+    all_cells:
+    - TRADING-765_to_769_CONTROLLED_RESEARCH_EXPANSION_AND_FORWARD_SCHEDULE
+    - Data foundation + controlled strategy research / benchmark execution expansion,
+      source closure, forward schedule, and activation gate
+    - P0
+    - VALIDATING
+    - 项目 owner 后续复核 + 系统运行观察
+    - 详见 `docs/requirements/TRADING-765_to_769_Controlled_Research_Expansion_and_Forward_Schedule.md`；controlled
+      implementation 已生成真实 artifacts：benchmark/control expansion、Marketstack DATA_REQUIRED
+      closure、FMP WATCHLIST closure、forward evidence daily dry-run archive / ledger
+      和 reverse diagnostics activation gate
+    - 新增 CLI 输出 benchmark/control gross/net return、turnover、drawdown、cost-aware metrics、by
+      asset / by horizon / by regime；Marketstack 0.125 coverage 与 price/split/dividend
+      DATA_REQUIRED root cause 明确，结论为 `LIMITED_SECOND_SOURCE_ONLY` 且不阻塞主 controlled
+      research；FMP 明确可作为 controlled research 主价格源，provider timestamp / available-time
+      / lineage / delisted gaps 只阻断 promotion；daily dry-run archive 通过统一 daily scheduler
+      path 写入 evidence ledger、outcome append-only、不触发 broker；reverse diagnostics activation
+      gate 仅在 benchmark/control、FMP source status 和 baseline-vs-simple benchmark 差异满足后打开
+      small controlled teacher/oracle batch；所有输出固定 production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0
+    - '2026-06-21: 新增并进入 IN_PROGRESS，原因：owner 要求推进 TRADING-765～769；本批目标是把 controlled
+      research 批次变得可解释、可每日留存、可安全打开 reverse diagnostics gate，仍不是 `PROMOTION_READY`。2026-06-21:
+      实现完成并转入 VALIDATING；真实 run 输出 benchmark_run_count=9、control_run_count=5、negative_control_promotion_count=0、future_leakage_trap_blocked=true、random_signal_not_promoted=true、baseline_vs_simple_interpretable_difference_count=3；Marketstack
+      降级为 limited second-source only；FMP controlled research primary price source
+      allowed=true，promotion_blocking_gap_count=4；forward daily archive 已 append ledger；activation
+      gate 为 `READY_FOR_CONTROLLED_ACTIVATION`，large-scale reverse diagnostics 仍关闭；focused
+      pytest、Ruff、Black check、compileall、fast-unit、contract-validation 和 report-validation
+      已通过。'
+    raw_line: '|TRADING-765_to_769_CONTROLLED_RESEARCH_EXPANSION_AND_FORWARD_SCHEDULE|Data
+      foundation + controlled strategy research / benchmark execution expansion, source
+      closure, forward schedule, and activation gate|P0|VALIDATING|项目 owner 后续复核 +
+      系统运行观察|详见 `docs/requirements/TRADING-765_to_769_Controlled_Research_Expansion_and_Forward_Schedule.md`；controlled
+      implementation 已生成真实 artifacts：benchmark/control expansion、Marketstack DATA_REQUIRED
+      closure、FMP WATCHLIST closure、forward evidence daily dry-run archive / ledger
+      和 reverse diagnostics activation gate|新增 CLI 输出 benchmark/control gross/net
+      return、turnover、drawdown、cost-aware metrics、by asset / by horizon / by regime；Marketstack
+      0.125 coverage 与 price/split/dividend DATA_REQUIRED root cause 明确，结论为 `LIMITED_SECOND_SOURCE_ONLY`
+      且不阻塞主 controlled research；FMP 明确可作为 controlled research 主价格源，provider timestamp
+      / available-time / lineage / delisted gaps 只阻断 promotion；daily dry-run archive
+      通过统一 daily scheduler path 写入 evidence ledger、outcome append-only、不触发 broker；reverse
+      diagnostics activation gate 仅在 benchmark/control、FMP source status 和 baseline-vs-simple
+      benchmark 差异满足后打开 small controlled teacher/oracle batch；所有输出固定 production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0|2026-06-21:
+      新增并进入 IN_PROGRESS，原因：owner 要求推进 TRADING-765～769；本批目标是把 controlled research 批次变得可解释、可每日留存、可安全打开
+      reverse diagnostics gate，仍不是 `PROMOTION_READY`。2026-06-21: 实现完成并转入 VALIDATING；真实
+      run 输出 benchmark_run_count=9、control_run_count=5、negative_control_promotion_count=0、future_leakage_trap_blocked=true、random_signal_not_promoted=true、baseline_vs_simple_interpretable_difference_count=3；Marketstack
+      降级为 limited second-source only；FMP controlled research primary price source
+      allowed=true，promotion_blocking_gap_count=4；forward daily archive 已 append ledger；activation
+      gate 为 `READY_FOR_CONTROLLED_ACTIVATION`，large-scale reverse diagnostics 仍关闭；focused
+      pytest、Ruff、Black check、compileall、fast-unit、contract-validation 和 report-validation
+      已通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d8ff1f385393ca51f6428ca4
+  task_id: TRADING-765_to_769_CONTROLLED_RESEARCH_EXPANSION_AND_FORWARD_SCHEDULE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 + 系统运行观察
+    notes: '2026-06-21: 新增并进入 IN_PROGRESS，原因：owner 要求推进 TRADING-765～769；本批目标是把 controlled
+      research 批次变得可解释、可每日留存、可安全打开 reverse diagnostics gate，仍不是 `PROMOTION_READY`。2026-06-21:
+      实现完成并转入 VALIDATING；真实 run 输出 benchmark_run_count=9、control_run_count=5、negative_control_promotion_count=0、future_leakage_trap_blocked=true、random_signal_not_promoted=true、baseline_vs_simple_interpretable_difference_count=3；Marketstack
+      降级为 limited second-source only；FMP controlled research primary price source
+      allowed=true，promotion_blocking_gap_count=4；forward daily archive 已 append ledger；activation
+      gate 为 `READY_FOR_CONTROLLED_ACTIVATION`，large-scale reverse diagnostics 仍关闭；focused
+      pytest、Ruff、Black check、compileall、fast-unit、contract-validation 和 report-validation
+      已通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d8ff1f385393ca51f6428ca4e9c51dc00e27baa2c2713f5df1a007981f01047c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-765_to_769_CONTROLLED_RESEARCH_EXPANSION_AND_FORWARD_SCHEDULE
+  - Data foundation + controlled strategy research / benchmark execution expansion,
+    source closure, forward schedule, and activation gate
+  - P0
+  - VALIDATING
+  - 项目 owner 后续复核 + 系统运行观察
+  - 详见 `docs/requirements/TRADING-765_to_769_Controlled_Research_Expansion_and_Forward_Schedule.md`；controlled
+    implementation 已生成真实 artifacts：benchmark/control expansion、Marketstack DATA_REQUIRED
+    closure、FMP WATCHLIST closure、forward evidence daily dry-run archive / ledger
+    和 reverse diagnostics activation gate
+  - 新增 CLI 输出 benchmark/control gross/net return、turnover、drawdown、cost-aware metrics、by
+    asset / by horizon / by regime；Marketstack 0.125 coverage 与 price/split/dividend
+    DATA_REQUIRED root cause 明确，结论为 `LIMITED_SECOND_SOURCE_ONLY` 且不阻塞主 controlled
+    research；FMP 明确可作为 controlled research 主价格源，provider timestamp / available-time
+    / lineage / delisted gaps 只阻断 promotion；daily dry-run archive 通过统一 daily scheduler
+    path 写入 evidence ledger、outcome append-only、不触发 broker；reverse diagnostics activation
+    gate 仅在 benchmark/control、FMP source status 和 baseline-vs-simple benchmark 差异满足后打开
+    small controlled teacher/oracle batch；所有输出固定 production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0
+  - '2026-06-21: 新增并进入 IN_PROGRESS，原因：owner 要求推进 TRADING-765～769；本批目标是把 controlled
+    research 批次变得可解释、可每日留存、可安全打开 reverse diagnostics gate，仍不是 `PROMOTION_READY`。2026-06-21:
+    实现完成并转入 VALIDATING；真实 run 输出 benchmark_run_count=9、control_run_count=5、negative_control_promotion_count=0、future_leakage_trap_blocked=true、random_signal_not_promoted=true、baseline_vs_simple_interpretable_difference_count=3；Marketstack
+    降级为 limited second-source only；FMP controlled research primary price source allowed=true，promotion_blocking_gap_count=4；forward
+    daily archive 已 append ledger；activation gate 为 `READY_FOR_CONTROLLED_ACTIVATION`，large-scale
+    reverse diagnostics 仍关闭；focused pytest、Ruff、Black check、compileall、fast-unit、contract-validation
+    和 report-validation 已通过。'
+  docs_links:
+  - docs/requirements/TRADING-765_to_769_Controlled_Research_Expansion_and_Forward_Schedule.md
+  terminal: false
+  raw_row_sha256: d8ff1f385393ca51f6428ca4e9c51dc00e27baa2c2713f5df1a007981f01047c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d5c05912457701cc29dc7028f6fa7536a5f4502ddf2f1b790c214b92c698b9f3

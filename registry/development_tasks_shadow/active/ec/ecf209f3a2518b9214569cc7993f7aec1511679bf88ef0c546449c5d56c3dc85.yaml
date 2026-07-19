@@ -1,0 +1,94 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-730_EXPERIMENT_RESULT_WAREHOUSE_RUN_REGISTRY
+  title: null
+  domain: Research runs / experiment result warehouse and run registry
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-726_to_733 总需求文档；建立 run registry、query、compare
+    和 reproducibility audit baseline
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits research runs register'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1369
+    row_sha256: db41ca946f3d36c39883dae21f6dc0a0314812090f7e68e7b125616fefa9ea0b
+    cell_count: 11
+    all_cells:
+    - TRADING-730_EXPERIMENT_RESULT_WAREHOUSE_RUN_REGISTRY
+    - Research runs / experiment result warehouse and run registry
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 TRADING-726_to_733 总需求文档；建立 run registry、query、compare 和 reproducibility
+      audit baseline
+    - '`aits research runs register'
+    - query
+    - compare
+    - audit` 可运行；run_registry_present=true；run_id 唯一；dataset/cost/label/config/code/policy
+      versions 可见；artifact_paths_valid=true
+    - '2026-06-21: validation-only baseline 已实现并进入 VALIDATING；新增 run registry schema、register/query/compare/audit
+      CLI 和测试；run registry 仅登记 research-only artifacts，不批准 promotion、paper-shadow
+      或 production change。'
+    raw_line: '|TRADING-730_EXPERIMENT_RESULT_WAREHOUSE_RUN_REGISTRY|Research runs
+      / experiment result warehouse and run registry|P1|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 TRADING-726_to_733 总需求文档；建立 run registry、query、compare 和 reproducibility
+      audit baseline|`aits research runs register|query|compare|audit` 可运行；run_registry_present=true；run_id
+      唯一；dataset/cost/label/config/code/policy versions 可见；artifact_paths_valid=true|2026-06-21:
+      validation-only baseline 已实现并进入 VALIDATING；新增 run registry schema、register/query/compare/audit
+      CLI 和测试；run registry 仅登记 research-only artifacts，不批准 promotion、paper-shadow
+      或 production change。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-db41ca946f3d36c39883dae2
+  task_id: TRADING-730_EXPERIMENT_RESULT_WAREHOUSE_RUN_REGISTRY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: query
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:db41ca946f3d36c39883dae21f6dc0a0314812090f7e68e7b125616fefa9ea0b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-730_EXPERIMENT_RESULT_WAREHOUSE_RUN_REGISTRY
+  - Research runs / experiment result warehouse and run registry
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-726_to_733 总需求文档；建立 run registry、query、compare 和 reproducibility audit
+    baseline
+  - '`aits research runs register'
+  - query
+  docs_links: []
+  terminal: false
+  raw_row_sha256: db41ca946f3d36c39883dae21f6dc0a0314812090f7e68e7b125616fefa9ea0b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c65a24d23fecc247c57e7262e47b474d65d81e6fdda5476faf40411b821cc5d9

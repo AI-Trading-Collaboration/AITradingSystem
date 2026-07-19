@@ -1,0 +1,143 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-015
+  title: null
+  domain: 运行展示/每日任务 Dashboard
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/operations/operations_runbook.md
+  - docs/requirements/daily_task_dashboard_2026-05-16.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/daily_task_dashboard_2026-05-16.md`；daily-run
+    总控展示页、`daily_decision_summary` 和只读 blocked-only `order_intent_candidates` 基础版已完成；后续若把候选转换为可执行
+    `OrderIntent`、paper runner 或真实 broker 流程，必须通过独立交易执行任务登记、验证和人工审批边界推进
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `outputs/reports/daily_task_dashboard_YYYY-MM-DD.html/json`，自动由 `aits
+      ops daily-run` 生成并进入 run bundle；页面首屏先汇总重要任务关键业务结论，包括投资动作/仓位/置信度/Data Gate、数据可信度、参数治理、反馈复盘、shadow
+      parameter search、pipeline health 和 secret hygiene；新增 `outputs/reports/daily_decision_summary_YYYY-MM-DD.json`，字段覆盖
+      as_of、run_id、`production_effect=none`、data_gate、investment_conclusion、parameter_governance、feedback_review、system_health、source_artifacts
+      / href / checksum；新增 `outputs/reports/order_intent_candidates_YYYY-MM-DD.json`，所有
+      candidate 必须 `blocked=true` 且至少包含 `trading_engine_not_enabled` 和 `manual_approval_required`；不得读取
+      broker API、paper broker、真实下单接口或账户状态，不生成订单或改变 scoring/gate/ledger
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 267
+    row_sha256: ee75a63e68bbc617e56973df31a37bff0e16154d035bae79bfb599a1b7d6129b
+    cell_count: 8
+    all_cells:
+    - OPS-015
+    - 运行展示/每日任务 Dashboard
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/daily_task_dashboard_2026-05-16.md`；daily-run 总控展示页、`daily_decision_summary`
+      和只读 blocked-only `order_intent_candidates` 基础版已完成；后续若把候选转换为可执行 `OrderIntent`、paper
+      runner 或真实 broker 流程，必须通过独立交易执行任务登记、验证和人工审批边界推进
+    - 新增 `outputs/reports/daily_task_dashboard_YYYY-MM-DD.html/json`，自动由 `aits ops
+      daily-run` 生成并进入 run bundle；页面首屏先汇总重要任务关键业务结论，包括投资动作/仓位/置信度/Data Gate、数据可信度、参数治理、反馈复盘、shadow
+      parameter search、pipeline health 和 secret hygiene；新增 `outputs/reports/daily_decision_summary_YYYY-MM-DD.json`，字段覆盖
+      as_of、run_id、`production_effect=none`、data_gate、investment_conclusion、parameter_governance、feedback_review、system_health、source_artifacts
+      / href / checksum；新增 `outputs/reports/order_intent_candidates_YYYY-MM-DD.json`，所有
+      candidate 必须 `blocked=true` 且至少包含 `trading_engine_not_enabled` 和 `manual_approval_required`；不得读取
+      broker API、paper broker、真实下单接口或账户状态，不生成订单或改变 scoring/gate/ledger
+    - '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 确认需要独立每日任务展示页，汇总各子任务最重要结论和重要风险。2026-05-16
+      至 2026-05-17: 逐步完成关键结论优先、shadow parameter 结论、参数/结果对比、子任务下钻、daily decision summary
+      和 blocked-only order intent candidates。2026-06-07: 继续 VALIDATING，原因：CI run `27084739065`
+      暴露 daily-run dashboard CLI 测试依赖本地未提交 decision snapshot；本轮补充 tmp_path 最小 snapshot
+      fixture，保持 Reader Brief 必需输入 fail-closed。2026-06-09: 从 VALIDATING 改为 DONE，原因：已先读取
+      `docs/operations/operations_runbook.md`，确认 daily scheduler 统一入口、quality gate、expected
+      artifacts 和 production-effect 边界；验证通过 `tests/test_daily_task_dashboard.py`、`tests/test_ops_daily.py`
+      和 `tests/test_cli_direct.py` 共 74 passed，文档新鲜度和 documentation contract 通过。'
+    raw_line: '|OPS-015|运行展示/每日任务 Dashboard|P1|DONE|系统验证|详细拆解见 `docs/requirements/daily_task_dashboard_2026-05-16.md`；daily-run
+      总控展示页、`daily_decision_summary` 和只读 blocked-only `order_intent_candidates` 基础版已完成；后续若把候选转换为可执行
+      `OrderIntent`、paper runner 或真实 broker 流程，必须通过独立交易执行任务登记、验证和人工审批边界推进|新增 `outputs/reports/daily_task_dashboard_YYYY-MM-DD.html/json`，自动由
+      `aits ops daily-run` 生成并进入 run bundle；页面首屏先汇总重要任务关键业务结论，包括投资动作/仓位/置信度/Data Gate、数据可信度、参数治理、反馈复盘、shadow
+      parameter search、pipeline health 和 secret hygiene；新增 `outputs/reports/daily_decision_summary_YYYY-MM-DD.json`，字段覆盖
+      as_of、run_id、`production_effect=none`、data_gate、investment_conclusion、parameter_governance、feedback_review、system_health、source_artifacts
+      / href / checksum；新增 `outputs/reports/order_intent_candidates_YYYY-MM-DD.json`，所有
+      candidate 必须 `blocked=true` 且至少包含 `trading_engine_not_enabled` 和 `manual_approval_required`；不得读取
+      broker API、paper broker、真实下单接口或账户状态，不生成订单或改变 scoring/gate/ledger|2026-05-16:
+      新增并进入 IN_PROGRESS，原因：owner 确认需要独立每日任务展示页，汇总各子任务最重要结论和重要风险。2026-05-16 至 2026-05-17:
+      逐步完成关键结论优先、shadow parameter 结论、参数/结果对比、子任务下钻、daily decision summary 和 blocked-only
+      order intent candidates。2026-06-07: 继续 VALIDATING，原因：CI run `27084739065` 暴露
+      daily-run dashboard CLI 测试依赖本地未提交 decision snapshot；本轮补充 tmp_path 最小 snapshot
+      fixture，保持 Reader Brief 必需输入 fail-closed。2026-06-09: 从 VALIDATING 改为 DONE，原因：已先读取
+      `docs/operations/operations_runbook.md`，确认 daily scheduler 统一入口、quality gate、expected
+      artifacts 和 production-effect 边界；验证通过 `tests/test_daily_task_dashboard.py`、`tests/test_ops_daily.py`
+      和 `tests/test_cli_direct.py` 共 74 passed，文档新鲜度和 documentation contract 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ee75a63e68bbc617e56973df
+  task_id: OPS-015
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 确认需要独立每日任务展示页，汇总各子任务最重要结论和重要风险。2026-05-16
+      至 2026-05-17: 逐步完成关键结论优先、shadow parameter 结论、参数/结果对比、子任务下钻、daily decision summary
+      和 blocked-only order intent candidates。2026-06-07: 继续 VALIDATING，原因：CI run `27084739065`
+      暴露 daily-run dashboard CLI 测试依赖本地未提交 decision snapshot；本轮补充 tmp_path 最小 snapshot
+      fixture，保持 Reader Brief 必需输入 fail-closed。2026-06-09: 从 VALIDATING 改为 DONE，原因：已先读取
+      `docs/operations/operations_runbook.md`，确认 daily scheduler 统一入口、quality gate、expected
+      artifacts 和 production-effect 边界；验证通过 `tests/test_daily_task_dashboard.py`、`tests/test_ops_daily.py`
+      和 `tests/test_cli_direct.py` 共 74 passed，文档新鲜度和 documentation contract 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ee75a63e68bbc617e56973df31a37bff0e16154d035bae79bfb599a1b7d6129b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-015
+  - 运行展示/每日任务 Dashboard
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/daily_task_dashboard_2026-05-16.md`；daily-run 总控展示页、`daily_decision_summary`
+    和只读 blocked-only `order_intent_candidates` 基础版已完成；后续若把候选转换为可执行 `OrderIntent`、paper
+    runner 或真实 broker 流程，必须通过独立交易执行任务登记、验证和人工审批边界推进
+  - 新增 `outputs/reports/daily_task_dashboard_YYYY-MM-DD.html/json`，自动由 `aits ops daily-run`
+    生成并进入 run bundle；页面首屏先汇总重要任务关键业务结论，包括投资动作/仓位/置信度/Data Gate、数据可信度、参数治理、反馈复盘、shadow
+    parameter search、pipeline health 和 secret hygiene；新增 `outputs/reports/daily_decision_summary_YYYY-MM-DD.json`，字段覆盖
+    as_of、run_id、`production_effect=none`、data_gate、investment_conclusion、parameter_governance、feedback_review、system_health、source_artifacts
+    / href / checksum；新增 `outputs/reports/order_intent_candidates_YYYY-MM-DD.json`，所有
+    candidate 必须 `blocked=true` 且至少包含 `trading_engine_not_enabled` 和 `manual_approval_required`；不得读取
+    broker API、paper broker、真实下单接口或账户状态，不生成订单或改变 scoring/gate/ledger
+  - '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 确认需要独立每日任务展示页，汇总各子任务最重要结论和重要风险。2026-05-16
+    至 2026-05-17: 逐步完成关键结论优先、shadow parameter 结论、参数/结果对比、子任务下钻、daily decision summary
+    和 blocked-only order intent candidates。2026-06-07: 继续 VALIDATING，原因：CI run `27084739065`
+    暴露 daily-run dashboard CLI 测试依赖本地未提交 decision snapshot；本轮补充 tmp_path 最小 snapshot
+    fixture，保持 Reader Brief 必需输入 fail-closed。2026-06-09: 从 VALIDATING 改为 DONE，原因：已先读取
+    `docs/operations/operations_runbook.md`，确认 daily scheduler 统一入口、quality gate、expected
+    artifacts 和 production-effect 边界；验证通过 `tests/test_daily_task_dashboard.py`、`tests/test_ops_daily.py`
+    和 `tests/test_cli_direct.py` 共 74 passed，文档新鲜度和 documentation contract 通过。'
+  docs_links:
+  - docs/operations/operations_runbook.md
+  - docs/requirements/daily_task_dashboard_2026-05-16.md
+  terminal: true
+  raw_row_sha256: ee75a63e68bbc617e56973df31a37bff0e16154d035bae79bfb599a1b7d6129b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: be0273ae82eeb44548e24680543872afd7f31d51e9e18ff8afe34d62980037f7

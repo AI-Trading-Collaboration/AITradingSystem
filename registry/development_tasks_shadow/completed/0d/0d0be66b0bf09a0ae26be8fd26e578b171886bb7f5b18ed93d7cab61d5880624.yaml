@@ -1,0 +1,120 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: BACKTEST-002
+  title: null
+  domain: 回测/数据可信度
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/pit_snapshot_archive_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成回测 A/B/C 数据可信度、vendor historical estimates
+    / self-archived snapshot 声明、核心输入 PIT 覆盖摘要、输入覆盖 CSV PIT 字段和 feature/universe lag
+    sensitivity Markdown + JSON；详细拆解见 `docs/requirements/pit_snapshot_archive_2026-05-04.md#backtest-002`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 回测报告显示 `Backtest Data Quality`、`Uses Vendor Historical Estimates`、`Uses
+      Self-Archived Snapshots`、`Minimum Feature Lag`、`Universe PIT`、`Corporate Actions
+      Handling` 和核心输入 `point_in_time_class/backtest_use` 覆盖；支持 0/1/3/5/10/20 交易日 feature-only、universe-only、combined
+      滞后敏感性；C 级探索性输入明确不得输出无条件 Sharpe 结论；已同步更新 `docs/system_flow.md` 并补充报告、CLI 和审计测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 448
+    row_sha256: 20e7471f61ee13b1e679e4579952969ae5a1fbd9b60491eba13ffd5520b1b947
+    cell_count: 8
+    all_cells:
+    - BACKTEST-002
+    - 回测/数据可信度
+    - P1
+    - DONE
+    - 系统实现
+    - 已完成回测 A/B/C 数据可信度、vendor historical estimates / self-archived snapshot 声明、核心输入
+      PIT 覆盖摘要、输入覆盖 CSV PIT 字段和 feature/universe lag sensitivity Markdown + JSON；详细拆解见
+      `docs/requirements/pit_snapshot_archive_2026-05-04.md#backtest-002`
+    - 回测报告显示 `Backtest Data Quality`、`Uses Vendor Historical Estimates`、`Uses Self-Archived
+      Snapshots`、`Minimum Feature Lag`、`Universe PIT`、`Corporate Actions Handling`
+      和核心输入 `point_in_time_class/backtest_use` 覆盖；支持 0/1/3/5/10/20 交易日 feature-only、universe-only、combined
+      滞后敏感性；C 级探索性输入明确不得输出无条件 Sharpe 结论；已同步更新 `docs/system_flow.md` 并补充报告、CLI 和审计测试
+    - '2026-05-04: 新增任务，原因：自建 PIT 只能改善未来样本，历史回测仍需要显式标注可信度和滞后敏感性，防止把供应商回填历史误读为可交易结论。2026-05-05:
+      从 READY 改为 IN_PROGRESS，原因：owner 要求按回测相关任务优先顺序继续开发，先实现 A/B/C 数据可信度、核心 PIT 覆盖摘要和
+      lag sensitivity 报告。2026-05-05: 从 IN_PROGRESS 改为 DONE，原因：`aits backtest` 已可输出数据可信度标签、核心
+      PIT 覆盖和滞后敏感性报告/摘要，C 级报告明确降级 Sharpe 解释；`ruff check src tests` 和 `.venv\Scripts\python.exe
+      -m pytest -q` 通过 371 项测试。'
+    raw_line: '|BACKTEST-002|回测/数据可信度|P1|DONE|系统实现|已完成回测 A/B/C 数据可信度、vendor historical
+      estimates / self-archived snapshot 声明、核心输入 PIT 覆盖摘要、输入覆盖 CSV PIT 字段和 feature/universe
+      lag sensitivity Markdown + JSON；详细拆解见 `docs/requirements/pit_snapshot_archive_2026-05-04.md#backtest-002`|回测报告显示
+      `Backtest Data Quality`、`Uses Vendor Historical Estimates`、`Uses Self-Archived
+      Snapshots`、`Minimum Feature Lag`、`Universe PIT`、`Corporate Actions Handling`
+      和核心输入 `point_in_time_class/backtest_use` 覆盖；支持 0/1/3/5/10/20 交易日 feature-only、universe-only、combined
+      滞后敏感性；C 级探索性输入明确不得输出无条件 Sharpe 结论；已同步更新 `docs/system_flow.md` 并补充报告、CLI 和审计测试|2026-05-04:
+      新增任务，原因：自建 PIT 只能改善未来样本，历史回测仍需要显式标注可信度和滞后敏感性，防止把供应商回填历史误读为可交易结论。2026-05-05:
+      从 READY 改为 IN_PROGRESS，原因：owner 要求按回测相关任务优先顺序继续开发，先实现 A/B/C 数据可信度、核心 PIT 覆盖摘要和
+      lag sensitivity 报告。2026-05-05: 从 IN_PROGRESS 改为 DONE，原因：`aits backtest` 已可输出数据可信度标签、核心
+      PIT 覆盖和滞后敏感性报告/摘要，C 级报告明确降级 Sharpe 解释；`ruff check src tests` 和 `.venv\Scripts\python.exe
+      -m pytest -q` 通过 371 项测试。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-20e7471f61ee13b1e679e457
+  task_id: BACKTEST-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-04: 新增任务，原因：自建 PIT 只能改善未来样本，历史回测仍需要显式标注可信度和滞后敏感性，防止把供应商回填历史误读为可交易结论。2026-05-05:
+      从 READY 改为 IN_PROGRESS，原因：owner 要求按回测相关任务优先顺序继续开发，先实现 A/B/C 数据可信度、核心 PIT 覆盖摘要和
+      lag sensitivity 报告。2026-05-05: 从 IN_PROGRESS 改为 DONE，原因：`aits backtest` 已可输出数据可信度标签、核心
+      PIT 覆盖和滞后敏感性报告/摘要，C 级报告明确降级 Sharpe 解释；`ruff check src tests` 和 `.venv\Scripts\python.exe
+      -m pytest -q` 通过 371 项测试。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:20e7471f61ee13b1e679e4579952969ae5a1fbd9b60491eba13ffd5520b1b947
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - BACKTEST-002
+  - 回测/数据可信度
+  - P1
+  - DONE
+  - 系统实现
+  - 已完成回测 A/B/C 数据可信度、vendor historical estimates / self-archived snapshot 声明、核心输入
+    PIT 覆盖摘要、输入覆盖 CSV PIT 字段和 feature/universe lag sensitivity Markdown + JSON；详细拆解见
+    `docs/requirements/pit_snapshot_archive_2026-05-04.md#backtest-002`
+  - 回测报告显示 `Backtest Data Quality`、`Uses Vendor Historical Estimates`、`Uses Self-Archived
+    Snapshots`、`Minimum Feature Lag`、`Universe PIT`、`Corporate Actions Handling` 和核心输入
+    `point_in_time_class/backtest_use` 覆盖；支持 0/1/3/5/10/20 交易日 feature-only、universe-only、combined
+    滞后敏感性；C 级探索性输入明确不得输出无条件 Sharpe 结论；已同步更新 `docs/system_flow.md` 并补充报告、CLI 和审计测试
+  - '2026-05-04: 新增任务，原因：自建 PIT 只能改善未来样本，历史回测仍需要显式标注可信度和滞后敏感性，防止把供应商回填历史误读为可交易结论。2026-05-05:
+    从 READY 改为 IN_PROGRESS，原因：owner 要求按回测相关任务优先顺序继续开发，先实现 A/B/C 数据可信度、核心 PIT 覆盖摘要和
+    lag sensitivity 报告。2026-05-05: 从 IN_PROGRESS 改为 DONE，原因：`aits backtest` 已可输出数据可信度标签、核心
+    PIT 覆盖和滞后敏感性报告/摘要，C 级报告明确降级 Sharpe 解释；`ruff check src tests` 和 `.venv\Scripts\python.exe
+    -m pytest -q` 通过 371 项测试。'
+  docs_links:
+  - docs/requirements/pit_snapshot_archive_2026-05-04.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: 20e7471f61ee13b1e679e4579952969ae5a1fbd9b60491eba13ffd5520b1b947
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: bef1823c5235ba514ccc97f4e379c70f249767a18260ebed6a78b7b7a006dd3a

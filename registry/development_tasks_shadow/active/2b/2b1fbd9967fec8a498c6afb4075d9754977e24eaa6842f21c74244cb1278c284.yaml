@@ -1,0 +1,126 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1841_to_1860_RETURN_SEEKING_DIAGNOSTIC_LANE_RESEARCH
+  title: null
+  domain: Research trends / return-seeking diagnostic lane
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md`；在
+    defensive lane 边界明确后，评估 first-layer v2 的 `stay_constructive`、`add_risk`、`high_confidence_risk_on`
+    是否只在 return-seeking probes 中有 diagnostic value；不得进入 defensive overlay 或 full allocation
+    主策略
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 return-seeking scope/policy、signal audit、return-seeking probe actual-path
+      review、beta/TQQQ attribution、2022 vs 2023+ contrast 和 closeout；必须判断是否只是更高 QQQ-equivalent
+      exposure 或 TQQQ beta；保留时也只能 forward diagnostic，不能接仓位、promotion、paper-shadow、production
+      或 broker
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1255
+    row_sha256: ab12ce5e5e2b35141cc26d0d622a08a6670d255a4d343356b7cbaf7d7ab1f7d9
+    cell_count: 8
+    all_cells:
+    - TRADING-1841_to_1860_RETURN_SEEKING_DIAGNOSTIC_LANE_RESEARCH
+    - Research trends / return-seeking diagnostic lane
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md`；在
+      defensive lane 边界明确后，评估 first-layer v2 的 `stay_constructive`、`add_risk`、`high_confidence_risk_on`
+      是否只在 return-seeking probes 中有 diagnostic value；不得进入 defensive overlay 或 full
+      allocation 主策略
+    - 新增 return-seeking scope/policy、signal audit、return-seeking probe actual-path
+      review、beta/TQQQ attribution、2022 vs 2023+ contrast 和 closeout；必须判断是否只是更高 QQQ-equivalent
+      exposure 或 TQQQ beta；保留时也只能 forward diagnostic，不能接仓位、promotion、paper-shadow、production
+      或 broker
+    - '2026-06-28: 从 owner 附件后续阶段登记为 READY；可与 Phase 2 结果并行研判，但 interpretation 必须服从
+      defensive lane veto。2026-06-28: 进入 IN_PROGRESS；本批只允许 return-seeking diagnostic
+      audit，不允许 defensive overlay/full allocation/gated integration/promotion/paper-shadow/production/broker。2026-06-28:
+      实现完成并转入 VALIDATING；真实 final status=`RETURN_SEEKING_DIAGNOSTIC_UPSIDE_DEPENDENT_DRAWDOWN_REGRESSED_PROMOTION_BLOCKED`，7/7
+      probes return delta 为正但 7/7 drawdown regression，diagnostic value count=0，TQQQ
+      beta dependency 和 2023+ dependence 均为 true。'
+    raw_line: '|TRADING-1841_to_1860_RETURN_SEEKING_DIAGNOSTIC_LANE_RESEARCH|Research
+      trends / return-seeking diagnostic lane|P1|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md`；在
+      defensive lane 边界明确后，评估 first-layer v2 的 `stay_constructive`、`add_risk`、`high_confidence_risk_on`
+      是否只在 return-seeking probes 中有 diagnostic value；不得进入 defensive overlay 或 full
+      allocation 主策略|新增 return-seeking scope/policy、signal audit、return-seeking probe
+      actual-path review、beta/TQQQ attribution、2022 vs 2023+ contrast 和 closeout；必须判断是否只是更高
+      QQQ-equivalent exposure 或 TQQQ beta；保留时也只能 forward diagnostic，不能接仓位、promotion、paper-shadow、production
+      或 broker|2026-06-28: 从 owner 附件后续阶段登记为 READY；可与 Phase 2 结果并行研判，但 interpretation
+      必须服从 defensive lane veto。2026-06-28: 进入 IN_PROGRESS；本批只允许 return-seeking diagnostic
+      audit，不允许 defensive overlay/full allocation/gated integration/promotion/paper-shadow/production/broker。2026-06-28:
+      实现完成并转入 VALIDATING；真实 final status=`RETURN_SEEKING_DIAGNOSTIC_UPSIDE_DEPENDENT_DRAWDOWN_REGRESSED_PROMOTION_BLOCKED`，7/7
+      probes return delta 为正但 7/7 drawdown regression，diagnostic value count=0，TQQQ
+      beta dependency 和 2023+ dependence 均为 true。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ab12ce5e5e2b35141cc26d0d
+  task_id: TRADING-1841_to_1860_RETURN_SEEKING_DIAGNOSTIC_LANE_RESEARCH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 从 owner 附件后续阶段登记为 READY；可与 Phase 2 结果并行研判，但 interpretation
+      必须服从 defensive lane veto。2026-06-28: 进入 IN_PROGRESS；本批只允许 return-seeking diagnostic
+      audit，不允许 defensive overlay/full allocation/gated integration/promotion/paper-shadow/production/broker。2026-06-28:
+      实现完成并转入 VALIDATING；真实 final status=`RETURN_SEEKING_DIAGNOSTIC_UPSIDE_DEPENDENT_DRAWDOWN_REGRESSED_PROMOTION_BLOCKED`，7/7
+      probes return delta 为正但 7/7 drawdown regression，diagnostic value count=0，TQQQ
+      beta dependency 和 2023+ dependence 均为 true。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ab12ce5e5e2b35141cc26d0d622a08a6670d255a4d343356b7cbaf7d7ab1f7d9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1841_to_1860_RETURN_SEEKING_DIAGNOSTIC_LANE_RESEARCH
+  - Research trends / return-seeking diagnostic lane
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md`；在
+    defensive lane 边界明确后，评估 first-layer v2 的 `stay_constructive`、`add_risk`、`high_confidence_risk_on`
+    是否只在 return-seeking probes 中有 diagnostic value；不得进入 defensive overlay 或 full allocation
+    主策略
+  - 新增 return-seeking scope/policy、signal audit、return-seeking probe actual-path review、beta/TQQQ
+    attribution、2022 vs 2023+ contrast 和 closeout；必须判断是否只是更高 QQQ-equivalent exposure
+    或 TQQQ beta；保留时也只能 forward diagnostic，不能接仓位、promotion、paper-shadow、production
+    或 broker
+  - '2026-06-28: 从 owner 附件后续阶段登记为 READY；可与 Phase 2 结果并行研判，但 interpretation 必须服从 defensive
+    lane veto。2026-06-28: 进入 IN_PROGRESS；本批只允许 return-seeking diagnostic audit，不允许
+    defensive overlay/full allocation/gated integration/promotion/paper-shadow/production/broker。2026-06-28:
+    实现完成并转入 VALIDATING；真实 final status=`RETURN_SEEKING_DIAGNOSTIC_UPSIDE_DEPENDENT_DRAWDOWN_REGRESSED_PROMOTION_BLOCKED`，7/7
+    probes return delta 为正但 7/7 drawdown regression，diagnostic value count=0，TQQQ
+    beta dependency 和 2023+ dependence 均为 true。'
+  docs_links:
+  - docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md
+  terminal: false
+  raw_row_sha256: ab12ce5e5e2b35141cc26d0d622a08a6670d255a4d343356b7cbaf7d7ab1f7d9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 93b187c94d5d41d3171a193eb5e4b1eaf12c28fa60bb4eccd899ef152986743b

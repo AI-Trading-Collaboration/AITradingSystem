@@ -1,0 +1,154 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-385_SIGNAL_INPUT_ROOT_CAUSE_AND_RESTORE
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue signal input root cause and restore
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核 signal warning
+  requirement_refs:
+  - docs/requirements/TRADING-385_Signal_Input_Root_Cause_And_Restore.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-385_Signal_Input_Root_Cause_And_Restore.md`；通过
+    canonical pipeline 恢复 ETF feature matrix、ETF signal series 和 latest signal snapshot
+    visibility，并新增只读 signal input recovery root-cause report；本任务不运行上游于 recovery report
+    内、不补造 signal/feature/snapshot artifact、不放宽 completeness policy、不修改 paper-shadow/production
+    state、不写 official target weights、不触发 broker/order
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_recovery.py`、`aits
+      etf dynamic-v3-rescue signal-input-recovery run/report`、`validate-signal-input-recovery`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；missing feature matrix 或 signal series 输出
+      `SIGNAL_INPUTS_STILL_BLOCKED` 并 hard stop，restored inputs 输出 restored artifact
+      ids 和 remaining warning list
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 211
+    row_sha256: 7458dab9a81e9253668e11bdb35353fb3ec461b91407d795d848fd3a8d8c9094
+    cell_count: 8
+    all_cells:
+    - TRADING-385_SIGNAL_INPUT_ROOT_CAUSE_AND_RESTORE
+    - ETF portfolio/dynamic v3 rescue signal input root cause and restore
+    - P0
+    - DONE
+    - 系统实现 + 项目 owner 后续复核 signal warning
+    - 详细拆解见 `docs/requirements/TRADING-385_Signal_Input_Root_Cause_And_Restore.md`；通过
+      canonical pipeline 恢复 ETF feature matrix、ETF signal series 和 latest signal snapshot
+      visibility，并新增只读 signal input recovery root-cause report；本任务不运行上游于 recovery
+      report 内、不补造 signal/feature/snapshot artifact、不放宽 completeness policy、不修改 paper-shadow/production
+      state、不写 official target weights、不触发 broker/order
+    - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_recovery.py`、`aits
+      etf dynamic-v3-rescue signal-input-recovery run/report`、`validate-signal-input-recovery`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；missing feature matrix 或 signal series 输出
+      `SIGNAL_INPUTS_STILL_BLOCKED` 并 hard stop，restored inputs 输出 restored artifact
+      ids 和 remaining warning list
+    - '2026-06-17: DONE；canonical recovery order 运行 `aits validate-data --as-of 2026-06-17`
+      为 `PASS_WITH_WARNINGS` / errors=0、`aits etf data validate` 为 PASS、`aits etf
+      features build --end latest` 生成 10620 rows、`aits signals build-snapshot --latest`
+      和 `aits reports signal-snapshot --latest` 生成 2026-06-15 latest snapshot、`aits
+      etf signals generate --date latest` 生成 2026-06-15 signals；restored completeness
+      monitor `signal-input-completeness_a0aacd1aac693cc0` 输出 `signal_input_status=WARNING`、blocking=0、warning=1；previous
+      monitor `signal-input-completeness_2fe124e7367a3282` stale `etf_feature_matrix`、`etf_signal_series`
+      和 `latest_signal_snapshot`。Recovery report 输出 `SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`，feature/signal
+      restored artifact ids 可见；remaining warning 为 latest signal snapshot status `LIMITED`，后续
+      TRADING-386/387 必须继续复核，不得解释为 promotion 或 extended-shadow approval。'
+    raw_line: '|TRADING-385_SIGNAL_INPUT_ROOT_CAUSE_AND_RESTORE|ETF portfolio/dynamic
+      v3 rescue signal input root cause and restore|P0|DONE|系统实现 + 项目 owner 后续复核 signal
+      warning|详细拆解见 `docs/requirements/TRADING-385_Signal_Input_Root_Cause_And_Restore.md`；通过
+      canonical pipeline 恢复 ETF feature matrix、ETF signal series 和 latest signal snapshot
+      visibility，并新增只读 signal input recovery root-cause report；本任务不运行上游于 recovery
+      report 内、不补造 signal/feature/snapshot artifact、不放宽 completeness policy、不修改 paper-shadow/production
+      state、不写 official target weights、不触发 broker/order|新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_recovery.py`、`aits
+      etf dynamic-v3-rescue signal-input-recovery run/report`、`validate-signal-input-recovery`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；missing feature matrix 或 signal series 输出
+      `SIGNAL_INPUTS_STILL_BLOCKED` 并 hard stop，restored inputs 输出 restored artifact
+      ids 和 remaining warning list|2026-06-17: DONE；canonical recovery order 运行 `aits
+      validate-data --as-of 2026-06-17` 为 `PASS_WITH_WARNINGS` / errors=0、`aits etf
+      data validate` 为 PASS、`aits etf features build --end latest` 生成 10620 rows、`aits
+      signals build-snapshot --latest` 和 `aits reports signal-snapshot --latest` 生成
+      2026-06-15 latest snapshot、`aits etf signals generate --date latest` 生成 2026-06-15
+      signals；restored completeness monitor `signal-input-completeness_a0aacd1aac693cc0`
+      输出 `signal_input_status=WARNING`、blocking=0、warning=1；previous monitor `signal-input-completeness_2fe124e7367a3282`
+      stale `etf_feature_matrix`、`etf_signal_series` 和 `latest_signal_snapshot`。Recovery
+      report 输出 `SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`，feature/signal restored artifact
+      ids 可见；remaining warning 为 latest signal snapshot status `LIMITED`，后续 TRADING-386/387
+      必须继续复核，不得解释为 promotion 或 extended-shadow approval。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7458dab9a81e9253668e11bd
+  task_id: TRADING-385_SIGNAL_INPUT_ROOT_CAUSE_AND_RESTORE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核 signal warning
+    notes: '2026-06-17: DONE；canonical recovery order 运行 `aits validate-data --as-of
+      2026-06-17` 为 `PASS_WITH_WARNINGS` / errors=0、`aits etf data validate` 为 PASS、`aits
+      etf features build --end latest` 生成 10620 rows、`aits signals build-snapshot
+      --latest` 和 `aits reports signal-snapshot --latest` 生成 2026-06-15 latest snapshot、`aits
+      etf signals generate --date latest` 生成 2026-06-15 signals；restored completeness
+      monitor `signal-input-completeness_a0aacd1aac693cc0` 输出 `signal_input_status=WARNING`、blocking=0、warning=1；previous
+      monitor `signal-input-completeness_2fe124e7367a3282` stale `etf_feature_matrix`、`etf_signal_series`
+      和 `latest_signal_snapshot`。Recovery report 输出 `SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`，feature/signal
+      restored artifact ids 可见；remaining warning 为 latest signal snapshot status `LIMITED`，后续
+      TRADING-386/387 必须继续复核，不得解释为 promotion 或 extended-shadow approval。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7458dab9a81e9253668e11bdb35353fb3ec461b91407d795d848fd3a8d8c9094
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-385_SIGNAL_INPUT_ROOT_CAUSE_AND_RESTORE
+  - ETF portfolio/dynamic v3 rescue signal input root cause and restore
+  - P0
+  - DONE
+  - 系统实现 + 项目 owner 后续复核 signal warning
+  - 详细拆解见 `docs/requirements/TRADING-385_Signal_Input_Root_Cause_And_Restore.md`；通过
+    canonical pipeline 恢复 ETF feature matrix、ETF signal series 和 latest signal snapshot
+    visibility，并新增只读 signal input recovery root-cause report；本任务不运行上游于 recovery report
+    内、不补造 signal/feature/snapshot artifact、不放宽 completeness policy、不修改 paper-shadow/production
+    state、不写 official target weights、不触发 broker/order
+  - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_recovery.py`、`aits
+    etf dynamic-v3-rescue signal-input-recovery run/report`、`validate-signal-input-recovery`、Reader
+    Brief section、report registry、artifact catalog、README、operations runbook、system
+    flow、requirements 和 focused tests；missing feature matrix 或 signal series 输出 `SIGNAL_INPUTS_STILL_BLOCKED`
+    并 hard stop，restored inputs 输出 restored artifact ids 和 remaining warning list
+  - '2026-06-17: DONE；canonical recovery order 运行 `aits validate-data --as-of 2026-06-17`
+    为 `PASS_WITH_WARNINGS` / errors=0、`aits etf data validate` 为 PASS、`aits etf features
+    build --end latest` 生成 10620 rows、`aits signals build-snapshot --latest` 和 `aits
+    reports signal-snapshot --latest` 生成 2026-06-15 latest snapshot、`aits etf signals
+    generate --date latest` 生成 2026-06-15 signals；restored completeness monitor `signal-input-completeness_a0aacd1aac693cc0`
+    输出 `signal_input_status=WARNING`、blocking=0、warning=1；previous monitor `signal-input-completeness_2fe124e7367a3282`
+    stale `etf_feature_matrix`、`etf_signal_series` 和 `latest_signal_snapshot`。Recovery
+    report 输出 `SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`，feature/signal restored artifact
+    ids 可见；remaining warning 为 latest signal snapshot status `LIMITED`，后续 TRADING-386/387
+    必须继续复核，不得解释为 promotion 或 extended-shadow approval。'
+  docs_links:
+  - docs/requirements/TRADING-385_Signal_Input_Root_Cause_And_Restore.md
+  terminal: true
+  raw_row_sha256: 7458dab9a81e9253668e11bdb35353fb3ec461b91407d795d848fd3a8d8c9094
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8cef06cba3465037ccf54d79414f9a8acebe14af1815c469cb84698b03417bf2

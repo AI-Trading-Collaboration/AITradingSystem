@@ -1,0 +1,158 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2406_GROWTH_TILT_ENGINE_PIT_AND_SIGNAL_CONSTRUCTION_REMEDIATION_PLAN
+  title: null
+  domain: Strategy research / growth tilt PIT remediation plan
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2407 valid-until window semantics and stale signal
+    remediation plan
+  requirement_refs:
+  - docs/requirements/TRADING-2406_Growth_Tilt_Engine_PIT_And_Signal_Construction_Remediation_Plan.md
+  - docs/tasks/completed/TRADING-2406_Growth_Tilt_Engine_PIT_And_Signal_Construction_Remediation_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2406_Growth_Tilt_Engine_PIT_And_Signal_Construction_Remediation_Plan.md`；承接
+    TRADING-2405 PIT coverage matrix reusable implementation，仅读取 prior validated TRADING-2405
+    / 2403 artifacts、governed PIT input registry、growth tilt candidate registry 和
+    strategy execution policy registry，生成 `growth_tilt_engine` source feature inventory、PIT
+    risk audit、signal construction gap analysis、remediation plan、severity downgrade
+    conditions 和 validation plan；本任务不清除或降级 blocker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-growth-tilt-engine-pit-signal-remediation-plan`；输出
+      `remediation_plan_result.json`、`source_feature_inventory.json`、`pit_risk_audit.json`、`signal_construction_gap_analysis.json`、`severity_downgrade_conditions.json`、`validation_plan.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_GROWTH_TILT_ENGINE_PIT_AND_SIGNAL_CONSTRUCTION_REMEDIATION_PLAN_READY`，input_under_review=`growth_tilt_engine`，current
+      severity=`BLOCKING`，current PIT status=`UNKNOWN_OR_APPROXIMATE_PIT`，source feature
+      inventory rows=10，PIT risk audit rows=6，`growth_tilt_engine_blocking_gap_resolved=false`，`growth_tilt_engine_severity_downgraded=false`，candidate_search_allowed=false，research_only_observation_allowed=false，paper_shadow_allowed=false，production_allowed=false，next
+      route=`TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan`，所有
+      safety fields false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 79
+    row_sha256: 4ed1cae5b0114606b80db838b6163797631e6d5d43267a408b01d81889bd0fbf
+    cell_count: 8
+    all_cells:
+    - TRADING-2406_GROWTH_TILT_ENGINE_PIT_AND_SIGNAL_CONSTRUCTION_REMEDIATION_PLAN
+    - Strategy research / growth tilt PIT remediation plan
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2407 valid-until window semantics and stale signal remediation
+      plan
+    - 详见 `docs/requirements/TRADING-2406_Growth_Tilt_Engine_PIT_And_Signal_Construction_Remediation_Plan.md`；承接
+      TRADING-2405 PIT coverage matrix reusable implementation，仅读取 prior validated
+      TRADING-2405 / 2403 artifacts、governed PIT input registry、growth tilt candidate
+      registry 和 strategy execution policy registry，生成 `growth_tilt_engine` source
+      feature inventory、PIT risk audit、signal construction gap analysis、remediation
+      plan、severity downgrade conditions 和 validation plan；本任务不清除或降级 blocker。
+    - 新增 `aits research strategies dynamic-strategy-growth-tilt-engine-pit-signal-remediation-plan`；输出
+      `remediation_plan_result.json`、`source_feature_inventory.json`、`pit_risk_audit.json`、`signal_construction_gap_analysis.json`、`severity_downgrade_conditions.json`、`validation_plan.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_GROWTH_TILT_ENGINE_PIT_AND_SIGNAL_CONSTRUCTION_REMEDIATION_PLAN_READY`，input_under_review=`growth_tilt_engine`，current
+      severity=`BLOCKING`，current PIT status=`UNKNOWN_OR_APPROXIMATE_PIT`，source feature
+      inventory rows=10，PIT risk audit rows=6，`growth_tilt_engine_blocking_gap_resolved=false`，`growth_tilt_engine_severity_downgraded=false`，candidate_search_allowed=false，research_only_observation_allowed=false，paper_shadow_allowed=false，production_allowed=false，next
+      route=`TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan`，所有
+      safety fields false/none。
+    - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务只做 remediation
+      plan / evidence inventory，未运行 `aits validate-data --as-of 2026-07-05`，因为只读取
+      prior validated 2405 / 2403 artifacts、PIT input registry 和 growth tilt / execution
+      policy configs，不读取 fresh cached market data、不运行新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。candidate auto-accept、research-only observation、scheduler、event
+      append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2406_Growth_Tilt_Engine_PIT_And_Signal_Construction_Remediation_Plan.md`。'
+    raw_line: '|TRADING-2406_GROWTH_TILT_ENGINE_PIT_AND_SIGNAL_CONSTRUCTION_REMEDIATION_PLAN|Strategy
+      research / growth tilt PIT remediation plan|P0|DONE|项目 owner 后续复核 TRADING-2407
+      valid-until window semantics and stale signal remediation plan|详见 `docs/requirements/TRADING-2406_Growth_Tilt_Engine_PIT_And_Signal_Construction_Remediation_Plan.md`；承接
+      TRADING-2405 PIT coverage matrix reusable implementation，仅读取 prior validated
+      TRADING-2405 / 2403 artifacts、governed PIT input registry、growth tilt candidate
+      registry 和 strategy execution policy registry，生成 `growth_tilt_engine` source
+      feature inventory、PIT risk audit、signal construction gap analysis、remediation
+      plan、severity downgrade conditions 和 validation plan；本任务不清除或降级 blocker。|新增 `aits
+      research strategies dynamic-strategy-growth-tilt-engine-pit-signal-remediation-plan`；输出
+      `remediation_plan_result.json`、`source_feature_inventory.json`、`pit_risk_audit.json`、`signal_construction_gap_analysis.json`、`severity_downgrade_conditions.json`、`validation_plan.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_GROWTH_TILT_ENGINE_PIT_AND_SIGNAL_CONSTRUCTION_REMEDIATION_PLAN_READY`，input_under_review=`growth_tilt_engine`，current
+      severity=`BLOCKING`，current PIT status=`UNKNOWN_OR_APPROXIMATE_PIT`，source feature
+      inventory rows=10，PIT risk audit rows=6，`growth_tilt_engine_blocking_gap_resolved=false`，`growth_tilt_engine_severity_downgraded=false`，candidate_search_allowed=false，research_only_observation_allowed=false，paper_shadow_allowed=false，production_allowed=false，next
+      route=`TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan`，所有
+      safety fields false/none。|2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07:
+      实现完成并归档 DONE；本任务只做 remediation plan / evidence inventory，未运行 `aits validate-data
+      --as-of 2026-07-05`，因为只读取 prior validated 2405 / 2403 artifacts、PIT input registry
+      和 growth tilt / execution policy configs，不读取 fresh cached market data、不运行新 backtest、不生成
+      technical features、scoring、daily report 或交易建议。candidate auto-accept、research-only
+      observation、scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      validation 结果见 `docs/tasks/completed/TRADING-2406_Growth_Tilt_Engine_PIT_And_Signal_Construction_Remediation_Plan.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4ed1cae5b0114606b80db838
+  task_id: TRADING-2406_GROWTH_TILT_ENGINE_PIT_AND_SIGNAL_CONSTRUCTION_REMEDIATION_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2407 valid-until window semantics and stale
+      signal remediation plan
+    notes: '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务只做
+      remediation plan / evidence inventory，未运行 `aits validate-data --as-of 2026-07-05`，因为只读取
+      prior validated 2405 / 2403 artifacts、PIT input registry 和 growth tilt / execution
+      policy configs，不读取 fresh cached market data、不运行新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。candidate auto-accept、research-only observation、scheduler、event
+      append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2406_Growth_Tilt_Engine_PIT_And_Signal_Construction_Remediation_Plan.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4ed1cae5b0114606b80db838b6163797631e6d5d43267a408b01d81889bd0fbf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2406_GROWTH_TILT_ENGINE_PIT_AND_SIGNAL_CONSTRUCTION_REMEDIATION_PLAN
+  - Strategy research / growth tilt PIT remediation plan
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2407 valid-until window semantics and stale signal remediation
+    plan
+  - 详见 `docs/requirements/TRADING-2406_Growth_Tilt_Engine_PIT_And_Signal_Construction_Remediation_Plan.md`；承接
+    TRADING-2405 PIT coverage matrix reusable implementation，仅读取 prior validated TRADING-2405
+    / 2403 artifacts、governed PIT input registry、growth tilt candidate registry 和
+    strategy execution policy registry，生成 `growth_tilt_engine` source feature inventory、PIT
+    risk audit、signal construction gap analysis、remediation plan、severity downgrade
+    conditions 和 validation plan；本任务不清除或降级 blocker。
+  - 新增 `aits research strategies dynamic-strategy-growth-tilt-engine-pit-signal-remediation-plan`；输出
+    `remediation_plan_result.json`、`source_feature_inventory.json`、`pit_risk_audit.json`、`signal_construction_gap_analysis.json`、`severity_downgrade_conditions.json`、`validation_plan.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_GROWTH_TILT_ENGINE_PIT_AND_SIGNAL_CONSTRUCTION_REMEDIATION_PLAN_READY`，input_under_review=`growth_tilt_engine`，current
+    severity=`BLOCKING`，current PIT status=`UNKNOWN_OR_APPROXIMATE_PIT`，source feature
+    inventory rows=10，PIT risk audit rows=6，`growth_tilt_engine_blocking_gap_resolved=false`，`growth_tilt_engine_severity_downgraded=false`，candidate_search_allowed=false，research_only_observation_allowed=false，paper_shadow_allowed=false，production_allowed=false，next
+    route=`TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan`，所有
+    safety fields false/none。
+  - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务只做 remediation
+    plan / evidence inventory，未运行 `aits validate-data --as-of 2026-07-05`，因为只读取 prior
+    validated 2405 / 2403 artifacts、PIT input registry 和 growth tilt / execution policy
+    configs，不读取 fresh cached market data、不运行新 backtest、不生成 technical features、scoring、daily
+    report 或交易建议。candidate auto-accept、research-only observation、scheduler、event append、outcome
+    binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+    report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2406_Growth_Tilt_Engine_PIT_And_Signal_Construction_Remediation_Plan.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2406_Growth_Tilt_Engine_PIT_And_Signal_Construction_Remediation_Plan.md
+  - docs/tasks/completed/TRADING-2406_Growth_Tilt_Engine_PIT_And_Signal_Construction_Remediation_Plan.md
+  terminal: true
+  raw_row_sha256: 4ed1cae5b0114606b80db838b6163797631e6d5d43267a408b01d81889bd0fbf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ba337ac9acdf0895f1668418028fe0ae2a9b7954e0e471be3dbb9f651a55129b

@@ -1,0 +1,194 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-034
+  title: null
+  domain: 交易执行/Operator Brief Notification Draft Dispatch
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/operator_brief_notification_draft_dispatch_2026-05-25.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/operator_brief_notification_draft_dispatch_2026-05-25.md`；只读
+    draft dispatch 核心模块、CLI、JSON/Markdown/latest/run.log、稳定 draft hash、TRADING-032
+    `body_markdown` schema 扩展、dashboard 只读卡片、runbook、system flow、artifact catalog、requirements
+    索引、专项测试和最终收尾验证已完成；本任务严格 draft-dispatch-only/read-only，不发送 email、不创建 Gmail draft、不调用
+    Gmail/SMTP/webhook、不访问网络、不读取 `.env` secrets、不修改 TRADING-032/TRADING-033 artifact
+    或 approval marker
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_operator_brief_notification_draft_dispatch.py` 和 `src/ai_trading_system/trading_engine/operator_brief_notification_draft_dispatch.py`；输出
+      `data/derived/operator_briefs/notifications/draft_dispatch/operator_brief_notification_draft_dispatch_YYYY-MM-DD.json/md`、`latest.json`、`latest.md`、`run.log`；支持
+      `DRAFT_READY` / `APPROVAL_REQUIRED` / `APPROVAL_EXPIRED` / `APPROVAL_MISMATCH`
+      / `SAFETY_BLOCKED` / `BLOCKED` / `NOOP`；稳定 `draft_hash` 忽略 `generated_at` 等
+      volatile 字段；dashboard 只读读取 TRADING-034 `latest.json`，不重跑 draft dispatch 或任何发送链路；repo
+      外 smoke 覆盖正常 `DRAFT_READY`、缺少必要 artifact 的 `BLOCKED`、preview/gate hash 不匹配的
+      `APPROVAL_MISMATCH`、TRADING-032 safety blocked 的 `SAFETY_BLOCKED`、`latest.json`
+      更新、历史 dated artifact 未覆盖和 Dashboard 只读读取；全部 smoke 均确认 `production_effect=none`、`manual_review_only=true`、`draft_dispatch_only=true`、`read_only=true`，email/Gmail/Slack/Discord/webhook/mobile
+      push/operator brief/pipeline/data/apply/rollback/broker/replay/trading flags
+      均为 false；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff
+      和 diff check；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+      diff
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 395
+    row_sha256: 37cdc2cf4cd40974ef6a8d160abbde98b6e25d22ced56096787e37b53687e721
+    cell_count: 8
+    all_cells:
+    - TRADING-034
+    - 交易执行/Operator Brief Notification Draft Dispatch
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/operator_brief_notification_draft_dispatch_2026-05-25.md`；只读
+      draft dispatch 核心模块、CLI、JSON/Markdown/latest/run.log、稳定 draft hash、TRADING-032
+      `body_markdown` schema 扩展、dashboard 只读卡片、runbook、system flow、artifact catalog、requirements
+      索引、专项测试和最终收尾验证已完成；本任务严格 draft-dispatch-only/read-only，不发送 email、不创建 Gmail draft、不调用
+      Gmail/SMTP/webhook、不访问网络、不读取 `.env` secrets、不修改 TRADING-032/TRADING-033 artifact
+      或 approval marker
+    - 新增 `scripts/run_operator_brief_notification_draft_dispatch.py` 和 `src/ai_trading_system/trading_engine/operator_brief_notification_draft_dispatch.py`；输出
+      `data/derived/operator_briefs/notifications/draft_dispatch/operator_brief_notification_draft_dispatch_YYYY-MM-DD.json/md`、`latest.json`、`latest.md`、`run.log`；支持
+      `DRAFT_READY` / `APPROVAL_REQUIRED` / `APPROVAL_EXPIRED` / `APPROVAL_MISMATCH`
+      / `SAFETY_BLOCKED` / `BLOCKED` / `NOOP`；稳定 `draft_hash` 忽略 `generated_at` 等
+      volatile 字段；dashboard 只读读取 TRADING-034 `latest.json`，不重跑 draft dispatch 或任何发送链路；repo
+      外 smoke 覆盖正常 `DRAFT_READY`、缺少必要 artifact 的 `BLOCKED`、preview/gate hash 不匹配的
+      `APPROVAL_MISMATCH`、TRADING-032 safety blocked 的 `SAFETY_BLOCKED`、`latest.json`
+      更新、历史 dated artifact 未覆盖和 Dashboard 只读读取；全部 smoke 均确认 `production_effect=none`、`manual_review_only=true`、`draft_dispatch_only=true`、`read_only=true`，email/Gmail/Slack/Discord/webhook/mobile
+      push/operator brief/pipeline/data/apply/rollback/broker/replay/trading flags
+      均为 false；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff
+      和 diff check；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+      diff
+    - '2026-05-25: 新增并进入 IN_PROGRESS，原因：TRADING-033 只判断 approval gate 是否允许进入下一阶段，仍缺少真实发送前唯一可审阅
+      draft dispatch artifact；本任务只生成本地草稿 artifact，并为未来 actual dispatch 提供唯一输入，不执行任何外部副作用。2026-05-25:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 draft dispatch builder、CLI、JSON/Markdown/latest/run.log、稳定
+      draft hash、TRADING-032 `body_markdown` 扩展、dashboard 只读卡片、runbook、system flow、artifact
+      catalog、requirements 索引和专项测试；验证通过 `tests/trading_engine/test_operator_brief_notification_draft_dispatch.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断。2026-05-25: 从 VALIDATING 改为 DONE，原因：最终 repo 外 smoke 确认正常 draft dispatch、缺少必要
+      artifact、hash mismatch、safety blocked 和 latest 更新/历史 artifact 未覆盖场景；Dashboard
+      import guard 确认 TRADING-034 卡片只读读取 latest.json，不触发 TRADING-034 script、approval
+      gate、dispatch preview、operator brief、notification draft generator、email/Gmail/Slack/Discord/webhook/mobile
+      push、market/backtest/scoring/data download/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关
+      `tests/test_market_data.py` baseline 阻断。'
+    raw_line: '|TRADING-034|交易执行/Operator Brief Notification Draft Dispatch|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/operator_brief_notification_draft_dispatch_2026-05-25.md`；只读
+      draft dispatch 核心模块、CLI、JSON/Markdown/latest/run.log、稳定 draft hash、TRADING-032
+      `body_markdown` schema 扩展、dashboard 只读卡片、runbook、system flow、artifact catalog、requirements
+      索引、专项测试和最终收尾验证已完成；本任务严格 draft-dispatch-only/read-only，不发送 email、不创建 Gmail draft、不调用
+      Gmail/SMTP/webhook、不访问网络、不读取 `.env` secrets、不修改 TRADING-032/TRADING-033 artifact
+      或 approval marker|新增 `scripts/run_operator_brief_notification_draft_dispatch.py`
+      和 `src/ai_trading_system/trading_engine/operator_brief_notification_draft_dispatch.py`；输出
+      `data/derived/operator_briefs/notifications/draft_dispatch/operator_brief_notification_draft_dispatch_YYYY-MM-DD.json/md`、`latest.json`、`latest.md`、`run.log`；支持
+      `DRAFT_READY` / `APPROVAL_REQUIRED` / `APPROVAL_EXPIRED` / `APPROVAL_MISMATCH`
+      / `SAFETY_BLOCKED` / `BLOCKED` / `NOOP`；稳定 `draft_hash` 忽略 `generated_at` 等
+      volatile 字段；dashboard 只读读取 TRADING-034 `latest.json`，不重跑 draft dispatch 或任何发送链路；repo
+      外 smoke 覆盖正常 `DRAFT_READY`、缺少必要 artifact 的 `BLOCKED`、preview/gate hash 不匹配的
+      `APPROVAL_MISMATCH`、TRADING-032 safety blocked 的 `SAFETY_BLOCKED`、`latest.json`
+      更新、历史 dated artifact 未覆盖和 Dashboard 只读读取；全部 smoke 均确认 `production_effect=none`、`manual_review_only=true`、`draft_dispatch_only=true`、`read_only=true`，email/Gmail/Slack/Discord/webhook/mobile
+      push/operator brief/pipeline/data/apply/rollback/broker/replay/trading flags
+      均为 false；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff
+      和 diff check；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+      diff|2026-05-25: 新增并进入 IN_PROGRESS，原因：TRADING-033 只判断 approval gate 是否允许进入下一阶段，仍缺少真实发送前唯一可审阅
+      draft dispatch artifact；本任务只生成本地草稿 artifact，并为未来 actual dispatch 提供唯一输入，不执行任何外部副作用。2026-05-25:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 draft dispatch builder、CLI、JSON/Markdown/latest/run.log、稳定
+      draft hash、TRADING-032 `body_markdown` 扩展、dashboard 只读卡片、runbook、system flow、artifact
+      catalog、requirements 索引和专项测试；验证通过 `tests/trading_engine/test_operator_brief_notification_draft_dispatch.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断。2026-05-25: 从 VALIDATING 改为 DONE，原因：最终 repo 外 smoke 确认正常 draft dispatch、缺少必要
+      artifact、hash mismatch、safety blocked 和 latest 更新/历史 artifact 未覆盖场景；Dashboard
+      import guard 确认 TRADING-034 卡片只读读取 latest.json，不触发 TRADING-034 script、approval
+      gate、dispatch preview、operator brief、notification draft generator、email/Gmail/Slack/Discord/webhook/mobile
+      push、market/backtest/scoring/data download/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关
+      `tests/test_market_data.py` baseline 阻断。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-37cdc2cf4cd40974ef6a8d16
+  task_id: TRADING-034
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-25: 新增并进入 IN_PROGRESS，原因：TRADING-033 只判断 approval gate 是否允许进入下一阶段，仍缺少真实发送前唯一可审阅
+      draft dispatch artifact；本任务只生成本地草稿 artifact，并为未来 actual dispatch 提供唯一输入，不执行任何外部副作用。2026-05-25:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 draft dispatch builder、CLI、JSON/Markdown/latest/run.log、稳定
+      draft hash、TRADING-032 `body_markdown` 扩展、dashboard 只读卡片、runbook、system flow、artifact
+      catalog、requirements 索引和专项测试；验证通过 `tests/trading_engine/test_operator_brief_notification_draft_dispatch.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断。2026-05-25: 从 VALIDATING 改为 DONE，原因：最终 repo 外 smoke 确认正常 draft dispatch、缺少必要
+      artifact、hash mismatch、safety blocked 和 latest 更新/历史 artifact 未覆盖场景；Dashboard
+      import guard 确认 TRADING-034 卡片只读读取 latest.json，不触发 TRADING-034 script、approval
+      gate、dispatch preview、operator brief、notification draft generator、email/Gmail/Slack/Discord/webhook/mobile
+      push、market/backtest/scoring/data download/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关
+      `tests/test_market_data.py` baseline 阻断。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:37cdc2cf4cd40974ef6a8d160abbde98b6e25d22ced56096787e37b53687e721
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-034
+  - 交易执行/Operator Brief Notification Draft Dispatch
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/operator_brief_notification_draft_dispatch_2026-05-25.md`；只读
+    draft dispatch 核心模块、CLI、JSON/Markdown/latest/run.log、稳定 draft hash、TRADING-032
+    `body_markdown` schema 扩展、dashboard 只读卡片、runbook、system flow、artifact catalog、requirements
+    索引、专项测试和最终收尾验证已完成；本任务严格 draft-dispatch-only/read-only，不发送 email、不创建 Gmail draft、不调用
+    Gmail/SMTP/webhook、不访问网络、不读取 `.env` secrets、不修改 TRADING-032/TRADING-033 artifact
+    或 approval marker
+  - 新增 `scripts/run_operator_brief_notification_draft_dispatch.py` 和 `src/ai_trading_system/trading_engine/operator_brief_notification_draft_dispatch.py`；输出
+    `data/derived/operator_briefs/notifications/draft_dispatch/operator_brief_notification_draft_dispatch_YYYY-MM-DD.json/md`、`latest.json`、`latest.md`、`run.log`；支持
+    `DRAFT_READY` / `APPROVAL_REQUIRED` / `APPROVAL_EXPIRED` / `APPROVAL_MISMATCH`
+    / `SAFETY_BLOCKED` / `BLOCKED` / `NOOP`；稳定 `draft_hash` 忽略 `generated_at` 等 volatile
+    字段；dashboard 只读读取 TRADING-034 `latest.json`，不重跑 draft dispatch 或任何发送链路；repo 外
+    smoke 覆盖正常 `DRAFT_READY`、缺少必要 artifact 的 `BLOCKED`、preview/gate hash 不匹配的 `APPROVAL_MISMATCH`、TRADING-032
+    safety blocked 的 `SAFETY_BLOCKED`、`latest.json` 更新、历史 dated artifact 未覆盖和 Dashboard
+    只读读取；全部 smoke 均确认 `production_effect=none`、`manual_review_only=true`、`draft_dispatch_only=true`、`read_only=true`，email/Gmail/Slack/Discord/webhook/mobile
+    push/operator brief/pipeline/data/apply/rollback/broker/replay/trading flags 均为
+    false；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和 diff
+    check；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+    diff
+  - '2026-05-25: 新增并进入 IN_PROGRESS，原因：TRADING-033 只判断 approval gate 是否允许进入下一阶段，仍缺少真实发送前唯一可审阅
+    draft dispatch artifact；本任务只生成本地草稿 artifact，并为未来 actual dispatch 提供唯一输入，不执行任何外部副作用。2026-05-25:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已完成 draft dispatch builder、CLI、JSON/Markdown/latest/run.log、稳定
+    draft hash、TRADING-032 `body_markdown` 扩展、dashboard 只读卡片、runbook、system flow、artifact
+    catalog、requirements 索引和专项测试；验证通过 `tests/trading_engine/test_operator_brief_notification_draft_dispatch.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+    pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关 `tests/test_market_data.py` baseline
+    阻断。2026-05-25: 从 VALIDATING 改为 DONE，原因：最终 repo 外 smoke 确认正常 draft dispatch、缺少必要
+    artifact、hash mismatch、safety blocked 和 latest 更新/历史 artifact 未覆盖场景；Dashboard
+    import guard 确认 TRADING-034 卡片只读读取 latest.json，不触发 TRADING-034 script、approval
+    gate、dispatch preview、operator brief、notification draft generator、email/Gmail/Slack/Discord/webhook/mobile
+    push、market/backtest/scoring/data download/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+    pytest、`tests/trading_engine`、全量 pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关
+    `tests/test_market_data.py` baseline 阻断。'
+  docs_links:
+  - docs/requirements/operator_brief_notification_draft_dispatch_2026-05-25.md
+  terminal: true
+  raw_row_sha256: 37cdc2cf4cd40974ef6a8d160abbde98b6e25d22ced56096787e37b53687e721
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e5d6354b58fb26a91874c74a66b47603cd8545b5993397e2b52378218b928a7b

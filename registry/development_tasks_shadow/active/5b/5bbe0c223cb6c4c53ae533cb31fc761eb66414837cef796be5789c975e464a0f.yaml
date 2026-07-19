@@ -1,0 +1,132 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2308_AI_SEMICONDUCTOR_LEADERSHIP_GENERATOR_POC
+  title: null
+  domain: Research trends / AI semiconductor leadership candidate family
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2308_AI_Semiconductor_Leadership_Generator_POC.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2308_AI_Semiconductor_Leadership_Generator_POC.md`；依赖
+    TRADING-2307 feasibility audit、required-symbol cached price quality gate 和 AI
+    core basket pilot policy。Full-universe validation 当前因 `ASX` 缺失 fail-closed，本任务只能声明
+    TRADING-2308 required-symbol price-proxy readiness，不能声明 full-universe data readiness。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `smh_relative_strength_leadership_v1`、`ai_semiconductor_leadership_quality_v1`、`ai_core_basket_leadership_v1`
+      的 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary
+      和 safety / policy summary；所有 artifacts 固定 actual-path validation / promotion
+      / paper-shadow / production / broker false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1212
+    row_sha256: e3caa7bf0a1e0381441b5eac6779e811258217fbd520f37aeff2783db97fa4bb
+    cell_count: 8
+    all_cells:
+    - TRADING-2308_AI_SEMICONDUCTOR_LEADERSHIP_GENERATOR_POC
+    - Research trends / AI semiconductor leadership candidate family
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2308_AI_Semiconductor_Leadership_Generator_POC.md`；依赖
+      TRADING-2307 feasibility audit、required-symbol cached price quality gate 和 AI
+      core basket pilot policy。Full-universe validation 当前因 `ASX` 缺失 fail-closed，本任务只能声明
+      TRADING-2308 required-symbol price-proxy readiness，不能声明 full-universe data readiness。
+    - 生成 `smh_relative_strength_leadership_v1`、`ai_semiconductor_leadership_quality_v1`、`ai_core_basket_leadership_v1`
+      的 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary
+      和 safety / policy summary；所有 artifacts 固定 actual-path validation / promotion
+      / paper-shadow / production / broker false/none。
+    - '2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2307 recommended_next_task
+      新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging。2026-07-01:
+      实现完成并转入 VALIDATING；真实 run status=`AI_SEMICONDUCTOR_LEADERSHIP_GENERATOR_POC_READY_VALIDATION_BLOCKED`，candidate_count=3，validation_status=`PASS`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`，三组
+      candidate-bound POC bundle 已生成，full-universe readiness 未声明；验证通过 TRADING-2308
+      focused parallel pytest 7 passed、docs/registry focused parallel pytest 45 passed、Ruff、compileall、`aits
+      validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation 193
+      passed 和 `git diff --check`。'
+    raw_line: '|TRADING-2308_AI_SEMICONDUCTOR_LEADERSHIP_GENERATOR_POC|Research trends
+      / AI semiconductor leadership candidate family|P1|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-2308_AI_Semiconductor_Leadership_Generator_POC.md`；依赖
+      TRADING-2307 feasibility audit、required-symbol cached price quality gate 和 AI
+      core basket pilot policy。Full-universe validation 当前因 `ASX` 缺失 fail-closed，本任务只能声明
+      TRADING-2308 required-symbol price-proxy readiness，不能声明 full-universe data readiness。|生成
+      `smh_relative_strength_leadership_v1`、`ai_semiconductor_leadership_quality_v1`、`ai_core_basket_leadership_v1`
+      的 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary
+      和 safety / policy summary；所有 artifacts 固定 actual-path validation / promotion
+      / paper-shadow / production / broker false/none。|2026-07-01: 根据 owner post-2302
+      roadmap 和 TRADING-2307 recommended_next_task 新增并进入 IN_PROGRESS；当前 worktree 有两个无关
+      research 文档未提交改动，本任务必须 selective staging。2026-07-01: 实现完成并转入 VALIDATING；真实 run
+      status=`AI_SEMICONDUCTOR_LEADERSHIP_GENERATOR_POC_READY_VALIDATION_BLOCKED`，candidate_count=3，validation_status=`PASS`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`，三组
+      candidate-bound POC bundle 已生成，full-universe readiness 未声明；验证通过 TRADING-2308
+      focused parallel pytest 7 passed、docs/registry focused parallel pytest 45 passed、Ruff、compileall、`aits
+      validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation 193
+      passed 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e3caa7bf0a1e0381441b5eac
+  task_id: TRADING-2308_AI_SEMICONDUCTOR_LEADERSHIP_GENERATOR_POC
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2307 recommended_next_task
+      新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging。2026-07-01:
+      实现完成并转入 VALIDATING；真实 run status=`AI_SEMICONDUCTOR_LEADERSHIP_GENERATOR_POC_READY_VALIDATION_BLOCKED`，candidate_count=3，validation_status=`PASS`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`，三组
+      candidate-bound POC bundle 已生成，full-universe readiness 未声明；验证通过 TRADING-2308
+      focused parallel pytest 7 passed、docs/registry focused parallel pytest 45 passed、Ruff、compileall、`aits
+      validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation 193
+      passed 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e3caa7bf0a1e0381441b5eac6779e811258217fbd520f37aeff2783db97fa4bb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2308_AI_SEMICONDUCTOR_LEADERSHIP_GENERATOR_POC
+  - Research trends / AI semiconductor leadership candidate family
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2308_AI_Semiconductor_Leadership_Generator_POC.md`；依赖
+    TRADING-2307 feasibility audit、required-symbol cached price quality gate 和 AI
+    core basket pilot policy。Full-universe validation 当前因 `ASX` 缺失 fail-closed，本任务只能声明
+    TRADING-2308 required-symbol price-proxy readiness，不能声明 full-universe data readiness。
+  - 生成 `smh_relative_strength_leadership_v1`、`ai_semiconductor_leadership_quality_v1`、`ai_core_basket_leadership_v1`
+    的 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary
+    和 safety / policy summary；所有 artifacts 固定 actual-path validation / promotion /
+    paper-shadow / production / broker false/none。
+  - '2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2307 recommended_next_task 新增并进入
+    IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging。2026-07-01:
+    实现完成并转入 VALIDATING；真实 run status=`AI_SEMICONDUCTOR_LEADERSHIP_GENERATOR_POC_READY_VALIDATION_BLOCKED`，candidate_count=3，validation_status=`PASS`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`，三组
+    candidate-bound POC bundle 已生成，full-universe readiness 未声明；验证通过 TRADING-2308 focused
+    parallel pytest 7 passed、docs/registry focused parallel pytest 45 passed、Ruff、compileall、`aits
+    validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation 193 passed
+    和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-2308_AI_Semiconductor_Leadership_Generator_POC.md
+  terminal: false
+  raw_row_sha256: e3caa7bf0a1e0381441b5eac6779e811258217fbd520f37aeff2783db97fa4bb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 219af381451a3fbc4adc8a39fe7177f2d93a7f5d055982b19fce6c24a769b985

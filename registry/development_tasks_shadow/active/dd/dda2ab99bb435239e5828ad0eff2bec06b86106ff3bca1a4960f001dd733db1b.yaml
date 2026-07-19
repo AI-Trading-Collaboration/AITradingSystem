@@ -1,0 +1,97 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: PROD-002
+  title: null
+  domain: 趋势判断/风险复核运行纪律
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner + 系统验证
+  requirement_refs:
+  - docs/requirements/production_readiness_gaps_2026-05-04.md
+  - docs/requirements/risk_event_review_workflow_2026-05-04.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: '`RISK-005/RISK-006/RISK-007/RISK-008`
+    已有工程底座；下一步需要 owner 明确每日风险复核责任人、合格来源清单、跳过规则和复核声明运行纪律；详细索引见 `docs/requirements/production_readiness_gaps_2026-05-04.md`
+    与 `docs/requirements/risk_event_review_workflow_2026-05-04.md`'
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 连续运行样本中，日报能区分“已复核且未发现未记录重大事件”“有待复核 backlog”“复核缺失导致 policy/geopolitics 降级”；有效复核声明必须包含
+      reviewer、source scope、reviewed_at、coverage window 和结论；缺失或过期声明时不得把空 occurrence
+      目录解释为无风险
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1498
+    row_sha256: 159b914b1aa1b4519a81a77dd676e33bf77683dd49ff74f91b07bcf71014903c
+    cell_count: 8
+    all_cells:
+    - PROD-002
+    - 趋势判断/风险复核运行纪律
+    - P1
+    - BLOCKED_OWNER_INPUT
+    - 项目 owner + 系统验证
+    - '`RISK-005/RISK-006/RISK-007/RISK-008` 已有工程底座；下一步需要 owner 明确每日风险复核责任人、合格来源清单、跳过规则和复核声明运行纪律；详细索引见
+      `docs/requirements/production_readiness_gaps_2026-05-04.md` 与 `docs/requirements/risk_event_review_workflow_2026-05-04.md`'
+    - 连续运行样本中，日报能区分“已复核且未发现未记录重大事件”“有待复核 backlog”“复核缺失导致 policy/geopolitics 降级”；有效复核声明必须包含
+      reviewer、source scope、reviewed_at、coverage window 和结论；缺失或过期声明时不得把空 occurrence
+      目录解释为无风险
+    - '2026-05-06: 从 `PROD-001` 拆出，原因：总控任务已完成缺口登记和边界收口，但风险事件真实复核是 owner 运营纪律，不应继续压在总任务里。'
+    raw_line: '|PROD-002|趋势判断/风险复核运行纪律|P1|BLOCKED_OWNER_INPUT|项目 owner + 系统验证|`RISK-005/RISK-006/RISK-007/RISK-008`
+      已有工程底座；下一步需要 owner 明确每日风险复核责任人、合格来源清单、跳过规则和复核声明运行纪律；详细索引见 `docs/requirements/production_readiness_gaps_2026-05-04.md`
+      与 `docs/requirements/risk_event_review_workflow_2026-05-04.md`|连续运行样本中，日报能区分“已复核且未发现未记录重大事件”“有待复核
+      backlog”“复核缺失导致 policy/geopolitics 降级”；有效复核声明必须包含 reviewer、source scope、reviewed_at、coverage
+      window 和结论；缺失或过期声明时不得把空 occurrence 目录解释为无风险|2026-05-06: 从 `PROD-001` 拆出，原因：总控任务已完成缺口登记和边界收口，但风险事件真实复核是
+      owner 运营纪律，不应继续压在总任务里。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-159b914b1aa1b4519a81a77d
+  task_id: PROD-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P1
+    next_owner: 项目 owner + 系统验证
+    notes: '2026-05-06: 从 `PROD-001` 拆出，原因：总控任务已完成缺口登记和边界收口，但风险事件真实复核是 owner 运营纪律，不应继续压在总任务里。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:159b914b1aa1b4519a81a77dd676e33bf77683dd49ff74f91b07bcf71014903c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - PROD-002
+  - 趋势判断/风险复核运行纪律
+  - P1
+  - BLOCKED_OWNER_INPUT
+  - 项目 owner + 系统验证
+  - '`RISK-005/RISK-006/RISK-007/RISK-008` 已有工程底座；下一步需要 owner 明确每日风险复核责任人、合格来源清单、跳过规则和复核声明运行纪律；详细索引见
+    `docs/requirements/production_readiness_gaps_2026-05-04.md` 与 `docs/requirements/risk_event_review_workflow_2026-05-04.md`'
+  - 连续运行样本中，日报能区分“已复核且未发现未记录重大事件”“有待复核 backlog”“复核缺失导致 policy/geopolitics 降级”；有效复核声明必须包含
+    reviewer、source scope、reviewed_at、coverage window 和结论；缺失或过期声明时不得把空 occurrence
+    目录解释为无风险
+  - '2026-05-06: 从 `PROD-001` 拆出，原因：总控任务已完成缺口登记和边界收口，但风险事件真实复核是 owner 运营纪律，不应继续压在总任务里。'
+  docs_links:
+  - docs/requirements/production_readiness_gaps_2026-05-04.md
+  - docs/requirements/risk_event_review_workflow_2026-05-04.md
+  terminal: false
+  raw_row_sha256: 159b914b1aa1b4519a81a77dd676e33bf77683dd49ff74f91b07bcf71014903c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 967643b3510636df3996c950d9800037a6a3359d8fac661a3b61963ae458928a

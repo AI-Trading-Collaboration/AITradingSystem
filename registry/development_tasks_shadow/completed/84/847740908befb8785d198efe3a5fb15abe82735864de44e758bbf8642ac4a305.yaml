@@ -1,0 +1,157 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-095
+  title: null
+  domain: ETF portfolio research/Dynamic v3 Rescue Candidate Ranking Leaderboard Reports
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+    v3 rescue candidate ranking、leaderboard、sweep report、candidate report 和 Reader
+    Brief sweep section 已完成并通过当前 canonical real sweep 复核；`sweep_20260607T102300Z_ae5ae1d8`
+    的 `sweep leaderboard` 为 `PASS`，candidate_count=300，top candidate=`a72139edcaef7d22`，gate=`review_required`，score=0.460619，`production_candidate_generated=false`；candidate
+    report 包含 7 个参数、3 个 gate reasons、27 个 metrics、7 项 score breakdown、3 个 artifact
+    links 和 recommendation；report index 对该 ad-hoc latest leaderboard 显式使用 `artifact_selection_policy=latest_available`，`reports
+    index --latest` 将其标记为 `FRESH` / `AFTER_AS_OF`，Reader Brief latest 展示 Dynamic Rescue
+    Parameter Sweep 为 `AVAILABLE/PASS`；该任务只生成 research/manual-review evidence，不生成
+    production candidate、不修改 baseline/production weights、不触发 broker 或 trading 行为
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf dynamic-v3-rescue sweep leaderboard/report` 与 `candidate report`
+      可运行；hard gate 先于 score；score 只排序不覆盖 hard gate；leaderboard 包含 eligible/rejected
+      摘要、reject reason aggregation、指标分布和 recommended next actions；candidate report
+      包含参数、gate、metrics、score breakdown、artifact links 和 recommendation；Reader Brief
+      只读摘要；focused tests 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 311
+    row_sha256: 84bb7607f59717b391efc7ca94081f880a0d72ca5ffe5592dcd0d95296afb96d
+    cell_count: 8
+    all_cells:
+    - TRADING-095
+    - ETF portfolio research/Dynamic v3 Rescue Candidate Ranking Leaderboard Reports
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+      v3 rescue candidate ranking、leaderboard、sweep report、candidate report 和 Reader
+      Brief sweep section 已完成并通过当前 canonical real sweep 复核；`sweep_20260607T102300Z_ae5ae1d8`
+      的 `sweep leaderboard` 为 `PASS`，candidate_count=300，top candidate=`a72139edcaef7d22`，gate=`review_required`，score=0.460619，`production_candidate_generated=false`；candidate
+      report 包含 7 个参数、3 个 gate reasons、27 个 metrics、7 项 score breakdown、3 个 artifact
+      links 和 recommendation；report index 对该 ad-hoc latest leaderboard 显式使用 `artifact_selection_policy=latest_available`，`reports
+      index --latest` 将其标记为 `FRESH` / `AFTER_AS_OF`，Reader Brief latest 展示 Dynamic
+      Rescue Parameter Sweep 为 `AVAILABLE/PASS`；该任务只生成 research/manual-review evidence，不生成
+      production candidate、不修改 baseline/production weights、不触发 broker 或 trading 行为
+    - '`aits etf dynamic-v3-rescue sweep leaderboard/report` 与 `candidate report`
+      可运行；hard gate 先于 score；score 只排序不覆盖 hard gate；leaderboard 包含 eligible/rejected
+      摘要、reject reason aggregation、指标分布和 recommended next actions；candidate report
+      包含参数、gate、metrics、score breakdown、artifact links 和 recommendation；Reader Brief
+      只读摘要；focused tests 通过'
+    - '2026-06-06: 新增并进入 IN_PROGRESS，原因：参数搜索必须先风险过滤再排序，禁止收益最高者自动胜出。2026-06-06: baseline
+      实现完成并转入 VALIDATING；sample top candidate `ce9db518659c8d68` 为 observe_only，score
+      0.487134；验证为 focused tests、legacy dynamic-v3 tests、Reader Brief/report index、ruff、compileall、diff
+      check 和全量 pytest 通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：current canonical real
+      leaderboard/report/candidate report、Reader Brief latest integration、report index
+      latest_available 选择策略、focused tests、Reader Brief quality、documentation contract、docs
+      freshness 和 diff check 均满足验收；当前真实 sweep 没有 hard rejected candidates，`most_common_reject_reasons`
+      为空但 aggregation 字段存在。'
+    raw_line: '|TRADING-095|ETF portfolio research/Dynamic v3 Rescue Candidate Ranking
+      Leaderboard Reports|P0|DONE|系统验证|详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+      v3 rescue candidate ranking、leaderboard、sweep report、candidate report 和 Reader
+      Brief sweep section 已完成并通过当前 canonical real sweep 复核；`sweep_20260607T102300Z_ae5ae1d8`
+      的 `sweep leaderboard` 为 `PASS`，candidate_count=300，top candidate=`a72139edcaef7d22`，gate=`review_required`，score=0.460619，`production_candidate_generated=false`；candidate
+      report 包含 7 个参数、3 个 gate reasons、27 个 metrics、7 项 score breakdown、3 个 artifact
+      links 和 recommendation；report index 对该 ad-hoc latest leaderboard 显式使用 `artifact_selection_policy=latest_available`，`reports
+      index --latest` 将其标记为 `FRESH` / `AFTER_AS_OF`，Reader Brief latest 展示 Dynamic
+      Rescue Parameter Sweep 为 `AVAILABLE/PASS`；该任务只生成 research/manual-review evidence，不生成
+      production candidate、不修改 baseline/production weights、不触发 broker 或 trading 行为|`aits
+      etf dynamic-v3-rescue sweep leaderboard/report` 与 `candidate report` 可运行；hard
+      gate 先于 score；score 只排序不覆盖 hard gate；leaderboard 包含 eligible/rejected 摘要、reject
+      reason aggregation、指标分布和 recommended next actions；candidate report 包含参数、gate、metrics、score
+      breakdown、artifact links 和 recommendation；Reader Brief 只读摘要；focused tests 通过|2026-06-06:
+      新增并进入 IN_PROGRESS，原因：参数搜索必须先风险过滤再排序，禁止收益最高者自动胜出。2026-06-06: baseline 实现完成并转入
+      VALIDATING；sample top candidate `ce9db518659c8d68` 为 observe_only，score 0.487134；验证为
+      focused tests、legacy dynamic-v3 tests、Reader Brief/report index、ruff、compileall、diff
+      check 和全量 pytest 通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：current canonical real
+      leaderboard/report/candidate report、Reader Brief latest integration、report index
+      latest_available 选择策略、focused tests、Reader Brief quality、documentation contract、docs
+      freshness 和 diff check 均满足验收；当前真实 sweep 没有 hard rejected candidates，`most_common_reject_reasons`
+      为空但 aggregation 字段存在。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-84bb7607f59717b391efc7ca
+  task_id: TRADING-095
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-06-06: 新增并进入 IN_PROGRESS，原因：参数搜索必须先风险过滤再排序，禁止收益最高者自动胜出。2026-06-06:
+      baseline 实现完成并转入 VALIDATING；sample top candidate `ce9db518659c8d68` 为 observe_only，score
+      0.487134；验证为 focused tests、legacy dynamic-v3 tests、Reader Brief/report index、ruff、compileall、diff
+      check 和全量 pytest 通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：current canonical real
+      leaderboard/report/candidate report、Reader Brief latest integration、report index
+      latest_available 选择策略、focused tests、Reader Brief quality、documentation contract、docs
+      freshness 和 diff check 均满足验收；当前真实 sweep 没有 hard rejected candidates，`most_common_reject_reasons`
+      为空但 aggregation 字段存在。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:84bb7607f59717b391efc7ca94081f880a0d72ca5ffe5592dcd0d95296afb96d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-095
+  - ETF portfolio research/Dynamic v3 Rescue Candidate Ranking Leaderboard Reports
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md`；Dynamic
+    v3 rescue candidate ranking、leaderboard、sweep report、candidate report 和 Reader
+    Brief sweep section 已完成并通过当前 canonical real sweep 复核；`sweep_20260607T102300Z_ae5ae1d8`
+    的 `sweep leaderboard` 为 `PASS`，candidate_count=300，top candidate=`a72139edcaef7d22`，gate=`review_required`，score=0.460619，`production_candidate_generated=false`；candidate
+    report 包含 7 个参数、3 个 gate reasons、27 个 metrics、7 项 score breakdown、3 个 artifact
+    links 和 recommendation；report index 对该 ad-hoc latest leaderboard 显式使用 `artifact_selection_policy=latest_available`，`reports
+    index --latest` 将其标记为 `FRESH` / `AFTER_AS_OF`，Reader Brief latest 展示 Dynamic Rescue
+    Parameter Sweep 为 `AVAILABLE/PASS`；该任务只生成 research/manual-review evidence，不生成
+    production candidate、不修改 baseline/production weights、不触发 broker 或 trading 行为
+  - '`aits etf dynamic-v3-rescue sweep leaderboard/report` 与 `candidate report` 可运行；hard
+    gate 先于 score；score 只排序不覆盖 hard gate；leaderboard 包含 eligible/rejected 摘要、reject
+    reason aggregation、指标分布和 recommended next actions；candidate report 包含参数、gate、metrics、score
+    breakdown、artifact links 和 recommendation；Reader Brief 只读摘要；focused tests 通过'
+  - '2026-06-06: 新增并进入 IN_PROGRESS，原因：参数搜索必须先风险过滤再排序，禁止收益最高者自动胜出。2026-06-06: baseline
+    实现完成并转入 VALIDATING；sample top candidate `ce9db518659c8d68` 为 observe_only，score
+    0.487134；验证为 focused tests、legacy dynamic-v3 tests、Reader Brief/report index、ruff、compileall、diff
+    check 和全量 pytest 通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：current canonical real
+    leaderboard/report/candidate report、Reader Brief latest integration、report index
+    latest_available 选择策略、focused tests、Reader Brief quality、documentation contract、docs
+    freshness 和 diff check 均满足验收；当前真实 sweep 没有 hard rejected candidates，`most_common_reject_reasons`
+    为空但 aggregation 字段存在。'
+  docs_links:
+  - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
+  terminal: true
+  raw_row_sha256: 84bb7607f59717b391efc7ca94081f880a0d72ca5ffe5592dcd0d95296afb96d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: bfeb50b148403dd8b901ba735bcd63cac5de69f3d1e5e3451e0eeedcfd3cace5

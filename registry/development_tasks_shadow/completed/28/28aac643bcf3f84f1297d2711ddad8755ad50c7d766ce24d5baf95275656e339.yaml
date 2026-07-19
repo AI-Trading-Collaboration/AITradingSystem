@@ -1,0 +1,146 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2402_DYNAMIC_STRATEGY_DATA_PIT_AND_SIGNAL_QUALITY_GAP_REVIEW
+  title: null
+  domain: Strategy research / data PIT and signal quality gap review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2403 PIT coverage matrix and signal construction
+    review
+  requirement_refs:
+  - docs/requirements/TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review.md
+  - docs/tasks/completed/TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review.md`；承接
+    TRADING-2401 plateau decision，运行 `aits validate-data --as-of 2026-07-05`，复盘 data
+    quality、PIT coverage、signal quality、valid-until / stale-signal、signal-to-execution
+    lag、regime labeling 和 threshold meta-dataset gaps，不恢复候选搜索。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-data-pit-signal-quality-gap-review`；输出
+      `gap_review_result.json`、`data_quality_gap_matrix.json`、`pit_coverage_gap_review.json`、`signal_quality_gap_review.json`、`regime_labeling_gap_review.json`、`threshold_meta_dataset_gap_review.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_DATA_PIT_AND_SIGNAL_QUALITY_GAP_REVIEW_READY`，validate-data=`PASS_WITH_WARNINGS`
+      / errors=0 / warnings=2，data quality / PIT coverage / signal quality / regime
+      labeling / threshold meta-dataset gap reviews ready=true，prioritized gap matrix
+      ready=true，resume candidate search=false，PIT coverage matrix / signal construction
+      review / regime expectation scoring review / threshold meta-dataset recommended=true，next
+      route=`TRADING-2403_Dynamic_Strategy_PIT_Coverage_Matrix_And_Signal_Construction_Review`，所有
+      safety fields false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 83
+    row_sha256: 215c3603e30e49e8256f8a6fd56343d79b69d26105a7747805635f20432b73c9
+    cell_count: 8
+    all_cells:
+    - TRADING-2402_DYNAMIC_STRATEGY_DATA_PIT_AND_SIGNAL_QUALITY_GAP_REVIEW
+    - Strategy research / data PIT and signal quality gap review
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2403 PIT coverage matrix and signal construction review
+    - 详见 `docs/requirements/TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review.md`；承接
+      TRADING-2401 plateau decision，运行 `aits validate-data --as-of 2026-07-05`，复盘
+      data quality、PIT coverage、signal quality、valid-until / stale-signal、signal-to-execution
+      lag、regime labeling 和 threshold meta-dataset gaps，不恢复候选搜索。
+    - 新增 `aits research strategies dynamic-strategy-data-pit-signal-quality-gap-review`；输出
+      `gap_review_result.json`、`data_quality_gap_matrix.json`、`pit_coverage_gap_review.json`、`signal_quality_gap_review.json`、`regime_labeling_gap_review.json`、`threshold_meta_dataset_gap_review.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_DATA_PIT_AND_SIGNAL_QUALITY_GAP_REVIEW_READY`，validate-data=`PASS_WITH_WARNINGS`
+      / errors=0 / warnings=2，data quality / PIT coverage / signal quality / regime
+      labeling / threshold meta-dataset gap reviews ready=true，prioritized gap matrix
+      ready=true，resume candidate search=false，PIT coverage matrix / signal construction
+      review / regime expectation scoring review / threshold meta-dataset recommended=true，next
+      route=`TRADING-2403_Dynamic_Strategy_PIT_Coverage_Matrix_And_Signal_Construction_Review`，所有
+      safety fields false/none。
+    - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务只做 data
+      / PIT / signal / regime / threshold gap review，不运行新策略回测、不生成新 signal/scoring、不批准
+      observation、paper-shadow、scheduler、event append、outcome binding、production、broker
+      或 daily report。validate-data warning `prices_download_manifest_checksum_missing`
+      和 `prices_adjustment_ratio_jump` 均已分类并保留 caveat；最终 validation 结果见 `docs/tasks/completed/TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review.md`。'
+    raw_line: '|TRADING-2402_DYNAMIC_STRATEGY_DATA_PIT_AND_SIGNAL_QUALITY_GAP_REVIEW|Strategy
+      research / data PIT and signal quality gap review|P0|DONE|项目 owner 后续复核 TRADING-2403
+      PIT coverage matrix and signal construction review|详见 `docs/requirements/TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review.md`；承接
+      TRADING-2401 plateau decision，运行 `aits validate-data --as-of 2026-07-05`，复盘
+      data quality、PIT coverage、signal quality、valid-until / stale-signal、signal-to-execution
+      lag、regime labeling 和 threshold meta-dataset gaps，不恢复候选搜索。|新增 `aits research
+      strategies dynamic-strategy-data-pit-signal-quality-gap-review`；输出 `gap_review_result.json`、`data_quality_gap_matrix.json`、`pit_coverage_gap_review.json`、`signal_quality_gap_review.json`、`regime_labeling_gap_review.json`、`threshold_meta_dataset_gap_review.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_DATA_PIT_AND_SIGNAL_QUALITY_GAP_REVIEW_READY`，validate-data=`PASS_WITH_WARNINGS`
+      / errors=0 / warnings=2，data quality / PIT coverage / signal quality / regime
+      labeling / threshold meta-dataset gap reviews ready=true，prioritized gap matrix
+      ready=true，resume candidate search=false，PIT coverage matrix / signal construction
+      review / regime expectation scoring review / threshold meta-dataset recommended=true，next
+      route=`TRADING-2403_Dynamic_Strategy_PIT_Coverage_Matrix_And_Signal_Construction_Review`，所有
+      safety fields false/none。|2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07:
+      实现完成并归档 DONE；本任务只做 data / PIT / signal / regime / threshold gap review，不运行新策略回测、不生成新
+      signal/scoring、不批准 observation、paper-shadow、scheduler、event append、outcome binding、production、broker
+      或 daily report。validate-data warning `prices_download_manifest_checksum_missing`
+      和 `prices_adjustment_ratio_jump` 均已分类并保留 caveat；最终 validation 结果见 `docs/tasks/completed/TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-215c3603e30e49e8256f8a6f
+  task_id: TRADING-2402_DYNAMIC_STRATEGY_DATA_PIT_AND_SIGNAL_QUALITY_GAP_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2403 PIT coverage matrix and signal construction
+      review
+    notes: '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务只做
+      data / PIT / signal / regime / threshold gap review，不运行新策略回测、不生成新 signal/scoring、不批准
+      observation、paper-shadow、scheduler、event append、outcome binding、production、broker
+      或 daily report。validate-data warning `prices_download_manifest_checksum_missing`
+      和 `prices_adjustment_ratio_jump` 均已分类并保留 caveat；最终 validation 结果见 `docs/tasks/completed/TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:215c3603e30e49e8256f8a6fd56343d79b69d26105a7747805635f20432b73c9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2402_DYNAMIC_STRATEGY_DATA_PIT_AND_SIGNAL_QUALITY_GAP_REVIEW
+  - Strategy research / data PIT and signal quality gap review
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2403 PIT coverage matrix and signal construction review
+  - 详见 `docs/requirements/TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review.md`；承接
+    TRADING-2401 plateau decision，运行 `aits validate-data --as-of 2026-07-05`，复盘 data
+    quality、PIT coverage、signal quality、valid-until / stale-signal、signal-to-execution
+    lag、regime labeling 和 threshold meta-dataset gaps，不恢复候选搜索。
+  - 新增 `aits research strategies dynamic-strategy-data-pit-signal-quality-gap-review`；输出
+    `gap_review_result.json`、`data_quality_gap_matrix.json`、`pit_coverage_gap_review.json`、`signal_quality_gap_review.json`、`regime_labeling_gap_review.json`、`threshold_meta_dataset_gap_review.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_DATA_PIT_AND_SIGNAL_QUALITY_GAP_REVIEW_READY`，validate-data=`PASS_WITH_WARNINGS`
+    / errors=0 / warnings=2，data quality / PIT coverage / signal quality / regime
+    labeling / threshold meta-dataset gap reviews ready=true，prioritized gap matrix
+    ready=true，resume candidate search=false，PIT coverage matrix / signal construction
+    review / regime expectation scoring review / threshold meta-dataset recommended=true，next
+    route=`TRADING-2403_Dynamic_Strategy_PIT_Coverage_Matrix_And_Signal_Construction_Review`，所有
+    safety fields false/none。
+  - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务只做 data
+    / PIT / signal / regime / threshold gap review，不运行新策略回测、不生成新 signal/scoring、不批准
+    observation、paper-shadow、scheduler、event append、outcome binding、production、broker
+    或 daily report。validate-data warning `prices_download_manifest_checksum_missing`
+    和 `prices_adjustment_ratio_jump` 均已分类并保留 caveat；最终 validation 结果见 `docs/tasks/completed/TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review.md
+  - docs/tasks/completed/TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review.md
+  terminal: true
+  raw_row_sha256: 215c3603e30e49e8256f8a6fd56343d79b69d26105a7747805635f20432b73c9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8a62a706492a0ed2b805af6105d57b27164edb4bc09983a14551a485b66ffa8e

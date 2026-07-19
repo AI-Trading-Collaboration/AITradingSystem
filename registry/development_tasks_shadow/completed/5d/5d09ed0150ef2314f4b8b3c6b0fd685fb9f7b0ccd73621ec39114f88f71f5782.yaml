@@ -1,0 +1,160 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-354B_PAPER_SHADOW_DATA_FRESHNESS_RECOVERY
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue paper-shadow data freshness recovery
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-354B_Paper_Shadow_Data_Freshness_Recovery.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-354B_Paper_Shadow_Data_Freshness_Recovery.md`；承接
+    TRADING-354A，weekly review blocker 已解除后，真实 monitor `evidence-staleness-monitor_9cb9357aade5728d`
+    仍因 `price_data` / `market_panel_data` STALE 输出 `safe_to_continue_shadow=false`；root
+    cause 是 requested as-of 使用本地 2026-06-16，而运行时 latest completed U.S. equity trading
+    day 仍为 2026-06-12；本任务不接受 waiver、threshold 放宽、伪造 cache、补造 market panel 或 production
+    mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Market-data freshness 改为显式披露 `requested_as_of`、`freshness_reference_date`、`latest_complete_market_date`
+      和 `market_calendar_status`；`price_data` / `market_panel_data` 使用 `freshness_reference_date`
+      计算 age，其他 research artifacts 仍按 requested as-of freshness 评估；每个 finding 输出 `stale_reason`
+      和 calendar-adjusted fields；CLI summary、manifest/report/Markdown、Reader Brief
+      summary、policy、README、operations runbook、system flow、artifact catalog、report
+      registry、requirements 和 focused tests 同步；真实 data quality gate、market panel、staleness
+      run/report/validate、documentation contract、report index、Reader Brief quality、ruff、compileall
+      和 git diff check 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 241
+    row_sha256: a7a16886a0c0eb0baa22cb8404014528ac08f3dd3dca4543c63c518eafc84ccc
+    cell_count: 8
+    all_cells:
+    - TRADING-354B_PAPER_SHADOW_DATA_FRESHNESS_RECOVERY
+    - ETF portfolio/dynamic v3 rescue paper-shadow data freshness recovery
+    - P0
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-354B_Paper_Shadow_Data_Freshness_Recovery.md`；承接
+      TRADING-354A，weekly review blocker 已解除后，真实 monitor `evidence-staleness-monitor_9cb9357aade5728d`
+      仍因 `price_data` / `market_panel_data` STALE 输出 `safe_to_continue_shadow=false`；root
+      cause 是 requested as-of 使用本地 2026-06-16，而运行时 latest completed U.S. equity trading
+      day 仍为 2026-06-12；本任务不接受 waiver、threshold 放宽、伪造 cache、补造 market panel 或 production
+      mutation
+    - Market-data freshness 改为显式披露 `requested_as_of`、`freshness_reference_date`、`latest_complete_market_date`
+      和 `market_calendar_status`；`price_data` / `market_panel_data` 使用 `freshness_reference_date`
+      计算 age，其他 research artifacts 仍按 requested as-of freshness 评估；每个 finding 输出 `stale_reason`
+      和 calendar-adjusted fields；CLI summary、manifest/report/Markdown、Reader Brief
+      summary、policy、README、operations runbook、system flow、artifact catalog、report
+      registry、requirements 和 focused tests 同步；真实 data quality gate、market panel、staleness
+      run/report/validate、documentation contract、report index、Reader Brief quality、ruff、compileall
+      和 git diff check 通过
+    - '2026-06-16: DONE；`validate-data --as-of 2026-06-12` 为 `PASS_WITH_WARNINGS`
+      / errors=0 / warnings=1，`reports market-panel --as-of 2026-06-12` 为 `PASS_WITH_WARNINGS`
+      / available=6/6；真实 monitor `evidence-staleness-monitor_605356e7ccc2baf0` 输出
+      `evidence_freshness_status=ACCEPTABLE`、`requested_as_of=2026-06-16`、`freshness_reference_date=2026-06-12`、`latest_complete_market_date=2026-06-12`、`market_calendar_status=TRADING_DAY`、`stale_artifacts=[]`、`blocking_artifacts=[]`、`missing_artifacts=[]`、`safe_to_continue_shadow=true`；price
+      / market panel findings 为 FRESH 且 `stale_reason=calendar_adjusted_to_latest_complete_market_date`；`validate-evidence-staleness-monitor`
+      PASS / failed=0；focused pytest 21 passed，Ruff PASS，documentation contract PASS，report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief quality OK，compileall
+      PASS，git diff check PASS；保持 read-only / no waiver / no threshold relaxation
+      / no official target / no broker / no production mutation。'
+    raw_line: '|TRADING-354B_PAPER_SHADOW_DATA_FRESHNESS_RECOVERY|ETF portfolio/dynamic
+      v3 rescue paper-shadow data freshness recovery|P0|DONE|项目 owner 后续复核；代码实现完成|详细拆解见
+      `docs/requirements/TRADING-354B_Paper_Shadow_Data_Freshness_Recovery.md`；承接
+      TRADING-354A，weekly review blocker 已解除后，真实 monitor `evidence-staleness-monitor_9cb9357aade5728d`
+      仍因 `price_data` / `market_panel_data` STALE 输出 `safe_to_continue_shadow=false`；root
+      cause 是 requested as-of 使用本地 2026-06-16，而运行时 latest completed U.S. equity trading
+      day 仍为 2026-06-12；本任务不接受 waiver、threshold 放宽、伪造 cache、补造 market panel 或 production
+      mutation|Market-data freshness 改为显式披露 `requested_as_of`、`freshness_reference_date`、`latest_complete_market_date`
+      和 `market_calendar_status`；`price_data` / `market_panel_data` 使用 `freshness_reference_date`
+      计算 age，其他 research artifacts 仍按 requested as-of freshness 评估；每个 finding 输出 `stale_reason`
+      和 calendar-adjusted fields；CLI summary、manifest/report/Markdown、Reader Brief
+      summary、policy、README、operations runbook、system flow、artifact catalog、report
+      registry、requirements 和 focused tests 同步；真实 data quality gate、market panel、staleness
+      run/report/validate、documentation contract、report index、Reader Brief quality、ruff、compileall
+      和 git diff check 通过|2026-06-16: DONE；`validate-data --as-of 2026-06-12` 为 `PASS_WITH_WARNINGS`
+      / errors=0 / warnings=1，`reports market-panel --as-of 2026-06-12` 为 `PASS_WITH_WARNINGS`
+      / available=6/6；真实 monitor `evidence-staleness-monitor_605356e7ccc2baf0` 输出
+      `evidence_freshness_status=ACCEPTABLE`、`requested_as_of=2026-06-16`、`freshness_reference_date=2026-06-12`、`latest_complete_market_date=2026-06-12`、`market_calendar_status=TRADING_DAY`、`stale_artifacts=[]`、`blocking_artifacts=[]`、`missing_artifacts=[]`、`safe_to_continue_shadow=true`；price
+      / market panel findings 为 FRESH 且 `stale_reason=calendar_adjusted_to_latest_complete_market_date`；`validate-evidence-staleness-monitor`
+      PASS / failed=0；focused pytest 21 passed，Ruff PASS，documentation contract PASS，report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief quality OK，compileall
+      PASS，git diff check PASS；保持 read-only / no waiver / no threshold relaxation
+      / no official target / no broker / no production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a7a16886a0c0eb0baa22cb84
+  task_id: TRADING-354B_PAPER_SHADOW_DATA_FRESHNESS_RECOVERY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: '2026-06-16: DONE；`validate-data --as-of 2026-06-12` 为 `PASS_WITH_WARNINGS`
+      / errors=0 / warnings=1，`reports market-panel --as-of 2026-06-12` 为 `PASS_WITH_WARNINGS`
+      / available=6/6；真实 monitor `evidence-staleness-monitor_605356e7ccc2baf0` 输出
+      `evidence_freshness_status=ACCEPTABLE`、`requested_as_of=2026-06-16`、`freshness_reference_date=2026-06-12`、`latest_complete_market_date=2026-06-12`、`market_calendar_status=TRADING_DAY`、`stale_artifacts=[]`、`blocking_artifacts=[]`、`missing_artifacts=[]`、`safe_to_continue_shadow=true`；price
+      / market panel findings 为 FRESH 且 `stale_reason=calendar_adjusted_to_latest_complete_market_date`；`validate-evidence-staleness-monitor`
+      PASS / failed=0；focused pytest 21 passed，Ruff PASS，documentation contract PASS，report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief quality OK，compileall
+      PASS，git diff check PASS；保持 read-only / no waiver / no threshold relaxation
+      / no official target / no broker / no production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a7a16886a0c0eb0baa22cb8404014528ac08f3dd3dca4543c63c518eafc84ccc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-354B_PAPER_SHADOW_DATA_FRESHNESS_RECOVERY
+  - ETF portfolio/dynamic v3 rescue paper-shadow data freshness recovery
+  - P0
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-354B_Paper_Shadow_Data_Freshness_Recovery.md`；承接
+    TRADING-354A，weekly review blocker 已解除后，真实 monitor `evidence-staleness-monitor_9cb9357aade5728d`
+    仍因 `price_data` / `market_panel_data` STALE 输出 `safe_to_continue_shadow=false`；root
+    cause 是 requested as-of 使用本地 2026-06-16，而运行时 latest completed U.S. equity trading
+    day 仍为 2026-06-12；本任务不接受 waiver、threshold 放宽、伪造 cache、补造 market panel 或 production
+    mutation
+  - Market-data freshness 改为显式披露 `requested_as_of`、`freshness_reference_date`、`latest_complete_market_date`
+    和 `market_calendar_status`；`price_data` / `market_panel_data` 使用 `freshness_reference_date`
+    计算 age，其他 research artifacts 仍按 requested as-of freshness 评估；每个 finding 输出 `stale_reason`
+    和 calendar-adjusted fields；CLI summary、manifest/report/Markdown、Reader Brief summary、policy、README、operations
+    runbook、system flow、artifact catalog、report registry、requirements 和 focused tests
+    同步；真实 data quality gate、market panel、staleness run/report/validate、documentation
+    contract、report index、Reader Brief quality、ruff、compileall 和 git diff check 通过
+  - '2026-06-16: DONE；`validate-data --as-of 2026-06-12` 为 `PASS_WITH_WARNINGS` /
+    errors=0 / warnings=1，`reports market-panel --as-of 2026-06-12` 为 `PASS_WITH_WARNINGS`
+    / available=6/6；真实 monitor `evidence-staleness-monitor_605356e7ccc2baf0` 输出 `evidence_freshness_status=ACCEPTABLE`、`requested_as_of=2026-06-16`、`freshness_reference_date=2026-06-12`、`latest_complete_market_date=2026-06-12`、`market_calendar_status=TRADING_DAY`、`stale_artifacts=[]`、`blocking_artifacts=[]`、`missing_artifacts=[]`、`safe_to_continue_shadow=true`；price
+    / market panel findings 为 FRESH 且 `stale_reason=calendar_adjusted_to_latest_complete_market_date`；`validate-evidence-staleness-monitor`
+    PASS / failed=0；focused pytest 21 passed，Ruff PASS，documentation contract PASS，report
+    index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief quality OK，compileall
+    PASS，git diff check PASS；保持 read-only / no waiver / no threshold relaxation /
+    no official target / no broker / no production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-354B_Paper_Shadow_Data_Freshness_Recovery.md
+  terminal: true
+  raw_row_sha256: a7a16886a0c0eb0baa22cb8404014528ac08f3dd3dca4543c63c518eafc84ccc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0b8e6b7d3008efe4a4a3ee415cadecb0d4efc7c3d12bab8f897fcc8985a85e27

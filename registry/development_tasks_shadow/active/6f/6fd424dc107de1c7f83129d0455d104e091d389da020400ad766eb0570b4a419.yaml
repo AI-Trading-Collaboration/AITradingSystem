@@ -1,0 +1,136 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1766_to_1785_FIRST_LAYER_WALK_FORWARD_COVERAGE_REBUILD
+  title: null
+  domain: Research trends / first-layer walk-forward coverage rebuild
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1766_to_1785_First_Layer_Walk_Forward_Coverage_Rebuild.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1766_to_1785_First_Layer_Walk_Forward_Coverage_Rebuild.md`；承接
+    first-layer v2 reset 的 `WINDOW_COVERAGE_INCOMPLETE`，必须先解决 prediction effective
+    window 覆盖，再允许 owner review 讨论 actual-path improvement
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 coverage blocker diagnosis、walk-forward coverage policy v2、coverage simulation
+      matrix、early feature coverage audit、feature optionalization policy、coverage
+      policy model matrix、coverage policy actual-path matrix、2022 stress/recovery
+      slice review、coverage-aware selection rule、coverage rebuild failure attribution、owner
+      pack、closeout/final matrix、report registry、artifact catalog、system flow 和 guardrail
+      tests；真实 run 测试 5 个 variants，`wf_252d_initial` 与 `wf_expanding_initial` 覆盖 2022
+      并通过 coverage rule，但接回 frozen probes 后 selection pass count=0，primary failure=`DEFENSIVE_PROBE_REGRESSION`；固定
+      `dynamic_second_layer_probe_registry_v2`，不得用 target-path metrics 晋级；dynamic
+      promotion、paper-shadow、production、broker 固定 blocked/false/false/none
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1262
+    row_sha256: 5e6ef345d576edda7aea73c7715931094207eed9ac539092d7e947b54ae9b819
+    cell_count: 8
+    all_cells:
+    - TRADING-1766_to_1785_FIRST_LAYER_WALK_FORWARD_COVERAGE_REBUILD
+    - Research trends / first-layer walk-forward coverage rebuild
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1766_to_1785_First_Layer_Walk_Forward_Coverage_Rebuild.md`；承接
+      first-layer v2 reset 的 `WINDOW_COVERAGE_INCOMPLETE`，必须先解决 prediction effective
+      window 覆盖，再允许 owner review 讨论 actual-path improvement
+    - 新增 coverage blocker diagnosis、walk-forward coverage policy v2、coverage simulation
+      matrix、early feature coverage audit、feature optionalization policy、coverage
+      policy model matrix、coverage policy actual-path matrix、2022 stress/recovery
+      slice review、coverage-aware selection rule、coverage rebuild failure attribution、owner
+      pack、closeout/final matrix、report registry、artifact catalog、system flow 和 guardrail
+      tests；真实 run 测试 5 个 variants，`wf_252d_initial` 与 `wf_expanding_initial` 覆盖 2022
+      并通过 coverage rule，但接回 frozen probes 后 selection pass count=0，primary failure=`DEFENSIVE_PROBE_REGRESSION`；固定
+      `dynamic_second_layer_probe_registry_v2`，不得用 target-path metrics 晋级；dynamic
+      promotion、paper-shadow、production、broker 固定 blocked/false/false/none
+    - '2026-06-28: 新增并进入 IN_PROGRESS，原因：上一批 first-layer v2 只在 2023-02-22 之后产生 prediction/portfolio
+      path，不能把 8/8 actual-path improvement 当作 owner-review evidence。2026-06-28: 实现完成并转入
+      VALIDATING；`aits research trends first-layer-coverage-rebuild` 真实生成 final_status=`COVERAGE_REBUILD_SUCCESS_ACTION_PATH_NO_LONGER_IMPROVES`，coverage_pass_variant_count=2，coverage_aware_selected_policy
+      为空，next_action=`KEEP_FIRST_LAYER_V2_COVERAGE_REBUILD_BLOCKED`，安全边界仍为 blocked/false/false/none。'
+    raw_line: '|TRADING-1766_to_1785_FIRST_LAYER_WALK_FORWARD_COVERAGE_REBUILD|Research
+      trends / first-layer walk-forward coverage rebuild|P0|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-1766_to_1785_First_Layer_Walk_Forward_Coverage_Rebuild.md`；承接
+      first-layer v2 reset 的 `WINDOW_COVERAGE_INCOMPLETE`，必须先解决 prediction effective
+      window 覆盖，再允许 owner review 讨论 actual-path improvement|新增 coverage blocker diagnosis、walk-forward
+      coverage policy v2、coverage simulation matrix、early feature coverage audit、feature
+      optionalization policy、coverage policy model matrix、coverage policy actual-path
+      matrix、2022 stress/recovery slice review、coverage-aware selection rule、coverage
+      rebuild failure attribution、owner pack、closeout/final matrix、report registry、artifact
+      catalog、system flow 和 guardrail tests；真实 run 测试 5 个 variants，`wf_252d_initial`
+      与 `wf_expanding_initial` 覆盖 2022 并通过 coverage rule，但接回 frozen probes 后 selection
+      pass count=0，primary failure=`DEFENSIVE_PROBE_REGRESSION`；固定 `dynamic_second_layer_probe_registry_v2`，不得用
+      target-path metrics 晋级；dynamic promotion、paper-shadow、production、broker 固定 blocked/false/false/none|2026-06-28:
+      新增并进入 IN_PROGRESS，原因：上一批 first-layer v2 只在 2023-02-22 之后产生 prediction/portfolio
+      path，不能把 8/8 actual-path improvement 当作 owner-review evidence。2026-06-28: 实现完成并转入
+      VALIDATING；`aits research trends first-layer-coverage-rebuild` 真实生成 final_status=`COVERAGE_REBUILD_SUCCESS_ACTION_PATH_NO_LONGER_IMPROVES`，coverage_pass_variant_count=2，coverage_aware_selected_policy
+      为空，next_action=`KEEP_FIRST_LAYER_V2_COVERAGE_REBUILD_BLOCKED`，安全边界仍为 blocked/false/false/none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5e6ef345d576edda7aea73c7
+  task_id: TRADING-1766_to_1785_FIRST_LAYER_WALK_FORWARD_COVERAGE_REBUILD
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 新增并进入 IN_PROGRESS，原因：上一批 first-layer v2 只在 2023-02-22 之后产生
+      prediction/portfolio path，不能把 8/8 actual-path improvement 当作 owner-review evidence。2026-06-28:
+      实现完成并转入 VALIDATING；`aits research trends first-layer-coverage-rebuild` 真实生成
+      final_status=`COVERAGE_REBUILD_SUCCESS_ACTION_PATH_NO_LONGER_IMPROVES`，coverage_pass_variant_count=2，coverage_aware_selected_policy
+      为空，next_action=`KEEP_FIRST_LAYER_V2_COVERAGE_REBUILD_BLOCKED`，安全边界仍为 blocked/false/false/none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5e6ef345d576edda7aea73c7715931094207eed9ac539092d7e947b54ae9b819
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1766_to_1785_FIRST_LAYER_WALK_FORWARD_COVERAGE_REBUILD
+  - Research trends / first-layer walk-forward coverage rebuild
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1766_to_1785_First_Layer_Walk_Forward_Coverage_Rebuild.md`；承接
+    first-layer v2 reset 的 `WINDOW_COVERAGE_INCOMPLETE`，必须先解决 prediction effective
+    window 覆盖，再允许 owner review 讨论 actual-path improvement
+  - 新增 coverage blocker diagnosis、walk-forward coverage policy v2、coverage simulation
+    matrix、early feature coverage audit、feature optionalization policy、coverage policy
+    model matrix、coverage policy actual-path matrix、2022 stress/recovery slice review、coverage-aware
+    selection rule、coverage rebuild failure attribution、owner pack、closeout/final
+    matrix、report registry、artifact catalog、system flow 和 guardrail tests；真实 run 测试
+    5 个 variants，`wf_252d_initial` 与 `wf_expanding_initial` 覆盖 2022 并通过 coverage rule，但接回
+    frozen probes 后 selection pass count=0，primary failure=`DEFENSIVE_PROBE_REGRESSION`；固定
+    `dynamic_second_layer_probe_registry_v2`，不得用 target-path metrics 晋级；dynamic promotion、paper-shadow、production、broker
+    固定 blocked/false/false/none
+  - '2026-06-28: 新增并进入 IN_PROGRESS，原因：上一批 first-layer v2 只在 2023-02-22 之后产生 prediction/portfolio
+    path，不能把 8/8 actual-path improvement 当作 owner-review evidence。2026-06-28: 实现完成并转入
+    VALIDATING；`aits research trends first-layer-coverage-rebuild` 真实生成 final_status=`COVERAGE_REBUILD_SUCCESS_ACTION_PATH_NO_LONGER_IMPROVES`，coverage_pass_variant_count=2，coverage_aware_selected_policy
+    为空，next_action=`KEEP_FIRST_LAYER_V2_COVERAGE_REBUILD_BLOCKED`，安全边界仍为 blocked/false/false/none。'
+  docs_links:
+  - docs/requirements/TRADING-1766_to_1785_First_Layer_Walk_Forward_Coverage_Rebuild.md
+  terminal: false
+  raw_row_sha256: 5e6ef345d576edda7aea73c7715931094207eed9ac539092d7e947b54ae9b819
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5bb39511261b832970e3776a8716c89c76f7087c9caaf80005da3cd0d0ebff7e

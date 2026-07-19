@@ -1,0 +1,150 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1666_to_1705_UPPER_STATE_LABEL_FEATURE_RESET
+  title: null
+  domain: Research trends / upper-state label and PIT feature reset with alternating
+    two-layer discipline
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1666_to_1705_Upper_State_Label_Feature_Reset.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1666_to_1705_Upper_State_Label_Feature_Reset.md`；上一批
+    `upper_state_detector_v1` 虽不再完全预测 0，但 precision/recall 与 frozen-probe actual-path
+    均失败，本批暂停继续微调旧 detector，改为在 `exact_three_asset_validated` 主窗口重生 action-value labels，并把
+    upper-state 拆为 do_not_de_risk、stay_constructive、add_risk、high_confidence_risk_on；第二层
+    probes 必须冻结，第一层模型不得输出 portfolio weights
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends upper-state-reset`、alternating two-layer protocol、upper-state
+      label taxonomy v2、action-value score policy v2、action-value matrix v2、upper-state
+      labels v2、PIT feature inventory/matrix v3、four 个 research-only first-layer submodel
+      review、threshold/composer v2、walk-forward v3、frozen-probe actual-path review、failure
+      attribution、owner pack、forward watch/final matrix/closeout、report registry、artifact
+      catalog、system flow 和 guardrail tests；真实 run：action-value rows=57,312、label
+      rows=14,328、PIT feature rows=1,343、composer predictions=2,205、actual-path improved_vs_flat_reference_count=4/4、final_status=`UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH`；但所有
+      submodels 仍为 `MODEL_EDGE_WEAK`，failure primary reason=`SUBMODEL_PRECISION_WEAK`；所有
+      artifacts 包含 research window metadata 和 data quality contract；target-path metrics
+      不能通过 gate；dynamic promotion、paper-shadow、production、broker 固定 blocked/false/none
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1264
+    row_sha256: c61be910c74080ffff24aa3756147ca781bbf697cf7d5f9a211f12394675dbbb
+    cell_count: 8
+    all_cells:
+    - TRADING-1666_to_1705_UPPER_STATE_LABEL_FEATURE_RESET
+    - Research trends / upper-state label and PIT feature reset with alternating two-layer
+      discipline
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1666_to_1705_Upper_State_Label_Feature_Reset.md`；上一批
+      `upper_state_detector_v1` 虽不再完全预测 0，但 precision/recall 与 frozen-probe actual-path
+      均失败，本批暂停继续微调旧 detector，改为在 `exact_three_asset_validated` 主窗口重生 action-value
+      labels，并把 upper-state 拆为 do_not_de_risk、stay_constructive、add_risk、high_confidence_risk_on；第二层
+      probes 必须冻结，第一层模型不得输出 portfolio weights
+    - 新增 `aits research trends upper-state-reset`、alternating two-layer protocol、upper-state
+      label taxonomy v2、action-value score policy v2、action-value matrix v2、upper-state
+      labels v2、PIT feature inventory/matrix v3、four 个 research-only first-layer submodel
+      review、threshold/composer v2、walk-forward v3、frozen-probe actual-path review、failure
+      attribution、owner pack、forward watch/final matrix/closeout、report registry、artifact
+      catalog、system flow 和 guardrail tests；真实 run：action-value rows=57,312、label
+      rows=14,328、PIT feature rows=1,343、composer predictions=2,205、actual-path improved_vs_flat_reference_count=4/4、final_status=`UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH`；但所有
+      submodels 仍为 `MODEL_EDGE_WEAK`，failure primary reason=`SUBMODEL_PRECISION_WEAK`；所有
+      artifacts 包含 research window metadata 和 data quality contract；target-path metrics
+      不能通过 gate；dynamic promotion、paper-shadow、production、broker 固定 blocked/false/none
+    - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1666～1705，上轮 up-state repair
+      结论为 `UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`，不能继续在旧 label 上做 threshold/class-weight
+      微调。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI status=`UPPER_STATE_LABEL_FEATURE_RESET_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final
+      status=`UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH`，但 first-layer v2 仍 research-only。'
+    raw_line: '|TRADING-1666_to_1705_UPPER_STATE_LABEL_FEATURE_RESET|Research trends
+      / upper-state label and PIT feature reset with alternating two-layer discipline|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1666_to_1705_Upper_State_Label_Feature_Reset.md`；上一批
+      `upper_state_detector_v1` 虽不再完全预测 0，但 precision/recall 与 frozen-probe actual-path
+      均失败，本批暂停继续微调旧 detector，改为在 `exact_three_asset_validated` 主窗口重生 action-value
+      labels，并把 upper-state 拆为 do_not_de_risk、stay_constructive、add_risk、high_confidence_risk_on；第二层
+      probes 必须冻结，第一层模型不得输出 portfolio weights|新增 `aits research trends upper-state-reset`、alternating
+      two-layer protocol、upper-state label taxonomy v2、action-value score policy v2、action-value
+      matrix v2、upper-state labels v2、PIT feature inventory/matrix v3、four 个 research-only
+      first-layer submodel review、threshold/composer v2、walk-forward v3、frozen-probe
+      actual-path review、failure attribution、owner pack、forward watch/final matrix/closeout、report
+      registry、artifact catalog、system flow 和 guardrail tests；真实 run：action-value
+      rows=57,312、label rows=14,328、PIT feature rows=1,343、composer predictions=2,205、actual-path
+      improved_vs_flat_reference_count=4/4、final_status=`UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH`；但所有
+      submodels 仍为 `MODEL_EDGE_WEAK`，failure primary reason=`SUBMODEL_PRECISION_WEAK`；所有
+      artifacts 包含 research window metadata 和 data quality contract；target-path metrics
+      不能通过 gate；dynamic promotion、paper-shadow、production、broker 固定 blocked/false/none|2026-06-27:
+      新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1666～1705，上轮 up-state repair 结论为 `UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`，不能继续在旧
+      label 上做 threshold/class-weight 微调。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI status=`UPPER_STATE_LABEL_FEATURE_RESET_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final
+      status=`UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH`，但 first-layer v2 仍 research-only。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c61be910c74080ffff24aa37
+  task_id: TRADING-1666_to_1705_UPPER_STATE_LABEL_FEATURE_RESET
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1666～1705，上轮 up-state
+      repair 结论为 `UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`，不能继续在旧 label 上做
+      threshold/class-weight 微调。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI status=`UPPER_STATE_LABEL_FEATURE_RESET_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final
+      status=`UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH`，但 first-layer v2 仍 research-only。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c61be910c74080ffff24aa3756147ca781bbf697cf7d5f9a211f12394675dbbb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1666_to_1705_UPPER_STATE_LABEL_FEATURE_RESET
+  - Research trends / upper-state label and PIT feature reset with alternating two-layer
+    discipline
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1666_to_1705_Upper_State_Label_Feature_Reset.md`；上一批
+    `upper_state_detector_v1` 虽不再完全预测 0，但 precision/recall 与 frozen-probe actual-path
+    均失败，本批暂停继续微调旧 detector，改为在 `exact_three_asset_validated` 主窗口重生 action-value labels，并把
+    upper-state 拆为 do_not_de_risk、stay_constructive、add_risk、high_confidence_risk_on；第二层
+    probes 必须冻结，第一层模型不得输出 portfolio weights
+  - 新增 `aits research trends upper-state-reset`、alternating two-layer protocol、upper-state
+    label taxonomy v2、action-value score policy v2、action-value matrix v2、upper-state
+    labels v2、PIT feature inventory/matrix v3、four 个 research-only first-layer submodel
+    review、threshold/composer v2、walk-forward v3、frozen-probe actual-path review、failure
+    attribution、owner pack、forward watch/final matrix/closeout、report registry、artifact
+    catalog、system flow 和 guardrail tests；真实 run：action-value rows=57,312、label rows=14,328、PIT
+    feature rows=1,343、composer predictions=2,205、actual-path improved_vs_flat_reference_count=4/4、final_status=`UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH`；但所有
+    submodels 仍为 `MODEL_EDGE_WEAK`，failure primary reason=`SUBMODEL_PRECISION_WEAK`；所有
+    artifacts 包含 research window metadata 和 data quality contract；target-path metrics
+    不能通过 gate；dynamic promotion、paper-shadow、production、broker 固定 blocked/false/none
+  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1666～1705，上轮 up-state repair
+    结论为 `UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`，不能继续在旧 label 上做 threshold/class-weight
+    微调。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI status=`UPPER_STATE_LABEL_FEATURE_RESET_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final
+    status=`UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH`，但 first-layer v2 仍 research-only。'
+  docs_links:
+  - docs/requirements/TRADING-1666_to_1705_Upper_State_Label_Feature_Reset.md
+  terminal: false
+  raw_row_sha256: c61be910c74080ffff24aa3756147ca781bbf697cf7d5f9a211f12394675dbbb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7521fe605a7ee74761412c3cab62d942a37a6ddf47eb4b9d14836f5dafe94c79

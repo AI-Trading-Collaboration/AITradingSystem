@@ -1,0 +1,90 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: SCORE-001
+  title: null
+  domain: 评分/仓位
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已实现独立 `position_gate` 层，把评分仓位、风险事件、估值拥挤、thesis
+    状态、数据置信度和组合限制取最严格上限
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`score-daily` 和 `backtest` 使用同一最终仓位约束；日报说明每个 gate 的来源、上限和是否触发；测试覆盖 L2/L3
+      风险压低仓位但不只依赖总分'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 427
+    row_sha256: 92b3e79b44270b14fd83fc46f18b593f3088f4d9770ef01b728baa094be58fb7
+    cell_count: 8
+    all_cells:
+    - SCORE-001
+    - 评分/仓位
+    - P0
+    - DONE
+    - 系统实现
+    - 已实现独立 `position_gate` 层，把评分仓位、风险事件、估值拥挤、thesis 状态、数据置信度和组合限制取最严格上限
+    - '`score-daily` 和 `backtest` 使用同一最终仓位约束；日报说明每个 gate 的来源、上限和是否触发；测试覆盖 L2/L3 风险压低仓位但不只依赖总分'
+    - '2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始实现共享仓位硬闸门并接入日报、回测、文档和测试。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：`score-daily` 与 `backtest` 已共用最终仓位闸门；日报和回测报告输出 gate
+      摘要；`python -m pytest -q` 通过 203 项测试。'
+    raw_line: '|SCORE-001|评分/仓位|P0|DONE|系统实现|已实现独立 `position_gate` 层，把评分仓位、风险事件、估值拥挤、thesis
+      状态、数据置信度和组合限制取最严格上限|`score-daily` 和 `backtest` 使用同一最终仓位约束；日报说明每个 gate 的来源、上限和是否触发；测试覆盖
+      L2/L3 风险压低仓位但不只依赖总分|2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始实现共享仓位硬闸门并接入日报、回测、文档和测试。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：`score-daily` 与 `backtest` 已共用最终仓位闸门；日报和回测报告输出 gate
+      摘要；`python -m pytest -q` 通过 203 项测试。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-92b3e79b44270b14fd83fc46
+  task_id: SCORE-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始实现共享仓位硬闸门并接入日报、回测、文档和测试。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：`score-daily` 与 `backtest` 已共用最终仓位闸门；日报和回测报告输出 gate
+      摘要；`python -m pytest -q` 通过 203 项测试。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:92b3e79b44270b14fd83fc46f18b593f3088f4d9770ef01b728baa094be58fb7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - SCORE-001
+  - 评分/仓位
+  - P0
+  - DONE
+  - 系统实现
+  - 已实现独立 `position_gate` 层，把评分仓位、风险事件、估值拥挤、thesis 状态、数据置信度和组合限制取最严格上限
+  - '`score-daily` 和 `backtest` 使用同一最终仓位约束；日报说明每个 gate 的来源、上限和是否触发；测试覆盖 L2/L3 风险压低仓位但不只依赖总分'
+  - '2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始实现共享仓位硬闸门并接入日报、回测、文档和测试。2026-05-04: 从
+    IN_PROGRESS 改为 DONE，原因：`score-daily` 与 `backtest` 已共用最终仓位闸门；日报和回测报告输出 gate 摘要；`python
+    -m pytest -q` 通过 203 项测试。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: 92b3e79b44270b14fd83fc46f18b593f3088f4d9770ef01b728baa094be58fb7
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c51d1b566aac2bf0672682f4c26520c146005f38ec4fd28ff4ec3587c84f3326

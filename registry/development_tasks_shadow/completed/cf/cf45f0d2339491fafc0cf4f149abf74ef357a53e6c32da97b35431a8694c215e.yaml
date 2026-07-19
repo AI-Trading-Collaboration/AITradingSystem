@@ -1,0 +1,134 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-062E
+  title: null
+  domain: ETF reports/Reader Brief visibility
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/artifact_catalog.md
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把
+    ETF brief 和关键 ETF 支撑报告纳入现有 report registry / Reader Brief navigation，不改变 ETF allocation、主
+    daily-run 或 broker 边界
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`config/report_registry.yaml` 登记 ETF portfolio brief、ETF data quality、ETF
+      backtest summary 和 ETF P2 walk-forward readiness；`aits reports index` 能只读扫描最新
+      ETF artifacts 并输出 freshness/status/owner_action；Reader Brief 在有 report_index
+      时能通过 report navigation/cadence calendar 下钻 ETF 报告；`docs/artifact_catalog.md`
+      和 `docs/system_flow.md` 同步；不重跑 ETF 上游、不写 production weights、不触发交易；测试覆盖 registry
+      默认加载、report index 最新 artifact 识别和 documentation contract 覆盖'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 368
+    row_sha256: cae51435311436de30b4cb0901bffe7d9f51b682eb3088edead38bf74439d71c
+    cell_count: 8
+    all_cells:
+    - TRADING-062E
+    - ETF reports/Reader Brief visibility
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把
+      ETF brief 和关键 ETF 支撑报告纳入现有 report registry / Reader Brief navigation，不改变 ETF
+      allocation、主 daily-run 或 broker 边界
+    - '`config/report_registry.yaml` 登记 ETF portfolio brief、ETF data quality、ETF backtest
+      summary 和 ETF P2 walk-forward readiness；`aits reports index` 能只读扫描最新 ETF artifacts
+      并输出 freshness/status/owner_action；Reader Brief 在有 report_index 时能通过 report navigation/cadence
+      calendar 下钻 ETF 报告；`docs/artifact_catalog.md` 和 `docs/system_flow.md` 同步；不重跑
+      ETF 上游、不写 production weights、不触发交易；测试覆盖 registry 默认加载、report index 最新 artifact
+      识别和 documentation contract 覆盖'
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：ETF P0/P1/P2 报告已独立生成，但尚未进入现有 Reader Brief/report
+      registry 可见性层。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 registry 条目、artifact catalog、system
+      flow、report index compact ETF backtest run date 解析和 Reader Brief navigation
+      测试；真实 smoke `aits reports index --as-of 2026-05-29`、`aits reports reader-brief
+      --date 2026-05-29`、`aits reports validate-reader-brief --date 2026-05-29` 通过，ETF
+      条目在 Reader Brief report navigation 可见且 `production_effect=none`。'
+    raw_line: '|TRADING-062E|ETF reports/Reader Brief visibility|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把 ETF
+      brief 和关键 ETF 支撑报告纳入现有 report registry / Reader Brief navigation，不改变 ETF allocation、主
+      daily-run 或 broker 边界|`config/report_registry.yaml` 登记 ETF portfolio brief、ETF
+      data quality、ETF backtest summary 和 ETF P2 walk-forward readiness；`aits reports
+      index` 能只读扫描最新 ETF artifacts 并输出 freshness/status/owner_action；Reader Brief
+      在有 report_index 时能通过 report navigation/cadence calendar 下钻 ETF 报告；`docs/artifact_catalog.md`
+      和 `docs/system_flow.md` 同步；不重跑 ETF 上游、不写 production weights、不触发交易；测试覆盖 registry
+      默认加载、report index 最新 artifact 识别和 documentation contract 覆盖|2026-05-31: 新增并进入
+      IN_PROGRESS，原因：ETF P0/P1/P2 报告已独立生成，但尚未进入现有 Reader Brief/report registry 可见性层。2026-05-31:
+      从 IN_PROGRESS 改为 DONE，原因：新增 registry 条目、artifact catalog、system flow、report
+      index compact ETF backtest run date 解析和 Reader Brief navigation 测试；真实 smoke
+      `aits reports index --as-of 2026-05-29`、`aits reports reader-brief --date 2026-05-29`、`aits
+      reports validate-reader-brief --date 2026-05-29` 通过，ETF 条目在 Reader Brief report
+      navigation 可见且 `production_effect=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-cae51435311436de30b4cb09
+  task_id: TRADING-062E
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：ETF P0/P1/P2 报告已独立生成，但尚未进入现有 Reader Brief/report
+      registry 可见性层。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 registry 条目、artifact catalog、system
+      flow、report index compact ETF backtest run date 解析和 Reader Brief navigation
+      测试；真实 smoke `aits reports index --as-of 2026-05-29`、`aits reports reader-brief
+      --date 2026-05-29`、`aits reports validate-reader-brief --date 2026-05-29` 通过，ETF
+      条目在 Reader Brief report navigation 可见且 `production_effect=none`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:cae51435311436de30b4cb0901bffe7d9f51b682eb3088edead38bf74439d71c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062E
+  - ETF reports/Reader Brief visibility
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把
+    ETF brief 和关键 ETF 支撑报告纳入现有 report registry / Reader Brief navigation，不改变 ETF allocation、主
+    daily-run 或 broker 边界
+  - '`config/report_registry.yaml` 登记 ETF portfolio brief、ETF data quality、ETF backtest
+    summary 和 ETF P2 walk-forward readiness；`aits reports index` 能只读扫描最新 ETF artifacts
+    并输出 freshness/status/owner_action；Reader Brief 在有 report_index 时能通过 report navigation/cadence
+    calendar 下钻 ETF 报告；`docs/artifact_catalog.md` 和 `docs/system_flow.md` 同步；不重跑 ETF
+    上游、不写 production weights、不触发交易；测试覆盖 registry 默认加载、report index 最新 artifact 识别和
+    documentation contract 覆盖'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：ETF P0/P1/P2 报告已独立生成，但尚未进入现有 Reader Brief/report
+    registry 可见性层。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 registry 条目、artifact catalog、system
+    flow、report index compact ETF backtest run date 解析和 Reader Brief navigation 测试；真实
+    smoke `aits reports index --as-of 2026-05-29`、`aits reports reader-brief --date
+    2026-05-29`、`aits reports validate-reader-brief --date 2026-05-29` 通过，ETF 条目在
+    Reader Brief report navigation 可见且 `production_effect=none`。'
+  docs_links:
+  - docs/artifact_catalog.md
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: cae51435311436de30b4cb0901bffe7d9f51b682eb3088edead38bf74439d71c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 771f81b8fbe72da0f44ec63a431ac445c0af5cc662343ff4f4806f6e62038e2c

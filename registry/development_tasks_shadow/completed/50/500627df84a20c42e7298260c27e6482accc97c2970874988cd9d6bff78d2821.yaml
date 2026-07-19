@@ -1,0 +1,138 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2429_GROWTH_TILT_ENGINE_FORWARD_OUTCOME_BINDING_BOUNDARY
+  title: null
+  domain: Strategy research / growth tilt forward outcome binding boundary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2430 candidate promotion evidence review
+  requirement_refs:
+  - docs/requirements/TRADING-2429_Growth_Tilt_Engine_Forward_Outcome_Binding_Boundary.md
+  - docs/tasks/completed/TRADING-2429_Growth_Tilt_Engine_Forward_Outcome_Binding_Boundary.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2429_Growth_Tilt_Engine_Forward_Outcome_Binding_Boundary.md`；承接
+    TRADING-2428 observe-only signal artifact boundary READY，仅读取 prior artifacts/docs/registry/catalog/system
+    flow；本任务只定义 future observe-only signal outcome binding boundary，不生成真实 signal、不回填真实
+    outcome、不读取 fresh market/outcome data。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 forward outcome binding boundary builder、`aits research strategies growth-tilt-engine-forward-outcome-binding-boundary`；输出
+      `forward_outcome_binding_boundary_result.json`、`outcome_horizon_rules.json`、`valid_until_binding_rules.json`、`outcome_decision_rules.json`、`baseline_comparison_rules.json`、`outcome_artifact_schema.json`、`signal_to_outcome_linkage.json`、`no_effect_boundary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_FORWARD_OUTCOME_BINDING_BOUNDARY_READY`，`pit_gate_ready=true`，`contract_ready=true`，`observe_only_signal_artifact_boundary_ready=true`，forward_outcome_binding_boundary_ready=true，forward_outcome_binding_boundary_gap_count=0，outcome_horizons=`1d/5d/10d/20d`，outcome_horizon_rules_ready=true，outcome_schema_ready=true，valid_until_binding_ready=true，outcome_decision_rules_ready=true，baseline_comparison_ready=true，signal_to_outcome_linkage_ready=true，no_effect_boundary_ready=true，manual_review_required=true，automatic_execution_allowed=false，generated_signal=false，new_signal_generated=false，generated_trading_advice=false，trading_advice_generated=false，actionable_allocation_generated=false，outcome_backfilled=false，outcome_binding_executed=false，outcome_store_mutated=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、paper_shadow_daily_job_run=false、scheduler_enabled=false、scheduled_task_created=false、production_enabled=false、broker_enabled=false、broker_order_generated=false、portfolio_weight_mutated=false、daily_report_run=false、backtest_run=false、scoring_run=false、fresh_market_data_read=false，next
+      route=`TRADING-2430_Growth_Tilt_Engine_Candidate_Promotion_Evidence_Review`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 55
+    row_sha256: ccef1f2ea5e649781f3bb902cd14e962665e70da4d058f3138bb5afa962b00af
+    cell_count: 8
+    all_cells:
+    - TRADING-2429_GROWTH_TILT_ENGINE_FORWARD_OUTCOME_BINDING_BOUNDARY
+    - Strategy research / growth tilt forward outcome binding boundary
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2430 candidate promotion evidence review
+    - 详见 `docs/requirements/TRADING-2429_Growth_Tilt_Engine_Forward_Outcome_Binding_Boundary.md`；承接
+      TRADING-2428 observe-only signal artifact boundary READY，仅读取 prior artifacts/docs/registry/catalog/system
+      flow；本任务只定义 future observe-only signal outcome binding boundary，不生成真实 signal、不回填真实
+      outcome、不读取 fresh market/outcome data。
+    - 新增 forward outcome binding boundary builder、`aits research strategies growth-tilt-engine-forward-outcome-binding-boundary`；输出
+      `forward_outcome_binding_boundary_result.json`、`outcome_horizon_rules.json`、`valid_until_binding_rules.json`、`outcome_decision_rules.json`、`baseline_comparison_rules.json`、`outcome_artifact_schema.json`、`signal_to_outcome_linkage.json`、`no_effect_boundary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_FORWARD_OUTCOME_BINDING_BOUNDARY_READY`，`pit_gate_ready=true`，`contract_ready=true`，`observe_only_signal_artifact_boundary_ready=true`，forward_outcome_binding_boundary_ready=true，forward_outcome_binding_boundary_gap_count=0，outcome_horizons=`1d/5d/10d/20d`，outcome_horizon_rules_ready=true，outcome_schema_ready=true，valid_until_binding_ready=true，outcome_decision_rules_ready=true，baseline_comparison_ready=true，signal_to_outcome_linkage_ready=true，no_effect_boundary_ready=true，manual_review_required=true，automatic_execution_allowed=false，generated_signal=false，new_signal_generated=false，generated_trading_advice=false，trading_advice_generated=false，actionable_allocation_generated=false，outcome_backfilled=false，outcome_binding_executed=false，outcome_store_mutated=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、paper_shadow_daily_job_run=false、scheduler_enabled=false、scheduled_task_created=false、production_enabled=false、broker_enabled=false、broker_order_generated=false、portfolio_weight_mutated=false、daily_report_run=false、backtest_run=false、scoring_run=false、fresh_market_data_read=false，next
+      route=`TRADING-2430_Growth_Tilt_Engine_Candidate_Promotion_Evidence_Review`。
+    - '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest、真实 CLI、docs freshness、documentation
+      contract、task-register consistency run/validate、contract-validation 和 `git diff
+      --check`；本任务未运行 `aits validate-data`，因为只读取 prior validated TRADING-2428 artifacts/docs/registry/catalog/system
+      flow，不读取 fresh cached market/outcome data、不运行新 backtest、不生成 feature/signal/scoring/daily
+      report 或交易建议。candidate search、observation、paper-shadow runtime/schedule、scheduler、event
+      append、real outcome binding、outcome store mutation、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2429_Growth_Tilt_Engine_Forward_Outcome_Binding_Boundary.md`。'
+    raw_line: '|TRADING-2429_GROWTH_TILT_ENGINE_FORWARD_OUTCOME_BINDING_BOUNDARY|Strategy
+      research / growth tilt forward outcome binding boundary|P0|DONE|项目 owner 后续复核
+      TRADING-2430 candidate promotion evidence review|详见 `docs/requirements/TRADING-2429_Growth_Tilt_Engine_Forward_Outcome_Binding_Boundary.md`；承接
+      TRADING-2428 observe-only signal artifact boundary READY，仅读取 prior artifacts/docs/registry/catalog/system
+      flow；本任务只定义 future observe-only signal outcome binding boundary，不生成真实 signal、不回填真实
+      outcome、不读取 fresh market/outcome data。|新增 forward outcome binding boundary builder、`aits
+      research strategies growth-tilt-engine-forward-outcome-binding-boundary`；输出
+      `forward_outcome_binding_boundary_result.json`、`outcome_horizon_rules.json`、`valid_until_binding_rules.json`、`outcome_decision_rules.json`、`baseline_comparison_rules.json`、`outcome_artifact_schema.json`、`signal_to_outcome_linkage.json`、`no_effect_boundary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_FORWARD_OUTCOME_BINDING_BOUNDARY_READY`，`pit_gate_ready=true`，`contract_ready=true`，`observe_only_signal_artifact_boundary_ready=true`，forward_outcome_binding_boundary_ready=true，forward_outcome_binding_boundary_gap_count=0，outcome_horizons=`1d/5d/10d/20d`，outcome_horizon_rules_ready=true，outcome_schema_ready=true，valid_until_binding_ready=true，outcome_decision_rules_ready=true，baseline_comparison_ready=true，signal_to_outcome_linkage_ready=true，no_effect_boundary_ready=true，manual_review_required=true，automatic_execution_allowed=false，generated_signal=false，new_signal_generated=false，generated_trading_advice=false，trading_advice_generated=false，actionable_allocation_generated=false，outcome_backfilled=false，outcome_binding_executed=false，outcome_store_mutated=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、paper_shadow_daily_job_run=false、scheduler_enabled=false、scheduled_task_created=false、production_enabled=false、broker_enabled=false、broker_order_generated=false、portfolio_weight_mutated=false、daily_report_run=false、backtest_run=false、scoring_run=false、fresh_market_data_read=false，next
+      route=`TRADING-2430_Growth_Tilt_Engine_Candidate_Promotion_Evidence_Review`。|2026-07-09:
+      根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest、真实 CLI、docs freshness、documentation contract、task-register consistency
+      run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits validate-data`，因为只读取
+      prior validated TRADING-2428 artifacts/docs/registry/catalog/system flow，不读取
+      fresh cached market/outcome data、不运行新 backtest、不生成 feature/signal/scoring/daily
+      report 或交易建议。candidate search、observation、paper-shadow runtime/schedule、scheduler、event
+      append、real outcome binding、outcome store mutation、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2429_Growth_Tilt_Engine_Forward_Outcome_Binding_Boundary.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ccef1f2ea5e649781f3bb902
+  task_id: TRADING-2429_GROWTH_TILT_ENGINE_FORWARD_OUTCOME_BINDING_BOUNDARY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2430 candidate promotion evidence review
+    notes: '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest、真实 CLI、docs freshness、documentation
+      contract、task-register consistency run/validate、contract-validation 和 `git diff
+      --check`；本任务未运行 `aits validate-data`，因为只读取 prior validated TRADING-2428 artifacts/docs/registry/catalog/system
+      flow，不读取 fresh cached market/outcome data、不运行新 backtest、不生成 feature/signal/scoring/daily
+      report 或交易建议。candidate search、observation、paper-shadow runtime/schedule、scheduler、event
+      append、real outcome binding、outcome store mutation、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2429_Growth_Tilt_Engine_Forward_Outcome_Binding_Boundary.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ccef1f2ea5e649781f3bb902cd14e962665e70da4d058f3138bb5afa962b00af
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2429_GROWTH_TILT_ENGINE_FORWARD_OUTCOME_BINDING_BOUNDARY
+  - Strategy research / growth tilt forward outcome binding boundary
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2430 candidate promotion evidence review
+  - 详见 `docs/requirements/TRADING-2429_Growth_Tilt_Engine_Forward_Outcome_Binding_Boundary.md`；承接
+    TRADING-2428 observe-only signal artifact boundary READY，仅读取 prior artifacts/docs/registry/catalog/system
+    flow；本任务只定义 future observe-only signal outcome binding boundary，不生成真实 signal、不回填真实
+    outcome、不读取 fresh market/outcome data。
+  - 新增 forward outcome binding boundary builder、`aits research strategies growth-tilt-engine-forward-outcome-binding-boundary`；输出
+    `forward_outcome_binding_boundary_result.json`、`outcome_horizon_rules.json`、`valid_until_binding_rules.json`、`outcome_decision_rules.json`、`baseline_comparison_rules.json`、`outcome_artifact_schema.json`、`signal_to_outcome_linkage.json`、`no_effect_boundary.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_FORWARD_OUTCOME_BINDING_BOUNDARY_READY`，`pit_gate_ready=true`，`contract_ready=true`，`observe_only_signal_artifact_boundary_ready=true`，forward_outcome_binding_boundary_ready=true，forward_outcome_binding_boundary_gap_count=0，outcome_horizons=`1d/5d/10d/20d`，outcome_horizon_rules_ready=true，outcome_schema_ready=true，valid_until_binding_ready=true，outcome_decision_rules_ready=true，baseline_comparison_ready=true，signal_to_outcome_linkage_ready=true，no_effect_boundary_ready=true，manual_review_required=true，automatic_execution_allowed=false，generated_signal=false，new_signal_generated=false，generated_trading_advice=false，trading_advice_generated=false，actionable_allocation_generated=false，outcome_backfilled=false，outcome_binding_executed=false，outcome_store_mutated=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、paper_shadow_daily_job_run=false、scheduler_enabled=false、scheduled_task_created=false、production_enabled=false、broker_enabled=false、broker_order_generated=false、portfolio_weight_mutated=false、daily_report_run=false、backtest_run=false、scoring_run=false、fresh_market_data_read=false，next
+    route=`TRADING-2430_Growth_Tilt_Engine_Candidate_Promotion_Evidence_Review`。
+  - '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+    Ruff、compileall、focused parallel pytest、真实 CLI、docs freshness、documentation contract、task-register
+    consistency run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits
+    validate-data`，因为只读取 prior validated TRADING-2428 artifacts/docs/registry/catalog/system
+    flow，不读取 fresh cached market/outcome data、不运行新 backtest、不生成 feature/signal/scoring/daily
+    report 或交易建议。candidate search、observation、paper-shadow runtime/schedule、scheduler、event
+    append、real outcome binding、outcome store mutation、production、broker/order、daily
+    report 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2429_Growth_Tilt_Engine_Forward_Outcome_Binding_Boundary.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2429_Growth_Tilt_Engine_Forward_Outcome_Binding_Boundary.md
+  - docs/tasks/completed/TRADING-2429_Growth_Tilt_Engine_Forward_Outcome_Binding_Boundary.md
+  terminal: true
+  raw_row_sha256: ccef1f2ea5e649781f3bb902cd14e962665e70da4d058f3138bb5afa962b00af
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 294fc9d97edf2d6ea24850da03eb6fb8cc7f52bf3a7d2aeaf164b2d7da9c6d84

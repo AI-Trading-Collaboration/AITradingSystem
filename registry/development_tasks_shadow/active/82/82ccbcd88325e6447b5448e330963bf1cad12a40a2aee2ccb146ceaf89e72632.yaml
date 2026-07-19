@@ -1,0 +1,117 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2304_BREADTH_PROXY_SIGNAL_CONCEPT_SELECTION
+  title: null
+  domain: Research trends / breadth participation proxy diagnostics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2304_Breadth_Proxy_Signal_Concept_Selection.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2304_Breadth_Proxy_Signal_Concept_Selection.md`；依赖
+    TRADING-2303 diagnostics 输出。当前 TRADING-2303 status=`CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_SOURCE_BLOCKED`，没有可计算
+    signal distribution；本批必须 fail closed，不得凭概念偏好选择 signal，不得推进 generator POC。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 形成 breadth proxy signal selection report、signal concept scorecard、selected/rejected
+      concept sets；当前 selected_concept_count=0、advance_to_generator_allowed=false，所有
+      outputs 保持 promotion/paper-shadow/production/broker false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1208
+    row_sha256: 0af0693ec22a57d381ab9d4c56f35455d1fe90aaf760253aaf596eaff6930772
+    cell_count: 8
+    all_cells:
+    - TRADING-2304_BREADTH_PROXY_SIGNAL_CONCEPT_SELECTION
+    - Research trends / breadth participation proxy diagnostics
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2304_Breadth_Proxy_Signal_Concept_Selection.md`；依赖
+      TRADING-2303 diagnostics 输出。当前 TRADING-2303 status=`CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_SOURCE_BLOCKED`，没有可计算
+      signal distribution；本批必须 fail closed，不得凭概念偏好选择 signal，不得推进 generator POC。
+    - 形成 breadth proxy signal selection report、signal concept scorecard、selected/rejected
+      concept sets；当前 selected_concept_count=0、advance_to_generator_allowed=false，所有
+      outputs 保持 promotion/paper-shadow/production/broker false/none。
+    - '2026-07-01: 根据 owner post-2302 roadmap 登记；2026-07-01: 根据 TRADING-2303 source-blocked
+      diagnostics 转入 IN_PROGRESS。2026-07-01: 实现完成并转入 VALIDATING；真实 run status=`BREADTH_PROXY_SIGNAL_SELECTION_SOURCE_BLOCKED_NO_SELECTION`，7
+      个 concepts 全部 rejected/source-blocked，0 selected；验证通过 focused parallel pytest
+      10 passed、docs/registry/task-register focused parallel pytest 41 passed、Ruff、compileall、docs/task-register
+      focused 31 passed、contract-validation 193 passed 和 `git diff --check`。'
+    raw_line: '|TRADING-2304_BREADTH_PROXY_SIGNAL_CONCEPT_SELECTION|Research trends
+      / breadth participation proxy diagnostics|P1|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-2304_Breadth_Proxy_Signal_Concept_Selection.md`；依赖
+      TRADING-2303 diagnostics 输出。当前 TRADING-2303 status=`CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_SOURCE_BLOCKED`，没有可计算
+      signal distribution；本批必须 fail closed，不得凭概念偏好选择 signal，不得推进 generator POC。|形成
+      breadth proxy signal selection report、signal concept scorecard、selected/rejected
+      concept sets；当前 selected_concept_count=0、advance_to_generator_allowed=false，所有
+      outputs 保持 promotion/paper-shadow/production/broker false/none。|2026-07-01:
+      根据 owner post-2302 roadmap 登记；2026-07-01: 根据 TRADING-2303 source-blocked diagnostics
+      转入 IN_PROGRESS。2026-07-01: 实现完成并转入 VALIDATING；真实 run status=`BREADTH_PROXY_SIGNAL_SELECTION_SOURCE_BLOCKED_NO_SELECTION`，7
+      个 concepts 全部 rejected/source-blocked，0 selected；验证通过 focused parallel pytest
+      10 passed、docs/registry/task-register focused parallel pytest 41 passed、Ruff、compileall、docs/task-register
+      focused 31 passed、contract-validation 193 passed 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0af0693ec22a57d381ab9d4c
+  task_id: TRADING-2304_BREADTH_PROXY_SIGNAL_CONCEPT_SELECTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 owner post-2302 roadmap 登记；2026-07-01: 根据 TRADING-2303
+      source-blocked diagnostics 转入 IN_PROGRESS。2026-07-01: 实现完成并转入 VALIDATING；真实
+      run status=`BREADTH_PROXY_SIGNAL_SELECTION_SOURCE_BLOCKED_NO_SELECTION`，7 个
+      concepts 全部 rejected/source-blocked，0 selected；验证通过 focused parallel pytest
+      10 passed、docs/registry/task-register focused parallel pytest 41 passed、Ruff、compileall、docs/task-register
+      focused 31 passed、contract-validation 193 passed 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0af0693ec22a57d381ab9d4c56f35455d1fe90aaf760253aaf596eaff6930772
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2304_BREADTH_PROXY_SIGNAL_CONCEPT_SELECTION
+  - Research trends / breadth participation proxy diagnostics
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2304_Breadth_Proxy_Signal_Concept_Selection.md`；依赖
+    TRADING-2303 diagnostics 输出。当前 TRADING-2303 status=`CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_SOURCE_BLOCKED`，没有可计算
+    signal distribution；本批必须 fail closed，不得凭概念偏好选择 signal，不得推进 generator POC。
+  - 形成 breadth proxy signal selection report、signal concept scorecard、selected/rejected
+    concept sets；当前 selected_concept_count=0、advance_to_generator_allowed=false，所有
+    outputs 保持 promotion/paper-shadow/production/broker false/none。
+  - '2026-07-01: 根据 owner post-2302 roadmap 登记；2026-07-01: 根据 TRADING-2303 source-blocked
+    diagnostics 转入 IN_PROGRESS。2026-07-01: 实现完成并转入 VALIDATING；真实 run status=`BREADTH_PROXY_SIGNAL_SELECTION_SOURCE_BLOCKED_NO_SELECTION`，7
+    个 concepts 全部 rejected/source-blocked，0 selected；验证通过 focused parallel pytest
+    10 passed、docs/registry/task-register focused parallel pytest 41 passed、Ruff、compileall、docs/task-register
+    focused 31 passed、contract-validation 193 passed 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-2304_Breadth_Proxy_Signal_Concept_Selection.md
+  terminal: false
+  raw_row_sha256: 0af0693ec22a57d381ab9d4c56f35455d1fe90aaf760253aaf596eaff6930772
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 52563a76676269971c16f3bac6e32687359f5e3d49dc212db488c9cbfd05f06f

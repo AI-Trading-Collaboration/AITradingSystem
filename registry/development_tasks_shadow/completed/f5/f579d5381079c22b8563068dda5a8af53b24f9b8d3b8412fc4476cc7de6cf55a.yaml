@@ -1,0 +1,120 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-014
+  title: null
+  domain: 数据质量/DTWEXBGS 新鲜度
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/dtwexbgs_freshness_policy_2026-05-09.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/dtwexbgs_freshness_policy_2026-05-09.md`；已把
+    `DTWEXBGS` 从全体 FRED 宏观序列 7 日历日 freshness 改为 14 日历日 series 级阈值；后续 owner 可决定是否接入第二宏观来源或直接
+    Federal Reserve H.10 来源
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`DTWEXBGS` 使用符合 Federal Reserve H.10 周度发布机制的 series 级 freshness 阈值，DGS2/DGS10
+      仍保持较严格默认阈值；`aits validate-data`、`score-daily` 和 `backtest` 继续 fail closed 于真正过期或缺失的宏观输入；数据源成本选项和接入边界记录在需求文档；系统流图、配置和测试同步更新'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 456
+    row_sha256: 0dd337ced07f6a3de7795405e461560eaa8b4d3f5f5af2143a87ea8fc01712bb
+    cell_count: 8
+    all_cells:
+    - DATA-014
+    - 数据质量/DTWEXBGS 新鲜度
+    - P0
+    - DONE
+    - 系统实现 + 项目 owner
+    - 详细拆解见 `docs/requirements/dtwexbgs_freshness_policy_2026-05-09.md`；已把 `DTWEXBGS`
+      从全体 FRED 宏观序列 7 日历日 freshness 改为 14 日历日 series 级阈值；后续 owner 可决定是否接入第二宏观来源或直接
+      Federal Reserve H.10 来源
+    - '`DTWEXBGS` 使用符合 Federal Reserve H.10 周度发布机制的 series 级 freshness 阈值，DGS2/DGS10
+      仍保持较严格默认阈值；`aits validate-data`、`score-daily` 和 `backtest` 继续 fail closed 于真正过期或缺失的宏观输入；数据源成本选项和接入边界记录在需求文档；系统流图、配置和测试同步更新'
+    - '2026-05-09: 新增并进入实现，原因：真实每日 `daily-run` 已更新 FRED 缓存，但 FRED/Board `DTWEXBGS`
+      最新 observation 仍停在 2026-05-01，8 个日历日触发全局 7 天门禁；该滞后符合 H.10 周度发布时间特征，需用 series
+      级 freshness 表达，而不是绕过数据质量门禁。2026-05-09: 从 IN_PROGRESS 改为 DONE，原因：新增 rate series
+      级 `max_stale_calendar_days` override，`DTWEXBGS` 配置为 14 天，DGS2/DGS10 保持默认 7 天；`validate-data
+      --as-of 2026-05-09` 已从 `FAIL` 变为 `PASS_WITH_WARNINGS` 且错误数 0；验证通过 `ruff check
+      src tests`、目标测试 39 passed 和完整 pytest 415 passed。2026-05-10: 归档时将原登记 ID 从 `DATA-012`
+      修正为 `DATA-014`，原因：`DATA-012` 已被早期 Yahoo 诊断复查任务占用，避免 completed register 出现重复
+      ID。'
+    raw_line: '|DATA-014|数据质量/DTWEXBGS 新鲜度|P0|DONE|系统实现 + 项目 owner|详细拆解见 `docs/requirements/dtwexbgs_freshness_policy_2026-05-09.md`；已把
+      `DTWEXBGS` 从全体 FRED 宏观序列 7 日历日 freshness 改为 14 日历日 series 级阈值；后续 owner 可决定是否接入第二宏观来源或直接
+      Federal Reserve H.10 来源|`DTWEXBGS` 使用符合 Federal Reserve H.10 周度发布机制的 series
+      级 freshness 阈值，DGS2/DGS10 仍保持较严格默认阈值；`aits validate-data`、`score-daily` 和 `backtest`
+      继续 fail closed 于真正过期或缺失的宏观输入；数据源成本选项和接入边界记录在需求文档；系统流图、配置和测试同步更新|2026-05-09:
+      新增并进入实现，原因：真实每日 `daily-run` 已更新 FRED 缓存，但 FRED/Board `DTWEXBGS` 最新 observation
+      仍停在 2026-05-01，8 个日历日触发全局 7 天门禁；该滞后符合 H.10 周度发布时间特征，需用 series 级 freshness 表达，而不是绕过数据质量门禁。2026-05-09:
+      从 IN_PROGRESS 改为 DONE，原因：新增 rate series 级 `max_stale_calendar_days` override，`DTWEXBGS`
+      配置为 14 天，DGS2/DGS10 保持默认 7 天；`validate-data --as-of 2026-05-09` 已从 `FAIL` 变为
+      `PASS_WITH_WARNINGS` 且错误数 0；验证通过 `ruff check src tests`、目标测试 39 passed 和完整 pytest
+      415 passed。2026-05-10: 归档时将原登记 ID 从 `DATA-012` 修正为 `DATA-014`，原因：`DATA-012`
+      已被早期 Yahoo 诊断复查任务占用，避免 completed register 出现重复 ID。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0dd337ced07f6a3de7795405
+  task_id: DATA-014
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner
+    notes: '2026-05-09: 新增并进入实现，原因：真实每日 `daily-run` 已更新 FRED 缓存，但 FRED/Board `DTWEXBGS`
+      最新 observation 仍停在 2026-05-01，8 个日历日触发全局 7 天门禁；该滞后符合 H.10 周度发布时间特征，需用 series
+      级 freshness 表达，而不是绕过数据质量门禁。2026-05-09: 从 IN_PROGRESS 改为 DONE，原因：新增 rate series
+      级 `max_stale_calendar_days` override，`DTWEXBGS` 配置为 14 天，DGS2/DGS10 保持默认 7 天；`validate-data
+      --as-of 2026-05-09` 已从 `FAIL` 变为 `PASS_WITH_WARNINGS` 且错误数 0；验证通过 `ruff check
+      src tests`、目标测试 39 passed 和完整 pytest 415 passed。2026-05-10: 归档时将原登记 ID 从 `DATA-012`
+      修正为 `DATA-014`，原因：`DATA-012` 已被早期 Yahoo 诊断复查任务占用，避免 completed register 出现重复
+      ID。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0dd337ced07f6a3de7795405e461560eaa8b4d3f5f5af2143a87ea8fc01712bb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-014
+  - 数据质量/DTWEXBGS 新鲜度
+  - P0
+  - DONE
+  - 系统实现 + 项目 owner
+  - 详细拆解见 `docs/requirements/dtwexbgs_freshness_policy_2026-05-09.md`；已把 `DTWEXBGS`
+    从全体 FRED 宏观序列 7 日历日 freshness 改为 14 日历日 series 级阈值；后续 owner 可决定是否接入第二宏观来源或直接 Federal
+    Reserve H.10 来源
+  - '`DTWEXBGS` 使用符合 Federal Reserve H.10 周度发布机制的 series 级 freshness 阈值，DGS2/DGS10
+    仍保持较严格默认阈值；`aits validate-data`、`score-daily` 和 `backtest` 继续 fail closed 于真正过期或缺失的宏观输入；数据源成本选项和接入边界记录在需求文档；系统流图、配置和测试同步更新'
+  - '2026-05-09: 新增并进入实现，原因：真实每日 `daily-run` 已更新 FRED 缓存，但 FRED/Board `DTWEXBGS` 最新
+    observation 仍停在 2026-05-01，8 个日历日触发全局 7 天门禁；该滞后符合 H.10 周度发布时间特征，需用 series 级 freshness
+    表达，而不是绕过数据质量门禁。2026-05-09: 从 IN_PROGRESS 改为 DONE，原因：新增 rate series 级 `max_stale_calendar_days`
+    override，`DTWEXBGS` 配置为 14 天，DGS2/DGS10 保持默认 7 天；`validate-data --as-of 2026-05-09`
+    已从 `FAIL` 变为 `PASS_WITH_WARNINGS` 且错误数 0；验证通过 `ruff check src tests`、目标测试 39 passed
+    和完整 pytest 415 passed。2026-05-10: 归档时将原登记 ID 从 `DATA-012` 修正为 `DATA-014`，原因：`DATA-012`
+    已被早期 Yahoo 诊断复查任务占用，避免 completed register 出现重复 ID。'
+  docs_links:
+  - docs/requirements/dtwexbgs_freshness_policy_2026-05-09.md
+  terminal: true
+  raw_row_sha256: 0dd337ced07f6a3de7795405e461560eaa8b4d3f5f5af2143a87ea8fc01712bb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ef32ac92c72d97963872f26173be68cb0a8de640b57be75c73e741a5f01faa15

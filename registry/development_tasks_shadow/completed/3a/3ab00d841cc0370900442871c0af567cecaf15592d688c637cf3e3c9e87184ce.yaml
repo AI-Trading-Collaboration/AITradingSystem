@@ -1,0 +1,103 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-013
+  title: null
+  domain: 数据源/SEC 日报指标缓存
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已通过正式 CLI 生成并校验 `data/processed/sec_fundamentals_2026-05-05.csv`，`score-daily`
+    已越过 SEC 指标门禁
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 当日 `sec_fundamentals_YYYY-MM-DD.csv` 必须来自正式 `aits fundamentals extract-sec-metrics`
+      路径，先通过 SEC companyfacts 缓存校验，再通过 `aits fundamentals validate-sec-metrics`；覆盖缺口必须如实进入校验报告，不允许补空行或伪造指标；`score-daily`
+      应能越过 SEC 指标校验进入后续门禁，若后续门禁失败则单独报告
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 438
+    row_sha256: e69f8dd44849705ae13b32838f729a9f0bec3fa6763c0ee47d1d91a87f5e983c
+    cell_count: 8
+    all_cells:
+    - DATA-013
+    - 数据源/SEC 日报指标缓存
+    - P0
+    - DONE
+    - 系统实现
+    - 已通过正式 CLI 生成并校验 `data/processed/sec_fundamentals_2026-05-05.csv`，`score-daily`
+      已越过 SEC 指标门禁
+    - 当日 `sec_fundamentals_YYYY-MM-DD.csv` 必须来自正式 `aits fundamentals extract-sec-metrics`
+      路径，先通过 SEC companyfacts 缓存校验，再通过 `aits fundamentals validate-sec-metrics`；覆盖缺口必须如实进入校验报告，不允许补空行或伪造指标；`score-daily`
+      应能越过 SEC 指标校验进入后续门禁，若后续门禁失败则单独报告
+    - '2026-05-05: 新增并进入实现，原因：当前 `score-daily` 已通过市场数据质量门禁，但因 `data/processed/sec_fundamentals_2026-05-05.csv`
+      不存在、覆盖 0/72 而停止。2026-05-05: 从 IN_PROGRESS 改为 DONE，原因：`validate-sec-companyfacts`
+      PASS，`extract-sec-metrics` 生成 66 行并 `PASS_WITH_WARNINGS`，`validate-sec-metrics`
+      覆盖率 92% 且 0 错误，`score-daily --as-of 2026-05-05` 已完成。'
+    raw_line: '|DATA-013|数据源/SEC 日报指标缓存|P0|DONE|系统实现|已通过正式 CLI 生成并校验 `data/processed/sec_fundamentals_2026-05-05.csv`，`score-daily`
+      已越过 SEC 指标门禁|当日 `sec_fundamentals_YYYY-MM-DD.csv` 必须来自正式 `aits fundamentals
+      extract-sec-metrics` 路径，先通过 SEC companyfacts 缓存校验，再通过 `aits fundamentals validate-sec-metrics`；覆盖缺口必须如实进入校验报告，不允许补空行或伪造指标；`score-daily`
+      应能越过 SEC 指标校验进入后续门禁，若后续门禁失败则单独报告|2026-05-05: 新增并进入实现，原因：当前 `score-daily` 已通过市场数据质量门禁，但因
+      `data/processed/sec_fundamentals_2026-05-05.csv` 不存在、覆盖 0/72 而停止。2026-05-05:
+      从 IN_PROGRESS 改为 DONE，原因：`validate-sec-companyfacts` PASS，`extract-sec-metrics`
+      生成 66 行并 `PASS_WITH_WARNINGS`，`validate-sec-metrics` 覆盖率 92% 且 0 错误，`score-daily
+      --as-of 2026-05-05` 已完成。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e69f8dd44849705ae13b3283
+  task_id: DATA-013
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增并进入实现，原因：当前 `score-daily` 已通过市场数据质量门禁，但因 `data/processed/sec_fundamentals_2026-05-05.csv`
+      不存在、覆盖 0/72 而停止。2026-05-05: 从 IN_PROGRESS 改为 DONE，原因：`validate-sec-companyfacts`
+      PASS，`extract-sec-metrics` 生成 66 行并 `PASS_WITH_WARNINGS`，`validate-sec-metrics`
+      覆盖率 92% 且 0 错误，`score-daily --as-of 2026-05-05` 已完成。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e69f8dd44849705ae13b32838f729a9f0bec3fa6763c0ee47d1d91a87f5e983c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-013
+  - 数据源/SEC 日报指标缓存
+  - P0
+  - DONE
+  - 系统实现
+  - 已通过正式 CLI 生成并校验 `data/processed/sec_fundamentals_2026-05-05.csv`，`score-daily`
+    已越过 SEC 指标门禁
+  - 当日 `sec_fundamentals_YYYY-MM-DD.csv` 必须来自正式 `aits fundamentals extract-sec-metrics`
+    路径，先通过 SEC companyfacts 缓存校验，再通过 `aits fundamentals validate-sec-metrics`；覆盖缺口必须如实进入校验报告，不允许补空行或伪造指标；`score-daily`
+    应能越过 SEC 指标校验进入后续门禁，若后续门禁失败则单独报告
+  - '2026-05-05: 新增并进入实现，原因：当前 `score-daily` 已通过市场数据质量门禁，但因 `data/processed/sec_fundamentals_2026-05-05.csv`
+    不存在、覆盖 0/72 而停止。2026-05-05: 从 IN_PROGRESS 改为 DONE，原因：`validate-sec-companyfacts`
+    PASS，`extract-sec-metrics` 生成 66 行并 `PASS_WITH_WARNINGS`，`validate-sec-metrics`
+    覆盖率 92% 且 0 错误，`score-daily --as-of 2026-05-05` 已完成。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: e69f8dd44849705ae13b32838f729a9f0bec3fa6763c0ee47d1d91a87f5e983c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 89757d54a73fd1b1269c04e6c0564d40da30b03f881b16ab41796cc6244fc97a

@@ -1,0 +1,120 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2271_FREE_LOW_COST_FIRST_LAYER_PROXY_COVERAGE_AUDIT
+  title: null
+  domain: Research trends / free and low-cost first-layer proxy coverage audit
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2271_Free_Low_Cost_First_Layer_Proxy_Coverage_Audit.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2271_Free_Low_Cost_First_Layer_Proxy_Coverage_Audit.md`；附件要求逐
+    proxy 审计 data availability、history start、primary window coverage、PIT safety、survivorship
+    risk、expected signal role 和 replacement for true breadth。本批已生成 audit artifacts，下一步进入
+    TRADING-2272 objective redesign。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends first-layer-proxy-coverage-audit`、proxy coverage
+      policy、JSON/YAML/Markdown audit artifacts、report registry、artifact catalog、system
+      flow 和 focused tests；所有 proxy rows 显式披露 `replacement_for_true_breadth=false`
+      或阻塞原因；可用 ETF price proxies 只能 price-proxy diagnostic，不得升级成 true breadth；所有 gate
+      fields 固定 false/none/BLOCKED。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1246
+    row_sha256: fc353f669140b066b6a2a6e68b7c9b707461241e3fce94ec88388228dc5d8a07
+    cell_count: 8
+    all_cells:
+    - TRADING-2271_FREE_LOW_COST_FIRST_LAYER_PROXY_COVERAGE_AUDIT
+    - Research trends / free and low-cost first-layer proxy coverage audit
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2271_Free_Low_Cost_First_Layer_Proxy_Coverage_Audit.md`；附件要求逐
+      proxy 审计 data availability、history start、primary window coverage、PIT safety、survivorship
+      risk、expected signal role 和 replacement for true breadth。本批已生成 audit artifacts，下一步进入
+      TRADING-2272 objective redesign。
+    - 新增 `aits research trends first-layer-proxy-coverage-audit`、proxy coverage policy、JSON/YAML/Markdown
+      audit artifacts、report registry、artifact catalog、system flow 和 focused tests；所有
+      proxy rows 显式披露 `replacement_for_true_breadth=false` 或阻塞原因；可用 ETF price proxies
+      只能 price-proxy diagnostic，不得升级成 true breadth；所有 gate fields 固定 false/none/BLOCKED。
+    - '2026-06-28: 新增并进入 IN_PROGRESS；本批只做 coverage audit，不下载网络数据、不升级 paid source、不训练模型、不恢复
+      reopen/promotion/paper-shadow/production/broker。2026-06-28: 实现完成并转入 VALIDATING；真实
+      run proxy_count=12、data_available_count=6、replacement_for_true_breadth_count=0。2026-06-28:
+      验证通过 focused / governance / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T122456Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-2271_FREE_LOW_COST_FIRST_LAYER_PROXY_COVERAGE_AUDIT|Research
+      trends / free and low-cost first-layer proxy coverage audit|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2271_Free_Low_Cost_First_Layer_Proxy_Coverage_Audit.md`；附件要求逐
+      proxy 审计 data availability、history start、primary window coverage、PIT safety、survivorship
+      risk、expected signal role 和 replacement for true breadth。本批已生成 audit artifacts，下一步进入
+      TRADING-2272 objective redesign。|新增 `aits research trends first-layer-proxy-coverage-audit`、proxy
+      coverage policy、JSON/YAML/Markdown audit artifacts、report registry、artifact
+      catalog、system flow 和 focused tests；所有 proxy rows 显式披露 `replacement_for_true_breadth=false`
+      或阻塞原因；可用 ETF price proxies 只能 price-proxy diagnostic，不得升级成 true breadth；所有 gate
+      fields 固定 false/none/BLOCKED。|2026-06-28: 新增并进入 IN_PROGRESS；本批只做 coverage audit，不下载网络数据、不升级
+      paid source、不训练模型、不恢复 reopen/promotion/paper-shadow/production/broker。2026-06-28:
+      实现完成并转入 VALIDATING；真实 run proxy_count=12、data_available_count=6、replacement_for_true_breadth_count=0。2026-06-28:
+      验证通过 focused / governance / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T122456Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fc353f669140b066b6a2a6e6
+  task_id: TRADING-2271_FREE_LOW_COST_FIRST_LAYER_PROXY_COVERAGE_AUDIT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 新增并进入 IN_PROGRESS；本批只做 coverage audit，不下载网络数据、不升级 paid source、不训练模型、不恢复
+      reopen/promotion/paper-shadow/production/broker。2026-06-28: 实现完成并转入 VALIDATING；真实
+      run proxy_count=12、data_available_count=6、replacement_for_true_breadth_count=0。2026-06-28:
+      验证通过 focused / governance / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T122456Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:fc353f669140b066b6a2a6e68b7c9b707461241e3fce94ec88388228dc5d8a07
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2271_FREE_LOW_COST_FIRST_LAYER_PROXY_COVERAGE_AUDIT
+  - Research trends / free and low-cost first-layer proxy coverage audit
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2271_Free_Low_Cost_First_Layer_Proxy_Coverage_Audit.md`；附件要求逐
+    proxy 审计 data availability、history start、primary window coverage、PIT safety、survivorship
+    risk、expected signal role 和 replacement for true breadth。本批已生成 audit artifacts，下一步进入
+    TRADING-2272 objective redesign。
+  - 新增 `aits research trends first-layer-proxy-coverage-audit`、proxy coverage policy、JSON/YAML/Markdown
+    audit artifacts、report registry、artifact catalog、system flow 和 focused tests；所有
+    proxy rows 显式披露 `replacement_for_true_breadth=false` 或阻塞原因；可用 ETF price proxies
+    只能 price-proxy diagnostic，不得升级成 true breadth；所有 gate fields 固定 false/none/BLOCKED。
+  - '2026-06-28: 新增并进入 IN_PROGRESS；本批只做 coverage audit，不下载网络数据、不升级 paid source、不训练模型、不恢复
+    reopen/promotion/paper-shadow/production/broker。2026-06-28: 实现完成并转入 VALIDATING；真实
+    run proxy_count=12、data_available_count=6、replacement_for_true_breadth_count=0。2026-06-28:
+    验证通过 focused / governance / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T122456Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-2271_Free_Low_Cost_First_Layer_Proxy_Coverage_Audit.md
+  terminal: false
+  raw_row_sha256: fc353f669140b066b6a2a6e68b7c9b707461241e3fce94ec88388228dc5d8a07
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3f23ba4afff75af4d7a0a1035452f4f9ff699eac75e4bba2842eee150eccc276

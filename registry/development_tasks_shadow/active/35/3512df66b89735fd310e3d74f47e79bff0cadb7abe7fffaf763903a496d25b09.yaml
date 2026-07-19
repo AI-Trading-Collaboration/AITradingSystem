@@ -1,0 +1,139 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1786_to_1805_FIRST_LAYER_V2_DEFENSIVE_PROBE_REGRESSION_DIAGNOSIS
+  title: null
+  domain: Research trends / first-layer v2 defensive probe regression diagnosis
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1786_to_1805_First_Layer_V2_Defensive_Probe_Regression_Diagnosis.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1786_to_1805_First_Layer_V2_Defensive_Probe_Regression_Diagnosis.md`；承接
+    coverage rebuild 的 `DEFENSIVE_PROBE_REGRESSION` blocker，必须先定位回归来源和可降级边界，不能继续调第一层或第二层，也不能恢复
+    owner review / promotion / paper-shadow / production / broker
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 coverage rebuild reclassification、defensive regression inventory、probe-role
+      group comparison、2022 defensive regression slice、signal error attribution、policy
+      variant stability review、return-seeking diagnostic reclassification、risk-off-only
+      fallback assessment、decision matrix、owner brief、closeout/final matrix、report
+      registry、artifact catalog、system flow 和 guardrail tests；真实 run 确认 coverage-pass
+      variants 的回归集中在 `defensive_overlay_probe`、`drawdown_control_probe`，并在 252d 中连带
+      `balanced_dynamic_probe`；pure return-seeking 与 risk-on diagnostic 只支持 diagnostic-only；risk-off-only
+      fallback 不支持；所有 artifacts 继续 research-only，owner review=false，promotion/paper-shadow/production/broker
+      blocked/false/false/none
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1259
+    row_sha256: ca0eb4a82a0c5d56bc50144ac482f44e526e32143a88edaf304df50fd1c53a93
+    cell_count: 8
+    all_cells:
+    - TRADING-1786_to_1805_FIRST_LAYER_V2_DEFENSIVE_PROBE_REGRESSION_DIAGNOSIS
+    - Research trends / first-layer v2 defensive probe regression diagnosis
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1786_to_1805_First_Layer_V2_Defensive_Probe_Regression_Diagnosis.md`；承接
+      coverage rebuild 的 `DEFENSIVE_PROBE_REGRESSION` blocker，必须先定位回归来源和可降级边界，不能继续调第一层或第二层，也不能恢复
+      owner review / promotion / paper-shadow / production / broker
+    - 新增 coverage rebuild reclassification、defensive regression inventory、probe-role
+      group comparison、2022 defensive regression slice、signal error attribution、policy
+      variant stability review、return-seeking diagnostic reclassification、risk-off-only
+      fallback assessment、decision matrix、owner brief、closeout/final matrix、report
+      registry、artifact catalog、system flow 和 guardrail tests；真实 run 确认 coverage-pass
+      variants 的回归集中在 `defensive_overlay_probe`、`drawdown_control_probe`，并在 252d 中连带
+      `balanced_dynamic_probe`；pure return-seeking 与 risk-on diagnostic 只支持 diagnostic-only；risk-off-only
+      fallback 不支持；所有 artifacts 继续 research-only，owner review=false，promotion/paper-shadow/production/broker
+      blocked/false/false/none
+    - '2026-06-28: 新增并进入 IN_PROGRESS，原因：TRADING-1766～1785 已修复 coverage 但 coverage-aware
+      actual-path selection 失败，primary failure=`DEFENSIVE_PROBE_REGRESSION`；本批先诊断来源并固定降级边界。2026-06-28:
+      实现完成并转入 VALIDATING；`aits research trends first-layer-defensive-regression-diagnosis`
+      真实生成 final_status=`FIRST_LAYER_V2_RETURN_SEEKING_DIAGNOSTIC_ONLY`，final_diagnosis=`RETURN_SEEKING_ONLY_DIAGNOSTIC`，signal
+      attribution primary=`DEFENSIVE_REGRESSION_DUE_TO_FALSE_ADD_RISK`，安全边界仍为 false/blocked/false/false/none。'
+    raw_line: '|TRADING-1786_to_1805_FIRST_LAYER_V2_DEFENSIVE_PROBE_REGRESSION_DIAGNOSIS|Research
+      trends / first-layer v2 defensive probe regression diagnosis|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1786_to_1805_First_Layer_V2_Defensive_Probe_Regression_Diagnosis.md`；承接
+      coverage rebuild 的 `DEFENSIVE_PROBE_REGRESSION` blocker，必须先定位回归来源和可降级边界，不能继续调第一层或第二层，也不能恢复
+      owner review / promotion / paper-shadow / production / broker|新增 coverage rebuild
+      reclassification、defensive regression inventory、probe-role group comparison、2022
+      defensive regression slice、signal error attribution、policy variant stability
+      review、return-seeking diagnostic reclassification、risk-off-only fallback assessment、decision
+      matrix、owner brief、closeout/final matrix、report registry、artifact catalog、system
+      flow 和 guardrail tests；真实 run 确认 coverage-pass variants 的回归集中在 `defensive_overlay_probe`、`drawdown_control_probe`，并在
+      252d 中连带 `balanced_dynamic_probe`；pure return-seeking 与 risk-on diagnostic 只支持
+      diagnostic-only；risk-off-only fallback 不支持；所有 artifacts 继续 research-only，owner
+      review=false，promotion/paper-shadow/production/broker blocked/false/false/none|2026-06-28:
+      新增并进入 IN_PROGRESS，原因：TRADING-1766～1785 已修复 coverage 但 coverage-aware actual-path
+      selection 失败，primary failure=`DEFENSIVE_PROBE_REGRESSION`；本批先诊断来源并固定降级边界。2026-06-28:
+      实现完成并转入 VALIDATING；`aits research trends first-layer-defensive-regression-diagnosis`
+      真实生成 final_status=`FIRST_LAYER_V2_RETURN_SEEKING_DIAGNOSTIC_ONLY`，final_diagnosis=`RETURN_SEEKING_ONLY_DIAGNOSTIC`，signal
+      attribution primary=`DEFENSIVE_REGRESSION_DUE_TO_FALSE_ADD_RISK`，安全边界仍为 false/blocked/false/false/none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ca0eb4a82a0c5d56bc50144a
+  task_id: TRADING-1786_to_1805_FIRST_LAYER_V2_DEFENSIVE_PROBE_REGRESSION_DIAGNOSIS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 新增并进入 IN_PROGRESS，原因：TRADING-1766～1785 已修复 coverage 但 coverage-aware
+      actual-path selection 失败，primary failure=`DEFENSIVE_PROBE_REGRESSION`；本批先诊断来源并固定降级边界。2026-06-28:
+      实现完成并转入 VALIDATING；`aits research trends first-layer-defensive-regression-diagnosis`
+      真实生成 final_status=`FIRST_LAYER_V2_RETURN_SEEKING_DIAGNOSTIC_ONLY`，final_diagnosis=`RETURN_SEEKING_ONLY_DIAGNOSTIC`，signal
+      attribution primary=`DEFENSIVE_REGRESSION_DUE_TO_FALSE_ADD_RISK`，安全边界仍为 false/blocked/false/false/none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ca0eb4a82a0c5d56bc50144ac482f44e526e32143a88edaf304df50fd1c53a93
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1786_to_1805_FIRST_LAYER_V2_DEFENSIVE_PROBE_REGRESSION_DIAGNOSIS
+  - Research trends / first-layer v2 defensive probe regression diagnosis
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1786_to_1805_First_Layer_V2_Defensive_Probe_Regression_Diagnosis.md`；承接
+    coverage rebuild 的 `DEFENSIVE_PROBE_REGRESSION` blocker，必须先定位回归来源和可降级边界，不能继续调第一层或第二层，也不能恢复
+    owner review / promotion / paper-shadow / production / broker
+  - 新增 coverage rebuild reclassification、defensive regression inventory、probe-role
+    group comparison、2022 defensive regression slice、signal error attribution、policy
+    variant stability review、return-seeking diagnostic reclassification、risk-off-only
+    fallback assessment、decision matrix、owner brief、closeout/final matrix、report registry、artifact
+    catalog、system flow 和 guardrail tests；真实 run 确认 coverage-pass variants 的回归集中在
+    `defensive_overlay_probe`、`drawdown_control_probe`，并在 252d 中连带 `balanced_dynamic_probe`；pure
+    return-seeking 与 risk-on diagnostic 只支持 diagnostic-only；risk-off-only fallback
+    不支持；所有 artifacts 继续 research-only，owner review=false，promotion/paper-shadow/production/broker
+    blocked/false/false/none
+  - '2026-06-28: 新增并进入 IN_PROGRESS，原因：TRADING-1766～1785 已修复 coverage 但 coverage-aware
+    actual-path selection 失败，primary failure=`DEFENSIVE_PROBE_REGRESSION`；本批先诊断来源并固定降级边界。2026-06-28:
+    实现完成并转入 VALIDATING；`aits research trends first-layer-defensive-regression-diagnosis`
+    真实生成 final_status=`FIRST_LAYER_V2_RETURN_SEEKING_DIAGNOSTIC_ONLY`，final_diagnosis=`RETURN_SEEKING_ONLY_DIAGNOSTIC`，signal
+    attribution primary=`DEFENSIVE_REGRESSION_DUE_TO_FALSE_ADD_RISK`，安全边界仍为 false/blocked/false/false/none。'
+  docs_links:
+  - docs/requirements/TRADING-1786_to_1805_First_Layer_V2_Defensive_Probe_Regression_Diagnosis.md
+  terminal: false
+  raw_row_sha256: ca0eb4a82a0c5d56bc50144ac482f44e526e32143a88edaf304df50fd1c53a93
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3af1ba9edf402cabf6d8b73736281cc9ad95a013c93d9f6ebdaf4490025b7b57

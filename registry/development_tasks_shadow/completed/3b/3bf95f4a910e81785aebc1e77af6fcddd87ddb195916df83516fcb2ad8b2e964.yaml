@@ -1,0 +1,142 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2423_GROWTH_TILT_ENGINE_PAPER_SHADOW_PREFLIGHT
+  title: null
+  domain: Strategy research / growth tilt paper-shadow preflight
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2424 paper-shadow enablement plan
+  requirement_refs:
+  - docs/requirements/TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight.md
+  - docs/tasks/completed/TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight.md`；承接
+    TRADING-2422 contract readiness snapshot，仅读取 prior artifacts/docs/registry/catalog/system
+    flow；本任务只做 paper-shadow preflight、preflight checklist、preflight gap summary 和
+    2424 route，不启用 paper-shadow runtime 或 schedule。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 paper-shadow preflight builder、`aits research strategies growth-tilt-engine-paper-shadow-preflight`；输出
+      `paper_shadow_preflight_result.json`、`preflight_checklist.json`、`preflight_gap_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_PAPER_SHADOW_PREFLIGHT_READY`，`pit_gate_ready=true`，`contract_ready=true`，remaining
+      PIT blockers=[]，contract_gap_count=0，source traceability accepted=true，`paper_shadow_preflight_started=true`，`paper_shadow_preflight_ready=true`，preflight_gap_count=0，missing_preflight_evidence_count=0，safety_boundary_gap_count=0，generated_signal=false，generated_trading_advice=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、production_enabled=false、broker_enabled=false，next
+      route=`TRADING-2424_Growth_Tilt_Engine_Paper_Shadow_Enablement_Plan`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 61
+    row_sha256: b13be6192ad2602e5257a8d41f921c103ae89f5ed9e8fd366bab0cb825d3c6dc
+    cell_count: 8
+    all_cells:
+    - TRADING-2423_GROWTH_TILT_ENGINE_PAPER_SHADOW_PREFLIGHT
+    - Strategy research / growth tilt paper-shadow preflight
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2424 paper-shadow enablement plan
+    - 详见 `docs/requirements/TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight.md`；承接
+      TRADING-2422 contract readiness snapshot，仅读取 prior artifacts/docs/registry/catalog/system
+      flow；本任务只做 paper-shadow preflight、preflight checklist、preflight gap summary
+      和 2424 route，不启用 paper-shadow runtime 或 schedule。
+    - 新增 paper-shadow preflight builder、`aits research strategies growth-tilt-engine-paper-shadow-preflight`；输出
+      `paper_shadow_preflight_result.json`、`preflight_checklist.json`、`preflight_gap_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_PAPER_SHADOW_PREFLIGHT_READY`，`pit_gate_ready=true`，`contract_ready=true`，remaining
+      PIT blockers=[]，contract_gap_count=0，source traceability accepted=true，`paper_shadow_preflight_started=true`，`paper_shadow_preflight_ready=true`，preflight_gap_count=0，missing_preflight_evidence_count=0，safety_boundary_gap_count=0，generated_signal=false，generated_trading_advice=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、production_enabled=false、broker_enabled=false，next
+      route=`TRADING-2424_Growth_Tilt_Engine_Paper_Shadow_Enablement_Plan`。
+    - '2026-07-09: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest、真实 CLI、docs freshness、documentation contract、task-register consistency
+      run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits validate-data`，因为只读取
+      prior validated TRADING-2420 / 2421 / 2422 artifacts/docs/registry/catalog/system
+      flow，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+      report 或交易建议。candidate search、observation、paper-shadow runtime/schedule、scheduler、event
+      append、outcome binding、production、broker/order、daily report 全部保持 disabled /
+      false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight.md`。'
+    raw_line: '|TRADING-2423_GROWTH_TILT_ENGINE_PAPER_SHADOW_PREFLIGHT|Strategy research
+      / growth tilt paper-shadow preflight|P0|DONE|项目 owner 后续复核 TRADING-2424 paper-shadow
+      enablement plan|详见 `docs/requirements/TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight.md`；承接
+      TRADING-2422 contract readiness snapshot，仅读取 prior artifacts/docs/registry/catalog/system
+      flow；本任务只做 paper-shadow preflight、preflight checklist、preflight gap summary
+      和 2424 route，不启用 paper-shadow runtime 或 schedule。|新增 paper-shadow preflight
+      builder、`aits research strategies growth-tilt-engine-paper-shadow-preflight`；输出
+      `paper_shadow_preflight_result.json`、`preflight_checklist.json`、`preflight_gap_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_PAPER_SHADOW_PREFLIGHT_READY`，`pit_gate_ready=true`，`contract_ready=true`，remaining
+      PIT blockers=[]，contract_gap_count=0，source traceability accepted=true，`paper_shadow_preflight_started=true`，`paper_shadow_preflight_ready=true`，preflight_gap_count=0，missing_preflight_evidence_count=0，safety_boundary_gap_count=0，generated_signal=false，generated_trading_advice=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、production_enabled=false、broker_enabled=false，next
+      route=`TRADING-2424_Growth_Tilt_Engine_Paper_Shadow_Enablement_Plan`。|2026-07-09:
+      根据 owner 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest、真实 CLI、docs freshness、documentation contract、task-register consistency
+      run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits validate-data`，因为只读取
+      prior validated TRADING-2420 / 2421 / 2422 artifacts/docs/registry/catalog/system
+      flow，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+      report 或交易建议。candidate search、observation、paper-shadow runtime/schedule、scheduler、event
+      append、outcome binding、production、broker/order、daily report 全部保持 disabled /
+      false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b13be6192ad2602e5257a8d4
+  task_id: TRADING-2423_GROWTH_TILT_ENGINE_PAPER_SHADOW_PREFLIGHT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2424 paper-shadow enablement plan
+    notes: '2026-07-09: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest、真实 CLI、docs freshness、documentation
+      contract、task-register consistency run/validate、contract-validation 和 `git diff
+      --check`；本任务未运行 `aits validate-data`，因为只读取 prior validated TRADING-2420 / 2421
+      / 2422 artifacts/docs/registry/catalog/system flow，不读取 fresh cached market data、不运行新
+      backtest、不生成 feature/signal/scoring/daily report 或交易建议。candidate search、observation、paper-shadow
+      runtime/schedule、scheduler、event append、outcome binding、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b13be6192ad2602e5257a8d41f921c103ae89f5ed9e8fd366bab0cb825d3c6dc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2423_GROWTH_TILT_ENGINE_PAPER_SHADOW_PREFLIGHT
+  - Strategy research / growth tilt paper-shadow preflight
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2424 paper-shadow enablement plan
+  - 详见 `docs/requirements/TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight.md`；承接
+    TRADING-2422 contract readiness snapshot，仅读取 prior artifacts/docs/registry/catalog/system
+    flow；本任务只做 paper-shadow preflight、preflight checklist、preflight gap summary 和
+    2424 route，不启用 paper-shadow runtime 或 schedule。
+  - 新增 paper-shadow preflight builder、`aits research strategies growth-tilt-engine-paper-shadow-preflight`；输出
+    `paper_shadow_preflight_result.json`、`preflight_checklist.json`、`preflight_gap_summary.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_PAPER_SHADOW_PREFLIGHT_READY`，`pit_gate_ready=true`，`contract_ready=true`，remaining
+    PIT blockers=[]，contract_gap_count=0，source traceability accepted=true，`paper_shadow_preflight_started=true`，`paper_shadow_preflight_ready=true`，preflight_gap_count=0，missing_preflight_evidence_count=0，safety_boundary_gap_count=0，generated_signal=false，generated_trading_advice=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、production_enabled=false、broker_enabled=false，next
+    route=`TRADING-2424_Growth_Tilt_Engine_Paper_Shadow_Enablement_Plan`。
+  - '2026-07-09: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+    parallel pytest、真实 CLI、docs freshness、documentation contract、task-register consistency
+    run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits validate-data`，因为只读取
+    prior validated TRADING-2420 / 2421 / 2422 artifacts/docs/registry/catalog/system
+    flow，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+    report 或交易建议。candidate search、observation、paper-shadow runtime/schedule、scheduler、event
+    append、outcome binding、production、broker/order、daily report 全部保持 disabled / false
+    / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight.md
+  - docs/tasks/completed/TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight.md
+  terminal: true
+  raw_row_sha256: b13be6192ad2602e5257a8d41f921c103ae89f5ed9e8fd366bab0cb825d3c6dc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f8724f42bb8f7c958146adfeb58c9943100a148b9fda44982d2aa44ceafc8390

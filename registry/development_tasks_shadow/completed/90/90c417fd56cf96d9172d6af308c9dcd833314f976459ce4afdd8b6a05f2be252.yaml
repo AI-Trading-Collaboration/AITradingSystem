@@ -1,0 +1,177 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-053A
+  title: null
+  domain: 数据质量/Data Repair Persistence & Latest Artifact Consistency
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/data_repair_persistence_latest_artifact_consistency_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/data_repair_persistence_latest_artifact_consistency_2026-05-30.md`；统一
+    symbol resolver、data registry consistency report、manifest context `validate-data`
+    error code、portfolio sensitivity `data_gate`、CLI、Dashboard/Reader Brief 展示已完成，并通过
+    2026-06-05 latest 真实复验
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits data inspect-registry --latest` 输出 latest resolution、price cache
+      paths、symbol mapping 和 registry status；`aits data validate-backtest-manifest
+      --latest` 明确显示 `GOOGL`、`BRK.B via BRK-B`、`SGOV` 的 manifest/cache 一致性；`aits data
+      reconcile-price-cache --latest --dry-run` 输出修复计划；portfolio sensitivity 使用 latest
+      valid backtest input manifest context，不再把已修复标的误判为简单 missing；Dashboard/Reader
+      Brief 展示 data registry / price cache reconcile 状态；不修改 `config/parameters/production/current.yaml`，不降低
+      data quality gate；专项测试、全量 pytest、ruff、compileall 和 diff check 通过；真实 latest resolution
+      为 OK'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 286
+    row_sha256: 3cc807f9aa25b7f680392b4307c1a8f8fe6b64cb063a3ef3b4ff319357ff0c84
+    cell_count: 8
+    all_cells:
+    - TRADING-053A
+    - 数据质量/Data Repair Persistence & Latest Artifact Consistency
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/data_repair_persistence_latest_artifact_consistency_2026-05-30.md`；统一
+      symbol resolver、data registry consistency report、manifest context `validate-data`
+      error code、portfolio sensitivity `data_gate`、CLI、Dashboard/Reader Brief 展示已完成，并通过
+      2026-06-05 latest 真实复验
+    - '`aits data inspect-registry --latest` 输出 latest resolution、price cache paths、symbol
+      mapping 和 registry status；`aits data validate-backtest-manifest --latest` 明确显示
+      `GOOGL`、`BRK.B via BRK-B`、`SGOV` 的 manifest/cache 一致性；`aits data reconcile-price-cache
+      --latest --dry-run` 输出修复计划；portfolio sensitivity 使用 latest valid backtest input
+      manifest context，不再把已修复标的误判为简单 missing；Dashboard/Reader Brief 展示 data registry
+      / price cache reconcile 状态；不修改 `config/parameters/production/current.yaml`，不降低
+      data quality gate；专项测试、全量 pytest、ruff、compileall 和 diff check 通过；真实 latest resolution
+      为 OK'
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-053 真实 latest 被 `validate-data` 报告
+      `GOOGL`、`BRK.B`、`SGOV` missing 阻断，但 TRADING-049 repair/diagnostics 曾显示这些标的已修复；需要先修正
+      repair persistence、symbol mapping、latest manifest 和下游 data gate 一致性，再解释 portfolio
+      sensitivity 结果。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实现和测试完成；真实 `aits data
+      inspect-registry --latest` 显示 market latest `2026-05-29`、latest valid manifest
+      `2026-05-28` 的 `LATEST_DATE_MISMATCH`，并把 `GOOGL`、`BRK.B`、`SGOV` 诊断为 `MANIFEST_PRICE_CACHE_MISMATCH`；`aits
+      portfolio sensitivity --latest` 现在输出明确 `data_gate.error_code=MANIFEST_PRICE_CACHE_MISMATCH`，candidate
+      promotion 仍 disabled。2026-05-30: TRADING-053B 后复验，`aits data inspect-registry
+      --latest` 与 `aits data validate-backtest-manifest --latest` 均通过，`GOOGL`、`BRK.B
+      via BRK-B`、`SGOV` 不再报 `MANIFEST_PRICE_CACHE_MISMATCH`。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：读取 operations runbook 后完成真实 latest 复验；`validate-data` 为 `PASS_WITH_WARNINGS`
+      / 错误数 0，`inspect-registry --latest` 为 `OK`，`market_data=2026-06-05`、`manifest=2026-06-05`、`latest_resolution=OK`；`validate-backtest-manifest
+      --latest` 确认 `QQQ`、`SMH`、`NVDA`、`TSM`、`MSFT`、`GOOGL`、`BRK.B via BRK-B`、`SGOV`
+      均为 OK；`portfolio sensitivity --latest` 在 `data_gate=OK` 下返回 `LIMITED` / `primary_bottleneck=rebalance_threshold`，candidate
+      promotion 仍 disabled。'
+    raw_line: '|TRADING-053A|数据质量/Data Repair Persistence & Latest Artifact Consistency|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/data_repair_persistence_latest_artifact_consistency_2026-05-30.md`；统一
+      symbol resolver、data registry consistency report、manifest context `validate-data`
+      error code、portfolio sensitivity `data_gate`、CLI、Dashboard/Reader Brief 展示已完成，并通过
+      2026-06-05 latest 真实复验|`aits data inspect-registry --latest` 输出 latest resolution、price
+      cache paths、symbol mapping 和 registry status；`aits data validate-backtest-manifest
+      --latest` 明确显示 `GOOGL`、`BRK.B via BRK-B`、`SGOV` 的 manifest/cache 一致性；`aits data
+      reconcile-price-cache --latest --dry-run` 输出修复计划；portfolio sensitivity 使用 latest
+      valid backtest input manifest context，不再把已修复标的误判为简单 missing；Dashboard/Reader
+      Brief 展示 data registry / price cache reconcile 状态；不修改 `config/parameters/production/current.yaml`，不降低
+      data quality gate；专项测试、全量 pytest、ruff、compileall 和 diff check 通过；真实 latest resolution
+      为 OK|2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-053 真实 latest 被 `validate-data`
+      报告 `GOOGL`、`BRK.B`、`SGOV` missing 阻断，但 TRADING-049 repair/diagnostics 曾显示这些标的已修复；需要先修正
+      repair persistence、symbol mapping、latest manifest 和下游 data gate 一致性，再解释 portfolio
+      sensitivity 结果。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实现和测试完成；真实 `aits data
+      inspect-registry --latest` 显示 market latest `2026-05-29`、latest valid manifest
+      `2026-05-28` 的 `LATEST_DATE_MISMATCH`，并把 `GOOGL`、`BRK.B`、`SGOV` 诊断为 `MANIFEST_PRICE_CACHE_MISMATCH`；`aits
+      portfolio sensitivity --latest` 现在输出明确 `data_gate.error_code=MANIFEST_PRICE_CACHE_MISMATCH`，candidate
+      promotion 仍 disabled。2026-05-30: TRADING-053B 后复验，`aits data inspect-registry
+      --latest` 与 `aits data validate-backtest-manifest --latest` 均通过，`GOOGL`、`BRK.B
+      via BRK-B`、`SGOV` 不再报 `MANIFEST_PRICE_CACHE_MISMATCH`。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：读取 operations runbook 后完成真实 latest 复验；`validate-data` 为 `PASS_WITH_WARNINGS`
+      / 错误数 0，`inspect-registry --latest` 为 `OK`，`market_data=2026-06-05`、`manifest=2026-06-05`、`latest_resolution=OK`；`validate-backtest-manifest
+      --latest` 确认 `QQQ`、`SMH`、`NVDA`、`TSM`、`MSFT`、`GOOGL`、`BRK.B via BRK-B`、`SGOV`
+      均为 OK；`portfolio sensitivity --latest` 在 `data_gate=OK` 下返回 `LIMITED` / `primary_bottleneck=rebalance_threshold`，candidate
+      promotion 仍 disabled。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3cc807f9aa25b7f680392b43
+  task_id: TRADING-053A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-053 真实 latest 被 `validate-data`
+      报告 `GOOGL`、`BRK.B`、`SGOV` missing 阻断，但 TRADING-049 repair/diagnostics 曾显示这些标的已修复；需要先修正
+      repair persistence、symbol mapping、latest manifest 和下游 data gate 一致性，再解释 portfolio
+      sensitivity 结果。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实现和测试完成；真实 `aits data
+      inspect-registry --latest` 显示 market latest `2026-05-29`、latest valid manifest
+      `2026-05-28` 的 `LATEST_DATE_MISMATCH`，并把 `GOOGL`、`BRK.B`、`SGOV` 诊断为 `MANIFEST_PRICE_CACHE_MISMATCH`；`aits
+      portfolio sensitivity --latest` 现在输出明确 `data_gate.error_code=MANIFEST_PRICE_CACHE_MISMATCH`，candidate
+      promotion 仍 disabled。2026-05-30: TRADING-053B 后复验，`aits data inspect-registry
+      --latest` 与 `aits data validate-backtest-manifest --latest` 均通过，`GOOGL`、`BRK.B
+      via BRK-B`、`SGOV` 不再报 `MANIFEST_PRICE_CACHE_MISMATCH`。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：读取 operations runbook 后完成真实 latest 复验；`validate-data` 为 `PASS_WITH_WARNINGS`
+      / 错误数 0，`inspect-registry --latest` 为 `OK`，`market_data=2026-06-05`、`manifest=2026-06-05`、`latest_resolution=OK`；`validate-backtest-manifest
+      --latest` 确认 `QQQ`、`SMH`、`NVDA`、`TSM`、`MSFT`、`GOOGL`、`BRK.B via BRK-B`、`SGOV`
+      均为 OK；`portfolio sensitivity --latest` 在 `data_gate=OK` 下返回 `LIMITED` / `primary_bottleneck=rebalance_threshold`，candidate
+      promotion 仍 disabled。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3cc807f9aa25b7f680392b4307c1a8f8fe6b64cb063a3ef3b4ff319357ff0c84
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-053A
+  - 数据质量/Data Repair Persistence & Latest Artifact Consistency
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/data_repair_persistence_latest_artifact_consistency_2026-05-30.md`；统一
+    symbol resolver、data registry consistency report、manifest context `validate-data`
+    error code、portfolio sensitivity `data_gate`、CLI、Dashboard/Reader Brief 展示已完成，并通过
+    2026-06-05 latest 真实复验
+  - '`aits data inspect-registry --latest` 输出 latest resolution、price cache paths、symbol
+    mapping 和 registry status；`aits data validate-backtest-manifest --latest` 明确显示
+    `GOOGL`、`BRK.B via BRK-B`、`SGOV` 的 manifest/cache 一致性；`aits data reconcile-price-cache
+    --latest --dry-run` 输出修复计划；portfolio sensitivity 使用 latest valid backtest input
+    manifest context，不再把已修复标的误判为简单 missing；Dashboard/Reader Brief 展示 data registry
+    / price cache reconcile 状态；不修改 `config/parameters/production/current.yaml`，不降低
+    data quality gate；专项测试、全量 pytest、ruff、compileall 和 diff check 通过；真实 latest resolution
+    为 OK'
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-053 真实 latest 被 `validate-data` 报告 `GOOGL`、`BRK.B`、`SGOV`
+    missing 阻断，但 TRADING-049 repair/diagnostics 曾显示这些标的已修复；需要先修正 repair persistence、symbol
+    mapping、latest manifest 和下游 data gate 一致性，再解释 portfolio sensitivity 结果。2026-05-30:
+    从 IN_PROGRESS 改为 VALIDATING，原因：实现和测试完成；真实 `aits data inspect-registry --latest`
+    显示 market latest `2026-05-29`、latest valid manifest `2026-05-28` 的 `LATEST_DATE_MISMATCH`，并把
+    `GOOGL`、`BRK.B`、`SGOV` 诊断为 `MANIFEST_PRICE_CACHE_MISMATCH`；`aits portfolio sensitivity
+    --latest` 现在输出明确 `data_gate.error_code=MANIFEST_PRICE_CACHE_MISMATCH`，candidate
+    promotion 仍 disabled。2026-05-30: TRADING-053B 后复验，`aits data inspect-registry
+    --latest` 与 `aits data validate-backtest-manifest --latest` 均通过，`GOOGL`、`BRK.B
+    via BRK-B`、`SGOV` 不再报 `MANIFEST_PRICE_CACHE_MISMATCH`。2026-06-09: 从 VALIDATING
+    改为 DONE，原因：读取 operations runbook 后完成真实 latest 复验；`validate-data` 为 `PASS_WITH_WARNINGS`
+    / 错误数 0，`inspect-registry --latest` 为 `OK`，`market_data=2026-06-05`、`manifest=2026-06-05`、`latest_resolution=OK`；`validate-backtest-manifest
+    --latest` 确认 `QQQ`、`SMH`、`NVDA`、`TSM`、`MSFT`、`GOOGL`、`BRK.B via BRK-B`、`SGOV`
+    均为 OK；`portfolio sensitivity --latest` 在 `data_gate=OK` 下返回 `LIMITED` / `primary_bottleneck=rebalance_threshold`，candidate
+    promotion 仍 disabled。'
+  docs_links:
+  - docs/requirements/data_repair_persistence_latest_artifact_consistency_2026-05-30.md
+  terminal: true
+  raw_row_sha256: 3cc807f9aa25b7f680392b4307c1a8f8fe6b64cb063a3ef3b4ff319357ff0c84
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7bdd28d65d49f3fdeb8329fac283e64eefd3134c0d2ae19116e2187b7fd79098

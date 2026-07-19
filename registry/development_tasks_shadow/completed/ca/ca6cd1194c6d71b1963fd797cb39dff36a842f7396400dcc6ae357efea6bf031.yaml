@@ -1,0 +1,141 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-002
+  title: null
+  domain: 架构/workflow 与 artifact 契约
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/architecture_contract_refactor_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/architecture_contract_refactor_2026-05-17.md`；`core`
+    层的 `ArtifactRef`、`ProductionEffect`、`WorkflowStep` 和 `WorkflowStepResult` 契约已抽出并保持可用；daily-run
+    manifest artifact 记录已改为复用统一契约；`ops_daily` 已提供 daily-run step/result 到通用 workflow
+    contract 的适配层；后续 dashboard / shadow / replay 的渐进接入由 ARCH-003 或后续重构任务承接，不再作为本任务未完成项
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: daily-run run manifest 的路径、checksum、artifact type、size/file count 字段保持行为兼容；`ProductionEffect`
+      覆盖 `production`、`advisory`、`none`、`validation-only` 和 `blocked` 并保守解析；workflow
+      contract、module boundary、system flow 和 artifact catalog 已同步；focused tests、Ruff
+      和 diff check 通过；不改变生产评分、仓位 gate、approved overlay、正式 ledger 或 shadow promotion
+      结论
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 306
+    row_sha256: 7837345a47614bf1e99df1dee4355839e36b440d2b55ebf05d74b99a5089f44b
+    cell_count: 8
+    all_cells:
+    - ARCH-002
+    - 架构/workflow 与 artifact 契约
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/architecture_contract_refactor_2026-05-17.md`；`core`
+      层的 `ArtifactRef`、`ProductionEffect`、`WorkflowStep` 和 `WorkflowStepResult` 契约已抽出并保持可用；daily-run
+      manifest artifact 记录已改为复用统一契约；`ops_daily` 已提供 daily-run step/result 到通用 workflow
+      contract 的适配层；后续 dashboard / shadow / replay 的渐进接入由 ARCH-003 或后续重构任务承接，不再作为本任务未完成项
+    - daily-run run manifest 的路径、checksum、artifact type、size/file count 字段保持行为兼容；`ProductionEffect`
+      覆盖 `production`、`advisory`、`none`、`validation-only` 和 `blocked` 并保守解析；workflow
+      contract、module boundary、system flow 和 artifact catalog 已同步；focused tests、Ruff
+      和 diff check 通过；不改变生产评分、仓位 gate、approved overlay、正式 ledger 或 shadow promotion
+      结论
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 提供结构化降复杂度重构讨论，当前最安全切片是先抽出 daily-run/artifact/production-effect
+      共同契约，作为后续 CLI 拆分、dashboard 分层和 shadow 子系统拆分的底座。2026-05-17: 从 IN_PROGRESS 改为
+      VALIDATING，原因：已新增 `core` 契约模块，`run_artifacts` 复用 `ArtifactRef` 生成 manifest artifact
+      记录，架构文档、产物目录和系统流图已同步；验证通过目标测试、ruff、mypy、docs freshness、diff check 和全量 pytest。2026-05-17:
+      继续保持 VALIDATING，原因：`ops_daily` 已新增 `DailyOpsStep` / `DailyOpsStepResult` 到 `WorkflowStep`
+      / `WorkflowStepResult` 的适配函数并通过目标测试。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核确认核心契约、manifest
+      adapter 和 daily-run workflow adapter 均仍在当前代码中生效；后续模块渐进接入已由 ARCH-003/后续重构承接，不构成本任务未完成交付；验证通过
+      `python -m pytest tests/test_core_contracts.py tests/test_ops_daily.py tests/test_run_artifacts.py
+      -q`（40 passed）和 scoped Ruff。'
+    raw_line: '|ARCH-002|架构/workflow 与 artifact 契约|P0|DONE|系统验证|详细拆解见 `docs/requirements/architecture_contract_refactor_2026-05-17.md`；`core`
+      层的 `ArtifactRef`、`ProductionEffect`、`WorkflowStep` 和 `WorkflowStepResult` 契约已抽出并保持可用；daily-run
+      manifest artifact 记录已改为复用统一契约；`ops_daily` 已提供 daily-run step/result 到通用 workflow
+      contract 的适配层；后续 dashboard / shadow / replay 的渐进接入由 ARCH-003 或后续重构任务承接，不再作为本任务未完成项|daily-run
+      run manifest 的路径、checksum、artifact type、size/file count 字段保持行为兼容；`ProductionEffect`
+      覆盖 `production`、`advisory`、`none`、`validation-only` 和 `blocked` 并保守解析；workflow
+      contract、module boundary、system flow 和 artifact catalog 已同步；focused tests、Ruff
+      和 diff check 通过；不改变生产评分、仓位 gate、approved overlay、正式 ledger 或 shadow promotion
+      结论|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 提供结构化降复杂度重构讨论，当前最安全切片是先抽出 daily-run/artifact/production-effect
+      共同契约，作为后续 CLI 拆分、dashboard 分层和 shadow 子系统拆分的底座。2026-05-17: 从 IN_PROGRESS 改为
+      VALIDATING，原因：已新增 `core` 契约模块，`run_artifacts` 复用 `ArtifactRef` 生成 manifest artifact
+      记录，架构文档、产物目录和系统流图已同步；验证通过目标测试、ruff、mypy、docs freshness、diff check 和全量 pytest。2026-05-17:
+      继续保持 VALIDATING，原因：`ops_daily` 已新增 `DailyOpsStep` / `DailyOpsStepResult` 到 `WorkflowStep`
+      / `WorkflowStepResult` 的适配函数并通过目标测试。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核确认核心契约、manifest
+      adapter 和 daily-run workflow adapter 均仍在当前代码中生效；后续模块渐进接入已由 ARCH-003/后续重构承接，不构成本任务未完成交付；验证通过
+      `python -m pytest tests/test_core_contracts.py tests/test_ops_daily.py tests/test_run_artifacts.py
+      -q`（40 passed）和 scoped Ruff。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7837345a47614bf1e99df1de
+  task_id: ARCH-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 提供结构化降复杂度重构讨论，当前最安全切片是先抽出 daily-run/artifact/production-effect
+      共同契约，作为后续 CLI 拆分、dashboard 分层和 shadow 子系统拆分的底座。2026-05-17: 从 IN_PROGRESS 改为
+      VALIDATING，原因：已新增 `core` 契约模块，`run_artifacts` 复用 `ArtifactRef` 生成 manifest artifact
+      记录，架构文档、产物目录和系统流图已同步；验证通过目标测试、ruff、mypy、docs freshness、diff check 和全量 pytest。2026-05-17:
+      继续保持 VALIDATING，原因：`ops_daily` 已新增 `DailyOpsStep` / `DailyOpsStepResult` 到 `WorkflowStep`
+      / `WorkflowStepResult` 的适配函数并通过目标测试。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核确认核心契约、manifest
+      adapter 和 daily-run workflow adapter 均仍在当前代码中生效；后续模块渐进接入已由 ARCH-003/后续重构承接，不构成本任务未完成交付；验证通过
+      `python -m pytest tests/test_core_contracts.py tests/test_ops_daily.py tests/test_run_artifacts.py
+      -q`（40 passed）和 scoped Ruff。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7837345a47614bf1e99df1dee4355839e36b440d2b55ebf05d74b99a5089f44b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-002
+  - 架构/workflow 与 artifact 契约
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/architecture_contract_refactor_2026-05-17.md`；`core`
+    层的 `ArtifactRef`、`ProductionEffect`、`WorkflowStep` 和 `WorkflowStepResult` 契约已抽出并保持可用；daily-run
+    manifest artifact 记录已改为复用统一契约；`ops_daily` 已提供 daily-run step/result 到通用 workflow
+    contract 的适配层；后续 dashboard / shadow / replay 的渐进接入由 ARCH-003 或后续重构任务承接，不再作为本任务未完成项
+  - daily-run run manifest 的路径、checksum、artifact type、size/file count 字段保持行为兼容；`ProductionEffect`
+    覆盖 `production`、`advisory`、`none`、`validation-only` 和 `blocked` 并保守解析；workflow
+    contract、module boundary、system flow 和 artifact catalog 已同步；focused tests、Ruff
+    和 diff check 通过；不改变生产评分、仓位 gate、approved overlay、正式 ledger 或 shadow promotion
+    结论
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 提供结构化降复杂度重构讨论，当前最安全切片是先抽出 daily-run/artifact/production-effect
+    共同契约，作为后续 CLI 拆分、dashboard 分层和 shadow 子系统拆分的底座。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+    `core` 契约模块，`run_artifacts` 复用 `ArtifactRef` 生成 manifest artifact 记录，架构文档、产物目录和系统流图已同步；验证通过目标测试、ruff、mypy、docs
+    freshness、diff check 和全量 pytest。2026-05-17: 继续保持 VALIDATING，原因：`ops_daily` 已新增
+    `DailyOpsStep` / `DailyOpsStepResult` 到 `WorkflowStep` / `WorkflowStepResult`
+    的适配函数并通过目标测试。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核确认核心契约、manifest adapter 和 daily-run
+    workflow adapter 均仍在当前代码中生效；后续模块渐进接入已由 ARCH-003/后续重构承接，不构成本任务未完成交付；验证通过 `python
+    -m pytest tests/test_core_contracts.py tests/test_ops_daily.py tests/test_run_artifacts.py
+    -q`（40 passed）和 scoped Ruff。'
+  docs_links:
+  - docs/requirements/architecture_contract_refactor_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 7837345a47614bf1e99df1dee4355839e36b440d2b55ebf05d74b99a5089f44b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3b80310e90c519b648398acefd7936f8d10b170821b6ff8e47a5c6b69cf602c0

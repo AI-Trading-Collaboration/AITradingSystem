@@ -1,0 +1,127 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1088_MARKETSTACK_MISSED_DAY_TAIL_CATCH_UP
+  title: null
+  domain: Data pipeline / Marketstack quota and catch-up governance
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1088_Marketstack_Missed_Day_Tail_Catch_Up.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1088_Marketstack_Missed_Day_Tail_Catch_Up.md`；承接
+    TRADING-1087 owner-approved small daily overage。当前实现新增受控 catch-up profile，把 eligible
+    tail gap 拆成 one-U.S.-trading-day windows，并保留 full-history / new ticker / large
+    quota shortfall fail-closed；后续需要真实 daily-run 观察确认。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 Marketstack missed-day tail catch-up budget profile、one-day split window
+      执行路径、manifest/failure diagnostics 中的 profile/original windows/split windows/quota
+      shortfall/ratio/violation reasons；`aits download-data` / daily-run 默认路径可在小额
+      missed-day gap 下继续进入 `aits validate-data`，但不得使用 `--without-marketstack`、不得绕过
+      data quality gate、不得写 production weights / active shadow weights 或触发 broker
+      action；focused tests 覆盖允许 catch-up、full-history block、ratio block 和诊断输出。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1194
+    row_sha256: 15c21994dc3bf43989461de8c13d2854c6241be33db54a2e79239b278b725c01
+    cell_count: 8
+    all_cells:
+    - TRADING-1088_MARKETSTACK_MISSED_DAY_TAIL_CATCH_UP
+    - Data pipeline / Marketstack quota and catch-up governance
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1088_Marketstack_Missed_Day_Tail_Catch_Up.md`；承接
+      TRADING-1087 owner-approved small daily overage。当前实现新增受控 catch-up profile，把
+      eligible tail gap 拆成 one-U.S.-trading-day windows，并保留 full-history / new ticker
+      / large quota shortfall fail-closed；后续需要真实 daily-run 观察确认。
+    - 新增 Marketstack missed-day tail catch-up budget profile、one-day split window
+      执行路径、manifest/failure diagnostics 中的 profile/original windows/split windows/quota
+      shortfall/ratio/violation reasons；`aits download-data` / daily-run 默认路径可在小额
+      missed-day gap 下继续进入 `aits validate-data`，但不得使用 `--without-marketstack`、不得绕过
+      data quality gate、不得写 production weights / active shadow weights 或触发 broker
+      action；focused tests 覆盖允许 catch-up、full-history block、ratio block 和诊断输出。
+    - '2026-07-03: 根据 daily PIT 自动化 ProviderQuotaBudgetError 复盘新增并进入 IN_PROGRESS；另一个
+      full validation 已 PASS 后开始实现。2026-07-03: 实现完成并进入 VALIDATING；验证通过 data download
+      focused tests 16 passed、config+data focused tests 33 passed、Ruff、compileall、docs
+      freshness、task-register consistency run/validate 和 contract-validation 193 passed。'
+    raw_line: '|TRADING-1088_MARKETSTACK_MISSED_DAY_TAIL_CATCH_UP|Data pipeline /
+      Marketstack quota and catch-up governance|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-1088_Marketstack_Missed_Day_Tail_Catch_Up.md`；承接
+      TRADING-1087 owner-approved small daily overage。当前实现新增受控 catch-up profile，把
+      eligible tail gap 拆成 one-U.S.-trading-day windows，并保留 full-history / new ticker
+      / large quota shortfall fail-closed；后续需要真实 daily-run 观察确认。|新增 Marketstack missed-day
+      tail catch-up budget profile、one-day split window 执行路径、manifest/failure diagnostics
+      中的 profile/original windows/split windows/quota shortfall/ratio/violation reasons；`aits
+      download-data` / daily-run 默认路径可在小额 missed-day gap 下继续进入 `aits validate-data`，但不得使用
+      `--without-marketstack`、不得绕过 data quality gate、不得写 production weights / active
+      shadow weights 或触发 broker action；focused tests 覆盖允许 catch-up、full-history block、ratio
+      block 和诊断输出。|2026-07-03: 根据 daily PIT 自动化 ProviderQuotaBudgetError 复盘新增并进入 IN_PROGRESS；另一个
+      full validation 已 PASS 后开始实现。2026-07-03: 实现完成并进入 VALIDATING；验证通过 data download
+      focused tests 16 passed、config+data focused tests 33 passed、Ruff、compileall、docs
+      freshness、task-register consistency run/validate 和 contract-validation 193 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-15c21994dc3bf43989461de8
+  task_id: TRADING-1088_MARKETSTACK_MISSED_DAY_TAIL_CATCH_UP
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-03: 根据 daily PIT 自动化 ProviderQuotaBudgetError 复盘新增并进入 IN_PROGRESS；另一个
+      full validation 已 PASS 后开始实现。2026-07-03: 实现完成并进入 VALIDATING；验证通过 data download
+      focused tests 16 passed、config+data focused tests 33 passed、Ruff、compileall、docs
+      freshness、task-register consistency run/validate 和 contract-validation 193 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:15c21994dc3bf43989461de8c13d2854c6241be33db54a2e79239b278b725c01
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1088_MARKETSTACK_MISSED_DAY_TAIL_CATCH_UP
+  - Data pipeline / Marketstack quota and catch-up governance
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1088_Marketstack_Missed_Day_Tail_Catch_Up.md`；承接
+    TRADING-1087 owner-approved small daily overage。当前实现新增受控 catch-up profile，把 eligible
+    tail gap 拆成 one-U.S.-trading-day windows，并保留 full-history / new ticker / large
+    quota shortfall fail-closed；后续需要真实 daily-run 观察确认。
+  - 新增 Marketstack missed-day tail catch-up budget profile、one-day split window 执行路径、manifest/failure
+    diagnostics 中的 profile/original windows/split windows/quota shortfall/ratio/violation
+    reasons；`aits download-data` / daily-run 默认路径可在小额 missed-day gap 下继续进入 `aits validate-data`，但不得使用
+    `--without-marketstack`、不得绕过 data quality gate、不得写 production weights / active
+    shadow weights 或触发 broker action；focused tests 覆盖允许 catch-up、full-history block、ratio
+    block 和诊断输出。
+  - '2026-07-03: 根据 daily PIT 自动化 ProviderQuotaBudgetError 复盘新增并进入 IN_PROGRESS；另一个
+    full validation 已 PASS 后开始实现。2026-07-03: 实现完成并进入 VALIDATING；验证通过 data download
+    focused tests 16 passed、config+data focused tests 33 passed、Ruff、compileall、docs
+    freshness、task-register consistency run/validate 和 contract-validation 193 passed。'
+  docs_links:
+  - docs/requirements/TRADING-1088_Marketstack_Missed_Day_Tail_Catch_Up.md
+  terminal: false
+  raw_row_sha256: 15c21994dc3bf43989461de8c13d2854c6241be33db54a2e79239b278b725c01
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0254b64a9fc0717f798512ddc6b6351b01851d372d0051a2c0ede235fa30bb38

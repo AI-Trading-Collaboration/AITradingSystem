@@ -1,0 +1,149 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-565_to_574_B2_FULL_DIAGNOSTIC_AND_B3_RESOLUTION
+  title: null
+  domain: ETF portfolio/weight research B2-only full diagnostic and B3 signal precheck
+    resolution
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-565_to_574_B2_Full_Diagnostic_and_B3_Resolution.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-565_to_574_B2_Full_Diagnostic_and_B3_Resolution.md`；在
+    TRADING-557~564 后冻结 B2 full diagnostic scope、finalize non-holdout diagnostic windows、运行
+    B2-only full diagnostic、归因 drawdown protection、false risk-off/re-entry cost、cost/benchmark
+    utility、signal robustness/trigger stability、B2-only full diagnostic gate、B3 signal
+    precheck resolution plan 和最终 B2/B3 branch snapshot；不得调 B2 threshold/参数，不得生成 B3
+    weights 或 B3 mini-backfill，不得运行 B4/B5/B6/v3，不得访问 untouched holdout，不得生成 official
+    target weights、paper-shadow activation、extended shadow、broker/order/live/production
+    mutation，不得自动 append owner decision
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 输出 `b2_full_diagnostic_scope.json/md`、`b2_full_diagnostic_windows.json/md`、`b2_full_diagnostic_backfill.json/md`、`b2_drawdown_protection_attribution.json/md`、`b2_false_risk_off_reentry_cost_review.json/md`、`b2_cost_benchmark_utility_review.json/md`、`b2_signal_robustness_trigger_stability.json/md`、`b2_only_full_diagnostic_gate.json/md`、`b3_signal_precheck_resolution_plan.json/md`
+      和 `b2_b3_branch_status_snapshot.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+      date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；B4
+      retest 必须依赖 valid B3，B5 必须依赖 non-redundant valid B4，B6 必须依赖 valid B5；focused
+      tests、JSON parse、ruff、compileall、`git diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1416
+    row_sha256: 5dc171a60a0fa1e208c43bda53a0bea4b81605451136c6bfd1356fe1cc46026d
+    cell_count: 8
+    all_cells:
+    - TRADING-565_to_574_B2_FULL_DIAGNOSTIC_AND_B3_RESOLUTION
+    - ETF portfolio/weight research B2-only full diagnostic and B3 signal precheck
+      resolution
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-565_to_574_B2_Full_Diagnostic_and_B3_Resolution.md`；在
+      TRADING-557~564 后冻结 B2 full diagnostic scope、finalize non-holdout diagnostic
+      windows、运行 B2-only full diagnostic、归因 drawdown protection、false risk-off/re-entry
+      cost、cost/benchmark utility、signal robustness/trigger stability、B2-only full
+      diagnostic gate、B3 signal precheck resolution plan 和最终 B2/B3 branch snapshot；不得调
+      B2 threshold/参数，不得生成 B3 weights 或 B3 mini-backfill，不得运行 B4/B5/B6/v3，不得访问 untouched
+      holdout，不得生成 official target weights、paper-shadow activation、extended shadow、broker/order/live/production
+      mutation，不得自动 append owner decision
+    - 输出 `b2_full_diagnostic_scope.json/md`、`b2_full_diagnostic_windows.json/md`、`b2_full_diagnostic_backfill.json/md`、`b2_drawdown_protection_attribution.json/md`、`b2_false_risk_off_reentry_cost_review.json/md`、`b2_cost_benchmark_utility_review.json/md`、`b2_signal_robustness_trigger_stability.json/md`、`b2_only_full_diagnostic_gate.json/md`、`b3_signal_precheck_resolution_plan.json/md`
+      和 `b2_b3_branch_status_snapshot.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+      date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；B4
+      retest 必须依赖 valid B3，B5 必须依赖 non-redundant valid B4，B6 必须依赖 valid B5；focused
+      tests、JSON parse、ruff、compileall、`git diff --check` 通过
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-557~564 后继续 B2-only full
+      diagnostic 并解决 B3 `B3_PRECHECK_MIXED` 的后续路径；当前 branch=`CONTINUE_B2_ONLY_TO_FULL_DIAGNOSTIC`、B2
+      gate=`B2_ONLY_NEEDS_MORE_EVIDENCE`、B3 precheck=`B3_PRECHECK_MIXED`，且 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19:
+      实现完成并转入 VALIDATING；`b2-full-diagnostic-research` 输出 TRADING-565=`B2_FULL_DIAGNOSTIC_SCOPE_READY`、566=`B2_FULL_DIAGNOSTIC_WINDOWS_READY`、567=`B2_FULL_DIAGNOSTIC_PARTIAL`、568=`B2_DRAWDOWN_PROTECTION_MIXED`、569=`B2_REENTRY_LAG_HIGH`、570=`B2_UTILITY_MIXED`、571=`B2_TRIGGER_STABILITY_WEAK`、572=`B2_ONLY_NEEDS_MORE_EVIDENCE`、573=`B3_SIGNAL_PRECHECK_RESOLUTION_READY`、574=`CONTINUE_B2_ONLY_RESEARCH`；567
+      为 PARTIAL，原因是 normal/calm controls 只有 normal-market no-trigger reference，尚无独立
+      B2 control-window signal rerun artifact；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+    raw_line: '|TRADING-565_to_574_B2_FULL_DIAGNOSTIC_AND_B3_RESOLUTION|ETF portfolio/weight
+      research B2-only full diagnostic and B3 signal precheck resolution|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-565_to_574_B2_Full_Diagnostic_and_B3_Resolution.md`；在
+      TRADING-557~564 后冻结 B2 full diagnostic scope、finalize non-holdout diagnostic
+      windows、运行 B2-only full diagnostic、归因 drawdown protection、false risk-off/re-entry
+      cost、cost/benchmark utility、signal robustness/trigger stability、B2-only full
+      diagnostic gate、B3 signal precheck resolution plan 和最终 B2/B3 branch snapshot；不得调
+      B2 threshold/参数，不得生成 B3 weights 或 B3 mini-backfill，不得运行 B4/B5/B6/v3，不得访问 untouched
+      holdout，不得生成 official target weights、paper-shadow activation、extended shadow、broker/order/live/production
+      mutation，不得自动 append owner decision|输出 `b2_full_diagnostic_scope.json/md`、`b2_full_diagnostic_windows.json/md`、`b2_full_diagnostic_backfill.json/md`、`b2_drawdown_protection_attribution.json/md`、`b2_false_risk_off_reentry_cost_review.json/md`、`b2_cost_benchmark_utility_review.json/md`、`b2_signal_robustness_trigger_stability.json/md`、`b2_only_full_diagnostic_gate.json/md`、`b3_signal_precheck_resolution_plan.json/md`
+      和 `b2_b3_branch_status_snapshot.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+      date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；B4
+      retest 必须依赖 valid B3，B5 必须依赖 non-redundant valid B4，B6 必须依赖 valid B5；focused
+      tests、JSON parse、ruff、compileall、`git diff --check` 通过|2026-06-19: 新增并进入 IN_PROGRESS，原因：owner
+      要求在 TRADING-557~564 后继续 B2-only full diagnostic 并解决 B3 `B3_PRECHECK_MIXED` 的后续路径；当前
+      branch=`CONTINUE_B2_ONLY_TO_FULL_DIAGNOSTIC`、B2 gate=`B2_ONLY_NEEDS_MORE_EVIDENCE`、B3
+      precheck=`B3_PRECHECK_MIXED`，且 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19:
+      实现完成并转入 VALIDATING；`b2-full-diagnostic-research` 输出 TRADING-565=`B2_FULL_DIAGNOSTIC_SCOPE_READY`、566=`B2_FULL_DIAGNOSTIC_WINDOWS_READY`、567=`B2_FULL_DIAGNOSTIC_PARTIAL`、568=`B2_DRAWDOWN_PROTECTION_MIXED`、569=`B2_REENTRY_LAG_HIGH`、570=`B2_UTILITY_MIXED`、571=`B2_TRIGGER_STABILITY_WEAK`、572=`B2_ONLY_NEEDS_MORE_EVIDENCE`、573=`B3_SIGNAL_PRECHECK_RESOLUTION_READY`、574=`CONTINUE_B2_ONLY_RESEARCH`；567
+      为 PARTIAL，原因是 normal/calm controls 只有 normal-market no-trigger reference，尚无独立
+      B2 control-window signal rerun artifact；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5dc171a60a0fa1e208c43bda
+  task_id: TRADING-565_to_574_B2_FULL_DIAGNOSTIC_AND_B3_RESOLUTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-557~564 后继续 B2-only
+      full diagnostic 并解决 B3 `B3_PRECHECK_MIXED` 的后续路径；当前 branch=`CONTINUE_B2_ONLY_TO_FULL_DIAGNOSTIC`、B2
+      gate=`B2_ONLY_NEEDS_MORE_EVIDENCE`、B3 precheck=`B3_PRECHECK_MIXED`，且 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19:
+      实现完成并转入 VALIDATING；`b2-full-diagnostic-research` 输出 TRADING-565=`B2_FULL_DIAGNOSTIC_SCOPE_READY`、566=`B2_FULL_DIAGNOSTIC_WINDOWS_READY`、567=`B2_FULL_DIAGNOSTIC_PARTIAL`、568=`B2_DRAWDOWN_PROTECTION_MIXED`、569=`B2_REENTRY_LAG_HIGH`、570=`B2_UTILITY_MIXED`、571=`B2_TRIGGER_STABILITY_WEAK`、572=`B2_ONLY_NEEDS_MORE_EVIDENCE`、573=`B3_SIGNAL_PRECHECK_RESOLUTION_READY`、574=`CONTINUE_B2_ONLY_RESEARCH`；567
+      为 PARTIAL，原因是 normal/calm controls 只有 normal-market no-trigger reference，尚无独立
+      B2 control-window signal rerun artifact；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5dc171a60a0fa1e208c43bda53a0bea4b81605451136c6bfd1356fe1cc46026d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-565_to_574_B2_FULL_DIAGNOSTIC_AND_B3_RESOLUTION
+  - ETF portfolio/weight research B2-only full diagnostic and B3 signal precheck resolution
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-565_to_574_B2_Full_Diagnostic_and_B3_Resolution.md`；在
+    TRADING-557~564 后冻结 B2 full diagnostic scope、finalize non-holdout diagnostic windows、运行
+    B2-only full diagnostic、归因 drawdown protection、false risk-off/re-entry cost、cost/benchmark
+    utility、signal robustness/trigger stability、B2-only full diagnostic gate、B3 signal
+    precheck resolution plan 和最终 B2/B3 branch snapshot；不得调 B2 threshold/参数，不得生成 B3
+    weights 或 B3 mini-backfill，不得运行 B4/B5/B6/v3，不得访问 untouched holdout，不得生成 official
+    target weights、paper-shadow activation、extended shadow、broker/order/live/production
+    mutation，不得自动 append owner decision
+  - 输出 `b2_full_diagnostic_scope.json/md`、`b2_full_diagnostic_windows.json/md`、`b2_full_diagnostic_backfill.json/md`、`b2_drawdown_protection_attribution.json/md`、`b2_false_risk_off_reentry_cost_review.json/md`、`b2_cost_benchmark_utility_review.json/md`、`b2_signal_robustness_trigger_stability.json/md`、`b2_only_full_diagnostic_gate.json/md`、`b3_signal_precheck_resolution_plan.json/md`
+    和 `b2_b3_branch_status_snapshot.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+    date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；B4
+    retest 必须依赖 valid B3，B5 必须依赖 non-redundant valid B4，B6 必须依赖 valid B5；focused tests、JSON
+    parse、ruff、compileall、`git diff --check` 通过
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-557~564 后继续 B2-only full diagnostic
+    并解决 B3 `B3_PRECHECK_MIXED` 的后续路径；当前 branch=`CONTINUE_B2_ONLY_TO_FULL_DIAGNOSTIC`、B2
+    gate=`B2_ONLY_NEEDS_MORE_EVIDENCE`、B3 precheck=`B3_PRECHECK_MIXED`，且 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19:
+    实现完成并转入 VALIDATING；`b2-full-diagnostic-research` 输出 TRADING-565=`B2_FULL_DIAGNOSTIC_SCOPE_READY`、566=`B2_FULL_DIAGNOSTIC_WINDOWS_READY`、567=`B2_FULL_DIAGNOSTIC_PARTIAL`、568=`B2_DRAWDOWN_PROTECTION_MIXED`、569=`B2_REENTRY_LAG_HIGH`、570=`B2_UTILITY_MIXED`、571=`B2_TRIGGER_STABILITY_WEAK`、572=`B2_ONLY_NEEDS_MORE_EVIDENCE`、573=`B3_SIGNAL_PRECHECK_RESOLUTION_READY`、574=`CONTINUE_B2_ONLY_RESEARCH`；567
+    为 PARTIAL，原因是 normal/calm controls 只有 normal-market no-trigger reference，尚无独立
+    B2 control-window signal rerun artifact；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+  docs_links:
+  - docs/requirements/TRADING-565_to_574_B2_Full_Diagnostic_and_B3_Resolution.md
+  terminal: false
+  raw_row_sha256: 5dc171a60a0fa1e208c43bda53a0bea4b81605451136c6bfd1356fe1cc46026d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a94759abe17331a8036ae3a6c7d4eceab0ca96239753f2442b61f3c69538eff4

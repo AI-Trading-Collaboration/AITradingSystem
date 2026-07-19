@@ -1,0 +1,137 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-364_OWNER_REVIEW_TEMPLATE_V2
+  title: null
+  domain: Research governance / owner review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续使用 template 填写并复核 manual review；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-364_Owner_Review_Template_V2.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-364_Owner_Review_Template_V2.md`；新增
+    governance-wide owner review template v2，固化 candidate id、evidence interpretation、continue/reject
+    reason、uncertainty、required follow-up、final owner action、linked input artifacts
+    和 safety status；本任务只生成模板/校验报告，不记录 owner decision、不推进候选、不修改 strategy outputs
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/owner_review_template_v2.py`、`aits reports
+      owner-review-template-v2`、`aits reports validate-owner-review-template-v2`、optional
+      filled review record validation、Reader Brief 摘要、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；owner action enum 固定为 `continue_shadow
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 219
+    row_sha256: e52a5a710b5040ca1890357a6e58b4a8f66dc763e1d2a8b2b188dde3b95bd1b2
+    cell_count: 13
+    all_cells:
+    - TRADING-364_OWNER_REVIEW_TEMPLATE_V2
+    - Research governance / owner review
+    - P1
+    - DONE
+    - 项目 owner 后续使用 template 填写并复核 manual review；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-364_Owner_Review_Template_V2.md`；新增 governance-wide
+      owner review template v2，固化 candidate id、evidence interpretation、continue/reject
+      reason、uncertainty、required follow-up、final owner action、linked input artifacts
+      和 safety status；本任务只生成模板/校验报告，不记录 owner decision、不推进候选、不修改 strategy outputs
+    - 新增 `src/ai_trading_system/reports/owner_review_template_v2.py`、`aits reports
+      owner-review-template-v2`、`aits reports validate-owner-review-template-v2`、optional
+      filled review record validation、Reader Brief 摘要、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；owner action enum 固定为 `continue_shadow
+    - enter_extended_shadow
+    - needs_more_evidence
+    - return_to_research
+    - reject_candidate
+    - hold`；缺 required field、非法 owner action、缺 linked input artifact、缺 safety status
+      或 `SAFETY_BLOCKED` 搭配 continuation action fail closed；所有输出固定 `production_effect=none`
+    - '2026-06-16: DONE；真实 2026-06-16 template `outputs/reports/owner_review_template_v2_2026-06-16.json/md`
+      输出 `template_status=TEMPLATE_READY`、required fields=9、owner actions=6、manual_review_only=true、owner_decision_logged=false；validation
+      `outputs/reports/owner_review_template_v2_validation_2026-06-16.json/md` 输出
+      `validation_status=PASS`、checks=9、failed=0、review_record_provided=false；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0；Reader Brief latest section
+      用 2026-06-15 local latest artifact 验证，section 展示 `TEMPLATE_READY`、validation=`PASS`、fields=9、owner
+      actions=6。Exact 2026-06-16 Reader Brief generation remains limited by missing
+      local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / governance-only / no owner decision
+      log append / no upstream evidence collection / no data refresh / no official
+      target / no broker / no order ticket / no candidate/paper-shadow/production
+      mutation。'
+    raw_line: '|TRADING-364_OWNER_REVIEW_TEMPLATE_V2|Research governance / owner review|P1|DONE|项目
+      owner 后续使用 template 填写并复核 manual review；代码实现完成|详细拆解见 `docs/requirements/TRADING-364_Owner_Review_Template_V2.md`；新增
+      governance-wide owner review template v2，固化 candidate id、evidence interpretation、continue/reject
+      reason、uncertainty、required follow-up、final owner action、linked input artifacts
+      和 safety status；本任务只生成模板/校验报告，不记录 owner decision、不推进候选、不修改 strategy outputs|新增
+      `src/ai_trading_system/reports/owner_review_template_v2.py`、`aits reports owner-review-template-v2`、`aits
+      reports validate-owner-review-template-v2`、optional filled review record validation、Reader
+      Brief 摘要、report registry、artifact catalog、README、system flow、operations runbook、requirements
+      和 focused tests；owner action enum 固定为 `continue_shadow|enter_extended_shadow|needs_more_evidence|return_to_research|reject_candidate|hold`；缺
+      required field、非法 owner action、缺 linked input artifact、缺 safety status 或 `SAFETY_BLOCKED`
+      搭配 continuation action fail closed；所有输出固定 `production_effect=none`|2026-06-16:
+      DONE；真实 2026-06-16 template `outputs/reports/owner_review_template_v2_2026-06-16.json/md`
+      输出 `template_status=TEMPLATE_READY`、required fields=9、owner actions=6、manual_review_only=true、owner_decision_logged=false；validation
+      `outputs/reports/owner_review_template_v2_validation_2026-06-16.json/md` 输出
+      `validation_status=PASS`、checks=9、failed=0、review_record_provided=false；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0；Reader Brief latest section
+      用 2026-06-15 local latest artifact 验证，section 展示 `TEMPLATE_READY`、validation=`PASS`、fields=9、owner
+      actions=6。Exact 2026-06-16 Reader Brief generation remains limited by missing
+      local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / governance-only / no owner decision
+      log append / no upstream evidence collection / no data refresh / no official
+      target / no broker / no order ticket / no candidate/paper-shadow/production
+      mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e52a5a710b5040ca1890357a
+  task_id: TRADING-364_OWNER_REVIEW_TEMPLATE_V2
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续使用 template 填写并复核 manual review；代码实现完成
+    notes: enter_extended_shadow
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e52a5a710b5040ca1890357a6e58b4a8f66dc763e1d2a8b2b188dde3b95bd1b2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-364_OWNER_REVIEW_TEMPLATE_V2
+  - Research governance / owner review
+  - P1
+  - DONE
+  - 项目 owner 后续使用 template 填写并复核 manual review；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-364_Owner_Review_Template_V2.md`；新增 governance-wide
+    owner review template v2，固化 candidate id、evidence interpretation、continue/reject
+    reason、uncertainty、required follow-up、final owner action、linked input artifacts
+    和 safety status；本任务只生成模板/校验报告，不记录 owner decision、不推进候选、不修改 strategy outputs
+  - 新增 `src/ai_trading_system/reports/owner_review_template_v2.py`、`aits reports owner-review-template-v2`、`aits
+    reports validate-owner-review-template-v2`、optional filled review record validation、Reader
+    Brief 摘要、report registry、artifact catalog、README、system flow、operations runbook、requirements
+    和 focused tests；owner action enum 固定为 `continue_shadow
+  - enter_extended_shadow
+  docs_links:
+  - docs/requirements/TRADING-364_Owner_Review_Template_V2.md
+  terminal: true
+  raw_row_sha256: e52a5a710b5040ca1890357a6e58b4a8f66dc763e1d2a8b2b188dde3b95bd1b2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 75a1fe4315aa9ae35a54ecdfa7b71ca7ef56da7c7167d359fb34d08bc9edc6a0

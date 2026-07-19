@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: GOV-002
+  title: null
+  domain: 治理/规则版本
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已把当前 production rule card 版本注入 `score-daily`、回测、decision
+    snapshot 和 evidence bundle；剩余缺口是正式 owner approval、promotion、retirement 操作和历史 rule
+    registry replay
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`score-daily` 和 `backtest` 先校验 rule card registry，失败时停止；trace run manifest
+      记录适用于本次命令的 production rule_id/version/type/approval/validation/source paths；decision
+      snapshot 保存同一 rule version manifest；报告/系统流图说明这是本次运行使用的当前规则登记，不是历史时点审批证明；补充规则版本和
+      trace 测试'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1112
+    row_sha256: 5a3b9115b8a43840f71e3b66060342823fda53c2769fcc8bf8bea3f1d0cc5c8b
+    cell_count: 8
+    all_cells:
+    - GOV-002
+    - 治理/规则版本
+    - P1
+    - BASELINE_DONE
+    - 系统实现
+    - 已把当前 production rule card 版本注入 `score-daily`、回测、decision snapshot 和 evidence
+      bundle；剩余缺口是正式 owner approval、promotion、retirement 操作和历史 rule registry replay
+    - '`score-daily` 和 `backtest` 先校验 rule card registry，失败时停止；trace run manifest
+      记录适用于本次命令的 production rule_id/version/type/approval/validation/source paths；decision
+      snapshot 保存同一 rule version manifest；报告/系统流图说明这是本次运行使用的当前规则登记，不是历史时点审批证明；补充规则版本和
+      trace 测试'
+    - '2026-05-04: 新增并进入实现，原因：生产就绪缺口 #7 已有 rule card registry，但日报/回测产物尚未写入具体 rule
+      version，审计链仍不完整。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 rule version
+      manifest、日报/回测 rule card 校验、trace run manifest 参数、decision snapshot 字段、系统流图和测试；真实日报/短区间回测已验证
+      rule_versions 写入。正式 approval/promotion/retirement 仍由 `GOV-001` 后续 owner 流程承接。'
+    raw_line: '|GOV-002|治理/规则版本|P1|BASELINE_DONE|系统实现|已把当前 production rule card 版本注入
+      `score-daily`、回测、decision snapshot 和 evidence bundle；剩余缺口是正式 owner approval、promotion、retirement
+      操作和历史 rule registry replay|`score-daily` 和 `backtest` 先校验 rule card registry，失败时停止；trace
+      run manifest 记录适用于本次命令的 production rule_id/version/type/approval/validation/source
+      paths；decision snapshot 保存同一 rule version manifest；报告/系统流图说明这是本次运行使用的当前规则登记，不是历史时点审批证明；补充规则版本和
+      trace 测试|2026-05-04: 新增并进入实现，原因：生产就绪缺口 #7 已有 rule card registry，但日报/回测产物尚未写入具体
+      rule version，审计链仍不完整。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 rule version
+      manifest、日报/回测 rule card 校验、trace run manifest 参数、decision snapshot 字段、系统流图和测试；真实日报/短区间回测已验证
+      rule_versions 写入。正式 approval/promotion/retirement 仍由 `GOV-001` 后续 owner 流程承接。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5a3b9115b8a43840f71e3b66
+  task_id: GOV-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-04: 新增并进入实现，原因：生产就绪缺口 #7 已有 rule card registry，但日报/回测产物尚未写入具体
+      rule version，审计链仍不完整。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 rule version
+      manifest、日报/回测 rule card 校验、trace run manifest 参数、decision snapshot 字段、系统流图和测试；真实日报/短区间回测已验证
+      rule_versions 写入。正式 approval/promotion/retirement 仍由 `GOV-001` 后续 owner 流程承接。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5a3b9115b8a43840f71e3b66060342823fda53c2769fcc8bf8bea3f1d0cc5c8b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - GOV-002
+  - 治理/规则版本
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - 已把当前 production rule card 版本注入 `score-daily`、回测、decision snapshot 和 evidence bundle；剩余缺口是正式
+    owner approval、promotion、retirement 操作和历史 rule registry replay
+  - '`score-daily` 和 `backtest` 先校验 rule card registry，失败时停止；trace run manifest 记录适用于本次命令的
+    production rule_id/version/type/approval/validation/source paths；decision snapshot
+    保存同一 rule version manifest；报告/系统流图说明这是本次运行使用的当前规则登记，不是历史时点审批证明；补充规则版本和 trace 测试'
+  - '2026-05-04: 新增并进入实现，原因：生产就绪缺口 #7 已有 rule card registry，但日报/回测产物尚未写入具体 rule version，审计链仍不完整。2026-05-04:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 rule version manifest、日报/回测 rule card 校验、trace
+    run manifest 参数、decision snapshot 字段、系统流图和测试；真实日报/短区间回测已验证 rule_versions 写入。正式
+    approval/promotion/retirement 仍由 `GOV-001` 后续 owner 流程承接。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 5a3b9115b8a43840f71e3b66060342823fda53c2769fcc8bf8bea3f1d0cc5c8b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2a8fe800ab63fef912493c1efdbb32ca862e5c610974cb5aa9e3b789f5446386

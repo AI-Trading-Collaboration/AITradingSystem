@@ -1,0 +1,112 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: BACKTEST-003
+  title: null
+  domain: 回测/模型晋级门槛
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已实现模型晋级门槛基础版：`aits backtest --promotion-report`
+    汇总数据可信度、robustness、lag sensitivity、shadow outcome 和 rule governance，并在回测报告中嵌入晋级状态；剩余缺口是真实
+    forward shadow 样本和 owner/rule approval 进入 `GOV-001`；详细拆解见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#backtest-003模型晋级门槛与回测路线`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 回测或模型评估报告默认声明 `ai_after_chatgpt` regime 和实际日期范围；C 级输入不得输出无条件 Sharpe/CAGR
+      主结论，也不得生成 promotion 通过状态；晋级状态必须引用具体 evidence、PIT 覆盖、robustness、shadow outcome
+      和 rule card；实现时同步更新 `docs/system_flow.md` 并补充报告文本和治理隔离测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1098
+    row_sha256: 7470ed3f030c4fc65c9ceb335612b627cb5da0cae700f56bf52592e76c3e38e7
+    cell_count: 8
+    all_cells:
+    - BACKTEST-003
+    - 回测/模型晋级门槛
+    - P1
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已实现模型晋级门槛基础版：`aits backtest --promotion-report` 汇总数据可信度、robustness、lag sensitivity、shadow
+      outcome 和 rule governance，并在回测报告中嵌入晋级状态；剩余缺口是真实 forward shadow 样本和 owner/rule
+      approval 进入 `GOV-001`；详细拆解见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#backtest-003模型晋级门槛与回测路线`
+    - 回测或模型评估报告默认声明 `ai_after_chatgpt` regime 和实际日期范围；C 级输入不得输出无条件 Sharpe/CAGR 主结论，也不得生成
+      promotion 通过状态；晋级状态必须引用具体 evidence、PIT 覆盖、robustness、shadow outcome 和 rule card；实现时同步更新
+      `docs/system_flow.md` 并补充报告文本和治理隔离测试
+    - '2026-05-05: 新增任务，原因：`BACKTEST-001/002` 已完成稳健性和数据可信度标注，但还缺一个可审计的“探索 -> 近似 PIT
+      回测 -> 前向 shadow -> 晋级审批 -> 生产规则”路线，防止漂亮历史回测被误读为上线证据。2026-05-05: 从 READY 改为 BASELINE_DONE，原因：新增
+      promotion gate 模块、Markdown/JSON 输出、回测 CLI 接入、主回测报告摘要和测试；完整 DONE 仍需真实 prediction
+      outcome 样本和 owner approval。'
+    raw_line: '|BACKTEST-003|回测/模型晋级门槛|P1|BASELINE_DONE|系统实现 + 项目 owner|已实现模型晋级门槛基础版：`aits
+      backtest --promotion-report` 汇总数据可信度、robustness、lag sensitivity、shadow outcome
+      和 rule governance，并在回测报告中嵌入晋级状态；剩余缺口是真实 forward shadow 样本和 owner/rule approval
+      进入 `GOV-001`；详细拆解见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#backtest-003模型晋级门槛与回测路线`|回测或模型评估报告默认声明
+      `ai_after_chatgpt` regime 和实际日期范围；C 级输入不得输出无条件 Sharpe/CAGR 主结论，也不得生成 promotion
+      通过状态；晋级状态必须引用具体 evidence、PIT 覆盖、robustness、shadow outcome 和 rule card；实现时同步更新
+      `docs/system_flow.md` 并补充报告文本和治理隔离测试|2026-05-05: 新增任务，原因：`BACKTEST-001/002`
+      已完成稳健性和数据可信度标注，但还缺一个可审计的“探索 -> 近似 PIT 回测 -> 前向 shadow -> 晋级审批 -> 生产规则”路线，防止漂亮历史回测被误读为上线证据。2026-05-05:
+      从 READY 改为 BASELINE_DONE，原因：新增 promotion gate 模块、Markdown/JSON 输出、回测 CLI 接入、主回测报告摘要和测试；完整
+      DONE 仍需真实 prediction outcome 样本和 owner approval。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7470ed3f030c4fc65c9ceb33
+  task_id: BACKTEST-003
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner
+    notes: '2026-05-05: 新增任务，原因：`BACKTEST-001/002` 已完成稳健性和数据可信度标注，但还缺一个可审计的“探索 ->
+      近似 PIT 回测 -> 前向 shadow -> 晋级审批 -> 生产规则”路线，防止漂亮历史回测被误读为上线证据。2026-05-05: 从 READY
+      改为 BASELINE_DONE，原因：新增 promotion gate 模块、Markdown/JSON 输出、回测 CLI 接入、主回测报告摘要和测试；完整
+      DONE 仍需真实 prediction outcome 样本和 owner approval。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7470ed3f030c4fc65c9ceb335612b627cb5da0cae700f56bf52592e76c3e38e7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - BACKTEST-003
+  - 回测/模型晋级门槛
+  - P1
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已实现模型晋级门槛基础版：`aits backtest --promotion-report` 汇总数据可信度、robustness、lag sensitivity、shadow
+    outcome 和 rule governance，并在回测报告中嵌入晋级状态；剩余缺口是真实 forward shadow 样本和 owner/rule
+    approval 进入 `GOV-001`；详细拆解见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#backtest-003模型晋级门槛与回测路线`
+  - 回测或模型评估报告默认声明 `ai_after_chatgpt` regime 和实际日期范围；C 级输入不得输出无条件 Sharpe/CAGR 主结论，也不得生成
+    promotion 通过状态；晋级状态必须引用具体 evidence、PIT 覆盖、robustness、shadow outcome 和 rule card；实现时同步更新
+    `docs/system_flow.md` 并补充报告文本和治理隔离测试
+  - '2026-05-05: 新增任务，原因：`BACKTEST-001/002` 已完成稳健性和数据可信度标注，但还缺一个可审计的“探索 -> 近似 PIT
+    回测 -> 前向 shadow -> 晋级审批 -> 生产规则”路线，防止漂亮历史回测被误读为上线证据。2026-05-05: 从 READY 改为 BASELINE_DONE，原因：新增
+    promotion gate 模块、Markdown/JSON 输出、回测 CLI 接入、主回测报告摘要和测试；完整 DONE 仍需真实 prediction
+    outcome 样本和 owner approval。'
+  docs_links:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: 7470ed3f030c4fc65c9ceb335612b627cb5da0cae700f56bf52592e76c3e38e7
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 579227f9d04df65f2cc55aa9052e6f73c56a0c65edb66315c6e223ff422ac5b9

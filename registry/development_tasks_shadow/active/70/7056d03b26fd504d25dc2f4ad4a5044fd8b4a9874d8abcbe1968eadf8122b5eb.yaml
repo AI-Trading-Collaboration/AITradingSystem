@@ -1,0 +1,158 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-894_to_910_SIMPLE_BASELINE_FORWARD_AGING_CONVERGENCE
+  title: null
+  domain: Research strategies / QQQ-TQQQ-SGOV simple baseline forward aging and candidate
+    convergence
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-894_to_910_Simple_Baseline_Forward_Aging_Convergence.md
+  - docs/research/simple_baseline_forward_aging_master_review.md
+  - docs/research/simple_baseline_forward_aging_owner_review_pack.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-894_to_910_Simple_Baseline_Forward_Aging_Convergence.md`；实现已完成，真实本地
+    cached data quality 当前 FAIL，数据依赖结论保持 fail-closed；下一步是修复/刷新本地 QQQ/TQQQ/SGOV/rates
+    cache 后重跑 forward-aging data-quality gate、observation、maturity、scoreboard、risk
+    budget、absolute-return gap、automation readiness 和 master review
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 17 个 `aits research strategies ...` CLI；输出指定 JSON/Markdown 和 `docs/research/simple_baseline_forward_aging_owner_review_pack.md`、`docs/research/simple_baseline_forward_aging_master_review.md`；接入
+      report registry、artifact catalog、system flow 和 Reader Brief；所有使用 cached data
+      的命令先走同源 `validate_data_cache` 并披露 data quality；candidate set 固定为 `equal_risk_qqq_sgov`
+      primary、`qqq_50_sgov_50`/`qqq_60_sgov_40`/`100_qqq` comparators、`dyn_tqqq_capped_trend`
+      challenger；最终 safety fields 固定 `promotion_allowed=false`、`paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；focused
+      pytest、CLI smoke、contract/report/doc validation、Ruff、compileall 和 `git diff
+      --check` 通过或记录阻塞
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1301
+    row_sha256: ccaaccddf34d4d36d4b7db73d5c0fcae5de48653b3a401bc277297ae9da1212a
+    cell_count: 8
+    all_cells:
+    - TRADING-894_to_910_SIMPLE_BASELINE_FORWARD_AGING_CONVERGENCE
+    - Research strategies / QQQ-TQQQ-SGOV simple baseline forward aging and candidate
+      convergence
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-894_to_910_Simple_Baseline_Forward_Aging_Convergence.md`；实现已完成，真实本地
+      cached data quality 当前 FAIL，数据依赖结论保持 fail-closed；下一步是修复/刷新本地 QQQ/TQQQ/SGOV/rates
+      cache 后重跑 forward-aging data-quality gate、observation、maturity、scoreboard、risk
+      budget、absolute-return gap、automation readiness 和 master review
+    - 新增 17 个 `aits research strategies ...` CLI；输出指定 JSON/Markdown 和 `docs/research/simple_baseline_forward_aging_owner_review_pack.md`、`docs/research/simple_baseline_forward_aging_master_review.md`；接入
+      report registry、artifact catalog、system flow 和 Reader Brief；所有使用 cached data
+      的命令先走同源 `validate_data_cache` 并披露 data quality；candidate set 固定为 `equal_risk_qqq_sgov`
+      primary、`qqq_50_sgov_50`/`qqq_60_sgov_40`/`100_qqq` comparators、`dyn_tqqq_capped_trend`
+      challenger；最终 safety fields 固定 `promotion_allowed=false`、`paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；focused
+      pytest、CLI smoke、contract/report/doc validation、Ruff、compileall 和 `git diff
+      --check` 通过或记录阻塞
+    - '2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-888～893 真实运行结果后进入候选收敛和长期
+      forward aging 观察；本批不进入 paper-shadow/production/broker，不恢复 TQQQ-heavy、LEAPS/Wheel
+      或 tail-risk fallback。2026-06-23: 实现完成并转入 VALIDATING；新增 forward-aging convergence
+      module、17 个 CLI、policy config、Reader Brief summary、report registry、artifact
+      catalog、system flow、owner/master docs 和 tests；真实 CLI smoke 输出 reconciliation=`RECONCILED`、candidate
+      freeze=`CANDIDATES_FROZEN`、contract=`FORWARD_AGING_CONTRACT_READY`、definition
+      locks ready，但本地 data quality gate=`DATA_QUALITY_BLOCKED`，因此 observation/maturity/risk/return/automation/master
+      按门禁输出 blocked/needs review；验证通过 focused parallel pytest、report/documentation/task/artifact
+      pytest、Ruff、compileall 和 `git diff --check`。'
+    raw_line: '|TRADING-894_to_910_SIMPLE_BASELINE_FORWARD_AGING_CONVERGENCE|Research
+      strategies / QQQ-TQQQ-SGOV simple baseline forward aging and candidate convergence|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-894_to_910_Simple_Baseline_Forward_Aging_Convergence.md`；实现已完成，真实本地
+      cached data quality 当前 FAIL，数据依赖结论保持 fail-closed；下一步是修复/刷新本地 QQQ/TQQQ/SGOV/rates
+      cache 后重跑 forward-aging data-quality gate、observation、maturity、scoreboard、risk
+      budget、absolute-return gap、automation readiness 和 master review|新增 17 个 `aits
+      research strategies ...` CLI；输出指定 JSON/Markdown 和 `docs/research/simple_baseline_forward_aging_owner_review_pack.md`、`docs/research/simple_baseline_forward_aging_master_review.md`；接入
+      report registry、artifact catalog、system flow 和 Reader Brief；所有使用 cached data
+      的命令先走同源 `validate_data_cache` 并披露 data quality；candidate set 固定为 `equal_risk_qqq_sgov`
+      primary、`qqq_50_sgov_50`/`qqq_60_sgov_40`/`100_qqq` comparators、`dyn_tqqq_capped_trend`
+      challenger；最终 safety fields 固定 `promotion_allowed=false`、`paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；focused
+      pytest、CLI smoke、contract/report/doc validation、Ruff、compileall 和 `git diff
+      --check` 通过或记录阻塞|2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-888～893
+      真实运行结果后进入候选收敛和长期 forward aging 观察；本批不进入 paper-shadow/production/broker，不恢复 TQQQ-heavy、LEAPS/Wheel
+      或 tail-risk fallback。2026-06-23: 实现完成并转入 VALIDATING；新增 forward-aging convergence
+      module、17 个 CLI、policy config、Reader Brief summary、report registry、artifact
+      catalog、system flow、owner/master docs 和 tests；真实 CLI smoke 输出 reconciliation=`RECONCILED`、candidate
+      freeze=`CANDIDATES_FROZEN`、contract=`FORWARD_AGING_CONTRACT_READY`、definition
+      locks ready，但本地 data quality gate=`DATA_QUALITY_BLOCKED`，因此 observation/maturity/risk/return/automation/master
+      按门禁输出 blocked/needs review；验证通过 focused parallel pytest、report/documentation/task/artifact
+      pytest、Ruff、compileall 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ccaaccddf34d4d36d4b7db73
+  task_id: TRADING-894_to_910_SIMPLE_BASELINE_FORWARD_AGING_CONVERGENCE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-888～893 真实运行结果后进入候选收敛和长期
+      forward aging 观察；本批不进入 paper-shadow/production/broker，不恢复 TQQQ-heavy、LEAPS/Wheel
+      或 tail-risk fallback。2026-06-23: 实现完成并转入 VALIDATING；新增 forward-aging convergence
+      module、17 个 CLI、policy config、Reader Brief summary、report registry、artifact
+      catalog、system flow、owner/master docs 和 tests；真实 CLI smoke 输出 reconciliation=`RECONCILED`、candidate
+      freeze=`CANDIDATES_FROZEN`、contract=`FORWARD_AGING_CONTRACT_READY`、definition
+      locks ready，但本地 data quality gate=`DATA_QUALITY_BLOCKED`，因此 observation/maturity/risk/return/automation/master
+      按门禁输出 blocked/needs review；验证通过 focused parallel pytest、report/documentation/task/artifact
+      pytest、Ruff、compileall 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ccaaccddf34d4d36d4b7db73d5c0fcae5de48653b3a401bc277297ae9da1212a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-894_to_910_SIMPLE_BASELINE_FORWARD_AGING_CONVERGENCE
+  - Research strategies / QQQ-TQQQ-SGOV simple baseline forward aging and candidate
+    convergence
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-894_to_910_Simple_Baseline_Forward_Aging_Convergence.md`；实现已完成，真实本地
+    cached data quality 当前 FAIL，数据依赖结论保持 fail-closed；下一步是修复/刷新本地 QQQ/TQQQ/SGOV/rates
+    cache 后重跑 forward-aging data-quality gate、observation、maturity、scoreboard、risk
+    budget、absolute-return gap、automation readiness 和 master review
+  - 新增 17 个 `aits research strategies ...` CLI；输出指定 JSON/Markdown 和 `docs/research/simple_baseline_forward_aging_owner_review_pack.md`、`docs/research/simple_baseline_forward_aging_master_review.md`；接入
+    report registry、artifact catalog、system flow 和 Reader Brief；所有使用 cached data 的命令先走同源
+    `validate_data_cache` 并披露 data quality；candidate set 固定为 `equal_risk_qqq_sgov`
+    primary、`qqq_50_sgov_50`/`qqq_60_sgov_40`/`100_qqq` comparators、`dyn_tqqq_capped_trend`
+    challenger；最终 safety fields 固定 `promotion_allowed=false`、`paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；focused
+    pytest、CLI smoke、contract/report/doc validation、Ruff、compileall 和 `git diff --check`
+    通过或记录阻塞
+  - '2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-888～893 真实运行结果后进入候选收敛和长期 forward
+    aging 观察；本批不进入 paper-shadow/production/broker，不恢复 TQQQ-heavy、LEAPS/Wheel 或 tail-risk
+    fallback。2026-06-23: 实现完成并转入 VALIDATING；新增 forward-aging convergence module、17
+    个 CLI、policy config、Reader Brief summary、report registry、artifact catalog、system
+    flow、owner/master docs 和 tests；真实 CLI smoke 输出 reconciliation=`RECONCILED`、candidate
+    freeze=`CANDIDATES_FROZEN`、contract=`FORWARD_AGING_CONTRACT_READY`、definition
+    locks ready，但本地 data quality gate=`DATA_QUALITY_BLOCKED`，因此 observation/maturity/risk/return/automation/master
+    按门禁输出 blocked/needs review；验证通过 focused parallel pytest、report/documentation/task/artifact
+    pytest、Ruff、compileall 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-894_to_910_Simple_Baseline_Forward_Aging_Convergence.md
+  - docs/research/simple_baseline_forward_aging_master_review.md
+  - docs/research/simple_baseline_forward_aging_owner_review_pack.md
+  terminal: false
+  raw_row_sha256: ccaaccddf34d4d36d4b7db73d5c0fcae5de48653b3a401bc277297ae9da1212a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d8a844b0c71a2c6efb77bf1085cb6f7d21acda7252ba8d7b54130238289c3389

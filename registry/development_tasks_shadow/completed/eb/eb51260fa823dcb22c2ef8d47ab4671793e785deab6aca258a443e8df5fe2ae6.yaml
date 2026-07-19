@@ -1,0 +1,106 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: SOURCE-001
+  title: null
+  domain: 数据源/风险
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/source_policy_2026-05-04.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已按 owner 批准的保守 source policy 落地；详细拆解见
+    `docs/requirements/source_policy_2026-05-04.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 形成 source policy：S/A/B/C/D/X 等级；`S/A` 可自动评分和触发仓位闸门，`B` 仅在确认后进入普通评分，`C/D/X`
+      只能 report/manual review；`public_convenience` 与 `llm_extracted` 不得直接评分；更新数据源目录、导入校验、风险事件评分资格和系统流图
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 444
+    row_sha256: 4a6e1f5c527ca7629a21dd556cb6d3a6ee9b02833adf6fe063e3edab623a4789
+    cell_count: 8
+    all_cells:
+    - SOURCE-001
+    - 数据源/风险
+    - P1
+    - DONE
+    - 系统实现
+    - 已按 owner 批准的保守 source policy 落地；详细拆解见 `docs/requirements/source_policy_2026-05-04.md`
+    - 形成 source policy：S/A/B/C/D/X 等级；`S/A` 可自动评分和触发仓位闸门，`B` 仅在确认后进入普通评分，`C/D/X` 只能
+      report/manual review；`public_convenience` 与 `llm_extracted` 不得直接评分；更新数据源目录、导入校验、风险事件评分资格和系统流图
+    - '2026-05-04: 从 BLOCKED_OWNER_INPUT 改为 IN_PROGRESS，原因：owner 批准先按保守方案落地 source
+      policy。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：新增 `source_policy` helper，market
+      evidence 和 risk event 校验报告已区分普通评分/仓位闸门资格，风险事件 position gate 只读取 `S/A` active
+      且 `position_gate_eligible` 的记录，测试覆盖 B 级 score-only、C/D/X 报告复核、public_convenience/LLM
+      隔离和 CSV 缺省 action class 保守行为；`python -m pytest -q` 通过 239 项测试，`python -m ruff
+      check .` 通过。'
+    raw_line: '|SOURCE-001|数据源/风险|P1|DONE|系统实现|已按 owner 批准的保守 source policy 落地；详细拆解见
+      `docs/requirements/source_policy_2026-05-04.md`|形成 source policy：S/A/B/C/D/X
+      等级；`S/A` 可自动评分和触发仓位闸门，`B` 仅在确认后进入普通评分，`C/D/X` 只能 report/manual review；`public_convenience`
+      与 `llm_extracted` 不得直接评分；更新数据源目录、导入校验、风险事件评分资格和系统流图|2026-05-04: 从 BLOCKED_OWNER_INPUT
+      改为 IN_PROGRESS，原因：owner 批准先按保守方案落地 source policy。2026-05-04: 从 IN_PROGRESS 改为
+      DONE，原因：新增 `source_policy` helper，market evidence 和 risk event 校验报告已区分普通评分/仓位闸门资格，风险事件
+      position gate 只读取 `S/A` active 且 `position_gate_eligible` 的记录，测试覆盖 B 级 score-only、C/D/X
+      报告复核、public_convenience/LLM 隔离和 CSV 缺省 action class 保守行为；`python -m pytest -q`
+      通过 239 项测试，`python -m ruff check .` 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4a6e1f5c527ca7629a21dd55
+  task_id: SOURCE-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-04: 从 BLOCKED_OWNER_INPUT 改为 IN_PROGRESS，原因：owner 批准先按保守方案落地 source
+      policy。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：新增 `source_policy` helper，market
+      evidence 和 risk event 校验报告已区分普通评分/仓位闸门资格，风险事件 position gate 只读取 `S/A` active
+      且 `position_gate_eligible` 的记录，测试覆盖 B 级 score-only、C/D/X 报告复核、public_convenience/LLM
+      隔离和 CSV 缺省 action class 保守行为；`python -m pytest -q` 通过 239 项测试，`python -m ruff
+      check .` 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4a6e1f5c527ca7629a21dd556cb6d3a6ee9b02833adf6fe063e3edab623a4789
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - SOURCE-001
+  - 数据源/风险
+  - P1
+  - DONE
+  - 系统实现
+  - 已按 owner 批准的保守 source policy 落地；详细拆解见 `docs/requirements/source_policy_2026-05-04.md`
+  - 形成 source policy：S/A/B/C/D/X 等级；`S/A` 可自动评分和触发仓位闸门，`B` 仅在确认后进入普通评分，`C/D/X` 只能
+    report/manual review；`public_convenience` 与 `llm_extracted` 不得直接评分；更新数据源目录、导入校验、风险事件评分资格和系统流图
+  - '2026-05-04: 从 BLOCKED_OWNER_INPUT 改为 IN_PROGRESS，原因：owner 批准先按保守方案落地 source policy。2026-05-04:
+    从 IN_PROGRESS 改为 DONE，原因：新增 `source_policy` helper，market evidence 和 risk event
+    校验报告已区分普通评分/仓位闸门资格，风险事件 position gate 只读取 `S/A` active 且 `position_gate_eligible`
+    的记录，测试覆盖 B 级 score-only、C/D/X 报告复核、public_convenience/LLM 隔离和 CSV 缺省 action class
+    保守行为；`python -m pytest -q` 通过 239 项测试，`python -m ruff check .` 通过。'
+  docs_links:
+  - docs/requirements/source_policy_2026-05-04.md
+  terminal: true
+  raw_row_sha256: 4a6e1f5c527ca7629a21dd556cb6d3a6ee9b02833adf6fe063e3edab623a4789
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 845f6d2a074dc925d01bec1fc2c71407833b4fb922eef8007790e8afa3fedb38

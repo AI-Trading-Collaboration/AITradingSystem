@@ -1,0 +1,118 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-062I
+  title: null
+  domain: ETF simulation benchmark outcome fields
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文
+    Simulation Ledger 后验字段和 simulation report 的 portfolio-vs-benchmark 摘要
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf simulation evaluate` 必须在 forward window 足够时写入 `relative_return_vs_spy_20d`、`relative_return_vs_qqq_20d`、`weight_contribution_20d`，并可计算组合级
+      `portfolio_return_20d`、`portfolio_relative_return_vs_spy_20d`、`portfolio_relative_return_vs_qqq_20d`；未来窗口不足或
+      benchmark 缺失必须保持 null，不得填 0；`aits etf simulation report` 必须显示 model_version
+      级 20d hit rate 和 portfolio vs SPY/QQQ 摘要；测试覆盖字段、null 语义和报告小节'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 372
+    row_sha256: a56c359bf732001a5723735f815b24c9910879e38a95e3c58831a86566062bea
+    cell_count: 8
+    all_cells:
+    - TRADING-062I
+    - ETF simulation benchmark outcome fields
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文
+      Simulation Ledger 后验字段和 simulation report 的 portfolio-vs-benchmark 摘要
+    - '`aits etf simulation evaluate` 必须在 forward window 足够时写入 `relative_return_vs_spy_20d`、`relative_return_vs_qqq_20d`、`weight_contribution_20d`，并可计算组合级
+      `portfolio_return_20d`、`portfolio_relative_return_vs_spy_20d`、`portfolio_relative_return_vs_qqq_20d`；未来窗口不足或
+      benchmark 缺失必须保持 null，不得填 0；`aits etf simulation report` 必须显示 model_version
+      级 20d hit rate 和 portfolio vs SPY/QQQ 摘要；测试覆盖字段、null 语义和报告小节'
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 11.3/12.2 要求 simulation ledger 包含相对 benchmark
+      和权重贡献字段，并要求日报/模拟舱说明 portfolio vs benchmarks；当前 evaluator 只写 forward return、drawdown
+      和 hit rate。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 20d SPY/QQQ-relative return、weight
+      contribution、portfolio-vs-benchmark 字段和 simulation report 小节；historical smoke
+      生成有效 20d outcome，latest ledger 窗口不足保持 null；目标测试、ruff、compileall、diff check 和全量
+      pytest 1627 passed。'
+    raw_line: '|TRADING-062I|ETF simulation benchmark outcome fields|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文 Simulation
+      Ledger 后验字段和 simulation report 的 portfolio-vs-benchmark 摘要|`aits etf simulation
+      evaluate` 必须在 forward window 足够时写入 `relative_return_vs_spy_20d`、`relative_return_vs_qqq_20d`、`weight_contribution_20d`，并可计算组合级
+      `portfolio_return_20d`、`portfolio_relative_return_vs_spy_20d`、`portfolio_relative_return_vs_qqq_20d`；未来窗口不足或
+      benchmark 缺失必须保持 null，不得填 0；`aits etf simulation report` 必须显示 model_version
+      级 20d hit rate 和 portfolio vs SPY/QQQ 摘要；测试覆盖字段、null 语义和报告小节|2026-05-31: 新增并进入
+      IN_PROGRESS，原因：原文 11.3/12.2 要求 simulation ledger 包含相对 benchmark 和权重贡献字段，并要求日报/模拟舱说明
+      portfolio vs benchmarks；当前 evaluator 只写 forward return、drawdown 和 hit rate。2026-05-31:
+      从 IN_PROGRESS 改为 DONE，原因：新增 20d SPY/QQQ-relative return、weight contribution、portfolio-vs-benchmark
+      字段和 simulation report 小节；historical smoke 生成有效 20d outcome，latest ledger 窗口不足保持
+      null；目标测试、ruff、compileall、diff check 和全量 pytest 1627 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a56c359bf732001a5723735f
+  task_id: TRADING-062I
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 11.3/12.2 要求 simulation ledger 包含相对
+      benchmark 和权重贡献字段，并要求日报/模拟舱说明 portfolio vs benchmarks；当前 evaluator 只写 forward
+      return、drawdown 和 hit rate。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 20d SPY/QQQ-relative
+      return、weight contribution、portfolio-vs-benchmark 字段和 simulation report 小节；historical
+      smoke 生成有效 20d outcome，latest ledger 窗口不足保持 null；目标测试、ruff、compileall、diff check
+      和全量 pytest 1627 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a56c359bf732001a5723735f815b24c9910879e38a95e3c58831a86566062bea
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062I
+  - ETF simulation benchmark outcome fields
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文
+    Simulation Ledger 后验字段和 simulation report 的 portfolio-vs-benchmark 摘要
+  - '`aits etf simulation evaluate` 必须在 forward window 足够时写入 `relative_return_vs_spy_20d`、`relative_return_vs_qqq_20d`、`weight_contribution_20d`，并可计算组合级
+    `portfolio_return_20d`、`portfolio_relative_return_vs_spy_20d`、`portfolio_relative_return_vs_qqq_20d`；未来窗口不足或
+    benchmark 缺失必须保持 null，不得填 0；`aits etf simulation report` 必须显示 model_version 级
+    20d hit rate 和 portfolio vs SPY/QQQ 摘要；测试覆盖字段、null 语义和报告小节'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 11.3/12.2 要求 simulation ledger 包含相对 benchmark
+    和权重贡献字段，并要求日报/模拟舱说明 portfolio vs benchmarks；当前 evaluator 只写 forward return、drawdown
+    和 hit rate。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 20d SPY/QQQ-relative return、weight
+    contribution、portfolio-vs-benchmark 字段和 simulation report 小节；historical smoke
+    生成有效 20d outcome，latest ledger 窗口不足保持 null；目标测试、ruff、compileall、diff check 和全量
+    pytest 1627 passed。'
+  docs_links:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  terminal: true
+  raw_row_sha256: a56c359bf732001a5723735f815b24c9910879e38a95e3c58831a86566062bea
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a942dffe97e4c9c37c4e75b60262f79b0d73b68e789ed9e9717a846a74645e89

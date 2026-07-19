@@ -1,0 +1,144 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1716_to_1735_SECOND_LAYER_PROBE_LIBRARY_FREEZE
+  title: null
+  domain: Research windows / frozen second-layer probe library and return-seeking
+    probe completion
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1716_to_1735_Second_Layer_Probe_Library_Freeze.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1716_to_1735_Second_Layer_Probe_Library_Freeze.md`；owner
+    附件原编号 TRADING-1676～1695 与已完成 upper-state reset 区间冲突，本批重编号为 1716～1735；承接 primary-window
+    adoption closeout，后续 first-layer 重做前必须先冻结 second-layer probe registry v2，防止 action-value
+    labels 的目标函数漂移
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 dynamic second-layer probe registry v2、constraint tests、QQQ-equivalent
+      exposure review、primary-window actual-path rebacktest、same-risk static frontier
+      comparison、TQQQ contribution/stress review、action-value readiness matrix、first-layer
+      dependency update、owner pack、closeout/final matrix、report registry、artifact
+      catalog、system flow、task register 和 guardrail tests；真实 run 生成 8 类 probes、7 个
+      action-value approved、1 个 diagnostic-only、0 个 rejected，same-risk 7 个优于同风险 static
+      frontier，TQQQ stress blocked=0；所有 outputs 带 primary window metadata 和 `research_audit_metadata`；dynamic
+      promotion、paper-shadow、production、broker 固定 blocked/false/none
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1260
+    row_sha256: 65dd2d2e367b8d6db1300e63a191ed6db64d56c839f36b4c8b3b9edb6e1202d1
+    cell_count: 8
+    all_cells:
+    - TRADING-1716_to_1735_SECOND_LAYER_PROBE_LIBRARY_FREEZE
+    - Research windows / frozen second-layer probe library and return-seeking probe
+      completion
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1716_to_1735_Second_Layer_Probe_Library_Freeze.md`；owner
+      附件原编号 TRADING-1676～1695 与已完成 upper-state reset 区间冲突，本批重编号为 1716～1735；承接 primary-window
+      adoption closeout，后续 first-layer 重做前必须先冻结 second-layer probe registry v2，防止
+      action-value labels 的目标函数漂移
+    - 新增 dynamic second-layer probe registry v2、constraint tests、QQQ-equivalent exposure
+      review、primary-window actual-path rebacktest、same-risk static frontier comparison、TQQQ
+      contribution/stress review、action-value readiness matrix、first-layer dependency
+      update、owner pack、closeout/final matrix、report registry、artifact catalog、system
+      flow、task register 和 guardrail tests；真实 run 生成 8 类 probes、7 个 action-value approved、1
+      个 diagnostic-only、0 个 rejected，same-risk 7 个优于同风险 static frontier，TQQQ stress
+      blocked=0；所有 outputs 带 primary window metadata 和 `research_audit_metadata`；dynamic
+      promotion、paper-shadow、production、broker 固定 blocked/false/none
+    - '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 要求完成 second-layer dynamic probe library
+      freeze；前置 primary-window adoption 已完成且后续 first-layer 校准必须冻结 second-layer v2。2026-06-28:
+      实现完成并转入 VALIDATING；`aits research trends second-layer-probe-freeze` 真实生成 exposure、actual-path、same-risk、TQQQ
+      stress、readiness、owner pack 和 final matrix，final_status=`SECOND_LAYER_RETURN_SEEKING_PROBES_DIAGNOSTIC_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，安全边界仍为
+      blocked/false/none。'
+    raw_line: '|TRADING-1716_to_1735_SECOND_LAYER_PROBE_LIBRARY_FREEZE|Research windows
+      / frozen second-layer probe library and return-seeking probe completion|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1716_to_1735_Second_Layer_Probe_Library_Freeze.md`；owner
+      附件原编号 TRADING-1676～1695 与已完成 upper-state reset 区间冲突，本批重编号为 1716～1735；承接 primary-window
+      adoption closeout，后续 first-layer 重做前必须先冻结 second-layer probe registry v2，防止
+      action-value labels 的目标函数漂移|新增 dynamic second-layer probe registry v2、constraint
+      tests、QQQ-equivalent exposure review、primary-window actual-path rebacktest、same-risk
+      static frontier comparison、TQQQ contribution/stress review、action-value readiness
+      matrix、first-layer dependency update、owner pack、closeout/final matrix、report
+      registry、artifact catalog、system flow、task register 和 guardrail tests；真实 run
+      生成 8 类 probes、7 个 action-value approved、1 个 diagnostic-only、0 个 rejected，same-risk
+      7 个优于同风险 static frontier，TQQQ stress blocked=0；所有 outputs 带 primary window metadata
+      和 `research_audit_metadata`；dynamic promotion、paper-shadow、production、broker
+      固定 blocked/false/none|2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 要求完成 second-layer
+      dynamic probe library freeze；前置 primary-window adoption 已完成且后续 first-layer 校准必须冻结
+      second-layer v2。2026-06-28: 实现完成并转入 VALIDATING；`aits research trends second-layer-probe-freeze`
+      真实生成 exposure、actual-path、same-risk、TQQQ stress、readiness、owner pack 和 final
+      matrix，final_status=`SECOND_LAYER_RETURN_SEEKING_PROBES_DIAGNOSTIC_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，安全边界仍为
+      blocked/false/none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-65dd2d2e367b8d6db1300e63
+  task_id: TRADING-1716_to_1735_SECOND_LAYER_PROBE_LIBRARY_FREEZE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 要求完成 second-layer dynamic probe
+      library freeze；前置 primary-window adoption 已完成且后续 first-layer 校准必须冻结 second-layer
+      v2。2026-06-28: 实现完成并转入 VALIDATING；`aits research trends second-layer-probe-freeze`
+      真实生成 exposure、actual-path、same-risk、TQQQ stress、readiness、owner pack 和 final
+      matrix，final_status=`SECOND_LAYER_RETURN_SEEKING_PROBES_DIAGNOSTIC_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，安全边界仍为
+      blocked/false/none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:65dd2d2e367b8d6db1300e63a191ed6db64d56c839f36b4c8b3b9edb6e1202d1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1716_to_1735_SECOND_LAYER_PROBE_LIBRARY_FREEZE
+  - Research windows / frozen second-layer probe library and return-seeking probe
+    completion
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1716_to_1735_Second_Layer_Probe_Library_Freeze.md`；owner
+    附件原编号 TRADING-1676～1695 与已完成 upper-state reset 区间冲突，本批重编号为 1716～1735；承接 primary-window
+    adoption closeout，后续 first-layer 重做前必须先冻结 second-layer probe registry v2，防止 action-value
+    labels 的目标函数漂移
+  - 新增 dynamic second-layer probe registry v2、constraint tests、QQQ-equivalent exposure
+    review、primary-window actual-path rebacktest、same-risk static frontier comparison、TQQQ
+    contribution/stress review、action-value readiness matrix、first-layer dependency
+    update、owner pack、closeout/final matrix、report registry、artifact catalog、system
+    flow、task register 和 guardrail tests；真实 run 生成 8 类 probes、7 个 action-value approved、1
+    个 diagnostic-only、0 个 rejected，same-risk 7 个优于同风险 static frontier，TQQQ stress
+    blocked=0；所有 outputs 带 primary window metadata 和 `research_audit_metadata`；dynamic
+    promotion、paper-shadow、production、broker 固定 blocked/false/none
+  - '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 要求完成 second-layer dynamic probe library
+    freeze；前置 primary-window adoption 已完成且后续 first-layer 校准必须冻结 second-layer v2。2026-06-28:
+    实现完成并转入 VALIDATING；`aits research trends second-layer-probe-freeze` 真实生成 exposure、actual-path、same-risk、TQQQ
+    stress、readiness、owner pack 和 final matrix，final_status=`SECOND_LAYER_RETURN_SEEKING_PROBES_DIAGNOSTIC_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，安全边界仍为
+    blocked/false/none。'
+  docs_links:
+  - docs/requirements/TRADING-1716_to_1735_Second_Layer_Probe_Library_Freeze.md
+  terminal: false
+  raw_row_sha256: 65dd2d2e367b8d6db1300e63a191ed6db64d56c839f36b4c8b3b9edb6e1202d1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 31bee95db63768e545dd459324a130a047aa0708ccc5b32c44f3adc0d72d1095

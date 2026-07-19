@@ -1,0 +1,173 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2353_OBSERVE_ONLY_SCHEDULER_OWNER_REVIEW_DECISION_RECORD
+  title: null
+  domain: Research trends / high-intensity risk-cap observe-only scheduler owner decision
+    record
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2354 gap closure and readiness hardening plan
+  requirement_refs:
+  - docs/requirements/TRADING-2353_Observe_Only_Scheduler_Owner_Review_Decision_Record.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2353_Observe_Only_Scheduler_Owner_Review_Decision_Record.md`；承接
+    TRADING-2352 owner review decision record route。本任务只读取 prior validated TRADING-2347
+    disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349 manual review gate、TRADING-2350
+    manual-run dry-run、TRADING-2351 replay validation 和 TRADING-2352 audit package
+    artifacts；不执行 manual run、不启用 scheduler、不创建真实 cron / Windows Task / GitHub Actions
+    schedule、不 append event、不绑定 outcome、不读取 fresh market data、不进入 paper-shadow / production
+    / broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-owner-review-decision`；生成
+      owner review decision record、summary、source artifact review、explicit non-approval
+      list、decision reasons、2354 gap closure route、interpretation boundary、安全边界和 research
+      docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_OWNER_REVIEW_DECISION_RECORDED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347, TRADING-2348, TRADING-2349, TRADING-2350, TRADING-2351,
+      TRADING-2352`，source validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，evidence_chain_complete=true，owner_review_recorded=true，owner_decision_recorded=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，promotion_decision=`BLOCKED`，promotion_allowed=false，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，manual_run_executed=false，event_append_attempted=false，outcome_binding_attempted=false，paper_shadow_attempted=false，production_attempted=false，broker_action_attempted=false，readiness=`READY_FOR_2354_WITH_CAVEATS`，next
+      route=`TRADING-2354_Observe_Only_Scheduler_Gap_Closure_And_Readiness_Hardening_Plan`。验证通过
+      Ruff、compileall、focused parallel pytest 7 passed、真实 CLI run、docs freshness 541
+      docs PASS、documentation contract 1250 reports PASS、task-register consistency
+      run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T032447Z/test_runtime_summary.json`）和后续
+      diff gate。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 134
+    row_sha256: 6a789e2a139d2c926c2a197f1df684279e293dbb4dfc7d1c5a451e88923f25e3
+    cell_count: 8
+    all_cells:
+    - TRADING-2353_OBSERVE_ONLY_SCHEDULER_OWNER_REVIEW_DECISION_RECORD
+    - Research trends / high-intensity risk-cap observe-only scheduler owner decision
+      record
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2354 gap closure and readiness hardening plan
+    - 详见 `docs/requirements/TRADING-2353_Observe_Only_Scheduler_Owner_Review_Decision_Record.md`；承接
+      TRADING-2352 owner review decision record route。本任务只读取 prior validated TRADING-2347
+      disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349 manual review gate、TRADING-2350
+      manual-run dry-run、TRADING-2351 replay validation 和 TRADING-2352 audit package
+      artifacts；不执行 manual run、不启用 scheduler、不创建真实 cron / Windows Task / GitHub Actions
+      schedule、不 append event、不绑定 outcome、不读取 fresh market data、不进入 paper-shadow /
+      production / broker。
+    - 新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-owner-review-decision`；生成
+      owner review decision record、summary、source artifact review、explicit non-approval
+      list、decision reasons、2354 gap closure route、interpretation boundary、安全边界和 research
+      docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_OWNER_REVIEW_DECISION_RECORDED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347, TRADING-2348, TRADING-2349, TRADING-2350, TRADING-2351,
+      TRADING-2352`，source validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，evidence_chain_complete=true，owner_review_recorded=true，owner_decision_recorded=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，promotion_decision=`BLOCKED`，promotion_allowed=false，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，manual_run_executed=false，event_append_attempted=false，outcome_binding_attempted=false，paper_shadow_attempted=false，production_attempted=false，broker_action_attempted=false，readiness=`READY_FOR_2354_WITH_CAVEATS`，next
+      route=`TRADING-2354_Observe_Only_Scheduler_Gap_Closure_And_Readiness_Hardening_Plan`。验证通过
+      Ruff、compileall、focused parallel pytest 7 passed、真实 CLI run、docs freshness 541
+      docs PASS、documentation contract 1250 reports PASS、task-register consistency
+      run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T032447Z/test_runtime_summary.json`）和后续
+      diff gate。
+    - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是记录默认 owner decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，并继续阻断
+      promotion / scheduler enablement。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347 disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349
+      manual review gate、TRADING-2350 manual-run dry-run、TRADING-2351 replay validation
+      和 TRADING-2352 audit package artifacts，不读取 fresh market data、不 append event、不绑定
+      outcome、不生成 technical features、scoring、backtest 或 daily report。后续只能进入 TRADING-2354
+      gap closure / readiness hardening plan，不能直接启用 scheduler。'
+    raw_line: '|TRADING-2353_OBSERVE_ONLY_SCHEDULER_OWNER_REVIEW_DECISION_RECORD|Research
+      trends / high-intensity risk-cap observe-only scheduler owner decision record|P0|DONE|项目
+      owner 后续复核 TRADING-2354 gap closure and readiness hardening plan|详见 `docs/requirements/TRADING-2353_Observe_Only_Scheduler_Owner_Review_Decision_Record.md`；承接
+      TRADING-2352 owner review decision record route。本任务只读取 prior validated TRADING-2347
+      disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349 manual review gate、TRADING-2350
+      manual-run dry-run、TRADING-2351 replay validation 和 TRADING-2352 audit package
+      artifacts；不执行 manual run、不启用 scheduler、不创建真实 cron / Windows Task / GitHub Actions
+      schedule、不 append event、不绑定 outcome、不读取 fresh market data、不进入 paper-shadow /
+      production / broker。|新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-owner-review-decision`；生成
+      owner review decision record、summary、source artifact review、explicit non-approval
+      list、decision reasons、2354 gap closure route、interpretation boundary、安全边界和 research
+      docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_OWNER_REVIEW_DECISION_RECORDED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347, TRADING-2348, TRADING-2349, TRADING-2350, TRADING-2351,
+      TRADING-2352`，source validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，evidence_chain_complete=true，owner_review_recorded=true，owner_decision_recorded=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，promotion_decision=`BLOCKED`，promotion_allowed=false，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，manual_run_executed=false，event_append_attempted=false，outcome_binding_attempted=false，paper_shadow_attempted=false，production_attempted=false，broker_action_attempted=false，readiness=`READY_FOR_2354_WITH_CAVEATS`，next
+      route=`TRADING-2354_Observe_Only_Scheduler_Gap_Closure_And_Readiness_Hardening_Plan`。验证通过
+      Ruff、compileall、focused parallel pytest 7 passed、真实 CLI run、docs freshness 541
+      docs PASS、documentation contract 1250 reports PASS、task-register consistency
+      run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T032447Z/test_runtime_summary.json`）和后续
+      diff gate。|2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是记录默认 owner decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，并继续阻断
+      promotion / scheduler enablement。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347 disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349
+      manual review gate、TRADING-2350 manual-run dry-run、TRADING-2351 replay validation
+      和 TRADING-2352 audit package artifacts，不读取 fresh market data、不 append event、不绑定
+      outcome、不生成 technical features、scoring、backtest 或 daily report。后续只能进入 TRADING-2354
+      gap closure / readiness hardening plan，不能直接启用 scheduler。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6a789e2a139d2c926c2a197f
+  task_id: TRADING-2353_OBSERVE_ONLY_SCHEDULER_OWNER_REVIEW_DECISION_RECORD
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2354 gap closure and readiness hardening plan
+    notes: '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是记录默认 owner decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，并继续阻断
+      promotion / scheduler enablement。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347 disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349
+      manual review gate、TRADING-2350 manual-run dry-run、TRADING-2351 replay validation
+      和 TRADING-2352 audit package artifacts，不读取 fresh market data、不 append event、不绑定
+      outcome、不生成 technical features、scoring、backtest 或 daily report。后续只能进入 TRADING-2354
+      gap closure / readiness hardening plan，不能直接启用 scheduler。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6a789e2a139d2c926c2a197f1df684279e293dbb4dfc7d1c5a451e88923f25e3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2353_OBSERVE_ONLY_SCHEDULER_OWNER_REVIEW_DECISION_RECORD
+  - Research trends / high-intensity risk-cap observe-only scheduler owner decision
+    record
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2354 gap closure and readiness hardening plan
+  - 详见 `docs/requirements/TRADING-2353_Observe_Only_Scheduler_Owner_Review_Decision_Record.md`；承接
+    TRADING-2352 owner review decision record route。本任务只读取 prior validated TRADING-2347
+    disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349 manual review gate、TRADING-2350
+    manual-run dry-run、TRADING-2351 replay validation 和 TRADING-2352 audit package
+    artifacts；不执行 manual run、不启用 scheduler、不创建真实 cron / Windows Task / GitHub Actions
+    schedule、不 append event、不绑定 outcome、不读取 fresh market data、不进入 paper-shadow / production
+    / broker。
+  - 新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-owner-review-decision`；生成
+    owner review decision record、summary、source artifact review、explicit non-approval
+    list、decision reasons、2354 gap closure route、interpretation boundary、安全边界和 research
+    docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_OWNER_REVIEW_DECISION_RECORDED_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+    tasks=`TRADING-2347, TRADING-2348, TRADING-2349, TRADING-2350, TRADING-2351, TRADING-2352`，source
+    validation=`2026-06-29` / `PASS_WITH_WARNINGS` / error_count=0，evidence_chain_complete=true，owner_review_recorded=true，owner_decision_recorded=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，promotion_decision=`BLOCKED`，promotion_allowed=false，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，manual_run_executed=false，event_append_attempted=false，outcome_binding_attempted=false，paper_shadow_attempted=false，production_attempted=false，broker_action_attempted=false，readiness=`READY_FOR_2354_WITH_CAVEATS`，next
+    route=`TRADING-2354_Observe_Only_Scheduler_Gap_Closure_And_Readiness_Hardening_Plan`。验证通过
+    Ruff、compileall、focused parallel pytest 7 passed、真实 CLI run、docs freshness 541
+    docs PASS、documentation contract 1250 reports PASS、task-register consistency run/validate
+    PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T032447Z/test_runtime_summary.json`）和后续
+    diff gate。
+  - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是记录默认 owner decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，并继续阻断
+    promotion / scheduler enablement。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+    prior validated TRADING-2347 disabled wiring、TRADING-2348 smoke dry-run、TRADING-2349
+    manual review gate、TRADING-2350 manual-run dry-run、TRADING-2351 replay validation
+    和 TRADING-2352 audit package artifacts，不读取 fresh market data、不 append event、不绑定
+    outcome、不生成 technical features、scoring、backtest 或 daily report。后续只能进入 TRADING-2354
+    gap closure / readiness hardening plan，不能直接启用 scheduler。'
+  docs_links:
+  - docs/requirements/TRADING-2353_Observe_Only_Scheduler_Owner_Review_Decision_Record.md
+  terminal: true
+  raw_row_sha256: 6a789e2a139d2c926c2a197f1df684279e293dbb4dfc7d1c5a451e88923f25e3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 675245f52fdea5f1d09d19a81eefad30c6ba7a34d54c1198191af38fc2020c83

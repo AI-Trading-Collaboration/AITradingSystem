@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-014C
+  title: null
+  domain: 交易执行/Fill Model Calibration Proposal
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统设计 + 项目 owner
+  requirement_refs:
+  - docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；阻塞于
+    `TRADING-014A` 真实 `fill_seen=true` 样本和本地验证完成；本任务只做 proposal，不直接实现 fill 行为改造
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 基于真实 regular session fill evidence 提出可审计 calibration 方案，说明 `PaperBroker`
+      与 IBKR Paper 行为差异、数据需求、候选调整项、预期影响、风险、回归测试范围、报告语义变化和退出条件；任何阈值或启发式必须进入 reviewed
+      policy / manifest 或有注释的不可调常量；实际修改 `PaperBroker` fill 行为前需要单独任务和 owner 决策
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1492
+    row_sha256: 29a112373dde20c47b62b228846c1866589a51647766f74bca19686b3118d61a
+    cell_count: 8
+    all_cells:
+    - TRADING-014C
+    - 交易执行/Fill Model Calibration Proposal
+    - P0
+    - BLOCKED_EXTERNAL
+    - 系统设计 + 项目 owner
+    - 详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；阻塞于
+      `TRADING-014A` 真实 `fill_seen=true` 样本和本地验证完成；本任务只做 proposal，不直接实现 fill 行为改造
+    - 基于真实 regular session fill evidence 提出可审计 calibration 方案，说明 `PaperBroker` 与 IBKR
+      Paper 行为差异、数据需求、候选调整项、预期影响、风险、回归测试范围、报告语义变化和退出条件；任何阈值或启发式必须进入 reviewed policy
+      / manifest 或有注释的不可调常量；实际修改 `PaperBroker` fill 行为前需要单独任务和 owner 决策
+    - '2026-05-18: 从原未提交 `TRADING-016` 改为 `TRADING-014C`，原因：owner 本轮明确 `TRADING-016`
+      用于 Weight Candidate Evaluation；fill model proposal 仍保持 BLOCKED_EXTERNAL，当前缺真实
+      fill 样本，不应提前进入 fill model 改造。'
+    raw_line: '|TRADING-014C|交易执行/Fill Model Calibration Proposal|P0|BLOCKED_EXTERNAL|系统设计
+      + 项目 owner|详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；阻塞于
+      `TRADING-014A` 真实 `fill_seen=true` 样本和本地验证完成；本任务只做 proposal，不直接实现 fill 行为改造|基于真实
+      regular session fill evidence 提出可审计 calibration 方案，说明 `PaperBroker` 与 IBKR Paper
+      行为差异、数据需求、候选调整项、预期影响、风险、回归测试范围、报告语义变化和退出条件；任何阈值或启发式必须进入 reviewed policy / manifest
+      或有注释的不可调常量；实际修改 `PaperBroker` fill 行为前需要单独任务和 owner 决策|2026-05-18: 从原未提交 `TRADING-016`
+      改为 `TRADING-014C`，原因：owner 本轮明确 `TRADING-016` 用于 Weight Candidate Evaluation；fill
+      model proposal 仍保持 BLOCKED_EXTERNAL，当前缺真实 fill 样本，不应提前进入 fill model 改造。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-29a112373dde20c47b62b228
+  task_id: TRADING-014C
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P0
+    next_owner: 系统设计 + 项目 owner
+    notes: '2026-05-18: 从原未提交 `TRADING-016` 改为 `TRADING-014C`，原因：owner 本轮明确 `TRADING-016`
+      用于 Weight Candidate Evaluation；fill model proposal 仍保持 BLOCKED_EXTERNAL，当前缺真实
+      fill 样本，不应提前进入 fill model 改造。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:29a112373dde20c47b62b228846c1866589a51647766f74bca19686b3118d61a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-014C
+  - 交易执行/Fill Model Calibration Proposal
+  - P0
+  - BLOCKED_EXTERNAL
+  - 系统设计 + 项目 owner
+  - 详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；阻塞于
+    `TRADING-014A` 真实 `fill_seen=true` 样本和本地验证完成；本任务只做 proposal，不直接实现 fill 行为改造
+  - 基于真实 regular session fill evidence 提出可审计 calibration 方案，说明 `PaperBroker` 与 IBKR
+    Paper 行为差异、数据需求、候选调整项、预期影响、风险、回归测试范围、报告语义变化和退出条件；任何阈值或启发式必须进入 reviewed policy
+    / manifest 或有注释的不可调常量；实际修改 `PaperBroker` fill 行为前需要单独任务和 owner 决策
+  - '2026-05-18: 从原未提交 `TRADING-016` 改为 `TRADING-014C`，原因：owner 本轮明确 `TRADING-016`
+    用于 Weight Candidate Evaluation；fill model proposal 仍保持 BLOCKED_EXTERNAL，当前缺真实
+    fill 样本，不应提前进入 fill model 改造。'
+  docs_links:
+  - docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md
+  terminal: false
+  raw_row_sha256: 29a112373dde20c47b62b228846c1866589a51647766f74bca19686b3118d61a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b73f56ed92286b953b8eddc01dfec36ba143b1507dd4bafda7e919e44c3b8d25

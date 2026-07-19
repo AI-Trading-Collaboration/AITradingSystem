@@ -1,0 +1,139 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1616_to_1645_FIRST_LAYER_UP_STATE_LEARNING_REPAIR
+  title: null
+  domain: Research trends / first-layer up-state learning repair
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1616_to_1645_First_Layer_Up_State_Learning_Repair.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1616_to_1645_First_Layer_Up_State_Learning_Repair.md`；承接上一批
+    first-layer flat five-class walk-forward collapse，当前模型预测 constructive/risk_on
+    为 0，接回 frozen probes 后 actual-path 过度防守；本批只做 research-only repair，不恢复 promotion，不进入
+    paper-shadow/production/broker
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends up-state-repair`、failure diagnosis、probe return-seeking
+      metadata、upper-state label audit、hierarchical labels、PIT feature matrix v2、feature
+      PIT audit v2、risk-off detector v2、upper-state detector v1、risk-on severity scaler、threshold
+      policy/review、hierarchical composer、walk-forward v2、frozen probe actual-path
+      v2、collapse guardrail tests、owner pack、forward watch plan/final matrix/closeout、report
+      registry、artifact catalog 和 system flow；真实结果：predicted upper_state=185（constructive=159、risk_on=26），upper_state_precision=0.064865、upper_state_recall=0.105263，actual-path
+      improved_vs_flat_probe_count=0，final_status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`；所有
+      outputs 固定 research-only、actual-path-required、target-path diagnostic-only、promotion
+      `BLOCKED`、paper-shadow/production/broker false/none
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1266
+    row_sha256: 0dac9b8a90f9044ba02d073fc05d8b80808b257faa2cdee1412e3dcd25f287d9
+    cell_count: 8
+    all_cells:
+    - TRADING-1616_to_1645_FIRST_LAYER_UP_STATE_LEARNING_REPAIR
+    - Research trends / first-layer up-state learning repair
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1616_to_1645_First_Layer_Up_State_Learning_Repair.md`；承接上一批
+      first-layer flat five-class walk-forward collapse，当前模型预测 constructive/risk_on
+      为 0，接回 frozen probes 后 actual-path 过度防守；本批只做 research-only repair，不恢复 promotion，不进入
+      paper-shadow/production/broker
+    - 新增 `aits research trends up-state-repair`、failure diagnosis、probe return-seeking
+      metadata、upper-state label audit、hierarchical labels、PIT feature matrix v2、feature
+      PIT audit v2、risk-off detector v2、upper-state detector v1、risk-on severity scaler、threshold
+      policy/review、hierarchical composer、walk-forward v2、frozen probe actual-path
+      v2、collapse guardrail tests、owner pack、forward watch plan/final matrix/closeout、report
+      registry、artifact catalog 和 system flow；真实结果：predicted upper_state=185（constructive=159、risk_on=26），upper_state_precision=0.064865、upper_state_recall=0.105263，actual-path
+      improved_vs_flat_probe_count=0，final_status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`；所有
+      outputs 固定 research-only、actual-path-required、target-path diagnostic-only、promotion
+      `BLOCKED`、paper-shadow/production/broker false/none
+    - '2026-06-27: 新增并进入 IN_PROGRESS，原因：上一批确认 first-layer 失败核心是 up-state 学习塌缩，而非 frozen
+      probe 链路缺失；本批将五分类拆成 risk-off detector、upper-state detector 和 severity scaler。2026-06-27:
+      实现完成并转入 VALIDATING；真实 CLI status=`FIRST_LAYER_UP_STATE_LEARNING_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final
+      status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`。'
+    raw_line: '|TRADING-1616_to_1645_FIRST_LAYER_UP_STATE_LEARNING_REPAIR|Research
+      trends / first-layer up-state learning repair|P0|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-1616_to_1645_First_Layer_Up_State_Learning_Repair.md`；承接上一批
+      first-layer flat five-class walk-forward collapse，当前模型预测 constructive/risk_on
+      为 0，接回 frozen probes 后 actual-path 过度防守；本批只做 research-only repair，不恢复 promotion，不进入
+      paper-shadow/production/broker|新增 `aits research trends up-state-repair`、failure
+      diagnosis、probe return-seeking metadata、upper-state label audit、hierarchical
+      labels、PIT feature matrix v2、feature PIT audit v2、risk-off detector v2、upper-state
+      detector v1、risk-on severity scaler、threshold policy/review、hierarchical composer、walk-forward
+      v2、frozen probe actual-path v2、collapse guardrail tests、owner pack、forward watch
+      plan/final matrix/closeout、report registry、artifact catalog 和 system flow；真实结果：predicted
+      upper_state=185（constructive=159、risk_on=26），upper_state_precision=0.064865、upper_state_recall=0.105263，actual-path
+      improved_vs_flat_probe_count=0，final_status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`；所有
+      outputs 固定 research-only、actual-path-required、target-path diagnostic-only、promotion
+      `BLOCKED`、paper-shadow/production/broker false/none|2026-06-27: 新增并进入 IN_PROGRESS，原因：上一批确认
+      first-layer 失败核心是 up-state 学习塌缩，而非 frozen probe 链路缺失；本批将五分类拆成 risk-off detector、upper-state
+      detector 和 severity scaler。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI status=`FIRST_LAYER_UP_STATE_LEARNING_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final
+      status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0dac9b8a90f9044ba02d073f
+  task_id: TRADING-1616_to_1645_FIRST_LAYER_UP_STATE_LEARNING_REPAIR
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-27: 新增并进入 IN_PROGRESS，原因：上一批确认 first-layer 失败核心是 up-state 学习塌缩，而非
+      frozen probe 链路缺失；本批将五分类拆成 risk-off detector、upper-state detector 和 severity
+      scaler。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI status=`FIRST_LAYER_UP_STATE_LEARNING_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final
+      status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0dac9b8a90f9044ba02d073fc05d8b80808b257faa2cdee1412e3dcd25f287d9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1616_to_1645_FIRST_LAYER_UP_STATE_LEARNING_REPAIR
+  - Research trends / first-layer up-state learning repair
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1616_to_1645_First_Layer_Up_State_Learning_Repair.md`；承接上一批
+    first-layer flat five-class walk-forward collapse，当前模型预测 constructive/risk_on
+    为 0，接回 frozen probes 后 actual-path 过度防守；本批只做 research-only repair，不恢复 promotion，不进入
+    paper-shadow/production/broker
+  - 新增 `aits research trends up-state-repair`、failure diagnosis、probe return-seeking
+    metadata、upper-state label audit、hierarchical labels、PIT feature matrix v2、feature
+    PIT audit v2、risk-off detector v2、upper-state detector v1、risk-on severity scaler、threshold
+    policy/review、hierarchical composer、walk-forward v2、frozen probe actual-path v2、collapse
+    guardrail tests、owner pack、forward watch plan/final matrix/closeout、report registry、artifact
+    catalog 和 system flow；真实结果：predicted upper_state=185（constructive=159、risk_on=26），upper_state_precision=0.064865、upper_state_recall=0.105263，actual-path
+    improved_vs_flat_probe_count=0，final_status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`；所有
+    outputs 固定 research-only、actual-path-required、target-path diagnostic-only、promotion
+    `BLOCKED`、paper-shadow/production/broker false/none
+  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：上一批确认 first-layer 失败核心是 up-state 学习塌缩，而非 frozen
+    probe 链路缺失；本批将五分类拆成 risk-off detector、upper-state detector 和 severity scaler。2026-06-27:
+    实现完成并转入 VALIDATING；真实 CLI status=`FIRST_LAYER_UP_STATE_LEARNING_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final
+    status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`。'
+  docs_links:
+  - docs/requirements/TRADING-1616_to_1645_First_Layer_Up_State_Learning_Repair.md
+  terminal: false
+  raw_row_sha256: 0dac9b8a90f9044ba02d073fc05d8b80808b257faa2cdee1412e3dcd25f287d9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: dd94a420133f550461325094cef39653f20b78d9980b12a3d8fea500c605e52d

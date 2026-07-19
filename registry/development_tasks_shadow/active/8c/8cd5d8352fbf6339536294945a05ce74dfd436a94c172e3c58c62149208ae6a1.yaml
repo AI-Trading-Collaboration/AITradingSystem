@@ -1,0 +1,124 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2279_FIRST_LAYER_BOUNDARY_CANDIDATE_OWNER_REVIEW_PACKAGE
+  title: null
+  domain: Research trends / boundary candidate owner review package
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2279_First_Layer_Boundary_Candidate_Owner_Review_Package.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2279_First_Layer_Boundary_Candidate_Owner_Review_Package.md`；依赖
+    TRADING-2278 challenger matrix v2。本批整理 owner-review evidence，不训练模型、不打开 promotion/paper-shadow/production/broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 boundary candidate owner review、comparison matrix、tradeoff summary、offline
+      validation ready summary、blocked failure reason summary 和 recommended next experiment
+      plan；必须覆盖 actual-path utility、return/drawdown/Sharpe/Calmar/turnover/cost、false
+      risk、defensive probe、2022 stress、2023+ dependency、beta/TQQQ、benchmark consistency、recovery
+      delay、drawdown warning lead time；缺失 candidate-level 指标必须显式标明 unavailable；每个
+      boundary candidate 输出 owner_review_decision、primary_risk_flag、utility_tradeoff_acceptable
+      和 promotion_ready=false。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1239
+    row_sha256: 3651e0afa1aba5ac8b9f1f57d7626d9b08cc3bb901fdaddd087ce9c05870c21b
+    cell_count: 8
+    all_cells:
+    - TRADING-2279_FIRST_LAYER_BOUNDARY_CANDIDATE_OWNER_REVIEW_PACKAGE
+    - Research trends / boundary candidate owner review package
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2279_First_Layer_Boundary_Candidate_Owner_Review_Package.md`；依赖
+      TRADING-2278 challenger matrix v2。本批整理 owner-review evidence，不训练模型、不打开 promotion/paper-shadow/production/broker。
+    - 生成 boundary candidate owner review、comparison matrix、tradeoff summary、offline
+      validation ready summary、blocked failure reason summary 和 recommended next experiment
+      plan；必须覆盖 actual-path utility、return/drawdown/Sharpe/Calmar/turnover/cost、false
+      risk、defensive probe、2022 stress、2023+ dependency、beta/TQQQ、benchmark consistency、recovery
+      delay、drawdown warning lead time；缺失 candidate-level 指标必须显式标明 unavailable；每个
+      boundary candidate 输出 owner_review_decision、primary_risk_flag、utility_tradeoff_acceptable
+      和 promotion_ready=false。
+    - '2026-06-29: 新增并进入 IN_PROGRESS。2026-06-29: 实现完成并转入 VALIDATING；真实 run boundary_candidate_count=2、offline_validation_ready=4、blocked=4、misclassification=`no_obvious_misclassification_detected`；`wf_504d_baseline`
+      结论为 expand_neighborhood，`wf_378d_initial` 结论为 continue_research。2026-06-29:
+      验证通过 Ruff、compileall、focused parallel pytest 51 passed、docs freshness、diff check
+      和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T153924Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-2279_FIRST_LAYER_BOUNDARY_CANDIDATE_OWNER_REVIEW_PACKAGE|Research
+      trends / boundary candidate owner review package|P0|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-2279_First_Layer_Boundary_Candidate_Owner_Review_Package.md`；依赖
+      TRADING-2278 challenger matrix v2。本批整理 owner-review evidence，不训练模型、不打开 promotion/paper-shadow/production/broker。|生成
+      boundary candidate owner review、comparison matrix、tradeoff summary、offline validation
+      ready summary、blocked failure reason summary 和 recommended next experiment plan；必须覆盖
+      actual-path utility、return/drawdown/Sharpe/Calmar/turnover/cost、false risk、defensive
+      probe、2022 stress、2023+ dependency、beta/TQQQ、benchmark consistency、recovery
+      delay、drawdown warning lead time；缺失 candidate-level 指标必须显式标明 unavailable；每个
+      boundary candidate 输出 owner_review_decision、primary_risk_flag、utility_tradeoff_acceptable
+      和 promotion_ready=false。|2026-06-29: 新增并进入 IN_PROGRESS。2026-06-29: 实现完成并转入 VALIDATING；真实
+      run boundary_candidate_count=2、offline_validation_ready=4、blocked=4、misclassification=`no_obvious_misclassification_detected`；`wf_504d_baseline`
+      结论为 expand_neighborhood，`wf_378d_initial` 结论为 continue_research。2026-06-29:
+      验证通过 Ruff、compileall、focused parallel pytest 51 passed、docs freshness、diff check
+      和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T153924Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3651e0afa1aba5ac8b9f1f57
+  task_id: TRADING-2279_FIRST_LAYER_BOUNDARY_CANDIDATE_OWNER_REVIEW_PACKAGE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-29: 新增并进入 IN_PROGRESS。2026-06-29: 实现完成并转入 VALIDATING；真实 run boundary_candidate_count=2、offline_validation_ready=4、blocked=4、misclassification=`no_obvious_misclassification_detected`；`wf_504d_baseline`
+      结论为 expand_neighborhood，`wf_378d_initial` 结论为 continue_research。2026-06-29:
+      验证通过 Ruff、compileall、focused parallel pytest 51 passed、docs freshness、diff check
+      和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T153924Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3651e0afa1aba5ac8b9f1f57d7626d9b08cc3bb901fdaddd087ce9c05870c21b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2279_FIRST_LAYER_BOUNDARY_CANDIDATE_OWNER_REVIEW_PACKAGE
+  - Research trends / boundary candidate owner review package
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2279_First_Layer_Boundary_Candidate_Owner_Review_Package.md`；依赖
+    TRADING-2278 challenger matrix v2。本批整理 owner-review evidence，不训练模型、不打开 promotion/paper-shadow/production/broker。
+  - 生成 boundary candidate owner review、comparison matrix、tradeoff summary、offline
+    validation ready summary、blocked failure reason summary 和 recommended next experiment
+    plan；必须覆盖 actual-path utility、return/drawdown/Sharpe/Calmar/turnover/cost、false
+    risk、defensive probe、2022 stress、2023+ dependency、beta/TQQQ、benchmark consistency、recovery
+    delay、drawdown warning lead time；缺失 candidate-level 指标必须显式标明 unavailable；每个 boundary
+    candidate 输出 owner_review_decision、primary_risk_flag、utility_tradeoff_acceptable
+    和 promotion_ready=false。
+  - '2026-06-29: 新增并进入 IN_PROGRESS。2026-06-29: 实现完成并转入 VALIDATING；真实 run boundary_candidate_count=2、offline_validation_ready=4、blocked=4、misclassification=`no_obvious_misclassification_detected`；`wf_504d_baseline`
+    结论为 expand_neighborhood，`wf_378d_initial` 结论为 continue_research。2026-06-29: 验证通过
+    Ruff、compileall、focused parallel pytest 51 passed、docs freshness、diff check 和
+    contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T153924Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-2279_First_Layer_Boundary_Candidate_Owner_Review_Package.md
+  terminal: false
+  raw_row_sha256: 3651e0afa1aba5ac8b9f1f57d7626d9b08cc3bb901fdaddd087ce9c05870c21b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6ca0e73d09d40b1e7071a0e649f9eb7287ffc5dab0b6f26201f9a6607afc8717

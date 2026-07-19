@@ -1,0 +1,122 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-397_EXTENDED_SHADOW_PROTOCOL_RECOVERY_RERUN
+  title: null
+  domain: Research governance / extended shadow protocol recovery rerun
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 复核 extended-shadow blockers；后续 TRADING-398 rerun roadmap dashboard，extended/live/official/broker/order/production
+    仍 blocked
+  requirement_refs:
+  - docs/requirements/TRADING-397_Extended_Shadow_Protocol_Recovery_Rerun.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-397_Extended_Shadow_Protocol_Recovery_Rerun.md`；在
+    TRADING-396 observation clock 后重跑 extended shadow protocol，支持 `EXTENDED_SHADOW_BLOCKED
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: EXTENDED_SHADOW_NOT_READY
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 199
+    row_sha256: 9690f15c5c829f251ca3dc762f2542f7b08184c8f2142fdcef5f65a8a9253f02
+    cell_count: 11
+    all_cells:
+    - TRADING-397_EXTENDED_SHADOW_PROTOCOL_RECOVERY_RERUN
+    - Research governance / extended shadow protocol recovery rerun
+    - P1
+    - DONE
+    - 项目 owner 复核 extended-shadow blockers；后续 TRADING-398 rerun roadmap dashboard，extended/live/official/broker/order/production
+      仍 blocked
+    - 详细拆解见 `docs/requirements/TRADING-397_Extended_Shadow_Protocol_Recovery_Rerun.md`；在
+      TRADING-396 observation clock 后重跑 extended shadow protocol，支持 `EXTENDED_SHADOW_BLOCKED
+    - EXTENDED_SHADOW_NOT_READY
+    - EXTENDED_SHADOW_REVIEW_REQUIRED
+    - EXTENDED_SHADOW_ELIGIBLE`，并保持 live/official/broker/order/production forbidden
+    - Protocol 使用 observation clock；hard blockers 保持 `EXTENDED_SHADOW_BLOCKED`，observation-only
+      gap 为 `EXTENDED_SHADOW_NOT_READY`，warning-only evidence 为 `EXTENDED_SHADOW_REVIEW_REQUIRED`；benchmark
+      underperformance 是 hard blocker；真实 2026-06-17 rerun 仍 blocked；Reader Brief、README、artifact
+      catalog、operations runbook、system flow、focused tests、ruff、compileall、documentation
+      contract、report index、Reader Brief quality、data quality gate 和 git diff check
+      通过
+    - '2026-06-17: DONE；真实 rerun `outputs/reports/extended_shadow_protocol_2026-06-17.json/md`
+      输出 `EXTENDED_SHADOW_BLOCKED`、candidate=`median_plus_regime_mismatch_filter`、observed_days=`0`、minimum_days=`20`、checks=11、passed=3、blocked=6、warnings=2、safety=`SAFETY_PASS_WITH_WARNINGS`、readiness=`MANUAL_REVIEW_REQUIRED`、owner_decision=`AUDIT_LOG_PASS`、lineage=`PASS`。Blockers:
+      promotion board `HOLD_FOR_MORE_DATA`、safety audit `SAFETY_PASS_WITH_WARNINGS`、cost
+      sensitivity `NOT_MEANINGFUL_UNDER_COSTS`、benchmark comparison `CANDIDATE_UNDERPERFORMS_BASELINES`、observation
+      clock `OBSERVATION_PERIOD_UNMET`、minimum observation period `0/20`。Warnings:
+      weekly review / readiness `MANUAL_REVIEW_REQUIRED`。Validation `outputs/reports/extended_shadow_protocol_validation_2026-06-17.json/md`
+      输出 `PASS_WITH_WARNINGS`、checks=7、failed=0、source_blockers=6、source_warnings=2。该
+      protocol 不运行上游、不补造 observation/owner/cost/benchmark/safety evidence、不批准 extended
+      shadow、live trading、official target、broker/order 或 production mutation。'
+    raw_line: '|TRADING-397_EXTENDED_SHADOW_PROTOCOL_RECOVERY_RERUN|Research governance
+      / extended shadow protocol recovery rerun|P1|DONE|项目 owner 复核 extended-shadow
+      blockers；后续 TRADING-398 rerun roadmap dashboard，extended/live/official/broker/order/production
+      仍 blocked|详细拆解见 `docs/requirements/TRADING-397_Extended_Shadow_Protocol_Recovery_Rerun.md`；在
+      TRADING-396 observation clock 后重跑 extended shadow protocol，支持 `EXTENDED_SHADOW_BLOCKED|EXTENDED_SHADOW_NOT_READY|EXTENDED_SHADOW_REVIEW_REQUIRED|EXTENDED_SHADOW_ELIGIBLE`，并保持
+      live/official/broker/order/production forbidden|Protocol 使用 observation clock；hard
+      blockers 保持 `EXTENDED_SHADOW_BLOCKED`，observation-only gap 为 `EXTENDED_SHADOW_NOT_READY`，warning-only
+      evidence 为 `EXTENDED_SHADOW_REVIEW_REQUIRED`；benchmark underperformance 是 hard
+      blocker；真实 2026-06-17 rerun 仍 blocked；Reader Brief、README、artifact catalog、operations
+      runbook、system flow、focused tests、ruff、compileall、documentation contract、report
+      index、Reader Brief quality、data quality gate 和 git diff check 通过|2026-06-17:
+      DONE；真实 rerun `outputs/reports/extended_shadow_protocol_2026-06-17.json/md`
+      输出 `EXTENDED_SHADOW_BLOCKED`、candidate=`median_plus_regime_mismatch_filter`、observed_days=`0`、minimum_days=`20`、checks=11、passed=3、blocked=6、warnings=2、safety=`SAFETY_PASS_WITH_WARNINGS`、readiness=`MANUAL_REVIEW_REQUIRED`、owner_decision=`AUDIT_LOG_PASS`、lineage=`PASS`。Blockers:
+      promotion board `HOLD_FOR_MORE_DATA`、safety audit `SAFETY_PASS_WITH_WARNINGS`、cost
+      sensitivity `NOT_MEANINGFUL_UNDER_COSTS`、benchmark comparison `CANDIDATE_UNDERPERFORMS_BASELINES`、observation
+      clock `OBSERVATION_PERIOD_UNMET`、minimum observation period `0/20`。Warnings:
+      weekly review / readiness `MANUAL_REVIEW_REQUIRED`。Validation `outputs/reports/extended_shadow_protocol_validation_2026-06-17.json/md`
+      输出 `PASS_WITH_WARNINGS`、checks=7、failed=0、source_blockers=6、source_warnings=2。该
+      protocol 不运行上游、不补造 observation/owner/cost/benchmark/safety evidence、不批准 extended
+      shadow、live trading、official target、broker/order 或 production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-9690f15c5c829f251ca3dc76
+  task_id: TRADING-397_EXTENDED_SHADOW_PROTOCOL_RECOVERY_RERUN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 复核 extended-shadow blockers；后续 TRADING-398 rerun roadmap
+      dashboard，extended/live/official/broker/order/production 仍 blocked
+    notes: EXTENDED_SHADOW_REVIEW_REQUIRED
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:9690f15c5c829f251ca3dc762f2542f7b08184c8f2142fdcef5f65a8a9253f02
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-397_EXTENDED_SHADOW_PROTOCOL_RECOVERY_RERUN
+  - Research governance / extended shadow protocol recovery rerun
+  - P1
+  - DONE
+  - 项目 owner 复核 extended-shadow blockers；后续 TRADING-398 rerun roadmap dashboard，extended/live/official/broker/order/production
+    仍 blocked
+  - 详细拆解见 `docs/requirements/TRADING-397_Extended_Shadow_Protocol_Recovery_Rerun.md`；在
+    TRADING-396 observation clock 后重跑 extended shadow protocol，支持 `EXTENDED_SHADOW_BLOCKED
+  - EXTENDED_SHADOW_NOT_READY
+  - EXTENDED_SHADOW_REVIEW_REQUIRED
+  docs_links:
+  - docs/requirements/TRADING-397_Extended_Shadow_Protocol_Recovery_Rerun.md
+  terminal: true
+  raw_row_sha256: 9690f15c5c829f251ca3dc762f2542f7b08184c8f2142fdcef5f65a8a9253f02
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f59a46f1700d9ffa9041844febeace3de73d25ffa840ad681ba9c7bec18254f0

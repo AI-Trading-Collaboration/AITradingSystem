@@ -1,0 +1,125 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: UI-002
+  title: null
+  domain: 仪表盘/每日决策展示
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/decision_dashboard_v2_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/decision_dashboard_v2_2026-05-10.md`；dashboard
+    v2 已接入自动 daily-run 并在最新生产 run 中以只读展示通过；后续 dashboard/Reader Brief 职责边界变化应新建报告任务
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Dashboard v2 仍只读取已生成 artifact，不重新计算结论；HTML 首页能展示今日动作、仓位区间、置信度、Data Gate、最大限制、变化摘要、Top
+      evidence/invalidators/next checks；可选读取既有 `market_feedback_optimization_YYYY-MM-DD.md`、`feedback_loop_review_YYYY-MM-DD.md`
+      和 `investment_weekly_review_YYYY-MM-DD.md`，缺失时必须标记 `NOT_CONNECTED` / `LIMITED`，不得补造复盘结论；页面、JSON
+      和文档均声明 `production_effect=none`、不替代 Markdown 日报和 trace bundle 审计源；休市日 skipped
+      dashboard 不得从 legacy 路径带入 canonical run bundle
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 352
+    row_sha256: 6e88ba8d259e7dc66dcf1877993cc383810c6ee446f9c9b2a9ef7a02468df35d
+    cell_count: 8
+    all_cells:
+    - UI-002
+    - 仪表盘/每日决策展示
+    - P2
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/decision_dashboard_v2_2026-05-10.md`；dashboard v2 已接入自动
+      daily-run 并在最新生产 run 中以只读展示通过；后续 dashboard/Reader Brief 职责边界变化应新建报告任务
+    - Dashboard v2 仍只读取已生成 artifact，不重新计算结论；HTML 首页能展示今日动作、仓位区间、置信度、Data Gate、最大限制、变化摘要、Top
+      evidence/invalidators/next checks；可选读取既有 `market_feedback_optimization_YYYY-MM-DD.md`、`feedback_loop_review_YYYY-MM-DD.md`
+      和 `investment_weekly_review_YYYY-MM-DD.md`，缺失时必须标记 `NOT_CONNECTED` / `LIMITED`，不得补造复盘结论；页面、JSON
+      和文档均声明 `production_effect=none`、不替代 Markdown 日报和 trace bundle 审计源；休市日 skipped
+      dashboard 不得从 legacy 路径带入 canonical run bundle
+    - '2026-05-10 至 2026-05-14: 已完成静态 dashboard、自动 daily-run 接入、历史趋势、run bundle mirror
+      guard 和旧反馈复盘读取。2026-05-29: OPS-059 将旧 feedback/investment review daily-run 前置链移出每日执行，改由
+      `config/scheduled_tasks.yaml` 登记为 weekly/biweekly cadence；dashboard 保持只读可选消费，Reader
+      Brief 上游链成为新的每日报告链。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of
+      2026-06-05 --run-id codex_20260605_20260607103901` 中 dashboard step 在 score
+      后、Reader Brief 链前 PASS，canonical run bundle 收录 `evidence_dashboard_2026-06-05.html/json`，dashboard
+      JSON 声明 `production_effect=none`，Reader Brief quality `failed=0`。'
+    raw_line: '|UI-002|仪表盘/每日决策展示|P2|DONE|系统验证|详细拆解见 `docs/requirements/decision_dashboard_v2_2026-05-10.md`；dashboard
+      v2 已接入自动 daily-run 并在最新生产 run 中以只读展示通过；后续 dashboard/Reader Brief 职责边界变化应新建报告任务|Dashboard
+      v2 仍只读取已生成 artifact，不重新计算结论；HTML 首页能展示今日动作、仓位区间、置信度、Data Gate、最大限制、变化摘要、Top
+      evidence/invalidators/next checks；可选读取既有 `market_feedback_optimization_YYYY-MM-DD.md`、`feedback_loop_review_YYYY-MM-DD.md`
+      和 `investment_weekly_review_YYYY-MM-DD.md`，缺失时必须标记 `NOT_CONNECTED` / `LIMITED`，不得补造复盘结论；页面、JSON
+      和文档均声明 `production_effect=none`、不替代 Markdown 日报和 trace bundle 审计源；休市日 skipped
+      dashboard 不得从 legacy 路径带入 canonical run bundle|2026-05-10 至 2026-05-14: 已完成静态
+      dashboard、自动 daily-run 接入、历史趋势、run bundle mirror guard 和旧反馈复盘读取。2026-05-29:
+      OPS-059 将旧 feedback/investment review daily-run 前置链移出每日执行，改由 `config/scheduled_tasks.yaml`
+      登记为 weekly/biweekly cadence；dashboard 保持只读可选消费，Reader Brief 上游链成为新的每日报告链。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      中 dashboard step 在 score 后、Reader Brief 链前 PASS，canonical run bundle 收录 `evidence_dashboard_2026-06-05.html/json`，dashboard
+      JSON 声明 `production_effect=none`，Reader Brief quality `failed=0`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6e88ba8d259e7dc66dcf1877
+  task_id: UI-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: '2026-05-10 至 2026-05-14: 已完成静态 dashboard、自动 daily-run 接入、历史趋势、run bundle
+      mirror guard 和旧反馈复盘读取。2026-05-29: OPS-059 将旧 feedback/investment review daily-run
+      前置链移出每日执行，改由 `config/scheduled_tasks.yaml` 登记为 weekly/biweekly cadence；dashboard
+      保持只读可选消费，Reader Brief 上游链成为新的每日报告链。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实
+      `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901` 中 dashboard
+      step 在 score 后、Reader Brief 链前 PASS，canonical run bundle 收录 `evidence_dashboard_2026-06-05.html/json`，dashboard
+      JSON 声明 `production_effect=none`，Reader Brief quality `failed=0`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6e88ba8d259e7dc66dcf1877993cc383810c6ee446f9c9b2a9ef7a02468df35d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - UI-002
+  - 仪表盘/每日决策展示
+  - P2
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/decision_dashboard_v2_2026-05-10.md`；dashboard v2 已接入自动
+    daily-run 并在最新生产 run 中以只读展示通过；后续 dashboard/Reader Brief 职责边界变化应新建报告任务
+  - Dashboard v2 仍只读取已生成 artifact，不重新计算结论；HTML 首页能展示今日动作、仓位区间、置信度、Data Gate、最大限制、变化摘要、Top
+    evidence/invalidators/next checks；可选读取既有 `market_feedback_optimization_YYYY-MM-DD.md`、`feedback_loop_review_YYYY-MM-DD.md`
+    和 `investment_weekly_review_YYYY-MM-DD.md`，缺失时必须标记 `NOT_CONNECTED` / `LIMITED`，不得补造复盘结论；页面、JSON
+    和文档均声明 `production_effect=none`、不替代 Markdown 日报和 trace bundle 审计源；休市日 skipped
+    dashboard 不得从 legacy 路径带入 canonical run bundle
+  - '2026-05-10 至 2026-05-14: 已完成静态 dashboard、自动 daily-run 接入、历史趋势、run bundle mirror
+    guard 和旧反馈复盘读取。2026-05-29: OPS-059 将旧 feedback/investment review daily-run 前置链移出每日执行，改由
+    `config/scheduled_tasks.yaml` 登记为 weekly/biweekly cadence；dashboard 保持只读可选消费，Reader
+    Brief 上游链成为新的每日报告链。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of
+    2026-06-05 --run-id codex_20260605_20260607103901` 中 dashboard step 在 score 后、Reader
+    Brief 链前 PASS，canonical run bundle 收录 `evidence_dashboard_2026-06-05.html/json`，dashboard
+    JSON 声明 `production_effect=none`，Reader Brief quality `failed=0`。'
+  docs_links:
+  - docs/requirements/decision_dashboard_v2_2026-05-10.md
+  terminal: true
+  raw_row_sha256: 6e88ba8d259e7dc66dcf1877993cc383810c6ee446f9c9b2a9ef7a02468df35d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ead84c25b8e81f77d2d66b3d98a2c089eee0f659c7aa5aa20e1305433e070f1d

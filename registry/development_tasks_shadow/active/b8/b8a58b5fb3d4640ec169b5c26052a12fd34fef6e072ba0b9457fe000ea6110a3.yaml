@@ -1,0 +1,92 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-729_REGIME_EVENT_CLUSTER_LABEL_STORE
+  title: null
+  domain: Research data / regime, event, and cluster label store
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-726_to_733 总需求文档；建立 regime/event/cluster
+    label definitions、label build 和 as-of audit baseline
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits research labels build-regime-labels'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1368
+    row_sha256: 7ea682bbbea5c6564b84fdddc7f51b66af4c1309880297aef4401ce8b7d738f0
+    cell_count: 11
+    all_cells:
+    - TRADING-729_REGIME_EVENT_CLUSTER_LABEL_STORE
+    - Research data / regime, event, and cluster label store
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 TRADING-726_to_733 总需求文档；建立 regime/event/cluster label definitions、label
+      build 和 as-of audit baseline
+    - '`aits research labels build-regime-labels'
+    - build-event-labels
+    - build-cluster-labels
+    - audit` 可运行；label coverage rates 可见；labels_as_of_valid=true；label_version_recorded=true；future_event_leakage_count=0
+    - '2026-06-21: validation-only baseline 已实现并进入 VALIDATING；新增 regime/event/cluster
+      label config、schema、build/audit CLI 和测试；label store 只用于分层评估和解释，不作为单独交易信号或 promotion
+      evidence。'
+    raw_line: '|TRADING-729_REGIME_EVENT_CLUSTER_LABEL_STORE|Research data / regime,
+      event, and cluster label store|P1|VALIDATING|系统实现 + 项目 owner 后续复核|详见 TRADING-726_to_733
+      总需求文档；建立 regime/event/cluster label definitions、label build 和 as-of audit baseline|`aits
+      research labels build-regime-labels|build-event-labels|build-cluster-labels|audit`
+      可运行；label coverage rates 可见；labels_as_of_valid=true；label_version_recorded=true；future_event_leakage_count=0|2026-06-21:
+      validation-only baseline 已实现并进入 VALIDATING；新增 regime/event/cluster label config、schema、build/audit
+      CLI 和测试；label store 只用于分层评估和解释，不作为单独交易信号或 promotion evidence。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7ea682bbbea5c6564b84fddd
+  task_id: TRADING-729_REGIME_EVENT_CLUSTER_LABEL_STORE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: build-event-labels
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7ea682bbbea5c6564b84fdddc7f51b66af4c1309880297aef4401ce8b7d738f0
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-729_REGIME_EVENT_CLUSTER_LABEL_STORE
+  - Research data / regime, event, and cluster label store
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-726_to_733 总需求文档；建立 regime/event/cluster label definitions、label build
+    和 as-of audit baseline
+  - '`aits research labels build-regime-labels'
+  - build-event-labels
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 7ea682bbbea5c6564b84fdddc7f51b66af4c1309880297aef4401ce8b7d738f0
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5ebea79d1e7b34acf73a552e3b4acf94418d43de06d3e45c28f8c61cdf8eea82

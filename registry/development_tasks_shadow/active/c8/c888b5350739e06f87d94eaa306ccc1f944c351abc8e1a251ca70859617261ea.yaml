@@ -1,0 +1,100 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL
+  title: null
+  domain: Architecture / governed cutover and legacy removal
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: architecture coordinator + 各surface owner + project owner；依赖G7 handoff
+  requirement_refs:
+  - docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md`。只有G7
+    ledger、2 daily/2 weekly/1 monthly parity、关键CLI/schema/artifact/Reader Brief parity、DQ/PIT/cost/production-effect/owner
+    signoff和正式validation tiers全部闭合后才能转READY；`BLOCKED_WITH_OWNER`不能据此删除。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 逐surface满足12项removal gates并按`DEPRECATED -> FROZEN -> REMOVED`推进；0永久dual
+      track/TODO；历史artifact/checksum/schema/commit/runner refs保留；clean worktree clean-clone、successor
+      release candidate、architecture/contract/report/integration/reproducibility/full
+      parallel全部PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1175
+    row_sha256: 23ff88d25728c91d07c4cb6707072bdfc4a5d478cc5996ea1a20e70be7913775
+    cell_count: 8
+    all_cells:
+    - ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL
+    - Architecture / governed cutover and legacy removal
+    - P0
+    - PROPOSED
+    - architecture coordinator + 各surface owner + project owner；依赖G7 handoff
+    - 详见 `docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md`。只有G7 ledger、2
+      daily/2 weekly/1 monthly parity、关键CLI/schema/artifact/Reader Brief parity、DQ/PIT/cost/production-effect/owner
+      signoff和正式validation tiers全部闭合后才能转READY；`BLOCKED_WITH_OWNER`不能据此删除。
+    - 逐surface满足12项removal gates并按`DEPRECATED -> FROZEN -> REMOVED`推进；0永久dual track/TODO；历史artifact/checksum/schema/commit/runner
+      refs保留；clean worktree clean-clone、successor release candidate、architecture/contract/report/integration/reproducibility/full
+      parallel全部PASS。
+    - '2026-07-12: owner确认先登记H执行边界；当前ARCH-004仍在G且`next_phase_unblocked=false`，未授权cutover。'
+    raw_line: '|ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL|Architecture / governed cutover
+      and legacy removal|P0|PROPOSED|architecture coordinator + 各surface owner + project
+      owner；依赖G7 handoff|详见 `docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md`。只有G7
+      ledger、2 daily/2 weekly/1 monthly parity、关键CLI/schema/artifact/Reader Brief
+      parity、DQ/PIT/cost/production-effect/owner signoff和正式validation tiers全部闭合后才能转READY；`BLOCKED_WITH_OWNER`不能据此删除。|逐surface满足12项removal
+      gates并按`DEPRECATED -> FROZEN -> REMOVED`推进；0永久dual track/TODO；历史artifact/checksum/schema/commit/runner
+      refs保留；clean worktree clean-clone、successor release candidate、architecture/contract/report/integration/reproducibility/full
+      parallel全部PASS。|2026-07-12: owner确认先登记H执行边界；当前ARCH-004仍在G且`next_phase_unblocked=false`，未授权cutover。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-23ff88d25728c91d07c4cb67
+  task_id: ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P0
+    next_owner: architecture coordinator + 各surface owner + project owner；依赖G7 handoff
+    notes: '2026-07-12: owner确认先登记H执行边界；当前ARCH-004仍在G且`next_phase_unblocked=false`，未授权cutover。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:23ff88d25728c91d07c4cb6707072bdfc4a5d478cc5996ea1a20e70be7913775
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL
+  - Architecture / governed cutover and legacy removal
+  - P0
+  - PROPOSED
+  - architecture coordinator + 各surface owner + project owner；依赖G7 handoff
+  - 详见 `docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md`。只有G7 ledger、2 daily/2
+    weekly/1 monthly parity、关键CLI/schema/artifact/Reader Brief parity、DQ/PIT/cost/production-effect/owner
+    signoff和正式validation tiers全部闭合后才能转READY；`BLOCKED_WITH_OWNER`不能据此删除。
+  - 逐surface满足12项removal gates并按`DEPRECATED -> FROZEN -> REMOVED`推进；0永久dual track/TODO；历史artifact/checksum/schema/commit/runner
+    refs保留；clean worktree clean-clone、successor release candidate、architecture/contract/report/integration/reproducibility/full
+    parallel全部PASS。
+  - '2026-07-12: owner确认先登记H执行边界；当前ARCH-004仍在G且`next_phase_unblocked=false`，未授权cutover。'
+  docs_links:
+  - docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md
+  terminal: false
+  raw_row_sha256: 23ff88d25728c91d07c4cb6707072bdfc4a5d478cc5996ea1a20e70be7913775
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7eeb55954e1fa057dd12243bb234af222c6237c584caae9c25e72e50552b50fd

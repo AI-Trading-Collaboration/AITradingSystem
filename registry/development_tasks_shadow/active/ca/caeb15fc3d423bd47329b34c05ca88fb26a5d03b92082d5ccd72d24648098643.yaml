@@ -1,0 +1,127 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-189_to_198_DEFENSIVE_HYPOTHESIS_FORWARD_EVIDENCE
+  title: null
+  domain: ETF portfolio research/Defensive Hypothesis Review and Forward Evidence
+    Automation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-189_to_198_Defensive_Hypothesis_Review_and_Forward_Evidence_Automation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-189_to_198_Defensive_Hypothesis_Review_and_Forward_Evidence_Automation.md`；已实现
+    research-only defensive hypothesis review 与 forward/PIT pressure evidence 自动收集闭环；当前
+    pressure sample ledger 仍为 `forward_samples=0`、`simulation_samples=116`，因此 `defensive_limited_adjustment`
+    继续固定为 `RESEARCH_ONLY`，simulation-only evidence 不得支持 rule approval
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`defensive-hypothesis-deep-dive`、`defensive-label-review`、`defensive-failure-study`、`defensive-research-note`、`defensive-owner-pack`、`forward-pressure-capture`、`pressure-trigger`、`pressure-capture`、`pressure-sample-ledger`、`weekly-defensive-evidence`
+      及对应 validate CLI 可运行；新增 config 和 artifacts 写入 dynamic_v3_rescue runtime roots；Reader
+      Brief、README、operations runbook、system flow、report registry、artifact catalog、requirements、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact
+      validation 完成；保持 `auto_apply=false`、`policy_change_allowed=false`、`broker_action_allowed=false`、`production_effect=none`'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1452
+    row_sha256: 4151f78fa81640415141e69b0c9d4681ddfa12610ed4254095fe2018151c230c
+    cell_count: 8
+    all_cells:
+    - TRADING-189_to_198_DEFENSIVE_HYPOTHESIS_FORWARD_EVIDENCE
+    - ETF portfolio research/Defensive Hypothesis Review and Forward Evidence Automation
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-189_to_198_Defensive_Hypothesis_Review_and_Forward_Evidence_Automation.md`；已实现
+      research-only defensive hypothesis review 与 forward/PIT pressure evidence 自动收集闭环；当前
+      pressure sample ledger 仍为 `forward_samples=0`、`simulation_samples=116`，因此 `defensive_limited_adjustment`
+      继续固定为 `RESEARCH_ONLY`，simulation-only evidence 不得支持 rule approval
+    - '`defensive-hypothesis-deep-dive`、`defensive-label-review`、`defensive-failure-study`、`defensive-research-note`、`defensive-owner-pack`、`forward-pressure-capture`、`pressure-trigger`、`pressure-capture`、`pressure-sample-ledger`、`weekly-defensive-evidence`
+      及对应 validate CLI 可运行；新增 config 和 artifacts 写入 dynamic_v3_rescue runtime roots；Reader
+      Brief、README、operations runbook、system flow、report registry、artifact catalog、requirements、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact
+      validation 完成；保持 `auto_apply=false`、`policy_change_allowed=false`、`broker_action_allowed=false`、`production_effect=none`'
+    - '2026-06-11: 实现并进入 VALIDATING；真实链路生成 deep dive `7dde2defa8472fdd`、label review
+      `839b841071b71eee`、failure study `603f3464fbb75826`、research note `098efbf1be65506c`、owner
+      pack `386d63af79363f22`、capture plan `0e666a62ab48b6c3`、trigger `10f11e44b3a6ac84`、capture
+      `77ce7f2ea4d9cb35`、ledger `c252b4af86d5ab46`、weekly evidence `752808d0ef02b3ba`；对应
+      validate CLI 均 PASS。'
+    raw_line: '|TRADING-189_to_198_DEFENSIVE_HYPOTHESIS_FORWARD_EVIDENCE|ETF portfolio
+      research/Defensive Hypothesis Review and Forward Evidence Automation|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-189_to_198_Defensive_Hypothesis_Review_and_Forward_Evidence_Automation.md`；已实现
+      research-only defensive hypothesis review 与 forward/PIT pressure evidence 自动收集闭环；当前
+      pressure sample ledger 仍为 `forward_samples=0`、`simulation_samples=116`，因此 `defensive_limited_adjustment`
+      继续固定为 `RESEARCH_ONLY`，simulation-only evidence 不得支持 rule approval|`defensive-hypothesis-deep-dive`、`defensive-label-review`、`defensive-failure-study`、`defensive-research-note`、`defensive-owner-pack`、`forward-pressure-capture`、`pressure-trigger`、`pressure-capture`、`pressure-sample-ledger`、`weekly-defensive-evidence`
+      及对应 validate CLI 可运行；新增 config 和 artifacts 写入 dynamic_v3_rescue runtime roots；Reader
+      Brief、README、operations runbook、system flow、report registry、artifact catalog、requirements、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact
+      validation 完成；保持 `auto_apply=false`、`policy_change_allowed=false`、`broker_action_allowed=false`、`production_effect=none`|2026-06-11:
+      实现并进入 VALIDATING；真实链路生成 deep dive `7dde2defa8472fdd`、label review `839b841071b71eee`、failure
+      study `603f3464fbb75826`、research note `098efbf1be65506c`、owner pack `386d63af79363f22`、capture
+      plan `0e666a62ab48b6c3`、trigger `10f11e44b3a6ac84`、capture `77ce7f2ea4d9cb35`、ledger
+      `c252b4af86d5ab46`、weekly evidence `752808d0ef02b3ba`；对应 validate CLI 均 PASS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4151f78fa81640415141e69b
+  task_id: TRADING-189_to_198_DEFENSIVE_HYPOTHESIS_FORWARD_EVIDENCE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-11: 实现并进入 VALIDATING；真实链路生成 deep dive `7dde2defa8472fdd`、label
+      review `839b841071b71eee`、failure study `603f3464fbb75826`、research note `098efbf1be65506c`、owner
+      pack `386d63af79363f22`、capture plan `0e666a62ab48b6c3`、trigger `10f11e44b3a6ac84`、capture
+      `77ce7f2ea4d9cb35`、ledger `c252b4af86d5ab46`、weekly evidence `752808d0ef02b3ba`；对应
+      validate CLI 均 PASS。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4151f78fa81640415141e69b0c9d4681ddfa12610ed4254095fe2018151c230c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-189_to_198_DEFENSIVE_HYPOTHESIS_FORWARD_EVIDENCE
+  - ETF portfolio research/Defensive Hypothesis Review and Forward Evidence Automation
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-189_to_198_Defensive_Hypothesis_Review_and_Forward_Evidence_Automation.md`；已实现
+    research-only defensive hypothesis review 与 forward/PIT pressure evidence 自动收集闭环；当前
+    pressure sample ledger 仍为 `forward_samples=0`、`simulation_samples=116`，因此 `defensive_limited_adjustment`
+    继续固定为 `RESEARCH_ONLY`，simulation-only evidence 不得支持 rule approval
+  - '`defensive-hypothesis-deep-dive`、`defensive-label-review`、`defensive-failure-study`、`defensive-research-note`、`defensive-owner-pack`、`forward-pressure-capture`、`pressure-trigger`、`pressure-capture`、`pressure-sample-ledger`、`weekly-defensive-evidence`
+    及对应 validate CLI 可运行；新增 config 和 artifacts 写入 dynamic_v3_rescue runtime roots；Reader
+    Brief、README、operations runbook、system flow、report registry、artifact catalog、requirements、focused
+    tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact validation
+    完成；保持 `auto_apply=false`、`policy_change_allowed=false`、`broker_action_allowed=false`、`production_effect=none`'
+  - '2026-06-11: 实现并进入 VALIDATING；真实链路生成 deep dive `7dde2defa8472fdd`、label review
+    `839b841071b71eee`、failure study `603f3464fbb75826`、research note `098efbf1be65506c`、owner
+    pack `386d63af79363f22`、capture plan `0e666a62ab48b6c3`、trigger `10f11e44b3a6ac84`、capture
+    `77ce7f2ea4d9cb35`、ledger `c252b4af86d5ab46`、weekly evidence `752808d0ef02b3ba`；对应
+    validate CLI 均 PASS。'
+  docs_links:
+  - docs/requirements/TRADING-189_to_198_Defensive_Hypothesis_Review_and_Forward_Evidence_Automation.md
+  terminal: false
+  raw_row_sha256: 4151f78fa81640415141e69b0c9d4681ddfa12610ed4254095fe2018151c230c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 39a98e8528e2cf02ca48ea4203af919cacff926c87f16170b7adbd81f77e6ed1

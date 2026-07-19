@@ -1,0 +1,152 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-605_to_622_RESEARCH_CAMPAIGN_CONTROL_PLANE
+  title: null
+  domain: ETF portfolio/weight research campaign systemization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-605_to_622_Research_Campaign_Control_Plane.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-605_to_622_Research_Campaign_Control_Plane.md`；把
+    B2/B3/B4 case-specific 研究推进收敛为 Campaign spec、module registry、evidence store、state
+    machine、evidence budget、gate policy、next-action planner、统一 CLI、Reader Brief/owner
+    packet 和 B2/B3 迁移；不得新增 B2/B3/B4/B5/B6/v3 专用 runner，不得访问 untouched holdout，不得生成
+    official target weights、paper-shadow activation、broker/order/live/production mutation，不得自动
+    append owner decision
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits research campaign validate/init/plan/run/diagnose/gate/status/packet/archive`
+      可用；B2/B3 sample specs 可解析和迁移；P0 mixed allocator、Signal 输出权重、Evaluation 修改策略、未授权
+      holdout 访问和预算外 `NEEDS_MORE_EVIDENCE` 均 fail-closed；消融/交互矩阵、预算/stop-rule、gate、next
+      action、owner packet、reproducibility manifest、system flow 和 focused tests 完成；旧
+      task-specific CLI 标记兼容/弃用，B2/B3 当前结论 parity 可见'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1411
+    row_sha256: b216a7beb218e59fb22aaf9d80cc8e7b758cd98bd65c691a7a38d4f0ee765761
+    cell_count: 8
+    all_cells:
+    - TRADING-605_to_622_RESEARCH_CAMPAIGN_CONTROL_PLANE
+    - ETF portfolio/weight research campaign systemization
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-605_to_622_Research_Campaign_Control_Plane.md`；把
+      B2/B3/B4 case-specific 研究推进收敛为 Campaign spec、module registry、evidence store、state
+      machine、evidence budget、gate policy、next-action planner、统一 CLI、Reader Brief/owner
+      packet 和 B2/B3 迁移；不得新增 B2/B3/B4/B5/B6/v3 专用 runner，不得访问 untouched holdout，不得生成
+      official target weights、paper-shadow activation、broker/order/live/production
+      mutation，不得自动 append owner decision
+    - '`aits research campaign validate/init/plan/run/diagnose/gate/status/packet/archive`
+      可用；B2/B3 sample specs 可解析和迁移；P0 mixed allocator、Signal 输出权重、Evaluation 修改策略、未授权
+      holdout 访问和预算外 `NEEDS_MORE_EVIDENCE` 均 fail-closed；消融/交互矩阵、预算/stop-rule、gate、next
+      action、owner packet、reproducibility manifest、system flow 和 focused tests 完成；旧
+      task-specific CLI 标记兼容/弃用，B2/B3 当前结论 parity 可见'
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求暂停继续增加 case-specific 任务，建设通用 Research
+      Campaign Control Plane，并以 B2/B3 迁移验证当前研究状态。2026-06-19: 实现完成并转入 VALIDATING；新增
+      `aits research campaign ...` CLI、schema/validator、module registry、window/holdout
+      policy、gate policy、state machine、evidence budget、experiment matrix、evidence
+      store、transition audit、reproducibility manifest、next-action planner、owner packet、B2/B3
+      config-driven migration、compatibility/deprecation policy、system flow、artifact
+      catalog 和 release note；计算型 diagnostic/backfill stage 尚未接入真实 adapter，当前按 no-silent-workaround
+      fail-closed 为 `STAGE_ADAPTER_NOT_CONFIGURED`。验证通过 focused pytest 17 passed、scoped
+      Ruff、compileall、CLI validate smoke、`git diff --check` 和 task-register terminal-status
+      check。'
+    raw_line: '|TRADING-605_to_622_RESEARCH_CAMPAIGN_CONTROL_PLANE|ETF portfolio/weight
+      research campaign systemization|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-605_to_622_Research_Campaign_Control_Plane.md`；把
+      B2/B3/B4 case-specific 研究推进收敛为 Campaign spec、module registry、evidence store、state
+      machine、evidence budget、gate policy、next-action planner、统一 CLI、Reader Brief/owner
+      packet 和 B2/B3 迁移；不得新增 B2/B3/B4/B5/B6/v3 专用 runner，不得访问 untouched holdout，不得生成
+      official target weights、paper-shadow activation、broker/order/live/production
+      mutation，不得自动 append owner decision|`aits research campaign validate/init/plan/run/diagnose/gate/status/packet/archive`
+      可用；B2/B3 sample specs 可解析和迁移；P0 mixed allocator、Signal 输出权重、Evaluation 修改策略、未授权
+      holdout 访问和预算外 `NEEDS_MORE_EVIDENCE` 均 fail-closed；消融/交互矩阵、预算/stop-rule、gate、next
+      action、owner packet、reproducibility manifest、system flow 和 focused tests 完成；旧
+      task-specific CLI 标记兼容/弃用，B2/B3 当前结论 parity 可见|2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求暂停继续增加
+      case-specific 任务，建设通用 Research Campaign Control Plane，并以 B2/B3 迁移验证当前研究状态。2026-06-19:
+      实现完成并转入 VALIDATING；新增 `aits research campaign ...` CLI、schema/validator、module
+      registry、window/holdout policy、gate policy、state machine、evidence budget、experiment
+      matrix、evidence store、transition audit、reproducibility manifest、next-action
+      planner、owner packet、B2/B3 config-driven migration、compatibility/deprecation
+      policy、system flow、artifact catalog 和 release note；计算型 diagnostic/backfill stage
+      尚未接入真实 adapter，当前按 no-silent-workaround fail-closed 为 `STAGE_ADAPTER_NOT_CONFIGURED`。验证通过
+      focused pytest 17 passed、scoped Ruff、compileall、CLI validate smoke、`git diff
+      --check` 和 task-register terminal-status check。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b216a7beb218e59fb22aaf9d
+  task_id: TRADING-605_to_622_RESEARCH_CAMPAIGN_CONTROL_PLANE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求暂停继续增加 case-specific 任务，建设通用 Research
+      Campaign Control Plane，并以 B2/B3 迁移验证当前研究状态。2026-06-19: 实现完成并转入 VALIDATING；新增
+      `aits research campaign ...` CLI、schema/validator、module registry、window/holdout
+      policy、gate policy、state machine、evidence budget、experiment matrix、evidence
+      store、transition audit、reproducibility manifest、next-action planner、owner packet、B2/B3
+      config-driven migration、compatibility/deprecation policy、system flow、artifact
+      catalog 和 release note；计算型 diagnostic/backfill stage 尚未接入真实 adapter，当前按 no-silent-workaround
+      fail-closed 为 `STAGE_ADAPTER_NOT_CONFIGURED`。验证通过 focused pytest 17 passed、scoped
+      Ruff、compileall、CLI validate smoke、`git diff --check` 和 task-register terminal-status
+      check。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b216a7beb218e59fb22aaf9d80cc8e7b758cd98bd65c691a7a38d4f0ee765761
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-605_to_622_RESEARCH_CAMPAIGN_CONTROL_PLANE
+  - ETF portfolio/weight research campaign systemization
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-605_to_622_Research_Campaign_Control_Plane.md`；把
+    B2/B3/B4 case-specific 研究推进收敛为 Campaign spec、module registry、evidence store、state
+    machine、evidence budget、gate policy、next-action planner、统一 CLI、Reader Brief/owner
+    packet 和 B2/B3 迁移；不得新增 B2/B3/B4/B5/B6/v3 专用 runner，不得访问 untouched holdout，不得生成
+    official target weights、paper-shadow activation、broker/order/live/production mutation，不得自动
+    append owner decision
+  - '`aits research campaign validate/init/plan/run/diagnose/gate/status/packet/archive`
+    可用；B2/B3 sample specs 可解析和迁移；P0 mixed allocator、Signal 输出权重、Evaluation 修改策略、未授权
+    holdout 访问和预算外 `NEEDS_MORE_EVIDENCE` 均 fail-closed；消融/交互矩阵、预算/stop-rule、gate、next
+    action、owner packet、reproducibility manifest、system flow 和 focused tests 完成；旧
+    task-specific CLI 标记兼容/弃用，B2/B3 当前结论 parity 可见'
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求暂停继续增加 case-specific 任务，建设通用 Research Campaign
+    Control Plane，并以 B2/B3 迁移验证当前研究状态。2026-06-19: 实现完成并转入 VALIDATING；新增 `aits research
+    campaign ...` CLI、schema/validator、module registry、window/holdout policy、gate
+    policy、state machine、evidence budget、experiment matrix、evidence store、transition
+    audit、reproducibility manifest、next-action planner、owner packet、B2/B3 config-driven
+    migration、compatibility/deprecation policy、system flow、artifact catalog 和 release
+    note；计算型 diagnostic/backfill stage 尚未接入真实 adapter，当前按 no-silent-workaround fail-closed
+    为 `STAGE_ADAPTER_NOT_CONFIGURED`。验证通过 focused pytest 17 passed、scoped Ruff、compileall、CLI
+    validate smoke、`git diff --check` 和 task-register terminal-status check。'
+  docs_links:
+  - docs/requirements/TRADING-605_to_622_Research_Campaign_Control_Plane.md
+  terminal: false
+  raw_row_sha256: b216a7beb218e59fb22aaf9d80cc8e7b758cd98bd65c691a7a38d4f0ee765761
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c3c91a1bacb931a101febb1cf4703b7397844be3eb168117033e14cd2235a7fb

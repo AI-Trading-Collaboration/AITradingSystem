@@ -1,0 +1,138 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-010
+  title: null
+  domain: 市场反馈优化/shadow weight 表现优选
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/market_feedback_optimization_loop_2026-05-13.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9d-shadow-weight-表现优选`；shadow
+    weight performance evaluator 基线已完成；后续参数/gate 搜索和 production 晋级由后续独立任务与治理流程承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 shadow weight performance evaluator，读取独立 observation ledger 和价格缓存，按同一
+      signal date 比较 production gate 后仓位与 shadow gate 后仓位的仓位加权收益、最大回撤、换手和成本；报告必须声明
+      validation-only、production_effect=none，不得自动写 approved overlay 或生产权重；用当前样本筛出
+      return-leading profile 作为继续观察/调参候选；当前 `shadow_weight_performance_2026-05-14.md/csv`
+      为 `PASS` / `production_effect=none`，并披露 available/pending/missing、return/MDD/turnover/beat
+      rate 和不改 production 边界
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 275
+    row_sha256: 438dafba7a71bdbef01846e823ac1d20a00697202315ff6ef215c1bc8b1fde8c
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-010
+    - 市场反馈优化/shadow weight 表现优选
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9d-shadow-weight-表现优选`；shadow
+      weight performance evaluator 基线已完成；后续参数/gate 搜索和 production 晋级由后续独立任务与治理流程承接
+    - 新增 shadow weight performance evaluator，读取独立 observation ledger 和价格缓存，按同一 signal
+      date 比较 production gate 后仓位与 shadow gate 后仓位的仓位加权收益、最大回撤、换手和成本；报告必须声明 validation-only、production_effect=none，不得自动写
+      approved overlay 或生产权重；用当前样本筛出 return-leading profile 作为继续观察/调参候选；当前 `shadow_weight_performance_2026-05-14.md/csv`
+      为 `PASS` / `production_effect=none`，并披露 available/pending/missing、return/MDD/turnover/beat
+      rate 和不改 production 边界
+    - '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进权重调参以找到更好表现配置；下一步先补主线 vs shadow
+      的 position-weighted evaluator，避免把“分数更高”误判为“真实表现更好”。2026-05-16: 从 IN_PROGRESS
+      改为 VALIDATING，原因：新增 `aits feedback evaluate-shadow-weight-performance`、机器可读
+      performance CSV 和报告；observation ledger 增补 production/shadow 模型目标仓位与 gate 后目标仓位字段。真实
+      2026-05-14 验证使用 2026-05-04 至 2026-05-14 样本，Horizon=1D、SMH、单边成本 5bps；三套 profile
+      available=8、pending=1、missing=2，production total return=4.74%、shadow total return=4.74%、excess=0.00%、turnover=1.20，未找到正向
+      excess profile。目标测试通过，ruff 通过；生产权重、approved overlay、正式 prediction ledger、日报结论和仓位
+      gate 未改变。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 performance report/CSV 与 observation
+      ledger 证明 evaluator 完整落盘并被后续 gate profile/search 任务复用；验证通过 `tests/test_shadow_weight_profiles.py`
+      15 passed、Ruff、repo-wide Black check 和 `compileall`。'
+    raw_line: '|CALIBRATION-010|市场反馈优化/shadow weight 表现优选|P1|DONE|系统验证|详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9d-shadow-weight-表现优选`；shadow
+      weight performance evaluator 基线已完成；后续参数/gate 搜索和 production 晋级由后续独立任务与治理流程承接|新增
+      shadow weight performance evaluator，读取独立 observation ledger 和价格缓存，按同一 signal
+      date 比较 production gate 后仓位与 shadow gate 后仓位的仓位加权收益、最大回撤、换手和成本；报告必须声明 validation-only、production_effect=none，不得自动写
+      approved overlay 或生产权重；用当前样本筛出 return-leading profile 作为继续观察/调参候选；当前 `shadow_weight_performance_2026-05-14.md/csv`
+      为 `PASS` / `production_effect=none`，并披露 available/pending/missing、return/MDD/turnover/beat
+      rate 和不改 production 边界|2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进权重调参以找到更好表现配置；下一步先补主线
+      vs shadow 的 position-weighted evaluator，避免把“分数更高”误判为“真实表现更好”。2026-05-16: 从 IN_PROGRESS
+      改为 VALIDATING，原因：新增 `aits feedback evaluate-shadow-weight-performance`、机器可读
+      performance CSV 和报告；observation ledger 增补 production/shadow 模型目标仓位与 gate 后目标仓位字段。真实
+      2026-05-14 验证使用 2026-05-04 至 2026-05-14 样本，Horizon=1D、SMH、单边成本 5bps；三套 profile
+      available=8、pending=1、missing=2，production total return=4.74%、shadow total return=4.74%、excess=0.00%、turnover=1.20，未找到正向
+      excess profile。目标测试通过，ruff 通过；生产权重、approved overlay、正式 prediction ledger、日报结论和仓位
+      gate 未改变。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 performance report/CSV 与 observation
+      ledger 证明 evaluator 完整落盘并被后续 gate profile/search 任务复用；验证通过 `tests/test_shadow_weight_profiles.py`
+      15 passed、Ruff、repo-wide Black check 和 `compileall`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-438dafba7a71bdbef01846e8
+  task_id: CALIBRATION-010
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进权重调参以找到更好表现配置；下一步先补主线 vs
+      shadow 的 position-weighted evaluator，避免把“分数更高”误判为“真实表现更好”。2026-05-16: 从 IN_PROGRESS
+      改为 VALIDATING，原因：新增 `aits feedback evaluate-shadow-weight-performance`、机器可读
+      performance CSV 和报告；observation ledger 增补 production/shadow 模型目标仓位与 gate 后目标仓位字段。真实
+      2026-05-14 验证使用 2026-05-04 至 2026-05-14 样本，Horizon=1D、SMH、单边成本 5bps；三套 profile
+      available=8、pending=1、missing=2，production total return=4.74%、shadow total return=4.74%、excess=0.00%、turnover=1.20，未找到正向
+      excess profile。目标测试通过，ruff 通过；生产权重、approved overlay、正式 prediction ledger、日报结论和仓位
+      gate 未改变。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 performance report/CSV 与 observation
+      ledger 证明 evaluator 完整落盘并被后续 gate profile/search 任务复用；验证通过 `tests/test_shadow_weight_profiles.py`
+      15 passed、Ruff、repo-wide Black check 和 `compileall`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:438dafba7a71bdbef01846e823ac1d20a00697202315ff6ef215c1bc8b1fde8c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-010
+  - 市场反馈优化/shadow weight 表现优选
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/market_feedback_optimization_loop_2026-05-13.md#阶段-9d-shadow-weight-表现优选`；shadow
+    weight performance evaluator 基线已完成；后续参数/gate 搜索和 production 晋级由后续独立任务与治理流程承接
+  - 新增 shadow weight performance evaluator，读取独立 observation ledger 和价格缓存，按同一 signal
+    date 比较 production gate 后仓位与 shadow gate 后仓位的仓位加权收益、最大回撤、换手和成本；报告必须声明 validation-only、production_effect=none，不得自动写
+    approved overlay 或生产权重；用当前样本筛出 return-leading profile 作为继续观察/调参候选；当前 `shadow_weight_performance_2026-05-14.md/csv`
+    为 `PASS` / `production_effect=none`，并披露 available/pending/missing、return/MDD/turnover/beat
+    rate 和不改 production 边界
+  - '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进权重调参以找到更好表现配置；下一步先补主线 vs shadow
+    的 position-weighted evaluator，避免把“分数更高”误判为“真实表现更好”。2026-05-16: 从 IN_PROGRESS 改为
+    VALIDATING，原因：新增 `aits feedback evaluate-shadow-weight-performance`、机器可读 performance
+    CSV 和报告；observation ledger 增补 production/shadow 模型目标仓位与 gate 后目标仓位字段。真实 2026-05-14
+    验证使用 2026-05-04 至 2026-05-14 样本，Horizon=1D、SMH、单边成本 5bps；三套 profile available=8、pending=1、missing=2，production
+    total return=4.74%、shadow total return=4.74%、excess=0.00%、turnover=1.20，未找到正向
+    excess profile。目标测试通过，ruff 通过；生产权重、approved overlay、正式 prediction ledger、日报结论和仓位
+    gate 未改变。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 performance report/CSV 与 observation
+    ledger 证明 evaluator 完整落盘并被后续 gate profile/search 任务复用；验证通过 `tests/test_shadow_weight_profiles.py`
+    15 passed、Ruff、repo-wide Black check 和 `compileall`。'
+  docs_links:
+  - docs/requirements/market_feedback_optimization_loop_2026-05-13.md
+  terminal: true
+  raw_row_sha256: 438dafba7a71bdbef01846e823ac1d20a00697202315ff6ef215c1bc8b1fde8c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9e152bbd1c5a45b3e27d9a7d4895a4eba3a54c59aecd04c43746581f4a16acfc

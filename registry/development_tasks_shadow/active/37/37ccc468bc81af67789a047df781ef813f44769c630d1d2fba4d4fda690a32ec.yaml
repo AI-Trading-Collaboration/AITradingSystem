@@ -1,0 +1,157 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-408_to_419_RECOVERY_BLOCKER_RESOLUTION_BATCH
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue recovery blocker resolution batch
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-408_to_419_Blocker_Resolution_Batch.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-408_to_419_Blocker_Resolution_Batch.md`；按附件顺序处理
+    remaining blocker ledger、signal restore、readiness/health、cost/benchmark metrics、owner
+    hold log、report-index warning cleanup、requirements freshness、recovery pack rerun、normal
+    paper-shadow owner gate、normal observation clock 和 post-recovery governance pack；不得削弱
+    policy、silent waiver、伪造数据、创建 official target weights、broker/order、paper-shadow
+    state mutation、production mutation、extended shadow 或 live trading
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增或更新相关 CLI/report/validation artifact、Reader Brief section、report registry、artifact
+      catalog、system flow、operations runbook、README、需求文档和 focused tests；真实链路输出每阶段
+      status、remaining blockers/warnings、normal paper-shadow boundary、extended/live
+      forbidden boundary；验证通过 focused pytest、ruff、compileall、documentation contract、task-register
+      consistency、docs freshness、data quality gate、report index/quality gates 或记录阻塞原因
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1427
+    row_sha256: ae1455a5c4a74b1de74b4553d7fce4ef326176aaf323229b8ced6cfa2845c5cb
+    cell_count: 8
+    all_cells:
+    - TRADING-408_to_419_RECOVERY_BLOCKER_RESOLUTION_BATCH
+    - ETF portfolio/dynamic v3 rescue recovery blocker resolution batch
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-408_to_419_Blocker_Resolution_Batch.md`；按附件顺序处理
+      remaining blocker ledger、signal restore、readiness/health、cost/benchmark metrics、owner
+      hold log、report-index warning cleanup、requirements freshness、recovery pack rerun、normal
+      paper-shadow owner gate、normal observation clock 和 post-recovery governance
+      pack；不得削弱 policy、silent waiver、伪造数据、创建 official target weights、broker/order、paper-shadow
+      state mutation、production mutation、extended shadow 或 live trading
+    - 新增或更新相关 CLI/report/validation artifact、Reader Brief section、report registry、artifact
+      catalog、system flow、operations runbook、README、需求文档和 focused tests；真实链路输出每阶段
+      status、remaining blockers/warnings、normal paper-shadow boundary、extended/live
+      forbidden boundary；验证通过 focused pytest、ruff、compileall、documentation contract、task-register
+      consistency、docs freshness、data quality gate、report index/quality gates 或记录阻塞原因
+    - '2026-06-17: 新增并进入 IN_PROGRESS，原因：owner 附件要求实现 TRADING-408～419 blocker resolution
+      batch；本批次允许恢复 normal paper-shadow owner gate 的只读判断，但不得批准 extended shadow、live
+      trading、official targets、broker/order 或 production mutation。2026-06-17: 实现完成并转入
+      VALIDATING；真实链路输出 recovery pack `RECOVERY_GOVERNANCE_BLOCKED`、remaining blockers=9、remaining
+      warnings=10、normal paper-shadow may resume=false、extended/live forbidden=true；TRADING-408/414/418/419
+      新 report/validate CLI 已生成 artifacts，TRADING-413 追加 owner hold decision `TRADING-413_owner_hold_2026-06-17`，TRADING-415
+      docs freshness PASS；focused pytest 60 passed，ruff/compileall/documentation contract/task-register
+      consistency/data quality gate PASS，report index `PASS_WITH_WARNINGS` 且 unwaived=9、silent
+      waiver=0；2026-06-17 Reader Brief/report quality gate 因缺同日 decision snapshot
+      保持 fail-closed，latest Reader Brief quality 和 latest report quality gate 已通过。'
+    raw_line: '|TRADING-408_to_419_RECOVERY_BLOCKER_RESOLUTION_BATCH|ETF portfolio/dynamic
+      v3 rescue recovery blocker resolution batch|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详细拆解见
+      `docs/requirements/TRADING-408_to_419_Blocker_Resolution_Batch.md`；按附件顺序处理 remaining
+      blocker ledger、signal restore、readiness/health、cost/benchmark metrics、owner
+      hold log、report-index warning cleanup、requirements freshness、recovery pack rerun、normal
+      paper-shadow owner gate、normal observation clock 和 post-recovery governance
+      pack；不得削弱 policy、silent waiver、伪造数据、创建 official target weights、broker/order、paper-shadow
+      state mutation、production mutation、extended shadow 或 live trading|新增或更新相关 CLI/report/validation
+      artifact、Reader Brief section、report registry、artifact catalog、system flow、operations
+      runbook、README、需求文档和 focused tests；真实链路输出每阶段 status、remaining blockers/warnings、normal
+      paper-shadow boundary、extended/live forbidden boundary；验证通过 focused pytest、ruff、compileall、documentation
+      contract、task-register consistency、docs freshness、data quality gate、report index/quality
+      gates 或记录阻塞原因|2026-06-17: 新增并进入 IN_PROGRESS，原因：owner 附件要求实现 TRADING-408～419
+      blocker resolution batch；本批次允许恢复 normal paper-shadow owner gate 的只读判断，但不得批准
+      extended shadow、live trading、official targets、broker/order 或 production mutation。2026-06-17:
+      实现完成并转入 VALIDATING；真实链路输出 recovery pack `RECOVERY_GOVERNANCE_BLOCKED`、remaining
+      blockers=9、remaining warnings=10、normal paper-shadow may resume=false、extended/live
+      forbidden=true；TRADING-408/414/418/419 新 report/validate CLI 已生成 artifacts，TRADING-413
+      追加 owner hold decision `TRADING-413_owner_hold_2026-06-17`，TRADING-415 docs
+      freshness PASS；focused pytest 60 passed，ruff/compileall/documentation contract/task-register
+      consistency/data quality gate PASS，report index `PASS_WITH_WARNINGS` 且 unwaived=9、silent
+      waiver=0；2026-06-17 Reader Brief/report quality gate 因缺同日 decision snapshot
+      保持 fail-closed，latest Reader Brief quality 和 latest report quality gate 已通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ae1455a5c4a74b1de74b4553
+  task_id: TRADING-408_to_419_RECOVERY_BLOCKER_RESOLUTION_BATCH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-17: 新增并进入 IN_PROGRESS，原因：owner 附件要求实现 TRADING-408～419 blocker
+      resolution batch；本批次允许恢复 normal paper-shadow owner gate 的只读判断，但不得批准 extended
+      shadow、live trading、official targets、broker/order 或 production mutation。2026-06-17:
+      实现完成并转入 VALIDATING；真实链路输出 recovery pack `RECOVERY_GOVERNANCE_BLOCKED`、remaining
+      blockers=9、remaining warnings=10、normal paper-shadow may resume=false、extended/live
+      forbidden=true；TRADING-408/414/418/419 新 report/validate CLI 已生成 artifacts，TRADING-413
+      追加 owner hold decision `TRADING-413_owner_hold_2026-06-17`，TRADING-415 docs
+      freshness PASS；focused pytest 60 passed，ruff/compileall/documentation contract/task-register
+      consistency/data quality gate PASS，report index `PASS_WITH_WARNINGS` 且 unwaived=9、silent
+      waiver=0；2026-06-17 Reader Brief/report quality gate 因缺同日 decision snapshot
+      保持 fail-closed，latest Reader Brief quality 和 latest report quality gate 已通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ae1455a5c4a74b1de74b4553d7fce4ef326176aaf323229b8ced6cfa2845c5cb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-408_to_419_RECOVERY_BLOCKER_RESOLUTION_BATCH
+  - ETF portfolio/dynamic v3 rescue recovery blocker resolution batch
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-408_to_419_Blocker_Resolution_Batch.md`；按附件顺序处理
+    remaining blocker ledger、signal restore、readiness/health、cost/benchmark metrics、owner
+    hold log、report-index warning cleanup、requirements freshness、recovery pack rerun、normal
+    paper-shadow owner gate、normal observation clock 和 post-recovery governance pack；不得削弱
+    policy、silent waiver、伪造数据、创建 official target weights、broker/order、paper-shadow
+    state mutation、production mutation、extended shadow 或 live trading
+  - 新增或更新相关 CLI/report/validation artifact、Reader Brief section、report registry、artifact
+    catalog、system flow、operations runbook、README、需求文档和 focused tests；真实链路输出每阶段 status、remaining
+    blockers/warnings、normal paper-shadow boundary、extended/live forbidden boundary；验证通过
+    focused pytest、ruff、compileall、documentation contract、task-register consistency、docs
+    freshness、data quality gate、report index/quality gates 或记录阻塞原因
+  - '2026-06-17: 新增并进入 IN_PROGRESS，原因：owner 附件要求实现 TRADING-408～419 blocker resolution
+    batch；本批次允许恢复 normal paper-shadow owner gate 的只读判断，但不得批准 extended shadow、live
+    trading、official targets、broker/order 或 production mutation。2026-06-17: 实现完成并转入
+    VALIDATING；真实链路输出 recovery pack `RECOVERY_GOVERNANCE_BLOCKED`、remaining blockers=9、remaining
+    warnings=10、normal paper-shadow may resume=false、extended/live forbidden=true；TRADING-408/414/418/419
+    新 report/validate CLI 已生成 artifacts，TRADING-413 追加 owner hold decision `TRADING-413_owner_hold_2026-06-17`，TRADING-415
+    docs freshness PASS；focused pytest 60 passed，ruff/compileall/documentation contract/task-register
+    consistency/data quality gate PASS，report index `PASS_WITH_WARNINGS` 且 unwaived=9、silent
+    waiver=0；2026-06-17 Reader Brief/report quality gate 因缺同日 decision snapshot 保持
+    fail-closed，latest Reader Brief quality 和 latest report quality gate 已通过。'
+  docs_links:
+  - docs/requirements/TRADING-408_to_419_Blocker_Resolution_Batch.md
+  terminal: false
+  raw_row_sha256: ae1455a5c4a74b1de74b4553d7fce4ef326176aaf323229b8ced6cfa2845c5cb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8105e8dcca245286e03dee508d860309415684426a2d7e2e299eb8d2a37a8e1c

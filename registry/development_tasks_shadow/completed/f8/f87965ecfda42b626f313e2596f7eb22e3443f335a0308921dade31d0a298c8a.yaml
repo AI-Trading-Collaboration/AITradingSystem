@@ -1,0 +1,143 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2422_GROWTH_TILT_ENGINE_CONTRACT_READINESS_SNAPSHOT
+  title: null
+  domain: Strategy research / growth tilt contract readiness snapshot
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2423 paper-shadow preflight
+  requirement_refs:
+  - docs/requirements/TRADING-2422_Growth_Tilt_Engine_Contract_Readiness_Snapshot.md
+  - docs/tasks/completed/TRADING-2422_Growth_Tilt_Engine_Contract_Readiness_Snapshot.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2422_Growth_Tilt_Engine_Contract_Readiness_Snapshot.md`；承接
+    TRADING-2421 PIT gate ready 状态和 TRADING-2420 source traceability remediation evidence，仅读取
+    prior artifacts/docs/registry/catalog/system flow；本任务只做 contract readiness snapshot、contract
+    evidence map、contract gap summary 和 2423 route，不执行 paper-shadow preflight。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 contract readiness snapshot builder、`aits research strategies growth-tilt-engine-contract-readiness-snapshot`；输出
+      `contract_readiness_snapshot_result.json`、`contract_evidence_map.json`、`contract_gap_summary.json`、`contract_requirements.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_CONTRACT_READINESS_SNAPSHOT_READY`，`pit_gate_ready=true`，`pit_gate_ready_count=1`，remaining
+      blockers=[]，source traceability remediation status=`READY`，contract_ready=true，contract_ready_count=1，contract_gap_count=0，missing_contract_evidence_count=0，incomplete_contract_field_count=0，paper_shadow_preflight_required=true，paper_shadow_preflight_started=false，paper_shadow_enabled=false、production_enabled=false、broker_enabled=false，next
+      route=`TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 62
+    row_sha256: cee96ac672f94993cc4ca3c79fb4cd15f5df7e32212ab64aa2433f00e401f353
+    cell_count: 8
+    all_cells:
+    - TRADING-2422_GROWTH_TILT_ENGINE_CONTRACT_READINESS_SNAPSHOT
+    - Strategy research / growth tilt contract readiness snapshot
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2423 paper-shadow preflight
+    - 详见 `docs/requirements/TRADING-2422_Growth_Tilt_Engine_Contract_Readiness_Snapshot.md`；承接
+      TRADING-2421 PIT gate ready 状态和 TRADING-2420 source traceability remediation
+      evidence，仅读取 prior artifacts/docs/registry/catalog/system flow；本任务只做 contract
+      readiness snapshot、contract evidence map、contract gap summary 和 2423 route，不执行
+      paper-shadow preflight。
+    - 新增 contract readiness snapshot builder、`aits research strategies growth-tilt-engine-contract-readiness-snapshot`；输出
+      `contract_readiness_snapshot_result.json`、`contract_evidence_map.json`、`contract_gap_summary.json`、`contract_requirements.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_CONTRACT_READINESS_SNAPSHOT_READY`，`pit_gate_ready=true`，`pit_gate_ready_count=1`，remaining
+      blockers=[]，source traceability remediation status=`READY`，contract_ready=true，contract_ready_count=1，contract_gap_count=0，missing_contract_evidence_count=0，incomplete_contract_field_count=0，paper_shadow_preflight_required=true，paper_shadow_preflight_started=false，paper_shadow_enabled=false、production_enabled=false、broker_enabled=false，next
+      route=`TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight`。
+    - '2026-07-09: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest、真实 CLI、docs freshness、documentation contract、task-register consistency
+      run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits validate-data`，因为只读取
+      prior validated TRADING-2420 / 2421 artifacts/docs/registry/catalog/system flow，不读取
+      fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily report
+      或交易建议。candidate search、observation、paper-shadow preflight、paper-shadow、scheduler、event
+      append、outcome binding、production、broker/order、daily report 全部保持 disabled /
+      false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2422_Growth_Tilt_Engine_Contract_Readiness_Snapshot.md`。'
+    raw_line: '|TRADING-2422_GROWTH_TILT_ENGINE_CONTRACT_READINESS_SNAPSHOT|Strategy
+      research / growth tilt contract readiness snapshot|P0|DONE|项目 owner 后续复核 TRADING-2423
+      paper-shadow preflight|详见 `docs/requirements/TRADING-2422_Growth_Tilt_Engine_Contract_Readiness_Snapshot.md`；承接
+      TRADING-2421 PIT gate ready 状态和 TRADING-2420 source traceability remediation
+      evidence，仅读取 prior artifacts/docs/registry/catalog/system flow；本任务只做 contract
+      readiness snapshot、contract evidence map、contract gap summary 和 2423 route，不执行
+      paper-shadow preflight。|新增 contract readiness snapshot builder、`aits research
+      strategies growth-tilt-engine-contract-readiness-snapshot`；输出 `contract_readiness_snapshot_result.json`、`contract_evidence_map.json`、`contract_gap_summary.json`、`contract_requirements.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_CONTRACT_READINESS_SNAPSHOT_READY`，`pit_gate_ready=true`，`pit_gate_ready_count=1`，remaining
+      blockers=[]，source traceability remediation status=`READY`，contract_ready=true，contract_ready_count=1，contract_gap_count=0，missing_contract_evidence_count=0，incomplete_contract_field_count=0，paper_shadow_preflight_required=true，paper_shadow_preflight_started=false，paper_shadow_enabled=false、production_enabled=false、broker_enabled=false，next
+      route=`TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight`。|2026-07-09:
+      根据 owner 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest、真实 CLI、docs freshness、documentation contract、task-register consistency
+      run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits validate-data`，因为只读取
+      prior validated TRADING-2420 / 2421 artifacts/docs/registry/catalog/system flow，不读取
+      fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily report
+      或交易建议。candidate search、observation、paper-shadow preflight、paper-shadow、scheduler、event
+      append、outcome binding、production、broker/order、daily report 全部保持 disabled /
+      false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2422_Growth_Tilt_Engine_Contract_Readiness_Snapshot.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-cee96ac672f94993cc4ca3c7
+  task_id: TRADING-2422_GROWTH_TILT_ENGINE_CONTRACT_READINESS_SNAPSHOT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2423 paper-shadow preflight
+    notes: '2026-07-09: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest、真实 CLI、docs freshness、documentation
+      contract、task-register consistency run/validate、contract-validation 和 `git diff
+      --check`；本任务未运行 `aits validate-data`，因为只读取 prior validated TRADING-2420 / 2421
+      artifacts/docs/registry/catalog/system flow，不读取 fresh cached market data、不运行新
+      backtest、不生成 feature/signal/scoring/daily report 或交易建议。candidate search、observation、paper-shadow
+      preflight、paper-shadow、scheduler、event append、outcome binding、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2422_Growth_Tilt_Engine_Contract_Readiness_Snapshot.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:cee96ac672f94993cc4ca3c79fb4cd15f5df7e32212ab64aa2433f00e401f353
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2422_GROWTH_TILT_ENGINE_CONTRACT_READINESS_SNAPSHOT
+  - Strategy research / growth tilt contract readiness snapshot
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2423 paper-shadow preflight
+  - 详见 `docs/requirements/TRADING-2422_Growth_Tilt_Engine_Contract_Readiness_Snapshot.md`；承接
+    TRADING-2421 PIT gate ready 状态和 TRADING-2420 source traceability remediation evidence，仅读取
+    prior artifacts/docs/registry/catalog/system flow；本任务只做 contract readiness snapshot、contract
+    evidence map、contract gap summary 和 2423 route，不执行 paper-shadow preflight。
+  - 新增 contract readiness snapshot builder、`aits research strategies growth-tilt-engine-contract-readiness-snapshot`；输出
+    `contract_readiness_snapshot_result.json`、`contract_evidence_map.json`、`contract_gap_summary.json`、`contract_requirements.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_CONTRACT_READINESS_SNAPSHOT_READY`，`pit_gate_ready=true`，`pit_gate_ready_count=1`，remaining
+    blockers=[]，source traceability remediation status=`READY`，contract_ready=true，contract_ready_count=1，contract_gap_count=0，missing_contract_evidence_count=0，incomplete_contract_field_count=0，paper_shadow_preflight_required=true，paper_shadow_preflight_started=false，paper_shadow_enabled=false、production_enabled=false、broker_enabled=false，next
+    route=`TRADING-2423_Growth_Tilt_Engine_Paper_Shadow_Preflight`。
+  - '2026-07-09: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+    parallel pytest、真实 CLI、docs freshness、documentation contract、task-register consistency
+    run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits validate-data`，因为只读取
+    prior validated TRADING-2420 / 2421 artifacts/docs/registry/catalog/system flow，不读取
+    fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily report
+    或交易建议。candidate search、observation、paper-shadow preflight、paper-shadow、scheduler、event
+    append、outcome binding、production、broker/order、daily report 全部保持 disabled / false
+    / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2422_Growth_Tilt_Engine_Contract_Readiness_Snapshot.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2422_Growth_Tilt_Engine_Contract_Readiness_Snapshot.md
+  - docs/tasks/completed/TRADING-2422_Growth_Tilt_Engine_Contract_Readiness_Snapshot.md
+  terminal: true
+  raw_row_sha256: cee96ac672f94993cc4ca3c79fb4cd15f5df7e32212ab64aa2433f00e401f353
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 29925e063aa89e3451886cdc0194d0e7912bbc3b51c8245c141ce91a0f7c552d

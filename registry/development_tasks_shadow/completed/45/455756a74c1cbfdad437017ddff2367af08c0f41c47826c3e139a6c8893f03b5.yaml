@@ -1,0 +1,132 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-051
+  title: null
+  domain: 回测输入/Signal Ablation & Contribution Validation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/signal_ablation_contribution_validation_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/signal_ablation_contribution_validation_2026-05-30.md`；remove-one-signal
+    ablation、贡献分类、proxy/fallback 风险标记、JSON/Markdown 报告、Dashboard/Reader Brief/promotion
+    decision 只读接入和 report registry 可见性已完成；后续是否进入 calibration 已由 TRADING-051A/052/053/054
+    处理
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits signals ablation --latest` 生成 `signal_ablation_summary.json/md`；`aits
+      reports signal-ablation --latest` 可读取并写报告 alias；`aits signals validate-ablation
+      --latest` 输出 `status=LIMITED`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；fallback/proxy
+      signal 不得获得 promotion credit；shadow promotion decision 可引用 ablation summary
+      但不得自动晋升'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 264
+    row_sha256: dc76a7ff5b39b9f5bef5e2269ce4b1304cc8454fdf2a60a31c0ecf3542514281
+    cell_count: 8
+    all_cells:
+    - TRADING-051
+    - 回测输入/Signal Ablation & Contribution Validation
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/signal_ablation_contribution_validation_2026-05-30.md`；remove-one-signal
+      ablation、贡献分类、proxy/fallback 风险标记、JSON/Markdown 报告、Dashboard/Reader Brief/promotion
+      decision 只读接入和 report registry 可见性已完成；后续是否进入 calibration 已由 TRADING-051A/052/053/054
+      处理
+    - '`aits signals ablation --latest` 生成 `signal_ablation_summary.json/md`；`aits
+      reports signal-ablation --latest` 可读取并写报告 alias；`aits signals validate-ablation
+      --latest` 输出 `status=LIMITED`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；fallback/proxy
+      signal 不得获得 promotion credit；shadow promotion decision 可引用 ablation summary
+      但不得自动晋升'
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-050 已完成 full-signal-limited shadow
+      backtest，但缺少逐信号贡献验证。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：v0.1 实现、文档和真实
+      CLI 验收完成。2026-06-09: 从 VALIDATING 改为 DONE，原因：后续 TRADING-051A/052/053/054 已消费该
+      ablation summary 并完成下一阶段决策；复验 `signals validate-ablation --latest` 为 `LIMITED`，`reports
+      signal-ablation --latest` 可读，promotion credit 仍为 0，`production_effect=none`；验证通过
+      focused pytest 54 passed、signal calibration focused pytest 7 passed、shadow backtest
+      dry-run、CLI smoke、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'
+    raw_line: '|TRADING-051|回测输入/Signal Ablation & Contribution Validation|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/signal_ablation_contribution_validation_2026-05-30.md`；remove-one-signal
+      ablation、贡献分类、proxy/fallback 风险标记、JSON/Markdown 报告、Dashboard/Reader Brief/promotion
+      decision 只读接入和 report registry 可见性已完成；后续是否进入 calibration 已由 TRADING-051A/052/053/054
+      处理|`aits signals ablation --latest` 生成 `signal_ablation_summary.json/md`；`aits
+      reports signal-ablation --latest` 可读取并写报告 alias；`aits signals validate-ablation
+      --latest` 输出 `status=LIMITED`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；fallback/proxy
+      signal 不得获得 promotion credit；shadow promotion decision 可引用 ablation summary
+      但不得自动晋升|2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-050 已完成 full-signal-limited
+      shadow backtest，但缺少逐信号贡献验证。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：v0.1 实现、文档和真实
+      CLI 验收完成。2026-06-09: 从 VALIDATING 改为 DONE，原因：后续 TRADING-051A/052/053/054 已消费该
+      ablation summary 并完成下一阶段决策；复验 `signals validate-ablation --latest` 为 `LIMITED`，`reports
+      signal-ablation --latest` 可读，promotion credit 仍为 0，`production_effect=none`；验证通过
+      focused pytest 54 passed、signal calibration focused pytest 7 passed、shadow backtest
+      dry-run、CLI smoke、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-dc76a7ff5b39b9f5bef5e226
+  task_id: TRADING-051
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-050 已完成 full-signal-limited shadow
+      backtest，但缺少逐信号贡献验证。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：v0.1 实现、文档和真实
+      CLI 验收完成。2026-06-09: 从 VALIDATING 改为 DONE，原因：后续 TRADING-051A/052/053/054 已消费该
+      ablation summary 并完成下一阶段决策；复验 `signals validate-ablation --latest` 为 `LIMITED`，`reports
+      signal-ablation --latest` 可读，promotion credit 仍为 0，`production_effect=none`；验证通过
+      focused pytest 54 passed、signal calibration focused pytest 7 passed、shadow backtest
+      dry-run、CLI smoke、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:dc76a7ff5b39b9f5bef5e2269ce4b1304cc8454fdf2a60a31c0ecf3542514281
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-051
+  - 回测输入/Signal Ablation & Contribution Validation
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/signal_ablation_contribution_validation_2026-05-30.md`；remove-one-signal
+    ablation、贡献分类、proxy/fallback 风险标记、JSON/Markdown 报告、Dashboard/Reader Brief/promotion
+    decision 只读接入和 report registry 可见性已完成；后续是否进入 calibration 已由 TRADING-051A/052/053/054
+    处理
+  - '`aits signals ablation --latest` 生成 `signal_ablation_summary.json/md`；`aits reports
+    signal-ablation --latest` 可读取并写报告 alias；`aits signals validate-ablation --latest`
+    输出 `status=LIMITED`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；fallback/proxy
+    signal 不得获得 promotion credit；shadow promotion decision 可引用 ablation summary 但不得自动晋升'
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-050 已完成 full-signal-limited shadow backtest，但缺少逐信号贡献验证。2026-05-30:
+    从 IN_PROGRESS 改为 VALIDATING，原因：v0.1 实现、文档和真实 CLI 验收完成。2026-06-09: 从 VALIDATING
+    改为 DONE，原因：后续 TRADING-051A/052/053/054 已消费该 ablation summary 并完成下一阶段决策；复验 `signals
+    validate-ablation --latest` 为 `LIMITED`，`reports signal-ablation --latest` 可读，promotion
+    credit 仍为 0，`production_effect=none`；验证通过 focused pytest 54 passed、signal calibration
+    focused pytest 7 passed、shadow backtest dry-run、CLI smoke、文档检查、Ruff、repo-wide
+    Black check、`compileall` 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/signal_ablation_contribution_validation_2026-05-30.md
+  terminal: true
+  raw_row_sha256: dc76a7ff5b39b9f5bef5e2269ce4b1304cc8454fdf2a60a31c0ecf3542514281
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: cca2f86e1d69109d6a25ec43008fe189b14e746901221f7494a19c779639ed61

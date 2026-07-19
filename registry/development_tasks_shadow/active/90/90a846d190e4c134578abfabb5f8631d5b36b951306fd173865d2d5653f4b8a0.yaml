@@ -1,0 +1,144 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1110_to_1118_GROWTH_TILT_FOCUSED_DIAGNOSIS_AND_WATCHLIST_RECONSIDERATION
+  title: null
+  domain: Research strategies / equal-risk growth tilt focused diagnosis and watchlist
+    reconsideration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1110_to_1118_Growth_Tilt_Focused_Diagnosis_And_Watchlist_Reconsideration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1110_to_1118_Growth_Tilt_Focused_Diagnosis_And_Watchlist_Reconsideration.md`；实现已完成并真实运行
+    `growth-tilt-focused-diagnosis-master-review --as-of 2026-06-25`，下一步为 owner 复核
+    focused diagnosis docs 和是否允许 research-only balanced-core forward-aging watchlist
+    review；不得新增 growth tilt family、不得修改原始 equal-risk、不得自动写 forward-aging observation、不得进入
+    paper-shadow/production/broker
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 9 个 `aits research strategies ...` CLI/artifacts：best-growth-tilt-candidate-deep-dive、vol-target-growth-tilt-local-sensitivity、beta-adjusted-edge-methodology-audit、growth-tilt-balanced-core-role-review、growth-tilt-vs-equal-risk-missed-upside-review、growth-tilt-parameter-neighbor-finalist-review、growth-tilt-watchlist-reconsideration-gate、growth-tilt-owner-diagnosis-pack、growth-tilt-focused-diagnosis-master-review；真实
+      master status=`BALANCED_CORE_FORWARD_AGING_REVIEWABLE`，candidate=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，owner
+      recommendation=`ADD_AS_BALANCED_CORE_FORWARD_AGING_CANDIDATE`，watchlist status=`BALANCED_CORE_WATCHLIST_REVIEWABLE`；所有
+      artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、focused pytest、Ruff、compileall 和 `git
+      diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1285
+    row_sha256: 0c4e19ec117cc7bf7f0797c40a6064e8a677cbb5e72cde06354f24a69359cf4a
+    cell_count: 8
+    all_cells:
+    - TRADING-1110_to_1118_GROWTH_TILT_FOCUSED_DIAGNOSIS_AND_WATCHLIST_RECONSIDERATION
+    - Research strategies / equal-risk growth tilt focused diagnosis and watchlist
+      reconsideration
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1110_to_1118_Growth_Tilt_Focused_Diagnosis_And_Watchlist_Reconsideration.md`；实现已完成并真实运行
+      `growth-tilt-focused-diagnosis-master-review --as-of 2026-06-25`，下一步为 owner
+      复核 focused diagnosis docs 和是否允许 research-only balanced-core forward-aging watchlist
+      review；不得新增 growth tilt family、不得修改原始 equal-risk、不得自动写 forward-aging observation、不得进入
+      paper-shadow/production/broker
+    - 新增 9 个 `aits research strategies ...` CLI/artifacts：best-growth-tilt-candidate-deep-dive、vol-target-growth-tilt-local-sensitivity、beta-adjusted-edge-methodology-audit、growth-tilt-balanced-core-role-review、growth-tilt-vs-equal-risk-missed-upside-review、growth-tilt-parameter-neighbor-finalist-review、growth-tilt-watchlist-reconsideration-gate、growth-tilt-owner-diagnosis-pack、growth-tilt-focused-diagnosis-master-review；真实
+      master status=`BALANCED_CORE_FORWARD_AGING_REVIEWABLE`，candidate=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，owner
+      recommendation=`ADD_AS_BALANCED_CORE_FORWARD_AGING_CANDIDATE`，watchlist status=`BALANCED_CORE_WATCHLIST_REVIEWABLE`；所有
+      artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、focused pytest、Ruff、compileall 和 `git
+      diff --check` 通过
+    - '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-1100～1109 real-run 结论 `GROWTH_TILT_RESEARCH_ONLY`
+      后，不扩大策略族也不直接放弃 Growth Tilt，而是围绕最佳 vol-target 候选解释收益来源、beta 归因、balanced-core
+      角色、局部稳健性和 research-only watchlist 复议。2026-06-26: 实现完成并转入 VALIDATING；真实 focused
+      master 使用本地 cache as-of 2026-06-25，结论为 `BALANCED_CORE_FORWARD_AGING_REVIEWABLE`，candidate
+      stable=true，better neighbor exists=true，beta-adjusted edge not material 仍成立，timing/risk-budget
+      independent contribution=false，equal-risk 继续 defensive primary，安全边界保持 no paper-shadow
+      / no production / no broker。'
+    raw_line: '|TRADING-1110_to_1118_GROWTH_TILT_FOCUSED_DIAGNOSIS_AND_WATCHLIST_RECONSIDERATION|Research
+      strategies / equal-risk growth tilt focused diagnosis and watchlist reconsideration|P1|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1110_to_1118_Growth_Tilt_Focused_Diagnosis_And_Watchlist_Reconsideration.md`；实现已完成并真实运行
+      `growth-tilt-focused-diagnosis-master-review --as-of 2026-06-25`，下一步为 owner
+      复核 focused diagnosis docs 和是否允许 research-only balanced-core forward-aging watchlist
+      review；不得新增 growth tilt family、不得修改原始 equal-risk、不得自动写 forward-aging observation、不得进入
+      paper-shadow/production/broker|新增 9 个 `aits research strategies ...` CLI/artifacts：best-growth-tilt-candidate-deep-dive、vol-target-growth-tilt-local-sensitivity、beta-adjusted-edge-methodology-audit、growth-tilt-balanced-core-role-review、growth-tilt-vs-equal-risk-missed-upside-review、growth-tilt-parameter-neighbor-finalist-review、growth-tilt-watchlist-reconsideration-gate、growth-tilt-owner-diagnosis-pack、growth-tilt-focused-diagnosis-master-review；真实
+      master status=`BALANCED_CORE_FORWARD_AGING_REVIEWABLE`，candidate=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，owner
+      recommendation=`ADD_AS_BALANCED_CORE_FORWARD_AGING_CANDIDATE`，watchlist status=`BALANCED_CORE_WATCHLIST_REVIEWABLE`；所有
+      artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、focused pytest、Ruff、compileall 和 `git
+      diff --check` 通过|2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-1100～1109
+      real-run 结论 `GROWTH_TILT_RESEARCH_ONLY` 后，不扩大策略族也不直接放弃 Growth Tilt，而是围绕最佳 vol-target
+      候选解释收益来源、beta 归因、balanced-core 角色、局部稳健性和 research-only watchlist 复议。2026-06-26:
+      实现完成并转入 VALIDATING；真实 focused master 使用本地 cache as-of 2026-06-25，结论为 `BALANCED_CORE_FORWARD_AGING_REVIEWABLE`，candidate
+      stable=true，better neighbor exists=true，beta-adjusted edge not material 仍成立，timing/risk-budget
+      independent contribution=false，equal-risk 继续 defensive primary，安全边界保持 no paper-shadow
+      / no production / no broker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0c4e19ec117cc7bf7f0797c4
+  task_id: TRADING-1110_to_1118_GROWTH_TILT_FOCUSED_DIAGNOSIS_AND_WATCHLIST_RECONSIDERATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-1100～1109 real-run
+      结论 `GROWTH_TILT_RESEARCH_ONLY` 后，不扩大策略族也不直接放弃 Growth Tilt，而是围绕最佳 vol-target
+      候选解释收益来源、beta 归因、balanced-core 角色、局部稳健性和 research-only watchlist 复议。2026-06-26:
+      实现完成并转入 VALIDATING；真实 focused master 使用本地 cache as-of 2026-06-25，结论为 `BALANCED_CORE_FORWARD_AGING_REVIEWABLE`，candidate
+      stable=true，better neighbor exists=true，beta-adjusted edge not material 仍成立，timing/risk-budget
+      independent contribution=false，equal-risk 继续 defensive primary，安全边界保持 no paper-shadow
+      / no production / no broker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0c4e19ec117cc7bf7f0797c40a6064e8a677cbb5e72cde06354f24a69359cf4a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1110_to_1118_GROWTH_TILT_FOCUSED_DIAGNOSIS_AND_WATCHLIST_RECONSIDERATION
+  - Research strategies / equal-risk growth tilt focused diagnosis and watchlist reconsideration
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1110_to_1118_Growth_Tilt_Focused_Diagnosis_And_Watchlist_Reconsideration.md`；实现已完成并真实运行
+    `growth-tilt-focused-diagnosis-master-review --as-of 2026-06-25`，下一步为 owner 复核
+    focused diagnosis docs 和是否允许 research-only balanced-core forward-aging watchlist
+    review；不得新增 growth tilt family、不得修改原始 equal-risk、不得自动写 forward-aging observation、不得进入
+    paper-shadow/production/broker
+  - 新增 9 个 `aits research strategies ...` CLI/artifacts：best-growth-tilt-candidate-deep-dive、vol-target-growth-tilt-local-sensitivity、beta-adjusted-edge-methodology-audit、growth-tilt-balanced-core-role-review、growth-tilt-vs-equal-risk-missed-upside-review、growth-tilt-parameter-neighbor-finalist-review、growth-tilt-watchlist-reconsideration-gate、growth-tilt-owner-diagnosis-pack、growth-tilt-focused-diagnosis-master-review；真实
+    master status=`BALANCED_CORE_FORWARD_AGING_REVIEWABLE`，candidate=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，owner
+    recommendation=`ADD_AS_BALANCED_CORE_FORWARD_AGING_CANDIDATE`，watchlist status=`BALANCED_CORE_WATCHLIST_REVIEWABLE`；所有
+    artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+    registry、artifact catalog、system flow、focused pytest、Ruff、compileall 和 `git diff
+    --check` 通过
+  - '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-1100～1109 real-run 结论 `GROWTH_TILT_RESEARCH_ONLY`
+    后，不扩大策略族也不直接放弃 Growth Tilt，而是围绕最佳 vol-target 候选解释收益来源、beta 归因、balanced-core 角色、局部稳健性和
+    research-only watchlist 复议。2026-06-26: 实现完成并转入 VALIDATING；真实 focused master 使用本地
+    cache as-of 2026-06-25，结论为 `BALANCED_CORE_FORWARD_AGING_REVIEWABLE`，candidate
+    stable=true，better neighbor exists=true，beta-adjusted edge not material 仍成立，timing/risk-budget
+    independent contribution=false，equal-risk 继续 defensive primary，安全边界保持 no paper-shadow
+    / no production / no broker。'
+  docs_links:
+  - docs/requirements/TRADING-1110_to_1118_Growth_Tilt_Focused_Diagnosis_And_Watchlist_Reconsideration.md
+  terminal: false
+  raw_row_sha256: 0c4e19ec117cc7bf7f0797c40a6064e8a677cbb5e72cde06354f24a69359cf4a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b2a00e1406e0a2b9500622fde565d254b18e021f61e14e57abb3c015808a4a50

@@ -1,0 +1,161 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: RISK-007
+  title: null
+  domain: 风险事件/日报前 OpenAI 自动预审
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/risk_event_daily_openai_precheck_2026-05-05.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 基础版已完成：`score-daily` 默认在风险事件发生记录校验前抓取官方来源并调用
+    OpenAI metadata-only 风险事件预审；详细拆解见 `docs/requirements/risk_event_daily_openai_precheck_2026-05-05.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`score-daily` 默认在风险事件发生记录校验前抓取官方来源并调用 OpenAI Responses API，可用 `--skip-risk-event-openai-precheck`
+      跳过；默认最多处理 20 条官方候选，OpenAI 默认模型 `gpt-5.5`、`reasoning.effort=high`、读超时 120 秒；单个
+      OpenAI 请求失败时重试该请求 2 次，仍失败则整批 fail closed；输出官方抓取报告、OpenAI 预审报告和 `risk_event_prereview_queue.json`；缺
+      `OPENAI_API_KEY`、官方来源抓取失败、provider LLM 权限失败或 OpenAI 请求最终失败时停止日报评分；无候选或 irrelevant
+      结果不增加人工队列；预审输出仍为 `llm_extracted / pending_review`，不得写 occurrence、复核声明、评分、仓位闸门或
+      thesis 状态；完整 `DONE` 仍需 owner 人工复核纪律'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1089
+    row_sha256: 8345c3a12ca3f2cf5d6f36500c79fdc6f59a718aef76c0f501711035a3c02d18
+    cell_count: 8
+    all_cells:
+    - RISK-007
+    - 风险事件/日报前 OpenAI 自动预审
+    - P1
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 基础版已完成：`score-daily` 默认在风险事件发生记录校验前抓取官方来源并调用 OpenAI metadata-only 风险事件预审；详细拆解见
+      `docs/requirements/risk_event_daily_openai_precheck_2026-05-05.md`
+    - '`score-daily` 默认在风险事件发生记录校验前抓取官方来源并调用 OpenAI Responses API，可用 `--skip-risk-event-openai-precheck`
+      跳过；默认最多处理 20 条官方候选，OpenAI 默认模型 `gpt-5.5`、`reasoning.effort=high`、读超时 120 秒；单个
+      OpenAI 请求失败时重试该请求 2 次，仍失败则整批 fail closed；输出官方抓取报告、OpenAI 预审报告和 `risk_event_prereview_queue.json`；缺
+      `OPENAI_API_KEY`、官方来源抓取失败、provider LLM 权限失败或 OpenAI 请求最终失败时停止日报评分；无候选或 irrelevant
+      结果不增加人工队列；预审输出仍为 `llm_extracted / pending_review`，不得写 occurrence、复核声明、评分、仓位闸门或
+      thesis 状态；完整 `DONE` 仍需 owner 人工复核纪律'
+    - '2026-05-05: 新增并进入实现，原因：owner 要求先用 OpenAI key 做政策/地缘预审，并加入日报前自动流程；同时明确默认不把正常无关结果加入人工确认输入。2026-05-05:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增官方候选批量 OpenAI 预审、`score-daily --risk-event-openai-precheck`
+      前置流程、README、系统流图和测试；`ruff check src tests` 通过，`pytest -q` 362 passed。2026-05-05:
+      owner 确认默认 OpenAI 响应可能超过 60 秒，已将默认请求读超时调为 600 秒并开放 CLI 参数；单候选真实 smoke 等待约 408
+      秒后收到 OpenAI HTTP 502，按 fail-closed 未写队列。2026-05-05: `gpt-5.5` 单候选 smoke 可收到正常响应；同步修正
+      irrelevant/none 但带 risk_id 的输出不入人工队列。2026-05-05: owner 决策后续默认使用 `gpt-5.5`，不再默认使用较不稳定的
+      `gpt-5.5-pro`；代码常量、README、系统流图、数据源目录和示例已同步；不带 `--openai-model` 的单候选日报前预审 smoke
+      约 96 秒完成，预审 PASS_WITH_WARNINGS，待复核队列 0，日报 PASS_WITH_LIMITATIONS。2026-05-05:
+      owner 决策把 OpenAI 默认配置改为 `gpt-5.5` + `reasoning.effort=high` + 120 秒读超时；`score-daily`
+      默认启用日报前预审，候选排序改为 AI 政策/出口管制优先，日报正文新增预审摘要。2026-05-05: 默认 20 条真实样本已执行，官方来源抓取 PASS、8
+      个 payload、402 条候选；OpenAI 预审上限 20 条，LLM claim 数 23，HTTP 502 错误 1、警告 13，按 fail
+      closed 未写新队列，日报评分未继续。2026-05-05: owner 批准单个 OpenAI 请求失败时重试 2 次；第 3 次仍失败则整批 fail
+      closed，不做断点续跑或部分成功入队。2026-05-05: 已实现并验证请求级重试和批量失败停止；`ruff check src tests`、目标测试
+      42 passed、完整 `pytest -q` 366 passed；默认 20 条真实样本官方抓取 PASS，OpenAI 预审在单请求 3 次尝试后仍失败，报告
+      FAIL、LLM claim 16、错误 1、警告 7，未写新队列，日报未继续。'
+    raw_line: '|RISK-007|风险事件/日报前 OpenAI 自动预审|P1|BASELINE_DONE|系统实现 + 项目 owner|基础版已完成：`score-daily`
+      默认在风险事件发生记录校验前抓取官方来源并调用 OpenAI metadata-only 风险事件预审；详细拆解见 `docs/requirements/risk_event_daily_openai_precheck_2026-05-05.md`|`score-daily`
+      默认在风险事件发生记录校验前抓取官方来源并调用 OpenAI Responses API，可用 `--skip-risk-event-openai-precheck`
+      跳过；默认最多处理 20 条官方候选，OpenAI 默认模型 `gpt-5.5`、`reasoning.effort=high`、读超时 120 秒；单个
+      OpenAI 请求失败时重试该请求 2 次，仍失败则整批 fail closed；输出官方抓取报告、OpenAI 预审报告和 `risk_event_prereview_queue.json`；缺
+      `OPENAI_API_KEY`、官方来源抓取失败、provider LLM 权限失败或 OpenAI 请求最终失败时停止日报评分；无候选或 irrelevant
+      结果不增加人工队列；预审输出仍为 `llm_extracted / pending_review`，不得写 occurrence、复核声明、评分、仓位闸门或
+      thesis 状态；完整 `DONE` 仍需 owner 人工复核纪律|2026-05-05: 新增并进入实现，原因：owner 要求先用 OpenAI
+      key 做政策/地缘预审，并加入日报前自动流程；同时明确默认不把正常无关结果加入人工确认输入。2026-05-05: 从 IN_PROGRESS 改为
+      BASELINE_DONE，原因：新增官方候选批量 OpenAI 预审、`score-daily --risk-event-openai-precheck`
+      前置流程、README、系统流图和测试；`ruff check src tests` 通过，`pytest -q` 362 passed。2026-05-05:
+      owner 确认默认 OpenAI 响应可能超过 60 秒，已将默认请求读超时调为 600 秒并开放 CLI 参数；单候选真实 smoke 等待约 408
+      秒后收到 OpenAI HTTP 502，按 fail-closed 未写队列。2026-05-05: `gpt-5.5` 单候选 smoke 可收到正常响应；同步修正
+      irrelevant/none 但带 risk_id 的输出不入人工队列。2026-05-05: owner 决策后续默认使用 `gpt-5.5`，不再默认使用较不稳定的
+      `gpt-5.5-pro`；代码常量、README、系统流图、数据源目录和示例已同步；不带 `--openai-model` 的单候选日报前预审 smoke
+      约 96 秒完成，预审 PASS_WITH_WARNINGS，待复核队列 0，日报 PASS_WITH_LIMITATIONS。2026-05-05:
+      owner 决策把 OpenAI 默认配置改为 `gpt-5.5` + `reasoning.effort=high` + 120 秒读超时；`score-daily`
+      默认启用日报前预审，候选排序改为 AI 政策/出口管制优先，日报正文新增预审摘要。2026-05-05: 默认 20 条真实样本已执行，官方来源抓取 PASS、8
+      个 payload、402 条候选；OpenAI 预审上限 20 条，LLM claim 数 23，HTTP 502 错误 1、警告 13，按 fail
+      closed 未写新队列，日报评分未继续。2026-05-05: owner 批准单个 OpenAI 请求失败时重试 2 次；第 3 次仍失败则整批 fail
+      closed，不做断点续跑或部分成功入队。2026-05-05: 已实现并验证请求级重试和批量失败停止；`ruff check src tests`、目标测试
+      42 passed、完整 `pytest -q` 366 passed；默认 20 条真实样本官方抓取 PASS，OpenAI 预审在单请求 3 次尝试后仍失败，报告
+      FAIL、LLM claim 16、错误 1、警告 7，未写新队列，日报未继续。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8345c3a12ca3f2cf5d6f3650
+  task_id: RISK-007
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner
+    notes: '2026-05-05: 新增并进入实现，原因：owner 要求先用 OpenAI key 做政策/地缘预审，并加入日报前自动流程；同时明确默认不把正常无关结果加入人工确认输入。2026-05-05:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增官方候选批量 OpenAI 预审、`score-daily --risk-event-openai-precheck`
+      前置流程、README、系统流图和测试；`ruff check src tests` 通过，`pytest -q` 362 passed。2026-05-05:
+      owner 确认默认 OpenAI 响应可能超过 60 秒，已将默认请求读超时调为 600 秒并开放 CLI 参数；单候选真实 smoke 等待约 408
+      秒后收到 OpenAI HTTP 502，按 fail-closed 未写队列。2026-05-05: `gpt-5.5` 单候选 smoke 可收到正常响应；同步修正
+      irrelevant/none 但带 risk_id 的输出不入人工队列。2026-05-05: owner 决策后续默认使用 `gpt-5.5`，不再默认使用较不稳定的
+      `gpt-5.5-pro`；代码常量、README、系统流图、数据源目录和示例已同步；不带 `--openai-model` 的单候选日报前预审 smoke
+      约 96 秒完成，预审 PASS_WITH_WARNINGS，待复核队列 0，日报 PASS_WITH_LIMITATIONS。2026-05-05:
+      owner 决策把 OpenAI 默认配置改为 `gpt-5.5` + `reasoning.effort=high` + 120 秒读超时；`score-daily`
+      默认启用日报前预审，候选排序改为 AI 政策/出口管制优先，日报正文新增预审摘要。2026-05-05: 默认 20 条真实样本已执行，官方来源抓取 PASS、8
+      个 payload、402 条候选；OpenAI 预审上限 20 条，LLM claim 数 23，HTTP 502 错误 1、警告 13，按 fail
+      closed 未写新队列，日报评分未继续。2026-05-05: owner 批准单个 OpenAI 请求失败时重试 2 次；第 3 次仍失败则整批 fail
+      closed，不做断点续跑或部分成功入队。2026-05-05: 已实现并验证请求级重试和批量失败停止；`ruff check src tests`、目标测试
+      42 passed、完整 `pytest -q` 366 passed；默认 20 条真实样本官方抓取 PASS，OpenAI 预审在单请求 3 次尝试后仍失败，报告
+      FAIL、LLM claim 16、错误 1、警告 7，未写新队列，日报未继续。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8345c3a12ca3f2cf5d6f36500c79fdc6f59a718aef76c0f501711035a3c02d18
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - RISK-007
+  - 风险事件/日报前 OpenAI 自动预审
+  - P1
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 基础版已完成：`score-daily` 默认在风险事件发生记录校验前抓取官方来源并调用 OpenAI metadata-only 风险事件预审；详细拆解见
+    `docs/requirements/risk_event_daily_openai_precheck_2026-05-05.md`
+  - '`score-daily` 默认在风险事件发生记录校验前抓取官方来源并调用 OpenAI Responses API，可用 `--skip-risk-event-openai-precheck`
+    跳过；默认最多处理 20 条官方候选，OpenAI 默认模型 `gpt-5.5`、`reasoning.effort=high`、读超时 120 秒；单个
+    OpenAI 请求失败时重试该请求 2 次，仍失败则整批 fail closed；输出官方抓取报告、OpenAI 预审报告和 `risk_event_prereview_queue.json`；缺
+    `OPENAI_API_KEY`、官方来源抓取失败、provider LLM 权限失败或 OpenAI 请求最终失败时停止日报评分；无候选或 irrelevant
+    结果不增加人工队列；预审输出仍为 `llm_extracted / pending_review`，不得写 occurrence、复核声明、评分、仓位闸门或
+    thesis 状态；完整 `DONE` 仍需 owner 人工复核纪律'
+  - '2026-05-05: 新增并进入实现，原因：owner 要求先用 OpenAI key 做政策/地缘预审，并加入日报前自动流程；同时明确默认不把正常无关结果加入人工确认输入。2026-05-05:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增官方候选批量 OpenAI 预审、`score-daily --risk-event-openai-precheck`
+    前置流程、README、系统流图和测试；`ruff check src tests` 通过，`pytest -q` 362 passed。2026-05-05:
+    owner 确认默认 OpenAI 响应可能超过 60 秒，已将默认请求读超时调为 600 秒并开放 CLI 参数；单候选真实 smoke 等待约 408
+    秒后收到 OpenAI HTTP 502，按 fail-closed 未写队列。2026-05-05: `gpt-5.5` 单候选 smoke 可收到正常响应；同步修正
+    irrelevant/none 但带 risk_id 的输出不入人工队列。2026-05-05: owner 决策后续默认使用 `gpt-5.5`，不再默认使用较不稳定的
+    `gpt-5.5-pro`；代码常量、README、系统流图、数据源目录和示例已同步；不带 `--openai-model` 的单候选日报前预审 smoke
+    约 96 秒完成，预审 PASS_WITH_WARNINGS，待复核队列 0，日报 PASS_WITH_LIMITATIONS。2026-05-05: owner
+    决策把 OpenAI 默认配置改为 `gpt-5.5` + `reasoning.effort=high` + 120 秒读超时；`score-daily`
+    默认启用日报前预审，候选排序改为 AI 政策/出口管制优先，日报正文新增预审摘要。2026-05-05: 默认 20 条真实样本已执行，官方来源抓取 PASS、8
+    个 payload、402 条候选；OpenAI 预审上限 20 条，LLM claim 数 23，HTTP 502 错误 1、警告 13，按 fail closed
+    未写新队列，日报评分未继续。2026-05-05: owner 批准单个 OpenAI 请求失败时重试 2 次；第 3 次仍失败则整批 fail closed，不做断点续跑或部分成功入队。2026-05-05:
+    已实现并验证请求级重试和批量失败停止；`ruff check src tests`、目标测试 42 passed、完整 `pytest -q` 366 passed；默认
+    20 条真实样本官方抓取 PASS，OpenAI 预审在单请求 3 次尝试后仍失败，报告 FAIL、LLM claim 16、错误 1、警告 7，未写新队列，日报未继续。'
+  docs_links:
+  - docs/requirements/risk_event_daily_openai_precheck_2026-05-05.md
+  terminal: false
+  raw_row_sha256: 8345c3a12ca3f2cf5d6f36500c79fdc6f59a718aef76c0f501711035a3c02d18
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: af420fde91a13d4cfd58b962bf172edeaf8d03159afa169fe0fe1c2e7443a555

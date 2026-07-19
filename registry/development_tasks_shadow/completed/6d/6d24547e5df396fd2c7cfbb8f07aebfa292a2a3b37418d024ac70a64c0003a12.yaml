@@ -1,0 +1,153 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-008A
+  title: null
+  domain: 交易执行/Shadow Impact Hardening
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/shadow_parameter_impact_evaluation_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/shadow_parameter_impact_evaluation_2026-05-17.md#trading-008a-shadow-impact-hardening`；hardening、CI
+    复核和本地复验已完成；后续真实 production / shadow paper 样本的比较性结论由后续 shadow/paper 观察任务在样本充足时承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`impact_status` 只允许 `INSUFFICIENT_DATA`、`OBSERVE_ONLY`、`SHADOW_PROMISING_BUT_LIMITED`、`NO_CLEAR_IMPROVEMENT`、`SHADOW_UNRELIABLE`、`LOW_DATA_QUALITY`；JSON/Markdown/dashboard
+      不得输出 production promotion、live trade、should-trade 或 approval 肯定语义；JSON 必须包含
+      policy id/version/threshold snapshot 和 `production_effect=none`，Markdown 展示
+      policy version 和关键 thresholds；impact gate 每个 blocker/warning 必须有 human-readable
+      explanation；缺 continuous replay 时输出 `continuous_replay_missing` warning，存在 continuous
+      replay 时记录 artifact path/mode/date range；dashboard 只读摘要，不触发 replay、broker、参数晋级或读取
+      broker API key；目标 pytest、全量 pytest、ruff、black 和 CI 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 297
+    row_sha256: 58a1aed181106d1855f0f41caf12a6a6a591f684ceeb659935f2269d8352106c
+    cell_count: 8
+    all_cells:
+    - TRADING-008A
+    - 交易执行/Shadow Impact Hardening
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/shadow_parameter_impact_evaluation_2026-05-17.md#trading-008a-shadow-impact-hardening`；hardening、CI
+      复核和本地复验已完成；后续真实 production / shadow paper 样本的比较性结论由后续 shadow/paper 观察任务在样本充足时承接
+    - '`impact_status` 只允许 `INSUFFICIENT_DATA`、`OBSERVE_ONLY`、`SHADOW_PROMISING_BUT_LIMITED`、`NO_CLEAR_IMPROVEMENT`、`SHADOW_UNRELIABLE`、`LOW_DATA_QUALITY`；JSON/Markdown/dashboard
+      不得输出 production promotion、live trade、should-trade 或 approval 肯定语义；JSON 必须包含
+      policy id/version/threshold snapshot 和 `production_effect=none`，Markdown 展示
+      policy version 和关键 thresholds；impact gate 每个 blocker/warning 必须有 human-readable
+      explanation；缺 continuous replay 时输出 `continuous_replay_missing` warning，存在 continuous
+      replay 时记录 artifact path/mode/date range；dashboard 只读摘要，不触发 replay、broker、参数晋级或读取
+      broker API key；目标 pytest、全量 pytest、ruff、black 和 CI 通过'
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-008 基础版后做 hardening，防止短样本
+      shadow PnL、daily-independent replay 或 dashboard 文案被误读为上线、实盘、交易批准或参数晋级证据。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已实现保守枚举含 `LOW_DATA_QUALITY`、危险语义扫描、policy snapshot
+      断言、impact_gate blocker/warning explanation、`continuous_replay_missing` warning、continuous
+      replay source path/mode/date range、daily-independent 非 continuous 防护和 dashboard
+      只读摘要测试；验证通过目标 pytest、全量 pytest、ruff 和 full black check。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：GitHub Actions `CI` run `25986926245` 对 commit `a720b95436f8481011145553399c6ec0b01c2e4c`
+      在线复核为 `Success`；本地复验通过 `test_shadow_parameter_impact.py` 6 passed、`test_daily_task_dashboard.py`
+      22 passed、`tests/trading_engine` 939 passed、全量 pytest 2270 passed、scoped Ruff/Black、continuous
+      replay smoke 和 shadow impact smoke；smoke 输出保持 `production_effect=none`、policy
+      snapshot、impact gate explanation、continuous replay source artifact 和只读 safety
+      boundary，未给出 promotion/live trade/approval 结论。'
+    raw_line: '|TRADING-008A|交易执行/Shadow Impact Hardening|P0|DONE|系统验证|详细拆解见 `docs/requirements/shadow_parameter_impact_evaluation_2026-05-17.md#trading-008a-shadow-impact-hardening`；hardening、CI
+      复核和本地复验已完成；后续真实 production / shadow paper 样本的比较性结论由后续 shadow/paper 观察任务在样本充足时承接|`impact_status`
+      只允许 `INSUFFICIENT_DATA`、`OBSERVE_ONLY`、`SHADOW_PROMISING_BUT_LIMITED`、`NO_CLEAR_IMPROVEMENT`、`SHADOW_UNRELIABLE`、`LOW_DATA_QUALITY`；JSON/Markdown/dashboard
+      不得输出 production promotion、live trade、should-trade 或 approval 肯定语义；JSON 必须包含
+      policy id/version/threshold snapshot 和 `production_effect=none`，Markdown 展示
+      policy version 和关键 thresholds；impact gate 每个 blocker/warning 必须有 human-readable
+      explanation；缺 continuous replay 时输出 `continuous_replay_missing` warning，存在 continuous
+      replay 时记录 artifact path/mode/date range；dashboard 只读摘要，不触发 replay、broker、参数晋级或读取
+      broker API key；目标 pytest、全量 pytest、ruff、black 和 CI 通过|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner
+      要求在 TRADING-008 基础版后做 hardening，防止短样本 shadow PnL、daily-independent replay 或
+      dashboard 文案被误读为上线、实盘、交易批准或参数晋级证据。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已实现保守枚举含
+      `LOW_DATA_QUALITY`、危险语义扫描、policy snapshot 断言、impact_gate blocker/warning explanation、`continuous_replay_missing`
+      warning、continuous replay source path/mode/date range、daily-independent 非 continuous
+      防护和 dashboard 只读摘要测试；验证通过目标 pytest、全量 pytest、ruff 和 full black check。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：GitHub Actions `CI` run `25986926245` 对 commit `a720b95436f8481011145553399c6ec0b01c2e4c`
+      在线复核为 `Success`；本地复验通过 `test_shadow_parameter_impact.py` 6 passed、`test_daily_task_dashboard.py`
+      22 passed、`tests/trading_engine` 939 passed、全量 pytest 2270 passed、scoped Ruff/Black、continuous
+      replay smoke 和 shadow impact smoke；smoke 输出保持 `production_effect=none`、policy
+      snapshot、impact gate explanation、continuous replay source artifact 和只读 safety
+      boundary，未给出 promotion/live trade/approval 结论。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-58a1aed181106d1855f0f41c
+  task_id: TRADING-008A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-008 基础版后做 hardening，防止短样本
+      shadow PnL、daily-independent replay 或 dashboard 文案被误读为上线、实盘、交易批准或参数晋级证据。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已实现保守枚举含 `LOW_DATA_QUALITY`、危险语义扫描、policy snapshot
+      断言、impact_gate blocker/warning explanation、`continuous_replay_missing` warning、continuous
+      replay source path/mode/date range、daily-independent 非 continuous 防护和 dashboard
+      只读摘要测试；验证通过目标 pytest、全量 pytest、ruff 和 full black check。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：GitHub Actions `CI` run `25986926245` 对 commit `a720b95436f8481011145553399c6ec0b01c2e4c`
+      在线复核为 `Success`；本地复验通过 `test_shadow_parameter_impact.py` 6 passed、`test_daily_task_dashboard.py`
+      22 passed、`tests/trading_engine` 939 passed、全量 pytest 2270 passed、scoped Ruff/Black、continuous
+      replay smoke 和 shadow impact smoke；smoke 输出保持 `production_effect=none`、policy
+      snapshot、impact gate explanation、continuous replay source artifact 和只读 safety
+      boundary，未给出 promotion/live trade/approval 结论。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:58a1aed181106d1855f0f41caf12a6a6a591f684ceeb659935f2269d8352106c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-008A
+  - 交易执行/Shadow Impact Hardening
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/shadow_parameter_impact_evaluation_2026-05-17.md#trading-008a-shadow-impact-hardening`；hardening、CI
+    复核和本地复验已完成；后续真实 production / shadow paper 样本的比较性结论由后续 shadow/paper 观察任务在样本充足时承接
+  - '`impact_status` 只允许 `INSUFFICIENT_DATA`、`OBSERVE_ONLY`、`SHADOW_PROMISING_BUT_LIMITED`、`NO_CLEAR_IMPROVEMENT`、`SHADOW_UNRELIABLE`、`LOW_DATA_QUALITY`；JSON/Markdown/dashboard
+    不得输出 production promotion、live trade、should-trade 或 approval 肯定语义；JSON 必须包含 policy
+    id/version/threshold snapshot 和 `production_effect=none`，Markdown 展示 policy version
+    和关键 thresholds；impact gate 每个 blocker/warning 必须有 human-readable explanation；缺
+    continuous replay 时输出 `continuous_replay_missing` warning，存在 continuous replay
+    时记录 artifact path/mode/date range；dashboard 只读摘要，不触发 replay、broker、参数晋级或读取 broker
+    API key；目标 pytest、全量 pytest、ruff、black 和 CI 通过'
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-008 基础版后做 hardening，防止短样本
+    shadow PnL、daily-independent replay 或 dashboard 文案被误读为上线、实盘、交易批准或参数晋级证据。2026-05-17:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已实现保守枚举含 `LOW_DATA_QUALITY`、危险语义扫描、policy snapshot
+    断言、impact_gate blocker/warning explanation、`continuous_replay_missing` warning、continuous
+    replay source path/mode/date range、daily-independent 非 continuous 防护和 dashboard
+    只读摘要测试；验证通过目标 pytest、全量 pytest、ruff 和 full black check。2026-06-09: 从 VALIDATING
+    改为 DONE，原因：GitHub Actions `CI` run `25986926245` 对 commit `a720b95436f8481011145553399c6ec0b01c2e4c`
+    在线复核为 `Success`；本地复验通过 `test_shadow_parameter_impact.py` 6 passed、`test_daily_task_dashboard.py`
+    22 passed、`tests/trading_engine` 939 passed、全量 pytest 2270 passed、scoped Ruff/Black、continuous
+    replay smoke 和 shadow impact smoke；smoke 输出保持 `production_effect=none`、policy
+    snapshot、impact gate explanation、continuous replay source artifact 和只读 safety
+    boundary，未给出 promotion/live trade/approval 结论。'
+  docs_links:
+  - docs/requirements/shadow_parameter_impact_evaluation_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 58a1aed181106d1855f0f41caf12a6a6a591f684ceeb659935f2269d8352106c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: bd8e8f558a1cd61fc88b63a6e24f76f5da3fda9975346d83e120d2b457a7c2f7

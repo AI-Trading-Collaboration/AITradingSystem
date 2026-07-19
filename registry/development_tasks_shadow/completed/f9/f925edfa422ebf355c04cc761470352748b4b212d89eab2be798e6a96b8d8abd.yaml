@@ -1,0 +1,141 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: UNIV-001
+  title: null
+  domain: 标的池/模型参数化
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/ai_universe_and_model_parameterization_2026-05-11.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/ai_universe_and_model_parameterization_2026-05-11.md`；expanded
+    universe 已通过真实非交易日 daily-run、交易日 strict replay、replay-window 和最新生产 daily-run 17-ticker
+    链路验证；AMZN R&D 覆盖 warning 继续作为非阻断披露
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增代表 ticker 进入 `core_watchlist`、watchlist、lifecycle 和 SEC 映射；默认数据下载、特征、评分、回测和
+      dashboard 使用扩展后的核心观察池；配置测试、watchlist/lifecycle 校验和相关单测通过；文档列出 valuation gate、评分仓位映射、置信度折扣、宏观预算、风险预算、数据质量阈值和执行政策等后续可调参数候选；真实
+      daily/replay 验证不因新增 ticker 的价格、估值或基本面覆盖配置错误而阻断
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 351
+    row_sha256: 493d062ab4e3ff3d0167324f7cb7f79980bdcec76bc7226a4087fee5ff45af28
+    cell_count: 8
+    all_cells:
+    - UNIV-001
+    - 标的池/模型参数化
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/ai_universe_and_model_parameterization_2026-05-11.md`；expanded
+      universe 已通过真实非交易日 daily-run、交易日 strict replay、replay-window 和最新生产 daily-run
+      17-ticker 链路验证；AMZN R&D 覆盖 warning 继续作为非阻断披露
+    - 新增代表 ticker 进入 `core_watchlist`、watchlist、lifecycle 和 SEC 映射；默认数据下载、特征、评分、回测和
+      dashboard 使用扩展后的核心观察池；配置测试、watchlist/lifecycle 校验和相关单测通过；文档列出 valuation gate、评分仓位映射、置信度折扣、宏观预算、风险预算、数据质量阈值和执行政策等后续可调参数候选；真实
+      daily/replay 验证不因新增 ticker 的价格、估值或基本面覆盖配置错误而阻断
+    - '2026-05-11: 新增并进入实现，原因：owner 明确系统尚未稳定进入生产，可以优先提升 AI 产业链代表性覆盖，不要求与早期 6 ticker
+      输出保持兼容；同时要求整理类似 valuation 40% cap 的硬阈值作为后续模型迭代重点。2026-05-11: 从 IN_PROGRESS 改为
+      VALIDATING，原因：核心观察池扩展到 17 个 ticker，watchlist/lifecycle/SEC 映射、风险事件映射、官方政策 ticker
+      匹配、AVGO/LRCX 拆股事件、系统流图和参数化清单均已更新；验证通过 CLI 校验、ruff 和全量 pytest。2026-05-11: 从 VALIDATING
+      改回 IN_PROGRESS，原因：expanded universe 真实非交易日 daily-run 已跑到 SEC metrics 并阻断于 ASML
+      taxonomy 配置，SEC companyfacts 实际返回 `us-gaap + dei`，需要修正配置后复测。2026-05-11: 从 IN_PROGRESS
+      改为 VALIDATING，原因：ASML SEC taxonomy 修正为 `us-gaap + dei` 并补 `us-gaap/EUR` 指标映射；非交易日
+      `daily-run --as-of 2026-05-10` 为 PASS_WITH_SKIPS，交易日 `replay-day --as-of 2026-05-08
+      --full-universe` 为 PASS，`replay-window 2026-05-08..2026-05-10` 为 PASS_WITH_SKIPS。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      31/31 PASS，17 个 ticker 已进入日报、估值、SEC/TSM 基本面、feature 和 dashboard 链，特征警告 0；AMZN
+      R&D 缺披露口径作为 warning 保留，不阻断 universe 验收。'
+    raw_line: '|UNIV-001|标的池/模型参数化|P1|DONE|系统验证|详细拆解见 `docs/requirements/ai_universe_and_model_parameterization_2026-05-11.md`；expanded
+      universe 已通过真实非交易日 daily-run、交易日 strict replay、replay-window 和最新生产 daily-run
+      17-ticker 链路验证；AMZN R&D 覆盖 warning 继续作为非阻断披露|新增代表 ticker 进入 `core_watchlist`、watchlist、lifecycle
+      和 SEC 映射；默认数据下载、特征、评分、回测和 dashboard 使用扩展后的核心观察池；配置测试、watchlist/lifecycle 校验和相关单测通过；文档列出
+      valuation gate、评分仓位映射、置信度折扣、宏观预算、风险预算、数据质量阈值和执行政策等后续可调参数候选；真实 daily/replay 验证不因新增
+      ticker 的价格、估值或基本面覆盖配置错误而阻断|2026-05-11: 新增并进入实现，原因：owner 明确系统尚未稳定进入生产，可以优先提升
+      AI 产业链代表性覆盖，不要求与早期 6 ticker 输出保持兼容；同时要求整理类似 valuation 40% cap 的硬阈值作为后续模型迭代重点。2026-05-11:
+      从 IN_PROGRESS 改为 VALIDATING，原因：核心观察池扩展到 17 个 ticker，watchlist/lifecycle/SEC
+      映射、风险事件映射、官方政策 ticker 匹配、AVGO/LRCX 拆股事件、系统流图和参数化清单均已更新；验证通过 CLI 校验、ruff 和全量
+      pytest。2026-05-11: 从 VALIDATING 改回 IN_PROGRESS，原因：expanded universe 真实非交易日 daily-run
+      已跑到 SEC metrics 并阻断于 ASML taxonomy 配置，SEC companyfacts 实际返回 `us-gaap + dei`，需要修正配置后复测。2026-05-11:
+      从 IN_PROGRESS 改为 VALIDATING，原因：ASML SEC taxonomy 修正为 `us-gaap + dei` 并补 `us-gaap/EUR`
+      指标映射；非交易日 `daily-run --as-of 2026-05-10` 为 PASS_WITH_SKIPS，交易日 `replay-day --as-of
+      2026-05-08 --full-universe` 为 PASS，`replay-window 2026-05-08..2026-05-10` 为
+      PASS_WITH_SKIPS。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of
+      2026-06-05 --run-id codex_20260605_20260607103901` 31/31 PASS，17 个 ticker 已进入日报、估值、SEC/TSM
+      基本面、feature 和 dashboard 链，特征警告 0；AMZN R&D 缺披露口径作为 warning 保留，不阻断 universe 验收。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-493d062ab4e3ff3d0167324f
+  task_id: UNIV-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-11: 新增并进入实现，原因：owner 明确系统尚未稳定进入生产，可以优先提升 AI 产业链代表性覆盖，不要求与早期 6
+      ticker 输出保持兼容；同时要求整理类似 valuation 40% cap 的硬阈值作为后续模型迭代重点。2026-05-11: 从 IN_PROGRESS
+      改为 VALIDATING，原因：核心观察池扩展到 17 个 ticker，watchlist/lifecycle/SEC 映射、风险事件映射、官方政策
+      ticker 匹配、AVGO/LRCX 拆股事件、系统流图和参数化清单均已更新；验证通过 CLI 校验、ruff 和全量 pytest。2026-05-11:
+      从 VALIDATING 改回 IN_PROGRESS，原因：expanded universe 真实非交易日 daily-run 已跑到 SEC metrics
+      并阻断于 ASML taxonomy 配置，SEC companyfacts 实际返回 `us-gaap + dei`，需要修正配置后复测。2026-05-11:
+      从 IN_PROGRESS 改为 VALIDATING，原因：ASML SEC taxonomy 修正为 `us-gaap + dei` 并补 `us-gaap/EUR`
+      指标映射；非交易日 `daily-run --as-of 2026-05-10` 为 PASS_WITH_SKIPS，交易日 `replay-day --as-of
+      2026-05-08 --full-universe` 为 PASS，`replay-window 2026-05-08..2026-05-10` 为
+      PASS_WITH_SKIPS。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of
+      2026-06-05 --run-id codex_20260605_20260607103901` 31/31 PASS，17 个 ticker 已进入日报、估值、SEC/TSM
+      基本面、feature 和 dashboard 链，特征警告 0；AMZN R&D 缺披露口径作为 warning 保留，不阻断 universe 验收。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:493d062ab4e3ff3d0167324f7cb7f79980bdcec76bc7226a4087fee5ff45af28
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - UNIV-001
+  - 标的池/模型参数化
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/ai_universe_and_model_parameterization_2026-05-11.md`；expanded
+    universe 已通过真实非交易日 daily-run、交易日 strict replay、replay-window 和最新生产 daily-run 17-ticker
+    链路验证；AMZN R&D 覆盖 warning 继续作为非阻断披露
+  - 新增代表 ticker 进入 `core_watchlist`、watchlist、lifecycle 和 SEC 映射；默认数据下载、特征、评分、回测和
+    dashboard 使用扩展后的核心观察池；配置测试、watchlist/lifecycle 校验和相关单测通过；文档列出 valuation gate、评分仓位映射、置信度折扣、宏观预算、风险预算、数据质量阈值和执行政策等后续可调参数候选；真实
+    daily/replay 验证不因新增 ticker 的价格、估值或基本面覆盖配置错误而阻断
+  - '2026-05-11: 新增并进入实现，原因：owner 明确系统尚未稳定进入生产，可以优先提升 AI 产业链代表性覆盖，不要求与早期 6 ticker
+    输出保持兼容；同时要求整理类似 valuation 40% cap 的硬阈值作为后续模型迭代重点。2026-05-11: 从 IN_PROGRESS 改为
+    VALIDATING，原因：核心观察池扩展到 17 个 ticker，watchlist/lifecycle/SEC 映射、风险事件映射、官方政策 ticker
+    匹配、AVGO/LRCX 拆股事件、系统流图和参数化清单均已更新；验证通过 CLI 校验、ruff 和全量 pytest。2026-05-11: 从 VALIDATING
+    改回 IN_PROGRESS，原因：expanded universe 真实非交易日 daily-run 已跑到 SEC metrics 并阻断于 ASML
+    taxonomy 配置，SEC companyfacts 实际返回 `us-gaap + dei`，需要修正配置后复测。2026-05-11: 从 IN_PROGRESS
+    改为 VALIDATING，原因：ASML SEC taxonomy 修正为 `us-gaap + dei` 并补 `us-gaap/EUR` 指标映射；非交易日
+    `daily-run --as-of 2026-05-10` 为 PASS_WITH_SKIPS，交易日 `replay-day --as-of 2026-05-08
+    --full-universe` 为 PASS，`replay-window 2026-05-08..2026-05-10` 为 PASS_WITH_SKIPS。2026-06-07:
+    从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+    31/31 PASS，17 个 ticker 已进入日报、估值、SEC/TSM 基本面、feature 和 dashboard 链，特征警告 0；AMZN
+    R&D 缺披露口径作为 warning 保留，不阻断 universe 验收。'
+  docs_links:
+  - docs/requirements/ai_universe_and_model_parameterization_2026-05-11.md
+  terminal: true
+  raw_row_sha256: 493d062ab4e3ff3d0167324f7cb7f79980bdcec76bc7226a4087fee5ff45af28
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 02039bca36af0c674e2dcb9d87b5a719502ba005ddbc47ac98981e57eef9a3e2

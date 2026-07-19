@@ -1,0 +1,152 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2285_REGENERATED_CANDIDATE_ACTUAL_PATH_VALIDATION
+  title: null
+  domain: Research trends / regenerated candidate actual-path validation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 actual-path evidence；TRADING-2286 执行 risk attribution
+    / owner review package
+  requirement_refs:
+  - docs/requirements/TRADING-2285_Regenerated_Candidate_Actual_Path_Validation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2285_Regenerated_Candidate_Actual_Path_Validation.md`；已读取
+    TRADING-2284 regenerated candidate artifacts 并生成 candidate-level actual-path evidence。本批只生成
+    validation evidence，不做 owner final decision、promotion、paper-shadow、production
+    或 broker action，不改变 TRADING-2281 permanently inconclusive 结论。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends regenerated-candidate-actual-path-validation`；读取
+      2284 artifacts 并 validator fail closed；生成 actual path matrix、prediction outcome
+      matrix、candidate validation scorecard、error attribution seed、data quality report、state
+      recommendation matrix 和 summary；真实 run 生成 95,220 条 actual-path / prediction-outcome
+      records，其中 73,188 条 validation eligible；三类 candidate 当前均为 `ACTUAL_PATH_VALIDATED_INCONCLUSIVE`；所有
+      outputs 固定 promotion/paper-shadow/production false、broker_action=none，paper_shadow/production
+      recommendation disabled；focused tests、full pytest、docs freshness、documentation
+      contract、contract-validation、task-register consistency、Ruff、compileall 和 diff
+      check 通过。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 166
+    row_sha256: 20da304455199f057a287da3e09a3fe89f323898ce15890ca827e0770136db34
+    cell_count: 8
+    all_cells:
+    - TRADING-2285_REGENERATED_CANDIDATE_ACTUAL_PATH_VALIDATION
+    - Research trends / regenerated candidate actual-path validation
+    - P0
+    - DONE
+    - 项目 owner 后续复核 actual-path evidence；TRADING-2286 执行 risk attribution / owner
+      review package
+    - 详见 `docs/requirements/TRADING-2285_Regenerated_Candidate_Actual_Path_Validation.md`；已读取
+      TRADING-2284 regenerated candidate artifacts 并生成 candidate-level actual-path
+      evidence。本批只生成 validation evidence，不做 owner final decision、promotion、paper-shadow、production
+      或 broker action，不改变 TRADING-2281 permanently inconclusive 结论。
+    - 新增 `aits research trends regenerated-candidate-actual-path-validation`；读取 2284
+      artifacts 并 validator fail closed；生成 actual path matrix、prediction outcome matrix、candidate
+      validation scorecard、error attribution seed、data quality report、state recommendation
+      matrix 和 summary；真实 run 生成 95,220 条 actual-path / prediction-outcome records，其中
+      73,188 条 validation eligible；三类 candidate 当前均为 `ACTUAL_PATH_VALIDATED_INCONCLUSIVE`；所有
+      outputs 固定 promotion/paper-shadow/production false、broker_action=none，paper_shadow/production
+      recommendation disabled；focused tests、full pytest、docs freshness、documentation
+      contract、contract-validation、task-register consistency、Ruff、compileall 和 diff
+      check 通过。
+    - '2026-06-30: 新增并进入 IN_PROGRESS；范围限定为 regenerated candidate actual-path evidence，TRADING-2286
+      才执行更完整 risk attribution 和 owner review package。2026-06-30: 实现完成并归档为 DONE；真实
+      run source data quality status=`PASS_WITH_WARNINGS` / error_count=0，actual_path_status_counts=`complete:73188
+      / missing_decision_price:21024 / incomplete_future_window:1008`；验证通过 focused
+      parallel pytest 24 passed、full parallel pytest 3538 passed / 643 warnings、contract-validation
+      193 passed。'
+    raw_line: '|TRADING-2285_REGENERATED_CANDIDATE_ACTUAL_PATH_VALIDATION|Research
+      trends / regenerated candidate actual-path validation|P0|DONE|项目 owner 后续复核
+      actual-path evidence；TRADING-2286 执行 risk attribution / owner review package|详见
+      `docs/requirements/TRADING-2285_Regenerated_Candidate_Actual_Path_Validation.md`；已读取
+      TRADING-2284 regenerated candidate artifacts 并生成 candidate-level actual-path
+      evidence。本批只生成 validation evidence，不做 owner final decision、promotion、paper-shadow、production
+      或 broker action，不改变 TRADING-2281 permanently inconclusive 结论。|新增 `aits research
+      trends regenerated-candidate-actual-path-validation`；读取 2284 artifacts 并 validator
+      fail closed；生成 actual path matrix、prediction outcome matrix、candidate validation
+      scorecard、error attribution seed、data quality report、state recommendation matrix
+      和 summary；真实 run 生成 95,220 条 actual-path / prediction-outcome records，其中 73,188
+      条 validation eligible；三类 candidate 当前均为 `ACTUAL_PATH_VALIDATED_INCONCLUSIVE`；所有
+      outputs 固定 promotion/paper-shadow/production false、broker_action=none，paper_shadow/production
+      recommendation disabled；focused tests、full pytest、docs freshness、documentation
+      contract、contract-validation、task-register consistency、Ruff、compileall 和 diff
+      check 通过。|2026-06-30: 新增并进入 IN_PROGRESS；范围限定为 regenerated candidate actual-path
+      evidence，TRADING-2286 才执行更完整 risk attribution 和 owner review package。2026-06-30:
+      实现完成并归档为 DONE；真实 run source data quality status=`PASS_WITH_WARNINGS` / error_count=0，actual_path_status_counts=`complete:73188
+      / missing_decision_price:21024 / incomplete_future_window:1008`；验证通过 focused
+      parallel pytest 24 passed、full parallel pytest 3538 passed / 643 warnings、contract-validation
+      193 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-20da304455199f057a287da3
+  task_id: TRADING-2285_REGENERATED_CANDIDATE_ACTUAL_PATH_VALIDATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 actual-path evidence；TRADING-2286 执行 risk attribution
+      / owner review package
+    notes: '2026-06-30: 新增并进入 IN_PROGRESS；范围限定为 regenerated candidate actual-path
+      evidence，TRADING-2286 才执行更完整 risk attribution 和 owner review package。2026-06-30:
+      实现完成并归档为 DONE；真实 run source data quality status=`PASS_WITH_WARNINGS` / error_count=0，actual_path_status_counts=`complete:73188
+      / missing_decision_price:21024 / incomplete_future_window:1008`；验证通过 focused
+      parallel pytest 24 passed、full parallel pytest 3538 passed / 643 warnings、contract-validation
+      193 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:20da304455199f057a287da3e09a3fe89f323898ce15890ca827e0770136db34
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2285_REGENERATED_CANDIDATE_ACTUAL_PATH_VALIDATION
+  - Research trends / regenerated candidate actual-path validation
+  - P0
+  - DONE
+  - 项目 owner 后续复核 actual-path evidence；TRADING-2286 执行 risk attribution / owner review
+    package
+  - 详见 `docs/requirements/TRADING-2285_Regenerated_Candidate_Actual_Path_Validation.md`；已读取
+    TRADING-2284 regenerated candidate artifacts 并生成 candidate-level actual-path evidence。本批只生成
+    validation evidence，不做 owner final decision、promotion、paper-shadow、production
+    或 broker action，不改变 TRADING-2281 permanently inconclusive 结论。
+  - 新增 `aits research trends regenerated-candidate-actual-path-validation`；读取 2284
+    artifacts 并 validator fail closed；生成 actual path matrix、prediction outcome matrix、candidate
+    validation scorecard、error attribution seed、data quality report、state recommendation
+    matrix 和 summary；真实 run 生成 95,220 条 actual-path / prediction-outcome records，其中
+    73,188 条 validation eligible；三类 candidate 当前均为 `ACTUAL_PATH_VALIDATED_INCONCLUSIVE`；所有
+    outputs 固定 promotion/paper-shadow/production false、broker_action=none，paper_shadow/production
+    recommendation disabled；focused tests、full pytest、docs freshness、documentation
+    contract、contract-validation、task-register consistency、Ruff、compileall 和 diff
+    check 通过。
+  - '2026-06-30: 新增并进入 IN_PROGRESS；范围限定为 regenerated candidate actual-path evidence，TRADING-2286
+    才执行更完整 risk attribution 和 owner review package。2026-06-30: 实现完成并归档为 DONE；真实 run
+    source data quality status=`PASS_WITH_WARNINGS` / error_count=0，actual_path_status_counts=`complete:73188
+    / missing_decision_price:21024 / incomplete_future_window:1008`；验证通过 focused parallel
+    pytest 24 passed、full parallel pytest 3538 passed / 643 warnings、contract-validation
+    193 passed。'
+  docs_links:
+  - docs/requirements/TRADING-2285_Regenerated_Candidate_Actual_Path_Validation.md
+  terminal: true
+  raw_row_sha256: 20da304455199f057a287da3e09a3fe89f323898ce15890ca827e0770136db34
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: badd027ca66d207fe6ed35722f4fa17156ccea8fb4c5b1c96b78d1df9e4d7619

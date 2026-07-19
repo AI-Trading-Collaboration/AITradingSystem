@@ -1,0 +1,151 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-695_INDICATOR_RESEARCH_EVIDENCE_GATE_THRESHOLD_CALIBRATION
+  title: null
+  domain: Threshold governance / indicator research validation-only sensitivity calibration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-695_Indicator_Research_Evidence_Gate_Threshold_Calibration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-695_Indicator_Research_Evidence_Gate_Threshold_Calibration.md`；本轮只校准第一批中的
+    5 个 indicator research evidence gate 阈值，输出 sensitivity analysis、robustness checks
+    和 validation pack `threshold_calibration_summary`；继续保持 validation-only，不修改 production
+    / paper-shadow / official weights
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`threshold_calibration_report.json/md` 覆盖指定 5 个阈值，逐项输出 current/tested values、recommendation/promotion
+      gate by value、false promotion/rejection risk、sample quality impact、valuation/crowding
+      recommendation change、recommended status/action/reason/evidence strength/limitations；floor
+      50 类阈值保持 `threshold_type=heuristic_guardrail`、`not_validated_statistical_boundary=true`
+      且最多升级到 `SENSITIVITY_TESTED`；robustness checks 包含 date/asset/cluster equal-weight、leave-one-date/cluster
+      和 full_advisory_only vs all_sources consistency；validation pack summary 披露 tested/sensitivity/still-uncalibrated/still-blocking/changed
+      counts；focused tests、CLI、Ruff、py_compile、`git diff --check` 和并行 validation tier
+      通过或明确记录阻塞'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1403
+    row_sha256: 8b8dc9341345c934fc481b4fad4de7a2ca5de1232616aa972cc529e7d11d0bdb
+    cell_count: 8
+    all_cells:
+    - TRADING-695_INDICATOR_RESEARCH_EVIDENCE_GATE_THRESHOLD_CALIBRATION
+    - Threshold governance / indicator research validation-only sensitivity calibration
+    - P0
+    - VALIDATING
+    - 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-695_Indicator_Research_Evidence_Gate_Threshold_Calibration.md`；本轮只校准第一批中的
+      5 个 indicator research evidence gate 阈值，输出 sensitivity analysis、robustness checks
+      和 validation pack `threshold_calibration_summary`；继续保持 validation-only，不修改 production
+      / paper-shadow / official weights
+    - '`threshold_calibration_report.json/md` 覆盖指定 5 个阈值，逐项输出 current/tested values、recommendation/promotion
+      gate by value、false promotion/rejection risk、sample quality impact、valuation/crowding
+      recommendation change、recommended status/action/reason/evidence strength/limitations；floor
+      50 类阈值保持 `threshold_type=heuristic_guardrail`、`not_validated_statistical_boundary=true`
+      且最多升级到 `SENSITIVITY_TESTED`；robustness checks 包含 date/asset/cluster equal-weight、leave-one-date/cluster
+      和 full_advisory_only vs all_sources consistency；validation pack summary 披露 tested/sensitivity/still-uncalibrated/still-blocking/changed
+      counts；focused tests、CLI、Ruff、py_compile、`git diff --check` 和并行 validation tier
+      通过或明确记录阻塞'
+    - '2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；范围限定为 indicator research evidence gate
+      threshold sensitivity，不能批准 promotion、paper-shadow、production 或 official weight
+      changes。2026-06-20: 实现完成并进入 VALIDATING；真实 CLI 输出 `tested_threshold_count=5`、`sensitivity_tested_count=5`、`still_uncalibrated_high_impact_count=31`、`thresholds_still_blocking_promotion_count=36`、`thresholds_changed_count=0`、`production_effect=none`，其中
+      2 个阈值仍 `insufficient_data`、3 个为 `keep_current_value`，所有输出保持 promotion/paper/production
+      weight flags=false。验证通过 Black、py_compile、Ruff、focused indicator pytest 38 passed、task/docs/config
+      并行 pytest 27 passed、validation-pack-stability PASS stable=true、`git diff --check`
+      和 full 并行 validation tier 2979 passed / 643 warnings / 166.15s，runtime artifact
+      `outputs/validation_runtime/full_20260620T110625Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-695_INDICATOR_RESEARCH_EVIDENCE_GATE_THRESHOLD_CALIBRATION|Threshold
+      governance / indicator research validation-only sensitivity calibration|P0|VALIDATING|项目
+      owner 后续复核|详细拆解见 `docs/requirements/TRADING-695_Indicator_Research_Evidence_Gate_Threshold_Calibration.md`；本轮只校准第一批中的
+      5 个 indicator research evidence gate 阈值，输出 sensitivity analysis、robustness checks
+      和 validation pack `threshold_calibration_summary`；继续保持 validation-only，不修改 production
+      / paper-shadow / official weights|`threshold_calibration_report.json/md` 覆盖指定
+      5 个阈值，逐项输出 current/tested values、recommendation/promotion gate by value、false
+      promotion/rejection risk、sample quality impact、valuation/crowding recommendation
+      change、recommended status/action/reason/evidence strength/limitations；floor
+      50 类阈值保持 `threshold_type=heuristic_guardrail`、`not_validated_statistical_boundary=true`
+      且最多升级到 `SENSITIVITY_TESTED`；robustness checks 包含 date/asset/cluster equal-weight、leave-one-date/cluster
+      和 full_advisory_only vs all_sources consistency；validation pack summary 披露 tested/sensitivity/still-uncalibrated/still-blocking/changed
+      counts；focused tests、CLI、Ruff、py_compile、`git diff --check` 和并行 validation tier
+      通过或明确记录阻塞|2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；范围限定为 indicator research evidence
+      gate threshold sensitivity，不能批准 promotion、paper-shadow、production 或 official
+      weight changes。2026-06-20: 实现完成并进入 VALIDATING；真实 CLI 输出 `tested_threshold_count=5`、`sensitivity_tested_count=5`、`still_uncalibrated_high_impact_count=31`、`thresholds_still_blocking_promotion_count=36`、`thresholds_changed_count=0`、`production_effect=none`，其中
+      2 个阈值仍 `insufficient_data`、3 个为 `keep_current_value`，所有输出保持 promotion/paper/production
+      weight flags=false。验证通过 Black、py_compile、Ruff、focused indicator pytest 38 passed、task/docs/config
+      并行 pytest 27 passed、validation-pack-stability PASS stable=true、`git diff --check`
+      和 full 并行 validation tier 2979 passed / 643 warnings / 166.15s，runtime artifact
+      `outputs/validation_runtime/full_20260620T110625Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8b8dc9341345c934fc481b4f
+  task_id: TRADING-695_INDICATOR_RESEARCH_EVIDENCE_GATE_THRESHOLD_CALIBRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核
+    notes: '2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；范围限定为 indicator research evidence
+      gate threshold sensitivity，不能批准 promotion、paper-shadow、production 或 official
+      weight changes。2026-06-20: 实现完成并进入 VALIDATING；真实 CLI 输出 `tested_threshold_count=5`、`sensitivity_tested_count=5`、`still_uncalibrated_high_impact_count=31`、`thresholds_still_blocking_promotion_count=36`、`thresholds_changed_count=0`、`production_effect=none`，其中
+      2 个阈值仍 `insufficient_data`、3 个为 `keep_current_value`，所有输出保持 promotion/paper/production
+      weight flags=false。验证通过 Black、py_compile、Ruff、focused indicator pytest 38 passed、task/docs/config
+      并行 pytest 27 passed、validation-pack-stability PASS stable=true、`git diff --check`
+      和 full 并行 validation tier 2979 passed / 643 warnings / 166.15s，runtime artifact
+      `outputs/validation_runtime/full_20260620T110625Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8b8dc9341345c934fc481b4fad4de7a2ca5de1232616aa972cc529e7d11d0bdb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-695_INDICATOR_RESEARCH_EVIDENCE_GATE_THRESHOLD_CALIBRATION
+  - Threshold governance / indicator research validation-only sensitivity calibration
+  - P0
+  - VALIDATING
+  - 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-695_Indicator_Research_Evidence_Gate_Threshold_Calibration.md`；本轮只校准第一批中的
+    5 个 indicator research evidence gate 阈值，输出 sensitivity analysis、robustness checks
+    和 validation pack `threshold_calibration_summary`；继续保持 validation-only，不修改 production
+    / paper-shadow / official weights
+  - '`threshold_calibration_report.json/md` 覆盖指定 5 个阈值，逐项输出 current/tested values、recommendation/promotion
+    gate by value、false promotion/rejection risk、sample quality impact、valuation/crowding
+    recommendation change、recommended status/action/reason/evidence strength/limitations；floor
+    50 类阈值保持 `threshold_type=heuristic_guardrail`、`not_validated_statistical_boundary=true`
+    且最多升级到 `SENSITIVITY_TESTED`；robustness checks 包含 date/asset/cluster equal-weight、leave-one-date/cluster
+    和 full_advisory_only vs all_sources consistency；validation pack summary 披露 tested/sensitivity/still-uncalibrated/still-blocking/changed
+    counts；focused tests、CLI、Ruff、py_compile、`git diff --check` 和并行 validation tier
+    通过或明确记录阻塞'
+  - '2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；范围限定为 indicator research evidence gate
+    threshold sensitivity，不能批准 promotion、paper-shadow、production 或 official weight
+    changes。2026-06-20: 实现完成并进入 VALIDATING；真实 CLI 输出 `tested_threshold_count=5`、`sensitivity_tested_count=5`、`still_uncalibrated_high_impact_count=31`、`thresholds_still_blocking_promotion_count=36`、`thresholds_changed_count=0`、`production_effect=none`，其中
+    2 个阈值仍 `insufficient_data`、3 个为 `keep_current_value`，所有输出保持 promotion/paper/production
+    weight flags=false。验证通过 Black、py_compile、Ruff、focused indicator pytest 38 passed、task/docs/config
+    并行 pytest 27 passed、validation-pack-stability PASS stable=true、`git diff --check`
+    和 full 并行 validation tier 2979 passed / 643 warnings / 166.15s，runtime artifact
+    `outputs/validation_runtime/full_20260620T110625Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-695_Indicator_Research_Evidence_Gate_Threshold_Calibration.md
+  terminal: false
+  raw_row_sha256: 8b8dc9341345c934fc481b4fad4de7a2ca5de1232616aa972cc529e7d11d0bdb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f80253a7ec62cb91f669ef6a6bf4b76bc3003c83ce9f9b26570686848ff734e2

@@ -1,0 +1,129 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC
+  title: null
+  domain: Research trends / diagnostic regime label generation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2316_Regime_Label_Generator_Diagnostic_POC.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2316_Regime_Label_Generator_Diagnostic_POC.md`；依赖
+    TRADING-2315 design audit、policy-governed label thresholds 和 cached data quality
+    gate。本批只生成 PIT-safe / PIT-approx daily labels for validation segmentation，不生成
+    candidate signal，不进入 actual-path validation，不影响 scoring、daily report、portfolio、paper-shadow、production
+    或 broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `regime_label_series.csv`、`regime_label_generation_summary.json`、`regime_label_pit_policy.json`、label
+      distribution/transition diagnostics、safety boundary 和 research report；真实 run
+      披露 selected market regime=`ai_after_chatgpt`、actual_requested_date_range=`2022-12-01..2026-06-29`、data_quality_status=`PASS_WITH_WARNINGS`、policy
+      version、known-at / lag policy 和 fixed safety flags；所有 promotion/paper-shadow/production/broker
+      false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1220
+    row_sha256: 54e2f45a1dc586ae0668728f2f875e00c89da67c8b7ac764ceca1594732bb9f2
+    cell_count: 8
+    all_cells:
+    - TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC
+    - Research trends / diagnostic regime label generation
+    - P2
+    - VALIDATING
+    - 系统验证 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2316_Regime_Label_Generator_Diagnostic_POC.md`；依赖
+      TRADING-2315 design audit、policy-governed label thresholds 和 cached data quality
+      gate。本批只生成 PIT-safe / PIT-approx daily labels for validation segmentation，不生成
+      candidate signal，不进入 actual-path validation，不影响 scoring、daily report、portfolio、paper-shadow、production
+      或 broker。
+    - 生成 `regime_label_series.csv`、`regime_label_generation_summary.json`、`regime_label_pit_policy.json`、label
+      distribution/transition diagnostics、safety boundary 和 research report；真实 run
+      披露 selected market regime=`ai_after_chatgpt`、actual_requested_date_range=`2022-12-01..2026-06-29`、data_quality_status=`PASS_WITH_WARNINGS`、policy
+      version、known-at / lag policy 和 fixed safety flags；所有 promotion/paper-shadow/production/broker
+      false/none。
+    - '2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2315 next task 新增并进入 IN_PROGRESS；当前
+      worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+      实现完成并进入 VALIDATING；真实 run status=`REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC_READY_SEGMENTATION_ONLY`，label_row_count=5370，distribution_row_count=30，transition_row_count=119；验证通过
+      Ruff、compileall、focused parallel pytest 40 passed、`aits validate-data --as-of
+      2026-06-29` PASS_WITH_WARNINGS、真实 CLI run、contract-validation 193 passed。'
+    raw_line: '|TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC|Research trends
+      / diagnostic regime label generation|P2|VALIDATING|系统验证 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2316_Regime_Label_Generator_Diagnostic_POC.md`；依赖
+      TRADING-2315 design audit、policy-governed label thresholds 和 cached data quality
+      gate。本批只生成 PIT-safe / PIT-approx daily labels for validation segmentation，不生成
+      candidate signal，不进入 actual-path validation，不影响 scoring、daily report、portfolio、paper-shadow、production
+      或 broker。|生成 `regime_label_series.csv`、`regime_label_generation_summary.json`、`regime_label_pit_policy.json`、label
+      distribution/transition diagnostics、safety boundary 和 research report；真实 run
+      披露 selected market regime=`ai_after_chatgpt`、actual_requested_date_range=`2022-12-01..2026-06-29`、data_quality_status=`PASS_WITH_WARNINGS`、policy
+      version、known-at / lag policy 和 fixed safety flags；所有 promotion/paper-shadow/production/broker
+      false/none。|2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2315 next task
+      新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+      实现完成并进入 VALIDATING；真实 run status=`REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC_READY_SEGMENTATION_ONLY`，label_row_count=5370，distribution_row_count=30，transition_row_count=119；验证通过
+      Ruff、compileall、focused parallel pytest 40 passed、`aits validate-data --as-of
+      2026-06-29` PASS_WITH_WARNINGS、真实 CLI run、contract-validation 193 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-54e2f45a1dc586ae0668728f
+  task_id: TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P2
+    next_owner: 系统验证 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2315 next task 新增并进入
+      IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+      实现完成并进入 VALIDATING；真实 run status=`REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC_READY_SEGMENTATION_ONLY`，label_row_count=5370，distribution_row_count=30，transition_row_count=119；验证通过
+      Ruff、compileall、focused parallel pytest 40 passed、`aits validate-data --as-of
+      2026-06-29` PASS_WITH_WARNINGS、真实 CLI run、contract-validation 193 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:54e2f45a1dc586ae0668728f2f875e00c89da67c8b7ac764ceca1594732bb9f2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC
+  - Research trends / diagnostic regime label generation
+  - P2
+  - VALIDATING
+  - 系统验证 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2316_Regime_Label_Generator_Diagnostic_POC.md`；依赖
+    TRADING-2315 design audit、policy-governed label thresholds 和 cached data quality
+    gate。本批只生成 PIT-safe / PIT-approx daily labels for validation segmentation，不生成
+    candidate signal，不进入 actual-path validation，不影响 scoring、daily report、portfolio、paper-shadow、production
+    或 broker。
+  - 生成 `regime_label_series.csv`、`regime_label_generation_summary.json`、`regime_label_pit_policy.json`、label
+    distribution/transition diagnostics、safety boundary 和 research report；真实 run 披露
+    selected market regime=`ai_after_chatgpt`、actual_requested_date_range=`2022-12-01..2026-06-29`、data_quality_status=`PASS_WITH_WARNINGS`、policy
+    version、known-at / lag policy 和 fixed safety flags；所有 promotion/paper-shadow/production/broker
+    false/none。
+  - '2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2315 next task 新增并进入 IN_PROGRESS；当前
+    worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入
+    VALIDATING；真实 run status=`REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC_READY_SEGMENTATION_ONLY`，label_row_count=5370，distribution_row_count=30，transition_row_count=119；验证通过
+    Ruff、compileall、focused parallel pytest 40 passed、`aits validate-data --as-of
+    2026-06-29` PASS_WITH_WARNINGS、真实 CLI run、contract-validation 193 passed。'
+  docs_links:
+  - docs/requirements/TRADING-2316_Regime_Label_Generator_Diagnostic_POC.md
+  terminal: false
+  raw_row_sha256: 54e2f45a1dc586ae0668728f2f875e00c89da67c8b7ac764ceca1594732bb9f2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0c890920bcf1eec6f83143fcd79f0708ac2f5aec5f3e4cefac2965d7e3568de1

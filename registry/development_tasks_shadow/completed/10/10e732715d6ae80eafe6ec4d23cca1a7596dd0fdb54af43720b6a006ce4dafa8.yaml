@@ -1,0 +1,139 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-059
+  title: null
+  domain: 运维/Unified Daily Weekly Monthly Scheduled Task Orchestration Review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/scheduled_task_orchestration_review_2026-05-29.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/scheduled_task_orchestration_review_2026-05-29.md`；已完成统一调度配置、daily-plan/daily-run
+    顺序约束、Reader Brief 上游链接入、非 daily cadence 登记、runbook、system flow/README 更新和专项测试
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `config/scheduled_tasks.yaml`，登记 `daily_trading_day`、`weekly`、`biweekly`、`monthly`
+      和 `ad_hoc_research`；`aits ops daily-plan` 必须列出 required daily commands 并按配置顺序校验；`aits
+      ops daily-run` 在 `score-daily` 后执行 dashboard、SEC PIT shadow observe/monitor、score
+      change attribution、market panel、report index、documentation contract、research
+      governance summary、Reader Brief 和 Reader Brief quality；report index/documentation
+      contract/research governance summary/SEC PIT shadow monitor 均在 Reader Brief
+      前；weekly/monthly/ad hoc tasks 登记但不 daily-run；closed-market mode 跳过 scoring/Reader
+      Brief artifacts 并保留 health/PIT/SEC/valuation；reader/governance/shadow/report
+      tasks 固定 `production_effect=none`、不写 production weights、不写 active shadow weights、不触发
+      broker/trading；测试覆盖命令顺序、闭市行为、非 daily 隔离和安全边界
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 383
+    row_sha256: 7b9304778b2cc4520f613e0d03434ba23245fd9032b9a36921851c6688edd228
+    cell_count: 8
+    all_cells:
+    - OPS-059
+    - 运维/Unified Daily Weekly Monthly Scheduled Task Orchestration Review
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/scheduled_task_orchestration_review_2026-05-29.md`；已完成统一调度配置、daily-plan/daily-run
+      顺序约束、Reader Brief 上游链接入、非 daily cadence 登记、runbook、system flow/README 更新和专项测试
+    - 新增 `config/scheduled_tasks.yaml`，登记 `daily_trading_day`、`weekly`、`biweekly`、`monthly`
+      和 `ad_hoc_research`；`aits ops daily-plan` 必须列出 required daily commands 并按配置顺序校验；`aits
+      ops daily-run` 在 `score-daily` 后执行 dashboard、SEC PIT shadow observe/monitor、score
+      change attribution、market panel、report index、documentation contract、research
+      governance summary、Reader Brief 和 Reader Brief quality；report index/documentation
+      contract/research governance summary/SEC PIT shadow monitor 均在 Reader Brief
+      前；weekly/monthly/ad hoc tasks 登记但不 daily-run；closed-market mode 跳过 scoring/Reader
+      Brief artifacts 并保留 health/PIT/SEC/valuation；reader/governance/shadow/report
+      tasks 固定 `production_effect=none`、不写 production weights、不写 active shadow weights、不触发
+      broker/trading；测试覆盖命令顺序、闭市行为、非 daily 隔离和安全边界
+    - '2026-05-29: 新增并进入 IN_PROGRESS，原因：Reader Brief、SEC PIT shadow monitor、research
+      governance、backtest、parameter/weight governance、documentation contract 和 report
+      registry 产物已经形成，但缺少统一调度计划，存在上游链遗漏风险。2026-05-29: 从 IN_PROGRESS 改为 DONE，原因：已新增配置/loader/runbook/requirements，更新
+      daily-plan/daily-run/direct dispatcher/latest CLI 支持、system flow/README 和测试；验证通过
+      OPS-059 目标 pytest、ruff/black 和 diff check。'
+    raw_line: '|OPS-059|运维/Unified Daily Weekly Monthly Scheduled Task Orchestration
+      Review|P1|DONE|系统验证|详细拆解见 `docs/requirements/scheduled_task_orchestration_review_2026-05-29.md`；已完成统一调度配置、daily-plan/daily-run
+      顺序约束、Reader Brief 上游链接入、非 daily cadence 登记、runbook、system flow/README 更新和专项测试|新增
+      `config/scheduled_tasks.yaml`，登记 `daily_trading_day`、`weekly`、`biweekly`、`monthly`
+      和 `ad_hoc_research`；`aits ops daily-plan` 必须列出 required daily commands 并按配置顺序校验；`aits
+      ops daily-run` 在 `score-daily` 后执行 dashboard、SEC PIT shadow observe/monitor、score
+      change attribution、market panel、report index、documentation contract、research
+      governance summary、Reader Brief 和 Reader Brief quality；report index/documentation
+      contract/research governance summary/SEC PIT shadow monitor 均在 Reader Brief
+      前；weekly/monthly/ad hoc tasks 登记但不 daily-run；closed-market mode 跳过 scoring/Reader
+      Brief artifacts 并保留 health/PIT/SEC/valuation；reader/governance/shadow/report
+      tasks 固定 `production_effect=none`、不写 production weights、不写 active shadow weights、不触发
+      broker/trading；测试覆盖命令顺序、闭市行为、非 daily 隔离和安全边界|2026-05-29: 新增并进入 IN_PROGRESS，原因：Reader
+      Brief、SEC PIT shadow monitor、research governance、backtest、parameter/weight governance、documentation
+      contract 和 report registry 产物已经形成，但缺少统一调度计划，存在上游链遗漏风险。2026-05-29: 从 IN_PROGRESS
+      改为 DONE，原因：已新增配置/loader/runbook/requirements，更新 daily-plan/daily-run/direct
+      dispatcher/latest CLI 支持、system flow/README 和测试；验证通过 OPS-059 目标 pytest、ruff/black
+      和 diff check。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7b9304778b2cc4520f613e0d
+  task_id: OPS-059
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：Reader Brief、SEC PIT shadow monitor、research
+      governance、backtest、parameter/weight governance、documentation contract 和 report
+      registry 产物已经形成，但缺少统一调度计划，存在上游链遗漏风险。2026-05-29: 从 IN_PROGRESS 改为 DONE，原因：已新增配置/loader/runbook/requirements，更新
+      daily-plan/daily-run/direct dispatcher/latest CLI 支持、system flow/README 和测试；验证通过
+      OPS-059 目标 pytest、ruff/black 和 diff check。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7b9304778b2cc4520f613e0d03434ba23245fd9032b9a36921851c6688edd228
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-059
+  - 运维/Unified Daily Weekly Monthly Scheduled Task Orchestration Review
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/scheduled_task_orchestration_review_2026-05-29.md`；已完成统一调度配置、daily-plan/daily-run
+    顺序约束、Reader Brief 上游链接入、非 daily cadence 登记、runbook、system flow/README 更新和专项测试
+  - 新增 `config/scheduled_tasks.yaml`，登记 `daily_trading_day`、`weekly`、`biweekly`、`monthly`
+    和 `ad_hoc_research`；`aits ops daily-plan` 必须列出 required daily commands 并按配置顺序校验；`aits
+    ops daily-run` 在 `score-daily` 后执行 dashboard、SEC PIT shadow observe/monitor、score
+    change attribution、market panel、report index、documentation contract、research governance
+    summary、Reader Brief 和 Reader Brief quality；report index/documentation contract/research
+    governance summary/SEC PIT shadow monitor 均在 Reader Brief 前；weekly/monthly/ad
+    hoc tasks 登记但不 daily-run；closed-market mode 跳过 scoring/Reader Brief artifacts
+    并保留 health/PIT/SEC/valuation；reader/governance/shadow/report tasks 固定 `production_effect=none`、不写
+    production weights、不写 active shadow weights、不触发 broker/trading；测试覆盖命令顺序、闭市行为、非
+    daily 隔离和安全边界
+  - '2026-05-29: 新增并进入 IN_PROGRESS，原因：Reader Brief、SEC PIT shadow monitor、research
+    governance、backtest、parameter/weight governance、documentation contract 和 report
+    registry 产物已经形成，但缺少统一调度计划，存在上游链遗漏风险。2026-05-29: 从 IN_PROGRESS 改为 DONE，原因：已新增配置/loader/runbook/requirements，更新
+    daily-plan/daily-run/direct dispatcher/latest CLI 支持、system flow/README 和测试；验证通过
+    OPS-059 目标 pytest、ruff/black 和 diff check。'
+  docs_links:
+  - docs/requirements/scheduled_task_orchestration_review_2026-05-29.md
+  terminal: true
+  raw_row_sha256: 7b9304778b2cc4520f613e0d03434ba23245fd9032b9a36921851c6688edd228
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 37fb4ef3fa4a6c82f2d635cfd9b97032ef1cfdf6de753cd67f03ca96d21bfe70

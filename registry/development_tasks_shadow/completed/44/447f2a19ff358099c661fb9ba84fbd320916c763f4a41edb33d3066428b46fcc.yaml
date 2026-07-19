@@ -1,0 +1,113 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-062D
+  title: null
+  domain: ETF P2/options IV-VXN-skew source normalizer
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把
+    owner/vendor 本地审计 options CSV 接入 canonical `options_iv_skew.csv` normalizer，继续保持
+    observe-only
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf p2 normalize-options-risk` 只接受本地审计 CSV/Parquet，不下载未批准 provider；必须规范化
+      symbol、as_of、available_at、iv_rank、skew_zscore、vxn_level、source_provider、source
+      URL、downloaded_at、row checksum 和 source manifest；缺列或无有效值 fail closed；risk flag
+      只能使用输入列或 `p2.yaml` 中 IV rank 阈值派生；不得写正式权重、不得改变信号、不得调用 broker；测试覆盖列名别名、percent
+      IV rank、VXN/skew numeric summary、manifest 和 source contract'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 367
+    row_sha256: 03292b976cf11328a9434410d0797ef7e7a9d9845e1aab15cee5050885507849
+    cell_count: 8
+    all_cells:
+    - TRADING-062D
+    - ETF P2/options IV-VXN-skew source normalizer
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把
+      owner/vendor 本地审计 options CSV 接入 canonical `options_iv_skew.csv` normalizer，继续保持
+      observe-only
+    - '`aits etf p2 normalize-options-risk` 只接受本地审计 CSV/Parquet，不下载未批准 provider；必须规范化
+      symbol、as_of、available_at、iv_rank、skew_zscore、vxn_level、source_provider、source
+      URL、downloaded_at、row checksum 和 source manifest；缺列或无有效值 fail closed；risk flag
+      只能使用输入列或 `p2.yaml` 中 IV rank 阈值派生；不得写正式权重、不得改变信号、不得调用 broker；测试覆盖列名别名、percent
+      IV rank、VXN/skew numeric summary、manifest 和 source contract'
+    - '2026-05-31: 新增并从 IN_PROGRESS 改为 DONE，原因：新增 `normalize_options_risk_source`、`aits
+      etf p2 normalize-options-risk`、fixture CSV 和测试；fixture smoke 在 `artifacts/etf_portfolio/p2_options_normalize_smoke/`
+      输出 NORMALIZED 与 `options-risk` `PASS_WITH_LIMITATIONS`，固定 `production_effect=none`。'
+    raw_line: '|TRADING-062D|ETF P2/options IV-VXN-skew source normalizer|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把 owner/vendor
+      本地审计 options CSV 接入 canonical `options_iv_skew.csv` normalizer，继续保持 observe-only|`aits
+      etf p2 normalize-options-risk` 只接受本地审计 CSV/Parquet，不下载未批准 provider；必须规范化 symbol、as_of、available_at、iv_rank、skew_zscore、vxn_level、source_provider、source
+      URL、downloaded_at、row checksum 和 source manifest；缺列或无有效值 fail closed；risk flag
+      只能使用输入列或 `p2.yaml` 中 IV rank 阈值派生；不得写正式权重、不得改变信号、不得调用 broker；测试覆盖列名别名、percent
+      IV rank、VXN/skew numeric summary、manifest 和 source contract|2026-05-31: 新增并从
+      IN_PROGRESS 改为 DONE，原因：新增 `normalize_options_risk_source`、`aits etf p2 normalize-options-risk`、fixture
+      CSV 和测试；fixture smoke 在 `artifacts/etf_portfolio/p2_options_normalize_smoke/`
+      输出 NORMALIZED 与 `options-risk` `PASS_WITH_LIMITATIONS`，固定 `production_effect=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-03292b976cf11328a9434410
+  task_id: TRADING-062D
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并从 IN_PROGRESS 改为 DONE，原因：新增 `normalize_options_risk_source`、`aits
+      etf p2 normalize-options-risk`、fixture CSV 和测试；fixture smoke 在 `artifacts/etf_portfolio/p2_options_normalize_smoke/`
+      输出 NORMALIZED 与 `options-risk` `PASS_WITH_LIMITATIONS`，固定 `production_effect=none`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:03292b976cf11328a9434410d0797ef7e7a9d9845e1aab15cee5050885507849
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062D
+  - ETF P2/options IV-VXN-skew source normalizer
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把
+    owner/vendor 本地审计 options CSV 接入 canonical `options_iv_skew.csv` normalizer，继续保持
+    observe-only
+  - '`aits etf p2 normalize-options-risk` 只接受本地审计 CSV/Parquet，不下载未批准 provider；必须规范化
+    symbol、as_of、available_at、iv_rank、skew_zscore、vxn_level、source_provider、source
+    URL、downloaded_at、row checksum 和 source manifest；缺列或无有效值 fail closed；risk flag
+    只能使用输入列或 `p2.yaml` 中 IV rank 阈值派生；不得写正式权重、不得改变信号、不得调用 broker；测试覆盖列名别名、percent
+    IV rank、VXN/skew numeric summary、manifest 和 source contract'
+  - '2026-05-31: 新增并从 IN_PROGRESS 改为 DONE，原因：新增 `normalize_options_risk_source`、`aits
+    etf p2 normalize-options-risk`、fixture CSV 和测试；fixture smoke 在 `artifacts/etf_portfolio/p2_options_normalize_smoke/`
+    输出 NORMALIZED 与 `options-risk` `PASS_WITH_LIMITATIONS`，固定 `production_effect=none`。'
+  docs_links:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  terminal: true
+  raw_row_sha256: 03292b976cf11328a9434410d0797ef7e7a9d9845e1aab15cee5050885507849
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b4045ffd1a98caccf95f3e3a9f3619615c053be161e003baa579d56df2c58845

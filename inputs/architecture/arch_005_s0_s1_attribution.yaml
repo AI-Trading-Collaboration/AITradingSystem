@@ -1,0 +1,87 @@
+schema_version: arch_005_s0_s1_attribution.v1
+task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+boundary_id: ARCH-005-S0-S1
+status: PASS_ATTRIBUTABLE_ISOLATION
+as_of: 2026-07-19
+base_commit: f1045634f771955e3ddef721ff5ed39aea795b27
+branch: codex/arch004g2-eb0-s3a-tail-optimization
+worktree: D:/Work/AITradingSystem-eb0-candidate
+source_handoff:
+  path: inputs/architecture/arch_005_bootstrap_handoff.yaml
+  checksum: 10d3106b08582183aef07989d146d31c0bfed783a59fe273496beaa216afbfa0
+  tracked_file_hash_basis: source_commit_git_blob_sha256
+declared_changed_paths:
+- config/architecture/devex_ownership_policy.yaml
+- docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
+- docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md
+- docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+- docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+- docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
+- docs/system_flow.md
+- docs/task_register.md
+- docs/task_register_completed.md
+- inputs/architecture/arch_004_compatibility_baseline.yaml
+- inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+- inputs/architecture/arch_004e_architecture_fitness.yaml
+- inputs/architecture/arch_004e_module_manifest.yaml
+- inputs/architecture/arch_004e_test_manifest.yaml
+- inputs/architecture/arch_004g_deprecation_inventory.yaml
+- inputs/architecture/arch_005_s0_s1_attribution.yaml
+- inputs/architecture/arch_005_task_registry_baseline.yaml
+- inputs/architecture/arch_005_task_shadow_index.yaml
+- registry/development_tasks_shadow/**
+- scripts/architecture_arch005_registry.py
+- scripts/run_validation_tier.py
+- src/ai_trading_system/platform/architecture/__init__.py
+- src/ai_trading_system/platform/architecture/task_registry_shadow.py
+- tests/test_arch_004_refactor_policy.py
+- tests/test_arch_004g_deprecation.py
+- tests/test_arch_005_task_registry_shadow.py
+generated_fragment_scope:
+  root: registry/development_tasks_shadow
+  expected_fragment_count: 869
+  worker_writable: false
+shared_path_activity:
+  active_shared_path_owner_count: 0
+  active_shared_path_lease_count: 0
+  active_shared_path_integration_count: 0
+  lease_acquisition_allowed: false
+adjacent_main_worktree:
+  path: D:/Work/AITradingSystem
+  status: DIRTY_USER_OWNED_PRESERVED
+  known_unrelated_worktree_files:
+  - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
+  - docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md
+  - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
+  - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+  - docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md
+  - docs/runbook_daily_ops.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004_compatibility_baseline.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g2_etf_cli_contract.yaml
+  - src/ai_trading_system/data/market_data.py
+  - src/ai_trading_system/platform/architecture/cli_contract.py
+  - src/ai_trading_system/platform/architecture/devex.py
+  - src/ai_trading_system/platform/artifacts/validation_session.py
+  - tests/test_advisory_proposal_review.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004e_devex.py
+  - tests/test_arch_004g2_etf_cli_contract.py
+  - tests/test_artifact_validation_session.py
+  - tests/test_confirmation_targets.py
+  - tests/test_external_request_cache.py
+  - tests/test_forward_confirmation_plan.py
+  - tests/test_rule_review_cycle.py
+  - tests/test_smoothed_freshness_hardening.py
+  included_in_arch_005_commit: false
+safety:
+  strategy_logic_changed: false
+  cached_data_mutated: false
+  official_weights_changed: false
+  paper_shadow_or_portfolio_mutated: false
+  order_or_broker_action: none
+  production_effect: none

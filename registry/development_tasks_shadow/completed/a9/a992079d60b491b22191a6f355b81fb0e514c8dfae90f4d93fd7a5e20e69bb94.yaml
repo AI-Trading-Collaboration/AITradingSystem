@@ -1,0 +1,146 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2408_DYNAMIC_STRATEGY_BLOCKING_GAP_REMEDIATION_IMPLEMENTATION_PLAN
+  title: null
+  domain: Strategy research / blocking gap remediation implementation plan
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2409 signal as-of and validity contract schema
+  requirement_refs:
+  - docs/requirements/TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan.md
+  - docs/tasks/completed/TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan.md`；承接
+    TRADING-2405 PIT gate、TRADING-2406 growth tilt remediation plan 和 TRADING-2407
+    valid-until / stale-signal remediation plan，仅读取 prior validated artifacts 与 governed
+    PIT input registry，生成统一 implementation sequence、contract schema plan、blocker downgrade
+    workflow、candidate search gate policy 和 2409 route；本任务不清除或降级 blocker，不实现 schema/replay。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-blocking-gap-remediation-implementation-plan`；输出
+      `implementation_plan_result.json`、`unified_remediation_architecture.json`、`contract_schema_plan.json`、`implementation_sequence.json`、`blocker_downgrade_workflow.json`、`candidate_search_gate_policy.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_BLOCKING_GAP_REMEDIATION_IMPLEMENTATION_PLAN_READY`，source_tasks=`TRADING-2405`
+      / `TRADING-2406` / `TRADING-2407`，blocking_gaps=`growth_tilt_engine` / `valid_until_window`，`route_to_next_task=TRADING-2409_Dynamic_Strategy_Signal_As_Of_And_Validity_Contract_Schema`，两个
+      blocker 均 unresolved/undowngraded，automatic_downgrade_allowed=false，owner_review_required_for_any_downgrade=true，candidate_search_allowed=false，research_only_observation_allowed=false，paper_shadow_allowed=false，production_allowed=false，broker_action=`none`，所有
+      safety fields false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 77
+    row_sha256: e0e99f02956c583878d745b6774a1f555e77d5fa58ce8172a8415204c7c465e8
+    cell_count: 8
+    all_cells:
+    - TRADING-2408_DYNAMIC_STRATEGY_BLOCKING_GAP_REMEDIATION_IMPLEMENTATION_PLAN
+    - Strategy research / blocking gap remediation implementation plan
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2409 signal as-of and validity contract schema
+    - 详见 `docs/requirements/TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan.md`；承接
+      TRADING-2405 PIT gate、TRADING-2406 growth tilt remediation plan 和 TRADING-2407
+      valid-until / stale-signal remediation plan，仅读取 prior validated artifacts 与
+      governed PIT input registry，生成统一 implementation sequence、contract schema plan、blocker
+      downgrade workflow、candidate search gate policy 和 2409 route；本任务不清除或降级 blocker，不实现
+      schema/replay。
+    - 新增 `aits research strategies dynamic-strategy-blocking-gap-remediation-implementation-plan`；输出
+      `implementation_plan_result.json`、`unified_remediation_architecture.json`、`contract_schema_plan.json`、`implementation_sequence.json`、`blocker_downgrade_workflow.json`、`candidate_search_gate_policy.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_BLOCKING_GAP_REMEDIATION_IMPLEMENTATION_PLAN_READY`，source_tasks=`TRADING-2405`
+      / `TRADING-2406` / `TRADING-2407`，blocking_gaps=`growth_tilt_engine` / `valid_until_window`，`route_to_next_task=TRADING-2409_Dynamic_Strategy_Signal_As_Of_And_Validity_Contract_Schema`，两个
+      blocker 均 unresolved/undowngraded，automatic_downgrade_allowed=false，owner_review_required_for_any_downgrade=true，candidate_search_allowed=false，research_only_observation_allowed=false，paper_shadow_allowed=false，production_allowed=false，broker_action=`none`，所有
+      safety fields false/none。
+    - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务只做 unified
+      remediation implementation plan，未运行 `aits validate-data --as-of 2026-07-05`，因为只读取
+      prior validated 2405 / 2406 / 2407 artifacts 与 PIT input registry，不读取 fresh
+      cached market data、不运行新 backtest、不生成 technical features、scoring、daily report
+      或交易建议。candidate auto-accept、research-only observation、scheduler、event append、outcome
+      binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan.md`。'
+    raw_line: '|TRADING-2408_DYNAMIC_STRATEGY_BLOCKING_GAP_REMEDIATION_IMPLEMENTATION_PLAN|Strategy
+      research / blocking gap remediation implementation plan|P0|DONE|项目 owner 后续复核
+      TRADING-2409 signal as-of and validity contract schema|详见 `docs/requirements/TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan.md`；承接
+      TRADING-2405 PIT gate、TRADING-2406 growth tilt remediation plan 和 TRADING-2407
+      valid-until / stale-signal remediation plan，仅读取 prior validated artifacts 与
+      governed PIT input registry，生成统一 implementation sequence、contract schema plan、blocker
+      downgrade workflow、candidate search gate policy 和 2409 route；本任务不清除或降级 blocker，不实现
+      schema/replay。|新增 `aits research strategies dynamic-strategy-blocking-gap-remediation-implementation-plan`；输出
+      `implementation_plan_result.json`、`unified_remediation_architecture.json`、`contract_schema_plan.json`、`implementation_sequence.json`、`blocker_downgrade_workflow.json`、`candidate_search_gate_policy.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_BLOCKING_GAP_REMEDIATION_IMPLEMENTATION_PLAN_READY`，source_tasks=`TRADING-2405`
+      / `TRADING-2406` / `TRADING-2407`，blocking_gaps=`growth_tilt_engine` / `valid_until_window`，`route_to_next_task=TRADING-2409_Dynamic_Strategy_Signal_As_Of_And_Validity_Contract_Schema`，两个
+      blocker 均 unresolved/undowngraded，automatic_downgrade_allowed=false，owner_review_required_for_any_downgrade=true，candidate_search_allowed=false，research_only_observation_allowed=false，paper_shadow_allowed=false，production_allowed=false，broker_action=`none`，所有
+      safety fields false/none。|2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07:
+      实现完成并归档 DONE；本任务只做 unified remediation implementation plan，未运行 `aits validate-data
+      --as-of 2026-07-05`，因为只读取 prior validated 2405 / 2406 / 2407 artifacts 与 PIT
+      input registry，不读取 fresh cached market data、不运行新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。candidate auto-accept、research-only observation、scheduler、event
+      append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e0e99f02956c583878d745b6
+  task_id: TRADING-2408_DYNAMIC_STRATEGY_BLOCKING_GAP_REMEDIATION_IMPLEMENTATION_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2409 signal as-of and validity contract schema
+    notes: '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务只做
+      unified remediation implementation plan，未运行 `aits validate-data --as-of 2026-07-05`，因为只读取
+      prior validated 2405 / 2406 / 2407 artifacts 与 PIT input registry，不读取 fresh
+      cached market data、不运行新 backtest、不生成 technical features、scoring、daily report
+      或交易建议。candidate auto-accept、research-only observation、scheduler、event append、outcome
+      binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e0e99f02956c583878d745b6774a1f555e77d5fa58ce8172a8415204c7c465e8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2408_DYNAMIC_STRATEGY_BLOCKING_GAP_REMEDIATION_IMPLEMENTATION_PLAN
+  - Strategy research / blocking gap remediation implementation plan
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2409 signal as-of and validity contract schema
+  - 详见 `docs/requirements/TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan.md`；承接
+    TRADING-2405 PIT gate、TRADING-2406 growth tilt remediation plan 和 TRADING-2407
+    valid-until / stale-signal remediation plan，仅读取 prior validated artifacts 与 governed
+    PIT input registry，生成统一 implementation sequence、contract schema plan、blocker downgrade
+    workflow、candidate search gate policy 和 2409 route；本任务不清除或降级 blocker，不实现 schema/replay。
+  - 新增 `aits research strategies dynamic-strategy-blocking-gap-remediation-implementation-plan`；输出
+    `implementation_plan_result.json`、`unified_remediation_architecture.json`、`contract_schema_plan.json`、`implementation_sequence.json`、`blocker_downgrade_workflow.json`、`candidate_search_gate_policy.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_BLOCKING_GAP_REMEDIATION_IMPLEMENTATION_PLAN_READY`，source_tasks=`TRADING-2405`
+    / `TRADING-2406` / `TRADING-2407`，blocking_gaps=`growth_tilt_engine` / `valid_until_window`，`route_to_next_task=TRADING-2409_Dynamic_Strategy_Signal_As_Of_And_Validity_Contract_Schema`，两个
+    blocker 均 unresolved/undowngraded，automatic_downgrade_allowed=false，owner_review_required_for_any_downgrade=true，candidate_search_allowed=false，research_only_observation_allowed=false，paper_shadow_allowed=false，production_allowed=false，broker_action=`none`，所有
+    safety fields false/none。
+  - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务只做 unified
+    remediation implementation plan，未运行 `aits validate-data --as-of 2026-07-05`，因为只读取
+    prior validated 2405 / 2406 / 2407 artifacts 与 PIT input registry，不读取 fresh cached
+    market data、不运行新 backtest、不生成 technical features、scoring、daily report 或交易建议。candidate
+    auto-accept、research-only observation、scheduler、event append、outcome binding、paper-shadow、paper
+    trade、shadow position、production、broker/order、daily report 全部保持 disabled / false
+    / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan.md
+  - docs/tasks/completed/TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan.md
+  terminal: true
+  raw_row_sha256: e0e99f02956c583878d745b6774a1f555e77d5fa58ce8172a8415204c7c465e8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f66260098e65bf6de22fc296122729b1a2ad16a9bae006f8c616e7f2577d0889

@@ -1,0 +1,104 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TEST-001
+  title: null
+  domain: 测试/正确性
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已建立跨模块 system invariant test suite；详细拆解见
+    `docs/requirements/feedback_loop_governance_2026-05-04.md#test-001`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 每条核心投资原则都有测试：`watch` 风险事件不直接重扣仓位、`public_convenience` 不自动评分、LLM 输出不直接影响仓位、`position_gate`
+      取最严格上限、回测不能使用未来估值快照、SEC 指标 `filed_date <= signal_date`、估值采集日之后才可见、数据质量未通过不能输出完整结论；新增关键规则时同步补测试或说明不适用原因
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 441
+    row_sha256: 51f2bc26a4a6d08cd79d6c79a0fec05fb3990c3742e696588282e86431be7049
+    cell_count: 8
+    all_cells:
+    - TEST-001
+    - 测试/正确性
+    - P1
+    - DONE
+    - 系统实现
+    - 已建立跨模块 system invariant test suite；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#test-001`
+    - 每条核心投资原则都有测试：`watch` 风险事件不直接重扣仓位、`public_convenience` 不自动评分、LLM 输出不直接影响仓位、`position_gate`
+      取最严格上限、回测不能使用未来估值快照、SEC 指标 `filed_date <= signal_date`、估值采集日之后才可见、数据质量未通过不能输出完整结论；新增关键规则时同步补测试或说明不适用原因
+    - '保护系统设计边界，防止后续改动破坏 source policy、point-in-time、gate 优先级、LLM 隔离和 watch/active
+      区分。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始补充覆盖 source policy、PIT、gate、LLM 隔离和
+      watch/active 边界的系统不变量测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：新增 watch/active、public_convenience、LLM
+      evidence、watchlist PIT、decision snapshot、confidence、valuation PIT 和 thesis 状态机测试；`python
+      -m pytest -q` 通过 220 项测试。'
+    raw_line: '|TEST-001|测试/正确性|P1|DONE|系统实现|已建立跨模块 system invariant test suite；详细拆解见
+      `docs/requirements/feedback_loop_governance_2026-05-04.md#test-001`|每条核心投资原则都有测试：`watch`
+      风险事件不直接重扣仓位、`public_convenience` 不自动评分、LLM 输出不直接影响仓位、`position_gate` 取最严格上限、回测不能使用未来估值快照、SEC
+      指标 `filed_date <= signal_date`、估值采集日之后才可见、数据质量未通过不能输出完整结论；新增关键规则时同步补测试或说明不适用原因|保护系统设计边界，防止后续改动破坏
+      source policy、point-in-time、gate 优先级、LLM 隔离和 watch/active 区分。2026-05-04: 从 READY
+      改为 IN_PROGRESS，原因：开始补充覆盖 source policy、PIT、gate、LLM 隔离和 watch/active 边界的系统不变量测试。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：新增 watch/active、public_convenience、LLM evidence、watchlist
+      PIT、decision snapshot、confidence、valuation PIT 和 thesis 状态机测试；`python -m pytest
+      -q` 通过 220 项测试。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-51f2bc26a4a6d08cd79d6c79
+  task_id: TEST-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '保护系统设计边界，防止后续改动破坏 source policy、point-in-time、gate 优先级、LLM 隔离和 watch/active
+      区分。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：开始补充覆盖 source policy、PIT、gate、LLM 隔离和
+      watch/active 边界的系统不变量测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：新增 watch/active、public_convenience、LLM
+      evidence、watchlist PIT、decision snapshot、confidence、valuation PIT 和 thesis 状态机测试；`python
+      -m pytest -q` 通过 220 项测试。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:51f2bc26a4a6d08cd79d6c79a0fec05fb3990c3742e696588282e86431be7049
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TEST-001
+  - 测试/正确性
+  - P1
+  - DONE
+  - 系统实现
+  - 已建立跨模块 system invariant test suite；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#test-001`
+  - 每条核心投资原则都有测试：`watch` 风险事件不直接重扣仓位、`public_convenience` 不自动评分、LLM 输出不直接影响仓位、`position_gate`
+    取最严格上限、回测不能使用未来估值快照、SEC 指标 `filed_date <= signal_date`、估值采集日之后才可见、数据质量未通过不能输出完整结论；新增关键规则时同步补测试或说明不适用原因
+  - '保护系统设计边界，防止后续改动破坏 source policy、point-in-time、gate 优先级、LLM 隔离和 watch/active 区分。2026-05-04:
+    从 READY 改为 IN_PROGRESS，原因：开始补充覆盖 source policy、PIT、gate、LLM 隔离和 watch/active 边界的系统不变量测试。2026-05-04:
+    从 IN_PROGRESS 改为 DONE，原因：新增 watch/active、public_convenience、LLM evidence、watchlist
+    PIT、decision snapshot、confidence、valuation PIT 和 thesis 状态机测试；`python -m pytest
+    -q` 通过 220 项测试。'
+  docs_links:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  terminal: true
+  raw_row_sha256: 51f2bc26a4a6d08cd79d6c79a0fec05fb3990c3742e696588282e86431be7049
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d6056121b101aaef2000bc8dbc73bd1c0796073d88240383db68d67d42ff175f

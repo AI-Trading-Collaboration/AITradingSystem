@@ -1,0 +1,165 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-239_to_245_WEIGHT_OPTIMIZATION_EXPERIMENT_FACTORY
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue weight optimization experiment factory
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-239_to_245_Weight_Optimization_Experiment_Factory_and_Hypothesis_Screening.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-239_to_245_Weight_Optimization_Experiment_Factory_and_Hypothesis_Screening.md`；建立
+    failure mode taxonomy、hypothesis backlog、lightweight transform spec、experiment
+    matrix、batch experiment scorecard、triage gate、top variant interpretation 和 formal
+    method promotion plan；本阶段只做 research screening，不实现正式 method、不写 official target
+    weights、不修改 `position_advisory_v1.yaml`、不触发 broker/order/production
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`hypothesis-backlog build/report`、`variant-transform validate-spec/report-spec`、`experiment-matrix
+      build/report`、`batch-experiment run/report`、`experiment-triage run/report`、`top-variant-interpretation
+      run/report`、`method-promotion-plan run/report` 及对应 validate CLI 可运行；artifacts
+      写入 dynamic_v3_rescue runtime roots；报告明确 `experiment_only=true`、`research_screening_only=true`、`not_formal_research_method=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation、report
+      index、Reader Brief quality、documentation contract 和 full pytest 完成'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1444
+    row_sha256: c28ba268be1130722805759e51bf06108b7ab6971a14a933b6e75bbf65c43bfe
+    cell_count: 8
+    all_cells:
+    - TRADING-239_to_245_WEIGHT_OPTIMIZATION_EXPERIMENT_FACTORY
+    - ETF portfolio/dynamic v3 rescue weight optimization experiment factory
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-239_to_245_Weight_Optimization_Experiment_Factory_and_Hypothesis_Screening.md`；建立
+      failure mode taxonomy、hypothesis backlog、lightweight transform spec、experiment
+      matrix、batch experiment scorecard、triage gate、top variant interpretation 和 formal
+      method promotion plan；本阶段只做 research screening，不实现正式 method、不写 official target
+      weights、不修改 `position_advisory_v1.yaml`、不触发 broker/order/production
+    - '`hypothesis-backlog build/report`、`variant-transform validate-spec/report-spec`、`experiment-matrix
+      build/report`、`batch-experiment run/report`、`experiment-triage run/report`、`top-variant-interpretation
+      run/report`、`method-promotion-plan run/report` 及对应 validate CLI 可运行；artifacts
+      写入 dynamic_v3_rescue runtime roots；报告明确 `experiment_only=true`、`research_screening_only=true`、`not_formal_research_method=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation、report
+      index、Reader Brief quality、documentation contract 和 full pytest 完成'
+    - '2026-06-13: 新增并进入 IN_PROGRESS，原因：owner 要求实现附件中的 TRADING-239～245；本轮优先交付 P0 批量轻量实验筛选闭环，P1
+      的更细 transform composition 和 P2 的图表/实验数据库不纳入本阶段。2026-06-13: baseline 实现完成并转入
+      VALIDATING；真实链路输出 backlog `hypothesis-backlog_fbbcbf2271748d54`、spec `variant-transform-spec_373a9aab08a36d73`、matrix
+      `experiment-matrix_430acfe2f5803112`、batch `batch-experiment_09e60902b65d7fe9`、triage
+      `experiment-triage_b310cdfb9d2a0e3d`、interpretation `top-variant-interpretation_eb3cf6b9546ff74b`、promotion
+      plan `method-promotion-plan_3f47bf96388289ec`；batch data_quality=`PASS_WITH_WARNINGS`，triage
+      promote/keep/reject=`3/3/9`，proposed methods=`smooth_weights_3d_limited_adjustment_research_method,smooth_weights_5d_limited_adjustment_research_method`；全部新增
+      validators、dynamic-v3 validation、family artifact validation、report index、Reader
+      Brief latest/quality、documentation contract、focused pytest、ruff、compileall、git
+      diff check 和 full pytest `2400 passed, 640 warnings` 已通过；下一步为 owner 复核是否另开 formal
+      research method implementation。'
+    raw_line: '|TRADING-239_to_245_WEIGHT_OPTIMIZATION_EXPERIMENT_FACTORY|ETF portfolio/dynamic
+      v3 rescue weight optimization experiment factory|P0|VALIDATING|系统实现 + 项目 owner
+      后续复核|详细拆解见 `docs/requirements/TRADING-239_to_245_Weight_Optimization_Experiment_Factory_and_Hypothesis_Screening.md`；建立
+      failure mode taxonomy、hypothesis backlog、lightweight transform spec、experiment
+      matrix、batch experiment scorecard、triage gate、top variant interpretation 和 formal
+      method promotion plan；本阶段只做 research screening，不实现正式 method、不写 official target
+      weights、不修改 `position_advisory_v1.yaml`、不触发 broker/order/production|`hypothesis-backlog
+      build/report`、`variant-transform validate-spec/report-spec`、`experiment-matrix
+      build/report`、`batch-experiment run/report`、`experiment-triage run/report`、`top-variant-interpretation
+      run/report`、`method-promotion-plan run/report` 及对应 validate CLI 可运行；artifacts
+      写入 dynamic_v3_rescue runtime roots；报告明确 `experiment_only=true`、`research_screening_only=true`、`not_formal_research_method=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation、report
+      index、Reader Brief quality、documentation contract 和 full pytest 完成|2026-06-13:
+      新增并进入 IN_PROGRESS，原因：owner 要求实现附件中的 TRADING-239～245；本轮优先交付 P0 批量轻量实验筛选闭环，P1
+      的更细 transform composition 和 P2 的图表/实验数据库不纳入本阶段。2026-06-13: baseline 实现完成并转入
+      VALIDATING；真实链路输出 backlog `hypothesis-backlog_fbbcbf2271748d54`、spec `variant-transform-spec_373a9aab08a36d73`、matrix
+      `experiment-matrix_430acfe2f5803112`、batch `batch-experiment_09e60902b65d7fe9`、triage
+      `experiment-triage_b310cdfb9d2a0e3d`、interpretation `top-variant-interpretation_eb3cf6b9546ff74b`、promotion
+      plan `method-promotion-plan_3f47bf96388289ec`；batch data_quality=`PASS_WITH_WARNINGS`，triage
+      promote/keep/reject=`3/3/9`，proposed methods=`smooth_weights_3d_limited_adjustment_research_method,smooth_weights_5d_limited_adjustment_research_method`；全部新增
+      validators、dynamic-v3 validation、family artifact validation、report index、Reader
+      Brief latest/quality、documentation contract、focused pytest、ruff、compileall、git
+      diff check 和 full pytest `2400 passed, 640 warnings` 已通过；下一步为 owner 复核是否另开 formal
+      research method implementation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c28ba268be1130722805759e
+  task_id: TRADING-239_to_245_WEIGHT_OPTIMIZATION_EXPERIMENT_FACTORY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-13: 新增并进入 IN_PROGRESS，原因：owner 要求实现附件中的 TRADING-239～245；本轮优先交付
+      P0 批量轻量实验筛选闭环，P1 的更细 transform composition 和 P2 的图表/实验数据库不纳入本阶段。2026-06-13:
+      baseline 实现完成并转入 VALIDATING；真实链路输出 backlog `hypothesis-backlog_fbbcbf2271748d54`、spec
+      `variant-transform-spec_373a9aab08a36d73`、matrix `experiment-matrix_430acfe2f5803112`、batch
+      `batch-experiment_09e60902b65d7fe9`、triage `experiment-triage_b310cdfb9d2a0e3d`、interpretation
+      `top-variant-interpretation_eb3cf6b9546ff74b`、promotion plan `method-promotion-plan_3f47bf96388289ec`；batch
+      data_quality=`PASS_WITH_WARNINGS`，triage promote/keep/reject=`3/3/9`，proposed
+      methods=`smooth_weights_3d_limited_adjustment_research_method,smooth_weights_5d_limited_adjustment_research_method`；全部新增
+      validators、dynamic-v3 validation、family artifact validation、report index、Reader
+      Brief latest/quality、documentation contract、focused pytest、ruff、compileall、git
+      diff check 和 full pytest `2400 passed, 640 warnings` 已通过；下一步为 owner 复核是否另开 formal
+      research method implementation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c28ba268be1130722805759e51bf06108b7ab6971a14a933b6e75bbf65c43bfe
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-239_to_245_WEIGHT_OPTIMIZATION_EXPERIMENT_FACTORY
+  - ETF portfolio/dynamic v3 rescue weight optimization experiment factory
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-239_to_245_Weight_Optimization_Experiment_Factory_and_Hypothesis_Screening.md`；建立
+    failure mode taxonomy、hypothesis backlog、lightweight transform spec、experiment
+    matrix、batch experiment scorecard、triage gate、top variant interpretation 和 formal
+    method promotion plan；本阶段只做 research screening，不实现正式 method、不写 official target
+    weights、不修改 `position_advisory_v1.yaml`、不触发 broker/order/production
+  - '`hypothesis-backlog build/report`、`variant-transform validate-spec/report-spec`、`experiment-matrix
+    build/report`、`batch-experiment run/report`、`experiment-triage run/report`、`top-variant-interpretation
+    run/report`、`method-promotion-plan run/report` 及对应 validate CLI 可运行；artifacts
+    写入 dynamic_v3_rescue runtime roots；报告明确 `experiment_only=true`、`research_screening_only=true`、`not_formal_research_method=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`production_effect=none`；README、operations
+    runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+    tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation、report
+    index、Reader Brief quality、documentation contract 和 full pytest 完成'
+  - '2026-06-13: 新增并进入 IN_PROGRESS，原因：owner 要求实现附件中的 TRADING-239～245；本轮优先交付 P0 批量轻量实验筛选闭环，P1
+    的更细 transform composition 和 P2 的图表/实验数据库不纳入本阶段。2026-06-13: baseline 实现完成并转入 VALIDATING；真实链路输出
+    backlog `hypothesis-backlog_fbbcbf2271748d54`、spec `variant-transform-spec_373a9aab08a36d73`、matrix
+    `experiment-matrix_430acfe2f5803112`、batch `batch-experiment_09e60902b65d7fe9`、triage
+    `experiment-triage_b310cdfb9d2a0e3d`、interpretation `top-variant-interpretation_eb3cf6b9546ff74b`、promotion
+    plan `method-promotion-plan_3f47bf96388289ec`；batch data_quality=`PASS_WITH_WARNINGS`，triage
+    promote/keep/reject=`3/3/9`，proposed methods=`smooth_weights_3d_limited_adjustment_research_method,smooth_weights_5d_limited_adjustment_research_method`；全部新增
+    validators、dynamic-v3 validation、family artifact validation、report index、Reader
+    Brief latest/quality、documentation contract、focused pytest、ruff、compileall、git
+    diff check 和 full pytest `2400 passed, 640 warnings` 已通过；下一步为 owner 复核是否另开 formal
+    research method implementation。'
+  docs_links:
+  - docs/requirements/TRADING-239_to_245_Weight_Optimization_Experiment_Factory_and_Hypothesis_Screening.md
+  terminal: false
+  raw_row_sha256: c28ba268be1130722805759e51bf06108b7ab6971a14a933b6e75bbf65c43bfe
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9d4167aaedf53a56b37263218554c93d35ce2637600017f2359e3404e65c88d9

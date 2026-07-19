@@ -1,0 +1,137 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-525_to_529_B2_B3_B4_DIAGNOSTIC_EXPANSION
+  title: null
+  domain: ETF portfolio/weight research B2/B3/B4 diagnostic expansion and B5 admission
+    checkpoint
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-525_to_529_B2_B3_B4_Diagnostic_Expansion.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-525_to_529_B2_B3_B4_Diagnostic_Expansion.md`；在
+    TRADING-521~524 之后只读诊断 B2 trigger coverage、B3 negative contribution、多窗口 B1/B2/B3/B4
+    diagnostic expansion、B4 interaction synthesis 和 B5 admission checkpoint；不得继续 B5/B6/v3，不得改
+    strategy logic，不得访问 untouched holdout，不得产生 official target weights、paper-shadow
+    activation、broker/order/live/production mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 输出 `b2_risk_scaler_trigger_coverage_audit.json/md`、`b3_slow_tilt_negative_contribution_attribution.json/md`、`b1_b4_multi_window_diagnostic_expansion.json/md`、`b4_interaction_evidence_synthesis.json/md`
+      和 `b5_admission_checkpoint.json/md`；必须覆盖 development/diagnostic windows，披露 B0/B1/B2/B3/B4
+      metrics、B1/B2/B3/B4 vs B0、B4 vs B2/B3、return/drawdown/turnover/cost/benchmark-relative
+      delta、risk trigger count、tilt contribution、constraint hits、window result、B2/B3
+      root-cause status、B4 interaction classification 和 b5/b6/v3 allowed flags；B4
+      未达到 positive/additive 时不得允许 B5，B5 blocked 时不得允许 B6/v3；focused tests、contract/data-quality
+      visibility、JSON parse、ruff、compileall、`git diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1420
+    row_sha256: 4ba74bb6550452f0df9d921c02e7c24cf8467a921b642dcaed956a9459040f3e
+    cell_count: 8
+    all_cells:
+    - TRADING-525_to_529_B2_B3_B4_DIAGNOSTIC_EXPANSION
+    - ETF portfolio/weight research B2/B3/B4 diagnostic expansion and B5 admission
+      checkpoint
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-525_to_529_B2_B3_B4_Diagnostic_Expansion.md`；在
+      TRADING-521~524 之后只读诊断 B2 trigger coverage、B3 negative contribution、多窗口 B1/B2/B3/B4
+      diagnostic expansion、B4 interaction synthesis 和 B5 admission checkpoint；不得继续
+      B5/B6/v3，不得改 strategy logic，不得访问 untouched holdout，不得产生 official target weights、paper-shadow
+      activation、broker/order/live/production mutation
+    - 输出 `b2_risk_scaler_trigger_coverage_audit.json/md`、`b3_slow_tilt_negative_contribution_attribution.json/md`、`b1_b4_multi_window_diagnostic_expansion.json/md`、`b4_interaction_evidence_synthesis.json/md`
+      和 `b5_admission_checkpoint.json/md`；必须覆盖 development/diagnostic windows，披露 B0/B1/B2/B3/B4
+      metrics、B1/B2/B3/B4 vs B0、B4 vs B2/B3、return/drawdown/turnover/cost/benchmark-relative
+      delta、risk trigger count、tilt contribution、constraint hits、window result、B2/B3
+      root-cause status、B4 interaction classification 和 b5/b6/v3 allowed flags；B4
+      未达到 positive/additive 时不得允许 B5，B5 blocked 时不得允许 B6/v3；focused tests、contract/data-quality
+      visibility、JSON parse、ruff、compileall、`git diff --check` 通过
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 TRADING-521~524 后继续诊断 B2 为什么未触发、B3
+      为什么负贡献、B4 是否仅为单窗口现象，并基于多窗口证据生成 B5 准入 checkpoint；当前 B4 仍 inconclusive，B5/B6/v3
+      必须继续 blocked。2026-06-19: 实现完成并转入 VALIDATING；诊断输出 TRADING-525=`B2_REQUIRES_RISK_HEAVY_WINDOWS`，TRADING-526=`B3_NEGATIVE_DUE_TO_SIGNAL_DIRECTION`，TRADING-527=`MULTI_WINDOW_DIAGNOSTIC_COMPLETE`，TRADING-528=`B4_REDUNDANT`，TRADING-529=`B5_ADMISSION_BLOCKED_MORE_EVIDENCE`，且
+      `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+    raw_line: '|TRADING-525_to_529_B2_B3_B4_DIAGNOSTIC_EXPANSION|ETF portfolio/weight
+      research B2/B3/B4 diagnostic expansion and B5 admission checkpoint|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-525_to_529_B2_B3_B4_Diagnostic_Expansion.md`；在
+      TRADING-521~524 之后只读诊断 B2 trigger coverage、B3 negative contribution、多窗口 B1/B2/B3/B4
+      diagnostic expansion、B4 interaction synthesis 和 B5 admission checkpoint；不得继续
+      B5/B6/v3，不得改 strategy logic，不得访问 untouched holdout，不得产生 official target weights、paper-shadow
+      activation、broker/order/live/production mutation|输出 `b2_risk_scaler_trigger_coverage_audit.json/md`、`b3_slow_tilt_negative_contribution_attribution.json/md`、`b1_b4_multi_window_diagnostic_expansion.json/md`、`b4_interaction_evidence_synthesis.json/md`
+      和 `b5_admission_checkpoint.json/md`；必须覆盖 development/diagnostic windows，披露 B0/B1/B2/B3/B4
+      metrics、B1/B2/B3/B4 vs B0、B4 vs B2/B3、return/drawdown/turnover/cost/benchmark-relative
+      delta、risk trigger count、tilt contribution、constraint hits、window result、B2/B3
+      root-cause status、B4 interaction classification 和 b5/b6/v3 allowed flags；B4
+      未达到 positive/additive 时不得允许 B5，B5 blocked 时不得允许 B6/v3；focused tests、contract/data-quality
+      visibility、JSON parse、ruff、compileall、`git diff --check` 通过|2026-06-19: 新增并进入
+      IN_PROGRESS，原因：owner 附件要求在 TRADING-521~524 后继续诊断 B2 为什么未触发、B3 为什么负贡献、B4 是否仅为单窗口现象，并基于多窗口证据生成
+      B5 准入 checkpoint；当前 B4 仍 inconclusive，B5/B6/v3 必须继续 blocked。2026-06-19: 实现完成并转入
+      VALIDATING；诊断输出 TRADING-525=`B2_REQUIRES_RISK_HEAVY_WINDOWS`，TRADING-526=`B3_NEGATIVE_DUE_TO_SIGNAL_DIRECTION`，TRADING-527=`MULTI_WINDOW_DIAGNOSTIC_COMPLETE`，TRADING-528=`B4_REDUNDANT`，TRADING-529=`B5_ADMISSION_BLOCKED_MORE_EVIDENCE`，且
+      `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4ba74bb6550452f0df9d921c
+  task_id: TRADING-525_to_529_B2_B3_B4_DIAGNOSTIC_EXPANSION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 TRADING-521~524 后继续诊断 B2
+      为什么未触发、B3 为什么负贡献、B4 是否仅为单窗口现象，并基于多窗口证据生成 B5 准入 checkpoint；当前 B4 仍 inconclusive，B5/B6/v3
+      必须继续 blocked。2026-06-19: 实现完成并转入 VALIDATING；诊断输出 TRADING-525=`B2_REQUIRES_RISK_HEAVY_WINDOWS`，TRADING-526=`B3_NEGATIVE_DUE_TO_SIGNAL_DIRECTION`，TRADING-527=`MULTI_WINDOW_DIAGNOSTIC_COMPLETE`，TRADING-528=`B4_REDUNDANT`，TRADING-529=`B5_ADMISSION_BLOCKED_MORE_EVIDENCE`，且
+      `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4ba74bb6550452f0df9d921c02e7c24cf8467a921b642dcaed956a9459040f3e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-525_to_529_B2_B3_B4_DIAGNOSTIC_EXPANSION
+  - ETF portfolio/weight research B2/B3/B4 diagnostic expansion and B5 admission checkpoint
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-525_to_529_B2_B3_B4_Diagnostic_Expansion.md`；在
+    TRADING-521~524 之后只读诊断 B2 trigger coverage、B3 negative contribution、多窗口 B1/B2/B3/B4
+    diagnostic expansion、B4 interaction synthesis 和 B5 admission checkpoint；不得继续 B5/B6/v3，不得改
+    strategy logic，不得访问 untouched holdout，不得产生 official target weights、paper-shadow
+    activation、broker/order/live/production mutation
+  - 输出 `b2_risk_scaler_trigger_coverage_audit.json/md`、`b3_slow_tilt_negative_contribution_attribution.json/md`、`b1_b4_multi_window_diagnostic_expansion.json/md`、`b4_interaction_evidence_synthesis.json/md`
+    和 `b5_admission_checkpoint.json/md`；必须覆盖 development/diagnostic windows，披露 B0/B1/B2/B3/B4
+    metrics、B1/B2/B3/B4 vs B0、B4 vs B2/B3、return/drawdown/turnover/cost/benchmark-relative
+    delta、risk trigger count、tilt contribution、constraint hits、window result、B2/B3
+    root-cause status、B4 interaction classification 和 b5/b6/v3 allowed flags；B4 未达到
+    positive/additive 时不得允许 B5，B5 blocked 时不得允许 B6/v3；focused tests、contract/data-quality
+    visibility、JSON parse、ruff、compileall、`git diff --check` 通过
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 TRADING-521~524 后继续诊断 B2 为什么未触发、B3
+    为什么负贡献、B4 是否仅为单窗口现象，并基于多窗口证据生成 B5 准入 checkpoint；当前 B4 仍 inconclusive，B5/B6/v3
+    必须继续 blocked。2026-06-19: 实现完成并转入 VALIDATING；诊断输出 TRADING-525=`B2_REQUIRES_RISK_HEAVY_WINDOWS`，TRADING-526=`B3_NEGATIVE_DUE_TO_SIGNAL_DIRECTION`，TRADING-527=`MULTI_WINDOW_DIAGNOSTIC_COMPLETE`，TRADING-528=`B4_REDUNDANT`，TRADING-529=`B5_ADMISSION_BLOCKED_MORE_EVIDENCE`，且
+    `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+  docs_links:
+  - docs/requirements/TRADING-525_to_529_B2_B3_B4_Diagnostic_Expansion.md
+  terminal: false
+  raw_row_sha256: 4ba74bb6550452f0df9d921c02e7c24cf8467a921b642dcaed956a9459040f3e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 56695e5e510c4e4529ba9026bb1fa8e81bbbd0b94385af699bad5163263c9cb2

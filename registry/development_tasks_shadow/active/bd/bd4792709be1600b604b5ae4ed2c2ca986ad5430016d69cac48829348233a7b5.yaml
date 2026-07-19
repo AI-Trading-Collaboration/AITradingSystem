@@ -1,0 +1,181 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-090
+  title: null
+  domain: ETF portfolio research/Dynamic v0.3 Constraint-Aware Rescue Policy
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-090_Dynamic_v0_3_Constraint_Aware_Rescue_Policy.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-090_Dynamic_v0_3_Constraint_Aware_Rescue_Policy.md`；baseline
+    已实现 candidate-only constraint-aware v0.3 rescue workflow，保留 v0.4 lower_turnover
+    的低 turnover / false-risk-off 改善并直接约束 `CONSTRAINT_HIT_WORSENED` 与 `DRAWDOWN_PRESERVATION_FAILED`；下一步由
+    owner 复核 v0.3 candidate report 是否足以进入 TRADING-091；本阶段不得生成 owner approval、shadow
+    enrollment、production baseline mutation、official target weights mutation 或 broker
+    action
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`config/etf_portfolio/dynamic_v3_constraint_aware_rescue.yaml` 存在且 safety
+      fields mandatory；root-cause loader、pre-constraint normalization、soft constraint
+      penalty/smoothing、drawdown guardrail、emergency risk-off、v0.3 template generator、candidate
+      batch runner、evaluation report、Reader Brief section 和 `aits etf dynamic-v3-rescue
+      validate` 可运行；候选必须链接 v0.4 review package、constraint decomposition、drawdown review、dynamic
+      rescue report、dynamic robustness report、source policy config 和 data quality
+      report；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs、report
+      registry、Reader Brief 和 tests 同步；focused pytest、ruff、compileall、diff check、`aits
+      etf dynamic-v3-rescue validate` 和全量 pytest 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1472
+    row_sha256: 018f0f4093d8dfae737e1916ec11aef12bf98cf6b7cf395605dcbd710752a80a
+    cell_count: 8
+    all_cells:
+    - TRADING-090
+    - ETF portfolio research/Dynamic v0.3 Constraint-Aware Rescue Policy
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-090_Dynamic_v0_3_Constraint_Aware_Rescue_Policy.md`；baseline
+      已实现 candidate-only constraint-aware v0.3 rescue workflow，保留 v0.4 lower_turnover
+      的低 turnover / false-risk-off 改善并直接约束 `CONSTRAINT_HIT_WORSENED` 与 `DRAWDOWN_PRESERVATION_FAILED`；下一步由
+      owner 复核 v0.3 candidate report 是否足以进入 TRADING-091；本阶段不得生成 owner approval、shadow
+      enrollment、production baseline mutation、official target weights mutation 或 broker
+      action
+    - '`config/etf_portfolio/dynamic_v3_constraint_aware_rescue.yaml` 存在且 safety fields
+      mandatory；root-cause loader、pre-constraint normalization、soft constraint penalty/smoothing、drawdown
+      guardrail、emergency risk-off、v0.3 template generator、candidate batch runner、evaluation
+      report、Reader Brief section 和 `aits etf dynamic-v3-rescue validate` 可运行；候选必须链接
+      v0.4 review package、constraint decomposition、drawdown review、dynamic rescue
+      report、dynamic robustness report、source policy config 和 data quality report；所有输出固定
+      `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs、report
+      registry、Reader Brief 和 tests 同步；focused pytest、ruff、compileall、diff check、`aits
+      etf dynamic-v3-rescue validate` 和全量 pytest 通过'
+    - '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-089 review-only v0.4 lower_turnover
+      已确认 false risk-off、turnover 和 dynamic-vs-static 指标改善，但 constraint hits 增加 143、drawdown
+      preservation 为 -5.95pp，仍为 `review_candidate / not_shadow_ready`；需要构建 constraint-aware
+      v0.3 rescue candidate workflow，在不 approval、不 enroll、不生产写入的前提下给 owner 提供下一阶段复核包。2026-06-05:
+      TRADING-090A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic v0.3 rescue policy、`aits
+      etf dynamic-v3-rescue run/report/validate`、constraint/drawdown root-cause loader、pre-constraint
+      normalization、soft constraint penalty/smoothing、drawdown guardrail、emergency
+      risk-off exception、v0.3a-v0.3d candidate templates、candidate comparison、JSON/Markdown
+      evaluation report、Reader Brief `Dynamic v0.3 Rescue` section、report registry/artifact
+      catalog/system flow/runbook/README integration 和 focused tests；验证为 focused +
+      Reader Brief tests 12 passed，`aits etf dynamic-v3-rescue validate` PASS，ruff、compileall、diff
+      check 和全量 pytest 2171 passed / 330 warnings 通过；剩余条件是 owner 复核。'
+    raw_line: '|TRADING-090|ETF portfolio research/Dynamic v0.3 Constraint-Aware Rescue
+      Policy|P0|VALIDATING|项目 owner 人工复核|详细拆解见 `docs/requirements/TRADING-090_Dynamic_v0_3_Constraint_Aware_Rescue_Policy.md`；baseline
+      已实现 candidate-only constraint-aware v0.3 rescue workflow，保留 v0.4 lower_turnover
+      的低 turnover / false-risk-off 改善并直接约束 `CONSTRAINT_HIT_WORSENED` 与 `DRAWDOWN_PRESERVATION_FAILED`；下一步由
+      owner 复核 v0.3 candidate report 是否足以进入 TRADING-091；本阶段不得生成 owner approval、shadow
+      enrollment、production baseline mutation、official target weights mutation 或 broker
+      action|`config/etf_portfolio/dynamic_v3_constraint_aware_rescue.yaml` 存在且 safety
+      fields mandatory；root-cause loader、pre-constraint normalization、soft constraint
+      penalty/smoothing、drawdown guardrail、emergency risk-off、v0.3 template generator、candidate
+      batch runner、evaluation report、Reader Brief section 和 `aits etf dynamic-v3-rescue
+      validate` 可运行；候选必须链接 v0.4 review package、constraint decomposition、drawdown review、dynamic
+      rescue report、dynamic robustness report、source policy config 和 data quality
+      report；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs、report
+      registry、Reader Brief 和 tests 同步；focused pytest、ruff、compileall、diff check、`aits
+      etf dynamic-v3-rescue validate` 和全量 pytest 通过|2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-089
+      review-only v0.4 lower_turnover 已确认 false risk-off、turnover 和 dynamic-vs-static
+      指标改善，但 constraint hits 增加 143、drawdown preservation 为 -5.95pp，仍为 `review_candidate
+      / not_shadow_ready`；需要构建 constraint-aware v0.3 rescue candidate workflow，在不
+      approval、不 enroll、不生产写入的前提下给 owner 提供下一阶段复核包。2026-06-05: TRADING-090A-K baseline
+      实现完成并转入 VALIDATING，原因：新增 dynamic v0.3 rescue policy、`aits etf dynamic-v3-rescue
+      run/report/validate`、constraint/drawdown root-cause loader、pre-constraint normalization、soft
+      constraint penalty/smoothing、drawdown guardrail、emergency risk-off exception、v0.3a-v0.3d
+      candidate templates、candidate comparison、JSON/Markdown evaluation report、Reader
+      Brief `Dynamic v0.3 Rescue` section、report registry/artifact catalog/system
+      flow/runbook/README integration 和 focused tests；验证为 focused + Reader Brief tests
+      12 passed，`aits etf dynamic-v3-rescue validate` PASS，ruff、compileall、diff check
+      和全量 pytest 2171 passed / 330 warnings 通过；剩余条件是 owner 复核。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-018f0f4093d8dfae737e1916
+  task_id: TRADING-090
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核
+    notes: '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-089 review-only v0.4 lower_turnover
+      已确认 false risk-off、turnover 和 dynamic-vs-static 指标改善，但 constraint hits 增加 143、drawdown
+      preservation 为 -5.95pp，仍为 `review_candidate / not_shadow_ready`；需要构建 constraint-aware
+      v0.3 rescue candidate workflow，在不 approval、不 enroll、不生产写入的前提下给 owner 提供下一阶段复核包。2026-06-05:
+      TRADING-090A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic v0.3 rescue policy、`aits
+      etf dynamic-v3-rescue run/report/validate`、constraint/drawdown root-cause loader、pre-constraint
+      normalization、soft constraint penalty/smoothing、drawdown guardrail、emergency
+      risk-off exception、v0.3a-v0.3d candidate templates、candidate comparison、JSON/Markdown
+      evaluation report、Reader Brief `Dynamic v0.3 Rescue` section、report registry/artifact
+      catalog/system flow/runbook/README integration 和 focused tests；验证为 focused +
+      Reader Brief tests 12 passed，`aits etf dynamic-v3-rescue validate` PASS，ruff、compileall、diff
+      check 和全量 pytest 2171 passed / 330 warnings 通过；剩余条件是 owner 复核。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:018f0f4093d8dfae737e1916ec11aef12bf98cf6b7cf395605dcbd710752a80a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-090
+  - ETF portfolio research/Dynamic v0.3 Constraint-Aware Rescue Policy
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-090_Dynamic_v0_3_Constraint_Aware_Rescue_Policy.md`；baseline
+    已实现 candidate-only constraint-aware v0.3 rescue workflow，保留 v0.4 lower_turnover
+    的低 turnover / false-risk-off 改善并直接约束 `CONSTRAINT_HIT_WORSENED` 与 `DRAWDOWN_PRESERVATION_FAILED`；下一步由
+    owner 复核 v0.3 candidate report 是否足以进入 TRADING-091；本阶段不得生成 owner approval、shadow
+    enrollment、production baseline mutation、official target weights mutation 或 broker
+    action
+  - '`config/etf_portfolio/dynamic_v3_constraint_aware_rescue.yaml` 存在且 safety fields
+    mandatory；root-cause loader、pre-constraint normalization、soft constraint penalty/smoothing、drawdown
+    guardrail、emergency risk-off、v0.3 template generator、candidate batch runner、evaluation
+    report、Reader Brief section 和 `aits etf dynamic-v3-rescue validate` 可运行；候选必须链接
+    v0.4 review package、constraint decomposition、drawdown review、dynamic rescue report、dynamic
+    robustness report、source policy config 和 data quality report；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`、`automatic_enrollment_allowed=false`、`owner_approval_executed=false`；system
+    flow、artifact catalog、operations runbook、README、task register、requirement docs、report
+    registry、Reader Brief 和 tests 同步；focused pytest、ruff、compileall、diff check、`aits
+    etf dynamic-v3-rescue validate` 和全量 pytest 通过'
+  - '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-089 review-only v0.4 lower_turnover
+    已确认 false risk-off、turnover 和 dynamic-vs-static 指标改善，但 constraint hits 增加 143、drawdown
+    preservation 为 -5.95pp，仍为 `review_candidate / not_shadow_ready`；需要构建 constraint-aware
+    v0.3 rescue candidate workflow，在不 approval、不 enroll、不生产写入的前提下给 owner 提供下一阶段复核包。2026-06-05:
+    TRADING-090A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic v0.3 rescue policy、`aits
+    etf dynamic-v3-rescue run/report/validate`、constraint/drawdown root-cause loader、pre-constraint
+    normalization、soft constraint penalty/smoothing、drawdown guardrail、emergency risk-off
+    exception、v0.3a-v0.3d candidate templates、candidate comparison、JSON/Markdown evaluation
+    report、Reader Brief `Dynamic v0.3 Rescue` section、report registry/artifact catalog/system
+    flow/runbook/README integration 和 focused tests；验证为 focused + Reader Brief tests
+    12 passed，`aits etf dynamic-v3-rescue validate` PASS，ruff、compileall、diff check
+    和全量 pytest 2171 passed / 330 warnings 通过；剩余条件是 owner 复核。'
+  docs_links:
+  - docs/requirements/TRADING-090_Dynamic_v0_3_Constraint_Aware_Rescue_Policy.md
+  terminal: false
+  raw_row_sha256: 018f0f4093d8dfae737e1916ec11aef12bf98cf6b7cf395605dcbd710752a80a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 123b0ea87f97dfbddf5defbf07ca6f484de6569e114c57fa173ff91e6ded8468

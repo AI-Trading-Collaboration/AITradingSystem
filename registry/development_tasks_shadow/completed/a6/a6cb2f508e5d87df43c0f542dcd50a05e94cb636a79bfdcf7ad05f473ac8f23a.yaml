@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-004B_SEMANTIC_KERNEL
+  title: null
+  domain: Architecture / semantic contracts / research evaluation context
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: ARCH-004C 复用 context 并建立 platform contracts
+  requirement_refs:
+  - docs/requirements/ARCH-004B_Semantic_Kernel.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004B_Semantic_Kernel.md`；新增纯
+    contracts、complete/blocked `ResearchEvaluationContext`、canonical status/evidence/window/policy
+    refs、governed legacy adapter 和新 artifact enforcement；不一次迁移历史 artifacts。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 合法 2021 primary window + 2022 AI regime round-trip；window-id/start、requested/actual/effective/evaluation/as-of、unknown
+      role/status、checksum/id和 legacy flat parity fail closed；首个 `first_layer_v2_effective_coverage_audit`
+      additive consumer 保持旧计算/status/safety。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 21
+    row_sha256: fd43f8f8fce20754f6292f0a03bcb4fa7a05a7d0b2d979e3ea1aa919592ecb49
+    cell_count: 8
+    all_cells:
+    - ARCH-004B_SEMANTIC_KERNEL
+    - Architecture / semantic contracts / research evaluation context
+    - P0
+    - DONE
+    - ARCH-004C 复用 context 并建立 platform contracts
+    - 详见 `docs/requirements/ARCH-004B_Semantic_Kernel.md`；新增纯 contracts、complete/blocked
+      `ResearchEvaluationContext`、canonical status/evidence/window/policy refs、governed
+      legacy adapter 和新 artifact enforcement；不一次迁移历史 artifacts。
+    - 合法 2021 primary window + 2022 AI regime round-trip；window-id/start、requested/actual/effective/evaluation/as-of、unknown
+      role/status、checksum/id和 legacy flat parity fail closed；首个 `first_layer_v2_effective_coverage_audit`
+      additive consumer 保持旧计算/status/safety。
+    - '2026-07-11: scoped Ruff/Black/compileall/mypy PASS；focused/docs 74、contract-validation
+      197、full parallel `5375 passed / 0 failed / 642 warnings`；artifact=`outputs/validation_runtime/full_20260710T171001Z/test_runtime_summary.json`；production
+      effect=none。'
+    raw_line: '|ARCH-004B_SEMANTIC_KERNEL|Architecture / semantic contracts / research
+      evaluation context|P0|DONE|ARCH-004C 复用 context 并建立 platform contracts|详见 `docs/requirements/ARCH-004B_Semantic_Kernel.md`；新增纯
+      contracts、complete/blocked `ResearchEvaluationContext`、canonical status/evidence/window/policy
+      refs、governed legacy adapter 和新 artifact enforcement；不一次迁移历史 artifacts。|合法 2021
+      primary window + 2022 AI regime round-trip；window-id/start、requested/actual/effective/evaluation/as-of、unknown
+      role/status、checksum/id和 legacy flat parity fail closed；首个 `first_layer_v2_effective_coverage_audit`
+      additive consumer 保持旧计算/status/safety。|2026-07-11: scoped Ruff/Black/compileall/mypy
+      PASS；focused/docs 74、contract-validation 197、full parallel `5375 passed / 0
+      failed / 642 warnings`；artifact=`outputs/validation_runtime/full_20260710T171001Z/test_runtime_summary.json`；production
+      effect=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fd43f8f8fce20754f6292f0a
+  task_id: ARCH-004B_SEMANTIC_KERNEL
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: ARCH-004C 复用 context 并建立 platform contracts
+    notes: '2026-07-11: scoped Ruff/Black/compileall/mypy PASS；focused/docs 74、contract-validation
+      197、full parallel `5375 passed / 0 failed / 642 warnings`；artifact=`outputs/validation_runtime/full_20260710T171001Z/test_runtime_summary.json`；production
+      effect=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:fd43f8f8fce20754f6292f0a03bcb4fa7a05a7d0b2d979e3ea1aa919592ecb49
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004B_SEMANTIC_KERNEL
+  - Architecture / semantic contracts / research evaluation context
+  - P0
+  - DONE
+  - ARCH-004C 复用 context 并建立 platform contracts
+  - 详见 `docs/requirements/ARCH-004B_Semantic_Kernel.md`；新增纯 contracts、complete/blocked
+    `ResearchEvaluationContext`、canonical status/evidence/window/policy refs、governed
+    legacy adapter 和新 artifact enforcement；不一次迁移历史 artifacts。
+  - 合法 2021 primary window + 2022 AI regime round-trip；window-id/start、requested/actual/effective/evaluation/as-of、unknown
+    role/status、checksum/id和 legacy flat parity fail closed；首个 `first_layer_v2_effective_coverage_audit`
+    additive consumer 保持旧计算/status/safety。
+  - '2026-07-11: scoped Ruff/Black/compileall/mypy PASS；focused/docs 74、contract-validation
+    197、full parallel `5375 passed / 0 failed / 642 warnings`；artifact=`outputs/validation_runtime/full_20260710T171001Z/test_runtime_summary.json`；production
+    effect=none。'
+  docs_links:
+  - docs/requirements/ARCH-004B_Semantic_Kernel.md
+  terminal: true
+  raw_row_sha256: fd43f8f8fce20754f6292f0a03bcb4fa7a05a7d0b2d979e3ea1aa919592ecb49
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5dda06971091145a3906f017237174e1c6b046898df21a359f25a1c8070bc6af

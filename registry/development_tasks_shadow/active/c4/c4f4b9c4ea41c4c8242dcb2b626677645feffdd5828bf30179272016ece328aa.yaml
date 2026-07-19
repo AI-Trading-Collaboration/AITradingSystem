@@ -1,0 +1,103 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-859_WORKTREE_CHANGE_ATTRIBUTION_AND_SAFE_COMMIT_PLAN
+  title: null
+  domain: Engineering closeout / tail-risk worktree attribution
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；必须先运行
+    `git status --short`、`git diff --name-status`、`git diff --stat`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `tail_risk_followup_change_attribution.json/md`，逐文件区分 843～858、新增 closeout、pre-existing
+      和 mixed attribution；输出 staged candidate list 或 `OWNER_REVIEW_REQUIRED` / `BLOCKED_BY_MIXED_WORKTREE`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1337
+    row_sha256: 148b0322307d6a318773a50ed2040c12778e7cd5ba4d84aab07aeece443ce4cc
+    cell_count: 8
+    all_cells:
+    - TRADING-859_WORKTREE_CHANGE_ATTRIBUTION_AND_SAFE_COMMIT_PLAN
+    - Engineering closeout / tail-risk worktree attribution
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；必须先运行
+      `git status --short`、`git diff --name-status`、`git diff --stat`
+    - 生成 `tail_risk_followup_change_attribution.json/md`，逐文件区分 843～858、新增 closeout、pre-existing
+      和 mixed attribution；输出 staged candidate list 或 `OWNER_REVIEW_REQUIRED` / `BLOCKED_BY_MIXED_WORKTREE`
+    - '2026-06-22: 新增并进入 IN_PROGRESS，原因：当前工作树含本轮开始前未提交改动，收口前必须先归因。2026-06-22: 产物完成并转入
+      VALIDATING；真实运行 `git status --short`、`git diff --name-status`、`git diff --stat`，输出状态
+      `BLOCKED_BY_MIXED_WORKTREE`，确认 7 个 mixed/unknown 文件和 5 个 safe candidates，要求
+      owner review 后再提交。'
+    raw_line: '|TRADING-859_WORKTREE_CHANGE_ATTRIBUTION_AND_SAFE_COMMIT_PLAN|Engineering
+      closeout / tail-risk worktree attribution|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；必须先运行
+      `git status --short`、`git diff --name-status`、`git diff --stat`|生成 `tail_risk_followup_change_attribution.json/md`，逐文件区分
+      843～858、新增 closeout、pre-existing 和 mixed attribution；输出 staged candidate list
+      或 `OWNER_REVIEW_REQUIRED` / `BLOCKED_BY_MIXED_WORKTREE`|2026-06-22: 新增并进入 IN_PROGRESS，原因：当前工作树含本轮开始前未提交改动，收口前必须先归因。2026-06-22:
+      产物完成并转入 VALIDATING；真实运行 `git status --short`、`git diff --name-status`、`git diff
+      --stat`，输出状态 `BLOCKED_BY_MIXED_WORKTREE`，确认 7 个 mixed/unknown 文件和 5 个 safe candidates，要求
+      owner review 后再提交。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-148b0322307d6a318773a50e
+  task_id: TRADING-859_WORKTREE_CHANGE_ATTRIBUTION_AND_SAFE_COMMIT_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 新增并进入 IN_PROGRESS，原因：当前工作树含本轮开始前未提交改动，收口前必须先归因。2026-06-22:
+      产物完成并转入 VALIDATING；真实运行 `git status --short`、`git diff --name-status`、`git diff
+      --stat`，输出状态 `BLOCKED_BY_MIXED_WORKTREE`，确认 7 个 mixed/unknown 文件和 5 个 safe candidates，要求
+      owner review 后再提交。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:148b0322307d6a318773a50ed2040c12778e7cd5ba4d84aab07aeece443ce4cc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-859_WORKTREE_CHANGE_ATTRIBUTION_AND_SAFE_COMMIT_PLAN
+  - Engineering closeout / tail-risk worktree attribution
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；必须先运行
+    `git status --short`、`git diff --name-status`、`git diff --stat`
+  - 生成 `tail_risk_followup_change_attribution.json/md`，逐文件区分 843～858、新增 closeout、pre-existing
+    和 mixed attribution；输出 staged candidate list 或 `OWNER_REVIEW_REQUIRED` / `BLOCKED_BY_MIXED_WORKTREE`
+  - '2026-06-22: 新增并进入 IN_PROGRESS，原因：当前工作树含本轮开始前未提交改动，收口前必须先归因。2026-06-22: 产物完成并转入
+    VALIDATING；真实运行 `git status --short`、`git diff --name-status`、`git diff --stat`，输出状态
+    `BLOCKED_BY_MIXED_WORKTREE`，确认 7 个 mixed/unknown 文件和 5 个 safe candidates，要求 owner
+    review 后再提交。'
+  docs_links:
+  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
+  terminal: false
+  raw_row_sha256: 148b0322307d6a318773a50ed2040c12778e7cd5ba4d84aab07aeece443ce4cc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 01746fdc6dad9403b52f25f03e5f21db436dd8afd0d21874b16ca87e9fc97759

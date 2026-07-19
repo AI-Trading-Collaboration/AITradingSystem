@@ -1,0 +1,163 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438I_GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_RECHECK_AFTER_REMAINING_BLOCKER_CLOSURE
+  title: null
+  domain: Strategy research / growth tilt top-3 PIT replay recheck after remaining
+    blocker closure
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2438J persistent candidate PIT replay blocker
+    escalation
+  requirement_refs:
+  - docs/requirements/TRADING-2438I_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Remaining_Blocker_Closure.md
+  - docs/tasks/completed/TRADING-2438I_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Remaining_Blocker_Closure.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2438I_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Remaining_Blocker_Closure.md`；承接
+    TRADING-2438H remaining blocker closure READY artifact、replay recheck readiness
+    handoff、remaining blocker before/after matrix 和 TRADING-2438D candidate replay
+    output records，独立重判 3 个 candidate 的 PASS / FAIL / BLOCKED。当前真实结果为 BLOCKED，下一跳为
+    `TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation`；这不是
+    no-passing candidate、forward-aging eligibility、paper-shadow candidate 或 2440 no-candidate
+    结论。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 top-3 candidate PIT replay recheck after remaining blocker closure builder、`aits
+      research strategies growth-tilt-top3-candidate-pit-replay-recheck-after-remaining-blocker-closure`；输出
+      recheck result、candidate pass/fail/blocked decision matrix、forward-aging handoff
+      readiness summary、persistent candidate replay blocker summary、no-effect boundary、2438J/2439A
+      route、research docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_RECHECK_AFTER_REMAINING_BLOCKER_CLOSURE_BLOCKED`，prior_status=`GROWTH_TILT_REMAINING_CANDIDATE_PIT_REPLAY_BLOCKER_CLOSURE_READY`，source_2438h_remaining_blocker_closure_ready=true，remaining_candidate_blocker_closure_ready=true，remaining_candidate_blocker_count_before=3，remaining_candidate_blocker_count_after=0，replay_recheck_handoff_ready=true，candidate_recheckable_after_closure_count=3，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，candidate_replay_outputs_complete=true，candidate_replay_output_record_count=3，candidate_records_recheckable_after_remaining_blocker_closure=true，pit_replay_recheck_after_remaining_blocker_closure_complete=false，candidate_replay_pass_count=0，candidate_replay_fail_count=0，candidate_replay_blocked_count=3，persistent_candidate_replay_blocker_count=3，forward_aging_handoff_ready=false，forward_aging_candidate_count=0，top3_candidate_count=3，handoff_candidate_count=3，before_after_row_count=3，each_candidate_has_replay_status=true，each_candidate_has_status_reason=true，pass_fail_blocked_counts_consistent=true，blocked_candidates_have_persistent_blocker_reason=true，forward_aging_handoff_pass_only=true，registry_catalog_docs_alignment=true，paper_shadow_candidate_found=false，paper_shadow_enabled=false，production_enabled=false，broker_enabled=false，next
+      route=`TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 34
+    row_sha256: 4560db9b299912b4104931788d380bca182d073414a6861d6d2f0b7a0093d415
+    cell_count: 8
+    all_cells:
+    - TRADING-2438I_GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_RECHECK_AFTER_REMAINING_BLOCKER_CLOSURE
+    - Strategy research / growth tilt top-3 PIT replay recheck after remaining blocker
+      closure
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2438J persistent candidate PIT replay blocker escalation
+    - 详见 `docs/requirements/TRADING-2438I_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Remaining_Blocker_Closure.md`；承接
+      TRADING-2438H remaining blocker closure READY artifact、replay recheck readiness
+      handoff、remaining blocker before/after matrix 和 TRADING-2438D candidate replay
+      output records，独立重判 3 个 candidate 的 PASS / FAIL / BLOCKED。当前真实结果为 BLOCKED，下一跳为
+      `TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation`；这不是
+      no-passing candidate、forward-aging eligibility、paper-shadow candidate 或 2440
+      no-candidate 结论。
+    - 新增 top-3 candidate PIT replay recheck after remaining blocker closure builder、`aits
+      research strategies growth-tilt-top3-candidate-pit-replay-recheck-after-remaining-blocker-closure`；输出
+      recheck result、candidate pass/fail/blocked decision matrix、forward-aging handoff
+      readiness summary、persistent candidate replay blocker summary、no-effect boundary、2438J/2439A
+      route、research docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_RECHECK_AFTER_REMAINING_BLOCKER_CLOSURE_BLOCKED`，prior_status=`GROWTH_TILT_REMAINING_CANDIDATE_PIT_REPLAY_BLOCKER_CLOSURE_READY`，source_2438h_remaining_blocker_closure_ready=true，remaining_candidate_blocker_closure_ready=true，remaining_candidate_blocker_count_before=3，remaining_candidate_blocker_count_after=0，replay_recheck_handoff_ready=true，candidate_recheckable_after_closure_count=3，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，candidate_replay_outputs_complete=true，candidate_replay_output_record_count=3，candidate_records_recheckable_after_remaining_blocker_closure=true，pit_replay_recheck_after_remaining_blocker_closure_complete=false，candidate_replay_pass_count=0，candidate_replay_fail_count=0，candidate_replay_blocked_count=3，persistent_candidate_replay_blocker_count=3，forward_aging_handoff_ready=false，forward_aging_candidate_count=0，top3_candidate_count=3，handoff_candidate_count=3，before_after_row_count=3，each_candidate_has_replay_status=true，each_candidate_has_status_reason=true，pass_fail_blocked_counts_consistent=true，blocked_candidates_have_persistent_blocker_reason=true，forward_aging_handoff_pass_only=true，registry_catalog_docs_alignment=true，paper_shadow_candidate_found=false，paper_shadow_enabled=false，production_enabled=false，broker_enabled=false，next
+      route=`TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation`。
+    - '2026-07-10: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-10: 实现完成并归档 DONE；验证通过
+      Ruff、focused parallel pytest、`aits validate-data --as-of 2026-07-08` 和真实 CLI，最终
+      closeout validation 结果见 `docs/tasks/completed/TRADING-2438I_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Remaining_Blocker_Closure.md`。2438I
+      只重判 replay outcome，不继续关闭 blocker、不运行新的 replay/backtest/scoring/daily report/outcome
+      binding，不生成 feature/signal/outcome 或交易建议；3 条真实 candidate 仍保持 `BLOCKED`，pass/fail/blocked=0/0/3，persistent
+      blocker count=3。paper-shadow runtime/schedule、scheduler、event append、real outcome
+      binding、outcome store mutation、production、broker/order、portfolio weight mutation
+      全部保持 disabled / false / none。'
+    raw_line: '|TRADING-2438I_GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_RECHECK_AFTER_REMAINING_BLOCKER_CLOSURE|Strategy
+      research / growth tilt top-3 PIT replay recheck after remaining blocker closure|P0|DONE|项目
+      owner 后续复核 TRADING-2438J persistent candidate PIT replay blocker escalation|详见
+      `docs/requirements/TRADING-2438I_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Remaining_Blocker_Closure.md`；承接
+      TRADING-2438H remaining blocker closure READY artifact、replay recheck readiness
+      handoff、remaining blocker before/after matrix 和 TRADING-2438D candidate replay
+      output records，独立重判 3 个 candidate 的 PASS / FAIL / BLOCKED。当前真实结果为 BLOCKED，下一跳为
+      `TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation`；这不是
+      no-passing candidate、forward-aging eligibility、paper-shadow candidate 或 2440
+      no-candidate 结论。|新增 top-3 candidate PIT replay recheck after remaining blocker
+      closure builder、`aits research strategies growth-tilt-top3-candidate-pit-replay-recheck-after-remaining-blocker-closure`；输出
+      recheck result、candidate pass/fail/blocked decision matrix、forward-aging handoff
+      readiness summary、persistent candidate replay blocker summary、no-effect boundary、2438J/2439A
+      route、research docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_RECHECK_AFTER_REMAINING_BLOCKER_CLOSURE_BLOCKED`，prior_status=`GROWTH_TILT_REMAINING_CANDIDATE_PIT_REPLAY_BLOCKER_CLOSURE_READY`，source_2438h_remaining_blocker_closure_ready=true，remaining_candidate_blocker_closure_ready=true，remaining_candidate_blocker_count_before=3，remaining_candidate_blocker_count_after=0，replay_recheck_handoff_ready=true，candidate_recheckable_after_closure_count=3，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，candidate_replay_outputs_complete=true，candidate_replay_output_record_count=3，candidate_records_recheckable_after_remaining_blocker_closure=true，pit_replay_recheck_after_remaining_blocker_closure_complete=false，candidate_replay_pass_count=0，candidate_replay_fail_count=0，candidate_replay_blocked_count=3，persistent_candidate_replay_blocker_count=3，forward_aging_handoff_ready=false，forward_aging_candidate_count=0，top3_candidate_count=3，handoff_candidate_count=3，before_after_row_count=3，each_candidate_has_replay_status=true，each_candidate_has_status_reason=true，pass_fail_blocked_counts_consistent=true，blocked_candidates_have_persistent_blocker_reason=true，forward_aging_handoff_pass_only=true，registry_catalog_docs_alignment=true，paper_shadow_candidate_found=false，paper_shadow_enabled=false，production_enabled=false，broker_enabled=false，next
+      route=`TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation`。|2026-07-10:
+      根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-10: 实现完成并归档 DONE；验证通过 Ruff、focused
+      parallel pytest、`aits validate-data --as-of 2026-07-08` 和真实 CLI，最终 closeout
+      validation 结果见 `docs/tasks/completed/TRADING-2438I_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Remaining_Blocker_Closure.md`。2438I
+      只重判 replay outcome，不继续关闭 blocker、不运行新的 replay/backtest/scoring/daily report/outcome
+      binding，不生成 feature/signal/outcome 或交易建议；3 条真实 candidate 仍保持 `BLOCKED`，pass/fail/blocked=0/0/3，persistent
+      blocker count=3。paper-shadow runtime/schedule、scheduler、event append、real outcome
+      binding、outcome store mutation、production、broker/order、portfolio weight mutation
+      全部保持 disabled / false / none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4560db9b299912b410493178
+  task_id: TRADING-2438I_GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_RECHECK_AFTER_REMAINING_BLOCKER_CLOSURE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2438J persistent candidate PIT replay blocker
+      escalation
+    notes: '2026-07-10: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-10: 实现完成并归档 DONE；验证通过
+      Ruff、focused parallel pytest、`aits validate-data --as-of 2026-07-08` 和真实 CLI，最终
+      closeout validation 结果见 `docs/tasks/completed/TRADING-2438I_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Remaining_Blocker_Closure.md`。2438I
+      只重判 replay outcome，不继续关闭 blocker、不运行新的 replay/backtest/scoring/daily report/outcome
+      binding，不生成 feature/signal/outcome 或交易建议；3 条真实 candidate 仍保持 `BLOCKED`，pass/fail/blocked=0/0/3，persistent
+      blocker count=3。paper-shadow runtime/schedule、scheduler、event append、real outcome
+      binding、outcome store mutation、production、broker/order、portfolio weight mutation
+      全部保持 disabled / false / none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4560db9b299912b4104931788d380bca182d073414a6861d6d2f0b7a0093d415
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438I_GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_RECHECK_AFTER_REMAINING_BLOCKER_CLOSURE
+  - Strategy research / growth tilt top-3 PIT replay recheck after remaining blocker
+    closure
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2438J persistent candidate PIT replay blocker escalation
+  - 详见 `docs/requirements/TRADING-2438I_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Remaining_Blocker_Closure.md`；承接
+    TRADING-2438H remaining blocker closure READY artifact、replay recheck readiness
+    handoff、remaining blocker before/after matrix 和 TRADING-2438D candidate replay
+    output records，独立重判 3 个 candidate 的 PASS / FAIL / BLOCKED。当前真实结果为 BLOCKED，下一跳为
+    `TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation`；这不是
+    no-passing candidate、forward-aging eligibility、paper-shadow candidate 或 2440 no-candidate
+    结论。
+  - 新增 top-3 candidate PIT replay recheck after remaining blocker closure builder、`aits
+    research strategies growth-tilt-top3-candidate-pit-replay-recheck-after-remaining-blocker-closure`；输出
+    recheck result、candidate pass/fail/blocked decision matrix、forward-aging handoff
+    readiness summary、persistent candidate replay blocker summary、no-effect boundary、2438J/2439A
+    route、research docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_TOP3_CANDIDATE_PIT_REPLAY_RECHECK_AFTER_REMAINING_BLOCKER_CLOSURE_BLOCKED`，prior_status=`GROWTH_TILT_REMAINING_CANDIDATE_PIT_REPLAY_BLOCKER_CLOSURE_READY`，source_2438h_remaining_blocker_closure_ready=true，remaining_candidate_blocker_closure_ready=true，remaining_candidate_blocker_count_before=3，remaining_candidate_blocker_count_after=0，replay_recheck_handoff_ready=true，candidate_recheckable_after_closure_count=3，data_quality_gate_executed=true，data_quality_gate_passed=true，data_quality_status=`PASS_WITH_WARNINGS`，candidate_replay_outputs_complete=true，candidate_replay_output_record_count=3，candidate_records_recheckable_after_remaining_blocker_closure=true，pit_replay_recheck_after_remaining_blocker_closure_complete=false，candidate_replay_pass_count=0，candidate_replay_fail_count=0，candidate_replay_blocked_count=3，persistent_candidate_replay_blocker_count=3，forward_aging_handoff_ready=false，forward_aging_candidate_count=0，top3_candidate_count=3，handoff_candidate_count=3，before_after_row_count=3，each_candidate_has_replay_status=true，each_candidate_has_status_reason=true，pass_fail_blocked_counts_consistent=true，blocked_candidates_have_persistent_blocker_reason=true，forward_aging_handoff_pass_only=true，registry_catalog_docs_alignment=true，paper_shadow_candidate_found=false，paper_shadow_enabled=false，production_enabled=false，broker_enabled=false，next
+    route=`TRADING-2438J_Growth_Tilt_Persistent_Candidate_PIT_Replay_Blocker_Escalation`。
+  - '2026-07-10: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-10: 实现完成并归档 DONE；验证通过
+    Ruff、focused parallel pytest、`aits validate-data --as-of 2026-07-08` 和真实 CLI，最终
+    closeout validation 结果见 `docs/tasks/completed/TRADING-2438I_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Remaining_Blocker_Closure.md`。2438I
+    只重判 replay outcome，不继续关闭 blocker、不运行新的 replay/backtest/scoring/daily report/outcome
+    binding，不生成 feature/signal/outcome 或交易建议；3 条真实 candidate 仍保持 `BLOCKED`，pass/fail/blocked=0/0/3，persistent
+    blocker count=3。paper-shadow runtime/schedule、scheduler、event append、real outcome
+    binding、outcome store mutation、production、broker/order、portfolio weight mutation
+    全部保持 disabled / false / none。'
+  docs_links:
+  - docs/requirements/TRADING-2438I_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Remaining_Blocker_Closure.md
+  - docs/tasks/completed/TRADING-2438I_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Remaining_Blocker_Closure.md
+  terminal: true
+  raw_row_sha256: 4560db9b299912b4104931788d380bca182d073414a6861d6d2f0b7a0093d415
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f1d5e12f525456c790aa97a8a09e184733234566f1d9ec9e196ceadf84a0095c

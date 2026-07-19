@@ -1,0 +1,95 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TREND-001
+  title: null
+  domain: 趋势判断/产品边界
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/trend_judgment_scope_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已落实“当前系统仅作趋势判断，不触发交易”的结论边界；详细拆解见 `docs/requirements/trend_judgment_scope_2026-05-04.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 日报和回测即使数据质量全绿，也不能把默认成功态写成交易触发、账户目标仓位或“可作为仓位复核依据”；报告必须明确趋势判断范围、`production_effect=none`
+      和投资姿态标签边界；实现时同步更新 `docs/system_flow.md` 并补充报告边界测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 422
+    row_sha256: 78fd865b06fab60c02d70a025ba619127cecf7316221f1737b2065bda9b37042
+    cell_count: 8
+    all_cells:
+    - TREND-001
+    - 趋势判断/产品边界
+    - P0
+    - DONE
+    - 系统实现
+    - 已落实“当前系统仅作趋势判断，不触发交易”的结论边界；详细拆解见 `docs/requirements/trend_judgment_scope_2026-05-04.md`
+    - 日报和回测即使数据质量全绿，也不能把默认成功态写成交易触发、账户目标仓位或“可作为仓位复核依据”；报告必须明确趋势判断范围、`production_effect=none`
+      和投资姿态标签边界；实现时同步更新 `docs/system_flow.md` 并补充报告边界测试
+    - '2026-05-04: 新增并进入实现，原因：owner 明确当前系统只做趋势判断；该边界影响投资解释，属于 P0 误读风险控制。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `trend_only` 结论等级和 `trend_judgment` 适用范围，`score-daily`
+      与回测均按趋势判断范围渲染，测试覆盖日报、回测和干净通过时不升级为仓位复核。'
+    raw_line: '|TREND-001|趋势判断/产品边界|P0|DONE|系统实现|已落实“当前系统仅作趋势判断，不触发交易”的结论边界；详细拆解见
+      `docs/requirements/trend_judgment_scope_2026-05-04.md`|日报和回测即使数据质量全绿，也不能把默认成功态写成交易触发、账户目标仓位或“可作为仓位复核依据”；报告必须明确趋势判断范围、`production_effect=none`
+      和投资姿态标签边界；实现时同步更新 `docs/system_flow.md` 并补充报告边界测试|2026-05-04: 新增并进入实现，原因：owner
+      明确当前系统只做趋势判断；该边界影响投资解释，属于 P0 误读风险控制。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：新增
+      `trend_only` 结论等级和 `trend_judgment` 适用范围，`score-daily` 与回测均按趋势判断范围渲染，测试覆盖日报、回测和干净通过时不升级为仓位复核。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-78fd865b06fab60c02d70a02
+  task_id: TREND-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-04: 新增并进入实现，原因：owner 明确当前系统只做趋势判断；该边界影响投资解释，属于 P0 误读风险控制。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `trend_only` 结论等级和 `trend_judgment` 适用范围，`score-daily`
+      与回测均按趋势判断范围渲染，测试覆盖日报、回测和干净通过时不升级为仓位复核。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:78fd865b06fab60c02d70a025ba619127cecf7316221f1737b2065bda9b37042
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TREND-001
+  - 趋势判断/产品边界
+  - P0
+  - DONE
+  - 系统实现
+  - 已落实“当前系统仅作趋势判断，不触发交易”的结论边界；详细拆解见 `docs/requirements/trend_judgment_scope_2026-05-04.md`
+  - 日报和回测即使数据质量全绿，也不能把默认成功态写成交易触发、账户目标仓位或“可作为仓位复核依据”；报告必须明确趋势判断范围、`production_effect=none`
+    和投资姿态标签边界；实现时同步更新 `docs/system_flow.md` 并补充报告边界测试
+  - '2026-05-04: 新增并进入实现，原因：owner 明确当前系统只做趋势判断；该边界影响投资解释，属于 P0 误读风险控制。2026-05-04:
+    从 IN_PROGRESS 改为 DONE，原因：新增 `trend_only` 结论等级和 `trend_judgment` 适用范围，`score-daily`
+    与回测均按趋势判断范围渲染，测试覆盖日报、回测和干净通过时不升级为仓位复核。'
+  docs_links:
+  - docs/requirements/trend_judgment_scope_2026-05-04.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: 78fd865b06fab60c02d70a025ba619127cecf7316221f1737b2065bda9b37042
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 359decfdadae00070b3e30d47c4562a0a2fb4c9cb91eeeae2f115a978fb6b106

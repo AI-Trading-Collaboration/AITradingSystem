@@ -1,0 +1,166 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-032
+  title: null
+  domain: 交易执行/Operator Brief Notification Dry-run Dispatch Preview
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/operator_brief_notification_dispatch_preview_2026-05-24.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/operator_brief_notification_dispatch_preview_2026-05-24.md`；只读
+    dry-run dispatch preview 核心模块、CLI、JSON/Markdown/latest/run.log、dashboard 只读卡片、runbook、system
+    flow、artifact catalog、requirements 索引、专项测试和当前复验证据已完成；真实 `TRADING-031` artifact
+    观察已拆分到 active `TRADING-032A`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_operator_brief_notification_dispatch_preview.py` 和 `src/ai_trading_system/trading_engine/operator_brief_notification_dispatch_preview.py`；读取
+      latest TRADING-031 preflight、latest TRADING-022 operator brief JSON/Markdown
+      和 TRADING-030 draft metadata/草稿摘要，生成 `WOULD_SEND` / `NEEDS_APPROVAL` / `SAFETY_BLOCKED`
+      / `BLOCKED` / `NOOP` dispatch preview、channel plan、masked target、subject/title/body
+      excerpt、safety flags、decision、JSON/Markdown/latest/run.log；dashboard 只读读取 TRADING-032
+      artifact，不重跑 preview pipeline 或发送逻辑；测试覆盖所有状态、缺失 brief、notification disabled、recipient
+      脱敏、body excerpt 限制、schema 字段、Markdown、无外部发送、path traversal、dashboard 只读和 run.log；临时
+      fixture WOULD_SEND smoke、缺输入 BLOCKED smoke、数据质量门、目标 pytest、Ruff 和 scoped Black
+      通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1152
+    row_sha256: da43edd116c3ddab73358c2ef70e5c0e13505a3b19426bf458487eb3cbb95512
+    cell_count: 8
+    all_cells:
+    - TRADING-032
+    - 交易执行/Operator Brief Notification Dry-run Dispatch Preview
+    - P0
+    - BASELINE_DONE
+    - 系统验证 + 项目 owner
+    - 详细拆解见 `docs/requirements/operator_brief_notification_dispatch_preview_2026-05-24.md`；只读
+      dry-run dispatch preview 核心模块、CLI、JSON/Markdown/latest/run.log、dashboard 只读卡片、runbook、system
+      flow、artifact catalog、requirements 索引、专项测试和当前复验证据已完成；真实 `TRADING-031` artifact
+      观察已拆分到 active `TRADING-032A`
+    - 新增 `scripts/run_operator_brief_notification_dispatch_preview.py` 和 `src/ai_trading_system/trading_engine/operator_brief_notification_dispatch_preview.py`；读取
+      latest TRADING-031 preflight、latest TRADING-022 operator brief JSON/Markdown
+      和 TRADING-030 draft metadata/草稿摘要，生成 `WOULD_SEND` / `NEEDS_APPROVAL` / `SAFETY_BLOCKED`
+      / `BLOCKED` / `NOOP` dispatch preview、channel plan、masked target、subject/title/body
+      excerpt、safety flags、decision、JSON/Markdown/latest/run.log；dashboard 只读读取 TRADING-032
+      artifact，不重跑 preview pipeline 或发送逻辑；测试覆盖所有状态、缺失 brief、notification disabled、recipient
+      脱敏、body excerpt 限制、schema 字段、Markdown、无外部发送、path traversal、dashboard 只读和 run.log；临时
+      fixture WOULD_SEND smoke、缺输入 BLOCKED smoke、数据质量门、目标 pytest、Ruff 和 scoped Black
+      通过
+    - '2026-05-24: 新增并进入 IN_PROGRESS，原因：TRADING-031 只能判断通知是否具备发送条件，仍缺少发送前可人工审阅的 dry-run
+      dispatch plan；本任务严格 preview-only/read-only，不执行真实发送、不访问网络、不读取 secrets、不自动审批。2026-05-24:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 dispatch preview builder、CLI、JSON/Markdown/latest/run.log、dashboard
+      只读卡片、runbook、system flow、artifact catalog、requirements 索引和专项测试；验证通过 `tests/trading_engine/test_operator_brief_notification_dispatch_preview.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮读取 operations runbook
+      并运行 `aits validate-data`，状态为 `PASS_WITH_WARNINGS` / 错误数 0；临时真实形态 fixture smoke
+      输出 `WOULD_SEND`，3 个 channel 均为 dry-run would-send，`production_effect=none`，所有
+      email/Gmail/webhook/broker/replay/trading flags 为 false；缺输入 smoke 输出 `BLOCKED`
+      且正常写出可审计 artifact，副作用字段保持 false；目标 dispatch preview + dashboard pytest 33 passed，Ruff
+      和 scoped Black 通过；当前缺真实 TRADING-031 artifacts，剩余观察已登记为 `TRADING-032A`。'
+    raw_line: '|TRADING-032|交易执行/Operator Brief Notification Dry-run Dispatch Preview|P0|BASELINE_DONE|系统验证
+      + 项目 owner|详细拆解见 `docs/requirements/operator_brief_notification_dispatch_preview_2026-05-24.md`；只读
+      dry-run dispatch preview 核心模块、CLI、JSON/Markdown/latest/run.log、dashboard 只读卡片、runbook、system
+      flow、artifact catalog、requirements 索引、专项测试和当前复验证据已完成；真实 `TRADING-031` artifact
+      观察已拆分到 active `TRADING-032A`|新增 `scripts/run_operator_brief_notification_dispatch_preview.py`
+      和 `src/ai_trading_system/trading_engine/operator_brief_notification_dispatch_preview.py`；读取
+      latest TRADING-031 preflight、latest TRADING-022 operator brief JSON/Markdown
+      和 TRADING-030 draft metadata/草稿摘要，生成 `WOULD_SEND` / `NEEDS_APPROVAL` / `SAFETY_BLOCKED`
+      / `BLOCKED` / `NOOP` dispatch preview、channel plan、masked target、subject/title/body
+      excerpt、safety flags、decision、JSON/Markdown/latest/run.log；dashboard 只读读取 TRADING-032
+      artifact，不重跑 preview pipeline 或发送逻辑；测试覆盖所有状态、缺失 brief、notification disabled、recipient
+      脱敏、body excerpt 限制、schema 字段、Markdown、无外部发送、path traversal、dashboard 只读和 run.log；临时
+      fixture WOULD_SEND smoke、缺输入 BLOCKED smoke、数据质量门、目标 pytest、Ruff 和 scoped Black
+      通过|2026-05-24: 新增并进入 IN_PROGRESS，原因：TRADING-031 只能判断通知是否具备发送条件，仍缺少发送前可人工审阅的
+      dry-run dispatch plan；本任务严格 preview-only/read-only，不执行真实发送、不访问网络、不读取 secrets、不自动审批。2026-05-24:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 dispatch preview builder、CLI、JSON/Markdown/latest/run.log、dashboard
+      只读卡片、runbook、system flow、artifact catalog、requirements 索引和专项测试；验证通过 `tests/trading_engine/test_operator_brief_notification_dispatch_preview.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮读取 operations runbook
+      并运行 `aits validate-data`，状态为 `PASS_WITH_WARNINGS` / 错误数 0；临时真实形态 fixture smoke
+      输出 `WOULD_SEND`，3 个 channel 均为 dry-run would-send，`production_effect=none`，所有
+      email/Gmail/webhook/broker/replay/trading flags 为 false；缺输入 smoke 输出 `BLOCKED`
+      且正常写出可审计 artifact，副作用字段保持 false；目标 dispatch preview + dashboard pytest 33 passed，Ruff
+      和 scoped Black 通过；当前缺真实 TRADING-031 artifacts，剩余观察已登记为 `TRADING-032A`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-da43edd116c3ddab73358c2e
+  task_id: TRADING-032
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-05-24: 新增并进入 IN_PROGRESS，原因：TRADING-031 只能判断通知是否具备发送条件，仍缺少发送前可人工审阅的
+      dry-run dispatch plan；本任务严格 preview-only/read-only，不执行真实发送、不访问网络、不读取 secrets、不自动审批。2026-05-24:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 dispatch preview builder、CLI、JSON/Markdown/latest/run.log、dashboard
+      只读卡片、runbook、system flow、artifact catalog、requirements 索引和专项测试；验证通过 `tests/trading_engine/test_operator_brief_notification_dispatch_preview.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+      pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+      baseline 阻断。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮读取 operations runbook
+      并运行 `aits validate-data`，状态为 `PASS_WITH_WARNINGS` / 错误数 0；临时真实形态 fixture smoke
+      输出 `WOULD_SEND`，3 个 channel 均为 dry-run would-send，`production_effect=none`，所有
+      email/Gmail/webhook/broker/replay/trading flags 为 false；缺输入 smoke 输出 `BLOCKED`
+      且正常写出可审计 artifact，副作用字段保持 false；目标 dispatch preview + dashboard pytest 33 passed，Ruff
+      和 scoped Black 通过；当前缺真实 TRADING-031 artifacts，剩余观察已登记为 `TRADING-032A`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:da43edd116c3ddab73358c2ef70e5c0e13505a3b19426bf458487eb3cbb95512
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-032
+  - 交易执行/Operator Brief Notification Dry-run Dispatch Preview
+  - P0
+  - BASELINE_DONE
+  - 系统验证 + 项目 owner
+  - 详细拆解见 `docs/requirements/operator_brief_notification_dispatch_preview_2026-05-24.md`；只读
+    dry-run dispatch preview 核心模块、CLI、JSON/Markdown/latest/run.log、dashboard 只读卡片、runbook、system
+    flow、artifact catalog、requirements 索引、专项测试和当前复验证据已完成；真实 `TRADING-031` artifact
+    观察已拆分到 active `TRADING-032A`
+  - 新增 `scripts/run_operator_brief_notification_dispatch_preview.py` 和 `src/ai_trading_system/trading_engine/operator_brief_notification_dispatch_preview.py`；读取
+    latest TRADING-031 preflight、latest TRADING-022 operator brief JSON/Markdown 和
+    TRADING-030 draft metadata/草稿摘要，生成 `WOULD_SEND` / `NEEDS_APPROVAL` / `SAFETY_BLOCKED`
+    / `BLOCKED` / `NOOP` dispatch preview、channel plan、masked target、subject/title/body
+    excerpt、safety flags、decision、JSON/Markdown/latest/run.log；dashboard 只读读取 TRADING-032
+    artifact，不重跑 preview pipeline 或发送逻辑；测试覆盖所有状态、缺失 brief、notification disabled、recipient
+    脱敏、body excerpt 限制、schema 字段、Markdown、无外部发送、path traversal、dashboard 只读和 run.log；临时
+    fixture WOULD_SEND smoke、缺输入 BLOCKED smoke、数据质量门、目标 pytest、Ruff 和 scoped Black
+    通过
+  - '2026-05-24: 新增并进入 IN_PROGRESS，原因：TRADING-031 只能判断通知是否具备发送条件，仍缺少发送前可人工审阅的 dry-run
+    dispatch plan；本任务严格 preview-only/read-only，不执行真实发送、不访问网络、不读取 secrets、不自动审批。2026-05-24:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已完成 dispatch preview builder、CLI、JSON/Markdown/latest/run.log、dashboard
+    只读卡片、runbook、system flow、artifact catalog、requirements 索引和专项测试；验证通过 `tests/trading_engine/test_operator_brief_notification_dispatch_preview.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量
+    pytest、ruff 和 diff check；全仓 Black check 仍只被既有无关 `tests/test_market_data.py` baseline
+    阻断。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮读取 operations runbook 并运行 `aits
+    validate-data`，状态为 `PASS_WITH_WARNINGS` / 错误数 0；临时真实形态 fixture smoke 输出 `WOULD_SEND`，3
+    个 channel 均为 dry-run would-send，`production_effect=none`，所有 email/Gmail/webhook/broker/replay/trading
+    flags 为 false；缺输入 smoke 输出 `BLOCKED` 且正常写出可审计 artifact，副作用字段保持 false；目标 dispatch
+    preview + dashboard pytest 33 passed，Ruff 和 scoped Black 通过；当前缺真实 TRADING-031
+    artifacts，剩余观察已登记为 `TRADING-032A`。'
+  docs_links:
+  - docs/requirements/operator_brief_notification_dispatch_preview_2026-05-24.md
+  terminal: false
+  raw_row_sha256: da43edd116c3ddab73358c2ef70e5c0e13505a3b19426bf458487eb3cbb95512
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3f9c72daf9eba6daabacf25d6eb582af7a22999c0e6dff9b6a837a9ac237406f

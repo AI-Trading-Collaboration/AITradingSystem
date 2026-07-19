@@ -1,0 +1,138 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-693_THRESHOLD_REGISTRY_AND_CALIBRATION_AUDIT
+  title: null
+  domain: Threshold governance / validation-only calibration backlog
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-693_Long_Horizon_Evidence_Floor_Calibration_Audit.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-693_Long_Horizon_Evidence_Floor_Calibration_Audit.md`；本轮扫描
+    config、indicator research、validation pack、masking diagnostics、outcome maturity、promotion/robustness
+    gates、backtest/replay/allocation constraints 和 tests 中固化阈值，生成 `config/research/threshold_registry.yaml`、A/B/C
+    分级、promotion-blocking 风险标记和 calibration backlog；保持 validation-only，不修改 production
+    / paper-shadow / official weights
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`threshold_registry.yaml` 每条记录包含 value/unit/where_used/purpose/impact/safety/calibration
+      fields；A 类未校准阈值均标记 `UNCALIBRATED_DEFAULT` 或 `HEURISTIC_GUARDRAIL`、`calibration_required=true`、`no_promotion_dependency_without_review=true`；validation
+      pack 输出 `threshold_audit_summary`，包含 total/high-impact/uncalibrated/guardrail/calibrated/blocking
+      counts；focused tests、CLI artifact、Ruff、py_compile、`git diff --check` 和并行 pytest/validation
+      tier 通过或明确记录阻塞'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1404
+    row_sha256: b96c035bb9283228581d1682d1cd1c408efc6d17ff659a57d4c82865a64e5368
+    cell_count: 8
+    all_cells:
+    - TRADING-693_THRESHOLD_REGISTRY_AND_CALIBRATION_AUDIT
+    - Threshold governance / validation-only calibration backlog
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-693_Long_Horizon_Evidence_Floor_Calibration_Audit.md`；本轮扫描
+      config、indicator research、validation pack、masking diagnostics、outcome maturity、promotion/robustness
+      gates、backtest/replay/allocation constraints 和 tests 中固化阈值，生成 `config/research/threshold_registry.yaml`、A/B/C
+      分级、promotion-blocking 风险标记和 calibration backlog；保持 validation-only，不修改 production
+      / paper-shadow / official weights
+    - '`threshold_registry.yaml` 每条记录包含 value/unit/where_used/purpose/impact/safety/calibration
+      fields；A 类未校准阈值均标记 `UNCALIBRATED_DEFAULT` 或 `HEURISTIC_GUARDRAIL`、`calibration_required=true`、`no_promotion_dependency_without_review=true`；validation
+      pack 输出 `threshold_audit_summary`，包含 total/high-impact/uncalibrated/guardrail/calibrated/blocking
+      counts；focused tests、CLI artifact、Ruff、py_compile、`git diff --check` 和并行 pytest/validation
+      tier 通过或明确记录阻塞'
+    - '2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；本轮只做 inventory、分级、风险标记和后续评估计划，不完成阈值校准，不触碰
+      production/paper-shadow/official weights。2026-06-20: 实现完成并进入 VALIDATING；新增 threshold
+      registry、threshold audit builder/CLI、validation-pack summary/stability 接入、focused
+      tests 和 system flow/artifact catalog 文档。真实 CLI 输出 total_threshold_count=44、high_impact_threshold_count=36、uncalibrated_high_impact_count=36、heuristic_guardrail_count=25、calibrated_count=0、thresholds_blocking_promotion_count=36，production_effect=none。验证通过
+      focused 并行 pytest 36 passed、task/docs 并行 pytest 10 passed、config 并行 pytest 17
+      passed、Ruff、py_compile、Black check、`git diff --check` 和 full 并行 validation tier
+      2977 passed / 642 warnings / 211.02s，runtime artifact `outputs/validation_runtime/full_20260620T093328Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-693_THRESHOLD_REGISTRY_AND_CALIBRATION_AUDIT|Threshold governance
+      / validation-only calibration backlog|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详细拆解见
+      `docs/requirements/TRADING-693_Long_Horizon_Evidence_Floor_Calibration_Audit.md`；本轮扫描
+      config、indicator research、validation pack、masking diagnostics、outcome maturity、promotion/robustness
+      gates、backtest/replay/allocation constraints 和 tests 中固化阈值，生成 `config/research/threshold_registry.yaml`、A/B/C
+      分级、promotion-blocking 风险标记和 calibration backlog；保持 validation-only，不修改 production
+      / paper-shadow / official weights|`threshold_registry.yaml` 每条记录包含 value/unit/where_used/purpose/impact/safety/calibration
+      fields；A 类未校准阈值均标记 `UNCALIBRATED_DEFAULT` 或 `HEURISTIC_GUARDRAIL`、`calibration_required=true`、`no_promotion_dependency_without_review=true`；validation
+      pack 输出 `threshold_audit_summary`，包含 total/high-impact/uncalibrated/guardrail/calibrated/blocking
+      counts；focused tests、CLI artifact、Ruff、py_compile、`git diff --check` 和并行 pytest/validation
+      tier 通过或明确记录阻塞|2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；本轮只做 inventory、分级、风险标记和后续评估计划，不完成阈值校准，不触碰
+      production/paper-shadow/official weights。2026-06-20: 实现完成并进入 VALIDATING；新增 threshold
+      registry、threshold audit builder/CLI、validation-pack summary/stability 接入、focused
+      tests 和 system flow/artifact catalog 文档。真实 CLI 输出 total_threshold_count=44、high_impact_threshold_count=36、uncalibrated_high_impact_count=36、heuristic_guardrail_count=25、calibrated_count=0、thresholds_blocking_promotion_count=36，production_effect=none。验证通过
+      focused 并行 pytest 36 passed、task/docs 并行 pytest 10 passed、config 并行 pytest 17
+      passed、Ruff、py_compile、Black check、`git diff --check` 和 full 并行 validation tier
+      2977 passed / 642 warnings / 211.02s，runtime artifact `outputs/validation_runtime/full_20260620T093328Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b96c035bb9283228581d1682
+  task_id: TRADING-693_THRESHOLD_REGISTRY_AND_CALIBRATION_AUDIT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；本轮只做 inventory、分级、风险标记和后续评估计划，不完成阈值校准，不触碰
+      production/paper-shadow/official weights。2026-06-20: 实现完成并进入 VALIDATING；新增 threshold
+      registry、threshold audit builder/CLI、validation-pack summary/stability 接入、focused
+      tests 和 system flow/artifact catalog 文档。真实 CLI 输出 total_threshold_count=44、high_impact_threshold_count=36、uncalibrated_high_impact_count=36、heuristic_guardrail_count=25、calibrated_count=0、thresholds_blocking_promotion_count=36，production_effect=none。验证通过
+      focused 并行 pytest 36 passed、task/docs 并行 pytest 10 passed、config 并行 pytest 17
+      passed、Ruff、py_compile、Black check、`git diff --check` 和 full 并行 validation tier
+      2977 passed / 642 warnings / 211.02s，runtime artifact `outputs/validation_runtime/full_20260620T093328Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b96c035bb9283228581d1682d1cd1c408efc6d17ff659a57d4c82865a64e5368
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-693_THRESHOLD_REGISTRY_AND_CALIBRATION_AUDIT
+  - Threshold governance / validation-only calibration backlog
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-693_Long_Horizon_Evidence_Floor_Calibration_Audit.md`；本轮扫描
+    config、indicator research、validation pack、masking diagnostics、outcome maturity、promotion/robustness
+    gates、backtest/replay/allocation constraints 和 tests 中固化阈值，生成 `config/research/threshold_registry.yaml`、A/B/C
+    分级、promotion-blocking 风险标记和 calibration backlog；保持 validation-only，不修改 production
+    / paper-shadow / official weights
+  - '`threshold_registry.yaml` 每条记录包含 value/unit/where_used/purpose/impact/safety/calibration
+    fields；A 类未校准阈值均标记 `UNCALIBRATED_DEFAULT` 或 `HEURISTIC_GUARDRAIL`、`calibration_required=true`、`no_promotion_dependency_without_review=true`；validation
+    pack 输出 `threshold_audit_summary`，包含 total/high-impact/uncalibrated/guardrail/calibrated/blocking
+    counts；focused tests、CLI artifact、Ruff、py_compile、`git diff --check` 和并行 pytest/validation
+    tier 通过或明确记录阻塞'
+  - '2026-06-20: 按 owner 指令新增并进入 IN_PROGRESS；本轮只做 inventory、分级、风险标记和后续评估计划，不完成阈值校准，不触碰
+    production/paper-shadow/official weights。2026-06-20: 实现完成并进入 VALIDATING；新增 threshold
+    registry、threshold audit builder/CLI、validation-pack summary/stability 接入、focused
+    tests 和 system flow/artifact catalog 文档。真实 CLI 输出 total_threshold_count=44、high_impact_threshold_count=36、uncalibrated_high_impact_count=36、heuristic_guardrail_count=25、calibrated_count=0、thresholds_blocking_promotion_count=36，production_effect=none。验证通过
+    focused 并行 pytest 36 passed、task/docs 并行 pytest 10 passed、config 并行 pytest 17
+    passed、Ruff、py_compile、Black check、`git diff --check` 和 full 并行 validation tier
+    2977 passed / 642 warnings / 211.02s，runtime artifact `outputs/validation_runtime/full_20260620T093328Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-693_Long_Horizon_Evidence_Floor_Calibration_Audit.md
+  terminal: false
+  raw_row_sha256: b96c035bb9283228581d1682d1cd1c408efc6d17ff659a57d4c82865a64e5368
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f449a6e87e86dd46f78fe80320bd1217dd2ddf5cbd862b72eaf1159dbeddd660

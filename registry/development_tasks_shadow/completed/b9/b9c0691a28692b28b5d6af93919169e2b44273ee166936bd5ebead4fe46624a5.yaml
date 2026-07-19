@@ -1,0 +1,140 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ENG-VAL-005_TAIL_RISK_TEST_FIXTURE_REUSE
+  title: null
+  domain: Developer validation / contract-validation runtime optimization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统后续针对 tail-risk independent setup、controlled strategy batch CLI smoke、current
+    subscription CLI smoke 和 regime-horizon / candidate-batch 重复构造继续优化
+  requirement_refs:
+  - docs/requirements/ENG-VAL-005_Tail_Risk_Test_Fixture_Reuse.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ENG-VAL-005_Tail_Risk_Test_Fixture_Reuse.md`；承接
+    ENG-VAL-004 runtime artifact 中 tail-risk fixture/setup、tail-risk fallback / policy
+    fixture 群和 remaining CLI smoke 慢项。本任务只优化测试前置 artifact 构造组织，不改变 tail-risk builder/report
+    behavior、contract 覆盖、payload schema、pass/fail 判定、validation runner 默认策略或生产边界。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`tests/test_tail_risk_fallback_falsification_audit.py` 与 `tests/test_controlled_strategy_tail_risk_policy.py`
+      复用 module-scoped 只读输入 fixture；每个测试仍执行自身目标 builder 并写入独立 `tmp_path`。验证通过 Ruff、compileall、focused
+      tail-risk pytest `20 passed in 19.43s`、docs freshness、documentation contract、task-register
+      consistency run/validate、contract-validation `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T185549Z/test_runtime_summary.json`）和
+      `git diff --check`。Focused 两文件 pytest 从 `20 passed in 160.18s` 降到 `20 passed
+      in 19.43s`；完整 tier elapsed 从 `181.10s` 降到 `165.93s`，top20 slow duration total
+      从 `340.96s` 降到 `260.25s`。'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 144
+    row_sha256: 71f9a47f2cd2ddcb5fd07204f5fed7fa6af2b28dc72d49381d58c8ab6d4fba02
+    cell_count: 8
+    all_cells:
+    - ENG-VAL-005_TAIL_RISK_TEST_FIXTURE_REUSE
+    - Developer validation / contract-validation runtime optimization
+    - P2
+    - DONE
+    - 系统后续针对 tail-risk independent setup、controlled strategy batch CLI smoke、current
+      subscription CLI smoke 和 regime-horizon / candidate-batch 重复构造继续优化
+    - 详见 `docs/requirements/ENG-VAL-005_Tail_Risk_Test_Fixture_Reuse.md`；承接 ENG-VAL-004
+      runtime artifact 中 tail-risk fixture/setup、tail-risk fallback / policy fixture
+      群和 remaining CLI smoke 慢项。本任务只优化测试前置 artifact 构造组织，不改变 tail-risk builder/report
+      behavior、contract 覆盖、payload schema、pass/fail 判定、validation runner 默认策略或生产边界。
+    - '`tests/test_tail_risk_fallback_falsification_audit.py` 与 `tests/test_controlled_strategy_tail_risk_policy.py`
+      复用 module-scoped 只读输入 fixture；每个测试仍执行自身目标 builder 并写入独立 `tmp_path`。验证通过 Ruff、compileall、focused
+      tail-risk pytest `20 passed in 19.43s`、docs freshness、documentation contract、task-register
+      consistency run/validate、contract-validation `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T185549Z/test_runtime_summary.json`）和
+      `git diff --check`。Focused 两文件 pytest 从 `20 passed in 160.18s` 降到 `20 passed
+      in 19.43s`；完整 tier elapsed 从 `181.10s` 降到 `165.93s`，top20 slow duration total
+      从 `340.96s` 降到 `260.25s`。'
+    - '2026-07-05: 根据 ENG-VAL-004 slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05:
+      实现完成并归档 DONE；tail-risk fallback / policy repeated call bottleneck 已解除，当前最慢项转为
+      tail-risk independent governance setup、controlled strategy batch CLI smoke、current
+      subscription CLI smoke 和 controlled strategy regime-horizon / candidate-batch
+      重复构造。'
+    raw_line: '|ENG-VAL-005_TAIL_RISK_TEST_FIXTURE_REUSE|Developer validation / contract-validation
+      runtime optimization|P2|DONE|系统后续针对 tail-risk independent setup、controlled strategy
+      batch CLI smoke、current subscription CLI smoke 和 regime-horizon / candidate-batch
+      重复构造继续优化|详见 `docs/requirements/ENG-VAL-005_Tail_Risk_Test_Fixture_Reuse.md`；承接
+      ENG-VAL-004 runtime artifact 中 tail-risk fixture/setup、tail-risk fallback /
+      policy fixture 群和 remaining CLI smoke 慢项。本任务只优化测试前置 artifact 构造组织，不改变 tail-risk
+      builder/report behavior、contract 覆盖、payload schema、pass/fail 判定、validation runner
+      默认策略或生产边界。|`tests/test_tail_risk_fallback_falsification_audit.py` 与 `tests/test_controlled_strategy_tail_risk_policy.py`
+      复用 module-scoped 只读输入 fixture；每个测试仍执行自身目标 builder 并写入独立 `tmp_path`。验证通过 Ruff、compileall、focused
+      tail-risk pytest `20 passed in 19.43s`、docs freshness、documentation contract、task-register
+      consistency run/validate、contract-validation `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T185549Z/test_runtime_summary.json`）和
+      `git diff --check`。Focused 两文件 pytest 从 `20 passed in 160.18s` 降到 `20 passed
+      in 19.43s`；完整 tier elapsed 从 `181.10s` 降到 `165.93s`，top20 slow duration total
+      从 `340.96s` 降到 `260.25s`。|2026-07-05: 根据 ENG-VAL-004 slow-duration evidence
+      新增并进入 IN_PROGRESS。2026-07-05: 实现完成并归档 DONE；tail-risk fallback / policy repeated
+      call bottleneck 已解除，当前最慢项转为 tail-risk independent governance setup、controlled
+      strategy batch CLI smoke、current subscription CLI smoke 和 controlled strategy
+      regime-horizon / candidate-batch 重复构造。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-71f9a47f2cd2ddcb5fd07204
+  task_id: ENG-VAL-005_TAIL_RISK_TEST_FIXTURE_REUSE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统后续针对 tail-risk independent setup、controlled strategy batch CLI smoke、current
+      subscription CLI smoke 和 regime-horizon / candidate-batch 重复构造继续优化
+    notes: '2026-07-05: 根据 ENG-VAL-004 slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05:
+      实现完成并归档 DONE；tail-risk fallback / policy repeated call bottleneck 已解除，当前最慢项转为
+      tail-risk independent governance setup、controlled strategy batch CLI smoke、current
+      subscription CLI smoke 和 controlled strategy regime-horizon / candidate-batch
+      重复构造。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:71f9a47f2cd2ddcb5fd07204f5fed7fa6af2b28dc72d49381d58c8ab6d4fba02
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ENG-VAL-005_TAIL_RISK_TEST_FIXTURE_REUSE
+  - Developer validation / contract-validation runtime optimization
+  - P2
+  - DONE
+  - 系统后续针对 tail-risk independent setup、controlled strategy batch CLI smoke、current
+    subscription CLI smoke 和 regime-horizon / candidate-batch 重复构造继续优化
+  - 详见 `docs/requirements/ENG-VAL-005_Tail_Risk_Test_Fixture_Reuse.md`；承接 ENG-VAL-004
+    runtime artifact 中 tail-risk fixture/setup、tail-risk fallback / policy fixture
+    群和 remaining CLI smoke 慢项。本任务只优化测试前置 artifact 构造组织，不改变 tail-risk builder/report
+    behavior、contract 覆盖、payload schema、pass/fail 判定、validation runner 默认策略或生产边界。
+  - '`tests/test_tail_risk_fallback_falsification_audit.py` 与 `tests/test_controlled_strategy_tail_risk_policy.py`
+    复用 module-scoped 只读输入 fixture；每个测试仍执行自身目标 builder 并写入独立 `tmp_path`。验证通过 Ruff、compileall、focused
+    tail-risk pytest `20 passed in 19.43s`、docs freshness、documentation contract、task-register
+    consistency run/validate、contract-validation `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T185549Z/test_runtime_summary.json`）和
+    `git diff --check`。Focused 两文件 pytest 从 `20 passed in 160.18s` 降到 `20 passed in
+    19.43s`；完整 tier elapsed 从 `181.10s` 降到 `165.93s`，top20 slow duration total 从 `340.96s`
+    降到 `260.25s`。'
+  - '2026-07-05: 根据 ENG-VAL-004 slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05:
+    实现完成并归档 DONE；tail-risk fallback / policy repeated call bottleneck 已解除，当前最慢项转为
+    tail-risk independent governance setup、controlled strategy batch CLI smoke、current
+    subscription CLI smoke 和 controlled strategy regime-horizon / candidate-batch
+    重复构造。'
+  docs_links:
+  - docs/requirements/ENG-VAL-005_Tail_Risk_Test_Fixture_Reuse.md
+  terminal: true
+  raw_row_sha256: 71f9a47f2cd2ddcb5fd07204f5fed7fa6af2b28dc72d49381d58c8ab6d4fba02
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7d064c1ad1d79019cd678cf455d7c226dcdf531d5c47593d206e307cdfff687e

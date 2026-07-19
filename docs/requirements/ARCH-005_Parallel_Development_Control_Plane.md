@@ -6,11 +6,11 @@
 
 - task id：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`
 - priority：`P0`
-- status：`READY`
+- status：`BASELINE_DONE_S0_S1_COMPLETE_S2_PENDING`
 - owner：architecture coordinator / developer platform owner / integration coordinator
 - owner review：project owner 负责 source-of-truth cutover 与调度策略复核
 - hard dependency：`ARCH-004C_PLATFORM_CONTRACTS`、`ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES` `DONE`；现有 task-register consistency baseline
-- bootstrap start condition：正式 S0 仍必须等待整个 ARCH-004G2.4 phase exit gate PASS，并收到 `arch_005_bootstrap_handoff.v1`；在此之前保持 `READY` 且 `next_slice_unblocked=false`
+- bootstrap start condition：`SATISFIED`；G2.4 phase exit source=`152f2d33`，`arch_005_bootstrap_handoff.v1`已提交推送并以`f1045634`修正为Git-blob可复算hash basis；`next_slice_unblocked=false`
 - approved pre-bootstrap boundary：ARCH-004G2.4-EB2 integration gate 已 PASS，owner 批准的下一实现范围为最终可复用、非 cutover 的 manifest/conflict/lane-plan/evidence primitives；它不是 S0，不得迁移 task registry、切换事实源、生成替代 task views、派发任务或获取真实 lease
 - pre-bootstrap status：`COMPLETE_NON_CUTOVER_G2_4_CONTINUES`，slice id=`ARCH-005-PB1`，base=`fe0e19b9`；只新增pure contracts/validators/planner及测试，不生成runtime registry或scheduler state
 - integration milestone：S0～S3 在 G2.4 handoff 后推进；S4 controlled dispatch 与 `ARCH-004G2_PARALLEL_READINESS_GATE` 的三 lane rehearsal 共同验收
@@ -437,11 +437,30 @@ ARCH-004 coordinator 生成并验证 `arch_005_bootstrap_handoff.v1`。S0 冻结
 - S4 三条 pilot lane 的具体选择；
 - S5 source-of-truth cutover 是否与 ARCH-004H 同一 wave 完成。
 
-这些问题不阻塞 handoff entry PASS 之后的 S0 inventory/schema/characterization；在完整 G2.4 handoff 前仍不得启动 S0。任何会影响调度或状态解释的选择必须在进入 S2/S3 前冻结。
+这些问题不影响已经闭合的 S0/S1 shadow baseline。任何会影响调度、lease 或状态解释的选择必须在进入 S2/S3 前由后续显式任务冻结；当前不得据此自动启动 S2、dispatch 或 G2.5。
 
 ## 状态记录
 
-- 2026-07-19：G2.4 phase-level exit已PASS，matrix=`967/0/0/0`，四级validation、manifests、
+- 2026-07-19：正式S0/S1已闭合并转`BASELINE_DONE`。S0冻结`task_record.v1`、`task_event.v1`、
+  `task_dependency.v1`、`execution_lease.v1`、`scheduler_decision.v1`与
+  `task_register_generated_view.v1`，并生成两份legacy register的bytes/SHA、row checksum、
+  ID/status/owner/docs-link集合与125个runtime/test/script consumer characterization。真实库存为
+  active/completed/unique=`427/442/869`、ID overlap=`0`。S1在
+  `registry/development_tasks_shadow/<source>/<sha-prefix>/<task-id-sha>.yaml`生成869个per-task
+  shadow fragments及`arch_005_task_shadow_index.v1`；重复生成byte-identical，两份compatibility
+  projection与原Markdown逐byte一致。发现55行含超过8个cells的legacy歧义：保留raw row、全部cells和
+  既有first-eight-cell投影，标记`LEGACY_HISTORY_PARTIAL`，不猜分隔边界。Fast/architecture/contract/
+  reproducibility/full=`300/419/265/23/6394 passed`；Full另有`2 skipped/642 warnings/961.89s`，相对
+  phase-exit Full 946.63s约增加1.6%，最慢测试族一致，无异常性能回归。Markdown继续是唯一可写事实源，
+  dual-write/dispatch/lease/status mutation均false，`production_effect=none`。S2与ARCH-004 G2.5均未
+  自动解锁；后者仍需owner新的显式指令。
+
+- 2026-07-19：S0 entry的持久复验发现首版handoff对compatibility baseline记录的是Windows mixed-EOL
+  worktree bytes SHA，而Git commit只保留LF blob，导致跨checkout无法只凭source commit复算。门禁按预期
+  fail closed；未采用EOL猜测或跳过校验，直接把v1 tracked-file hash basis修正为
+  `source_commit_git_blob_sha256`，更新checksum、focused 9 passed并以`f1045634`推送后恢复S0。
+
+- 2026-07-19（历史状态，已被上方S0/S1完成记录取代）：G2.4 phase-level exit已PASS，matrix=`967/0/0/0`，四级validation、manifests、
   deprecation、source hashes与clean attribution均闭合。`arch_005_bootstrap_handoff.v1`严格validator
   已冻结，但handoff尚未写入/验证/提交/推送，因此正式S0仍保持等待，
   `next_slice_unblocked=false`。下一步先推送phase-exit source commit，再从该commit生成handoff，

@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: UNIVERSE-001
+  title: null
+  domain: 观察池/回测正确性
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已建立 point-in-time watchlist lifecycle、校验命令和回测
+    signal_date 过滤
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 每个进入评分、回测或报告的 ticker 都有 `added_at`、`removed_at`、`reason`、`active_from`、`active_until`、`competence_status`、`node_mapping_valid_from`
+      和 thesis 要求可见日期；回测只能使用 signal_date 当时已进入观察池且映射有效的标的；实现时同步更新 `docs/system_flow.md`
+      并补充防幸存者偏差测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 436
+    row_sha256: 3f750906cf6487c9502a2bca769d72f596ce4efdf8884d4f619ebfc62327b1f7
+    cell_count: 8
+    all_cells:
+    - UNIVERSE-001
+    - 观察池/回测正确性
+    - P0
+    - DONE
+    - 系统实现
+    - 已建立 point-in-time watchlist lifecycle、校验命令和回测 signal_date 过滤
+    - 每个进入评分、回测或报告的 ticker 都有 `added_at`、`removed_at`、`reason`、`active_from`、`active_until`、`competence_status`、`node_mapping_valid_from`
+      和 thesis 要求可见日期；回测只能使用 signal_date 当时已进入观察池且映射有效的标的；实现时同步更新 `docs/system_flow.md`
+      并补充防幸存者偏差测试
+    - '优先级列为 P0，原因：扩展 universe 后如果没有 point-in-time 生命周期，回测会产生幸存者偏差并误导投资解释。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始实现 watchlist lifecycle schema、校验、回测按 signal_date
+      过滤和防幸存者偏差测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：默认 lifecycle、`aits watchlist
+      validate-lifecycle`、回测过滤、系统流图和防幸存者偏差测试已完成；`python -m pytest -q` 通过 220 项测试。'
+    raw_line: '|UNIVERSE-001|观察池/回测正确性|P0|DONE|系统实现|已建立 point-in-time watchlist lifecycle、校验命令和回测
+      signal_date 过滤|每个进入评分、回测或报告的 ticker 都有 `added_at`、`removed_at`、`reason`、`active_from`、`active_until`、`competence_status`、`node_mapping_valid_from`
+      和 thesis 要求可见日期；回测只能使用 signal_date 当时已进入观察池且映射有效的标的；实现时同步更新 `docs/system_flow.md`
+      并补充防幸存者偏差测试|优先级列为 P0，原因：扩展 universe 后如果没有 point-in-time 生命周期，回测会产生幸存者偏差并误导投资解释。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始实现 watchlist lifecycle schema、校验、回测按 signal_date
+      过滤和防幸存者偏差测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：默认 lifecycle、`aits watchlist
+      validate-lifecycle`、回测过滤、系统流图和防幸存者偏差测试已完成；`python -m pytest -q` 通过 220 项测试。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3f750906cf6487c9502a2bca
+  task_id: UNIVERSE-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '优先级列为 P0，原因：扩展 universe 后如果没有 point-in-time 生命周期，回测会产生幸存者偏差并误导投资解释。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始实现 watchlist lifecycle schema、校验、回测按 signal_date
+      过滤和防幸存者偏差测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：默认 lifecycle、`aits watchlist
+      validate-lifecycle`、回测过滤、系统流图和防幸存者偏差测试已完成；`python -m pytest -q` 通过 220 项测试。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3f750906cf6487c9502a2bca769d72f596ce4efdf8884d4f619ebfc62327b1f7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - UNIVERSE-001
+  - 观察池/回测正确性
+  - P0
+  - DONE
+  - 系统实现
+  - 已建立 point-in-time watchlist lifecycle、校验命令和回测 signal_date 过滤
+  - 每个进入评分、回测或报告的 ticker 都有 `added_at`、`removed_at`、`reason`、`active_from`、`active_until`、`competence_status`、`node_mapping_valid_from`
+    和 thesis 要求可见日期；回测只能使用 signal_date 当时已进入观察池且映射有效的标的；实现时同步更新 `docs/system_flow.md`
+    并补充防幸存者偏差测试
+  - '优先级列为 P0，原因：扩展 universe 后如果没有 point-in-time 生命周期，回测会产生幸存者偏差并误导投资解释。2026-05-04:
+    从 READY 改为 IN_PROGRESS，原因：开始实现 watchlist lifecycle schema、校验、回测按 signal_date 过滤和防幸存者偏差测试。2026-05-04:
+    从 IN_PROGRESS 改为 DONE，原因：默认 lifecycle、`aits watchlist validate-lifecycle`、回测过滤、系统流图和防幸存者偏差测试已完成；`python
+    -m pytest -q` 通过 220 项测试。'
+  docs_links:
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: 3f750906cf6487c9502a2bca769d72f596ce4efdf8884d4f619ebfc62327b1f7
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 327ce8f28f4c925989ff4c752f0085ed9f9e1b63055db3b5e362569085b339bb

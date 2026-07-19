@@ -1,0 +1,147 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-064
+  title: null
+  domain: ETF 组合校准/Calibration Experiment Pack
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 后续 owner/真实样本观察
+  requirement_refs:
+  - docs/requirements/TRADING-064_ETF_Portfolio_Calibration_Experiment_Pack.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-064_ETF_Portfolio_Calibration_Experiment_Pack.md`；TRADING-064A~J
+    基础设施已完成，final experiment validation gate PASS；真实 experiment batch、candidate selection、shadow
+    observation、weekly review 样本和 owner review 仍是后续观察/owner 决策依赖，不阻塞本基础设施归档
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`etf_calibration_v1` pack 存在；batch experiment runner、comparison report、risk-adjusted
+      ranking policy、candidate gate、shadow enrollment、weekly review、Reader Brief/report
+      index integration 和 final validation gate 均可运行；`aits etf experiments validate
+      --pack etf_calibration_v1` 输出 `status=PASS`、11 项 checks PASS、`safe_for_shadow_observation=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_promotion_allowed=false`；所有输出固定
+      observe-only/manual-review-only，不写 production weights、不触发 broker action、不自动
+      promotion；runtime experiment artifacts 不提交'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1155
+    row_sha256: a495c3ffb45e2f128c79113e58620d2b10e0af5010eb303d4290a1ada63c2e6e
+    cell_count: 8
+    all_cells:
+    - TRADING-064
+    - ETF 组合校准/Calibration Experiment Pack
+    - P0
+    - BASELINE_DONE
+    - 系统验证 + 后续 owner/真实样本观察
+    - 详细拆解见 `docs/requirements/TRADING-064_ETF_Portfolio_Calibration_Experiment_Pack.md`；TRADING-064A~J
+      基础设施已完成，final experiment validation gate PASS；真实 experiment batch、candidate
+      selection、shadow observation、weekly review 样本和 owner review 仍是后续观察/owner 决策依赖，不阻塞本基础设施归档
+    - '`etf_calibration_v1` pack 存在；batch experiment runner、comparison report、risk-adjusted
+      ranking policy、candidate gate、shadow enrollment、weekly review、Reader Brief/report
+      index integration 和 final validation gate 均可运行；`aits etf experiments validate
+      --pack etf_calibration_v1` 输出 `status=PASS`、11 项 checks PASS、`safe_for_shadow_observation=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_promotion_allowed=false`；所有输出固定
+      observe-only/manual-review-only，不写 production weights、不触发 broker action、不自动
+      promotion；runtime experiment artifacts 不提交'
+    - '2026-06-01: 新增并进入 IN_PROGRESS，原因：owner 提供 ETF Portfolio Calibration Experiment
+      Pack 计划；本阶段只建立受控 ETF 校准实验与 shadow observation 基础，不新增 live trading、broker action
+      或 automatic production promotion。2026-06-01: TRADING-064A~J 完成 experiment registry、`etf_calibration_v1`
+      pack、batch runner、comparison report、ranking policy、candidate selection gate、shadow
+      enrollment、weekly review、Reader Brief/report integration 和 final validation
+      gate，父任务转入 VALIDATING。2026-06-09: 系统验证复跑 `python -m ai_trading_system.cli etf
+      experiments validate --pack etf_calibration_v1`，gate 仍为 PASS；`tests/test_etf_experiments.py`
+      为 57 passed。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：基础设施和只读安全门禁完成，但当前 `data/simulation/etf_shadow_candidates.json`
+      为 `candidate_count=0`，Reader Brief 仍显示 experiment run/candidate selection/weekly
+      review/top candidate 为 MISSING；真实样本和 owner review 不能由系统伪造，后续由独立观察/owner 决策链路继续推进。'
+    raw_line: '|TRADING-064|ETF 组合校准/Calibration Experiment Pack|P0|BASELINE_DONE|系统验证
+      + 后续 owner/真实样本观察|详细拆解见 `docs/requirements/TRADING-064_ETF_Portfolio_Calibration_Experiment_Pack.md`；TRADING-064A~J
+      基础设施已完成，final experiment validation gate PASS；真实 experiment batch、candidate
+      selection、shadow observation、weekly review 样本和 owner review 仍是后续观察/owner 决策依赖，不阻塞本基础设施归档|`etf_calibration_v1`
+      pack 存在；batch experiment runner、comparison report、risk-adjusted ranking policy、candidate
+      gate、shadow enrollment、weekly review、Reader Brief/report index integration 和
+      final validation gate 均可运行；`aits etf experiments validate --pack etf_calibration_v1`
+      输出 `status=PASS`、11 项 checks PASS、`safe_for_shadow_observation=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_promotion_allowed=false`；所有输出固定
+      observe-only/manual-review-only，不写 production weights、不触发 broker action、不自动
+      promotion；runtime experiment artifacts 不提交|2026-06-01: 新增并进入 IN_PROGRESS，原因：owner
+      提供 ETF Portfolio Calibration Experiment Pack 计划；本阶段只建立受控 ETF 校准实验与 shadow observation
+      基础，不新增 live trading、broker action 或 automatic production promotion。2026-06-01:
+      TRADING-064A~J 完成 experiment registry、`etf_calibration_v1` pack、batch runner、comparison
+      report、ranking policy、candidate selection gate、shadow enrollment、weekly review、Reader
+      Brief/report integration 和 final validation gate，父任务转入 VALIDATING。2026-06-09:
+      系统验证复跑 `python -m ai_trading_system.cli etf experiments validate --pack etf_calibration_v1`，gate
+      仍为 PASS；`tests/test_etf_experiments.py` 为 57 passed。2026-06-09: 从 VALIDATING
+      改为 BASELINE_DONE，原因：基础设施和只读安全门禁完成，但当前 `data/simulation/etf_shadow_candidates.json`
+      为 `candidate_count=0`，Reader Brief 仍显示 experiment run/candidate selection/weekly
+      review/top candidate 为 MISSING；真实样本和 owner review 不能由系统伪造，后续由独立观察/owner 决策链路继续推进。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a495c3ffb45e2f128c79113e
+  task_id: TRADING-064
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 后续 owner/真实样本观察
+    notes: '2026-06-01: 新增并进入 IN_PROGRESS，原因：owner 提供 ETF Portfolio Calibration Experiment
+      Pack 计划；本阶段只建立受控 ETF 校准实验与 shadow observation 基础，不新增 live trading、broker action
+      或 automatic production promotion。2026-06-01: TRADING-064A~J 完成 experiment registry、`etf_calibration_v1`
+      pack、batch runner、comparison report、ranking policy、candidate selection gate、shadow
+      enrollment、weekly review、Reader Brief/report integration 和 final validation
+      gate，父任务转入 VALIDATING。2026-06-09: 系统验证复跑 `python -m ai_trading_system.cli etf
+      experiments validate --pack etf_calibration_v1`，gate 仍为 PASS；`tests/test_etf_experiments.py`
+      为 57 passed。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：基础设施和只读安全门禁完成，但当前 `data/simulation/etf_shadow_candidates.json`
+      为 `candidate_count=0`，Reader Brief 仍显示 experiment run/candidate selection/weekly
+      review/top candidate 为 MISSING；真实样本和 owner review 不能由系统伪造，后续由独立观察/owner 决策链路继续推进。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a495c3ffb45e2f128c79113e58620d2b10e0af5010eb303d4290a1ada63c2e6e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-064
+  - ETF 组合校准/Calibration Experiment Pack
+  - P0
+  - BASELINE_DONE
+  - 系统验证 + 后续 owner/真实样本观察
+  - 详细拆解见 `docs/requirements/TRADING-064_ETF_Portfolio_Calibration_Experiment_Pack.md`；TRADING-064A~J
+    基础设施已完成，final experiment validation gate PASS；真实 experiment batch、candidate selection、shadow
+    observation、weekly review 样本和 owner review 仍是后续观察/owner 决策依赖，不阻塞本基础设施归档
+  - '`etf_calibration_v1` pack 存在；batch experiment runner、comparison report、risk-adjusted
+    ranking policy、candidate gate、shadow enrollment、weekly review、Reader Brief/report
+    index integration 和 final validation gate 均可运行；`aits etf experiments validate
+    --pack etf_calibration_v1` 输出 `status=PASS`、11 项 checks PASS、`safe_for_shadow_observation=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_promotion_allowed=false`；所有输出固定
+    observe-only/manual-review-only，不写 production weights、不触发 broker action、不自动 promotion；runtime
+    experiment artifacts 不提交'
+  - '2026-06-01: 新增并进入 IN_PROGRESS，原因：owner 提供 ETF Portfolio Calibration Experiment
+    Pack 计划；本阶段只建立受控 ETF 校准实验与 shadow observation 基础，不新增 live trading、broker action
+    或 automatic production promotion。2026-06-01: TRADING-064A~J 完成 experiment registry、`etf_calibration_v1`
+    pack、batch runner、comparison report、ranking policy、candidate selection gate、shadow
+    enrollment、weekly review、Reader Brief/report integration 和 final validation gate，父任务转入
+    VALIDATING。2026-06-09: 系统验证复跑 `python -m ai_trading_system.cli etf experiments
+    validate --pack etf_calibration_v1`，gate 仍为 PASS；`tests/test_etf_experiments.py`
+    为 57 passed。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：基础设施和只读安全门禁完成，但当前 `data/simulation/etf_shadow_candidates.json`
+    为 `candidate_count=0`，Reader Brief 仍显示 experiment run/candidate selection/weekly
+    review/top candidate 为 MISSING；真实样本和 owner review 不能由系统伪造，后续由独立观察/owner 决策链路继续推进。'
+  docs_links:
+  - docs/requirements/TRADING-064_ETF_Portfolio_Calibration_Experiment_Pack.md
+  terminal: false
+  raw_row_sha256: a495c3ffb45e2f128c79113e58620d2b10e0af5010eb303d4290a1ada63c2e6e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 898549b2a935271f5c09a74563f2a02b298b15b646d602b04eb84977290b1781

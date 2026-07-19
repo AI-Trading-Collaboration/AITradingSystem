@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: BACKTEST-004
+  title: null
+  domain: 回测/Gate 与事件效果归因
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统设计 + 系统实现
+  requirement_refs:
+  - docs/requirements/backtest_weight_tuning_validation_protocol_2026-05-06.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段 `aits backtest-gate-attribution`：读取已生成
+    backtest daily 与 input coverage，输出 gate trigger、平均仓位降幅、avoided drawdown、missed
+    upside、net effect、false alarm、late trigger 和 event label readiness；详细拆解见 `docs/requirements/backtest_weight_tuning_validation_protocol_2026-05-06.md#backtest-004gate-与事件效果归因`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 报告输出 gate_trigger_count、average_position_reduction、avoided_drawdown、missed_upside、net_effect、false_alarm_rate、late_trigger_rate、event_precision、severity_accuracy、review_pass_rate、pending_to_confirmed_rate
+      和 confirmed_high 后 1/5/20 日最大不利波动；LLM 只能使用当时可见文本做结构化抽取，不得做未来收益判断；所有 event/gate
+      评估按 PIT 输入和可见时间执行；完整 DONE 仍需真实事件标签、severity/outcome 账本和更完整反事实回测
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1133
+    row_sha256: 23b79ad9a5adca3ebcf2d6bb9a2bb2eaffea625cc9d551084975017aa635feed
+    cell_count: 8
+    all_cells:
+    - BACKTEST-004
+    - 回测/Gate 与事件效果归因
+    - P1
+    - BASELINE_DONE
+    - 系统设计 + 系统实现
+    - 已完成第一阶段 `aits backtest-gate-attribution`：读取已生成 backtest daily 与 input coverage，输出
+      gate trigger、平均仓位降幅、avoided drawdown、missed upside、net effect、false alarm、late
+      trigger 和 event label readiness；详细拆解见 `docs/requirements/backtest_weight_tuning_validation_protocol_2026-05-06.md#backtest-004gate-与事件效果归因`
+    - 报告输出 gate_trigger_count、average_position_reduction、avoided_drawdown、missed_upside、net_effect、false_alarm_rate、late_trigger_rate、event_precision、severity_accuracy、review_pass_rate、pending_to_confirmed_rate
+      和 confirmed_high 后 1/5/20 日最大不利波动；LLM 只能使用当时可见文本做结构化抽取，不得做未来收益判断；所有 event/gate
+      评估按 PIT 输入和可见时间执行；完整 DONE 仍需真实事件标签、severity/outcome 账本和更完整反事实回测
+    - '2026-05-06: 新增任务，原因：gate 和 news/LLM 模块的价值不能只用最终收益衡量；需要分别解释避免损失、错失上涨、误报、迟报和人工复核质量。2026-05-06:
+      从 PROPOSED 改为 IN_PROGRESS，原因：开始实现基于已有 backtest daily 与 input coverage 的只读 gate/event
+      attribution 报告基础版。2026-05-06: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 gate/event
+      归因模块、CLI、系统流图、README 和测试；真实 2026-04-01 至 2026-05-05 回测产物生成报告为 PASS_WITH_LIMITATIONS，限制来自当前无事件标签。'
+    raw_line: '|BACKTEST-004|回测/Gate 与事件效果归因|P1|BASELINE_DONE|系统设计 + 系统实现|已完成第一阶段
+      `aits backtest-gate-attribution`：读取已生成 backtest daily 与 input coverage，输出 gate
+      trigger、平均仓位降幅、avoided drawdown、missed upside、net effect、false alarm、late trigger
+      和 event label readiness；详细拆解见 `docs/requirements/backtest_weight_tuning_validation_protocol_2026-05-06.md#backtest-004gate-与事件效果归因`|报告输出
+      gate_trigger_count、average_position_reduction、avoided_drawdown、missed_upside、net_effect、false_alarm_rate、late_trigger_rate、event_precision、severity_accuracy、review_pass_rate、pending_to_confirmed_rate
+      和 confirmed_high 后 1/5/20 日最大不利波动；LLM 只能使用当时可见文本做结构化抽取，不得做未来收益判断；所有 event/gate
+      评估按 PIT 输入和可见时间执行；完整 DONE 仍需真实事件标签、severity/outcome 账本和更完整反事实回测|2026-05-06:
+      新增任务，原因：gate 和 news/LLM 模块的价值不能只用最终收益衡量；需要分别解释避免损失、错失上涨、误报、迟报和人工复核质量。2026-05-06:
+      从 PROPOSED 改为 IN_PROGRESS，原因：开始实现基于已有 backtest daily 与 input coverage 的只读 gate/event
+      attribution 报告基础版。2026-05-06: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 gate/event
+      归因模块、CLI、系统流图、README 和测试；真实 2026-04-01 至 2026-05-05 回测产物生成报告为 PASS_WITH_LIMITATIONS，限制来自当前无事件标签。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-23b79ad9a5adca3ebcf2d6bb
+  task_id: BACKTEST-004
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统设计 + 系统实现
+    notes: '2026-05-06: 新增任务，原因：gate 和 news/LLM 模块的价值不能只用最终收益衡量；需要分别解释避免损失、错失上涨、误报、迟报和人工复核质量。2026-05-06:
+      从 PROPOSED 改为 IN_PROGRESS，原因：开始实现基于已有 backtest daily 与 input coverage 的只读 gate/event
+      attribution 报告基础版。2026-05-06: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 gate/event
+      归因模块、CLI、系统流图、README 和测试；真实 2026-04-01 至 2026-05-05 回测产物生成报告为 PASS_WITH_LIMITATIONS，限制来自当前无事件标签。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:23b79ad9a5adca3ebcf2d6bb9a2bb2eaffea625cc9d551084975017aa635feed
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - BACKTEST-004
+  - 回测/Gate 与事件效果归因
+  - P1
+  - BASELINE_DONE
+  - 系统设计 + 系统实现
+  - 已完成第一阶段 `aits backtest-gate-attribution`：读取已生成 backtest daily 与 input coverage，输出
+    gate trigger、平均仓位降幅、avoided drawdown、missed upside、net effect、false alarm、late
+    trigger 和 event label readiness；详细拆解见 `docs/requirements/backtest_weight_tuning_validation_protocol_2026-05-06.md#backtest-004gate-与事件效果归因`
+  - 报告输出 gate_trigger_count、average_position_reduction、avoided_drawdown、missed_upside、net_effect、false_alarm_rate、late_trigger_rate、event_precision、severity_accuracy、review_pass_rate、pending_to_confirmed_rate
+    和 confirmed_high 后 1/5/20 日最大不利波动；LLM 只能使用当时可见文本做结构化抽取，不得做未来收益判断；所有 event/gate
+    评估按 PIT 输入和可见时间执行；完整 DONE 仍需真实事件标签、severity/outcome 账本和更完整反事实回测
+  - '2026-05-06: 新增任务，原因：gate 和 news/LLM 模块的价值不能只用最终收益衡量；需要分别解释避免损失、错失上涨、误报、迟报和人工复核质量。2026-05-06:
+    从 PROPOSED 改为 IN_PROGRESS，原因：开始实现基于已有 backtest daily 与 input coverage 的只读 gate/event
+    attribution 报告基础版。2026-05-06: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 gate/event
+    归因模块、CLI、系统流图、README 和测试；真实 2026-04-01 至 2026-05-05 回测产物生成报告为 PASS_WITH_LIMITATIONS，限制来自当前无事件标签。'
+  docs_links:
+  - docs/requirements/backtest_weight_tuning_validation_protocol_2026-05-06.md
+  terminal: false
+  raw_row_sha256: 23b79ad9a5adca3ebcf2d6bb9a2bb2eaffea625cc9d551084975017aa635feed
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b5ab701d248f67f8fbbd9fbb857ecf92502ccaabc420634528117b252e792365

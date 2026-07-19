@@ -1,0 +1,131 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-879_to_887_SIMPLE_BASELINE_REAL_RUN_DECISION_PACK
+  title: null
+  domain: Research strategies / QQQ-TQQQ-SGOV simple baseline real-run candidate decision
+    pack
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-879_to_887_Simple_Baseline_Real_Run_Decision_Pack.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-879_to_887_Simple_Baseline_Real_Run_Decision_Pack.md`；已完成
+    879 branch/commit/clean/push/PR readiness、880 真实 CLI suite、881～887 候选提取/解释/复盘/拆解/鲁棒性/owner
+    pack/watchlist；不得 merge main，不得修改 production config，不得 activation paper-shadow/production/broker
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 输出 `simple_baseline_pr_readiness_summary`、`simple_baseline_real_run_summary`、`simple_baseline_top_candidate_extraction_report`、`simple_baseline_dominance_explanation`、`simple_baseline_drawdown_episode_replay`、`simple_baseline_exposure_decomposition_report`、`simple_baseline_parameter_robustness_top_candidates`、`simple_baseline_owner_decision_pack`、`simple_baseline_paper_shadow_watchlist`
+      JSON/Markdown；所有数据依赖结果必须通过 `validate_data_cache` 同源 gate 或显式 BLOCKED；候选字段、dominance
+      原因、关键回撤段、收益来源、鲁棒性、owner 8 个问题和 watchlist safety fields 均可审计
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1303
+    row_sha256: 5d358043ba1bc2054f1e29f56dd754aa81ecc3e4ff29cd3dfe93e66db627aea2
+    cell_count: 8
+    all_cells:
+    - TRADING-879_to_887_SIMPLE_BASELINE_REAL_RUN_DECISION_PACK
+    - Research strategies / QQQ-TQQQ-SGOV simple baseline real-run candidate decision
+      pack
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核
+    - 详见 `docs/requirements/TRADING-879_to_887_Simple_Baseline_Real_Run_Decision_Pack.md`；已完成
+      879 branch/commit/clean/push/PR readiness、880 真实 CLI suite、881～887 候选提取/解释/复盘/拆解/鲁棒性/owner
+      pack/watchlist；不得 merge main，不得修改 production config，不得 activation paper-shadow/production/broker
+    - 输出 `simple_baseline_pr_readiness_summary`、`simple_baseline_real_run_summary`、`simple_baseline_top_candidate_extraction_report`、`simple_baseline_dominance_explanation`、`simple_baseline_drawdown_episode_replay`、`simple_baseline_exposure_decomposition_report`、`simple_baseline_parameter_robustness_top_candidates`、`simple_baseline_owner_decision_pack`、`simple_baseline_paper_shadow_watchlist`
+      JSON/Markdown；所有数据依赖结果必须通过 `validate_data_cache` 同源 gate 或显式 BLOCKED；候选字段、dominance
+      原因、关键回撤段、收益来源、鲁棒性、owner 8 个问题和 watchlist safety fields 均可审计
+    - '2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求从 c57cb082 的 14 个 CLI 实现转向真实运行、候选收敛和人工决策；TRADING-879
+      已确认当前分支为 `codex/simple-baseline-portfolio-control`、HEAD=`c57cb082`、本地 commit
+      存在、工作区 clean，并已 push 到 `origin/codex/simple-baseline-portfolio-control`。2026-06-23:
+      转入 VALIDATING；初次 simple-baseline gate 因主价格缓存缺 TQQQ fail-closed，随后通过既有 FMP price
+      repair/manifest 路径补入 TQQQ 1008 行并重跑 `validate-data`，状态 `PASS_WITH_WARNINGS`/0
+      errors；865～878 真实 CLI 全部执行，ranking=`BASELINE_RANKING_READY`，top recommended=`equal_risk_qqq_sgov`，readiness=`PAPER_SHADOW_REVIEWABLE_LATER`
+      但 safety fields 仍 false/none，master=`PAUSE_TQQQ_HEAVY`，options=`OPTIONS_RESEARCH_BLOCKED`；881～887
+      artifacts 已生成，watchlist 5 个候选且全部 no activation。'
+    raw_line: '|TRADING-879_to_887_SIMPLE_BASELINE_REAL_RUN_DECISION_PACK|Research
+      strategies / QQQ-TQQQ-SGOV simple baseline real-run candidate decision pack|P0|VALIDATING|项目
+      owner 人工复核|详见 `docs/requirements/TRADING-879_to_887_Simple_Baseline_Real_Run_Decision_Pack.md`；已完成
+      879 branch/commit/clean/push/PR readiness、880 真实 CLI suite、881～887 候选提取/解释/复盘/拆解/鲁棒性/owner
+      pack/watchlist；不得 merge main，不得修改 production config，不得 activation paper-shadow/production/broker|输出
+      `simple_baseline_pr_readiness_summary`、`simple_baseline_real_run_summary`、`simple_baseline_top_candidate_extraction_report`、`simple_baseline_dominance_explanation`、`simple_baseline_drawdown_episode_replay`、`simple_baseline_exposure_decomposition_report`、`simple_baseline_parameter_robustness_top_candidates`、`simple_baseline_owner_decision_pack`、`simple_baseline_paper_shadow_watchlist`
+      JSON/Markdown；所有数据依赖结果必须通过 `validate_data_cache` 同源 gate 或显式 BLOCKED；候选字段、dominance
+      原因、关键回撤段、收益来源、鲁棒性、owner 8 个问题和 watchlist safety fields 均可审计|2026-06-23: 新增并进入
+      IN_PROGRESS，原因：owner 要求从 c57cb082 的 14 个 CLI 实现转向真实运行、候选收敛和人工决策；TRADING-879
+      已确认当前分支为 `codex/simple-baseline-portfolio-control`、HEAD=`c57cb082`、本地 commit
+      存在、工作区 clean，并已 push 到 `origin/codex/simple-baseline-portfolio-control`。2026-06-23:
+      转入 VALIDATING；初次 simple-baseline gate 因主价格缓存缺 TQQQ fail-closed，随后通过既有 FMP price
+      repair/manifest 路径补入 TQQQ 1008 行并重跑 `validate-data`，状态 `PASS_WITH_WARNINGS`/0
+      errors；865～878 真实 CLI 全部执行，ranking=`BASELINE_RANKING_READY`，top recommended=`equal_risk_qqq_sgov`，readiness=`PAPER_SHADOW_REVIEWABLE_LATER`
+      但 safety fields 仍 false/none，master=`PAUSE_TQQQ_HEAVY`，options=`OPTIONS_RESEARCH_BLOCKED`；881～887
+      artifacts 已生成，watchlist 5 个候选且全部 no activation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5d358043ba1bc2054f1e29f5
+  task_id: TRADING-879_to_887_SIMPLE_BASELINE_REAL_RUN_DECISION_PACK
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核
+    notes: '2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求从 c57cb082 的 14 个 CLI 实现转向真实运行、候选收敛和人工决策；TRADING-879
+      已确认当前分支为 `codex/simple-baseline-portfolio-control`、HEAD=`c57cb082`、本地 commit
+      存在、工作区 clean，并已 push 到 `origin/codex/simple-baseline-portfolio-control`。2026-06-23:
+      转入 VALIDATING；初次 simple-baseline gate 因主价格缓存缺 TQQQ fail-closed，随后通过既有 FMP price
+      repair/manifest 路径补入 TQQQ 1008 行并重跑 `validate-data`，状态 `PASS_WITH_WARNINGS`/0
+      errors；865～878 真实 CLI 全部执行，ranking=`BASELINE_RANKING_READY`，top recommended=`equal_risk_qqq_sgov`，readiness=`PAPER_SHADOW_REVIEWABLE_LATER`
+      但 safety fields 仍 false/none，master=`PAUSE_TQQQ_HEAVY`，options=`OPTIONS_RESEARCH_BLOCKED`；881～887
+      artifacts 已生成，watchlist 5 个候选且全部 no activation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5d358043ba1bc2054f1e29f56dd754aa81ecc3e4ff29cd3dfe93e66db627aea2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-879_to_887_SIMPLE_BASELINE_REAL_RUN_DECISION_PACK
+  - Research strategies / QQQ-TQQQ-SGOV simple baseline real-run candidate decision
+    pack
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核
+  - 详见 `docs/requirements/TRADING-879_to_887_Simple_Baseline_Real_Run_Decision_Pack.md`；已完成
+    879 branch/commit/clean/push/PR readiness、880 真实 CLI suite、881～887 候选提取/解释/复盘/拆解/鲁棒性/owner
+    pack/watchlist；不得 merge main，不得修改 production config，不得 activation paper-shadow/production/broker
+  - 输出 `simple_baseline_pr_readiness_summary`、`simple_baseline_real_run_summary`、`simple_baseline_top_candidate_extraction_report`、`simple_baseline_dominance_explanation`、`simple_baseline_drawdown_episode_replay`、`simple_baseline_exposure_decomposition_report`、`simple_baseline_parameter_robustness_top_candidates`、`simple_baseline_owner_decision_pack`、`simple_baseline_paper_shadow_watchlist`
+    JSON/Markdown；所有数据依赖结果必须通过 `validate_data_cache` 同源 gate 或显式 BLOCKED；候选字段、dominance
+    原因、关键回撤段、收益来源、鲁棒性、owner 8 个问题和 watchlist safety fields 均可审计
+  - '2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求从 c57cb082 的 14 个 CLI 实现转向真实运行、候选收敛和人工决策；TRADING-879
+    已确认当前分支为 `codex/simple-baseline-portfolio-control`、HEAD=`c57cb082`、本地 commit 存在、工作区
+    clean，并已 push 到 `origin/codex/simple-baseline-portfolio-control`。2026-06-23: 转入
+    VALIDATING；初次 simple-baseline gate 因主价格缓存缺 TQQQ fail-closed，随后通过既有 FMP price repair/manifest
+    路径补入 TQQQ 1008 行并重跑 `validate-data`，状态 `PASS_WITH_WARNINGS`/0 errors；865～878 真实
+    CLI 全部执行，ranking=`BASELINE_RANKING_READY`，top recommended=`equal_risk_qqq_sgov`，readiness=`PAPER_SHADOW_REVIEWABLE_LATER`
+    但 safety fields 仍 false/none，master=`PAUSE_TQQQ_HEAVY`，options=`OPTIONS_RESEARCH_BLOCKED`；881～887
+    artifacts 已生成，watchlist 5 个候选且全部 no activation。'
+  docs_links:
+  - docs/requirements/TRADING-879_to_887_Simple_Baseline_Real_Run_Decision_Pack.md
+  terminal: false
+  raw_row_sha256: 5d358043ba1bc2054f1e29f56dd754aa81ecc3e4ff29cd3dfe93e66db627aea2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 29d4dd9bda73be6ac4c8702074e60159feb6fddab8df397db577f0432bdba35f

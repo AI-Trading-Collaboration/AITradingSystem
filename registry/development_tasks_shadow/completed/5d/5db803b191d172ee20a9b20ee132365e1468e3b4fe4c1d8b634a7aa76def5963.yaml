@@ -1,0 +1,177 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-021
+  title: null
+  domain: 交易执行/Parameter Governance Daily Digest
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/parameter_governance_daily_digest_2026-05-23.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/parameter_governance_daily_digest_2026-05-23.md`；只读
+    daily digest 生成器、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成；TRADING-022
+    如需整合全系统 operator brief 应另建任务，不混入本任务
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_parameter_governance_daily_digest.py`、`src/ai_trading_system/trading_engine/parameter_governance_daily_digest.py`
+      和 `data/derived/weight_iterations/governance/digests/parameter_governance_daily_digest_YYYY-MM-DD.json/md`、`digests/logs/parameter_governance_daily_digest_run_YYYY-MM-DD.json/md`；只读读取
+      latest TRADING-019 summary，可选读取 TRADING-020 metadata / 018C2 review / 018F lifecycle
+      audit，不重跑 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020，不修改 production/shadow，不执行
+      promotion/apply/rollback，不触发 scoring/broker/replay/trading；输出固定 `production_effect=none`、`manual_review_only=true`、`digest_only=true`、`governance_only=true`、`apply_executed_by_digest=false`、`rollback_executed_by_digest=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；覆盖
+      OK/WATCH/ACTION_REQUIRED/URGENT/INPUT_MISSING/INPUT_INVALID/SAFETY_BLOCKED/ERROR、Markdown
+      banners、weight snapshot、pending items、critical/warning/notes、dashboard 只读卡片和
+      repo 外 smoke；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff
+      通过；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 405
+    row_sha256: c3cac93117b426fc5bc52b091054e6259751909c2702985a9da8b4e8ea74b800
+    cell_count: 8
+    all_cells:
+    - TRADING-021
+    - 交易执行/Parameter Governance Daily Digest
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/parameter_governance_daily_digest_2026-05-23.md`；只读
+      daily digest 生成器、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成；TRADING-022
+      如需整合全系统 operator brief 应另建任务，不混入本任务
+    - 新增 `scripts/run_parameter_governance_daily_digest.py`、`src/ai_trading_system/trading_engine/parameter_governance_daily_digest.py`
+      和 `data/derived/weight_iterations/governance/digests/parameter_governance_daily_digest_YYYY-MM-DD.json/md`、`digests/logs/parameter_governance_daily_digest_run_YYYY-MM-DD.json/md`；只读读取
+      latest TRADING-019 summary，可选读取 TRADING-020 metadata / 018C2 review / 018F lifecycle
+      audit，不重跑 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020，不修改 production/shadow，不执行
+      promotion/apply/rollback，不触发 scoring/broker/replay/trading；输出固定 `production_effect=none`、`manual_review_only=true`、`digest_only=true`、`governance_only=true`、`apply_executed_by_digest=false`、`rollback_executed_by_digest=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；覆盖
+      OK/WATCH/ACTION_REQUIRED/URGENT/INPUT_MISSING/INPUT_INVALID/SAFETY_BLOCKED/ERROR、Markdown
+      banners、weight snapshot、pending items、critical/warning/notes、dashboard 只读卡片和
+      repo 外 smoke；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff
+      通过；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff
+    - '2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-019 summary 和 TRADING-020
+      web view 后增加每日快速阅读的参数治理摘要；本任务只压缩和解释既有 summary，不生成新治理判断，不扩展到全系统 operator brief。2026-05-23:
+      从 IN_PROGRESS 改为 VALIDATING，原因：digest builder、CLI、dashboard 只读卡片、runbook、system
+      flow、artifact catalog、专项测试和 repo 外 smoke 已完成；验证通过目标 pytest 21 passed、dashboard
+      pytest 8 passed、`tests/trading_engine` 389 passed / 1 warning、全量 pytest 973
+      passed / 1 warning、ruff passed、触达文件 black check passed；全仓 black check 被既有 `tests/test_market_data.py`
+      格式 baseline 阻断，未格式化无关文件。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo
+      外临时 fixture 四路径 smoke；OK 输出 `OK/NORMAL` 且 Markdown 包含 `Continue observation`，ACTION_REQUIRED
+      顶部显示 `Action Required` 且 `pending_apply=true` 渲染为 pending apply，URGENT 顶部显示
+      `URGENT: Manual Attention Required` 且 critical findings 渲染在 Alerts/Critical，SAFETY_BLOCKED
+      顶部显示 `Digest Safety Blocked`；四路径均确认 digest 顶层 `production_effect=none`、`manual_review_only=true`、`digest_only=true`、`governance_only=true`、`apply_executed_by_digest=false`、`rollback_executed_by_digest=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+      import guard 验证 Parameter Governance Daily Digest 卡片只读读取 digest artifact，不触发
+      018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020/021/scoring/broker/replay/trading；收尾验证通过目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+      仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。'
+    raw_line: '|TRADING-021|交易执行/Parameter Governance Daily Digest|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/parameter_governance_daily_digest_2026-05-23.md`；只读 daily
+      digest 生成器、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成；TRADING-022
+      如需整合全系统 operator brief 应另建任务，不混入本任务|新增 `scripts/run_parameter_governance_daily_digest.py`、`src/ai_trading_system/trading_engine/parameter_governance_daily_digest.py`
+      和 `data/derived/weight_iterations/governance/digests/parameter_governance_daily_digest_YYYY-MM-DD.json/md`、`digests/logs/parameter_governance_daily_digest_run_YYYY-MM-DD.json/md`；只读读取
+      latest TRADING-019 summary，可选读取 TRADING-020 metadata / 018C2 review / 018F lifecycle
+      audit，不重跑 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020，不修改 production/shadow，不执行
+      promotion/apply/rollback，不触发 scoring/broker/replay/trading；输出固定 `production_effect=none`、`manual_review_only=true`、`digest_only=true`、`governance_only=true`、`apply_executed_by_digest=false`、`rollback_executed_by_digest=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；覆盖
+      OK/WATCH/ACTION_REQUIRED/URGENT/INPUT_MISSING/INPUT_INVALID/SAFETY_BLOCKED/ERROR、Markdown
+      banners、weight snapshot、pending items、critical/warning/notes、dashboard 只读卡片和
+      repo 外 smoke；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff
+      通过；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff|2026-05-23:
+      新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-019 summary 和 TRADING-020 web view 后增加每日快速阅读的参数治理摘要；本任务只压缩和解释既有
+      summary，不生成新治理判断，不扩展到全系统 operator brief。2026-05-23: 从 IN_PROGRESS 改为 VALIDATING，原因：digest
+      builder、CLI、dashboard 只读卡片、runbook、system flow、artifact catalog、专项测试和 repo 外
+      smoke 已完成；验证通过目标 pytest 21 passed、dashboard pytest 8 passed、`tests/trading_engine`
+      389 passed / 1 warning、全量 pytest 973 passed / 1 warning、ruff passed、触达文件 black
+      check passed；全仓 black check 被既有 `tests/test_market_data.py` 格式 baseline 阻断，未格式化无关文件。2026-05-23:
+      从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo 外临时 fixture 四路径 smoke；OK 输出 `OK/NORMAL`
+      且 Markdown 包含 `Continue observation`，ACTION_REQUIRED 顶部显示 `Action Required`
+      且 `pending_apply=true` 渲染为 pending apply，URGENT 顶部显示 `URGENT: Manual Attention
+      Required` 且 critical findings 渲染在 Alerts/Critical，SAFETY_BLOCKED 顶部显示 `Digest
+      Safety Blocked`；四路径均确认 digest 顶层 `production_effect=none`、`manual_review_only=true`、`digest_only=true`、`governance_only=true`、`apply_executed_by_digest=false`、`rollback_executed_by_digest=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+      import guard 验证 Parameter Governance Daily Digest 卡片只读读取 digest artifact，不触发
+      018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020/021/scoring/broker/replay/trading；收尾验证通过目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+      仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c3cac93117b426fc5bc52b09
+  task_id: TRADING-021
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-019 summary 和 TRADING-020
+      web view 后增加每日快速阅读的参数治理摘要；本任务只压缩和解释既有 summary，不生成新治理判断，不扩展到全系统 operator brief。2026-05-23:
+      从 IN_PROGRESS 改为 VALIDATING，原因：digest builder、CLI、dashboard 只读卡片、runbook、system
+      flow、artifact catalog、专项测试和 repo 外 smoke 已完成；验证通过目标 pytest 21 passed、dashboard
+      pytest 8 passed、`tests/trading_engine` 389 passed / 1 warning、全量 pytest 973
+      passed / 1 warning、ruff passed、触达文件 black check passed；全仓 black check 被既有 `tests/test_market_data.py`
+      格式 baseline 阻断，未格式化无关文件。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo
+      外临时 fixture 四路径 smoke；OK 输出 `OK/NORMAL` 且 Markdown 包含 `Continue observation`，ACTION_REQUIRED
+      顶部显示 `Action Required` 且 `pending_apply=true` 渲染为 pending apply，URGENT 顶部显示
+      `URGENT: Manual Attention Required` 且 critical findings 渲染在 Alerts/Critical，SAFETY_BLOCKED
+      顶部显示 `Digest Safety Blocked`；四路径均确认 digest 顶层 `production_effect=none`、`manual_review_only=true`、`digest_only=true`、`governance_only=true`、`apply_executed_by_digest=false`、`rollback_executed_by_digest=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+      import guard 验证 Parameter Governance Daily Digest 卡片只读读取 digest artifact，不触发
+      018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020/021/scoring/broker/replay/trading；收尾验证通过目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+      仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c3cac93117b426fc5bc52b091054e6259751909c2702985a9da8b4e8ea74b800
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-021
+  - 交易执行/Parameter Governance Daily Digest
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/parameter_governance_daily_digest_2026-05-23.md`；只读 daily
+    digest 生成器、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成；TRADING-022
+    如需整合全系统 operator brief 应另建任务，不混入本任务
+  - 新增 `scripts/run_parameter_governance_daily_digest.py`、`src/ai_trading_system/trading_engine/parameter_governance_daily_digest.py`
+    和 `data/derived/weight_iterations/governance/digests/parameter_governance_daily_digest_YYYY-MM-DD.json/md`、`digests/logs/parameter_governance_daily_digest_run_YYYY-MM-DD.json/md`；只读读取
+    latest TRADING-019 summary，可选读取 TRADING-020 metadata / 018C2 review / 018F lifecycle
+    audit，不重跑 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020，不修改 production/shadow，不执行
+    promotion/apply/rollback，不触发 scoring/broker/replay/trading；输出固定 `production_effect=none`、`manual_review_only=true`、`digest_only=true`、`governance_only=true`、`apply_executed_by_digest=false`、`rollback_executed_by_digest=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；覆盖
+    OK/WATCH/ACTION_REQUIRED/URGENT/INPUT_MISSING/INPUT_INVALID/SAFETY_BLOCKED/ERROR、Markdown
+    banners、weight snapshot、pending items、critical/warning/notes、dashboard 只读卡片和 repo
+    外 smoke；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；全仓
+    black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff
+  - '2026-05-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-019 summary 和 TRADING-020
+    web view 后增加每日快速阅读的参数治理摘要；本任务只压缩和解释既有 summary，不生成新治理判断，不扩展到全系统 operator brief。2026-05-23:
+    从 IN_PROGRESS 改为 VALIDATING，原因：digest builder、CLI、dashboard 只读卡片、runbook、system
+    flow、artifact catalog、专项测试和 repo 外 smoke 已完成；验证通过目标 pytest 21 passed、dashboard
+    pytest 8 passed、`tests/trading_engine` 389 passed / 1 warning、全量 pytest 973 passed
+    / 1 warning、ruff passed、触达文件 black check passed；全仓 black check 被既有 `tests/test_market_data.py`
+    格式 baseline 阻断，未格式化无关文件。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo 外临时
+    fixture 四路径 smoke；OK 输出 `OK/NORMAL` 且 Markdown 包含 `Continue observation`，ACTION_REQUIRED
+    顶部显示 `Action Required` 且 `pending_apply=true` 渲染为 pending apply，URGENT 顶部显示 `URGENT:
+    Manual Attention Required` 且 critical findings 渲染在 Alerts/Critical，SAFETY_BLOCKED
+    顶部显示 `Digest Safety Blocked`；四路径均确认 digest 顶层 `production_effect=none`、`manual_review_only=true`、`digest_only=true`、`governance_only=true`、`apply_executed_by_digest=false`、`rollback_executed_by_digest=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+    import guard 验证 Parameter Governance Daily Digest 卡片只读读取 digest artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020/021/scoring/broker/replay/trading；收尾验证通过目标
+    pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+    仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。'
+  docs_links:
+  - docs/requirements/parameter_governance_daily_digest_2026-05-23.md
+  terminal: true
+  raw_row_sha256: c3cac93117b426fc5bc52b091054e6259751909c2702985a9da8b4e8ea74b800
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a39d4676eb0f931d6434a8683f7dc62714e35bcf2d692b4ef94610f3dbb12c88

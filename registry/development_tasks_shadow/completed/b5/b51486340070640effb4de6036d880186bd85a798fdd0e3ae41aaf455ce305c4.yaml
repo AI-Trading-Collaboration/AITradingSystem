@@ -1,0 +1,105 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-060
+  title: null
+  domain: 运维/周期任务总入口 Runbook
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/operations/operations_runbook.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 新增 `docs/operations/operations_runbook.md`，并更新
+    `AGENTS.md`，要求 Codex 执行任何周期任务前先读取该总入口；本次为文档-only 变更，不修改业务代码、不提交
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: operations runbook 覆盖 daily / weekly / biweekly / monthly / governance 任务；说明每日
+      scheduler trigger 是统一外部入口，较长周期任务只能通过日期和条件门控编排或人工按 runbook 执行；每日任务列出 daily PIT、`score-daily`、dashboard/latest
+      checks、Reader Brief 和 `validate-reader-brief`；周期任务登记 weekly review、biweekly
+      weight feedback、monthly governance、scheduler validation 和 artifact catalog consistency；AGENTS
+      明确执行周期任务前读取该 runbook
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 382
+    row_sha256: a0dba69dd8f98d4de9c9223b8653a751864e8ae5517ebfc126c8dca6d9bf8757
+    cell_count: 8
+    all_cells:
+    - OPS-060
+    - 运维/周期任务总入口 Runbook
+    - P1
+    - DONE
+    - 系统验证
+    - 新增 `docs/operations/operations_runbook.md`，并更新 `AGENTS.md`，要求 Codex 执行任何周期任务前先读取该总入口；本次为文档-only
+      变更，不修改业务代码、不提交
+    - operations runbook 覆盖 daily / weekly / biweekly / monthly / governance 任务；说明每日
+      scheduler trigger 是统一外部入口，较长周期任务只能通过日期和条件门控编排或人工按 runbook 执行；每日任务列出 daily PIT、`score-daily`、dashboard/latest
+      checks、Reader Brief 和 `validate-reader-brief`；周期任务登记 weekly review、biweekly
+      weight feedback、monthly governance、scheduler validation 和 artifact catalog consistency；AGENTS
+      明确执行周期任务前读取该 runbook
+    - '2026-05-29: 新增并直接归档为 DONE，原因：owner 要求补充周期任务总入口文档，范围限于 Markdown 文档和 AGENTS 指令，不改变
+      scheduler 代码或业务逻辑。'
+    raw_line: '|OPS-060|运维/周期任务总入口 Runbook|P1|DONE|系统验证|新增 `docs/operations/operations_runbook.md`，并更新
+      `AGENTS.md`，要求 Codex 执行任何周期任务前先读取该总入口；本次为文档-only 变更，不修改业务代码、不提交|operations runbook
+      覆盖 daily / weekly / biweekly / monthly / governance 任务；说明每日 scheduler trigger
+      是统一外部入口，较长周期任务只能通过日期和条件门控编排或人工按 runbook 执行；每日任务列出 daily PIT、`score-daily`、dashboard/latest
+      checks、Reader Brief 和 `validate-reader-brief`；周期任务登记 weekly review、biweekly
+      weight feedback、monthly governance、scheduler validation 和 artifact catalog consistency；AGENTS
+      明确执行周期任务前读取该 runbook|2026-05-29: 新增并直接归档为 DONE，原因：owner 要求补充周期任务总入口文档，范围限于 Markdown
+      文档和 AGENTS 指令，不改变 scheduler 代码或业务逻辑。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a0dba69dd8f98d4de9c9223b
+  task_id: OPS-060
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-29: 新增并直接归档为 DONE，原因：owner 要求补充周期任务总入口文档，范围限于 Markdown 文档和 AGENTS
+      指令，不改变 scheduler 代码或业务逻辑。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a0dba69dd8f98d4de9c9223b8653a751864e8ae5517ebfc126c8dca6d9bf8757
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-060
+  - 运维/周期任务总入口 Runbook
+  - P1
+  - DONE
+  - 系统验证
+  - 新增 `docs/operations/operations_runbook.md`，并更新 `AGENTS.md`，要求 Codex 执行任何周期任务前先读取该总入口；本次为文档-only
+    变更，不修改业务代码、不提交
+  - operations runbook 覆盖 daily / weekly / biweekly / monthly / governance 任务；说明每日
+    scheduler trigger 是统一外部入口，较长周期任务只能通过日期和条件门控编排或人工按 runbook 执行；每日任务列出 daily PIT、`score-daily`、dashboard/latest
+    checks、Reader Brief 和 `validate-reader-brief`；周期任务登记 weekly review、biweekly weight
+    feedback、monthly governance、scheduler validation 和 artifact catalog consistency；AGENTS
+    明确执行周期任务前读取该 runbook
+  - '2026-05-29: 新增并直接归档为 DONE，原因：owner 要求补充周期任务总入口文档，范围限于 Markdown 文档和 AGENTS 指令，不改变
+    scheduler 代码或业务逻辑。'
+  docs_links:
+  - docs/operations/operations_runbook.md
+  terminal: true
+  raw_row_sha256: a0dba69dd8f98d4de9c9223b8653a751864e8ae5517ebfc126c8dca6d9bf8757
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b7e741a79426fda5fd8f27a6d187af17328f581fb8e77f5e87ed58d91828473f

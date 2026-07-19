@@ -1,0 +1,173 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-013
+  title: null
+  domain: 交易执行/IBKR Paper Controlled Small Fill Test
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/ibkr_paper_controlled_fill_test_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/ibkr_paper_controlled_fill_test_2026-05-17.md`；受控
+    IBKR Paper 小额测试脚本、默认关闭配置、PaperBroker 诊断对比、JSON/Markdown 报告、runbook、系统流图、mock 测试和当前
+    HEAD CI 已完成
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_ibkr_paper_controlled_fill_test.py` 和 `config/ibkr_paper_controlled_fill.yaml`，默认
+      `controlled_fill_enabled=false`、`trading_mode=paper`、`production_effect=none`、`max_quantity=1`；人工显式运行，只允许
+      `stock` / `BUY` / `LIMIT` / `DAY` / `quantity=1` / 白名单 symbol / 手工 limit price；必须连接
+      IBKR Paper、校验 `DUP` account、等待 `orderStatus` / `execDetails` / `commissionReport`，成交则记录
+      fill，timeout 未成交则 cancel 并输出 `LIMITED`；报告输出 `outputs/reports/ibkr_paper_controlled_fill_YYYY-MM-DD.json/md`，含
+      masked account、redacted broker order id、order status events、fill/cancel/commission、issues、safety
+      checks；fill_seen=true 且存在可靠 `MarketSnapshot` 时才用相同 `OrderIntent` 运行本地 `PaperBroker`
+      对比，缺 snapshot 标记 `INSUFFICIENT_MARKET_DATA`；不记录完整 account id、broker order id、password/token/API
+      key；不触发 daily-run/replay/dashboard/paper signal quality/shadow impact；目标 pytest、trading_engine、全量
+      pytest、ruff、black、commit、push 后 CI 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 338
+    row_sha256: 31b9c9e89a47d9bb681b907e7ebdeef31f4e7c968b02dfa8d09cbd3a3318e9f3
+    cell_count: 8
+    all_cells:
+    - TRADING-013
+    - 交易执行/IBKR Paper Controlled Small Fill Test
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/ibkr_paper_controlled_fill_test_2026-05-17.md`；受控 IBKR
+      Paper 小额测试脚本、默认关闭配置、PaperBroker 诊断对比、JSON/Markdown 报告、runbook、系统流图、mock 测试和当前
+      HEAD CI 已完成
+    - 新增 `scripts/run_ibkr_paper_controlled_fill_test.py` 和 `config/ibkr_paper_controlled_fill.yaml`，默认
+      `controlled_fill_enabled=false`、`trading_mode=paper`、`production_effect=none`、`max_quantity=1`；人工显式运行，只允许
+      `stock` / `BUY` / `LIMIT` / `DAY` / `quantity=1` / 白名单 symbol / 手工 limit price；必须连接
+      IBKR Paper、校验 `DUP` account、等待 `orderStatus` / `execDetails` / `commissionReport`，成交则记录
+      fill，timeout 未成交则 cancel 并输出 `LIMITED`；报告输出 `outputs/reports/ibkr_paper_controlled_fill_YYYY-MM-DD.json/md`，含
+      masked account、redacted broker order id、order status events、fill/cancel/commission、issues、safety
+      checks；fill_seen=true 且存在可靠 `MarketSnapshot` 时才用相同 `OrderIntent` 运行本地 `PaperBroker`
+      对比，缺 snapshot 标记 `INSUFFICIENT_MARKET_DATA`；不记录完整 account id、broker order id、password/token/API
+      key；不触发 daily-run/replay/dashboard/paper signal quality/shadow impact；目标 pytest、trading_engine、全量
+      pytest、ruff、black、commit、push 后 CI 通过
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：TRADING-012 当前 `calibration_status=LIFECYCLE_ALIGNED_FILL_UNTESTED`，说明
+      open/cancel lifecycle 已对齐但 fill model 尚未被验证；owner 要求新增受控 IBKR Paper 小额成交样本采集能力，并保持
+      paper-only、manual-only、`production_effect=none` 和不修改 `PaperBroker` 行为。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 controlled fill 配置、核心 report builder、人工显式
+      CLI、JSON/Markdown 输出、PaperBroker 同 OrderIntent 诊断对比、runbook、系统流图/产物目录和 mock
+      IBKR client 测试；验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff、black 和 diff
+      check。2026-05-17: 继续保持 VALIDATING，原因：本机 controlled fill 运行在写报告前触发 broker order
+      id 脱敏 fail-closed 检查；已修复短数字 IBKR order id 与 `quantity=1`、日期或 redaction token
+      长度等非敏感输出冲突的问题，新增短 `order_id=1` 回归测试；重跑本机命令正常生成报告，结果 `test_status=LIMITED`、`fill_seen=false`、`cancel_requested=true`、`final_order_status=Cancelled`，broker
+      order id 已 redacted。2026-06-07: 从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub
+      Actions CI run `27085392644` completed/success；复验 controlled fill、calibration
+      / comparison focused tests 和触达文件 ruff 通过；manual-only / paper-only / production_effect=none
+      边界保持不变。'
+    raw_line: '|TRADING-013|交易执行/IBKR Paper Controlled Small Fill Test|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/ibkr_paper_controlled_fill_test_2026-05-17.md`；受控 IBKR Paper
+      小额测试脚本、默认关闭配置、PaperBroker 诊断对比、JSON/Markdown 报告、runbook、系统流图、mock 测试和当前 HEAD
+      CI 已完成|新增 `scripts/run_ibkr_paper_controlled_fill_test.py` 和 `config/ibkr_paper_controlled_fill.yaml`，默认
+      `controlled_fill_enabled=false`、`trading_mode=paper`、`production_effect=none`、`max_quantity=1`；人工显式运行，只允许
+      `stock` / `BUY` / `LIMIT` / `DAY` / `quantity=1` / 白名单 symbol / 手工 limit price；必须连接
+      IBKR Paper、校验 `DUP` account、等待 `orderStatus` / `execDetails` / `commissionReport`，成交则记录
+      fill，timeout 未成交则 cancel 并输出 `LIMITED`；报告输出 `outputs/reports/ibkr_paper_controlled_fill_YYYY-MM-DD.json/md`，含
+      masked account、redacted broker order id、order status events、fill/cancel/commission、issues、safety
+      checks；fill_seen=true 且存在可靠 `MarketSnapshot` 时才用相同 `OrderIntent` 运行本地 `PaperBroker`
+      对比，缺 snapshot 标记 `INSUFFICIENT_MARKET_DATA`；不记录完整 account id、broker order id、password/token/API
+      key；不触发 daily-run/replay/dashboard/paper signal quality/shadow impact；目标 pytest、trading_engine、全量
+      pytest、ruff、black、commit、push 后 CI 通过|2026-05-17: 新增并进入 IN_PROGRESS，原因：TRADING-012
+      当前 `calibration_status=LIFECYCLE_ALIGNED_FILL_UNTESTED`，说明 open/cancel lifecycle
+      已对齐但 fill model 尚未被验证；owner 要求新增受控 IBKR Paper 小额成交样本采集能力，并保持 paper-only、manual-only、`production_effect=none`
+      和不修改 `PaperBroker` 行为。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 controlled
+      fill 配置、核心 report builder、人工显式 CLI、JSON/Markdown 输出、PaperBroker 同 OrderIntent
+      诊断对比、runbook、系统流图/产物目录和 mock IBKR client 测试；验证通过目标 pytest、`tests/trading_engine`、全量
+      pytest、ruff、black 和 diff check。2026-05-17: 继续保持 VALIDATING，原因：本机 controlled
+      fill 运行在写报告前触发 broker order id 脱敏 fail-closed 检查；已修复短数字 IBKR order id 与 `quantity=1`、日期或
+      redaction token 长度等非敏感输出冲突的问题，新增短 `order_id=1` 回归测试；重跑本机命令正常生成报告，结果 `test_status=LIMITED`、`fill_seen=false`、`cancel_requested=true`、`final_order_status=Cancelled`，broker
+      order id 已 redacted。2026-06-07: 从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub
+      Actions CI run `27085392644` completed/success；复验 controlled fill、calibration
+      / comparison focused tests 和触达文件 ruff 通过；manual-only / paper-only / production_effect=none
+      边界保持不变。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-31b9c9e89a47d9bb681b907e
+  task_id: TRADING-013
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：TRADING-012 当前 `calibration_status=LIFECYCLE_ALIGNED_FILL_UNTESTED`，说明
+      open/cancel lifecycle 已对齐但 fill model 尚未被验证；owner 要求新增受控 IBKR Paper 小额成交样本采集能力，并保持
+      paper-only、manual-only、`production_effect=none` 和不修改 `PaperBroker` 行为。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 controlled fill 配置、核心 report builder、人工显式
+      CLI、JSON/Markdown 输出、PaperBroker 同 OrderIntent 诊断对比、runbook、系统流图/产物目录和 mock
+      IBKR client 测试；验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff、black 和 diff
+      check。2026-05-17: 继续保持 VALIDATING，原因：本机 controlled fill 运行在写报告前触发 broker order
+      id 脱敏 fail-closed 检查；已修复短数字 IBKR order id 与 `quantity=1`、日期或 redaction token
+      长度等非敏感输出冲突的问题，新增短 `order_id=1` 回归测试；重跑本机命令正常生成报告，结果 `test_status=LIMITED`、`fill_seen=false`、`cancel_requested=true`、`final_order_status=Cancelled`，broker
+      order id 已 redacted。2026-06-07: 从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub
+      Actions CI run `27085392644` completed/success；复验 controlled fill、calibration
+      / comparison focused tests 和触达文件 ruff 通过；manual-only / paper-only / production_effect=none
+      边界保持不变。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:31b9c9e89a47d9bb681b907e7ebdeef31f4e7c968b02dfa8d09cbd3a3318e9f3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-013
+  - 交易执行/IBKR Paper Controlled Small Fill Test
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/ibkr_paper_controlled_fill_test_2026-05-17.md`；受控 IBKR
+    Paper 小额测试脚本、默认关闭配置、PaperBroker 诊断对比、JSON/Markdown 报告、runbook、系统流图、mock 测试和当前
+    HEAD CI 已完成
+  - 新增 `scripts/run_ibkr_paper_controlled_fill_test.py` 和 `config/ibkr_paper_controlled_fill.yaml`，默认
+    `controlled_fill_enabled=false`、`trading_mode=paper`、`production_effect=none`、`max_quantity=1`；人工显式运行，只允许
+    `stock` / `BUY` / `LIMIT` / `DAY` / `quantity=1` / 白名单 symbol / 手工 limit price；必须连接
+    IBKR Paper、校验 `DUP` account、等待 `orderStatus` / `execDetails` / `commissionReport`，成交则记录
+    fill，timeout 未成交则 cancel 并输出 `LIMITED`；报告输出 `outputs/reports/ibkr_paper_controlled_fill_YYYY-MM-DD.json/md`，含
+    masked account、redacted broker order id、order status events、fill/cancel/commission、issues、safety
+    checks；fill_seen=true 且存在可靠 `MarketSnapshot` 时才用相同 `OrderIntent` 运行本地 `PaperBroker`
+    对比，缺 snapshot 标记 `INSUFFICIENT_MARKET_DATA`；不记录完整 account id、broker order id、password/token/API
+    key；不触发 daily-run/replay/dashboard/paper signal quality/shadow impact；目标 pytest、trading_engine、全量
+    pytest、ruff、black、commit、push 后 CI 通过
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：TRADING-012 当前 `calibration_status=LIFECYCLE_ALIGNED_FILL_UNTESTED`，说明
+    open/cancel lifecycle 已对齐但 fill model 尚未被验证；owner 要求新增受控 IBKR Paper 小额成交样本采集能力，并保持
+    paper-only、manual-only、`production_effect=none` 和不修改 `PaperBroker` 行为。2026-05-17:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已新增 controlled fill 配置、核心 report builder、人工显式 CLI、JSON/Markdown
+    输出、PaperBroker 同 OrderIntent 诊断对比、runbook、系统流图/产物目录和 mock IBKR client 测试；验证通过目标
+    pytest、`tests/trading_engine`、全量 pytest、ruff、black 和 diff check。2026-05-17: 继续保持
+    VALIDATING，原因：本机 controlled fill 运行在写报告前触发 broker order id 脱敏 fail-closed 检查；已修复短数字
+    IBKR order id 与 `quantity=1`、日期或 redaction token 长度等非敏感输出冲突的问题，新增短 `order_id=1`
+    回归测试；重跑本机命令正常生成报告，结果 `test_status=LIMITED`、`fill_seen=false`、`cancel_requested=true`、`final_order_status=Cancelled`，broker
+    order id 已 redacted。2026-06-07: 从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub
+    Actions CI run `27085392644` completed/success；复验 controlled fill、calibration
+    / comparison focused tests 和触达文件 ruff 通过；manual-only / paper-only / production_effect=none
+    边界保持不变。'
+  docs_links:
+  - docs/requirements/ibkr_paper_controlled_fill_test_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 31b9c9e89a47d9bb681b907e7ebdeef31f4e7c968b02dfa8d09cbd3a3318e9f3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 920c55a52e52927c920ca868d22efb99d0a267a3f89856c36ed42758800790fc

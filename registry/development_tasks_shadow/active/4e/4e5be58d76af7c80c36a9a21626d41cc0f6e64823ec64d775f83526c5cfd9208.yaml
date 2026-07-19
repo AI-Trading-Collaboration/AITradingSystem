@@ -1,0 +1,159 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-209_to_213_SYSTEM_TARGET_PORTFOLIO_AND_PAPER_SHADOW
+  title: null
+  domain: ETF portfolio/system target portfolio and paper shadow account
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 + 系统运行观察
+  requirement_refs:
+  - docs/requirements/TRADING-209_to_213_System_Target_Portfolio_and_Paper_Shadow_Account.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-209_to_213_System_Target_Portfolio_and_Paper_Shadow_Account.md`；本阶段要在不读取、不修改
+    owner real portfolio 的前提下，生成 research model target weights，初始化独立 paper shadow
+    account，模拟 model rebalance，比较 target methods 与 baselines，并生成 system target review
+    pack；固定不接 broker、不生成 order ticket、不写 official target weights、不自动 production candidate
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`model-target config-validate/generate/report`、`paper-shadow init/state/report`、`model-rebalance
+      simulate/report`、`paper-shadow-performance run/report --as-of YYYY-MM-DD`、`system-target-review
+      pack/report` 及对应 validate CLI 可运行；新增 config 和 artifacts 写入 dynamic_v3_rescue
+      runtime roots；报告和 JSON 明确 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation
+      和验收链路完成'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1449
+    row_sha256: aa6fbc1ffeb0cf4489e96c60e50467cfd78fbd03c8fb5589968fd30455b6b568
+    cell_count: 8
+    all_cells:
+    - TRADING-209_to_213_SYSTEM_TARGET_PORTFOLIO_AND_PAPER_SHADOW
+    - ETF portfolio/system target portfolio and paper shadow account
+    - P0
+    - VALIDATING
+    - 项目 owner 后续复核 + 系统运行观察
+    - 详细拆解见 `docs/requirements/TRADING-209_to_213_System_Target_Portfolio_and_Paper_Shadow_Account.md`；本阶段要在不读取、不修改
+      owner real portfolio 的前提下，生成 research model target weights，初始化独立 paper shadow
+      account，模拟 model rebalance，比较 target methods 与 baselines，并生成 system target review
+      pack；固定不接 broker、不生成 order ticket、不写 official target weights、不自动 production
+      candidate
+    - '`model-target config-validate/generate/report`、`paper-shadow init/state/report`、`model-rebalance
+      simulate/report`、`paper-shadow-performance run/report --as-of YYYY-MM-DD`、`system-target-review
+      pack/report` 及对应 validate CLI 可运行；新增 config 和 artifacts 写入 dynamic_v3_rescue
+      runtime roots；报告和 JSON 明确 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation
+      和验收链路完成'
+    - '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求实现附件中的 TRADING-209～213；本轮优先交付 P0 research-only
+      target portfolio 与 paper shadow account 闭环，P1/P2 的更丰富风险解释、图表化、多 shadow account、交易成本/slippage
+      sensitivity 和真实账户映射不纳入本轮。2026-06-12: baseline 实现完成并转入 VALIDATING；一致链路使用 target
+      `model-target_8bb78129f2a68d0b`、paper shadow `paper-shadow_9b6984c19ecdb4ce`、rebalance
+      `model-rebalance_1db70778e22ce9ac`、performance `paper-shadow-performance_14e18d3e0b3a1a38`、review
+      `system-target-review_84b81667ea1e932d`；performance window 为 `2026-06-09` 到
+      `2026-06-10`，data quality 为 `PASS_WITH_WARNINGS`；focused pytest `5 passed`、full
+      pytest `2367 passed, 640 warnings`、ruff、compileall、git diff check、dynamic-v3
+      validation、artifact repair/latest validation、report index、Reader Brief 和 Reader
+      Brief quality 已通过；下一步为 owner 复核是否继续观察 `limited_adjustment` 或扩展 forward paper
+      shadow observation。'
+    raw_line: '|TRADING-209_to_213_SYSTEM_TARGET_PORTFOLIO_AND_PAPER_SHADOW|ETF portfolio/system
+      target portfolio and paper shadow account|P0|VALIDATING|项目 owner 后续复核 + 系统运行观察|详细拆解见
+      `docs/requirements/TRADING-209_to_213_System_Target_Portfolio_and_Paper_Shadow_Account.md`；本阶段要在不读取、不修改
+      owner real portfolio 的前提下，生成 research model target weights，初始化独立 paper shadow
+      account，模拟 model rebalance，比较 target methods 与 baselines，并生成 system target review
+      pack；固定不接 broker、不生成 order ticket、不写 official target weights、不自动 production
+      candidate|`model-target config-validate/generate/report`、`paper-shadow init/state/report`、`model-rebalance
+      simulate/report`、`paper-shadow-performance run/report --as-of YYYY-MM-DD`、`system-target-review
+      pack/report` 及对应 validate CLI 可运行；新增 config 和 artifacts 写入 dynamic_v3_rescue
+      runtime roots；报告和 JSON 明确 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation
+      和验收链路完成|2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求实现附件中的 TRADING-209～213；本轮优先交付
+      P0 research-only target portfolio 与 paper shadow account 闭环，P1/P2 的更丰富风险解释、图表化、多
+      shadow account、交易成本/slippage sensitivity 和真实账户映射不纳入本轮。2026-06-12: baseline 实现完成并转入
+      VALIDATING；一致链路使用 target `model-target_8bb78129f2a68d0b`、paper shadow `paper-shadow_9b6984c19ecdb4ce`、rebalance
+      `model-rebalance_1db70778e22ce9ac`、performance `paper-shadow-performance_14e18d3e0b3a1a38`、review
+      `system-target-review_84b81667ea1e932d`；performance window 为 `2026-06-09` 到
+      `2026-06-10`，data quality 为 `PASS_WITH_WARNINGS`；focused pytest `5 passed`、full
+      pytest `2367 passed, 640 warnings`、ruff、compileall、git diff check、dynamic-v3
+      validation、artifact repair/latest validation、report index、Reader Brief 和 Reader
+      Brief quality 已通过；下一步为 owner 复核是否继续观察 `limited_adjustment` 或扩展 forward paper
+      shadow observation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-aa6fbc1ffeb0cf4489e96c60
+  task_id: TRADING-209_to_213_SYSTEM_TARGET_PORTFOLIO_AND_PAPER_SHADOW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 + 系统运行观察
+    notes: '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求实现附件中的 TRADING-209～213；本轮优先交付
+      P0 research-only target portfolio 与 paper shadow account 闭环，P1/P2 的更丰富风险解释、图表化、多
+      shadow account、交易成本/slippage sensitivity 和真实账户映射不纳入本轮。2026-06-12: baseline 实现完成并转入
+      VALIDATING；一致链路使用 target `model-target_8bb78129f2a68d0b`、paper shadow `paper-shadow_9b6984c19ecdb4ce`、rebalance
+      `model-rebalance_1db70778e22ce9ac`、performance `paper-shadow-performance_14e18d3e0b3a1a38`、review
+      `system-target-review_84b81667ea1e932d`；performance window 为 `2026-06-09` 到
+      `2026-06-10`，data quality 为 `PASS_WITH_WARNINGS`；focused pytest `5 passed`、full
+      pytest `2367 passed, 640 warnings`、ruff、compileall、git diff check、dynamic-v3
+      validation、artifact repair/latest validation、report index、Reader Brief 和 Reader
+      Brief quality 已通过；下一步为 owner 复核是否继续观察 `limited_adjustment` 或扩展 forward paper
+      shadow observation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:aa6fbc1ffeb0cf4489e96c60e50467cfd78fbd03c8fb5589968fd30455b6b568
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-209_to_213_SYSTEM_TARGET_PORTFOLIO_AND_PAPER_SHADOW
+  - ETF portfolio/system target portfolio and paper shadow account
+  - P0
+  - VALIDATING
+  - 项目 owner 后续复核 + 系统运行观察
+  - 详细拆解见 `docs/requirements/TRADING-209_to_213_System_Target_Portfolio_and_Paper_Shadow_Account.md`；本阶段要在不读取、不修改
+    owner real portfolio 的前提下，生成 research model target weights，初始化独立 paper shadow
+    account，模拟 model rebalance，比较 target methods 与 baselines，并生成 system target review
+    pack；固定不接 broker、不生成 order ticket、不写 official target weights、不自动 production candidate
+  - '`model-target config-validate/generate/report`、`paper-shadow init/state/report`、`model-rebalance
+    simulate/report`、`paper-shadow-performance run/report --as-of YYYY-MM-DD`、`system-target-review
+    pack/report` 及对应 validate CLI 可运行；新增 config 和 artifacts 写入 dynamic_v3_rescue runtime
+    roots；报告和 JSON 明确 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`；README、operations
+    runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+    tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation
+    和验收链路完成'
+  - '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求实现附件中的 TRADING-209～213；本轮优先交付 P0 research-only
+    target portfolio 与 paper shadow account 闭环，P1/P2 的更丰富风险解释、图表化、多 shadow account、交易成本/slippage
+    sensitivity 和真实账户映射不纳入本轮。2026-06-12: baseline 实现完成并转入 VALIDATING；一致链路使用 target
+    `model-target_8bb78129f2a68d0b`、paper shadow `paper-shadow_9b6984c19ecdb4ce`、rebalance
+    `model-rebalance_1db70778e22ce9ac`、performance `paper-shadow-performance_14e18d3e0b3a1a38`、review
+    `system-target-review_84b81667ea1e932d`；performance window 为 `2026-06-09` 到 `2026-06-10`，data
+    quality 为 `PASS_WITH_WARNINGS`；focused pytest `5 passed`、full pytest `2367 passed,
+    640 warnings`、ruff、compileall、git diff check、dynamic-v3 validation、artifact repair/latest
+    validation、report index、Reader Brief 和 Reader Brief quality 已通过；下一步为 owner 复核是否继续观察
+    `limited_adjustment` 或扩展 forward paper shadow observation。'
+  docs_links:
+  - docs/requirements/TRADING-209_to_213_System_Target_Portfolio_and_Paper_Shadow_Account.md
+  terminal: false
+  raw_row_sha256: aa6fbc1ffeb0cf4489e96c60e50467cfd78fbd03c8fb5589968fd30455b6b568
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8e8ab2d13fe51370cfac6934c1f6868ac532d5ded312383b5caf4c2431f4227b

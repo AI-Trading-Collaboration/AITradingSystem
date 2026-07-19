@@ -1,0 +1,135 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-005
+  title: null
+  domain: 参数配置治理/owner 暂缺量化输入
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/parameter_governance_manifest_2026-05-15.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/parameter_governance_manifest_2026-05-15.md`；参数治理
+    manifest、CLI 和 market feedback 摘要已完成；OPS-059 后参数治理报告登记为 weekly cadence，不再作为 `daily-run`
+    dashboard 前置步骤；下一步观察真实 candidate ledger 阻断是否随数据覆盖改善解除，owner 暂缺量化输入期间不得改 production
+    参数
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `config/parameter_governance.yaml` 记录可调参数面、来源等级、owner/status/rationale、验证证据、退出条件和
+      production 边界；新增 CLI 报告读取 parameter candidate ledger、sample/backtest policy
+      和当前配置，输出 `parameter_governance_YYYY-MM-DD.md/json`；当 owner 缺席时只能给出 keep/collect-evidence/forward-shadow-prep/owner-required/block-by-data
+      等动作建议，不能写 approved overlay 或修改 scoring/backtest hard gate；报告接入市场反馈优化摘要；OPS-059
+      后由 `config/scheduled_tasks.yaml` 登记为 weekly governance，不由 daily-run 自动触发；目标测试、ruff、`git
+      diff --check`、全量 pytest 和真实 smoke 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1497
+    row_sha256: cc0eed47dae8caed1857ee4b955809d8b47ab5b295e479359da67684778347eb
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-005
+    - 参数配置治理/owner 暂缺量化输入
+    - P1
+    - VALIDATING
+    - 系统验证 + 项目 owner
+    - 详细拆解见 `docs/requirements/parameter_governance_manifest_2026-05-15.md`；参数治理 manifest、CLI
+      和 market feedback 摘要已完成；OPS-059 后参数治理报告登记为 weekly cadence，不再作为 `daily-run` dashboard
+      前置步骤；下一步观察真实 candidate ledger 阻断是否随数据覆盖改善解除，owner 暂缺量化输入期间不得改 production 参数
+    - 新增 `config/parameter_governance.yaml` 记录可调参数面、来源等级、owner/status/rationale、验证证据、退出条件和
+      production 边界；新增 CLI 报告读取 parameter candidate ledger、sample/backtest policy
+      和当前配置，输出 `parameter_governance_YYYY-MM-DD.md/json`；当 owner 缺席时只能给出 keep/collect-evidence/forward-shadow-prep/owner-required/block-by-data
+      等动作建议，不能写 approved overlay 或修改 scoring/backtest hard gate；报告接入市场反馈优化摘要；OPS-059
+      后由 `config/scheduled_tasks.yaml` 登记为 weekly governance，不由 daily-run 自动触发；目标测试、ruff、`git
+      diff --check`、全量 pytest 和真实 smoke 通过
+    - '2026-05-15: 新增并进入 IN_PROGRESS，原因：owner 明确当前无法提供可量化参数输入，但要求继续迭代参数配置逻辑并修复验证阻塞；本轮选择可审计
+      governance manifest + evidence-driven action 建议，避免把主观数值硬编码为生产参数。2026-05-15:
+      从 IN_PROGRESS 改为 VALIDATING，原因：`evaluate-parameter-governance`、`config/parameter_governance.yaml`、`market_feedback_optimization`
+      汇总和 `daily-run` 前置步骤已实现；真实 2026-05-13 smoke 为 PASS_WITH_LIMITATIONS，16 个 candidate
+      映射为 BLOCKED_BY_DATA=2、COLLECT_MORE_EVIDENCE=3，无生产参数改写；ruff、目标测试、全量 pytest 528
+      passed 和 `git diff --check` 通过。2026-05-29: OPS-059 将该报告从 daily-run 自动链路移入 weekly
+      cadence 登记，Reader Brief daily governance 改读 `research-governance-summary`，生产参数边界不变。'
+    raw_line: '|CALIBRATION-005|参数配置治理/owner 暂缺量化输入|P1|VALIDATING|系统验证 + 项目 owner|详细拆解见
+      `docs/requirements/parameter_governance_manifest_2026-05-15.md`；参数治理 manifest、CLI
+      和 market feedback 摘要已完成；OPS-059 后参数治理报告登记为 weekly cadence，不再作为 `daily-run` dashboard
+      前置步骤；下一步观察真实 candidate ledger 阻断是否随数据覆盖改善解除，owner 暂缺量化输入期间不得改 production 参数|新增
+      `config/parameter_governance.yaml` 记录可调参数面、来源等级、owner/status/rationale、验证证据、退出条件和
+      production 边界；新增 CLI 报告读取 parameter candidate ledger、sample/backtest policy
+      和当前配置，输出 `parameter_governance_YYYY-MM-DD.md/json`；当 owner 缺席时只能给出 keep/collect-evidence/forward-shadow-prep/owner-required/block-by-data
+      等动作建议，不能写 approved overlay 或修改 scoring/backtest hard gate；报告接入市场反馈优化摘要；OPS-059
+      后由 `config/scheduled_tasks.yaml` 登记为 weekly governance，不由 daily-run 自动触发；目标测试、ruff、`git
+      diff --check`、全量 pytest 和真实 smoke 通过|2026-05-15: 新增并进入 IN_PROGRESS，原因：owner
+      明确当前无法提供可量化参数输入，但要求继续迭代参数配置逻辑并修复验证阻塞；本轮选择可审计 governance manifest + evidence-driven
+      action 建议，避免把主观数值硬编码为生产参数。2026-05-15: 从 IN_PROGRESS 改为 VALIDATING，原因：`evaluate-parameter-governance`、`config/parameter_governance.yaml`、`market_feedback_optimization`
+      汇总和 `daily-run` 前置步骤已实现；真实 2026-05-13 smoke 为 PASS_WITH_LIMITATIONS，16 个 candidate
+      映射为 BLOCKED_BY_DATA=2、COLLECT_MORE_EVIDENCE=3，无生产参数改写；ruff、目标测试、全量 pytest 528
+      passed 和 `git diff --check` 通过。2026-05-29: OPS-059 将该报告从 daily-run 自动链路移入 weekly
+      cadence 登记，Reader Brief daily governance 改读 `research-governance-summary`，生产参数边界不变。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-cc0eed47dae8caed1857ee4b
+  task_id: CALIBRATION-005
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-05-15: 新增并进入 IN_PROGRESS，原因：owner 明确当前无法提供可量化参数输入，但要求继续迭代参数配置逻辑并修复验证阻塞；本轮选择可审计
+      governance manifest + evidence-driven action 建议，避免把主观数值硬编码为生产参数。2026-05-15:
+      从 IN_PROGRESS 改为 VALIDATING，原因：`evaluate-parameter-governance`、`config/parameter_governance.yaml`、`market_feedback_optimization`
+      汇总和 `daily-run` 前置步骤已实现；真实 2026-05-13 smoke 为 PASS_WITH_LIMITATIONS，16 个 candidate
+      映射为 BLOCKED_BY_DATA=2、COLLECT_MORE_EVIDENCE=3，无生产参数改写；ruff、目标测试、全量 pytest 528
+      passed 和 `git diff --check` 通过。2026-05-29: OPS-059 将该报告从 daily-run 自动链路移入 weekly
+      cadence 登记，Reader Brief daily governance 改读 `research-governance-summary`，生产参数边界不变。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:cc0eed47dae8caed1857ee4b955809d8b47ab5b295e479359da67684778347eb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-005
+  - 参数配置治理/owner 暂缺量化输入
+  - P1
+  - VALIDATING
+  - 系统验证 + 项目 owner
+  - 详细拆解见 `docs/requirements/parameter_governance_manifest_2026-05-15.md`；参数治理 manifest、CLI
+    和 market feedback 摘要已完成；OPS-059 后参数治理报告登记为 weekly cadence，不再作为 `daily-run` dashboard
+    前置步骤；下一步观察真实 candidate ledger 阻断是否随数据覆盖改善解除，owner 暂缺量化输入期间不得改 production 参数
+  - 新增 `config/parameter_governance.yaml` 记录可调参数面、来源等级、owner/status/rationale、验证证据、退出条件和
+    production 边界；新增 CLI 报告读取 parameter candidate ledger、sample/backtest policy 和当前配置，输出
+    `parameter_governance_YYYY-MM-DD.md/json`；当 owner 缺席时只能给出 keep/collect-evidence/forward-shadow-prep/owner-required/block-by-data
+    等动作建议，不能写 approved overlay 或修改 scoring/backtest hard gate；报告接入市场反馈优化摘要；OPS-059
+    后由 `config/scheduled_tasks.yaml` 登记为 weekly governance，不由 daily-run 自动触发；目标测试、ruff、`git
+    diff --check`、全量 pytest 和真实 smoke 通过
+  - '2026-05-15: 新增并进入 IN_PROGRESS，原因：owner 明确当前无法提供可量化参数输入，但要求继续迭代参数配置逻辑并修复验证阻塞；本轮选择可审计
+    governance manifest + evidence-driven action 建议，避免把主观数值硬编码为生产参数。2026-05-15: 从
+    IN_PROGRESS 改为 VALIDATING，原因：`evaluate-parameter-governance`、`config/parameter_governance.yaml`、`market_feedback_optimization`
+    汇总和 `daily-run` 前置步骤已实现；真实 2026-05-13 smoke 为 PASS_WITH_LIMITATIONS，16 个 candidate
+    映射为 BLOCKED_BY_DATA=2、COLLECT_MORE_EVIDENCE=3，无生产参数改写；ruff、目标测试、全量 pytest 528
+    passed 和 `git diff --check` 通过。2026-05-29: OPS-059 将该报告从 daily-run 自动链路移入 weekly
+    cadence 登记，Reader Brief daily governance 改读 `research-governance-summary`，生产参数边界不变。'
+  docs_links:
+  - docs/requirements/parameter_governance_manifest_2026-05-15.md
+  terminal: false
+  raw_row_sha256: cc0eed47dae8caed1857ee4b955809d8b47ab5b295e479359da67684778347eb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b132d7d6d41423255823dde86ba5a9ace357253ddf49c5e6729a47375e1b4c8e

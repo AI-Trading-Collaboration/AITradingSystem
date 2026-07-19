@@ -1,0 +1,149 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-021
+  title: null
+  domain: 数据工程/估值与配置 YAML 读取边界韧性
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/valuation_yaml_loader_robustness_2026-05-29.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/valuation_yaml_loader_robustness_2026-05-29.md`；本轮修复
+    `score_daily` 在 valuation snapshot store 和核心配置 loader 通过 PyYAML 读取 YAML 文件流时触发
+    Windows access violation 并阻断 daily-run 的问题；系统验证已完成，daily-run 触达的估值/配置 YAML loader
+    均走稳定 UTF-8 文本快照 + 项目统一安全 YAML loader
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: daily-run 会触达的估值和配置 YAML loader 必须先读取稳定 UTF-8 文本快照，再用项目统一安全 YAML loader
+      解析；文件读取、解码和 YAML 解析失败都进入既有 fail-closed 路径；不得跳过估值门禁、补写快照或伪造数据；目标测试和真实 `aits ops
+      daily-run` 通过或报告新的真实门禁原因
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 328
+    row_sha256: 29e3fcfcf26217bb5e3c9c9e457cf72ac2cb474fa23204b3a6565d729169263c
+    cell_count: 8
+    all_cells:
+    - DATA-021
+    - 数据工程/估值与配置 YAML 读取边界韧性
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/valuation_yaml_loader_robustness_2026-05-29.md`；本轮修复
+      `score_daily` 在 valuation snapshot store 和核心配置 loader 通过 PyYAML 读取 YAML 文件流时触发
+      Windows access violation 并阻断 daily-run 的问题；系统验证已完成，daily-run 触达的估值/配置 YAML loader
+      均走稳定 UTF-8 文本快照 + 项目统一安全 YAML loader
+    - daily-run 会触达的估值和配置 YAML loader 必须先读取稳定 UTF-8 文本快照，再用项目统一安全 YAML loader 解析；文件读取、解码和
+      YAML 解析失败都进入既有 fail-closed 路径；不得跳过估值门禁、补写快照或伪造数据；目标测试和真实 `aits ops daily-run`
+      通过或报告新的真实门禁原因
+    - '2026-05-29: 新增并进入 IN_PROGRESS，原因：`DATA-020` 修复后完整 daily-run 已通过 download-data/PIT/SEC/valuation
+      fetch/validation/SEC PIT shadow monitor，随后 `score_daily` 在 `valuation.load_valuation_snapshot_store`
+      的 `yaml.safe_load(file)` 路径触发 Windows native access violation，未能进入现有估值校验审计报告。2026-05-29:
+      范围扩展到核心配置 loader，原因：valuation loader 改为文本快照后，目标测试在 `config.load_watchlist()`
+      的同类 `yaml.safe_load(file)` 路径复现 access violation；完整 daily-run 又在 `pit_snapshots_validate`
+      读取 `config/data_sources.yaml` 时命中 PyYAML 纯 Python scanner 内部 `TypeError`，PIT
+      manifest 报告本身为 PASS。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：项目统一 YAML loader
+      已改为稳定 UTF-8 文本快照 + `CSafeLoader`，目标测试/ruff/black/diff check 通过，真实 `aits ops
+      daily-run` as-of 2026-05-28 已 23/23 PASS。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前复跑
+      `tests/test_valuation.py tests/test_daily_scoring.py` 为 40 passed，相关 ruff/compileall
+      PASS；`score-daily --as-of 2026-06-05 --skip-risk-event-openai-precheck` 走通估值、配置
+      YAML、数据质量和日报评分读取路径，状态 `PASS_WITH_LIMITATIONS`，数据质量 `PASS`；本次 smoke 未触发 OpenAI
+      预审，完整 daily-run 归档证据仍为 2026-05-28 的 23/23 PASS。'
+    raw_line: '|DATA-021|数据工程/估值与配置 YAML 读取边界韧性|P0|DONE|系统验证|详细拆解见 `docs/requirements/valuation_yaml_loader_robustness_2026-05-29.md`；本轮修复
+      `score_daily` 在 valuation snapshot store 和核心配置 loader 通过 PyYAML 读取 YAML 文件流时触发
+      Windows access violation 并阻断 daily-run 的问题；系统验证已完成，daily-run 触达的估值/配置 YAML loader
+      均走稳定 UTF-8 文本快照 + 项目统一安全 YAML loader|daily-run 会触达的估值和配置 YAML loader 必须先读取稳定
+      UTF-8 文本快照，再用项目统一安全 YAML loader 解析；文件读取、解码和 YAML 解析失败都进入既有 fail-closed 路径；不得跳过估值门禁、补写快照或伪造数据；目标测试和真实
+      `aits ops daily-run` 通过或报告新的真实门禁原因|2026-05-29: 新增并进入 IN_PROGRESS，原因：`DATA-020`
+      修复后完整 daily-run 已通过 download-data/PIT/SEC/valuation fetch/validation/SEC PIT
+      shadow monitor，随后 `score_daily` 在 `valuation.load_valuation_snapshot_store`
+      的 `yaml.safe_load(file)` 路径触发 Windows native access violation，未能进入现有估值校验审计报告。2026-05-29:
+      范围扩展到核心配置 loader，原因：valuation loader 改为文本快照后，目标测试在 `config.load_watchlist()`
+      的同类 `yaml.safe_load(file)` 路径复现 access violation；完整 daily-run 又在 `pit_snapshots_validate`
+      读取 `config/data_sources.yaml` 时命中 PyYAML 纯 Python scanner 内部 `TypeError`，PIT
+      manifest 报告本身为 PASS。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：项目统一 YAML loader
+      已改为稳定 UTF-8 文本快照 + `CSafeLoader`，目标测试/ruff/black/diff check 通过，真实 `aits ops
+      daily-run` as-of 2026-05-28 已 23/23 PASS。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前复跑
+      `tests/test_valuation.py tests/test_daily_scoring.py` 为 40 passed，相关 ruff/compileall
+      PASS；`score-daily --as-of 2026-06-05 --skip-risk-event-openai-precheck` 走通估值、配置
+      YAML、数据质量和日报评分读取路径，状态 `PASS_WITH_LIMITATIONS`，数据质量 `PASS`；本次 smoke 未触发 OpenAI
+      预审，完整 daily-run 归档证据仍为 2026-05-28 的 23/23 PASS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-29e3fcfcf26217bb5e3c9c9e
+  task_id: DATA-021
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：`DATA-020` 修复后完整 daily-run 已通过 download-data/PIT/SEC/valuation
+      fetch/validation/SEC PIT shadow monitor，随后 `score_daily` 在 `valuation.load_valuation_snapshot_store`
+      的 `yaml.safe_load(file)` 路径触发 Windows native access violation，未能进入现有估值校验审计报告。2026-05-29:
+      范围扩展到核心配置 loader，原因：valuation loader 改为文本快照后，目标测试在 `config.load_watchlist()`
+      的同类 `yaml.safe_load(file)` 路径复现 access violation；完整 daily-run 又在 `pit_snapshots_validate`
+      读取 `config/data_sources.yaml` 时命中 PyYAML 纯 Python scanner 内部 `TypeError`，PIT
+      manifest 报告本身为 PASS。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：项目统一 YAML loader
+      已改为稳定 UTF-8 文本快照 + `CSafeLoader`，目标测试/ruff/black/diff check 通过，真实 `aits ops
+      daily-run` as-of 2026-05-28 已 23/23 PASS。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前复跑
+      `tests/test_valuation.py tests/test_daily_scoring.py` 为 40 passed，相关 ruff/compileall
+      PASS；`score-daily --as-of 2026-06-05 --skip-risk-event-openai-precheck` 走通估值、配置
+      YAML、数据质量和日报评分读取路径，状态 `PASS_WITH_LIMITATIONS`，数据质量 `PASS`；本次 smoke 未触发 OpenAI
+      预审，完整 daily-run 归档证据仍为 2026-05-28 的 23/23 PASS。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:29e3fcfcf26217bb5e3c9c9e457cf72ac2cb474fa23204b3a6565d729169263c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-021
+  - 数据工程/估值与配置 YAML 读取边界韧性
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/valuation_yaml_loader_robustness_2026-05-29.md`；本轮修复
+    `score_daily` 在 valuation snapshot store 和核心配置 loader 通过 PyYAML 读取 YAML 文件流时触发
+    Windows access violation 并阻断 daily-run 的问题；系统验证已完成，daily-run 触达的估值/配置 YAML loader
+    均走稳定 UTF-8 文本快照 + 项目统一安全 YAML loader
+  - daily-run 会触达的估值和配置 YAML loader 必须先读取稳定 UTF-8 文本快照，再用项目统一安全 YAML loader 解析；文件读取、解码和
+    YAML 解析失败都进入既有 fail-closed 路径；不得跳过估值门禁、补写快照或伪造数据；目标测试和真实 `aits ops daily-run`
+    通过或报告新的真实门禁原因
+  - '2026-05-29: 新增并进入 IN_PROGRESS，原因：`DATA-020` 修复后完整 daily-run 已通过 download-data/PIT/SEC/valuation
+    fetch/validation/SEC PIT shadow monitor，随后 `score_daily` 在 `valuation.load_valuation_snapshot_store`
+    的 `yaml.safe_load(file)` 路径触发 Windows native access violation，未能进入现有估值校验审计报告。2026-05-29:
+    范围扩展到核心配置 loader，原因：valuation loader 改为文本快照后，目标测试在 `config.load_watchlist()` 的同类
+    `yaml.safe_load(file)` 路径复现 access violation；完整 daily-run 又在 `pit_snapshots_validate`
+    读取 `config/data_sources.yaml` 时命中 PyYAML 纯 Python scanner 内部 `TypeError`，PIT manifest
+    报告本身为 PASS。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：项目统一 YAML loader 已改为稳定 UTF-8
+    文本快照 + `CSafeLoader`，目标测试/ruff/black/diff check 通过，真实 `aits ops daily-run` as-of
+    2026-05-28 已 23/23 PASS。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前复跑 `tests/test_valuation.py
+    tests/test_daily_scoring.py` 为 40 passed，相关 ruff/compileall PASS；`score-daily
+    --as-of 2026-06-05 --skip-risk-event-openai-precheck` 走通估值、配置 YAML、数据质量和日报评分读取路径，状态
+    `PASS_WITH_LIMITATIONS`，数据质量 `PASS`；本次 smoke 未触发 OpenAI 预审，完整 daily-run 归档证据仍为
+    2026-05-28 的 23/23 PASS。'
+  docs_links:
+  - docs/requirements/valuation_yaml_loader_robustness_2026-05-29.md
+  terminal: true
+  raw_row_sha256: 29e3fcfcf26217bb5e3c9c9e457cf72ac2cb474fa23204b3a6565d729169263c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5ca777f5acaf2bceb8c88573a390c5a6a8269db801953076d1e93bca9eec486a

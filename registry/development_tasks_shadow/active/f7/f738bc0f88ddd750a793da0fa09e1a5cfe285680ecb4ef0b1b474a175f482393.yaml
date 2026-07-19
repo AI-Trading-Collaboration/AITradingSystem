@@ -1,0 +1,129 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC
+  title: null
+  domain: Research trends / event calendar gating generator
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2319_Event_Calendar_Gating_Generator_POC.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2319_Event_Calendar_Gating_Generator_POC.md`；依赖
+    TRADING-2318 feasibility audit。当前 2318 真实 run 显示 `pit_ready_source_count=0`、`source_audit_required_count=8`，因此本批只能实现
+    source-blocked generator POC 包；不得绕过 source manifest / known-at blocker 生成 event
+    rows 或 gating signal。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 形成 event gating generator summary、inactive signal spec、use-case readiness
+      matrix、source blocker report、manual review contract carry-forward、validation
+      summary、safety boundary 和 research report；所有 outputs 固定 `source_blocked_no_generation=true`、`event_rows_consumed=false`、`gating_signal_generated=false`、`event_gating_signal_series_generated=false`、promotion/paper-shadow/production/broker
+      false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1223
+    row_sha256: 0f1d1e66b79849e40e790c723161a21a396494f3561b551cb3405c58ccfdfcdc
+    cell_count: 8
+    all_cells:
+    - TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC
+    - Research trends / event calendar gating generator
+    - P2
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2319_Event_Calendar_Gating_Generator_POC.md`；依赖
+      TRADING-2318 feasibility audit。当前 2318 真实 run 显示 `pit_ready_source_count=0`、`source_audit_required_count=8`，因此本批只能实现
+      source-blocked generator POC 包；不得绕过 source manifest / known-at blocker 生成 event
+      rows 或 gating signal。
+    - 形成 event gating generator summary、inactive signal spec、use-case readiness matrix、source
+      blocker report、manual review contract carry-forward、validation summary、safety
+      boundary 和 research report；所有 outputs 固定 `source_blocked_no_generation=true`、`event_rows_consumed=false`、`gating_signal_generated=false`、`event_gating_signal_series_generated=false`、promotion/paper-shadow/production/broker
+      false/none。
+    - '2026-07-01: 根据 owner roadmap 和 TRADING-2318 recommended next task 新增并进入 IN_PROGRESS；当前
+      worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+      实现完成并进入 VALIDATING；真实 run status=`EVENT_CALENDAR_GATING_GENERATOR_POC_SOURCE_BLOCKED_NO_SIGNAL`，data_quality_status=`NOT_APPLICABLE_SOURCE_BLOCKED_STATIC_GENERATOR`，source_pit_ready_source_count=0，source_blocker_count=8，use_case_readiness_count=4，blocked_use_case_count=4，validation_status=`PASS_SOURCE_BLOCKED_EXPECTED`；验证通过
+      Ruff、compileall、focused 2319 parallel pytest 8 passed、adjacent event/regime
+      focused parallel pytest 21 passed、docs/registry focused parallel pytest 27 passed、真实
+      CLI run、contract-validation 193 passed 和 `git diff --check`；`aits validate-data`
+      不适用，因为命令只读取 TRADING-2318 static artifacts、不读取 cached market data 或 event rows。'
+    raw_line: '|TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC|Research trends /
+      event calendar gating generator|P2|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2319_Event_Calendar_Gating_Generator_POC.md`；依赖
+      TRADING-2318 feasibility audit。当前 2318 真实 run 显示 `pit_ready_source_count=0`、`source_audit_required_count=8`，因此本批只能实现
+      source-blocked generator POC 包；不得绕过 source manifest / known-at blocker 生成 event
+      rows 或 gating signal。|形成 event gating generator summary、inactive signal spec、use-case
+      readiness matrix、source blocker report、manual review contract carry-forward、validation
+      summary、safety boundary 和 research report；所有 outputs 固定 `source_blocked_no_generation=true`、`event_rows_consumed=false`、`gating_signal_generated=false`、`event_gating_signal_series_generated=false`、promotion/paper-shadow/production/broker
+      false/none。|2026-07-01: 根据 owner roadmap 和 TRADING-2318 recommended next task
+      新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+      实现完成并进入 VALIDATING；真实 run status=`EVENT_CALENDAR_GATING_GENERATOR_POC_SOURCE_BLOCKED_NO_SIGNAL`，data_quality_status=`NOT_APPLICABLE_SOURCE_BLOCKED_STATIC_GENERATOR`，source_pit_ready_source_count=0，source_blocker_count=8，use_case_readiness_count=4，blocked_use_case_count=4，validation_status=`PASS_SOURCE_BLOCKED_EXPECTED`；验证通过
+      Ruff、compileall、focused 2319 parallel pytest 8 passed、adjacent event/regime
+      focused parallel pytest 21 passed、docs/registry focused parallel pytest 27 passed、真实
+      CLI run、contract-validation 193 passed 和 `git diff --check`；`aits validate-data`
+      不适用，因为命令只读取 TRADING-2318 static artifacts、不读取 cached market data 或 event rows。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0f1d1e66b79849e40e790c72
+  task_id: TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P2
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 owner roadmap 和 TRADING-2318 recommended next task 新增并进入
+      IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+      实现完成并进入 VALIDATING；真实 run status=`EVENT_CALENDAR_GATING_GENERATOR_POC_SOURCE_BLOCKED_NO_SIGNAL`，data_quality_status=`NOT_APPLICABLE_SOURCE_BLOCKED_STATIC_GENERATOR`，source_pit_ready_source_count=0，source_blocker_count=8，use_case_readiness_count=4，blocked_use_case_count=4，validation_status=`PASS_SOURCE_BLOCKED_EXPECTED`；验证通过
+      Ruff、compileall、focused 2319 parallel pytest 8 passed、adjacent event/regime
+      focused parallel pytest 21 passed、docs/registry focused parallel pytest 27 passed、真实
+      CLI run、contract-validation 193 passed 和 `git diff --check`；`aits validate-data`
+      不适用，因为命令只读取 TRADING-2318 static artifacts、不读取 cached market data 或 event rows。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0f1d1e66b79849e40e790c723161a21a396494f3561b551cb3405c58ccfdfcdc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC
+  - Research trends / event calendar gating generator
+  - P2
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2319_Event_Calendar_Gating_Generator_POC.md`；依赖
+    TRADING-2318 feasibility audit。当前 2318 真实 run 显示 `pit_ready_source_count=0`、`source_audit_required_count=8`，因此本批只能实现
+    source-blocked generator POC 包；不得绕过 source manifest / known-at blocker 生成 event
+    rows 或 gating signal。
+  - 形成 event gating generator summary、inactive signal spec、use-case readiness matrix、source
+    blocker report、manual review contract carry-forward、validation summary、safety
+    boundary 和 research report；所有 outputs 固定 `source_blocked_no_generation=true`、`event_rows_consumed=false`、`gating_signal_generated=false`、`event_gating_signal_series_generated=false`、promotion/paper-shadow/production/broker
+    false/none。
+  - '2026-07-01: 根据 owner roadmap 和 TRADING-2318 recommended next task 新增并进入 IN_PROGRESS；当前
+    worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入
+    VALIDATING；真实 run status=`EVENT_CALENDAR_GATING_GENERATOR_POC_SOURCE_BLOCKED_NO_SIGNAL`，data_quality_status=`NOT_APPLICABLE_SOURCE_BLOCKED_STATIC_GENERATOR`，source_pit_ready_source_count=0，source_blocker_count=8，use_case_readiness_count=4，blocked_use_case_count=4，validation_status=`PASS_SOURCE_BLOCKED_EXPECTED`；验证通过
+    Ruff、compileall、focused 2319 parallel pytest 8 passed、adjacent event/regime focused
+    parallel pytest 21 passed、docs/registry focused parallel pytest 27 passed、真实 CLI
+    run、contract-validation 193 passed 和 `git diff --check`；`aits validate-data` 不适用，因为命令只读取
+    TRADING-2318 static artifacts、不读取 cached market data 或 event rows。'
+  docs_links:
+  - docs/requirements/TRADING-2319_Event_Calendar_Gating_Generator_POC.md
+  terminal: false
+  raw_row_sha256: 0f1d1e66b79849e40e790c723161a21a396494f3561b551cb3405c58ccfdfcdc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a7343f3ef7ef5ad30f8bf021106a67b8bc0ff3337a98523eba5f25c5d531f46c

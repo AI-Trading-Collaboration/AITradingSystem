@@ -1,0 +1,134 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1286_to_1305_SIGNAL_VALIDITY_STALENESS_REPAIR
+  title: null
+  domain: Research strategies / signal validity, staleness-aware execution, watch-only
+    dynamic repair
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 + 系统后续验证
+  requirement_refs:
+  - docs/requirements/TRADING-1286_to_1305_Signal_Validity_Staleness_Repair.md
+  - docs/research/signal_validity_staleness_input_summary.md
+  - docs/research/signal_validity_staleness_repair_review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1286_to_1305_Signal_Validity_Staleness_Repair.md`；实现已完成，下一步为
+    owner 复核 `NO_MATERIAL_IMPROVEMENT` repair verdict、staleness/lag decomposition、是否停止投入或仅保留
+    watch-only diagnostic；本批不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `config/research/signal_validity_taxonomy.yaml`、`docs/research/signal_validity_staleness_input_summary.md`、per-strategy
+      staleness/lag decomposition、`staleness_repair_summary.csv`、`lag_repair_summary.csv`、`inputs/research_reviews/staleness_repair_matrix.yaml`、`docs/research/signal_validity_staleness_repair_review.md`；CLI
+      支持 staleness repair 参数；leaderboard 继续只按 actual-path metrics 排序；target-path metrics
+      diagnostic-only；dynamic promotion final status 继续 `BLOCKED`；no future leakage
+      / actual-path-only promotion / stale action semantics tests、Ruff、compileall、parallel
+      pytest 和 `git diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1274
+    row_sha256: c8287e1e8b3bc9a0ceb2e472ee9e1242a7bf2d922424fd384262ac27c9234c14
+    cell_count: 8
+    all_cells:
+    - TRADING-1286_to_1305_SIGNAL_VALIDITY_STALENESS_REPAIR
+    - Research strategies / signal validity, staleness-aware execution, watch-only
+      dynamic repair
+    - P0
+    - VALIDATING
+    - 项目 owner 后续复核 + 系统后续验证
+    - 详见 `docs/requirements/TRADING-1286_to_1305_Signal_Validity_Staleness_Repair.md`；实现已完成，下一步为
+      owner 复核 `NO_MATERIAL_IMPROVEMENT` repair verdict、staleness/lag decomposition、是否停止投入或仅保留
+      watch-only diagnostic；本批不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker
+    - 新增 `config/research/signal_validity_taxonomy.yaml`、`docs/research/signal_validity_staleness_input_summary.md`、per-strategy
+      staleness/lag decomposition、`staleness_repair_summary.csv`、`lag_repair_summary.csv`、`inputs/research_reviews/staleness_repair_matrix.yaml`、`docs/research/signal_validity_staleness_repair_review.md`；CLI
+      支持 staleness repair 参数；leaderboard 继续只按 actual-path metrics 排序；target-path metrics
+      diagnostic-only；dynamic promotion final status 继续 `BLOCKED`；no future leakage
+      / actual-path-only promotion / stale action semantics tests、Ruff、compileall、parallel
+      pytest 和 `git diff --check` 通过
+    - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求对当前 watch-only surviving dynamic
+      candidates 聚焦修复 signal validity / staleness cost / execution lag sensitivity，只允许输出
+      watch-only research evidence。2026-06-27: 实现完成并转入 VALIDATING；两个 repaired variants
+      的真实 dry-run verdict 均为 `NO_MATERIAL_IMPROVEMENT`，paper_shadow_preflight_candidate=`NOT_IDENTIFIED`，dynamic
+      promotion 继续 `BLOCKED`；验证通过 Ruff、compileall、指定并行 pytest suites 和 `git diff --check`。'
+    raw_line: '|TRADING-1286_to_1305_SIGNAL_VALIDITY_STALENESS_REPAIR|Research strategies
+      / signal validity, staleness-aware execution, watch-only dynamic repair|P0|VALIDATING|项目
+      owner 后续复核 + 系统后续验证|详见 `docs/requirements/TRADING-1286_to_1305_Signal_Validity_Staleness_Repair.md`；实现已完成，下一步为
+      owner 复核 `NO_MATERIAL_IMPROVEMENT` repair verdict、staleness/lag decomposition、是否停止投入或仅保留
+      watch-only diagnostic；本批不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker|新增
+      `config/research/signal_validity_taxonomy.yaml`、`docs/research/signal_validity_staleness_input_summary.md`、per-strategy
+      staleness/lag decomposition、`staleness_repair_summary.csv`、`lag_repair_summary.csv`、`inputs/research_reviews/staleness_repair_matrix.yaml`、`docs/research/signal_validity_staleness_repair_review.md`；CLI
+      支持 staleness repair 参数；leaderboard 继续只按 actual-path metrics 排序；target-path metrics
+      diagnostic-only；dynamic promotion final status 继续 `BLOCKED`；no future leakage
+      / actual-path-only promotion / stale action semantics tests、Ruff、compileall、parallel
+      pytest 和 `git diff --check` 通过|2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求对当前
+      watch-only surviving dynamic candidates 聚焦修复 signal validity / staleness cost
+      / execution lag sensitivity，只允许输出 watch-only research evidence。2026-06-27: 实现完成并转入
+      VALIDATING；两个 repaired variants 的真实 dry-run verdict 均为 `NO_MATERIAL_IMPROVEMENT`，paper_shadow_preflight_candidate=`NOT_IDENTIFIED`，dynamic
+      promotion 继续 `BLOCKED`；验证通过 Ruff、compileall、指定并行 pytest suites 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c8287e1e8b3bc9a0ceb2e472
+  task_id: TRADING-1286_to_1305_SIGNAL_VALIDITY_STALENESS_REPAIR
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 + 系统后续验证
+    notes: '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求对当前 watch-only surviving dynamic
+      candidates 聚焦修复 signal validity / staleness cost / execution lag sensitivity，只允许输出
+      watch-only research evidence。2026-06-27: 实现完成并转入 VALIDATING；两个 repaired variants
+      的真实 dry-run verdict 均为 `NO_MATERIAL_IMPROVEMENT`，paper_shadow_preflight_candidate=`NOT_IDENTIFIED`，dynamic
+      promotion 继续 `BLOCKED`；验证通过 Ruff、compileall、指定并行 pytest suites 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c8287e1e8b3bc9a0ceb2e472ee9e1242a7bf2d922424fd384262ac27c9234c14
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1286_to_1305_SIGNAL_VALIDITY_STALENESS_REPAIR
+  - Research strategies / signal validity, staleness-aware execution, watch-only dynamic
+    repair
+  - P0
+  - VALIDATING
+  - 项目 owner 后续复核 + 系统后续验证
+  - 详见 `docs/requirements/TRADING-1286_to_1305_Signal_Validity_Staleness_Repair.md`；实现已完成，下一步为
+    owner 复核 `NO_MATERIAL_IMPROVEMENT` repair verdict、staleness/lag decomposition、是否停止投入或仅保留
+    watch-only diagnostic；本批不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker
+  - 新增 `config/research/signal_validity_taxonomy.yaml`、`docs/research/signal_validity_staleness_input_summary.md`、per-strategy
+    staleness/lag decomposition、`staleness_repair_summary.csv`、`lag_repair_summary.csv`、`inputs/research_reviews/staleness_repair_matrix.yaml`、`docs/research/signal_validity_staleness_repair_review.md`；CLI
+    支持 staleness repair 参数；leaderboard 继续只按 actual-path metrics 排序；target-path metrics
+    diagnostic-only；dynamic promotion final status 继续 `BLOCKED`；no future leakage
+    / actual-path-only promotion / stale action semantics tests、Ruff、compileall、parallel
+    pytest 和 `git diff --check` 通过
+  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求对当前 watch-only surviving dynamic candidates
+    聚焦修复 signal validity / staleness cost / execution lag sensitivity，只允许输出 watch-only
+    research evidence。2026-06-27: 实现完成并转入 VALIDATING；两个 repaired variants 的真实 dry-run
+    verdict 均为 `NO_MATERIAL_IMPROVEMENT`，paper_shadow_preflight_candidate=`NOT_IDENTIFIED`，dynamic
+    promotion 继续 `BLOCKED`；验证通过 Ruff、compileall、指定并行 pytest suites 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-1286_to_1305_Signal_Validity_Staleness_Repair.md
+  - docs/research/signal_validity_staleness_input_summary.md
+  - docs/research/signal_validity_staleness_repair_review.md
+  terminal: false
+  raw_row_sha256: c8287e1e8b3bc9a0ceb2e472ee9e1242a7bf2d922424fd384262ac27c9234c14
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ee1cdae7fc7fad16d4a03e3cb7911484177f6119462fa6297f904da277f2d191

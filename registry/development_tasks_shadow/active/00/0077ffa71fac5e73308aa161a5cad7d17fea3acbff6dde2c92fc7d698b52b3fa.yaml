@@ -1,0 +1,113 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: RISK-012
+  title: null
+  domain: 风险事件/LLM 正式评估准入
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`；已实现
+    LLM formal assessment 准入；后续如需调整 LLM watch/active 映射或人工复核替代关系，应新建或重开任务
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 提供命令把 `risk_event_prereview_queue.json` 转换为正式 risk occurrence YAML 与 LLM
+      formal attestation；日报政策/地缘模块必须显示 `llm_formal_assessment` 来源类型，置信度低于人工复核；LLM
+      formal evidence 最高按 B 级处理，默认不能单独触发 position gate；输出保留 model、request id、checksum、status/level
+      suggestion、confidence 和“未人工复核”声明；系统流图、README、测试同步更新
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1085
+    row_sha256: a4207a4393ed9c6bdb818c2132ddfc75b5734d08760c99576530aaf271a6f9da
+    cell_count: 8
+    all_cells:
+    - RISK-012
+    - 风险事件/LLM 正式评估准入
+    - P1
+    - BASELINE_DONE
+    - 系统验证 + 项目 owner
+    - 详细拆解见 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`；已实现
+      LLM formal assessment 准入；后续如需调整 LLM watch/active 映射或人工复核替代关系，应新建或重开任务
+    - 提供命令把 `risk_event_prereview_queue.json` 转换为正式 risk occurrence YAML 与 LLM formal
+      attestation；日报政策/地缘模块必须显示 `llm_formal_assessment` 来源类型，置信度低于人工复核；LLM formal
+      evidence 最高按 B 级处理，默认不能单独触发 position gate；输出保留 model、request id、checksum、status/level
+      suggestion、confidence 和“未人工复核”声明；系统流图、README、测试同步更新
+    - '2026-05-10: 新增并进入实现，原因：owner 明确要求参考 LLM 复核结果作为正式评估结果，先不通过人工复核。2026-05-10: 从
+      IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits risk-events apply-llm-formal-assessment`、LLM
+      formal occurrence/attestation 写入、日报 `llm_formal_assessment` 来源类型和较低置信度、系统流图、README、需求文档和测试；真实
+      2026-05-10 队列写入 5 条 watch occurrence 和 1 条 LLM formal attestation，validate-occurrences
+      PASS；验证通过 `ruff check src tests`、CLI help、完整 `pytest -q` 444 passed。'
+    raw_line: '|RISK-012|风险事件/LLM 正式评估准入|P1|BASELINE_DONE|系统验证 + 项目 owner|详细拆解见 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`；已实现
+      LLM formal assessment 准入；后续如需调整 LLM watch/active 映射或人工复核替代关系，应新建或重开任务|提供命令把
+      `risk_event_prereview_queue.json` 转换为正式 risk occurrence YAML 与 LLM formal attestation；日报政策/地缘模块必须显示
+      `llm_formal_assessment` 来源类型，置信度低于人工复核；LLM formal evidence 最高按 B 级处理，默认不能单独触发
+      position gate；输出保留 model、request id、checksum、status/level suggestion、confidence
+      和“未人工复核”声明；系统流图、README、测试同步更新|2026-05-10: 新增并进入实现，原因：owner 明确要求参考 LLM 复核结果作为正式评估结果，先不通过人工复核。2026-05-10:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits risk-events apply-llm-formal-assessment`、LLM
+      formal occurrence/attestation 写入、日报 `llm_formal_assessment` 来源类型和较低置信度、系统流图、README、需求文档和测试；真实
+      2026-05-10 队列写入 5 条 watch occurrence 和 1 条 LLM formal attestation，validate-occurrences
+      PASS；验证通过 `ruff check src tests`、CLI help、完整 `pytest -q` 444 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a4207a4393ed9c6bdb818c21
+  task_id: RISK-012
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-05-10: 新增并进入实现，原因：owner 明确要求参考 LLM 复核结果作为正式评估结果，先不通过人工复核。2026-05-10:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits risk-events apply-llm-formal-assessment`、LLM
+      formal occurrence/attestation 写入、日报 `llm_formal_assessment` 来源类型和较低置信度、系统流图、README、需求文档和测试；真实
+      2026-05-10 队列写入 5 条 watch occurrence 和 1 条 LLM formal attestation，validate-occurrences
+      PASS；验证通过 `ruff check src tests`、CLI help、完整 `pytest -q` 444 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a4207a4393ed9c6bdb818c2132ddfc75b5734d08760c99576530aaf271a6f9da
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - RISK-012
+  - 风险事件/LLM 正式评估准入
+  - P1
+  - BASELINE_DONE
+  - 系统验证 + 项目 owner
+  - 详细拆解见 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`；已实现 LLM
+    formal assessment 准入；后续如需调整 LLM watch/active 映射或人工复核替代关系，应新建或重开任务
+  - 提供命令把 `risk_event_prereview_queue.json` 转换为正式 risk occurrence YAML 与 LLM formal
+    attestation；日报政策/地缘模块必须显示 `llm_formal_assessment` 来源类型，置信度低于人工复核；LLM formal evidence
+    最高按 B 级处理，默认不能单独触发 position gate；输出保留 model、request id、checksum、status/level suggestion、confidence
+    和“未人工复核”声明；系统流图、README、测试同步更新
+  - '2026-05-10: 新增并进入实现，原因：owner 明确要求参考 LLM 复核结果作为正式评估结果，先不通过人工复核。2026-05-10: 从 IN_PROGRESS
+    改为 BASELINE_DONE，原因：新增 `aits risk-events apply-llm-formal-assessment`、LLM formal
+    occurrence/attestation 写入、日报 `llm_formal_assessment` 来源类型和较低置信度、系统流图、README、需求文档和测试；真实
+    2026-05-10 队列写入 5 条 watch occurrence 和 1 条 LLM formal attestation，validate-occurrences
+    PASS；验证通过 `ruff check src tests`、CLI help、完整 `pytest -q` 444 passed。'
+  docs_links:
+  - docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md
+  terminal: false
+  raw_row_sha256: a4207a4393ed9c6bdb818c2132ddfc75b5734d08760c99576530aaf271a6f9da
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2c1f86569470026e3768d00f2aed10cabdd58a08b4cb830a842cb8889e22e72c

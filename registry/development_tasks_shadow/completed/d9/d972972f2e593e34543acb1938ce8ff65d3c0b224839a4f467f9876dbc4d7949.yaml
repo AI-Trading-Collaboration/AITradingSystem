@@ -1,0 +1,93 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: AUDIT-001
+  title: null
+  domain: 回测审计
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已用 2026-04-01 至 2026-05-05 真实本地缓存回测复核
+    `backtest_audit_*.md` 和覆盖诊断；当前格式足够定位主要输入问题
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 已确认报告按月列出数据可信度、模块覆盖率和历史输入缺口，`backtest_input_coverage_*.csv` 提供 `signal_date`
+      级下钻；若后续出现按月聚合无法定位的新问题，再登记新任务补细粒度 Markdown 视图
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 451
+    row_sha256: 3441b001d8820329c545dcfc3e960448369f7585c1a3ed8bd89c5a68996c2642
+    cell_count: 8
+    all_cells:
+    - AUDIT-001
+    - 回测审计
+    - P2
+    - DONE
+    - 系统实现
+    - 已用 2026-04-01 至 2026-05-05 真实本地缓存回测复核 `backtest_audit_*.md` 和覆盖诊断；当前格式足够定位主要输入问题
+    - 已确认报告按月列出数据可信度、模块覆盖率和历史输入缺口，`backtest_input_coverage_*.csv` 提供 `signal_date`
+      级下钻；若后续出现按月聚合无法定位的新问题，再登记新任务补细粒度 Markdown 视图
+    - '2026-05-06: 从 VALIDATING 改为 DONE，原因：运行 `aits validate-data --as-of 2026-05-05`
+      与 `aits backtest --from 2026-04-01 --to 2026-05-05 --quality-as-of 2026-05-05`，审计输出清楚标出
+      C 级数据可信度、估值/风险事件历史缺口、模块覆盖率和 2026-04/2026-05 月度问题。'
+    raw_line: '|AUDIT-001|回测审计|P2|DONE|系统实现|已用 2026-04-01 至 2026-05-05 真实本地缓存回测复核
+      `backtest_audit_*.md` 和覆盖诊断；当前格式足够定位主要输入问题|已确认报告按月列出数据可信度、模块覆盖率和历史输入缺口，`backtest_input_coverage_*.csv`
+      提供 `signal_date` 级下钻；若后续出现按月聚合无法定位的新问题，再登记新任务补细粒度 Markdown 视图|2026-05-06: 从
+      VALIDATING 改为 DONE，原因：运行 `aits validate-data --as-of 2026-05-05` 与 `aits backtest
+      --from 2026-04-01 --to 2026-05-05 --quality-as-of 2026-05-05`，审计输出清楚标出 C 级数据可信度、估值/风险事件历史缺口、模块覆盖率和
+      2026-04/2026-05 月度问题。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3441b001d8820329c545dcfc
+  task_id: AUDIT-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统实现
+    notes: '2026-05-06: 从 VALIDATING 改为 DONE，原因：运行 `aits validate-data --as-of 2026-05-05`
+      与 `aits backtest --from 2026-04-01 --to 2026-05-05 --quality-as-of 2026-05-05`，审计输出清楚标出
+      C 级数据可信度、估值/风险事件历史缺口、模块覆盖率和 2026-04/2026-05 月度问题。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3441b001d8820329c545dcfc3e960448369f7585c1a3ed8bd89c5a68996c2642
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - AUDIT-001
+  - 回测审计
+  - P2
+  - DONE
+  - 系统实现
+  - 已用 2026-04-01 至 2026-05-05 真实本地缓存回测复核 `backtest_audit_*.md` 和覆盖诊断；当前格式足够定位主要输入问题
+  - 已确认报告按月列出数据可信度、模块覆盖率和历史输入缺口，`backtest_input_coverage_*.csv` 提供 `signal_date` 级下钻；若后续出现按月聚合无法定位的新问题，再登记新任务补细粒度
+    Markdown 视图
+  - '2026-05-06: 从 VALIDATING 改为 DONE，原因：运行 `aits validate-data --as-of 2026-05-05`
+    与 `aits backtest --from 2026-04-01 --to 2026-05-05 --quality-as-of 2026-05-05`，审计输出清楚标出
+    C 级数据可信度、估值/风险事件历史缺口、模块覆盖率和 2026-04/2026-05 月度问题。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: 3441b001d8820329c545dcfc3e960448369f7585c1a3ed8bd89c5a68996c2642
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ee76ebac0b9e925797ce0ad194cf7d26f3407bdc0c4e679e7c2343299b3d3205

@@ -1,0 +1,171 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-775_to_779_CONTROLLED_STRATEGY_RESEARCH_NEXT_STAGE
+  title: null
+  domain: Controlled strategy research / value surface expansion, utility boundary
+    audit, forward maturity, GBDT pivot, and regret gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-775_to_779_Controlled_Strategy_Research_Next_Stage.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-775_to_779_Controlled_Strategy_Research_Next_Stage.md`；owner
+    已确认 batch 1 完成，下一阶段只继续扩大 value surface，forward evidence daily dry-run 继续成熟度跟踪，GBDT
+    只做 pivot design，regret state machine 维持 watchlist，simple selector 暂停；所有输出只能 controlled-research
+    / observe-only，不得进入 promotion、paper-shadow、production review、official weight 或
+    broker/order 路径
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 next-stage policy config；新增 CLI：`aits research strategies value-surface-controlled-expansion`、`utility-boundary-ranking-policy-audit`、`gbdt-pivot-review`、`regret-casebook-expansion-gate`
+      和 `aits forward-evidence maturity-tracker`；value surface expansion 必须输出 action
+      × horizon、benchmark、horizon smoothness/leakage、by asset/regime/cluster、gross/net、turnover/cost/drawdown
+      和 negative controls；utility audit 最多 `SENSITIVITY_TESTED` 且 `validated_boundary_count=0`；forward
+      tracker 必须按 1d/5d/10d/20d/60d 记录 append-only maturity；GBDT pivot 禁止本轮局部调参；regret
+      gate 未满足 case / distribution / teacher-oracle / attribution 条件时不得扩展；所有 safety
+      flags false
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1354
+    row_sha256: 22b478e3ddc0c93050a1db5c04a08cc1c5ce5e39ef21c721e2fff0f7b7f9ead2
+    cell_count: 8
+    all_cells:
+    - TRADING-775_to_779_CONTROLLED_STRATEGY_RESEARCH_NEXT_STAGE
+    - Controlled strategy research / value surface expansion, utility boundary audit,
+      forward maturity, GBDT pivot, and regret gate
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-775_to_779_Controlled_Strategy_Research_Next_Stage.md`；owner
+      已确认 batch 1 完成，下一阶段只继续扩大 value surface，forward evidence daily dry-run 继续成熟度跟踪，GBDT
+      只做 pivot design，regret state machine 维持 watchlist，simple selector 暂停；所有输出只能
+      controlled-research / observe-only，不得进入 promotion、paper-shadow、production review、official
+      weight 或 broker/order 路径
+    - 新增 next-stage policy config；新增 CLI：`aits research strategies value-surface-controlled-expansion`、`utility-boundary-ranking-policy-audit`、`gbdt-pivot-review`、`regret-casebook-expansion-gate`
+      和 `aits forward-evidence maturity-tracker`；value surface expansion 必须输出 action
+      × horizon、benchmark、horizon smoothness/leakage、by asset/regime/cluster、gross/net、turnover/cost/drawdown
+      和 negative controls；utility audit 最多 `SENSITIVITY_TESTED` 且 `validated_boundary_count=0`；forward
+      tracker 必须按 1d/5d/10d/20d/60d 记录 append-only maturity；GBDT pivot 禁止本轮局部调参；regret
+      gate 未满足 case / distribution / teacher-oracle / attribution 条件时不得扩展；所有 safety
+      flags false
+    - '2026-06-21: 新增并进入 IN_PROGRESS，原因：owner 对 batch-1 结果给出下一阶段执行顺序 TRADING-775～779。当前状态：`CONTROLLED_STRATEGY_RESEARCH_BATCH_1_COMPLETE`，data_foundation_status=`PASS_WITH_WARNINGS`
+      且 quality gate passed；promotion_ready=false、paper_shadow_ready=false、production_ready=false。候选决策固定为
+      value_surface CONTINUE、regret_state_machine WATCHLIST、simple_strategy_selector
+      KILL、gbdt_action_utility PIVOT。本阶段不允许把 value surface heuristic utility 当作 validated
+      boundary。2026-06-21: 实现完成并转入 VALIDATING；真实 CLI run 生成 value surface expansion、utility
+      boundary audit、forward maturity tracker、GBDT pivot review 和 regret casebook
+      expansion gate artifacts。TRADING-775 `PASS_WITH_WARNINGS`、decision_date_count=72；TRADING-776
+      `SENSITIVITY_TESTED`、validated_boundary_count=0；TRADING-777 `PASS_WITH_WARNINGS`、ledger_event_count=1、future_outcomes_appended_only=true；TRADING-778
+      `PIVOT_REVIEW_READY`、model_run_executed=false；TRADING-779 `WATCHLIST_NOT_READY`、case_count=24、expansion_allowed=false；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T095425Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T095616Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T095808Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-775_to_779_CONTROLLED_STRATEGY_RESEARCH_NEXT_STAGE|Controlled
+      strategy research / value surface expansion, utility boundary audit, forward
+      maturity, GBDT pivot, and regret gate|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-775_to_779_Controlled_Strategy_Research_Next_Stage.md`；owner
+      已确认 batch 1 完成，下一阶段只继续扩大 value surface，forward evidence daily dry-run 继续成熟度跟踪，GBDT
+      只做 pivot design，regret state machine 维持 watchlist，simple selector 暂停；所有输出只能
+      controlled-research / observe-only，不得进入 promotion、paper-shadow、production review、official
+      weight 或 broker/order 路径|新增 next-stage policy config；新增 CLI：`aits research strategies
+      value-surface-controlled-expansion`、`utility-boundary-ranking-policy-audit`、`gbdt-pivot-review`、`regret-casebook-expansion-gate`
+      和 `aits forward-evidence maturity-tracker`；value surface expansion 必须输出 action
+      × horizon、benchmark、horizon smoothness/leakage、by asset/regime/cluster、gross/net、turnover/cost/drawdown
+      和 negative controls；utility audit 最多 `SENSITIVITY_TESTED` 且 `validated_boundary_count=0`；forward
+      tracker 必须按 1d/5d/10d/20d/60d 记录 append-only maturity；GBDT pivot 禁止本轮局部调参；regret
+      gate 未满足 case / distribution / teacher-oracle / attribution 条件时不得扩展；所有 safety
+      flags false|2026-06-21: 新增并进入 IN_PROGRESS，原因：owner 对 batch-1 结果给出下一阶段执行顺序 TRADING-775～779。当前状态：`CONTROLLED_STRATEGY_RESEARCH_BATCH_1_COMPLETE`，data_foundation_status=`PASS_WITH_WARNINGS`
+      且 quality gate passed；promotion_ready=false、paper_shadow_ready=false、production_ready=false。候选决策固定为
+      value_surface CONTINUE、regret_state_machine WATCHLIST、simple_strategy_selector
+      KILL、gbdt_action_utility PIVOT。本阶段不允许把 value surface heuristic utility 当作 validated
+      boundary。2026-06-21: 实现完成并转入 VALIDATING；真实 CLI run 生成 value surface expansion、utility
+      boundary audit、forward maturity tracker、GBDT pivot review 和 regret casebook
+      expansion gate artifacts。TRADING-775 `PASS_WITH_WARNINGS`、decision_date_count=72；TRADING-776
+      `SENSITIVITY_TESTED`、validated_boundary_count=0；TRADING-777 `PASS_WITH_WARNINGS`、ledger_event_count=1、future_outcomes_appended_only=true；TRADING-778
+      `PIVOT_REVIEW_READY`、model_run_executed=false；TRADING-779 `WATCHLIST_NOT_READY`、case_count=24、expansion_allowed=false；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T095425Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T095616Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T095808Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-22b478e3ddc0c93050a1db5c
+  task_id: TRADING-775_to_779_CONTROLLED_STRATEGY_RESEARCH_NEXT_STAGE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-21: 新增并进入 IN_PROGRESS，原因：owner 对 batch-1 结果给出下一阶段执行顺序 TRADING-775～779。当前状态：`CONTROLLED_STRATEGY_RESEARCH_BATCH_1_COMPLETE`，data_foundation_status=`PASS_WITH_WARNINGS`
+      且 quality gate passed；promotion_ready=false、paper_shadow_ready=false、production_ready=false。候选决策固定为
+      value_surface CONTINUE、regret_state_machine WATCHLIST、simple_strategy_selector
+      KILL、gbdt_action_utility PIVOT。本阶段不允许把 value surface heuristic utility 当作 validated
+      boundary。2026-06-21: 实现完成并转入 VALIDATING；真实 CLI run 生成 value surface expansion、utility
+      boundary audit、forward maturity tracker、GBDT pivot review 和 regret casebook
+      expansion gate artifacts。TRADING-775 `PASS_WITH_WARNINGS`、decision_date_count=72；TRADING-776
+      `SENSITIVITY_TESTED`、validated_boundary_count=0；TRADING-777 `PASS_WITH_WARNINGS`、ledger_event_count=1、future_outcomes_appended_only=true；TRADING-778
+      `PIVOT_REVIEW_READY`、model_run_executed=false；TRADING-779 `WATCHLIST_NOT_READY`、case_count=24、expansion_allowed=false；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T095425Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T095616Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T095808Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:22b478e3ddc0c93050a1db5c04a08cc1c5ce5e39ef21c721e2fff0f7b7f9ead2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-775_to_779_CONTROLLED_STRATEGY_RESEARCH_NEXT_STAGE
+  - Controlled strategy research / value surface expansion, utility boundary audit,
+    forward maturity, GBDT pivot, and regret gate
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-775_to_779_Controlled_Strategy_Research_Next_Stage.md`；owner
+    已确认 batch 1 完成，下一阶段只继续扩大 value surface，forward evidence daily dry-run 继续成熟度跟踪，GBDT
+    只做 pivot design，regret state machine 维持 watchlist，simple selector 暂停；所有输出只能 controlled-research
+    / observe-only，不得进入 promotion、paper-shadow、production review、official weight 或
+    broker/order 路径
+  - 新增 next-stage policy config；新增 CLI：`aits research strategies value-surface-controlled-expansion`、`utility-boundary-ranking-policy-audit`、`gbdt-pivot-review`、`regret-casebook-expansion-gate`
+    和 `aits forward-evidence maturity-tracker`；value surface expansion 必须输出 action
+    × horizon、benchmark、horizon smoothness/leakage、by asset/regime/cluster、gross/net、turnover/cost/drawdown
+    和 negative controls；utility audit 最多 `SENSITIVITY_TESTED` 且 `validated_boundary_count=0`；forward
+    tracker 必须按 1d/5d/10d/20d/60d 记录 append-only maturity；GBDT pivot 禁止本轮局部调参；regret
+    gate 未满足 case / distribution / teacher-oracle / attribution 条件时不得扩展；所有 safety
+    flags false
+  - '2026-06-21: 新增并进入 IN_PROGRESS，原因：owner 对 batch-1 结果给出下一阶段执行顺序 TRADING-775～779。当前状态：`CONTROLLED_STRATEGY_RESEARCH_BATCH_1_COMPLETE`，data_foundation_status=`PASS_WITH_WARNINGS`
+    且 quality gate passed；promotion_ready=false、paper_shadow_ready=false、production_ready=false。候选决策固定为
+    value_surface CONTINUE、regret_state_machine WATCHLIST、simple_strategy_selector
+    KILL、gbdt_action_utility PIVOT。本阶段不允许把 value surface heuristic utility 当作 validated
+    boundary。2026-06-21: 实现完成并转入 VALIDATING；真实 CLI run 生成 value surface expansion、utility
+    boundary audit、forward maturity tracker、GBDT pivot review 和 regret casebook expansion
+    gate artifacts。TRADING-775 `PASS_WITH_WARNINGS`、decision_date_count=72；TRADING-776
+    `SENSITIVITY_TESTED`、validated_boundary_count=0；TRADING-777 `PASS_WITH_WARNINGS`、ledger_event_count=1、future_outcomes_appended_only=true；TRADING-778
+    `PIVOT_REVIEW_READY`、model_run_executed=false；TRADING-779 `WATCHLIST_NOT_READY`、case_count=24、expansion_allowed=false；所有输出固定
+    production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+    focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
+    和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T095425Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T095616Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T095808Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-775_to_779_Controlled_Strategy_Research_Next_Stage.md
+  terminal: false
+  raw_row_sha256: 22b478e3ddc0c93050a1db5c04a08cc1c5ce5e39ef21c721e2fff0f7b7f9ead2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: bacab1312a7544999f887b7c85a3f69e5cbc23b77846987df97a1fc3711e9943

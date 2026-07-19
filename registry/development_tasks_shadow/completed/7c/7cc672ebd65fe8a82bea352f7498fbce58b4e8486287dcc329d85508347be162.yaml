@@ -1,0 +1,137 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: RISK-014
+  title: null
+  domain: 风险事件/PIT 历史日回跑
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/input_visibility_contract_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/input_visibility_contract_2026-05-10.md`；历史
+    as-of 风险事件 occurrence / attestation 可见性过滤已完成并通过真实 2026-05-08 replay 复核；`aits risk-events
+    validate-occurrences --as-of 2026-05-08` 为 `PASS_WITH_WARNINGS`，发生记录数 0、复核声明数
+    0、错误 0，future occurrence 以 `risk_event_occurrence_excluded_future_as_of` warning
+    进入审计；`aits ops replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy
+    cache-only --compare-to-production` 为 PASS。Direct `score-daily --as-of 2026-05-08
+    --skip-risk-event-openai-precheck` 被当前生产 market/macro cache 的 `prices_future_dates`
+    / `rates_future_dates` 门禁阻断，按 runbook 属于历史复现入口错误，不是风险事件记录失败；后续历史研究继续使用 replay
+    隔离 bundle
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 历史 as-of 日报或 daily-run 只使用评估日可见的风险事件 occurrence、evidence 和 attestation；后续日期记录不得进入评分、仓位闸门或复核声明，也不得导致历史日流程因风险事件记录误失败；被排除记录必须以
+      warning/审计记录出现在风险事件校验报告；当前可见记录自身错误仍 fail closed
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 308
+    row_sha256: 63bb5e352c110369cb6afd6d2170d8815532c58df31203c101c1b7f14d572057
+    cell_count: 8
+    all_cells:
+    - RISK-014
+    - 风险事件/PIT 历史日回跑
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/input_visibility_contract_2026-05-10.md`；历史 as-of 风险事件
+      occurrence / attestation 可见性过滤已完成并通过真实 2026-05-08 replay 复核；`aits risk-events
+      validate-occurrences --as-of 2026-05-08` 为 `PASS_WITH_WARNINGS`，发生记录数 0、复核声明数
+      0、错误 0，future occurrence 以 `risk_event_occurrence_excluded_future_as_of` warning
+      进入审计；`aits ops replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy
+      cache-only --compare-to-production` 为 PASS。Direct `score-daily --as-of 2026-05-08
+      --skip-risk-event-openai-precheck` 被当前生产 market/macro cache 的 `prices_future_dates`
+      / `rates_future_dates` 门禁阻断，按 runbook 属于历史复现入口错误，不是风险事件记录失败；后续历史研究继续使用 replay
+      隔离 bundle
+    - 历史 as-of 日报或 daily-run 只使用评估日可见的风险事件 occurrence、evidence 和 attestation；后续日期记录不得进入评分、仓位闸门或复核声明，也不得导致历史日流程因风险事件记录误失败；被排除记录必须以
+      warning/审计记录出现在风险事件校验报告；当前可见记录自身错误仍 fail closed
+    - '2026-05-10: 新增并进入实现，原因：owner 要求测试最后一个交易日流程，估值阻断解除后，真实 `score-daily --as-of
+      2026-05-08` 失败于 2026-05-10 风险事件记录相对历史日的未来日期。2026-05-10: 从 IN_PROGRESS 改为 VALIDATING，原因：`score-daily
+      --as-of 2026-05-08 --skip-risk-event-openai-precheck` 已通过，报告显式列出被排除的未来 occurrence/attestation。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：focused PIT tests、真实 risk occurrence validation 和 2026-05-08
+      cache-only replay 均确认未来 occurrence/attestation 只进 warning 审计，不进入历史评分、仓位闸门或复核声明；direct
+      historical `score-daily` 失败来自 market/macro 生产缓存未来行门禁，应由 replay 入口隔离。'
+    raw_line: '|RISK-014|风险事件/PIT 历史日回跑|P0|DONE|系统验证|详细拆解见 `docs/requirements/input_visibility_contract_2026-05-10.md`；历史
+      as-of 风险事件 occurrence / attestation 可见性过滤已完成并通过真实 2026-05-08 replay 复核；`aits
+      risk-events validate-occurrences --as-of 2026-05-08` 为 `PASS_WITH_WARNINGS`，发生记录数
+      0、复核声明数 0、错误 0，future occurrence 以 `risk_event_occurrence_excluded_future_as_of`
+      warning 进入审计；`aits ops replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy
+      cache-only --compare-to-production` 为 PASS。Direct `score-daily --as-of 2026-05-08
+      --skip-risk-event-openai-precheck` 被当前生产 market/macro cache 的 `prices_future_dates`
+      / `rates_future_dates` 门禁阻断，按 runbook 属于历史复现入口错误，不是风险事件记录失败；后续历史研究继续使用 replay
+      隔离 bundle|历史 as-of 日报或 daily-run 只使用评估日可见的风险事件 occurrence、evidence 和 attestation；后续日期记录不得进入评分、仓位闸门或复核声明，也不得导致历史日流程因风险事件记录误失败；被排除记录必须以
+      warning/审计记录出现在风险事件校验报告；当前可见记录自身错误仍 fail closed|2026-05-10: 新增并进入实现，原因：owner
+      要求测试最后一个交易日流程，估值阻断解除后，真实 `score-daily --as-of 2026-05-08` 失败于 2026-05-10 风险事件记录相对历史日的未来日期。2026-05-10:
+      从 IN_PROGRESS 改为 VALIDATING，原因：`score-daily --as-of 2026-05-08 --skip-risk-event-openai-precheck`
+      已通过，报告显式列出被排除的未来 occurrence/attestation。2026-06-09: 从 VALIDATING 改为 DONE，原因：focused
+      PIT tests、真实 risk occurrence validation 和 2026-05-08 cache-only replay 均确认未来
+      occurrence/attestation 只进 warning 审计，不进入历史评分、仓位闸门或复核声明；direct historical `score-daily`
+      失败来自 market/macro 生产缓存未来行门禁，应由 replay 入口隔离。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-63bb5e352c110369cb6afd6d
+  task_id: RISK-014
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-10: 新增并进入实现，原因：owner 要求测试最后一个交易日流程，估值阻断解除后，真实 `score-daily --as-of
+      2026-05-08` 失败于 2026-05-10 风险事件记录相对历史日的未来日期。2026-05-10: 从 IN_PROGRESS 改为 VALIDATING，原因：`score-daily
+      --as-of 2026-05-08 --skip-risk-event-openai-precheck` 已通过，报告显式列出被排除的未来 occurrence/attestation。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：focused PIT tests、真实 risk occurrence validation 和 2026-05-08
+      cache-only replay 均确认未来 occurrence/attestation 只进 warning 审计，不进入历史评分、仓位闸门或复核声明；direct
+      historical `score-daily` 失败来自 market/macro 生产缓存未来行门禁，应由 replay 入口隔离。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:63bb5e352c110369cb6afd6d2170d8815532c58df31203c101c1b7f14d572057
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - RISK-014
+  - 风险事件/PIT 历史日回跑
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/input_visibility_contract_2026-05-10.md`；历史 as-of 风险事件
+    occurrence / attestation 可见性过滤已完成并通过真实 2026-05-08 replay 复核；`aits risk-events
+    validate-occurrences --as-of 2026-05-08` 为 `PASS_WITH_WARNINGS`，发生记录数 0、复核声明数
+    0、错误 0，future occurrence 以 `risk_event_occurrence_excluded_future_as_of` warning
+    进入审计；`aits ops replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy
+    cache-only --compare-to-production` 为 PASS。Direct `score-daily --as-of 2026-05-08
+    --skip-risk-event-openai-precheck` 被当前生产 market/macro cache 的 `prices_future_dates`
+    / `rates_future_dates` 门禁阻断，按 runbook 属于历史复现入口错误，不是风险事件记录失败；后续历史研究继续使用 replay
+    隔离 bundle
+  - 历史 as-of 日报或 daily-run 只使用评估日可见的风险事件 occurrence、evidence 和 attestation；后续日期记录不得进入评分、仓位闸门或复核声明，也不得导致历史日流程因风险事件记录误失败；被排除记录必须以
+    warning/审计记录出现在风险事件校验报告；当前可见记录自身错误仍 fail closed
+  - '2026-05-10: 新增并进入实现，原因：owner 要求测试最后一个交易日流程，估值阻断解除后，真实 `score-daily --as-of 2026-05-08`
+    失败于 2026-05-10 风险事件记录相对历史日的未来日期。2026-05-10: 从 IN_PROGRESS 改为 VALIDATING，原因：`score-daily
+    --as-of 2026-05-08 --skip-risk-event-openai-precheck` 已通过，报告显式列出被排除的未来 occurrence/attestation。2026-06-09:
+    从 VALIDATING 改为 DONE，原因：focused PIT tests、真实 risk occurrence validation 和 2026-05-08
+    cache-only replay 均确认未来 occurrence/attestation 只进 warning 审计，不进入历史评分、仓位闸门或复核声明；direct
+    historical `score-daily` 失败来自 market/macro 生产缓存未来行门禁，应由 replay 入口隔离。'
+  docs_links:
+  - docs/requirements/input_visibility_contract_2026-05-10.md
+  terminal: true
+  raw_row_sha256: 63bb5e352c110369cb6afd6d2170d8815532c58df31203c101c1b7f14d572057
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b36f3f580de2f043a252b2f8ef6b7bbe4a5ff44d434d1942edaf1f923df872b9

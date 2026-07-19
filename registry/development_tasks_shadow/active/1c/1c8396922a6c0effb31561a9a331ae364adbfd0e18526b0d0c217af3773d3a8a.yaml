@@ -1,0 +1,118 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-286_to_305_WEIGHT_OPTIMIZATION_BATCH_SEARCH_AND_ADAPTIVE_PROMOTION_PIPELINE
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue weight optimization batch search and adaptive
+    promotion pipeline
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 真实owner研究复核；ARCH-004 coordinator继续剩余G2.4 matrix
+  requirement_refs:
+  - docs/requirements/TRADING-286_to_305_Weight_Optimization_Batch_Search_and_Adaptive_Promotion_Pipeline.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-286_to_305_Weight_Optimization_Batch_Search_and_Adaptive_Promotion_Pipeline.md`；2026-06-14
+    research-only baseline和真实artifacts保留历史；G2.4CV1/CV2/CV3已完成39 callbacks的canonical迁移、bounded
+    snapshots、exact lineage、live replay/all-view rebuild与tamper fail-close；不得 formal
+    method auto-apply、official target weight mutation、portfolio mutation、order ticket、broker
+    action 或 production effect
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: CV1/CV2/CV3分别10/11/18 callbacks全部`COMPLETE_G2_4_CONTINUES`；CLI parity、manifests/deprecation/source
+      hashes及各slice focused/architecture/contract/full均闭合；真实研究结论仍由owner复核，且该任务完成不代表whole
+      G2.4 phase exit。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1436
+    row_sha256: 84b4d92088624cb6395646105c19c2a499eaca981c08c3bb8af14954cc39507f
+    cell_count: 8
+    all_cells:
+    - TRADING-286_to_305_WEIGHT_OPTIMIZATION_BATCH_SEARCH_AND_ADAPTIVE_PROMOTION_PIPELINE
+    - ETF portfolio/dynamic v3 rescue weight optimization batch search and adaptive
+      promotion pipeline
+    - P0
+    - BASELINE_DONE
+    - 真实owner研究复核；ARCH-004 coordinator继续剩余G2.4 matrix
+    - 详细拆解见 `docs/requirements/TRADING-286_to_305_Weight_Optimization_Batch_Search_and_Adaptive_Promotion_Pipeline.md`；2026-06-14
+      research-only baseline和真实artifacts保留历史；G2.4CV1/CV2/CV3已完成39 callbacks的canonical迁移、bounded
+      snapshots、exact lineage、live replay/all-view rebuild与tamper fail-close；不得 formal
+      method auto-apply、official target weight mutation、portfolio mutation、order ticket、broker
+      action 或 production effect
+    - CV1/CV2/CV3分别10/11/18 callbacks全部`COMPLETE_G2_4_CONTINUES`；CLI parity、manifests/deprecation/source
+      hashes及各slice focused/architecture/contract/full均闭合；真实研究结论仍由owner复核，且该任务完成不代表whole
+      G2.4 phase exit。
+    - '2026-07-15: CV1/CV2/CV3全部完成，末次focused/architecture/contract/full=145/285/203/6,029
+      passed，generated=934/1,128/858/0；转BASELINE_DONE，architecture继续TRADING-306～315等剩余G2.4
+      matrix。'
+    raw_line: '|TRADING-286_to_305_WEIGHT_OPTIMIZATION_BATCH_SEARCH_AND_ADAPTIVE_PROMOTION_PIPELINE|ETF
+      portfolio/dynamic v3 rescue weight optimization batch search and adaptive promotion
+      pipeline|P0|BASELINE_DONE|真实owner研究复核；ARCH-004 coordinator继续剩余G2.4 matrix|详细拆解见
+      `docs/requirements/TRADING-286_to_305_Weight_Optimization_Batch_Search_and_Adaptive_Promotion_Pipeline.md`；2026-06-14
+      research-only baseline和真实artifacts保留历史；G2.4CV1/CV2/CV3已完成39 callbacks的canonical迁移、bounded
+      snapshots、exact lineage、live replay/all-view rebuild与tamper fail-close；不得 formal
+      method auto-apply、official target weight mutation、portfolio mutation、order ticket、broker
+      action 或 production effect|CV1/CV2/CV3分别10/11/18 callbacks全部`COMPLETE_G2_4_CONTINUES`；CLI
+      parity、manifests/deprecation/source hashes及各slice focused/architecture/contract/full均闭合；真实研究结论仍由owner复核，且该任务完成不代表whole
+      G2.4 phase exit。|2026-07-15: CV1/CV2/CV3全部完成，末次focused/architecture/contract/full=145/285/203/6,029
+      passed，generated=934/1,128/858/0；转BASELINE_DONE，architecture继续TRADING-306～315等剩余G2.4
+      matrix。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-84b4d92088624cb639564610
+  task_id: TRADING-286_to_305_WEIGHT_OPTIMIZATION_BATCH_SEARCH_AND_ADAPTIVE_PROMOTION_PIPELINE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 真实owner研究复核；ARCH-004 coordinator继续剩余G2.4 matrix
+    notes: '2026-07-15: CV1/CV2/CV3全部完成，末次focused/architecture/contract/full=145/285/203/6,029
+      passed，generated=934/1,128/858/0；转BASELINE_DONE，architecture继续TRADING-306～315等剩余G2.4
+      matrix。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:84b4d92088624cb6395646105c19c2a499eaca981c08c3bb8af14954cc39507f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-286_to_305_WEIGHT_OPTIMIZATION_BATCH_SEARCH_AND_ADAPTIVE_PROMOTION_PIPELINE
+  - ETF portfolio/dynamic v3 rescue weight optimization batch search and adaptive
+    promotion pipeline
+  - P0
+  - BASELINE_DONE
+  - 真实owner研究复核；ARCH-004 coordinator继续剩余G2.4 matrix
+  - 详细拆解见 `docs/requirements/TRADING-286_to_305_Weight_Optimization_Batch_Search_and_Adaptive_Promotion_Pipeline.md`；2026-06-14
+    research-only baseline和真实artifacts保留历史；G2.4CV1/CV2/CV3已完成39 callbacks的canonical迁移、bounded
+    snapshots、exact lineage、live replay/all-view rebuild与tamper fail-close；不得 formal
+    method auto-apply、official target weight mutation、portfolio mutation、order ticket、broker
+    action 或 production effect
+  - CV1/CV2/CV3分别10/11/18 callbacks全部`COMPLETE_G2_4_CONTINUES`；CLI parity、manifests/deprecation/source
+    hashes及各slice focused/architecture/contract/full均闭合；真实研究结论仍由owner复核，且该任务完成不代表whole
+    G2.4 phase exit。
+  - '2026-07-15: CV1/CV2/CV3全部完成，末次focused/architecture/contract/full=145/285/203/6,029
+    passed，generated=934/1,128/858/0；转BASELINE_DONE，architecture继续TRADING-306～315等剩余G2.4
+    matrix。'
+  docs_links:
+  - docs/requirements/TRADING-286_to_305_Weight_Optimization_Batch_Search_and_Adaptive_Promotion_Pipeline.md
+  terminal: false
+  raw_row_sha256: 84b4d92088624cb6395646105c19c2a499eaca981c08c3bb8af14954cc39507f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 086196900346b6b26a5d99edd163131fcc59ecdd1e5ef27bbe3aec53c8df3cad

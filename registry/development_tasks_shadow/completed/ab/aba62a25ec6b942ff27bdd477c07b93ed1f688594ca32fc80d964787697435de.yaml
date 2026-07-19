@@ -1,0 +1,149 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2437_GROWTH_TILT_REGIME_SLICE_ATTRIBUTION_REVIEW
+  title: null
+  domain: Strategy research / growth tilt regime slice attribution review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2438 top-3 candidate PIT replay
+  requirement_refs:
+  - docs/requirements/TRADING-2437_Growth_Tilt_Regime_Slice_Attribution_Review.md
+  - docs/tasks/completed/TRADING-2437_Growth_Tilt_Regime_Slice_Attribution_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2437_Growth_Tilt_Regime_Slice_Attribution_Review.md`；承接
+    TRADING-2436 READY，只读 prior artifacts、candidate-set config、registry/catalog/system
+    flow 和 research docs；本任务只做 prior-artifact / contract-level regime slice attribution
+    review，不运行真实 regime attribution / parameter sweep / historical screen / PIT replay
+    / backtest / scoring / daily report / outcome binding。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 regime slice attribution review builder、`aits research strategies growth-tilt-regime-slice-attribution-review`；输出
+      `regime_slice_attribution_review_result.json`、`regime_slice_attribution_matrix.json`、`candidate_status_by_regime.json`、`no_effect_boundary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_REGIME_SLICE_ATTRIBUTION_REVIEW_READY`，source_2436_ready=true，source_2432_gauntlet_ready=true，candidate_set_regime_slice_contract_ready=true，candidate_set_required_metrics_ready=true，regime_slice_attribution_review_ready=true，regime_slice_attribution_matrix_ready=true，candidate_status_by_regime_ready=true，no_effect_boundary_ready=true，recommended_regime_slice_count=9，candidate_set_regime_slice_count=4，regime_robustness_score=0.0，single_regime_dependency_detected=false，single_regime_dependency_assessed=false，regime_pass_count=0，regime_fail_count=0，regime_inconclusive_count=9，all_recommended_regime_status_inconclusive=true，component_value_found=false，candidate_status=`needs_pit`，computed_new_metrics=false，regime_attribution_run=false，market_data_regime_attribution_run=false，manual_review_required=true，automatic_execution_allowed=false，generated_signal=false，new_signal_generated=false，generated_trading_advice=false，trading_advice_generated=false，actionable_allocation_generated=false，outcome_backfilled=false，outcome_binding_executed=false，outcome_store_mutated=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、paper_shadow_daily_job_run=false、scheduler_enabled=false、scheduled_task_created=false、production_enabled=false、broker_enabled=false、broker_order_generated=false、portfolio_weight_mutated=false、daily_report_run=false、backtest_run=false、scoring_run=false、fresh_market_data_read=false、fresh_outcome_data_read=false，next
+      route=`TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 47
+    row_sha256: 7b77ed37bc1ff860c0fcc8c5c73df037e543c768e17d700f0839fa57273f5da9
+    cell_count: 8
+    all_cells:
+    - TRADING-2437_GROWTH_TILT_REGIME_SLICE_ATTRIBUTION_REVIEW
+    - Strategy research / growth tilt regime slice attribution review
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2438 top-3 candidate PIT replay
+    - 详见 `docs/requirements/TRADING-2437_Growth_Tilt_Regime_Slice_Attribution_Review.md`；承接
+      TRADING-2436 READY，只读 prior artifacts、candidate-set config、registry/catalog/system
+      flow 和 research docs；本任务只做 prior-artifact / contract-level regime slice attribution
+      review，不运行真实 regime attribution / parameter sweep / historical screen / PIT
+      replay / backtest / scoring / daily report / outcome binding。
+    - 新增 regime slice attribution review builder、`aits research strategies growth-tilt-regime-slice-attribution-review`；输出
+      `regime_slice_attribution_review_result.json`、`regime_slice_attribution_matrix.json`、`candidate_status_by_regime.json`、`no_effect_boundary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_REGIME_SLICE_ATTRIBUTION_REVIEW_READY`，source_2436_ready=true，source_2432_gauntlet_ready=true，candidate_set_regime_slice_contract_ready=true，candidate_set_required_metrics_ready=true，regime_slice_attribution_review_ready=true，regime_slice_attribution_matrix_ready=true，candidate_status_by_regime_ready=true，no_effect_boundary_ready=true，recommended_regime_slice_count=9，candidate_set_regime_slice_count=4，regime_robustness_score=0.0，single_regime_dependency_detected=false，single_regime_dependency_assessed=false，regime_pass_count=0，regime_fail_count=0，regime_inconclusive_count=9，all_recommended_regime_status_inconclusive=true，component_value_found=false，candidate_status=`needs_pit`，computed_new_metrics=false，regime_attribution_run=false，market_data_regime_attribution_run=false，manual_review_required=true，automatic_execution_allowed=false，generated_signal=false，new_signal_generated=false，generated_trading_advice=false，trading_advice_generated=false，actionable_allocation_generated=false，outcome_backfilled=false，outcome_binding_executed=false，outcome_store_mutated=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、paper_shadow_daily_job_run=false、scheduler_enabled=false、scheduled_task_created=false、production_enabled=false、broker_enabled=false、broker_order_generated=false、portfolio_weight_mutated=false、daily_report_run=false、backtest_run=false、scoring_run=false、fresh_market_data_read=false、fresh_outcome_data_read=false，next
+      route=`TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay`。
+    - '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest、真实 CLI、docs freshness、documentation
+      contract、task-register consistency run/validate、contract-validation 和 `git diff
+      --check`；本任务未运行 `aits validate-data`，因为只读取 prior artifacts、candidate-set config、registry/catalog/system
+      flow 和 research docs，不读取 fresh cached market/outcome data、不运行真实 regime attribution
+      / parameter sweep / historical screen / PIT replay / backtest / scoring / daily
+      report / outcome binding、不生成 feature/signal/outcome 或交易建议。candidate search、regime
+      attribution、observation、paper-shadow runtime/schedule、scheduler、event append、real
+      outcome binding、outcome store mutation、production、broker/order、daily report
+      全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2437_Growth_Tilt_Regime_Slice_Attribution_Review.md`。'
+    raw_line: '|TRADING-2437_GROWTH_TILT_REGIME_SLICE_ATTRIBUTION_REVIEW|Strategy
+      research / growth tilt regime slice attribution review|P0|DONE|项目 owner 后续复核
+      TRADING-2438 top-3 candidate PIT replay|详见 `docs/requirements/TRADING-2437_Growth_Tilt_Regime_Slice_Attribution_Review.md`；承接
+      TRADING-2436 READY，只读 prior artifacts、candidate-set config、registry/catalog/system
+      flow 和 research docs；本任务只做 prior-artifact / contract-level regime slice attribution
+      review，不运行真实 regime attribution / parameter sweep / historical screen / PIT
+      replay / backtest / scoring / daily report / outcome binding。|新增 regime slice
+      attribution review builder、`aits research strategies growth-tilt-regime-slice-attribution-review`；输出
+      `regime_slice_attribution_review_result.json`、`regime_slice_attribution_matrix.json`、`candidate_status_by_regime.json`、`no_effect_boundary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_REGIME_SLICE_ATTRIBUTION_REVIEW_READY`，source_2436_ready=true，source_2432_gauntlet_ready=true，candidate_set_regime_slice_contract_ready=true，candidate_set_required_metrics_ready=true，regime_slice_attribution_review_ready=true，regime_slice_attribution_matrix_ready=true，candidate_status_by_regime_ready=true，no_effect_boundary_ready=true，recommended_regime_slice_count=9，candidate_set_regime_slice_count=4，regime_robustness_score=0.0，single_regime_dependency_detected=false，single_regime_dependency_assessed=false，regime_pass_count=0，regime_fail_count=0，regime_inconclusive_count=9，all_recommended_regime_status_inconclusive=true，component_value_found=false，candidate_status=`needs_pit`，computed_new_metrics=false，regime_attribution_run=false，market_data_regime_attribution_run=false，manual_review_required=true，automatic_execution_allowed=false，generated_signal=false，new_signal_generated=false，generated_trading_advice=false，trading_advice_generated=false，actionable_allocation_generated=false，outcome_backfilled=false，outcome_binding_executed=false，outcome_store_mutated=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、paper_shadow_daily_job_run=false、scheduler_enabled=false、scheduled_task_created=false、production_enabled=false、broker_enabled=false、broker_order_generated=false、portfolio_weight_mutated=false、daily_report_run=false、backtest_run=false、scoring_run=false、fresh_market_data_read=false、fresh_outcome_data_read=false，next
+      route=`TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay`。|2026-07-09: 根据 owner
+      roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest、真实 CLI、docs freshness、documentation contract、task-register consistency
+      run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits validate-data`，因为只读取
+      prior artifacts、candidate-set config、registry/catalog/system flow 和 research
+      docs，不读取 fresh cached market/outcome data、不运行真实 regime attribution / parameter
+      sweep / historical screen / PIT replay / backtest / scoring / daily report /
+      outcome binding、不生成 feature/signal/outcome 或交易建议。candidate search、regime attribution、observation、paper-shadow
+      runtime/schedule、scheduler、event append、real outcome binding、outcome store mutation、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2437_Growth_Tilt_Regime_Slice_Attribution_Review.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7b77ed37bc1ff860c0fcc8c5
+  task_id: TRADING-2437_GROWTH_TILT_REGIME_SLICE_ATTRIBUTION_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2438 top-3 candidate PIT replay
+    notes: '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest、真实 CLI、docs freshness、documentation
+      contract、task-register consistency run/validate、contract-validation 和 `git diff
+      --check`；本任务未运行 `aits validate-data`，因为只读取 prior artifacts、candidate-set config、registry/catalog/system
+      flow 和 research docs，不读取 fresh cached market/outcome data、不运行真实 regime attribution
+      / parameter sweep / historical screen / PIT replay / backtest / scoring / daily
+      report / outcome binding、不生成 feature/signal/outcome 或交易建议。candidate search、regime
+      attribution、observation、paper-shadow runtime/schedule、scheduler、event append、real
+      outcome binding、outcome store mutation、production、broker/order、daily report
+      全部保持 disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2437_Growth_Tilt_Regime_Slice_Attribution_Review.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7b77ed37bc1ff860c0fcc8c5c73df037e543c768e17d700f0839fa57273f5da9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2437_GROWTH_TILT_REGIME_SLICE_ATTRIBUTION_REVIEW
+  - Strategy research / growth tilt regime slice attribution review
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2438 top-3 candidate PIT replay
+  - 详见 `docs/requirements/TRADING-2437_Growth_Tilt_Regime_Slice_Attribution_Review.md`；承接
+    TRADING-2436 READY，只读 prior artifacts、candidate-set config、registry/catalog/system
+    flow 和 research docs；本任务只做 prior-artifact / contract-level regime slice attribution
+    review，不运行真实 regime attribution / parameter sweep / historical screen / PIT replay
+    / backtest / scoring / daily report / outcome binding。
+  - 新增 regime slice attribution review builder、`aits research strategies growth-tilt-regime-slice-attribution-review`；输出
+    `regime_slice_attribution_review_result.json`、`regime_slice_attribution_matrix.json`、`candidate_status_by_regime.json`、`no_effect_boundary.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_REGIME_SLICE_ATTRIBUTION_REVIEW_READY`，source_2436_ready=true，source_2432_gauntlet_ready=true，candidate_set_regime_slice_contract_ready=true，candidate_set_required_metrics_ready=true，regime_slice_attribution_review_ready=true，regime_slice_attribution_matrix_ready=true，candidate_status_by_regime_ready=true，no_effect_boundary_ready=true，recommended_regime_slice_count=9，candidate_set_regime_slice_count=4，regime_robustness_score=0.0，single_regime_dependency_detected=false，single_regime_dependency_assessed=false，regime_pass_count=0，regime_fail_count=0，regime_inconclusive_count=9，all_recommended_regime_status_inconclusive=true，component_value_found=false，candidate_status=`needs_pit`，computed_new_metrics=false，regime_attribution_run=false，market_data_regime_attribution_run=false，manual_review_required=true，automatic_execution_allowed=false，generated_signal=false，new_signal_generated=false，generated_trading_advice=false，trading_advice_generated=false，actionable_allocation_generated=false，outcome_backfilled=false，outcome_binding_executed=false，outcome_store_mutated=false，paper_shadow_enabled=false、paper_shadow_schedule_enabled=false、paper_shadow_daily_job_run=false、scheduler_enabled=false、scheduled_task_created=false、production_enabled=false、broker_enabled=false、broker_order_generated=false、portfolio_weight_mutated=false、daily_report_run=false、backtest_run=false、scoring_run=false、fresh_market_data_read=false、fresh_outcome_data_read=false，next
+    route=`TRADING-2438_Growth_Tilt_Top3_Candidate_PIT_Replay`。
+  - '2026-07-09: 根据 owner roadmap 附件新增并进入 IN_PROGRESS。2026-07-09: 实现完成并归档 DONE；验证通过
+    Ruff、compileall、focused parallel pytest、真实 CLI、docs freshness、documentation contract、task-register
+    consistency run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits
+    validate-data`，因为只读取 prior artifacts、candidate-set config、registry/catalog/system
+    flow 和 research docs，不读取 fresh cached market/outcome data、不运行真实 regime attribution
+    / parameter sweep / historical screen / PIT replay / backtest / scoring / daily
+    report / outcome binding、不生成 feature/signal/outcome 或交易建议。candidate search、regime
+    attribution、observation、paper-shadow runtime/schedule、scheduler、event append、real
+    outcome binding、outcome store mutation、production、broker/order、daily report 全部保持
+    disabled / false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2437_Growth_Tilt_Regime_Slice_Attribution_Review.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2437_Growth_Tilt_Regime_Slice_Attribution_Review.md
+  - docs/tasks/completed/TRADING-2437_Growth_Tilt_Regime_Slice_Attribution_Review.md
+  terminal: true
+  raw_row_sha256: 7b77ed37bc1ff860c0fcc8c5c73df037e543c768e17d700f0839fa57273f5da9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5f6bc4e10d03b09b4e0bbeb0566a87f1a33d97518a8cc068282727a5e2b73a2f

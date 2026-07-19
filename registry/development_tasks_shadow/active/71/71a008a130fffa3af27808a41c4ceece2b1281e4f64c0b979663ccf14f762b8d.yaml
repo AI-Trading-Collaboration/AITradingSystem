@@ -1,0 +1,118 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-033A
+  title: null
+  domain: 交易执行/Operator Brief Notification Approval Gate Real Artifact Observation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/operator_brief_notification_approval_gate_real_artifact_observation_2026-06-09.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 承接 `TRADING-033` 的真实 `TRADING-032` artifact
+    和人工 approval marker 观察；阻塞于本机或运行环境产生可审计 `operator_brief_notification_dispatch_preview_YYYY-MM-DD.json/md`，并由
+    owner 提供或确认本地 manual approval marker；详细拆解见 `docs/requirements/operator_brief_notification_approval_gate_real_artifact_observation_2026-06-09.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 至少一个真实 `TRADING-032` artifact 日期完成 approval gate 观察，记录 `approval_gate_status`、`allowed_to_enter_dispatch`、preview
+      hash、marker exists/approved/hash_matches/expired、reasons/warnings 和 dashboard
+      只读卡片结果；无 marker 必须 `APPROVAL_REQUIRED`，有效 marker 才能 `APPROVED`，过期/不匹配/缺 preview/safety
+      blocked 必须 fail closed；输出固定 `production_effect=none`、`manual_review_only=true`、`approval_gate_only=true`、`read_only=true`，所有
+      sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；不得自动审批或自动发送
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1487
+    row_sha256: f69037fc8654abe1abe293c5b5750b820205b172f76711f3f50f318841f1f5a2
+    cell_count: 8
+    all_cells:
+    - TRADING-033A
+    - 交易执行/Operator Brief Notification Approval Gate Real Artifact Observation
+    - P0
+    - BLOCKED_EXTERNAL
+    - 系统验证 + 项目 owner
+    - 承接 `TRADING-033` 的真实 `TRADING-032` artifact 和人工 approval marker 观察；阻塞于本机或运行环境产生可审计
+      `operator_brief_notification_dispatch_preview_YYYY-MM-DD.json/md`，并由 owner 提供或确认本地
+      manual approval marker；详细拆解见 `docs/requirements/operator_brief_notification_approval_gate_real_artifact_observation_2026-06-09.md`
+    - 至少一个真实 `TRADING-032` artifact 日期完成 approval gate 观察，记录 `approval_gate_status`、`allowed_to_enter_dispatch`、preview
+      hash、marker exists/approved/hash_matches/expired、reasons/warnings 和 dashboard
+      只读卡片结果；无 marker 必须 `APPROVAL_REQUIRED`，有效 marker 才能 `APPROVED`，过期/不匹配/缺 preview/safety
+      blocked 必须 fail closed；输出固定 `production_effect=none`、`manual_review_only=true`、`approval_gate_only=true`、`read_only=true`，所有
+      sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；不得自动审批或自动发送
+    - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-033 工程基线、临时 fixture APPROVED
+      / APPROVAL_REQUIRED / BLOCKED smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-032
+      dispatch preview artifacts 和真实人工 approval marker，不能把真实 artifact approval gate
+      观察并入 baseline 完成。'
+    raw_line: '|TRADING-033A|交易执行/Operator Brief Notification Approval Gate Real Artifact
+      Observation|P0|BLOCKED_EXTERNAL|系统验证 + 项目 owner|承接 `TRADING-033` 的真实 `TRADING-032`
+      artifact 和人工 approval marker 观察；阻塞于本机或运行环境产生可审计 `operator_brief_notification_dispatch_preview_YYYY-MM-DD.json/md`，并由
+      owner 提供或确认本地 manual approval marker；详细拆解见 `docs/requirements/operator_brief_notification_approval_gate_real_artifact_observation_2026-06-09.md`|至少一个真实
+      `TRADING-032` artifact 日期完成 approval gate 观察，记录 `approval_gate_status`、`allowed_to_enter_dispatch`、preview
+      hash、marker exists/approved/hash_matches/expired、reasons/warnings 和 dashboard
+      只读卡片结果；无 marker 必须 `APPROVAL_REQUIRED`，有效 marker 才能 `APPROVED`，过期/不匹配/缺 preview/safety
+      blocked 必须 fail closed；输出固定 `production_effect=none`、`manual_review_only=true`、`approval_gate_only=true`、`read_only=true`，所有
+      sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；不得自动审批或自动发送|2026-06-09:
+      新增并进入 BLOCKED_EXTERNAL，原因：TRADING-033 工程基线、临时 fixture APPROVED / APPROVAL_REQUIRED
+      / BLOCKED smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-032 dispatch preview
+      artifacts 和真实人工 approval marker，不能把真实 artifact approval gate 观察并入 baseline 完成。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f69037fc8654abe1abe293c5
+  task_id: TRADING-033A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-033 工程基线、临时 fixture APPROVED
+      / APPROVAL_REQUIRED / BLOCKED smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-032
+      dispatch preview artifacts 和真实人工 approval marker，不能把真实 artifact approval gate
+      观察并入 baseline 完成。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f69037fc8654abe1abe293c5b5750b820205b172f76711f3f50f318841f1f5a2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-033A
+  - 交易执行/Operator Brief Notification Approval Gate Real Artifact Observation
+  - P0
+  - BLOCKED_EXTERNAL
+  - 系统验证 + 项目 owner
+  - 承接 `TRADING-033` 的真实 `TRADING-032` artifact 和人工 approval marker 观察；阻塞于本机或运行环境产生可审计
+    `operator_brief_notification_dispatch_preview_YYYY-MM-DD.json/md`，并由 owner 提供或确认本地
+    manual approval marker；详细拆解见 `docs/requirements/operator_brief_notification_approval_gate_real_artifact_observation_2026-06-09.md`
+  - 至少一个真实 `TRADING-032` artifact 日期完成 approval gate 观察，记录 `approval_gate_status`、`allowed_to_enter_dispatch`、preview
+    hash、marker exists/approved/hash_matches/expired、reasons/warnings 和 dashboard
+    只读卡片结果；无 marker 必须 `APPROVAL_REQUIRED`，有效 marker 才能 `APPROVED`，过期/不匹配/缺 preview/safety
+    blocked 必须 fail closed；输出固定 `production_effect=none`、`manual_review_only=true`、`approval_gate_only=true`、`read_only=true`，所有
+    sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；不得自动审批或自动发送
+  - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-033 工程基线、临时 fixture APPROVED /
+    APPROVAL_REQUIRED / BLOCKED smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-032
+    dispatch preview artifacts 和真实人工 approval marker，不能把真实 artifact approval gate
+    观察并入 baseline 完成。'
+  docs_links:
+  - docs/requirements/operator_brief_notification_approval_gate_real_artifact_observation_2026-06-09.md
+  terminal: false
+  raw_row_sha256: f69037fc8654abe1abe293c5b5750b820205b172f76711f3f50f318841f1f5a2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f42647cea62932579ed5209ae02633763f45f2fd98b8958148050823a64eb287

@@ -1,0 +1,130 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1256_to_1285_ACTUAL_PATH_OWNER_REVIEW_AND_POLICY_SENSITIVITY
+  title: null
+  domain: Research strategies / execution semantics actual-path owner review and policy
+    sensitivity
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 + 系统后续验证
+  requirement_refs:
+  - docs/requirements/TRADING-1256_to_1285_Actual_Path_Owner_Review_And_Policy_Sensitivity.md
+  - docs/research/dynamic_actual_path_owner_review_decision.md
+  - docs/research/dynamic_actual_path_policy_sensitivity_review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1256_to_1285_Actual_Path_Owner_Review_And_Policy_Sensitivity.md`；实现已完成，下一步为
+    owner 复核 `WATCH_ONLY` 建议、确认 staged policy sensitivity 是否足够、决定是否需要调整 signal validity
+    window / rebalance window / 策略定义；本批不得恢复 dynamic promotion
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `docs/research/dynamic_actual_path_owner_review_decision.md`、`inputs/research_reviews/dynamic_actual_path_owner_review_decision.yaml`、`outputs/research_strategies/policy_sensitivity/*`、`docs/research/dynamic_actual_path_policy_sensitivity_review.md`、`inputs/research_reviews/dynamic_actual_path_policy_sensitivity_matrix.yaml`；owner
+      decision 保留人工决策字段；policy sensitivity ranking 只使用 actual-path metrics；target-path
+      diagnostic-only；dynamic promotion 继续 blocked；report registry、artifact catalog、system
+      flow、focused tests、Ruff、compileall、parallel pytest 和 `git diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1275
+    row_sha256: b4216f8569643c77d9f77a4c5a99b5c0f6ec7de056bd2357909f99fea17b7558
+    cell_count: 8
+    all_cells:
+    - TRADING-1256_to_1285_ACTUAL_PATH_OWNER_REVIEW_AND_POLICY_SENSITIVITY
+    - Research strategies / execution semantics actual-path owner review and policy
+      sensitivity
+    - P0
+    - VALIDATING
+    - 项目 owner 后续复核 + 系统后续验证
+    - 详见 `docs/requirements/TRADING-1256_to_1285_Actual_Path_Owner_Review_And_Policy_Sensitivity.md`；实现已完成，下一步为
+      owner 复核 `WATCH_ONLY` 建议、确认 staged policy sensitivity 是否足够、决定是否需要调整 signal validity
+      window / rebalance window / 策略定义；本批不得恢复 dynamic promotion
+    - 新增 `docs/research/dynamic_actual_path_owner_review_decision.md`、`inputs/research_reviews/dynamic_actual_path_owner_review_decision.yaml`、`outputs/research_strategies/policy_sensitivity/*`、`docs/research/dynamic_actual_path_policy_sensitivity_review.md`、`inputs/research_reviews/dynamic_actual_path_policy_sensitivity_matrix.yaml`；owner
+      decision 保留人工决策字段；policy sensitivity ranking 只使用 actual-path metrics；target-path
+      diagnostic-only；dynamic promotion 继续 blocked；report registry、artifact catalog、system
+      flow、focused tests、Ruff、compileall、parallel pytest 和 `git diff --check` 通过
+    - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求对 actual-path surviving candidates
+      做正式 owner review 与 execution policy sensitivity，不进入 paper-shadow/production/broker。2026-06-27:
+      实现完成并转入 VALIDATING；两个 surviving dynamic candidates owner recommendation 均为 `WATCH_ONLY`，policy
+      sensitivity classification 均为 `POLICY_SENSITIVE_BUT_WATCHABLE`，best surviving
+      candidate 为 `limited_adjustment`，remaining blockers 为 short-validity/staleness
+      sensitivity 与 static baseline underperformance；dynamic promotion 继续 `BLOCKED`。'
+    raw_line: '|TRADING-1256_to_1285_ACTUAL_PATH_OWNER_REVIEW_AND_POLICY_SENSITIVITY|Research
+      strategies / execution semantics actual-path owner review and policy sensitivity|P0|VALIDATING|项目
+      owner 后续复核 + 系统后续验证|详见 `docs/requirements/TRADING-1256_to_1285_Actual_Path_Owner_Review_And_Policy_Sensitivity.md`；实现已完成，下一步为
+      owner 复核 `WATCH_ONLY` 建议、确认 staged policy sensitivity 是否足够、决定是否需要调整 signal validity
+      window / rebalance window / 策略定义；本批不得恢复 dynamic promotion|新增 `docs/research/dynamic_actual_path_owner_review_decision.md`、`inputs/research_reviews/dynamic_actual_path_owner_review_decision.yaml`、`outputs/research_strategies/policy_sensitivity/*`、`docs/research/dynamic_actual_path_policy_sensitivity_review.md`、`inputs/research_reviews/dynamic_actual_path_policy_sensitivity_matrix.yaml`；owner
+      decision 保留人工决策字段；policy sensitivity ranking 只使用 actual-path metrics；target-path
+      diagnostic-only；dynamic promotion 继续 blocked；report registry、artifact catalog、system
+      flow、focused tests、Ruff、compileall、parallel pytest 和 `git diff --check` 通过|2026-06-27:
+      新增并进入 IN_PROGRESS，原因：owner 附件要求对 actual-path surviving candidates 做正式 owner
+      review 与 execution policy sensitivity，不进入 paper-shadow/production/broker。2026-06-27:
+      实现完成并转入 VALIDATING；两个 surviving dynamic candidates owner recommendation 均为 `WATCH_ONLY`，policy
+      sensitivity classification 均为 `POLICY_SENSITIVE_BUT_WATCHABLE`，best surviving
+      candidate 为 `limited_adjustment`，remaining blockers 为 short-validity/staleness
+      sensitivity 与 static baseline underperformance；dynamic promotion 继续 `BLOCKED`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b4216f8569643c77d9f77a4c
+  task_id: TRADING-1256_to_1285_ACTUAL_PATH_OWNER_REVIEW_AND_POLICY_SENSITIVITY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 + 系统后续验证
+    notes: '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求对 actual-path surviving candidates
+      做正式 owner review 与 execution policy sensitivity，不进入 paper-shadow/production/broker。2026-06-27:
+      实现完成并转入 VALIDATING；两个 surviving dynamic candidates owner recommendation 均为 `WATCH_ONLY`，policy
+      sensitivity classification 均为 `POLICY_SENSITIVE_BUT_WATCHABLE`，best surviving
+      candidate 为 `limited_adjustment`，remaining blockers 为 short-validity/staleness
+      sensitivity 与 static baseline underperformance；dynamic promotion 继续 `BLOCKED`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b4216f8569643c77d9f77a4c5a99b5c0f6ec7de056bd2357909f99fea17b7558
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1256_to_1285_ACTUAL_PATH_OWNER_REVIEW_AND_POLICY_SENSITIVITY
+  - Research strategies / execution semantics actual-path owner review and policy
+    sensitivity
+  - P0
+  - VALIDATING
+  - 项目 owner 后续复核 + 系统后续验证
+  - 详见 `docs/requirements/TRADING-1256_to_1285_Actual_Path_Owner_Review_And_Policy_Sensitivity.md`；实现已完成，下一步为
+    owner 复核 `WATCH_ONLY` 建议、确认 staged policy sensitivity 是否足够、决定是否需要调整 signal validity
+    window / rebalance window / 策略定义；本批不得恢复 dynamic promotion
+  - 新增 `docs/research/dynamic_actual_path_owner_review_decision.md`、`inputs/research_reviews/dynamic_actual_path_owner_review_decision.yaml`、`outputs/research_strategies/policy_sensitivity/*`、`docs/research/dynamic_actual_path_policy_sensitivity_review.md`、`inputs/research_reviews/dynamic_actual_path_policy_sensitivity_matrix.yaml`；owner
+    decision 保留人工决策字段；policy sensitivity ranking 只使用 actual-path metrics；target-path
+    diagnostic-only；dynamic promotion 继续 blocked；report registry、artifact catalog、system
+    flow、focused tests、Ruff、compileall、parallel pytest 和 `git diff --check` 通过
+  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求对 actual-path surviving candidates
+    做正式 owner review 与 execution policy sensitivity，不进入 paper-shadow/production/broker。2026-06-27:
+    实现完成并转入 VALIDATING；两个 surviving dynamic candidates owner recommendation 均为 `WATCH_ONLY`，policy
+    sensitivity classification 均为 `POLICY_SENSITIVE_BUT_WATCHABLE`，best surviving
+    candidate 为 `limited_adjustment`，remaining blockers 为 short-validity/staleness
+    sensitivity 与 static baseline underperformance；dynamic promotion 继续 `BLOCKED`。'
+  docs_links:
+  - docs/requirements/TRADING-1256_to_1285_Actual_Path_Owner_Review_And_Policy_Sensitivity.md
+  - docs/research/dynamic_actual_path_owner_review_decision.md
+  - docs/research/dynamic_actual_path_policy_sensitivity_review.md
+  terminal: false
+  raw_row_sha256: b4216f8569643c77d9f77a4c5a99b5c0f6ec7de056bd2357909f99fea17b7558
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4f6f526fae5a1d8553d737cd70a9104aea07ae0e1d5a3423d7c4292a5dd67a62

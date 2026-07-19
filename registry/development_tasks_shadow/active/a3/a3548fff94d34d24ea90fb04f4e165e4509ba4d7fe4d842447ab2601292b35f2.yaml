@@ -1,0 +1,193 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-081
+  title: null
+  domain: ETF portfolio research/Weight Calibration Profiling and Hotspot Baseline
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-081_Weight_Calibration_Profiling_and_Hotspot_Baseline.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-081_Weight_Calibration_Profiling_and_Hotspot_Baseline.md`；production-like
+    cold detailed profiling 样本已完成，下一步 owner 复核 hotspot evidence；基于当前证据，TRADING-082
+    优先建议做 Shadow-Ready Candidate Review and Enrollment Playbook，除非 owner 要求更严格 cold-run
+    SLA 或函数级热点 cProfile
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`config/etf_portfolio/profiling_policy.yaml` 存在且 safety fields mandatory；`aits
+      etf weight-calibration diagnostics` 支持 `--profile off/summary/detailed/cprofile`、`--profile-output`
+      和 `--profile-top-n`；profiling report 输出 step timing、candidate hotspot、cache
+      timing、worker timing、optional cProfile top functions、vectorization audit、regime
+      mask assessment、optimization recommendations 和 safety banner；Reader Brief 只读
+      latest profiling report；`aits etf weight-calibration profiling-validate` fail
+      closed 校验 A-K workflow 和 safety boundary；normal runs 不强制 heavy cProfile；runtime
+      profiling artifacts 位于 ignored reports/data paths；不得做 broker action、production
+      weight mutation、automatic promotion、native rewrite、Numba rewrite 或 optimizer
+      rewrite；pytest、ruff、compileall、diff check、profiling validation gate 和 production-like
+      detailed profiling evidence 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1481
+    row_sha256: 364616761968c6b6fde868460012703f63c5ac14a02ed29800839a8ad7f387ad
+    cell_count: 8
+    all_cells:
+    - TRADING-081
+    - ETF portfolio research/Weight Calibration Profiling and Hotspot Baseline
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-081_Weight_Calibration_Profiling_and_Hotspot_Baseline.md`；production-like
+      cold detailed profiling 样本已完成，下一步 owner 复核 hotspot evidence；基于当前证据，TRADING-082
+      优先建议做 Shadow-Ready Candidate Review and Enrollment Playbook，除非 owner 要求更严格 cold-run
+      SLA 或函数级热点 cProfile
+    - '`config/etf_portfolio/profiling_policy.yaml` 存在且 safety fields mandatory；`aits
+      etf weight-calibration diagnostics` 支持 `--profile off/summary/detailed/cprofile`、`--profile-output`
+      和 `--profile-top-n`；profiling report 输出 step timing、candidate hotspot、cache
+      timing、worker timing、optional cProfile top functions、vectorization audit、regime
+      mask assessment、optimization recommendations 和 safety banner；Reader Brief 只读
+      latest profiling report；`aits etf weight-calibration profiling-validate` fail
+      closed 校验 A-K workflow 和 safety boundary；normal runs 不强制 heavy cProfile；runtime
+      profiling artifacts 位于 ignored reports/data paths；不得做 broker action、production
+      weight mutation、automatic promotion、native rewrite、Numba rewrite 或 optimizer
+      rewrite；pytest、ruff、compileall、diff check、profiling validation gate 和 production-like
+      detailed profiling evidence 通过'
+    - '2026-06-04: 新增并进入 IN_PROGRESS，原因：TRADING-080 post-fix production evidence 显示
+      cold run wall runtime 1378.734s、warm 2.570s、resume 2.610s，warm/resume cache
+      hit rate 已达 1.0；重复计算问题已解决，但 cold startup 仍处于 20-30 minute profiling trigger
+      zone。TRADING-081 只做 measurement-first profiling baseline，固定 observe_only/candidate_only/manual_review_required，不允许
+      broker action、production weight mutation、automatic candidate promotion 或 native
+      kernel rewrite。2026-06-04: TRADING-081A~K baseline 实现完成并转入 VALIDATING，原因：新增
+      profiling policy、diagnostics profile modes、step/candidate/cache/worker timing、optional
+      cProfile artifacts、vectorization audit、regime mask assessment、profiling report、Reader
+      Brief section、report registry entry 和 `profiling-validate` gate；相关测试 129 passed，ruff、compileall、diff
+      check 和 profiling validation gate 已通过。2026-06-04: production-like detailed cold
+      profiling 样本完成，`validate-data --as-of 2026-06-03` 为 `PASS_WITH_WARNINGS`，full
+      diagnostics detailed runtime 970.143s、`slowest_step=run_searches` 968.956s、24
+      个 preset/search 组合、240 个 candidate observations、39 个 shadow-ready candidates、`cache_miss_count=6464`、`cache_write_count=12926`；主要耗时为
+      per-candidate regime robustness / backtest computation，cache write 不是主瓶颈；vectorization
+      audit 建议 Python/NumPy/precompute/batching，不建议 native extension；由于 runtime 低于
+      1200s trigger 且 warm/resume cache 已解决重复计算，推荐先做 shadow-ready review playbook。'
+    raw_line: '|TRADING-081|ETF portfolio research/Weight Calibration Profiling and
+      Hotspot Baseline|P0|VALIDATING|项目 owner 人工复核|详细拆解见 `docs/requirements/TRADING-081_Weight_Calibration_Profiling_and_Hotspot_Baseline.md`；production-like
+      cold detailed profiling 样本已完成，下一步 owner 复核 hotspot evidence；基于当前证据，TRADING-082
+      优先建议做 Shadow-Ready Candidate Review and Enrollment Playbook，除非 owner 要求更严格 cold-run
+      SLA 或函数级热点 cProfile|`config/etf_portfolio/profiling_policy.yaml` 存在且 safety
+      fields mandatory；`aits etf weight-calibration diagnostics` 支持 `--profile off/summary/detailed/cprofile`、`--profile-output`
+      和 `--profile-top-n`；profiling report 输出 step timing、candidate hotspot、cache
+      timing、worker timing、optional cProfile top functions、vectorization audit、regime
+      mask assessment、optimization recommendations 和 safety banner；Reader Brief 只读
+      latest profiling report；`aits etf weight-calibration profiling-validate` fail
+      closed 校验 A-K workflow 和 safety boundary；normal runs 不强制 heavy cProfile；runtime
+      profiling artifacts 位于 ignored reports/data paths；不得做 broker action、production
+      weight mutation、automatic promotion、native rewrite、Numba rewrite 或 optimizer
+      rewrite；pytest、ruff、compileall、diff check、profiling validation gate 和 production-like
+      detailed profiling evidence 通过|2026-06-04: 新增并进入 IN_PROGRESS，原因：TRADING-080
+      post-fix production evidence 显示 cold run wall runtime 1378.734s、warm 2.570s、resume
+      2.610s，warm/resume cache hit rate 已达 1.0；重复计算问题已解决，但 cold startup 仍处于 20-30
+      minute profiling trigger zone。TRADING-081 只做 measurement-first profiling baseline，固定
+      observe_only/candidate_only/manual_review_required，不允许 broker action、production
+      weight mutation、automatic candidate promotion 或 native kernel rewrite。2026-06-04:
+      TRADING-081A~K baseline 实现完成并转入 VALIDATING，原因：新增 profiling policy、diagnostics
+      profile modes、step/candidate/cache/worker timing、optional cProfile artifacts、vectorization
+      audit、regime mask assessment、profiling report、Reader Brief section、report registry
+      entry 和 `profiling-validate` gate；相关测试 129 passed，ruff、compileall、diff check
+      和 profiling validation gate 已通过。2026-06-04: production-like detailed cold profiling
+      样本完成，`validate-data --as-of 2026-06-03` 为 `PASS_WITH_WARNINGS`，full diagnostics
+      detailed runtime 970.143s、`slowest_step=run_searches` 968.956s、24 个 preset/search
+      组合、240 个 candidate observations、39 个 shadow-ready candidates、`cache_miss_count=6464`、`cache_write_count=12926`；主要耗时为
+      per-candidate regime robustness / backtest computation，cache write 不是主瓶颈；vectorization
+      audit 建议 Python/NumPy/precompute/batching，不建议 native extension；由于 runtime 低于
+      1200s trigger 且 warm/resume cache 已解决重复计算，推荐先做 shadow-ready review playbook。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-364616761968c6b6fde86846
+  task_id: TRADING-081
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核
+    notes: '2026-06-04: 新增并进入 IN_PROGRESS，原因：TRADING-080 post-fix production evidence
+      显示 cold run wall runtime 1378.734s、warm 2.570s、resume 2.610s，warm/resume cache
+      hit rate 已达 1.0；重复计算问题已解决，但 cold startup 仍处于 20-30 minute profiling trigger
+      zone。TRADING-081 只做 measurement-first profiling baseline，固定 observe_only/candidate_only/manual_review_required，不允许
+      broker action、production weight mutation、automatic candidate promotion 或 native
+      kernel rewrite。2026-06-04: TRADING-081A~K baseline 实现完成并转入 VALIDATING，原因：新增
+      profiling policy、diagnostics profile modes、step/candidate/cache/worker timing、optional
+      cProfile artifacts、vectorization audit、regime mask assessment、profiling report、Reader
+      Brief section、report registry entry 和 `profiling-validate` gate；相关测试 129 passed，ruff、compileall、diff
+      check 和 profiling validation gate 已通过。2026-06-04: production-like detailed cold
+      profiling 样本完成，`validate-data --as-of 2026-06-03` 为 `PASS_WITH_WARNINGS`，full
+      diagnostics detailed runtime 970.143s、`slowest_step=run_searches` 968.956s、24
+      个 preset/search 组合、240 个 candidate observations、39 个 shadow-ready candidates、`cache_miss_count=6464`、`cache_write_count=12926`；主要耗时为
+      per-candidate regime robustness / backtest computation，cache write 不是主瓶颈；vectorization
+      audit 建议 Python/NumPy/precompute/batching，不建议 native extension；由于 runtime 低于
+      1200s trigger 且 warm/resume cache 已解决重复计算，推荐先做 shadow-ready review playbook。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:364616761968c6b6fde868460012703f63c5ac14a02ed29800839a8ad7f387ad
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-081
+  - ETF portfolio research/Weight Calibration Profiling and Hotspot Baseline
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-081_Weight_Calibration_Profiling_and_Hotspot_Baseline.md`；production-like
+    cold detailed profiling 样本已完成，下一步 owner 复核 hotspot evidence；基于当前证据，TRADING-082
+    优先建议做 Shadow-Ready Candidate Review and Enrollment Playbook，除非 owner 要求更严格 cold-run
+    SLA 或函数级热点 cProfile
+  - '`config/etf_portfolio/profiling_policy.yaml` 存在且 safety fields mandatory；`aits
+    etf weight-calibration diagnostics` 支持 `--profile off/summary/detailed/cprofile`、`--profile-output`
+    和 `--profile-top-n`；profiling report 输出 step timing、candidate hotspot、cache timing、worker
+    timing、optional cProfile top functions、vectorization audit、regime mask assessment、optimization
+    recommendations 和 safety banner；Reader Brief 只读 latest profiling report；`aits
+    etf weight-calibration profiling-validate` fail closed 校验 A-K workflow 和 safety
+    boundary；normal runs 不强制 heavy cProfile；runtime profiling artifacts 位于 ignored
+    reports/data paths；不得做 broker action、production weight mutation、automatic promotion、native
+    rewrite、Numba rewrite 或 optimizer rewrite；pytest、ruff、compileall、diff check、profiling
+    validation gate 和 production-like detailed profiling evidence 通过'
+  - '2026-06-04: 新增并进入 IN_PROGRESS，原因：TRADING-080 post-fix production evidence 显示
+    cold run wall runtime 1378.734s、warm 2.570s、resume 2.610s，warm/resume cache hit
+    rate 已达 1.0；重复计算问题已解决，但 cold startup 仍处于 20-30 minute profiling trigger zone。TRADING-081
+    只做 measurement-first profiling baseline，固定 observe_only/candidate_only/manual_review_required，不允许
+    broker action、production weight mutation、automatic candidate promotion 或 native
+    kernel rewrite。2026-06-04: TRADING-081A~K baseline 实现完成并转入 VALIDATING，原因：新增 profiling
+    policy、diagnostics profile modes、step/candidate/cache/worker timing、optional cProfile
+    artifacts、vectorization audit、regime mask assessment、profiling report、Reader Brief
+    section、report registry entry 和 `profiling-validate` gate；相关测试 129 passed，ruff、compileall、diff
+    check 和 profiling validation gate 已通过。2026-06-04: production-like detailed cold
+    profiling 样本完成，`validate-data --as-of 2026-06-03` 为 `PASS_WITH_WARNINGS`，full
+    diagnostics detailed runtime 970.143s、`slowest_step=run_searches` 968.956s、24
+    个 preset/search 组合、240 个 candidate observations、39 个 shadow-ready candidates、`cache_miss_count=6464`、`cache_write_count=12926`；主要耗时为
+    per-candidate regime robustness / backtest computation，cache write 不是主瓶颈；vectorization
+    audit 建议 Python/NumPy/precompute/batching，不建议 native extension；由于 runtime 低于 1200s
+    trigger 且 warm/resume cache 已解决重复计算，推荐先做 shadow-ready review playbook。'
+  docs_links:
+  - docs/requirements/TRADING-081_Weight_Calibration_Profiling_and_Hotspot_Baseline.md
+  terminal: false
+  raw_row_sha256: 364616761968c6b6fde868460012703f63c5ac14a02ed29800839a8ad7f387ad
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c32e6c53d7299408f0f0f6f34f1bbf50218c3ec30d3d40fd5c59871d55002ad7

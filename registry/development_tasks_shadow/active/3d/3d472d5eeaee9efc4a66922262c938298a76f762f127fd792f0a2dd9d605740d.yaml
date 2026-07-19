@@ -1,0 +1,158 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-800_to_804_VALUE_SURFACE_V2_COST_HORIZON_HOLDOUT
+  title: null
+  domain: Controlled strategy research / cost-turnover-aware regime-conditioned value
+    surface, long-horizon quarantine, regime attribution, walk-forward holdout, v2
+    review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-800_to_804_Value_Surface_V2_Cost_Horizon_Holdout.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-800_to_804_Value_Surface_V2_Cost_Horizon_Holdout.md`；owner
+    要求基于 TRADING-799 `WATCHLIST` 与 `turnover_cost_not_worse=false`，把主线升级为 cost-aware
+    + horizon-restricted + fallback-controlled value surface v2；不得继续无条件扩大原始 value
+    surface、直接上 GBDT/NN/RL、进入 paper-shadow、只按 mean_delta 接近 0 继续或忽略成本换手恶化
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI：`aits research strategies cost-turnover-aware-regime-conditioned-value-surface`、`long-horizon-quarantine-selection-review`、`ai-after-chatgpt-full-regime-attribution-review`、`regime-conditioned-walk-forward-holdout`
+      和 `value-surface-v2-controlled-review`；TRADING-800 必须比较 turnover penalty/action
+      hysteresis/no-trade band/benchmark fallback/max action-change cap 并输出收益、尾损、换手/成本、drawdown、flip/switch
+      指标；TRADING-801 必须输出 20d/60d disable-vs-downgrade comparison；TRADING-802 必须拆解
+      `ai_after_chatgpt_full` 的 asset/horizon/action/cluster 与 benchmark stability；TRADING-803
+      必须做 leave-one-regime/horizon/asset-cluster/date-window-out；TRADING-804 决策只能为
+      `CONTINUE_TO_LARGER_CONTROLLED_RESEARCH
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1349
+    row_sha256: fbd7a0475d7e9886d804a7766619579958344d7368cc88afd1e6fd87c3b5e1aa
+    cell_count: 13
+    all_cells:
+    - TRADING-800_to_804_VALUE_SURFACE_V2_COST_HORIZON_HOLDOUT
+    - Controlled strategy research / cost-turnover-aware regime-conditioned value
+      surface, long-horizon quarantine, regime attribution, walk-forward holdout,
+      v2 review
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-800_to_804_Value_Surface_V2_Cost_Horizon_Holdout.md`；owner
+      要求基于 TRADING-799 `WATCHLIST` 与 `turnover_cost_not_worse=false`，把主线升级为 cost-aware
+      + horizon-restricted + fallback-controlled value surface v2；不得继续无条件扩大原始 value
+      surface、直接上 GBDT/NN/RL、进入 paper-shadow、只按 mean_delta 接近 0 继续或忽略成本换手恶化
+    - 新增 CLI：`aits research strategies cost-turnover-aware-regime-conditioned-value-surface`、`long-horizon-quarantine-selection-review`、`ai-after-chatgpt-full-regime-attribution-review`、`regime-conditioned-walk-forward-holdout`
+      和 `value-surface-v2-controlled-review`；TRADING-800 必须比较 turnover penalty/action
+      hysteresis/no-trade band/benchmark fallback/max action-change cap 并输出收益、尾损、换手/成本、drawdown、flip/switch
+      指标；TRADING-801 必须输出 20d/60d disable-vs-downgrade comparison；TRADING-802 必须拆解
+      `ai_after_chatgpt_full` 的 asset/horizon/action/cluster 与 benchmark stability；TRADING-803
+      必须做 leave-one-regime/horizon/asset-cluster/date-window-out；TRADING-804 决策只能为
+      `CONTINUE_TO_LARGER_CONTROLLED_RESEARCH
+    - WATCHLIST
+    - PIVOT_TO_TAIL_RISK_POLICY
+    - PIVOT_TO_HORIZON_SELECTOR
+    - KILL_VALUE_SURFACE
+    - DATA_REQUIRED`；所有 safety flags false
+    - '2026-06-21: 新增并进入 IN_PROGRESS，原因：TRADING-795～799 已证明负期望可被 regime-conditioned/fallback
+      修复到接近 0，但 turnover/cost 明显恶化；下一步必须验证 v2 是否能在 mean_delta 改善、tail loss 下降、turnover/cost
+      不恶化、beat rate 不大幅下降时成立。2026-06-21: 实现完成并进入 VALIDATING；真实 CLI run 输出 TRADING-800
+      `COST_TURNOVER_AWARE_VARIANTS_REVIEWED`、case_count=2152、variant_count=6、best_variant_by_v2_score=`regime_conditioned_benchmark_fallback`、original
+      mean_delta_vs_benchmark=-0.02366、best mean_delta_vs_benchmark=-0.000033、tail_loss_reduced=true、beat_rate_retained=true、turnover_cost_not_worse=false、best
+      turnover_delta=1235、cost_delta=0.6175、action_flip_count=296、horizon_switch_count=2120；TRADING-801
+      `LONG_HORIZON_QUARANTINE_REVIEW_COMPLETE`、reviewed_horizon_count=2、best_comparison_variant=`regime_only_20d_60d`、best
+      mean_delta_vs_benchmark=-0.004552、tail_loss_reduction_best_variant=0.297009、horizon_selector_issue_likely=true；TRADING-802
+      `AI_REGIME_ATTRIBUTION_REVIEW_COMPLETE`、target_regime=`ai_after_chatgpt_full`、regime_case_count=1640、regime_losing_case_count=438、top_loss_asset=AMD、top_loss_horizon=60d、top_loss_action=`hold_cash`、benchmark_more_stable=true；TRADING-803
+      `REGIME_CONDITIONED_HOLDOUT_REVIEW_COMPLETE`、holdout_case_count=14、holdout_pass_count=0、holdout_pass_rate=0、overfit_risk=`HIGH`；TRADING-804
+      `VALUE_SURFACE_V2_CONTROLLED_REVIEW_COMPLETE`、value_surface_v2_decision=`PIVOT_TO_HORIZON_SELECTOR`、mean_delta_condition_met=false、tail_loss_condition_met=true、turnover_cost_condition_met=false、beat_rate_condition_met=true、holdout_condition_met=false；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、完整 controlled strategy pytest、docs/registry contract
+      pytest、Ruff、Black check、compileall、fast-unit、contract-validation 和 report-validation
+      均已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T130910Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T131402Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T131855Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-800_to_804_VALUE_SURFACE_V2_COST_HORIZON_HOLDOUT|Controlled
+      strategy research / cost-turnover-aware regime-conditioned value surface, long-horizon
+      quarantine, regime attribution, walk-forward holdout, v2 review|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-800_to_804_Value_Surface_V2_Cost_Horizon_Holdout.md`；owner
+      要求基于 TRADING-799 `WATCHLIST` 与 `turnover_cost_not_worse=false`，把主线升级为 cost-aware
+      + horizon-restricted + fallback-controlled value surface v2；不得继续无条件扩大原始 value
+      surface、直接上 GBDT/NN/RL、进入 paper-shadow、只按 mean_delta 接近 0 继续或忽略成本换手恶化|新增 CLI：`aits
+      research strategies cost-turnover-aware-regime-conditioned-value-surface`、`long-horizon-quarantine-selection-review`、`ai-after-chatgpt-full-regime-attribution-review`、`regime-conditioned-walk-forward-holdout`
+      和 `value-surface-v2-controlled-review`；TRADING-800 必须比较 turnover penalty/action
+      hysteresis/no-trade band/benchmark fallback/max action-change cap 并输出收益、尾损、换手/成本、drawdown、flip/switch
+      指标；TRADING-801 必须输出 20d/60d disable-vs-downgrade comparison；TRADING-802 必须拆解
+      `ai_after_chatgpt_full` 的 asset/horizon/action/cluster 与 benchmark stability；TRADING-803
+      必须做 leave-one-regime/horizon/asset-cluster/date-window-out；TRADING-804 决策只能为
+      `CONTINUE_TO_LARGER_CONTROLLED_RESEARCH|WATCHLIST|PIVOT_TO_TAIL_RISK_POLICY|PIVOT_TO_HORIZON_SELECTOR|KILL_VALUE_SURFACE|DATA_REQUIRED`；所有
+      safety flags false|2026-06-21: 新增并进入 IN_PROGRESS，原因：TRADING-795～799 已证明负期望可被
+      regime-conditioned/fallback 修复到接近 0，但 turnover/cost 明显恶化；下一步必须验证 v2 是否能在 mean_delta
+      改善、tail loss 下降、turnover/cost 不恶化、beat rate 不大幅下降时成立。2026-06-21: 实现完成并进入 VALIDATING；真实
+      CLI run 输出 TRADING-800 `COST_TURNOVER_AWARE_VARIANTS_REVIEWED`、case_count=2152、variant_count=6、best_variant_by_v2_score=`regime_conditioned_benchmark_fallback`、original
+      mean_delta_vs_benchmark=-0.02366、best mean_delta_vs_benchmark=-0.000033、tail_loss_reduced=true、beat_rate_retained=true、turnover_cost_not_worse=false、best
+      turnover_delta=1235、cost_delta=0.6175、action_flip_count=296、horizon_switch_count=2120；TRADING-801
+      `LONG_HORIZON_QUARANTINE_REVIEW_COMPLETE`、reviewed_horizon_count=2、best_comparison_variant=`regime_only_20d_60d`、best
+      mean_delta_vs_benchmark=-0.004552、tail_loss_reduction_best_variant=0.297009、horizon_selector_issue_likely=true；TRADING-802
+      `AI_REGIME_ATTRIBUTION_REVIEW_COMPLETE`、target_regime=`ai_after_chatgpt_full`、regime_case_count=1640、regime_losing_case_count=438、top_loss_asset=AMD、top_loss_horizon=60d、top_loss_action=`hold_cash`、benchmark_more_stable=true；TRADING-803
+      `REGIME_CONDITIONED_HOLDOUT_REVIEW_COMPLETE`、holdout_case_count=14、holdout_pass_count=0、holdout_pass_rate=0、overfit_risk=`HIGH`；TRADING-804
+      `VALUE_SURFACE_V2_CONTROLLED_REVIEW_COMPLETE`、value_surface_v2_decision=`PIVOT_TO_HORIZON_SELECTOR`、mean_delta_condition_met=false、tail_loss_condition_met=true、turnover_cost_condition_met=false、beat_rate_condition_met=true、holdout_condition_met=false；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、完整 controlled strategy pytest、docs/registry contract
+      pytest、Ruff、Black check、compileall、fast-unit、contract-validation 和 report-validation
+      均已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T130910Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T131402Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T131855Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fbd7a0475d7e9886d804a776
+  task_id: TRADING-800_to_804_VALUE_SURFACE_V2_COST_HORIZON_HOLDOUT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: WATCHLIST
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:fbd7a0475d7e9886d804a7766619579958344d7368cc88afd1e6fd87c3b5e1aa
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-800_to_804_VALUE_SURFACE_V2_COST_HORIZON_HOLDOUT
+  - Controlled strategy research / cost-turnover-aware regime-conditioned value surface,
+    long-horizon quarantine, regime attribution, walk-forward holdout, v2 review
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-800_to_804_Value_Surface_V2_Cost_Horizon_Holdout.md`；owner
+    要求基于 TRADING-799 `WATCHLIST` 与 `turnover_cost_not_worse=false`，把主线升级为 cost-aware
+    + horizon-restricted + fallback-controlled value surface v2；不得继续无条件扩大原始 value
+    surface、直接上 GBDT/NN/RL、进入 paper-shadow、只按 mean_delta 接近 0 继续或忽略成本换手恶化
+  - 新增 CLI：`aits research strategies cost-turnover-aware-regime-conditioned-value-surface`、`long-horizon-quarantine-selection-review`、`ai-after-chatgpt-full-regime-attribution-review`、`regime-conditioned-walk-forward-holdout`
+    和 `value-surface-v2-controlled-review`；TRADING-800 必须比较 turnover penalty/action
+    hysteresis/no-trade band/benchmark fallback/max action-change cap 并输出收益、尾损、换手/成本、drawdown、flip/switch
+    指标；TRADING-801 必须输出 20d/60d disable-vs-downgrade comparison；TRADING-802 必须拆解 `ai_after_chatgpt_full`
+    的 asset/horizon/action/cluster 与 benchmark stability；TRADING-803 必须做 leave-one-regime/horizon/asset-cluster/date-window-out；TRADING-804
+    决策只能为 `CONTINUE_TO_LARGER_CONTROLLED_RESEARCH
+  - WATCHLIST
+  docs_links:
+  - docs/requirements/TRADING-800_to_804_Value_Surface_V2_Cost_Horizon_Holdout.md
+  terminal: false
+  raw_row_sha256: fbd7a0475d7e9886d804a7766619579958344d7368cc88afd1e6fd87c3b5e1aa
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 588867861e5c5e6463c518993a07fdbfbe1507bade352bcd055a7db438648d78

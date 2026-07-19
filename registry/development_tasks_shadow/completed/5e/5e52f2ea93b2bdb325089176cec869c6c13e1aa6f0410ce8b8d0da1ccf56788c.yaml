@@ -1,0 +1,147 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-368_DATA_SOURCE_FALLBACK_POLICY
+  title: null
+  domain: Data governance / paper-shadow research data fallback policy
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-368_Data_Source_Fallback_Policy.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-368_Data_Source_Fallback_Policy.md`；定义
+    primary source unavailable 时的 fail-closed fallback behavior，状态限定为 `PRIMARY_OK`
+    / `FALLBACK_USED` / `FALLBACK_UNAVAILABLE` / `BLOCKED_NO_VALID_SOURCE`；不得静默替换
+    primary data，不得刷新数据、补造 cache、运行评分/回测、写 official target weights、触发 broker/order
+    或 production mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `config/data_source_fallback_policy.yaml`、`src/ai_trading_system/data_source_fallback_policy.py`、`aits
+      data fallback-policy run/report/validate`、JSON/Markdown/validation/Reader Brief
+      artifact、report registry、artifact catalog、README、system flow、operations runbook、requirements、task
+      register 和 focused tests；fallback used 必须在 JSON report 和 Reader Brief 明确显示 primary
+      source、fallback source、reason、provider、endpoint、request parameters、download
+      timestamp、row count、checksum、metadata status 和 safety boundary；data refresh
+      audit、PIT source manifest、evidence staleness monitor、shadow continuation readiness
+      均只读接入 fallback summary
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 235
+    row_sha256: 27a3615b922d4fb08b2fc169763cd772d085a910b9391d9092118a285057de8a
+    cell_count: 8
+    all_cells:
+    - TRADING-368_DATA_SOURCE_FALLBACK_POLICY
+    - Data governance / paper-shadow research data fallback policy
+    - P0
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-368_Data_Source_Fallback_Policy.md`；定义 primary
+      source unavailable 时的 fail-closed fallback behavior，状态限定为 `PRIMARY_OK` / `FALLBACK_USED`
+      / `FALLBACK_UNAVAILABLE` / `BLOCKED_NO_VALID_SOURCE`；不得静默替换 primary data，不得刷新数据、补造
+      cache、运行评分/回测、写 official target weights、触发 broker/order 或 production mutation
+    - 新增 `config/data_source_fallback_policy.yaml`、`src/ai_trading_system/data_source_fallback_policy.py`、`aits
+      data fallback-policy run/report/validate`、JSON/Markdown/validation/Reader Brief
+      artifact、report registry、artifact catalog、README、system flow、operations runbook、requirements、task
+      register 和 focused tests；fallback used 必须在 JSON report 和 Reader Brief 明确显示 primary
+      source、fallback source、reason、provider、endpoint、request parameters、download
+      timestamp、row count、checksum、metadata status 和 safety boundary；data refresh
+      audit、PIT source manifest、evidence staleness monitor、shadow continuation readiness
+      均只读接入 fallback summary
+    - '2026-06-16: DONE；真实 fallback policy artifact `data-source-fallback-policy_2026-06-16_55a3f5b7f6152f52`
+      生成成功，`status=PASS`、`fallback_status=PRIMARY_OK`、`source_group_count=2`、`fallback_used_count=0`、`blocking_source_count=0`，`validate
+      --latest` 为 PASS / errors=0 / warnings=0；focused pytest 19 passed，Ruff PASS，compileall
+      PASS，documentation contract PASS，report index `PASS_WITH_EXPLICIT_WAIVERS` /
+      unwaived=0，Reader Brief OK，Reader Brief quality OK，git diff check PASS（仅 task
+      register CRLF notice）；保持 read-only / no data refresh / no cache mutation / no
+      provider auto-switch / no official target / no broker / no production mutation。'
+    raw_line: '|TRADING-368_DATA_SOURCE_FALLBACK_POLICY|Data governance / paper-shadow
+      research data fallback policy|P0|DONE|项目 owner 后续复核；代码实现完成|详细拆解见 `docs/requirements/TRADING-368_Data_Source_Fallback_Policy.md`；定义
+      primary source unavailable 时的 fail-closed fallback behavior，状态限定为 `PRIMARY_OK`
+      / `FALLBACK_USED` / `FALLBACK_UNAVAILABLE` / `BLOCKED_NO_VALID_SOURCE`；不得静默替换
+      primary data，不得刷新数据、补造 cache、运行评分/回测、写 official target weights、触发 broker/order
+      或 production mutation|新增 `config/data_source_fallback_policy.yaml`、`src/ai_trading_system/data_source_fallback_policy.py`、`aits
+      data fallback-policy run/report/validate`、JSON/Markdown/validation/Reader Brief
+      artifact、report registry、artifact catalog、README、system flow、operations runbook、requirements、task
+      register 和 focused tests；fallback used 必须在 JSON report 和 Reader Brief 明确显示 primary
+      source、fallback source、reason、provider、endpoint、request parameters、download
+      timestamp、row count、checksum、metadata status 和 safety boundary；data refresh
+      audit、PIT source manifest、evidence staleness monitor、shadow continuation readiness
+      均只读接入 fallback summary|2026-06-16: DONE；真实 fallback policy artifact `data-source-fallback-policy_2026-06-16_55a3f5b7f6152f52`
+      生成成功，`status=PASS`、`fallback_status=PRIMARY_OK`、`source_group_count=2`、`fallback_used_count=0`、`blocking_source_count=0`，`validate
+      --latest` 为 PASS / errors=0 / warnings=0；focused pytest 19 passed，Ruff PASS，compileall
+      PASS，documentation contract PASS，report index `PASS_WITH_EXPLICIT_WAIVERS` /
+      unwaived=0，Reader Brief OK，Reader Brief quality OK，git diff check PASS（仅 task
+      register CRLF notice）；保持 read-only / no data refresh / no cache mutation / no
+      provider auto-switch / no official target / no broker / no production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-27a3615b922d4fb08b2fc169
+  task_id: TRADING-368_DATA_SOURCE_FALLBACK_POLICY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: '2026-06-16: DONE；真实 fallback policy artifact `data-source-fallback-policy_2026-06-16_55a3f5b7f6152f52`
+      生成成功，`status=PASS`、`fallback_status=PRIMARY_OK`、`source_group_count=2`、`fallback_used_count=0`、`blocking_source_count=0`，`validate
+      --latest` 为 PASS / errors=0 / warnings=0；focused pytest 19 passed，Ruff PASS，compileall
+      PASS，documentation contract PASS，report index `PASS_WITH_EXPLICIT_WAIVERS` /
+      unwaived=0，Reader Brief OK，Reader Brief quality OK，git diff check PASS（仅 task
+      register CRLF notice）；保持 read-only / no data refresh / no cache mutation / no
+      provider auto-switch / no official target / no broker / no production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:27a3615b922d4fb08b2fc169763cd772d085a910b9391d9092118a285057de8a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-368_DATA_SOURCE_FALLBACK_POLICY
+  - Data governance / paper-shadow research data fallback policy
+  - P0
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-368_Data_Source_Fallback_Policy.md`；定义 primary
+    source unavailable 时的 fail-closed fallback behavior，状态限定为 `PRIMARY_OK` / `FALLBACK_USED`
+    / `FALLBACK_UNAVAILABLE` / `BLOCKED_NO_VALID_SOURCE`；不得静默替换 primary data，不得刷新数据、补造
+    cache、运行评分/回测、写 official target weights、触发 broker/order 或 production mutation
+  - 新增 `config/data_source_fallback_policy.yaml`、`src/ai_trading_system/data_source_fallback_policy.py`、`aits
+    data fallback-policy run/report/validate`、JSON/Markdown/validation/Reader Brief
+    artifact、report registry、artifact catalog、README、system flow、operations runbook、requirements、task
+    register 和 focused tests；fallback used 必须在 JSON report 和 Reader Brief 明确显示 primary
+    source、fallback source、reason、provider、endpoint、request parameters、download timestamp、row
+    count、checksum、metadata status 和 safety boundary；data refresh audit、PIT source
+    manifest、evidence staleness monitor、shadow continuation readiness 均只读接入 fallback
+    summary
+  - '2026-06-16: DONE；真实 fallback policy artifact `data-source-fallback-policy_2026-06-16_55a3f5b7f6152f52`
+    生成成功，`status=PASS`、`fallback_status=PRIMARY_OK`、`source_group_count=2`、`fallback_used_count=0`、`blocking_source_count=0`，`validate
+    --latest` 为 PASS / errors=0 / warnings=0；focused pytest 19 passed，Ruff PASS，compileall
+    PASS，documentation contract PASS，report index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader
+    Brief OK，Reader Brief quality OK，git diff check PASS（仅 task register CRLF notice）；保持
+    read-only / no data refresh / no cache mutation / no provider auto-switch / no
+    official target / no broker / no production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-368_Data_Source_Fallback_Policy.md
+  terminal: true
+  raw_row_sha256: 27a3615b922d4fb08b2fc169763cd772d085a910b9391d9092118a285057de8a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8598bad731dee8fe6f2a49db19e576e311b539689d18727ced03a08d271d7a9a

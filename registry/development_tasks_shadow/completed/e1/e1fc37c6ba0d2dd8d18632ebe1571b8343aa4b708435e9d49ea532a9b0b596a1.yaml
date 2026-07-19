@@ -1,0 +1,173 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE
+  title: null
+  domain: Research governance / candidate rejection postmortem
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续在真实 rejection 后填写 postmortem；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-380_Candidate_Rejection_Postmortem_Template.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-380_Candidate_Rejection_Postmortem_Template.md`；建立
+    candidate rejection postmortem template 和可选 filled postmortem validation；本任务不拒绝任何候选、不修改
+    candidate/paper-shadow/production state、不补造 rejection、official target weights、order
+    ticket 或 broker action
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/candidate_rejection_postmortem.py`、`aits
+      reports candidate-rejection-postmortem-template`、`aits reports validate-candidate-rejection-postmortem-template`、required
+      schema sections、optional filled postmortem validation、JSON/Markdown report、validation
+      artifact、Reader Brief section、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；必需 sections 包括 candidate
+      summary、reason for rejection、failed evidence gates、failed stress scenarios、data
+      quality issues、safety boundary issues、whether idea can be revisited、lessons
+      learned；所有输出固定 `production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 215
+    row_sha256: cd7c86fba89493fa03bed84dc64a6b5395dd5c0d22e2cd9b158b99d629d78551
+    cell_count: 8
+    all_cells:
+    - TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE
+    - Research governance / candidate rejection postmortem
+    - P1
+    - DONE
+    - 项目 owner 后续在真实 rejection 后填写 postmortem；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-380_Candidate_Rejection_Postmortem_Template.md`；建立
+      candidate rejection postmortem template 和可选 filled postmortem validation；本任务不拒绝任何候选、不修改
+      candidate/paper-shadow/production state、不补造 rejection、official target weights、order
+      ticket 或 broker action
+    - 新增 `src/ai_trading_system/reports/candidate_rejection_postmortem.py`、`aits reports
+      candidate-rejection-postmortem-template`、`aits reports validate-candidate-rejection-postmortem-template`、required
+      schema sections、optional filled postmortem validation、JSON/Markdown report、validation
+      artifact、Reader Brief section、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；必需 sections 包括 candidate
+      summary、reason for rejection、failed evidence gates、failed stress scenarios、data
+      quality issues、safety boundary issues、whether idea can be revisited、lessons
+      learned；所有输出固定 `production_effect=none`
+    - '2026-06-16: DONE；真实 2026-06-16 template `outputs/reports/candidate_rejection_postmortem_template_2026-06-16.json/md`
+      输出 `TEMPLATE_READY`、candidate=`median_plus_regime_mismatch_filter`、required
+      sections=8、postmortem_record_provided=false、filled status=`NO_POSTMORTEM_RECORD_PROVIDED`、promotion
+      board status=`HOLD_FOR_MORE_DATA`、owner decision=`AUDIT_LOG_EMPTY`、safety=`SAFETY_PASS_WITH_WARNINGS`；未补造
+      rejection record。Validation `outputs/reports/candidate_rejection_postmortem_template_validation_2026-06-16.json/md`
+      输出 `PASS`、checks=7、failed=0；report index `PASS_WITH_EXPLICIT_WAIVERS` / reports=400
+      / missing=20 / stale=10 / waived=30 / unwaived=0；documentation contract PASS；Reader
+      Brief latest 使用 2026-06-15 decision snapshot + 2026-06-16 report index 展示 postmortem
+      section，Reader Brief quality OK / failed=0；focused pytest 36 passed，Ruff PASS，compileall
+      PASS。精确 2026-06-16 Reader Brief generation remains limited by missing local
+      `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`; no snapshot
+      was fabricated. 保持 read-only / no upstream rerun / no data refresh / no filled
+      postmortem fabrication / no candidate, paper-shadow or production mutation /
+      no official target / no broker / no order ticket。'
+    raw_line: '|TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE|Research governance
+      / candidate rejection postmortem|P1|DONE|项目 owner 后续在真实 rejection 后填写 postmortem；代码实现完成|详细拆解见
+      `docs/requirements/TRADING-380_Candidate_Rejection_Postmortem_Template.md`；建立
+      candidate rejection postmortem template 和可选 filled postmortem validation；本任务不拒绝任何候选、不修改
+      candidate/paper-shadow/production state、不补造 rejection、official target weights、order
+      ticket 或 broker action|新增 `src/ai_trading_system/reports/candidate_rejection_postmortem.py`、`aits
+      reports candidate-rejection-postmortem-template`、`aits reports validate-candidate-rejection-postmortem-template`、required
+      schema sections、optional filled postmortem validation、JSON/Markdown report、validation
+      artifact、Reader Brief section、report registry、artifact catalog、README、system
+      flow、operations runbook、requirements 和 focused tests；必需 sections 包括 candidate
+      summary、reason for rejection、failed evidence gates、failed stress scenarios、data
+      quality issues、safety boundary issues、whether idea can be revisited、lessons
+      learned；所有输出固定 `production_effect=none`|2026-06-16: DONE；真实 2026-06-16 template
+      `outputs/reports/candidate_rejection_postmortem_template_2026-06-16.json/md`
+      输出 `TEMPLATE_READY`、candidate=`median_plus_regime_mismatch_filter`、required
+      sections=8、postmortem_record_provided=false、filled status=`NO_POSTMORTEM_RECORD_PROVIDED`、promotion
+      board status=`HOLD_FOR_MORE_DATA`、owner decision=`AUDIT_LOG_EMPTY`、safety=`SAFETY_PASS_WITH_WARNINGS`；未补造
+      rejection record。Validation `outputs/reports/candidate_rejection_postmortem_template_validation_2026-06-16.json/md`
+      输出 `PASS`、checks=7、failed=0；report index `PASS_WITH_EXPLICIT_WAIVERS` / reports=400
+      / missing=20 / stale=10 / waived=30 / unwaived=0；documentation contract PASS；Reader
+      Brief latest 使用 2026-06-15 decision snapshot + 2026-06-16 report index 展示 postmortem
+      section，Reader Brief quality OK / failed=0；focused pytest 36 passed，Ruff PASS，compileall
+      PASS。精确 2026-06-16 Reader Brief generation remains limited by missing local
+      `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`; no snapshot
+      was fabricated. 保持 read-only / no upstream rerun / no data refresh / no filled
+      postmortem fabrication / no candidate, paper-shadow or production mutation /
+      no official target / no broker / no order ticket。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-cd7c86fba89493fa03bed84d
+  task_id: TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续在真实 rejection 后填写 postmortem；代码实现完成
+    notes: '2026-06-16: DONE；真实 2026-06-16 template `outputs/reports/candidate_rejection_postmortem_template_2026-06-16.json/md`
+      输出 `TEMPLATE_READY`、candidate=`median_plus_regime_mismatch_filter`、required
+      sections=8、postmortem_record_provided=false、filled status=`NO_POSTMORTEM_RECORD_PROVIDED`、promotion
+      board status=`HOLD_FOR_MORE_DATA`、owner decision=`AUDIT_LOG_EMPTY`、safety=`SAFETY_PASS_WITH_WARNINGS`；未补造
+      rejection record。Validation `outputs/reports/candidate_rejection_postmortem_template_validation_2026-06-16.json/md`
+      输出 `PASS`、checks=7、failed=0；report index `PASS_WITH_EXPLICIT_WAIVERS` / reports=400
+      / missing=20 / stale=10 / waived=30 / unwaived=0；documentation contract PASS；Reader
+      Brief latest 使用 2026-06-15 decision snapshot + 2026-06-16 report index 展示 postmortem
+      section，Reader Brief quality OK / failed=0；focused pytest 36 passed，Ruff PASS，compileall
+      PASS。精确 2026-06-16 Reader Brief generation remains limited by missing local
+      `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`; no snapshot
+      was fabricated. 保持 read-only / no upstream rerun / no data refresh / no filled
+      postmortem fabrication / no candidate, paper-shadow or production mutation /
+      no official target / no broker / no order ticket。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:cd7c86fba89493fa03bed84dc64a6b5395dd5c0d22e2cd9b158b99d629d78551
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE
+  - Research governance / candidate rejection postmortem
+  - P1
+  - DONE
+  - 项目 owner 后续在真实 rejection 后填写 postmortem；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-380_Candidate_Rejection_Postmortem_Template.md`；建立
+    candidate rejection postmortem template 和可选 filled postmortem validation；本任务不拒绝任何候选、不修改
+    candidate/paper-shadow/production state、不补造 rejection、official target weights、order
+    ticket 或 broker action
+  - 新增 `src/ai_trading_system/reports/candidate_rejection_postmortem.py`、`aits reports
+    candidate-rejection-postmortem-template`、`aits reports validate-candidate-rejection-postmortem-template`、required
+    schema sections、optional filled postmortem validation、JSON/Markdown report、validation
+    artifact、Reader Brief section、report registry、artifact catalog、README、system flow、operations
+    runbook、requirements 和 focused tests；必需 sections 包括 candidate summary、reason for
+    rejection、failed evidence gates、failed stress scenarios、data quality issues、safety
+    boundary issues、whether idea can be revisited、lessons learned；所有输出固定 `production_effect=none`
+  - '2026-06-16: DONE；真实 2026-06-16 template `outputs/reports/candidate_rejection_postmortem_template_2026-06-16.json/md`
+    输出 `TEMPLATE_READY`、candidate=`median_plus_regime_mismatch_filter`、required sections=8、postmortem_record_provided=false、filled
+    status=`NO_POSTMORTEM_RECORD_PROVIDED`、promotion board status=`HOLD_FOR_MORE_DATA`、owner
+    decision=`AUDIT_LOG_EMPTY`、safety=`SAFETY_PASS_WITH_WARNINGS`；未补造 rejection record。Validation
+    `outputs/reports/candidate_rejection_postmortem_template_validation_2026-06-16.json/md`
+    输出 `PASS`、checks=7、failed=0；report index `PASS_WITH_EXPLICIT_WAIVERS` / reports=400
+    / missing=20 / stale=10 / waived=30 / unwaived=0；documentation contract PASS；Reader
+    Brief latest 使用 2026-06-15 decision snapshot + 2026-06-16 report index 展示 postmortem
+    section，Reader Brief quality OK / failed=0；focused pytest 36 passed，Ruff PASS，compileall
+    PASS。精确 2026-06-16 Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+    no snapshot was fabricated. 保持 read-only / no upstream rerun / no data refresh
+    / no filled postmortem fabrication / no candidate, paper-shadow or production
+    mutation / no official target / no broker / no order ticket。'
+  docs_links:
+  - docs/requirements/TRADING-380_Candidate_Rejection_Postmortem_Template.md
+  terminal: true
+  raw_row_sha256: cd7c86fba89493fa03bed84dc64a6b5395dd5c0d22e2cd9b158b99d629d78551
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 10b211f4f6193fbe3b82904bfa10d3e97165b55ee1c6448412a8496ce5536afa

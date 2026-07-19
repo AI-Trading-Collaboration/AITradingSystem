@@ -1,0 +1,122 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-058A
+  title: null
+  domain: 回测输入/Tracking Window Accumulation & Scheduled Review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/portfolio_tracking_window_accumulation_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/portfolio_tracking_window_accumulation_2026-05-30.md`；tracking
+    window 阶段、剩余天数、每日 review 可见性、Dashboard/Reader Brief 展示、shadow backtest 最小窗口解释和
+    scheduled review 登记已完成；extended review 仍作为后续观察窗口，不阻塞本 visibility 机制归档
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`config/portfolio/portfolio_tracking_review_windows.yaml` 定义窗口；`portfolio
+      tracking-window-status --latest` 和 tracking review summary/report 输出 `tracking_window.stage`、`days_until_short_review`、`days_until_extended_review`
+      与 `done_condition_met`；`tracking_days<5` fail closed；不修改 production config、不伪造
+      tracking days、不自动 promotion'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 258
+    row_sha256: f6ece101f3eade2b566bbc2d094e8b182f5e4fa86bcb853449b0a3279154d5de
+    cell_count: 8
+    all_cells:
+    - TRADING-058A
+    - 回测输入/Tracking Window Accumulation & Scheduled Review
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/portfolio_tracking_window_accumulation_2026-05-30.md`；tracking
+      window 阶段、剩余天数、每日 review 可见性、Dashboard/Reader Brief 展示、shadow backtest 最小窗口解释和
+      scheduled review 登记已完成；extended review 仍作为后续观察窗口，不阻塞本 visibility 机制归档
+    - '`config/portfolio/portfolio_tracking_review_windows.yaml` 定义窗口；`portfolio tracking-window-status
+      --latest` 和 tracking review summary/report 输出 `tracking_window.stage`、`days_until_short_review`、`days_until_extended_review`
+      与 `done_condition_met`；`tracking_days<5` fail closed；不修改 production config、不伪造
+      tracking days、不自动 promotion'
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-058 latest 真实状态为 1 个 tracking day，需要系统化解释最小
+      review window。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：窗口 policy、CLI、报告和 dashboard
+      接入完成。2026-06-09：从 VALIDATING 改为 DONE，原因：latest `portfolio_tracking_reviews/2026-06-08`
+      已推进到 `short_window_review`，`days_until_short_review=0`、`days_until_extended_review=13`、`done_condition_met=true`；验证通过
+      portfolio candidate/review/tracking focused pytest 52 passed、相关 CLI/report smoke、shadow
+      backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'
+    raw_line: '|TRADING-058A|回测输入/Tracking Window Accumulation & Scheduled Review|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/portfolio_tracking_window_accumulation_2026-05-30.md`；tracking
+      window 阶段、剩余天数、每日 review 可见性、Dashboard/Reader Brief 展示、shadow backtest 最小窗口解释和
+      scheduled review 登记已完成；extended review 仍作为后续观察窗口，不阻塞本 visibility 机制归档|`config/portfolio/portfolio_tracking_review_windows.yaml`
+      定义窗口；`portfolio tracking-window-status --latest` 和 tracking review summary/report
+      输出 `tracking_window.stage`、`days_until_short_review`、`days_until_extended_review`
+      与 `done_condition_met`；`tracking_days<5` fail closed；不修改 production config、不伪造
+      tracking days、不自动 promotion|2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-058 latest
+      真实状态为 1 个 tracking day，需要系统化解释最小 review window。2026-05-30: 从 IN_PROGRESS 改为
+      VALIDATING，原因：窗口 policy、CLI、报告和 dashboard 接入完成。2026-06-09：从 VALIDATING 改为 DONE，原因：latest
+      `portfolio_tracking_reviews/2026-06-08` 已推进到 `short_window_review`，`days_until_short_review=0`、`days_until_extended_review=13`、`done_condition_met=true`；验证通过
+      portfolio candidate/review/tracking focused pytest 52 passed、相关 CLI/report smoke、shadow
+      backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f6ece101f3eade2b566bbc2d
+  task_id: TRADING-058A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-058 latest 真实状态为 1 个 tracking
+      day，需要系统化解释最小 review window。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：窗口 policy、CLI、报告和
+      dashboard 接入完成。2026-06-09：从 VALIDATING 改为 DONE，原因：latest `portfolio_tracking_reviews/2026-06-08`
+      已推进到 `short_window_review`，`days_until_short_review=0`、`days_until_extended_review=13`、`done_condition_met=true`；验证通过
+      portfolio candidate/review/tracking focused pytest 52 passed、相关 CLI/report smoke、shadow
+      backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f6ece101f3eade2b566bbc2d094e8b182f5e4fa86bcb853449b0a3279154d5de
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-058A
+  - 回测输入/Tracking Window Accumulation & Scheduled Review
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/portfolio_tracking_window_accumulation_2026-05-30.md`；tracking
+    window 阶段、剩余天数、每日 review 可见性、Dashboard/Reader Brief 展示、shadow backtest 最小窗口解释和
+    scheduled review 登记已完成；extended review 仍作为后续观察窗口，不阻塞本 visibility 机制归档
+  - '`config/portfolio/portfolio_tracking_review_windows.yaml` 定义窗口；`portfolio tracking-window-status
+    --latest` 和 tracking review summary/report 输出 `tracking_window.stage`、`days_until_short_review`、`days_until_extended_review`
+    与 `done_condition_met`；`tracking_days<5` fail closed；不修改 production config、不伪造
+    tracking days、不自动 promotion'
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-058 latest 真实状态为 1 个 tracking day，需要系统化解释最小
+    review window。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：窗口 policy、CLI、报告和 dashboard
+    接入完成。2026-06-09：从 VALIDATING 改为 DONE，原因：latest `portfolio_tracking_reviews/2026-06-08`
+    已推进到 `short_window_review`，`days_until_short_review=0`、`days_until_extended_review=13`、`done_condition_met=true`；验证通过
+    portfolio candidate/review/tracking focused pytest 52 passed、相关 CLI/report smoke、shadow
+    backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/portfolio_tracking_window_accumulation_2026-05-30.md
+  terminal: true
+  raw_row_sha256: f6ece101f3eade2b566bbc2d094e8b182f5e4fa86bcb853449b0a3279154d5de
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e18515a5c7de07725ea4712e5b03c2f10d7ad8b3ef72ccb2ad8d1562123c29ea

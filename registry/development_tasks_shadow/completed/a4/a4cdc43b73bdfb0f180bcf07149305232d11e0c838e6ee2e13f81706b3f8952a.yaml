@@ -1,0 +1,158 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-061
+  title: null
+  domain: 回测输入/Weight Search Stability Constraints
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/weight_search_stability_constraints_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/weight_search_stability_constraints_2026-05-31.md`；stable
+    weight tuning profile、候选稳定性约束、turnover-aware prefilter、cost drag objective penalty、报告/Dashboard/Reader
+    Brief/shadow backtest 只读引用已完成；fallback fixed values 已对齐 production baseline，避免固定
+    neutral fallback 时人为远离 baseline
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits signals build-snapshot --latest` 生成 2026-06-08 snapshot；`aits parameters
+      diagnose-weight-stability-inputs --latest` 为 `LIMITED_READY`、`can_run=true`、`blocking_checks=none`；`aits
+      parameters tune-weights-stable --latest` 生成 2026-06-08 artifact，`candidates_backtested=166`、`candidates_passed_guardrails=17`、recommended
+      candidate `watch`、`stability_status=PASS`、`turnover_prefilter_status=PASS`；`validate-weight-stability
+      --latest`、`validate-weight-stability-readiness --latest`、report aliases、Dashboard/Reader
+      Brief/shadow dry-run 可读；不修改 `config/parameters/production/current.yaml`，不降低
+      turnover guardrail，不修改 cost model，不放开 fallback signals，不自动 promotion'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 254
+    row_sha256: d5393fcea2eb136c994e5f035e732e05b2db303f90c0d5d9ec1ea5021bf9fb3c
+    cell_count: 8
+    all_cells:
+    - TRADING-061
+    - 回测输入/Weight Search Stability Constraints
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/weight_search_stability_constraints_2026-05-31.md`；stable
+      weight tuning profile、候选稳定性约束、turnover-aware prefilter、cost drag objective penalty、报告/Dashboard/Reader
+      Brief/shadow backtest 只读引用已完成；fallback fixed values 已对齐 production baseline，避免固定
+      neutral fallback 时人为远离 baseline
+    - '`aits signals build-snapshot --latest` 生成 2026-06-08 snapshot；`aits parameters
+      diagnose-weight-stability-inputs --latest` 为 `LIMITED_READY`、`can_run=true`、`blocking_checks=none`；`aits
+      parameters tune-weights-stable --latest` 生成 2026-06-08 artifact，`candidates_backtested=166`、`candidates_passed_guardrails=17`、recommended
+      candidate `watch`、`stability_status=PASS`、`turnover_prefilter_status=PASS`；`validate-weight-stability
+      --latest`、`validate-weight-stability-readiness --latest`、report aliases、Dashboard/Reader
+      Brief/shadow dry-run 可读；不修改 `config/parameters/production/current.yaml`，不降低
+      turnover guardrail，不修改 cost model，不放开 fallback signals，不自动 promotion'
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-061 规格；TRADING-060 已确认失败主因为
+      aggressive weight search，需要先用 baseline proximity、单 signal delta、trend/sector
+      cap 和 turnover prefilter 收敛搜索。2026-05-31: 从 IN_PROGRESS 改为 VALIDATING，原因：实现、文档和验证完成；2026-05-28
+      latest 因 upstream freshness / signal snapshot readiness 未满足停在 `INSUFFICIENT_DATA`。2026-06-09:
+      继续保持 VALIDATING，原因：2026-06-08 latest 仍因 `signal_snapshot_date_mismatch` 未进入
+      candidate backtest。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：恢复 2026-06-08
+      signal snapshot readiness 后发现 v0.2 固定 fallback 到 `0.05/0.05` 会使最接近 baseline
+      的候选 L1 至少为 0.30，搜索空间与 0.25 stability/prefilter 不可同时满足。2026-06-09: 从 IN_PROGRESS
+      改为 DONE，原因：固定 fallback 改为 production baseline `earnings_quality=0.15`、`event_risk=0.10`，真实
+      stable tuning 进入 candidate backtest 并产出 shadow-only `watch` candidate；production
+      promotion 仍因 signal quality LIMITED 和 manual review required 被禁用。'
+    raw_line: '|TRADING-061|回测输入/Weight Search Stability Constraints|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/weight_search_stability_constraints_2026-05-31.md`；stable
+      weight tuning profile、候选稳定性约束、turnover-aware prefilter、cost drag objective penalty、报告/Dashboard/Reader
+      Brief/shadow backtest 只读引用已完成；fallback fixed values 已对齐 production baseline，避免固定
+      neutral fallback 时人为远离 baseline|`aits signals build-snapshot --latest` 生成 2026-06-08
+      snapshot；`aits parameters diagnose-weight-stability-inputs --latest` 为 `LIMITED_READY`、`can_run=true`、`blocking_checks=none`；`aits
+      parameters tune-weights-stable --latest` 生成 2026-06-08 artifact，`candidates_backtested=166`、`candidates_passed_guardrails=17`、recommended
+      candidate `watch`、`stability_status=PASS`、`turnover_prefilter_status=PASS`；`validate-weight-stability
+      --latest`、`validate-weight-stability-readiness --latest`、report aliases、Dashboard/Reader
+      Brief/shadow dry-run 可读；不修改 `config/parameters/production/current.yaml`，不降低
+      turnover guardrail，不修改 cost model，不放开 fallback signals，不自动 promotion|2026-05-31:
+      新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-061 规格；TRADING-060 已确认失败主因为 aggressive
+      weight search，需要先用 baseline proximity、单 signal delta、trend/sector cap 和 turnover
+      prefilter 收敛搜索。2026-05-31: 从 IN_PROGRESS 改为 VALIDATING，原因：实现、文档和验证完成；2026-05-28
+      latest 因 upstream freshness / signal snapshot readiness 未满足停在 `INSUFFICIENT_DATA`。2026-06-09:
+      继续保持 VALIDATING，原因：2026-06-08 latest 仍因 `signal_snapshot_date_mismatch` 未进入
+      candidate backtest。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：恢复 2026-06-08
+      signal snapshot readiness 后发现 v0.2 固定 fallback 到 `0.05/0.05` 会使最接近 baseline
+      的候选 L1 至少为 0.30，搜索空间与 0.25 stability/prefilter 不可同时满足。2026-06-09: 从 IN_PROGRESS
+      改为 DONE，原因：固定 fallback 改为 production baseline `earnings_quality=0.15`、`event_risk=0.10`，真实
+      stable tuning 进入 candidate backtest 并产出 shadow-only `watch` candidate；production
+      promotion 仍因 signal quality LIMITED 和 manual review required 被禁用。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d5393fcea2eb136c994e5f03
+  task_id: TRADING-061
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-061 规格；TRADING-060 已确认失败主因为
+      aggressive weight search，需要先用 baseline proximity、单 signal delta、trend/sector
+      cap 和 turnover prefilter 收敛搜索。2026-05-31: 从 IN_PROGRESS 改为 VALIDATING，原因：实现、文档和验证完成；2026-05-28
+      latest 因 upstream freshness / signal snapshot readiness 未满足停在 `INSUFFICIENT_DATA`。2026-06-09:
+      继续保持 VALIDATING，原因：2026-06-08 latest 仍因 `signal_snapshot_date_mismatch` 未进入
+      candidate backtest。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：恢复 2026-06-08
+      signal snapshot readiness 后发现 v0.2 固定 fallback 到 `0.05/0.05` 会使最接近 baseline
+      的候选 L1 至少为 0.30，搜索空间与 0.25 stability/prefilter 不可同时满足。2026-06-09: 从 IN_PROGRESS
+      改为 DONE，原因：固定 fallback 改为 production baseline `earnings_quality=0.15`、`event_risk=0.10`，真实
+      stable tuning 进入 candidate backtest 并产出 shadow-only `watch` candidate；production
+      promotion 仍因 signal quality LIMITED 和 manual review required 被禁用。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d5393fcea2eb136c994e5f035e732e05b2db303f90c0d5d9ec1ea5021bf9fb3c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-061
+  - 回测输入/Weight Search Stability Constraints
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/weight_search_stability_constraints_2026-05-31.md`；stable
+    weight tuning profile、候选稳定性约束、turnover-aware prefilter、cost drag objective penalty、报告/Dashboard/Reader
+    Brief/shadow backtest 只读引用已完成；fallback fixed values 已对齐 production baseline，避免固定
+    neutral fallback 时人为远离 baseline
+  - '`aits signals build-snapshot --latest` 生成 2026-06-08 snapshot；`aits parameters
+    diagnose-weight-stability-inputs --latest` 为 `LIMITED_READY`、`can_run=true`、`blocking_checks=none`；`aits
+    parameters tune-weights-stable --latest` 生成 2026-06-08 artifact，`candidates_backtested=166`、`candidates_passed_guardrails=17`、recommended
+    candidate `watch`、`stability_status=PASS`、`turnover_prefilter_status=PASS`；`validate-weight-stability
+    --latest`、`validate-weight-stability-readiness --latest`、report aliases、Dashboard/Reader
+    Brief/shadow dry-run 可读；不修改 `config/parameters/production/current.yaml`，不降低 turnover
+    guardrail，不修改 cost model，不放开 fallback signals，不自动 promotion'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-061 规格；TRADING-060 已确认失败主因为
+    aggressive weight search，需要先用 baseline proximity、单 signal delta、trend/sector cap
+    和 turnover prefilter 收敛搜索。2026-05-31: 从 IN_PROGRESS 改为 VALIDATING，原因：实现、文档和验证完成；2026-05-28
+    latest 因 upstream freshness / signal snapshot readiness 未满足停在 `INSUFFICIENT_DATA`。2026-06-09:
+    继续保持 VALIDATING，原因：2026-06-08 latest 仍因 `signal_snapshot_date_mismatch` 未进入 candidate
+    backtest。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：恢复 2026-06-08 signal snapshot
+    readiness 后发现 v0.2 固定 fallback 到 `0.05/0.05` 会使最接近 baseline 的候选 L1 至少为 0.30，搜索空间与
+    0.25 stability/prefilter 不可同时满足。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：固定 fallback
+    改为 production baseline `earnings_quality=0.15`、`event_risk=0.10`，真实 stable tuning
+    进入 candidate backtest 并产出 shadow-only `watch` candidate；production promotion 仍因
+    signal quality LIMITED 和 manual review required 被禁用。'
+  docs_links:
+  - docs/requirements/weight_search_stability_constraints_2026-05-31.md
+  terminal: true
+  raw_row_sha256: d5393fcea2eb136c994e5f035e732e05b2db303f90c0d5d9ec1ea5021bf9fb3c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c9270148011cc53b5a5d4f5382dbeee97e09263692a30ec6957077abd3c60d3b

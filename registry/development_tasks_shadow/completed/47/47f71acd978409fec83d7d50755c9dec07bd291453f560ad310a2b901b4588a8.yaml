@@ -1,0 +1,147 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-388_NORMAL_PAPER_SHADOW_RESUMPTION_GATE
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue normal paper-shadow resumption gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 记录 hold 或 continue_normal_shadow 人工复核动作；后续 TRADING-389/390
+    补 cost/benchmark evidence
+  requirement_refs:
+  - docs/requirements/TRADING-388_Normal_Paper_Shadow_Resumption_Gate.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-388_Normal_Paper_Shadow_Resumption_Gate.md`；在
+    readiness/health recovery 后增加显式 normal paper-shadow resumption gate，检查 signal
+    input completeness not BLOCKING、evidence staleness not BLOCKING、readiness not
+    BLOCKED、canonical health not BLOCKED、safety boundary not BLOCKED、owner action
+    safe non-promotion 和 manual owner review completion；`hold` 是 safe non-promotion
+    但不授权恢复，只有 `continue_normal_shadow` 且人工 review completed 才可能恢复 normal observation；不得运行
+    promotion board、执行 extended-shadow protocol、批准 live trading、写 official target
+    weights、触发 broker/order 或修改 paper account/production state
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_normal_paper_shadow_resumption_gate.py`、`aits
+      etf dynamic-v3-rescue normal-paper-shadow-resumption-gate run/report`、`validate-normal-paper-shadow-resumption-gate`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；status 限定为 `RESUME_NORMAL_SHADOW_ALLOWED
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 208
+    row_sha256: 7cce8f69238e74e93fa4a9fb8dbaf5a4e75bca4e53c37080926edd13c4725672
+    cell_count: 10
+    all_cells:
+    - TRADING-388_NORMAL_PAPER_SHADOW_RESUMPTION_GATE
+    - ETF portfolio/dynamic v3 rescue normal paper-shadow resumption gate
+    - P1
+    - DONE
+    - 项目 owner 记录 hold 或 continue_normal_shadow 人工复核动作；后续 TRADING-389/390 补 cost/benchmark
+      evidence
+    - 详细拆解见 `docs/requirements/TRADING-388_Normal_Paper_Shadow_Resumption_Gate.md`；在
+      readiness/health recovery 后增加显式 normal paper-shadow resumption gate，检查 signal
+      input completeness not BLOCKING、evidence staleness not BLOCKING、readiness not
+      BLOCKED、canonical health not BLOCKED、safety boundary not BLOCKED、owner action
+      safe non-promotion 和 manual owner review completion；`hold` 是 safe non-promotion
+      但不授权恢复，只有 `continue_normal_shadow` 且人工 review completed 才可能恢复 normal observation；不得运行
+      promotion board、执行 extended-shadow protocol、批准 live trading、写 official target
+      weights、触发 broker/order 或修改 paper account/production state
+    - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_normal_paper_shadow_resumption_gate.py`、`aits
+      etf dynamic-v3-rescue normal-paper-shadow-resumption-gate run/report`、`validate-normal-paper-shadow-resumption-gate`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；status 限定为 `RESUME_NORMAL_SHADOW_ALLOWED
+    - RESUME_NORMAL_SHADOW_WITH_WARNINGS
+    - RESUME_NORMAL_SHADOW_BLOCKED`；non-blocked status 必须 manual owner review completed
+      且 owner_action=`continue_normal_shadow`，并且仍只允许 normal observation
+    - '2026-06-17: DONE；真实 artifact `normal-paper-shadow-resumption-gate_092cb50466657186`
+      读取 readiness/health recovery `readiness-health-recovery_4c4fa150becc7305`，输出
+      `RESUME_NORMAL_SHADOW_BLOCKED`、`normal_paper_shadow_may_resume=false`、owner_action
+      empty、manual_owner_review_completed=false、readiness_health_recovery_status=`MANUAL_REVIEW_REQUIRED`；blocking
+      reasons=`manual_owner_review_before_resumption,owner_action:missing_manual_owner_review,owner_action_authorizes_normal_resumption,owner_action_safe_non_promotion`，warnings
+      include signal input warning, evidence acceptable, readiness/health manual review
+      and recovery warnings；validation PASS。该状态不是 normal resumption、promotion、extended
+      shadow、official target 或 live approval；剩余 blocker 是 owner hold/continue_normal_shadow
+      decision 尚未进入 audit log，且后续 cost/benchmark evidence 仍待恢复。'
+    raw_line: '|TRADING-388_NORMAL_PAPER_SHADOW_RESUMPTION_GATE|ETF portfolio/dynamic
+      v3 rescue normal paper-shadow resumption gate|P1|DONE|项目 owner 记录 hold 或 continue_normal_shadow
+      人工复核动作；后续 TRADING-389/390 补 cost/benchmark evidence|详细拆解见 `docs/requirements/TRADING-388_Normal_Paper_Shadow_Resumption_Gate.md`；在
+      readiness/health recovery 后增加显式 normal paper-shadow resumption gate，检查 signal
+      input completeness not BLOCKING、evidence staleness not BLOCKING、readiness not
+      BLOCKED、canonical health not BLOCKED、safety boundary not BLOCKED、owner action
+      safe non-promotion 和 manual owner review completion；`hold` 是 safe non-promotion
+      但不授权恢复，只有 `continue_normal_shadow` 且人工 review completed 才可能恢复 normal observation；不得运行
+      promotion board、执行 extended-shadow protocol、批准 live trading、写 official target
+      weights、触发 broker/order 或修改 paper account/production state|新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_normal_paper_shadow_resumption_gate.py`、`aits
+      etf dynamic-v3-rescue normal-paper-shadow-resumption-gate run/report`、`validate-normal-paper-shadow-resumption-gate`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；status 限定为 `RESUME_NORMAL_SHADOW_ALLOWED|RESUME_NORMAL_SHADOW_WITH_WARNINGS|RESUME_NORMAL_SHADOW_BLOCKED`；non-blocked
+      status 必须 manual owner review completed 且 owner_action=`continue_normal_shadow`，并且仍只允许
+      normal observation|2026-06-17: DONE；真实 artifact `normal-paper-shadow-resumption-gate_092cb50466657186`
+      读取 readiness/health recovery `readiness-health-recovery_4c4fa150becc7305`，输出
+      `RESUME_NORMAL_SHADOW_BLOCKED`、`normal_paper_shadow_may_resume=false`、owner_action
+      empty、manual_owner_review_completed=false、readiness_health_recovery_status=`MANUAL_REVIEW_REQUIRED`；blocking
+      reasons=`manual_owner_review_before_resumption,owner_action:missing_manual_owner_review,owner_action_authorizes_normal_resumption,owner_action_safe_non_promotion`，warnings
+      include signal input warning, evidence acceptable, readiness/health manual review
+      and recovery warnings；validation PASS。该状态不是 normal resumption、promotion、extended
+      shadow、official target 或 live approval；剩余 blocker 是 owner hold/continue_normal_shadow
+      decision 尚未进入 audit log，且后续 cost/benchmark evidence 仍待恢复。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7cce8f69238e74e93fa4a9fb
+  task_id: TRADING-388_NORMAL_PAPER_SHADOW_RESUMPTION_GATE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 记录 hold 或 continue_normal_shadow 人工复核动作；后续 TRADING-389/390
+      补 cost/benchmark evidence
+    notes: RESUME_NORMAL_SHADOW_WITH_WARNINGS
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7cce8f69238e74e93fa4a9fb8dbaf5a4e75bca4e53c37080926edd13c4725672
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-388_NORMAL_PAPER_SHADOW_RESUMPTION_GATE
+  - ETF portfolio/dynamic v3 rescue normal paper-shadow resumption gate
+  - P1
+  - DONE
+  - 项目 owner 记录 hold 或 continue_normal_shadow 人工复核动作；后续 TRADING-389/390 补 cost/benchmark
+    evidence
+  - 详细拆解见 `docs/requirements/TRADING-388_Normal_Paper_Shadow_Resumption_Gate.md`；在
+    readiness/health recovery 后增加显式 normal paper-shadow resumption gate，检查 signal
+    input completeness not BLOCKING、evidence staleness not BLOCKING、readiness not
+    BLOCKED、canonical health not BLOCKED、safety boundary not BLOCKED、owner action
+    safe non-promotion 和 manual owner review completion；`hold` 是 safe non-promotion
+    但不授权恢复，只有 `continue_normal_shadow` 且人工 review completed 才可能恢复 normal observation；不得运行
+    promotion board、执行 extended-shadow protocol、批准 live trading、写 official target
+    weights、触发 broker/order 或修改 paper account/production state
+  - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_normal_paper_shadow_resumption_gate.py`、`aits
+    etf dynamic-v3-rescue normal-paper-shadow-resumption-gate run/report`、`validate-normal-paper-shadow-resumption-gate`、Reader
+    Brief section、report registry、artifact catalog、README、operations runbook、system
+    flow、requirements 和 focused tests；status 限定为 `RESUME_NORMAL_SHADOW_ALLOWED
+  - RESUME_NORMAL_SHADOW_WITH_WARNINGS
+  docs_links:
+  - docs/requirements/TRADING-388_Normal_Paper_Shadow_Resumption_Gate.md
+  terminal: true
+  raw_row_sha256: 7cce8f69238e74e93fa4a9fb8dbaf5a4e75bca4e53c37080926edd13c4725672
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6686dce350eb8a15fb022c776f8faee0c581ee30e8acd121fea87e2d30ea6df1

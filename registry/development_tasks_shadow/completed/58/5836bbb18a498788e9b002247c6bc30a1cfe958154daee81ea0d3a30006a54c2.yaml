@@ -1,0 +1,151 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-375_REGISTRY_WARNING_WAIVER_EXPIRY
+  title: null
+  domain: Report registry / waiver governance
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 waiver renewal/removal cadence；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-375_Registry_Warning_Waiver_Expiry.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-375_Registry_Warning_Waiver_Expiry.md`；强化
+    report index visibility waiver schema，增加 affected report/artifact、owner、created/expires、review
+    status、linked task 和 current inventory；过期或 inactive waiver 不得静默压掉 stale/missing
+    artifact warning
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/waiver_inventory.py`、`aits reports waiver-inventory`、`aits
+      reports validate-waiver-inventory`、expiry-aware report index waiver application、Reader
+      Brief waiver inventory 摘要、report registry、artifact catalog、README、system flow、operations
+      runbook、requirements 和 focused tests；expired waiver 或缺 registry entry fail closed，near-expiry
+      / inactive review status visible warning，所有输出固定 `production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 223
+    row_sha256: a31a74aeac1ff01e65e6d7fcfea750d3466f30bb9c98769f019b7155decf8707
+    cell_count: 8
+    all_cells:
+    - TRADING-375_REGISTRY_WARNING_WAIVER_EXPIRY
+    - Report registry / waiver governance
+    - P1
+    - DONE
+    - 项目 owner 后续复核 waiver renewal/removal cadence；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-375_Registry_Warning_Waiver_Expiry.md`；强化 report
+      index visibility waiver schema，增加 affected report/artifact、owner、created/expires、review
+      status、linked task 和 current inventory；过期或 inactive waiver 不得静默压掉 stale/missing
+      artifact warning
+    - 新增 `src/ai_trading_system/reports/waiver_inventory.py`、`aits reports waiver-inventory`、`aits
+      reports validate-waiver-inventory`、expiry-aware report index waiver application、Reader
+      Brief waiver inventory 摘要、report registry、artifact catalog、README、system flow、operations
+      runbook、requirements 和 focused tests；expired waiver 或缺 registry entry fail closed，near-expiry
+      / inactive review status visible warning，所有输出固定 `production_effect=none`
+    - '2026-06-16: DONE；真实 artifact `outputs/reports/report_index_waiver_inventory_2026-06-16.json/md`
+      输出 `inventory_status=PASS`、expanded waivers=31、active=31、expired=0、expiring_soon=0；`outputs/reports/report_index_waiver_inventory_validation_2026-06-16.json/md`
+      输出 `validation_status=PASS`、checks=6、failed=0、warnings=0；report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / reports=384 / missing=20 / stale=10 / waived=30 / expired_waivers=0 / unwaived=0；documentation
+      contract PASS / warnings=0；Reader Brief latest `2026-06-15` OK，Reader Brief
+      quality OK；focused pytest `tests/test_report_index.py tests/test_waiver_inventory.py`
+      16 passed，Reader Brief/documentation focused pytest 24 passed，focused Ruff PASS。Exact
+      2026-06-16 Reader Brief generation remains limited by missing local `decision_snapshot_2026-06-16.json`;
+      latest available Reader Brief was regenerated and validated. 保持 read-only /
+      no waiver auto-renewal / no report repair / no data refresh / no upstream rerun
+      / no official target / no broker / no production mutation。'
+    raw_line: '|TRADING-375_REGISTRY_WARNING_WAIVER_EXPIRY|Report registry / waiver
+      governance|P1|DONE|项目 owner 后续复核 waiver renewal/removal cadence；代码实现完成|详细拆解见
+      `docs/requirements/TRADING-375_Registry_Warning_Waiver_Expiry.md`；强化 report
+      index visibility waiver schema，增加 affected report/artifact、owner、created/expires、review
+      status、linked task 和 current inventory；过期或 inactive waiver 不得静默压掉 stale/missing
+      artifact warning|新增 `src/ai_trading_system/reports/waiver_inventory.py`、`aits
+      reports waiver-inventory`、`aits reports validate-waiver-inventory`、expiry-aware
+      report index waiver application、Reader Brief waiver inventory 摘要、report registry、artifact
+      catalog、README、system flow、operations runbook、requirements 和 focused tests；expired
+      waiver 或缺 registry entry fail closed，near-expiry / inactive review status visible
+      warning，所有输出固定 `production_effect=none`|2026-06-16: DONE；真实 artifact `outputs/reports/report_index_waiver_inventory_2026-06-16.json/md`
+      输出 `inventory_status=PASS`、expanded waivers=31、active=31、expired=0、expiring_soon=0；`outputs/reports/report_index_waiver_inventory_validation_2026-06-16.json/md`
+      输出 `validation_status=PASS`、checks=6、failed=0、warnings=0；report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / reports=384 / missing=20 / stale=10 / waived=30 / expired_waivers=0 / unwaived=0；documentation
+      contract PASS / warnings=0；Reader Brief latest `2026-06-15` OK，Reader Brief
+      quality OK；focused pytest `tests/test_report_index.py tests/test_waiver_inventory.py`
+      16 passed，Reader Brief/documentation focused pytest 24 passed，focused Ruff PASS。Exact
+      2026-06-16 Reader Brief generation remains limited by missing local `decision_snapshot_2026-06-16.json`;
+      latest available Reader Brief was regenerated and validated. 保持 read-only /
+      no waiver auto-renewal / no report repair / no data refresh / no upstream rerun
+      / no official target / no broker / no production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a31a74aeac1ff01e65e6d7fc
+  task_id: TRADING-375_REGISTRY_WARNING_WAIVER_EXPIRY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核 waiver renewal/removal cadence；代码实现完成
+    notes: '2026-06-16: DONE；真实 artifact `outputs/reports/report_index_waiver_inventory_2026-06-16.json/md`
+      输出 `inventory_status=PASS`、expanded waivers=31、active=31、expired=0、expiring_soon=0；`outputs/reports/report_index_waiver_inventory_validation_2026-06-16.json/md`
+      输出 `validation_status=PASS`、checks=6、failed=0、warnings=0；report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / reports=384 / missing=20 / stale=10 / waived=30 / expired_waivers=0 / unwaived=0；documentation
+      contract PASS / warnings=0；Reader Brief latest `2026-06-15` OK，Reader Brief
+      quality OK；focused pytest `tests/test_report_index.py tests/test_waiver_inventory.py`
+      16 passed，Reader Brief/documentation focused pytest 24 passed，focused Ruff PASS。Exact
+      2026-06-16 Reader Brief generation remains limited by missing local `decision_snapshot_2026-06-16.json`;
+      latest available Reader Brief was regenerated and validated. 保持 read-only /
+      no waiver auto-renewal / no report repair / no data refresh / no upstream rerun
+      / no official target / no broker / no production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a31a74aeac1ff01e65e6d7fcfea750d3466f30bb9c98769f019b7155decf8707
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-375_REGISTRY_WARNING_WAIVER_EXPIRY
+  - Report registry / waiver governance
+  - P1
+  - DONE
+  - 项目 owner 后续复核 waiver renewal/removal cadence；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-375_Registry_Warning_Waiver_Expiry.md`；强化 report
+    index visibility waiver schema，增加 affected report/artifact、owner、created/expires、review
+    status、linked task 和 current inventory；过期或 inactive waiver 不得静默压掉 stale/missing
+    artifact warning
+  - 新增 `src/ai_trading_system/reports/waiver_inventory.py`、`aits reports waiver-inventory`、`aits
+    reports validate-waiver-inventory`、expiry-aware report index waiver application、Reader
+    Brief waiver inventory 摘要、report registry、artifact catalog、README、system flow、operations
+    runbook、requirements 和 focused tests；expired waiver 或缺 registry entry fail closed，near-expiry
+    / inactive review status visible warning，所有输出固定 `production_effect=none`
+  - '2026-06-16: DONE；真实 artifact `outputs/reports/report_index_waiver_inventory_2026-06-16.json/md`
+    输出 `inventory_status=PASS`、expanded waivers=31、active=31、expired=0、expiring_soon=0；`outputs/reports/report_index_waiver_inventory_validation_2026-06-16.json/md`
+    输出 `validation_status=PASS`、checks=6、failed=0、warnings=0；report index `PASS_WITH_EXPLICIT_WAIVERS`
+    / reports=384 / missing=20 / stale=10 / waived=30 / expired_waivers=0 / unwaived=0；documentation
+    contract PASS / warnings=0；Reader Brief latest `2026-06-15` OK，Reader Brief quality
+    OK；focused pytest `tests/test_report_index.py tests/test_waiver_inventory.py`
+    16 passed，Reader Brief/documentation focused pytest 24 passed，focused Ruff PASS。Exact
+    2026-06-16 Reader Brief generation remains limited by missing local `decision_snapshot_2026-06-16.json`;
+    latest available Reader Brief was regenerated and validated. 保持 read-only / no
+    waiver auto-renewal / no report repair / no data refresh / no upstream rerun /
+    no official target / no broker / no production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-375_Registry_Warning_Waiver_Expiry.md
+  terminal: true
+  raw_row_sha256: a31a74aeac1ff01e65e6d7fcfea750d3466f30bb9c98769f019b7155decf8707
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e72a5ca2ad47f3b9865041bafa652dd5b9d137ac50c4e54dfac297321fad6191

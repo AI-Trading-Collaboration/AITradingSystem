@@ -1,0 +1,159 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-074
+  title: null
+  domain: ETF portfolio operations/Portfolio Operations Runbook and Scheduler Review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner + 后续真实 cadence dispatch / owner review
+  requirement_refs:
+  - docs/operations/operations_runbook.md
+  - docs/requirements/TRADING-074_Portfolio_Operations_Runbook_and_Scheduler_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-074_Portfolio_Operations_Runbook_and_Scheduler_Review.md`；TRADING-074A-K
+    operations schedule / graph / freshness / failure policy / owner checklist / dry-run
+    / health report / Reader Brief / validation gate 基础设施已完成并复验通过；当前 daily/weekly/biweekly/monthly
+    health 均按真实 artifact 状态 fail-closed 为 `blocked`，后续需要真实 cadence dispatch 与 owner
+    review 观察，不自动接入外部 scheduler 或执行 planned commands
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 已按 runbook 先读取 `docs/operations/operations_runbook.md`；`validate-data --as-of
+      2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；`aits etf ops validate --as-of
+      2026-06-08` 输出 `status=PASS`、`failed_check_count=0`；四个 `ops dry-run` 均只读且 `commands_executed=false`、`production_state_mutated=false`，daily/weekly/biweekly/monthly
+      分别为 blocked，planned steps 11/9/4/6；四个 `ops report` 均生成 health JSON/Markdown
+      且 blocked，blocking failures 10/17/6/10、warnings 2/1/0/2；Reader Brief `Operations
+      Health` 显示 `availability=AVAILABLE`、cadence monthly、status blocked、missing_artifact_count=8、next
+      owner review blocked；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；专项
+      pytest 79 passed
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1162
+    row_sha256: 19228778f917b90877b490d4462d4df6d0566f5d8a279ccec92953511804cddc
+    cell_count: 8
+    all_cells:
+    - TRADING-074
+    - ETF portfolio operations/Portfolio Operations Runbook and Scheduler Review
+    - P0
+    - BASELINE_DONE
+    - 项目 owner + 后续真实 cadence dispatch / owner review
+    - 详细拆解见 `docs/requirements/TRADING-074_Portfolio_Operations_Runbook_and_Scheduler_Review.md`；TRADING-074A-K
+      operations schedule / graph / freshness / failure policy / owner checklist /
+      dry-run / health report / Reader Brief / validation gate 基础设施已完成并复验通过；当前 daily/weekly/biweekly/monthly
+      health 均按真实 artifact 状态 fail-closed 为 `blocked`，后续需要真实 cadence dispatch 与 owner
+      review 观察，不自动接入外部 scheduler 或执行 planned commands
+    - 已按 runbook 先读取 `docs/operations/operations_runbook.md`；`validate-data --as-of
+      2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；`aits etf ops validate --as-of
+      2026-06-08` 输出 `status=PASS`、`failed_check_count=0`；四个 `ops dry-run` 均只读且 `commands_executed=false`、`production_state_mutated=false`，daily/weekly/biweekly/monthly
+      分别为 blocked，planned steps 11/9/4/6；四个 `ops report` 均生成 health JSON/Markdown
+      且 blocked，blocking failures 10/17/6/10、warnings 2/1/0/2；Reader Brief `Operations
+      Health` 显示 `availability=AVAILABLE`、cadence monthly、status blocked、missing_artifact_count=8、next
+      owner review blocked；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；专项
+      pytest 79 passed
+    - '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求把 TRADING-062 至 TRADING-073 ETF portfolio
+      research modules 组织成可审计的 daily/weekly/biweekly/monthly operations workflow。2026-06-03:
+      TRADING-074A-K 完成并转入 VALIDATING，新增 operations schedule spec、cadence command
+      graph、artifact freshness/dependency check、failure policy、owner checklist、scheduler
+      dry-run、operations health report、Reader Brief section 和 validation gate；所有 outputs
+      固定 dry-run/read-only，不执行 planned commands、不写 production state。2026-06-09: 从
+      VALIDATING 改为 BASELINE_DONE，原因：复验证明 workflow 和 validation gate 完成，且真实 cadence
+      reports 能显式披露 blockers；后续真实 cadence dispatch / owner review 由运行观察承接。'
+    raw_line: '|TRADING-074|ETF portfolio operations/Portfolio Operations Runbook
+      and Scheduler Review|P0|BASELINE_DONE|项目 owner + 后续真实 cadence dispatch / owner
+      review|详细拆解见 `docs/requirements/TRADING-074_Portfolio_Operations_Runbook_and_Scheduler_Review.md`；TRADING-074A-K
+      operations schedule / graph / freshness / failure policy / owner checklist /
+      dry-run / health report / Reader Brief / validation gate 基础设施已完成并复验通过；当前 daily/weekly/biweekly/monthly
+      health 均按真实 artifact 状态 fail-closed 为 `blocked`，后续需要真实 cadence dispatch 与 owner
+      review 观察，不自动接入外部 scheduler 或执行 planned commands|已按 runbook 先读取 `docs/operations/operations_runbook.md`；`validate-data
+      --as-of 2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；`aits etf ops validate
+      --as-of 2026-06-08` 输出 `status=PASS`、`failed_check_count=0`；四个 `ops dry-run`
+      均只读且 `commands_executed=false`、`production_state_mutated=false`，daily/weekly/biweekly/monthly
+      分别为 blocked，planned steps 11/9/4/6；四个 `ops report` 均生成 health JSON/Markdown
+      且 blocked，blocking failures 10/17/6/10、warnings 2/1/0/2；Reader Brief `Operations
+      Health` 显示 `availability=AVAILABLE`、cadence monthly、status blocked、missing_artifact_count=8、next
+      owner review blocked；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；专项
+      pytest 79 passed|2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求把 TRADING-062 至 TRADING-073
+      ETF portfolio research modules 组织成可审计的 daily/weekly/biweekly/monthly operations
+      workflow。2026-06-03: TRADING-074A-K 完成并转入 VALIDATING，新增 operations schedule
+      spec、cadence command graph、artifact freshness/dependency check、failure policy、owner
+      checklist、scheduler dry-run、operations health report、Reader Brief section 和
+      validation gate；所有 outputs 固定 dry-run/read-only，不执行 planned commands、不写 production
+      state。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：复验证明 workflow 和 validation
+      gate 完成，且真实 cadence reports 能显式披露 blockers；后续真实 cadence dispatch / owner review
+      由运行观察承接。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-19228778f917b90877b490d4
+  task_id: TRADING-074
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner + 后续真实 cadence dispatch / owner review
+    notes: '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求把 TRADING-062 至 TRADING-073 ETF
+      portfolio research modules 组织成可审计的 daily/weekly/biweekly/monthly operations
+      workflow。2026-06-03: TRADING-074A-K 完成并转入 VALIDATING，新增 operations schedule
+      spec、cadence command graph、artifact freshness/dependency check、failure policy、owner
+      checklist、scheduler dry-run、operations health report、Reader Brief section 和
+      validation gate；所有 outputs 固定 dry-run/read-only，不执行 planned commands、不写 production
+      state。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：复验证明 workflow 和 validation
+      gate 完成，且真实 cadence reports 能显式披露 blockers；后续真实 cadence dispatch / owner review
+      由运行观察承接。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:19228778f917b90877b490d4462d4df6d0566f5d8a279ccec92953511804cddc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-074
+  - ETF portfolio operations/Portfolio Operations Runbook and Scheduler Review
+  - P0
+  - BASELINE_DONE
+  - 项目 owner + 后续真实 cadence dispatch / owner review
+  - 详细拆解见 `docs/requirements/TRADING-074_Portfolio_Operations_Runbook_and_Scheduler_Review.md`；TRADING-074A-K
+    operations schedule / graph / freshness / failure policy / owner checklist / dry-run
+    / health report / Reader Brief / validation gate 基础设施已完成并复验通过；当前 daily/weekly/biweekly/monthly
+    health 均按真实 artifact 状态 fail-closed 为 `blocked`，后续需要真实 cadence dispatch 与 owner
+    review 观察，不自动接入外部 scheduler 或执行 planned commands
+  - 已按 runbook 先读取 `docs/operations/operations_runbook.md`；`validate-data --as-of
+    2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；`aits etf ops validate --as-of 2026-06-08`
+    输出 `status=PASS`、`failed_check_count=0`；四个 `ops dry-run` 均只读且 `commands_executed=false`、`production_state_mutated=false`，daily/weekly/biweekly/monthly
+    分别为 blocked，planned steps 11/9/4/6；四个 `ops report` 均生成 health JSON/Markdown 且
+    blocked，blocking failures 10/17/6/10、warnings 2/1/0/2；Reader Brief `Operations
+    Health` 显示 `availability=AVAILABLE`、cadence monthly、status blocked、missing_artifact_count=8、next
+    owner review blocked；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；专项
+    pytest 79 passed
+  - '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求把 TRADING-062 至 TRADING-073 ETF portfolio
+    research modules 组织成可审计的 daily/weekly/biweekly/monthly operations workflow。2026-06-03:
+    TRADING-074A-K 完成并转入 VALIDATING，新增 operations schedule spec、cadence command graph、artifact
+    freshness/dependency check、failure policy、owner checklist、scheduler dry-run、operations
+    health report、Reader Brief section 和 validation gate；所有 outputs 固定 dry-run/read-only，不执行
+    planned commands、不写 production state。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：复验证明
+    workflow 和 validation gate 完成，且真实 cadence reports 能显式披露 blockers；后续真实 cadence
+    dispatch / owner review 由运行观察承接。'
+  docs_links:
+  - docs/operations/operations_runbook.md
+  - docs/requirements/TRADING-074_Portfolio_Operations_Runbook_and_Scheduler_Review.md
+  terminal: false
+  raw_row_sha256: 19228778f917b90877b490d4462d4df6d0566f5d8a279ccec92953511804cddc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7ca7d6a7ca1cc75c10a203914f105312548e0f50d9cdfa4cf20dc23fdc5b5e99

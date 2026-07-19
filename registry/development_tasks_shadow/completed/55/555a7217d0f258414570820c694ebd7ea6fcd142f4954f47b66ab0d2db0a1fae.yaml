@@ -1,0 +1,155 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2378_DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_AND_RETURN_GAP_OPTIMIZATION_PLAN
+  title: null
+  domain: Strategy research / execution semantics / slice robustness and return-gap
+    optimization plan
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2379 optimized variant retest route
+  requirement_refs:
+  - docs/requirements/TRADING-2378_Dynamic_Strategy_Slice_Robustness_And_Return_Gap_Optimization_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2378_Dynamic_Strategy_Slice_Robustness_And_Return_Gap_Optimization_Plan.md`；承接
+    TRADING-2377 continue-optimization approval，只读取 prior validated TRADING-2365 /
+    2366 / 2375 / 2376 / 2377 artifacts，不读取 fresh cached market data、不重新 backtest。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-slice-robustness-return-gap-optimization-plan`；生成
+      `optimization_plan_result.json`、`time_regime_slice_gap_diagnosis.json`、`return_gap_repair_variant_plan.json`、`variant_evaluation_plan.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_AND_RETURN_GAP_OPTIMIZATION_PLAN_READY`，primary
+      candidate=`dynamic_regime_overlay_v0_4_lower_turnover`，ranking top reference=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，decision_from_2377=`KEEP_RESEARCH_ONLY_AND_CONTINUE_OPTIMIZATION`，primary
+      cadence=`valid_until_window`，planned variants=5，forbidden optimization paths
+      明确，next route=`TRADING-2379_Dynamic_Strategy_Slice_Robustness_Optimized_Variant_Retest`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 109
+    row_sha256: e3b78706a1e7790eba215a5582e25e438b607ea4376b176afa03916cde3750d6
+    cell_count: 8
+    all_cells:
+    - TRADING-2378_DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_AND_RETURN_GAP_OPTIMIZATION_PLAN
+    - Strategy research / execution semantics / slice robustness and return-gap optimization
+      plan
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2379 optimized variant retest route
+    - 详见 `docs/requirements/TRADING-2378_Dynamic_Strategy_Slice_Robustness_And_Return_Gap_Optimization_Plan.md`；承接
+      TRADING-2377 continue-optimization approval，只读取 prior validated TRADING-2365
+      / 2366 / 2375 / 2376 / 2377 artifacts，不读取 fresh cached market data、不重新 backtest。
+    - 新增 `aits research strategies dynamic-strategy-slice-robustness-return-gap-optimization-plan`；生成
+      `optimization_plan_result.json`、`time_regime_slice_gap_diagnosis.json`、`return_gap_repair_variant_plan.json`、`variant_evaluation_plan.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_AND_RETURN_GAP_OPTIMIZATION_PLAN_READY`，primary
+      candidate=`dynamic_regime_overlay_v0_4_lower_turnover`，ranking top reference=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，decision_from_2377=`KEEP_RESEARCH_ONLY_AND_CONTINUE_OPTIMIZATION`，primary
+      cadence=`valid_until_window`，planned variants=5，forbidden optimization paths
+      明确，next route=`TRADING-2379_Dynamic_Strategy_Slice_Robustness_Optimized_Variant_Retest`。
+    - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；这是 optimization plan，不是 optimized
+      variant retest、research-only observation approval、paper-shadow approval、scheduler
+      enablement、production 或 broker readiness。2026-07-05: 实现完成并归档 DONE；验证通过 full
+      Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs
+      freshness 563 docs PASS、documentation contract 1275 reports PASS、task-register
+      consistency run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T140401Z/test_runtime_summary.json`）和
+      `git diff --check`（仅 CRLF normalization warning）。本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2365 / 2366 / 2375 / 2376 / 2377 artifacts，不读取 fresh
+      cached market data、不重新 backtest、不生成 technical features、scoring、daily report
+      或交易建议。scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order 和 daily report 全部保持 disabled / false / none。'
+    raw_line: '|TRADING-2378_DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_AND_RETURN_GAP_OPTIMIZATION_PLAN|Strategy
+      research / execution semantics / slice robustness and return-gap optimization
+      plan|P0|DONE|项目 owner 后续复核 TRADING-2379 optimized variant retest route|详见 `docs/requirements/TRADING-2378_Dynamic_Strategy_Slice_Robustness_And_Return_Gap_Optimization_Plan.md`；承接
+      TRADING-2377 continue-optimization approval，只读取 prior validated TRADING-2365
+      / 2366 / 2375 / 2376 / 2377 artifacts，不读取 fresh cached market data、不重新 backtest。|新增
+      `aits research strategies dynamic-strategy-slice-robustness-return-gap-optimization-plan`；生成
+      `optimization_plan_result.json`、`time_regime_slice_gap_diagnosis.json`、`return_gap_repair_variant_plan.json`、`variant_evaluation_plan.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_AND_RETURN_GAP_OPTIMIZATION_PLAN_READY`，primary
+      candidate=`dynamic_regime_overlay_v0_4_lower_turnover`，ranking top reference=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，decision_from_2377=`KEEP_RESEARCH_ONLY_AND_CONTINUE_OPTIMIZATION`，primary
+      cadence=`valid_until_window`，planned variants=5，forbidden optimization paths
+      明确，next route=`TRADING-2379_Dynamic_Strategy_Slice_Robustness_Optimized_Variant_Retest`。|2026-07-05:
+      根据 owner 附件新增并进入 IN_PROGRESS；这是 optimization plan，不是 optimized variant retest、research-only
+      observation approval、paper-shadow approval、scheduler enablement、production 或
+      broker readiness。2026-07-05: 实现完成并归档 DONE；验证通过 full Ruff、`compileall -q src
+      tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 563 docs PASS、documentation
+      contract 1275 reports PASS、task-register consistency run/validate PASS、contract-validation
+      197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T140401Z/test_runtime_summary.json`）和
+      `git diff --check`（仅 CRLF normalization warning）。本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2365 / 2366 / 2375 / 2376 / 2377 artifacts，不读取 fresh
+      cached market data、不重新 backtest、不生成 technical features、scoring、daily report
+      或交易建议。scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order 和 daily report 全部保持 disabled / false / none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e3b78706a1e7790eba215a55
+  task_id: TRADING-2378_DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_AND_RETURN_GAP_OPTIMIZATION_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2379 optimized variant retest route
+    notes: '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；这是 optimization plan，不是 optimized
+      variant retest、research-only observation approval、paper-shadow approval、scheduler
+      enablement、production 或 broker readiness。2026-07-05: 实现完成并归档 DONE；验证通过 full
+      Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs
+      freshness 563 docs PASS、documentation contract 1275 reports PASS、task-register
+      consistency run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T140401Z/test_runtime_summary.json`）和
+      `git diff --check`（仅 CRLF normalization warning）。本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2365 / 2366 / 2375 / 2376 / 2377 artifacts，不读取 fresh
+      cached market data、不重新 backtest、不生成 technical features、scoring、daily report
+      或交易建议。scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order 和 daily report 全部保持 disabled / false / none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e3b78706a1e7790eba215a5582e25e438b607ea4376b176afa03916cde3750d6
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2378_DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_AND_RETURN_GAP_OPTIMIZATION_PLAN
+  - Strategy research / execution semantics / slice robustness and return-gap optimization
+    plan
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2379 optimized variant retest route
+  - 详见 `docs/requirements/TRADING-2378_Dynamic_Strategy_Slice_Robustness_And_Return_Gap_Optimization_Plan.md`；承接
+    TRADING-2377 continue-optimization approval，只读取 prior validated TRADING-2365 /
+    2366 / 2375 / 2376 / 2377 artifacts，不读取 fresh cached market data、不重新 backtest。
+  - 新增 `aits research strategies dynamic-strategy-slice-robustness-return-gap-optimization-plan`；生成
+    `optimization_plan_result.json`、`time_regime_slice_gap_diagnosis.json`、`return_gap_repair_variant_plan.json`、`variant_evaluation_plan.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_AND_RETURN_GAP_OPTIMIZATION_PLAN_READY`，primary
+    candidate=`dynamic_regime_overlay_v0_4_lower_turnover`，ranking top reference=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，decision_from_2377=`KEEP_RESEARCH_ONLY_AND_CONTINUE_OPTIMIZATION`，primary
+    cadence=`valid_until_window`，planned variants=5，forbidden optimization paths 明确，next
+    route=`TRADING-2379_Dynamic_Strategy_Slice_Robustness_Optimized_Variant_Retest`。
+  - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；这是 optimization plan，不是 optimized variant
+    retest、research-only observation approval、paper-shadow approval、scheduler enablement、production
+    或 broker readiness。2026-07-05: 实现完成并归档 DONE；验证通过 full Ruff、`compileall -q src
+    tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 563 docs PASS、documentation
+    contract 1275 reports PASS、task-register consistency run/validate PASS、contract-validation
+    197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T140401Z/test_runtime_summary.json`）和
+    `git diff --check`（仅 CRLF normalization warning）。本任务未重跑 `aits validate-data`，因为只读取
+    prior validated TRADING-2365 / 2366 / 2375 / 2376 / 2377 artifacts，不读取 fresh cached
+    market data、不重新 backtest、不生成 technical features、scoring、daily report 或交易建议。scheduler、event
+    append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order
+    和 daily report 全部保持 disabled / false / none。'
+  docs_links:
+  - docs/requirements/TRADING-2378_Dynamic_Strategy_Slice_Robustness_And_Return_Gap_Optimization_Plan.md
+  terminal: true
+  raw_row_sha256: e3b78706a1e7790eba215a5582e25e438b607ea4376b176afa03916cde3750d6
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: cbe4243fa8fc36d34d182225b564accbcb0af93d7cc9ec106cf5e9f182e579f7

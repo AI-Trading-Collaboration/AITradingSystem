@@ -1,0 +1,94 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2305_BREADTH_PROXY_CANDIDATE_GENERATOR_POC
+  title: null
+  domain: Research trends / breadth participation proxy diagnostics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 依赖 TRADING-2304 selected concepts 和 frozen
+    current constituent snapshot / coverage audit。仅允许 diagnostics-only POC，不允许 actual-path
+    validation grade 或 promotion eligibility。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 形成 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary
+      和 proxy_bias_disclaimer；所有 artifacts 必须标记 `data_mode=current_constituents_proxy`、`strict_pit=false`、`promotion_eligible=false`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1209
+    row_sha256: 684ec84a5de9f96859a77afa2bca7401b9c2e3ea5b290b35296a376b6dcd832f
+    cell_count: 8
+    all_cells:
+    - TRADING-2305_BREADTH_PROXY_CANDIDATE_GENERATOR_POC
+    - Research trends / breadth participation proxy diagnostics
+    - P1
+    - PROPOSED
+    - 系统实现 + 项目 owner 后续复核
+    - 依赖 TRADING-2304 selected concepts 和 frozen current constituent snapshot / coverage
+      audit。仅允许 diagnostics-only POC，不允许 actual-path validation grade 或 promotion
+      eligibility。
+    - 形成 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary
+      和 proxy_bias_disclaimer；所有 artifacts 必须标记 `data_mode=current_constituents_proxy`、`strict_pit=false`、`promotion_eligible=false`。
+    - '2026-07-01: 根据 owner post-2302 roadmap 登记；当前被 current constituent snapshot
+      缺口阻断。'
+    raw_line: '|TRADING-2305_BREADTH_PROXY_CANDIDATE_GENERATOR_POC|Research trends
+      / breadth participation proxy diagnostics|P1|PROPOSED|系统实现 + 项目 owner 后续复核|依赖
+      TRADING-2304 selected concepts 和 frozen current constituent snapshot / coverage
+      audit。仅允许 diagnostics-only POC，不允许 actual-path validation grade 或 promotion
+      eligibility。|形成 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary
+      和 proxy_bias_disclaimer；所有 artifacts 必须标记 `data_mode=current_constituents_proxy`、`strict_pit=false`、`promotion_eligible=false`。|2026-07-01:
+      根据 owner post-2302 roadmap 登记；当前被 current constituent snapshot 缺口阻断。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-684ec84a5de9f96859a77afa
+  task_id: TRADING-2305_BREADTH_PROXY_CANDIDATE_GENERATOR_POC
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 owner post-2302 roadmap 登记；当前被 current constituent snapshot
+      缺口阻断。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:684ec84a5de9f96859a77afa2bca7401b9c2e3ea5b290b35296a376b6dcd832f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2305_BREADTH_PROXY_CANDIDATE_GENERATOR_POC
+  - Research trends / breadth participation proxy diagnostics
+  - P1
+  - PROPOSED
+  - 系统实现 + 项目 owner 后续复核
+  - 依赖 TRADING-2304 selected concepts 和 frozen current constituent snapshot / coverage
+    audit。仅允许 diagnostics-only POC，不允许 actual-path validation grade 或 promotion eligibility。
+  - 形成 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary
+    和 proxy_bias_disclaimer；所有 artifacts 必须标记 `data_mode=current_constituents_proxy`、`strict_pit=false`、`promotion_eligible=false`。
+  - '2026-07-01: 根据 owner post-2302 roadmap 登记；当前被 current constituent snapshot 缺口阻断。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 684ec84a5de9f96859a77afa2bca7401b9c2e3ea5b290b35296a376b6dcd832f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e604c2694b608bc8b33afaa0dd0aaad19f214ffc6663e5ded8df0ab73a0a41da

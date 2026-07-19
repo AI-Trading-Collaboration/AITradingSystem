@@ -1,0 +1,167 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-641_to_648_RESEARCH_CAMPAIGN_B2_FULL_COMPUTE_COVERAGE
+  title: null
+  domain: ETF portfolio/weight research campaign B2 full compute coverage and decision
+    enforcement
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-641_to_648_Research_Campaign_B2_Full_Compute_Coverage.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-641_to_648_Research_Campaign_B2_Full_Compute_Coverage.md`；在
+    TRADING-631~640 rc2 基础上扩展 B2 Campaign compute adapter 覆盖 TARGETED_EVIDENCE、FULL_DIAGNOSTIC
+    和 GATE，新增 B2 end-to-end compute path、legacy full path parity、evidence budget final-decision
+    drill、legacy B2 runner deprecation readiness 和 Control Plane v1 rc3 validation
+    pack；不得启用 B3/B4/B5/B6/v3、paper-shadow/live/official weights/broker/order/production
+    mutation，不得访问 untouched holdout，不得调参或伪造 metrics
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: B2 targeted compute、full diagnostic compute 和 gate compute 均可生成 fresh Campaign
+      run artifact/evidence；full diagnostic 只有 risk-heavy 与 control evidence 同时 validated
+      才能 COMPLETE；gate 从 Campaign evidence store、budget 和 stop rules 生成 constrained
+      B2 decision；B2 E2E compute path 可运行或明确 PASS_WITH_LIMITATIONS/BLOCKED；legacy
+      full path parity PASS 或 explained；budget exhausted 禁止 generic `NEEDS_MORE_EVIDENCE`
+      并强制 final decision drill；legacy B2 runner deprecation readiness 输出 keep/deprecate/not-ready；rc3
+      validation pack 覆盖 adapter registry、B2 targeted/full/gate compute、E2E、parity、B3
+      signal-only smoke、budget final decision、holdout、next-action、no fabricated metrics
+      和 forbidden-effects；focused tests、Ruff、compileall、JSON parse、B2/B3 campaign
+      validate、validation-pack 和 `git diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1408
+    row_sha256: ac8c8c60acbde996518aedfdc3fab4606a87cd530ebd9c4096d8ddd3d5467637
+    cell_count: 8
+    all_cells:
+    - TRADING-641_to_648_RESEARCH_CAMPAIGN_B2_FULL_COMPUTE_COVERAGE
+    - ETF portfolio/weight research campaign B2 full compute coverage and decision
+      enforcement
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-641_to_648_Research_Campaign_B2_Full_Compute_Coverage.md`；在
+      TRADING-631~640 rc2 基础上扩展 B2 Campaign compute adapter 覆盖 TARGETED_EVIDENCE、FULL_DIAGNOSTIC
+      和 GATE，新增 B2 end-to-end compute path、legacy full path parity、evidence budget
+      final-decision drill、legacy B2 runner deprecation readiness 和 Control Plane
+      v1 rc3 validation pack；不得启用 B3/B4/B5/B6/v3、paper-shadow/live/official weights/broker/order/production
+      mutation，不得访问 untouched holdout，不得调参或伪造 metrics
+    - B2 targeted compute、full diagnostic compute 和 gate compute 均可生成 fresh Campaign
+      run artifact/evidence；full diagnostic 只有 risk-heavy 与 control evidence 同时 validated
+      才能 COMPLETE；gate 从 Campaign evidence store、budget 和 stop rules 生成 constrained
+      B2 decision；B2 E2E compute path 可运行或明确 PASS_WITH_LIMITATIONS/BLOCKED；legacy
+      full path parity PASS 或 explained；budget exhausted 禁止 generic `NEEDS_MORE_EVIDENCE`
+      并强制 final decision drill；legacy B2 runner deprecation readiness 输出 keep/deprecate/not-ready；rc3
+      validation pack 覆盖 adapter registry、B2 targeted/full/gate compute、E2E、parity、B3
+      signal-only smoke、budget final decision、holdout、next-action、no fabricated metrics
+      和 forbidden-effects；focused tests、Ruff、compileall、JSON parse、B2/B3 campaign
+      validate、validation-pack 和 `git diff --check` 通过
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求把 Campaign 从 B2 control-window smoke adapter
+      推进到 B2 targeted/full/gate compute coverage，并继续保持 B3 signal-only 与所有 production/promotion/broker/order
+      边界关闭。2026-06-19: 实现完成并转入 VALIDATING；新增 B2 targeted/full/gate compute adapter、B2
+      E2E compute、full-path parity、budget final-decision drill、legacy B2 runner readiness
+      和 rc3 validation pack；验证通过 focused pytest 18 passed、Ruff、compileall、adapter
+      validation、B2/B3 campaign validate、validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`、JSON
+      parse 和 `git diff --check`。'
+    raw_line: '|TRADING-641_to_648_RESEARCH_CAMPAIGN_B2_FULL_COMPUTE_COVERAGE|ETF
+      portfolio/weight research campaign B2 full compute coverage and decision enforcement|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-641_to_648_Research_Campaign_B2_Full_Compute_Coverage.md`；在
+      TRADING-631~640 rc2 基础上扩展 B2 Campaign compute adapter 覆盖 TARGETED_EVIDENCE、FULL_DIAGNOSTIC
+      和 GATE，新增 B2 end-to-end compute path、legacy full path parity、evidence budget
+      final-decision drill、legacy B2 runner deprecation readiness 和 Control Plane
+      v1 rc3 validation pack；不得启用 B3/B4/B5/B6/v3、paper-shadow/live/official weights/broker/order/production
+      mutation，不得访问 untouched holdout，不得调参或伪造 metrics|B2 targeted compute、full diagnostic
+      compute 和 gate compute 均可生成 fresh Campaign run artifact/evidence；full diagnostic
+      只有 risk-heavy 与 control evidence 同时 validated 才能 COMPLETE；gate 从 Campaign evidence
+      store、budget 和 stop rules 生成 constrained B2 decision；B2 E2E compute path 可运行或明确
+      PASS_WITH_LIMITATIONS/BLOCKED；legacy full path parity PASS 或 explained；budget
+      exhausted 禁止 generic `NEEDS_MORE_EVIDENCE` 并强制 final decision drill；legacy B2
+      runner deprecation readiness 输出 keep/deprecate/not-ready；rc3 validation pack
+      覆盖 adapter registry、B2 targeted/full/gate compute、E2E、parity、B3 signal-only
+      smoke、budget final decision、holdout、next-action、no fabricated metrics 和 forbidden-effects；focused
+      tests、Ruff、compileall、JSON parse、B2/B3 campaign validate、validation-pack 和 `git
+      diff --check` 通过|2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求把 Campaign 从 B2 control-window
+      smoke adapter 推进到 B2 targeted/full/gate compute coverage，并继续保持 B3 signal-only
+      与所有 production/promotion/broker/order 边界关闭。2026-06-19: 实现完成并转入 VALIDATING；新增
+      B2 targeted/full/gate compute adapter、B2 E2E compute、full-path parity、budget
+      final-decision drill、legacy B2 runner readiness 和 rc3 validation pack；验证通过 focused
+      pytest 18 passed、Ruff、compileall、adapter validation、B2/B3 campaign validate、validation-pack
+      `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`、JSON parse 和 `git
+      diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ac8c8c60acbde996518aedfd
+  task_id: TRADING-641_to_648_RESEARCH_CAMPAIGN_B2_FULL_COMPUTE_COVERAGE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求把 Campaign 从 B2 control-window smoke
+      adapter 推进到 B2 targeted/full/gate compute coverage，并继续保持 B3 signal-only 与所有
+      production/promotion/broker/order 边界关闭。2026-06-19: 实现完成并转入 VALIDATING；新增 B2
+      targeted/full/gate compute adapter、B2 E2E compute、full-path parity、budget final-decision
+      drill、legacy B2 runner readiness 和 rc3 validation pack；验证通过 focused pytest 18
+      passed、Ruff、compileall、adapter validation、B2/B3 campaign validate、validation-pack
+      `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`、JSON parse 和 `git
+      diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ac8c8c60acbde996518aedfdc3fab4606a87cd530ebd9c4096d8ddd3d5467637
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-641_to_648_RESEARCH_CAMPAIGN_B2_FULL_COMPUTE_COVERAGE
+  - ETF portfolio/weight research campaign B2 full compute coverage and decision enforcement
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-641_to_648_Research_Campaign_B2_Full_Compute_Coverage.md`；在
+    TRADING-631~640 rc2 基础上扩展 B2 Campaign compute adapter 覆盖 TARGETED_EVIDENCE、FULL_DIAGNOSTIC
+    和 GATE，新增 B2 end-to-end compute path、legacy full path parity、evidence budget final-decision
+    drill、legacy B2 runner deprecation readiness 和 Control Plane v1 rc3 validation
+    pack；不得启用 B3/B4/B5/B6/v3、paper-shadow/live/official weights/broker/order/production
+    mutation，不得访问 untouched holdout，不得调参或伪造 metrics
+  - B2 targeted compute、full diagnostic compute 和 gate compute 均可生成 fresh Campaign
+    run artifact/evidence；full diagnostic 只有 risk-heavy 与 control evidence 同时 validated
+    才能 COMPLETE；gate 从 Campaign evidence store、budget 和 stop rules 生成 constrained
+    B2 decision；B2 E2E compute path 可运行或明确 PASS_WITH_LIMITATIONS/BLOCKED；legacy full
+    path parity PASS 或 explained；budget exhausted 禁止 generic `NEEDS_MORE_EVIDENCE`
+    并强制 final decision drill；legacy B2 runner deprecation readiness 输出 keep/deprecate/not-ready；rc3
+    validation pack 覆盖 adapter registry、B2 targeted/full/gate compute、E2E、parity、B3
+    signal-only smoke、budget final decision、holdout、next-action、no fabricated metrics
+    和 forbidden-effects；focused tests、Ruff、compileall、JSON parse、B2/B3 campaign validate、validation-pack
+    和 `git diff --check` 通过
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求把 Campaign 从 B2 control-window smoke adapter
+    推进到 B2 targeted/full/gate compute coverage，并继续保持 B3 signal-only 与所有 production/promotion/broker/order
+    边界关闭。2026-06-19: 实现完成并转入 VALIDATING；新增 B2 targeted/full/gate compute adapter、B2
+    E2E compute、full-path parity、budget final-decision drill、legacy B2 runner readiness
+    和 rc3 validation pack；验证通过 focused pytest 18 passed、Ruff、compileall、adapter validation、B2/B3
+    campaign validate、validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`、JSON
+    parse 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-641_to_648_Research_Campaign_B2_Full_Compute_Coverage.md
+  terminal: false
+  raw_row_sha256: ac8c8c60acbde996518aedfdc3fab4606a87cd530ebd9c4096d8ddd3d5467637
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7b56b78d72e8d40c51562018f586f63b1191a1bece966875d650e3d8b0dce8b7

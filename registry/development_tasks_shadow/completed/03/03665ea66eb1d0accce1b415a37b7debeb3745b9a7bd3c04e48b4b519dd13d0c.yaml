@@ -1,0 +1,188 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-007A
+  title: null
+  domain: 交易执行/continuous replay hardening & visibility
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/continuous_replay_hardening_visibility_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/continuous_replay_hardening_visibility_2026-05-17.md`；continuous
+    replay summary、Markdown 解释、daily task dashboard latest replay 可见性和 paper signal
+    quality warning 语义已完成；后续真实 daily flow 持续观察由 TRADING-008 等后续任务承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`paper_trading_replay_START_END.json` 必须明确输出 replay/order policy/continuous
+      metrics/final portfolio/max drawdown/concentration 字段；Markdown 必须区分 `daily-independent`
+      与 `continuous-portfolio`，并声明 continuous replay 不是真实账户收益、真实 broker 成交、完整税费/滑点模拟或实盘上线依据；dashboard
+      Paper Trading Trend 只读识别最近已有 replay，continuous 时展示 final_equity、max_drawdown、exposure_peak、final_positions
+      count 和 carry-forward；paper_signal_quality 使用 continuous replay 时不得误报 `DAILY_INDEPENDENT_ONLY`，但必须保留
+      `PAPER_ONLY_SIMULATION` warning，且不得出现 live/trade/promotion 语义；目标 pytest、全量 pytest、ruff、两种
+      replay smoke、提交 push 和 GitHub Actions CI 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 299
+    row_sha256: 82354ab3352e1864214a82016e647b84f5124ad8e640cb64f66e85538363cd95
+    cell_count: 8
+    all_cells:
+    - TRADING-007A
+    - 交易执行/continuous replay hardening & visibility
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/continuous_replay_hardening_visibility_2026-05-17.md`；continuous
+      replay summary、Markdown 解释、daily task dashboard latest replay 可见性和 paper signal
+      quality warning 语义已完成；后续真实 daily flow 持续观察由 TRADING-008 等后续任务承接
+    - '`paper_trading_replay_START_END.json` 必须明确输出 replay/order policy/continuous
+      metrics/final portfolio/max drawdown/concentration 字段；Markdown 必须区分 `daily-independent`
+      与 `continuous-portfolio`，并声明 continuous replay 不是真实账户收益、真实 broker 成交、完整税费/滑点模拟或实盘上线依据；dashboard
+      Paper Trading Trend 只读识别最近已有 replay，continuous 时展示 final_equity、max_drawdown、exposure_peak、final_positions
+      count 和 carry-forward；paper_signal_quality 使用 continuous replay 时不得误报 `DAILY_INDEPENDENT_ONLY`，但必须保留
+      `PAPER_ONLY_SIMULATION` warning，且不得出现 live/trade/promotion 语义；目标 pytest、全量 pytest、ruff、两种
+      replay smoke、提交 push 和 GitHub Actions CI 通过'
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求推进 TRADING-007A，在已实现 continuous replay
+      后补齐语义、可见性和 paper signal quality 边界；真实 broker 和订单类型扩展仍不在范围内。2026-05-17: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已完成 replay JSON/Markdown summary hardening、DAY/GTC policy 可见性、final
+      portfolio metrics、dashboard latest replay summary、paper signal quality `PAPER_ONLY_SIMULATION`
+      warning 和 continuous replay 下移除 `DAILY_INDEPENDENT_ONLY`；本地验证通过 `python -m pytest
+      tests/trading_engine`、`python -m pytest tests/test_daily_task_dashboard.py`、`python
+      -m pytest`、`python -m ruff check scripts src tests`、两种 replay smoke 和 `git diff
+      --check`。2026-05-17: CI 确认完成，GitHub Actions `CI` run `25986442870` 对 commit
+      `75cba8fe37621c73e2c0e32334e3a0f78c3ad475` 状态为 `completed/success`。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：字段级复核确认 daily-independent smoke 无 continuous metrics，continuous-portfolio
+      smoke 输出 `portfolio_carry_forward=true`、`continuous_metrics_available=true`、final
+      portfolio、17 条 equity/cash/exposure 序列、17 条 snapshot、order policy、drawdown、exposure
+      和 concentration 字段；Markdown 明确 paper-only、非实盘、非真实 broker、非完整税费/滑点、非上线依据且不读取
+      broker API key；latest dashboard 当前因 run-bundle 缺 replay JSON 仍 fail closed 为
+      daily-independent / LIMITED，不补造 continuous 结论，dashboard continuous 可见性由目标测试覆盖；paper
+      signal quality continuous smoke 只保留 `PAPER_ONLY_SIMULATION`，不出现 `DAILY_INDEPENDENT_ONLY`
+      或 live/trade/promotion 语义；验证通过 replay/dashboard/continuous replay 目标测试 33 passed、paper
+      signal quality 目标测试 3 passed、`tests/trading_engine` 939 passed、scoped Ruff/Black、两种
+      replay smoke、paper signal quality smoke 和 GitHub Actions run `25986442870` 公开
+      `Success`。'
+    raw_line: '|TRADING-007A|交易执行/continuous replay hardening & visibility|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/continuous_replay_hardening_visibility_2026-05-17.md`；continuous
+      replay summary、Markdown 解释、daily task dashboard latest replay 可见性和 paper signal
+      quality warning 语义已完成；后续真实 daily flow 持续观察由 TRADING-008 等后续任务承接|`paper_trading_replay_START_END.json`
+      必须明确输出 replay/order policy/continuous metrics/final portfolio/max drawdown/concentration
+      字段；Markdown 必须区分 `daily-independent` 与 `continuous-portfolio`，并声明 continuous
+      replay 不是真实账户收益、真实 broker 成交、完整税费/滑点模拟或实盘上线依据；dashboard Paper Trading Trend
+      只读识别最近已有 replay，continuous 时展示 final_equity、max_drawdown、exposure_peak、final_positions
+      count 和 carry-forward；paper_signal_quality 使用 continuous replay 时不得误报 `DAILY_INDEPENDENT_ONLY`，但必须保留
+      `PAPER_ONLY_SIMULATION` warning，且不得出现 live/trade/promotion 语义；目标 pytest、全量 pytest、ruff、两种
+      replay smoke、提交 push 和 GitHub Actions CI 通过|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner
+      要求推进 TRADING-007A，在已实现 continuous replay 后补齐语义、可见性和 paper signal quality 边界；真实
+      broker 和订单类型扩展仍不在范围内。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 replay JSON/Markdown
+      summary hardening、DAY/GTC policy 可见性、final portfolio metrics、dashboard latest
+      replay summary、paper signal quality `PAPER_ONLY_SIMULATION` warning 和 continuous
+      replay 下移除 `DAILY_INDEPENDENT_ONLY`；本地验证通过 `python -m pytest tests/trading_engine`、`python
+      -m pytest tests/test_daily_task_dashboard.py`、`python -m pytest`、`python -m
+      ruff check scripts src tests`、两种 replay smoke 和 `git diff --check`。2026-05-17:
+      CI 确认完成，GitHub Actions `CI` run `25986442870` 对 commit `75cba8fe37621c73e2c0e32334e3a0f78c3ad475`
+      状态为 `completed/success`。2026-06-09: 从 VALIDATING 改为 DONE，原因：字段级复核确认 daily-independent
+      smoke 无 continuous metrics，continuous-portfolio smoke 输出 `portfolio_carry_forward=true`、`continuous_metrics_available=true`、final
+      portfolio、17 条 equity/cash/exposure 序列、17 条 snapshot、order policy、drawdown、exposure
+      和 concentration 字段；Markdown 明确 paper-only、非实盘、非真实 broker、非完整税费/滑点、非上线依据且不读取
+      broker API key；latest dashboard 当前因 run-bundle 缺 replay JSON 仍 fail closed 为
+      daily-independent / LIMITED，不补造 continuous 结论，dashboard continuous 可见性由目标测试覆盖；paper
+      signal quality continuous smoke 只保留 `PAPER_ONLY_SIMULATION`，不出现 `DAILY_INDEPENDENT_ONLY`
+      或 live/trade/promotion 语义；验证通过 replay/dashboard/continuous replay 目标测试 33 passed、paper
+      signal quality 目标测试 3 passed、`tests/trading_engine` 939 passed、scoped Ruff/Black、两种
+      replay smoke、paper signal quality smoke 和 GitHub Actions run `25986442870` 公开
+      `Success`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-82354ab3352e1864214a8201
+  task_id: TRADING-007A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求推进 TRADING-007A，在已实现 continuous
+      replay 后补齐语义、可见性和 paper signal quality 边界；真实 broker 和订单类型扩展仍不在范围内。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 replay JSON/Markdown summary hardening、DAY/GTC
+      policy 可见性、final portfolio metrics、dashboard latest replay summary、paper signal
+      quality `PAPER_ONLY_SIMULATION` warning 和 continuous replay 下移除 `DAILY_INDEPENDENT_ONLY`；本地验证通过
+      `python -m pytest tests/trading_engine`、`python -m pytest tests/test_daily_task_dashboard.py`、`python
+      -m pytest`、`python -m ruff check scripts src tests`、两种 replay smoke 和 `git diff
+      --check`。2026-05-17: CI 确认完成，GitHub Actions `CI` run `25986442870` 对 commit
+      `75cba8fe37621c73e2c0e32334e3a0f78c3ad475` 状态为 `completed/success`。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：字段级复核确认 daily-independent smoke 无 continuous metrics，continuous-portfolio
+      smoke 输出 `portfolio_carry_forward=true`、`continuous_metrics_available=true`、final
+      portfolio、17 条 equity/cash/exposure 序列、17 条 snapshot、order policy、drawdown、exposure
+      和 concentration 字段；Markdown 明确 paper-only、非实盘、非真实 broker、非完整税费/滑点、非上线依据且不读取
+      broker API key；latest dashboard 当前因 run-bundle 缺 replay JSON 仍 fail closed 为
+      daily-independent / LIMITED，不补造 continuous 结论，dashboard continuous 可见性由目标测试覆盖；paper
+      signal quality continuous smoke 只保留 `PAPER_ONLY_SIMULATION`，不出现 `DAILY_INDEPENDENT_ONLY`
+      或 live/trade/promotion 语义；验证通过 replay/dashboard/continuous replay 目标测试 33 passed、paper
+      signal quality 目标测试 3 passed、`tests/trading_engine` 939 passed、scoped Ruff/Black、两种
+      replay smoke、paper signal quality smoke 和 GitHub Actions run `25986442870` 公开
+      `Success`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:82354ab3352e1864214a82016e647b84f5124ad8e640cb64f66e85538363cd95
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-007A
+  - 交易执行/continuous replay hardening & visibility
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/continuous_replay_hardening_visibility_2026-05-17.md`；continuous
+    replay summary、Markdown 解释、daily task dashboard latest replay 可见性和 paper signal
+    quality warning 语义已完成；后续真实 daily flow 持续观察由 TRADING-008 等后续任务承接
+  - '`paper_trading_replay_START_END.json` 必须明确输出 replay/order policy/continuous metrics/final
+    portfolio/max drawdown/concentration 字段；Markdown 必须区分 `daily-independent` 与 `continuous-portfolio`，并声明
+    continuous replay 不是真实账户收益、真实 broker 成交、完整税费/滑点模拟或实盘上线依据；dashboard Paper Trading
+    Trend 只读识别最近已有 replay，continuous 时展示 final_equity、max_drawdown、exposure_peak、final_positions
+    count 和 carry-forward；paper_signal_quality 使用 continuous replay 时不得误报 `DAILY_INDEPENDENT_ONLY`，但必须保留
+    `PAPER_ONLY_SIMULATION` warning，且不得出现 live/trade/promotion 语义；目标 pytest、全量 pytest、ruff、两种
+    replay smoke、提交 push 和 GitHub Actions CI 通过'
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求推进 TRADING-007A，在已实现 continuous replay
+    后补齐语义、可见性和 paper signal quality 边界；真实 broker 和订单类型扩展仍不在范围内。2026-05-17: 从 IN_PROGRESS
+    改为 VALIDATING，原因：已完成 replay JSON/Markdown summary hardening、DAY/GTC policy 可见性、final
+    portfolio metrics、dashboard latest replay summary、paper signal quality `PAPER_ONLY_SIMULATION`
+    warning 和 continuous replay 下移除 `DAILY_INDEPENDENT_ONLY`；本地验证通过 `python -m pytest
+    tests/trading_engine`、`python -m pytest tests/test_daily_task_dashboard.py`、`python
+    -m pytest`、`python -m ruff check scripts src tests`、两种 replay smoke 和 `git diff
+    --check`。2026-05-17: CI 确认完成，GitHub Actions `CI` run `25986442870` 对 commit `75cba8fe37621c73e2c0e32334e3a0f78c3ad475`
+    状态为 `completed/success`。2026-06-09: 从 VALIDATING 改为 DONE，原因：字段级复核确认 daily-independent
+    smoke 无 continuous metrics，continuous-portfolio smoke 输出 `portfolio_carry_forward=true`、`continuous_metrics_available=true`、final
+    portfolio、17 条 equity/cash/exposure 序列、17 条 snapshot、order policy、drawdown、exposure
+    和 concentration 字段；Markdown 明确 paper-only、非实盘、非真实 broker、非完整税费/滑点、非上线依据且不读取 broker
+    API key；latest dashboard 当前因 run-bundle 缺 replay JSON 仍 fail closed 为 daily-independent
+    / LIMITED，不补造 continuous 结论，dashboard continuous 可见性由目标测试覆盖；paper signal quality
+    continuous smoke 只保留 `PAPER_ONLY_SIMULATION`，不出现 `DAILY_INDEPENDENT_ONLY` 或 live/trade/promotion
+    语义；验证通过 replay/dashboard/continuous replay 目标测试 33 passed、paper signal quality
+    目标测试 3 passed、`tests/trading_engine` 939 passed、scoped Ruff/Black、两种 replay smoke、paper
+    signal quality smoke 和 GitHub Actions run `25986442870` 公开 `Success`。'
+  docs_links:
+  - docs/requirements/continuous_replay_hardening_visibility_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 82354ab3352e1864214a82016e647b84f5124ad8e640cb64f66e85538363cd95
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 98ff129e29a7e520af76a04070a43b83241ef7a8b2365e2693eb69468c56bbc4

@@ -1,0 +1,97 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: PROD-006
+  title: null
+  domain: 趋势判断/forward shadow 与 outcome 成熟度
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 时间窗口
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: '`SHADOW-002/SHADOW-003/REPORT-005` 已有
+    challenger shadow runner、样本成熟度报告和 production vs challenger 复盘入口；下一步等待真实 prediction
+    outcome 样本达到可评估窗口'
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: shadow maturity 报告按 candidate、horizon 和 `ai_after_chatgpt` regime 输出样本数、pending/missing、收益、胜率、回撤和
+      benchmark excess；样本不足时 promotion gate 维持观察或缺失状态；达到门槛前，回测或 shadow 结果不得被写成 production
+      规则晋级结论
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1502
+    row_sha256: 35d98ba059abd9bc3279e72913cb03a00beab2ab6522be7c8ad45af1a0380b3f
+    cell_count: 8
+    all_cells:
+    - PROD-006
+    - 趋势判断/forward shadow 与 outcome 成熟度
+    - P1
+    - BLOCKED_EXTERNAL
+    - 系统验证 + 时间窗口
+    - '`SHADOW-002/SHADOW-003/REPORT-005` 已有 challenger shadow runner、样本成熟度报告和 production
+      vs challenger 复盘入口；下一步等待真实 prediction outcome 样本达到可评估窗口'
+    - shadow maturity 报告按 candidate、horizon 和 `ai_after_chatgpt` regime 输出样本数、pending/missing、收益、胜率、回撤和
+      benchmark excess；样本不足时 promotion gate 维持观察或缺失状态；达到门槛前，回测或 shadow 结果不得被写成 production
+      规则晋级结论
+    - '2026-05-06: 从 `PROD-001` 拆出，原因：趋势判断长期可信度需要真实前向样本，但该成熟度受交易日和 label horizon 限制，适合作为独立时间窗口任务。2026-05-10:
+      owner 要求继续积累 outcome 样本；本轮刷新成熟度/校准报告，样本不足仍保持外部时间窗口阻塞。'
+    raw_line: '|PROD-006|趋势判断/forward shadow 与 outcome 成熟度|P1|BLOCKED_EXTERNAL|系统验证
+      + 时间窗口|`SHADOW-002/SHADOW-003/REPORT-005` 已有 challenger shadow runner、样本成熟度报告和
+      production vs challenger 复盘入口；下一步等待真实 prediction outcome 样本达到可评估窗口|shadow maturity
+      报告按 candidate、horizon 和 `ai_after_chatgpt` regime 输出样本数、pending/missing、收益、胜率、回撤和
+      benchmark excess；样本不足时 promotion gate 维持观察或缺失状态；达到门槛前，回测或 shadow 结果不得被写成 production
+      规则晋级结论|2026-05-06: 从 `PROD-001` 拆出，原因：趋势判断长期可信度需要真实前向样本，但该成熟度受交易日和 label horizon
+      限制，适合作为独立时间窗口任务。2026-05-10: owner 要求继续积累 outcome 样本；本轮刷新成熟度/校准报告，样本不足仍保持外部时间窗口阻塞。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-35d98ba059abd9bc3279e729
+  task_id: PROD-006
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 时间窗口
+    notes: '2026-05-06: 从 `PROD-001` 拆出，原因：趋势判断长期可信度需要真实前向样本，但该成熟度受交易日和 label horizon
+      限制，适合作为独立时间窗口任务。2026-05-10: owner 要求继续积累 outcome 样本；本轮刷新成熟度/校准报告，样本不足仍保持外部时间窗口阻塞。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:35d98ba059abd9bc3279e72913cb03a00beab2ab6522be7c8ad45af1a0380b3f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - PROD-006
+  - 趋势判断/forward shadow 与 outcome 成熟度
+  - P1
+  - BLOCKED_EXTERNAL
+  - 系统验证 + 时间窗口
+  - '`SHADOW-002/SHADOW-003/REPORT-005` 已有 challenger shadow runner、样本成熟度报告和 production
+    vs challenger 复盘入口；下一步等待真实 prediction outcome 样本达到可评估窗口'
+  - shadow maturity 报告按 candidate、horizon 和 `ai_after_chatgpt` regime 输出样本数、pending/missing、收益、胜率、回撤和
+    benchmark excess；样本不足时 promotion gate 维持观察或缺失状态；达到门槛前，回测或 shadow 结果不得被写成 production
+    规则晋级结论
+  - '2026-05-06: 从 `PROD-001` 拆出，原因：趋势判断长期可信度需要真实前向样本，但该成熟度受交易日和 label horizon 限制，适合作为独立时间窗口任务。2026-05-10:
+    owner 要求继续积累 outcome 样本；本轮刷新成熟度/校准报告，样本不足仍保持外部时间窗口阻塞。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 35d98ba059abd9bc3279e72913cb03a00beab2ab6522be7c8ad45af1a0380b3f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 406ce3f9091a1d93e05b4652666f5b75b86314433e531cf39e524ccb87759d90

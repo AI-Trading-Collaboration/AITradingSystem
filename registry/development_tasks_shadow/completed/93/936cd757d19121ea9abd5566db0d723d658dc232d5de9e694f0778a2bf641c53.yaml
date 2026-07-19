@@ -1,0 +1,144 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2361_OBSERVE_ONLY_PRODUCTION_AND_BROKER_HARD_BLOCKER_PLAN
+  title: null
+  domain: Research trends / high-intensity risk-cap observe-only production broker
+    hard-blocker
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2362 promotion blocker matrix route
+  requirement_refs:
+  - docs/requirements/TRADING-2361_Observe_Only_Production_And_Broker_Hard_Blocker_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2361_Observe_Only_Production_And_Broker_Hard_Blocker_Plan.md`；承接
+    TRADING-2360 production and broker hard-blocker route。本任务只读取 prior validated TRADING-2347～2360
+    guardrail artifacts；不得启用 scheduler、执行 manual run、append event、绑定 outcome、启用 paper-shadow、进入
+    production、读取账户、导入/调用 broker API、生成订单或让 capital at risk。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends high-intensity-risk-cap-observe-only-production-broker-hard-blocker-plan`；生成
+      production hard-blocker plan、broker hard-blocker plan、capital-at-risk blocker、human
+      confirmation requirement、summary、main package、source artifact review、blocked
+      promotion rationale、2362 route、interpretation boundary、安全边界和 research docs；真实
+      run status=`OBSERVE_ONLY_PRODUCTION_AND_BROKER_HARD_BLOCKER_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347..TRADING-2360`，evidence_chain_complete=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，production_hard_blocker_plan_ready=true，broker_hard_blocker_plan_ready=true，capital_at_risk_blocker_ready=true，human_confirmation_requirement_ready=true，promotion_decision=`BLOCKED`，promotion_allowed=false，production_enabled=false，production_attempted=false，broker_action_enabled=false，broker_action_attempted=false，capital_at_risk_allowed=false，readiness=`READY_FOR_2362_WITH_CAVEATS`，next
+      route=`TRADING-2362_Observe_Only_Consolidated_Promotion_Blocker_And_Safety_Evidence_Matrix`；focused
+      parallel pytest 13 passed。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 126
+    row_sha256: 49979aa2fbef15d8cdad75b145ab74c0bb1b8dced4d1a229f49b7e3a38531cea
+    cell_count: 8
+    all_cells:
+    - TRADING-2361_OBSERVE_ONLY_PRODUCTION_AND_BROKER_HARD_BLOCKER_PLAN
+    - Research trends / high-intensity risk-cap observe-only production broker hard-blocker
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2362 promotion blocker matrix route
+    - 详见 `docs/requirements/TRADING-2361_Observe_Only_Production_And_Broker_Hard_Blocker_Plan.md`；承接
+      TRADING-2360 production and broker hard-blocker route。本任务只读取 prior validated
+      TRADING-2347～2360 guardrail artifacts；不得启用 scheduler、执行 manual run、append event、绑定
+      outcome、启用 paper-shadow、进入 production、读取账户、导入/调用 broker API、生成订单或让 capital at
+      risk。
+    - 新增 `aits research trends high-intensity-risk-cap-observe-only-production-broker-hard-blocker-plan`；生成
+      production hard-blocker plan、broker hard-blocker plan、capital-at-risk blocker、human
+      confirmation requirement、summary、main package、source artifact review、blocked
+      promotion rationale、2362 route、interpretation boundary、安全边界和 research docs；真实
+      run status=`OBSERVE_ONLY_PRODUCTION_AND_BROKER_HARD_BLOCKER_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347..TRADING-2360`，evidence_chain_complete=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，production_hard_blocker_plan_ready=true，broker_hard_blocker_plan_ready=true，capital_at_risk_blocker_ready=true，human_confirmation_requirement_ready=true，promotion_decision=`BLOCKED`，promotion_allowed=false，production_enabled=false，production_attempted=false，broker_action_enabled=false，broker_action_attempted=false，capital_at_risk_allowed=false，readiness=`READY_FOR_2362_WITH_CAVEATS`，next
+      route=`TRADING-2362_Observe_Only_Consolidated_Promotion_Blocker_And_Safety_Evidence_Matrix`；focused
+      parallel pytest 13 passed。
+    - '2026-07-05: 根据 owner closure pack 新增并进入 IN_PROGRESS；2360 已完成，当前从 2361 开始继续
+      closure pack。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取 prior
+      validated TRADING-2347～2360 artifacts，不读取 fresh market data、不 append event、不绑定
+      outcome、不 mutate outcome store、不启用 paper-shadow、不调用 broker API、不生成 technical
+      features、scoring、backtest 或 daily report。后续只能进入 TRADING-2362 promotion blocker
+      matrix route，不能直接 enable paper-shadow、enter production 或 broker。'
+    raw_line: '|TRADING-2361_OBSERVE_ONLY_PRODUCTION_AND_BROKER_HARD_BLOCKER_PLAN|Research
+      trends / high-intensity risk-cap observe-only production broker hard-blocker|P0|DONE|项目
+      owner 后续复核 TRADING-2362 promotion blocker matrix route|详见 `docs/requirements/TRADING-2361_Observe_Only_Production_And_Broker_Hard_Blocker_Plan.md`；承接
+      TRADING-2360 production and broker hard-blocker route。本任务只读取 prior validated
+      TRADING-2347～2360 guardrail artifacts；不得启用 scheduler、执行 manual run、append event、绑定
+      outcome、启用 paper-shadow、进入 production、读取账户、导入/调用 broker API、生成订单或让 capital at
+      risk。|新增 `aits research trends high-intensity-risk-cap-observe-only-production-broker-hard-blocker-plan`；生成
+      production hard-blocker plan、broker hard-blocker plan、capital-at-risk blocker、human
+      confirmation requirement、summary、main package、source artifact review、blocked
+      promotion rationale、2362 route、interpretation boundary、安全边界和 research docs；真实
+      run status=`OBSERVE_ONLY_PRODUCTION_AND_BROKER_HARD_BLOCKER_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347..TRADING-2360`，evidence_chain_complete=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，production_hard_blocker_plan_ready=true，broker_hard_blocker_plan_ready=true，capital_at_risk_blocker_ready=true，human_confirmation_requirement_ready=true，promotion_decision=`BLOCKED`，promotion_allowed=false，production_enabled=false，production_attempted=false，broker_action_enabled=false，broker_action_attempted=false，capital_at_risk_allowed=false，readiness=`READY_FOR_2362_WITH_CAVEATS`，next
+      route=`TRADING-2362_Observe_Only_Consolidated_Promotion_Blocker_And_Safety_Evidence_Matrix`；focused
+      parallel pytest 13 passed。|2026-07-05: 根据 owner closure pack 新增并进入 IN_PROGRESS；2360
+      已完成，当前从 2361 开始继续 closure pack。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347～2360 artifacts，不读取 fresh market data、不 append event、不绑定
+      outcome、不 mutate outcome store、不启用 paper-shadow、不调用 broker API、不生成 technical
+      features、scoring、backtest 或 daily report。后续只能进入 TRADING-2362 promotion blocker
+      matrix route，不能直接 enable paper-shadow、enter production 或 broker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-49979aa2fbef15d8cdad75b1
+  task_id: TRADING-2361_OBSERVE_ONLY_PRODUCTION_AND_BROKER_HARD_BLOCKER_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2362 promotion blocker matrix route
+    notes: '2026-07-05: 根据 owner closure pack 新增并进入 IN_PROGRESS；2360 已完成，当前从 2361
+      开始继续 closure pack。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347～2360 artifacts，不读取 fresh market data、不 append event、不绑定
+      outcome、不 mutate outcome store、不启用 paper-shadow、不调用 broker API、不生成 technical
+      features、scoring、backtest 或 daily report。后续只能进入 TRADING-2362 promotion blocker
+      matrix route，不能直接 enable paper-shadow、enter production 或 broker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:49979aa2fbef15d8cdad75b145ab74c0bb1b8dced4d1a229f49b7e3a38531cea
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2361_OBSERVE_ONLY_PRODUCTION_AND_BROKER_HARD_BLOCKER_PLAN
+  - Research trends / high-intensity risk-cap observe-only production broker hard-blocker
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2362 promotion blocker matrix route
+  - 详见 `docs/requirements/TRADING-2361_Observe_Only_Production_And_Broker_Hard_Blocker_Plan.md`；承接
+    TRADING-2360 production and broker hard-blocker route。本任务只读取 prior validated TRADING-2347～2360
+    guardrail artifacts；不得启用 scheduler、执行 manual run、append event、绑定 outcome、启用 paper-shadow、进入
+    production、读取账户、导入/调用 broker API、生成订单或让 capital at risk。
+  - 新增 `aits research trends high-intensity-risk-cap-observe-only-production-broker-hard-blocker-plan`；生成
+    production hard-blocker plan、broker hard-blocker plan、capital-at-risk blocker、human
+    confirmation requirement、summary、main package、source artifact review、blocked promotion
+    rationale、2362 route、interpretation boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_PRODUCTION_AND_BROKER_HARD_BLOCKER_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+    tasks=`TRADING-2347..TRADING-2360`，evidence_chain_complete=true，owner_decision=`KEEP_DISABLED_AND_PROMOTION_BLOCKED`，production_hard_blocker_plan_ready=true，broker_hard_blocker_plan_ready=true，capital_at_risk_blocker_ready=true，human_confirmation_requirement_ready=true，promotion_decision=`BLOCKED`，promotion_allowed=false，production_enabled=false，production_attempted=false，broker_action_enabled=false，broker_action_attempted=false，capital_at_risk_allowed=false，readiness=`READY_FOR_2362_WITH_CAVEATS`，next
+    route=`TRADING-2362_Observe_Only_Consolidated_Promotion_Blocker_And_Safety_Evidence_Matrix`；focused
+    parallel pytest 13 passed。
+  - '2026-07-05: 根据 owner closure pack 新增并进入 IN_PROGRESS；2360 已完成，当前从 2361 开始继续 closure
+    pack。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取 prior validated
+    TRADING-2347～2360 artifacts，不读取 fresh market data、不 append event、不绑定 outcome、不
+    mutate outcome store、不启用 paper-shadow、不调用 broker API、不生成 technical features、scoring、backtest
+    或 daily report。后续只能进入 TRADING-2362 promotion blocker matrix route，不能直接 enable
+    paper-shadow、enter production 或 broker。'
+  docs_links:
+  - docs/requirements/TRADING-2361_Observe_Only_Production_And_Broker_Hard_Blocker_Plan.md
+  terminal: true
+  raw_row_sha256: 49979aa2fbef15d8cdad75b145ab74c0bb1b8dced4d1a229f49b7e3a38531cea
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7884ff4d6a0b95920311f806ae5a2e7b92dbe4b0808ef1e656d8b8b34a4cdf3c

@@ -1,0 +1,138 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-041
+  title: null
+  domain: 基本面/SEC PIT Baseline Comparison & Decision Impact Report
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/sec_pit_baseline_comparison_2026-05-27.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/sec_pit_baseline_comparison_2026-05-27.md`；已完成
+    `aits sec-pit compare-baseline`、只读 baseline comparison 核心模块、summary JSON/Markdown、decision
+    impact CSV、rank shift CSV、incremental alpha CSV、缺失输入 LIMITED 模式、`--strict` fail-closed、dashboard
+    只读卡片、artifact catalog、system flow、learning path、runbook、data source 和 feature
+    availability 更新
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: CLI 支持 `--start`、`--end`、`--sec-pit-evaluation-dir`、`--baseline-score-dir`、`--benchmark`、`--output-dir`、`--tickers`、`--strict`；输出
+      decision-level comparison artifact；缺 baseline 或 SEC PIT evaluation 时默认生成 LIMITED
+      report；overlap 不足输出 `INSUFFICIENT_OVERLAP`；所有 decision impact 行固定 `manual_review_required=true`、`production_effect=none`；dashboard
+      只读读取 latest comparison summary，不运行 comparison、不读取 market data、不修改 production
+      weights/actions；专项测试覆盖 summary/Markdown/CSV schema、missing baseline、missing
+      evaluation、insufficient overlap、CLI、dashboard read-only 和 deterministic output
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 393
+    row_sha256: c66ae93d3d46f4485f03d1666f6f10489986d119343a08c5621cdf5f2074970c
+    cell_count: 8
+    all_cells:
+    - TRADING-041
+    - 基本面/SEC PIT Baseline Comparison & Decision Impact Report
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/sec_pit_baseline_comparison_2026-05-27.md`；已完成 `aits
+      sec-pit compare-baseline`、只读 baseline comparison 核心模块、summary JSON/Markdown、decision
+      impact CSV、rank shift CSV、incremental alpha CSV、缺失输入 LIMITED 模式、`--strict` fail-closed、dashboard
+      只读卡片、artifact catalog、system flow、learning path、runbook、data source 和 feature
+      availability 更新
+    - CLI 支持 `--start`、`--end`、`--sec-pit-evaluation-dir`、`--baseline-score-dir`、`--benchmark`、`--output-dir`、`--tickers`、`--strict`；输出
+      decision-level comparison artifact；缺 baseline 或 SEC PIT evaluation 时默认生成 LIMITED
+      report；overlap 不足输出 `INSUFFICIENT_OVERLAP`；所有 decision impact 行固定 `manual_review_required=true`、`production_effect=none`；dashboard
+      只读读取 latest comparison summary，不运行 comparison、不读取 market data、不修改 production
+      weights/actions；专项测试覆盖 summary/Markdown/CSV schema、missing baseline、missing
+      evaluation、insufficient overlap、CLI、dashboard read-only 和 deterministic output
+    - '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-040 已能评估 SEC PIT feature-level evidence，但仍缺少与
+      price-only / score-daily baseline 的 decision-level 对比。2026-05-27: 从 IN_PROGRESS
+      改为 DONE，原因：实现和文档完成；验证通过 `python -m pytest tests/trading_engine/test_sec_pit_baseline_comparison.py
+      -q`（7 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量
+      `python -m pytest -q`（1276 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+    raw_line: '|TRADING-041|基本面/SEC PIT Baseline Comparison & Decision Impact Report|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/sec_pit_baseline_comparison_2026-05-27.md`；已完成 `aits sec-pit
+      compare-baseline`、只读 baseline comparison 核心模块、summary JSON/Markdown、decision
+      impact CSV、rank shift CSV、incremental alpha CSV、缺失输入 LIMITED 模式、`--strict` fail-closed、dashboard
+      只读卡片、artifact catalog、system flow、learning path、runbook、data source 和 feature
+      availability 更新|CLI 支持 `--start`、`--end`、`--sec-pit-evaluation-dir`、`--baseline-score-dir`、`--benchmark`、`--output-dir`、`--tickers`、`--strict`；输出
+      decision-level comparison artifact；缺 baseline 或 SEC PIT evaluation 时默认生成 LIMITED
+      report；overlap 不足输出 `INSUFFICIENT_OVERLAP`；所有 decision impact 行固定 `manual_review_required=true`、`production_effect=none`；dashboard
+      只读读取 latest comparison summary，不运行 comparison、不读取 market data、不修改 production
+      weights/actions；专项测试覆盖 summary/Markdown/CSV schema、missing baseline、missing
+      evaluation、insufficient overlap、CLI、dashboard read-only 和 deterministic output|2026-05-27:
+      新增并进入 IN_PROGRESS，原因：TRADING-040 已能评估 SEC PIT feature-level evidence，但仍缺少与 price-only
+      / score-daily baseline 的 decision-level 对比。2026-05-27: 从 IN_PROGRESS 改为 DONE，原因：实现和文档完成；验证通过
+      `python -m pytest tests/trading_engine/test_sec_pit_baseline_comparison.py -q`（7
+      passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量
+      `python -m pytest -q`（1276 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c66ae93d3d46f4485f03d166
+  task_id: TRADING-041
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-040 已能评估 SEC PIT feature-level
+      evidence，但仍缺少与 price-only / score-daily baseline 的 decision-level 对比。2026-05-27:
+      从 IN_PROGRESS 改为 DONE，原因：实现和文档完成；验证通过 `python -m pytest tests/trading_engine/test_sec_pit_baseline_comparison.py
+      -q`（7 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量
+      `python -m pytest -q`（1276 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c66ae93d3d46f4485f03d1666f6f10489986d119343a08c5621cdf5f2074970c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-041
+  - 基本面/SEC PIT Baseline Comparison & Decision Impact Report
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/sec_pit_baseline_comparison_2026-05-27.md`；已完成 `aits
+    sec-pit compare-baseline`、只读 baseline comparison 核心模块、summary JSON/Markdown、decision
+    impact CSV、rank shift CSV、incremental alpha CSV、缺失输入 LIMITED 模式、`--strict` fail-closed、dashboard
+    只读卡片、artifact catalog、system flow、learning path、runbook、data source 和 feature
+    availability 更新
+  - CLI 支持 `--start`、`--end`、`--sec-pit-evaluation-dir`、`--baseline-score-dir`、`--benchmark`、`--output-dir`、`--tickers`、`--strict`；输出
+    decision-level comparison artifact；缺 baseline 或 SEC PIT evaluation 时默认生成 LIMITED
+    report；overlap 不足输出 `INSUFFICIENT_OVERLAP`；所有 decision impact 行固定 `manual_review_required=true`、`production_effect=none`；dashboard
+    只读读取 latest comparison summary，不运行 comparison、不读取 market data、不修改 production weights/actions；专项测试覆盖
+    summary/Markdown/CSV schema、missing baseline、missing evaluation、insufficient overlap、CLI、dashboard
+    read-only 和 deterministic output
+  - '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-040 已能评估 SEC PIT feature-level evidence，但仍缺少与
+    price-only / score-daily baseline 的 decision-level 对比。2026-05-27: 从 IN_PROGRESS
+    改为 DONE，原因：实现和文档完成；验证通过 `python -m pytest tests/trading_engine/test_sec_pit_baseline_comparison.py
+    -q`（7 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、全量
+    `python -m pytest -q`（1276 passed, 1 warning）、全量 `python -m ruff check config
+    src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+  docs_links:
+  - docs/requirements/sec_pit_baseline_comparison_2026-05-27.md
+  terminal: true
+  raw_row_sha256: c66ae93d3d46f4485f03d1666f6f10489986d119343a08c5621cdf5f2074970c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d969c531a5459f677012f2044b93d6b8c45300d0c597af654a0227474a3e53a1

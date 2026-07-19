@@ -1,0 +1,118 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2277_SPLIT_ACTIVE_SELECTION_AND_PROMOTION_POLICY
+  title: null
+  domain: Research trends / split active selection and promotion policy
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2277_Split_Active_Selection_And_Promotion_Policy.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2277_Split_Active_Selection_And_Promotion_Policy.md`；依赖
+    TRADING-2276 结论。本批先固化 split selection / promotion semantics，旧的 gate policy v2
+    challenger rerun 暂缓到该 policy 完成后。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `active_selection_policy_v2.md/yaml`、`research_candidate_queue.json`、`owner_review_queue.json`、`promotion_boundary_report.md`
+      和 `updated_challenger_selection_matrix.json`；确保 `OWNER_REVIEW_REQUIRED` 不被 active
+      selection 改写为 `BLOCKED`，`RESEARCH_ACCEPTED` 不触发 promotion，boundary candidates
+      `wf_504d_baseline` / `wf_378d_initial` 状态符合 owner 要求；promotion/paper-shadow/production/broker
+      固定 false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1237
+    row_sha256: e3ab9addcf48e29a954c417de5a538aab6e5214a2c89430e16afa1bbc7c1a026
+    cell_count: 8
+    all_cells:
+    - TRADING-2277_SPLIT_ACTIVE_SELECTION_AND_PROMOTION_POLICY
+    - Research trends / split active selection and promotion policy
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2277_Split_Active_Selection_And_Promotion_Policy.md`；依赖
+      TRADING-2276 结论。本批先固化 split selection / promotion semantics，旧的 gate policy v2
+      challenger rerun 暂缓到该 policy 完成后。
+    - 生成 `active_selection_policy_v2.md/yaml`、`research_candidate_queue.json`、`owner_review_queue.json`、`promotion_boundary_report.md`
+      和 `updated_challenger_selection_matrix.json`；确保 `OWNER_REVIEW_REQUIRED` 不被 active
+      selection 改写为 `BLOCKED`，`RESEARCH_ACCEPTED` 不触发 promotion，boundary candidates
+      `wf_504d_baseline` / `wf_378d_initial` 状态符合 owner 要求；promotion/paper-shadow/production/broker
+      固定 false/none。
+    - '2026-06-28: 按 owner 最新要求进入 IN_PROGRESS。2026-06-28: 实现完成并转入 VALIDATING；真实 run
+      candidate_count=10、ranked_review=2、offline_validation_ready=4、owner_review_required=1、blocked=4、promotion_ready=0。验证通过
+      Ruff、compileall、focused parallel pytest 49 passed、docs freshness、diff check
+      和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T150616Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-2277_SPLIT_ACTIVE_SELECTION_AND_PROMOTION_POLICY|Research
+      trends / split active selection and promotion policy|P0|VALIDATING|系统实现 + 项目
+      owner 后续复核|详见 `docs/requirements/TRADING-2277_Split_Active_Selection_And_Promotion_Policy.md`；依赖
+      TRADING-2276 结论。本批先固化 split selection / promotion semantics，旧的 gate policy v2
+      challenger rerun 暂缓到该 policy 完成后。|生成 `active_selection_policy_v2.md/yaml`、`research_candidate_queue.json`、`owner_review_queue.json`、`promotion_boundary_report.md`
+      和 `updated_challenger_selection_matrix.json`；确保 `OWNER_REVIEW_REQUIRED` 不被 active
+      selection 改写为 `BLOCKED`，`RESEARCH_ACCEPTED` 不触发 promotion，boundary candidates
+      `wf_504d_baseline` / `wf_378d_initial` 状态符合 owner 要求；promotion/paper-shadow/production/broker
+      固定 false/none。|2026-06-28: 按 owner 最新要求进入 IN_PROGRESS。2026-06-28: 实现完成并转入 VALIDATING；真实
+      run candidate_count=10、ranked_review=2、offline_validation_ready=4、owner_review_required=1、blocked=4、promotion_ready=0。验证通过
+      Ruff、compileall、focused parallel pytest 49 passed、docs freshness、diff check
+      和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T150616Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e3ab9addcf48e29a954c417d
+  task_id: TRADING-2277_SPLIT_ACTIVE_SELECTION_AND_PROMOTION_POLICY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 按 owner 最新要求进入 IN_PROGRESS。2026-06-28: 实现完成并转入 VALIDATING；真实
+      run candidate_count=10、ranked_review=2、offline_validation_ready=4、owner_review_required=1、blocked=4、promotion_ready=0。验证通过
+      Ruff、compileall、focused parallel pytest 49 passed、docs freshness、diff check
+      和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T150616Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e3ab9addcf48e29a954c417de5a538aab6e5214a2c89430e16afa1bbc7c1a026
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2277_SPLIT_ACTIVE_SELECTION_AND_PROMOTION_POLICY
+  - Research trends / split active selection and promotion policy
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2277_Split_Active_Selection_And_Promotion_Policy.md`；依赖
+    TRADING-2276 结论。本批先固化 split selection / promotion semantics，旧的 gate policy v2
+    challenger rerun 暂缓到该 policy 完成后。
+  - 生成 `active_selection_policy_v2.md/yaml`、`research_candidate_queue.json`、`owner_review_queue.json`、`promotion_boundary_report.md`
+    和 `updated_challenger_selection_matrix.json`；确保 `OWNER_REVIEW_REQUIRED` 不被 active
+    selection 改写为 `BLOCKED`，`RESEARCH_ACCEPTED` 不触发 promotion，boundary candidates
+    `wf_504d_baseline` / `wf_378d_initial` 状态符合 owner 要求；promotion/paper-shadow/production/broker
+    固定 false/none。
+  - '2026-06-28: 按 owner 最新要求进入 IN_PROGRESS。2026-06-28: 实现完成并转入 VALIDATING；真实 run
+    candidate_count=10、ranked_review=2、offline_validation_ready=4、owner_review_required=1、blocked=4、promotion_ready=0。验证通过
+    Ruff、compileall、focused parallel pytest 49 passed、docs freshness、diff check 和
+    contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T150616Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-2277_Split_Active_Selection_And_Promotion_Policy.md
+  terminal: false
+  raw_row_sha256: e3ab9addcf48e29a954c417de5a538aab6e5214a2c89430e16afa1bbc7c1a026
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e5dfa5867d34c3afe779f4927b4f826a066902da81393e2064614e97e4387f60

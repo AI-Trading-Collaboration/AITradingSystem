@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+  title: null
+  domain: Data Foundation / immutable snapshots, canonical DQ evidence, lifecycle
+    and lineage
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner + data platform owner + architecture coordinator
+  requirement_refs:
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`；复用ARCH-004
+    contracts/atomic writer及TRADING-726～759 validation-only baseline，不建立第二套contract；下一步复核D0事务发布、统一DQ
+    preflight、retention/backup的实施顺序与shared-path ownership。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可校验`DataQualityEvidence`并在FAIL前零下游结果；market-calendar
+      freshness/区间coverage/内部缺口进入gate；cache lifecycle与backup/restore真实执行；instance
+      lineage和source identity可重放；system flow/runbook/registry/catalog/tests同步。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1176
+    row_sha256: b2f90f58846ba1e65d7eb0debe62d1863b9fb6172c3edeac3533b78dcb670a54
+    cell_count: 8
+    all_cells:
+    - DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+    - Data Foundation / immutable snapshots, canonical DQ evidence, lifecycle and
+      lineage
+    - P0
+    - PROPOSED
+    - project owner + data platform owner + architecture coordinator
+    - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`；复用ARCH-004
+      contracts/atomic writer及TRADING-726～759 validation-only baseline，不建立第二套contract；下一步复核D0事务发布、统一DQ
+      preflight、retention/backup的实施顺序与shared-path ownership。
+    - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可校验`DataQualityEvidence`并在FAIL前零下游结果；market-calendar
+      freshness/区间coverage/内部缺口进入gate；cache lifecycle与backup/restore真实执行；instance
+      lineage和source identity可重放；system flow/runbook/registry/catalog/tests同步。
+    - '2026-07-12: 根据owner数据管理审计与逻辑分层决策登记为PROPOSED；只冻结目标和边界，不改变cache、gate、score、backtest或production。'
+    raw_line: '|DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE|Data Foundation /
+      immutable snapshots, canonical DQ evidence, lifecycle and lineage|P0|PROPOSED|project
+      owner + data platform owner + architecture coordinator|详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`；复用ARCH-004
+      contracts/atomic writer及TRADING-726～759 validation-only baseline，不建立第二套contract；下一步复核D0事务发布、统一DQ
+      preflight、retention/backup的实施顺序与shared-path ownership。|canonical数据采用staged immutable
+      snapshot + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可校验`DataQualityEvidence`并在FAIL前零下游结果；market-calendar
+      freshness/区间coverage/内部缺口进入gate；cache lifecycle与backup/restore真实执行；instance
+      lineage和source identity可重放；system flow/runbook/registry/catalog/tests同步。|2026-07-12:
+      根据owner数据管理审计与逻辑分层决策登记为PROPOSED；只冻结目标和边界，不改变cache、gate、score、backtest或production。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b2f90f58846ba1e65d7eb0de
+  task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P0
+    next_owner: project owner + data platform owner + architecture coordinator
+    notes: '2026-07-12: 根据owner数据管理审计与逻辑分层决策登记为PROPOSED；只冻结目标和边界，不改变cache、gate、score、backtest或production。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b2f90f58846ba1e65d7eb0debe62d1863b9fb6172c3edeac3533b78dcb670a54
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+  - Data Foundation / immutable snapshots, canonical DQ evidence, lifecycle and lineage
+  - P0
+  - PROPOSED
+  - project owner + data platform owner + architecture coordinator
+  - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`；复用ARCH-004
+    contracts/atomic writer及TRADING-726～759 validation-only baseline，不建立第二套contract；下一步复核D0事务发布、统一DQ
+    preflight、retention/backup的实施顺序与shared-path ownership。
+  - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可校验`DataQualityEvidence`并在FAIL前零下游结果；market-calendar
+    freshness/区间coverage/内部缺口进入gate；cache lifecycle与backup/restore真实执行；instance lineage和source
+    identity可重放；system flow/runbook/registry/catalog/tests同步。
+  - '2026-07-12: 根据owner数据管理审计与逻辑分层决策登记为PROPOSED；只冻结目标和边界，不改变cache、gate、score、backtest或production。'
+  docs_links:
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  terminal: false
+  raw_row_sha256: b2f90f58846ba1e65d7eb0debe62d1863b9fb6172c3edeac3533b78dcb670a54
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: fb4933a14fb92b42ef421654a58d79cf07122ea39cb091e4c36b7cef36d9f722

@@ -1,0 +1,174 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-631_to_640_RESEARCH_CAMPAIGN_EXECUTION_ADAPTERS
+  title: null
+  domain: ETF portfolio/weight research campaign execution adapter integration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-631_to_640_Research_Campaign_Execution_Adapters.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-631_to_640_Research_Campaign_Execution_Adapters.md`；在
+    TRADING-623~630 Control Plane v1 validation pack 基础上，先完成已验证产物的本地提交和推送，再为 Campaign
+    adapter 定义 run mode contract，接入一个最小 B2 compute adapter、B2 compute/audited parity、`campaign
+    run --stage next` smoke、evidence budget forced transition、B3 signal-only compute
+    smoke、status/plan UX、case-specific runner deprecation boundary 和 v1 rc2 validation
+    pack；不得启用 paper-shadow/live/official weights/broker/order/production mutation，不得访问
+    untouched holdout，不得推进 B4/B5/B6/v3
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: TRADING-631 已复验并推送；adapter 输出能区分 `AUDITED_ARTIFACT_MODE` 与 `COMPUTE_MODE`；B2
+      compute smoke 真实调用 B2 risk overlay 计算路径并生成 fresh run artifact/evidence；B2 compute/audited
+      parity 为 PASS 或 explained；`campaign run --stage next` 对 adapter missing、budget
+      exhausted、holdout 越权 fail-closed；budget exhausted 不再允许泛化 `NEEDS_MORE_EVIDENCE`；B3
+      adapter 只产出 signal-direction evidence；status/plan/blocked/allowed/budget/source-artifacts
+      输出可读；deprecation plan 明确旧 runner replacement/parity/blocker；rc2 validation pack
+      可解析且无伪造 metrics、无 forbidden production effects；focused tests、ruff、compileall、JSON
+      parse、B2/B3 campaign validate、validation-pack 和 `git diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1409
+    row_sha256: 64b0045e6ab6b934e831a7f746a16f30e8d5203ce44cda4917e39ba0c3c4a3b3
+    cell_count: 8
+    all_cells:
+    - TRADING-631_to_640_RESEARCH_CAMPAIGN_EXECUTION_ADAPTERS
+    - ETF portfolio/weight research campaign execution adapter integration
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-631_to_640_Research_Campaign_Execution_Adapters.md`；在
+      TRADING-623~630 Control Plane v1 validation pack 基础上，先完成已验证产物的本地提交和推送，再为 Campaign
+      adapter 定义 run mode contract，接入一个最小 B2 compute adapter、B2 compute/audited parity、`campaign
+      run --stage next` smoke、evidence budget forced transition、B3 signal-only compute
+      smoke、status/plan UX、case-specific runner deprecation boundary 和 v1 rc2 validation
+      pack；不得启用 paper-shadow/live/official weights/broker/order/production mutation，不得访问
+      untouched holdout，不得推进 B4/B5/B6/v3
+    - TRADING-631 已复验并推送；adapter 输出能区分 `AUDITED_ARTIFACT_MODE` 与 `COMPUTE_MODE`；B2
+      compute smoke 真实调用 B2 risk overlay 计算路径并生成 fresh run artifact/evidence；B2 compute/audited
+      parity 为 PASS 或 explained；`campaign run --stage next` 对 adapter missing、budget
+      exhausted、holdout 越权 fail-closed；budget exhausted 不再允许泛化 `NEEDS_MORE_EVIDENCE`；B3
+      adapter 只产出 signal-direction evidence；status/plan/blocked/allowed/budget/source-artifacts
+      输出可读；deprecation plan 明确旧 runner replacement/parity/blocker；rc2 validation pack
+      可解析且无伪造 metrics、无 forbidden production effects；focused tests、ruff、compileall、JSON
+      parse、B2/B3 campaign validate、validation-pack 和 `git diff --check` 通过
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求把 Research Campaign 从 audited-evidence
+      control plane 推进到最小 execution-control-plane；TRADING-631 已在本地复验 focused pytest
+      15 passed、task-register terminal-status check、Ruff、compileall、JSON parse、adapter
+      validation、B2/B3 campaign validation、validation pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`
+      和 `git diff --check`，并提交推送 `ba323dd1`。2026-06-19: 实现完成并转入 VALIDATING；新增 adapter
+      run mode contract、B2 compute adapter smoke、B2 compute/audited parity、run-next
+      smoke、evidence budget forced transition、B3 signal-only compute smoke、status/plan
+      UX、old runner deprecation plan 和 rc2 validation pack；验证通过 focused pytest 17
+      passed、Ruff、compileall、JSON parse、adapter validation、B2/B3 campaign validate、CLI
+      UX smoke、validation pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`
+      和 `git diff --check`。'
+    raw_line: '|TRADING-631_to_640_RESEARCH_CAMPAIGN_EXECUTION_ADAPTERS|ETF portfolio/weight
+      research campaign execution adapter integration|P0|VALIDATING|系统实现 + 项目 owner
+      后续复核|详细拆解见 `docs/requirements/TRADING-631_to_640_Research_Campaign_Execution_Adapters.md`；在
+      TRADING-623~630 Control Plane v1 validation pack 基础上，先完成已验证产物的本地提交和推送，再为 Campaign
+      adapter 定义 run mode contract，接入一个最小 B2 compute adapter、B2 compute/audited parity、`campaign
+      run --stage next` smoke、evidence budget forced transition、B3 signal-only compute
+      smoke、status/plan UX、case-specific runner deprecation boundary 和 v1 rc2 validation
+      pack；不得启用 paper-shadow/live/official weights/broker/order/production mutation，不得访问
+      untouched holdout，不得推进 B4/B5/B6/v3|TRADING-631 已复验并推送；adapter 输出能区分 `AUDITED_ARTIFACT_MODE`
+      与 `COMPUTE_MODE`；B2 compute smoke 真实调用 B2 risk overlay 计算路径并生成 fresh run artifact/evidence；B2
+      compute/audited parity 为 PASS 或 explained；`campaign run --stage next` 对 adapter
+      missing、budget exhausted、holdout 越权 fail-closed；budget exhausted 不再允许泛化 `NEEDS_MORE_EVIDENCE`；B3
+      adapter 只产出 signal-direction evidence；status/plan/blocked/allowed/budget/source-artifacts
+      输出可读；deprecation plan 明确旧 runner replacement/parity/blocker；rc2 validation pack
+      可解析且无伪造 metrics、无 forbidden production effects；focused tests、ruff、compileall、JSON
+      parse、B2/B3 campaign validate、validation-pack 和 `git diff --check` 通过|2026-06-19:
+      新增并进入 IN_PROGRESS，原因：附件要求把 Research Campaign 从 audited-evidence control plane
+      推进到最小 execution-control-plane；TRADING-631 已在本地复验 focused pytest 15 passed、task-register
+      terminal-status check、Ruff、compileall、JSON parse、adapter validation、B2/B3 campaign
+      validation、validation pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`
+      和 `git diff --check`，并提交推送 `ba323dd1`。2026-06-19: 实现完成并转入 VALIDATING；新增 adapter
+      run mode contract、B2 compute adapter smoke、B2 compute/audited parity、run-next
+      smoke、evidence budget forced transition、B3 signal-only compute smoke、status/plan
+      UX、old runner deprecation plan 和 rc2 validation pack；验证通过 focused pytest 17
+      passed、Ruff、compileall、JSON parse、adapter validation、B2/B3 campaign validate、CLI
+      UX smoke、validation pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`
+      和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-64b0045e6ab6b934e831a7f7
+  task_id: TRADING-631_to_640_RESEARCH_CAMPAIGN_EXECUTION_ADAPTERS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求把 Research Campaign 从 audited-evidence
+      control plane 推进到最小 execution-control-plane；TRADING-631 已在本地复验 focused pytest
+      15 passed、task-register terminal-status check、Ruff、compileall、JSON parse、adapter
+      validation、B2/B3 campaign validation、validation pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`
+      和 `git diff --check`，并提交推送 `ba323dd1`。2026-06-19: 实现完成并转入 VALIDATING；新增 adapter
+      run mode contract、B2 compute adapter smoke、B2 compute/audited parity、run-next
+      smoke、evidence budget forced transition、B3 signal-only compute smoke、status/plan
+      UX、old runner deprecation plan 和 rc2 validation pack；验证通过 focused pytest 17
+      passed、Ruff、compileall、JSON parse、adapter validation、B2/B3 campaign validate、CLI
+      UX smoke、validation pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`
+      和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:64b0045e6ab6b934e831a7f746a16f30e8d5203ce44cda4917e39ba0c3c4a3b3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-631_to_640_RESEARCH_CAMPAIGN_EXECUTION_ADAPTERS
+  - ETF portfolio/weight research campaign execution adapter integration
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-631_to_640_Research_Campaign_Execution_Adapters.md`；在
+    TRADING-623~630 Control Plane v1 validation pack 基础上，先完成已验证产物的本地提交和推送，再为 Campaign
+    adapter 定义 run mode contract，接入一个最小 B2 compute adapter、B2 compute/audited parity、`campaign
+    run --stage next` smoke、evidence budget forced transition、B3 signal-only compute
+    smoke、status/plan UX、case-specific runner deprecation boundary 和 v1 rc2 validation
+    pack；不得启用 paper-shadow/live/official weights/broker/order/production mutation，不得访问
+    untouched holdout，不得推进 B4/B5/B6/v3
+  - TRADING-631 已复验并推送；adapter 输出能区分 `AUDITED_ARTIFACT_MODE` 与 `COMPUTE_MODE`；B2 compute
+    smoke 真实调用 B2 risk overlay 计算路径并生成 fresh run artifact/evidence；B2 compute/audited
+    parity 为 PASS 或 explained；`campaign run --stage next` 对 adapter missing、budget
+    exhausted、holdout 越权 fail-closed；budget exhausted 不再允许泛化 `NEEDS_MORE_EVIDENCE`；B3
+    adapter 只产出 signal-direction evidence；status/plan/blocked/allowed/budget/source-artifacts
+    输出可读；deprecation plan 明确旧 runner replacement/parity/blocker；rc2 validation pack
+    可解析且无伪造 metrics、无 forbidden production effects；focused tests、ruff、compileall、JSON
+    parse、B2/B3 campaign validate、validation-pack 和 `git diff --check` 通过
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求把 Research Campaign 从 audited-evidence control
+    plane 推进到最小 execution-control-plane；TRADING-631 已在本地复验 focused pytest 15 passed、task-register
+    terminal-status check、Ruff、compileall、JSON parse、adapter validation、B2/B3 campaign
+    validation、validation pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`
+    和 `git diff --check`，并提交推送 `ba323dd1`。2026-06-19: 实现完成并转入 VALIDATING；新增 adapter
+    run mode contract、B2 compute adapter smoke、B2 compute/audited parity、run-next
+    smoke、evidence budget forced transition、B3 signal-only compute smoke、status/plan
+    UX、old runner deprecation plan 和 rc2 validation pack；验证通过 focused pytest 17 passed、Ruff、compileall、JSON
+    parse、adapter validation、B2/B3 campaign validate、CLI UX smoke、validation pack
+    `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS` 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-631_to_640_Research_Campaign_Execution_Adapters.md
+  terminal: false
+  raw_row_sha256: 64b0045e6ab6b934e831a7f746a16f30e8d5203ce44cda4917e39ba0c3c4a3b3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9c4a68fe6de31e683361f413cb0274488e5b33db7601139b66b57ff4cf6bc0bc

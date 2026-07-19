@@ -1,0 +1,105 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: PORTFOLIO-002
+  title: null
+  domain: 组合风险/解释
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已建立真实持仓文件驱动的 AI 仓位 ticker、产业链节点、地区、客户链、因子、ETF
+    beta、相关性簇和集中度暴露分解；剩余缺口是真实账户持仓文件、FX/流动性/税费扩展，以及后续 `SCORE-003` 风险预算接入；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#portfolio-002`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 日报显示当前 AI 仓位不是只显示百分比，还显示单票集中度、节点暴露、地区暴露、客户链暴露、估值/成长因子、ETF beta、相关性簇和主要拥挤风险；缺少真实持仓输入时明确
+      `NOT_CONNECTED`；第一版只做解释层，不直接改变仓位；实现时同步更新 `docs/system_flow.md` 并补充暴露计算测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1117
+    row_sha256: fb6264113cdd90f45b73d9811eb4fbd1b0480ae8b8d8a247569bd573999773b0
+    cell_count: 8
+    all_cells:
+    - PORTFOLIO-002
+    - 组合风险/解释
+    - P1
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已建立真实持仓文件驱动的 AI 仓位 ticker、产业链节点、地区、客户链、因子、ETF beta、相关性簇和集中度暴露分解；剩余缺口是真实账户持仓文件、FX/流动性/税费扩展，以及后续
+      `SCORE-003` 风险预算接入；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#portfolio-002`
+    - 日报显示当前 AI 仓位不是只显示百分比，还显示单票集中度、节点暴露、地区暴露、客户链暴露、估值/成长因子、ETF beta、相关性簇和主要拥挤风险；缺少真实持仓输入时明确
+      `NOT_CONNECTED`；第一版只做解释层，不直接改变仓位；实现时同步更新 `docs/system_flow.md` 并补充暴露计算测试
+    - '与 `SCORE-003` 有重叠但不重复；该任务先提供解释和输入数据，后续由 `SCORE-003` 决定是否进入风险预算约束。2026-05-04:
+      从 PROPOSED 改为 IN_PROGRESS，原因：生产就绪复盘确认日报仓位还不是账户级建议，开始实现真实持仓 CSV、只读暴露分解、CLI、日报章节和测试；没有真实持仓时不得用观察池替代。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `portfolio_exposure` 模块、`aits portfolio
+      exposure`、持仓 CSV 模板、日报组合暴露章节、数据源目录、系统流图和测试；`production_effect=none`，不会改变评分、`position_gate`、执行建议或回测仓位。'
+    raw_line: '|PORTFOLIO-002|组合风险/解释|P1|BASELINE_DONE|系统实现 + 项目 owner|已建立真实持仓文件驱动的
+      AI 仓位 ticker、产业链节点、地区、客户链、因子、ETF beta、相关性簇和集中度暴露分解；剩余缺口是真实账户持仓文件、FX/流动性/税费扩展，以及后续
+      `SCORE-003` 风险预算接入；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#portfolio-002`|日报显示当前
+      AI 仓位不是只显示百分比，还显示单票集中度、节点暴露、地区暴露、客户链暴露、估值/成长因子、ETF beta、相关性簇和主要拥挤风险；缺少真实持仓输入时明确
+      `NOT_CONNECTED`；第一版只做解释层，不直接改变仓位；实现时同步更新 `docs/system_flow.md` 并补充暴露计算测试|与 `SCORE-003`
+      有重叠但不重复；该任务先提供解释和输入数据，后续由 `SCORE-003` 决定是否进入风险预算约束。2026-05-04: 从 PROPOSED 改为
+      IN_PROGRESS，原因：生产就绪复盘确认日报仓位还不是账户级建议，开始实现真实持仓 CSV、只读暴露分解、CLI、日报章节和测试；没有真实持仓时不得用观察池替代。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `portfolio_exposure` 模块、`aits portfolio
+      exposure`、持仓 CSV 模板、日报组合暴露章节、数据源目录、系统流图和测试；`production_effect=none`，不会改变评分、`position_gate`、执行建议或回测仓位。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fb6264113cdd90f45b73d981
+  task_id: PORTFOLIO-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner
+    notes: '与 `SCORE-003` 有重叠但不重复；该任务先提供解释和输入数据，后续由 `SCORE-003` 决定是否进入风险预算约束。2026-05-04:
+      从 PROPOSED 改为 IN_PROGRESS，原因：生产就绪复盘确认日报仓位还不是账户级建议，开始实现真实持仓 CSV、只读暴露分解、CLI、日报章节和测试；没有真实持仓时不得用观察池替代。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `portfolio_exposure` 模块、`aits portfolio
+      exposure`、持仓 CSV 模板、日报组合暴露章节、数据源目录、系统流图和测试；`production_effect=none`，不会改变评分、`position_gate`、执行建议或回测仓位。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:fb6264113cdd90f45b73d9811eb4fbd1b0480ae8b8d8a247569bd573999773b0
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - PORTFOLIO-002
+  - 组合风险/解释
+  - P1
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已建立真实持仓文件驱动的 AI 仓位 ticker、产业链节点、地区、客户链、因子、ETF beta、相关性簇和集中度暴露分解；剩余缺口是真实账户持仓文件、FX/流动性/税费扩展，以及后续
+    `SCORE-003` 风险预算接入；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#portfolio-002`
+  - 日报显示当前 AI 仓位不是只显示百分比，还显示单票集中度、节点暴露、地区暴露、客户链暴露、估值/成长因子、ETF beta、相关性簇和主要拥挤风险；缺少真实持仓输入时明确
+    `NOT_CONNECTED`；第一版只做解释层，不直接改变仓位；实现时同步更新 `docs/system_flow.md` 并补充暴露计算测试
+  - '与 `SCORE-003` 有重叠但不重复；该任务先提供解释和输入数据，后续由 `SCORE-003` 决定是否进入风险预算约束。2026-05-04:
+    从 PROPOSED 改为 IN_PROGRESS，原因：生产就绪复盘确认日报仓位还不是账户级建议，开始实现真实持仓 CSV、只读暴露分解、CLI、日报章节和测试；没有真实持仓时不得用观察池替代。2026-05-04:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `portfolio_exposure` 模块、`aits portfolio exposure`、持仓
+    CSV 模板、日报组合暴露章节、数据源目录、系统流图和测试；`production_effect=none`，不会改变评分、`position_gate`、执行建议或回测仓位。'
+  docs_links:
+  - docs/requirements/feedback_loop_governance_2026-05-04.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: fb6264113cdd90f45b73d9811eb4fbd1b0480ae8b8d8a247569bd573999773b0
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 25331ae7e486cc87f5ea505cff4bfd8ac65d08b50025b2d676eec13d52c43eaf

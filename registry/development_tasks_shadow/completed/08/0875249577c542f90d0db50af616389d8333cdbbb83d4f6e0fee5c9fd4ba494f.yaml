@@ -1,0 +1,117 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-894_DAILY_INCREMENTAL_REFACTOR_SIMPLE_BASELINE_CLI_BOUNDARY
+  title: null
+  domain: Architecture / daily incremental refactor simple baseline CLI boundary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/refactor_log.md
+  - docs/requirements/TRADING-894_Daily_Incremental_Refactor_Simple_Baseline_CLI_Boundary.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-894_Daily_Incremental_Refactor_Simple_Baseline_CLI_Boundary.md`；已将
+    TRADING-865～893 `aits research strategies ...` simple baseline CLI wrapper 从过大的
+    `cli_commands/research.py` 拆到专用 `cli_commands/research_simple_baselines.py` 模块，外部命令和输出保持兼容
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits research strategies` 下 20 个 simple baseline 命令路径、参数、artifact 输出、安全字段和退出语义保持兼容；focused
+      xdist pytest、`contract-validation`、Ruff、Black check、compileall、CLI help smoke
+      和 `git diff --check` 通过；`docs/refactor_log.md` 记录本轮基线、验证和提交 SHA'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 180
+    row_sha256: 10bbe3020d7c4166b5777ebabdde38ea0929721a934f9f25ba66918f4cde7fbd
+    cell_count: 8
+    all_cells:
+    - TRADING-894_DAILY_INCREMENTAL_REFACTOR_SIMPLE_BASELINE_CLI_BOUNDARY
+    - Architecture / daily incremental refactor simple baseline CLI boundary
+    - P2
+    - DONE
+    - 系统验证
+    - 详见 `docs/requirements/TRADING-894_Daily_Incremental_Refactor_Simple_Baseline_CLI_Boundary.md`；已将
+      TRADING-865～893 `aits research strategies ...` simple baseline CLI wrapper 从过大的
+      `cli_commands/research.py` 拆到专用 `cli_commands/research_simple_baselines.py`
+      模块，外部命令和输出保持兼容
+    - '`aits research strategies` 下 20 个 simple baseline 命令路径、参数、artifact 输出、安全字段和退出语义保持兼容；focused
+      xdist pytest、`contract-validation`、Ruff、Black check、compileall、CLI help smoke
+      和 `git diff --check` 通过；`docs/refactor_log.md` 记录本轮基线、验证和提交 SHA'
+    - '2026-06-23: 每日增量重构自动化新增并完成；边界固定 `production_effect=none`，不改变 simple baseline
+      计算逻辑、cached data validation gate、threshold、score band、promotion gate、backtest
+      acceptance、仓位约束、投资解释、paper-shadow/production weights 或 broker/order path。验证通过
+      focused pytest 13 passed、`contract-validation` 193 passed、Ruff、Black check、compileall、CLI
+      help smoke 和 `git diff --check`。'
+    raw_line: '|TRADING-894_DAILY_INCREMENTAL_REFACTOR_SIMPLE_BASELINE_CLI_BOUNDARY|Architecture
+      / daily incremental refactor simple baseline CLI boundary|P2|DONE|系统验证|详见 `docs/requirements/TRADING-894_Daily_Incremental_Refactor_Simple_Baseline_CLI_Boundary.md`；已将
+      TRADING-865～893 `aits research strategies ...` simple baseline CLI wrapper 从过大的
+      `cli_commands/research.py` 拆到专用 `cli_commands/research_simple_baselines.py`
+      模块，外部命令和输出保持兼容|`aits research strategies` 下 20 个 simple baseline 命令路径、参数、artifact
+      输出、安全字段和退出语义保持兼容；focused xdist pytest、`contract-validation`、Ruff、Black check、compileall、CLI
+      help smoke 和 `git diff --check` 通过；`docs/refactor_log.md` 记录本轮基线、验证和提交 SHA|2026-06-23:
+      每日增量重构自动化新增并完成；边界固定 `production_effect=none`，不改变 simple baseline 计算逻辑、cached
+      data validation gate、threshold、score band、promotion gate、backtest acceptance、仓位约束、投资解释、paper-shadow/production
+      weights 或 broker/order path。验证通过 focused pytest 13 passed、`contract-validation`
+      193 passed、Ruff、Black check、compileall、CLI help smoke 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-10bbe3020d7c4166b5777eba
+  task_id: TRADING-894_DAILY_INCREMENTAL_REFACTOR_SIMPLE_BASELINE_CLI_BOUNDARY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: '2026-06-23: 每日增量重构自动化新增并完成；边界固定 `production_effect=none`，不改变 simple baseline
+      计算逻辑、cached data validation gate、threshold、score band、promotion gate、backtest
+      acceptance、仓位约束、投资解释、paper-shadow/production weights 或 broker/order path。验证通过
+      focused pytest 13 passed、`contract-validation` 193 passed、Ruff、Black check、compileall、CLI
+      help smoke 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:10bbe3020d7c4166b5777ebabdde38ea0929721a934f9f25ba66918f4cde7fbd
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-894_DAILY_INCREMENTAL_REFACTOR_SIMPLE_BASELINE_CLI_BOUNDARY
+  - Architecture / daily incremental refactor simple baseline CLI boundary
+  - P2
+  - DONE
+  - 系统验证
+  - 详见 `docs/requirements/TRADING-894_Daily_Incremental_Refactor_Simple_Baseline_CLI_Boundary.md`；已将
+    TRADING-865～893 `aits research strategies ...` simple baseline CLI wrapper 从过大的
+    `cli_commands/research.py` 拆到专用 `cli_commands/research_simple_baselines.py` 模块，外部命令和输出保持兼容
+  - '`aits research strategies` 下 20 个 simple baseline 命令路径、参数、artifact 输出、安全字段和退出语义保持兼容；focused
+    xdist pytest、`contract-validation`、Ruff、Black check、compileall、CLI help smoke
+    和 `git diff --check` 通过；`docs/refactor_log.md` 记录本轮基线、验证和提交 SHA'
+  - '2026-06-23: 每日增量重构自动化新增并完成；边界固定 `production_effect=none`，不改变 simple baseline
+    计算逻辑、cached data validation gate、threshold、score band、promotion gate、backtest
+    acceptance、仓位约束、投资解释、paper-shadow/production weights 或 broker/order path。验证通过
+    focused pytest 13 passed、`contract-validation` 193 passed、Ruff、Black check、compileall、CLI
+    help smoke 和 `git diff --check`。'
+  docs_links:
+  - docs/refactor_log.md
+  - docs/requirements/TRADING-894_Daily_Incremental_Refactor_Simple_Baseline_CLI_Boundary.md
+  terminal: true
+  raw_row_sha256: 10bbe3020d7c4166b5777ebabdde38ea0929721a934f9f25ba66918f4cde7fbd
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a009f4ef6859f9e3271a28b4c05c6eef2cbe770351ebbfb7731b5a2ba6d612db

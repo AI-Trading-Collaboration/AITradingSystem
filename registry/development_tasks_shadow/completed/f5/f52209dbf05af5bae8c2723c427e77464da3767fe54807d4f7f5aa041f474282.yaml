@@ -1,0 +1,170 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2419_GROWTH_TILT_ENGINE_PIT_GATE_READINESS_RECHECK
+  title: null
+  domain: Strategy research / growth tilt PIT gate readiness recheck
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2420 signal artifact source traceability remediation
+  requirement_refs:
+  - docs/requirements/TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck.md
+  - docs/tasks/completed/TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck.md`；承接
+    TRADING-2418 valid-until dependency evidence closure、TRADING-2417 source traceability
+    / upstream artifact closure、TRADING-2416 remaining blocker closure plan 和 TRADING-2415
+    PIT gate readiness snapshot，仅读取 prior artifacts/docs/registry/catalog 与 PIT input
+    registry；本任务只生成 PIT gate readiness recheck、blocker classification、remaining blocker
+    summary 和 2420 route，不标记 PIT gate ready 或 contract ready、不解除或降级 blocker、不运行 candidate
+    search / observation / paper-shadow / scheduler / event append / outcome binding
+    / production / broker，不运行新 backtest、scoring、daily report 或生成新 signal/feature。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 reusable PIT gate readiness recheck builder、`aits research strategies
+      growth-tilt-engine-pit-gate-readiness-recheck`；输出 `readiness_recheck_result.json`、`pit_gate_recheck_matrix.json`、`blocker_classification.json`、`remaining_blocker_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_PIT_GATE_READINESS_RECHECK_BLOCKED_BY_SIGNAL_ARTIFACT_SOURCE_TRACEABILITY`，PIT
+      gate ready count=0，contract-ready count=0，PIT gate blocked count=10，valid-until
+      dependency evidence ready from 2418=true，valid-until dependency still-blocked
+      count after recheck=0，remaining blocker list 只保留 `growth_tilt_engine_signal_artifact`，blocker
+      classification=`source_traceability`，`auto_mark_pit_gate_ready=false`、`auto_mark_contract_ready=false`、`auto_downgrade_blocker=false`、`blockers_resolved=false`、`blockers_downgraded=false`、`signal_artifact_source_traceability_blocker_resolved=false`、`signal_artifact_source_traceability_blocker_downgraded=false`、candidate_search_allowed=false、candidate_search_resumed=false、research_only_observation_approved=false、paper_shadow_enabled=false、event_append_enabled=false、outcome_binding_enabled=false、scheduler_enabled=false、production_enabled=false、broker_action_enabled=false、daily_report_generated=false，next
+      route=`TRADING-2420_Growth_Tilt_Engine_Signal_Artifact_Source_Traceability_Remediation`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 65
+    row_sha256: 4804e92226fd84b072ec666383fe54421eefb373a299fcb42967fabb4003ee14
+    cell_count: 8
+    all_cells:
+    - TRADING-2419_GROWTH_TILT_ENGINE_PIT_GATE_READINESS_RECHECK
+    - Strategy research / growth tilt PIT gate readiness recheck
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2420 signal artifact source traceability remediation
+    - 详见 `docs/requirements/TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck.md`；承接
+      TRADING-2418 valid-until dependency evidence closure、TRADING-2417 source traceability
+      / upstream artifact closure、TRADING-2416 remaining blocker closure plan 和 TRADING-2415
+      PIT gate readiness snapshot，仅读取 prior artifacts/docs/registry/catalog 与 PIT
+      input registry；本任务只生成 PIT gate readiness recheck、blocker classification、remaining
+      blocker summary 和 2420 route，不标记 PIT gate ready 或 contract ready、不解除或降级 blocker、不运行
+      candidate search / observation / paper-shadow / scheduler / event append / outcome
+      binding / production / broker，不运行新 backtest、scoring、daily report 或生成新 signal/feature。
+    - 新增 reusable PIT gate readiness recheck builder、`aits research strategies growth-tilt-engine-pit-gate-readiness-recheck`；输出
+      `readiness_recheck_result.json`、`pit_gate_recheck_matrix.json`、`blocker_classification.json`、`remaining_blocker_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_PIT_GATE_READINESS_RECHECK_BLOCKED_BY_SIGNAL_ARTIFACT_SOURCE_TRACEABILITY`，PIT
+      gate ready count=0，contract-ready count=0，PIT gate blocked count=10，valid-until
+      dependency evidence ready from 2418=true，valid-until dependency still-blocked
+      count after recheck=0，remaining blocker list 只保留 `growth_tilt_engine_signal_artifact`，blocker
+      classification=`source_traceability`，`auto_mark_pit_gate_ready=false`、`auto_mark_contract_ready=false`、`auto_downgrade_blocker=false`、`blockers_resolved=false`、`blockers_downgraded=false`、`signal_artifact_source_traceability_blocker_resolved=false`、`signal_artifact_source_traceability_blocker_downgraded=false`、candidate_search_allowed=false、candidate_search_resumed=false、research_only_observation_approved=false、paper_shadow_enabled=false、event_append_enabled=false、outcome_binding_enabled=false、scheduler_enabled=false、production_enabled=false、broker_action_enabled=false、daily_report_generated=false，next
+      route=`TRADING-2420_Growth_Tilt_Engine_Signal_Artifact_Source_Traceability_Remediation`。
+    - '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest、真实 CLI、docs freshness、documentation contract、task-register consistency
+      run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits validate-data`，因为只读取
+      prior validated TRADING-2415～2418 artifacts/docs/registry/catalog 和 PIT input
+      registry，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+      report 或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+      binding、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      closeout validation 结果见 `docs/tasks/completed/TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck.md`。'
+    raw_line: '|TRADING-2419_GROWTH_TILT_ENGINE_PIT_GATE_READINESS_RECHECK|Strategy
+      research / growth tilt PIT gate readiness recheck|P0|DONE|项目 owner 后续复核 TRADING-2420
+      signal artifact source traceability remediation|详见 `docs/requirements/TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck.md`；承接
+      TRADING-2418 valid-until dependency evidence closure、TRADING-2417 source traceability
+      / upstream artifact closure、TRADING-2416 remaining blocker closure plan 和 TRADING-2415
+      PIT gate readiness snapshot，仅读取 prior artifacts/docs/registry/catalog 与 PIT
+      input registry；本任务只生成 PIT gate readiness recheck、blocker classification、remaining
+      blocker summary 和 2420 route，不标记 PIT gate ready 或 contract ready、不解除或降级 blocker、不运行
+      candidate search / observation / paper-shadow / scheduler / event append / outcome
+      binding / production / broker，不运行新 backtest、scoring、daily report 或生成新 signal/feature。|新增
+      reusable PIT gate readiness recheck builder、`aits research strategies growth-tilt-engine-pit-gate-readiness-recheck`；输出
+      `readiness_recheck_result.json`、`pit_gate_recheck_matrix.json`、`blocker_classification.json`、`remaining_blocker_summary.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_PIT_GATE_READINESS_RECHECK_BLOCKED_BY_SIGNAL_ARTIFACT_SOURCE_TRACEABILITY`，PIT
+      gate ready count=0，contract-ready count=0，PIT gate blocked count=10，valid-until
+      dependency evidence ready from 2418=true，valid-until dependency still-blocked
+      count after recheck=0，remaining blocker list 只保留 `growth_tilt_engine_signal_artifact`，blocker
+      classification=`source_traceability`，`auto_mark_pit_gate_ready=false`、`auto_mark_contract_ready=false`、`auto_downgrade_blocker=false`、`blockers_resolved=false`、`blockers_downgraded=false`、`signal_artifact_source_traceability_blocker_resolved=false`、`signal_artifact_source_traceability_blocker_downgraded=false`、candidate_search_allowed=false、candidate_search_resumed=false、research_only_observation_approved=false、paper_shadow_enabled=false、event_append_enabled=false、outcome_binding_enabled=false、scheduler_enabled=false、production_enabled=false、broker_action_enabled=false、daily_report_generated=false，next
+      route=`TRADING-2420_Growth_Tilt_Engine_Signal_Artifact_Source_Traceability_Remediation`。|2026-07-08:
+      根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+      parallel pytest、真实 CLI、docs freshness、documentation contract、task-register consistency
+      run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits validate-data`，因为只读取
+      prior validated TRADING-2415～2418 artifacts/docs/registry/catalog 和 PIT input
+      registry，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+      report 或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+      binding、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      closeout validation 结果见 `docs/tasks/completed/TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4804e92226fd84b072ec6663
+  task_id: TRADING-2419_GROWTH_TILT_ENGINE_PIT_GATE_READINESS_RECHECK
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2420 signal artifact source traceability remediation
+    notes: '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；验证通过
+      Ruff、compileall、focused parallel pytest、真实 CLI、docs freshness、documentation
+      contract、task-register consistency run/validate、contract-validation 和 `git diff
+      --check`；本任务未运行 `aits validate-data`，因为只读取 prior validated TRADING-2415～2418
+      artifacts/docs/registry/catalog 和 PIT input registry，不读取 fresh cached market
+      data、不运行新 backtest、不生成 feature/signal/scoring/daily report 或交易建议。candidate search、observation、paper-shadow、scheduler、event
+      append、outcome binding、production、broker/order、daily report 全部保持 disabled /
+      false / none；最终 closeout validation 结果见 `docs/tasks/completed/TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4804e92226fd84b072ec666383fe54421eefb373a299fcb42967fabb4003ee14
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2419_GROWTH_TILT_ENGINE_PIT_GATE_READINESS_RECHECK
+  - Strategy research / growth tilt PIT gate readiness recheck
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2420 signal artifact source traceability remediation
+  - 详见 `docs/requirements/TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck.md`；承接
+    TRADING-2418 valid-until dependency evidence closure、TRADING-2417 source traceability
+    / upstream artifact closure、TRADING-2416 remaining blocker closure plan 和 TRADING-2415
+    PIT gate readiness snapshot，仅读取 prior artifacts/docs/registry/catalog 与 PIT input
+    registry；本任务只生成 PIT gate readiness recheck、blocker classification、remaining blocker
+    summary 和 2420 route，不标记 PIT gate ready 或 contract ready、不解除或降级 blocker、不运行 candidate
+    search / observation / paper-shadow / scheduler / event append / outcome binding
+    / production / broker，不运行新 backtest、scoring、daily report 或生成新 signal/feature。
+  - 新增 reusable PIT gate readiness recheck builder、`aits research strategies growth-tilt-engine-pit-gate-readiness-recheck`；输出
+    `readiness_recheck_result.json`、`pit_gate_recheck_matrix.json`、`blocker_classification.json`、`remaining_blocker_summary.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`GROWTH_TILT_ENGINE_PIT_GATE_READINESS_RECHECK_BLOCKED_BY_SIGNAL_ARTIFACT_SOURCE_TRACEABILITY`，PIT
+    gate ready count=0，contract-ready count=0，PIT gate blocked count=10，valid-until
+    dependency evidence ready from 2418=true，valid-until dependency still-blocked
+    count after recheck=0，remaining blocker list 只保留 `growth_tilt_engine_signal_artifact`，blocker
+    classification=`source_traceability`，`auto_mark_pit_gate_ready=false`、`auto_mark_contract_ready=false`、`auto_downgrade_blocker=false`、`blockers_resolved=false`、`blockers_downgraded=false`、`signal_artifact_source_traceability_blocker_resolved=false`、`signal_artifact_source_traceability_blocker_downgraded=false`、candidate_search_allowed=false、candidate_search_resumed=false、research_only_observation_approved=false、paper_shadow_enabled=false、event_append_enabled=false、outcome_binding_enabled=false、scheduler_enabled=false、production_enabled=false、broker_action_enabled=false、daily_report_generated=false，next
+    route=`TRADING-2420_Growth_Tilt_Engine_Signal_Artifact_Source_Traceability_Remediation`。
+  - '2026-07-08: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-08: 实现完成并归档 DONE；验证通过 Ruff、compileall、focused
+    parallel pytest、真实 CLI、docs freshness、documentation contract、task-register consistency
+    run/validate、contract-validation 和 `git diff --check`；本任务未运行 `aits validate-data`，因为只读取
+    prior validated TRADING-2415～2418 artifacts/docs/registry/catalog 和 PIT input
+    registry，不读取 fresh cached market data、不运行新 backtest、不生成 feature/signal/scoring/daily
+    report 或交易建议。candidate search、observation、paper-shadow、scheduler、event append、outcome
+    binding、production、broker/order、daily report 全部保持 disabled / false / none；最终 closeout
+    validation 结果见 `docs/tasks/completed/TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck.md
+  - docs/tasks/completed/TRADING-2419_Growth_Tilt_Engine_PIT_Gate_Readiness_Recheck.md
+  terminal: true
+  raw_row_sha256: 4804e92226fd84b072ec666383fe54421eefb373a299fcb42967fabb4003ee14
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d1413fbcc9367ff5ff1a308f1151ad979b6f8fab342c3eb74b6321c84cc93bbe

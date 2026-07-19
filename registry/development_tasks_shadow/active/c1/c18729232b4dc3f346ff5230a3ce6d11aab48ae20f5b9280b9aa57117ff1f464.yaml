@@ -1,0 +1,115 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-306_to_315_NO_PROMOTION_DIAGNOSTICS_AND_TARGETED_SEARCH_V3
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue no-promotion diagnostics and targeted expanded
+    search v3
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 研究 owner：复核 continue smaller v4 / signal-level diagnosis 结论；architecture
+    coordinator：继续剩余 G2.4 matrix
+  requirement_refs:
+  - docs/requirements/TRADING-306_to_315_No_Promotion_Diagnostics_and_Targeted_Search_v3.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-306_to_315_No_Promotion_Diagnostics_and_Targeted_Search_v3.md`；2026-06-14
+    research-only artifacts保留历史；G2.4已将31个legacy callbacks按CW1/CW2/CW3=`12/10/9`全部迁canonical并完成hardening；不得
+    broker/order/official weights/production/auto owner approval/paper primary switch。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 31 callbacks/31业务入口、十一类v2 snapshots、reviewed policies、exact lineage、pre-output
+      validation、live replay/all-view byte rebuild、tamper fail-close与全部分层验证闭合；真实 owner
+      复核缺口仍保留。单任务完成不触发handoff、不进入G2.5，`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1435
+    row_sha256: 716b4061b2bbb34cc8e8a7834d9330897f5478de9f917ade2402e56fbf3acdbf
+    cell_count: 8
+    all_cells:
+    - TRADING-306_to_315_NO_PROMOTION_DIAGNOSTICS_AND_TARGETED_SEARCH_V3
+    - ETF portfolio/dynamic v3 rescue no-promotion diagnostics and targeted expanded
+      search v3
+    - P0
+    - BASELINE_DONE
+    - 研究 owner：复核 continue smaller v4 / signal-level diagnosis 结论；architecture coordinator：继续剩余
+      G2.4 matrix
+    - 详细拆解见 `docs/requirements/TRADING-306_to_315_No_Promotion_Diagnostics_and_Targeted_Search_v3.md`；2026-06-14
+      research-only artifacts保留历史；G2.4已将31个legacy callbacks按CW1/CW2/CW3=`12/10/9`全部迁canonical并完成hardening；不得
+      broker/order/official weights/production/auto owner approval/paper primary switch。
+    - 31 callbacks/31业务入口、十一类v2 snapshots、reviewed policies、exact lineage、pre-output
+      validation、live replay/all-view byte rebuild、tamper fail-close与全部分层验证闭合；真实 owner
+      复核缺口仍保留。单任务完成不触发handoff、不进入G2.5，`production_effect=none`。
+    - '2026-07-15: CW3=`COMPLETE_G2_4_CONTINUES`；focused合并=`142 passed`，architecture/contract/full=`291/203/6,039
+      passed`，generated=`940/1,131/858/0`。2026-07-16: task row由过时`IN_PROGRESS`修正为`BASELINE_DONE`；whole
+      G2.4仍pending。'
+    raw_line: '|TRADING-306_to_315_NO_PROMOTION_DIAGNOSTICS_AND_TARGETED_SEARCH_V3|ETF
+      portfolio/dynamic v3 rescue no-promotion diagnostics and targeted expanded search
+      v3|P0|BASELINE_DONE|研究 owner：复核 continue smaller v4 / signal-level diagnosis
+      结论；architecture coordinator：继续剩余 G2.4 matrix|详细拆解见 `docs/requirements/TRADING-306_to_315_No_Promotion_Diagnostics_and_Targeted_Search_v3.md`；2026-06-14
+      research-only artifacts保留历史；G2.4已将31个legacy callbacks按CW1/CW2/CW3=`12/10/9`全部迁canonical并完成hardening；不得
+      broker/order/official weights/production/auto owner approval/paper primary switch。|31
+      callbacks/31业务入口、十一类v2 snapshots、reviewed policies、exact lineage、pre-output
+      validation、live replay/all-view byte rebuild、tamper fail-close与全部分层验证闭合；真实 owner
+      复核缺口仍保留。单任务完成不触发handoff、不进入G2.5，`production_effect=none`。|2026-07-15: CW3=`COMPLETE_G2_4_CONTINUES`；focused合并=`142
+      passed`，architecture/contract/full=`291/203/6,039 passed`，generated=`940/1,131/858/0`。2026-07-16:
+      task row由过时`IN_PROGRESS`修正为`BASELINE_DONE`；whole G2.4仍pending。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-716b4061b2bbb34cc8e8a783
+  task_id: TRADING-306_to_315_NO_PROMOTION_DIAGNOSTICS_AND_TARGETED_SEARCH_V3
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 研究 owner：复核 continue smaller v4 / signal-level diagnosis 结论；architecture
+      coordinator：继续剩余 G2.4 matrix
+    notes: '2026-07-15: CW3=`COMPLETE_G2_4_CONTINUES`；focused合并=`142 passed`，architecture/contract/full=`291/203/6,039
+      passed`，generated=`940/1,131/858/0`。2026-07-16: task row由过时`IN_PROGRESS`修正为`BASELINE_DONE`；whole
+      G2.4仍pending。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:716b4061b2bbb34cc8e8a7834d9330897f5478de9f917ade2402e56fbf3acdbf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-306_to_315_NO_PROMOTION_DIAGNOSTICS_AND_TARGETED_SEARCH_V3
+  - ETF portfolio/dynamic v3 rescue no-promotion diagnostics and targeted expanded
+    search v3
+  - P0
+  - BASELINE_DONE
+  - 研究 owner：复核 continue smaller v4 / signal-level diagnosis 结论；architecture coordinator：继续剩余
+    G2.4 matrix
+  - 详细拆解见 `docs/requirements/TRADING-306_to_315_No_Promotion_Diagnostics_and_Targeted_Search_v3.md`；2026-06-14
+    research-only artifacts保留历史；G2.4已将31个legacy callbacks按CW1/CW2/CW3=`12/10/9`全部迁canonical并完成hardening；不得
+    broker/order/official weights/production/auto owner approval/paper primary switch。
+  - 31 callbacks/31业务入口、十一类v2 snapshots、reviewed policies、exact lineage、pre-output
+    validation、live replay/all-view byte rebuild、tamper fail-close与全部分层验证闭合；真实 owner
+    复核缺口仍保留。单任务完成不触发handoff、不进入G2.5，`production_effect=none`。
+  - '2026-07-15: CW3=`COMPLETE_G2_4_CONTINUES`；focused合并=`142 passed`，architecture/contract/full=`291/203/6,039
+    passed`，generated=`940/1,131/858/0`。2026-07-16: task row由过时`IN_PROGRESS`修正为`BASELINE_DONE`；whole
+    G2.4仍pending。'
+  docs_links:
+  - docs/requirements/TRADING-306_to_315_No_Promotion_Diagnostics_and_Targeted_Search_v3.md
+  terminal: false
+  raw_row_sha256: 716b4061b2bbb34cc8e8a7834d9330897f5478de9f917ade2402e56fbf3acdbf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c0eb5957fc99118ea15bc8867559ab01e6803e2bb8198b5fc5323ad4be46c28a

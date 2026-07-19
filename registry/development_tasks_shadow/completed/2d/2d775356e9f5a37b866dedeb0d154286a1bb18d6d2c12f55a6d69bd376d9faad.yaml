@@ -1,0 +1,177 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-014
+  title: null
+  domain: 交易执行/Market Session Guard for Controlled Fill
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/ibkr_paper_controlled_fill_market_session_guard_2026-05-18.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/ibkr_paper_controlled_fill_market_session_guard_2026-05-18.md`；controlled
+    fill submit 前 market session guard、非 regular session fail-closed、CLI override、JSON/Markdown
+    报告字段、runbook、系统流图、artifact catalog、测试和当前复验证据已完成；真实 `REGULAR` session 成功 fill /
+    no-fill failure diagnostics / calibration proposal 继续由 active `TRADING-014A`、`TRADING-014B`、`TRADING-014C`
+    承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `market_session_guard.py`，根据 symbol、as_of、contract details `tradingHours`
+      / `liquidHours` 和 exchange timezone 输出 `REGULAR` / `OUTSIDE_RTH` / `CLOSED`
+      / `UNKNOWN`、`can_submit_controlled_fill`、reason 和 source；controlled fill 默认仅
+      `REGULAR` 可提交，非 regular session 输出 `BLOCK` 或 `LIMITED`、issue code `market_session_closed`
+      / `outside_regular_trading_hours` / `market_session_unknown`，并标记 `controlled_fill_submission=blocked_by_session_guard`；CLI
+      增加 `--allow-outside-rth-diagnostic`，显式覆盖时报告必须标记 `outside_rth_override=true`
+      且 fill interpretation limited；JSON/Markdown/runbook/system flow/artifact catalog
+      同步 session guard 字段；测试覆盖 closed、regular、outside-RTH、unknown、override、blocked
+      不调用 submit_order、`production_effect=none`、不读取 API key、不触发 daily-run/dashboard；目标
+      pytest、默认配置 smoke、docs freshness、`tests/trading_engine` 和 GitHub Actions CI
+      通过；实现期验收记录保留全量 pytest、ruff 和 black check 结果
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 292
+    row_sha256: ffa1ccc4572083711d0f59b24a6dfc17640d8748eb5781974dff4728e104fb42
+    cell_count: 8
+    all_cells:
+    - TRADING-014
+    - 交易执行/Market Session Guard for Controlled Fill
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/ibkr_paper_controlled_fill_market_session_guard_2026-05-18.md`；controlled
+      fill submit 前 market session guard、非 regular session fail-closed、CLI override、JSON/Markdown
+      报告字段、runbook、系统流图、artifact catalog、测试和当前复验证据已完成；真实 `REGULAR` session 成功 fill
+      / no-fill failure diagnostics / calibration proposal 继续由 active `TRADING-014A`、`TRADING-014B`、`TRADING-014C`
+      承接
+    - 新增 `market_session_guard.py`，根据 symbol、as_of、contract details `tradingHours`
+      / `liquidHours` 和 exchange timezone 输出 `REGULAR` / `OUTSIDE_RTH` / `CLOSED`
+      / `UNKNOWN`、`can_submit_controlled_fill`、reason 和 source；controlled fill 默认仅
+      `REGULAR` 可提交，非 regular session 输出 `BLOCK` 或 `LIMITED`、issue code `market_session_closed`
+      / `outside_regular_trading_hours` / `market_session_unknown`，并标记 `controlled_fill_submission=blocked_by_session_guard`；CLI
+      增加 `--allow-outside-rth-diagnostic`，显式覆盖时报告必须标记 `outside_rth_override=true`
+      且 fill interpretation limited；JSON/Markdown/runbook/system flow/artifact catalog
+      同步 session guard 字段；测试覆盖 closed、regular、outside-RTH、unknown、override、blocked
+      不调用 submit_order、`production_effect=none`、不读取 API key、不触发 daily-run/dashboard；目标
+      pytest、默认配置 smoke、docs freshness、`tests/trading_engine` 和 GitHub Actions CI
+      通过；实现期验收记录保留全量 pytest、ruff 和 black check 结果
+    - '2026-05-18: 新增并进入 IN_PROGRESS，原因：`TRADING-013A` 本机 no-fill 样本 likely 来自 non-regular
+      trading session，需要在提交 controlled fill 前 fail closed，避免把 `PreSubmitted` no-fill
+      误归因于 `PaperBroker` fill model。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      IBKR contract details session guard、controlled fill submit 前阻断、outside-RTH 显式诊断
+      override、报告字段、runbook/系统流图/产物目录和 mock tests；本地验证通过目标 pytest、`tests/trading_engine`、全量
+      pytest、ruff 和 black check。2026-06-09: 从 VALIDATING 改为 DONE，原因：本任务范围是提交前 session
+      guard 和 fail-closed 语义，真实 regular-session fill 样本已拆分到 `TRADING-014A` / `TRADING-014B`
+      / `TRADING-014C`；当前复验通过 `test_market_session_guard.py` + `test_ibkr_paper_controlled_fill.py`
+      29 passed、`tests/trading_engine` 939 passed，默认 config smoke 输出 `BLOCK/NOT_RUN`、`controlled_fill_enabled=false`、`controlled_fill_submission=not_evaluated`、`outside_rth_override=false`、no
+      fill、no cancel，安全扫描未发现完整 account id、credential 赋值或 forbidden production semantics；归档前代码基线
+      GitHub Actions run `27175962934` success。'
+    raw_line: '|TRADING-014|交易执行/Market Session Guard for Controlled Fill|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/ibkr_paper_controlled_fill_market_session_guard_2026-05-18.md`；controlled
+      fill submit 前 market session guard、非 regular session fail-closed、CLI override、JSON/Markdown
+      报告字段、runbook、系统流图、artifact catalog、测试和当前复验证据已完成；真实 `REGULAR` session 成功 fill
+      / no-fill failure diagnostics / calibration proposal 继续由 active `TRADING-014A`、`TRADING-014B`、`TRADING-014C`
+      承接|新增 `market_session_guard.py`，根据 symbol、as_of、contract details `tradingHours`
+      / `liquidHours` 和 exchange timezone 输出 `REGULAR` / `OUTSIDE_RTH` / `CLOSED`
+      / `UNKNOWN`、`can_submit_controlled_fill`、reason 和 source；controlled fill 默认仅
+      `REGULAR` 可提交，非 regular session 输出 `BLOCK` 或 `LIMITED`、issue code `market_session_closed`
+      / `outside_regular_trading_hours` / `market_session_unknown`，并标记 `controlled_fill_submission=blocked_by_session_guard`；CLI
+      增加 `--allow-outside-rth-diagnostic`，显式覆盖时报告必须标记 `outside_rth_override=true`
+      且 fill interpretation limited；JSON/Markdown/runbook/system flow/artifact catalog
+      同步 session guard 字段；测试覆盖 closed、regular、outside-RTH、unknown、override、blocked
+      不调用 submit_order、`production_effect=none`、不读取 API key、不触发 daily-run/dashboard；目标
+      pytest、默认配置 smoke、docs freshness、`tests/trading_engine` 和 GitHub Actions CI
+      通过；实现期验收记录保留全量 pytest、ruff 和 black check 结果|2026-05-18: 新增并进入 IN_PROGRESS，原因：`TRADING-013A`
+      本机 no-fill 样本 likely 来自 non-regular trading session，需要在提交 controlled fill 前
+      fail closed，避免把 `PreSubmitted` no-fill 误归因于 `PaperBroker` fill model。2026-05-18:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 IBKR contract details session guard、controlled
+      fill submit 前阻断、outside-RTH 显式诊断 override、报告字段、runbook/系统流图/产物目录和 mock tests；本地验证通过目标
+      pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：本任务范围是提交前 session guard 和 fail-closed 语义，真实 regular-session fill
+      样本已拆分到 `TRADING-014A` / `TRADING-014B` / `TRADING-014C`；当前复验通过 `test_market_session_guard.py`
+      + `test_ibkr_paper_controlled_fill.py` 29 passed、`tests/trading_engine` 939
+      passed，默认 config smoke 输出 `BLOCK/NOT_RUN`、`controlled_fill_enabled=false`、`controlled_fill_submission=not_evaluated`、`outside_rth_override=false`、no
+      fill、no cancel，安全扫描未发现完整 account id、credential 赋值或 forbidden production semantics；归档前代码基线
+      GitHub Actions run `27175962934` success。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ffa1ccc4572083711d0f59b2
+  task_id: TRADING-014
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-18: 新增并进入 IN_PROGRESS，原因：`TRADING-013A` 本机 no-fill 样本 likely 来自
+      non-regular trading session，需要在提交 controlled fill 前 fail closed，避免把 `PreSubmitted`
+      no-fill 误归因于 `PaperBroker` fill model。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      IBKR contract details session guard、controlled fill submit 前阻断、outside-RTH 显式诊断
+      override、报告字段、runbook/系统流图/产物目录和 mock tests；本地验证通过目标 pytest、`tests/trading_engine`、全量
+      pytest、ruff 和 black check。2026-06-09: 从 VALIDATING 改为 DONE，原因：本任务范围是提交前 session
+      guard 和 fail-closed 语义，真实 regular-session fill 样本已拆分到 `TRADING-014A` / `TRADING-014B`
+      / `TRADING-014C`；当前复验通过 `test_market_session_guard.py` + `test_ibkr_paper_controlled_fill.py`
+      29 passed、`tests/trading_engine` 939 passed，默认 config smoke 输出 `BLOCK/NOT_RUN`、`controlled_fill_enabled=false`、`controlled_fill_submission=not_evaluated`、`outside_rth_override=false`、no
+      fill、no cancel，安全扫描未发现完整 account id、credential 赋值或 forbidden production semantics；归档前代码基线
+      GitHub Actions run `27175962934` success。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ffa1ccc4572083711d0f59b24a6dfc17640d8748eb5781974dff4728e104fb42
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-014
+  - 交易执行/Market Session Guard for Controlled Fill
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/ibkr_paper_controlled_fill_market_session_guard_2026-05-18.md`；controlled
+    fill submit 前 market session guard、非 regular session fail-closed、CLI override、JSON/Markdown
+    报告字段、runbook、系统流图、artifact catalog、测试和当前复验证据已完成；真实 `REGULAR` session 成功 fill /
+    no-fill failure diagnostics / calibration proposal 继续由 active `TRADING-014A`、`TRADING-014B`、`TRADING-014C`
+    承接
+  - 新增 `market_session_guard.py`，根据 symbol、as_of、contract details `tradingHours` /
+    `liquidHours` 和 exchange timezone 输出 `REGULAR` / `OUTSIDE_RTH` / `CLOSED` / `UNKNOWN`、`can_submit_controlled_fill`、reason
+    和 source；controlled fill 默认仅 `REGULAR` 可提交，非 regular session 输出 `BLOCK` 或 `LIMITED`、issue
+    code `market_session_closed` / `outside_regular_trading_hours` / `market_session_unknown`，并标记
+    `controlled_fill_submission=blocked_by_session_guard`；CLI 增加 `--allow-outside-rth-diagnostic`，显式覆盖时报告必须标记
+    `outside_rth_override=true` 且 fill interpretation limited；JSON/Markdown/runbook/system
+    flow/artifact catalog 同步 session guard 字段；测试覆盖 closed、regular、outside-RTH、unknown、override、blocked
+    不调用 submit_order、`production_effect=none`、不读取 API key、不触发 daily-run/dashboard；目标
+    pytest、默认配置 smoke、docs freshness、`tests/trading_engine` 和 GitHub Actions CI 通过；实现期验收记录保留全量
+    pytest、ruff 和 black check 结果
+  - '2026-05-18: 新增并进入 IN_PROGRESS，原因：`TRADING-013A` 本机 no-fill 样本 likely 来自 non-regular
+    trading session，需要在提交 controlled fill 前 fail closed，避免把 `PreSubmitted` no-fill
+    误归因于 `PaperBroker` fill model。2026-05-18: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 IBKR
+    contract details session guard、controlled fill submit 前阻断、outside-RTH 显式诊断 override、报告字段、runbook/系统流图/产物目录和
+    mock tests；本地验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。2026-06-09:
+    从 VALIDATING 改为 DONE，原因：本任务范围是提交前 session guard 和 fail-closed 语义，真实 regular-session
+    fill 样本已拆分到 `TRADING-014A` / `TRADING-014B` / `TRADING-014C`；当前复验通过 `test_market_session_guard.py`
+    + `test_ibkr_paper_controlled_fill.py` 29 passed、`tests/trading_engine` 939 passed，默认
+    config smoke 输出 `BLOCK/NOT_RUN`、`controlled_fill_enabled=false`、`controlled_fill_submission=not_evaluated`、`outside_rth_override=false`、no
+    fill、no cancel，安全扫描未发现完整 account id、credential 赋值或 forbidden production semantics；归档前代码基线
+    GitHub Actions run `27175962934` success。'
+  docs_links:
+  - docs/requirements/ibkr_paper_controlled_fill_market_session_guard_2026-05-18.md
+  terminal: true
+  raw_row_sha256: ffa1ccc4572083711d0f59b24a6dfc17640d8748eb5781974dff4728e104fb42
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 38b12f5955607730f2748b00ad19b472b04ad37334b06e420858bf2ee9e58457

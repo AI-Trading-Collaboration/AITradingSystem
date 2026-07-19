@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: THESIS-001
+  title: null
+  domain: 交易 thesis
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/decision_support_improvements_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已把 thesis 从结构校验/复核升级为状态机：`draft -> active
+    -> warning -> challenged -> invalidated -> closed`，并把 `warning/challenged/invalidated`
+    作为日报解释和 `position_gate` 候选输入；详细拆解见 `docs/requirements/decision_support_improvements_2026-05-04.md#thesis-001`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: thesis 报告显示当前状态、上次状态、触发原因、证据来源、相关 ticker/产业链节点和人工复核要求；`draft` 不进入正式评分，`warning`
+      至少触发禁止主动加仓，`challenged/invalidated` 能进入仓位限制或人工复核流程；实现时同步更新 `docs/system_flow.md`
+      并补充 schema、复核、日报和回测相关测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 450
+    row_sha256: bc59d87631663787b008a9a072d619889ff2721e49899926b77ca823dc79d6b9
+    cell_count: 8
+    all_cells:
+    - THESIS-001
+    - 交易 thesis
+    - P1
+    - DONE
+    - 系统实现
+    - 已把 thesis 从结构校验/复核升级为状态机：`draft -> active -> warning -> challenged -> invalidated
+      -> closed`，并把 `warning/challenged/invalidated` 作为日报解释和 `position_gate` 候选输入；详细拆解见
+      `docs/requirements/decision_support_improvements_2026-05-04.md#thesis-001`
+    - thesis 报告显示当前状态、上次状态、触发原因、证据来源、相关 ticker/产业链节点和人工复核要求；`draft` 不进入正式评分，`warning`
+      至少触发禁止主动加仓，`challenged/invalidated` 能进入仓位限制或人工复核流程；实现时同步更新 `docs/system_flow.md`
+      并补充 schema、复核、日报和回测相关测试
+    - '2026-05-04: 从 P2/PROPOSED 升级为 P1/READY，原因：状态机比单纯总分下降更能解释 thesis 承压、证伪、估值过高和基本面恶化的差异。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始扩展 thesis 状态机字段、状态复核规则和仓位闸门联动。2026-05-04: 从 IN_PROGRESS
+      改为 DONE，原因：状态机 schema、状态迁移校验、复核健康状态、日报人工复核摘要、position_gate 联动、模板和测试均已完成；`python
+      -m pytest -q` 通过 220 项测试。'
+    raw_line: '|THESIS-001|交易 thesis|P1|DONE|系统实现|已把 thesis 从结构校验/复核升级为状态机：`draft
+      -> active -> warning -> challenged -> invalidated -> closed`，并把 `warning/challenged/invalidated`
+      作为日报解释和 `position_gate` 候选输入；详细拆解见 `docs/requirements/decision_support_improvements_2026-05-04.md#thesis-001`|thesis
+      报告显示当前状态、上次状态、触发原因、证据来源、相关 ticker/产业链节点和人工复核要求；`draft` 不进入正式评分，`warning` 至少触发禁止主动加仓，`challenged/invalidated`
+      能进入仓位限制或人工复核流程；实现时同步更新 `docs/system_flow.md` 并补充 schema、复核、日报和回测相关测试|2026-05-04:
+      从 P2/PROPOSED 升级为 P1/READY，原因：状态机比单纯总分下降更能解释 thesis 承压、证伪、估值过高和基本面恶化的差异。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始扩展 thesis 状态机字段、状态复核规则和仓位闸门联动。2026-05-04: 从 IN_PROGRESS
+      改为 DONE，原因：状态机 schema、状态迁移校验、复核健康状态、日报人工复核摘要、position_gate 联动、模板和测试均已完成；`python
+      -m pytest -q` 通过 220 项测试。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bc59d87631663787b008a9a0
+  task_id: THESIS-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-04: 从 P2/PROPOSED 升级为 P1/READY，原因：状态机比单纯总分下降更能解释 thesis 承压、证伪、估值过高和基本面恶化的差异。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始扩展 thesis 状态机字段、状态复核规则和仓位闸门联动。2026-05-04: 从 IN_PROGRESS
+      改为 DONE，原因：状态机 schema、状态迁移校验、复核健康状态、日报人工复核摘要、position_gate 联动、模板和测试均已完成；`python
+      -m pytest -q` 通过 220 项测试。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bc59d87631663787b008a9a072d619889ff2721e49899926b77ca823dc79d6b9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - THESIS-001
+  - 交易 thesis
+  - P1
+  - DONE
+  - 系统实现
+  - 已把 thesis 从结构校验/复核升级为状态机：`draft -> active -> warning -> challenged -> invalidated
+    -> closed`，并把 `warning/challenged/invalidated` 作为日报解释和 `position_gate` 候选输入；详细拆解见
+    `docs/requirements/decision_support_improvements_2026-05-04.md#thesis-001`
+  - thesis 报告显示当前状态、上次状态、触发原因、证据来源、相关 ticker/产业链节点和人工复核要求；`draft` 不进入正式评分，`warning`
+    至少触发禁止主动加仓，`challenged/invalidated` 能进入仓位限制或人工复核流程；实现时同步更新 `docs/system_flow.md`
+    并补充 schema、复核、日报和回测相关测试
+  - '2026-05-04: 从 P2/PROPOSED 升级为 P1/READY，原因：状态机比单纯总分下降更能解释 thesis 承压、证伪、估值过高和基本面恶化的差异。2026-05-04:
+    从 READY 改为 IN_PROGRESS，原因：开始扩展 thesis 状态机字段、状态复核规则和仓位闸门联动。2026-05-04: 从 IN_PROGRESS
+    改为 DONE，原因：状态机 schema、状态迁移校验、复核健康状态、日报人工复核摘要、position_gate 联动、模板和测试均已完成；`python
+    -m pytest -q` 通过 220 项测试。'
+  docs_links:
+  - docs/requirements/decision_support_improvements_2026-05-04.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: bc59d87631663787b008a9a072d619889ff2721e49899926b77ca823dc79d6b9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: db548fae0c1343ac3bbd876bd28d7fa0431e2a4001b8525e3806432e9a0faf93

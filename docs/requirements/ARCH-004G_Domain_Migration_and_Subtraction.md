@@ -7,7 +7,7 @@
 - task id：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`
 - parent：`ARCH-004`
 - priority：`P0`
-- status：`G2_4_COMPLETE_HANDOFF_PENDING`
+- status：`G2_4_COMPLETE_HANDOFF_PASS_STOPPED_BEFORE_G2_5`
 - owner：architecture coordinator / 各 domain owner
 - dependency：ARCH-004F1、F2、F3 `DONE`
 - production effect：`none`

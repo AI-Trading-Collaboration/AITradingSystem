@@ -1,0 +1,164 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2349_MANUAL_REVIEW_PROMOTION_GATE_FOR_OBSERVE_ONLY_SCHEDULER
+  title: null
+  domain: Research trends / high-intensity risk-cap observe-only scheduler manual
+    review promotion gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2350 manual-run interface dry-run route
+  requirement_refs:
+  - docs/requirements/TRADING-2349_Manual_Review_Promotion_Gate_For_Observe_Only_Scheduler.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2349_Manual_Review_Promotion_Gate_For_Observe_Only_Scheduler.md`；承接
+    TRADING-2348 manual review route。本任务只读取 prior validated TRADING-2347 disabled
+    wiring artifacts 和 TRADING-2348 smoke dry-run evidence；只做人工评审 gate package、blocked
+    promotion decision 和 2350 manual-run interface dry-run route，不启用 scheduler、不创建真实
+    cron / Windows Task / GitHub Actions schedule、不 append event、不绑定 outcome、不读取 fresh
+    market data、不进入 paper-shadow / production / broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-manual-review-gate`；生成
+      manual review gate summary/package、source artifact review、blocked promotion
+      decision、2350 route、interpretation boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_MANUAL_REVIEW_GATE_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347, TRADING-2348`，source validation=`2026-06-29` / `PASS_WITH_WARNINGS`
+      / error_count=0，promotion_decision=`BLOCKED`，promotion_allowed=false，manual_review_required=true，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，paper_shadow_enabled=false，production_enabled=false，broker_action_enabled=false，event_log_mutated=false，outcome_store_mutated=false，fresh_market_data_read=false，review
+      findings 中 disabled_wiring_present=true、smoke_dry_run_passed=true、guardrail_evidence_present=true、side_effect_assertions_present=true、promotion_evidence_sufficient_for_enablement=false，readiness=`READY_FOR_2350_WITH_CAVEATS`，next
+      route=`TRADING-2350_Observe_Only_Scheduler_Manual_Run_Interface_Dry_Run`。验证通过
+      Ruff、compileall、focused parallel pytest 15 passed、真实 CLI run、docs freshness
+      533 docs PASS、documentation contract 1246 reports PASS、task-register consistency
+      run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T191536Z/test_runtime_summary.json`）和
+      `git diff --check`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 142
+    row_sha256: b09cef02c326bb25b29133bd2efeb743804417817d7fba79093665ee17ed6184
+    cell_count: 8
+    all_cells:
+    - TRADING-2349_MANUAL_REVIEW_PROMOTION_GATE_FOR_OBSERVE_ONLY_SCHEDULER
+    - Research trends / high-intensity risk-cap observe-only scheduler manual review
+      promotion gate
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2350 manual-run interface dry-run route
+    - 详见 `docs/requirements/TRADING-2349_Manual_Review_Promotion_Gate_For_Observe_Only_Scheduler.md`；承接
+      TRADING-2348 manual review route。本任务只读取 prior validated TRADING-2347 disabled
+      wiring artifacts 和 TRADING-2348 smoke dry-run evidence；只做人工评审 gate package、blocked
+      promotion decision 和 2350 manual-run interface dry-run route，不启用 scheduler、不创建真实
+      cron / Windows Task / GitHub Actions schedule、不 append event、不绑定 outcome、不读取
+      fresh market data、不进入 paper-shadow / production / broker。
+    - 新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-manual-review-gate`；生成
+      manual review gate summary/package、source artifact review、blocked promotion
+      decision、2350 route、interpretation boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_MANUAL_REVIEW_GATE_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347, TRADING-2348`，source validation=`2026-06-29` / `PASS_WITH_WARNINGS`
+      / error_count=0，promotion_decision=`BLOCKED`，promotion_allowed=false，manual_review_required=true，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，paper_shadow_enabled=false，production_enabled=false，broker_action_enabled=false，event_log_mutated=false，outcome_store_mutated=false，fresh_market_data_read=false，review
+      findings 中 disabled_wiring_present=true、smoke_dry_run_passed=true、guardrail_evidence_present=true、side_effect_assertions_present=true、promotion_evidence_sufficient_for_enablement=false，readiness=`READY_FOR_2350_WITH_CAVEATS`，next
+      route=`TRADING-2350_Observe_Only_Scheduler_Manual_Run_Interface_Dry_Run`。验证通过
+      Ruff、compileall、focused parallel pytest 15 passed、真实 CLI run、docs freshness
+      533 docs PASS、documentation contract 1246 reports PASS、task-register consistency
+      run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T191536Z/test_runtime_summary.json`）和
+      `git diff --check`。
+    - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 2347 / 2348 evidence 汇总成人工评审
+      gate package，并继续阻断 promotion。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347 disabled wiring 和 TRADING-2348 smoke dry-run artifacts，不读取
+      fresh market data、不 append event、不绑定 outcome。后续只能进入 TRADING-2350 observe-only
+      scheduler manual-run interface dry-run with caveats，不能直接启用 scheduler。'
+    raw_line: '|TRADING-2349_MANUAL_REVIEW_PROMOTION_GATE_FOR_OBSERVE_ONLY_SCHEDULER|Research
+      trends / high-intensity risk-cap observe-only scheduler manual review promotion
+      gate|P0|DONE|项目 owner 后续复核 TRADING-2350 manual-run interface dry-run route|详见
+      `docs/requirements/TRADING-2349_Manual_Review_Promotion_Gate_For_Observe_Only_Scheduler.md`；承接
+      TRADING-2348 manual review route。本任务只读取 prior validated TRADING-2347 disabled
+      wiring artifacts 和 TRADING-2348 smoke dry-run evidence；只做人工评审 gate package、blocked
+      promotion decision 和 2350 manual-run interface dry-run route，不启用 scheduler、不创建真实
+      cron / Windows Task / GitHub Actions schedule、不 append event、不绑定 outcome、不读取
+      fresh market data、不进入 paper-shadow / production / broker。|新增 `aits research
+      trends high-intensity-risk-cap-observe-only-scheduler-manual-review-gate`；生成
+      manual review gate summary/package、source artifact review、blocked promotion
+      decision、2350 route、interpretation boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_MANUAL_REVIEW_GATE_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+      tasks=`TRADING-2347, TRADING-2348`，source validation=`2026-06-29` / `PASS_WITH_WARNINGS`
+      / error_count=0，promotion_decision=`BLOCKED`，promotion_allowed=false，manual_review_required=true，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，paper_shadow_enabled=false，production_enabled=false，broker_action_enabled=false，event_log_mutated=false，outcome_store_mutated=false，fresh_market_data_read=false，review
+      findings 中 disabled_wiring_present=true、smoke_dry_run_passed=true、guardrail_evidence_present=true、side_effect_assertions_present=true、promotion_evidence_sufficient_for_enablement=false，readiness=`READY_FOR_2350_WITH_CAVEATS`，next
+      route=`TRADING-2350_Observe_Only_Scheduler_Manual_Run_Interface_Dry_Run`。验证通过
+      Ruff、compileall、focused parallel pytest 15 passed、真实 CLI run、docs freshness
+      533 docs PASS、documentation contract 1246 reports PASS、task-register consistency
+      run/validate PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T191536Z/test_runtime_summary.json`）和
+      `git diff --check`。|2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 2347 /
+      2348 evidence 汇总成人工评审 gate package，并继续阻断 promotion。2026-07-05: 实现完成并归档 DONE；本任务未重跑
+      `aits validate-data`，因为只读取 prior validated TRADING-2347 disabled wiring 和 TRADING-2348
+      smoke dry-run artifacts，不读取 fresh market data、不 append event、不绑定 outcome。后续只能进入
+      TRADING-2350 observe-only scheduler manual-run interface dry-run with caveats，不能直接启用
+      scheduler。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b09cef02c326bb25b29133bd
+  task_id: TRADING-2349_MANUAL_REVIEW_PROMOTION_GATE_FOR_OBSERVE_ONLY_SCHEDULER
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2350 manual-run interface dry-run route
+    notes: '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 2347 / 2348 evidence
+      汇总成人工评审 gate package，并继续阻断 promotion。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2347 disabled wiring 和 TRADING-2348 smoke dry-run artifacts，不读取
+      fresh market data、不 append event、不绑定 outcome。后续只能进入 TRADING-2350 observe-only
+      scheduler manual-run interface dry-run with caveats，不能直接启用 scheduler。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b09cef02c326bb25b29133bd2efeb743804417817d7fba79093665ee17ed6184
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2349_MANUAL_REVIEW_PROMOTION_GATE_FOR_OBSERVE_ONLY_SCHEDULER
+  - Research trends / high-intensity risk-cap observe-only scheduler manual review
+    promotion gate
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2350 manual-run interface dry-run route
+  - 详见 `docs/requirements/TRADING-2349_Manual_Review_Promotion_Gate_For_Observe_Only_Scheduler.md`；承接
+    TRADING-2348 manual review route。本任务只读取 prior validated TRADING-2347 disabled
+    wiring artifacts 和 TRADING-2348 smoke dry-run evidence；只做人工评审 gate package、blocked
+    promotion decision 和 2350 manual-run interface dry-run route，不启用 scheduler、不创建真实
+    cron / Windows Task / GitHub Actions schedule、不 append event、不绑定 outcome、不读取 fresh
+    market data、不进入 paper-shadow / production / broker。
+  - 新增 `aits research trends high-intensity-risk-cap-observe-only-scheduler-manual-review-gate`；生成
+    manual review gate summary/package、source artifact review、blocked promotion decision、2350
+    route、interpretation boundary、安全边界和 research docs；真实 run status=`OBSERVE_ONLY_SCHEDULER_MANUAL_REVIEW_GATE_READY_WITH_CAVEATS_PROMOTION_BLOCKED`，source
+    tasks=`TRADING-2347, TRADING-2348`，source validation=`2026-06-29` / `PASS_WITH_WARNINGS`
+    / error_count=0，promotion_decision=`BLOCKED`，promotion_allowed=false，manual_review_required=true，scheduler_enabled=false，manual_run_only=true，dry_run_only=true，paper_shadow_enabled=false，production_enabled=false，broker_action_enabled=false，event_log_mutated=false，outcome_store_mutated=false，fresh_market_data_read=false，review
+    findings 中 disabled_wiring_present=true、smoke_dry_run_passed=true、guardrail_evidence_present=true、side_effect_assertions_present=true、promotion_evidence_sufficient_for_enablement=false，readiness=`READY_FOR_2350_WITH_CAVEATS`，next
+    route=`TRADING-2350_Observe_Only_Scheduler_Manual_Run_Interface_Dry_Run`。验证通过
+    Ruff、compileall、focused parallel pytest 15 passed、真实 CLI run、docs freshness 533
+    docs PASS、documentation contract 1246 reports PASS、task-register consistency run/validate
+    PASS、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T191536Z/test_runtime_summary.json`）和
+    `git diff --check`。
+  - '2026-07-05: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是把 2347 / 2348 evidence 汇总成人工评审
+    gate package，并继续阻断 promotion。2026-07-05: 实现完成并归档 DONE；本任务未重跑 `aits validate-data`，因为只读取
+    prior validated TRADING-2347 disabled wiring 和 TRADING-2348 smoke dry-run artifacts，不读取
+    fresh market data、不 append event、不绑定 outcome。后续只能进入 TRADING-2350 observe-only
+    scheduler manual-run interface dry-run with caveats，不能直接启用 scheduler。'
+  docs_links:
+  - docs/requirements/TRADING-2349_Manual_Review_Promotion_Gate_For_Observe_Only_Scheduler.md
+  terminal: true
+  raw_row_sha256: b09cef02c326bb25b29133bd2efeb743804417817d7fba79093665ee17ed6184
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 302bb86ce4a1fb41d016f743282ae8b6275bd83b29021346d8865b5d95f4f1e0

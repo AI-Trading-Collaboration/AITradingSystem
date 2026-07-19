@@ -1,0 +1,124 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-353_PAPER_SHADOW_WEEKLY_REVIEW
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue paper-shadow weekly review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-353_Paper_Shadow_Weekly_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-353_Paper_Shadow_Weekly_Review.md`；承接
+    TRADING-351 daily runner 与 TRADING-352 drift monitor，聚合 week start/end 内 daily
+    paper-shadow artifacts、drift monitor artifacts、formal research method contract
+    和 candidate decision ledger；不得刷新数据、重跑上游、修改 ledger、生成 official target weights、order
+    ticket、broker action 或 production mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `paper-shadow-weekly-review build/report`、`validate-paper-shadow-weekly-review`、weekly
+      manifest/review/report/Reader Brief/validation artifact、decision policy、report
+      registry、Reader Brief fields、artifact catalog、README、system flow、operations
+      runbook、requirements 和 focused tests；missing inputs 显式披露，weekly decision 限定为
+      `CONTINUE
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 248
+    row_sha256: 22e27502e299899d4e8b22856ccb607dcb30979418fe876cbbe1dedc08709174
+    cell_count: 11
+    all_cells:
+    - TRADING-353_PAPER_SHADOW_WEEKLY_REVIEW
+    - ETF portfolio/dynamic v3 rescue paper-shadow weekly review
+    - P1
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-353_Paper_Shadow_Weekly_Review.md`；承接 TRADING-351
+      daily runner 与 TRADING-352 drift monitor，聚合 week start/end 内 daily paper-shadow
+      artifacts、drift monitor artifacts、formal research method contract 和 candidate
+      decision ledger；不得刷新数据、重跑上游、修改 ledger、生成 official target weights、order ticket、broker
+      action 或 production mutation
+    - 新增 `paper-shadow-weekly-review build/report`、`validate-paper-shadow-weekly-review`、weekly
+      manifest/review/report/Reader Brief/validation artifact、decision policy、report
+      registry、Reader Brief fields、artifact catalog、README、system flow、operations
+      runbook、requirements 和 focused tests；missing inputs 显式披露，weekly decision 限定为
+      `CONTINUE
+    - WATCH
+    - RETURN_TO_RESEARCH
+    - REJECT`
+    - '2026-06-15: DONE；focused paper-shadow tests 10 passed，combined validation 34
+      passed，documentation contract PASS，report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / `unwaived=0`，Reader Brief OK，Reader Brief quality OK，ruff、compileall 和 git
+      diff check 通过；保持 manual weekly aggregation / read-only / no data refresh / no
+      upstream rerun / no ledger mutation / no official target / no broker / no production。'
+    raw_line: '|TRADING-353_PAPER_SHADOW_WEEKLY_REVIEW|ETF portfolio/dynamic v3 rescue
+      paper-shadow weekly review|P1|DONE|项目 owner 后续复核；代码实现完成|详细拆解见 `docs/requirements/TRADING-353_Paper_Shadow_Weekly_Review.md`；承接
+      TRADING-351 daily runner 与 TRADING-352 drift monitor，聚合 week start/end 内 daily
+      paper-shadow artifacts、drift monitor artifacts、formal research method contract
+      和 candidate decision ledger；不得刷新数据、重跑上游、修改 ledger、生成 official target weights、order
+      ticket、broker action 或 production mutation|新增 `paper-shadow-weekly-review build/report`、`validate-paper-shadow-weekly-review`、weekly
+      manifest/review/report/Reader Brief/validation artifact、decision policy、report
+      registry、Reader Brief fields、artifact catalog、README、system flow、operations
+      runbook、requirements 和 focused tests；missing inputs 显式披露，weekly decision 限定为
+      `CONTINUE|WATCH|RETURN_TO_RESEARCH|REJECT`|2026-06-15: DONE；focused paper-shadow
+      tests 10 passed，combined validation 34 passed，documentation contract PASS，report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / `unwaived=0`，Reader Brief OK，Reader Brief
+      quality OK，ruff、compileall 和 git diff check 通过；保持 manual weekly aggregation
+      / read-only / no data refresh / no upstream rerun / no ledger mutation / no
+      official target / no broker / no production。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-22e27502e299899d4e8b2285
+  task_id: TRADING-353_PAPER_SHADOW_WEEKLY_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: WATCH
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:22e27502e299899d4e8b22856ccb607dcb30979418fe876cbbe1dedc08709174
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-353_PAPER_SHADOW_WEEKLY_REVIEW
+  - ETF portfolio/dynamic v3 rescue paper-shadow weekly review
+  - P1
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-353_Paper_Shadow_Weekly_Review.md`；承接 TRADING-351
+    daily runner 与 TRADING-352 drift monitor，聚合 week start/end 内 daily paper-shadow
+    artifacts、drift monitor artifacts、formal research method contract 和 candidate
+    decision ledger；不得刷新数据、重跑上游、修改 ledger、生成 official target weights、order ticket、broker
+    action 或 production mutation
+  - 新增 `paper-shadow-weekly-review build/report`、`validate-paper-shadow-weekly-review`、weekly
+    manifest/review/report/Reader Brief/validation artifact、decision policy、report
+    registry、Reader Brief fields、artifact catalog、README、system flow、operations runbook、requirements
+    和 focused tests；missing inputs 显式披露，weekly decision 限定为 `CONTINUE
+  - WATCH
+  docs_links:
+  - docs/requirements/TRADING-353_Paper_Shadow_Weekly_Review.md
+  terminal: true
+  raw_row_sha256: 22e27502e299899d4e8b22856ccb607dcb30979418fe876cbbe1dedc08709174
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c1d33d8973b8419a1e5d5f4e963304391c1d5ae37d62f6c1b0712d93d327dc7f

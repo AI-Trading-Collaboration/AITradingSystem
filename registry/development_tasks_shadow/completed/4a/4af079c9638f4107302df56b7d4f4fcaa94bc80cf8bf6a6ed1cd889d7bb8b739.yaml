@@ -1,0 +1,134 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: VAL-001
+  title: null
+  domain: 估值/PIT 历史日回跑
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/input_visibility_contract_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/input_visibility_contract_2026-05-10.md`；历史
+    as-of 估值可见性过滤已完成并通过真实 2026-05-08 replay 复核；`aits valuation validate --as-of 2026-05-08`
+    和 `aits valuation review --as-of 2026-05-08` 均为 `PASS_WITH_WARNINGS`，可见快照数 49、覆盖标的
+    6、错误 0，future snapshot 以 `valuation_snapshot_excluded_future_as_of` warning 进入审计；`aits
+    ops replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy cache-only
+    --compare-to-production` 为 PASS。Direct `score-daily --as-of 2026-05-08 --skip-risk-event-openai-precheck`
+    被当前生产 market/macro cache 的 `prices_future_dates` / `rates_future_dates` 门禁阻断，按
+    runbook 属于历史复现入口错误，不是估值快照失败；后续历史研究继续使用 replay 隔离 bundle
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 历史 as-of 日报或 daily-run 只使用评估日可见估值快照；后续日期快照不得进入评分/复核，也不得导致历史日流程因估值快照误失败；被排除快照必须以
+      warning/审计记录出现在估值校验报告；真实 schema/load 错误和当前可见快照错误仍 fail closed
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 307
+    row_sha256: 2f0e2e4bdc538c9155e65acc1583882760767a38afe41935e4b44fd6e490cca3
+    cell_count: 8
+    all_cells:
+    - VAL-001
+    - 估值/PIT 历史日回跑
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/input_visibility_contract_2026-05-10.md`；历史 as-of 估值可见性过滤已完成并通过真实
+      2026-05-08 replay 复核；`aits valuation validate --as-of 2026-05-08` 和 `aits valuation
+      review --as-of 2026-05-08` 均为 `PASS_WITH_WARNINGS`，可见快照数 49、覆盖标的 6、错误 0，future
+      snapshot 以 `valuation_snapshot_excluded_future_as_of` warning 进入审计；`aits ops
+      replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy cache-only
+      --compare-to-production` 为 PASS。Direct `score-daily --as-of 2026-05-08 --skip-risk-event-openai-precheck`
+      被当前生产 market/macro cache 的 `prices_future_dates` / `rates_future_dates` 门禁阻断，按
+      runbook 属于历史复现入口错误，不是估值快照失败；后续历史研究继续使用 replay 隔离 bundle
+    - 历史 as-of 日报或 daily-run 只使用评估日可见估值快照；后续日期快照不得进入评分/复核，也不得导致历史日流程因估值快照误失败；被排除快照必须以
+      warning/审计记录出现在估值校验报告；真实 schema/load 错误和当前可见快照错误仍 fail closed
+    - '2026-05-10: 新增并进入实现，原因：owner 要求测试最后一个交易日流程，真实 `ops daily-run --as-of 2026-05-08`
+      失败于 `valuation_snapshots`，暴露累计快照目录对历史日回跑的未来数据处理缺陷。2026-05-10: 从 IN_PROGRESS
+      改为 VALIDATING，原因：`valuation fetch-fmp --as-of 2026-05-08` 已从 FAIL 转为 PASS_WITH_WARNINGS，报告显式列出被排除的
+      2026-05-09/2026-05-10 快照。2026-06-09: 从 VALIDATING 改为 DONE，原因：focused PIT tests、真实估值
+      validate/review 和 2026-05-08 cache-only replay 均确认未来估值快照只进 warning 审计，不进入历史评分/复核；direct
+      historical `score-daily` 失败来自 market/macro 生产缓存未来行门禁，应由 replay 入口隔离。'
+    raw_line: '|VAL-001|估值/PIT 历史日回跑|P0|DONE|系统验证|详细拆解见 `docs/requirements/input_visibility_contract_2026-05-10.md`；历史
+      as-of 估值可见性过滤已完成并通过真实 2026-05-08 replay 复核；`aits valuation validate --as-of
+      2026-05-08` 和 `aits valuation review --as-of 2026-05-08` 均为 `PASS_WITH_WARNINGS`，可见快照数
+      49、覆盖标的 6、错误 0，future snapshot 以 `valuation_snapshot_excluded_future_as_of`
+      warning 进入审计；`aits ops replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy
+      cache-only --compare-to-production` 为 PASS。Direct `score-daily --as-of 2026-05-08
+      --skip-risk-event-openai-precheck` 被当前生产 market/macro cache 的 `prices_future_dates`
+      / `rates_future_dates` 门禁阻断，按 runbook 属于历史复现入口错误，不是估值快照失败；后续历史研究继续使用 replay
+      隔离 bundle|历史 as-of 日报或 daily-run 只使用评估日可见估值快照；后续日期快照不得进入评分/复核，也不得导致历史日流程因估值快照误失败；被排除快照必须以
+      warning/审计记录出现在估值校验报告；真实 schema/load 错误和当前可见快照错误仍 fail closed|2026-05-10: 新增并进入实现，原因：owner
+      要求测试最后一个交易日流程，真实 `ops daily-run --as-of 2026-05-08` 失败于 `valuation_snapshots`，暴露累计快照目录对历史日回跑的未来数据处理缺陷。2026-05-10:
+      从 IN_PROGRESS 改为 VALIDATING，原因：`valuation fetch-fmp --as-of 2026-05-08` 已从 FAIL
+      转为 PASS_WITH_WARNINGS，报告显式列出被排除的 2026-05-09/2026-05-10 快照。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：focused PIT tests、真实估值 validate/review 和 2026-05-08 cache-only replay
+      均确认未来估值快照只进 warning 审计，不进入历史评分/复核；direct historical `score-daily` 失败来自 market/macro
+      生产缓存未来行门禁，应由 replay 入口隔离。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2f0e2e4bdc538c9155e65acc
+  task_id: VAL-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-10: 新增并进入实现，原因：owner 要求测试最后一个交易日流程，真实 `ops daily-run --as-of 2026-05-08`
+      失败于 `valuation_snapshots`，暴露累计快照目录对历史日回跑的未来数据处理缺陷。2026-05-10: 从 IN_PROGRESS
+      改为 VALIDATING，原因：`valuation fetch-fmp --as-of 2026-05-08` 已从 FAIL 转为 PASS_WITH_WARNINGS，报告显式列出被排除的
+      2026-05-09/2026-05-10 快照。2026-06-09: 从 VALIDATING 改为 DONE，原因：focused PIT tests、真实估值
+      validate/review 和 2026-05-08 cache-only replay 均确认未来估值快照只进 warning 审计，不进入历史评分/复核；direct
+      historical `score-daily` 失败来自 market/macro 生产缓存未来行门禁，应由 replay 入口隔离。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:2f0e2e4bdc538c9155e65acc1583882760767a38afe41935e4b44fd6e490cca3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - VAL-001
+  - 估值/PIT 历史日回跑
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/input_visibility_contract_2026-05-10.md`；历史 as-of 估值可见性过滤已完成并通过真实
+    2026-05-08 replay 复核；`aits valuation validate --as-of 2026-05-08` 和 `aits valuation
+    review --as-of 2026-05-08` 均为 `PASS_WITH_WARNINGS`，可见快照数 49、覆盖标的 6、错误 0，future
+    snapshot 以 `valuation_snapshot_excluded_future_as_of` warning 进入审计；`aits ops replay-day
+    --mode cache-only --as-of 2026-05-08 --openai-replay-policy cache-only --compare-to-production`
+    为 PASS。Direct `score-daily --as-of 2026-05-08 --skip-risk-event-openai-precheck`
+    被当前生产 market/macro cache 的 `prices_future_dates` / `rates_future_dates` 门禁阻断，按
+    runbook 属于历史复现入口错误，不是估值快照失败；后续历史研究继续使用 replay 隔离 bundle
+  - 历史 as-of 日报或 daily-run 只使用评估日可见估值快照；后续日期快照不得进入评分/复核，也不得导致历史日流程因估值快照误失败；被排除快照必须以
+    warning/审计记录出现在估值校验报告；真实 schema/load 错误和当前可见快照错误仍 fail closed
+  - '2026-05-10: 新增并进入实现，原因：owner 要求测试最后一个交易日流程，真实 `ops daily-run --as-of 2026-05-08`
+    失败于 `valuation_snapshots`，暴露累计快照目录对历史日回跑的未来数据处理缺陷。2026-05-10: 从 IN_PROGRESS 改为
+    VALIDATING，原因：`valuation fetch-fmp --as-of 2026-05-08` 已从 FAIL 转为 PASS_WITH_WARNINGS，报告显式列出被排除的
+    2026-05-09/2026-05-10 快照。2026-06-09: 从 VALIDATING 改为 DONE，原因：focused PIT tests、真实估值
+    validate/review 和 2026-05-08 cache-only replay 均确认未来估值快照只进 warning 审计，不进入历史评分/复核；direct
+    historical `score-daily` 失败来自 market/macro 生产缓存未来行门禁，应由 replay 入口隔离。'
+  docs_links:
+  - docs/requirements/input_visibility_contract_2026-05-10.md
+  terminal: true
+  raw_row_sha256: 2f0e2e4bdc538c9155e65acc1583882760767a38afe41935e4b44fd6e490cca3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2f1851a9cd665602f0a56e23686ad4e4b138fcee1cae018c8663109c08040468

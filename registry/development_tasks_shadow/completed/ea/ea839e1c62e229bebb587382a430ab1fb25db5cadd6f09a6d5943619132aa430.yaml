@@ -1,0 +1,174 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2392_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_AND_GATE_EVIDENCE_PLAN
+  title: null
+  domain: Strategy research / component attribution and gate evidence plan
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2393 component attribution targeted ablation retest
+  requirement_refs:
+  - docs/requirements/TRADING-2392_Dynamic_Strategy_Component_Attribution_And_Gate_Evidence_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2392_Dynamic_Strategy_Component_Attribution_And_Gate_Evidence_Plan.md`；承接
+    TRADING-2391 owner decision=`DO_NOT_APPROVE_OBSERVATION_KEEP_OWNER_REVIEW_REQUIRED_AND_CONTINUE_COMPONENT_ATTRIBUTION`
+    和 TRADING-2390 component attribution preview，只生成 component attribution plan、component
+    value matrix、gate evidence plan、targeted ablation retest plan 和 2393 route；不运行新
+    backtest、不生成 signal/scoring、不批准 observation、不启用 scheduler / event append / outcome
+    binding / paper-shadow / production / broker / daily report。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-component-attribution-gate-evidence-plan`；输出
+      `component_attribution_plan.json`、`component_value_matrix.json`、`gate_evidence_plan.json`、`targeted_ablation_retest_plan.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_AND_GATE_EVIDENCE_PLAN_READY`，component
+      attribution plan / component value matrix / gate evidence plan / targeted ablation
+      retest plan ready=true，component value candidates=`dynamic_turnover_budgeted_growth_tilt_v1`
+      / `dynamic_valid_until_expiry_strict_v1`，components_to_attribute=`turnover_budgeting`
+      / `valid_until_strictness` / `growth_tilt_engine` / `lower_turnover_guardrail`
+      / `guarded_turnover_transfer`，candidate auto-accept=false，research-only observation=false，next
+      route=`TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 94
+    row_sha256: 28968d92e5f8615d95c5d6ffaf313332a0315be1f39dedcdfe12d05a26070b32
+    cell_count: 8
+    all_cells:
+    - TRADING-2392_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_AND_GATE_EVIDENCE_PLAN
+    - Strategy research / component attribution and gate evidence plan
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2393 component attribution targeted ablation retest
+    - 详见 `docs/requirements/TRADING-2392_Dynamic_Strategy_Component_Attribution_And_Gate_Evidence_Plan.md`；承接
+      TRADING-2391 owner decision=`DO_NOT_APPROVE_OBSERVATION_KEEP_OWNER_REVIEW_REQUIRED_AND_CONTINUE_COMPONENT_ATTRIBUTION`
+      和 TRADING-2390 component attribution preview，只生成 component attribution plan、component
+      value matrix、gate evidence plan、targeted ablation retest plan 和 2393 route；不运行新
+      backtest、不生成 signal/scoring、不批准 observation、不启用 scheduler / event append / outcome
+      binding / paper-shadow / production / broker / daily report。
+    - 新增 `aits research strategies dynamic-strategy-component-attribution-gate-evidence-plan`；输出
+      `component_attribution_plan.json`、`component_value_matrix.json`、`gate_evidence_plan.json`、`targeted_ablation_retest_plan.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_AND_GATE_EVIDENCE_PLAN_READY`，component
+      attribution plan / component value matrix / gate evidence plan / targeted ablation
+      retest plan ready=true，component value candidates=`dynamic_turnover_budgeted_growth_tilt_v1`
+      / `dynamic_valid_until_expiry_strict_v1`，components_to_attribute=`turnover_budgeting`
+      / `valid_until_strictness` / `growth_tilt_engine` / `lower_turnover_guardrail`
+      / `guarded_turnover_transfer`，candidate auto-accept=false，research-only observation=false，next
+      route=`TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest`。
+    - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；验证通过 full
+      Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs
+      freshness 578 docs PASS、documentation contract 1289 reports PASS、task-register
+      consistency run active=319 / completed=452 / failed=0、task-register consistency
+      validate checks=5 / failed=0 / warnings=0、contract-validation 197 passed（runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260706T154253Z/test_runtime_summary.json`）和
+      `git diff --check`（仅 CRLF normalization warning）。本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2365 / 2366 / 2386 / 2390 / 2391 artifacts，不读取 fresh
+      cached market data、不重新 backtest、不生成 technical features、scoring、daily report
+      或交易建议；scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order 全部保持 disabled / false / none。'
+    raw_line: '|TRADING-2392_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_AND_GATE_EVIDENCE_PLAN|Strategy
+      research / component attribution and gate evidence plan|P0|DONE|项目 owner 后续复核
+      TRADING-2393 component attribution targeted ablation retest|详见 `docs/requirements/TRADING-2392_Dynamic_Strategy_Component_Attribution_And_Gate_Evidence_Plan.md`；承接
+      TRADING-2391 owner decision=`DO_NOT_APPROVE_OBSERVATION_KEEP_OWNER_REVIEW_REQUIRED_AND_CONTINUE_COMPONENT_ATTRIBUTION`
+      和 TRADING-2390 component attribution preview，只生成 component attribution plan、component
+      value matrix、gate evidence plan、targeted ablation retest plan 和 2393 route；不运行新
+      backtest、不生成 signal/scoring、不批准 observation、不启用 scheduler / event append / outcome
+      binding / paper-shadow / production / broker / daily report。|新增 `aits research
+      strategies dynamic-strategy-component-attribution-gate-evidence-plan`；输出 `component_attribution_plan.json`、`component_value_matrix.json`、`gate_evidence_plan.json`、`targeted_ablation_retest_plan.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_AND_GATE_EVIDENCE_PLAN_READY`，component
+      attribution plan / component value matrix / gate evidence plan / targeted ablation
+      retest plan ready=true，component value candidates=`dynamic_turnover_budgeted_growth_tilt_v1`
+      / `dynamic_valid_until_expiry_strict_v1`，components_to_attribute=`turnover_budgeting`
+      / `valid_until_strictness` / `growth_tilt_engine` / `lower_turnover_guardrail`
+      / `guarded_turnover_transfer`，candidate auto-accept=false，research-only observation=false，next
+      route=`TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest`。|2026-07-07:
+      根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；验证通过 full Ruff、`compileall
+      -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 578
+      docs PASS、documentation contract 1289 reports PASS、task-register consistency
+      run active=319 / completed=452 / failed=0、task-register consistency validate
+      checks=5 / failed=0 / warnings=0、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260706T154253Z/test_runtime_summary.json`）和
+      `git diff --check`（仅 CRLF normalization warning）。本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2365 / 2366 / 2386 / 2390 / 2391 artifacts，不读取 fresh
+      cached market data、不重新 backtest、不生成 technical features、scoring、daily report
+      或交易建议；scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order 全部保持 disabled / false / none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-28968d92e5f8615d95c5d6ff
+  task_id: TRADING-2392_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_AND_GATE_EVIDENCE_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2393 component attribution targeted ablation
+      retest
+    notes: '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；验证通过
+      full Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、真实 CLI
+      run、docs freshness 578 docs PASS、documentation contract 1289 reports PASS、task-register
+      consistency run active=319 / completed=452 / failed=0、task-register consistency
+      validate checks=5 / failed=0 / warnings=0、contract-validation 197 passed（runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260706T154253Z/test_runtime_summary.json`）和
+      `git diff --check`（仅 CRLF normalization warning）。本任务未重跑 `aits validate-data`，因为只读取
+      prior validated TRADING-2365 / 2366 / 2386 / 2390 / 2391 artifacts，不读取 fresh
+      cached market data、不重新 backtest、不生成 technical features、scoring、daily report
+      或交易建议；scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order 全部保持 disabled / false / none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:28968d92e5f8615d95c5d6ffaf313332a0315be1f39dedcdfe12d05a26070b32
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2392_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_AND_GATE_EVIDENCE_PLAN
+  - Strategy research / component attribution and gate evidence plan
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2393 component attribution targeted ablation retest
+  - 详见 `docs/requirements/TRADING-2392_Dynamic_Strategy_Component_Attribution_And_Gate_Evidence_Plan.md`；承接
+    TRADING-2391 owner decision=`DO_NOT_APPROVE_OBSERVATION_KEEP_OWNER_REVIEW_REQUIRED_AND_CONTINUE_COMPONENT_ATTRIBUTION`
+    和 TRADING-2390 component attribution preview，只生成 component attribution plan、component
+    value matrix、gate evidence plan、targeted ablation retest plan 和 2393 route；不运行新
+    backtest、不生成 signal/scoring、不批准 observation、不启用 scheduler / event append / outcome
+    binding / paper-shadow / production / broker / daily report。
+  - 新增 `aits research strategies dynamic-strategy-component-attribution-gate-evidence-plan`；输出
+    `component_attribution_plan.json`、`component_value_matrix.json`、`gate_evidence_plan.json`、`targeted_ablation_retest_plan.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_AND_GATE_EVIDENCE_PLAN_READY`，component
+    attribution plan / component value matrix / gate evidence plan / targeted ablation
+    retest plan ready=true，component value candidates=`dynamic_turnover_budgeted_growth_tilt_v1`
+    / `dynamic_valid_until_expiry_strict_v1`，components_to_attribute=`turnover_budgeting`
+    / `valid_until_strictness` / `growth_tilt_engine` / `lower_turnover_guardrail`
+    / `guarded_turnover_transfer`，candidate auto-accept=false，research-only observation=false，next
+    route=`TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest`。
+  - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；验证通过 full Ruff、`compileall
+    -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 578 docs
+    PASS、documentation contract 1289 reports PASS、task-register consistency run active=319
+    / completed=452 / failed=0、task-register consistency validate checks=5 / failed=0
+    / warnings=0、contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260706T154253Z/test_runtime_summary.json`）和
+    `git diff --check`（仅 CRLF normalization warning）。本任务未重跑 `aits validate-data`，因为只读取
+    prior validated TRADING-2365 / 2366 / 2386 / 2390 / 2391 artifacts，不读取 fresh cached
+    market data、不重新 backtest、不生成 technical features、scoring、daily report 或交易建议；scheduler、event
+    append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order
+    全部保持 disabled / false / none。'
+  docs_links:
+  - docs/requirements/TRADING-2392_Dynamic_Strategy_Component_Attribution_And_Gate_Evidence_Plan.md
+  terminal: true
+  raw_row_sha256: 28968d92e5f8615d95c5d6ffaf313332a0315be1f39dedcdfe12d05a26070b32
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 425be4db5affd702452bef2334d8b93b630338ca1e46b1a224737562b7783375

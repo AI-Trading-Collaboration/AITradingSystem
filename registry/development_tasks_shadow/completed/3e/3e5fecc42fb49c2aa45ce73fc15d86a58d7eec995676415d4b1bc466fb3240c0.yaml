@@ -1,0 +1,103 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-006
+  title: null
+  domain: 报告/关注股票趋势
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已在 `score-daily` 日报结论区增加核心观察池逐 ticker
+    趋势分析；只读使用已通过市场数据质量门禁的 `features_daily` 价格/趋势特征，不改变评分、仓位闸门、execution policy 或 prediction
+    ledger
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 日报显示 `config/universe.yaml` 的 AI core_watchlist 每个 ticker 的 1/5/20 日收益、20/50/100/200
+      日均线位置、相对均线偏离和趋势状态；缺少某 ticker 或窗口特征时显式标记数据缺口；报告声明 `production_effect=none`，trace
+      bundle 可追溯到价格缓存和特征缓存；同步更新 `docs/system_flow.md` 并补充报告文本测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 449
+    row_sha256: 0279bf78ec0061eb5743042c7931a512ae5257edd1b357c145829db409d03f3a
+    cell_count: 8
+    all_cells:
+    - REPORT-006
+    - 报告/关注股票趋势
+    - P1
+    - DONE
+    - 系统实现
+    - 已在 `score-daily` 日报结论区增加核心观察池逐 ticker 趋势分析；只读使用已通过市场数据质量门禁的 `features_daily`
+      价格/趋势特征，不改变评分、仓位闸门、execution policy 或 prediction ledger
+    - 日报显示 `config/universe.yaml` 的 AI core_watchlist 每个 ticker 的 1/5/20 日收益、20/50/100/200
+      日均线位置、相对均线偏离和趋势状态；缺少某 ticker 或窗口特征时显式标记数据缺口；报告声明 `production_effect=none`，trace
+      bundle 可追溯到价格缓存和特征缓存；同步更新 `docs/system_flow.md` 并补充报告文本测试
+    - '2026-05-05: 新增并进入实现，原因：owner 要求当前输出结论增加关注股票趋势分析；该改动影响日报解释和投资阅读顺序，但不改变评分或仓位。2026-05-05:
+      从 IN_PROGRESS 改为 DONE，原因：新增关注股票趋势分析模块、日报章节、trace claim/evidence、系统流图和测试；`ruff
+      check src tests` 与全量 `pytest -q` 382 项通过。'
+    raw_line: '|REPORT-006|报告/关注股票趋势|P1|DONE|系统实现|已在 `score-daily` 日报结论区增加核心观察池逐 ticker
+      趋势分析；只读使用已通过市场数据质量门禁的 `features_daily` 价格/趋势特征，不改变评分、仓位闸门、execution policy 或
+      prediction ledger|日报显示 `config/universe.yaml` 的 AI core_watchlist 每个 ticker
+      的 1/5/20 日收益、20/50/100/200 日均线位置、相对均线偏离和趋势状态；缺少某 ticker 或窗口特征时显式标记数据缺口；报告声明
+      `production_effect=none`，trace bundle 可追溯到价格缓存和特征缓存；同步更新 `docs/system_flow.md`
+      并补充报告文本测试|2026-05-05: 新增并进入实现，原因：owner 要求当前输出结论增加关注股票趋势分析；该改动影响日报解释和投资阅读顺序，但不改变评分或仓位。2026-05-05:
+      从 IN_PROGRESS 改为 DONE，原因：新增关注股票趋势分析模块、日报章节、trace claim/evidence、系统流图和测试；`ruff
+      check src tests` 与全量 `pytest -q` 382 项通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0279bf78ec0061eb5743042c
+  task_id: REPORT-006
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增并进入实现，原因：owner 要求当前输出结论增加关注股票趋势分析；该改动影响日报解释和投资阅读顺序，但不改变评分或仓位。2026-05-05:
+      从 IN_PROGRESS 改为 DONE，原因：新增关注股票趋势分析模块、日报章节、trace claim/evidence、系统流图和测试；`ruff
+      check src tests` 与全量 `pytest -q` 382 项通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0279bf78ec0061eb5743042c7931a512ae5257edd1b357c145829db409d03f3a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-006
+  - 报告/关注股票趋势
+  - P1
+  - DONE
+  - 系统实现
+  - 已在 `score-daily` 日报结论区增加核心观察池逐 ticker 趋势分析；只读使用已通过市场数据质量门禁的 `features_daily` 价格/趋势特征，不改变评分、仓位闸门、execution
+    policy 或 prediction ledger
+  - 日报显示 `config/universe.yaml` 的 AI core_watchlist 每个 ticker 的 1/5/20 日收益、20/50/100/200
+    日均线位置、相对均线偏离和趋势状态；缺少某 ticker 或窗口特征时显式标记数据缺口；报告声明 `production_effect=none`，trace
+    bundle 可追溯到价格缓存和特征缓存；同步更新 `docs/system_flow.md` 并补充报告文本测试
+  - '2026-05-05: 新增并进入实现，原因：owner 要求当前输出结论增加关注股票趋势分析；该改动影响日报解释和投资阅读顺序，但不改变评分或仓位。2026-05-05:
+    从 IN_PROGRESS 改为 DONE，原因：新增关注股票趋势分析模块、日报章节、trace claim/evidence、系统流图和测试；`ruff
+    check src tests` 与全量 `pytest -q` 382 项通过。'
+  docs_links:
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: 0279bf78ec0061eb5743042c7931a512ae5257edd1b357c145829db409d03f3a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b671e002d9461c1e944814e4acbae290f680dca364f2495e19da1f5dd8575ed4

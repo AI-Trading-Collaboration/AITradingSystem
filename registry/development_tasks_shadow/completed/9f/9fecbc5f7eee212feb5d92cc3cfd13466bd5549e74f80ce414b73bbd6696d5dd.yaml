@@ -1,0 +1,94 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-009
+  title: null
+  domain: 运行架构/replay 风险事件 PIT 冻结
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已让 `replay-day` 生成 `risk_event_occurrences`
+    的 as-of 可见隔离视图，并把 `score-daily --risk-event-occurrences-path` 指向 replay bundle
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: input freeze manifest 记录风险事件源路径、隔离路径、总数、纳入数、排除数和 checksum；生产 occurrence
+      YAML 不被改写；2026-05-08 cache-only replay 不再因 2026-05-10 LLM formal occurrence/attestation
+      触发未来日期错误；相关单测、系统流图和需求文档已同步更新
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 418
+    row_sha256: 413ff43c31c3a45848e9ef3345f22f1f605d4da649aedc71b2b2ff3ae0d777cb
+    cell_count: 8
+    all_cells:
+    - OPS-009
+    - 运行架构/replay 风险事件 PIT 冻结
+    - P0
+    - DONE
+    - 系统实现
+    - 已让 `replay-day` 生成 `risk_event_occurrences` 的 as-of 可见隔离视图，并把 `score-daily --risk-event-occurrences-path`
+      指向 replay bundle
+    - input freeze manifest 记录风险事件源路径、隔离路径、总数、纳入数、排除数和 checksum；生产 occurrence YAML
+      不被改写；2026-05-08 cache-only replay 不再因 2026-05-10 LLM formal occurrence/attestation
+      触发未来日期错误；相关单测、系统流图和需求文档已同步更新
+    - '2026-05-10: 新增并完成，原因：真实最近交易日回放验证发现 valuation 已隔离，但 risk event occurrence store
+      仍读取生产目录，导致历史回放被未来风险事件数据阻断。验证：`score_daily` 在真实 2026-05-08 replay 中 PASS，风险事件报告改为隔离路径且无未来日期错误。'
+    raw_line: '|OPS-009|运行架构/replay 风险事件 PIT 冻结|P0|DONE|系统实现|已让 `replay-day` 生成 `risk_event_occurrences`
+      的 as-of 可见隔离视图，并把 `score-daily --risk-event-occurrences-path` 指向 replay bundle|input
+      freeze manifest 记录风险事件源路径、隔离路径、总数、纳入数、排除数和 checksum；生产 occurrence YAML 不被改写；2026-05-08
+      cache-only replay 不再因 2026-05-10 LLM formal occurrence/attestation 触发未来日期错误；相关单测、系统流图和需求文档已同步更新|2026-05-10:
+      新增并完成，原因：真实最近交易日回放验证发现 valuation 已隔离，但 risk event occurrence store 仍读取生产目录，导致历史回放被未来风险事件数据阻断。验证：`score_daily`
+      在真实 2026-05-08 replay 中 PASS，风险事件报告改为隔离路径且无未来日期错误。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-413ff43c31c3a45848e9ef33
+  task_id: OPS-009
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-10: 新增并完成，原因：真实最近交易日回放验证发现 valuation 已隔离，但 risk event occurrence
+      store 仍读取生产目录，导致历史回放被未来风险事件数据阻断。验证：`score_daily` 在真实 2026-05-08 replay 中 PASS，风险事件报告改为隔离路径且无未来日期错误。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:413ff43c31c3a45848e9ef3345f22f1f605d4da649aedc71b2b2ff3ae0d777cb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-009
+  - 运行架构/replay 风险事件 PIT 冻结
+  - P0
+  - DONE
+  - 系统实现
+  - 已让 `replay-day` 生成 `risk_event_occurrences` 的 as-of 可见隔离视图，并把 `score-daily --risk-event-occurrences-path`
+    指向 replay bundle
+  - input freeze manifest 记录风险事件源路径、隔离路径、总数、纳入数、排除数和 checksum；生产 occurrence YAML 不被改写；2026-05-08
+    cache-only replay 不再因 2026-05-10 LLM formal occurrence/attestation 触发未来日期错误；相关单测、系统流图和需求文档已同步更新
+  - '2026-05-10: 新增并完成，原因：真实最近交易日回放验证发现 valuation 已隔离，但 risk event occurrence store
+    仍读取生产目录，导致历史回放被未来风险事件数据阻断。验证：`score_daily` 在真实 2026-05-08 replay 中 PASS，风险事件报告改为隔离路径且无未来日期错误。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: 413ff43c31c3a45848e9ef3345f22f1f605d4da649aedc71b2b2ff3ae0d777cb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 795286f1e3055926ac3885cf9bb5c1f847f1610f19a3964cf74fe0149d888fbc

@@ -1,0 +1,88 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-728_COST_LIQUIDITY_TRADABILITY_MODEL
+  title: null
+  domain: Data foundation / cost, liquidity, and tradability model
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-726_to_733 总需求文档；建立版本化 cost/liquidity
+    model 和 net-return/cost fields baseline
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits trading-costs estimate'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1367
+    row_sha256: dcc1e7be856e68d799ea101d7f0e9fbbff2c76b0a36065ddc4e33d9cc31f8e4a
+    cell_count: 9
+    all_cells:
+    - TRADING-728_COST_LIQUIDITY_TRADABILITY_MODEL
+    - Data foundation / cost, liquidity, and tradability model
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 TRADING-726_to_733 总需求文档；建立版本化 cost/liquidity model 和 net-return/cost fields
+      baseline
+    - '`aits trading-costs estimate'
+    - audit` 可运行；net_return_available=true；cost_model_version_recorded=true；liquidity_violation_count_reported=true；strategy_evaluation_uses_cost_model=true
+    - '2026-06-21: validation-only baseline 已实现并进入 VALIDATING；新增 research-only cost/liquidity
+      config、schema、estimate/audit CLI 和测试；不生成订单、不修改交易执行或仓位。'
+    raw_line: '|TRADING-728_COST_LIQUIDITY_TRADABILITY_MODEL|Data foundation / cost,
+      liquidity, and tradability model|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 TRADING-726_to_733
+      总需求文档；建立版本化 cost/liquidity model 和 net-return/cost fields baseline|`aits trading-costs
+      estimate|audit` 可运行；net_return_available=true；cost_model_version_recorded=true；liquidity_violation_count_reported=true；strategy_evaluation_uses_cost_model=true|2026-06-21:
+      validation-only baseline 已实现并进入 VALIDATING；新增 research-only cost/liquidity config、schema、estimate/audit
+      CLI 和测试；不生成订单、不修改交易执行或仓位。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-dcc1e7be856e68d799ea101d
+  task_id: TRADING-728_COST_LIQUIDITY_TRADABILITY_MODEL
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: audit` 可运行；net_return_available=true；cost_model_version_recorded=true；liquidity_violation_count_reported=true；strategy_evaluation_uses_cost_model=true
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:dcc1e7be856e68d799ea101d7f0e9fbbff2c76b0a36065ddc4e33d9cc31f8e4a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-728_COST_LIQUIDITY_TRADABILITY_MODEL
+  - Data foundation / cost, liquidity, and tradability model
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-726_to_733 总需求文档；建立版本化 cost/liquidity model 和 net-return/cost fields
+    baseline
+  - '`aits trading-costs estimate'
+  - audit` 可运行；net_return_available=true；cost_model_version_recorded=true；liquidity_violation_count_reported=true；strategy_evaluation_uses_cost_model=true
+  docs_links: []
+  terminal: false
+  raw_row_sha256: dcc1e7be856e68d799ea101d7f0e9fbbff2c76b0a36065ddc4e33d9cc31f8e4a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d4b868da6bf9b0abc36ac94cdcfb76a6fbc3cfad01fb6e26c7490d18d6cf30b5

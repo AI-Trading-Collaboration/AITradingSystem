@@ -1,0 +1,144 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-379_PAPER_SHADOW_PROMOTION_BOARD
+  title: null
+  domain: Research governance / paper-shadow promotion board
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续手工复核真实 board blockers；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-379_Paper_Shadow_Promotion_Board.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-379_Paper_Shadow_Promotion_Board.md`；聚合
+    weekly review、readiness、drift、cost sensitivity、benchmark baseline、safety audit、owner
+    review/decision 和 lineage graph，输出 paper-shadow-only promotion board decision；不得推进
+    live trading、official allocation、production state、broker/order、automatic owner
+    approval 或 candidate state mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/paper_shadow_promotion_board.py`、`aits
+      reports paper-shadow-promotion-board`、`aits reports validate-paper-shadow-promotion-board`、required
+      evidence checklist、blocking reasons、JSON/Markdown board report、validation artifact、Reader
+      Brief section、report registry、artifact catalog、README、system flow、operations
+      runbook、requirements 和 focused tests；decision 限定为 `EXTEND_SHADOW
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 216
+    row_sha256: dca6f38f758e239bd3e093be379693fec8e87fd42b4ff074ca7d4462dba8257a
+    cell_count: 12
+    all_cells:
+    - TRADING-379_PAPER_SHADOW_PROMOTION_BOARD
+    - Research governance / paper-shadow promotion board
+    - P1
+    - DONE
+    - 项目 owner 后续手工复核真实 board blockers；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-379_Paper_Shadow_Promotion_Board.md`；聚合 weekly
+      review、readiness、drift、cost sensitivity、benchmark baseline、safety audit、owner
+      review/decision 和 lineage graph，输出 paper-shadow-only promotion board decision；不得推进
+      live trading、official allocation、production state、broker/order、automatic owner
+      approval 或 candidate state mutation
+    - 新增 `src/ai_trading_system/reports/paper_shadow_promotion_board.py`、`aits reports
+      paper-shadow-promotion-board`、`aits reports validate-paper-shadow-promotion-board`、required
+      evidence checklist、blocking reasons、JSON/Markdown board report、validation artifact、Reader
+      Brief section、report registry、artifact catalog、README、system flow、operations
+      runbook、requirements 和 focused tests；decision 限定为 `EXTEND_SHADOW
+    - CONTINUE_NORMAL_SHADOW
+    - RETURN_TO_RESEARCH
+    - REJECT
+    - HOLD_FOR_MORE_DATA`，所有输出固定 `production_effect=none`
+    - '2026-06-16: DONE；真实 2026-06-16 board `outputs/reports/paper_shadow_promotion_board_2026-06-16.json/md`
+      输出 `HOLD_FOR_MORE_DATA`、candidate=`median_plus_regime_mismatch_filter`、checks=9、passed=2、blocked=4、warnings=3、safety=`SAFETY_PASS_WITH_WARNINGS`、readiness=`BLOCKED_STALE_DATA`、owner
+      decision=`AUDIT_LOG_EMPTY`、lineage=`PASS`；blockers 来自 readiness stale data、cost
+      sensitivity insufficient inputs、benchmark insufficient baseline metrics 和 owner
+      decision audit log empty，未补造 owner decision 或 metrics。Validation `outputs/reports/paper_shadow_promotion_board_validation_2026-06-16.json/md`
+      输出 `PASS_WITH_WARNINGS`、checks=8、failed=0、source blockers=4、source warnings=3；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=398 / missing=20 / stale=10 / waived=30
+      / unwaived=0；documentation contract PASS；Reader Brief latest 使用 2026-06-15 decision
+      snapshot + 2026-06-16 report index 展示 board section，Reader Brief quality OK
+      / failed=0；focused pytest 36 passed，Ruff PASS，compileall PASS。精确 2026-06-16
+      Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no upstream rerun / no data refresh
+      / no missing evidence fabrication / no strategy, candidate, paper-shadow or
+      production mutation / no official target / no broker / no order ticket。'
+    raw_line: '|TRADING-379_PAPER_SHADOW_PROMOTION_BOARD|Research governance / paper-shadow
+      promotion board|P1|DONE|项目 owner 后续手工复核真实 board blockers；代码实现完成|详细拆解见 `docs/requirements/TRADING-379_Paper_Shadow_Promotion_Board.md`；聚合
+      weekly review、readiness、drift、cost sensitivity、benchmark baseline、safety audit、owner
+      review/decision 和 lineage graph，输出 paper-shadow-only promotion board decision；不得推进
+      live trading、official allocation、production state、broker/order、automatic owner
+      approval 或 candidate state mutation|新增 `src/ai_trading_system/reports/paper_shadow_promotion_board.py`、`aits
+      reports paper-shadow-promotion-board`、`aits reports validate-paper-shadow-promotion-board`、required
+      evidence checklist、blocking reasons、JSON/Markdown board report、validation artifact、Reader
+      Brief section、report registry、artifact catalog、README、system flow、operations
+      runbook、requirements 和 focused tests；decision 限定为 `EXTEND_SHADOW|CONTINUE_NORMAL_SHADOW|RETURN_TO_RESEARCH|REJECT|HOLD_FOR_MORE_DATA`，所有输出固定
+      `production_effect=none`|2026-06-16: DONE；真实 2026-06-16 board `outputs/reports/paper_shadow_promotion_board_2026-06-16.json/md`
+      输出 `HOLD_FOR_MORE_DATA`、candidate=`median_plus_regime_mismatch_filter`、checks=9、passed=2、blocked=4、warnings=3、safety=`SAFETY_PASS_WITH_WARNINGS`、readiness=`BLOCKED_STALE_DATA`、owner
+      decision=`AUDIT_LOG_EMPTY`、lineage=`PASS`；blockers 来自 readiness stale data、cost
+      sensitivity insufficient inputs、benchmark insufficient baseline metrics 和 owner
+      decision audit log empty，未补造 owner decision 或 metrics。Validation `outputs/reports/paper_shadow_promotion_board_validation_2026-06-16.json/md`
+      输出 `PASS_WITH_WARNINGS`、checks=8、failed=0、source blockers=4、source warnings=3；report
+      index `PASS_WITH_EXPLICIT_WAIVERS` / reports=398 / missing=20 / stale=10 / waived=30
+      / unwaived=0；documentation contract PASS；Reader Brief latest 使用 2026-06-15 decision
+      snapshot + 2026-06-16 report index 展示 board section，Reader Brief quality OK
+      / failed=0；focused pytest 36 passed，Ruff PASS，compileall PASS。精确 2026-06-16
+      Reader Brief generation remains limited by missing local `data/processed/decision_snapshots/decision_snapshot_2026-06-16.json`;
+      no snapshot was fabricated. 保持 read-only / no upstream rerun / no data refresh
+      / no missing evidence fabrication / no strategy, candidate, paper-shadow or
+      production mutation / no official target / no broker / no order ticket。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-dca6f38f758e239bd3e093be
+  task_id: TRADING-379_PAPER_SHADOW_PROMOTION_BOARD
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续手工复核真实 board blockers；代码实现完成
+    notes: CONTINUE_NORMAL_SHADOW
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:dca6f38f758e239bd3e093be379693fec8e87fd42b4ff074ca7d4462dba8257a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-379_PAPER_SHADOW_PROMOTION_BOARD
+  - Research governance / paper-shadow promotion board
+  - P1
+  - DONE
+  - 项目 owner 后续手工复核真实 board blockers；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-379_Paper_Shadow_Promotion_Board.md`；聚合 weekly
+    review、readiness、drift、cost sensitivity、benchmark baseline、safety audit、owner
+    review/decision 和 lineage graph，输出 paper-shadow-only promotion board decision；不得推进
+    live trading、official allocation、production state、broker/order、automatic owner
+    approval 或 candidate state mutation
+  - 新增 `src/ai_trading_system/reports/paper_shadow_promotion_board.py`、`aits reports
+    paper-shadow-promotion-board`、`aits reports validate-paper-shadow-promotion-board`、required
+    evidence checklist、blocking reasons、JSON/Markdown board report、validation artifact、Reader
+    Brief section、report registry、artifact catalog、README、system flow、operations runbook、requirements
+    和 focused tests；decision 限定为 `EXTEND_SHADOW
+  - CONTINUE_NORMAL_SHADOW
+  docs_links:
+  - docs/requirements/TRADING-379_Paper_Shadow_Promotion_Board.md
+  terminal: true
+  raw_row_sha256: dca6f38f758e239bd3e093be379693fec8e87fd42b4ff074ca7d4462dba8257a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f27737519df9a354e2889e4662988b2658ec4e9aa5a603a434d78c79790106c4

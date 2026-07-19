@@ -1,0 +1,121 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: FUND-002
+  title: null
+  domain: 基本面/SEC companyfacts 写入稳定性
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/sec_companyfacts_json_write_stability_2026-05-12.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/sec_companyfacts_json_write_stability_2026-05-12.md`；2026-06-05
+    最新 production daily-run 已稳定越过 SEC companyfacts，companyfacts validation PASS
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: SEC companyfacts raw JSON 写入必须保留原始字段和值，但不得对大型 payload 先做完整 pretty/sorted
+      `json.dumps` 中间字符串；manifest 继续记录 endpoint、请求参数、fact count 和 checksum；真实 daily-run
+      至少越过 SEC companyfacts
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 359
+    row_sha256: e05379f2b060689e69bc3b2c95bf618ea0755127a51e4afa7640e367ad907772
+    cell_count: 8
+    all_cells:
+    - FUND-002
+    - 基本面/SEC companyfacts 写入稳定性
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/sec_companyfacts_json_write_stability_2026-05-12.md`；2026-06-05
+      最新 production daily-run 已稳定越过 SEC companyfacts，companyfacts validation PASS
+    - SEC companyfacts raw JSON 写入必须保留原始字段和值，但不得对大型 payload 先做完整 pretty/sorted `json.dumps`
+      中间字符串；manifest 继续记录 endpoint、请求参数、fact count 和 checksum；真实 daily-run 至少越过 SEC
+      companyfacts
+    - '2026-05-12: 新增并进入实现，原因：扩展核心观察池后，17 个 ticker 的 SEC companyfacts 大型 JSON 在 `_write_json()`
+      的 pretty/sorted `json.dumps` 路径触发 Windows access violation，阻断每日链路。2026-06-07:
+      从 IN_PROGRESS 改为 VALIDATING，原因：SEC companyfacts 下载已优先保存 raw response bytes，非
+      raw provider 改为 `JSONEncoder.iterencode()` chunk 写入 compact JSON，manifest checksum
+      仍基于实际写入文件；focused tests、ruff、compileall 和 git diff check 通过。2026-06-07: 从 VALIDATING
+      改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      中 SEC companyfacts step PASS，17/17 公司缓存存在，`sec_companyfacts_validation_2026-06-05.md`
+      PASS、错误 0、警告 0，manifest 记录下载时间、fact count 和 checksum。'
+    raw_line: '|FUND-002|基本面/SEC companyfacts 写入稳定性|P0|DONE|系统验证|详细拆解见 `docs/requirements/sec_companyfacts_json_write_stability_2026-05-12.md`；2026-06-05
+      最新 production daily-run 已稳定越过 SEC companyfacts，companyfacts validation PASS|SEC
+      companyfacts raw JSON 写入必须保留原始字段和值，但不得对大型 payload 先做完整 pretty/sorted `json.dumps`
+      中间字符串；manifest 继续记录 endpoint、请求参数、fact count 和 checksum；真实 daily-run 至少越过 SEC
+      companyfacts|2026-05-12: 新增并进入实现，原因：扩展核心观察池后，17 个 ticker 的 SEC companyfacts
+      大型 JSON 在 `_write_json()` 的 pretty/sorted `json.dumps` 路径触发 Windows access violation，阻断每日链路。2026-06-07:
+      从 IN_PROGRESS 改为 VALIDATING，原因：SEC companyfacts 下载已优先保存 raw response bytes，非
+      raw provider 改为 `JSONEncoder.iterencode()` chunk 写入 compact JSON，manifest checksum
+      仍基于实际写入文件；focused tests、ruff、compileall 和 git diff check 通过。2026-06-07: 从 VALIDATING
+      改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      中 SEC companyfacts step PASS，17/17 公司缓存存在，`sec_companyfacts_validation_2026-06-05.md`
+      PASS、错误 0、警告 0，manifest 记录下载时间、fact count 和 checksum。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e05379f2b060689e69bc3b2c
+  task_id: FUND-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-12: 新增并进入实现，原因：扩展核心观察池后，17 个 ticker 的 SEC companyfacts 大型 JSON
+      在 `_write_json()` 的 pretty/sorted `json.dumps` 路径触发 Windows access violation，阻断每日链路。2026-06-07:
+      从 IN_PROGRESS 改为 VALIDATING，原因：SEC companyfacts 下载已优先保存 raw response bytes，非
+      raw provider 改为 `JSONEncoder.iterencode()` chunk 写入 compact JSON，manifest checksum
+      仍基于实际写入文件；focused tests、ruff、compileall 和 git diff check 通过。2026-06-07: 从 VALIDATING
+      改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      中 SEC companyfacts step PASS，17/17 公司缓存存在，`sec_companyfacts_validation_2026-06-05.md`
+      PASS、错误 0、警告 0，manifest 记录下载时间、fact count 和 checksum。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e05379f2b060689e69bc3b2c95bf618ea0755127a51e4afa7640e367ad907772
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - FUND-002
+  - 基本面/SEC companyfacts 写入稳定性
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/sec_companyfacts_json_write_stability_2026-05-12.md`；2026-06-05
+    最新 production daily-run 已稳定越过 SEC companyfacts，companyfacts validation PASS
+  - SEC companyfacts raw JSON 写入必须保留原始字段和值，但不得对大型 payload 先做完整 pretty/sorted `json.dumps`
+    中间字符串；manifest 继续记录 endpoint、请求参数、fact count 和 checksum；真实 daily-run 至少越过 SEC
+    companyfacts
+  - '2026-05-12: 新增并进入实现，原因：扩展核心观察池后，17 个 ticker 的 SEC companyfacts 大型 JSON 在 `_write_json()`
+    的 pretty/sorted `json.dumps` 路径触发 Windows access violation，阻断每日链路。2026-06-07:
+    从 IN_PROGRESS 改为 VALIDATING，原因：SEC companyfacts 下载已优先保存 raw response bytes，非 raw
+    provider 改为 `JSONEncoder.iterencode()` chunk 写入 compact JSON，manifest checksum
+    仍基于实际写入文件；focused tests、ruff、compileall 和 git diff check 通过。2026-06-07: 从 VALIDATING
+    改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+    中 SEC companyfacts step PASS，17/17 公司缓存存在，`sec_companyfacts_validation_2026-06-05.md`
+    PASS、错误 0、警告 0，manifest 记录下载时间、fact count 和 checksum。'
+  docs_links:
+  - docs/requirements/sec_companyfacts_json_write_stability_2026-05-12.md
+  terminal: true
+  raw_row_sha256: e05379f2b060689e69bc3b2c95bf618ea0755127a51e4afa7640e367ad907772
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e3cccea7c36d137bbd4c6a55ff164ea7a8325ee06c32d767d482c3617baef5e7

@@ -1,0 +1,200 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-505_to_520_WEIGHT_RESEARCH_PROGRAM_V1
+  title: null
+  domain: ETF portfolio/weight research program v1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-505_to_520_Weight_Research_Program_v1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-505_to_520_Weight_Research_Program_v1.md`；本批次承接已归档的
+    TRADING-500~504 基础 RFC，Phase A/B 独立 research-only source contracts、window catalog、scorecard、ablation
+    runner/comparison harness 和 program snapshot 已补齐；B0 static strategic baseline
+    已用 `B000/static_default_portfolio` 完成 research-only mini-backfill；TRADING-511A-D
+    已完成 unblock batch 并只运行 B1 execution-control mini-backfill，结果为 mixed research-only
+    evidence；Phase C/D 后续 B2-B6 只有在 owner/system 复核 B1 mixed evidence、独立 runner scope、signal
+    robustness evidence 和 holdout/final gate 后才能继续，不得把 P0 动态策略总结果写成分层消融完成；当前禁止 paper-shadow/extended/live/official
+    target weights/broker/order/production mutation/automatic owner decision
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增或更新 TRADING-500~509 独立 JSON/Markdown source artifacts、B0/B1 result artifacts、Reader
+      Brief、system flow、artifact catalog、需求文档、task register、benchmark registry fix
+      和 focused tests；所有 safety fields 必须保持 research-only/manual-review-only/production_effect=none；TRADING-512~520
+      若缺 B2~B6 真实消融结果必须输出 `WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE` 或 blocked，不得伪造
+      return/drawdown/turnover/cost/benchmark/window/signal robustness 结果；后续真正 backfill/score
+      outputs 必须先调用 `aits validate-data` 同一路径并披露数据质量状态；解除阻塞条件：owner/system 复核 B1 mixed
+      evidence 并批准是否进入 B2/B3 独立 runner implementation
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1424
+    row_sha256: 7bca8ff765dbb998a7dc18dc2f6ba34985707da2e846ed13c3ce25e463e26c63
+    cell_count: 8
+    all_cells:
+    - TRADING-505_to_520_WEIGHT_RESEARCH_PROGRAM_V1
+    - ETF portfolio/weight research program v1
+    - P0
+    - BLOCKED_OWNER_INPUT
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-505_to_520_Weight_Research_Program_v1.md`；本批次承接已归档的
+      TRADING-500~504 基础 RFC，Phase A/B 独立 research-only source contracts、window catalog、scorecard、ablation
+      runner/comparison harness 和 program snapshot 已补齐；B0 static strategic baseline
+      已用 `B000/static_default_portfolio` 完成 research-only mini-backfill；TRADING-511A-D
+      已完成 unblock batch 并只运行 B1 execution-control mini-backfill，结果为 mixed research-only
+      evidence；Phase C/D 后续 B2-B6 只有在 owner/system 复核 B1 mixed evidence、独立 runner
+      scope、signal robustness evidence 和 holdout/final gate 后才能继续，不得把 P0 动态策略总结果写成分层消融完成；当前禁止
+      paper-shadow/extended/live/official target weights/broker/order/production mutation/automatic
+      owner decision
+    - 新增或更新 TRADING-500~509 独立 JSON/Markdown source artifacts、B0/B1 result artifacts、Reader
+      Brief、system flow、artifact catalog、需求文档、task register、benchmark registry fix
+      和 focused tests；所有 safety fields 必须保持 research-only/manual-review-only/production_effect=none；TRADING-512~520
+      若缺 B2~B6 真实消融结果必须输出 `WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE` 或 blocked，不得伪造
+      return/drawdown/turnover/cost/benchmark/window/signal robustness 结果；后续真正 backfill/score
+      outputs 必须先调用 `aits validate-data` 同一路径并披露数据质量状态；解除阻塞条件：owner/system 复核 B1 mixed
+      evidence 并批准是否进入 B2/B3 独立 runner implementation
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 engineering closeout RC2 后进入 Weight
+      Research Program v1；TRADING-500~504 已有合并 RFC baseline，但附件新增 TRADING-505~520
+      需要独立 source contracts、受控实验框架和硬停止边界。本轮先实现 Phase A/B 合同层和 Phase C/D hard-stop
+      snapshot，不运行 backfill、不生成 official target weights、不激活 paper-shadow、不触发 broker/order、不
+      append owner decision。2026-06-19: 从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：Phase
+      A/B source contracts 和 `WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE` snapshot
+      已完成并通过 focused validation，但 TRADING-510~520 需要 owner/system 先冻结 B0 research-only
+      control、untouched holdout 和 B0 runner scope；当前没有 B0~B6 真实消融结果，不得创建 v3 spec 或进入
+      paper-shadow。验证通过 `pytest tests/test_weight_research_program_v1.py tests/test_task_register_consistency.py
+      tests/test_documentation_contract.py -q`（16 passed）和 `git diff --check`。2026-06-19:
+      B0 blocker 已部分解除：新增 `B000/static_default_portfolio` benchmark registry 修复，先运行
+      `aits validate-data`（`PASS_WITH_WARNINGS`，0 errors/1 warning），再在 `normal_market_regime`
+      mini window（2023-01-03 至 2023-07-31）生成 `etf-backtest-20260619T074656Z`，B0 result
+      写入 `docs/research/b0_static_strategic_baseline_result.json/md`；snapshot 仍为 `WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE`，原因：B1-B6
+      独立 runner、signal robustness evidence 和 untouched holdout/final gate 尚未冻结。2026-06-19:
+      TRADING-511A-D unblock batch 已完成：511A-C contracts 和 holdout/final gate frozen，B1-only
+      runner 完成 mini-backfill；B1 证据 mixed，B2-B6 仍 blocked，未经 owner/system 复核不得继续。'
+    raw_line: '|TRADING-505_to_520_WEIGHT_RESEARCH_PROGRAM_V1|ETF portfolio/weight
+      research program v1|P0|BLOCKED_OWNER_INPUT|系统实现 + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-505_to_520_Weight_Research_Program_v1.md`；本批次承接已归档的
+      TRADING-500~504 基础 RFC，Phase A/B 独立 research-only source contracts、window catalog、scorecard、ablation
+      runner/comparison harness 和 program snapshot 已补齐；B0 static strategic baseline
+      已用 `B000/static_default_portfolio` 完成 research-only mini-backfill；TRADING-511A-D
+      已完成 unblock batch 并只运行 B1 execution-control mini-backfill，结果为 mixed research-only
+      evidence；Phase C/D 后续 B2-B6 只有在 owner/system 复核 B1 mixed evidence、独立 runner
+      scope、signal robustness evidence 和 holdout/final gate 后才能继续，不得把 P0 动态策略总结果写成分层消融完成；当前禁止
+      paper-shadow/extended/live/official target weights/broker/order/production mutation/automatic
+      owner decision|新增或更新 TRADING-500~509 独立 JSON/Markdown source artifacts、B0/B1
+      result artifacts、Reader Brief、system flow、artifact catalog、需求文档、task register、benchmark
+      registry fix 和 focused tests；所有 safety fields 必须保持 research-only/manual-review-only/production_effect=none；TRADING-512~520
+      若缺 B2~B6 真实消融结果必须输出 `WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE` 或 blocked，不得伪造
+      return/drawdown/turnover/cost/benchmark/window/signal robustness 结果；后续真正 backfill/score
+      outputs 必须先调用 `aits validate-data` 同一路径并披露数据质量状态；解除阻塞条件：owner/system 复核 B1 mixed
+      evidence 并批准是否进入 B2/B3 独立 runner implementation|2026-06-19: 新增并进入 IN_PROGRESS，原因：owner
+      附件要求在 engineering closeout RC2 后进入 Weight Research Program v1；TRADING-500~504
+      已有合并 RFC baseline，但附件新增 TRADING-505~520 需要独立 source contracts、受控实验框架和硬停止边界。本轮先实现
+      Phase A/B 合同层和 Phase C/D hard-stop snapshot，不运行 backfill、不生成 official target
+      weights、不激活 paper-shadow、不触发 broker/order、不 append owner decision。2026-06-19:
+      从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：Phase A/B source contracts 和 `WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE`
+      snapshot 已完成并通过 focused validation，但 TRADING-510~520 需要 owner/system 先冻结 B0
+      research-only control、untouched holdout 和 B0 runner scope；当前没有 B0~B6 真实消融结果，不得创建
+      v3 spec 或进入 paper-shadow。验证通过 `pytest tests/test_weight_research_program_v1.py
+      tests/test_task_register_consistency.py tests/test_documentation_contract.py
+      -q`（16 passed）和 `git diff --check`。2026-06-19: B0 blocker 已部分解除：新增 `B000/static_default_portfolio`
+      benchmark registry 修复，先运行 `aits validate-data`（`PASS_WITH_WARNINGS`，0 errors/1
+      warning），再在 `normal_market_regime` mini window（2023-01-03 至 2023-07-31）生成 `etf-backtest-20260619T074656Z`，B0
+      result 写入 `docs/research/b0_static_strategic_baseline_result.json/md`；snapshot
+      仍为 `WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE`，原因：B1-B6 独立 runner、signal robustness
+      evidence 和 untouched holdout/final gate 尚未冻结。2026-06-19: TRADING-511A-D unblock
+      batch 已完成：511A-C contracts 和 holdout/final gate frozen，B1-only runner 完成 mini-backfill；B1
+      证据 mixed，B2-B6 仍 blocked，未经 owner/system 复核不得继续。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7bca8ff765dbb998a7dc18dc
+  task_id: TRADING-505_to_520_WEIGHT_RESEARCH_PROGRAM_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 engineering closeout RC2
+      后进入 Weight Research Program v1；TRADING-500~504 已有合并 RFC baseline，但附件新增 TRADING-505~520
+      需要独立 source contracts、受控实验框架和硬停止边界。本轮先实现 Phase A/B 合同层和 Phase C/D hard-stop
+      snapshot，不运行 backfill、不生成 official target weights、不激活 paper-shadow、不触发 broker/order、不
+      append owner decision。2026-06-19: 从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：Phase
+      A/B source contracts 和 `WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE` snapshot
+      已完成并通过 focused validation，但 TRADING-510~520 需要 owner/system 先冻结 B0 research-only
+      control、untouched holdout 和 B0 runner scope；当前没有 B0~B6 真实消融结果，不得创建 v3 spec 或进入
+      paper-shadow。验证通过 `pytest tests/test_weight_research_program_v1.py tests/test_task_register_consistency.py
+      tests/test_documentation_contract.py -q`（16 passed）和 `git diff --check`。2026-06-19:
+      B0 blocker 已部分解除：新增 `B000/static_default_portfolio` benchmark registry 修复，先运行
+      `aits validate-data`（`PASS_WITH_WARNINGS`，0 errors/1 warning），再在 `normal_market_regime`
+      mini window（2023-01-03 至 2023-07-31）生成 `etf-backtest-20260619T074656Z`，B0 result
+      写入 `docs/research/b0_static_strategic_baseline_result.json/md`；snapshot 仍为 `WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE`，原因：B1-B6
+      独立 runner、signal robustness evidence 和 untouched holdout/final gate 尚未冻结。2026-06-19:
+      TRADING-511A-D unblock batch 已完成：511A-C contracts 和 holdout/final gate frozen，B1-only
+      runner 完成 mini-backfill；B1 证据 mixed，B2-B6 仍 blocked，未经 owner/system 复核不得继续。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7bca8ff765dbb998a7dc18dc2f6ba34985707da2e846ed13c3ce25e463e26c63
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-505_to_520_WEIGHT_RESEARCH_PROGRAM_V1
+  - ETF portfolio/weight research program v1
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-505_to_520_Weight_Research_Program_v1.md`；本批次承接已归档的
+    TRADING-500~504 基础 RFC，Phase A/B 独立 research-only source contracts、window catalog、scorecard、ablation
+    runner/comparison harness 和 program snapshot 已补齐；B0 static strategic baseline
+    已用 `B000/static_default_portfolio` 完成 research-only mini-backfill；TRADING-511A-D
+    已完成 unblock batch 并只运行 B1 execution-control mini-backfill，结果为 mixed research-only
+    evidence；Phase C/D 后续 B2-B6 只有在 owner/system 复核 B1 mixed evidence、独立 runner scope、signal
+    robustness evidence 和 holdout/final gate 后才能继续，不得把 P0 动态策略总结果写成分层消融完成；当前禁止 paper-shadow/extended/live/official
+    target weights/broker/order/production mutation/automatic owner decision
+  - 新增或更新 TRADING-500~509 独立 JSON/Markdown source artifacts、B0/B1 result artifacts、Reader
+    Brief、system flow、artifact catalog、需求文档、task register、benchmark registry fix 和
+    focused tests；所有 safety fields 必须保持 research-only/manual-review-only/production_effect=none；TRADING-512~520
+    若缺 B2~B6 真实消融结果必须输出 `WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE` 或 blocked，不得伪造
+    return/drawdown/turnover/cost/benchmark/window/signal robustness 结果；后续真正 backfill/score
+    outputs 必须先调用 `aits validate-data` 同一路径并披露数据质量状态；解除阻塞条件：owner/system 复核 B1 mixed
+    evidence 并批准是否进入 B2/B3 独立 runner implementation
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 engineering closeout RC2 后进入 Weight
+    Research Program v1；TRADING-500~504 已有合并 RFC baseline，但附件新增 TRADING-505~520 需要独立
+    source contracts、受控实验框架和硬停止边界。本轮先实现 Phase A/B 合同层和 Phase C/D hard-stop snapshot，不运行
+    backfill、不生成 official target weights、不激活 paper-shadow、不触发 broker/order、不 append
+    owner decision。2026-06-19: 从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：Phase A/B source
+    contracts 和 `WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE` snapshot 已完成并通过 focused
+    validation，但 TRADING-510~520 需要 owner/system 先冻结 B0 research-only control、untouched
+    holdout 和 B0 runner scope；当前没有 B0~B6 真实消融结果，不得创建 v3 spec 或进入 paper-shadow。验证通过
+    `pytest tests/test_weight_research_program_v1.py tests/test_task_register_consistency.py
+    tests/test_documentation_contract.py -q`（16 passed）和 `git diff --check`。2026-06-19:
+    B0 blocker 已部分解除：新增 `B000/static_default_portfolio` benchmark registry 修复，先运行
+    `aits validate-data`（`PASS_WITH_WARNINGS`，0 errors/1 warning），再在 `normal_market_regime`
+    mini window（2023-01-03 至 2023-07-31）生成 `etf-backtest-20260619T074656Z`，B0 result
+    写入 `docs/research/b0_static_strategic_baseline_result.json/md`；snapshot 仍为 `WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE`，原因：B1-B6
+    独立 runner、signal robustness evidence 和 untouched holdout/final gate 尚未冻结。2026-06-19:
+    TRADING-511A-D unblock batch 已完成：511A-C contracts 和 holdout/final gate frozen，B1-only
+    runner 完成 mini-backfill；B1 证据 mixed，B2-B6 仍 blocked，未经 owner/system 复核不得继续。'
+  docs_links:
+  - docs/requirements/TRADING-505_to_520_Weight_Research_Program_v1.md
+  terminal: false
+  raw_row_sha256: 7bca8ff765dbb998a7dc18dc2f6ba34985707da2e846ed13c3ce25e463e26c63
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b3d22b5e3f605a60ae4edb3623fc61e916834ba265e3069ed5a7d018347fdf66

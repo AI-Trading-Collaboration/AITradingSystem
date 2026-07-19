@@ -1,0 +1,110 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-833_REGIME_STRATIFIED_INDEPENDENT_OUTCOME_REVIEW
+  title: null
+  domain: Controlled strategy research / regime-stratified independent outcome review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+    TRADING-828、832；AI after ChatGPT regime 仍为默认解释窗口
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI `aits research strategies tail-risk-regime-stratified-forward-outcome-review`；按
+      bull/bear/range、vol、200dma、drawdown/recovery、rate/liquidity 可用性分层，输出 robustness/concentration
+      状态
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1311
+    row_sha256: e1ddd2880cba180dba0071bc55577d0d4230c4b0be3bd607f8af6a95a064b97a
+    cell_count: 8
+    all_cells:
+    - TRADING-833_REGIME_STRATIFIED_INDEPENDENT_OUTCOME_REVIEW
+    - Controlled strategy research / regime-stratified independent outcome review
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+      TRADING-828、832；AI after ChatGPT regime 仍为默认解释窗口
+    - 新增 CLI `aits research strategies tail-risk-regime-stratified-forward-outcome-review`；按
+      bull/bear/range、vol、200dma、drawdown/recovery、rate/liquidity 可用性分层，输出 robustness/concentration
+      状态
+    - '2026-06-22: 按附件任务包登记为第二批 P1。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+      registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
+      pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation
+      190 passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+      和 git diff --check。'
+    raw_line: '|TRADING-833_REGIME_STRATIFIED_INDEPENDENT_OUTCOME_REVIEW|Controlled
+      strategy research / regime-stratified independent outcome review|P1|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+      TRADING-828、832；AI after ChatGPT regime 仍为默认解释窗口|新增 CLI `aits research strategies
+      tail-risk-regime-stratified-forward-outcome-review`；按 bull/bear/range、vol、200dma、drawdown/recovery、rate/liquidity
+      可用性分层，输出 robustness/concentration 状态|2026-06-22: 按附件任务包登记为第二批 P1。2026-06-22:
+      实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report registry、system flow、artifact
+      catalog、focused pytest 和 CLI/registry coverage；验证通过：focused pytest 15 passed、CLI
+      smoke 1 passed、fast-unit 191 passed、contract-validation 190 passed、report-validation
+      55 passed、ruff check .、changed-file Black check、compileall 和 git diff --check。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e1ddd2880cba180dba0071bc
+  task_id: TRADING-833_REGIME_STRATIFIED_INDEPENDENT_OUTCOME_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 按附件任务包登记为第二批 P1。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD
+      artifacts、report registry、system flow、artifact catalog、focused pytest 和 CLI/registry
+      coverage；验证通过：focused pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation
+      190 passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+      和 git diff --check。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e1ddd2880cba180dba0071bc55577d0d4230c4b0be3bd607f8af6a95a064b97a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-833_REGIME_STRATIFIED_INDEPENDENT_OUTCOME_REVIEW
+  - Controlled strategy research / regime-stratified independent outcome review
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+    TRADING-828、832；AI after ChatGPT regime 仍为默认解释窗口
+  - 新增 CLI `aits research strategies tail-risk-regime-stratified-forward-outcome-review`；按
+    bull/bear/range、vol、200dma、drawdown/recovery、rate/liquidity 可用性分层，输出 robustness/concentration
+    状态
+  - '2026-06-22: 按附件任务包登记为第二批 P1。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+    registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
+    pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation 190
+    passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+    和 git diff --check。'
+  docs_links:
+  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
+  terminal: false
+  raw_row_sha256: e1ddd2880cba180dba0071bc55577d0d4230c4b0be3bd607f8af6a95a064b97a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 93226aef5390f686d310f096a4abfd48007997161b66ee3fd3dd90ed1e5b0eb2

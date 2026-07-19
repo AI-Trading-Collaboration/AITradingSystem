@@ -1,0 +1,143 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT
+  title: null
+  domain: Developer validation / controlled strategy pytest runtime optimization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-821_Validation_Runtime_Controlled_Strategy_Split.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-821_Validation_Runtime_Controlled_Strategy_Split.md`；当前
+    `tests/test_controlled_strategy_batch.py` 在 `pytest-xdist --dist loadfile` 下成为单文件瓶颈，导致
+    16 worker 无法有效分摊，且 `fast-unit` / `contract-validation` 均重复承担约 9 分钟 controlled
+    strategy suite；本任务只优化测试文件组织和 validation tier 路径，不改变策略逻辑、CLI 行为、report/artifact
+    schema、质量门或投资解释
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 将 controlled strategy batch 测试按主题拆成多个 `test_controlled_strategy_*.py` 文件，使现有
+      `--dist loadfile` 能并行调度；公共 fixtures/helpers 必须抽到非 test helper 模块；`fast-unit`
+      与 `contract-validation` 仍覆盖全部拆分后的 controlled strategy tests；验证需包含拆分后的 focused
+      parallel pytest、`fast-unit`、`contract-validation`，并记录 runtime 对比；所有 runtime
+      artifacts 仍固定 `production_effect=none`，不得改变 validation tier safety boundary
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1345
+    row_sha256: 6ff3b089003d1a2bb44c62018b2bc5ad89fd827be10ec2eb1e8e9f90ec1de82c
+    cell_count: 8
+    all_cells:
+    - TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT
+    - Developer validation / controlled strategy pytest runtime optimization
+    - P2
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-821_Validation_Runtime_Controlled_Strategy_Split.md`；当前
+      `tests/test_controlled_strategy_batch.py` 在 `pytest-xdist --dist loadfile` 下成为单文件瓶颈，导致
+      16 worker 无法有效分摊，且 `fast-unit` / `contract-validation` 均重复承担约 9 分钟 controlled
+      strategy suite；本任务只优化测试文件组织和 validation tier 路径，不改变策略逻辑、CLI 行为、report/artifact
+      schema、质量门或投资解释
+    - 将 controlled strategy batch 测试按主题拆成多个 `test_controlled_strategy_*.py` 文件，使现有
+      `--dist loadfile` 能并行调度；公共 fixtures/helpers 必须抽到非 test helper 模块；`fast-unit`
+      与 `contract-validation` 仍覆盖全部拆分后的 controlled strategy tests；验证需包含拆分后的 focused
+      parallel pytest、`fast-unit`、`contract-validation`，并记录 runtime 对比；所有 runtime
+      artifacts 仍固定 `production_effect=none`，不得改变 validation tier safety boundary
+    - '2026-06-22: 新增并进入 IN_PROGRESS；原因：TRADING-816～820 验证显示主要耗时来自 `tests/test_controlled_strategy_batch.py`
+      被完整 pytest、fast-unit、contract-validation 重复执行，且单文件在 `loadfile` 调度下无法充分并行。2026-06-22:
+      实现完成并转入 VALIDATING；将原 73 个 controlled strategy tests 拆为 `test_controlled_strategy_value_surface.py`、`test_controlled_strategy_regime_horizon.py`、`test_controlled_strategy_tail_risk_policy.py`、`test_controlled_strategy_candidate_batch.py`
+      和保留 CLI/registry 契约的 `test_controlled_strategy_batch.py`，公共 helper 抽到 `tests/controlled_strategy_batch_helpers.py`；`fast-unit`
+      和 `contract-validation` 均显式包含 5 个拆分文件，`--dist loadfile` 默认不变。拆分后 focused controlled
+      strategy pytest 73 passed，用时 132.52s，对比拆分前 552.17s，缩短约 76.0%；`fast-unit` 178
+      passed，用时 136.55s，对比 549.89s，缩短约 75.2%；`contract-validation` 177 passed，用时 138.91s，对比
+      559.78s，缩短约 75.2%。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T162455Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T162717Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT|Developer
+      validation / controlled strategy pytest runtime optimization|P2|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-821_Validation_Runtime_Controlled_Strategy_Split.md`；当前
+      `tests/test_controlled_strategy_batch.py` 在 `pytest-xdist --dist loadfile` 下成为单文件瓶颈，导致
+      16 worker 无法有效分摊，且 `fast-unit` / `contract-validation` 均重复承担约 9 分钟 controlled
+      strategy suite；本任务只优化测试文件组织和 validation tier 路径，不改变策略逻辑、CLI 行为、report/artifact
+      schema、质量门或投资解释|将 controlled strategy batch 测试按主题拆成多个 `test_controlled_strategy_*.py`
+      文件，使现有 `--dist loadfile` 能并行调度；公共 fixtures/helpers 必须抽到非 test helper 模块；`fast-unit`
+      与 `contract-validation` 仍覆盖全部拆分后的 controlled strategy tests；验证需包含拆分后的 focused
+      parallel pytest、`fast-unit`、`contract-validation`，并记录 runtime 对比；所有 runtime
+      artifacts 仍固定 `production_effect=none`，不得改变 validation tier safety boundary|2026-06-22:
+      新增并进入 IN_PROGRESS；原因：TRADING-816～820 验证显示主要耗时来自 `tests/test_controlled_strategy_batch.py`
+      被完整 pytest、fast-unit、contract-validation 重复执行，且单文件在 `loadfile` 调度下无法充分并行。2026-06-22:
+      实现完成并转入 VALIDATING；将原 73 个 controlled strategy tests 拆为 `test_controlled_strategy_value_surface.py`、`test_controlled_strategy_regime_horizon.py`、`test_controlled_strategy_tail_risk_policy.py`、`test_controlled_strategy_candidate_batch.py`
+      和保留 CLI/registry 契约的 `test_controlled_strategy_batch.py`，公共 helper 抽到 `tests/controlled_strategy_batch_helpers.py`；`fast-unit`
+      和 `contract-validation` 均显式包含 5 个拆分文件，`--dist loadfile` 默认不变。拆分后 focused controlled
+      strategy pytest 73 passed，用时 132.52s，对比拆分前 552.17s，缩短约 76.0%；`fast-unit` 178
+      passed，用时 136.55s，对比 549.89s，缩短约 75.2%；`contract-validation` 177 passed，用时 138.91s，对比
+      559.78s，缩短约 75.2%。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T162455Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T162717Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6ff3b089003d1a2bb44c6201
+  task_id: TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P2
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 新增并进入 IN_PROGRESS；原因：TRADING-816～820 验证显示主要耗时来自 `tests/test_controlled_strategy_batch.py`
+      被完整 pytest、fast-unit、contract-validation 重复执行，且单文件在 `loadfile` 调度下无法充分并行。2026-06-22:
+      实现完成并转入 VALIDATING；将原 73 个 controlled strategy tests 拆为 `test_controlled_strategy_value_surface.py`、`test_controlled_strategy_regime_horizon.py`、`test_controlled_strategy_tail_risk_policy.py`、`test_controlled_strategy_candidate_batch.py`
+      和保留 CLI/registry 契约的 `test_controlled_strategy_batch.py`，公共 helper 抽到 `tests/controlled_strategy_batch_helpers.py`；`fast-unit`
+      和 `contract-validation` 均显式包含 5 个拆分文件，`--dist loadfile` 默认不变。拆分后 focused controlled
+      strategy pytest 73 passed，用时 132.52s，对比拆分前 552.17s，缩短约 76.0%；`fast-unit` 178
+      passed，用时 136.55s，对比 549.89s，缩短约 75.2%；`contract-validation` 177 passed，用时 138.91s，对比
+      559.78s，缩短约 75.2%。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T162455Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T162717Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6ff3b089003d1a2bb44c62018b2bc5ad89fd827be10ec2eb1e8e9f90ec1de82c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT
+  - Developer validation / controlled strategy pytest runtime optimization
+  - P2
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-821_Validation_Runtime_Controlled_Strategy_Split.md`；当前
+    `tests/test_controlled_strategy_batch.py` 在 `pytest-xdist --dist loadfile` 下成为单文件瓶颈，导致
+    16 worker 无法有效分摊，且 `fast-unit` / `contract-validation` 均重复承担约 9 分钟 controlled
+    strategy suite；本任务只优化测试文件组织和 validation tier 路径，不改变策略逻辑、CLI 行为、report/artifact
+    schema、质量门或投资解释
+  - 将 controlled strategy batch 测试按主题拆成多个 `test_controlled_strategy_*.py` 文件，使现有 `--dist
+    loadfile` 能并行调度；公共 fixtures/helpers 必须抽到非 test helper 模块；`fast-unit` 与 `contract-validation`
+    仍覆盖全部拆分后的 controlled strategy tests；验证需包含拆分后的 focused parallel pytest、`fast-unit`、`contract-validation`，并记录
+    runtime 对比；所有 runtime artifacts 仍固定 `production_effect=none`，不得改变 validation tier
+    safety boundary
+  - '2026-06-22: 新增并进入 IN_PROGRESS；原因：TRADING-816～820 验证显示主要耗时来自 `tests/test_controlled_strategy_batch.py`
+    被完整 pytest、fast-unit、contract-validation 重复执行，且单文件在 `loadfile` 调度下无法充分并行。2026-06-22:
+    实现完成并转入 VALIDATING；将原 73 个 controlled strategy tests 拆为 `test_controlled_strategy_value_surface.py`、`test_controlled_strategy_regime_horizon.py`、`test_controlled_strategy_tail_risk_policy.py`、`test_controlled_strategy_candidate_batch.py`
+    和保留 CLI/registry 契约的 `test_controlled_strategy_batch.py`，公共 helper 抽到 `tests/controlled_strategy_batch_helpers.py`；`fast-unit`
+    和 `contract-validation` 均显式包含 5 个拆分文件，`--dist loadfile` 默认不变。拆分后 focused controlled
+    strategy pytest 73 passed，用时 132.52s，对比拆分前 552.17s，缩短约 76.0%；`fast-unit` 178 passed，用时
+    136.55s，对比 549.89s，缩短约 75.2%；`contract-validation` 177 passed，用时 138.91s，对比 559.78s，缩短约
+    75.2%。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T162455Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T162717Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-821_Validation_Runtime_Controlled_Strategy_Split.md
+  terminal: false
+  raw_row_sha256: 6ff3b089003d1a2bb44c62018b2bc5ad89fd827be10ec2eb1e8e9f90ec1de82c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6daa463459013f376562ff02a15f713e781bdb98bc67e8a5299689cc1d2a6cc1

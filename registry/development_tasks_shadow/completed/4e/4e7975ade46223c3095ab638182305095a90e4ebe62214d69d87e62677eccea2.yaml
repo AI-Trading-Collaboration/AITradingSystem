@@ -1,0 +1,121 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-020
+  title: null
+  domain: 数据工程/外部请求缓存映射快照韧性
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/external_request_cache_mapping_snapshot_2026-05-29.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/external_request_cache_mapping_snapshot_2026-05-29.md`；外部请求
+    cache identity / metadata mapping 快照韧性已通过目标测试和真实 daily-run 复验
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 外部请求缓存对 params、headers、json payload 和 response headers 生成脱敏 identity/metadata
+      前必须稳定快照 mapping；遇到一次 `dictionary keys changed during iteration` 应重试并保留脱敏边界；不得写入
+      API key/token/Cookie/User-Agent 原文；目标测试和真实 `aits ops daily-run` 通过或报告新的真实供应商门禁原因
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 347
+    row_sha256: 9a1086aa57719614b2989743cdbc17a558288bb72564516418b5d80bbd15cafb
+    cell_count: 8
+    all_cells:
+    - DATA-020
+    - 数据工程/外部请求缓存映射快照韧性
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/external_request_cache_mapping_snapshot_2026-05-29.md`；外部请求
+      cache identity / metadata mapping 快照韧性已通过目标测试和真实 daily-run 复验
+    - 外部请求缓存对 params、headers、json payload 和 response headers 生成脱敏 identity/metadata
+      前必须稳定快照 mapping；遇到一次 `dictionary keys changed during iteration` 应重试并保留脱敏边界；不得写入
+      API key/token/Cookie/User-Agent 原文；目标测试和真实 `aits ops daily-run` 通过或报告新的真实供应商门禁原因
+    - '2026-05-29: 新增并进入 IN_PROGRESS，原因：RISK-016/TRADING-047/TRADING-048 修复后完整 daily-run
+      已越过 SEC PIT shadow monitor，随后在第 1 步 `download_data` 因本地 RuntimeError `dictionary
+      keys changed during iteration` fail closed；凭据存在，诊断未捕获结构化 provider 错误。2026-05-29:
+      从 IN_PROGRESS 改为 VALIDATING，原因：request cache mapping snapshot 修复通过目标测试/ruff/black/diff
+      check，真实 `aits ops daily-run` as-of 2026-05-28 已 23/23 PASS。2026-06-07: 从 VALIDATING
+      改为 DONE，原因：验收证据已满足且无剩余 owner 或时间窗口 blocker；真实 daily-run 已证明 `download_data`
+      和 `validate_data` 在该修复后通过，后续 FRED tail refresh 与 latest daily-run 也未再复现 `dictionary
+      keys changed during iteration`。'
+    raw_line: '|DATA-020|数据工程/外部请求缓存映射快照韧性|P0|DONE|系统验证|详细拆解见 `docs/requirements/external_request_cache_mapping_snapshot_2026-05-29.md`；外部请求
+      cache identity / metadata mapping 快照韧性已通过目标测试和真实 daily-run 复验|外部请求缓存对 params、headers、json
+      payload 和 response headers 生成脱敏 identity/metadata 前必须稳定快照 mapping；遇到一次 `dictionary
+      keys changed during iteration` 应重试并保留脱敏边界；不得写入 API key/token/Cookie/User-Agent
+      原文；目标测试和真实 `aits ops daily-run` 通过或报告新的真实供应商门禁原因|2026-05-29: 新增并进入 IN_PROGRESS，原因：RISK-016/TRADING-047/TRADING-048
+      修复后完整 daily-run 已越过 SEC PIT shadow monitor，随后在第 1 步 `download_data` 因本地 RuntimeError
+      `dictionary keys changed during iteration` fail closed；凭据存在，诊断未捕获结构化 provider
+      错误。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：request cache mapping snapshot
+      修复通过目标测试/ruff/black/diff check，真实 `aits ops daily-run` as-of 2026-05-28 已 23/23
+      PASS。2026-06-07: 从 VALIDATING 改为 DONE，原因：验收证据已满足且无剩余 owner 或时间窗口 blocker；真实
+      daily-run 已证明 `download_data` 和 `validate_data` 在该修复后通过，后续 FRED tail refresh
+      与 latest daily-run 也未再复现 `dictionary keys changed during iteration`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-9a1086aa57719614b2989743
+  task_id: DATA-020
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：RISK-016/TRADING-047/TRADING-048 修复后完整
+      daily-run 已越过 SEC PIT shadow monitor，随后在第 1 步 `download_data` 因本地 RuntimeError
+      `dictionary keys changed during iteration` fail closed；凭据存在，诊断未捕获结构化 provider
+      错误。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：request cache mapping snapshot
+      修复通过目标测试/ruff/black/diff check，真实 `aits ops daily-run` as-of 2026-05-28 已 23/23
+      PASS。2026-06-07: 从 VALIDATING 改为 DONE，原因：验收证据已满足且无剩余 owner 或时间窗口 blocker；真实
+      daily-run 已证明 `download_data` 和 `validate_data` 在该修复后通过，后续 FRED tail refresh
+      与 latest daily-run 也未再复现 `dictionary keys changed during iteration`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:9a1086aa57719614b2989743cdbc17a558288bb72564516418b5d80bbd15cafb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-020
+  - 数据工程/外部请求缓存映射快照韧性
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/external_request_cache_mapping_snapshot_2026-05-29.md`；外部请求
+    cache identity / metadata mapping 快照韧性已通过目标测试和真实 daily-run 复验
+  - 外部请求缓存对 params、headers、json payload 和 response headers 生成脱敏 identity/metadata
+    前必须稳定快照 mapping；遇到一次 `dictionary keys changed during iteration` 应重试并保留脱敏边界；不得写入
+    API key/token/Cookie/User-Agent 原文；目标测试和真实 `aits ops daily-run` 通过或报告新的真实供应商门禁原因
+  - '2026-05-29: 新增并进入 IN_PROGRESS，原因：RISK-016/TRADING-047/TRADING-048 修复后完整 daily-run
+    已越过 SEC PIT shadow monitor，随后在第 1 步 `download_data` 因本地 RuntimeError `dictionary
+    keys changed during iteration` fail closed；凭据存在，诊断未捕获结构化 provider 错误。2026-05-29:
+    从 IN_PROGRESS 改为 VALIDATING，原因：request cache mapping snapshot 修复通过目标测试/ruff/black/diff
+    check，真实 `aits ops daily-run` as-of 2026-05-28 已 23/23 PASS。2026-06-07: 从 VALIDATING
+    改为 DONE，原因：验收证据已满足且无剩余 owner 或时间窗口 blocker；真实 daily-run 已证明 `download_data` 和
+    `validate_data` 在该修复后通过，后续 FRED tail refresh 与 latest daily-run 也未再复现 `dictionary
+    keys changed during iteration`。'
+  docs_links:
+  - docs/requirements/external_request_cache_mapping_snapshot_2026-05-29.md
+  terminal: true
+  raw_row_sha256: 9a1086aa57719614b2989743cdbc17a558288bb72564516418b5d80bbd15cafb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f91922d0c6d9bc6e5e09b9775aec3ebb23383b0063a61035370cacafc192bd68

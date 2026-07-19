@@ -1,0 +1,117 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-003
+  title: null
+  domain: 架构/结构化降复杂度后续切片
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/structured_refactor_followup_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/structured_refactor_followup_2026-05-17.md`；五个基础切片已完成并复验通过；后续若继续拆分，应新建任务或在对应模块任务中沿用这些边界
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 五个切片均保持行为兼容；不改变 production scoring、position gate、approved overlay、正式 prediction
+      ledger、backtest 语义或 shadow promotion 结论；每个切片有目标测试；当前复验覆盖 daily-run workflow
+      contract、daily task dashboard view model、`aits docs` 命令组、shadow lineage helper
+      和 ProductionEffect 低风险替换；验证通过 focused pytest 107 passed、Ruff、repo-wide Black
+      check、`compileall` 和目标 mypy
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 270
+    row_sha256: 9ba612c26e25b02b5f86523a676e505be942fd69a6dc8504d41d99addc559b45
+    cell_count: 8
+    all_cells:
+    - ARCH-003
+    - 架构/结构化降复杂度后续切片
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/structured_refactor_followup_2026-05-17.md`；五个基础切片已完成并复验通过；后续若继续拆分，应新建任务或在对应模块任务中沿用这些边界
+    - 五个切片均保持行为兼容；不改变 production scoring、position gate、approved overlay、正式 prediction
+      ledger、backtest 语义或 shadow promotion 结论；每个切片有目标测试；当前复验覆盖 daily-run workflow
+      contract、daily task dashboard view model、`aits docs` 命令组、shadow lineage helper
+      和 ProductionEffect 低风险替换；验证通过 focused pytest 107 passed、Ruff、repo-wide Black
+      check、`compileall` 和目标 mypy
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求继续依次开发、测试、修复并验收五个低风险重构任务。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：五个切片均已实现并通过目标测试、全量 ruff、全量 pytest 和 diff check；`prediction_ledger.py`
+      目标 mypy 也已修复并通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 `core/workflow.py`、`ops_daily.py`、`daily_task_dashboard.py`、`cli_commands/docs.py`、`shadow/lineage.py`、`core/production_effect.py`
+      和 `prediction_ledger.py` 相关契约仍有效，后续重构已沿用这些边界；验证通过 `tests/test_core_contracts.py`、`tests/test_ops_daily.py`、`tests/test_daily_task_dashboard.py`、`tests/test_cli_direct.py`、`tests/test_docs_freshness.py`、`tests/test_documentation_contract.py`、`tests/test_shadow_weight_profiles.py`
+      和 `tests/test_prediction_ledger.py` 共 107 passed，以及 Ruff、repo-wide Black check、`compileall`
+      和目标 mypy。'
+    raw_line: '|ARCH-003|架构/结构化降复杂度后续切片|P1|DONE|系统验证|详细拆解见 `docs/requirements/structured_refactor_followup_2026-05-17.md`；五个基础切片已完成并复验通过；后续若继续拆分，应新建任务或在对应模块任务中沿用这些边界|五个切片均保持行为兼容；不改变
+      production scoring、position gate、approved overlay、正式 prediction ledger、backtest
+      语义或 shadow promotion 结论；每个切片有目标测试；当前复验覆盖 daily-run workflow contract、daily task
+      dashboard view model、`aits docs` 命令组、shadow lineage helper 和 ProductionEffect
+      低风险替换；验证通过 focused pytest 107 passed、Ruff、repo-wide Black check、`compileall`
+      和目标 mypy|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求继续依次开发、测试、修复并验收五个低风险重构任务。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：五个切片均已实现并通过目标测试、全量 ruff、全量 pytest 和 diff check；`prediction_ledger.py`
+      目标 mypy 也已修复并通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 `core/workflow.py`、`ops_daily.py`、`daily_task_dashboard.py`、`cli_commands/docs.py`、`shadow/lineage.py`、`core/production_effect.py`
+      和 `prediction_ledger.py` 相关契约仍有效，后续重构已沿用这些边界；验证通过 `tests/test_core_contracts.py`、`tests/test_ops_daily.py`、`tests/test_daily_task_dashboard.py`、`tests/test_cli_direct.py`、`tests/test_docs_freshness.py`、`tests/test_documentation_contract.py`、`tests/test_shadow_weight_profiles.py`
+      和 `tests/test_prediction_ledger.py` 共 107 passed，以及 Ruff、repo-wide Black check、`compileall`
+      和目标 mypy。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-9ba612c26e25b02b5f86523a
+  task_id: ARCH-003
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求继续依次开发、测试、修复并验收五个低风险重构任务。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：五个切片均已实现并通过目标测试、全量 ruff、全量 pytest 和 diff check；`prediction_ledger.py`
+      目标 mypy 也已修复并通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 `core/workflow.py`、`ops_daily.py`、`daily_task_dashboard.py`、`cli_commands/docs.py`、`shadow/lineage.py`、`core/production_effect.py`
+      和 `prediction_ledger.py` 相关契约仍有效，后续重构已沿用这些边界；验证通过 `tests/test_core_contracts.py`、`tests/test_ops_daily.py`、`tests/test_daily_task_dashboard.py`、`tests/test_cli_direct.py`、`tests/test_docs_freshness.py`、`tests/test_documentation_contract.py`、`tests/test_shadow_weight_profiles.py`
+      和 `tests/test_prediction_ledger.py` 共 107 passed，以及 Ruff、repo-wide Black check、`compileall`
+      和目标 mypy。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:9ba612c26e25b02b5f86523a676e505be942fd69a6dc8504d41d99addc559b45
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-003
+  - 架构/结构化降复杂度后续切片
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/structured_refactor_followup_2026-05-17.md`；五个基础切片已完成并复验通过；后续若继续拆分，应新建任务或在对应模块任务中沿用这些边界
+  - 五个切片均保持行为兼容；不改变 production scoring、position gate、approved overlay、正式 prediction
+    ledger、backtest 语义或 shadow promotion 结论；每个切片有目标测试；当前复验覆盖 daily-run workflow contract、daily
+    task dashboard view model、`aits docs` 命令组、shadow lineage helper 和 ProductionEffect
+    低风险替换；验证通过 focused pytest 107 passed、Ruff、repo-wide Black check、`compileall` 和目标
+    mypy
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求继续依次开发、测试、修复并验收五个低风险重构任务。2026-05-17:
+    从 IN_PROGRESS 改为 VALIDATING，原因：五个切片均已实现并通过目标测试、全量 ruff、全量 pytest 和 diff check；`prediction_ledger.py`
+    目标 mypy 也已修复并通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 `core/workflow.py`、`ops_daily.py`、`daily_task_dashboard.py`、`cli_commands/docs.py`、`shadow/lineage.py`、`core/production_effect.py`
+    和 `prediction_ledger.py` 相关契约仍有效，后续重构已沿用这些边界；验证通过 `tests/test_core_contracts.py`、`tests/test_ops_daily.py`、`tests/test_daily_task_dashboard.py`、`tests/test_cli_direct.py`、`tests/test_docs_freshness.py`、`tests/test_documentation_contract.py`、`tests/test_shadow_weight_profiles.py`
+    和 `tests/test_prediction_ledger.py` 共 107 passed，以及 Ruff、repo-wide Black check、`compileall`
+    和目标 mypy。'
+  docs_links:
+  - docs/requirements/structured_refactor_followup_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 9ba612c26e25b02b5f86523a676e505be942fd69a6dc8504d41d99addc559b45
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 815a10ed56d2e247eeab34eb74fd3738de35e627345223d5f2916e993d80e913

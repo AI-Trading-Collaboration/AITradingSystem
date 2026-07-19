@@ -1,0 +1,152 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-359_COST_SENSITIVITY_REVIEW
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue cost-sensitivity review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-359_Cost_Sensitivity_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-359_Cost_Sensitivity_Review.md`；为
+    paper-shadow candidate 建立 configurable zero/low/medium/high transaction-cost assumptions，并只读评估
+    candidate improvement 是否在成本假设后仍 meaningful；不得接 broker、不得生成真实执行假设、不得刷新数据、不得补造 upstream
+    artifact、不得写 official target weights 或 production state
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `config/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review_v1.yaml`、`src/ai_trading_system/etf_portfolio/dynamic_v3_cost_sensitivity.py`、`cost-sensitivity-review
+      run/report` CLI、`validate-cost-sensitivity-review`、scenario-level turnover/cost
+      drag/gross/net performance proxy、meaningful improvement classification、weekly
+      review source visibility、promotion-board input summary、Reader Brief fields、artifact
+      family、report registry、artifact catalog、README、operations runbook、system flow、requirements
+      和 focused tests；成本假设和 meaningful threshold 配置化并披露 owner/version/rationale/review
+      condition；所有输出 research-only 且 no broker/order/production
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 231
+    row_sha256: 16267cbe2f7f0d149c731690f3a11a3c3a46e7296a87275ee7614a87c2e3503a
+    cell_count: 8
+    all_cells:
+    - TRADING-359_COST_SENSITIVITY_REVIEW
+    - ETF portfolio/dynamic v3 rescue cost-sensitivity review
+    - P1
+    - DONE
+    - 项目 owner 后续复核；代码实现完成
+    - 详细拆解见 `docs/requirements/TRADING-359_Cost_Sensitivity_Review.md`；为 paper-shadow
+      candidate 建立 configurable zero/low/medium/high transaction-cost assumptions，并只读评估
+      candidate improvement 是否在成本假设后仍 meaningful；不得接 broker、不得生成真实执行假设、不得刷新数据、不得补造
+      upstream artifact、不得写 official target weights 或 production state
+    - 新增 `config/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review_v1.yaml`、`src/ai_trading_system/etf_portfolio/dynamic_v3_cost_sensitivity.py`、`cost-sensitivity-review
+      run/report` CLI、`validate-cost-sensitivity-review`、scenario-level turnover/cost
+      drag/gross/net performance proxy、meaningful improvement classification、weekly
+      review source visibility、promotion-board input summary、Reader Brief fields、artifact
+      family、report registry、artifact catalog、README、operations runbook、system flow、requirements
+      和 focused tests；成本假设和 meaningful threshold 配置化并披露 owner/version/rationale/review
+      condition；所有输出 research-only 且 no broker/order/production
+    - '2026-06-16: DONE；真实 artifact `cost-sensitivity-review_2da1efa5169ea62b` 输出
+      `cost_sensitivity_status=INSUFFICIENT_COST_INPUTS`、`candidate=median_plus_regime_mismatch_filter`、policy
+      `dynamic_v3_rescue_cost_sensitivity_review_v1 / 2026-06-16`、blocking reason
+      `candidate_metrics:insufficient_cost_inputs`、warnings `paper_shadow_health:blocked_signal_inputs,candidate_metrics:limited_source`、next
+      action `provide_numeric_turnover_and_performance_metrics_before_cost_review`，validation
+      PASS / failed=0；该状态来自 latest weekly review 缺 numeric turnover/performance metrics，未补造
+      metrics 或执行假设。Focused pytest 10 passed，documentation contract PASS，report index
+      `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief latest OK 并展示 `cost_sensitivity_*`
+      fields。保持 research-only / no execution model / no data refresh / no upstream
+      rerun / no official target / no broker / no paper account or production mutation。'
+    raw_line: '|TRADING-359_COST_SENSITIVITY_REVIEW|ETF portfolio/dynamic v3 rescue
+      cost-sensitivity review|P1|DONE|项目 owner 后续复核；代码实现完成|详细拆解见 `docs/requirements/TRADING-359_Cost_Sensitivity_Review.md`；为
+      paper-shadow candidate 建立 configurable zero/low/medium/high transaction-cost
+      assumptions，并只读评估 candidate improvement 是否在成本假设后仍 meaningful；不得接 broker、不得生成真实执行假设、不得刷新数据、不得补造
+      upstream artifact、不得写 official target weights 或 production state|新增 `config/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review_v1.yaml`、`src/ai_trading_system/etf_portfolio/dynamic_v3_cost_sensitivity.py`、`cost-sensitivity-review
+      run/report` CLI、`validate-cost-sensitivity-review`、scenario-level turnover/cost
+      drag/gross/net performance proxy、meaningful improvement classification、weekly
+      review source visibility、promotion-board input summary、Reader Brief fields、artifact
+      family、report registry、artifact catalog、README、operations runbook、system flow、requirements
+      和 focused tests；成本假设和 meaningful threshold 配置化并披露 owner/version/rationale/review
+      condition；所有输出 research-only 且 no broker/order/production|2026-06-16: DONE；真实
+      artifact `cost-sensitivity-review_2da1efa5169ea62b` 输出 `cost_sensitivity_status=INSUFFICIENT_COST_INPUTS`、`candidate=median_plus_regime_mismatch_filter`、policy
+      `dynamic_v3_rescue_cost_sensitivity_review_v1 / 2026-06-16`、blocking reason
+      `candidate_metrics:insufficient_cost_inputs`、warnings `paper_shadow_health:blocked_signal_inputs,candidate_metrics:limited_source`、next
+      action `provide_numeric_turnover_and_performance_metrics_before_cost_review`，validation
+      PASS / failed=0；该状态来自 latest weekly review 缺 numeric turnover/performance metrics，未补造
+      metrics 或执行假设。Focused pytest 10 passed，documentation contract PASS，report index
+      `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief latest OK 并展示 `cost_sensitivity_*`
+      fields。保持 research-only / no execution model / no data refresh / no upstream
+      rerun / no official target / no broker / no paper account or production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-16267cbe2f7f0d149c731690
+  task_id: TRADING-359_COST_SENSITIVITY_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: '2026-06-16: DONE；真实 artifact `cost-sensitivity-review_2da1efa5169ea62b`
+      输出 `cost_sensitivity_status=INSUFFICIENT_COST_INPUTS`、`candidate=median_plus_regime_mismatch_filter`、policy
+      `dynamic_v3_rescue_cost_sensitivity_review_v1 / 2026-06-16`、blocking reason
+      `candidate_metrics:insufficient_cost_inputs`、warnings `paper_shadow_health:blocked_signal_inputs,candidate_metrics:limited_source`、next
+      action `provide_numeric_turnover_and_performance_metrics_before_cost_review`，validation
+      PASS / failed=0；该状态来自 latest weekly review 缺 numeric turnover/performance metrics，未补造
+      metrics 或执行假设。Focused pytest 10 passed，documentation contract PASS，report index
+      `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief latest OK 并展示 `cost_sensitivity_*`
+      fields。保持 research-only / no execution model / no data refresh / no upstream
+      rerun / no official target / no broker / no paper account or production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:16267cbe2f7f0d149c731690f3a11a3c3a46e7296a87275ee7614a87c2e3503a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-359_COST_SENSITIVITY_REVIEW
+  - ETF portfolio/dynamic v3 rescue cost-sensitivity review
+  - P1
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-359_Cost_Sensitivity_Review.md`；为 paper-shadow
+    candidate 建立 configurable zero/low/medium/high transaction-cost assumptions，并只读评估
+    candidate improvement 是否在成本假设后仍 meaningful；不得接 broker、不得生成真实执行假设、不得刷新数据、不得补造 upstream
+    artifact、不得写 official target weights 或 production state
+  - 新增 `config/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review_v1.yaml`、`src/ai_trading_system/etf_portfolio/dynamic_v3_cost_sensitivity.py`、`cost-sensitivity-review
+    run/report` CLI、`validate-cost-sensitivity-review`、scenario-level turnover/cost
+    drag/gross/net performance proxy、meaningful improvement classification、weekly
+    review source visibility、promotion-board input summary、Reader Brief fields、artifact
+    family、report registry、artifact catalog、README、operations runbook、system flow、requirements
+    和 focused tests；成本假设和 meaningful threshold 配置化并披露 owner/version/rationale/review
+    condition；所有输出 research-only 且 no broker/order/production
+  - '2026-06-16: DONE；真实 artifact `cost-sensitivity-review_2da1efa5169ea62b` 输出 `cost_sensitivity_status=INSUFFICIENT_COST_INPUTS`、`candidate=median_plus_regime_mismatch_filter`、policy
+    `dynamic_v3_rescue_cost_sensitivity_review_v1 / 2026-06-16`、blocking reason `candidate_metrics:insufficient_cost_inputs`、warnings
+    `paper_shadow_health:blocked_signal_inputs,candidate_metrics:limited_source`、next
+    action `provide_numeric_turnover_and_performance_metrics_before_cost_review`，validation
+    PASS / failed=0；该状态来自 latest weekly review 缺 numeric turnover/performance metrics，未补造
+    metrics 或执行假设。Focused pytest 10 passed，documentation contract PASS，report index
+    `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief latest OK 并展示 `cost_sensitivity_*`
+    fields。保持 research-only / no execution model / no data refresh / no upstream rerun
+    / no official target / no broker / no paper account or production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-359_Cost_Sensitivity_Review.md
+  terminal: true
+  raw_row_sha256: 16267cbe2f7f0d149c731690f3a11a3c3a46e7296a87275ee7614a87c2e3503a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b460385fdc1b5c8dee73e7e38f8ccc381577aeeae68ff0cbea0af01c4abc1d94

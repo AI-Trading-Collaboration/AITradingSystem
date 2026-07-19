@@ -1,0 +1,135 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1031_to_1048_EQUAL_RISK_FORWARD_AGING_AND_LAYER2_GROWTH_RESTART
+  title: null
+  domain: Research strategies / equal-risk forward-aging stabilization and Layer-2
+    controlled growth restart
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1031_to_1048_Equal_Risk_Forward_Aging_Stabilization_and_Layer2_Growth_Restart.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1031_to_1048_Equal_Risk_Forward_Aging_Stabilization_and_Layer2_Growth_Restart.md`；实现和验证已完成，下一步为
+    owner 复核 research-only artifacts、growth owner decision pack 和 roadmap v2；本批不得恢复
+    Layer-1 selector、不得直接恢复旧 QQQ-plus growth selectable、不得启动 paper-shadow/production/broker
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 18 个 `aits research strategies ...` CLI/artifacts；新增 controlled growth
+      component registry v2 config；equal-risk scheduler/continuity/maturity/scoreboard/Reader
+      Brief 摘要稳定；growth restart contract、beta-adjusted edge、低换手/vol-target/drawdown-guarded
+      search、attribution、period/drawdown、cost/turnover、readiness gate、owner decision
+      pack、dual-track roadmap 和 roadmap v2 master review 输出完整；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、requirements 文档、focused pytest、Ruff、compileall
+      和 `git diff --check` 通过或记录阻塞
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1289
+    row_sha256: 4d598179101b02de49460d1b790a6af66d4ef9b945b0e7bf37fd56cd4fc14768
+    cell_count: 8
+    all_cells:
+    - TRADING-1031_to_1048_EQUAL_RISK_FORWARD_AGING_AND_LAYER2_GROWTH_RESTART
+    - Research strategies / equal-risk forward-aging stabilization and Layer-2 controlled
+      growth restart
+    - P1
+    - VALIDATING
+    - 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1031_to_1048_Equal_Risk_Forward_Aging_Stabilization_and_Layer2_Growth_Restart.md`；实现和验证已完成，下一步为
+      owner 复核 research-only artifacts、growth owner decision pack 和 roadmap v2；本批不得恢复
+      Layer-1 selector、不得直接恢复旧 QQQ-plus growth selectable、不得启动 paper-shadow/production/broker
+    - 新增 18 个 `aits research strategies ...` CLI/artifacts；新增 controlled growth component
+      registry v2 config；equal-risk scheduler/continuity/maturity/scoreboard/Reader
+      Brief 摘要稳定；growth restart contract、beta-adjusted edge、低换手/vol-target/drawdown-guarded
+      search、attribution、period/drawdown、cost/turnover、readiness gate、owner decision
+      pack、dual-track roadmap 和 roadmap v2 master review 输出完整；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、requirements 文档、focused pytest、Ruff、compileall
+      和 `git diff --check` 通过或记录阻塞
+    - '2026-06-25: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1031～1048；当前基线为 `equal_risk_qqq_sgov`
+      defensive primary forward-aging active，Layer-1 selector dry-run only archived，growth
+      research 只能从更严格的 controlled Layer-2 component 标准重启。2026-06-25: 实现完成并转入 VALIDATING；验证通过
+      Ruff、compileall、focused equal-risk/growth pytest、report/task/documentation pytest、Layer-1/Layer-2
+      readiness regression pytest 和 `git diff --check`；所有 safety fields 保持 false/none。'
+    raw_line: '|TRADING-1031_to_1048_EQUAL_RISK_FORWARD_AGING_AND_LAYER2_GROWTH_RESTART|Research
+      strategies / equal-risk forward-aging stabilization and Layer-2 controlled growth
+      restart|P1|VALIDATING|项目 owner 后续复核|详见 `docs/requirements/TRADING-1031_to_1048_Equal_Risk_Forward_Aging_Stabilization_and_Layer2_Growth_Restart.md`；实现和验证已完成，下一步为
+      owner 复核 research-only artifacts、growth owner decision pack 和 roadmap v2；本批不得恢复
+      Layer-1 selector、不得直接恢复旧 QQQ-plus growth selectable、不得启动 paper-shadow/production/broker|新增
+      18 个 `aits research strategies ...` CLI/artifacts；新增 controlled growth component
+      registry v2 config；equal-risk scheduler/continuity/maturity/scoreboard/Reader
+      Brief 摘要稳定；growth restart contract、beta-adjusted edge、低换手/vol-target/drawdown-guarded
+      search、attribution、period/drawdown、cost/turnover、readiness gate、owner decision
+      pack、dual-track roadmap 和 roadmap v2 master review 输出完整；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、requirements 文档、focused pytest、Ruff、compileall
+      和 `git diff --check` 通过或记录阻塞|2026-06-25: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1031～1048；当前基线为
+      `equal_risk_qqq_sgov` defensive primary forward-aging active，Layer-1 selector
+      dry-run only archived，growth research 只能从更严格的 controlled Layer-2 component 标准重启。2026-06-25:
+      实现完成并转入 VALIDATING；验证通过 Ruff、compileall、focused equal-risk/growth pytest、report/task/documentation
+      pytest、Layer-1/Layer-2 readiness regression pytest 和 `git diff --check`；所有 safety
+      fields 保持 false/none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4d598179101b02de49460d1b
+  task_id: TRADING-1031_to_1048_EQUAL_RISK_FORWARD_AGING_AND_LAYER2_GROWTH_RESTART
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 项目 owner 后续复核
+    notes: '2026-06-25: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1031～1048；当前基线为 `equal_risk_qqq_sgov`
+      defensive primary forward-aging active，Layer-1 selector dry-run only archived，growth
+      research 只能从更严格的 controlled Layer-2 component 标准重启。2026-06-25: 实现完成并转入 VALIDATING；验证通过
+      Ruff、compileall、focused equal-risk/growth pytest、report/task/documentation pytest、Layer-1/Layer-2
+      readiness regression pytest 和 `git diff --check`；所有 safety fields 保持 false/none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4d598179101b02de49460d1b790a6af66d4ef9b945b0e7bf37fd56cd4fc14768
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1031_to_1048_EQUAL_RISK_FORWARD_AGING_AND_LAYER2_GROWTH_RESTART
+  - Research strategies / equal-risk forward-aging stabilization and Layer-2 controlled
+    growth restart
+  - P1
+  - VALIDATING
+  - 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1031_to_1048_Equal_Risk_Forward_Aging_Stabilization_and_Layer2_Growth_Restart.md`；实现和验证已完成，下一步为
+    owner 复核 research-only artifacts、growth owner decision pack 和 roadmap v2；本批不得恢复
+    Layer-1 selector、不得直接恢复旧 QQQ-plus growth selectable、不得启动 paper-shadow/production/broker
+  - 新增 18 个 `aits research strategies ...` CLI/artifacts；新增 controlled growth component
+    registry v2 config；equal-risk scheduler/continuity/maturity/scoreboard/Reader
+    Brief 摘要稳定；growth restart contract、beta-adjusted edge、低换手/vol-target/drawdown-guarded
+    search、attribution、period/drawdown、cost/turnover、readiness gate、owner decision
+    pack、dual-track roadmap 和 roadmap v2 master review 输出完整；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+    registry、artifact catalog、system flow、requirements 文档、focused pytest、Ruff、compileall
+    和 `git diff --check` 通过或记录阻塞
+  - '2026-06-25: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1031～1048；当前基线为 `equal_risk_qqq_sgov`
+    defensive primary forward-aging active，Layer-1 selector dry-run only archived，growth
+    research 只能从更严格的 controlled Layer-2 component 标准重启。2026-06-25: 实现完成并转入 VALIDATING；验证通过
+    Ruff、compileall、focused equal-risk/growth pytest、report/task/documentation pytest、Layer-1/Layer-2
+    readiness regression pytest 和 `git diff --check`；所有 safety fields 保持 false/none。'
+  docs_links:
+  - docs/requirements/TRADING-1031_to_1048_Equal_Risk_Forward_Aging_Stabilization_and_Layer2_Growth_Restart.md
+  terminal: false
+  raw_row_sha256: 4d598179101b02de49460d1b790a6af66d4ef9b945b0e7bf37fd56cd4fc14768
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4359fbadbf81c3bd07db75f88147bc7a76ae0a7ad9050537b452258b82a836be

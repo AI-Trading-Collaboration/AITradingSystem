@@ -1,0 +1,153 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-043
+  title: null
+  domain: 基本面/SEC PIT Shadow Candidate Review & Evidence Pack
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/sec_pit_candidate_review_2026-05-27.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/sec_pit_candidate_review_2026-05-27.md`；已完成
+    `aits sec-pit review-candidates` / `--latest`、只读 candidate review 核心模块、summary
+    JSON/Markdown、candidate evidence CSV、by-ticker CSV、by-period CSV、baseline overlap
+    CSV、shadow proposal CSV、缺失 artifact / baseline fields 降级、dashboard 只读卡片、artifact
+    catalog、system flow、learning path 和 runbook 更新
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: CLI 支持 `--start`、`--end`、`--evaluation-dir`、`--comparison-dir`、`--diagnostics-dir`、`--candidate-feature`、`--output-dir`、`--latest`；输出
+      evidence pack 用于人工判断 SEC PIT shadow candidate 是否适合 observe-only iteration；所有
+      evidence 固定 `manual_review_required=true`、`production_effect=none`，所有 proposal
+      固定 `review_required=true`、`production_effect=none`；不修改 production weights、approved
+      overlay、score config 或 active shadow weights；baseline fields 缺失时 overlap 明确降级为
+      `LIMITED_BASELINE_FIELDS_MISSING`；dashboard 只读读取 latest review JSON，不运行 review
+      或上游 pipeline；真实 `--latest --candidate-feature capex_intensity` 已生成 `outputs/sec_pit_candidate_review/sec_pit_candidate_review_summary_2026-05-26.*`，`review_status=OK`，`capex_intensity`
+      为 `READY_FOR_MANUAL_REVIEW`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 390
+    row_sha256: e76483e3bb4f517cc4651338ec60d59f7f2cbaed924ed0e27f74520912433044
+    cell_count: 8
+    all_cells:
+    - TRADING-043
+    - 基本面/SEC PIT Shadow Candidate Review & Evidence Pack
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/sec_pit_candidate_review_2026-05-27.md`；已完成 `aits sec-pit
+      review-candidates` / `--latest`、只读 candidate review 核心模块、summary JSON/Markdown、candidate
+      evidence CSV、by-ticker CSV、by-period CSV、baseline overlap CSV、shadow proposal
+      CSV、缺失 artifact / baseline fields 降级、dashboard 只读卡片、artifact catalog、system
+      flow、learning path 和 runbook 更新
+    - CLI 支持 `--start`、`--end`、`--evaluation-dir`、`--comparison-dir`、`--diagnostics-dir`、`--candidate-feature`、`--output-dir`、`--latest`；输出
+      evidence pack 用于人工判断 SEC PIT shadow candidate 是否适合 observe-only iteration；所有
+      evidence 固定 `manual_review_required=true`、`production_effect=none`，所有 proposal
+      固定 `review_required=true`、`production_effect=none`；不修改 production weights、approved
+      overlay、score config 或 active shadow weights；baseline fields 缺失时 overlap 明确降级为
+      `LIMITED_BASELINE_FIELDS_MISSING`；dashboard 只读读取 latest review JSON，不运行 review
+      或上游 pipeline；真实 `--latest --candidate-feature capex_intensity` 已生成 `outputs/sec_pit_candidate_review/sec_pit_candidate_review_summary_2026-05-26.*`，`review_status=OK`，`capex_intensity`
+      为 `READY_FOR_MANUAL_REVIEW`
+    - '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-042A 修复并真实复跑后 `capex_intensity` 已进入
+      manual-review shadow candidate 状态，但下一步需要人工可复核 evidence pack，而不是自动 promotion。2026-05-27:
+      从 IN_PROGRESS 改为 DONE，原因：实现、真实 review artifacts、dashboard 和文档完成；验证通过 `python
+      -m pytest tests/trading_engine/test_sec_pit_candidate_review.py -q`（10 passed）、`python
+      -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、`python -m pytest
+      tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（10 passed）、全量
+      `python -m pytest -q`（1298 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+    raw_line: '|TRADING-043|基本面/SEC PIT Shadow Candidate Review & Evidence Pack|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/sec_pit_candidate_review_2026-05-27.md`；已完成 `aits sec-pit
+      review-candidates` / `--latest`、只读 candidate review 核心模块、summary JSON/Markdown、candidate
+      evidence CSV、by-ticker CSV、by-period CSV、baseline overlap CSV、shadow proposal
+      CSV、缺失 artifact / baseline fields 降级、dashboard 只读卡片、artifact catalog、system
+      flow、learning path 和 runbook 更新|CLI 支持 `--start`、`--end`、`--evaluation-dir`、`--comparison-dir`、`--diagnostics-dir`、`--candidate-feature`、`--output-dir`、`--latest`；输出
+      evidence pack 用于人工判断 SEC PIT shadow candidate 是否适合 observe-only iteration；所有
+      evidence 固定 `manual_review_required=true`、`production_effect=none`，所有 proposal
+      固定 `review_required=true`、`production_effect=none`；不修改 production weights、approved
+      overlay、score config 或 active shadow weights；baseline fields 缺失时 overlap 明确降级为
+      `LIMITED_BASELINE_FIELDS_MISSING`；dashboard 只读读取 latest review JSON，不运行 review
+      或上游 pipeline；真实 `--latest --candidate-feature capex_intensity` 已生成 `outputs/sec_pit_candidate_review/sec_pit_candidate_review_summary_2026-05-26.*`，`review_status=OK`，`capex_intensity`
+      为 `READY_FOR_MANUAL_REVIEW`|2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-042A 修复并真实复跑后
+      `capex_intensity` 已进入 manual-review shadow candidate 状态，但下一步需要人工可复核 evidence
+      pack，而不是自动 promotion。2026-05-27: 从 IN_PROGRESS 改为 DONE，原因：实现、真实 review artifacts、dashboard
+      和文档完成；验证通过 `python -m pytest tests/trading_engine/test_sec_pit_candidate_review.py
+      -q`（10 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（10 passed）、全量
+      `python -m pytest -q`（1298 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e76483e3bb4f517cc4651338
+  task_id: TRADING-043
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-042A 修复并真实复跑后 `capex_intensity`
+      已进入 manual-review shadow candidate 状态，但下一步需要人工可复核 evidence pack，而不是自动 promotion。2026-05-27:
+      从 IN_PROGRESS 改为 DONE，原因：实现、真实 review artifacts、dashboard 和文档完成；验证通过 `python
+      -m pytest tests/trading_engine/test_sec_pit_candidate_review.py -q`（10 passed）、`python
+      -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、`python -m pytest
+      tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（10 passed）、全量
+      `python -m pytest -q`（1298 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e76483e3bb4f517cc4651338ec60d59f7f2cbaed924ed0e27f74520912433044
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-043
+  - 基本面/SEC PIT Shadow Candidate Review & Evidence Pack
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/sec_pit_candidate_review_2026-05-27.md`；已完成 `aits sec-pit
+    review-candidates` / `--latest`、只读 candidate review 核心模块、summary JSON/Markdown、candidate
+    evidence CSV、by-ticker CSV、by-period CSV、baseline overlap CSV、shadow proposal
+    CSV、缺失 artifact / baseline fields 降级、dashboard 只读卡片、artifact catalog、system flow、learning
+    path 和 runbook 更新
+  - CLI 支持 `--start`、`--end`、`--evaluation-dir`、`--comparison-dir`、`--diagnostics-dir`、`--candidate-feature`、`--output-dir`、`--latest`；输出
+    evidence pack 用于人工判断 SEC PIT shadow candidate 是否适合 observe-only iteration；所有 evidence
+    固定 `manual_review_required=true`、`production_effect=none`，所有 proposal 固定 `review_required=true`、`production_effect=none`；不修改
+    production weights、approved overlay、score config 或 active shadow weights；baseline
+    fields 缺失时 overlap 明确降级为 `LIMITED_BASELINE_FIELDS_MISSING`；dashboard 只读读取 latest
+    review JSON，不运行 review 或上游 pipeline；真实 `--latest --candidate-feature capex_intensity`
+    已生成 `outputs/sec_pit_candidate_review/sec_pit_candidate_review_summary_2026-05-26.*`，`review_status=OK`，`capex_intensity`
+    为 `READY_FOR_MANUAL_REVIEW`
+  - '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-042A 修复并真实复跑后 `capex_intensity` 已进入
+    manual-review shadow candidate 状态，但下一步需要人工可复核 evidence pack，而不是自动 promotion。2026-05-27:
+    从 IN_PROGRESS 改为 DONE，原因：实现、真实 review artifacts、dashboard 和文档完成；验证通过 `python -m
+    pytest tests/trading_engine/test_sec_pit_candidate_review.py -q`（10 passed）、`python
+    -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、`python -m pytest
+    tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（10 passed）、全量 `python
+    -m pytest -q`（1298 passed, 1 warning）、全量 `python -m ruff check config src tests
+    scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+  docs_links:
+  - docs/requirements/sec_pit_candidate_review_2026-05-27.md
+  terminal: true
+  raw_row_sha256: e76483e3bb4f517cc4651338ec60d59f7f2cbaed924ed0e27f74520912433044
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b18af1a77b1e4cb537b2f7ea1feb4c65c81acf8bc1bd6ee19621b50d1560ee39

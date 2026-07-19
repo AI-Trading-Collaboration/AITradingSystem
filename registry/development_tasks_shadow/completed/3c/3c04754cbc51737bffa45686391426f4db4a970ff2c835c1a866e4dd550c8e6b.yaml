@@ -1,0 +1,154 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2399_DYNAMIC_STRATEGY_RECOMBINATION_CANDIDATE_TARGETED_GATE_EVIDENCE_RETEST
+  title: null
+  domain: Strategy research / recombination candidate targeted gate evidence retest
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2400 targeted gate evidence owner review and observation
+    decision
+  requirement_refs:
+  - docs/requirements/TRADING-2399_Dynamic_Strategy_Recombination_Candidate_Targeted_Gate_Evidence_Retest.md
+  - docs/tasks/completed/TRADING-2399_Dynamic_Strategy_Recombination_Candidate_Targeted_Gate_Evidence_Retest.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2399_Dynamic_Strategy_Recombination_Candidate_Targeted_Gate_Evidence_Retest.md`；承接
+    TRADING-2398 targeted gate evidence plan，读取 TRADING-2398 / 2397 / 2396 / 2395
+    artifacts，并在 cached-data quality gate 通过后运行 6 个 targeted variants 的 `valid_until_window`
+    主口径 retest；使用完整唯一 ID 与已归档的 `TRADING-2399_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_JSON_HELPER_BOUNDARY`
+    区分。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-recombination-candidate-targeted-gate-evidence-retest`；输出
+      `targeted_gate_evidence_retest_result.json`、`targeted_variant_ranking.json`、`gate_evidence_matrix.json`、`decision_update.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RECOMBINATION_CANDIDATE_TARGETED_GATE_EVIDENCE_RETEST_READY`，data
+      quality=`PASS_WITH_WARNINGS` / errors=0，candidate under review=`growth_tilt_lower_turnover_guarded_transfer_v1`，best
+      targeted variant=`growth_tilt_guarded_transfer_valid_until_strict_v1`，best targeted
+      variant decision=`CONTINUE_TARGETED_IMPROVEMENT`，observation preview candidates=0，next
+      route=`TRADING-2400_Dynamic_Strategy_Targeted_Gate_Evidence_Owner_Review_And_Observation_Decision`，所有
+      safety fields false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 86
+    row_sha256: 17f6a00200fcb2a63e919733f421c0999ebb301bb01995a430256a2db84bdbb2
+    cell_count: 8
+    all_cells:
+    - TRADING-2399_DYNAMIC_STRATEGY_RECOMBINATION_CANDIDATE_TARGETED_GATE_EVIDENCE_RETEST
+    - Strategy research / recombination candidate targeted gate evidence retest
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2400 targeted gate evidence owner review and observation
+      decision
+    - 详见 `docs/requirements/TRADING-2399_Dynamic_Strategy_Recombination_Candidate_Targeted_Gate_Evidence_Retest.md`；承接
+      TRADING-2398 targeted gate evidence plan，读取 TRADING-2398 / 2397 / 2396 / 2395
+      artifacts，并在 cached-data quality gate 通过后运行 6 个 targeted variants 的 `valid_until_window`
+      主口径 retest；使用完整唯一 ID 与已归档的 `TRADING-2399_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_JSON_HELPER_BOUNDARY`
+      区分。
+    - 新增 `aits research strategies dynamic-strategy-recombination-candidate-targeted-gate-evidence-retest`；输出
+      `targeted_gate_evidence_retest_result.json`、`targeted_variant_ranking.json`、`gate_evidence_matrix.json`、`decision_update.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RECOMBINATION_CANDIDATE_TARGETED_GATE_EVIDENCE_RETEST_READY`，data
+      quality=`PASS_WITH_WARNINGS` / errors=0，candidate under review=`growth_tilt_lower_turnover_guarded_transfer_v1`，best
+      targeted variant=`growth_tilt_guarded_transfer_valid_until_strict_v1`，best targeted
+      variant decision=`CONTINUE_TARGETED_IMPROVEMENT`，observation preview candidates=0，next
+      route=`TRADING-2400_Dynamic_Strategy_Targeted_Gate_Evidence_Owner_Review_And_Observation_Decision`，所有
+      safety fields false/none。
+    - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS；本任务运行 cached-data-dependent targeted
+      retest，但不得批准 observation、paper-shadow、scheduler、event append、outcome binding、production、broker
+      或 daily report。2026-07-07: 实现完成并归档 DONE；真实 `aits validate-data --as-of 2026-07-05`
+      通过，真实 CLI run ready。candidate auto-accept、research-only observation、scheduler、event
+      append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2399_Dynamic_Strategy_Recombination_Candidate_Targeted_Gate_Evidence_Retest.md`。'
+    raw_line: '|TRADING-2399_DYNAMIC_STRATEGY_RECOMBINATION_CANDIDATE_TARGETED_GATE_EVIDENCE_RETEST|Strategy
+      research / recombination candidate targeted gate evidence retest|P0|DONE|项目
+      owner 后续复核 TRADING-2400 targeted gate evidence owner review and observation
+      decision|详见 `docs/requirements/TRADING-2399_Dynamic_Strategy_Recombination_Candidate_Targeted_Gate_Evidence_Retest.md`；承接
+      TRADING-2398 targeted gate evidence plan，读取 TRADING-2398 / 2397 / 2396 / 2395
+      artifacts，并在 cached-data quality gate 通过后运行 6 个 targeted variants 的 `valid_until_window`
+      主口径 retest；使用完整唯一 ID 与已归档的 `TRADING-2399_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_JSON_HELPER_BOUNDARY`
+      区分。|新增 `aits research strategies dynamic-strategy-recombination-candidate-targeted-gate-evidence-retest`；输出
+      `targeted_gate_evidence_retest_result.json`、`targeted_variant_ranking.json`、`gate_evidence_matrix.json`、`decision_update.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RECOMBINATION_CANDIDATE_TARGETED_GATE_EVIDENCE_RETEST_READY`，data
+      quality=`PASS_WITH_WARNINGS` / errors=0，candidate under review=`growth_tilt_lower_turnover_guarded_transfer_v1`，best
+      targeted variant=`growth_tilt_guarded_transfer_valid_until_strict_v1`，best targeted
+      variant decision=`CONTINUE_TARGETED_IMPROVEMENT`，observation preview candidates=0，next
+      route=`TRADING-2400_Dynamic_Strategy_Targeted_Gate_Evidence_Owner_Review_And_Observation_Decision`，所有
+      safety fields false/none。|2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS；本任务运行 cached-data-dependent
+      targeted retest，但不得批准 observation、paper-shadow、scheduler、event append、outcome
+      binding、production、broker 或 daily report。2026-07-07: 实现完成并归档 DONE；真实 `aits validate-data
+      --as-of 2026-07-05` 通过，真实 CLI run ready。candidate auto-accept、research-only
+      observation、scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      validation 结果见 `docs/tasks/completed/TRADING-2399_Dynamic_Strategy_Recombination_Candidate_Targeted_Gate_Evidence_Retest.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-17f6a00200fcb2a63e919733
+  task_id: TRADING-2399_DYNAMIC_STRATEGY_RECOMBINATION_CANDIDATE_TARGETED_GATE_EVIDENCE_RETEST
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2400 targeted gate evidence owner review and
+      observation decision
+    notes: '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS；本任务运行 cached-data-dependent targeted
+      retest，但不得批准 observation、paper-shadow、scheduler、event append、outcome binding、production、broker
+      或 daily report。2026-07-07: 实现完成并归档 DONE；真实 `aits validate-data --as-of 2026-07-05`
+      通过，真实 CLI run ready。candidate auto-accept、research-only observation、scheduler、event
+      append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2399_Dynamic_Strategy_Recombination_Candidate_Targeted_Gate_Evidence_Retest.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:17f6a00200fcb2a63e919733f421c0999ebb301bb01995a430256a2db84bdbb2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2399_DYNAMIC_STRATEGY_RECOMBINATION_CANDIDATE_TARGETED_GATE_EVIDENCE_RETEST
+  - Strategy research / recombination candidate targeted gate evidence retest
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2400 targeted gate evidence owner review and observation
+    decision
+  - 详见 `docs/requirements/TRADING-2399_Dynamic_Strategy_Recombination_Candidate_Targeted_Gate_Evidence_Retest.md`；承接
+    TRADING-2398 targeted gate evidence plan，读取 TRADING-2398 / 2397 / 2396 / 2395
+    artifacts，并在 cached-data quality gate 通过后运行 6 个 targeted variants 的 `valid_until_window`
+    主口径 retest；使用完整唯一 ID 与已归档的 `TRADING-2399_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_JSON_HELPER_BOUNDARY`
+    区分。
+  - 新增 `aits research strategies dynamic-strategy-recombination-candidate-targeted-gate-evidence-retest`；输出
+    `targeted_gate_evidence_retest_result.json`、`targeted_variant_ranking.json`、`gate_evidence_matrix.json`、`decision_update.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RECOMBINATION_CANDIDATE_TARGETED_GATE_EVIDENCE_RETEST_READY`，data
+    quality=`PASS_WITH_WARNINGS` / errors=0，candidate under review=`growth_tilt_lower_turnover_guarded_transfer_v1`，best
+    targeted variant=`growth_tilt_guarded_transfer_valid_until_strict_v1`，best targeted
+    variant decision=`CONTINUE_TARGETED_IMPROVEMENT`，observation preview candidates=0，next
+    route=`TRADING-2400_Dynamic_Strategy_Targeted_Gate_Evidence_Owner_Review_And_Observation_Decision`，所有
+    safety fields false/none。
+  - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS；本任务运行 cached-data-dependent targeted
+    retest，但不得批准 observation、paper-shadow、scheduler、event append、outcome binding、production、broker
+    或 daily report。2026-07-07: 实现完成并归档 DONE；真实 `aits validate-data --as-of 2026-07-05`
+    通过，真实 CLI run ready。candidate auto-accept、research-only observation、scheduler、event
+    append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+    report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2399_Dynamic_Strategy_Recombination_Candidate_Targeted_Gate_Evidence_Retest.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2399_Dynamic_Strategy_Recombination_Candidate_Targeted_Gate_Evidence_Retest.md
+  - docs/tasks/completed/TRADING-2399_Dynamic_Strategy_Recombination_Candidate_Targeted_Gate_Evidence_Retest.md
+  terminal: true
+  raw_row_sha256: 17f6a00200fcb2a63e919733f421c0999ebb301bb01995a430256a2db84bdbb2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0de0cd6a6d67bc36fa8e795cc91d99fc2f292a892884fd009905cc41c84d8ab1

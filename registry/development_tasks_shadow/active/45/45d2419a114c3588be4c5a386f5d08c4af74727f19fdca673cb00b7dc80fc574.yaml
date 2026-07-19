@@ -1,0 +1,138 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2312_LIQUIDITY_RATES_PRESSURE_GENERATOR_POC
+  title: null
+  domain: Research trends / liquidity rates pressure candidate family
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2312_Liquidity_Rates_Pressure_Generator_POC.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2312_Liquidity_Rates_Pressure_Generator_POC.md`；依赖
+    TRADING-2311 feasibility audit、required-anchor cached data quality gate 和 liquidity/rates
+    generator pilot policy。当前仅允许 partial rates-only route；`liquidity_headwind_proxy_v1`
+    因 `UUP` / `HYG` / `LQD` 缺失继续 blocked。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `duration_pressure_proxy_v1` 和 `rates_pressure_exposure_cap_modifier_v1`
+      的 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary、policy
+      summary、blocked candidate report 和 safety boundary；真实 run status=`LIQUIDITY_RATES_PRESSURE_GENERATOR_POC_READY_VALIDATION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，top-level
+      validation status=`PASS`；所有 artifacts 固定 actual-path validation / promotion
+      / paper-shadow / production / broker false/none，不得声称 full liquidity pressure
+      POC ready。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1216
+    row_sha256: 5b07d7901e3488b5360b1bb9e69cbe9c65106d8d55f4106835201c0076472c3a
+    cell_count: 8
+    all_cells:
+    - TRADING-2312_LIQUIDITY_RATES_PRESSURE_GENERATOR_POC
+    - Research trends / liquidity rates pressure candidate family
+    - P1
+    - VALIDATING
+    - 系统验证 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2312_Liquidity_Rates_Pressure_Generator_POC.md`；依赖
+      TRADING-2311 feasibility audit、required-anchor cached data quality gate 和 liquidity/rates
+      generator pilot policy。当前仅允许 partial rates-only route；`liquidity_headwind_proxy_v1`
+      因 `UUP` / `HYG` / `LQD` 缺失继续 blocked。
+    - 生成 `duration_pressure_proxy_v1` 和 `rates_pressure_exposure_cap_modifier_v1`
+      的 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary、policy
+      summary、blocked candidate report 和 safety boundary；真实 run status=`LIQUIDITY_RATES_PRESSURE_GENERATOR_POC_READY_VALIDATION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，top-level
+      validation status=`PASS`；所有 artifacts 固定 actual-path validation / promotion
+      / paper-shadow / production / broker false/none，不得声称 full liquidity pressure
+      POC ready。
+    - '2026-07-01: 根据 owner 附件和 TRADING-2311 recommended_next_task 新增并进入 IN_PROGRESS；本任务必须
+      selective staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；真实
+      run 生成两个 partial rates-only candidate-bound bundles，`liquidity_headwind_proxy_v1`
+      只进入 blocked report，所有 promotion/paper-shadow/production/broker gates 仍为 false/none；验证通过
+      Ruff、compileall、TRADING-2312 CLI smoke、focused parallel pytest 76 passed、`aits
+      validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation 193
+      passed 和 `git diff --check`。'
+    raw_line: '|TRADING-2312_LIQUIDITY_RATES_PRESSURE_GENERATOR_POC|Research trends
+      / liquidity rates pressure candidate family|P1|VALIDATING|系统验证 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-2312_Liquidity_Rates_Pressure_Generator_POC.md`；依赖
+      TRADING-2311 feasibility audit、required-anchor cached data quality gate 和 liquidity/rates
+      generator pilot policy。当前仅允许 partial rates-only route；`liquidity_headwind_proxy_v1`
+      因 `UUP` / `HYG` / `LQD` 缺失继续 blocked。|生成 `duration_pressure_proxy_v1` 和 `rates_pressure_exposure_cap_modifier_v1`
+      的 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary、policy
+      summary、blocked candidate report 和 safety boundary；真实 run status=`LIQUIDITY_RATES_PRESSURE_GENERATOR_POC_READY_VALIDATION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，top-level
+      validation status=`PASS`；所有 artifacts 固定 actual-path validation / promotion
+      / paper-shadow / production / broker false/none，不得声称 full liquidity pressure
+      POC ready。|2026-07-01: 根据 owner 附件和 TRADING-2311 recommended_next_task 新增并进入
+      IN_PROGRESS；本任务必须 selective staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入
+      VALIDATING；真实 run 生成两个 partial rates-only candidate-bound bundles，`liquidity_headwind_proxy_v1`
+      只进入 blocked report，所有 promotion/paper-shadow/production/broker gates 仍为 false/none；验证通过
+      Ruff、compileall、TRADING-2312 CLI smoke、focused parallel pytest 76 passed、`aits
+      validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation 193
+      passed 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5b07d7901e3488b5360b1bb9
+  task_id: TRADING-2312_LIQUIDITY_RATES_PRESSURE_GENERATOR_POC
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 owner 附件和 TRADING-2311 recommended_next_task 新增并进入 IN_PROGRESS；本任务必须
+      selective staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；真实
+      run 生成两个 partial rates-only candidate-bound bundles，`liquidity_headwind_proxy_v1`
+      只进入 blocked report，所有 promotion/paper-shadow/production/broker gates 仍为 false/none；验证通过
+      Ruff、compileall、TRADING-2312 CLI smoke、focused parallel pytest 76 passed、`aits
+      validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation 193
+      passed 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5b07d7901e3488b5360b1bb9e69cbe9c65106d8d55f4106835201c0076472c3a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2312_LIQUIDITY_RATES_PRESSURE_GENERATOR_POC
+  - Research trends / liquidity rates pressure candidate family
+  - P1
+  - VALIDATING
+  - 系统验证 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2312_Liquidity_Rates_Pressure_Generator_POC.md`；依赖
+    TRADING-2311 feasibility audit、required-anchor cached data quality gate 和 liquidity/rates
+    generator pilot policy。当前仅允许 partial rates-only route；`liquidity_headwind_proxy_v1`
+    因 `UUP` / `HYG` / `LQD` 缺失继续 blocked。
+  - 生成 `duration_pressure_proxy_v1` 和 `rates_pressure_exposure_cap_modifier_v1` 的
+    candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary、policy
+    summary、blocked candidate report 和 safety boundary；真实 run status=`LIQUIDITY_RATES_PRESSURE_GENERATOR_POC_READY_VALIDATION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，top-level
+    validation status=`PASS`；所有 artifacts 固定 actual-path validation / promotion /
+    paper-shadow / production / broker false/none，不得声称 full liquidity pressure POC
+    ready。
+  - '2026-07-01: 根据 owner 附件和 TRADING-2311 recommended_next_task 新增并进入 IN_PROGRESS；本任务必须
+    selective staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；真实 run
+    生成两个 partial rates-only candidate-bound bundles，`liquidity_headwind_proxy_v1`
+    只进入 blocked report，所有 promotion/paper-shadow/production/broker gates 仍为 false/none；验证通过
+    Ruff、compileall、TRADING-2312 CLI smoke、focused parallel pytest 76 passed、`aits
+    validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation 193 passed
+    和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-2312_Liquidity_Rates_Pressure_Generator_POC.md
+  terminal: false
+  raw_row_sha256: 5b07d7901e3488b5360b1bb9e69cbe9c65106d8d55f4106835201c0076472c3a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 55f81a2a9c21cb658327716b757511c5a3709bc042bee06f4ed1c5ce603fd66f

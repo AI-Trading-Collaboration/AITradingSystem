@@ -1,0 +1,152 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2401_DYNAMIC_STRATEGY_RECOMBINATION_LINE_PLATEAU_AND_DATA_SIGNAL_QUALITY_DECISION
+  title: null
+  domain: Strategy research / recombination line plateau and data-signal quality decision
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2402 data PIT and signal quality gap review
+  requirement_refs:
+  - docs/requirements/TRADING-2401_Dynamic_Strategy_Recombination_Line_Plateau_And_Data_Signal_Quality_Decision.md
+  - docs/tasks/completed/TRADING-2401_Dynamic_Strategy_Recombination_Line_Plateau_And_Data_Signal_Quality_Decision.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2401_Dynamic_Strategy_Recombination_Line_Plateau_And_Data_Signal_Quality_Decision.md`；承接
+    TRADING-2400 targeted gate evidence owner decision，仅读取 TRADING-2400 / 2399 / 2398
+    / 2397 / 2396 prior validated artifacts，记录 recombination line plateau / next direction
+    owner decision，不运行新 backtest、不读取 fresh cached market data。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-recombination-line-plateau-decision`；输出
+      `plateau_decision_result.json`、`recombination_plateau_review.json`、`next_research_direction_decision.json`、`data_signal_quality_review_route.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RECOMBINATION_LINE_PLATEAU_AND_DATA_SIGNAL_QUALITY_DECISION_READY`，owner
+      decision=`PAUSE_RECOMBINATION_LINE_AND_REVIEW_DATA_PIT_SIGNAL_QUALITY`，base
+      candidate=`growth_tilt_lower_turnover_guarded_transfer_v1`，best targeted variant=`growth_tilt_guarded_transfer_valid_until_strict_v1`，decision
+      from 2399=`CONTINUE_TARGETED_IMPROVEMENT`，observation preview candidates=0，plateau
+      detected=true，continue local targeted improvement=false，data/PIT/signal quality、regime
+      labeling、threshold meta-dataset review recommended=true，next route=`TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review`，所有
+      safety fields false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 84
+    row_sha256: fbf9055f356e4ac69ef1bf81365ce90042bd46993e3c6fd616116c71d39d9159
+    cell_count: 8
+    all_cells:
+    - TRADING-2401_DYNAMIC_STRATEGY_RECOMBINATION_LINE_PLATEAU_AND_DATA_SIGNAL_QUALITY_DECISION
+    - Strategy research / recombination line plateau and data-signal quality decision
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2402 data PIT and signal quality gap review
+    - 详见 `docs/requirements/TRADING-2401_Dynamic_Strategy_Recombination_Line_Plateau_And_Data_Signal_Quality_Decision.md`；承接
+      TRADING-2400 targeted gate evidence owner decision，仅读取 TRADING-2400 / 2399 /
+      2398 / 2397 / 2396 prior validated artifacts，记录 recombination line plateau /
+      next direction owner decision，不运行新 backtest、不读取 fresh cached market data。
+    - 新增 `aits research strategies dynamic-strategy-recombination-line-plateau-decision`；输出
+      `plateau_decision_result.json`、`recombination_plateau_review.json`、`next_research_direction_decision.json`、`data_signal_quality_review_route.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RECOMBINATION_LINE_PLATEAU_AND_DATA_SIGNAL_QUALITY_DECISION_READY`，owner
+      decision=`PAUSE_RECOMBINATION_LINE_AND_REVIEW_DATA_PIT_SIGNAL_QUALITY`，base
+      candidate=`growth_tilt_lower_turnover_guarded_transfer_v1`，best targeted variant=`growth_tilt_guarded_transfer_valid_until_strict_v1`，decision
+      from 2399=`CONTINUE_TARGETED_IMPROVEMENT`，observation preview candidates=0，plateau
+      detected=true，continue local targeted improvement=false，data/PIT/signal quality、regime
+      labeling、threshold meta-dataset review recommended=true，next route=`TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review`，所有
+      safety fields false/none。
+    - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务未运行 `aits
+      validate-data --as-of 2026-07-05`，因为只读取 prior validated TRADING-2400 / 2399
+      / 2398 / 2397 / 2396 artifacts，不读取 fresh cached market data、不运行新 backtest、不生成
+      technical features、scoring、daily report 或交易建议。candidate auto-accept、research-only
+      observation、scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      validation 结果见 `docs/tasks/completed/TRADING-2401_Dynamic_Strategy_Recombination_Line_Plateau_And_Data_Signal_Quality_Decision.md`。'
+    raw_line: '|TRADING-2401_DYNAMIC_STRATEGY_RECOMBINATION_LINE_PLATEAU_AND_DATA_SIGNAL_QUALITY_DECISION|Strategy
+      research / recombination line plateau and data-signal quality decision|P0|DONE|项目
+      owner 后续复核 TRADING-2402 data PIT and signal quality gap review|详见 `docs/requirements/TRADING-2401_Dynamic_Strategy_Recombination_Line_Plateau_And_Data_Signal_Quality_Decision.md`；承接
+      TRADING-2400 targeted gate evidence owner decision，仅读取 TRADING-2400 / 2399 /
+      2398 / 2397 / 2396 prior validated artifacts，记录 recombination line plateau /
+      next direction owner decision，不运行新 backtest、不读取 fresh cached market data。|新增
+      `aits research strategies dynamic-strategy-recombination-line-plateau-decision`；输出
+      `plateau_decision_result.json`、`recombination_plateau_review.json`、`next_research_direction_decision.json`、`data_signal_quality_review_route.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RECOMBINATION_LINE_PLATEAU_AND_DATA_SIGNAL_QUALITY_DECISION_READY`，owner
+      decision=`PAUSE_RECOMBINATION_LINE_AND_REVIEW_DATA_PIT_SIGNAL_QUALITY`，base
+      candidate=`growth_tilt_lower_turnover_guarded_transfer_v1`，best targeted variant=`growth_tilt_guarded_transfer_valid_until_strict_v1`，decision
+      from 2399=`CONTINUE_TARGETED_IMPROVEMENT`，observation preview candidates=0，plateau
+      detected=true，continue local targeted improvement=false，data/PIT/signal quality、regime
+      labeling、threshold meta-dataset review recommended=true，next route=`TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review`，所有
+      safety fields false/none。|2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07:
+      实现完成并归档 DONE；本任务未运行 `aits validate-data --as-of 2026-07-05`，因为只读取 prior validated
+      TRADING-2400 / 2399 / 2398 / 2397 / 2396 artifacts，不读取 fresh cached market data、不运行新
+      backtest、不生成 technical features、scoring、daily report 或交易建议。candidate auto-accept、research-only
+      observation、scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      validation 结果见 `docs/tasks/completed/TRADING-2401_Dynamic_Strategy_Recombination_Line_Plateau_And_Data_Signal_Quality_Decision.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fbf9055f356e4ac69ef1bf81
+  task_id: TRADING-2401_DYNAMIC_STRATEGY_RECOMBINATION_LINE_PLATEAU_AND_DATA_SIGNAL_QUALITY_DECISION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2402 data PIT and signal quality gap review
+    notes: '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务未运行
+      `aits validate-data --as-of 2026-07-05`，因为只读取 prior validated TRADING-2400 /
+      2399 / 2398 / 2397 / 2396 artifacts，不读取 fresh cached market data、不运行新 backtest、不生成
+      technical features、scoring、daily report 或交易建议。candidate auto-accept、research-only
+      observation、scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order、daily report 全部保持 disabled / false / none；最终
+      validation 结果见 `docs/tasks/completed/TRADING-2401_Dynamic_Strategy_Recombination_Line_Plateau_And_Data_Signal_Quality_Decision.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:fbf9055f356e4ac69ef1bf81365ce90042bd46993e3c6fd616116c71d39d9159
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2401_DYNAMIC_STRATEGY_RECOMBINATION_LINE_PLATEAU_AND_DATA_SIGNAL_QUALITY_DECISION
+  - Strategy research / recombination line plateau and data-signal quality decision
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2402 data PIT and signal quality gap review
+  - 详见 `docs/requirements/TRADING-2401_Dynamic_Strategy_Recombination_Line_Plateau_And_Data_Signal_Quality_Decision.md`；承接
+    TRADING-2400 targeted gate evidence owner decision，仅读取 TRADING-2400 / 2399 / 2398
+    / 2397 / 2396 prior validated artifacts，记录 recombination line plateau / next direction
+    owner decision，不运行新 backtest、不读取 fresh cached market data。
+  - 新增 `aits research strategies dynamic-strategy-recombination-line-plateau-decision`；输出
+    `plateau_decision_result.json`、`recombination_plateau_review.json`、`next_research_direction_decision.json`、`data_signal_quality_review_route.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_RECOMBINATION_LINE_PLATEAU_AND_DATA_SIGNAL_QUALITY_DECISION_READY`，owner
+    decision=`PAUSE_RECOMBINATION_LINE_AND_REVIEW_DATA_PIT_SIGNAL_QUALITY`，base candidate=`growth_tilt_lower_turnover_guarded_transfer_v1`，best
+    targeted variant=`growth_tilt_guarded_transfer_valid_until_strict_v1`，decision
+    from 2399=`CONTINUE_TARGETED_IMPROVEMENT`，observation preview candidates=0，plateau
+    detected=true，continue local targeted improvement=false，data/PIT/signal quality、regime
+    labeling、threshold meta-dataset review recommended=true，next route=`TRADING-2402_Dynamic_Strategy_Data_PIT_And_Signal_Quality_Gap_Review`，所有
+    safety fields false/none。
+  - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务未运行 `aits
+    validate-data --as-of 2026-07-05`，因为只读取 prior validated TRADING-2400 / 2399 /
+    2398 / 2397 / 2396 artifacts，不读取 fresh cached market data、不运行新 backtest、不生成 technical
+    features、scoring、daily report 或交易建议。candidate auto-accept、research-only observation、scheduler、event
+    append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+    report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2401_Dynamic_Strategy_Recombination_Line_Plateau_And_Data_Signal_Quality_Decision.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2401_Dynamic_Strategy_Recombination_Line_Plateau_And_Data_Signal_Quality_Decision.md
+  - docs/tasks/completed/TRADING-2401_Dynamic_Strategy_Recombination_Line_Plateau_And_Data_Signal_Quality_Decision.md
+  terminal: true
+  raw_row_sha256: fbf9055f356e4ac69ef1bf81365ce90042bd46993e3c6fd616116c71d39d9159
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0b865bb13e8c1a19e47f2742ed5548960943ed0d16822a907ba1ad7941eb8418

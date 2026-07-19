@@ -1,0 +1,182 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-076
+  title: null
+  domain: ETF portfolio research/Strategy Evidence Dashboard
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner + 后续 source artifact refresh / manual review priorities
+  requirement_refs:
+  - docs/operations/operations_runbook.md
+  - docs/requirements/TRADING-076_Strategy_Evidence_Dashboard.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-076_Strategy_Evidence_Dashboard.md`；TRADING-076A-J
+    strategy evidence dashboard schema / source registry / aggregator / cards / ranking
+    / conflicts / manual queue / report / Reader Brief / validation gate 基础设施已完成并复验通过；本轮修复
+    report index 指向 Markdown 时未读取同名 JSON sidecar 导致 BLOCKED source 被误判为 AVAILABLE
+    的解释问题；当前真实 dashboard `overall_status=blocked`，后续需要刷新 source artifacts 并由 owner
+    处理 manual review priorities，不自动 promotion、不写 weights、不触发 broker action
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 已按 runbook 先读取 `docs/operations/operations_runbook.md`；`validate-data --as-of
+      2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；`aits etf evidence-dashboard validate
+      --as-of 2026-06-08` 输出 `status=PASS`、`failed_check_count=0`；`aits etf evidence-dashboard
+      aggregate --as-of 2026-06-08` 输出 `aggregation_status=blocked`、loaded_sources
+      8、missing_sources 3、stale_sources 1、blocked_sources 2（data_quality_governance_report、operations_health_report）；`aits
+      etf evidence-dashboard report --as-of 2026-06-08` 输出 `overall_status=blocked`、evidence_card_count
+      14、candidate_ranking_count 6、conflict_count 1、manual_review_priority_count 16，`data_quality`
+      card 和 `data_quality_overlay` 均为 blocked；Reader Brief `Strategy Evidence Dashboard`
+      显示 `availability=AVAILABLE`、overall_status blocked、data_quality_status blocked、blocking
+      issues 包含 data_quality、manual_review_priority_count 16；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`commands_executed=false`、`production_state_mutated=false`；专项
+      pytest 11 passed
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1164
+    row_sha256: 15e62fd5ede97f79ee210319e69861820847fe8bb94ebc81b13ace3b43c92714
+    cell_count: 8
+    all_cells:
+    - TRADING-076
+    - ETF portfolio research/Strategy Evidence Dashboard
+    - P0
+    - BASELINE_DONE
+    - 项目 owner + 后续 source artifact refresh / manual review priorities
+    - 详细拆解见 `docs/requirements/TRADING-076_Strategy_Evidence_Dashboard.md`；TRADING-076A-J
+      strategy evidence dashboard schema / source registry / aggregator / cards /
+      ranking / conflicts / manual queue / report / Reader Brief / validation gate
+      基础设施已完成并复验通过；本轮修复 report index 指向 Markdown 时未读取同名 JSON sidecar 导致 BLOCKED source
+      被误判为 AVAILABLE 的解释问题；当前真实 dashboard `overall_status=blocked`，后续需要刷新 source artifacts
+      并由 owner 处理 manual review priorities，不自动 promotion、不写 weights、不触发 broker action
+    - 已按 runbook 先读取 `docs/operations/operations_runbook.md`；`validate-data --as-of
+      2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；`aits etf evidence-dashboard validate
+      --as-of 2026-06-08` 输出 `status=PASS`、`failed_check_count=0`；`aits etf evidence-dashboard
+      aggregate --as-of 2026-06-08` 输出 `aggregation_status=blocked`、loaded_sources
+      8、missing_sources 3、stale_sources 1、blocked_sources 2（data_quality_governance_report、operations_health_report）；`aits
+      etf evidence-dashboard report --as-of 2026-06-08` 输出 `overall_status=blocked`、evidence_card_count
+      14、candidate_ranking_count 6、conflict_count 1、manual_review_priority_count 16，`data_quality`
+      card 和 `data_quality_overlay` 均为 blocked；Reader Brief `Strategy Evidence Dashboard`
+      显示 `availability=AVAILABLE`、overall_status blocked、data_quality_status blocked、blocking
+      issues 包含 data_quality、manual_review_priority_count 16；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`commands_executed=false`、`production_state_mutated=false`；专项
+      pytest 11 passed
+    - '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求把 ETF strategy research modules 的支持/阻断/stale/data-quality
+      evidence 汇总成可审计研究 dashboard，并输出 owner manual review priorities。2026-06-03: TRADING-076A-J
+      baseline 完成并转入 BASELINE_DONE，新增 strategy evidence source registry、schema/aggregator/cards/ranking/conflicts/manual
+      queue/report/validation gate、Reader Brief section、report registry/catalog/system-flow/runbook/README
+      integration 和专项测试；dashboard blocked source evidence 供 owner review / artifact
+      refresh，不自动绕过。2026-06-05: 因任务表只保留待验证/owner 输入任务，重新归类为 VALIDATING 以等待真实 dashboard
+      artifacts、source freshness blockers 和 owner manual review priorities 观察。2026-06-09:
+      从 VALIDATING 改为 BASELINE_DONE，原因：真实 2026-06-08 复验证明 workflow、validation gate、Reader
+      Brief 可见性和 Markdown sidecar status 透传均完成；当前 blockers 已显式披露，后续由 artifact refresh
+      和 owner manual review 承接。'
+    raw_line: '|TRADING-076|ETF portfolio research/Strategy Evidence Dashboard|P0|BASELINE_DONE|项目
+      owner + 后续 source artifact refresh / manual review priorities|详细拆解见 `docs/requirements/TRADING-076_Strategy_Evidence_Dashboard.md`；TRADING-076A-J
+      strategy evidence dashboard schema / source registry / aggregator / cards /
+      ranking / conflicts / manual queue / report / Reader Brief / validation gate
+      基础设施已完成并复验通过；本轮修复 report index 指向 Markdown 时未读取同名 JSON sidecar 导致 BLOCKED source
+      被误判为 AVAILABLE 的解释问题；当前真实 dashboard `overall_status=blocked`，后续需要刷新 source artifacts
+      并由 owner 处理 manual review priorities，不自动 promotion、不写 weights、不触发 broker action|已按
+      runbook 先读取 `docs/operations/operations_runbook.md`；`validate-data --as-of 2026-06-08`
+      为 `PASS_WITH_WARNINGS`（0 errors）；`aits etf evidence-dashboard validate --as-of
+      2026-06-08` 输出 `status=PASS`、`failed_check_count=0`；`aits etf evidence-dashboard
+      aggregate --as-of 2026-06-08` 输出 `aggregation_status=blocked`、loaded_sources
+      8、missing_sources 3、stale_sources 1、blocked_sources 2（data_quality_governance_report、operations_health_report）；`aits
+      etf evidence-dashboard report --as-of 2026-06-08` 输出 `overall_status=blocked`、evidence_card_count
+      14、candidate_ranking_count 6、conflict_count 1、manual_review_priority_count 16，`data_quality`
+      card 和 `data_quality_overlay` 均为 blocked；Reader Brief `Strategy Evidence Dashboard`
+      显示 `availability=AVAILABLE`、overall_status blocked、data_quality_status blocked、blocking
+      issues 包含 data_quality、manual_review_priority_count 16；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`commands_executed=false`、`production_state_mutated=false`；专项
+      pytest 11 passed|2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求把 ETF strategy research
+      modules 的支持/阻断/stale/data-quality evidence 汇总成可审计研究 dashboard，并输出 owner manual
+      review priorities。2026-06-03: TRADING-076A-J baseline 完成并转入 BASELINE_DONE，新增
+      strategy evidence source registry、schema/aggregator/cards/ranking/conflicts/manual
+      queue/report/validation gate、Reader Brief section、report registry/catalog/system-flow/runbook/README
+      integration 和专项测试；dashboard blocked source evidence 供 owner review / artifact
+      refresh，不自动绕过。2026-06-05: 因任务表只保留待验证/owner 输入任务，重新归类为 VALIDATING 以等待真实 dashboard
+      artifacts、source freshness blockers 和 owner manual review priorities 观察。2026-06-09:
+      从 VALIDATING 改为 BASELINE_DONE，原因：真实 2026-06-08 复验证明 workflow、validation gate、Reader
+      Brief 可见性和 Markdown sidecar status 透传均完成；当前 blockers 已显式披露，后续由 artifact refresh
+      和 owner manual review 承接。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-15e62fd5ede97f79ee210319
+  task_id: TRADING-076
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner + 后续 source artifact refresh / manual review priorities
+    notes: '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求把 ETF strategy research modules
+      的支持/阻断/stale/data-quality evidence 汇总成可审计研究 dashboard，并输出 owner manual review
+      priorities。2026-06-03: TRADING-076A-J baseline 完成并转入 BASELINE_DONE，新增 strategy
+      evidence source registry、schema/aggregator/cards/ranking/conflicts/manual queue/report/validation
+      gate、Reader Brief section、report registry/catalog/system-flow/runbook/README
+      integration 和专项测试；dashboard blocked source evidence 供 owner review / artifact
+      refresh，不自动绕过。2026-06-05: 因任务表只保留待验证/owner 输入任务，重新归类为 VALIDATING 以等待真实 dashboard
+      artifacts、source freshness blockers 和 owner manual review priorities 观察。2026-06-09:
+      从 VALIDATING 改为 BASELINE_DONE，原因：真实 2026-06-08 复验证明 workflow、validation gate、Reader
+      Brief 可见性和 Markdown sidecar status 透传均完成；当前 blockers 已显式披露，后续由 artifact refresh
+      和 owner manual review 承接。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:15e62fd5ede97f79ee210319e69861820847fe8bb94ebc81b13ace3b43c92714
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-076
+  - ETF portfolio research/Strategy Evidence Dashboard
+  - P0
+  - BASELINE_DONE
+  - 项目 owner + 后续 source artifact refresh / manual review priorities
+  - 详细拆解见 `docs/requirements/TRADING-076_Strategy_Evidence_Dashboard.md`；TRADING-076A-J
+    strategy evidence dashboard schema / source registry / aggregator / cards / ranking
+    / conflicts / manual queue / report / Reader Brief / validation gate 基础设施已完成并复验通过；本轮修复
+    report index 指向 Markdown 时未读取同名 JSON sidecar 导致 BLOCKED source 被误判为 AVAILABLE
+    的解释问题；当前真实 dashboard `overall_status=blocked`，后续需要刷新 source artifacts 并由 owner
+    处理 manual review priorities，不自动 promotion、不写 weights、不触发 broker action
+  - 已按 runbook 先读取 `docs/operations/operations_runbook.md`；`validate-data --as-of
+    2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；`aits etf evidence-dashboard validate
+    --as-of 2026-06-08` 输出 `status=PASS`、`failed_check_count=0`；`aits etf evidence-dashboard
+    aggregate --as-of 2026-06-08` 输出 `aggregation_status=blocked`、loaded_sources 8、missing_sources
+    3、stale_sources 1、blocked_sources 2（data_quality_governance_report、operations_health_report）；`aits
+    etf evidence-dashboard report --as-of 2026-06-08` 输出 `overall_status=blocked`、evidence_card_count
+    14、candidate_ranking_count 6、conflict_count 1、manual_review_priority_count 16，`data_quality`
+    card 和 `data_quality_overlay` 均为 blocked；Reader Brief `Strategy Evidence Dashboard`
+    显示 `availability=AVAILABLE`、overall_status blocked、data_quality_status blocked、blocking
+    issues 包含 data_quality、manual_review_priority_count 16；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`commands_executed=false`、`production_state_mutated=false`；专项
+    pytest 11 passed
+  - '2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 要求把 ETF strategy research modules 的支持/阻断/stale/data-quality
+    evidence 汇总成可审计研究 dashboard，并输出 owner manual review priorities。2026-06-03: TRADING-076A-J
+    baseline 完成并转入 BASELINE_DONE，新增 strategy evidence source registry、schema/aggregator/cards/ranking/conflicts/manual
+    queue/report/validation gate、Reader Brief section、report registry/catalog/system-flow/runbook/README
+    integration 和专项测试；dashboard blocked source evidence 供 owner review / artifact
+    refresh，不自动绕过。2026-06-05: 因任务表只保留待验证/owner 输入任务，重新归类为 VALIDATING 以等待真实 dashboard
+    artifacts、source freshness blockers 和 owner manual review priorities 观察。2026-06-09:
+    从 VALIDATING 改为 BASELINE_DONE，原因：真实 2026-06-08 复验证明 workflow、validation gate、Reader
+    Brief 可见性和 Markdown sidecar status 透传均完成；当前 blockers 已显式披露，后续由 artifact refresh
+    和 owner manual review 承接。'
+  docs_links:
+  - docs/operations/operations_runbook.md
+  - docs/requirements/TRADING-076_Strategy_Evidence_Dashboard.md
+  terminal: false
+  raw_row_sha256: 15e62fd5ede97f79ee210319e69861820847fe8bb94ebc81b13ace3b43c92714
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 21e896a9868f61b432190745dc0345752e853d1479e76f2d998d4a8cf8440345

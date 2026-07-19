@@ -1,0 +1,129 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-261_to_265_SMOOTHED_METHOD_PROMOTION_REVIEW_AND_PRIMARY_CANDIDATE_GATE
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue smoothed promotion/gate/binding/switch/owner
+    journal
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据并执行人工 review；architecture
+    coordinator：继续剩余 G2.4 matrix
+  requirement_refs:
+  - docs/requirements/TRADING-261_to_265_Smoothed_Method_Promotion_Review_and_Primary_Candidate_Gate.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-261_to_265_Smoothed_Method_Promotion_Review_and_Primary_Candidate_Gate.md`。G2.4CQ
+    canonical closeout已完成；旧固定3d/PROMOTE、静态evidence/criteria、0-target补造和candidate-null
+    switch语义已撤销。当前无eligible candidate，workflow PASS不是promotion或投资结论。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 16 callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output
+      upstream/live policy validation；Confirmation-only candidate与Scorecard/Owner/Watch
+      exact match；content-derived evidence/criteria/targets/switch/journal；null/0-target保持；reviewed
+      policy；Owner record原子重建并拒绝无资格promote；全部views byte rebuild；bounded business-view
+      commitments不递归嵌入上游snapshot；CLI parity、docs/manifests/deprecation/compatibility与focused/architecture/contract验证；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1167
+    row_sha256: 3d325ba314114826c51f2b1eb7ff63b2b14697f74daec2ce615e5e4adfab8ebb
+    cell_count: 8
+    all_cells:
+    - TRADING-261_to_265_SMOOTHED_METHOD_PROMOTION_REVIEW_AND_PRIMARY_CANDIDATE_GATE
+    - ETF portfolio/dynamic v3 rescue smoothed promotion/gate/binding/switch/owner
+      journal
+    - P0
+    - BASELINE_DONE
+    - 研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据并执行人工 review；architecture coordinator：继续剩余
+      G2.4 matrix
+    - 详细拆解见 `docs/requirements/TRADING-261_to_265_Smoothed_Method_Promotion_Review_and_Primary_Candidate_Gate.md`。G2.4CQ
+      canonical closeout已完成；旧固定3d/PROMOTE、静态evidence/criteria、0-target补造和candidate-null
+      switch语义已撤销。当前无eligible candidate，workflow PASS不是promotion或投资结论。
+    - 16 callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output upstream/live
+      policy validation；Confirmation-only candidate与Scorecard/Owner/Watch exact match；content-derived
+      evidence/criteria/targets/switch/journal；null/0-target保持；reviewed policy；Owner
+      record原子重建并拒绝无资格promote；全部views byte rebuild；bounded business-view commitments不递归嵌入上游snapshot；CLI
+      parity、docs/manifests/deprecation/compatibility与focused/architecture/contract验证；`production_effect=none`。
+    - '2026-07-14: G2.4CQ=`COMPLETE_G2_4_CONTINUES`。当前candidate=null、Promotion不能进入owner
+      review、Gate=`CONTINUE_OBSERVATION`、Binding=`targets=[]/NOT_REGISTERED`、Switch
+      proposed=null、Owner推荐`request_more_forward_data`；非法promote record fail closed、合法continue-observation
+      validation PASS。Focused=`7/5`、architecture/contract=`278/203 passed`，generated=`919/1,120/858/0`。单slice不触发ARCH-005
+      handoff，不进入G2.5。'
+    raw_line: '|TRADING-261_to_265_SMOOTHED_METHOD_PROMOTION_REVIEW_AND_PRIMARY_CANDIDATE_GATE|ETF
+      portfolio/dynamic v3 rescue smoothed promotion/gate/binding/switch/owner journal|P0|BASELINE_DONE|研究
+      owner：积累独立 forward/PIT/DQ/cost/holdout 证据并执行人工 review；architecture coordinator：继续剩余
+      G2.4 matrix|详细拆解见 `docs/requirements/TRADING-261_to_265_Smoothed_Method_Promotion_Review_and_Primary_Candidate_Gate.md`。G2.4CQ
+      canonical closeout已完成；旧固定3d/PROMOTE、静态evidence/criteria、0-target补造和candidate-null
+      switch语义已撤销。当前无eligible candidate，workflow PASS不是promotion或投资结论。|16 callbacks迁canonical
+      interface/domain；五类bounded v2 snapshots；pre-output upstream/live policy validation；Confirmation-only
+      candidate与Scorecard/Owner/Watch exact match；content-derived evidence/criteria/targets/switch/journal；null/0-target保持；reviewed
+      policy；Owner record原子重建并拒绝无资格promote；全部views byte rebuild；bounded business-view
+      commitments不递归嵌入上游snapshot；CLI parity、docs/manifests/deprecation/compatibility与focused/architecture/contract验证；`production_effect=none`。|2026-07-14:
+      G2.4CQ=`COMPLETE_G2_4_CONTINUES`。当前candidate=null、Promotion不能进入owner review、Gate=`CONTINUE_OBSERVATION`、Binding=`targets=[]/NOT_REGISTERED`、Switch
+      proposed=null、Owner推荐`request_more_forward_data`；非法promote record fail closed、合法continue-observation
+      validation PASS。Focused=`7/5`、architecture/contract=`278/203 passed`，generated=`919/1,120/858/0`。单slice不触发ARCH-005
+      handoff，不进入G2.5。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3d325ba314114826c51f2b1e
+  task_id: TRADING-261_to_265_SMOOTHED_METHOD_PROMOTION_REVIEW_AND_PRIMARY_CANDIDATE_GATE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据并执行人工 review；architecture
+      coordinator：继续剩余 G2.4 matrix
+    notes: '2026-07-14: G2.4CQ=`COMPLETE_G2_4_CONTINUES`。当前candidate=null、Promotion不能进入owner
+      review、Gate=`CONTINUE_OBSERVATION`、Binding=`targets=[]/NOT_REGISTERED`、Switch
+      proposed=null、Owner推荐`request_more_forward_data`；非法promote record fail closed、合法continue-observation
+      validation PASS。Focused=`7/5`、architecture/contract=`278/203 passed`，generated=`919/1,120/858/0`。单slice不触发ARCH-005
+      handoff，不进入G2.5。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3d325ba314114826c51f2b1eb7ff63b2b14697f74daec2ce615e5e4adfab8ebb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-261_to_265_SMOOTHED_METHOD_PROMOTION_REVIEW_AND_PRIMARY_CANDIDATE_GATE
+  - ETF portfolio/dynamic v3 rescue smoothed promotion/gate/binding/switch/owner journal
+  - P0
+  - BASELINE_DONE
+  - 研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据并执行人工 review；architecture coordinator：继续剩余
+    G2.4 matrix
+  - 详细拆解见 `docs/requirements/TRADING-261_to_265_Smoothed_Method_Promotion_Review_and_Primary_Candidate_Gate.md`。G2.4CQ
+    canonical closeout已完成；旧固定3d/PROMOTE、静态evidence/criteria、0-target补造和candidate-null
+    switch语义已撤销。当前无eligible candidate，workflow PASS不是promotion或投资结论。
+  - 16 callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output upstream/live
+    policy validation；Confirmation-only candidate与Scorecard/Owner/Watch exact match；content-derived
+    evidence/criteria/targets/switch/journal；null/0-target保持；reviewed policy；Owner
+    record原子重建并拒绝无资格promote；全部views byte rebuild；bounded business-view commitments不递归嵌入上游snapshot；CLI
+    parity、docs/manifests/deprecation/compatibility与focused/architecture/contract验证；`production_effect=none`。
+  - '2026-07-14: G2.4CQ=`COMPLETE_G2_4_CONTINUES`。当前candidate=null、Promotion不能进入owner
+    review、Gate=`CONTINUE_OBSERVATION`、Binding=`targets=[]/NOT_REGISTERED`、Switch
+    proposed=null、Owner推荐`request_more_forward_data`；非法promote record fail closed、合法continue-observation
+    validation PASS。Focused=`7/5`、architecture/contract=`278/203 passed`，generated=`919/1,120/858/0`。单slice不触发ARCH-005
+    handoff，不进入G2.5。'
+  docs_links:
+  - docs/requirements/TRADING-261_to_265_Smoothed_Method_Promotion_Review_and_Primary_Candidate_Gate.md
+  terminal: false
+  raw_row_sha256: 3d325ba314114826c51f2b1eb7ff63b2b14697f74daec2ce615e5e4adfab8ebb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8a9c604bd557e58f9e0ef5e316d4dac67e7b62c77ff54284d56a28ee7917208d

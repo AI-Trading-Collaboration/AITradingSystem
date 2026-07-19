@@ -1,0 +1,149 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-050
+  title: null
+  domain: 报告/Score Change Attribution
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/reader_reporting_improvement_plan_2026-05-28.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；score
+    change attribution 已完成并通过 latest 连续 signal-time snapshot 复核；`score_change_attribution_2026-06-05`
+    为 `PASS`、`production_effect=none`、warnings 0，真实比较 2026-06-04 -> 2026-06-05，Reader
+    Brief 生成和质量校验均为 OK
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `outputs/reports/score_change_attribution_YYYY-MM-DD.md/json`；输出 `ai_after_chatgpt`
+      regime、实际比较日期、overall score delta、component score delta effect、weight delta
+      effect、coverage delta effect、gate delta effect、confidence delta effect、data
+      quality / PIT 状态变化、top positive/negative/missing/neutralized/changed drivers；Reader
+      Brief 展示 top changes；缺少上一交易日或关键 artifact 时输出 `INSUFFICIENT_DATA` 而不是补造变化原因；实现时补系统流图、产物目录和专项测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 323
+    row_sha256: c7fd467f21adf736106acd1712cf08a77523d67487130e95d23b53a344b287e0
+    cell_count: 8
+    all_cells:
+    - REPORT-050
+    - 报告/Score Change Attribution
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；score
+      change attribution 已完成并通过 latest 连续 signal-time snapshot 复核；`score_change_attribution_2026-06-05`
+      为 `PASS`、`production_effect=none`、warnings 0，真实比较 2026-06-04 -> 2026-06-05，Reader
+      Brief 生成和质量校验均为 OK
+    - 生成 `outputs/reports/score_change_attribution_YYYY-MM-DD.md/json`；输出 `ai_after_chatgpt`
+      regime、实际比较日期、overall score delta、component score delta effect、weight delta
+      effect、coverage delta effect、gate delta effect、confidence delta effect、data
+      quality / PIT 状态变化、top positive/negative/missing/neutralized/changed drivers；Reader
+      Brief 展示 top changes；缺少上一交易日或关键 artifact 时输出 `INSUFFICIENT_DATA` 而不是补造变化原因；实现时补系统流图、产物目录和专项测试
+    - '2026-05-28: 新增，原因：读者最关心“为什么今天和昨天不一样”，当前日报有变化原因树基础，但还缺少机器可读、可复用的变化归因 artifact。2026-05-28:
+      从 READY 改为 IN_PROGRESS，原因：开始实现只读 score change attribution builder、CLI 和 Reader
+      Brief 摘要接入。2026-05-28: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 score change attribution
+      builder、CLI/direct dispatcher、Markdown/JSON artifact、Reader Brief 接入、系统流图、产物目录和专项测试；验证通过
+      `tests/test_score_change_attribution.py` 与 `tests/test_reader_brief.py`。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：最新 `aits reports score-change-attribution --latest`
+      输出 `score_change_attribution_2026-06-05.md/json`，状态 `PASS`、`production_effect=none`、warnings=0；JSON
+      字段级复核包含 `market_regime=ai_after_chatgpt`、current/previous date 2026-06-05/2026-06-04、6
+      个 component attribution、8 个 gate attribution、top negative drivers `risk_sentiment`
+      / `macro_liquidity`、data quality delta、source snapshot paths 和 `methodology.does_not_recompute_score=true`；专项测试、Reader
+      Brief 生成/质量校验和 documentation contract 通过。'
+    raw_line: '|REPORT-050|报告/Score Change Attribution|P1|DONE|系统验证|详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；score
+      change attribution 已完成并通过 latest 连续 signal-time snapshot 复核；`score_change_attribution_2026-06-05`
+      为 `PASS`、`production_effect=none`、warnings 0，真实比较 2026-06-04 -> 2026-06-05，Reader
+      Brief 生成和质量校验均为 OK|生成 `outputs/reports/score_change_attribution_YYYY-MM-DD.md/json`；输出
+      `ai_after_chatgpt` regime、实际比较日期、overall score delta、component score delta effect、weight
+      delta effect、coverage delta effect、gate delta effect、confidence delta effect、data
+      quality / PIT 状态变化、top positive/negative/missing/neutralized/changed drivers；Reader
+      Brief 展示 top changes；缺少上一交易日或关键 artifact 时输出 `INSUFFICIENT_DATA` 而不是补造变化原因；实现时补系统流图、产物目录和专项测试|2026-05-28:
+      新增，原因：读者最关心“为什么今天和昨天不一样”，当前日报有变化原因树基础，但还缺少机器可读、可复用的变化归因 artifact。2026-05-28:
+      从 READY 改为 IN_PROGRESS，原因：开始实现只读 score change attribution builder、CLI 和 Reader
+      Brief 摘要接入。2026-05-28: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 score change attribution
+      builder、CLI/direct dispatcher、Markdown/JSON artifact、Reader Brief 接入、系统流图、产物目录和专项测试；验证通过
+      `tests/test_score_change_attribution.py` 与 `tests/test_reader_brief.py`。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：最新 `aits reports score-change-attribution --latest`
+      输出 `score_change_attribution_2026-06-05.md/json`，状态 `PASS`、`production_effect=none`、warnings=0；JSON
+      字段级复核包含 `market_regime=ai_after_chatgpt`、current/previous date 2026-06-05/2026-06-04、6
+      个 component attribution、8 个 gate attribution、top negative drivers `risk_sentiment`
+      / `macro_liquidity`、data quality delta、source snapshot paths 和 `methodology.does_not_recompute_score=true`；专项测试、Reader
+      Brief 生成/质量校验和 documentation contract 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c7fd467f21adf736106acd17
+  task_id: REPORT-050
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-28: 新增，原因：读者最关心“为什么今天和昨天不一样”，当前日报有变化原因树基础，但还缺少机器可读、可复用的变化归因 artifact。2026-05-28:
+      从 READY 改为 IN_PROGRESS，原因：开始实现只读 score change attribution builder、CLI 和 Reader
+      Brief 摘要接入。2026-05-28: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 score change attribution
+      builder、CLI/direct dispatcher、Markdown/JSON artifact、Reader Brief 接入、系统流图、产物目录和专项测试；验证通过
+      `tests/test_score_change_attribution.py` 与 `tests/test_reader_brief.py`。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：最新 `aits reports score-change-attribution --latest`
+      输出 `score_change_attribution_2026-06-05.md/json`，状态 `PASS`、`production_effect=none`、warnings=0；JSON
+      字段级复核包含 `market_regime=ai_after_chatgpt`、current/previous date 2026-06-05/2026-06-04、6
+      个 component attribution、8 个 gate attribution、top negative drivers `risk_sentiment`
+      / `macro_liquidity`、data quality delta、source snapshot paths 和 `methodology.does_not_recompute_score=true`；专项测试、Reader
+      Brief 生成/质量校验和 documentation contract 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c7fd467f21adf736106acd1712cf08a77523d67487130e95d23b53a344b287e0
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-050
+  - 报告/Score Change Attribution
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；score
+    change attribution 已完成并通过 latest 连续 signal-time snapshot 复核；`score_change_attribution_2026-06-05`
+    为 `PASS`、`production_effect=none`、warnings 0，真实比较 2026-06-04 -> 2026-06-05，Reader
+    Brief 生成和质量校验均为 OK
+  - 生成 `outputs/reports/score_change_attribution_YYYY-MM-DD.md/json`；输出 `ai_after_chatgpt`
+    regime、实际比较日期、overall score delta、component score delta effect、weight delta effect、coverage
+    delta effect、gate delta effect、confidence delta effect、data quality / PIT 状态变化、top
+    positive/negative/missing/neutralized/changed drivers；Reader Brief 展示 top changes；缺少上一交易日或关键
+    artifact 时输出 `INSUFFICIENT_DATA` 而不是补造变化原因；实现时补系统流图、产物目录和专项测试
+  - '2026-05-28: 新增，原因：读者最关心“为什么今天和昨天不一样”，当前日报有变化原因树基础，但还缺少机器可读、可复用的变化归因 artifact。2026-05-28:
+    从 READY 改为 IN_PROGRESS，原因：开始实现只读 score change attribution builder、CLI 和 Reader
+    Brief 摘要接入。2026-05-28: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 score change attribution
+    builder、CLI/direct dispatcher、Markdown/JSON artifact、Reader Brief 接入、系统流图、产物目录和专项测试；验证通过
+    `tests/test_score_change_attribution.py` 与 `tests/test_reader_brief.py`。2026-06-09:
+    从 VALIDATING 改为 DONE，原因：最新 `aits reports score-change-attribution --latest` 输出
+    `score_change_attribution_2026-06-05.md/json`，状态 `PASS`、`production_effect=none`、warnings=0；JSON
+    字段级复核包含 `market_regime=ai_after_chatgpt`、current/previous date 2026-06-05/2026-06-04、6
+    个 component attribution、8 个 gate attribution、top negative drivers `risk_sentiment`
+    / `macro_liquidity`、data quality delta、source snapshot paths 和 `methodology.does_not_recompute_score=true`；专项测试、Reader
+    Brief 生成/质量校验和 documentation contract 通过。'
+  docs_links:
+  - docs/requirements/reader_reporting_improvement_plan_2026-05-28.md
+  terminal: true
+  raw_row_sha256: c7fd467f21adf736106acd1712cf08a77523d67487130e95d23b53a344b287e0
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 051747939a4c1882ad6d6ece36351690d4976c59d313fd1e867173f9b99c07fc

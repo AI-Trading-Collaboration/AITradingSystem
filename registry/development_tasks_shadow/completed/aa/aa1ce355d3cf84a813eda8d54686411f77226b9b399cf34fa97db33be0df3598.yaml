@@ -1,0 +1,150 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-014
+  title: null
+  domain: 市场反馈优化/shadow 参数验证收紧
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/shadow_parameter_validation_hardening_2026-05-16.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/shadow_parameter_validation_hardening_2026-05-16.md`；factorial
+    attribution、验证级 objective、`approved_hard` hard effect fail-closed 和生产权重 metadata
+    清理已完成；后续真实样本观察、promotion floor、forward shadow、owner approval 和 rollback condition
+    由独立治理流程承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`search-shadow-parameters` 报告能拆出 weight-only、gate-only、combined 与 production
+      baseline 的 post-gate 表现；默认 objective 不把当前 8 个 available 小样本写成 eligible best
+      trial；带 hard effect 的 `approved_hard` overlay 在执行层未接入前 fail closed；`weight_profile_current.yaml`
+      metadata 与当前 score-daily/backtest resolver 状态一致；系统流图、目标测试和当前样本 CLI smoke 通过，且不改变
+      production scoring、position gate、approved overlay、正式 prediction ledger 或日报结论；当前
+      `current_20260504_20260514_validation_v3` 为 `PASS_WITH_LIMITATIONS` / `production_effect=none`，diagnostic-leading
+      因样本 floor 保持不 eligible，factorial primary driver 为 `gate`'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 278
+    row_sha256: 2869b5aa5d4b97d2f7d841656cc3843fc7fb7e5f577be8932812bf9433dfac3f
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-014
+    - 市场反馈优化/shadow 参数验证收紧
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/shadow_parameter_validation_hardening_2026-05-16.md`；factorial
+      attribution、验证级 objective、`approved_hard` hard effect fail-closed 和生产权重 metadata
+      清理已完成；后续真实样本观察、promotion floor、forward shadow、owner approval 和 rollback condition
+      由独立治理流程承接
+    - '`search-shadow-parameters` 报告能拆出 weight-only、gate-only、combined 与 production
+      baseline 的 post-gate 表现；默认 objective 不把当前 8 个 available 小样本写成 eligible best
+      trial；带 hard effect 的 `approved_hard` overlay 在执行层未接入前 fail closed；`weight_profile_current.yaml`
+      metadata 与当前 score-daily/backtest resolver 状态一致；系统流图、目标测试和当前样本 CLI smoke 通过，且不改变
+      production scoring、position gate、approved overlay、正式 prediction ledger 或日报结论；当前
+      `current_20260504_20260514_validation_v3` 为 `PASS_WITH_LIMITATIONS` / `production_effect=none`，diagnostic-leading
+      因样本 floor 保持不 eligible，factorial primary driver 为 `gate`'
+    - '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 要求把本轮权重/gate 回测评估结论登记，并继续推进实现和测试整条 validation-only
+      流程。2026-05-16: 从 IN_PROGRESS 改为 VALIDATING，原因：已实现并验证目标闭环；完整当前样本搜索 `current_20260504_20260514_validation_v3`
+      为 `PASS_WITH_LIMITATIONS`，51,612 trials，因 available=8 低于 objective floor 13
+      而没有 eligible best trial，diagnostic-leading 为 `grid_weight_0118__grid_gate_0217`，factorial
+      primary driver 为 `gate`；全量 pytest 548 passed，ruff 通过，diff check 无 whitespace
+      error。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核当前样本 artifact 仍 fail closed，Factorial
+      Attribution、objective sample floor、approved_hard fail-closed 和 production weight
+      metadata 均符合验收；验证通过 `tests/test_shadow_weight_profiles.py` + `tests/test_weight_calibration.py`
+      31 passed、Ruff、repo-wide Black check 和 `compileall`。'
+    raw_line: '|CALIBRATION-014|市场反馈优化/shadow 参数验证收紧|P1|DONE|系统验证|详细拆解见 `docs/requirements/shadow_parameter_validation_hardening_2026-05-16.md`；factorial
+      attribution、验证级 objective、`approved_hard` hard effect fail-closed 和生产权重 metadata
+      清理已完成；后续真实样本观察、promotion floor、forward shadow、owner approval 和 rollback condition
+      由独立治理流程承接|`search-shadow-parameters` 报告能拆出 weight-only、gate-only、combined 与
+      production baseline 的 post-gate 表现；默认 objective 不把当前 8 个 available 小样本写成 eligible
+      best trial；带 hard effect 的 `approved_hard` overlay 在执行层未接入前 fail closed；`weight_profile_current.yaml`
+      metadata 与当前 score-daily/backtest resolver 状态一致；系统流图、目标测试和当前样本 CLI smoke 通过，且不改变
+      production scoring、position gate、approved overlay、正式 prediction ledger 或日报结论；当前
+      `current_20260504_20260514_validation_v3` 为 `PASS_WITH_LIMITATIONS` / `production_effect=none`，diagnostic-leading
+      因样本 floor 保持不 eligible，factorial primary driver 为 `gate`|2026-05-16: 新增并进入 IN_PROGRESS，原因：owner
+      要求把本轮权重/gate 回测评估结论登记，并继续推进实现和测试整条 validation-only 流程。2026-05-16: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已实现并验证目标闭环；完整当前样本搜索 `current_20260504_20260514_validation_v3`
+      为 `PASS_WITH_LIMITATIONS`，51,612 trials，因 available=8 低于 objective floor 13
+      而没有 eligible best trial，diagnostic-leading 为 `grid_weight_0118__grid_gate_0217`，factorial
+      primary driver 为 `gate`；全量 pytest 548 passed，ruff 通过，diff check 无 whitespace
+      error。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核当前样本 artifact 仍 fail closed，Factorial
+      Attribution、objective sample floor、approved_hard fail-closed 和 production weight
+      metadata 均符合验收；验证通过 `tests/test_shadow_weight_profiles.py` + `tests/test_weight_calibration.py`
+      31 passed、Ruff、repo-wide Black check 和 `compileall`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2869b5aa5d4b97d2f7d84165
+  task_id: CALIBRATION-014
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 要求把本轮权重/gate 回测评估结论登记，并继续推进实现和测试整条
+      validation-only 流程。2026-05-16: 从 IN_PROGRESS 改为 VALIDATING，原因：已实现并验证目标闭环；完整当前样本搜索
+      `current_20260504_20260514_validation_v3` 为 `PASS_WITH_LIMITATIONS`，51,612 trials，因
+      available=8 低于 objective floor 13 而没有 eligible best trial，diagnostic-leading
+      为 `grid_weight_0118__grid_gate_0217`，factorial primary driver 为 `gate`；全量 pytest
+      548 passed，ruff 通过，diff check 无 whitespace error。2026-06-09: 从 VALIDATING 改为
+      DONE，原因：复核当前样本 artifact 仍 fail closed，Factorial Attribution、objective sample
+      floor、approved_hard fail-closed 和 production weight metadata 均符合验收；验证通过 `tests/test_shadow_weight_profiles.py`
+      + `tests/test_weight_calibration.py` 31 passed、Ruff、repo-wide Black check 和
+      `compileall`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:2869b5aa5d4b97d2f7d841656cc3843fc7fb7e5f577be8932812bf9433dfac3f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-014
+  - 市场反馈优化/shadow 参数验证收紧
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/shadow_parameter_validation_hardening_2026-05-16.md`；factorial
+    attribution、验证级 objective、`approved_hard` hard effect fail-closed 和生产权重 metadata
+    清理已完成；后续真实样本观察、promotion floor、forward shadow、owner approval 和 rollback condition
+    由独立治理流程承接
+  - '`search-shadow-parameters` 报告能拆出 weight-only、gate-only、combined 与 production
+    baseline 的 post-gate 表现；默认 objective 不把当前 8 个 available 小样本写成 eligible best trial；带
+    hard effect 的 `approved_hard` overlay 在执行层未接入前 fail closed；`weight_profile_current.yaml`
+    metadata 与当前 score-daily/backtest resolver 状态一致；系统流图、目标测试和当前样本 CLI smoke 通过，且不改变
+    production scoring、position gate、approved overlay、正式 prediction ledger 或日报结论；当前
+    `current_20260504_20260514_validation_v3` 为 `PASS_WITH_LIMITATIONS` / `production_effect=none`，diagnostic-leading
+    因样本 floor 保持不 eligible，factorial primary driver 为 `gate`'
+  - '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 要求把本轮权重/gate 回测评估结论登记，并继续推进实现和测试整条 validation-only
+    流程。2026-05-16: 从 IN_PROGRESS 改为 VALIDATING，原因：已实现并验证目标闭环；完整当前样本搜索 `current_20260504_20260514_validation_v3`
+    为 `PASS_WITH_LIMITATIONS`，51,612 trials，因 available=8 低于 objective floor 13 而没有
+    eligible best trial，diagnostic-leading 为 `grid_weight_0118__grid_gate_0217`，factorial
+    primary driver 为 `gate`；全量 pytest 548 passed，ruff 通过，diff check 无 whitespace error。2026-06-09:
+    从 VALIDATING 改为 DONE，原因：复核当前样本 artifact 仍 fail closed，Factorial Attribution、objective
+    sample floor、approved_hard fail-closed 和 production weight metadata 均符合验收；验证通过
+    `tests/test_shadow_weight_profiles.py` + `tests/test_weight_calibration.py` 31
+    passed、Ruff、repo-wide Black check 和 `compileall`。'
+  docs_links:
+  - docs/requirements/shadow_parameter_validation_hardening_2026-05-16.md
+  terminal: true
+  raw_row_sha256: 2869b5aa5d4b97d2f7d841656cc3843fc7fb7e5f577be8932812bf9433dfac3f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b5cc90841aa5877779cb2fb72ce1fac944faa23f547669eb35c0a47d9006e877

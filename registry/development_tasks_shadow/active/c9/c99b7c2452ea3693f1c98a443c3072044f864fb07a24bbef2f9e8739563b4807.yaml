@@ -1,0 +1,140 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1806_to_1820_FIRST_LAYER_V2_CLOSEOUT_AND_LANE_SEPARATION_POLICY
+  title: null
+  domain: Research trends / first-layer v2 closeout and two-lane signal separation
+    policy
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1806_to_1820_First_Layer_V2_Closeout_And_Lane_Separation_Policy.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1806_to_1820_First_Layer_V2_Closeout_And_Lane_Separation_Policy.md`；承接
+    TRADING-1786～1805 的 `FIRST_LAYER_V2_RETURN_SEEKING_DIAGNOSTIC_ONLY` 结论，必须先正式关闭
+    universal first-layer v2 路线，并把 defensive channel、return-seeking diagnostic channel
+    和 gated integration channel 的使用边界写成可测试政策；不得直接进入 defensive model training、return-seeking
+    allocation 或 gated integration actual-path run
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 first-layer v2 universal layer closeout、two-lane signal policy、first-layer
+      signal usage matrix、lane separation closeout/final matrix、report registry、artifact
+      catalog、system flow、task register 和 guardrail tests；已证明 add-risk 不能驱动 defensive
+      overlay，risk-off veto 会阻断 growth overlay，return-seeking diagnostic 不能启用 promotion，universal
+      first-layer v2 被拒绝，usage matrix 每个 signal 都有 allowed/blocked usage 和 required
+      gate；owner review、promotion、paper-shadow、production、broker 固定 false/blocked/false/false/none
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1258
+    row_sha256: 54562cefa90502b575f12ba91b024d6c0b6e578e8460a1286137b68e3a348d97
+    cell_count: 8
+    all_cells:
+    - TRADING-1806_to_1820_FIRST_LAYER_V2_CLOSEOUT_AND_LANE_SEPARATION_POLICY
+    - Research trends / first-layer v2 closeout and two-lane signal separation policy
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1806_to_1820_First_Layer_V2_Closeout_And_Lane_Separation_Policy.md`；承接
+      TRADING-1786～1805 的 `FIRST_LAYER_V2_RETURN_SEEKING_DIAGNOSTIC_ONLY` 结论，必须先正式关闭
+      universal first-layer v2 路线，并把 defensive channel、return-seeking diagnostic channel
+      和 gated integration channel 的使用边界写成可测试政策；不得直接进入 defensive model training、return-seeking
+      allocation 或 gated integration actual-path run
+    - 新增 first-layer v2 universal layer closeout、two-lane signal policy、first-layer
+      signal usage matrix、lane separation closeout/final matrix、report registry、artifact
+      catalog、system flow、task register 和 guardrail tests；已证明 add-risk 不能驱动 defensive
+      overlay，risk-off veto 会阻断 growth overlay，return-seeking diagnostic 不能启用 promotion，universal
+      first-layer v2 被拒绝，usage matrix 每个 signal 都有 allowed/blocked usage 和 required
+      gate；owner review、promotion、paper-shadow、production、broker 固定 false/blocked/false/false/none
+    - '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 附件要求执行 TRADING-1806～1820 closeout 与
+      lane separation policy；本批仅固化政策和安全边界，后续 TRADING-1821～1885 需要基于该政策分阶段推进。2026-06-28:
+      实现完成并转入 VALIDATING；真实 final matrix status=`LANE_SEPARATION_POLICY_READY`，universal
+      first-layer status=`UNIVERSAL_FIRST_LAYER_REJECTED`，retained first-layer status=`RETURN_SEEKING_DIAGNOSTIC_RETAINED`，defensive
+      usage status=`DEFENSIVE_USAGE_BLOCKED`，gated integration status=`POLICY_DEFINED_NOT_ENABLED`，安全边界仍为
+      false/blocked/false/false/none。'
+    raw_line: '|TRADING-1806_to_1820_FIRST_LAYER_V2_CLOSEOUT_AND_LANE_SEPARATION_POLICY|Research
+      trends / first-layer v2 closeout and two-lane signal separation policy|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1806_to_1820_First_Layer_V2_Closeout_And_Lane_Separation_Policy.md`；承接
+      TRADING-1786～1805 的 `FIRST_LAYER_V2_RETURN_SEEKING_DIAGNOSTIC_ONLY` 结论，必须先正式关闭
+      universal first-layer v2 路线，并把 defensive channel、return-seeking diagnostic channel
+      和 gated integration channel 的使用边界写成可测试政策；不得直接进入 defensive model training、return-seeking
+      allocation 或 gated integration actual-path run|新增 first-layer v2 universal layer
+      closeout、two-lane signal policy、first-layer signal usage matrix、lane separation
+      closeout/final matrix、report registry、artifact catalog、system flow、task register
+      和 guardrail tests；已证明 add-risk 不能驱动 defensive overlay，risk-off veto 会阻断 growth
+      overlay，return-seeking diagnostic 不能启用 promotion，universal first-layer v2 被拒绝，usage
+      matrix 每个 signal 都有 allowed/blocked usage 和 required gate；owner review、promotion、paper-shadow、production、broker
+      固定 false/blocked/false/false/none|2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 附件要求执行
+      TRADING-1806～1820 closeout 与 lane separation policy；本批仅固化政策和安全边界，后续 TRADING-1821～1885
+      需要基于该政策分阶段推进。2026-06-28: 实现完成并转入 VALIDATING；真实 final matrix status=`LANE_SEPARATION_POLICY_READY`，universal
+      first-layer status=`UNIVERSAL_FIRST_LAYER_REJECTED`，retained first-layer status=`RETURN_SEEKING_DIAGNOSTIC_RETAINED`，defensive
+      usage status=`DEFENSIVE_USAGE_BLOCKED`，gated integration status=`POLICY_DEFINED_NOT_ENABLED`，安全边界仍为
+      false/blocked/false/false/none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-54562cefa90502b575f12ba9
+  task_id: TRADING-1806_to_1820_FIRST_LAYER_V2_CLOSEOUT_AND_LANE_SEPARATION_POLICY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 附件要求执行 TRADING-1806～1820 closeout
+      与 lane separation policy；本批仅固化政策和安全边界，后续 TRADING-1821～1885 需要基于该政策分阶段推进。2026-06-28:
+      实现完成并转入 VALIDATING；真实 final matrix status=`LANE_SEPARATION_POLICY_READY`，universal
+      first-layer status=`UNIVERSAL_FIRST_LAYER_REJECTED`，retained first-layer status=`RETURN_SEEKING_DIAGNOSTIC_RETAINED`，defensive
+      usage status=`DEFENSIVE_USAGE_BLOCKED`，gated integration status=`POLICY_DEFINED_NOT_ENABLED`，安全边界仍为
+      false/blocked/false/false/none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:54562cefa90502b575f12ba91b024d6c0b6e578e8460a1286137b68e3a348d97
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1806_to_1820_FIRST_LAYER_V2_CLOSEOUT_AND_LANE_SEPARATION_POLICY
+  - Research trends / first-layer v2 closeout and two-lane signal separation policy
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1806_to_1820_First_Layer_V2_Closeout_And_Lane_Separation_Policy.md`；承接
+    TRADING-1786～1805 的 `FIRST_LAYER_V2_RETURN_SEEKING_DIAGNOSTIC_ONLY` 结论，必须先正式关闭
+    universal first-layer v2 路线，并把 defensive channel、return-seeking diagnostic channel
+    和 gated integration channel 的使用边界写成可测试政策；不得直接进入 defensive model training、return-seeking
+    allocation 或 gated integration actual-path run
+  - 新增 first-layer v2 universal layer closeout、two-lane signal policy、first-layer
+    signal usage matrix、lane separation closeout/final matrix、report registry、artifact
+    catalog、system flow、task register 和 guardrail tests；已证明 add-risk 不能驱动 defensive
+    overlay，risk-off veto 会阻断 growth overlay，return-seeking diagnostic 不能启用 promotion，universal
+    first-layer v2 被拒绝，usage matrix 每个 signal 都有 allowed/blocked usage 和 required
+    gate；owner review、promotion、paper-shadow、production、broker 固定 false/blocked/false/false/none
+  - '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 附件要求执行 TRADING-1806～1820 closeout 与 lane
+    separation policy；本批仅固化政策和安全边界，后续 TRADING-1821～1885 需要基于该政策分阶段推进。2026-06-28: 实现完成并转入
+    VALIDATING；真实 final matrix status=`LANE_SEPARATION_POLICY_READY`，universal first-layer
+    status=`UNIVERSAL_FIRST_LAYER_REJECTED`，retained first-layer status=`RETURN_SEEKING_DIAGNOSTIC_RETAINED`，defensive
+    usage status=`DEFENSIVE_USAGE_BLOCKED`，gated integration status=`POLICY_DEFINED_NOT_ENABLED`，安全边界仍为
+    false/blocked/false/false/none。'
+  docs_links:
+  - docs/requirements/TRADING-1806_to_1820_First_Layer_V2_Closeout_And_Lane_Separation_Policy.md
+  terminal: false
+  raw_row_sha256: 54562cefa90502b575f12ba91b024d6c0b6e578e8460a1286137b68e3a348d97
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a0dbda82f798e791d43ef1a11e2b0d144faa7c27f136affbd9af748e97a7393d

@@ -1,0 +1,105 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: RISK-005
+  title: null
+  domain: 风险事件/每日复核声明
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/risk_event_review_workflow_2026-05-04.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段“已复核且未发现未记录重大事件”的结构化声明链路：支持 `review_attestation`
+    YAML、`aits risk-events record-review-attestation`、校验报告、日报政策/地缘评分识别和 point-in-time
+    回测切片；剩余缺口是真实每日复核 owner、来源清单和运行纪律；详细流程见 `docs/requirements/risk_event_review_workflow_2026-05-04.md#risk-005`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 支持人工复核声明 YAML 和 CLI 写入；校验报告显示复核声明数量、当前有效声明数量、覆盖窗口、复核人、来源范围和过期状态；只有覆盖 `as_of`、复核结论明确、未过期且来源范围合格的声明，才允许政策/地缘模块把无可评分
+      active 风险事件作为经复核输入，而不是 `insufficient_data`；日报和系统流图说明该声明不是自动风险消除证明；补充测试覆盖有效声明、过期声明、日报评分和
+      gate 隔离
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1104
+    row_sha256: 9c2d7a79e0292153d797e12ec2d389aa8d7eb2ccea000e5ced81c861c2c8e293
+    cell_count: 8
+    all_cells:
+    - RISK-005
+    - 风险事件/每日复核声明
+    - P1
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已完成第一阶段“已复核且未发现未记录重大事件”的结构化声明链路：支持 `review_attestation` YAML、`aits risk-events
+      record-review-attestation`、校验报告、日报政策/地缘评分识别和 point-in-time 回测切片；剩余缺口是真实每日复核
+      owner、来源清单和运行纪律；详细流程见 `docs/requirements/risk_event_review_workflow_2026-05-04.md#risk-005`
+    - 支持人工复核声明 YAML 和 CLI 写入；校验报告显示复核声明数量、当前有效声明数量、覆盖窗口、复核人、来源范围和过期状态；只有覆盖 `as_of`、复核结论明确、未过期且来源范围合格的声明，才允许政策/地缘模块把无可评分
+      active 风险事件作为经复核输入，而不是 `insufficient_data`；日报和系统流图说明该声明不是自动风险消除证明；补充测试覆盖有效声明、过期声明、日报评分和
+      gate 隔离
+    - '2026-05-04: 新增并进入实现，原因：2026-05-04 日报显示风险事件发生记录目录缺失导致政策/地缘模块降级；该项可独立补工程链路，但真实复核内容仍需
+      owner 填写，不由系统伪造。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增复核声明 schema/loader/writer、CLI
+      写入、发生记录校验报告展示、日报政策/地缘模块接入、历史切片、数据源目录、系统流图和测试；系统没有自动生成任何真实无风险声明。'
+    raw_line: '|RISK-005|风险事件/每日复核声明|P1|BASELINE_DONE|系统实现 + 项目 owner|已完成第一阶段“已复核且未发现未记录重大事件”的结构化声明链路：支持
+      `review_attestation` YAML、`aits risk-events record-review-attestation`、校验报告、日报政策/地缘评分识别和
+      point-in-time 回测切片；剩余缺口是真实每日复核 owner、来源清单和运行纪律；详细流程见 `docs/requirements/risk_event_review_workflow_2026-05-04.md#risk-005`|支持人工复核声明
+      YAML 和 CLI 写入；校验报告显示复核声明数量、当前有效声明数量、覆盖窗口、复核人、来源范围和过期状态；只有覆盖 `as_of`、复核结论明确、未过期且来源范围合格的声明，才允许政策/地缘模块把无可评分
+      active 风险事件作为经复核输入，而不是 `insufficient_data`；日报和系统流图说明该声明不是自动风险消除证明；补充测试覆盖有效声明、过期声明、日报评分和
+      gate 隔离|2026-05-04: 新增并进入实现，原因：2026-05-04 日报显示风险事件发生记录目录缺失导致政策/地缘模块降级；该项可独立补工程链路，但真实复核内容仍需
+      owner 填写，不由系统伪造。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增复核声明 schema/loader/writer、CLI
+      写入、发生记录校验报告展示、日报政策/地缘模块接入、历史切片、数据源目录、系统流图和测试；系统没有自动生成任何真实无风险声明。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-9c2d7a79e0292153d797e12e
+  task_id: RISK-005
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner
+    notes: '2026-05-04: 新增并进入实现，原因：2026-05-04 日报显示风险事件发生记录目录缺失导致政策/地缘模块降级；该项可独立补工程链路，但真实复核内容仍需
+      owner 填写，不由系统伪造。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增复核声明 schema/loader/writer、CLI
+      写入、发生记录校验报告展示、日报政策/地缘模块接入、历史切片、数据源目录、系统流图和测试；系统没有自动生成任何真实无风险声明。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:9c2d7a79e0292153d797e12ec2d389aa8d7eb2ccea000e5ced81c861c2c8e293
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - RISK-005
+  - 风险事件/每日复核声明
+  - P1
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已完成第一阶段“已复核且未发现未记录重大事件”的结构化声明链路：支持 `review_attestation` YAML、`aits risk-events
+    record-review-attestation`、校验报告、日报政策/地缘评分识别和 point-in-time 回测切片；剩余缺口是真实每日复核 owner、来源清单和运行纪律；详细流程见
+    `docs/requirements/risk_event_review_workflow_2026-05-04.md#risk-005`
+  - 支持人工复核声明 YAML 和 CLI 写入；校验报告显示复核声明数量、当前有效声明数量、覆盖窗口、复核人、来源范围和过期状态；只有覆盖 `as_of`、复核结论明确、未过期且来源范围合格的声明，才允许政策/地缘模块把无可评分
+    active 风险事件作为经复核输入，而不是 `insufficient_data`；日报和系统流图说明该声明不是自动风险消除证明；补充测试覆盖有效声明、过期声明、日报评分和
+    gate 隔离
+  - '2026-05-04: 新增并进入实现，原因：2026-05-04 日报显示风险事件发生记录目录缺失导致政策/地缘模块降级；该项可独立补工程链路，但真实复核内容仍需
+    owner 填写，不由系统伪造。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增复核声明 schema/loader/writer、CLI
+    写入、发生记录校验报告展示、日报政策/地缘模块接入、历史切片、数据源目录、系统流图和测试；系统没有自动生成任何真实无风险声明。'
+  docs_links:
+  - docs/requirements/risk_event_review_workflow_2026-05-04.md
+  terminal: false
+  raw_row_sha256: 9c2d7a79e0292153d797e12ec2d389aa8d7eb2ccea000e5ced81c861c2c8e293
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 88f3a20b51c16e988f3e600625602d5e78e151dda5328eb634a54dc3e66ad4cb

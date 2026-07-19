@@ -1,0 +1,152 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-204_to_208_REAL_MANUAL_SNAPSHOT_DRY_RUN
+  title: null
+  domain: ETF portfolio/manual real snapshot dry run and owner decision loop
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核 + 系统运行观察
+  requirement_refs:
+  - docs/requirements/TRADING-204_to_208_Real_Manual_Snapshot_Dry_Run_and_Owner_Decision_Loop.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-204_to_208_Real_Manual_Snapshot_Dry_Run_and_Owner_Decision_Loop.md`；baseline
+    实现已完成并生成真实 artifacts：real snapshot intake `329a413d95ba6d66`、dry run `6d5a08c630f05053`、owner
+    review `2a16c992cfa06e60`、paper action `e42112a6a34bd7c0`、weekly real snapshot
+    review `4bf5bd4bd36a0cd7`；owner decision 验收路径为 `monitor`，paper action 为 `no_action`；仍不做
+    broker import、order ticket、自动下单、自动 owner approval、production candidate 或真实账户 mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`real-snapshot template/lint/intake/report`、`real-snapshot-dry-run run/report`、`real-execution-owner-review
+      create/record/report`、`real-snapshot-paper-action apply/report`、`weekly-real-snapshot-review
+      run/report` 及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；报告明确
+      `broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`owner_approval_required=true`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation
+      和真实 dry-run 验收链路完成'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1450
+    row_sha256: 76aeacbbf162052ce6d7a75314f31b6a5206752a7d4075c92b916a760752d1bd
+    cell_count: 8
+    all_cells:
+    - TRADING-204_to_208_REAL_MANUAL_SNAPSHOT_DRY_RUN
+    - ETF portfolio/manual real snapshot dry run and owner decision loop
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核 + 系统运行观察
+    - 详细拆解见 `docs/requirements/TRADING-204_to_208_Real_Manual_Snapshot_Dry_Run_and_Owner_Decision_Loop.md`；baseline
+      实现已完成并生成真实 artifacts：real snapshot intake `329a413d95ba6d66`、dry run `6d5a08c630f05053`、owner
+      review `2a16c992cfa06e60`、paper action `e42112a6a34bd7c0`、weekly real snapshot
+      review `4bf5bd4bd36a0cd7`；owner decision 验收路径为 `monitor`，paper action 为 `no_action`；仍不做
+      broker import、order ticket、自动下单、自动 owner approval、production candidate 或真实账户
+      mutation
+    - '`real-snapshot template/lint/intake/report`、`real-snapshot-dry-run run/report`、`real-execution-owner-review
+      create/record/report`、`real-snapshot-paper-action apply/report`、`weekly-real-snapshot-review
+      run/report` 及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；报告明确
+      `broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`owner_approval_required=true`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation
+      和真实 dry-run 验收链路完成'
+    - '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-204～208；本阶段优先交付 P0
+      real manual snapshot dry-run 与 owner decision loop，P1/P2 的更细敏感字段检测、broker import、order
+      ticket 草案、税务批次和真实执行记录不纳入本轮。2026-06-12: baseline 实现完成并转入 VALIDATING；真实链路使用 example
+      manual snapshot 和 shadow shortlist `4378b3ed3fc1be41`，五个新增 validate CLI、`aits
+      etf dynamic-v3-rescue validate`、dynamic-v3 family artifact validation、report
+      index、Reader Brief、Reader Brief quality、focused pytest 9 passed、ruff、compileall
+      和 full pytest `2362 passed, 640 warnings` 通过；下一步为 owner 复核 weekly real snapshot
+      review 并决定是否提供更真实的 redaction-safe owner snapshot 样本做运营观察。'
+    raw_line: '|TRADING-204_to_208_REAL_MANUAL_SNAPSHOT_DRY_RUN|ETF portfolio/manual
+      real snapshot dry run and owner decision loop|P0|VALIDATING|项目 owner 人工复核 +
+      系统运行观察|详细拆解见 `docs/requirements/TRADING-204_to_208_Real_Manual_Snapshot_Dry_Run_and_Owner_Decision_Loop.md`；baseline
+      实现已完成并生成真实 artifacts：real snapshot intake `329a413d95ba6d66`、dry run `6d5a08c630f05053`、owner
+      review `2a16c992cfa06e60`、paper action `e42112a6a34bd7c0`、weekly real snapshot
+      review `4bf5bd4bd36a0cd7`；owner decision 验收路径为 `monitor`，paper action 为 `no_action`；仍不做
+      broker import、order ticket、自动下单、自动 owner approval、production candidate 或真实账户
+      mutation|`real-snapshot template/lint/intake/report`、`real-snapshot-dry-run
+      run/report`、`real-execution-owner-review create/record/report`、`real-snapshot-paper-action
+      apply/report`、`weekly-real-snapshot-review run/report` 及对应 validate CLI 可运行；artifacts
+      写入 dynamic_v3_rescue runtime roots；报告明确 `broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`owner_approval_required=true`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation
+      和真实 dry-run 验收链路完成|2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-204～208；本阶段优先交付
+      P0 real manual snapshot dry-run 与 owner decision loop，P1/P2 的更细敏感字段检测、broker
+      import、order ticket 草案、税务批次和真实执行记录不纳入本轮。2026-06-12: baseline 实现完成并转入 VALIDATING；真实链路使用
+      example manual snapshot 和 shadow shortlist `4378b3ed3fc1be41`，五个新增 validate
+      CLI、`aits etf dynamic-v3-rescue validate`、dynamic-v3 family artifact validation、report
+      index、Reader Brief、Reader Brief quality、focused pytest 9 passed、ruff、compileall
+      和 full pytest `2362 passed, 640 warnings` 通过；下一步为 owner 复核 weekly real snapshot
+      review 并决定是否提供更真实的 redaction-safe owner snapshot 样本做运营观察。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-76aeacbbf162052ce6d7a753
+  task_id: TRADING-204_to_208_REAL_MANUAL_SNAPSHOT_DRY_RUN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核 + 系统运行观察
+    notes: '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-204～208；本阶段优先交付
+      P0 real manual snapshot dry-run 与 owner decision loop，P1/P2 的更细敏感字段检测、broker
+      import、order ticket 草案、税务批次和真实执行记录不纳入本轮。2026-06-12: baseline 实现完成并转入 VALIDATING；真实链路使用
+      example manual snapshot 和 shadow shortlist `4378b3ed3fc1be41`，五个新增 validate
+      CLI、`aits etf dynamic-v3-rescue validate`、dynamic-v3 family artifact validation、report
+      index、Reader Brief、Reader Brief quality、focused pytest 9 passed、ruff、compileall
+      和 full pytest `2362 passed, 640 warnings` 通过；下一步为 owner 复核 weekly real snapshot
+      review 并决定是否提供更真实的 redaction-safe owner snapshot 样本做运营观察。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:76aeacbbf162052ce6d7a75314f31b6a5206752a7d4075c92b916a760752d1bd
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-204_to_208_REAL_MANUAL_SNAPSHOT_DRY_RUN
+  - ETF portfolio/manual real snapshot dry run and owner decision loop
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核 + 系统运行观察
+  - 详细拆解见 `docs/requirements/TRADING-204_to_208_Real_Manual_Snapshot_Dry_Run_and_Owner_Decision_Loop.md`；baseline
+    实现已完成并生成真实 artifacts：real snapshot intake `329a413d95ba6d66`、dry run `6d5a08c630f05053`、owner
+    review `2a16c992cfa06e60`、paper action `e42112a6a34bd7c0`、weekly real snapshot
+    review `4bf5bd4bd36a0cd7`；owner decision 验收路径为 `monitor`，paper action 为 `no_action`；仍不做
+    broker import、order ticket、自动下单、自动 owner approval、production candidate 或真实账户 mutation
+  - '`real-snapshot template/lint/intake/report`、`real-snapshot-dry-run run/report`、`real-execution-owner-review
+    create/record/report`、`real-snapshot-paper-action apply/report`、`weekly-real-snapshot-review
+    run/report` 及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；报告明确
+    `broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`owner_approval_required=true`、`production_effect=none`；README、operations
+    runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+    tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation
+    和真实 dry-run 验收链路完成'
+  - '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-204～208；本阶段优先交付 P0 real
+    manual snapshot dry-run 与 owner decision loop，P1/P2 的更细敏感字段检测、broker import、order
+    ticket 草案、税务批次和真实执行记录不纳入本轮。2026-06-12: baseline 实现完成并转入 VALIDATING；真实链路使用 example
+    manual snapshot 和 shadow shortlist `4378b3ed3fc1be41`，五个新增 validate CLI、`aits
+    etf dynamic-v3-rescue validate`、dynamic-v3 family artifact validation、report index、Reader
+    Brief、Reader Brief quality、focused pytest 9 passed、ruff、compileall 和 full pytest
+    `2362 passed, 640 warnings` 通过；下一步为 owner 复核 weekly real snapshot review 并决定是否提供更真实的
+    redaction-safe owner snapshot 样本做运营观察。'
+  docs_links:
+  - docs/requirements/TRADING-204_to_208_Real_Manual_Snapshot_Dry_Run_and_Owner_Decision_Loop.md
+  terminal: false
+  raw_row_sha256: 76aeacbbf162052ce6d7a75314f31b6a5206752a7d4075c92b916a760752d1bd
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: cd01daf5b27171f66afc011337c6f63e130aa2489a382d9e8f95cf2fb7ee85c3

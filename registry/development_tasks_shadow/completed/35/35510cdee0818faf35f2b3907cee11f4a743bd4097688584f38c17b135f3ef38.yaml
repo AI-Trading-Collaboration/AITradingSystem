@@ -1,0 +1,151 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-394_MONTHLY_REVIEW_RECOVERY_RERUN
+  title: null
+  domain: Research governance / monthly review recovery rerun
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner 复核 monthly blockers；后续 TRADING-395 rerun promotion board recovery，promotion/extended/live
+    仍 blocked until gates clear
+  requirement_refs:
+  - docs/requirements/TRADING-394_Monthly_Review_Recovery_Rerun.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-394_Monthly_Review_Recovery_Rerun.md`；在
+    TRADING-385~393 恢复 signal/readiness/health/cost/benchmark/evidence/owner hold
+    后重跑 research monthly review pack，检查 signal、readiness、health、cost、benchmark、owner
+    decision 和 data governance blockers 是否仍存在；不得 waiver、补造数据、approve promotion/extended
+    shadow/live、生成 official target weights、触发 broker/order 或 production mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 更新 monthly review source classification，使 cost sensitivity `NOT_MEANINGFUL_*`
+      和 benchmark baseline `*UNDERPERFORMS*` source statuses 作为 monthly major blockers；新增
+      focused regression；`aits reports research-monthly-review-pack --as-of 2026-06-17`
+      和 `validate-research-monthly-review-pack --latest` 运行完成；Reader Brief、report
+      index、focused tests、ruff、compileall、documentation contract、Reader Brief quality
+      和 git diff check 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 202
+    row_sha256: a312840bcd8c55608686f1c90c919eac2887d0cf3fc633111530ee9b1305438a
+    cell_count: 8
+    all_cells:
+    - TRADING-394_MONTHLY_REVIEW_RECOVERY_RERUN
+    - Research governance / monthly review recovery rerun
+    - P1
+    - DONE
+    - 项目 owner 复核 monthly blockers；后续 TRADING-395 rerun promotion board recovery，promotion/extended/live
+      仍 blocked until gates clear
+    - 详细拆解见 `docs/requirements/TRADING-394_Monthly_Review_Recovery_Rerun.md`；在 TRADING-385~393
+      恢复 signal/readiness/health/cost/benchmark/evidence/owner hold 后重跑 research monthly
+      review pack，检查 signal、readiness、health、cost、benchmark、owner decision 和 data
+      governance blockers 是否仍存在；不得 waiver、补造数据、approve promotion/extended shadow/live、生成
+      official target weights、触发 broker/order 或 production mutation
+    - 更新 monthly review source classification，使 cost sensitivity `NOT_MEANINGFUL_*`
+      和 benchmark baseline `*UNDERPERFORMS*` source statuses 作为 monthly major blockers；新增
+      focused regression；`aits reports research-monthly-review-pack --as-of 2026-06-17`
+      和 `validate-research-monthly-review-pack --latest` 运行完成；Reader Brief、report
+      index、focused tests、ruff、compileall、documentation contract、Reader Brief quality
+      和 git diff check 通过
+    - '2026-06-17: DONE；真实 rerun `outputs/reports/research_monthly_review_pack_2026-06-17.json/md`
+      输出 `MONTHLY_REVIEW_BLOCKED`、sources=15/15、major_blockers=2、major_warnings=8、safety=`SAFETY_PASS_WITH_WARNINGS`、data_governance=`PASS_WITH_WARNINGS`、owner_decision=`AUDIT_LOG_PASS`。Blockers:
+      cost sensitivity `NOT_MEANINGFUL_UNDER_COSTS` -> `return_candidate_to_research_until_net_improvement_survives_costs`;
+      benchmark comparison `CANDIDATE_UNDERPERFORMS_BASELINES` -> `return_candidate_to_research_until_it_outperforms_baseline_controls`。Validation
+      `outputs/reports/research_monthly_review_pack_validation_2026-06-17.json/md`
+      输出 `PASS_WITH_WARNINGS`、failed=0、source_blockers=2、source_warnings=8。该 rerun
+      不恢复 paper-shadow、不批准 promotion/extended shadow/live、official target、broker/order
+      或 production mutation。'
+    raw_line: '|TRADING-394_MONTHLY_REVIEW_RECOVERY_RERUN|Research governance / monthly
+      review recovery rerun|P1|DONE|项目 owner 复核 monthly blockers；后续 TRADING-395 rerun
+      promotion board recovery，promotion/extended/live 仍 blocked until gates clear|详细拆解见
+      `docs/requirements/TRADING-394_Monthly_Review_Recovery_Rerun.md`；在 TRADING-385~393
+      恢复 signal/readiness/health/cost/benchmark/evidence/owner hold 后重跑 research monthly
+      review pack，检查 signal、readiness、health、cost、benchmark、owner decision 和 data
+      governance blockers 是否仍存在；不得 waiver、补造数据、approve promotion/extended shadow/live、生成
+      official target weights、触发 broker/order 或 production mutation|更新 monthly review
+      source classification，使 cost sensitivity `NOT_MEANINGFUL_*` 和 benchmark baseline
+      `*UNDERPERFORMS*` source statuses 作为 monthly major blockers；新增 focused regression；`aits
+      reports research-monthly-review-pack --as-of 2026-06-17` 和 `validate-research-monthly-review-pack
+      --latest` 运行完成；Reader Brief、report index、focused tests、ruff、compileall、documentation
+      contract、Reader Brief quality 和 git diff check 通过|2026-06-17: DONE；真实 rerun
+      `outputs/reports/research_monthly_review_pack_2026-06-17.json/md` 输出 `MONTHLY_REVIEW_BLOCKED`、sources=15/15、major_blockers=2、major_warnings=8、safety=`SAFETY_PASS_WITH_WARNINGS`、data_governance=`PASS_WITH_WARNINGS`、owner_decision=`AUDIT_LOG_PASS`。Blockers:
+      cost sensitivity `NOT_MEANINGFUL_UNDER_COSTS` -> `return_candidate_to_research_until_net_improvement_survives_costs`;
+      benchmark comparison `CANDIDATE_UNDERPERFORMS_BASELINES` -> `return_candidate_to_research_until_it_outperforms_baseline_controls`。Validation
+      `outputs/reports/research_monthly_review_pack_validation_2026-06-17.json/md`
+      输出 `PASS_WITH_WARNINGS`、failed=0、source_blockers=2、source_warnings=8。该 rerun
+      不恢复 paper-shadow、不批准 promotion/extended shadow/live、official target、broker/order
+      或 production mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a312840bcd8c55608686f1c9
+  task_id: TRADING-394_MONTHLY_REVIEW_RECOVERY_RERUN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 项目 owner 复核 monthly blockers；后续 TRADING-395 rerun promotion board
+      recovery，promotion/extended/live 仍 blocked until gates clear
+    notes: '2026-06-17: DONE；真实 rerun `outputs/reports/research_monthly_review_pack_2026-06-17.json/md`
+      输出 `MONTHLY_REVIEW_BLOCKED`、sources=15/15、major_blockers=2、major_warnings=8、safety=`SAFETY_PASS_WITH_WARNINGS`、data_governance=`PASS_WITH_WARNINGS`、owner_decision=`AUDIT_LOG_PASS`。Blockers:
+      cost sensitivity `NOT_MEANINGFUL_UNDER_COSTS` -> `return_candidate_to_research_until_net_improvement_survives_costs`;
+      benchmark comparison `CANDIDATE_UNDERPERFORMS_BASELINES` -> `return_candidate_to_research_until_it_outperforms_baseline_controls`。Validation
+      `outputs/reports/research_monthly_review_pack_validation_2026-06-17.json/md`
+      输出 `PASS_WITH_WARNINGS`、failed=0、source_blockers=2、source_warnings=8。该 rerun
+      不恢复 paper-shadow、不批准 promotion/extended shadow/live、official target、broker/order
+      或 production mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a312840bcd8c55608686f1c90c919eac2887d0cf3fc633111530ee9b1305438a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-394_MONTHLY_REVIEW_RECOVERY_RERUN
+  - Research governance / monthly review recovery rerun
+  - P1
+  - DONE
+  - 项目 owner 复核 monthly blockers；后续 TRADING-395 rerun promotion board recovery，promotion/extended/live
+    仍 blocked until gates clear
+  - 详细拆解见 `docs/requirements/TRADING-394_Monthly_Review_Recovery_Rerun.md`；在 TRADING-385~393
+    恢复 signal/readiness/health/cost/benchmark/evidence/owner hold 后重跑 research monthly
+    review pack，检查 signal、readiness、health、cost、benchmark、owner decision 和 data governance
+    blockers 是否仍存在；不得 waiver、补造数据、approve promotion/extended shadow/live、生成 official
+    target weights、触发 broker/order 或 production mutation
+  - 更新 monthly review source classification，使 cost sensitivity `NOT_MEANINGFUL_*`
+    和 benchmark baseline `*UNDERPERFORMS*` source statuses 作为 monthly major blockers；新增
+    focused regression；`aits reports research-monthly-review-pack --as-of 2026-06-17`
+    和 `validate-research-monthly-review-pack --latest` 运行完成；Reader Brief、report index、focused
+    tests、ruff、compileall、documentation contract、Reader Brief quality 和 git diff check
+    通过
+  - '2026-06-17: DONE；真实 rerun `outputs/reports/research_monthly_review_pack_2026-06-17.json/md`
+    输出 `MONTHLY_REVIEW_BLOCKED`、sources=15/15、major_blockers=2、major_warnings=8、safety=`SAFETY_PASS_WITH_WARNINGS`、data_governance=`PASS_WITH_WARNINGS`、owner_decision=`AUDIT_LOG_PASS`。Blockers:
+    cost sensitivity `NOT_MEANINGFUL_UNDER_COSTS` -> `return_candidate_to_research_until_net_improvement_survives_costs`;
+    benchmark comparison `CANDIDATE_UNDERPERFORMS_BASELINES` -> `return_candidate_to_research_until_it_outperforms_baseline_controls`。Validation
+    `outputs/reports/research_monthly_review_pack_validation_2026-06-17.json/md` 输出
+    `PASS_WITH_WARNINGS`、failed=0、source_blockers=2、source_warnings=8。该 rerun 不恢复
+    paper-shadow、不批准 promotion/extended shadow/live、official target、broker/order 或
+    production mutation。'
+  docs_links:
+  - docs/requirements/TRADING-394_Monthly_Review_Recovery_Rerun.md
+  terminal: true
+  raw_row_sha256: a312840bcd8c55608686f1c90c919eac2887d0cf3fc633111530ee9b1305438a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a20a575ded5ad6a677ca74d1b2ecb4c7a9b9429721d829212e0fdf305183ffdb

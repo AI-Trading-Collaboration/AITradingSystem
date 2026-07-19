@@ -1,0 +1,177 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-010
+  title: null
+  domain: 交易执行/IBKR Paper order lifecycle test
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/ibkr_paper_order_lifecycle_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/ibkr_paper_order_lifecycle_2026-05-17.md`；Paper-only
+    lifecycle adapter、默认关闭配置、人工显式脚本、JSON/Markdown 报告、runbook、系统流图、mock 测试、真实 Paper
+    lifecycle PASS 样本和 CI 复核已完成；后续 regular-session fill 样本由 TRADING-014A/014B 承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `config/ibkr_paper_order.yaml` 默认关闭且不保存凭证；新增 `src/ai_trading_system/trading_engine/brokers/ibkr_paper_order.py`
+      和 `scripts/run_ibkr_paper_order_lifecycle.py`；仅允许 `trading_mode=paper`、`paper_order_lifecycle_enabled=true`、`production_effect=none`、`DUP`
+      account；订单仅允许白名单股票、`LIMIT`、`DAY`、`BUY/SELL`、极小数量，拒绝 market/option/short/margin/GTC/bracket/stop/trailing/algo；默认使用远离市场价限价，无法取得参考价时不提交并输出
+      `LIMITED`；输出 `outputs/reports/ibkr_paper_order_lifecycle_YYYY-MM-DD.json/md`，含
+      lifecycle_status、connection_status、account_id_masked、submitted_order、broker_order_id、order_status_events、open_order_seen、cancel_requested、final_order_status、cancelled_confirmed、fills_seen、safety_checks、issues；mock
+      测试覆盖 fail-closed、安全边界、正常 submit/open/cancel/cancelled、异常仍写 ERROR/BLOCK 报告、脱敏、不读
+      API key、不调用 live broker；目标 pytest、`tests/trading_engine`、ruff、触达文件 Black 和 GitHub
+      Actions CI 通过；全仓 Black 当前仍被无关 repo-wide formatter baseline 阻断并由 TRADING-006
+      后续治理承接
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 294
+    row_sha256: dde594ba181ffdf3c2732da31e032a1c30b53e1d3a401acc676febfdc12f60ca
+    cell_count: 8
+    all_cells:
+    - TRADING-010
+    - 交易执行/IBKR Paper order lifecycle test
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/ibkr_paper_order_lifecycle_2026-05-17.md`；Paper-only
+      lifecycle adapter、默认关闭配置、人工显式脚本、JSON/Markdown 报告、runbook、系统流图、mock 测试、真实 Paper
+      lifecycle PASS 样本和 CI 复核已完成；后续 regular-session fill 样本由 TRADING-014A/014B 承接
+    - 新增 `config/ibkr_paper_order.yaml` 默认关闭且不保存凭证；新增 `src/ai_trading_system/trading_engine/brokers/ibkr_paper_order.py`
+      和 `scripts/run_ibkr_paper_order_lifecycle.py`；仅允许 `trading_mode=paper`、`paper_order_lifecycle_enabled=true`、`production_effect=none`、`DUP`
+      account；订单仅允许白名单股票、`LIMIT`、`DAY`、`BUY/SELL`、极小数量，拒绝 market/option/short/margin/GTC/bracket/stop/trailing/algo；默认使用远离市场价限价，无法取得参考价时不提交并输出
+      `LIMITED`；输出 `outputs/reports/ibkr_paper_order_lifecycle_YYYY-MM-DD.json/md`，含
+      lifecycle_status、connection_status、account_id_masked、submitted_order、broker_order_id、order_status_events、open_order_seen、cancel_requested、final_order_status、cancelled_confirmed、fills_seen、safety_checks、issues；mock
+      测试覆盖 fail-closed、安全边界、正常 submit/open/cancel/cancelled、异常仍写 ERROR/BLOCK 报告、脱敏、不读
+      API key、不调用 live broker；目标 pytest、`tests/trading_engine`、ruff、触达文件 Black 和 GitHub
+      Actions CI 通过；全仓 Black 当前仍被无关 repo-wide formatter baseline 阻断并由 TRADING-006
+      后续治理承接
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 明确 TRADING-009/009A 只读 snapshot 已通过，要求推进
+      IBKR Paper 专用订单生命周期测试能力；本阶段只验证 Paper 账号 submit/status/cancel/report 链路，不允许 live
+      trading、production 自动交易或任何生产仓位解释影响。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      `IBKRPaperOrderLifecycleAdapter`、`config/ibkr_paper_order.yaml`、`scripts/run_ibkr_paper_order_lifecycle.py`、lifecycle
+      JSON/Markdown writer、Paper-only safety checks、runbook、系统流图和 mock client 测试；本地验证通过目标
+      pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。2026-05-17: 继续保持
+      VALIDATING，原因：本机 TWS Paper order lifecycle 已生成 PASS 样本并通过 TRADING-010A 脱敏 review
+      / fixture 固化；样本为 `LIMIT DAY` stock、NVDA BUY 1 @ 10.0、final `ApiCancelled`、无
+      fill、`production_effect=none`，未触发 daily-run / replay / dashboard / production
+      conclusion。2026-06-09: 从 VALIDATING 改为 DONE，原因：默认 config smoke 输出 `BLOCK/NOT_RUN`，证明未显式启用
+      local Paper 配置时不提交订单；真实 ignored lifecycle 样本字段级复核为 `PASS/CONNECTED`、`production_effect=none`、`trading_mode=paper`、`LIMIT
+      DAY`、quantity 1、open order seen、cancel requested、final `ApiCancelled`、cancel
+      confirmed、no fill、0 issues，完整 account id / credential / forbidden production
+      semantics 匹配数为 0；验证通过 `test_ibkr_paper_order_lifecycle.py` 24 passed、`tests/trading_engine`
+      939 passed、触达文件 Ruff/Black 和 GitHub Actions run `27174292737` success。'
+    raw_line: '|TRADING-010|交易执行/IBKR Paper order lifecycle test|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/ibkr_paper_order_lifecycle_2026-05-17.md`；Paper-only lifecycle
+      adapter、默认关闭配置、人工显式脚本、JSON/Markdown 报告、runbook、系统流图、mock 测试、真实 Paper lifecycle
+      PASS 样本和 CI 复核已完成；后续 regular-session fill 样本由 TRADING-014A/014B 承接|新增 `config/ibkr_paper_order.yaml`
+      默认关闭且不保存凭证；新增 `src/ai_trading_system/trading_engine/brokers/ibkr_paper_order.py`
+      和 `scripts/run_ibkr_paper_order_lifecycle.py`；仅允许 `trading_mode=paper`、`paper_order_lifecycle_enabled=true`、`production_effect=none`、`DUP`
+      account；订单仅允许白名单股票、`LIMIT`、`DAY`、`BUY/SELL`、极小数量，拒绝 market/option/short/margin/GTC/bracket/stop/trailing/algo；默认使用远离市场价限价，无法取得参考价时不提交并输出
+      `LIMITED`；输出 `outputs/reports/ibkr_paper_order_lifecycle_YYYY-MM-DD.json/md`，含
+      lifecycle_status、connection_status、account_id_masked、submitted_order、broker_order_id、order_status_events、open_order_seen、cancel_requested、final_order_status、cancelled_confirmed、fills_seen、safety_checks、issues；mock
+      测试覆盖 fail-closed、安全边界、正常 submit/open/cancel/cancelled、异常仍写 ERROR/BLOCK 报告、脱敏、不读
+      API key、不调用 live broker；目标 pytest、`tests/trading_engine`、ruff、触达文件 Black 和 GitHub
+      Actions CI 通过；全仓 Black 当前仍被无关 repo-wide formatter baseline 阻断并由 TRADING-006
+      后续治理承接|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 明确 TRADING-009/009A 只读 snapshot
+      已通过，要求推进 IBKR Paper 专用订单生命周期测试能力；本阶段只验证 Paper 账号 submit/status/cancel/report
+      链路，不允许 live trading、production 自动交易或任何生产仓位解释影响。2026-05-17: 从 IN_PROGRESS 改为
+      VALIDATING，原因：已新增 `IBKRPaperOrderLifecycleAdapter`、`config/ibkr_paper_order.yaml`、`scripts/run_ibkr_paper_order_lifecycle.py`、lifecycle
+      JSON/Markdown writer、Paper-only safety checks、runbook、系统流图和 mock client 测试；本地验证通过目标
+      pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。2026-05-17: 继续保持
+      VALIDATING，原因：本机 TWS Paper order lifecycle 已生成 PASS 样本并通过 TRADING-010A 脱敏 review
+      / fixture 固化；样本为 `LIMIT DAY` stock、NVDA BUY 1 @ 10.0、final `ApiCancelled`、无
+      fill、`production_effect=none`，未触发 daily-run / replay / dashboard / production
+      conclusion。2026-06-09: 从 VALIDATING 改为 DONE，原因：默认 config smoke 输出 `BLOCK/NOT_RUN`，证明未显式启用
+      local Paper 配置时不提交订单；真实 ignored lifecycle 样本字段级复核为 `PASS/CONNECTED`、`production_effect=none`、`trading_mode=paper`、`LIMIT
+      DAY`、quantity 1、open order seen、cancel requested、final `ApiCancelled`、cancel
+      confirmed、no fill、0 issues，完整 account id / credential / forbidden production
+      semantics 匹配数为 0；验证通过 `test_ibkr_paper_order_lifecycle.py` 24 passed、`tests/trading_engine`
+      939 passed、触达文件 Ruff/Black 和 GitHub Actions run `27174292737` success。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-dde594ba181ffdf3c2732da3
+  task_id: TRADING-010
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 明确 TRADING-009/009A 只读 snapshot
+      已通过，要求推进 IBKR Paper 专用订单生命周期测试能力；本阶段只验证 Paper 账号 submit/status/cancel/report
+      链路，不允许 live trading、production 自动交易或任何生产仓位解释影响。2026-05-17: 从 IN_PROGRESS 改为
+      VALIDATING，原因：已新增 `IBKRPaperOrderLifecycleAdapter`、`config/ibkr_paper_order.yaml`、`scripts/run_ibkr_paper_order_lifecycle.py`、lifecycle
+      JSON/Markdown writer、Paper-only safety checks、runbook、系统流图和 mock client 测试；本地验证通过目标
+      pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。2026-05-17: 继续保持
+      VALIDATING，原因：本机 TWS Paper order lifecycle 已生成 PASS 样本并通过 TRADING-010A 脱敏 review
+      / fixture 固化；样本为 `LIMIT DAY` stock、NVDA BUY 1 @ 10.0、final `ApiCancelled`、无
+      fill、`production_effect=none`，未触发 daily-run / replay / dashboard / production
+      conclusion。2026-06-09: 从 VALIDATING 改为 DONE，原因：默认 config smoke 输出 `BLOCK/NOT_RUN`，证明未显式启用
+      local Paper 配置时不提交订单；真实 ignored lifecycle 样本字段级复核为 `PASS/CONNECTED`、`production_effect=none`、`trading_mode=paper`、`LIMIT
+      DAY`、quantity 1、open order seen、cancel requested、final `ApiCancelled`、cancel
+      confirmed、no fill、0 issues，完整 account id / credential / forbidden production
+      semantics 匹配数为 0；验证通过 `test_ibkr_paper_order_lifecycle.py` 24 passed、`tests/trading_engine`
+      939 passed、触达文件 Ruff/Black 和 GitHub Actions run `27174292737` success。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:dde594ba181ffdf3c2732da31e032a1c30b53e1d3a401acc676febfdc12f60ca
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-010
+  - 交易执行/IBKR Paper order lifecycle test
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/ibkr_paper_order_lifecycle_2026-05-17.md`；Paper-only
+    lifecycle adapter、默认关闭配置、人工显式脚本、JSON/Markdown 报告、runbook、系统流图、mock 测试、真实 Paper
+    lifecycle PASS 样本和 CI 复核已完成；后续 regular-session fill 样本由 TRADING-014A/014B 承接
+  - 新增 `config/ibkr_paper_order.yaml` 默认关闭且不保存凭证；新增 `src/ai_trading_system/trading_engine/brokers/ibkr_paper_order.py`
+    和 `scripts/run_ibkr_paper_order_lifecycle.py`；仅允许 `trading_mode=paper`、`paper_order_lifecycle_enabled=true`、`production_effect=none`、`DUP`
+    account；订单仅允许白名单股票、`LIMIT`、`DAY`、`BUY/SELL`、极小数量，拒绝 market/option/short/margin/GTC/bracket/stop/trailing/algo；默认使用远离市场价限价，无法取得参考价时不提交并输出
+    `LIMITED`；输出 `outputs/reports/ibkr_paper_order_lifecycle_YYYY-MM-DD.json/md`，含
+    lifecycle_status、connection_status、account_id_masked、submitted_order、broker_order_id、order_status_events、open_order_seen、cancel_requested、final_order_status、cancelled_confirmed、fills_seen、safety_checks、issues；mock
+    测试覆盖 fail-closed、安全边界、正常 submit/open/cancel/cancelled、异常仍写 ERROR/BLOCK 报告、脱敏、不读
+    API key、不调用 live broker；目标 pytest、`tests/trading_engine`、ruff、触达文件 Black 和 GitHub
+    Actions CI 通过；全仓 Black 当前仍被无关 repo-wide formatter baseline 阻断并由 TRADING-006 后续治理承接
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 明确 TRADING-009/009A 只读 snapshot 已通过，要求推进
+    IBKR Paper 专用订单生命周期测试能力；本阶段只验证 Paper 账号 submit/status/cancel/report 链路，不允许 live
+    trading、production 自动交易或任何生产仓位解释影响。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+    `IBKRPaperOrderLifecycleAdapter`、`config/ibkr_paper_order.yaml`、`scripts/run_ibkr_paper_order_lifecycle.py`、lifecycle
+    JSON/Markdown writer、Paper-only safety checks、runbook、系统流图和 mock client 测试；本地验证通过目标
+    pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。2026-05-17: 继续保持 VALIDATING，原因：本机
+    TWS Paper order lifecycle 已生成 PASS 样本并通过 TRADING-010A 脱敏 review / fixture 固化；样本为
+    `LIMIT DAY` stock、NVDA BUY 1 @ 10.0、final `ApiCancelled`、无 fill、`production_effect=none`，未触发
+    daily-run / replay / dashboard / production conclusion。2026-06-09: 从 VALIDATING
+    改为 DONE，原因：默认 config smoke 输出 `BLOCK/NOT_RUN`，证明未显式启用 local Paper 配置时不提交订单；真实
+    ignored lifecycle 样本字段级复核为 `PASS/CONNECTED`、`production_effect=none`、`trading_mode=paper`、`LIMIT
+    DAY`、quantity 1、open order seen、cancel requested、final `ApiCancelled`、cancel confirmed、no
+    fill、0 issues，完整 account id / credential / forbidden production semantics 匹配数为
+    0；验证通过 `test_ibkr_paper_order_lifecycle.py` 24 passed、`tests/trading_engine` 939
+    passed、触达文件 Ruff/Black 和 GitHub Actions run `27174292737` success。'
+  docs_links:
+  - docs/requirements/ibkr_paper_order_lifecycle_2026-05-17.md
+  terminal: true
+  raw_row_sha256: dde594ba181ffdf3c2732da31e032a1c30b53e1d3a401acc676febfdc12f60ca
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0076f6cc53cd32b62395c1b786d4e61fbe5ec003a9fe504bfedcfb073ae61b5d

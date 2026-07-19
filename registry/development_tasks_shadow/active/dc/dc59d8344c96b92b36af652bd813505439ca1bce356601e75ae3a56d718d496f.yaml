@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-717_PIT_ACTION_OUTCOME_DATASET
+  title: null
+  domain: Portfolio decision research / PIT action-outcome dataset
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；构造 state ×
+    action × horizon × outcome 研究数据集 contract
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`build-action-outcome-dataset` 可运行；pit_valid_rows_only=true；future_outcome_marked_evaluation_only=true；horizon_maturity_recorded=true；overlapping_horizon_warning_present=true'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1387
+    row_sha256: 7155c81107f75cd6fafdea524a15b3706df7f240556cb2cf982972c23fa1d721
+    cell_count: 8
+    all_cells:
+    - TRADING-717_PIT_ACTION_OUTCOME_DATASET
+    - Portfolio decision research / PIT action-outcome dataset
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 TRADING-703_to_725 总需求文档；构造 state × action × horizon × outcome 研究数据集 contract
+    - '`build-action-outcome-dataset` 可运行；pit_valid_rows_only=true；future_outcome_marked_evaluation_only=true；horizon_maturity_recorded=true；overlapping_horizon_warning_present=true'
+    - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。'
+    raw_line: '|TRADING-717_PIT_ACTION_OUTCOME_DATASET|Portfolio decision research
+      / PIT action-outcome dataset|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 TRADING-703_to_725
+      总需求文档；构造 state × action × horizon × outcome 研究数据集 contract|`build-action-outcome-dataset`
+      可运行；pit_valid_rows_only=true；future_outcome_marked_evaluation_only=true；horizon_maturity_recorded=true；overlapping_horizon_warning_present=true|2026-06-21:
+      按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+      schema/config/protocol、research governance / acceleration / portfolio decision
+      / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+      / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+      production_effect=none，不修改 production / paper-shadow / official weights，不触发
+      broker/order。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7155c81107f75cd6fafdea52
+  task_id: TRADING-717_PIT_ACTION_OUTCOME_DATASET
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7155c81107f75cd6fafdea524a15b3706df7f240556cb2cf982972c23fa1d721
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-717_PIT_ACTION_OUTCOME_DATASET
+  - Portfolio decision research / PIT action-outcome dataset
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-703_to_725 总需求文档；构造 state × action × horizon × outcome 研究数据集 contract
+  - '`build-action-outcome-dataset` 可运行；pit_valid_rows_only=true；future_outcome_marked_evaluation_only=true；horizon_maturity_recorded=true；overlapping_horizon_warning_present=true'
+  - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入
+    VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio
+    decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+    / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+    production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 7155c81107f75cd6fafdea524a15b3706df7f240556cb2cf982972c23fa1d721
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 45677622faddaa97f60513e4a20ffd1e5931909a7db8350784ec107eb55f5768

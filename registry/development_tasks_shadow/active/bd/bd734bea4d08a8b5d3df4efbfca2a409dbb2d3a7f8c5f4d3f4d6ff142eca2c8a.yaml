@@ -1,0 +1,120 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-281_to_285_SMOOTHED_DATA_REFRESH_EXECUTION_AND_SCHEDULED_RETRY_OPERATIONS
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue smoothed data refresh execution and scheduled
+    retry operations
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: research/operations data owner：提供真实provider/network/credentials并刷新2026-06-20后数据；architecture
+    coordinator继续剩余G2.4 slices
+  requirement_refs:
+  - docs/requirements/TRADING-281_to_285_Smoothed_Data_Refresh_Execution_and_Scheduled_Retry_Operations.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-281_to_285_Smoothed_Data_Refresh_Execution_and_Scheduled_Retry_Operations.md`；G2.4CU已完成受控source
+    refresh execution、post-refresh validation、retry resume、sample growth dashboard和owner
+    data readiness status pack的canonical迁移与硬化；真实外部refresh依赖provider credentials/network
+    availability，缺失时继续记录blocker，不得伪造fresh cache或绕过`aits validate-data`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 16 callbacks/15业务入口迁独立canonical interface/domain；五类bounded v2 input snapshots；source
+      refresh验证exact plan并冻结显式execute授权、before/after commitments且validator不重放provider副作用；post/retry/growth/readiness要求exact
+      lineage和child validator PASS；blocked不得生成下游child；validators live replay可重验sources并逐byte重建全部JSON/Markdown/Reader
+      Brief；CLI parity、manifests/deprecation/source hashes及focused/architecture/contract/full闭合；单slice完成仍为`COMPLETE_G2_4_CONTINUES`，不触发handoff、不进入G2.5，`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1437
+    row_sha256: 045ed61fe0218e6d6bb6b50340635694b648f32d06c7c1b2800665ddea845c79
+    cell_count: 8
+    all_cells:
+    - TRADING-281_to_285_SMOOTHED_DATA_REFRESH_EXECUTION_AND_SCHEDULED_RETRY_OPERATIONS
+    - ETF portfolio/dynamic v3 rescue smoothed data refresh execution and scheduled
+      retry operations
+    - P0
+    - BASELINE_DONE
+    - research/operations data owner：提供真实provider/network/credentials并刷新2026-06-20后数据；architecture
+      coordinator继续剩余G2.4 slices
+    - 详细拆解见 `docs/requirements/TRADING-281_to_285_Smoothed_Data_Refresh_Execution_and_Scheduled_Retry_Operations.md`；G2.4CU已完成受控source
+      refresh execution、post-refresh validation、retry resume、sample growth dashboard和owner
+      data readiness status pack的canonical迁移与硬化；真实外部refresh依赖provider credentials/network
+      availability，缺失时继续记录blocker，不得伪造fresh cache或绕过`aits validate-data`
+    - 16 callbacks/15业务入口迁独立canonical interface/domain；五类bounded v2 input snapshots；source
+      refresh验证exact plan并冻结显式execute授权、before/after commitments且validator不重放provider副作用；post/retry/growth/readiness要求exact
+      lineage和child validator PASS；blocked不得生成下游child；validators live replay可重验sources并逐byte重建全部JSON/Markdown/Reader
+      Brief；CLI parity、manifests/deprecation/source hashes及focused/architecture/contract/full闭合；单slice完成仍为`COMPLETE_G2_4_CONTINUES`，不触发handoff、不进入G2.5，`production_effect=none`。
+    - '2026-06-14 baseline实现和真实provider blocker记录保留。2026-07-15: G2.4CU=`COMPLETE_G2_4_CONTINUES`；focused/architecture/contract/full=`123/282/203/6,023
+      passed`，full=`1,939.34s`；generated=`928/1,125/858/0`，CLI parity不变；等待真实provider与更新数据复验。'
+    raw_line: '|TRADING-281_to_285_SMOOTHED_DATA_REFRESH_EXECUTION_AND_SCHEDULED_RETRY_OPERATIONS|ETF
+      portfolio/dynamic v3 rescue smoothed data refresh execution and scheduled retry
+      operations|P0|BASELINE_DONE|research/operations data owner：提供真实provider/network/credentials并刷新2026-06-20后数据；architecture
+      coordinator继续剩余G2.4 slices|详细拆解见 `docs/requirements/TRADING-281_to_285_Smoothed_Data_Refresh_Execution_and_Scheduled_Retry_Operations.md`；G2.4CU已完成受控source
+      refresh execution、post-refresh validation、retry resume、sample growth dashboard和owner
+      data readiness status pack的canonical迁移与硬化；真实外部refresh依赖provider credentials/network
+      availability，缺失时继续记录blocker，不得伪造fresh cache或绕过`aits validate-data`|16 callbacks/15业务入口迁独立canonical
+      interface/domain；五类bounded v2 input snapshots；source refresh验证exact plan并冻结显式execute授权、before/after
+      commitments且validator不重放provider副作用；post/retry/growth/readiness要求exact lineage和child
+      validator PASS；blocked不得生成下游child；validators live replay可重验sources并逐byte重建全部JSON/Markdown/Reader
+      Brief；CLI parity、manifests/deprecation/source hashes及focused/architecture/contract/full闭合；单slice完成仍为`COMPLETE_G2_4_CONTINUES`，不触发handoff、不进入G2.5，`production_effect=none`。|2026-06-14
+      baseline实现和真实provider blocker记录保留。2026-07-15: G2.4CU=`COMPLETE_G2_4_CONTINUES`；focused/architecture/contract/full=`123/282/203/6,023
+      passed`，full=`1,939.34s`；generated=`928/1,125/858/0`，CLI parity不变；等待真实provider与更新数据复验。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-045ed61fe0218e6d6bb6b503
+  task_id: TRADING-281_to_285_SMOOTHED_DATA_REFRESH_EXECUTION_AND_SCHEDULED_RETRY_OPERATIONS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: research/operations data owner：提供真实provider/network/credentials并刷新2026-06-20后数据；architecture
+      coordinator继续剩余G2.4 slices
+    notes: '2026-06-14 baseline实现和真实provider blocker记录保留。2026-07-15: G2.4CU=`COMPLETE_G2_4_CONTINUES`；focused/architecture/contract/full=`123/282/203/6,023
+      passed`，full=`1,939.34s`；generated=`928/1,125/858/0`，CLI parity不变；等待真实provider与更新数据复验。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:045ed61fe0218e6d6bb6b50340635694b648f32d06c7c1b2800665ddea845c79
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-281_to_285_SMOOTHED_DATA_REFRESH_EXECUTION_AND_SCHEDULED_RETRY_OPERATIONS
+  - ETF portfolio/dynamic v3 rescue smoothed data refresh execution and scheduled
+    retry operations
+  - P0
+  - BASELINE_DONE
+  - research/operations data owner：提供真实provider/network/credentials并刷新2026-06-20后数据；architecture
+    coordinator继续剩余G2.4 slices
+  - 详细拆解见 `docs/requirements/TRADING-281_to_285_Smoothed_Data_Refresh_Execution_and_Scheduled_Retry_Operations.md`；G2.4CU已完成受控source
+    refresh execution、post-refresh validation、retry resume、sample growth dashboard和owner
+    data readiness status pack的canonical迁移与硬化；真实外部refresh依赖provider credentials/network
+    availability，缺失时继续记录blocker，不得伪造fresh cache或绕过`aits validate-data`
+  - 16 callbacks/15业务入口迁独立canonical interface/domain；五类bounded v2 input snapshots；source
+    refresh验证exact plan并冻结显式execute授权、before/after commitments且validator不重放provider副作用；post/retry/growth/readiness要求exact
+    lineage和child validator PASS；blocked不得生成下游child；validators live replay可重验sources并逐byte重建全部JSON/Markdown/Reader
+    Brief；CLI parity、manifests/deprecation/source hashes及focused/architecture/contract/full闭合；单slice完成仍为`COMPLETE_G2_4_CONTINUES`，不触发handoff、不进入G2.5，`production_effect=none`。
+  - '2026-06-14 baseline实现和真实provider blocker记录保留。2026-07-15: G2.4CU=`COMPLETE_G2_4_CONTINUES`；focused/architecture/contract/full=`123/282/203/6,023
+    passed`，full=`1,939.34s`；generated=`928/1,125/858/0`，CLI parity不变；等待真实provider与更新数据复验。'
+  docs_links:
+  - docs/requirements/TRADING-281_to_285_Smoothed_Data_Refresh_Execution_and_Scheduled_Retry_Operations.md
+  terminal: false
+  raw_row_sha256: 045ed61fe0218e6d6bb6b50340635694b648f32d06c7c1b2800665ddea845c79
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5dbb3d8092e7796849d979e8ecec3794484e1a17b8512741e50c4925b11bddfc

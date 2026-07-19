@@ -1,0 +1,121 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-062C
+  title: null
+  domain: ETF P2/news theme tracking baseline
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把
+    canonical news/theme input 升级为 observe-only 主题事件追踪报告
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`p2.yaml` 治理 tracking window、max report rows、candidate-only 和 auto-promotion
+      边界；`aits etf p2 news-themes` 在 canonical input 存在时输出 symbol/theme event count、weighted
+      sentiment、avg relevance、latest published/available time、latest summary、source
+      URL、limitation、policy version 和 `production_effect=none`；缺输入时仍输出 `MISSING_INPUT`；不得调用
+      LLM、不得生成交易建议、不得改变正式信号或权重；测试覆盖 normalizer 默认 sentiment/relevance、tracking aggregation
+      和安全边界'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 366
+    row_sha256: 5cab7256ba300fa27181d0714d3117b6412621c9b38abe33cb23eae809031967
+    cell_count: 8
+    all_cells:
+    - TRADING-062C
+    - ETF P2/news theme tracking baseline
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把
+      canonical news/theme input 升级为 observe-only 主题事件追踪报告
+    - '`p2.yaml` 治理 tracking window、max report rows、candidate-only 和 auto-promotion
+      边界；`aits etf p2 news-themes` 在 canonical input 存在时输出 symbol/theme event count、weighted
+      sentiment、avg relevance、latest published/available time、latest summary、source
+      URL、limitation、policy version 和 `production_effect=none`；缺输入时仍输出 `MISSING_INPUT`；不得调用
+      LLM、不得生成交易建议、不得改变正式信号或权重；测试覆盖 normalizer 默认 sentiment/relevance、tracking aggregation
+      和安全边界'
+    - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 P2 明确包含“新闻摘要和主题事件追踪”，当前已有 `normalize-news`
+      和 source contract，但 `news-themes` 尚未输出主题追踪摘要。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增
+      `build_news_theme_tracking_report`、`news_themes` tracking policy 和 `aits etf
+      p2 news-themes` 追踪输出；fixture smoke 在 `artifacts/etf_portfolio/p2_news_tracking_smoke/`
+      输出 NVDA/SMH 主题追踪，固定 `production_effect=none`。'
+    raw_line: '|TRADING-062C|ETF P2/news theme tracking baseline|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把 canonical
+      news/theme input 升级为 observe-only 主题事件追踪报告|`p2.yaml` 治理 tracking window、max
+      report rows、candidate-only 和 auto-promotion 边界；`aits etf p2 news-themes` 在 canonical
+      input 存在时输出 symbol/theme event count、weighted sentiment、avg relevance、latest
+      published/available time、latest summary、source URL、limitation、policy version
+      和 `production_effect=none`；缺输入时仍输出 `MISSING_INPUT`；不得调用 LLM、不得生成交易建议、不得改变正式信号或权重；测试覆盖
+      normalizer 默认 sentiment/relevance、tracking aggregation 和安全边界|2026-05-31: 新增并进入
+      IN_PROGRESS，原因：原文 P2 明确包含“新闻摘要和主题事件追踪”，当前已有 `normalize-news` 和 source contract，但
+      `news-themes` 尚未输出主题追踪摘要。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 `build_news_theme_tracking_report`、`news_themes`
+      tracking policy 和 `aits etf p2 news-themes` 追踪输出；fixture smoke 在 `artifacts/etf_portfolio/p2_news_tracking_smoke/`
+      输出 NVDA/SMH 主题追踪，固定 `production_effect=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5cab7256ba300fa27181d071
+  task_id: TRADING-062C
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 P2 明确包含“新闻摘要和主题事件追踪”，当前已有 `normalize-news`
+      和 source contract，但 `news-themes` 尚未输出主题追踪摘要。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增
+      `build_news_theme_tracking_report`、`news_themes` tracking policy 和 `aits etf
+      p2 news-themes` 追踪输出；fixture smoke 在 `artifacts/etf_portfolio/p2_news_tracking_smoke/`
+      输出 NVDA/SMH 主题追踪，固定 `production_effect=none`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5cab7256ba300fa27181d0714d3117b6412621c9b38abe33cb23eae809031967
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062C
+  - ETF P2/news theme tracking baseline
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把
+    canonical news/theme input 升级为 observe-only 主题事件追踪报告
+  - '`p2.yaml` 治理 tracking window、max report rows、candidate-only 和 auto-promotion
+    边界；`aits etf p2 news-themes` 在 canonical input 存在时输出 symbol/theme event count、weighted
+    sentiment、avg relevance、latest published/available time、latest summary、source
+    URL、limitation、policy version 和 `production_effect=none`；缺输入时仍输出 `MISSING_INPUT`；不得调用
+    LLM、不得生成交易建议、不得改变正式信号或权重；测试覆盖 normalizer 默认 sentiment/relevance、tracking aggregation
+    和安全边界'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 P2 明确包含“新闻摘要和主题事件追踪”，当前已有 `normalize-news`
+    和 source contract，但 `news-themes` 尚未输出主题追踪摘要。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增
+    `build_news_theme_tracking_report`、`news_themes` tracking policy 和 `aits etf p2
+    news-themes` 追踪输出；fixture smoke 在 `artifacts/etf_portfolio/p2_news_tracking_smoke/`
+    输出 NVDA/SMH 主题追踪，固定 `production_effect=none`。'
+  docs_links:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  terminal: true
+  raw_row_sha256: 5cab7256ba300fa27181d0714d3117b6412621c9b38abe33cb23eae809031967
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e9cc6380e9dc15f63caa4136136a273b61a0479c2452db5789c40fb60a7116c8

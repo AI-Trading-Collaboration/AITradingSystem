@@ -1,0 +1,174 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-229_to_233_RISK_CAPPED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
+  title: null
+  domain: ETF portfolio/risk-capped limited adjustment research method
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 + 系统运行观察
+  requirement_refs:
+  - docs/requirements/TRADING-229_to_233_Risk_Capped_Limited_Adjustment_Research_Method.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-229_to_233_Risk_Capped_Limited_Adjustment_Research_Method.md`；承接
+    TRADING-224～228 refined proposal，新增 `risk_capped_limited_adjustment` research-only
+    target method，并跑通 config validation、target generation、paper shadow backfill、vs
+    limited comparison 和 review pack；本阶段不实现 `regime_gated_limited_adjustment`，不写 official
+    target weights、不修改 `position_advisory_v1.yaml`、不触发 broker/order/production
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`risk-capped-limited config-validate/report-config/generate/report`、`risk-capped-backfill
+      run/report`、`risk-capped-comparison run/report`、`risk-capped-review pack/report`
+      及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；报告明确 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`、`auto_apply=false`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact
+      validation 完成'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1445
+    row_sha256: d00cb0801bae71d7027151746601500031b2920ef30d0d7bbb4a25de60839430
+    cell_count: 8
+    all_cells:
+    - TRADING-229_to_233_RISK_CAPPED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
+    - ETF portfolio/risk-capped limited adjustment research method
+    - P0
+    - VALIDATING
+    - 项目 owner 后续复核 + 系统运行观察
+    - 详细拆解见 `docs/requirements/TRADING-229_to_233_Risk_Capped_Limited_Adjustment_Research_Method.md`；承接
+      TRADING-224～228 refined proposal，新增 `risk_capped_limited_adjustment` research-only
+      target method，并跑通 config validation、target generation、paper shadow backfill、vs
+      limited comparison 和 review pack；本阶段不实现 `regime_gated_limited_adjustment`，不写
+      official target weights、不修改 `position_advisory_v1.yaml`、不触发 broker/order/production
+    - '`risk-capped-limited config-validate/report-config/generate/report`、`risk-capped-backfill
+      run/report`、`risk-capped-comparison run/report`、`risk-capped-review pack/report`
+      及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；报告明确 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`、`auto_apply=false`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact
+      validation 完成'
+    - '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-229～233；本轮优先交付 P0 risk-capped
+      research method、cap/reallocation diagnostics、historical backfill、comparison
+      和 review pack，P2 的 regime-gated/hybrid、图表化 cap event report、slippage / transaction
+      cost sensitivity 不纳入本阶段。2026-06-12: baseline 实现完成并转入 VALIDATING；真实链路输出 config
+      `risk-capped-config_a2f0f9f5a9c99298`、model target `model-target_a4c790df71379190`、risk-capped
+      target `risk-capped-limited_e567c0b5135843fd`、risk-capped backfill `risk-capped-backfill_3d41bb93e038bbe4`、comparison
+      `risk-capped-comparison_e48889d74b4d13c4`、review `risk-capped-review_41c625e30eb6efe7`；generation
+      cap_event_count=2、total_reallocated_to_cash=0.004454685；backfill date range=`2022-12-01`
+      到 `2026-06-11`、data_quality=`PASS_WITH_WARNINGS`、cap_event_count=290、avg/max
+      semiconductor weight=0.2163382044/0.2367086138；comparison conclusion=`mixed`、return_delta=-0.0808442483、drawdown_delta=-0.000636931、semiconductor_exposure_delta=-0.0074072835、rolling_consistency=`WORSE`；review
+      decision=`REJECT`、confidence=`LOW`、requires_forward_confirmation=true；所有新增 validate
+      CLI、dynamic-v3 validation、artifact repair/latest validation、family artifact
+      validation、report index、Reader Brief latest 和 Reader Brief quality 已通过；下一步为
+      owner 复核是否拒绝当前 cap policy、调整 cap calibration，或另开 `regime_gated_limited_adjustment`
+      / hybrid research。'
+    raw_line: '|TRADING-229_to_233_RISK_CAPPED_LIMITED_ADJUSTMENT_RESEARCH_METHOD|ETF
+      portfolio/risk-capped limited adjustment research method|P0|VALIDATING|项目 owner
+      后续复核 + 系统运行观察|详细拆解见 `docs/requirements/TRADING-229_to_233_Risk_Capped_Limited_Adjustment_Research_Method.md`；承接
+      TRADING-224～228 refined proposal，新增 `risk_capped_limited_adjustment` research-only
+      target method，并跑通 config validation、target generation、paper shadow backfill、vs
+      limited comparison 和 review pack；本阶段不实现 `regime_gated_limited_adjustment`，不写
+      official target weights、不修改 `position_advisory_v1.yaml`、不触发 broker/order/production|`risk-capped-limited
+      config-validate/report-config/generate/report`、`risk-capped-backfill run/report`、`risk-capped-comparison
+      run/report`、`risk-capped-review pack/report` 及对应 validate CLI 可运行；artifacts
+      写入 dynamic_v3_rescue runtime roots；报告明确 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`、`auto_apply=false`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact
+      validation 完成|2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-229～233；本轮优先交付
+      P0 risk-capped research method、cap/reallocation diagnostics、historical backfill、comparison
+      和 review pack，P2 的 regime-gated/hybrid、图表化 cap event report、slippage / transaction
+      cost sensitivity 不纳入本阶段。2026-06-12: baseline 实现完成并转入 VALIDATING；真实链路输出 config
+      `risk-capped-config_a2f0f9f5a9c99298`、model target `model-target_a4c790df71379190`、risk-capped
+      target `risk-capped-limited_e567c0b5135843fd`、risk-capped backfill `risk-capped-backfill_3d41bb93e038bbe4`、comparison
+      `risk-capped-comparison_e48889d74b4d13c4`、review `risk-capped-review_41c625e30eb6efe7`；generation
+      cap_event_count=2、total_reallocated_to_cash=0.004454685；backfill date range=`2022-12-01`
+      到 `2026-06-11`、data_quality=`PASS_WITH_WARNINGS`、cap_event_count=290、avg/max
+      semiconductor weight=0.2163382044/0.2367086138；comparison conclusion=`mixed`、return_delta=-0.0808442483、drawdown_delta=-0.000636931、semiconductor_exposure_delta=-0.0074072835、rolling_consistency=`WORSE`；review
+      decision=`REJECT`、confidence=`LOW`、requires_forward_confirmation=true；所有新增 validate
+      CLI、dynamic-v3 validation、artifact repair/latest validation、family artifact
+      validation、report index、Reader Brief latest 和 Reader Brief quality 已通过；下一步为
+      owner 复核是否拒绝当前 cap policy、调整 cap calibration，或另开 `regime_gated_limited_adjustment`
+      / hybrid research。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d00cb0801bae71d702715174
+  task_id: TRADING-229_to_233_RISK_CAPPED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 + 系统运行观察
+    notes: '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-229～233；本轮优先交付
+      P0 risk-capped research method、cap/reallocation diagnostics、historical backfill、comparison
+      和 review pack，P2 的 regime-gated/hybrid、图表化 cap event report、slippage / transaction
+      cost sensitivity 不纳入本阶段。2026-06-12: baseline 实现完成并转入 VALIDATING；真实链路输出 config
+      `risk-capped-config_a2f0f9f5a9c99298`、model target `model-target_a4c790df71379190`、risk-capped
+      target `risk-capped-limited_e567c0b5135843fd`、risk-capped backfill `risk-capped-backfill_3d41bb93e038bbe4`、comparison
+      `risk-capped-comparison_e48889d74b4d13c4`、review `risk-capped-review_41c625e30eb6efe7`；generation
+      cap_event_count=2、total_reallocated_to_cash=0.004454685；backfill date range=`2022-12-01`
+      到 `2026-06-11`、data_quality=`PASS_WITH_WARNINGS`、cap_event_count=290、avg/max
+      semiconductor weight=0.2163382044/0.2367086138；comparison conclusion=`mixed`、return_delta=-0.0808442483、drawdown_delta=-0.000636931、semiconductor_exposure_delta=-0.0074072835、rolling_consistency=`WORSE`；review
+      decision=`REJECT`、confidence=`LOW`、requires_forward_confirmation=true；所有新增 validate
+      CLI、dynamic-v3 validation、artifact repair/latest validation、family artifact
+      validation、report index、Reader Brief latest 和 Reader Brief quality 已通过；下一步为
+      owner 复核是否拒绝当前 cap policy、调整 cap calibration，或另开 `regime_gated_limited_adjustment`
+      / hybrid research。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d00cb0801bae71d7027151746601500031b2920ef30d0d7bbb4a25de60839430
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-229_to_233_RISK_CAPPED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
+  - ETF portfolio/risk-capped limited adjustment research method
+  - P0
+  - VALIDATING
+  - 项目 owner 后续复核 + 系统运行观察
+  - 详细拆解见 `docs/requirements/TRADING-229_to_233_Risk_Capped_Limited_Adjustment_Research_Method.md`；承接
+    TRADING-224～228 refined proposal，新增 `risk_capped_limited_adjustment` research-only
+    target method，并跑通 config validation、target generation、paper shadow backfill、vs
+    limited comparison 和 review pack；本阶段不实现 `regime_gated_limited_adjustment`，不写 official
+    target weights、不修改 `position_advisory_v1.yaml`、不触发 broker/order/production
+  - '`risk-capped-limited config-validate/report-config/generate/report`、`risk-capped-backfill
+    run/report`、`risk-capped-comparison run/report`、`risk-capped-review pack/report`
+    及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；报告明确 `research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`、`auto_apply=false`；README、operations
+    runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+    tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact validation
+    完成'
+  - '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-229～233；本轮优先交付 P0 risk-capped
+    research method、cap/reallocation diagnostics、historical backfill、comparison 和
+    review pack，P2 的 regime-gated/hybrid、图表化 cap event report、slippage / transaction
+    cost sensitivity 不纳入本阶段。2026-06-12: baseline 实现完成并转入 VALIDATING；真实链路输出 config
+    `risk-capped-config_a2f0f9f5a9c99298`、model target `model-target_a4c790df71379190`、risk-capped
+    target `risk-capped-limited_e567c0b5135843fd`、risk-capped backfill `risk-capped-backfill_3d41bb93e038bbe4`、comparison
+    `risk-capped-comparison_e48889d74b4d13c4`、review `risk-capped-review_41c625e30eb6efe7`；generation
+    cap_event_count=2、total_reallocated_to_cash=0.004454685；backfill date range=`2022-12-01`
+    到 `2026-06-11`、data_quality=`PASS_WITH_WARNINGS`、cap_event_count=290、avg/max semiconductor
+    weight=0.2163382044/0.2367086138；comparison conclusion=`mixed`、return_delta=-0.0808442483、drawdown_delta=-0.000636931、semiconductor_exposure_delta=-0.0074072835、rolling_consistency=`WORSE`；review
+    decision=`REJECT`、confidence=`LOW`、requires_forward_confirmation=true；所有新增 validate
+    CLI、dynamic-v3 validation、artifact repair/latest validation、family artifact validation、report
+    index、Reader Brief latest 和 Reader Brief quality 已通过；下一步为 owner 复核是否拒绝当前 cap policy、调整
+    cap calibration，或另开 `regime_gated_limited_adjustment` / hybrid research。'
+  docs_links:
+  - docs/requirements/TRADING-229_to_233_Risk_Capped_Limited_Adjustment_Research_Method.md
+  terminal: false
+  raw_row_sha256: d00cb0801bae71d7027151746601500031b2920ef30d0d7bbb4a25de60839430
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 25f78d2434a9c14b1edfa1a599aa035abad88ae040d7b9b0aefe9153dc44fdc1

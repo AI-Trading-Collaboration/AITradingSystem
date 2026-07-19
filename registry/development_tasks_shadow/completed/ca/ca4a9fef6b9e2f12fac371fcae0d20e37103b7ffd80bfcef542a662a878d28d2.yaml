@@ -1,0 +1,162 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-042
+  title: null
+  domain: 基本面/SEC PIT Real Run Diagnostics & Data Coverage Improvement
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/sec_pit_real_run_diagnostics_2026-05-27.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/sec_pit_real_run_diagnostics_2026-05-27.md`；已完成
+    `aits sec-pit diagnose-run` / `--latest`、只读 real-run diagnostics 核心模块、provenance
+    gap / coverage / alias / label / candidate sensitivity CSV、summary JSON/Markdown、SEC
+    provenance propagation、GOOG/GOOGL alias、baseline artifact fallback、coverage ratio
+    去重修正、evaluation drawdown label 传播、dashboard 只读卡片、artifact catalog、system flow、learning
+    path、runbook、data source 和 feature availability 更新
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: CLI 支持 `--start`、`--end`、`--tickers`、`--feature-panel`、`--evaluation-dir`、`--comparison-dir`、`--baseline-score-path`、`--baseline-score-dir`、`--output-dir`、`--latest`；诊断产物能定位
+      provenance 首个明显丢失阶段、记录 baseline artifact、审计 alias、label coverage、coverage ratio
+      修正前后和 duplicate observations；candidate sensitivity 固定 `manual_review_required=true`、`production_effect=none`，不自动
+      promotion；dashboard 只读读取 latest diagnostics JSON，不运行 diagnostics；真实 `--latest`
+      已生成 `outputs/sec_pit_diagnostics/sec_pit_real_run_diagnostics_2026-05-26.*`，显示
+      `first_loss_stage=xbrl_facts_long`、feature panel missing provenance 51,972 行、baseline
+      fallback 使用 `data/processed/scores_daily.csv`、drawdown coverage 0、修正前 coverage
+      ratio > 1 的 feature 4 个、near-promotion 3 个；未修改 production/shadow weights 或 actions
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 392
+    row_sha256: a6349f6db0f90f4a8238ae10d928466237a2871aefb8b4a94c9bf2dd31f18acf
+    cell_count: 8
+    all_cells:
+    - TRADING-042
+    - 基本面/SEC PIT Real Run Diagnostics & Data Coverage Improvement
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/sec_pit_real_run_diagnostics_2026-05-27.md`；已完成 `aits
+      sec-pit diagnose-run` / `--latest`、只读 real-run diagnostics 核心模块、provenance gap
+      / coverage / alias / label / candidate sensitivity CSV、summary JSON/Markdown、SEC
+      provenance propagation、GOOG/GOOGL alias、baseline artifact fallback、coverage
+      ratio 去重修正、evaluation drawdown label 传播、dashboard 只读卡片、artifact catalog、system
+      flow、learning path、runbook、data source 和 feature availability 更新
+    - CLI 支持 `--start`、`--end`、`--tickers`、`--feature-panel`、`--evaluation-dir`、`--comparison-dir`、`--baseline-score-path`、`--baseline-score-dir`、`--output-dir`、`--latest`；诊断产物能定位
+      provenance 首个明显丢失阶段、记录 baseline artifact、审计 alias、label coverage、coverage ratio
+      修正前后和 duplicate observations；candidate sensitivity 固定 `manual_review_required=true`、`production_effect=none`，不自动
+      promotion；dashboard 只读读取 latest diagnostics JSON，不运行 diagnostics；真实 `--latest`
+      已生成 `outputs/sec_pit_diagnostics/sec_pit_real_run_diagnostics_2026-05-26.*`，显示
+      `first_loss_stage=xbrl_facts_long`、feature panel missing provenance 51,972 行、baseline
+      fallback 使用 `data/processed/scores_daily.csv`、drawdown coverage 0、修正前 coverage
+      ratio > 1 的 feature 4 个、near-promotion 3 个；未修改 production/shadow weights 或 actions
+    - '2026-05-27: 新增并进入 IN_PROGRESS，原因：2026-05-26 真实 SEC PIT run 完成但不具备 shadow promotion
+      条件，暴露 provenance 缺失、GOOGL alias、baseline artifact discovery、drawdown label NaN、coverage
+      ratio > 1 和候选敏感性诊断缺口。2026-05-27: 从 IN_PROGRESS 改为 DONE，原因：实现、真实诊断产物和文档完成；验证通过
+      `python -m pytest tests/trading_engine/test_sec_pit_real_run_diagnostics.py
+      -q`（10 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_evaluation.py -q`（11 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_baseline_comparison.py -q`（7 passed）、全量
+      `python -m pytest -q`（1286 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+    raw_line: '|TRADING-042|基本面/SEC PIT Real Run Diagnostics & Data Coverage Improvement|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/sec_pit_real_run_diagnostics_2026-05-27.md`；已完成 `aits sec-pit
+      diagnose-run` / `--latest`、只读 real-run diagnostics 核心模块、provenance gap / coverage
+      / alias / label / candidate sensitivity CSV、summary JSON/Markdown、SEC provenance
+      propagation、GOOG/GOOGL alias、baseline artifact fallback、coverage ratio 去重修正、evaluation
+      drawdown label 传播、dashboard 只读卡片、artifact catalog、system flow、learning path、runbook、data
+      source 和 feature availability 更新|CLI 支持 `--start`、`--end`、`--tickers`、`--feature-panel`、`--evaluation-dir`、`--comparison-dir`、`--baseline-score-path`、`--baseline-score-dir`、`--output-dir`、`--latest`；诊断产物能定位
+      provenance 首个明显丢失阶段、记录 baseline artifact、审计 alias、label coverage、coverage ratio
+      修正前后和 duplicate observations；candidate sensitivity 固定 `manual_review_required=true`、`production_effect=none`，不自动
+      promotion；dashboard 只读读取 latest diagnostics JSON，不运行 diagnostics；真实 `--latest`
+      已生成 `outputs/sec_pit_diagnostics/sec_pit_real_run_diagnostics_2026-05-26.*`，显示
+      `first_loss_stage=xbrl_facts_long`、feature panel missing provenance 51,972 行、baseline
+      fallback 使用 `data/processed/scores_daily.csv`、drawdown coverage 0、修正前 coverage
+      ratio > 1 的 feature 4 个、near-promotion 3 个；未修改 production/shadow weights 或 actions|2026-05-27:
+      新增并进入 IN_PROGRESS，原因：2026-05-26 真实 SEC PIT run 完成但不具备 shadow promotion 条件，暴露
+      provenance 缺失、GOOGL alias、baseline artifact discovery、drawdown label NaN、coverage
+      ratio > 1 和候选敏感性诊断缺口。2026-05-27: 从 IN_PROGRESS 改为 DONE，原因：实现、真实诊断产物和文档完成；验证通过
+      `python -m pytest tests/trading_engine/test_sec_pit_real_run_diagnostics.py
+      -q`（10 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_evaluation.py -q`（11 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_baseline_comparison.py -q`（7 passed）、全量
+      `python -m pytest -q`（1286 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a6349f6db0f90f4a8238ae10
+  task_id: TRADING-042
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-27: 新增并进入 IN_PROGRESS，原因：2026-05-26 真实 SEC PIT run 完成但不具备 shadow
+      promotion 条件，暴露 provenance 缺失、GOOGL alias、baseline artifact discovery、drawdown
+      label NaN、coverage ratio > 1 和候选敏感性诊断缺口。2026-05-27: 从 IN_PROGRESS 改为 DONE，原因：实现、真实诊断产物和文档完成；验证通过
+      `python -m pytest tests/trading_engine/test_sec_pit_real_run_diagnostics.py
+      -q`（10 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_evaluation.py -q`（11 passed）、`python
+      -m pytest tests/trading_engine/test_sec_pit_baseline_comparison.py -q`（7 passed）、全量
+      `python -m pytest -q`（1286 passed, 1 warning）、全量 `python -m ruff check config
+      src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a6349f6db0f90f4a8238ae10d928466237a2871aefb8b4a94c9bf2dd31f18acf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-042
+  - 基本面/SEC PIT Real Run Diagnostics & Data Coverage Improvement
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/sec_pit_real_run_diagnostics_2026-05-27.md`；已完成 `aits
+    sec-pit diagnose-run` / `--latest`、只读 real-run diagnostics 核心模块、provenance gap
+    / coverage / alias / label / candidate sensitivity CSV、summary JSON/Markdown、SEC
+    provenance propagation、GOOG/GOOGL alias、baseline artifact fallback、coverage ratio
+    去重修正、evaluation drawdown label 传播、dashboard 只读卡片、artifact catalog、system flow、learning
+    path、runbook、data source 和 feature availability 更新
+  - CLI 支持 `--start`、`--end`、`--tickers`、`--feature-panel`、`--evaluation-dir`、`--comparison-dir`、`--baseline-score-path`、`--baseline-score-dir`、`--output-dir`、`--latest`；诊断产物能定位
+    provenance 首个明显丢失阶段、记录 baseline artifact、审计 alias、label coverage、coverage ratio
+    修正前后和 duplicate observations；candidate sensitivity 固定 `manual_review_required=true`、`production_effect=none`，不自动
+    promotion；dashboard 只读读取 latest diagnostics JSON，不运行 diagnostics；真实 `--latest`
+    已生成 `outputs/sec_pit_diagnostics/sec_pit_real_run_diagnostics_2026-05-26.*`，显示
+    `first_loss_stage=xbrl_facts_long`、feature panel missing provenance 51,972 行、baseline
+    fallback 使用 `data/processed/scores_daily.csv`、drawdown coverage 0、修正前 coverage
+    ratio > 1 的 feature 4 个、near-promotion 3 个；未修改 production/shadow weights 或 actions
+  - '2026-05-27: 新增并进入 IN_PROGRESS，原因：2026-05-26 真实 SEC PIT run 完成但不具备 shadow promotion
+    条件，暴露 provenance 缺失、GOOGL alias、baseline artifact discovery、drawdown label NaN、coverage
+    ratio > 1 和候选敏感性诊断缺口。2026-05-27: 从 IN_PROGRESS 改为 DONE，原因：实现、真实诊断产物和文档完成；验证通过
+    `python -m pytest tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（10
+    passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、`python
+    -m pytest tests/trading_engine/test_sec_pit_evaluation.py -q`（11 passed）、`python
+    -m pytest tests/trading_engine/test_sec_pit_baseline_comparison.py -q`（7 passed）、全量
+    `python -m pytest -q`（1286 passed, 1 warning）、全量 `python -m ruff check config
+    src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'
+  docs_links:
+  - docs/requirements/sec_pit_real_run_diagnostics_2026-05-27.md
+  terminal: true
+  raw_row_sha256: a6349f6db0f90f4a8238ae10d928466237a2871aefb8b4a94c9bf2dd31f18acf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c45199cc1ca1612de3027c08d370b8b512eb7a88faca63b95d92f14bd28d604d

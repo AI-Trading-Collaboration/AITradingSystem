@@ -1,0 +1,93 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-732_FORWARD_EVIDENCE_DAILY_DECISION_ARCHIVE
+  title: null
+  domain: Forward evidence / daily decision archive
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-726_to_733 总需求文档；建立 forward
+    evidence daily archive、append-only outcome update、audit/report baseline
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits forward-evidence capture-daily'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1371
+    row_sha256: 7939ad3860a7e7d898a54df6eb6a84183d4660c31b2994c67a32c9e741b76dae
+    cell_count: 11
+    all_cells:
+    - TRADING-732_FORWARD_EVIDENCE_DAILY_DECISION_ARCHIVE
+    - Forward evidence / daily decision archive
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 TRADING-726_to_733 总需求文档；建立 forward evidence daily archive、append-only outcome
+      update、audit/report baseline
+    - '`aits forward-evidence capture-daily'
+    - update-outcomes
+    - audit
+    - report` 可运行；daily_archive_created=true；feature_snapshot_linked=true；future_outcomes_appended_only=true；broker_action=none
+    - '2026-06-21: validation-only baseline 已实现并进入 VALIDATING；新增 forward archive schema、capture/update/audit/report
+      CLI 和测试；archive 捕获 baseline/candidate/benchmark/control/oracle diagnostic evidence，但不启动
+      paper-shadow、不下单、不改 official weights。'
+    raw_line: '|TRADING-732_FORWARD_EVIDENCE_DAILY_DECISION_ARCHIVE|Forward evidence
+      / daily decision archive|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 TRADING-726_to_733
+      总需求文档；建立 forward evidence daily archive、append-only outcome update、audit/report
+      baseline|`aits forward-evidence capture-daily|update-outcomes|audit|report`
+      可运行；daily_archive_created=true；feature_snapshot_linked=true；future_outcomes_appended_only=true；broker_action=none|2026-06-21:
+      validation-only baseline 已实现并进入 VALIDATING；新增 forward archive schema、capture/update/audit/report
+      CLI 和测试；archive 捕获 baseline/candidate/benchmark/control/oracle diagnostic evidence，但不启动
+      paper-shadow、不下单、不改 official weights。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7939ad3860a7e7d898a54df6
+  task_id: TRADING-732_FORWARD_EVIDENCE_DAILY_DECISION_ARCHIVE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: update-outcomes
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7939ad3860a7e7d898a54df6eb6a84183d4660c31b2994c67a32c9e741b76dae
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-732_FORWARD_EVIDENCE_DAILY_DECISION_ARCHIVE
+  - Forward evidence / daily decision archive
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-726_to_733 总需求文档；建立 forward evidence daily archive、append-only outcome
+    update、audit/report baseline
+  - '`aits forward-evidence capture-daily'
+  - update-outcomes
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 7939ad3860a7e7d898a54df6eb6a84183d4660c31b2994c67a32c9e741b76dae
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: bda4826c3669e5c129941605cde94b96e9711271ba6f29db19dabb961167ecc4

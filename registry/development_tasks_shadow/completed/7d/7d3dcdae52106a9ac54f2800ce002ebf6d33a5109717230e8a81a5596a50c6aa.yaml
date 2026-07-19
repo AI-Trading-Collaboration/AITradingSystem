@@ -1,0 +1,165 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: REPORT-048
+  title: null
+  domain: 报告/Calculation Explainer Registry
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/calculation_logic.md
+  - docs/requirements/reader_reporting_improvement_plan_2026-05-28.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；Calculation
+    Explainer Registry 已完成并通过 latest 真实 artifact 复核；`aits reports calculation-explainers
+    --as-of 2026-06-05` 生成 `calculation_explainers_2026-06-05.json`，状态 `PASS`、metrics=13、warnings=0、`production_effect=none`；字段级复核确认所有
+    metric 均有 formula、input fields、source artifacts、PIT policy、limitations 字段、common
+    misread 和 metric-level `production_effect=none`，10 个当日指标为 `AVAILABLE`，`baseline_coverage`、`max_drawdown`、`rank_ic`
+    按设计为 `DEFINITION_ONLY`；Reader Brief source input 中 calculation explainers 为 `AVAILABLE`
+    / `exists=True` / `production_effect=none`，HTML 保留 calculation explainer source
+    与 `<details>` 审计展开；该任务只读解释既有 decision snapshot 数值，不改变 production scoring、weights、position
+    gates 或 trading 行为
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `outputs/reports/calculation_explainers_YYYY-MM-DD.json`；覆盖 overall score、component
+      score、effective weight、confidence adjustment、model band、macro budget cap、position
+      gate、final position、RankIC、drawdown、baseline coverage 等关键指标；每个 explainer 包含
+      formula、input fields / values、source artifacts、PIT policy、production_effect、limitations
+      和 common misread；HTML 报告可用 `<details>` 展示计算解释；缺少必需 explainer 时测试失败或显式 warning；实现时同步更新系统流图、产物目录和报告
+      contract 测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 316
+    row_sha256: 4f25c71079b2b91131e5df9eb7a09de83e6fd121c4db72e4029b89625dfca103
+    cell_count: 8
+    all_cells:
+    - REPORT-048
+    - 报告/Calculation Explainer Registry
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；Calculation
+      Explainer Registry 已完成并通过 latest 真实 artifact 复核；`aits reports calculation-explainers
+      --as-of 2026-06-05` 生成 `calculation_explainers_2026-06-05.json`，状态 `PASS`、metrics=13、warnings=0、`production_effect=none`；字段级复核确认所有
+      metric 均有 formula、input fields、source artifacts、PIT policy、limitations 字段、common
+      misread 和 metric-level `production_effect=none`，10 个当日指标为 `AVAILABLE`，`baseline_coverage`、`max_drawdown`、`rank_ic`
+      按设计为 `DEFINITION_ONLY`；Reader Brief source input 中 calculation explainers 为
+      `AVAILABLE` / `exists=True` / `production_effect=none`，HTML 保留 calculation explainer
+      source 与 `<details>` 审计展开；该任务只读解释既有 decision snapshot 数值，不改变 production scoring、weights、position
+      gates 或 trading 行为
+    - 新增 `outputs/reports/calculation_explainers_YYYY-MM-DD.json`；覆盖 overall score、component
+      score、effective weight、confidence adjustment、model band、macro budget cap、position
+      gate、final position、RankIC、drawdown、baseline coverage 等关键指标；每个 explainer 包含
+      formula、input fields / values、source artifacts、PIT policy、production_effect、limitations
+      和 common misread；HTML 报告可用 `<details>` 展示计算解释；缺少必需 explainer 时测试失败或显式 warning；实现时同步更新系统流图、产物目录和报告
+      contract 测试
+    - '2026-05-28: 新增，原因：现有 `docs/calculation_logic.md` 已能解释通用逻辑，但每日结果页缺少“这个数字今天具体怎么算出来”的结构化解释层。2026-05-28:
+      从 READY 改为 VALIDATING，原因：已完成 registry、builder、CLI、score-daily 自动产物、系统流图、产物目录和专项测试；验证通过
+      `tests/test_calculation_explainers.py`、`tests/test_daily_scoring.py`、`tests/test_evidence_dashboard.py`、`tests/test_daily_task_dashboard.py`
+      共 53 项，以及触达文件 ruff、black 和 diff check。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest
+      字段级复核确认 calculation explainers artifact、Reader Brief consumption 和 HTML audit
+      links 均满足验收；`tests/test_calculation_explainers.py tests/test_daily_scoring.py
+      tests/test_evidence_dashboard.py tests/test_daily_task_dashboard.py tests/test_reader_brief.py
+      -q` 为 61 passed，Reader Brief quality、documentation contract 和 docs freshness
+      均通过。'
+    raw_line: '|REPORT-048|报告/Calculation Explainer Registry|P1|DONE|系统验证|详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；Calculation
+      Explainer Registry 已完成并通过 latest 真实 artifact 复核；`aits reports calculation-explainers
+      --as-of 2026-06-05` 生成 `calculation_explainers_2026-06-05.json`，状态 `PASS`、metrics=13、warnings=0、`production_effect=none`；字段级复核确认所有
+      metric 均有 formula、input fields、source artifacts、PIT policy、limitations 字段、common
+      misread 和 metric-level `production_effect=none`，10 个当日指标为 `AVAILABLE`，`baseline_coverage`、`max_drawdown`、`rank_ic`
+      按设计为 `DEFINITION_ONLY`；Reader Brief source input 中 calculation explainers 为
+      `AVAILABLE` / `exists=True` / `production_effect=none`，HTML 保留 calculation explainer
+      source 与 `<details>` 审计展开；该任务只读解释既有 decision snapshot 数值，不改变 production scoring、weights、position
+      gates 或 trading 行为|新增 `outputs/reports/calculation_explainers_YYYY-MM-DD.json`；覆盖
+      overall score、component score、effective weight、confidence adjustment、model band、macro
+      budget cap、position gate、final position、RankIC、drawdown、baseline coverage 等关键指标；每个
+      explainer 包含 formula、input fields / values、source artifacts、PIT policy、production_effect、limitations
+      和 common misread；HTML 报告可用 `<details>` 展示计算解释；缺少必需 explainer 时测试失败或显式 warning；实现时同步更新系统流图、产物目录和报告
+      contract 测试|2026-05-28: 新增，原因：现有 `docs/calculation_logic.md` 已能解释通用逻辑，但每日结果页缺少“这个数字今天具体怎么算出来”的结构化解释层。2026-05-28:
+      从 READY 改为 VALIDATING，原因：已完成 registry、builder、CLI、score-daily 自动产物、系统流图、产物目录和专项测试；验证通过
+      `tests/test_calculation_explainers.py`、`tests/test_daily_scoring.py`、`tests/test_evidence_dashboard.py`、`tests/test_daily_task_dashboard.py`
+      共 53 项，以及触达文件 ruff、black 和 diff check。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest
+      字段级复核确认 calculation explainers artifact、Reader Brief consumption 和 HTML audit
+      links 均满足验收；`tests/test_calculation_explainers.py tests/test_daily_scoring.py
+      tests/test_evidence_dashboard.py tests/test_daily_task_dashboard.py tests/test_reader_brief.py
+      -q` 为 61 passed，Reader Brief quality、documentation contract 和 docs freshness
+      均通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4f25c71079b2b91131e5df9e
+  task_id: REPORT-048
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-28: 新增，原因：现有 `docs/calculation_logic.md` 已能解释通用逻辑，但每日结果页缺少“这个数字今天具体怎么算出来”的结构化解释层。2026-05-28:
+      从 READY 改为 VALIDATING，原因：已完成 registry、builder、CLI、score-daily 自动产物、系统流图、产物目录和专项测试；验证通过
+      `tests/test_calculation_explainers.py`、`tests/test_daily_scoring.py`、`tests/test_evidence_dashboard.py`、`tests/test_daily_task_dashboard.py`
+      共 53 项，以及触达文件 ruff、black 和 diff check。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest
+      字段级复核确认 calculation explainers artifact、Reader Brief consumption 和 HTML audit
+      links 均满足验收；`tests/test_calculation_explainers.py tests/test_daily_scoring.py
+      tests/test_evidence_dashboard.py tests/test_daily_task_dashboard.py tests/test_reader_brief.py
+      -q` 为 61 passed，Reader Brief quality、documentation contract 和 docs freshness
+      均通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4f25c71079b2b91131e5df9eb7a09de83e6fd121c4db72e4029b89625dfca103
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-048
+  - 报告/Calculation Explainer Registry
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/reader_reporting_improvement_plan_2026-05-28.md`；Calculation
+    Explainer Registry 已完成并通过 latest 真实 artifact 复核；`aits reports calculation-explainers
+    --as-of 2026-06-05` 生成 `calculation_explainers_2026-06-05.json`，状态 `PASS`、metrics=13、warnings=0、`production_effect=none`；字段级复核确认所有
+    metric 均有 formula、input fields、source artifacts、PIT policy、limitations 字段、common
+    misread 和 metric-level `production_effect=none`，10 个当日指标为 `AVAILABLE`，`baseline_coverage`、`max_drawdown`、`rank_ic`
+    按设计为 `DEFINITION_ONLY`；Reader Brief source input 中 calculation explainers 为 `AVAILABLE`
+    / `exists=True` / `production_effect=none`，HTML 保留 calculation explainer source
+    与 `<details>` 审计展开；该任务只读解释既有 decision snapshot 数值，不改变 production scoring、weights、position
+    gates 或 trading 行为
+  - 新增 `outputs/reports/calculation_explainers_YYYY-MM-DD.json`；覆盖 overall score、component
+    score、effective weight、confidence adjustment、model band、macro budget cap、position
+    gate、final position、RankIC、drawdown、baseline coverage 等关键指标；每个 explainer 包含 formula、input
+    fields / values、source artifacts、PIT policy、production_effect、limitations 和 common
+    misread；HTML 报告可用 `<details>` 展示计算解释；缺少必需 explainer 时测试失败或显式 warning；实现时同步更新系统流图、产物目录和报告
+    contract 测试
+  - '2026-05-28: 新增，原因：现有 `docs/calculation_logic.md` 已能解释通用逻辑，但每日结果页缺少“这个数字今天具体怎么算出来”的结构化解释层。2026-05-28:
+    从 READY 改为 VALIDATING，原因：已完成 registry、builder、CLI、score-daily 自动产物、系统流图、产物目录和专项测试；验证通过
+    `tests/test_calculation_explainers.py`、`tests/test_daily_scoring.py`、`tests/test_evidence_dashboard.py`、`tests/test_daily_task_dashboard.py`
+    共 53 项，以及触达文件 ruff、black 和 diff check。2026-06-09: 从 VALIDATING 改为 DONE，原因：latest
+    字段级复核确认 calculation explainers artifact、Reader Brief consumption 和 HTML audit
+    links 均满足验收；`tests/test_calculation_explainers.py tests/test_daily_scoring.py
+    tests/test_evidence_dashboard.py tests/test_daily_task_dashboard.py tests/test_reader_brief.py
+    -q` 为 61 passed，Reader Brief quality、documentation contract 和 docs freshness 均通过。'
+  docs_links:
+  - docs/calculation_logic.md
+  - docs/requirements/reader_reporting_improvement_plan_2026-05-28.md
+  terminal: true
+  raw_row_sha256: 4f25c71079b2b91131e5df9eb7a09de83e6fd121c4db72e4029b89625dfca103
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a5c780d0bbcc3fbd94a7201aab968a75a8b9c464ad106e54f488ca50aae54c7d

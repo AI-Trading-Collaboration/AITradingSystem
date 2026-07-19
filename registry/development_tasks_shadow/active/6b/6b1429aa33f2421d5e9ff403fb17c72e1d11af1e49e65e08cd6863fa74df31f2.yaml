@@ -1,0 +1,161 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: LLM-001
+  title: null
+  domain: 新闻/LLM
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/decision_support_improvements_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已把 owner 选择的 OpenAI 默认请求策略落地为 `gpt-5.5`
+    + `reasoning.effort=high`，并把 reasoning effort 写入请求、报告和待复核队列；剩余依赖仍是真实 owner 批准样本、更多
+    provider 授权条款覆盖、人工复核 SLA 运行纪律和批量处理评估；详细拆解见 `docs/requirements/decision_support_improvements_2026-05-04.md#llm-001`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: LLM 输出必须是结构化证据分类结果，并保留原始来源、采集时间、输入/输出 checksum、model、reasoning effort、prompt
+      version、request id 和 provider 授权标记；报告区分 LLM 辅助抽取、人工确认和自动评分输入；没有人工确认或明确证据等级前，LLM
+      输出不得直接改变仓位建议；付费新闻/供应商内容只有在 provider 级授权允许外部 LLM 处理时才可发送，授权未知时 fail closed；实现时同步更新
+      `docs/system_flow.md` 并补充防止 LLM 交易建议直连评分和供应商授权绕过的测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1103
+    row_sha256: 88b2be101cf415ac89116dd6086524f023621b0731efe8dac67573704efcec68
+    cell_count: 8
+    all_cells:
+    - LLM-001
+    - 新闻/LLM
+    - P1
+    - BASELINE_DONE
+    - 系统实现 + 项目 owner
+    - 已把 owner 选择的 OpenAI 默认请求策略落地为 `gpt-5.5` + `reasoning.effort=high`，并把 reasoning
+      effort 写入请求、报告和待复核队列；剩余依赖仍是真实 owner 批准样本、更多 provider 授权条款覆盖、人工复核 SLA 运行纪律和批量处理评估；详细拆解见
+      `docs/requirements/decision_support_improvements_2026-05-04.md#llm-001`
+    - LLM 输出必须是结构化证据分类结果，并保留原始来源、采集时间、输入/输出 checksum、model、reasoning effort、prompt
+      version、request id 和 provider 授权标记；报告区分 LLM 辅助抽取、人工确认和自动评分输入；没有人工确认或明确证据等级前，LLM
+      输出不得直接改变仓位建议；付费新闻/供应商内容只有在 provider 级授权允许外部 LLM 处理时才可发送，授权未知时 fail closed；实现时同步更新
+      `docs/system_flow.md` 并补充防止 LLM 交易建议直连评分和供应商授权绕过的测试
+    - '来自 2026-05-04 新闻/LLM 接入边界讨论；明确禁止 LLM 直接输出看多/看空/加仓/减仓作为交易评分。2026-05-04: 从 PROPOSED
+      改为 READY，原因：owner 确认使用边界、付费/供应商内容处理原则和预审 schema 方案，剩余工作转为实现 provider 授权字段、结构化输出
+      schema、OpenAI 请求审计和隔离测试。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：owner 已设置 API
+      key，并批准剩余阻塞项按保守默认处理：真实样本先用官方/一手来源和手工摘要，provider 授权未知时 fail closed，LLM 输出只进入待复核队列。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `llm_precheck` 模块、`aits llm precheck-claims`、`data/processed/llm_claim_prereview_queue.json`
+      schema、中文预审报告、provider `llm_permission` 校验、输入模板、系统流图和隔离测试；`python -m pytest
+      -q` 通过 301 项测试，`python -m ruff check .` 通过；尚未用真实 owner 批准样本发起生产预审。2026-05-04:
+      从 BASELINE_DONE 改为 IN_PROGRESS，原因：owner 指定 OpenAI 默认策略升级为 `gpt-5.5-pro` 和 `reasoning.effort=high`，开始补请求
+      payload、CLI 选项、审计输出、系统流图和测试。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：`aits
+      llm precheck-claims` 和 `aits risk-events precheck-openai` 默认请求均使用 `gpt-5.5`
+      + `reasoning.effort=high`，队列 schema、报告、数据源目录、示例、系统流图和测试均记录 reasoning effort；`.venv\Scripts\python.exe
+      -m pytest -q` 通过 311 项测试，`ruff check config src tests` 通过。2026-05-05: owner
+      决策后续默认从 `gpt-5.5-pro` 切换为 `gpt-5.5`，原因：日报前单候选真实 smoke 中 `gpt-5.5-pro` 返回 HTTP
+      502，而 `gpt-5.5` 可稳定返回；代码常量、文档和示例已同步；不带 `--openai-model` 的单候选日报前预审 smoke 约 96
+      秒完成，预审 PASS_WITH_WARNINGS，待复核队列 0，日报 PASS_WITH_LIMITATIONS。'
+    raw_line: '|LLM-001|新闻/LLM|P1|BASELINE_DONE|系统实现 + 项目 owner|已把 owner 选择的 OpenAI
+      默认请求策略落地为 `gpt-5.5` + `reasoning.effort=high`，并把 reasoning effort 写入请求、报告和待复核队列；剩余依赖仍是真实
+      owner 批准样本、更多 provider 授权条款覆盖、人工复核 SLA 运行纪律和批量处理评估；详细拆解见 `docs/requirements/decision_support_improvements_2026-05-04.md#llm-001`|LLM
+      输出必须是结构化证据分类结果，并保留原始来源、采集时间、输入/输出 checksum、model、reasoning effort、prompt version、request
+      id 和 provider 授权标记；报告区分 LLM 辅助抽取、人工确认和自动评分输入；没有人工确认或明确证据等级前，LLM 输出不得直接改变仓位建议；付费新闻/供应商内容只有在
+      provider 级授权允许外部 LLM 处理时才可发送，授权未知时 fail closed；实现时同步更新 `docs/system_flow.md`
+      并补充防止 LLM 交易建议直连评分和供应商授权绕过的测试|来自 2026-05-04 新闻/LLM 接入边界讨论；明确禁止 LLM 直接输出看多/看空/加仓/减仓作为交易评分。2026-05-04:
+      从 PROPOSED 改为 READY，原因：owner 确认使用边界、付费/供应商内容处理原则和预审 schema 方案，剩余工作转为实现 provider
+      授权字段、结构化输出 schema、OpenAI 请求审计和隔离测试。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：owner
+      已设置 API key，并批准剩余阻塞项按保守默认处理：真实样本先用官方/一手来源和手工摘要，provider 授权未知时 fail closed，LLM
+      输出只进入待复核队列。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `llm_precheck` 模块、`aits
+      llm precheck-claims`、`data/processed/llm_claim_prereview_queue.json` schema、中文预审报告、provider
+      `llm_permission` 校验、输入模板、系统流图和隔离测试；`python -m pytest -q` 通过 301 项测试，`python
+      -m ruff check .` 通过；尚未用真实 owner 批准样本发起生产预审。2026-05-04: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：owner
+      指定 OpenAI 默认策略升级为 `gpt-5.5-pro` 和 `reasoning.effort=high`，开始补请求 payload、CLI
+      选项、审计输出、系统流图和测试。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：`aits llm precheck-claims`
+      和 `aits risk-events precheck-openai` 默认请求均使用 `gpt-5.5` + `reasoning.effort=high`，队列
+      schema、报告、数据源目录、示例、系统流图和测试均记录 reasoning effort；`.venv\Scripts\python.exe -m
+      pytest -q` 通过 311 项测试，`ruff check config src tests` 通过。2026-05-05: owner 决策后续默认从
+      `gpt-5.5-pro` 切换为 `gpt-5.5`，原因：日报前单候选真实 smoke 中 `gpt-5.5-pro` 返回 HTTP 502，而
+      `gpt-5.5` 可稳定返回；代码常量、文档和示例已同步；不带 `--openai-model` 的单候选日报前预审 smoke 约 96 秒完成，预审
+      PASS_WITH_WARNINGS，待复核队列 0，日报 PASS_WITH_LIMITATIONS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-88b2be101cf415ac89116dd6
+  task_id: LLM-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner
+    notes: '来自 2026-05-04 新闻/LLM 接入边界讨论；明确禁止 LLM 直接输出看多/看空/加仓/减仓作为交易评分。2026-05-04:
+      从 PROPOSED 改为 READY，原因：owner 确认使用边界、付费/供应商内容处理原则和预审 schema 方案，剩余工作转为实现 provider
+      授权字段、结构化输出 schema、OpenAI 请求审计和隔离测试。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：owner
+      已设置 API key，并批准剩余阻塞项按保守默认处理：真实样本先用官方/一手来源和手工摘要，provider 授权未知时 fail closed，LLM
+      输出只进入待复核队列。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `llm_precheck` 模块、`aits
+      llm precheck-claims`、`data/processed/llm_claim_prereview_queue.json` schema、中文预审报告、provider
+      `llm_permission` 校验、输入模板、系统流图和隔离测试；`python -m pytest -q` 通过 301 项测试，`python
+      -m ruff check .` 通过；尚未用真实 owner 批准样本发起生产预审。2026-05-04: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：owner
+      指定 OpenAI 默认策略升级为 `gpt-5.5-pro` 和 `reasoning.effort=high`，开始补请求 payload、CLI
+      选项、审计输出、系统流图和测试。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：`aits llm precheck-claims`
+      和 `aits risk-events precheck-openai` 默认请求均使用 `gpt-5.5` + `reasoning.effort=high`，队列
+      schema、报告、数据源目录、示例、系统流图和测试均记录 reasoning effort；`.venv\Scripts\python.exe -m
+      pytest -q` 通过 311 项测试，`ruff check config src tests` 通过。2026-05-05: owner 决策后续默认从
+      `gpt-5.5-pro` 切换为 `gpt-5.5`，原因：日报前单候选真实 smoke 中 `gpt-5.5-pro` 返回 HTTP 502，而
+      `gpt-5.5` 可稳定返回；代码常量、文档和示例已同步；不带 `--openai-model` 的单候选日报前预审 smoke 约 96 秒完成，预审
+      PASS_WITH_WARNINGS，待复核队列 0，日报 PASS_WITH_LIMITATIONS。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:88b2be101cf415ac89116dd6086524f023621b0731efe8dac67573704efcec68
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - LLM-001
+  - 新闻/LLM
+  - P1
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已把 owner 选择的 OpenAI 默认请求策略落地为 `gpt-5.5` + `reasoning.effort=high`，并把 reasoning
+    effort 写入请求、报告和待复核队列；剩余依赖仍是真实 owner 批准样本、更多 provider 授权条款覆盖、人工复核 SLA 运行纪律和批量处理评估；详细拆解见
+    `docs/requirements/decision_support_improvements_2026-05-04.md#llm-001`
+  - LLM 输出必须是结构化证据分类结果，并保留原始来源、采集时间、输入/输出 checksum、model、reasoning effort、prompt version、request
+    id 和 provider 授权标记；报告区分 LLM 辅助抽取、人工确认和自动评分输入；没有人工确认或明确证据等级前，LLM 输出不得直接改变仓位建议；付费新闻/供应商内容只有在
+    provider 级授权允许外部 LLM 处理时才可发送，授权未知时 fail closed；实现时同步更新 `docs/system_flow.md` 并补充防止
+    LLM 交易建议直连评分和供应商授权绕过的测试
+  - '来自 2026-05-04 新闻/LLM 接入边界讨论；明确禁止 LLM 直接输出看多/看空/加仓/减仓作为交易评分。2026-05-04: 从 PROPOSED
+    改为 READY，原因：owner 确认使用边界、付费/供应商内容处理原则和预审 schema 方案，剩余工作转为实现 provider 授权字段、结构化输出
+    schema、OpenAI 请求审计和隔离测试。2026-05-04: 从 READY 改为 IN_PROGRESS，原因：owner 已设置 API key，并批准剩余阻塞项按保守默认处理：真实样本先用官方/一手来源和手工摘要，provider
+    授权未知时 fail closed，LLM 输出只进入待复核队列。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增
+    `llm_precheck` 模块、`aits llm precheck-claims`、`data/processed/llm_claim_prereview_queue.json`
+    schema、中文预审报告、provider `llm_permission` 校验、输入模板、系统流图和隔离测试；`python -m pytest -q`
+    通过 301 项测试，`python -m ruff check .` 通过；尚未用真实 owner 批准样本发起生产预审。2026-05-04: 从 BASELINE_DONE
+    改为 IN_PROGRESS，原因：owner 指定 OpenAI 默认策略升级为 `gpt-5.5-pro` 和 `reasoning.effort=high`，开始补请求
+    payload、CLI 选项、审计输出、系统流图和测试。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：`aits
+    llm precheck-claims` 和 `aits risk-events precheck-openai` 默认请求均使用 `gpt-5.5` +
+    `reasoning.effort=high`，队列 schema、报告、数据源目录、示例、系统流图和测试均记录 reasoning effort；`.venv\Scripts\python.exe
+    -m pytest -q` 通过 311 项测试，`ruff check config src tests` 通过。2026-05-05: owner 决策后续默认从
+    `gpt-5.5-pro` 切换为 `gpt-5.5`，原因：日报前单候选真实 smoke 中 `gpt-5.5-pro` 返回 HTTP 502，而 `gpt-5.5`
+    可稳定返回；代码常量、文档和示例已同步；不带 `--openai-model` 的单候选日报前预审 smoke 约 96 秒完成，预审 PASS_WITH_WARNINGS，待复核队列
+    0，日报 PASS_WITH_LIMITATIONS。'
+  docs_links:
+  - docs/requirements/decision_support_improvements_2026-05-04.md
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: 88b2be101cf415ac89116dd6086524f023621b0731efe8dac67573704efcec68
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e1e34143483ffd6716155c036a8dcd5c0ac64d99918ffdd7972a75729dd1272b

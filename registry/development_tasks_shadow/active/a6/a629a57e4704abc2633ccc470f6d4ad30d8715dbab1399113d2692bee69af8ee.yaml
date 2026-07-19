@@ -1,0 +1,171 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-219_to_223_PAPER_SHADOW_SELECTION_DRILLDOWN_AND_RESEARCH_METHOD_HARDENING
+  title: null
+  domain: ETF portfolio/paper shadow selection drilldown and research method hardening
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-219_to_223_Paper_Shadow_Selection_Drilldown_and_Research_Method_Hardening.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-219_to_223_Paper_Shadow_Selection_Drilldown_and_Research_Method_Hardening.md`；本阶段解释
+    `system-target-selection-review_83a214b3223d937b` 中 `limited_adjustment` 被推荐和
+    `REVIEW_REQUIRED` 的原因，补齐 selection attribution、long-window risk、rolling/regime/stability
+    consistency、data warning impact 和 research method hardening pack；固定不写 official
+    target weights、不修改 `position_advisory_v1.yaml` 或 `model_target_portfolio_v1.yaml`、不触发
+    broker/order/production
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`selection-attribution run/report`、`limited-long-risk run/report`、`limited-consistency
+      run/report`、`data-warning-impact run/report`、`research-method-hardening run/report`
+      及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；报告明确 `research_target_only=true`、`not_official_target_weights=true`、`paper_shadow_only=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact
+      validation 完成'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1447
+    row_sha256: 879f35a6265df89bbcbc75c366810a38c6fe2679c9bc7dafa6421fa29030eee1
+    cell_count: 8
+    all_cells:
+    - TRADING-219_to_223_PAPER_SHADOW_SELECTION_DRILLDOWN_AND_RESEARCH_METHOD_HARDENING
+    - ETF portfolio/paper shadow selection drilldown and research method hardening
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详细拆解见 `docs/requirements/TRADING-219_to_223_Paper_Shadow_Selection_Drilldown_and_Research_Method_Hardening.md`；本阶段解释
+      `system-target-selection-review_83a214b3223d937b` 中 `limited_adjustment` 被推荐和
+      `REVIEW_REQUIRED` 的原因，补齐 selection attribution、long-window risk、rolling/regime/stability
+      consistency、data warning impact 和 research method hardening pack；固定不写 official
+      target weights、不修改 `position_advisory_v1.yaml` 或 `model_target_portfolio_v1.yaml`、不触发
+      broker/order/production
+    - '`selection-attribution run/report`、`limited-long-risk run/report`、`limited-consistency
+      run/report`、`data-warning-impact run/report`、`research-method-hardening run/report`
+      及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；报告明确 `research_target_only=true`、`not_official_target_weights=true`、`paper_shadow_only=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact
+      validation 完成'
+    - '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-219～223；本轮优先交付 P0 selection
+      drilldown、risk/consistency/data-warning impact 和 hardening pack 闭环，P1/P2 的图表化、交互式
+      comparison 和自动 Obsidian note 不纳入本轮。2026-06-12: baseline 实现完成并转入 VALIDATING；真实链路输出
+      selection attribution `selection-attribution_0206b2ebef7fa3f7`、long-risk review
+      `limited-long-risk_b648c3f9e6143ad6`、consistency check `limited-consistency_dd5b4c272ca5e24c`、data
+      warning impact `data-warning-impact_8902063d65aca354`、hardening pack `research-method-hardening_be155e974fc8b08f`；hardening
+      decision=`REVIEW_REQUIRED`、decision_confidence=`LOW`、candidate_method=`limited_adjustment`；limited
+      long-window risk 为 `RETURN_IMPROVES_RISK_WORSENS`，rolling consistency=`UNSTABLE`，regime
+      consistency=`BROADLY_CONSISTENT`，stability=`MODERATE`，data warning impact=`REVIEW_REQUIRED`，warning
+      id=`pass_with_warnings_detail_unavailable`；validate-data 为 `PASS_WITH_WARNINGS`，新增
+      report/validate CLI、dynamic-v3 validation、family artifact validation、report
+      index、Reader Brief 和 Reader Brief quality 已通过；下一步为 owner 复核是否继续观察 `limited_adjustment`，并决定是否补齐更细
+      warning provenance 或 forward confirmation evidence。'
+    raw_line: '|TRADING-219_to_223_PAPER_SHADOW_SELECTION_DRILLDOWN_AND_RESEARCH_METHOD_HARDENING|ETF
+      portfolio/paper shadow selection drilldown and research method hardening|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详细拆解见 `docs/requirements/TRADING-219_to_223_Paper_Shadow_Selection_Drilldown_and_Research_Method_Hardening.md`；本阶段解释
+      `system-target-selection-review_83a214b3223d937b` 中 `limited_adjustment` 被推荐和
+      `REVIEW_REQUIRED` 的原因，补齐 selection attribution、long-window risk、rolling/regime/stability
+      consistency、data warning impact 和 research method hardening pack；固定不写 official
+      target weights、不修改 `position_advisory_v1.yaml` 或 `model_target_portfolio_v1.yaml`、不触发
+      broker/order/production|`selection-attribution run/report`、`limited-long-risk
+      run/report`、`limited-consistency run/report`、`data-warning-impact run/report`、`research-method-hardening
+      run/report` 及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；报告明确
+      `research_target_only=true`、`not_official_target_weights=true`、`paper_shadow_only=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact
+      validation 完成|2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-219～223；本轮优先交付
+      P0 selection drilldown、risk/consistency/data-warning impact 和 hardening pack
+      闭环，P1/P2 的图表化、交互式 comparison 和自动 Obsidian note 不纳入本轮。2026-06-12: baseline 实现完成并转入
+      VALIDATING；真实链路输出 selection attribution `selection-attribution_0206b2ebef7fa3f7`、long-risk
+      review `limited-long-risk_b648c3f9e6143ad6`、consistency check `limited-consistency_dd5b4c272ca5e24c`、data
+      warning impact `data-warning-impact_8902063d65aca354`、hardening pack `research-method-hardening_be155e974fc8b08f`；hardening
+      decision=`REVIEW_REQUIRED`、decision_confidence=`LOW`、candidate_method=`limited_adjustment`；limited
+      long-window risk 为 `RETURN_IMPROVES_RISK_WORSENS`，rolling consistency=`UNSTABLE`，regime
+      consistency=`BROADLY_CONSISTENT`，stability=`MODERATE`，data warning impact=`REVIEW_REQUIRED`，warning
+      id=`pass_with_warnings_detail_unavailable`；validate-data 为 `PASS_WITH_WARNINGS`，新增
+      report/validate CLI、dynamic-v3 validation、family artifact validation、report
+      index、Reader Brief 和 Reader Brief quality 已通过；下一步为 owner 复核是否继续观察 `limited_adjustment`，并决定是否补齐更细
+      warning provenance 或 forward confirmation evidence。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-879f35a6265df89bbcbc75c3
+  task_id: TRADING-219_to_223_PAPER_SHADOW_SELECTION_DRILLDOWN_AND_RESEARCH_METHOD_HARDENING
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-219～223；本轮优先交付
+      P0 selection drilldown、risk/consistency/data-warning impact 和 hardening pack
+      闭环，P1/P2 的图表化、交互式 comparison 和自动 Obsidian note 不纳入本轮。2026-06-12: baseline 实现完成并转入
+      VALIDATING；真实链路输出 selection attribution `selection-attribution_0206b2ebef7fa3f7`、long-risk
+      review `limited-long-risk_b648c3f9e6143ad6`、consistency check `limited-consistency_dd5b4c272ca5e24c`、data
+      warning impact `data-warning-impact_8902063d65aca354`、hardening pack `research-method-hardening_be155e974fc8b08f`；hardening
+      decision=`REVIEW_REQUIRED`、decision_confidence=`LOW`、candidate_method=`limited_adjustment`；limited
+      long-window risk 为 `RETURN_IMPROVES_RISK_WORSENS`，rolling consistency=`UNSTABLE`，regime
+      consistency=`BROADLY_CONSISTENT`，stability=`MODERATE`，data warning impact=`REVIEW_REQUIRED`，warning
+      id=`pass_with_warnings_detail_unavailable`；validate-data 为 `PASS_WITH_WARNINGS`，新增
+      report/validate CLI、dynamic-v3 validation、family artifact validation、report
+      index、Reader Brief 和 Reader Brief quality 已通过；下一步为 owner 复核是否继续观察 `limited_adjustment`，并决定是否补齐更细
+      warning provenance 或 forward confirmation evidence。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:879f35a6265df89bbcbc75c366810a38c6fe2679c9bc7dafa6421fa29030eee1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-219_to_223_PAPER_SHADOW_SELECTION_DRILLDOWN_AND_RESEARCH_METHOD_HARDENING
+  - ETF portfolio/paper shadow selection drilldown and research method hardening
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详细拆解见 `docs/requirements/TRADING-219_to_223_Paper_Shadow_Selection_Drilldown_and_Research_Method_Hardening.md`；本阶段解释
+    `system-target-selection-review_83a214b3223d937b` 中 `limited_adjustment` 被推荐和
+    `REVIEW_REQUIRED` 的原因，补齐 selection attribution、long-window risk、rolling/regime/stability
+    consistency、data warning impact 和 research method hardening pack；固定不写 official
+    target weights、不修改 `position_advisory_v1.yaml` 或 `model_target_portfolio_v1.yaml`、不触发
+    broker/order/production
+  - '`selection-attribution run/report`、`limited-long-risk run/report`、`limited-consistency
+    run/report`、`data-warning-impact run/report`、`research-method-hardening run/report`
+    及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；报告明确 `research_target_only=true`、`not_official_target_weights=true`、`paper_shadow_only=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none`；README、operations
+    runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+    tests、ruff、compileall、git diff check、dynamic-v3 validation 和 family artifact validation
+    完成'
+  - '2026-06-12: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-219～223；本轮优先交付 P0 selection
+    drilldown、risk/consistency/data-warning impact 和 hardening pack 闭环，P1/P2 的图表化、交互式
+    comparison 和自动 Obsidian note 不纳入本轮。2026-06-12: baseline 实现完成并转入 VALIDATING；真实链路输出
+    selection attribution `selection-attribution_0206b2ebef7fa3f7`、long-risk review
+    `limited-long-risk_b648c3f9e6143ad6`、consistency check `limited-consistency_dd5b4c272ca5e24c`、data
+    warning impact `data-warning-impact_8902063d65aca354`、hardening pack `research-method-hardening_be155e974fc8b08f`；hardening
+    decision=`REVIEW_REQUIRED`、decision_confidence=`LOW`、candidate_method=`limited_adjustment`；limited
+    long-window risk 为 `RETURN_IMPROVES_RISK_WORSENS`，rolling consistency=`UNSTABLE`，regime
+    consistency=`BROADLY_CONSISTENT`，stability=`MODERATE`，data warning impact=`REVIEW_REQUIRED`，warning
+    id=`pass_with_warnings_detail_unavailable`；validate-data 为 `PASS_WITH_WARNINGS`，新增
+    report/validate CLI、dynamic-v3 validation、family artifact validation、report index、Reader
+    Brief 和 Reader Brief quality 已通过；下一步为 owner 复核是否继续观察 `limited_adjustment`，并决定是否补齐更细
+    warning provenance 或 forward confirmation evidence。'
+  docs_links:
+  - docs/requirements/TRADING-219_to_223_Paper_Shadow_Selection_Drilldown_and_Research_Method_Hardening.md
+  terminal: false
+  raw_row_sha256: 879f35a6265df89bbcbc75c366810a38c6fe2679c9bc7dafa6421fa29030eee1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 96fb2d9270031b8260544257ec0b3ba6095167010d105838a6e6c5c51173e769

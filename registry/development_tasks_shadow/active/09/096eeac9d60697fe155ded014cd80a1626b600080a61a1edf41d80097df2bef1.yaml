@@ -1,0 +1,155 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2333_DYNAMIC_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+  title: null
+  domain: Research trends / dynamic exposure-cap diagnostics review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2333_Dynamic_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2333_Dynamic_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md`；承接
+    TRADING-2332 dynamic target baseline source-bound dry-run route。本批只读取 2332 prior
+    validated dynamic dry-run artifacts、2327/2326 static reference、2331 readiness
+    / PIT caveat、2330 timestamp remediation 和 2323 simulation policy context；不得重新执行
+    simulation、修改 exposure-cap policy、生成交易指令或进入 paper-shadow / production / broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends dynamic-exposure-cap-vs-no-cap-diagnostics-review`；生成
+      dynamic diagnostics summary、cap-binding / overbinding / exposure-reduction /
+      return-drawdown / false-cost-missed-upside / downside-protection / turnover-cooldown
+      / strategy-overlap diagnostics、static-vs-dynamic evidence comparison、cap binding
+      period attribution、policy sensitivity recommendation、decision matrix、2334 task
+      route、interpretation boundary 和 research docs；真实 run `cap_binding_rate=0.455422`、`overbinding_label=OVERBINDING_BLOCKING`、`return_proxy_delta=-0.187258`、`drawdown_proxy_delta=0.045294`、`overall_recommendation=HIGH_INTENSITY_ONLY_FORWARD_OBSERVE`、next
+      task=`TRADING-2334_High_Intensity_Only_Risk_Cap_Forward_Observe_Plan`；所有 outputs
+      固定 promotion/paper-shadow/production/broker false/none，并保留 `NEXT_SESSION_DECISION_POLICY`
+      / PIT caveat。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1195
+    row_sha256: b7595b7c7dbc4315c5003a4d4b6f82222236debdf889ea3f331d63d24820ca55
+    cell_count: 8
+    all_cells:
+    - TRADING-2333_DYNAMIC_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+    - Research trends / dynamic exposure-cap diagnostics review
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2333_Dynamic_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md`；承接
+      TRADING-2332 dynamic target baseline source-bound dry-run route。本批只读取 2332 prior
+      validated dynamic dry-run artifacts、2327/2326 static reference、2331 readiness
+      / PIT caveat、2330 timestamp remediation 和 2323 simulation policy context；不得重新执行
+      simulation、修改 exposure-cap policy、生成交易指令或进入 paper-shadow / production / broker。
+    - 新增 `aits research trends dynamic-exposure-cap-vs-no-cap-diagnostics-review`；生成
+      dynamic diagnostics summary、cap-binding / overbinding / exposure-reduction /
+      return-drawdown / false-cost-missed-upside / downside-protection / turnover-cooldown
+      / strategy-overlap diagnostics、static-vs-dynamic evidence comparison、cap binding
+      period attribution、policy sensitivity recommendation、decision matrix、2334 task
+      route、interpretation boundary 和 research docs；真实 run `cap_binding_rate=0.455422`、`overbinding_label=OVERBINDING_BLOCKING`、`return_proxy_delta=-0.187258`、`drawdown_proxy_delta=0.045294`、`overall_recommendation=HIGH_INTENSITY_ONLY_FORWARD_OBSERVE`、next
+      task=`TRADING-2334_High_Intensity_Only_Risk_Cap_Forward_Observe_Plan`；所有 outputs
+      固定 promotion/paper-shadow/production/broker false/none，并保留 `NEXT_SESSION_DECISION_POLICY`
+      / PIT caveat。
+    - '2026-07-03: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging，不能混入无关改动。2026-07-03: 实现完成并进入 VALIDATING；真实 CLI run 已生成 TRADING-2333
+      artifacts，`aits validate-data` 不适用，因为本任务只读取 prior validated TRADING-2332 dynamic
+      dry-run artifacts。2026-07-03: 验证通过 Ruff、compileall、focused parallel pytest 22
+      passed、docs freshness 511 docs PASS、documentation contract 1231 reports PASS、task-register
+      consistency run/validate PASS、contract-validation 193 passed、full parallel pytest
+      4104 passed / 643 warnings 和 `git diff --check`。'
+    raw_line: '|TRADING-2333_DYNAMIC_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW|Research
+      trends / dynamic exposure-cap diagnostics review|P0|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-2333_Dynamic_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md`；承接
+      TRADING-2332 dynamic target baseline source-bound dry-run route。本批只读取 2332 prior
+      validated dynamic dry-run artifacts、2327/2326 static reference、2331 readiness
+      / PIT caveat、2330 timestamp remediation 和 2323 simulation policy context；不得重新执行
+      simulation、修改 exposure-cap policy、生成交易指令或进入 paper-shadow / production / broker。|新增
+      `aits research trends dynamic-exposure-cap-vs-no-cap-diagnostics-review`；生成
+      dynamic diagnostics summary、cap-binding / overbinding / exposure-reduction /
+      return-drawdown / false-cost-missed-upside / downside-protection / turnover-cooldown
+      / strategy-overlap diagnostics、static-vs-dynamic evidence comparison、cap binding
+      period attribution、policy sensitivity recommendation、decision matrix、2334 task
+      route、interpretation boundary 和 research docs；真实 run `cap_binding_rate=0.455422`、`overbinding_label=OVERBINDING_BLOCKING`、`return_proxy_delta=-0.187258`、`drawdown_proxy_delta=0.045294`、`overall_recommendation=HIGH_INTENSITY_ONLY_FORWARD_OBSERVE`、next
+      task=`TRADING-2334_High_Intensity_Only_Risk_Cap_Forward_Observe_Plan`；所有 outputs
+      固定 promotion/paper-shadow/production/broker false/none，并保留 `NEXT_SESSION_DECISION_POLICY`
+      / PIT caveat。|2026-07-03: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research
+      文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-03: 实现完成并进入 VALIDATING；真实 CLI
+      run 已生成 TRADING-2333 artifacts，`aits validate-data` 不适用，因为本任务只读取 prior validated
+      TRADING-2332 dynamic dry-run artifacts。2026-07-03: 验证通过 Ruff、compileall、focused
+      parallel pytest 22 passed、docs freshness 511 docs PASS、documentation contract
+      1231 reports PASS、task-register consistency run/validate PASS、contract-validation
+      193 passed、full parallel pytest 4104 passed / 643 warnings 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b7595b7c7dbc4315c5003a4d
+  task_id: TRADING-2333_DYNAMIC_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-03: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging，不能混入无关改动。2026-07-03: 实现完成并进入 VALIDATING；真实 CLI run 已生成 TRADING-2333
+      artifacts，`aits validate-data` 不适用，因为本任务只读取 prior validated TRADING-2332 dynamic
+      dry-run artifacts。2026-07-03: 验证通过 Ruff、compileall、focused parallel pytest 22
+      passed、docs freshness 511 docs PASS、documentation contract 1231 reports PASS、task-register
+      consistency run/validate PASS、contract-validation 193 passed、full parallel pytest
+      4104 passed / 643 warnings 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b7595b7c7dbc4315c5003a4d4b6f82222236debdf889ea3f331d63d24820ca55
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2333_DYNAMIC_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+  - Research trends / dynamic exposure-cap diagnostics review
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2333_Dynamic_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md`；承接
+    TRADING-2332 dynamic target baseline source-bound dry-run route。本批只读取 2332 prior
+    validated dynamic dry-run artifacts、2327/2326 static reference、2331 readiness
+    / PIT caveat、2330 timestamp remediation 和 2323 simulation policy context；不得重新执行
+    simulation、修改 exposure-cap policy、生成交易指令或进入 paper-shadow / production / broker。
+  - 新增 `aits research trends dynamic-exposure-cap-vs-no-cap-diagnostics-review`；生成
+    dynamic diagnostics summary、cap-binding / overbinding / exposure-reduction / return-drawdown
+    / false-cost-missed-upside / downside-protection / turnover-cooldown / strategy-overlap
+    diagnostics、static-vs-dynamic evidence comparison、cap binding period attribution、policy
+    sensitivity recommendation、decision matrix、2334 task route、interpretation boundary
+    和 research docs；真实 run `cap_binding_rate=0.455422`、`overbinding_label=OVERBINDING_BLOCKING`、`return_proxy_delta=-0.187258`、`drawdown_proxy_delta=0.045294`、`overall_recommendation=HIGH_INTENSITY_ONLY_FORWARD_OBSERVE`、next
+    task=`TRADING-2334_High_Intensity_Only_Risk_Cap_Forward_Observe_Plan`；所有 outputs
+    固定 promotion/paper-shadow/production/broker false/none，并保留 `NEXT_SESSION_DECISION_POLICY`
+    / PIT caveat。
+  - '2026-07-03: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+    selective staging，不能混入无关改动。2026-07-03: 实现完成并进入 VALIDATING；真实 CLI run 已生成 TRADING-2333
+    artifacts，`aits validate-data` 不适用，因为本任务只读取 prior validated TRADING-2332 dynamic
+    dry-run artifacts。2026-07-03: 验证通过 Ruff、compileall、focused parallel pytest 22
+    passed、docs freshness 511 docs PASS、documentation contract 1231 reports PASS、task-register
+    consistency run/validate PASS、contract-validation 193 passed、full parallel pytest
+    4104 passed / 643 warnings 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-2333_Dynamic_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md
+  terminal: false
+  raw_row_sha256: b7595b7c7dbc4315c5003a4d4b6f82222236debdf889ea3f331d63d24820ca55
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f7ff687b904af14d484d32703b2ebe77d1d1ee8924f784c0c77ad29adda23030

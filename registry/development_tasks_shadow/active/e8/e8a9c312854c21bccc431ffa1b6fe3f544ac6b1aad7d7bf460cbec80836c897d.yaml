@@ -1,0 +1,136 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2328_DYNAMIC_TARGET_BASELINE_PREPARATION
+  title: null
+  domain: Research trends / exposure-cap dynamic target baseline preparation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2328_Dynamic_Target_Baseline_Preparation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2328_Dynamic_Target_Baseline_Preparation.md`；承接
+    TRADING-2327 diagnostics route。本批只准备和审计 dynamic strategy target exposure / advisory
+    exposure candidate source，判断 PIT、timestamp、validity、rebalance、hash、replayability、risk-cap
+    alignment 和 market-data alignment；不得执行新的 exposure-cap simulation、不得修改 policy /
+    trigger / dynamic strategy、不得生成 target weight 或 rebalance instruction。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends dynamic-target-baseline-preparation`；生成 dynamic
+      target source inventory、source gap matrix、PIT / replayability audit、field coverage
+      matrix、risk-cap / market-data alignment readiness、candidate matrix、recommended
+      spec、2329 readiness matrix、2329 task route、安全边界和 research docs；真实 run status=`DYNAMIC_TARGET_BASELINE_PREPARATION_READY_PROMOTION_BLOCKED`，available_source_count=`34`，inventory_source_count=`34`，pit_ready_source_count=`0`，blocking_gap_count=`136`，recommended_candidate_count=`0`，readiness_status=`DYNAMIC_BASELINE_SOURCE_REMEDIATION_REQUIRED`，next
+      task=`TRADING-2329_Dynamic_Target_Baseline_Source_Remediation`；所有 outputs 固定
+      `simulation_executed=false`、promotion/paper-shadow/production/broker false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1199
+    row_sha256: 85960b8deb6d5912d1fb9bd1cb31ee3d147330b80510fe92d0d82919895ed5be
+    cell_count: 8
+    all_cells:
+    - TRADING-2328_DYNAMIC_TARGET_BASELINE_PREPARATION
+    - Research trends / exposure-cap dynamic target baseline preparation
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2328_Dynamic_Target_Baseline_Preparation.md`；承接
+      TRADING-2327 diagnostics route。本批只准备和审计 dynamic strategy target exposure / advisory
+      exposure candidate source，判断 PIT、timestamp、validity、rebalance、hash、replayability、risk-cap
+      alignment 和 market-data alignment；不得执行新的 exposure-cap simulation、不得修改 policy
+      / trigger / dynamic strategy、不得生成 target weight 或 rebalance instruction。
+    - 新增 `aits research trends dynamic-target-baseline-preparation`；生成 dynamic target
+      source inventory、source gap matrix、PIT / replayability audit、field coverage
+      matrix、risk-cap / market-data alignment readiness、candidate matrix、recommended
+      spec、2329 readiness matrix、2329 task route、安全边界和 research docs；真实 run status=`DYNAMIC_TARGET_BASELINE_PREPARATION_READY_PROMOTION_BLOCKED`，available_source_count=`34`，inventory_source_count=`34`，pit_ready_source_count=`0`，blocking_gap_count=`136`，recommended_candidate_count=`0`，readiness_status=`DYNAMIC_BASELINE_SOURCE_REMEDIATION_REQUIRED`，next
+      task=`TRADING-2329_Dynamic_Target_Baseline_Source_Remediation`；所有 outputs 固定
+      `simulation_executed=false`、promotion/paper-shadow/production/broker false/none。
+    - '2026-07-02: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging，不能混入无关改动。2026-07-02: 实现完成并进入 VALIDATING；验证通过 focused parallel
+      pytest 19 passed、Ruff、compileall、真实 CLI run、docs / contract / task-register
+      gates、contract-validation 和 full validation；`aits validate-data` 不适用，因为本任务只读取
+      prior research outputs、static config 和 registry/candidate artifacts。'
+    raw_line: '|TRADING-2328_DYNAMIC_TARGET_BASELINE_PREPARATION|Research trends /
+      exposure-cap dynamic target baseline preparation|P0|VALIDATING|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-2328_Dynamic_Target_Baseline_Preparation.md`；承接
+      TRADING-2327 diagnostics route。本批只准备和审计 dynamic strategy target exposure / advisory
+      exposure candidate source，判断 PIT、timestamp、validity、rebalance、hash、replayability、risk-cap
+      alignment 和 market-data alignment；不得执行新的 exposure-cap simulation、不得修改 policy
+      / trigger / dynamic strategy、不得生成 target weight 或 rebalance instruction。|新增
+      `aits research trends dynamic-target-baseline-preparation`；生成 dynamic target
+      source inventory、source gap matrix、PIT / replayability audit、field coverage
+      matrix、risk-cap / market-data alignment readiness、candidate matrix、recommended
+      spec、2329 readiness matrix、2329 task route、安全边界和 research docs；真实 run status=`DYNAMIC_TARGET_BASELINE_PREPARATION_READY_PROMOTION_BLOCKED`，available_source_count=`34`，inventory_source_count=`34`，pit_ready_source_count=`0`，blocking_gap_count=`136`，recommended_candidate_count=`0`，readiness_status=`DYNAMIC_BASELINE_SOURCE_REMEDIATION_REQUIRED`，next
+      task=`TRADING-2329_Dynamic_Target_Baseline_Source_Remediation`；所有 outputs 固定
+      `simulation_executed=false`、promotion/paper-shadow/production/broker false/none。|2026-07-02:
+      根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective
+      staging，不能混入无关改动。2026-07-02: 实现完成并进入 VALIDATING；验证通过 focused parallel pytest
+      19 passed、Ruff、compileall、真实 CLI run、docs / contract / task-register gates、contract-validation
+      和 full validation；`aits validate-data` 不适用，因为本任务只读取 prior research outputs、static
+      config 和 registry/candidate artifacts。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-85960b8deb6d5912d1fb9bd1
+  task_id: TRADING-2328_DYNAMIC_TARGET_BASELINE_PREPARATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-02: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging，不能混入无关改动。2026-07-02: 实现完成并进入 VALIDATING；验证通过 focused parallel
+      pytest 19 passed、Ruff、compileall、真实 CLI run、docs / contract / task-register
+      gates、contract-validation 和 full validation；`aits validate-data` 不适用，因为本任务只读取
+      prior research outputs、static config 和 registry/candidate artifacts。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:85960b8deb6d5912d1fb9bd1cb31ee3d147330b80510fe92d0d82919895ed5be
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2328_DYNAMIC_TARGET_BASELINE_PREPARATION
+  - Research trends / exposure-cap dynamic target baseline preparation
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2328_Dynamic_Target_Baseline_Preparation.md`；承接
+    TRADING-2327 diagnostics route。本批只准备和审计 dynamic strategy target exposure / advisory
+    exposure candidate source，判断 PIT、timestamp、validity、rebalance、hash、replayability、risk-cap
+    alignment 和 market-data alignment；不得执行新的 exposure-cap simulation、不得修改 policy /
+    trigger / dynamic strategy、不得生成 target weight 或 rebalance instruction。
+  - 新增 `aits research trends dynamic-target-baseline-preparation`；生成 dynamic target
+    source inventory、source gap matrix、PIT / replayability audit、field coverage matrix、risk-cap
+    / market-data alignment readiness、candidate matrix、recommended spec、2329 readiness
+    matrix、2329 task route、安全边界和 research docs；真实 run status=`DYNAMIC_TARGET_BASELINE_PREPARATION_READY_PROMOTION_BLOCKED`，available_source_count=`34`，inventory_source_count=`34`，pit_ready_source_count=`0`，blocking_gap_count=`136`，recommended_candidate_count=`0`，readiness_status=`DYNAMIC_BASELINE_SOURCE_REMEDIATION_REQUIRED`，next
+    task=`TRADING-2329_Dynamic_Target_Baseline_Source_Remediation`；所有 outputs 固定 `simulation_executed=false`、promotion/paper-shadow/production/broker
+    false/none。
+  - '2026-07-02: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+    selective staging，不能混入无关改动。2026-07-02: 实现完成并进入 VALIDATING；验证通过 focused parallel
+    pytest 19 passed、Ruff、compileall、真实 CLI run、docs / contract / task-register gates、contract-validation
+    和 full validation；`aits validate-data` 不适用，因为本任务只读取 prior research outputs、static
+    config 和 registry/candidate artifacts。'
+  docs_links:
+  - docs/requirements/TRADING-2328_Dynamic_Target_Baseline_Preparation.md
+  terminal: false
+  raw_row_sha256: 85960b8deb6d5912d1fb9bd1cb31ee3d147330b80510fe92d0d82919895ed5be
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8a05c84aad59c6aa7dcd6a900495b59dd24c413497b16a34b40889ec6ed32266

@@ -1,0 +1,141 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-785_to_789_VALUE_SURFACE_WALK_FORWARD_EXPANSION
+  title: null
+  domain: Controlled strategy research / value surface walk-forward expansion, utility
+    Pareto review, forward continuity, GBDT residual diagnostics, regret activation
+    recheck
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-785_to_789_Value_Surface_Walk_Forward_Expansion.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-785_to_789_Value_Surface_Walk_Forward_Expansion.md`；owner
+    要求把 horizon-conditioned value surface 从 `CONTINUE` 推进到更严格 controlled walk-forward
+    review，并同步复核 utility/Pareto ranking、forward daily continuity、GBDT residual diagnostic
+    和 regret activation；不得 promotion、paper-shadow、production review、official weight
+    或 broker/order
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI：`aits research strategies value-surface-controlled-walk-forward-expansion`、`value-surface-utility-pareto-ranking-review`、`gbdt-value-surface-residual-diagnostic-prototype`、`regret-casebook-activation-recheck`
+      和 `aits forward-evidence daily-continuity-review`；TRADING-785 决策只能为 `CONTINUE
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1352
+    row_sha256: 55ca61488e3228830760f981ebbe1aa1eefb139750a7ba54cf4f355a817a83c1
+    cell_count: 12
+    all_cells:
+    - TRADING-785_to_789_VALUE_SURFACE_WALK_FORWARD_EXPANSION
+    - Controlled strategy research / value surface walk-forward expansion, utility
+      Pareto review, forward continuity, GBDT residual diagnostics, regret activation
+      recheck
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-785_to_789_Value_Surface_Walk_Forward_Expansion.md`；owner
+      要求把 horizon-conditioned value surface 从 `CONTINUE` 推进到更严格 controlled walk-forward
+      review，并同步复核 utility/Pareto ranking、forward daily continuity、GBDT residual diagnostic
+      和 regret activation；不得 promotion、paper-shadow、production review、official weight
+      或 broker/order
+    - 新增 CLI：`aits research strategies value-surface-controlled-walk-forward-expansion`、`value-surface-utility-pareto-ranking-review`、`gbdt-value-surface-residual-diagnostic-prototype`、`regret-casebook-activation-recheck`
+      和 `aits forward-evidence daily-continuity-review`；TRADING-785 决策只能为 `CONTINUE
+    - WATCHLIST
+    - DATA_REQUIRED
+    - PAUSE
+    - KILL`；TRADING-786 最多 `SENSITIVITY_TESTED` 且 `not_validated_utility_boundary=true`；TRADING-787
+      必须检查 append-only ledger、missing archive、maturity tracker 和 output coverage；TRADING-788
+      只能解释 residual 并输出 hypotheses，不生成策略；TRADING-789 条件不足时继续 watchlist；所有 safety flags
+      false
+    - '2026-06-21: 新增并进入 IN_PROGRESS，原因：owner 将 TRADING-785 指定为下一步主任务，目标是验证 value
+      surface 在 walk-forward、benchmark、utility ranking 和 forward evidence 条件下是否仍值得继续；GBDT
+      residual 和 regret recheck 只作为辅助诊断线，不允许晋级。2026-06-21: 实现完成并转入 VALIDATING；真实 CLI
+      run 输出 TRADING-785 `CONTROLLED_WALK_FORWARD_REVIEW_COMPLETE`、`controlled_walk_forward_decision=WATCHLIST`、`walk_forward_window_count=6`、`decision_date_count=72`、overall
+      `mean_delta_vs_benchmark=-0.02366`、`value_surface_beats_benchmark_rate=0.742565`；TRADING-786
+      `SENSITIVITY_TESTED`、`utility_profile_count=5`、`ranking_flip_count=1`、`pareto_candidate_count=32`、`horizon_cliff_count=30`；TRADING-787
+      `PASS_WITH_WARNINGS`、`ledger_event_count=1`、`missing_daily_archive_count=0`、`continuity_ready_for_longer_review=false`；TRADING-788
+      `DIAGNOSTIC_PROTOTYPE_COMPLETE`、`residual_case_count=23672`、`hypothesis_candidate_count=10`、`strategy_signal_generated=false`；TRADING-789
+      `WATCHLIST_NOT_READY`、`value_surface_losing_case_count=692`、`benchmark_disagreement_case_count=830`、`teacher_oracle_better_case_count=0`、`stable_regret_type_count=9`、`regret_casebook_expansion_allowed=false`；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T111023Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T111311Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T111559Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-785_to_789_VALUE_SURFACE_WALK_FORWARD_EXPANSION|Controlled
+      strategy research / value surface walk-forward expansion, utility Pareto review,
+      forward continuity, GBDT residual diagnostics, regret activation recheck|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-785_to_789_Value_Surface_Walk_Forward_Expansion.md`；owner
+      要求把 horizon-conditioned value surface 从 `CONTINUE` 推进到更严格 controlled walk-forward
+      review，并同步复核 utility/Pareto ranking、forward daily continuity、GBDT residual diagnostic
+      和 regret activation；不得 promotion、paper-shadow、production review、official weight
+      或 broker/order|新增 CLI：`aits research strategies value-surface-controlled-walk-forward-expansion`、`value-surface-utility-pareto-ranking-review`、`gbdt-value-surface-residual-diagnostic-prototype`、`regret-casebook-activation-recheck`
+      和 `aits forward-evidence daily-continuity-review`；TRADING-785 决策只能为 `CONTINUE|WATCHLIST|DATA_REQUIRED|PAUSE|KILL`；TRADING-786
+      最多 `SENSITIVITY_TESTED` 且 `not_validated_utility_boundary=true`；TRADING-787
+      必须检查 append-only ledger、missing archive、maturity tracker 和 output coverage；TRADING-788
+      只能解释 residual 并输出 hypotheses，不生成策略；TRADING-789 条件不足时继续 watchlist；所有 safety flags
+      false|2026-06-21: 新增并进入 IN_PROGRESS，原因：owner 将 TRADING-785 指定为下一步主任务，目标是验证 value
+      surface 在 walk-forward、benchmark、utility ranking 和 forward evidence 条件下是否仍值得继续；GBDT
+      residual 和 regret recheck 只作为辅助诊断线，不允许晋级。2026-06-21: 实现完成并转入 VALIDATING；真实 CLI
+      run 输出 TRADING-785 `CONTROLLED_WALK_FORWARD_REVIEW_COMPLETE`、`controlled_walk_forward_decision=WATCHLIST`、`walk_forward_window_count=6`、`decision_date_count=72`、overall
+      `mean_delta_vs_benchmark=-0.02366`、`value_surface_beats_benchmark_rate=0.742565`；TRADING-786
+      `SENSITIVITY_TESTED`、`utility_profile_count=5`、`ranking_flip_count=1`、`pareto_candidate_count=32`、`horizon_cliff_count=30`；TRADING-787
+      `PASS_WITH_WARNINGS`、`ledger_event_count=1`、`missing_daily_archive_count=0`、`continuity_ready_for_longer_review=false`；TRADING-788
+      `DIAGNOSTIC_PROTOTYPE_COMPLETE`、`residual_case_count=23672`、`hypothesis_candidate_count=10`、`strategy_signal_generated=false`；TRADING-789
+      `WATCHLIST_NOT_READY`、`value_surface_losing_case_count=692`、`benchmark_disagreement_case_count=830`、`teacher_oracle_better_case_count=0`、`stable_regret_type_count=9`、`regret_casebook_expansion_allowed=false`；所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
+      focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T111023Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T111311Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T111559Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: true
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-55ca61488e3228830760f981
+  task_id: TRADING-785_to_789_VALUE_SURFACE_WALK_FORWARD_EXPANSION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: WATCHLIST
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:55ca61488e3228830760f981ebbe1aa1eefb139750a7ba54cf4f355a817a83c1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-785_to_789_VALUE_SURFACE_WALK_FORWARD_EXPANSION
+  - Controlled strategy research / value surface walk-forward expansion, utility Pareto
+    review, forward continuity, GBDT residual diagnostics, regret activation recheck
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-785_to_789_Value_Surface_Walk_Forward_Expansion.md`；owner
+    要求把 horizon-conditioned value surface 从 `CONTINUE` 推进到更严格 controlled walk-forward
+    review，并同步复核 utility/Pareto ranking、forward daily continuity、GBDT residual diagnostic
+    和 regret activation；不得 promotion、paper-shadow、production review、official weight
+    或 broker/order
+  - 新增 CLI：`aits research strategies value-surface-controlled-walk-forward-expansion`、`value-surface-utility-pareto-ranking-review`、`gbdt-value-surface-residual-diagnostic-prototype`、`regret-casebook-activation-recheck`
+    和 `aits forward-evidence daily-continuity-review`；TRADING-785 决策只能为 `CONTINUE
+  - WATCHLIST
+  docs_links:
+  - docs/requirements/TRADING-785_to_789_Value_Surface_Walk_Forward_Expansion.md
+  terminal: false
+  raw_row_sha256: 55ca61488e3228830760f981ebbe1aa1eefb139750a7ba54cf4f355a817a83c1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a373b3d76b3d4624899fc4dcaf00df8562cf3df8f74e3cdc1abd69d874fea98d

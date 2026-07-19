@@ -1,0 +1,98 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-346_FORMAL_RESEARCH_METHOD_CONTRACT
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue formal research method governance contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；当前收集dated evidence
+  requirement_refs:
+  - docs/requirements/TRADING-346_Formal_Research_Method_Contract.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-346_Formal_Research_Method_Contract.md`；承接canonical
+    TRADING-336～345，把证据状态映射为可审计Contract；缺dated evidence应为`NEEDS_MORE_EVIDENCE`而非READY或hard
+    REJECTED。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Contract输出`NOT_READY / NEEDS_MORE_EVIDENCE / NOT_ELIGIBLE`并阻断paper-shadow；只有safety
+      failure或上游显式REJECTED/FAIL才hard reject；保持no official weights/broker/production。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1431
+    row_sha256: 89b4a0dd42e80bdce0e4c8610074d6f13f9527309eda8966873d4085c22cb92b
+    cell_count: 8
+    all_cells:
+    - TRADING-346_FORMAL_RESEARCH_METHOD_CONTRACT
+    - ETF portfolio/dynamic v3 rescue formal research method governance contract
+    - P0
+    - BASELINE_DONE
+    - 项目 owner 后续复核；当前收集dated evidence
+    - 详细拆解见 `docs/requirements/TRADING-346_Formal_Research_Method_Contract.md`；承接canonical
+      TRADING-336～345，把证据状态映射为可审计Contract；缺dated evidence应为`NEEDS_MORE_EVIDENCE`而非READY或hard
+      REJECTED。
+    - Contract输出`NOT_READY / NEEDS_MORE_EVIDENCE / NOT_ELIGIBLE`并阻断paper-shadow；只有safety
+      failure或上游显式REJECTED/FAIL才hard reject；保持no official weights/broker/production。
+    - 2026-07-19：EB3修正legacy bridge并闭合正式门禁；2026-06-15 `FORMAL_RESEARCH_READY` artifact被canonical
+      v2链路取代。当前下一动作=`COLLECT_VALIDATED_DATED_FILTERED_OUTCOMES`；architecture/contract/Full均PASS。
+    raw_line: '|TRADING-346_FORMAL_RESEARCH_METHOD_CONTRACT|ETF portfolio/dynamic
+      v3 rescue formal research method governance contract|P0|BASELINE_DONE|项目 owner
+      后续复核；当前收集dated evidence|详细拆解见 `docs/requirements/TRADING-346_Formal_Research_Method_Contract.md`；承接canonical
+      TRADING-336～345，把证据状态映射为可审计Contract；缺dated evidence应为`NEEDS_MORE_EVIDENCE`而非READY或hard
+      REJECTED。|Contract输出`NOT_READY / NEEDS_MORE_EVIDENCE / NOT_ELIGIBLE`并阻断paper-shadow；只有safety
+      failure或上游显式REJECTED/FAIL才hard reject；保持no official weights/broker/production。|2026-07-19：EB3修正legacy
+      bridge并闭合正式门禁；2026-06-15 `FORMAL_RESEARCH_READY` artifact被canonical v2链路取代。当前下一动作=`COLLECT_VALIDATED_DATED_FILTERED_OUTCOMES`；architecture/contract/Full均PASS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-89b4a0dd42e80bdce0e4c861
+  task_id: TRADING-346_FORMAL_RESEARCH_METHOD_CONTRACT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核；当前收集dated evidence
+    notes: 2026-07-19：EB3修正legacy bridge并闭合正式门禁；2026-06-15 `FORMAL_RESEARCH_READY`
+      artifact被canonical v2链路取代。当前下一动作=`COLLECT_VALIDATED_DATED_FILTERED_OUTCOMES`；architecture/contract/Full均PASS。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:89b4a0dd42e80bdce0e4c8610074d6f13f9527309eda8966873d4085c22cb92b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-346_FORMAL_RESEARCH_METHOD_CONTRACT
+  - ETF portfolio/dynamic v3 rescue formal research method governance contract
+  - P0
+  - BASELINE_DONE
+  - 项目 owner 后续复核；当前收集dated evidence
+  - 详细拆解见 `docs/requirements/TRADING-346_Formal_Research_Method_Contract.md`；承接canonical
+    TRADING-336～345，把证据状态映射为可审计Contract；缺dated evidence应为`NEEDS_MORE_EVIDENCE`而非READY或hard
+    REJECTED。
+  - Contract输出`NOT_READY / NEEDS_MORE_EVIDENCE / NOT_ELIGIBLE`并阻断paper-shadow；只有safety
+    failure或上游显式REJECTED/FAIL才hard reject；保持no official weights/broker/production。
+  - 2026-07-19：EB3修正legacy bridge并闭合正式门禁；2026-06-15 `FORMAL_RESEARCH_READY` artifact被canonical
+    v2链路取代。当前下一动作=`COLLECT_VALIDATED_DATED_FILTERED_OUTCOMES`；architecture/contract/Full均PASS。
+  docs_links:
+  - docs/requirements/TRADING-346_Formal_Research_Method_Contract.md
+  terminal: false
+  raw_row_sha256: 89b4a0dd42e80bdce0e4c8610074d6f13f9527309eda8966873d4085c22cb92b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0b640ccbe8564a3dace2e7dddbe10878ca321ebfde8050c39e33e942d6f0ea3b

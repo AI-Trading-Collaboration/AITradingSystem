@@ -1,0 +1,115 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2278_FIRST_LAYER_CHALLENGER_MATRIX_V2_RERUN
+  title: null
+  domain: Research trends / first-layer challenger matrix v2 rerun
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2278_First_Layer_Challenger_Matrix_v2_Rerun.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2278_First_Layer_Challenger_Matrix_v2_Rerun.md`；依赖
+    TRADING-2275 gate policy v2 和 TRADING-2277 active selection policy v2。本批重跑 matrix/queues，但不训练模型、不打开
+    promotion/paper-shadow/production/broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 `first_layer_challenger_matrix_v2.json`、`first_layer_challenger_report_v2.md`、`research_candidate_queue_v2.json`、`owner_review_queue_v2.json`、`blocked_candidate_queue_v2.json`
+      和 `promotion_boundary_check_v2.md`；核心字段包含 research/owner/blocked/promotion counts、best
+      candidates、`candidate_state_transition_from_v1`、`active_selection_policy_v2_applied`
+      和 `gate_policy_v2_applied`；`wf_504d_baseline` 保持 `OWNER_REVIEW_REQUIRED`，`wf_378d_initial`
+      保持 research/offline-ready；所有 safety fields 固定 false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1238
+    row_sha256: 0850abea0e1dd0ed3aa3cc5afe8803b3c13ee6e61c7bd3b8089ea3c55e8ab53b
+    cell_count: 8
+    all_cells:
+    - TRADING-2278_FIRST_LAYER_CHALLENGER_MATRIX_V2_RERUN
+    - Research trends / first-layer challenger matrix v2 rerun
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2278_First_Layer_Challenger_Matrix_v2_Rerun.md`；依赖
+      TRADING-2275 gate policy v2 和 TRADING-2277 active selection policy v2。本批重跑 matrix/queues，但不训练模型、不打开
+      promotion/paper-shadow/production/broker。
+    - 生成 `first_layer_challenger_matrix_v2.json`、`first_layer_challenger_report_v2.md`、`research_candidate_queue_v2.json`、`owner_review_queue_v2.json`、`blocked_candidate_queue_v2.json`
+      和 `promotion_boundary_check_v2.md`；核心字段包含 research/owner/blocked/promotion counts、best
+      candidates、`candidate_state_transition_from_v1`、`active_selection_policy_v2_applied`
+      和 `gate_policy_v2_applied`；`wf_504d_baseline` 保持 `OWNER_REVIEW_REQUIRED`，`wf_378d_initial`
+      保持 research/offline-ready；所有 safety fields 固定 false/none。
+    - '2026-06-29: 新增并进入 IN_PROGRESS。2026-06-29: 实现完成并转入 VALIDATING；真实 run candidate_count=10、research_accepted=1、offline_validation_ready=4、owner_review_required=1、blocked=4、promotion_ready=0。验证通过
+      Ruff、compileall、focused parallel pytest 52 passed、docs freshness、diff check
+      和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T152152Z/test_runtime_summary.json`。'
+    raw_line: '|TRADING-2278_FIRST_LAYER_CHALLENGER_MATRIX_V2_RERUN|Research trends
+      / first-layer challenger matrix v2 rerun|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-2278_First_Layer_Challenger_Matrix_v2_Rerun.md`；依赖
+      TRADING-2275 gate policy v2 和 TRADING-2277 active selection policy v2。本批重跑 matrix/queues，但不训练模型、不打开
+      promotion/paper-shadow/production/broker。|生成 `first_layer_challenger_matrix_v2.json`、`first_layer_challenger_report_v2.md`、`research_candidate_queue_v2.json`、`owner_review_queue_v2.json`、`blocked_candidate_queue_v2.json`
+      和 `promotion_boundary_check_v2.md`；核心字段包含 research/owner/blocked/promotion counts、best
+      candidates、`candidate_state_transition_from_v1`、`active_selection_policy_v2_applied`
+      和 `gate_policy_v2_applied`；`wf_504d_baseline` 保持 `OWNER_REVIEW_REQUIRED`，`wf_378d_initial`
+      保持 research/offline-ready；所有 safety fields 固定 false/none。|2026-06-29: 新增并进入
+      IN_PROGRESS。2026-06-29: 实现完成并转入 VALIDATING；真实 run candidate_count=10、research_accepted=1、offline_validation_ready=4、owner_review_required=1、blocked=4、promotion_ready=0。验证通过
+      Ruff、compileall、focused parallel pytest 52 passed、docs freshness、diff check
+      和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T152152Z/test_runtime_summary.json`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0850abea0e1dd0ed3aa3cc5a
+  task_id: TRADING-2278_FIRST_LAYER_CHALLENGER_MATRIX_V2_RERUN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-29: 新增并进入 IN_PROGRESS。2026-06-29: 实现完成并转入 VALIDATING；真实 run candidate_count=10、research_accepted=1、offline_validation_ready=4、owner_review_required=1、blocked=4、promotion_ready=0。验证通过
+      Ruff、compileall、focused parallel pytest 52 passed、docs freshness、diff check
+      和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T152152Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0850abea0e1dd0ed3aa3cc5afe8803b3c13ee6e61c7bd3b8089ea3c55e8ab53b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2278_FIRST_LAYER_CHALLENGER_MATRIX_V2_RERUN
+  - Research trends / first-layer challenger matrix v2 rerun
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2278_First_Layer_Challenger_Matrix_v2_Rerun.md`；依赖
+    TRADING-2275 gate policy v2 和 TRADING-2277 active selection policy v2。本批重跑 matrix/queues，但不训练模型、不打开
+    promotion/paper-shadow/production/broker。
+  - 生成 `first_layer_challenger_matrix_v2.json`、`first_layer_challenger_report_v2.md`、`research_candidate_queue_v2.json`、`owner_review_queue_v2.json`、`blocked_candidate_queue_v2.json`
+    和 `promotion_boundary_check_v2.md`；核心字段包含 research/owner/blocked/promotion counts、best
+    candidates、`candidate_state_transition_from_v1`、`active_selection_policy_v2_applied`
+    和 `gate_policy_v2_applied`；`wf_504d_baseline` 保持 `OWNER_REVIEW_REQUIRED`，`wf_378d_initial`
+    保持 research/offline-ready；所有 safety fields 固定 false/none。
+  - '2026-06-29: 新增并进入 IN_PROGRESS。2026-06-29: 实现完成并转入 VALIDATING；真实 run candidate_count=10、research_accepted=1、offline_validation_ready=4、owner_review_required=1、blocked=4、promotion_ready=0。验证通过
+    Ruff、compileall、focused parallel pytest 52 passed、docs freshness、diff check 和
+    contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T152152Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-2278_First_Layer_Challenger_Matrix_v2_Rerun.md
+  terminal: false
+  raw_row_sha256: 0850abea0e1dd0ed3aa3cc5afe8803b3c13ee6e61c7bd3b8089ea3c55e8ab53b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 1205546685c553ba13808eee7b499aa85071cc84792e51cea7e83a603be3d4d3

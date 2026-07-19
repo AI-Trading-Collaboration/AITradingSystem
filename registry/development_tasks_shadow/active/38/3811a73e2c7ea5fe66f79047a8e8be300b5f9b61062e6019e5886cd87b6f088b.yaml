@@ -1,0 +1,103 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-857_TAIL_RISK_RESEARCH_READINESS_SCORE
+  title: null
+  domain: Controlled strategy research / tail-risk readiness score
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；分数解释必须防止自动
+    promotion 误读
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies tail-risk-research-readiness-score`，按 anti-leakage、forward
+      independence、sample maturity、regime robustness、sensitivity stability、baseline
+      competitiveness、operational safety 汇总 0～100 和解释区间
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1335
+    row_sha256: ccb61a65c6b0b0fd40078355d1afd700bbac9669f51a0d36c65f0602f5f599fd
+    cell_count: 8
+    all_cells:
+    - TRADING-857_TAIL_RISK_RESEARCH_READINESS_SCORE
+    - Controlled strategy research / tail-risk readiness score
+    - P2
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；分数解释必须防止自动
+      promotion 误读
+    - 新增 `aits research strategies tail-risk-research-readiness-score`，按 anti-leakage、forward
+      independence、sample maturity、regime robustness、sensitivity stability、baseline
+      competitiveness、operational safety 汇总 0～100 和解释区间
+    - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+      Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+      tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+    raw_line: '|TRADING-857_TAIL_RISK_RESEARCH_READINESS_SCORE|Controlled strategy
+      research / tail-risk readiness score|P2|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；分数解释必须防止自动
+      promotion 误读|新增 `aits research strategies tail-risk-research-readiness-score`，按
+      anti-leakage、forward independence、sample maturity、regime robustness、sensitivity
+      stability、baseline competitiveness、operational safety 汇总 0～100 和解释区间|2026-06-22:
+      新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+      Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+      tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ccb61a65c6b0b0fd40078355
+  task_id: TRADING-857_TAIL_RISK_RESEARCH_READINESS_SCORE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P2
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up
+      CLI/artifacts、registry/catalog/system-flow/Reader Brief/tests；验证通过 focused parallel
+      pytest、registry/documentation/task-register tests、Ruff、compileall 和 git diff
+      --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ccb61a65c6b0b0fd40078355d1afd700bbac9669f51a0d36c65f0602f5f599fd
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-857_TAIL_RISK_RESEARCH_READINESS_SCORE
+  - Controlled strategy research / tail-risk readiness score
+  - P2
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；分数解释必须防止自动
+    promotion 误读
+  - 新增 `aits research strategies tail-risk-research-readiness-score`，按 anti-leakage、forward
+    independence、sample maturity、regime robustness、sensitivity stability、baseline
+    competitiveness、operational safety 汇总 0～100 和解释区间
+  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+    Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+    tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  docs_links:
+  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
+  terminal: false
+  raw_row_sha256: ccb61a65c6b0b0fd40078355d1afd700bbac9669f51a0d36c65f0602f5f599fd
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4eac427cc91d53c07a2787840d5572024ee27c39ba9cbd3a54879950790b4b34

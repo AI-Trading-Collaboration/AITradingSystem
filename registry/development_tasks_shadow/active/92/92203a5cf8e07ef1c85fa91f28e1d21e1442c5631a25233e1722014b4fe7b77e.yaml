@@ -1,0 +1,197 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-086
+  title: null
+  domain: ETF portfolio research/Dynamic Strategy Backtest, Robustness, and Attribution
+    Review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-086_Dynamic_Strategy_Backtest_Robustness_and_Attribution_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-086_Dynamic_Strategy_Backtest_Robustness_and_Attribution_Review.md`；baseline
+    已实现真实价格驱动 dynamic robustness workflow；下一步 owner 复核真实 robustness report，并在 TRADING-087
+    前确认哪些 dynamic candidates 可进入 owner-approved shadow package；本阶段可输出 dynamic/static
+    robustness evidence，但不得写 official ETF target weights、production baseline、broker
+    state 或 shadow enrollment ledger
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`config/etf_portfolio/dynamic_robustness.yaml` 存在且 safety fields mandatory；`aits
+      etf dynamic-robustness report --candidate <candidate_id>`、`report --latest`
+      和 `validate` 可运行；从 cached price data 生成 report 前必须运行 `aits validate-data` 等价门禁并在输出披露
+      status；比较指标包含 CAGR、total return、max drawdown、volatility、Sharpe、Sortino、Calmar、turnover、downside/upside
+      capture、risk-off drawdown reduction、false risk-off opportunity cost、false risk-on
+      drawdown cost；walk-forward、regime attribution、false risk-on/off、turnover sensitivity、AI/semiconductor
+      contribution、event risk overlay 和 overfit diagnostics 可见；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs
+      和 tests 同步；focused pytest、ruff、compileall、diff check、`aits etf dynamic-robustness
+      validate`、真实 cached-data smoke 和全量 pytest 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1476
+    row_sha256: 657a4ae5bea057a6f8cc66abde1507b4bbcf69ecea860408e4542d0ad5e38c53
+    cell_count: 8
+    all_cells:
+    - TRADING-086
+    - ETF portfolio research/Dynamic Strategy Backtest, Robustness, and Attribution
+      Review
+    - P0
+    - VALIDATING
+    - 系统验证 + 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-086_Dynamic_Strategy_Backtest_Robustness_and_Attribution_Review.md`；baseline
+      已实现真实价格驱动 dynamic robustness workflow；下一步 owner 复核真实 robustness report，并在 TRADING-087
+      前确认哪些 dynamic candidates 可进入 owner-approved shadow package；本阶段可输出 dynamic/static
+      robustness evidence，但不得写 official ETF target weights、production baseline、broker
+      state 或 shadow enrollment ledger
+    - '`config/etf_portfolio/dynamic_robustness.yaml` 存在且 safety fields mandatory；`aits
+      etf dynamic-robustness report --candidate <candidate_id>`、`report --latest`
+      和 `validate` 可运行；从 cached price data 生成 report 前必须运行 `aits validate-data` 等价门禁并在输出披露
+      status；比较指标包含 CAGR、total return、max drawdown、volatility、Sharpe、Sortino、Calmar、turnover、downside/upside
+      capture、risk-off drawdown reduction、false risk-off opportunity cost、false risk-on
+      drawdown cost；walk-forward、regime attribution、false risk-on/off、turnover sensitivity、AI/semiconductor
+      contribution、event risk overlay 和 overfit diagnostics 可见；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs
+      和 tests 同步；focused pytest、ruff、compileall、diff check、`aits etf dynamic-robustness
+      validate`、真实 cached-data smoke 和全量 pytest 通过'
+    - '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-085 已完成 two-layer dynamic candidate
+      batch/cache baseline，但其 `dynamic_backtest` 只是 calibration proxy；下一优先级是用真实 ETF
+      price data 完整评估 dynamic candidate 是否优于 static alternatives，并量化 false signal、turnover、regime
+      robustness 和 overfit risk，为 TRADING-087 owner-approved shadow enrollment 提供前置证据。2026-06-05:
+      TRADING-086A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic robustness policy、`aits
+      etf dynamic-robustness report --candidate <candidate_id>` / `report --latest`
+      / `validate`、真实价格驱动 daily dynamic path、dynamic/static/current/QQQ/SPY/SMH/best-static
+      comparison、walk-forward、regime attribution、false risk-on/off diagnostics、turnover
+      sensitivity、AI/semiconductor contribution、event risk overlay attribution、overfit
+      diagnostics、JSON/Markdown report、Reader Brief `Dynamic Robustness Review` section、report
+      registry/artifact catalog/system flow/runbook/README integration 和 focused tests；验证为
+      20 个相关测试 passed，`aits etf dynamic-robustness validate` PASS，ruff、compileall、diff
+      check 通过；真实 cached-data smoke 使用 `dynamic-candidate-pack_8904048b4dbd`、2022-12-01
+      至 2026-06-03，`validate_data_status=PASS_WITH_WARNINGS`，生成 `dynamic-robustness-report_98f2aa81bb60.json/md`，`status=REVIEW_REQUIRED`、`dynamic_total_return=1.1048362233046518`、`excess_vs_static_base=-0.42559745604739074`、`false_risk_off_count=217`、`false_risk_on_count=40`、`overfit_status=REVIEW_REQUIRED`、`shadow_enrollment_allowed=false`。2026-06-05:
+      全量 `python -m pytest tests -q` 长跑复核通过，结果为 2153 passed、330 warnings、耗时 641.51s；剩余条件是真实
+      robustness report 的 owner 复核和 TRADING-087 前的 dynamic shadow input 审查。'
+    raw_line: '|TRADING-086|ETF portfolio research/Dynamic Strategy Backtest, Robustness,
+      and Attribution Review|P0|VALIDATING|系统验证 + 项目 owner 人工复核|详细拆解见 `docs/requirements/TRADING-086_Dynamic_Strategy_Backtest_Robustness_and_Attribution_Review.md`；baseline
+      已实现真实价格驱动 dynamic robustness workflow；下一步 owner 复核真实 robustness report，并在 TRADING-087
+      前确认哪些 dynamic candidates 可进入 owner-approved shadow package；本阶段可输出 dynamic/static
+      robustness evidence，但不得写 official ETF target weights、production baseline、broker
+      state 或 shadow enrollment ledger|`config/etf_portfolio/dynamic_robustness.yaml`
+      存在且 safety fields mandatory；`aits etf dynamic-robustness report --candidate
+      <candidate_id>`、`report --latest` 和 `validate` 可运行；从 cached price data 生成 report
+      前必须运行 `aits validate-data` 等价门禁并在输出披露 status；比较指标包含 CAGR、total return、max drawdown、volatility、Sharpe、Sortino、Calmar、turnover、downside/upside
+      capture、risk-off drawdown reduction、false risk-off opportunity cost、false risk-on
+      drawdown cost；walk-forward、regime attribution、false risk-on/off、turnover sensitivity、AI/semiconductor
+      contribution、event risk overlay 和 overfit diagnostics 可见；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs
+      和 tests 同步；focused pytest、ruff、compileall、diff check、`aits etf dynamic-robustness
+      validate`、真实 cached-data smoke 和全量 pytest 通过|2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-085
+      已完成 two-layer dynamic candidate batch/cache baseline，但其 `dynamic_backtest` 只是
+      calibration proxy；下一优先级是用真实 ETF price data 完整评估 dynamic candidate 是否优于 static
+      alternatives，并量化 false signal、turnover、regime robustness 和 overfit risk，为 TRADING-087
+      owner-approved shadow enrollment 提供前置证据。2026-06-05: TRADING-086A-K baseline
+      实现完成并转入 VALIDATING，原因：新增 dynamic robustness policy、`aits etf dynamic-robustness
+      report --candidate <candidate_id>` / `report --latest` / `validate`、真实价格驱动 daily
+      dynamic path、dynamic/static/current/QQQ/SPY/SMH/best-static comparison、walk-forward、regime
+      attribution、false risk-on/off diagnostics、turnover sensitivity、AI/semiconductor
+      contribution、event risk overlay attribution、overfit diagnostics、JSON/Markdown
+      report、Reader Brief `Dynamic Robustness Review` section、report registry/artifact
+      catalog/system flow/runbook/README integration 和 focused tests；验证为 20 个相关测试
+      passed，`aits etf dynamic-robustness validate` PASS，ruff、compileall、diff check
+      通过；真实 cached-data smoke 使用 `dynamic-candidate-pack_8904048b4dbd`、2022-12-01
+      至 2026-06-03，`validate_data_status=PASS_WITH_WARNINGS`，生成 `dynamic-robustness-report_98f2aa81bb60.json/md`，`status=REVIEW_REQUIRED`、`dynamic_total_return=1.1048362233046518`、`excess_vs_static_base=-0.42559745604739074`、`false_risk_off_count=217`、`false_risk_on_count=40`、`overfit_status=REVIEW_REQUIRED`、`shadow_enrollment_allowed=false`。2026-06-05:
+      全量 `python -m pytest tests -q` 长跑复核通过，结果为 2153 passed、330 warnings、耗时 641.51s；剩余条件是真实
+      robustness report 的 owner 复核和 TRADING-087 前的 dynamic shadow input 审查。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-657a4ae5bea057a6f8cc66ab
+  task_id: TRADING-086
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner 人工复核
+    notes: '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-085 已完成 two-layer dynamic candidate
+      batch/cache baseline，但其 `dynamic_backtest` 只是 calibration proxy；下一优先级是用真实 ETF
+      price data 完整评估 dynamic candidate 是否优于 static alternatives，并量化 false signal、turnover、regime
+      robustness 和 overfit risk，为 TRADING-087 owner-approved shadow enrollment 提供前置证据。2026-06-05:
+      TRADING-086A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic robustness policy、`aits
+      etf dynamic-robustness report --candidate <candidate_id>` / `report --latest`
+      / `validate`、真实价格驱动 daily dynamic path、dynamic/static/current/QQQ/SPY/SMH/best-static
+      comparison、walk-forward、regime attribution、false risk-on/off diagnostics、turnover
+      sensitivity、AI/semiconductor contribution、event risk overlay attribution、overfit
+      diagnostics、JSON/Markdown report、Reader Brief `Dynamic Robustness Review` section、report
+      registry/artifact catalog/system flow/runbook/README integration 和 focused tests；验证为
+      20 个相关测试 passed，`aits etf dynamic-robustness validate` PASS，ruff、compileall、diff
+      check 通过；真实 cached-data smoke 使用 `dynamic-candidate-pack_8904048b4dbd`、2022-12-01
+      至 2026-06-03，`validate_data_status=PASS_WITH_WARNINGS`，生成 `dynamic-robustness-report_98f2aa81bb60.json/md`，`status=REVIEW_REQUIRED`、`dynamic_total_return=1.1048362233046518`、`excess_vs_static_base=-0.42559745604739074`、`false_risk_off_count=217`、`false_risk_on_count=40`、`overfit_status=REVIEW_REQUIRED`、`shadow_enrollment_allowed=false`。2026-06-05:
+      全量 `python -m pytest tests -q` 长跑复核通过，结果为 2153 passed、330 warnings、耗时 641.51s；剩余条件是真实
+      robustness report 的 owner 复核和 TRADING-087 前的 dynamic shadow input 审查。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:657a4ae5bea057a6f8cc66abde1507b4bbcf69ecea860408e4542d0ad5e38c53
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-086
+  - ETF portfolio research/Dynamic Strategy Backtest, Robustness, and Attribution
+    Review
+  - P0
+  - VALIDATING
+  - 系统验证 + 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-086_Dynamic_Strategy_Backtest_Robustness_and_Attribution_Review.md`；baseline
+    已实现真实价格驱动 dynamic robustness workflow；下一步 owner 复核真实 robustness report，并在 TRADING-087
+    前确认哪些 dynamic candidates 可进入 owner-approved shadow package；本阶段可输出 dynamic/static
+    robustness evidence，但不得写 official ETF target weights、production baseline、broker
+    state 或 shadow enrollment ledger
+  - '`config/etf_portfolio/dynamic_robustness.yaml` 存在且 safety fields mandatory；`aits
+    etf dynamic-robustness report --candidate <candidate_id>`、`report --latest` 和
+    `validate` 可运行；从 cached price data 生成 report 前必须运行 `aits validate-data` 等价门禁并在输出披露
+    status；比较指标包含 CAGR、total return、max drawdown、volatility、Sharpe、Sortino、Calmar、turnover、downside/upside
+    capture、risk-off drawdown reduction、false risk-off opportunity cost、false risk-on
+    drawdown cost；walk-forward、regime attribution、false risk-on/off、turnover sensitivity、AI/semiconductor
+    contribution、event risk overlay 和 overfit diagnostics 可见；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`、`shadow_enrollment_allowed=false`；system
+    flow、artifact catalog、operations runbook、README、task register、requirement docs
+    和 tests 同步；focused pytest、ruff、compileall、diff check、`aits etf dynamic-robustness
+    validate`、真实 cached-data smoke 和全量 pytest 通过'
+  - '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-085 已完成 two-layer dynamic candidate
+    batch/cache baseline，但其 `dynamic_backtest` 只是 calibration proxy；下一优先级是用真实 ETF
+    price data 完整评估 dynamic candidate 是否优于 static alternatives，并量化 false signal、turnover、regime
+    robustness 和 overfit risk，为 TRADING-087 owner-approved shadow enrollment 提供前置证据。2026-06-05:
+    TRADING-086A-K baseline 实现完成并转入 VALIDATING，原因：新增 dynamic robustness policy、`aits
+    etf dynamic-robustness report --candidate <candidate_id>` / `report --latest`
+    / `validate`、真实价格驱动 daily dynamic path、dynamic/static/current/QQQ/SPY/SMH/best-static
+    comparison、walk-forward、regime attribution、false risk-on/off diagnostics、turnover
+    sensitivity、AI/semiconductor contribution、event risk overlay attribution、overfit
+    diagnostics、JSON/Markdown report、Reader Brief `Dynamic Robustness Review` section、report
+    registry/artifact catalog/system flow/runbook/README integration 和 focused tests；验证为
+    20 个相关测试 passed，`aits etf dynamic-robustness validate` PASS，ruff、compileall、diff
+    check 通过；真实 cached-data smoke 使用 `dynamic-candidate-pack_8904048b4dbd`、2022-12-01
+    至 2026-06-03，`validate_data_status=PASS_WITH_WARNINGS`，生成 `dynamic-robustness-report_98f2aa81bb60.json/md`，`status=REVIEW_REQUIRED`、`dynamic_total_return=1.1048362233046518`、`excess_vs_static_base=-0.42559745604739074`、`false_risk_off_count=217`、`false_risk_on_count=40`、`overfit_status=REVIEW_REQUIRED`、`shadow_enrollment_allowed=false`。2026-06-05:
+    全量 `python -m pytest tests -q` 长跑复核通过，结果为 2153 passed、330 warnings、耗时 641.51s；剩余条件是真实
+    robustness report 的 owner 复核和 TRADING-087 前的 dynamic shadow input 审查。'
+  docs_links:
+  - docs/requirements/TRADING-086_Dynamic_Strategy_Backtest_Robustness_and_Attribution_Review.md
+  terminal: false
+  raw_row_sha256: 657a4ae5bea057a6f8cc66abde1507b4bbcf69ecea860408e4542d0ad5e38c53
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b281ab0c2b8cb9e9228dcc333b33089b43f2230751e94e2138f5ce9d5ab22ece

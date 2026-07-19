@@ -1,0 +1,115 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: PROXY-001
+  title: null
+  domain: 回测/基准
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段 benchmark policy registry：登记 SPY/QQQ/SMH/SOXX
+    解释角色，提供 `validate-benchmark-policy` 校验、报告和 `lookup-benchmark-policy` 查询，并把回测/校准报告接入基准政策解释；剩余缺口是可复算的自定义
+    AI basket 历史收益、成员 lifecycle 与权重快照
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 报告说明为什么使用 SPY、QQQ、SMH、SOXX 或自定义 AI basket；回测和校准可区分半导体 beta、纳指 beta、AI 主题
+      beta 和系统动态仓位价值；自定义 basket 必须 point-in-time 维护；实现时同步更新 `docs/system_flow.md`
+      并补充基准治理测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1114
+    row_sha256: b837d4dff70d3bfd01c773474aeb4e12f343c4e0bf92841931817b7c83bc6a93
+    cell_count: 8
+    all_cells:
+    - PROXY-001
+    - 回测/基准
+    - P1
+    - BASELINE_DONE
+    - 系统实现
+    - 已完成第一阶段 benchmark policy registry：登记 SPY/QQQ/SMH/SOXX 解释角色，提供 `validate-benchmark-policy`
+      校验、报告和 `lookup-benchmark-policy` 查询，并把回测/校准报告接入基准政策解释；剩余缺口是可复算的自定义 AI basket
+      历史收益、成员 lifecycle 与权重快照
+    - 报告说明为什么使用 SPY、QQQ、SMH、SOXX 或自定义 AI basket；回测和校准可区分半导体 beta、纳指 beta、AI 主题 beta
+      和系统动态仓位价值；自定义 basket 必须 point-in-time 维护；实现时同步更新 `docs/system_flow.md` 并补充基准治理测试
+    - '避免把 SMH 这类半导体 ETF 表现误解释成完整 AI 产业链判断；与 `UNIVERSE-001` 协同。2026-05-04: 从 PROPOSED
+      改为 IN_PROGRESS，原因：开始实现第一阶段 benchmark policy registry、校验报告、查询入口，并把回测/校准报告接入基准政策解释。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `config/benchmark_policy.yaml`、`benchmark_policy`
+      模块、`aits feedback validate-benchmark-policy`、`aits feedback lookup-benchmark-policy`、回测/校准报告基准政策章节、系统流图和测试；当前
+      planned custom AI basket 只做治理要求，不生成正式 basket return；`python -m ruff check src
+      tests` 和相关 pytest 通过。'
+    raw_line: '|PROXY-001|回测/基准|P1|BASELINE_DONE|系统实现|已完成第一阶段 benchmark policy registry：登记
+      SPY/QQQ/SMH/SOXX 解释角色，提供 `validate-benchmark-policy` 校验、报告和 `lookup-benchmark-policy`
+      查询，并把回测/校准报告接入基准政策解释；剩余缺口是可复算的自定义 AI basket 历史收益、成员 lifecycle 与权重快照|报告说明为什么使用
+      SPY、QQQ、SMH、SOXX 或自定义 AI basket；回测和校准可区分半导体 beta、纳指 beta、AI 主题 beta 和系统动态仓位价值；自定义
+      basket 必须 point-in-time 维护；实现时同步更新 `docs/system_flow.md` 并补充基准治理测试|避免把 SMH 这类半导体
+      ETF 表现误解释成完整 AI 产业链判断；与 `UNIVERSE-001` 协同。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段
+      benchmark policy registry、校验报告、查询入口，并把回测/校准报告接入基准政策解释。2026-05-04: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：新增 `config/benchmark_policy.yaml`、`benchmark_policy` 模块、`aits
+      feedback validate-benchmark-policy`、`aits feedback lookup-benchmark-policy`、回测/校准报告基准政策章节、系统流图和测试；当前
+      planned custom AI basket 只做治理要求，不生成正式 basket return；`python -m ruff check src
+      tests` 和相关 pytest 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b837d4dff70d3bfd01c77347
+  task_id: PROXY-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '避免把 SMH 这类半导体 ETF 表现误解释成完整 AI 产业链判断；与 `UNIVERSE-001` 协同。2026-05-04: 从
+      PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段 benchmark policy registry、校验报告、查询入口，并把回测/校准报告接入基准政策解释。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `config/benchmark_policy.yaml`、`benchmark_policy`
+      模块、`aits feedback validate-benchmark-policy`、`aits feedback lookup-benchmark-policy`、回测/校准报告基准政策章节、系统流图和测试；当前
+      planned custom AI basket 只做治理要求，不生成正式 basket return；`python -m ruff check src
+      tests` 和相关 pytest 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b837d4dff70d3bfd01c773474aeb4e12f343c4e0bf92841931817b7c83bc6a93
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - PROXY-001
+  - 回测/基准
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - 已完成第一阶段 benchmark policy registry：登记 SPY/QQQ/SMH/SOXX 解释角色，提供 `validate-benchmark-policy`
+    校验、报告和 `lookup-benchmark-policy` 查询，并把回测/校准报告接入基准政策解释；剩余缺口是可复算的自定义 AI basket 历史收益、成员
+    lifecycle 与权重快照
+  - 报告说明为什么使用 SPY、QQQ、SMH、SOXX 或自定义 AI basket；回测和校准可区分半导体 beta、纳指 beta、AI 主题 beta
+    和系统动态仓位价值；自定义 basket 必须 point-in-time 维护；实现时同步更新 `docs/system_flow.md` 并补充基准治理测试
+  - '避免把 SMH 这类半导体 ETF 表现误解释成完整 AI 产业链判断；与 `UNIVERSE-001` 协同。2026-05-04: 从 PROPOSED
+    改为 IN_PROGRESS，原因：开始实现第一阶段 benchmark policy registry、校验报告、查询入口，并把回测/校准报告接入基准政策解释。2026-05-04:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `config/benchmark_policy.yaml`、`benchmark_policy`
+    模块、`aits feedback validate-benchmark-policy`、`aits feedback lookup-benchmark-policy`、回测/校准报告基准政策章节、系统流图和测试；当前
+    planned custom AI basket 只做治理要求，不生成正式 basket return；`python -m ruff check src
+    tests` 和相关 pytest 通过。'
+  docs_links:
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: b837d4dff70d3bfd01c773474aeb4e12f343c4e0bf92841931817b7c83bc6a93
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4130926c31f7369953c96154ef8dfd3a1fd658255f11ed5eb957999f8145fbef

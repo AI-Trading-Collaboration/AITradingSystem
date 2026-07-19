@@ -1,0 +1,190 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-439_to_448_RETURN_TO_RESEARCH_RESET_BATCH
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue return-to-research reset after decision-stage
+    review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 next research redesign；normal paper-shadow、extended shadow、live
+    trading、official target、broker/order 仍 forbidden
+  requirement_refs:
+  - docs/requirements/TRADING-439_to_448_Return_to_Research_Reset_Batch.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-439_to_448_Return_to_Research_Reset_Batch.md`；按
+    TRADING-439～448 顺序记录 owner return-to-research decision、transition pack、failure
+    attribution、reusable evidence、hypothesis backlog、next candidate spec、backfill
+    plan、archived candidate status、research-cycle reset pack 和 final governance snapshot；不得恢复
+    normal paper-shadow、批准 extended shadow/live trading、创建 official target weights、broker/order、production
+    mutation，且不得把候选标为 rejected
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/reports/return_to_research_reset.py`、`aits reports
+      return-to-research-reset`、`aits reports validate-return-to-research-governance-snapshot`、append-only
+      owner decision source、JSON/Markdown report family、Reader Brief Return-To-Research
+      Governance Snapshot section、report registry、artifact catalog、system flow、README、需求文档和
+      focused tests；真实链路输出 owner decision audit validation PASS、candidate status `RETURNED_TO_RESEARCH`、normal
+      shadow disabled、extended/live forbidden、research backlog/spec/backfill/reset/snapshot
+      available；验证通过 focused pytest、ruff/py_compile、task-register consistency、documentation/report
+      gates、data quality gate
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 187
+    row_sha256: 621512a758d11d8a38f195f5818c1fbbc8cb7802a18c18e5a7cbeb2592008dcb
+    cell_count: 8
+    all_cells:
+    - TRADING-439_to_448_RETURN_TO_RESEARCH_RESET_BATCH
+    - ETF portfolio/dynamic v3 rescue return-to-research reset after decision-stage
+      review
+    - P0
+    - DONE
+    - 项目 owner 后续复核 next research redesign；normal paper-shadow、extended shadow、live
+      trading、official target、broker/order 仍 forbidden
+    - 详细拆解见 `docs/requirements/TRADING-439_to_448_Return_to_Research_Reset_Batch.md`；按
+      TRADING-439～448 顺序记录 owner return-to-research decision、transition pack、failure
+      attribution、reusable evidence、hypothesis backlog、next candidate spec、backfill
+      plan、archived candidate status、research-cycle reset pack 和 final governance
+      snapshot；不得恢复 normal paper-shadow、批准 extended shadow/live trading、创建 official
+      target weights、broker/order、production mutation，且不得把候选标为 rejected
+    - 新增 `src/ai_trading_system/reports/return_to_research_reset.py`、`aits reports
+      return-to-research-reset`、`aits reports validate-return-to-research-governance-snapshot`、append-only
+      owner decision source、JSON/Markdown report family、Reader Brief Return-To-Research
+      Governance Snapshot section、report registry、artifact catalog、system flow、README、需求文档和
+      focused tests；真实链路输出 owner decision audit validation PASS、candidate status `RETURNED_TO_RESEARCH`、normal
+      shadow disabled、extended/live forbidden、research backlog/spec/backfill/reset/snapshot
+      available；验证通过 focused pytest、ruff/py_compile、task-register consistency、documentation/report
+      gates、data quality gate
+    - '2026-06-18: DONE；真实 owner source `docs/decisions/TRADING-439_return_to_research_decision_2026-06-17.json`
+      已创建，`data/governance/owner_decision_audit_log.jsonl` append-only 新增 `TRADING-439_return_to_research_2026-06-17`，owner
+      audit report latest decision 为 `return_to_research` 且 validation PASS。真实 artifacts
+      `outputs/reports/owner_return_to_research_decision_record_2026-06-17.json/md`、`candidate_return_to_research_transition_pack_2026-06-17.json/md`、`candidate_failure_mode_attribution_2026-06-17.json/md`、`reusable_evidence_extraction_2026-06-17.json/md`、`return_to_research_hypothesis_backlog_2026-06-17.json/md`、`next_candidate_spec_draft_2026-06-17.json/md`、`research_backfill_plan_for_next_candidate_2026-06-17.json/md`、`archived_candidate_status_update_2026-06-17.json/md`、`research_cycle_reset_pack_2026-06-17.json/md`、`return_to_research_governance_snapshot_2026-06-17.json/md`
+      和 `return_to_research_governance_snapshot_validation_2026-06-17.json/md` 已生成；final
+      snapshot `RETURN_TO_RESEARCH_COMPLETE`、candidate_status=`RETURNED_TO_RESEARCH`、hypothesis_count=6、next_candidate_id=`median_plus_regime_mismatch_filter_research_redesign_v2_draft`、normal_paper_shadow_active=false、extended_shadow_allowed=false、live_trading_allowed=false、candidate_rejected=false、validation
+      PASS。Reader Brief section 正确读取 snapshot 和 validation；report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / unwaived=0；Reader Brief `LIMITED_READER_CONTEXT`；report quality gate `PASS_WITH_WARNINGS`
+      / blocking=0；reader consistency `PASS_WITH_WARNINGS`；`validate-data --as-of
+      2026-06-17` PASS；focused pytest `tests/test_return_to_research_reset.py tests/test_decision_stage_review.py`
+      4 passed，report/Reader/reset regression 29 passed，docs/task freshness regression
+      14 passed，ruff PASS，py_compile PASS，`git diff --check` PASS。未恢复 normal shadow、未批准
+      extended/live、未写 official target weights、未生成 broker/order、未执行 production mutation、未
+      reject candidate。'
+    raw_line: '|TRADING-439_to_448_RETURN_TO_RESEARCH_RESET_BATCH|ETF portfolio/dynamic
+      v3 rescue return-to-research reset after decision-stage review|P0|DONE|项目 owner
+      后续复核 next research redesign；normal paper-shadow、extended shadow、live trading、official
+      target、broker/order 仍 forbidden|详细拆解见 `docs/requirements/TRADING-439_to_448_Return_to_Research_Reset_Batch.md`；按
+      TRADING-439～448 顺序记录 owner return-to-research decision、transition pack、failure
+      attribution、reusable evidence、hypothesis backlog、next candidate spec、backfill
+      plan、archived candidate status、research-cycle reset pack 和 final governance
+      snapshot；不得恢复 normal paper-shadow、批准 extended shadow/live trading、创建 official
+      target weights、broker/order、production mutation，且不得把候选标为 rejected|新增 `src/ai_trading_system/reports/return_to_research_reset.py`、`aits
+      reports return-to-research-reset`、`aits reports validate-return-to-research-governance-snapshot`、append-only
+      owner decision source、JSON/Markdown report family、Reader Brief Return-To-Research
+      Governance Snapshot section、report registry、artifact catalog、system flow、README、需求文档和
+      focused tests；真实链路输出 owner decision audit validation PASS、candidate status `RETURNED_TO_RESEARCH`、normal
+      shadow disabled、extended/live forbidden、research backlog/spec/backfill/reset/snapshot
+      available；验证通过 focused pytest、ruff/py_compile、task-register consistency、documentation/report
+      gates、data quality gate|2026-06-18: DONE；真实 owner source `docs/decisions/TRADING-439_return_to_research_decision_2026-06-17.json`
+      已创建，`data/governance/owner_decision_audit_log.jsonl` append-only 新增 `TRADING-439_return_to_research_2026-06-17`，owner
+      audit report latest decision 为 `return_to_research` 且 validation PASS。真实 artifacts
+      `outputs/reports/owner_return_to_research_decision_record_2026-06-17.json/md`、`candidate_return_to_research_transition_pack_2026-06-17.json/md`、`candidate_failure_mode_attribution_2026-06-17.json/md`、`reusable_evidence_extraction_2026-06-17.json/md`、`return_to_research_hypothesis_backlog_2026-06-17.json/md`、`next_candidate_spec_draft_2026-06-17.json/md`、`research_backfill_plan_for_next_candidate_2026-06-17.json/md`、`archived_candidate_status_update_2026-06-17.json/md`、`research_cycle_reset_pack_2026-06-17.json/md`、`return_to_research_governance_snapshot_2026-06-17.json/md`
+      和 `return_to_research_governance_snapshot_validation_2026-06-17.json/md` 已生成；final
+      snapshot `RETURN_TO_RESEARCH_COMPLETE`、candidate_status=`RETURNED_TO_RESEARCH`、hypothesis_count=6、next_candidate_id=`median_plus_regime_mismatch_filter_research_redesign_v2_draft`、normal_paper_shadow_active=false、extended_shadow_allowed=false、live_trading_allowed=false、candidate_rejected=false、validation
+      PASS。Reader Brief section 正确读取 snapshot 和 validation；report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / unwaived=0；Reader Brief `LIMITED_READER_CONTEXT`；report quality gate `PASS_WITH_WARNINGS`
+      / blocking=0；reader consistency `PASS_WITH_WARNINGS`；`validate-data --as-of
+      2026-06-17` PASS；focused pytest `tests/test_return_to_research_reset.py tests/test_decision_stage_review.py`
+      4 passed，report/Reader/reset regression 29 passed，docs/task freshness regression
+      14 passed，ruff PASS，py_compile PASS，`git diff --check` PASS。未恢复 normal shadow、未批准
+      extended/live、未写 official target weights、未生成 broker/order、未执行 production mutation、未
+      reject candidate。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-621512a758d11d8a38f195f5
+  task_id: TRADING-439_to_448_RETURN_TO_RESEARCH_RESET_BATCH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 next research redesign；normal paper-shadow、extended
+      shadow、live trading、official target、broker/order 仍 forbidden
+    notes: '2026-06-18: DONE；真实 owner source `docs/decisions/TRADING-439_return_to_research_decision_2026-06-17.json`
+      已创建，`data/governance/owner_decision_audit_log.jsonl` append-only 新增 `TRADING-439_return_to_research_2026-06-17`，owner
+      audit report latest decision 为 `return_to_research` 且 validation PASS。真实 artifacts
+      `outputs/reports/owner_return_to_research_decision_record_2026-06-17.json/md`、`candidate_return_to_research_transition_pack_2026-06-17.json/md`、`candidate_failure_mode_attribution_2026-06-17.json/md`、`reusable_evidence_extraction_2026-06-17.json/md`、`return_to_research_hypothesis_backlog_2026-06-17.json/md`、`next_candidate_spec_draft_2026-06-17.json/md`、`research_backfill_plan_for_next_candidate_2026-06-17.json/md`、`archived_candidate_status_update_2026-06-17.json/md`、`research_cycle_reset_pack_2026-06-17.json/md`、`return_to_research_governance_snapshot_2026-06-17.json/md`
+      和 `return_to_research_governance_snapshot_validation_2026-06-17.json/md` 已生成；final
+      snapshot `RETURN_TO_RESEARCH_COMPLETE`、candidate_status=`RETURNED_TO_RESEARCH`、hypothesis_count=6、next_candidate_id=`median_plus_regime_mismatch_filter_research_redesign_v2_draft`、normal_paper_shadow_active=false、extended_shadow_allowed=false、live_trading_allowed=false、candidate_rejected=false、validation
+      PASS。Reader Brief section 正确读取 snapshot 和 validation；report index `PASS_WITH_EXPLICIT_WAIVERS`
+      / unwaived=0；Reader Brief `LIMITED_READER_CONTEXT`；report quality gate `PASS_WITH_WARNINGS`
+      / blocking=0；reader consistency `PASS_WITH_WARNINGS`；`validate-data --as-of
+      2026-06-17` PASS；focused pytest `tests/test_return_to_research_reset.py tests/test_decision_stage_review.py`
+      4 passed，report/Reader/reset regression 29 passed，docs/task freshness regression
+      14 passed，ruff PASS，py_compile PASS，`git diff --check` PASS。未恢复 normal shadow、未批准
+      extended/live、未写 official target weights、未生成 broker/order、未执行 production mutation、未
+      reject candidate。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:621512a758d11d8a38f195f5818c1fbbc8cb7802a18c18e5a7cbeb2592008dcb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-439_to_448_RETURN_TO_RESEARCH_RESET_BATCH
+  - ETF portfolio/dynamic v3 rescue return-to-research reset after decision-stage
+    review
+  - P0
+  - DONE
+  - 项目 owner 后续复核 next research redesign；normal paper-shadow、extended shadow、live
+    trading、official target、broker/order 仍 forbidden
+  - 详细拆解见 `docs/requirements/TRADING-439_to_448_Return_to_Research_Reset_Batch.md`；按
+    TRADING-439～448 顺序记录 owner return-to-research decision、transition pack、failure
+    attribution、reusable evidence、hypothesis backlog、next candidate spec、backfill
+    plan、archived candidate status、research-cycle reset pack 和 final governance snapshot；不得恢复
+    normal paper-shadow、批准 extended shadow/live trading、创建 official target weights、broker/order、production
+    mutation，且不得把候选标为 rejected
+  - 新增 `src/ai_trading_system/reports/return_to_research_reset.py`、`aits reports return-to-research-reset`、`aits
+    reports validate-return-to-research-governance-snapshot`、append-only owner decision
+    source、JSON/Markdown report family、Reader Brief Return-To-Research Governance
+    Snapshot section、report registry、artifact catalog、system flow、README、需求文档和 focused
+    tests；真实链路输出 owner decision audit validation PASS、candidate status `RETURNED_TO_RESEARCH`、normal
+    shadow disabled、extended/live forbidden、research backlog/spec/backfill/reset/snapshot
+    available；验证通过 focused pytest、ruff/py_compile、task-register consistency、documentation/report
+    gates、data quality gate
+  - '2026-06-18: DONE；真实 owner source `docs/decisions/TRADING-439_return_to_research_decision_2026-06-17.json`
+    已创建，`data/governance/owner_decision_audit_log.jsonl` append-only 新增 `TRADING-439_return_to_research_2026-06-17`，owner
+    audit report latest decision 为 `return_to_research` 且 validation PASS。真实 artifacts
+    `outputs/reports/owner_return_to_research_decision_record_2026-06-17.json/md`、`candidate_return_to_research_transition_pack_2026-06-17.json/md`、`candidate_failure_mode_attribution_2026-06-17.json/md`、`reusable_evidence_extraction_2026-06-17.json/md`、`return_to_research_hypothesis_backlog_2026-06-17.json/md`、`next_candidate_spec_draft_2026-06-17.json/md`、`research_backfill_plan_for_next_candidate_2026-06-17.json/md`、`archived_candidate_status_update_2026-06-17.json/md`、`research_cycle_reset_pack_2026-06-17.json/md`、`return_to_research_governance_snapshot_2026-06-17.json/md`
+    和 `return_to_research_governance_snapshot_validation_2026-06-17.json/md` 已生成；final
+    snapshot `RETURN_TO_RESEARCH_COMPLETE`、candidate_status=`RETURNED_TO_RESEARCH`、hypothesis_count=6、next_candidate_id=`median_plus_regime_mismatch_filter_research_redesign_v2_draft`、normal_paper_shadow_active=false、extended_shadow_allowed=false、live_trading_allowed=false、candidate_rejected=false、validation
+    PASS。Reader Brief section 正确读取 snapshot 和 validation；report index `PASS_WITH_EXPLICIT_WAIVERS`
+    / unwaived=0；Reader Brief `LIMITED_READER_CONTEXT`；report quality gate `PASS_WITH_WARNINGS`
+    / blocking=0；reader consistency `PASS_WITH_WARNINGS`；`validate-data --as-of 2026-06-17`
+    PASS；focused pytest `tests/test_return_to_research_reset.py tests/test_decision_stage_review.py`
+    4 passed，report/Reader/reset regression 29 passed，docs/task freshness regression
+    14 passed，ruff PASS，py_compile PASS，`git diff --check` PASS。未恢复 normal shadow、未批准
+    extended/live、未写 official target weights、未生成 broker/order、未执行 production mutation、未
+    reject candidate。'
+  docs_links:
+  - docs/requirements/TRADING-439_to_448_Return_to_Research_Reset_Batch.md
+  terminal: true
+  raw_row_sha256: 621512a758d11d8a38f195f5818c1fbbc8cb7802a18c18e5a7cbeb2592008dcb
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9046ffb9a49e87c7396bc2754df72879fe1a9ecdc50db1c76ca78312405de628

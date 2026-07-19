@@ -1,0 +1,140 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2314_LIQUIDITY_RATES_SCOPE_REVIEW
+  title: null
+  domain: Research trends / liquidity rates pressure candidate family
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2314_Liquidity_Rates_Scope_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2314_Liquidity_Rates_Scope_Review.md`；依赖
+    TRADING-2313 actual-path validation outputs、required-anchor cached data quality
+    gate 和 liquidity/rates scope-review policy。当前仅允许 partial rates-only scope review；`liquidity_headwind_proxy_v1`
+    因 `UUP` / `HYG` / `LQD` 缺失继续 blocked，不得生成 scope row。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 liquidity/rates scope review summary、candidate scope matrix、horizon scope
+      matrix、use-case scope matrix、recommended scope、safety boundary 和 research report；真实
+      run status=`LIQUIDITY_RATES_SCOPE_REVIEW_DIAGNOSTIC_ONLY`，scope_review_result=`DIAGNOSTIC_ONLY_WITH_LIMITED_RISK_CAP_RESEARCH_CANDIDATE`；所有
+      artifacts 固定 forward observe / promotion / paper-shadow / production / broker
+      false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1218
+    row_sha256: 9a4dfa8eeab9b1c7bada9c3bfeee925e2dc0de00179cc43fa823009047dfae9a
+    cell_count: 8
+    all_cells:
+    - TRADING-2314_LIQUIDITY_RATES_SCOPE_REVIEW
+    - Research trends / liquidity rates pressure candidate family
+    - P1
+    - VALIDATING
+    - 系统验证 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2314_Liquidity_Rates_Scope_Review.md`；依赖 TRADING-2313
+      actual-path validation outputs、required-anchor cached data quality gate 和 liquidity/rates
+      scope-review policy。当前仅允许 partial rates-only scope review；`liquidity_headwind_proxy_v1`
+      因 `UUP` / `HYG` / `LQD` 缺失继续 blocked，不得生成 scope row。
+    - 生成 liquidity/rates scope review summary、candidate scope matrix、horizon scope
+      matrix、use-case scope matrix、recommended scope、safety boundary 和 research report；真实
+      run status=`LIQUIDITY_RATES_SCOPE_REVIEW_DIAGNOSTIC_ONLY`，scope_review_result=`DIAGNOSTIC_ONLY_WITH_LIMITED_RISK_CAP_RESEARCH_CANDIDATE`；所有
+      artifacts 固定 forward observe / promotion / paper-shadow / production / broker
+      false/none。
+    - '2026-07-01: 根据 owner 附件和 TRADING-2313 next task 新增并进入 IN_PROGRESS；本任务必须 selective
+      staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；`duration_pressure_proxy_v1`
+      保留 limited research candidate，`rates_pressure_exposure_cap_modifier_v1` diagnostic，`10d`
+      keep、`20d` / `1m` diagnostic；`risk_cap_modifier`、`max_exposure_limiter` 和 `diagnostic_only`
+      keep，`no_add_gate` reject；验证通过 Ruff、compileall、TRADING-2314 focused parallel
+      pytest 9 passed、liquidity / AI focused parallel pytest 41 passed、registry/docs
+      focused parallel pytest 27 passed、task-register/docs focused parallel pytest
+      10 passed、`aits validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation
+      193 passed 和 `git diff --check`。'
+    raw_line: '|TRADING-2314_LIQUIDITY_RATES_SCOPE_REVIEW|Research trends / liquidity
+      rates pressure candidate family|P1|VALIDATING|系统验证 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2314_Liquidity_Rates_Scope_Review.md`；依赖
+      TRADING-2313 actual-path validation outputs、required-anchor cached data quality
+      gate 和 liquidity/rates scope-review policy。当前仅允许 partial rates-only scope review；`liquidity_headwind_proxy_v1`
+      因 `UUP` / `HYG` / `LQD` 缺失继续 blocked，不得生成 scope row。|生成 liquidity/rates scope
+      review summary、candidate scope matrix、horizon scope matrix、use-case scope matrix、recommended
+      scope、safety boundary 和 research report；真实 run status=`LIQUIDITY_RATES_SCOPE_REVIEW_DIAGNOSTIC_ONLY`，scope_review_result=`DIAGNOSTIC_ONLY_WITH_LIMITED_RISK_CAP_RESEARCH_CANDIDATE`；所有
+      artifacts 固定 forward observe / promotion / paper-shadow / production / broker
+      false/none。|2026-07-01: 根据 owner 附件和 TRADING-2313 next task 新增并进入 IN_PROGRESS；本任务必须
+      selective staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；`duration_pressure_proxy_v1`
+      保留 limited research candidate，`rates_pressure_exposure_cap_modifier_v1` diagnostic，`10d`
+      keep、`20d` / `1m` diagnostic；`risk_cap_modifier`、`max_exposure_limiter` 和 `diagnostic_only`
+      keep，`no_add_gate` reject；验证通过 Ruff、compileall、TRADING-2314 focused parallel
+      pytest 9 passed、liquidity / AI focused parallel pytest 41 passed、registry/docs
+      focused parallel pytest 27 passed、task-register/docs focused parallel pytest
+      10 passed、`aits validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation
+      193 passed 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-9a4dfa8eeab9b1c7bada9c3b
+  task_id: TRADING-2314_LIQUIDITY_RATES_SCOPE_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 owner 附件和 TRADING-2313 next task 新增并进入 IN_PROGRESS；本任务必须
+      selective staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；`duration_pressure_proxy_v1`
+      保留 limited research candidate，`rates_pressure_exposure_cap_modifier_v1` diagnostic，`10d`
+      keep、`20d` / `1m` diagnostic；`risk_cap_modifier`、`max_exposure_limiter` 和 `diagnostic_only`
+      keep，`no_add_gate` reject；验证通过 Ruff、compileall、TRADING-2314 focused parallel
+      pytest 9 passed、liquidity / AI focused parallel pytest 41 passed、registry/docs
+      focused parallel pytest 27 passed、task-register/docs focused parallel pytest
+      10 passed、`aits validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation
+      193 passed 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:9a4dfa8eeab9b1c7bada9c3bfeee925e2dc0de00179cc43fa823009047dfae9a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2314_LIQUIDITY_RATES_SCOPE_REVIEW
+  - Research trends / liquidity rates pressure candidate family
+  - P1
+  - VALIDATING
+  - 系统验证 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2314_Liquidity_Rates_Scope_Review.md`；依赖 TRADING-2313
+    actual-path validation outputs、required-anchor cached data quality gate 和 liquidity/rates
+    scope-review policy。当前仅允许 partial rates-only scope review；`liquidity_headwind_proxy_v1`
+    因 `UUP` / `HYG` / `LQD` 缺失继续 blocked，不得生成 scope row。
+  - 生成 liquidity/rates scope review summary、candidate scope matrix、horizon scope matrix、use-case
+    scope matrix、recommended scope、safety boundary 和 research report；真实 run status=`LIQUIDITY_RATES_SCOPE_REVIEW_DIAGNOSTIC_ONLY`，scope_review_result=`DIAGNOSTIC_ONLY_WITH_LIMITED_RISK_CAP_RESEARCH_CANDIDATE`；所有
+    artifacts 固定 forward observe / promotion / paper-shadow / production / broker
+    false/none。
+  - '2026-07-01: 根据 owner 附件和 TRADING-2313 next task 新增并进入 IN_PROGRESS；本任务必须 selective
+    staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；`duration_pressure_proxy_v1`
+    保留 limited research candidate，`rates_pressure_exposure_cap_modifier_v1` diagnostic，`10d`
+    keep、`20d` / `1m` diagnostic；`risk_cap_modifier`、`max_exposure_limiter` 和 `diagnostic_only`
+    keep，`no_add_gate` reject；验证通过 Ruff、compileall、TRADING-2314 focused parallel pytest
+    9 passed、liquidity / AI focused parallel pytest 41 passed、registry/docs focused
+    parallel pytest 27 passed、task-register/docs focused parallel pytest 10 passed、`aits
+    validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation 193 passed
+    和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-2314_Liquidity_Rates_Scope_Review.md
+  terminal: false
+  raw_row_sha256: 9a4dfa8eeab9b1c7bada9c3bfeee925e2dc0de00179cc43fa823009047dfae9a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b09f91832e13de61002ccb21d907589c995109ceb1dfbaec41794e66a8fa331a

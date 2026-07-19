@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2444_CANONICAL_READER_BRIEF_TRACE_ROUTING
+  title: null
+  domain: Daily operations / canonical Reader Brief trace routing
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: system operations：后续 daily-run 观察
+  requirement_refs:
+  - docs/requirements/TRADING-2444_Canonical_Reader_Brief_Trace_Routing.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2444_Canonical_Reader_Brief_Trace_Routing.md`。Canonical
+    bundle 已有 `traces/daily_score_<as_of>_trace.json`，final Reader Brief refresh 改为显式消费该路径，不再查找不存在的
+    canonical `reports/evidence/`。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Integration test 证明 trace 归档后 Reader Brief 为 `AVAILABLE` 且 full path 指向本轮
+      `traces/`；真正缺 trace 仍 `LIMITED_READER_CONTEXT`；真实 2026-07-15 bundle 隔离复验 Reader
+      Brief/quality=`OK`、13/13；不复制第二份 trace、不回退 legacy path，`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 19
+    row_sha256: 16154930fc7759313fb86a8dd28ce7bf8384e9f7165902800fa29a9e7765133a
+    cell_count: 8
+    all_cells:
+    - TRADING-2444_CANONICAL_READER_BRIEF_TRACE_ROUTING
+    - Daily operations / canonical Reader Brief trace routing
+    - P1
+    - DONE
+    - system operations：后续 daily-run 观察
+    - 详见 `docs/requirements/TRADING-2444_Canonical_Reader_Brief_Trace_Routing.md`。Canonical
+      bundle 已有 `traces/daily_score_<as_of>_trace.json`，final Reader Brief refresh
+      改为显式消费该路径，不再查找不存在的 canonical `reports/evidence/`。
+    - Integration test 证明 trace 归档后 Reader Brief 为 `AVAILABLE` 且 full path 指向本轮 `traces/`；真正缺
+      trace 仍 `LIMITED_READER_CONTEXT`；真实 2026-07-15 bundle 隔离复验 Reader Brief/quality=`OK`、13/13；不复制第二份
+      trace、不回退 legacy path，`production_effect=none`。
+    - '2026-07-16: focused parallel=`42 passed`，缺失路径保护=`1 passed`，Ruff/compileall/diff
+      check PASS；隔离复验默认触及的 canonical Owner Daily Brief JSON/HTML 已按 manifest 恢复且 SHA256
+      完全匹配。'
+    raw_line: '|TRADING-2444_CANONICAL_READER_BRIEF_TRACE_ROUTING|Daily operations
+      / canonical Reader Brief trace routing|P1|DONE|system operations：后续 daily-run
+      观察|详见 `docs/requirements/TRADING-2444_Canonical_Reader_Brief_Trace_Routing.md`。Canonical
+      bundle 已有 `traces/daily_score_<as_of>_trace.json`，final Reader Brief refresh
+      改为显式消费该路径，不再查找不存在的 canonical `reports/evidence/`。|Integration test 证明 trace
+      归档后 Reader Brief 为 `AVAILABLE` 且 full path 指向本轮 `traces/`；真正缺 trace 仍 `LIMITED_READER_CONTEXT`；真实
+      2026-07-15 bundle 隔离复验 Reader Brief/quality=`OK`、13/13；不复制第二份 trace、不回退 legacy
+      path，`production_effect=none`。|2026-07-16: focused parallel=`42 passed`，缺失路径保护=`1
+      passed`，Ruff/compileall/diff check PASS；隔离复验默认触及的 canonical Owner Daily Brief
+      JSON/HTML 已按 manifest 恢复且 SHA256 完全匹配。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-16154930fc7759313fb86a8d
+  task_id: TRADING-2444_CANONICAL_READER_BRIEF_TRACE_ROUTING
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: system operations：后续 daily-run 观察
+    notes: '2026-07-16: focused parallel=`42 passed`，缺失路径保护=`1 passed`，Ruff/compileall/diff
+      check PASS；隔离复验默认触及的 canonical Owner Daily Brief JSON/HTML 已按 manifest 恢复且 SHA256
+      完全匹配。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:16154930fc7759313fb86a8dd28ce7bf8384e9f7165902800fa29a9e7765133a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2444_CANONICAL_READER_BRIEF_TRACE_ROUTING
+  - Daily operations / canonical Reader Brief trace routing
+  - P1
+  - DONE
+  - system operations：后续 daily-run 观察
+  - 详见 `docs/requirements/TRADING-2444_Canonical_Reader_Brief_Trace_Routing.md`。Canonical
+    bundle 已有 `traces/daily_score_<as_of>_trace.json`，final Reader Brief refresh 改为显式消费该路径，不再查找不存在的
+    canonical `reports/evidence/`。
+  - Integration test 证明 trace 归档后 Reader Brief 为 `AVAILABLE` 且 full path 指向本轮 `traces/`；真正缺
+    trace 仍 `LIMITED_READER_CONTEXT`；真实 2026-07-15 bundle 隔离复验 Reader Brief/quality=`OK`、13/13；不复制第二份
+    trace、不回退 legacy path，`production_effect=none`。
+  - '2026-07-16: focused parallel=`42 passed`，缺失路径保护=`1 passed`，Ruff/compileall/diff
+    check PASS；隔离复验默认触及的 canonical Owner Daily Brief JSON/HTML 已按 manifest 恢复且 SHA256
+    完全匹配。'
+  docs_links:
+  - docs/requirements/TRADING-2444_Canonical_Reader_Brief_Trace_Routing.md
+  terminal: true
+  raw_row_sha256: 16154930fc7759313fb86a8dd28ce7bf8384e9f7165902800fa29a9e7765133a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8d894bb298675b302ff6ff8353020d05c7b7f6f81b614b8810a800d114f98fea

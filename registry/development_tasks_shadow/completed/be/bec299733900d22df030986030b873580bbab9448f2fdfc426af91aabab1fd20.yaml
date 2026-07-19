@@ -1,0 +1,173 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-001
+  title: null
+  domain: 交易执行/paper trading engine MVP
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/paper_trading_engine_mvp_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/paper_trading_engine_mvp_2026-05-17.md`；独立
+    `trading_engine` 子系统、paper-only 配置、风控链路、审计日志、交易日报、demo、基础测试、安全边界测试和 audit replay
+    helper 已完成并通过当前系统验证；后续真实趋势输出 `OrderIntent` adapter、IBKR paper read-only / order
+    lifecycle、continuous replay 和 dashboard 可见性由 TRADING-002 及后续任务承接；真实券商仍不在本 MVP
+    范围
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 趋势系统不得直接调用 broker；交易执行只能通过 `OrderIntent -> PreTradeRiskChecker -> ExecutionService
+      -> PaperBroker`；真实交易默认关闭且真实券商 adapter 只能是 stub；订单、风控、成交、组合快照和日报均可审计；demo 可生成模拟订单、模拟成交和交易日报；安全边界测试覆盖
+      paper-only、`real_trading_enabled=false` 默认、IBKR/Alpaca stub 禁止下单、外部趋势/日报/dashboard
+      模块不得直接 import broker adapter、trading daily report `production_effect=none`、测试不得读取真实券商环境变量；audit
+      完整性测试覆盖 approved / rejected / filled / open，并能用 intent_id 串起 order_intent、risk_result、order、execution_report、fill
+      和 portfolio_snapshot；完整 `tests/trading_engine`、聚焦 MVP tests、Ruff、diff check
+      和 demo smoke 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 305
+    row_sha256: 48639e503478ce17f77a96bc9674611f13f219659f40f2232824a7d6181bd516
+    cell_count: 8
+    all_cells:
+    - TRADING-001
+    - 交易执行/paper trading engine MVP
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/paper_trading_engine_mvp_2026-05-17.md`；独立 `trading_engine`
+      子系统、paper-only 配置、风控链路、审计日志、交易日报、demo、基础测试、安全边界测试和 audit replay helper 已完成并通过当前系统验证；后续真实趋势输出
+      `OrderIntent` adapter、IBKR paper read-only / order lifecycle、continuous replay
+      和 dashboard 可见性由 TRADING-002 及后续任务承接；真实券商仍不在本 MVP 范围
+    - 趋势系统不得直接调用 broker；交易执行只能通过 `OrderIntent -> PreTradeRiskChecker -> ExecutionService
+      -> PaperBroker`；真实交易默认关闭且真实券商 adapter 只能是 stub；订单、风控、成交、组合快照和日报均可审计；demo 可生成模拟订单、模拟成交和交易日报；安全边界测试覆盖
+      paper-only、`real_trading_enabled=false` 默认、IBKR/Alpaca stub 禁止下单、外部趋势/日报/dashboard
+      模块不得直接 import broker adapter、trading daily report `production_effect=none`、测试不得读取真实券商环境变量；audit
+      完整性测试覆盖 approved / rejected / filled / open，并能用 intent_id 串起 order_intent、risk_result、order、execution_report、fill
+      和 portfolio_snapshot；完整 `tests/trading_engine`、聚焦 MVP tests、Ruff、diff check
+      和 demo smoke 通过
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 提供第二套实时交易引擎开发文档，要求在现有 repo 中实现初版系统设计，并保持与既有趋势预测系统合理隔离。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：paper trading MVP 已实现，默认 demo 跑通并生成 JSONL 审计日志和交易日报；验证通过目标测试、全量
+      pytest、ruff、目标 mypy、diff check 和真实 demo smoke；真实券商仍为 stub。2026-05-17: 从 VALIDATING
+      改回 IN_PROGRESS，原因：owner 要求为 trading_engine 补充安全边界测试，覆盖 paper-only、real_trading_enabled=false
+      默认、IBKR/Alpaca stub 禁止下单、外部模块不得直接 import broker adapter、trading daily report
+      production_effect=none、测试不得读取真实券商环境变量。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      `tests/trading_engine/test_safety_boundaries.py`，ExecutionService 运行时拒绝非 PaperBroker，IBKR/Alpaca
+      stub submit_order 抛出明确错误，交易日报固定输出 `production_effect=none`；验证通过 trading_engine
+      测试、全量 pytest、ruff、目标 mypy、diff check 和 demo smoke。2026-05-17: 继续保持 VALIDATING，原因：已新增
+      `replay_intent_audit_trace` 和 `tests/trading_engine/test_audit_integrity.py`，audit
+      JSONL 顶层写入 intent lineage 字段并新增 execution_report_log；验证通过 audit integrity 测试、trading_engine
+      测试、全量 pytest、ruff、目标 mypy、diff check 和 demo smoke。2026-06-09: 从 VALIDATING 改为
+      DONE，原因：当前完整 `python -m pytest tests\trading_engine -q` 通过（939 passed, 330 warnings），TRADING-001
+      聚焦测试通过（35 passed），demo smoke 输出 3 个 OrderIntent、风控 2/1、paper 订单 2、成交/未成交 1/1、reconciliation
+      PASS；后续 execution adapters 和可见性扩展已由独立任务承接，不构成本 MVP 未完成项。'
+    raw_line: '|TRADING-001|交易执行/paper trading engine MVP|P0|DONE|系统验证|详细拆解见 `docs/requirements/paper_trading_engine_mvp_2026-05-17.md`；独立
+      `trading_engine` 子系统、paper-only 配置、风控链路、审计日志、交易日报、demo、基础测试、安全边界测试和 audit replay
+      helper 已完成并通过当前系统验证；后续真实趋势输出 `OrderIntent` adapter、IBKR paper read-only / order
+      lifecycle、continuous replay 和 dashboard 可见性由 TRADING-002 及后续任务承接；真实券商仍不在本 MVP
+      范围|趋势系统不得直接调用 broker；交易执行只能通过 `OrderIntent -> PreTradeRiskChecker -> ExecutionService
+      -> PaperBroker`；真实交易默认关闭且真实券商 adapter 只能是 stub；订单、风控、成交、组合快照和日报均可审计；demo 可生成模拟订单、模拟成交和交易日报；安全边界测试覆盖
+      paper-only、`real_trading_enabled=false` 默认、IBKR/Alpaca stub 禁止下单、外部趋势/日报/dashboard
+      模块不得直接 import broker adapter、trading daily report `production_effect=none`、测试不得读取真实券商环境变量；audit
+      完整性测试覆盖 approved / rejected / filled / open，并能用 intent_id 串起 order_intent、risk_result、order、execution_report、fill
+      和 portfolio_snapshot；完整 `tests/trading_engine`、聚焦 MVP tests、Ruff、diff check
+      和 demo smoke 通过|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 提供第二套实时交易引擎开发文档，要求在现有
+      repo 中实现初版系统设计，并保持与既有趋势预测系统合理隔离。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：paper
+      trading MVP 已实现，默认 demo 跑通并生成 JSONL 审计日志和交易日报；验证通过目标测试、全量 pytest、ruff、目标 mypy、diff
+      check 和真实 demo smoke；真实券商仍为 stub。2026-05-17: 从 VALIDATING 改回 IN_PROGRESS，原因：owner
+      要求为 trading_engine 补充安全边界测试，覆盖 paper-only、real_trading_enabled=false 默认、IBKR/Alpaca
+      stub 禁止下单、外部模块不得直接 import broker adapter、trading daily report production_effect=none、测试不得读取真实券商环境变量。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `tests/trading_engine/test_safety_boundaries.py`，ExecutionService
+      运行时拒绝非 PaperBroker，IBKR/Alpaca stub submit_order 抛出明确错误，交易日报固定输出 `production_effect=none`；验证通过
+      trading_engine 测试、全量 pytest、ruff、目标 mypy、diff check 和 demo smoke。2026-05-17:
+      继续保持 VALIDATING，原因：已新增 `replay_intent_audit_trace` 和 `tests/trading_engine/test_audit_integrity.py`，audit
+      JSONL 顶层写入 intent lineage 字段并新增 execution_report_log；验证通过 audit integrity 测试、trading_engine
+      测试、全量 pytest、ruff、目标 mypy、diff check 和 demo smoke。2026-06-09: 从 VALIDATING 改为
+      DONE，原因：当前完整 `python -m pytest tests\trading_engine -q` 通过（939 passed, 330 warnings），TRADING-001
+      聚焦测试通过（35 passed），demo smoke 输出 3 个 OrderIntent、风控 2/1、paper 订单 2、成交/未成交 1/1、reconciliation
+      PASS；后续 execution adapters 和可见性扩展已由独立任务承接，不构成本 MVP 未完成项。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-48639e503478ce17f77a96bc
+  task_id: TRADING-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 提供第二套实时交易引擎开发文档，要求在现有 repo 中实现初版系统设计，并保持与既有趋势预测系统合理隔离。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：paper trading MVP 已实现，默认 demo 跑通并生成 JSONL 审计日志和交易日报；验证通过目标测试、全量
+      pytest、ruff、目标 mypy、diff check 和真实 demo smoke；真实券商仍为 stub。2026-05-17: 从 VALIDATING
+      改回 IN_PROGRESS，原因：owner 要求为 trading_engine 补充安全边界测试，覆盖 paper-only、real_trading_enabled=false
+      默认、IBKR/Alpaca stub 禁止下单、外部模块不得直接 import broker adapter、trading daily report
+      production_effect=none、测试不得读取真实券商环境变量。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增
+      `tests/trading_engine/test_safety_boundaries.py`，ExecutionService 运行时拒绝非 PaperBroker，IBKR/Alpaca
+      stub submit_order 抛出明确错误，交易日报固定输出 `production_effect=none`；验证通过 trading_engine
+      测试、全量 pytest、ruff、目标 mypy、diff check 和 demo smoke。2026-05-17: 继续保持 VALIDATING，原因：已新增
+      `replay_intent_audit_trace` 和 `tests/trading_engine/test_audit_integrity.py`，audit
+      JSONL 顶层写入 intent lineage 字段并新增 execution_report_log；验证通过 audit integrity 测试、trading_engine
+      测试、全量 pytest、ruff、目标 mypy、diff check 和 demo smoke。2026-06-09: 从 VALIDATING 改为
+      DONE，原因：当前完整 `python -m pytest tests\trading_engine -q` 通过（939 passed, 330 warnings），TRADING-001
+      聚焦测试通过（35 passed），demo smoke 输出 3 个 OrderIntent、风控 2/1、paper 订单 2、成交/未成交 1/1、reconciliation
+      PASS；后续 execution adapters 和可见性扩展已由独立任务承接，不构成本 MVP 未完成项。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:48639e503478ce17f77a96bc9674611f13f219659f40f2232824a7d6181bd516
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-001
+  - 交易执行/paper trading engine MVP
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/paper_trading_engine_mvp_2026-05-17.md`；独立 `trading_engine`
+    子系统、paper-only 配置、风控链路、审计日志、交易日报、demo、基础测试、安全边界测试和 audit replay helper 已完成并通过当前系统验证；后续真实趋势输出
+    `OrderIntent` adapter、IBKR paper read-only / order lifecycle、continuous replay
+    和 dashboard 可见性由 TRADING-002 及后续任务承接；真实券商仍不在本 MVP 范围
+  - 趋势系统不得直接调用 broker；交易执行只能通过 `OrderIntent -> PreTradeRiskChecker -> ExecutionService
+    -> PaperBroker`；真实交易默认关闭且真实券商 adapter 只能是 stub；订单、风控、成交、组合快照和日报均可审计；demo 可生成模拟订单、模拟成交和交易日报；安全边界测试覆盖
+    paper-only、`real_trading_enabled=false` 默认、IBKR/Alpaca stub 禁止下单、外部趋势/日报/dashboard
+    模块不得直接 import broker adapter、trading daily report `production_effect=none`、测试不得读取真实券商环境变量；audit
+    完整性测试覆盖 approved / rejected / filled / open，并能用 intent_id 串起 order_intent、risk_result、order、execution_report、fill
+    和 portfolio_snapshot；完整 `tests/trading_engine`、聚焦 MVP tests、Ruff、diff check 和
+    demo smoke 通过
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 提供第二套实时交易引擎开发文档，要求在现有 repo 中实现初版系统设计，并保持与既有趋势预测系统合理隔离。2026-05-17:
+    从 IN_PROGRESS 改为 VALIDATING，原因：paper trading MVP 已实现，默认 demo 跑通并生成 JSONL 审计日志和交易日报；验证通过目标测试、全量
+    pytest、ruff、目标 mypy、diff check 和真实 demo smoke；真实券商仍为 stub。2026-05-17: 从 VALIDATING
+    改回 IN_PROGRESS，原因：owner 要求为 trading_engine 补充安全边界测试，覆盖 paper-only、real_trading_enabled=false
+    默认、IBKR/Alpaca stub 禁止下单、外部模块不得直接 import broker adapter、trading daily report production_effect=none、测试不得读取真实券商环境变量。2026-05-17:
+    从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `tests/trading_engine/test_safety_boundaries.py`，ExecutionService
+    运行时拒绝非 PaperBroker，IBKR/Alpaca stub submit_order 抛出明确错误，交易日报固定输出 `production_effect=none`；验证通过
+    trading_engine 测试、全量 pytest、ruff、目标 mypy、diff check 和 demo smoke。2026-05-17: 继续保持
+    VALIDATING，原因：已新增 `replay_intent_audit_trace` 和 `tests/trading_engine/test_audit_integrity.py`，audit
+    JSONL 顶层写入 intent lineage 字段并新增 execution_report_log；验证通过 audit integrity 测试、trading_engine
+    测试、全量 pytest、ruff、目标 mypy、diff check 和 demo smoke。2026-06-09: 从 VALIDATING 改为
+    DONE，原因：当前完整 `python -m pytest tests\trading_engine -q` 通过（939 passed, 330 warnings），TRADING-001
+    聚焦测试通过（35 passed），demo smoke 输出 3 个 OrderIntent、风控 2/1、paper 订单 2、成交/未成交 1/1、reconciliation
+    PASS；后续 execution adapters 和可见性扩展已由独立任务承接，不构成本 MVP 未完成项。'
+  docs_links:
+  - docs/requirements/paper_trading_engine_mvp_2026-05-17.md
+  terminal: true
+  raw_row_sha256: 48639e503478ce17f77a96bc9674611f13f219659f40f2232824a7d6181bd516
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 80be6e78b9be7b9430836b346ffadfe7c64d1d50393180a73f45fde203b3f6ac

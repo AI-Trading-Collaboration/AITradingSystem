@@ -1,0 +1,133 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-013
+  title: null
+  domain: 市场反馈优化/shadow 与 production 边界复核
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/shadow_production_boundary_review_2026-05-16.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/shadow_production_boundary_review_2026-05-16.md`；`validation_shadow`
+    source level 和 parameter shadow ledger 隔离已通过复验，正式 production 链路边界保持不变
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`validation_shadow` 必须是合法参数治理 source level 且只能用于 validation-only shadow
+      参数面；`run-parameter-shadow` 默认写独立 `prediction_ledger_flow_validation.csv`，不写正式
+      production prediction ledger；正式 `score-daily`、approved overlay、生产权重、正式仓位 gate、rule
+      card 和日报结论不得因 shadow 链路变化而改变；目标测试、ruff、diff check 和真实 daily-run 通过或报告新的真实门禁原因'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 341
+    row_sha256: d11e49e600f89a56529b1086492da78d937eb23db5392da7ef61a3b797c7bd67
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-013
+    - 市场反馈优化/shadow 与 production 边界复核
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/shadow_production_boundary_review_2026-05-16.md`；`validation_shadow`
+      source level 和 parameter shadow ledger 隔离已通过复验，正式 production 链路边界保持不变
+    - '`validation_shadow` 必须是合法参数治理 source level 且只能用于 validation-only shadow 参数面；`run-parameter-shadow`
+      默认写独立 `prediction_ledger_flow_validation.csv`，不写正式 production prediction ledger；正式
+      `score-daily`、approved overlay、生产权重、正式仓位 gate、rule card 和日报结论不得因 shadow 链路变化而改变；目标测试、ruff、diff
+      check 和真实 daily-run 通过或报告新的真实门禁原因'
+    - '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 要求 review shadow 链路和正式生产链路的逻辑正确性，上一轮
+      daily-run 已暴露 `validation_shadow` 枚举漏配；同时 review 发现 parameter shadow 默认 ledger
+      与 validation-only 语义隔离不够。2026-05-16: 从 IN_PROGRESS 改为 VALIDATING，原因：`validation_shadow`
+      已加入参数治理合法枚举，`run-parameter-shadow` 默认 ledger 已隔离到 `data/processed/prediction_ledger_flow_validation.csv`，正式
+      `score-daily`、approved overlay、生产权重、正式仓位 gate、rule card 和日报结论链路未改；验证通过 ruff、目标
+      pytest、`git diff --check` 和真实 `aits ops daily-run`，2026-05-15 run 15/15 PASS，parameter_governance
+      为 PASS_WITH_LIMITATIONS 且 `production_effect=none`。2026-06-07: 从 VALIDATING
+      改为 DONE，原因：复验通过 `test_parameter_governance_accepts_validation_shadow_source_level`、`tests/test_prediction_ledger.py`
+      和触达文件 ruff；`validation_shadow` 枚举、flow validation ledger 隔离和正式 prediction ledger
+      边界仍保持有效。'
+    raw_line: '|CALIBRATION-013|市场反馈优化/shadow 与 production 边界复核|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/shadow_production_boundary_review_2026-05-16.md`；`validation_shadow`
+      source level 和 parameter shadow ledger 隔离已通过复验，正式 production 链路边界保持不变|`validation_shadow`
+      必须是合法参数治理 source level 且只能用于 validation-only shadow 参数面；`run-parameter-shadow`
+      默认写独立 `prediction_ledger_flow_validation.csv`，不写正式 production prediction ledger；正式
+      `score-daily`、approved overlay、生产权重、正式仓位 gate、rule card 和日报结论不得因 shadow 链路变化而改变；目标测试、ruff、diff
+      check 和真实 daily-run 通过或报告新的真实门禁原因|2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 要求
+      review shadow 链路和正式生产链路的逻辑正确性，上一轮 daily-run 已暴露 `validation_shadow` 枚举漏配；同时
+      review 发现 parameter shadow 默认 ledger 与 validation-only 语义隔离不够。2026-05-16: 从
+      IN_PROGRESS 改为 VALIDATING，原因：`validation_shadow` 已加入参数治理合法枚举，`run-parameter-shadow`
+      默认 ledger 已隔离到 `data/processed/prediction_ledger_flow_validation.csv`，正式 `score-daily`、approved
+      overlay、生产权重、正式仓位 gate、rule card 和日报结论链路未改；验证通过 ruff、目标 pytest、`git diff --check`
+      和真实 `aits ops daily-run`，2026-05-15 run 15/15 PASS，parameter_governance 为 PASS_WITH_LIMITATIONS
+      且 `production_effect=none`。2026-06-07: 从 VALIDATING 改为 DONE，原因：复验通过 `test_parameter_governance_accepts_validation_shadow_source_level`、`tests/test_prediction_ledger.py`
+      和触达文件 ruff；`validation_shadow` 枚举、flow validation ledger 隔离和正式 prediction ledger
+      边界仍保持有效。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d11e49e600f89a56529b1086
+  task_id: CALIBRATION-013
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 要求 review shadow 链路和正式生产链路的逻辑正确性，上一轮
+      daily-run 已暴露 `validation_shadow` 枚举漏配；同时 review 发现 parameter shadow 默认 ledger
+      与 validation-only 语义隔离不够。2026-05-16: 从 IN_PROGRESS 改为 VALIDATING，原因：`validation_shadow`
+      已加入参数治理合法枚举，`run-parameter-shadow` 默认 ledger 已隔离到 `data/processed/prediction_ledger_flow_validation.csv`，正式
+      `score-daily`、approved overlay、生产权重、正式仓位 gate、rule card 和日报结论链路未改；验证通过 ruff、目标
+      pytest、`git diff --check` 和真实 `aits ops daily-run`，2026-05-15 run 15/15 PASS，parameter_governance
+      为 PASS_WITH_LIMITATIONS 且 `production_effect=none`。2026-06-07: 从 VALIDATING
+      改为 DONE，原因：复验通过 `test_parameter_governance_accepts_validation_shadow_source_level`、`tests/test_prediction_ledger.py`
+      和触达文件 ruff；`validation_shadow` 枚举、flow validation ledger 隔离和正式 prediction ledger
+      边界仍保持有效。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d11e49e600f89a56529b1086492da78d937eb23db5392da7ef61a3b797c7bd67
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-013
+  - 市场反馈优化/shadow 与 production 边界复核
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/shadow_production_boundary_review_2026-05-16.md`；`validation_shadow`
+    source level 和 parameter shadow ledger 隔离已通过复验，正式 production 链路边界保持不变
+  - '`validation_shadow` 必须是合法参数治理 source level 且只能用于 validation-only shadow 参数面；`run-parameter-shadow`
+    默认写独立 `prediction_ledger_flow_validation.csv`，不写正式 production prediction ledger；正式
+    `score-daily`、approved overlay、生产权重、正式仓位 gate、rule card 和日报结论不得因 shadow 链路变化而改变；目标测试、ruff、diff
+    check 和真实 daily-run 通过或报告新的真实门禁原因'
+  - '2026-05-16: 新增并进入 IN_PROGRESS，原因：owner 要求 review shadow 链路和正式生产链路的逻辑正确性，上一轮 daily-run
+    已暴露 `validation_shadow` 枚举漏配；同时 review 发现 parameter shadow 默认 ledger 与 validation-only
+    语义隔离不够。2026-05-16: 从 IN_PROGRESS 改为 VALIDATING，原因：`validation_shadow` 已加入参数治理合法枚举，`run-parameter-shadow`
+    默认 ledger 已隔离到 `data/processed/prediction_ledger_flow_validation.csv`，正式 `score-daily`、approved
+    overlay、生产权重、正式仓位 gate、rule card 和日报结论链路未改；验证通过 ruff、目标 pytest、`git diff --check`
+    和真实 `aits ops daily-run`，2026-05-15 run 15/15 PASS，parameter_governance 为 PASS_WITH_LIMITATIONS
+    且 `production_effect=none`。2026-06-07: 从 VALIDATING 改为 DONE，原因：复验通过 `test_parameter_governance_accepts_validation_shadow_source_level`、`tests/test_prediction_ledger.py`
+    和触达文件 ruff；`validation_shadow` 枚举、flow validation ledger 隔离和正式 prediction ledger
+    边界仍保持有效。'
+  docs_links:
+  - docs/requirements/shadow_production_boundary_review_2026-05-16.md
+  terminal: true
+  raw_row_sha256: d11e49e600f89a56529b1086492da78d937eb23db5392da7ef61a3b797c7bd67
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 017a1ecd09eee8b26aa21b2f5fff6ac13798138c6109df0ae3a67ed64333f21c

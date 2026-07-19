@@ -1,0 +1,237 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-957_to_975_LAYER2_STRATEGY_COMPONENT_READINESS_FOR_LAYER1_METAPOLICY
+  title: null
+  domain: Research strategies / Layer-2 component readiness for Layer-1 meta-policy
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-957_to_975_Layer2_Strategy_Component_Readiness_for_Layer1_MetaPolicy.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-957_to_975_Layer2_Strategy_Component_Readiness_for_Layer1_MetaPolicy.md`；957～975
+    baseline 已实现；growth owner decision=`KEEP_GROWTH_RESEARCH_ONLY`，因此 growth 仅 inactive
+    research reference，不进入 formal Layer-2 component pool 或 selectable facts；下一步为 owner
+    review 与 976～985 readiness gate 复核
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 957～966 输出 readiness reconciliation、component pool freeze、definition lock、data
+      quality check、readiness matrix、PIT historical weight path、return/cost/exposure
+      panel、forward outcome cube、anti-leakage/time-boundary audit 和 common robustness
+      validation JSON/Markdown/Parquet artifacts；967～970 输出 transition cost / component
+      distinctiveness / selector headroom oracle / switching constraint contract JSON/Markdown
+      artifacts，真实状态为 transition cost `MATERIAL`、components `DISTINCT`、selector headroom
+      `MATERIAL`、switching constraint `READY`；971～975 输出 best-component labels（`PARTIAL`，831
+      mature labels）、policy combiner contract、objective/outcome contract、purged walk-forward
+      split contract（3 splits）和 Layer-1 research dataset（831 rows）JSON/Markdown artifacts；formal
+      selectable 只含 `equal_risk_qqq_sgov` 与 `100_qqq`；`qqq_50_sgov_50` / `qqq_60_sgov_40`
+      为 reference-only；growth 标记 `research_only_inactive_reference`；所有 artifacts 固定
+      `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、focused pytest、Ruff、compileall、documentation/task
+      validation 和 `git diff --check` 通过或记录阻塞
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1290
+    row_sha256: daa350b471a570d3557e746a39d45b5fa931b80f329ae566454ca26bb49df0c3
+    cell_count: 8
+    all_cells:
+    - TRADING-957_to_975_LAYER2_STRATEGY_COMPONENT_READINESS_FOR_LAYER1_METAPOLICY
+    - Research strategies / Layer-2 component readiness for Layer-1 meta-policy
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-957_to_975_Layer2_Strategy_Component_Readiness_for_Layer1_MetaPolicy.md`；957～975
+      baseline 已实现；growth owner decision=`KEEP_GROWTH_RESEARCH_ONLY`，因此 growth 仅 inactive
+      research reference，不进入 formal Layer-2 component pool 或 selectable facts；下一步为
+      owner review 与 976～985 readiness gate 复核
+    - 957～966 输出 readiness reconciliation、component pool freeze、definition lock、data
+      quality check、readiness matrix、PIT historical weight path、return/cost/exposure
+      panel、forward outcome cube、anti-leakage/time-boundary audit 和 common robustness
+      validation JSON/Markdown/Parquet artifacts；967～970 输出 transition cost / component
+      distinctiveness / selector headroom oracle / switching constraint contract JSON/Markdown
+      artifacts，真实状态为 transition cost `MATERIAL`、components `DISTINCT`、selector headroom
+      `MATERIAL`、switching constraint `READY`；971～975 输出 best-component labels（`PARTIAL`，831
+      mature labels）、policy combiner contract、objective/outcome contract、purged walk-forward
+      split contract（3 splits）和 Layer-1 research dataset（831 rows）JSON/Markdown artifacts；formal
+      selectable 只含 `equal_risk_qqq_sgov` 与 `100_qqq`；`qqq_50_sgov_50` / `qqq_60_sgov_40`
+      为 reference-only；growth 标记 `research_only_inactive_reference`；所有 artifacts 固定
+      `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、focused pytest、Ruff、compileall、documentation/task
+      validation 和 `git diff --check` 通过或记录阻塞
+    - '2026-06-24: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进 Layer-2 strategy component readiness
+      并优先完成 957～961；同时根据最新 947～956 结果修正前提，QQQ-plus growth owner decision=`KEEP_GROWTH_RESEARCH_ONLY`，不得把
+      growth candidate 纳入 formal component pool。2026-06-24: 957～961 实现完成并转入 VALIDATING；新增
+      Layer-2 component pool config、readiness module、5 个 CLI、report registry entries、artifact
+      catalog row、system flow paragraph、requirements 进展记录和 focused tests；readiness
+      matrix 仍保持 `layer1_historical_research_allowed=false`、`layer1_forward_aging_allowed=false`，等待后续
+      PIT weight path/outcome cube/anti-leakage/dataset reproducibility gate。2026-06-24:
+      从 VALIDATING 改回 IN_PROGRESS，原因：owner 要求继续推进下一阶段 962～966，构建 PIT historical weight
+      path、return/cost/exposure panel、independent forward outcome cube、anti-leakage/time-boundary
+      audit 和 common robustness validation；本阶段仍不允许 Layer-1 historical research、paper-shadow、production
+      或 broker action。2026-06-24: 962～966 baseline 实现并验证通过；新增 5 个 Layer-2 fact/outcome
+      CLI、3 个 Parquet artifacts、2 个 audit JSON/Markdown artifacts、report registry/artifact
+      catalog/system flow 更新和 focused tests；真实 CLI 状态为 anti-leakage WARN（latest forward
+      windows 未全成熟）与 robustness MIXED（缺失/不足覆盖显式披露），无 broker/production/paper-shadow
+      解锁。2026-06-24: 967～970 第一批进入 IN_PROGRESS；目标是在启动 Layer-1 dataset 前先判断 Layer-2
+      component pool 的切换成本、差异性、selector headroom 与切换约束，若 headroom 很小或组件冗余则后续 971～985
+      不应升级为复杂第一层研究。2026-06-24: 967～970 baseline 实现并验证通过；新增 4 个 CLI/artifacts、selector
+      headroom policy config、report registry/artifact catalog/system flow 更新和 focused
+      tests；真实 CLI 结果为 `TRANSITION_COST_MATERIAL`、`COMPONENTS_DISTINCT`、`SELECTOR_HEADROOM_MATERIAL`、`SWITCHING_CONSTRAINT_READY`，data
+      quality=`PASS_WITH_WARNINGS`；headroom material 支持继续推进 simple-rule research readiness，但不自动启动复杂
+      ML selector、paper-shadow、production 或 broker。2026-06-24: 971～975 进入 IN_PROGRESS；目标是在训练任何
+      selector 前建立 labels、combiner、objective、purged split 和 research dataset。2026-06-24:
+      971～975 baseline 实现完成并转入 VALIDATING；真实 CLI 结果为 `BEST_COMPONENT_LABELS_PARTIAL`、`POLICY_COMBINER_CONTRACT_READY`、`LAYER1_OBJECTIVE_READY`、`PURGED_WALK_FORWARD_CONTRACT_READY`、`LAYER1_RESEARCH_DATASET_READY`，dataset
+      rows=831，data quality=`PASS_WITH_WARNINGS`。'
+    raw_line: '|TRADING-957_to_975_LAYER2_STRATEGY_COMPONENT_READINESS_FOR_LAYER1_METAPOLICY|Research
+      strategies / Layer-2 component readiness for Layer-1 meta-policy|P1|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-957_to_975_Layer2_Strategy_Component_Readiness_for_Layer1_MetaPolicy.md`；957～975
+      baseline 已实现；growth owner decision=`KEEP_GROWTH_RESEARCH_ONLY`，因此 growth 仅 inactive
+      research reference，不进入 formal Layer-2 component pool 或 selectable facts；下一步为
+      owner review 与 976～985 readiness gate 复核|957～966 输出 readiness reconciliation、component
+      pool freeze、definition lock、data quality check、readiness matrix、PIT historical
+      weight path、return/cost/exposure panel、forward outcome cube、anti-leakage/time-boundary
+      audit 和 common robustness validation JSON/Markdown/Parquet artifacts；967～970
+      输出 transition cost / component distinctiveness / selector headroom oracle /
+      switching constraint contract JSON/Markdown artifacts，真实状态为 transition cost
+      `MATERIAL`、components `DISTINCT`、selector headroom `MATERIAL`、switching constraint
+      `READY`；971～975 输出 best-component labels（`PARTIAL`，831 mature labels）、policy
+      combiner contract、objective/outcome contract、purged walk-forward split contract（3
+      splits）和 Layer-1 research dataset（831 rows）JSON/Markdown artifacts；formal selectable
+      只含 `equal_risk_qqq_sgov` 与 `100_qqq`；`qqq_50_sgov_50` / `qqq_60_sgov_40` 为 reference-only；growth
+      标记 `research_only_inactive_reference`；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、focused pytest、Ruff、compileall、documentation/task
+      validation 和 `git diff --check` 通过或记录阻塞|2026-06-24: 新增并进入 IN_PROGRESS，原因：owner
+      要求继续推进 Layer-2 strategy component readiness 并优先完成 957～961；同时根据最新 947～956 结果修正前提，QQQ-plus
+      growth owner decision=`KEEP_GROWTH_RESEARCH_ONLY`，不得把 growth candidate 纳入 formal
+      component pool。2026-06-24: 957～961 实现完成并转入 VALIDATING；新增 Layer-2 component pool
+      config、readiness module、5 个 CLI、report registry entries、artifact catalog row、system
+      flow paragraph、requirements 进展记录和 focused tests；readiness matrix 仍保持 `layer1_historical_research_allowed=false`、`layer1_forward_aging_allowed=false`，等待后续
+      PIT weight path/outcome cube/anti-leakage/dataset reproducibility gate。2026-06-24:
+      从 VALIDATING 改回 IN_PROGRESS，原因：owner 要求继续推进下一阶段 962～966，构建 PIT historical weight
+      path、return/cost/exposure panel、independent forward outcome cube、anti-leakage/time-boundary
+      audit 和 common robustness validation；本阶段仍不允许 Layer-1 historical research、paper-shadow、production
+      或 broker action。2026-06-24: 962～966 baseline 实现并验证通过；新增 5 个 Layer-2 fact/outcome
+      CLI、3 个 Parquet artifacts、2 个 audit JSON/Markdown artifacts、report registry/artifact
+      catalog/system flow 更新和 focused tests；真实 CLI 状态为 anti-leakage WARN（latest forward
+      windows 未全成熟）与 robustness MIXED（缺失/不足覆盖显式披露），无 broker/production/paper-shadow
+      解锁。2026-06-24: 967～970 第一批进入 IN_PROGRESS；目标是在启动 Layer-1 dataset 前先判断 Layer-2
+      component pool 的切换成本、差异性、selector headroom 与切换约束，若 headroom 很小或组件冗余则后续 971～985
+      不应升级为复杂第一层研究。2026-06-24: 967～970 baseline 实现并验证通过；新增 4 个 CLI/artifacts、selector
+      headroom policy config、report registry/artifact catalog/system flow 更新和 focused
+      tests；真实 CLI 结果为 `TRANSITION_COST_MATERIAL`、`COMPONENTS_DISTINCT`、`SELECTOR_HEADROOM_MATERIAL`、`SWITCHING_CONSTRAINT_READY`，data
+      quality=`PASS_WITH_WARNINGS`；headroom material 支持继续推进 simple-rule research readiness，但不自动启动复杂
+      ML selector、paper-shadow、production 或 broker。2026-06-24: 971～975 进入 IN_PROGRESS；目标是在训练任何
+      selector 前建立 labels、combiner、objective、purged split 和 research dataset。2026-06-24:
+      971～975 baseline 实现完成并转入 VALIDATING；真实 CLI 结果为 `BEST_COMPONENT_LABELS_PARTIAL`、`POLICY_COMBINER_CONTRACT_READY`、`LAYER1_OBJECTIVE_READY`、`PURGED_WALK_FORWARD_CONTRACT_READY`、`LAYER1_RESEARCH_DATASET_READY`，dataset
+      rows=831，data quality=`PASS_WITH_WARNINGS`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-daa350b471a570d3557e746a
+  task_id: TRADING-957_to_975_LAYER2_STRATEGY_COMPONENT_READINESS_FOR_LAYER1_METAPOLICY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-24: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进 Layer-2 strategy component
+      readiness 并优先完成 957～961；同时根据最新 947～956 结果修正前提，QQQ-plus growth owner decision=`KEEP_GROWTH_RESEARCH_ONLY`，不得把
+      growth candidate 纳入 formal component pool。2026-06-24: 957～961 实现完成并转入 VALIDATING；新增
+      Layer-2 component pool config、readiness module、5 个 CLI、report registry entries、artifact
+      catalog row、system flow paragraph、requirements 进展记录和 focused tests；readiness
+      matrix 仍保持 `layer1_historical_research_allowed=false`、`layer1_forward_aging_allowed=false`，等待后续
+      PIT weight path/outcome cube/anti-leakage/dataset reproducibility gate。2026-06-24:
+      从 VALIDATING 改回 IN_PROGRESS，原因：owner 要求继续推进下一阶段 962～966，构建 PIT historical weight
+      path、return/cost/exposure panel、independent forward outcome cube、anti-leakage/time-boundary
+      audit 和 common robustness validation；本阶段仍不允许 Layer-1 historical research、paper-shadow、production
+      或 broker action。2026-06-24: 962～966 baseline 实现并验证通过；新增 5 个 Layer-2 fact/outcome
+      CLI、3 个 Parquet artifacts、2 个 audit JSON/Markdown artifacts、report registry/artifact
+      catalog/system flow 更新和 focused tests；真实 CLI 状态为 anti-leakage WARN（latest forward
+      windows 未全成熟）与 robustness MIXED（缺失/不足覆盖显式披露），无 broker/production/paper-shadow
+      解锁。2026-06-24: 967～970 第一批进入 IN_PROGRESS；目标是在启动 Layer-1 dataset 前先判断 Layer-2
+      component pool 的切换成本、差异性、selector headroom 与切换约束，若 headroom 很小或组件冗余则后续 971～985
+      不应升级为复杂第一层研究。2026-06-24: 967～970 baseline 实现并验证通过；新增 4 个 CLI/artifacts、selector
+      headroom policy config、report registry/artifact catalog/system flow 更新和 focused
+      tests；真实 CLI 结果为 `TRANSITION_COST_MATERIAL`、`COMPONENTS_DISTINCT`、`SELECTOR_HEADROOM_MATERIAL`、`SWITCHING_CONSTRAINT_READY`，data
+      quality=`PASS_WITH_WARNINGS`；headroom material 支持继续推进 simple-rule research readiness，但不自动启动复杂
+      ML selector、paper-shadow、production 或 broker。2026-06-24: 971～975 进入 IN_PROGRESS；目标是在训练任何
+      selector 前建立 labels、combiner、objective、purged split 和 research dataset。2026-06-24:
+      971～975 baseline 实现完成并转入 VALIDATING；真实 CLI 结果为 `BEST_COMPONENT_LABELS_PARTIAL`、`POLICY_COMBINER_CONTRACT_READY`、`LAYER1_OBJECTIVE_READY`、`PURGED_WALK_FORWARD_CONTRACT_READY`、`LAYER1_RESEARCH_DATASET_READY`，dataset
+      rows=831，data quality=`PASS_WITH_WARNINGS`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:daa350b471a570d3557e746a39d45b5fa931b80f329ae566454ca26bb49df0c3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-957_to_975_LAYER2_STRATEGY_COMPONENT_READINESS_FOR_LAYER1_METAPOLICY
+  - Research strategies / Layer-2 component readiness for Layer-1 meta-policy
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-957_to_975_Layer2_Strategy_Component_Readiness_for_Layer1_MetaPolicy.md`；957～975
+    baseline 已实现；growth owner decision=`KEEP_GROWTH_RESEARCH_ONLY`，因此 growth 仅 inactive
+    research reference，不进入 formal Layer-2 component pool 或 selectable facts；下一步为 owner
+    review 与 976～985 readiness gate 复核
+  - 957～966 输出 readiness reconciliation、component pool freeze、definition lock、data
+    quality check、readiness matrix、PIT historical weight path、return/cost/exposure
+    panel、forward outcome cube、anti-leakage/time-boundary audit 和 common robustness
+    validation JSON/Markdown/Parquet artifacts；967～970 输出 transition cost / component
+    distinctiveness / selector headroom oracle / switching constraint contract JSON/Markdown
+    artifacts，真实状态为 transition cost `MATERIAL`、components `DISTINCT`、selector headroom
+    `MATERIAL`、switching constraint `READY`；971～975 输出 best-component labels（`PARTIAL`，831
+    mature labels）、policy combiner contract、objective/outcome contract、purged walk-forward
+    split contract（3 splits）和 Layer-1 research dataset（831 rows）JSON/Markdown artifacts；formal
+    selectable 只含 `equal_risk_qqq_sgov` 与 `100_qqq`；`qqq_50_sgov_50` / `qqq_60_sgov_40`
+    为 reference-only；growth 标记 `research_only_inactive_reference`；所有 artifacts 固定
+    `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+    registry、artifact catalog、system flow、focused pytest、Ruff、compileall、documentation/task
+    validation 和 `git diff --check` 通过或记录阻塞
+  - '2026-06-24: 新增并进入 IN_PROGRESS，原因：owner 要求继续推进 Layer-2 strategy component readiness
+    并优先完成 957～961；同时根据最新 947～956 结果修正前提，QQQ-plus growth owner decision=`KEEP_GROWTH_RESEARCH_ONLY`，不得把
+    growth candidate 纳入 formal component pool。2026-06-24: 957～961 实现完成并转入 VALIDATING；新增
+    Layer-2 component pool config、readiness module、5 个 CLI、report registry entries、artifact
+    catalog row、system flow paragraph、requirements 进展记录和 focused tests；readiness matrix
+    仍保持 `layer1_historical_research_allowed=false`、`layer1_forward_aging_allowed=false`，等待后续
+    PIT weight path/outcome cube/anti-leakage/dataset reproducibility gate。2026-06-24:
+    从 VALIDATING 改回 IN_PROGRESS，原因：owner 要求继续推进下一阶段 962～966，构建 PIT historical weight
+    path、return/cost/exposure panel、independent forward outcome cube、anti-leakage/time-boundary
+    audit 和 common robustness validation；本阶段仍不允许 Layer-1 historical research、paper-shadow、production
+    或 broker action。2026-06-24: 962～966 baseline 实现并验证通过；新增 5 个 Layer-2 fact/outcome
+    CLI、3 个 Parquet artifacts、2 个 audit JSON/Markdown artifacts、report registry/artifact
+    catalog/system flow 更新和 focused tests；真实 CLI 状态为 anti-leakage WARN（latest forward
+    windows 未全成熟）与 robustness MIXED（缺失/不足覆盖显式披露），无 broker/production/paper-shadow
+    解锁。2026-06-24: 967～970 第一批进入 IN_PROGRESS；目标是在启动 Layer-1 dataset 前先判断 Layer-2 component
+    pool 的切换成本、差异性、selector headroom 与切换约束，若 headroom 很小或组件冗余则后续 971～985 不应升级为复杂第一层研究。2026-06-24:
+    967～970 baseline 实现并验证通过；新增 4 个 CLI/artifacts、selector headroom policy config、report
+    registry/artifact catalog/system flow 更新和 focused tests；真实 CLI 结果为 `TRANSITION_COST_MATERIAL`、`COMPONENTS_DISTINCT`、`SELECTOR_HEADROOM_MATERIAL`、`SWITCHING_CONSTRAINT_READY`，data
+    quality=`PASS_WITH_WARNINGS`；headroom material 支持继续推进 simple-rule research readiness，但不自动启动复杂
+    ML selector、paper-shadow、production 或 broker。2026-06-24: 971～975 进入 IN_PROGRESS；目标是在训练任何
+    selector 前建立 labels、combiner、objective、purged split 和 research dataset。2026-06-24:
+    971～975 baseline 实现完成并转入 VALIDATING；真实 CLI 结果为 `BEST_COMPONENT_LABELS_PARTIAL`、`POLICY_COMBINER_CONTRACT_READY`、`LAYER1_OBJECTIVE_READY`、`PURGED_WALK_FORWARD_CONTRACT_READY`、`LAYER1_RESEARCH_DATASET_READY`，dataset
+    rows=831，data quality=`PASS_WITH_WARNINGS`。'
+  docs_links:
+  - docs/requirements/TRADING-957_to_975_Layer2_Strategy_Component_Readiness_for_Layer1_MetaPolicy.md
+  terminal: false
+  raw_row_sha256: daa350b471a570d3557e746a39d45b5fa931b80f329ae566454ca26bb49df0c3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 95ba74635cc05d0d5eef96b19ea01af09f5f54de95e74611835fd6d050d1e9aa

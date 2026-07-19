@@ -1,0 +1,164 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-005
+  title: null
+  domain: 交易执行/dashboard paper replay visibility
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/dashboard_paper_replay_visibility_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/dashboard_paper_replay_visibility_2026-05-17.md`；7/14/30
+    日 Paper Trading Trend、snapshot 质量、candidate 解释维度、缺失历史 LIMITED 降级和只读 production
+    boundary 已完成；后续 paper signal quality、continuous replay visibility 与真实 daily flow
+    观察由 TRADING-006/TRADING-007A+ 承接
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: daily task dashboard 必须只读读取已有 `paper_trading_summary_YYYY-MM-DD.json` 和
+      `order_intent_candidates_YYYY-MM-DD.json`，同时展示最近 7/14/30 日 Paper Trading Trend；趋势字段包括
+      `replay_mode=daily_independent`、`portfolio_carry_forward=false`、candidate /
+      intent / fill / PnL / reconciliation 分布、synthetic snapshot 使用比例、top `blocked_by`
+      和 top `reason_code`；缺历史 summary 或 candidate 文件时显示 `LIMITED` 且不补造结论；dashboard
+      不运行 paper runner/replay、不读取 broker API key、不调用真实 broker、不改变 production 仓位建议、不影响参数晋级
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 301
+    row_sha256: a05c94aae98be51448648d033d6e091ef2d96b71ad4288eef52c501040b39cb8
+    cell_count: 8
+    all_cells:
+    - TRADING-005
+    - 交易执行/dashboard paper replay visibility
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/dashboard_paper_replay_visibility_2026-05-17.md`；7/14/30
+      日 Paper Trading Trend、snapshot 质量、candidate 解释维度、缺失历史 LIMITED 降级和只读 production
+      boundary 已完成；后续 paper signal quality、continuous replay visibility 与真实 daily
+      flow 观察由 TRADING-006/TRADING-007A+ 承接
+    - daily task dashboard 必须只读读取已有 `paper_trading_summary_YYYY-MM-DD.json` 和 `order_intent_candidates_YYYY-MM-DD.json`，同时展示最近
+      7/14/30 日 Paper Trading Trend；趋势字段包括 `replay_mode=daily_independent`、`portfolio_carry_forward=false`、candidate
+      / intent / fill / PnL / reconciliation 分布、synthetic snapshot 使用比例、top `blocked_by`
+      和 top `reason_code`；缺历史 summary 或 candidate 文件时显示 `LIMITED` 且不补造结论；dashboard
+      不运行 paper runner/replay、不读取 broker API key、不调用真实 broker、不改变 production 仓位建议、不影响参数晋级
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-004 后把 paper replay 历史可见性接回
+      daily dashboard，同时保持 paper-only、只读和 `production_effect=none` 边界。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 7/14/30 日趋势窗口、`replay_mode=daily_independent`、`portfolio_carry_forward=false`、只读
+      execution boundary、synthetic snapshot 比例、top `blocked_by` / `reason_code` 和缺失历史
+      LIMITED 行为；验证通过 `python -m pytest tests/test_daily_task_dashboard.py -q`、`python
+      -m pytest tests/trading_engine -q`、`python -m pytest`、`python -m ruff check
+      src tests scripts`、`python -m black --check src/ai_trading_system/daily_task_dashboard.py
+      tests/test_daily_task_dashboard.py` 和 `git diff --check`。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：latest `daily_task_dashboard_2026-06-05.json/html` 字段级复核确认 Paper
+      Trading Trend 包含 7/14/30 窗口、`production_effect=none`、`replay_mode=daily_independent`、`portfolio_carry_forward=false`、只读
+      execution boundary、synthetic snapshot summary、top `blocked_by` 和 top `reason_code`；当前
+      run-bundle reports 目录缺 paper summaries 时趋势按设计为 `LIMITED`，所有缺失日仍显式 `production_effect=none`，不补造结论、不运行
+      runner/replay；目标 dashboard tests 22 passed，完整 `tests/trading_engine` 939 passed，scoped
+      Black/Ruff 通过。'
+    raw_line: '|TRADING-005|交易执行/dashboard paper replay visibility|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/dashboard_paper_replay_visibility_2026-05-17.md`；7/14/30
+      日 Paper Trading Trend、snapshot 质量、candidate 解释维度、缺失历史 LIMITED 降级和只读 production
+      boundary 已完成；后续 paper signal quality、continuous replay visibility 与真实 daily
+      flow 观察由 TRADING-006/TRADING-007A+ 承接|daily task dashboard 必须只读读取已有 `paper_trading_summary_YYYY-MM-DD.json`
+      和 `order_intent_candidates_YYYY-MM-DD.json`，同时展示最近 7/14/30 日 Paper Trading Trend；趋势字段包括
+      `replay_mode=daily_independent`、`portfolio_carry_forward=false`、candidate /
+      intent / fill / PnL / reconciliation 分布、synthetic snapshot 使用比例、top `blocked_by`
+      和 top `reason_code`；缺历史 summary 或 candidate 文件时显示 `LIMITED` 且不补造结论；dashboard
+      不运行 paper runner/replay、不读取 broker API key、不调用真实 broker、不改变 production 仓位建议、不影响参数晋级|2026-05-17:
+      新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-004 后把 paper replay 历史可见性接回 daily dashboard，同时保持
+      paper-only、只读和 `production_effect=none` 边界。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成
+      7/14/30 日趋势窗口、`replay_mode=daily_independent`、`portfolio_carry_forward=false`、只读
+      execution boundary、synthetic snapshot 比例、top `blocked_by` / `reason_code` 和缺失历史
+      LIMITED 行为；验证通过 `python -m pytest tests/test_daily_task_dashboard.py -q`、`python
+      -m pytest tests/trading_engine -q`、`python -m pytest`、`python -m ruff check
+      src tests scripts`、`python -m black --check src/ai_trading_system/daily_task_dashboard.py
+      tests/test_daily_task_dashboard.py` 和 `git diff --check`。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：latest `daily_task_dashboard_2026-06-05.json/html` 字段级复核确认 Paper
+      Trading Trend 包含 7/14/30 窗口、`production_effect=none`、`replay_mode=daily_independent`、`portfolio_carry_forward=false`、只读
+      execution boundary、synthetic snapshot summary、top `blocked_by` 和 top `reason_code`；当前
+      run-bundle reports 目录缺 paper summaries 时趋势按设计为 `LIMITED`，所有缺失日仍显式 `production_effect=none`，不补造结论、不运行
+      runner/replay；目标 dashboard tests 22 passed，完整 `tests/trading_engine` 939 passed，scoped
+      Black/Ruff 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a05c94aae98be51448648d03
+  task_id: TRADING-005
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-004 后把 paper replay
+      历史可见性接回 daily dashboard，同时保持 paper-only、只读和 `production_effect=none` 边界。2026-05-17:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已完成 7/14/30 日趋势窗口、`replay_mode=daily_independent`、`portfolio_carry_forward=false`、只读
+      execution boundary、synthetic snapshot 比例、top `blocked_by` / `reason_code` 和缺失历史
+      LIMITED 行为；验证通过 `python -m pytest tests/test_daily_task_dashboard.py -q`、`python
+      -m pytest tests/trading_engine -q`、`python -m pytest`、`python -m ruff check
+      src tests scripts`、`python -m black --check src/ai_trading_system/daily_task_dashboard.py
+      tests/test_daily_task_dashboard.py` 和 `git diff --check`。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：latest `daily_task_dashboard_2026-06-05.json/html` 字段级复核确认 Paper
+      Trading Trend 包含 7/14/30 窗口、`production_effect=none`、`replay_mode=daily_independent`、`portfolio_carry_forward=false`、只读
+      execution boundary、synthetic snapshot summary、top `blocked_by` 和 top `reason_code`；当前
+      run-bundle reports 目录缺 paper summaries 时趋势按设计为 `LIMITED`，所有缺失日仍显式 `production_effect=none`，不补造结论、不运行
+      runner/replay；目标 dashboard tests 22 passed，完整 `tests/trading_engine` 939 passed，scoped
+      Black/Ruff 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a05c94aae98be51448648d033d6e091ef2d96b71ad4288eef52c501040b39cb8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-005
+  - 交易执行/dashboard paper replay visibility
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/dashboard_paper_replay_visibility_2026-05-17.md`；7/14/30
+    日 Paper Trading Trend、snapshot 质量、candidate 解释维度、缺失历史 LIMITED 降级和只读 production
+    boundary 已完成；后续 paper signal quality、continuous replay visibility 与真实 daily flow
+    观察由 TRADING-006/TRADING-007A+ 承接
+  - daily task dashboard 必须只读读取已有 `paper_trading_summary_YYYY-MM-DD.json` 和 `order_intent_candidates_YYYY-MM-DD.json`，同时展示最近
+    7/14/30 日 Paper Trading Trend；趋势字段包括 `replay_mode=daily_independent`、`portfolio_carry_forward=false`、candidate
+    / intent / fill / PnL / reconciliation 分布、synthetic snapshot 使用比例、top `blocked_by`
+    和 top `reason_code`；缺历史 summary 或 candidate 文件时显示 `LIMITED` 且不补造结论；dashboard 不运行
+    paper runner/replay、不读取 broker API key、不调用真实 broker、不改变 production 仓位建议、不影响参数晋级
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-004 后把 paper replay 历史可见性接回
+    daily dashboard，同时保持 paper-only、只读和 `production_effect=none` 边界。2026-05-17: 从
+    IN_PROGRESS 改为 VALIDATING，原因：已完成 7/14/30 日趋势窗口、`replay_mode=daily_independent`、`portfolio_carry_forward=false`、只读
+    execution boundary、synthetic snapshot 比例、top `blocked_by` / `reason_code` 和缺失历史
+    LIMITED 行为；验证通过 `python -m pytest tests/test_daily_task_dashboard.py -q`、`python
+    -m pytest tests/trading_engine -q`、`python -m pytest`、`python -m ruff check src
+    tests scripts`、`python -m black --check src/ai_trading_system/daily_task_dashboard.py
+    tests/test_daily_task_dashboard.py` 和 `git diff --check`。2026-06-09: 从 VALIDATING
+    改为 DONE，原因：latest `daily_task_dashboard_2026-06-05.json/html` 字段级复核确认 Paper Trading
+    Trend 包含 7/14/30 窗口、`production_effect=none`、`replay_mode=daily_independent`、`portfolio_carry_forward=false`、只读
+    execution boundary、synthetic snapshot summary、top `blocked_by` 和 top `reason_code`；当前
+    run-bundle reports 目录缺 paper summaries 时趋势按设计为 `LIMITED`，所有缺失日仍显式 `production_effect=none`，不补造结论、不运行
+    runner/replay；目标 dashboard tests 22 passed，完整 `tests/trading_engine` 939 passed，scoped
+    Black/Ruff 通过。'
+  docs_links:
+  - docs/requirements/dashboard_paper_replay_visibility_2026-05-17.md
+  terminal: true
+  raw_row_sha256: a05c94aae98be51448648d033d6e091ef2d96b71ad4288eef52c501040b39cb8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: aef3ee59df73d086fc4c338b5c641fa92d4b0c9f485f8cf8988ab3b29ebe2b7c

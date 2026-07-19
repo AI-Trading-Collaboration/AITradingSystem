@@ -1,0 +1,151 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2292_SCOPE_NARROWED_CANDIDATE_ACTUAL_PATH_VALIDATION
+  title: null
+  domain: Research trends / scope-narrowed candidate actual-path validation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2292_Scope_Narrowed_Candidate_Actual_Path_Validation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2292_Scope_Narrowed_Candidate_Actual_Path_Validation.md`；依赖
+    TRADING-2291 scope-narrowed artifacts、TRADING-2290 scope review outputs、TRADING-2289
+    refined validation outputs 和 validated cached QQQ/SPY/SMH price data。本批只验证 active
+    scope records，不生成新 candidate、不修改 2291 artifacts、不打开 owner review / promotion /
+    paper-shadow / production / broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends scope-narrowed-candidate-actual-path-validation`；生成
+      active actual-path matrix、active prediction outcome matrix、inactive reference
+      matrix、active-vs-inactive comparison、confirmation-only scorecard、risk-cap-only
+      scorecard、sample sufficiency、false signal cost、state recommendation、error attribution
+      seed、data quality report、risk appetite archive carry-forward 和 research docs；input/output
+      safety gates fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker
+      false/none，且不得输出 promotion/paper-shadow/production/broker ready recommendation。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1229
+    row_sha256: 5b9087475443816666be0a95f20cc45aa02fd8b7a68d3db1d28398749a99d34d
+    cell_count: 8
+    all_cells:
+    - TRADING-2292_SCOPE_NARROWED_CANDIDATE_ACTUAL_PATH_VALIDATION
+    - Research trends / scope-narrowed candidate actual-path validation
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2292_Scope_Narrowed_Candidate_Actual_Path_Validation.md`；依赖
+      TRADING-2291 scope-narrowed artifacts、TRADING-2290 scope review outputs、TRADING-2289
+      refined validation outputs 和 validated cached QQQ/SPY/SMH price data。本批只验证 active
+      scope records，不生成新 candidate、不修改 2291 artifacts、不打开 owner review / promotion
+      / paper-shadow / production / broker。
+    - 新增 `aits research trends scope-narrowed-candidate-actual-path-validation`；生成
+      active actual-path matrix、active prediction outcome matrix、inactive reference
+      matrix、active-vs-inactive comparison、confirmation-only scorecard、risk-cap-only
+      scorecard、sample sufficiency、false signal cost、state recommendation、error attribution
+      seed、data quality report、risk appetite archive carry-forward 和 research docs；input/output
+      safety gates fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker
+      false/none，且不得输出 promotion/paper-shadow/production/broker ready recommendation。
+    - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；pre-flight 已识别 worktree 中存在 TRADING-1087
+      / ops / docs 相关既有未提交改动，TRADING-2292 必须 selective staging 且最终 commit 不纳入这些无关改动。2026-06-30:
+      实现完成并转入 VALIDATING；真实 run active records=4,040、eligible active=3,108、source
+      data quality=`PASS_WITH_WARNINGS`；confirmation candidate=`SCOPE_NARROWED_VALIDATED_REJECT_RECOMMENDED`，risk-cap
+      candidate=`SCOPE_NARROWED_VALIDATED_FORWARD_OBSERVE_CANDIDATE`，next task recommendation=`TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review`；验证通过
+      Ruff、compileall、focused parallel pytest 35 passed、full parallel pytest 3712
+      passed、docs freshness、report contract、contract-validation 193 passed、task-register
+      consistency run/validate 和 `git diff --check`。'
+    raw_line: '|TRADING-2292_SCOPE_NARROWED_CANDIDATE_ACTUAL_PATH_VALIDATION|Research
+      trends / scope-narrowed candidate actual-path validation|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2292_Scope_Narrowed_Candidate_Actual_Path_Validation.md`；依赖
+      TRADING-2291 scope-narrowed artifacts、TRADING-2290 scope review outputs、TRADING-2289
+      refined validation outputs 和 validated cached QQQ/SPY/SMH price data。本批只验证 active
+      scope records，不生成新 candidate、不修改 2291 artifacts、不打开 owner review / promotion
+      / paper-shadow / production / broker。|新增 `aits research trends scope-narrowed-candidate-actual-path-validation`；生成
+      active actual-path matrix、active prediction outcome matrix、inactive reference
+      matrix、active-vs-inactive comparison、confirmation-only scorecard、risk-cap-only
+      scorecard、sample sufficiency、false signal cost、state recommendation、error attribution
+      seed、data quality report、risk appetite archive carry-forward 和 research docs；input/output
+      safety gates fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker
+      false/none，且不得输出 promotion/paper-shadow/production/broker ready recommendation。|2026-06-30:
+      根据 owner 附件新增并进入 IN_PROGRESS；pre-flight 已识别 worktree 中存在 TRADING-1087 / ops
+      / docs 相关既有未提交改动，TRADING-2292 必须 selective staging 且最终 commit 不纳入这些无关改动。2026-06-30:
+      实现完成并转入 VALIDATING；真实 run active records=4,040、eligible active=3,108、source
+      data quality=`PASS_WITH_WARNINGS`；confirmation candidate=`SCOPE_NARROWED_VALIDATED_REJECT_RECOMMENDED`，risk-cap
+      candidate=`SCOPE_NARROWED_VALIDATED_FORWARD_OBSERVE_CANDIDATE`，next task recommendation=`TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review`；验证通过
+      Ruff、compileall、focused parallel pytest 35 passed、full parallel pytest 3712
+      passed、docs freshness、report contract、contract-validation 193 passed、task-register
+      consistency run/validate 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5b9087475443816666be0a95
+  task_id: TRADING-2292_SCOPE_NARROWED_CANDIDATE_ACTUAL_PATH_VALIDATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；pre-flight 已识别 worktree 中存在 TRADING-1087
+      / ops / docs 相关既有未提交改动，TRADING-2292 必须 selective staging 且最终 commit 不纳入这些无关改动。2026-06-30:
+      实现完成并转入 VALIDATING；真实 run active records=4,040、eligible active=3,108、source
+      data quality=`PASS_WITH_WARNINGS`；confirmation candidate=`SCOPE_NARROWED_VALIDATED_REJECT_RECOMMENDED`，risk-cap
+      candidate=`SCOPE_NARROWED_VALIDATED_FORWARD_OBSERVE_CANDIDATE`，next task recommendation=`TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review`；验证通过
+      Ruff、compileall、focused parallel pytest 35 passed、full parallel pytest 3712
+      passed、docs freshness、report contract、contract-validation 193 passed、task-register
+      consistency run/validate 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5b9087475443816666be0a95f20cc45aa02fd8b7a68d3db1d28398749a99d34d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2292_SCOPE_NARROWED_CANDIDATE_ACTUAL_PATH_VALIDATION
+  - Research trends / scope-narrowed candidate actual-path validation
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2292_Scope_Narrowed_Candidate_Actual_Path_Validation.md`；依赖
+    TRADING-2291 scope-narrowed artifacts、TRADING-2290 scope review outputs、TRADING-2289
+    refined validation outputs 和 validated cached QQQ/SPY/SMH price data。本批只验证 active
+    scope records，不生成新 candidate、不修改 2291 artifacts、不打开 owner review / promotion /
+    paper-shadow / production / broker。
+  - 新增 `aits research trends scope-narrowed-candidate-actual-path-validation`；生成 active
+    actual-path matrix、active prediction outcome matrix、inactive reference matrix、active-vs-inactive
+    comparison、confirmation-only scorecard、risk-cap-only scorecard、sample sufficiency、false
+    signal cost、state recommendation、error attribution seed、data quality report、risk
+    appetite archive carry-forward 和 research docs；input/output safety gates fail
+    closed；所有 outputs 固定 promotion/paper-shadow/production/broker false/none，且不得输出
+    promotion/paper-shadow/production/broker ready recommendation。
+  - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；pre-flight 已识别 worktree 中存在 TRADING-1087
+    / ops / docs 相关既有未提交改动，TRADING-2292 必须 selective staging 且最终 commit 不纳入这些无关改动。2026-06-30:
+    实现完成并转入 VALIDATING；真实 run active records=4,040、eligible active=3,108、source data
+    quality=`PASS_WITH_WARNINGS`；confirmation candidate=`SCOPE_NARROWED_VALIDATED_REJECT_RECOMMENDED`，risk-cap
+    candidate=`SCOPE_NARROWED_VALIDATED_FORWARD_OBSERVE_CANDIDATE`，next task recommendation=`TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review`；验证通过
+    Ruff、compileall、focused parallel pytest 35 passed、full parallel pytest 3712 passed、docs
+    freshness、report contract、contract-validation 193 passed、task-register consistency
+    run/validate 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-2292_Scope_Narrowed_Candidate_Actual_Path_Validation.md
+  terminal: false
+  raw_row_sha256: 5b9087475443816666be0a95f20cc45aa02fd8b7a68d3db1d28398749a99d34d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8a2143d845252a38a066a2818ffd38230bd819578c6aa420dd9bac5813f9f140

@@ -1,0 +1,139 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-256_to_260_SMOOTHED_EVIDENCE_COMPLETENESS_AND_PROMOTION_READINESS
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue smoothed evidence completeness and promotion
+    readiness review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据；architecture coordinator：继续
+    G2.4 并迁移 TRADING-261～265 consumer
+  requirement_refs:
+  - docs/requirements/TRADING-256_to_260_Smoothed_Evidence_Completeness_and_Promotion_Readiness.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-256_to_260_Smoothed_Evidence_Completeness_and_Promotion_Readiness.md`；G2.4CP
+    canonical chain 已闭合。当前 source-backed fixture candidate=null、Scorecard=`CONTINUE_OBSERVATION/INSUFFICIENT_EVIDENCE`、Owner=`request_additional_evidence`、promotion=false；不得视为
+    promotion approval、official target weights、broker/order 或 production change。下游固定3d/5d
+    consumer debt属于紧接的下一slice
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 15 callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output
+      live validation/cutoff；common Review/Comparison/Backfill lineage；reviewed readiness
+      policy；explicit deltas/turnover identity；unique finite method/date；missing/null且不计正分；Confirmation-only
+      candidate；candidate-null不得promote；全部views byte rebuild；README、研究执行链、runbook、system
+      flow、registry/catalog、requirements/task register、module/test manifests、compatibility/deprecation
+      inventories与focused/architecture/contract validation完成；全部输出`production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1440
+    row_sha256: 5f8af7424d630ffd14da646dee2efc72bebf5b123e8e8033aef5c9fb1974a6de
+    cell_count: 8
+    all_cells:
+    - TRADING-256_to_260_SMOOTHED_EVIDENCE_COMPLETENESS_AND_PROMOTION_READINESS
+    - ETF portfolio/dynamic v3 rescue smoothed evidence completeness and promotion
+      readiness review
+    - P0
+    - BASELINE_DONE
+    - 研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据；architecture coordinator：继续 G2.4
+      并迁移 TRADING-261～265 consumer
+    - 详细拆解见 `docs/requirements/TRADING-256_to_260_Smoothed_Evidence_Completeness_and_Promotion_Readiness.md`；G2.4CP
+      canonical chain 已闭合。当前 source-backed fixture candidate=null、Scorecard=`CONTINUE_OBSERVATION/INSUFFICIENT_EVIDENCE`、Owner=`request_additional_evidence`、promotion=false；不得视为
+      promotion approval、official target weights、broker/order 或 production change。下游固定3d/5d
+      consumer debt属于紧接的下一slice
+    - 15 callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output live
+      validation/cutoff；common Review/Comparison/Backfill lineage；reviewed readiness
+      policy；explicit deltas/turnover identity；unique finite method/date；missing/null且不计正分；Confirmation-only
+      candidate；candidate-null不得promote；全部views byte rebuild；README、研究执行链、runbook、system
+      flow、registry/catalog、requirements/task register、module/test manifests、compatibility/deprecation
+      inventories与focused/architecture/contract validation完成；全部输出`production_effect=none`
+    - 2026-06-13 baseline 的固定3d/5d、missing-to-zero与`PROMOTE_FOR_REVIEW`结论已被2026-07-14
+      G2.4CP supersede。当前Gap direct backfill不可解决且仍需forward observation；Scorecard/Owner保持fail
+      closed。Focused integration/hardening/CLI=`1/7/116 passed`，architecture/contract=`277/203
+      passed`，generated=`917 modules/1,119 tests/858 writers/0 violations`；CLI tree保持41/291/993/0
+      duplicate/hash不变。下游审计发现TRADING-261～265仍回填固定3d/5d，已明确转入下一G2.4 slice，不以workaround掩盖。
+    raw_line: '|TRADING-256_to_260_SMOOTHED_EVIDENCE_COMPLETENESS_AND_PROMOTION_READINESS|ETF
+      portfolio/dynamic v3 rescue smoothed evidence completeness and promotion readiness
+      review|P0|BASELINE_DONE|研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据；architecture
+      coordinator：继续 G2.4 并迁移 TRADING-261～265 consumer|详细拆解见 `docs/requirements/TRADING-256_to_260_Smoothed_Evidence_Completeness_and_Promotion_Readiness.md`；G2.4CP
+      canonical chain 已闭合。当前 source-backed fixture candidate=null、Scorecard=`CONTINUE_OBSERVATION/INSUFFICIENT_EVIDENCE`、Owner=`request_additional_evidence`、promotion=false；不得视为
+      promotion approval、official target weights、broker/order 或 production change。下游固定3d/5d
+      consumer debt属于紧接的下一slice|15 callbacks迁canonical interface/domain；五类bounded
+      v2 snapshots；pre-output live validation/cutoff；common Review/Comparison/Backfill
+      lineage；reviewed readiness policy；explicit deltas/turnover identity；unique finite
+      method/date；missing/null且不计正分；Confirmation-only candidate；candidate-null不得promote；全部views
+      byte rebuild；README、研究执行链、runbook、system flow、registry/catalog、requirements/task
+      register、module/test manifests、compatibility/deprecation inventories与focused/architecture/contract
+      validation完成；全部输出`production_effect=none`|2026-06-13 baseline 的固定3d/5d、missing-to-zero与`PROMOTE_FOR_REVIEW`结论已被2026-07-14
+      G2.4CP supersede。当前Gap direct backfill不可解决且仍需forward observation；Scorecard/Owner保持fail
+      closed。Focused integration/hardening/CLI=`1/7/116 passed`，architecture/contract=`277/203
+      passed`，generated=`917 modules/1,119 tests/858 writers/0 violations`；CLI tree保持41/291/993/0
+      duplicate/hash不变。下游审计发现TRADING-261～265仍回填固定3d/5d，已明确转入下一G2.4 slice，不以workaround掩盖。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5f8af7424d630ffd14da646d
+  task_id: TRADING-256_to_260_SMOOTHED_EVIDENCE_COMPLETENESS_AND_PROMOTION_READINESS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据；architecture coordinator：继续
+      G2.4 并迁移 TRADING-261～265 consumer
+    notes: 2026-06-13 baseline 的固定3d/5d、missing-to-zero与`PROMOTE_FOR_REVIEW`结论已被2026-07-14
+      G2.4CP supersede。当前Gap direct backfill不可解决且仍需forward observation；Scorecard/Owner保持fail
+      closed。Focused integration/hardening/CLI=`1/7/116 passed`，architecture/contract=`277/203
+      passed`，generated=`917 modules/1,119 tests/858 writers/0 violations`；CLI tree保持41/291/993/0
+      duplicate/hash不变。下游审计发现TRADING-261～265仍回填固定3d/5d，已明确转入下一G2.4 slice，不以workaround掩盖。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5f8af7424d630ffd14da646dee2efc72bebf5b123e8e8033aef5c9fb1974a6de
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-256_to_260_SMOOTHED_EVIDENCE_COMPLETENESS_AND_PROMOTION_READINESS
+  - ETF portfolio/dynamic v3 rescue smoothed evidence completeness and promotion readiness
+    review
+  - P0
+  - BASELINE_DONE
+  - 研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据；architecture coordinator：继续 G2.4
+    并迁移 TRADING-261～265 consumer
+  - 详细拆解见 `docs/requirements/TRADING-256_to_260_Smoothed_Evidence_Completeness_and_Promotion_Readiness.md`；G2.4CP
+    canonical chain 已闭合。当前 source-backed fixture candidate=null、Scorecard=`CONTINUE_OBSERVATION/INSUFFICIENT_EVIDENCE`、Owner=`request_additional_evidence`、promotion=false；不得视为
+    promotion approval、official target weights、broker/order 或 production change。下游固定3d/5d
+    consumer debt属于紧接的下一slice
+  - 15 callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output live
+    validation/cutoff；common Review/Comparison/Backfill lineage；reviewed readiness
+    policy；explicit deltas/turnover identity；unique finite method/date；missing/null且不计正分；Confirmation-only
+    candidate；candidate-null不得promote；全部views byte rebuild；README、研究执行链、runbook、system
+    flow、registry/catalog、requirements/task register、module/test manifests、compatibility/deprecation
+    inventories与focused/architecture/contract validation完成；全部输出`production_effect=none`
+  - 2026-06-13 baseline 的固定3d/5d、missing-to-zero与`PROMOTE_FOR_REVIEW`结论已被2026-07-14
+    G2.4CP supersede。当前Gap direct backfill不可解决且仍需forward observation；Scorecard/Owner保持fail
+    closed。Focused integration/hardening/CLI=`1/7/116 passed`，architecture/contract=`277/203
+    passed`，generated=`917 modules/1,119 tests/858 writers/0 violations`；CLI tree保持41/291/993/0
+    duplicate/hash不变。下游审计发现TRADING-261～265仍回填固定3d/5d，已明确转入下一G2.4 slice，不以workaround掩盖。
+  docs_links:
+  - docs/requirements/TRADING-256_to_260_Smoothed_Evidence_Completeness_and_Promotion_Readiness.md
+  terminal: false
+  raw_row_sha256: 5f8af7424d630ffd14da646dee2efc72bebf5b123e8e8033aef5c9fb1974a6de
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 688f23ffb6c49cb3372c5f56ef84c758a1e9f712d248811a87639e335170b52f

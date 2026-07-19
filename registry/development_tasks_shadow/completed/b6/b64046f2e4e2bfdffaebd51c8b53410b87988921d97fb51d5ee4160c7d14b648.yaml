@@ -1,0 +1,139 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: CALIBRATION-006
+  title: null
+  domain: 市场反馈优化/current context 与 effective weights 审计产物
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: '`score-daily` 已补齐正式默认输出路径下的 current context
+    / current effective weights 写入；2026-06-08 默认 current artifacts 已落盘并通过复核；后续 approved
+    overlay 接入仍由 owner approval / overlay 治理流程承接'
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`score-daily` 默认生产输出时写入 `outputs/current_context.json` 和 `outputs/current_effective_weights.json`；自定义测试/临时输出不得污染项目全局
+      current 文件；`apply-calibration-overlay` 默认路径可直接运行；`optimize-market-feedback`
+      和 dashboard 读取到 effective weights，仍不修改 production scoring、position gate 或 approved
+      overlay；当前 `outputs/current_context.json` 披露 `market_regime_id=ai_after_chatgpt`、`data_quality_status=PASS`、`feature_status=PASS`，`outputs/current_effective_weights.json`
+      披露 `matched_overlays=[]`、`No approved overlays matched` 且 base/effective weights
+      相等'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 271
+    row_sha256: 48acfd9cb277c24758147e8844df0f65096ba31a239f6c9602110e7c77911b17
+    cell_count: 8
+    all_cells:
+    - CALIBRATION-006
+    - 市场反馈优化/current context 与 effective weights 审计产物
+    - P1
+    - DONE
+    - 系统验证
+    - '`score-daily` 已补齐正式默认输出路径下的 current context / current effective weights 写入；2026-06-08
+      默认 current artifacts 已落盘并通过复核；后续 approved overlay 接入仍由 owner approval / overlay
+      治理流程承接'
+    - '`score-daily` 默认生产输出时写入 `outputs/current_context.json` 和 `outputs/current_effective_weights.json`；自定义测试/临时输出不得污染项目全局
+      current 文件；`apply-calibration-overlay` 默认路径可直接运行；`optimize-market-feedback`
+      和 dashboard 读取到 effective weights，仍不修改 production scoring、position gate 或 approved
+      overlay；当前 `outputs/current_context.json` 披露 `market_regime_id=ai_after_chatgpt`、`data_quality_status=PASS`、`feature_status=PASS`，`outputs/current_effective_weights.json`
+      披露 `matched_overlays=[]`、`No approved overlays matched` 且 base/effective weights
+      相等'
+    - '2026-05-15: 新增并进入 IN_PROGRESS，原因：owner 要求为了验证流程系统逻辑跑完全流程，并允许数据阻塞时用既有数据放低限制；当前阻塞是
+      current context 审计产物未落盘，不是市场数据缺失。2026-05-15: 从 IN_PROGRESS 改为 VALIDATING，原因：CLI
+      已新增 current context/effective weights 写入；目标单测、ruff、diff check 通过；真实链路已用 2026-05-14
+      既有数据跑通 `backtest robustness -> parameter replay -> candidates -> governance
+      -> feedback/dashboard/health/secret scan`，dashboard PASS。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：复核 2026-06-08 默认 current artifacts 已由 score-daily 写出，apply/effective
+      weight 审计路径可用且生产边界未改变；验证通过 `tests/test_weight_calibration.py`、`tests/test_daily_scoring.py`
+      和 `tests/test_market_feedback_optimization.py` 共 44 passed，以及 Ruff、repo-wide
+      Black check 和 `compileall`。'
+    raw_line: '|CALIBRATION-006|市场反馈优化/current context 与 effective weights 审计产物|P1|DONE|系统验证|`score-daily`
+      已补齐正式默认输出路径下的 current context / current effective weights 写入；2026-06-08 默认 current
+      artifacts 已落盘并通过复核；后续 approved overlay 接入仍由 owner approval / overlay 治理流程承接|`score-daily`
+      默认生产输出时写入 `outputs/current_context.json` 和 `outputs/current_effective_weights.json`；自定义测试/临时输出不得污染项目全局
+      current 文件；`apply-calibration-overlay` 默认路径可直接运行；`optimize-market-feedback`
+      和 dashboard 读取到 effective weights，仍不修改 production scoring、position gate 或 approved
+      overlay；当前 `outputs/current_context.json` 披露 `market_regime_id=ai_after_chatgpt`、`data_quality_status=PASS`、`feature_status=PASS`，`outputs/current_effective_weights.json`
+      披露 `matched_overlays=[]`、`No approved overlays matched` 且 base/effective weights
+      相等|2026-05-15: 新增并进入 IN_PROGRESS，原因：owner 要求为了验证流程系统逻辑跑完全流程，并允许数据阻塞时用既有数据放低限制；当前阻塞是
+      current context 审计产物未落盘，不是市场数据缺失。2026-05-15: 从 IN_PROGRESS 改为 VALIDATING，原因：CLI
+      已新增 current context/effective weights 写入；目标单测、ruff、diff check 通过；真实链路已用 2026-05-14
+      既有数据跑通 `backtest robustness -> parameter replay -> candidates -> governance
+      -> feedback/dashboard/health/secret scan`，dashboard PASS。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：复核 2026-06-08 默认 current artifacts 已由 score-daily 写出，apply/effective
+      weight 审计路径可用且生产边界未改变；验证通过 `tests/test_weight_calibration.py`、`tests/test_daily_scoring.py`
+      和 `tests/test_market_feedback_optimization.py` 共 44 passed，以及 Ruff、repo-wide
+      Black check 和 `compileall`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-48acfd9cb277c24758147e88
+  task_id: CALIBRATION-006
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-15: 新增并进入 IN_PROGRESS，原因：owner 要求为了验证流程系统逻辑跑完全流程，并允许数据阻塞时用既有数据放低限制；当前阻塞是
+      current context 审计产物未落盘，不是市场数据缺失。2026-05-15: 从 IN_PROGRESS 改为 VALIDATING，原因：CLI
+      已新增 current context/effective weights 写入；目标单测、ruff、diff check 通过；真实链路已用 2026-05-14
+      既有数据跑通 `backtest robustness -> parameter replay -> candidates -> governance
+      -> feedback/dashboard/health/secret scan`，dashboard PASS。2026-06-09: 从 VALIDATING
+      改为 DONE，原因：复核 2026-06-08 默认 current artifacts 已由 score-daily 写出，apply/effective
+      weight 审计路径可用且生产边界未改变；验证通过 `tests/test_weight_calibration.py`、`tests/test_daily_scoring.py`
+      和 `tests/test_market_feedback_optimization.py` 共 44 passed，以及 Ruff、repo-wide
+      Black check 和 `compileall`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:48acfd9cb277c24758147e8844df0f65096ba31a239f6c9602110e7c77911b17
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - CALIBRATION-006
+  - 市场反馈优化/current context 与 effective weights 审计产物
+  - P1
+  - DONE
+  - 系统验证
+  - '`score-daily` 已补齐正式默认输出路径下的 current context / current effective weights 写入；2026-06-08
+    默认 current artifacts 已落盘并通过复核；后续 approved overlay 接入仍由 owner approval / overlay
+    治理流程承接'
+  - '`score-daily` 默认生产输出时写入 `outputs/current_context.json` 和 `outputs/current_effective_weights.json`；自定义测试/临时输出不得污染项目全局
+    current 文件；`apply-calibration-overlay` 默认路径可直接运行；`optimize-market-feedback` 和
+    dashboard 读取到 effective weights，仍不修改 production scoring、position gate 或 approved
+    overlay；当前 `outputs/current_context.json` 披露 `market_regime_id=ai_after_chatgpt`、`data_quality_status=PASS`、`feature_status=PASS`，`outputs/current_effective_weights.json`
+    披露 `matched_overlays=[]`、`No approved overlays matched` 且 base/effective weights
+    相等'
+  - '2026-05-15: 新增并进入 IN_PROGRESS，原因：owner 要求为了验证流程系统逻辑跑完全流程，并允许数据阻塞时用既有数据放低限制；当前阻塞是
+    current context 审计产物未落盘，不是市场数据缺失。2026-05-15: 从 IN_PROGRESS 改为 VALIDATING，原因：CLI
+    已新增 current context/effective weights 写入；目标单测、ruff、diff check 通过；真实链路已用 2026-05-14
+    既有数据跑通 `backtest robustness -> parameter replay -> candidates -> governance ->
+    feedback/dashboard/health/secret scan`，dashboard PASS。2026-06-09: 从 VALIDATING
+    改为 DONE，原因：复核 2026-06-08 默认 current artifacts 已由 score-daily 写出，apply/effective
+    weight 审计路径可用且生产边界未改变；验证通过 `tests/test_weight_calibration.py`、`tests/test_daily_scoring.py`
+    和 `tests/test_market_feedback_optimization.py` 共 44 passed，以及 Ruff、repo-wide Black
+    check 和 `compileall`。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: 48acfd9cb277c24758147e8844df0f65096ba31a239f6c9602110e7c77911b17
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c2017d6c663096683b98e15aba4ce7e29ef42eff36326a5a16dc4c42b2624a64

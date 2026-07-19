@@ -1,0 +1,137 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-016
+  title: null
+  domain: 运行架构/Reader Brief current-run decision summary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/reader_brief_current_decision_summary_2026-06-04.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/reader_brief_current_decision_summary_2026-06-04.md`；2026-06-05
+    最新 production daily-run 已验证最终 Reader Brief 读取同一 run 的 `daily_decision_summary`
+    / `daily_task_dashboard`，canonical run bundle 与 legacy mirror hash 一致
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits ops daily-run` 最终发布的 Reader Brief 必须读取同一 run 的 `daily_decision_summary`
+      和 `daily_task_dashboard`；canonical run bundle 与 legacy `outputs/reports` mirror
+      保持一致；修复只允许重建 Reader Brief / Reader Brief quality，只读、`production_effect=none`，不得重跑
+      scoring/PIT/SEC/valuation/backtest/shadow/weight/docs 上游，不写 production weights、active
+      shadow weights、broker state 或交易指令；目标测试和真实 as_of 复测通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 354
+    row_sha256: dbe6b75e16ed2c1892ab31912f2d4c7a965d3fa7fec1889706854da4e78f0434
+    cell_count: 8
+    all_cells:
+    - OPS-016
+    - 运行架构/Reader Brief current-run decision summary
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/reader_brief_current_decision_summary_2026-06-04.md`；2026-06-05
+      最新 production daily-run 已验证最终 Reader Brief 读取同一 run 的 `daily_decision_summary`
+      / `daily_task_dashboard`，canonical run bundle 与 legacy mirror hash 一致
+    - '`aits ops daily-run` 最终发布的 Reader Brief 必须读取同一 run 的 `daily_decision_summary`
+      和 `daily_task_dashboard`；canonical run bundle 与 legacy `outputs/reports` mirror
+      保持一致；修复只允许重建 Reader Brief / Reader Brief quality，只读、`production_effect=none`，不得重跑
+      scoring/PIT/SEC/valuation/backtest/shadow/weight/docs 上游，不写 production weights、active
+      shadow weights、broker state 或交易指令；目标测试和真实 as_of 复测通过'
+    - '2026-06-04: 新增并进入 IN_PROGRESS，原因：修复 FRED 后完整 daily-run 31/31 PASS，但当前 Reader
+      Brief HTML Core Decision 仍显示 `missing`，排查确认其读取修复前失败 run 的 stale summary。2026-06-04:
+      从 IN_PROGRESS 改为 VALIDATING，原因：新增 daily-run finalization Reader Brief refresh
+      helper、legacy mirror 覆盖 Reader Brief/quality、daily-run CLI 单测断言 current run_id、系统流图/artifact
+      catalog/runbook 文档；验证通过目标测试和完整 `aits ops daily-run --as-of 2026-06-03`。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      31/31 PASS；Reader Brief、decision summary 和 task dashboard 均绑定同一 run_id，Core
+      Decision 不再读取旧失败 run，Reader Brief quality failed=0，canonical 与 legacy mirror
+      hash 一致。'
+    raw_line: '|OPS-016|运行架构/Reader Brief current-run decision summary|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/reader_brief_current_decision_summary_2026-06-04.md`；2026-06-05
+      最新 production daily-run 已验证最终 Reader Brief 读取同一 run 的 `daily_decision_summary`
+      / `daily_task_dashboard`，canonical run bundle 与 legacy mirror hash 一致|`aits
+      ops daily-run` 最终发布的 Reader Brief 必须读取同一 run 的 `daily_decision_summary` 和 `daily_task_dashboard`；canonical
+      run bundle 与 legacy `outputs/reports` mirror 保持一致；修复只允许重建 Reader Brief / Reader
+      Brief quality，只读、`production_effect=none`，不得重跑 scoring/PIT/SEC/valuation/backtest/shadow/weight/docs
+      上游，不写 production weights、active shadow weights、broker state 或交易指令；目标测试和真实 as_of
+      复测通过|2026-06-04: 新增并进入 IN_PROGRESS，原因：修复 FRED 后完整 daily-run 31/31 PASS，但当前 Reader
+      Brief HTML Core Decision 仍显示 `missing`，排查确认其读取修复前失败 run 的 stale summary。2026-06-04:
+      从 IN_PROGRESS 改为 VALIDATING，原因：新增 daily-run finalization Reader Brief refresh
+      helper、legacy mirror 覆盖 Reader Brief/quality、daily-run CLI 单测断言 current run_id、系统流图/artifact
+      catalog/runbook 文档；验证通过目标测试和完整 `aits ops daily-run --as-of 2026-06-03`。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      31/31 PASS；Reader Brief、decision summary 和 task dashboard 均绑定同一 run_id，Core
+      Decision 不再读取旧失败 run，Reader Brief quality failed=0，canonical 与 legacy mirror
+      hash 一致。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-dbe6b75e16ed2c1892ab3191
+  task_id: OPS-016
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-06-04: 新增并进入 IN_PROGRESS，原因：修复 FRED 后完整 daily-run 31/31 PASS，但当前
+      Reader Brief HTML Core Decision 仍显示 `missing`，排查确认其读取修复前失败 run 的 stale summary。2026-06-04:
+      从 IN_PROGRESS 改为 VALIDATING，原因：新增 daily-run finalization Reader Brief refresh
+      helper、legacy mirror 覆盖 Reader Brief/quality、daily-run CLI 单测断言 current run_id、系统流图/artifact
+      catalog/runbook 文档；验证通过目标测试和完整 `aits ops daily-run --as-of 2026-06-03`。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      31/31 PASS；Reader Brief、decision summary 和 task dashboard 均绑定同一 run_id，Core
+      Decision 不再读取旧失败 run，Reader Brief quality failed=0，canonical 与 legacy mirror
+      hash 一致。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:dbe6b75e16ed2c1892ab31912f2d4c7a965d3fa7fec1889706854da4e78f0434
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-016
+  - 运行架构/Reader Brief current-run decision summary
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/reader_brief_current_decision_summary_2026-06-04.md`；2026-06-05
+    最新 production daily-run 已验证最终 Reader Brief 读取同一 run 的 `daily_decision_summary`
+    / `daily_task_dashboard`，canonical run bundle 与 legacy mirror hash 一致
+  - '`aits ops daily-run` 最终发布的 Reader Brief 必须读取同一 run 的 `daily_decision_summary`
+    和 `daily_task_dashboard`；canonical run bundle 与 legacy `outputs/reports` mirror
+    保持一致；修复只允许重建 Reader Brief / Reader Brief quality，只读、`production_effect=none`，不得重跑
+    scoring/PIT/SEC/valuation/backtest/shadow/weight/docs 上游，不写 production weights、active
+    shadow weights、broker state 或交易指令；目标测试和真实 as_of 复测通过'
+  - '2026-06-04: 新增并进入 IN_PROGRESS，原因：修复 FRED 后完整 daily-run 31/31 PASS，但当前 Reader
+    Brief HTML Core Decision 仍显示 `missing`，排查确认其读取修复前失败 run 的 stale summary。2026-06-04:
+    从 IN_PROGRESS 改为 VALIDATING，原因：新增 daily-run finalization Reader Brief refresh
+    helper、legacy mirror 覆盖 Reader Brief/quality、daily-run CLI 单测断言 current run_id、系统流图/artifact
+    catalog/runbook 文档；验证通过目标测试和完整 `aits ops daily-run --as-of 2026-06-03`。2026-06-07:
+    从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+    31/31 PASS；Reader Brief、decision summary 和 task dashboard 均绑定同一 run_id，Core Decision
+    不再读取旧失败 run，Reader Brief quality failed=0，canonical 与 legacy mirror hash 一致。'
+  docs_links:
+  - docs/requirements/reader_brief_current_decision_summary_2026-06-04.md
+  terminal: true
+  raw_row_sha256: dbe6b75e16ed2c1892ab31912f2d4c7a965d3fa7fec1889706854da4e78f0434
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b031d29b9fccf3a96683efb17a04f3047b10069ad18046082bad1fadbb2efcbe

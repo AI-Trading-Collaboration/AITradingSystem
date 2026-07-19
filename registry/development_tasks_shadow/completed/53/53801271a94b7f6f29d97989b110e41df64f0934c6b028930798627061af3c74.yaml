@@ -1,0 +1,99 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438M1D1A_GROWTH_TILT_OWNER_DECISION_RESOLUTION_AND_CANDIDATE_A_REFRAMING
+  title: null
+  domain: Strategy research / owner decision resolution and candidate reframing
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner后续只通过新 M1E owner-input任务处理已解除 blocker后的 replacement A
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: D01～D18 explicit outcomes已固化：A REDEFINE=`capped_recovery_permission_overlay`，B
+    WITHDRAW，C REDEFINE/out-of-route；recovery semantic=`UNSCALED_SCORE`，threshold/veto/transition/native
+    scalar缺失保持 blocker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: owner resolution 18/18；权威 M1 approved/redefine/withdraw=`0/2/1`、owner gaps=0、M2=0；D1A不运行
+      runtime/replay且只授权 existing-behavior adapters。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 28
+    row_sha256: e25c1f0bd74df214b1a5ed0491be5d01ad50442d55395b532783fcc73736f894
+    cell_count: 8
+    all_cells:
+    - TRADING-2438M1D1A_GROWTH_TILT_OWNER_DECISION_RESOLUTION_AND_CANDIDATE_A_REFRAMING
+    - Strategy research / owner decision resolution and candidate reframing
+    - P0
+    - DONE
+    - 项目 owner后续只通过新 M1E owner-input任务处理已解除 blocker后的 replacement A
+    - D01～D18 explicit outcomes已固化：A REDEFINE=`capped_recovery_permission_overlay`，B
+      WITHDRAW，C REDEFINE/out-of-route；recovery semantic=`UNSCALED_SCORE`，threshold/veto/transition/native
+      scalar缺失保持 blocker。
+    - owner resolution 18/18；权威 M1 approved/redefine/withdraw=`0/2/1`、owner gaps=0、M2=0；D1A不运行
+      runtime/replay且只授权 existing-behavior adapters。
+    - '2026-07-10: 实现、真实 strict D1A/M1 run与归档完成。验证：D1A+M1 focused 63、combined chain
+      144、fast-unit 198、contract-validation 197、report-validation 55及治理检查全部 PASS。'
+    raw_line: '|TRADING-2438M1D1A_GROWTH_TILT_OWNER_DECISION_RESOLUTION_AND_CANDIDATE_A_REFRAMING|Strategy
+      research / owner decision resolution and candidate reframing|P0|DONE|项目 owner后续只通过新
+      M1E owner-input任务处理已解除 blocker后的 replacement A|D01～D18 explicit outcomes已固化：A
+      REDEFINE=`capped_recovery_permission_overlay`，B WITHDRAW，C REDEFINE/out-of-route；recovery
+      semantic=`UNSCALED_SCORE`，threshold/veto/transition/native scalar缺失保持 blocker。|owner
+      resolution 18/18；权威 M1 approved/redefine/withdraw=`0/2/1`、owner gaps=0、M2=0；D1A不运行
+      runtime/replay且只授权 existing-behavior adapters。|2026-07-10: 实现、真实 strict D1A/M1
+      run与归档完成。验证：D1A+M1 focused 63、combined chain 144、fast-unit 198、contract-validation
+      197、report-validation 55及治理检查全部 PASS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e25c1f0bd74df214b1a5ed04
+  task_id: TRADING-2438M1D1A_GROWTH_TILT_OWNER_DECISION_RESOLUTION_AND_CANDIDATE_A_REFRAMING
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner后续只通过新 M1E owner-input任务处理已解除 blocker后的 replacement A
+    notes: '2026-07-10: 实现、真实 strict D1A/M1 run与归档完成。验证：D1A+M1 focused 63、combined
+      chain 144、fast-unit 198、contract-validation 197、report-validation 55及治理检查全部
+      PASS。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e25c1f0bd74df214b1a5ed0491be5d01ad50442d55395b532783fcc73736f894
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438M1D1A_GROWTH_TILT_OWNER_DECISION_RESOLUTION_AND_CANDIDATE_A_REFRAMING
+  - Strategy research / owner decision resolution and candidate reframing
+  - P0
+  - DONE
+  - 项目 owner后续只通过新 M1E owner-input任务处理已解除 blocker后的 replacement A
+  - D01～D18 explicit outcomes已固化：A REDEFINE=`capped_recovery_permission_overlay`，B
+    WITHDRAW，C REDEFINE/out-of-route；recovery semantic=`UNSCALED_SCORE`，threshold/veto/transition/native
+    scalar缺失保持 blocker。
+  - owner resolution 18/18；权威 M1 approved/redefine/withdraw=`0/2/1`、owner gaps=0、M2=0；D1A不运行
+    runtime/replay且只授权 existing-behavior adapters。
+  - '2026-07-10: 实现、真实 strict D1A/M1 run与归档完成。验证：D1A+M1 focused 63、combined chain
+    144、fast-unit 198、contract-validation 197、report-validation 55及治理检查全部 PASS。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: e25c1f0bd74df214b1a5ed0491be5d01ad50442d55395b532783fcc73736f894
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: edf11dda9014ec1b56c0959135064117ff1b62f0de72ca564e607bd0ba2ed890

@@ -1,0 +1,124 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-017
+  title: null
+  domain: 数据工程/FMP forward PIT normalized_id
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/fmp_forward_pit_id_normalization_crash_2026-05-12.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/fmp_forward_pit_id_normalization_crash_2026-05-12.md`；2026-06-05
+    最新 production daily-run 已越过 FMP forward PIT fetch/build/validate，normalized CSV
+    与 manifest validation 均 PASS
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: FMP forward-only PIT 标准化 ID 生成必须对非 ASCII、超长和非标供应商字段保持确定性、可读前缀和冲突保护；不得因逐字符
+      Unicode 分类或大批量 dataclass 字段复制触发 Windows 原生访问冲突；真实 CLI 应从 raw payload 流式写出 normalized
+      CSV，而不是为全量行创建常驻 dataclass；raw payload、normalized CSV、PIT manifest、抓取报告和 PIT
+      validation 报告必须正常生成；真实 `daily-run` 至少越过 PIT 阶段
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 360
+    row_sha256: 4ee474106e1ac2063aede8c335c59b64212fed5de06029f1a549d01f16adf106
+    cell_count: 8
+    all_cells:
+    - DATA-017
+    - 数据工程/FMP forward PIT normalized_id
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/fmp_forward_pit_id_normalization_crash_2026-05-12.md`；2026-06-05
+      最新 production daily-run 已越过 FMP forward PIT fetch/build/validate，normalized
+      CSV 与 manifest validation 均 PASS
+    - FMP forward-only PIT 标准化 ID 生成必须对非 ASCII、超长和非标供应商字段保持确定性、可读前缀和冲突保护；不得因逐字符 Unicode
+      分类或大批量 dataclass 字段复制触发 Windows 原生访问冲突；真实 CLI 应从 raw payload 流式写出 normalized
+      CSV，而不是为全量行创建常驻 dataclass；raw payload、normalized CSV、PIT manifest、抓取报告和 PIT
+      validation 报告必须正常生成；真实 `daily-run` 至少越过 PIT 阶段
+    - '2026-05-12: 新增并进入实现，原因：最新交易日 `daily-run` 默认 as-of 已正确落到 `2026-05-11`，但 `pit_snapshots`
+      在 `_id_token` 标准化真实 FMP payload 时 Windows access violation 退出。2026-05-12: 修复
+      raw JSON、scalar extraction、report attach、dataclass 复制和 streaming normalized
+      CSV，单独 PIT direct dispatcher PASS。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run
+      --as-of 2026-06-05 --run-id codex_20260605_20260607103901` 中 PIT fetch/build-manifest/validate
+      steps PASS；FMP raw payload 17、原始/标准化行 12411、错误 0、警告 0，PIT manifest validation
+      PASS。'
+    raw_line: '|DATA-017|数据工程/FMP forward PIT normalized_id|P0|DONE|系统验证|详细拆解见 `docs/requirements/fmp_forward_pit_id_normalization_crash_2026-05-12.md`；2026-06-05
+      最新 production daily-run 已越过 FMP forward PIT fetch/build/validate，normalized
+      CSV 与 manifest validation 均 PASS|FMP forward-only PIT 标准化 ID 生成必须对非 ASCII、超长和非标供应商字段保持确定性、可读前缀和冲突保护；不得因逐字符
+      Unicode 分类或大批量 dataclass 字段复制触发 Windows 原生访问冲突；真实 CLI 应从 raw payload 流式写出 normalized
+      CSV，而不是为全量行创建常驻 dataclass；raw payload、normalized CSV、PIT manifest、抓取报告和 PIT
+      validation 报告必须正常生成；真实 `daily-run` 至少越过 PIT 阶段|2026-05-12: 新增并进入实现，原因：最新交易日
+      `daily-run` 默认 as-of 已正确落到 `2026-05-11`，但 `pit_snapshots` 在 `_id_token` 标准化真实
+      FMP payload 时 Windows access violation 退出。2026-05-12: 修复 raw JSON、scalar extraction、report
+      attach、dataclass 复制和 streaming normalized CSV，单独 PIT direct dispatcher PASS。2026-06-07:
+      从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+      中 PIT fetch/build-manifest/validate steps PASS；FMP raw payload 17、原始/标准化行 12411、错误
+      0、警告 0，PIT manifest validation PASS。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4ee474106e1ac2063aede8c3
+  task_id: DATA-017
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-12: 新增并进入实现，原因：最新交易日 `daily-run` 默认 as-of 已正确落到 `2026-05-11`，但
+      `pit_snapshots` 在 `_id_token` 标准化真实 FMP payload 时 Windows access violation 退出。2026-05-12:
+      修复 raw JSON、scalar extraction、report attach、dataclass 复制和 streaming normalized
+      CSV，单独 PIT direct dispatcher PASS。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run
+      --as-of 2026-06-05 --run-id codex_20260605_20260607103901` 中 PIT fetch/build-manifest/validate
+      steps PASS；FMP raw payload 17、原始/标准化行 12411、错误 0、警告 0，PIT manifest validation
+      PASS。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4ee474106e1ac2063aede8c335c59b64212fed5de06029f1a549d01f16adf106
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-017
+  - 数据工程/FMP forward PIT normalized_id
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/fmp_forward_pit_id_normalization_crash_2026-05-12.md`；2026-06-05
+    最新 production daily-run 已越过 FMP forward PIT fetch/build/validate，normalized CSV
+    与 manifest validation 均 PASS
+  - FMP forward-only PIT 标准化 ID 生成必须对非 ASCII、超长和非标供应商字段保持确定性、可读前缀和冲突保护；不得因逐字符 Unicode
+    分类或大批量 dataclass 字段复制触发 Windows 原生访问冲突；真实 CLI 应从 raw payload 流式写出 normalized CSV，而不是为全量行创建常驻
+    dataclass；raw payload、normalized CSV、PIT manifest、抓取报告和 PIT validation 报告必须正常生成；真实
+    `daily-run` 至少越过 PIT 阶段
+  - '2026-05-12: 新增并进入实现，原因：最新交易日 `daily-run` 默认 as-of 已正确落到 `2026-05-11`，但 `pit_snapshots`
+    在 `_id_token` 标准化真实 FMP payload 时 Windows access violation 退出。2026-05-12: 修复 raw
+    JSON、scalar extraction、report attach、dataclass 复制和 streaming normalized CSV，单独
+    PIT direct dispatcher PASS。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run
+    --as-of 2026-06-05 --run-id codex_20260605_20260607103901` 中 PIT fetch/build-manifest/validate
+    steps PASS；FMP raw payload 17、原始/标准化行 12411、错误 0、警告 0，PIT manifest validation
+    PASS。'
+  docs_links:
+  - docs/requirements/fmp_forward_pit_id_normalization_crash_2026-05-12.md
+  terminal: true
+  raw_row_sha256: 4ee474106e1ac2063aede8c335c59b64212fed5de06029f1a549d01f16adf106
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f414c6b398dca59b068b776ee79e0ff9766fa3b31b6f20b315f475c523e430be

@@ -1,0 +1,181 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-460_to_470_EXECUTABLE_RESEARCH_BINDING
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue executable research binding after next-cycle
+    fail-close
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 executable research evidence；paper-shadow、extended shadow、live
+    trading、official target、broker/order 仍 forbidden
+  requirement_refs:
+  - docs/requirements/TRADING-460_to_470_Executable_Research_Binding.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-460_to_470_Executable_Research_Binding.md`；TRADING-460～470
+    已按顺序定义 executable binding contract、实现 research-only signal binding、research-only
+    hypothetical weight binding、安全审计、binding-backed real backfill、stress/cost/benchmark
+    rerun、vs-returned comparison、signal/window rerun、research gate、owner packet 和
+    executable research-cycle snapshot；最终 gate 仍要求继续 research evidence，不得进入 paper-shadow
+    或 production
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增或更新 `src/ai_trading_system/reports/executable_research_binding.py`、`src/ai_trading_system/reports/next_research_cycle.py`、`aits
+      reports next-candidate-executable-binding-contract` 到 `next-candidate-research-cycle-snapshot`
+      及对应 validation CLI、JSON/Markdown artifact family、Reader Brief sections、report
+      registry、artifact catalog、system flow、README、需求文档和 focused tests；数据相关步骤调用同一
+      `aits validate-data` 门禁并在产物披露状态；所有 executable binding outputs 固定 research-only/manual-review-only/no
+      production/broker/order effect；验证通过 focused pytest、ruff、compileall、documentation/report
+      contract、task-register consistency、data quality gate、report index、Reader Brief
+      quality 和 `git diff --check`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 185
+    row_sha256: caae3db465b2239eb091db984edf2b97bf3d4bb7725de533439a8de397184747
+    cell_count: 8
+    all_cells:
+    - TRADING-460_to_470_EXECUTABLE_RESEARCH_BINDING
+    - ETF portfolio/dynamic v3 rescue executable research binding after next-cycle
+      fail-close
+    - P0
+    - DONE
+    - 项目 owner 后续复核 executable research evidence；paper-shadow、extended shadow、live
+      trading、official target、broker/order 仍 forbidden
+    - 详细拆解见 `docs/requirements/TRADING-460_to_470_Executable_Research_Binding.md`；TRADING-460～470
+      已按顺序定义 executable binding contract、实现 research-only signal binding、research-only
+      hypothetical weight binding、安全审计、binding-backed real backfill、stress/cost/benchmark
+      rerun、vs-returned comparison、signal/window rerun、research gate、owner packet
+      和 executable research-cycle snapshot；最终 gate 仍要求继续 research evidence，不得进入 paper-shadow
+      或 production
+    - 新增或更新 `src/ai_trading_system/reports/executable_research_binding.py`、`src/ai_trading_system/reports/next_research_cycle.py`、`aits
+      reports next-candidate-executable-binding-contract` 到 `next-candidate-research-cycle-snapshot`
+      及对应 validation CLI、JSON/Markdown artifact family、Reader Brief sections、report
+      registry、artifact catalog、system flow、README、需求文档和 focused tests；数据相关步骤调用同一
+      `aits validate-data` 门禁并在产物披露状态；所有 executable binding outputs 固定 research-only/manual-review-only/no
+      production/broker/order effect；验证通过 focused pytest、ruff、compileall、documentation/report
+      contract、task-register consistency、data quality gate、report index、Reader Brief
+      quality 和 `git diff --check`
+    - '2026-06-18: DONE；TRADING-460 `d83506c1`、TRADING-461 `44c144e1`、TRADING-462
+      `8a4b3449`、TRADING-463 `af8cc458`、TRADING-464 `cb31e9c5`、TRADING-465 `aa966873`、TRADING-466
+      `20385c56`、TRADING-467 `d12db3db`、TRADING-468 `264da30b`、TRADING-469 `92df8fb6`
+      已提交推送，TRADING-470 在本变更完成。真实 artifacts 包括 `next_candidate_executable_binding_contract_2026-06-17.json/md`、`next_candidate_signal_binding_2026-06-17.json/md`、`next_candidate_research_weight_binding_2026-06-17.json/md`、`executable_binding_safety_audit_2026-06-17.json/md`、binding-backed
+      `next_candidate_backfill_2026-06-17.json/md`、rerun stress/cost/benchmark、vs-returned、signal/window、research
+      gate、owner packet、`next_candidate_research_cycle_snapshot_2026-06-17.json/md`
+      和对应 validation artifacts。Final snapshot collected artifacts=14、executable artifacts=4、missing
+      required=0，输出 `EXECUTABLE_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE`；research gate=`NEEDS_MORE_EVIDENCE`、backfill=`CANDIDATE_BACKFILL_PARTIAL`、stress=`WEAK`、cost/benchmark=`COST_BENCHMARK_REVIEW_WEAK`、comparison=`MIXED_VS_RETURNED_CANDIDATE`、signal
+      robustness=`SIGNAL_ROBUSTNESS_BLOCKED`、window=`WINDOW_FRAGILE`、owner packet=`OWNER_RESEARCH_REVIEW_PACKET_READY`，validation
+      PASS。未创建 paper-shadow candidate、未恢复 normal shadow、未批准 extended/live、未写 official
+      target weights、未 append owner decision、未触发 broker/order、未伪造 metrics 或 production
+      mutation。'
+    raw_line: '|TRADING-460_to_470_EXECUTABLE_RESEARCH_BINDING|ETF portfolio/dynamic
+      v3 rescue executable research binding after next-cycle fail-close|P0|DONE|项目
+      owner 后续复核 executable research evidence；paper-shadow、extended shadow、live trading、official
+      target、broker/order 仍 forbidden|详细拆解见 `docs/requirements/TRADING-460_to_470_Executable_Research_Binding.md`；TRADING-460～470
+      已按顺序定义 executable binding contract、实现 research-only signal binding、research-only
+      hypothetical weight binding、安全审计、binding-backed real backfill、stress/cost/benchmark
+      rerun、vs-returned comparison、signal/window rerun、research gate、owner packet
+      和 executable research-cycle snapshot；最终 gate 仍要求继续 research evidence，不得进入 paper-shadow
+      或 production|新增或更新 `src/ai_trading_system/reports/executable_research_binding.py`、`src/ai_trading_system/reports/next_research_cycle.py`、`aits
+      reports next-candidate-executable-binding-contract` 到 `next-candidate-research-cycle-snapshot`
+      及对应 validation CLI、JSON/Markdown artifact family、Reader Brief sections、report
+      registry、artifact catalog、system flow、README、需求文档和 focused tests；数据相关步骤调用同一
+      `aits validate-data` 门禁并在产物披露状态；所有 executable binding outputs 固定 research-only/manual-review-only/no
+      production/broker/order effect；验证通过 focused pytest、ruff、compileall、documentation/report
+      contract、task-register consistency、data quality gate、report index、Reader Brief
+      quality 和 `git diff --check`|2026-06-18: DONE；TRADING-460 `d83506c1`、TRADING-461
+      `44c144e1`、TRADING-462 `8a4b3449`、TRADING-463 `af8cc458`、TRADING-464 `cb31e9c5`、TRADING-465
+      `aa966873`、TRADING-466 `20385c56`、TRADING-467 `d12db3db`、TRADING-468 `264da30b`、TRADING-469
+      `92df8fb6` 已提交推送，TRADING-470 在本变更完成。真实 artifacts 包括 `next_candidate_executable_binding_contract_2026-06-17.json/md`、`next_candidate_signal_binding_2026-06-17.json/md`、`next_candidate_research_weight_binding_2026-06-17.json/md`、`executable_binding_safety_audit_2026-06-17.json/md`、binding-backed
+      `next_candidate_backfill_2026-06-17.json/md`、rerun stress/cost/benchmark、vs-returned、signal/window、research
+      gate、owner packet、`next_candidate_research_cycle_snapshot_2026-06-17.json/md`
+      和对应 validation artifacts。Final snapshot collected artifacts=14、executable artifacts=4、missing
+      required=0，输出 `EXECUTABLE_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE`；research gate=`NEEDS_MORE_EVIDENCE`、backfill=`CANDIDATE_BACKFILL_PARTIAL`、stress=`WEAK`、cost/benchmark=`COST_BENCHMARK_REVIEW_WEAK`、comparison=`MIXED_VS_RETURNED_CANDIDATE`、signal
+      robustness=`SIGNAL_ROBUSTNESS_BLOCKED`、window=`WINDOW_FRAGILE`、owner packet=`OWNER_RESEARCH_REVIEW_PACKET_READY`，validation
+      PASS。未创建 paper-shadow candidate、未恢复 normal shadow、未批准 extended/live、未写 official
+      target weights、未 append owner decision、未触发 broker/order、未伪造 metrics 或 production
+      mutation。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-caae3db465b2239eb091db98
+  task_id: TRADING-460_to_470_EXECUTABLE_RESEARCH_BINDING
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 executable research evidence；paper-shadow、extended shadow、live
+      trading、official target、broker/order 仍 forbidden
+    notes: '2026-06-18: DONE；TRADING-460 `d83506c1`、TRADING-461 `44c144e1`、TRADING-462
+      `8a4b3449`、TRADING-463 `af8cc458`、TRADING-464 `cb31e9c5`、TRADING-465 `aa966873`、TRADING-466
+      `20385c56`、TRADING-467 `d12db3db`、TRADING-468 `264da30b`、TRADING-469 `92df8fb6`
+      已提交推送，TRADING-470 在本变更完成。真实 artifacts 包括 `next_candidate_executable_binding_contract_2026-06-17.json/md`、`next_candidate_signal_binding_2026-06-17.json/md`、`next_candidate_research_weight_binding_2026-06-17.json/md`、`executable_binding_safety_audit_2026-06-17.json/md`、binding-backed
+      `next_candidate_backfill_2026-06-17.json/md`、rerun stress/cost/benchmark、vs-returned、signal/window、research
+      gate、owner packet、`next_candidate_research_cycle_snapshot_2026-06-17.json/md`
+      和对应 validation artifacts。Final snapshot collected artifacts=14、executable artifacts=4、missing
+      required=0，输出 `EXECUTABLE_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE`；research gate=`NEEDS_MORE_EVIDENCE`、backfill=`CANDIDATE_BACKFILL_PARTIAL`、stress=`WEAK`、cost/benchmark=`COST_BENCHMARK_REVIEW_WEAK`、comparison=`MIXED_VS_RETURNED_CANDIDATE`、signal
+      robustness=`SIGNAL_ROBUSTNESS_BLOCKED`、window=`WINDOW_FRAGILE`、owner packet=`OWNER_RESEARCH_REVIEW_PACKET_READY`，validation
+      PASS。未创建 paper-shadow candidate、未恢复 normal shadow、未批准 extended/live、未写 official
+      target weights、未 append owner decision、未触发 broker/order、未伪造 metrics 或 production
+      mutation。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:caae3db465b2239eb091db984edf2b97bf3d4bb7725de533439a8de397184747
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-460_to_470_EXECUTABLE_RESEARCH_BINDING
+  - ETF portfolio/dynamic v3 rescue executable research binding after next-cycle fail-close
+  - P0
+  - DONE
+  - 项目 owner 后续复核 executable research evidence；paper-shadow、extended shadow、live trading、official
+    target、broker/order 仍 forbidden
+  - 详细拆解见 `docs/requirements/TRADING-460_to_470_Executable_Research_Binding.md`；TRADING-460～470
+    已按顺序定义 executable binding contract、实现 research-only signal binding、research-only
+    hypothetical weight binding、安全审计、binding-backed real backfill、stress/cost/benchmark
+    rerun、vs-returned comparison、signal/window rerun、research gate、owner packet 和
+    executable research-cycle snapshot；最终 gate 仍要求继续 research evidence，不得进入 paper-shadow
+    或 production
+  - 新增或更新 `src/ai_trading_system/reports/executable_research_binding.py`、`src/ai_trading_system/reports/next_research_cycle.py`、`aits
+    reports next-candidate-executable-binding-contract` 到 `next-candidate-research-cycle-snapshot`
+    及对应 validation CLI、JSON/Markdown artifact family、Reader Brief sections、report
+    registry、artifact catalog、system flow、README、需求文档和 focused tests；数据相关步骤调用同一 `aits
+    validate-data` 门禁并在产物披露状态；所有 executable binding outputs 固定 research-only/manual-review-only/no
+    production/broker/order effect；验证通过 focused pytest、ruff、compileall、documentation/report
+    contract、task-register consistency、data quality gate、report index、Reader Brief
+    quality 和 `git diff --check`
+  - '2026-06-18: DONE；TRADING-460 `d83506c1`、TRADING-461 `44c144e1`、TRADING-462 `8a4b3449`、TRADING-463
+    `af8cc458`、TRADING-464 `cb31e9c5`、TRADING-465 `aa966873`、TRADING-466 `20385c56`、TRADING-467
+    `d12db3db`、TRADING-468 `264da30b`、TRADING-469 `92df8fb6` 已提交推送，TRADING-470 在本变更完成。真实
+    artifacts 包括 `next_candidate_executable_binding_contract_2026-06-17.json/md`、`next_candidate_signal_binding_2026-06-17.json/md`、`next_candidate_research_weight_binding_2026-06-17.json/md`、`executable_binding_safety_audit_2026-06-17.json/md`、binding-backed
+    `next_candidate_backfill_2026-06-17.json/md`、rerun stress/cost/benchmark、vs-returned、signal/window、research
+    gate、owner packet、`next_candidate_research_cycle_snapshot_2026-06-17.json/md`
+    和对应 validation artifacts。Final snapshot collected artifacts=14、executable artifacts=4、missing
+    required=0，输出 `EXECUTABLE_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE`；research gate=`NEEDS_MORE_EVIDENCE`、backfill=`CANDIDATE_BACKFILL_PARTIAL`、stress=`WEAK`、cost/benchmark=`COST_BENCHMARK_REVIEW_WEAK`、comparison=`MIXED_VS_RETURNED_CANDIDATE`、signal
+    robustness=`SIGNAL_ROBUSTNESS_BLOCKED`、window=`WINDOW_FRAGILE`、owner packet=`OWNER_RESEARCH_REVIEW_PACKET_READY`，validation
+    PASS。未创建 paper-shadow candidate、未恢复 normal shadow、未批准 extended/live、未写 official
+    target weights、未 append owner decision、未触发 broker/order、未伪造 metrics 或 production
+    mutation。'
+  docs_links:
+  - docs/requirements/TRADING-460_to_470_Executable_Research_Binding.md
+  terminal: true
+  raw_row_sha256: caae3db465b2239eb091db984edf2b97bf3d4bb7725de533439a8de397184747
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5d8ce2a83015882638104b3b848f0b393f25242d8bf392ff077450867ecc55bf

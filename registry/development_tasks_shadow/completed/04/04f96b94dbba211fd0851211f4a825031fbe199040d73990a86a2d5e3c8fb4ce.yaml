@@ -1,0 +1,165 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2384_DYNAMIC_STRATEGY_GUARDED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION
+  title: null
+  domain: Strategy research / execution semantics / guarded variant owner review decision
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2385 candidate pool expansion and signal family
+    diversification plan
+  requirement_refs:
+  - docs/requirements/TRADING-2384_Dynamic_Strategy_Guarded_Variant_Owner_Review_And_Observation_Decision.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2384_Dynamic_Strategy_Guarded_Variant_Owner_Review_And_Observation_Decision.md`；承接
+    TRADING-2383 route，读取 TRADING-2379 / 2380 / 2381 / 2382 / 2383 artifacts，并记录 guarded
+    variant owner review / observation rejection / next direction decision。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-guarded-variant-owner-review-decision`；生成
+      `owner_review_decision.json`、`two_line_candidate_review.json`、`next_research_direction_decision.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_GUARDED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION_READY`，owner
+      decision=`DO_NOT_APPROVE_OBSERVATION_EXPAND_CANDIDATE_POOL_REVIEW_REQUIRED`，lower-turnover
+      line best variant=`dynamic_regime_overlay_v0_4_cooldown_balanced_v1` / decision=`CONTINUE_OPTIMIZATION`
+      / observation=false，ranking-top guarded line best variant=`equal_risk_growth_tilt_guarded_turnover_v1`
+      / decision=`CONTINUE_OPTIMIZATION` / observation=false，continue_local_optimization_allowed=false，candidate_pool_expansion_recommended=true，signal_family_diversification_recommended=true，next
+      route=`TRADING-2385_Dynamic_Strategy_Candidate_Pool_Expansion_And_Signal_Family_Diversification_Plan`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 103
+    row_sha256: 950d1fcef864c45657305e7952daf47a85d79dc66b0847621cc1209d579330b8
+    cell_count: 8
+    all_cells:
+    - TRADING-2384_DYNAMIC_STRATEGY_GUARDED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION
+    - Strategy research / execution semantics / guarded variant owner review decision
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2385 candidate pool expansion and signal family diversification
+      plan
+    - 详见 `docs/requirements/TRADING-2384_Dynamic_Strategy_Guarded_Variant_Owner_Review_And_Observation_Decision.md`；承接
+      TRADING-2383 route，读取 TRADING-2379 / 2380 / 2381 / 2382 / 2383 artifacts，并记录
+      guarded variant owner review / observation rejection / next direction decision。
+    - 新增 `aits research strategies dynamic-strategy-guarded-variant-owner-review-decision`；生成
+      `owner_review_decision.json`、`two_line_candidate_review.json`、`next_research_direction_decision.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_GUARDED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION_READY`，owner
+      decision=`DO_NOT_APPROVE_OBSERVATION_EXPAND_CANDIDATE_POOL_REVIEW_REQUIRED`，lower-turnover
+      line best variant=`dynamic_regime_overlay_v0_4_cooldown_balanced_v1` / decision=`CONTINUE_OPTIMIZATION`
+      / observation=false，ranking-top guarded line best variant=`equal_risk_growth_tilt_guarded_turnover_v1`
+      / decision=`CONTINUE_OPTIMIZATION` / observation=false，continue_local_optimization_allowed=false，candidate_pool_expansion_recommended=true，signal_family_diversification_recommended=true，next
+      route=`TRADING-2385_Dynamic_Strategy_Candidate_Pool_Expansion_And_Signal_Family_Diversification_Plan`。
+    - '2026-07-06: 根据 owner 附件新增并进入 IN_PROGRESS；这是 owner review / observation decision
+      record，不是 observation approval、paper-shadow approval、scheduler enablement、daily
+      report、production 或 broker readiness。2026-07-06: 实现完成并归档 DONE；验证通过 full Ruff、`compileall
+      -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 569
+      docs PASS、documentation contract 1281 reports PASS、task-register consistency
+      run active=319 / completed=443 / failed=0、task-register consistency validate
+      checks=5 / failed=0 / warnings=0 和 contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T162018Z/test_runtime_summary.json`）。本任务未重跑
+      `aits validate-data`，因为只读取 prior validated TRADING-2379 / 2380 / 2381 / 2382
+      / 2383 artifacts，不读取 fresh cached market data、不重新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order 和 daily report 全部保持 disabled / false / none。'
+    raw_line: '|TRADING-2384_DYNAMIC_STRATEGY_GUARDED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION|Strategy
+      research / execution semantics / guarded variant owner review decision|P0|DONE|项目
+      owner 后续复核 TRADING-2385 candidate pool expansion and signal family diversification
+      plan|详见 `docs/requirements/TRADING-2384_Dynamic_Strategy_Guarded_Variant_Owner_Review_And_Observation_Decision.md`；承接
+      TRADING-2383 route，读取 TRADING-2379 / 2380 / 2381 / 2382 / 2383 artifacts，并记录
+      guarded variant owner review / observation rejection / next direction decision。|新增
+      `aits research strategies dynamic-strategy-guarded-variant-owner-review-decision`；生成
+      `owner_review_decision.json`、`two_line_candidate_review.json`、`next_research_direction_decision.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_GUARDED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION_READY`，owner
+      decision=`DO_NOT_APPROVE_OBSERVATION_EXPAND_CANDIDATE_POOL_REVIEW_REQUIRED`，lower-turnover
+      line best variant=`dynamic_regime_overlay_v0_4_cooldown_balanced_v1` / decision=`CONTINUE_OPTIMIZATION`
+      / observation=false，ranking-top guarded line best variant=`equal_risk_growth_tilt_guarded_turnover_v1`
+      / decision=`CONTINUE_OPTIMIZATION` / observation=false，continue_local_optimization_allowed=false，candidate_pool_expansion_recommended=true，signal_family_diversification_recommended=true，next
+      route=`TRADING-2385_Dynamic_Strategy_Candidate_Pool_Expansion_And_Signal_Family_Diversification_Plan`。|2026-07-06:
+      根据 owner 附件新增并进入 IN_PROGRESS；这是 owner review / observation decision record，不是
+      observation approval、paper-shadow approval、scheduler enablement、daily report、production
+      或 broker readiness。2026-07-06: 实现完成并归档 DONE；验证通过 full Ruff、`compileall -q src
+      tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 569 docs PASS、documentation
+      contract 1281 reports PASS、task-register consistency run active=319 / completed=443
+      / failed=0、task-register consistency validate checks=5 / failed=0 / warnings=0
+      和 contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T162018Z/test_runtime_summary.json`）。本任务未重跑
+      `aits validate-data`，因为只读取 prior validated TRADING-2379 / 2380 / 2381 / 2382
+      / 2383 artifacts，不读取 fresh cached market data、不重新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order 和 daily report 全部保持 disabled / false / none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-950d1fcef864c45657305e79
+  task_id: TRADING-2384_DYNAMIC_STRATEGY_GUARDED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2385 candidate pool expansion and signal family
+      diversification plan
+    notes: '2026-07-06: 根据 owner 附件新增并进入 IN_PROGRESS；这是 owner review / observation
+      decision record，不是 observation approval、paper-shadow approval、scheduler enablement、daily
+      report、production 或 broker readiness。2026-07-06: 实现完成并归档 DONE；验证通过 full Ruff、`compileall
+      -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 569
+      docs PASS、documentation contract 1281 reports PASS、task-register consistency
+      run active=319 / completed=443 / failed=0、task-register consistency validate
+      checks=5 / failed=0 / warnings=0 和 contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T162018Z/test_runtime_summary.json`）。本任务未重跑
+      `aits validate-data`，因为只读取 prior validated TRADING-2379 / 2380 / 2381 / 2382
+      / 2383 artifacts，不读取 fresh cached market data、不重新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order 和 daily report 全部保持 disabled / false / none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:950d1fcef864c45657305e7952daf47a85d79dc66b0847621cc1209d579330b8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2384_DYNAMIC_STRATEGY_GUARDED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION
+  - Strategy research / execution semantics / guarded variant owner review decision
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2385 candidate pool expansion and signal family diversification
+    plan
+  - 详见 `docs/requirements/TRADING-2384_Dynamic_Strategy_Guarded_Variant_Owner_Review_And_Observation_Decision.md`；承接
+    TRADING-2383 route，读取 TRADING-2379 / 2380 / 2381 / 2382 / 2383 artifacts，并记录 guarded
+    variant owner review / observation rejection / next direction decision。
+  - 新增 `aits research strategies dynamic-strategy-guarded-variant-owner-review-decision`；生成
+    `owner_review_decision.json`、`two_line_candidate_review.json`、`next_research_direction_decision.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_GUARDED_VARIANT_OWNER_REVIEW_AND_OBSERVATION_DECISION_READY`，owner
+    decision=`DO_NOT_APPROVE_OBSERVATION_EXPAND_CANDIDATE_POOL_REVIEW_REQUIRED`，lower-turnover
+    line best variant=`dynamic_regime_overlay_v0_4_cooldown_balanced_v1` / decision=`CONTINUE_OPTIMIZATION`
+    / observation=false，ranking-top guarded line best variant=`equal_risk_growth_tilt_guarded_turnover_v1`
+    / decision=`CONTINUE_OPTIMIZATION` / observation=false，continue_local_optimization_allowed=false，candidate_pool_expansion_recommended=true，signal_family_diversification_recommended=true，next
+    route=`TRADING-2385_Dynamic_Strategy_Candidate_Pool_Expansion_And_Signal_Family_Diversification_Plan`。
+  - '2026-07-06: 根据 owner 附件新增并进入 IN_PROGRESS；这是 owner review / observation decision
+    record，不是 observation approval、paper-shadow approval、scheduler enablement、daily
+    report、production 或 broker readiness。2026-07-06: 实现完成并归档 DONE；验证通过 full Ruff、`compileall
+    -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 569 docs
+    PASS、documentation contract 1281 reports PASS、task-register consistency run active=319
+    / completed=443 / failed=0、task-register consistency validate checks=5 / failed=0
+    / warnings=0 和 contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T162018Z/test_runtime_summary.json`）。本任务未重跑
+    `aits validate-data`，因为只读取 prior validated TRADING-2379 / 2380 / 2381 / 2382 /
+    2383 artifacts，不读取 fresh cached market data、不重新 backtest、不生成 technical features、scoring、daily
+    report 或交易建议。scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+    position、production、broker/order 和 daily report 全部保持 disabled / false / none。'
+  docs_links:
+  - docs/requirements/TRADING-2384_Dynamic_Strategy_Guarded_Variant_Owner_Review_And_Observation_Decision.md
+  terminal: true
+  raw_row_sha256: 950d1fcef864c45657305e7952daf47a85d79dc66b0847621cc1209d579330b8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d6e0412da80688ac4c226c61d76619bf7ea280eb97c25c6e6696f725442a31e6

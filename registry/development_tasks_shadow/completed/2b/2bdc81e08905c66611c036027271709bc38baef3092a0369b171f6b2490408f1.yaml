@@ -1,0 +1,112 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: LLM-003
+  title: null
+  domain: 新闻/LLM/Agent 请求缓存
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/openai_request_cache_2026-05-10.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/openai_request_cache_2026-05-10.md`；已实现
+    provider-neutral 短 TTL 精确请求缓存和本地请求/响应审计归档，OpenAI Responses 是首个接入 adapter，避免调试和日报
+    rerun 在半天或一天内重复发送完全相同请求
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 相同 OpenAI request payload 在 TTL 内第二次运行不调用 HTTP client，报告显示 cache HIT；TTL
+      过期后允许重新请求；所有实际发送请求写入本地审计缓存，包含 provider/api family、sanitized request、response
+      body、attempt diagnostics、cache key 和 checksum，不包含 API key；`cache_allowed=false`
+      时 fail closed；系统流图、README 和测试同步更新
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 452
+    row_sha256: 83ce99555086eaba69a9b07994fe5d085112cd14f8a29926ca03ab1a8c30e1bd
+    cell_count: 8
+    all_cells:
+    - LLM-003
+    - 新闻/LLM/Agent 请求缓存
+    - P1
+    - DONE
+    - 系统实现
+    - 详细拆解见 `docs/requirements/openai_request_cache_2026-05-10.md`；已实现 provider-neutral
+      短 TTL 精确请求缓存和本地请求/响应审计归档，OpenAI Responses 是首个接入 adapter，避免调试和日报 rerun 在半天或一天内重复发送完全相同请求
+    - 相同 OpenAI request payload 在 TTL 内第二次运行不调用 HTTP client，报告显示 cache HIT；TTL 过期后允许重新请求；所有实际发送请求写入本地审计缓存，包含
+      provider/api family、sanitized request、response body、attempt diagnostics、cache
+      key 和 checksum，不包含 API key；`cache_allowed=false` 时 fail closed；系统流图、README 和测试同步更新
+    - '2026-05-10: 新增并进入实现，原因：owner 要求短时间重复发送相同 OpenAI 请求时复用本地缓存，并完整归档已付费请求/响应详情。2026-05-10:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `data/processed/agent_request_cache` 通用短 TTL request
+      cache/archive，OpenAI 归档位于 `archive/openai/responses/YYYY-MM-DD/`，CLI 默认 24 小时
+      TTL 并可通过 `--openai-cache-ttl-hours` 调整；报告和队列输出 cache HIT/MISS/EXPIRED/DISABLED；验证通过目标测试
+      53 passed、完整 `pytest -q` 445 passed 和 `git diff --check`。'
+    raw_line: '|LLM-003|新闻/LLM/Agent 请求缓存|P1|DONE|系统实现|详细拆解见 `docs/requirements/openai_request_cache_2026-05-10.md`；已实现
+      provider-neutral 短 TTL 精确请求缓存和本地请求/响应审计归档，OpenAI Responses 是首个接入 adapter，避免调试和日报
+      rerun 在半天或一天内重复发送完全相同请求|相同 OpenAI request payload 在 TTL 内第二次运行不调用 HTTP client，报告显示
+      cache HIT；TTL 过期后允许重新请求；所有实际发送请求写入本地审计缓存，包含 provider/api family、sanitized request、response
+      body、attempt diagnostics、cache key 和 checksum，不包含 API key；`cache_allowed=false`
+      时 fail closed；系统流图、README 和测试同步更新|2026-05-10: 新增并进入实现，原因：owner 要求短时间重复发送相同 OpenAI
+      请求时复用本地缓存，并完整归档已付费请求/响应详情。2026-05-10: 从 IN_PROGRESS 改为 DONE，原因：新增 `data/processed/agent_request_cache`
+      通用短 TTL request cache/archive，OpenAI 归档位于 `archive/openai/responses/YYYY-MM-DD/`，CLI
+      默认 24 小时 TTL 并可通过 `--openai-cache-ttl-hours` 调整；报告和队列输出 cache HIT/MISS/EXPIRED/DISABLED；验证通过目标测试
+      53 passed、完整 `pytest -q` 445 passed 和 `git diff --check`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-83ce99555086eaba69a9b079
+  task_id: LLM-003
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-10: 新增并进入实现，原因：owner 要求短时间重复发送相同 OpenAI 请求时复用本地缓存，并完整归档已付费请求/响应详情。2026-05-10:
+      从 IN_PROGRESS 改为 DONE，原因：新增 `data/processed/agent_request_cache` 通用短 TTL request
+      cache/archive，OpenAI 归档位于 `archive/openai/responses/YYYY-MM-DD/`，CLI 默认 24 小时
+      TTL 并可通过 `--openai-cache-ttl-hours` 调整；报告和队列输出 cache HIT/MISS/EXPIRED/DISABLED；验证通过目标测试
+      53 passed、完整 `pytest -q` 445 passed 和 `git diff --check`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:83ce99555086eaba69a9b07994fe5d085112cd14f8a29926ca03ab1a8c30e1bd
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - LLM-003
+  - 新闻/LLM/Agent 请求缓存
+  - P1
+  - DONE
+  - 系统实现
+  - 详细拆解见 `docs/requirements/openai_request_cache_2026-05-10.md`；已实现 provider-neutral
+    短 TTL 精确请求缓存和本地请求/响应审计归档，OpenAI Responses 是首个接入 adapter，避免调试和日报 rerun 在半天或一天内重复发送完全相同请求
+  - 相同 OpenAI request payload 在 TTL 内第二次运行不调用 HTTP client，报告显示 cache HIT；TTL 过期后允许重新请求；所有实际发送请求写入本地审计缓存，包含
+    provider/api family、sanitized request、response body、attempt diagnostics、cache
+    key 和 checksum，不包含 API key；`cache_allowed=false` 时 fail closed；系统流图、README 和测试同步更新
+  - '2026-05-10: 新增并进入实现，原因：owner 要求短时间重复发送相同 OpenAI 请求时复用本地缓存，并完整归档已付费请求/响应详情。2026-05-10:
+    从 IN_PROGRESS 改为 DONE，原因：新增 `data/processed/agent_request_cache` 通用短 TTL request
+    cache/archive，OpenAI 归档位于 `archive/openai/responses/YYYY-MM-DD/`，CLI 默认 24 小时
+    TTL 并可通过 `--openai-cache-ttl-hours` 调整；报告和队列输出 cache HIT/MISS/EXPIRED/DISABLED；验证通过目标测试
+    53 passed、完整 `pytest -q` 445 passed 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/openai_request_cache_2026-05-10.md
+  terminal: true
+  raw_row_sha256: 83ce99555086eaba69a9b07994fe5d085112cd14f8a29926ca03ab1a8c30e1bd
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4a0ce972b109229443458950c053151d0bb667de426a9472c57bbbcb26030d23

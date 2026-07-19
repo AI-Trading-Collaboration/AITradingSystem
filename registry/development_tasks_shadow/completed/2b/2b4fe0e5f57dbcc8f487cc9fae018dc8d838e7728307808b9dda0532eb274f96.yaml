@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: BTINPUT-002
+  title: null
+  domain: 回测输入/shadow backtest diagnostics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/shadow_backtest_input_diagnostics_2026-05-29.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/shadow_backtest_input_diagnostics_2026-05-29.md`；已补齐
+    shadow backtest input diagnostics、snapshot manifest、repair dry-run plan、shadow
+    summary 引用、dashboard 和 Reader Brief 只读展示
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits data diagnose-backtest-inputs --latest` 生成结构化 JSON/Markdown 和 backtest
+      input manifest；`aits data repair-backtest-inputs --latest --dry-run` 输出可执行 repair
+      plan；shadow backtest 失败时 summary/Markdown 明确引用 diagnostic report 和 blocking
+      errors；dashboard/Reader Brief 显示最新 backtest data quality 状态；不修改 production 参数、promotion
+      criteria 或真实交易路径；目标测试通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 380
+    row_sha256: 34ac3cf25d2a9aa3c6f7543897f7720b8769b9a81d9d394343f6bbf41c1898f3
+    cell_count: 8
+    all_cells:
+    - BTINPUT-002
+    - 回测输入/shadow backtest diagnostics
+    - P0
+    - DONE
+    - 系统实现
+    - 详细拆解见 `docs/requirements/shadow_backtest_input_diagnostics_2026-05-29.md`；已补齐
+      shadow backtest input diagnostics、snapshot manifest、repair dry-run plan、shadow
+      summary 引用、dashboard 和 Reader Brief 只读展示
+    - '`aits data diagnose-backtest-inputs --latest` 生成结构化 JSON/Markdown 和 backtest
+      input manifest；`aits data repair-backtest-inputs --latest --dry-run` 输出可执行 repair
+      plan；shadow backtest 失败时 summary/Markdown 明确引用 diagnostic report 和 blocking
+      errors；dashboard/Reader Brief 显示最新 backtest data quality 状态；不修改 production 参数、promotion
+      criteria 或真实交易路径；目标测试通过'
+    - '2026-05-29: 完成实现和验证；当前本地 latest 诊断为 FAILED，阻断项为缺少 `GOOGL`、`BRK.B`、`SGOV` price
+      history；actual repair 按本阶段边界返回 `NOT_IMPLEMENTED`。2026-05-30: 从当前任务表归档到 completed，原因：该行已为
+      DONE，需保持任务登记表只保留未完成任务。'
+    raw_line: '|BTINPUT-002|回测输入/shadow backtest diagnostics|P0|DONE|系统实现|详细拆解见 `docs/requirements/shadow_backtest_input_diagnostics_2026-05-29.md`；已补齐
+      shadow backtest input diagnostics、snapshot manifest、repair dry-run plan、shadow
+      summary 引用、dashboard 和 Reader Brief 只读展示|`aits data diagnose-backtest-inputs
+      --latest` 生成结构化 JSON/Markdown 和 backtest input manifest；`aits data repair-backtest-inputs
+      --latest --dry-run` 输出可执行 repair plan；shadow backtest 失败时 summary/Markdown 明确引用
+      diagnostic report 和 blocking errors；dashboard/Reader Brief 显示最新 backtest data
+      quality 状态；不修改 production 参数、promotion criteria 或真实交易路径；目标测试通过|2026-05-29: 完成实现和验证；当前本地
+      latest 诊断为 FAILED，阻断项为缺少 `GOOGL`、`BRK.B`、`SGOV` price history；actual repair
+      按本阶段边界返回 `NOT_IMPLEMENTED`。2026-05-30: 从当前任务表归档到 completed，原因：该行已为 DONE，需保持任务登记表只保留未完成任务。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-34ac3cf25d2a9aa3c6f75438
+  task_id: BTINPUT-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-29: 完成实现和验证；当前本地 latest 诊断为 FAILED，阻断项为缺少 `GOOGL`、`BRK.B`、`SGOV`
+      price history；actual repair 按本阶段边界返回 `NOT_IMPLEMENTED`。2026-05-30: 从当前任务表归档到
+      completed，原因：该行已为 DONE，需保持任务登记表只保留未完成任务。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:34ac3cf25d2a9aa3c6f7543897f7720b8769b9a81d9d394343f6bbf41c1898f3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - BTINPUT-002
+  - 回测输入/shadow backtest diagnostics
+  - P0
+  - DONE
+  - 系统实现
+  - 详细拆解见 `docs/requirements/shadow_backtest_input_diagnostics_2026-05-29.md`；已补齐
+    shadow backtest input diagnostics、snapshot manifest、repair dry-run plan、shadow
+    summary 引用、dashboard 和 Reader Brief 只读展示
+  - '`aits data diagnose-backtest-inputs --latest` 生成结构化 JSON/Markdown 和 backtest
+    input manifest；`aits data repair-backtest-inputs --latest --dry-run` 输出可执行 repair
+    plan；shadow backtest 失败时 summary/Markdown 明确引用 diagnostic report 和 blocking errors；dashboard/Reader
+    Brief 显示最新 backtest data quality 状态；不修改 production 参数、promotion criteria 或真实交易路径；目标测试通过'
+  - '2026-05-29: 完成实现和验证；当前本地 latest 诊断为 FAILED，阻断项为缺少 `GOOGL`、`BRK.B`、`SGOV` price
+    history；actual repair 按本阶段边界返回 `NOT_IMPLEMENTED`。2026-05-30: 从当前任务表归档到 completed，原因：该行已为
+    DONE，需保持任务登记表只保留未完成任务。'
+  docs_links:
+  - docs/requirements/shadow_backtest_input_diagnostics_2026-05-29.md
+  terminal: true
+  raw_row_sha256: 34ac3cf25d2a9aa3c6f7543897f7720b8769b9a81d9d394343f6bbf41c1898f3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 978040c65b2d7e55fa9a35aa83ab07dde9afd0f08de2d4d02ffc8f105acea497

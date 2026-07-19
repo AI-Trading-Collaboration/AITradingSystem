@@ -1,0 +1,163 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-511E_to_520_ABLATION_BOUNDARY_INTERACTION
+  title: null
+  domain: ETF portfolio/weight research ablation boundary and interaction program
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 复核 + 系统后续执行
+  requirement_refs:
+  - docs/requirements/TRADING-511E_to_520_Ablation_Boundary_and_Interaction_Development_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-511E_to_520_Ablation_Boundary_and_Interaction_Development_Plan.md`；511E-G、512A/B、512C-F、513A-D、514A-B
+    已完成 research-only artifacts；515A/516A contract 已冻结；515B/516B/517-519 按 hard stop
+    输出 blocked/inconclusive checkpoint；下一步需 owner 决定是否补跑 full scorecard/stress/benchmark
+    gates，或 redesign B2/B3 policy 后再进入 B5/B6；仍不得访问 untouched holdout，不得产生 official
+    target weights、paper-shadow activation、broker/order/live/production mutation
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 511E 新增 audit artifact 并冻结 metric units/sign/delta semantics；511F 生成 B0H/B0R/B0R-vs-B0H
+      artifacts；511G 生成 B1E vs B0R primary comparison；512A/B 输出 layer interface contract、dependency
+      boundary validation 和 signal diagnostics framework；512C-F/B2、513A-D/B3、514A-B/B4
+      均先调用同一路径 `aits validate-data` 并披露 `PASS_WITH_WARNINGS`，生成 signal/target/E0/E1/diagnostics/result
+      artifacts；B4 interaction classification=`INCONCLUSIVE`；515B=`CONFIDENCE_INTERACTION_BLOCKED_CORE_COMBO_INCONCLUSIVE`，516B=`REGIME_INCREMENTAL_EVALUATION_BLOCKED_NO_PRE_REGIME_COMBO`，519=`V3_BLOCKED`，520=`WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE`；focused
+      tests、scoped ruff、JSON parse、`git diff --check` 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1422
+    row_sha256: 97c8d60141024b99abcdca47b673e9a7349d6e7af256c2ba1d1999018d417dc5
+    cell_count: 8
+    all_cells:
+    - TRADING-511E_to_520_ABLATION_BOUNDARY_INTERACTION
+    - ETF portfolio/weight research ablation boundary and interaction program
+    - P0
+    - BLOCKED_OWNER_INPUT
+    - 项目 owner 复核 + 系统后续执行
+    - 详细拆解见 `docs/requirements/TRADING-511E_to_520_Ablation_Boundary_and_Interaction_Development_Plan.md`；511E-G、512A/B、512C-F、513A-D、514A-B
+      已完成 research-only artifacts；515A/516A contract 已冻结；515B/516B/517-519 按 hard
+      stop 输出 blocked/inconclusive checkpoint；下一步需 owner 决定是否补跑 full scorecard/stress/benchmark
+      gates，或 redesign B2/B3 policy 后再进入 B5/B6；仍不得访问 untouched holdout，不得产生 official
+      target weights、paper-shadow activation、broker/order/live/production mutation
+    - 511E 新增 audit artifact 并冻结 metric units/sign/delta semantics；511F 生成 B0H/B0R/B0R-vs-B0H
+      artifacts；511G 生成 B1E vs B0R primary comparison；512A/B 输出 layer interface contract、dependency
+      boundary validation 和 signal diagnostics framework；512C-F/B2、513A-D/B3、514A-B/B4
+      均先调用同一路径 `aits validate-data` 并披露 `PASS_WITH_WARNINGS`，生成 signal/target/E0/E1/diagnostics/result
+      artifacts；B4 interaction classification=`INCONCLUSIVE`；515B=`CONFIDENCE_INTERACTION_BLOCKED_CORE_COMBO_INCONCLUSIVE`，516B=`REGIME_INCREMENTAL_EVALUATION_BLOCKED_NO_PRE_REGIME_COMBO`，519=`V3_BLOCKED`，520=`WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE`；focused
+      tests、scoped ruff、JSON parse、`git diff --check` 通过
+    - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 511A-D 后继续推进消融边界、B1 comparator
+      修复和模块交互计划；当前已识别历史 B1 mixed evidence 的 comparator attribution 可能混入静态再平衡效果，必须先修复
+      Phase 0，再决定是否进入 B2/B3。2026-06-19: 511E 输出 `B1_ATTRIBUTION_PARTIAL`；511F 输出 `STATIC_BASELINE_FAMILY_READY_RESEARCH_ONLY`，B0H
+      return/drawdown/turnover=0.323123/-0.062466/0.0，B0R=0.312945/-0.061282/0.598768；511G
+      输出 `B1_ATTRIBUTION_VALID_MIXED`，B1E vs B0R return_delta=0.003019、drawdown_reduction=-0.001184、turnover_delta=-0.47445，B2/B3
+      可继续但 E 不得默认进入最终候选；512A/B 输出 interface contract、dependency validation PASS 和
+      diagnostics framework。2026-06-19: B2 输出 `B2_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY`，B2-E1
+      return/drawdown/turnover=-0.071974/-0.108383/0.0；B3 输出 `B3_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY`，B3-E1=-0.074658/-0.111566/0.105104；B4
+      输出 `B4_INTERACTION_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY`，B4-E1=-0.074658/-0.111566/0.105104，R×T
+      partial utility approx 0 但 classification=`INCONCLUSIVE`。因 full scorecard/stress/benchmark
+      gates 缺失且没有 screened core combination，任务转为 BLOCKED_OWNER_INPUT，B5/B6/v3 均保持
+      research-only blocked。'
+    raw_line: '|TRADING-511E_to_520_ABLATION_BOUNDARY_INTERACTION|ETF portfolio/weight
+      research ablation boundary and interaction program|P0|BLOCKED_OWNER_INPUT|项目
+      owner 复核 + 系统后续执行|详细拆解见 `docs/requirements/TRADING-511E_to_520_Ablation_Boundary_and_Interaction_Development_Plan.md`；511E-G、512A/B、512C-F、513A-D、514A-B
+      已完成 research-only artifacts；515A/516A contract 已冻结；515B/516B/517-519 按 hard
+      stop 输出 blocked/inconclusive checkpoint；下一步需 owner 决定是否补跑 full scorecard/stress/benchmark
+      gates，或 redesign B2/B3 policy 后再进入 B5/B6；仍不得访问 untouched holdout，不得产生 official
+      target weights、paper-shadow activation、broker/order/live/production mutation|511E
+      新增 audit artifact 并冻结 metric units/sign/delta semantics；511F 生成 B0H/B0R/B0R-vs-B0H
+      artifacts；511G 生成 B1E vs B0R primary comparison；512A/B 输出 layer interface contract、dependency
+      boundary validation 和 signal diagnostics framework；512C-F/B2、513A-D/B3、514A-B/B4
+      均先调用同一路径 `aits validate-data` 并披露 `PASS_WITH_WARNINGS`，生成 signal/target/E0/E1/diagnostics/result
+      artifacts；B4 interaction classification=`INCONCLUSIVE`；515B=`CONFIDENCE_INTERACTION_BLOCKED_CORE_COMBO_INCONCLUSIVE`，516B=`REGIME_INCREMENTAL_EVALUATION_BLOCKED_NO_PRE_REGIME_COMBO`，519=`V3_BLOCKED`，520=`WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE`；focused
+      tests、scoped ruff、JSON parse、`git diff --check` 通过|2026-06-19: 新增并进入 IN_PROGRESS，原因：owner
+      附件要求在 511A-D 后继续推进消融边界、B1 comparator 修复和模块交互计划；当前已识别历史 B1 mixed evidence 的 comparator
+      attribution 可能混入静态再平衡效果，必须先修复 Phase 0，再决定是否进入 B2/B3。2026-06-19: 511E 输出 `B1_ATTRIBUTION_PARTIAL`；511F
+      输出 `STATIC_BASELINE_FAMILY_READY_RESEARCH_ONLY`，B0H return/drawdown/turnover=0.323123/-0.062466/0.0，B0R=0.312945/-0.061282/0.598768；511G
+      输出 `B1_ATTRIBUTION_VALID_MIXED`，B1E vs B0R return_delta=0.003019、drawdown_reduction=-0.001184、turnover_delta=-0.47445，B2/B3
+      可继续但 E 不得默认进入最终候选；512A/B 输出 interface contract、dependency validation PASS 和
+      diagnostics framework。2026-06-19: B2 输出 `B2_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY`，B2-E1
+      return/drawdown/turnover=-0.071974/-0.108383/0.0；B3 输出 `B3_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY`，B3-E1=-0.074658/-0.111566/0.105104；B4
+      输出 `B4_INTERACTION_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY`，B4-E1=-0.074658/-0.111566/0.105104，R×T
+      partial utility approx 0 但 classification=`INCONCLUSIVE`。因 full scorecard/stress/benchmark
+      gates 缺失且没有 screened core combination，任务转为 BLOCKED_OWNER_INPUT，B5/B6/v3 均保持
+      research-only blocked。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-97c8d60141024b99abcdca47
+  task_id: TRADING-511E_to_520_ABLATION_BOUNDARY_INTERACTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: 项目 owner 复核 + 系统后续执行
+    notes: '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 511A-D 后继续推进消融边界、B1 comparator
+      修复和模块交互计划；当前已识别历史 B1 mixed evidence 的 comparator attribution 可能混入静态再平衡效果，必须先修复
+      Phase 0，再决定是否进入 B2/B3。2026-06-19: 511E 输出 `B1_ATTRIBUTION_PARTIAL`；511F 输出 `STATIC_BASELINE_FAMILY_READY_RESEARCH_ONLY`，B0H
+      return/drawdown/turnover=0.323123/-0.062466/0.0，B0R=0.312945/-0.061282/0.598768；511G
+      输出 `B1_ATTRIBUTION_VALID_MIXED`，B1E vs B0R return_delta=0.003019、drawdown_reduction=-0.001184、turnover_delta=-0.47445，B2/B3
+      可继续但 E 不得默认进入最终候选；512A/B 输出 interface contract、dependency validation PASS 和
+      diagnostics framework。2026-06-19: B2 输出 `B2_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY`，B2-E1
+      return/drawdown/turnover=-0.071974/-0.108383/0.0；B3 输出 `B3_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY`，B3-E1=-0.074658/-0.111566/0.105104；B4
+      输出 `B4_INTERACTION_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY`，B4-E1=-0.074658/-0.111566/0.105104，R×T
+      partial utility approx 0 但 classification=`INCONCLUSIVE`。因 full scorecard/stress/benchmark
+      gates 缺失且没有 screened core combination，任务转为 BLOCKED_OWNER_INPUT，B5/B6/v3 均保持
+      research-only blocked。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:97c8d60141024b99abcdca47b673e9a7349d6e7af256c2ba1d1999018d417dc5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-511E_to_520_ABLATION_BOUNDARY_INTERACTION
+  - ETF portfolio/weight research ablation boundary and interaction program
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - 项目 owner 复核 + 系统后续执行
+  - 详细拆解见 `docs/requirements/TRADING-511E_to_520_Ablation_Boundary_and_Interaction_Development_Plan.md`；511E-G、512A/B、512C-F、513A-D、514A-B
+    已完成 research-only artifacts；515A/516A contract 已冻结；515B/516B/517-519 按 hard stop
+    输出 blocked/inconclusive checkpoint；下一步需 owner 决定是否补跑 full scorecard/stress/benchmark
+    gates，或 redesign B2/B3 policy 后再进入 B5/B6；仍不得访问 untouched holdout，不得产生 official
+    target weights、paper-shadow activation、broker/order/live/production mutation
+  - 511E 新增 audit artifact 并冻结 metric units/sign/delta semantics；511F 生成 B0H/B0R/B0R-vs-B0H
+    artifacts；511G 生成 B1E vs B0R primary comparison；512A/B 输出 layer interface contract、dependency
+    boundary validation 和 signal diagnostics framework；512C-F/B2、513A-D/B3、514A-B/B4
+    均先调用同一路径 `aits validate-data` 并披露 `PASS_WITH_WARNINGS`，生成 signal/target/E0/E1/diagnostics/result
+    artifacts；B4 interaction classification=`INCONCLUSIVE`；515B=`CONFIDENCE_INTERACTION_BLOCKED_CORE_COMBO_INCONCLUSIVE`，516B=`REGIME_INCREMENTAL_EVALUATION_BLOCKED_NO_PRE_REGIME_COMBO`，519=`V3_BLOCKED`，520=`WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE`；focused
+    tests、scoped ruff、JSON parse、`git diff --check` 通过
+  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 511A-D 后继续推进消融边界、B1 comparator 修复和模块交互计划；当前已识别历史
+    B1 mixed evidence 的 comparator attribution 可能混入静态再平衡效果，必须先修复 Phase 0，再决定是否进入 B2/B3。2026-06-19:
+    511E 输出 `B1_ATTRIBUTION_PARTIAL`；511F 输出 `STATIC_BASELINE_FAMILY_READY_RESEARCH_ONLY`，B0H
+    return/drawdown/turnover=0.323123/-0.062466/0.0，B0R=0.312945/-0.061282/0.598768；511G
+    输出 `B1_ATTRIBUTION_VALID_MIXED`，B1E vs B0R return_delta=0.003019、drawdown_reduction=-0.001184、turnover_delta=-0.47445，B2/B3
+    可继续但 E 不得默认进入最终候选；512A/B 输出 interface contract、dependency validation PASS 和 diagnostics
+    framework。2026-06-19: B2 输出 `B2_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY`，B2-E1
+    return/drawdown/turnover=-0.071974/-0.108383/0.0；B3 输出 `B3_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY`，B3-E1=-0.074658/-0.111566/0.105104；B4
+    输出 `B4_INTERACTION_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY`，B4-E1=-0.074658/-0.111566/0.105104，R×T
+    partial utility approx 0 但 classification=`INCONCLUSIVE`。因 full scorecard/stress/benchmark
+    gates 缺失且没有 screened core combination，任务转为 BLOCKED_OWNER_INPUT，B5/B6/v3 均保持 research-only
+    blocked。'
+  docs_links:
+  - docs/requirements/TRADING-511E_to_520_Ablation_Boundary_and_Interaction_Development_Plan.md
+  terminal: false
+  raw_row_sha256: 97c8d60141024b99abcdca47b673e9a7349d6e7af256c2ba1d1999018d417dc5
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e70726cad0019b48d5bf66831ad13b1cb03ce2bb118a6b57d5bf3382573e8e5c

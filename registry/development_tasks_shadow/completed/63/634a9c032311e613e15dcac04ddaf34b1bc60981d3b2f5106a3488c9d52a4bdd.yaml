@@ -1,0 +1,130 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-005
+  title: null
+  domain: 运行架构/日报前置数据依赖
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/daily_score_preflight_dependencies_2026-05-07.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/daily_score_preflight_dependencies_2026-05-07.md`；daily
+    plan 已新增 SEC companyfacts 刷新、SEC metrics 抽取/校验和 FMP 估值快照刷新；2026-05-07 真实日报链路已验证不再因当日
+    SEC metrics 缺失停止；`ops health` 已显式检查 FMP PIT 抓取报告状态
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 默认每日计划必须在 `score-daily` 前列出并阻断执行 `aits fundamentals download-sec-companyfacts`、`aits
+      fundamentals extract-sec-metrics --as-of YYYY-MM-DD`、`aits fundamentals validate-sec-metrics
+      --as-of YYYY-MM-DD` 和 `aits valuation fetch-fmp --as-of YYYY-MM-DD`；缺少 `SEC_USER_AGENT`
+      或 `FMP_API_KEY` 必须显示 `BLOCKED_ENV`；报告、README、系统流图和测试同步更新；下一次真实日报不应再因当日 SEC metrics
+      文件缺失或估值快照过期而失败；PIT 抓取失败必须进入 FMP PIT 抓取报告和 pipeline health/alert
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 453
+    row_sha256: 590100c5a5e51fbcebce39fc37ad6f82f782a3f6f869c43f47c39298dbf6e825
+    cell_count: 8
+    all_cells:
+    - OPS-005
+    - 运行架构/日报前置数据依赖
+    - P0
+    - DONE
+    - 系统实现
+    - 详细拆解见 `docs/requirements/daily_score_preflight_dependencies_2026-05-07.md`；daily
+      plan 已新增 SEC companyfacts 刷新、SEC metrics 抽取/校验和 FMP 估值快照刷新；2026-05-07 真实日报链路已验证不再因当日
+      SEC metrics 缺失停止；`ops health` 已显式检查 FMP PIT 抓取报告状态
+    - 默认每日计划必须在 `score-daily` 前列出并阻断执行 `aits fundamentals download-sec-companyfacts`、`aits
+      fundamentals extract-sec-metrics --as-of YYYY-MM-DD`、`aits fundamentals validate-sec-metrics
+      --as-of YYYY-MM-DD` 和 `aits valuation fetch-fmp --as-of YYYY-MM-DD`；缺少 `SEC_USER_AGENT`
+      或 `FMP_API_KEY` 必须显示 `BLOCKED_ENV`；报告、README、系统流图和测试同步更新；下一次真实日报不应再因当日 SEC metrics
+      文件缺失或估值快照过期而失败；PIT 抓取失败必须进入 FMP PIT 抓取报告和 pipeline health/alert
+    - '2026-05-07: 新增任务，原因：真实每日运行暴露日报依赖当日 SEC metrics，但现有每日编排没有生成该 CSV；同时审计发现估值快照刷新也不在日报前置链路中。2026-05-07:
+      从 IN_PROGRESS 改为 VALIDATING，原因：`aits ops daily-plan` 已补齐 SEC companyfacts、SEC
+      metrics、SEC metrics validation 和 FMP valuation 前置步骤；验证通过 `ruff check src tests`
+      和完整 `pytest -q` 408 项。2026-05-07: 从 VALIDATING 改为 DONE，原因：真实日报链路通过，`score-daily`
+      输出 `PASS_WITH_LIMITATIONS`；同时修复运行观察发现的 PIT fetch 报告状态 health 漏报，验证通过 `ruff check
+      src tests`、`pytest -q tests/test_pipeline_health.py`、`pytest -q tests/test_ops_daily.py
+      tests/test_pipeline_health.py` 和 `aits ops health --as-of 2026-05-07`。'
+    raw_line: '|OPS-005|运行架构/日报前置数据依赖|P0|DONE|系统实现|详细拆解见 `docs/requirements/daily_score_preflight_dependencies_2026-05-07.md`；daily
+      plan 已新增 SEC companyfacts 刷新、SEC metrics 抽取/校验和 FMP 估值快照刷新；2026-05-07 真实日报链路已验证不再因当日
+      SEC metrics 缺失停止；`ops health` 已显式检查 FMP PIT 抓取报告状态|默认每日计划必须在 `score-daily` 前列出并阻断执行
+      `aits fundamentals download-sec-companyfacts`、`aits fundamentals extract-sec-metrics
+      --as-of YYYY-MM-DD`、`aits fundamentals validate-sec-metrics --as-of YYYY-MM-DD`
+      和 `aits valuation fetch-fmp --as-of YYYY-MM-DD`；缺少 `SEC_USER_AGENT` 或 `FMP_API_KEY`
+      必须显示 `BLOCKED_ENV`；报告、README、系统流图和测试同步更新；下一次真实日报不应再因当日 SEC metrics 文件缺失或估值快照过期而失败；PIT
+      抓取失败必须进入 FMP PIT 抓取报告和 pipeline health/alert|2026-05-07: 新增任务，原因：真实每日运行暴露日报依赖当日
+      SEC metrics，但现有每日编排没有生成该 CSV；同时审计发现估值快照刷新也不在日报前置链路中。2026-05-07: 从 IN_PROGRESS
+      改为 VALIDATING，原因：`aits ops daily-plan` 已补齐 SEC companyfacts、SEC metrics、SEC
+      metrics validation 和 FMP valuation 前置步骤；验证通过 `ruff check src tests` 和完整 `pytest
+      -q` 408 项。2026-05-07: 从 VALIDATING 改为 DONE，原因：真实日报链路通过，`score-daily` 输出 `PASS_WITH_LIMITATIONS`；同时修复运行观察发现的
+      PIT fetch 报告状态 health 漏报，验证通过 `ruff check src tests`、`pytest -q tests/test_pipeline_health.py`、`pytest
+      -q tests/test_ops_daily.py tests/test_pipeline_health.py` 和 `aits ops health
+      --as-of 2026-05-07`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-590100c5a5e51fbcebce39fc
+  task_id: OPS-005
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    notes: '2026-05-07: 新增任务，原因：真实每日运行暴露日报依赖当日 SEC metrics，但现有每日编排没有生成该 CSV；同时审计发现估值快照刷新也不在日报前置链路中。2026-05-07:
+      从 IN_PROGRESS 改为 VALIDATING，原因：`aits ops daily-plan` 已补齐 SEC companyfacts、SEC
+      metrics、SEC metrics validation 和 FMP valuation 前置步骤；验证通过 `ruff check src tests`
+      和完整 `pytest -q` 408 项。2026-05-07: 从 VALIDATING 改为 DONE，原因：真实日报链路通过，`score-daily`
+      输出 `PASS_WITH_LIMITATIONS`；同时修复运行观察发现的 PIT fetch 报告状态 health 漏报，验证通过 `ruff check
+      src tests`、`pytest -q tests/test_pipeline_health.py`、`pytest -q tests/test_ops_daily.py
+      tests/test_pipeline_health.py` 和 `aits ops health --as-of 2026-05-07`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:590100c5a5e51fbcebce39fc37ad6f82f782a3f6f869c43f47c39298dbf6e825
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-005
+  - 运行架构/日报前置数据依赖
+  - P0
+  - DONE
+  - 系统实现
+  - 详细拆解见 `docs/requirements/daily_score_preflight_dependencies_2026-05-07.md`；daily
+    plan 已新增 SEC companyfacts 刷新、SEC metrics 抽取/校验和 FMP 估值快照刷新；2026-05-07 真实日报链路已验证不再因当日
+    SEC metrics 缺失停止；`ops health` 已显式检查 FMP PIT 抓取报告状态
+  - 默认每日计划必须在 `score-daily` 前列出并阻断执行 `aits fundamentals download-sec-companyfacts`、`aits
+    fundamentals extract-sec-metrics --as-of YYYY-MM-DD`、`aits fundamentals validate-sec-metrics
+    --as-of YYYY-MM-DD` 和 `aits valuation fetch-fmp --as-of YYYY-MM-DD`；缺少 `SEC_USER_AGENT`
+    或 `FMP_API_KEY` 必须显示 `BLOCKED_ENV`；报告、README、系统流图和测试同步更新；下一次真实日报不应再因当日 SEC metrics
+    文件缺失或估值快照过期而失败；PIT 抓取失败必须进入 FMP PIT 抓取报告和 pipeline health/alert
+  - '2026-05-07: 新增任务，原因：真实每日运行暴露日报依赖当日 SEC metrics，但现有每日编排没有生成该 CSV；同时审计发现估值快照刷新也不在日报前置链路中。2026-05-07:
+    从 IN_PROGRESS 改为 VALIDATING，原因：`aits ops daily-plan` 已补齐 SEC companyfacts、SEC
+    metrics、SEC metrics validation 和 FMP valuation 前置步骤；验证通过 `ruff check src tests`
+    和完整 `pytest -q` 408 项。2026-05-07: 从 VALIDATING 改为 DONE，原因：真实日报链路通过，`score-daily`
+    输出 `PASS_WITH_LIMITATIONS`；同时修复运行观察发现的 PIT fetch 报告状态 health 漏报，验证通过 `ruff check
+    src tests`、`pytest -q tests/test_pipeline_health.py`、`pytest -q tests/test_ops_daily.py
+    tests/test_pipeline_health.py` 和 `aits ops health --as-of 2026-05-07`。'
+  docs_links:
+  - docs/requirements/daily_score_preflight_dependencies_2026-05-07.md
+  terminal: true
+  raw_row_sha256: 590100c5a5e51fbcebce39fc37ad6f82f782a3f6f869c43f47c39298dbf6e825
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 174b7722c5c1b705d5627c3d648e499b65124ce63eb84711fb463a29d2876a8e

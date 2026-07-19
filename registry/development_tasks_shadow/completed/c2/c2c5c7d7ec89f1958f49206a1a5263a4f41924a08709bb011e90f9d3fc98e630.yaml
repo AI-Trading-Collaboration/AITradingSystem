@@ -1,0 +1,103 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2445_TASK_REGISTER_BASELINE_DONE_ACTIVE_SEMANTICS
+  title: null
+  domain: Governance / task register consistency semantics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: governance owner：后续变更保持新语义
+  requirement_refs:
+  - docs/requirements/TRADING-2445_Task_Register_BASELINE_DONE_Active_Semantics.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2445_Task_Register_BASELINE_DONE_Active_Semantics.md`；terminal
+    status 已收敛为 `DONE/DROPPED`，82 条历史 `BASELINE_DONE` 原样迁回 active，并删除两条被较新 canonical
+    rows 取代的旧 duplicate。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`BASELINE_DONE` active PASS、completed FAIL；`DONE/DROPPED` active FAIL；task
+      id 全局唯一；真实 register consistency 与 validation PASS；文档、flow、runbook 和 focused
+      tests 同步；`production_effect=none`。'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 18
+    row_sha256: 22302b46173d43b2332cce2d9bbf426e2df029a0829b9bbab36062a288b1494d
+    cell_count: 8
+    all_cells:
+    - TRADING-2445_TASK_REGISTER_BASELINE_DONE_ACTIVE_SEMANTICS
+    - Governance / task register consistency semantics
+    - P1
+    - DONE
+    - governance owner：后续变更保持新语义
+    - 详见 `docs/requirements/TRADING-2445_Task_Register_BASELINE_DONE_Active_Semantics.md`；terminal
+      status 已收敛为 `DONE/DROPPED`，82 条历史 `BASELINE_DONE` 原样迁回 active，并删除两条被较新 canonical
+      rows 取代的旧 duplicate。
+    - '`BASELINE_DONE` active PASS、completed FAIL；`DONE/DROPPED` active FAIL；task
+      id 全局唯一；真实 register consistency 与 validation PASS；文档、flow、runbook 和 focused
+      tests 同步；`production_effect=none`。'
+    - '2026-07-16: focused parallel=`10 passed`；真实 consistency/validation=`PASS`，迁移后
+      active/completed/total=`428/440/868`、active baseline=91、completed baseline=0、blocking/warning=0/0。'
+    raw_line: '|TRADING-2445_TASK_REGISTER_BASELINE_DONE_ACTIVE_SEMANTICS|Governance
+      / task register consistency semantics|P1|DONE|governance owner：后续变更保持新语义|详见
+      `docs/requirements/TRADING-2445_Task_Register_BASELINE_DONE_Active_Semantics.md`；terminal
+      status 已收敛为 `DONE/DROPPED`，82 条历史 `BASELINE_DONE` 原样迁回 active，并删除两条被较新 canonical
+      rows 取代的旧 duplicate。|`BASELINE_DONE` active PASS、completed FAIL；`DONE/DROPPED`
+      active FAIL；task id 全局唯一；真实 register consistency 与 validation PASS；文档、flow、runbook
+      和 focused tests 同步；`production_effect=none`。|2026-07-16: focused parallel=`10
+      passed`；真实 consistency/validation=`PASS`，迁移后 active/completed/total=`428/440/868`、active
+      baseline=91、completed baseline=0、blocking/warning=0/0。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-22302b46173d43b2332cce2d
+  task_id: TRADING-2445_TASK_REGISTER_BASELINE_DONE_ACTIVE_SEMANTICS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: governance owner：后续变更保持新语义
+    notes: '2026-07-16: focused parallel=`10 passed`；真实 consistency/validation=`PASS`，迁移后
+      active/completed/total=`428/440/868`、active baseline=91、completed baseline=0、blocking/warning=0/0。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:22302b46173d43b2332cce2d9bbf426e2df029a0829b9bbab36062a288b1494d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2445_TASK_REGISTER_BASELINE_DONE_ACTIVE_SEMANTICS
+  - Governance / task register consistency semantics
+  - P1
+  - DONE
+  - governance owner：后续变更保持新语义
+  - 详见 `docs/requirements/TRADING-2445_Task_Register_BASELINE_DONE_Active_Semantics.md`；terminal
+    status 已收敛为 `DONE/DROPPED`，82 条历史 `BASELINE_DONE` 原样迁回 active，并删除两条被较新 canonical
+    rows 取代的旧 duplicate。
+  - '`BASELINE_DONE` active PASS、completed FAIL；`DONE/DROPPED` active FAIL；task id
+    全局唯一；真实 register consistency 与 validation PASS；文档、flow、runbook 和 focused tests
+    同步；`production_effect=none`。'
+  - '2026-07-16: focused parallel=`10 passed`；真实 consistency/validation=`PASS`，迁移后
+    active/completed/total=`428/440/868`、active baseline=91、completed baseline=0、blocking/warning=0/0。'
+  docs_links:
+  - docs/requirements/TRADING-2445_Task_Register_BASELINE_DONE_Active_Semantics.md
+  terminal: true
+  raw_row_sha256: 22302b46173d43b2332cce2d9bbf426e2df029a0829b9bbab36062a288b1494d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8af24920afebe533a1175a88069e59aed38fee5fa8f970ba4a1fdedad0d76535

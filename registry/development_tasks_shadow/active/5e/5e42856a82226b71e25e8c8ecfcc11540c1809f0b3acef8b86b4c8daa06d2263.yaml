@@ -1,0 +1,211 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-141_to_145
+  title: null
+  domain: ETF portfolio research/Historical Advisory Replay and Backfilled Outcome
+    Evaluation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 人工复核
+  requirement_refs:
+  - docs/requirements/TRADING-141_to_145_Historical_Advisory_Replay_and_Backfilled_Outcome_Evaluation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-141_to_145_Historical_Advisory_Replay_and_Backfilled_Outcome_Evaluation.md`；基于
+    TRADING-136_to_140 的 forward advisory outcome/paper tracking，新增 historical replay
+    inventory、PIT safety audit、historical replay variants、backfilled outcome、historical
+    paper simulation 和 replay performance review；本阶段仍禁止 broker API、自动下单、automatic
+    production candidate、owner auto approval、真实仓位自动修改、official target weight mutation
+    和 production config auto calibration
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`replay-inventory build/report` 可扫描 historical advisory artifacts 并区分 PIT_SAFE/PIT_WARNING/PIT_UNSAFE，`validate-replay-inventory`
+      PASS 且 PIT_UNSAFE 默认不进入 replay；`historical-replay run/report` 可生成 no_trade、consensus_target、limited_adjustment、owner_decision、paper_action
+      variants，所有 broker/action/production flags 为 false/none，`validate-historical-replay`
+      PASS；`backfill-outcome run/report` 正确区分 AVAILABLE/PENDING/INSUFFICIENT_DATA，价格只用于
+      outcome 不用于 decision input，`validate-backfill-outcome` PASS；`historical-paper-sim
+      run/report` 可重建 state/ledger 且 broker_action_taken=false，`validate-historical-paper-sim`
+      PASS；`replay-performance-review run/report` 输出 advisory rule effectiveness、calibration
+      recommendations 和 Reader Brief section，不自动修改 config 或 promotion；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 root validation 和 dynamic-v3
+      family artifact validation 完成'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1462
+    row_sha256: 6d61b01ed20c210b2d1245bfab16d0d3e21dcd321a694504b74ccc22f44664bf
+    cell_count: 8
+    all_cells:
+    - TRADING-141_to_145
+    - ETF portfolio research/Historical Advisory Replay and Backfilled Outcome Evaluation
+    - P0
+    - VALIDATING
+    - 项目 owner 人工复核
+    - 详细拆解见 `docs/requirements/TRADING-141_to_145_Historical_Advisory_Replay_and_Backfilled_Outcome_Evaluation.md`；基于
+      TRADING-136_to_140 的 forward advisory outcome/paper tracking，新增 historical replay
+      inventory、PIT safety audit、historical replay variants、backfilled outcome、historical
+      paper simulation 和 replay performance review；本阶段仍禁止 broker API、自动下单、automatic
+      production candidate、owner auto approval、真实仓位自动修改、official target weight mutation
+      和 production config auto calibration
+    - '`replay-inventory build/report` 可扫描 historical advisory artifacts 并区分 PIT_SAFE/PIT_WARNING/PIT_UNSAFE，`validate-replay-inventory`
+      PASS 且 PIT_UNSAFE 默认不进入 replay；`historical-replay run/report` 可生成 no_trade、consensus_target、limited_adjustment、owner_decision、paper_action
+      variants，所有 broker/action/production flags 为 false/none，`validate-historical-replay`
+      PASS；`backfill-outcome run/report` 正确区分 AVAILABLE/PENDING/INSUFFICIENT_DATA，价格只用于
+      outcome 不用于 decision input，`validate-backfill-outcome` PASS；`historical-paper-sim
+      run/report` 可重建 state/ledger 且 broker_action_taken=false，`validate-historical-paper-sim`
+      PASS；`replay-performance-review run/report` 输出 advisory rule effectiveness、calibration
+      recommendations 和 Reader Brief section，不自动修改 config 或 promotion；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 root validation 和 dynamic-v3
+      family artifact validation 完成'
+    - '2026-06-09: 新增并进入 IN_PROGRESS，原因：TRADING-136_to_140 已建立 paper portfolio、advisory
+      outcome、owner attribution、shadow aging 和 weekly advisory review，但 forward outcome
+      需要等待未来窗口到期；本阶段用历史已存在 artifacts 做 PIT-safe replay 和 backfilled outcome，加速 advisory
+      规则评估，同时继续保持 no broker / no production / no auto approval 安全边界。2026-06-09: 转入
+      VALIDATING；真实链路输出 replay inventory `4cd60c43a04b2288`、historical replay `0f407af36295acf9`、backfilled
+      outcome `b9bc15e81c38dade`（当前 `PENDING`，data quality `PASS_WITH_WARNINGS`）、historical
+      paper simulation `daf5c9deef4601a9`、replay performance review `9d0ee2c74043c904`（`PENDING`
+      / `continue_forward_tracking`）；Reader Brief `2026-06-05` 展示 replay-only `PARTIAL/PENDING`
+      摘要且 production/promotion/enrollment flags 均为 false；验证通过五个新增 artifact validate、dynamic-v3
+      root validation、dynamic-v3 family artifact validation、documentation contract、report
+      index、Reader Brief quality、focused pytest、ruff 和 compileall。2026-06-09: TRADING-146
+      hardening 后重建 latest 链路；hard PIT limitations 将原 2 个 warning 事件改为 `PIT_UNSAFE`，latest
+      historical replay 变为 0 events / 2 skipped，backfill/paper sim/performance review
+      均保持 `INSUFFICIENT_DATA` / `continue_forward_tracking`，不伪造 outcome 或 calibration
+      结论。2026-06-09: full pytest 复验暴露 backfill outcome 的 `INSUFFICIENT_DATA` 测试夹具已被
+      TRADING-146 hard PIT 规则先排除，本轮改为 replay 后缺少部分 outcome window 价格，并补齐缺失/NaN price
+      fail-closed；验证通过 `tests/test_backfill_outcome.py`、scoped Black/Ruff 和全量 pytest
+      2270 passed。'
+    raw_line: '|TRADING-141_to_145|ETF portfolio research/Historical Advisory Replay
+      and Backfilled Outcome Evaluation|P0|VALIDATING|项目 owner 人工复核|详细拆解见 `docs/requirements/TRADING-141_to_145_Historical_Advisory_Replay_and_Backfilled_Outcome_Evaluation.md`；基于
+      TRADING-136_to_140 的 forward advisory outcome/paper tracking，新增 historical replay
+      inventory、PIT safety audit、historical replay variants、backfilled outcome、historical
+      paper simulation 和 replay performance review；本阶段仍禁止 broker API、自动下单、automatic
+      production candidate、owner auto approval、真实仓位自动修改、official target weight mutation
+      和 production config auto calibration|`replay-inventory build/report` 可扫描 historical
+      advisory artifacts 并区分 PIT_SAFE/PIT_WARNING/PIT_UNSAFE，`validate-replay-inventory`
+      PASS 且 PIT_UNSAFE 默认不进入 replay；`historical-replay run/report` 可生成 no_trade、consensus_target、limited_adjustment、owner_decision、paper_action
+      variants，所有 broker/action/production flags 为 false/none，`validate-historical-replay`
+      PASS；`backfill-outcome run/report` 正确区分 AVAILABLE/PENDING/INSUFFICIENT_DATA，价格只用于
+      outcome 不用于 decision input，`validate-backfill-outcome` PASS；`historical-paper-sim
+      run/report` 可重建 state/ledger 且 broker_action_taken=false，`validate-historical-paper-sim`
+      PASS；`replay-performance-review run/report` 输出 advisory rule effectiveness、calibration
+      recommendations 和 Reader Brief section，不自动修改 config 或 promotion；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 root validation 和 dynamic-v3
+      family artifact validation 完成|2026-06-09: 新增并进入 IN_PROGRESS，原因：TRADING-136_to_140
+      已建立 paper portfolio、advisory outcome、owner attribution、shadow aging 和 weekly
+      advisory review，但 forward outcome 需要等待未来窗口到期；本阶段用历史已存在 artifacts 做 PIT-safe
+      replay 和 backfilled outcome，加速 advisory 规则评估，同时继续保持 no broker / no production
+      / no auto approval 安全边界。2026-06-09: 转入 VALIDATING；真实链路输出 replay inventory `4cd60c43a04b2288`、historical
+      replay `0f407af36295acf9`、backfilled outcome `b9bc15e81c38dade`（当前 `PENDING`，data
+      quality `PASS_WITH_WARNINGS`）、historical paper simulation `daf5c9deef4601a9`、replay
+      performance review `9d0ee2c74043c904`（`PENDING` / `continue_forward_tracking`）；Reader
+      Brief `2026-06-05` 展示 replay-only `PARTIAL/PENDING` 摘要且 production/promotion/enrollment
+      flags 均为 false；验证通过五个新增 artifact validate、dynamic-v3 root validation、dynamic-v3
+      family artifact validation、documentation contract、report index、Reader Brief
+      quality、focused pytest、ruff 和 compileall。2026-06-09: TRADING-146 hardening 后重建
+      latest 链路；hard PIT limitations 将原 2 个 warning 事件改为 `PIT_UNSAFE`，latest historical
+      replay 变为 0 events / 2 skipped，backfill/paper sim/performance review 均保持 `INSUFFICIENT_DATA`
+      / `continue_forward_tracking`，不伪造 outcome 或 calibration 结论。2026-06-09: full
+      pytest 复验暴露 backfill outcome 的 `INSUFFICIENT_DATA` 测试夹具已被 TRADING-146 hard PIT
+      规则先排除，本轮改为 replay 后缺少部分 outcome window 价格，并补齐缺失/NaN price fail-closed；验证通过 `tests/test_backfill_outcome.py`、scoped
+      Black/Ruff 和全量 pytest 2270 passed。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6d61b01ed20c210b2d1245bf
+  task_id: TRADING-141_to_145
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 项目 owner 人工复核
+    notes: '2026-06-09: 新增并进入 IN_PROGRESS，原因：TRADING-136_to_140 已建立 paper portfolio、advisory
+      outcome、owner attribution、shadow aging 和 weekly advisory review，但 forward outcome
+      需要等待未来窗口到期；本阶段用历史已存在 artifacts 做 PIT-safe replay 和 backfilled outcome，加速 advisory
+      规则评估，同时继续保持 no broker / no production / no auto approval 安全边界。2026-06-09: 转入
+      VALIDATING；真实链路输出 replay inventory `4cd60c43a04b2288`、historical replay `0f407af36295acf9`、backfilled
+      outcome `b9bc15e81c38dade`（当前 `PENDING`，data quality `PASS_WITH_WARNINGS`）、historical
+      paper simulation `daf5c9deef4601a9`、replay performance review `9d0ee2c74043c904`（`PENDING`
+      / `continue_forward_tracking`）；Reader Brief `2026-06-05` 展示 replay-only `PARTIAL/PENDING`
+      摘要且 production/promotion/enrollment flags 均为 false；验证通过五个新增 artifact validate、dynamic-v3
+      root validation、dynamic-v3 family artifact validation、documentation contract、report
+      index、Reader Brief quality、focused pytest、ruff 和 compileall。2026-06-09: TRADING-146
+      hardening 后重建 latest 链路；hard PIT limitations 将原 2 个 warning 事件改为 `PIT_UNSAFE`，latest
+      historical replay 变为 0 events / 2 skipped，backfill/paper sim/performance review
+      均保持 `INSUFFICIENT_DATA` / `continue_forward_tracking`，不伪造 outcome 或 calibration
+      结论。2026-06-09: full pytest 复验暴露 backfill outcome 的 `INSUFFICIENT_DATA` 测试夹具已被
+      TRADING-146 hard PIT 规则先排除，本轮改为 replay 后缺少部分 outcome window 价格，并补齐缺失/NaN price
+      fail-closed；验证通过 `tests/test_backfill_outcome.py`、scoped Black/Ruff 和全量 pytest
+      2270 passed。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6d61b01ed20c210b2d1245bfab16d0d3e21dcd321a694504b74ccc22f44664bf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-141_to_145
+  - ETF portfolio research/Historical Advisory Replay and Backfilled Outcome Evaluation
+  - P0
+  - VALIDATING
+  - 项目 owner 人工复核
+  - 详细拆解见 `docs/requirements/TRADING-141_to_145_Historical_Advisory_Replay_and_Backfilled_Outcome_Evaluation.md`；基于
+    TRADING-136_to_140 的 forward advisory outcome/paper tracking，新增 historical replay
+    inventory、PIT safety audit、historical replay variants、backfilled outcome、historical
+    paper simulation 和 replay performance review；本阶段仍禁止 broker API、自动下单、automatic
+    production candidate、owner auto approval、真实仓位自动修改、official target weight mutation
+    和 production config auto calibration
+  - '`replay-inventory build/report` 可扫描 historical advisory artifacts 并区分 PIT_SAFE/PIT_WARNING/PIT_UNSAFE，`validate-replay-inventory`
+    PASS 且 PIT_UNSAFE 默认不进入 replay；`historical-replay run/report` 可生成 no_trade、consensus_target、limited_adjustment、owner_decision、paper_action
+    variants，所有 broker/action/production flags 为 false/none，`validate-historical-replay`
+    PASS；`backfill-outcome run/report` 正确区分 AVAILABLE/PENDING/INSUFFICIENT_DATA，价格只用于
+    outcome 不用于 decision input，`validate-backfill-outcome` PASS；`historical-paper-sim
+    run/report` 可重建 state/ledger 且 broker_action_taken=false，`validate-historical-paper-sim`
+    PASS；`replay-performance-review run/report` 输出 advisory rule effectiveness、calibration
+    recommendations 和 Reader Brief section，不自动修改 config 或 promotion；README、operations
+    runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+    tests、ruff、compileall、git diff check、dynamic-v3 root validation 和 dynamic-v3 family
+    artifact validation 完成'
+  - '2026-06-09: 新增并进入 IN_PROGRESS，原因：TRADING-136_to_140 已建立 paper portfolio、advisory
+    outcome、owner attribution、shadow aging 和 weekly advisory review，但 forward outcome
+    需要等待未来窗口到期；本阶段用历史已存在 artifacts 做 PIT-safe replay 和 backfilled outcome，加速 advisory
+    规则评估，同时继续保持 no broker / no production / no auto approval 安全边界。2026-06-09: 转入 VALIDATING；真实链路输出
+    replay inventory `4cd60c43a04b2288`、historical replay `0f407af36295acf9`、backfilled
+    outcome `b9bc15e81c38dade`（当前 `PENDING`，data quality `PASS_WITH_WARNINGS`）、historical
+    paper simulation `daf5c9deef4601a9`、replay performance review `9d0ee2c74043c904`（`PENDING`
+    / `continue_forward_tracking`）；Reader Brief `2026-06-05` 展示 replay-only `PARTIAL/PENDING`
+    摘要且 production/promotion/enrollment flags 均为 false；验证通过五个新增 artifact validate、dynamic-v3
+    root validation、dynamic-v3 family artifact validation、documentation contract、report
+    index、Reader Brief quality、focused pytest、ruff 和 compileall。2026-06-09: TRADING-146
+    hardening 后重建 latest 链路；hard PIT limitations 将原 2 个 warning 事件改为 `PIT_UNSAFE`，latest
+    historical replay 变为 0 events / 2 skipped，backfill/paper sim/performance review
+    均保持 `INSUFFICIENT_DATA` / `continue_forward_tracking`，不伪造 outcome 或 calibration
+    结论。2026-06-09: full pytest 复验暴露 backfill outcome 的 `INSUFFICIENT_DATA` 测试夹具已被
+    TRADING-146 hard PIT 规则先排除，本轮改为 replay 后缺少部分 outcome window 价格，并补齐缺失/NaN price
+    fail-closed；验证通过 `tests/test_backfill_outcome.py`、scoped Black/Ruff 和全量 pytest
+    2270 passed。'
+  docs_links:
+  - docs/requirements/TRADING-141_to_145_Historical_Advisory_Replay_and_Backfilled_Outcome_Evaluation.md
+  terminal: false
+  raw_row_sha256: 6d61b01ed20c210b2d1245bfab16d0d3e21dcd321a694504b74ccc22f44664bf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 872d34f5f7ad5a42e106cf82149fbf289e42688b78b454577fb0d51505d800d4

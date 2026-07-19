@@ -1,0 +1,94 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING
+  title: null
+  domain: Strategy research / approved-only replay orchestration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现；依赖 M1A/M1B/M2A
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 只读取 M1 validation 通过且 decision=APPROVE
+    的 candidate；同 timeline/PIT snapshot/baseline/benchmark/cost/missing-data policy
+    运行 baseline 与 overlay，持久化并 reload；REDEFINE/WITHDRAW/PENDING 不得调用 executor。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: placeholder count=0；baseline/candidate runner 均 invoked；`pit_candidates_tested`
+      等于真实 invocation；输出 required M2 artifacts 与 provenance；数据质量 gate 先通过；首轮允许 approved_count=2，不要求凑满
+      3。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1190
+    row_sha256: af256a1ca534d6f40ed506b73f0f1f225de25b4de87809a83ed3b472f8983052
+    cell_count: 8
+    all_cells:
+    - TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING
+    - Strategy research / approved-only replay orchestration
+    - P0
+    - PROPOSED
+    - 系统实现；依赖 M1A/M1B/M2A
+    - 只读取 M1 validation 通过且 decision=APPROVE 的 candidate；同 timeline/PIT snapshot/baseline/benchmark/cost/missing-data
+      policy 运行 baseline 与 overlay，持久化并 reload；REDEFINE/WITHDRAW/PENDING 不得调用 executor。
+    - placeholder count=0；baseline/candidate runner 均 invoked；`pit_candidates_tested`
+      等于真实 invocation；输出 required M2 artifacts 与 provenance；数据质量 gate 先通过；首轮允许 approved_count=2，不要求凑满
+      3。
+    - '2026-07-10: 等待 M1 mappings/policy 完整和 M2A callable executor。'
+    raw_line: '|TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING|Strategy research
+      / approved-only replay orchestration|P0|PROPOSED|系统实现；依赖 M1A/M1B/M2A|只读取 M1
+      validation 通过且 decision=APPROVE 的 candidate；同 timeline/PIT snapshot/baseline/benchmark/cost/missing-data
+      policy 运行 baseline 与 overlay，持久化并 reload；REDEFINE/WITHDRAW/PENDING 不得调用 executor。|placeholder
+      count=0；baseline/candidate runner 均 invoked；`pit_candidates_tested` 等于真实 invocation；输出
+      required M2 artifacts 与 provenance；数据质量 gate 先通过；首轮允许 approved_count=2，不要求凑满
+      3。|2026-07-10: 等待 M1 mappings/policy 完整和 M2A callable executor。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-af256a1ca534d6f40ed506b7
+  task_id: TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P0
+    next_owner: 系统实现；依赖 M1A/M1B/M2A
+    notes: '2026-07-10: 等待 M1 mappings/policy 完整和 M2A callable executor。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:af256a1ca534d6f40ed506b73f0f1f225de25b4de87809a83ed3b472f8983052
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING
+  - Strategy research / approved-only replay orchestration
+  - P0
+  - PROPOSED
+  - 系统实现；依赖 M1A/M1B/M2A
+  - 只读取 M1 validation 通过且 decision=APPROVE 的 candidate；同 timeline/PIT snapshot/baseline/benchmark/cost/missing-data
+    policy 运行 baseline 与 overlay，持久化并 reload；REDEFINE/WITHDRAW/PENDING 不得调用 executor。
+  - placeholder count=0；baseline/candidate runner 均 invoked；`pit_candidates_tested`
+    等于真实 invocation；输出 required M2 artifacts 与 provenance；数据质量 gate 先通过；首轮允许 approved_count=2，不要求凑满
+    3。
+  - '2026-07-10: 等待 M1 mappings/policy 完整和 M2A callable executor。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: af256a1ca534d6f40ed506b73f0f1f225de25b4de87809a83ed3b472f8983052
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b6163fee8856c074d98687a09d7dbcf1ab729035c79894a91a3bcf10d2ac51a3

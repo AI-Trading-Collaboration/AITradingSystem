@@ -1,0 +1,159 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2339_HIGH_INTENSITY_RISK_CAP_PARTIAL_OUTCOME_READINESS_REVIEW
+  title: null
+  domain: Research trends / high-intensity risk-cap partial outcome readiness review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2340 forward outcome review with partial coverage
+    caveat
+  requirement_refs:
+  - docs/requirements/TRADING-2339_High_Intensity_Risk_Cap_Partial_Outcome_Readiness_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2339_High_Intensity_Risk_Cap_Partial_Outcome_Readiness_Review.md`；承接
+    TRADING-2337 actual-path outcome binder。当前 60 clusters × 4 horizons = 240 cluster
+    outcome slots，2337 已绑定 231 个，9 个为 not-due horizons；本任务只读取 prior validated 2337
+    artifacts 和 2336/2335/2334 lineage/context，不重新读取 market data 或重新绑定 outcome。TRADING-2338
+    已占用 B2 data-quality as-of 修复，因此本路线使用 TRADING-2339/2340。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends high-intensity-risk-cap-partial-outcome-readiness-review`；生成
+      partial outcome coverage matrix、not-due horizon matrix、not-due cluster impact
+      report、asset / horizon distribution、horizon readiness matrix、cluster readiness
+      matrix、sufficiency report、wait-vs-review decision matrix、partial review input
+      contract、interpretation boundary、2340 readiness checklist、2340 task route、安全边界和
+      research docs；真实 run status=`READY_FOR_2340_FORWARD_OUTCOME_REVIEW_WITH_PARTIAL_COVERAGE_CAVEAT`，source_validate_data_as_of=`2026-06-29`，source_validate_data_status=`PASS_WITH_WARNINGS`，source_validate_data_error_count=`0`，expected_outcome_count=`240`，bound_outcome_count=`231`，not_due_outcome_count=`9`，blocked_outcome_count=`0`，coverage_ratio=`0.9625`，critical_clusters_with_not_due=`0`，not_due_concentration_label=`NOT_DUE_RECENT_20D_CONCENTRATION`，decision=`PROCEED_TO_FORWARD_OUTCOME_REVIEW_WITH_CAVEAT`，next
+      task=`TRADING-2340_High_Intensity_Risk_Cap_Forward_Outcome_Review_With_Partial_Coverage_Caveat`；所有
+      outputs 固定 `outcome_binding_executed=false`、`original_event_log_mutated=false`、promotion/paper-shadow/production
+      false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 18 passed、真实
+      CLI run、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+      193 passed、full parallel pytest 4196 passed / 643 warnings 和 `git diff --check`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 157
+    row_sha256: 451bc3a2e78734e6419345db3e1a5c1b75d607b82ce918f8ed0950c9e9ada8d9
+    cell_count: 8
+    all_cells:
+    - TRADING-2339_HIGH_INTENSITY_RISK_CAP_PARTIAL_OUTCOME_READINESS_REVIEW
+    - Research trends / high-intensity risk-cap partial outcome readiness review
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2340 forward outcome review with partial coverage caveat
+    - 详见 `docs/requirements/TRADING-2339_High_Intensity_Risk_Cap_Partial_Outcome_Readiness_Review.md`；承接
+      TRADING-2337 actual-path outcome binder。当前 60 clusters × 4 horizons = 240 cluster
+      outcome slots，2337 已绑定 231 个，9 个为 not-due horizons；本任务只读取 prior validated 2337
+      artifacts 和 2336/2335/2334 lineage/context，不重新读取 market data 或重新绑定 outcome。TRADING-2338
+      已占用 B2 data-quality as-of 修复，因此本路线使用 TRADING-2339/2340。
+    - 新增 `aits research trends high-intensity-risk-cap-partial-outcome-readiness-review`；生成
+      partial outcome coverage matrix、not-due horizon matrix、not-due cluster impact
+      report、asset / horizon distribution、horizon readiness matrix、cluster readiness
+      matrix、sufficiency report、wait-vs-review decision matrix、partial review input
+      contract、interpretation boundary、2340 readiness checklist、2340 task route、安全边界和
+      research docs；真实 run status=`READY_FOR_2340_FORWARD_OUTCOME_REVIEW_WITH_PARTIAL_COVERAGE_CAVEAT`，source_validate_data_as_of=`2026-06-29`，source_validate_data_status=`PASS_WITH_WARNINGS`，source_validate_data_error_count=`0`，expected_outcome_count=`240`，bound_outcome_count=`231`，not_due_outcome_count=`9`，blocked_outcome_count=`0`，coverage_ratio=`0.9625`，critical_clusters_with_not_due=`0`，not_due_concentration_label=`NOT_DUE_RECENT_20D_CONCENTRATION`，decision=`PROCEED_TO_FORWARD_OUTCOME_REVIEW_WITH_CAVEAT`，next
+      task=`TRADING-2340_High_Intensity_Risk_Cap_Forward_Outcome_Review_With_Partial_Coverage_Caveat`；所有
+      outputs 固定 `outcome_binding_executed=false`、`original_event_log_mutated=false`、promotion/paper-shadow/production
+      false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 18 passed、真实
+      CLI run、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+      193 passed、full parallel pytest 4196 passed / 643 warnings 和 `git diff --check`。
+    - '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是判断 231/240 的 partial outcome
+      coverage 是否足够进入 2340，而不是证明 signal 有效。2026-07-04: 实现完成并进入 VALIDATING；未重跑 `aits
+      validate-data`，因为本任务只读取 prior validated TRADING-2337 outcome artifacts，不直接读取
+      cached market data。2026-07-04: 完整验证通过并归档 DONE；后续进入 TRADING-2340 forward outcome
+      review with partial coverage caveat。'
+    raw_line: '|TRADING-2339_HIGH_INTENSITY_RISK_CAP_PARTIAL_OUTCOME_READINESS_REVIEW|Research
+      trends / high-intensity risk-cap partial outcome readiness review|P0|DONE|项目
+      owner 后续复核 TRADING-2340 forward outcome review with partial coverage caveat|详见
+      `docs/requirements/TRADING-2339_High_Intensity_Risk_Cap_Partial_Outcome_Readiness_Review.md`；承接
+      TRADING-2337 actual-path outcome binder。当前 60 clusters × 4 horizons = 240 cluster
+      outcome slots，2337 已绑定 231 个，9 个为 not-due horizons；本任务只读取 prior validated 2337
+      artifacts 和 2336/2335/2334 lineage/context，不重新读取 market data 或重新绑定 outcome。TRADING-2338
+      已占用 B2 data-quality as-of 修复，因此本路线使用 TRADING-2339/2340。|新增 `aits research trends
+      high-intensity-risk-cap-partial-outcome-readiness-review`；生成 partial outcome
+      coverage matrix、not-due horizon matrix、not-due cluster impact report、asset /
+      horizon distribution、horizon readiness matrix、cluster readiness matrix、sufficiency
+      report、wait-vs-review decision matrix、partial review input contract、interpretation
+      boundary、2340 readiness checklist、2340 task route、安全边界和 research docs；真实 run
+      status=`READY_FOR_2340_FORWARD_OUTCOME_REVIEW_WITH_PARTIAL_COVERAGE_CAVEAT`，source_validate_data_as_of=`2026-06-29`，source_validate_data_status=`PASS_WITH_WARNINGS`，source_validate_data_error_count=`0`，expected_outcome_count=`240`，bound_outcome_count=`231`，not_due_outcome_count=`9`，blocked_outcome_count=`0`，coverage_ratio=`0.9625`，critical_clusters_with_not_due=`0`，not_due_concentration_label=`NOT_DUE_RECENT_20D_CONCENTRATION`，decision=`PROCEED_TO_FORWARD_OUTCOME_REVIEW_WITH_CAVEAT`，next
+      task=`TRADING-2340_High_Intensity_Risk_Cap_Forward_Outcome_Review_With_Partial_Coverage_Caveat`；所有
+      outputs 固定 `outcome_binding_executed=false`、`original_event_log_mutated=false`、promotion/paper-shadow/production
+      false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 18 passed、真实
+      CLI run、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+      193 passed、full parallel pytest 4196 passed / 643 warnings 和 `git diff --check`。|2026-07-04:
+      根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是判断 231/240 的 partial outcome coverage 是否足够进入
+      2340，而不是证明 signal 有效。2026-07-04: 实现完成并进入 VALIDATING；未重跑 `aits validate-data`，因为本任务只读取
+      prior validated TRADING-2337 outcome artifacts，不直接读取 cached market data。2026-07-04:
+      完整验证通过并归档 DONE；后续进入 TRADING-2340 forward outcome review with partial coverage
+      caveat。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-451bc3a2e78734e6419345db
+  task_id: TRADING-2339_HIGH_INTENSITY_RISK_CAP_PARTIAL_OUTCOME_READINESS_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2340 forward outcome review with partial coverage
+      caveat
+    notes: '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是判断 231/240 的 partial outcome
+      coverage 是否足够进入 2340，而不是证明 signal 有效。2026-07-04: 实现完成并进入 VALIDATING；未重跑 `aits
+      validate-data`，因为本任务只读取 prior validated TRADING-2337 outcome artifacts，不直接读取
+      cached market data。2026-07-04: 完整验证通过并归档 DONE；后续进入 TRADING-2340 forward outcome
+      review with partial coverage caveat。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:451bc3a2e78734e6419345db3e1a5c1b75d607b82ce918f8ed0950c9e9ada8d9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2339_HIGH_INTENSITY_RISK_CAP_PARTIAL_OUTCOME_READINESS_REVIEW
+  - Research trends / high-intensity risk-cap partial outcome readiness review
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2340 forward outcome review with partial coverage caveat
+  - 详见 `docs/requirements/TRADING-2339_High_Intensity_Risk_Cap_Partial_Outcome_Readiness_Review.md`；承接
+    TRADING-2337 actual-path outcome binder。当前 60 clusters × 4 horizons = 240 cluster
+    outcome slots，2337 已绑定 231 个，9 个为 not-due horizons；本任务只读取 prior validated 2337
+    artifacts 和 2336/2335/2334 lineage/context，不重新读取 market data 或重新绑定 outcome。TRADING-2338
+    已占用 B2 data-quality as-of 修复，因此本路线使用 TRADING-2339/2340。
+  - 新增 `aits research trends high-intensity-risk-cap-partial-outcome-readiness-review`；生成
+    partial outcome coverage matrix、not-due horizon matrix、not-due cluster impact
+    report、asset / horizon distribution、horizon readiness matrix、cluster readiness
+    matrix、sufficiency report、wait-vs-review decision matrix、partial review input
+    contract、interpretation boundary、2340 readiness checklist、2340 task route、安全边界和
+    research docs；真实 run status=`READY_FOR_2340_FORWARD_OUTCOME_REVIEW_WITH_PARTIAL_COVERAGE_CAVEAT`，source_validate_data_as_of=`2026-06-29`，source_validate_data_status=`PASS_WITH_WARNINGS`，source_validate_data_error_count=`0`，expected_outcome_count=`240`，bound_outcome_count=`231`，not_due_outcome_count=`9`，blocked_outcome_count=`0`，coverage_ratio=`0.9625`，critical_clusters_with_not_due=`0`，not_due_concentration_label=`NOT_DUE_RECENT_20D_CONCENTRATION`，decision=`PROCEED_TO_FORWARD_OUTCOME_REVIEW_WITH_CAVEAT`，next
+    task=`TRADING-2340_High_Intensity_Risk_Cap_Forward_Outcome_Review_With_Partial_Coverage_Caveat`；所有
+    outputs 固定 `outcome_binding_executed=false`、`original_event_log_mutated=false`、promotion/paper-shadow/production
+    false、broker_action=none。验证通过 Ruff、compileall、focused parallel pytest 18 passed、真实
+    CLI run、docs freshness、documentation contract、task-register consistency run/validate、contract-validation
+    193 passed、full parallel pytest 4196 passed / 643 warnings 和 `git diff --check`。
+  - '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；核心验收点是判断 231/240 的 partial outcome coverage
+    是否足够进入 2340，而不是证明 signal 有效。2026-07-04: 实现完成并进入 VALIDATING；未重跑 `aits validate-data`，因为本任务只读取
+    prior validated TRADING-2337 outcome artifacts，不直接读取 cached market data。2026-07-04:
+    完整验证通过并归档 DONE；后续进入 TRADING-2340 forward outcome review with partial coverage
+    caveat。'
+  docs_links:
+  - docs/requirements/TRADING-2339_High_Intensity_Risk_Cap_Partial_Outcome_Readiness_Review.md
+  terminal: true
+  raw_row_sha256: 451bc3a2e78734e6419345db3e1a5c1b75d607b82ce918f8ed0950c9e9ada8d9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: fe9d1d94cfbad2a853de39767ed9a8e84ec19bc0282f7cc8cd69c87b400810cd

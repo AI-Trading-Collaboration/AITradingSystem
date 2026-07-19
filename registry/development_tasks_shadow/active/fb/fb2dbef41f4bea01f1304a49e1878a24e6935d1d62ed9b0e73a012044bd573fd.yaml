@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-014A
+  title: null
+  domain: 交易执行/Successful Fill Local Validation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；下一步等待美股
+    `REGULAR` session，人工显式运行 controlled fill；只有 `market_session_status=REGULAR` 且
+    `fill_seen=true` 才进入本任务
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 固化真实 IBKR Paper controlled fill 成功样本的 sanitized review / fixture，记录 `production_effect=none`、paper-only、manual-only、`market_session_status=REGULAR`、`fill_seen=true`、fill
+      quantity / price、commission / execution event 是否可见、同 `OrderIntent` 的本地 `PaperBroker`
+      诊断对比；不得提交完整 `DUP` account、真实 broker order id、perm id、execution id、password、token
+      或 API key；本任务不修改 `PaperBroker` fill 行为
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1488
+    row_sha256: db107cc25c06d2cbc9910c989a14180c7815d0a238013da3b4ad7d7438a27e7c
+    cell_count: 8
+    all_cells:
+    - TRADING-014A
+    - 交易执行/Successful Fill Local Validation
+    - P0
+    - BLOCKED_EXTERNAL
+    - 系统验证 + 项目 owner
+    - 详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；下一步等待美股
+      `REGULAR` session，人工显式运行 controlled fill；只有 `market_session_status=REGULAR`
+      且 `fill_seen=true` 才进入本任务
+    - 固化真实 IBKR Paper controlled fill 成功样本的 sanitized review / fixture，记录 `production_effect=none`、paper-only、manual-only、`market_session_status=REGULAR`、`fill_seen=true`、fill
+      quantity / price、commission / execution event 是否可见、同 `OrderIntent` 的本地 `PaperBroker`
+      诊断对比；不得提交完整 `DUP` account、真实 broker order id、perm id、execution id、password、token
+      或 API key；本任务不修改 `PaperBroker` fill 行为
+    - '2026-05-18: 新增并进入 BLOCKED_EXTERNAL，原因：owner 明确 TRADING-014 后最有价值的是获取真实 regular
+      session fill 样本；无 `fill_seen=true` 样本前不得进入真正 fill model 改造。'
+    raw_line: '|TRADING-014A|交易执行/Successful Fill Local Validation|P0|BLOCKED_EXTERNAL|系统验证
+      + 项目 owner|详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；下一步等待美股
+      `REGULAR` session，人工显式运行 controlled fill；只有 `market_session_status=REGULAR`
+      且 `fill_seen=true` 才进入本任务|固化真实 IBKR Paper controlled fill 成功样本的 sanitized review
+      / fixture，记录 `production_effect=none`、paper-only、manual-only、`market_session_status=REGULAR`、`fill_seen=true`、fill
+      quantity / price、commission / execution event 是否可见、同 `OrderIntent` 的本地 `PaperBroker`
+      诊断对比；不得提交完整 `DUP` account、真实 broker order id、perm id、execution id、password、token
+      或 API key；本任务不修改 `PaperBroker` fill 行为|2026-05-18: 新增并进入 BLOCKED_EXTERNAL，原因：owner
+      明确 TRADING-014 后最有价值的是获取真实 regular session fill 样本；无 `fill_seen=true` 样本前不得进入真正
+      fill model 改造。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-db107cc25c06d2cbc9910c98
+  task_id: TRADING-014A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-05-18: 新增并进入 BLOCKED_EXTERNAL，原因：owner 明确 TRADING-014 后最有价值的是获取真实
+      regular session fill 样本；无 `fill_seen=true` 样本前不得进入真正 fill model 改造。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:db107cc25c06d2cbc9910c989a14180c7815d0a238013da3b4ad7d7438a27e7c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-014A
+  - 交易执行/Successful Fill Local Validation
+  - P0
+  - BLOCKED_EXTERNAL
+  - 系统验证 + 项目 owner
+  - 详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；下一步等待美股
+    `REGULAR` session，人工显式运行 controlled fill；只有 `market_session_status=REGULAR` 且
+    `fill_seen=true` 才进入本任务
+  - 固化真实 IBKR Paper controlled fill 成功样本的 sanitized review / fixture，记录 `production_effect=none`、paper-only、manual-only、`market_session_status=REGULAR`、`fill_seen=true`、fill
+    quantity / price、commission / execution event 是否可见、同 `OrderIntent` 的本地 `PaperBroker`
+    诊断对比；不得提交完整 `DUP` account、真实 broker order id、perm id、execution id、password、token
+    或 API key；本任务不修改 `PaperBroker` fill 行为
+  - '2026-05-18: 新增并进入 BLOCKED_EXTERNAL，原因：owner 明确 TRADING-014 后最有价值的是获取真实 regular
+    session fill 样本；无 `fill_seen=true` 样本前不得进入真正 fill model 改造。'
+  docs_links:
+  - docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md
+  terminal: false
+  raw_row_sha256: db107cc25c06d2cbc9910c989a14180c7815d0a238013da3b4ad7d7438a27e7c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 78ed118382174f73656e1216b6b9cd835906108b8e57d28bf72017dba5330690

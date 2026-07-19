@@ -1,0 +1,139 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1547_to_1586_POLICY_AWARE_FIRST_LAYER_TREND_CALIBRATION
+  title: null
+  domain: Research trends / policy-aware first-layer trend calibration with frozen
+    dynamic probes
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1547_to_1586_Policy_Aware_First_Layer_Trend_Calibration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1547_to_1586_Policy_Aware_First_Layer_Trend_Calibration.md`；承接
+    defensive overlay no-survivor 结论，转向检验第一层 trend state 是否有 edge；second-layer probes
+    必须冻结且 trend-sensitive，不允许 static baseline 生成 trend calibration labels；第一层只能输出
+    trend_state/confidence/validity/decay，不得直接输出权重
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends full-pack`、scope/config、dynamic second-layer probe
+      registry、probe validation、action-value matrix、action-value score policy、single-probe/consensus
+      labels、PIT feature matrix and audit、scorecard/walk-forward low-complexity first-layer
+      model、probe actual-path backtest、overlay/TQQQ/consensus reviews、owner pack、forward
+      watch plan、final matrix/closeout、report registry、artifact catalog、system flow
+      和 guardrail tests；真实 full-pack 输出 action_value_matrix_size=66640、walk_forward_balanced_accuracy=0.151597、final_status=`FIRST_LAYER_CALIBRATION_NO_MATERIAL_IMPROVEMENT_PROMOTION_BLOCKED`；所有
+      data-dependent outputs 走同源 cached-data quality gate 并披露 status；所有 outputs 固定
+      research-only、actual-path-required、target-path diagnostic-only、promotion `BLOCKED`、paper-shadow/production/broker
+      false/none
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1267
+    row_sha256: e39719339c582c8fad6397e078d8d32e83fbb55eda38e6cb37794d7e0e5e7394
+    cell_count: 8
+    all_cells:
+    - TRADING-1547_to_1586_POLICY_AWARE_FIRST_LAYER_TREND_CALIBRATION
+    - Research trends / policy-aware first-layer trend calibration with frozen dynamic
+      probes
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1547_to_1586_Policy_Aware_First_Layer_Trend_Calibration.md`；承接
+      defensive overlay no-survivor 结论，转向检验第一层 trend state 是否有 edge；second-layer probes
+      必须冻结且 trend-sensitive，不允许 static baseline 生成 trend calibration labels；第一层只能输出
+      trend_state/confidence/validity/decay，不得直接输出权重
+    - 新增 `aits research trends full-pack`、scope/config、dynamic second-layer probe
+      registry、probe validation、action-value matrix、action-value score policy、single-probe/consensus
+      labels、PIT feature matrix and audit、scorecard/walk-forward low-complexity first-layer
+      model、probe actual-path backtest、overlay/TQQQ/consensus reviews、owner pack、forward
+      watch plan、final matrix/closeout、report registry、artifact catalog、system flow
+      和 guardrail tests；真实 full-pack 输出 action_value_matrix_size=66640、walk_forward_balanced_accuracy=0.151597、final_status=`FIRST_LAYER_CALIBRATION_NO_MATERIAL_IMPROVEMENT_PROMOTION_BLOCKED`；所有
+      data-dependent outputs 走同源 cached-data quality gate 并披露 status；所有 outputs 固定
+      research-only、actual-path-required、target-path diagnostic-only、promotion `BLOCKED`、paper-shadow/production/broker
+      false/none
+    - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 认为用于验证第一层趋势策略的第二层策略必须动态，否则无法反向校准第一层；原附件
+      TRADING-1546 与上一批收尾编号冲突，本批重编号为 1547～1586。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI
+      status=`FIRST_LAYER_POLICY_AWARE_CALIBRATION_READY_PROMOTION_BLOCKED`，final
+      status=`FIRST_LAYER_CALIBRATION_NO_MATERIAL_IMPROVEMENT_PROMOTION_BLOCKED`。'
+    raw_line: '|TRADING-1547_to_1586_POLICY_AWARE_FIRST_LAYER_TREND_CALIBRATION|Research
+      trends / policy-aware first-layer trend calibration with frozen dynamic probes|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1547_to_1586_Policy_Aware_First_Layer_Trend_Calibration.md`；承接
+      defensive overlay no-survivor 结论，转向检验第一层 trend state 是否有 edge；second-layer probes
+      必须冻结且 trend-sensitive，不允许 static baseline 生成 trend calibration labels；第一层只能输出
+      trend_state/confidence/validity/decay，不得直接输出权重|新增 `aits research trends full-pack`、scope/config、dynamic
+      second-layer probe registry、probe validation、action-value matrix、action-value
+      score policy、single-probe/consensus labels、PIT feature matrix and audit、scorecard/walk-forward
+      low-complexity first-layer model、probe actual-path backtest、overlay/TQQQ/consensus
+      reviews、owner pack、forward watch plan、final matrix/closeout、report registry、artifact
+      catalog、system flow 和 guardrail tests；真实 full-pack 输出 action_value_matrix_size=66640、walk_forward_balanced_accuracy=0.151597、final_status=`FIRST_LAYER_CALIBRATION_NO_MATERIAL_IMPROVEMENT_PROMOTION_BLOCKED`；所有
+      data-dependent outputs 走同源 cached-data quality gate 并披露 status；所有 outputs 固定
+      research-only、actual-path-required、target-path diagnostic-only、promotion `BLOCKED`、paper-shadow/production/broker
+      false/none|2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 认为用于验证第一层趋势策略的第二层策略必须动态，否则无法反向校准第一层；原附件
+      TRADING-1546 与上一批收尾编号冲突，本批重编号为 1547～1586。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI
+      status=`FIRST_LAYER_POLICY_AWARE_CALIBRATION_READY_PROMOTION_BLOCKED`，final
+      status=`FIRST_LAYER_CALIBRATION_NO_MATERIAL_IMPROVEMENT_PROMOTION_BLOCKED`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e39719339c582c8fad6397e0
+  task_id: TRADING-1547_to_1586_POLICY_AWARE_FIRST_LAYER_TREND_CALIBRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 认为用于验证第一层趋势策略的第二层策略必须动态，否则无法反向校准第一层；原附件
+      TRADING-1546 与上一批收尾编号冲突，本批重编号为 1547～1586。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI
+      status=`FIRST_LAYER_POLICY_AWARE_CALIBRATION_READY_PROMOTION_BLOCKED`，final
+      status=`FIRST_LAYER_CALIBRATION_NO_MATERIAL_IMPROVEMENT_PROMOTION_BLOCKED`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e39719339c582c8fad6397e078d8d32e83fbb55eda38e6cb37794d7e0e5e7394
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1547_to_1586_POLICY_AWARE_FIRST_LAYER_TREND_CALIBRATION
+  - Research trends / policy-aware first-layer trend calibration with frozen dynamic
+    probes
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1547_to_1586_Policy_Aware_First_Layer_Trend_Calibration.md`；承接
+    defensive overlay no-survivor 结论，转向检验第一层 trend state 是否有 edge；second-layer probes
+    必须冻结且 trend-sensitive，不允许 static baseline 生成 trend calibration labels；第一层只能输出
+    trend_state/confidence/validity/decay，不得直接输出权重
+  - 新增 `aits research trends full-pack`、scope/config、dynamic second-layer probe registry、probe
+    validation、action-value matrix、action-value score policy、single-probe/consensus
+    labels、PIT feature matrix and audit、scorecard/walk-forward low-complexity first-layer
+    model、probe actual-path backtest、overlay/TQQQ/consensus reviews、owner pack、forward
+    watch plan、final matrix/closeout、report registry、artifact catalog、system flow
+    和 guardrail tests；真实 full-pack 输出 action_value_matrix_size=66640、walk_forward_balanced_accuracy=0.151597、final_status=`FIRST_LAYER_CALIBRATION_NO_MATERIAL_IMPROVEMENT_PROMOTION_BLOCKED`；所有
+    data-dependent outputs 走同源 cached-data quality gate 并披露 status；所有 outputs 固定 research-only、actual-path-required、target-path
+    diagnostic-only、promotion `BLOCKED`、paper-shadow/production/broker false/none
+  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 认为用于验证第一层趋势策略的第二层策略必须动态，否则无法反向校准第一层；原附件
+    TRADING-1546 与上一批收尾编号冲突，本批重编号为 1547～1586。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI
+    status=`FIRST_LAYER_POLICY_AWARE_CALIBRATION_READY_PROMOTION_BLOCKED`，final status=`FIRST_LAYER_CALIBRATION_NO_MATERIAL_IMPROVEMENT_PROMOTION_BLOCKED`。'
+  docs_links:
+  - docs/requirements/TRADING-1547_to_1586_Policy_Aware_First_Layer_Trend_Calibration.md
+  terminal: false
+  raw_row_sha256: e39719339c582c8fad6397e078d8d32e83fbb55eda38e6cb37794d7e0e5e7394
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 18d562f04c53cb754c2b73be79e8fa0b9b9e1a1229a7103400c6d4d169809cbe

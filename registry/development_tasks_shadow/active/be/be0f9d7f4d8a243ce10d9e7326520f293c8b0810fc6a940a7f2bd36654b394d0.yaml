@@ -1,0 +1,154 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-072
+  title: null
+  domain: ETF AI confirmation forward attribution/AI Confirmation Forward Attribution
+    Review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner + 后续真实 forward samples / policy review
+  requirement_refs:
+  - docs/requirements/TRADING-072_AI_Confirmation_Forward_Attribution_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-072_AI_Confirmation_Forward_Attribution_Review.md`；TRADING-072A-J
+    attribution-only 基础设施已完成并复验通过；当前真实 2026-06-08 dataset `record_count=0`、`available_sample_count=0`，report
+    正确停在 `needs_more_data`，后续需要真实 forward samples 和 owner policy review，不能自动扩大 AI
+    confirmation overlay 或形成交易结论
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf ai-attribution build/report/validate` 可运行；`validate-data --as-of
+      2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；dataset 固定 `evaluation_only=true`、`production_effect=none`、`broker_action=none`；report
+      披露 market regime `ai_after_chatgpt`、requested date range `2022-12-01` 至 `2026-06-08`、forward
+      windows `1D/5D/20D/60D`、forward return usage attribution/reporting only、status
+      `needs_more_data`；validation gate PASS；Reader Brief 显示 `availability=AVAILABLE`、`status=needs_more_data`、`redundancy_status=unknown_insufficient_data`
+      和继续 observe-only 积累样本文案；不得写 production weights、不得自动 promotion、不得触发 broker action；专项
+      pytest 9 passed'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1160
+    row_sha256: 0e7c2fa018c79f2c626e5f05b7652d4ddfea8e873d703ccaf39929a227b78de4
+    cell_count: 8
+    all_cells:
+    - TRADING-072
+    - ETF AI confirmation forward attribution/AI Confirmation Forward Attribution
+      Review
+    - P0
+    - BASELINE_DONE
+    - 项目 owner + 后续真实 forward samples / policy review
+    - 详细拆解见 `docs/requirements/TRADING-072_AI_Confirmation_Forward_Attribution_Review.md`；TRADING-072A-J
+      attribution-only 基础设施已完成并复验通过；当前真实 2026-06-08 dataset `record_count=0`、`available_sample_count=0`，report
+      正确停在 `needs_more_data`，后续需要真实 forward samples 和 owner policy review，不能自动扩大 AI
+      confirmation overlay 或形成交易结论
+    - '`aits etf ai-attribution build/report/validate` 可运行；`validate-data --as-of
+      2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；dataset 固定 `evaluation_only=true`、`production_effect=none`、`broker_action=none`；report
+      披露 market regime `ai_after_chatgpt`、requested date range `2022-12-01` 至 `2026-06-08`、forward
+      windows `1D/5D/20D/60D`、forward return usage attribution/reporting only、status
+      `needs_more_data`；validation gate PASS；Reader Brief 显示 `availability=AVAILABLE`、`status=needs_more_data`、`redundancy_status=unknown_insufficient_data`
+      和继续 observe-only 积累样本文案；不得写 production weights、不得自动 promotion、不得触发 broker action；专项
+      pytest 9 passed'
+    - '2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-072 计划，要求验证 `AIConfirmationScore`
+      和 component scores 是否对 QQQ/SPY/SMH/SOXX、candidate overlay 和 satellite candidate
+      forward outcomes 具备 attribution / explanatory value；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-02:
+      TRADING-072A-J 完成并转入 VALIDATING，新增 AI attribution dataset、bucket/component/regime/event/redundancy
+      analysis、evidence scorecard、JSON/Markdown report、Reader Brief `AI Attribution
+      Review`、report registry/artifact catalog/system flow/operations runbook/README
+      integration 和 fail-closed validation gate。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：真实
+      2026-06-08 复验确认基础设施和 fail-closed gate 可运行，且在 forward sample 为 0 时正确输出 `needs_more_data`
+      并保持 evaluation-only；后续由 forward samples 和 owner policy review 承接。'
+    raw_line: '|TRADING-072|ETF AI confirmation forward attribution/AI Confirmation
+      Forward Attribution Review|P0|BASELINE_DONE|项目 owner + 后续真实 forward samples
+      / policy review|详细拆解见 `docs/requirements/TRADING-072_AI_Confirmation_Forward_Attribution_Review.md`；TRADING-072A-J
+      attribution-only 基础设施已完成并复验通过；当前真实 2026-06-08 dataset `record_count=0`、`available_sample_count=0`，report
+      正确停在 `needs_more_data`，后续需要真实 forward samples 和 owner policy review，不能自动扩大 AI
+      confirmation overlay 或形成交易结论|`aits etf ai-attribution build/report/validate`
+      可运行；`validate-data --as-of 2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；dataset
+      固定 `evaluation_only=true`、`production_effect=none`、`broker_action=none`；report
+      披露 market regime `ai_after_chatgpt`、requested date range `2022-12-01` 至 `2026-06-08`、forward
+      windows `1D/5D/20D/60D`、forward return usage attribution/reporting only、status
+      `needs_more_data`；validation gate PASS；Reader Brief 显示 `availability=AVAILABLE`、`status=needs_more_data`、`redundancy_status=unknown_insufficient_data`
+      和继续 observe-only 积累样本文案；不得写 production weights、不得自动 promotion、不得触发 broker action；专项
+      pytest 9 passed|2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-072 计划，要求验证
+      `AIConfirmationScore` 和 component scores 是否对 QQQ/SPY/SMH/SOXX、candidate overlay
+      和 satellite candidate forward outcomes 具备 attribution / explanatory value；本阶段保持
+      observe-only/candidate-only/manual-review-only。2026-06-02: TRADING-072A-J 完成并转入
+      VALIDATING，新增 AI attribution dataset、bucket/component/regime/event/redundancy
+      analysis、evidence scorecard、JSON/Markdown report、Reader Brief `AI Attribution
+      Review`、report registry/artifact catalog/system flow/operations runbook/README
+      integration 和 fail-closed validation gate。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：真实
+      2026-06-08 复验确认基础设施和 fail-closed gate 可运行，且在 forward sample 为 0 时正确输出 `needs_more_data`
+      并保持 evaluation-only；后续由 forward samples 和 owner policy review 承接。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0e7c2fa018c79f2c626e5f05
+  task_id: TRADING-072
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner + 后续真实 forward samples / policy review
+    notes: '2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-072 计划，要求验证 `AIConfirmationScore`
+      和 component scores 是否对 QQQ/SPY/SMH/SOXX、candidate overlay 和 satellite candidate
+      forward outcomes 具备 attribution / explanatory value；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-02:
+      TRADING-072A-J 完成并转入 VALIDATING，新增 AI attribution dataset、bucket/component/regime/event/redundancy
+      analysis、evidence scorecard、JSON/Markdown report、Reader Brief `AI Attribution
+      Review`、report registry/artifact catalog/system flow/operations runbook/README
+      integration 和 fail-closed validation gate。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：真实
+      2026-06-08 复验确认基础设施和 fail-closed gate 可运行，且在 forward sample 为 0 时正确输出 `needs_more_data`
+      并保持 evaluation-only；后续由 forward samples 和 owner policy review 承接。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0e7c2fa018c79f2c626e5f05b7652d4ddfea8e873d703ccaf39929a227b78de4
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-072
+  - ETF AI confirmation forward attribution/AI Confirmation Forward Attribution Review
+  - P0
+  - BASELINE_DONE
+  - 项目 owner + 后续真实 forward samples / policy review
+  - 详细拆解见 `docs/requirements/TRADING-072_AI_Confirmation_Forward_Attribution_Review.md`；TRADING-072A-J
+    attribution-only 基础设施已完成并复验通过；当前真实 2026-06-08 dataset `record_count=0`、`available_sample_count=0`，report
+    正确停在 `needs_more_data`，后续需要真实 forward samples 和 owner policy review，不能自动扩大 AI
+    confirmation overlay 或形成交易结论
+  - '`aits etf ai-attribution build/report/validate` 可运行；`validate-data --as-of 2026-06-08`
+    为 `PASS_WITH_WARNINGS`（0 errors）；dataset 固定 `evaluation_only=true`、`production_effect=none`、`broker_action=none`；report
+    披露 market regime `ai_after_chatgpt`、requested date range `2022-12-01` 至 `2026-06-08`、forward
+    windows `1D/5D/20D/60D`、forward return usage attribution/reporting only、status
+    `needs_more_data`；validation gate PASS；Reader Brief 显示 `availability=AVAILABLE`、`status=needs_more_data`、`redundancy_status=unknown_insufficient_data`
+    和继续 observe-only 积累样本文案；不得写 production weights、不得自动 promotion、不得触发 broker action；专项
+    pytest 9 passed'
+  - '2026-06-02: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-072 计划，要求验证 `AIConfirmationScore`
+    和 component scores 是否对 QQQ/SPY/SMH/SOXX、candidate overlay 和 satellite candidate
+    forward outcomes 具备 attribution / explanatory value；本阶段保持 observe-only/candidate-only/manual-review-only。2026-06-02:
+    TRADING-072A-J 完成并转入 VALIDATING，新增 AI attribution dataset、bucket/component/regime/event/redundancy
+    analysis、evidence scorecard、JSON/Markdown report、Reader Brief `AI Attribution
+    Review`、report registry/artifact catalog/system flow/operations runbook/README
+    integration 和 fail-closed validation gate。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：真实
+    2026-06-08 复验确认基础设施和 fail-closed gate 可运行，且在 forward sample 为 0 时正确输出 `needs_more_data`
+    并保持 evaluation-only；后续由 forward samples 和 owner policy review 承接。'
+  docs_links:
+  - docs/requirements/TRADING-072_AI_Confirmation_Forward_Attribution_Review.md
+  terminal: false
+  raw_row_sha256: 0e7c2fa018c79f2c626e5f05b7652d4ddfea8e873d703ccaf39929a227b78de4
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4c83492771de0d91c5a7775075d8f05cfa05916e0c5192989ee3e59bb2c980e0

@@ -1,0 +1,104 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: SCORE-005
+  title: null
+  domain: 仓位模型/软硬闸门与非线性映射
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统设计 + 系统实现
+  requirement_refs:
+  - docs/requirements/scoring_architecture_refactor_2026-05-06.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段 gate taxonomy 审计字段：`PositionGate`
+    输出 `gate_class`、`target_effect`、`execution_effect`，日报 Risk Caps 表展示每个 gate 的来源、触发状态和上限；详细拆解见
+    `docs/requirements/scoring_architecture_refactor_2026-05-06.md#score-005软硬闸门非线性仓位映射与执行平滑`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: P0 硬约束仍 fail closed；soft gate 只能降低目标、速度或确认要求，不得释放硬风险；非线性映射、turnover limit、cooldown
+      和 rebalance band 必须先作为 challenger 经回测、forward shadow 和 rule governance 验证；报告能解释最终仓位变化来自基础分、hard
+      cap、soft cap 还是执行平滑；完整 DONE 仍需 soft gate 与非线性映射候选通过 replay/shadow/governance
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1131
+    row_sha256: a6d7ff25f963f07cd137f2ffaf60d99f17491b40e93d15339ceac64ba683c4a8
+    cell_count: 8
+    all_cells:
+    - SCORE-005
+    - 仓位模型/软硬闸门与非线性映射
+    - P1
+    - BASELINE_DONE
+    - 系统设计 + 系统实现
+    - 已完成第一阶段 gate taxonomy 审计字段：`PositionGate` 输出 `gate_class`、`target_effect`、`execution_effect`，日报
+      Risk Caps 表展示每个 gate 的来源、触发状态和上限；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#score-005软硬闸门非线性仓位映射与执行平滑`
+    - P0 硬约束仍 fail closed；soft gate 只能降低目标、速度或确认要求，不得释放硬风险；非线性映射、turnover limit、cooldown
+      和 rebalance band 必须先作为 challenger 经回测、forward shadow 和 rule governance 验证；报告能解释最终仓位变化来自基础分、hard
+      cap、soft cap 还是执行平滑；完整 DONE 仍需 soft gate 与非线性映射候选通过 replay/shadow/governance
+    - '2026-05-06: 新增任务，原因：现有 `min(cap)` 结构稳健但可能过于保守并造成跳变；需要在不削弱硬闸门的前提下，把软风险和执行纪律从硬上限中拆出来。2026-05-06:
+      从 PROPOSED 改为 BASELINE_DONE，原因：新增 gate taxonomy 字段和报告审计表；当前仍保持最严格上限生产行为，不启用
+      soft gate 或非线性仓位映射。'
+    raw_line: '|SCORE-005|仓位模型/软硬闸门与非线性映射|P1|BASELINE_DONE|系统设计 + 系统实现|已完成第一阶段 gate
+      taxonomy 审计字段：`PositionGate` 输出 `gate_class`、`target_effect`、`execution_effect`，日报
+      Risk Caps 表展示每个 gate 的来源、触发状态和上限；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#score-005软硬闸门非线性仓位映射与执行平滑`|P0
+      硬约束仍 fail closed；soft gate 只能降低目标、速度或确认要求，不得释放硬风险；非线性映射、turnover limit、cooldown
+      和 rebalance band 必须先作为 challenger 经回测、forward shadow 和 rule governance 验证；报告能解释最终仓位变化来自基础分、hard
+      cap、soft cap 还是执行平滑；完整 DONE 仍需 soft gate 与非线性映射候选通过 replay/shadow/governance|2026-05-06:
+      新增任务，原因：现有 `min(cap)` 结构稳健但可能过于保守并造成跳变；需要在不削弱硬闸门的前提下，把软风险和执行纪律从硬上限中拆出来。2026-05-06:
+      从 PROPOSED 改为 BASELINE_DONE，原因：新增 gate taxonomy 字段和报告审计表；当前仍保持最严格上限生产行为，不启用
+      soft gate 或非线性仓位映射。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a6d7ff25f963f07cd137f2ff
+  task_id: SCORE-005
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统设计 + 系统实现
+    notes: '2026-05-06: 新增任务，原因：现有 `min(cap)` 结构稳健但可能过于保守并造成跳变；需要在不削弱硬闸门的前提下，把软风险和执行纪律从硬上限中拆出来。2026-05-06:
+      从 PROPOSED 改为 BASELINE_DONE，原因：新增 gate taxonomy 字段和报告审计表；当前仍保持最严格上限生产行为，不启用
+      soft gate 或非线性仓位映射。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a6d7ff25f963f07cd137f2ffaf60d99f17491b40e93d15339ceac64ba683c4a8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - SCORE-005
+  - 仓位模型/软硬闸门与非线性映射
+  - P1
+  - BASELINE_DONE
+  - 系统设计 + 系统实现
+  - 已完成第一阶段 gate taxonomy 审计字段：`PositionGate` 输出 `gate_class`、`target_effect`、`execution_effect`，日报
+    Risk Caps 表展示每个 gate 的来源、触发状态和上限；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#score-005软硬闸门非线性仓位映射与执行平滑`
+  - P0 硬约束仍 fail closed；soft gate 只能降低目标、速度或确认要求，不得释放硬风险；非线性映射、turnover limit、cooldown
+    和 rebalance band 必须先作为 challenger 经回测、forward shadow 和 rule governance 验证；报告能解释最终仓位变化来自基础分、hard
+    cap、soft cap 还是执行平滑；完整 DONE 仍需 soft gate 与非线性映射候选通过 replay/shadow/governance
+  - '2026-05-06: 新增任务，原因：现有 `min(cap)` 结构稳健但可能过于保守并造成跳变；需要在不削弱硬闸门的前提下，把软风险和执行纪律从硬上限中拆出来。2026-05-06:
+    从 PROPOSED 改为 BASELINE_DONE，原因：新增 gate taxonomy 字段和报告审计表；当前仍保持最严格上限生产行为，不启用 soft
+    gate 或非线性仓位映射。'
+  docs_links:
+  - docs/requirements/scoring_architecture_refactor_2026-05-06.md
+  terminal: false
+  raw_row_sha256: a6d7ff25f963f07cd137f2ffaf60d99f17491b40e93d15339ceac64ba683c4a8
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7b2fce31867a030ed3e934cadf1d14a0b8c36cf032ed064b125fd2046acecc7f

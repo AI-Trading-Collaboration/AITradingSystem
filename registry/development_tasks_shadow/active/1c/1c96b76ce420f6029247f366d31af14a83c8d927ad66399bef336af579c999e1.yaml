@@ -1,0 +1,128 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-1187_to_1200_CODEX_EXECUTION_SEMANTICS_REPAIR_AND_DYNAMIC_REBACKTEST
+  title: null
+  domain: Research strategies / execution semantics repair and dynamic actual-path
+    rebacktest
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-1187_to_1200_Codex_Execution_Semantics_Repair_and_Dynamic_Rebacktest.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1187_to_1200_Codex_Execution_Semantics_Repair_and_Dynamic_Rebacktest.md`；承接
+    TRADING-1165～1186 的 `EXECUTION_SEMANTICS_REQUIRES_REBACKTEST`，本轮必须冻结 legacy dynamic
+    target-path evidence、强制 explicit strategy execution policy binding、提供 execution-semantics-aware
+    actual-path rebacktest CLI，并保持 static baseline 不被误阻断
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增/更新 metric convention signoff namespace、execution policy strategy bindings、promotion
+      rebacktest gate、`execution-semantics-rebacktest` CLI、actual/target metrics 和
+      lag/staleness artifacts；报告和 readiness 默认只读取 actual path；target path 仅 diagnostic；report
+      registry、artifact catalog、system flow、需求文档、focused pytest、execution semantics
+      / equal-risk / external validation 回归、Ruff、compileall 和 `git diff --check` 通过；所有
+      outputs 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1279
+    row_sha256: 27285e0cf85f3247afab10d39b2ec02add58c12573505ca1f1d6f77ae0fcf168
+    cell_count: 8
+    all_cells:
+    - TRADING-1187_to_1200_CODEX_EXECUTION_SEMANTICS_REPAIR_AND_DYNAMIC_REBACKTEST
+    - Research strategies / execution semantics repair and dynamic actual-path rebacktest
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-1187_to_1200_Codex_Execution_Semantics_Repair_and_Dynamic_Rebacktest.md`；承接
+      TRADING-1165～1186 的 `EXECUTION_SEMANTICS_REQUIRES_REBACKTEST`，本轮必须冻结 legacy
+      dynamic target-path evidence、强制 explicit strategy execution policy binding、提供
+      execution-semantics-aware actual-path rebacktest CLI，并保持 static baseline 不被误阻断
+    - 新增/更新 metric convention signoff namespace、execution policy strategy bindings、promotion
+      rebacktest gate、`execution-semantics-rebacktest` CLI、actual/target metrics 和
+      lag/staleness artifacts；报告和 readiness 默认只读取 actual path；target path 仅 diagnostic；report
+      registry、artifact catalog、system flow、需求文档、focused pytest、execution semantics
+      / equal-risk / external validation 回归、Ruff、compileall 和 `git diff --check` 通过；所有
+      outputs 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`
+    - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求把动态策略回测从 ideal target weight path
+      升级为 actual position path，并禁止 legacy/pre-semantics 动态结果进入 promotion/ranking。2026-06-27:
+      实现完成并转入 VALIDATING；当前 dynamic promotion 默认保持 blocked，除非 actual-path rebacktest、policy
+      binding、metric namespace 和 owner review 全部满足。'
+    raw_line: '|TRADING-1187_to_1200_CODEX_EXECUTION_SEMANTICS_REPAIR_AND_DYNAMIC_REBACKTEST|Research
+      strategies / execution semantics repair and dynamic actual-path rebacktest|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-1187_to_1200_Codex_Execution_Semantics_Repair_and_Dynamic_Rebacktest.md`；承接
+      TRADING-1165～1186 的 `EXECUTION_SEMANTICS_REQUIRES_REBACKTEST`，本轮必须冻结 legacy
+      dynamic target-path evidence、强制 explicit strategy execution policy binding、提供
+      execution-semantics-aware actual-path rebacktest CLI，并保持 static baseline 不被误阻断|新增/更新
+      metric convention signoff namespace、execution policy strategy bindings、promotion
+      rebacktest gate、`execution-semantics-rebacktest` CLI、actual/target metrics 和
+      lag/staleness artifacts；报告和 readiness 默认只读取 actual path；target path 仅 diagnostic；report
+      registry、artifact catalog、system flow、需求文档、focused pytest、execution semantics
+      / equal-risk / external validation 回归、Ruff、compileall 和 `git diff --check` 通过；所有
+      outputs 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`|2026-06-27:
+      新增并进入 IN_PROGRESS，原因：owner 附件要求把动态策略回测从 ideal target weight path 升级为 actual
+      position path，并禁止 legacy/pre-semantics 动态结果进入 promotion/ranking。2026-06-27:
+      实现完成并转入 VALIDATING；当前 dynamic promotion 默认保持 blocked，除非 actual-path rebacktest、policy
+      binding、metric namespace 和 owner review 全部满足。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-27285e0cf85f3247afab10d3
+  task_id: TRADING-1187_to_1200_CODEX_EXECUTION_SEMANTICS_REPAIR_AND_DYNAMIC_REBACKTEST
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求把动态策略回测从 ideal target weight
+      path 升级为 actual position path，并禁止 legacy/pre-semantics 动态结果进入 promotion/ranking。2026-06-27:
+      实现完成并转入 VALIDATING；当前 dynamic promotion 默认保持 blocked，除非 actual-path rebacktest、policy
+      binding、metric namespace 和 owner review 全部满足。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:27285e0cf85f3247afab10d39b2ec02add58c12573505ca1f1d6f77ae0fcf168
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-1187_to_1200_CODEX_EXECUTION_SEMANTICS_REPAIR_AND_DYNAMIC_REBACKTEST
+  - Research strategies / execution semantics repair and dynamic actual-path rebacktest
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-1187_to_1200_Codex_Execution_Semantics_Repair_and_Dynamic_Rebacktest.md`；承接
+    TRADING-1165～1186 的 `EXECUTION_SEMANTICS_REQUIRES_REBACKTEST`，本轮必须冻结 legacy dynamic
+    target-path evidence、强制 explicit strategy execution policy binding、提供 execution-semantics-aware
+    actual-path rebacktest CLI，并保持 static baseline 不被误阻断
+  - 新增/更新 metric convention signoff namespace、execution policy strategy bindings、promotion
+    rebacktest gate、`execution-semantics-rebacktest` CLI、actual/target metrics 和 lag/staleness
+    artifacts；报告和 readiness 默认只读取 actual path；target path 仅 diagnostic；report registry、artifact
+    catalog、system flow、需求文档、focused pytest、execution semantics / equal-risk / external
+    validation 回归、Ruff、compileall 和 `git diff --check` 通过；所有 outputs 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`
+  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求把动态策略回测从 ideal target weight path
+    升级为 actual position path，并禁止 legacy/pre-semantics 动态结果进入 promotion/ranking。2026-06-27:
+    实现完成并转入 VALIDATING；当前 dynamic promotion 默认保持 blocked，除非 actual-path rebacktest、policy
+    binding、metric namespace 和 owner review 全部满足。'
+  docs_links:
+  - docs/requirements/TRADING-1187_to_1200_Codex_Execution_Semantics_Repair_and_Dynamic_Rebacktest.md
+  terminal: false
+  raw_row_sha256: 27285e0cf85f3247afab10d39b2ec02add58c12573505ca1f1d6f77ae0fcf168
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 349d6a5d3c41f5640daead35e9a4ad93f1d8cdfbbfb966a8847eece109b4bded

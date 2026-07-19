@@ -1,0 +1,100 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-854_INDEPENDENT_TRIGGER_V2_INPUT_QUALITY_REVIEW
+  title: null
+  domain: Controlled strategy research / trigger v2 input quality
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；在构建
+    trigger v2 前审查输入质量
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies tail-risk-independent-trigger-v2-input-quality-review`，输出
+      feature_name、pit_quality、missing_rate、history_start、usable_for_trigger、risk_of_leakage、recommended_priority
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1332
+    row_sha256: a0c71f9d853660d8103409a79a71732c1ada6eda2fbfce061a3f673b2a1f9ed9
+    cell_count: 8
+    all_cells:
+    - TRADING-854_INDEPENDENT_TRIGGER_V2_INPUT_QUALITY_REVIEW
+    - Controlled strategy research / trigger v2 input quality
+    - P1
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；在构建
+      trigger v2 前审查输入质量
+    - 新增 `aits research strategies tail-risk-independent-trigger-v2-input-quality-review`，输出
+      feature_name、pit_quality、missing_rate、history_start、usable_for_trigger、risk_of_leakage、recommended_priority
+    - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+      Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+      tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+    raw_line: '|TRADING-854_INDEPENDENT_TRIGGER_V2_INPUT_QUALITY_REVIEW|Controlled
+      strategy research / trigger v2 input quality|P1|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+      `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；在构建
+      trigger v2 前审查输入质量|新增 `aits research strategies tail-risk-independent-trigger-v2-input-quality-review`，输出
+      feature_name、pit_quality、missing_rate、history_start、usable_for_trigger、risk_of_leakage、recommended_priority|2026-06-22:
+      新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+      Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+      tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a0c71f9d853660d8103409a7
+  task_id: TRADING-854_INDEPENDENT_TRIGGER_V2_INPUT_QUALITY_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up
+      CLI/artifacts、registry/catalog/system-flow/Reader Brief/tests；验证通过 focused parallel
+      pytest、registry/documentation/task-register tests、Ruff、compileall 和 git diff
+      --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a0c71f9d853660d8103409a79a71732c1ada6eda2fbfce061a3f673b2a1f9ed9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-854_INDEPENDENT_TRIGGER_V2_INPUT_QUALITY_REVIEW
+  - Controlled strategy research / trigger v2 input quality
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；在构建
+    trigger v2 前审查输入质量
+  - 新增 `aits research strategies tail-risk-independent-trigger-v2-input-quality-review`，输出
+    feature_name、pit_quality、missing_rate、history_start、usable_for_trigger、risk_of_leakage、recommended_priority
+  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+    Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+    tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  docs_links:
+  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
+  terminal: false
+  raw_row_sha256: a0c71f9d853660d8103409a79a71732c1ada6eda2fbfce061a3f673b2a1f9ed9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6b75b74f0a2c31b2a3b1805a5821bc609a521e3c9823ce9780ebfdaeb13279b8

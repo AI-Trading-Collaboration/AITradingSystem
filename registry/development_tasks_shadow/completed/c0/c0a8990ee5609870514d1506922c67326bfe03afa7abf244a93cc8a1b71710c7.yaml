@@ -1,0 +1,152 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2381_DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_AND_NEXT_CANDIDATE_DECISION
+  title: null
+  domain: Strategy research / execution semantics / optimization plateau decision
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2382 ranking top guarded-turnover retest plan
+    route
+  requirement_refs:
+  - docs/requirements/TRADING-2381_Dynamic_Strategy_Optimization_Plateau_And_Next_Candidate_Decision.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2381_Dynamic_Strategy_Optimization_Plateau_And_Next_Candidate_Decision.md`；承接
+    TRADING-2380 route，读取 TRADING-2365 / 2366 / 2376 / 2379 / 2380 artifacts，并记录 optimization
+    plateau / next candidate decision。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-optimization-plateau-next-candidate-decision`；生成
+      `optimization_plateau_decision.json`、`next_candidate_direction.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_AND_NEXT_CANDIDATE_DECISION_READY`，optimization
+      plateau=`LOWER_TURNOVER_LOCAL_PLATEAU_DETECTED`，next direction=`OPTION_B_SWITCH_TO_RANKING_TOP_GUARDED_VARIANT`，recommended
+      default direction 同为 OPTION_B，next route=`TRADING-2382_Dynamic_Strategy_Ranking_Top_Guarded_Turnover_Retest_Plan`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 106
+    row_sha256: e3861190a1e574a22f40bae35c28f5f412ff607ba2aeceae2cba767dfc36f967
+    cell_count: 8
+    all_cells:
+    - TRADING-2381_DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_AND_NEXT_CANDIDATE_DECISION
+    - Strategy research / execution semantics / optimization plateau decision
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2382 ranking top guarded-turnover retest plan route
+    - 详见 `docs/requirements/TRADING-2381_Dynamic_Strategy_Optimization_Plateau_And_Next_Candidate_Decision.md`；承接
+      TRADING-2380 route，读取 TRADING-2365 / 2366 / 2376 / 2379 / 2380 artifacts，并记录
+      optimization plateau / next candidate decision。
+    - 新增 `aits research strategies dynamic-strategy-optimization-plateau-next-candidate-decision`；生成
+      `optimization_plateau_decision.json`、`next_candidate_direction.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_AND_NEXT_CANDIDATE_DECISION_READY`，optimization
+      plateau=`LOWER_TURNOVER_LOCAL_PLATEAU_DETECTED`，next direction=`OPTION_B_SWITCH_TO_RANKING_TOP_GUARDED_VARIANT`，recommended
+      default direction 同为 OPTION_B，next route=`TRADING-2382_Dynamic_Strategy_Ranking_Top_Guarded_Turnover_Retest_Plan`。
+    - '2026-07-06: 根据 owner 附件新增并进入 IN_PROGRESS；这是 owner / research decision record，不是新
+      backtest、signal generation、research-only observation approval、paper-shadow approval、scheduler
+      enablement、production 或 broker readiness。2026-07-06: 实现完成并归档 DONE；验证通过 full
+      Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs
+      freshness 566 docs PASS、documentation contract 1278 reports PASS、task-register
+      consistency run active=319 / completed=440 / failed=0、task-register consistency
+      validate checks=5 / failed=0 / warnings=0 和 contract-validation 197 passed（runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260705T152529Z/test_runtime_summary.json`）。本任务未重跑
+      `aits validate-data`，因为只读取 prior validated TRADING-2365 / 2366 / 2376 / 2379
+      / 2380 artifacts，不读取 fresh cached market data、不重新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order 和 daily report 全部保持 disabled / false / none。'
+    raw_line: '|TRADING-2381_DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_AND_NEXT_CANDIDATE_DECISION|Strategy
+      research / execution semantics / optimization plateau decision|P0|DONE|项目 owner
+      后续复核 TRADING-2382 ranking top guarded-turnover retest plan route|详见 `docs/requirements/TRADING-2381_Dynamic_Strategy_Optimization_Plateau_And_Next_Candidate_Decision.md`；承接
+      TRADING-2380 route，读取 TRADING-2365 / 2366 / 2376 / 2379 / 2380 artifacts，并记录
+      optimization plateau / next candidate decision。|新增 `aits research strategies
+      dynamic-strategy-optimization-plateau-next-candidate-decision`；生成 `optimization_plateau_decision.json`、`next_candidate_direction.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_AND_NEXT_CANDIDATE_DECISION_READY`，optimization
+      plateau=`LOWER_TURNOVER_LOCAL_PLATEAU_DETECTED`，next direction=`OPTION_B_SWITCH_TO_RANKING_TOP_GUARDED_VARIANT`，recommended
+      default direction 同为 OPTION_B，next route=`TRADING-2382_Dynamic_Strategy_Ranking_Top_Guarded_Turnover_Retest_Plan`。|2026-07-06:
+      根据 owner 附件新增并进入 IN_PROGRESS；这是 owner / research decision record，不是新 backtest、signal
+      generation、research-only observation approval、paper-shadow approval、scheduler
+      enablement、production 或 broker readiness。2026-07-06: 实现完成并归档 DONE；验证通过 full
+      Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs
+      freshness 566 docs PASS、documentation contract 1278 reports PASS、task-register
+      consistency run active=319 / completed=440 / failed=0、task-register consistency
+      validate checks=5 / failed=0 / warnings=0 和 contract-validation 197 passed（runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260705T152529Z/test_runtime_summary.json`）。本任务未重跑
+      `aits validate-data`，因为只读取 prior validated TRADING-2365 / 2366 / 2376 / 2379
+      / 2380 artifacts，不读取 fresh cached market data、不重新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order 和 daily report 全部保持 disabled / false / none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e3861190a1e574a22f40bae3
+  task_id: TRADING-2381_DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_AND_NEXT_CANDIDATE_DECISION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2382 ranking top guarded-turnover retest plan
+      route
+    notes: '2026-07-06: 根据 owner 附件新增并进入 IN_PROGRESS；这是 owner / research decision
+      record，不是新 backtest、signal generation、research-only observation approval、paper-shadow
+      approval、scheduler enablement、production 或 broker readiness。2026-07-06: 实现完成并归档
+      DONE；验证通过 full Ruff、`compileall -q src tests`、focused parallel pytest 3 passed、真实
+      CLI run、docs freshness 566 docs PASS、documentation contract 1278 reports PASS、task-register
+      consistency run active=319 / completed=440 / failed=0、task-register consistency
+      validate checks=5 / failed=0 / warnings=0 和 contract-validation 197 passed（runtime
+      artifact=`outputs/validation_runtime/contract-validation_20260705T152529Z/test_runtime_summary.json`）。本任务未重跑
+      `aits validate-data`，因为只读取 prior validated TRADING-2365 / 2366 / 2376 / 2379
+      / 2380 artifacts，不读取 fresh cached market data、不重新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+      position、production、broker/order 和 daily report 全部保持 disabled / false / none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e3861190a1e574a22f40bae35c28f5f412ff607ba2aeceae2cba767dfc36f967
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2381_DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_AND_NEXT_CANDIDATE_DECISION
+  - Strategy research / execution semantics / optimization plateau decision
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2382 ranking top guarded-turnover retest plan route
+  - 详见 `docs/requirements/TRADING-2381_Dynamic_Strategy_Optimization_Plateau_And_Next_Candidate_Decision.md`；承接
+    TRADING-2380 route，读取 TRADING-2365 / 2366 / 2376 / 2379 / 2380 artifacts，并记录 optimization
+    plateau / next candidate decision。
+  - 新增 `aits research strategies dynamic-strategy-optimization-plateau-next-candidate-decision`；生成
+    `optimization_plateau_decision.json`、`next_candidate_direction.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_AND_NEXT_CANDIDATE_DECISION_READY`，optimization
+    plateau=`LOWER_TURNOVER_LOCAL_PLATEAU_DETECTED`，next direction=`OPTION_B_SWITCH_TO_RANKING_TOP_GUARDED_VARIANT`，recommended
+    default direction 同为 OPTION_B，next route=`TRADING-2382_Dynamic_Strategy_Ranking_Top_Guarded_Turnover_Retest_Plan`。
+  - '2026-07-06: 根据 owner 附件新增并进入 IN_PROGRESS；这是 owner / research decision record，不是新
+    backtest、signal generation、research-only observation approval、paper-shadow approval、scheduler
+    enablement、production 或 broker readiness。2026-07-06: 实现完成并归档 DONE；验证通过 full Ruff、`compileall
+    -q src tests`、focused parallel pytest 3 passed、真实 CLI run、docs freshness 566 docs
+    PASS、documentation contract 1278 reports PASS、task-register consistency run active=319
+    / completed=440 / failed=0、task-register consistency validate checks=5 / failed=0
+    / warnings=0 和 contract-validation 197 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260705T152529Z/test_runtime_summary.json`）。本任务未重跑
+    `aits validate-data`，因为只读取 prior validated TRADING-2365 / 2366 / 2376 / 2379 /
+    2380 artifacts，不读取 fresh cached market data、不重新 backtest、不生成 technical features、scoring、daily
+    report 或交易建议。scheduler、event append、outcome binding、paper-shadow、paper trade、shadow
+    position、production、broker/order 和 daily report 全部保持 disabled / false / none。'
+  docs_links:
+  - docs/requirements/TRADING-2381_Dynamic_Strategy_Optimization_Plateau_And_Next_Candidate_Decision.md
+  terminal: true
+  raw_row_sha256: e3861190a1e574a22f40bae35c28f5f412ff607ba2aeceae2cba767dfc36f967
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c806fd61ced297b88f842f3f9195a82f7ba7bc00db716a671dde213ed5cd465b

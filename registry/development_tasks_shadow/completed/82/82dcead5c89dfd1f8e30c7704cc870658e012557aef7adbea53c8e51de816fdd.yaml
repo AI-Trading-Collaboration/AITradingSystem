@@ -1,0 +1,101 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: VALUATION-002
+  title: null
+  domain: 估值/数据可信度
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/decision_support_improvements_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已把估值输入显式分为真实 point-in-time、采集日快照和回填历史分布，并在估值复核、日报和回测审计中输出可信度等级和限制原因；详细拆解见
+    `docs/requirements/decision_support_improvements_2026-05-04.md#valuation-002`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 日报、估值复核和回测审计显示估值分位可信度：高/中/低及原因；严格回测不能使用采集日之后才可见的估值回填数据得出历史时点结论；`eps_revision_90d_pct`
+      只允许真实可审计历史 analyst 快照支持；实现时同步更新 `docs/system_flow.md` 并补充估值校验和回测切片测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 446
+    row_sha256: a68cab57298473e974ad4f51da88d9559fc7ad1b869bcf70d1540bfd6cc449e3
+    cell_count: 8
+    all_cells:
+    - VALUATION-002
+    - 估值/数据可信度
+    - P1
+    - DONE
+    - 系统实现
+    - 已把估值输入显式分为真实 point-in-time、采集日快照和回填历史分布，并在估值复核、日报和回测审计中输出可信度等级和限制原因；详细拆解见 `docs/requirements/decision_support_improvements_2026-05-04.md#valuation-002`
+    - 日报、估值复核和回测审计显示估值分位可信度：高/中/低及原因；严格回测不能使用采集日之后才可见的估值回填数据得出历史时点结论；`eps_revision_90d_pct`
+      只允许真实可审计历史 analyst 快照支持；实现时同步更新 `docs/system_flow.md` 并补充估值校验和回测切片测试
+    - '来自 2026-05-04 估值历史快照伪 point-in-time 风险讨论；与 `BTINPUT-001`、`DATA-001` 协同。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始实现估值 PIT 可信度字段、FMP historical 低可信标签、报告输出和切片测试。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：valuation snapshot、CSV/FMP 来源、校验、复核、日报、decision snapshot、回测输出和测试均已覆盖
+      PIT 可信度；`python -m pytest -q` 通过 220 项测试。'
+    raw_line: '|VALUATION-002|估值/数据可信度|P1|DONE|系统实现|已把估值输入显式分为真实 point-in-time、采集日快照和回填历史分布，并在估值复核、日报和回测审计中输出可信度等级和限制原因；详细拆解见
+      `docs/requirements/decision_support_improvements_2026-05-04.md#valuation-002`|日报、估值复核和回测审计显示估值分位可信度：高/中/低及原因；严格回测不能使用采集日之后才可见的估值回填数据得出历史时点结论；`eps_revision_90d_pct`
+      只允许真实可审计历史 analyst 快照支持；实现时同步更新 `docs/system_flow.md` 并补充估值校验和回测切片测试|来自 2026-05-04
+      估值历史快照伪 point-in-time 风险讨论；与 `BTINPUT-001`、`DATA-001` 协同。2026-05-04: 从 READY
+      改为 IN_PROGRESS，原因：开始实现估值 PIT 可信度字段、FMP historical 低可信标签、报告输出和切片测试。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：valuation snapshot、CSV/FMP 来源、校验、复核、日报、decision snapshot、回测输出和测试均已覆盖
+      PIT 可信度；`python -m pytest -q` 通过 220 项测试。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a68cab57298473e974ad4f51
+  task_id: VALUATION-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '来自 2026-05-04 估值历史快照伪 point-in-time 风险讨论；与 `BTINPUT-001`、`DATA-001` 协同。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始实现估值 PIT 可信度字段、FMP historical 低可信标签、报告输出和切片测试。2026-05-04:
+      从 IN_PROGRESS 改为 DONE，原因：valuation snapshot、CSV/FMP 来源、校验、复核、日报、decision snapshot、回测输出和测试均已覆盖
+      PIT 可信度；`python -m pytest -q` 通过 220 项测试。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a68cab57298473e974ad4f51da88d9559fc7ad1b869bcf70d1540bfd6cc449e3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - VALUATION-002
+  - 估值/数据可信度
+  - P1
+  - DONE
+  - 系统实现
+  - 已把估值输入显式分为真实 point-in-time、采集日快照和回填历史分布，并在估值复核、日报和回测审计中输出可信度等级和限制原因；详细拆解见 `docs/requirements/decision_support_improvements_2026-05-04.md#valuation-002`
+  - 日报、估值复核和回测审计显示估值分位可信度：高/中/低及原因；严格回测不能使用采集日之后才可见的估值回填数据得出历史时点结论；`eps_revision_90d_pct`
+    只允许真实可审计历史 analyst 快照支持；实现时同步更新 `docs/system_flow.md` 并补充估值校验和回测切片测试
+  - '来自 2026-05-04 估值历史快照伪 point-in-time 风险讨论；与 `BTINPUT-001`、`DATA-001` 协同。2026-05-04:
+    从 READY 改为 IN_PROGRESS，原因：开始实现估值 PIT 可信度字段、FMP historical 低可信标签、报告输出和切片测试。2026-05-04:
+    从 IN_PROGRESS 改为 DONE，原因：valuation snapshot、CSV/FMP 来源、校验、复核、日报、decision snapshot、回测输出和测试均已覆盖
+    PIT 可信度；`python -m pytest -q` 通过 220 项测试。'
+  docs_links:
+  - docs/requirements/decision_support_improvements_2026-05-04.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: a68cab57298473e974ad4f51da88d9559fc7ad1b869bcf70d1540bfd6cc449e3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0fbdf8444d4cd5d09685c80c84195f5df7042f590d6a443134e822a475256a13

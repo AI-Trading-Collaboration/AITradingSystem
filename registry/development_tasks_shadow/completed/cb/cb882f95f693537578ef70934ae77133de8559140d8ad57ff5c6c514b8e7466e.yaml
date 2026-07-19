@@ -1,0 +1,165 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-018E1
+  title: null
+  domain: 交易执行/Approved Promotion Apply Preflight Only
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/shadow_promotion_apply_preflight_2026-05-22.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/shadow_promotion_apply_preflight_2026-05-22.md`；只读
+    apply preflight、standalone script、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成；repo
+    既有无关 `tests/test_market_data.py` Black baseline 仍需后续单独处理，不混入本任务
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_shadow_promotion_apply_preflight.py`、`src/ai_trading_system/trading_engine/shadow_promotion_apply_preflight.py`
+      和 `data/derived/weight_iterations/promotion/preflight/shadow_promotion_apply_preflight_YYYY-MM-DD.json/md`、`preflight/logs/shadow_promotion_apply_preflight_run_YYYY-MM-DD.json/md`；读取
+      018D proposal、人工 approval artifact、target production profile 和 current shadow
+      weights；输出 approval/proposal/weight/target validation、production diff preview、rollback
+      plan preview、safety checklist、pipeline contract 和 audit；所有输出固定 `production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`apply_executed=false`、`preflight_only=true`、`safe_for_production=false`；dashboard
+      只读展示 latest preflight artifact，不重跑 018B/018C/018C2/018D/018E1/scoring/broker/replay，也不
+      apply production；最终收尾 smoke 使用 repo 外临时 fixture 生成 preflight JSON/Markdown/run
+      log，production profile hash 前后一致
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 411
+    row_sha256: 6f072691aac8212a330acc99d76d0457e516ac8e193058f03aba87c65500bcfd
+    cell_count: 8
+    all_cells:
+    - TRADING-018E1
+    - 交易执行/Approved Promotion Apply Preflight Only
+    - P0
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/shadow_promotion_apply_preflight_2026-05-22.md`；只读
+      apply preflight、standalone script、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成；repo
+      既有无关 `tests/test_market_data.py` Black baseline 仍需后续单独处理，不混入本任务
+    - 新增 `scripts/run_shadow_promotion_apply_preflight.py`、`src/ai_trading_system/trading_engine/shadow_promotion_apply_preflight.py`
+      和 `data/derived/weight_iterations/promotion/preflight/shadow_promotion_apply_preflight_YYYY-MM-DD.json/md`、`preflight/logs/shadow_promotion_apply_preflight_run_YYYY-MM-DD.json/md`；读取
+      018D proposal、人工 approval artifact、target production profile 和 current shadow
+      weights；输出 approval/proposal/weight/target validation、production diff preview、rollback
+      plan preview、safety checklist、pipeline contract 和 audit；所有输出固定 `production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`apply_executed=false`、`preflight_only=true`、`safe_for_production=false`；dashboard
+      只读展示 latest preflight artifact，不重跑 018B/018C/018C2/018D/018E1/scoring/broker/replay，也不
+      apply production；最终收尾 smoke 使用 repo 外临时 fixture 生成 preflight JSON/Markdown/run
+      log，production profile hash 前后一致
+    - '2026-05-22: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018D proposal 后新增 approved
+      apply preflight only 阶段；本任务只生成 apply 前检查报告、production diff preview 和 rollback
+      plan，不授权 production modification，不执行 promotion/apply。2026-05-22: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已新增 apply preflight builder、CLI、JSON/Markdown/run log 输出、approval/proposal/weight/target
+      validation、diff preview、rollback plan、dashboard Shadow Promotion Apply Preflight
+      只读卡片、runbook、系统流图/产物目录和测试；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 Black check 仅被既有无关 `tests/test_market_data.py` 格式 baseline
+      阻断，本次改动文件 Black check 通过。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证通过手动 CLI
+      smoke（临时 approval/proposal/shadow/production fixture，输出 `preflight_decision=PASS`，生成
+      preflight JSON/Markdown/run log、diff preview 和 rollback plan）、安全边界检查（`production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`apply_executed=false`、`preflight_only=true`、`safe_for_production=false`）、production
+      profile hash 前后一致、dashboard 只读测试确认不导入或重跑 018B/018C/018C2/018D/018E1/scoring/broker/replay；收尾验证通过目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+      仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。'
+    raw_line: '|TRADING-018E1|交易执行/Approved Promotion Apply Preflight Only|P0|DONE|系统验证|详细拆解见
+      `docs/requirements/shadow_promotion_apply_preflight_2026-05-22.md`；只读 apply
+      preflight、standalone script、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成；repo
+      既有无关 `tests/test_market_data.py` Black baseline 仍需后续单独处理，不混入本任务|新增 `scripts/run_shadow_promotion_apply_preflight.py`、`src/ai_trading_system/trading_engine/shadow_promotion_apply_preflight.py`
+      和 `data/derived/weight_iterations/promotion/preflight/shadow_promotion_apply_preflight_YYYY-MM-DD.json/md`、`preflight/logs/shadow_promotion_apply_preflight_run_YYYY-MM-DD.json/md`；读取
+      018D proposal、人工 approval artifact、target production profile 和 current shadow
+      weights；输出 approval/proposal/weight/target validation、production diff preview、rollback
+      plan preview、safety checklist、pipeline contract 和 audit；所有输出固定 `production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`apply_executed=false`、`preflight_only=true`、`safe_for_production=false`；dashboard
+      只读展示 latest preflight artifact，不重跑 018B/018C/018C2/018D/018E1/scoring/broker/replay，也不
+      apply production；最终收尾 smoke 使用 repo 外临时 fixture 生成 preflight JSON/Markdown/run
+      log，production profile hash 前后一致|2026-05-22: 新增并进入 IN_PROGRESS，原因：owner 要求在
+      TRADING-018D proposal 后新增 approved apply preflight only 阶段；本任务只生成 apply 前检查报告、production
+      diff preview 和 rollback plan，不授权 production modification，不执行 promotion/apply。2026-05-22:
+      从 IN_PROGRESS 改为 VALIDATING，原因：已新增 apply preflight builder、CLI、JSON/Markdown/run
+      log 输出、approval/proposal/weight/target validation、diff preview、rollback plan、dashboard
+      Shadow Promotion Apply Preflight 只读卡片、runbook、系统流图/产物目录和测试；验证通过目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仅被既有无关 `tests/test_market_data.py`
+      格式 baseline 阻断，本次改动文件 Black check 通过。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证通过手动
+      CLI smoke（临时 approval/proposal/shadow/production fixture，输出 `preflight_decision=PASS`，生成
+      preflight JSON/Markdown/run log、diff preview 和 rollback plan）、安全边界检查（`production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`apply_executed=false`、`preflight_only=true`、`safe_for_production=false`）、production
+      profile hash 前后一致、dashboard 只读测试确认不导入或重跑 018B/018C/018C2/018D/018E1/scoring/broker/replay；收尾验证通过目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+      仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6f072691aac8212a330acc99
+  task_id: TRADING-018E1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-22: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018D proposal 后新增 approved
+      apply preflight only 阶段；本任务只生成 apply 前检查报告、production diff preview 和 rollback
+      plan，不授权 production modification，不执行 promotion/apply。2026-05-22: 从 IN_PROGRESS
+      改为 VALIDATING，原因：已新增 apply preflight builder、CLI、JSON/Markdown/run log 输出、approval/proposal/weight/target
+      validation、diff preview、rollback plan、dashboard Shadow Promotion Apply Preflight
+      只读卡片、runbook、系统流图/产物目录和测试；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+      pytest 和 ruff；全仓 Black check 仅被既有无关 `tests/test_market_data.py` 格式 baseline
+      阻断，本次改动文件 Black check 通过。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证通过手动 CLI
+      smoke（临时 approval/proposal/shadow/production fixture，输出 `preflight_decision=PASS`，生成
+      preflight JSON/Markdown/run log、diff preview 和 rollback plan）、安全边界检查（`production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`apply_executed=false`、`preflight_only=true`、`safe_for_production=false`）、production
+      profile hash 前后一致、dashboard 只读测试确认不导入或重跑 018B/018C/018C2/018D/018E1/scoring/broker/replay；收尾验证通过目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+      仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:6f072691aac8212a330acc99d76d0457e516ac8e193058f03aba87c65500bcfd
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-018E1
+  - 交易执行/Approved Promotion Apply Preflight Only
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/shadow_promotion_apply_preflight_2026-05-22.md`；只读 apply
+    preflight、standalone script、dashboard 只读卡片、runbook、系统流图、产物目录、测试和最终收尾验证已完成；repo
+    既有无关 `tests/test_market_data.py` Black baseline 仍需后续单独处理，不混入本任务
+  - 新增 `scripts/run_shadow_promotion_apply_preflight.py`、`src/ai_trading_system/trading_engine/shadow_promotion_apply_preflight.py`
+    和 `data/derived/weight_iterations/promotion/preflight/shadow_promotion_apply_preflight_YYYY-MM-DD.json/md`、`preflight/logs/shadow_promotion_apply_preflight_run_YYYY-MM-DD.json/md`；读取
+    018D proposal、人工 approval artifact、target production profile 和 current shadow
+    weights；输出 approval/proposal/weight/target validation、production diff preview、rollback
+    plan preview、safety checklist、pipeline contract 和 audit；所有输出固定 `production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`apply_executed=false`、`preflight_only=true`、`safe_for_production=false`；dashboard
+    只读展示 latest preflight artifact，不重跑 018B/018C/018C2/018D/018E1/scoring/broker/replay，也不
+    apply production；最终收尾 smoke 使用 repo 外临时 fixture 生成 preflight JSON/Markdown/run
+    log，production profile hash 前后一致
+  - '2026-05-22: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018D proposal 后新增 approved
+    apply preflight only 阶段；本任务只生成 apply 前检查报告、production diff preview 和 rollback
+    plan，不授权 production modification，不执行 promotion/apply。2026-05-22: 从 IN_PROGRESS
+    改为 VALIDATING，原因：已新增 apply preflight builder、CLI、JSON/Markdown/run log 输出、approval/proposal/weight/target
+    validation、diff preview、rollback plan、dashboard Shadow Promotion Apply Preflight
+    只读卡片、runbook、系统流图/产物目录和测试；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+    pytest 和 ruff；全仓 Black check 仅被既有无关 `tests/test_market_data.py` 格式 baseline 阻断，本次改动文件
+    Black check 通过。2026-05-23: 从 VALIDATING 改为 DONE，原因：最终收尾验证通过手动 CLI smoke（临时 approval/proposal/shadow/production
+    fixture，输出 `preflight_decision=PASS`，生成 preflight JSON/Markdown/run log、diff preview
+    和 rollback plan）、安全边界检查（`production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、`apply_executed=false`、`preflight_only=true`、`safe_for_production=false`）、production
+    profile hash 前后一致、dashboard 只读测试确认不导入或重跑 018B/018C/018C2/018D/018E1/scoring/broker/replay；收尾验证通过目标
+    pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+    仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。'
+  docs_links:
+  - docs/requirements/shadow_promotion_apply_preflight_2026-05-22.md
+  terminal: true
+  raw_row_sha256: 6f072691aac8212a330acc99d76d0457e516ac8e193058f03aba87c65500bcfd
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7f53098f5102bdfb8f13d9a05fb468a02a0c2acb9a935bb28b8f42d6e2d05f71

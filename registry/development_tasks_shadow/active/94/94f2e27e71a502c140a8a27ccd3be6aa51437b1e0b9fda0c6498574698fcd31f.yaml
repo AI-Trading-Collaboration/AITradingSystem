@@ -1,0 +1,104 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: UI-001
+  title: null
+  domain: 仪表盘/解释
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/ui_evidence_dashboard_2026-05-04.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成第一阶段本地静态 evidence-first dashboard：`aits
+    reports dashboard` 读取日报、trace bundle、decision snapshot 和可选 belief_state，生成简约 HTML，把报告结论、论证链、实际输入数据、quality
+    refs 和 trace lookup 连起来；剩余缺口是更完整交互服务、跨日报对比和可配置 reader mode；详细拆解见 `docs/requirements/ui_evidence_dashboard_2026-05-04.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 第一阶段从日报 Markdown、evidence bundle、decision snapshot 和可选 belief_state 生成只读
+      HTML；可按快速读者、投资复核者、系统审计者查看结论卡、动作/限制、论证链、gate、thesis/risk/valuation 状态、数据源、原始证据和质量报告；输出声明
+      `production_effect=none` 且不替代 Markdown 报告的审计责任
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1109
+    row_sha256: 1e0b94179ae50035b6e48c6bc8fee50016583f1ee8728b55076384cae0fd7641
+    cell_count: 8
+    all_cells:
+    - UI-001
+    - 仪表盘/解释
+    - P2
+    - BASELINE_DONE
+    - 系统实现
+    - 已完成第一阶段本地静态 evidence-first dashboard：`aits reports dashboard` 读取日报、trace bundle、decision
+      snapshot 和可选 belief_state，生成简约 HTML，把报告结论、论证链、实际输入数据、quality refs 和 trace lookup
+      连起来；剩余缺口是更完整交互服务、跨日报对比和可配置 reader mode；详细拆解见 `docs/requirements/ui_evidence_dashboard_2026-05-04.md`
+    - 第一阶段从日报 Markdown、evidence bundle、decision snapshot 和可选 belief_state 生成只读 HTML；可按快速读者、投资复核者、系统审计者查看结论卡、动作/限制、论证链、gate、thesis/risk/valuation
+      状态、数据源、原始证据和质量报告；输出声明 `production_effect=none` 且不替代 Markdown 报告的审计责任
+    - '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：owner 明确主要使用者是自己，优先关注报告结论与实际输入数据的联系以及论证逻辑，视觉风格保持简约；第一阶段先做本地静态证据下钻页，不引入交互式服务或新投资计算。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits reports dashboard`、`evidence_dashboard`
+      模块、HTML 输出、系统流图和测试；页面只读展示结论到 evidence/dataset/quality 的链路，未改变评分、仓位、回测或执行建议。'
+    raw_line: '|UI-001|仪表盘/解释|P2|BASELINE_DONE|系统实现|已完成第一阶段本地静态 evidence-first dashboard：`aits
+      reports dashboard` 读取日报、trace bundle、decision snapshot 和可选 belief_state，生成简约
+      HTML，把报告结论、论证链、实际输入数据、quality refs 和 trace lookup 连起来；剩余缺口是更完整交互服务、跨日报对比和可配置
+      reader mode；详细拆解见 `docs/requirements/ui_evidence_dashboard_2026-05-04.md`|第一阶段从日报
+      Markdown、evidence bundle、decision snapshot 和可选 belief_state 生成只读 HTML；可按快速读者、投资复核者、系统审计者查看结论卡、动作/限制、论证链、gate、thesis/risk/valuation
+      状态、数据源、原始证据和质量报告；输出声明 `production_effect=none` 且不替代 Markdown 报告的审计责任|2026-05-04:
+      从 PROPOSED 改为 IN_PROGRESS，原因：owner 明确主要使用者是自己，优先关注报告结论与实际输入数据的联系以及论证逻辑，视觉风格保持简约；第一阶段先做本地静态证据下钻页，不引入交互式服务或新投资计算。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits reports dashboard`、`evidence_dashboard`
+      模块、HTML 输出、系统流图和测试；页面只读展示结论到 evidence/dataset/quality 的链路，未改变评分、仓位、回测或执行建议。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1e0b94179ae50035b6e48c6b
+  task_id: UI-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P2
+    next_owner: 系统实现
+    notes: '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：owner 明确主要使用者是自己，优先关注报告结论与实际输入数据的联系以及论证逻辑，视觉风格保持简约；第一阶段先做本地静态证据下钻页，不引入交互式服务或新投资计算。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits reports dashboard`、`evidence_dashboard`
+      模块、HTML 输出、系统流图和测试；页面只读展示结论到 evidence/dataset/quality 的链路，未改变评分、仓位、回测或执行建议。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1e0b94179ae50035b6e48c6bc8fee50016583f1ee8728b55076384cae0fd7641
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - UI-001
+  - 仪表盘/解释
+  - P2
+  - BASELINE_DONE
+  - 系统实现
+  - 已完成第一阶段本地静态 evidence-first dashboard：`aits reports dashboard` 读取日报、trace bundle、decision
+    snapshot 和可选 belief_state，生成简约 HTML，把报告结论、论证链、实际输入数据、quality refs 和 trace lookup
+    连起来；剩余缺口是更完整交互服务、跨日报对比和可配置 reader mode；详细拆解见 `docs/requirements/ui_evidence_dashboard_2026-05-04.md`
+  - 第一阶段从日报 Markdown、evidence bundle、decision snapshot 和可选 belief_state 生成只读 HTML；可按快速读者、投资复核者、系统审计者查看结论卡、动作/限制、论证链、gate、thesis/risk/valuation
+    状态、数据源、原始证据和质量报告；输出声明 `production_effect=none` 且不替代 Markdown 报告的审计责任
+  - '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：owner 明确主要使用者是自己，优先关注报告结论与实际输入数据的联系以及论证逻辑，视觉风格保持简约；第一阶段先做本地静态证据下钻页，不引入交互式服务或新投资计算。2026-05-04:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits reports dashboard`、`evidence_dashboard`
+    模块、HTML 输出、系统流图和测试；页面只读展示结论到 evidence/dataset/quality 的链路，未改变评分、仓位、回测或执行建议。'
+  docs_links:
+  - docs/requirements/ui_evidence_dashboard_2026-05-04.md
+  terminal: false
+  raw_row_sha256: 1e0b94179ae50035b6e48c6bc8fee50016583f1ee8728b55076384cae0fd7641
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: adbfa4075ce64f9eec01e034b6927082af2e7ade14dd004d4c89220edeabe541

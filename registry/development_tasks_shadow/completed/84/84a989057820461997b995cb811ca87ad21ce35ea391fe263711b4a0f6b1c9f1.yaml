@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: EVIDENCE-001
+  title: null
+  domain: 信息输入/证据账本
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已实现 `market_evidence` schema、YAML/CSV
+    导入、校验报告、CLI 和 LLM/public_convenience 隔离
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新市场信息进入系统前都有结构化证据记录、来源等级、采集时间、去重键、影响对象和人工复核状态；报告能区分已确认证据、待复核证据和不能进入自动评分的低可信证据；证据可追溯到
+      risk event、thesis、valuation、catalyst、industry_chain_node 或日报 claim；实现时同步更新 `docs/system_flow.md`
+      并补充 schema、去重、来源等级和 LLM 隔离测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 430
+    row_sha256: bc55ead54bdace7967d6d7b8203dbf5f2e25730ad35519519a1165399b96f43a
+    cell_count: 8
+    all_cells:
+    - EVIDENCE-001
+    - 信息输入/证据账本
+    - P1
+    - DONE
+    - 系统实现 + 项目 owner
+    - 已实现 `market_evidence` schema、YAML/CSV 导入、校验报告、CLI 和 LLM/public_convenience 隔离
+    - 新市场信息进入系统前都有结构化证据记录、来源等级、采集时间、去重键、影响对象和人工复核状态；报告能区分已确认证据、待复核证据和不能进入自动评分的低可信证据；证据可追溯到
+      risk event、thesis、valuation、catalyst、industry_chain_node 或日报 claim；实现时同步更新 `docs/system_flow.md`
+      并补充 schema、去重、来源等级和 LLM 隔离测试
+    - '该任务补足“新信息进入闭环”的入口；与 `LLM-001` 边界明确：LLM 只能辅助分类和写入待复核证据，不得直接改评分或仓位。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始实现 market_evidence schema、CSV/YAML 导入、校验、CLI 和 LLM
+      隔离测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：证据账本、导入、校验、报告、系统流图和 LLM 隔离测试已完成；`python
+      -m pytest -q` 通过 220 项测试。'
+    raw_line: '|EVIDENCE-001|信息输入/证据账本|P1|DONE|系统实现 + 项目 owner|已实现 `market_evidence`
+      schema、YAML/CSV 导入、校验报告、CLI 和 LLM/public_convenience 隔离|新市场信息进入系统前都有结构化证据记录、来源等级、采集时间、去重键、影响对象和人工复核状态；报告能区分已确认证据、待复核证据和不能进入自动评分的低可信证据；证据可追溯到
+      risk event、thesis、valuation、catalyst、industry_chain_node 或日报 claim；实现时同步更新 `docs/system_flow.md`
+      并补充 schema、去重、来源等级和 LLM 隔离测试|该任务补足“新信息进入闭环”的入口；与 `LLM-001` 边界明确：LLM 只能辅助分类和写入待复核证据，不得直接改评分或仓位。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始实现 market_evidence schema、CSV/YAML 导入、校验、CLI 和 LLM
+      隔离测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：证据账本、导入、校验、报告、系统流图和 LLM 隔离测试已完成；`python
+      -m pytest -q` 通过 220 项测试。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-bc55ead54bdace7967d6d7b8
+  task_id: EVIDENCE-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner
+    notes: '该任务补足“新信息进入闭环”的入口；与 `LLM-001` 边界明确：LLM 只能辅助分类和写入待复核证据，不得直接改评分或仓位。2026-05-04:
+      从 READY 改为 IN_PROGRESS，原因：开始实现 market_evidence schema、CSV/YAML 导入、校验、CLI 和 LLM
+      隔离测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：证据账本、导入、校验、报告、系统流图和 LLM 隔离测试已完成；`python
+      -m pytest -q` 通过 220 项测试。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:bc55ead54bdace7967d6d7b8203dbf5f2e25730ad35519519a1165399b96f43a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - EVIDENCE-001
+  - 信息输入/证据账本
+  - P1
+  - DONE
+  - 系统实现 + 项目 owner
+  - 已实现 `market_evidence` schema、YAML/CSV 导入、校验报告、CLI 和 LLM/public_convenience 隔离
+  - 新市场信息进入系统前都有结构化证据记录、来源等级、采集时间、去重键、影响对象和人工复核状态；报告能区分已确认证据、待复核证据和不能进入自动评分的低可信证据；证据可追溯到
+    risk event、thesis、valuation、catalyst、industry_chain_node 或日报 claim；实现时同步更新 `docs/system_flow.md`
+    并补充 schema、去重、来源等级和 LLM 隔离测试
+  - '该任务补足“新信息进入闭环”的入口；与 `LLM-001` 边界明确：LLM 只能辅助分类和写入待复核证据，不得直接改评分或仓位。2026-05-04:
+    从 READY 改为 IN_PROGRESS，原因：开始实现 market_evidence schema、CSV/YAML 导入、校验、CLI 和 LLM
+    隔离测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：证据账本、导入、校验、报告、系统流图和 LLM 隔离测试已完成；`python
+    -m pytest -q` 通过 220 项测试。'
+  docs_links:
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: bc55ead54bdace7967d6d7b8203dbf5f2e25730ad35519519a1165399b96f43a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f908fe69e5a36be0df7059bdceb04a1feb8b116e867e8d618b5da655047a340b

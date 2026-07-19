@@ -1,0 +1,118 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-725_MASTER_VALIDATION_MIGRATION_DOCUMENTATION_ROLLUP
+  title: null
+  domain: Research ops / master validation, migration, documentation rollup
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；整合 CLI、docs、registry、validation
+    和 legacy compatibility
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: CLI/docs/tests 更新；existing_production_outputs_unchanged=true；legacy_recommendation_semantic_drift_count=0；all_primary_artifacts_registered=true；validation_tier_pass=true
+      或明确阻塞
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1395
+    row_sha256: 668ccc816af416e2b096d7f0bc21e4099d202865d7591b130da22ea83ae95ffe
+    cell_count: 8
+    all_cells:
+    - TRADING-725_MASTER_VALIDATION_MIGRATION_DOCUMENTATION_ROLLUP
+    - Research ops / master validation, migration, documentation rollup
+    - P0
+    - VALIDATING
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 TRADING-703_to_725 总需求文档；整合 CLI、docs、registry、validation 和 legacy compatibility
+    - CLI/docs/tests 更新；existing_production_outputs_unchanged=true；legacy_recommendation_semantic_drift_count=0；all_primary_artifacts_registered=true；validation_tier_pass=true
+      或明确阻塞
+    - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。2026-06-21: 继续 VALIDATING；`tests/test_research_master_roadmap.py`
+      已纳入 `fast-unit` 和 `contract-validation`，primary artifacts 已进入 report registry
+      与 artifact catalog，CLI smoke 增加 artifact existence checks；仍需真实 full-advisory
+      / forward paper-shadow evidence 和 owner review 才能进入 promotion review。'
+    raw_line: '|TRADING-725_MASTER_VALIDATION_MIGRATION_DOCUMENTATION_ROLLUP|Research
+      ops / master validation, migration, documentation rollup|P0|VALIDATING|系统实现
+      + 项目 owner 后续复核|详见 TRADING-703_to_725 总需求文档；整合 CLI、docs、registry、validation
+      和 legacy compatibility|CLI/docs/tests 更新；existing_production_outputs_unchanged=true；legacy_recommendation_semantic_drift_count=0；all_primary_artifacts_registered=true；validation_tier_pass=true
+      或明确阻塞|2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。2026-06-21: 继续 VALIDATING；`tests/test_research_master_roadmap.py`
+      已纳入 `fast-unit` 和 `contract-validation`，primary artifacts 已进入 report registry
+      与 artifact catalog，CLI smoke 增加 artifact existence checks；仍需真实 full-advisory
+      / forward paper-shadow evidence 和 owner review 才能进入 promotion review。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-668ccc816af416e2b096d7f0
+  task_id: TRADING-725_MASTER_VALIDATION_MIGRATION_DOCUMENTATION_ROLLUP
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline
+      并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration
+      / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit
+      / contract-validation / report-validation tiers、compileall、Black check、Ruff
+      和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow
+      / official weights，不触发 broker/order。2026-06-21: 继续 VALIDATING；`tests/test_research_master_roadmap.py`
+      已纳入 `fast-unit` 和 `contract-validation`，primary artifacts 已进入 report registry
+      与 artifact catalog，CLI smoke 增加 artifact existence checks；仍需真实 full-advisory
+      / forward paper-shadow evidence 和 owner review 才能进入 promotion review。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:668ccc816af416e2b096d7f0bc21e4099d202865d7591b130da22ea83ae95ffe
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-725_MASTER_VALIDATION_MIGRATION_DOCUMENTATION_ROLLUP
+  - Research ops / master validation, migration, documentation rollup
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-703_to_725 总需求文档；整合 CLI、docs、registry、validation 和 legacy compatibility
+  - CLI/docs/tests 更新；existing_production_outputs_unchanged=true；legacy_recommendation_semantic_drift_count=0；all_primary_artifacts_registered=true；validation_tier_pass=true
+    或明确阻塞
+  - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入
+    VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio
+    decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+    / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+    production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。2026-06-21:
+    继续 VALIDATING；`tests/test_research_master_roadmap.py` 已纳入 `fast-unit` 和 `contract-validation`，primary
+    artifacts 已进入 report registry 与 artifact catalog，CLI smoke 增加 artifact existence
+    checks；仍需真实 full-advisory / forward paper-shadow evidence 和 owner review 才能进入
+    promotion review。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 668ccc816af416e2b096d7f0bc21e4099d202865d7591b130da22ea83ae95ffe
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 31f79a476beb71ab61a4f5fc73a571c36ec6a0da8c690bde7a849ababde0cccf

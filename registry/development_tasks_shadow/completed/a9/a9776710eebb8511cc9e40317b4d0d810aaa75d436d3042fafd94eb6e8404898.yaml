@@ -1,0 +1,142 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2393_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_TARGETED_ABLATION_RETEST
+  title: null
+  domain: Strategy research / component attribution targeted ablation retest
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2394 component ablation owner review and recombination
+    decision
+  requirement_refs:
+  - docs/requirements/TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest.md
+  - docs/tasks/completed/TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest.md`；承接
+    TRADING-2392 component attribution plan，读取 TRADING-2365 / 2366 / 2386 / 2390 /
+    2391 / 2392 artifacts，并在 `aits validate-data --as-of 2026-07-05` 通过后运行 targeted
+    ablation retest；主口径为 `valid_until_window`，monthly rebalance 只作为 legacy reference，不作为
+    primary decision。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-component-attribution-targeted-ablation-retest`；输出
+      `ablation_retest_result.json`、`component_attribution_matrix.json`、`reusable_component_decision.json`、`decision_update.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_TARGETED_ABLATION_RETEST_READY`，data
+      quality=`PASS_WITH_WARNINGS` / errors=0，components_tested 覆盖五个指定组件，ablation_candidates_tested
+      覆盖六个指定 candidates，component decisions ready，best reusable component=`growth_tilt_engine`，next
+      route=`TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 93
+    row_sha256: 7bd36672d6f9a0bdddb57bede75178479b5742759a7dd215aa037ccbc72a9b49
+    cell_count: 8
+    all_cells:
+    - TRADING-2393_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_TARGETED_ABLATION_RETEST
+    - Strategy research / component attribution targeted ablation retest
+    - P0
+    - DONE
+    - 项目 owner 后续复核 TRADING-2394 component ablation owner review and recombination
+      decision
+    - 详见 `docs/requirements/TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest.md`；承接
+      TRADING-2392 component attribution plan，读取 TRADING-2365 / 2366 / 2386 / 2390
+      / 2391 / 2392 artifacts，并在 `aits validate-data --as-of 2026-07-05` 通过后运行 targeted
+      ablation retest；主口径为 `valid_until_window`，monthly rebalance 只作为 legacy reference，不作为
+      primary decision。
+    - 新增 `aits research strategies dynamic-strategy-component-attribution-targeted-ablation-retest`；输出
+      `ablation_retest_result.json`、`component_attribution_matrix.json`、`reusable_component_decision.json`、`decision_update.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_TARGETED_ABLATION_RETEST_READY`，data
+      quality=`PASS_WITH_WARNINGS` / errors=0，components_tested 覆盖五个指定组件，ablation_candidates_tested
+      覆盖六个指定 candidates，component decisions ready，best reusable component=`growth_tilt_engine`，next
+      route=`TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision`。
+    - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；真实 `aits
+      validate-data --as-of 2026-07-05` 通过，真实 CLI run ready，component decisions 包含
+      `growth_tilt_engine=REUSABLE_COMPONENT`、`lower_turnover_guardrail=USE_ONLY_AS_GUARDRAIL`、`guarded_turnover_transfer=OWNER_REVIEW_REQUIRED`、`turnover_budgeting=CONTINUE_COMPONENT_RESEARCH`、`valid_until_strictness=CONTINUE_COMPONENT_RESEARCH`。candidate
+      auto-accept、research-only observation、scheduler、event append、outcome binding、paper-shadow、paper
+      trade、shadow position、production、broker/order、daily report 全部保持 disabled / false
+      / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest.md`。'
+    raw_line: '|TRADING-2393_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_TARGETED_ABLATION_RETEST|Strategy
+      research / component attribution targeted ablation retest|P0|DONE|项目 owner 后续复核
+      TRADING-2394 component ablation owner review and recombination decision|详见 `docs/requirements/TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest.md`；承接
+      TRADING-2392 component attribution plan，读取 TRADING-2365 / 2366 / 2386 / 2390
+      / 2391 / 2392 artifacts，并在 `aits validate-data --as-of 2026-07-05` 通过后运行 targeted
+      ablation retest；主口径为 `valid_until_window`，monthly rebalance 只作为 legacy reference，不作为
+      primary decision。|新增 `aits research strategies dynamic-strategy-component-attribution-targeted-ablation-retest`；输出
+      `ablation_retest_result.json`、`component_attribution_matrix.json`、`reusable_component_decision.json`、`decision_update.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_TARGETED_ABLATION_RETEST_READY`，data
+      quality=`PASS_WITH_WARNINGS` / errors=0，components_tested 覆盖五个指定组件，ablation_candidates_tested
+      覆盖六个指定 candidates，component decisions ready，best reusable component=`growth_tilt_engine`，next
+      route=`TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision`。|2026-07-07:
+      根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；真实 `aits validate-data
+      --as-of 2026-07-05` 通过，真实 CLI run ready，component decisions 包含 `growth_tilt_engine=REUSABLE_COMPONENT`、`lower_turnover_guardrail=USE_ONLY_AS_GUARDRAIL`、`guarded_turnover_transfer=OWNER_REVIEW_REQUIRED`、`turnover_budgeting=CONTINUE_COMPONENT_RESEARCH`、`valid_until_strictness=CONTINUE_COMPONENT_RESEARCH`。candidate
+      auto-accept、research-only observation、scheduler、event append、outcome binding、paper-shadow、paper
+      trade、shadow position、production、broker/order、daily report 全部保持 disabled / false
+      / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest.md`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7bd36672d6f9a0bdddb57bed
+  task_id: TRADING-2393_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_TARGETED_ABLATION_RETEST
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2394 component ablation owner review and recombination
+      decision
+    notes: '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；真实 `aits
+      validate-data --as-of 2026-07-05` 通过，真实 CLI run ready，component decisions 包含
+      `growth_tilt_engine=REUSABLE_COMPONENT`、`lower_turnover_guardrail=USE_ONLY_AS_GUARDRAIL`、`guarded_turnover_transfer=OWNER_REVIEW_REQUIRED`、`turnover_budgeting=CONTINUE_COMPONENT_RESEARCH`、`valid_until_strictness=CONTINUE_COMPONENT_RESEARCH`。candidate
+      auto-accept、research-only observation、scheduler、event append、outcome binding、paper-shadow、paper
+      trade、shadow position、production、broker/order、daily report 全部保持 disabled / false
+      / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest.md`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7bd36672d6f9a0bdddb57bede75178479b5742759a7dd215aa037ccbc72a9b49
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2393_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_TARGETED_ABLATION_RETEST
+  - Strategy research / component attribution targeted ablation retest
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2394 component ablation owner review and recombination decision
+  - 详见 `docs/requirements/TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest.md`；承接
+    TRADING-2392 component attribution plan，读取 TRADING-2365 / 2366 / 2386 / 2390 /
+    2391 / 2392 artifacts，并在 `aits validate-data --as-of 2026-07-05` 通过后运行 targeted
+    ablation retest；主口径为 `valid_until_window`，monthly rebalance 只作为 legacy reference，不作为
+    primary decision。
+  - 新增 `aits research strategies dynamic-strategy-component-attribution-targeted-ablation-retest`；输出
+    `ablation_retest_result.json`、`component_attribution_matrix.json`、`reusable_component_decision.json`、`decision_update.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_TARGETED_ABLATION_RETEST_READY`，data
+    quality=`PASS_WITH_WARNINGS` / errors=0，components_tested 覆盖五个指定组件，ablation_candidates_tested
+    覆盖六个指定 candidates，component decisions ready，best reusable component=`growth_tilt_engine`，next
+    route=`TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision`。
+  - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；真实 `aits validate-data
+    --as-of 2026-07-05` 通过，真实 CLI run ready，component decisions 包含 `growth_tilt_engine=REUSABLE_COMPONENT`、`lower_turnover_guardrail=USE_ONLY_AS_GUARDRAIL`、`guarded_turnover_transfer=OWNER_REVIEW_REQUIRED`、`turnover_budgeting=CONTINUE_COMPONENT_RESEARCH`、`valid_until_strictness=CONTINUE_COMPONENT_RESEARCH`。candidate
+    auto-accept、research-only observation、scheduler、event append、outcome binding、paper-shadow、paper
+    trade、shadow position、production、broker/order、daily report 全部保持 disabled / false
+    / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest.md
+  - docs/tasks/completed/TRADING-2393_Dynamic_Strategy_Component_Attribution_Targeted_Ablation_Retest.md
+  terminal: true
+  raw_row_sha256: 7bd36672d6f9a0bdddb57bede75178479b5742759a7dd215aa037ccbc72a9b49
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 09ff0beff4dacc1ed4e6f0314caf6453d268add45291779d2e643e7054793842

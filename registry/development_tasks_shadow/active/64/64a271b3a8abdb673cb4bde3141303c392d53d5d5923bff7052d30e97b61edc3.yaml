@@ -1,0 +1,106 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH
+  title: null
+  domain: Publishing & Experience / read-only interactive system understanding client
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: project owner + architecture coordinator + knowledge/reporting/UX owner
+  requirement_refs:
+  - docs/requirements/PLATFORM-UX-001_System_Understanding_Workbench.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/PLATFORM-UX-001_System_Understanding_Workbench.md`；依赖KNOWLEDGE-001/PUBLISHING-001，并严格按完整G2.4
+    handoff PASS→ARCH-005 S0/S1→新显式恢复指令→G2.5→G3推进，native cut-in依赖ARCH-004H。复用canonical
+    status、Knowledge Object、Evidence Dashboard、typed contracts、RunLedger、trace和policy，不创建第二套status、知识或数据control
+    plane。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: versioned deterministic `SystemUnderstandingViewModel`作为Knowledge/runtime
+      contracts只读projection；本地HTML覆盖“现在/为什么/结果/可信度/问题/改进”；claim可下钻source/as-of/regime/range/DQ/PIT/freshness/limitations；missing显式fail
+      closed；不重算score/gate/backtest/promotion。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1181
+    row_sha256: 963f90b69eb098a07bafe1916a1e0bebf0f092ef87d9759456e2dde40a2db1d4
+    cell_count: 8
+    all_cells:
+    - PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH
+    - Publishing & Experience / read-only interactive system understanding client
+    - P1
+    - PROPOSED
+    - project owner + architecture coordinator + knowledge/reporting/UX owner
+    - 详见 `docs/requirements/PLATFORM-UX-001_System_Understanding_Workbench.md`；依赖KNOWLEDGE-001/PUBLISHING-001，并严格按完整G2.4
+      handoff PASS→ARCH-005 S0/S1→新显式恢复指令→G2.5→G3推进，native cut-in依赖ARCH-004H。复用canonical
+      status、Knowledge Object、Evidence Dashboard、typed contracts、RunLedger、trace和policy，不创建第二套status、知识或数据control
+      plane。
+    - versioned deterministic `SystemUnderstandingViewModel`作为Knowledge/runtime contracts只读projection；本地HTML覆盖“现在/为什么/结果/可信度/问题/改进”；claim可下钻source/as-of/regime/range/DQ/PIT/freshness/limitations；missing显式fail
+      closed；不重算score/gate/backtest/promotion。
+    - '2026-07-12: 初始登记为统一理解工作台；同日按最新讨论收敛为Publishing & Experience交互客户端，原只读/no-recompute边界保留，知识核心与多载体发布由KNOWLEDGE-001/PUBLISHING-001承接。2026-07-16:
+      补齐phase-level handoff与ARCH-005恢复依赖，当前不可提前实施。'
+    raw_line: '|PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH|Publishing & Experience
+      / read-only interactive system understanding client|P1|PROPOSED|project owner
+      + architecture coordinator + knowledge/reporting/UX owner|详见 `docs/requirements/PLATFORM-UX-001_System_Understanding_Workbench.md`；依赖KNOWLEDGE-001/PUBLISHING-001，并严格按完整G2.4
+      handoff PASS→ARCH-005 S0/S1→新显式恢复指令→G2.5→G3推进，native cut-in依赖ARCH-004H。复用canonical
+      status、Knowledge Object、Evidence Dashboard、typed contracts、RunLedger、trace和policy，不创建第二套status、知识或数据control
+      plane。|versioned deterministic `SystemUnderstandingViewModel`作为Knowledge/runtime
+      contracts只读projection；本地HTML覆盖“现在/为什么/结果/可信度/问题/改进”；claim可下钻source/as-of/regime/range/DQ/PIT/freshness/limitations；missing显式fail
+      closed；不重算score/gate/backtest/promotion。|2026-07-12: 初始登记为统一理解工作台；同日按最新讨论收敛为Publishing
+      & Experience交互客户端，原只读/no-recompute边界保留，知识核心与多载体发布由KNOWLEDGE-001/PUBLISHING-001承接。2026-07-16:
+      补齐phase-level handoff与ARCH-005恢复依赖，当前不可提前实施。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-963f90b69eb098a07bafe191
+  task_id: PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: project owner + architecture coordinator + knowledge/reporting/UX
+      owner
+    notes: '2026-07-12: 初始登记为统一理解工作台；同日按最新讨论收敛为Publishing & Experience交互客户端，原只读/no-recompute边界保留，知识核心与多载体发布由KNOWLEDGE-001/PUBLISHING-001承接。2026-07-16:
+      补齐phase-level handoff与ARCH-005恢复依赖，当前不可提前实施。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:963f90b69eb098a07bafe1916a1e0bebf0f092ef87d9759456e2dde40a2db1d4
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH
+  - Publishing & Experience / read-only interactive system understanding client
+  - P1
+  - PROPOSED
+  - project owner + architecture coordinator + knowledge/reporting/UX owner
+  - 详见 `docs/requirements/PLATFORM-UX-001_System_Understanding_Workbench.md`；依赖KNOWLEDGE-001/PUBLISHING-001，并严格按完整G2.4
+    handoff PASS→ARCH-005 S0/S1→新显式恢复指令→G2.5→G3推进，native cut-in依赖ARCH-004H。复用canonical
+    status、Knowledge Object、Evidence Dashboard、typed contracts、RunLedger、trace和policy，不创建第二套status、知识或数据control
+    plane。
+  - versioned deterministic `SystemUnderstandingViewModel`作为Knowledge/runtime contracts只读projection；本地HTML覆盖“现在/为什么/结果/可信度/问题/改进”；claim可下钻source/as-of/regime/range/DQ/PIT/freshness/limitations；missing显式fail
+    closed；不重算score/gate/backtest/promotion。
+  - '2026-07-12: 初始登记为统一理解工作台；同日按最新讨论收敛为Publishing & Experience交互客户端，原只读/no-recompute边界保留，知识核心与多载体发布由KNOWLEDGE-001/PUBLISHING-001承接。2026-07-16:
+    补齐phase-level handoff与ARCH-005恢复依赖，当前不可提前实施。'
+  docs_links:
+  - docs/requirements/PLATFORM-UX-001_System_Understanding_Workbench.md
+  terminal: false
+  raw_row_sha256: 963f90b69eb098a07bafe1916a1e0bebf0f092ef87d9759456e2dde40a2db1d4
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 273eeb7e448239e2277bf83d0cb82ee49a7b948513a89ac416f62fd407c25196

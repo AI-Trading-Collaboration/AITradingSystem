@@ -1,0 +1,193 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-054
+  title: null
+  domain: 回测输入/Portfolio Construction Candidate Profiles
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/portfolio_construction_candidate_profiles_2026-05-30.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/portfolio_construction_candidate_profiles_2026-05-30.md`；只读
+    portfolio construction candidate evaluation、候选 profile 配置、shadow simulation、remove-one-signal
+    contribution summary、ranking、JSON/Markdown/recommended candidate artifact、Dashboard/Reader
+    Brief 和 shadow promotion supporting artifact 已完成；2026-06-08 latest 真实链路恢复为 `data_gate=OK`，推荐
+    `best_profile=softmax_mapping`，但 signal quality 仍 `LIMITED`，candidate promotion
+    仍 disabled
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits portfolio candidates --latest` 生成 `artifacts/portfolio_candidates/YYYY-MM-DD/portfolio_candidates_summary.json/md`
+      和 `recommended_portfolio_candidate.yaml`；`aits reports portfolio-candidates
+      --latest` 可读取 latest 报告；`aits portfolio validate-candidates --latest` 输出 `status=LIMITED`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；每个
+      candidate 输出 signal transmission、performance、risk guardrails、turnover/cost、signal
+      contribution 和 delta vs baseline；ranking 不以收益最高作为唯一标准且一票否决 data gate、drawdown、turnover、production
+      effect 和 manual review 缺失；Dashboard/Reader Brief 按不晚于 report `as_of` 的最大 artifact
+      日期选择 candidate summary，不按 mtime 误选旧 artifact；shadow backtest dry-run 可引用 candidate
+      artifact 但仍 rejected；不修改 `config/parameters/production/current.yaml`，不降低 data
+      quality gate，不使用 mock 数据，不自动 promotion；专项测试、Dashboard/Reader Brief 回归测试、全量 pytest、ruff、compileall、docs
+      freshness 和 diff check 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 288
+    row_sha256: ae48e4722592fc90c6ceac5166157550b8c84aeff7934be2de1d5bf86d450d18
+    cell_count: 8
+    all_cells:
+    - TRADING-054
+    - 回测输入/Portfolio Construction Candidate Profiles
+    - P1
+    - DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/portfolio_construction_candidate_profiles_2026-05-30.md`；只读
+      portfolio construction candidate evaluation、候选 profile 配置、shadow simulation、remove-one-signal
+      contribution summary、ranking、JSON/Markdown/recommended candidate artifact、Dashboard/Reader
+      Brief 和 shadow promotion supporting artifact 已完成；2026-06-08 latest 真实链路恢复为 `data_gate=OK`，推荐
+      `best_profile=softmax_mapping`，但 signal quality 仍 `LIMITED`，candidate promotion
+      仍 disabled
+    - '`aits portfolio candidates --latest` 生成 `artifacts/portfolio_candidates/YYYY-MM-DD/portfolio_candidates_summary.json/md`
+      和 `recommended_portfolio_candidate.yaml`；`aits reports portfolio-candidates
+      --latest` 可读取 latest 报告；`aits portfolio validate-candidates --latest` 输出 `status=LIMITED`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；每个
+      candidate 输出 signal transmission、performance、risk guardrails、turnover/cost、signal
+      contribution 和 delta vs baseline；ranking 不以收益最高作为唯一标准且一票否决 data gate、drawdown、turnover、production
+      effect 和 manual review 缺失；Dashboard/Reader Brief 按不晚于 report `as_of` 的最大 artifact
+      日期选择 candidate summary，不按 mtime 误选旧 artifact；shadow backtest dry-run 可引用 candidate
+      artifact 但仍 rejected；不修改 `config/parameters/production/current.yaml`，不降低 data
+      quality gate，不使用 mock 数据，不自动 promotion；专项测试、Dashboard/Reader Brief 回归测试、全量 pytest、ruff、compileall、docs
+      freshness 和 diff check 通过'
+    - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-053B 已解除数据层 blocker，真实 sensitivity
+      指向 `rebalance_threshold`，需要在不修改 production 参数的前提下评估若干 portfolio construction
+      候选方案。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实现、文档和真实 latest 验收完成；`aits portfolio
+      candidates --latest` 生成 2026-05-28 artifact，`best_profile=lower_rebalance_threshold_2pct`、`data_gate=OK`、`status=LIMITED`、`production_effect=none`；`aits
+      parameters shadow-backtest --latest --dry-run` 已引用 `portfolio_candidates` supporting
+      artifact 且 promotion 仍 rejected。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：真实
+      2026-06-08 recovery 后 `portfolio candidates --latest` 已生成 `status=LIMITED`、`data_gate=OK`、`best_profile=softmax_mapping`
+      的新 artifact，且 shadow dry-run 已引用该 artifact；但完整 2026-06-08 daily-run 的 Dashboard/Reader
+      Brief 仍按 mtime 选中了较晚修改的 2026-06-05 FAILED candidate summary，展示为 `portfolio_candidates_status=FAILED`。2026-06-09:
+      从 IN_PROGRESS 改为 DONE，原因：Dashboard/Reader Brief selector 已修复为按 artifact 日期选择不晚于
+      report `as_of` 的最大日期；真实 2026-06-08 Dashboard candidate card 和 Reader Brief 均显示
+      `status=LIMITED`、`best_profile=softmax_mapping`、`data_gate=OK`，shadow dry-run
+      仍 `promotion_status=rejected`，production/broker/trading action 均为 false；focused
+      portfolio candidates pytest 10 passed，Dashboard/Reader Brief 相关 pytest 31 passed，最终全量
+      pytest 2272 passed，Ruff、compileall、docs freshness 和 diff check 通过。'
+    raw_line: '|TRADING-054|回测输入/Portfolio Construction Candidate Profiles|P1|DONE|系统验证|详细拆解见
+      `docs/requirements/portfolio_construction_candidate_profiles_2026-05-30.md`；只读
+      portfolio construction candidate evaluation、候选 profile 配置、shadow simulation、remove-one-signal
+      contribution summary、ranking、JSON/Markdown/recommended candidate artifact、Dashboard/Reader
+      Brief 和 shadow promotion supporting artifact 已完成；2026-06-08 latest 真实链路恢复为 `data_gate=OK`，推荐
+      `best_profile=softmax_mapping`，但 signal quality 仍 `LIMITED`，candidate promotion
+      仍 disabled|`aits portfolio candidates --latest` 生成 `artifacts/portfolio_candidates/YYYY-MM-DD/portfolio_candidates_summary.json/md`
+      和 `recommended_portfolio_candidate.yaml`；`aits reports portfolio-candidates
+      --latest` 可读取 latest 报告；`aits portfolio validate-candidates --latest` 输出 `status=LIMITED`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；每个
+      candidate 输出 signal transmission、performance、risk guardrails、turnover/cost、signal
+      contribution 和 delta vs baseline；ranking 不以收益最高作为唯一标准且一票否决 data gate、drawdown、turnover、production
+      effect 和 manual review 缺失；Dashboard/Reader Brief 按不晚于 report `as_of` 的最大 artifact
+      日期选择 candidate summary，不按 mtime 误选旧 artifact；shadow backtest dry-run 可引用 candidate
+      artifact 但仍 rejected；不修改 `config/parameters/production/current.yaml`，不降低 data
+      quality gate，不使用 mock 数据，不自动 promotion；专项测试、Dashboard/Reader Brief 回归测试、全量 pytest、ruff、compileall、docs
+      freshness 和 diff check 通过|2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-053B 已解除数据层
+      blocker，真实 sensitivity 指向 `rebalance_threshold`，需要在不修改 production 参数的前提下评估若干
+      portfolio construction 候选方案。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实现、文档和真实
+      latest 验收完成；`aits portfolio candidates --latest` 生成 2026-05-28 artifact，`best_profile=lower_rebalance_threshold_2pct`、`data_gate=OK`、`status=LIMITED`、`production_effect=none`；`aits
+      parameters shadow-backtest --latest --dry-run` 已引用 `portfolio_candidates` supporting
+      artifact 且 promotion 仍 rejected。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：真实
+      2026-06-08 recovery 后 `portfolio candidates --latest` 已生成 `status=LIMITED`、`data_gate=OK`、`best_profile=softmax_mapping`
+      的新 artifact，且 shadow dry-run 已引用该 artifact；但完整 2026-06-08 daily-run 的 Dashboard/Reader
+      Brief 仍按 mtime 选中了较晚修改的 2026-06-05 FAILED candidate summary，展示为 `portfolio_candidates_status=FAILED`。2026-06-09:
+      从 IN_PROGRESS 改为 DONE，原因：Dashboard/Reader Brief selector 已修复为按 artifact 日期选择不晚于
+      report `as_of` 的最大日期；真实 2026-06-08 Dashboard candidate card 和 Reader Brief 均显示
+      `status=LIMITED`、`best_profile=softmax_mapping`、`data_gate=OK`，shadow dry-run
+      仍 `promotion_status=rejected`，production/broker/trading action 均为 false；focused
+      portfolio candidates pytest 10 passed，Dashboard/Reader Brief 相关 pytest 31 passed，最终全量
+      pytest 2272 passed，Ruff、compileall、docs freshness 和 diff check 通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ae48e4722592fc90c6ceac51
+  task_id: TRADING-054
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-053B 已解除数据层 blocker，真实 sensitivity
+      指向 `rebalance_threshold`，需要在不修改 production 参数的前提下评估若干 portfolio construction
+      候选方案。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：实现、文档和真实 latest 验收完成；`aits portfolio
+      candidates --latest` 生成 2026-05-28 artifact，`best_profile=lower_rebalance_threshold_2pct`、`data_gate=OK`、`status=LIMITED`、`production_effect=none`；`aits
+      parameters shadow-backtest --latest --dry-run` 已引用 `portfolio_candidates` supporting
+      artifact 且 promotion 仍 rejected。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：真实
+      2026-06-08 recovery 后 `portfolio candidates --latest` 已生成 `status=LIMITED`、`data_gate=OK`、`best_profile=softmax_mapping`
+      的新 artifact，且 shadow dry-run 已引用该 artifact；但完整 2026-06-08 daily-run 的 Dashboard/Reader
+      Brief 仍按 mtime 选中了较晚修改的 2026-06-05 FAILED candidate summary，展示为 `portfolio_candidates_status=FAILED`。2026-06-09:
+      从 IN_PROGRESS 改为 DONE，原因：Dashboard/Reader Brief selector 已修复为按 artifact 日期选择不晚于
+      report `as_of` 的最大日期；真实 2026-06-08 Dashboard candidate card 和 Reader Brief 均显示
+      `status=LIMITED`、`best_profile=softmax_mapping`、`data_gate=OK`，shadow dry-run
+      仍 `promotion_status=rejected`，production/broker/trading action 均为 false；focused
+      portfolio candidates pytest 10 passed，Dashboard/Reader Brief 相关 pytest 31 passed，最终全量
+      pytest 2272 passed，Ruff、compileall、docs freshness 和 diff check 通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ae48e4722592fc90c6ceac5166157550b8c84aeff7934be2de1d5bf86d450d18
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-054
+  - 回测输入/Portfolio Construction Candidate Profiles
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/portfolio_construction_candidate_profiles_2026-05-30.md`；只读
+    portfolio construction candidate evaluation、候选 profile 配置、shadow simulation、remove-one-signal
+    contribution summary、ranking、JSON/Markdown/recommended candidate artifact、Dashboard/Reader
+    Brief 和 shadow promotion supporting artifact 已完成；2026-06-08 latest 真实链路恢复为 `data_gate=OK`，推荐
+    `best_profile=softmax_mapping`，但 signal quality 仍 `LIMITED`，candidate promotion
+    仍 disabled
+  - '`aits portfolio candidates --latest` 生成 `artifacts/portfolio_candidates/YYYY-MM-DD/portfolio_candidates_summary.json/md`
+    和 `recommended_portfolio_candidate.yaml`；`aits reports portfolio-candidates --latest`
+    可读取 latest 报告；`aits portfolio validate-candidates --latest` 输出 `status=LIMITED`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；每个
+    candidate 输出 signal transmission、performance、risk guardrails、turnover/cost、signal
+    contribution 和 delta vs baseline；ranking 不以收益最高作为唯一标准且一票否决 data gate、drawdown、turnover、production
+    effect 和 manual review 缺失；Dashboard/Reader Brief 按不晚于 report `as_of` 的最大 artifact
+    日期选择 candidate summary，不按 mtime 误选旧 artifact；shadow backtest dry-run 可引用 candidate
+    artifact 但仍 rejected；不修改 `config/parameters/production/current.yaml`，不降低 data
+    quality gate，不使用 mock 数据，不自动 promotion；专项测试、Dashboard/Reader Brief 回归测试、全量 pytest、ruff、compileall、docs
+    freshness 和 diff check 通过'
+  - '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-053B 已解除数据层 blocker，真实 sensitivity 指向
+    `rebalance_threshold`，需要在不修改 production 参数的前提下评估若干 portfolio construction 候选方案。2026-05-30:
+    从 IN_PROGRESS 改为 VALIDATING，原因：实现、文档和真实 latest 验收完成；`aits portfolio candidates
+    --latest` 生成 2026-05-28 artifact，`best_profile=lower_rebalance_threshold_2pct`、`data_gate=OK`、`status=LIMITED`、`production_effect=none`；`aits
+    parameters shadow-backtest --latest --dry-run` 已引用 `portfolio_candidates` supporting
+    artifact 且 promotion 仍 rejected。2026-06-09: 从 VALIDATING 改回 IN_PROGRESS，原因：真实
+    2026-06-08 recovery 后 `portfolio candidates --latest` 已生成 `status=LIMITED`、`data_gate=OK`、`best_profile=softmax_mapping`
+    的新 artifact，且 shadow dry-run 已引用该 artifact；但完整 2026-06-08 daily-run 的 Dashboard/Reader
+    Brief 仍按 mtime 选中了较晚修改的 2026-06-05 FAILED candidate summary，展示为 `portfolio_candidates_status=FAILED`。2026-06-09:
+    从 IN_PROGRESS 改为 DONE，原因：Dashboard/Reader Brief selector 已修复为按 artifact 日期选择不晚于
+    report `as_of` 的最大日期；真实 2026-06-08 Dashboard candidate card 和 Reader Brief 均显示
+    `status=LIMITED`、`best_profile=softmax_mapping`、`data_gate=OK`，shadow dry-run
+    仍 `promotion_status=rejected`，production/broker/trading action 均为 false；focused
+    portfolio candidates pytest 10 passed，Dashboard/Reader Brief 相关 pytest 31 passed，最终全量
+    pytest 2272 passed，Ruff、compileall、docs freshness 和 diff check 通过。'
+  docs_links:
+  - docs/requirements/portfolio_construction_candidate_profiles_2026-05-30.md
+  terminal: true
+  raw_row_sha256: ae48e4722592fc90c6ceac5166157550b8c84aeff7934be2de1d5bf86d450d18
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8c2bcd156c8c53b9be8ba83294ab081355a7256978097872cbf04d506c8f3476

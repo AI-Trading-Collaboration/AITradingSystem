@@ -7,7 +7,7 @@
 - task id：`ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`
 - parent：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`
 - priority：`P0`
-- status：`COMPLETE_G2_4_PHASE_EXIT_HANDOFF_PENDING`（G2.3 / G2.4 `COMPLETE`）
+- status：`COMPLETE_HANDOFF_PASS_STOPPED_BEFORE_G2_5`（G2.3 / G2.4 `COMPLETE`）
 - owner：interface platform / architecture coordinator
 - dependency：ARCH-004G1 `COMPLETE`
 - production effect：`none`
@@ -19,9 +19,12 @@
   6386 passed`，Full另有2 skipped/643 warnings、946.63s，provenance/scheduler/telemetry/
   performance evidence均PASS。Module/test manifests=`978/1131`、direct writers=`858`、
   violations=`0`，deprecation inventory=`arch_004g_deprecation_inventory_4296af7c89bfd6eacd84`；
-  v16 partial duration seed绑定`6388 nodes / 1073 files`。当前只剩把本phase-exit source commit
-  提交推送并从该干净commit生成/验证/提交/推送handoff；在此之前正式ARCH-005 S0与G2.5仍锁定，
-  `next_slice_unblocked=false`、`production_effect=none`。
+  v16 partial duration seed绑定`6388 nodes / 1073 files`。Phase-exit source commit=`152f2d33`、
+  handoff commit=`770bf6ff`已推送；随后S0 entry复验发现Windows mixed-EOL worktree hash无法只凭
+  Git commit复算，已直接修正为`source_commit_git_blob_sha256`并以`f1045634`推送，未绕过校验。
+  `arch_005_bootstrap_handoff.v1`现可跨checkout复算且PASS；ARCH-004严格停在G2.5前，
+  `next_slice_unblocked=false`、`production_effect=none`。ARCH-005 S0/S1现已`BASELINE_DONE`；ARCH-004
+  继续停在G2.5前，等待owner新的显式恢复指令。
 
 ## 为什么先冻结 contract
 

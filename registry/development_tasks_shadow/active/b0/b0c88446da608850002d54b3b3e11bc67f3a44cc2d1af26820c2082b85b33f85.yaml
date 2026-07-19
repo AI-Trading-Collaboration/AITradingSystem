@@ -1,0 +1,96 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: PROD-005
+  title: null
+  domain: 趋势判断/规则治理 owner approval
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 项目 owner + 系统验证
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: '`GOV-001/GOV-002/GOV-003` 已有 rule card、rule
+    version 注入和受控 promotion/retirement 基础版；下一步需要 owner 对 production rule baseline、promotion
+    条件和 retirement 条件形成批准记录'
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 核心 production rule card 具备 owner approval、适用范围、验证证据、已知失败模式、rollback condition
+      和最后复核时间；未批准候选规则不得改变正式评分、仓位 gate、日报结论或回测 production 规则；日报、回测、decision snapshot
+      和 trace 能追溯本次运行使用的规则版本
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1501
+    row_sha256: aff58c3cb0ff85bcd4d1e4aaffd5dde2781196f8bd62b48cf8b7ffd2b3fc4e49
+    cell_count: 8
+    all_cells:
+    - PROD-005
+    - 趋势判断/规则治理 owner approval
+    - P1
+    - BLOCKED_OWNER_INPUT
+    - 项目 owner + 系统验证
+    - '`GOV-001/GOV-002/GOV-003` 已有 rule card、rule version 注入和受控 promotion/retirement
+      基础版；下一步需要 owner 对 production rule baseline、promotion 条件和 retirement 条件形成批准记录'
+    - 核心 production rule card 具备 owner approval、适用范围、验证证据、已知失败模式、rollback condition
+      和最后复核时间；未批准候选规则不得改变正式评分、仓位 gate、日报结论或回测 production 规则；日报、回测、decision snapshot
+      和 trace 能追溯本次运行使用的规则版本
+    - '2026-05-06: 从 `PROD-001` 拆出，原因：规则治理工程底座已完成，但真实批准流属于 owner 决策和长期治理，不应让 `PROD-001`
+      继续保持进行中。'
+    raw_line: '|PROD-005|趋势判断/规则治理 owner approval|P1|BLOCKED_OWNER_INPUT|项目 owner
+      + 系统验证|`GOV-001/GOV-002/GOV-003` 已有 rule card、rule version 注入和受控 promotion/retirement
+      基础版；下一步需要 owner 对 production rule baseline、promotion 条件和 retirement 条件形成批准记录|核心
+      production rule card 具备 owner approval、适用范围、验证证据、已知失败模式、rollback condition 和最后复核时间；未批准候选规则不得改变正式评分、仓位
+      gate、日报结论或回测 production 规则；日报、回测、decision snapshot 和 trace 能追溯本次运行使用的规则版本|2026-05-06:
+      从 `PROD-001` 拆出，原因：规则治理工程底座已完成，但真实批准流属于 owner 决策和长期治理，不应让 `PROD-001` 继续保持进行中。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-aff58c3cb0ff85bcd4d1e4aa
+  task_id: PROD-005
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P1
+    next_owner: 项目 owner + 系统验证
+    notes: '2026-05-06: 从 `PROD-001` 拆出，原因：规则治理工程底座已完成，但真实批准流属于 owner 决策和长期治理，不应让
+      `PROD-001` 继续保持进行中。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:aff58c3cb0ff85bcd4d1e4aaffd5dde2781196f8bd62b48cf8b7ffd2b3fc4e49
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - PROD-005
+  - 趋势判断/规则治理 owner approval
+  - P1
+  - BLOCKED_OWNER_INPUT
+  - 项目 owner + 系统验证
+  - '`GOV-001/GOV-002/GOV-003` 已有 rule card、rule version 注入和受控 promotion/retirement
+    基础版；下一步需要 owner 对 production rule baseline、promotion 条件和 retirement 条件形成批准记录'
+  - 核心 production rule card 具备 owner approval、适用范围、验证证据、已知失败模式、rollback condition
+    和最后复核时间；未批准候选规则不得改变正式评分、仓位 gate、日报结论或回测 production 规则；日报、回测、decision snapshot
+    和 trace 能追溯本次运行使用的规则版本
+  - '2026-05-06: 从 `PROD-001` 拆出，原因：规则治理工程底座已完成，但真实批准流属于 owner 决策和长期治理，不应让 `PROD-001`
+    继续保持进行中。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: aff58c3cb0ff85bcd4d1e4aaffd5dde2781196f8bd62b48cf8b7ffd2b3fc4e49
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 8c14a0be4a3d0f855a05321954a2591069586775bec8bdddaf44ad5ad011d7ba

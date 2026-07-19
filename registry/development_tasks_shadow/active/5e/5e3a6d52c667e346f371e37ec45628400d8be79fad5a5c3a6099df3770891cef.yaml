@@ -1,0 +1,98 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-004
+  title: null
+  domain: Architecture / post-freeze architecture v2 after TRADING-2438N
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner；若决定恢复则显式授权G2.5
+  requirement_refs:
+  - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
+  - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+  - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
+    handoff及ARCH-005 S0/S1均已PASS；既定技术依赖已满足，但handoff固定`next_slice_unblocked=false`，因此没有owner新指令不得进入G2.5。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 保持既有控制面、domain迁移与安全边界；后续恢复时继续G2.5及后续lane，最终通过daily/weekly/monthly parity、clean-clone、reproducibility、full
+      parallel pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1171
+    row_sha256: 28297ced51988a7a50e7cfb7d42a154e43756a12b268acd2d5537fc79cdc703e
+    cell_count: 8
+    all_cells:
+    - ARCH-004
+    - Architecture / post-freeze architecture v2 after TRADING-2438N
+    - P0
+    - BLOCKED_OWNER_INPUT
+    - project owner；若决定恢复则显式授权G2.5
+    - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
+      handoff及ARCH-005 S0/S1均已PASS；既定技术依赖已满足，但handoff固定`next_slice_unblocked=false`，因此没有owner新指令不得进入G2.5。
+    - 保持既有控制面、domain迁移与安全边界；后续恢复时继续G2.5及后续lane，最终通过daily/weekly/monthly parity、clean-clone、reproducibility、full
+      parallel pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
+    - 2026-07-19：S0/S1以869个task shadow、byte-identical views及fast/architecture/contract/reproducibility/full=`300/419/265/23/6394
+      passed`闭合。ARCH-004仍停在G2.5前，等待owner显式决定是否恢复；不自动续跑。
+    raw_line: '|ARCH-004|Architecture / post-freeze architecture v2 after TRADING-2438N|P0|BLOCKED_OWNER_INPUT|project
+      owner；若决定恢复则显式授权G2.5|详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
+      handoff及ARCH-005 S0/S1均已PASS；既定技术依赖已满足，但handoff固定`next_slice_unblocked=false`，因此没有owner新指令不得进入G2.5。|保持既有控制面、domain迁移与安全边界；后续恢复时继续G2.5及后续lane，最终通过daily/weekly/monthly
+      parity、clean-clone、reproducibility、full parallel pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。|2026-07-19：S0/S1以869个task
+      shadow、byte-identical views及fast/architecture/contract/reproducibility/full=`300/419/265/23/6394
+      passed`闭合。ARCH-004仍停在G2.5前，等待owner显式决定是否恢复；不自动续跑。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-28297ced51988a7a50e7cfb7
+  task_id: ARCH-004
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: project owner；若决定恢复则显式授权G2.5
+    notes: 2026-07-19：S0/S1以869个task shadow、byte-identical views及fast/architecture/contract/reproducibility/full=`300/419/265/23/6394
+      passed`闭合。ARCH-004仍停在G2.5前，等待owner显式决定是否恢复；不自动续跑。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:28297ced51988a7a50e7cfb7d42a154e43756a12b268acd2d5537fc79cdc703e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004
+  - Architecture / post-freeze architecture v2 after TRADING-2438N
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - project owner；若决定恢复则显式授权G2.5
+  - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
+    handoff及ARCH-005 S0/S1均已PASS；既定技术依赖已满足，但handoff固定`next_slice_unblocked=false`，因此没有owner新指令不得进入G2.5。
+  - 保持既有控制面、domain迁移与安全边界；后续恢复时继续G2.5及后续lane，最终通过daily/weekly/monthly parity、clean-clone、reproducibility、full
+    parallel pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
+  - 2026-07-19：S0/S1以869个task shadow、byte-identical views及fast/architecture/contract/reproducibility/full=`300/419/265/23/6394
+    passed`闭合。ARCH-004仍停在G2.5前，等待owner显式决定是否恢复；不自动续跑。
+  docs_links:
+  - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
+  - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+  - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+  terminal: false
+  raw_row_sha256: 28297ced51988a7a50e7cfb7d42a154e43756a12b268acd2d5537fc79cdc703e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d4a82d79b9c9f18cd470cd0bcfdce7df2e5abdb969625ad0f80d92206daf78fc

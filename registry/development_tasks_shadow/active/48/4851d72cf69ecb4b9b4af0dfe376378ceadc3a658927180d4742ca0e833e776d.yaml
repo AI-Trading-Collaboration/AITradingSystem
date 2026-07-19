@@ -1,0 +1,135 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-006A
+  title: null
+  domain: 交易执行/paper signal quality hardening
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/paper_signal_quality_hardening_2026-05-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/paper_signal_quality_hardening_2026-05-17.md`；paper
+    signal quality 状态语义、policy snapshot、gate explanation、daily-independent warning、dashboard
+    只读摘要、安全边界测试和当前复验证据已完成；剩余 repo-wide formatter baseline 已由 `DEV-001` 归档完成
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`evaluation_status` / `quality_status` 只允许 `INSUFFICIENT_DATA`、`OBSERVE_ONLY`、`PROMISING_BUT_LIMITED`、`LOW_DATA_QUALITY`、`UNRELIABLE`；JSON
+      顶层包含 `policy_id`、`policy_version`、`production_effect=none` 和 thresholds snapshot；Markdown
+      显示 policy version、关键 thresholds、evaluation gate explanation、blocked_by explanation
+      和 `DAILY_INDEPENDENT_ONLY` / `PAPER_ONLY_SIMULATION` warning；dashboard 只读展示摘要，不展示完整长表，不触发
+      runner/replay/broker；目标 pytest、Ruff 和触达文件 Black check 通过'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1150
+    row_sha256: 7cc67194a0c293eba8562e800888d12cdb04f030a22d9ee1f62225a6592451c0
+    cell_count: 8
+    all_cells:
+    - TRADING-006A
+    - 交易执行/paper signal quality hardening
+    - P0
+    - BASELINE_DONE
+    - 系统验证
+    - 详细拆解见 `docs/requirements/paper_signal_quality_hardening_2026-05-17.md`；paper
+      signal quality 状态语义、policy snapshot、gate explanation、daily-independent warning、dashboard
+      只读摘要、安全边界测试和当前复验证据已完成；剩余 repo-wide formatter baseline 已由 `DEV-001` 归档完成
+    - '`evaluation_status` / `quality_status` 只允许 `INSUFFICIENT_DATA`、`OBSERVE_ONLY`、`PROMISING_BUT_LIMITED`、`LOW_DATA_QUALITY`、`UNRELIABLE`；JSON
+      顶层包含 `policy_id`、`policy_version`、`production_effect=none` 和 thresholds snapshot；Markdown
+      显示 policy version、关键 thresholds、evaluation gate explanation、blocked_by explanation
+      和 `DAILY_INDEPENDENT_ONLY` / `PAPER_ONLY_SIMULATION` warning；dashboard 只读展示摘要，不展示完整长表，不触发
+      runner/replay/broker；目标 pytest、Ruff 和触达文件 Black check 通过'
+    - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求加固 TRADING-006 的状态语义、policy 暴露、evaluation
+      gate 解释、daily-independent warning 和测试边界。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成状态语义收紧、policy
+      snapshot、gate explanation、daily-independent warning、dashboard 只读摘要和安全边界测试；目标测试、全量测试、Ruff
+      和目标文件 Black check 通过，全仓 Black 受既有无关 baseline 阻断。2026-06-09: 从 VALIDATING 改为
+      BASELINE_DONE，原因：本轮 isolated smoke 和字段级复核确认 allowed status、policy snapshot、warnings、dashboard
+      只读摘要和 `production_effect=none` 安全边界均保持；forbidden live / promotion 语义只出现在测试禁止清单中；目标
+      paper signal quality + dashboard pytest 25 passed，Ruff 和触达文件 Black check 通过；剩余全仓
+      Black baseline 已登记为 `DEV-001`。'
+    raw_line: '|TRADING-006A|交易执行/paper signal quality hardening|P0|BASELINE_DONE|系统验证|详细拆解见
+      `docs/requirements/paper_signal_quality_hardening_2026-05-17.md`；paper signal
+      quality 状态语义、policy snapshot、gate explanation、daily-independent warning、dashboard
+      只读摘要、安全边界测试和当前复验证据已完成；剩余 repo-wide formatter baseline 已由 `DEV-001` 归档完成|`evaluation_status`
+      / `quality_status` 只允许 `INSUFFICIENT_DATA`、`OBSERVE_ONLY`、`PROMISING_BUT_LIMITED`、`LOW_DATA_QUALITY`、`UNRELIABLE`；JSON
+      顶层包含 `policy_id`、`policy_version`、`production_effect=none` 和 thresholds snapshot；Markdown
+      显示 policy version、关键 thresholds、evaluation gate explanation、blocked_by explanation
+      和 `DAILY_INDEPENDENT_ONLY` / `PAPER_ONLY_SIMULATION` warning；dashboard 只读展示摘要，不展示完整长表，不触发
+      runner/replay/broker；目标 pytest、Ruff 和触达文件 Black check 通过|2026-05-17: 新增并进入 IN_PROGRESS，原因：owner
+      要求加固 TRADING-006 的状态语义、policy 暴露、evaluation gate 解释、daily-independent warning
+      和测试边界。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成状态语义收紧、policy snapshot、gate
+      explanation、daily-independent warning、dashboard 只读摘要和安全边界测试；目标测试、全量测试、Ruff 和目标文件
+      Black check 通过，全仓 Black 受既有无关 baseline 阻断。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮
+      isolated smoke 和字段级复核确认 allowed status、policy snapshot、warnings、dashboard 只读摘要和
+      `production_effect=none` 安全边界均保持；forbidden live / promotion 语义只出现在测试禁止清单中；目标
+      paper signal quality + dashboard pytest 25 passed，Ruff 和触达文件 Black check 通过；剩余全仓
+      Black baseline 已登记为 `DEV-001`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7cc67194a0c293eba8562e80
+  task_id: TRADING-006A
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求加固 TRADING-006 的状态语义、policy 暴露、evaluation
+      gate 解释、daily-independent warning 和测试边界。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成状态语义收紧、policy
+      snapshot、gate explanation、daily-independent warning、dashboard 只读摘要和安全边界测试；目标测试、全量测试、Ruff
+      和目标文件 Black check 通过，全仓 Black 受既有无关 baseline 阻断。2026-06-09: 从 VALIDATING 改为
+      BASELINE_DONE，原因：本轮 isolated smoke 和字段级复核确认 allowed status、policy snapshot、warnings、dashboard
+      只读摘要和 `production_effect=none` 安全边界均保持；forbidden live / promotion 语义只出现在测试禁止清单中；目标
+      paper signal quality + dashboard pytest 25 passed，Ruff 和触达文件 Black check 通过；剩余全仓
+      Black baseline 已登记为 `DEV-001`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7cc67194a0c293eba8562e800888d12cdb04f030a22d9ee1f62225a6592451c0
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-006A
+  - 交易执行/paper signal quality hardening
+  - P0
+  - BASELINE_DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/paper_signal_quality_hardening_2026-05-17.md`；paper signal
+    quality 状态语义、policy snapshot、gate explanation、daily-independent warning、dashboard
+    只读摘要、安全边界测试和当前复验证据已完成；剩余 repo-wide formatter baseline 已由 `DEV-001` 归档完成
+  - '`evaluation_status` / `quality_status` 只允许 `INSUFFICIENT_DATA`、`OBSERVE_ONLY`、`PROMISING_BUT_LIMITED`、`LOW_DATA_QUALITY`、`UNRELIABLE`；JSON
+    顶层包含 `policy_id`、`policy_version`、`production_effect=none` 和 thresholds snapshot；Markdown
+    显示 policy version、关键 thresholds、evaluation gate explanation、blocked_by explanation
+    和 `DAILY_INDEPENDENT_ONLY` / `PAPER_ONLY_SIMULATION` warning；dashboard 只读展示摘要，不展示完整长表，不触发
+    runner/replay/broker；目标 pytest、Ruff 和触达文件 Black check 通过'
+  - '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求加固 TRADING-006 的状态语义、policy 暴露、evaluation
+    gate 解释、daily-independent warning 和测试边界。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成状态语义收紧、policy
+    snapshot、gate explanation、daily-independent warning、dashboard 只读摘要和安全边界测试；目标测试、全量测试、Ruff
+    和目标文件 Black check 通过，全仓 Black 受既有无关 baseline 阻断。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮
+    isolated smoke 和字段级复核确认 allowed status、policy snapshot、warnings、dashboard 只读摘要和
+    `production_effect=none` 安全边界均保持；forbidden live / promotion 语义只出现在测试禁止清单中；目标 paper
+    signal quality + dashboard pytest 25 passed，Ruff 和触达文件 Black check 通过；剩余全仓 Black
+    baseline 已登记为 `DEV-001`。'
+  docs_links:
+  - docs/requirements/paper_signal_quality_hardening_2026-05-17.md
+  terminal: false
+  raw_row_sha256: 7cc67194a0c293eba8562e800888d12cdb04f030a22d9ee1f62225a6592451c0
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: af363ad7f85c4c4c0ac8135d061f79a10bd39f305d3ec121164ef0e9711a08b5

@@ -1,0 +1,103 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-486_SECRET_HYGIENE_GENERATED_REPORT_FALSE_POSITIVE
+  title: null
+  domain: Operations/secret hygiene generated report false positive
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 由 TRADING-499A 完成分类和修复；active operations
+    blocker cleared；若未来出现新的 generated metadata carrier，必须新增精确上下文测试后再扩展 allowlist
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 同一 2026-06-18 artifact 集合 rerun secret hygiene 不再因 generated metadata fail；回归测试证明真实
+      secret value 仍 fail closed；报告记录分类、风险、allowlist 范围和安全边界；不得降低真实 secret 检测，不得生产
+      mutation
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 183
+    row_sha256: f8a574d1ff19a3f71d5c2110551fd6482be6773b9d5a5c2c0e70991536a5da3c
+    cell_count: 8
+    all_cells:
+    - TRADING-486_SECRET_HYGIENE_GENERATED_REPORT_FALSE_POSITIVE
+    - Operations/secret hygiene generated report false positive
+    - P0
+    - DONE
+    - 项目 owner 后续复核
+    - 由 TRADING-499A 完成分类和修复；active operations blocker cleared；若未来出现新的 generated metadata
+      carrier，必须新增精确上下文测试后再扩展 allowlist
+    - 同一 2026-06-18 artifact 集合 rerun secret hygiene 不再因 generated metadata fail；回归测试证明真实
+      secret value 仍 fail closed；报告记录分类、风险、allowlist 范围和安全边界；不得降低真实 secret 检测，不得生产
+      mutation
+    - '2026-06-19: DONE；2026-06-18 daily-run 的 12 个 secret hygiene errors 均来自 generated
+      governance report metadata source-location token 或其 Reader Brief consistency
+      嵌入，不是完整 credential value。修复后默认 secret scan PASS，生产影响 `none`；未删除 artifacts、未写
+      production weights、未触发 broker/order。'
+    raw_line: '|TRADING-486_SECRET_HYGIENE_GENERATED_REPORT_FALSE_POSITIVE|Operations/secret
+      hygiene generated report false positive|P0|DONE|项目 owner 后续复核|由 TRADING-499A
+      完成分类和修复；active operations blocker cleared；若未来出现新的 generated metadata carrier，必须新增精确上下文测试后再扩展
+      allowlist|同一 2026-06-18 artifact 集合 rerun secret hygiene 不再因 generated metadata
+      fail；回归测试证明真实 secret value 仍 fail closed；报告记录分类、风险、allowlist 范围和安全边界；不得降低真实
+      secret 检测，不得生产 mutation|2026-06-19: DONE；2026-06-18 daily-run 的 12 个 secret
+      hygiene errors 均来自 generated governance report metadata source-location token
+      或其 Reader Brief consistency 嵌入，不是完整 credential value。修复后默认 secret scan PASS，生产影响
+      `none`；未删除 artifacts、未写 production weights、未触发 broker/order。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f8a574d1ff19a3f71d5c2110
+  task_id: TRADING-486_SECRET_HYGIENE_GENERATED_REPORT_FALSE_POSITIVE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核
+    notes: '2026-06-19: DONE；2026-06-18 daily-run 的 12 个 secret hygiene errors 均来自
+      generated governance report metadata source-location token 或其 Reader Brief consistency
+      嵌入，不是完整 credential value。修复后默认 secret scan PASS，生产影响 `none`；未删除 artifacts、未写
+      production weights、未触发 broker/order。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f8a574d1ff19a3f71d5c2110551fd6482be6773b9d5a5c2c0e70991536a5da3c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-486_SECRET_HYGIENE_GENERATED_REPORT_FALSE_POSITIVE
+  - Operations/secret hygiene generated report false positive
+  - P0
+  - DONE
+  - 项目 owner 后续复核
+  - 由 TRADING-499A 完成分类和修复；active operations blocker cleared；若未来出现新的 generated metadata
+    carrier，必须新增精确上下文测试后再扩展 allowlist
+  - 同一 2026-06-18 artifact 集合 rerun secret hygiene 不再因 generated metadata fail；回归测试证明真实
+    secret value 仍 fail closed；报告记录分类、风险、allowlist 范围和安全边界；不得降低真实 secret 检测，不得生产 mutation
+  - '2026-06-19: DONE；2026-06-18 daily-run 的 12 个 secret hygiene errors 均来自 generated
+    governance report metadata source-location token 或其 Reader Brief consistency 嵌入，不是完整
+    credential value。修复后默认 secret scan PASS，生产影响 `none`；未删除 artifacts、未写 production
+    weights、未触发 broker/order。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: f8a574d1ff19a3f71d5c2110551fd6482be6773b9d5a5c2c0e70991536a5da3c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3be62909ceb933e5e9e3739216f67d8a320444cb50b86505b5d41de0893d9a8f

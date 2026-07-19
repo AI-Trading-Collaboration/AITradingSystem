@@ -1,0 +1,115 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-005
+  title: null
+  domain: 数据源/Marketstack 行情第二来源
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/marketstack_second_price_source_2026-05-05.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: owner 已订阅 Marketstack Basic 并配置 `MARKETSTACK_API_KEY`；低成本正式接入已完成，详细记录见
+    `docs/requirements/marketstack_second_price_source_2026-05-05.md`；完整生产级覆盖仍受 Marketstack
+    Basic `^VIX` 缺失和部分 ETF adjusted close 分红复权口径限制
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits download-data` 写入独立 `data/raw/prices_marketstack_daily.csv` 与 manifest
+      记录；`aits validate-data` 校验 Marketstack schema/覆盖/新鲜度/重复键/异常值，并比较主缓存与第二来源 raw
+      `close` 价差和 adjusted close 口径差异；`data_sources health` 中 `market_prices` 在 Yahoo
+      + Marketstack 低成本组合下显示 `COVERED_BASELINE`；报告明确 Marketstack 只做第二来源核验，不自动修正主价格；API
+      key 不进入报告、manifest 或错误输出'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1127
+    row_sha256: 57a430fffd67215749ef57b4a4bbf3b8da108f922bd1e692ad1f519a5b680994
+    cell_count: 8
+    all_cells:
+    - DATA-005
+    - 数据源/Marketstack 行情第二来源
+    - P1
+    - BASELINE_DONE
+    - 系统实现
+    - owner 已订阅 Marketstack Basic 并配置 `MARKETSTACK_API_KEY`；低成本正式接入已完成，详细记录见 `docs/requirements/marketstack_second_price_source_2026-05-05.md`；完整生产级覆盖仍受
+      Marketstack Basic `^VIX` 缺失和部分 ETF adjusted close 分红复权口径限制
+    - '`aits download-data` 写入独立 `data/raw/prices_marketstack_daily.csv` 与 manifest
+      记录；`aits validate-data` 校验 Marketstack schema/覆盖/新鲜度/重复键/异常值，并比较主缓存与第二来源 raw
+      `close` 价差和 adjusted close 口径差异；`data_sources health` 中 `market_prices` 在 Yahoo
+      + Marketstack 低成本组合下显示 `COVERED_BASELINE`；报告明确 Marketstack 只做第二来源核验，不自动修正主价格；API
+      key 不进入报告、manifest 或错误输出'
+    - '2026-05-05: 新增并进入实现，原因：owner 已购买 Marketstack Basic，希望正式接入项目；Marketstack Basic
+      不覆盖 `^VIX` 等所有 Yahoo 宏观代理，实施中必须显式记录覆盖限制，不能伪造第二来源。2026-05-05: 从 IN_PROGRESS 改为
+      BASELINE_DONE，原因：已实现 provider、独立缓存、manifest、质量门禁、数据源目录、系统流图、README 和测试；真实烟测下载成功，`validate-data`
+      为 `PASS_WITH_WARNINGS`，警告来自 ETF adjusted close 分红复权口径差异，raw close 核验通过。'
+    raw_line: '|DATA-005|数据源/Marketstack 行情第二来源|P1|BASELINE_DONE|系统实现|owner 已订阅 Marketstack
+      Basic 并配置 `MARKETSTACK_API_KEY`；低成本正式接入已完成，详细记录见 `docs/requirements/marketstack_second_price_source_2026-05-05.md`；完整生产级覆盖仍受
+      Marketstack Basic `^VIX` 缺失和部分 ETF adjusted close 分红复权口径限制|`aits download-data`
+      写入独立 `data/raw/prices_marketstack_daily.csv` 与 manifest 记录；`aits validate-data`
+      校验 Marketstack schema/覆盖/新鲜度/重复键/异常值，并比较主缓存与第二来源 raw `close` 价差和 adjusted close
+      口径差异；`data_sources health` 中 `market_prices` 在 Yahoo + Marketstack 低成本组合下显示
+      `COVERED_BASELINE`；报告明确 Marketstack 只做第二来源核验，不自动修正主价格；API key 不进入报告、manifest
+      或错误输出|2026-05-05: 新增并进入实现，原因：owner 已购买 Marketstack Basic，希望正式接入项目；Marketstack
+      Basic 不覆盖 `^VIX` 等所有 Yahoo 宏观代理，实施中必须显式记录覆盖限制，不能伪造第二来源。2026-05-05: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：已实现 provider、独立缓存、manifest、质量门禁、数据源目录、系统流图、README 和测试；真实烟测下载成功，`validate-data`
+      为 `PASS_WITH_WARNINGS`，警告来自 ETF adjusted close 分红复权口径差异，raw close 核验通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-57a430fffd67215749ef57b4
+  task_id: DATA-005
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增并进入实现，原因：owner 已购买 Marketstack Basic，希望正式接入项目；Marketstack
+      Basic 不覆盖 `^VIX` 等所有 Yahoo 宏观代理，实施中必须显式记录覆盖限制，不能伪造第二来源。2026-05-05: 从 IN_PROGRESS
+      改为 BASELINE_DONE，原因：已实现 provider、独立缓存、manifest、质量门禁、数据源目录、系统流图、README 和测试；真实烟测下载成功，`validate-data`
+      为 `PASS_WITH_WARNINGS`，警告来自 ETF adjusted close 分红复权口径差异，raw close 核验通过。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:57a430fffd67215749ef57b4a4bbf3b8da108f922bd1e692ad1f519a5b680994
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-005
+  - 数据源/Marketstack 行情第二来源
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - owner 已订阅 Marketstack Basic 并配置 `MARKETSTACK_API_KEY`；低成本正式接入已完成，详细记录见 `docs/requirements/marketstack_second_price_source_2026-05-05.md`；完整生产级覆盖仍受
+    Marketstack Basic `^VIX` 缺失和部分 ETF adjusted close 分红复权口径限制
+  - '`aits download-data` 写入独立 `data/raw/prices_marketstack_daily.csv` 与 manifest
+    记录；`aits validate-data` 校验 Marketstack schema/覆盖/新鲜度/重复键/异常值，并比较主缓存与第二来源 raw `close`
+    价差和 adjusted close 口径差异；`data_sources health` 中 `market_prices` 在 Yahoo + Marketstack
+    低成本组合下显示 `COVERED_BASELINE`；报告明确 Marketstack 只做第二来源核验，不自动修正主价格；API key 不进入报告、manifest
+    或错误输出'
+  - '2026-05-05: 新增并进入实现，原因：owner 已购买 Marketstack Basic，希望正式接入项目；Marketstack Basic
+    不覆盖 `^VIX` 等所有 Yahoo 宏观代理，实施中必须显式记录覆盖限制，不能伪造第二来源。2026-05-05: 从 IN_PROGRESS 改为
+    BASELINE_DONE，原因：已实现 provider、独立缓存、manifest、质量门禁、数据源目录、系统流图、README 和测试；真实烟测下载成功，`validate-data`
+    为 `PASS_WITH_WARNINGS`，警告来自 ETF adjusted close 分红复权口径差异，raw close 核验通过。'
+  docs_links:
+  - docs/requirements/marketstack_second_price_source_2026-05-05.md
+  terminal: false
+  raw_row_sha256: 57a430fffd67215749ef57b4a4bbf3b8da108f922bd1e692ad1f519a5b680994
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: deef3bc0d85261bec2bdd593850e3e87e938f3ca256f7c8b09f3830d1f10cae3
