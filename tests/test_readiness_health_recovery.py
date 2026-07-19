@@ -128,16 +128,11 @@ def test_readiness_health_recovery_cli_run_report_and_validate(
         ],
     )
     assert run.exit_code == 0
-    expected_status = (
-        "readiness_health_recovery_status="
-        "PAPER_SHADOW_CAN_RESUME_NORMAL_OBSERVATION"
-    )
+    expected_status = "readiness_health_recovery_status=PAPER_SHADOW_CAN_RESUME_NORMAL_OBSERVATION"
     assert expected_status in run.output
     assert "promotion_board_allowed=false" in run.output
     recovery_id = next(
-        line.split("=", 1)[1]
-        for line in run.output.splitlines()
-        if line.startswith("recovery_id=")
+        line.split("=", 1)[1] for line in run.output.splitlines() if line.startswith("recovery_id=")
     )
 
     report = CliRunner().invoke(
@@ -226,7 +221,8 @@ def _patch_chain(
                 "report_type": "etf_dynamic_v3_shadow_continuation_readiness_report",
                 "readiness_id": readiness_id,
                 "shadow_continuation_readiness": readiness_status,
-                "safe_to_continue_shadow": readiness_status in {
+                "safe_to_continue_shadow": readiness_status
+                in {
                     "READY_TO_CONTINUE",
                     "READY_WITH_WARNINGS",
                 },
@@ -254,7 +250,8 @@ def _patch_chain(
                 "report_type": "etf_dynamic_v3_paper_shadow_health_report",
                 "health_id": health_id,
                 "paper_shadow_health_status": health_status,
-                "safe_to_continue_shadow": health_status in {
+                "safe_to_continue_shadow": health_status
+                in {
                     "HEALTHY",
                     "HEALTHY_WITH_WARNINGS",
                 },
@@ -274,6 +271,66 @@ def _patch_chain(
         fake_readiness,
     )
     monkeypatch.setattr(recovery.health, "run_paper_shadow_health_report", fake_health)
+
+    def fake_staleness_payload(**kwargs):
+        result = fake_staleness(**kwargs)
+        return {
+            **result["manifest"],
+            "monitor_id": result["monitor_id"],
+            "evidence_staleness_report": result["evidence_staleness_report"],
+            "evidence_staleness_validation": result["evidence_staleness_validation"],
+        }
+
+    def fake_readiness_payload(**kwargs):
+        result = fake_readiness(**kwargs)
+        return {
+            **result["manifest"],
+            "readiness_id": result["readiness_id"],
+            "shadow_continuation_readiness_report": result["shadow_continuation_readiness_report"],
+            "shadow_continuation_readiness_validation": result[
+                "shadow_continuation_readiness_validation"
+            ],
+        }
+
+    def fake_health_payload(**kwargs):
+        result = fake_health(**kwargs)
+        return {
+            **result["manifest"],
+            "health_id": result["health_id"],
+            "paper_shadow_health_report": result["paper_shadow_health_report"],
+            "paper_shadow_health_validation": result["paper_shadow_health_validation"],
+        }
+
+    monkeypatch.setattr(
+        recovery.readiness,
+        "evidence_staleness_monitor_report_payload",
+        fake_staleness_payload,
+    )
+    monkeypatch.setattr(
+        recovery.readiness,
+        "shadow_continuation_readiness_report_payload",
+        fake_readiness_payload,
+    )
+    monkeypatch.setattr(
+        recovery.health,
+        "paper_shadow_health_report_payload",
+        fake_health_payload,
+    )
+    monkeypatch.setattr(
+        recovery.readiness,
+        "validate_evidence_staleness_monitor_artifact",
+        lambda **kwargs: _validation(str(kwargs["monitor_id"])),
+    )
+    monkeypatch.setattr(
+        recovery.readiness,
+        "validate_shadow_continuation_readiness_artifact",
+        lambda **kwargs: _validation(str(kwargs["readiness_id"])),
+    )
+    monkeypatch.setattr(
+        recovery.health,
+        "validate_paper_shadow_health_artifact",
+        lambda **kwargs: _validation(str(kwargs["health_id"])),
+    )
 
 
 def _validation(artifact_id: str) -> dict[str, object]:

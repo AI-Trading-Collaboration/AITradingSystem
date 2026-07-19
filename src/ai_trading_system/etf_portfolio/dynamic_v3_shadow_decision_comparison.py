@@ -15,6 +15,7 @@ from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 DEFAULT_SHADOW_DECISION_COMPARISON_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shadow_decision_comparison"
 )
+SHADOW_DECISION_COMPARISON_INPUT_SCHEMA = "shadow_decision_comparison_input_snapshot.v2"
 SHADOW_DECISION_COMPARISON_STATUSES = (
     "DECISION_COMPARISON_COMPLETE",
     "DECISION_COMPARISON_WITH_WARNINGS",
@@ -248,6 +249,9 @@ def run_shadow_decision_comparison(
         "shadow_decision_comparison_manifest_path": str(
             root / "shadow_decision_comparison_manifest.json"
         ),
+        "shadow_decision_comparison_input_snapshot_path": str(
+            root / "shadow_decision_comparison_input_snapshot.json"
+        ),
         "shadow_decision_comparison_report_path": str(
             root / "shadow_decision_comparison_report.json"
         ),
@@ -259,6 +263,21 @@ def run_shadow_decision_comparison(
         **SHADOW_DECISION_COMPARISON_SAFETY,
     }
     reader = render_shadow_decision_comparison_reader_brief(report)
+    input_snapshot = {
+        "schema_version": SHADOW_DECISION_COMPARISON_INPUT_SCHEMA,
+        "comparison_id": root.name,
+        "generated_at": generated.isoformat(),
+        "readiness_dir": str(readiness_dir),
+        "weekly_review_dir": str(weekly_review_dir),
+        "paper_shadow_health_dir": str(paper_shadow_health_dir),
+        "current_source": current_source,
+        "previous_source": previous_source,
+        "current_state": current_state,
+        "previous_state": previous_state,
+    }
+    input_snapshot_path = root / "shadow_decision_comparison_input_snapshot.json"
+    st._write_json(input_snapshot_path, input_snapshot)
+    manifest["input_snapshot_sha256"] = st._file_sha256(input_snapshot_path)
     st._write_json(root / "shadow_decision_comparison_manifest.json", manifest)
     st._write_json(root / "shadow_decision_comparison_report.json", report)
     st._write_text(
@@ -324,6 +343,9 @@ def validate_shadow_decision_comparison_artifact(
     root = output_dir / comparison_id
     manifest = st._read_optional_json(root / "shadow_decision_comparison_manifest.json") or {}
     report = st._read_optional_json(root / "shadow_decision_comparison_report.json") or {}
+    input_snapshot = (
+        st._read_optional_json(root / "shadow_decision_comparison_input_snapshot.json") or {}
+    )
     reader = (
         (root / "reader_brief_section.md").read_text(encoding="utf-8")
         if (root / "reader_brief_section.md").exists()
@@ -336,6 +358,7 @@ def validate_shadow_decision_comparison_artifact(
         root,
         (
             "shadow_decision_comparison_manifest.json",
+            "shadow_decision_comparison_input_snapshot.json",
             "shadow_decision_comparison_report.json",
             "shadow_decision_comparison_report.md",
             "reader_brief_section.md",
@@ -344,10 +367,25 @@ def validate_shadow_decision_comparison_artifact(
     checks.extend(
         [
             st._check(
+                "input_snapshot_schema",
+                input_snapshot.get("schema_version") == SHADOW_DECISION_COMPARISON_INPUT_SCHEMA,
+                "",
+            ),
+            st._check(
+                "input_snapshot_id",
+                input_snapshot.get("comparison_id") == comparison_id,
+                "",
+            ),
+            st._check(
+                "input_snapshot_sha256_matches",
+                bool(_text(manifest.get("input_snapshot_sha256")))
+                and manifest.get("input_snapshot_sha256")
+                == st._file_sha256(root / "shadow_decision_comparison_input_snapshot.json"),
+                "",
+            ),
+            st._check(
                 "manifest_report_id_match",
-                manifest.get("comparison_id")
-                == report.get("comparison_id")
-                == comparison_id,
+                manifest.get("comparison_id") == report.get("comparison_id") == comparison_id,
                 "",
             ),
             st._check(
@@ -425,6 +463,100 @@ def validate_shadow_decision_comparison_artifact(
                 "",
             ),
             st._check("broker_forbidden", st._payload_safe(manifest, report), ""),
+        ]
+    )
+    snapshot_current = _mapping(input_snapshot.get("current_source"))
+    snapshot_previous = _mapping(input_snapshot.get("previous_source"))
+    readiness_dir = Path(_text(input_snapshot.get("readiness_dir")))
+    weekly_review_dir = Path(_text(input_snapshot.get("weekly_review_dir")))
+    health_dir = Path(_text(input_snapshot.get("paper_shadow_health_dir")))
+    try:
+        live_current = (
+            _readiness_source(
+                readiness_id=_text(snapshot_current.get("artifact_id")),
+                latest=False,
+                output_dir=readiness_dir,
+            )
+            if snapshot_current.get("exists") is True
+            else snapshot_current
+        )
+        live_previous = (
+            _readiness_source(
+                readiness_id=_text(snapshot_previous.get("artifact_id")),
+                latest=False,
+                output_dir=readiness_dir,
+            )
+            if snapshot_previous.get("exists") is True
+            else snapshot_previous
+        )
+        live_current_state = _decision_state(
+            live_current,
+            weekly_review_dir=weekly_review_dir,
+            paper_shadow_health_dir=health_dir,
+        )
+        live_previous_state = _decision_state(
+            live_previous,
+            weekly_review_dir=weekly_review_dir,
+            paper_shadow_health_dir=health_dir,
+        )
+    except (OSError, ValueError):
+        live_current = {}
+        live_previous = {}
+        live_current_state = {}
+        live_previous_state = {}
+    checks.extend(
+        [
+            st._check(
+                "current_source_matches_live",
+                live_current == snapshot_current,
+                "",
+            ),
+            st._check(
+                "previous_source_matches_live",
+                live_previous == snapshot_previous,
+                "",
+            ),
+            st._check(
+                "current_state_matches_live",
+                live_current_state == _mapping(input_snapshot.get("current_state"))
+                and live_current_state == current_state,
+                "",
+            ),
+            st._check(
+                "previous_state_matches_live",
+                live_previous_state == _mapping(input_snapshot.get("previous_state"))
+                and live_previous_state == previous_state,
+                "",
+            ),
+            st._check(
+                "source_lineage_consistent",
+                snapshot_current.get("exists") is not True
+                or snapshot_previous.get("exists") is not True
+                or live_current_state.get("candidate")
+                == live_previous_state.get("candidate")
+                == report.get("candidate"),
+                "",
+            ),
+            st._check(
+                "source_chronology_valid",
+                snapshot_current.get("exists") is not True
+                or _timestamp_not_after(
+                    _text(live_current_state.get("generated_at")),
+                    _text(report.get("generated_at")),
+                ),
+                "",
+            ),
+            st._check(
+                "report_exact_rebuild",
+                (root / "shadow_decision_comparison_report.md").read_text(encoding="utf-8")
+                == render_shadow_decision_comparison_report(manifest, report),
+                "",
+            ),
+            st._check(
+                "reader_exact_rebuild",
+                reader == render_shadow_decision_comparison_reader_brief(report),
+                "",
+            ),
         ]
     )
     validation = st._validation_payload(
@@ -554,7 +686,11 @@ def _readiness_source(
             f"shadow continuation readiness missing: {exc}",
         )
     report = _mapping(payload.get("shadow_continuation_readiness_report"))
-    validation = _mapping(payload.get("shadow_continuation_readiness_validation"))
+    validation = readiness.validate_shadow_continuation_readiness_artifact(
+        readiness_id=_text(payload.get("readiness_id")),
+        output_dir=output_dir,
+        write_output=False,
+    )
     return _source(
         "shadow_continuation_readiness",
         exists=True,
@@ -670,9 +806,7 @@ def _decision_state(
             ),
         ),
     )
-    weekly_drift_trend = _mapping(weekly_review.get("summary")).get(
-        "drift_severity_trend"
-    )
+    weekly_drift_trend = _mapping(weekly_review.get("summary")).get("drift_severity_trend")
     weekly_drift_status = (
         _mapping(weekly_drift_trend).get("max_severity")
         if isinstance(weekly_drift_trend, Mapping)
@@ -840,9 +974,7 @@ def _change_classification(
     current_readiness = _text(current_state.get("readiness_status"))
     if not _texts(delta_summary.get("changed_fields")):
         return "NO_CHANGE"
-    if current_readiness.startswith("BLOCKED_") or (
-        previous_safe and not current_safe
-    ):
+    if current_readiness.startswith("BLOCKED_") or (previous_safe and not current_safe):
         return "BLOCKED"
     if not previous_safe and current_safe:
         return "RECOVERED"
@@ -1121,6 +1253,12 @@ def _parse_optional_datetime(value: Any) -> datetime | None:
     except ValueError:
         return None
     return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=UTC)
+
+
+def _timestamp_not_after(source_value: str, artifact_value: str) -> bool:
+    source = _parse_optional_datetime(source_value)
+    artifact = _parse_optional_datetime(artifact_value)
+    return source is not None and artifact is not None and source <= artifact
 
 
 def _markdown_text(value: Any) -> str:

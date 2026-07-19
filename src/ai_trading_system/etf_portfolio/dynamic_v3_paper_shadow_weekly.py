@@ -12,11 +12,15 @@ from ai_trading_system.etf_portfolio import (
     dynamic_v3_signal_input_completeness as signal_inputs,
 )
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
 DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_weekly_review"
 )
+PAPER_SHADOW_WEEKLY_INPUT_SCHEMA = "paper_shadow_weekly_input_snapshot.v2"
 WEEKLY_DECISIONS = ("CONTINUE", "WATCH", "RETURN_TO_RESEARCH", "REJECT")
 WEEKLY_COVERAGE_CLASSIFICATIONS = (
     "FULL_WEEK_REVIEW",
@@ -123,6 +127,7 @@ PAPER_SHADOW_WEEKLY_SAFETY = {
 }
 
 
+@with_artifact_validation_session
 def build_paper_shadow_weekly_review(
     *,
     candidate: str,
@@ -162,9 +167,7 @@ def build_paper_shadow_weekly_review(
     resolved_contract_id = (
         contract_id
         or _first_text(
-            _mapping(payload.get("paper_shadow_daily_observation")).get(
-                "source_contract_id"
-            )
+            _mapping(payload.get("paper_shadow_daily_observation")).get("source_contract_id")
             for payload in daily_payloads
         )
         or None
@@ -184,6 +187,48 @@ def build_paper_shadow_weekly_review(
         report_path=signal_input_completeness_report_path,
         output_dir=signal_input_completeness_dir,
     )
+    daily_validations = [
+        daily.validate_paper_shadow_daily_artifact(
+            observation_id=_text(payload.get("observation_id")),
+            output_dir=observation_dir,
+            write_output=False,
+        )
+        for payload in daily_payloads
+    ]
+    drift_validations = [
+        drift.validate_paper_shadow_drift_monitor_artifact(
+            monitor_id=_text(payload.get("monitor_id")),
+            output_dir=drift_dir,
+            write_output=False,
+        )
+        for payload in drift_payloads
+    ]
+    source_contract_id = _text(contract_payload.get("contract_id"))
+    source_ledger_id = _text(ledger_payload.get("ledger_run_id"))
+    contract_validation = readiness.validate_formal_research_method_contract_artifact(
+        contract_id=source_contract_id,
+        output_dir=contract_dir,
+        write_output=False,
+    )
+    ledger_validation = readiness.validate_candidate_decision_ledger_artifact(
+        ledger_run_id=source_ledger_id,
+        output_dir=ledger_dir,
+        write_output=False,
+    )
+    if any(
+        not daily.paper_shadow_daily_validation_acceptable_for_diagnostic(
+            observation=_mapping(payload.get("paper_shadow_daily_observation")),
+            validation=validation,
+        )
+        for payload, validation in zip(daily_payloads, daily_validations, strict=True)
+    ):
+        raise ValueError("paper-shadow weekly review requires validated daily observations")
+    if any(item.get("status") != "PASS" for item in drift_validations):
+        raise ValueError("paper-shadow weekly review requires validated drift monitors")
+    if contract_validation.get("status") != "PASS":
+        raise ValueError("paper-shadow weekly review requires a validated formal contract")
+    if ledger_validation.get("status") != "PASS":
+        raise ValueError("paper-shadow weekly review requires a validated decision ledger")
 
     daily_records = [
         _daily_record(payload, week_start=start_date, week_end=end_date)
@@ -197,9 +242,7 @@ def build_paper_shadow_weekly_review(
         manual_coverage_override=manual_coverage_override,
         manual_coverage_override_reason=manual_coverage_override_reason,
     )
-    contract_decision = _mapping(
-        contract_payload.get("formal_research_method_decision")
-    )
+    contract_decision = _mapping(contract_payload.get("formal_research_method_decision"))
     ledger_record = _mapping(ledger_payload.get("candidate_decision_record"))
     missing_inputs = _missing_input_artifacts(
         candidate=candidate,
@@ -250,9 +293,7 @@ def build_paper_shadow_weekly_review(
         "week_end": week_end,
         "generated_at": generated.isoformat(),
         "source_contract_id": contract_payload.get("contract_id"),
-        "source_contract_status": contract_decision.get(
-            "formal_research_method_status"
-        ),
+        "source_contract_status": contract_decision.get("formal_research_method_status"),
         "source_contract_promotion_state": contract_decision.get("promotion_state"),
         "source_ledger_run_id": ledger_payload.get("ledger_run_id"),
         "source_ledger_record_id": ledger_record.get("record_id"),
@@ -269,9 +310,7 @@ def build_paper_shadow_weekly_review(
             **stability,
             **coverage,
             "missing_input_artifacts": missing_inputs,
-            "reviewer_notes_placeholder": (
-                "manual_reviewer_notes_required_before_owner_decision"
-            ),
+            "reviewer_notes_placeholder": ("manual_reviewer_notes_required_before_owner_decision"),
         },
         "weekly_decision": decision,
         "weekly_decision_reasons": decision_reasons,
@@ -306,20 +345,58 @@ def build_paper_shadow_weekly_review(
         "source_ledger_run_id": ledger_payload.get("ledger_run_id"),
         "signal_input_completeness_id": signal_input_summary.get("monitor_id"),
         "signal_input_status": signal_input_summary.get("signal_input_status"),
-        "paper_shadow_weekly_manifest_path": str(
-            root / "paper_shadow_weekly_manifest.json"
+        "paper_shadow_weekly_manifest_path": str(root / "paper_shadow_weekly_manifest.json"),
+        "paper_shadow_weekly_input_snapshot_path": str(
+            root / "paper_shadow_weekly_input_snapshot.json"
         ),
-        "paper_shadow_weekly_review_path": str(
-            root / "paper_shadow_weekly_review.json"
-        ),
-        "paper_shadow_weekly_report_path": str(
-            root / "paper_shadow_weekly_report.md"
-        ),
+        "paper_shadow_weekly_review_path": str(root / "paper_shadow_weekly_review.json"),
+        "paper_shadow_weekly_report_path": str(root / "paper_shadow_weekly_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         "validation_path": str(root / "paper_shadow_weekly_validation.json"),
         **PAPER_SHADOW_WEEKLY_SAFETY,
     }
     reader = render_paper_shadow_weekly_reader_brief(review)
+    input_snapshot = {
+        "schema_version": PAPER_SHADOW_WEEKLY_INPUT_SCHEMA,
+        "weekly_review_id": root.name,
+        "generated_at": generated.isoformat(),
+        "observation_dir": str(observation_dir),
+        "drift_dir": str(drift_dir),
+        "contract_dir": str(contract_dir),
+        "ledger_dir": str(ledger_dir),
+        "signal_input_completeness_dir": str(signal_input_completeness_dir),
+        "daily_sources": [
+            _without_key(payload, "paper_shadow_daily_validation") for payload in daily_payloads
+        ],
+        "daily_validations": daily_validations,
+        "drift_sources": [
+            _without_key(payload, "paper_shadow_drift_validation") for payload in drift_payloads
+        ],
+        "drift_validations": drift_validations,
+        "source_contract": _without_key(
+            contract_payload,
+            "formal_research_method_contract_validation",
+        ),
+        "source_contract_validation": contract_validation,
+        "source_ledger": _without_key(
+            ledger_payload,
+            "candidate_decision_ledger_validation",
+        ),
+        "source_ledger_validation": ledger_validation,
+        "signal_input_completeness_summary": signal_input_summary,
+        "request": {
+            "candidate": candidate,
+            "week_start": week_start,
+            "week_end": week_end,
+            "manual_coverage_override": manual_coverage_override,
+            "manual_coverage_override_reason": manual_coverage_override_reason,
+        },
+        "decision_policy": WEEKLY_DECISION_POLICY,
+        "coverage_policy": WEEKLY_COVERAGE_POLICY,
+    }
+    input_snapshot_path = root / "paper_shadow_weekly_input_snapshot.json"
+    st._write_json(input_snapshot_path, input_snapshot)
+    manifest["input_snapshot_sha256"] = st._file_sha256(input_snapshot_path)
     st._write_json(root / "paper_shadow_weekly_manifest.json", manifest)
     st._write_json(root / "paper_shadow_weekly_review.json", review)
     st._write_text(
@@ -362,12 +439,8 @@ def paper_shadow_weekly_review_report_payload(
     )
     payload = {
         **st._read_json(root / "paper_shadow_weekly_manifest.json"),
-        "paper_shadow_weekly_review": st._read_json(
-            root / "paper_shadow_weekly_review.json"
-        ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "paper_shadow_weekly_review": st._read_json(root / "paper_shadow_weekly_review.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "weekly_review_dir": str(root),
     }
     validation = st._read_optional_json(root / "paper_shadow_weekly_validation.json")
@@ -385,6 +458,7 @@ def validate_paper_shadow_weekly_review_artifact(
     root = output_dir / weekly_review_id
     manifest = st._read_optional_json(root / "paper_shadow_weekly_manifest.json") or {}
     review = st._read_optional_json(root / "paper_shadow_weekly_review.json") or {}
+    input_snapshot = st._read_optional_json(root / "paper_shadow_weekly_input_snapshot.json") or {}
     reader = (
         (root / "reader_brief_section.md").read_text(encoding="utf-8")
         if (root / "reader_brief_section.md").exists()
@@ -399,6 +473,7 @@ def validate_paper_shadow_weekly_review_artifact(
         root,
         (
             "paper_shadow_weekly_manifest.json",
+            "paper_shadow_weekly_input_snapshot.json",
             "paper_shadow_weekly_review.json",
             "paper_shadow_weekly_report.md",
             "reader_brief_section.md",
@@ -406,6 +481,23 @@ def validate_paper_shadow_weekly_review_artifact(
     )
     checks.extend(
         [
+            st._check(
+                "input_snapshot_schema",
+                input_snapshot.get("schema_version") == PAPER_SHADOW_WEEKLY_INPUT_SCHEMA,
+                "",
+            ),
+            st._check(
+                "input_snapshot_id",
+                input_snapshot.get("weekly_review_id") == weekly_review_id,
+                "",
+            ),
+            st._check(
+                "input_snapshot_sha256_matches",
+                bool(_text(manifest.get("input_snapshot_sha256")))
+                and manifest.get("input_snapshot_sha256")
+                == st._file_sha256(root / "paper_shadow_weekly_input_snapshot.json"),
+                "",
+            ),
             st._check(
                 "weekly_review_id_matches",
                 manifest.get("weekly_review_id") == weekly_review_id,
@@ -467,8 +559,7 @@ def validate_paper_shadow_weekly_review_artifact(
                 "coverage_policy_visible",
                 _mapping(review.get("coverage_policy")).get("policy_id")
                 == WEEKLY_COVERAGE_POLICY["policy_id"]
-                and manifest.get("coverage_policy_id")
-                == WEEKLY_COVERAGE_POLICY["policy_id"],
+                and manifest.get("coverage_policy_id") == WEEKLY_COVERAGE_POLICY["policy_id"],
                 "",
             ),
             st._check(
@@ -503,10 +594,8 @@ def validate_paper_shadow_weekly_review_artifact(
             st._check(
                 "coverage_classification_valid",
                 review.get("coverage_classification") in WEEKLY_COVERAGE_CLASSIFICATIONS
-                and summary.get("coverage_classification")
-                in WEEKLY_COVERAGE_CLASSIFICATIONS
-                and manifest.get("coverage_classification")
-                in WEEKLY_COVERAGE_CLASSIFICATIONS,
+                and summary.get("coverage_classification") in WEEKLY_COVERAGE_CLASSIFICATIONS
+                and manifest.get("coverage_classification") in WEEKLY_COVERAGE_CLASSIFICATIONS,
                 "",
             ),
             st._check(
@@ -575,6 +664,225 @@ def validate_paper_shadow_weekly_review_artifact(
             st._check("broker_forbidden", st._payload_safe(manifest, review), ""),
         ]
     )
+    snapshot_daily_sources = _records(input_snapshot.get("daily_sources"))
+    snapshot_drift_sources = _records(input_snapshot.get("drift_sources"))
+    observation_dir = Path(_text(input_snapshot.get("observation_dir")))
+    drift_dir = Path(_text(input_snapshot.get("drift_dir")))
+    contract_dir = Path(_text(input_snapshot.get("contract_dir")))
+    ledger_dir = Path(_text(input_snapshot.get("ledger_dir")))
+    signal_dir = Path(_text(input_snapshot.get("signal_input_completeness_dir")))
+    try:
+        live_daily_sources = [
+            _without_key(
+                daily.paper_shadow_daily_report_payload(
+                    observation_id=_text(source.get("observation_id")),
+                    latest=False,
+                    output_dir=observation_dir,
+                ),
+                "paper_shadow_daily_validation",
+            )
+            for source in snapshot_daily_sources
+        ]
+        live_daily_validations = [
+            daily.validate_paper_shadow_daily_artifact(
+                observation_id=_text(source.get("observation_id")),
+                output_dir=observation_dir,
+                write_output=False,
+            )
+            for source in snapshot_daily_sources
+        ]
+        live_drift_sources = [
+            _without_key(
+                drift.paper_shadow_drift_monitor_report_payload(
+                    monitor_id=_text(source.get("monitor_id")),
+                    latest=False,
+                    output_dir=drift_dir,
+                ),
+                "paper_shadow_drift_validation",
+            )
+            for source in snapshot_drift_sources
+        ]
+        live_drift_validations = [
+            drift.validate_paper_shadow_drift_monitor_artifact(
+                monitor_id=_text(source.get("monitor_id")),
+                output_dir=drift_dir,
+                write_output=False,
+            )
+            for source in snapshot_drift_sources
+        ]
+        snapshot_contract = _mapping(input_snapshot.get("source_contract"))
+        live_contract = _without_key(
+            readiness.formal_research_method_contract_report_payload(
+                contract_id=_text(snapshot_contract.get("contract_id")),
+                latest=False,
+                output_dir=contract_dir,
+            ),
+            "formal_research_method_contract_validation",
+        )
+        live_contract_validation = readiness.validate_formal_research_method_contract_artifact(
+            contract_id=_text(snapshot_contract.get("contract_id")),
+            output_dir=contract_dir,
+            write_output=False,
+        )
+        snapshot_ledger = _mapping(input_snapshot.get("source_ledger"))
+        live_ledger = _without_key(
+            readiness.candidate_decision_ledger_report_payload(
+                ledger_run_id=_text(snapshot_ledger.get("ledger_run_id")),
+                latest=False,
+                output_dir=ledger_dir,
+            ),
+            "candidate_decision_ledger_validation",
+        )
+        live_ledger_validation = readiness.validate_candidate_decision_ledger_artifact(
+            ledger_run_id=_text(snapshot_ledger.get("ledger_run_id")),
+            output_dir=ledger_dir,
+            write_output=False,
+        )
+        snapshot_signal = _mapping(input_snapshot.get("signal_input_completeness_summary"))
+        live_signal = signal_inputs.latest_signal_input_completeness_summary(
+            monitor_id=_text(snapshot_signal.get("monitor_id")) or None,
+            output_dir=signal_dir,
+        )
+    except (OSError, ValueError):
+        live_daily_sources = []
+        live_daily_validations = []
+        live_drift_sources = []
+        live_drift_validations = []
+        live_contract = {}
+        live_contract_validation = {"status": "FAIL"}
+        live_ledger = {}
+        live_ledger_validation = {"status": "FAIL"}
+        live_signal = {}
+    live_daily_observations = [
+        _mapping(source.get("paper_shadow_daily_observation")) for source in live_daily_sources
+    ]
+    live_drift_reports = [
+        _mapping(source.get("paper_shadow_drift_report")) for source in live_drift_sources
+    ]
+    generated_at = _text(review.get("generated_at"))
+    checks.extend(
+        [
+            st._check(
+                "daily_sources_match_live",
+                live_daily_sources == snapshot_daily_sources,
+                "",
+            ),
+            st._check(
+                "daily_validations_match_snapshot",
+                live_daily_validations == _records(input_snapshot.get("daily_validations")),
+                "",
+            ),
+            st._check(
+                "daily_sources_acceptable",
+                len(live_daily_observations) == len(live_daily_validations)
+                and all(
+                    daily.paper_shadow_daily_validation_acceptable_for_diagnostic(
+                        observation=observation,
+                        validation=source_validation,
+                    )
+                    for observation, source_validation in zip(
+                        live_daily_observations,
+                        live_daily_validations,
+                        strict=True,
+                    )
+                ),
+                "",
+            ),
+            st._check(
+                "drift_sources_match_live",
+                live_drift_sources == snapshot_drift_sources,
+                "",
+            ),
+            st._check(
+                "drift_validations_match_snapshot",
+                live_drift_validations == _records(input_snapshot.get("drift_validations")),
+                "",
+            ),
+            st._check(
+                "drift_validations_pass",
+                bool(live_drift_validations)
+                and all(item.get("status") == "PASS" for item in live_drift_validations),
+                "",
+            ),
+            st._check(
+                "contract_source_matches_live",
+                live_contract == _mapping(input_snapshot.get("source_contract")),
+                "",
+            ),
+            st._check(
+                "contract_validation_matches_snapshot",
+                live_contract_validation
+                == _mapping(input_snapshot.get("source_contract_validation"))
+                and live_contract_validation.get("status") == "PASS",
+                "",
+            ),
+            st._check(
+                "ledger_source_matches_live",
+                live_ledger == _mapping(input_snapshot.get("source_ledger")),
+                "",
+            ),
+            st._check(
+                "ledger_validation_matches_snapshot",
+                live_ledger_validation == _mapping(input_snapshot.get("source_ledger_validation"))
+                and live_ledger_validation.get("status") == "PASS",
+                "",
+            ),
+            st._check(
+                "signal_input_matches_live",
+                live_signal == _mapping(input_snapshot.get("signal_input_completeness_summary")),
+                "",
+            ),
+            st._check(
+                "policy_snapshot_matches_code",
+                input_snapshot.get("decision_policy") == WEEKLY_DECISION_POLICY
+                and input_snapshot.get("coverage_policy") == WEEKLY_COVERAGE_POLICY,
+                "",
+            ),
+            st._check(
+                "source_lineage_consistent",
+                all(
+                    observation.get("candidate") == review.get("candidate")
+                    and observation.get("source_contract_id") == review.get("source_contract_id")
+                    for observation in live_daily_observations
+                )
+                and all(
+                    report.get("candidate") == review.get("candidate")
+                    and report.get("source_contract_id") == review.get("source_contract_id")
+                    and report.get("observation_id")
+                    in {
+                        observation.get("observation_id") for observation in live_daily_observations
+                    }
+                    for report in live_drift_reports
+                ),
+                "",
+            ),
+            st._check(
+                "source_chronology_valid",
+                bool(generated_at)
+                and all(
+                    _timestamp_not_after(_text(source.get("generated_at")), generated_at)
+                    for source in [
+                        *live_daily_observations,
+                        *live_drift_reports,
+                        live_contract,
+                        live_ledger,
+                    ]
+                ),
+                "",
+            ),
+            st._check(
+                "report_exact_rebuild",
+                (root / "paper_shadow_weekly_report.md").read_text(encoding="utf-8")
+                == render_paper_shadow_weekly_report(manifest, review),
+                "",
+            ),
+            st._check(
+                "reader_exact_rebuild",
+                reader == render_paper_shadow_weekly_reader_brief(review),
+                "",
+            ),
+        ]
+    )
     validation = st._validation_payload(
         "etf_dynamic_v3_paper_shadow_weekly_review_validation",
         weekly_review_id,
@@ -604,8 +912,7 @@ def render_paper_shadow_weekly_reader_brief(review: Mapping[str, Any]) -> str:
             f"- signal_input_status: {review.get('signal_input_status')}",
             "- paper_shadow_weekly_coverage_classification: "
             f"{review.get('coverage_classification')}",
-            "- paper_shadow_weekly_coverage_ratio: "
-            f"{review.get('coverage_ratio')}",
+            f"- paper_shadow_weekly_coverage_ratio: {review.get('coverage_ratio')}",
             "- paper_shadow_weekly_coverage_safe_for_continuation: "
             f"{review.get('coverage_safe_for_continuation')}",
             "- paper_shadow_weekly_missing_inputs: "
@@ -656,20 +963,15 @@ def render_paper_shadow_weekly_report(
             f"- next_required_action: {review.get('next_required_action')}",
             f"- decision_policy: {_mapping(review.get('decision_policy')).get('policy_id')}",
             f"- coverage_policy: {_mapping(review.get('coverage_policy')).get('policy_id')}",
-            "- decision_reasons: "
-            f"{_join_or_none(review.get('weekly_decision_reasons'))}",
+            f"- decision_reasons: {_join_or_none(review.get('weekly_decision_reasons'))}",
             f"- selected_window_start: {review.get('selected_window_start')}",
             f"- selected_window_end: {review.get('selected_window_end')}",
-            "- expected_market_days: "
-            f"{_join_or_none(review.get('expected_market_days'))}",
-            "- covered_market_days: "
-            f"{_join_or_none(review.get('covered_market_days'))}",
-            "- missing_market_days: "
-            f"{_join_or_none(review.get('missing_market_days'))}",
+            f"- expected_market_days: {_join_or_none(review.get('expected_market_days'))}",
+            f"- covered_market_days: {_join_or_none(review.get('covered_market_days'))}",
+            f"- missing_market_days: {_join_or_none(review.get('missing_market_days'))}",
             f"- coverage_ratio: {review.get('coverage_ratio')}",
             f"- coverage_classification: {review.get('coverage_classification')}",
-            "- coverage_safe_for_continuation: "
-            f"{review.get('coverage_safe_for_continuation')}",
+            f"- coverage_safe_for_continuation: {review.get('coverage_safe_for_continuation')}",
             f"- coverage_status: {review.get('coverage_status')}",
             f"- manual_coverage_override: {review.get('manual_coverage_override')}",
             "- manual_coverage_override_reason: "
@@ -684,8 +986,7 @@ def render_paper_shadow_weekly_report(
             f"- flip_rotation_behavior: {summary.get('flip_rotation_behavior')}",
             f"- drift_severity_trend: {_drift_trend_text(summary.get('drift_severity_trend'))}",
             f"- benchmark_comparison_proxy: {summary.get('benchmark_comparison_proxy')}",
-            "- missing_input_artifacts: "
-            f"{_join_or_none(summary.get('missing_input_artifacts'))}",
+            f"- missing_input_artifacts: {_join_or_none(summary.get('missing_input_artifacts'))}",
             "- signal_input_blocking_inputs: "
             f"{_join_or_none(_mapping(review.get('signal_input_completeness_summary')).get('blocking_input_ids'))}",
             f"- reviewer_notes_placeholder: {summary.get('reviewer_notes_placeholder')}",
@@ -929,9 +1230,7 @@ def _weekly_stability(
 ) -> dict[str, Any]:
     drift_sequence = [_text(row.get("drift_severity")) for row in drift_records]
     return {
-        "signal_stability": _stability_label(
-            [row.get("signal_output") for row in daily_records]
-        ),
+        "signal_stability": _stability_label([row.get("signal_output") for row in daily_records]),
         "hypothetical_recommendation_stability": _stability_label(
             [row.get("hypothetical_weight_recommendation") for row in daily_records]
         ),
@@ -951,9 +1250,7 @@ def _weekly_stability(
         "drift_severity_trend": {
             "sequence": drift_sequence,
             "max_severity": _max_severity(drift_sequence),
-            "blocking_count": sum(
-                1 for value in drift_sequence if value == "BLOCKING"
-            ),
+            "blocking_count": sum(1 for value in drift_sequence if value == "BLOCKING"),
             "warning_count": sum(1 for value in drift_sequence if value == "WARNING"),
             "watch_count": sum(1 for value in drift_sequence if value == "WATCH"),
         },
@@ -1036,13 +1333,9 @@ def _missing_input_artifacts(
         if row.get("within_week_window") is not True:
             missing.append(f"{observation_id}:outside_week_window")
         if row.get("observation_status") != "RECORDED":
-            missing.append(
-                f"{observation_id}:observation_status={row.get('observation_status')}"
-            )
+            missing.append(f"{observation_id}:observation_status={row.get('observation_status')}")
         for artifact in _records(row.get("input_artifacts")):
-            if artifact.get("exists") is not True or not _text(
-                artifact.get("checksum_sha256")
-            ):
+            if artifact.get("exists") is not True or not _text(artifact.get("checksum_sha256")):
                 missing.append(f"{observation_id}:{artifact.get('source_id')}")
     for row in drift_records:
         monitor_id = _text(row.get("monitor_id"), "MISSING_DRIFT")
@@ -1056,8 +1349,7 @@ def _missing_input_artifacts(
         missing.append("candidate_decision_ledger:missing_ledger_run_id")
     if signal_input_summary.get("signal_input_status") not in {"OK", "WARNING"}:
         missing.append(
-            "signal_input_completeness:"
-            f"status={signal_input_summary.get('signal_input_status')}"
+            f"signal_input_completeness:status={signal_input_summary.get('signal_input_status')}"
         )
     if not daily_records:
         missing.append("paper_shadow_daily_observation:none_loaded")
@@ -1188,10 +1480,7 @@ def _drift_trend_text(value: object) -> str:
     trend = _mapping(value)
     if not trend:
         return "MISSING"
-    return (
-        f"max={trend.get('max_severity')}; "
-        f"sequence={','.join(_texts(trend.get('sequence')))}"
-    )
+    return f"max={trend.get('max_severity')}; sequence={','.join(_texts(trend.get('sequence')))}"
 
 
 def _valid_week_window(start: object, end: object) -> bool:
@@ -1224,6 +1513,19 @@ def _first_text(values: Sequence[object]) -> str:
 
 def _join_or_none(value: object) -> str:
     return ", ".join(_texts(value)) or "none"
+
+
+def _without_key(payload: Mapping[str, Any], key: str) -> dict[str, Any]:
+    return {name: value for name, value in payload.items() if name != key}
+
+
+def _timestamp_not_after(source_value: str, artifact_value: str) -> bool:
+    try:
+        source = datetime.fromisoformat(source_value)
+        artifact = datetime.fromisoformat(artifact_value)
+    except ValueError:
+        return False
+    return source.tzinfo is not None and artifact.tzinfo is not None and source <= artifact
 
 
 _mapping = st._mapping

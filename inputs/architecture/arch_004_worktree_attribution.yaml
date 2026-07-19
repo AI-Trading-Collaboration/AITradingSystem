@@ -1,19 +1,19 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB4_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB5_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-19
-base_commit: 26a45e0daf6bfad5ed11762d277d136c5cfb8883
+base_commit: 8332e9613e3fabd542f61689c899bb90dc1bd995
 production_effect: none
 current_staging_authority:
   task_id: ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION
-  increment: ARCH-004G2.4-EB4
+  increment: ARCH-004G2.4-EB5
   status: COMPLETE_G2_4_CONTINUES
-  base_commit: 26a45e0daf6bfad5ed11762d277d136c5cfb8883
+  base_commit: 8332e9613e3fabd542f61689c899bb90dc1bd995
   declared_path_set_current: true
   owner_authorization:
     instruction: 先按照这个顺序推进到可以考虑开始推进研究策略前把
     authorized_at: 2026-07-19
-    boundary_id: ARCH-004G2.4-EB4
+    boundary_id: ARCH-004G2.4-EB5
   phase_lock:
     next_phase_or_slice_unblocked: true
     eb2_authorized: true
@@ -26,17 +26,17 @@ current_staging_authority:
     eb4_authorized: true
     eb4_unblocked: true
     eb5_unblocked: true
+    eb5_authorized: true
+    eb5_complete: true
+    eb6_unblocked: true
     formal_arch_005_s0_unblocked: false
     g2_5_unblocked: false
   declared_changed_paths:
-    - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
-    - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
     - docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md
-    - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
     - docs/system_flow.md
     - docs/task_register.md
-    - inputs/architecture/arch_004_worktree_attribution.yaml
     - inputs/architecture/arch_004_compatibility_baseline.yaml
+    - inputs/architecture/arch_004_worktree_attribution.yaml
     - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
     - inputs/architecture/arch_004e_architecture_fitness.yaml
     - inputs/architecture/arch_004e_module_manifest.yaml
@@ -45,48 +45,32 @@ current_staging_authority:
     - inputs/architecture/arch_004g2_etf_cli_contract.yaml
     - inputs/architecture/arch_004g2_full_duration_profile.yaml
     - inputs/architecture/arch_004g_deprecation_inventory.yaml
-    - scripts/refresh_partial_duration_profile.py
     - src/ai_trading_system/cli_commands/etf_portfolio.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_benchmark_baseline_control.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_benchmark_baseline_metrics_materialization.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_candidate_regression_replay.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_cost_metrics_materialization.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_cost_sensitivity.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_drawdown_casebook.py
     - src/ai_trading_system/etf_portfolio/dynamic_v3_filtered_candidate_readiness.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_flip_rotation_casebook.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_metric_source_map.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_promotion_thresholds.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_research_contract_ledger.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_completeness.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_completeness_recovery.py
-    - src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_recovery.py
+    - src/ai_trading_system/etf_portfolio/dynamic_v3_normal_paper_shadow_resumption_gate.py
+    - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_daily.py
+    - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_drift.py
+    - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_health.py
+    - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_outcome_attribution.py
+    - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_weekly.py
+    - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
+    - src/ai_trading_system/etf_portfolio/dynamic_v3_readiness_health_recovery.py
+    - src/ai_trading_system/etf_portfolio/dynamic_v3_shadow_decision_comparison.py
+    - src/ai_trading_system/etf_portfolio/dynamic_v3_stress_scenarios.py
     - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_materialization.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_contract_ledger.py
-    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_signal_input_readiness.py
-    - tests/dynamic_v3_filtered_candidate_readiness_helpers.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_paper_shadow_operations.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_shadow_decision_support.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_shadow_health_control.py
     - tests/test_arch_004_refactor_policy.py
     - tests/test_arch_004g2_callback_migration_matrix.py
     - tests/test_arch_004g2_etf_cli_contract.py
     - tests/test_arch_004g_deprecation.py
-    - tests/test_benchmark_baseline_control.py
-    - tests/test_benchmark_baseline_metrics_materialization.py
-    - tests/test_candidate_decision_ledger.py
-    - tests/test_candidate_regression_replay.py
-    - tests/test_cost_metrics_materialization.py
-    - tests/test_cost_sensitivity_review.py
-    - tests/test_drawdown_event_casebook.py
-    - tests/test_flip_rotation_event_casebook.py
-    - tests/test_formal_research_method_contract.py
-    - tests/test_metric_source_map.py
-    - tests/test_paper_shadow_health.py
-    - tests/test_promotion_gate_threshold_calibration.py
-    - tests/test_signal_input_completeness.py
-    - tests/test_signal_input_completeness_recovery.py
-    - tests/test_signal_input_recovery.py
+    - tests/test_evidence_staleness_monitor.py
+    - tests/test_normal_paper_shadow_resumption_gate.py
+    - tests/test_paper_shadow_protocol.py
+    - tests/test_paper_shadow_weekly_review.py
+    - tests/test_readiness_health_recovery.py
     - tests/test_shadow_continuation_readiness.py
-    - tests/test_validation_runtime_profile.py
 
 integrated_task_ids:
   - ARCH-004

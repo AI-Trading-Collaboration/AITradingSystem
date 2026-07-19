@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import pytest
 from dynamic_v3_filtered_candidate_readiness_helpers import (
     assert_research_safe,
     run_paper_shadow_protocol_fixture,
@@ -17,10 +19,37 @@ from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readin
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as daily
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as drift
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as weekly
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+)
 
 
-def test_paper_shadow_weekly_review_builds_and_validates(tmp_path: Path, monkeypatch) -> None:
-    fixture = _weekly_fixture(tmp_path, monkeypatch)
+@pytest.fixture(autouse=True)
+def _reuse_validated_artifacts_within_test():
+    with artifact_validation_session():
+        yield
+
+
+@pytest.fixture(scope="module")
+def shared_weekly_source_fixture(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[dict[str, Any]]:
+    root = tmp_path_factory.mktemp("paper-shadow-weekly-source-fixture")
+    monkeypatch = pytest.MonkeyPatch()
+    try:
+        with artifact_validation_session():
+            fixture = _weekly_fixture(root, monkeypatch)
+        fixture["fixture_root"] = root
+        yield fixture
+    finally:
+        monkeypatch.undo()
+
+
+def test_paper_shadow_weekly_review_builds_and_validates(
+    tmp_path: Path, shared_weekly_source_fixture: dict[str, Any]
+) -> None:
+    fixture = shared_weekly_source_fixture
+    fixture_root = Path(fixture["fixture_root"])
     result = weekly.build_paper_shadow_weekly_review(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         week_start="2026-06-08",
@@ -30,11 +59,11 @@ def test_paper_shadow_weekly_review_builds_and_validates(tmp_path: Path, monkeyp
         contract_id=fixture["contract_id"],
         ledger_run_id=fixture["ledger_run_id"],
         signal_input_completeness_id=fixture["signal_input_completeness_id"],
-        observation_dir=tmp_path / "paper_shadow_daily",
-        drift_dir=tmp_path / "paper_shadow_drift_monitor",
-        contract_dir=tmp_path / "formal_research_method_contract",
-        ledger_dir=tmp_path / "candidate_decision_ledger",
-        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
+        observation_dir=fixture_root / "paper_shadow_daily",
+        drift_dir=fixture_root / "paper_shadow_drift_monitor",
+        contract_dir=fixture_root / "formal_research_method_contract",
+        ledger_dir=fixture_root / "candidate_decision_ledger",
+        signal_input_completeness_dir=fixture_root / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_weekly_review",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
@@ -99,8 +128,11 @@ def test_paper_shadow_weekly_review_discloses_missing_daily_input(
     assert result["paper_shadow_weekly_validation"]["status"] == "PASS"
 
 
-def test_paper_shadow_weekly_cli_build_report_and_validate(tmp_path: Path, monkeypatch) -> None:
-    fixture = _weekly_fixture(tmp_path, monkeypatch)
+def test_paper_shadow_weekly_cli_build_report_and_validate(
+    tmp_path: Path, shared_weekly_source_fixture: dict[str, Any]
+) -> None:
+    fixture = shared_weekly_source_fixture
+    fixture_root = Path(fixture["fixture_root"])
     output_dir = tmp_path / "paper_shadow_weekly_review"
     source_args: list[str] = []
     for daily_id in fixture["daily_ids"]:
@@ -128,15 +160,15 @@ def test_paper_shadow_weekly_cli_build_report_and_validate(tmp_path: Path, monke
             "--signal-input-completeness-id",
             fixture["signal_input_completeness_id"],
             "--observation-dir",
-            str(tmp_path / "paper_shadow_daily"),
+            str(fixture_root / "paper_shadow_daily"),
             "--drift-dir",
-            str(tmp_path / "paper_shadow_drift_monitor"),
+            str(fixture_root / "paper_shadow_drift_monitor"),
             "--contract-dir",
-            str(tmp_path / "formal_research_method_contract"),
+            str(fixture_root / "formal_research_method_contract"),
             "--ledger-dir",
-            str(tmp_path / "candidate_decision_ledger"),
+            str(fixture_root / "candidate_decision_ledger"),
             "--signal-input-completeness-dir",
-            str(tmp_path / "signal_input_completeness"),
+            str(fixture_root / "signal_input_completeness"),
             "--output-dir",
             str(output_dir),
         ],
@@ -186,9 +218,10 @@ def test_paper_shadow_weekly_cli_build_report_and_validate(tmp_path: Path, monke
 
 
 def test_paper_shadow_weekly_validation_rejects_illegal_decision(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path, shared_weekly_source_fixture: dict[str, Any]
 ) -> None:
-    fixture = _weekly_fixture(tmp_path, monkeypatch)
+    fixture = shared_weekly_source_fixture
+    fixture_root = Path(fixture["fixture_root"])
     result = weekly.build_paper_shadow_weekly_review(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         week_start="2026-06-08",
@@ -198,14 +231,44 @@ def test_paper_shadow_weekly_validation_rejects_illegal_decision(
         contract_id=fixture["contract_id"],
         ledger_run_id=fixture["ledger_run_id"],
         signal_input_completeness_id=fixture["signal_input_completeness_id"],
-        observation_dir=tmp_path / "paper_shadow_daily",
-        drift_dir=tmp_path / "paper_shadow_drift_monitor",
-        contract_dir=tmp_path / "formal_research_method_contract",
-        ledger_dir=tmp_path / "candidate_decision_ledger",
-        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
+        observation_dir=fixture_root / "paper_shadow_daily",
+        drift_dir=fixture_root / "paper_shadow_drift_monitor",
+        contract_dir=fixture_root / "formal_research_method_contract",
+        ledger_dir=fixture_root / "candidate_decision_ledger",
+        signal_input_completeness_dir=fixture_root / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_weekly_review",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
+    daily_path = (
+        fixture_root
+        / "paper_shadow_daily"
+        / fixture["daily_ids"][0]
+        / "paper_shadow_daily_observation.json"
+    )
+    original_daily_bytes = daily_path.read_bytes()
+    tampered_daily = json.loads(original_daily_bytes.decode("utf-8"))
+    tampered_daily["candidate"] = "cross-lineage-candidate"
+    try:
+        daily_path.write_text(
+            json.dumps(tampered_daily, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        lineage_validation = weekly.validate_paper_shadow_weekly_review_artifact(
+            weekly_review_id=result["weekly_review_id"],
+            output_dir=tmp_path / "paper_shadow_weekly_review",
+            write_output=False,
+        )
+    finally:
+        daily_path.write_bytes(original_daily_bytes)
+    lineage_failed = {
+        row["check_id"]
+        for row in lineage_validation["checks"]
+        if row.get("passed") is not True
+    }
+    assert lineage_validation["status"] == "FAIL"
+    assert "source_lineage_consistent" in lineage_failed
+    assert "daily_sources_match_live" in lineage_failed
+
     review_path = (
         tmp_path
         / "paper_shadow_weekly_review"

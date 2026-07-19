@@ -403,6 +403,21 @@ Markdown/Reader Brief views由validator逐byte重建；source/snapshot/policy/ou
 `814 migrated / 153 pending / 0 unresolved / 0 duplicate`。EB4=`COMPLETE_G2_4_CONTINUES`后只解锁
 owner既有序列中的EB5；整个G2.4 phase exit、ARCH-005 S0、G2.5与handoff仍未满足或触发。
 
+G2.4-EB5把Paper-shadow Protocol/Daily/Drift/Weekly、Evidence Staleness、Shadow Continuation、
+Health/Recovery/Normal Resumption、Outcome Attribution/Decision Comparison、Stress Scenario和
+Position Review的37个legacy callbacks迁到`dynamic_v3_paper_shadow_operations.py`、
+`dynamic_v3_shadow_health_control.py`与`dynamic_v3_shadow_decision_support.py`三个canonical CLI owner。
+主链固定为validated Formal Contract→Protocol→Daily→Drift/Weekly→Staleness/Continuation→
+Health/Recovery/Resumption，并由Weekly/Health向Attribution/Decision分支；Stress与Position Review保持
+manual diagnostic，不构成promotion或execution authority。13类v2 input snapshot冻结live source、policy、
+requested ids/dirs、chronology与lineage，manifest同时封存`input_snapshot_sha256`；validator重验live source，
+逐字节重建JSON派生的Markdown/Reader Brief，并对source/snapshot/output/cross-lineage drift fail closed。
+缺失或不合格证据保持empty/null/`INSUFFICIENT_DATA`/`BLOCKED`，manual observation、protocol target和
+hypothetical weight不得补成observed return、benchmark、cost或health improvement。Validation session只复用
+前后content fingerprint一致的PASS，文件变化或tamper立即失效；module-scoped test fixtures只共享只读上游
+artifact，每个case仍生成并验证独立输出。该批不下载数据、不更新paper account/official weights、不触发
+broker/order/production，`production_effect=none`；完成后只解锁EB6，不代表whole G2.4 phase exit。
+
 S3F只改变test execution fixture，不改变Smoothed生产链。Operations/Evidence测试把既有content-fingerprint、PASS-only validation session延长到单个同步test function，cache仍按validator/kwargs/path/exact bytes绑定并在内容变化时失效，不跨test、worker或进程；Retry/Weekly五个热点改用test-only recorded-owner authority prefix，仍真实运行Promotion、Binding、Switch与Owner `continue_observation`记录，再执行各自完整Weekly/Retry/Refresh producer、validator与tamper路径，旧Operations helper及其他消费者不变。Indicator Family Ablation的28个secondary test outputs与Layer1 Final Gate owner doc均重定向到各test `tmp_path`，因此full不再覆盖tracked research Markdown。三个same-command focused lane墙钟合计`648.19 -> 430.90s`，expanded focused=`134 passed / 1 skipped`；这些是工程验证证据，不改变artifact schema、research conclusion、DQ/PIT/policy、paper-shadow、production或broker状态，完整full收益仍以本批唯一integration-boundary profile为准。
 
 S3F唯一自然integration-boundary profile位于`outputs/validation_runtime/full_20260718T004439Z/`：full=`6,246 passed / 2 skipped / 642 warnings / 1,027.74s`，strict reader确认`6,248 nodes / 1,068 files / 16 workers`、与`231920Z`完全相同的ordered/set collection SHA、scheduler applied、no fallback及profile/telemetry/performance全部PASS。相对`231920Z`，Smoothed 38文件和S3F 17文件worker time分别下降`16.04%/19.00%`，但full墙钟只下降`1.23%`，file P99、worker CV和tail total分别变为`258.01s/1.53%/460.50s`；因此后续瓶颈已转为Layer1、Smoothed Weekly/Refresh、Refined Method和Weight Diagnostics，不能把focused收益当作全局收益。该run使`complete_profile_count=3`，但第1份collection少22 nodes且仍缺complete peak-memory/read-amplification artifact，故`stable_full_improvement_claimed=false`。Tracked research Markdown在full前后byte不变；完整研究数据流、结论语义及production边界均未改变。

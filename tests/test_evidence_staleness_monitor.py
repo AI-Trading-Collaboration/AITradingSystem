@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from datetime import UTC, date, datetime
 from pathlib import Path
 
+import pytest
 from dynamic_v3_filtered_candidate_readiness_helpers import (
     assert_research_safe,
     run_paper_shadow_protocol_fixture,
@@ -14,21 +16,37 @@ from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readin
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as daily
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as drift
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as weekly
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+)
 
 
-def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path, monkeypatch) -> None:
-    fixture = _paper_shadow_freshness_fixture(tmp_path, monkeypatch)
-    evidence_manifest_path = Path(
-        fixture["filtered_candidate_evidence"]["manifest"][
-            "filtered_candidate_evidence_manifest_path"
-        ]
-    )
-    evidence_manifest = json.loads(evidence_manifest_path.read_text(encoding="utf-8"))
-    evidence_manifest["date_end"] = "2024-04-17"
-    evidence_manifest_path.write_text(
-        json.dumps(evidence_manifest, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
+@pytest.fixture(autouse=True)
+def _reuse_validated_artifacts_within_test():
+    with artifact_validation_session():
+        yield
+
+
+@pytest.fixture(scope="module")
+def shared_default_freshness_fixture(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[dict[str, object]]:
+    root = tmp_path_factory.mktemp("evidence-staleness-source-fixture")
+    monkeypatch = pytest.MonkeyPatch()
+    try:
+        with artifact_validation_session():
+            fixture = _paper_shadow_freshness_fixture(root, monkeypatch)
+        fixture["fixture_root"] = root
+        yield fixture
+    finally:
+        monkeypatch.undo()
+
+
+def test_evidence_staleness_monitor_builds_and_validates(
+    tmp_path: Path, shared_default_freshness_fixture: dict[str, object]
+) -> None:
+    fixture = shared_default_freshness_fixture
+    fixture_root = Path(fixture["fixture_root"])
     price_cache_path = tmp_path / "prices_daily.csv"
     price_cache_path.write_text(
         "date,ticker,close\n2024-04-18,QQQ,430\n2024-04-19,QQQ,431\n",
@@ -64,14 +82,14 @@ def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path, monkeyp
         paper_shadow_drift_monitor_id=fixture["paper_shadow_drift"]["monitor_id"],
         paper_shadow_weekly_review_id=fixture["paper_shadow_weekly"]["weekly_review_id"],
         signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
-        evidence_dir=tmp_path / "filtered_candidate_evidence",
-        stress_backfill_dir=tmp_path / "filtered_candidate_stress_backfill",
-        ab_review_dir=tmp_path / "filtered_candidate_ab_review",
-        owner_review_dir=tmp_path / "owner_filtered_candidate_review",
-        paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
-        paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
-        paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
-        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
+        evidence_dir=fixture_root / "filtered_candidate_evidence",
+        stress_backfill_dir=fixture_root / "filtered_candidate_stress_backfill",
+        ab_review_dir=fixture_root / "filtered_candidate_ab_review",
+        owner_review_dir=fixture_root / "owner_filtered_candidate_review",
+        paper_shadow_daily_dir=fixture_root / "paper_shadow_daily",
+        paper_shadow_drift_monitor_dir=fixture_root / "paper_shadow_drift_monitor",
+        paper_shadow_weekly_review_dir=fixture_root / "paper_shadow_weekly_review",
+        signal_input_completeness_dir=fixture_root / "signal_input_completeness",
         cache_catalog_report_path=cache_catalog_report,
         output_dir=tmp_path / "evidence_staleness_monitor",
         generated_at=datetime(2024, 4, 22, tzinfo=UTC),
@@ -208,8 +226,11 @@ def test_evidence_staleness_weekend_market_reference_does_not_hide_real_stale_da
     assert stale_finding["stale_reason"] == "older_than_blocking_policy_window"
 
 
-def test_evidence_staleness_missing_weekly_review_blocks(tmp_path: Path, monkeypatch) -> None:
-    fixture = _paper_shadow_freshness_fixture(tmp_path, monkeypatch)
+def test_evidence_staleness_missing_weekly_review_blocks(
+    tmp_path: Path, shared_default_freshness_fixture: dict[str, object]
+) -> None:
+    fixture = shared_default_freshness_fixture
+    fixture_root = Path(fixture["fixture_root"])
     price_cache_path = tmp_path / "prices_daily.csv"
     price_cache_path.write_text(
         "date,ticker,close\n2024-04-22,QQQ,431\n",
@@ -235,14 +256,14 @@ def test_evidence_staleness_missing_weekly_review_blocks(tmp_path: Path, monkeyp
         paper_shadow_drift_monitor_id=fixture["paper_shadow_drift"]["monitor_id"],
         paper_shadow_weekly_review_id="missing-weekly-review",
         signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
-        evidence_dir=tmp_path / "filtered_candidate_evidence",
-        stress_backfill_dir=tmp_path / "filtered_candidate_stress_backfill",
-        ab_review_dir=tmp_path / "filtered_candidate_ab_review",
-        owner_review_dir=tmp_path / "owner_filtered_candidate_review",
-        paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
-        paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
-        paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
-        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
+        evidence_dir=fixture_root / "filtered_candidate_evidence",
+        stress_backfill_dir=fixture_root / "filtered_candidate_stress_backfill",
+        ab_review_dir=fixture_root / "filtered_candidate_ab_review",
+        owner_review_dir=fixture_root / "owner_filtered_candidate_review",
+        paper_shadow_daily_dir=fixture_root / "paper_shadow_daily",
+        paper_shadow_drift_monitor_dir=fixture_root / "paper_shadow_drift_monitor",
+        paper_shadow_weekly_review_dir=fixture_root / "paper_shadow_weekly_review",
+        signal_input_completeness_dir=fixture_root / "signal_input_completeness",
         output_dir=tmp_path / "evidence_staleness_monitor_missing",
         generated_at=datetime(2024, 4, 22, tzinfo=UTC),
     )
@@ -259,17 +280,10 @@ def test_evidence_staleness_missing_weekly_review_blocks(tmp_path: Path, monkeyp
 def test_evidence_staleness_discovers_latest_weekly_review_artifact(
     tmp_path: Path, monkeypatch
 ) -> None:
-    fixture = _paper_shadow_freshness_fixture(tmp_path, monkeypatch)
-    evidence_manifest_path = Path(
-        fixture["filtered_candidate_evidence"]["manifest"][
-            "filtered_candidate_evidence_manifest_path"
-        ]
-    )
-    evidence_manifest = json.loads(evidence_manifest_path.read_text(encoding="utf-8"))
-    evidence_manifest["date_end"] = "2024-04-22"
-    evidence_manifest_path.write_text(
-        json.dumps(evidence_manifest, indent=2, sort_keys=True),
-        encoding="utf-8",
+    fixture = _paper_shadow_freshness_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end="2024-04-22",
     )
     price_cache_path = tmp_path / "prices_daily.csv"
     price_cache_path.write_text(
@@ -324,24 +338,17 @@ def test_evidence_staleness_discovers_latest_weekly_review_artifact(
 
 
 def test_evidence_staleness_blocks_on_fallback_policy_blocker(tmp_path: Path, monkeypatch) -> None:
-    fixture = _paper_shadow_freshness_fixture(tmp_path, monkeypatch)
+    fixture = _paper_shadow_freshness_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end="2024-04-19",
+    )
     fallback_policy_report = _write_fallback_policy_report(
         tmp_path,
         fallback_status="BLOCKED_NO_VALID_SOURCE",
         status="FAIL",
         blocking_data_types=["price_data"],
         fallback_used_count=0,
-    )
-    evidence_manifest_path = Path(
-        fixture["filtered_candidate_evidence"]["manifest"][
-            "filtered_candidate_evidence_manifest_path"
-        ]
-    )
-    evidence_manifest = json.loads(evidence_manifest_path.read_text(encoding="utf-8"))
-    evidence_manifest["date_end"] = "2024-04-19"
-    evidence_manifest_path.write_text(
-        json.dumps(evidence_manifest, indent=2, sort_keys=True),
-        encoding="utf-8",
     )
     price_cache_path = tmp_path / "prices_daily.csv"
     price_cache_path.write_text(
@@ -391,8 +398,17 @@ def test_evidence_staleness_blocks_on_fallback_policy_blocker(tmp_path: Path, mo
     assert result["evidence_staleness_validation"]["status"] == "PASS"
 
 
-def _paper_shadow_freshness_fixture(tmp_path: Path, monkeypatch) -> dict[str, object]:
-    fixture = run_paper_shadow_protocol_fixture(tmp_path, monkeypatch)
+def _paper_shadow_freshness_fixture(
+    tmp_path: Path,
+    monkeypatch,
+    *,
+    evidence_date_end: str = "2024-04-17",
+) -> dict[str, object]:
+    fixture = run_paper_shadow_protocol_fixture(
+        tmp_path,
+        monkeypatch,
+        evidence_date_end=evidence_date_end,
+    )
     signal_input = run_signal_input_completeness_fixture(tmp_path, as_of="2024-04-22")
     ledger = readiness.record_candidate_decision_ledger(
         candidate=readiness.TOP_FILTERED_CANDIDATE,

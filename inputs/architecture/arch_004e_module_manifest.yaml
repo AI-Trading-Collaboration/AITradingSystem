@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: dc11a0fcfc5b5a3f83a08b6474b4646400e8a32e436cf8a345fb4ad902f58a23
 source_root: src/ai_trading_system
-module_count: 960
+module_count: 963
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -939,7 +939,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.etf_portfolio
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: f0652cc97ee8127bc52d5f577e6d65ada46d371a4fd9ebf948e8d783981a8785
+  sha256: c8c33b9a00c1d22f8914f364477d0b046edc838587107649c69441a8cd3339f1
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -5585,7 +5585,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_filtered_candidate_readiness
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_filtered_candidate_readiness.py
-  sha256: bc66030d50b8d33aad5ee00da4dda5ed7103e4d1f32b7d71cdc597d7cfe6f38b
+  sha256: 837c534f612a1952d55e873a4ae3bed2f69a9f3c06aa0c72b2e10e58bfeada2e
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -5739,7 +5739,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_normal_paper_shadow_resumption_gate
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_normal_paper_shadow_resumption_gate.py
-  sha256: b112ad8dc99da66d0216c93ac770207c680bbaad4255d2f90ae61043a3921ff0
+  sha256: 5e4815f6e48c11b7c130165d0fc4bed57f032764f0952e670a15bd10ddcc2893
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -5783,7 +5783,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_paper_shadow_daily
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_daily.py
-  sha256: 804d30dbe820b2135a3caf07f55b21e53b431f67e0e46fd7c10c97ed78304b5c
+  sha256: c039405e5ce18762454a148b90e5248243093e9b39e879ebd9599ec74d96f552
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -5805,7 +5805,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_paper_shadow_drift
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_drift.py
-  sha256: e5774d3f1f2968e37a5ee4527eb89c02638d0038a2d8ef3419666c1b633d9ab9
+  sha256: 87601bfc83822c0009a0fc7ea6a5e8e3d8b58bb3c9a18083c4e2bbdadda7e09b
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -5827,7 +5827,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_paper_shadow_health
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_health.py
-  sha256: 76afe9d80fbc3359e7dbd3732bd3f19b52d76a09a1d9d4f7ed84b8447ef35bf3
+  sha256: a6996f3283e62a76d45b9fdafae3d50ce8a4d5a931448e8a59777a11129d1bbb
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -5849,7 +5849,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_paper_shadow_outcome_attribution
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_outcome_attribution.py
-  sha256: 53c3872c2fcbea1855a31f5f0858f08a4a74ecb6bcf6562dca4f33b7fdc5be92
+  sha256: a246a195af0cd283e0a7f55d981f9d1a567814d16ac78bf03678a3eb35860329
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -5871,7 +5871,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_paper_shadow_weekly
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_paper_shadow_weekly.py
-  sha256: 865f939aed2ab4cbdffc5c2f0acbf84e82e12986ecb90bba98cb4192791d2ec3
+  sha256: bed74131e511e38bad4802ebd5ff23afaa137ff7f143137562e7f02dceb6ba1e
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -5915,7 +5915,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_parameter_research
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
-  sha256: 127f89897f2e005a5737e10fb9e47956efc7ca0ec08a72e6e4763e20eef96c28
+  sha256: b02bb13e63dade91234359ecc878a25522cc336af9ec5780692f1989a7b5de7d
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -5981,7 +5981,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_readiness_health_recovery
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_readiness_health_recovery.py
-  sha256: a2d3deb96e23422e798dac4fd8b90ea626b7ba53ef596aa055410514f3e3f043
+  sha256: f37f12ca2e77327148028d92c4347af4766e436befb2d56aca541e854783e036
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -6113,7 +6113,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_shadow_decision_comparison
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_shadow_decision_comparison.py
-  sha256: 8ff4e22ed3a9925814a90f79ee34d44f27b20c55fc3349c773ca983d8863ad3c
+  sha256: 6d5088b4f8fa946d2ecd1d20f05b8152f193cc59023943308892dc22a373c776
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -6245,7 +6245,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_stress_scenarios
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_stress_scenarios.py
-  sha256: bedbe2bdea1c2cbfd2f4bc640419d7288b9557e351a387a508d63f9ee931586d
+  sha256: 4f30d5a0893e6378342fc91b3744656c02827e02a1ea874bd88463d06c567e7c
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -10070,7 +10070,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.__init__
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-  sha256: 98121a09a81295c305761b80f2c9de83a1fc1e1d4df247df025478c59f6076f5
+  sha256: a03ce8b126f8c498d4efa0922fbd0a69e563e799ef85646a5a960ebeb5300777
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -11228,6 +11228,26 @@ modules:
   validation_tiers:
   - fast-unit
   shared_integration: false
+- module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_paper_shadow_operations
+  path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_paper_shadow_operations.py
+  sha256: 6c9ba44e05d471cf643fc5e216d7cc21405d06e08821ac767e302de4b9bd8bf5
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_portfolio_intake
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_portfolio_intake.py
   sha256: 4c6e93eef0408b0f92250662ff46faaebb3edc874bcabb281edfc475b463ad88
@@ -11691,6 +11711,46 @@ modules:
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_shadow_aging
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_shadow_aging.py
   sha256: 0e417cdcb745d717512d72aac2a967088577411a736b89ec35cd7c618723a8b3
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_shadow_decision_support
+  path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_shadow_decision_support.py
+  sha256: bd99e2ad4dc2f9295548f97d9feab4d2e677397211cc92edfe551ff3123c64c3
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_shadow_health_control
+  path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_shadow_health_control.py
+  sha256: ac7baeb368552684ee2ccc7be629b5a5e5236fbb1813ccc6a2e7b64525c914ea
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

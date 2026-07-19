@@ -14,10 +14,14 @@ from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_health as he
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as weekly
 from ai_trading_system.etf_portfolio import dynamic_v3_signal_input_completeness as signal_inputs
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 
 DEFAULT_READINESS_HEALTH_RECOVERY_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "readiness_health_recovery"
 )
+READINESS_HEALTH_RECOVERY_INPUT_SCHEMA = "readiness_health_recovery_input_snapshot.v2"
 
 READINESS_HEALTH_RECOVERY_STATUSES = (
     "PAPER_SHADOW_CAN_RESUME_NORMAL_OBSERVATION",
@@ -42,6 +46,7 @@ READINESS_HEALTH_RECOVERY_SAFETY = {
 }
 
 
+@with_artifact_validation_session
 def run_readiness_health_recovery_chain(
     *,
     as_of: date | None = None,
@@ -257,6 +262,9 @@ def run_readiness_health_recovery_chain(
         "readiness_health_recovery_manifest_path": str(
             root / "readiness_health_recovery_manifest.json"
         ),
+        "readiness_health_recovery_input_snapshot_path": str(
+            root / "readiness_health_recovery_input_snapshot.json"
+        ),
         "readiness_health_recovery_report_path": str(
             root / "readiness_health_recovery_report.json"
         ),
@@ -268,6 +276,45 @@ def run_readiness_health_recovery_chain(
         **READINESS_HEALTH_RECOVERY_SAFETY,
     }
     reader = render_readiness_health_recovery_reader_brief(report)
+    staleness_payload = readiness.evidence_staleness_monitor_report_payload(
+        monitor_id=staleness_id,
+        latest=False,
+        output_dir=evidence_staleness_monitor_dir,
+    )
+    readiness_payload = readiness.shadow_continuation_readiness_report_payload(
+        readiness_id=readiness_id,
+        latest=False,
+        output_dir=shadow_continuation_readiness_dir,
+    )
+    health_payload = health.paper_shadow_health_report_payload(
+        health_id=_text(health_result.get("health_id")),
+        latest=False,
+        output_dir=paper_shadow_health_dir,
+    )
+    input_snapshot = {
+        "schema_version": READINESS_HEALTH_RECOVERY_INPUT_SCHEMA,
+        "recovery_id": root.name,
+        "generated_at": generated.isoformat(),
+        "evidence_staleness_monitor_dir": str(evidence_staleness_monitor_dir),
+        "shadow_continuation_readiness_dir": str(shadow_continuation_readiness_dir),
+        "paper_shadow_health_dir": str(paper_shadow_health_dir),
+        "evidence_staleness_policy_path": str(evidence_staleness_policy_path),
+        "source_staleness": _without_key(staleness_payload, "evidence_staleness_validation"),
+        "source_staleness_validation": _mapping(
+            staleness_result.get("evidence_staleness_validation")
+        ),
+        "source_readiness": _without_key(
+            readiness_payload, "shadow_continuation_readiness_validation"
+        ),
+        "source_readiness_validation": _mapping(
+            readiness_result.get("shadow_continuation_readiness_validation")
+        ),
+        "source_health": _without_key(health_payload, "paper_shadow_health_validation"),
+        "source_health_validation": _mapping(health_result.get("paper_shadow_health_validation")),
+    }
+    input_snapshot_path = root / "readiness_health_recovery_input_snapshot.json"
+    st._write_json(input_snapshot_path, input_snapshot)
+    manifest["input_snapshot_sha256"] = st._file_sha256(input_snapshot_path)
     st._write_json(root / "readiness_health_recovery_manifest.json", manifest)
     st._write_json(root / "readiness_health_recovery_report.json", report)
     st._write_text(
@@ -316,9 +363,7 @@ def readiness_health_recovery_report_payload(
         "readiness_health_recovery_report": st._read_json(
             root / "readiness_health_recovery_report.json"
         ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "recovery_dir": str(root),
     }
     validation = st._read_optional_json(root / "readiness_health_recovery_validation.json")
@@ -336,6 +381,9 @@ def validate_readiness_health_recovery_artifact(
     root = output_dir / recovery_id
     manifest = st._read_optional_json(root / "readiness_health_recovery_manifest.json") or {}
     report = st._read_optional_json(root / "readiness_health_recovery_report.json") or {}
+    input_snapshot = (
+        st._read_optional_json(root / "readiness_health_recovery_input_snapshot.json") or {}
+    )
     reader = (
         (root / "reader_brief_section.md").read_text(encoding="utf-8")
         if (root / "reader_brief_section.md").exists()
@@ -348,6 +396,7 @@ def validate_readiness_health_recovery_artifact(
         root,
         (
             "readiness_health_recovery_manifest.json",
+            "readiness_health_recovery_input_snapshot.json",
             "readiness_health_recovery_report.json",
             "readiness_health_recovery_report.md",
             "reader_brief_section.md",
@@ -355,6 +404,23 @@ def validate_readiness_health_recovery_artifact(
     )
     checks.extend(
         [
+            st._check(
+                "input_snapshot_schema",
+                input_snapshot.get("schema_version") == READINESS_HEALTH_RECOVERY_INPUT_SCHEMA,
+                "",
+            ),
+            st._check(
+                "input_snapshot_id",
+                input_snapshot.get("recovery_id") == recovery_id,
+                "",
+            ),
+            st._check(
+                "input_snapshot_sha256_matches",
+                bool(_text(manifest.get("input_snapshot_sha256")))
+                and manifest.get("input_snapshot_sha256")
+                == st._file_sha256(root / "readiness_health_recovery_input_snapshot.json"),
+                "",
+            ),
             st._check("recovery_id_matches", manifest.get("recovery_id") == recovery_id, ""),
             st._check("status_enum_valid", status in READINESS_HEALTH_RECOVERY_STATUSES, status),
             st._check(
@@ -378,7 +444,8 @@ def validate_readiness_health_recovery_artifact(
             ),
             st._check(
                 "final_status_consistent",
-                status == _final_status(
+                status
+                == _final_status(
                     source_statuses,
                     _mapping(report.get("source_validations")),
                 ),
@@ -419,6 +486,116 @@ def validate_readiness_health_recovery_artifact(
             st._check("broker_forbidden", st._payload_safe(manifest, report), ""),
         ]
     )
+    try:
+        snapshot_staleness = _mapping(input_snapshot.get("source_staleness"))
+        live_staleness = _without_key(
+            readiness.evidence_staleness_monitor_report_payload(
+                monitor_id=_text(snapshot_staleness.get("monitor_id")),
+                latest=False,
+                output_dir=Path(_text(input_snapshot.get("evidence_staleness_monitor_dir"))),
+            ),
+            "evidence_staleness_validation",
+        )
+        live_staleness_validation = readiness.validate_evidence_staleness_monitor_artifact(
+            monitor_id=_text(snapshot_staleness.get("monitor_id")),
+            output_dir=Path(_text(input_snapshot.get("evidence_staleness_monitor_dir"))),
+            policy_path=Path(_text(input_snapshot.get("evidence_staleness_policy_path"))),
+            write_output=False,
+        )
+        snapshot_readiness = _mapping(input_snapshot.get("source_readiness"))
+        live_readiness = _without_key(
+            readiness.shadow_continuation_readiness_report_payload(
+                readiness_id=_text(snapshot_readiness.get("readiness_id")),
+                latest=False,
+                output_dir=Path(_text(input_snapshot.get("shadow_continuation_readiness_dir"))),
+            ),
+            "shadow_continuation_readiness_validation",
+        )
+        live_readiness_validation = readiness.validate_shadow_continuation_readiness_artifact(
+            readiness_id=_text(snapshot_readiness.get("readiness_id")),
+            output_dir=Path(_text(input_snapshot.get("shadow_continuation_readiness_dir"))),
+            write_output=False,
+        )
+        snapshot_health = _mapping(input_snapshot.get("source_health"))
+        live_health = _without_key(
+            health.paper_shadow_health_report_payload(
+                health_id=_text(snapshot_health.get("health_id")),
+                latest=False,
+                output_dir=Path(_text(input_snapshot.get("paper_shadow_health_dir"))),
+            ),
+            "paper_shadow_health_validation",
+        )
+        live_health_validation = health.validate_paper_shadow_health_artifact(
+            health_id=_text(snapshot_health.get("health_id")),
+            output_dir=Path(_text(input_snapshot.get("paper_shadow_health_dir"))),
+            write_output=False,
+        )
+    except (OSError, ValueError):
+        live_staleness = {}
+        live_staleness_validation = {"status": "FAIL"}
+        live_readiness = {}
+        live_readiness_validation = {"status": "FAIL"}
+        live_health = {}
+        live_health_validation = {"status": "FAIL"}
+    checks.extend(
+        [
+            st._check(
+                "staleness_source_matches_live",
+                live_staleness == _mapping(input_snapshot.get("source_staleness")),
+                "",
+            ),
+            st._check(
+                "staleness_validation_matches_snapshot",
+                live_staleness_validation
+                == _mapping(input_snapshot.get("source_staleness_validation")),
+                "",
+            ),
+            st._check(
+                "readiness_source_matches_live",
+                live_readiness == _mapping(input_snapshot.get("source_readiness")),
+                "",
+            ),
+            st._check(
+                "readiness_validation_matches_snapshot",
+                live_readiness_validation
+                == _mapping(input_snapshot.get("source_readiness_validation")),
+                "",
+            ),
+            st._check(
+                "health_source_matches_live",
+                live_health == _mapping(input_snapshot.get("source_health")),
+                "",
+            ),
+            st._check(
+                "health_validation_matches_snapshot",
+                live_health_validation == _mapping(input_snapshot.get("source_health_validation")),
+                "",
+            ),
+            st._check(
+                "all_source_validations_pass",
+                all(
+                    item.get("status") == "PASS"
+                    for item in (
+                        live_staleness_validation,
+                        live_readiness_validation,
+                        live_health_validation,
+                    )
+                ),
+                "",
+            ),
+            st._check(
+                "report_exact_rebuild",
+                (root / "readiness_health_recovery_report.md").read_text(encoding="utf-8")
+                == render_readiness_health_recovery_report(manifest, report),
+                "",
+            ),
+            st._check(
+                "reader_exact_rebuild",
+                reader == render_readiness_health_recovery_reader_brief(report),
+                "",
+            ),
+        ]
+    )
     validation = st._validation_payload(
         "etf_dynamic_v3_readiness_health_recovery_validation",
         recovery_id,
@@ -444,8 +621,7 @@ def render_readiness_health_recovery_reader_brief(report: Mapping[str, Any]) -> 
             f"- normal_paper_shadow_may_resume: {report.get('normal_paper_shadow_may_resume')}",
             f"- signal_input_status: {statuses.get('signal_input_status')}",
             f"- evidence_freshness_status: {statuses.get('evidence_freshness_status')}",
-            "- shadow_continuation_readiness: "
-            f"{statuses.get('shadow_continuation_readiness')}",
+            f"- shadow_continuation_readiness: {statuses.get('shadow_continuation_readiness')}",
             f"- paper_shadow_health_status: {statuses.get('paper_shadow_health_status')}",
             f"- blocking_reasons: {_joined_texts(report.get('blocking_reasons'))}",
             f"- warning_reasons: {_joined_texts(report.get('warning_reasons'))}",
@@ -541,8 +717,7 @@ def _source_statuses(
             staleness_report.get("evidence_freshness_status"),
             "MISSING",
         ),
-        "evidence_safe_to_continue_shadow": staleness_report.get("safe_to_continue_shadow")
-        is True,
+        "evidence_safe_to_continue_shadow": staleness_report.get("safe_to_continue_shadow") is True,
         "evidence_blocking_artifacts": _texts(staleness_report.get("blocking_artifacts")),
         "evidence_stale_artifacts": _texts(staleness_report.get("stale_artifacts")),
         "evidence_missing_artifacts": _texts(staleness_report.get("missing_artifacts")),
@@ -554,28 +729,20 @@ def _source_statuses(
             "safe_to_continue_shadow"
         )
         is True,
-        "shadow_continuation_missing_artifacts": _texts(
-            readiness_report.get("missing_artifacts")
-        ),
+        "shadow_continuation_missing_artifacts": _texts(readiness_report.get("missing_artifacts")),
         "shadow_continuation_blocking_artifacts": _texts(
             readiness_report.get("blocking_artifacts")
         ),
         "shadow_continuation_stale_artifacts": _texts(readiness_report.get("stale_artifacts")),
-        "shadow_continuation_manual_review_required": readiness_report.get(
-            "manual_review_required"
-        )
+        "shadow_continuation_manual_review_required": readiness_report.get("manual_review_required")
         is True,
         "paper_shadow_health_status": _text(
             health_report.get("paper_shadow_health_status"),
             "MISSING",
         ),
-        "paper_shadow_health_safe_to_continue_shadow": health_report.get(
-            "safe_to_continue_shadow"
-        )
+        "paper_shadow_health_safe_to_continue_shadow": health_report.get("safe_to_continue_shadow")
         is True,
-        "paper_shadow_health_blocking_reasons": _texts(
-            health_report.get("blocking_reasons")
-        ),
+        "paper_shadow_health_blocking_reasons": _texts(health_report.get("blocking_reasons")),
         "paper_shadow_health_warnings": _texts(health_report.get("warnings")),
         "signal_input_status": _text(
             health_report.get("signal_input_status")
@@ -602,8 +769,7 @@ def _source_artifacts(
         "evidence_staleness_monitor": {
             "artifact_id": _text(staleness_result.get("monitor_id")),
             "status": _text(staleness_report.get("evidence_freshness_status"), "MISSING"),
-            "safe_to_continue_shadow": staleness_report.get("safe_to_continue_shadow")
-            is True,
+            "safe_to_continue_shadow": staleness_report.get("safe_to_continue_shadow") is True,
             "validation_status": _validation_status(
                 staleness_result,
                 "evidence_staleness_validation",
@@ -616,8 +782,7 @@ def _source_artifacts(
                 readiness_report.get("shadow_continuation_readiness"),
                 "MISSING",
             ),
-            "safe_to_continue_shadow": readiness_report.get("safe_to_continue_shadow")
-            is True,
+            "safe_to_continue_shadow": readiness_report.get("safe_to_continue_shadow") is True,
             "validation_status": _validation_status(
                 readiness_result,
                 "shadow_continuation_readiness_validation",
@@ -780,6 +945,10 @@ def _next_action(status: str) -> str:
 
 def _joined_texts(value: object, sep: str = ", ") -> str:
     return sep.join(_texts(value)) or "none"
+
+
+def _without_key(payload: Mapping[str, Any], key: str) -> dict[str, Any]:
+    return {name: value for name, value in payload.items() if name != key}
 
 
 _mapping = st._mapping

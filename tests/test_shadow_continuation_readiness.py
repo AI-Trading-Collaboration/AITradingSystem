@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from datetime import UTC, date, datetime
 from pathlib import Path
 
+import pytest
 from dynamic_v3_filtered_candidate_readiness_helpers import (
     assert_research_safe,
     run_paper_shadow_protocol_fixture,
@@ -16,12 +18,37 @@ from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readin
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as daily
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as drift
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as weekly
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+)
+
+
+@pytest.fixture(autouse=True)
+def _reuse_validated_artifacts_within_test():
+    with artifact_validation_session():
+        yield
+
+
+@pytest.fixture(scope="module")
+def shared_shadow_continuation_fixture(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[dict[str, object]]:
+    root = tmp_path_factory.mktemp("shadow-continuation-source-fixture")
+    monkeypatch = pytest.MonkeyPatch()
+    try:
+        with artifact_validation_session():
+            fixture = _shadow_continuation_fixture(root, monkeypatch)
+        fixture["fixture_root"] = root
+        yield fixture
+    finally:
+        monkeypatch.undo()
 
 
 def test_shadow_continuation_readiness_requires_manual_review_for_recovery_week(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path, shared_shadow_continuation_fixture: dict[str, object]
 ) -> None:
-    fixture = _shadow_continuation_fixture(tmp_path, monkeypatch)
+    fixture = shared_shadow_continuation_fixture
+    fixture_root = Path(fixture["fixture_root"])
     data_quality_report = _write_data_quality_report(tmp_path)
 
     result = readiness.run_shadow_continuation_readiness_report(
@@ -33,11 +60,11 @@ def test_shadow_continuation_readiness_requires_manual_review_for_recovery_week(
         evidence_staleness_monitor_id=fixture["evidence_staleness"]["monitor_id"],
         signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
         data_quality_report_path=data_quality_report,
-        paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
-        paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
-        paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
-        evidence_staleness_monitor_dir=tmp_path / "evidence_staleness_monitor",
-        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
+        paper_shadow_daily_dir=fixture_root / "paper_shadow_daily",
+        paper_shadow_drift_monitor_dir=fixture_root / "paper_shadow_drift_monitor",
+        paper_shadow_weekly_review_dir=fixture_root / "paper_shadow_weekly_review",
+        evidence_staleness_monitor_dir=fixture_root / "evidence_staleness_monitor",
+        signal_input_completeness_dir=fixture_root / "signal_input_completeness",
         output_dir=tmp_path / "shadow_continuation_readiness",
         generated_at=datetime(2024, 4, 22, 1, tzinfo=UTC),
     )
@@ -75,9 +102,10 @@ def test_shadow_continuation_readiness_requires_manual_review_for_recovery_week(
 
 
 def test_shadow_continuation_readiness_blocks_missing_weekly_review(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path, shared_shadow_continuation_fixture: dict[str, object]
 ) -> None:
-    fixture = _shadow_continuation_fixture(tmp_path, monkeypatch)
+    fixture = shared_shadow_continuation_fixture
+    fixture_root = Path(fixture["fixture_root"])
     data_quality_report = _write_data_quality_report(tmp_path, status="PASS")
 
     result = readiness.run_shadow_continuation_readiness_report(
@@ -89,11 +117,11 @@ def test_shadow_continuation_readiness_blocks_missing_weekly_review(
         evidence_staleness_monitor_id=fixture["evidence_staleness"]["monitor_id"],
         signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
         data_quality_report_path=data_quality_report,
-        paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
-        paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
-        paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
-        evidence_staleness_monitor_dir=tmp_path / "evidence_staleness_monitor",
-        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
+        paper_shadow_daily_dir=fixture_root / "paper_shadow_daily",
+        paper_shadow_drift_monitor_dir=fixture_root / "paper_shadow_drift_monitor",
+        paper_shadow_weekly_review_dir=fixture_root / "paper_shadow_weekly_review",
+        evidence_staleness_monitor_dir=fixture_root / "evidence_staleness_monitor",
+        signal_input_completeness_dir=fixture_root / "signal_input_completeness",
         output_dir=tmp_path / "shadow_continuation_readiness_missing",
         generated_at=datetime(2024, 4, 22, 1, tzinfo=UTC),
     )
@@ -107,9 +135,10 @@ def test_shadow_continuation_readiness_blocks_missing_weekly_review(
 
 
 def test_shadow_continuation_readiness_blocks_fallback_unavailable(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path, shared_shadow_continuation_fixture: dict[str, object]
 ) -> None:
-    fixture = _shadow_continuation_fixture(tmp_path, monkeypatch)
+    fixture = shared_shadow_continuation_fixture
+    fixture_root = Path(fixture["fixture_root"])
     data_quality_report = _write_data_quality_report(tmp_path, status="PASS")
     fallback_policy_report = _write_fallback_policy_report(
         tmp_path,
@@ -127,11 +156,11 @@ def test_shadow_continuation_readiness_blocks_fallback_unavailable(
         evidence_staleness_monitor_id=fixture["evidence_staleness"]["monitor_id"],
         signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
         data_quality_report_path=data_quality_report,
-        paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
-        paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
-        paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
-        evidence_staleness_monitor_dir=tmp_path / "evidence_staleness_monitor",
-        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
+        paper_shadow_daily_dir=fixture_root / "paper_shadow_daily",
+        paper_shadow_drift_monitor_dir=fixture_root / "paper_shadow_drift_monitor",
+        paper_shadow_weekly_review_dir=fixture_root / "paper_shadow_weekly_review",
+        evidence_staleness_monitor_dir=fixture_root / "evidence_staleness_monitor",
+        signal_input_completeness_dir=fixture_root / "signal_input_completeness",
         fallback_policy_report_path=fallback_policy_report,
         output_dir=tmp_path / "shadow_continuation_readiness_fallback_blocked",
         generated_at=datetime(2024, 4, 22, 1, tzinfo=UTC),
@@ -147,9 +176,10 @@ def test_shadow_continuation_readiness_blocks_fallback_unavailable(
 
 
 def test_shadow_continuation_readiness_blocks_cache_catalog_failure(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path, shared_shadow_continuation_fixture: dict[str, object]
 ) -> None:
-    fixture = _shadow_continuation_fixture(tmp_path, monkeypatch)
+    fixture = shared_shadow_continuation_fixture
+    fixture_root = Path(fixture["fixture_root"])
     data_quality_report = _write_data_quality_report(tmp_path, status="PASS")
     cache_catalog_report = _write_cache_catalog_report(tmp_path, status="FAIL")
 
@@ -162,11 +192,11 @@ def test_shadow_continuation_readiness_blocks_cache_catalog_failure(
         evidence_staleness_monitor_id=fixture["evidence_staleness"]["monitor_id"],
         signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
         data_quality_report_path=data_quality_report,
-        paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
-        paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
-        paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
-        evidence_staleness_monitor_dir=tmp_path / "evidence_staleness_monitor",
-        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
+        paper_shadow_daily_dir=fixture_root / "paper_shadow_daily",
+        paper_shadow_drift_monitor_dir=fixture_root / "paper_shadow_drift_monitor",
+        paper_shadow_weekly_review_dir=fixture_root / "paper_shadow_weekly_review",
+        evidence_staleness_monitor_dir=fixture_root / "evidence_staleness_monitor",
+        signal_input_completeness_dir=fixture_root / "signal_input_completeness",
         cache_catalog_report_path=cache_catalog_report,
         output_dir=tmp_path / "shadow_continuation_readiness_cache_blocked",
         generated_at=datetime(2024, 4, 22, 1, tzinfo=UTC),
@@ -182,9 +212,10 @@ def test_shadow_continuation_readiness_blocks_cache_catalog_failure(
 
 
 def test_shadow_continuation_readiness_cli_run_report_and_validate(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path, shared_shadow_continuation_fixture: dict[str, object]
 ) -> None:
-    fixture = _shadow_continuation_fixture(tmp_path, monkeypatch)
+    fixture = shared_shadow_continuation_fixture
+    fixture_root = Path(fixture["fixture_root"])
     data_quality_report = _write_data_quality_report(tmp_path)
     output_dir = tmp_path / "shadow_continuation_readiness_cli"
 
@@ -212,15 +243,15 @@ def test_shadow_continuation_readiness_cli_run_report_and_validate(
             "--data-quality-report-path",
             str(data_quality_report),
             "--paper-shadow-daily-dir",
-            str(tmp_path / "paper_shadow_daily"),
+            str(fixture_root / "paper_shadow_daily"),
             "--paper-shadow-drift-monitor-dir",
-            str(tmp_path / "paper_shadow_drift_monitor"),
+            str(fixture_root / "paper_shadow_drift_monitor"),
             "--paper-shadow-weekly-review-dir",
-            str(tmp_path / "paper_shadow_weekly_review"),
+            str(fixture_root / "paper_shadow_weekly_review"),
             "--evidence-staleness-monitor-dir",
-            str(tmp_path / "evidence_staleness_monitor"),
+            str(fixture_root / "evidence_staleness_monitor"),
             "--signal-input-completeness-dir",
-            str(tmp_path / "signal_input_completeness"),
+            str(fixture_root / "signal_input_completeness"),
             "--output-dir",
             str(output_dir),
         ],

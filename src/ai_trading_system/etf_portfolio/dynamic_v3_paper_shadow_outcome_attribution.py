@@ -19,6 +19,7 @@ DEFAULT_OUTCOME_ATTRIBUTION_CONFIG_PATH = (
 DEFAULT_OUTCOME_ATTRIBUTION_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_outcome_attribution"
 )
+OUTCOME_ATTRIBUTION_INPUT_SCHEMA = "paper_shadow_outcome_attribution_input_snapshot.v2"
 OUTCOME_ATTRIBUTION_STATUSES = (
     "OUTCOME_ATTRIBUTION_COMPLETE",
     "OUTCOME_ATTRIBUTION_WITH_WARNINGS",
@@ -142,12 +143,8 @@ def run_paper_shadow_outcome_attribution(
         "policy_version": policy.get("version"),
         "paper_shadow_outcome_attribution_status": status,
         "weekly_review_id": weekly_source.get("artifact_id"),
-        "weekly_decision": _mapping(weekly_source.get("summary")).get(
-            "weekly_decision"
-        ),
-        "weekly_coverage_status": _mapping(weekly_source.get("summary")).get(
-            "coverage_status"
-        ),
+        "weekly_decision": _mapping(weekly_source.get("summary")).get("weekly_decision"),
+        "weekly_coverage_status": _mapping(weekly_source.get("summary")).get("coverage_status"),
         "dominant_driver": driver_summary.get("dominant_driver"),
         "dominant_driver_category": driver_summary.get("dominant_driver_category"),
         "dominant_confidence": driver_summary.get("dominant_confidence"),
@@ -194,6 +191,9 @@ def run_paper_shadow_outcome_attribution(
         "paper_shadow_outcome_attribution_manifest_path": str(
             root / "paper_shadow_outcome_attribution_manifest.json"
         ),
+        "paper_shadow_outcome_attribution_input_snapshot_path": str(
+            root / "paper_shadow_outcome_attribution_input_snapshot.json"
+        ),
         "paper_shadow_outcome_attribution_report_path": str(
             root / "paper_shadow_outcome_attribution_report.json"
         ),
@@ -205,6 +205,25 @@ def run_paper_shadow_outcome_attribution(
         **OUTCOME_ATTRIBUTION_SAFETY,
     }
     reader = render_outcome_attribution_reader_brief(report)
+    input_snapshot = {
+        "schema_version": OUTCOME_ATTRIBUTION_INPUT_SCHEMA,
+        "attribution_id": root.name,
+        "generated_at": generated.isoformat(),
+        "weekly_review_dir": str(weekly_review_dir),
+        "paper_shadow_health_dir": str(paper_shadow_health_dir),
+        "config_path": str(config_path),
+        "policy": policy,
+        "weekly_source": weekly_source,
+        "health_source": health_source,
+        "resolved_weekly_review_id": _text(weekly_source.get("artifact_id")),
+        "resolved_paper_shadow_health_id": _text(health_source.get("artifact_id")),
+        "paper_shadow_health_report_path": (
+            "" if paper_shadow_health_report_path is None else str(paper_shadow_health_report_path)
+        ),
+    }
+    input_snapshot_path = root / "paper_shadow_outcome_attribution_input_snapshot.json"
+    st._write_json(input_snapshot_path, input_snapshot)
+    manifest["input_snapshot_sha256"] = st._file_sha256(input_snapshot_path)
     st._write_json(root / "paper_shadow_outcome_attribution_manifest.json", manifest)
     st._write_json(root / "paper_shadow_outcome_attribution_report.json", report)
     st._write_text(
@@ -255,9 +274,7 @@ def paper_shadow_outcome_attribution_report_payload(
         ),
         "attribution_dir": str(root),
     }
-    validation = st._read_optional_json(
-        root / "paper_shadow_outcome_attribution_validation.json"
-    )
+    validation = st._read_optional_json(root / "paper_shadow_outcome_attribution_validation.json")
     if validation:
         payload["paper_shadow_outcome_attribution_validation"] = validation
     return payload
@@ -270,13 +287,10 @@ def validate_paper_shadow_outcome_attribution_artifact(
     write_output: bool = True,
 ) -> dict[str, Any]:
     root = output_dir / attribution_id
-    manifest = (
-        st._read_optional_json(root / "paper_shadow_outcome_attribution_manifest.json")
-        or {}
-    )
-    report = (
-        st._read_optional_json(root / "paper_shadow_outcome_attribution_report.json")
-        or {}
+    manifest = st._read_optional_json(root / "paper_shadow_outcome_attribution_manifest.json") or {}
+    report = st._read_optional_json(root / "paper_shadow_outcome_attribution_report.json") or {}
+    input_snapshot = (
+        st._read_optional_json(root / "paper_shadow_outcome_attribution_input_snapshot.json") or {}
     )
     reader = (
         (root / "reader_brief_section.md").read_text(encoding="utf-8")
@@ -294,6 +308,7 @@ def validate_paper_shadow_outcome_attribution_artifact(
         root,
         (
             "paper_shadow_outcome_attribution_manifest.json",
+            "paper_shadow_outcome_attribution_input_snapshot.json",
             "paper_shadow_outcome_attribution_report.json",
             "paper_shadow_outcome_attribution_report.md",
             "reader_brief_section.md",
@@ -302,10 +317,27 @@ def validate_paper_shadow_outcome_attribution_artifact(
     checks.extend(
         [
             st._check(
+                "input_snapshot_schema",
+                input_snapshot.get("schema_version") == OUTCOME_ATTRIBUTION_INPUT_SCHEMA,
+                "",
+            ),
+            st._check(
+                "input_snapshot_id",
+                input_snapshot.get("attribution_id") == attribution_id,
+                "",
+            ),
+            st._check(
+                "input_snapshot_sha256_matches",
+                bool(_text(manifest.get("input_snapshot_sha256")))
+                and manifest.get("input_snapshot_sha256")
+                == st._file_sha256(
+                    root / "paper_shadow_outcome_attribution_input_snapshot.json"
+                ),
+                "",
+            ),
+            st._check(
                 "manifest_report_id_match",
-                manifest.get("attribution_id")
-                == report.get("attribution_id")
-                == attribution_id,
+                manifest.get("attribution_id") == report.get("attribution_id") == attribution_id,
                 "",
             ),
             st._check(
@@ -366,6 +398,85 @@ def validate_paper_shadow_outcome_attribution_artifact(
                 "",
             ),
             st._check("broker_forbidden", st._payload_safe(manifest, report), ""),
+        ]
+    )
+    snapshot_weekly = _mapping(input_snapshot.get("weekly_source"))
+    snapshot_health = _mapping(input_snapshot.get("health_source"))
+    try:
+        live_policy = load_outcome_attribution_policy(
+            Path(_text(input_snapshot.get("config_path")))
+        )
+        live_weekly = (
+            _weekly_source(
+                weekly_review_id=_text(input_snapshot.get("resolved_weekly_review_id")),
+                output_dir=Path(_text(input_snapshot.get("weekly_review_dir"))),
+            )
+            if snapshot_weekly.get("exists") is True
+            else snapshot_weekly
+        )
+        explicit_health_path = _text(input_snapshot.get("paper_shadow_health_report_path"))
+        live_health = (
+            _health_source(
+                health_id=(
+                    None
+                    if explicit_health_path
+                    else _text(input_snapshot.get("resolved_paper_shadow_health_id"))
+                ),
+                report_path=Path(explicit_health_path) if explicit_health_path else None,
+                output_dir=Path(_text(input_snapshot.get("paper_shadow_health_dir"))),
+            )
+            if snapshot_health.get("exists") is True
+            else snapshot_health
+        )
+    except (OSError, ValueError):
+        live_policy = {}
+        live_weekly = {}
+        live_health = {}
+    checks.extend(
+        [
+            st._check(
+                "policy_snapshot_matches_live",
+                live_policy == _mapping(input_snapshot.get("policy"))
+                and report.get("policy") == input_snapshot.get("policy"),
+                "",
+            ),
+            st._check(
+                "weekly_source_matches_live",
+                live_weekly == snapshot_weekly,
+                "",
+            ),
+            st._check(
+                "health_source_matches_live",
+                live_health == snapshot_health,
+                "",
+            ),
+            st._check(
+                "source_snapshot_matches_report",
+                report.get("source_artifacts")
+                == {
+                    "paper_shadow_weekly_review": snapshot_weekly,
+                    "paper_shadow_health": snapshot_health,
+                },
+                "",
+            ),
+            st._check(
+                "source_lineage_consistent",
+                snapshot_weekly.get("exists") is not True
+                or _mapping(snapshot_weekly.get("summary")).get("candidate")
+                == report.get("candidate"),
+                "",
+            ),
+            st._check(
+                "report_exact_rebuild",
+                (root / "paper_shadow_outcome_attribution_report.md").read_text(encoding="utf-8")
+                == render_outcome_attribution_report(manifest, report),
+                "",
+            ),
+            st._check(
+                "reader_exact_rebuild",
+                reader == render_outcome_attribution_reader_brief(report),
+                "",
+            ),
         ]
     )
     validation = st._validation_payload(
@@ -529,15 +640,17 @@ def _weekly_source(*, weekly_review_id: str | None, output_dir: Path) -> dict[st
             f"paper-shadow weekly review missing: {exc}",
         )
     review = _mapping(payload.get("paper_shadow_weekly_review"))
+    validation = weekly.validate_paper_shadow_weekly_review_artifact(
+        weekly_review_id=_text(payload.get("weekly_review_id")),
+        output_dir=output_dir,
+        write_output=False,
+    )
     return _source(
         "paper_shadow_weekly_review",
         exists=True,
         artifact_id=_text(payload.get("weekly_review_id")),
         status=_text(review.get("weekly_decision"), _text(payload.get("status"), "UNKNOWN")),
-        validation_status=_text(
-            _mapping(payload.get("paper_shadow_weekly_validation")).get("status"),
-            "NOT_RUN",
-        ),
+        validation_status=_text(validation.get("status"), "NOT_RUN"),
         source_path=Path(_text(payload.get("paper_shadow_weekly_manifest_path"))),
         summary={
             "weekly_review_id": payload.get("weekly_review_id"),
@@ -547,9 +660,7 @@ def _weekly_source(*, weekly_review_id: str | None, output_dir: Path) -> dict[st
             "weekly_decision": review.get("weekly_decision"),
             "coverage_status": review.get("coverage_status"),
             "coverage_classification": review.get("coverage_classification"),
-            "coverage_safe_for_continuation": review.get(
-                "coverage_safe_for_continuation"
-            ),
+            "coverage_safe_for_continuation": review.get("coverage_safe_for_continuation"),
             "signal_input_status": review.get("signal_input_status"),
         },
         payload=review,
@@ -569,8 +680,10 @@ def _health_source(
                 f"paper-shadow health report missing: {report_path}",
             )
         report = st._read_json(report_path)
-        validation = st._read_optional_json(
-            report_path.parent / "paper_shadow_health_validation.json"
+        validation = health.validate_paper_shadow_health_artifact(
+            health_id=_text(report.get("health_id"), report_path.parent.name),
+            output_dir=report_path.parent.parent,
+            write_output=False,
         )
         return _source(
             "paper_shadow_health",
@@ -594,15 +707,17 @@ def _health_source(
             f"paper-shadow health missing: {exc}",
         )
     report = _mapping(payload.get("paper_shadow_health_report"))
+    validation = health.validate_paper_shadow_health_artifact(
+        health_id=_text(payload.get("health_id")),
+        output_dir=output_dir,
+        write_output=False,
+    )
     return _source(
         "paper_shadow_health",
         exists=True,
         artifact_id=_text(payload.get("health_id")),
         status=_text(report.get("paper_shadow_health_status"), "UNKNOWN"),
-        validation_status=_text(
-            _mapping(payload.get("paper_shadow_health_validation")).get("status"),
-            "NOT_RUN",
-        ),
+        validation_status=_text(validation.get("status"), "NOT_RUN"),
         source_path=Path(_text(payload.get("paper_shadow_health_manifest_path"))),
         summary=_health_summary(report),
         payload=report,
@@ -878,9 +993,7 @@ def _driver_summary(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
     return {
         "driver_count": len(rows),
         "active_driver_count": len(active),
-        "inactive_driver_count": sum(
-            1 for row in rows if row.get("driver_status") == "INACTIVE"
-        ),
+        "inactive_driver_count": sum(1 for row in rows if row.get("driver_status") == "INACTIVE"),
         "unknown_driver_count": len(unknown),
         "dominant_driver": _text(dominant.get("driver_id"), "UNKNOWN"),
         "dominant_driver_category": _text(dominant.get("category"), "UNKNOWN"),
@@ -947,7 +1060,7 @@ def _warnings(
         warnings.append("paper_shadow_health:missing_optional_context")
     if int(driver_summary.get("unknown_driver_count") or 0):
         warnings.append(
-            "unknown_driver_count:" f"{int(driver_summary.get('unknown_driver_count') or 0)}"
+            f"unknown_driver_count:{int(driver_summary.get('unknown_driver_count') or 0)}"
         )
     if status == "OUTCOME_ATTRIBUTION_WITH_WARNINGS":
         warnings.append("manual_review_recommended_for_attribution_warnings")

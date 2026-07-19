@@ -11,12 +11,16 @@ from ai_trading_system.etf_portfolio import (
     dynamic_v3_readiness_health_recovery as recovery,
 )
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
+)
 from ai_trading_system.reports import owner_decision_audit_log as owner_log
 
 DEFAULT_NORMAL_PAPER_SHADOW_RESUMPTION_GATE_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "normal_paper_shadow_resumption_gate"
 )
 DEFAULT_OWNER_DECISION_REPORTS_DIR = PROJECT_ROOT / "outputs" / "reports"
+NORMAL_PAPER_SHADOW_RESUMPTION_INPUT_SCHEMA = "normal_paper_shadow_resumption_input_snapshot.v2"
 
 NORMAL_PAPER_SHADOW_RESUMPTION_STATUSES = (
     "RESUME_NORMAL_SHADOW_ALLOWED",
@@ -53,6 +57,7 @@ NORMAL_PAPER_SHADOW_RESUMPTION_SAFETY = {
 }
 
 
+@with_artifact_validation_session
 def run_normal_paper_shadow_resumption_gate(
     *,
     as_of: date | None = None,
@@ -76,6 +81,13 @@ def run_normal_paper_shadow_resumption_gate(
         output_dir=readiness_health_recovery_dir,
     )
     recovery_report = _mapping(recovery_payload.get("readiness_health_recovery_report"))
+    recovery_validation = recovery.validate_readiness_health_recovery_artifact(
+        recovery_id=_text(recovery_payload.get("recovery_id")),
+        output_dir=readiness_health_recovery_dir,
+        write_output=False,
+    )
+    if recovery_validation.get("status") != "PASS":
+        raise ValueError("normal paper-shadow resumption requires validated recovery evidence")
     source_statuses = _mapping(recovery_report.get("source_statuses"))
     source_validations = _mapping(recovery_report.get("source_validations"))
     owner_context = _owner_decision_context(
@@ -135,8 +147,7 @@ def run_normal_paper_shadow_resumption_gate(
         "normal_paper_shadow_resumption_gate_status": final_status,
         "normal_paper_shadow_may_resume": may_resume,
         "manual_owner_review_required_before_resumption": True,
-        "manual_owner_review_completed": owner_context.get("manual_owner_review_completed")
-        is True,
+        "manual_owner_review_completed": owner_context.get("manual_owner_review_completed") is True,
         "owner_action": _text(owner_context.get("owner_action")),
         "owner_action_is_safe_non_promotion": owner_context.get(
             "owner_action_is_safe_non_promotion"
@@ -198,6 +209,9 @@ def run_normal_paper_shadow_resumption_gate(
         "normal_paper_shadow_resumption_gate_manifest_path": str(
             root / "normal_paper_shadow_resumption_gate_manifest.json"
         ),
+        "normal_paper_shadow_resumption_gate_input_snapshot_path": str(
+            root / "normal_paper_shadow_resumption_gate_input_snapshot.json"
+        ),
         "normal_paper_shadow_resumption_gate_report_path": str(
             root / "normal_paper_shadow_resumption_gate_report.json"
         ),
@@ -209,6 +223,28 @@ def run_normal_paper_shadow_resumption_gate(
         **NORMAL_PAPER_SHADOW_RESUMPTION_SAFETY,
     }
     reader = render_normal_paper_shadow_resumption_gate_reader_brief(report)
+    input_snapshot = {
+        "schema_version": NORMAL_PAPER_SHADOW_RESUMPTION_INPUT_SCHEMA,
+        "gate_id": root.name,
+        "generated_at": generated.isoformat(),
+        "readiness_health_recovery_dir": str(readiness_health_recovery_dir),
+        "source_recovery": _without_key(recovery_payload, "readiness_health_recovery_validation"),
+        "source_recovery_validation": recovery_validation,
+        "owner_context": owner_context,
+        "owner_request": {
+            "as_of": effective_as_of.isoformat(),
+            "explicit_owner_action": owner_action,
+            "explicit_manual_review_completed": manual_owner_review_completed,
+            "owner_decision_report_path": (
+                "" if owner_decision_report_path is None else str(owner_decision_report_path)
+            ),
+            "owner_decision_reports_dir": str(owner_decision_reports_dir),
+            "owner_decision_log_path": str(owner_decision_log_path),
+        },
+    }
+    input_snapshot_path = root / "normal_paper_shadow_resumption_gate_input_snapshot.json"
+    st._write_json(input_snapshot_path, input_snapshot)
+    manifest["input_snapshot_sha256"] = st._file_sha256(input_snapshot_path)
     st._write_json(root / "normal_paper_shadow_resumption_gate_manifest.json", manifest)
     st._write_json(root / "normal_paper_shadow_resumption_gate_report.json", report)
     st._write_text(
@@ -254,9 +290,7 @@ def normal_paper_shadow_resumption_gate_report_payload(
         "normal_paper_shadow_resumption_gate_report": st._read_json(
             root / "normal_paper_shadow_resumption_gate_report.json"
         ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "gate_dir": str(root),
     }
     validation = st._read_optional_json(
@@ -275,11 +309,11 @@ def validate_normal_paper_shadow_resumption_gate_artifact(
 ) -> dict[str, Any]:
     root = output_dir / gate_id
     manifest = (
-        st._read_optional_json(root / "normal_paper_shadow_resumption_gate_manifest.json")
-        or {}
+        st._read_optional_json(root / "normal_paper_shadow_resumption_gate_manifest.json") or {}
     )
-    report = (
-        st._read_optional_json(root / "normal_paper_shadow_resumption_gate_report.json")
+    report = st._read_optional_json(root / "normal_paper_shadow_resumption_gate_report.json") or {}
+    input_snapshot = (
+        st._read_optional_json(root / "normal_paper_shadow_resumption_gate_input_snapshot.json")
         or {}
     )
     reader = (
@@ -304,6 +338,7 @@ def validate_normal_paper_shadow_resumption_gate_artifact(
         root,
         (
             "normal_paper_shadow_resumption_gate_manifest.json",
+            "normal_paper_shadow_resumption_gate_input_snapshot.json",
             "normal_paper_shadow_resumption_gate_report.json",
             "normal_paper_shadow_resumption_gate_report.md",
             "reader_brief_section.md",
@@ -311,6 +346,25 @@ def validate_normal_paper_shadow_resumption_gate_artifact(
     )
     checks.extend(
         [
+            st._check(
+                "input_snapshot_schema",
+                input_snapshot.get("schema_version") == NORMAL_PAPER_SHADOW_RESUMPTION_INPUT_SCHEMA,
+                "",
+            ),
+            st._check(
+                "input_snapshot_id",
+                input_snapshot.get("gate_id") == gate_id,
+                "",
+            ),
+            st._check(
+                "input_snapshot_sha256_matches",
+                bool(_text(manifest.get("input_snapshot_sha256")))
+                and manifest.get("input_snapshot_sha256")
+                == st._file_sha256(
+                    root / "normal_paper_shadow_resumption_gate_input_snapshot.json"
+                ),
+                "",
+            ),
             st._check("gate_id_matches", manifest.get("gate_id") == gate_id, ""),
             st._check(
                 "status_enum_valid",
@@ -381,6 +435,86 @@ def validate_normal_paper_shadow_resumption_gate_artifact(
             ),
         ]
     )
+    try:
+        snapshot_recovery = _mapping(input_snapshot.get("source_recovery"))
+        recovery_dir = Path(_text(input_snapshot.get("readiness_health_recovery_dir")))
+        live_recovery = _without_key(
+            recovery.readiness_health_recovery_report_payload(
+                recovery_id=_text(snapshot_recovery.get("recovery_id")),
+                latest=False,
+                output_dir=recovery_dir,
+            ),
+            "readiness_health_recovery_validation",
+        )
+        live_recovery_validation = recovery.validate_readiness_health_recovery_artifact(
+            recovery_id=_text(snapshot_recovery.get("recovery_id")),
+            output_dir=recovery_dir,
+            write_output=False,
+        )
+        owner_request = _mapping(input_snapshot.get("owner_request"))
+        live_owner_context = _owner_decision_context(
+            as_of=date.fromisoformat(_text(owner_request.get("as_of"))),
+            explicit_owner_action=(_text(owner_request.get("explicit_owner_action")) or None),
+            explicit_manual_review_completed=owner_request.get("explicit_manual_review_completed")
+            is True,
+            owner_decision_report_path=_optional_path(
+                owner_request.get("owner_decision_report_path")
+            ),
+            owner_decision_reports_dir=Path(_text(owner_request.get("owner_decision_reports_dir"))),
+            owner_decision_log_path=Path(_text(owner_request.get("owner_decision_log_path"))),
+        )
+    except (OSError, ValueError):
+        live_recovery = {}
+        live_recovery_validation = {"status": "FAIL"}
+        live_owner_context = {}
+    live_recovery_report = _mapping(live_recovery.get("readiness_health_recovery_report"))
+    checks.extend(
+        [
+            st._check(
+                "recovery_source_matches_live",
+                live_recovery == _mapping(input_snapshot.get("source_recovery")),
+                "",
+            ),
+            st._check(
+                "recovery_validation_matches_snapshot",
+                live_recovery_validation
+                == _mapping(input_snapshot.get("source_recovery_validation"))
+                and live_recovery_validation.get("status") == "PASS",
+                "",
+            ),
+            st._check(
+                "owner_context_matches_live",
+                live_owner_context == _mapping(input_snapshot.get("owner_context")),
+                "",
+            ),
+            st._check(
+                "source_lineage_consistent",
+                live_recovery_report.get("candidate") == report.get("candidate")
+                and live_recovery_report.get("recovery_id")
+                == report.get("readiness_health_recovery_id"),
+                "",
+            ),
+            st._check(
+                "source_chronology_valid",
+                _timestamp_not_after(
+                    _text(live_recovery_report.get("generated_at")),
+                    _text(report.get("generated_at")),
+                ),
+                "",
+            ),
+            st._check(
+                "report_exact_rebuild",
+                (root / "normal_paper_shadow_resumption_gate_report.md").read_text(encoding="utf-8")
+                == render_normal_paper_shadow_resumption_gate_report(manifest, report),
+                "",
+            ),
+            st._check(
+                "reader_exact_rebuild",
+                reader == render_normal_paper_shadow_resumption_gate_reader_brief(report),
+                "",
+            ),
+        ]
+    )
     validation = st._validation_payload(
         "etf_dynamic_v3_normal_paper_shadow_resumption_gate_validation",
         gate_id,
@@ -408,15 +542,12 @@ def render_normal_paper_shadow_resumption_gate_reader_brief(
             f"{report.get('normal_paper_shadow_resumption_gate_status')}",
             f"- normal_paper_shadow_may_resume: {report.get('normal_paper_shadow_may_resume')}",
             f"- owner_action: {report.get('owner_action')}",
-            "- manual_owner_review_completed: "
-            f"{report.get('manual_owner_review_completed')}",
+            f"- manual_owner_review_completed: {report.get('manual_owner_review_completed')}",
             f"- readiness_health_recovery_id: {report.get('readiness_health_recovery_id')}",
-            "- readiness_health_recovery_status: "
-            f"{report.get('readiness_health_recovery_status')}",
+            f"- readiness_health_recovery_status: {report.get('readiness_health_recovery_status')}",
             f"- signal_input_status: {statuses.get('signal_input_status')}",
             f"- evidence_freshness_status: {statuses.get('evidence_freshness_status')}",
-            "- shadow_continuation_readiness: "
-            f"{statuses.get('shadow_continuation_readiness')}",
+            f"- shadow_continuation_readiness: {statuses.get('shadow_continuation_readiness')}",
             f"- paper_shadow_health_status: {statuses.get('paper_shadow_health_status')}",
             f"- blocking_reasons: {_joined_texts(report.get('blocking_reasons'))}",
             f"- warning_reasons: {_joined_texts(report.get('warning_reasons'))}",
@@ -433,10 +564,7 @@ def render_normal_paper_shadow_resumption_gate_report(
     report: Mapping[str, Any],
 ) -> str:
     requirement_lines = [
-        (
-            f"- {row.get('requirement_id')}: status={row.get('status')} "
-            f"detail={row.get('detail')}"
-        )
+        (f"- {row.get('requirement_id')}: status={row.get('status')} detail={row.get('detail')}")
         for row in _records(report.get("resumption_requirements"))
     ]
     return "\n".join(
@@ -454,8 +582,7 @@ def render_normal_paper_shadow_resumption_gate_report(
             f"{report.get('normal_paper_shadow_resumption_gate_status')}",
             f"- normal_paper_shadow_may_resume: {report.get('normal_paper_shadow_may_resume')}",
             f"- owner_action: {report.get('owner_action')}",
-            "- manual_owner_review_completed: "
-            f"{report.get('manual_owner_review_completed')}",
+            f"- manual_owner_review_completed: {report.get('manual_owner_review_completed')}",
             f"- blocking_reasons: {_joined_texts(report.get('blocking_reasons'))}",
             f"- warning_reasons: {_joined_texts(report.get('warning_reasons'))}",
             f"- next_required_action: {report.get('next_required_action')}",
@@ -574,10 +701,8 @@ def _owner_context_from_action(
         "latest_safety_status": safety_status,
         "manual_owner_review_completed": manual_review_completed,
         "owner_action_is_safe_non_promotion": owner_action in SAFE_OWNER_ACTIONS,
-        "owner_action_authorizes_normal_resumption": owner_action
-        in RESUMPTION_OWNER_ACTIONS,
-        "promotion_action_detected": bool(owner_action)
-        and owner_action not in SAFE_OWNER_ACTIONS,
+        "owner_action_authorizes_normal_resumption": owner_action in RESUMPTION_OWNER_ACTIONS,
+        "promotion_action_detected": bool(owner_action) and owner_action not in SAFE_OWNER_ACTIONS,
     }
 
 
@@ -736,22 +861,36 @@ def _next_action(status: str, owner_context: Mapping[str, Any]) -> str:
     if not owner_action:
         return "record_manual_owner_review_before_normal_shadow_resumption"
     if owner_action in {"hold", "keep_hold"}:
-        return (
-            "keep_normal_paper_shadow_on_hold_until_owner_records_"
-            "approve_resume_normal_shadow"
-        )
+        return "keep_normal_paper_shadow_on_hold_until_owner_records_approve_resume_normal_shadow"
     if owner_action in {"return_to_research", "reject_candidate"}:
         return "owner_decision_moves_candidate_out_of_normal_resumption_path"
     if owner_action not in SAFE_OWNER_ACTIONS:
         return (
-            "replace_promotion_or_extended_shadow_action_with_hold_or_"
-            "approve_resume_normal_shadow"
+            "replace_promotion_or_extended_shadow_action_with_hold_or_approve_resume_normal_shadow"
         )
     return "clear_blocking_resumption_requirements_before_normal_shadow_resumption"
 
 
 def _joined_texts(value: object, sep: str = ", ") -> str:
     return sep.join(_texts(value)) or "none"
+
+
+def _without_key(payload: Mapping[str, Any], key: str) -> dict[str, Any]:
+    return {name: value for name, value in payload.items() if name != key}
+
+
+def _optional_path(value: object) -> Path | None:
+    text = _text(value)
+    return Path(text) if text else None
+
+
+def _timestamp_not_after(source_value: str, artifact_value: str) -> bool:
+    try:
+        source = datetime.fromisoformat(source_value)
+        artifact = datetime.fromisoformat(artifact_value)
+    except ValueError:
+        return False
+    return source.tzinfo is not None and artifact.tzinfo is not None and source <= artifact
 
 
 _mapping = st._mapping

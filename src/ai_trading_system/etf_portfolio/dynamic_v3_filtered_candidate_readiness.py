@@ -26,6 +26,10 @@ from ai_trading_system.etf_portfolio import (
 )
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 from ai_trading_system.market_calendar_freshness import resolve_us_equity_market_freshness
+from ai_trading_system.platform.artifacts.validation_session import (
+    cached_artifact_validation,
+    with_artifact_validation_session,
+)
 
 DEFAULT_FILTERED_CANDIDATE_EVIDENCE_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "filtered_candidate_evidence"
@@ -59,6 +63,7 @@ DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "formal_research_method_contract"
 )
 DEFAULT_PAPER_SHADOW_PROTOCOL_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_protocol"
+PAPER_SHADOW_PROTOCOL_INPUT_SCHEMA = "paper_shadow_protocol_input_snapshot.v2"
 DEFAULT_CANDIDATE_DECISION_LEDGER_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "candidate_decision_ledger"
 )
@@ -72,9 +77,11 @@ DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR = (
 DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "evidence_staleness_monitor"
 )
+EVIDENCE_STALENESS_INPUT_SCHEMA = "evidence_staleness_input_snapshot.v2"
 DEFAULT_SHADOW_CONTINUATION_READINESS_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shadow_continuation_readiness"
 )
+SHADOW_CONTINUATION_INPUT_SCHEMA = "shadow_continuation_input_snapshot.v2"
 DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR = signal_inputs.DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR
 DEFAULT_EVIDENCE_STALENESS_POLICY_PATH = (
     st.PROJECT_ROOT
@@ -178,6 +185,11 @@ SHADOW_CONTINUATION_REQUIRED_SOURCES = (
     "paper_shadow_weekly_review",
     "evidence_staleness_monitor",
     "data_validation_result",
+)
+SHADOW_CONTINUATION_VALIDATED_ARTIFACT_SOURCES = tuple(
+    source_id
+    for source_id in SHADOW_CONTINUATION_REQUIRED_SOURCES
+    if source_id != "data_validation_result"
 )
 
 
@@ -425,8 +437,17 @@ def build_paper_shadow_protocol(
     validation = _mapping(contract_payload.get("formal_research_method_contract_validation"))
     candidate = _text(contract_payload.get("candidate"), TOP_FILTERED_CANDIDATE)
     source_contract_id = _text(contract_payload.get("contract_id"))
+    source_contract_validation = validate_formal_research_method_contract_artifact(
+        contract_id=source_contract_id,
+        output_dir=contract_dir,
+        write_output=False,
+    )
+    if source_contract_validation.get("status") != "PASS":
+        raise ValueError("paper-shadow protocol requires a validated formal research contract")
     eligible = decision.get("paper_shadow_eligibility") == "ELIGIBLE_FOR_PROTOCOL_DESIGN"
-    contract_validation_pass = validation.get("status") in ("PASS", "", None)
+    contract_validation_pass = (
+        validation.get("status") == "PASS" and source_contract_validation.get("status") == "PASS"
+    )
     safety_pass = (
         contract.get("safety_boundary_status") == "PASS"
         and decision.get("safety_boundary_status") == "PASS"
@@ -447,8 +468,8 @@ def build_paper_shadow_protocol(
         },
         {
             "condition_id": "contract_validation_pass",
-            "required_value": "PASS_OR_NOT_YET_RUN",
-            "actual_value": validation.get("status", "NOT_RUN"),
+            "required_value": "PASS",
+            "actual_value": source_contract_validation.get("status", "NOT_RUN"),
             "passed": contract_validation_pass,
         },
         {
@@ -483,6 +504,9 @@ def build_paper_shadow_protocol(
         "status": "PASS" if protocol_status == "PROTOCOL_READY" else "FAIL",
         "protocol_status": protocol_status,
         "paper_shadow_protocol_manifest_path": str(root / "paper_shadow_protocol_manifest.json"),
+        "paper_shadow_protocol_input_snapshot_path": str(
+            root / "paper_shadow_protocol_input_snapshot.json"
+        ),
         "paper_shadow_protocol_path": str(root / "paper_shadow_protocol.json"),
         "paper_shadow_protocol_report_path": str(root / "paper_shadow_protocol_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
@@ -529,6 +553,22 @@ def build_paper_shadow_protocol(
         **PAPER_SHADOW_PROTOCOL_SAFETY,
     }
     reader = render_paper_shadow_protocol_reader_brief(protocol)
+    input_snapshot = {
+        "schema_version": PAPER_SHADOW_PROTOCOL_INPUT_SCHEMA,
+        "protocol_id": root.name,
+        "generated_at": generated.isoformat(),
+        "source_contract_id": source_contract_id,
+        "source_contract_dir": str(contract_dir),
+        "source_contract": {
+            key: value
+            for key, value in contract_payload.items()
+            if key != "formal_research_method_contract_validation"
+        },
+        "source_contract_validation": source_contract_validation,
+    }
+    input_snapshot_path = root / "paper_shadow_protocol_input_snapshot.json"
+    _write_json(input_snapshot_path, input_snapshot)
+    manifest["input_snapshot_sha256"] = st._file_sha256(input_snapshot_path)
     _write_json(root / "paper_shadow_protocol_manifest.json", manifest)
     _write_json(root / "paper_shadow_protocol.json", protocol)
     _write_text(
@@ -590,6 +630,7 @@ def validate_paper_shadow_protocol_artifact(
     root = output_dir / protocol_id
     manifest = _read_optional_json(root / "paper_shadow_protocol_manifest.json") or {}
     protocol = _read_optional_json(root / "paper_shadow_protocol.json") or {}
+    input_snapshot = _read_optional_json(root / "paper_shadow_protocol_input_snapshot.json") or {}
     reader = (
         (root / "reader_brief_section.md").read_text(encoding="utf-8")
         if (root / "reader_brief_section.md").exists()
@@ -604,6 +645,7 @@ def validate_paper_shadow_protocol_artifact(
         root,
         (
             "paper_shadow_protocol_manifest.json",
+            "paper_shadow_protocol_input_snapshot.json",
             "paper_shadow_protocol.json",
             "paper_shadow_protocol_report.md",
             "reader_brief_section.md",
@@ -611,6 +653,23 @@ def validate_paper_shadow_protocol_artifact(
     )
     checks.extend(
         [
+            st._check(
+                "input_snapshot_schema",
+                input_snapshot.get("schema_version") == PAPER_SHADOW_PROTOCOL_INPUT_SCHEMA,
+                "",
+            ),
+            st._check(
+                "input_snapshot_id",
+                input_snapshot.get("protocol_id") == protocol_id,
+                "",
+            ),
+            st._check(
+                "input_snapshot_sha256_matches",
+                bool(_text(manifest.get("input_snapshot_sha256")))
+                and manifest.get("input_snapshot_sha256")
+                == st._file_sha256(root / "paper_shadow_protocol_input_snapshot.json"),
+                "",
+            ),
             st._check("protocol_id_matches", manifest.get("protocol_id") == protocol_id, ""),
             st._check("source_contract_visible", bool(protocol.get("source_contract_id")), ""),
             st._check("eligibility_conditions_visible", len(eligibility_conditions) >= 4, ""),
@@ -649,6 +708,52 @@ def validate_paper_shadow_protocol_artifact(
             ),
         ]
     )
+    source_contract_id = _text(input_snapshot.get("source_contract_id"))
+    source_contract_dir = Path(_text(input_snapshot.get("source_contract_dir")))
+    try:
+        live_contract_payload = formal_research_method_contract_report_payload(
+            contract_id=source_contract_id,
+            latest=False,
+            output_dir=source_contract_dir,
+        )
+        live_contract = {
+            key: value
+            for key, value in live_contract_payload.items()
+            if key != "formal_research_method_contract_validation"
+        }
+        live_validation = validate_formal_research_method_contract_artifact(
+            contract_id=source_contract_id,
+            output_dir=source_contract_dir,
+            write_output=False,
+        )
+    except (OSError, ValueError):
+        live_contract = {}
+        live_validation = {"status": "FAIL"}
+    checks.extend(
+        [
+            st._check(
+                "source_contract_snapshot_matches_live",
+                live_contract == _mapping(input_snapshot.get("source_contract")),
+                "",
+            ),
+            st._check(
+                "source_contract_validation_pass",
+                live_validation.get("status") == "PASS",
+                "",
+            ),
+            st._check(
+                "report_exact_rebuild",
+                (root / "paper_shadow_protocol_report.md").read_text(encoding="utf-8")
+                == render_paper_shadow_protocol_report(manifest, protocol),
+                "",
+            ),
+            st._check(
+                "reader_exact_rebuild",
+                reader == render_paper_shadow_protocol_reader_brief(protocol),
+                "",
+            ),
+        ]
+    )
     validation = _validation_payload(
         "etf_dynamic_v3_paper_shadow_protocol_validation",
         protocol_id,
@@ -663,6 +768,7 @@ def validate_paper_shadow_protocol_artifact(
     return validation
 
 
+@with_artifact_validation_session
 def run_evidence_staleness_monitor(
     *,
     as_of: date | None = None,
@@ -719,6 +825,25 @@ def run_evidence_staleness_monitor(
         paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
         paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
     )
+    source_validations = _validate_staleness_selected_sources(
+        findings=findings,
+        evidence_dir=evidence_dir,
+        stress_backfill_dir=stress_backfill_dir,
+        ab_review_dir=ab_review_dir,
+        owner_review_dir=owner_review_dir,
+        paper_shadow_daily_dir=paper_shadow_daily_dir,
+        paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
+        paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
+    )
+    rejected_sources = [
+        source_id
+        for source_id, item in source_validations.items()
+        if _text(item.get("acceptance_status")) == "REJECT"
+    ]
+    if rejected_sources:
+        raise ValueError(
+            "evidence staleness requires validated selected sources: " + ",".join(rejected_sources)
+        )
     status = _overall_evidence_freshness_status(policy, findings)
     fallback_summary = latest_data_source_fallback_policy_summary(
         report_path=fallback_policy_report_path,
@@ -890,6 +1015,9 @@ def run_evidence_staleness_monitor(
         "policy_id": policy.get("policy_id"),
         "policy_version": policy_version,
         "evidence_staleness_manifest_path": str(root / "evidence_staleness_manifest.json"),
+        "evidence_staleness_input_snapshot_path": str(
+            root / "evidence_staleness_input_snapshot.json"
+        ),
         "evidence_staleness_report_path": str(root / "evidence_staleness_report.json"),
         "evidence_staleness_findings_path": str(root / "evidence_staleness_findings.jsonl"),
         "evidence_staleness_markdown_path": str(root / "evidence_staleness_report.md"),
@@ -897,6 +1025,60 @@ def run_evidence_staleness_monitor(
         **EVIDENCE_STALENESS_MONITOR_SAFETY,
     }
     reader = render_evidence_staleness_reader_brief(report)
+    input_snapshot = {
+        "schema_version": EVIDENCE_STALENESS_INPUT_SCHEMA,
+        "monitor_id": root.name,
+        "generated_at": generated.isoformat(),
+        "as_of": effective_as_of.isoformat(),
+        "candidate": candidate,
+        "policy_path": str(policy_path),
+        "policy": policy,
+        "price_cache_path": str(price_cache_path),
+        "market_panel_dir": str(market_panel_dir),
+        "resolved_source_ids": {
+            "signal_artifact": evidence_id
+            or _finding_artifact_id(findings, "signal_artifact"),
+            "stress_backfill_result": stress_backfill_id
+            or _finding_artifact_id(findings, "stress_backfill_result"),
+            "ab_review": ab_review_id or _finding_artifact_id(findings, "ab_review"),
+            "owner_review": owner_review_id
+            or _finding_artifact_id(findings, "owner_review"),
+            "paper_shadow_daily_observation": paper_shadow_daily_id
+            or _finding_artifact_id(findings, "paper_shadow_daily_observation"),
+            "paper_shadow_drift_monitor": paper_shadow_drift_monitor_id
+            or _finding_artifact_id(findings, "paper_shadow_drift_monitor"),
+            "paper_shadow_weekly_review": paper_shadow_weekly_review_id
+            or _finding_artifact_id(findings, "paper_shadow_weekly_review"),
+        },
+        "source_dirs": {
+            "evidence_dir": str(evidence_dir),
+            "stress_backfill_dir": str(stress_backfill_dir),
+            "ab_review_dir": str(ab_review_dir),
+            "owner_review_dir": str(owner_review_dir),
+            "paper_shadow_daily_dir": str(paper_shadow_daily_dir),
+            "paper_shadow_drift_monitor_dir": str(paper_shadow_drift_monitor_dir),
+            "paper_shadow_weekly_review_dir": str(paper_shadow_weekly_review_dir),
+            "signal_input_completeness_dir": str(signal_input_completeness_dir),
+            "fallback_policy_output_dir": str(fallback_policy_output_dir),
+            "cache_catalog_output_dir": str(cache_catalog_output_dir),
+        },
+        "fallback_policy_report_path": (
+            "" if fallback_policy_report_path is None else str(fallback_policy_report_path)
+        ),
+        "cache_catalog_report_path": (
+            "" if cache_catalog_report_path is None else str(cache_catalog_report_path)
+        ),
+        "signal_input_completeness_id": _text(signal_input_summary.get("monitor_id")),
+        "fallback_summary": fallback_summary,
+        "cache_catalog_summary": cache_catalog_summary,
+        "signal_input_summary": signal_input_summary,
+        "findings": findings,
+        "market_calendar": market_calendar,
+        "source_validations": source_validations,
+    }
+    input_snapshot_path = root / "evidence_staleness_input_snapshot.json"
+    _write_json(input_snapshot_path, input_snapshot)
+    manifest["input_snapshot_sha256"] = st._file_sha256(input_snapshot_path)
     _write_json(root / "evidence_staleness_manifest.json", manifest)
     _write_json(root / "evidence_staleness_report.json", report)
     _write_jsonl(root / "evidence_staleness_findings.jsonl", findings)
@@ -986,6 +1168,7 @@ def validate_evidence_staleness_monitor_artifact(
     root = output_dir / monitor_id
     manifest = _read_optional_json(root / "evidence_staleness_manifest.json") or {}
     report = _read_optional_json(root / "evidence_staleness_report.json") or {}
+    input_snapshot = _read_optional_json(root / "evidence_staleness_input_snapshot.json") or {}
     findings = _read_jsonl(root / "evidence_staleness_findings.jsonl")
     reader = (
         (root / "reader_brief_section.md").read_text(encoding="utf-8")
@@ -1011,6 +1194,7 @@ def validate_evidence_staleness_monitor_artifact(
         root,
         (
             "evidence_staleness_manifest.json",
+            "evidence_staleness_input_snapshot.json",
             "evidence_staleness_report.json",
             "evidence_staleness_findings.jsonl",
             "evidence_staleness_report.md",
@@ -1019,6 +1203,23 @@ def validate_evidence_staleness_monitor_artifact(
     )
     checks.extend(
         [
+            st._check(
+                "input_snapshot_schema",
+                input_snapshot.get("schema_version") == EVIDENCE_STALENESS_INPUT_SCHEMA,
+                "",
+            ),
+            st._check(
+                "input_snapshot_id",
+                input_snapshot.get("monitor_id") == monitor_id,
+                "",
+            ),
+            st._check(
+                "input_snapshot_sha256_matches",
+                bool(_text(manifest.get("input_snapshot_sha256")))
+                and manifest.get("input_snapshot_sha256")
+                == st._file_sha256(root / "evidence_staleness_input_snapshot.json"),
+                "",
+            ),
             st._check("monitor_id_matches", manifest.get("monitor_id") == monitor_id, ""),
             st._check(
                 "policy_metadata_visible",
@@ -1151,6 +1352,134 @@ def validate_evidence_staleness_monitor_artifact(
             st._check("broker_forbidden", _payload_safe(manifest, report), ""),
         ]
     )
+    resolved_ids = _mapping(input_snapshot.get("resolved_source_ids"))
+    source_dirs = _mapping(input_snapshot.get("source_dirs"))
+    try:
+        snapshot_policy_path = Path(_text(input_snapshot.get("policy_path")))
+        live_policy = _load_evidence_staleness_policy(snapshot_policy_path)
+        live_findings, live_calendar = _evidence_staleness_findings(
+            as_of=date.fromisoformat(_text(input_snapshot.get("as_of"))),
+            generated_at=datetime.fromisoformat(_text(input_snapshot.get("generated_at"))),
+            candidate=_text(input_snapshot.get("candidate")),
+            policy=live_policy,
+            price_cache_path=Path(_text(input_snapshot.get("price_cache_path"))),
+            market_panel_dir=Path(_text(input_snapshot.get("market_panel_dir"))),
+            evidence_id=_optional_text(resolved_ids.get("signal_artifact")),
+            stress_backfill_id=_optional_text(resolved_ids.get("stress_backfill_result")),
+            ab_review_id=_optional_text(resolved_ids.get("ab_review")),
+            owner_review_id=_optional_text(resolved_ids.get("owner_review")),
+            paper_shadow_daily_id=_optional_text(
+                resolved_ids.get("paper_shadow_daily_observation")
+            ),
+            paper_shadow_drift_monitor_id=_optional_text(
+                resolved_ids.get("paper_shadow_drift_monitor")
+            ),
+            paper_shadow_weekly_review_id=_optional_text(
+                resolved_ids.get("paper_shadow_weekly_review")
+            ),
+            evidence_dir=Path(_text(source_dirs.get("evidence_dir"))),
+            stress_backfill_dir=Path(_text(source_dirs.get("stress_backfill_dir"))),
+            ab_review_dir=Path(_text(source_dirs.get("ab_review_dir"))),
+            owner_review_dir=Path(_text(source_dirs.get("owner_review_dir"))),
+            paper_shadow_daily_dir=Path(_text(source_dirs.get("paper_shadow_daily_dir"))),
+            paper_shadow_drift_monitor_dir=Path(
+                _text(source_dirs.get("paper_shadow_drift_monitor_dir"))
+            ),
+            paper_shadow_weekly_review_dir=Path(
+                _text(source_dirs.get("paper_shadow_weekly_review_dir"))
+            ),
+        )
+        live_source_validations = _validate_staleness_selected_sources(
+            findings=live_findings,
+            evidence_dir=Path(_text(source_dirs.get("evidence_dir"))),
+            stress_backfill_dir=Path(_text(source_dirs.get("stress_backfill_dir"))),
+            ab_review_dir=Path(_text(source_dirs.get("ab_review_dir"))),
+            owner_review_dir=Path(_text(source_dirs.get("owner_review_dir"))),
+            paper_shadow_daily_dir=Path(_text(source_dirs.get("paper_shadow_daily_dir"))),
+            paper_shadow_drift_monitor_dir=Path(
+                _text(source_dirs.get("paper_shadow_drift_monitor_dir"))
+            ),
+            paper_shadow_weekly_review_dir=Path(
+                _text(source_dirs.get("paper_shadow_weekly_review_dir"))
+            ),
+        )
+        fallback_path = _optional_path(input_snapshot.get("fallback_policy_report_path"))
+        live_fallback = latest_data_source_fallback_policy_summary(
+            report_path=fallback_path,
+            output_dir=Path(_text(source_dirs.get("fallback_policy_output_dir"))),
+        )
+        cache_path = _optional_path(input_snapshot.get("cache_catalog_report_path"))
+        live_cache = latest_cache_catalog_summary(
+            report_path=cache_path,
+            output_dir=Path(_text(source_dirs.get("cache_catalog_output_dir"))),
+        )
+        live_signal = signal_inputs.latest_signal_input_completeness_summary(
+            monitor_id=_optional_text(input_snapshot.get("signal_input_completeness_id")),
+            output_dir=Path(_text(source_dirs.get("signal_input_completeness_dir"))),
+        )
+    except (OSError, ValueError):
+        live_policy = {}
+        live_findings = []
+        live_calendar = {}
+        live_fallback = {}
+        live_cache = {}
+        live_signal = {}
+        live_source_validations = {}
+    checks.extend(
+        [
+            st._check(
+                "policy_snapshot_matches_live",
+                live_policy == _mapping(input_snapshot.get("policy")),
+                "",
+            ),
+            st._check(
+                "findings_snapshot_matches_live",
+                live_findings == _records(input_snapshot.get("findings"))
+                and live_findings == findings,
+                "",
+            ),
+            st._check(
+                "market_calendar_snapshot_matches_live",
+                live_calendar == _mapping(input_snapshot.get("market_calendar")),
+                "",
+            ),
+            st._check(
+                "fallback_snapshot_matches_live",
+                live_fallback == _mapping(input_snapshot.get("fallback_summary")),
+                "",
+            ),
+            st._check(
+                "cache_catalog_snapshot_matches_live",
+                live_cache == _mapping(input_snapshot.get("cache_catalog_summary")),
+                "",
+            ),
+            st._check(
+                "signal_input_snapshot_matches_live",
+                live_signal == _mapping(input_snapshot.get("signal_input_summary")),
+                "",
+            ),
+            st._check(
+                "source_validations_match_snapshot",
+                live_source_validations == _mapping(input_snapshot.get("source_validations"))
+                and all(
+                    _text(item.get("acceptance_status")) != "REJECT"
+                    for item in live_source_validations.values()
+                ),
+                "",
+            ),
+            st._check(
+                "report_exact_rebuild",
+                (root / "evidence_staleness_report.md").read_text(encoding="utf-8")
+                == render_evidence_staleness_report(manifest, report),
+                "",
+            ),
+            st._check(
+                "reader_exact_rebuild",
+                reader == render_evidence_staleness_reader_brief(report),
+                "",
+            ),
+        ]
+    )
     validation = _validation_payload(
         "etf_dynamic_v3_evidence_staleness_monitor_validation",
         monitor_id,
@@ -1165,6 +1494,7 @@ def validate_evidence_staleness_monitor_artifact(
     return validation
 
 
+@with_artifact_validation_session
 def run_shadow_continuation_readiness_report(
     *,
     as_of: date | None = None,
@@ -1198,6 +1528,14 @@ def run_shadow_continuation_readiness_report(
         evidence_staleness_monitor_id=evidence_staleness_monitor_id,
         signal_input_completeness_id=signal_input_completeness_id,
         signal_input_completeness_report_path=signal_input_completeness_report_path,
+        paper_shadow_daily_dir=paper_shadow_daily_dir,
+        paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
+        paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
+        evidence_staleness_monitor_dir=evidence_staleness_monitor_dir,
+        signal_input_completeness_dir=signal_input_completeness_dir,
+    )
+    _refresh_shadow_continuation_source_validations(
+        source_artifacts=source_artifacts,
         paper_shadow_daily_dir=paper_shadow_daily_dir,
         paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
         paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
@@ -1279,6 +1617,13 @@ def run_shadow_continuation_readiness_report(
         blocking_artifacts = _dedupe_texts([*blocking_artifacts, "cache_catalog"])
     if signal_input_status not in {"OK", "WARNING"}:
         blocking_artifacts = _dedupe_texts([*blocking_artifacts, "signal_input_completeness"])
+    invalid_source_ids = [
+        source_id
+        for source_id in SHADOW_CONTINUATION_VALIDATED_ARTIFACT_SOURCES
+        if source_artifacts[source_id].get("exists") is True
+        and source_artifacts[source_id].get("validation_acceptable") is not True
+    ]
+    blocking_artifacts = _dedupe_texts([*blocking_artifacts, *invalid_source_ids])
     safety_audit = _shadow_continuation_safety_audit(source_artifacts)
     readiness = _shadow_continuation_readiness_decision(
         missing_artifacts=missing_artifacts,
@@ -1388,6 +1733,9 @@ def run_shadow_continuation_readiness_report(
         "shadow_continuation_readiness_manifest_path": str(
             root / "shadow_continuation_readiness_manifest.json"
         ),
+        "shadow_continuation_input_snapshot_path": str(
+            root / "shadow_continuation_input_snapshot.json"
+        ),
         "shadow_continuation_readiness_report_path": str(
             root / "shadow_continuation_readiness_report.json"
         ),
@@ -1399,6 +1747,49 @@ def run_shadow_continuation_readiness_report(
         **SHADOW_CONTINUATION_READINESS_SAFETY,
     }
     reader = render_shadow_continuation_readiness_reader_brief(report)
+    input_snapshot = {
+        "schema_version": SHADOW_CONTINUATION_INPUT_SCHEMA,
+        "readiness_id": root.name,
+        "generated_at": generated.isoformat(),
+        "as_of": effective_as_of.isoformat(),
+        "candidate": candidate,
+        "source_artifacts": source_artifacts,
+        "data_validation": data_validation,
+        "fallback_summary": fallback_summary,
+        "cache_catalog_summary": cache_catalog_summary,
+        "request": {
+            "paper_shadow_daily_id": _text(
+                source_artifacts["paper_shadow_daily_observation"].get("artifact_id")
+            ),
+            "paper_shadow_drift_monitor_id": _text(
+                source_artifacts["paper_shadow_drift_monitor"].get("artifact_id")
+            ),
+            "paper_shadow_weekly_review_id": _text(
+                source_artifacts["paper_shadow_weekly_review"].get("artifact_id")
+            ),
+            "evidence_staleness_monitor_id": _text(
+                source_artifacts["evidence_staleness_monitor"].get("artifact_id")
+            ),
+            "signal_input_completeness_id": _text(
+                source_artifacts["signal_input_completeness"].get("artifact_id")
+            ),
+            "data_quality_report_path": _text(data_validation.get("source_path")),
+            "data_quality_report_dir": str(data_quality_report_dir),
+            "paper_shadow_daily_dir": str(paper_shadow_daily_dir),
+            "paper_shadow_drift_monitor_dir": str(paper_shadow_drift_monitor_dir),
+            "paper_shadow_weekly_review_dir": str(paper_shadow_weekly_review_dir),
+            "evidence_staleness_monitor_dir": str(evidence_staleness_monitor_dir),
+            "signal_input_completeness_dir": str(signal_input_completeness_dir),
+            "fallback_policy_report_path": _text(fallback_summary.get("report_path")),
+            "fallback_policy_output_dir": str(fallback_policy_output_dir),
+            "cache_catalog_report_path": _text(cache_catalog_summary.get("report_path")),
+            "cache_catalog_output_dir": str(cache_catalog_output_dir),
+        },
+        "readiness_decision_policy": report["readiness_decision_policy"],
+    }
+    input_snapshot_path = root / "shadow_continuation_input_snapshot.json"
+    _write_json(input_snapshot_path, input_snapshot)
+    manifest["input_snapshot_sha256"] = st._file_sha256(input_snapshot_path)
     _write_json(root / "shadow_continuation_readiness_manifest.json", manifest)
     _write_json(root / "shadow_continuation_readiness_report.json", report)
     _write_text(
@@ -1462,6 +1853,7 @@ def validate_shadow_continuation_readiness_artifact(
     root = output_dir / readiness_id
     manifest = _read_optional_json(root / "shadow_continuation_readiness_manifest.json") or {}
     report = _read_optional_json(root / "shadow_continuation_readiness_report.json") or {}
+    input_snapshot = _read_optional_json(root / "shadow_continuation_input_snapshot.json") or {}
     reader = (
         (root / "reader_brief_section.md").read_text(encoding="utf-8")
         if (root / "reader_brief_section.md").exists()
@@ -1473,6 +1865,7 @@ def validate_shadow_continuation_readiness_artifact(
         root,
         (
             "shadow_continuation_readiness_manifest.json",
+            "shadow_continuation_input_snapshot.json",
             "shadow_continuation_readiness_report.json",
             "shadow_continuation_readiness_report.md",
             "reader_brief_section.md",
@@ -1480,6 +1873,23 @@ def validate_shadow_continuation_readiness_artifact(
     )
     checks.extend(
         [
+            st._check(
+                "input_snapshot_schema",
+                input_snapshot.get("schema_version") == SHADOW_CONTINUATION_INPUT_SCHEMA,
+                "",
+            ),
+            st._check(
+                "input_snapshot_id",
+                input_snapshot.get("readiness_id") == readiness_id,
+                "",
+            ),
+            st._check(
+                "input_snapshot_sha256_matches",
+                bool(_text(manifest.get("input_snapshot_sha256")))
+                and manifest.get("input_snapshot_sha256")
+                == st._file_sha256(root / "shadow_continuation_input_snapshot.json"),
+                "",
+            ),
             st._check("readiness_id_matches", manifest.get("readiness_id") == readiness_id, ""),
             st._check(
                 "readiness_state_valid",
@@ -1573,6 +1983,135 @@ def validate_shadow_continuation_readiness_artifact(
                 "",
             ),
             st._check("broker_forbidden", _payload_safe(manifest, report), ""),
+        ]
+    )
+    request = _mapping(input_snapshot.get("request"))
+    try:
+        live_sources = _shadow_continuation_source_artifacts(
+            paper_shadow_daily_id=_optional_text(request.get("paper_shadow_daily_id")),
+            paper_shadow_drift_monitor_id=_optional_text(
+                request.get("paper_shadow_drift_monitor_id")
+            ),
+            paper_shadow_weekly_review_id=_optional_text(
+                request.get("paper_shadow_weekly_review_id")
+            ),
+            evidence_staleness_monitor_id=_optional_text(
+                request.get("evidence_staleness_monitor_id")
+            ),
+            signal_input_completeness_id=_optional_text(
+                request.get("signal_input_completeness_id")
+            ),
+            signal_input_completeness_report_path=None,
+            paper_shadow_daily_dir=Path(_text(request.get("paper_shadow_daily_dir"))),
+            paper_shadow_drift_monitor_dir=Path(
+                _text(request.get("paper_shadow_drift_monitor_dir"))
+            ),
+            paper_shadow_weekly_review_dir=Path(
+                _text(request.get("paper_shadow_weekly_review_dir"))
+            ),
+            evidence_staleness_monitor_dir=Path(
+                _text(request.get("evidence_staleness_monitor_dir"))
+            ),
+            signal_input_completeness_dir=Path(_text(request.get("signal_input_completeness_dir"))),
+        )
+        _refresh_shadow_continuation_source_validations(
+            source_artifacts=live_sources,
+            paper_shadow_daily_dir=Path(_text(request.get("paper_shadow_daily_dir"))),
+            paper_shadow_drift_monitor_dir=Path(
+                _text(request.get("paper_shadow_drift_monitor_dir"))
+            ),
+            paper_shadow_weekly_review_dir=Path(
+                _text(request.get("paper_shadow_weekly_review_dir"))
+            ),
+            evidence_staleness_monitor_dir=Path(
+                _text(request.get("evidence_staleness_monitor_dir"))
+            ),
+            signal_input_completeness_dir=Path(_text(request.get("signal_input_completeness_dir"))),
+        )
+        live_data_validation = _data_quality_report_summary(
+            data_quality_report_path=_optional_path(request.get("data_quality_report_path")),
+            data_quality_report_dir=Path(_text(request.get("data_quality_report_dir"))),
+            as_of=date.fromisoformat(_text(input_snapshot.get("as_of"))),
+        )
+        live_sources["data_validation_result"] = live_data_validation
+        fallback_path = _optional_path(request.get("fallback_policy_report_path"))
+        live_evidence_report = _mapping(live_sources["evidence_staleness_monitor"].get("detail"))
+        if fallback_path is not None:
+            live_fallback = latest_data_source_fallback_policy_summary(
+                report_path=fallback_path,
+                output_dir=Path(_text(request.get("fallback_policy_output_dir"))),
+            )
+        else:
+            live_fallback = _mapping(live_evidence_report.get("fallback_policy_summary"))
+            if not live_fallback or _text(live_fallback.get("fallback_status")) == "MISSING":
+                live_fallback = latest_data_source_fallback_policy_summary(
+                    output_dir=Path(_text(request.get("fallback_policy_output_dir")))
+                )
+        cache_path = _optional_path(request.get("cache_catalog_report_path"))
+        if cache_path is not None:
+            live_cache = latest_cache_catalog_summary(
+                report_path=cache_path,
+                output_dir=Path(_text(request.get("cache_catalog_output_dir"))),
+            )
+        else:
+            live_cache = _mapping(live_evidence_report.get("cache_catalog_summary"))
+            if not live_cache or _text(live_cache.get("cache_integrity_status")) == "MISSING":
+                live_cache = latest_cache_catalog_summary(
+                    output_dir=Path(_text(request.get("cache_catalog_output_dir")))
+                )
+    except (OSError, ValueError):
+        live_sources = {}
+        live_data_validation = {}
+        live_fallback = {}
+        live_cache = {}
+    live_source_summary = {
+        source_id: _shadow_continuation_source_summary(payload)
+        for source_id, payload in live_sources.items()
+    }
+    checks.extend(
+        [
+            st._check(
+                "source_snapshot_matches_live",
+                live_sources == _mapping(input_snapshot.get("source_artifacts")),
+                "",
+            ),
+            st._check(
+                "source_summary_matches_report",
+                live_source_summary == source_artifacts,
+                "",
+            ),
+            st._check(
+                "data_validation_snapshot_matches_live",
+                live_data_validation == _mapping(input_snapshot.get("data_validation")),
+                "",
+            ),
+            st._check(
+                "fallback_snapshot_matches_live",
+                live_fallback == _mapping(input_snapshot.get("fallback_summary")),
+                "",
+            ),
+            st._check(
+                "cache_catalog_snapshot_matches_live",
+                live_cache == _mapping(input_snapshot.get("cache_catalog_summary")),
+                "",
+            ),
+            st._check(
+                "decision_policy_matches_snapshot",
+                report.get("readiness_decision_policy")
+                == input_snapshot.get("readiness_decision_policy"),
+                "",
+            ),
+            st._check(
+                "report_exact_rebuild",
+                (root / "shadow_continuation_readiness_report.md").read_text(encoding="utf-8")
+                == render_shadow_continuation_readiness_report(manifest, report),
+                "",
+            ),
+            st._check(
+                "reader_exact_rebuild",
+                reader == render_shadow_continuation_readiness_reader_brief(report),
+                "",
+            ),
         ]
     )
     validation = _validation_payload(
@@ -1977,7 +2516,139 @@ def _improvement_status(value: float, neutral: float) -> str:
 
 def _load_evidence_staleness_policy(path: Path) -> dict[str, Any]:
     payload = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else {}
-    return payload if isinstance(payload, dict) else {}
+    return _json_safe_mapping(payload) if isinstance(payload, dict) else {}
+
+
+def _validate_staleness_selected_sources(
+    *,
+    findings: Sequence[Mapping[str, Any]],
+    evidence_dir: Path,
+    stress_backfill_dir: Path,
+    ab_review_dir: Path,
+    owner_review_dir: Path,
+    paper_shadow_daily_dir: Path,
+    paper_shadow_drift_monitor_dir: Path,
+    paper_shadow_weekly_review_dir: Path,
+) -> dict[str, dict[str, Any]]:
+    from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as daily
+    from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as drift
+    from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as weekly
+
+    ids = {_text(row.get("source_id")): _text(row.get("artifact_id")) for row in findings}
+    validations: dict[str, dict[str, Any]] = {}
+
+    def record(source_id: str, validation: Mapping[str, Any], *, accepted: bool) -> None:
+        validations[source_id] = {
+            "artifact_id": ids.get(source_id, ""),
+            "status": _text(validation.get("status"), "MISSING"),
+            "acceptance_status": "ACCEPT" if accepted else "REJECT",
+            "validation": dict(validation),
+        }
+
+    evidence_validation = cached_artifact_validation(
+        validator=validate_filtered_candidate_evidence_artifact,
+        validator_key="evidence_id",
+        artifact_id=ids.get("signal_artifact", ""),
+        root=evidence_dir,
+    )
+    record(
+        "signal_artifact",
+        evidence_validation,
+        accepted=evidence_validation.get("status") == "PASS",
+    )
+    stress_validation = cached_artifact_validation(
+        validator=validate_filtered_candidate_stress_backfill_artifact,
+        validator_key="stress_backfill_id",
+        artifact_id=ids.get("stress_backfill_result", ""),
+        root=stress_backfill_dir,
+    )
+    record(
+        "stress_backfill_result",
+        stress_validation,
+        accepted=stress_validation.get("status") == "PASS",
+    )
+    ab_validation = cached_artifact_validation(
+        validator=validate_filtered_candidate_ab_review_artifact,
+        validator_key="ab_review_id",
+        artifact_id=ids.get("ab_review", ""),
+        root=ab_review_dir,
+    )
+    record("ab_review", ab_validation, accepted=ab_validation.get("status") == "PASS")
+    owner_validation = cached_artifact_validation(
+        validator=validate_owner_filtered_candidate_review_artifact,
+        validator_key="owner_review_id",
+        artifact_id=ids.get("owner_review", ""),
+        root=owner_review_dir,
+    )
+    record(
+        "owner_review",
+        owner_validation,
+        accepted=owner_validation.get("status") == "PASS",
+    )
+
+    daily_id = ids.get("paper_shadow_daily_observation", "")
+    if daily_id:
+        daily_payload = daily.paper_shadow_daily_report_payload(
+            observation_id=daily_id,
+            latest=False,
+            output_dir=paper_shadow_daily_dir,
+        )
+        daily_observation = _mapping(daily_payload.get("paper_shadow_daily_observation"))
+        daily_validation = cached_artifact_validation(
+            validator=daily.validate_paper_shadow_daily_artifact,
+            validator_key="observation_id",
+            artifact_id=daily_id,
+            root=paper_shadow_daily_dir,
+            validator_kwargs={"write_output": False},
+        )
+        record(
+            "paper_shadow_daily_observation",
+            daily_validation,
+            accepted=daily.paper_shadow_daily_validation_acceptable_for_diagnostic(
+                observation=daily_observation,
+                validation=daily_validation,
+            ),
+        )
+    else:
+        validations["paper_shadow_daily_observation"] = {
+            "artifact_id": "",
+            "status": "MISSING",
+            "acceptance_status": "ALLOW_MISSING_DIAGNOSTIC",
+            "validation": {},
+        }
+    for source_id, artifact_id, output_dir, validator, argument in (
+        (
+            "paper_shadow_drift_monitor",
+            ids.get("paper_shadow_drift_monitor", ""),
+            paper_shadow_drift_monitor_dir,
+            drift.validate_paper_shadow_drift_monitor_artifact,
+            "monitor_id",
+        ),
+        (
+            "paper_shadow_weekly_review",
+            ids.get("paper_shadow_weekly_review", ""),
+            paper_shadow_weekly_review_dir,
+            weekly.validate_paper_shadow_weekly_review_artifact,
+            "weekly_review_id",
+        ),
+    ):
+        if not artifact_id:
+            validations[source_id] = {
+                "artifact_id": "",
+                "status": "MISSING",
+                "acceptance_status": "ALLOW_MISSING_DIAGNOSTIC",
+                "validation": {},
+            }
+            continue
+        validation = cached_artifact_validation(
+            validator=validator,
+            validator_key=argument,
+            artifact_id=artifact_id,
+            root=output_dir,
+            validator_kwargs={"write_output": False},
+        )
+        record(source_id, validation, accepted=validation.get("status") == "PASS")
+    return validations
 
 
 def _evidence_staleness_findings(
@@ -2501,6 +3172,96 @@ def _shadow_continuation_source_artifacts(
     }
 
 
+def _refresh_shadow_continuation_source_validations(
+    *,
+    source_artifacts: dict[str, dict[str, Any]],
+    paper_shadow_daily_dir: Path,
+    paper_shadow_drift_monitor_dir: Path,
+    paper_shadow_weekly_review_dir: Path,
+    evidence_staleness_monitor_dir: Path,
+    signal_input_completeness_dir: Path,
+) -> None:
+    from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as daily
+    from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as drift
+    from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as weekly
+
+    for source_id, output_dir, validator, argument in (
+        (
+            "signal_input_completeness",
+            signal_input_completeness_dir,
+            signal_inputs.validate_signal_input_completeness_artifact,
+            "monitor_id",
+        ),
+        (
+            "paper_shadow_drift_monitor",
+            paper_shadow_drift_monitor_dir,
+            drift.validate_paper_shadow_drift_monitor_artifact,
+            "monitor_id",
+        ),
+        (
+            "paper_shadow_weekly_review",
+            paper_shadow_weekly_review_dir,
+            weekly.validate_paper_shadow_weekly_review_artifact,
+            "weekly_review_id",
+        ),
+        (
+            "evidence_staleness_monitor",
+            evidence_staleness_monitor_dir,
+            validate_evidence_staleness_monitor_artifact,
+            "monitor_id",
+        ),
+    ):
+        source = source_artifacts[source_id]
+        if source.get("exists") is not True:
+            source["validation_acceptable"] = False
+            continue
+        artifact_id = _text(source.get("artifact_id"))
+        kwargs: dict[str, Any] = {
+            argument: artifact_id,
+            "output_dir": output_dir,
+            "write_output": False,
+        }
+        if source_id == "evidence_staleness_monitor":
+            policy_path = _text(_mapping(source.get("manifest")).get("policy_path"))
+            if policy_path:
+                kwargs["policy_path"] = Path(policy_path)
+        validation = cached_artifact_validation(
+            validator=validator,
+            validator_key=argument,
+            artifact_id=artifact_id,
+            root=output_dir,
+            validator_kwargs={
+                key: value
+                for key, value in kwargs.items()
+                if key not in {argument, "output_dir"}
+            },
+        )
+        source["validation"] = validation
+        source["validation_status"] = _text(validation.get("status"), "FAIL")
+        source["validation_acceptable"] = validation.get("status") == "PASS"
+
+    daily_source = source_artifacts["paper_shadow_daily_observation"]
+    if daily_source.get("exists") is not True:
+        daily_source["validation_acceptable"] = False
+        return
+    daily_id = _text(daily_source.get("artifact_id"))
+    daily_validation = cached_artifact_validation(
+        validator=daily.validate_paper_shadow_daily_artifact,
+        validator_key="observation_id",
+        artifact_id=daily_id,
+        root=paper_shadow_daily_dir,
+        validator_kwargs={"write_output": False},
+    )
+    daily_source["validation"] = daily_validation
+    daily_source["validation_status"] = _text(daily_validation.get("status"), "FAIL")
+    daily_source["validation_acceptable"] = (
+        daily.paper_shadow_daily_validation_acceptable_for_diagnostic(
+            observation=_mapping(daily_source.get("detail")),
+            validation=daily_validation,
+        )
+    )
+
+
 def _shadow_continuation_signal_input_source_artifact(
     summary: Mapping[str, Any],
 ) -> dict[str, Any]:
@@ -2532,6 +3293,7 @@ def _shadow_continuation_signal_input_source_artifact(
         "summary": dict(summary),
         "status": _text(summary.get("signal_input_status"), "MISSING"),
         "validation_status": _text(_mapping(validation).get("status"), "NOT_RUN"),
+        "validation_acceptable": False,
         "generated_at": _text(summary.get("generated_at")),
     }
 
@@ -2589,6 +3351,7 @@ def _shadow_continuation_source_artifact(
         "validation": validation,
         "status": status or "UNKNOWN",
         "validation_status": _text(validation.get("status"), "NOT_RUN"),
+        "validation_acceptable": False,
         "generated_at": _text(manifest.get("generated_at") or detail.get("generated_at")),
     }
 
@@ -2606,6 +3369,7 @@ def _shadow_continuation_source_summary(payload: Mapping[str, Any]) -> dict[str,
         "root": _text(payload.get("root")),
         "status": _text(payload.get("status"), "MISSING"),
         "validation_status": _text(payload.get("validation_status"), "MISSING"),
+        "validation_acceptable": payload.get("validation_acceptable") is True,
         "manifest_report_type": _text(manifest.get("report_type")),
         "detail_report_type": _text(detail.get("report_type")),
         "validation_report_type": _text(validation.get("report_type")),
@@ -2954,6 +3718,38 @@ def _timestamp_relation(raw_age: int | None) -> str:
     if raw_age == 0:
         return "AS_OF"
     return "BEFORE_AS_OF"
+
+
+def _finding_artifact_id(findings: Sequence[Mapping[str, Any]], source_id: str) -> str:
+    return _text(
+        next(
+            (row.get("artifact_id") for row in findings if row.get("source_id") == source_id),
+            "",
+        )
+    )
+
+
+def _optional_text(value: object) -> str | None:
+    text = _text(value)
+    return None if not text or text == "MISSING" else text
+
+
+def _optional_path(value: object) -> Path | None:
+    text = _text(value)
+    return None if not text or text == "MISSING" else Path(text)
+
+
+def _json_safe_mapping(payload: Mapping[str, Any]) -> dict[str, Any]:
+    def normalize(value: Any) -> Any:
+        if isinstance(value, datetime | date):
+            return value.isoformat()
+        if isinstance(value, Mapping):
+            return {str(key): normalize(item) for key, item in value.items()}
+        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
+            return [normalize(item) for item in value]
+        return value
+
+    return normalize(payload)
 
 
 _mapping = st._mapping

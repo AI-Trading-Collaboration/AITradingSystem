@@ -17,6 +17,7 @@ DEFAULT_STRESS_SCENARIO_LIBRARY_CONFIG_PATH = (
 DEFAULT_STRESS_SCENARIO_LIBRARY_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "stress_scenario_library"
 )
+STRESS_SCENARIO_LIBRARY_INPUT_SCHEMA = "stress_scenario_library_input_snapshot.v2"
 REQUIRED_STRESS_SCENARIO_IDS = (
     "rapid_drawdown",
     "slow_drawdown",
@@ -85,12 +86,23 @@ def build_stress_scenario_library(
         "generated_at": generated.isoformat(),
         "config_path": str(config_path),
         "stress_scenario_manifest_path": str(root / "stress_scenario_manifest.json"),
+        "stress_scenario_input_snapshot_path": str(root / "stress_scenario_input_snapshot.json"),
         "stress_scenario_library_path": str(root / "stress_scenario_library.json"),
         "stress_scenario_reader_brief_path": str(root / "stress_scenario_reader_brief.md"),
         "stress_scenario_report_path": str(root / "stress_scenario_report.md"),
         **STRESS_SCENARIO_LIBRARY_SAFETY,
     }
     reader = render_stress_scenario_reader_brief(library)
+    input_snapshot = {
+        "schema_version": STRESS_SCENARIO_LIBRARY_INPUT_SCHEMA,
+        "library_run_id": root.name,
+        "generated_at": generated.isoformat(),
+        "config_path": str(config_path),
+        "normalized_config": normalized,
+    }
+    input_snapshot_path = root / "stress_scenario_input_snapshot.json"
+    st._write_json(input_snapshot_path, input_snapshot)
+    manifest["input_snapshot_sha256"] = st._file_sha256(input_snapshot_path)
     st._write_json(root / "stress_scenario_manifest.json", manifest)
     st._write_json(root / "stress_scenario_library.json", library)
     st._write_text(root / "stress_scenario_reader_brief.md", reader)
@@ -134,9 +146,9 @@ def stress_scenario_library_report_payload(
     payload = {
         **st._read_json(root / "stress_scenario_manifest.json"),
         "stress_scenario_library": st._read_json(root / "stress_scenario_library.json"),
-        "stress_scenario_reader_brief": (
-            root / "stress_scenario_reader_brief.md"
-        ).read_text(encoding="utf-8"),
+        "stress_scenario_reader_brief": (root / "stress_scenario_reader_brief.md").read_text(
+            encoding="utf-8"
+        ),
         "library_dir": str(root),
     }
     validation = st._read_optional_json(root / "stress_scenario_validation.json")
@@ -154,6 +166,7 @@ def validate_stress_scenario_library_artifact(
     root = output_dir / library_run_id
     manifest = st._read_optional_json(root / "stress_scenario_manifest.json") or {}
     library = st._read_optional_json(root / "stress_scenario_library.json") or {}
+    input_snapshot = st._read_optional_json(root / "stress_scenario_input_snapshot.json") or {}
     reader = (
         (root / "stress_scenario_reader_brief.md").read_text(encoding="utf-8")
         if (root / "stress_scenario_reader_brief.md").exists()
@@ -165,6 +178,7 @@ def validate_stress_scenario_library_artifact(
         root,
         (
             "stress_scenario_manifest.json",
+            "stress_scenario_input_snapshot.json",
             "stress_scenario_library.json",
             "stress_scenario_reader_brief.md",
             "stress_scenario_report.md",
@@ -172,6 +186,23 @@ def validate_stress_scenario_library_artifact(
     )
     checks.extend(
         [
+            st._check(
+                "input_snapshot_schema",
+                input_snapshot.get("schema_version") == STRESS_SCENARIO_LIBRARY_INPUT_SCHEMA,
+                "",
+            ),
+            st._check(
+                "input_snapshot_id",
+                input_snapshot.get("library_run_id") == library_run_id,
+                "",
+            ),
+            st._check(
+                "input_snapshot_sha256_matches",
+                bool(_text(manifest.get("input_snapshot_sha256")))
+                and manifest.get("input_snapshot_sha256")
+                == st._file_sha256(root / "stress_scenario_input_snapshot.json"),
+                "",
+            ),
             st._check(
                 "library_run_id_matches",
                 manifest.get("library_run_id") == library_run_id,
@@ -216,6 +247,45 @@ def validate_stress_scenario_library_artifact(
                 "",
             ),
             st._check("broker_forbidden", st._payload_safe(manifest, library), ""),
+        ]
+    )
+    try:
+        config_path = Path(_text(input_snapshot.get("config_path")))
+        live_normalized = _normalized_stress_scenario_library(
+            st._load_yaml_mapping(config_path),
+            config_path=config_path,
+        )
+    except (OSError, ValueError):
+        live_normalized = {}
+    snapshot_normalized = _mapping(input_snapshot.get("normalized_config"))
+    checks.extend(
+        [
+            st._check(
+                "config_snapshot_matches_live",
+                live_normalized == snapshot_normalized,
+                "",
+            ),
+            st._check(
+                "library_matches_config_snapshot",
+                library.get("stress_scenario_library_id") == snapshot_normalized.get("library_id")
+                and library.get("version") == snapshot_normalized.get("version")
+                and library.get("status") == snapshot_normalized.get("status")
+                and library.get("owner") == snapshot_normalized.get("owner")
+                and library.get("selection_policy") == snapshot_normalized.get("selection_policy")
+                and library.get("scenarios") == snapshot_normalized.get("scenarios"),
+                "",
+            ),
+            st._check(
+                "report_exact_rebuild",
+                (root / "stress_scenario_report.md").read_text(encoding="utf-8")
+                == render_stress_scenario_report(manifest, library),
+                "",
+            ),
+            st._check(
+                "reader_exact_rebuild",
+                reader == render_stress_scenario_reader_brief(library),
+                "",
+            ),
         ]
     )
     validation = st._validation_payload(
@@ -340,9 +410,7 @@ def _normalized_stress_scenario_library(
         "candidate_validation_use": "standardized_dynamic_v3_candidate_stress_validation",
         "selection_policy": {
             **selection_policy,
-            "required_scenario_ids": _texts(
-                selection_policy.get("required_scenario_ids")
-            )
+            "required_scenario_ids": _texts(selection_policy.get("required_scenario_ids"))
             or list(REQUIRED_STRESS_SCENARIO_IDS),
         },
         "scenarios": scenarios,

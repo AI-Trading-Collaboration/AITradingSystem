@@ -134,6 +134,7 @@ DEFAULT_POSITION_ADVISORY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "position_adv
 DEFAULT_POSITION_ADVISORY_DAILY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "position_advisory_daily"
 DEFAULT_CONSENSUS_DRIFT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "consensus_drift"
 DEFAULT_POSITION_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "position_review"
+POSITION_REVIEW_INPUT_SCHEMA = "position_review_input_snapshot.v2"
 DEFAULT_OWNER_REVIEW_JOURNAL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "owner_review_journal"
 DEFAULT_LATEST_POINTER_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "latest"
 DEFAULT_SHADOW_REGISTRY_PATH = (
@@ -4054,8 +4055,7 @@ def load_position_advisory_config(
                 f"position advisory consensus threshold must be numeric: {key}"
             ) from exc
     if any(
-        not isfinite(value) or value < 0.0 or value > 1.0
-        for value in threshold_values.values()
+        not isfinite(value) or value < 0.0 or value > 1.0 for value in threshold_values.values()
     ):
         raise DynamicV3ParameterResearchError(
             "position advisory consensus thresholds must be finite values in [0, 1]"
@@ -4113,12 +4113,17 @@ def run_position_advisory(
                 "weight_path_status": latest_weights["status"],
             }
         )
-    if not target_rows or any(
-        row.get("weight_path_status") != "COMPLETE" or not row.get("target_weights")
-        or not _text(row.get("source_weight_path_artifact"))
-        or not Path(_text(row.get("source_weight_path_artifact"))).is_file()
-        for row in target_rows
-    ) or not _position_advisory_target_rows_valid(target_rows):
+    if (
+        not target_rows
+        or any(
+            row.get("weight_path_status") != "COMPLETE"
+            or not row.get("target_weights")
+            or not _text(row.get("source_weight_path_artifact"))
+            or not Path(_text(row.get("source_weight_path_artifact"))).is_file()
+            for row in target_rows
+        )
+        or not _position_advisory_target_rows_valid(target_rows)
+    ):
         raise DynamicV3ParameterResearchError(
             "all shadow shortlist candidates require complete target-weight paths"
         )
@@ -4344,9 +4349,7 @@ def validate_position_advisory_artifact(
                     "cluster_label": row.get("cluster_label"),
                     "as_of": latest_weights["as_of"],
                     "target_weights": latest_weights["weights"],
-                    "source_weight_path_artifact": latest_weights[
-                        "source_weight_path_artifact"
-                    ],
+                    "source_weight_path_artifact": latest_weights["source_weight_path_artifact"],
                     "weight_path_status": latest_weights["status"],
                 }
             )
@@ -4358,9 +4361,7 @@ def validate_position_advisory_artifact(
             {
                 "candidate_id": row.get("candidate_id"),
                 "path": row.get("source_weight_path_artifact"),
-                "sha256": _file_sha256_path(
-                    Path(_text(row.get("source_weight_path_artifact")))
-                ),
+                "sha256": _file_sha256_path(Path(_text(row.get("source_weight_path_artifact")))),
             }
             for row in expected_targets
         ]
@@ -4467,13 +4468,11 @@ def validate_position_advisory_artifact(
             _check(
                 "manifest_derived_fields_match",
                 manifest.get("candidate_count") == len(expected_targets)
-                and manifest.get("consensus_target_weight_status")
-                == expected_consensus_status
+                and manifest.get("consensus_target_weight_status") == expected_consensus_status
                 and manifest.get("portfolio_snapshot_provided") is bool(expected_snapshot)
                 and manifest.get("position_advisory_status")
                 == expected_actions.get("position_advisory_status")
-                and manifest.get("recommended_action")
-                == expected_actions.get("recommended_action")
+                and manifest.get("recommended_action") == expected_actions.get("recommended_action")
                 and manifest.get("policy_id") == _text(policy_metadata.get("policy_id"))
                 and manifest.get("policy_version") == _text(policy_metadata.get("version")),
                 "content-derived manifest fields",
@@ -4563,6 +4562,23 @@ def build_position_review_pack(
     )
     advisory = _read_json(advisory_dir / advisory_id / "position_advisory_manifest.json")
     actions = _read_optional_json(advisory_dir / advisory_id / "advisory_actions.json") or {}
+    source_validations = {
+        "shortlist": validate_shortlist_artifact(
+            shortlist_id=shortlist_id, output_dir=shortlist_dir
+        ),
+        "cluster": validate_candidate_cluster_artifact(
+            cluster_id=cluster_id, output_dir=cluster_dir
+        ),
+        "shadow_shortlist": validate_shadow_shortlist_artifact(
+            shadow_shortlist_id=shadow_shortlist_id,
+            output_dir=shadow_shortlist_dir,
+        ),
+        "position_advisory": validate_position_advisory_artifact(
+            advisory_id=advisory_id, output_dir=advisory_dir
+        ),
+    }
+    if any(item.get("status") != "PASS" for item in source_validations.values()):
+        raise DynamicV3ParameterResearchError("position review requires validated source artifacts")
     decision = _position_review_decision(shortlist, cluster, shadow, advisory, actions)
     review_id = _stable_id(
         "position-review",
@@ -4599,12 +4615,33 @@ def build_position_review_pack(
         "owner_approval_required": True,
         "broker_action_allowed": False,
         "go_no_go_decision_path": str(review_dir / "go_no_go_decision.json"),
+        "position_review_input_snapshot_path": str(
+            review_dir / "position_review_input_snapshot.json"
+        ),
         "owner_review_checklist_path": str(review_dir / "owner_review_checklist.md"),
         "position_review_report_path": str(review_dir / "position_review_report.md"),
         "reader_brief_section_path": str(review_dir / "reader_brief_section.md"),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+    input_snapshot = {
+        "schema_version": POSITION_REVIEW_INPUT_SCHEMA,
+        "review_id": review_dir.name,
+        "generated_at": generated.isoformat(),
+        "shortlist_dir": str(shortlist_dir),
+        "cluster_dir": str(cluster_dir),
+        "shadow_shortlist_dir": str(shadow_shortlist_dir),
+        "advisory_dir": str(advisory_dir),
+        "shortlist": shortlist,
+        "cluster": cluster,
+        "shadow_shortlist": shadow,
+        "advisory": advisory,
+        "advisory_actions": actions,
+        "source_validations": source_validations,
+    }
+    input_snapshot_path = review_dir / "position_review_input_snapshot.json"
+    _write_json(input_snapshot_path, input_snapshot)
+    manifest["input_snapshot_sha256"] = _file_sha256_path(input_snapshot_path)
     _write_json(review_dir / "position_review_manifest.json", manifest)
     _write_json(review_dir / "go_no_go_decision.json", decision)
     _write_text(review_dir / "owner_review_checklist.md", render_owner_review_checklist(decision))
@@ -4655,7 +4692,9 @@ def validate_position_review_artifact(
     review_dir = output_dir / review_id
     manifest = _read_optional_json(review_dir / "position_review_manifest.json") or {}
     decision = _read_optional_json(review_dir / "go_no_go_decision.json") or {}
+    input_snapshot = _read_optional_json(review_dir / "position_review_input_snapshot.json") or {}
     required = [
+        "position_review_input_snapshot.json",
         "position_review_manifest.json",
         "go_no_go_decision.json",
         "owner_review_checklist.md",
@@ -4667,6 +4706,23 @@ def validate_position_review_artifact(
     ]
     checks.extend(
         [
+            _check(
+                "input_snapshot_schema",
+                input_snapshot.get("schema_version") == POSITION_REVIEW_INPUT_SCHEMA,
+                "position review input snapshot must be v2",
+            ),
+            _check(
+                "input_snapshot_id",
+                input_snapshot.get("review_id") == review_id,
+                "position review input snapshot id must match",
+            ),
+            _check(
+                "input_snapshot_sha256_matches",
+                bool(_text(manifest.get("input_snapshot_sha256")))
+                and manifest.get("input_snapshot_sha256")
+                == _file_sha256_path(review_dir / "position_review_input_snapshot.json"),
+                "position review input snapshot checksum must match manifest",
+            ),
             _check("review_id_matches", manifest.get("review_id") == review_id, review_id),
             _check(
                 "production_readiness_not_ready",
@@ -4689,6 +4745,100 @@ def validate_position_review_artifact(
                 "production_candidate_not_generated",
                 manifest.get("production_candidate_generated") is False,
                 "review pack is not production",
+            ),
+        ]
+    )
+    try:
+        shortlist_dir = Path(_text(input_snapshot.get("shortlist_dir")))
+        cluster_dir = Path(_text(input_snapshot.get("cluster_dir")))
+        shadow_dir = Path(_text(input_snapshot.get("shadow_shortlist_dir")))
+        advisory_dir = Path(_text(input_snapshot.get("advisory_dir")))
+        shortlist_id = _text(manifest.get("source_shortlist_id"))
+        cluster_id = _text(manifest.get("source_cluster_id"))
+        shadow_id = _text(manifest.get("source_shadow_shortlist_id"))
+        advisory_id = _text(manifest.get("source_advisory_id"))
+        live_shortlist = _read_json(shortlist_dir / shortlist_id / "shortlist_manifest.json")
+        live_cluster = _read_json(cluster_dir / cluster_id / "cluster_manifest.json")
+        live_shadow = _read_json(shadow_dir / shadow_id / "shadow_shortlist_manifest.json")
+        live_advisory = _read_json(advisory_dir / advisory_id / "position_advisory_manifest.json")
+        live_actions = (
+            _read_optional_json(advisory_dir / advisory_id / "advisory_actions.json") or {}
+        )
+        live_validations = {
+            "shortlist": validate_shortlist_artifact(
+                shortlist_id=shortlist_id, output_dir=shortlist_dir
+            ),
+            "cluster": validate_candidate_cluster_artifact(
+                cluster_id=cluster_id, output_dir=cluster_dir
+            ),
+            "shadow_shortlist": validate_shadow_shortlist_artifact(
+                shadow_shortlist_id=shadow_id, output_dir=shadow_dir
+            ),
+            "position_advisory": validate_position_advisory_artifact(
+                advisory_id=advisory_id, output_dir=advisory_dir
+            ),
+        }
+    except (OSError, ValueError):
+        live_shortlist = {}
+        live_cluster = {}
+        live_shadow = {}
+        live_advisory = {}
+        live_actions = {}
+        live_validations = {}
+    rebuilt_decision = _position_review_decision(
+        live_shortlist,
+        live_cluster,
+        live_shadow,
+        live_advisory,
+        live_actions,
+    )
+    checks.extend(
+        [
+            _check(
+                "source_snapshot_matches_live",
+                live_shortlist == _mapping(input_snapshot.get("shortlist"))
+                and live_cluster == _mapping(input_snapshot.get("cluster"))
+                and live_shadow == _mapping(input_snapshot.get("shadow_shortlist"))
+                and live_advisory == _mapping(input_snapshot.get("advisory"))
+                and live_actions == _mapping(input_snapshot.get("advisory_actions")),
+                "source artifacts must match the frozen input snapshot",
+            ),
+            _check(
+                "source_validations_match_snapshot",
+                live_validations == _mapping(input_snapshot.get("source_validations"))
+                and bool(live_validations)
+                and all(item.get("status") == "PASS" for item in live_validations.values()),
+                "all live source validations must match and pass",
+            ),
+            _check(
+                "decision_exact_rebuild",
+                decision == rebuilt_decision,
+                "go/no-go decision must rebuild from frozen live sources",
+            ),
+            _check(
+                "checklist_exact_rebuild",
+                (review_dir / "owner_review_checklist.md").read_text(encoding="utf-8")
+                == render_owner_review_checklist(decision),
+                "owner checklist must rebuild exactly",
+            ),
+            _check(
+                "report_exact_rebuild",
+                (review_dir / "position_review_report.md").read_text(encoding="utf-8")
+                == render_position_review_markdown(
+                    manifest,
+                    live_shortlist,
+                    live_cluster,
+                    live_shadow,
+                    live_advisory,
+                    decision,
+                ),
+                "position review report must rebuild exactly",
+            ),
+            _check(
+                "reader_exact_rebuild",
+                (review_dir / "reader_brief_section.md").read_text(encoding="utf-8")
+                == render_position_review_reader_brief(manifest, decision),
+                "reader brief must rebuild exactly",
             ),
         ]
     )
@@ -4799,7 +4949,9 @@ def run_shadow_shortlist_monitor(
     summary_recommendation = (
         "pause_monitoring"
         if active_count == 0
-        else "manual_review_required" if downgrade_count else "continue_monitoring"
+        else "manual_review_required"
+        if downgrade_count
+        else "continue_monitoring"
     )
     summary = {
         "schema_version": SCHEMA_VERSION,
@@ -5259,8 +5411,7 @@ def _select_position_advisory_daily_drift(
     )
     if selected_reasons:
         raise DynamicV3ParameterResearchError(
-            "latest same-chain consensus drift evidence is invalid: "
-            + ", ".join(selected_reasons)
+            "latest same-chain consensus drift evidence is invalid: " + ", ".join(selected_reasons)
         )
     return {
         "selected_drift_id": selected_id,
@@ -5281,9 +5432,7 @@ def _position_advisory_daily_source_paths(
     monitor_dir = shadow_monitor_run_dir / shadow_monitor_run_id
     paths = {
         "shadow_monitor_manifest": str(monitor_dir / "shadow_monitor_manifest.json"),
-        "shadow_candidate_daily_results": str(
-            monitor_dir / "shadow_candidate_daily_results.jsonl"
-        ),
+        "shadow_candidate_daily_results": str(monitor_dir / "shadow_candidate_daily_results.jsonl"),
         "shadow_candidate_weekly_summary": str(
             monitor_dir / "shadow_candidate_weekly_summary.jsonl"
         ),
@@ -5312,12 +5461,8 @@ def _position_advisory_daily_source_paths(
                 "consensus_drift_symbol_dispersion": str(
                     selected_drift_dir / "symbol_weight_dispersion.csv"
                 ),
-                "consensus_drift_summary": str(
-                    selected_drift_dir / "consensus_drift_summary.json"
-                ),
-                "consensus_drift_report": str(
-                    selected_drift_dir / "consensus_drift_report.md"
-                ),
+                "consensus_drift_summary": str(selected_drift_dir / "consensus_drift_summary.json"),
+                "consensus_drift_report": str(selected_drift_dir / "consensus_drift_report.md"),
             }
         )
     return paths
@@ -5663,16 +5808,13 @@ def validate_position_advisory_daily_artifact(
                 and manifest.get("candidate_count") == len(expected_targets)
                 and manifest.get("consensus_status") == expected_actions.get("consensus_status")
                 and manifest.get("disagreement_status") == expected_disagreement_status
-                and manifest.get("recommended_action")
-                == expected_actions.get("recommended_action")
+                and manifest.get("recommended_action") == expected_actions.get("recommended_action")
                 and manifest.get("portfolio_snapshot_provided") is bool(expected_snapshot)
-                and manifest.get("portfolio_snapshot_as_of")
-                == expected_snapshot.get("as_of", "")
+                and manifest.get("portfolio_snapshot_as_of") == expected_snapshot.get("as_of", "")
                 and manifest.get("source_consensus_drift_id") == expected_selected_drift_id
                 and manifest.get("consensus_drift_evidence_status")
                 == expected_drift_evidence_status
-                and manifest.get("policy_id")
-                == _text(expected_policy_metadata.get("policy_id"))
+                and manifest.get("policy_id") == _text(expected_policy_metadata.get("policy_id"))
                 and manifest.get("policy_version")
                 == _text(expected_policy_metadata.get("version")),
                 (
@@ -5871,8 +6013,7 @@ def _select_previous_consensus_drift_monitor(
     inventory[inventory_index]["selected"] = True
     if selected_reasons:
         raise DynamicV3ParameterResearchError(
-            "latest relevant previous shadow monitor is invalid: "
-            + ", ".join(selected_reasons)
+            "latest relevant previous shadow monitor is invalid: " + ", ".join(selected_reasons)
         )
     try:
         selected = _validated_consensus_drift_monitor_source(
@@ -5924,9 +6065,7 @@ def _consensus_drift_source_paths(
     ):
         monitor_dir = shadow_monitor_run_dir / monitor_id if monitor_id else None
         for suffix, filename in source_files.items():
-            paths[f"{prefix}_{suffix}"] = (
-                "" if monitor_dir is None else str(monitor_dir / filename)
-            )
+            paths[f"{prefix}_{suffix}"] = "" if monitor_dir is None else str(monitor_dir / filename)
     return paths
 
 
@@ -5973,9 +6112,7 @@ def _compute_consensus_drift(
         config=config,
     )
     implication = (
-        "continue_monitoring"
-        if disagreement_status == "CONSENSUS"
-        else "manual_review_required"
+        "continue_monitoring" if disagreement_status == "CONSENSUS" else "manual_review_required"
     )
     previous_change = _daily_consensus_change_vs_previous(
         current_target_rows=current["target_rows"],
@@ -6079,9 +6216,7 @@ def _consensus_drift_manifest(
         "drift_id": drift_id,
         "source_shadow_monitor_run_id": shadow_monitor_run_id,
         "source_shadow_monitor_run_root": str(shadow_monitor_run_dir),
-        "source_previous_shadow_monitor_run_id": computation.get(
-            "previous_monitor_run_id", ""
-        ),
+        "source_previous_shadow_monitor_run_id": computation.get("previous_monitor_run_id", ""),
         "as_of": current.get("as_of_text", ""),
         "generated_at": generated_at.isoformat(),
         "status": "PASS",
@@ -6089,9 +6224,7 @@ def _consensus_drift_manifest(
         "disagreement_status": computation.get("disagreement_status"),
         "position_advisory_implication": computation.get("implication"),
         "source_monitor_validation_status": current.get("validation_status"),
-        "source_previous_monitor_validation_status": computation.get(
-            "previous_validation_status"
-        ),
+        "source_previous_monitor_validation_status": computation.get("previous_validation_status"),
         "previous_monitor_inventory": computation.get("previous_monitor_inventory"),
         "source_artifact_paths": computation.get("source_paths"),
         "source_artifact_checksums": computation.get("source_checksums"),
@@ -6316,16 +6449,13 @@ def validate_consensus_drift_artifact(
             ),
             _check(
                 "source_checksums_match",
-                not recomputation_error
-                and source_checksums == expected_source_checksums,
+                not recomputation_error and source_checksums == expected_source_checksums,
                 _canonical_json(source_checksums),
             ),
             _check(
                 "manifest_derived_fields_match",
                 not recomputation_error
-                and all(
-                    manifest.get(key) == value for key, value in expected_manifest.items()
-                ),
+                and all(manifest.get(key) == value for key, value in expected_manifest.items()),
                 "content-derived manifest fields",
             ),
             _check(
@@ -6348,9 +6478,7 @@ def validate_consensus_drift_artifact(
                 not recomputation_error
                 and symbol_path.is_file()
                 and symbol_path.read_text(encoding="utf-8")
-                == _render_csv_text(_records(computation.get("symbol_rows"))).replace(
-                    "\r\n", "\n"
-                ),
+                == _render_csv_text(_records(computation.get("symbol_rows"))).replace("\r\n", "\n"),
                 str(symbol_path),
             ),
             _check(
@@ -6368,8 +6496,7 @@ def validate_consensus_drift_artifact(
             *[
                 _check(
                     f"output_checksum_matches:{name}",
-                    _text(output_checksums.get(name))
-                    == _file_sha256_path(drift_dir / name),
+                    _text(output_checksums.get(name)) == _file_sha256_path(drift_dir / name),
                     _text(output_checksums.get(name)),
                 )
                 for name in sorted(output_names)
@@ -7389,9 +7516,7 @@ def _owner_review_daily_source_paths(
         "daily_consensus_weights": str(source_dir / "daily_consensus_weights.csv"),
         "daily_position_deltas": str(source_dir / "daily_position_deltas.jsonl"),
         "daily_advisory_actions": str(source_dir / "daily_advisory_actions.json"),
-        "daily_position_advisory_report": str(
-            source_dir / "daily_position_advisory_report.md"
-        ),
+        "daily_position_advisory_report": str(source_dir / "daily_position_advisory_report.md"),
         "daily_reader_brief": str(source_dir / "reader_brief_section.md"),
     }
 
@@ -7423,9 +7548,7 @@ def _validated_owner_review_daily_source(
         daily_advisory_id=daily_advisory_id,
         daily_advisory_dir=daily_advisory_dir,
     )
-    source_checksums = {
-        key: _file_sha256_path(Path(path)) for key, path in source_paths.items()
-    }
+    source_checksums = {key: _file_sha256_path(Path(path)) for key, path in source_paths.items()}
     if not all(source_checksums.values()):
         raise DynamicV3ParameterResearchError("daily advisory source files must all exist")
     return {
@@ -7628,7 +7751,9 @@ def _owner_review_summary_from_records(
     status = (
         "MISSING"
         if not records
-        else "PASS" if event_chain_status == "PASS" else "PASS_WITH_WARNINGS"
+        else "PASS"
+        if event_chain_status == "PASS"
+        else "PASS_WITH_WARNINGS"
     )
     return {
         "schema_version": SCHEMA_VERSION,
@@ -7757,8 +7882,7 @@ def record_owner_review_decision(
     sensitive_issues = owner_notes_sensitive_issues(manual_notes)
     if sensitive_issues:
         raise DynamicV3ParameterResearchError(
-            "manual owner notes contain sensitive account data: "
-            + ",".join(sensitive_issues)
+            "manual owner notes contain sensitive account data: " + ",".join(sensitive_issues)
         )
     generated = generated_at or datetime.now(UTC)
     generated = generated if generated.tzinfo else generated.replace(tzinfo=UTC)
@@ -7923,8 +8047,7 @@ def validate_owner_review_artifact(
             _mapping(create_event.get("source_artifact_paths")) == source["source_paths"]
         )
         source_checksums_match = (
-            _mapping(create_event.get("source_artifact_checksums"))
-            == source["source_checksums"]
+            _mapping(create_event.get("source_artifact_checksums")) == source["source_checksums"]
         )
         source_derived_fields_match = (
             create_event.get("as_of") == source["manifest"].get("as_of")
@@ -7943,9 +8066,7 @@ def validate_owner_review_artifact(
         output_dir=output_dir,
     )
     expected_report = render_owner_review_report_markdown(expected_summary)
-    matching_paper_actions = [
-        row for row in paper_actions if row.get("review_id") == review_id
-    ]
+    matching_paper_actions = [row for row in paper_actions if row.get("review_id") == review_id]
     recorded_event_paper_action = _mapping(decision_event.get("paper_action_record"))
     expected_paper_action: dict[str, Any] = {}
     paper_recomputation_error = ""
@@ -7958,9 +8079,7 @@ def validate_owner_review_artifact(
                 )
             expected_paper_action = _paper_action_record_payload(
                 review=record,
-                daily_advisory_dir=Path(
-                    _text(create_event.get("source_daily_advisory_root"))
-                ),
+                daily_advisory_dir=Path(_text(create_event.get("source_daily_advisory_root"))),
                 generated_at=decision_at,
                 decision_event_id=_text(decision_event.get("event_id")),
             )
@@ -18962,12 +19081,8 @@ def _daily_consensus_change_vs_previous(
     previous_target_rows: Sequence[Mapping[str, Any]],
     agreement_tolerance: float,
 ) -> dict[str, Any]:
-    current_candidate_ids = sorted(
-        _text(row.get("candidate_id")) for row in current_target_rows
-    )
-    previous_candidate_ids = sorted(
-        _text(row.get("candidate_id")) for row in previous_target_rows
-    )
+    current_candidate_ids = sorted(_text(row.get("candidate_id")) for row in current_target_rows)
+    previous_candidate_ids = sorted(_text(row.get("candidate_id")) for row in previous_target_rows)
     if not previous_monitor_run_id or not previous_target_rows:
         return {
             "status": "NO_PRIOR_MONITOR_RUN",
@@ -20747,7 +20862,11 @@ def _cache_file_inventory(path: Path, *, file_role: str) -> dict[str, Any]:
     symbol_column = (
         "ticker"
         if "ticker" in frame
-        else "symbol" if "symbol" in frame else "series" if "series" in frame else ""
+        else "symbol"
+        if "symbol" in frame
+        else "series"
+        if "series" in frame
+        else ""
     )
     if symbol_column:
         summary["symbols"] = sorted(str(value) for value in frame[symbol_column].dropna().unique())

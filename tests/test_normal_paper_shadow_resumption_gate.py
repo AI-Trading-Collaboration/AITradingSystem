@@ -34,9 +34,7 @@ def test_normal_paper_shadow_resumption_gate_allows_clean_manual_review(
     )
     report = result["normal_paper_shadow_resumption_gate_report"]
 
-    assert report["normal_paper_shadow_resumption_gate_status"] == (
-        "RESUME_NORMAL_SHADOW_ALLOWED"
-    )
+    assert report["normal_paper_shadow_resumption_gate_status"] == ("RESUME_NORMAL_SHADOW_ALLOWED")
     assert report["normal_paper_shadow_may_resume"] is True
     assert report["owner_action"] == "continue_normal_shadow"
     assert report["extended_shadow_allowed"] is False
@@ -67,9 +65,7 @@ def test_normal_paper_shadow_resumption_gate_allows_decision_stage_approval_acti
     )
     report = result["normal_paper_shadow_resumption_gate_report"]
 
-    assert report["normal_paper_shadow_resumption_gate_status"] == (
-        "RESUME_NORMAL_SHADOW_ALLOWED"
-    )
+    assert report["normal_paper_shadow_resumption_gate_status"] == ("RESUME_NORMAL_SHADOW_ALLOWED")
     assert report["normal_paper_shadow_may_resume"] is True
     assert report["owner_action"] == "approve_resume_normal_shadow"
     assert report["owner_action_authorizes_normal_resumption"] is True
@@ -104,9 +100,9 @@ def test_normal_paper_shadow_resumption_gate_preserves_warnings(
     assert report["normal_paper_shadow_may_resume"] is True
     assert "signal_input_completeness_not_blocking" in report["warning_reasons"]
     assert "canonical_health_not_blocked" in report["warning_reasons"]
-    assert "readiness_health_recovery:signal_input_completeness:warning" in report[
-        "warning_reasons"
-    ]
+    assert (
+        "readiness_health_recovery:signal_input_completeness:warning" in report["warning_reasons"]
+    )
     assert result["normal_paper_shadow_resumption_gate_validation"]["status"] == "PASS"
 
 
@@ -131,9 +127,7 @@ def test_normal_paper_shadow_resumption_gate_hold_blocks_resumption(
     )
     report = result["normal_paper_shadow_resumption_gate_report"]
 
-    assert report["normal_paper_shadow_resumption_gate_status"] == (
-        "RESUME_NORMAL_SHADOW_BLOCKED"
-    )
+    assert report["normal_paper_shadow_resumption_gate_status"] == ("RESUME_NORMAL_SHADOW_BLOCKED")
     assert report["normal_paper_shadow_may_resume"] is False
     assert report["owner_action_is_safe_non_promotion"] is True
     assert "owner_action:hold" in report["blocking_reasons"]
@@ -161,9 +155,7 @@ def test_normal_paper_shadow_resumption_gate_blocks_promotion_like_owner_action(
     )
     report = result["normal_paper_shadow_resumption_gate_report"]
 
-    assert report["normal_paper_shadow_resumption_gate_status"] == (
-        "RESUME_NORMAL_SHADOW_BLOCKED"
-    )
+    assert report["normal_paper_shadow_resumption_gate_status"] == ("RESUME_NORMAL_SHADOW_BLOCKED")
     assert report["owner_action_is_safe_non_promotion"] is False
     assert "owner_action_safe_non_promotion" in report["blocking_reasons"]
     assert "owner_action:not_allowed_for_normal_resumption" in report["blocking_reasons"]
@@ -200,14 +192,10 @@ def test_normal_paper_shadow_resumption_gate_cli_run_report_and_validate(
         ],
     )
     assert run.exit_code == 0
-    assert "normal_paper_shadow_resumption_gate_status=RESUME_NORMAL_SHADOW_ALLOWED" in (
-        run.output
-    )
+    assert "normal_paper_shadow_resumption_gate_status=RESUME_NORMAL_SHADOW_ALLOWED" in (run.output)
     assert "extended_shadow_allowed=false" in run.output
     gate_id = next(
-        line.split("=", 1)[1]
-        for line in run.output.splitlines()
-        if line.startswith("gate_id=")
+        line.split("=", 1)[1] for line in run.output.splitlines() if line.startswith("gate_id=")
     )
 
     report = CliRunner().invoke(
@@ -272,6 +260,8 @@ def _patch_recovery(
             "schema_version": st.SCHEMA_VERSION,
             "report_type": "etf_dynamic_v3_readiness_health_recovery_report",
             "recovery_id": recovery_id,
+            "candidate": "median_plus_regime_mismatch_filter",
+            "generated_at": "2024-04-22T00:00:00+00:00",
             "readiness_health_recovery_status": "MANUAL_REVIEW_REQUIRED"
             if warning_reasons
             else "PAPER_SHADOW_CAN_RESUME_NORMAL_OBSERVATION",
@@ -299,6 +289,11 @@ def _patch_recovery(
         gate.recovery,
         "readiness_health_recovery_report_payload",
         fake_recovery_payload,
+    )
+    monkeypatch.setattr(
+        gate.recovery,
+        "validate_readiness_health_recovery_artifact",
+        lambda **kwargs: _validation(str(kwargs["recovery_id"])),
     )
 
 

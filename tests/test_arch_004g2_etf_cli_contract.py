@@ -26,6 +26,21 @@ BASELINE_PATH = PROJECT_ROOT / "inputs/architecture/arch_004g2_etf_cli_contract.
 REGISTRATION_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/registration.py"
 )
+PAPER_SHADOW_OPERATIONS_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_paper_shadow_operations.py"
+)
+SHADOW_HEALTH_CONTROL_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_shadow_health_control.py"
+)
+SHADOW_DECISION_SUPPORT_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_shadow_decision_support.py"
+)
 DATA_COMMANDS_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/data.py"
 DATA_QUALITY_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/data_quality.py"
@@ -627,7 +642,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 9065
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 6572
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -838,8 +853,62 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 9065
-    assert len(legacy_names) == 192
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 6572
+    assert len(legacy_names) == 142
+
+
+def test_g2_4_eb5_shadow_control_callbacks_leave_legacy_root() -> None:
+    legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
+    canonical_names: set[str] = set()
+    for path in (
+        PAPER_SHADOW_OPERATIONS_COMMANDS_PATH,
+        SHADOW_HEALTH_CONTROL_COMMANDS_PATH,
+        SHADOW_DECISION_SUPPORT_COMMANDS_PATH,
+    ):
+        canonical_names.update(_function_names(ast.parse(path.read_text(encoding="utf-8"))))
+    callbacks = {
+        "dynamic_v3_paper_shadow_protocol_build_command",
+        "dynamic_v3_paper_shadow_protocol_report_command",
+        "dynamic_v3_validate_paper_shadow_protocol_command",
+        "dynamic_v3_paper_shadow_daily_run_command",
+        "dynamic_v3_paper_shadow_daily_report_command",
+        "dynamic_v3_validate_paper_shadow_daily_command",
+        "dynamic_v3_paper_shadow_drift_monitor_report_command",
+        "dynamic_v3_validate_paper_shadow_drift_monitor_command",
+        "dynamic_v3_paper_shadow_weekly_review_build_command",
+        "dynamic_v3_paper_shadow_weekly_review_report_command",
+        "dynamic_v3_validate_paper_shadow_weekly_review_command",
+        "dynamic_v3_evidence_staleness_monitor_run_command",
+        "dynamic_v3_evidence_staleness_monitor_report_command",
+        "dynamic_v3_validate_evidence_staleness_monitor_command",
+        "dynamic_v3_shadow_continuation_readiness_run_command",
+        "dynamic_v3_shadow_continuation_readiness_report_command",
+        "dynamic_v3_validate_shadow_continuation_readiness_command",
+        "dynamic_v3_paper_shadow_health_run_command",
+        "dynamic_v3_paper_shadow_health_report_command",
+        "dynamic_v3_validate_paper_shadow_health_command",
+        "dynamic_v3_readiness_health_recovery_run_command",
+        "dynamic_v3_readiness_health_recovery_report_command",
+        "dynamic_v3_validate_readiness_health_recovery_command",
+        "dynamic_v3_normal_paper_shadow_resumption_gate_run_command",
+        "dynamic_v3_normal_paper_shadow_resumption_gate_report_command",
+        "dynamic_v3_validate_normal_paper_shadow_resumption_gate_command",
+        "dynamic_v3_paper_shadow_outcome_attribution_run_command",
+        "dynamic_v3_paper_shadow_outcome_attribution_report_command",
+        "dynamic_v3_validate_paper_shadow_outcome_attribution_command",
+        "dynamic_v3_shadow_decision_comparison_run_command",
+        "dynamic_v3_shadow_decision_comparison_report_command",
+        "dynamic_v3_validate_shadow_decision_comparison_command",
+        "dynamic_v3_stress_scenario_library_report_command",
+        "dynamic_v3_validate_stress_scenario_library_command",
+        "dynamic_v3_position_review_pack_command",
+        "dynamic_v3_position_review_report_command",
+        "dynamic_v3_validate_position_review_command",
+    }
+
+    assert len(callbacks) == 37
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:

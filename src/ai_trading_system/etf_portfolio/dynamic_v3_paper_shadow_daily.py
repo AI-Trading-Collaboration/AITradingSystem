@@ -13,6 +13,7 @@ from ai_trading_system.etf_portfolio import (
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 
 DEFAULT_PAPER_SHADOW_DAILY_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_daily"
+PAPER_SHADOW_DAILY_INPUT_SCHEMA = "paper_shadow_daily_input_snapshot.v2"
 PAPER_SHADOW_DAILY_REVIEW_FIELDS = (
     "signal_output",
     "hypothetical_weight_recommendation",
@@ -83,6 +84,20 @@ def run_paper_shadow_daily_observation(
     protocol = _mapping(protocol_payload.get("paper_shadow_protocol"))
     source_contract_id = _text(contract_payload.get("contract_id"))
     source_protocol_id = _text(protocol_payload.get("protocol_id"))
+    contract_validation = readiness.validate_formal_research_method_contract_artifact(
+        contract_id=source_contract_id,
+        output_dir=contract_dir,
+        write_output=False,
+    )
+    protocol_validation = readiness.validate_paper_shadow_protocol_artifact(
+        protocol_id=source_protocol_id,
+        output_dir=protocol_dir,
+        write_output=False,
+    )
+    if contract_validation.get("status") != "PASS":
+        raise ValueError("paper-shadow daily requires a validated formal contract")
+    if protocol_validation.get("status") != "PASS":
+        raise ValueError("paper-shadow daily requires a validated protocol")
     signal_input_summary = signal_inputs.latest_signal_input_completeness_summary(
         monitor_id=signal_input_completeness_id,
         report_path=signal_input_completeness_report_path,
@@ -175,15 +190,51 @@ def run_paper_shadow_daily_observation(
         "signal_input_completeness_id": signal_input_summary.get("monitor_id"),
         "signal_input_status": signal_input_summary.get("signal_input_status"),
         "paper_shadow_daily_manifest_path": str(root / "paper_shadow_daily_manifest.json"),
-        "paper_shadow_daily_observation_path": str(
-            root / "paper_shadow_daily_observation.json"
+        "paper_shadow_daily_input_snapshot_path": str(
+            root / "paper_shadow_daily_input_snapshot.json"
         ),
+        "paper_shadow_daily_observation_path": str(root / "paper_shadow_daily_observation.json"),
         "paper_shadow_daily_report_path": str(root / "paper_shadow_daily_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         "validation_path": str(root / "paper_shadow_daily_validation.json"),
         **PAPER_SHADOW_DAILY_SAFETY,
     }
     reader = render_paper_shadow_daily_reader_brief(observation)
+    input_snapshot = {
+        "schema_version": PAPER_SHADOW_DAILY_INPUT_SCHEMA,
+        "observation_id": root.name,
+        "generated_at": generated.isoformat(),
+        "contract_dir": str(contract_dir),
+        "protocol_dir": str(protocol_dir),
+        "signal_input_completeness_dir": str(signal_input_completeness_dir),
+        "source_contract": {
+            key: value
+            for key, value in contract_payload.items()
+            if key != "formal_research_method_contract_validation"
+        },
+        "source_contract_validation": contract_validation,
+        "source_protocol": {
+            key: value
+            for key, value in protocol_payload.items()
+            if key != "paper_shadow_protocol_validation"
+        },
+        "source_protocol_validation": protocol_validation,
+        "signal_input_completeness_summary": signal_input_summary,
+        "input_artifacts": input_artifacts,
+        "daily_fields": {
+            "signal_output": signal_output,
+            "hypothetical_weight_recommendation": hypothetical_weight_recommendation,
+            "risk_off_risk_on_state": risk_off_risk_on_state,
+            "drawdown_state": drawdown_state,
+            "rotation_event": rotation_event,
+            "mismatch_event": mismatch_event,
+            "benchmark_comparison": benchmark_comparison,
+            "manual_reviewer_notes": manual_reviewer_notes,
+        },
+    }
+    input_snapshot_path = root / "paper_shadow_daily_input_snapshot.json"
+    st._write_json(input_snapshot_path, input_snapshot)
+    manifest["input_snapshot_sha256"] = st._file_sha256(input_snapshot_path)
     st._write_json(root / "paper_shadow_daily_manifest.json", manifest)
     st._write_json(root / "paper_shadow_daily_observation.json", observation)
     st._write_text(
@@ -229,9 +280,7 @@ def paper_shadow_daily_report_payload(
         "paper_shadow_daily_observation": st._read_json(
             root / "paper_shadow_daily_observation.json"
         ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "observation_dir": str(root),
     }
     validation = st._read_optional_json(root / "paper_shadow_daily_validation.json")
@@ -249,6 +298,7 @@ def validate_paper_shadow_daily_artifact(
     root = output_dir / observation_id
     manifest = st._read_optional_json(root / "paper_shadow_daily_manifest.json") or {}
     observation = st._read_optional_json(root / "paper_shadow_daily_observation.json") or {}
+    input_snapshot = st._read_optional_json(root / "paper_shadow_daily_input_snapshot.json") or {}
     reader = (
         (root / "reader_brief_section.md").read_text(encoding="utf-8")
         if (root / "reader_brief_section.md").exists()
@@ -262,6 +312,7 @@ def validate_paper_shadow_daily_artifact(
         root,
         (
             "paper_shadow_daily_manifest.json",
+            "paper_shadow_daily_input_snapshot.json",
             "paper_shadow_daily_observation.json",
             "paper_shadow_daily_report.md",
             "reader_brief_section.md",
@@ -269,6 +320,23 @@ def validate_paper_shadow_daily_artifact(
     )
     checks.extend(
         [
+            st._check(
+                "input_snapshot_schema",
+                input_snapshot.get("schema_version") == PAPER_SHADOW_DAILY_INPUT_SCHEMA,
+                "",
+            ),
+            st._check(
+                "input_snapshot_id",
+                input_snapshot.get("observation_id") == observation_id,
+                "",
+            ),
+            st._check(
+                "input_snapshot_sha256_matches",
+                bool(_text(manifest.get("input_snapshot_sha256")))
+                and manifest.get("input_snapshot_sha256")
+                == st._file_sha256(root / "paper_shadow_daily_input_snapshot.json"),
+                "",
+            ),
             st._check(
                 "observation_id_matches",
                 manifest.get("observation_id") == observation_id,
@@ -305,9 +373,8 @@ def validate_paper_shadow_daily_artifact(
                 "signal_input_fail_closed",
                 (
                     signal_input_summary.get("signal_input_status") in {"OK", "WARNING"}
-                    or "signal_input_completeness_blocking" in _texts(
-                        observation.get("blocking_reasons")
-                    )
+                    or "signal_input_completeness_blocking"
+                    in _texts(observation.get("blocking_reasons"))
                 ),
                 "",
             ),
@@ -327,8 +394,7 @@ def validate_paper_shadow_daily_artifact(
             ),
             st._check(
                 "reader_brief_fields",
-                "paper_shadow_daily_observation_id" in reader
-                and "signal_input_status" in reader,
+                "paper_shadow_daily_observation_id" in reader and "signal_input_status" in reader,
                 "",
             ),
             st._check("broker_forbidden", st._payload_safe(manifest, observation), ""),
@@ -336,6 +402,105 @@ def validate_paper_shadow_daily_artifact(
                 "paper_account_not_mutated",
                 observation.get("paper_account_state_mutated") is False
                 and manifest.get("paper_account_state_mutated") is False,
+                "",
+            ),
+        ]
+    )
+    source_contract = _mapping(input_snapshot.get("source_contract"))
+    source_protocol = _mapping(input_snapshot.get("source_protocol"))
+    source_contract_id = _text(source_contract.get("contract_id"))
+    source_protocol_id = _text(source_protocol.get("protocol_id"))
+    contract_dir = Path(_text(input_snapshot.get("contract_dir")))
+    protocol_dir = Path(_text(input_snapshot.get("protocol_dir")))
+    signal_dir = Path(_text(input_snapshot.get("signal_input_completeness_dir")))
+    signal_monitor_id = _text(signal_input_summary.get("monitor_id"))
+    try:
+        live_contract_payload = readiness.formal_research_method_contract_report_payload(
+            contract_id=source_contract_id,
+            latest=False,
+            output_dir=contract_dir,
+        )
+        live_contract = {
+            key: value
+            for key, value in live_contract_payload.items()
+            if key != "formal_research_method_contract_validation"
+        }
+        live_contract_validation = readiness.validate_formal_research_method_contract_artifact(
+            contract_id=source_contract_id,
+            output_dir=contract_dir,
+            write_output=False,
+        )
+        live_protocol_payload = readiness.paper_shadow_protocol_report_payload(
+            protocol_id=source_protocol_id,
+            latest=False,
+            output_dir=protocol_dir,
+        )
+        live_protocol = {
+            key: value
+            for key, value in live_protocol_payload.items()
+            if key != "paper_shadow_protocol_validation"
+        }
+        live_protocol_validation = readiness.validate_paper_shadow_protocol_artifact(
+            protocol_id=source_protocol_id,
+            output_dir=protocol_dir,
+            write_output=False,
+        )
+        live_signal_summary = signal_inputs.latest_signal_input_completeness_summary(
+            monitor_id=signal_monitor_id or None,
+            output_dir=signal_dir,
+        )
+    except (OSError, ValueError):
+        live_contract = {}
+        live_protocol = {}
+        live_signal_summary = {}
+        live_contract_validation = {"status": "FAIL"}
+        live_protocol_validation = {"status": "FAIL"}
+    live_inputs = [
+        _input_artifact(_text(row.get("source_id")), Path(_text(row.get("path"))))
+        for row in _records(input_snapshot.get("input_artifacts"))
+    ]
+    checks.extend(
+        [
+            st._check(
+                "source_contract_snapshot_matches_live",
+                live_contract == source_contract,
+                "",
+            ),
+            st._check(
+                "source_contract_validation_pass",
+                live_contract_validation.get("status") == "PASS",
+                "",
+            ),
+            st._check(
+                "source_protocol_snapshot_matches_live",
+                live_protocol == source_protocol,
+                "",
+            ),
+            st._check(
+                "source_protocol_validation_pass",
+                live_protocol_validation.get("status") == "PASS",
+                "",
+            ),
+            st._check(
+                "signal_input_snapshot_matches_live",
+                live_signal_summary
+                == _mapping(input_snapshot.get("signal_input_completeness_summary")),
+                "",
+            ),
+            st._check(
+                "input_artifact_snapshot_matches_live",
+                live_inputs == _records(input_snapshot.get("input_artifacts")),
+                "",
+            ),
+            st._check(
+                "report_exact_rebuild",
+                (root / "paper_shadow_daily_report.md").read_text(encoding="utf-8")
+                == render_paper_shadow_daily_report(manifest, observation),
+                "",
+            ),
+            st._check(
+                "reader_exact_rebuild",
+                reader == render_paper_shadow_daily_reader_brief(observation),
                 "",
             ),
         ]
@@ -352,6 +517,31 @@ def validate_paper_shadow_daily_artifact(
             render_paper_shadow_daily_validation_report(validation),
         )
     return validation
+
+
+def paper_shadow_daily_validation_acceptable_for_diagnostic(
+    *,
+    observation: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> bool:
+    """Allow diagnostics to consume an intact BLOCKED record of missing evidence."""
+    if validation.get("status") == "PASS":
+        return True
+    failed_checks = {
+        _text(row.get("check_id"))
+        for row in _records(validation.get("checks"))
+        if row.get("passed") is not True
+    }
+    expected_missing_evidence_checks = {
+        "input_artifacts_exist",
+        "input_checksums_visible",
+    }
+    return (
+        observation.get("observation_status") == "BLOCKED"
+        and "missing_input_artifact" in _texts(observation.get("blocking_reasons"))
+        and bool(failed_checks)
+        and failed_checks.issubset(expected_missing_evidence_checks)
+    )
 
 
 def render_paper_shadow_daily_reader_brief(observation: Mapping[str, Any]) -> str:
@@ -388,9 +578,7 @@ def render_paper_shadow_daily_report(
         for row in _records(observation.get("input_artifacts"))
     ]
     signal_summary = _mapping(observation.get("signal_input_completeness_summary"))
-    blocking_inputs = ", ".join(
-        _texts(signal_summary.get("blocking_input_ids"))
-    ) or "none"
+    blocking_inputs = ", ".join(_texts(signal_summary.get("blocking_input_ids"))) or "none"
     return "\n".join(
         [
             f"# Paper Shadow Daily Observation {manifest.get('observation_id')}",

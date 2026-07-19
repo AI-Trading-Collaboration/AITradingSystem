@@ -12,6 +12,7 @@ from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_drift_monitor"
 )
+PAPER_SHADOW_DRIFT_INPUT_SCHEMA = "paper_shadow_drift_input_snapshot.v2"
 DRIFT_FAMILIES = (
     "unexpected_turnover_increase",
     "excessive_risk_off_frequency",
@@ -102,6 +103,25 @@ def build_paper_shadow_drift_monitor_report(
     )
     contract = _mapping(contract_payload.get("formal_research_method_contract"))
     decision = _mapping(contract_payload.get("formal_research_method_decision"))
+    source_observation_id = _text(observation_payload.get("observation_id"))
+    source_contract_id = _text(contract_payload.get("contract_id"))
+    observation_validation = daily.validate_paper_shadow_daily_artifact(
+        observation_id=source_observation_id,
+        output_dir=observation_dir,
+        write_output=False,
+    )
+    contract_validation = readiness.validate_formal_research_method_contract_artifact(
+        contract_id=source_contract_id,
+        output_dir=contract_dir,
+        write_output=False,
+    )
+    if not daily.paper_shadow_daily_validation_acceptable_for_diagnostic(
+        observation=observation,
+        validation=observation_validation,
+    ):
+        raise ValueError("paper-shadow drift requires a validated daily observation")
+    if contract_validation.get("status") != "PASS":
+        raise ValueError("paper-shadow drift requires a validated formal contract")
     findings = _drift_findings(
         observation_payload=observation_payload,
         observation=observation,
@@ -170,6 +190,9 @@ def build_paper_shadow_drift_monitor_report(
         "observation_date": observation.get("observation_date"),
         "source_contract_id": contract_payload.get("contract_id"),
         "paper_shadow_drift_manifest_path": str(root / "paper_shadow_drift_manifest.json"),
+        "paper_shadow_drift_input_snapshot_path": str(
+            root / "paper_shadow_drift_input_snapshot.json"
+        ),
         "paper_shadow_drift_report_path": str(root / "paper_shadow_drift_report.json"),
         "paper_shadow_drift_findings_path": str(root / "paper_shadow_drift_findings.jsonl"),
         "paper_shadow_drift_markdown_path": str(root / "paper_shadow_drift_report.md"),
@@ -178,6 +201,28 @@ def build_paper_shadow_drift_monitor_report(
         **PAPER_SHADOW_DRIFT_SAFETY,
     }
     reader = render_paper_shadow_drift_reader_brief(report)
+    input_snapshot = {
+        "schema_version": PAPER_SHADOW_DRIFT_INPUT_SCHEMA,
+        "monitor_id": root.name,
+        "generated_at": generated.isoformat(),
+        "observation_dir": str(observation_dir),
+        "contract_dir": str(contract_dir),
+        "source_observation": {
+            key: value
+            for key, value in observation_payload.items()
+            if key != "paper_shadow_daily_validation"
+        },
+        "source_observation_validation": observation_validation,
+        "source_contract": {
+            key: value
+            for key, value in contract_payload.items()
+            if key != "formal_research_method_contract_validation"
+        },
+        "source_contract_validation": contract_validation,
+    }
+    input_snapshot_path = root / "paper_shadow_drift_input_snapshot.json"
+    st._write_json(input_snapshot_path, input_snapshot)
+    manifest["input_snapshot_sha256"] = st._file_sha256(input_snapshot_path)
     st._write_json(root / "paper_shadow_drift_manifest.json", manifest)
     st._write_json(root / "paper_shadow_drift_report.json", report)
     st._write_jsonl(root / "paper_shadow_drift_findings.jsonl", findings)
@@ -223,12 +268,8 @@ def paper_shadow_drift_monitor_report_payload(
     payload = {
         **st._read_json(root / "paper_shadow_drift_manifest.json"),
         "paper_shadow_drift_report": st._read_json(root / "paper_shadow_drift_report.json"),
-        "paper_shadow_drift_findings": st._read_jsonl(
-            root / "paper_shadow_drift_findings.jsonl"
-        ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "paper_shadow_drift_findings": st._read_jsonl(root / "paper_shadow_drift_findings.jsonl"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "monitor_dir": str(root),
     }
     validation = st._read_optional_json(root / "paper_shadow_drift_validation.json")
@@ -246,6 +287,7 @@ def validate_paper_shadow_drift_monitor_artifact(
     root = output_dir / monitor_id
     manifest = st._read_optional_json(root / "paper_shadow_drift_manifest.json") or {}
     report = st._read_optional_json(root / "paper_shadow_drift_report.json") or {}
+    input_snapshot = st._read_optional_json(root / "paper_shadow_drift_input_snapshot.json") or {}
     findings = st._read_jsonl(root / "paper_shadow_drift_findings.jsonl")
     reader = (
         (root / "reader_brief_section.md").read_text(encoding="utf-8")
@@ -257,6 +299,7 @@ def validate_paper_shadow_drift_monitor_artifact(
         root,
         (
             "paper_shadow_drift_manifest.json",
+            "paper_shadow_drift_input_snapshot.json",
             "paper_shadow_drift_report.json",
             "paper_shadow_drift_findings.jsonl",
             "paper_shadow_drift_report.md",
@@ -265,6 +308,23 @@ def validate_paper_shadow_drift_monitor_artifact(
     )
     checks.extend(
         [
+            st._check(
+                "input_snapshot_schema",
+                input_snapshot.get("schema_version") == PAPER_SHADOW_DRIFT_INPUT_SCHEMA,
+                "",
+            ),
+            st._check(
+                "input_snapshot_id",
+                input_snapshot.get("monitor_id") == monitor_id,
+                "",
+            ),
+            st._check(
+                "input_snapshot_sha256_matches",
+                bool(_text(manifest.get("input_snapshot_sha256")))
+                and manifest.get("input_snapshot_sha256")
+                == st._file_sha256(root / "paper_shadow_drift_input_snapshot.json"),
+                "",
+            ),
             st._check("monitor_id_matches", manifest.get("monitor_id") == monitor_id, ""),
             st._check("candidate_visible", bool(_text(report.get("candidate"))), ""),
             st._check(
@@ -329,6 +389,97 @@ def validate_paper_shadow_drift_monitor_artifact(
             st._check("broker_forbidden", st._payload_safe(manifest, report), ""),
         ]
     )
+    source_observation = _mapping(input_snapshot.get("source_observation"))
+    source_contract = _mapping(input_snapshot.get("source_contract"))
+    source_observation_id = _text(source_observation.get("observation_id"))
+    source_contract_id = _text(source_contract.get("contract_id"))
+    observation_dir = Path(_text(input_snapshot.get("observation_dir")))
+    contract_dir = Path(_text(input_snapshot.get("contract_dir")))
+    try:
+        live_observation_payload = daily.paper_shadow_daily_report_payload(
+            observation_id=source_observation_id,
+            latest=False,
+            output_dir=observation_dir,
+        )
+        live_observation = {
+            key: value
+            for key, value in live_observation_payload.items()
+            if key != "paper_shadow_daily_validation"
+        }
+        live_observation_validation = daily.validate_paper_shadow_daily_artifact(
+            observation_id=source_observation_id,
+            output_dir=observation_dir,
+            write_output=False,
+        )
+        live_contract_payload = readiness.formal_research_method_contract_report_payload(
+            contract_id=source_contract_id,
+            latest=False,
+            output_dir=contract_dir,
+        )
+        live_contract = {
+            key: value
+            for key, value in live_contract_payload.items()
+            if key != "formal_research_method_contract_validation"
+        }
+        live_contract_validation = readiness.validate_formal_research_method_contract_artifact(
+            contract_id=source_contract_id,
+            output_dir=contract_dir,
+            write_output=False,
+        )
+    except (OSError, ValueError):
+        live_observation = {}
+        live_contract = {}
+        live_observation_validation = {"status": "FAIL"}
+        live_contract_validation = {"status": "FAIL"}
+    checks.extend(
+        [
+            st._check(
+                "source_observation_snapshot_matches_live",
+                live_observation == source_observation,
+                "",
+            ),
+            st._check(
+                "source_observation_validation_matches_snapshot",
+                live_observation_validation
+                == _mapping(input_snapshot.get("source_observation_validation")),
+                "",
+            ),
+            st._check(
+                "source_observation_validation_acceptable",
+                daily.paper_shadow_daily_validation_acceptable_for_diagnostic(
+                    observation=_mapping(live_observation.get("paper_shadow_daily_observation")),
+                    validation=live_observation_validation,
+                ),
+                "",
+            ),
+            st._check(
+                "source_contract_snapshot_matches_live",
+                live_contract == source_contract,
+                "",
+            ),
+            st._check(
+                "source_contract_validation_pass",
+                live_contract_validation.get("status") == "PASS",
+                "",
+            ),
+            st._check(
+                "findings_exact_rebuild",
+                findings == _records(report.get("findings")),
+                "",
+            ),
+            st._check(
+                "report_exact_rebuild",
+                (root / "paper_shadow_drift_report.md").read_text(encoding="utf-8")
+                == render_paper_shadow_drift_report(manifest, report),
+                "",
+            ),
+            st._check(
+                "reader_exact_rebuild",
+                reader == render_paper_shadow_drift_reader_brief(report),
+                "",
+            ),
+        ]
+    )
     validation = st._validation_payload(
         "etf_dynamic_v3_paper_shadow_drift_monitor_validation",
         monitor_id,
@@ -373,8 +524,7 @@ def render_paper_shadow_drift_report(
         for row in _records(report.get("findings"))
     ]
     source_lines = [
-        f"- {row.get('source_id')}: artifact_id={row.get('artifact_id')} "
-        f"path={row.get('path')}"
+        f"- {row.get('source_id')}: artifact_id={row.get('artifact_id')} path={row.get('path')}"
         for row in _records(report.get("source_artifacts"))
     ]
     return "\n".join(

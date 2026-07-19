@@ -161,6 +161,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_paper_portfolio as dynamic_v3_paper_portfolio_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_paper_shadow_operations as dynamic_v3_paper_shadow_operations_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_portfolio_intake as dynamic_v3_portfolio_intake_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -231,6 +234,12 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_shadow_aging as dynamic_v3_shadow_aging_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_shadow_decision_support as dynamic_v3_shadow_decision_support_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_shadow_health_control as dynamic_v3_shadow_health_control_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_shadow_registry as dynamic_v3_shadow_registry_commands,
@@ -429,6 +438,8 @@ __all__ = [
     "dynamic_v3_sim_defensive_validation_commands",
     "dynamic_v3_sim_risk_return_commands",
     "dynamic_v3_shadow_aging_commands",
+    "dynamic_v3_shadow_decision_support_commands",
+    "dynamic_v3_shadow_health_control_commands",
     "dynamic_v3_sweep_config_commands",
     "dynamic_v3_sweep_runtime_commands",
     "dynamic_v3_system_target_portfolio_commands",
@@ -446,6 +457,7 @@ __all__ = [
     "dynamic_v3_smoothed_readiness_commands",
     "dynamic_v3_experiment_factory_commands",
     "dynamic_v3_evidence_materialization_commands",
+    "dynamic_v3_paper_shadow_operations_commands",
     "dynamic_v3_filtered_candidate_pipeline_commands",
     "dynamic_v3_filtered_candidate_readiness_commands",
     "dynamic_v3_data_audit_commands",

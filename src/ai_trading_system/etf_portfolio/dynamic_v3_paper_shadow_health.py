@@ -14,14 +14,16 @@ from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as dri
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as weekly
 from ai_trading_system.etf_portfolio import dynamic_v3_signal_input_completeness as signal_inputs
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
-
-DEFAULT_PAPER_SHADOW_HEALTH_DIR = (
-    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_health"
+from ai_trading_system.platform.artifacts.validation_session import (
+    with_artifact_validation_session,
 )
+
+DEFAULT_PAPER_SHADOW_HEALTH_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_health"
 DEFAULT_MARKET_PANEL_REPORT_DIR = st.PROJECT_ROOT / "outputs" / "reports"
 DEFAULT_DATA_SOURCE_FALLBACK_DIR = fallback_policy.DEFAULT_DATA_SOURCE_FALLBACK_DIR
 DEFAULT_CACHE_CATALOG_DIR = cache_catalog.DEFAULT_CACHE_CATALOG_DIR
 DEFAULT_DATA_REFRESH_AUDIT_DIR = data_refresh_audit.DEFAULT_DATA_REFRESH_AUDIT_DIR
+PAPER_SHADOW_HEALTH_INPUT_SCHEMA = "paper_shadow_health_input_snapshot.v2"
 
 PAPER_SHADOW_HEALTH_STATUSES = (
     "HEALTHY",
@@ -58,6 +60,7 @@ DATA_BLOCKING_FALLBACK_STATUSES = {
 }
 
 
+@with_artifact_validation_session
 def run_paper_shadow_health_report(
     *,
     as_of: date | None = None,
@@ -78,9 +81,7 @@ def run_paper_shadow_health_report(
     paper_shadow_drift_monitor_dir: Path = drift.DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
     paper_shadow_weekly_review_dir: Path = weekly.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
     evidence_staleness_monitor_dir: Path = readiness.DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
-    shadow_continuation_readiness_dir: Path = (
-        readiness.DEFAULT_SHADOW_CONTINUATION_READINESS_DIR
-    ),
+    shadow_continuation_readiness_dir: Path = (readiness.DEFAULT_SHADOW_CONTINUATION_READINESS_DIR),
     fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     cache_catalog_output_dir: Path = DEFAULT_CACHE_CATALOG_DIR,
     data_refresh_audit_dir: Path = DEFAULT_DATA_REFRESH_AUDIT_DIR,
@@ -185,6 +186,9 @@ def run_paper_shadow_health_report(
         "paper_shadow_health_status": health_status,
         "safe_to_continue_shadow": safe_to_continue,
         "paper_shadow_health_manifest_path": str(root / "paper_shadow_health_manifest.json"),
+        "paper_shadow_health_input_snapshot_path": str(
+            root / "paper_shadow_health_input_snapshot.json"
+        ),
         "paper_shadow_health_report_path": str(root / "paper_shadow_health_report.json"),
         "paper_shadow_health_markdown_path": str(root / "paper_shadow_health_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
@@ -192,6 +196,50 @@ def run_paper_shadow_health_report(
         **PAPER_SHADOW_HEALTH_SAFETY,
     }
     reader = render_paper_shadow_health_reader_brief(report)
+    input_snapshot = {
+        "schema_version": PAPER_SHADOW_HEALTH_INPUT_SCHEMA,
+        "health_id": root.name,
+        "generated_at": generated.isoformat(),
+        "as_of": effective_as_of.isoformat(),
+        "source_artifacts": source_artifacts,
+        "request": {
+            "price_cache_path": str(price_cache_path),
+            "market_panel_dir": str(market_panel_dir),
+            "signal_input_completeness_id": _resolved_source_id(
+                source_artifacts, "signal_input_completeness"
+            ),
+            "paper_shadow_daily_id": _resolved_source_id(source_artifacts, "paper_shadow_daily"),
+            "paper_shadow_drift_monitor_id": _resolved_source_id(
+                source_artifacts, "paper_shadow_drift_monitor"
+            ),
+            "paper_shadow_weekly_review_id": _resolved_source_id(
+                source_artifacts, "paper_shadow_weekly_review"
+            ),
+            "evidence_staleness_monitor_id": _resolved_source_id(
+                source_artifacts, "evidence_staleness"
+            ),
+            "shadow_continuation_readiness_id": _resolved_source_id(
+                source_artifacts, "shadow_continuation_readiness"
+            ),
+            "fallback_policy_report_path": _resolved_source_path(
+                source_artifacts, "fallback_policy"
+            ),
+            "cache_catalog_report_path": _resolved_source_path(source_artifacts, "cache_catalog"),
+            "data_refresh_audit_id": _resolved_source_id(source_artifacts, "data_refresh_audit"),
+            "signal_input_completeness_dir": str(signal_input_completeness_dir),
+            "paper_shadow_daily_dir": str(paper_shadow_daily_dir),
+            "paper_shadow_drift_monitor_dir": str(paper_shadow_drift_monitor_dir),
+            "paper_shadow_weekly_review_dir": str(paper_shadow_weekly_review_dir),
+            "evidence_staleness_monitor_dir": str(evidence_staleness_monitor_dir),
+            "shadow_continuation_readiness_dir": str(shadow_continuation_readiness_dir),
+            "fallback_policy_output_dir": str(fallback_policy_output_dir),
+            "cache_catalog_output_dir": str(cache_catalog_output_dir),
+            "data_refresh_audit_dir": str(data_refresh_audit_dir),
+        },
+    }
+    input_snapshot_path = root / "paper_shadow_health_input_snapshot.json"
+    st._write_json(input_snapshot_path, input_snapshot)
+    manifest["input_snapshot_sha256"] = st._file_sha256(input_snapshot_path)
     st._write_json(root / "paper_shadow_health_manifest.json", manifest)
     st._write_json(root / "paper_shadow_health_report.json", report)
     st._write_text(
@@ -255,6 +303,7 @@ def validate_paper_shadow_health_artifact(
     root = output_dir / health_id
     manifest = st._read_optional_json(root / "paper_shadow_health_manifest.json") or {}
     report = st._read_optional_json(root / "paper_shadow_health_report.json") or {}
+    input_snapshot = st._read_optional_json(root / "paper_shadow_health_input_snapshot.json") or {}
     reader = (
         (root / "reader_brief_section.md").read_text(encoding="utf-8")
         if (root / "reader_brief_section.md").exists()
@@ -265,6 +314,7 @@ def validate_paper_shadow_health_artifact(
         root,
         (
             "paper_shadow_health_manifest.json",
+            "paper_shadow_health_input_snapshot.json",
             "paper_shadow_health_report.json",
             "paper_shadow_health_report.md",
             "reader_brief_section.md",
@@ -272,6 +322,23 @@ def validate_paper_shadow_health_artifact(
     )
     checks.extend(
         [
+            st._check(
+                "input_snapshot_schema",
+                input_snapshot.get("schema_version") == PAPER_SHADOW_HEALTH_INPUT_SCHEMA,
+                "",
+            ),
+            st._check(
+                "input_snapshot_id",
+                input_snapshot.get("health_id") == health_id,
+                "",
+            ),
+            st._check(
+                "input_snapshot_sha256_matches",
+                bool(_text(manifest.get("input_snapshot_sha256")))
+                and manifest.get("input_snapshot_sha256")
+                == st._file_sha256(root / "paper_shadow_health_input_snapshot.json"),
+                "",
+            ),
             st._check(
                 "manifest_report_id_match",
                 manifest.get("health_id") == report.get("health_id") == health_id,
@@ -309,8 +376,7 @@ def validate_paper_shadow_health_artifact(
             st._check(
                 "drift_fail_closed",
                 (
-                    _source_status(source_artifacts, "paper_shadow_drift_monitor")
-                    != "BLOCKING"
+                    _source_status(source_artifacts, "paper_shadow_drift_monitor") != "BLOCKING"
                     or report.get("paper_shadow_health_status") == "BLOCKED_DRIFT"
                 ),
                 _source_status(source_artifacts, "paper_shadow_drift_monitor"),
@@ -338,6 +404,77 @@ def validate_paper_shadow_health_artifact(
                 "",
             ),
             st._check("broker_forbidden", st._payload_safe(manifest, report), ""),
+        ]
+    )
+    request = _mapping(input_snapshot.get("request"))
+    try:
+        live_sources = _paper_shadow_health_sources(
+            as_of=date.fromisoformat(_text(input_snapshot.get("as_of"))),
+            price_cache_path=Path(_text(request.get("price_cache_path"))),
+            market_panel_dir=Path(_text(request.get("market_panel_dir"))),
+            signal_input_completeness_id=_optional_text(
+                request.get("signal_input_completeness_id")
+            ),
+            signal_input_completeness_report_path=None,
+            paper_shadow_daily_id=_optional_text(request.get("paper_shadow_daily_id")),
+            paper_shadow_drift_monitor_id=_optional_text(
+                request.get("paper_shadow_drift_monitor_id")
+            ),
+            paper_shadow_weekly_review_id=_optional_text(
+                request.get("paper_shadow_weekly_review_id")
+            ),
+            evidence_staleness_monitor_id=_optional_text(
+                request.get("evidence_staleness_monitor_id")
+            ),
+            shadow_continuation_readiness_id=_optional_text(
+                request.get("shadow_continuation_readiness_id")
+            ),
+            fallback_policy_report_path=_optional_path(request.get("fallback_policy_report_path")),
+            cache_catalog_report_path=_optional_path(request.get("cache_catalog_report_path")),
+            data_refresh_audit_id=_optional_text(request.get("data_refresh_audit_id")),
+            signal_input_completeness_dir=Path(_text(request.get("signal_input_completeness_dir"))),
+            paper_shadow_daily_dir=Path(_text(request.get("paper_shadow_daily_dir"))),
+            paper_shadow_drift_monitor_dir=Path(
+                _text(request.get("paper_shadow_drift_monitor_dir"))
+            ),
+            paper_shadow_weekly_review_dir=Path(
+                _text(request.get("paper_shadow_weekly_review_dir"))
+            ),
+            evidence_staleness_monitor_dir=Path(
+                _text(request.get("evidence_staleness_monitor_dir"))
+            ),
+            shadow_continuation_readiness_dir=Path(
+                _text(request.get("shadow_continuation_readiness_dir"))
+            ),
+            fallback_policy_output_dir=Path(_text(request.get("fallback_policy_output_dir"))),
+            cache_catalog_output_dir=Path(_text(request.get("cache_catalog_output_dir"))),
+            data_refresh_audit_dir=Path(_text(request.get("data_refresh_audit_dir"))),
+        )
+    except (OSError, ValueError):
+        live_sources = {}
+    checks.extend(
+        [
+            st._check(
+                "source_snapshot_matches_live",
+                live_sources == _mapping(input_snapshot.get("source_artifacts")),
+                "",
+            ),
+            st._check(
+                "source_snapshot_matches_report",
+                input_snapshot.get("source_artifacts") == report.get("source_artifacts"),
+                "",
+            ),
+            st._check(
+                "report_exact_rebuild",
+                (root / "paper_shadow_health_report.md").read_text(encoding="utf-8")
+                == render_paper_shadow_health_report(manifest, report),
+                "",
+            ),
+            st._check(
+                "reader_exact_rebuild",
+                reader == render_paper_shadow_health_reader_brief(report),
+                "",
+            ),
         ]
     )
     validation = st._validation_payload(
@@ -601,7 +738,11 @@ def _daily_source(*, observation_id: str | None, output_dir: Path) -> dict[str, 
     except Exception as exc:
         return _missing_source("paper_shadow_daily", f"daily artifact missing: {exc}")
     observation = _mapping(payload.get("paper_shadow_daily_observation"))
-    validation = _mapping(payload.get("paper_shadow_daily_validation"))
+    validation = daily.validate_paper_shadow_daily_artifact(
+        observation_id=_text(payload.get("observation_id")),
+        output_dir=output_dir,
+        write_output=False,
+    )
     return _source(
         "paper_shadow_daily",
         exists=True,
@@ -624,7 +765,11 @@ def _drift_source(*, monitor_id: str | None, output_dir: Path) -> dict[str, Any]
     except Exception as exc:
         return _missing_source("paper_shadow_drift_monitor", f"drift artifact missing: {exc}")
     report = _mapping(payload.get("paper_shadow_drift_report"))
-    validation = _mapping(payload.get("paper_shadow_drift_validation"))
+    validation = drift.validate_paper_shadow_drift_monitor_artifact(
+        monitor_id=_text(payload.get("monitor_id")),
+        output_dir=output_dir,
+        write_output=False,
+    )
     return _source(
         "paper_shadow_drift_monitor",
         exists=True,
@@ -647,11 +792,15 @@ def _weekly_source(*, review_id: str | None, output_dir: Path) -> dict[str, Any]
     except Exception as exc:
         return _missing_source("paper_shadow_weekly_review", f"weekly artifact missing: {exc}")
     report = _mapping(payload.get("paper_shadow_weekly_review"))
-    validation = _mapping(payload.get("paper_shadow_weekly_validation"))
+    validation = weekly.validate_paper_shadow_weekly_review_artifact(
+        weekly_review_id=_text(payload.get("weekly_review_id")),
+        output_dir=output_dir,
+        write_output=False,
+    )
     return _source(
         "paper_shadow_weekly_review",
         exists=True,
-        artifact_id=_text(payload.get("review_id"), "UNKNOWN"),
+        artifact_id=_text(payload.get("weekly_review_id"), "UNKNOWN"),
         status=_text(report.get("weekly_decision"), "UNKNOWN"),
         validation_status=_text(validation.get("status"), "NOT_RUN"),
         source_path=_optional_path(payload.get("paper_shadow_weekly_report_path")),
@@ -670,7 +819,17 @@ def _evidence_source(*, monitor_id: str | None, output_dir: Path) -> dict[str, A
     except Exception as exc:
         return _missing_source("evidence_staleness", f"staleness artifact missing: {exc}")
     report = _mapping(payload.get("evidence_staleness_report"))
-    validation = _mapping(payload.get("evidence_staleness_validation"))
+    validation = readiness.validate_evidence_staleness_monitor_artifact(
+        monitor_id=_text(payload.get("monitor_id")),
+        output_dir=output_dir,
+        policy_path=Path(
+            _text(
+                payload.get("policy_path"),
+                readiness.DEFAULT_EVIDENCE_STALENESS_POLICY_PATH,
+            )
+        ),
+        write_output=False,
+    )
     return _source(
         "evidence_staleness",
         exists=True,
@@ -696,7 +855,11 @@ def _readiness_source(*, readiness_id: str | None, output_dir: Path) -> dict[str
             f"readiness artifact missing: {exc}",
         )
     report = _mapping(payload.get("shadow_continuation_readiness_report"))
-    validation = _mapping(payload.get("shadow_continuation_readiness_validation"))
+    validation = readiness.validate_shadow_continuation_readiness_artifact(
+        readiness_id=_text(payload.get("readiness_id")),
+        output_dir=output_dir,
+        write_output=False,
+    )
     return _source(
         "shadow_continuation_readiness",
         exists=True,
@@ -952,9 +1115,7 @@ def _data_next_action(
             "rerun_validate_data_and_data_refresh_audit",
         )
     return _text(
-        _mapping(source_artifacts["evidence_staleness"].get("summary")).get(
-            "next_refresh_action"
-        ),
+        _mapping(source_artifacts["evidence_staleness"].get("summary")).get("next_refresh_action"),
         "restore_data_artifacts_before_paper_shadow",
     )
 
@@ -976,8 +1137,7 @@ def _weekly_coverage_status(source_artifacts: Mapping[str, Any]) -> str:
         _mapping(source_artifacts.get("paper_shadow_weekly_review")).get("summary")
     )
     return _text(
-        weekly_summary.get("coverage_status")
-        or weekly_summary.get("coverage_classification"),
+        weekly_summary.get("coverage_status") or weekly_summary.get("coverage_classification"),
         "MISSING",
     )
 
@@ -1053,6 +1213,19 @@ def _optional_path(value: object) -> Path | None:
     if not text or text == "MISSING":
         return None
     return Path(text)
+
+
+def _optional_text(value: object) -> str | None:
+    text = _text(value)
+    return None if not text or text == "MISSING" else text
+
+
+def _resolved_source_id(source_artifacts: Mapping[str, Any], source_id: str) -> str:
+    return _text(_mapping(source_artifacts.get(source_id)).get("artifact_id"))
+
+
+def _resolved_source_path(source_artifacts: Mapping[str, Any], source_id: str) -> str:
+    return _text(_mapping(source_artifacts.get(source_id)).get("source_path"))
 
 
 def _dedupe(values: list[str]) -> list[str]:

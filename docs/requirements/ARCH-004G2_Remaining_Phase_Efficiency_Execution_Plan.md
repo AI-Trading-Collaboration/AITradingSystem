@@ -868,6 +868,95 @@ profile/telemetry/performance/provenance全部PASS。该PASS profile机械生成
 SHA=`7e1e43d9...3172`；仍不声明stable Full improvement。EB4收口为`COMPLETE_G2_4_CONTINUES`，
 只解锁EB5，不触发whole G2.4 exit、ARCH-005 S0或G2.5。
 
+### EB5 启动授权与 callback freeze
+
+2026-07-19，按owner已批准的连续顺序，`ARCH-004G2.4-EB5`从base=`8332e961`进入
+`IN_PROGRESS / CONTRACT_FREEZE`。入口matrix=`814 migrated / 153 pending / 0 unresolved /
+0 duplicate`；本批只处理Paper-shadow Protocol / Daily / Drift / Weekly、Evidence Staleness、
+Shadow Continuation、Health / Recovery / Normal Resumption、Outcome Attribution / Decision Comparison、
+Stress Scenario和Position Review共37个callbacks，不吸收EB6 weight callback。
+
+24个app callbacks冻结为：`callback_c54824f6244842852634`、`callback_16f138740f9f26f95bdf`、
+`callback_1b0d4fcddf3027e731d6`、`callback_bb8c0e4f8b2dacc02fae`、
+`callback_2b3d6a53d161acbe4fd9`、`callback_5d6e497200c9d5c43084`、
+`callback_495ccb88bd15af45be2a`、`callback_67717c4cb12a474edbb6`、
+`callback_84bf96b49fbe1e95a374`、`callback_de32b1658e2e96eeeed9`、
+`callback_c79121965ab79c8fe862`、`callback_05bb68b460a98892bbc9`、
+`callback_d123f934fe3ddefb03fb`、`callback_2b0f98efdb32ceecd35e`、
+`callback_c357c02155d1e066e733`、`callback_97554295170b3609627d`、
+`callback_e8dbc96c88d2efdcd172`、`callback_582c984cb940e291a251`、
+`callback_d55734db415153016d9a`、`callback_d6e6a9ddd56c90ac1a24`、
+`callback_01197282a18eb20d24ab`、`callback_d6d2d87fbdf1206a3cb0`、
+`callback_87993044fe1fb12b6801`、`callback_3689251894eb3bf8cad4`。13个matching validators冻结为：
+`callback_2e379f13c4f8e36de0d4`、`callback_a605f2dbed742241ac4e`、
+`callback_ad9df814de281d6473f0`、`callback_a59b6f5e15225745ba7f`、
+`callback_2b5ea709f3bdcb1b6033`、`callback_a98f2117cdebdd750ee4`、
+`callback_2cc49d63e82f6b27b56d`、`callback_d54f269bd7467a1ca960`、
+`callback_73df0093d03e19ac71ce`、`callback_9eaf569dd6a0fb33d348`、
+`callback_d955e77576a4a55eac61`、`callback_76d1c88ac805595dded1`、
+`callback_f8e2c3e3633adda5764d`。精确app/command/function映射继续以migration matrix为准。
+
+入口只读审计确认现有49个focused tests全部PASS，但现有v1链仍有四类需要在迁移边界内直接修复的
+正确性风险：部分producer读取mutable latest或只检查source存在/checksum，未统一要求content-derived
+upstream PASS和timezone-aware cutoff；部分validator只复核字段/枚举/文件存在，不能从冻结输入重建全部
+JSON/CSV/Markdown/Reader Brief；manual observation、protocol target或registered status可能被下游误读为
+observed outcome；缺失输入在若干聚合路径仍可能经默认值进入count、score或directional decision。
+
+EB5正确性契约固定为：
+
+1. 每个producer在任何output前解析zero-or-one明确source，要求适用的EB4及EB5上游content-derived
+   validation PASS、身份/lineage一致、`generated_at <= current generated_at`，并冻结versioned v2 input
+   snapshot；ambiguous/future/invalid/cross-lineage source fail closed；
+2. Protocol和manual fields只能表达研究计划、人工观察或hypothetical paper weight，不能补足EB4 evidence
+   gap，不能产生observed return/benchmark/cost/health improvement；缺样本保持empty/null和
+   `INSUFFICIENT_DATA`/`BLOCKED`，不得用0、固定分母或registered target合成；
+3. Daily→Drift/Weekly→Staleness/Continuation→Health/Recovery/Resumption→Attribution/Decision链必须显式
+   绑定同candidate、contract/protocol、monitor和日期前缀；Position Review与Stress Scenario保持manual
+   diagnostic，不能被解释为promotion或execution authorization；
+4. validator必须重验live source/policy/snapshot并逐byte重建本artifact的全部materialized views；source、
+   snapshot、policy、output、chronology或cross-lineage tamper均FAIL；legacy unsnapshotted artifact只读并
+   明确warning，不得作为新decision证据；
+5. 37 callbacks迁入bounded canonical CLI owner和domain public API并从legacy root减除；CLI tree/help保持
+   frozen parity。所有输出固定manual/research/paper-shadow only，`auto_apply=false`、no official weights、
+   no order/broker/production mutation、`production_effect=none`。
+
+EB5退出要求37 callbacks全部迁移、legacy subtraction、truth-preserving snapshots和all-view replay、
+focused/tamper/CLI tests、matrix/manifests/compatibility/deprecation/reporting/source hashes fresh、architecture/
+contract及本批唯一natural Full PASS、clean attribution与正常commit/push。EB5完成只解锁EB6，不等于
+whole G2.4 phase exit；ARCH-005 S0、G2.5和handoff继续锁定。
+
+2026-07-19，EB5 implementation、legacy subtraction、focused correctness与尾部耗时治理完成，进入
+`VALIDATING_G2_4_CONTINUES`。37 callbacks / 24 app callbacks / 13 matching validators已迁入三个canonical
+CLI owner；legacy root减至`6,572 lines / 142 functions / 116 decorators`，matrix=`851 migrated / 116 pending /
+0 unresolved / 0 duplicate`，CLI保持`41/291/993/0`及冻结tree hash。13类v2 snapshots绑定live source、
+policy、lineage与chronology，并由manifest封存snapshot SHA-256；Protocol→Daily→Drift/Weekly→Staleness/
+Continuation→Health/Recovery/Resumption及Attribution/Decision分支均在写出前重验适用上游，Stress/Position
+保持manual diagnostic。Source/snapshot/output/cross-lineage tamper fail closed；缺失或不合格证据保持
+empty/null/`INSUFFICIENT_DATA`/`BLOCKED`，不得从manual/hypothetical字段合成observed结果。
+
+首轮13-file family为`43 passed / 7 failed / 475.56s`，7项全部暴露真实契约问题：旧fixture在freeze后改写
+source、Continuation把`PASS_WITH_WARNINGS` data-quality误当作无validator source，以及`MISSING`路径被误解析
+为真实相对路径。修复后family=`50 passed / 259.99s`，相对缩短`45.3%`；Continuation同一`loadfile`命令由
+`230.37s`降至`117.05s`（`-49.2%`）。优化只把immutable upstream test chain提升为module-scoped只读fixture，
+并把重复live validators接入PASS-only content-fingerprint cache；每个case仍生成独立output，tamper会使缓存
+立即失效。最终family最慢node=`65.38s < 101.47s`的v11冻结尾部触发线，未形成新的性能阻塞。当前剩余
+CLI/matrix/manifests/compatibility/deprecation/source hashes、architecture/contract与本批唯一natural Full；
+这些门禁闭合前EB5仍不算完成，EB6仍未启动，`production_effect=none`。
+
+2026-07-19，EB5正式门禁闭合并转为`COMPLETE_G2_4_CONTINUES`。architecture首轮两次`399 passed /
+1 failed`分别捕获aggregate shadow index supersession遗漏与修改测试后的generated manifest过期；均按真实
+根因刷新审计元数据，最终architecture=`400 passed / 35.11s`、contract=`265 passed / 161.90s`。本批唯一
+natural Full以16 workers/loadfile及完整trigger provenance执行，结果=`6,375 passed / 2 skipped /
+642 warnings / 977.39s`，exact collection=`6,377 nodes / 1,072 files`，scheduler无fallback，profile、
+telemetry、performance evidence与provenance binding均PASS，`production_effect=none`。Full中EB5 weekly文件
+因v11 seed仍按旧实现低估并被排入高竞争尾部，三个node为`138.72/110.47/103.90s`。Post-full final
+tracked-state family=`50 passed / 388.28s`、最慢node=`99.52s`，单独weekly复核=`5 passed / 277.20s`、
+最慢node=`63.95s`；文件级串行成本可复现，但无竞争单node仍未越过`101.47s`冻结线，且implementation
+family相对首轮缩短`45.3%`，因此不继续牺牲门禁或横向修改业务逻辑。已用本次完整PASS
+profile刷新v12 partial seed（`6,377 nodes / 1,072 files`），使EB5文件按真实成本提前调度；不声称一次样本
+形成稳定full改进。EB5完成只解锁EB6，matrix仍为`851/116/0/0`，whole G2.4 phase exit、handoff、
+ARCH-005 S0和G2.5均未触发。
+
 ## EB0：最高长尾限时治理
 
 时间预算：1～3 个连续推进日。它不是完成整个 runtime-budget 任务的授权。
