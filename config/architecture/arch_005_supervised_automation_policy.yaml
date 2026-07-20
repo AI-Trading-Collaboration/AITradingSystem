@@ -57,6 +57,7 @@ execution:
   max_stdout_bytes: 8388608
   max_stderr_bytes: 8388608
   inherited_environment_allowlist:
+    - APPDATA
     - COMSPEC
     - HOME
     - HOMEDRIVE

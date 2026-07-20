@@ -7757,7 +7757,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s4a_supervised_automation
   path: tests/test_arch_005_s4a_supervised_automation.py
-  sha256: f0ee81fb512a7e8d72f9a5e1c721b21c280a26bd5e933d33491e019c0f68b896
+  sha256: 28589c1be0cf99959b69a782e1b378cde9db20c19157d43f077eb6525a23c570
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality

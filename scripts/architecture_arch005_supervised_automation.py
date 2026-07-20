@@ -47,11 +47,7 @@ def main() -> int:
             datetime.fromisoformat(args.started_at) if args.started_at else datetime.now(UTC)
         )
         report_path = controller.run(started_at=started_at)
-        payload = {
-            "status": "PASS",
-            "report_path": report_path.relative_to(PROJECT_ROOT).as_posix(),
-            "production_effect": "none",
-        }
+        payload = _run_result_payload(report_path, project_root=PROJECT_ROOT)
     elif args.command == "validate":
         payload = validate_supervised_run(
             args.report,
@@ -77,6 +73,18 @@ def main() -> int:
         write_json_atomic(args.report.parent / "supervised_cleanup_result.json", payload)
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0 if payload.get("status") == "PASS" else 1
+
+
+def _run_result_payload(report_path: Path, *, project_root: Path) -> dict[str, object]:
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    return {
+        "status": report["status"],
+        "report_id": report["report_id"],
+        "report_path": report_path.relative_to(project_root).as_posix(),
+        "human_coordinator_approval_required": True,
+        "merge_allowed": False,
+        "production_effect": "none",
+    }
 
 
 if __name__ == "__main__":

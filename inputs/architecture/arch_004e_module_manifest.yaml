@@ -13907,7 +13907,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.supervised_automation
   path: src/ai_trading_system/platform/architecture/supervised_automation.py
-  sha256: 1320644964e74b67598ddc2716a89851dbe48b6e65d7f0676ba04cc065cddc3a
+  sha256: ee152e1c40fcf2148470cf8f0b6212d0a16d48694b97111e24de5e639615224a
   rule_id: platform
   owner_profile: platform
   owners:

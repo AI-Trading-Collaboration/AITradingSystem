@@ -16,6 +16,7 @@ from ai_trading_system.platform.architecture.supervised_automation import (
     load_supervised_automation_policy,
     validate_supervised_run,
 )
+from scripts.architecture_arch005_supervised_automation import _run_result_payload
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 POLICY_SOURCE = PROJECT_ROOT / "config/architecture/arch_005_supervised_automation_policy.yaml"
@@ -276,3 +277,18 @@ def test_policy_rejects_worktree_and_command_escape(tmp_path: Path) -> None:
     path.write_text(yaml.safe_dump(policy, sort_keys=False), encoding="utf-8")
     with pytest.raises(ParallelControlError, match="COMMAND_ARGV"):
         load_supervised_automation_policy(path)
+
+
+def test_cli_run_payload_propagates_inner_report_failure(tmp_path: Path) -> None:
+    report_path = tmp_path / "run" / "supervised_run_report.json"
+    report_path.parent.mkdir()
+    report_path.write_text(
+        json.dumps({"status": "FAIL", "report_id": "failed-report"}),
+        encoding="utf-8",
+    )
+
+    payload = _run_result_payload(report_path, project_root=tmp_path)
+
+    assert payload["status"] == "FAIL"
+    assert payload["report_id"] == "failed-report"
+    assert payload["merge_allowed"] is False

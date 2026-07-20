@@ -106,6 +106,8 @@ class WorkerExecutionResult:
     command_id: str
     command_argv: tuple[str, ...]
     validation_tier: str
+    environment_keys: tuple[str, ...]
+    environment_sha256: str
     change_manifest_sha256: str
     owned_paths: tuple[str, ...]
     shared_paths: tuple[str, ...]
@@ -143,6 +145,8 @@ class WorkerExecutionResult:
             "command_id": self.command_id,
             "command_argv": list(self.command_argv),
             "validation_tier": self.validation_tier,
+            "environment_keys": list(self.environment_keys),
+            "environment_sha256": self.environment_sha256,
             "change_manifest_sha256": self.change_manifest_sha256,
             "resource_claims": {
                 "owned_paths": list(self.owned_paths),
@@ -636,6 +640,7 @@ class SupervisedAutomationController:
                         branch=branch,
                         base_commit=base,
                         run_root=run_root,
+                        policy=self.policy,
                         exc=exc,
                     )
                 results[binding.change_id] = result
@@ -830,6 +835,9 @@ def validate_supervised_run(
                     for arg in expected_command.argv
                 ]
             )
+            expected_environment = _worker_environment(
+                Path(str(payload.get("worktree_path"))), policy
+            )
             resource_claims = payload.get("resource_claims")
             expected_claims = (
                 {}
@@ -852,6 +860,8 @@ def validate_supervised_run(
                 and payload.get("final_head") == base
                 and payload.get("command_id") == binding.command_id
                 and payload.get("command_argv") == expected_argv
+                and payload.get("environment_keys") == sorted(expected_environment)
+                and payload.get("environment_sha256") == _canonical_sha256(expected_environment)
                 and payload.get("actor") == binding.actor
                 and payload.get("lane_id") == binding.lane_id
                 and payload.get("change_manifest_sha256") == task.manifest.sha256
@@ -1067,13 +1077,7 @@ def _execute_worker(
     stdout_path = run_root / stdout_relative
     stderr_path = run_root / stderr_relative
     argv = tuple(str(Path(sys.executable)) if arg == "{python}" else arg for arg in command.argv)
-    environment = {
-        key: value
-        for key, value in os.environ.items()
-        if key.upper() in set(policy.inherited_environment_allowlist)
-    }
-    environment["PYTHONPATH"] = str(worktree / "src")
-    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    environment = _worker_environment(worktree, policy)
     creationflags = 0
     start_new_session = False
     if os.name == "nt":
@@ -1134,6 +1138,8 @@ def _execute_worker(
         command_id=command.command_id,
         command_argv=argv,
         validation_tier=command.validation_tier,
+        environment_keys=tuple(sorted(environment)),
+        environment_sha256=_canonical_sha256(environment),
         change_manifest_sha256=task.manifest.sha256,
         owned_paths=task.manifest.owned_paths,
         shared_paths=task.manifest.shared_paths,
@@ -1172,6 +1178,7 @@ def _exception_worker_result(
     branch: str,
     base_commit: str,
     run_root: Path,
+    policy: SupervisedAutomationPolicy,
     exc: Exception,
 ) -> WorkerExecutionResult:
     lane_root = run_root / "workers" / binding.lane_id
@@ -1183,6 +1190,7 @@ def _exception_worker_result(
     stdout_path.touch(exist_ok=True)
     write_text_atomic(stderr_path, f"{type(exc).__name__}: {exc}\n")
     now = datetime.now(UTC).isoformat()
+    environment = _worker_environment(worktree, policy)
     try:
         final_head = _git(worktree, "rev-parse", "HEAD")
         changed = tuple(_changed_paths(worktree))
@@ -1197,6 +1205,8 @@ def _exception_worker_result(
         command_id=command.command_id,
         command_argv=tuple(command.argv),
         validation_tier=command.validation_tier,
+        environment_keys=tuple(sorted(environment)),
+        environment_sha256=_canonical_sha256(environment),
         change_manifest_sha256=task.manifest.sha256,
         owned_paths=task.manifest.owned_paths,
         shared_paths=task.manifest.shared_paths,
@@ -1246,6 +1256,14 @@ def _terminate_process_tree(process: subprocess.Popen[bytes]) -> None:
             pass
     if process.poll() is None:
         process.kill()
+
+
+def _worker_environment(worktree: Path, policy: SupervisedAutomationPolicy) -> dict[str, str]:
+    allowlist = set(policy.inherited_environment_allowlist)
+    environment = {key: value for key, value in os.environ.items() if key.upper() in allowlist}
+    environment["PYTHONPATH"] = str(worktree / "src")
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    return dict(sorted(environment.items()))
 
 
 def _worktree_root(project_root: Path, policy: SupervisedAutomationPolicy) -> Path:
