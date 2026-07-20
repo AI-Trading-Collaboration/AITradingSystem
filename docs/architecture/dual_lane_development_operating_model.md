@@ -1,0 +1,202 @@
+# 双线研发 Operating Model 与冲突处理协议
+
+最后更新：2026-07-20
+
+状态：`ADOPTED_BASELINE`（基于 ARCH-005 S4/S4A；S5 未授权）
+
+## 1. 决策与适用范围
+
+项目后续研发默认采用以下拓扑：
+
+1. `engineering`：工程、数据平台、架构、运行效率与基础设施；
+2. `strategy-evidence`：策略研究、数据证据、预注册、回测验证与结论复核；
+3. `integration-coordinator`：任务登记、共享合同、中央接线、generated views、正式验证、提交与集成。
+
+“双线”表示默认同时寻找一项可执行的工程任务和一项可执行的策略证据任务，不表示必须让两条
+lane 始终占满。没有满足依赖、owner 授权、数据质量、PIT、预注册或证据门禁的高价值任务时，
+对应 lane 必须保持空闲或只做只读审计，不得用低价值加法、补造输入、复制逻辑或降低门禁制造吞吐。
+
+本 operating model 复用 ARCH-005 已完成的 dependency/readiness/conflict/lease/replay、isolated
+worktree 和 human-gated integration 能力。它不授权：
+
+- ARCH-005 S5 canonical task source cutover；
+- 自动 commit、merge、push、PR 或 task status mutation；
+- ARCH-004 G2.5 自动恢复；
+- 自动调参、候选扩展、promotion、paper-shadow、production 或 broker/order 行为。
+
+## 2. 为什么采用双线
+
+工程与策略证据通常具有不同的主要瓶颈：前者多受代码合同、并发、缓存、验证资源和架构依赖约束，
+后者多受数据成熟度、PIT、预注册、holdout、owner 决策和研究结论边界约束。把两者放在同一个串行
+队列会让一个外部数据或 owner blocker 阻塞另一条可执行工程链；不加控制地并发，则会在任务表、
+root CLI、report registry、system flow、架构清单和全量验证上重新形成中央冲突。
+
+双线 operating model 的目标不是“同时改更多文件”，而是：
+
+- 让两个独立 domain slice 同时推进；
+- 把共享写入集中到一个较短的 integration wave；
+- 在启动前识别语义、合同、资源和路径冲突；
+- 只运行一次必要的中央 architecture/contract/full gate；
+- 保留可重放的选择、阻塞、失败、返工和集成证据。
+
+## 3. 每条 lane 的输入与输出
+
+|角色|启动输入|允许输出|禁止事项|
+|---|---|---|---|
+|`engineering`|task/requirement、exact base、owned paths、module/contract/resource claims、focused tests、safety boundary|独占工程模块、lane-local policy/contract、focused tests、lane evidence|直接编辑 coordinator-only 文件；借工程优化改变 DQ、PIT 或投资语义|
+|`strategy-evidence`|预注册或明确的 legacy-diagnostic contract、source commitments、research window、DQ/PIT/cost/holdout、owned paths、focused tests|独占研究模块、证据 validator、lane-local artifacts/tests、诚实的 BLOCKED/INCOMPLETE 结论|事后选择候选、补造证据、复用污染 holdout、无授权运行 clean search/promotion|
+|`integration-coordinator`|两条 lane 的 manifest、diff、validation evidence、base freshness 与 unresolved conflicts|共享接线、任务登记、system flow、catalog/registry、generated manifests/views、formal validation、commit/push|替 worker 改写业务结论；把集成 PASS 推断为策略 PASS|
+
+每条 worker manifest 至少声明：
+
+- `task_id`、`change_id`、`lane_id`、`base_commit`；
+- `owned_paths`、`shared_paths_requested`、`coordinator_only_paths_touched=false`；
+- `module_ids`、`contract_versions`、`generated_outputs`、`removal_targets`；
+- `validation_tiers`、CPU/内存/网络/provider quota 等 resource claims；
+- `production_effect=none`、`broker_action=none` 和本切片安全边界；
+- 启动条件、完成条件、blocked/abort 条件和下一责任方。
+
+## 4. 路径与所有权分区
+
+### 4.1 Worker-owned
+
+worker 只能写入 manifest 明确独占的 domain module、domain config、domain tests 和不与另一 lane 共用的
+requirement/supporting document。两个 active manifest 的 owned paths、module IDs 和 write contract 不得重叠。
+
+### 4.2 Coordinator-only
+
+下列中央文件和 generated outputs 默认只有 integration coordinator 可写：
+
+- `docs/task_register.md`、`docs/task_register_completed.md`；
+- `registry/development_tasks_shadow/**` 与 task shadow index/baseline；
+- `docs/system_flow.md`、`docs/artifact_catalog.md`；
+- `config/report_registry.yaml`；
+- root CLI 或被两条 lane 共用的 CLI registration/wiring；
+- shared schema、global policy 和跨 domain public contract；
+- module/test manifests、compatibility baseline、deprecation/reporting inventories；
+- aggregate/generated views、正式 validation artifacts 和最终提交边界。
+
+同一文件中“改不同段落”仍视为共享写冲突，不把文本合并能力误当作语义可并行。
+
+### 4.3 Shared read-only
+
+两条 lane 可同时读取同一 policy、cache、历史 artifact 或 canonical contract，但必须固定 source path、
+SHA-256、schema/version 和 `as_of`。如果任一 lane 会更新该 source，它就不再是 shared read-only，必须
+转为 contract wave 或建立资源 lease。
+
+## 5. 冲突分类与处理决策
+
+|冲突类型|典型表现|处理方式|是否继续并行|
+|---|---|---|---|
+|Path conflict|两 lane 写同一文件/目录|把中央文件收回 coordinator；能拆成独占 leaf module 时先拆 module|拆分后可并行|
+|Module/API conflict|同时修改同一 public API 或 adapter|先串行冻结 contract wave；两 lane 从新 base 实现各自 adapter/domain|contract 后可并行|
+|Semantic/policy conflict|一条 lane 改阈值、窗口、DQ/PIT、cache identity，另一条消费它|停止消费方；先完成 owner-reviewed policy/contract 和兼容性裁决|裁决前不可并行|
+|Generated-view conflict|两 lane 刷新 task shadows、manifests、catalog 或 registry|worker 不生成；coordinator 在集成末尾统一生成一次|业务实现可并行|
+|Runtime resource conflict|full pytest、重回测、provider quota、同一 cache key、内存峰值竞争|声明 resource claim；轻量 focused 可并行，重资源 gate/联网操作按 lease 串行|受资源容量约束|
+|Base drift|一条 lane 的 source/contract 已被另一提交改变|停止集成，重跑 manifest/readiness；不得把 stale diff 直接合入|刷新后再决定|
+|Evidence lineage conflict|不同 run、window、holdout 或 policy 的 artifact 被混用|fail closed；恢复 exact lineage 或另立安全重跑任务|不可并行拼接|
+|Validation conflict|两 lane 各自反复运行 architecture/full|lane 仅跑 focused/impact tests；coordinator 自然集成边界统一跑 formal gates|避免重复重资源验证|
+
+冲突处理顺序固定为：
+
+1. 判断是否为真实语义/合同冲突，而不仅是 Git 文本冲突；
+2. 能通过抽出稳定 contract、leaf module 或 adapter 分离时，先完成最小 contract wave；
+3. 将 shared docs、root wiring 和 generated outputs 收回 coordinator；
+4. 更新 manifest、base 和 lease 后重新计算 readiness；
+5. 无法安全拆分时显式串行，不以复制 helper、alias、fallback 或跳过 validator 换并行度。
+
+## 6. 提升并行力度的方法
+
+并行度应通过缩小共享写集合获得：
+
+- 需求阶段先冻结输入、输出、schema、reason code 和安全边界，再分 worker；
+- domain implementation、validator 和 focused tests放在 leaf module，root CLI 只保留薄接线；
+- report family 使用 lane-local producer/validator，catalog/registry 在 integration wave 一次更新；
+- task worker 不更新全局任务表，coordinator 按真实结果一次更新并统一生成 shadow views；
+- 对只读 source 使用 exact path/hash/as-of commitment，避免“同名最新 artifact”漂移；
+- 对 cache、provider quota、CPU、内存和 full validation 建立 resource claim，而不只检查文件重叠；
+- 两条 lane 在独立 branch/worktree、同一 exact base 上开发；超出 manifest 立即停止并重新排程；
+- 一条 lane 失败只释放/expire 自身 lease；无依赖 lane 继续，coordinator 不提前集成半成品；
+- merge 顺序固定为 `contract -> adapter -> domain implementation -> tests/fragments -> shared wiring/docs -> generated aggregates -> compatibility removal`。
+
+当前只采用两条 domain worker。只有至少两个真实批次证明 shared-path conflict、返工、lease expiry、
+coordinator wait 和 full validation 资源均可控，才讨论增加第三条 domain lane；不能仅凭 CPU 空闲扩容。
+
+## 7. 验证与性能规则
+
+### Lane 内
+
+- 默认运行 `python -m pytest -n 16 --dist loadfile` 的 focused/impact-selected tests；
+- 运行 Ruff、Black/scoped type check 和 lane-local tamper/compatibility tests；
+- 记录 wall time、slowest nodes、CPU/内存或 provider request count；
+- 若耗时明显超出同类基线，先确认 fixture 重建、递归 validator、锁等待、provider 重试或资源竞争，
+  不直接扩大 timeout 或改为串行 pytest 掩盖问题。
+
+### 集成边界
+
+- coordinator 复验 base/manifest/path/module/contract/source freshness；
+- 合并两 lane 后运行 combined focused；
+- 统一刷新 task shadow、module/test manifest、compatibility/deprecation/reporting inventory；
+- architecture/contract 必须在最终 tracked state 通过；
+- full 只在 formal trigger/natural integration boundary 运行一次，失败修复重跑必须遵守 provenance policy；
+- 新增测试进入 slowest tail、wall/P95/P99、scheduler fallback、tail idle 或峰值内存异常时，暂停下一批扩容并登记性能任务。
+
+## 8. 双线周期与复盘指标
+
+每个 integration batch 保存：
+
+- 两 lane 的 selected/not-selected reason、queue age 和 blocker；
+- preflight path/module/contract/resource conflict 数；
+- replan、abort、lease expiry/takeover、base drift 和越界写次数；
+- lane focused time、coordinator wait、architecture/contract/full time；
+- merge conflict、返工文件、失败隔离是否有效；
+- 从 READY 到 integrated 的 cycle time，以及 full 相对最近有效基线的变化。
+
+至少每两个真实批次复盘一次。优化优先级为：减少 shared-write wait、重复 fixture/validator 计算和重复
+formal gate，其次才是增加 worker 数量。任何容量、TTL、retry、aging 或 fairness 阈值必须进入 reviewed policy。
+
+## 9. 近期双线任务队列
+
+### Wave 1：可立即启动
+
+|Lane|任务|状态与目标|主要 owned scope|退出/停止条件|
+|---|---|---|---|---|
+|Engineering|`OPS-065_EXTERNAL_REQUEST_CACHE_REVALIDATION_SINGLEFLIGHT`|`P1/READY`；per-key lease、winner double-check、bounded waiter reuse、stale-owner takeover|external request cache coordination policy/module、multiprocess tests；共享 cache 接线由 coordinator|同 key 仅一次 injected live request，不同 key 保持并行；crash/timeout/invalidation/tamper PASS；不得改 cache key/body/DQ 语义|
+|Strategy evidence|`TRADING-2449` canonical R0/R1/R2 artifact recovery audit|`P0/BASELINE_DONE` 缺口；从可信 archive/旧工作区恢复 exact bytes并逐层验证|只读来源盘点、恢复候选 evidence、gate run artifacts；不改候选/阈值|恢复后真实 gate 必须为 `BLOCKED_CONTAMINATED_LEGACY_SOURCE`；若 exact bundle 不可恢复，停下并登记 legacy diagnostic 安全重跑任务|
+|Coordinator|Wave 1 integration|共享写入、formal gates、提交与性能复盘|task register/system flow/catalog/registry/manifests/baselines|两 lane evidence 可归属、无 active lease、共享文件单写、formal gates PASS|
+
+已知 legacy evidence identity 包括：
+
+- R1 walk-forward：`r1-wf_6447beb5464bad37`；
+- R1 robustness：`r1-robustness_8c93b0e2615d0ace`；
+- R2 decision：`r2-decision_c761da11538fc58c`。
+
+恢复任务不得接受同名但 checksum/lineage 不一致的 artifact，也不得从 synthetic fixture 生成“真实”证据。
+
+### Wave 2：条件满足后
+
+1. 如果 exact legacy bundle 无法恢复：先登记并由 owner 审核“R0 -> R1 -> R2 legacy diagnostic
+   evidence safe rerun”；它只恢复旧诊断证据，不是 clean run。
+2. Research owner 提供结果不可见时冻结的新 preregistration 后，另建 `TRADING-2449 S1`；只有 gate=
+   `ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN` 且 owner 显式授权，才能运行 TRADING-106 fold-local evaluator。
+3. TRADING-106 clean fold evidence 完成后，再推进 TRADING-107 neighbor/rank/regime/extreme-day 与
+   multiple-testing/overfit closure；没有 eligible candidate 时必须保持 `INCOMPLETE`。
+4. `event_risk_high=15<20`、20d/60d maturity=0 和 5 个 archive gap 继续作为观察/owner 治理支线，
+   不占主动开发 WIP，不降样本 floor。
+
+### 后续架构方向
+
+- `ARCH-004G2_PARALLEL_READINESS_GATE` / G2.5 是下一项高杠杆工程方向，但仍等待 owner 对恢复
+  ARCH-004 的单独显式授权；本次采用双线 operating model 不等于该授权。
+- G2.5 PASS 后，按容量分波推进 G3 Reporting、G4 Operations 和 G5 Research Wrapper；当前已验证
+  capacity 仍是两个 domain worker，不直接同时开放三域。
+- ARCH-005 S5 source-of-truth cutover 后置，必须单独授权并在真实双线 telemetry 足够后评估；不得与
+  G2.5 或另一项中央 shared-architecture 变更并行。
+
+## 10. 本轮明确不做
+
+- 不在本文档变更中启动 OPS-065 或策略 backtest；
+- 不把“默认双线”解释成 S5、自主合并或 autonomous task mutation；
+- 不恢复 ARCH-004 G2.5；
+- 不运行周期 operations、联网 provider refresh 或 cache 删除；
+- 不改变研究窗口、阈值、策略结论、权重、promotion、paper-shadow、production 或 broker。

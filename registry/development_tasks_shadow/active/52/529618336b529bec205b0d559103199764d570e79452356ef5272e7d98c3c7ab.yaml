@@ -11,54 +11,53 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: architecture coordinator；ARCH-005 S0/S1完成且新显式指令恢复后复核
+  next_owner: architecture coordinator；等待 owner 对 ARCH-004 G2.5 的新显式恢复指令
   requirement_refs:
   - docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.5不因G2.4单slice完成或ARCH-005需求READY而解锁；必须先完成整个G2
-    phase gate和`arch_005_bootstrap_handoff.v1` PASS，且handoff保持`next_slice_unblocked=false`。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.4
+    matrix=`967/0/0/0`、bootstrap handoff与ARCH-005 S0～S4A已PASS，技术前置已满足；handoff仍固定`next_slice_unblocked=false`，本次采用双线
+    operating model 不等于恢复G2.5。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 接入ARCH-005 versioned `change_manifest.v1`、lease/conflict primitives和scheduler
-      kernel；完成owned/shared-path overlap、base drift、coordinator-only paths、deterministic
-      fragment preview及G3/G4/G5 conflict/non-conflict rehearsal；architecture/contract/focused/full
-      gates通过；`production_effect=none`。
+    text: 复用ARCH-005 versioned `change_manifest.v1`、lease/conflict primitives、scheduler
+      kernel及S4B协议；生成G3/G4/G5 ownership snapshot，完成fragment preview和真实conflict/non-conflict
+      rehearsal；architecture/contract/focused/full gates通过；`production_effect=none`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1287
-    row_sha256: 73940ad4e7d797029cb5b6fbce1902a519726d4f68e0b23d841328532bdfe864
+    line_number: 1299
+    row_sha256: 34e62b2a0e6daf02051bc4b3612be7c601a8bcb674d3aacff8735d4615b4b26e
     cell_count: 8
     all_cells:
     - ARCH-004G2_PARALLEL_READINESS_GATE
     - Architecture / G2.5 parallel change and merge readiness
     - P1
     - PROPOSED
-    - architecture coordinator；ARCH-005 S0/S1完成且新显式指令恢复后复核
-    - 详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.5不因G2.4单slice完成或ARCH-005需求READY而解锁；必须先完成整个G2
-      phase gate和`arch_005_bootstrap_handoff.v1` PASS，且handoff保持`next_slice_unblocked=false`。
-    - 接入ARCH-005 versioned `change_manifest.v1`、lease/conflict primitives和scheduler
-      kernel；完成owned/shared-path overlap、base drift、coordinator-only paths、deterministic
-      fragment preview及G3/G4/G5 conflict/non-conflict rehearsal；architecture/contract/focused/full
-      gates通过；`production_effect=none`。
-    - '2026-07-12: owner将长期并行研发控制面提升为ARCH-005/P0，后确认必须先在G2.5前停止并完成bootstrap handoff；本任务保持P1/PROPOSED。'
+    - architecture coordinator；等待 owner 对 ARCH-004 G2.5 的新显式恢复指令
+    - 详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.4 matrix=`967/0/0/0`、bootstrap
+      handoff与ARCH-005 S0～S4A已PASS，技术前置已满足；handoff仍固定`next_slice_unblocked=false`，本次采用双线
+      operating model 不等于恢复G2.5。
+    - 复用ARCH-005 versioned `change_manifest.v1`、lease/conflict primitives、scheduler
+      kernel及S4B协议；生成G3/G4/G5 ownership snapshot，完成fragment preview和真实conflict/non-conflict
+      rehearsal；architecture/contract/focused/full gates通过；`production_effect=none`。
+    - 2026-07-20：修正旧依赖状态；任务保持P1/PROPOSED，唯一启动blocker为owner新的G2.5显式恢复指令，不建立第二套scheduler/lease。
     raw_line: '|ARCH-004G2_PARALLEL_READINESS_GATE|Architecture / G2.5 parallel change
-      and merge readiness|P1|PROPOSED|architecture coordinator；ARCH-005 S0/S1完成且新显式指令恢复后复核|详见
-      `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.5不因G2.4单slice完成或ARCH-005需求READY而解锁；必须先完成整个G2
-      phase gate和`arch_005_bootstrap_handoff.v1` PASS，且handoff保持`next_slice_unblocked=false`。|接入ARCH-005
-      versioned `change_manifest.v1`、lease/conflict primitives和scheduler kernel；完成owned/shared-path
-      overlap、base drift、coordinator-only paths、deterministic fragment preview及G3/G4/G5
-      conflict/non-conflict rehearsal；architecture/contract/focused/full gates通过；`production_effect=none`。|2026-07-12:
-      owner将长期并行研发控制面提升为ARCH-005/P0，后确认必须先在G2.5前停止并完成bootstrap handoff；本任务保持P1/PROPOSED。|'
+      and merge readiness|P1|PROPOSED|architecture coordinator；等待 owner 对 ARCH-004
+      G2.5 的新显式恢复指令|详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.4
+      matrix=`967/0/0/0`、bootstrap handoff与ARCH-005 S0～S4A已PASS，技术前置已满足；handoff仍固定`next_slice_unblocked=false`，本次采用双线
+      operating model 不等于恢复G2.5。|复用ARCH-005 versioned `change_manifest.v1`、lease/conflict
+      primitives、scheduler kernel及S4B协议；生成G3/G4/G5 ownership snapshot，完成fragment preview和真实conflict/non-conflict
+      rehearsal；architecture/contract/focused/full gates通过；`production_effect=none`。|2026-07-20：修正旧依赖状态；任务保持P1/PROPOSED，唯一启动blocker为owner新的G2.5显式恢复指令，不建立第二套scheduler/lease。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-73940ad4e7d797029cb5b6fb
+  event_id: legacy-import-34e62b2a0e6daf02051bc4b3
   task_id: ARCH-004G2_PARALLEL_READINESS_GATE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -71,11 +70,11 @@ initial_event:
   to_status: PROPOSED
   payload:
     priority: P1
-    next_owner: architecture coordinator；ARCH-005 S0/S1完成且新显式指令恢复后复核
-    notes: '2026-07-12: owner将长期并行研发控制面提升为ARCH-005/P0，后确认必须先在G2.5前停止并完成bootstrap handoff；本任务保持P1/PROPOSED。'
+    next_owner: architecture coordinator；等待 owner 对 ARCH-004 G2.5 的新显式恢复指令
+    notes: 2026-07-20：修正旧依赖状态；任务保持P1/PROPOSED，唯一启动blocker为owner新的G2.5显式恢复指令，不建立第二套scheduler/lease。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:73940ad4e7d797029cb5b6fbce1902a519726d4f68e0b23d841328532bdfe864
+  - sha256:34e62b2a0e6daf02051bc4b3612be7c601a8bcb674d3aacff8735d4615b4b26e
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -83,17 +82,17 @@ projection:
   - Architecture / G2.5 parallel change and merge readiness
   - P1
   - PROPOSED
-  - architecture coordinator；ARCH-005 S0/S1完成且新显式指令恢复后复核
-  - 详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.5不因G2.4单slice完成或ARCH-005需求READY而解锁；必须先完成整个G2
-    phase gate和`arch_005_bootstrap_handoff.v1` PASS，且handoff保持`next_slice_unblocked=false`。
-  - 接入ARCH-005 versioned `change_manifest.v1`、lease/conflict primitives和scheduler
-    kernel；完成owned/shared-path overlap、base drift、coordinator-only paths、deterministic
-    fragment preview及G3/G4/G5 conflict/non-conflict rehearsal；architecture/contract/focused/full
-    gates通过；`production_effect=none`。
-  - '2026-07-12: owner将长期并行研发控制面提升为ARCH-005/P0，后确认必须先在G2.5前停止并完成bootstrap handoff；本任务保持P1/PROPOSED。'
+  - architecture coordinator；等待 owner 对 ARCH-004 G2.5 的新显式恢复指令
+  - 详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.4 matrix=`967/0/0/0`、bootstrap
+    handoff与ARCH-005 S0～S4A已PASS，技术前置已满足；handoff仍固定`next_slice_unblocked=false`，本次采用双线
+    operating model 不等于恢复G2.5。
+  - 复用ARCH-005 versioned `change_manifest.v1`、lease/conflict primitives、scheduler
+    kernel及S4B协议；生成G3/G4/G5 ownership snapshot，完成fragment preview和真实conflict/non-conflict
+    rehearsal；architecture/contract/focused/full gates通过；`production_effect=none`。
+  - 2026-07-20：修正旧依赖状态；任务保持P1/PROPOSED，唯一启动blocker为owner新的G2.5显式恢复指令，不建立第二套scheduler/lease。
   docs_links:
   - docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md
   terminal: false
-  raw_row_sha256: 73940ad4e7d797029cb5b6fbce1902a519726d4f68e0b23d841328532bdfe864
+  raw_row_sha256: 34e62b2a0e6daf02051bc4b3612be7c601a8bcb674d3aacff8735d4615b4b26e
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 0285c8efb2adf7b90ddfacf199e7a0573ff5514d206b6aa308edcc4be47f2ace
+fragment_checksum: d63b814a3c42349f5744b5bdf061f4112f134c64a6eb1b0e508997ba0436bee4

@@ -6,7 +6,7 @@
 
 - task id：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`
 - priority：`P0`
-- status：`BASELINE_DONE_S4A_S5_PENDING`
+- status：`BASELINE_DONE_S4B_OPERATING_MODEL_S5_PENDING`
 - owner：architecture coordinator / developer platform owner / integration coordinator
 - owner review：project owner 负责 source-of-truth cutover 与调度策略复核
 - hard dependency：`ARCH-004C_PLATFORM_CONTRACTS`、`ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES` `DONE`；现有 task-register consistency baseline
@@ -34,6 +34,20 @@ integration candidate 仍等待人工。当前状态为 formal gates/freshness c
 Formal architecture/contract/reproducibility/full 已以 `446/265/23/6430 passed` 闭合，full wall=
 `970.42s`、2 skipped、642 warnings，performance telemetry PASS、scheduler 无 fallback。S4A 因而转
 `BASELINE_DONE`；它证明受监督执行闭环可用，不代表 S5 self-hosting/canonical cutover 已完成。
+
+### S4B 双线 Operating Model
+
+Owner 已确认后续默认采用 `engineering + strategy-evidence + integration-coordinator`。S4B 不新增
+自动调度权限，而是把 S4/S4A 已验证能力转为日常研发协议：worker 从同一 exact base 获取不重叠的
+owned paths、module/contract/resource claims，只运行 lane-local focused validation；任务表、system flow、
+catalog/registry、root CLI/shared schema、generated manifests/views 与 formal gates 由 coordinator 单写和
+统一集成。path/module/API/semantic/generated-view/runtime-resource/base/evidence-lineage 冲突必须在启动前
+分类；能通过 leaf module、adapter 或 contract wave 拆解的先拆解，不能安全拆解的显式串行，禁止复制
+helper、降低门禁或用 stale artifact 提升表面吞吐。
+
+完整 operating model、冲突决策表、验证/性能复盘规则及近期双线队列见
+`docs/architecture/dual_lane_development_operating_model.md`。S4B 仍保持 Markdown 为唯一可写任务事实源，
+不授权 S5、自动 commit/merge/push/PR、task status mutation、ARCH-004 G2.5 或策略/生产副作用。
 
 ## 决策
 
@@ -387,6 +401,17 @@ ARCH-004 coordinator 生成并验证 `arch_005_bootstrap_handoff.v1`。S0 冻结
 
 退出：三 lane 持续并行，无 task-register shared-write conflict；merge/recovery/replay 证据完整。
 
+### S4B：双线研发 Operating Model
+
+- 默认选择一项可执行 engineering task 与一项可执行 strategy-evidence task；没有合格任务时允许 lane 空闲；
+- worker 只持有独占 leaf paths，coordinator-only/shared/generated paths 在 integration wave 单写；
+- contract/API/policy 变更先形成最小串行 contract wave，再从同一新 base 并行 domain implementation；
+- focused validation 在 lane 内执行，architecture/contract/full 在自然集成边界统一执行；
+- 记录 conflict、replan、lease expiry、base drift、返工、coordinator wait 与 validation runtime；
+- 至少两个真实批次后，才基于 telemetry 评估是否从两个 domain worker 扩容。
+
+退出：operating model、冲突协议、近期队列和 shared-path ownership 固化到项目文档；S5 继续锁定。
+
 ### S5：Canonical Cutover 与 Self-hosting
 
 - 短暂冻结旧 register 写入并完成最终 import；
@@ -449,15 +474,22 @@ ARCH-004 coordinator 生成并验证 `arch_005_bootstrap_handoff.v1`。S0 冻结
 
 ## 当前开放问题
 
-- `registry/development_tasks` 的目录 fan-out、manifest 和 DevEx ownership/change rule 细节；
-- progress event 使用一事件一文件还是 task-local append-only stream；
-- scheduler capacity、lease expiry、retry 和 fairness policy 的首个 reviewed baseline；
-- S4 三条 pilot lane 的具体选择；
-- S5 source-of-truth cutover 是否与 ARCH-004H 同一 wave 完成。
+- S5 source-of-truth cutover 是否与 ARCH-004H 同一 wave 完成，以及最终 rollback owner；
+- 在至少两个真实 S4B 批次后，是否有证据把两个 domain worker 扩为三个；
+- ARCH-004 G2.5 的单独恢复授权与 G3/G4/G5 首批具体 wave；
+- S6 throughput、queue age、conflict/rework 与 coordinator wait telemetry 的长期 read model；
+- S5 后 canonical event 写入采用一事件一文件还是 task-local append-only stream。
 
-这些问题不影响已经闭合的 S0/S1 shadow baseline。任何会影响调度、lease 或状态解释的选择必须在进入 S2/S3 前由后续显式任务冻结；当前不得据此自动启动 S2、dispatch 或 G2.5。
+这些问题不影响已闭合的 S0～S4A 与已采用的 S4B operating model。任何扩大 lane capacity、切换
+source-of-truth、自动集成或恢复 G2.5 的决定仍必须单独授权，不能从“双线默认”推断。
 
 ## 状态记录
+
+- 2026-07-20：project owner 确认后续默认按 engineering + strategy-evidence 双线推进，并要求重点
+  固化冲突处理以提升安全并行度。S4B operating model 已记录 owned/shared/coordinator-only 分区、
+  conflict classification、contract wave、resource claim、base freshness、失败隔离、固定 integration
+  order、formal gate 去重和双批次 telemetry 扩容条件；首批队列为 OPS-065 + TRADING-2449 canonical
+  artifact recovery audit。S5、自动集成和 G2.5 仍未授权。
 
 - 2026-07-20：project owner 批准先推进 pre-S5 的较窄受监督自动化版本，boundary=
   `ARCH-005-S4A-SUPERVISED-AUTOMATION`。本批连接 S2～S4 内核与 isolated Git worktree、受审核

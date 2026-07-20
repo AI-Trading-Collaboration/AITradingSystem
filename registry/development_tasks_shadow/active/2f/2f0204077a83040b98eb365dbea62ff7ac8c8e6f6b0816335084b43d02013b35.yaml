@@ -1,0 +1,99 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT
+  title: null
+  domain: Documentation governance / existing committed freshness metadata debt
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: documentation governance owner
+  requirement_refs:
+  - docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md`；2026-07-20
+    全局 freshness 扫描发现 10 个既有 requirements 文档缺失或落后 `最后更新`，均非 S4B 本轮改动。按每个文档真实最新状态日期修正
+    metadata，禁止改写历史结论或把 metadata housekeeping 与策略/架构实现混在同一 lane。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 10 个已列举文档逐一核对内部最新状态记录并修复；全局 `aits docs validate-freshness` PASS；focused
+      docs tests与diff check PASS；变更仅限可归属 metadata/必要说明，`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1306
+    row_sha256: 15dfe8580d2a2dae132d53492b92ad4d6ef0f0a213d8769d36df6a3420adb03c
+    cell_count: 8
+    all_cells:
+    - DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT
+    - Documentation governance / existing committed freshness metadata debt
+    - P2
+    - READY
+    - documentation governance owner
+    - 详见 `docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md`；2026-07-20
+      全局 freshness 扫描发现 10 个既有 requirements 文档缺失或落后 `最后更新`，均非 S4B 本轮改动。按每个文档真实最新状态日期修正
+      metadata，禁止改写历史结论或把 metadata housekeeping 与策略/架构实现混在同一 lane。
+    - 10 个已列举文档逐一核对内部最新状态记录并修复；全局 `aits docs validate-freshness` PASS；focused docs
+      tests与diff check PASS；变更仅限可归属 metadata/必要说明，`production_effect=none`。
+    - 2026-07-20：S4B closeout 扫描登记；当前 global freshness=FAIL/10 issues，本轮4个变更文档的targeted
+      freshness均PASS，因此后续独立处理。
+    raw_line: '|DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT|Documentation governance
+      / existing committed freshness metadata debt|P2|READY|documentation governance
+      owner|详见 `docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md`；2026-07-20
+      全局 freshness 扫描发现 10 个既有 requirements 文档缺失或落后 `最后更新`，均非 S4B 本轮改动。按每个文档真实最新状态日期修正
+      metadata，禁止改写历史结论或把 metadata housekeeping 与策略/架构实现混在同一 lane。|10 个已列举文档逐一核对内部最新状态记录并修复；全局
+      `aits docs validate-freshness` PASS；focused docs tests与diff check PASS；变更仅限可归属
+      metadata/必要说明，`production_effect=none`。|2026-07-20：S4B closeout 扫描登记；当前 global
+      freshness=FAIL/10 issues，本轮4个变更文档的targeted freshness均PASS，因此后续独立处理。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-15dfe8580d2a2dae132d5349
+  task_id: DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: READY
+  payload:
+    priority: P2
+    next_owner: documentation governance owner
+    notes: 2026-07-20：S4B closeout 扫描登记；当前 global freshness=FAIL/10 issues，本轮4个变更文档的targeted
+      freshness均PASS，因此后续独立处理。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:15dfe8580d2a2dae132d53492b92ad4d6ef0f0a213d8769d36df6a3420adb03c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT
+  - Documentation governance / existing committed freshness metadata debt
+  - P2
+  - READY
+  - documentation governance owner
+  - 详见 `docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md`；2026-07-20
+    全局 freshness 扫描发现 10 个既有 requirements 文档缺失或落后 `最后更新`，均非 S4B 本轮改动。按每个文档真实最新状态日期修正
+    metadata，禁止改写历史结论或把 metadata housekeeping 与策略/架构实现混在同一 lane。
+  - 10 个已列举文档逐一核对内部最新状态记录并修复；全局 `aits docs validate-freshness` PASS；focused docs tests与diff
+    check PASS；变更仅限可归属 metadata/必要说明，`production_effect=none`。
+  - 2026-07-20：S4B closeout 扫描登记；当前 global freshness=FAIL/10 issues，本轮4个变更文档的targeted
+    freshness均PASS，因此后续独立处理。
+  docs_links:
+  - docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md
+  terminal: false
+  raw_row_sha256: 15dfe8580d2a2dae132d53492b92ad4d6ef0f0a213d8769d36df6a3420adb03c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 448929afa8fb1093c655dcb1b861c209bd93aa82d950cab5acb63aebdac710d7
