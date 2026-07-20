@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import requests
 
 import ai_trading_system.data.market_data as market_data_module
 from ai_trading_system.data.market_data import (
@@ -100,6 +101,168 @@ def test_fmp_price_provider_uses_request_cache_for_repeated_request(tmp_path: Pa
 
     assert first.equals(second)
     assert len(fake_requests.calls) == 2  # non-split-adjusted + dividend-adjusted once each
+
+
+def test_fmp_price_provider_retries_transient_ssl_error_then_succeeds(tmp_path: Path) -> None:
+    fake_requests = _TransientSslRequests(
+        payload=[
+            {
+                "date": "2026-07-16",
+                "adjOpen": 319.0,
+                "adjHigh": 324.0,
+                "adjLow": 317.0,
+                "adjClose": 322.0,
+                "volume": 1234,
+            }
+        ],
+        failures_before_success=1,
+    )
+    provider = FmpPriceProvider(
+        api_key="test-key",
+        requests_module=fake_requests,
+        request_cache_dir=tmp_path,
+        max_attempts=3,
+        retry_backoff_seconds=0,
+    )
+
+    prices = provider.download_prices(
+        PriceRequest(tickers=["AMAT"], start=date(2026, 7, 16), end=date(2026, 7, 16))
+    )
+
+    assert prices.loc[0, "ticker"] == "AMAT"
+    assert prices.loc[0, "date"] == "2026-07-16"
+    assert len(fake_requests.calls) == 3  # failed raw + successful raw + adjusted
+    assert len(list(tmp_path.rglob("metadata.json"))) == 2
+
+
+def test_fmp_price_provider_reports_sanitized_exhausted_ssl_retries(
+    tmp_path: Path,
+) -> None:
+    fake_requests = _TransientSslRequests(
+        payload=[],
+        failures_before_success=10,
+        error_message="EOF occurred in violation of protocol apikey=test-key",
+    )
+    provider = FmpPriceProvider(
+        api_key="test-key",
+        requests_module=fake_requests,
+        request_cache_dir=tmp_path,
+        max_attempts=3,
+        retry_backoff_seconds=0,
+    )
+
+    try:
+        provider.download_prices(
+            PriceRequest(tickers=["AMAT"], start=date(2026, 7, 16), end=date(2026, 7, 16))
+        )
+    except ProviderDownloadError as exc:
+        diagnostic = exc.diagnostic
+    else:
+        raise AssertionError("FMP TLS failure did not raise ProviderDownloadError")
+
+    assert diagnostic.provider == "Financial Modeling Prep"
+    assert diagnostic.api_family == "eod_daily_prices"
+    assert diagnostic.stage == "http_request"
+    assert diagnostic.cache_status == "MISS_NO_RESPONSE"
+    assert diagnostic.cache_key
+    assert diagnostic.request_parameters == {
+        "apikey": "***",
+        "from": "2026-07-16",
+        "symbol": "AMAT",
+        "to": "2026-07-16",
+    }
+    assert diagnostic.exception_type == "SSLError"
+    assert "test-key" not in (diagnostic.exception_message or "")
+    assert diagnostic.attempt_count == 3
+    assert diagnostic.max_attempts == 3
+    assert diagnostic.timeout_seconds == 30
+    assert len(fake_requests.calls) == 3
+    assert not list(tmp_path.rglob("metadata.json"))
+
+
+def test_fmp_price_provider_does_not_retry_http_error(tmp_path: Path) -> None:
+    fake_requests = _FakeRequests(
+        payload={"Error Message": "provider unavailable"},
+        status_code=500,
+    )
+    provider = FmpPriceProvider(
+        api_key="test-key",
+        requests_module=fake_requests,
+        request_cache_dir=tmp_path,
+        max_attempts=3,
+        retry_backoff_seconds=0,
+    )
+
+    try:
+        provider.download_prices(
+            PriceRequest(tickers=["AMAT"], start=date(2026, 7, 16), end=date(2026, 7, 16))
+        )
+    except ProviderDownloadError as exc:
+        diagnostic = exc.diagnostic
+    else:
+        raise AssertionError("FMP HTTP failure did not raise ProviderDownloadError")
+
+    assert diagnostic.stage == "http_status"
+    assert diagnostic.http_status == 500
+    assert diagnostic.attempt_count == 1
+    assert len(fake_requests.calls) == 1
+
+
+def test_fmp_price_provider_classifies_non_json_http_error_before_json(
+    tmp_path: Path,
+) -> None:
+    fake_requests = _FakeRequests(
+        payload=None,
+        content=b"<html>temporary upstream failure</html>",
+        status_code=500,
+    )
+    provider = FmpPriceProvider(
+        api_key="test-key",
+        requests_module=fake_requests,
+        request_cache_dir=tmp_path,
+        max_attempts=3,
+        retry_backoff_seconds=0,
+    )
+
+    try:
+        provider.download_prices(
+            PriceRequest(tickers=["AMAT"], start=date(2026, 7, 16), end=date(2026, 7, 16))
+        )
+    except ProviderDownloadError as exc:
+        diagnostic = exc.diagnostic
+    else:
+        raise AssertionError("FMP non-JSON HTTP failure did not raise ProviderDownloadError")
+
+    assert diagnostic.stage == "http_status"
+    assert diagnostic.http_status == 500
+    assert diagnostic.error_code == "unknown"
+    assert diagnostic.attempt_count == 1
+    assert len(fake_requests.calls) == 1
+
+
+def test_fmp_price_provider_classifies_provider_error_without_retry(tmp_path: Path) -> None:
+    fake_requests = _FakeRequests(payload={"Error Message": "subscription unavailable"})
+    provider = FmpPriceProvider(
+        api_key="test-key",
+        requests_module=fake_requests,
+        request_cache_dir=tmp_path,
+        max_attempts=3,
+        retry_backoff_seconds=0,
+    )
+
+    try:
+        provider.download_prices(
+            PriceRequest(tickers=["AMAT"], start=date(2026, 7, 16), end=date(2026, 7, 16))
+        )
+    except ProviderDownloadError as exc:
+        diagnostic = exc.diagnostic
+    else:
+        raise AssertionError("FMP provider error did not raise ProviderDownloadError")
+
+    assert diagnostic.stage == "provider_error"
+    assert diagnostic.error_code == "subscription unavailable"
+    assert diagnostic.attempt_count == 1
+    assert len(fake_requests.calls) == 1
 
 
 def test_sec_companyfacts_provider_uses_request_cache_for_repeated_request(
@@ -318,14 +481,47 @@ class _FakeResponse:
 
 
 class _FakeRequests:
-    def __init__(self, payload: object, *, content: bytes | None = None) -> None:
+    def __init__(
+        self,
+        payload: object,
+        *,
+        content: bytes | None = None,
+        status_code: int = 200,
+    ) -> None:
         self.payload = payload
         self.content = content
+        self.status_code = status_code
         self.calls: list[dict[str, object]] = []
 
     def get(self, url: str, **kwargs: Any) -> _FakeResponse:
         self.calls.append({"url": url, **kwargs})
-        return _FakeResponse(self.payload, content=self.content)
+        return _FakeResponse(
+            self.payload,
+            status_code=self.status_code,
+            content=self.content,
+        )
+
+
+class _TransientSslRequests(_FakeRequests):
+    exceptions = requests.exceptions
+
+    def __init__(
+        self,
+        payload: object,
+        *,
+        failures_before_success: int,
+        error_message: str = "EOF occurred in violation of protocol",
+    ) -> None:
+        super().__init__(payload)
+        self.failures_before_success = failures_before_success
+        self.error_message = error_message
+
+    def get(self, url: str, **kwargs: Any) -> _FakeResponse:
+        self.calls.append({"url": url, **kwargs})
+        if self.failures_before_success > 0:
+            self.failures_before_success -= 1
+            raise requests.exceptions.SSLError(self.error_message)
+        return _FakeResponse(self.payload)
 
 
 class _RaisesOnceHeaders(dict[str, str]):

@@ -53,6 +53,19 @@
 
 最新增量：
 
+2026-07-20：工作区归属审计从 2026-07-17 的保全 stash 中恢复
+`OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY` 与
+`OPS-063_2026_07_13_14_STRICT_PIT_GAP_DISPOSITION` 的有效独特增量；同期 ARCH-004G2
+中间态已被 `main` 的 G2.4 phase exit 与 ARCH-005 S0～S4A 完整覆盖，未回灌旧状态、旧 manifest
+或旧 contract。OPS-062 的 FMP transport retry、脱敏诊断、runbook/system-flow/tests 进入正式复验，
+HTTP、invalid JSON、provider/schema error 均不重试；OPS-063 继续作为 owner 批准的一次性
+`LIMITED_NON_PIT_RECONSTRUCTION` 归档，不进入 canonical daily、Reader Brief 或投资结论链。
+审计同时登记 `OPS-064_EXTERNAL_REQUEST_ERROR_CACHE_LIFECYCLE`：现有 external request cache 会保留
+HTTP failure response，后续必须以 reviewed negative-cache/retention policy 决定 TTL、复验和显式失效路径，
+不得静默删除，`production_effect=none`。同轮正式复验发现 ARCH-004G2 EB1/EB2 的 3 个 Python
+source hash 仍绑定旧 Windows CRLF 工作树原始字节，和仓库既定 `eol=lf`/新工作树不一致；本次将其
+迁移为显式 `git_eol_lf` 规范化哈希，要求 Windows、Linux 与新 worktree 得到同一兼容性结论。
+
 2026-07-20：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE` S4A 已闭合并由 `IN_PROGRESS` 转
 `BASELINE_DONE`。真实 successful run=`supervised-5de95c5f37821ac3`，两 worker 17/9 tests、13项
 validator、orphan audit 与6-event replay全部PASS，active lease=0，integration candidate等待人工且
@@ -1161,6 +1174,8 @@ ARCH-005 S0与G2.5仍锁定，`production_effect=none`。
 
 |ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
 |---|---|---|---|---|---|---|---|
+|OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY|运行架构/每日结果恢复|P0|IN_PROGRESS|operations owner|FMP 请求级 transient retry 与脱敏诊断已实现；原 canonical `download_data` attempt budget 仍耗尽，下一步审批新的可审计 recovery workflow/spec；详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`|保留旧 state/ledger，不删除状态、不直跑下游；TLS 瞬时异常在单个 FMP 请求内有限重试，HTTP/JSON/schema/provider error 不重试且失败诊断不泄漏 key；只通过 runbook 允许且 owner 审批的 unified daily trigger 恢复 `2026-07-16`，36/36 steps、DQ、PIT、SEC、score、dashboard/latest checks、Reader Brief 全部绑定同一 canonical run id 并通过，`production_effect=none`|2026-07-20：从保全 stash 恢复代码、测试与治理文档；定向 44、fast-unit 317、architecture 446、contract 265、full 6435 passed，full 972.33s 相对最近基线约 +0.20%，无异常性能退化。代码 slice 完成不等于 7/16 canonical recovery 完成。|
+|OPS-064_EXTERNAL_REQUEST_ERROR_CACHE_LIFECYCLE|Data platform / external request negative-cache governance|P1|READY|data platform owner + operations owner|现有通用 external request cache 会保存 HTTP 4xx/5xx response；同 identity 后续可能持续 HIT failure。设计 reviewed retention/TTL/revalidation/explicit invalidation policy，保持原始失败证据且不得静默删除或绕过 DQ。|政策 manifest 明确 status eligibility、TTL/expiry、重验条件、显式失效审计、并发与 checksum 语义；FMP/Marketstack/FRED 等适配器契约测试覆盖首次 failure、cache HIT、到期/复验及错误响应不被解释为数据成功；runbook、artifact catalog、system flow 和 task evidence 同步，`production_effect=none`。|2026-07-20：OPS-062 workspace audit 发现；本批仅保持既有 fail-closed cache 行为并补精确诊断，不用隐式 cache deletion 作为修复。|
 |OPS-003|运行架构/云端持续运行|P1|BASELINE_DONE|系统实现 + 项目 owner|本地基础闭环已完成 `aits ops daily-plan` 与 `aits ops daily-run`；详细拆解见 `docs/requirements/cloud_operations_2026-05-06.md`。后续云 VM、通知、secret 管理和备份策略需 owner 决策时新建或重开任务|每日运行入口必须明确下载、PIT 快照、数据质量门禁、日报、pipeline health、secret hygiene 的顺序和阻断关系；缺少关键凭据或输入时不得静默跳过；云端部署文档必须覆盖 systemd/cron、持久化目录、日志、告警、备份和恢复；运行报告必须显示数据质量状态和 output artifact 路径|2026-05-06: 新增任务，原因：当前持续运行依赖开发机开机；迁移到云 VM 可行但会影响运行链路、质量门禁和 PIT 样本连续性，必须先拆解和登记。2026-05-06: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增每日运行计划命令、报告、系统流图、README 和测试；完整 DONE 仍需 run log、真实调度执行器、云 VM runbook、备份恢复和通知策略。2026-05-08: 从 BASELINE_DONE 改为 IN_PROGRESS，原因：每日自动化真实运行暴露 `daily-plan` 只生成计划、不执行前置依赖和日报评分，owner 同意以能让每日任务正常跑完为目标补齐执行入口。2026-05-08: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits ops daily-run`、脱敏执行报告和关键 artifact 状态检查；自动化改为调用 daily-run；真实 2026-05-08 每日链路 9/9 步通过，验证 `ruff check src tests` 与 `pytest -q` 412 passed。|
 |RISK-012|风险事件/LLM 正式评估准入|P1|BASELINE_DONE|系统验证 + 项目 owner|详细拆解见 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`；已实现 LLM formal assessment 准入；后续如需调整 LLM watch/active 映射或人工复核替代关系，应新建或重开任务|提供命令把 `risk_event_prereview_queue.json` 转换为正式 risk occurrence YAML 与 LLM formal attestation；日报政策/地缘模块必须显示 `llm_formal_assessment` 来源类型，置信度低于人工复核；LLM formal evidence 最高按 B 级处理，默认不能单独触发 position gate；输出保留 model、request id、checksum、status/level suggestion、confidence 和“未人工复核”声明；系统流图、README、测试同步更新|2026-05-10: 新增并进入实现，原因：owner 明确要求参考 LLM 复核结果作为正式评估结果，先不通过人工复核。2026-05-10: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits risk-events apply-llm-formal-assessment`、LLM formal occurrence/attestation 写入、日报 `llm_formal_assessment` 来源类型和较低置信度、系统流图、README、需求文档和测试；真实 2026-05-10 队列写入 5 条 watch occurrence 和 1 条 LLM formal attestation，validate-occurrences PASS；验证通过 `ruff check src tests`、CLI help、完整 `pytest -q` 444 passed。|
 |RISK-011|风险事件/高优先级候选 LLM 风险等级预审|P1|BASELINE_DONE|系统验证 + 项目 owner|详细拆解见 `docs/requirements/risk_event_triaged_llm_precheck_2026-05-10.md`；已实现高优先级候选 OpenAI metadata-only 预审入口；后续采纳为正式 occurrence 或复核声明仍需 owner 复核或独立任务推进|提供命令读取 triage CSV 和官方候选 CSV，按 bucket 过滤后调用现有 OpenAI 风险预审链路；输出必须保存 model、reasoning effort、request id、input/output checksum、`status_suggestion`、`level_suggestion`、matched risk/ticker/node 和人工复核问题；结果强制 `llm_extracted / pending_review`，不得写入正式 occurrence、评分或仓位闸门；系统流图、README 和测试同步更新|2026-05-10: 新增并进入实现，原因：owner 确认高风险源可用 LLM 判断风险等级，但该等级只能作为人工复核建议。2026-05-10: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits risk-events precheck-triaged-official-candidates`、官方候选 CSV loader、triage bucket 过滤、系统流图、README、需求文档和测试；真实 2026-05-10 高优先级候选 8 条送入 OpenAI，生成 5 条 pending_review 预审记录，其中 L2/L3 候选 4 条、active 候选 0 条；验证通过 `ruff check src tests`、CLI help、目标测试 26 passed 和完整 `pytest -q` 438 passed。|

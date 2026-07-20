@@ -883,14 +883,18 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         "schema_version": "arch_004_checkout_hash_normalization.v1",
         "status": "PASS",
         "policy": "git_eol_lf",
-        "normalized_source_count": 6,
+        "normalized_source_count": 9,
         "source_content_changed": False,
         "production_effect": "none",
         "paths": [
             "docs/artifact_catalog.md",
             "src/ai_trading_system/cli_commands/reports.py",
             "src/ai_trading_system/cli_commands/research_execution_common.py",
+            "src/ai_trading_system/etf_portfolio/dynamic_v3_signal_filter_foundation.py",
             "src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py",
+            "src/ai_trading_system/etf_portfolio/dynamic_v3_weight_batch_search.py",
+            "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+            "dynamic_v3_signal_filter_foundation.py",
             "src/ai_trading_system/interfaces/cli/etf_portfolio/"
             "dynamic_v3_system_target_smoothed_freshness.py",
             "tests/test_cli_direct.py",

@@ -1,0 +1,106 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
+  title: null
+  domain: 运行架构/每日结果恢复
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: operations owner
+  requirement_refs:
+  - docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: FMP 请求级 transient retry 与脱敏诊断已实现；原 canonical
+    `download_data` attempt budget 仍耗尽，下一步审批新的可审计 recovery workflow/spec；详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 保留旧 state/ledger，不删除状态、不直跑下游；TLS 瞬时异常在单个 FMP 请求内有限重试，HTTP/JSON/schema/provider
+      error 不重试且失败诊断不泄漏 key；只通过 runbook 允许且 owner 审批的 unified daily trigger 恢复 `2026-07-16`，36/36
+      steps、DQ、PIT、SEC、score、dashboard/latest checks、Reader Brief 全部绑定同一 canonical
+      run id 并通过，`production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1177
+    row_sha256: a1f85a3544373e5b2ddabff60aaeae3b3eb01bffd42690d9ce1b0c0d4abe050a
+    cell_count: 8
+    all_cells:
+    - OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
+    - 运行架构/每日结果恢复
+    - P0
+    - IN_PROGRESS
+    - operations owner
+    - FMP 请求级 transient retry 与脱敏诊断已实现；原 canonical `download_data` attempt budget
+      仍耗尽，下一步审批新的可审计 recovery workflow/spec；详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`
+    - 保留旧 state/ledger，不删除状态、不直跑下游；TLS 瞬时异常在单个 FMP 请求内有限重试，HTTP/JSON/schema/provider
+      error 不重试且失败诊断不泄漏 key；只通过 runbook 允许且 owner 审批的 unified daily trigger 恢复 `2026-07-16`，36/36
+      steps、DQ、PIT、SEC、score、dashboard/latest checks、Reader Brief 全部绑定同一 canonical
+      run id 并通过，`production_effect=none`
+    - 2026-07-20：从保全 stash 恢复代码、测试与治理文档；定向 44、fast-unit 317、architecture 446、contract
+      265、full 6435 passed，full 972.33s 相对最近基线约 +0.20%，无异常性能退化。代码 slice 完成不等于 7/16
+      canonical recovery 完成。
+    raw_line: '|OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY|运行架构/每日结果恢复|P0|IN_PROGRESS|operations
+      owner|FMP 请求级 transient retry 与脱敏诊断已实现；原 canonical `download_data` attempt budget
+      仍耗尽，下一步审批新的可审计 recovery workflow/spec；详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`|保留旧
+      state/ledger，不删除状态、不直跑下游；TLS 瞬时异常在单个 FMP 请求内有限重试，HTTP/JSON/schema/provider error
+      不重试且失败诊断不泄漏 key；只通过 runbook 允许且 owner 审批的 unified daily trigger 恢复 `2026-07-16`，36/36
+      steps、DQ、PIT、SEC、score、dashboard/latest checks、Reader Brief 全部绑定同一 canonical
+      run id 并通过，`production_effect=none`|2026-07-20：从保全 stash 恢复代码、测试与治理文档；定向 44、fast-unit
+      317、architecture 446、contract 265、full 6435 passed，full 972.33s 相对最近基线约 +0.20%，无异常性能退化。代码
+      slice 完成不等于 7/16 canonical recovery 完成。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a1f85a3544373e5b2ddabff6
+  task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: operations owner
+    notes: 2026-07-20：从保全 stash 恢复代码、测试与治理文档；定向 44、fast-unit 317、architecture 446、contract
+      265、full 6435 passed，full 972.33s 相对最近基线约 +0.20%，无异常性能退化。代码 slice 完成不等于 7/16
+      canonical recovery 完成。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a1f85a3544373e5b2ddabff60aaeae3b3eb01bffd42690d9ce1b0c0d4abe050a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
+  - 运行架构/每日结果恢复
+  - P0
+  - IN_PROGRESS
+  - operations owner
+  - FMP 请求级 transient retry 与脱敏诊断已实现；原 canonical `download_data` attempt budget 仍耗尽，下一步审批新的可审计
+    recovery workflow/spec；详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`
+  - 保留旧 state/ledger，不删除状态、不直跑下游；TLS 瞬时异常在单个 FMP 请求内有限重试，HTTP/JSON/schema/provider
+    error 不重试且失败诊断不泄漏 key；只通过 runbook 允许且 owner 审批的 unified daily trigger 恢复 `2026-07-16`，36/36
+    steps、DQ、PIT、SEC、score、dashboard/latest checks、Reader Brief 全部绑定同一 canonical run
+    id 并通过，`production_effect=none`
+  - 2026-07-20：从保全 stash 恢复代码、测试与治理文档；定向 44、fast-unit 317、architecture 446、contract
+    265、full 6435 passed，full 972.33s 相对最近基线约 +0.20%，无异常性能退化。代码 slice 完成不等于 7/16 canonical
+    recovery 完成。
+  docs_links:
+  - docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md
+  terminal: false
+  raw_row_sha256: a1f85a3544373e5b2ddabff60aaeae3b3eb01bffd42690d9ce1b0c0d4abe050a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ec0b42d0185c2d0d832977dd556845f3e6688aa909c070fbbcbf663da221b56f

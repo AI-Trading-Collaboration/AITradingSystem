@@ -43,6 +43,10 @@ outputs/runs/daily/<executed_at_utc>/
 
 外部供应商调用前还有一层请求级缓存：`data/raw/external_request_cache/`。FMP、Marketstack、Cboe VIX、FRED、SEC、TSMC IR、官方政策源、EODHD 和 yfinance 路径的相同请求命中 cache 时不得再次请求供应商；只有 MISS 才发送请求并归档 `response.body`、脱敏请求身份、status code、headers 和 checksum。这个缓存保护供应商额度，不替代业务 raw cache、download manifest、PIT manifest 或数据质量门禁。Cboe VIX 的 `VIX_History.csv` 是固定 URL 的可变静态文件，cache identity 额外包含 ticker/start/end/interval 业务窗口；命中缓存时还会校验 CSV 最大日期覆盖请求 `end`，避免新 as-of 或同窗口旧缓存复用过期 CSV 响应。排查供应商额度或重复请求问题时，先看该目录的 `metadata.json` 和 `body_sha256`，不要重新跑 live 命令试探。若 `download-data` 失败，先看 `download_data_diagnostics_YYYY-MM-DD.md`；它记录 provider、失败阶段、cache status、cache key、脱敏请求参数，以及 Marketstack quota preflight 的 budget profile / `violation_reasons`，但不保存 stdout/stderr 原文或供应商响应正文。
 
+FMP EOD 价格请求对 requests `Timeout` / `ConnectionError`（含 `SSLError`）采用最多三次的请求级有界重试，默认以 1 秒、2 秒递增退避；只有未收到响应的 transient transport error 可重试。HTTP status、invalid JSON、schema/provider error 仍立即 fail closed。重试耗尽时，`download_data_diagnostics_YYYY-MM-DD.md` 应记录脱敏请求参数、cache identity、attempt count、timeout 和异常类型；不得因重试删除 canonical state/ledger、跳过 `aits validate-data` 或提高 scheduler step attempt budget。
+
+OPS-063 的 `limited_non_pit_reconstruction.v1` 仅是 2026-07-13/14 缺 contemporaneous hard inputs 时经 owner 批准的一次性 manual evidence。它不属于 `aits ops daily-run`、periodic-dispatch、Reader Brief 或 governance 下游，canonical daily status 仍为 `INSUFFICIENT_DATA`；operator 不得用 live refetch、7/15 snapshot 或该 bundle 补造 PIT、score、position 或投资结论。未来若需复跑，必须先新建受治理 producer/validator 任务。
+
 过渡期仍可在 `outputs/reports/` 看到 legacy mirror。投资阅读入口优先级：
 
 1. `evidence_dashboard_YYYY-MM-DD.html`：只读每日决策展示入口，不替代审计源。

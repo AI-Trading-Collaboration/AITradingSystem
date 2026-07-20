@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-063_2026_07_13_14_STRICT_PIT_GAP_DISPOSITION
+  title: null
+  domain: 运行架构/历史 PIT 缺口
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统运行：未来只有发现 contemporaneous archived inputs 时才重开 strict PIT recovery
+  requirement_refs:
+  - docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`；owner
+    已批准一次性受限 `LIMITED_NON_PIT_RECONSTRUCTION`，两日 canonical daily status 保持 `INSUFFICIENT_DATA`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 2026-07-13/14 各生成隔离 cache-only input freeze、replay inventory、market/macro
+      DQ 和 Markdown/JSON limited report；PIT/SEC 保持 null、OpenAI disabled，不生成综合分、仓位、Decision
+      Snapshot 或 Reader Brief；source SHA、行情值、null contract、无 conclusion artifact、canonical
+      checksum 与隔离边界验证 PASS；`production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 17
+    row_sha256: 25fe3310badafb1c945d97799df2ec3c0800d51c6ee99546c4fb5bfa998b94f3
+    cell_count: 8
+    all_cells:
+    - OPS-063_2026_07_13_14_STRICT_PIT_GAP_DISPOSITION
+    - 运行架构/历史 PIT 缺口
+    - P0
+    - DONE
+    - 系统运行：未来只有发现 contemporaneous archived inputs 时才重开 strict PIT recovery
+    - 详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`；owner
+      已批准一次性受限 `LIMITED_NON_PIT_RECONSTRUCTION`，两日 canonical daily status 保持 `INSUFFICIENT_DATA`
+    - 2026-07-13/14 各生成隔离 cache-only input freeze、replay inventory、market/macro DQ
+      和 Markdown/JSON limited report；PIT/SEC 保持 null、OpenAI disabled，不生成综合分、仓位、Decision
+      Snapshot 或 Reader Brief；source SHA、行情值、null contract、无 conclusion artifact、canonical
+      checksum 与隔离边界验证 PASS；`production_effect=none`
+    - 2026-07-20：从保全 stash 恢复归档记录；bundle 分别位于 `outputs/replays/limited_non_pit_reconstruction/2026-07-13/limited_non_pit_reconstruction_2026-07-13_20260717/`
+      与 `outputs/replays/limited_non_pit_reconstruction/2026-07-14/limited_non_pit_reconstruction_2026-07-14_20260717/`。该证据不可复跑且无
+      canonical 下游；未来发现 contemporaneous inputs 时必须新开 strict PIT recovery。
+    raw_line: '|OPS-063_2026_07_13_14_STRICT_PIT_GAP_DISPOSITION|运行架构/历史 PIT 缺口|P0|DONE|系统运行：未来只有发现
+      contemporaneous archived inputs 时才重开 strict PIT recovery|详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`；owner
+      已批准一次性受限 `LIMITED_NON_PIT_RECONSTRUCTION`，两日 canonical daily status 保持 `INSUFFICIENT_DATA`|2026-07-13/14
+      各生成隔离 cache-only input freeze、replay inventory、market/macro DQ 和 Markdown/JSON
+      limited report；PIT/SEC 保持 null、OpenAI disabled，不生成综合分、仓位、Decision Snapshot 或
+      Reader Brief；source SHA、行情值、null contract、无 conclusion artifact、canonical checksum
+      与隔离边界验证 PASS；`production_effect=none`|2026-07-20：从保全 stash 恢复归档记录；bundle 分别位于
+      `outputs/replays/limited_non_pit_reconstruction/2026-07-13/limited_non_pit_reconstruction_2026-07-13_20260717/`
+      与 `outputs/replays/limited_non_pit_reconstruction/2026-07-14/limited_non_pit_reconstruction_2026-07-14_20260717/`。该证据不可复跑且无
+      canonical 下游；未来发现 contemporaneous inputs 时必须新开 strict PIT recovery。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-25fe3310badafb1c945d9779
+  task_id: OPS-063_2026_07_13_14_STRICT_PIT_GAP_DISPOSITION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统运行：未来只有发现 contemporaneous archived inputs 时才重开 strict PIT recovery
+    notes: 2026-07-20：从保全 stash 恢复归档记录；bundle 分别位于 `outputs/replays/limited_non_pit_reconstruction/2026-07-13/limited_non_pit_reconstruction_2026-07-13_20260717/`
+      与 `outputs/replays/limited_non_pit_reconstruction/2026-07-14/limited_non_pit_reconstruction_2026-07-14_20260717/`。该证据不可复跑且无
+      canonical 下游；未来发现 contemporaneous inputs 时必须新开 strict PIT recovery。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:25fe3310badafb1c945d97799df2ec3c0800d51c6ee99546c4fb5bfa998b94f3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-063_2026_07_13_14_STRICT_PIT_GAP_DISPOSITION
+  - 运行架构/历史 PIT 缺口
+  - P0
+  - DONE
+  - 系统运行：未来只有发现 contemporaneous archived inputs 时才重开 strict PIT recovery
+  - 详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`；owner
+    已批准一次性受限 `LIMITED_NON_PIT_RECONSTRUCTION`，两日 canonical daily status 保持 `INSUFFICIENT_DATA`
+  - 2026-07-13/14 各生成隔离 cache-only input freeze、replay inventory、market/macro DQ 和
+    Markdown/JSON limited report；PIT/SEC 保持 null、OpenAI disabled，不生成综合分、仓位、Decision
+    Snapshot 或 Reader Brief；source SHA、行情值、null contract、无 conclusion artifact、canonical
+    checksum 与隔离边界验证 PASS；`production_effect=none`
+  - 2026-07-20：从保全 stash 恢复归档记录；bundle 分别位于 `outputs/replays/limited_non_pit_reconstruction/2026-07-13/limited_non_pit_reconstruction_2026-07-13_20260717/`
+    与 `outputs/replays/limited_non_pit_reconstruction/2026-07-14/limited_non_pit_reconstruction_2026-07-14_20260717/`。该证据不可复跑且无
+    canonical 下游；未来发现 contemporaneous inputs 时必须新开 strict PIT recovery。
+  docs_links:
+  - docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md
+  terminal: true
+  raw_row_sha256: 25fe3310badafb1c945d97799df2ec3c0800d51c6ee99546c4fb5bfa998b94f3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f483221fd3c48c52249e0a1fc00727d933eae021671983b7bb6741e1532321a0

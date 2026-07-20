@@ -2483,7 +2483,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.market_data
   path: src/ai_trading_system/data/market_data.py
-  sha256: aab1d92259f0da8baa3d23da6497ac6ff89e5e009c064ea490541e455091cb15
+  sha256: 55fd1586a9ef31818babf71da7b3d5c397fa8684d50a95bc77c4f9dfffddb527
   rule_id: data
   owner_profile: data
   owners:

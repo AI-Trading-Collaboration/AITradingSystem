@@ -4266,6 +4266,14 @@ flowchart TD
 
 ## 每日评分链路
 
+### FMP EOD 瞬时传输错误边界（OPS-062）
+
+FMP EOD adapter 对 requests `Timeout` / `ConnectionError`（含 `SSLError`）只做三次以内、递增短退避的请求级重试；HTTP status、JSON/schema/provider error 不重试，最终 pre-response failure 以脱敏 `ProviderDownloadError` 记录 cache identity、attempt count、timeout 和已完成行数。该修复避免单次瞬时 TLS reset 直接消耗整个 canonical `download_data` step attempt，但不改变 request cache、fail-closed、DQ、downstream gate、production weight 或 broker/trading 边界。
+
+### Strict PIT 缺口的一次性受限证据（OPS-063）
+
+2026-07-13/14 缺少 contemporaneous FMP forward PIT、SEC 与 OpenAI prereview hard inputs，因而 canonical daily status 永久保持 `INSUFFICIENT_DATA`，除非未来取得原始 archived inputs。Owner 批准的 `limited_non_pit_reconstruction.v1` 只冻结 cache-only market/macro facts、source SHA、DQ 与 null contract，且位于隔离 replay 目录；它没有 reusable producer/validator、report-registry 或 Reader Brief routing，不生成 score、position、Decision Snapshot，也不进入 weekly/governance/promotion/backtest/production。需要复跑时必须另建受治理链路，不能把 live refetch 解释为历史 PIT。
+
 ```mermaid
 flowchart TD
     A["用户执行<br/>aits score-daily --as-of YYYY-MM-DD"] --> B["读取配置<br/>universe / data_quality / features / feature_availability / scoring_rules / portfolio / risk_events / execution_policy"]

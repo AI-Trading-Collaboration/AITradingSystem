@@ -32,6 +32,11 @@ FMP_EOD_NON_SPLIT_ADJUSTED_URL = (
 FMP_EOD_DIVIDEND_ADJUSTED_URL = (
     "https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted"
 )
+FMP_PROVIDER_NAME = "Financial Modeling Prep"
+FMP_PRICE_API_FAMILY = "eod_daily_prices"
+FMP_REQUEST_TIMEOUT_SECONDS = 30.0
+FMP_REQUEST_MAX_ATTEMPTS = 3
+FMP_REQUEST_RETRY_BACKOFF_SECONDS = 1.0
 FMP_DEFAULT_SYMBOL_ALIASES: dict[str, str | None] = {
     "^VIX": None,
 }
@@ -382,10 +387,19 @@ class FmpPriceProvider:
     )
     requests_module: Any | None = None
     request_cache_dir: Path | str | None = None
+    timeout_seconds: float = FMP_REQUEST_TIMEOUT_SECONDS
+    max_attempts: int = FMP_REQUEST_MAX_ATTEMPTS
+    retry_backoff_seconds: float = FMP_REQUEST_RETRY_BACKOFF_SECONDS
 
     def __post_init__(self) -> None:
         if not self.api_key.strip():
             raise ValueError("FMP API key must not be empty")
+        if self.timeout_seconds <= 0:
+            raise ValueError("FMP timeout_seconds must be positive")
+        if self.max_attempts <= 0:
+            raise ValueError("FMP max_attempts must be positive")
+        if self.retry_backoff_seconds < 0:
+            raise ValueError("FMP retry_backoff_seconds must not be negative")
 
     def download_prices(self, request: PriceRequest) -> pd.DataFrame:
         requests = self.requests_module or cast(Any, import_module("requests"))
@@ -406,6 +420,10 @@ class FmpPriceProvider:
                 params=params,
                 response_label="FMP price",
                 request_cache_dir=request_cache_dir,
+                row_count_before_failure=len(records),
+                timeout_seconds=self.timeout_seconds,
+                max_attempts=self.max_attempts,
+                retry_backoff_seconds=self.retry_backoff_seconds,
             )
             adjusted_records = _fetch_fmp_price_records(
                 requests=requests,
@@ -413,6 +431,10 @@ class FmpPriceProvider:
                 params=params,
                 response_label="FMP adjusted price",
                 request_cache_dir=request_cache_dir,
+                row_count_before_failure=len(records),
+                timeout_seconds=self.timeout_seconds,
+                max_attempts=self.max_attempts,
+                retry_backoff_seconds=self.retry_backoff_seconds,
             )
             if not page_records:
                 raise ValueError(f"FMP price response was empty for symbol {provider_symbol}")
@@ -1227,6 +1249,69 @@ def _fmp_error_code(payload: Any) -> str:
     return str(error).splitlines()[0][:120]
 
 
+def _fmp_diagnostic(
+    *,
+    url: str,
+    params: dict[str, object],
+    cache_key: str | None,
+    cache_metadata_path: Path | None,
+    cache_status: str,
+    stage: str,
+    row_count_before_failure: int,
+    response: Any | None = None,
+    error_code: str | None = None,
+    exception: Exception | None = None,
+    attempt_count: int | None = None,
+    max_attempts: int | None = None,
+    timeout_seconds: float | None = None,
+) -> ProviderRequestDiagnostic:
+    content = getattr(response, "content", None)
+    content_bytes = content if isinstance(content, (bytes, bytearray)) else None
+    api_key = str(params.get("apikey") or "")
+    return ProviderRequestDiagnostic(
+        provider=FMP_PROVIDER_NAME,
+        api_family=FMP_PRICE_API_FAMILY,
+        endpoint=url,
+        stage=stage,
+        method="GET",
+        request_parameters={
+            key: ("***" if key.lower() in {"apikey", "api_key"} else value)
+            for key, value in sorted(params.items(), key=lambda item: item[0])
+        },
+        cache_status=cache_status,
+        cache_key=cache_key,
+        cache_metadata_path=cache_metadata_path,
+        http_status=getattr(response, "status_code", None),
+        error_code=error_code,
+        response_body_sha256=(
+            sha256(bytes(content_bytes)).hexdigest() if content_bytes is not None else None
+        ),
+        response_body_size_bytes=(len(content_bytes) if content_bytes is not None else None),
+        row_count_before_failure=row_count_before_failure,
+        attempt_count=attempt_count,
+        max_attempts=max_attempts,
+        timeout_seconds=timeout_seconds,
+        exception_type=type(exception).__name__ if exception is not None else None,
+        exception_message=(
+            sanitize_diagnostic_text(str(exception), extra_secrets=(api_key,))
+            if exception is not None
+            else None
+        ),
+    )
+
+
+def _is_retryable_requests_transport_error(exception: Exception, requests: Any) -> bool:
+    exceptions = getattr(requests, "exceptions", None)
+    if exceptions is None:
+        return False
+    retryable_types = tuple(
+        exception_type
+        for name in ("Timeout", "ConnectionError", "SSLError", "ChunkedEncodingError")
+        if isinstance((exception_type := getattr(exceptions, name, None)), type)
+    )
+    return bool(retryable_types) and isinstance(exception, retryable_types)
+
+
 def _fetch_fmp_price_records(
     *,
     requests: Any,
@@ -1234,24 +1319,146 @@ def _fetch_fmp_price_records(
     params: dict[str, object],
     response_label: str,
     request_cache_dir: Path | str | None = None,
+    row_count_before_failure: int = 0,
+    timeout_seconds: float = FMP_REQUEST_TIMEOUT_SECONDS,
+    max_attempts: int = FMP_REQUEST_MAX_ATTEMPTS,
+    retry_backoff_seconds: float = FMP_REQUEST_RETRY_BACKOFF_SECONDS,
 ) -> list[dict[str, Any]]:
-    response = cached_requests_get(
-        provider="Financial Modeling Prep",
-        api_family="eod_daily_prices",
+    cache_lookup = lookup_external_request_cache(
+        provider=FMP_PROVIDER_NAME,
+        api_family=FMP_PRICE_API_FAMILY,
+        method="GET",
         url=url,
         params=params,
-        timeout=30,
-        requests_module=requests,
-        cache_dir=request_cache_dir,
+        cache_dir=None if request_cache_dir is None else Path(request_cache_dir),
     )
+    response: CachedHttpResponse | None = None
+    last_exception: Exception | None = None
+    attempt_count = 0
+    for attempt in range(1, max_attempts + 1):
+        attempt_count = attempt
+        try:
+            response = cached_requests_get(
+                provider=FMP_PROVIDER_NAME,
+                api_family=FMP_PRICE_API_FAMILY,
+                url=url,
+                params=params,
+                timeout=timeout_seconds,
+                requests_module=requests,
+                cache_dir=request_cache_dir,
+            )
+            break
+        except Exception as exc:
+            last_exception = exc
+            if not _is_retryable_requests_transport_error(exc, requests):
+                break
+            if attempt < max_attempts and retry_backoff_seconds > 0:
+                sleep(retry_backoff_seconds * attempt)
+    if response is None:
+        diagnostic = _fmp_diagnostic(
+            url=url,
+            params=params,
+            cache_key=cache_lookup.cache_key,
+            cache_metadata_path=(
+                None if request_cache_dir is None else cache_lookup.metadata_path
+            ),
+            cache_status="DISABLED" if request_cache_dir is None else "MISS_NO_RESPONSE",
+            stage="http_request",
+            row_count_before_failure=row_count_before_failure,
+            exception=last_exception,
+            attempt_count=attempt_count,
+            max_attempts=max_attempts,
+            timeout_seconds=timeout_seconds,
+        )
+        raise ProviderDownloadError(
+            f"{response_label} request failed before receiving a cacheable response",
+            diagnostic,
+        ) from last_exception
+    if not response.ok:
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = None
+        diagnostic = _fmp_diagnostic(
+            url=url,
+            params=params,
+            cache_key=response.cache_key,
+            cache_metadata_path=response.cache_metadata_path,
+            cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+            stage="http_status",
+            row_count_before_failure=row_count_before_failure,
+            response=response,
+            error_code=_fmp_error_code(payload),
+            attempt_count=attempt_count,
+            max_attempts=max_attempts,
+            timeout_seconds=timeout_seconds,
+        )
+        raise ProviderDownloadError(
+            f"{response_label} request failed: "
+            f"http_status={response.status_code}, "
+            f"error_code={_fmp_error_code(payload)}",
+            diagnostic,
+        )
     try:
         payload = response.json()
     except ValueError as exc:
-        raise ValueError(f"{response_label} response was not valid JSON") from exc
-    if not response.ok:
-        raise ValueError(
-            f"{response_label} request failed: "
-            f"http_status={response.status_code}, "
-            f"error_code={_fmp_error_code(payload)}"
+        diagnostic = _fmp_diagnostic(
+            url=url,
+            params=params,
+            cache_key=response.cache_key,
+            cache_metadata_path=response.cache_metadata_path,
+            cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+            stage="response_json",
+            row_count_before_failure=row_count_before_failure,
+            response=response,
+            exception=exc,
+            attempt_count=attempt_count,
+            max_attempts=max_attempts,
+            timeout_seconds=timeout_seconds,
         )
-    return _fmp_price_records(payload)
+        raise ProviderDownloadError(
+            f"{response_label} response was not valid JSON",
+            diagnostic,
+        ) from exc
+    if isinstance(payload, dict) and ("Error Message" in payload or "error" in payload):
+        diagnostic = _fmp_diagnostic(
+            url=url,
+            params=params,
+            cache_key=response.cache_key,
+            cache_metadata_path=response.cache_metadata_path,
+            cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+            stage="provider_error",
+            row_count_before_failure=row_count_before_failure,
+            response=response,
+            error_code=_fmp_error_code(payload),
+            attempt_count=attempt_count,
+            max_attempts=max_attempts,
+            timeout_seconds=timeout_seconds,
+        )
+        raise ProviderDownloadError(
+            f"{response_label} returned a provider error: "
+            f"error_code={_fmp_error_code(payload)}",
+            diagnostic,
+        )
+    try:
+        return _fmp_price_records(payload)
+    except ValueError as exc:
+        diagnostic = _fmp_diagnostic(
+            url=url,
+            params=params,
+            cache_key=response.cache_key,
+            cache_metadata_path=response.cache_metadata_path,
+            cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+            stage="response_schema",
+            row_count_before_failure=row_count_before_failure,
+            response=response,
+            error_code=_fmp_error_code(payload),
+            exception=exc,
+            attempt_count=attempt_count,
+            max_attempts=max_attempts,
+            timeout_seconds=timeout_seconds,
+        )
+        raise ProviderDownloadError(
+            f"{response_label} response did not match the expected schema",
+            diagnostic,
+        ) from exc
