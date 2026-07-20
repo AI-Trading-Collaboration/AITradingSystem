@@ -1,8 +1,8 @@
 schema_version: arch_004e_architecture_fitness.v1
 status: PASS
 policy_id: arch_004e_devex_ownership_policy
-module_count: 991
-test_file_count: 1142
+module_count: 992
+test_file_count: 1143
 module_orphan_count: 0
 module_specific_overlap_count: 0
 test_orphan_count: 0
@@ -12,7 +12,7 @@ aggregate_fragment_count: 13
 dependency_gate:
   policy_id: arch_004c_platform_dependency_policy
   status: PASS
-  scanned_python_files: 991
+  scanned_python_files: 992
   current_direct_writer_calls: 856
   baseline_direct_writer_calls: 894
   violation_count: 0

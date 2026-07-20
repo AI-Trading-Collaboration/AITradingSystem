@@ -267,6 +267,36 @@ stage/commit/push和formal gates，由coordinator保留owned requirement/runtime
 task shadow和source hashes。冲突未造成中断或丢失，`workaround_used=false`。后续wave应在dispatch前把
 shared-path denylist注入worker验收，而不是只依赖文字约束。
 
+### Wave 4：TRADING-2451 preregistration + shadow-continuation runtime
+
+Base=`872d7ccb`，branch=`codex/dual-lane-wave4-prereg-runtime`。本轮从启动即同时具备两个有效lane，
+并冻结以下owned scopes：
+
+|Lane|状态|任务/owned scope|冲突与停止条件|
+|---|---|---|---|
+|Engineering|`COMPLETE`|`ARCH-004G2.../W4E1`；仅`tests/test_shadow_continuation_readiness.py`，把既有artifact validation session由per-test提升到module scope|5 nodeids、真实module source DAG、CLI、missing/fallback/cache blockers、DQ/lineage/validator与安全断言保持；isolated=`198.89s -> 155.18s`，Full worker-s=`479.3692 -> 363.3858`|
+|Strategy evidence|`COMPLETE_PREREGISTRATION`|`TRADING-2451_DYNAMIC_V3_CLEAN_SELECTION_S1_PREREGISTRATION`；新requirement、policy/package inputs、独立builder/validator与focused test|package=`dynamic-v3-clean-s1_cf88e2fc1cee51406b6b`，validator=`PASS/0`、focused=11；0 result inputs，未运行evaluator/backtest/search/holdout；clean run仍需owner独立授权|
+|Coordinator|`COMPLETE`|`task_register`、本operating model、system flow、generated manifests、compatibility与formal integration|generated=`878/429/449 tasks, 992 modules, 1143 tests`；architecture/contract/full全部PASS|
+
+W4E1的Full profile目标文件为`479.37 worker-s`，但同机isolated仅`198.89s`，说明Full数值受全局负载
+影响，验收只使用空闲isolated A/B。baseline中module source setup=`45.22s`，五个call依次约
+`40.07/35.41/29.50/23.87/19.31s`；现有module fixture已经避免重复producer，剩余候选只允许让
+content-fingerprint保护的PASS-only validation cache跨本module五个测试复用。所有per-test output、DQ、
+fallback/cache输入仍各自位于独立`tmp_path`；任何shared source mutation或FAIL缓存都会使切片撤回。
+
+Wave启动时再次发生了一次控制面竞态：Strategy worker在收到最新协调消息前创建requirement并短暂写入
+shared task row/尝试切换临时branch。它随后自行删除shared row、回到coordinator branch并等待登记；
+coordinator保留owned requirement、正式登记`TRADING-2451`后才恢复实现。未丢失成果，但这证明同checkout
+并行仅靠消息仍存在时序窗口；后续自动调度必须把branch lease和shared-path denylist作为执行前硬门禁。
+
+Wave 4最终formal结果：architecture=`446 passed / 51.90s`，contract=`265 passed / 128.13s`，Full=
+`6498 passed / 2 skipped / 642 warnings / 940.47s`。Full runner相对Wave 3的`1019.79s`下降`7.78%`，
+共同1084文件duration median ratio=`0.9516`，worker busy median=`1008.69 -> 929.22s`；W4E1目标文件
+Full worker-s下降`24.20%`。由于仅一个自然Full样本且全局共同文件也整体变快，继续固定
+`stable_full_improvement_claimed=false`。首次architecture因deprecation inventory新增引用计数陈旧而
+FAIL，完整刷新后复验PASS；首次Full调用在pytest前被provenance gate拒绝，补齐真实run provenance后执行，
+两项均未使用workaround。
+
 ### 后续架构方向
 
 - `ARCH-004G2_PARALLEL_READINESS_GATE` / G2.5 是下一项高杠杆工程方向，但仍等待 owner 对恢复

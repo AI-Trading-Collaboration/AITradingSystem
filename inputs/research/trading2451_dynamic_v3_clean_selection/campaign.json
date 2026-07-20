@@ -1,0 +1,102 @@
+{
+  "campaign_id": "dynamic-v3-clean-selection-s1",
+  "evidence_budget": {
+    "compute_budget": "300 train evaluations plus at most 20 test evaluations per frozen fold",
+    "max_mini_rounds": 0,
+    "max_needs_more_evidence_occurrences": 1,
+    "max_redesign_rounds": 0,
+    "max_targeted_rounds": 1,
+    "max_window_expansions": 0,
+    "owner_override_required_after_budget": true,
+    "time_budget": null
+  },
+  "hypothesis": {
+    "expected_failure_modes": [
+      "no_train_eligible_candidate",
+      "negative_test_evidence",
+      "regime_or_stress_concentration",
+      "runtime_data_quality_failure"
+    ],
+    "expected_gain": [
+      "protocol_clean_fold_local_evidence"
+    ],
+    "statement": "A fixed 300-parameter Dynamic v3 universe may retain reviewable risk behavior when every fold selects candidates from train evidence only; historical replay is protocol-clean but not investigator-blind."
+  },
+  "market_regime": "ai_after_chatgpt",
+  "metadata": {
+    "candidate_universe_id": "dynamic-v3-clean-universe_ca7ae334a926bccccbe4",
+    "clean_run_authorized": false,
+    "clean_selection_preregistration_id": "research_preregistration_98d9af62627162b61708",
+    "evaluator_executed": false,
+    "execution_policy": {
+      "commission_bps": 0.0,
+      "cost_turnover_basis": "two_way_abs_weight_change",
+      "embargo_trading_days": 1,
+      "purge_trading_days": 1,
+      "signal_execution_lag_trading_days": 1,
+      "slippage_bps": 2.0,
+      "trading_calendar": "XNYS"
+    },
+    "historical_replay_investigator_blind": false,
+    "prior_market_outcome_visibility": "KNOWN",
+    "prospective_holdout_accessed": false,
+    "protocol_clean": true,
+    "research_context_id": "research_context_5b788598ae4eddd88deb",
+    "unbiased_oos_claim_allowed": false
+  },
+  "module_graph": {
+    "allowed_interaction_order": 1,
+    "allowed_mechanisms": [
+      "train_only_fold_local_ranking"
+    ],
+    "baseline": "dynamic_v0_4_and_static_baseline_contract_v1",
+    "forbidden_mechanisms": [
+      "full_period_ranking",
+      "test_metric_selection",
+      "legacy_leaderboard_backfill",
+      "prospective_holdout_access"
+    ],
+    "modules": [
+      "dynamic_v3_rescue"
+    ]
+  },
+  "owner_authorized_holdout": false,
+  "program_id": "dynamic-v3-evidence-closure",
+  "requested_date_range": "2021-02-22..2024-12-31 historical seen replay; prospective holdout 2026-07-22..2027-07-21",
+  "safety": {
+    "broker_effect": "none",
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_effect": "none",
+    "paper_shadow_allowed": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": "research_campaign.v1",
+  "scorecard_policy": "dynamic_v3_clean_selection_s1_fold_local_v1",
+  "stop_rules": [
+    {
+      "code": "RUNTIME_DATA_QUALITY_GATE_FAILS"
+    },
+    {
+      "code": "SOURCE_OR_POLICY_CHECKSUM_DRIFT"
+    },
+    {
+      "code": "FOLD_HAS_NO_ELIGIBLE_TRAIN_CANDIDATE"
+    },
+    {
+      "code": "TEST_METRIC_ENTERS_SELECTION"
+    },
+    {
+      "code": "PROSPECTIVE_HOLDOUT_ACCESSED_WITHOUT_OWNER_AUTHORIZATION"
+    }
+  ],
+  "title": "Dynamic v3 protocol-clean fold-local selection S1",
+  "window_policy": {
+    "development_catalog": "historical_seen_protocol_replay_2021_2024_v1",
+    "diagnostic_catalog": "historical_seen_protocol_replay_2021_2024_v1",
+    "full_catalog": null,
+    "holdout_access": "OWNER_AUTHORIZATION_REQUIRED",
+    "holdout_catalog": "prospective_post_freeze_2026_07_22_v1"
+  }
+}

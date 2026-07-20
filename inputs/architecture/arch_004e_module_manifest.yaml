@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 source_root: src/ai_trading_system
-module_count: 991
+module_count: 992
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -4888,6 +4888,26 @@ modules:
 - module_id: src.ai_trading_system.dynamic_v3_clean_selection_preregistration_gate
   path: src/ai_trading_system/dynamic_v3_clean_selection_preregistration_gate.py
   sha256: d30749d4e8296ba823b76ffc5b1851060034112775f565d9c55f59a1454e5a92
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.dynamic_v3_clean_selection_s1_preregistration
+  path: src/ai_trading_system/dynamic_v3_clean_selection_s1_preregistration.py
+  sha256: 817c199aaae5b11f9f8bf15fc0271d16c65de8b828593f204a3ebbf8c65e00e6
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

@@ -1385,6 +1385,45 @@ Wave 2为`152.49s -> 116.98s`（`-23.29%`），Full runner wall为`1169.47s -> 1
 没有修改production、策略、阈值或W3E1测试语义；其validator/focused/governance独立PASS。最终formal
 gates在合并shared docs/manifests后复验，Full不因closeout记录本身循环重跑。
 
+### Wave 4 W4E1：Shadow-continuation module validation session
+
+2026-07-21：从W3 PASS Full profile选择此前未治理的最高长尾
+`tests/test_shadow_continuation_readiness.py`。Full profile=`479.37 worker-s / 5 nodes`；空闲环境同命令
+`python -m pytest -n 16 --dist loadfile tests/test_shadow_continuation_readiness.py -q --durations=10`
+为`5 passed / 198.89s`（runner wall约`199.9s`）。setup=`45.22s`；manual-review、CLI、fallback、cache、
+missing calls分别为`40.07/35.41/29.50/23.87/19.31s`。Full与isolated差异证明本轮不得以单次Full
+worker-s作为收益基线。
+
+现有module-scoped fixture已只构建一次真实paper-shadow→weekly→evidence-staleness source DAG，但
+autouse `artifact_validation_session`仍为function scope，五个测试会对相同immutable source重复做
+content-derived验证。W4E1 owned scope仅为该test file，允许把既有validation session提升为module scope；
+session cache仍由resolved args、content fingerprint、bound paths和deep-copy保护。每个测试的readiness
+output、data-quality、fallback/cache input及CLI output继续使用独立`tmp_path`，不得修改production/helper/
+validator/CLI/policy，不得跳过真实validator或缓存FAIL。
+
+验收冻结5个nodeids及manual-review、missing weekly、fallback unavailable、cache checksum failure、CLI
+run/report/validate和全部research safety断言。有效after必须`<=169.06s`（至少15%）且绝对节省不少于
+`25s`；任一断言、source fingerprint或隔离语义弱化即byte-exact撤回。focused后仍需刷新v18 seed与
+source-bound contract、module/test manifests、architecture/contract/full；单次wave不声明stable Full
+improvement，`production_effect=none`。
+
+单行fixture-scope实现后同机同命令=`5 passed / 155.18s`（runner wall约`157.1s`），相对baseline节省
+`43.71s / 21.98%`，通过`<=169.06s`与绝对`>=25s`双门槛。setup=`45.22s -> 37.45s`；manual、
+CLI、fallback、cache、missing calls分别降为`36.54/31.17/18.22/18.15/8.11s`。5个nodeid与断言全集
+保持，production/source fixture/per-test inputs和outputs均未修改。随后使用唯一W3 PASS Full
+`full_20260720T163446Z`同步生成v18 advisory seed：`1084 files / 6489 nodes`，profile SHA-256=
+`61ccfaf0...007227`；source-bound test在同一integration scope更新，避免再次产生seed/contract drift。
+
+Wave 4正式集成完成：focused合并口径=`18 passed / 147.97s`；architecture=`446 passed / 51.90s`，
+contract=`265 passed / 128.13s`，自然Full=`6498 passed / 2 skipped / 642 warnings`、pytest=`939.59s`、
+runner=`940.47s`、`1085 files / 6500 nodes / 16 workers`，scheduler/profile/telemetry/performance/provenance
+均PASS且fallback=false。W4E1目标文件Full worker-s=`479.3692 -> 363.3858`（`-24.20%`），Full runner
+相对W3下降`7.78%`；但共同1084文件duration median ratio=`0.9516`，说明环境/全局波动也整体有利，
+故仍不声明stable improvement。首次architecture run暴露deprecation inventory新增module/test及ETF CLI
+reference counts未同步，直接刷新完整frozen inventory后复验PASS；首次Full调用因缺少trigger provenance在
+pytest前被拒绝，补齐task/boundary/reason后运行，二者均未采用workaround。v18仍作为下一轮advisory seed，
+本轮closeout不循环生成v19或重跑第二次Full；`production_effect=none`。
+
 ## 验收标准
 
 - 当前 4 个 confirmation 长尾 module 的累计 wall time至少降低70%，最大单shard不超过当前

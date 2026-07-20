@@ -104,6 +104,18 @@ contract fixture 达到 `ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN`，本节点也
 候选或启动 backtest。真实 clean run 必须由 owner 提供新的结果不可见预注册并另建 S1 任务；全链固定
 candidate expansion/new search=false、`production_effect=none`、`broker_action=none`。
 
+TRADING-2451 在上述legacy blocker之后新增真正的S1预注册冻结包，而不是修改旧gate结论。输入为reviewed
+`selection_rule.yaml`、`window_catalog.yaml`、tracked Dynamic-v3 parameter/sweep-profile configs，以及
+generic `ResearchPreregistration`、`ResearchEvaluationContext`、`CampaignSpec` contracts。builder按policy
+axis order对既有参数空间做deterministic Cartesian prefix，生成300个稳定candidate ids；不读取任何旧
+leaderboard、candidate result、real evaluation或top-N。四个historical-seen folds只冻结train-only top-20
+selection规则，不执行evaluation；2026-07-22起prospective holdout保持未访问。输出为candidate universe、
+context、preregistration、campaign、source contract、eligibility与package manifest，全部带content checksum
+与互相引用。validator从live tracked config/policy重新生成并逐文件比较，对source drift、result-source注入、
+candidate/order/tamper、window/holdout overlap及授权或安全字段放宽fail closed。当前最高资格为
+`ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN`；evaluator、backtest、search、holdout access、unbiased OOS claim、
+paper-shadow、production与broker仍全部关闭，后续TRADING-106必须取得新的独立owner授权。
+
 Wave 1 strategy-evidence lane 已从可信历史 Git worktree 恢复 exact R0/R1/forward/R2 canonical bytes，
 逐文件 path/length/SHA-256 与 output commitments 一致；R0、walk-forward、robustness、R2 validators
 均 `PASS/0`，R2 保持 `CONTINUE_EVIDENCE_CLOSURE`。真实 gate
@@ -148,6 +160,15 @@ flowchart LR
     GATE -->|"contaminated / drift / incomplete / overlap"| BLOCK["BLOCKED / fail closed"]
     GATE -->|"all eligibility checks pass"| ELIGIBLE["ELIGIBLE for owner-authorized clean run"]
     ELIGIBLE -.-> STOP["No evaluator / no candidate / no backtest"]
+    POLICY2451["TRADING-2451 frozen selection + window policy"] --> BUILD2451["Deterministic S1 package builder"]
+    CONFIG2451["Tracked parameter + medium-real profile configs"] --> BUILD2451
+    BUILD2451 --> UNIVERSE2451["300-candidate universe<br/>0 result inputs"]
+    BUILD2451 --> CONTRACT2451["Context + preregistration + campaign + source contract"]
+    UNIVERSE2451 --> VALIDATE2451["Live content-derived package validator"]
+    CONTRACT2451 --> VALIDATE2451
+    VALIDATE2451 -->|"PASS"| AUTH2451["ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN"]
+    VALIDATE2451 -->|"drift / injection / overlap / relaxed safety"| BLOCK2451["FAIL CLOSED"]
+    AUTH2451 -.-> STOP2451["Separate owner authorization required<br/>TRADING-106 not executed"]
 ```
 
 OPS-064 把通用 external request cache 的“证据保留”与“可复用期限”拆开。既有 v1 request

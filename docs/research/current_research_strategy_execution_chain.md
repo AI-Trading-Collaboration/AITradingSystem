@@ -430,6 +430,32 @@ base(parameters_1..7)
 
 Holdout 在 selection rule、window、metric 和 threshold 冻结前不得访问；访问后不能反复用于调参。E0/E1/E2 evidence 只支持 test/diagnostic/component replay，不支持 promotion；promotion 至少要求 owner-reviewed E3 full-advisory PIT replay 和 E4 forward paper-shadow。
 
+#### TRADING-2451 clean-selection S1 预注册冻结包
+
+为什么新增这一层：TRADING-2449已证明legacy R1先看full-period leaderboard再绑定holdout，不能靠重命名
+artifact修复selection contamination。TRADING-2451先冻结“以后怎样选”，再允许任何新fold结果出现；它建立
+的是`protocol-clean`，不是“历史市场结果从未被研究者看过”的investigator-blind声明。
+
+|环节|输入|计算与校验|输出|当前边界/优化空间|
+|---|---|---|---|---|
+|Policy freeze|`selection_rule.yaml`、`window_catalog.yaml`；owner/status/version/rationale/review condition|冻结candidate axis/order/count、train-only gate/score/tie-break、top-N、cost/lag/purge/embargo、4个historical-seen folds与prospective holdout|两份reviewed policy inputs及SHA-256 commitments|改变任一heuristic必须新预注册并重新owner review；不能原地调参|
+|Candidate universe|tracked `parameter_sweep_real_smoke.yaml`与`parameter_sweep_profiles.yaml:medium_real`|按policy axis order做Cartesian product，取冻结前300个；`candidate_id=SHA256(candidate_definition_version,strategy_family,parameters)[:16]`；不得读取result source|`candidate_universe.json`，300 unique rows、0 result artifacts|后续若扩大候选集必须另建任务；本任务固定candidate expansion/search=false|
+|Lifecycle contracts|universe、policy refs、AI regime/window、hypothesis与validation plan|构造并解析`ResearchEvaluationContext`、`ResearchPreregistration`、`CampaignSpec`；冻结时`result_visibility=NONE`，historical outcomes=`KNOWN`|`research_context.json`、`preregistration.json`、`campaign.json`、`source_contract.json`|context保持runtime DQ blocked；不能把protocol-clean解释为unbiased OOS|
+|Eligibility|上述payload、live source commitments与安全字段|检查source bytes、canonical IDs/checksums、300/4 folds、train-only top-20、holdout不重叠、forbidden result lineage、owner/run/access flags|`eligibility.json`，最高`ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN`|资格只允许owner决定是否启动TRADING-106，不自动执行|
+|Content-derived validation|package目录与live tracked configs/policies|重新生成expected package，逐文件JSON-equivalent/checksum比较；tamper、source drift、result injection、candidate/order/window overlap、授权或safety放宽均FAIL|`package_manifest.json`与validation checks|可增加独立review签名和future holdout append-only access ledger，但不得降低fail-closed检查|
+
+四个历史fold的设计规则为：每个fold在train段独立评价全部300个冻结候选，只允许
+`train_gate != reject`且train score非空者进入排序，按score降序、candidate id升序取top 20；test指标不参与
+eligibility、score、tie-break或回填。全体reject时输出`INCOMPLETE_NO_ELIGIBLE_CANDIDATE`，不得从旧
+leaderboard或rejected candidate补位。注意：本任务只冻结该算法，并没有实际产生train/test metrics。
+
+当前AI regime anchor=`2022-11-30`、默认结论起点=`2022-12-01`。requested research start=
+`2021-02-22`只用于expanding-train历史protocol replay；四个test windows均从2023开始，且历史结果统一标为
+`KNOWN`。真正outcome-blind evidence从冻结后的prospective holdout `2026-07-22..2027-07-21`开始，本任务
+明确不读取。下一优化步骤依次是：owner独立复核/授权clean run、runtime DQ与source snapshot commitment、
+TRADING-106 fold-local evaluator、TRADING-107 robustness/overfit；任一步失败都不能触发paper-shadow、
+production weights或broker action。
+
 #### Dynamic-v3 true walk-forward selection
 
 设计目的不是把全周期leaderboard重复切成多个文件，而是防止“用全样本选出赢家，再把赢家的全样本指标贴到test window”造成未来信息泄漏。G2.4S将source sweep内冻结的candidate universe、normalized config和window policy作为唯一输入；当前profile config只用于核对evaluator、candidate budget和当前policy drift，历史sweep始终按其自身normalized config解释，不能被今天的配置静默重写。

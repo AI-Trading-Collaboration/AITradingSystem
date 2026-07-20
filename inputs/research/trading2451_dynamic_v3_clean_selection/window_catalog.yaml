@@ -1,0 +1,73 @@
+schema_version: dynamic_v3_clean_selection_window_catalog.v1
+catalog_id: dynamic_v3_clean_selection_s1_windows_v1
+status: owner_frozen_preregistration
+owner: project_owner_and_research_governance
+frozen_at: "2026-07-21T02:15:00+09:00"
+
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: "2022-11-30"
+  start_date: "2022-12-01"
+
+research_window:
+  window_id: exact_three_asset_validated
+  start_date: "2021-02-22"
+  role: primary_validated
+  evidence_role: PRIMARY_DECISION_EVIDENCE
+  assets: [QQQ, SGOV, TQQQ]
+
+historical_protocol_replay:
+  catalog_id: historical_seen_protocol_replay_2021_2024_v1
+  prior_market_outcome_visibility: KNOWN
+  investigator_blind: false
+  selection_uses_only_train: true
+  test_metrics_available_to_selection: false
+  purge_trading_days: 1
+  embargo_trading_days: 1
+  folds:
+    - window_index: 1
+      train_start: "2021-02-22"
+      train_end: "2022-12-30"
+      test_start: "2023-01-03"
+      test_end: "2023-06-30"
+    - window_index: 2
+      train_start: "2021-02-22"
+      train_end: "2023-06-30"
+      test_start: "2023-07-03"
+      test_end: "2023-12-29"
+    - window_index: 3
+      train_start: "2021-02-22"
+      train_end: "2023-12-29"
+      test_start: "2024-01-02"
+      test_end: "2024-06-28"
+    - window_index: 4
+      train_start: "2021-02-22"
+      train_end: "2024-06-28"
+      test_start: "2024-07-01"
+      test_end: "2024-12-31"
+
+prospective_holdout:
+  catalog_id: prospective_post_freeze_2026_07_22_v1
+  start: "2026-07-22"
+  end: "2027-07-21"
+  outcome_visibility_at_freeze: NONE
+  access: OWNER_AUTHORIZATION_REQUIRED
+  accessed_by_this_task: false
+  minimum_role: prospective_outcome_blind_evidence
+
+runtime_requirements:
+  effective_dates_derived_from_xnys: true
+  runtime_data_quality_gate_required: true
+  runtime_source_snapshot_commitment_required: true
+  runtime_cost_and_execution_revalidation_required: true
+
+safety:
+  evaluator_execution_allowed: false
+  clean_run_authorized: false
+  locked_holdout_access_allowed: false
+  historical_replay_execution_allowed: false
+  prospective_holdout_execution_allowed: false
+  unbiased_oos_claim_allowed: false
+  production_effect: none
+  broker_action: none

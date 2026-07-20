@@ -6004,6 +6004,125 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
 
+    wave4 = baseline["phase_arch_005_s4c_dual_lane_wave4"]
+    assert wave4["status"] == "COMPLETE_WAVE4_DUAL_LANE"
+    assert wave4["task_ids"] == [
+        "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE",
+        "TRADING-2451_DYNAMIC_V3_CLEAN_SELECTION_S1_PREREGISTRATION",
+    ]
+    assert wave4["base_commit"] == "872d7ccbf29939b2a2c2f42a6ae34ce274b89b65"
+    assert wave4["branch"] == "codex/dual-lane-wave4-prereg-runtime"
+    engineering4 = wave4["engineering_lane"]
+    assert engineering4["status"] == "COMPLETE_FOCUSED_AND_FULL_PROFILE"
+    assert engineering4["owned_path"] == "tests/test_shadow_continuation_readiness.py"
+    assert engineering4["node_count_preserved"] == 5
+    assert engineering4["source_full_profile_worker_seconds"] == 479.3692383
+    assert engineering4["isolated_before_seconds"] == 198.89
+    assert engineering4["isolated_after_seconds"] == 155.18
+    assert engineering4["frozen_after_limit_seconds"] == 169.06
+    assert engineering4["minimum_absolute_reduction_seconds"] == 25.0
+    assert engineering4["focused_status"] == "PASS"
+    assert engineering4["stable_full_improvement_claimed"] is False
+    assert engineering4["duration_seed"]["version"] == 18
+    assert engineering4["duration_seed"]["source_file_count"] == 1084
+    assert engineering4["duration_seed"]["source_node_count"] == 6489
+    strategy4 = wave4["strategy_evidence_lane"]
+    assert strategy4["status"] == ("COMPLETE_PREREGISTRATION_OWNER_AUTHORIZATION_PENDING")
+    assert strategy4["task_id"] == ("TRADING-2451_DYNAMIC_V3_CLEAN_SELECTION_S1_PREREGISTRATION")
+    assert strategy4["package_id"] == "dynamic-v3-clean-s1_cf88e2fc1cee51406b6b"
+    assert strategy4["eligibility_status"] == ("ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN")
+    assert strategy4["candidate_count"] == 300
+    assert strategy4["historical_fold_count"] == 4
+    assert strategy4["result_artifact_count"] == 0
+    assert strategy4["validator_status"] == "PASS"
+    assert strategy4["validator_failed_check_count"] == 0
+    assert strategy4["focused_passed"] == 11
+    assert strategy4["fail_closed_tamper_classes"] == [
+        "top_n",
+        "score_weight",
+        "slippage",
+        "window_date",
+    ]
+    assert strategy4["clean_run_authorized"] is False
+    assert strategy4["evaluator_executed"] is False
+    assert strategy4["backtest_or_search_executed"] is False
+    assert strategy4["prospective_holdout_accessed"] is False
+    assert strategy4["unbiased_oos_claim_allowed"] is False
+    assert wave4["conflict_telemetry"] == {
+        "owned_path_overlap_count": 0,
+        "worker_shared_path_precoord_write_count": 1,
+        "worker_branch_switch_attempt_count": 1,
+        "coordination_correction_applied": True,
+        "worker_shared_path_write_count_after_coordination": 0,
+        "shared_path_writer_after_coordination": "integration_coordinator",
+        "work_lost_or_reverted": False,
+        "workaround_used": False,
+    }
+    assert wave4["generated_state"]["task_count"] == 878
+    assert wave4["generated_state"]["active_task_count"] == 429
+    assert wave4["generated_state"]["completed_task_count"] == 449
+    assert wave4["generated_state"]["module_count"] == 992
+    assert wave4["generated_state"]["test_file_count"] == 1143
+    required4 = wave4["required_validation"]
+    for key in (
+        "engineering_isolated",
+        "strategy_validator",
+        "strategy_focused",
+        "duration_seed_source_binding",
+        "ruff",
+        "black",
+        "diff_check",
+    ):
+        assert required4[key]["status"] == "PASS"
+    for key in ("architecture_fitness", "contract_validation", "full"):
+        assert required4[key]["status"] == "PASS"
+    assert required4["architecture_fitness"]["passed"] == 446
+    assert required4["contract_validation"]["passed"] == 265
+    assert required4["full"]["passed"] == 6498
+    assert required4["full"]["skipped"] == 2
+    assert required4["full"]["file_count"] == 1085
+    assert required4["full"]["node_count"] == 6500
+    assert required4["full"]["scheduler_applied"] is True
+    assert required4["full"]["scheduler_fallback"] is False
+    assert wave4["failed_validation_attempts"] == [
+        {
+            "tier": "architecture_fitness",
+            "status": "FAIL",
+            "passed": 445,
+            "failed": 1,
+            "elapsed_seconds": 57.36,
+            "artifact": (
+                "outputs/validation_runtime/architecture-fitness_20260720T174852Z/"
+                "test_runtime_summary.json"
+            ),
+            "failure": (
+                "DEPRECATION_INVENTORY_MODULE_AND_REFERENCE_COUNTS_STALE_AFTER_"
+                "NEW_STRATEGY_MODULE"
+            ),
+            "direct_fix_applied": True,
+            "workaround_used": False,
+        }
+    ]
+    assert wave4["validation_preflight_rejections"][0]["status"] == ("REJECTED_BEFORE_PYTEST")
+    assert wave4["validation_preflight_rejections"][0]["counts_as_performance_sample"] is False
+    assert wave4["performance_assessment"]["isolated_reduction_percent"] == 21.98
+    assert wave4["performance_assessment"]["target_file_full_reduction_percent"] == 24.20
+    assert wave4["performance_assessment"]["full_runner_reduction_percent"] == 7.78
+    assert wave4["performance_assessment"]["common_file_count"] == 1084
+    assert wave4["performance_assessment"]["stable_full_improvement_claimed"] is False
+    assert wave4["next_work"] == {
+        "strategy_clean_run_unblocked": False,
+        "owner_clean_run_authorization_required": True,
+        "arch_004_g2_5_unblocked": False,
+        "arch_005_s5_unblocked": False,
+        "next_engineering_leaf_selected": False,
+    }
+    assert wave4["safety"]["production_effect"] == "none"
+    assert wave4["safety"]["broker_action"] == "none"
+    for source in wave4["sources"]:
+        actual = _source_sha256(source)
+        assert actual == source["sha256"], source["path"]
+
     prebootstrap = baseline["arch_005_prebootstrap_primitives"]
     assert prebootstrap["status"] in {
         "IN_PROGRESS_NON_CUTOVER",

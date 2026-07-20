@@ -1,0 +1,112 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2451_DYNAMIC_V3_CLEAN_SELECTION_S1_PREREGISTRATION
+  title: null
+  domain: Strategy research / Dynamic v3 clean-selection S1 preregistration package
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner仅在独立新指令中决定是否授权TRADING-106 clean run
+  requirement_refs:
+  - docs/requirements/TRADING-2451_Dynamic_V3_Clean_Selection_S1_Preregistration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2451_Dynamic_V3_Clean_Selection_S1_Preregistration.md`；protocol-clean候选全集、fold-local
+    selection/window/cost/kill policy、canonical preregistration/context/campaign、source
+    contract、eligibility与content checksum已冻结；历史市场结果已见，不能声称investigator-blind或unbiased
+    OOS。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: tracked config机械重算300个唯一候选；0 legacy result inputs；4 folds/train-only top20/prospective
+      holdout隔离；canonical policy SHA锁定；validator对tamper/drift/result injection/overlap/授权放宽fail
+      closed；focused/architecture/contract/full PASS；最高`ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN`；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 17
+    row_sha256: 52028bca566114ca8449dbe645624c769daad1e7034c823988aed12e277a3532
+    cell_count: 8
+    all_cells:
+    - TRADING-2451_DYNAMIC_V3_CLEAN_SELECTION_S1_PREREGISTRATION
+    - Strategy research / Dynamic v3 clean-selection S1 preregistration package
+    - P0
+    - DONE
+    - project owner仅在独立新指令中决定是否授权TRADING-106 clean run
+    - 详见 `docs/requirements/TRADING-2451_Dynamic_V3_Clean_Selection_S1_Preregistration.md`；protocol-clean候选全集、fold-local
+      selection/window/cost/kill policy、canonical preregistration/context/campaign、source
+      contract、eligibility与content checksum已冻结；历史市场结果已见，不能声称investigator-blind或unbiased
+      OOS。
+    - tracked config机械重算300个唯一候选；0 legacy result inputs；4 folds/train-only top20/prospective
+      holdout隔离；canonical policy SHA锁定；validator对tamper/drift/result injection/overlap/授权放宽fail
+      closed；focused/architecture/contract/full PASS；最高`ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN`；`production_effect=none`。
+    - 2026-07-21：package=`dynamic-v3-clean-s1_cf88e2fc1cee51406b6b`、validator PASS/0、focused=11；architecture/contract=`446/265
+      passed`，Full=`6498 passed / 2 skipped / 642 warnings / 940.47s`。TRADING-106/107、evaluator、backtest、search、holdout读取、promotion、shadow
+      enrollment、official weights与broker均未授权或执行。
+    raw_line: '|TRADING-2451_DYNAMIC_V3_CLEAN_SELECTION_S1_PREREGISTRATION|Strategy
+      research / Dynamic v3 clean-selection S1 preregistration package|P0|DONE|project
+      owner仅在独立新指令中决定是否授权TRADING-106 clean run|详见 `docs/requirements/TRADING-2451_Dynamic_V3_Clean_Selection_S1_Preregistration.md`；protocol-clean候选全集、fold-local
+      selection/window/cost/kill policy、canonical preregistration/context/campaign、source
+      contract、eligibility与content checksum已冻结；历史市场结果已见，不能声称investigator-blind或unbiased
+      OOS。|tracked config机械重算300个唯一候选；0 legacy result inputs；4 folds/train-only top20/prospective
+      holdout隔离；canonical policy SHA锁定；validator对tamper/drift/result injection/overlap/授权放宽fail
+      closed；focused/architecture/contract/full PASS；最高`ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN`；`production_effect=none`。|2026-07-21：package=`dynamic-v3-clean-s1_cf88e2fc1cee51406b6b`、validator
+      PASS/0、focused=11；architecture/contract=`446/265 passed`，Full=`6498 passed /
+      2 skipped / 642 warnings / 940.47s`。TRADING-106/107、evaluator、backtest、search、holdout读取、promotion、shadow
+      enrollment、official weights与broker均未授权或执行。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-52028bca566114ca8449dbe6
+  task_id: TRADING-2451_DYNAMIC_V3_CLEAN_SELECTION_S1_PREREGISTRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: project owner仅在独立新指令中决定是否授权TRADING-106 clean run
+    notes: 2026-07-21：package=`dynamic-v3-clean-s1_cf88e2fc1cee51406b6b`、validator
+      PASS/0、focused=11；architecture/contract=`446/265 passed`，Full=`6498 passed /
+      2 skipped / 642 warnings / 940.47s`。TRADING-106/107、evaluator、backtest、search、holdout读取、promotion、shadow
+      enrollment、official weights与broker均未授权或执行。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:52028bca566114ca8449dbe645624c769daad1e7034c823988aed12e277a3532
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2451_DYNAMIC_V3_CLEAN_SELECTION_S1_PREREGISTRATION
+  - Strategy research / Dynamic v3 clean-selection S1 preregistration package
+  - P0
+  - DONE
+  - project owner仅在独立新指令中决定是否授权TRADING-106 clean run
+  - 详见 `docs/requirements/TRADING-2451_Dynamic_V3_Clean_Selection_S1_Preregistration.md`；protocol-clean候选全集、fold-local
+    selection/window/cost/kill policy、canonical preregistration/context/campaign、source
+    contract、eligibility与content checksum已冻结；历史市场结果已见，不能声称investigator-blind或unbiased
+    OOS。
+  - tracked config机械重算300个唯一候选；0 legacy result inputs；4 folds/train-only top20/prospective
+    holdout隔离；canonical policy SHA锁定；validator对tamper/drift/result injection/overlap/授权放宽fail
+    closed；focused/architecture/contract/full PASS；最高`ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN`；`production_effect=none`。
+  - 2026-07-21：package=`dynamic-v3-clean-s1_cf88e2fc1cee51406b6b`、validator PASS/0、focused=11；architecture/contract=`446/265
+    passed`，Full=`6498 passed / 2 skipped / 642 warnings / 940.47s`。TRADING-106/107、evaluator、backtest、search、holdout读取、promotion、shadow
+    enrollment、official weights与broker均未授权或执行。
+  docs_links:
+  - docs/requirements/TRADING-2451_Dynamic_V3_Clean_Selection_S1_Preregistration.md
+  terminal: true
+  raw_row_sha256: 52028bca566114ca8449dbe645624c769daad1e7034c823988aed12e277a3532
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: fe2069b2b5fe2e0faf1414f92e38f917fb7568ee2a959967e29da71c0f774e80

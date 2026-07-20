@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 test_root: tests
-test_file_count: 1142
-test_count: 1084
+test_file_count: 1143
+test_count: 1085
 support_file_count: 58
 orphan_count: 0
 specific_overlap_count: 0
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 6252c1c1e6be53083e3222f8b91a4dbf5e91025422dfd9f4f078715cc9386c6d
+  sha256: e34ee67b4f68f72f827a4b7a9943317ef7f52deaee242232c017e78eefb75c25
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7641,7 +7641,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 3b194e1af0f0262a84de386c303efc42f7db884f7195b42eb2afffffd8aa889d
+  sha256: d4e38f1e3ab117938027d0df9fb693b61734d70c08f883616a4689acfabdb20e
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -9442,6 +9442,22 @@ tests:
 - test_id: tests.test_dynamic_v3_clean_selection_preregistration_gate
   path: tests/test_dynamic_v3_clean_selection_preregistration_gate.py
   sha256: 56acede0619602f6ac6c6e5671f07e6c3ef4f218c7f77aea96e5efe8d99bf475
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_dynamic_v3_clean_selection_s1_preregistration
+  path: tests/test_dynamic_v3_clean_selection_s1_preregistration.py
+  sha256: e557ccd914fe8d31e863210d7c05ec9ab859efeb8304dc8817990fe8ca4644bd
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -14259,7 +14275,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_shadow_continuation_readiness
   path: tests/test_shadow_continuation_readiness.py
-  sha256: 8d91aecbe03faf14a581d10677bdf1c0092841bbd5f3fbc9f556c9a8ec600f33
+  sha256: d95ffdd38690a011605d79f408eeed2e19919a32b411bb42f488915d263240ca
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15445,7 +15461,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_validation_runtime_profile
   path: tests/test_validation_runtime_profile.py
-  sha256: b7da06bf9e85edefd3e6ac67a17f56539ef5c92d8a73de2d53b8bc7a5a9a08bb
+  sha256: 49e609f5d86b33129d97186f3de7b5bc748bae6b8ea1ad496a34e5d70d95c717
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

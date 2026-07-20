@@ -1,0 +1,40 @@
+{
+  "baseline_id": "dynamic_v0_4_and_static_baseline_contract_v1",
+  "candidate_id": "dynamic-v3-clean-universe_ca7ae334a926bccccbe4",
+  "frozen_at": "2026-07-21T02:15:00+09:00",
+  "hypothesis_id": "dynamic-v3-clean-selection-s1",
+  "hypothesis_statement": "A fixed 300-parameter Dynamic v3 universe may retain reviewable risk behavior when every fold selects candidates from train evidence only; historical replay is protocol-clean but not investigator-blind.",
+  "manual_review_required": true,
+  "metric_ids": [
+    "constraint_hit_rate",
+    "constraint_hits_delta_vs_reference",
+    "data_quality",
+    "drawdown_degradation_pp",
+    "dynamic_vs_static_gap",
+    "false_risk_off_delta",
+    "lookahead_status",
+    "robustness_status",
+    "turnover"
+  ],
+  "owner": "project_owner",
+  "policy_ref_ids": [
+    "dynamic_v3_rescue_parameter_governance_v1",
+    "etf_data_quality_policy_v1",
+    "etf_dynamic_v3_real_evaluation_policy_v1",
+    "primary_research_window_policy_v1",
+    "strategy_execution_policy_registry_v1",
+    "strategy_research_restart_r0_r2_v1"
+  ],
+  "preregistration_id": "research_preregistration_98d9af62627162b61708",
+  "production_effect": "none",
+  "research_context_id": "research_context_5b788598ae4eddd88deb",
+  "result_visibility": "NONE",
+  "schema_version": "research_preregistration.v1",
+  "selection_rule_id": "dynamic_v3_clean_selection_s1_fold_local_v1",
+  "selection_rule_sha256": "b8d3caad13f9d7e3c98517dc1fa3849868a1e46eb288a9d8bb013aa9fd0ffcf0",
+  "validation_plan_ids": [
+    "trading-106-fold-local-clean-evaluator-after-owner-authorization",
+    "trading-107-robustness-overfit-after-clean-run",
+    "trading-2451-package-content-derived"
+  ]
+}

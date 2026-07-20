@@ -1,0 +1,4246 @@
+{
+  "axis_order": [
+    "rescue_intensity",
+    "smooth_window_days",
+    "constraint_buffer_bps",
+    "turnover_penalty",
+    "risk_off_confirmation_days",
+    "rebalance_cooldown_days",
+    "drawdown_guard"
+  ],
+  "candidate_count": 300,
+  "candidate_universe_id": "dynamic-v3-clean-universe_ca7ae334a926bccccbe4",
+  "candidate_universe_origin": "preregistered_candidate_universe",
+  "candidates": [
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "a80f321276268e48",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "749bccf1ae834dbc",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "49748478f2131cec",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "e68e01eb0d4be552",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "53f8fac9f62a4fc5",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "c9c1c28c3ad6482a",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "de7fb4815b21a99d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "13bbc3c3b9ce3552",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "6593530c17a5c430",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "cce97146765f4e6a",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "4bf348422492b663",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "d0beef967399b5c2",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "8baa9a8ff6297aae",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "1535e9dc6cc18a49",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "94c80044e48d827e",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "f87b7e45e37e35f8",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "c344894abde11d33",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "8884b05c3031b816",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "8b09422f6208e16a",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "d71d28b37466d3a8",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "b915163fed513547",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "aa87fc11ca17dbeb",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "f2d334d888702b46",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "afbf4f7f86b35c80",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "2a7ffa8362fd0955",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "a9ac53683586b555",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "37304256b0a47041",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "39c4bcc27be73546",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "a3b25bc0a706aa10",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "445beed4014f98e1",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "fe834bfa5d2f84ca",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "23461663d82556d0",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "25b8836cf267f850",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "0f83cb8fd3c70dad",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "5d53d7953c66214c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "b05b2c0a4d643ae0",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "b7c9b33f1057df9d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ff2667bc4ab8b360",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "197b3c7d424b8ba4",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ac82c280487f6013",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "f5e655fd6ad1470c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "bfb8a7a67fd9a046",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "e3a59a831b138280",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "6b6967f4edd2b456",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "404cbb12ed4c7fe5",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "0a990c255e420478",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "6a48bc714206074d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "1a0848b4f3059dea",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "5bcef262a828da32",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "83e270d6ac66c24a",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "4a0cb0e88e197819",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "da29b19e0b7288f7",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "2b0cfe1b3eb1dd0f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "57ae420be0539027",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "07b874b01425a3b2",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "aa14b309cca6fa82",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ac07a0d20e6c3839",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "6baff7531d320558",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ce38152ed55a4f01",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "2b6d72f5f79f1959",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "54199274818d1c25",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "f1caa4d622119884",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "be0f098e143c9a6e",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "6e935a79a305c98c",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "1021a34bce893db5",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "63da25b66c961139",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "22426ba908dfc482",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "370f5989a6de5fe8",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "153833804aa154fb",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "e60651b65982327a",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "8727b6e13a7049d6",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "a43e6b11eadbd7e2",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "c0d7cc19bdfcff6e",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "df7e7ff9acae2593",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "66301df141812bbf",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "27bf7b43b59d54c9",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "52ea54b2dd9f8f54",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "0b17e6505907a7fd",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "5cc2acd6ab04d310",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "607d63ffc4f6f7ff",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "bf5383ee0822f657",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "b17dc6c4c1c6a342",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ce67500876fcf862",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "c32c3b0fb13de07a",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "9b55804f3a710e2f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "78a49596dfeb8e90",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "c5283ea05c941c0c",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "58dfac573f1b30af",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "20a859931c56083a",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "8cd13e6e307daebe",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "f05e8fc1c6f102d3",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ad054217b7401376",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "6baf500987941a2d",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "1946a0fd7cad2bdc",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "59654956a73ef64d",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "02a4092f5dca0c91",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "f7d0a54badb4cf25",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "c3b0b54abaf25002",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "9ab91beaf10f0953",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "743c9f26515f0306",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "7a58687d892bd85d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "1e5ae0f9ab1ff487",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ddcd730ce8dfd8cb",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "62cbe3db93f1ee8f",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "831d8cc0f5dfc65b",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "15242b5b3890fd08",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "a775db49843201f2",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "7520045a0b616c24",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "198d8585c9d5ca49",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3bb562be777b596d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "b4503cb8e12db63a",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ea95baf06d294faf",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ddf5e412fa8fb8d5",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "296f45cf35c26364",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ddbdd53e5dded102",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "817813fa806be5e3",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "a293775f8bc9339d",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3d1250e4ee38f7dc",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "2b8d8992d7d75988",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "7fdeddfaee542370",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "177bd6259bf61cd7",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "6bdaa04b2ea97435",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "e8d65acec106759d",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "5857be043aa79e01",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "0be3b2310f3936f9",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3ed5d6b2c8bd02c0",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "a461414f8f43194f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "1328d9d51b83f61c",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "9dc91e99eb3945e5",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "4e07d81e12b2d894",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "d9d47dd9b0a3aa58",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "229b24ef92dd31c7",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "485066e08c02de88",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3d6626d7fdb9e4a0",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "75e2c9403df2a842",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "1713e96465d18f70",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "82002016edc474a5",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "8871d26205909fb1",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "85a63ff9bfee742d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "af778507ece40301",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "de86360b1e8a268c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "d2127d39ea76c633",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "4bc3f21dd78c480c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "1f7730e2c763f5c4",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "7391c1349281dd3b",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "998f64ccbd21be04",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "4157f6b8a9f507f6",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "c5e1fea22c433c8e",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "d9ff199f4a426cd0",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "7484ad699a1236d3",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "7b33ee0e84188e6d",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "81cddf876ff8a3c1",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ea6bac334ea54c0e",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "9f6ee81cc2a0308d",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "290132e5f7d65555",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "8f59cff5a1b64b9c",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "e64d4e9201b51176",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "120422e7d19a4931",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "dfe7e629fc864c2f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "9704ab01acc315a0",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "aa468a88398ce8eb",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "65b3f815e2e57bc2",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "f8306b1620c92950",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "b5f72360f0cc55ba",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3c57863b51e79f0c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "b083428b845399d1",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "89b413583dff9a57",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "af6757772a654330",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "abe278ec06d90291",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "efbf26145eac4b81",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "58613c73e361e04f",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3327f2c2ce109fd1",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "5c8e48660eac088d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "a80f76c8bac2e330",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "25dce48cec24797b",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "1cf2330953fe75c8",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3320bf3de18784e2",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "51c657b2ff9d1640",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "922713fd73ab93a1",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3fa551802a6c30c4",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3226cf5752175dc1",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "69b744ef3a41ea6f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "2074bf76759a98b1",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3444468e52aae481",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "80bf2203eed5c6ae",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "dddd071d8c3ee43c",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "d52630ef16e4d3a6",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "62712680d7795c3e",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "fc7dae15ad537948",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "0a6894a4a50e804b",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "12a72aa6d312ef22",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "8a8126137fcee187",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "49c7979d37680840",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "bdda5640265ebe6d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "9ad60cae56582dec",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "74196a087204badc",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "2eccaaf138e5d80c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3d49bea793efd35b",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "f1d598e044dba984",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "df5c1a4570b35b41",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "0e4a5708dbf2e64e",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "780133c7132e6d1c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "540f5d1a5fd96905",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "dde582ee47b5db7d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "69d9e1df3db9d412",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ae7572eb94301b0b",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "1b209c3f12bea1ac",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "28d785c208139f2c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "f95d9ef340987133",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "998385aea4a86a99",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "6ecc4f0cc2a542f9",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "6374b481eafd3f72",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "4d099f1c8dcbaa94",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "bf0a51ba1869314f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ebdd5ab82e1185e0",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "24e65fadcd2c603d",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "012d264dcc42de27",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "d1f76a7d8fd63f34",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "14fad8bcd4ce4a38",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3397b5638f9aa93c",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "02ce264fa9ccf720",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "96342b63a3ab0f7f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3ef01943f3c4d956",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "56d9b7da80b49ecd",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "954be8dbd8e37580",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "d43c15ffc30233d5",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "9b23375e2ba3c42c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "021f6f23bf667c94",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "a211e81ef8710f6a",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ed2399e7340ace3d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "10e7e330cf00b8e0",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "daa7fb47e34bdd13",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "d3192231453ab108",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "9f2cd6020b291314",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "9d32e9e3d9ba0332",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "121308c83479c895",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "87cb06d15aee8725",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3504d972d69e7a6d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ec6967ec10b3600a",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "bc5f8125fc7e5455",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "16e22ac967ff8a18",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "d3df84dca0edf48f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "ccbc93a9e2653c5b",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "54cb94381a1d0ed5",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "6c2716bd888d87bb",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3f637de284df7be0",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "9b3c8cfba840f0a4",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "d0a510157fed0624",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "7fd2df078d401a48",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "960bda686bf750b2",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "952947a2d66b39a4",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "8509e879cf1b8b95",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "bb7a99b2e097cde6",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "969d8ff516cbdb57",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "cc2eeba2d75f244d",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "fe71352ff00d1acd",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "c17d50a620d108d4",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "c4d402371cef6eec",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "4e38a025c04f7ec6",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "78b6b70d64be26ef",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "b9fd32a464ce31af",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "43383d7c87cc51ff",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "419511aa5d44b759",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "963b2526e1e4ce88",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3ed51aff182873fa",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "9333a11a79bd9b96",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3cc1efff0f46d1f2",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "b0de28337828fc5e",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "59a84181a7be7d37",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "f66f0e52229f7133",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "21caaf36ad7e9dc5",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "d741a0a024ebd85b",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "d97c200c9c0674b1",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "f0f8ae880a86ad70",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "1dca4463912ae22f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "f82c744b18ee5b13",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "e67b9b16e83c5b52",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "56ae8c0ccb5bc6a4",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "8e22a5e5894cce02",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "2b5614b9ea6156aa",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "7ab5daddcf83d732",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "05394964e4c59744",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "a0c389e374af2073",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "569439cdc7d96384",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "de038e5ddac79c15",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "03bf2b307336a150",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "4552df494d2cc5d7",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "fbdcd786dd365dd2",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "716a4515e57afecc",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "1f11a11d60e584fe",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "3c7c93f3acf174fb",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "e2b0271db98a29c9",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "7fd64a49d413c036",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "238aa6330eb5931b",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "5791db68bfe6026e",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "f041df37210a6d96",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "4165949e6f433d27",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "aad56b317ee27967",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "b7514c45e4321312",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_s1_candidate_definition_v1",
+      "candidate_id": "1fc676b2f8f2c8b9",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    }
+  ],
+  "derivation": "deterministic_cartesian_prefix",
+  "result_artifact_count": 0,
+  "result_artifacts_consumed": [],
+  "safety": {
+    "broker_action": "none",
+    "candidate_expansion_allowed": false,
+    "clean_run_authorized": false,
+    "evaluator_execution_allowed": false,
+    "locked_holdout_access_allowed": false,
+    "manual_review_required": true,
+    "new_parameter_search_allowed": false,
+    "paper_shadow_change_allowed": false,
+    "production_effect": "none",
+    "production_weight_change_allowed": false,
+    "research_only": true,
+    "unbiased_oos_claim_allowed": false
+  },
+  "schema_version": "dynamic_v3_clean_candidate_universe.v1",
+  "source_commitments": {
+    "parameter_sweep_config": {
+      "path": "config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_real_smoke.yaml",
+      "sha256": "2c6620e497178a65b91e0cd58801901693c1d0acbfc3d7a792e8bb36ce5ef924",
+      "size": 3188
+    },
+    "sweep_profile_config": {
+      "path": "config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_profiles.yaml",
+      "sha256": "d009bb541838e59830478b43b5e10944af606810cfbbcd6db79b5f5c992a1eff",
+      "size": 1543
+    }
+  }
+}

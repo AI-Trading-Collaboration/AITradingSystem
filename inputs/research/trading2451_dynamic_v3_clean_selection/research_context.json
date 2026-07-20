@@ -1,0 +1,91 @@
+{
+  "actual_data_range": null,
+  "actual_portfolio_start": null,
+  "as_of": "2026-07-21",
+  "blocking_issues": [
+    "RUNTIME_DATA_QUALITY_GATE_REQUIRED_BEFORE_EVALUATOR"
+  ],
+  "caveats": [
+    "historical_market_outcomes_known_at_preregistration",
+    "runtime_data_snapshot_not_bound_until_owner_authorized_run",
+    "unbiased_oos_claim_not_allowed"
+  ],
+  "context_id": "research_context_5b788598ae4eddd88deb",
+  "data_quality": {
+    "as_of": "2026-07-21",
+    "contract_id": "runtime_data_quality_gate_required_before_trading106",
+    "passed": false,
+    "policy_ref_id": "etf_data_quality_policy_v1",
+    "report_path": null,
+    "report_sha256": null,
+    "status": "PENDING_RUNTIME_VALIDATION"
+  },
+  "effective_coverage": null,
+  "effective_feature_start": null,
+  "effective_prediction_start": null,
+  "evaluation_range": null,
+  "evidence_role": "PRIMARY_DECISION_EVIDENCE",
+  "market_regime_id": "ai_after_chatgpt",
+  "policy_refs": [
+    {
+      "path": "config/etf_portfolio/data_quality.yaml",
+      "policy_id": "etf_data_quality_policy_v1",
+      "role": "data_quality",
+      "sha256": "a4b8dd8fd875c4dd225db9591a6e4aad92a0302c22b3b079cfe5867283322031",
+      "status": "pilot_baseline",
+      "version": "etf_data_quality_policy_v0_1"
+    },
+    {
+      "path": "config/research/strategy_execution_policy_registry.yaml",
+      "policy_id": "strategy_execution_policy_registry_v1",
+      "role": "execution",
+      "sha256": "bbd2a70905c247e6daac400632a0fc5a44393ac50f1a6b9de98cacc163921b22",
+      "status": "research_only_baseline",
+      "version": "v1"
+    },
+    {
+      "path": "config/research/strategy_research_restart_policy.yaml",
+      "policy_id": "strategy_research_restart_r0_r2_v1",
+      "role": "market_regime",
+      "sha256": "0f81afa123d5646548496951a912b04a00dd4535b77ef60de5760ed6f02bf476",
+      "status": "owner_approved_pilot_baseline",
+      "version": "v1"
+    },
+    {
+      "path": "config/research/primary_research_window_policy.yaml",
+      "policy_id": "primary_research_window_policy_v1",
+      "role": "research_window",
+      "sha256": "4fd79be1bbce8a3dbd8c733d5e03e09d513a3e375703d3ce11801f2adcd5512d",
+      "status": "pilot_baseline",
+      "version": "v1"
+    },
+    {
+      "path": "config/etf_portfolio/dynamic_v3_rescue/parameter_governance_v1.yaml",
+      "policy_id": "dynamic_v3_rescue_parameter_governance_v1",
+      "role": "strategy",
+      "sha256": "d032ee7483803c2635613028c42d0a00d3b72fedf2bb0407b37fd22fffa474c5",
+      "status": "reviewed_baseline",
+      "version": "2026-06-06"
+    },
+    {
+      "path": "config/etf_portfolio/dynamic_v3_real_evaluation.yaml",
+      "policy_id": "etf_dynamic_v3_real_evaluation_policy_v1",
+      "role": "threshold",
+      "sha256": "eedbccd1bd6fb511336570e9f9383ac7ed1c19930f1fb3377893f4e388172d8c",
+      "status": "pilot_baseline",
+      "version": "etf_dynamic_v3_real_evaluation_v0_1"
+    }
+  ],
+  "regime_anchor": "2022-11-30",
+  "regime_start": "2022-12-01",
+  "requested_range": {
+    "end": "2027-07-21",
+    "start": "2021-02-22"
+  },
+  "research_window_id": "exact_three_asset_validated",
+  "research_window_start": "2021-02-22",
+  "schema_version": "research_evaluation_context.v1",
+  "status": "BLOCKED",
+  "trading_calendar": "XNYS",
+  "window_role": "primary_validated"
+}

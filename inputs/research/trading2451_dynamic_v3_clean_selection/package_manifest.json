@@ -1,0 +1,97 @@
+{
+  "broker_action": "none",
+  "candidate_expansion_allowed": false,
+  "clean_run_authorized": false,
+  "eligibility_status": "ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN",
+  "evaluator_execution_allowed": false,
+  "generated_at": "2026-07-21T02:15:00+09:00",
+  "locked_holdout_access_allowed": false,
+  "manual_review_required": true,
+  "new_parameter_search_allowed": false,
+  "next_responsible_party": "project_owner_clean_run_authorization",
+  "output_artifact_checksums": {
+    "campaign.json": "26d8d89422c01e5c5a534e3560edede9de9d81bf490f0ac69c057c4cf74d7dc3",
+    "candidate_universe.json": "a25c311fcc5ecededcdd2fb1d4b29677cc0f3d438405196f369928c51c6f21e4",
+    "eligibility.json": "f6851a02e0d07e5c804d8b04b5fd4718cd107bbd8e2588dd2e893b5572183b3a",
+    "preregistration.json": "fc49889311a5d22caf0b1de6ae2822750a6af82fd3c4b7315a7ed53226c95d01",
+    "research_context.json": "e75547212a85a80b6feb6a1b4018bd139573c98db8b130fc7c5d1799637f112b",
+    "source_contract.json": "20032919e340334474e52cb4b71b8214ac5749a826b4b447493b0c86cd4b92ff"
+  },
+  "package_id": "dynamic-v3-clean-s1_cf88e2fc1cee51406b6b",
+  "paper_shadow_change_allowed": false,
+  "production_effect": "none",
+  "production_weight_change_allowed": false,
+  "report_type": "dynamic_v3_clean_selection_s1_package_manifest",
+  "research_only": true,
+  "result_artifact_count": 0,
+  "result_artifacts_consumed": [],
+  "safety": {
+    "broker_action": "none",
+    "candidate_expansion_allowed": false,
+    "clean_run_authorized": false,
+    "evaluator_execution_allowed": false,
+    "locked_holdout_access_allowed": false,
+    "manual_review_required": true,
+    "new_parameter_search_allowed": false,
+    "paper_shadow_change_allowed": false,
+    "production_effect": "none",
+    "production_weight_change_allowed": false,
+    "research_only": true,
+    "unbiased_oos_claim_allowed": false
+  },
+  "schema_version": "dynamic_v3_clean_selection_s1_package.v1",
+  "selection_input_commitments": {
+    "parameter_sweep_config": {
+      "path": "config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_real_smoke.yaml",
+      "sha256": "2c6620e497178a65b91e0cd58801901693c1d0acbfc3d7a792e8bb36ce5ef924",
+      "size": 3188
+    },
+    "policy:dynamic_v3_rescue_parameter_governance_v1": {
+      "path": "config/etf_portfolio/dynamic_v3_rescue/parameter_governance_v1.yaml",
+      "sha256": "d032ee7483803c2635613028c42d0a00d3b72fedf2bb0407b37fd22fffa474c5",
+      "size": 1523
+    },
+    "policy:etf_data_quality_policy_v1": {
+      "path": "config/etf_portfolio/data_quality.yaml",
+      "sha256": "a4b8dd8fd875c4dd225db9591a6e4aad92a0302c22b3b079cfe5867283322031",
+      "size": 7228
+    },
+    "policy:etf_dynamic_v3_real_evaluation_policy_v1": {
+      "path": "config/etf_portfolio/dynamic_v3_real_evaluation.yaml",
+      "sha256": "eedbccd1bd6fb511336570e9f9383ac7ed1c19930f1fb3377893f4e388172d8c",
+      "size": 3456
+    },
+    "policy:primary_research_window_policy_v1": {
+      "path": "config/research/primary_research_window_policy.yaml",
+      "sha256": "4fd79be1bbce8a3dbd8c733d5e03e09d513a3e375703d3ce11801f2adcd5512d",
+      "size": 4227
+    },
+    "policy:strategy_execution_policy_registry_v1": {
+      "path": "config/research/strategy_execution_policy_registry.yaml",
+      "sha256": "bbd2a70905c247e6daac400632a0fc5a44393ac50f1a6b9de98cacc163921b22",
+      "size": 34775
+    },
+    "policy:strategy_research_restart_r0_r2_v1": {
+      "path": "config/research/strategy_research_restart_policy.yaml",
+      "sha256": "0f81afa123d5646548496951a912b04a00dd4535b77ef60de5760ed6f02bf476",
+      "size": 6866
+    },
+    "selection_rule": {
+      "path": "inputs/research/trading2451_dynamic_v3_clean_selection/selection_rule.yaml",
+      "sha256": "b8d3caad13f9d7e3c98517dc1fa3849868a1e46eb288a9d8bb013aa9fd0ffcf0",
+      "size": 4525
+    },
+    "sweep_profile_config": {
+      "path": "config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_profiles.yaml",
+      "sha256": "d009bb541838e59830478b43b5e10944af606810cfbbcd6db79b5f5c992a1eff",
+      "size": 1543
+    },
+    "window_catalog": {
+      "path": "inputs/research/trading2451_dynamic_v3_clean_selection/window_catalog.yaml",
+      "sha256": "c827c0eda5fe152bb5c05b56bed8100dab0bedece2aed037232d76a9891ddd63",
+      "size": 2210
+    }
+  },
+  "status": "PASS",
+  "unbiased_oos_claim_allowed": false
+}

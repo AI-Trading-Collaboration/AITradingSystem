@@ -23,8 +23,8 @@ from ai_trading_system.platform.artifacts.validation_session import (
 )
 
 
-@pytest.fixture(autouse=True)
-def _reuse_validated_artifacts_within_test():
+@pytest.fixture(scope="module", autouse=True)
+def _reuse_validated_artifacts_within_module():
     with artifact_validation_session():
         yield
 
@@ -496,9 +496,9 @@ def _write_fallback_policy_report(
                     "source_group_count": 1,
                     "primary_ok_count": 0,
                     "fallback_used_count": 0,
-                    "fallback_unavailable_count": 1
-                    if fallback_status == "FALLBACK_UNAVAILABLE"
-                    else 0,
+                    "fallback_unavailable_count": (
+                        1 if fallback_status == "FALLBACK_UNAVAILABLE" else 0
+                    ),
                     "blocked_no_valid_source_count": 0,
                     "blocking_source_count": len(blocking_data_types),
                     "fallback_used_sources": [],
