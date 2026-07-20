@@ -5762,6 +5762,44 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
+    s2_s4 = baseline["phase_arch_005_s2_s4_parallel_control"]
+    assert s2_s4["status"] in {"VALIDATING_S2_S4", "COMPLETE_S2_S4_S5_PENDING"}
+    assert s2_s4["task_id"] == "ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE"
+    assert s2_s4["base_commit"] == "20b878ea2d84a31238311bdbcac14a28892dabe1"
+    assert s2_s4["contracts"]["lease_replay_schema"] == "execution_lease_replay.v1"
+    pilot_policy = s2_s4["reviewed_pilot_policy"]
+    assert pilot_policy["max_parallel_domain_lanes"] == 2
+    assert pilot_policy["max_active_leases"] == 3
+    assert pilot_policy["max_reassignments"] == 1
+    assert pilot_policy["priority_aging_enabled"] is False
+    assert s2_s4["s2_kernel"]["status"] == "PASS"
+    scheduler = s2_s4["s3_shadow_scheduler"]
+    assert scheduler["status"] == "PASS"
+    assert len(set(scheduler["decision_ids"])) == 1
+    assert len(set(scheduler["decision_byte_sha256"])) == 1
+    assert scheduler["dispatch_allowed"] is False
+    dispatch = s2_s4["s4_controlled_dispatch"]
+    assert dispatch["status"] == "PASS"
+    assert dispatch["dispatch_id"] == "controlled-dispatch-aca2d27f60304e5a5c60"
+    assert dispatch["validation_check_count"] == 29
+    assert dispatch["successful_run_event_count"] == 13
+    assert dispatch["successful_run_active_lease_count"] == 0
+    assert dispatch["failed_run_chains_preserved"] == 2
+    assert dispatch["all_failed_run_active_leases_closed"] is True
+    assert s2_s4["research_lineage_refresh"]["r2_decision"] == ("CONTINUE_EVIDENCE_CLOSURE")
+    assert s2_s4["source_of_truth"]["legacy_markdown_only"] is True
+    assert s2_s4["source_of_truth"]["canonical_cutover_performed"] is False
+    assert s2_s4["next_work"]["s5_unblocked"] is False
+    assert s2_s4["next_work"]["arch_004_g2_5_unblocked"] is False
+    assert s2_s4["safety"]["production_effect"] == "none"
+    if s2_s4["status"] == "VALIDATING_S2_S4":
+        assert all(source["sha256"] == 0 for source in s2_s4["sources"])
+    else:
+        assert all(record["status"] == "PASS" for record in s2_s4["validation"].values())
+        for source in s2_s4["sources"]:
+            actual = _source_sha256(source)
+            assert actual == source["sha256"], source["path"]
+
     prebootstrap = baseline["arch_005_prebootstrap_primitives"]
     assert prebootstrap["status"] in {
         "IN_PROGRESS_NON_CUTOVER",

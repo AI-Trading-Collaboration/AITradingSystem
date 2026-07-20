@@ -1,0 +1,86 @@
+schema_version: arch_005_parallel_control_policy.v1
+policy_id: arch_005_s2_s4_controlled_parallelism
+version: 1.0.0
+status: REVIEWED_PILOT_BASELINE
+owner: architecture_coordinator
+approved_by: project_owner
+approval_ref: owner_instruction_2026-07-20_continue_to_s4
+rationale: >-
+  在不切换任务事实源、不改变投资逻辑的前提下，验证两条独立 domain lane 与一条
+  integration coordinator lane 的依赖、租约、调度、失败隔离和恢复闭环。
+intended_effect: >-
+  降低工程任务与证据型策略研究任务的共享文件冲突和等待时间，同时保留完整审计证据。
+validation_plan:
+  - focused S2 dependency/readiness/lease/replay tests
+  - focused S3 deterministic two-cycle scheduler tests
+  - focused S4 concurrent dispatch/failure recovery/integration tests
+  - architecture-fitness
+  - contract-validation
+  - reproducibility
+  - full
+review:
+  required_before_stage: S5
+  trigger: after_first_s4_three_lane_rehearsal
+  expires_after_successful_s4_rehearsals: 1
+  exit_condition: >-
+    用真实 rehearsal telemetry 重新评估 capacity、TTL、retry 和 fairness 后，由 owner
+    审核下一版 policy；本 pilot policy 不得直接沿用到 canonical cutover。
+readiness:
+  eligible_governance_statuses:
+    - READY
+    - IN_PROGRESS
+    - BASELINE_DONE
+    - VALIDATING
+  hard_dependency_types:
+    - blocks_start
+    - blocks_completion
+  require_requirement_refs: true
+  require_acceptance_criteria: true
+scheduler:
+  max_parallel_domain_lanes: 2
+  max_total_active_leases: 3
+  priority_order:
+    - P0
+    - P1
+    - P2
+    - P3
+  tie_breakers:
+    - priority
+    - task_id
+    - change_id
+  fairness_mode: deterministic_no_aging_pilot
+lease:
+  ttl_seconds: 1800
+  max_reassignments: 1
+  arbiter_ttl_seconds: 30
+  require_exact_base_commit: true
+  require_manifest_hash_binding: true
+  active_state: ACTIVE
+  terminal_states:
+    - RELEASED
+    - REASSIGNED
+    - BLOCKED
+  stale_state: EXPIRED
+s4:
+  allowlisted_task_ids:
+    - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+    - ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+    - TRADING-2446_to_2448_RESEARCH_RESTART_R0_R2
+  allowlisted_actors:
+    - engineering-agent
+    - research-agent
+    - recovery-agent
+    - integration-coordinator
+  domain_lane_count: 2
+  coordinator_lane_count: 1
+  failure_injection_change_id: arch-005-s4-engineering-validation
+  failure_injection_reason: CONTROLLED_REHEARSAL_FIRST_ATTEMPT
+safety:
+  source_of_truth: LEGACY_MARKDOWN_ONLY
+  task_governance_status_mutation_allowed: false
+  generated_task_view_write_allowed: false
+  strategy_logic_change_allowed: false
+  strategy_threshold_change_allowed: false
+  paper_shadow_change_allowed: false
+  production_effect: none
+  broker_action: none

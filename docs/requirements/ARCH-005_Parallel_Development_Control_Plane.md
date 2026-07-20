@@ -1,19 +1,19 @@
 # ARCH-005 Parallel Development Control Plane
 
-最后更新：2026-07-19
+最后更新：2026-07-20
 
 ## 任务信息
 
 - task id：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`
 - priority：`P0`
-- status：`BASELINE_DONE_S0_S1_COMPLETE_S2_PENDING`
+- status：`BASELINE_DONE_S2_S4_COMPLETE_S5_PENDING`
 - owner：architecture coordinator / developer platform owner / integration coordinator
 - owner review：project owner 负责 source-of-truth cutover 与调度策略复核
 - hard dependency：`ARCH-004C_PLATFORM_CONTRACTS`、`ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES` `DONE`；现有 task-register consistency baseline
 - bootstrap start condition：`SATISFIED`；G2.4 phase exit source=`152f2d33`，`arch_005_bootstrap_handoff.v1`已提交推送并以`f1045634`修正为Git-blob可复算hash basis；`next_slice_unblocked=false`
 - approved pre-bootstrap boundary：ARCH-004G2.4-EB2 integration gate 已 PASS，owner 批准的下一实现范围为最终可复用、非 cutover 的 manifest/conflict/lane-plan/evidence primitives；它不是 S0，不得迁移 task registry、切换事实源、生成替代 task views、派发任务或获取真实 lease
 - pre-bootstrap status：`COMPLETE_NON_CUTOVER_G2_4_CONTINUES`，slice id=`ARCH-005-PB1`，base=`fe0e19b9`；只新增pure contracts/validators/planner及测试，不生成runtime registry或scheduler state
-- integration milestone：S0～S3 在 G2.4 handoff 后推进；S4 controlled dispatch 与 `ARCH-004G2_PARALLEL_READINESS_GATE` 的三 lane rehearsal 共同验收
+- integration milestone：S0～S4 已在 G2.4 handoff 后完成；S5 canonical cutover 尚未授权
 - downstream consumers：ARCH-004 G3/G4/G5 lanes、`PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH`
 - production effect：`none`
 
@@ -440,6 +440,27 @@ ARCH-004 coordinator 生成并验证 `arch_005_bootstrap_handoff.v1`。S0 冻结
 这些问题不影响已经闭合的 S0/S1 shadow baseline。任何会影响调度、lease 或状态解释的选择必须在进入 S2/S3 前由后续显式任务冻结；当前不得据此自动启动 S2、dispatch 或 G2.5。
 
 ## 状态记录
+
+- 2026-07-20：S2～S4 受控 pilot 已闭合并转
+  `BASELINE_DONE_S2_S4_COMPLETE_S5_PENDING`。S2 typed dependency/readiness/conflict/lease kernel
+  fail closed；S3 两个 read-only governance cycles 生成相同 decision id 与 bytes；S4 成功 dispatch
+  `controlled-dispatch-aca2d27f60304e5a5c60`，工程 lane 预期失败后仅重试自身，研究 lane 未受阻，
+  coordinator 仅在两项 evidence PASS 后启动，成功链 13 个事件 replay PASS、active lease=0，pilot
+  validator 29 项全 PASS。两条失败演练链均保留并以追加 expiry event 收口；未删除或改写历史。
+  正式 architecture focused/fast-unit/architecture-fitness/contract-validation/reproducibility/full=
+  `85/317/436/265/23/6420 passed`，full 另有 2 skipped、643 warnings、wall 956.37s；相对上一轮
+  978.80s 缩短约 2.3%，slowest 50 未出现新增 S2～S4 测试，没有性能回退。
+  完整设计、输入输出、失败恢复与优化边界见
+  `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。S5 尚未授权，legacy Markdown 仍是唯一
+  可写事实源，ARCH-004 仍停在 G2.5 前；`production_effect=none`。
+
+- 2026-07-20：project owner 明确批准按 S2 → S3 → S4 继续推进，并采用“一条工程 lane +
+  一条证据型策略研究 lane + integration coordinator lane”的受控试运行边界。本批先冻结
+  reviewed pilot policy，再实现 typed dependency/readiness、single-arbiter lease/CAS/replay、只读
+  deterministic scheduler 与 controlled dispatch/failure recovery；S4 只允许
+  `production_effect=none`、不修改 task governance status、投资逻辑、策略阈值、paper-shadow、
+  production 或 broker 状态。S5 canonical cutover 与 self-hosting 不在本批，Markdown 在 S4 完成后
+  仍是唯一可写事实源。
 
 - 2026-07-19：正式S0/S1已闭合并转`BASELINE_DONE`。S0冻结`task_record.v1`、`task_event.v1`、
   `task_dependency.v1`、`execution_lease.v1`、`scheduler_decision.v1`与

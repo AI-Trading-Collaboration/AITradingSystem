@@ -4,6 +4,12 @@
 
 如果需要理解输入数据如何计算成输出数据，先读 `docs/calculation_logic.md`；字段级含义见 `docs/schema/fields.yaml`，也可以用 `aits explain <field|gate|artifact>` 做只读反查。该 YAML 先覆盖 `scores_daily.csv`、decision snapshot、trace bundle、prediction ledger 和 shadow parameter search 的核心字段。
 
+## ARCH-005 S2～S4 Parallel Development Control Plane
+
+|产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
+|---|---|---|---|---|---|---|
+|`config/architecture/arch_005_parallel_control_policy.yaml`<br/>`inputs/architecture/arch_005_s2_s4_pilot.yaml`<br/>`outputs/architecture/arch_005_s4/shadow_governance_audit.json`<br/>`outputs/architecture/arch_005_s4/controlled_dispatch_report.json`<br/>`outputs/architecture/arch_005_s4/controlled_dispatch_validation.json`<br/>`outputs/architecture/arch_005_s4/runs/*/lease_store/events/**/*.json`|`python scripts/architecture_arch005_control_plane.py shadow-audit`；`run-pilot --started-at <ISO-8601>`；`validate-pilot`|ARCH-005 S0/S1 contracts与shadow task facts、frozen base commit、reviewed pilot policy、显式三-lane pilot spec、DevEx fitness、R0/R2 research validators|`arch_005_parallel_control_policy.v1`、`arch_005_s2_s4_pilot.v1`、`task_dependency.v1`、`task_readiness_decision.v1`、`execution_lease.v1`、`execution_lease_replay.v1`、`scheduler_decision.v1`、`controlled_three_lane_dispatch.v1`；single arbiter、resource conflict、base binding、append-only causal hash、artifact SHA、report id、failure isolation；S3 dispatch/lease false，S4仅allowlist true；task/strategy/paper-shadow mutation false、production/broker none|在canonical cutover前验证dependency/readiness、deterministic scheduling、租约恢复、两domain+coordinator并发闭环；失败run保留审计链|否，`production_effect=none`、`broker_action=none`|S4 PASS不是S5 cutover，也不表示Markdown已变generated view、任务会自动改状态或merge；pilot capacity=2、TTL=1800秒、retry=1是reviewed pilot baseline，不是未经复核即可扩大并行度的永久参数。|
+
 ## TRADING-2446～2448 Strategy Research Restart R0～R2
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|

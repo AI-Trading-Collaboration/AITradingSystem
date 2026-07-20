@@ -35,7 +35,7 @@ task_record:
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1225
+    line_number: 1251
     row_sha256: c7b2737c2ac4b8f841e84bd3b5458387489696e0ae8041c952faf3fb889df633
     cell_count: 8
     all_cells:
@@ -129,4 +129,4 @@ projection:
   terminal: false
   raw_row_sha256: c7b2737c2ac4b8f841e84bd3b5458387489696e0ae8041c952faf3fb889df633
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 5f0899b7a2a28cdceb4ab3bc14fa12f4a907adb5c8ef66423d3ba3d90e41d68c
+fragment_checksum: 1d2fc8db2bde8d54ec78fe942caa5b1fd667264e524095e25d31b0f96207e833

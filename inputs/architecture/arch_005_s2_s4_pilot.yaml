@@ -1,0 +1,112 @@
+schema_version: arch_005_s2_s4_pilot.v1
+pilot_id: arch_005_s2_s4_engineering_research_coordinator
+policy_id: arch_005_s2_s4_controlled_parallelism
+base_commit_source: runtime_head
+tasks:
+  - task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+    title: Engineering architecture validation lane
+    governance_status: IN_PROGRESS
+    priority: P1
+    requirement_refs:
+      - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
+    acceptance_criteria:
+      - architecture fitness is recomputed from tracked manifests
+      - no generated manifest or governance status is mutated by the lane
+    change_manifest:
+      change_id: arch-005-s4-engineering-validation
+      lane_role: DOMAIN
+      owner: developer_platform_owner
+      owned_paths:
+        - outputs/architecture/arch_005_s4/engineering_result.json
+      shared_paths: []
+      module_ids:
+        - src.ai_trading_system.platform.architecture.devex
+      contract_claims:
+        - contract_id: arch_004e_architecture_fitness
+          version: v1
+          access: READ
+      required_validation_tiers:
+        - engineering-validation
+  - task_id: TRADING-2446_to_2448_RESEARCH_RESTART_R0_R2
+    title: Research evidence validation lane
+    governance_status: BASELINE_DONE
+    priority: P0
+    requirement_refs:
+      - docs/requirements/TRADING-2446_to_2448_Research_Restart_R0_R2.md
+    acceptance_criteria:
+      - R0 and R2 validators pass against current immutable evidence
+      - no candidate expansion, parameter search or investment state is changed
+    change_manifest:
+      change_id: arch-005-s4-research-evidence-validation
+      lane_role: DOMAIN
+      owner: research_validation_owner
+      owned_paths:
+        - outputs/architecture/arch_005_s4/research_result.json
+      shared_paths: []
+      module_ids:
+        - src.ai_trading_system.research_restart
+        - src.ai_trading_system.research_restart_decision
+      contract_claims:
+        - contract_id: strategy_research_restart
+          version: v1
+          access: READ
+      required_validation_tiers:
+        - research-evidence-validation
+  - task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+    title: Integration coordinator lane
+    governance_status: IN_PROGRESS
+    priority: P0
+    requirement_refs:
+      - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
+    acceptance_criteria:
+      - both domain lane results and evidence bindings pass
+      - coordinator output is deterministic and task governance status remains unchanged
+    change_manifest:
+      change_id: arch-005-s4-integration-coordinator
+      lane_role: COORDINATOR
+      owner: integration_coordinator
+      owned_paths: []
+      shared_paths:
+        - outputs/architecture/arch_005_s4/dispatch_summary.json
+        - outputs/architecture/arch_005_s4/controlled_dispatch_report.json
+        - outputs/architecture/arch_005_s4/controlled_dispatch_validation.json
+        - outputs/architecture/arch_005_s4/shadow_governance_audit.json
+      module_ids:
+        - src.ai_trading_system.platform.architecture.parallel_control_dispatch
+      contract_claims:
+        - contract_id: arch_005_controlled_dispatch
+          version: v1
+          access: WRITE
+      required_validation_tiers:
+        - integration-validation
+dependencies:
+  - dependency_id: s4-coordinator-after-engineering
+    task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+    depends_on_task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+    edge_type: blocks_start
+    required_statuses:
+      - EXECUTION_PASS
+    rationale: coordinator consumes validated engineering lane result
+    owner: integration_coordinator
+  - dependency_id: s4-coordinator-after-research
+    task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+    depends_on_task_id: TRADING-2446_to_2448_RESEARCH_RESTART_R0_R2
+    edge_type: blocks_start
+    required_statuses:
+      - EXECUTION_PASS
+    rationale: coordinator consumes validated research evidence lane result
+    owner: integration_coordinator
+governance_cycles:
+  - governance-cycle-001
+  - governance-cycle-002
+failure_recovery:
+  injected_change_id: arch-005-s4-engineering-validation
+  fail_first_attempt: true
+  recovery_actor: recovery-agent
+  expected_unaffected_change_id: arch-005-s4-research-evidence-validation
+safety:
+  production_effect: none
+  broker_action: none
+  task_governance_status_mutation_allowed: false
+  generated_task_view_write_allowed: false
+  strategy_logic_change_allowed: false

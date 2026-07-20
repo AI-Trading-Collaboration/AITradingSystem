@@ -11,57 +11,63 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner + architecture coordinator；选择S2或与策略研究并行的后续边界
+  next_owner: architecture coordinator + developer platform owner + integration coordinator；S5需project
+    owner新授权
   requirement_refs:
+  - docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md
   - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`。PB1及正式S0/S1已完成；S2
-    dependency/readiness/conflict/lease kernel、S3 read-only scheduler、S4 controlled
-    dispatch、S5 cutover和S6理解/优化仍待后续显式选择。旧Markdown继续是唯一可写事实源，禁止dual write、真实dispatch或lease。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`
+    和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1与S2～S4已完成；旧Markdown继续是唯一可写事实源，S5
+    cutover/self-hosting未授权。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: S0/S1 baseline与shadow registry可重复生成；869个task、0 overlap/缺失/重复，55个legacy歧义行无损保留；两份compatibility
-      views逐byte一致；fast/architecture/contract/reproducibility/full通过，`production_effect=none`。后续S2须另行冻结lease/readiness
-      policy并保持fail closed。
+    text: 已完成：S2 unknown/self/cycle/stale/conflict/unsafe fail closed，lease支持CAS/release/expire/reassign/replay；S3两个governance
+      cycles deterministic；S4工程/证据研究/coordinator三lane完成并发、失败隔离、reassign、evidence binding和deterministic
+      integration。剩余退出条件：owner授权S5；最终import/parity、consumer migration、canonical cutover与rollback
+      rehearsal；稳定两个governance cycles后移除manual row-move。全链保持`production_effect=none`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1196
-    row_sha256: 39abd23abd22f715d1ad0db0992aa0e3c93b6ac516742758f0d1a4b73e3441f6
+    line_number: 1222
+    row_sha256: 5abb82ea65dabb3270ebd3ecba5b1c6fb78cc62489378ceb6bed96c545eee9ff
     cell_count: 8
     all_cells:
     - ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
     - Architecture / auditable parallel development scheduling foundation
     - P0
     - BASELINE_DONE
-    - project owner + architecture coordinator；选择S2或与策略研究并行的后续边界
-    - 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`。PB1及正式S0/S1已完成；S2
-      dependency/readiness/conflict/lease kernel、S3 read-only scheduler、S4 controlled
-      dispatch、S5 cutover和S6理解/优化仍待后续显式选择。旧Markdown继续是唯一可写事实源，禁止dual write、真实dispatch或lease。
-    - S0/S1 baseline与shadow registry可重复生成；869个task、0 overlap/缺失/重复，55个legacy歧义行无损保留；两份compatibility
-      views逐byte一致；fast/architecture/contract/reproducibility/full通过，`production_effect=none`。后续S2须另行冻结lease/readiness
-      policy并保持fail closed。
-    - 2026-07-19：S0/S1=`BASELINE_DONE`；验证=`300/419/265/23/6394 passed`，Full另有2 skipped/642
-      warnings、961.89s，相对phase-exit Full约+1.6%，无异常性能回归。ARCH-004 G2.5仍锁定，S2也未自动启动。
+    - architecture coordinator + developer platform owner + integration coordinator；S5需project
+      owner新授权
+    - 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md` 和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1与S2～S4已完成；旧Markdown继续是唯一可写事实源，S5
+      cutover/self-hosting未授权。
+    - 已完成：S2 unknown/self/cycle/stale/conflict/unsafe fail closed，lease支持CAS/release/expire/reassign/replay；S3两个governance
+      cycles deterministic；S4工程/证据研究/coordinator三lane完成并发、失败隔离、reassign、evidence binding和deterministic
+      integration。剩余退出条件：owner授权S5；最终import/parity、consumer migration、canonical cutover与rollback
+      rehearsal；稳定两个governance cycles后移除manual row-move。全链保持`production_effect=none`。
+    - 2026-07-20：S2～S4 closed pilot dispatch=`controlled-dispatch-aca2d27f60304e5a5c60`；17
+      focused tests、29项pilot checks、13-event replay均PASS，active lease=0。正式 focused/fast/architecture/contract/repro/full=`85/317/436/265/23/6420
+      passed`，full 2 skipped、643 warnings、956.37s，较基线快约2.3%且无新增长尾；失败链保留并已expiry收口；S5未授权，ARCH-004仍停G2.5前。
     raw_line: '|ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE|Architecture / auditable
-      parallel development scheduling foundation|P0|BASELINE_DONE|project owner +
-      architecture coordinator；选择S2或与策略研究并行的后续边界|详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`。PB1及正式S0/S1已完成；S2
-      dependency/readiness/conflict/lease kernel、S3 read-only scheduler、S4 controlled
-      dispatch、S5 cutover和S6理解/优化仍待后续显式选择。旧Markdown继续是唯一可写事实源，禁止dual write、真实dispatch或lease。|S0/S1
-      baseline与shadow registry可重复生成；869个task、0 overlap/缺失/重复，55个legacy歧义行无损保留；两份compatibility
-      views逐byte一致；fast/architecture/contract/reproducibility/full通过，`production_effect=none`。后续S2须另行冻结lease/readiness
-      policy并保持fail closed。|2026-07-19：S0/S1=`BASELINE_DONE`；验证=`300/419/265/23/6394
-      passed`，Full另有2 skipped/642 warnings、961.89s，相对phase-exit Full约+1.6%，无异常性能回归。ARCH-004
-      G2.5仍锁定，S2也未自动启动。|'
+      parallel development scheduling foundation|P0|BASELINE_DONE|architecture coordinator
+      + developer platform owner + integration coordinator；S5需project owner新授权|详见
+      `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md` 和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1与S2～S4已完成；旧Markdown继续是唯一可写事实源，S5
+      cutover/self-hosting未授权。|已完成：S2 unknown/self/cycle/stale/conflict/unsafe fail
+      closed，lease支持CAS/release/expire/reassign/replay；S3两个governance cycles deterministic；S4工程/证据研究/coordinator三lane完成并发、失败隔离、reassign、evidence
+      binding和deterministic integration。剩余退出条件：owner授权S5；最终import/parity、consumer
+      migration、canonical cutover与rollback rehearsal；稳定两个governance cycles后移除manual
+      row-move。全链保持`production_effect=none`。|2026-07-20：S2～S4 closed pilot dispatch=`controlled-dispatch-aca2d27f60304e5a5c60`；17
+      focused tests、29项pilot checks、13-event replay均PASS，active lease=0。正式 focused/fast/architecture/contract/repro/full=`85/317/436/265/23/6420
+      passed`，full 2 skipped、643 warnings、956.37s，较基线快约2.3%且无新增长尾；失败链保留并已expiry收口；S5未授权，ARCH-004仍停G2.5前。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-39abd23abd22f715d1ad0db0
+  event_id: legacy-import-5abb82ea65dabb3270ebd3ec
   task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -74,12 +80,14 @@ initial_event:
   to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: project owner + architecture coordinator；选择S2或与策略研究并行的后续边界
-    notes: 2026-07-19：S0/S1=`BASELINE_DONE`；验证=`300/419/265/23/6394 passed`，Full另有2
-      skipped/642 warnings、961.89s，相对phase-exit Full约+1.6%，无异常性能回归。ARCH-004 G2.5仍锁定，S2也未自动启动。
+    next_owner: architecture coordinator + developer platform owner + integration
+      coordinator；S5需project owner新授权
+    notes: 2026-07-20：S2～S4 closed pilot dispatch=`controlled-dispatch-aca2d27f60304e5a5c60`；17
+      focused tests、29项pilot checks、13-event replay均PASS，active lease=0。正式 focused/fast/architecture/contract/repro/full=`85/317/436/265/23/6420
+      passed`，full 2 skipped、643 warnings、956.37s，较基线快约2.3%且无新增长尾；失败链保留并已expiry收口；S5未授权，ARCH-004仍停G2.5前。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:39abd23abd22f715d1ad0db0992aa0e3c93b6ac516742758f0d1a4b73e3441f6
+  - sha256:5abb82ea65dabb3270ebd3ecba5b1c6fb78cc62489378ceb6bed96c545eee9ff
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -87,18 +95,21 @@ projection:
   - Architecture / auditable parallel development scheduling foundation
   - P0
   - BASELINE_DONE
-  - project owner + architecture coordinator；选择S2或与策略研究并行的后续边界
-  - 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`。PB1及正式S0/S1已完成；S2
-    dependency/readiness/conflict/lease kernel、S3 read-only scheduler、S4 controlled
-    dispatch、S5 cutover和S6理解/优化仍待后续显式选择。旧Markdown继续是唯一可写事实源，禁止dual write、真实dispatch或lease。
-  - S0/S1 baseline与shadow registry可重复生成；869个task、0 overlap/缺失/重复，55个legacy歧义行无损保留；两份compatibility
-    views逐byte一致；fast/architecture/contract/reproducibility/full通过，`production_effect=none`。后续S2须另行冻结lease/readiness
-    policy并保持fail closed。
-  - 2026-07-19：S0/S1=`BASELINE_DONE`；验证=`300/419/265/23/6394 passed`，Full另有2 skipped/642
-    warnings、961.89s，相对phase-exit Full约+1.6%，无异常性能回归。ARCH-004 G2.5仍锁定，S2也未自动启动。
+  - architecture coordinator + developer platform owner + integration coordinator；S5需project
+    owner新授权
+  - 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md` 和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1与S2～S4已完成；旧Markdown继续是唯一可写事实源，S5
+    cutover/self-hosting未授权。
+  - 已完成：S2 unknown/self/cycle/stale/conflict/unsafe fail closed，lease支持CAS/release/expire/reassign/replay；S3两个governance
+    cycles deterministic；S4工程/证据研究/coordinator三lane完成并发、失败隔离、reassign、evidence binding和deterministic
+    integration。剩余退出条件：owner授权S5；最终import/parity、consumer migration、canonical cutover与rollback
+    rehearsal；稳定两个governance cycles后移除manual row-move。全链保持`production_effect=none`。
+  - 2026-07-20：S2～S4 closed pilot dispatch=`controlled-dispatch-aca2d27f60304e5a5c60`；17
+    focused tests、29项pilot checks、13-event replay均PASS，active lease=0。正式 focused/fast/architecture/contract/repro/full=`85/317/436/265/23/6420
+    passed`，full 2 skipped、643 warnings、956.37s，较基线快约2.3%且无新增长尾；失败链保留并已expiry收口；S5未授权，ARCH-004仍停G2.5前。
   docs_links:
+  - docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md
   - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
   terminal: false
-  raw_row_sha256: 39abd23abd22f715d1ad0db0992aa0e3c93b6ac516742758f0d1a4b73e3441f6
+  raw_row_sha256: 5abb82ea65dabb3270ebd3ecba5b1c6fb78cc62489378ceb6bed96c545eee9ff
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 99687a430179b91ea4e3630cb9f1fc7c2c69433801884d27add137e85ae94089
+fragment_checksum: c4343eb47a9c14b9b027f3d2f421c64a148aeef620e660b4554fb38e3823da47

@@ -2,6 +2,22 @@
 
 本文档是系统从数据输入、中间评估到输出结论的流程图。它不是一次性说明文档，而是工程事实的一部分：后续新增命令、数据源、配置、评分模块、回测路径或报告输出时，必须同步维护本文件。
 
+ARCH-005 S2～S4 在 S0/S1 shadow registry 之后新增非 cutover 的并行研发控制链。
+`config/architecture/arch_005_parallel_control_policy.yaml` 与
+`inputs/architecture/arch_005_s2_s4_pilot.yaml` 先冻结 capacity、TTL、retry、priority、allowlist、
+dependency、change manifest、resource claim 与 safety。S2 kernel 对 unknown/self/cycle、unsatisfied
+dependency、stale base、unsafe production effect 及 path/module/contract conflict fail closed；
+single-arbiter file lease 以 append-only hash/causal events 实现 acquire/release/expire/reassign 和 replay。
+S3 `shadow-audit` 从同一 snapshot 连续生成两个 read-only scheduler decision，要求 decision id 与
+canonical bytes 一致，只输出 selected/not-selected reasons、capacity 与 alternatives，不取 lease、
+不派发、不改 task status。S4 `run-pilot` 仅向 allowlist 中一条工程验证 lane 和一条研究证据验证
+lane 发真实 lease，两者并发且失败隔离；只有两条 evidence 都 PASS 后 coordinator 才可获得第三条
+lease 并写 dispatch summary/report。`validate-pilot` 重算 report id、artifact SHA、shadow decision、
+lease replay 和两个 adapter 结果。成功演练为
+`controlled-dispatch-aca2d27f60304e5a5c60`，13-event replay PASS、active lease=0；历史失败 run
+保留并追加 expiry 收口。该链没有切换 canonical source，Markdown 仍是唯一可写任务事实源；S5
+未授权，ARCH-004 G2.5 未自动恢复，`production_effect=none`、`broker_action=none`。
+
 TRADING-2446～2448 在 ARCH-005 S0/S1 后新增独立 strategy research restart R0～R2
 evidence-closure lane，不恢复 ARCH-004 G2.5，也不启动 candidate promotion。
 `aits research ops strategy-restart-preflight` 先调用与 `aits validate-data` 同源的 cached-data gate，

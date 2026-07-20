@@ -127,6 +127,9 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_arch_005_prebootstrap.py",
             "tests/test_arch_005_bootstrap_handoff.py",
             "tests/test_arch_005_task_registry_shadow.py",
+            "tests/test_arch_005_s2_kernel.py",
+            "tests/test_arch_005_s3_scheduler.py",
+            "tests/test_arch_005_s4_dispatch.py",
             "tests/test_arch_004g_deprecation.py",
             "tests/test_documentation_contract.py",
             "tests/test_report_index.py",
@@ -631,8 +634,7 @@ def _validated_parent_run_binding(
     parent_provenance_errors = validate_full_provenance(parent_provenance)
     if parent_provenance_errors:
         errors.append(
-            "parent_run validation provenance is invalid: "
-            + "; ".join(parent_provenance_errors)
+            "parent_run validation provenance is invalid: " + "; ".join(parent_provenance_errors)
         )
     elif summary.get("validation_provenance_status") != "PASS":
         errors.append("parent_run validation_provenance_status must match PASS provenance")
@@ -645,8 +647,7 @@ def _validated_parent_run_binding(
         candidate_profile_path = profile_path.resolve(strict=True)
     except (OSError, RuntimeError, ValueError) as exc:
         errors.append(
-            "parent_run runtime profile does not exist or could not be resolved: "
-            f"{exc}"
+            "parent_run runtime profile does not exist or could not be resolved: " f"{exc}"
         )
         runtime_profile_bytes = None
     else:
@@ -732,12 +733,9 @@ def _validated_parent_run_binding(
                 raw_bytes=runtime_profile_bytes,
             )
         profile_telemetry = validated_profile.get("telemetry")
-        if (
-            not canonical_persisted_failure
-            and (
-                not isinstance(profile_telemetry, Mapping)
-                or profile_telemetry.get("missing_runtime_profile_artifact") is True
-            )
+        if not canonical_persisted_failure and (
+            not isinstance(profile_telemetry, Mapping)
+            or profile_telemetry.get("missing_runtime_profile_artifact") is True
         ):
             errors.append("parent_run runtime profile is missing or invalid")
         else:
@@ -760,9 +758,7 @@ def _validated_parent_run_binding(
                     errors.append("parent_run runtime_profile_path is invalid")
                 else:
                     if recorded_resolved != resolved_profile_path:
-                        errors.append(
-                            "parent_run runtime_profile_path does not match its sidecar"
-                        )
+                        errors.append("parent_run runtime_profile_path does not match its sidecar")
             for field_name in (
                 "runtime_profile_status",
                 "formal_full_selection_eligible",
@@ -777,18 +773,10 @@ def _validated_parent_run_binding(
         else None
     )
     failure_basis: str | None = None
-    if (
-        valid_exit_code
-        and parent_status == "FAIL"
-        and exit_code != 0
-        and runtime_profile == "FAIL"
-    ):
+    if valid_exit_code and parent_status == "FAIL" and exit_code != 0 and runtime_profile == "FAIL":
         failure_basis = "PYTEST_FAIL"
     elif (
-        valid_exit_code
-        and parent_status == "PASS"
-        and exit_code == 0
-        and runtime_profile == "FAIL"
+        valid_exit_code and parent_status == "PASS" and exit_code == 0 and runtime_profile == "FAIL"
     ):
         failure_basis = "RUNTIME_PROFILE_FAIL"
     else:
@@ -805,10 +793,7 @@ def _validated_parent_run_binding(
         resolved_repo_root = repo_root.resolve()
         relative_path = resolved_path.relative_to(resolved_repo_root).as_posix()
     except (OSError, RuntimeError, ValueError) as exc:
-        return None, [
-            "repository root could not be resolved for parent_run summary: "
-            f"{exc}"
-        ]
+        return None, ["repository root could not be resolved for parent_run summary: " f"{exc}"]
     return (
         {
             "run_id": run_id,
@@ -851,8 +836,7 @@ def _validation_trigger_provenance(
     elif any(env_name in os.environ for env_name in env_names.values()):
         envelope_source = "environment"
         raw_values = {
-            field_name: os.environ.get(env_name)
-            for field_name, env_name in env_names.items()
+            field_name: os.environ.get(env_name) for field_name, env_name in env_names.items()
         }
     else:
         envelope_source = "unset"
@@ -951,8 +935,7 @@ def _formal_full_selection_eligible(
     while index < len(extra_pytest_args):
         argument = str(extra_pytest_args[index]).strip()
         if any(
-            argument.startswith(f"{option}=")
-            for option in FULL_NON_SELECTION_PYTEST_ARG_OPTIONS
+            argument.startswith(f"{option}=") for option in FULL_NON_SELECTION_PYTEST_ARG_OPTIONS
         ):
             index += 1
             continue
@@ -1366,16 +1349,12 @@ def _runtime_profile_contract_error(
     observed_provenance = payload.get("validation_provenance")
     provenance_errors = validate_full_provenance(observed_provenance)
     if provenance_binding_status == "PASS" and provenance_errors:
-        return (
-            "runtime profile validation provenance is invalid: "
-            + "; ".join(provenance_errors)
-        )
+        return "runtime profile validation provenance is invalid: " + "; ".join(provenance_errors)
     if expected_validation_provenance is not None:
         if provenance_binding_status != "PASS":
             return "runtime profile validation provenance binding did not pass"
-        if (
-            not isinstance(observed_provenance, Mapping)
-            or dict(observed_provenance) != dict(expected_validation_provenance)
+        if not isinstance(observed_provenance, Mapping) or dict(observed_provenance) != dict(
+            expected_validation_provenance
         ):
             return "runtime profile validation provenance does not match runner envelope"
 
@@ -1999,8 +1978,7 @@ def _runtime_profile_contract_error(
         )
         if (
             scheduler.get("policy") != expected_applied_policy
-            or scheduler.get("equal_duration_tie_policy")
-            != "stable_first_seen_file_order"
+            or scheduler.get("equal_duration_tie_policy") != "stable_first_seen_file_order"
             or not _numbers_close(scheduler.get("untracked_file_weight_seconds"), 0.0)
             or scheduler.get("xdist_dist") != "loadfile"
             or scheduler.get("loadscope_reorder_disabled") is not True
@@ -2166,9 +2144,7 @@ def _read_runtime_profile_payload(
 ) -> dict[str, object]:
     try:
         raw_text = (
-            path.read_text(encoding="utf-8")
-            if raw_bytes is None
-            else raw_bytes.decode("utf-8")
+            path.read_text(encoding="utf-8") if raw_bytes is None else raw_bytes.decode("utf-8")
         )
         payload = json.loads(
             raw_text,
