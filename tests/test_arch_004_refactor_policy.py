@@ -5908,6 +5908,102 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
 
+    wave3 = baseline["phase_arch_005_s4b_dual_lane_wave3"]
+    assert wave3["status"] == "COMPLETE_WAVE3_DUAL_LANE"
+    assert wave3["task_ids"] == [
+        "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE",
+        "TRADING-098",
+    ]
+    assert wave3["base_commit"] == "3156a4b91b170880c9b8e46802e85f81637af015"
+    engineering3 = wave3["engineering_lane"]
+    assert engineering3["owned_path"] == "tests/test_evidence_staleness_monitor.py"
+    assert engineering3["node_count_preserved"] == 6
+    assert engineering3["isolated_before_seconds"] == 125.36
+    assert engineering3["isolated_after_seconds"] == 85.44
+    assert engineering3["frozen_after_limit_seconds"] == 100.29
+    assert engineering3["focused_status"] == "PASS"
+    assert engineering3["stable_full_improvement_claimed"] is False
+    strategy3 = wave3["strategy_evidence_lane"]
+    assert strategy3["status"] == "COMPLETE_OBSERVE_ONLY_MIGRATION"
+    assert strategy3["initial_status"] == "BLOCKED_INPUT"
+    assert strategy3["task_id"] == "TRADING-098"
+    assert strategy3["runtime_registry_gitignored"] is True
+    assert strategy3["historical_row_count_preserved"] == 3
+    assert strategy3["downgraded_complete_binding_count"] == 2
+    assert strategy3["explicit_none_selection_count"] == 3
+    assert strategy3["registry_validation_status"] == "PASS"
+    assert strategy3["registry_validation_failed_count"] == 0
+    assert strategy3["partial_legacy_pair_bound"] is False
+    assert strategy3["fabricated_parallel_work"] is False
+    assert wave3["failed_validation_attempts"] == [
+        {
+            "tier": "full",
+            "status": "FAIL",
+            "passed": 6486,
+            "failed": 1,
+            "skipped": 2,
+            "warnings": 643,
+            "runner_elapsed_seconds": 986.81,
+            "artifact": (
+                "outputs/validation_runtime/full_20260720T161303Z/" "test_runtime_summary.json"
+            ),
+            "failure": "TRACKED_PARTIAL_PROFILE_V17_SOURCE_BOUND_TEST_STILL_EXPECTED_V16",
+            "scheduler_applied": True,
+            "workaround_used": False,
+            "counts_as_stable_performance_sample": False,
+        }
+    ]
+    assert wave3["conflict_telemetry"] == {
+        "owned_path_overlap_count": 0,
+        "shared_path_overlap_count": 2,
+        "late_shared_write_detected": True,
+        "worker_shared_path_write_count": 2,
+        "shared_path_writer": "integration_coordinator",
+        "worker_stopped_shared_writes_after_coordination": True,
+        "coordinator_rebuilt_shared_state": True,
+        "work_lost_or_reverted": False,
+        "workaround_used": False,
+    }
+    assert wave3["generated_state"]["task_count"] == 877
+    assert wave3["generated_state"]["active_task_count"] == 429
+    assert wave3["generated_state"]["completed_task_count"] == 448
+    assert wave3["generated_state"]["module_count"] == 991
+    assert wave3["generated_state"]["test_file_count"] == 1142
+    required3 = wave3["required_validation"]
+    for key in (
+        "engineering_isolated",
+        "ruff",
+        "black",
+        "diff_check",
+        "strategy_registry",
+        "strategy_focused",
+        "strategy_expanded",
+        "strategy_governance",
+        "architecture_fitness",
+        "contract_validation",
+        "full",
+    ):
+        assert required3[key]["status"] == "PASS"
+    assert required3["architecture_fitness"]["passed"] == 446
+    assert required3["contract_validation"]["passed"] == 265
+    assert required3["full"]["passed"] == 6487
+    assert required3["full"]["skipped"] == 2
+    assert required3["full"]["file_count"] == 1084
+    assert required3["full"]["node_count"] == 6489
+    assert required3["full"]["scheduler_applied"] is True
+    assert required3["full"]["scheduler_fallback"] is False
+    performance3 = wave3["performance_assessment"]
+    assert performance3["target_file_reduction_percent"] == 31.37
+    assert performance3["common_file_count"] == 1084
+    assert performance3["stable_full_improvement_claimed"] is False
+    assert wave3["next_work"]["strategy_lane_unblocked"] is False
+    assert wave3["safety"]["runtime_registry_state_changed"] is True
+    assert wave3["safety"]["production_effect"] == "none"
+    assert wave3["safety"]["broker_action"] == "none"
+    for source in wave3["sources"]:
+        actual = _source_sha256(source)
+        assert actual == source["sha256"], source["path"]
+
     prebootstrap = baseline["arch_005_prebootstrap_primitives"]
     assert prebootstrap["status"] in {
         "IN_PROGRESS_NON_CUTOVER",

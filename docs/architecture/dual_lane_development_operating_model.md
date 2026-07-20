@@ -238,6 +238,35 @@ architecture/contract/reproducibility/full=`446/265/23/6487 passed`，Full=`2 sk
    views最后统一刷新，以及“任一lane失败不污染另一lane产物”的集成顺序。只有连续多个真实wave证明
    overlap/base-drift/abort和Full性能稳定，才评估第三条domain lane。
 
+### Wave 3：完成，含一次迟到策略输入与共享路径冲突收口
+
+Base=`3156a4b9`。本轮继续采用双线控制面，但不把“双线”误解为两个lane必须同时产生代码。
+Strategy lane在scope freeze时没有合规输入；2026-07-21 owner随后为既有`TRADING-098`提供保守迁移方案1，
+因此它只在coordinator安全集成点作为迟到解锁的策略子切片纳入本wave，不扩大到backtest、search、
+shadow enrollment或promotion：
+
+|Lane|状态|任务/owned scope|冲突与停止条件|
+|---|---|---|---|
+|Engineering|`COMPLETE`|`ARCH-004G2.../W3E1`；仅`tests/test_evidence_staleness_monitor.py`，复用既有module-scoped真实source DAG|6 nodeids/真实latest discovery/fallback/live validators/DQ/PIT/decision/safety全部保持；isolated=`125.36s -> 85.44s`，通过`<=100.29s`门槛|
+|Strategy evidence|`COMPLETE_OBSERVE_ONLY_MIGRATION`|`TRADING-098` tracked requirement + gitignored runtime registry|三条历史记录保留并显式降级为incomplete；validator=`PASS/0`，focused/expanded/governance=`1/2/19 passed`；不绑定partial evidence、不产生投资结论或生产效果|
+|Coordinator|`COMPLETE`|任务/需求/operating-model、generated manifests、compatibility、formal/full与integration|首轮Full失败按失败保留；direct fix后architecture/contract/Full闭合；shared docs最终只有coordinator写入|
+
+只读baseline=`6 passed / 125.36s`，其中latest discovery/fallback分别约`35.54/35.33s`；完整DAG共建3次，
+目标是消除后两次重复构建。Strategy输入到达时，复用了既有稳定task id与既有验收，没有新增策略逻辑；
+runtime registry按项目约定保持gitignored，仅提交可审计的需求、状态归档和验证证据。
+
+Engineering isolated after=`6 passed / 85.44s`（`-39.92s/-31.84%`），latest/fallback分别降至
+`15.78/15.52s`。首轮Full因v17 source-bound test残留v16冻结值而FAIL；direct fix后architecture=`446`
+、contract=`265`、Full=`6487 passed / 2 skipped / 643 warnings`。Full runner wall=`1169.47s ->
+1019.79s`，但1084个common files的median ratio=`0.8456`且worker busy median也整体下降，因此只接受
+W3E1的isolated收益，`stable_full_improvement_claimed=false`。
+
+本wave还暴露并验证了一次真实冲突流程：Strategy worker在coordinator发现前已写入`task_register`与本
+operating model两个shared paths；发现后没有回退其业务成果，而是立即停止worker的shared writes、
+stage/commit/push和formal gates，由coordinator保留owned requirement/runtime结果并串行重建shared docs、
+task shadow和source hashes。冲突未造成中断或丢失，`workaround_used=false`。后续wave应在dispatch前把
+shared-path denylist注入worker验收，而不是只依赖文字约束。
+
 ### 后续架构方向
 
 - `ARCH-004G2_PARALLEL_READINESS_GATE` / G2.5 是下一项高杠杆工程方向，但仍等待 owner 对恢复

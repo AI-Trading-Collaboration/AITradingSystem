@@ -239,8 +239,7 @@ def _build_comparable_runtime_payload(
         phase_reports=phase_reports,
         duration_profile=_legacy_runtime_profile(
             observed_seconds={
-                f"tests/test_{index:02d}.py": float(16 - index)
-                for index in range(16)
+                f"tests/test_{index:02d}.py": float(16 - index) for index in range(16)
             },
             source_workers=16,
         ),
@@ -264,16 +263,16 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
     assert profile.partial_seed is True
     assert profile.complete_profile is False
     assert profile.owner == "validation_operations"
-    assert profile.version == 16
+    assert profile.version == 17
     assert profile.source_workers == 16
     assert profile.source_dist == "loadfile"
     assert profile.source_artifact_path == (
-        "outputs/validation_runtime/full_20260719T182127Z/test_runtime_profile.json"
+        "outputs/validation_runtime/full_20260720T151936Z/test_runtime_profile.json"
     )
     assert profile.source_artifact_sha256 == (
-        "51e816354e2017d57ea8b95ab0cc1278f9e867c450cb8fdd97b526bbb4afa8df"
+        "9559a7d65cc8e6bee29a1844230b8f43d515ca28ab46931c23a10a9d842db54e"
     )
-    assert len(profile.observed_seconds) == 1073
+    assert len(profile.observed_seconds) == 1084
     assert profile.source_node_count is None
     assert profile.source_file_count is None
     assert profile.source_collection_ordered_sha256 is None
@@ -282,12 +281,11 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
     assert profile.source_file_rows_sha256 is None
     assert profile.expected_scheduled_ordered_sha256 is None
     assert profile.source_file_duration_total_seconds is None
-    assert profile.observed_seconds["tests/test_layer1_meta_policy_readiness.py"] == (
-        405.2125399
+    assert profile.observed_seconds["tests/test_layer1_meta_policy_readiness.py"] == (633.4988554)
+    assert (
+        profile.observed_seconds["tests/test_filtered_candidate_readiness_pipeline_foundation.py"]
+        == 126.6449753
     )
-    assert profile.observed_seconds[
-        "tests/test_filtered_candidate_readiness_pipeline_foundation.py"
-    ] == 100.6891847
 
     legacy = load_duration_profile(_write_legacy_partial_profile(tmp_path / "legacy_partial.yaml"))
     assert legacy.valid is True
@@ -404,9 +402,7 @@ def test_partial_profile_refresh_uses_duration_rows_and_exact_summary_binding(
     assert manifest["status"] == "PARTIAL_SEED"
     assert "complete_profile" not in manifest
     assert manifest["source"]["artifact_sha256"] == source_sha256
-    assert manifest["source"]["artifact_path"] == (
-        "outputs/full/test_runtime_profile.json"
-    )
+    assert manifest["source"]["artifact_path"] == ("outputs/full/test_runtime_profile.json")
     assert [row["path"] for row in manifest["files"]] == [
         "tests/test_slow.py",
         "tests/test_fast.py",
@@ -700,8 +696,7 @@ def test_missing_validation_provenance_fails_only_performance_binding() -> None:
     assert payload["pytest_outcome_overridden"] is False
     assert payload["validation_provenance"] is None
     assert any(
-        "validation provenance must be a mapping" in warning
-        for warning in payload["warnings"]
+        "validation provenance must be a mapping" in warning for warning in payload["warnings"]
     )
 
 
@@ -724,8 +719,7 @@ def test_invalid_validation_provenance_fails_only_performance_binding() -> None:
     assert payload["pytest_outcome_overridden"] is False
     assert payload["validation_provenance"] == invalid_provenance
     assert any(
-        "validation provenance status must be PASS" in warning
-        for warning in payload["warnings"]
+        "validation provenance status must be PASS" in warning for warning in payload["warnings"]
     )
 
 

@@ -1,0 +1,97 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-098
+  title: null
+  domain: ETF portfolio research/Dynamic v3 Rescue Shadow Candidate Registry
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: research owner：仅在 clean S1 产生新合格证据后以新任务重开登记
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Owner 选择保守迁移方案1；三条历史 observe-only records全部保留，`ce9db518659c8d68`与`a72139edcaef7d22`清空superseded
+    evidence ids并降级为`incomplete_observation_basis`，`aa02bb947cf29885`保持incomplete；未绑定partial
+    legacy pair。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 三行均显式`observation_basis_selection=none`；历史candidate/source/metrics保留；`validate-shadow-registry=PASS/0`；focused/expanded
+      parallel tests通过；无自动enroll/promotion/production/broker。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 17
+    row_sha256: af09a6d7b89d16eb79b13c962a2d42f371a2a8893bce86c98618a50de9c05d71
+    cell_count: 8
+    all_cells:
+    - TRADING-098
+    - ETF portfolio research/Dynamic v3 Rescue Shadow Candidate Registry
+    - P1
+    - DONE
+    - research owner：仅在 clean S1 产生新合格证据后以新任务重开登记
+    - Owner 选择保守迁移方案1；三条历史 observe-only records全部保留，`ce9db518659c8d68`与`a72139edcaef7d22`清空superseded
+      evidence ids并降级为`incomplete_observation_basis`，`aa02bb947cf29885`保持incomplete；未绑定partial
+      legacy pair。
+    - 三行均显式`observation_basis_selection=none`；历史candidate/source/metrics保留；`validate-shadow-registry=PASS/0`；focused/expanded
+      parallel tests通过；无自动enroll/promotion/production/broker。
+    - '2026-07-12: G2.4U完成后runtime registry因两条旧complete binding FAIL 12项。2026-07-21:
+      owner选择方案1；迁移后真实validator PASS/0，focused/expanded=`1/2 passed`，任务归档DONE；`production_effect=none`、`broker_action=none`。'
+    raw_line: '|TRADING-098|ETF portfolio research/Dynamic v3 Rescue Shadow Candidate
+      Registry|P1|DONE|research owner：仅在 clean S1 产生新合格证据后以新任务重开登记|Owner 选择保守迁移方案1；三条历史
+      observe-only records全部保留，`ce9db518659c8d68`与`a72139edcaef7d22`清空superseded evidence
+      ids并降级为`incomplete_observation_basis`，`aa02bb947cf29885`保持incomplete；未绑定partial
+      legacy pair。|三行均显式`observation_basis_selection=none`；历史candidate/source/metrics保留；`validate-shadow-registry=PASS/0`；focused/expanded
+      parallel tests通过；无自动enroll/promotion/production/broker。|2026-07-12: G2.4U完成后runtime
+      registry因两条旧complete binding FAIL 12项。2026-07-21: owner选择方案1；迁移后真实validator
+      PASS/0，focused/expanded=`1/2 passed`，任务归档DONE；`production_effect=none`、`broker_action=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-af09a6d7b89d16eb79b13c96
+  task_id: TRADING-098
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: research owner：仅在 clean S1 产生新合格证据后以新任务重开登记
+    notes: '2026-07-12: G2.4U完成后runtime registry因两条旧complete binding FAIL 12项。2026-07-21:
+      owner选择方案1；迁移后真实validator PASS/0，focused/expanded=`1/2 passed`，任务归档DONE；`production_effect=none`、`broker_action=none`。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:af09a6d7b89d16eb79b13c962a2d42f371a2a8893bce86c98618a50de9c05d71
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-098
+  - ETF portfolio research/Dynamic v3 Rescue Shadow Candidate Registry
+  - P1
+  - DONE
+  - research owner：仅在 clean S1 产生新合格证据后以新任务重开登记
+  - Owner 选择保守迁移方案1；三条历史 observe-only records全部保留，`ce9db518659c8d68`与`a72139edcaef7d22`清空superseded
+    evidence ids并降级为`incomplete_observation_basis`，`aa02bb947cf29885`保持incomplete；未绑定partial
+    legacy pair。
+  - 三行均显式`observation_basis_selection=none`；历史candidate/source/metrics保留；`validate-shadow-registry=PASS/0`；focused/expanded
+    parallel tests通过；无自动enroll/promotion/production/broker。
+  - '2026-07-12: G2.4U完成后runtime registry因两条旧complete binding FAIL 12项。2026-07-21:
+    owner选择方案1；迁移后真实validator PASS/0，focused/expanded=`1/2 passed`，任务归档DONE；`production_effect=none`、`broker_action=none`。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: af09a6d7b89d16eb79b13c962a2d42f371a2a8893bce86c98618a50de9c05d71
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f252c7f9bc3971bfc90d7742628e6d819277a7e579aff90f30ddbda5cd6983f9

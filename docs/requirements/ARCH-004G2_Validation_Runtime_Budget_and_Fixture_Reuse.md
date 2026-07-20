@@ -1325,6 +1325,66 @@ test files 的耗时中位数比约`1.264x`、worker busy 中位数从约`950.08
 `stable_full_improvement_claimed=false`。本次 Full 已刷新 tracked advisory duration seed 至 v17，覆盖
 `1084 files / 6489 nodes`；它只影响 loadfile 调度顺序，不减少验证范围。
 
+### Wave 3 W3E1：Evidence-staleness test fixture reuse
+
+2026-07-20：在 `main@3156a4b9` 上完成只读审计并冻结下一有界 leaf。空闲环境同命令
+`python -m pytest -n 16 --dist loadfile tests/test_evidence_staleness_monitor.py -q --durations=10`
+为`6 passed / 125.36s`（外部wall约`126.1s`）。耗时集中在latest weekly discovery=`35.54s`、fallback
+blocker=`35.33s`，以及builds-and-validates的setup/call=`19.67s/24.27s`；missing weekly=`7.50s`，两个
+PIT/calendar纯函数node均低于`0.005s`。审计确认完整paper-shadow→evidence-staleness真实artifact/validator
+DAG被构建3次：已有module fixture供builds/missing两个测试共享，而latest discovery与fallback blocker各自
+重复构建一次，合计约`70.87s`。
+
+W3E1 owned scope仅为`tests/test_evidence_staleness_monitor.py`。允许latest discovery与fallback blocker复用
+现有module-scoped immutable source root；price cache、market panel、fallback report和monitor output仍必须
+每测试独立。latest测试继续省略weekly ID并走真实latest discovery；fallback继续注入真实
+`BLOCKED_NO_VALID_SOURCE`；自动/显式live validators、snapshot SHA、DQ/source validation、future timestamp
+BLOCKING、weekend/PIT边界、missing-weekly/fallback decision、recovery coverage和全部safety断言不得减少。
+禁止修改production/helper/validator/CLI/policy，禁止mock validator、伪造缩小artifact或build后篡改lineage。
+
+同一fixture会把两个测试未断言的synthetic `evidence_date_end`从`2024-04-22/2024-04-19`统一为
+`2024-04-17`；三者在当前reviewed policy下均为`FRESH`。验收冻结的是分类、blocker、decision、latest
+discovery和lineage，而不是未作为契约的age数值。有效after必须保持相同6 nodeids全部PASS且
+`<=100.29s`（至少20%改善）；若收益不足或任一真实验证/语义弱化则byte-exact撤回。focused后仍需
+architecture/contract/full；单次leaf证据不升级stable Full improvement，`production_effect=none`。
+
+实现后同机、同命令、空闲环境为`6 passed / 85.44s`，相对baseline节省`39.92s / 31.84%`，低于
+冻结上限`14.85s`。latest discovery=`35.54s -> 15.78s`，fallback blocker=`35.33s -> 15.52s`，
+missing weekly control=`7.50s -> 7.41s`。改动仅把两个重复构建测试的source directories指向既有
+module-scoped immutable fixture root；两者的price/market/fallback/output仍位于各自`tmp_path`，weekly ID
+省略与`BLOCKED_NO_VALID_SOURCE`注入保持原样。Ruff/Black/diff-check PASS；当前实现验收通过，待generated
+manifests、architecture/contract/full闭合后收口，不声明stable Full improvement。
+
+首轮正式Full=`6486 passed / 1 failed / 2 skipped / 643 warnings / 986.81s`，唯一失败为
+`test_tracked_partial_profile_is_valid_and_source_bound`：v17 duration seed已在Wave 2刷新，但该source-bound
+test仍硬编码v16的source artifact/hash、1073 files和两个样本duration。scheduler实际applied且W3E1业务
+tests均PASS，因此这不是production/策略或fixture语义回归；但Full仍按FAIL处理，不能集成。最佳修复是把
+该契约同步到已reviewed v17 manifest（source=`full_20260720T151936Z`、1084 files），而非回退seed、降低
+检查或忽略失败。`tests/test_validation_runtime_profile.py`作为coordinator integration scope加入本wave，
+随后必须刷新test manifest/compatibility并重跑focused、architecture与完整Full；失败Full不计入稳定收益。
+
+direct fix后的精确source-bound focused与expanded focused分别为`9/32 passed`；最终architecture=
+`446 passed / 43.53s`，contract=`265 passed / 116.98s`，Full=`6487 passed / 2 skipped /
+643 warnings`，pytest=`1018.83s`、runner=`1019.79s`，artifact=`full_20260720T163446Z`。
+Full profile覆盖`1084 files / 6489 nodes / 16 workers`，scheduler=`applied=true/fallback=false`，
+profile、telemetry、performance、provenance四项均PASS，tail idle max=`0.0108s`、total=`0.1068s`。
+
+W3E1目标文件在正式Full中的worker-s为`378.6406 -> 259.8411`（`-31.37%`）；contract wall相对
+Wave 2为`152.49s -> 116.98s`（`-23.29%`），Full runner wall为`1169.47s -> 1019.79s`
+（`-12.80%`）。但1084个common files的duration median ratio=`0.8456`，worker busy median也从
+`1140.509s`降至`1008.693s`，表明本次机器整体更快；因此只接受isolated与目标文件证据，
+`stable_full_improvement_claimed=false`。tracked v17 seed继续保持为当前reviewed输入；下一wave开始时
+才把新PASS Full profile与source-bound contract同步刷新，避免在closeout后制造新的contract drift。
+
+合并`TRADING-098`归档、task shadow和最终source hashes后，coordinator再次运行正式门禁：architecture=
+`446 passed / 45.92s`、artifact=`architecture-fitness_20260720T170623Z`；contract=`265 passed /
+133.53s`、artifact=`contract-validation_20260720T170717Z`。最终contract相对Wave 2的`152.49s`仍下降
+`12.43%`，但同样不升级为稳定全局性能结论。
+
+共享收口期间，owner另行解锁的`TRADING-098`只迁移gitignored runtime registry与其需求/任务状态，
+没有修改production、策略、阈值或W3E1测试语义；其validator/focused/governance独立PASS。最终formal
+gates在合并shared docs/manifests后复验，Full不因closeout记录本身循环重跑。
+
 ## 验收标准
 
 - 当前 4 个 confirmation 长尾 module 的累计 wall time至少降低70%，最大单shard不超过当前
