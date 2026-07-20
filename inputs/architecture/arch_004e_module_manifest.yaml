@@ -13631,7 +13631,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.__init__
   path: src/ai_trading_system/platform/architecture/__init__.py
-  sha256: 63fa54f20ec84956900f8ff2fcfdc186e286d93b89ee9fdfd155abd19b631041
+  sha256: 050bf92d2d3dd2d8719a396de112c14af681532cc8e1c29e3417ff23c8449e76
   rule_id: platform
   owner_profile: platform
   owners:

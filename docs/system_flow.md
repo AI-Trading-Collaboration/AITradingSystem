@@ -32,6 +32,18 @@ report/candidate/artifact/log/lease/Git identity，orphan audit 检查 active le
 branch。全链不自动 commit/merge/push/PR，不改 task status/Markdown source，不扩展策略候选，
 `production_effect=none`、`broker_action=none`。
 
+首个真实 run `supervised-4dd5bee3720db78b` 因 sanitized Windows environment 缺 `APPDATA` 而
+无法定位 user-site pytest，内部 report/validator fail closed；同时修复 CLI wrapper 曾错误固定输出
+PASS 的问题并增加 environment SHA binding。修复后的 run `supervised-5de95c5f37821ac3` 完成
+engineering 17 tests + research-evidence 9 tests，13/13 validator checks 与 orphan audit PASS，6-event
+lease replay active=0；integration candidate 仍等待人工且 merge=false。失败 run、expired lease 和 logs
+全部保留，未使用 workaround 或篡改 evidence。
+
+S4A formal architecture/contract/reproducibility/full=`446/265/23/6430 passed`；full 另有2 skipped、
+642 warnings，wall=`970.42s`，profile/performance/telemetry/provenance均PASS，scheduler applied且
+fallback=false，tail idle max=`15.13s`。新增S4A tests未进入slowest 50，不宣称单次稳定性能改善。
+S4A已转`BASELINE_DONE`，但S5/canonical cutover/自动集成仍未授权。
+
 ```mermaid
 flowchart LR
     FACTS["Legacy task facts + reviewed S4A policy"] --> READY["Readiness + two-cycle deterministic audit"]

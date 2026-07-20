@@ -116,6 +116,11 @@ from ai_trading_system.platform.architecture.parallel_control_scheduler import (
     parse_task_control_record,
     run_shadow_governance_cycles,
 )
+from ai_trading_system.platform.architecture.scaffold import (
+    ScaffoldKind,
+    ScaffoldResult,
+    create_scaffold,
+)
 from ai_trading_system.platform.architecture.supervised_automation import (
     INTEGRATION_CANDIDATE_SCHEMA_VERSION,
     ORPHAN_AUDIT_SCHEMA_VERSION,
@@ -133,11 +138,6 @@ from ai_trading_system.platform.architecture.supervised_automation import (
     load_supervised_automation_policy,
     load_supervised_pilot_spec,
     validate_supervised_run,
-)
-from ai_trading_system.platform.architecture.scaffold import (
-    ScaffoldKind,
-    ScaffoldResult,
-    create_scaffold,
 )
 from ai_trading_system.platform.architecture.task_registry_shadow import (
     ACTIVE_REGISTER_PATH,

@@ -5800,6 +5800,44 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
+    s4a = baseline["phase_arch_005_s4a_supervised_automation"]
+    assert s4a["status"] in {"VALIDATING_S4A", "COMPLETE_S4A_S5_PENDING"}
+    assert s4a["task_id"] == "ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE"
+    assert s4a["base_commit"] == "50a765fe3176b53b308adc92fdf7b66e96269386"
+    assert s4a["contracts"]["run_report_schema"] == "supervised_automation_run.v1"
+    assert s4a["reviewed_policy"]["max_workers"] == 2
+    assert s4a["reviewed_policy"]["max_active_leases"] == 2
+    assert s4a["reviewed_policy"]["automatic_merge_allowed"] is False
+    failed_run = s4a["failed_run"]
+    assert failed_run["status"] == "FAIL"
+    assert failed_run["cli_wrapper_false_pass_detected"] is True
+    assert failed_run["validator_rejected"] is True
+    assert failed_run["active_lease_count"] == 0
+    successful_run = s4a["successful_run"]
+    assert successful_run["status"] == "PASS"
+    assert successful_run["engineering_tests_passed"] == 17
+    assert successful_run["research_tests_passed"] == 9
+    assert successful_run["validation_check_count"] == 13
+    assert successful_run["orphan_issue_count"] == 0
+    assert successful_run["active_lease_count"] == 0
+    assert successful_run["integration_candidate_status"] == (
+        "AWAITING_HUMAN_COORDINATOR_APPROVAL"
+    )
+    assert successful_run["human_coordinator_approved"] is False
+    assert successful_run["merge_allowed"] is False
+    assert s4a["source_of_truth"]["legacy_markdown_only"] is True
+    assert s4a["source_of_truth"]["canonical_cutover_performed"] is False
+    assert s4a["next_work"]["s5_unblocked"] is False
+    assert s4a["next_work"]["arch_004_g2_5_unblocked"] is False
+    assert s4a["safety"]["production_effect"] == "none"
+    if s4a["status"] == "VALIDATING_S4A":
+        assert all(source["sha256"] == 0 for source in s4a["sources"])
+    else:
+        assert all(record["status"] == "PASS" for record in s4a["validation"].values())
+        for source in s4a["sources"]:
+            actual = _source_sha256(source)
+            assert actual == source["sha256"], source["path"]
+
     prebootstrap = baseline["arch_005_prebootstrap_primitives"]
     assert prebootstrap["status"] in {
         "IN_PROGRESS_NON_CUTOVER",

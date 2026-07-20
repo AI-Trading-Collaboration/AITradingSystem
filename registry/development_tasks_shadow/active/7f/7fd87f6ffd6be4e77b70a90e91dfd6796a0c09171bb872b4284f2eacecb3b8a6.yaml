@@ -20,8 +20,8 @@ task_record:
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`
-    和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1与S2～S4已完成；owner已授权pre-S5
-    S4A supervised automation，旧Markdown仍是唯一可写事实源。
+    和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1、S2～S4及pre-S5
+    S4A supervised automation均已闭合；旧Markdown仍是唯一可写事实源，S5待新授权。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: S4A自动完成readiness→isolated worktree/branch→engineering/research-evidence
@@ -33,36 +33,39 @@ task_record:
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1237
-    row_sha256: a532ec346afe183ab368813fa63fa549bbe6a0eb85585b04a93673eca755a9df
+    line_number: 1255
+    row_sha256: 52fa8ff18ee7bbb24f24159ec46c6856ea71b10143103957fc40e16da596ca0c
     cell_count: 8
     all_cells:
     - ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
     - Architecture / auditable parallel development scheduling foundation
     - P0
-    - IN_PROGRESS
+    - BASELINE_DONE
     - architecture coordinator + developer platform owner + integration coordinator
     - 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`
-      和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1与S2～S4已完成；owner已授权pre-S5
-      S4A supervised automation，旧Markdown仍是唯一可写事实源。
+      和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1、S2～S4及pre-S5
+      S4A supervised automation均已闭合；旧Markdown仍是唯一可写事实源，S5待新授权。
     - S4A自动完成readiness→isolated worktree/branch→engineering/research-evidence workers→evidence
       binding→human-gated integration queue；unknown command/path escape/stale base/timeout/tamper
       fail closed；单lane失败隔离；cleanup不删除未审计变更；focused/architecture/contract/repro/full通过。禁止自动commit/merge/push、task
       status mutation、S5 cutover与策略/生产副作用。后续S5仍需owner新授权。
-    - 2026-07-20：S2～S4已闭合；owner批准S4A较窄自动化并转`IN_PROGRESS`。当前boundary=`ARCH-005-S4A-SUPERVISED-AUTOMATION`，S5未授权、ARCH-004仍停G2.5前。
+    - 2026-07-20：S4A已闭合并转`BASELINE_DONE`；formal full=6430 passed/2 skipped/970.42s，integration
+      candidate等待人工。S5未授权、ARCH-004仍停G2.5前。
     raw_line: '|ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE|Architecture / auditable
-      parallel development scheduling foundation|P0|IN_PROGRESS|architecture coordinator
+      parallel development scheduling foundation|P0|BASELINE_DONE|architecture coordinator
       + developer platform owner + integration coordinator|详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`
-      和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1与S2～S4已完成；owner已授权pre-S5
-      S4A supervised automation，旧Markdown仍是唯一可写事实源。|S4A自动完成readiness→isolated worktree/branch→engineering/research-evidence
-      workers→evidence binding→human-gated integration queue；unknown command/path
-      escape/stale base/timeout/tamper fail closed；单lane失败隔离；cleanup不删除未审计变更；focused/architecture/contract/repro/full通过。禁止自动commit/merge/push、task
-      status mutation、S5 cutover与策略/生产副作用。后续S5仍需owner新授权。|2026-07-20：S2～S4已闭合；owner批准S4A较窄自动化并转`IN_PROGRESS`。当前boundary=`ARCH-005-S4A-SUPERVISED-AUTOMATION`，S5未授权、ARCH-004仍停G2.5前。|'
+      和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1、S2～S4及pre-S5
+      S4A supervised automation均已闭合；旧Markdown仍是唯一可写事实源，S5待新授权。|S4A自动完成readiness→isolated
+      worktree/branch→engineering/research-evidence workers→evidence binding→human-gated
+      integration queue；unknown command/path escape/stale base/timeout/tamper fail
+      closed；单lane失败隔离；cleanup不删除未审计变更；focused/architecture/contract/repro/full通过。禁止自动commit/merge/push、task
+      status mutation、S5 cutover与策略/生产副作用。后续S5仍需owner新授权。|2026-07-20：S4A已闭合并转`BASELINE_DONE`；formal
+      full=6430 passed/2 skipped/970.42s，integration candidate等待人工。S5未授权、ARCH-004仍停G2.5前。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-a532ec346afe183ab368813f
+  event_id: legacy-import-52fa8ff18ee7bbb24f24159e
   task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -72,36 +75,38 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: IN_PROGRESS
+  to_status: BASELINE_DONE
   payload:
     priority: P0
     next_owner: architecture coordinator + developer platform owner + integration
       coordinator
-    notes: 2026-07-20：S2～S4已闭合；owner批准S4A较窄自动化并转`IN_PROGRESS`。当前boundary=`ARCH-005-S4A-SUPERVISED-AUTOMATION`，S5未授权、ARCH-004仍停G2.5前。
+    notes: 2026-07-20：S4A已闭合并转`BASELINE_DONE`；formal full=6430 passed/2 skipped/970.42s，integration
+      candidate等待人工。S5未授权、ARCH-004仍停G2.5前。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:a532ec346afe183ab368813fa63fa549bbe6a0eb85585b04a93673eca755a9df
+  - sha256:52fa8ff18ee7bbb24f24159ec46c6856ea71b10143103957fc40e16da596ca0c
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
   - Architecture / auditable parallel development scheduling foundation
   - P0
-  - IN_PROGRESS
+  - BASELINE_DONE
   - architecture coordinator + developer platform owner + integration coordinator
   - 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`
-    和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1与S2～S4已完成；owner已授权pre-S5
-    S4A supervised automation，旧Markdown仍是唯一可写事实源。
+    和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1、S2～S4及pre-S5
+    S4A supervised automation均已闭合；旧Markdown仍是唯一可写事实源，S5待新授权。
   - S4A自动完成readiness→isolated worktree/branch→engineering/research-evidence workers→evidence
     binding→human-gated integration queue；unknown command/path escape/stale base/timeout/tamper
     fail closed；单lane失败隔离；cleanup不删除未审计变更；focused/architecture/contract/repro/full通过。禁止自动commit/merge/push、task
     status mutation、S5 cutover与策略/生产副作用。后续S5仍需owner新授权。
-  - 2026-07-20：S2～S4已闭合；owner批准S4A较窄自动化并转`IN_PROGRESS`。当前boundary=`ARCH-005-S4A-SUPERVISED-AUTOMATION`，S5未授权、ARCH-004仍停G2.5前。
+  - 2026-07-20：S4A已闭合并转`BASELINE_DONE`；formal full=6430 passed/2 skipped/970.42s，integration
+    candidate等待人工。S5未授权、ARCH-004仍停G2.5前。
   docs_links:
   - docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md
   - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
   - docs/requirements/ARCH-005_S4A_Supervised_Automation.md
   terminal: false
-  raw_row_sha256: a532ec346afe183ab368813fa63fa549bbe6a0eb85585b04a93673eca755a9df
+  raw_row_sha256: 52fa8ff18ee7bbb24f24159ec46c6856ea71b10143103957fc40e16da596ca0c
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 6e64336716575189f563557fff908f7bc4da1519862369935ee98d3ca3f4c628
+fragment_checksum: 470025a9cb3fcfb651c83989cb403493af21633be64c8aa08531073f91f807c7

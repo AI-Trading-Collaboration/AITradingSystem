@@ -2,7 +2,7 @@
 
 最后更新：2026-07-20
 
-状态：`IN_PROGRESS_OWNER_APPROVED`
+状态：`BASELINE_DONE_S4A_S5_PENDING`
 
 ## 1. 任务信息
 
@@ -108,3 +108,12 @@ worktree/branch 不匹配全部 fail closed。
   Git/log evidence binding、human-gated integration candidate、validator、orphan audit 与 clean-only cleanup。
   focused regression=`26 passed / 15.45s`。当前进入 S4A.4 formal validation 与真实 pilot；在 pilot evidence、
   generated manifests、architecture/contract/reproducibility/full 全部闭合前维持 `IN_PROGRESS`。
+- 2026-07-20：首次真实 run fail closed，暴露 sanitized Windows environment 缺 `APPDATA` 及 CLI
+  wrapper 未传播内部 FAIL；失败 report/log/expired leases 全部保留。修复并增加 environment evidence 与
+  CLI regression 后，第二次真实 run `supervised-5de95c5f37821ac3` PASS：engineering/research worker
+  分别 17/9 tests PASS，13/13 validator checks PASS，orphan issue=0，active lease=0，integration candidate
+  停在 `AWAITING_HUMAN_COORDINATOR_APPROVAL`、merge=false。当前只剩 formal gates/freshness closeout。
+- 2026-07-20：formal architecture/contract/reproducibility/full=`446/265/23/6430 passed`，full 另有
+  2 skipped、642 warnings、wall=`970.42s`；profile/performance/telemetry/provenance PASS、scheduler
+  applied、fallback=false、tail idle max=`15.13s`。S4A 验收闭合并转 `BASELINE_DONE`；S5、自动集成、
+  task source cutover 与 agent 自动写代码仍需新的 owner 授权。

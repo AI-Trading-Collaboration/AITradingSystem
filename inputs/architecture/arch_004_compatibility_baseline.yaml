@@ -16172,28 +16172,156 @@ phase_arch_005_s2_s4_parallel_control:
   sources:
   - {path: config/architecture/arch_005_parallel_control_policy.yaml, sha256: 820c78dfa483b848090f4417c05b8ff93da3c2b98e516e9bd38eb313352ed12f}
   - {path: docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md, sha256: 756edecb1c020966031794a01763dc1e4625d450962f98933dbdf79272aa1e4f}
-  - {path: docs/artifact_catalog.md, sha256: 74e5fc98ca90a5e685a86a0ad53ddedb3d3c65915a20322b5c06713c6f7866e8}
-  - {path: docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md, sha256: fd39f02acf345b454be4dab7bfa26cbf277f7286d8397dea3ac1abfdaf5512c5}
+  - {path: docs/artifact_catalog.md, sha256: 4ea98e36b7218da0b31e4175a9dc3ed391fd91bd0a899a612235f1616171b604}
+  - {path: docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md, sha256: e601a0cea796fd4a26efd5933cbc7e171a06c95dfddc0f9df683a1d93aca647f}
   - {path: docs/requirements/TRADING-2446_to_2448_Research_Restart_R0_R2.md, sha256: 10113e5551495dc18edf2fcd9ef067e7c69af39abfc3726c576d563e912826fa}
   - {path: docs/research/strategy_research_restart_r0_r2_closeout_2026-07-20.md, sha256: 679aa339df5d35814dff9c047cd7b62a30cd4e7e14463c32143cd4df4b4734eb}
-  - {path: docs/system_flow.md, sha256: cf2dafd75164a83b8cd41413a0ba0880bd22265c493aff9e57dc07631300404e}
-  - {path: docs/task_register.md, sha256: f1e9b649a392c8ddfc4cbbb582ee0b01524ed84db42e98ebe274867bf4ce158f}
-  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: c23a1536f1bf79cc2e68d9cd4fea815f8f1d3287482e096bdfe73b9c57cb9e0e}
-  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: b7bb5b18cf853751f5f3c4349957f5492f5e4cfec54b905c705bd2e4d75e920c}
-  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 0bd8601fd876ca9c1987702c6b20d781bb4b14a1a451507273f7ffb3991a79b2}
-  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: d3eb523283b677ea67bf5c60d76862254cb2d170ede1d25679e5d126d137dfaf}
-  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 9ee8d4b3d1ac299dc5f9d550fd4cb3456e177bfd6b1d9b897d2529f7c6207986}
+  - {path: docs/system_flow.md, sha256: 08024f4ccf0a516a4a053f7e31cc751f47586ae6c03f68a504fb9f4d96c811a5}
+  - {path: docs/task_register.md, sha256: 7410e62a52920e615c9d8d6a3c5465396e08a54c0de92b49689a35d27ff22476}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 43f8ecee4a5fe0f6d052fa7eb52ca7adf361004871fb32b6ffdff8add5f515be}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: aa8cf34035570087bb5c5a3d0efcd7103a6e0b1693dca77f2ed17d1362fdde90}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 0781932760dfe2ca40d51357216a72d0141854fdff3c1d13d4bed84ec0f4bff7}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 69adcad862050556100b10c81f41ed9c616cea273c26b6f6c16781cf8555ae8a}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: e09d295097851cd6fba26fed6bd6c65ddf2f19451c1cc75f80e51ef8d7d606fc}
   - {path: inputs/architecture/arch_005_s2_s4_pilot.yaml, sha256: edc5104a571d5b199d96cf769672c38ef9200f2ca1869fee48507203e8e35e56}
-  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: e3a00132f898dcee4a158d6df39964ebb41db33b0b44b5188921b6b625bcb47a}
-  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: babdf568f4c04b23f8208ad4057154b427cc3ef0948ee10876e58d416a965fc2}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 8cf8fb2d9f7c5da6e804cf131e603eb0b2790988f4c50e7c11da0fc00e35621c}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: e124303aaef0341b990e92b59962e1fcaa2958acd7a981e66cbfe81a726d950b}
   - {path: scripts/architecture_arch005_control_plane.py, sha256: 69a827abafd7c8d138c0d4966d87af59ad7d1ac57436bb3a31ab769cb16f515f}
   - {path: scripts/run_validation_tier.py, sha256: 53a541642bbf38801a6a852b40150e915ddd4341cde3fa790bfd25d5974462e1}
-  - {path: src/ai_trading_system/platform/architecture/__init__.py, sha256: c979a2e01320d92fa59660b503a3ba8672f1aa86f9c4d61079e6f658c479a648}
+  - {path: src/ai_trading_system/platform/architecture/__init__.py, sha256: 050bf92d2d3dd2d8719a396de112c14af681532cc8e1c29e3417ff23c8449e76}
   - {path: src/ai_trading_system/platform/architecture/parallel_control_dispatch.py, sha256: e444526e6bdaf15a6b6efd84eea1851ae239d2f2c04face162c5d8bf1cbdcf26}
   - {path: src/ai_trading_system/platform/architecture/parallel_control_kernel.py, sha256: b32b1200be2fa80e7c4d473954f5edbd29df4018ac081ccd953f8ce7f8fa3e86}
-  - {path: src/ai_trading_system/platform/architecture/parallel_control_scheduler.py, sha256: ba67e23434c75a850669ba605d79b3003684fcb994f312e77a558f7d5bdadf43}
-  - {path: tests/test_arch_004_refactor_policy.py, sha256: d59c99c987cffe4a9bc9846f175e62e500eb45fb8c3cc0deb44823425bf6ebe5}
-  - {path: tests/test_arch_004g_deprecation.py, sha256: 0f156ad0652328df91317fd6af1b428f3e5a696fa28e92f107c4c18a60085686}
+  - {path: src/ai_trading_system/platform/architecture/parallel_control_scheduler.py, sha256: 2a633691025e9fd437e2cd83e254390eaac4b182308e9d1aff929fecf942ab2e}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: 7e7c0fb59007faf04a4751a641bcb0c814b72ccb5a39172b3ecba927cab2f7a7}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: 663fef1b830c02f1ceae768a6c66f7b14cf21e900ff428f73e0b41046428f5e7}
   - {path: tests/test_arch_005_s2_kernel.py, sha256: 396d5b6dfeaef6048c2ad19430c4fe4028fb20dcad4b2ef4b2da1fad81ddb273}
   - {path: tests/test_arch_005_s3_scheduler.py, sha256: ab8cb8125985f4db6e4cf5abc522ac819bbabb0b9e0f1f1acd491778dd718a38}
   - {path: tests/test_arch_005_s4_dispatch.py, sha256: b026fba2023560d90a30207dc3440075c9d6d05b25f21795705ee76cd07cad94}
+
+phase_arch_005_s4a_supervised_automation:
+  status: COMPLETE_S4A_S5_PENDING
+  task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
+  as_of: 2026-07-20
+  base_commit: 50a765fe3176b53b308adc92fdf7b66e96269386
+  boundary_id: ARCH-005-S4A-SUPERVISED-AUTOMATION
+  contracts:
+    policy_schema: arch_005_supervised_automation_policy.v1
+    pilot_schema: arch_005_s4a_supervised_pilot.v1
+    worker_result_schema: supervised_worker_execution.v1
+    integration_candidate_schema: supervised_integration_candidate.v1
+    run_report_schema: supervised_automation_run.v1
+    validation_schema: supervised_automation_validation.v1
+    orphan_audit_schema: supervised_orphan_audit.v1
+  reviewed_policy:
+    policy_version: arch_005_s4a_supervised_automation@1.0.0
+    max_workers: 2
+    max_active_leases: 2
+    lease_ttl_seconds: 1800
+    automatic_commit_allowed: false
+    automatic_merge_allowed: false
+    automatic_push_allowed: false
+    canonical_cutover_allowed: false
+  failed_run:
+    run_id: supervised-4dd5bee3720db78b
+    report_id: supervised-run-a78509ed3e9ec980a344
+    status: FAIL
+    base_commit: 26a15951c28b42b167717dba8c29d88185559b1b
+    duration_seconds: 5.013308
+    reason: WINDOWS_SANITIZED_ENVIRONMENT_MISSING_APPDATA_PYTEST_NOT_FOUND
+    cli_wrapper_false_pass_detected: true
+    validator_rejected: true
+    lease_event_count: 6
+    expired_lease_count: 2
+    active_lease_count: 0
+    evidence_preserved: true
+  successful_run:
+    run_id: supervised-5de95c5f37821ac3
+    report_id: supervised-run-d21df0bbca3d00da9708
+    status: PASS
+    base_commit: 50a765fe3176b53b308adc92fdf7b66e96269386
+    duration_seconds: 19.789205
+    engineering_tests_passed: 17
+    engineering_worker_seconds: 3.343505
+    research_tests_passed: 9
+    research_worker_seconds: 16.094196
+    validation_check_count: 13
+    validation_failed_check_count: 0
+    orphan_issue_count: 0
+    lease_event_count: 6
+    released_lease_count: 2
+    active_lease_count: 0
+    integration_candidate_status: AWAITING_HUMAN_COORDINATOR_APPROVAL
+    human_coordinator_approved: false
+    merge_allowed: false
+  worktree_lifecycle:
+    failed_run_worktrees_retained: 2
+    successful_run_worktrees_retained: 2
+    all_retained_worktrees_clean: true
+    force_cleanup_used: false
+    branches_deleted: 0
+  validation:
+    focused: {status: PASS, passed: 10, failed: 0}
+    pilot: {status: PASS, checks: 13, failed: 0}
+    orphan_audit: {status: PASS, issues: 0}
+    architecture_fitness: {status: PASS, passed: 446, artifact: outputs/validation_runtime/architecture-fitness_20260720T094327Z/test_runtime_summary.json, artifact_sha256: 2dfacba67ed437b3437a7c8a83ab84e28a3072033afa03e9abeb3b7cb9e2d61f}
+    contract_validation: {status: PASS, passed: 265, artifact: outputs/validation_runtime/contract-validation_20260720T091223Z/test_runtime_summary.json, artifact_sha256: 8618ea4f00b58ac2449d9509112e585278b92462446b545b698498a62bf7ccfe}
+    reproducibility: {status: PASS, passed: 23, artifact: outputs/validation_runtime/reproducibility_20260720T091536Z/test_runtime_summary.json, artifact_sha256: 5dcf3e2e1f29a0c33adb8b201bd7a6646611dbeae097aef96a24dea54a5ba0e8}
+    full_validation:
+      status: PASS
+      passed: 6430
+      skipped: 2
+      warnings: 642
+      pytest_seconds: 969.60
+      elapsed_seconds: 970.42
+      prior_elapsed_seconds: 956.37
+      elapsed_delta_percent: 1.47
+      abnormal_performance_regression: false
+      scheduler_applied: true
+      scheduler_fallback: false
+      tail_idle_max_seconds: 15.13
+      artifact: outputs/validation_runtime/full_20260720T091601Z/test_runtime_summary.json
+      artifact_sha256: 993170b5b835c6f32220117753a99260644f067ded10f8cafe9c7fa67eed776c
+      runtime_profile: outputs/validation_runtime/full_20260720T091601Z/test_runtime_profile.json
+      runtime_profile_sha256: c6594918341ddca69c474b41805514ac44402705a32d52d238bf80478b32be5e
+  source_of_truth:
+    legacy_markdown_only: true
+    task_governance_status_mutated: false
+    canonical_cutover_performed: false
+  next_work:
+    s5_unblocked: false
+    s5_owner_authorization_required: true
+    arch_004_g2_5_unblocked: false
+  safety:
+    automatic_commit_performed: false
+    automatic_merge_performed: false
+    automatic_push_performed: false
+    automatic_pr_performed: false
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    candidate_expansion_performed: false
+    paper_shadow_or_portfolio_mutated: false
+    order_or_broker_action: none
+    production_effect: none
+  sources:
+  - {path: config/architecture/arch_005_supervised_automation_policy.yaml, sha256: 78fe9ba759598e51c864691f00189903f1e789e372a2afa010a6b5283392ee8f}
+  - {path: docs/architecture/arch_005_s4a_supervised_automation_closeout_2026-07-20.md, sha256: 478a64fbe8e128a279eb19ccd6b5acc1737daeaf85a46c7254b0752e3a01a625}
+  - {path: docs/artifact_catalog.md, sha256: 4ea98e36b7218da0b31e4175a9dc3ed391fd91bd0a899a612235f1616171b604}
+  - {path: docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md, sha256: e601a0cea796fd4a26efd5933cbc7e171a06c95dfddc0f9df683a1d93aca647f}
+  - {path: docs/requirements/ARCH-005_S4A_Supervised_Automation.md, sha256: a0aa6f03a143bcebf7186b3f15b081a196202e09fa25ed8d872807d57fabb14a}
+  - {path: docs/system_flow.md, sha256: 08024f4ccf0a516a4a053f7e31cc751f47586ae6c03f68a504fb9f4d96c811a5}
+  - {path: docs/task_register.md, sha256: 7410e62a52920e615c9d8d6a3c5465396e08a54c0de92b49689a35d27ff22476}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 43f8ecee4a5fe0f6d052fa7eb52ca7adf361004871fb32b6ffdff8add5f515be}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: aa8cf34035570087bb5c5a3d0efcd7103a6e0b1693dca77f2ed17d1362fdde90}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 0781932760dfe2ca40d51357216a72d0141854fdff3c1d13d4bed84ec0f4bff7}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 69adcad862050556100b10c81f41ed9c616cea273c26b6f6c16781cf8555ae8a}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: e09d295097851cd6fba26fed6bd6c65ddf2f19451c1cc75f80e51ef8d7d606fc}
+  - {path: inputs/architecture/arch_005_s4a_supervised_pilot.yaml, sha256: 2b931f632dcc70697859dc217de94a3b07ee5cfb721e759cc63e7591a8dafb62}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 8cf8fb2d9f7c5da6e804cf131e603eb0b2790988f4c50e7c11da0fc00e35621c}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: e124303aaef0341b990e92b59962e1fcaa2958acd7a981e66cbfe81a726d950b}
+  - {path: scripts/architecture_arch005_supervised_automation.py, sha256: 305e20b12d923b43bdd49e6f46e79174ae57f6f92883573bfdeb6d05a8e52811}
+  - {path: src/ai_trading_system/platform/architecture/__init__.py, sha256: 050bf92d2d3dd2d8719a396de112c14af681532cc8e1c29e3417ff23c8449e76}
+  - {path: src/ai_trading_system/platform/architecture/parallel_control_scheduler.py, sha256: 2a633691025e9fd437e2cd83e254390eaac4b182308e9d1aff929fecf942ab2e}
+  - {path: src/ai_trading_system/platform/architecture/supervised_automation.py, sha256: ee152e1c40fcf2148470cf8f0b6212d0a16d48694b97111e24de5e639615224a}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: 7e7c0fb59007faf04a4751a641bcb0c814b72ccb5a39172b3ecba927cab2f7a7}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: 663fef1b830c02f1ceae768a6c66f7b14cf21e900ff428f73e0b41046428f5e7}
+  - {path: tests/test_arch_005_s4a_supervised_automation.py, sha256: 28589c1be0cf99959b69a782e1b378cde9db20c19157d43f077eb6525a23c570}
