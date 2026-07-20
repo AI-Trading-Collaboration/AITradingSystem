@@ -18,6 +18,34 @@ lease replay 和两个 adapter 结果。成功演练为
 保留并追加 expiry 收口。该链没有切换 canonical source，Markdown 仍是唯一可写任务事实源；S5
 未授权，ARCH-004 G2.5 未自动恢复，`production_effect=none`、`broker_action=none`。
 
+ARCH-005 S4A 在上述内核之上增加“受监督自动化”窄链路，但仍不进入 S5。输入为 reviewed
+`arch_005_supervised_automation_policy.v1`、两条 task/change manifest、runtime HEAD 与干净的
+coordinator worktree。readiness 连续两轮产生 byte-identical decision 后，controller 为 engineering
+与 research-evidence 各创建一条 exact-base `codex/arch-005-s4a/*` branch 和固定 sibling root 下的
+Git worktree；lease 成功后仅以 reviewed argv list、`shell=false`、受限环境、timeout 和 output budget
+并发执行命令。每条 worker evidence 绑定 task/change/manifest SHA、resource claims、exact argv、PID、
+exit/timeout、stdout/stderr bytes+SHA、初始/最终 HEAD、branch 和 dirty paths。单 lane 失败只 expire 本
+lane lease，不取消无依赖 lane。两条 lane 与 replay 全部 PASS 时只生成
+`AWAITING_HUMAN_COORDINATOR_APPROVAL` integration candidate，`merge_allowed=false`；validator 复算
+report/candidate/artifact/log/lease/Git identity，orphan audit 检查 active lease、缺失 evidence/worktree
+和未审计 dirty path。cleanup 需要显式 coordinator approval，且只移除 clean worktree，不 force、不删
+branch。全链不自动 commit/merge/push/PR，不改 task status/Markdown source，不扩展策略候选，
+`production_effect=none`、`broker_action=none`。
+
+```mermaid
+flowchart LR
+    FACTS["Legacy task facts + reviewed S4A policy"] --> READY["Readiness + two-cycle deterministic audit"]
+    READY --> LEASE["Two non-conflicting execution leases"]
+    LEASE --> ENG["Engineering branch + worktree + argv worker"]
+    LEASE --> RES["Research-evidence branch + worktree + argv worker"]
+    ENG --> EVIDENCE["Manifest/resource/Git/log evidence binding"]
+    RES --> EVIDENCE
+    EVIDENCE --> REPLAY["Lease replay / active=0"]
+    REPLAY --> QUEUE["Integration candidate"]
+    QUEUE --> HUMAN["AWAITING_HUMAN_COORDINATOR_APPROVAL"]
+    HUMAN -.-> CLOSED["merge=false / status mutation=false / production=none"]
+```
+
 TRADING-2446～2448 在 ARCH-005 S0/S1 后新增独立 strategy research restart R0～R2
 evidence-closure lane，不恢复 ARCH-004 G2.5，也不启动 candidate promotion。
 `aits research ops strategy-restart-preflight` 先调用与 `aits validate-data` 同源的 cached-data gate，

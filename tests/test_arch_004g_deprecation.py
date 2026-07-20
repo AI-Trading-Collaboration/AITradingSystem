@@ -47,8 +47,8 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     inventory = scan_deprecation_inventory(load_deprecation_policy())
     surfaces = {item.surface_id: item for item in inventory.surfaces}
 
-    assert inventory.python_module_count == 986
-    assert inventory.python_test_file_count == 1137
+    assert inventory.python_module_count == 987
+    assert inventory.python_test_file_count == 1138
     assert inventory.direct_writer_baseline_count == 894
     assert inventory.direct_writer_current_count == 858
     assert inventory.direct_writer_violation_count == 0

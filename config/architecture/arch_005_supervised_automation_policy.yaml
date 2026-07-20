@@ -1,0 +1,115 @@
+schema_version: arch_005_supervised_automation_policy.v1
+policy_id: arch_005_s4a_supervised_automation
+version: 1.0.0
+status: REVIEWED_SUPERVISED_BASELINE
+owner: architecture_coordinator
+approved_by: project_owner
+approval_ref: owner_instruction_2026-07-20_narrow_supervised_automation
+rationale: >-
+  在 legacy Markdown 继续作为唯一可写事实源、human coordinator 继续作为最终集成闸门的
+  前提下，把已验证的 readiness、scheduler 和 lease 内核连接到两个真实隔离的 Git worktree。
+review:
+  maximum_successful_pilot_runs: 2
+  required_before_stage: S5
+  exit_condition: >-
+    两轮 supervised telemetry 完成后复核 timeout、output budget、orphan rate、冲突率和返工率；
+    本 policy 不授权 canonical cutover、自动集成或远端操作。
+control:
+  eligible_governance_statuses:
+    - IN_PROGRESS
+    - BASELINE_DONE
+  hard_dependency_types:
+    - blocks_start
+    - blocks_completion
+  require_requirement_refs: true
+  require_acceptance_criteria: true
+  max_parallel_domain_lanes: 2
+  max_total_active_leases: 2
+  priority_order:
+    - P0
+    - P1
+    - P2
+    - P3
+  tie_breakers:
+    - priority
+    - task_id
+    - change_id
+  fairness_mode: deterministic_no_aging_supervised_pilot
+  lease_ttl_seconds: 1800
+  max_reassignments: 0
+  arbiter_ttl_seconds: 30
+  require_exact_base_commit: true
+  require_manifest_hash_binding: true
+  allowlisted_task_ids:
+    - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+    - TRADING-2446_to_2448_RESEARCH_RESTART_R0_R2
+  allowlisted_actors:
+    - engineering-worker
+    - research-evidence-worker
+workspace:
+  worktree_root: ../AITradingSystem-supervised-runs
+  branch_prefix: codex/arch-005-s4a/
+  require_clean_coordinator: true
+execution:
+  max_workers: 2
+  default_timeout_seconds: 300
+  max_timeout_seconds: 900
+  max_stdout_bytes: 8388608
+  max_stderr_bytes: 8388608
+  inherited_environment_allowlist:
+    - COMSPEC
+    - HOME
+    - HOMEDRIVE
+    - HOMEPATH
+    - LOCALAPPDATA
+    - PATH
+    - PATHEXT
+    - SYSTEMDRIVE
+    - SYSTEMROOT
+    - TEMP
+    - TMP
+    - USERPROFILE
+commands:
+  - command_id: engineering-focused-validation
+    argv:
+      - "{python}"
+      - -m
+      - pytest
+      - -n
+      - "4"
+      - --dist
+      - loadfile
+      - tests/test_arch_005_s2_kernel.py
+      - tests/test_arch_005_s3_scheduler.py
+      - tests/test_arch_005_s4_dispatch.py
+      - -q
+    timeout_seconds: 300
+    validation_tier: engineering-validation
+  - command_id: research-evidence-validation
+    argv:
+      - "{python}"
+      - -m
+      - pytest
+      - -n
+      - "4"
+      - --dist
+      - loadfile
+      - tests/test_research_restart.py
+      - tests/test_dynamic_v3_r1_evidence.py
+      - -q
+    timeout_seconds: 300
+    validation_tier: research-evidence-validation
+safety:
+  source_of_truth: LEGACY_MARKDOWN_ONLY
+  task_governance_status_mutation_allowed: false
+  generated_task_view_write_allowed: false
+  automatic_commit_allowed: false
+  automatic_merge_allowed: false
+  automatic_push_allowed: false
+  automatic_pr_allowed: false
+  strategy_logic_change_allowed: false
+  strategy_threshold_change_allowed: false
+  candidate_expansion_allowed: false
+  paper_shadow_change_allowed: false
+  production_effect: none
+  broker_action: none

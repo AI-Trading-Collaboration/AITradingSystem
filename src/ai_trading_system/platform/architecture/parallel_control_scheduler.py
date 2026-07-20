@@ -147,7 +147,9 @@ def load_pilot_spec(
     tasks = tuple(
         sorted(
             (
-                _parse_task(_mapping(item, "task"), current_base_commit=current_base_commit)
+                parse_task_control_record(
+                    _mapping(item, "task"), current_base_commit=current_base_commit
+                )
                 for item in raw_tasks
             ),
             key=lambda item: item.task_id,
@@ -342,7 +344,10 @@ def run_shadow_governance_cycles(
     )
 
 
-def _parse_task(payload: Mapping[str, Any], *, current_base_commit: str) -> TaskControlRecord:
+def parse_task_control_record(
+    payload: Mapping[str, Any], *, current_base_commit: str
+) -> TaskControlRecord:
+    """Parse one task row while binding its change manifest to the runtime Git base."""
     manifest_payload = dict(_mapping(payload.get("change_manifest"), "change_manifest"))
     manifest_payload.update(
         {

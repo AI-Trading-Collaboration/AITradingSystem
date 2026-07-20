@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 test_root: tests
-test_file_count: 1137
-test_count: 1079
+test_file_count: 1138
+test_count: 1080
 support_file_count: 58
 orphan_count: 0
 specific_overlap_count: 0
@@ -7641,7 +7641,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 0f156ad0652328df91317fd6af1b428f3e5a696fa28e92f107c4c18a60085686
+  sha256: 663fef1b830c02f1ceae768a6c66f7b14cf21e900ff428f73e0b41046428f5e7
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7742,6 +7742,22 @@ tests:
 - test_id: tests.test_arch_005_s4_dispatch
   path: tests/test_arch_005_s4_dispatch.py
   sha256: b026fba2023560d90a30207dc3440075c9d6d05b25f21795705ee76cd07cad94
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_s4a_supervised_automation
+  path: tests/test_arch_005_s4a_supervised_automation.py
+  sha256: f0ee81fb512a7e8d72f9a5e1c721b21c280a26bd5e933d33491e019c0f68b896
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality

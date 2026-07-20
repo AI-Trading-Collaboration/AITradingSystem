@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 source_root: src/ai_trading_system
-module_count: 986
+module_count: 987
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -13631,7 +13631,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.__init__
   path: src/ai_trading_system/platform/architecture/__init__.py
-  sha256: c979a2e01320d92fa59660b503a3ba8672f1aa86f9c4d61079e6f658c479a648
+  sha256: 63fa54f20ec84956900f8ff2fcfdc186e286d93b89ee9fdfd155abd19b631041
   rule_id: platform
   owner_profile: platform
   owners:
@@ -13861,7 +13861,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.parallel_control_scheduler
   path: src/ai_trading_system/platform/architecture/parallel_control_scheduler.py
-  sha256: ba67e23434c75a850669ba605d79b3003684fcb994f312e77a558f7d5bdadf43
+  sha256: 2a633691025e9fd437e2cd83e254390eaac4b182308e9d1aff929fecf942ab2e
   rule_id: platform
   owner_profile: platform
   owners:
@@ -13885,6 +13885,29 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.scaffold
   path: src/ai_trading_system/platform/architecture/scaffold.py
   sha256: f6df60d5fac025ec7224d3048c9e2887bc610bde7ca7249ecb532efb9d723d03
+  rule_id: platform
+  owner_profile: platform
+  owners:
+    code_owner: platform_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: platform
+  category: platform_services
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004c_*.py
+  - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.platform.architecture.supervised_automation
+  path: src/ai_trading_system/platform/architecture/supervised_automation.py
+  sha256: 1320644964e74b67598ddc2716a89851dbe48b6e65d7f0676ba04cc065cddc3a
   rule_id: platform
   owner_profile: platform
   owners:

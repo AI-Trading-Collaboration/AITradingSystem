@@ -6,7 +6,7 @@
 
 - task id：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`
 - priority：`P0`
-- status：`BASELINE_DONE_S2_S4_COMPLETE_S5_PENDING`
+- status：`IN_PROGRESS_S4A_SUPERVISED_AUTOMATION`
 - owner：architecture coordinator / developer platform owner / integration coordinator
 - owner review：project owner 负责 source-of-truth cutover 与调度策略复核
 - hard dependency：`ARCH-004C_PLATFORM_CONTRACTS`、`ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES` `DONE`；现有 task-register consistency baseline
@@ -16,6 +16,15 @@
 - integration milestone：S0～S4 已在 G2.4 handoff 后完成；S5 canonical cutover 尚未授权
 - downstream consumers：ARCH-004 G3/G4/G5 lanes、`PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH`
 - production effect：`none`
+
+### S4A 受监督自动化增量
+
+Owner 已批准在 S5 前先实现较窄的 S4A。该增量复用 S2 readiness/scheduler/lease，不修改 canonical
+registry：controller 从 exact HEAD 为 engineering 与 research-evidence 创建两条隔离 worktree/branch，
+只运行 policy exact-allowlist argv command，并物化 manifest/resource/Git/stdout/stderr/exit/timeout evidence。
+两 lane PASS 后只写入等待人工 coordinator 的 integration queue；自动 commit、merge、push、PR、task
+status mutation 和策略候选扩展继续关闭。详细边界、分片与验收见
+`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`。
 
 ## 决策
 
@@ -440,6 +449,12 @@ ARCH-004 coordinator 生成并验证 `arch_005_bootstrap_handoff.v1`。S0 冻结
 这些问题不影响已经闭合的 S0/S1 shadow baseline。任何会影响调度、lease 或状态解释的选择必须在进入 S2/S3 前由后续显式任务冻结；当前不得据此自动启动 S2、dispatch 或 G2.5。
 
 ## 状态记录
+
+- 2026-07-20：project owner 批准先推进 pre-S5 的较窄受监督自动化版本，boundary=
+  `ARCH-005-S4A-SUPERVISED-AUTOMATION`。本批连接 S2～S4 内核与 isolated Git worktree、受审核
+  command worker、evidence binding 和 human-gated integration queue；不自动 commit/merge/push，
+  不切换 task source，不启动策略 candidate expansion 或 production。详细切片与验收见
+  `docs/requirements/ARCH-005_S4A_Supervised_Automation.md`。
 
 - 2026-07-20：S2～S4 受控 pilot 已闭合并转
   `BASELINE_DONE_S2_S4_COMPLETE_S5_PENDING`。S2 typed dependency/readiness/conflict/lease kernel
