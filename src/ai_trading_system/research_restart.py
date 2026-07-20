@@ -6,7 +6,7 @@ from dataclasses import asdict
 from datetime import UTC, date, datetime
 from hashlib import sha256
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from ai_trading_system.config import (
     PROJECT_ROOT,
@@ -16,6 +16,14 @@ from ai_trading_system.config import (
     load_universe,
 )
 from ai_trading_system.data.quality import DataQualityReport, validate_data_cache
+from ai_trading_system.legacy_research_artifact_portable_lineage import (
+    DEFAULT_POLICY_PATH as DEFAULT_PORTABLE_LINEAGE_POLICY_PATH,
+)
+from ai_trading_system.legacy_research_artifact_portable_lineage import (
+    PortableLineageError,
+    PortableLineageResolver,
+    portable_lineage_failure_evidence,
+)
 from ai_trading_system.platform.artifacts.writer import (
     write_json_atomic,
     write_markdown_atomic,
@@ -255,45 +263,70 @@ def build_research_restart_preflight(
         "safety": dict(SAFETY_BOUNDARY),
         **SAFETY_BOUNDARY,
     }
-    return _jsonable(payload)
+    return cast(dict[str, Any], _jsonable(payload))
 
 
 def validate_research_restart_preflight(
     *,
     artifact_path: Path,
+    portable_lineage_sidecar_path: Path | None = None,
+    portable_project_root: Path = PROJECT_ROOT,
+    portable_lineage_policy_path: Path = DEFAULT_PORTABLE_LINEAGE_POLICY_PATH,
 ) -> dict[str, Any]:
-    payload = _load_json_mapping(artifact_path)
-    checks = [
-        _check("schema_version", payload.get("schema_version") == SCHEMA_VERSION),
-        _check("report_type", payload.get("report_type") == REPORT_TYPE),
-        _check("safety_boundary", payload.get("safety") == SAFETY_BOUNDARY),
-        _check(
-            "execution_gate_matches_checks",
-            payload.get("research_execution_unblocked")
-            is all(bool(item.get("passed")) for item in _records(payload.get("checks"))),
-        ),
-        _check(
-            "status_matches_execution_gate",
-            payload.get("status")
-            == ("PASS" if payload.get("research_execution_unblocked") is True else "FAIL"),
-        ),
-        _check(
-            "window_semantics_pass",
-            _mapping(payload.get("window_semantics")).get("status") == "PASS",
-        ),
-        _check("input_fingerprints_fresh", _fingerprints_fresh(payload.get("input_fingerprints"))),
-    ]
-    markdown_path = Path(_mapping(payload.get("artifact_paths")).get("markdown", ""))
-    checks.append(
-        _check(
-            "markdown_matches_payload",
-            markdown_path.is_file()
-            and markdown_path.read_text(encoding="utf-8")
-            == render_research_restart_preflight(payload),
+    resolver: PortableLineageResolver | None = None
+    try:
+        if portable_lineage_sidecar_path is not None:
+            resolver = PortableLineageResolver(
+                sidecar_path=portable_lineage_sidecar_path,
+                subject_artifact_path=artifact_path,
+                consumer="r0_preflight",
+                project_root=portable_project_root,
+                policy_path=portable_lineage_policy_path,
+            )
+        payload = _load_json_mapping(artifact_path)
+        checks = [
+            _check("schema_version", payload.get("schema_version") == SCHEMA_VERSION),
+            _check("report_type", payload.get("report_type") == REPORT_TYPE),
+            _check("safety_boundary", payload.get("safety") == SAFETY_BOUNDARY),
+            _check(
+                "execution_gate_matches_checks",
+                payload.get("research_execution_unblocked")
+                is all(bool(item.get("passed")) for item in _records(payload.get("checks"))),
+            ),
+            _check(
+                "status_matches_execution_gate",
+                payload.get("status")
+                == ("PASS" if payload.get("research_execution_unblocked") is True else "FAIL"),
+            ),
+            _check(
+                "window_semantics_pass",
+                _mapping(payload.get("window_semantics")).get("status") == "PASS",
+            ),
+            _check(
+                "input_fingerprints_fresh",
+                _fingerprints_fresh(payload.get("input_fingerprints"), resolver=resolver),
+            ),
+        ]
+        markdown_path = _portable_path(
+            Path(_mapping(payload.get("artifact_paths")).get("markdown", "")), resolver
         )
-    )
+        checks.append(
+            _check(
+                "markdown_matches_payload",
+                markdown_path.is_file()
+                and markdown_path.read_text(encoding="utf-8")
+                == render_research_restart_preflight(payload),
+            )
+        )
+    except PortableLineageError as exc:
+        assert portable_lineage_sidecar_path is not None
+        return _portable_validation_failure(
+            artifact_path=artifact_path,
+            sidecar_path=portable_lineage_sidecar_path,
+            error=exc,
+        )
     passed = all(bool(item["passed"]) for item in checks)
-    return {
+    result: dict[str, Any] = {
         "schema_version": "strategy_research_restart_preflight_validation.v1",
         "report_type": "strategy_research_restart_preflight_validation",
         "status": "PASS" if passed else "FAIL",
@@ -303,6 +336,9 @@ def validate_research_restart_preflight(
         "production_effect": "none",
         "broker_action": "none",
     }
+    if resolver is not None:
+        result["portable_lineage_resolution"] = resolver.evidence()
+    return result
 
 
 def render_research_restart_preflight(payload: Mapping[str, Any]) -> str:
@@ -361,8 +397,8 @@ def _window_semantics_snapshot(
     legacy = _mapping(semantics.get("qqq_sgov_tqqq_ai_cycle_comparison"))
     primary_contract = _mapping(primary_policy.get("primary_research_window_policy"))
     registry_windows = _mapping(registry.get("windows"))
-    registry_primary = _mapping(registry_windows.get(primary.get("window_id")))
-    registry_legacy = _mapping(registry_windows.get(legacy.get("window_id")))
+    registry_primary = _mapping(registry_windows.get(str(primary.get("window_id", ""))))
+    registry_legacy = _mapping(registry_windows.get(str(legacy.get("window_id", ""))))
     checks = [
         _check("project_ai_cycle_start", _iso(project.get("start")) == "2022-12-01"),
         _check("project_ai_cycle_anchor", _iso(project.get("anchor_date")) == "2022-11-30"),
@@ -432,16 +468,62 @@ def _fingerprints(paths: Mapping[str, Path]) -> dict[str, Any]:
     }
 
 
-def _fingerprints_fresh(value: Any) -> bool:
+def _fingerprints_fresh(value: Any, *, resolver: PortableLineageResolver | None = None) -> bool:
     records = _mapping(value)
     if not records:
         return False
     for item in records.values():
         record = _mapping(item)
-        path = Path(str(record.get("path", "")))
+        path = _portable_path(
+            Path(str(record.get("path", ""))),
+            resolver,
+            expected_sha256=str(record.get("sha256", "")),
+        )
         if not path.is_file() or record.get("sha256") != _file_sha256(path):
             return False
     return True
+
+
+def _portable_path(
+    path: Path,
+    resolver: PortableLineageResolver | None,
+    *,
+    expected_sha256: str | None = None,
+    expected_size: int | None = None,
+) -> Path:
+    if resolver is None:
+        return path
+    return resolver.resolve(
+        path,
+        expected_sha256=expected_sha256,
+        expected_size=expected_size,
+    )
+
+
+def _portable_validation_failure(
+    *, artifact_path: Path, sidecar_path: Path, error: PortableLineageError
+) -> dict[str, Any]:
+    return {
+        "schema_version": "strategy_research_restart_preflight_validation.v1",
+        "report_type": "strategy_research_restart_preflight_validation",
+        "status": "FAIL",
+        "artifact_path": str(artifact_path),
+        "checks": [
+            {
+                "check_id": "portable_lineage_resolution",
+                "passed": False,
+                "reason_code": error.reason_code,
+            }
+        ],
+        "failed_check_count": 1,
+        "portable_lineage_resolution": portable_lineage_failure_evidence(
+            error=error,
+            consumer="r0_preflight",
+            sidecar_path=sidecar_path,
+        ),
+        "production_effect": "none",
+        "broker_action": "none",
+    }
 
 
 def _max_csv_date(path: Path) -> date | None:

@@ -41,6 +41,12 @@
 |---|---|---|---|---|---|---|
 |`config/research/dynamic_v3_clean_selection_preregistration_policy.yaml`<br/>`outputs/research_ops/strategy_restart/clean_selection_gate/dynamic_v3_clean_selection_preregistration_gate.json/md`|`aits research ops clean-selection-preregistration-gate`；`aits research ops validate-clean-selection-preregistration-gate`|Validated R2 decision/manifest、R1 walk-forward manifest/report/source、canonical preregistration/evaluation context/campaign 与 live checksums|schema=`dynamic_v3_clean_selection_preregistration_gate.v1`；status=`BLOCKED_*` 或 `ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN`；content-derived source drift、selection origin/result visibility、preregistration completeness、freeze chronology 与 locked-holdout overlap checks；all safety flags fixed false/none|仅供 research owner 判断能否另行授权 clean fold-local run|否，`production_effect=none`、`broker_action=none`|当前 full-period leaderboard top-N source 必须 blocked；`ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN` 也不运行 evaluator、不生成候选或 backtest。真实 S1 必须由 owner 新预注册并另建任务。|
 
+## TRADING-2450 Legacy Research Artifact Portable Lineage
+
+|Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|
+|---|---|---|---|---|---|---|
+|`config/research/legacy_research_artifact_portable_lineage_policy.yaml`<br/>`inputs/research/legacy_lineage/trading2449_r0_r1_r2_portable_lineage.v1.json`<br/>R0/R1/R2 validation payload 内的 `portable_lineage_resolution`|Python API `build_research_restart_portable_lineage_sidecar`；`PortableLineageResolver`；R0/WF/robustness/R2 validators 的显式 `portable_lineage_sidecar_path` adapter|TRADING-2449 exact recovered R0/WF/robustness/R2 artifacts、其 immutable path graph、project-relative exact source archive、reviewed v1 policy|sidecar schema=`legacy_research_artifact_portable_lineage_sidecar.v1`；canonical sidecar=`portable-lineage_dfa5dfc7208e5913fc75` / SHA-256=`031428a9...f9b` / 4 artifact bindings / 108 source bindings；policy/content ID/subject/source/hash/size/consumer/containment全部校验；historical存在时必须与portable exact match，不存在可按archive replay；任一missing/tamper/conflict/traversal/policy drift fail closed|clean clone / controlled archive 上的 R0/R1/R2 exact replay 与审计；不替代原 validator|否，`production_effect=none`、`broker_action=none`|sidecar tracked，但原artifact/source archive不进Git；clean clone未安装archive时应为`PORTABLE_SOURCE_MISSING`。不得改写legacy bytes、重算研究、生成候选/搜索或把portable PASS解释为策略结论变化；R2仍为`CONTINUE_EVIDENCE_CLOSURE`，TRADING-2449仍blocked。|
+
 ## ARCH-004G2.4AT Backfilled Outcome 增量
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
@@ -99,26 +100,88 @@ def test_paper_shadow_weekly_review_builds_and_validates(
 
 
 def test_paper_shadow_weekly_review_discloses_missing_daily_input(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path, shared_weekly_source_fixture: dict[str, Any]
 ) -> None:
-    fixture = _weekly_fixture(tmp_path, monkeypatch, missing_market_panel=True)
-    result = weekly.build_paper_shadow_weekly_review(
-        candidate=readiness.TOP_FILTERED_CANDIDATE,
-        week_start="2026-06-08",
-        week_end="2026-06-12",
-        daily_observation_ids=fixture["daily_ids"],
-        drift_monitor_ids=fixture["drift_ids"],
-        contract_id=fixture["contract_id"],
-        ledger_run_id=fixture["ledger_run_id"],
-        signal_input_completeness_id=fixture["signal_input_completeness_id"],
-        observation_dir=tmp_path / "paper_shadow_daily",
-        drift_dir=tmp_path / "paper_shadow_drift_monitor",
-        contract_dir=tmp_path / "formal_research_method_contract",
-        ledger_dir=tmp_path / "candidate_decision_ledger",
-        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
-        output_dir=tmp_path / "paper_shadow_weekly_review",
-        generated_at=datetime(2026, 6, 15, tzinfo=UTC),
-    )
+    fixture = shared_weekly_source_fixture
+    fixture_root = Path(fixture["fixture_root"])
+    market_panel_path = Path(fixture["market_panel_paths_by_date"]["2026-06-12"])
+    original_market_panel_bytes = market_panel_path.read_bytes()
+    observation_dir = tmp_path / "paper_shadow_daily"
+    drift_dir = tmp_path / "paper_shadow_drift_monitor"
+    observation_dir.mkdir()
+    drift_dir.mkdir()
+    daily_ids = [
+        fixture["daily_ids_by_date"][day]
+        for day in ("2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11")
+    ]
+    drift_ids = [
+        fixture["drift_ids_by_date"][day]
+        for day in ("2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11")
+    ]
+    for observation_id in daily_ids:
+        shutil.copytree(
+            fixture_root / "paper_shadow_daily" / observation_id,
+            observation_dir / observation_id,
+        )
+    for monitor_id in drift_ids:
+        shutil.copytree(
+            fixture_root / "paper_shadow_drift_monitor" / monitor_id,
+            drift_dir / monitor_id,
+        )
+    try:
+        market_panel_path.unlink()
+        missing_observation = daily.run_paper_shadow_daily_observation(
+            candidate=readiness.TOP_FILTERED_CANDIDATE,
+            observation_date="2026-06-12",
+            market_panel_artifact=market_panel_path,
+            signal_artifact=fixture_root / "candidate_signal_summary_2026-06-12.json",
+            signal_output="OBSERVE_RISK_ON",
+            hypothetical_weight_recommendation="paper_shadow_only_no_official_weight",
+            risk_off_risk_on_state="risk_on",
+            drawdown_state="normal",
+            rotation_event="none",
+            mismatch_event="none",
+            benchmark_comparison="tracking_QQQ_SPY_SMH",
+            manual_reviewer_notes="synthetic weekly review fixture",
+            contract_id=fixture["contract_id"],
+            protocol_id=fixture["protocol_id"],
+            signal_input_completeness_id=fixture["signal_input_completeness_id"],
+            contract_dir=fixture_root / "formal_research_method_contract",
+            protocol_dir=fixture_root / "paper_shadow_protocol",
+            signal_input_completeness_dir=fixture_root / "signal_input_completeness",
+            output_dir=observation_dir,
+            generated_at=datetime(2026, 6, 15, tzinfo=UTC),
+        )
+        daily_ids.append(missing_observation["observation_id"])
+        missing_drift = drift.build_paper_shadow_drift_monitor_report(
+            observation_id=missing_observation["observation_id"],
+            observation_dir=observation_dir,
+            contract_id=fixture["contract_id"],
+            contract_dir=fixture_root / "formal_research_method_contract",
+            output_dir=drift_dir,
+            generated_at=datetime(2026, 6, 15, tzinfo=UTC),
+        )
+        drift_ids.append(missing_drift["monitor_id"])
+        result = weekly.build_paper_shadow_weekly_review(
+            candidate=readiness.TOP_FILTERED_CANDIDATE,
+            week_start="2026-06-08",
+            week_end="2026-06-12",
+            daily_observation_ids=daily_ids,
+            drift_monitor_ids=drift_ids,
+            contract_id=fixture["contract_id"],
+            ledger_run_id=fixture["ledger_run_id"],
+            signal_input_completeness_id=fixture["signal_input_completeness_id"],
+            observation_dir=observation_dir,
+            drift_dir=drift_dir,
+            contract_dir=fixture_root / "formal_research_method_contract",
+            ledger_dir=fixture_root / "candidate_decision_ledger",
+            signal_input_completeness_dir=fixture_root / "signal_input_completeness",
+            output_dir=tmp_path / "paper_shadow_weekly_review",
+            generated_at=datetime(2026, 6, 15, tzinfo=UTC),
+        )
+    finally:
+        market_panel_path.write_bytes(original_market_panel_bytes)
+    assert market_panel_path.read_bytes() == original_market_panel_bytes
     review = result["paper_shadow_weekly_review"]
 
     assert review["weekly_decision"] == "RETURN_TO_RESEARCH"
@@ -261,9 +324,7 @@ def test_paper_shadow_weekly_validation_rejects_illegal_decision(
     finally:
         daily_path.write_bytes(original_daily_bytes)
     lineage_failed = {
-        row["check_id"]
-        for row in lineage_validation["checks"]
-        if row.get("passed") is not True
+        row["check_id"] for row in lineage_validation["checks"] if row.get("passed") is not True
     }
     assert lineage_validation["status"] == "FAIL"
     assert "source_lineage_consistent" in lineage_failed
@@ -292,22 +353,25 @@ def test_paper_shadow_weekly_validation_rejects_illegal_decision(
     assert "weekly_decision_valid" in failed
 
 
-def test_paper_shadow_weekly_recovery_window_is_not_full_week(tmp_path: Path, monkeypatch) -> None:
-    fixture = _weekly_fixture(tmp_path, monkeypatch, days=("2026-06-12",))
+def test_paper_shadow_weekly_recovery_window_is_not_full_week(
+    tmp_path: Path, shared_weekly_source_fixture: dict[str, Any]
+) -> None:
+    fixture = shared_weekly_source_fixture
+    fixture_root = Path(fixture["fixture_root"])
     result = weekly.build_paper_shadow_weekly_review(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         week_start="2026-06-12",
         week_end="2026-06-12",
-        daily_observation_ids=fixture["daily_ids"],
-        drift_monitor_ids=fixture["drift_ids"],
+        daily_observation_ids=[fixture["daily_ids_by_date"]["2026-06-12"]],
+        drift_monitor_ids=[fixture["drift_ids_by_date"]["2026-06-12"]],
         contract_id=fixture["contract_id"],
         ledger_run_id=fixture["ledger_run_id"],
         signal_input_completeness_id=fixture["signal_input_completeness_id"],
-        observation_dir=tmp_path / "paper_shadow_daily",
-        drift_dir=tmp_path / "paper_shadow_drift_monitor",
-        contract_dir=tmp_path / "formal_research_method_contract",
-        ledger_dir=tmp_path / "candidate_decision_ledger",
-        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
+        observation_dir=fixture_root / "paper_shadow_daily",
+        drift_dir=fixture_root / "paper_shadow_drift_monitor",
+        contract_dir=fixture_root / "formal_research_method_contract",
+        ledger_dir=fixture_root / "candidate_decision_ledger",
+        signal_input_completeness_dir=fixture_root / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_weekly_review",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
@@ -334,28 +398,28 @@ def test_paper_shadow_weekly_recovery_window_is_not_full_week(tmp_path: Path, mo
 def _weekly_fixture(
     tmp_path: Path,
     monkeypatch,
-    *,
-    missing_market_panel: bool = False,
-    days: tuple[str, ...] = (
-        "2026-06-08",
-        "2026-06-09",
-        "2026-06-10",
-        "2026-06-11",
-        "2026-06-12",
-    ),
 ) -> dict[str, Any]:
     fixture = run_paper_shadow_protocol_fixture(tmp_path, monkeypatch)
     signal_input = run_signal_input_completeness_fixture(tmp_path, as_of="2026-06-12")
     ledger = _candidate_decision_ledger_fixture(tmp_path, fixture)
     daily_ids: list[str] = []
     drift_ids: list[str] = []
-    for day in days:
+    daily_ids_by_date: dict[str, str] = {}
+    drift_ids_by_date: dict[str, str] = {}
+    market_panel_paths_by_date: dict[str, Path] = {}
+    for day in (
+        "2026-06-08",
+        "2026-06-09",
+        "2026-06-10",
+        "2026-06-11",
+        "2026-06-12",
+    ):
         market_panel = tmp_path / f"market_panel_{day}.json"
-        if not missing_market_panel or day != "2026-06-12":
-            market_panel.write_text(
-                json.dumps({"as_of": day, "report_type": "market_panel"}),
-                encoding="utf-8",
-            )
+        market_panel.write_text(
+            json.dumps({"as_of": day, "report_type": "market_panel"}),
+            encoding="utf-8",
+        )
+        market_panel_paths_by_date[day] = market_panel
         signal_artifact = tmp_path / f"candidate_signal_summary_{day}.json"
         signal_artifact.write_text(
             json.dumps(
@@ -390,6 +454,7 @@ def _weekly_fixture(
             generated_at=datetime(2026, 6, 15, tzinfo=UTC),
         )
         daily_ids.append(observation["observation_id"])
+        daily_ids_by_date[day] = observation["observation_id"]
         monitor = drift.build_paper_shadow_drift_monitor_report(
             observation_id=observation["observation_id"],
             observation_dir=tmp_path / "paper_shadow_daily",
@@ -399,12 +464,17 @@ def _weekly_fixture(
             generated_at=datetime(2026, 6, 15, tzinfo=UTC),
         )
         drift_ids.append(monitor["monitor_id"])
+        drift_ids_by_date[day] = monitor["monitor_id"]
     return {
         "contract_id": fixture["formal_research_method_contract"]["contract_id"],
+        "protocol_id": fixture["paper_shadow_protocol"]["protocol_id"],
         "ledger_run_id": ledger["ledger_run_id"],
         "signal_input_completeness_id": signal_input["monitor_id"],
         "daily_ids": daily_ids,
         "drift_ids": drift_ids,
+        "daily_ids_by_date": daily_ids_by_date,
+        "drift_ids_by_date": drift_ids_by_date,
+        "market_panel_paths_by_date": market_panel_paths_by_date,
     }
 
 

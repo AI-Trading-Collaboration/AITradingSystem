@@ -181,7 +181,15 @@ applied=true、fallback=false、tail idle max=`15.57s`。相对最近 969.84s fu
 进入 slowest 50。策略线恢复约 167.7MB exact bytes，四级 validator 与 gate 均 `PASS/0`。该批证明
 “domain 并行 + shared integration 单写”可工作，但只有一个真实批次，不增加第三条 domain lane。
 
-### Wave 2：建议队列
+### Wave 2：已完成
+
+Base=`ca9dea5e`，scope freeze如下：
+
+|Lane|任务/切片|Owned scope|共享/冲突处理|停止条件|
+|---|---|---|---|---|
+|Engineering|`ARCH-004G2.../W2E1`|仅`tests/test_paper_shadow_weekly_review.py`；test-only immutable fixture reuse|不得触碰portable lineage、shared docs/manifests；保留5 nodeids及真实tamper/live validators|isolated before/after不正确、restore不可靠或无有意义降幅即撤回|
+|Strategy evidence|`TRADING-2450`|locator policy/module、sidecar builder、R0/R1/R2 opt-in adapters、focused tests|legacy bytes/IDs/checksums只读；不得触碰weekly test或shared docs；path/content冲突fail closed|clean-clone、missing legacy、conflict/tamper/traversal/exact replay任一未闭合即不集成|
+|Coordinator|Wave 2 integration|task/system-flow/catalog、compatibility/deprecation/manifests/generated registry、formal/full gates|共享路径单写；若两lane需同一public helper，先暂停并建立最小contract wave|归属、base freshness、focused/formal/full与telemetry全部PASS|
 
 1. Engineering 优先从现有
    `ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE` 读取本次自然 Full profile，选择一个
@@ -200,6 +208,36 @@ applied=true、fallback=false、tail idle max=`15.57s`。相对最近 969.84s fu
 6. `event_risk_high=15<20`、20d/60d maturity=0 和 5 个 archive gap 继续作为观察/owner 治理支线，
    不占主动开发 WIP，不降样本 floor。
 
+Wave 2 telemetry：两条 lane owned-path 冲突=0、越界写=0、base drift=0、workaround=0；integration
+coordinator 仍是 shared docs/config/manifests/generated views 的唯一写者。Engineering 的首版实现把
+build-time missing source 误成 build 后删除 live source，被真实 lineage validator fail closed 拦截；该
+`4 pass / 1 fail` 运行作废，未放松门禁。修订版同机isolated=`340.62s -> 286.28s`（`-15.95%`），
+5 nodeids 与 CLI/live/tamper/coverage/decision 语义不变。Strategy lane 固化4个artifact/108个source的
+portable sidecar；R0/WF/robustness/R2均PASS，旧artifacts byte-identical，R2与TRADING-2449结论不变。
+architecture/contract/reproducibility/full=`446/265/23/6487 passed`，Full=`2 skipped / 642 warnings /
+1169.47s`，scheduler applied=true、fallback=false、profile/telemetry/performance/provenance均PASS。
+
+本次 Full 相比 Wave 1 wall 增加约19.91%，但633个共同文件耗时中位数约`1.264x`且worker busy中位数
+同步上升，判定为广泛机器负载而非W2E1局部回归；目标 weekly file worker-s仍下降约2.87%。因此只接受
+局部收益，不声明稳定Full提速；v17 duration seed以本次完整`1084 files / 6489 nodes`刷新。
+
+### 下一双线 Wave 的选取顺序
+
+1. Engineering lane 从新 Full profile 选择一个 bounded leaf，优先评估
+   `tests/test_evidence_staleness_monitor.py`（6 nodes，约378.64 worker-s，且在contract tier也形成长尾）；
+   `tests/test_smoothed_forward_weekly_run.py`虽约575.17 worker-s，但单node链更深、语义风险更高，只有前者
+   无安全复用点或收益不足时才升级为候选。每次只治理一个leaf并做同机before/after。
+2. Strategy lane 只有在输入可用时推进：首选 research owner 提供不可见结果时冻结的新 preregistration 后
+   启动`TRADING-2449 S1`；gate达到`ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN`且owner显式授权后才进入
+   `TRADING-106`，随后才是`TRADING-107`。当前这些条件未满足，因此策略lane可处于
+   `BLOCKED_INPUT`，不得为维持“形式双线”伪造任务、复用污染selection或降低样本floor。
+3. 若策略输入仍未就绪，第二条lane可选取与Engineering完全分离的strategy-evidence platform
+   housekeeping/reproducibility slice，但必须先登记稳定task id与验收标准；不得把另一个中央架构变更
+   塞入同一wave。`ARCH-004 G2.5`与`ARCH-005 S5`仍分别需要新显式授权。
+4. 两条lane继续遵循 owned-path lease、shared-path单写、public contract冲突先拆contract wave、generated
+   views最后统一刷新，以及“任一lane失败不污染另一lane产物”的集成顺序。只有连续多个真实wave证明
+   overlap/base-drift/abort和Full性能稳定，才评估第三条domain lane。
+
 ### 后续架构方向
 
 - `ARCH-004G2_PARALLEL_READINESS_GATE` / G2.5 是下一项高杠杆工程方向，但仍等待 owner 对恢复
@@ -211,7 +249,7 @@ applied=true、fallback=false、tail idle max=`15.57s`。相对最近 969.84s fu
 
 ## 10. 本轮明确不做
 
-- 不在本文档变更中启动 OPS-065 或策略 backtest；
+- 不运行真实 periodic operation、策略 backtest、candidate/search 或 provider refresh；weekly 仅执行隔离测试；
 - 不把“默认双线”解释成 S5、自主合并或 autonomous task mutation；
 - 不恢复 ARCH-004 G2.5；
 - 不运行周期 operations、联网 provider refresh 或 cache 删除；

@@ -11,77 +11,62 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: project owner / G2.4 coordinator；后续runtime优化另行选择
+  next_owner: 下一engineering lane候选：先审计evidence-staleness bounded leaf；shared integration由coordinator
   requirement_refs:
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N已完成多轮长尾治理；最近一次natural
-    Full=`6,246 passed/2 skipped/643 warnings/904.14s`，三目标file time合计下降`50.94%`、single-run
-    overall wall下降`8.82%`，但固定`stable_full_improvement_claimed=false`。S4现已完成whole-envelope
-    trigger provenance、formal failed-parent summary/profile hash binding、profile binding、developer
-    scheduled CI持久化与benchmark inherited-env隔离，并令benchmark不生成formal profile且记录`runtime_profile_status=NOT_APPLICABLE`；不改变完整nodeid、DQ/PIT/source/all-view/tamper或投资语义。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
+    provenance与Wave 2 W2E1均已完成；W2E1只治理`tests/test_paper_shadow_weekly_review.py`的test-only
+    immutable fixture reuse，不改production builder、scheduler、DQ/PIT、research policy或投资语义。下一步从v17完整Full
+    profile选择单一leaf，优先审计`tests/test_evidence_staleness_monitor.py`，无安全复用点再评估更深smoothed
+    chain。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: Full provenance缺失/非法在pytest前fail-fast；summary/profile/Reader Brief同源；profile
-      binding PASS才可形成performance evidence；失败重跑只能绑定经schema、执行状态、provenance、sidecar
-      fixed-sibling containment、same-captured-bytes及inventory hash复验的prior failed
-      formal Full；filesystem resolution异常必须结构化收敛为canonical validation error/exit 2且不得启动pytest；CI
-      artifacts always持久化；非Full保持兼容。长期runtime/read/memory目标和完整验证语义继续保留；后续优化必须重新基于自然Full
-      profile选择，`production_effect=none`。
+    text: 每个leaf顺序isolated before/after保持全部nodeid、CLI/live-source/tamper/coverage/decision断言和真实validator；formal/full
+      PASS；性能只按同机同命令证据报告，连续证据不足不得声称stable Full improvement，`production_effect=none`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1326
-    row_sha256: 2d4cb78795546616184648dd5d226d58c723fac8cb52ced43061fbb43ac9f379
+    line_number: 1367
+    row_sha256: c069a8f64c84a07fb027c7afb8ef33dbcfa5d991565e1fe1b4fa4abd6066a5be
     cell_count: 8
     all_cells:
     - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
     - Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism
     - P1
     - IN_PROGRESS
-    - project owner / G2.4 coordinator；后续runtime优化另行选择
-    - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N已完成多轮长尾治理；最近一次natural
-      Full=`6,246 passed/2 skipped/643 warnings/904.14s`，三目标file time合计下降`50.94%`、single-run
-      overall wall下降`8.82%`，但固定`stable_full_improvement_claimed=false`。S4现已完成whole-envelope
-      trigger provenance、formal failed-parent summary/profile hash binding、profile
-      binding、developer scheduled CI持久化与benchmark inherited-env隔离，并令benchmark不生成formal
-      profile且记录`runtime_profile_status=NOT_APPLICABLE`；不改变完整nodeid、DQ/PIT/source/all-view/tamper或投资语义。
-    - Full provenance缺失/非法在pytest前fail-fast；summary/profile/Reader Brief同源；profile
-      binding PASS才可形成performance evidence；失败重跑只能绑定经schema、执行状态、provenance、sidecar
-      fixed-sibling containment、same-captured-bytes及inventory hash复验的prior failed
-      formal Full；filesystem resolution异常必须结构化收敛为canonical validation error/exit 2且不得启动pytest；CI
-      artifacts always持久化；非Full保持兼容。长期runtime/read/memory目标和完整验证语义继续保留；后续优化必须重新基于自然Full
-      profile选择，`production_effect=none`。
-    - '2026-07-19: S4 expanded-focused/pre-final architecture/contract=`136/362/254
-      passed`，post-doc final artifact/hash由compatibility baseline canonical绑定；最终审查闭合filesystem
-      resolution exception P2；24/24 attribution paths、83 active sources与refreshed
-      manifests/deprecation闭合，Full run count=`0`。S4=`COMPLETE_RUNTIME_TASK_CONTINUES`并返回G2.4协调点；`next_phase_or_slice_unblocked=false`，EB1/下一callback/ARCH-005/G2.5仍未启动。'
+    - 下一engineering lane候选：先审计evidence-staleness bounded leaf；shared integration由coordinator
+    - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
+      provenance与Wave 2 W2E1均已完成；W2E1只治理`tests/test_paper_shadow_weekly_review.py`的test-only
+      immutable fixture reuse，不改production builder、scheduler、DQ/PIT、research policy或投资语义。下一步从v17完整Full
+      profile选择单一leaf，优先审计`tests/test_evidence_staleness_monitor.py`，无安全复用点再评估更深smoothed
+      chain。
+    - 每个leaf顺序isolated before/after保持全部nodeid、CLI/live-source/tamper/coverage/decision断言和真实validator；formal/full
+      PASS；性能只按同机同命令证据报告，连续证据不足不得声称stable Full improvement，`production_effect=none`。
+    - 2026-07-20：W2E1 isolated=`340.62s -> 286.28s`（`-15.95%`），5/5 PASS；architecture/contract/reproducibility=`446/265/23
+      passed`，Full=`6487 passed / 2 skipped / 1169.47s`，目标file worker-s约`-2.87%`。全局共同文件广泛变慢，故parent继续`IN_PROGRESS`且`stable_full_improvement_claimed=false`；v17
+      seed=`1084 files/6489 nodes`。
     raw_line: '|ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE|Architecture
-      / validation runtime、immutable fixture reuse与memory-aware parallelism|P1|IN_PROGRESS|project
-      owner / G2.4 coordinator；后续runtime优化另行选择|详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N已完成多轮长尾治理；最近一次natural
-      Full=`6,246 passed/2 skipped/643 warnings/904.14s`，三目标file time合计下降`50.94%`、single-run
-      overall wall下降`8.82%`，但固定`stable_full_improvement_claimed=false`。S4现已完成whole-envelope
-      trigger provenance、formal failed-parent summary/profile hash binding、profile
-      binding、developer scheduled CI持久化与benchmark inherited-env隔离，并令benchmark不生成formal
-      profile且记录`runtime_profile_status=NOT_APPLICABLE`；不改变完整nodeid、DQ/PIT/source/all-view/tamper或投资语义。|Full
-      provenance缺失/非法在pytest前fail-fast；summary/profile/Reader Brief同源；profile binding
-      PASS才可形成performance evidence；失败重跑只能绑定经schema、执行状态、provenance、sidecar fixed-sibling
-      containment、same-captured-bytes及inventory hash复验的prior failed formal Full；filesystem
-      resolution异常必须结构化收敛为canonical validation error/exit 2且不得启动pytest；CI artifacts
-      always持久化；非Full保持兼容。长期runtime/read/memory目标和完整验证语义继续保留；后续优化必须重新基于自然Full profile选择，`production_effect=none`。|2026-07-19:
-      S4 expanded-focused/pre-final architecture/contract=`136/362/254 passed`，post-doc
-      final artifact/hash由compatibility baseline canonical绑定；最终审查闭合filesystem resolution
-      exception P2；24/24 attribution paths、83 active sources与refreshed manifests/deprecation闭合，Full
-      run count=`0`。S4=`COMPLETE_RUNTIME_TASK_CONTINUES`并返回G2.4协调点；`next_phase_or_slice_unblocked=false`，EB1/下一callback/ARCH-005/G2.5仍未启动。|'
+      / validation runtime、immutable fixture reuse与memory-aware parallelism|P1|IN_PROGRESS|下一engineering
+      lane候选：先审计evidence-staleness bounded leaf；shared integration由coordinator|详见
+      `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
+      provenance与Wave 2 W2E1均已完成；W2E1只治理`tests/test_paper_shadow_weekly_review.py`的test-only
+      immutable fixture reuse，不改production builder、scheduler、DQ/PIT、research policy或投资语义。下一步从v17完整Full
+      profile选择单一leaf，优先审计`tests/test_evidence_staleness_monitor.py`，无安全复用点再评估更深smoothed
+      chain。|每个leaf顺序isolated before/after保持全部nodeid、CLI/live-source/tamper/coverage/decision断言和真实validator；formal/full
+      PASS；性能只按同机同命令证据报告，连续证据不足不得声称stable Full improvement，`production_effect=none`。|2026-07-20：W2E1
+      isolated=`340.62s -> 286.28s`（`-15.95%`），5/5 PASS；architecture/contract/reproducibility=`446/265/23
+      passed`，Full=`6487 passed / 2 skipped / 1169.47s`，目标file worker-s约`-2.87%`。全局共同文件广泛变慢，故parent继续`IN_PROGRESS`且`stable_full_improvement_claimed=false`；v17
+      seed=`1084 files/6489 nodes`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-2d4cb78795546616184648dd
+  event_id: legacy-import-c069a8f64c84a07fb027c7af
   task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -94,14 +79,13 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P1
-    next_owner: project owner / G2.4 coordinator；后续runtime优化另行选择
-    notes: '2026-07-19: S4 expanded-focused/pre-final architecture/contract=`136/362/254
-      passed`，post-doc final artifact/hash由compatibility baseline canonical绑定；最终审查闭合filesystem
-      resolution exception P2；24/24 attribution paths、83 active sources与refreshed
-      manifests/deprecation闭合，Full run count=`0`。S4=`COMPLETE_RUNTIME_TASK_CONTINUES`并返回G2.4协调点；`next_phase_or_slice_unblocked=false`，EB1/下一callback/ARCH-005/G2.5仍未启动。'
+    next_owner: 下一engineering lane候选：先审计evidence-staleness bounded leaf；shared integration由coordinator
+    notes: 2026-07-20：W2E1 isolated=`340.62s -> 286.28s`（`-15.95%`），5/5 PASS；architecture/contract/reproducibility=`446/265/23
+      passed`，Full=`6487 passed / 2 skipped / 1169.47s`，目标file worker-s约`-2.87%`。全局共同文件广泛变慢，故parent继续`IN_PROGRESS`且`stable_full_improvement_claimed=false`；v17
+      seed=`1084 files/6489 nodes`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:2d4cb78795546616184648dd5d226d58c723fac8cb52ced43061fbb43ac9f379
+  - sha256:c069a8f64c84a07fb027c7afb8ef33dbcfa5d991565e1fe1b4fa4abd6066a5be
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -109,24 +93,20 @@ projection:
   - Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism
   - P1
   - IN_PROGRESS
-  - project owner / G2.4 coordinator；后续runtime优化另行选择
-  - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N已完成多轮长尾治理；最近一次natural
-    Full=`6,246 passed/2 skipped/643 warnings/904.14s`，三目标file time合计下降`50.94%`、single-run
-    overall wall下降`8.82%`，但固定`stable_full_improvement_claimed=false`。S4现已完成whole-envelope
-    trigger provenance、formal failed-parent summary/profile hash binding、profile binding、developer
-    scheduled CI持久化与benchmark inherited-env隔离，并令benchmark不生成formal profile且记录`runtime_profile_status=NOT_APPLICABLE`；不改变完整nodeid、DQ/PIT/source/all-view/tamper或投资语义。
-  - Full provenance缺失/非法在pytest前fail-fast；summary/profile/Reader Brief同源；profile binding
-    PASS才可形成performance evidence；失败重跑只能绑定经schema、执行状态、provenance、sidecar fixed-sibling
-    containment、same-captured-bytes及inventory hash复验的prior failed formal Full；filesystem
-    resolution异常必须结构化收敛为canonical validation error/exit 2且不得启动pytest；CI artifacts
-    always持久化；非Full保持兼容。长期runtime/read/memory目标和完整验证语义继续保留；后续优化必须重新基于自然Full profile选择，`production_effect=none`。
-  - '2026-07-19: S4 expanded-focused/pre-final architecture/contract=`136/362/254
-    passed`，post-doc final artifact/hash由compatibility baseline canonical绑定；最终审查闭合filesystem
-    resolution exception P2；24/24 attribution paths、83 active sources与refreshed manifests/deprecation闭合，Full
-    run count=`0`。S4=`COMPLETE_RUNTIME_TASK_CONTINUES`并返回G2.4协调点；`next_phase_or_slice_unblocked=false`，EB1/下一callback/ARCH-005/G2.5仍未启动。'
+  - 下一engineering lane候选：先审计evidence-staleness bounded leaf；shared integration由coordinator
+  - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
+    provenance与Wave 2 W2E1均已完成；W2E1只治理`tests/test_paper_shadow_weekly_review.py`的test-only
+    immutable fixture reuse，不改production builder、scheduler、DQ/PIT、research policy或投资语义。下一步从v17完整Full
+    profile选择单一leaf，优先审计`tests/test_evidence_staleness_monitor.py`，无安全复用点再评估更深smoothed
+    chain。
+  - 每个leaf顺序isolated before/after保持全部nodeid、CLI/live-source/tamper/coverage/decision断言和真实validator；formal/full
+    PASS；性能只按同机同命令证据报告，连续证据不足不得声称stable Full improvement，`production_effect=none`。
+  - 2026-07-20：W2E1 isolated=`340.62s -> 286.28s`（`-15.95%`），5/5 PASS；architecture/contract/reproducibility=`446/265/23
+    passed`，Full=`6487 passed / 2 skipped / 1169.47s`，目标file worker-s约`-2.87%`。全局共同文件广泛变慢，故parent继续`IN_PROGRESS`且`stable_full_improvement_claimed=false`；v17
+    seed=`1084 files/6489 nodes`。
   docs_links:
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   terminal: false
-  raw_row_sha256: 2d4cb78795546616184648dd5d226d58c723fac8cb52ced43061fbb43ac9f379
+  raw_row_sha256: c069a8f64c84a07fb027c7afb8ef33dbcfa5d991565e1fe1b4fa4abd6066a5be
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: be308a974a891a4da755dfa4269947ae40fd68b5f80545a822aa019b999f9483
+fragment_checksum: e37e20189e4c6ec49d63353cc2759d414105a5c3d1c8572f87245d48ee682d7f

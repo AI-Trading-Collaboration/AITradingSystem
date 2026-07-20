@@ -2,7 +2,7 @@
 
 最后更新：2026-07-20
 
-状态：`READY`
+状态：`DONE`
 
 ## 问题与目标
 
@@ -33,6 +33,34 @@ artifact 把生成时的绝对 worktree 路径纳入 immutable lineage。当前 
 4. 覆盖 clean clone、missing legacy worktree、hash conflict、path traversal、sidecar tamper 和 exact replay；
 5. 更新 artifact catalog、system flow、module/test manifests 与 reproducibility/formal gates。
 
+## 执行链路与输入输出
+
+1. reviewed policy 输入为
+   `config/research/legacy_research_artifact_portable_lineage_policy.yaml`。loader 对 v1 的 sidecar、resolution、
+   distribution、consumer、reason-code 与 safety contract 做 exact 校验；缺文件、YAML 损坏或任一 policy
+   drift 统一以 `POLICY_SCHEMA_INVALID` fail closed。
+2. canonical sidecar 输入为
+   `inputs/research/legacy_lineage/trading2449_r0_r1_r2_portable_lineage.v1.json`。builder 只读扫描恢复后的
+   R0、walk-forward、robustness、R2 manifest 和其原有 source path graph，输出 4 个 immutable artifact
+   bindings 与 108 个 source bindings；每条 binding 固定 original legacy path、project-relative locator、
+   consumer、size 与 SHA-256，sidecar 自身以 canonical content ID 和 policy SHA 绑定。
+3. portable mode 只有调用 validator 时显式传入 `portable_lineage_sidecar_path` 才启用；未传入时沿用原直接
+   path 行为。resolver 先验证 policy、sidecar ID、policy hash、subject artifact binding 和该 consumer 的
+   全部 source binding，再返回 project root 内的 locator。locator 绝对路径、`..`、symlink escape、缺失或
+   checksum/size drift 均失败。
+4. historical source 不存在时允许按 portable source 的 exact bytes replay；若 historical 与 portable 同时
+   存在，则二者必须和 binding 完全一致，任一冲突不得选择优先级绕过。R0/R1/R2 validator 随后继续执行
+   原 checksum、lineage、fold/comparator、forward/DQ、Markdown 与 decision 重算逻辑，不接受 resolver
+   自身 PASS 替代业务 validator PASS。
+5. 输出是在原 validation payload 上追加的 `portable_lineage_resolution` evidence，包含 mode、consumer、
+   sidecar/policy ID 与 SHA、legacy artifact binding、resolved sources 及稳定 reason code；不改写任何 legacy
+   artifact。archive 安装必须把原 artifact/source bytes 放回 sidecar 指定的 project-relative locator；只有
+   tracked sidecar、尚未安装 archive 的 clean clone 明确报 `PORTABLE_SOURCE_MISSING`。
+
+当前 canonical sidecar ID=`portable-lineage_dfa5dfc7208e5913fc75`、SHA-256=
+`031428a97a3e123486142bc603a7df52f65d1b32f987cef32630b13e296c4f9b`。policy 或 source 变化不会静默
+重映射，必须经 review 重建 sidecar 并重新通过全部 validator。
+
 ## 验收标准
 
 - 历史 worktree 不存在时，同一 content-addressed source 可使 R0/R1/R2 validator PASS；
@@ -48,3 +76,20 @@ artifact 把生成时的绝对 worktree 路径纳入 immutable lineage。当前 
 
 - 2026-07-20：由 TRADING-2449 exact recovery audit 登记。当前无数据缺失，主要依赖为 versioned
   resolver contract 设计与 immutable-artifact compatibility review；未授权在当前 Wave 1 内顺带实现。
+- 2026-07-20：project owner 要求继续双线推进，Wave 2 从 base=`ca9dea5e` 启动。本 lane 持有
+  locator policy/module、sidecar builder、R0/R1/R2 opt-in resolution adapters 与 focused tests；不得编辑
+  task register、system flow、artifact catalog、compatibility/deprecation/manifests/generated registry，
+  这些共享路径由 integration coordinator 单写。不得改写 recovered legacy bytes、运行 backtest、候选、
+  搜索或 provider refresh；`production_effect=none`、`broker_action=none`。
+- 2026-07-20：实现完成并转 `VALIDATING`。versioned policy、tracked canonical sidecar、只读 builder/resolver
+  及 R0/WF/robustness/R2 explicit opt-in adapters 已实现；默认 direct-path 行为兼容。真实 recovered bundle
+  replay 为 R0/WF/robustness/R2=`PASS/PASS/PASS/PASS`，source counts=`13/87/9/16`，R2 decision 保持
+  `CONTINUE_EVIDENCE_CLOSURE`，TRADING-2449 gate 回归 PASS 且仍为
+  `BLOCKED_CONTAMINATED_LEGACY_SOURCE`；四份 canonical artifacts 前后 size/SHA 不变。focused=`33 passed /
+  20.05s`，Ruff/Black/mypy/diff-check PASS；shared manifests 与 formal tiers 由 coordinator 收口。
+- 2026-07-20：Wave 2 integration 完成并转 `DONE`。architecture/contract/reproducibility=
+  `446/265/23 passed`，正式 Full=`6487 passed / 2 skipped / 642 warnings`，runner wall=`1169.47s`；
+  collection=`6489 nodes / 1084 files`，duration scheduler applied=true、fallback=false，profile/telemetry/
+  performance/provenance 全部 PASS。Full 前后 legacy artifacts、R2 decision 与 TRADING-2449 gate 均未变化；
+  `production_effect=none`、`broker_action=none`。后续 archive operator 只可依据 tracked sidecar 安装 exact
+  bytes；任何 policy、locator、size 或 SHA drift 必须重新 review，不重开本任务来改写旧证据。

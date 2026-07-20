@@ -5824,9 +5824,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert successful_run["validation_check_count"] == 13
     assert successful_run["orphan_issue_count"] == 0
     assert successful_run["active_lease_count"] == 0
-    assert successful_run["integration_candidate_status"] == (
-        "AWAITING_HUMAN_COORDINATOR_APPROVAL"
-    )
+    assert successful_run["integration_candidate_status"] == ("AWAITING_HUMAN_COORDINATOR_APPROVAL")
     assert successful_run["human_coordinator_approved"] is False
     assert successful_run["merge_allowed"] is False
     assert s4a["source_of_truth"]["legacy_markdown_only"] is True
@@ -5841,6 +5839,74 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         for source in s4a["sources"]:
             actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
+
+    wave2 = baseline["phase_arch_005_s4b_dual_lane_wave2"]
+    assert wave2["status"] == "COMPLETE_WAVE2"
+    assert wave2["task_ids"] == [
+        "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE",
+        "TRADING-2450_LEGACY_RESEARCH_ARTIFACT_PORTABLE_LINEAGE",
+    ]
+    assert wave2["base_commit"] == "ca9dea5e424c85b1e968456137c8829222334114"
+    engineering = wave2["engineering_lane"]
+    assert engineering["node_count_preserved"] == 5
+    assert engineering["isolated_before_seconds"] == 340.62
+    assert engineering["isolated_after_seconds"] == 286.28
+    assert engineering["frozen_after_limit_seconds"] == 307.35
+    assert engineering["focused_status"] == "PASS"
+    assert engineering["stable_full_improvement_claimed"] is False
+    strategy = wave2["strategy_evidence_lane"]
+    assert strategy["sidecar_id"] == "portable-lineage_dfa5dfc7208e5913fc75"
+    assert strategy["artifact_binding_count"] == 4
+    assert strategy["source_binding_count"] == 108
+    assert strategy["r0_status"] == "PASS"
+    assert strategy["walk_forward_status"] == "PASS"
+    assert strategy["robustness_status"] == "PASS"
+    assert strategy["r2_status"] == "PASS"
+    assert strategy["r2_decision"] == "CONTINUE_EVIDENCE_CLOSURE"
+    assert strategy["trading2449_status"] == "BLOCKED_CONTAMINATED_LEGACY_SOURCE"
+    assert strategy["immutable_artifacts_unchanged"] is True
+    assert wave2["conflict_telemetry"] == {
+        "owned_path_overlap_count": 0,
+        "shared_path_writer": "integration_coordinator",
+        "semantic_regression_detected_and_rejected": 1,
+        "workaround_used": False,
+    }
+    assert wave2["generated_state"]["module_count"] == 991
+    assert wave2["generated_state"]["test_file_count"] == 1142
+    assert wave2["generated_state"]["active_task_count"] == 430
+    assert wave2["generated_state"]["completed_task_count"] == 447
+    assert wave2["generated_state"]["direct_writer_violation_count"] == 0
+    required = wave2["required_validation"]
+    for key in ("engineering_isolated", "strategy_focused", "ruff", "black", "mypy"):
+        assert required[key]["status"] == "PASS"
+    for key in ("architecture_fitness", "contract_validation", "reproducibility", "full"):
+        assert required[key]["status"] == "PASS"
+    assert required["full"]["node_count"] == 6489
+    assert required["full"]["file_count"] == 1084
+    assert required["full"]["scheduler_applied"] is True
+    assert required["full"]["fallback_used"] is False
+    assert wave2["performance_interpretation"]["broad_machine_slowdown_observed"] is True
+    assert wave2["performance_interpretation"]["stable_full_improvement_claimed"] is False
+    assert wave2["refreshed_duration_profile"] == {
+        "path": "inputs/architecture/arch_004g2_full_duration_profile.yaml",
+        "profile_id": "arch_004g2_wave2_full_duration_partial_seed",
+        "version": 17,
+        "status": "PARTIAL_SEED",
+        "source_full": "outputs/validation_runtime/full_20260720T151936Z/test_runtime_profile.json",
+        "file_count": 1084,
+        "node_count": 6489,
+        "production_effect": "none",
+    }
+    assert wave2["next_work"] == {
+        "s5_unblocked": False,
+        "arch_004_g2_5_unblocked": False,
+        "trading2449_s1_unblocked": False,
+    }
+    assert wave2["safety"]["production_effect"] == "none"
+    assert wave2["safety"]["broker_action"] == "none"
+    for source in wave2["sources"]:
+        actual = _source_sha256(source)
+        assert actual == source["sha256"], source["path"]
 
     prebootstrap = baseline["arch_005_prebootstrap_primitives"]
     assert prebootstrap["status"] in {

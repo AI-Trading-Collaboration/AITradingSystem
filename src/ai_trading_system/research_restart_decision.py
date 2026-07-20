@@ -15,6 +15,14 @@ from ai_trading_system.etf_portfolio.dynamic_v3_r1_evidence import (
     validate_r1_robustness_evidence,
     validate_r1_walk_forward_evidence,
 )
+from ai_trading_system.legacy_research_artifact_portable_lineage import (
+    DEFAULT_POLICY_PATH as DEFAULT_PORTABLE_LINEAGE_POLICY_PATH,
+)
+from ai_trading_system.legacy_research_artifact_portable_lineage import (
+    PortableLineageError,
+    PortableLineageResolver,
+    portable_lineage_failure_evidence,
+)
 from ai_trading_system.platform.artifacts.writer import (
     write_json_atomic,
     write_markdown_atomic,
@@ -147,7 +155,37 @@ def run_strategy_research_restart_decision(
 
 
 def validate_strategy_research_restart_decision(
-    *, output_root: Path = DEFAULT_R2_OUTPUT_ROOT
+    *,
+    output_root: Path = DEFAULT_R2_OUTPUT_ROOT,
+    portable_lineage_sidecar_path: Path | None = None,
+    portable_project_root: Path = PROJECT_ROOT,
+    portable_lineage_policy_path: Path = DEFAULT_PORTABLE_LINEAGE_POLICY_PATH,
+) -> dict[str, Any]:
+    resolver: PortableLineageResolver | None = None
+    try:
+        if portable_lineage_sidecar_path is not None:
+            resolver = PortableLineageResolver(
+                sidecar_path=portable_lineage_sidecar_path,
+                subject_artifact_path=(output_root / "strategy_research_restart_r2_manifest.json"),
+                consumer="r2_decision",
+                project_root=portable_project_root,
+                policy_path=portable_lineage_policy_path,
+            )
+        result = _validate_strategy_research_restart_decision(
+            output_root=output_root, resolver=resolver
+        )
+    except PortableLineageError as exc:
+        assert portable_lineage_sidecar_path is not None
+        return _portable_r2_validation_failure(
+            sidecar_path=portable_lineage_sidecar_path, error=exc
+        )
+    if resolver is not None:
+        result["portable_lineage_resolution"] = resolver.evidence()
+    return result
+
+
+def _validate_strategy_research_restart_decision(
+    *, output_root: Path, resolver: PortableLineageResolver | None
 ) -> dict[str, Any]:
     report_path = output_root / "strategy_research_restart_r2_decision.json"
     markdown_path = report_path.with_suffix(".md")
@@ -163,7 +201,10 @@ def validate_strategy_research_restart_decision(
         _check("decision_id_matches", report.get("decision_id") == manifest.get("decision_id")),
         _check("decision_matches", report.get("decision") == manifest.get("decision")),
         _check("safety_boundary", report.get("safety") == SAFETY),
-        _check("input_commitments_fresh", _commitments_fresh(commitments)),
+        _check(
+            "input_commitments_fresh",
+            _commitments_fresh(commitments, resolver=resolver),
+        ),
     ]
     output_checksums = _mapping(manifest.get("output_artifact_checksums"))
     for path in (report_path, markdown_path):
@@ -176,13 +217,20 @@ def validate_strategy_research_restart_decision(
     evidence = _validated_evidence(
         walk_forward_id=str(manifest.get("walk_forward_id", "")),
         robustness_id=str(manifest.get("robustness_id", "")),
-        r0_preflight_path=_commitment_path(commitments, "r0_preflight"),
-        walk_forward_root=_commitment_path(commitments, "walk_forward_manifest").parent.parent,
-        robustness_root=_commitment_path(commitments, "robustness_manifest").parent.parent,
-        forward_maturity_path=_commitment_path(commitments, "forward_maturity"),
-        forward_continuity_path=_commitment_path(commitments, "forward_continuity"),
+        r0_preflight_path=_commitment_path(commitments, "r0_preflight", resolver=resolver),
+        walk_forward_root=_commitment_path(
+            commitments, "walk_forward_manifest", resolver=resolver
+        ).parent.parent,
+        robustness_root=_commitment_path(
+            commitments, "robustness_manifest", resolver=resolver
+        ).parent.parent,
+        forward_maturity_path=_commitment_path(commitments, "forward_maturity", resolver=resolver),
+        forward_continuity_path=_commitment_path(
+            commitments, "forward_continuity", resolver=resolver
+        ),
+        portable_resolver=resolver,
     )
-    policy = load_restart_policy(_commitment_path(commitments, "restart_policy"))
+    policy = load_restart_policy(_commitment_path(commitments, "restart_policy", resolver=resolver))
     recomputed = _build_decision_report(
         decision_id=str(report.get("decision_id", "")),
         evidence=evidence,
@@ -222,17 +270,32 @@ def _validated_evidence(
     robustness_root: Path,
     forward_maturity_path: Path,
     forward_continuity_path: Path,
+    portable_resolver: PortableLineageResolver | None = None,
 ) -> dict[str, Any]:
-    r0_validation = validate_research_restart_preflight(artifact_path=r0_preflight_path)
+    portable_kwargs: dict[str, Any] = {}
+    if portable_resolver is not None:
+        portable_kwargs = {
+            "portable_lineage_sidecar_path": portable_resolver.sidecar_path,
+            "portable_project_root": portable_resolver.project_root,
+            "portable_lineage_policy_path": portable_resolver.policy_path,
+        }
+    r0_validation = validate_research_restart_preflight(
+        artifact_path=r0_preflight_path, **portable_kwargs
+    )
     wf_validation = validate_r1_walk_forward_evidence(
-        walk_forward_id=walk_forward_id, output_dir=walk_forward_root
+        walk_forward_id=walk_forward_id,
+        output_dir=walk_forward_root,
+        **portable_kwargs,
     )
     robustness_validation = validate_r1_robustness_evidence(
-        robustness_id=robustness_id, output_dir=robustness_root
+        robustness_id=robustness_id,
+        output_dir=robustness_root,
+        **portable_kwargs,
     )
     forward_validation = _validate_forward_evidence(
         maturity_path=forward_maturity_path,
         continuity_path=forward_continuity_path,
+        resolver=portable_resolver,
     )
     validations = {
         "r0": r0_validation,
@@ -242,6 +305,15 @@ def _validated_evidence(
     }
     failed = [name for name, value in validations.items() if value.get("status") != "PASS"]
     if failed:
+        if portable_resolver is not None:
+            for name in failed:
+                resolution = _mapping(validations[name].get("portable_lineage_resolution"))
+                reason_code = str(resolution.get("reason_code", ""))
+                if reason_code:
+                    raise PortableLineageError(
+                        reason_code,
+                        f"nested {name} portable-lineage validation failed",
+                    )
         raise ResearchRestartDecisionError(
             "R2 requires validated R0/R1 evidence; failed: " + ", ".join(failed)
         )
@@ -257,15 +329,20 @@ def _validated_evidence(
     }
 
 
-def _validate_forward_evidence(*, maturity_path: Path, continuity_path: Path) -> dict[str, Any]:
+def _validate_forward_evidence(
+    *,
+    maturity_path: Path,
+    continuity_path: Path,
+    resolver: PortableLineageResolver | None = None,
+) -> dict[str, Any]:
     maturity = _load_json(maturity_path)
     continuity = _load_json(continuity_path)
     dq = _mapping(maturity.get("data_quality_gate"))
-    config_path = Path(str(maturity.get("config_path", "")))
-    ledger_path = Path(str(maturity.get("ledger_path", "")))
-    prices_path = Path(str(dq.get("prices_path", "")))
-    secondary_path = Path(str(dq.get("secondary_prices_path", "")))
-    rates_path = Path(str(dq.get("rates_path", "")))
+    config_path = _portable_path(Path(str(maturity.get("config_path", ""))), resolver)
+    ledger_path = _portable_path(Path(str(maturity.get("ledger_path", ""))), resolver)
+    prices_path = _portable_path(Path(str(dq.get("prices_path", ""))), resolver)
+    secondary_path = _portable_path(Path(str(dq.get("secondary_prices_path", ""))), resolver)
+    rates_path = _portable_path(Path(str(dq.get("rates_path", ""))), resolver)
     config = controlled._load_next_stage_config(config_path)
     universe = controlled._universe(config)
     as_of = date.fromisoformat(str(dq.get("as_of")))
@@ -669,22 +746,101 @@ def _commitment(path: Path) -> dict[str, Any]:
     }
 
 
-def _commitments_fresh(commitments: Mapping[str, Any]) -> bool:
+def _commitments_fresh(
+    commitments: Mapping[str, Any], *, resolver: PortableLineageResolver | None = None
+) -> bool:
     if not commitments:
         return False
-    return all(
-        (path := Path(str(_mapping(value).get("path", "")))).is_file()
-        and path.stat().st_size == int(_mapping(value).get("size", -1))
-        and _file_sha256(path) == _mapping(value).get("sha256")
-        for value in commitments.values()
+    for value in commitments.values():
+        record = _mapping(value)
+        expected_size = _portable_expected_size(record)
+        path = _portable_path(
+            Path(str(record.get("path", ""))),
+            resolver,
+            expected_sha256=str(record.get("sha256", "")),
+            expected_size=expected_size,
+        )
+        if (
+            not path.is_file()
+            or path.stat().st_size != expected_size
+            or _file_sha256(path) != record.get("sha256")
+        ):
+            return False
+    return True
+
+
+def _commitment_path(
+    commitments: Mapping[str, Any],
+    name: str,
+    *,
+    resolver: PortableLineageResolver | None = None,
+) -> Path:
+    record = _mapping(commitments.get(name))
+    expected_size = _portable_expected_size(record)
+    path = _portable_path(
+        Path(str(record.get("path", ""))),
+        resolver,
+        expected_sha256=str(record.get("sha256", "")),
+        expected_size=expected_size,
     )
-
-
-def _commitment_path(commitments: Mapping[str, Any], name: str) -> Path:
-    path = Path(str(_mapping(commitments.get(name)).get("path", "")))
     if not path.is_file():
         raise ResearchRestartDecisionError(f"R2 commitment missing: {name}")
     return path
+
+
+def _portable_expected_size(record: Mapping[str, Any]) -> int:
+    try:
+        value = int(record.get("size", -1))
+    except (TypeError, ValueError) as exc:
+        raise PortableLineageError(
+            "SOURCE_EXPECTATION_MISMATCH", "commitment size is invalid"
+        ) from exc
+    if value < 0:
+        raise PortableLineageError("SOURCE_EXPECTATION_MISMATCH", "commitment size is invalid")
+    return value
+
+
+def _portable_path(
+    path: Path,
+    resolver: PortableLineageResolver | None,
+    *,
+    expected_sha256: str | None = None,
+    expected_size: int | None = None,
+) -> Path:
+    if resolver is None:
+        return path
+    return resolver.resolve(
+        path,
+        expected_sha256=expected_sha256,
+        expected_size=expected_size,
+    )
+
+
+def _portable_r2_validation_failure(
+    *, sidecar_path: Path, error: PortableLineageError
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": VALIDATION_TYPE,
+        "decision_id": None,
+        "decision": None,
+        "status": "FAIL",
+        "checks": [
+            {
+                "check_id": "portable_lineage_resolution",
+                "passed": False,
+                "reason_code": error.reason_code,
+            }
+        ],
+        "failed_check_count": 1,
+        "portable_lineage_resolution": portable_lineage_failure_evidence(
+            error=error,
+            consumer="r2_decision",
+            sidecar_path=sidecar_path,
+        ),
+        "production_effect": "none",
+        "broker_action": "none",
+    }
 
 
 def _stable_id(*values: Any) -> str:

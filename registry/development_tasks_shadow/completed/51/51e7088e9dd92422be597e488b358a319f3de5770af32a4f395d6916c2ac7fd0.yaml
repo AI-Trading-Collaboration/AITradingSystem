@@ -1,0 +1,104 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2450_LEGACY_RESEARCH_ARTIFACT_PORTABLE_LINEAGE
+  title: null
+  domain: Strategy evidence platform / immutable legacy lineage portability
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: archive operator：仅按tracked sidecar安装exact bytes；如policy/source drift则另行review
+  requirement_refs:
+  - docs/requirements/TRADING-2450_Legacy_Research_Artifact_Portable_Lineage.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2450_Legacy_Research_Artifact_Portable_Lineage.md`；versioned
+    project-relative locator、strict policy、只读resolver、tracked canonical sidecar与R0/R1/R2
+    explicit opt-in adapters已闭合；未改写legacy bytes、ID或checksum。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 历史worktree缺失时安装同content archive后R0/R1/R2仍PASS；path/locator冲突、缺失、tamper、traversal、policy
+      drift均fail closed；四份canonical artifact byte-identical；R2/TRADING-2449结论不变；formal/full
+      PASS，`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 17
+    row_sha256: 7853f83aacd22f2c21f24cb3660cb018303eb8f6967a2425bd802cf18abebad7
+    cell_count: 8
+    all_cells:
+    - TRADING-2450_LEGACY_RESEARCH_ARTIFACT_PORTABLE_LINEAGE
+    - Strategy evidence platform / immutable legacy lineage portability
+    - P0
+    - DONE
+    - archive operator：仅按tracked sidecar安装exact bytes；如policy/source drift则另行review
+    - 详见 `docs/requirements/TRADING-2450_Legacy_Research_Artifact_Portable_Lineage.md`；versioned
+      project-relative locator、strict policy、只读resolver、tracked canonical sidecar与R0/R1/R2
+      explicit opt-in adapters已闭合；未改写legacy bytes、ID或checksum。
+    - 历史worktree缺失时安装同content archive后R0/R1/R2仍PASS；path/locator冲突、缺失、tamper、traversal、policy
+      drift均fail closed；四份canonical artifact byte-identical；R2/TRADING-2449结论不变；formal/full
+      PASS，`production_effect=none`。
+    - 2026-07-20：sidecar=`portable-lineage_dfa5dfc7208e5913fc75`、4 artifacts/108 sources；真实R0/WF/robustness/R2=`PASS`，focused=33；architecture/contract/reproducibility=`446/265/23
+      passed`，Full=`6487 passed / 2 skipped / 642 warnings / 1169.47s`。
+    raw_line: '|TRADING-2450_LEGACY_RESEARCH_ARTIFACT_PORTABLE_LINEAGE|Strategy evidence
+      platform / immutable legacy lineage portability|P0|DONE|archive operator：仅按tracked
+      sidecar安装exact bytes；如policy/source drift则另行review|详见 `docs/requirements/TRADING-2450_Legacy_Research_Artifact_Portable_Lineage.md`；versioned
+      project-relative locator、strict policy、只读resolver、tracked canonical sidecar与R0/R1/R2
+      explicit opt-in adapters已闭合；未改写legacy bytes、ID或checksum。|历史worktree缺失时安装同content
+      archive后R0/R1/R2仍PASS；path/locator冲突、缺失、tamper、traversal、policy drift均fail closed；四份canonical
+      artifact byte-identical；R2/TRADING-2449结论不变；formal/full PASS，`production_effect=none`。|2026-07-20：sidecar=`portable-lineage_dfa5dfc7208e5913fc75`、4
+      artifacts/108 sources；真实R0/WF/robustness/R2=`PASS`，focused=33；architecture/contract/reproducibility=`446/265/23
+      passed`，Full=`6487 passed / 2 skipped / 642 warnings / 1169.47s`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7853f83aacd22f2c21f24cb3
+  task_id: TRADING-2450_LEGACY_RESEARCH_ARTIFACT_PORTABLE_LINEAGE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: archive operator：仅按tracked sidecar安装exact bytes；如policy/source drift则另行review
+    notes: 2026-07-20：sidecar=`portable-lineage_dfa5dfc7208e5913fc75`、4 artifacts/108
+      sources；真实R0/WF/robustness/R2=`PASS`，focused=33；architecture/contract/reproducibility=`446/265/23
+      passed`，Full=`6487 passed / 2 skipped / 642 warnings / 1169.47s`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:7853f83aacd22f2c21f24cb3660cb018303eb8f6967a2425bd802cf18abebad7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2450_LEGACY_RESEARCH_ARTIFACT_PORTABLE_LINEAGE
+  - Strategy evidence platform / immutable legacy lineage portability
+  - P0
+  - DONE
+  - archive operator：仅按tracked sidecar安装exact bytes；如policy/source drift则另行review
+  - 详见 `docs/requirements/TRADING-2450_Legacy_Research_Artifact_Portable_Lineage.md`；versioned
+    project-relative locator、strict policy、只读resolver、tracked canonical sidecar与R0/R1/R2
+    explicit opt-in adapters已闭合；未改写legacy bytes、ID或checksum。
+  - 历史worktree缺失时安装同content archive后R0/R1/R2仍PASS；path/locator冲突、缺失、tamper、traversal、policy
+    drift均fail closed；四份canonical artifact byte-identical；R2/TRADING-2449结论不变；formal/full
+    PASS，`production_effect=none`。
+  - 2026-07-20：sidecar=`portable-lineage_dfa5dfc7208e5913fc75`、4 artifacts/108 sources；真实R0/WF/robustness/R2=`PASS`，focused=33；architecture/contract/reproducibility=`446/265/23
+    passed`，Full=`6487 passed / 2 skipped / 642 warnings / 1169.47s`。
+  docs_links:
+  - docs/requirements/TRADING-2450_Legacy_Research_Artifact_Portable_Lineage.md
+  terminal: true
+  raw_row_sha256: 7853f83aacd22f2c21f24cb3660cb018303eb8f6967a2425bd802cf18abebad7
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3dc599ce9dc568de6490aa62ac3e20ffe7c706c407d38f097f58e5baea673258

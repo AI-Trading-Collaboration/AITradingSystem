@@ -1295,6 +1295,36 @@ PARTIAL_SEED order全部PASS。该sidecar成为EB1当前`6,297 nodes / 1,069 fil
 collection重验PASS。两次失败与最终PASS完整保留，不把失败运行计入稳定提速样本；本次wall较前一失败
 Full约缩短3%，但单次结果仍不升级`stable_full_improvement_claimed=false`。
 
+### Wave 2 W2E1：Paper-shadow weekly test fixture reuse
+
+2026-07-20：project owner 要求按双线 operating model 继续推进。Engineering lane 根据最新自然 Full
+`outputs/validation_runtime/full_20260720T135519Z/test_runtime_profile.json` 选择单一有界 leaf：
+`tests/test_paper_shadow_weekly_review.py=700.7719 worker-s / 5 nodes`。本切片只允许在该 test file 内复用
+一次已验证的 immutable paper-shadow weekly source DAG；missing-market-panel 场景必须以受控删除/异常安全
+byte-exact restore触发真实 live-source failure，recovery-window 场景只可选择同一fixture的单日source ids。
+全部5个nodeid、CLI、weekly decision、coverage、lineage tamper及live validator断言必须保留；禁止修改
+production builder/validator、scheduler、fixture规模、DQ/PIT、研究政策或投资语义，禁止增加worker掩盖长尾。
+coordinator在无其他pytest/Python负载时顺序采集同命令before/after；after若不保持正确性、restore边界或
+未形成有意义降幅则byte-exact撤回。单一isolated结果只证明leaf优化，不形成full稳定提速声明；最终仍需
+expanded focused、architecture/contract及本批一次自然Full，`production_effect=none`。
+
+同机、同命令、无其他Python/pytest负载的isolated证据为：before=`5 passed / 340.62s`，冻结退出上限
+=`307.35s`；第一次实现把“build-time missing source”错误改成“build后删除live source”，真实validator
+正确按lineage tamper fail closed（`4 passed / 1 failed / 262.28s`），该结果作废且未放松validator。修订后
+只复制前四日已验证artifact，在第五日source缺失状态下调用真实daily/drift builder生成diagnostic-valid
+artifact，并在`finally` byte-exact恢复source；有效after=`5 passed / 286.28s`，节省`54.34s / 15.95%`，
+通过冻结门槛。
+
+Wave 2 formal/full 已闭合：architecture/contract/reproducibility=`446/265/23 passed`；正式 Full=
+`6487 passed / 2 skipped / 642 warnings`，pytest=`1168.38s`、runner=`1169.47s`，collection=
+`6489 nodes / 1084 files`，scheduler applied=true、fallback=false、tail idle max=`17.95s`，profile/telemetry/
+performance/provenance 全部 PASS。相对上一次自然 Full `975.18s`，本次 wall 上升约`19.91%`；633个共同
+test files 的耗时中位数比约`1.264x`、worker busy 中位数从约`950.08s`升至`1140.51s`，属于全局机器/
+系统级变慢而非单一 leaf 回归。目标 weekly file 的 worker-s 从`700.77s`降至`680.65s`（约`-2.87%`），
+且同机isolated证据为`-15.95%`，因此接受 W2E1，但仍不升级
+`stable_full_improvement_claimed=false`。本次 Full 已刷新 tracked advisory duration seed 至 v17，覆盖
+`1084 files / 6489 nodes`；它只影响 loadfile 调度顺序，不减少验证范围。
+
 ## 验收标准
 
 - 当前 4 个 confirmation 长尾 module 的累计 wall time至少降低70%，最大单shard不超过当前

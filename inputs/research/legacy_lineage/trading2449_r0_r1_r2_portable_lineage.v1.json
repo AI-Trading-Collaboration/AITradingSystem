@@ -1,0 +1,1495 @@
+{
+  "legacy_artifacts": [
+    {
+      "binding_id": "artifact_r0_preflight",
+      "consumers": [
+        "r0_preflight"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\outputs\\research_ops\\strategy_restart\\strategy_research_restart_preflight.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "outputs/research_ops/strategy_restart/strategy_research_restart_preflight.json"
+      },
+      "sha256": "b7272a44f8f9eba845e47a103895de7ce207da0913d5518d08fdd5be2ad4faf9",
+      "size": 12555
+    },
+    {
+      "binding_id": "artifact_r1_walk_forward_manifest",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\r1_wf_manifest.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/r1_wf_manifest.json"
+      },
+      "sha256": "50a60f7aca02cd4e11b4a6fd982c7faf2cf46a9933b5eaa57f3dc1f4f89888bc",
+      "size": 2980
+    },
+    {
+      "binding_id": "artifact_r1_robustness_manifest",
+      "consumers": [
+        "r1_robustness"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\robustness_r1\\r1-robustness_8c93b0e2615d0ace\\r1_robustness_manifest.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/robustness_r1/r1-robustness_8c93b0e2615d0ace/r1_robustness_manifest.json"
+      },
+      "sha256": "876b9d81ed98b8e0f38b696f51e253c5ad15e29e75e631ce725231b1c95e8692",
+      "size": 3775
+    },
+    {
+      "binding_id": "artifact_r2_decision_manifest",
+      "consumers": [
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\outputs\\research_ops\\strategy_restart\\r2_decision\\strategy_research_restart_r2_manifest.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "outputs/research_ops/strategy_restart/r2_decision/strategy_research_restart_r2_manifest.json"
+      },
+      "sha256": "0fc4ded3cbde2aac73d6d6f7dee50a0946a7a9d5a7632a1b78dac3f677968743",
+      "size": 5248
+    }
+  ],
+  "policy_binding": {
+    "policy_id": "legacy_research_artifact_portable_lineage_v1",
+    "policy_sha256": "d6a3524a82eb303a92397dd21f70c9ba4f207178bb86430cd853cdb25c1a8c20",
+    "policy_version": 1
+  },
+  "safety": {
+    "broker_action": "none",
+    "candidate_generation_allowed": false,
+    "immutable_legacy_artifact_rewrite_allowed": false,
+    "parameter_search_allowed": false,
+    "production_effect": "none",
+    "promotion_change_allowed": false,
+    "research_recalculation_allowed": false
+  },
+  "schema_version": "legacy_research_artifact_portable_lineage_sidecar.v1",
+  "sidecar_id": "portable-lineage_dfa5dfc7208e5913fc75",
+  "sources": [
+    {
+      "binding_id": "source_614c59de13f6f45ac6c6",
+      "consumers": [
+        "r0_preflight"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\config\\etf_portfolio\\risk.yaml",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "config/etf_portfolio/risk.yaml"
+      },
+      "sha256": "77f93f4af740ba659e477fd91cbdf3ee16543356b18c8eb69c3100f82d029725",
+      "size": 1423
+    },
+    {
+      "binding_id": "source_3359d7f60e8b20b43428",
+      "consumers": [
+        "r0_preflight"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\config\\etf_portfolio\\strategy.yaml",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "config/etf_portfolio/strategy.yaml"
+      },
+      "sha256": "b1b3cb64ee8965b0df013dc821ac10431d341c224ee05bbb9fa652c5ff329f59",
+      "size": 1809
+    },
+    {
+      "binding_id": "source_486145fa3a1f4e659856",
+      "consumers": [
+        "r0_preflight"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\config\\research\\primary_research_window_policy.yaml",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "config/research/primary_research_window_policy.yaml"
+      },
+      "sha256": "4fd79be1bbce8a3dbd8c733d5e03e09d513a3e375703d3ce11801f2adcd5512d",
+      "size": 4227
+    },
+    {
+      "binding_id": "source_19f8dd14565bf3f529c4",
+      "consumers": [
+        "r0_preflight"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\config\\research\\research_window_registry.yaml",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "config/research/research_window_registry.yaml"
+      },
+      "sha256": "18f10df9aee328491c589373179d63520606bf10bb1e0fe569bbcac9a7b711cf",
+      "size": 4986
+    },
+    {
+      "binding_id": "source_100e2a05abff91305c13",
+      "consumers": [
+        "r0_preflight",
+        "r1_robustness",
+        "r1_walk_forward",
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\config\\research\\strategy_research_restart_policy.yaml",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "config/research/strategy_research_restart_policy.yaml"
+      },
+      "sha256": "0f81afa123d5646548496951a912b04a00dd4535b77ef60de5760ed6f02bf476",
+      "size": 6866
+    },
+    {
+      "binding_id": "source_44d1c137cf6ba6bdadce",
+      "consumers": [
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\outputs\\forward_evidence\\maturity_tracker_r1\\forward_evidence_daily_continuity_maturity_tracker.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "outputs/forward_evidence/maturity_tracker_r1/forward_evidence_daily_continuity_maturity_tracker.json"
+      },
+      "sha256": "b0798ffa1217e7688c7a560761db92ad39076e58b401eccacbbb326cc6264824",
+      "size": 8366
+    },
+    {
+      "binding_id": "source_6ea07d7a4369114b9998",
+      "consumers": [
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\outputs\\forward_evidence\\maturity_tracker_r1\\forward_evidence_maturity_tracker.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "outputs/forward_evidence/maturity_tracker_r1/forward_evidence_maturity_tracker.json"
+      },
+      "sha256": "0b6ed45d351b46e1f71a5a0c007ce233a44bba7e2f73ff1d3e95b354a325eadf",
+      "size": 42491
+    },
+    {
+      "binding_id": "source_6cfc13f4bd52dac260bf",
+      "consumers": [
+        "r1_robustness",
+        "r1_walk_forward",
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\outputs\\research_ops\\strategy_restart\\strategy_research_restart_preflight.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "outputs/research_ops/strategy_restart/strategy_research_restart_preflight.json"
+      },
+      "sha256": "b7272a44f8f9eba845e47a103895de7ce207da0913d5518d08fdd5be2ad4faf9",
+      "size": 12555
+    },
+    {
+      "binding_id": "source_89ffd9f20e1d78f53e87",
+      "consumers": [
+        "r1_robustness"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\robustness_r1\\r1-robustness_8c93b0e2615d0ace\\derived_neighbor_evaluations\\derived-neighbor_dc4e7f38146f14f2.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/robustness_r1/r1-robustness_8c93b0e2615d0ace/derived_neighbor_evaluations/derived-neighbor_dc4e7f38146f14f2.json"
+      },
+      "sha256": "c71d8e0baf804b6fc28bc4438f3e99a0c6c3ae85310502dcfda8cde5a3727546",
+      "size": 10759583
+    },
+    {
+      "binding_id": "source_228106ccf31474f89c7b",
+      "consumers": [
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\robustness_r1\\r1-robustness_8c93b0e2615d0ace\\r1_dedicated_comparators.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/robustness_r1/r1-robustness_8c93b0e2615d0ace/r1_dedicated_comparators.json"
+      },
+      "sha256": "d472e09de38a691385ea0f1a152a72bb61909be2a8308bdb093e926715b33d09",
+      "size": 6186
+    },
+    {
+      "binding_id": "source_f9a95345488c072aeb94",
+      "consumers": [
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\robustness_r1\\r1-robustness_8c93b0e2615d0ace\\r1_robustness_manifest.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/robustness_r1/r1-robustness_8c93b0e2615d0ace/r1_robustness_manifest.json"
+      },
+      "sha256": "876b9d81ed98b8e0f38b696f51e253c5ad15e29e75e631ce725231b1c95e8692",
+      "size": 3775
+    },
+    {
+      "binding_id": "source_4da5429b4f97f4dad258",
+      "consumers": [
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\robustness_r1\\r1-robustness_8c93b0e2615d0ace\\r1_robustness_report.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/robustness_r1/r1-robustness_8c93b0e2615d0ace/r1_robustness_report.json"
+      },
+      "sha256": "dc5964a43dd096301058e6039e52ba08bb22586a75de8e5d87bdabe47ade1243",
+      "size": 20144
+    },
+    {
+      "binding_id": "source_a1e3d99255a15233466d",
+      "consumers": [
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\robustness_r1\\r1-robustness_8c93b0e2615d0ace\\r1_sensitivity.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/robustness_r1/r1-robustness_8c93b0e2615d0ace/r1_sensitivity.json"
+      },
+      "sha256": "0b1a34dd2aafe9b44ef9db6b346b699a4124f630d61b37032950d3532967a556",
+      "size": 12410
+    },
+    {
+      "binding_id": "source_75b0187683d0f39acfab",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\0914e501929fe8b3\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/0914e501929fe8b3/window_1_test.json"
+      },
+      "sha256": "8f14a10fbc74082d3728c9fa9a3c4210d68117d0cce32568b69c40c653ca723f",
+      "size": 848267
+    },
+    {
+      "binding_id": "source_aa38fb77e7680f146bbc",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\0914e501929fe8b3\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/0914e501929fe8b3/window_1_train.json"
+      },
+      "sha256": "698e69fb4011baeb4d947bd83c82b8c45196f813ca21b5279ea61c0be89a2759",
+      "size": 3004072
+    },
+    {
+      "binding_id": "source_c0e27871ddca70e1582b",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\0914e501929fe8b3\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/0914e501929fe8b3/window_2_test.json"
+      },
+      "sha256": "1d5188f47a04e8e7a538e72529ffcbca0d11424829595dd1f0186fad8deb762e",
+      "size": 862418
+    },
+    {
+      "binding_id": "source_8deadfcebe11af777007",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\0914e501929fe8b3\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/0914e501929fe8b3/window_2_train.json"
+      },
+      "sha256": "6a59414ff906b20176dd8df217950a89e44e5342d46ef6627fb3f2c06430c016",
+      "size": 3119093
+    },
+    {
+      "binding_id": "source_1f1f952d17169263f314",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\17d4d48c9a7a350f\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/17d4d48c9a7a350f/window_1_test.json"
+      },
+      "sha256": "0b0daf245d153671c6b40bff36e1c893bd075460f7dff0e3f3054ca404efa868",
+      "size": 848391
+    },
+    {
+      "binding_id": "source_1a0478eb833086e15eee",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\17d4d48c9a7a350f\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/17d4d48c9a7a350f/window_1_train.json"
+      },
+      "sha256": "bc52a92b66c2c55d54a4026bd5b49518d51712b26927d102608cd1d4f964a09c",
+      "size": 3003825
+    },
+    {
+      "binding_id": "source_fc8499e72ada2f652ccc",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\17d4d48c9a7a350f\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/17d4d48c9a7a350f/window_2_test.json"
+      },
+      "sha256": "d084a08cd0f3ea49114eb0e7661463e5f20bb727b3ddd901c57f332bf2d5daea",
+      "size": 862582
+    },
+    {
+      "binding_id": "source_8f7c1676c992d4c41be4",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\17d4d48c9a7a350f\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/17d4d48c9a7a350f/window_2_train.json"
+      },
+      "sha256": "cdb2bb43d03d47e122153601d8bb68766df582e57969252d81cbae3214fa9df6",
+      "size": 3119003
+    },
+    {
+      "binding_id": "source_a75b64d2cc8f66919c4d",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\3aff850eff52db61\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/3aff850eff52db61/window_1_test.json"
+      },
+      "sha256": "23bcaf9c575824970371fac7afe0cfc8baa049e99f535523fc6686b878fb9093",
+      "size": 848267
+    },
+    {
+      "binding_id": "source_b014341c0f4f94c041fb",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\3aff850eff52db61\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/3aff850eff52db61/window_1_train.json"
+      },
+      "sha256": "01649dc9f4a65f2c9f434ca2c191cd420237bcbc8489c3e12cb056a1ee76fc18",
+      "size": 3004072
+    },
+    {
+      "binding_id": "source_cd6ec8144770f09eda01",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\3aff850eff52db61\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/3aff850eff52db61/window_2_test.json"
+      },
+      "sha256": "259919efa93f0da9dc3612065c9143d322c141d0dfbe9ac7ab26cf6752d55647",
+      "size": 862418
+    },
+    {
+      "binding_id": "source_2aad4b98c8a431f8e0ce",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\3aff850eff52db61\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/3aff850eff52db61/window_2_train.json"
+      },
+      "sha256": "3f2d5275f50b06f8507f10b80057c2eb4b9aa8fe1640e94f11a5d191665beb44",
+      "size": 3119093
+    },
+    {
+      "binding_id": "source_37e791a3c15140cb40ce",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\4228985d76d97e71\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/4228985d76d97e71/window_1_test.json"
+      },
+      "sha256": "50208b47702ea8ecb2c754f5a58b5a68fb188b435bee29e8d110e7a535f593cd",
+      "size": 848613
+    },
+    {
+      "binding_id": "source_5fc6a0f4adb2968f9e17",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\4228985d76d97e71\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/4228985d76d97e71/window_1_train.json"
+      },
+      "sha256": "516a19fca22f5d610dfae94c035e4287c4047db180783765eccbe2f6a8b39b51",
+      "size": 3004755
+    },
+    {
+      "binding_id": "source_8f575c96bc11e466694e",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\4228985d76d97e71\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/4228985d76d97e71/window_2_test.json"
+      },
+      "sha256": "800c22ed99f3da0029bf374af5877566858475d30ab41e9f67632db7546bc44a",
+      "size": 854888
+    },
+    {
+      "binding_id": "source_c7fd9528da9f033690c2",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\4228985d76d97e71\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/4228985d76d97e71/window_2_train.json"
+      },
+      "sha256": "abccfb4ef3b4329f57f9b909a69a80bd1578d4e051378bc2eba00d347f3b428a",
+      "size": 3120052
+    },
+    {
+      "binding_id": "source_8b84a225019b8c884407",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\60aa68057c5cfe27\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/60aa68057c5cfe27/window_1_test.json"
+      },
+      "sha256": "8f63629b6fb954ad255a9c9b71f29a89146831113a7812aa8c1ef61ea2a3cb8c",
+      "size": 848271
+    },
+    {
+      "binding_id": "source_7ef93be5406814515b8d",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\60aa68057c5cfe27\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/60aa68057c5cfe27/window_1_train.json"
+      },
+      "sha256": "0a9a6c20c2e91d520c5d3ed2de2ad954602fbc1d34ad045f1bd5eb3baa942b94",
+      "size": 3004534
+    },
+    {
+      "binding_id": "source_48016ad1e46fc52a6acf",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\60aa68057c5cfe27\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/60aa68057c5cfe27/window_2_test.json"
+      },
+      "sha256": "c6bdac16929e9d2a2364023c4a526dbd84dd1229838d7dcf2577f4ea1bd7cb4d",
+      "size": 862518
+    },
+    {
+      "binding_id": "source_e62f1a7a23d58239f4e4",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\60aa68057c5cfe27\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/60aa68057c5cfe27/window_2_train.json"
+      },
+      "sha256": "2dd949e178f77e3cfe7d8c02e68f63f02fcd833989bdf364a26ccec83258baf9",
+      "size": 3119500
+    },
+    {
+      "binding_id": "source_90e575b6194c7a63e43f",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\62da96bf80bc9656\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/62da96bf80bc9656/window_1_test.json"
+      },
+      "sha256": "1c4ea2ba72db10946bb39a27526fc81c649cda3446060e7ba73d4d3d6c90564f",
+      "size": 848382
+    },
+    {
+      "binding_id": "source_0b928c932e0e0c462903",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\62da96bf80bc9656\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/62da96bf80bc9656/window_1_train.json"
+      },
+      "sha256": "0734238571b26bf006edc4b9ec12aa1aadfe7d6907fa0f083db49cd72f374880",
+      "size": 2989710
+    },
+    {
+      "binding_id": "source_e0988fb19e503e768c10",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\62da96bf80bc9656\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/62da96bf80bc9656/window_2_test.json"
+      },
+      "sha256": "aae073dbf688c5be59f47f61e4fe129f4efdb21c87de921c0b0831df564a1be4",
+      "size": 854765
+    },
+    {
+      "binding_id": "source_88a77be4f50c495b05da",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\62da96bf80bc9656\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/62da96bf80bc9656/window_2_train.json"
+      },
+      "sha256": "8a78f7d470e83eacf5c2235e2e721fb55a32848c20d4fa923b444041ca2f488b",
+      "size": 3106720
+    },
+    {
+      "binding_id": "source_86eed6337841e8f3ad6b",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\6625f24cf3280045\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/6625f24cf3280045/window_1_test.json"
+      },
+      "sha256": "46989e10e914776f8a2303a84217d85c15267d7da2c18d7c50876d984b370c74",
+      "size": 848271
+    },
+    {
+      "binding_id": "source_70b27291c15ed7f59c0a",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\6625f24cf3280045\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/6625f24cf3280045/window_1_train.json"
+      },
+      "sha256": "dd0bc52208e627b8955a40e2607777c6645fdb02835499574a1b141d3f091e41",
+      "size": 3004534
+    },
+    {
+      "binding_id": "source_60c719e7353eae9ec90f",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\6625f24cf3280045\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/6625f24cf3280045/window_2_test.json"
+      },
+      "sha256": "f9234a36401820d530ee7ca7f7acb8c775c421ad2cc5ed0879140dfd70aa029f",
+      "size": 862518
+    },
+    {
+      "binding_id": "source_0fee9f58ce0499084ee4",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\6625f24cf3280045\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/6625f24cf3280045/window_2_train.json"
+      },
+      "sha256": "dbe07f76b3b5e1e32da2268963a57e1211e448bd5530910e2336f9694a8ab382",
+      "size": 3119500
+    },
+    {
+      "binding_id": "source_09ad5e4bd15b1c204e4b",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\6b91d729ec48c712\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/6b91d729ec48c712/window_1_test.json"
+      },
+      "sha256": "3d870d8815f1b41b6bde55670fca0e95260e6908d95551dc6c2bb06f3b62368d",
+      "size": 848271
+    },
+    {
+      "binding_id": "source_a246300fedcd0004fc23",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\6b91d729ec48c712\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/6b91d729ec48c712/window_1_train.json"
+      },
+      "sha256": "ee5915200468c25163c6fef2a72c2dcb7542dbe3bf76d41fc0584e9a60adc844",
+      "size": 3004534
+    },
+    {
+      "binding_id": "source_5dbb1e653fe480c02ef0",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\6b91d729ec48c712\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/6b91d729ec48c712/window_2_test.json"
+      },
+      "sha256": "9c497fbbede11d4587a61a1319ec13773aab2040275d2dce338b83d29936b151",
+      "size": 862518
+    },
+    {
+      "binding_id": "source_7b19de3292667d6582b7",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\6b91d729ec48c712\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/6b91d729ec48c712/window_2_train.json"
+      },
+      "sha256": "570f4688547dcfd9da00cdfa2cda7f92ae8adc86da8a3b83180b9728ee2585a8",
+      "size": 3119500
+    },
+    {
+      "binding_id": "source_ffed17c07d90330b0a72",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\771943bffe420507\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/771943bffe420507/window_1_test.json"
+      },
+      "sha256": "6fd15285956b66ac8c59b94f15b226534cda64baa03afc886bf1e3996bea7a6d",
+      "size": 848045
+    },
+    {
+      "binding_id": "source_93d32ce688ab07678bcf",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\771943bffe420507\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/771943bffe420507/window_1_train.json"
+      },
+      "sha256": "daa501a96b78fc5f63cee8991a4bc4964b3aae5085c72c2c33fca9b3239aa60a",
+      "size": 3003836
+    },
+    {
+      "binding_id": "source_eeaf82988509827fd55f",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\771943bffe420507\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/771943bffe420507/window_2_test.json"
+      },
+      "sha256": "f049b2cc57de4ac630aff8f48e520b1e0ec3d2134801152e2b83bd001a5fa42e",
+      "size": 862408
+    },
+    {
+      "binding_id": "source_172141029063c47a5d59",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\771943bffe420507\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/771943bffe420507/window_2_train.json"
+      },
+      "sha256": "907fb3b8b2e5e38347736c0bbc9ddba62088374ff1f2eda8b63556b024ed172f",
+      "size": 3118657
+    },
+    {
+      "binding_id": "source_f62992b0e158abb28198",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\7eadbfaa1a3cfe2d\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/7eadbfaa1a3cfe2d/window_1_test.json"
+      },
+      "sha256": "e1b9042fc403847c620e1e0dde0c0e72a76d8677b3994de42ecd2af4b89ca521",
+      "size": 848613
+    },
+    {
+      "binding_id": "source_c03a8865488ff51ffd71",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\7eadbfaa1a3cfe2d\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/7eadbfaa1a3cfe2d/window_1_train.json"
+      },
+      "sha256": "b2ec96fcd6fa16c7764bb4f70db7a750a96998494cee2292e7f232e5442aeef7",
+      "size": 3004755
+    },
+    {
+      "binding_id": "source_e1f412ffe2cc6f134318",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\7eadbfaa1a3cfe2d\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/7eadbfaa1a3cfe2d/window_2_test.json"
+      },
+      "sha256": "b42907995b76e8db2e044b0c06bce109df852908e437944cff97d552d229a2f8",
+      "size": 854888
+    },
+    {
+      "binding_id": "source_90c5b447c262f74ce1ca",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\7eadbfaa1a3cfe2d\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/7eadbfaa1a3cfe2d/window_2_train.json"
+      },
+      "sha256": "51987e2ff2951a87657248d3ed6e341d20674f9aa5dd5200052a52a81ccdd914",
+      "size": 3120052
+    },
+    {
+      "binding_id": "source_0bc1bc062c729646c5cd",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\8983566f99e84119\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/8983566f99e84119/window_1_test.json"
+      },
+      "sha256": "28ce04845a91595ea3c88ac787e750cf1d094a337f64f20b881bf303092d76b2",
+      "size": 848271
+    },
+    {
+      "binding_id": "source_0d37adbafde6312677b2",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\8983566f99e84119\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/8983566f99e84119/window_1_train.json"
+      },
+      "sha256": "af7c7c68cfccf90db3ff444f5e9232746603fcc7cad900ab5050e87c23413167",
+      "size": 3004534
+    },
+    {
+      "binding_id": "source_2bb5a87edecab5c2dd53",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\8983566f99e84119\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/8983566f99e84119/window_2_test.json"
+      },
+      "sha256": "bda97756f411fcbf12f90f452af73d59b20d6dffc372f32953a6616a4af370a1",
+      "size": 862518
+    },
+    {
+      "binding_id": "source_14039eea46e3d0dad463",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\8983566f99e84119\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/8983566f99e84119/window_2_train.json"
+      },
+      "sha256": "09d7eafcbcdc5dc274f59c2ab00701e4030705290c64006f73617041be9048ab",
+      "size": 3119500
+    },
+    {
+      "binding_id": "source_9cff3875d03fe0ff4c18",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\8d15ebad7bfceb4a\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/8d15ebad7bfceb4a/window_1_test.json"
+      },
+      "sha256": "d6bacb8f37b609b637595ee1a71270cf9daed58cef73493f9bb2440e6b72062c",
+      "size": 848382
+    },
+    {
+      "binding_id": "source_426b72f7806ecdfd5014",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\8d15ebad7bfceb4a\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/8d15ebad7bfceb4a/window_1_train.json"
+      },
+      "sha256": "2f7a036f01f1c873fffd42c826ee873116099d4650e60192edf91ad1cfd63539",
+      "size": 2989710
+    },
+    {
+      "binding_id": "source_44662205292b7fdc2ed6",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\8d15ebad7bfceb4a\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/8d15ebad7bfceb4a/window_2_test.json"
+      },
+      "sha256": "b3968a423b4c26af6a57e633b57c2736ce7c1bb6539c7adab1a2d9a05c41728a",
+      "size": 854765
+    },
+    {
+      "binding_id": "source_7373954b4c3775dbf2d0",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\8d15ebad7bfceb4a\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/8d15ebad7bfceb4a/window_2_train.json"
+      },
+      "sha256": "95c75c9132de39e7c76582316414dba44b042b274cd1b76901eae180366b68c0",
+      "size": 3106720
+    },
+    {
+      "binding_id": "source_6e89015a09d044d5691d",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\96ab48402d50cf8d\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/96ab48402d50cf8d/window_1_test.json"
+      },
+      "sha256": "620a26a32a326aa5ba1a5af0de91eaf5af97b42684c1bf6e31c7a325eb91714c",
+      "size": 848391
+    },
+    {
+      "binding_id": "source_1532d8056fbc679b35eb",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\96ab48402d50cf8d\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/96ab48402d50cf8d/window_1_train.json"
+      },
+      "sha256": "884a381f48653c412f45f428c119af51746d69250e89ad1941cb9a8745a6ef9b",
+      "size": 3003825
+    },
+    {
+      "binding_id": "source_e92737e0759d7087ad5f",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\96ab48402d50cf8d\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/96ab48402d50cf8d/window_2_test.json"
+      },
+      "sha256": "b6fc22c09870bdead4d6846b63264aa98b0a96f1d93e66099109028a4ca3a230",
+      "size": 862582
+    },
+    {
+      "binding_id": "source_e53842b12f6267d3b351",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\96ab48402d50cf8d\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/96ab48402d50cf8d/window_2_train.json"
+      },
+      "sha256": "f330353fa2155fa4c7a2b3e0d23d2f4c4a9f378309e6a2c8ce15e003d2de3c61",
+      "size": 3119003
+    },
+    {
+      "binding_id": "source_88901490ffbe4d566da7",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\a72139edcaef7d22\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/a72139edcaef7d22/window_1_test.json"
+      },
+      "sha256": "22169fdf3d58dd71aaa7b074f0ef5e3dab6d8e7fc11901ff91f1de1e21e2f744",
+      "size": 848045
+    },
+    {
+      "binding_id": "source_3385b36f672e012e46b9",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\a72139edcaef7d22\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/a72139edcaef7d22/window_1_train.json"
+      },
+      "sha256": "60e4d6c587bb040e69b1e1168145cce5d47394b0f8d6e26a9232e792632bdee5",
+      "size": 3003836
+    },
+    {
+      "binding_id": "source_b42f98a6aa09b83fef33",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\a72139edcaef7d22\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/a72139edcaef7d22/window_2_test.json"
+      },
+      "sha256": "b53b7e3644105d88810e1ee70d446fe3c18aefdbce386c8721586353d4ea8f26",
+      "size": 862408
+    },
+    {
+      "binding_id": "source_a3b230b7ef7e533a1e64",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\a72139edcaef7d22\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/a72139edcaef7d22/window_2_train.json"
+      },
+      "sha256": "3878de30c7e54411f8f403dbd92eea78124a8fffc34801d29736891460758094",
+      "size": 3118657
+    },
+    {
+      "binding_id": "source_c88d459c49cdac4c1946",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\ac2b19ad18865a48\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/ac2b19ad18865a48/window_1_test.json"
+      },
+      "sha256": "31b43dfedf939da1b8a7064ef21208793fc36c12f1258f2a1024536b068bf10e",
+      "size": 848391
+    },
+    {
+      "binding_id": "source_eecf956eab36a6833594",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\ac2b19ad18865a48\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/ac2b19ad18865a48/window_1_train.json"
+      },
+      "sha256": "4fa71ab4648c21b74b32619edf7ba4a105ee16bc6faf3f0201b8953134769e99",
+      "size": 3003825
+    },
+    {
+      "binding_id": "source_7915a9b58792df58d63c",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\ac2b19ad18865a48\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/ac2b19ad18865a48/window_2_test.json"
+      },
+      "sha256": "0ea2159f36275e8ffa78cb0f7c182c84d11fc1cfb65a09ac71c4a39f5b5e827e",
+      "size": 862582
+    },
+    {
+      "binding_id": "source_b152090ca43840ff6102",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\ac2b19ad18865a48\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/ac2b19ad18865a48/window_2_train.json"
+      },
+      "sha256": "9ab627c69916108a976222855a17ed61bce53a48a14774be6682d6a7063e77ca",
+      "size": 3119003
+    },
+    {
+      "binding_id": "source_e1d9312ab78d0b8eb614",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\c761bcdff9cb6704\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/c761bcdff9cb6704/window_1_test.json"
+      },
+      "sha256": "cb4e7b40d9cebb9ff8df6c401e762ffe4170e0df1fdd216fbc6973df86e90cd5",
+      "size": 848382
+    },
+    {
+      "binding_id": "source_b06b75cde3d34a30e876",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\c761bcdff9cb6704\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/c761bcdff9cb6704/window_1_train.json"
+      },
+      "sha256": "069949aa64b5a0d3cfb1ad1527702ab41ab7dada1f115a12804c4de74944c4fb",
+      "size": 2989710
+    },
+    {
+      "binding_id": "source_c55f7cdd15f171463ca3",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\c761bcdff9cb6704\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/c761bcdff9cb6704/window_2_test.json"
+      },
+      "sha256": "078897cd576d7112cc3ee663e3901e00947b10c18d47c85757e209c7c3915bf5",
+      "size": 854765
+    },
+    {
+      "binding_id": "source_0f30500803b19eb09cb4",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\c761bcdff9cb6704\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/c761bcdff9cb6704/window_2_train.json"
+      },
+      "sha256": "6637aea89bc358305ac0b944484b08aa555df3e842d64e2ff6f2d484cca5332a",
+      "size": 3106720
+    },
+    {
+      "binding_id": "source_478ff904c8c25204aede",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\ca8d3c831c824d86\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/ca8d3c831c824d86/window_1_test.json"
+      },
+      "sha256": "0fe39e9da3bf5f4f9be8d12a067b19d12252f0ac59d547d5e959f626a05c035d",
+      "size": 848382
+    },
+    {
+      "binding_id": "source_7a23a24d15228e048620",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\ca8d3c831c824d86\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/ca8d3c831c824d86/window_1_train.json"
+      },
+      "sha256": "dba03f65bcc9c496268580297c82d60fc26407045f99c6912c2ab6eab4e02f4e",
+      "size": 2989710
+    },
+    {
+      "binding_id": "source_bd95970f581816849ff1",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\ca8d3c831c824d86\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/ca8d3c831c824d86/window_2_test.json"
+      },
+      "sha256": "6c39ca9d284e8d2b2f49f2288f4a20b340a1d31f1b5f5e7b4605cd7935933084",
+      "size": 854765
+    },
+    {
+      "binding_id": "source_d9a8b63ef69937db788d",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\ca8d3c831c824d86\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/ca8d3c831c824d86/window_2_train.json"
+      },
+      "sha256": "e83af2c08c905585f621043e9133e1107a7dda29fa2b19f1d667034e841fdd8a",
+      "size": 3106720
+    },
+    {
+      "binding_id": "source_c542a158e5dea1ec4d9f",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\da2e9ef58ca648fe\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/da2e9ef58ca648fe/window_1_test.json"
+      },
+      "sha256": "7c43ade7949ec23acf9fbabecf3f0be6a71a8252e9427c922cc345143a1fa614",
+      "size": 848613
+    },
+    {
+      "binding_id": "source_a33ccfb9cec1cc6927f7",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\da2e9ef58ca648fe\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/da2e9ef58ca648fe/window_1_train.json"
+      },
+      "sha256": "23abf7054fc1f04df2c12de626de35e9532f76eb8fbbd949a698bb1ecbfd3508",
+      "size": 3004755
+    },
+    {
+      "binding_id": "source_6015ce0b66ceb6df1f97",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\da2e9ef58ca648fe\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/da2e9ef58ca648fe/window_2_test.json"
+      },
+      "sha256": "87c817a7fd2a62a3d891643b02112ff7b04df79c256480f310e9e19cb93bc804",
+      "size": 854888
+    },
+    {
+      "binding_id": "source_03923ec62457baf7a9b5",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\da2e9ef58ca648fe\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/da2e9ef58ca648fe/window_2_train.json"
+      },
+      "sha256": "b652131578f6f01752e253c372f4c570ccfe1f0bebc5f81e81b4ce46aa156004",
+      "size": 3120052
+    },
+    {
+      "binding_id": "source_26edf00c0eb1b8afa232",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\f2a828466c5fd73b\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/f2a828466c5fd73b/window_1_test.json"
+      },
+      "sha256": "fcaed6d75a4139e2543f543ee4296967ba62d6971f702c4afce3087aae981262",
+      "size": 848391
+    },
+    {
+      "binding_id": "source_5fbf1f48e7571e2727d7",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\f2a828466c5fd73b\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/f2a828466c5fd73b/window_1_train.json"
+      },
+      "sha256": "f06a58d6592268cc2a7d8069a05e4a9023af748f5cf0c427ec002918e5fa77eb",
+      "size": 3003825
+    },
+    {
+      "binding_id": "source_1ef6387f802da39481be",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\f2a828466c5fd73b\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/f2a828466c5fd73b/window_2_test.json"
+      },
+      "sha256": "490015c7b537f069f207fb375c2d18523199affcae06e0e4a88b5555d8eecb2c",
+      "size": 862582
+    },
+    {
+      "binding_id": "source_4427b0c095e1f7825a3a",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\f2a828466c5fd73b\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/f2a828466c5fd73b/window_2_train.json"
+      },
+      "sha256": "a6f3078912a47523d76fa28081611427b77a6d2f1fb32e1149a31a82f7b1a6d3",
+      "size": 3119003
+    },
+    {
+      "binding_id": "source_dabbee20fbf9fc393eb8",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\f62f23b9f2c5d5a7\\window_1_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/f62f23b9f2c5d5a7/window_1_test.json"
+      },
+      "sha256": "e316d1ea911c996cc5dcb768928558b055cf896c80c3a0793099274c6f0ea3ee",
+      "size": 848613
+    },
+    {
+      "binding_id": "source_22f26d51f38257cf1aae",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\f62f23b9f2c5d5a7\\window_1_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/f62f23b9f2c5d5a7/window_1_train.json"
+      },
+      "sha256": "8801343277326164b33a693ed0064c12936d9f8fc16c65ba824173bdfe66e29e",
+      "size": 3004755
+    },
+    {
+      "binding_id": "source_577eda0d6e971fa88262",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\f62f23b9f2c5d5a7\\window_2_test.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/f62f23b9f2c5d5a7/window_2_test.json"
+      },
+      "sha256": "4967063f1ea49a5b800c1a84aa53f0aa1a411b2a53f05345b72d2499ecf02cb0",
+      "size": 854888
+    },
+    {
+      "binding_id": "source_e1f8f314f927ed604c84",
+      "consumers": [
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations\\f62f23b9f2c5d5a7\\window_2_train.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations/f62f23b9f2c5d5a7/window_2_train.json"
+      },
+      "sha256": "2f87d0e7f7eca23df79530c266fe262460f9b7918cf3e6589186bfde3f6401da",
+      "size": 3120052
+    },
+    {
+      "binding_id": "source_9c6d36a7a82875a505d0",
+      "consumers": [
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\fold_evaluations_index.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/fold_evaluations_index.json"
+      },
+      "sha256": "017dee1426683d49d31bc0af51c29e409de5a2aecfff06b0faad86a2ddc52288",
+      "size": 293378
+    },
+    {
+      "binding_id": "source_9c5f3ade472c672b911f",
+      "consumers": [
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\r1_walk_forward_report.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/r1_walk_forward_report.json"
+      },
+      "sha256": "de581cede1c6a8c5454bbc07b760843b0f030010a376bce39a34761828a7e234",
+      "size": 6629
+    },
+    {
+      "binding_id": "source_c9f628b546d788db4b34",
+      "consumers": [
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\reports\\etf_portfolio\\dynamic_v3_rescue\\walk_forward_r1\\r1-wf_6447beb5464bad37\\r1_wf_manifest.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/r1-wf_6447beb5464bad37/r1_wf_manifest.json"
+      },
+      "sha256": "50a60f7aca02cd4e11b4a6fd982c7faf2cf46a9933b5eaa57f3dc1f4f89888bc",
+      "size": 2980
+    },
+    {
+      "binding_id": "source_f3af401bd04447415bc1",
+      "consumers": [
+        "r0_preflight"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem\\data\\raw\\download_manifest.csv",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "data/raw/download_manifest.csv"
+      },
+      "sha256": "3703a1c5f8858e6088b8b138a7e6d400877d4ebfcabc8bf17a25b887ddb2825c",
+      "size": 730277
+    },
+    {
+      "binding_id": "source_2359a08b2c37809e744c",
+      "consumers": [
+        "r0_preflight",
+        "r1_robustness",
+        "r1_walk_forward",
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_daily.csv",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "data/raw/prices_daily.csv"
+      },
+      "sha256": "b9c9633794ca01762d1b4eecd2310343776c4413897df3c73faa02a2b7708542",
+      "size": 5102327
+    },
+    {
+      "binding_id": "source_ceac77b139f54c5b5831",
+      "consumers": [
+        "r0_preflight",
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_marketstack_daily.csv",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "data/raw/prices_marketstack_daily.csv"
+      },
+      "sha256": "460b94166dacfc56f02d2cc6c5627542cd8f7ea9dede3404693aa10ff29fc901",
+      "size": 3230927
+    },
+    {
+      "binding_id": "source_c5a37e6df5fab475eee0",
+      "consumers": [
+        "r0_preflight",
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem\\data\\raw\\rates_daily.csv",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "data/raw/rates_daily.csv"
+      },
+      "sha256": "d530a35e810d78643753d84c7b6ef4bcfe9a7911402425e1aeccf76eff8c2658",
+      "size": 159197
+    },
+    {
+      "binding_id": "source_7bab93e28540639a2d2f",
+      "consumers": [
+        "r2_decision"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem\\outputs\\forward_evidence\\daily_archive\\forward_evidence_dry_run_ledger.jsonl",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "outputs/forward_evidence/daily_archive/forward_evidence_dry_run_ledger.jsonl"
+      },
+      "sha256": "f5c2c65301667e0751dd504829d31e4742810b4ecd25148879aa0d091e9dfd88",
+      "size": 7069
+    },
+    {
+      "binding_id": "source_5de12de085af92a58544",
+      "consumers": [
+        "r0_preflight",
+        "r1_robustness",
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem\\reports\\etf_portfolio\\dynamic_v3_rescue\\sweeps\\sweep_20260607T102300Z_ae5ae1d8\\candidate_results.jsonl",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/sweeps/sweep_20260607T102300Z_ae5ae1d8/candidate_results.jsonl"
+      },
+      "sha256": "1be43bd73f01e83b0f67d153bd264d2f137b2cfb181e0b4e236df4a426615372",
+      "size": 1239436
+    },
+    {
+      "binding_id": "source_47ba9fe92836ffb3ed00",
+      "consumers": [
+        "r1_robustness",
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem\\reports\\etf_portfolio\\dynamic_v3_rescue\\sweeps\\sweep_20260607T102300Z_ae5ae1d8\\leaderboard.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/sweeps/sweep_20260607T102300Z_ae5ae1d8/leaderboard.json"
+      },
+      "sha256": "a86df8e25cc4655d9f3aa87b0fbf97bf6e269cb82b8d8fb8994e778b0bbd31ac",
+      "size": 105883
+    },
+    {
+      "binding_id": "source_5347a1fed6c4a880bcae",
+      "consumers": [
+        "r1_robustness"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem\\reports\\etf_portfolio\\dynamic_v3_rescue\\sweeps\\sweep_20260607T102300Z_ae5ae1d8\\real_evaluation\\a72139edcaef7d22\\dynamic-v3-real-evaluation-report_62654d689df29588.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/sweeps/sweep_20260607T102300Z_ae5ae1d8/real_evaluation/a72139edcaef7d22/dynamic-v3-real-evaluation-report_62654d689df29588.json"
+      },
+      "sha256": "0c569afca58b832dc4d28541b1219741bc0b1918e6c2df53360adde327aea52c",
+      "size": 11741278
+    },
+    {
+      "binding_id": "source_bd046509b265418833a5",
+      "consumers": [
+        "r0_preflight",
+        "r1_robustness",
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem\\reports\\etf_portfolio\\dynamic_v3_rescue\\sweeps\\sweep_20260607T102300Z_ae5ae1d8\\sweep_config.normalized.yaml",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/sweeps/sweep_20260607T102300Z_ae5ae1d8/sweep_config.normalized.yaml"
+      },
+      "sha256": "eb90752e07bcba41106984df89b5a4a3d4a47e6bc5bd8da7f9810c6090a04d7c",
+      "size": 3145
+    },
+    {
+      "binding_id": "source_c0268c6540d11fb0a3ad",
+      "consumers": [
+        "r0_preflight",
+        "r1_robustness",
+        "r1_walk_forward"
+      ],
+      "legacy_path": "D:\\Work\\AITradingSystem\\reports\\etf_portfolio\\dynamic_v3_rescue\\sweeps\\sweep_20260607T102300Z_ae5ae1d8\\sweep_manifest.json",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "reports/etf_portfolio/dynamic_v3_rescue/sweeps/sweep_20260607T102300Z_ae5ae1d8/sweep_manifest.json"
+      },
+      "sha256": "2193997ec965ffb84e61772276c42dc5501cdcc75ac89ac575bb73541a898eca",
+      "size": 3464
+    },
+    {
+      "binding_id": "source_2c9c99f56d401726e639",
+      "consumers": [
+        "r2_decision"
+      ],
+      "legacy_path": "config\\research\\controlled_strategy_next_stage_research.yaml",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "config/research/controlled_strategy_next_stage_research.yaml"
+      },
+      "sha256": "626ad4a44cde8cfd6d29442ad2514aed776689aae77a9f7c878e278969e4156e",
+      "size": 49482
+    },
+    {
+      "binding_id": "source_e017d7781764054dbf4f",
+      "consumers": [
+        "r0_preflight"
+      ],
+      "legacy_path": "outputs\\research_ops\\strategy_restart\\strategy_research_restart_preflight.md",
+      "locator": {
+        "kind": "project_relative_content",
+        "path": "outputs/research_ops/strategy_restart/strategy_research_restart_preflight.md"
+      },
+      "sha256": "a9cc63c98855290fce441f21676126bddf1f123918d69a577a03fd758619ffa0",
+      "size": 1613
+    }
+  ]
+}

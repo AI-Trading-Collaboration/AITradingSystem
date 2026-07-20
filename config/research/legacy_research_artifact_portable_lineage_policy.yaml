@@ -1,0 +1,72 @@
+schema_version: legacy_research_artifact_portable_lineage_policy.v1
+policy_id: legacy_research_artifact_portable_lineage_v1
+policy_version: 1
+status: owner_approved_portability_contract
+owner: research_governance
+rationale: >-
+  Immutable R0/R1/R2 research artifacts may retain absolute paths from the
+  worktree in which they were generated.  A separately checksummed sidecar may
+  resolve those paths to byte-identical project-relative sources without
+  rewriting the historical artifact or weakening any research gate.
+sidecar:
+  schema_version: legacy_research_artifact_portable_lineage_sidecar.v1
+  allowed_locator_kinds:
+    - project_relative_content
+  require_sidecar_content_id: true
+  require_policy_hash_binding: true
+  require_legacy_artifact_hash_binding: true
+  require_source_sha256: true
+  require_source_size: true
+resolution:
+  portable_mode_requires_explicit_opt_in: true
+  require_portable_source: true
+  allow_missing_historical_path: true
+  require_historical_source_match_when_present: true
+  historical_portable_conflict_action: fail_closed
+  missing_source_action: fail_closed
+  tamper_action: fail_closed
+  reject_absolute_locator: true
+  reject_parent_traversal: true
+  require_locator_under_project_root: true
+distribution:
+  canonical_sidecar_path: inputs/research/legacy_lineage/trading2449_r0_r1_r2_portable_lineage.v1.json
+  persistence: tracked_repository_input
+  archive_installation: >-
+    Copy the immutable R0/R1/R2 artifact and source archive into the exact
+    project-relative locator paths recorded by the canonical sidecar, then run
+    the validators with explicit portable_lineage_sidecar_path.  Never rewrite
+    the legacy artifacts or the sidecar during installation.
+  clean_clone_without_archive: fail_closed_portable_source_missing
+safety:
+  immutable_legacy_artifact_rewrite_allowed: false
+  research_recalculation_allowed: false
+  candidate_generation_allowed: false
+  parameter_search_allowed: false
+  promotion_change_allowed: false
+  production_effect: none
+  broker_action: none
+validation:
+  required_consumers:
+    - r0_preflight
+    - r1_walk_forward
+    - r1_robustness
+    - r2_decision
+  required_failure_reasons:
+    - POLICY_SCHEMA_INVALID
+    - SIDECAR_SCHEMA_INVALID
+    - SIDECAR_CONTENT_ID_MISMATCH
+    - POLICY_BINDING_MISMATCH
+    - LEGACY_ARTIFACT_BINDING_MISSING
+    - LEGACY_ARTIFACT_TAMPERED
+    - SOURCE_BINDING_MISSING
+    - SOURCE_EXPECTATION_MISMATCH
+    - SIDECAR_MISSING
+    - PORTABLE_SOURCE_MISSING
+    - PORTABLE_SOURCE_TAMPERED
+    - HISTORICAL_SOURCE_TAMPERED
+    - HISTORICAL_PORTABLE_CONFLICT
+    - LOCATOR_PATH_TRAVERSAL
+    - LOCATOR_OUTSIDE_PROJECT_ROOT
+  review_condition: >-
+    Review before adding a new locator kind, changing source priority, or
+    allowing any non-byte-identical migration.

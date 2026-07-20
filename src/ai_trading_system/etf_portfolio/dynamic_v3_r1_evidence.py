@@ -9,7 +9,7 @@ from datetime import UTC, date, datetime
 from hashlib import sha256
 from math import isfinite
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 
@@ -27,6 +27,7 @@ from ai_trading_system.etf_portfolio.dynamic_robustness import (
     load_dynamic_robustness_policy_config,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_real_evaluation import (
+    DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH,
     build_dynamic_v3_real_evaluation_report,
     load_dynamic_v3_real_evaluation_policy_config,
     precompute_dynamic_v3_fixed_robustness_reports,
@@ -35,6 +36,14 @@ from ai_trading_system.etf_portfolio.dynamic_v3_rescue import (
     load_dynamic_v3_rescue_policy_config,
 )
 from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
+from ai_trading_system.legacy_research_artifact_portable_lineage import (
+    DEFAULT_POLICY_PATH as DEFAULT_PORTABLE_LINEAGE_POLICY_PATH,
+)
+from ai_trading_system.legacy_research_artifact_portable_lineage import (
+    PortableLineageError,
+    PortableLineageResolver,
+    portable_lineage_failure_evidence,
+)
 from ai_trading_system.platform.artifacts.writer import (
     write_json_atomic,
     write_markdown_atomic,
@@ -252,6 +261,45 @@ def validate_r1_walk_forward_evidence(
     *,
     walk_forward_id: str,
     output_dir: Path = DEFAULT_R1_WALK_FORWARD_DIR,
+    portable_lineage_sidecar_path: Path | None = None,
+    portable_project_root: Path = PROJECT_ROOT,
+    portable_lineage_policy_path: Path = DEFAULT_PORTABLE_LINEAGE_POLICY_PATH,
+) -> dict[str, Any]:
+    resolver: PortableLineageResolver | None = None
+    try:
+        if portable_lineage_sidecar_path is not None:
+            resolver = PortableLineageResolver(
+                sidecar_path=portable_lineage_sidecar_path,
+                subject_artifact_path=output_dir / walk_forward_id / "r1_wf_manifest.json",
+                consumer="r1_walk_forward",
+                project_root=portable_project_root,
+                policy_path=portable_lineage_policy_path,
+            )
+        result = _validate_r1_walk_forward_evidence(
+            walk_forward_id=walk_forward_id,
+            output_dir=output_dir,
+            resolver=resolver,
+        )
+    except PortableLineageError as exc:
+        assert portable_lineage_sidecar_path is not None
+        return _portable_r1_validation_failure(
+            report_type=WF_VALIDATION_TYPE,
+            identity_key="walk_forward_id",
+            identity_value=walk_forward_id,
+            consumer="r1_walk_forward",
+            sidecar_path=portable_lineage_sidecar_path,
+            error=exc,
+        )
+    if resolver is not None:
+        result["portable_lineage_resolution"] = resolver.evidence()
+    return result
+
+
+def _validate_r1_walk_forward_evidence(
+    *,
+    walk_forward_id: str,
+    output_dir: Path,
+    resolver: PortableLineageResolver | None,
 ) -> dict[str, Any]:
     wf_dir = output_dir / walk_forward_id
     manifest = _load_json(wf_dir / "r1_wf_manifest.json")
@@ -264,10 +312,19 @@ def validate_r1_walk_forward_evidence(
         _check("safety_boundary", report.get("safety") == SAFETY),
         _check(
             "restart_preflight_validation",
-            _safe_preflight_validation(Path(str(manifest.get("restart_preflight_path", "")))),
+            _safe_preflight_validation(
+                _portable_path(Path(str(manifest.get("restart_preflight_path", ""))), resolver),
+                resolver=resolver,
+            ),
         ),
-        _check("source_checksums_fresh", _source_checksums_fresh(manifest)),
-        _check("prices_checksum_fresh", _path_checksum_fresh(manifest, "prices")),
+        _check(
+            "source_checksums_fresh",
+            _source_checksums_fresh(manifest, resolver=resolver),
+        ),
+        _check(
+            "prices_checksum_fresh",
+            _path_checksum_fresh(manifest, "prices", resolver=resolver),
+        ),
     ]
     output_checksums = _mapping(manifest.get("output_artifact_checksums"))
     for filename in (
@@ -286,24 +343,31 @@ def validate_r1_walk_forward_evidence(
         int(manifest.get("candidate_count", 0)) * int(manifest.get("window_count", 0)) * 2
     )
     checks.append(_check("evaluation_count_complete", len(evaluations) == expected_count))
-    source_sweep_dir = Path(
-        str(_mapping(manifest.get("source_artifacts")).get("sweep_manifest_path", ""))
+    source_artifacts = _mapping(manifest.get("source_artifacts"))
+    source_sweep_dir = _portable_path(
+        Path(str(source_artifacts.get("sweep_manifest_path", ""))), resolver
     ).parent
     source = _load_source_sweep(source_sweep_dir)
     walk_policy = _mapping(
         _mapping(
-            load_restart_policy(Path(str(manifest.get("restart_policy_path", "")))).get(
-                "r1_evidence"
-            )
+            load_restart_policy(
+                _portable_path(Path(str(manifest.get("restart_policy_path", ""))), resolver)
+            ).get("r1_evidence")
         ).get("walk_forward")
     )
     runtime = _load_runtime_context(
-        prices_path=Path(str(manifest.get("prices_path", ""))),
-        preflight=_load_json(Path(str(manifest.get("restart_preflight_path", "")))),
+        prices_path=_portable_path(Path(str(manifest.get("prices_path", ""))), resolver),
+        preflight=_load_json(
+            _portable_path(Path(str(manifest.get("restart_preflight_path", ""))), resolver)
+        ),
     )
     trading_dates = _trading_dates(runtime.prices)
     for item in evaluations:
-        path = Path(str(item.get("evaluation_path", "")))
+        path = _portable_path(
+            Path(str(item.get("evaluation_path", ""))),
+            resolver,
+            expected_sha256=str(item.get("evaluation_sha256", "")),
+        )
         payload = _load_json_optional(path)
         recomputed_summary = _summarize_fold_payload(
             payload=payload,
@@ -599,6 +663,45 @@ def validate_r1_robustness_evidence(
     *,
     robustness_id: str,
     output_dir: Path = DEFAULT_R1_ROBUSTNESS_DIR,
+    portable_lineage_sidecar_path: Path | None = None,
+    portable_project_root: Path = PROJECT_ROOT,
+    portable_lineage_policy_path: Path = DEFAULT_PORTABLE_LINEAGE_POLICY_PATH,
+) -> dict[str, Any]:
+    resolver: PortableLineageResolver | None = None
+    try:
+        if portable_lineage_sidecar_path is not None:
+            resolver = PortableLineageResolver(
+                sidecar_path=portable_lineage_sidecar_path,
+                subject_artifact_path=output_dir / robustness_id / "r1_robustness_manifest.json",
+                consumer="r1_robustness",
+                project_root=portable_project_root,
+                policy_path=portable_lineage_policy_path,
+            )
+        result = _validate_r1_robustness_evidence(
+            robustness_id=robustness_id,
+            output_dir=output_dir,
+            resolver=resolver,
+        )
+    except PortableLineageError as exc:
+        assert portable_lineage_sidecar_path is not None
+        return _portable_r1_validation_failure(
+            report_type=ROBUSTNESS_VALIDATION_TYPE,
+            identity_key="robustness_id",
+            identity_value=robustness_id,
+            consumer="r1_robustness",
+            sidecar_path=portable_lineage_sidecar_path,
+            error=exc,
+        )
+    if resolver is not None:
+        result["portable_lineage_resolution"] = resolver.evidence()
+    return result
+
+
+def _validate_r1_robustness_evidence(
+    *,
+    robustness_id: str,
+    output_dir: Path,
+    resolver: PortableLineageResolver | None,
 ) -> dict[str, Any]:
     root = output_dir / robustness_id
     manifest = _load_json(root / "r1_robustness_manifest.json")
@@ -610,13 +713,22 @@ def validate_r1_robustness_evidence(
         _check("safety_boundary", report.get("safety") == SAFETY),
         _check(
             "restart_preflight_validation",
-            _safe_preflight_validation(Path(str(manifest.get("restart_preflight_path", "")))),
+            _safe_preflight_validation(
+                _portable_path(Path(str(manifest.get("restart_preflight_path", ""))), resolver),
+                resolver=resolver,
+            ),
         ),
-        _check("source_checksums_fresh", _source_checksums_fresh(manifest)),
-        _check("prices_checksum_fresh", _path_checksum_fresh(manifest, "prices")),
+        _check(
+            "source_checksums_fresh",
+            _source_checksums_fresh(manifest, resolver=resolver),
+        ),
+        _check(
+            "prices_checksum_fresh",
+            _path_checksum_fresh(manifest, "prices", resolver=resolver),
+        ),
         _check(
             "source_real_evaluation_fresh",
-            _path_checksum_fresh(manifest, "source_real_evaluation"),
+            _path_checksum_fresh(manifest, "source_real_evaluation", resolver=resolver),
         ),
         _check(
             "legacy_window_role_disclosed", report.get("source_window_role") == "legacy_comparison"
@@ -627,7 +739,11 @@ def validate_r1_robustness_evidence(
         ),
     ]
     for item in _records(manifest.get("derived_neighbors")):
-        path = Path(str(item.get("path", "")))
+        path = _portable_path(
+            Path(str(item.get("path", ""))),
+            resolver,
+            expected_sha256=str(item.get("sha256", "")),
+        )
         payload = _load_json_optional(path)
         checks.extend(
             [
@@ -657,18 +773,22 @@ def validate_r1_robustness_evidence(
         )
     comparator_payload = _load_json(root / "r1_dedicated_comparators.json")
     runtime = _load_runtime_context(
-        prices_path=Path(str(manifest.get("prices_path", ""))),
-        preflight=_load_json(Path(str(manifest.get("restart_preflight_path", "")))),
+        prices_path=_portable_path(Path(str(manifest.get("prices_path", ""))), resolver),
+        preflight=_load_json(
+            _portable_path(Path(str(manifest.get("restart_preflight_path", ""))), resolver)
+        ),
     )
     robustness_policy = _mapping(
         _mapping(
-            load_restart_policy(Path(str(manifest.get("restart_policy_path", "")))).get(
-                "r1_evidence"
-            )
+            load_restart_policy(
+                _portable_path(Path(str(manifest.get("restart_policy_path", ""))), resolver)
+            ).get("r1_evidence")
         ).get("robustness")
     )
     recomputed_comparator = _dedicated_robustness_comparators(
-        payload=_load_json(Path(str(manifest.get("source_real_evaluation_path", "")))),
+        payload=_load_json(
+            _portable_path(Path(str(manifest.get("source_real_evaluation_path", ""))), resolver)
+        ),
         runtime=runtime,
         policy=robustness_policy,
     )
@@ -920,7 +1040,7 @@ def _precompute_fixed_reports(
         data_quality_report=runtime.data_quality_report_path,
         prices_path=runtime.prices_path,
     )
-    return fixed["reports"]
+    return cast(Mapping[str, Mapping[str, Any]], fixed["reports"])
 
 
 def _write_fold_evaluations(*, evaluated: Any, evaluation_root: Path) -> list[dict[str, Any]]:
@@ -1469,7 +1589,7 @@ def _load_runtime_context(*, prices_path: Path, preflight: Mapping[str, Any]) ->
         prices=prices,
         etf_config=etf_config,
         real_policy=load_dynamic_v3_real_evaluation_policy_config(
-            legacy.DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH
+            DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH
         ),
         v3_rescue_policy=load_dynamic_v3_rescue_policy_config(),
         dynamic_robustness_policy=load_dynamic_robustness_policy_config(),
@@ -1549,6 +1669,7 @@ def _selected_source_results(source: Mapping[str, Any], *, top_n: int) -> list[d
 
 
 def _trading_dates(prices: pd.DataFrame) -> list[date]:
+    values: Any
     if "date" in prices.columns:
         values = prices["date"]
     elif isinstance(prices.index, pd.MultiIndex):
@@ -1595,29 +1716,103 @@ def _fold_payload_identity_matches(item: Mapping[str, Any], payload: Mapping[str
     )
 
 
-def _source_checksums_fresh(manifest: Mapping[str, Any]) -> bool:
+def _source_checksums_fresh(
+    manifest: Mapping[str, Any], *, resolver: PortableLineageResolver | None = None
+) -> bool:
     artifacts = _mapping(manifest.get("source_artifacts"))
     checksums = _mapping(manifest.get("source_checksums"))
     if not artifacts:
         return False
     for name, raw_path in artifacts.items():
         checksum_name = name.removesuffix("_path") + "_sha256"
-        path = Path(str(raw_path))
+        path = _portable_path(
+            Path(str(raw_path)),
+            resolver,
+            expected_sha256=str(checksums.get(checksum_name, "")),
+        )
         if not path.is_file() or checksums.get(checksum_name) != _file_sha256(path):
             return False
     return True
 
 
-def _path_checksum_fresh(manifest: Mapping[str, Any], prefix: str) -> bool:
-    path = Path(str(manifest.get(f"{prefix}_path", "")))
+def _path_checksum_fresh(
+    manifest: Mapping[str, Any],
+    prefix: str,
+    *,
+    resolver: PortableLineageResolver | None = None,
+) -> bool:
+    path = _portable_path(
+        Path(str(manifest.get(f"{prefix}_path", ""))),
+        resolver,
+        expected_sha256=str(manifest.get(f"{prefix}_sha256", "")),
+    )
     return path.is_file() and manifest.get(f"{prefix}_sha256") == _file_sha256(path)
 
 
-def _safe_preflight_validation(path: Path) -> bool:
+def _safe_preflight_validation(
+    path: Path, *, resolver: PortableLineageResolver | None = None
+) -> bool:
     try:
-        return validate_research_restart_preflight(artifact_path=path)["status"] == "PASS"
+        if resolver is None:
+            validation = validate_research_restart_preflight(artifact_path=path)
+        else:
+            validation = validate_research_restart_preflight(
+                artifact_path=path,
+                portable_lineage_sidecar_path=resolver.sidecar_path,
+                portable_project_root=resolver.project_root,
+                portable_lineage_policy_path=resolver.policy_path,
+            )
+        return bool(validation["status"] == "PASS")
     except (OSError, ValueError, json.JSONDecodeError):
         return False
+
+
+def _portable_path(
+    path: Path,
+    resolver: PortableLineageResolver | None,
+    *,
+    expected_sha256: str | None = None,
+    expected_size: int | None = None,
+) -> Path:
+    if resolver is None:
+        return path
+    return resolver.resolve(
+        path,
+        expected_sha256=expected_sha256,
+        expected_size=expected_size,
+    )
+
+
+def _portable_r1_validation_failure(
+    *,
+    report_type: str,
+    identity_key: str,
+    identity_value: str,
+    consumer: str,
+    sidecar_path: Path,
+    error: PortableLineageError,
+) -> dict[str, Any]:
+    return {
+        "schema_version": f"{report_type}.v1",
+        "report_type": report_type,
+        identity_key: identity_value,
+        "status": "FAIL",
+        "checks": [
+            {
+                "check_id": "portable_lineage_resolution",
+                "passed": False,
+                "reason_code": error.reason_code,
+            }
+        ],
+        "failed_check_count": 1,
+        "portable_lineage_resolution": portable_lineage_failure_evidence(
+            error=error,
+            consumer=consumer,
+            sidecar_path=sidecar_path,
+        ),
+        "production_effect": "none",
+        "broker_action": "none",
+    }
 
 
 def _ranges_overlap(a_start: date, a_end: date, b_start: date, b_end: date) -> bool:

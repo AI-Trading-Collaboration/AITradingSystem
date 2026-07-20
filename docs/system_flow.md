@@ -114,6 +114,32 @@ commitment，当前历史 worktree 存在所以 live validation PASS；不得改
 以 versioned portable locator/sidecar resolver 治理。恢复清单与 hashes 见
 `docs/research/trading2449_canonical_artifact_recovery_audit_2026-07-20.md`。
 
+TRADING-2450 不改写上述 immutable artifact，而是在其外增加显式 opt-in portable-lineage 层。
+`config/research/legacy_research_artifact_portable_lineage_policy.yaml` 冻结 v1 sidecar、resolution、distribution、
+consumer/reason codes 与 safety；tracked
+`inputs/research/legacy_lineage/trading2449_r0_r1_r2_portable_lineage.v1.json` 绑定 4 个 subject artifacts、
+108 个 source 的 original path、project-relative locator、size/SHA-256、consumer、policy SHA 与自身 content ID。
+R0/WF/robustness/R2 validator 只有收到显式 sidecar path 才构造 resolver；默认 direct-path 行为不变。
+resolver 先验证 policy/sidecar/subject/全部 consumer bindings，再把 legacy path 映射到 project root 内的 exact
+content；historical path 缺失允许 archive replay，但存在时必须与 portable bytes 一致。missing、tamper、
+historical/portable conflict、absolute/parent traversal、symlink escape、policy/sidecar drift 均 fail closed；随后
+仍执行原 checksum、lineage、fold/comparator、forward/DQ、Markdown 和 R2 decision 重算，resolution PASS
+不能替代业务 validator PASS。clean clone 只有 sidecar但未安装 archive 时明确
+`PORTABLE_SOURCE_MISSING`；archive 必须按 locator 恢复 exact bytes，禁止改写 legacy artifact 或 sidecar。
+真实 replay R0/WF/robustness/R2 全部 PASS，R2 保持 `CONTINUE_EVIDENCE_CLOSURE`，TRADING-2449 gate
+保持 `BLOCKED_CONTAMINATED_LEGACY_SOURCE`；`production_effect=none`、`broker_action=none`。
+
+```mermaid
+flowchart LR
+    POLICY2450["Reviewed portable-lineage v1 policy"] --> RESOLVE2450["Explicit opt-in resolver"]
+    SIDECAR2450["Tracked sidecar<br/>4 artifacts / 108 sources<br/>path + size + SHA + consumer"] --> RESOLVE2450
+    ARCHIVE2450["Exact project-relative artifact/source archive"] --> RESOLVE2450
+    HIST2450["Historical paths<br/>optional when missing / exact match when present"] --> RESOLVE2450
+    RESOLVE2450 -->|"policy / content / containment PASS"| VALIDATE2450["Original R0 / WF / robustness / R2 validators"]
+    RESOLVE2450 -->|"missing / drift / conflict / traversal"| FAIL2450["FAIL CLOSED + stable reason code"]
+    VALIDATE2450 --> EVIDENCE2450["Portable resolution evidence<br/>legacy bytes and decisions unchanged"]
+```
+
 ```mermaid
 flowchart LR
     R2["Validated R2 decision + manifest"] --> GATE["Clean-selection preregistration gate"]
