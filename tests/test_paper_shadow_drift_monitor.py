@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
+import pytest
 from dynamic_v3_filtered_candidate_readiness_helpers import (
     assert_research_safe,
     run_formal_research_method_contract_fixture,
@@ -15,15 +17,61 @@ from ai_trading_system.cli import app
 from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readiness as readiness
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as daily
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as drift
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+)
 
 
-def test_paper_shadow_drift_monitor_builds_clean_report(tmp_path: Path, monkeypatch) -> None:
-    fixture = _paper_shadow_daily_fixture(tmp_path, monkeypatch)
+@pytest.fixture(scope="module")
+def paper_shadow_daily_fixtures(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Any:
+    root = tmp_path_factory.mktemp("paper-shadow-drift-upstream")
+    monkeypatch = pytest.MonkeyPatch()
+    try:
+        with artifact_validation_session():
+            contract_fixture = run_formal_research_method_contract_fixture(root, monkeypatch)
+            contract_id = contract_fixture["formal_research_method_contract"]["contract_id"]
+            protocol_result = readiness.build_paper_shadow_protocol(
+                contract_id=contract_id,
+                contract_dir=root / "formal_research_method_contract",
+                output_dir=root / "paper_shadow_protocol",
+                generated_at=datetime(2026, 6, 15, tzinfo=UTC),
+            )
+            signal_input = run_signal_input_completeness_fixture(
+                root,
+                as_of="2026-06-12",
+            )
+            shared = {
+                "contract_id": contract_id,
+                "protocol_id": protocol_result["protocol_id"],
+                "signal_input_completeness_id": signal_input["monitor_id"],
+                "contract_dir": root / "formal_research_method_contract",
+                "protocol_dir": root / "paper_shadow_protocol",
+                "signal_input_completeness_dir": root / "signal_input_completeness",
+            }
+            yield {
+                "clean": _paper_shadow_daily_fixture(root / "clean", shared=shared),
+                "missing_market_panel": _paper_shadow_daily_fixture(
+                    root / "missing-market-panel",
+                    shared=shared,
+                    missing_market_panel=True,
+                ),
+            }
+    finally:
+        monkeypatch.undo()
+
+
+def test_paper_shadow_drift_monitor_builds_clean_report(
+    tmp_path: Path,
+    paper_shadow_daily_fixtures: dict[str, dict[str, Any]],
+) -> None:
+    fixture = paper_shadow_daily_fixtures["clean"]
     result = drift.build_paper_shadow_drift_monitor_report(
         observation_id=fixture["observation_id"],
-        observation_dir=tmp_path / "paper_shadow_daily",
+        observation_dir=fixture["observation_dir"],
         contract_id=fixture["contract_id"],
-        contract_dir=tmp_path / "formal_research_method_contract",
+        contract_dir=fixture["contract_dir"],
         output_dir=tmp_path / "paper_shadow_drift_monitor",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
@@ -46,14 +94,15 @@ def test_paper_shadow_drift_monitor_builds_clean_report(tmp_path: Path, monkeypa
 
 
 def test_paper_shadow_drift_monitor_flags_missing_signal_inputs(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path,
+    paper_shadow_daily_fixtures: dict[str, dict[str, Any]],
 ) -> None:
-    fixture = _paper_shadow_daily_fixture(tmp_path, monkeypatch, missing_market_panel=True)
+    fixture = paper_shadow_daily_fixtures["missing_market_panel"]
     result = drift.build_paper_shadow_drift_monitor_report(
         observation_id=fixture["observation_id"],
-        observation_dir=tmp_path / "paper_shadow_daily",
+        observation_dir=fixture["observation_dir"],
         contract_id=fixture["contract_id"],
-        contract_dir=tmp_path / "formal_research_method_contract",
+        contract_dir=fixture["contract_dir"],
         output_dir=tmp_path / "paper_shadow_drift_monitor",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
@@ -67,8 +116,11 @@ def test_paper_shadow_drift_monitor_flags_missing_signal_inputs(
     assert result["paper_shadow_drift_validation"]["status"] == "PASS"
 
 
-def test_paper_shadow_drift_monitor_cli_report_and_validate(tmp_path: Path, monkeypatch) -> None:
-    fixture = _paper_shadow_daily_fixture(tmp_path, monkeypatch)
+def test_paper_shadow_drift_monitor_cli_report_and_validate(
+    tmp_path: Path,
+    paper_shadow_daily_fixtures: dict[str, dict[str, Any]],
+) -> None:
+    fixture = paper_shadow_daily_fixtures["clean"]
     output_dir = tmp_path / "paper_shadow_drift_monitor"
     result = CliRunner().invoke(
         app,
@@ -80,11 +132,11 @@ def test_paper_shadow_drift_monitor_cli_report_and_validate(tmp_path: Path, monk
             "--observation-id",
             fixture["observation_id"],
             "--observation-dir",
-            str(tmp_path / "paper_shadow_daily"),
+            str(fixture["observation_dir"]),
             "--contract-id",
             fixture["contract_id"],
             "--contract-dir",
-            str(tmp_path / "formal_research_method_contract"),
+            str(fixture["contract_dir"]),
             "--output-dir",
             str(output_dir),
         ],
@@ -131,19 +183,11 @@ def test_paper_shadow_drift_monitor_cli_report_and_validate(tmp_path: Path, monk
 
 def _paper_shadow_daily_fixture(
     tmp_path: Path,
-    monkeypatch,
     *,
+    shared: dict[str, Any],
     missing_market_panel: bool = False,
-) -> dict[str, str]:
-    contract_fixture = run_formal_research_method_contract_fixture(tmp_path, monkeypatch)
-    contract_id = contract_fixture["formal_research_method_contract"]["contract_id"]
-    protocol_result = readiness.build_paper_shadow_protocol(
-        contract_id=contract_id,
-        contract_dir=tmp_path / "formal_research_method_contract",
-        output_dir=tmp_path / "paper_shadow_protocol",
-        generated_at=datetime(2026, 6, 15, tzinfo=UTC),
-    )
-    signal_input = run_signal_input_completeness_fixture(tmp_path, as_of="2026-06-12")
+) -> dict[str, Any]:
+    tmp_path.mkdir(parents=True)
     market_panel = tmp_path / "market_panel_2026-06-12.json"
     if not missing_market_panel:
         market_panel.write_text(
@@ -174,17 +218,19 @@ def _paper_shadow_daily_fixture(
         mismatch_event="none",
         benchmark_comparison="tracking_QQQ_SPY_SMH",
         manual_reviewer_notes="synthetic drift monitor fixture",
-        contract_id=contract_id,
-        protocol_id=protocol_result["protocol_id"],
-        signal_input_completeness_id=signal_input["monitor_id"],
-        contract_dir=tmp_path / "formal_research_method_contract",
-        protocol_dir=tmp_path / "paper_shadow_protocol",
-        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
+        contract_id=shared["contract_id"],
+        protocol_id=shared["protocol_id"],
+        signal_input_completeness_id=shared["signal_input_completeness_id"],
+        contract_dir=shared["contract_dir"],
+        protocol_dir=shared["protocol_dir"],
+        signal_input_completeness_dir=shared["signal_input_completeness_dir"],
         output_dir=tmp_path / "paper_shadow_daily",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
     return {
-        "contract_id": contract_id,
-        "protocol_id": protocol_result["protocol_id"],
+        "contract_id": shared["contract_id"],
+        "contract_dir": shared["contract_dir"],
+        "protocol_id": shared["protocol_id"],
         "observation_id": observation["observation_id"],
+        "observation_dir": tmp_path / "paper_shadow_daily",
     }

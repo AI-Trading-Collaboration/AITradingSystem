@@ -12435,7 +12435,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_paper_shadow_drift_monitor
   path: tests/test_paper_shadow_drift_monitor.py
-  sha256: eed8be57800d575a72959cab7f2ca8aa9e60270f6ef0a3893f3bb18362f70a99
+  sha256: e9f9d5724187b0d2fd9ea216f25980b159862e87aae41850149135644f77f5e6
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15461,7 +15461,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_validation_runtime_profile
   path: tests/test_validation_runtime_profile.py
-  sha256: 49e609f5d86b33129d97186f3de7b5bc748bae6b8ea1ad496a34e5d70d95c717
+  sha256: 78d22c9d542b005b1ef151f1fe8e22a3ff86d5612196553cae968e3da75b7f21
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

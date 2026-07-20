@@ -2,7 +2,7 @@
 
 本文是未完成任务、后续优化、阻塞项、基础版遗留问题和 owner 配合事项的统一登记表。只有真正完成或明确不再需要的任务归档在 `docs/task_register_completed.md`；`BASELINE_DONE` 仍保留在本文，`docs/implementation_backlog.md` 继续负责长期模块路线图。
 
-最后更新：2026-07-20
+最后更新：2026-07-21
 
 ## 使用规则
 
@@ -52,6 +52,35 @@
 本节只保留仍需推进、验证、owner 输入、外部条件解除或基础版后续缺口关闭的任务。只有 `DONE` 和 `DROPPED` 任务归档在 `docs/task_register_completed.md`。
 
 最新增量：
+
+2026-07-21：双线 Wave 5 从`main@1fa742d3`启动。Engineering 先按最新 Wave 4 Full profile与
+无负载isolated复核候选：`tests/test_dynamic_v3_system_target_smoothed_operations_hardening.py`的
+Full/isolated约为`260.80/84.21s`，主要是Full负载放大而非可归属本地重复，暂不实施；W5E1改选
+`tests/test_paper_shadow_drift_monitor.py`，isolated baseline=`3 passed / 66.57s`，三节点真实重复构造同一
+formal contract/protocol/signal-completeness前缀。owned scope仅允许在该test file建立module/worker内只读
+shared upstream，clean/missing daily observation仍分目录，两个drift outputs与CLI outputs仍per-test隔离；
+两次after较慢一次必须`<=56.57s`且绝对节省`>=10s`，否则撤回。Strategy lane当前为
+`BLOCKED_INPUT_TRADING106_OWNER_AUTHORIZATION_REQUIRED`：Wave 4预注册包已PASS，但一般“继续推进”不等于
+授权执行clean evaluator/backtest/search/prospective holdout；本wave只保持授权边界、输入新鲜度与队列可见，
+不制造策略结果，`production_effect=none`。
+
+2026-07-21：W5E1两次after=`3 passed / 29.16s`与`3 passed / 28.58s`；较慢值相对baseline
+`66.57s`降低`37.41s / 56.20%`，局部门槛PASS。3个nodeid、clean/missing variant隔离、per-test
+drift/CLI outputs、真实report/validator与CLI report/read/validate均保持。v19 duration seed已从Wave 4
+唯一自然Full同步为`1085 files / 6500 nodes`，source profile SHA-256=`99cecaf6...00e96f`，manifest
+SHA-256=`75216672...02d24`；当前进入focused/shared manifest/formal integration，策略lane仍为
+`BLOCKED_INPUT_TRADING106_OWNER_AUTHORIZATION_REQUIRED`，`production_effect=none`。
+
+2026-07-21：双线 Wave 5 完成。Engineering W5E1 isolated较慢after=`29.16s`，相对`66.57s`降低
+`56.20%`；自然Full中目标文件=`155.8019 -> 59.6908 worker-s`（`-61.69%`），3个nodeid、clean/
+missing variant、per-test drift/CLI outputs及真实validator/CLI链保持。focused/architecture/contract=
+`36/446/265 passed`；Full=`6498 passed / 2 skipped / 643 warnings / 929.82s`，v19完整匹配
+`1085 files / 6500 nodes`、fallback=false、tail idle max=`0.0080s`。共同文件duration median ratio=
+`1.0039`且整体runner仅下降`1.13%`，故仍不声明stable Full improvement。Strategy lane诚实保持
+`BLOCKED_INPUT_TRADING106_OWNER_AUTHORIZATION_REQUIRED`，没有生成clean evaluator/backtest/search/
+prospective holdout结果，`production_effect=none`。
+首次focused为`34 passed / 2 failed`，准确暴露compatibility test-manifest hash与deprecation inventory
+陈旧；统一刷新时又由一处YAML缩进错误触发parse failure，均直接修正并由最终`36 passed`闭合，未降级或绕过门禁。
 
 2026-07-21：双线 Wave 4 完成并归档。Engineering W4E1 保持5个nodeid及真实artifact DAG、CLI、
 missing/fallback/cache/DQ/lineage/safety语义，isolated=`198.89s -> 155.18s`（`-21.98%`），自然Full中
@@ -1429,7 +1458,7 @@ ARCH-005 S0与G2.5仍锁定，`production_effect=none`。
 |TRADING-096|ETF portfolio research/Dynamic v3 Rescue Walk-forward OOS Validation|P0|BASELINE_DONE|研究验证 owner；未来无污染selection protocol owner|逐fold real evaluator、purge/embargo、cost/lag/chronology/false-signal 与 content-derived validator 已完成；真实 OOS 为负面，且现有 source top-N 来自 full-period leaderboard并与 locked holdout 重叠，只能作为 legacy comparison。|Real top-N逐window path重算；source/path/report-id/checksum锁定；content-derived validation；完成purged/embargo逐fold evaluator与完整window gate后才可讨论PASS。未来无偏 OOS 需要独立 selection protocol，不得复用当前 source。|2026-07-12: artifact `7b6db671cbd67468`=20 candidates×2 windows/40 rows，`REVIEW_REQUIRED`且validation PASS；旧`c49f65c76e2b9b73` validation FAIL。2026-07-20: R1真实重跑20 candidates×2 windows×train/test=80/80 fold完整，40 test folds=20 reject+20 review-required，validator PASS；因selection/holdout污染转`BASELINE_DONE`，下一退出条件为另建无污染selection protocol。|
 |TRADING-097|ETF portfolio research/Dynamic v3 Rescue Robustness Sensitivity Overfit Diagnostics|P0|BASELINE_DONE|研究验证 owner + forward observation|9/9 real/derived neighbors 与 dedicated high-drawdown/fast-recovery、per-regime comparators均已实现并通过 content validator；`event_risk_high`真实样本15行低于reviewed floor 20，证据保持不完整。|所有neighbor path/report/checksum归属可证；stress/regime方法与completeness显式；validator从source重算；dedicated bucket与per-regime reviewed policy完成后才可校准PASS boundary。退出条件为独立样本自然达到floor后按同policy重跑，禁止降低门槛。|2026-07-12: artifact `87b0fc81d6681368`有8 real neighbors/1 missing，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、validation PASS；旧`6df822e705e15a42` validation FAIL。2026-07-20: R1真实重跑9/9 neighbors、2/2 stress完整，validator PASS；`event_risk_high=15<20`，故转`BASELINE_DONE`而非伪造robustness PASS。|
 |ARCH-004|Architecture / post-freeze architecture v2 after TRADING-2438N|P0|BLOCKED_OWNER_INPUT|project owner；若决定恢复则显式授权G2.5|详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap handoff及ARCH-005 S0/S1均已PASS；既定技术依赖已满足，但handoff固定`next_slice_unblocked=false`，因此没有owner新指令不得进入G2.5。|保持既有控制面、domain迁移与安全边界；后续恢复时继续G2.5及后续lane，最终通过daily/weekly/monthly parity、clean-clone、reproducibility、full parallel pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。|2026-07-19：S0/S1以869个task shadow、byte-identical views及fast/architecture/contract/reproducibility/full=`300/419/265/23/6394 passed`闭合。ARCH-004仍停在G2.5前，等待owner显式决定是否恢复；不自动续跑。|
-|ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE|Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism|P1|IN_PROGRESS|Wave 4 coordinator：W4E1 focused/manifest/formal/full integration；下个leaf待W4 closeout后再选|详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4 provenance、W2E1及W3E1已完成；W4E1仅把`tests/test_shadow_continuation_readiness.py`的既有validation session由per-test提升为module scope，复用immutable shared source validation，不改production/helper/validator/CLI/scheduler、DQ/PIT、research policy或投资语义；v18 seed/source-bound contract已同步刷新。|同机isolated保持5 nodeids及manual-review、missing/fallback/cache/CLI真实语义；after `<=169.06s`且绝对节省>=25s；v18 exact source binding；architecture/contract/full PASS。收益不足或语义弱化即撤回，连续证据不足不得声称stable Full improvement，`production_effect=none`。|2026-07-21：W4E1 isolated=`198.89s -> 155.18s`（`-43.71s/-21.98%`），双门槛PASS；v18 seed绑定W3 PASS Full `1084 files / 6489 nodes`。当前等待TRADING-2451 owned结果后统一刷新manifests与formal/full。|
+|ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE|Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism|P1|IN_PROGRESS|Wave 6 candidate coordinator：从Wave 5 PASS Full选择下一个有真实isolated尾部的bounded leaf；策略lane输入/授权独立判断|详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4 provenance、W2E1～W5E1已完成；W5E1仅在`tests/test_paper_shadow_drift_monitor.py`复用immutable formal contract/protocol/signal-completeness test DAG，不改production/helper/validator/CLI/scheduler、DQ/PIT、research policy或投资语义；v19 seed/source-bound contract绑定Wave 4唯一PASS Full，W5 Full不在closeout循环刷新v20。|每wave只治理一个bounded leaf并预冻结isolated退出门槛；保持nodeid、真实producer/validator/CLI、DQ/PIT/tamper与投资语义；architecture/contract及单次自然Full在integration boundary PASS。连续证据不足不得声称stable Full improvement；策略输入阻塞时保持`BLOCKED_INPUT`而非伪造任务，`production_effect=none`。|2026-07-21：W5E1 isolated=`66.57 -> 29.16/28.58s`，Full目标=`155.8019 -> 59.6908 worker-s`（`-61.69%`）；formal/full=`446/265/6498 passed`，Full runner=`929.82s`、fallback=false。下一步从W5 profile复核新candidate；TRADING-106仍需owner独立显式授权。|
 |ARCH-004G2_PARALLEL_READINESS_GATE|Architecture / G2.5 parallel change and merge readiness|P1|PROPOSED|architecture coordinator；等待 owner 对 ARCH-004 G2.5 的新显式恢复指令|详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.4 matrix=`967/0/0/0`、bootstrap handoff与ARCH-005 S0～S4A已PASS，技术前置已满足；handoff仍固定`next_slice_unblocked=false`，本次采用双线 operating model 不等于恢复G2.5。|复用ARCH-005 versioned `change_manifest.v1`、lease/conflict primitives、scheduler kernel及S4B协议；生成G3/G4/G5 ownership snapshot，完成fragment preview和真实conflict/non-conflict rehearsal；architecture/contract/focused/full gates通过；`production_effect=none`。|2026-07-20：修正旧依赖状态；任务保持P1/PROPOSED，唯一启动blocker为owner新的G2.5显式恢复指令，不建立第二套scheduler/lease。|
 |ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE|Architecture / auditable parallel development scheduling foundation|P0|BASELINE_DONE|architecture coordinator + developer platform owner + integration coordinator|详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`、`docs/architecture/dual_lane_development_operating_model.md` 和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1、S2～S4A均已闭合；S4B已固化工程/策略双线 operating model、冲突拆解协议和近期队列，旧Markdown仍是唯一可写事实源，S5待新授权。|S4B 已定义 lane 输入输出、owned/shared/coordinator-only 分区、path/module/API/semantic/generated-view/resource/base/evidence冲突处理、contract wave、lease/base freshness、共享文件单写者、失败隔离、固定集成顺序、分层验证与双批次 telemetry 扩容条件；不得以复制逻辑、跳过验证或降低门禁换并行度。禁止自动commit/merge/push、task status mutation、S5 cutover与策略/生产副作用。|2026-07-20：owner批准后续默认双线；S4B文档闭合并转回`BASELINE_DONE`。首批=OPS-065 + TRADING-2449 canonical artifact recovery audit；S5未授权、ARCH-004仍停G2.5前。|
 |ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL|Architecture / governed cutover and legacy removal|P0|PROPOSED|architecture coordinator + 各surface owner + project owner；依赖G7 handoff|详见 `docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md`。只有G7 ledger、2 daily/2 weekly/1 monthly parity、关键CLI/schema/artifact/Reader Brief parity、DQ/PIT/cost/production-effect/owner signoff和正式validation tiers全部闭合后才能转READY；`BLOCKED_WITH_OWNER`不能据此删除。|逐surface满足12项removal gates并按`DEPRECATED -> FROZEN -> REMOVED`推进；0永久dual track/TODO；历史artifact/checksum/schema/commit/runner refs保留；clean worktree clean-clone、successor release candidate、architecture/contract/report/integration/reproducibility/full parallel全部PASS。|2026-07-12: owner确认先登记H执行边界；当前ARCH-004仍在G且`next_phase_unblocked=false`，未授权cutover。|

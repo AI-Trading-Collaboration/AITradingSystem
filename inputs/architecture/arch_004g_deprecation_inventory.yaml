@@ -216,7 +216,7 @@ surfaces:
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 0
   test_reference_file_count: 91
-  docs_config_reference_file_count: 18
+  docs_config_reference_file_count: 19
   required_removal_gate_count: 12
   removal_ready: false
   open_gate_ids:
