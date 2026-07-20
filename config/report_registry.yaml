@@ -32398,3 +32398,27 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_v3_clean_selection_preregistration_gate
+    title: Dynamic v3 Clean-Selection Preregistration Eligibility Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research ops clean-selection-preregistration-gate
+    artifact_globs:
+      - config/research/dynamic_v3_clean_selection_preregistration_policy.yaml
+      - docs/requirements/TRADING-2449_Dynamic_V3_Clean_Selection_Preregistration_Gate.md
+      - outputs/research_ops/strategy_restart/clean_selection_gate/dynamic_v3_clean_selection_preregistration_gate.json
+      - outputs/research_ops/strategy_restart/clean_selection_gate/dynamic_v3_clean_selection_preregistration_gate.md
+      - outputs/research_ops/strategy_restart/clean_selection_gate/dynamic_v3_clean_selection_preregistration_gate_manifest.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      The eligibility decision must be rebuilt after R2/R1 source bytes, source selection
+      origin, preregistration, evaluation context, campaign, holdout, or gate policy changes.
+    owner_action: provide_new_result_blind_preregistration_before_any_clean_run
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

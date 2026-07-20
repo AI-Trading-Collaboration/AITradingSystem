@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 import os
+from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
 from rich.console import Console
@@ -32,7 +34,10 @@ from ai_trading_system.data.quality import (
     write_data_quality_report,
 )
 from ai_trading_system.data_refresh_audit import write_validate_data_audit_sidecar
-from ai_trading_system.external_request_cache import sanitize_diagnostic_text
+from ai_trading_system.external_request_cache import (
+    invalidate_external_request_cache,
+    sanitize_diagnostic_text,
+)
 
 console = Console()
 
@@ -40,6 +45,56 @@ console = Console()
 def register_data_cache_commands(app: typer.Typer) -> None:
     app.command("download-data")(download_data)
     app.command("validate-data")(validate_data)
+    app.command("invalidate-external-request-cache")(invalidate_external_request_cache_command)
+
+
+def invalidate_external_request_cache_command(
+    metadata_path: Annotated[
+        Path,
+        typer.Option(
+            "--metadata-path",
+            help="目标 v2 metadata.json；request identity 只从脱敏 metadata 读取。",
+        ),
+    ],
+    expected_generation_id: Annotated[
+        str, typer.Option("--expected-generation-id", help="当前 v2 generation id。")
+    ],
+    expected_body_sha256: Annotated[
+        str, typer.Option("--expected-body-sha256", help="当前 body SHA-256。")
+    ],
+    actor: Annotated[str, typer.Option(help="执行失效的可审计主体。")],
+    reason: Annotated[str, typer.Option(help="非空失效原因。")],
+    reference: Annotated[str, typer.Option(help="task/ticket/incident 引用。")],
+) -> None:
+    """以 generation/body CAS 显式失效缓存；不删除证据、不发起网络请求。"""
+
+    try:
+        identity = _external_request_cache_identity_from_metadata(metadata_path)
+        result = invalidate_external_request_cache(
+            provider=str(identity["provider"]),
+            api_family=str(identity["api_family"]),
+            method=str(identity["method"]),
+            url=str(identity["url"]),
+            expected_generation_id=expected_generation_id,
+            expected_body_sha256=expected_body_sha256,
+            actor=actor,
+            reason=reason,
+            reference=reference,
+            cache_dir=identity["cache_dir"],
+            params=identity["params"],
+            headers=identity["headers"],
+            json_payload=identity["json_payload"],
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print("[green]External request cache generation 已显式失效。[/green]")
+    console.print(f"cache_key={result.cache_key}")
+    console.print(f"generation_id={result.generation_id}")
+    console.print(f"body_sha256={result.body_sha256}")
+    console.print(f"invalidation_path={result.invalidation_path}")
+    console.print(f"lifecycle_event_path={result.lifecycle_event_path}")
+    console.print("production_effect=none")
+    console.print("next_business_request_may_contact_provider=true")
 
 
 def download_data(
@@ -171,9 +226,7 @@ def download_data(
         violation_reasons = _budget_violation_reasons(budget)
         tail_catch_up = budget.get("tail_catch_up")
         tail_catch_up_applied = (
-            tail_catch_up.get("applied")
-            if isinstance(tail_catch_up, dict)
-            else None
+            tail_catch_up.get("applied") if isinstance(tail_catch_up, dict) else None
         )
         quota_cycle_reset = budget.get("quota_cycle_reset")
         quota_cycle_reset_status = (
@@ -296,6 +349,43 @@ def _parse_date(value: str) -> date:
         return date.fromisoformat(value)
     except ValueError as exc:
         raise typer.BadParameter("日期必须使用 YYYY-MM-DD 格式。") from exc
+
+
+def _external_request_cache_identity_from_metadata(
+    metadata_path: Path,
+) -> dict[str, Any]:
+    try:
+        resolved_path = metadata_path.resolve(strict=True)
+        payload = json.loads(resolved_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"无法读取合法 external request cache metadata：{metadata_path}") from exc
+    if (
+        resolved_path.name != "metadata.json"
+        or not isinstance(payload, Mapping)
+        or payload.get("schema_version") != "external_request_cache.v2"
+        or len(resolved_path.parents) < 5
+    ):
+        raise ValueError("显式失效只接受标准路径下的 external_request_cache.v2 metadata.json")
+    request_identity = payload.get("request_identity")
+    if not isinstance(request_identity, Mapping):
+        raise ValueError("metadata 缺少脱敏 request_identity")
+    required = ("provider", "api_family", "method", "url")
+    if any(not isinstance(payload.get(field), str) or not payload.get(field) for field in required):
+        raise ValueError("metadata 缺少 provider/api_family/method/url")
+    mappings: dict[str, Mapping[str, object]] = {}
+    for field in ("params", "headers", "json_payload"):
+        value = request_identity.get(field)
+        if not isinstance(value, Mapping):
+            raise ValueError(f"metadata request_identity.{field} 必须是 object")
+        mappings[field] = value
+    return {
+        "provider": payload["provider"],
+        "api_family": payload["api_family"],
+        "method": payload["method"],
+        "url": payload["url"],
+        "cache_dir": resolved_path.parents[4],
+        **mappings,
+    }
 
 
 def _download_manifest_path(prices_path: Path) -> Path:

@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, date, datetime, timedelta
+from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import pytest
 import requests
 
 import ai_trading_system.data.market_data as market_data_module
+import ai_trading_system.external_request_cache as external_request_cache_module
 from ai_trading_system.data.market_data import (
     CboeVixPriceProvider,
     FmpPriceProvider,
@@ -20,15 +24,26 @@ from ai_trading_system.data.market_data import (
     YFinancePriceProvider,
 )
 from ai_trading_system.external_request_cache import (
+    CachedHttpStatusError,
     cached_requests_get,
+    external_request_cache_paths,
     external_request_cache_trace,
+    external_request_identity,
+    invalidate_external_request_cache,
+    lookup_external_request_cache,
     safe_response_headers,
+    sha256_json,
     write_external_request_cache_response,
+)
+from ai_trading_system.external_request_cache_policy import (
+    evaluate_external_request_cache_lifecycle,
+    load_external_request_cache_lifecycle_policy,
 )
 from ai_trading_system.fundamentals.sec_companyfacts import (
     SecCompanyFactsRequest,
     SecEdgarCompanyFactsProvider,
 )
+from ai_trading_system.fundamentals.sec_pit_backfill import SecPitEdgarProvider
 
 
 def test_cached_requests_get_reuses_identical_request_and_redacts_secret(
@@ -66,6 +81,465 @@ def test_cached_requests_get_reuses_identical_request_and_redacts_secret(
     assert metadata["request_identity"]["params"]["apikey"] == "***"
     assert "secret-key" not in metadata_text
     assert "another-secret-key" not in metadata_text
+
+
+def test_http_failure_lifecycle_policy_covers_ttl_and_retry_after_cap() -> None:
+    policy = load_external_request_cache_lifecycle_policy()
+    observed_at = datetime(2026, 7, 20, 0, 0, tzinfo=UTC)
+    assert policy.status == "pilot_baseline"
+    assert policy.owner == "data_platform_owner + operations_owner"
+
+    expected_ttls = {
+        408: 300,
+        425: 300,
+        429: 300,
+        500: 300,
+        599: 300,
+        401: 300,
+        403: 300,
+        404: 900,
+        410: 900,
+        400: 3600,
+        499: 3600,
+        199: 0,
+        600: 0,
+    }
+    for status_code, expected_ttl in expected_ttls.items():
+        decision = evaluate_external_request_cache_lifecycle(
+            status_code=status_code,
+            response_headers={},
+            observed_at=observed_at,
+            policy=policy,
+        )
+        assert decision.ttl_seconds == expected_ttl
+        assert decision.expires_at == observed_at + timedelta(seconds=expected_ttl)
+
+    capped = evaluate_external_request_cache_lifecycle(
+        status_code=429,
+        response_headers={"Retry-After": "99999"},
+        observed_at=observed_at,
+        policy=policy,
+    )
+    assert capped.retry_after_seconds == 21600
+    assert capped.ttl_seconds == 21600
+
+    credential = evaluate_external_request_cache_lifecycle(
+        status_code=403,
+        response_headers={"Retry-After": "99999"},
+        observed_at=observed_at,
+        policy=policy,
+    )
+    assert credential.retry_after_seconds is None
+    assert credential.ttl_seconds == 300
+
+    positive = evaluate_external_request_cache_lifecycle(
+        status_code=304,
+        response_headers={},
+        observed_at=observed_at,
+        policy=policy,
+    )
+    assert positive.persistent is True
+    assert positive.ttl_seconds is None
+
+
+def test_v2_negative_observation_hits_then_expires_without_deleting_evidence(
+    tmp_path: Path,
+) -> None:
+    observed_at = datetime(2026, 7, 20, 0, 0, tzinfo=UTC)
+    response = write_external_request_cache_response(
+        provider="Example Vendor",
+        api_family="negative",
+        method="GET",
+        url="https://vendor.example.test/failure",
+        status_code=500,
+        response_headers={"content-type": "text/plain"},
+        content=b"temporary failure",
+        cache_dir=tmp_path,
+        requested_at=observed_at,
+    )
+    metadata = json.loads(response.cache_metadata_path.read_text(encoding="utf-8"))
+    body_path = response.cache_metadata_path.parent / metadata["body_path"]
+    observation_path = response.cache_metadata_path.parent / metadata["negative_observation_path"]
+
+    within_ttl = lookup_external_request_cache(
+        provider="Example Vendor",
+        api_family="negative",
+        method="GET",
+        url="https://vendor.example.test/failure",
+        cache_dir=tmp_path,
+        evaluated_at=observed_at + timedelta(seconds=299),
+    )
+    expired = lookup_external_request_cache(
+        provider="Example Vendor",
+        api_family="negative",
+        method="GET",
+        url="https://vendor.example.test/failure",
+        cache_dir=tmp_path,
+        evaluated_at=observed_at + timedelta(seconds=300),
+    )
+
+    assert metadata["schema_version"] == "external_request_cache.v2"
+    assert Path(metadata["body_path"]) == Path("bodies") / f"{metadata['body_sha256']}.body"
+    assert within_ttl.status == "HIT"
+    assert within_ttl.response is not None
+    assert within_ttl.response.status_code == 500
+    assert expired.status == "EXPIRED_REVALIDATE"
+    assert expired.response is None
+    assert body_path.read_bytes() == b"temporary failure"
+    assert observation_path.exists()
+
+
+def test_expired_failure_live_revalidates_and_preserves_old_observation(
+    tmp_path: Path,
+) -> None:
+    observed_at = datetime(2020, 1, 1, tzinfo=UTC)
+    old = write_external_request_cache_response(
+        provider="Example Vendor",
+        api_family="revalidate",
+        method="GET",
+        url="https://vendor.example.test/data",
+        status_code=503,
+        response_headers={"content-type": "text/plain"},
+        content=b"unavailable",
+        cache_dir=tmp_path,
+        requested_at=observed_at,
+    )
+    old_metadata = json.loads(old.cache_metadata_path.read_text(encoding="utf-8"))
+    old_body = old.cache_metadata_path.parent / old_metadata["body_path"]
+    old_observation = old.cache_metadata_path.parent / old_metadata["negative_observation_path"]
+    fake_requests = _FakeRequests(payload={"ok": True})
+
+    recovered = cached_requests_get(
+        provider="Example Vendor",
+        api_family="revalidate",
+        url="https://vendor.example.test/data",
+        requests_module=fake_requests,
+        cache_dir=tmp_path,
+    )
+    current = lookup_external_request_cache(
+        provider="Example Vendor",
+        api_family="revalidate",
+        method="GET",
+        url="https://vendor.example.test/data",
+        cache_dir=tmp_path,
+    )
+
+    assert recovered.from_cache is False
+    assert recovered.status_code == 200
+    assert len(fake_requests.calls) == 1
+    assert current.status == "HIT"
+    assert current.response is not None and current.response.json() == {"ok": True}
+    assert old_body.read_bytes() == b"unavailable"
+    assert old_observation.exists()
+
+
+def test_negative_observation_tamper_fails_closed_even_if_pointer_hash_is_updated(
+    tmp_path: Path,
+) -> None:
+    response = write_external_request_cache_response(
+        provider="Example Vendor",
+        api_family="observation-tamper",
+        method="GET",
+        url="https://vendor.example.test/data",
+        status_code=429,
+        response_headers={"Retry-After": "600"},
+        content=b"quota",
+        cache_dir=tmp_path,
+    )
+    metadata = json.loads(response.cache_metadata_path.read_text(encoding="utf-8"))
+    observation_path = response.cache_metadata_path.parent / metadata["negative_observation_path"]
+    observation = json.loads(observation_path.read_text(encoding="utf-8"))
+    observation["ttl_seconds"] = 99999
+    tampered_raw = (
+        json.dumps(observation, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    ).encode()
+    observation_path.write_bytes(tampered_raw)
+    metadata["negative_observation_sha256"] = sha256(tampered_raw).hexdigest()
+    response.cache_metadata_path.write_text(
+        json.dumps(metadata, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    lookup = lookup_external_request_cache(
+        provider="Example Vendor",
+        api_family="observation-tamper",
+        method="GET",
+        url="https://vendor.example.test/data",
+        cache_dir=tmp_path,
+    )
+    assert lookup.status == "MISS"
+    assert lookup.response is None
+
+
+def test_legacy_v1_cache_key_and_response_body_remain_readable(tmp_path: Path) -> None:
+    identity = external_request_identity(
+        provider="Legacy Vendor",
+        api_family="legacy",
+        method="GET",
+        url="https://legacy.example.test/data",
+        params={"symbol": "NVDA", "apikey": "old-secret"},
+    )
+    assert identity["schema_version"] == "external_request_cache.v1"
+    cache_key = sha256_json(identity)
+    metadata_path, body_path = external_request_cache_paths(
+        tmp_path,
+        provider="Legacy Vendor",
+        api_family="legacy",
+        cache_key=cache_key,
+    )
+    content = b'{"legacy":true}'
+    body_path.parent.mkdir(parents=True, exist_ok=True)
+    body_path.write_bytes(content)
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "external_request_cache.v1",
+                "cache_key": cache_key,
+                "created_at": "2026-07-20T00:00:00+00:00",
+                "provider": "Legacy Vendor",
+                "api_family": "legacy",
+                "method": "GET",
+                "request_identity": identity,
+                "status_code": 200,
+                "response_headers": {"content-type": "application/json"},
+                "body_path": str(body_path),
+                "body_size_bytes": len(content),
+                "body_sha256": sha256(content).hexdigest(),
+            }
+        ),
+        encoding="utf-8",
+    )
+    fake_requests = _FakeRequests(payload={"live": True})
+
+    response = cached_requests_get(
+        provider="Legacy Vendor",
+        api_family="legacy",
+        url="https://legacy.example.test/data",
+        params={"symbol": "NVDA", "apikey": "new-secret"},
+        requests_module=fake_requests,
+        cache_dir=tmp_path,
+    )
+
+    assert response.from_cache is True
+    assert response.json() == {"legacy": True}
+    assert fake_requests.calls == []
+
+
+def test_v2_cache_body_path_or_checksum_tamper_fails_closed(tmp_path: Path) -> None:
+    response = write_external_request_cache_response(
+        provider="Example Vendor",
+        api_family="tamper",
+        method="GET",
+        url="https://vendor.example.test/data",
+        status_code=200,
+        response_headers={},
+        content=b"trusted",
+        cache_dir=tmp_path,
+    )
+    metadata = json.loads(response.cache_metadata_path.read_text(encoding="utf-8"))
+    metadata["body_path"] = "../escaped.body"
+    response.cache_metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+    escaped = lookup_external_request_cache(
+        provider="Example Vendor",
+        api_family="tamper",
+        method="GET",
+        url="https://vendor.example.test/data",
+        cache_dir=tmp_path,
+    )
+    assert escaped.status == "MISS"
+    assert escaped.response is None
+
+    metadata["body_path"] = str(Path("bodies") / f"{metadata['body_sha256']}.body")
+    response.cache_metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+    body_path = response.cache_metadata_path.parent / metadata["body_path"]
+    body_path.write_bytes(b"tampered")
+    checksum_failure = lookup_external_request_cache(
+        provider="Example Vendor",
+        api_family="tamper",
+        method="GET",
+        url="https://vendor.example.test/data",
+        cache_dir=tmp_path,
+    )
+    assert checksum_failure.status == "MISS"
+    assert checksum_failure.response is None
+
+
+def test_cas_invalidation_preserves_event_and_new_generation_is_unlocked(
+    tmp_path: Path,
+) -> None:
+    first = write_external_request_cache_response(
+        provider="Example Vendor",
+        api_family="invalidate",
+        method="GET",
+        url="https://vendor.example.test/data",
+        status_code=200,
+        response_headers={},
+        content=b"first",
+        cache_dir=tmp_path,
+    )
+    current = json.loads(first.cache_metadata_path.read_text(encoding="utf-8"))
+    with pytest.raises(ValueError, match="stale cache invalidation target"):
+        invalidate_external_request_cache(
+            provider="Example Vendor",
+            api_family="invalidate",
+            method="GET",
+            url="https://vendor.example.test/data",
+            expected_generation_id="stale-generation",
+            expected_body_sha256=current["body_sha256"],
+            actor="operator@example.test",
+            reason="credential rotation",
+            reference="OPS-064-test",
+            cache_dir=tmp_path,
+        )
+
+    result = invalidate_external_request_cache(
+        provider="Example Vendor",
+        api_family="invalidate",
+        method="GET",
+        url="https://vendor.example.test/data",
+        expected_generation_id=current["generation_id"],
+        expected_body_sha256=current["body_sha256"],
+        actor="operator@example.test",
+        reason="credential rotation",
+        reference="OPS-064-test",
+        cache_dir=tmp_path,
+    )
+    invalidated = lookup_external_request_cache(
+        provider="Example Vendor",
+        api_family="invalidate",
+        method="GET",
+        url="https://vendor.example.test/data",
+        cache_dir=tmp_path,
+    )
+    assert invalidated.status == "INVALIDATED_REVALIDATE"
+    assert invalidated.response is None
+    assert result.lifecycle_event_path.exists()
+    assert result.invalidation_path.exists()
+
+    second = write_external_request_cache_response(
+        provider="Example Vendor",
+        api_family="invalidate",
+        method="GET",
+        url="https://vendor.example.test/data",
+        status_code=200,
+        response_headers={},
+        content=b"second",
+        cache_dir=tmp_path,
+    )
+    unlocked = lookup_external_request_cache(
+        provider="Example Vendor",
+        api_family="invalidate",
+        method="GET",
+        url="https://vendor.example.test/data",
+        cache_dir=tmp_path,
+    )
+    assert unlocked.status == "HIT"
+    assert unlocked.response is not None and unlocked.response.content == b"second"
+    assert result.lifecycle_event_path.exists()
+    assert result.invalidation_path.exists()
+    assert second.cache_metadata_path == first.cache_metadata_path
+
+
+def test_cas_invalidation_rejects_pointer_change_during_event_write(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    first = write_external_request_cache_response(
+        provider="Example Vendor",
+        api_family="invalidate-race",
+        method="GET",
+        url="https://vendor.example.test/data",
+        status_code=200,
+        response_headers={},
+        content=b"first",
+        cache_dir=tmp_path,
+    )
+    first_metadata = json.loads(first.cache_metadata_path.read_text(encoding="utf-8"))
+    original_writer = external_request_cache_module._write_cache_json_atomically
+    race_injected = False
+
+    def racing_writer(path: Path, payload: Any) -> Any:
+        nonlocal race_injected
+        result = original_writer(path, payload)
+        if path.parent.name == "lifecycle_events" and not race_injected:
+            race_injected = True
+            write_external_request_cache_response(
+                provider="Example Vendor",
+                api_family="invalidate-race",
+                method="GET",
+                url="https://vendor.example.test/data",
+                status_code=200,
+                response_headers={},
+                content=b"racing-generation",
+                cache_dir=tmp_path,
+            )
+        return result
+
+    monkeypatch.setattr(
+        external_request_cache_module,
+        "_write_cache_json_atomically",
+        racing_writer,
+    )
+    with pytest.raises(ValueError, match="changed while writing lifecycle event"):
+        invalidate_external_request_cache(
+            provider="Example Vendor",
+            api_family="invalidate-race",
+            method="GET",
+            url="https://vendor.example.test/data",
+            expected_generation_id=first_metadata["generation_id"],
+            expected_body_sha256=first_metadata["body_sha256"],
+            actor="operator@example.test",
+            reason="race test",
+            reference="OPS-064-race",
+            cache_dir=tmp_path,
+        )
+
+    current = lookup_external_request_cache(
+        provider="Example Vendor",
+        api_family="invalidate-race",
+        method="GET",
+        url="https://vendor.example.test/data",
+        cache_dir=tmp_path,
+    )
+    assert current.status == "HIT"
+    assert current.response is not None and current.response.content == b"racing-generation"
+    assert len(list(first.cache_metadata_path.parent.glob("lifecycle_events/*.json"))) == 1
+    assert not (first.cache_metadata_path.parent / "invalidation.json").exists()
+
+
+def test_concurrent_writes_publish_a_pointer_to_a_complete_immutable_body(
+    tmp_path: Path,
+) -> None:
+    contents = [f"payload-{index}".encode() for index in range(16)]
+
+    def write(content: bytes) -> None:
+        write_external_request_cache_response(
+            provider="Example Vendor",
+            api_family="concurrent",
+            method="GET",
+            url="https://vendor.example.test/data",
+            status_code=200,
+            response_headers={},
+            content=content,
+            cache_dir=tmp_path,
+        )
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        list(executor.map(write, contents))
+
+    lookup = lookup_external_request_cache(
+        provider="Example Vendor",
+        api_family="concurrent",
+        method="GET",
+        url="https://vendor.example.test/data",
+        cache_dir=tmp_path,
+    )
+    assert lookup.status == "HIT"
+    assert lookup.response is not None
+    assert lookup.response.content in contents
+    assert lookup.body_sha256 == sha256(lookup.response.content).hexdigest()
+    assert len(list(lookup.metadata_path.parent.glob("bodies/*.body"))) == len(contents)
 
 
 def test_safe_response_headers_retries_mutating_mapping() -> None:
@@ -285,6 +759,29 @@ def test_sec_companyfacts_provider_uses_request_cache_for_repeated_request(
     assert len(fake_requests.calls) == 1
     metadata_text = next(tmp_path.rglob("metadata.json")).read_text(encoding="utf-8")
     assert "owner@example.test" not in metadata_text
+
+
+def test_sec_pit_provider_reuses_recent_403_under_shared_negative_lifecycle(
+    tmp_path: Path,
+) -> None:
+    fake_requests = _FakeRequests(payload={"error": "forbidden"}, status_code=403)
+    provider = SecPitEdgarProvider(
+        user_agent="owner@example.test",
+        max_requests_per_second=1_000_000,
+        requests_module=fake_requests,
+        request_cache_dir=tmp_path,
+        max_retries=0,
+    )
+
+    for _ in range(2):
+        with pytest.raises(CachedHttpStatusError):
+            provider.download_companyfacts_raw("NVDA", "0001045810")
+
+    assert len(fake_requests.calls) == 1
+    metadata = json.loads(next(tmp_path.rglob("metadata.json")).read_text(encoding="utf-8"))
+    assert metadata["status_code"] == 403
+    assert metadata["ttl_seconds"] == 300
+    assert len(list(tmp_path.rglob("negative_observations/*.json"))) == 1
 
 
 def test_yfinance_provider_uses_dataframe_cache(

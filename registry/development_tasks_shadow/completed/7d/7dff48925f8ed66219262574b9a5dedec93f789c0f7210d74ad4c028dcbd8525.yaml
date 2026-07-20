@@ -1,0 +1,114 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-064_EXTERNAL_REQUEST_ERROR_CACHE_LIFECYCLE
+  title: null
+  domain: Data platform / external request negative-cache governance
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: operations/data platform：观察 30 天 negative observations；跨进程到期 singleflight
+    由 OPS-065
+  requirement_refs:
+  - docs/requirements/OPS-064_External_Request_Error_Cache_Lifecycle.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-064_External_Request_Error_Cache_Lifecycle.md`；HTTP
+    4xx/5xx 不再永久 HIT。Reviewed pilot TTL/Retry-After、v1 key/legacy body 兼容、v2 content-addressed
+    immutable body、negative observations、expiry revalidation、CAS invalidation 与 unified
+    SEC lifecycle 已完成。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: status/TTL/Retry-After cap 可复算；legacy v1 可读；body/observation/event 不可变；path/checksum/tamper
+      fail closed；并发 pointer last-completed-valid；FMP/Marketstack/FRED/SEC、CLI、docs/catalog/system
+      flow、manifests 与 formal gates PASS；不删除 cache、不绕过 DQ，`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 18
+    row_sha256: 8ad90547c779469dfdea02a0d54f4bfa11f0b8944ca9079284cf1bca0f95a625
+    cell_count: 8
+    all_cells:
+    - OPS-064_EXTERNAL_REQUEST_ERROR_CACHE_LIFECYCLE
+    - Data platform / external request negative-cache governance
+    - P1
+    - DONE
+    - operations/data platform：观察 30 天 negative observations；跨进程到期 singleflight 由
+      OPS-065
+    - 详见 `docs/requirements/OPS-064_External_Request_Error_Cache_Lifecycle.md`；HTTP
+      4xx/5xx 不再永久 HIT。Reviewed pilot TTL/Retry-After、v1 key/legacy body 兼容、v2 content-addressed
+      immutable body、negative observations、expiry revalidation、CAS invalidation 与
+      unified SEC lifecycle 已完成。
+    - status/TTL/Retry-After cap 可复算；legacy v1 可读；body/observation/event 不可变；path/checksum/tamper
+      fail closed；并发 pointer last-completed-valid；FMP/Marketstack/FRED/SEC、CLI、docs/catalog/system
+      flow、manifests 与 formal gates PASS；不删除 cache、不绕过 DQ，`production_effect=none`。
+    - 2026-07-20：focused integration=81 passed；architecture=446 passed/35.11s；contract=265
+      passed/149.33s；full=6456 passed/2 skipped/643 warnings/969.84s，较 972.33s 基线约
+      -0.26%，无异常回归。跨进程同 key 到期可能重复 live revalidate 已透明登记 OPS-065，不隐藏为 OPS-064 已解决。
+    raw_line: '|OPS-064_EXTERNAL_REQUEST_ERROR_CACHE_LIFECYCLE|Data platform / external
+      request negative-cache governance|P1|DONE|operations/data platform：观察 30 天 negative
+      observations；跨进程到期 singleflight 由 OPS-065|详见 `docs/requirements/OPS-064_External_Request_Error_Cache_Lifecycle.md`；HTTP
+      4xx/5xx 不再永久 HIT。Reviewed pilot TTL/Retry-After、v1 key/legacy body 兼容、v2 content-addressed
+      immutable body、negative observations、expiry revalidation、CAS invalidation 与
+      unified SEC lifecycle 已完成。|status/TTL/Retry-After cap 可复算；legacy v1 可读；body/observation/event
+      不可变；path/checksum/tamper fail closed；并发 pointer last-completed-valid；FMP/Marketstack/FRED/SEC、CLI、docs/catalog/system
+      flow、manifests 与 formal gates PASS；不删除 cache、不绕过 DQ，`production_effect=none`。|2026-07-20：focused
+      integration=81 passed；architecture=446 passed/35.11s；contract=265 passed/149.33s；full=6456
+      passed/2 skipped/643 warnings/969.84s，较 972.33s 基线约 -0.26%，无异常回归。跨进程同 key 到期可能重复
+      live revalidate 已透明登记 OPS-065，不隐藏为 OPS-064 已解决。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8ad90547c779469dfdea02a0
+  task_id: OPS-064_EXTERNAL_REQUEST_ERROR_CACHE_LIFECYCLE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: operations/data platform：观察 30 天 negative observations；跨进程到期 singleflight
+      由 OPS-065
+    notes: 2026-07-20：focused integration=81 passed；architecture=446 passed/35.11s；contract=265
+      passed/149.33s；full=6456 passed/2 skipped/643 warnings/969.84s，较 972.33s 基线约
+      -0.26%，无异常回归。跨进程同 key 到期可能重复 live revalidate 已透明登记 OPS-065，不隐藏为 OPS-064 已解决。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:8ad90547c779469dfdea02a0d54f4bfa11f0b8944ca9079284cf1bca0f95a625
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-064_EXTERNAL_REQUEST_ERROR_CACHE_LIFECYCLE
+  - Data platform / external request negative-cache governance
+  - P1
+  - DONE
+  - operations/data platform：观察 30 天 negative observations；跨进程到期 singleflight 由 OPS-065
+  - 详见 `docs/requirements/OPS-064_External_Request_Error_Cache_Lifecycle.md`；HTTP
+    4xx/5xx 不再永久 HIT。Reviewed pilot TTL/Retry-After、v1 key/legacy body 兼容、v2 content-addressed
+    immutable body、negative observations、expiry revalidation、CAS invalidation 与 unified
+    SEC lifecycle 已完成。
+  - status/TTL/Retry-After cap 可复算；legacy v1 可读；body/observation/event 不可变；path/checksum/tamper
+    fail closed；并发 pointer last-completed-valid；FMP/Marketstack/FRED/SEC、CLI、docs/catalog/system
+    flow、manifests 与 formal gates PASS；不删除 cache、不绕过 DQ，`production_effect=none`。
+  - 2026-07-20：focused integration=81 passed；architecture=446 passed/35.11s；contract=265
+    passed/149.33s；full=6456 passed/2 skipped/643 warnings/969.84s，较 972.33s 基线约 -0.26%，无异常回归。跨进程同
+    key 到期可能重复 live revalidate 已透明登记 OPS-065，不隐藏为 OPS-064 已解决。
+  docs_links:
+  - docs/requirements/OPS-064_External_Request_Error_Cache_Lifecycle.md
+  terminal: true
+  raw_row_sha256: 8ad90547c779469dfdea02a0d54f4bfa11f0b8944ca9079284cf1bca0f95a625
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 21a6912b0b5b2e49110b8ea6acd346e1df1ed29c7b47bb2319a646eacd809995

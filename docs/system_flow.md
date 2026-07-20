@@ -80,6 +80,52 @@ selection/holdout contaminated、`event_risk_high=15<20`、forward missing archi
 GBDT=`PIVOT_DESIGN_ONLY`、regret=`WATCHLIST`。全链固定 `production_effect=none`、
 `broker_action=none`，不修改 shadow、official/production weights、portfolio、order 或 broker。
 
+TRADING-2449 在 R2 与 TRADING-106 fold-local evaluator 之间增加无污染选择预注册资格门。
+`config/research/dynamic_v3_clean_selection_preregistration_policy.yaml` 只定义 source eligibility、
+结果可见性、预注册完整性和 locked-holdout 隔离规则，不定义候选参数或投资阈值。builder 绑定并校验
+R2 decision/manifest、R1 walk-forward source、canonical preregistration/evaluation context/campaign 与
+live SHA-256；validator 重读同一 live source 并重算判定与 JSON/Markdown。full-period leaderboard
+top-N、结果可见后的 freeze、缺失 preregistration 字段、source drift 或 train/test 与 locked holdout
+重叠都会 fail closed。当前 legacy R1 source 只能为 `BLOCKED_CONTAMINATED_LEGACY_SOURCE`；即使合成
+contract fixture 达到 `ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN`，本节点也不会调用 evaluator、生成
+候选或启动 backtest。真实 clean run 必须由 owner 提供新的结果不可见预注册并另建 S1 任务；全链固定
+candidate expansion/new search=false、`production_effect=none`、`broker_action=none`。
+
+```mermaid
+flowchart LR
+    R2["Validated R2 decision + manifest"] --> GATE["Clean-selection preregistration gate"]
+    R1["R1 source + selection origin"] --> GATE
+    PRE["Preregistration + context + campaign"] --> GATE
+    GATE -->|"contaminated / drift / incomplete / overlap"| BLOCK["BLOCKED / fail closed"]
+    GATE -->|"all eligibility checks pass"| ELIGIBLE["ELIGIBLE for owner-authorized clean run"]
+    ELIGIBLE -.-> STOP["No evaluator / no candidate / no backtest"]
+```
+
+OPS-064 把通用 external request cache 的“证据保留”与“可复用期限”拆开。既有 v1 request
+identity/cache key 保持不变，legacy `response.body` 可继续读取；新写入使用 v2 atomic current pointer、
+content-addressed `bodies/<sha256>.body` 和负响应 `negative_observations/<generation_id>.json`。200～399
+继续持久复用；4xx/5xx 按 reviewed pilot policy 与有上限的 `Retry-After` 到期，到期后下一次 wrapper
+调用 live revalidate，旧 body/observation 不删除。显式失效使用 expected generation/body checksum 的
+CAS，追加 lifecycle event 并只让目标 generation 失去复用资格。lookup 同时校验 key、路径 containment、
+size/checksum、policy 与 invalidation，任一漂移均 MISS/fail closed。requests/urllib 以及 FMP、
+Marketstack、FRED、SEC 仍由 provider 层解释 HTTP failure，不会把负缓存解释为成功数据；本节点不绕过
+`aits validate-data`。并发 writer 保证 pointer 只指向已落盘且 checksum 匹配的 immutable body；到期边界
+的跨进程 singleflight 不在本切片，单独由 OPS-065 治理。
+
+```mermaid
+flowchart LR
+    REQUEST["External request identity v1"] --> LOOKUP["Lookup + checksum/path/policy/CAS checks"]
+    LOOKUP -->|"eligible"| HIT["Cached response HIT"]
+    LOOKUP -->|"MISS / EXPIRED / INVALIDATED"| LIVE["Live provider request"]
+    LIVE --> BODY["Immutable content-addressed body"]
+    LIVE --> NEG["Negative observation when 4xx/5xx"]
+    BODY --> POINTER["Atomic v2 current pointer"]
+    NEG --> POINTER
+    POINTER --> ADAPTER["Provider fail-closed interpretation"]
+    ADAPTER --> DQ["Required validate-data gate"]
+    INVALIDATE["CAS invalidation + lifecycle event"] --> LOOKUP
+```
+
 ARCH-004G2.4 phase exit 在EB8后的稳定callback集合上独立执行。Callback matrix必须为
 `967 migrated / 0 pending / 0 unresolved / 0 duplicate`，随后依次绑定focused、architecture、
 contract、full四类PASS artifact及其SHA-256，并复验module/test manifests、compatibility baseline、

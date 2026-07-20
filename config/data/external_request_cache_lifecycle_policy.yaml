@@ -1,0 +1,52 @@
+schema_version: external_request_cache_lifecycle_policy.v1
+policy_id: external_request_cache_http_status_lifecycle
+policy_version: 1.0.0-pilot
+status: pilot_baseline
+owner: data_platform_owner + operations_owner
+rationale: 将失败响应的永久审计保留与短期可复用期限分离，避免 credential 或 provider 恢复后继续命中旧失败。
+intended_effect: 4xx/5xx 在有界 TTL 后强制 live revalidation，同时保留不可变 failure evidence。
+validation_evidence:
+  status: focused_pass
+  suites:
+    - tests/test_external_request_cache.py
+    - tests/test_data_download.py
+    - tests/test_market_data.py
+    - tests/test_sec_pit_backfill.py
+positive_status:
+  minimum: 200
+  maximum: 399
+  lifecycle_class: positive_persistent
+negative_status_rules:
+  - lifecycle_class: transient_http_failure
+    statuses: [408, 425, 429]
+    ranges:
+      - minimum: 500
+        maximum: 599
+    ttl_seconds: 300
+    honor_retry_after: true
+  - lifecycle_class: credential_http_failure
+    statuses: [401, 403]
+    ttl_seconds: 300
+    honor_retry_after: false
+  - lifecycle_class: missing_resource_http_failure
+    statuses: [404, 410]
+    ttl_seconds: 900
+    honor_retry_after: false
+  - lifecycle_class: other_client_http_failure
+    ranges:
+      - minimum: 400
+        maximum: 499
+    excluded_statuses: [401, 403, 404, 408, 410, 425, 429]
+    ttl_seconds: 3600
+    honor_retry_after: false
+nonstandard_status:
+  lifecycle_class: nonstandard_status_evidence_only
+  ttl_seconds: 0
+retry_after:
+  maximum_seconds: 21600
+  combination: maximum
+review_condition:
+  - 30_days_runtime_observations
+  - provider_quota_or_429_distribution_change
+  - poisoned_cache_recurrence
+exit_condition: owner_approves_evidence_backed_stable_ttl_or_replacement_policy

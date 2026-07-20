@@ -6,6 +6,14 @@ from typing import Annotated, Any
 
 import typer
 
+from ai_trading_system.dynamic_v3_clean_selection_preregistration_gate import (
+    DEFAULT_CLEAN_SELECTION_GATE_OUTPUT_ROOT,
+    DEFAULT_CLEAN_SELECTION_POLICY_PATH,
+    DynamicV3CleanSelectionGateError,
+    build_dynamic_v3_clean_selection_preregistration_gate,
+    validate_dynamic_v3_clean_selection_preregistration_gate,
+    write_dynamic_v3_clean_selection_preregistration_gate,
+)
 from ai_trading_system.research_restart import (
     DEFAULT_COST_POLICY_PATH,
     DEFAULT_EXECUTION_POLICY_PATH,
@@ -38,6 +46,12 @@ def register_research_restart_commands(app: typer.Typer) -> None:
     app.command("validate-strategy-restart-preflight")(validate_strategy_restart_preflight_command)
     app.command("strategy-restart-decision")(strategy_restart_decision_command)
     app.command("validate-strategy-restart-decision")(validate_strategy_restart_decision_command)
+    app.command("clean-selection-preregistration-gate")(
+        clean_selection_preregistration_gate_command
+    )
+    app.command("validate-clean-selection-preregistration-gate")(
+        validate_clean_selection_preregistration_gate_command
+    )
 
 
 def strategy_restart_preflight_command(
@@ -174,6 +188,72 @@ def validate_strategy_restart_decision_command(
         raise typer.BadParameter(str(exc)) from exc
     _print_payload(payload)
     typer.echo(f"decision={payload.get('decision')}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+def clean_selection_preregistration_gate_command(
+    r2_manifest_path: Annotated[
+        Path, typer.Option("--r2-manifest", help="Validated R2 decision manifest。")
+    ],
+    policy_path: Annotated[
+        Path, typer.Option("--policy-path", help="Clean-selection eligibility policy。")
+    ] = DEFAULT_CLEAN_SELECTION_POLICY_PATH,
+    preregistration_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--preregistration",
+            help="可选 canonical preregistration；默认从 source contract 解析。",
+        ),
+    ] = None,
+    research_context_path: Annotated[
+        Path | None,
+        typer.Option("--research-context", help="可选 canonical evaluation context。"),
+    ] = None,
+    campaign_spec_path: Annotated[
+        Path | None,
+        typer.Option("--campaign-spec", help="可选 canonical CampaignSpec。"),
+    ] = None,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="资格门 artifact 输出目录。")
+    ] = DEFAULT_CLEAN_SELECTION_GATE_OUTPUT_ROOT,
+) -> None:
+    """构建 S0 clean-selection 资格证据；不运行 evaluator 或 backtest。"""
+
+    try:
+        report = build_dynamic_v3_clean_selection_preregistration_gate(
+            r2_manifest_path=r2_manifest_path,
+            policy_path=policy_path,
+            preregistration_path=preregistration_path,
+            research_context_path=research_context_path,
+            campaign_spec_path=campaign_spec_path,
+        )
+        result = write_dynamic_v3_clean_selection_preregistration_gate(
+            report,
+            output_root=output_root,
+        )
+    except (DynamicV3CleanSelectionGateError, OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"status={result['status']}")
+    typer.echo(f"gate_id={result['gate_id']}")
+    typer.echo(f"report_path={result['report_path']}")
+    typer.echo("clean_run_unblocked=false")
+    typer.echo("candidate_expansion_allowed=false")
+    typer.echo("new_parameter_search_allowed=false")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+
+
+def validate_clean_selection_preregistration_gate_command(
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="资格门 artifact 输出目录。")
+    ] = DEFAULT_CLEAN_SELECTION_GATE_OUTPUT_ROOT,
+) -> None:
+    """重读 live source 并重算 S0 clean-selection 资格证据。"""
+
+    payload = validate_dynamic_v3_clean_selection_preregistration_gate(output_root=output_root)
+    _print_payload(payload)
+    typer.echo(f"eligibility_status={payload.get('eligibility_status')}")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
 

@@ -193,7 +193,7 @@ class SecPitEdgarProvider:
                 headers=headers,
                 cache_dir=Path(cache_dir),
             )
-            if lookup.response is not None and lookup.response.status_code not in {403, 429}:
+            if lookup.response is not None:
                 return lookup.response
 
         retry_statuses = {403, 429}

@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 source_root: src/ai_trading_system
-module_count: 987
+module_count: 989
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -829,7 +829,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.data_cache
   path: src/ai_trading_system/cli_commands/data_cache.py
-  sha256: 2cb17f1486c88eaf6deb1f51339b28633c0b06a02f2fd771dca92fb6a4fb05fb
+  sha256: e8e2dcd4af3c2220d0d6c893fc2032e421e8d421a88bb59a79ac7f349497f259
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -1533,7 +1533,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.research_restart
   path: src/ai_trading_system/cli_commands/research_restart.py
-  sha256: 4aa6b69e88d49a4acf1b977f6f848c4296efa395e5be88c942a2cf30f172b8bf
+  sha256: 1072b4478ee052935ea23bd706ae6e0b484b7fe02f506912af6f2f534e323db9
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -4885,6 +4885,26 @@ modules:
   validation_tiers:
   - fast-unit
   shared_integration: false
+- module_id: src.ai_trading_system.dynamic_v3_clean_selection_preregistration_gate
+  path: src/ai_trading_system/dynamic_v3_clean_selection_preregistration_gate.py
+  sha256: d30749d4e8296ba823b76ffc5b1851060034112775f565d9c55f59a1454e5a92
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
 - module_id: src.ai_trading_system.equal_risk_growth_tilt
   path: src/ai_trading_system/equal_risk_growth_tilt.py
   sha256: 10ddedc46ef167be41fe2d400570f1faecf2be0c1a8d96e197a4d8f6aadac571
@@ -7983,7 +8003,27 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.external_request_cache
   path: src/ai_trading_system/external_request_cache.py
-  sha256: 5e18df8b6887fdc7bfc967c5a0e9e1d68516a199bcbe0e4bf5bc0dcc4fbc575e
+  sha256: 47692ea9564b1276c2ef01f32086fdfe2fb1236729a6107358a472586bf45f8b
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.external_request_cache_policy
+  path: src/ai_trading_system/external_request_cache_policy.py
+  sha256: 376fafc2126d5694b7a205b3d2c3ad0585d24990133a94d4870bf35d85743241
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -9020,7 +9060,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.fundamentals.sec_pit_backfill
   path: src/ai_trading_system/fundamentals/sec_pit_backfill.py
-  sha256: 4ae0e0836abb57ce17864b4574bff6b770cffbcad84bc263009ff4a1119ba21e
+  sha256: ba82b45f3626af0ea5cd8ec179474f90591b4ffd3b5e21e63a0b2259e9ab2dcb
   rule_id: fundamentals
   owner_profile: data
   owners:

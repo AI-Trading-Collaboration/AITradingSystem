@@ -1,0 +1,68 @@
+schema_version: dynamic_v3_clean_selection_preregistration_policy.v1
+policy_id: dynamic_v3_clean_selection_preregistration_gate_v1
+status: reviewed_pilot_baseline
+owner: project_owner_and_research_governance
+
+policy_metadata:
+  rationale: >
+    A fold-local evaluator cannot create unbiased OOS evidence when its candidate
+    universe was selected from a full-period leaderboard or when train/test windows
+    overlap the locked holdout.  This policy therefore freezes source eligibility
+    before any evaluator can be owner-authorized.
+  intended_effect: >
+    Make source origin, preregistration chronology, live checksums, window isolation,
+    and the no-production boundary content-derived and fail closed.
+  validation_evidence: >
+    TRADING-2446 through TRADING-2448 disclosed full-period top-N contamination and
+    locked-holdout overlap; TRADING-2449 focused contract and tamper tests.
+  review_condition: >
+    Review before changing an allowed source origin, required canonical contract,
+    chronology rule, overlap rule, or any research/production safety boundary.
+
+qualification:
+  ordered_outcomes:
+    - BLOCKED_SOURCE_DRIFT
+    - BLOCKED_CONTAMINATED_LEGACY_SOURCE
+    - BLOCKED_INCOMPLETE_PREREGISTRATION
+    - BLOCKED_RESULT_VISIBILITY
+    - BLOCKED_HOLDOUT_OVERLAP
+    - ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN
+  contaminated_source_origins:
+    - full_period_source_leaderboard_top_n
+    - post_result_ranked_candidates
+  allowed_source_origins:
+    - preregistered_candidate_universe
+  required_result_visibility: NONE
+  freeze_must_precede_first_selected_result: true
+  train_and_test_must_not_overlap_locked_holdout: true
+  required_preregistration_fields:
+    - frozen_at
+    - candidate_id
+    - selection_rule_id
+    - selection_rule_sha256
+    - metric_ids
+    - policy_ref_ids
+    - validation_plan_ids
+  required_source_contract_fields:
+    - candidate_universe_id
+    - candidate_universe_path
+    - candidate_universe_sha256
+    - candidate_universe_origin
+    - selection_rule_path
+    - first_selected_result_at
+  required_canonical_schemas:
+    preregistration: research_preregistration.v1
+    research_context: research_evaluation_context.v1
+    campaign_spec: research_campaign.v1
+
+safety_boundary:
+  clean_run_unblocked: false
+  unbiased_oos_claim_allowed: false
+  candidate_expansion_allowed: false
+  new_parameter_search_allowed: false
+  evaluator_execution_allowed: false
+  locked_holdout_access_allowed: false
+  paper_shadow_change_allowed: false
+  production_weight_change_allowed: false
+  production_effect: none
+  broker_action: none

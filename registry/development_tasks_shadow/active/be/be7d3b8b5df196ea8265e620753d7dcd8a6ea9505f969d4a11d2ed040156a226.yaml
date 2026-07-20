@@ -1,0 +1,99 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-065_EXTERNAL_REQUEST_CACHE_REVALIDATION_SINGLEFLIGHT
+  title: null
+  domain: Data platform / cross-process cache revalidation coordination
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: data platform owner
+  requirement_refs:
+  - docs/requirements/OPS-065_External_Request_Cache_Revalidation_Singleflight.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-065_External_Request_Cache_Revalidation_Singleflight.md`；OPS-064
+    保证并发存储完整性，但多个进程仍可能在同一 key 到期边界重复 live revalidate。实现 per-key lease、winner double-check、bounded
+    waiter reuse 与 stale-owner takeover；不得使用全局锁或绕过 request budget/DQ。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 两个独立进程同 key 到期只产生一次 injected live request；不同 key 保持并行；crash/takeover/timeout/invalidation
+      race/tamper 可确定性复验；lease evidence 脱敏且可重放；provider regressions 与 formal gates
+      PASS，`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1195
+    row_sha256: 411f907a0ceea32414d8caed0c488f78ae005cf6f8951f66814a09517988fc33
+    cell_count: 8
+    all_cells:
+    - OPS-065_EXTERNAL_REQUEST_CACHE_REVALIDATION_SINGLEFLIGHT
+    - Data platform / cross-process cache revalidation coordination
+    - P1
+    - READY
+    - data platform owner
+    - 详见 `docs/requirements/OPS-065_External_Request_Cache_Revalidation_Singleflight.md`；OPS-064
+      保证并发存储完整性，但多个进程仍可能在同一 key 到期边界重复 live revalidate。实现 per-key lease、winner double-check、bounded
+      waiter reuse 与 stale-owner takeover；不得使用全局锁或绕过 request budget/DQ。
+    - 两个独立进程同 key 到期只产生一次 injected live request；不同 key 保持并行；crash/takeover/timeout/invalidation
+      race/tamper 可确定性复验；lease evidence 脱敏且可重放；provider regressions 与 formal gates
+      PASS，`production_effect=none`。
+    - 2026-07-20：OPS-064 设计审计登记；明确作为后续独立切片，当前不阻断 error-cache TTL/CAS 生命周期闭环。
+    raw_line: '|OPS-065_EXTERNAL_REQUEST_CACHE_REVALIDATION_SINGLEFLIGHT|Data platform
+      / cross-process cache revalidation coordination|P1|READY|data platform owner|详见
+      `docs/requirements/OPS-065_External_Request_Cache_Revalidation_Singleflight.md`；OPS-064
+      保证并发存储完整性，但多个进程仍可能在同一 key 到期边界重复 live revalidate。实现 per-key lease、winner double-check、bounded
+      waiter reuse 与 stale-owner takeover；不得使用全局锁或绕过 request budget/DQ。|两个独立进程同 key
+      到期只产生一次 injected live request；不同 key 保持并行；crash/takeover/timeout/invalidation
+      race/tamper 可确定性复验；lease evidence 脱敏且可重放；provider regressions 与 formal gates
+      PASS，`production_effect=none`。|2026-07-20：OPS-064 设计审计登记；明确作为后续独立切片，当前不阻断 error-cache
+      TTL/CAS 生命周期闭环。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-411f907a0ceea32414d8caed
+  task_id: OPS-065_EXTERNAL_REQUEST_CACHE_REVALIDATION_SINGLEFLIGHT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: READY
+  payload:
+    priority: P1
+    next_owner: data platform owner
+    notes: 2026-07-20：OPS-064 设计审计登记；明确作为后续独立切片，当前不阻断 error-cache TTL/CAS 生命周期闭环。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:411f907a0ceea32414d8caed0c488f78ae005cf6f8951f66814a09517988fc33
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-065_EXTERNAL_REQUEST_CACHE_REVALIDATION_SINGLEFLIGHT
+  - Data platform / cross-process cache revalidation coordination
+  - P1
+  - READY
+  - data platform owner
+  - 详见 `docs/requirements/OPS-065_External_Request_Cache_Revalidation_Singleflight.md`；OPS-064
+    保证并发存储完整性，但多个进程仍可能在同一 key 到期边界重复 live revalidate。实现 per-key lease、winner double-check、bounded
+    waiter reuse 与 stale-owner takeover；不得使用全局锁或绕过 request budget/DQ。
+  - 两个独立进程同 key 到期只产生一次 injected live request；不同 key 保持并行；crash/takeover/timeout/invalidation
+    race/tamper 可确定性复验；lease evidence 脱敏且可重放；provider regressions 与 formal gates PASS，`production_effect=none`。
+  - 2026-07-20：OPS-064 设计审计登记；明确作为后续独立切片，当前不阻断 error-cache TTL/CAS 生命周期闭环。
+  docs_links:
+  - docs/requirements/OPS-065_External_Request_Cache_Revalidation_Singleflight.md
+  terminal: false
+  raw_row_sha256: 411f907a0ceea32414d8caed0c488f78ae005cf6f8951f66814a09517988fc33
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ff71dd0b2e20488d19f5e046276950944ab84e3256c9777abdbba790af85d287
