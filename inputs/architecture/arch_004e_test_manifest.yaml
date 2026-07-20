@@ -12419,7 +12419,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_paper_shadow_daily
   path: tests/test_paper_shadow_daily.py
-  sha256: 2c4371160c57c1fd362a5dd6bacf34f15c082eec28ac91fefe34ed16ffe29712
+  sha256: b7ae78842e14dba9b5c1e433a38fba6bf08268d478883b139ca900f74ae73bf2
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15461,7 +15461,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_validation_runtime_profile
   path: tests/test_validation_runtime_profile.py
-  sha256: 78d22c9d542b005b1ef151f1fe8e22a3ff86d5612196553cae968e3da75b7f21
+  sha256: 185d1a428d04183e8490a5cc386b745b815d47841a1c8eec8144f0e0730bba97
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

@@ -263,14 +263,14 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
     assert profile.partial_seed is True
     assert profile.complete_profile is False
     assert profile.owner == "validation_operations"
-    assert profile.version == 19
+    assert profile.version == 20
     assert profile.source_workers == 16
     assert profile.source_dist == "loadfile"
     assert profile.source_artifact_path == (
-        "outputs/validation_runtime/full_20260720T175548Z/test_runtime_profile.json"
+        "outputs/validation_runtime/full_20260720T185256Z/test_runtime_profile.json"
     )
     assert profile.source_artifact_sha256 == (
-        "99cecaf60ada21852764ca04dbb825d072c2887f43f22ac341328049f000e96f"
+        "4b6c8c5040b732e3e1d40f9e666c6d2728637626909418d00505dfd91c56841c"
     )
     assert len(profile.observed_seconds) == 1085
     assert profile.source_node_count is None
@@ -281,10 +281,10 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
     assert profile.source_file_rows_sha256 is None
     assert profile.expected_scheduled_ordered_sha256 is None
     assert profile.source_file_duration_total_seconds is None
-    assert profile.observed_seconds["tests/test_layer1_meta_policy_readiness.py"] == (420.4089531)
+    assert profile.observed_seconds["tests/test_layer1_meta_policy_readiness.py"] == (405.4114613)
     assert (
         profile.observed_seconds["tests/test_filtered_candidate_readiness_pipeline_foundation.py"]
-        == 124.9199046
+        == 108.9618279
     )
 
     legacy = load_duration_profile(_write_legacy_partial_profile(tmp_path / "legacy_partial.yaml"))

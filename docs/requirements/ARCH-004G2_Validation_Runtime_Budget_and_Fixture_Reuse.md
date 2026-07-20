@@ -1468,6 +1468,43 @@ tail idle max=`0.0080s`。W5E1目标文件Full worker-s=`155.8019 -> 59.6908`，
 新增warning source。仍因只有一份自然Full证据而保持`stable_full_improvement_claimed=false`；v19作为
 下一wave开始前的reviewed seed，本轮closeout不循环生成v20或运行第二次Full，`production_effect=none`。
 
+### Wave 6 W6E1：Paper-shadow daily immutable upstream reuse
+
+2026-07-21：Wave 6从`main@1e31ede1`启动。候选筛选先复核Full首部的三组smoothed多节点文件；同机
+combined isolated显示每个文件都由一个真实重链节点主导，分别约`146.09s`、`155.48s`与`158.71s`，
+不是多个consumer反复构造同一只读前缀，因此本wave不借fixture复用削弱这些单节点语义。随后选择
+`tests/test_paper_shadow_daily.py`：Wave 5 Full file worker-s=`82.79s`，无负载isolated baseline=
+`3 passed / 41.93s`，三个call约`10.65/10.11/15.86s`，均重复构造formal research method contract、
+paper-shadow protocol、signal-input completeness以及相同market/signal source artifacts。
+
+W6E1 owned scope仅为该test file：允许在module/worker生命周期内构造一次immutable contract/protocol/
+signal-completeness与source artifacts；每个test仍必须在独立`tmp_path`执行真实daily producer/validator，
+missing-input节点继续传入真实不存在的market-panel路径，CLI节点继续真实执行run/report/validate。
+不得共享可写daily output、减少validator或CLI调用、缓存FAIL、改变production/helper/CLI/scheduler、DQ/PIT、
+research policy或投资语义。3个nodeid、BLOCKED/OK/FAIL reason、research-safety与paper-account不变断言必须保留。
+两次同命令after中较慢一次必须`<=35.64s`且相对baseline绝对节省不少于`8s`；任一source被consumer写入、
+路径隔离丢失、语义覆盖弱化或收益未达门槛即撤回。实现前先把Wave 5唯一自然Full刷新为v20 advisory
+duration seed并更新source-bound test；closeout仍只允许一个自然Full，单一Wave 6样本不得声明stable Full
+improvement，`production_effect=none`。
+
+实现后两次同机同命令after=`3 passed / 20.70s`与`3 passed / 20.37s`；较慢值相对baseline
+`41.93s`降低`21.23s / 50.63%`，通过`<=35.64s`且绝对节省`>=8s`门槛。三个consumer仍各自
+执行真实daily producer/validator；daily outputs保持per-test，missing-input仍使用真实不存在路径，CLI节点仍
+真实执行run/report/validate。共享范围只包含只读contract/protocol/signal-completeness与market/signal
+source。v20 advisory seed已绑定Wave 5唯一自然Full`full_20260720T185256Z`，source profile SHA-256=
+`4b6c8c50...c56841c`，manifest SHA-256=`69d73dae...9242f3`，匹配`1085 files / 6500 nodes`；当前进入
+focused/shared manifest/formal integration，`stable_full_improvement_claimed=false`、`production_effect=none`。
+
+Wave 6正式集成结果：focused=`36 passed / 23.50s`；pre-Full architecture=`446 passed / 35.55s`、
+artifact=`architecture-fitness_20260720T193332Z`；contract=`265 passed / 105.48s`、artifact=
+`contract-validation_20260720T193408Z`。唯一自然Full=`6498 passed / 2 skipped / 643 warnings`，pytest=
+`925.08s`、runner=`926.10s`、artifact=`full_20260720T193559Z`；v20匹配`1085 files / 6500 nodes`，
+scheduler applied=true、fallback=false，profile/telemetry/performance/provenance全部PASS，tail idle max=
+`0.0154s`。W6E1目标文件Full worker-s=`82.7893 -> 30.1328`，减少`52.6565s / 63.60%`；共同
+1085文件duration median ratio=`1.0036`，整体file worker-s=`14704.52 -> 14639.68`（`-0.44%`），
+runner减少`3.72s / 0.40%`。单一自然样本仍不足以声明stable Full improvement；v20留作下一wave开始前
+reviewed seed，本轮不循环生成v21或运行第二次Full，`production_effect=none`。
+
 ## 验收标准
 
 - 当前 4 个 confirmation 长尾 module 的累计 wall time至少降低70%，最大单shard不超过当前

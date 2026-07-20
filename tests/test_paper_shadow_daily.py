@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
+import pytest
 from dynamic_v3_filtered_candidate_readiness_helpers import (
     assert_research_safe,
     run_formal_research_method_contract_fixture,
@@ -14,10 +16,63 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readiness as readiness
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as daily
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+)
 
 
-def test_paper_shadow_daily_observation_builds_and_validates(tmp_path: Path, monkeypatch) -> None:
-    fixture = _paper_shadow_fixture(tmp_path, monkeypatch)
+@pytest.fixture(scope="module")
+def paper_shadow_upstream_fixture(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> dict[str, Any]:
+    root = tmp_path_factory.mktemp("paper-shadow-daily-upstream")
+    monkeypatch = pytest.MonkeyPatch()
+    try:
+        with artifact_validation_session():
+            contract_fixture = run_formal_research_method_contract_fixture(root, monkeypatch)
+            contract_id = contract_fixture["formal_research_method_contract"]["contract_id"]
+            protocol_result = readiness.build_paper_shadow_protocol(
+                contract_id=contract_id,
+                contract_dir=root / "formal_research_method_contract",
+                output_dir=root / "paper_shadow_protocol",
+                generated_at=datetime(2026, 6, 15, tzinfo=UTC),
+            )
+            signal_input = run_signal_input_completeness_fixture(root, as_of="2026-06-12")
+            market_panel = root / "market_panel_2026-06-12.json"
+            market_panel.write_text(
+                json.dumps({"as_of": "2026-06-12", "report_type": "market_panel"}),
+                encoding="utf-8",
+            )
+            signal_artifact = root / "candidate_signal_summary.json"
+            signal_artifact.write_text(
+                json.dumps(
+                    {
+                        "as_of": "2026-06-12",
+                        "candidate": "median_plus_regime_mismatch_filter",
+                        "signal_output": "OBSERVE_RISK_ON",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            yield {
+                "contract_id": contract_id,
+                "protocol_id": protocol_result["protocol_id"],
+                "signal_input_completeness_id": signal_input["monitor_id"],
+                "contract_dir": root / "formal_research_method_contract",
+                "protocol_dir": root / "paper_shadow_protocol",
+                "signal_input_completeness_dir": root / "signal_input_completeness",
+                "market_panel": market_panel,
+                "signal_artifact": signal_artifact,
+            }
+    finally:
+        monkeypatch.undo()
+
+
+def test_paper_shadow_daily_observation_builds_and_validates(
+    tmp_path: Path,
+    paper_shadow_upstream_fixture: dict[str, Any],
+) -> None:
+    fixture = paper_shadow_upstream_fixture
     result = daily.run_paper_shadow_daily_observation(
         candidate="median_plus_regime_mismatch_filter",
         observation_date="2026-06-12",
@@ -34,9 +89,9 @@ def test_paper_shadow_daily_observation_builds_and_validates(tmp_path: Path, mon
         contract_id=fixture["contract_id"],
         protocol_id=fixture["protocol_id"],
         signal_input_completeness_id=fixture["signal_input_completeness_id"],
-        contract_dir=tmp_path / "formal_research_method_contract",
-        protocol_dir=tmp_path / "paper_shadow_protocol",
-        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
+        contract_dir=fixture["contract_dir"],
+        protocol_dir=fixture["protocol_dir"],
+        signal_input_completeness_dir=fixture["signal_input_completeness_dir"],
         output_dir=tmp_path / "paper_shadow_daily",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
@@ -66,8 +121,11 @@ def test_paper_shadow_daily_observation_builds_and_validates(tmp_path: Path, mon
     assert observation["paper_account_state_mutated"] is False
 
 
-def test_paper_shadow_daily_validation_fails_missing_input(tmp_path: Path, monkeypatch) -> None:
-    fixture = _paper_shadow_fixture(tmp_path, monkeypatch)
+def test_paper_shadow_daily_validation_fails_missing_input(
+    tmp_path: Path,
+    paper_shadow_upstream_fixture: dict[str, Any],
+) -> None:
+    fixture = paper_shadow_upstream_fixture
     result = daily.run_paper_shadow_daily_observation(
         candidate="median_plus_regime_mismatch_filter",
         observation_date="2026-06-12",
@@ -84,9 +142,9 @@ def test_paper_shadow_daily_validation_fails_missing_input(tmp_path: Path, monke
         contract_id=fixture["contract_id"],
         protocol_id=fixture["protocol_id"],
         signal_input_completeness_id=fixture["signal_input_completeness_id"],
-        contract_dir=tmp_path / "formal_research_method_contract",
-        protocol_dir=tmp_path / "paper_shadow_protocol",
-        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
+        contract_dir=fixture["contract_dir"],
+        protocol_dir=fixture["protocol_dir"],
+        signal_input_completeness_dir=fixture["signal_input_completeness_dir"],
         output_dir=tmp_path / "paper_shadow_daily",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
@@ -98,8 +156,11 @@ def test_paper_shadow_daily_validation_fails_missing_input(tmp_path: Path, monke
     assert "input_artifacts_exist" in failed
 
 
-def test_paper_shadow_daily_cli_run_report_and_validate(tmp_path: Path, monkeypatch) -> None:
-    fixture = _paper_shadow_fixture(tmp_path, monkeypatch)
+def test_paper_shadow_daily_cli_run_report_and_validate(
+    tmp_path: Path,
+    paper_shadow_upstream_fixture: dict[str, Any],
+) -> None:
+    fixture = paper_shadow_upstream_fixture
     output_dir = tmp_path / "paper_shadow_daily"
     result = CliRunner().invoke(
         app,
@@ -139,11 +200,11 @@ def test_paper_shadow_daily_cli_run_report_and_validate(tmp_path: Path, monkeypa
             "--signal-input-completeness-id",
             fixture["signal_input_completeness_id"],
             "--contract-dir",
-            str(tmp_path / "formal_research_method_contract"),
+            str(fixture["contract_dir"]),
             "--protocol-dir",
-            str(tmp_path / "paper_shadow_protocol"),
+            str(fixture["protocol_dir"]),
             "--signal-input-completeness-dir",
-            str(tmp_path / "signal_input_completeness"),
+            str(fixture["signal_input_completeness_dir"]),
             "--output-dir",
             str(output_dir),
         ],
@@ -187,38 +248,3 @@ def test_paper_shadow_daily_cli_run_report_and_validate(tmp_path: Path, monkeypa
     )
     assert validation.exit_code == 0
     assert "status=PASS" in validation.output
-
-
-def _paper_shadow_fixture(tmp_path: Path, monkeypatch) -> dict[str, Path | str]:
-    contract_fixture = run_formal_research_method_contract_fixture(tmp_path, monkeypatch)
-    contract_id = contract_fixture["formal_research_method_contract"]["contract_id"]
-    protocol_result = readiness.build_paper_shadow_protocol(
-        contract_id=contract_id,
-        contract_dir=tmp_path / "formal_research_method_contract",
-        output_dir=tmp_path / "paper_shadow_protocol",
-        generated_at=datetime(2026, 6, 15, tzinfo=UTC),
-    )
-    signal_input = run_signal_input_completeness_fixture(tmp_path, as_of="2026-06-12")
-    market_panel = tmp_path / "market_panel_2026-06-12.json"
-    market_panel.write_text(
-        json.dumps({"as_of": "2026-06-12", "report_type": "market_panel"}),
-        encoding="utf-8",
-    )
-    signal_artifact = tmp_path / "candidate_signal_summary.json"
-    signal_artifact.write_text(
-        json.dumps(
-            {
-                "as_of": "2026-06-12",
-                "candidate": "median_plus_regime_mismatch_filter",
-                "signal_output": "OBSERVE_RISK_ON",
-            }
-        ),
-        encoding="utf-8",
-    )
-    return {
-        "contract_id": contract_id,
-        "protocol_id": protocol_result["protocol_id"],
-        "signal_input_completeness_id": signal_input["monitor_id"],
-        "market_panel": market_panel,
-        "signal_artifact": signal_artifact,
-    }
