@@ -1,0 +1,108 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-065_EXTERNAL_REQUEST_CACHE_REVALIDATION_SINGLEFLIGHT
+  title: null
+  domain: Data platform / cross-process cache revalidation coordination
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: operations/data platform：观察 30 天 lease/timeout/takeover evidence；无新异常不重开
+  requirement_refs:
+  - docs/requirements/OPS-065_External_Request_Cache_Revalidation_Singleflight.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-065_External_Request_Cache_Revalidation_Singleflight.md`；per-key
+    跨进程 lease、winner double-check、bounded waiter、stale-owner takeover 与严格 cache publish
+    fencing 已完成；不使用全局锁，不绕过 request budget/DQ。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 两个独立进程同 key 到期只产生一次 injected live request；不同 key 保持并行；crash/takeover/timeout/invalidation
+      race/tamper/TTL=0 与 stale-owner publish 均可确定性复验；lease evidence 脱敏、不可变且可重放；provider
+      与 formal gates PASS，`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 17
+    row_sha256: dfa062294abe0142546e4b4a2bbad49256e094ee8e3830d56542b1d97288975b
+    cell_count: 8
+    all_cells:
+    - OPS-065_EXTERNAL_REQUEST_CACHE_REVALIDATION_SINGLEFLIGHT
+    - Data platform / cross-process cache revalidation coordination
+    - P1
+    - DONE
+    - operations/data platform：观察 30 天 lease/timeout/takeover evidence；无新异常不重开
+    - 详见 `docs/requirements/OPS-065_External_Request_Cache_Revalidation_Singleflight.md`；per-key
+      跨进程 lease、winner double-check、bounded waiter、stale-owner takeover 与严格 cache
+      publish fencing 已完成；不使用全局锁，不绕过 request budget/DQ。
+    - 两个独立进程同 key 到期只产生一次 injected live request；不同 key 保持并行；crash/takeover/timeout/invalidation
+      race/tamper/TTL=0 与 stale-owner publish 均可确定性复验；lease evidence 脱敏、不可变且可重放；provider
+      与 formal gates PASS，`production_effect=none`。
+    - 2026-07-20：Wave 1 完成。module/cache/provider=`13/38/118 passed`；architecture/contract/full=`446/265/6470
+      passed`；full=`975.18s`，较前次约 `+0.55%`，新 OPS 测试未进入 slowest 50，无异常性能回归。集成期补齐 stale-owner
+      publish fencing，path 冲突=0、base drift=0。
+    raw_line: '|OPS-065_EXTERNAL_REQUEST_CACHE_REVALIDATION_SINGLEFLIGHT|Data platform
+      / cross-process cache revalidation coordination|P1|DONE|operations/data platform：观察
+      30 天 lease/timeout/takeover evidence；无新异常不重开|详见 `docs/requirements/OPS-065_External_Request_Cache_Revalidation_Singleflight.md`；per-key
+      跨进程 lease、winner double-check、bounded waiter、stale-owner takeover 与严格 cache
+      publish fencing 已完成；不使用全局锁，不绕过 request budget/DQ。|两个独立进程同 key 到期只产生一次 injected
+      live request；不同 key 保持并行；crash/takeover/timeout/invalidation race/tamper/TTL=0
+      与 stale-owner publish 均可确定性复验；lease evidence 脱敏、不可变且可重放；provider 与 formal gates
+      PASS，`production_effect=none`。|2026-07-20：Wave 1 完成。module/cache/provider=`13/38/118
+      passed`；architecture/contract/full=`446/265/6470 passed`；full=`975.18s`，较前次约
+      `+0.55%`，新 OPS 测试未进入 slowest 50，无异常性能回归。集成期补齐 stale-owner publish fencing，path
+      冲突=0、base drift=0。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-dfa062294abe0142546e4b4a
+  task_id: OPS-065_EXTERNAL_REQUEST_CACHE_REVALIDATION_SINGLEFLIGHT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: operations/data platform：观察 30 天 lease/timeout/takeover evidence；无新异常不重开
+    notes: 2026-07-20：Wave 1 完成。module/cache/provider=`13/38/118 passed`；architecture/contract/full=`446/265/6470
+      passed`；full=`975.18s`，较前次约 `+0.55%`，新 OPS 测试未进入 slowest 50，无异常性能回归。集成期补齐 stale-owner
+      publish fencing，path 冲突=0、base drift=0。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:dfa062294abe0142546e4b4a2bbad49256e094ee8e3830d56542b1d97288975b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-065_EXTERNAL_REQUEST_CACHE_REVALIDATION_SINGLEFLIGHT
+  - Data platform / cross-process cache revalidation coordination
+  - P1
+  - DONE
+  - operations/data platform：观察 30 天 lease/timeout/takeover evidence；无新异常不重开
+  - 详见 `docs/requirements/OPS-065_External_Request_Cache_Revalidation_Singleflight.md`；per-key
+    跨进程 lease、winner double-check、bounded waiter、stale-owner takeover 与严格 cache publish
+    fencing 已完成；不使用全局锁，不绕过 request budget/DQ。
+  - 两个独立进程同 key 到期只产生一次 injected live request；不同 key 保持并行；crash/takeover/timeout/invalidation
+    race/tamper/TTL=0 与 stale-owner publish 均可确定性复验；lease evidence 脱敏、不可变且可重放；provider
+    与 formal gates PASS，`production_effect=none`。
+  - 2026-07-20：Wave 1 完成。module/cache/provider=`13/38/118 passed`；architecture/contract/full=`446/265/6470
+    passed`；full=`975.18s`，较前次约 `+0.55%`，新 OPS 测试未进入 slowest 50，无异常性能回归。集成期补齐 stale-owner
+    publish fencing，path 冲突=0、base drift=0。
+  docs_links:
+  - docs/requirements/OPS-065_External_Request_Cache_Revalidation_Singleflight.md
+  terminal: true
+  raw_row_sha256: dfa062294abe0142546e4b4a2bbad49256e094ee8e3830d56542b1d97288975b
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3be97dddd4a83a293996c385414ecae260cc87ced1e6e775adc0586168b76761

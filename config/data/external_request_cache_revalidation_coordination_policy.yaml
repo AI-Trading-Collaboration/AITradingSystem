@@ -1,0 +1,55 @@
+schema_version: external_request_cache_revalidation_coordination_policy.v1
+policy_id: external_request_cache_per_key_revalidation_singleflight
+policy_version: 1.0.0-pilot
+status: reviewed_pilot_baseline
+owner: data_platform_owner + operations_owner
+rationale: >-
+  对同一 cache key 的到期或显式失效复验进行跨进程合并，避免 provider quota、429
+  和长尾耗时被并发重复请求放大；不同 key 不共享锁。
+intended_effect: >-
+  一个有效 lease generation 最多允许一个 live revalidation owner，其余进程在有界时间内
+  复用 winner 发布的 generation；owner 崩溃后只允许有界 stale takeover。
+coordination:
+  lease_ttl_seconds: 120
+  waiter_timeout_seconds: 135
+  initial_poll_interval_milliseconds: 25
+  maximum_poll_interval_milliseconds: 250
+  arbiter_timeout_seconds: 5
+  max_stale_takeovers_per_cause: 1
+  allow_waiter_retry_after_owner_failure: false
+evidence:
+  host_context: sha256_fingerprint
+  owner_token_storage: sha256_only
+  immutable_hash_chain: true
+  forbidden_field_tokens:
+    - api_key
+    - apikey
+    - authorization
+    - bearer
+    - client_secret
+    - cookie
+    - password
+    - secret
+    - token_value
+validation_evidence:
+  status: focused_and_formal_pass
+  required_suites:
+    - tests/test_external_request_cache_revalidation_coordination.py
+    - tests/test_external_request_cache.py
+  focused:
+    module_passed: 13
+    cache_integration_passed: 38
+    provider_regression_passed: 118
+  formal:
+    architecture_fitness_passed: 446
+    contract_validation_passed: 265
+    full_passed: 6470
+    full_skipped: 2
+    full_elapsed_seconds: 975.18
+    full_runtime_artifact: outputs/validation_runtime/full_20260720T135519Z/test_runtime_summary.json
+review_condition:
+  - 30_days_runtime_observations
+  - provider_quota_or_429_distribution_change
+  - owner_timeout_or_stale_takeover_observed
+  - request_timeout_policy_change
+exit_condition: owner_approves_evidence_backed_stable_coordination_policy_or_replacement

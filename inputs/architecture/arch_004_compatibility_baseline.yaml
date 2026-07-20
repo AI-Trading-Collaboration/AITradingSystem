@@ -16182,16 +16182,16 @@ phase_arch_005_s2_s4_parallel_control:
   - {path: docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md, sha256: a6693fec2e7ba747671e6e0d7d7a644356db09b3a9f69f004ec61b8e677b395c}
   - {path: docs/requirements/TRADING-2446_to_2448_Research_Restart_R0_R2.md, sha256: 10113e5551495dc18edf2fcd9ef067e7c69af39abfc3726c576d563e912826fa}
   - {path: docs/research/strategy_research_restart_r0_r2_closeout_2026-07-20.md, sha256: 679aa339df5d35814dff9c047cd7b62a30cd4e7e14463c32143cd4df4b4734eb}
-  - {path: docs/system_flow.md, sha256: c49b0d9b34b93767242e353fd24835147e09ff9d26ec6c34b4df1c4c1950917e}
-  - {path: docs/task_register.md, sha256: d2c2d40b385477390a8cba4d95cf190d8c4d956d68ccea09fa7e5041716ac6af}
-  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: c862fc8bc28bcc82a5a2d9695bc29a0751b55a6a025e8301790e07e3032fae16}
-  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 9a81dea0b730c8a164f705c1a41717f04e3afd2a5510d717873ae19c0e4c5c24}
-  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: d8f2d4f1f73eb5ce85295400a507dc46ce0aa41cb74028e32ff731446aa3888f}
-  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: ec1996b540c6bba78e0aae112551f014e70b44240d1b60ec39a09b4854b4fc9a}
-  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 8aa9c9f0b0bf83d3ca3d33a9a74fd2f2776507b5994c47589102f1bf0b544baf}
+  - {path: docs/system_flow.md, sha256: 0fb9956e5a54593251fe070a3d15e5f8bc739d18f5eb7f3a342132a06c4f34e7}
+  - {path: docs/task_register.md, sha256: aefbc1d451932b08023a703f9b57f3479ffca6733eb63b339ac1c69390760489}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 190140c27fcad870bb787d5fac8484945bfaff8841f6b37501bbc707a7815576}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: ed243a2641d95509fa0d2d0382db5f25f1f492a008e87fd0e495cddae2054981}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 85577a8dd00db2099009d69f2b91315a601d2434bdaed4563ac2845b72cf4c02}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: db8ec4de772869ecf038c9d473ab8ffebe0f407f26ee86e0131ceead5481a7bb}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 4ebd924a6965b251c3a7644232935f4358f8c5b52a02d09c108ae2678eff30aa}
   - {path: inputs/architecture/arch_005_s2_s4_pilot.yaml, sha256: edc5104a571d5b199d96cf769672c38ef9200f2ca1869fee48507203e8e35e56}
-  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 5a30f3c707595bb2f0d778e1a5fb78bc180f7f1353a2f2427de0bc3c79c74511}
-  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: 91aa7a868f9175a266c733df097cccdecc0f042cf1e9d1f0745092a93c8a7a65}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 7ccaa84dc9bb84b3e3b5b5a8e525d40fa11e72d93c32d9dc9f0df1c8a0ad40c1}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: 1445d55cfdd224b570058a5d5b0c451a16ec0774f0e7d35971449b1acdc19b18}
   - {path: scripts/architecture_arch005_control_plane.py, sha256: 69a827abafd7c8d138c0d4966d87af59ad7d1ac57436bb3a31ab769cb16f515f}
   - {path: scripts/run_validation_tier.py, sha256: 53a541642bbf38801a6a852b40150e915ddd4341cde3fa790bfd25d5974462e1}
   - {path: src/ai_trading_system/platform/architecture/__init__.py, sha256: 050bf92d2d3dd2d8719a396de112c14af681532cc8e1c29e3417ff23c8449e76}
@@ -16199,7 +16199,7 @@ phase_arch_005_s2_s4_parallel_control:
   - {path: src/ai_trading_system/platform/architecture/parallel_control_kernel.py, sha256: b32b1200be2fa80e7c4d473954f5edbd29df4018ac081ccd953f8ce7f8fa3e86}
   - {path: src/ai_trading_system/platform/architecture/parallel_control_scheduler.py, sha256: 2a633691025e9fd437e2cd83e254390eaac4b182308e9d1aff929fecf942ab2e}
   - {path: tests/test_arch_004_refactor_policy.py, sha256: 0537e37c30f2f406012044b2435b20451aebbbb6f1b9fbbe83459546fd1d6a56}
-  - {path: tests/test_arch_004g_deprecation.py, sha256: 38db7ef251113e240a1601c33ddf0380c045b05420b5f385a5ec51b05d534eb6}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: 46cbae6d710204d6d2c830f082b50a51d7ba0799e73eed75f4cc4d382d48d984}
   - {path: tests/test_arch_005_s2_kernel.py, sha256: 396d5b6dfeaef6048c2ad19430c4fe4028fb20dcad4b2ef4b2da1fad81ddb273}
   - {path: tests/test_arch_005_s3_scheduler.py, sha256: ab8cb8125985f4db6e4cf5abc522ac819bbabb0b9e0f1f1acd491778dd718a38}
   - {path: tests/test_arch_005_s4_dispatch.py, sha256: b026fba2023560d90a30207dc3440075c9d6d05b25f21795705ee76cd07cad94}
@@ -16310,28 +16310,28 @@ phase_arch_005_s4a_supervised_automation:
     production_effect: none
   sources:
   - {path: config/architecture/arch_005_supervised_automation_policy.yaml, sha256: 78fe9ba759598e51c864691f00189903f1e789e372a2afa010a6b5283392ee8f}
-  - {path: docs/architecture/dual_lane_development_operating_model.md, sha256: 67624fa5cf627a1e5a0e377439c210a566920a846003c31f231892c327b4fa97}
+  - {path: docs/architecture/dual_lane_development_operating_model.md, sha256: 6ea460fb6e58b579da481e3cd297be5914c7b6f01a4f5888cecbf29672a28834}
   - {path: docs/architecture/arch_005_s4a_supervised_automation_closeout_2026-07-20.md, sha256: 478a64fbe8e128a279eb19ccd6b5acc1737daeaf85a46c7254b0752e3a01a625}
   - {path: docs/artifact_catalog.md, sha256: 581068649994eac12da7e4181bb2c7bcb59b38bb07d027e1a8a688c807ca8d1e}
   - {path: docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md, sha256: 844dd8da75ea39d17c7710dc8fb3bfea019ed3df3a479db7af6c0b930eb526c0}
   - {path: docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md, sha256: a6693fec2e7ba747671e6e0d7d7a644356db09b3a9f69f004ec61b8e677b395c}
   - {path: docs/requirements/ARCH-005_S4A_Supervised_Automation.md, sha256: a0aa6f03a143bcebf7186b3f15b081a196202e09fa25ed8d872807d57fabb14a}
-  - {path: docs/system_flow.md, sha256: c49b0d9b34b93767242e353fd24835147e09ff9d26ec6c34b4df1c4c1950917e}
-  - {path: docs/task_register.md, sha256: d2c2d40b385477390a8cba4d95cf190d8c4d956d68ccea09fa7e5041716ac6af}
-  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: c862fc8bc28bcc82a5a2d9695bc29a0751b55a6a025e8301790e07e3032fae16}
-  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 9a81dea0b730c8a164f705c1a41717f04e3afd2a5510d717873ae19c0e4c5c24}
-  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: d8f2d4f1f73eb5ce85295400a507dc46ce0aa41cb74028e32ff731446aa3888f}
-  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: ec1996b540c6bba78e0aae112551f014e70b44240d1b60ec39a09b4854b4fc9a}
-  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 8aa9c9f0b0bf83d3ca3d33a9a74fd2f2776507b5994c47589102f1bf0b544baf}
+  - {path: docs/system_flow.md, sha256: 0fb9956e5a54593251fe070a3d15e5f8bc739d18f5eb7f3a342132a06c4f34e7}
+  - {path: docs/task_register.md, sha256: aefbc1d451932b08023a703f9b57f3479ffca6733eb63b339ac1c69390760489}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 190140c27fcad870bb787d5fac8484945bfaff8841f6b37501bbc707a7815576}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: ed243a2641d95509fa0d2d0382db5f25f1f492a008e87fd0e495cddae2054981}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 85577a8dd00db2099009d69f2b91315a601d2434bdaed4563ac2845b72cf4c02}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: db8ec4de772869ecf038c9d473ab8ffebe0f407f26ee86e0131ceead5481a7bb}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 4ebd924a6965b251c3a7644232935f4358f8c5b52a02d09c108ae2678eff30aa}
   - {path: inputs/architecture/arch_005_s4a_supervised_pilot.yaml, sha256: 2b931f632dcc70697859dc217de94a3b07ee5cfb721e759cc63e7591a8dafb62}
-  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 5a30f3c707595bb2f0d778e1a5fb78bc180f7f1353a2f2427de0bc3c79c74511}
-  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: 91aa7a868f9175a266c733df097cccdecc0f042cf1e9d1f0745092a93c8a7a65}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 7ccaa84dc9bb84b3e3b5b5a8e525d40fa11e72d93c32d9dc9f0df1c8a0ad40c1}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: 1445d55cfdd224b570058a5d5b0c451a16ec0774f0e7d35971449b1acdc19b18}
   - {path: scripts/architecture_arch005_supervised_automation.py, sha256: 305e20b12d923b43bdd49e6f46e79174ae57f6f92883573bfdeb6d05a8e52811}
   - {path: src/ai_trading_system/platform/architecture/__init__.py, sha256: 050bf92d2d3dd2d8719a396de112c14af681532cc8e1c29e3417ff23c8449e76}
   - {path: src/ai_trading_system/platform/architecture/parallel_control_scheduler.py, sha256: 2a633691025e9fd437e2cd83e254390eaac4b182308e9d1aff929fecf942ab2e}
   - {path: src/ai_trading_system/platform/architecture/supervised_automation.py, sha256: ee152e1c40fcf2148470cf8f0b6212d0a16d48694b97111e24de5e639615224a}
   - {path: tests/test_arch_004_refactor_policy.py, sha256: 0537e37c30f2f406012044b2435b20451aebbbb6f1b9fbbe83459546fd1d6a56}
-  - {path: tests/test_arch_004g_deprecation.py, sha256: 38db7ef251113e240a1601c33ddf0380c045b05420b5f385a5ec51b05d534eb6}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: 46cbae6d710204d6d2c830f082b50a51d7ba0799e73eed75f4cc4d382d48d984}
   - {path: tests/test_arch_005_s4a_supervised_automation.py, sha256: 28589c1be0cf99959b69a782e1b378cde9db20c19157d43f077eb6525a23c570}
 
 phase_arch_005_s4b_dual_lane_operating_model:
@@ -16371,12 +16371,12 @@ phase_arch_005_s4b_dual_lane_operating_model:
     production_effect: none
     broker_action: none
   sources:
-  - {path: docs/architecture/dual_lane_development_operating_model.md, sha256: 67624fa5cf627a1e5a0e377439c210a566920a846003c31f231892c327b4fa97}
+  - {path: docs/architecture/dual_lane_development_operating_model.md, sha256: 6ea460fb6e58b579da481e3cd297be5914c7b6f01a4f5888cecbf29672a28834}
   - {path: docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md, sha256: 844dd8da75ea39d17c7710dc8fb3bfea019ed3df3a479db7af6c0b930eb526c0}
   - {path: docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md, sha256: a6693fec2e7ba747671e6e0d7d7a644356db09b3a9f69f004ec61b8e677b395c}
-  - {path: docs/system_flow.md, sha256: c49b0d9b34b93767242e353fd24835147e09ff9d26ec6c34b4df1c4c1950917e}
-  - {path: docs/task_register.md, sha256: d2c2d40b385477390a8cba4d95cf190d8c4d956d68ccea09fa7e5041716ac6af}
-  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: c862fc8bc28bcc82a5a2d9695bc29a0751b55a6a025e8301790e07e3032fae16}
-  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 9a81dea0b730c8a164f705c1a41717f04e3afd2a5510d717873ae19c0e4c5c24}
-  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 5a30f3c707595bb2f0d778e1a5fb78bc180f7f1353a2f2427de0bc3c79c74511}
-  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: 91aa7a868f9175a266c733df097cccdecc0f042cf1e9d1f0745092a93c8a7a65}
+  - {path: docs/system_flow.md, sha256: 0fb9956e5a54593251fe070a3d15e5f8bc739d18f5eb7f3a342132a06c4f34e7}
+  - {path: docs/task_register.md, sha256: aefbc1d451932b08023a703f9b57f3479ffca6733eb63b339ac1c69390760489}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 190140c27fcad870bb787d5fac8484945bfaff8841f6b37501bbc707a7815576}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: ed243a2641d95509fa0d2d0382db5f25f1f492a008e87fd0e495cddae2054981}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 7ccaa84dc9bb84b3e3b5b5a8e525d40fa11e72d93c32d9dc9f0df1c8a0ad40c1}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: 1445d55cfdd224b570058a5d5b0c451a16ec0774f0e7d35971449b1acdc19b18}

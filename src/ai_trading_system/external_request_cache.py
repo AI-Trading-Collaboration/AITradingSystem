@@ -24,6 +24,10 @@ from ai_trading_system.external_request_cache_policy import (
     evaluate_external_request_cache_lifecycle,
     load_external_request_cache_lifecycle_policy,
 )
+from ai_trading_system.external_request_cache_revalidation_coordination import (
+    ExternalRequestRevalidationCoordinator,
+    RevalidationProbe,
+)
 from ai_trading_system.platform.artifacts import (
     ArtifactWriteError,
     ArtifactWriteResult,
@@ -232,17 +236,17 @@ def cached_requests_get(
         )
         return lookup.response
 
-    kwargs: dict[str, Any] = {"timeout": timeout}
-    if params is not None:
-        kwargs["params"] = dict(params)
-    if headers is not None:
-        kwargs["headers"] = dict(headers)
-    response = requests_module.get(url, **kwargs)
-    status_code = _response_status_code(response)
-    response_headers = _mapping_from_headers(getattr(response, "headers", {}) or {})
-    content = _response_content(response)
-    if cache_dir is None:
-        cached_response = CachedHttpResponse(
+    def fetch_live_response() -> CachedHttpResponse:
+        kwargs: dict[str, Any] = {"timeout": timeout}
+        if params is not None:
+            kwargs["params"] = dict(params)
+        if headers is not None:
+            kwargs["headers"] = dict(headers)
+        response = requests_module.get(url, **kwargs)
+        status_code = _response_status_code(response)
+        response_headers = _mapping_from_headers(getattr(response, "headers", {}) or {})
+        content = _response_content(response)
+        return CachedHttpResponse(
             status_code=status_code,
             headers=response_headers,
             content=content,
@@ -251,35 +255,44 @@ def cached_requests_get(
             cache_metadata_path=lookup.metadata_path,
             from_cache=False,
         )
-        record_external_request_cache_event(
+
+    def publish_live_response(response: CachedHttpResponse) -> None:
+        if cache_dir is None:
+            return
+        write_external_request_cache_response(
             provider=provider,
             api_family=api_family,
-            cache_key=cached_response.cache_key,
-            cache_metadata_path=cached_response.cache_metadata_path,
-            from_cache=False,
-            status_code=cached_response.status_code,
-            response_headers=cached_response.headers,
+            method="GET",
+            url=url,
+            params=params,
+            headers=headers,
+            status_code=response.status_code,
+            response_headers=response.headers,
+            content=response.content,
+            cache_dir=Path(cache_dir),
+            requested_at=datetime.now(tz=UTC),
         )
-        return cached_response
-    cached_response = write_external_request_cache_response(
-        provider=provider,
-        api_family=api_family,
-        method="GET",
-        url=url,
-        params=params,
-        headers=headers,
-        status_code=status_code,
-        response_headers=response_headers,
-        content=content,
-        cache_dir=Path(cache_dir),
-        requested_at=datetime.now(tz=UTC),
+
+    cached_response = _coordinate_revalidation_if_required(
+        initial_lookup=lookup,
+        lookup=lambda: lookup_external_request_cache(
+            provider=provider,
+            api_family=api_family,
+            method="GET",
+            url=url,
+            params=params,
+            headers=headers,
+            cache_dir=None if cache_dir is None else Path(cache_dir),
+        ),
+        fetch=fetch_live_response,
+        publish=publish_live_response,
     )
     record_external_request_cache_event(
         provider=provider,
         api_family=api_family,
         cache_key=cached_response.cache_key,
         cache_metadata_path=cached_response.cache_metadata_path,
-        from_cache=False,
+        from_cache=cached_response.from_cache,
         status_code=cached_response.status_code,
         response_headers=cached_response.headers,
     )
@@ -316,23 +329,23 @@ def cached_urllib_get(
         )
         return lookup.response
 
-    request = urllib.request.Request(
-        url,
-        headers=dict(headers or {}),
-        method="GET",
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            status_code = int(response.status)
-            response_headers = dict(response.headers.items())
-            content = response.read()
-    except urllib.error.HTTPError as exc:
-        status_code = int(exc.code)
-        response_headers = dict(exc.headers.items())
-        content = exc.read()
+    def fetch_live_response() -> CachedHttpResponse:
+        request = urllib.request.Request(
+            url,
+            headers=dict(headers or {}),
+            method="GET",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                status_code = int(response.status)
+                response_headers = dict(response.headers.items())
+                content = response.read()
+        except urllib.error.HTTPError as exc:
+            status_code = int(exc.code)
+            response_headers = dict(exc.headers.items())
+            content = exc.read()
 
-    if cache_dir is None:
-        cached_response = CachedHttpResponse(
+        return CachedHttpResponse(
             status_code=status_code,
             headers=response_headers,
             content=content,
@@ -341,38 +354,90 @@ def cached_urllib_get(
             cache_metadata_path=lookup.metadata_path,
             from_cache=False,
         )
-        record_external_request_cache_event(
+
+    def publish_live_response(response: CachedHttpResponse) -> None:
+        if cache_dir is None:
+            return
+        write_external_request_cache_response(
             provider=provider,
             api_family=api_family,
-            cache_key=cached_response.cache_key,
-            cache_metadata_path=cached_response.cache_metadata_path,
-            from_cache=False,
-            status_code=cached_response.status_code,
-            response_headers=cached_response.headers,
+            method="GET",
+            url=url,
+            headers=headers,
+            status_code=response.status_code,
+            response_headers=response.headers,
+            content=response.content,
+            cache_dir=Path(cache_dir),
+            requested_at=datetime.now(tz=UTC),
         )
-        return cached_response
-    cached_response = write_external_request_cache_response(
-        provider=provider,
-        api_family=api_family,
-        method="GET",
-        url=url,
-        headers=headers,
-        status_code=status_code,
-        response_headers=response_headers,
-        content=content,
-        cache_dir=Path(cache_dir),
-        requested_at=datetime.now(tz=UTC),
+
+    cached_response = _coordinate_revalidation_if_required(
+        initial_lookup=lookup,
+        lookup=lambda: lookup_external_request_cache(
+            provider=provider,
+            api_family=api_family,
+            method="GET",
+            url=url,
+            headers=headers,
+            cache_dir=None if cache_dir is None else Path(cache_dir),
+        ),
+        fetch=fetch_live_response,
+        publish=publish_live_response,
     )
     record_external_request_cache_event(
         provider=provider,
         api_family=api_family,
         cache_key=cached_response.cache_key,
         cache_metadata_path=cached_response.cache_metadata_path,
-        from_cache=False,
+        from_cache=cached_response.from_cache,
         status_code=cached_response.status_code,
         response_headers=cached_response.headers,
     )
     return cached_response
+
+
+def _coordinate_revalidation_if_required(
+    *,
+    initial_lookup: ExternalRequestCacheLookup,
+    lookup: Callable[[], ExternalRequestCacheLookup],
+    fetch: Callable[[], CachedHttpResponse],
+    publish: Callable[[CachedHttpResponse], None],
+) -> CachedHttpResponse:
+    if initial_lookup.status not in {"EXPIRED_REVALIDATE", "INVALIDATED_REVALIDATE"}:
+        response = fetch()
+        publish(response)
+        return response
+
+    coordinator = ExternalRequestRevalidationCoordinator(
+        initial_lookup.metadata_path.parent,
+        cache_key=initial_lookup.cache_key,
+    )
+
+    def probe() -> RevalidationProbe[CachedHttpResponse]:
+        current = lookup()
+        if current.response is not None:
+            return RevalidationProbe(
+                status="REUSABLE",
+                generation_id=current.generation_id,
+                body_sha256=current.body_sha256,
+                reason_code="CACHE_HIT",
+                value=current.response,
+            )
+        if current.status in {"EXPIRED_REVALIDATE", "INVALIDATED_REVALIDATE"}:
+            return RevalidationProbe(
+                status="NEEDS_REVALIDATION",
+                generation_id=current.generation_id,
+                body_sha256=current.body_sha256,
+                reason_code=current.status,
+            )
+        return RevalidationProbe(
+            status="INVALID",
+            generation_id=current.generation_id,
+            body_sha256=current.body_sha256,
+            reason_code="CACHE_LOOKUP_INVALID",
+        )
+
+    return coordinator.execute(probe=probe, fetch=fetch, publish=publish).value
 
 
 def lookup_external_request_cache(

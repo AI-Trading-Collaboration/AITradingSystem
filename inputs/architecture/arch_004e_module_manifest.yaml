@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 source_root: src/ai_trading_system
-module_count: 989
+module_count: 990
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -8003,7 +8003,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.external_request_cache
   path: src/ai_trading_system/external_request_cache.py
-  sha256: 47692ea9564b1276c2ef01f32086fdfe2fb1236729a6107358a472586bf45f8b
+  sha256: 5213e12b117303a3caabddecd6430f995db7d9c50737c8aef07c4b3a1e1200cb
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -8024,6 +8024,26 @@ modules:
 - module_id: src.ai_trading_system.external_request_cache_policy
   path: src/ai_trading_system/external_request_cache_policy.py
   sha256: 376fafc2126d5694b7a205b3d2c3ad0585d24990133a94d4870bf35d85743241
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.external_request_cache_revalidation_coordination
+  path: src/ai_trading_system/external_request_cache_revalidation_coordination.py
+  sha256: dcce1bd34e0edc696ca4849bf472e454261136ec9f85f1cf4478cc20c8393790
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

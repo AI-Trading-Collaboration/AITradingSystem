@@ -2,7 +2,7 @@
 
 最后更新：2026-07-20
 
-状态：`ADOPTED_BASELINE`（基于 ARCH-005 S4/S4A；S5 未授权）
+状态：`ADOPTED_WAVE1_VALIDATED`（基于 ARCH-005 S4/S4A；S5 未授权）
 
 ## 1. 决策与适用范围
 
@@ -157,13 +157,13 @@ formal gate，其次才是增加 worker 数量。任何容量、TTL、retry、ag
 
 ## 9. 近期双线任务队列
 
-### Wave 1：可立即启动
+### Wave 1：已完成
 
 |Lane|任务|状态与目标|主要 owned scope|退出/停止条件|
 |---|---|---|---|---|
-|Engineering|`OPS-065_EXTERNAL_REQUEST_CACHE_REVALIDATION_SINGLEFLIGHT`|`P1/READY`；per-key lease、winner double-check、bounded waiter reuse、stale-owner takeover|external request cache coordination policy/module、multiprocess tests；共享 cache 接线由 coordinator|同 key 仅一次 injected live request，不同 key 保持并行；crash/timeout/invalidation/tamper PASS；不得改 cache key/body/DQ 语义|
-|Strategy evidence|`TRADING-2449` canonical R0/R1/R2 artifact recovery audit|`P0/BASELINE_DONE` 缺口；从可信 archive/旧工作区恢复 exact bytes并逐层验证|只读来源盘点、恢复候选 evidence、gate run artifacts；不改候选/阈值|恢复后真实 gate 必须为 `BLOCKED_CONTAMINATED_LEGACY_SOURCE`；若 exact bundle 不可恢复，停下并登记 legacy diagnostic 安全重跑任务|
-|Coordinator|Wave 1 integration|共享写入、formal gates、提交与性能复盘|task register/system flow/catalog/registry/manifests/baselines|两 lane evidence 可归属、无 active lease、共享文件单写、formal gates PASS|
+|Engineering|`OPS-065_EXTERNAL_REQUEST_CACHE_REVALIDATION_SINGLEFLIGHT`|`DONE`；per-key lease、winner double-check、bounded waiter reuse、stale-owner takeover 与严格 publish fencing|external request cache coordination policy/module、multiprocess tests；共享 cache 接线由 coordinator|同 key 一次 live、不同 key 并行、TTL=0 串行、crash/timeout/invalidation/tamper/fencing PASS；cache key/body/DQ 语义不变|
+|Strategy evidence|`TRADING-2449` canonical R0/R1/R2 artifact recovery audit|`DONE`；可信 worktree exact recovery，R0/R1/R2 validators 与真实 gate PASS|只读来源盘点、exact ignored evidence、gate run artifacts；不改候选/阈值|真实 gate=`BLOCKED_CONTAMINATED_LEGACY_SOURCE`；R2不变；未运行 backtest/evaluator/候选/新搜索|
+|Coordinator|Wave 1 integration|`DONE`；共享写入、formal gates、提交与性能复盘|task register/system flow/generated registry/manifests/baselines|focused/architecture/contract/full PASS；共享文件单写；`production_effect=none`|
 
 已知 legacy evidence identity 包括：
 
@@ -173,15 +173,31 @@ formal gate，其次才是增加 worker 数量。任何容量、TTL、retry、ag
 
 恢复任务不得接受同名但 checksum/lineage 不一致的 artifact，也不得从 synthetic fixture 生成“真实”证据。
 
-### Wave 2：条件满足后
+Wave 1 telemetry：base=`8bf2b86c`，两条 lane owned-path 冲突=0、越界写=0、base drift=0、lane abort=0；
+integration review 发现并在 formal gate 前修复 stale-owner cache-pointer fencing gap，architecture 首轮又按设计
+阻断一个 stale compatibility hash，未降低门禁。工程 focused module/cache/provider=`13/38/118 passed`；
+architecture/contract/full=`446/265/6470 passed`，full=`2 skipped / 642 warnings / 975.18s`，scheduler
+applied=true、fallback=false、tail idle max=`15.57s`。相对最近 969.84s full 基线约 +0.55%，新增测试未
+进入 slowest 50。策略线恢复约 167.7MB exact bytes，四级 validator 与 gate 均 `PASS/0`。该批证明
+“domain 并行 + shared integration 单写”可工作，但只有一个真实批次，不增加第三条 domain lane。
 
-1. 如果 exact legacy bundle 无法恢复：先登记并由 owner 审核“R0 -> R1 -> R2 legacy diagnostic
-   evidence safe rerun”；它只恢复旧诊断证据，不是 clean run。
-2. Research owner 提供结果不可见时冻结的新 preregistration 后，另建 `TRADING-2449 S1`；只有 gate=
+### Wave 2：建议队列
+
+1. Engineering 优先从现有
+   `ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE` 读取本次自然 Full profile，选择一个
+   bounded smoothed long-tail leaf slice；首选 immutable fixture/DAG reuse 或单测内部重复 validator
+   消除，不改 nodeid、DQ/PIT/tamper/策略语义，也不以增加 worker 数掩盖单文件长尾。
+2. Strategy-evidence platform 推进 `TRADING-2450_LEGACY_RESEARCH_ARTIFACT_PORTABLE_LINEAGE`：冻结
+   content-addressed/project-relative locator + sidecar resolver contract，使历史 worktree 删除后仍可按
+   exact content 验证，同时保持 legacy bytes、run IDs、R2 与 TRADING-2449 gate 不变。
+3. 两项主要 owned scope 分别为 validation runtime/fixtures 与 portable lineage resolver/R0-R2 adapters；
+   task register、system flow、compatibility baseline、generated manifests 和 formal gates继续由 coordinator
+   单写。若实现前发现两者同时修改同一 validator cache/public contract，先做最小 contract wave再并行。
+4. Research owner 提供结果不可见时冻结的新 preregistration 后，另建 `TRADING-2449 S1`；只有 gate=
    `ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN` 且 owner 显式授权，才能运行 TRADING-106 fold-local evaluator。
-3. TRADING-106 clean fold evidence 完成后，再推进 TRADING-107 neighbor/rank/regime/extreme-day 与
+5. TRADING-106 clean fold evidence 完成后，再推进 TRADING-107 neighbor/rank/regime/extreme-day 与
    multiple-testing/overfit closure；没有 eligible candidate 时必须保持 `INCOMPLETE`。
-4. `event_risk_high=15<20`、20d/60d maturity=0 和 5 个 archive gap 继续作为观察/owner 治理支线，
+6. `event_risk_high=15<20`、20d/60d maturity=0 和 5 个 archive gap 继续作为观察/owner 治理支线，
    不占主动开发 WIP，不降样本 floor。
 
 ### 后续架构方向

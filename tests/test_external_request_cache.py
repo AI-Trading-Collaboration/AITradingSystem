@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
@@ -24,6 +26,7 @@ from ai_trading_system.data.market_data import (
     YFinancePriceProvider,
 )
 from ai_trading_system.external_request_cache import (
+    CachedHttpResponse,
     CachedHttpStatusError,
     cached_requests_get,
     external_request_cache_paths,
@@ -231,6 +234,54 @@ def test_expired_failure_live_revalidates_and_preserves_old_observation(
     assert current.response is not None and current.response.json() == {"ok": True}
     assert old_body.read_bytes() == b"unavailable"
     assert old_observation.exists()
+
+
+def test_concurrent_wrapper_revalidation_uses_single_live_request(tmp_path: Path) -> None:
+    write_external_request_cache_response(
+        provider="Example Vendor",
+        api_family="wrapper-singleflight",
+        method="GET",
+        url="https://vendor.example.test/data",
+        status_code=503,
+        response_headers={"content-type": "text/plain"},
+        content=b"expired",
+        cache_dir=tmp_path,
+        requested_at=datetime(2020, 1, 1, tzinfo=UTC),
+    )
+    calls: list[str] = []
+    calls_lock = threading.Lock()
+    start = threading.Barrier(2)
+
+    class SlowRequests:
+        def get(self, url: str, **kwargs: Any) -> _FakeResponse:
+            with calls_lock:
+                calls.append(url)
+            time.sleep(0.2)
+            return _FakeResponse({"ok": True})
+
+    fake_requests = SlowRequests()
+
+    def revalidate() -> CachedHttpResponse:
+        start.wait(timeout=5)
+        return cached_requests_get(
+            provider="Example Vendor",
+            api_family="wrapper-singleflight",
+            url="https://vendor.example.test/data",
+            requests_module=fake_requests,
+            cache_dir=tmp_path,
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        responses = list(executor.map(lambda _: revalidate(), range(2)))
+
+    assert len(calls) == 1
+    assert sorted(response.from_cache for response in responses) == [False, True]
+    assert all(response.json() == {"ok": True} for response in responses)
+    event_files = list(tmp_path.rglob("revalidation_coordination/events/*.json"))
+    assert {json.loads(path.read_text(encoding="utf-8"))["event_type"] for path in event_files} == {
+        "ACQUIRED",
+        "COMPLETED",
+    }
 
 
 def test_negative_observation_tamper_fails_closed_even_if_pointer_hash_is_updated(

@@ -2,7 +2,7 @@
 
 最后更新：2026-07-20
 
-状态：`BASELINE_DONE`（S0 实现闭环；current real source artifact 缺失；真实 clean run 未授权）
+状态：`DONE`（S0 与 current real source gate 闭环；真实 clean run 仍未授权且必须另建 S1）
 
 ## 背景与目标
 
@@ -83,6 +83,23 @@ TRADING-106 fold-local selection/evaluation 之前增加 source eligibility 与 
 
 ## 状态记录
 
+- 2026-07-20：Wave 1 从可信历史 Git worktree HEAD=`1a33122448521abfc49eaf044ffef21fd715f0c2`
+  恢复 exact R0/R1/forward/R2 bundle，逐文件 path/length/SHA-256 一致；四级 validator 均
+  `PASS/0`，R2 保持 `r2-decision_c761da11538fc58c / CONTINUE_EVIDENCE_CLOSURE`。真实 gate
+  `clean-selection-gate_caed06d5b6175e9f`=`BLOCKED_CONTAMINATED_LEGACY_SOURCE`、validator=`PASS/0`，
+  contamination 为 full-period leaderboard top-N=20 与 locked-holdout overlap=4。未运行 backtest、
+  evaluator、candidate 或 new search；详细审计见
+  `docs/research/trading2449_canonical_artifact_recovery_audit_2026-07-20.md`。
+- 2026-07-20：exact legacy bytes 保留生成时 absolute-path commitment；当前历史 worktree 存在且
+  validators PASS，但删除后会 fail closed。不得改写旧 artifact，portable lineage 后续已登记
+  `TRADING-2450`。本 S0 所有验收项闭合并归档 `DONE`；S1 仍需 owner 新的结果不可见预注册与独立授权。
+  Wave 1 formal integration=`architecture 446 / contract 265 / full 6470 passed`，
+  `production_effect=none`、`broker_action=none`。
+- 2026-07-20：owner 指示按双线 Wave 1 继续推进，strategy-evidence lane 从 base=`8bf2b86c`
+  启动 canonical R0/R1/R2 artifact recovery audit。只允许从可信 archive/旧工作区恢复 exact bytes，
+  重验 commitments、lineage、JSON/Markdown 和 validator；恢复后真实 gate 必须为
+  `BLOCKED_CONTAMINATED_LEGACY_SOURCE`。若 exact bundle 不可恢复，停止并登记 legacy diagnostic
+  安全重跑任务，不自动进入 S1/TRADING-106、不补跑 clean search。
 - 2026-07-20：R0～R2 closeout 后只读审计确认，`event_risk_high=15<20`、20d/60d
   maturity=0 与 5 个 archive gap 都不能由工程补造；唯一无需外部数据且不改变策略结论的可执行项是
   clean-selection S0 资格门。任务登记并进入 `IN_PROGRESS`；真实 S1 仍需 owner 预注册。

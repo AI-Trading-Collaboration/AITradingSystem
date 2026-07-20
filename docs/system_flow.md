@@ -104,6 +104,16 @@ contract fixture 达到 `ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN`，本节点也
 候选或启动 backtest。真实 clean run 必须由 owner 提供新的结果不可见预注册并另建 S1 任务；全链固定
 candidate expansion/new search=false、`production_effect=none`、`broker_action=none`。
 
+Wave 1 strategy-evidence lane 已从可信历史 Git worktree 恢复 exact R0/R1/forward/R2 canonical bytes，
+逐文件 path/length/SHA-256 与 output commitments 一致；R0、walk-forward、robustness、R2 validators
+均 `PASS/0`，R2 保持 `CONTINUE_EVIDENCE_CLOSURE`。真实 gate
+`clean-selection-gate_caed06d5b6175e9f` 已生成并验证为
+`BLOCKED_CONTAMINATED_LEGACY_SOURCE`，污染证据为 full-period leaderboard top-N=20 与 locked-holdout
+overlap=4；未运行 backtest/evaluator/候选/新搜索。exact legacy artifact 内部仍保留生成时 absolute-path
+commitment，当前历史 worktree 存在所以 live validation PASS；不得改写旧 bytes，后续由 TRADING-2450
+以 versioned portable locator/sidecar resolver 治理。恢复清单与 hashes 见
+`docs/research/trading2449_canonical_artifact_recovery_audit_2026-07-20.md`。
+
 ```mermaid
 flowchart LR
     R2["Validated R2 decision + manifest"] --> GATE["Clean-selection preregistration gate"]
@@ -122,14 +132,31 @@ content-addressed `bodies/<sha256>.body` 和负响应 `negative_observations/<ge
 CAS，追加 lifecycle event 并只让目标 generation 失去复用资格。lookup 同时校验 key、路径 containment、
 size/checksum、policy 与 invalidation，任一漂移均 MISS/fail closed。requests/urllib 以及 FMP、
 Marketstack、FRED、SEC 仍由 provider 层解释 HTTP failure，不会把负缓存解释为成功数据；本节点不绕过
-`aits validate-data`。并发 writer 保证 pointer 只指向已落盘且 checksum 匹配的 immutable body；到期边界
-的跨进程 singleflight 不在本切片，单独由 OPS-065 治理。
+`aits validate-data`。并发 writer 保证 pointer 只指向已落盘且 checksum 匹配的 immutable body。
+
+OPS-065 在不改变上述 cache identity、body、TTL、CAS invalidation 或 provider interpretation 的前提下，
+只对已经判定为 `EXPIRED_REVALIDATE` / `INVALIDATED_REVALIDATE` 的 key 增加跨进程 singleflight。
+`config/data/external_request_cache_revalidation_coordination_policy.yaml` 冻结 lease TTL、waiter timeout、
+poll interval、arbiter timeout、stale takeover 上限与 explicit owner-failure retry policy；每个 request directory
+拥有独立 OS file arbiter，不使用 provider/global lock。lease acquire/complete/takeover 写 immutable hash-chain
+events 和 atomic current pointer，只保存 owner token SHA-256 与 host fingerprint，不保存 credential。
+winner 获 lease 后必须再次执行原 cache lookup；其他 writer 已发布可复用 generation 时直接返回 HIT，
+否则执行一次 live request 并由原 writer 发布 generation。waiter 在有界时间内持续调用同一原 validator，
+只能复用 checksum/path/policy/CAS 全部通过的 generation；lease/source tamper、显式 owner failure与超时
+均 fail closed。owner crash 后最多按 policy 对同一 causal state takeover；不同 key 可并行。cold MISS、
+普通 HIT、legacy v1、cache disabled 与 DQ gate 保持原路径。live response 若按 lifecycle 不可复用，winner
+仍返回原 response，但不得把 TTL=0 generation 标成 HIT；并发 waiter只能按新的 causal generation重新
+竞争，不能读取不可复用 body。
 
 ```mermaid
 flowchart LR
     REQUEST["External request identity v1"] --> LOOKUP["Lookup + checksum/path/policy/CAS checks"]
     LOOKUP -->|"eligible"| HIT["Cached response HIT"]
-    LOOKUP -->|"MISS / EXPIRED / INVALIDATED"| LIVE["Live provider request"]
+    LOOKUP -->|"cold MISS"| LIVE["Live provider request"]
+    LOOKUP -->|"EXPIRED / INVALIDATED"| SF["Per-key lease + winner double-check"]
+    SF -->|"winner"| LIVE
+    SF -->|"validated generation published"| HIT
+    SF -->|"tamper / timeout / owner failure"| BLOCK["Fail closed"]
     LIVE --> BODY["Immutable content-addressed body"]
     LIVE --> NEG["Negative observation when 4xx/5xx"]
     BODY --> POINTER["Atomic v2 current pointer"]

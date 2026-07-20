@@ -1,0 +1,118 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2449_DYNAMIC_V3_CLEAN_SELECTION_PREREGISTRATION_GATE
+  title: null
+  domain: Strategy research / uncontaminated selection eligibility and preregistration
+    gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: research owner：如启动 S1，必须另行提供新的 clean preregistration；portable legacy
+    lineage 由 TRADING-2450 承接
+  requirement_refs:
+  - docs/requirements/TRADING-2449_Dynamic_V3_Clean_Selection_Preregistration_Gate.md
+  - docs/research/trading2449_canonical_artifact_recovery_audit_2026-07-20.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2449_Dynamic_V3_Clean_Selection_Preregistration_Gate.md`
+    与 `docs/research/trading2449_canonical_artifact_recovery_audit_2026-07-20.md`；S0
+    policy/builder/validator/CLI/contracts 和真实 current-source gate 已闭合。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 从可信历史 worktree 恢复 exact R0/R1/forward/R2 canonical bytes并逐文件 path/length/SHA-256
+      一致；四级 validator 与 gate validator 均 PASS；真实 gate=`BLOCKED_CONTAMINATED_LEGACY_SOURCE`，R2
+      仍为 `CONTINUE_EVIDENCE_CLOSURE`；未运行 S1/TRADING-106、backtest、candidate 或新搜索，`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 18
+    row_sha256: 03ff1d85412f610e8b86e580cd71dc6367dbedac0cc504cb7d5a40a62fdc243d
+    cell_count: 8
+    all_cells:
+    - TRADING-2449_DYNAMIC_V3_CLEAN_SELECTION_PREREGISTRATION_GATE
+    - Strategy research / uncontaminated selection eligibility and preregistration
+      gate
+    - P0
+    - DONE
+    - research owner：如启动 S1，必须另行提供新的 clean preregistration；portable legacy lineage
+      由 TRADING-2450 承接
+    - 详见 `docs/requirements/TRADING-2449_Dynamic_V3_Clean_Selection_Preregistration_Gate.md`
+      与 `docs/research/trading2449_canonical_artifact_recovery_audit_2026-07-20.md`；S0
+      policy/builder/validator/CLI/contracts 和真实 current-source gate 已闭合。
+    - 从可信历史 worktree 恢复 exact R0/R1/forward/R2 canonical bytes并逐文件 path/length/SHA-256
+      一致；四级 validator 与 gate validator 均 PASS；真实 gate=`BLOCKED_CONTAMINATED_LEGACY_SOURCE`，R2
+      仍为 `CONTINUE_EVIDENCE_CLOSURE`；未运行 S1/TRADING-106、backtest、candidate 或新搜索，`production_effect=none`。
+    - 2026-07-20：source HEAD=`1a331224`；contamination top-N=20、locked-holdout overlap=4，clean/evaluator/candidate/search/holdout
+      eligibility 全为 false。legacy absolute-path portability 债务已显式登记为 `TRADING-2450`，不得改写旧
+      bytes、ID 或 checksum 绕过。
+    raw_line: '|TRADING-2449_DYNAMIC_V3_CLEAN_SELECTION_PREREGISTRATION_GATE|Strategy
+      research / uncontaminated selection eligibility and preregistration gate|P0|DONE|research
+      owner：如启动 S1，必须另行提供新的 clean preregistration；portable legacy lineage 由 TRADING-2450
+      承接|详见 `docs/requirements/TRADING-2449_Dynamic_V3_Clean_Selection_Preregistration_Gate.md`
+      与 `docs/research/trading2449_canonical_artifact_recovery_audit_2026-07-20.md`；S0
+      policy/builder/validator/CLI/contracts 和真实 current-source gate 已闭合。|从可信历史 worktree
+      恢复 exact R0/R1/forward/R2 canonical bytes并逐文件 path/length/SHA-256 一致；四级 validator
+      与 gate validator 均 PASS；真实 gate=`BLOCKED_CONTAMINATED_LEGACY_SOURCE`，R2 仍为 `CONTINUE_EVIDENCE_CLOSURE`；未运行
+      S1/TRADING-106、backtest、candidate 或新搜索，`production_effect=none`。|2026-07-20：source
+      HEAD=`1a331224`；contamination top-N=20、locked-holdout overlap=4，clean/evaluator/candidate/search/holdout
+      eligibility 全为 false。legacy absolute-path portability 债务已显式登记为 `TRADING-2450`，不得改写旧
+      bytes、ID 或 checksum 绕过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-03ff1d85412f610e8b86e580
+  task_id: TRADING-2449_DYNAMIC_V3_CLEAN_SELECTION_PREREGISTRATION_GATE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: research owner：如启动 S1，必须另行提供新的 clean preregistration；portable legacy
+      lineage 由 TRADING-2450 承接
+    notes: 2026-07-20：source HEAD=`1a331224`；contamination top-N=20、locked-holdout
+      overlap=4，clean/evaluator/candidate/search/holdout eligibility 全为 false。legacy
+      absolute-path portability 债务已显式登记为 `TRADING-2450`，不得改写旧 bytes、ID 或 checksum
+      绕过。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:03ff1d85412f610e8b86e580cd71dc6367dbedac0cc504cb7d5a40a62fdc243d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2449_DYNAMIC_V3_CLEAN_SELECTION_PREREGISTRATION_GATE
+  - Strategy research / uncontaminated selection eligibility and preregistration gate
+  - P0
+  - DONE
+  - research owner：如启动 S1，必须另行提供新的 clean preregistration；portable legacy lineage 由
+    TRADING-2450 承接
+  - 详见 `docs/requirements/TRADING-2449_Dynamic_V3_Clean_Selection_Preregistration_Gate.md`
+    与 `docs/research/trading2449_canonical_artifact_recovery_audit_2026-07-20.md`；S0
+    policy/builder/validator/CLI/contracts 和真实 current-source gate 已闭合。
+  - 从可信历史 worktree 恢复 exact R0/R1/forward/R2 canonical bytes并逐文件 path/length/SHA-256
+    一致；四级 validator 与 gate validator 均 PASS；真实 gate=`BLOCKED_CONTAMINATED_LEGACY_SOURCE`，R2
+    仍为 `CONTINUE_EVIDENCE_CLOSURE`；未运行 S1/TRADING-106、backtest、candidate 或新搜索，`production_effect=none`。
+  - 2026-07-20：source HEAD=`1a331224`；contamination top-N=20、locked-holdout overlap=4，clean/evaluator/candidate/search/holdout
+    eligibility 全为 false。legacy absolute-path portability 债务已显式登记为 `TRADING-2450`，不得改写旧
+    bytes、ID 或 checksum 绕过。
+  docs_links:
+  - docs/requirements/TRADING-2449_Dynamic_V3_Clean_Selection_Preregistration_Gate.md
+  - docs/research/trading2449_canonical_artifact_recovery_audit_2026-07-20.md
+  terminal: true
+  raw_row_sha256: 03ff1d85412f610e8b86e580cd71dc6367dbedac0cc504cb7d5a40a62fdc243d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6ec3f57893ddcd693e309bc8d971da1db7f3513dfba06ef7db9bef33200779d8
