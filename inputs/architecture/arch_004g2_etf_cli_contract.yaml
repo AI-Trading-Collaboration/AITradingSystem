@@ -5,11 +5,11 @@ source:
 counts:
   root_command_count: 41
   group_count: 291
-  leaf_command_count: 993
-  registered_leaf_count: 993
-  unique_path_count: 1284
+  leaf_command_count: 997
+  registered_leaf_count: 997
+  unique_path_count: 1288
   duplicate_path_count: 0
-tree_sha256: 01c78550ae58b38c2d8cca0683376643e2934f93e324710612c87d39eea7302d
+tree_sha256: f45a241614ac73afc3e4090d835d666191ea2e0496dc2cebb34a8642c05980ef
 nodes:
 - path: <root>
   kind: group
@@ -294,7 +294,7 @@ nodes:
 - path: dynamic-v3-rescue
   kind: group
   parameter_count: 0
-  contract_sha256: 80c00cd07720fd4ee971b0e70f9c825a3da367bc6ccc1d32a356bcb1472be6ea
+  contract_sha256: cf37b808a1f8fbe180ff3ae08f24119d3c31d41d11373d8d8174e8b7f5470086
 - path: dynamic-v3-rescue advisory-outcome
   kind: group
   parameter_count: 0
@@ -2374,7 +2374,11 @@ nodes:
 - path: dynamic-v3-rescue robustness
   kind: group
   parameter_count: 0
-  contract_sha256: 56b59ed76497899dcf631a3995e1ea989015bff866f983c0bf9bff7e296d4710
+  contract_sha256: 405efac6b73fbf2fe5392b9aa9ef0a6776591614bc0f5fd919c056aac715a185
+- path: dynamic-v3-rescue robustness r1-run
+  kind: command
+  parameter_count: 6
+  contract_sha256: 2be726f792da543efc882647907af801d43d17d02534c954d55dd361c8236390
 - path: dynamic-v3-rescue robustness report
   kind: command
   parameter_count: 2
@@ -3883,6 +3887,14 @@ nodes:
   kind: command
   parameter_count: 2
   contract_sha256: 5acc4363b51ffefe8cb563f474bc5413dc8d0409e2113f994b067e05d8b34851
+- path: dynamic-v3-rescue validate-r1-robustness
+  kind: command
+  parameter_count: 2
+  contract_sha256: 5aec1413414587010e1e1296ea54b0f818ff12de44504b17ff3e6661ca3b2f26
+- path: dynamic-v3-rescue validate-r1-walk-forward
+  kind: command
+  parameter_count: 2
+  contract_sha256: 0914e558416b8928c084190ac73e14a40cb1170de61a0dccc055e8e93c457744
 - path: dynamic-v3-rescue validate-readiness-health-recovery
   kind: command
   parameter_count: 3
@@ -4370,7 +4382,11 @@ nodes:
 - path: dynamic-v3-rescue walk-forward
   kind: group
   parameter_count: 0
-  contract_sha256: 9a86925dde496935fecb8088e85be54a571c1b363af5fe00c23802053bbd5f7c
+  contract_sha256: 278e85fa3d9d4ebf7aea422d032600d93a55b9804a1c2a1e596c34fda46c2833
+- path: dynamic-v3-rescue walk-forward r1-run
+  kind: command
+  parameter_count: 7
+  contract_sha256: 002f21e14d0402af13cbbd77654543a1f0a3ea84e4dc6869f47b81417cdbdf6f
 - path: dynamic-v3-rescue walk-forward report
   kind: command
   parameter_count: 2

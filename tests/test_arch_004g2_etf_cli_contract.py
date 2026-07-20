@@ -587,13 +587,13 @@ def test_g2_1_etf_cli_contract_matches_frozen_runtime_tree() -> None:
     assert contract["counts"] == {
         "root_command_count": 41,
         "group_count": 291,
-        "leaf_command_count": 993,
-        "registered_leaf_count": 993,
-        "unique_path_count": 1284,
+        "leaf_command_count": 997,
+        "registered_leaf_count": 997,
+        "unique_path_count": 1288,
         "duplicate_path_count": 0,
     }
     assert contract["tree_sha256"] == (
-        "01c78550ae58b38c2d8cca0683376643e2934f93e324710612c87d39eea7302d"
+        "f45a241614ac73afc3e4090d835d666191ea2e0496dc2cebb34a8642c05980ef"
     )
     assert contract["production_effect"] == "none"
     assert contract == safe_load_yaml_path(BASELINE_PATH)

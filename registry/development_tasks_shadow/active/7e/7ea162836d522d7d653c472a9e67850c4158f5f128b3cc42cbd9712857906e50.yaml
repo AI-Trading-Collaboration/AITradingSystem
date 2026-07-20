@@ -12,50 +12,56 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 研究验证 owner；stress/regime policy owner
+  next_owner: 研究验证 owner + forward observation
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: G2.4T已锁定candidate/neighbor real identity并降级aggregate
-    proxy；仍缺1个real neighbor、dedicated stress bucket与per-regime comparator/gate，当前不得形成robustness
-    PASS。
+  unstructured_legacy_blocker_or_next_step: 9/9 real/derived neighbors 与 dedicated
+    high-drawdown/fast-recovery、per-regime comparators均已实现并通过 content validator；`event_risk_high`真实样本15行低于reviewed
+    floor 20，证据保持不完整。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 所有neighbor path/report/checksum归属可证；stress/regime方法与completeness显式；validator从source重算；dedicated
-      bucket与per-regime reviewed policy完成后才可校准PASS boundary。
+      bucket与per-regime reviewed policy完成后才可校准PASS boundary。退出条件为独立样本自然达到floor后按同policy重跑，禁止降低门槛。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1169
-    row_sha256: 74d973240e432f17a6106841c833bcd3c00e9afbecd4bcc411f7b3a022bbe2a8
+    line_number: 1191
+    row_sha256: 7c74bbeaef30d7e0dfc4d8d343ee16a3ba3c74feb8079a411a874ff2fb18d2d9
     cell_count: 8
     all_cells:
     - TRADING-097
     - ETF portfolio research/Dynamic v3 Rescue Robustness Sensitivity Overfit Diagnostics
     - P0
-    - VALIDATING
-    - 研究验证 owner；stress/regime policy owner
-    - G2.4T已锁定candidate/neighbor real identity并降级aggregate proxy；仍缺1个real neighbor、dedicated
-      stress bucket与per-regime comparator/gate，当前不得形成robustness PASS。
+    - BASELINE_DONE
+    - 研究验证 owner + forward observation
+    - 9/9 real/derived neighbors 与 dedicated high-drawdown/fast-recovery、per-regime
+      comparators均已实现并通过 content validator；`event_risk_high`真实样本15行低于reviewed floor
+      20，证据保持不完整。
     - 所有neighbor path/report/checksum归属可证；stress/regime方法与completeness显式；validator从source重算；dedicated
-      bucket与per-regime reviewed policy完成后才可校准PASS boundary。
+      bucket与per-regime reviewed policy完成后才可校准PASS boundary。退出条件为独立样本自然达到floor后按同policy重跑，禁止降低门槛。
     - '2026-07-12: artifact `87b0fc81d6681368`有8 real neighbors/1 missing，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、validation
-      PASS；旧`6df822e705e15a42` validation FAIL。'
+      PASS；旧`6df822e705e15a42` validation FAIL。2026-07-20: R1真实重跑9/9 neighbors、2/2
+      stress完整，validator PASS；`event_risk_high=15<20`，故转`BASELINE_DONE`而非伪造robustness
+      PASS。'
     raw_line: '|TRADING-097|ETF portfolio research/Dynamic v3 Rescue Robustness Sensitivity
-      Overfit Diagnostics|P0|VALIDATING|研究验证 owner；stress/regime policy owner|G2.4T已锁定candidate/neighbor
-      real identity并降级aggregate proxy；仍缺1个real neighbor、dedicated stress bucket与per-regime
-      comparator/gate，当前不得形成robustness PASS。|所有neighbor path/report/checksum归属可证；stress/regime方法与completeness显式；validator从source重算；dedicated
-      bucket与per-regime reviewed policy完成后才可校准PASS boundary。|2026-07-12: artifact
-      `87b0fc81d6681368`有8 real neighbors/1 missing，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、validation
-      PASS；旧`6df822e705e15a42` validation FAIL。|'
+      Overfit Diagnostics|P0|BASELINE_DONE|研究验证 owner + forward observation|9/9 real/derived
+      neighbors 与 dedicated high-drawdown/fast-recovery、per-regime comparators均已实现并通过
+      content validator；`event_risk_high`真实样本15行低于reviewed floor 20，证据保持不完整。|所有neighbor
+      path/report/checksum归属可证；stress/regime方法与completeness显式；validator从source重算；dedicated
+      bucket与per-regime reviewed policy完成后才可校准PASS boundary。退出条件为独立样本自然达到floor后按同policy重跑，禁止降低门槛。|2026-07-12:
+      artifact `87b0fc81d6681368`有8 real neighbors/1 missing，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、validation
+      PASS；旧`6df822e705e15a42` validation FAIL。2026-07-20: R1真实重跑9/9 neighbors、2/2
+      stress完整，validator PASS；`event_risk_high=15<20`，故转`BASELINE_DONE`而非伪造robustness
+      PASS。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-74d973240e432f17a6106841
+  event_id: legacy-import-7c74bbeaef30d7e0dfc4d8d3
   task_id: TRADING-097
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -65,31 +71,35 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: VALIDATING
+  to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: 研究验证 owner；stress/regime policy owner
+    next_owner: 研究验证 owner + forward observation
     notes: '2026-07-12: artifact `87b0fc81d6681368`有8 real neighbors/1 missing，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、validation
-      PASS；旧`6df822e705e15a42` validation FAIL。'
+      PASS；旧`6df822e705e15a42` validation FAIL。2026-07-20: R1真实重跑9/9 neighbors、2/2
+      stress完整，validator PASS；`event_risk_high=15<20`，故转`BASELINE_DONE`而非伪造robustness
+      PASS。'
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:74d973240e432f17a6106841c833bcd3c00e9afbecd4bcc411f7b3a022bbe2a8
+  - sha256:7c74bbeaef30d7e0dfc4d8d343ee16a3ba3c74feb8079a411a874ff2fb18d2d9
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-097
   - ETF portfolio research/Dynamic v3 Rescue Robustness Sensitivity Overfit Diagnostics
   - P0
-  - VALIDATING
-  - 研究验证 owner；stress/regime policy owner
-  - G2.4T已锁定candidate/neighbor real identity并降级aggregate proxy；仍缺1个real neighbor、dedicated
-    stress bucket与per-regime comparator/gate，当前不得形成robustness PASS。
+  - BASELINE_DONE
+  - 研究验证 owner + forward observation
+  - 9/9 real/derived neighbors 与 dedicated high-drawdown/fast-recovery、per-regime
+    comparators均已实现并通过 content validator；`event_risk_high`真实样本15行低于reviewed floor
+    20，证据保持不完整。
   - 所有neighbor path/report/checksum归属可证；stress/regime方法与completeness显式；validator从source重算；dedicated
-    bucket与per-regime reviewed policy完成后才可校准PASS boundary。
+    bucket与per-regime reviewed policy完成后才可校准PASS boundary。退出条件为独立样本自然达到floor后按同policy重跑，禁止降低门槛。
   - '2026-07-12: artifact `87b0fc81d6681368`有8 real neighbors/1 missing，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、validation
-    PASS；旧`6df822e705e15a42` validation FAIL。'
+    PASS；旧`6df822e705e15a42` validation FAIL。2026-07-20: R1真实重跑9/9 neighbors、2/2 stress完整，validator
+    PASS；`event_risk_high=15<20`，故转`BASELINE_DONE`而非伪造robustness PASS。'
   docs_links: []
   terminal: false
-  raw_row_sha256: 74d973240e432f17a6106841c833bcd3c00e9afbecd4bcc411f7b3a022bbe2a8
+  raw_row_sha256: 7c74bbeaef30d7e0dfc4d8d343ee16a3ba3c74feb8079a411a874ff2fb18d2d9
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 809ed94758730b1c94219d8f8425665c5e07659f6977c4216ebd36f8a6fe82ee
+fragment_checksum: 9756924a740a49ab8080f5f993374c6d4fe4f60bf368c6994a9139b526bfdeb2

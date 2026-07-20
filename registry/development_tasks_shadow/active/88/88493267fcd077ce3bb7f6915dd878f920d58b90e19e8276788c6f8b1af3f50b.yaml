@@ -37,8 +37,8 @@ task_record:
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1354
-    row_sha256: 22b478e3ddc0c93050a1db5c04a08cc1c5ce5e39ef21c721e2fff0f7b7f9ead2
+    line_number: 1376
+    row_sha256: 7e3fc5a64d63a8f3f250984c908466cd51e4fba27253bd78a5875d84d3d51114
     cell_count: 8
     all_cells:
     - TRADING-775_to_779_CONTROLLED_STRATEGY_RESEARCH_NEXT_STAGE
@@ -70,7 +70,10 @@ task_record:
       `PIVOT_REVIEW_READY`、model_run_executed=false；TRADING-779 `WATCHLIST_NOT_READY`、case_count=24、expansion_allowed=false；所有输出固定
       production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
       focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
-      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T095425Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T095616Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T095808Z/test_runtime_summary.json`。'
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T095425Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T095616Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T095808Z/test_runtime_summary.json`。2026-07-20:
+      TRADING-777 由 R1 真实刷新；DQ=`PASS_WITH_WARNINGS`（0 errors/2 warnings），ledger_event_count=16、append-only
+      PASS，1d/5d/10d matured=15/14/9，20d/60d matured=0，missing daily archive=5；该结果进入
+      R2=`CONTINUE_EVIDENCE_CLOSURE`，不允许 promotion 或 candidate expansion。'
     raw_line: '|TRADING-775_to_779_CONTROLLED_STRATEGY_RESEARCH_NEXT_STAGE|Controlled
       strategy research / value surface expansion, utility boundary audit, forward
       maturity, GBDT pivot, and regret gate|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见
@@ -96,12 +99,15 @@ task_record:
       `PIVOT_REVIEW_READY`、model_run_executed=false；TRADING-779 `WATCHLIST_NOT_READY`、case_count=24、expansion_allowed=false；所有输出固定
       production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
       focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
-      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T095425Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T095616Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T095808Z/test_runtime_summary.json`。|'
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T095425Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T095616Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T095808Z/test_runtime_summary.json`。2026-07-20:
+      TRADING-777 由 R1 真实刷新；DQ=`PASS_WITH_WARNINGS`（0 errors/2 warnings），ledger_event_count=16、append-only
+      PASS，1d/5d/10d matured=15/14/9，20d/60d matured=0，missing daily archive=5；该结果进入
+      R2=`CONTINUE_EVIDENCE_CLOSURE`，不允许 promotion 或 candidate expansion。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-22b478e3ddc0c93050a1db5c
+  event_id: legacy-import-7e3fc5a64d63a8f3f250984c
   task_id: TRADING-775_to_779_CONTROLLED_STRATEGY_RESEARCH_NEXT_STAGE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -126,10 +132,13 @@ initial_event:
       `PIVOT_REVIEW_READY`、model_run_executed=false；TRADING-779 `WATCHLIST_NOT_READY`、case_count=24、expansion_allowed=false；所有输出固定
       production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
       focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
-      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T095425Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T095616Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T095808Z/test_runtime_summary.json`。'
+      和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T095425Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T095616Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T095808Z/test_runtime_summary.json`。2026-07-20:
+      TRADING-777 由 R1 真实刷新；DQ=`PASS_WITH_WARNINGS`（0 errors/2 warnings），ledger_event_count=16、append-only
+      PASS，1d/5d/10d matured=15/14/9，20d/60d matured=0，missing daily archive=5；该结果进入
+      R2=`CONTINUE_EVIDENCE_CLOSURE`，不允许 promotion 或 candidate expansion。'
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:22b478e3ddc0c93050a1db5c04a08cc1c5ce5e39ef21c721e2fff0f7b7f9ead2
+  - sha256:7e3fc5a64d63a8f3f250984c908466cd51e4fba27253bd78a5875d84d3d51114
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -162,10 +171,13 @@ projection:
     `PIVOT_REVIEW_READY`、model_run_executed=false；TRADING-779 `WATCHLIST_NOT_READY`、case_count=24、expansion_allowed=false；所有输出固定
     production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0。2026-06-21:
     focused parallel pytest、Ruff、Black check、compileall、git diff check、fast-unit、contract-validation
-    和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T095425Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T095616Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T095808Z/test_runtime_summary.json`。'
+    和 report-validation 已通过。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T095425Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T095616Z/test_runtime_summary.json`、`outputs/validation_runtime/report-validation_20260621T095808Z/test_runtime_summary.json`。2026-07-20:
+    TRADING-777 由 R1 真实刷新；DQ=`PASS_WITH_WARNINGS`（0 errors/2 warnings），ledger_event_count=16、append-only
+    PASS，1d/5d/10d matured=15/14/9，20d/60d matured=0，missing daily archive=5；该结果进入
+    R2=`CONTINUE_EVIDENCE_CLOSURE`，不允许 promotion 或 candidate expansion。'
   docs_links:
   - docs/requirements/TRADING-775_to_779_Controlled_Strategy_Research_Next_Stage.md
   terminal: false
-  raw_row_sha256: 22b478e3ddc0c93050a1db5c04a08cc1c5ce5e39ef21c721e2fff0f7b7f9ead2
+  raw_row_sha256: 7e3fc5a64d63a8f3f250984c908466cd51e4fba27253bd78a5875d84d3d51114
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: bacab1312a7544999f887b7c85a3f69e5cbc23b77846987df97a1fc3711e9943
+fragment_checksum: 852b2728f35389f2bb1b1dcd7948238e14dae1993c91f830c8c7ccce771ea8fa

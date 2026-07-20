@@ -1,5 +1,10 @@
 # Roadmap V2 Real Result Master Review
 
+- latest_review_date: `2026-07-20`
+- research_restart_r2: `CONTINUE_EVIDENCE_CLOSURE`
+- candidate_expansion_allowed: `false`
+- new_parameter_search_allowed: `false`
+
 - status: `NO_GROWTH_EDGE_FOUND`
 - owner_recommendation: `N/A`
 - paper_shadow_allowed: `false`
@@ -19,6 +24,14 @@
 |`6_growth_candidate_component_reviewable`|`False`|
 |`7_layer1_selector_remains_archived`|`True`|
 |`8_next_minimum_task`|`continue_equal_risk_forward_aging_and_decide_whether_to_pause_growth`|
+
+## R0～R2 Evidence Overlay（2026-07-20）
+
+- R0 preflight/validator：`PASS`；
+- dynamic-v3 walk-forward：80/80 fold 完整，但 test=20 reject + 20 review-required；
+- robustness：9/9 neighbor、2/2 stress 完整，per-regime 因 `event_risk_high=15<20` 不完整；
+- forward：16 ledger events，missing daily archive=5，20d/60d matured=0；
+- R2：`CONTINUE_EVIDENCE_CLOSURE`，维持 candidate expansion pause。
 
 ## Source Statuses
 

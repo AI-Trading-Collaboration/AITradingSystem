@@ -11,49 +11,58 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 研究验证 owner；逐fold evaluator/window gate实现者
+  next_owner: 研究验证 owner；未来无污染selection protocol owner
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: G2.4T已修复full-period复制与hash drift并完成真实重算，但当前仅为`PATH_DERIVED_PARTIAL`：缺window
-    false-risk-off/robustness/cost/lag完整字段，且path slicing未逐fold重跑evaluator。
+  unstructured_legacy_blocker_or_next_step: 逐fold real evaluator、purge/embargo、cost/lag/chronology/false-signal
+    与 content-derived validator 已完成；真实 OOS 为负面，且现有 source top-N 来自 full-period leaderboard并与
+    locked holdout 重叠，只能作为 legacy comparison。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: Real top-N逐window path重算；source/path/report-id/checksum锁定；content-derived
-      validation；完成purged/embargo逐fold evaluator与完整window gate后才可讨论PASS。
+      validation；完成purged/embargo逐fold evaluator与完整window gate后才可讨论PASS。未来无偏 OOS 需要独立
+      selection protocol，不得复用当前 source。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1168
-    row_sha256: d857f541558b9fe3da2148edfc1a2bbe309fa85a0890f97c1fc2b3b53f0cb719
+    line_number: 1190
+    row_sha256: 5a47f9e5e433ce5c85c26e4803160eba9336031ab2af1b397bdd57fb2a39944d
     cell_count: 8
     all_cells:
     - TRADING-096
     - ETF portfolio research/Dynamic v3 Rescue Walk-forward OOS Validation
     - P0
-    - VALIDATING
-    - 研究验证 owner；逐fold evaluator/window gate实现者
-    - G2.4T已修复full-period复制与hash drift并完成真实重算，但当前仅为`PATH_DERIVED_PARTIAL`：缺window
-      false-risk-off/robustness/cost/lag完整字段，且path slicing未逐fold重跑evaluator。
+    - BASELINE_DONE
+    - 研究验证 owner；未来无污染selection protocol owner
+    - 逐fold real evaluator、purge/embargo、cost/lag/chronology/false-signal 与 content-derived
+      validator 已完成；真实 OOS 为负面，且现有 source top-N 来自 full-period leaderboard并与 locked
+      holdout 重叠，只能作为 legacy comparison。
     - Real top-N逐window path重算；source/path/report-id/checksum锁定；content-derived validation；完成purged/embargo逐fold
-      evaluator与完整window gate后才可讨论PASS。
+      evaluator与完整window gate后才可讨论PASS。未来无偏 OOS 需要独立 selection protocol，不得复用当前 source。
     - '2026-07-12: artifact `7b6db671cbd67468`=20 candidates×2 windows/40 rows，`REVIEW_REQUIRED`且validation
-      PASS；旧`c49f65c76e2b9b73` validation FAIL。'
+      PASS；旧`c49f65c76e2b9b73` validation FAIL。2026-07-20: R1真实重跑20 candidates×2 windows×train/test=80/80
+      fold完整，40 test folds=20 reject+20 review-required，validator PASS；因selection/holdout污染转`BASELINE_DONE`，下一退出条件为另建无污染selection
+      protocol。'
     raw_line: '|TRADING-096|ETF portfolio research/Dynamic v3 Rescue Walk-forward
-      OOS Validation|P0|VALIDATING|研究验证 owner；逐fold evaluator/window gate实现者|G2.4T已修复full-period复制与hash
-      drift并完成真实重算，但当前仅为`PATH_DERIVED_PARTIAL`：缺window false-risk-off/robustness/cost/lag完整字段，且path
-      slicing未逐fold重跑evaluator。|Real top-N逐window path重算；source/path/report-id/checksum锁定；content-derived
-      validation；完成purged/embargo逐fold evaluator与完整window gate后才可讨论PASS。|2026-07-12:
-      artifact `7b6db671cbd67468`=20 candidates×2 windows/40 rows，`REVIEW_REQUIRED`且validation
-      PASS；旧`c49f65c76e2b9b73` validation FAIL。|'
+      OOS Validation|P0|BASELINE_DONE|研究验证 owner；未来无污染selection protocol owner|逐fold
+      real evaluator、purge/embargo、cost/lag/chronology/false-signal 与 content-derived
+      validator 已完成；真实 OOS 为负面，且现有 source top-N 来自 full-period leaderboard并与 locked
+      holdout 重叠，只能作为 legacy comparison。|Real top-N逐window path重算；source/path/report-id/checksum锁定；content-derived
+      validation；完成purged/embargo逐fold evaluator与完整window gate后才可讨论PASS。未来无偏 OOS 需要独立
+      selection protocol，不得复用当前 source。|2026-07-12: artifact `7b6db671cbd67468`=20
+      candidates×2 windows/40 rows，`REVIEW_REQUIRED`且validation PASS；旧`c49f65c76e2b9b73`
+      validation FAIL。2026-07-20: R1真实重跑20 candidates×2 windows×train/test=80/80 fold完整，40
+      test folds=20 reject+20 review-required，validator PASS；因selection/holdout污染转`BASELINE_DONE`，下一退出条件为另建无污染selection
+      protocol。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-d857f541558b9fe3da2148ed
+  event_id: legacy-import-5a47f9e5e433ce5c85c26e48
   task_id: TRADING-096
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -63,31 +72,36 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: VALIDATING
+  to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: 研究验证 owner；逐fold evaluator/window gate实现者
+    next_owner: 研究验证 owner；未来无污染selection protocol owner
     notes: '2026-07-12: artifact `7b6db671cbd67468`=20 candidates×2 windows/40 rows，`REVIEW_REQUIRED`且validation
-      PASS；旧`c49f65c76e2b9b73` validation FAIL。'
+      PASS；旧`c49f65c76e2b9b73` validation FAIL。2026-07-20: R1真实重跑20 candidates×2 windows×train/test=80/80
+      fold完整，40 test folds=20 reject+20 review-required，validator PASS；因selection/holdout污染转`BASELINE_DONE`，下一退出条件为另建无污染selection
+      protocol。'
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:d857f541558b9fe3da2148edfc1a2bbe309fa85a0890f97c1fc2b3b53f0cb719
+  - sha256:5a47f9e5e433ce5c85c26e4803160eba9336031ab2af1b397bdd57fb2a39944d
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-096
   - ETF portfolio research/Dynamic v3 Rescue Walk-forward OOS Validation
   - P0
-  - VALIDATING
-  - 研究验证 owner；逐fold evaluator/window gate实现者
-  - G2.4T已修复full-period复制与hash drift并完成真实重算，但当前仅为`PATH_DERIVED_PARTIAL`：缺window false-risk-off/robustness/cost/lag完整字段，且path
-    slicing未逐fold重跑evaluator。
+  - BASELINE_DONE
+  - 研究验证 owner；未来无污染selection protocol owner
+  - 逐fold real evaluator、purge/embargo、cost/lag/chronology/false-signal 与 content-derived
+    validator 已完成；真实 OOS 为负面，且现有 source top-N 来自 full-period leaderboard并与 locked
+    holdout 重叠，只能作为 legacy comparison。
   - Real top-N逐window path重算；source/path/report-id/checksum锁定；content-derived validation；完成purged/embargo逐fold
-    evaluator与完整window gate后才可讨论PASS。
+    evaluator与完整window gate后才可讨论PASS。未来无偏 OOS 需要独立 selection protocol，不得复用当前 source。
   - '2026-07-12: artifact `7b6db671cbd67468`=20 candidates×2 windows/40 rows，`REVIEW_REQUIRED`且validation
-    PASS；旧`c49f65c76e2b9b73` validation FAIL。'
+    PASS；旧`c49f65c76e2b9b73` validation FAIL。2026-07-20: R1真实重跑20 candidates×2 windows×train/test=80/80
+    fold完整，40 test folds=20 reject+20 review-required，validator PASS；因selection/holdout污染转`BASELINE_DONE`，下一退出条件为另建无污染selection
+    protocol。'
   docs_links: []
   terminal: false
-  raw_row_sha256: d857f541558b9fe3da2148edfc1a2bbe309fa85a0890f97c1fc2b3b53f0cb719
+  raw_row_sha256: 5a47f9e5e433ce5c85c26e4803160eba9336031ab2af1b397bdd57fb2a39944d
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 077177f7bc75e84d95badcbba8f49ed4274de2e433a6f1ed66f71a0548e1dbb2
+fragment_checksum: f51505e779dfbca4b8ac9c635972565fd034c44fa373d98b5d8a209618eea748

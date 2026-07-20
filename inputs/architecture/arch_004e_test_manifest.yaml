@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 test_root: tests
-test_file_count: 1132
-test_count: 1074
+test_file_count: 1134
+test_count: 1076
 support_file_count: 58
 orphan_count: 0
 specific_overlap_count: 0
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: fd46c8d915bb0827297da80ce970bae648caa22491d1ad026b65588bc7e67d68
+  sha256: d8a6f07ec17458350d566c8c22a5f550aea695e16873c85f3de963cdd4860e35
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7587,7 +7587,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004f3_reporting_architecture
   path: tests/test_arch_004f3_reporting_architecture.py
-  sha256: 4ecd7b5382cf96948541aeb8d1dbeb57c083c69ad7086d1d61d70d27f891dd25
+  sha256: 73058d09cfe2a4c8aadf0ce4f54de4b10a676826d1ab0c4352b8bbf716fba7b4
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7605,7 +7605,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g2_callback_migration_matrix
   path: tests/test_arch_004g2_callback_migration_matrix.py
-  sha256: 7e52844dc86bc9cf2e96cc6d2d056e54bfd1684f690aded2a8aab0589dc645ad
+  sha256: 8c91eb6e546948a7415883e86dc4375f78c20fb98167f05dab7d6846be9b484d
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7623,7 +7623,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g2_etf_cli_contract
   path: tests/test_arch_004g2_etf_cli_contract.py
-  sha256: 2a1fc7fbb478112054b17737f4c188533ca76661eb1285c2646d64bb8a14b6f2
+  sha256: 9c90b85d8ea28d99fc52637c7be5d25cace7b41a2b77f5c64bc4a2411ab6a52e
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7641,7 +7641,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 966ef9f3babe94b0db2f319445d97f3b4872c7e188e589eaf8e41967fde23224
+  sha256: 1a31d5e7d0e7a6ae397edf8927632c19cd3f3f809e42864afe6e8f351b6d2ce4
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7709,7 +7709,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_task_registry_shadow
   path: tests/test_arch_005_task_registry_shadow.py
-  sha256: cc6a05fe5debb67e6d12b8038e37d9866721c62ca40e3e060ff2f48577e5a088
+  sha256: 6067add5b76d18539ced82068c8fcafaf0e700192b6a3e0235e7299be50e99b5
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -9378,6 +9378,22 @@ tests:
 - test_id: tests.test_dynamic_v3_historical_replay
   path: tests/test_dynamic_v3_historical_replay.py
   sha256: bc2986d19338d653b600b1c7c6c2299058b0b017695cdb7d87022a4cdbc7c3a1
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_dynamic_v3_r1_evidence
+  path: tests/test_dynamic_v3_r1_evidence.py
+  sha256: 5536539b354e99e48dfa79e89207d83c7bd2330ca4b399aee8e06026cf976df0
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -13476,6 +13492,22 @@ tests:
 - test_id: tests.test_research_monthly_review_pack
   path: tests/test_research_monthly_review_pack.py
   sha256: ecedd91ed91dd641a0e31de9e30366deaf40644de2953cd1ed602fc21efd35fa
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_research_restart
+  path: tests/test_research_restart.py
+  sha256: 39fddeac8af35f827be96f418c42f64e4b147aa5f757841b3801a9c5ff655b85
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

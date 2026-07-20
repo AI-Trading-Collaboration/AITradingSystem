@@ -11,11 +11,11 @@ summary:
   pending_callback_count: 0
   unresolved_callback_count: 0
   duplicate_callback_count: 0
-  pre_g2_4_canonical_callback_count: 26
-  current_total_callback_count: 993
+  pre_g2_4_canonical_callback_count: 30
+  current_total_callback_count: 997
   phase_exit_ready: true
   phase_completion_status: COMPLETE
-current_callback_set_sha256: 050279ffaa5f61ae2d39653e2686cf7bdae07136dc21bd390a38c1e426501855
+current_callback_set_sha256: 245e22a50f652a41a37c750c0c6b529838e4077afc994ea8572f786c5177252e
 pending_by_app: {}
 current_owner_counts:
   src/ai_trading_system/interfaces/cli/etf_portfolio/ai_attribution.py: 3
@@ -7888,4 +7888,4 @@ callbacks:
   migration_status: MIGRATED_CANONICAL
 production_effect: none
 broker_action: none
-matrix_id: arch_004g2_callback_matrix_3ce3cc7eba7e124b9d25
+matrix_id: arch_004g2_callback_matrix_765099093aaee4ee7c90

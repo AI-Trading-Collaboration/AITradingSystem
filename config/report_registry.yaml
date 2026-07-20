@@ -32365,3 +32365,36 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: strategy_research_restart_r0_r2
+    title: Strategy Research Restart R0-R2 Evidence Decision
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research ops strategy-restart-decision
+    artifact_globs:
+      - config/research/strategy_research_restart_policy.yaml
+      - docs/requirements/TRADING-2446_to_2448_Research_Restart_R0_R2.md
+      - docs/research/strategy_research_restart_r0_r2_closeout_2026-07-20.md
+      - outputs/research_ops/strategy_restart/strategy_research_restart_preflight.json
+      - outputs/research_ops/strategy_restart/strategy_research_restart_preflight.md
+      - reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/*/r1_walk_forward_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/*/r1_walk_forward_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/robustness_r1/*/r1_robustness_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/robustness_r1/*/r1_robustness_report.md
+      - outputs/forward_evidence/maturity_tracker_r1/forward_evidence_maturity_tracker.json
+      - outputs/forward_evidence/maturity_tracker_r1/forward_evidence_daily_continuity_maturity_tracker.json
+      - outputs/research_ops/strategy_restart/r2_decision/strategy_research_restart_r2_decision.json
+      - outputs/research_ops/strategy_restart/r2_decision/strategy_research_restart_r2_decision.md
+      - outputs/research_ops/strategy_restart/r2_decision/strategy_research_restart_r2_manifest.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      R0/R1/R2 must be rerun after source sweep bytes, data caches, restart policy,
+      forward ledger, archive continuity, regime sample coverage, or selection protocol changes.
+    owner_action: continue_evidence_closure_without_candidate_expansion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

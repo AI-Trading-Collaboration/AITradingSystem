@@ -1,0 +1,167 @@
+schema_version: strategy_research_restart_policy.v1
+policy_id: strategy_research_restart_r0_r2_v1
+status: owner_approved_pilot_baseline
+owner: project_owner_and_research_governance
+
+policy_metadata:
+  rationale: >
+    Strategy research resumes after ARCH-005 S0/S1, but project-level AI-cycle
+    conclusions and the longer QQQ/SGOV/TQQQ validation window answer different
+    questions. The restart must freeze those roles and close OOS/robustness evidence
+    debt before candidate expansion is reconsidered.
+  intended_effect: >
+    Make window role, DQ/PIT lineage, cost, lag, holdout, hypothesis, falsification,
+    and no-production boundaries machine-verifiable for R0 through R2.
+  validation_evidence: >
+    TRADING-1646 to 1665 established the 2021-02-22 exact-three-asset primary
+    validated window; ARCH-004G2.4T established that TRADING-096/097 legacy evidence
+    is source-locked but partial; ARCH-005 S0/S1 completed the restart prerequisite.
+  review_condition: >
+    Review before changing a window role, purge/embargo, evidence-completeness rule,
+    stress/regime definition, decision mapping, or any promotion/paper-shadow boundary.
+
+window_semantics:
+  project_ai_cycle_conclusion:
+    regime_id: ai_after_chatgpt
+    anchor_date: 2022-11-30
+    start: 2022-12-01
+    conclusion_scope: project_ai_cycle_conclusion
+  qqq_sgov_tqqq_primary_validation:
+    window_id: exact_three_asset_validated
+    start: 2021-02-22
+    role: primary_validated
+    conclusion_scope: qqq_sgov_tqqq_robustness_and_owner_research_evidence
+  qqq_sgov_tqqq_ai_cycle_comparison:
+    window_id: legacy_research_window_2022_12
+    start: 2022-12-01
+    role: legacy_comparison
+    conclusion_scope: ai_after_chatgpt_comparison_only
+  sensitivity:
+    window_id: exact_three_asset_primary_only_extension
+    start: 2020-05-28
+    role: sensitivity
+    required_caveat: sgov_secondary_gap_2020_05_28_to_2021_02_19
+  requested_inception:
+    window_id: requested_sgov_inception_range
+    requested_start: 2020-05-26
+    actual_portfolio_start: 2020-05-28
+    role: metadata_only
+  rules:
+    unqualified_default_window_label_allowed: false
+    mixed_window_leaderboard_allowed: false
+    legacy_only_primary_decision_allowed: false
+    report_window_role_required: true
+
+research_lane:
+  lane_id: dynamic_v3_evidence_closure_and_controlled_forward_maturity
+  hypothesis: >
+    Previously selected dynamic-v3 rescue candidates may retain defensible OOS risk
+    behavior after fold-local evaluation, transaction costs, lag, dedicated stress,
+    and per-regime comparison are evaluated without full-period metric reuse.
+  primary_falsification_question: >
+    Does the apparent legacy-window edge disappear, concentrate in one regime or
+    stress episode, or fail after fold-local cost/lag evaluation?
+  candidate_family: dynamic_v3_rescue
+  source_window_id: legacy_research_window_2022_12
+  source_window_role: legacy_comparison
+  next_candidate_generation_allowed: false
+  simple_selector_status: KILL
+  gbdt_status: PIVOT_DESIGN_ONLY
+  regret_state_machine_status: WATCHLIST
+  kill_criteria:
+    - fold_local_oos_fails_reviewed_gate
+    - dedicated_stress_is_incomplete_or_negative
+    - per_regime_edge_is_concentrated_or_negative
+    - forward_outcomes_are_not_mature_or_not_bound
+    - data_quality_or_pit_lineage_fails
+
+r0_preflight:
+  required_source_files:
+    - sweep_manifest.json
+    - sweep_config.normalized.yaml
+    - candidate_results.jsonl
+  required_evaluator_mode: real_dynamic_v3_rescue
+  allowed_data_quality_status:
+    - PASS
+    - PASS_WITH_WARNINGS
+  required_cost_sources:
+    - config/etf_portfolio/risk.yaml
+    - config/etf_portfolio/strategy.yaml
+  required_window_policy_sources:
+    - config/research/primary_research_window_policy.yaml
+    - config/research/research_window_registry.yaml
+
+r1_evidence:
+  walk_forward:
+    policy_status: pilot_baseline
+    purge_trading_days: 1
+    embargo_trading_days: 1
+    minimum_train_rows: 126
+    minimum_test_rows: 42
+    require_fold_local_evaluator: true
+    require_signal_execution_return_chronology: true
+    require_transaction_costs: true
+    require_execution_lag: true
+    require_false_risk_off: true
+    require_robustness: true
+    status_cap_without_all_fields: REVIEW_REQUIRED
+    rationale: >
+      One trading session of purge plus one session of embargo prevents adjacent
+      signal/execution/return boundaries from being treated as independent evidence
+      for the one-session execution-lag strategy. Row floors correspond to roughly
+      half-year train and two-month test evidence and remain pilot review baselines.
+    review_condition: >
+      Review after the first real R1 run and before interpreting a PASS as anything
+      beyond research-only evidence completeness.
+  robustness:
+    policy_status: pilot_baseline
+    required_real_neighbor_grid_steps: 1
+    allow_lineage_locked_derived_neighbor: true
+    high_drawdown_threshold: -0.10
+    fast_recovery_lookback_trading_days: 20
+    fast_recovery_min_rebound: 0.05
+    minimum_stress_rows: 20
+    minimum_regime_rows: 20
+    max_drawdown_degradation_pp: 0.02
+    min_dynamic_vs_static_return_gap: -0.01
+    require_dedicated_date_sets: true
+    require_dynamic_static_comparator: true
+    status_cap_without_complete_neighbor_stress_regime: REVIEW_REQUIRED
+    rationale: >
+      The pilot stress definitions use a 10% static-baseline drawdown and a 5%
+      twenty-session rebound to create explicit path-derived episodes. The relative
+      return and drawdown tolerances are review boundaries, not promotion thresholds.
+    review_condition: >
+      Recalibrate only after enough independent episodes and regimes exist; until then
+      a passing diagnostic remains research-only and manually reviewed.
+  forward_maturity:
+    horizons_days: [1, 5, 10, 20, 60]
+    append_only_required: true
+    missing_archive_is_blocking: true
+    target_date_does_not_imply_outcome_bound: true
+
+r2_decision:
+  ordered_rules:
+    - decision: HOLD_RESEARCH_RESTART
+      when: r0_hard_check_failed_or_data_quality_failed
+    - decision: CONTINUE_EVIDENCE_CLOSURE
+      when: walk_forward_or_robustness_evidence_contract_incomplete
+    - decision: PAUSE_CANDIDATE_EXPANSION
+      when: evidence_complete_but_oos_or_robustness_negative_or_legacy_only
+    - decision: CONTINUE_FORWARD_MATURATION
+      when: oos_and_robustness_reviewable_but_forward_not_mature
+    - decision: READY_FOR_OWNER_CONTROLLED_NEXT_RESEARCH_REVIEW
+      when: all_research_only_gates_pass
+
+safety_boundary:
+  research_only: true
+  validation_only: true
+  observe_only: true
+  production_effect: none
+  broker_action: none
+  promotion_gate_allowed: false
+  paper_shadow_change_allowed: false
+  production_weight_change_allowed: false
+  shadow_enrollment_allowed: false
+  automatic_candidate_generation_allowed: false
+  manual_review_required: true

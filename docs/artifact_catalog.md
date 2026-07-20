@@ -4,6 +4,12 @@
 
 如果需要理解输入数据如何计算成输出数据，先读 `docs/calculation_logic.md`；字段级含义见 `docs/schema/fields.yaml`，也可以用 `aits explain <field|gate|artifact>` 做只读反查。该 YAML 先覆盖 `scores_daily.csv`、decision snapshot、trace bundle、prediction ledger 和 shadow parameter search 的核心字段。
 
+## TRADING-2446～2448 Strategy Research Restart R0～R2
+
+|产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
+|---|---|---|---|---|---|---|
+|`config/research/strategy_research_restart_policy.yaml`<br/>`outputs/research_ops/strategy_restart/strategy_research_restart_preflight.json/md`<br/>`reports/etf_portfolio/dynamic_v3_rescue/walk_forward_r1/*/r1_walk_forward_report.json/md`<br/>`reports/etf_portfolio/dynamic_v3_rescue/robustness_r1/*/r1_robustness_report.json/md`<br/>`outputs/forward_evidence/maturity_tracker_r1/*.json/md`<br/>`outputs/research_ops/strategy_restart/r2_decision/strategy_research_restart_r2_decision.json/md`<br/>`outputs/research_ops/strategy_restart/r2_decision/strategy_research_restart_r2_manifest.json`|`aits research ops strategy-restart-preflight`；`aits etf dynamic-v3-rescue walk-forward r1-run`；`aits etf dynamic-v3-rescue robustness r1-run`；`aits forward-evidence maturity-tracker`；`aits forward-evidence daily-continuity-maturity-tracker`；`aits research ops strategy-restart-decision` 及对应 validators|Versioned restart policy、research window registry、source dynamic-v3 real sweep、primary/secondary prices、rates、download manifest、cost/execution policies、append-only forward ledger|`schema_version` / `status`、R0/R1/R2 source/output SHA commitments；项目级 `2022-12-01` AI-cycle 与 QQQ/SGOV/TQQQ `2021-02-22` primary validated 双窗口；逐fold real evaluator、1-day purge/embargo、cost/lag/chronology/false-signal；lineage-locked neighbors、dedicated stress/per-regime comparator；1/5/10/20/60d maturity；R2 ordered decision；固定 research/validation/observe-only、promotion/paper-shadow/weights false、production/broker none|关闭窗口语义和 TRADING-096/097/777 证据债，并根据真实负面/不完整结果决定 HOLD/CONTINUE/PAUSE/READY；当前 R2=`CONTINUE_EVIDENCE_CLOSURE`|否，`production_effect=none`、`broker_action=none`|R0 PASS 只解锁 research-only execution；80/80 fold 完整不等于 OOS 正向；validator PASS 不等于策略通过；当前 source 有 selection/holdout contamination，robustness/forward 尚不完整，因此不得恢复 candidate expansion、parameter search、paper-shadow 或 promotion。|
+
 ## ARCH-004G2.4AT Backfilled Outcome 增量
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|

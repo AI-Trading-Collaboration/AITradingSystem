@@ -1,4 +1,4 @@
-inventory_id: reporting_inventory_1d8e22c52aec32c66cfe
+inventory_id: reporting_inventory_de326657f81b816b9214
 schema_version: reporting_architecture_inventory.v1
 reader_brief:
   path: src/ai_trading_system/reports/reader_brief.py
@@ -7,9 +7,9 @@ reader_brief:
   top_level_function_count: 367
 report_registry:
   path: config/report_registry.yaml
-  sha256: d0e9f84ad9ee7c7be96e2dc44fce6c11f45f465babaa52efcbd91e38eb41c9d3
-  entry_count: 1358
-  explicit_production_effect_count: 669
+  sha256: 18de34292a918cd6e0be5bc07064ca9c37991b1b345a0c47801c3af3453a90c9
+  entry_count: 1359
+  explicit_production_effect_count: 670
   missing_explicit_production_effect_count: 689
   explicit_reader_tier_count: 0
   explicit_actionable_count: 0
@@ -18,7 +18,7 @@ report_registry:
   explicit_renderer_count: 0
   explicit_canonical_source_count: 0
   cadence_counts:
-    ad_hoc: 949
+    ad_hoc: 950
     daily: 83
     event_driven: 1
     manual: 236
@@ -30,11 +30,11 @@ report_registry:
     investor: 8
     operator: 127
     owner: 77
-    project_owner: 773
+    project_owner: 774
     reviewer: 371
     system: 1
 generated_report_fragments:
   root: config/architecture/fragments/reports
   fragment_count: 4
   active_source_of_truth_count: 0
-legacy_unclassified_entry_count: 1358
+legacy_unclassified_entry_count: 1359

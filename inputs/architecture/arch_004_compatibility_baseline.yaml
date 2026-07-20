@@ -3655,6 +3655,7 @@ phase_g2_4t_etf_cli_dynamic_v3_legacy_validation:
   superseded_source_paths:
     - src/ai_trading_system/cli_commands/etf_portfolio.py
     - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_legacy_validation.py
     - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
     - inputs/architecture/arch_004g2_etf_cli_contract.yaml
     - tests/test_arch_004g2_etf_cli_contract.py
@@ -4564,6 +4565,7 @@ phase_g2_4ah_etf_cli_dynamic_v3_weekly_real_snapshot_review:
     - tests/test_arch_004g2_etf_cli_contract.py
     - tests/test_arch_004_refactor_policy.py
     - tests/test_arch_004g_deprecation.py
+    - tests/test_arch_004f3_reporting_architecture.py
     - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
     - docs/research/current_research_strategy_execution_chain.md
     - docs/system_flow.md
@@ -13783,6 +13785,7 @@ integrated_change_arch_004g2_eb0_s3a_weight_search_tail:
   - {path: tests/test_equal_risk_growth_research_restart.py, sha256: e00516e49736993c95a4254086e4f6df4db7a0c1e0abc2e714bdaf431123ac1e}
   - {path: tests/test_equal_risk_growth_tilt.py, sha256: 37d90271e34003f3543b603d4506756e1da68f57210123144d9d8b75b4ea4aa0}
   superseded_source_paths:
+  - docs/artifact_catalog.md
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   - docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
@@ -15750,7 +15753,11 @@ phase_g2_4eb8_final_cli_compatibility_facade:
     phase_exit_or_handoff_triggered: false
   next_phase_or_slice_unblocked: true
   superseded_source_paths:
+  - inputs/architecture/arch_004g2_callback_migration_matrix.yaml
+  - inputs/architecture/arch_004g2_etf_cli_contract.yaml
   - inputs/architecture/arch_004g2_full_duration_profile.yaml
+  - tests/test_arch_004g2_callback_migration_matrix.py
+  - tests/test_arch_004g2_etf_cli_contract.py
   - tests/test_validation_runtime_profile.py
   - docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md
   - docs/system_flow.md
@@ -15917,6 +15924,8 @@ phase_g2_4_phase_exit:
   - inputs/architecture/arch_004e_module_manifest.yaml
   - inputs/architecture/arch_004e_test_manifest.yaml
   - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_004g2_callback_migration_matrix.yaml
+  - inputs/architecture/arch_004g2_etf_cli_contract.yaml
   - scripts/architecture_arch005_handoff.py
   - scripts/run_validation_tier.py
   - src/ai_trading_system/platform/architecture/__init__.py
@@ -16010,6 +16019,20 @@ phase_arch_005_s0_s1_shadow_registry:
     paper_shadow_or_portfolio_mutated: false
     order_or_broker_action: none
     production_effect: none
+  superseded_by_phase: TRADING-2446_to_2448_RESEARCH_RESTART_R0_R2
+  superseded_source_paths:
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_arch_005_task_registry_shadow.py
   sources:
   - {path: config/architecture/devex_ownership_policy.yaml, sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe}
   - {path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md, sha256: 0f9f503670f5b8e4b4cf9bf9659d41442909371a0de9a9a82fb5800173ef2731}

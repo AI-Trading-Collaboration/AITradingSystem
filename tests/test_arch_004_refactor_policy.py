@@ -5683,9 +5683,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         "group_count": 291,
         "leaf_command_count": 993,
         "duplicate_path_count": 0,
-        "command_tree_sha256": (
-            "01c78550ae58b38c2d8cca0683376643e2934f93e324710612c87d39eea7302d"
-        ),
+        "command_tree_sha256": ("01c78550ae58b38c2d8cca0683376643e2934f93e324710612c87d39eea7302d"),
     }
     assert phase_exit["shared_path_activity"] == {
         "status": "PASS",
@@ -5697,23 +5695,19 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_exit["handoff"]["schema_version"] == "arch_005_bootstrap_handoff.v1"
     assert phase_exit["handoff"]["validator_frozen"] is True
     assert phase_exit["handoff"]["status"] == "PASS_COMMITTED_AND_PUSHED"
-    assert phase_exit["handoff"]["tracked_file_hash_basis"] == (
-        "source_commit_git_blob_sha256"
-    )
+    assert phase_exit["handoff"]["tracked_file_hash_basis"] == ("source_commit_git_blob_sha256")
     assert phase_exit["handoff"]["next_slice_unblocked"] is False
     assert phase_exit["handoff"]["formal_arch_005_s0_unblocked"] is True
     assert phase_exit["handoff"]["g2_5_unblocked"] is False
     assert phase_exit["safety"]["production_effect"] == "none"
     if phase_exit["status"] == "VALIDATING_PHASE_EXIT":
         assert all(
-            record["status"] == "PENDING"
-            for record in phase_exit["required_validation"].values()
+            record["status"] == "PENDING" for record in phase_exit["required_validation"].values()
         )
         assert all(source["sha256"] == 0 for source in phase_exit["sources"])
     else:
         assert all(
-            record["status"] == "PASS"
-            for record in phase_exit["required_validation"].values()
+            record["status"] == "PASS" for record in phase_exit["required_validation"].values()
         )
         superseded = set(phase_exit.get("superseded_source_paths", []))
         assert phase_exit.get("superseded_by_phase") == "ARCH-005-S0-S1"
@@ -5728,9 +5722,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert s0_s1["task_id"] == "ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE"
     assert s0_s1["base_commit"] == "f1045634f771955e3ddef721ff5ed39aea795b27"
     assert s0_s1["entry_gate"]["status"] == "PASS"
-    assert s0_s1["entry_gate"]["tracked_file_hash_basis"] == (
-        "source_commit_git_blob_sha256"
-    )
+    assert s0_s1["entry_gate"]["tracked_file_hash_basis"] == ("source_commit_git_blob_sha256")
     assert s0_s1["entry_gate"]["next_slice_unblocked"] is False
     assert s0_s1["contracts"] == {
         "task_record_schema": "task_record.v1",
@@ -5762,7 +5754,11 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         assert all(source["sha256"] == 0 for source in s0_s1["sources"])
     else:
         assert all(record["status"] == "PASS" for record in s0_s1["validation"].values())
+        assert s0_s1.get("superseded_by_phase") == ("TRADING-2446_to_2448_RESEARCH_RESTART_R0_R2")
+        superseded = set(s0_s1.get("superseded_source_paths", []))
         for source in s0_s1["sources"]:
+            if source["path"] in superseded:
+                continue
             actual = _source_sha256(source)
             assert actual == source["sha256"], source["path"]
 
@@ -6045,12 +6041,12 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB8_IN_PROGRESS_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB8_VALIDATING_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EB8_COMPLETE_G2_4_CONTINUES",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_ARCH_005_PREBOOTSTRAP_IN_PROGRESS",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_ARCH_005_PREBOOTSTRAP_COMPLETE_G2_4_CONTINUES",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EXIT_IN_PROGRESS",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EXIT_PASS_HANDOFF_PENDING",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_HANDOFF_PASS_STOPPED",
-        }
+        "ATTRIBUTABLE_ISOLATION_PROVEN_ARCH_005_PREBOOTSTRAP_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_ARCH_005_PREBOOTSTRAP_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EXIT_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_EXIT_PASS_HANDOFF_PENDING",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4_HANDOFF_PASS_STOPPED",
+    }
     current_authority = attribution["current_staging_authority"]
     assert current_authority["task_id"] == ("ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION")
     assert current_authority["increment"] == "ARCH-004G2.4-PHASE-EXIT-HANDOFF"

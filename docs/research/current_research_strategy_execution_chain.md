@@ -1,6 +1,6 @@
 # 当前研究策略执行链路、计算逻辑与优化边界
 
-最后更新：2026-07-16
+最后更新：2026-07-20
 
 项目级 AI market regime：`ai_after_chatgpt`，起点 `2022-12-01`
 
@@ -21,7 +21,23 @@
 - B0～B6 权重研究、tail-risk、dynamic-v3 等大量历史研究仍由 task-shaped module/CLI/report 串联，属于 legacy migration backlog；
 - 当前最新 growth-tilt 结论是“没有 contract-complete、PIT-executable candidate”，不是“候选回测亏损”；
 - 当前 Weight Research Program 是 `NEEDS_MORE_EVIDENCE`，B4 interaction 证据不足，B5/B6 和 untouched holdout 未解锁；
+- TRADING-2446～2448 R0～R2 已完成真实运行；R2=`CONTINUE_EVIDENCE_CLOSURE`，
+  dynamic-v3 top-20 walk-forward OOS 为负面且 source selection/locked holdout 有污染，
+  robustness/forward evidence 仍不完整，候选扩展保持暂停；
 - 因此当前合理动作是补齐 baseline capability、PIT lineage 和预注册 contract，而不是继续对旧候选做参数搜索。
+
+### 1.1 2026-07-20 R0～R2 真实重启结果
+
+本次研究重启把本文的通用执行链落到一条真实 dynamic-v3 evidence-closure lane。R0 先冻结
+双窗口、source bytes、DQ/PIT、cost/lag、holdout、hypothesis 和 safety；R1 逐 fold 重跑真实
+evaluator，并从 daily path 重算 neighbor/stress/regime；R2 只消费通过 validator 的 artifacts。
+
+真实结果为：R0 `PASS`；walk-forward 80/80 fold 完整但 40 个 test fold 为 20 reject +
+20 review-required；robustness 的 `event_risk_high` 15 行低于 floor 20；forward ledger 16 条，
+20d/60d 尚无 matured record且缺 5 个 daily archive。因此技术链 PASS，但研究决策必须停在
+`CONTINUE_EVIDENCE_CLOSURE`，不能把 workflow 成功解释为策略成功。详细原因、输入输出、计算逻辑、
+性能数据和优化入口见
+`docs/research/strategy_research_restart_r0_r2_closeout_2026-07-20.md`。
 
 ## 2. 状态标记
 
@@ -2041,6 +2057,7 @@ Observation
 - `config/research/primary_research_window_policy.yaml`
 - `config/research/research_governance_policy.yaml`
 - `config/research/promotion_gate_thresholds.yaml`
+- `config/research/strategy_research_restart_policy.yaml`
 - `config/research/experiments/growth_tilt_candidate_family_closure.yaml`
 - `config/etf_portfolio/assets.yaml`
 - `config/etf_portfolio/backtest.yaml`
@@ -2059,4 +2076,5 @@ Observation
 - `docs/research/current_research_strategy_and_periodic_optimization_review_2026-07-10.md`
 - `docs/research/weight_research_program_v1_snapshot.md`
 - `docs/research/growth_tilt_candidate_family_closure.md`
+- `docs/research/strategy_research_restart_r0_r2_closeout_2026-07-20.md`
 - `outputs/research_strategies/growth_tilt_candidate_family_closure/growth_tilt_candidate_family_closure.json`

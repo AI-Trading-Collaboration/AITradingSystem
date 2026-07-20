@@ -2,6 +2,28 @@
 
 本文档是系统从数据输入、中间评估到输出结论的流程图。它不是一次性说明文档，而是工程事实的一部分：后续新增命令、数据源、配置、评分模块、回测路径或报告输出时，必须同步维护本文件。
 
+TRADING-2446～2448 在 ARCH-005 S0/S1 后新增独立 strategy research restart R0～R2
+evidence-closure lane，不恢复 ARCH-004 G2.5，也不启动 candidate promotion。
+`aits research ops strategy-restart-preflight` 先调用与 `aits validate-data` 同源的 cached-data gate，
+冻结 source sweep、prices/rates/manifest、cost/execution policy、holdout、hypothesis、kill criteria
+和 SHA-256 commitments，并把项目级 `ai_after_chatgpt start=2022-12-01` 与
+QQQ/SGOV/TQQQ `primary_validated start=2021-02-22`、`2022 legacy_comparison` 分层物化；
+只有全部 hard checks PASS 才允许 research-only R1。
+`aits etf dynamic-v3-rescue walk-forward r1-run` 对 source top-N 按 purged/embargoed
+train/test fold 重新执行 real evaluator，写完整 daily paths、cost/lag/chronology/false-signal/gate
+和 selection/holdout contamination；4-process worker 按 phase 缓存 fixed reports。
+`aits etf dynamic-v3-rescue robustness r1-run` 补齐 real/lineage-locked neighbor，并从 source
+daily path 重算 high-drawdown、fast-recovery 和 per-regime dynamic/static comparators。
+Forward 分支只读 append-only ledger，经 DQ 后刷新 1/5/10/20/60d maturity 与 continuity。
+`aits research ops strategy-restart-decision` 仅消费 R0/R1 validator PASS artifacts，按
+HOLD→CONTINUE_EVIDENCE_CLOSURE→PAUSE_CANDIDATE_EXPANSION→CONTINUE_FORWARD_MATURATION→READY
+顺序决策；validator 重验所有 live source commitments、80 fold summaries、stress/regime
+comparators、forward/DQ 和 Markdown。当前真实 R2=`CONTINUE_EVIDENCE_CLOSURE`：OOS 为负面、
+selection/holdout contaminated、`event_risk_high=15<20`、forward missing archive=5、
+20d/60d 未成熟；因此 candidate expansion/new parameter search=false，simple selector=`KILL`、
+GBDT=`PIVOT_DESIGN_ONLY`、regret=`WATCHLIST`。全链固定 `production_effect=none`、
+`broker_action=none`，不修改 shadow、official/production weights、portfolio、order 或 broker。
+
 ARCH-004G2.4 phase exit 在EB8后的稳定callback集合上独立执行。Callback matrix必须为
 `967 migrated / 0 pending / 0 unresolved / 0 duplicate`，随后依次绑定focused、architecture、
 contract、full四类PASS artifact及其SHA-256，并复验module/test manifests、compatibility baseline、

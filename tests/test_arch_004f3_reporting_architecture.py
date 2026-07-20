@@ -77,8 +77,8 @@ def test_reporting_inventory_matches_frozen_f3_baseline() -> None:
 
     assert inventory.reader_brief_line_count == 29050
     assert inventory.reader_brief_top_level_function_count == 367
-    assert inventory.report_registry_entry_count == 1358
-    assert inventory.explicit_production_effect_count == 669
+    assert inventory.report_registry_entry_count == 1359
+    assert inventory.explicit_production_effect_count == 670
     assert inventory.missing_explicit_production_effect_count == 689
     assert inventory.explicit_reader_tier_count == 0
     assert inventory.explicit_actionable_count == 0
@@ -87,7 +87,7 @@ def test_reporting_inventory_matches_frozen_f3_baseline() -> None:
     assert inventory.explicit_renderer_count == 0
     assert inventory.explicit_canonical_source_count == 0
     assert dict(inventory.cadence_counts) == {
-        "ad_hoc": 949,
+        "ad_hoc": 950,
         "daily": 83,
         "event_driven": 1,
         "manual": 236,
@@ -100,13 +100,13 @@ def test_reporting_inventory_matches_frozen_f3_baseline() -> None:
         "investor": 8,
         "operator": 127,
         "owner": 77,
-        "project_owner": 773,
+        "project_owner": 774,
         "reviewer": 371,
         "system": 1,
     }
     assert inventory.report_fragment_count == 4
     assert inventory.active_report_fragment_count == 0
-    assert inventory.legacy_unclassified_entry_count == 1358
+    assert inventory.legacy_unclassified_entry_count == 1359
     assert_frozen_reporting_inventory(inventory)
 
 
@@ -212,14 +212,14 @@ def test_actual_report_registry_is_fully_covered_as_limited_unclassified() -> No
     )
 
     assert assessment.status is CanonicalStatus.LIMITED
-    assert len(assessment.entries) == 1358
+    assert len(assessment.entries) == 1359
     assert all(item.report_spec is None for item in assessment.entries)
     assert all(item.status is CanonicalStatus.LIMITED for item in assessment.entries)
     assert {item.disposition for item in assessment.entries} == {
         ReportCatalogDisposition.AUDIT_INDEX_LIMITED_UNCLASSIFIED
     }
     assert assessment.to_dict()["typed_count"] == 0
-    assert assessment.to_dict()["limited_count"] == 1358
+    assert assessment.to_dict()["limited_count"] == 1359
     assert assessment.to_dict()["blocked_count"] == 0
 
 
@@ -390,9 +390,10 @@ def test_research_review_pack_separates_retirement_investigation_and_adoption(
     assert all(item.adoption_recorded is False for item in view.items)
     assert all(item.proposal_is_adoption is False for item in view.items)
     assert view.items[0].blocker_codes == ("PIT_LINEAGE_MISSING",)
-    assert ResearchReviewPackViewModel.from_dict(
-        json.loads(json_path.read_text(encoding="utf-8"))
-    ) == view
+    assert (
+        ResearchReviewPackViewModel.from_dict(json.loads(json_path.read_text(encoding="utf-8")))
+        == view
+    )
     assert "proposal不等于adoption" in markdown_path.read_text(encoding="utf-8")
 
 
@@ -407,11 +408,11 @@ def test_report_audit_index_preserves_every_legacy_registry_entry(tmp_path: Path
     json_path, markdown_path = write_report_audit_index(view, output_dir=tmp_path)
     payload = json.loads(json_path.read_text(encoding="utf-8"))
 
-    assert payload["entry_count"] == 1358
+    assert payload["entry_count"] == 1359
     assert payload["typed_count"] == 0
-    assert payload["limited_count"] == 1358
-    assert len(payload["entries"]) == 1358
-    assert len({item["report_id"] for item in payload["entries"]}) == 1358
+    assert payload["limited_count"] == 1359
+    assert len(payload["entries"]) == 1359
+    assert len({item["report_id"] for item in payload["entries"]}) == 1359
     assert payload["include_all_registry_entries"] is True
     assert payload["include_legacy_unclassified"] is True
     assert payload["production_effect"] == "none"

@@ -61,8 +61,8 @@ def test_tracked_g2_4_callback_matrix_is_current_and_complete_as_inventory() -> 
     assert summary["pending_callback_count"] == 0
     assert summary["unresolved_callback_count"] == 0
     assert summary["duplicate_callback_count"] == 0
-    assert summary["pre_g2_4_canonical_callback_count"] == 26
-    assert summary["current_total_callback_count"] == 993
+    assert summary["pre_g2_4_canonical_callback_count"] == 30
+    assert summary["current_total_callback_count"] == 997
     assert summary["phase_exit_ready"] is True
     assert summary["phase_completion_status"] == "COMPLETE"
     assert len(actual["callbacks"]) == 967

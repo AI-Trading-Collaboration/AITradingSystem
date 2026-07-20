@@ -60,9 +60,7 @@ def test_s1_shadow_fragment_preserves_all_cells_without_guessing(tmp_path: Path)
 
     assert fragment["schema_version"] == SHADOW_FRAGMENT_SCHEMA_VERSION
     assert fragment["shadow_only"] is True
-    assert fragment["task_record"]["legacy_source"][
-        "ambiguous_unescaped_pipe_boundaries"
-    ] is True
+    assert fragment["task_record"]["legacy_source"]["ambiguous_unescaped_pipe_boundaries"] is True
     assert fragment["task_record"]["legacy_source"]["all_cells"] == [
         "ARCH-101",
         "Architecture / sample",
@@ -187,7 +185,7 @@ def test_repository_s0_s1_artifacts_are_fresh_and_replayable() -> None:
     validate_shadow_index(index, baseline=baseline, documents=documents)
 
     assert rebuilt == index
-    assert index["task_count"] == 869
+    assert index["task_count"] == baseline["inventory"]["total_task_count"]
     assert index["missing_task_count"] == 0
     assert index["duplicate_task_count"] == 0
     assert all(view["byte_identical"] for view in index["generated_views"])
@@ -209,9 +207,7 @@ def _write_registers(root: Path, *, active_status: str) -> None:
         "|ARCH-101|Architecture / sample|P0|"
         f"{active_status}|owner|next step|criterion `A|B`|notes|\r\n"
     )
-    completed_row = (
-        "|ARCH-102|Architecture / complete|P1|DONE|owner|none|accepted|notes|\r\n"
-    )
+    completed_row = "|ARCH-102|Architecture / complete|P1|DONE|owner|none|accepted|notes|\r\n"
     (docs / "task_register.md").write_bytes(
         ("# Active\r\n\r\n" + header + active_row).encode("utf-8")
     )

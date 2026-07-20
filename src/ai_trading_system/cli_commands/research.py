@@ -11,6 +11,9 @@ from rich.console import Console
 from ai_trading_system.cli_commands.research_foundation import (
     register_research_foundation_commands,
 )
+from ai_trading_system.cli_commands.research_restart import (
+    register_research_restart_commands,
+)
 from ai_trading_system.cli_commands.research_simple_baselines import (
     register_simple_baseline_strategy_commands,
 )
@@ -412,6 +415,7 @@ research_app.add_typer(paper_shadow_app, name="paper-shadow")
 research_app.add_typer(trends_app, name="trends")
 register_research_foundation_commands(research_app)
 register_simple_baseline_strategy_commands(strategies_app)
+register_research_restart_commands(research_ops_app)
 
 
 @controlled_pilot_app.command("benchmark-batch")
