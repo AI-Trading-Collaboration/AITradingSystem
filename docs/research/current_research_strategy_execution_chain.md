@@ -79,14 +79,15 @@ TRADING-2452拒绝不是serializer、算术或gate执行漂移。`payload.best_c
 确认。fold 1～5的300个候选各自只有一个rate，fold 6只有两个rate档，也显示当前参数空间对
 constraint outcome辨识度很低或结构性退化，但这本身不是代码缺陷证据。
 
-Owner pack默认/推荐`A_KEEP_KILL_AND_CLOSE_CURRENT_PACKAGE`。如选择B，必须新建reviewed gate policy、
-新preregistration与新package，不能称same-package replay；如选择C，必须新授权per-template/per-axis
-causal diagnostic replay。Owner决定前策略线状态=`BLOCKED_OWNER_INPUT/KILL_PAUSE`，prospective、
-promotion、paper-shadow、production与broker/order全部关闭。
+Owner 已于 2026-07-22 选择 `A_KEEP_KILL_AND_CLOSE_CURRENT_PACKAGE`，因此当前 package 保持
+`KILL_PAUSE` 并正式关闭，不修改 gate、不重跑、不扩候选，也不访问 prospective。未来如另行选择B，
+必须新建reviewed gate policy、新preregistration与新package，不能称same-package replay；如选择C，
+必须新授权per-template/per-axis causal diagnostic replay。B/C 均不是当前 package 的续跑，且未被
+本次决定自动授权。prospective、promotion、paper-shadow、production与broker/order全部继续关闭。
 
 该诊断已通过content-derived validator、focused、architecture、contract与唯一自然Full；Full=
-`6553 passed / 2 skipped / 643 warnings`，新增诊断test文件耗时`2.41s`。因此当前等待项是Owner研究
-决策，不是实现或验证缺口。
+`6553 passed / 2 skipped / 643 warnings`，新增诊断test文件耗时`2.41s`。Owner 选择 A 后，
+TRADING-2453 已归档 `DONE`；策略线没有遗留的实现或验证缺口，下一项研究必须来自独立的新授权。
 
 ## 2. 状态标记
 

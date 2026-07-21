@@ -1,8 +1,8 @@
 # TRADING-2453：Constraint-hit 全量拒绝诊断与 Owner Review
 
-最后更新：2026-07-21
+最后更新：2026-07-22
 
-状态：`BLOCKED_OWNER_INPUT`
+状态：`DONE`
 
 稳定任务 ID：`TRADING-2453_CONSTRAINT_HIT_REJECTION_DIAGNOSIS_AND_OWNER_REVIEW`
 
@@ -79,3 +79,8 @@ recent-known diagnostic 均未执行。
   `6553 passed / 2 skipped / 643 warnings`。Full profile/telemetry/performance/provenance均PASS，
   scheduler applied=true、fallback=false；新增TRADING-2453 test文件在Full中仅`2.41s`。任务保持
   `BLOCKED_OWNER_INPUT`而非伪造完成，等待Owner选择A/B/C，`production_effect=none`。
+- 2026-07-22：Owner 明确选择 `A_KEEP_KILL_AND_CLOSE_CURRENT_PACKAGE`。当前 package 按既有
+  `KILL_PAUSE` 负面结果正式关闭；不修改 `max_constraint_hit_rate=0.65`、不在同 package 重跑、
+  不扩候选或搜索参数，也不读取 prospective holdout。B/C 仅保留为未来可能的新任务类型：只有
+  新的显式授权、reviewed policy/诊断边界与独立 preregistration/package 才能启动。当前任务验收
+  已全部满足并归档 `DONE`，`production_effect=none`、`broker_action=none`。

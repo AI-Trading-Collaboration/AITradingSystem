@@ -61,6 +61,9 @@ from ai_trading_system.simple_baseline_forward_aging import (
     run_simple_baseline_forward_aging_write_observation,
 )
 
+# Test functions remain byte-for-byte in this support module and are re-exported
+# one per file so pytest-xdist loadfile scheduling can execute them independently.
+
 NEW_REPORT_IDS = {
     "layer1_simple_rule_selector_registry_review",
     "layer1_trend_rule_selector_backtest",

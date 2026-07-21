@@ -1570,6 +1570,56 @@ wall ratio=`1.1570`同向，显示广泛机器/套件波动。W8E1目标weekly/b
 `2.41s`，因此不归因于局部W8E1残留或新增策略诊断。单次Full不支持stable improvement claim；
 下一wave仍必须从该profile选定更高确定性bounded candidate并预冻结退出门槛。
 
+### Wave 9 W9E1：Layer1 loadfile partition pilot
+
+2026-07-22：下一候选冻结为 `tests/test_layer1_meta_policy_readiness.py`。最近四份可比Full中该文件为
+`434.84/454.50/447.31/658.31 worker-s`、固定6个test nodes；最新一次绝对增加约`211s`，且全部
+节点在同一worker串行。S3G曾尝试per-node context session，两次after仅`330.74/362.52s`、复杂度约
+314行并已完整撤回，因此W9E1禁止重引入该缓存设计。
+
+本次只允许test layout partition：六个既有test function、断言、真实producer/validator/CLI调用、
+DQ/PIT与安全边界保持逐函数source-body exact；共享数据生成helper可移动到单一test support module，
+不得复制或改变计算。由于`--dist loadfile`按文件调度，允许以显式old→new nodeid双射迁移文件路径，
+但test function name、数量、函数体hash与collection语义必须exact，且不得新增skip/xfail。实施前先在
+无其他pytest负载下运行原文件baseline并冻结数值门槛；after必须以全部新文件同一命令连续两次复验，
+较慢一次至少降低30%且绝对节省不少于120秒，否则完整撤回。资源竞争、worker crash、DQ/PIT/tamper
+覆盖下降或维护复杂度明显上升同样触发撤回。只在共享integration boundary运行一次自然Full；不足
+三份qualifying Full仍不得声称stable全局提速。`strategy_logic_changed=false`、
+`cached_data_mutated=false`、`production_effect=none`。
+
+原文件无其他pytest负载baseline=`6 passed / 437.03s`（runner wall=`439.2s`）；六个call分别为
+`2.13/59.37/78.90/41.45/126.10/123.11s`。据此冻结after较慢一次必须`<=305.92s`，同时相对
+baseline绝对节省`>=120s`。本数值在任何实现改动前记录，后续不得按结果修改。
+
+W9E1两次after=`6 passed / 146.72s`与`6 passed / 148.92s`；较慢值相对baseline节省
+`288.11s`、降低`65.92%`，通过`<=305.92s`与`>=120s`双门槛。实现把原文件原样移为非收集
+support module，六个薄test files各自只重导出一个同名函数；函数体、断言及真实调用保持，collect-only
+仍为6个函数名且无skip/xfail，Ruff PASS。该结果证明局部loadfile调度粒度改善，不等同于Full墙钟
+同比例改善；共享manifests、architecture/contract与本批唯一自然Full仍待闭合。
+
+2026-07-22 / W9E1唯一自然Full=`6553 passed / 2 skipped / 643 warnings`，pytest=`1227.34s`、
+runner=`1228.36s`，profile/telemetry/performance/provenance均PASS，exact=`6555 nodes / 1095 files /
+16 workers`、scheduler applied=true、fallback=false。相对上一轮runner=`1168.92s`墙钟回退`5.09%`，
+不得声明全局加速。归因并非机器整体变慢：1,089个共同文件duration median ratio=`0.9309`，worker
+busy median ratio=`0.8968`；原Layer1文件`658.31 worker-s / 658.31s envelope`变为六文件合计
+`457.75 worker-s`、最大envelope=`139.48s`。真正回退来源是六个新文件未被旧v20 duration seed跟踪，
+按advisory规则排在队尾并只落到3个末尾worker，使tail idle max/total从`12.24/约正常低位`激增至
+`190.89/2575.46s`。
+
+因此不撤回已通过局部门槛且无资源竞争/正确性回归的layout，但也不把本次Full包装成收益。已从该
+唯一PASS profile机械刷新`PARTIAL_SEED v21`，绑定profile SHA与`6555/1095` exact collection，输出
+SHA-256=`aa25216f7d609d963a7ceda1bdbdb82f54413745a91df30531d268fcd35bba82`；六个新文件现在按真实
+`139.48/136.29/81.47/54.61/43.79/2.11s`进入duration排序，而不是留在untracked tail。按
+integration-boundary-only原则不运行第二次Full；v21实际全局效果留待下一自然Full验证，当前仍为
+`stable_full_improvement_claimed=false`。post-full首轮tracked-state已闭合：task registry=`882 total /
+430 active / 452 completed`且byte-identical，module/test manifests=`995/1154`、ownership/dependency
+violations=`0`，compatibility/deprecation focused=`8 passed`，architecture=`446 passed / 53.70s`、artifact=
+`outputs/validation_runtime/architecture-fitness_20260721T172026Z/test_runtime_summary.json`，contract=
+`265 passed / 126.30s`、artifact=`outputs/validation_runtime/contract-validation_20260721T172120Z/
+test_runtime_summary.json`。W9E1据此转`COMPLETE_RUNTIME_TASK_CONTINUES`；最终文档/manifest/source-hash
+刷新后只重跑architecture/contract，不重跑Full。下一次自然Full负责验证v21全局效果；在此之前不宣称
+stable improvement。`production_effect=none`。
+
 ## 验收标准
 
 - 当前 4 个 confirmation 长尾 module 的累计 wall time至少降低70%，最大单shard不超过当前

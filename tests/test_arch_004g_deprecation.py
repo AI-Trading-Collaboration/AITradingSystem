@@ -48,7 +48,7 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     surfaces = {item.surface_id: item for item in inventory.surfaces}
 
     assert inventory.python_module_count == 995
-    assert inventory.python_test_file_count == 1148
+    assert inventory.python_test_file_count == 1154
     assert inventory.direct_writer_baseline_count == 894
     assert inventory.direct_writer_current_count == 856
     assert inventory.direct_writer_violation_count == 0

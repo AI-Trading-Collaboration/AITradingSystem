@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2453_CONSTRAINT_HIT_REJECTION_DIAGNOSIS_AND_OWNER_REVIEW
+  title: null
+  domain: Strategy research / constraint-hit 全量拒绝诊断与 owner review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: strategy owner：只有未来新显式授权才可把B/C建为独立新任务
+  requirement_refs:
+  - docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md`。正式
+    diagnosis=`trading2453-constraint-hit_745d7d6d7b4579929546`；1,800/1,800行机械重算exact，best-template选择是现行设计，主要发现为smoke来源0.65与fold
+    hard eligibility之间的policy-role mismatch。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 绑定run/package/policy/source hashes；gate重算exact；fold/template/policy/constraint归因；owner
+      options与formal focused/architecture/contract/Full PASS；不改阈值、扩候选、搜索参数或访问prospective。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 17
+    row_sha256: de5df433240b83deeb4f3d700095d1b9904383d41f8e7509553cfc10eb32482d
+    cell_count: 8
+    all_cells:
+    - TRADING-2453_CONSTRAINT_HIT_REJECTION_DIAGNOSIS_AND_OWNER_REVIEW
+    - Strategy research / constraint-hit 全量拒绝诊断与 owner review
+    - P0
+    - DONE
+    - strategy owner：只有未来新显式授权才可把B/C建为独立新任务
+    - 详见 `docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md`。正式
+      diagnosis=`trading2453-constraint-hit_745d7d6d7b4579929546`；1,800/1,800行机械重算exact，best-template选择是现行设计，主要发现为smoke来源0.65与fold
+      hard eligibility之间的policy-role mismatch。
+    - 绑定run/package/policy/source hashes；gate重算exact；fold/template/policy/constraint归因；owner
+      options与formal focused/architecture/contract/Full PASS；不改阈值、扩候选、搜索参数或访问prospective。
+    - 2026-07-22：Owner选择`A_KEEP_KILL_AND_CLOSE_CURRENT_PACKAGE`；当前package保持`KILL_PAUSE`并关闭，不重跑。B须新reviewed
+      policy+新preregistration/package，C须新授权causal diagnostic；二者均未自动启动。Formal=`15/446/265/6553
+      passed`，`production_effect=none`。
+    raw_line: '|TRADING-2453_CONSTRAINT_HIT_REJECTION_DIAGNOSIS_AND_OWNER_REVIEW|Strategy
+      research / constraint-hit 全量拒绝诊断与 owner review|P0|DONE|strategy owner：只有未来新显式授权才可把B/C建为独立新任务|详见
+      `docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md`。正式
+      diagnosis=`trading2453-constraint-hit_745d7d6d7b4579929546`；1,800/1,800行机械重算exact，best-template选择是现行设计，主要发现为smoke来源0.65与fold
+      hard eligibility之间的policy-role mismatch。|绑定run/package/policy/source hashes；gate重算exact；fold/template/policy/constraint归因；owner
+      options与formal focused/architecture/contract/Full PASS；不改阈值、扩候选、搜索参数或访问prospective。|2026-07-22：Owner选择`A_KEEP_KILL_AND_CLOSE_CURRENT_PACKAGE`；当前package保持`KILL_PAUSE`并关闭，不重跑。B须新reviewed
+      policy+新preregistration/package，C须新授权causal diagnostic；二者均未自动启动。Formal=`15/446/265/6553
+      passed`，`production_effect=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-de5df433240b83deeb4f3d70
+  task_id: TRADING-2453_CONSTRAINT_HIT_REJECTION_DIAGNOSIS_AND_OWNER_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: strategy owner：只有未来新显式授权才可把B/C建为独立新任务
+    notes: 2026-07-22：Owner选择`A_KEEP_KILL_AND_CLOSE_CURRENT_PACKAGE`；当前package保持`KILL_PAUSE`并关闭，不重跑。B须新reviewed
+      policy+新preregistration/package，C须新授权causal diagnostic；二者均未自动启动。Formal=`15/446/265/6553
+      passed`，`production_effect=none`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:de5df433240b83deeb4f3d700095d1b9904383d41f8e7509553cfc10eb32482d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2453_CONSTRAINT_HIT_REJECTION_DIAGNOSIS_AND_OWNER_REVIEW
+  - Strategy research / constraint-hit 全量拒绝诊断与 owner review
+  - P0
+  - DONE
+  - strategy owner：只有未来新显式授权才可把B/C建为独立新任务
+  - 详见 `docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md`。正式
+    diagnosis=`trading2453-constraint-hit_745d7d6d7b4579929546`；1,800/1,800行机械重算exact，best-template选择是现行设计，主要发现为smoke来源0.65与fold
+    hard eligibility之间的policy-role mismatch。
+  - 绑定run/package/policy/source hashes；gate重算exact；fold/template/policy/constraint归因；owner
+    options与formal focused/architecture/contract/Full PASS；不改阈值、扩候选、搜索参数或访问prospective。
+  - 2026-07-22：Owner选择`A_KEEP_KILL_AND_CLOSE_CURRENT_PACKAGE`；当前package保持`KILL_PAUSE`并关闭，不重跑。B须新reviewed
+    policy+新preregistration/package，C须新授权causal diagnostic；二者均未自动启动。Formal=`15/446/265/6553
+    passed`，`production_effect=none`。
+  docs_links:
+  - docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md
+  terminal: true
+  raw_row_sha256: de5df433240b83deeb4f3d700095d1b9904383d41f8e7509553cfc10eb32482d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 80498f20b3c9a69c40e74bd9c2982614b085ae0e775cfe6fd4bc6b2ab71fcf99

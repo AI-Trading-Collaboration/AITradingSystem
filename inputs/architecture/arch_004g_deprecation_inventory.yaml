@@ -1,9 +1,9 @@
-inventory_id: arch_004g_deprecation_inventory_0edfb3c34acfb429a9a2
+inventory_id: arch_004g_deprecation_inventory_2d6c170ca7ec4598d0ca
 schema_version: arch_004g_deprecation_inventory.v1
 policy_id: arch_004g_deprecation_policy_v1
 repository:
   python_module_count: 995
-  python_test_file_count: 1148
+  python_test_file_count: 1154
   direct_writer_baseline_count: 894
   direct_writer_current_count: 856
   direct_writer_violation_count: 0
