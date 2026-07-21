@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 source_root: src/ai_trading_system
-module_count: 994
+module_count: 995
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -18201,6 +18201,26 @@ modules:
 - module_id: src.ai_trading_system.trade_review
   path: src/ai_trading_system/trade_review.py
   sha256: 294187519aa9311b824322e82695865376805911be135464d7c6a789633a71bc
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.trading2453_constraint_hit_diagnosis
+  path: src/ai_trading_system/trading2453_constraint_hit_diagnosis.py
+  sha256: 48c6c620f857bfe1988c790c44483dbd8673a5c03fbd44687dd681095a75428e
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

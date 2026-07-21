@@ -11,61 +11,59 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Wave 7 candidate coordinator：从Wave 6 PASS Full选择下一个有真实isolated重复的bounded
-    leaf；策略lane输入/授权独立判断
+  next_owner: Validation performance coordinator：基于自然Full profile选择下一高确定性bounded candidate；策略lane输入/授权独立判断
   requirement_refs:
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   module_ids: []
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
-    provenance、W2E1～W6E1已完成；W6E1仅在`tests/test_paper_shadow_daily.py`复用immutable formal
-    contract/protocol/signal-completeness与market/signal source，不改production/helper/validator/CLI/scheduler、DQ/PIT、research
-    policy或投资语义；v20 advisory seed/source-bound contract绑定Wave 5唯一PASS Full，Wave 6
-    Full不在closeout循环刷新v21。
+    provenance、W2E1～W7E1已完成；W7E1仅在`tests/test_sim_interpretation.py`复用immutable PASS-only
+    source DAG，10个nodeid及真实producer/validator、PIT/missing/live drift/tamper保持。W8E1试验未达到预冻结worst-of-two门槛并已完整撤回，不保留test-only
+    store/helper或consumer改动。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 每wave只治理一个bounded leaf并预冻结isolated退出门槛；保持nodeid、真实producer/validator/CLI、DQ/PIT/tamper与投资语义；architecture/contract及单次自然Full在integration
-      boundary PASS。连续证据不足不得声称stable Full improvement；策略输入阻塞时保持`BLOCKED_INPUT`，`production_effect=none`。
+      boundary PASS。连续证据不足不得声称stable Full improvement；失败试验完整撤回，`production_effect=none`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1553
-    row_sha256: 5a5157ac7621aae98eae1a03cf830b22080c9bcb11bf4153c09cb20903356a7d
+    line_number: 1566
+    row_sha256: 415766456f6e3355ea298e3ae6df21c69bbff4752407453bae5e4ecc352ccf4e
     cell_count: 8
     all_cells:
     - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
     - Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism
     - P1
     - IN_PROGRESS
-    - Wave 7 candidate coordinator：从Wave 6 PASS Full选择下一个有真实isolated重复的bounded leaf；策略lane输入/授权独立判断
+    - Validation performance coordinator：基于自然Full profile选择下一高确定性bounded candidate；策略lane输入/授权独立判断
     - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
-      provenance、W2E1～W6E1已完成；W6E1仅在`tests/test_paper_shadow_daily.py`复用immutable
-      formal contract/protocol/signal-completeness与market/signal source，不改production/helper/validator/CLI/scheduler、DQ/PIT、research
-      policy或投资语义；v20 advisory seed/source-bound contract绑定Wave 5唯一PASS Full，Wave
-      6 Full不在closeout循环刷新v21。
+      provenance、W2E1～W7E1已完成；W7E1仅在`tests/test_sim_interpretation.py`复用immutable
+      PASS-only source DAG，10个nodeid及真实producer/validator、PIT/missing/live drift/tamper保持。W8E1试验未达到预冻结worst-of-two门槛并已完整撤回，不保留test-only
+      store/helper或consumer改动。
     - 每wave只治理一个bounded leaf并预冻结isolated退出门槛；保持nodeid、真实producer/validator/CLI、DQ/PIT/tamper与投资语义；architecture/contract及单次自然Full在integration
-      boundary PASS。连续证据不足不得声称stable Full improvement；策略输入阻塞时保持`BLOCKED_INPUT`，`production_effect=none`。
-    - 2026-07-21：W6E1 isolated较慢值`-50.63%`，Full目标`-63.60%`；formal/full=`446/265/6498
-      passed`，Full runner=`926.10s`、fallback=false。下一步从W6 profile复核新candidate；TRADING-106仍需owner独立显式授权。
+      boundary PASS。连续证据不足不得声称stable Full improvement；失败试验完整撤回，`production_effect=none`。
+    - 2026-07-22：W8E1 baseline=`303.82s`，最终可裁决组=`245.02s`，绝对节省`58.80s`但仅降低`19.35%`，距20%门槛差`1.96s`，状态=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`；安全专项4
+      passed，撤回后focused 3 passed。shared Full=`6553 passed / 1168.92s`，共同文件/worker中位数显示广泛慢速波动，非局部回归；主任务等待下一profile-backed
+      candidate，ARCH-004仍停在G2.5前。
     raw_line: '|ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE|Architecture
-      / validation runtime、immutable fixture reuse与memory-aware parallelism|P1|IN_PROGRESS|Wave
-      7 candidate coordinator：从Wave 6 PASS Full选择下一个有真实isolated重复的bounded leaf；策略lane输入/授权独立判断|详见
+      / validation runtime、immutable fixture reuse与memory-aware parallelism|P1|IN_PROGRESS|Validation
+      performance coordinator：基于自然Full profile选择下一高确定性bounded candidate；策略lane输入/授权独立判断|详见
       `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
-      provenance、W2E1～W6E1已完成；W6E1仅在`tests/test_paper_shadow_daily.py`复用immutable
-      formal contract/protocol/signal-completeness与market/signal source，不改production/helper/validator/CLI/scheduler、DQ/PIT、research
-      policy或投资语义；v20 advisory seed/source-bound contract绑定Wave 5唯一PASS Full，Wave
-      6 Full不在closeout循环刷新v21。|每wave只治理一个bounded leaf并预冻结isolated退出门槛；保持nodeid、真实producer/validator/CLI、DQ/PIT/tamper与投资语义；architecture/contract及单次自然Full在integration
-      boundary PASS。连续证据不足不得声称stable Full improvement；策略输入阻塞时保持`BLOCKED_INPUT`，`production_effect=none`。|2026-07-21：W6E1
-      isolated较慢值`-50.63%`，Full目标`-63.60%`；formal/full=`446/265/6498 passed`，Full
-      runner=`926.10s`、fallback=false。下一步从W6 profile复核新candidate；TRADING-106仍需owner独立显式授权。|'
+      provenance、W2E1～W7E1已完成；W7E1仅在`tests/test_sim_interpretation.py`复用immutable
+      PASS-only source DAG，10个nodeid及真实producer/validator、PIT/missing/live drift/tamper保持。W8E1试验未达到预冻结worst-of-two门槛并已完整撤回，不保留test-only
+      store/helper或consumer改动。|每wave只治理一个bounded leaf并预冻结isolated退出门槛；保持nodeid、真实producer/validator/CLI、DQ/PIT/tamper与投资语义；architecture/contract及单次自然Full在integration
+      boundary PASS。连续证据不足不得声称stable Full improvement；失败试验完整撤回，`production_effect=none`。|2026-07-22：W8E1
+      baseline=`303.82s`，最终可裁决组=`245.02s`，绝对节省`58.80s`但仅降低`19.35%`，距20%门槛差`1.96s`，状态=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`；安全专项4
+      passed，撤回后focused 3 passed。shared Full=`6553 passed / 1168.92s`，共同文件/worker中位数显示广泛慢速波动，非局部回归；主任务等待下一profile-backed
+      candidate，ARCH-004仍停在G2.5前。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-5a5157ac7621aae98eae1a03
+  event_id: legacy-import-415766456f6e3355ea298e3a
   task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -78,13 +76,14 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P1
-    next_owner: Wave 7 candidate coordinator：从Wave 6 PASS Full选择下一个有真实isolated重复的bounded
-      leaf；策略lane输入/授权独立判断
-    notes: 2026-07-21：W6E1 isolated较慢值`-50.63%`，Full目标`-63.60%`；formal/full=`446/265/6498
-      passed`，Full runner=`926.10s`、fallback=false。下一步从W6 profile复核新candidate；TRADING-106仍需owner独立显式授权。
+    next_owner: Validation performance coordinator：基于自然Full profile选择下一高确定性bounded
+      candidate；策略lane输入/授权独立判断
+    notes: 2026-07-22：W8E1 baseline=`303.82s`，最终可裁决组=`245.02s`，绝对节省`58.80s`但仅降低`19.35%`，距20%门槛差`1.96s`，状态=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`；安全专项4
+      passed，撤回后focused 3 passed。shared Full=`6553 passed / 1168.92s`，共同文件/worker中位数显示广泛慢速波动，非局部回归；主任务等待下一profile-backed
+      candidate，ARCH-004仍停在G2.5前。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:5a5157ac7621aae98eae1a03cf830b22080c9bcb11bf4153c09cb20903356a7d
+  - sha256:415766456f6e3355ea298e3ae6df21c69bbff4752407453bae5e4ecc352ccf4e
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -92,19 +91,19 @@ projection:
   - Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism
   - P1
   - IN_PROGRESS
-  - Wave 7 candidate coordinator：从Wave 6 PASS Full选择下一个有真实isolated重复的bounded leaf；策略lane输入/授权独立判断
+  - Validation performance coordinator：基于自然Full profile选择下一高确定性bounded candidate；策略lane输入/授权独立判断
   - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
-    provenance、W2E1～W6E1已完成；W6E1仅在`tests/test_paper_shadow_daily.py`复用immutable formal
-    contract/protocol/signal-completeness与market/signal source，不改production/helper/validator/CLI/scheduler、DQ/PIT、research
-    policy或投资语义；v20 advisory seed/source-bound contract绑定Wave 5唯一PASS Full，Wave 6
-    Full不在closeout循环刷新v21。
+    provenance、W2E1～W7E1已完成；W7E1仅在`tests/test_sim_interpretation.py`复用immutable PASS-only
+    source DAG，10个nodeid及真实producer/validator、PIT/missing/live drift/tamper保持。W8E1试验未达到预冻结worst-of-two门槛并已完整撤回，不保留test-only
+    store/helper或consumer改动。
   - 每wave只治理一个bounded leaf并预冻结isolated退出门槛；保持nodeid、真实producer/validator/CLI、DQ/PIT/tamper与投资语义；architecture/contract及单次自然Full在integration
-    boundary PASS。连续证据不足不得声称stable Full improvement；策略输入阻塞时保持`BLOCKED_INPUT`，`production_effect=none`。
-  - 2026-07-21：W6E1 isolated较慢值`-50.63%`，Full目标`-63.60%`；formal/full=`446/265/6498
-    passed`，Full runner=`926.10s`、fallback=false。下一步从W6 profile复核新candidate；TRADING-106仍需owner独立显式授权。
+    boundary PASS。连续证据不足不得声称stable Full improvement；失败试验完整撤回，`production_effect=none`。
+  - 2026-07-22：W8E1 baseline=`303.82s`，最终可裁决组=`245.02s`，绝对节省`58.80s`但仅降低`19.35%`，距20%门槛差`1.96s`，状态=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`；安全专项4
+    passed，撤回后focused 3 passed。shared Full=`6553 passed / 1168.92s`，共同文件/worker中位数显示广泛慢速波动，非局部回归；主任务等待下一profile-backed
+    candidate，ARCH-004仍停在G2.5前。
   docs_links:
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   terminal: false
-  raw_row_sha256: 5a5157ac7621aae98eae1a03cf830b22080c9bcb11bf4153c09cb20903356a7d
+  raw_row_sha256: 415766456f6e3355ea298e3ae6df21c69bbff4752407453bae5e4ecc352ccf4e
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 20dd170f12cda7272bde180617ca59343aef67bc4f63def5411164fd5d848313
+fragment_checksum: f4d49072e5531aa548cae3de2306dc5e0be87931e4605fca8b4c8f8a3435350e

@@ -11,15 +11,17 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: strategy lane；依赖 TRADING-2452 S4 closeout，最终路径需 project owner review
+  next_owner: project owner：在 A保持KILL / B新policy+新preregistration / C新授权causal diagnostic
+    中决定；默认A/KILL_PAUSE
   requirement_refs:
   - docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md`。TRADING-2452
-    的 1,800 个 COMPLETE train evaluations 全部因现有 constraint-hit policy 被 reject；本任务只做冻结输入重算、分层归因、policy/计算语义审计和
-    owner decision pack。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md`。正式
+    diagnosis=`trading2453-constraint-hit_745d7d6d7b4579929546`；1,800/1,800 行机械重算
+    exact，best-template选择是现行设计而非实现错误，主要发现为smoke来源的0.65与fold hard eligibility之间的policy-role
+    mismatch。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 绑定有效 run/package/policy/source hashes；重算 gate exact match；按 fold/template/policy
@@ -30,36 +32,42 @@ task_record:
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1547
-    row_sha256: 85cffb79485946983788236c3535e2ca315563fc75587b2169c13c6a01806ee5
+    line_number: 1560
+    row_sha256: 088e2aad4292264626feaed0125593f12bd0ceb4f7391fecd56ef97e675e63ed
     cell_count: 8
     all_cells:
     - TRADING-2453_CONSTRAINT_HIT_REJECTION_DIAGNOSIS_AND_OWNER_REVIEW
     - Strategy research / constraint-hit 全量拒绝诊断与 owner review
     - P0
-    - READY
-    - strategy lane；依赖 TRADING-2452 S4 closeout，最终路径需 project owner review
-    - 详见 `docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md`。TRADING-2452
-      的 1,800 个 COMPLETE train evaluations 全部因现有 constraint-hit policy 被 reject；本任务只做冻结输入重算、分层归因、policy/计算语义审计和
-      owner decision pack。
+    - BLOCKED_OWNER_INPUT
+    - project owner：在 A保持KILL / B新policy+新preregistration / C新授权causal diagnostic
+      中决定；默认A/KILL_PAUSE
+    - 详见 `docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md`。正式
+      diagnosis=`trading2453-constraint-hit_745d7d6d7b4579929546`；1,800/1,800 行机械重算
+      exact，best-template选择是现行设计而非实现错误，主要发现为smoke来源的0.65与fold hard eligibility之间的policy-role
+      mismatch。
     - 绑定有效 run/package/policy/source hashes；重算 gate exact match；按 fold/template/policy
       hash/constraint type 输出分布；区分正确拒绝、统计口径问题与统一窗口暴露的结构风险；不得改阈值、扩候选、搜索参数或访问 prospective；输出
       owner options 且默认保持 KILL/PAUSE。
-    - 2026-07-21：由 TRADING-2452 正式负面结果登记；等待 TRADING-2452 focused/architecture/contract/full
-      与提交完成后启动，`production_effect=none`。
+    - 2026-07-22：S0～S3与content-derived owner pack PASS；formal focused/architecture/contract/Full=`15/446/265/6553
+      passed`。推荐A结束当前package；B必须新reviewed policy+新preregistration/package，不能称same-package
+      replay；C需要新授权。Owner决策前保持`KILL_PAUSE`，`production_effect=none`。
     raw_line: '|TRADING-2453_CONSTRAINT_HIT_REJECTION_DIAGNOSIS_AND_OWNER_REVIEW|Strategy
-      research / constraint-hit 全量拒绝诊断与 owner review|P0|READY|strategy lane；依赖 TRADING-2452
-      S4 closeout，最终路径需 project owner review|详见 `docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md`。TRADING-2452
-      的 1,800 个 COMPLETE train evaluations 全部因现有 constraint-hit policy 被 reject；本任务只做冻结输入重算、分层归因、policy/计算语义审计和
-      owner decision pack。|绑定有效 run/package/policy/source hashes；重算 gate exact match；按
-      fold/template/policy hash/constraint type 输出分布；区分正确拒绝、统计口径问题与统一窗口暴露的结构风险；不得改阈值、扩候选、搜索参数或访问
-      prospective；输出 owner options 且默认保持 KILL/PAUSE。|2026-07-21：由 TRADING-2452 正式负面结果登记；等待
-      TRADING-2452 focused/architecture/contract/full 与提交完成后启动，`production_effect=none`。|'
+      research / constraint-hit 全量拒绝诊断与 owner review|P0|BLOCKED_OWNER_INPUT|project
+      owner：在 A保持KILL / B新policy+新preregistration / C新授权causal diagnostic 中决定；默认A/KILL_PAUSE|详见
+      `docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md`。正式
+      diagnosis=`trading2453-constraint-hit_745d7d6d7b4579929546`；1,800/1,800 行机械重算
+      exact，best-template选择是现行设计而非实现错误，主要发现为smoke来源的0.65与fold hard eligibility之间的policy-role
+      mismatch。|绑定有效 run/package/policy/source hashes；重算 gate exact match；按 fold/template/policy
+      hash/constraint type 输出分布；区分正确拒绝、统计口径问题与统一窗口暴露的结构风险；不得改阈值、扩候选、搜索参数或访问 prospective；输出
+      owner options 且默认保持 KILL/PAUSE。|2026-07-22：S0～S3与content-derived owner pack
+      PASS；formal focused/architecture/contract/Full=`15/446/265/6553 passed`。推荐A结束当前package；B必须新reviewed
+      policy+新preregistration/package，不能称same-package replay；C需要新授权。Owner决策前保持`KILL_PAUSE`，`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-85cffb79485946983788236c
+  event_id: legacy-import-088e2aad4292264626feaed0
   task_id: TRADING-2453_CONSTRAINT_HIT_REJECTION_DIAGNOSIS_AND_OWNER_REVIEW
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -69,34 +77,38 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: READY
+  to_status: BLOCKED_OWNER_INPUT
   payload:
     priority: P0
-    next_owner: strategy lane；依赖 TRADING-2452 S4 closeout，最终路径需 project owner review
-    notes: 2026-07-21：由 TRADING-2452 正式负面结果登记；等待 TRADING-2452 focused/architecture/contract/full
-      与提交完成后启动，`production_effect=none`。
+    next_owner: project owner：在 A保持KILL / B新policy+新preregistration / C新授权causal diagnostic
+      中决定；默认A/KILL_PAUSE
+    notes: 2026-07-22：S0～S3与content-derived owner pack PASS；formal focused/architecture/contract/Full=`15/446/265/6553
+      passed`。推荐A结束当前package；B必须新reviewed policy+新preregistration/package，不能称same-package
+      replay；C需要新授权。Owner决策前保持`KILL_PAUSE`，`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:85cffb79485946983788236c3535e2ca315563fc75587b2169c13c6a01806ee5
+  - sha256:088e2aad4292264626feaed0125593f12bd0ceb4f7391fecd56ef97e675e63ed
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2453_CONSTRAINT_HIT_REJECTION_DIAGNOSIS_AND_OWNER_REVIEW
   - Strategy research / constraint-hit 全量拒绝诊断与 owner review
   - P0
-  - READY
-  - strategy lane；依赖 TRADING-2452 S4 closeout，最终路径需 project owner review
-  - 详见 `docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md`。TRADING-2452
-    的 1,800 个 COMPLETE train evaluations 全部因现有 constraint-hit policy 被 reject；本任务只做冻结输入重算、分层归因、policy/计算语义审计和
-    owner decision pack。
+  - BLOCKED_OWNER_INPUT
+  - project owner：在 A保持KILL / B新policy+新preregistration / C新授权causal diagnostic 中决定；默认A/KILL_PAUSE
+  - 详见 `docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md`。正式
+    diagnosis=`trading2453-constraint-hit_745d7d6d7b4579929546`；1,800/1,800 行机械重算
+    exact，best-template选择是现行设计而非实现错误，主要发现为smoke来源的0.65与fold hard eligibility之间的policy-role
+    mismatch。
   - 绑定有效 run/package/policy/source hashes；重算 gate exact match；按 fold/template/policy
     hash/constraint type 输出分布；区分正确拒绝、统计口径问题与统一窗口暴露的结构风险；不得改阈值、扩候选、搜索参数或访问 prospective；输出
     owner options 且默认保持 KILL/PAUSE。
-  - 2026-07-21：由 TRADING-2452 正式负面结果登记；等待 TRADING-2452 focused/architecture/contract/full
-    与提交完成后启动，`production_effect=none`。
+  - 2026-07-22：S0～S3与content-derived owner pack PASS；formal focused/architecture/contract/Full=`15/446/265/6553
+    passed`。推荐A结束当前package；B必须新reviewed policy+新preregistration/package，不能称same-package
+    replay；C需要新授权。Owner决策前保持`KILL_PAUSE`，`production_effect=none`。
   docs_links:
   - docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md
   terminal: false
-  raw_row_sha256: 85cffb79485946983788236c3535e2ca315563fc75587b2169c13c6a01806ee5
+  raw_row_sha256: 088e2aad4292264626feaed0125593f12bd0ceb4f7391fecd56ef97e675e63ed
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: e94958794575049785550e15ed7263a4528e2e91ba5a29c70b9206fc01ca4bd8
+fragment_checksum: e6cfcb2681e736e89912da15ac26d5d4ba2808c373c937d95b69688c93cd7994

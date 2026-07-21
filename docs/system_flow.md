@@ -120,6 +120,20 @@ fixed reports。JSONL writer 强制 one-object-per-line；更早一轮因多行 
 `constraint_hits_delta_exceeds_policy`，所以 train-only selected/test/recent 均为 0，报告状态为
 `INCOMPLETE_NO_ELIGIBLE_CANDIDATE`。该负面结果不允许事后放宽 policy、扩候选或搜索参数；后续只能
 先进入独立 constraint-hit 结构诊断与 owner review，prospective holdout 继续未访问。
+
+TRADING-2453 只读消费上述正式run与TRADING-2452 package，不重跑evaluator。诊断先绑定run/package/
+runtime/policy/gate source/real-evaluation source/rescue-template source hashes，并逐行重算1,800个train
+evaluation的hit count↔rate、delta、candidate parameters、gate与reasons；随后按fold、best v0.3
+template、candidate policy hash与constraint type聚合，null单列且不转0。正式diagnosis=
+`trading2453-constraint-hit_745d7d6d7b4579929546`，1,800/1,800 exact、validator PASS。
+语义审计确认`payload.best_candidate`是四个`dynamic_v0_3_rescue` templates内部选优的现行设计，
+不是实现取错行；主要发现是`parameter_sweep_real_smoke.yaml`中为small-real observe-only smoke配置且
+明确“not a promotion gate”的`max_constraint_hit_rate=0.65`，在TRADING-2452冻结selection中被用作
+fold hard eligibility，形成`POLICY_ROLE_MISMATCH_REQUIRES_OWNER_REVIEW`。Owner pack默认
+`KILL_PAUSE`并推荐结束当前package；任何新gate必须新policy version+新preregistration/package，
+per-template/per-axis causal replay也需新授权。该链固定prospective/promotion/paper-shadow/production/
+broker关闭，不能把修改gate后的运行称为same-package replay。
+
 `aits research ops strategy-restart-decision` 仅消费 R0/R1 validator PASS artifacts，按
 HOLD→CONTINUE_EVIDENCE_CLOSURE→PAUSE_CANDIDATE_EXPANSION→CONTINUE_FORWARD_MATURATION→READY
 顺序决策；validator 重验所有 live source commitments、80 fold summaries、stress/regime

@@ -2,7 +2,7 @@
 
 最后更新：2026-07-21
 
-状态：`READY`
+状态：`BLOCKED_OWNER_INPUT`
 
 稳定任务 ID：`TRADING-2453_CONSTRAINT_HIT_REJECTION_DIAGNOSIS_AND_OWNER_REVIEW`
 
@@ -51,3 +51,31 @@ recent-known diagnostic 均未执行。
 - Strategy lane 负责 S0～S3；Engineering lane 可并行继续 ARCH-004 既定工作，但不得同时修改
   central gate/policy、共享 task/system-flow/catalog；
 - owner 只在 S3 review pack 后决定是否产生新的策略实现或预注册任务。
+
+## 进展记录
+
+- 2026-07-21：TRADING-2452 已完成 formal validation 与本地提交，S0/S1 启动。预检确认
+  1,800 行 gate reason 可从冻结 policy 重算；同时发现前五个 fold 内 300 个候选的
+  `constraint_hit_rate` 各自完全相同，且 1,602/1,800 行的
+  `real_best_candidate_policy_id=dynamic_regime_overlay_v0_3b_drawdown_guarded`。该现象只作为
+  S2 语义审计输入，不据此修改 evaluator、阈值、候选或 selection rule；默认结论继续为
+  `KILL/PAUSE`，`production_effect=none`。
+- 2026-07-21：S0～S3 已完成，正式 diagnosis=
+  `trading2453-constraint-hit_745d7d6d7b4579929546`，content-derived validator=`PASS/0`。
+  1,800/1,800 行 hit count/rate/delta/gate/reason 与冻结 policy exact match，结论为
+  `CALCULATION_MATCH`；`payload.best_candidate` 是四个 v0.3 templates 内部选优的现行设计，
+  classification=`DESIGNED_TEMPLATE_SELECTION_NOT_IMPLEMENTATION_DEFECT`。主要审计发现为
+  `POLICY_ROLE_MISMATCH_REQUIRES_OWNER_REVIEW`：`max_constraint_hit_rate=0.65` 的 source rationale
+  是 small-real smoke / observe-only enablement 且明确不是 promotion gate，但在 TRADING-2452
+  preregistration 中被用作 fold train hard eligibility。冻结结果仍然有效，不允许在原 package 内
+  改 gate。
+- 2026-07-21：Owner pack 状态=`READY_FOR_OWNER_REVIEW`，默认/推荐为
+  `A_KEEP_KILL_AND_CLOSE_CURRENT_PACKAGE`；B 要求新 reviewed policy + 新 preregistration/package，
+  不能称为 same-package replay；C 要求新授权的 per-template/per-axis causal diagnostic replay。
+  Owner 决策前状态固定 `BLOCKED_OWNER_INPUT/KILL_PAUSE`，prospective、promotion、paper-shadow、
+  production 与 broker/order 均关闭。
+- 2026-07-22：shared integration正式门禁完成：diagnosis validator=`PASS/0`，focused=`15 passed`，
+  architecture=`446 passed`，contract=`265 passed`，唯一自然Full=
+  `6553 passed / 2 skipped / 643 warnings`。Full profile/telemetry/performance/provenance均PASS，
+  scheduler applied=true、fallback=false；新增TRADING-2453 test文件在Full中仅`2.41s`。任务保持
+  `BLOCKED_OWNER_INPUT`而非伪造完成，等待Owner选择A/B/C，`production_effect=none`。

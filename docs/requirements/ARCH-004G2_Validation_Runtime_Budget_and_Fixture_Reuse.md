@@ -1522,6 +1522,54 @@ production/helper/CLI、DQ/PIT、research policy或投资语义。Formal archite
 manifests/hash 由 coordinator 在 TRADING-2452 共享集成边界统一闭合；在唯一自然 Full 完成前，
 `stable_full_improvement_claimed=false`、`production_effect=none`。
 
+2026-07-21 / W7E1 shared integration 已闭合：最终 architecture=`446 passed`、contract=
+`265 passed`、Full=`6543 passed / 2 skipped / 642 warnings`，pytest=`1009.31s`、runner=
+`1010.39s`，profile/telemetry/performance/provenance均PASS，scheduler applied=true、
+fallback=false、tail idle max=`10.32s`。目标文件在自然 Full 中为`10 nodes / 53.1483s`，与
+isolated较慢after=`45.15s`方向一致；但Full总墙钟仍与最近`1005.04/1028.74/1005.52s`处于同一
+波动区间，因此只闭合W7E1局部退出门槛，不声明stable Full improvement。
+
+### Wave 8 W8E1：Smoothed cross-worker immutable upstream / COW pilot
+
+2026-07-21：owner继续双线推进后，从最终Full及最近三次complete profile复核新候选。16 workers
+几乎全程忙碌且tail idle max仅`10.32s`，当前主要风险不是worker不足，而是多个Smoothed文件跨worker
+重复构建相同重上游。W8E1只允许审计并试点
+`tests/test_smoothed_forward_weekly_run.py`与`tests/test_smoothed_bootstrap_retry.py`，以及一个新建、
+test-only、内容寻址的immutable store/helper与其专项测试；不得修改production `src`、CLI、全局
+`conftest.py`、策略/config、DQ/PIT、validator或投资语义。
+
+Store key必须覆盖实际读取的source/config/policy/cache/DQ bytes、validator identity/version、
+Python/schema version和绝对root语义；只复用完整PASS immutable upstream，FAIL/exception不得缓存。
+任一source drift必须miss并由真实validator fail closed；每个consumer的可写output保持独立，tamper
+只能copy-on-write或由`finally` byte-exact restore。先在无其他pytest负载下取得两个文件各自的exact
+isolated baseline和空/热缓存证据，再冻结退出门槛：worst-of-two至少降低20%，且两文件合计绝对节省
+不少于45秒；任一安全边界或收益门槛不满足即完整撤回。多个候选只在下一自然integration boundary
+运行一次architecture/contract/Full；不足三份qualifying Full不声明stable全局提速。
+
+W8E1最终状态=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`。无其他pytest负载时的冻结baseline为
+weekly=`185.70s`、bootstrap=`118.12s`、合计=`303.82s`；退出门槛要求worst-of-two合计
+`<=243.06s`且绝对节省`>=45s`。首版两个执行顺序分别为`219.34s`（PASS）与`259.00s`
+（FAIL）。移除hot-hit路径内与consumer真实live validation重复的一次validator调用后，最终可裁决组为
+weekly cold=`179.71s`、bootstrap hot=`65.31s`、合计=`245.02s`：绝对节省`58.80s`，但仅降低
+`19.35%`，距20%门槛差`1.96s`，因此不继续反向长跑并完整撤回。
+
+撤回前安全专项=`4 passed`，覆盖cold/hot、source drift、artifact tamper、FAIL/exception不缓存和
+consumer输出隔离；没有发现安全合同失败。撤回后两个目标test文件diff归零，新helper、专项test和
+runtime store均不存在；原始focused=`3 passed / 250.58s`、Ruff与`git diff --check` PASS。该结果
+说明immutable upstream方向有收益信号但当前波动下不足以可靠跨过冻结门槛，不能作为保留实现或stable
+Full improvement的依据。它不是G2.4/G2.5 migration，不改变handoff的
+`next_slice_unblocked=false`，`strategy_logic_changed=false`、`cached_data_mutated=false`、
+`production_effect=none`。
+
+2026-07-22 / shared integration唯一自然Full=`6553 passed / 2 skipped / 643 warnings`，pytest=
+`1167.83s`、runner=`1168.92s`；scheduler applied=true、fallback=false，profile/telemetry/performance/
+provenance均PASS，tail idle max=`12.24s`。相对上一份runner=`1010.39s`墙钟增加约`15.69%`，但
+1,089个共同test文件的duration median ratio=`1.1437`、worker busy median ratio=`1.1568`，与
+wall ratio=`1.1570`同向，显示广泛机器/套件波动。W8E1目标weekly/bootstrap在两份Full中只从
+`541.60/362.98s`变为`572.96/373.81s`（`+5.79%/+2.98%`），TRADING-2453新增test文件仅
+`2.41s`，因此不归因于局部W8E1残留或新增策略诊断。单次Full不支持stable improvement claim；
+下一wave仍必须从该profile选定更高确定性bounded candidate并预冻结退出门槛。
+
 ## 验收标准
 
 - 当前 4 个 confirmation 长尾 module 的累计 wall time至少降低70%，最大单shard不超过当前
