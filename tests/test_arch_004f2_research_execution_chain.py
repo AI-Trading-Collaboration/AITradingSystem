@@ -21,9 +21,9 @@ def test_research_execution_chain_documents_semantics_calculation_and_optimizati
     for section in required_sections:
         assert section in text
 
-    assert "`ai_after_chatgpt`，起点 `2022-12-01`" in text
+    assert "`unified_primary_2021`，起点 `2021-02-22`" in text
     assert "`exact_three_asset_validated`，起点 `2021-02-22`" in text
-    assert "不能依赖该默认值" in text
+    assert "历史 regime" in text
     assert "周期复核不等于自动调优" in text
     assert "workflow PASS 不等于投资有效性 PASS" in text
     assert "GROWTH_TILT_CANDIDATE_FAMILY_CLOSED_NO_EXECUTABLE_PIT_CANDIDATE" in text

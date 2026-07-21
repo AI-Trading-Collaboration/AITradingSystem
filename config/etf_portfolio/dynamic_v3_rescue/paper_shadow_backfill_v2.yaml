@@ -1,0 +1,209 @@
+schema_version: 1
+
+backfill:
+  name: dynamic_v3_rescue_paper_shadow_backfill_v2
+  mode: BACKTEST_SIMULATION
+  not_pit_safe: true
+  research_target_only: true
+  paper_shadow_only: true
+
+policy_metadata:
+  policy_id: dynamic_v3_rescue_paper_shadow_backfill_v2
+  owner: project_owner
+  version: 2026-07-21
+  status: pilot_baseline
+  rationale: >
+    Reconstruct research-only paper shadow target-method paths over the
+    owner-approved unified_primary_2021 research window while preserving the
+    former v1 policy only for historical artifact replay.
+  intended_effect: >
+    Provide non-production historical research diagnostics for target method
+    return, drawdown, regime behavior, stability, and turnover without using
+    2022-12-01 as an active lower bound.
+  validation_evidence: >
+    TRADING-2452 unified-window migration, focused artifact validators, data
+    quality gate, and system-target history regression tests.
+  review_condition: >
+    Revisit after owner review of the first v2 historical backfill and after
+    enough forward paper shadow observations exist to compare simulated and
+    forward evidence.
+
+date_range:
+  start: "2021-02-22"
+  end: latest_available
+  rebalance_frequency: weekly
+  rebalance_day: MON
+  min_history_days_before_first_rebalance: 60
+
+source:
+  model_target_config: config/etf_portfolio/dynamic_v3_rescue/model_target_portfolio_v1.yaml
+  model_target_dir: reports/etf_portfolio/dynamic_v3_rescue/model_target
+  paper_shadow_config: config/etf_portfolio/dynamic_v3_rescue/paper_shadow_account_v2.yaml
+  position_advisory_daily_dir: reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily
+  shadow_monitor_dir: reports/etf_portfolio/dynamic_v3_rescue/shadow_monitor_runs
+  shadow_shortlist_dir: reports/etf_portfolio/dynamic_v3_rescue/shadow_shortlist
+  consensus_drift_dir: reports/etf_portfolio/dynamic_v3_rescue/consensus_drift
+  risk_capped_limited_config: config/etf_portfolio/dynamic_v3_rescue/risk_capped_limited_adjustment_v1.yaml
+  smoothed_limited_config: config/etf_portfolio/dynamic_v3_rescue/smoothed_limited_adjustment_v1.yaml
+  price_source: existing_price_cache
+  price_cache_path: data/raw/prices_daily.csv
+  use_adjusted_close: true
+
+target_methods:
+  enabled:
+    - static_baseline
+    - no_trade_baseline
+    - consensus_target
+    - limited_adjustment
+    - smooth_weights_3d_limited_adjustment
+    - smooth_weights_5d_limited_adjustment
+    - risk_capped_limited_adjustment
+    - defensive_limited_adjustment
+    - equal_weight_shadow_candidates
+    - selected_top_candidate
+
+costs:
+  transaction_cost_bps: 0
+  slippage_bps: 0
+
+evaluation:
+  min_observations_per_window: 20
+  rank_stability:
+    top_n: 3
+    stable_top_frequency_min: 0.60
+    stable_bottom_frequency_max: 0.20
+    unstable_bottom_frequency_min: 0.50
+  rationale: >
+    Thin windows remain visible but are marked INSUFFICIENT_DATA before they
+    influence method selection. Rank-stability labels are governed here rather
+    than embedded as unexplained code thresholds.
+
+regime_policy:
+  min_sample_count: 5
+  risk_off_symbol: QQQ
+  tech_drawdown_symbol: QQQ
+  semiconductor_pullback_symbol: SMH
+  ai_trend_symbol: QQQ
+  strong_recovery_symbol: SMH
+  risk_off_return_threshold: -0.015
+  tech_drawdown_return_threshold: -0.010
+  semiconductor_pullback_return_threshold: -0.012
+  ai_trend_return_threshold: 0.008
+  strong_recovery_return_threshold: 0.012
+  rationale: >
+    Initial rule-based buckets for research diagnostics only. These thresholds
+    do not approve defensive rules and must be revisited after owner review.
+
+stability_policy:
+  large_jump_threshold: 0.10
+  high_jump_threshold: 0.20
+  stable_max_daily_weight_change: 0.08
+  unstable_max_daily_weight_change: 0.18
+  moderate_annualized_turnover: 1.5
+  high_annualized_turnover: 4.0
+  rationale: >
+    Pilot diagnostics for large weight path changes and high turnover. These
+    labels affect research review only, not trading permission.
+
+selection_policy:
+  preferred_method_order:
+    - limited_adjustment
+    - defensive_limited_adjustment
+    - equal_weight_shadow_candidates
+    - consensus_target
+  reference_only_methods:
+    - consensus_target
+  preferred_method_score_tolerance: 0.10
+  continue_observation_score: 0.55
+  review_required_score: 0.35
+  score_weights:
+    return: 0.25
+    drawdown: 0.25
+    risk_adjusted: 0.20
+    regime: 0.15
+    stability: 0.15
+    turnover_penalty: 0.10
+  stability_status_scores:
+    STABLE: 1.0
+    MODERATE: 0.65
+    UNSTABLE: 0.15
+  rationale: >
+    Balanced pilot scorecard that favors durable return, lower drawdown,
+    risk-adjusted behavior, regime coverage, and stability. A preferred method
+    can remain recommended only when it is close to the highest score and is not
+    blocked by insufficient data.
+
+method_hardening_policy:
+  policy_version: method_refinement_v1
+  policy_status: PILOT_BASELINE
+  policy_owner: project_owner
+  reviewed_at: 2026-07-13
+  candidate_method: limited_adjustment
+  comparison_baselines:
+    - static_baseline
+    - no_trade_baseline
+  risk_exposure_symbols:
+    - SPY
+    - QQQ
+    - SMH
+    - SOXX
+    - TQQQ
+  semiconductor_symbols:
+    - SMH
+    - SOXX
+  pressure_regimes:
+    - risk_off
+    - tech_drawdown
+    - semiconductor_pullback
+  exposure_similarity_tolerance: 0.03
+  method_refinement:
+    instability:
+      return_underperformance_tolerance: -0.0001
+      drawdown_worse_tolerance: -0.002
+      high_severity_return_delta: -0.005
+      high_severity_drawdown_delta: -0.01
+      turnover_high_threshold: 0.08
+      weight_jump_threshold: 0.04
+    risk_events:
+      window_days: 20
+      drawdown_delta_threshold: -0.002
+      volatility_delta_threshold: 0.005
+      turnover_delta_threshold: 0.02
+      high_semiconductor_weight: 0.25
+      low_cash_weight: 0.10
+    alternative_review:
+      high_total_return_threshold: 0.10
+      existing_methods:
+        - limited_adjustment
+        - defensive_limited_adjustment
+        - static_baseline
+        - consensus_target
+      conceptual_methods:
+        - risk_capped_limited_adjustment
+        - regime_gated_limited_adjustment
+        - lower_turnover_limited_adjustment
+        - cash_buffered_limited_adjustment
+      primary_research_candidates:
+        - risk_capped_limited_adjustment
+        - regime_gated_limited_adjustment
+  review_condition: >
+    Replace this pilot baseline when owner-approved calibration, forward
+    paper-shadow evidence, or a material change to the candidate methods,
+    pressure regimes, or source data contract is accepted.
+  forward_confirmation_required: true
+  rationale: >
+    Bind TRADING-219 to 223 attribution, long-window risk, consistency, warning
+    impact, and hardening interpretations to reviewed method, baseline,
+    exposure, and pressure-regime semantics. This pilot policy affects only
+    manual research review and expires when owner-approved calibration or
+    forward paper-shadow evidence replaces it.
+
+safety:
+  research_target_only: true
+  paper_shadow_only: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_effect: none
+  auto_apply: false

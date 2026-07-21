@@ -7,10 +7,10 @@ search:
     - limited_adjustment
     - smooth_weights_3d_limited_adjustment
   mode: research_screening_only
-  market_regime: ai_after_chatgpt
+  market_regime: unified_primary_2021
   anchor_event: ChatGPT public launch
   anchor_date: "2022-11-30"
-  default_backtest_start: "2022-12-01"
+  default_backtest_start: "2021-02-22"
   rationale: >
     Batch-2 expands from single-candidate validation to broad
     research-only screening across smoothing, cooldown, regime gates,

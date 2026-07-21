@@ -17,6 +17,7 @@ from ai_trading_system.data_foundation import (
     DEFAULT_RESEARCH_EXECUTION_OUTPUT_ROOT,
     DEFAULT_RESEARCH_LABEL_OUTPUT_ROOT,
     DEFAULT_RESEARCH_RUN_OUTPUT_ROOT,
+    PRIMARY_RESEARCH_START,
     audit_research_case_library,
     audit_research_execution_cache,
     audit_research_labels,
@@ -62,7 +63,7 @@ def labels_build_regime_labels_command(
     as_of_date: Annotated[
         str,
         typer.Option("--as-of-date", "--as-of", help="Label as-of date。"),
-    ] = "2022-12-01",
+    ] = PRIMARY_RESEARCH_START,
     output_root: Annotated[
         Path,
         typer.Option("--output-root", help="Research labels 输出目录。"),
@@ -80,7 +81,7 @@ def labels_build_event_labels_command(
     as_of_date: Annotated[
         str,
         typer.Option("--as-of-date", "--as-of", help="Label as-of date。"),
-    ] = "2022-12-01",
+    ] = PRIMARY_RESEARCH_START,
     output_root: Annotated[
         Path,
         typer.Option("--output-root", help="Research labels 输出目录。"),
@@ -98,7 +99,7 @@ def labels_build_cluster_labels_command(
     as_of_date: Annotated[
         str,
         typer.Option("--as-of-date", "--as-of", help="Label as-of date。"),
-    ] = "2022-12-01",
+    ] = PRIMARY_RESEARCH_START,
     output_root: Annotated[
         Path,
         typer.Option("--output-root", help="Research labels 输出目录。"),
@@ -116,7 +117,7 @@ def labels_audit_command(
     as_of_date: Annotated[
         str,
         typer.Option("--as-of-date", "--as-of", help="Label as-of date。"),
-    ] = "2022-12-01",
+    ] = PRIMARY_RESEARCH_START,
     output_root: Annotated[
         Path,
         typer.Option("--output-root", help="Research labels 输出目录。"),

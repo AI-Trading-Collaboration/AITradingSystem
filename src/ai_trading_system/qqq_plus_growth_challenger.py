@@ -12,7 +12,7 @@ import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data_foundation import (
-    AI_REGIME_START,
+    PRIMARY_RESEARCH_START,
     utc_now_iso,
     write_foundation_artifact_pair,
 )
@@ -39,9 +39,9 @@ DEFAULT_QQQ_OUTPERFORMANCE_OWNER_DECISION_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "qqq_outperformance_owner_decision_pack.md"
 )
 DEFAULT_AI_REGIME_BACKTEST_START = (
-    AI_REGIME_START
-    if isinstance(AI_REGIME_START, date)
-    else date.fromisoformat(str(AI_REGIME_START))
+    PRIMARY_RESEARCH_START
+    if isinstance(PRIMARY_RESEARCH_START, date)
+    else date.fromisoformat(str(PRIMARY_RESEARCH_START))
 )
 
 PRIMARY_BENCHMARK_ID = "100_qqq"
@@ -2100,12 +2100,12 @@ def _payload(
         "title": title,
         "status": status,
         "generated_at": utc_now_iso(),
-        "market_regime": "ai_after_chatgpt",
-        "anchor_event": "ChatGPT public launch",
-        "anchor_date": "2022-11-30",
+        "market_regime": "unified_primary_2021",
+        "anchor_event": "validated QQQ/SGOV/TQQQ common history start",
+        "anchor_date": "2021-02-22",
         "default_backtest_start": DEFAULT_AI_REGIME_BACKTEST_START.isoformat(),
         "summary": {
-            "market_regime": "ai_after_chatgpt",
+            "market_regime": "unified_primary_2021",
             "default_backtest_start": DEFAULT_AI_REGIME_BACKTEST_START.isoformat(),
             **dict(summary),
         },

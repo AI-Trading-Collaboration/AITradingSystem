@@ -116,7 +116,7 @@ def test_ai_semiconductor_leadership_generator_cli_writes_outputs(
 
     assert summary["status"] == STATUS
     assert summary["data_quality_status"] == "PASS"
-    assert summary["market_regime"] == "ai_after_chatgpt"
+    assert summary["market_regime"] == "unified_primary_2021"
     assert summary["actual_requested_date_range"] == "2026-05-15..2026-06-29"
     assert summary["full_universe_validation_blocker_out_of_scope"] == FULL_UNIVERSE_BLOCKER
     assert summary["summary"]["candidate_count"] == 3

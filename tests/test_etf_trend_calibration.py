@@ -37,7 +37,7 @@ def test_trend_calibration_policy_loads_and_rejects_unsafe(tmp_path: Path) -> No
     policy = load_trend_calibration_policy_config()
 
     assert policy.safety.model_dump(mode="json") == TREND_CALIBRATION_SAFETY
-    assert policy.market_regime.regime_id == "ai_after_chatgpt"
+    assert policy.market_regime.regime_id == "unified_primary_2021"
     assert policy.search.preset_weight_sets
 
     raw = yaml.safe_load(DEFAULT_TREND_CALIBRATION_POLICY_CONFIG_PATH.read_text(encoding="utf-8"))
@@ -75,7 +75,7 @@ def test_dataset_search_report_are_evaluation_only_and_candidate_only() -> None:
         generated_at=GENERATED_AT,
     )
 
-    assert dataset["market_regime"] == "ai_after_chatgpt"
+    assert dataset["market_regime"] == "unified_primary_2021"
     assert dataset["records"][0]["evaluation_only"] is True
     assert dataset["records"][0]["forward_return_windows"]
     assert score_run["scores"][0]["CompositeTrendScore"] >= 0

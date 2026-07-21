@@ -15,9 +15,9 @@ policy_metadata:
     Review whenever daily scoring modules, position gates, Research Campaign
     adapters, or report conclusion boundaries change.
 market_regime:
-  regime_id: ai_after_chatgpt
-  requested_date_range: "2022-12-01..present"
-  anchor_event: "ChatGPT public launch on 2022-11-30"
+  regime_id: unified_primary_2021
+  requested_date_range: "2021-02-22..present"
+  anchor_event: "validated QQQ/SGOV/TQQQ common history start"
 data_quality_status: NOT_REQUIRED_CONFIG_ONLY
 safety_boundary:
   research_only: true
@@ -97,7 +97,7 @@ validation_policy:
     min_trigger_observations_for_mapping_research: 20
     min_walk_forward_windows: 4
   holdout:
-    default_development_window: "2022-12-01..2024-12-31"
+    default_development_window: "2021-02-22..2024-12-31"
     default_diagnostic_window: "2025-01-01..2025-12-31"
     final_holdout_access: OWNER_AUTHORIZATION_REQUIRED
     purge_days: 5

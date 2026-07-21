@@ -17,13 +17,14 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.data.quality import validate_data_cache
 from ai_trading_system.data_foundation import (
-    AI_REGIME_START,
+    AI_CYCLE_COMPARISON_START,
     DEFAULT_ASSET_MASTER_PATH,
     DEFAULT_COST_MODEL_PATH,
     DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT,
     DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_UPDATED_PATH,
     DEFAULT_LIQUIDITY_MODEL_PATH,
     DEFAULT_UNIVERSE_DEFINITIONS_PATH,
+    PRIMARY_RESEARCH_START,
     SAFETY_BOUNDARY,
     run_data_foundation_acceptance,
     utc_now_iso,
@@ -224,8 +225,9 @@ CONTROLLED_BENCHMARK_HORIZONS = (
     ("full_ai_regime", None),
 )
 CONTROLLED_BENCHMARK_REGIME_WINDOWS = (
-    ("ai_after_chatgpt_full", AI_REGIME_START, None),
-    ("ai_after_chatgpt_2023", AI_REGIME_START, "2023-12-31"),
+    ("unified_primary_2021_full", PRIMARY_RESEARCH_START, None),
+    ("ai_after_chatgpt_full", AI_CYCLE_COMPARISON_START, None),
+    ("ai_after_chatgpt_2023", AI_CYCLE_COMPARISON_START, "2023-12-31"),
     ("ai_after_chatgpt_2024_plus", "2024-01-01", None),
 )
 CONTROLLED_BENCHMARK_COST_POLICY_ID = (
@@ -1290,7 +1292,7 @@ def run_controlled_benchmark_batch(
         config_path=str(config_path),
         data_quality_gate=quality,
         representative_universe=universe,
-        requested_date_range=f"{AI_REGIME_START}..{data_window.get('max_date', 'open')}",
+        requested_date_range=f"{PRIMARY_RESEARCH_START}..{data_window.get('max_date', 'open')}",
         benchmark_zoo=list(REQUIRED_CONTROLLED_BENCHMARKS),
         control_zoo=list(REQUIRED_CONTROLLED_CONTROLS),
         benchmark_results=benchmark_results,
@@ -1456,7 +1458,7 @@ def run_controlled_benchmark_execution_expansion(
         },
         data_quality_gate=quality,
         representative_universe=universe,
-        requested_date_range=f"{AI_REGIME_START}..{data_window.get('max_date', 'open')}",
+        requested_date_range=f"{PRIMARY_RESEARCH_START}..{data_window.get('max_date', 'open')}",
         benchmark_results=benchmark_results,
         control_results=control_results,
         by_asset_metrics=by_asset,
@@ -3200,7 +3202,7 @@ def _all_visible_dates(
             row_date
             for rows in price_rows.values()
             for row_date in rows
-            if row_date >= AI_REGIME_START
+            if row_date >= PRIMARY_RESEARCH_START
         }
     )
 
@@ -3317,7 +3319,9 @@ def _round_metric(value: float | None) -> float | None:
 
 
 def _ticker_total_return(rows: Mapping[str, Mapping[str, Any]]) -> float | None:
-    visible_dates = sorted(row_date for row_date in rows if row_date >= AI_REGIME_START)
+    visible_dates = sorted(
+        row_date for row_date in rows if row_date >= PRIMARY_RESEARCH_START
+    )
     if len(visible_dates) < 2:
         return None
     first = rows[visible_dates[0]]
@@ -4070,12 +4074,12 @@ def _controlled_payload(
         title=title,
         status=status,
         summary={
-            "market_regime": "ai_after_chatgpt",
-            "requested_date_range": f"{AI_REGIME_START}..open",
+            "market_regime": "unified_primary_2021",
+            "requested_date_range": f"{PRIMARY_RESEARCH_START}..open",
             **dict(summary),
         },
-        market_regime="ai_after_chatgpt",
-        default_backtest_start=AI_REGIME_START,
+        market_regime="unified_primary_2021",
+        default_backtest_start=PRIMARY_RESEARCH_START,
         research_only=True,
         manual_review_only=True,
         diagnostic_only=True,
@@ -4097,8 +4101,8 @@ def _base_payload(
         "title": title,
         "status": status,
         "generated_at": utc_now_iso(),
-        "market_regime": "ai_after_chatgpt",
-        "default_backtest_start": AI_REGIME_START,
+        "market_regime": "unified_primary_2021",
+        "default_backtest_start": PRIMARY_RESEARCH_START,
         "manual_review_required": True,
         "summary": dict(summary),
         **PRODUCTION_SAFETY,

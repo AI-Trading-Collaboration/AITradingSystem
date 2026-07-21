@@ -12,7 +12,6 @@ from ai_trading_system.contracts.research_context import ResearchEvaluationConte
 from ai_trading_system.contracts.research_lifecycle import ResearchPreregistration
 from ai_trading_system.dynamic_v3_clean_selection_s1_preregistration import (
     DEFAULT_PACKAGE_ROOT,
-    ELIGIBLE_STATUS,
     SAFETY,
     build_dynamic_v3_clean_selection_s1_package,
     validate_dynamic_v3_clean_selection_s1_package,
@@ -20,12 +19,12 @@ from ai_trading_system.dynamic_v3_clean_selection_s1_preregistration import (
 from ai_trading_system.research_campaign import CampaignSpec
 
 
-def test_frozen_s1_package_is_eligible_without_running_evaluator() -> None:
+def test_frozen_s1_package_is_historical_and_fails_closed_after_window_migration() -> None:
     validation = validate_dynamic_v3_clean_selection_s1_package()
 
-    assert validation["status"] == "PASS"
-    assert validation["failed_check_count"] == 0
-    assert validation["eligibility_status"] == ELIGIBLE_STATUS
+    assert validation["status"] == "FAIL"
+    assert validation["failed_check_count"] >= 1
+    assert validation["eligibility_status"] == "BLOCKED_INVALID_PREREGISTRATION_PACKAGE"
     assert validation["evaluator_execution_allowed"] is False
     assert validation["clean_run_authorized"] is False
     assert validation["locked_holdout_access_allowed"] is False

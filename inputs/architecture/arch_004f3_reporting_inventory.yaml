@@ -1,9 +1,9 @@
-inventory_id: reporting_inventory_14dfc325047c288d8a2c
+inventory_id: reporting_inventory_9f39c169eda16e98097c
 schema_version: reporting_architecture_inventory.v1
 reader_brief:
   path: src/ai_trading_system/reports/reader_brief.py
-  sha256: 15fd69575d03c5262d824313f4dad79d2ec42f4d4d4409e3b248750a1f69936a
-  line_count: 29050
+  sha256: c7e984900be4826cf5621b63e26fd7e6c6f31efe633360cf611db1b954e05cdc
+  line_count: 29053
   top_level_function_count: 367
 report_registry:
   path: config/report_registry.yaml

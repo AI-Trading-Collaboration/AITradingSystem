@@ -3,9 +3,9 @@ version: v1
 status: pilot_research
 owner: research_governance
 task_id: TRADING-2309_AI_LEADERSHIP_ACTUAL_PATH_VALIDATION
-market_regime: ai_after_chatgpt
-anchor_event: ChatGPT public launch
-default_start_date: "2022-12-01"
+market_regime: unified_primary_2021
+anchor_event: validated QQQ/SGOV/TQQQ common history start
+default_start_date: "2021-02-22"
 source_generator_task: TRADING-2308_AI_SEMICONDUCTOR_LEADERSHIP_GENERATOR_POC
 rationale: >
   TRADING-2308 generated schema-valid AI / semiconductor leadership price-proxy

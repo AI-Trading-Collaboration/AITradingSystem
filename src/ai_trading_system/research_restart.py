@@ -187,8 +187,8 @@ def build_research_restart_preflight(
         _check("data_quality_status_allowed", data_quality_report.status in allowed_dq),
         _check("window_semantics_consistent", window_semantics["status"] == "PASS"),
         _check(
-            "source_window_is_explicit_legacy_comparison",
-            _mapping(policy.get("research_lane")).get("source_window_role") == "legacy_comparison",
+            "source_window_is_explicit_primary_validated",
+            _mapping(policy.get("research_lane")).get("source_window_role") == "primary_validated",
         ),
         _check(
             "cost_model_complete",
@@ -400,8 +400,8 @@ def _window_semantics_snapshot(
     registry_primary = _mapping(registry_windows.get(str(primary.get("window_id", ""))))
     registry_legacy = _mapping(registry_windows.get(str(legacy.get("window_id", ""))))
     checks = [
-        _check("project_ai_cycle_start", _iso(project.get("start")) == "2022-12-01"),
-        _check("project_ai_cycle_anchor", _iso(project.get("anchor_date")) == "2022-11-30"),
+        _check("project_primary_start", _iso(project.get("start")) == "2021-02-22"),
+        _check("project_primary_anchor", _iso(project.get("anchor_date")) == "2021-02-22"),
         _check(
             "primary_policy_start",
             _iso(primary_contract.get("default_start")) == "2021-02-22",
@@ -415,7 +415,7 @@ def _window_semantics_snapshot(
     ]
     return {
         "status": "PASS" if all(item["passed"] for item in checks) else "FAIL",
-        "project_ai_cycle_start": _iso(project.get("start")),
+        "project_primary_start": _iso(project.get("start")),
         "primary_validated_start": _iso(primary.get("start")),
         "legacy_comparison_start": _iso(legacy.get("start")),
         "checks": checks,

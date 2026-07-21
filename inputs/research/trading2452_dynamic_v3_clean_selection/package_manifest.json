@@ -1,0 +1,190 @@
+{
+  "broker_action": "none",
+  "candidate_expansion_allowed": false,
+  "clean_run_authorized": true,
+  "eligibility_status": "ELIGIBLE_FOR_OWNER_AUTHORIZED_HISTORICAL_SEEN_RUN",
+  "evaluator_execution_allowed": true,
+  "generated_at": "2026-07-21T18:00:00+09:00",
+  "historical_immutable_evidence": {
+    "active_policy_source": false,
+    "artifact_count": 9,
+    "artifacts": {
+      "campaign.json": {
+        "path": "inputs/research/trading2451_dynamic_v3_clean_selection/campaign.json",
+        "sha256": "26d8d89422c01e5c5a534e3560edede9de9d81bf490f0ac69c057c4cf74d7dc3",
+        "size": 3492
+      },
+      "candidate_universe.json": {
+        "path": "inputs/research/trading2451_dynamic_v3_clean_selection/candidate_universe.json",
+        "sha256": "a25c311fcc5ecededcdd2fb1d4b29677cc0f3d438405196f369928c51c6f21e4",
+        "size": 144105
+      },
+      "eligibility.json": {
+        "path": "inputs/research/trading2451_dynamic_v3_clean_selection/eligibility.json",
+        "sha256": "f6851a02e0d07e5c804d8b04b5fd4718cd107bbd8e2588dd2e893b5572183b3a",
+        "size": 2116
+      },
+      "package_manifest.json": {
+        "path": "inputs/research/trading2451_dynamic_v3_clean_selection/package_manifest.json",
+        "sha256": "46d995810b1920450dbb498bb3773046a4dc833cfcb72c31ae5d93c785092ccc",
+        "size": 4329
+      },
+      "preregistration.json": {
+        "path": "inputs/research/trading2451_dynamic_v3_clean_selection/preregistration.json",
+        "sha256": "fc49889311a5d22caf0b1de6ae2822750a6af82fd3c4b7315a7ed53226c95d01",
+        "size": 1693
+      },
+      "research_context.json": {
+        "path": "inputs/research/trading2451_dynamic_v3_clean_selection/research_context.json",
+        "sha256": "e75547212a85a80b6feb6a1b4018bd139573c98db8b130fc7c5d1799637f112b",
+        "size": 3297
+      },
+      "selection_rule.yaml": {
+        "path": "inputs/research/trading2451_dynamic_v3_clean_selection/selection_rule.yaml",
+        "sha256": "b8d3caad13f9d7e3c98517dc1fa3849868a1e46eb288a9d8bb013aa9fd0ffcf0",
+        "size": 4525
+      },
+      "source_contract.json": {
+        "path": "inputs/research/trading2451_dynamic_v3_clean_selection/source_contract.json",
+        "sha256": "20032919e340334474e52cb4b71b8214ac5749a826b4b447493b0c86cd4b92ff",
+        "size": 1881
+      },
+      "window_catalog.yaml": {
+        "path": "inputs/research/trading2451_dynamic_v3_clean_selection/window_catalog.yaml",
+        "sha256": "c827c0eda5fe152bb5c05b56bed8100dab0bedece2aed037232d76a9891ddd63",
+        "size": 2210
+      }
+    },
+    "package_role": "HISTORICAL_IMMUTABLE_PREREGISTRATION_EVIDENCE_ONLY",
+    "selection_input": false
+  },
+  "historical_replay_execution_allowed": true,
+  "legacy_immutable_evidence_selection_allowed": false,
+  "manual_review_required": true,
+  "new_parameter_search_allowed": false,
+  "next_responsible_party": "owner_authorized_historical_seen_evaluator",
+  "output_artifact_checksums": {
+    "campaign.json": "6b6c7d0e9b3c3617e0e97cb5c0054a5e754bf0301c2815d51bbbc6cd0f1fc6e8",
+    "candidate_universe.json": "a47d17d5adcf37afb4ab75e0ec0e0215c8b6034021828ae448bc20ad36ccc646",
+    "eligibility.json": "effb9b27b04ad4a529a9474da7e982c8e7312210608af6152cc656a2e2da1cf6",
+    "preregistration.json": "dfe83fae6ed00df73350e3307383a4d0758644c67d703d1eb6d49ebebcc1e467",
+    "research_context.json": "dc77923a53ad2f9c7cfe21b13768c5178cbf5fa83bee283a3707548bc9684c7c",
+    "source_contract.json": "85d104da9dee78c2c337fe7c0d3c69c3f3145cf7c0efdd75c0826e3adc193441"
+  },
+  "package_id": "dynamic-v3-clean-trading2452_11991ac7965cfcd7aa18",
+  "paper_shadow_change_allowed": false,
+  "production_effect": "none",
+  "production_weight_change_allowed": false,
+  "prospective_holdout_access_allowed": false,
+  "recent_known_diagnostic_allowed": true,
+  "report_type": "dynamic_v3_clean_selection_trading2452_package_manifest",
+  "research_only": true,
+  "result_artifact_count": 0,
+  "result_artifacts_consumed": [],
+  "safety": {
+    "broker_action": "none",
+    "candidate_expansion_allowed": false,
+    "clean_run_authorized": true,
+    "evaluator_execution_allowed": true,
+    "historical_replay_execution_allowed": true,
+    "manual_review_required": true,
+    "new_parameter_search_allowed": false,
+    "paper_shadow_change_allowed": false,
+    "production_effect": "none",
+    "production_weight_change_allowed": false,
+    "prospective_holdout_access_allowed": false,
+    "recent_known_diagnostic_allowed": true,
+    "research_only": true,
+    "unbiased_oos_claim_allowed": false
+  },
+  "schema_version": "dynamic_v3_clean_selection_trading2452_package.v1",
+  "selection_input_commitments": {
+    "package_builder": {
+      "path": "src/ai_trading_system/dynamic_v3_clean_selection_trading2452.py",
+      "sha256": "48efcf0717230d38aa1f23c16666c5e8c716afad42942618b3dfc5d2379d416a",
+      "size": 48022
+    },
+    "parameter_sweep_config": {
+      "path": "config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_real_smoke.yaml",
+      "sha256": "2c6620e497178a65b91e0cd58801901693c1d0acbfc3d7a792e8bb36ce5ef924",
+      "size": 3188
+    },
+    "policy:etf_asset_policy": {
+      "path": "config/etf_portfolio/assets.yaml",
+      "sha256": "faba16530b53fcb5bb3d596eb4eb31deed0537b67e6070945b2d12371369698a",
+      "size": 1776
+    },
+    "policy:etf_dynamic_allocation_policy": {
+      "path": "config/etf_portfolio/dynamic_allocation_policy.yaml",
+      "sha256": "e296218adc4f121c546b1ac822ed84603a4e5f5654417fd92c31a3c2a78ebb2d",
+      "size": 7025
+    },
+    "policy:etf_dynamic_failure_diagnostics_policy": {
+      "path": "config/etf_portfolio/dynamic_failure_diagnostics.yaml",
+      "sha256": "616f288a34a531b16eba8ee9c7f7a271265bc584c2ba4deecd7c15222c97ecd2",
+      "size": 6656
+    },
+    "policy:etf_dynamic_robustness_policy": {
+      "path": "config/etf_portfolio/dynamic_robustness.yaml",
+      "sha256": "c3355e9bf8f69b128cae7191b411422d5926ae5619d12f4d34f5cc4619c5faed",
+      "size": 3231
+    },
+    "policy:etf_dynamic_v3_real_evaluation_policy_v1": {
+      "path": "config/etf_portfolio/dynamic_v3_real_evaluation.yaml",
+      "sha256": "26364fca496c3e19efaf3089a3ea372cfd7d645fcf4e49373def2c8562c1b68b",
+      "size": 3460
+    },
+    "policy:etf_dynamic_v3_rescue_policy": {
+      "path": "config/etf_portfolio/dynamic_v3_constraint_aware_rescue.yaml",
+      "sha256": "8a3cfbbe31843eb0a67470ac9add125e9ceaa0a5ffc67043d84fb7915ccb5fc8",
+      "size": 5335
+    },
+    "policy:etf_risk_policy": {
+      "path": "config/etf_portfolio/risk.yaml",
+      "sha256": "77f93f4af740ba659e477fd91cbdf3ee16543356b18c8eb69c3100f82d029725",
+      "size": 1423
+    },
+    "policy:etf_strategy_policy": {
+      "path": "config/etf_portfolio/strategy.yaml",
+      "sha256": "b1b3cb64ee8965b0df013dc821ac10431d341c224ee05bbb9fa652c5ff329f59",
+      "size": 1809
+    },
+    "policy:market_regime_registry_v1": {
+      "path": "config/market_regimes.yaml",
+      "sha256": "9946c7b561c309d08a11fcbed20d2f710f48941b1e0832f7438c052ad444d779",
+      "size": 1711
+    },
+    "policy:primary_research_window_policy_v1": {
+      "path": "config/research/primary_research_window_policy.yaml",
+      "sha256": "4fd79be1bbce8a3dbd8c733d5e03e09d513a3e375703d3ce11801f2adcd5512d",
+      "size": 4227
+    },
+    "policy:project_data_quality_policy": {
+      "path": "config/data_quality.yaml",
+      "sha256": "d1b459849dc5c1858567a1db220c1d2bb54985a8c62cedb3f945b802f7cea3fa",
+      "size": 4538
+    },
+    "policy:project_universe_policy": {
+      "path": "config/universe.yaml",
+      "sha256": "ce572af740e9b50c1ec97fd401ae5b16283709d6130c80d3253b5029989844ea",
+      "size": 917
+    },
+    "selection_rule": {
+      "path": "inputs/research/trading2452_dynamic_v3_clean_selection/selection_rule.yaml",
+      "sha256": "895f6208fcf13013b2457580625b9207d12b942607aadf56e809ff7c47f1aabd",
+      "size": 5220
+    },
+    "sweep_profile_config": {
+      "path": "config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_profiles.yaml",
+      "sha256": "d009bb541838e59830478b43b5e10944af606810cfbbcd6db79b5f5c992a1eff",
+      "size": 1543
+    },
+    "window_catalog": {
+      "path": "inputs/research/trading2452_dynamic_v3_clean_selection/window_catalog.yaml",
+      "sha256": "19a0fffc6deb468bb53a104a528bdecc23b9ff9072967174548b835dfd1169b5",
+      "size": 2773
+    }
+  },
+  "status": "PASS",
+  "unbiased_oos_claim_allowed": false
+}

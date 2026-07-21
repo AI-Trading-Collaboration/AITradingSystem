@@ -32,6 +32,7 @@ from ai_trading_system.data.quality import (
     validate_data_cache,
     write_data_quality_report,
 )
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.etf_portfolio.data import load_standard_prices
 from ai_trading_system.etf_portfolio.dynamic_allocation import (
     load_dynamic_allocation_policy_config,
@@ -2894,7 +2895,7 @@ def run_regime_coverage(
     manifest = _read_json(sweep_dir / "sweep_manifest.json")
     results = _read_candidate_results(sweep_dir)
     ranked = _ranked_candidate_rows(results)[:top_n]
-    start = date(2022, 12, 1)
+    start = PRIMARY_RESEARCH_START_DATE
     end = _date_from_any(manifest.get("end")) or start
     windows = _regime_windows_from_prices(
         prices_path=prices_path,
@@ -13490,7 +13491,7 @@ def render_data_audit_markdown(payload: Mapping[str, Any]) -> str:
         "",
         f"- Status: {payload.get('status')}",
         f"- Data quality status: {payload.get('data_quality_status')}",
-        "- Market regime: ai_after_chatgpt",
+        "- Market regime: unified_primary_2021",
         f"- Requested range: {coverage.get('requested_as_of')} to {coverage.get('requested_end')}",
         f"- prices_download_manifest_checksum_missing: {checksum.get('prices_checksum_missing')}",
         f"- Price cache sha256: {_mapping(provenance.get('prices')).get('sha256')}",
@@ -13554,7 +13555,7 @@ def render_window_audit_markdown(payload: Mapping[str, Any]) -> str:
         "## Required Questions",
         f"- 当前 configured_backtest_start: {answers.get('configured_backtest_start')}",
         f"- 当前最早 actual_evaluation_start: {answers.get('earliest_actual_evaluation_start')}",
-        f"- 是否覆盖 2022-12-01: {answers.get('covers_ai_regime_start')}",
+        f"- 是否覆盖 2021-02-22: {answers.get('covers_ai_regime_start')}",
         "- 是否存在 2025-05-28 to 2026-05-28 artifact: "
         f"{answers.get('contains_2025_05_28_to_2026_05_28_artifact')}",
         f"- 窗口问题是否阻断 promotion: {answers.get('promotion_blocking')}",
@@ -21804,7 +21805,7 @@ def _configured_ai_regime_start() -> date:
     try:
         return load_dynamic_v3_real_evaluation_policy_config().market_regime.default_backtest_start
     except Exception:  # noqa: BLE001
-        return date(2022, 12, 1)
+        return PRIMARY_RESEARCH_START_DATE
 
 
 def _csv_columns(path: Path) -> list[str]:

@@ -1001,7 +1001,7 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(
 
     real_payload = json.loads(first_artifact.read_text(encoding="utf-8"))
     evaluation_id = real_payload["dynamic_v3_real_evaluation_report_id"]
-    assert real_payload["backtest_window"]["configured_backtest_start"] == "2022-12-01"
+    assert real_payload["backtest_window"]["configured_backtest_start"] == "2021-02-22"
     assert real_payload["comparison_daily_paths"]["dynamic_candidate"]
     weight_validation = validate_weight_path_artifact(
         evaluation_id=evaluation_id,
@@ -1087,7 +1087,7 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(
         artifact_root=output_dir,
         output_dir=tmp_path / "window_audit",
     )
-    assert window_audit["report"]["configured_backtest_start"] == "2022-12-01"
+    assert window_audit["report"]["configured_backtest_start"] == "2021-02-22"
     assert (
         validate_window_audit_artifact(
             audit_id=window_audit["window_audit_id"],
@@ -1100,7 +1100,7 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(
             audit_id=window_audit["window_audit_id"],
             output_dir=tmp_path / "window_audit",
         )["configured_backtest_start"]
-        == "2022-12-01"
+            == "2021-02-22"
     )
 
     first_artifact.unlink()

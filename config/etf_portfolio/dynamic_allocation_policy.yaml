@@ -19,10 +19,10 @@ policy_metadata:
     windows, or safety fields change.
 
 market_regime:
-  regime_id: ai_after_chatgpt
-  anchor_event: ChatGPT public launch
-  anchor_date: 2022-11-30
-  default_decision_start: 2022-12-01
+  regime_id: unified_primary_2021
+  anchor_event: QQQ/SGOV/TQQQ exact-three-asset validated coverage begins
+  anchor_date: 2021-02-22
+  default_decision_start: 2021-02-22
 
 safety:
   observe_only: true

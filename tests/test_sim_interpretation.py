@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import pytest
-from dynamic_v3_backtest_sim_helpers import (
-    run_forward_bridge_fixture,
-    run_sim_interpretation_fixture,
-)
+from dynamic_v3_backtest_sim_helpers import run_sim_interpretation_fixture
 
 from ai_trading_system.etf_portfolio import dynamic_v3_backtest_simulation as sim
 from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
@@ -18,12 +16,29 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     DynamicV3BacktestSimulationError,
     validate_sim_interpretation_artifact,
 )
+from ai_trading_system.platform.artifacts.validation_session import (
+    artifact_validation_session,
+)
+
+
+@pytest.fixture(scope="module")
+def shared_sim_interpretation_fixture(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[dict[str, Any]]:
+    root = tmp_path_factory.mktemp("sim-interpretation-source-fixture")
+    monkeypatch = pytest.MonkeyPatch()
+    try:
+        with artifact_validation_session():
+            fixture = run_sim_interpretation_fixture(root, monkeypatch)
+            yield fixture
+    finally:
+        monkeypatch.undo()
 
 
 def test_sim_interpretation_explains_each_variant(
-    tmp_path: Path, monkeypatch: Any
+    shared_sim_interpretation_fixture: dict[str, Any],
 ) -> None:
-    fixture = run_sim_interpretation_fixture(tmp_path, monkeypatch)
+    fixture = shared_sim_interpretation_fixture
     interpretation = fixture["interpretation"]
     matrix = interpretation["variant_interpretation_matrix"]
     findings = interpretation["key_findings"]["findings"]
@@ -49,24 +64,27 @@ def test_sim_interpretation_explains_each_variant(
 
 
 def test_sim_interpretation_rejects_naive_cutoff_before_output(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, shared_sim_interpretation_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_forward_bridge_fixture(tmp_path, monkeypatch)
+    fixture = shared_sim_interpretation_fixture
     with pytest.raises(DynamicV3BacktestSimulationError, match="timezone-aware"):
         _run_interpretation(fixture, tmp_path / "new", datetime(2026, 7, 31, 10))
     assert not (tmp_path / "new").exists()
 
 
 def test_sim_interpretation_rejects_invalid_source_before_output(
-    tmp_path: Path, monkeypatch: Any
+    tmp_path: Path, shared_sim_interpretation_fixture: dict[str, Any]
 ) -> None:
-    fixture = run_forward_bridge_fixture(tmp_path, monkeypatch)
+    fixture = shared_sim_interpretation_fixture
     source = fixture["bridge"]["bridge_dir"] / "sim_forward_bridge_report.md"
-    source.write_text(source.read_text(encoding="utf-8") + "tamper\n", encoding="utf-8")
-    with pytest.raises(DynamicV3BacktestSimulationError, match="source validation"):
-        _run_interpretation(
-            fixture, tmp_path / "new", datetime(2026, 7, 31, 10, tzinfo=UTC)
-        )
+    original_source_bytes = source.read_bytes()
+    try:
+        source.write_text(source.read_text(encoding="utf-8") + "tamper\n", encoding="utf-8")
+        with pytest.raises(DynamicV3BacktestSimulationError, match="source validation"):
+            _run_interpretation(fixture, tmp_path / "new", datetime(2026, 7, 31, 10, tzinfo=UTC))
+    finally:
+        source.write_bytes(original_source_bytes)
+    assert source.read_bytes() == original_source_bytes
     assert not (tmp_path / "new").exists()
 
 
@@ -78,9 +96,7 @@ def test_sim_interpretation_missing_pairs_remain_insufficient() -> None:
         bridge_targets={"targets": []},
     )
     assert all(row["evidence_status"] == "INSUFFICIENT_DATA" for row in matrix["variants"])
-    assert all(
-        row["return_profile"]["avg_20d_return"] is None for row in matrix["variants"]
-    )
+    assert all(row["return_profile"]["avg_20d_return"] is None for row in matrix["variants"])
     assert all(row["confidence"] == "INSUFFICIENT_DATA" for row in findings["findings"])
 
 
@@ -95,38 +111,48 @@ def test_sim_interpretation_missing_pairs_remain_insufficient() -> None:
     ],
 )
 def test_sim_interpretation_validator_rejects_output_tamper(
-    tmp_path: Path, monkeypatch: Any, artifact_name: str
+    shared_sim_interpretation_fixture: dict[str, Any], artifact_name: str
 ) -> None:
-    fixture = run_sim_interpretation_fixture(tmp_path, monkeypatch)
+    fixture = shared_sim_interpretation_fixture
     interpretation = fixture["interpretation"]
     path = interpretation["interpretation_dir"] / artifact_name
-    if path.suffix == ".md":
-        path.write_text(path.read_text(encoding="utf-8") + "tamper\n", encoding="utf-8")
-    else:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        payload["tampered"] = True
-        path.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
+    original_artifact_bytes = path.read_bytes()
+    try:
+        if path.suffix == ".md":
+            path.write_text(path.read_text(encoding="utf-8") + "tamper\n", encoding="utf-8")
+        else:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload["tampered"] = True
+            path.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        validation = validate_sim_interpretation_artifact(
+            interpretation_id=interpretation["interpretation_id"],
+            output_dir=fixture["interpretation_dir"],
         )
-    validation = validate_sim_interpretation_artifact(
-        interpretation_id=interpretation["interpretation_id"],
-        output_dir=fixture["interpretation_dir"],
-    )
+    finally:
+        path.write_bytes(original_artifact_bytes)
+    assert path.read_bytes() == original_artifact_bytes
     assert validation["status"] == "FAIL"
 
 
 def test_sim_interpretation_validator_rejects_live_source_drift(
-    tmp_path: Path, monkeypatch: Any
+    shared_sim_interpretation_fixture: dict[str, Any],
 ) -> None:
-    fixture = run_sim_interpretation_fixture(tmp_path, monkeypatch)
+    fixture = shared_sim_interpretation_fixture
     interpretation = fixture["interpretation"]
     source = fixture["outcome"]["sim_outcome_dir"] / "backtest_sim_outcome_report.md"
-    source.write_text(source.read_text(encoding="utf-8") + "tamper\n", encoding="utf-8")
-    validation = validate_sim_interpretation_artifact(
-        interpretation_id=interpretation["interpretation_id"],
-        output_dir=fixture["interpretation_dir"],
-    )
+    original_source_bytes = source.read_bytes()
+    try:
+        source.write_text(source.read_text(encoding="utf-8") + "tamper\n", encoding="utf-8")
+        validation = validate_sim_interpretation_artifact(
+            interpretation_id=interpretation["interpretation_id"],
+            output_dir=fixture["interpretation_dir"],
+        )
+    finally:
+        source.write_bytes(original_source_bytes)
+    assert source.read_bytes() == original_source_bytes
     assert validation["status"] == "FAIL"
 
 

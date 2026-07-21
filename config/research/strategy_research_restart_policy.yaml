@@ -5,10 +5,10 @@ owner: project_owner_and_research_governance
 
 policy_metadata:
   rationale: >
-    Strategy research resumes after ARCH-005 S0/S1, but project-level AI-cycle
-    conclusions and the longer QQQ/SGOV/TQQQ validation window answer different
-    questions. The restart must freeze those roles and close OOS/robustness evidence
-    debt before candidate expansion is reconsidered.
+    Strategy research resumes after ARCH-005 S0/S1 with the validated
+    QQQ/SGOV/TQQQ common-history window as the project-level primary conclusion
+    window. The restart must freeze active and historical-comparison roles and close
+    OOS/robustness evidence debt before candidate expansion is reconsidered.
   intended_effect: >
     Make window role, DQ/PIT lineage, cost, lag, holdout, hypothesis, falsification,
     and no-production boundaries machine-verifiable for R0 through R2.
@@ -22,10 +22,11 @@ policy_metadata:
 
 window_semantics:
   project_ai_cycle_conclusion:
-    regime_id: ai_after_chatgpt
-    anchor_date: 2022-11-30
-    start: 2022-12-01
-    conclusion_scope: project_ai_cycle_conclusion
+    regime_id: unified_primary_2021
+    anchor_date: 2021-02-22
+    start: 2021-02-22
+    conclusion_scope: project_primary_research_conclusion
+    compatibility_key_only: true
   qqq_sgov_tqqq_primary_validation:
     window_id: exact_three_asset_validated
     start: 2021-02-22
@@ -62,8 +63,8 @@ research_lane:
     Does the apparent legacy-window edge disappear, concentrate in one regime or
     stress episode, or fail after fold-local cost/lag evaluation?
   candidate_family: dynamic_v3_rescue
-  source_window_id: legacy_research_window_2022_12
-  source_window_role: legacy_comparison
+  source_window_id: exact_three_asset_validated
+  source_window_role: primary_validated
   next_candidate_generation_allowed: false
   simple_selector_status: KILL
   gbdt_status: PIVOT_DESIGN_ONLY

@@ -20,10 +20,10 @@ policy_metadata:
     Review before accepting any paid vendor trial output into a model-ready
     breadth feature family.
 market_regime:
-  id: ai_after_chatgpt
-  anchor_event: ChatGPT public launch
-  anchor_date: "2022-11-30"
-  default_backtest_start: "2022-12-01"
+  id: unified_primary_2021
+  anchor_event: QQQ/SGOV/TQQQ exact-three-asset validated coverage begins
+  anchor_date: "2021-02-22"
+  default_backtest_start: "2021-02-22"
 primary_window_coverage:
   start: "2021-02-22"
   required: true

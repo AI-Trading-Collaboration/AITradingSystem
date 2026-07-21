@@ -7,7 +7,7 @@ auto_promotion: false
 observe_only: true
 rationale: >
   Conservative observe-only shadow parameter backtest framework for the
-  ai_after_chatgpt regime. It evaluates candidates against production baseline
+  unified 2021 primary window. It evaluates candidates against production baseline
   parameters without writing production configuration.
 intended_effect: >
   Provide reproducible walk-forward evidence, attribution, and promotion
@@ -70,10 +70,10 @@ backtest_modes:
       Candidate status may be enabled only after required signals all report OK
       and neutral fallback signals have been replaced by auditable PIT inputs.
 market_regime:
-  id: "ai_after_chatgpt"
-  anchor_event: "ChatGPT public launch"
-  anchor_date: "2022-11-30"
-  default_backtest_start: "2022-12-01"
+  id: "unified_primary_2021"
+  anchor_event: "QQQ/SGOV/TQQQ exact-three-asset validated coverage begins"
+  anchor_date: "2021-02-22"
+  default_backtest_start: "2021-02-22"
 data:
   prices_path: "data/raw/prices_daily.csv"
   rates_path: "data/raw/rates_daily.csv"

@@ -930,7 +930,7 @@ def _paper_shadow_views(
         "method_states": method_rows,
         "source_model_target_id": target_binding["artifact_id"],
         "source_model_target_used_for_initial_weights": False,
-        "initial_weights_basis": "REVIEWED_STATIC_BASELINE_AT_AI_REGIME_START",
+        "initial_weights_basis": "REVIEWED_STATIC_BASELINE_AT_PRIMARY_WINDOW_START",
         "config_path": str(_binding_path(config_binding)),
         **SYSTEM_TARGET_SAFETY,
     }

@@ -12,6 +12,7 @@ from typing import Any
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.layer1_low_turnover_selector_helpers import (
     LOW_TURNOVER_BUFFER_GRID,
     LOW_TURNOVER_CONFIRMATION_GRID,
@@ -4291,15 +4292,15 @@ def _history_coverage_summary(
     if can_backfill and available_start and available_start <= expected_start:
         strength = "FULL_HISTORY_AVAILABLE"
         reason = "Layer-2 fact panel and selector inputs cover the requested 2012 start."
-    elif available_start and available_start <= date(2022, 12, 1):
+    elif available_start and available_start <= PRIMARY_RESEARCH_START_DATE:
         strength = "RECENT_REGIME_ONLY_WARNING"
         reason = (
-            "Layer-2 fact context defaults to ai_after_chatgpt start and the current "
-            "audited selector panel does not include pre-2022 regimes."
+            "Layer-2 fact context covers the unified 2021 primary start but the current "
+            "audited selector panel does not include the requested pre-2021 history."
         )
     elif available_start:
         strength = "SHORT_HISTORY_ACCEPTABLE_FOR_RESEARCH"
-        reason = "Audited selector panel starts after the configured AI-regime start."
+        reason = "Audited selector panel starts after the configured primary research start."
     else:
         strength = "HISTORY_COVERAGE_BLOCKED"
         reason = "Layer-2 fact panel is empty after data quality gating."

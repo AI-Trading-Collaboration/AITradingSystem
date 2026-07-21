@@ -3,22 +3,23 @@
 This project is an investment decision-support system. Data quality, auditability,
 and correctness are product requirements, not optional polish.
 
-## AI Regime Priority
+## Primary Research Window
 
-The project primarily studies U.S. AI-related trading after the public launch of
-ChatGPT. Strategy design, information collection, backtests, and report
-interpretation should prioritize the configured `ai_after_chatgpt` market regime:
+The project's active strategy research, primary backtests, and investment-facing
+conclusions use the exact QQQ/SGOV/TQQQ validated window beginning on 2021-02-22.
+This is the single project default unless a reviewed policy explicitly defines a
+different sensitivity or stress role.
 
-- anchor event: ChatGPT public launch on 2022-11-30;
-- default backtest start: 2022-12-01, the first full U.S. trading day after that
-  event;
-- pre-2022 history may be used for warm-up, stress testing, and regime
-  comparison, but it must not be treated as the default AI-cycle conclusion
-  window.
+- default research and backtest start: 2021-02-22;
+- results before 2021-02-22 may be used only for governed sensitivity, proxy, or
+  stress testing with the relevant data-quality caveats;
+- 2022-12-01 is not an active default, primary conclusion boundary, required
+  comparator, or minimum allowed start. It may remain only in immutable historical
+  artifacts, legacy compatibility evidence, and descriptions of prior runs.
 
-Backtest and strategy reports should state the selected market regime and the
-actual requested date range. If a primary conclusion relies on data before the AI
-regime start, document why that older regime is relevant.
+Backtest and strategy reports must state the selected research window and the
+actual requested and evaluated date ranges. Historical retained evidence must not
+silently supply the default for a new run.
 
 ## System Flow Diagram Maintenance
 

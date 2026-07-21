@@ -64,7 +64,7 @@ def test_data_quality_config_loads_thresholds() -> None:
     assert config.prices.max_stale_calendar_days == 7
     assert config.prices.suspicious_daily_return_abs == 0.20
     assert config.prices.consistency_start_date is not None
-    assert config.prices.consistency_start_date.isoformat() == "2022-12-01"
+    assert config.prices.consistency_start_date.isoformat() == "2021-02-22"
     assert config.prices.volume_optional_tickers == ["^VIX"]
     assert config.prices.known_split_events["NVDA"][0].ratio == 10
     assert config.prices.secondary_source_self_check_fail_closed is False
@@ -72,7 +72,7 @@ def test_data_quality_config_loads_thresholds() -> None:
     assert config.rates.min_plausible_value == -1.0
     assert config.rates.max_plausible_value == 25.0
     assert config.rates.consistency_start_date is not None
-    assert config.rates.consistency_start_date.isoformat() == "2022-12-01"
+    assert config.rates.consistency_start_date.isoformat() == "2021-02-22"
     assert config.rates.series_overrides["DTWEXBGS"].max_stale_calendar_days == 14
     assert config.rates.series_overrides["DTWEXBGS"].max_plausible_value == 250.0
     assert config.rates.series_overrides["DTWEXBGS"].extreme_daily_change_abs == 5.0
@@ -286,15 +286,20 @@ def test_industry_chain_config_covers_watchlist_nodes() -> None:
     assert watchlist_node_ids.issubset(node_ids)
 
 
-def test_market_regimes_default_to_ai_after_chatgpt() -> None:
+def test_market_regimes_default_to_unified_primary_2021() -> None:
     config = load_market_regimes()
 
     default_regime = market_regime_by_id(config, config.default_backtest_regime)
 
-    assert default_regime.regime_id == "ai_after_chatgpt"
-    assert default_regime.start_date.isoformat() == "2022-12-01"
-    assert default_regime.anchor_date.isoformat() == "2022-11-30"
-    assert "ChatGPT" in default_regime.anchor_event
+    assert default_regime.regime_id == "unified_primary_2021"
+    assert default_regime.start_date.isoformat() == "2021-02-22"
+    assert default_regime.anchor_date.isoformat() == "2021-02-22"
+    assert "exact-three-asset" in default_regime.anchor_event
+
+    legacy_regime = market_regime_by_id(config, "ai_after_chatgpt")
+    assert legacy_regime.start_date.isoformat() == "2022-12-01"
+    assert legacy_regime.anchor_date.isoformat() == "2022-11-30"
+    assert legacy_regime.primary is False
 
 
 def test_risk_events_config_loads_levels_and_rules() -> None:

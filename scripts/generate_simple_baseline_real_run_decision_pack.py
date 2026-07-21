@@ -12,6 +12,7 @@ import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data_foundation import utc_now_iso, write_foundation_artifact_pair
+from ai_trading_system.post_2085_research_common import ANCHOR_DATE, ANCHOR_EVENT, MARKET_REGIME
 from ai_trading_system.simple_baseline_portfolio_control import (
     DEFAULT_AI_REGIME_BACKTEST_START,
     DEFAULT_PRICES_PATH,
@@ -238,8 +239,7 @@ def _build_pr_readiness_summary() -> dict[str, Any]:
             "push_command": f"git push origin {BRANCH_NAME}",
             "push_exit_code": 0,
             "push_note": (
-                "Branch push was completed before TRADING-880 research artifacts were "
-                "generated."
+                "Branch push was completed before TRADING-880 research artifacts were " "generated."
             ),
         },
     )
@@ -394,7 +394,8 @@ def _build_drawdown_replay(
         "best_static_baseline": BEST_STATIC_BASELINE_ID,
         "pre_2022_note": (
             "2018Q4 and 2020 are stress/replay windows only; primary AI-cycle "
-            "conclusions use 2022-12-01 onward."
+            "conclusions use 2021-02-22 onward; 2022-12-01 remains a legacy "
+            "comparison boundary."
         ),
     }
     return _payload(
@@ -944,12 +945,12 @@ def _payload(
         "title": title,
         "status": status,
         "generated_at": utc_now_iso(),
-        "market_regime": "ai_after_chatgpt",
-        "anchor_event": "ChatGPT public launch",
-        "anchor_date": "2022-11-30",
+        "market_regime": MARKET_REGIME,
+        "anchor_event": ANCHOR_EVENT,
+        "anchor_date": ANCHOR_DATE,
         "default_backtest_start": DEFAULT_AI_REGIME_BACKTEST_START.isoformat(),
         "summary": {
-            "market_regime": "ai_after_chatgpt",
+            "market_regime": MARKET_REGIME,
             "default_backtest_start": DEFAULT_AI_REGIME_BACKTEST_START.isoformat(),
             **dict(summary),
         },

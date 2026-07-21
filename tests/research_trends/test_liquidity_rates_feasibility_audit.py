@@ -112,7 +112,7 @@ def test_liquidity_rates_feasibility_cli_writes_outputs(
     summary = summary_payload["summary"]
     assert summary_payload["status"] == STATUS
     assert summary["status"] == STATUS
-    assert summary["market_regime"] == "ai_after_chatgpt"
+    assert summary["market_regime"] == "unified_primary_2021"
     assert summary["actual_requested_date_range"] == "2022-12-01..2026-06-29"
     assert summary["data_quality_status"] == "PASS"
     assert summary["partial_poc_possible"] is True

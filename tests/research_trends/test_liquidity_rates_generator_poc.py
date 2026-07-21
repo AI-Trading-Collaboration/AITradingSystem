@@ -36,7 +36,7 @@ def test_liquidity_rates_generator_policy_is_governed() -> None:
     assert policy["version"] == "v1"
     assert policy["status"] == "pilot_research"
     assert policy["owner"] == "research_governance"
-    assert policy["market_regime"] == "ai_after_chatgpt"
+    assert policy["market_regime"] == "unified_primary_2021"
     assert policy["validation_evidence"]
     assert policy["review_condition"]
     assert policy["expiry_condition"]
@@ -97,7 +97,7 @@ def test_liquidity_rates_generator_cli_writes_outputs(
     )
     assert summary["status"] == STATUS
     assert summary["data_quality_status"] == "PASS"
-    assert summary["market_regime"] == "ai_after_chatgpt"
+    assert summary["market_regime"] == "unified_primary_2021"
     assert summary["actual_requested_date_range"] == "2026-05-15..2026-06-29"
     assert summary["summary"]["candidate_count"] == 2
     assert summary["summary"]["blocked_candidate_count"] == 1
@@ -124,7 +124,7 @@ def test_liquidity_rates_generator_cli_writes_outputs(
         series = pd.read_csv(candidate_dir / "candidate_signal_series.csv")
         assert not series.empty
         assert set(series["candidate_id"]) == {candidate_id}
-        assert set(series["market_regime"]) == {"ai_after_chatgpt"}
+        assert set(series["market_regime"]) == {"unified_primary_2021"}
 
     assert not (output_dir / "liquidity_headwind_proxy_v1").exists()
     blocked = json.loads(

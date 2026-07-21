@@ -9,6 +9,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.post_2085_research_common import (
+    ANCHOR_DATE,
+    ANCHOR_EVENT,
+    DEFAULT_BACKTEST_START,
+    MARKET_REGIME,
+)
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_strategies" / "qqq_plus_growth"
 DEFAULT_OWNER_DOC_PATH = (
@@ -161,7 +168,7 @@ def _load_context(output_root: Path) -> dict[str, Any]:
         "data_quality": _mapping(ranking.get("data_quality")),
         "requested_date_range": _string(
             rows[0].get("requested_date_range") if rows else None,
-            "2022-12-01..latest",
+            f"{DEFAULT_BACKTEST_START}..latest",
         ),
     }
 
@@ -170,10 +177,10 @@ def _base_payload(extra: Mapping[str, Any]) -> dict[str, Any]:
     payload = {
         "schema_version": "1.0",
         "generated_at": datetime.now(tz=UTC).isoformat().replace("+00:00", "Z"),
-        "market_regime": "ai_after_chatgpt",
-        "anchor_event": "ChatGPT public launch",
-        "anchor_date": "2022-11-30",
-        "default_backtest_start": "2022-12-01",
+        "market_regime": MARKET_REGIME,
+        "anchor_event": ANCHOR_EVENT,
+        "anchor_date": ANCHOR_DATE,
+        "default_backtest_start": DEFAULT_BACKTEST_START,
         "production_effect": "none",
         "broker_action": "none",
         "promotion_allowed": False,
@@ -224,9 +231,7 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
         lines.extend(["## Summary", "", "|Key|Value|", "|---|---|"])
         for key, value in summary.items():
             rendered = (
-                json.dumps(value, ensure_ascii=False)
-                if isinstance(value, list | dict)
-                else value
+                json.dumps(value, ensure_ascii=False) if isinstance(value, list | dict) else value
             )
             lines.append(f"|`{key}`|`{rendered}`|")
         lines.append("")
@@ -607,9 +612,11 @@ def _watchlist_gate(context: Mapping[str, Any]) -> dict[str, Any]:
             "owner pack does not approve adding growth challenger",
         ]
     return {
-        "status": "NO_GROWTH_WATCHLIST_CANDIDATE"
-        if candidate is None
-        else "GROWTH_WATCHLIST_CANDIDATE_READY",
+        "status": (
+            "NO_GROWTH_WATCHLIST_CANDIDATE"
+            if candidate is None
+            else "GROWTH_WATCHLIST_CANDIDATE_READY"
+        ),
         "requested_date_range": context["requested_date_range"],
         "data_quality_status": _mapping(context["data_quality"]).get("status"),
         "summary": {
@@ -718,9 +725,11 @@ def _compact_candidate(row: Mapping[str, Any], non_dom_ids: set[str]) -> dict[st
         "effective_qqq_beta": row.get("effective_qqq_beta"),
         "max_tqqq_weight": row.get("max_tqqq_weight_observed"),
         "sgov_weight": weights.get("SGOV", 0.0),
-        "dominance_status": "non_dominated"
-        if row.get("strategy_id") in non_dom_ids
-        else "dominated_or_not_selected",
+        "dominance_status": (
+            "non_dominated"
+            if row.get("strategy_id") in non_dom_ids
+            else "dominated_or_not_selected"
+        ),
         "blocked_reasons": row.get("blocked_reasons", []),
         "research_commentary": _candidate_commentary(row),
     }

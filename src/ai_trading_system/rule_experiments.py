@@ -7,10 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 
 SCHEMA_VERSION = 1
 DEFAULT_RULE_EXPERIMENT_LEDGER_PATH = PROJECT_ROOT / "data" / "processed" / "rule_experiments.json"
-DEFAULT_REPLAY_START = date(2022, 12, 1)
+DEFAULT_REPLAY_START = PRIMARY_RESEARCH_START_DATE
 
 
 @dataclass(frozen=True)

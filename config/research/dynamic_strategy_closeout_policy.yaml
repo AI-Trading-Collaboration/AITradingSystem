@@ -13,10 +13,10 @@ promotion_status: BLOCKED
 owner_review_status: OWNER_REVIEW_REQUIRED
 target_path_metrics_role: diagnostic_only
 market_regime:
-  regime_id: ai_after_chatgpt
+  regime_id: unified_primary_2021
   anchor_date: 2022-11-30
   anchor_event: ChatGPT public launch
-  default_backtest_start: 2022-12-01
+  default_backtest_start: 2021-02-22
 policy_metadata:
   rationale: >
     TRADING-1326 to 1485 did not establish enough actual-path, net-of-cost,

@@ -26,7 +26,7 @@ def test_dynamic_v2_review_policy_loads_and_rejects_unsafe(tmp_path: Path) -> No
     policy = load_dynamic_v2_review_policy_config()
 
     assert policy.safety.model_dump(mode="json") == DYNAMIC_V2_REVIEW_SAFETY
-    assert policy.market_regime.regime_id == "ai_after_chatgpt"
+    assert policy.market_regime.regime_id == "unified_primary_2021"
     assert policy.review_package_policy.default_candidate_policy_id.endswith("lower_turnover")
     assert policy.blocking_conditions.block_shadow_enrollment is True
     assert policy.comparison_targets

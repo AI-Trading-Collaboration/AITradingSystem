@@ -93,3 +93,8 @@ artifact 把生成时的绝对 worktree 路径纳入 immutable lineage。当前 
   performance/provenance 全部 PASS。Full 前后 legacy artifacts、R2 decision 与 TRADING-2449 gate 均未变化；
   `production_effect=none`、`broker_action=none`。后续 archive operator 只可依据 tracked sidecar 安装 exact
   bytes；任何 policy、locator、size 或 SHA drift 必须重新 review，不重开本任务来改写旧证据。
+- 2026-07-21：TRADING-2452 将 active primary window 迁移到 `2021-02-22` 后，sidecar 绑定的
+  `strategy_research_restart_policy.yaml` 与 `controlled_strategy_next_stage_research.yaml` 历史 bytes 不再
+  位于 active locator。canonical sidecar 与四份 immutable artifacts 均保持不变；当前重放按设计返回
+  `HISTORICAL_PORTABLE_CONFLICT`。精确历史 source archive 与分离 locator 由 TRADING-2454 承接，
+  不用当前 source 重建 sidecar，也不回滚 active window。

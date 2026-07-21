@@ -16,9 +16,9 @@ validation_evidence: >
 review_condition: >
   Review before TRADING-2273 challenger experiments and before any first-layer
   output is interpreted as validation-ready or promotion evidence.
-market_regime: ai_after_chatgpt
+market_regime: unified_primary_2021
 requested_window:
-  start: "2022-12-01"
+  start: "2021-02-22"
   end: latest
 data_quality_expected_price_tickers:
   - QQQ

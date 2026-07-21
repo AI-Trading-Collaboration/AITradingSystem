@@ -14,7 +14,7 @@ import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data_foundation import (
-    AI_REGIME_START,
+    PRIMARY_RESEARCH_START,
     utc_now_iso,
     write_foundation_artifact_pair,
 )
@@ -216,9 +216,9 @@ DEFAULT_RESEARCH_ARTIFACT_GOVERNANCE_SNAPSHOT_PATH = (
     PROJECT_ROOT / "inputs" / "research_reviews" / "research_artifact_governance_snapshot.yaml"
 )
 DEFAULT_AI_REGIME_BACKTEST_START = (
-    AI_REGIME_START
-    if isinstance(AI_REGIME_START, date)
-    else date.fromisoformat(str(AI_REGIME_START))
+    PRIMARY_RESEARCH_START
+    if isinstance(PRIMARY_RESEARCH_START, date)
+    else date.fromisoformat(str(PRIMARY_RESEARCH_START))
 )
 
 SAFETY_BOUNDARY: dict[str, Any] = {
@@ -233,9 +233,10 @@ SAFETY_BOUNDARY: dict[str, Any] = {
 }
 
 AI_REGIME_SUMMARY: dict[str, str] = {
-    "market_regime": "ai_after_chatgpt",
-    "anchor_event": "ChatGPT public launch",
-    "anchor_date": "2022-11-30",
+    "market_regime": "unified_primary_2021",
+    "research_window_id": "exact_three_asset_validated",
+    "anchor_event": "validated QQQ/SGOV/TQQQ common history start",
+    "anchor_date": "2021-02-22",
     "default_backtest_start": DEFAULT_AI_REGIME_BACKTEST_START.isoformat(),
 }
 
@@ -1561,7 +1562,7 @@ def run_execution_semantics_rebacktest(
     date_range = {
         "start": prices.index.min().date().isoformat(),
         "end": prices.index.max().date().isoformat(),
-        "market_regime": "ai_after_chatgpt",
+        "market_regime": "unified_primary_2021",
     }
     aggregate_artifact_paths = _write_rebacktest_aggregate_artifacts(
         output_root=output_root,
@@ -1742,7 +1743,7 @@ def run_dynamic_actual_path_owner_review_decision(
         date_range={
             "start": date_range.get("start"),
             "end": date_range.get("end"),
-            "market_regime": date_range.get("market_regime", "ai_after_chatgpt"),
+            "market_regime": date_range.get("market_regime", "unified_primary_2021"),
         },
         tracked_evidence=[
             "docs/research/execution_semantics_actual_path_rebacktest_review.md",
@@ -1968,7 +1969,7 @@ def run_dynamic_actual_path_policy_sensitivity_review(
         date_range={
             "start": prices.index.min().date().isoformat(),
             "end": prices.index.max().date().isoformat(),
-            "market_regime": "ai_after_chatgpt",
+            "market_regime": "unified_primary_2021",
         },
         data_quality=data_gate,
         classification_policy=POLICY_SENSITIVITY_CLASSIFICATION_POLICY,
@@ -2121,7 +2122,7 @@ def run_actual_path_edge_attribution_review(
         "start": runtime_date_range.get("start")
         or prices.index.min().date().isoformat(),
         "end": runtime_date_range.get("end") or prices.index.max().date().isoformat(),
-        "market_regime": runtime_date_range.get("market_regime", "ai_after_chatgpt"),
+        "market_regime": runtime_date_range.get("market_regime", "unified_primary_2021"),
     }
     evidence = {
         strategy_id: _load_runtime_strategy_evidence(source_root, strategy_id)
@@ -2351,7 +2352,7 @@ def run_pit_data_availability_audit(
     date_range = {
         "start": prices.index.min().date().isoformat(),
         "end": prices.index.max().date().isoformat(),
-        "market_regime": "ai_after_chatgpt",
+        "market_regime": "unified_primary_2021",
     }
     registry = _load_policy_registry(policy_registry_path)
     signal_rows = _pit_signal_inventory_rows(
@@ -2474,7 +2475,7 @@ def run_dynamic_strategy_walk_forward_validation(
     date_range = {
         "start": prices.index.min().date().isoformat(),
         "end": prices.index.max().date().isoformat(),
-        "market_regime": "ai_after_chatgpt",
+        "market_regime": "unified_primary_2021",
     }
     policy = _load_yaml_mapping(walk_forward_policy_path)
     edge_matrix = _load_yaml_mapping(edge_matrix_path)
@@ -2786,7 +2787,7 @@ def run_risk_timing_quality_review(
     date_range = {
         "start": prices.index.min().date().isoformat(),
         "end": prices.index.max().date().isoformat(),
-        "market_regime": "ai_after_chatgpt",
+        "market_regime": "unified_primary_2021",
     }
     if missing:
         payload = _payload(
@@ -7258,7 +7259,7 @@ def _event_override_survival_matrix_payload(
         "run_id": utc_now_iso(),
         "source_commit": _source_commit_hash(),
         "event_override_policy_hash": event_override_policy_hash,
-        "market_regime": "ai_after_chatgpt",
+        "market_regime": "unified_primary_2021",
         "date_range": dict(date_range),
         "dynamic_promotion": {"final_status": "BLOCKED"},
         "paper_shadow_preflight_candidate": _event_override_paper_shadow_candidate(
@@ -7548,7 +7549,7 @@ def _staleness_repair_matrix_payload(
         "source_commit": _source_commit_hash(),
         "policy_registry_hash": policy_registry_hash,
         "signal_validity_taxonomy_hash": taxonomy_hash,
-        "market_regime": "ai_after_chatgpt",
+        "market_regime": "unified_primary_2021",
         "date_range": dict(date_range),
         "dynamic_promotion": {
             "final_status": "BLOCKED",
@@ -7779,7 +7780,7 @@ def _signal_validity_staleness_repair_review_markdown(
             "# Signal Validity Staleness Repair Review",
             "",
             f"- status: `{matrix_payload.get('status')}`",
-            "- market_regime: `ai_after_chatgpt`",
+            "- market_regime: `unified_primary_2021`",
             "- dynamic_promotion: `BLOCKED`",
             "- target_path_metrics_role: `diagnostic_only`",
             "- paper_shadow_allowed: `false`",
@@ -8409,7 +8410,7 @@ def _pit_audit_review_markdown(
             "# PIT Data Availability Audit",
             "",
             f"- 状态：`{payload.get('status')}`",
-            f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+            f"- market_regime：`{date_range.get('market_regime', 'unified_primary_2021')}`",
             f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
             (
                 "- data_quality_status：`"
@@ -8901,7 +8902,7 @@ def _walk_forward_review_markdown(
             "# Dynamic Strategy Walk-Forward Validation",
             "",
             f"- 状态：`{payload.get('status')}`",
-            f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+            f"- market_regime：`{date_range.get('market_regime', 'unified_primary_2021')}`",
             f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
             (
                 "- data_quality_status：`"
@@ -8945,7 +8946,7 @@ def _date_range_from_runtime_or_gate(source_root: Path) -> dict[str, Any]:
     return {
         "start": runtime_range.get("start") or DEFAULT_AI_REGIME_BACKTEST_START.isoformat(),
         "end": runtime_range.get("end") or "unknown",
-        "market_regime": runtime_range.get("market_regime", "ai_after_chatgpt"),
+        "market_regime": runtime_range.get("market_regime", "unified_primary_2021"),
     }
 
 
@@ -9252,7 +9253,7 @@ def _event_taxonomy_review_markdown(
             "# Event Override Ex-Ante Taxonomy Review",
             "",
             f"- 状态：`{payload.get('status')}`",
-            f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+            f"- market_regime：`{date_range.get('market_regime', 'unified_primary_2021')}`",
             f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
             (
                 "- data_quality_status：`"
@@ -9824,7 +9825,7 @@ def _risk_timing_quality_markdown(
             "# Risk-Off Risk-On Timing Quality Review",
             "",
             f"- 状态：`{payload.get('status')}`",
-            f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+            f"- market_regime：`{date_range.get('market_regime', 'unified_primary_2021')}`",
             f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
             (
                 "- data_quality_status：`"
@@ -9867,7 +9868,7 @@ def _date_range_from_prices(prices: pd.DataFrame) -> dict[str, Any]:
     return {
         "start": prices.index.min().date().isoformat(),
         "end": prices.index.max().date().isoformat(),
-        "market_regime": "ai_after_chatgpt",
+        "market_regime": "unified_primary_2021",
     }
 
 
@@ -10561,7 +10562,7 @@ def _batch4_markdown(
             f"# {title}",
             "",
             f"- 状态：`{payload.get('status')}`",
-            f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+            f"- market_regime：`{date_range.get('market_regime', 'unified_primary_2021')}`",
             f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
             (
                 "- data_quality_status：`"
@@ -11361,7 +11362,7 @@ def _edge_attribution_review_markdown(
         "# Actual Path Edge Attribution Review",
         "",
         f"- 状态：`{payload.get('status')}`",
-        f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+        f"- market_regime：`{date_range.get('market_regime', 'unified_primary_2021')}`",
         f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
         f"- data_quality_status：`{matrix_payload.get('data_quality_status')}`",
         "- promotion_decision_source：`actual_path_only`",
@@ -11571,7 +11572,7 @@ def _objective_gate_review_markdown(
         "# Dynamic Strategy Objective Gate Review",
         "",
         f"- 状态：`{payload.get('status')}`",
-        f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+        f"- market_regime：`{date_range.get('market_regime', 'unified_primary_2021')}`",
         f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
         "- promotion_decision_source：`actual_path_only`",
         "- target_path_metrics_role：`diagnostic_only`",
@@ -11847,7 +11848,7 @@ def _owner_review_decision_markdown(payload: Mapping[str, Any]) -> str:
             "# Dynamic Actual-Path Owner Review Decision",
             "",
             f"- 状态：`{payload.get('status')}`",
-            "- market_regime：`ai_after_chatgpt`",
+            "- market_regime：`unified_primary_2021`",
             "- promotion_decision_source：`actual_path_only`",
             "- target_path_metrics_role：`diagnostic_only`",
             "- dynamic_promotion：`BLOCKED`",
@@ -12433,7 +12434,7 @@ def _policy_sensitivity_markdown(payload: Mapping[str, Any]) -> str:
             "# Dynamic Actual-Path Policy Sensitivity Review",
             "",
             f"- 状态：`{payload.get('status')}`",
-            "- market_regime：`ai_after_chatgpt`",
+            "- market_regime：`unified_primary_2021`",
             "- matrix_mode：`staged`",
             "- Stage A：`execution_lag_days x rebalance_frequency`",
             (

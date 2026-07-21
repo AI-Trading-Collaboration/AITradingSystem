@@ -2063,7 +2063,7 @@ def _run_trace_card_summary(run_id: str | None, trace_bundle_path: Path | None) 
 
 
 def _market_regime_card_summary() -> str:
-    return "ai_after_chatgpt；default backtest start=2022-12-01"
+    return "unified_primary_2021；default backtest start=2021-02-22"
 
 
 def _path_cell(path: Path | str | None) -> str:

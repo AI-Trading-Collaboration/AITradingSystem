@@ -3,9 +3,9 @@ version: v1
 status: pilot_research
 owner: research_governance
 task_id: TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC
-market_regime: ai_after_chatgpt
-anchor_event: ChatGPT public launch
-default_start_date: "2022-12-01"
+market_regime: unified_primary_2021
+anchor_event: validated QQQ/SGOV/TQQQ common history start
+default_start_date: "2021-02-22"
 rationale: >
   Regime labels can help explain candidate behavior by market state, but they
   can become hindsight labels if generated from final episode outcomes. This

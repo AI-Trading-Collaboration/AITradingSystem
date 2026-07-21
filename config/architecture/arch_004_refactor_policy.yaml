@@ -48,7 +48,7 @@ program:
     source_commit: 4ca63626
     reconciliation_path: inputs/architecture/arch_004_predecessor_reconciliation.yaml
     reader_path: docs/architecture/arch_004_phase_a_baseline.md
-    semantic_glossary_path: config/architecture/research_semantic_glossary.yaml
+    semantic_glossary_path: config/architecture/research_semantic_glossary_v2.yaml
     compatibility_baseline_path: inputs/architecture/arch_004_compatibility_baseline.yaml
     worktree_attribution_path: inputs/architecture/arch_004_worktree_attribution.yaml
     full_validation_artifact: outputs/validation_runtime/full_20260710T162418Z/test_runtime_summary.json
@@ -97,6 +97,16 @@ feature_freeze:
     - validation_coverage
     - exit_condition
     - linked_task_id
+  approved_exceptions:
+    - task_id: TRADING-2452_UNIFIED_2021_PRIMARY_WINDOW_AND_CLEAN_RUN
+      owner: project_owner
+      approved_at: 2026-07-21
+      reason: unify future active strategy research at the validated 2021-02-22 start
+      behavioral_impact: active research defaults and interpretation metadata change only
+      risk: historical and active window semantics could be conflated
+      validation_coverage: versioned glossary, migration guard, focused and full validation
+      exit_condition: TRADING-2452 package and shared contract closeout PASS
+      production_effect: none
 
 predecessor_disposition_vocabulary:
   - REUSE

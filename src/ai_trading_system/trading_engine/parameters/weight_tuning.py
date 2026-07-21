@@ -13,6 +13,7 @@ import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.quality import default_quality_report_path
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty, sha256_file
 from ai_trading_system.trading_engine.backtesting.metrics import calculate_portfolio_metrics
 from ai_trading_system.trading_engine.backtesting.portfolio_simulator import (
@@ -2239,7 +2240,9 @@ def _full_result_start(
     trading_dates: Sequence[date],
     market_regime: Any,
 ) -> date:
-    regime_start = getattr(market_regime, "default_backtest_start", date(2022, 12, 1))
+    regime_start = getattr(
+        market_regime, "default_backtest_start", PRIMARY_RESEARCH_START_DATE
+    )
     if windows:
         return max(windows[0].validation_start, regime_start)
     if trading_dates:

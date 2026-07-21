@@ -17,8 +17,9 @@ PRODUCTION_EFFECT = "none"
 PASS_STATUS = "PASS"
 FAIL_STATUS = "FAIL"
 PASS_WITH_WARNINGS_STATUS = "PASS_WITH_WARNINGS"
-MARKET_REGIME = "ai_after_chatgpt"
+MARKET_REGIME = "unified_primary_2021"
 AI_REGIME_START = "2022-12-01"
+PRIMARY_RESEARCH_START = "2021-02-22"
 CANDIDATE_BACKFILL_COMPLETE = "CANDIDATE_BACKFILL_COMPLETE"
 CANDIDATE_BACKFILL_PARTIAL = "CANDIDATE_BACKFILL_PARTIAL"
 CANDIDATE_BACKFILL_BLOCKED = "CANDIDATE_BACKFILL_BLOCKED"
@@ -4141,7 +4142,7 @@ def _date_range_from_windows(windows: Sequence[Mapping[str, Any]]) -> str:
     starts = [_text(row.get("start")) for row in windows if _text(row.get("start"))]
     ends = [_text(row.get("end")) for row in windows if _text(row.get("end"))]
     if not starts or not ends:
-        return f"{AI_REGIME_START}..unspecified"
+        return f"{PRIMARY_RESEARCH_START}..unspecified"
     return f"{min(starts)}..{max(ends)}"
 
 

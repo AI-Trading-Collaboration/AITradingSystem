@@ -1075,8 +1075,11 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_f2["validation"]["contract_validation"]["passed"] == 197
     for source in phase_f2["sources"]:
         if source.get("historical_phase_f2_documentation_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004F2_RUNTIME"
-            assert source["current_hash_tracked_in"] == ("phase_f2_runtime_lifecycle.sources")
+            assert source["superseded_by_phase"] in {
+                "ARCH-004F2_RUNTIME",
+                "TRADING-2452",
+            }
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = _source_sha256(source)
         assert actual == source["sha256"], source["path"]
@@ -1174,6 +1177,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
                 "ARCH-004G2.4P",
                 "ARCH-004G2.4AH",
                 "TRADING-2444",
+                "TRADING-2452",
             }
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue

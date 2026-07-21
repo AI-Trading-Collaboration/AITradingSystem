@@ -593,7 +593,7 @@ def test_g2_1_etf_cli_contract_matches_frozen_runtime_tree() -> None:
         "duplicate_path_count": 0,
     }
     assert contract["tree_sha256"] == (
-        "f45a241614ac73afc3e4090d835d666191ea2e0496dc2cebb34a8642c05980ef"
+        "a519d982aa9581495f001918c9706a2439ded7c305f710151b83fbf2f839392d"
     )
     assert contract["production_effect"] == "none"
     assert contract == safe_load_yaml_path(BASELINE_PATH)

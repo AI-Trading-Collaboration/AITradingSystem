@@ -414,7 +414,7 @@ def test_single_asset_manual_external_record_accepts_no_rebalancing(
                         "external_tool": "Portfolio Visualizer",
                         "external_tool_url_or_name": "portfolio_visualizer_export_fixture",
                         "strategy_id": "100_qqq",
-                        "date_range_start": "2022-12-01",
+                            "date_range_start": "2021-02-22",
                         "date_range_end": "2026-06-25",
                         "asset_weights": {"QQQ": 1.0},
                         "rebalance_frequency": "No rebalancing",
@@ -440,7 +440,7 @@ def test_single_asset_manual_external_record_accepts_no_rebalancing(
                         "external_tool": "Portfolio Visualizer",
                         "external_tool_url_or_name": "portfolio_visualizer_export_fixture",
                         "strategy_id": "qqq_50_sgov_50",
-                        "date_range_start": "2022-12-01",
+                            "date_range_start": "2021-02-22",
                         "date_range_end": "2026-06-25",
                         "asset_weights": {"QQQ": 0.5, "SGOV": 0.5},
                         "rebalance_frequency": "No rebalancing",
@@ -546,7 +546,7 @@ def _assert_external_validation_safety(payload: dict[str, object]) -> None:
     assert payload["paper_shadow_allowed"] is False
     assert payload["production_allowed"] is False
     assert payload["manual_review_required"] is True
-    assert payload["market_regime"] == "ai_after_chatgpt"
+    assert payload["market_regime"] == "unified_primary_2021"
     artifact_paths = payload["artifact_paths"]
     assert isinstance(artifact_paths, dict)
     assert Path(str(artifact_paths["json_path"])).exists()
@@ -595,7 +595,7 @@ def _write_manual_external_records(
                 "external_tool": "test_fixture_external",
                 "external_tool_url_or_name": "fixture://external-platform",
                 "strategy_id": row["strategy_id"],
-                "date_range_start": "2022-12-01",
+                "date_range_start": "2021-02-22",
                 "date_range_end": as_of.isoformat(),
                 "asset_weights": weights[row["strategy_id"]],
                 "rebalance_frequency": "monthly",

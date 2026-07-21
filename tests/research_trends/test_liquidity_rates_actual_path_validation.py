@@ -45,7 +45,7 @@ def test_liquidity_rates_actual_path_policy_is_governed() -> None:
     assert policy["version"] == "v1"
     assert policy["status"] == "pilot_research"
     assert policy["owner"] == "research_governance"
-    assert policy["market_regime"] == "ai_after_chatgpt"
+    assert policy["market_regime"] == "unified_primary_2021"
     assert policy["validation_evidence"]
     assert policy["review_condition"]
     assert policy["expiry_condition"]
@@ -122,7 +122,7 @@ def test_liquidity_rates_actual_path_cli_writes_outputs(tmp_path: Path) -> None:
     summary = summary_payload["summary"]
     assert summary_payload["status"] in ALLOWED_STATUSES
     assert summary["status"] in ALLOWED_STATUSES
-    assert summary["market_regime"] == "ai_after_chatgpt"
+    assert summary["market_regime"] == "unified_primary_2021"
     assert summary["actual_requested_date_range"] == "2026-05-15..2026-06-29"
     assert summary["data_quality_status"] == "PASS"
     assert summary["source_generator_status"] == GENERATOR_STATUS

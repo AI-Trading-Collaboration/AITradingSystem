@@ -2,8 +2,8 @@ schema_version: 1
 policy_id: smoothed_source_refresh_v1
 owner: project_owner
 status: active
-market_regime: ai_after_chatgpt
-default_backtest_start: 2022-12-01
+market_regime: unified_primary_2021
+default_backtest_start: 2021-02-22
 
 purpose: >
   Controlled source refresh policy for TRADING-281 to TRADING-285 smoothed
@@ -18,7 +18,7 @@ refresh:
   price_provider: fmp
   secondary_price_provider: marketstack
   fallback_price_provider: yfinance
-  start: 2022-12-01
+  start: 2021-02-22
   include_full_ai_chain: false
   allow_partial_refresh: true
   stop_on_validation_failure: true

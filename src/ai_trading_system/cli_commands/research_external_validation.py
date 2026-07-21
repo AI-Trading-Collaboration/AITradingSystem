@@ -8,6 +8,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.equal_risk_growth_tilt import (
     DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
 )
@@ -81,7 +82,7 @@ def _make_scope_command(
         payload = _build_payload(
             lambda: builder(
                 output_root=output_root,
-                start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+                start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
                 end_date=_parse_optional_date(end_date),
             )
         )
@@ -137,7 +138,7 @@ def _make_data_command(
                 growth_config_path=growth_config_path,
                 output_root=output_root,
                 as_of_date=_parse_optional_date(as_of),
-                start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+                start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
                 end_date=_parse_optional_date(end_date),
             )
         )
@@ -175,7 +176,7 @@ def strategies_static_baseline_external_reconciliation_command(
             output_root=output_root,
             external_records_path=external_records_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -214,7 +215,7 @@ def strategies_static_baseline_reconciliation_final_check_command(
             output_root=output_root,
             external_records_path=external_records_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -239,7 +240,7 @@ def strategies_manual_external_record_template_command(
             output_root=output_root,
             template_dir=template_dir,
             guide_path=guide_path,
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -264,7 +265,7 @@ def strategies_static_baseline_external_manual_runbook_command(
             simple_config_path=simple_config_path,
             output_root=output_root,
             docs_path=docs_path,
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -293,7 +294,7 @@ def strategies_static_baseline_external_manual_input_ingestion_command(
             output_root=output_root,
             input_yaml_path=input_yaml_path,
             input_csv_path=input_csv_path,
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -357,7 +358,7 @@ def strategies_sgov_external_convention_signoff_command(
             output_root=output_root,
             signoff_path=signoff_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -408,7 +409,7 @@ def strategies_static_baseline_final_reconciliation_after_manual_input_command(
             metric_signoff_path=metric_signoff_path,
             sgov_signoff_path=sgov_signoff_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -447,7 +448,7 @@ def strategies_external_validation_owner_report_command(
             output_root=output_root,
             docs_path=docs_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -490,7 +491,7 @@ def strategies_external_validation_master_review_command(
             docs_path=docs_path,
             owner_docs_path=owner_docs_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -545,7 +546,7 @@ def strategies_external_validation_manual_evidence_owner_signoff_command(
             metric_signoff_path=metric_signoff_path,
             sgov_signoff_path=sgov_signoff_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -604,7 +605,7 @@ def strategies_external_validation_manual_evidence_master_review_command(
             metric_signoff_path=metric_signoff_path,
             sgov_signoff_path=sgov_signoff_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )

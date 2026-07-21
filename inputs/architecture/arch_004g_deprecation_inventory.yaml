@@ -1,9 +1,9 @@
-inventory_id: arch_004g_deprecation_inventory_a712f6163ff2a2482c15
+inventory_id: arch_004g_deprecation_inventory_669b858d4850cf54ba21
 schema_version: arch_004g_deprecation_inventory.v1
 policy_id: arch_004g_deprecation_policy_v1
 repository:
-  python_module_count: 992
-  python_test_file_count: 1143
+  python_module_count: 994
+  python_test_file_count: 1147
   direct_writer_baseline_count: 894
   direct_writer_current_count: 856
   direct_writer_violation_count: 0
@@ -60,8 +60,8 @@ surfaces:
   top_level_class_count: 0
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 1
-  test_reference_file_count: 313
-  docs_config_reference_file_count: 121
+  test_reference_file_count: 315
+  docs_config_reference_file_count: 122
   required_removal_gate_count: 12
   removal_ready: false
   open_gate_ids:
@@ -84,9 +84,9 @@ surfaces:
   migration_wave: G3
   path: src/ai_trading_system/reports/reader_brief.py
   file_count: 1
-  line_count: 29050
-  byte_count: 1278713
-  source_sha256: cacb14c2252d3e5b19de423cea04f0eb85ea102460a8b8871bf481212fb2e076
+  line_count: 29053
+  byte_count: 1278818
+  source_sha256: 295971e3ff8dd38f0f3db4aa79d038c38a2aff6739bc7df4be623e730871bb1a
   top_level_function_count: 367
   top_level_class_count: 0
   cli_command_decorator_count: 0
@@ -208,14 +208,14 @@ surfaces:
   migration_wave: G6
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py
   file_count: 1
-  line_count: 12951
-  byte_count: 515757
-  source_sha256: 8a088c98177cb17a3be615facffa54472dcb5ab656d3d06c7d565d5c87322b0b
+  line_count: 12956
+  byte_count: 515942
+  source_sha256: cf5a5ee7d2b2fe2da9c0dbebb7eea155825cde43e0c982b91d43c915c964a9e4
   top_level_function_count: 680
   top_level_class_count: 1
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 0
-  test_reference_file_count: 91
+  test_reference_file_count: 92
   docs_config_reference_file_count: 19
   required_removal_gate_count: 12
   removal_ready: false
@@ -239,15 +239,15 @@ surfaces:
   migration_wave: G6
   path: src/ai_trading_system/controlled_strategy_batch.py
   file_count: 1
-  line_count: 19802
-  byte_count: 836611
-  source_sha256: 338c80eed9078e8886ee023b82b145b1d031e8d6f05a987c6b4dc2e0f352ffee
+  line_count: 19804
+  byte_count: 836716
+  source_sha256: 429013c426449d5ad7c0bfdba6664d094793025ef0b7b22b5527d658ab352f4c
   top_level_function_count: 490
   top_level_class_count: 0
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 2
   test_reference_file_count: 8
-  docs_config_reference_file_count: 23
+  docs_config_reference_file_count: 24
   required_removal_gate_count: 12
   removal_ready: false
   open_gate_ids:
@@ -270,9 +270,9 @@ surfaces:
   migration_wave: G6
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
   file_count: 1
-  line_count: 24222
-  byte_count: 1000799
-  source_sha256: 6ed325634e6e61221595961edda24fae5139855ada83c8f2370da70a153ba229
+  line_count: 24223
+  byte_count: 1000897
+  source_sha256: f5ead882aea2a964401956181adce9fa776656183571eea533ab38c3e409d4a0
   top_level_function_count: 578
   top_level_class_count: 21
   cli_command_decorator_count: 0

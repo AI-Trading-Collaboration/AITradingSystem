@@ -435,7 +435,7 @@ def render_backtest_summary(run: ETFBacktestRun) -> str:
                 "execution_date 执行，收益窗口为 execution_date 到 return_date。"
             ),
             "- 交易成本按 turnover * (commission_bps + slippage_bps) 扣除。",
-            "- 2022-12-01 前历史只作为 warm-up，不作为默认 AI regime 主结论窗口。",
+            "- 默认主结论窗口从 2021-02-22 开始；更早历史仅用于受治理的 stress 或 sensitivity。",
         ]
     )
     return "\n".join(lines) + "\n"

@@ -38,7 +38,7 @@ def test_next_research_cycle_builds_fail_closed_research_chain(tmp_path: Path) -
     )
     frozen = payloads[next_cycle.FROZEN_SPEC_REPORT_TYPE]
     assert frozen["summary"]["paper_shadow_eligible"] is False
-    assert frozen["summary"]["market_regime"] == "ai_after_chatgpt"
+    assert frozen["summary"]["market_regime"] == "unified_primary_2021"
 
     backfill = payloads[next_cycle.BACKFILL_REPORT_TYPE]
     assert backfill["status"] == next_cycle.CANDIDATE_BACKFILL_BLOCKED

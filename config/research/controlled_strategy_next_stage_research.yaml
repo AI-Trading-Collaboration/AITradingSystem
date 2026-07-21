@@ -5,9 +5,9 @@ owner: research_governance
 heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
 base_config_path: config/research/controlled_strategy_candidate_research.yaml
 market_regime:
-  regime_id: ai_after_chatgpt
-  anchor_event: ChatGPT public launch on 2022-11-30
-  default_start: "2022-12-01"
+  regime_id: unified_primary_2021
+  anchor_event: validated QQQ/SGOV/TQQQ common history start
+  default_start: "2021-02-22"
 production_effect: none
 rationale: >
   Continue only the value surface line after controlled strategy batch 1,
@@ -58,6 +58,9 @@ value_surface_expansion:
         - MSFT
         - GOOGL
   regime_segments:
+    - segment_id: unified_primary_2021_full
+      start_date: "2021-02-22"
+      end_date: null
     - segment_id: ai_after_chatgpt_full
       start_date: "2022-12-01"
       end_date: null

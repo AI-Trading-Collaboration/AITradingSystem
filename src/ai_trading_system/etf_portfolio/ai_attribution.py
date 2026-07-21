@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 
 DEFAULT_AI_ATTRIBUTION_REPORT_ROOT = PROJECT_ROOT / "reports" / "etf_portfolio" / "ai_attribution"
 DEFAULT_AI_ATTRIBUTION_DATASET_DIR = DEFAULT_AI_ATTRIBUTION_REPORT_ROOT / "datasets"
@@ -21,8 +22,8 @@ AI_ATTRIBUTION_DATASET_SCHEMA_VERSION = "ai_attribution_dataset_v1"
 AI_ATTRIBUTION_REPORT_SCHEMA_VERSION = "ai_attribution_report_v1"
 AI_ATTRIBUTION_VALIDATION_SCHEMA_VERSION = "ai_attribution_validation_v1"
 
-AI_ATTRIBUTION_MARKET_REGIME = "ai_after_chatgpt"
-AI_ATTRIBUTION_REGIME_START = date(2022, 12, 1)
+AI_ATTRIBUTION_MARKET_REGIME = "unified_primary_2021"
+AI_ATTRIBUTION_REGIME_START = PRIMARY_RESEARCH_START_DATE
 FORWARD_WINDOWS: tuple[int, ...] = (1, 5, 20, 60)
 PRICE_TARGETS: tuple[str, ...] = ("QQQ", "SPY", "SMH", "SOXX")
 

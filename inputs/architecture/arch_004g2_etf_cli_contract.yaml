@@ -9,7 +9,7 @@ counts:
   registered_leaf_count: 997
   unique_path_count: 1288
   duplicate_path_count: 0
-tree_sha256: f45a241614ac73afc3e4090d835d666191ea2e0496dc2cebb34a8642c05980ef
+tree_sha256: a519d982aa9581495f001918c9706a2439ded7c305f710151b83fbf2f839392d
 nodes:
 - path: <root>
   kind: group
@@ -22,11 +22,11 @@ nodes:
 - path: ai-attribution build
   kind: command
   parameter_count: 5
-  contract_sha256: 5d52f5ebc4a3ecddc6406e1ab432f76ead47f809a679bd84bf27d0ef9e56e891
+  contract_sha256: 3d798327ea6a942a695d1210d63755f5fc1d3bf90de4f87aaa8f1b8635aee5e8
 - path: ai-attribution report
   kind: command
   parameter_count: 6
-  contract_sha256: 742db0e6f00fa841a3f8f2770e6ee53759976b9b33104da5041b4c21cfc2defa
+  contract_sha256: 39a5bd627c797cddae0c62f77ce817c8337713ed06dd4ac3dd94663e9a0c138c
 - path: ai-attribution validate
   kind: command
   parameter_count: 3
@@ -1722,7 +1722,7 @@ nodes:
 - path: dynamic-v3-rescue paper-shadow init
   kind: command
   parameter_count: 2
-  contract_sha256: 6c2511efdc8be2c8b948484f73e8eaf58ec1a902ea90c99657ad1aed5860bded
+  contract_sha256: a3ec6bed83ecc46a71755780492b5c95f1011408993e5947a4412ea1cc59cada
 - path: dynamic-v3-rescue paper-shadow report
   kind: command
   parameter_count: 3
@@ -1738,7 +1738,7 @@ nodes:
 - path: dynamic-v3-rescue paper-shadow-backfill config-validate
   kind: command
   parameter_count: 1
-  contract_sha256: 0f40d1cb7820e7be7311506026e3d033217adba85eaa1d6134646c87c77c7b68
+  contract_sha256: e3dd7e10faccaac5e58e86c5e132c868cdd05e119e29c2271d8c5456610afc99
 - path: dynamic-v3-rescue paper-shadow-backfill report
   kind: command
   parameter_count: 3
@@ -1746,7 +1746,7 @@ nodes:
 - path: dynamic-v3-rescue paper-shadow-backfill run
   kind: command
   parameter_count: 2
-  contract_sha256: c210d9ad21dfc4b9b9b4b74633a58bcc619c178fd4606eba3403d04f6acb7a9f
+  contract_sha256: b107ad27083eb46ccb90cd82a9388a49440ef4264886d9bbbd49e4219ae153ca
 - path: dynamic-v3-rescue paper-shadow-daily
   kind: group
   parameter_count: 0
@@ -2326,7 +2326,7 @@ nodes:
 - path: dynamic-v3-rescue risk-capped-backfill run
   kind: command
   parameter_count: 2
-  contract_sha256: 39102c65393b1912b55205ea7acb2aea136c6c891305d9bbcaf6f2fc6dc21fc0
+  contract_sha256: 90f476381ecb1cb909a72fe7fa724f07f01a44c6cd76ed1020e84b5078e5aaab
 - path: dynamic-v3-rescue risk-capped-comparison
   kind: group
   parameter_count: 0
@@ -2770,7 +2770,7 @@ nodes:
 - path: dynamic-v3-rescue smoothed-backfill run
   kind: command
   parameter_count: 2
-  contract_sha256: ba502ab1f0361a2eafd2b93c35632ad25aeaf1c46cbe67651e5d0f065c3b08d1
+  contract_sha256: 82089d37cedb28ef87289489529f9cf0becf18dea3f3694f73372ecaa06f6f15
 - path: dynamic-v3-rescue smoothed-blocked-explain
   kind: group
   parameter_count: 0
@@ -4902,11 +4902,11 @@ nodes:
 - path: satellite-attribution build
   kind: command
   parameter_count: 7
-  contract_sha256: a23d56d1a694889f1489fbf28ab8118cc154d7945e8f2b1c2de0b0a5f263f972
+  contract_sha256: 6b4eedd75c2d5502e156d77e374ac5062e148effa85d4f45e4cd949369dfef56
 - path: satellite-attribution report
   kind: command
   parameter_count: 8
-  contract_sha256: b1b130e3a6dfac1908b59c35c1ffb936ab6e9bf63fb2b16f4214e5a1a8649abc
+  contract_sha256: 000a5fab15ff072eca24412d59efee8439c627f90d92d41dbfbeb74e297261ec
 - path: satellite-attribution validate
   kind: command
   parameter_count: 3

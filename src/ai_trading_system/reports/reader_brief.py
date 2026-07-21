@@ -10,6 +10,7 @@ from typing import Any
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
@@ -7701,8 +7702,10 @@ def _run_context(
     return {
         "as_of": as_of.isoformat(),
         "run_id": summary_run_id or _text(daily_task_dashboard.get("run_id"), "UNKNOWN"),
-        "market_regime": _text(market_regime.get("regime_id"), "ai_after_chatgpt"),
-        "market_regime_start": _text(market_regime.get("start_date"), "2022-12-01"),
+        "market_regime": _text(
+            market_regime.get("regime_id"), "unified_primary_2021"
+        ),
+        "market_regime_start": _text(market_regime.get("start_date"), PRIMARY_RESEARCH_START),
         "visibility_cutoff": _text(
             daily_task_dashboard.get("visibility_cutoff"),
             _text(task_summary.get("visibility_cutoff"), "UNKNOWN"),

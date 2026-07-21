@@ -45,7 +45,7 @@ def test_event_gating_validation_policy_is_governed() -> None:
     assert policy["status"] == "pilot_research_source_blocked"
     assert policy["owner"] == "research_governance"
     assert policy["task_id"] == "TRADING-2320_EVENT_GATING_VALIDATION"
-    assert policy["market_regime"] == "ai_after_chatgpt"
+    assert policy["market_regime"] == "unified_primary_2021"
     assert policy["source_dependency"]["required_task_id"] == (
         "TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC"
     )
@@ -132,7 +132,7 @@ def test_event_gating_validation_cli_writes_source_blocked_outputs(
     summary = summary_payload["summary"]
     assert summary_payload["status"] == STATUS
     assert summary["status"] == STATUS
-    assert summary["market_regime"] == "ai_after_chatgpt"
+    assert summary["market_regime"] == "unified_primary_2021"
     assert summary["data_quality_status"] == DATA_QUALITY_STATUS
     assert summary["source_status"] == (
         "EVENT_CALENDAR_GATING_GENERATOR_POC_SOURCE_BLOCKED_NO_SIGNAL"

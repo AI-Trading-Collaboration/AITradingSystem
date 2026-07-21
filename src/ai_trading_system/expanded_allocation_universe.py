@@ -14,7 +14,7 @@ import yaml
 
 from ai_trading_system.config import PROJECT_ROOT, load_data_quality
 from ai_trading_system.data.quality import DataQualityReport, validate_data_cache
-from ai_trading_system.data_foundation import AI_REGIME_START, utc_now_iso
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START, utc_now_iso
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH = (
@@ -108,9 +108,9 @@ DEFAULT_OWNER_REVIEW_PACK_DOC_PATH = (
 )
 
 DEFAULT_AI_REGIME_BACKTEST_START = (
-    AI_REGIME_START
-    if isinstance(AI_REGIME_START, date)
-    else date.fromisoformat(str(AI_REGIME_START))
+    PRIMARY_RESEARCH_START
+    if isinstance(PRIMARY_RESEARCH_START, date)
+    else date.fromisoformat(str(PRIMARY_RESEARCH_START))
 )
 GRID_ROUND_DIGITS = 6
 SAFETY_BOUNDARY: dict[str, Any] = {
@@ -922,12 +922,12 @@ def _payload(
         "status": status,
         "generated_at": utc_now_iso(),
         "source_commit": _source_commit(),
-        "market_regime": "ai_after_chatgpt",
-        "anchor_event": "ChatGPT public launch",
-        "anchor_date": "2022-11-30",
+        "market_regime": "unified_primary_2021",
+        "anchor_event": "validated QQQ/SGOV/TQQQ common history start",
+        "anchor_date": "2021-02-22",
         "default_backtest_start": DEFAULT_AI_REGIME_BACKTEST_START.isoformat(),
         "summary": {
-            "market_regime": "ai_after_chatgpt",
+            "market_regime": "unified_primary_2021",
             "default_backtest_start": DEFAULT_AI_REGIME_BACKTEST_START.isoformat(),
             **dict(summary),
         },
@@ -2113,7 +2113,7 @@ def _date_range_from_index(
             if requested_end
             else index.max().date().isoformat()
         ),
-        "market_regime": "ai_after_chatgpt",
+        "market_regime": "unified_primary_2021",
     }
 
 
@@ -2232,8 +2232,8 @@ def _render_scope_doc(payload: Mapping[str, Any]) -> str:
             "# Expanded QQQ / SGOV / TQQQ Universe Scope",
             "",
             f"- 状态：`{payload.get('status')}`",
-            "- market_regime：`ai_after_chatgpt`",
-            "- default_backtest_start：`2022-12-01`",
+            "- market_regime：`unified_primary_2021`",
+            "- default_backtest_start：`2021-02-22`",
             "- TQQQ：`research_only`，promotion universe 仍为 `BLOCKED`",
             "- production_effect：`none`",
             "- broker_action：`none`",

@@ -12,6 +12,7 @@ import pandas as pd
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.etf_portfolio.features import build_feature_store
 from ai_trading_system.etf_portfolio.models import (
     ETFAssetsConfig,
@@ -69,8 +70,8 @@ FORBIDDEN_OUTPUT_KEYS = {
     "automatic_candidate_promotion",
     "auto_promotion",
 }
-DEFAULT_MARKET_REGIME = "ai_after_chatgpt"
-DEFAULT_REGIME_START = date(2022, 12, 1)
+DEFAULT_MARKET_REGIME = "unified_primary_2021"
+DEFAULT_REGIME_START = PRIMARY_RESEARCH_START_DATE
 PRICE_TARGETS = ("QQQ", "SPY", "SMH", "SOXX")
 
 
@@ -88,7 +89,7 @@ class TrendCalibrationSafety(BaseModel):
 
 
 class TrendCalibrationMarketRegime(BaseModel):
-    regime_id: Literal["ai_after_chatgpt"]
+    regime_id: Literal["unified_primary_2021"]
     anchor_event: str = Field(min_length=1)
     anchor_date: date
     default_evaluation_start: date
@@ -96,7 +97,7 @@ class TrendCalibrationMarketRegime(BaseModel):
     @model_validator(mode="after")
     def validate_ai_regime_start(self) -> Self:
         if self.default_evaluation_start < DEFAULT_REGIME_START:
-            raise ValueError("default trend calibration start cannot predate 2022-12-01")
+            raise ValueError("default trend calibration start cannot predate 2021-02-22")
         return self
 
 

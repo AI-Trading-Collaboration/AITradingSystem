@@ -6,6 +6,8 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START
+
 SCHEMA_VERSION = 1
 REPORT_TYPE = "score_change_attribution"
 PRODUCTION_EFFECT = "none"
@@ -946,7 +948,7 @@ def _market_regime_record(snapshot: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "regime_id": _text(regime.get("regime_id"), "ai_after_chatgpt"),
         "anchor_date": _text(regime.get("anchor_date"), "2022-11-30"),
-        "start_date": _text(regime.get("start_date"), "2022-12-01"),
+        "start_date": _text(regime.get("start_date"), PRIMARY_RESEARCH_START),
     }
 
 

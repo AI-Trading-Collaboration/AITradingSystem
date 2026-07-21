@@ -16,7 +16,7 @@
 |`3_beta_adjusted_edge_really_insufficient`|`True`|
 |`4_possible_balanced_core`|`True`|
 |`5_better_neighbor_exists`|`True`|
-|`6_missed_upside_improvement_worth_it`|`False`|
+|`6_missed_upside_improvement_worth_it`|`True`|
 |`7_forward_aging_watchlist_allowed`|`True`|
 |`8_equal_risk_remains_defensive_primary`|`True`|
 |`9_continue_no_paper_shadow_production_broker`|`True`|

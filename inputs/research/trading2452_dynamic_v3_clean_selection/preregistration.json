@@ -1,0 +1,46 @@
+{
+  "baseline_id": "dynamic_v0_4_and_static_baseline_contract_v1",
+  "candidate_id": "dynamic-v3-clean-universe-trading2452_aa64f915302704bb9224",
+  "frozen_at": "2026-07-21T18:00:00+09:00",
+  "hypothesis_id": "dynamic-v3-clean-selection-trading2452",
+  "hypothesis_statement": "A fixed 300-parameter Dynamic v3 universe may retain reviewable risk behavior from 2021-02-22 through 2025-12-31 when each fold selects the train-only top 20; historical outcomes are known and cannot support an unbiased OOS claim.",
+  "manual_review_required": true,
+  "metric_ids": [
+    "constraint_hit_rate",
+    "constraint_hits_delta_vs_reference",
+    "data_quality",
+    "drawdown_degradation_pp",
+    "dynamic_vs_static_gap",
+    "false_risk_off_delta",
+    "lookahead_status",
+    "robustness_status",
+    "turnover"
+  ],
+  "owner": "project_owner",
+  "policy_ref_ids": [
+    "etf_asset_policy",
+    "etf_dynamic_allocation_policy",
+    "etf_dynamic_failure_diagnostics_policy",
+    "etf_dynamic_robustness_policy",
+    "etf_dynamic_v3_real_evaluation_policy_v1",
+    "etf_dynamic_v3_rescue_policy",
+    "etf_risk_policy",
+    "etf_strategy_policy",
+    "market_regime_registry_v1",
+    "primary_research_window_policy_v1",
+    "project_data_quality_policy",
+    "project_universe_policy"
+  ],
+  "preregistration_id": "research_preregistration_afeba0639611c7f3816f",
+  "production_effect": "none",
+  "research_context_id": "research_context_23f78729c9a31d395f1c",
+  "result_visibility": "NONE",
+  "schema_version": "research_preregistration.v1",
+  "selection_rule_id": "dynamic_v3_clean_selection_trading2452_fold_local_v2",
+  "selection_rule_sha256": "895f6208fcf13013b2457580625b9207d12b942607aadf56e809ff7c47f1aabd",
+  "validation_plan_ids": [
+    "trading-106-fold-local-historical-seen-owner-authorized",
+    "trading-107-robustness-after-historical-seen-run",
+    "trading-2452-package-content-derived"
+  ]
+}

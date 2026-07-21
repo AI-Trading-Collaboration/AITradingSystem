@@ -31,7 +31,7 @@ def test_dynamic_v3_rescue_policy_loads_and_rejects_unsafe(tmp_path: Path) -> No
     policy = load_dynamic_v3_rescue_policy_config()
 
     assert policy.safety.model_dump(mode="json") == DYNAMIC_V3_RESCUE_SAFETY
-    assert policy.market_regime.regime_id == "ai_after_chatgpt"
+    assert policy.market_regime.regime_id == "unified_primary_2021"
     assert policy.base_candidate == "dynamic_regime_overlay_v0_4_lower_turnover"
     assert policy.constraint_targets.max_constraint_hit_delta_vs_v0_4 < 0
     assert len(policy.candidate_templates) == 4

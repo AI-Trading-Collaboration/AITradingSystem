@@ -58,6 +58,7 @@ RECOMMENDED_BENCHMARKS = frozenset(
     }
 )
 AI_AFTER_CHATGPT_START = date(2022, 12, 1)
+UNIFIED_PRIMARY_RESEARCH_START = date(2021, 2, 22)
 PLACEHOLDER_TOKENS = ("REPLACE", "YYYY", "TODO")
 
 
@@ -182,8 +183,8 @@ def render_calibration_protocol_report(report: CalibrationProtocolReport) -> str
             "不表示权重候选可进入 production。",
             "- 后续仍需 OOS 聚合、参数邻域稳定性、成本压力、DSR/PBO "
             "或同等多重测试折扣、forward shadow 和 owner/rule approval。",
-            "- 使用 `ai_after_chatgpt` 主结论时，默认结论窗口不得把 "
-            "2022-12-01 之前历史当作 AI-cycle 结论依据。",
+            "- 当前主结论使用 `unified_primary_2021`，默认研究起点为 "
+            "`2021-02-22`；`ai_after_chatgpt` 只保留为历史比较 regime。",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -263,7 +264,18 @@ def _append_date_range_issues(
             "`date_range.start` 晚于 `date_range.end`。",
             "修正实验窗口后重新校验。",
         )
-    if str(manifest.get("market_regime", "")).strip() == "ai_after_chatgpt":
+    market_regime = str(manifest.get("market_regime", "")).strip()
+    if market_regime == "unified_primary_2021":
+        if start < UNIFIED_PRIMARY_RESEARCH_START:
+            _issue(
+                issues,
+                "WARNING",
+                "pre_unified_primary_range",
+                "date_range",
+                "主实验窗口早于 2021-02-22。",
+                "如使用更早历史，只能标为 warm-up、压力测试或 regime 对照。",
+            )
+    elif market_regime == "ai_after_chatgpt":
         if start < AI_AFTER_CHATGPT_START:
             _issue(
                 issues,

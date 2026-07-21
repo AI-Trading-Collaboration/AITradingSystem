@@ -1,11 +1,11 @@
-schema_version: 1
-policy_id: dynamic_walk_forward_validation_policy_v1
+schema_version: 2
+policy_id: dynamic_walk_forward_validation_policy_v2
 status: pilot_baseline
 owner: research_governance
 market_regime:
-  regime_id: ai_after_chatgpt
-  anchor_date: 2022-11-30
-  default_backtest_start: 2022-12-01
+  regime_id: unified_primary_2021
+  anchor_date: 2021-02-22
+  default_backtest_start: 2021-02-22
 policy_metadata:
   rationale: >
     Dynamic strategy candidates must be reviewed outside the single full-sample
@@ -21,21 +21,30 @@ policy_metadata:
     length, or using this policy outside research-only owner review.
 validation_splits:
   - split_id: research_sample
-    start_date: 2022-12-01
+    start_date: 2021-02-22
     end_date: 2023-12-29
     purpose: hypothesis_generation_and_debug
   - split_id: validation_sample
     start_date: 2024-01-02
     end_date: 2024-12-31
     purpose: strategy_selection
-  - split_id: locked_holdout_sample
+  - split_id: historical_seen_2025_sample
     start_date: 2025-01-02
     end_date: 2025-12-31
-    purpose: final_acceptance_only
-  - split_id: forward_paper_sample
+    purpose: historical_seen_evaluation
+    prior_market_outcome_visibility: KNOWN
+    unbiased_oos_claim_allowed: false
+  - split_id: recent_pre_freeze_diagnostic
     start_date: 2026-01-02
-    end_date:
-    purpose: live_observation
+    end_date: 2026-07-20
+    purpose: recent_known_diagnostic_only
+    include_in_primary_fold_ranking: false
+  - split_id: prospective_untouched_holdout
+    start_date: 2026-07-22
+    end_date: 2027-07-21
+    purpose: outcome_blind_final_acceptance_only
+    access_allowed: false
+    result_consumption_allowed: false
 rolling_policy:
   window_trading_days: 126
   step_trading_days: 63

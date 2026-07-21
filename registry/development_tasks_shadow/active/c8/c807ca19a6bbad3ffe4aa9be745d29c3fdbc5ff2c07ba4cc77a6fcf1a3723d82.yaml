@@ -1,0 +1,105 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2454_HISTORICAL_PORTABLE_SOURCE_ARCHIVE_AFTER_WINDOW_MIGRATION
+  title: null
+  domain: Strategy evidence platform / historical portable source archive after active-window
+    migration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: strategy evidence platform + integration coordinator；依赖可信历史 source bytes
+  requirement_refs:
+  - docs/requirements/TRADING-2454_Historical_Portable_Source_Archive_After_Window_Migration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2454_Historical_Portable_Source_Archive_After_Window_Migration.md`。TRADING-2450
+    sidecar 与四份 legacy artifacts 保持冻结；TRADING-2452 改变两份 active config 后，当前 locator
+    与历史 binding 冲突并正确 fail closed。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 恢复两份配置在 sidecar freeze 时的 exact bytes 与 provenance；建立不覆盖 active config 的
+      versioned archive locator；四级 validator PASS，missing/tamper/drift 继续 fail closed；不得重建
+      sidecar、回滚 active window或运行研究搜索。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1548
+    row_sha256: 0e4972827690190aa965ee5ddd3657e08b2131b5a675231e1cea11223ec51797
+    cell_count: 8
+    all_cells:
+    - TRADING-2454_HISTORICAL_PORTABLE_SOURCE_ARCHIVE_AFTER_WINDOW_MIGRATION
+    - Strategy evidence platform / historical portable source archive after active-window
+      migration
+    - P1
+    - READY
+    - strategy evidence platform + integration coordinator；依赖可信历史 source bytes
+    - 详见 `docs/requirements/TRADING-2454_Historical_Portable_Source_Archive_After_Window_Migration.md`。TRADING-2450
+      sidecar 与四份 legacy artifacts 保持冻结；TRADING-2452 改变两份 active config 后，当前 locator
+      与历史 binding 冲突并正确 fail closed。
+    - 恢复两份配置在 sidecar freeze 时的 exact bytes 与 provenance；建立不覆盖 active config 的 versioned
+      archive locator；四级 validator PASS，missing/tamper/drift 继续 fail closed；不得重建 sidecar、回滚
+      active window或运行研究搜索。
+    - 2026-07-21：由 full failure audit 登记；当前稳定状态=`HISTORICAL_PORTABLE_CONFLICT`，不阻塞
+      TRADING-2452/2453，`production_effect=none`、`broker_action=none`。
+    raw_line: '|TRADING-2454_HISTORICAL_PORTABLE_SOURCE_ARCHIVE_AFTER_WINDOW_MIGRATION|Strategy
+      evidence platform / historical portable source archive after active-window migration|P1|READY|strategy
+      evidence platform + integration coordinator；依赖可信历史 source bytes|详见 `docs/requirements/TRADING-2454_Historical_Portable_Source_Archive_After_Window_Migration.md`。TRADING-2450
+      sidecar 与四份 legacy artifacts 保持冻结；TRADING-2452 改变两份 active config 后，当前 locator
+      与历史 binding 冲突并正确 fail closed。|恢复两份配置在 sidecar freeze 时的 exact bytes 与 provenance；建立不覆盖
+      active config 的 versioned archive locator；四级 validator PASS，missing/tamper/drift
+      继续 fail closed；不得重建 sidecar、回滚 active window或运行研究搜索。|2026-07-21：由 full failure
+      audit 登记；当前稳定状态=`HISTORICAL_PORTABLE_CONFLICT`，不阻塞 TRADING-2452/2453，`production_effect=none`、`broker_action=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-0e4972827690190aa965ee5d
+  task_id: TRADING-2454_HISTORICAL_PORTABLE_SOURCE_ARCHIVE_AFTER_WINDOW_MIGRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: READY
+  payload:
+    priority: P1
+    next_owner: strategy evidence platform + integration coordinator；依赖可信历史 source
+      bytes
+    notes: 2026-07-21：由 full failure audit 登记；当前稳定状态=`HISTORICAL_PORTABLE_CONFLICT`，不阻塞
+      TRADING-2452/2453，`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:0e4972827690190aa965ee5ddd3657e08b2131b5a675231e1cea11223ec51797
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2454_HISTORICAL_PORTABLE_SOURCE_ARCHIVE_AFTER_WINDOW_MIGRATION
+  - Strategy evidence platform / historical portable source archive after active-window
+    migration
+  - P1
+  - READY
+  - strategy evidence platform + integration coordinator；依赖可信历史 source bytes
+  - 详见 `docs/requirements/TRADING-2454_Historical_Portable_Source_Archive_After_Window_Migration.md`。TRADING-2450
+    sidecar 与四份 legacy artifacts 保持冻结；TRADING-2452 改变两份 active config 后，当前 locator
+    与历史 binding 冲突并正确 fail closed。
+  - 恢复两份配置在 sidecar freeze 时的 exact bytes 与 provenance；建立不覆盖 active config 的 versioned
+    archive locator；四级 validator PASS，missing/tamper/drift 继续 fail closed；不得重建 sidecar、回滚
+    active window或运行研究搜索。
+  - 2026-07-21：由 full failure audit 登记；当前稳定状态=`HISTORICAL_PORTABLE_CONFLICT`，不阻塞 TRADING-2452/2453，`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2454_Historical_Portable_Source_Archive_After_Window_Migration.md
+  terminal: false
+  raw_row_sha256: 0e4972827690190aa965ee5ddd3657e08b2131b5a675231e1cea11223ec51797
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 60c6f3fcf99bc7c5a6069384e6b806fce05edc9f6acc2b05c6543fffe3a175c2

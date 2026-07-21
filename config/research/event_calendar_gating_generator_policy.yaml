@@ -3,9 +3,9 @@ version: v1
 status: pilot_research_source_blocked
 owner: research_governance
 task_id: TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC
-market_regime: ai_after_chatgpt
-anchor_event: ChatGPT public launch
-default_start_date: "2022-12-01"
+market_regime: unified_primary_2021
+anchor_event: validated QQQ/SGOV/TQQQ common history start
+default_start_date: "2021-02-22"
 rationale: >
   Event calendar gating can only become a generator POC after provider-specific
   event rows and known-at timestamps are validated. TRADING-2318 found no

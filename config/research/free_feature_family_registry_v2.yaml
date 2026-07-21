@@ -17,9 +17,9 @@ policy_metadata:
     Review before adding a family to a channel-specific first-layer model or
     interpreting diagnostic-only evidence as model-ready.
 market_regime:
-  regime_id: ai_after_chatgpt
+  regime_id: unified_primary_2021
   anchor_date: 2022-11-30
-  default_backtest_start: 2022-12-01
+  default_backtest_start: 2021-02-22
 families:
   rates_liquidity_free_v1:
     source: FRED / ALFRED

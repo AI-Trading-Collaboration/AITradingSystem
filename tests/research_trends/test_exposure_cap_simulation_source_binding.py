@@ -45,7 +45,7 @@ def test_exposure_cap_source_binding_policy_is_governed() -> None:
     assert policy["version"] == "v1"
     assert policy["status"] == "pilot_research_source_bound_dry_run"
     assert policy["task_id"] == TASK_ID
-    assert policy["market_regime"] == "ai_after_chatgpt"
+    assert policy["market_regime"] == "unified_primary_2021"
     assert policy["source_requirements"]["required_candidate_id"] == (
         "volatility_regime_scope_narrowed_risk_cap_v1"
     )

@@ -973,16 +973,7 @@ def _exclusive_file_lock(
     poll_seconds: float,
 ) -> Iterator[None]:
     path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    except FileExistsError:
-        pass
-    else:
-        with os.fdopen(descriptor, "wb") as initializer:
-            initializer.write(b"\0")
-            initializer.flush()
-            os.fsync(initializer.fileno())
-    handle = path.open("r+b", buffering=0)
+    handle = path.open("a+b", buffering=0)
     deadline = time.monotonic() + timeout_seconds
     acquired = False
     try:
@@ -999,6 +990,11 @@ def _exclusive_file_lock(
                 time.sleep(poll_seconds)
             else:
                 acquired = True
+        handle.seek(0, os.SEEK_END)
+        if handle.tell() == 0:
+            handle.write(b"\0")
+            handle.flush()
+            os.fsync(handle.fileno())
         yield
     finally:
         if acquired:

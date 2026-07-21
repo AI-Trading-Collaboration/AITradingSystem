@@ -2,13 +2,13 @@ policy_metadata:
   version: etf_backtest_v0_1
   status: pilot_baseline
   owner: system
-  rationale: "默认结论窗口使用 ai_after_chatgpt regime；2022-12-01 之前历史只用于 warm-up 或对照。"
+  rationale: "默认结论窗口使用 unified_primary_2021 regime，并从三资产共同可验证起点 2021-02-22 开始。"
   validation: "由 ETF portfolio backtest、toy return 和 no-lookahead tests 覆盖。"
   review_condition: "P0 全流程稳定后增加 robustness 与 walk-forward。"
 
 backtest:
-  regime: ai_after_chatgpt
-  start_date: "2022-12-01"
+  regime: unified_primary_2021
+  start_date: "2021-02-22"
   end_date: null
   warmup_start_date: "2015-01-01"
   initial_capital: 100000

@@ -1,0 +1,90 @@
+schema_version: dynamic_v3_clean_selection_window_catalog.v2
+catalog_id: dynamic_v3_clean_selection_trading2452_windows_v2
+status: owner_frozen_preregistration
+owner: project_owner_and_research_governance
+frozen_at: "2026-07-21T18:00:00+09:00"
+
+primary_research_window:
+  window_id: exact_three_asset_validated
+  start_date: "2021-02-22"
+  role: primary_validated
+  evidence_role: PRIMARY_DECISION_EVIDENCE
+  assets: [QQQ, SGOV, TQQQ]
+  active_default: true
+  legacy_2022_boundary_consumption_allowed: false
+
+historical_protocol_replay:
+  catalog_id: historical_seen_protocol_replay_2021_2025_v2
+  prior_market_outcome_visibility: KNOWN
+  investigator_blind: false
+  selection_uses_only_train: true
+  test_metrics_available_to_selection: false
+  main_scoring_end: "2025-12-31"
+  purge_trading_days: 1
+  embargo_trading_days: 1
+  folds:
+    - window_index: 1
+      train_start: "2021-02-22"
+      train_end: "2022-12-30"
+      test_start: "2023-01-03"
+      test_end: "2023-06-30"
+    - window_index: 2
+      train_start: "2021-02-22"
+      train_end: "2023-06-30"
+      test_start: "2023-07-03"
+      test_end: "2023-12-29"
+    - window_index: 3
+      train_start: "2021-02-22"
+      train_end: "2023-12-29"
+      test_start: "2024-01-02"
+      test_end: "2024-06-28"
+    - window_index: 4
+      train_start: "2021-02-22"
+      train_end: "2024-06-28"
+      test_start: "2024-07-01"
+      test_end: "2024-12-31"
+    - window_index: 5
+      train_start: "2021-02-22"
+      train_end: "2024-12-31"
+      test_start: "2025-01-02"
+      test_end: "2025-06-30"
+    - window_index: 6
+      train_start: "2021-02-22"
+      train_end: "2025-06-30"
+      test_start: "2025-07-01"
+      test_end: "2025-12-31"
+
+recent_known_diagnostic:
+  catalog_id: recent_known_pre_freeze_2026_v1
+  start: "2026-01-02"
+  end: "2026-07-20"
+  prior_market_outcome_visibility: KNOWN
+  investigator_blind: false
+  role: RECENT_KNOWN_DIAGNOSTIC_ONLY
+  included_in_main_fold_ranking: false
+  candidate_selection_allowed: false
+
+prospective_holdout:
+  catalog_id: prospective_post_freeze_2026_07_22_v1
+  start: "2026-07-22"
+  end: "2027-07-21"
+  outcome_visibility_at_freeze: NONE
+  access: OWNER_AUTHORIZATION_REQUIRED
+  accessed_by_this_task: false
+  minimum_role: prospective_outcome_blind_evidence
+
+runtime_requirements:
+  effective_dates_derived_from_xnys: true
+  runtime_data_quality_gate_required: true
+  runtime_source_snapshot_commitment_required: true
+  runtime_cost_and_execution_revalidation_required: true
+
+safety:
+  evaluator_execution_allowed: true
+  clean_run_authorized: true
+  historical_replay_execution_allowed: true
+  recent_known_diagnostic_allowed: true
+  prospective_holdout_access_allowed: false
+  unbiased_oos_claim_allowed: false
+  production_effect: none
+  broker_action: none

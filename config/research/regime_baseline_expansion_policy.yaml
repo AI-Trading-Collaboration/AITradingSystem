@@ -3,9 +3,9 @@ policy_id: regime_baseline_expansion_policy_v1
 status: pilot_baseline
 owner: research_governance
 market_regime:
-  regime_id: ai_after_chatgpt
+  regime_id: unified_primary_2021
   anchor_date: 2022-11-30
-  default_backtest_start: 2022-12-01
+  default_backtest_start: 2021-02-22
 policy_metadata:
   rationale: >
     Dynamic strategy complexity is not justified unless it survives regime

@@ -4,9 +4,9 @@ status: first_batch_heuristic_baseline
 owner: research_governance
 heuristic_policy_version: controlled_strategy_batch_1_heuristic_v1
 market_regime:
-  regime_id: ai_after_chatgpt
-  anchor_event: ChatGPT public launch on 2022-11-30
-  default_start: "2022-12-01"
+  regime_id: unified_primary_2021
+  anchor_event: validated QQQ/SGOV/TQQQ common history start
+  default_start: "2021-02-22"
 production_effect: none
 rationale: >
   Run the first controlled strategy candidate research batch after TRADING-765

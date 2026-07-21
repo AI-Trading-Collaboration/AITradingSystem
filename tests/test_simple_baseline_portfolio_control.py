@@ -278,7 +278,7 @@ def test_simple_baseline_research_functions_write_auditable_artifacts(tmp_path: 
     assert qqq["data_quality"]["passed"] is True
     assert qqq["data_quality"]["price_row_count"] > 0
     assert qqq["data_quality"]["price_checksum"]
-    assert qqq["requested_date_range"].startswith("2022-12-01")
+    assert qqq["requested_date_range"].startswith("2021-02-22")
     assert tqqq["status"] in {
         "TQQQ_BASELINE_RESEARCH_READY",
         "TQQQ_BASELINE_TOO_RISKY",
@@ -317,7 +317,7 @@ def test_simple_baseline_research_functions_write_auditable_artifacts(tmp_path: 
     )
 
     for payload in payloads:
-        assert payload["market_regime"] == "ai_after_chatgpt"
+        assert payload["market_regime"] == "unified_primary_2021", payload["report_type"]
         assert payload["production_effect"] == "none"
         assert payload["broker_action"] == "none"
         assert payload["promotion_allowed"] is False
@@ -1009,7 +1009,7 @@ def test_simple_baseline_data_repair_forward_aging_unblock_artifacts(tmp_path: P
     proof_source["summary"] = {
         **proof_source["summary"],
         "tqqq_rows_before": 0,
-        "tqqq_rows_after": 420,
+        "tqqq_rows_after": 883,
     }
     _write_json(output_root / "tqqq_cache_rebuild_validation.json", proof_source)
     reproducibility = run_data_repair_reproducibility_proof(
@@ -1019,7 +1019,7 @@ def test_simple_baseline_data_repair_forward_aging_unblock_artifacts(tmp_path: P
         manifest_path=manifest_path,
         output_root=output_root,
         as_of_date=TEST_AS_OF,
-        expected_tqqq_rows=420,
+        expected_tqqq_rows=883,
     )
     marketstack = run_marketstack_ssl_failure_triage(
         prices_path=prices_path,
@@ -1085,7 +1085,7 @@ def test_simple_baseline_data_repair_forward_aging_unblock_artifacts(tmp_path: P
     assert not preview["forbidden_phrase_hits"]
     assert owner_pack["status"] == "OWNER_APPROVE_FORWARD_AGING"
     assert reproducibility["status"] == "DATA_REPAIR_REPRODUCIBLE"
-    assert reproducibility["summary"]["current_tqqq_rows"] == 420
+    assert reproducibility["summary"]["current_tqqq_rows"] == 883
     assert marketstack["status"] == "MARKETSTACK_FAIL_CLOSED_ACCEPTED"
     assert marketstack["failure_record"]["ssl_verification_disabled"] is False
     assert sgov_proxy["status"] == "SGOV_PROXY_ACCEPTABLE"
@@ -1236,7 +1236,7 @@ def test_reader_brief_renders_portfolio_control_research_summary(
 
 
 def _write_simple_baseline_caches(tmp_path: Path) -> tuple[Path, Path, Path]:
-    dates = _business_dates(date(2022, 12, 1), 420)
+    dates = _business_dates(date(2021, 2, 22), 883)
     prices_path = tmp_path / "prices_daily.csv"
     marketstack_path = tmp_path / "prices_marketstack_daily.csv"
     rates_path = tmp_path / "rates_daily.csv"

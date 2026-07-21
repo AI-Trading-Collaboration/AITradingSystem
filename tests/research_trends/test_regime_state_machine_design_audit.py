@@ -34,7 +34,7 @@ def test_regime_state_machine_design_policy_is_governed() -> None:
     assert policy["version"] == "v1"
     assert policy["status"] == "pilot_research"
     assert policy["owner"] == "research_governance"
-    assert policy["market_regime"] == "ai_after_chatgpt"
+    assert policy["market_regime"] == "unified_primary_2021"
     assert policy["validation_evidence"]
     assert policy["review_condition"]
     assert policy["expiry_condition"]
@@ -176,7 +176,7 @@ def test_regime_state_machine_design_cli_writes_outputs(tmp_path: Path) -> None:
     summary = summary_payload["summary"]
     assert summary_payload["status"] == STATUS
     assert summary["status"] == STATUS
-    assert summary["market_regime"] == "ai_after_chatgpt"
+    assert summary["market_regime"] == "unified_primary_2021"
     assert summary["actual_requested_date_range"] == "owner_static_design_audit"
     assert summary["data_quality_status"] == DATA_QUALITY_STATUS
     assert summary["label_count"] == 9

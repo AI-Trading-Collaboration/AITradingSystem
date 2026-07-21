@@ -22,7 +22,7 @@ BROKER_EFFECT = "none"
 ORDER_EFFECT = "none"
 PASS_STATUS = "PASS"
 FAIL_STATUS = "FAIL"
-MARKET_REGIME = "ai_after_chatgpt"
+MARKET_REGIME = "unified_primary_2021"
 AI_REGIME_START = "2022-12-01"
 
 CONTRACT_REPORT_TYPE = "next_candidate_executable_binding_contract"

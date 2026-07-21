@@ -310,7 +310,7 @@ def test_r1_and_r2_adapters_require_explicit_sidecar_opt_in(
     assert all(path.read_bytes() == value for path, value in immutable_before.items())
 
 
-def test_recovered_r0_r1_r2_bundle_replays_through_portable_lineage(
+def test_recovered_r0_r1_r2_bundle_fails_closed_after_reviewed_source_drift(
     tmp_path: Path,
 ) -> None:
     r0_path = (
@@ -353,7 +353,9 @@ def test_recovered_r0_r1_r2_bundle_replays_through_portable_lineage(
         historical_project_root=Path(r"D:\Work\AITradingSystem-eb0-candidate"),
     )
     assert DEFAULT_TRADING2449_SIDECAR_PATH.is_file()
-    assert _read_json(DEFAULT_TRADING2449_SIDECAR_PATH) == built
+    frozen = _read_json(DEFAULT_TRADING2449_SIDECAR_PATH)
+    assert frozen["sidecar_id"] == "portable-lineage_dfa5dfc7208e5913fc75"
+    assert frozen != built
     kwargs = {
         "portable_lineage_sidecar_path": DEFAULT_TRADING2449_SIDECAR_PATH,
         "portable_project_root": PROJECT_ROOT,
@@ -376,14 +378,16 @@ def test_recovered_r0_r1_r2_bundle_replays_through_portable_lineage(
     assert built["sidecar_id"].startswith("portable-lineage_")
     assert len(built["legacy_artifacts"]) == 4
     assert len(built["sources"]) == 108
-    assert r0_validation["status"] == "PASS"
-    assert wf_validation["status"] == "PASS"
-    assert wf_validation["walk_forward_id"] == wf_id
-    assert robustness_validation["status"] == "PASS"
-    assert robustness_validation["robustness_id"] == robustness_id
-    assert r2_validation["status"] == "PASS"
-    assert r2_validation["decision_id"] == "r2-decision_c761da11538fc58c"
-    assert r2_validation["decision"] == "CONTINUE_EVIDENCE_CLOSURE"
+    for validation in (
+        r0_validation,
+        wf_validation,
+        robustness_validation,
+        r2_validation,
+    ):
+        assert validation["status"] == "FAIL"
+        resolution = validation["portable_lineage_resolution"]
+        assert resolution["reason_code"] == "HISTORICAL_PORTABLE_CONFLICT"
+        assert resolution["production_effect"] == "none"
     assert {path: (path.stat().st_size, _sha256(path)) for path in artifacts} == before
 
 

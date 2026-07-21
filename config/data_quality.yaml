@@ -5,9 +5,9 @@ prices:
   suspicious_daily_return_abs: 0.20
   extreme_daily_return_abs: 0.50
   suspicious_adjustment_ratio_change_abs: 0.25
-  # 默认研究窗口为 ChatGPT 后 AI 主线行情。早于该日期的复权比例、
-  # adjusted close 波动和跨源一致性差异不阻断默认日报质量门禁。
-  consistency_start_date: 2022-12-01
+  # 与统一 exact-three-asset primary window 对齐；更早历史只能按受治理的
+  # sensitivity/stress 口径解释，不进入默认日报质量门禁。
+  consistency_start_date: 2021-02-22
   # 价格指数没有真实成交量。此处必须显式列出，缺 volume 只作为
   # 可审计信息记录，不计入数据质量警告。
   volume_optional_tickers:
@@ -74,9 +74,9 @@ rates:
   max_plausible_value: 25.0
   suspicious_daily_change_abs: 0.75
   extreme_daily_change_abs: 2.00
-  # 与价格一致性窗口保持一致；早于默认 AI 研究窗口的宏观单日变化
+  # 与价格一致性窗口保持一致；早于默认 primary research window 的宏观单日变化
   # 不阻断或提示默认日报。
-  consistency_start_date: 2022-12-01
+  consistency_start_date: 2021-02-22
   series_overrides:
     DTWEXBGS:
       # Federal Reserve H.10 usually releases the prior business week's daily

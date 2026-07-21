@@ -1,0 +1,153 @@
+schema_version: dynamic_v3_clean_selection_rule.v2
+policy_id: dynamic_v3_clean_selection_trading2452_fold_local_v2
+status: owner_frozen_preregistration
+owner: project_owner_and_research_governance
+frozen_at: "2026-07-21T18:00:00+09:00"
+
+policy_metadata:
+  rationale: >
+    Freeze the existing medium_real 300-parameter universe under the owner-approved
+    2021-02-22 primary research window before the TRADING-106 historical-seen run.
+    Selection is train-only within each fold and cannot consume the superseded
+    TRADING-2451 package, legacy leaderboard, full-period score, or test metric.
+  intended_effect: >
+    Produce a content-derived, owner-authorized historical replay while preserving
+    the distinction between known historical outcomes and untouched prospective
+    evidence beginning 2026-07-22.
+  validation_evidence: >
+    TRADING-2449 contamination disclosure, TRADING-2451 package hardening, and
+    TRADING-2452 owner approval of the unified 2021 primary window.
+  review_condition: >
+    A new versioned preregistration is required before changing candidate derivation,
+    train gates, score semantics, top_n, execution cost, lag, purge, embargo, fold
+    dates, recent diagnostic role, or any safety boundary.
+
+candidate_universe:
+  strategy_family: dynamic_v3_rescue
+  source_config: config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_real_smoke.yaml
+  source_profile_config: config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_profiles.yaml
+  source_profile: medium_real
+  derivation: deterministic_cartesian_prefix
+  candidate_definition_version: dynamic_v3_clean_selection_trading2452_candidate_definition_v2
+  max_candidates: 300
+  axis_order:
+    - rescue_intensity
+    - smooth_window_days
+    - constraint_buffer_bps
+    - turnover_penalty
+    - risk_off_confirmation_days
+    - rebalance_cooldown_days
+    - drawdown_guard
+  forbidden_result_inputs:
+    - leaderboard
+    - candidate_results
+    - candidate_report
+    - real_evaluation
+    - fold_evaluations
+    - top_eligible_candidates
+    - trading2451_dynamic_v3_clean_selection
+
+selection:
+  evidence_phase: train_only
+  eligible_gates:
+    - observe_only
+    - review_required
+  rejected_gate: reject
+  top_n: 20
+  ranking:
+    - field: selection_score
+      direction: descending
+    - field: candidate_id
+      direction: ascending
+  all_rejected_outcome: INCOMPLETE_NO_ELIGIBLE_CANDIDATE
+  rejected_candidate_backfill_allowed: false
+  legacy_candidate_backfill_allowed: false
+  test_metric_selection_allowed: false
+  required_metrics:
+    - constraint_hit_rate
+    - constraint_hits_delta_vs_reference
+    - false_risk_off_delta
+    - turnover
+    - dynamic_vs_static_gap
+    - drawdown_degradation_pp
+    - robustness_status
+    - data_quality
+    - lookahead_status
+  hard_gate_source:
+    path: config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_real_smoke.yaml
+    section: hard_constraints
+  score:
+    objective: constrained_weighted_score
+    weights:
+      dynamic_vs_static_gap_improvement: 0.25
+      constraint_hit_reduction: 0.25
+      drawdown_preservation: 0.20
+      turnover_reduction: 0.10
+      false_risk_off_control: 0.10
+      robustness_score: 0.10
+    normalization:
+      dynamic_vs_static_gap_improvement_divisor: 0.08
+      constraint_hit_reduction_divisor: 0.08
+      drawdown_degradation_divisor: 0.08
+      turnover_reduction_divisor: 0.25
+    robustness_mapping:
+      PASS: 1.0
+      REVIEW_REQUIRED: 0.45
+      FAIL: 0.0
+    penalties:
+      overfit_review_required: 0.05
+      gate_review_required: 0.03
+
+execution:
+  trading_calendar: XNYS
+  signal_execution_lag_trading_days: 1
+  purge_trading_days: 1
+  embargo_trading_days: 1
+  evidence_row_floors:
+    minimum_train_rows: 126
+    minimum_test_rows: 42
+    rationale: >
+      Preserve the reviewed R1 evidence-completeness floors of approximately one
+      half-year for train evidence and two months for test/recent diagnostics; these
+      are completeness checks, not promotion or return thresholds.
+  commission_bps: 0.0
+  slippage_bps: 2.0
+  cost_turnover_basis: two_way_abs_weight_change
+
+campaign:
+  allowed_interaction_order: 1
+  evidence_budget:
+    max_mini_rounds: 0
+    max_targeted_rounds: 1
+    max_window_expansions: 0
+    max_redesign_rounds: 0
+    max_needs_more_evidence_occurrences: 1
+    owner_override_required_after_budget: true
+
+evidence_claim:
+  protocol_clean: true
+  prior_market_outcome_visibility: KNOWN
+  historical_replay_investigator_blind: false
+  prospective_holdout_outcome_blind: true
+  unbiased_oos_claim_allowed: false
+
+validation_plan_ids:
+  - trading-2452-package-content-derived
+  - trading-106-fold-local-historical-seen-owner-authorized
+  - trading-107-robustness-after-historical-seen-run
+
+safety:
+  research_only: true
+  manual_review_required: true
+  candidate_expansion_allowed: false
+  new_parameter_search_allowed: false
+  evaluator_execution_allowed: true
+  clean_run_authorized: true
+  historical_replay_execution_allowed: true
+  recent_known_diagnostic_allowed: true
+  prospective_holdout_access_allowed: false
+  paper_shadow_change_allowed: false
+  production_weight_change_allowed: false
+  unbiased_oos_claim_allowed: false
+  production_effect: none
+  broker_action: none

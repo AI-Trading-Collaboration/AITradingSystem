@@ -9,6 +9,7 @@ from typing import Any
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.decision_causal_chains import DEFAULT_DECISION_CAUSAL_CHAIN_PATH
 from ai_trading_system.decision_learning_queue import DEFAULT_DECISION_LEARNING_QUEUE_PATH
 from ai_trading_system.decision_outcomes import DEFAULT_DECISION_OUTCOMES_PATH
@@ -34,7 +35,7 @@ from ai_trading_system.weight_calibration import (
 )
 
 DEFAULT_MARKET_FEEDBACK_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
-DEFAULT_MARKET_FEEDBACK_REPLAY_START = date(2022, 12, 1)
+DEFAULT_MARKET_FEEDBACK_REPLAY_START = PRIMARY_RESEARCH_START_DATE
 
 
 @dataclass(frozen=True)
@@ -122,7 +123,7 @@ def build_market_feedback_optimization_report(
     since: date | None = None,
     replay_start: date = DEFAULT_MARKET_FEEDBACK_REPLAY_START,
     replay_end: date | None = None,
-    market_regime_id: str = "ai_after_chatgpt",
+    market_regime_id: str = "unified_primary_2021",
     data_quality_report_path: Path | None = None,
     decision_outcomes_path: Path = DEFAULT_DECISION_OUTCOMES_PATH,
     prediction_outcomes_path: Path = DEFAULT_PREDICTION_OUTCOMES_PATH,
@@ -237,7 +238,7 @@ def render_market_feedback_optimization_report(
         "`aits feedback build-causal-chain`、`aits feedback build-learning-queue`、"
         "`aits feedback build-rule-experiments` | "
         "先生成本报告依赖的后验观察、因果链和候选规则台账。 |",
-        "| 每月 | 使用 `--replay-start 2022-12-01 --replay-end YYYY-MM-DD` 固定 AI regime "
+        "| 每月 | 使用 `--replay-start 2021-02-22 --replay-end YYYY-MM-DD` 固定主研究窗口 "
         "窗口复核 | 检查权重/规则候选是否有足够 as-if 证据、是否需要 policy replay 或 "
         "owner governance。 |",
         "",
@@ -313,7 +314,7 @@ def render_market_feedback_optimization_report(
         "data quality 和 trace bundle；本流程只消费这些产物。",
         "- 周期性复核放在日报之后，不作为 daily-run 阻断步骤；缺少样本时输出 "
         "`PASS_WITH_LIMITATIONS` 和明确下一步。",
-        "- as-if 回放默认使用 `ai_after_chatgpt` 窗口，起点为 2022-12-01；若使用更早历史，"
+        "- as-if 回放默认使用 `unified_primary_2021` 窗口，起点为 2021-02-22；若使用更早历史，"
         "报告必须写明非默认市场阶段和原因。",
         "- 任何权重、规则或 gate 的生产变更必须先经过 replay、forward shadow、"
         "rule card / overlay approval 和回滚条件登记。",

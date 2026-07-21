@@ -13,7 +13,7 @@ import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data_foundation import (
-    AI_REGIME_START,
+    PRIMARY_RESEARCH_START,
     utc_now_iso,
     write_foundation_artifact_pair,
 )
@@ -166,13 +166,13 @@ SAFETY_BOUNDARY: dict[str, Any] = {
 }
 
 AI_REGIME_SUMMARY: dict[str, str] = {
-    "market_regime": "ai_after_chatgpt",
-    "anchor_event": "ChatGPT public launch",
-    "anchor_date": "2022-11-30",
+    "market_regime": "unified_primary_2021",
+    "anchor_event": "validated QQQ/SGOV/TQQQ common history start",
+    "anchor_date": "2021-02-22",
     "default_backtest_start": (
-        AI_REGIME_START
-        if isinstance(AI_REGIME_START, date)
-        else date.fromisoformat(str(AI_REGIME_START))
+        PRIMARY_RESEARCH_START
+        if isinstance(PRIMARY_RESEARCH_START, date)
+        else date.fromisoformat(str(PRIMARY_RESEARCH_START))
     ).isoformat(),
 }
 
@@ -214,7 +214,7 @@ def run_external_validation_scope_contract(
         date_range={
             "start": start_date.isoformat(),
             "end": end_date.isoformat() if end_date else "latest_available",
-            "market_regime": "ai_after_chatgpt",
+            "market_regime": "unified_primary_2021",
         },
         price_field_policy={
             "internal_price_field": "adj_close",

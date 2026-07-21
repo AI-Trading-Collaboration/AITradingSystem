@@ -41,7 +41,7 @@ def test_regime_label_generator_policy_is_governed() -> None:
     assert policy["status"] == "pilot_research"
     assert policy["owner"] == "research_governance"
     assert policy["task_id"] == "TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC"
-    assert policy["market_regime"] == "ai_after_chatgpt"
+    assert policy["market_regime"] == "unified_primary_2021"
     assert policy["known_at_policy"]["pit_policy_status"] == (
         "PIT_APPROX_TRAILING_CLOSE_ONLY"
     )
@@ -127,7 +127,7 @@ def test_regime_label_generator_cli_writes_outputs(tmp_path: Path) -> None:
     )
     summary = summary_payload["summary"]
     assert summary["status"] == STATUS
-    assert summary["market_regime"] == "ai_after_chatgpt"
+    assert summary["market_regime"] == "unified_primary_2021"
     assert summary["actual_requested_date_range"] == "2022-12-01..2023-06-30"
     assert summary["data_quality_status"] in {"PASS", "PASS_WITH_WARNINGS"}
     assert summary["data_quality_gate"]["required_command"] == "aits validate-data"

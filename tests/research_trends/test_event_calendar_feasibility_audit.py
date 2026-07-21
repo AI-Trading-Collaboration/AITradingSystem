@@ -38,7 +38,7 @@ def test_event_calendar_feasibility_policy_is_governed() -> None:
     assert policy["status"] == "pilot_research"
     assert policy["owner"] == "research_governance"
     assert policy["task_id"] == "TRADING-2318_EVENT_CALENDAR_DATA_FEASIBILITY_AUDIT"
-    assert policy["market_regime"] == "ai_after_chatgpt"
+    assert policy["market_regime"] == "unified_primary_2021"
     assert policy["data_quality"]["status"] == DATA_QUALITY_STATUS
     assert policy["source_manifest_requirements"]["required"] is True
     assert {
@@ -121,7 +121,7 @@ def test_event_calendar_feasibility_cli_writes_outputs(tmp_path: Path) -> None:
     summary = summary_payload["summary"]
     assert summary_payload["status"] == STATUS
     assert summary["status"] == STATUS
-    assert summary["market_regime"] == "ai_after_chatgpt"
+    assert summary["market_regime"] == "unified_primary_2021"
     assert summary["actual_requested_date_range"] == "static_feasibility_audit"
     assert summary["data_quality_status"] == DATA_QUALITY_STATUS
     assert summary["event_source_count"] == 8

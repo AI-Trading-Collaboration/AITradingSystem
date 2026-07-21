@@ -261,7 +261,7 @@ def test_equal_risk_growth_tilt_builders_preserve_research_only_boundary(
 
     assert cap_floor["summary"]["candidate_count"] >= 1
     assert cap_floor["data_quality"]["passed"] is True
-    assert str(cap_floor["requested_date_range"]).startswith("2022-12-01..")
+    assert str(cap_floor["requested_date_range"]).startswith("2021-02-22..")
     assert ranking["status"] in {
         "GROWTH_TILT_CANDIDATES_RANKED",
         "NO_GROWTH_TILT_EDGE",
@@ -827,8 +827,8 @@ def test_equal_risk_growth_tilt_reports_and_registry_contracts() -> None:
     assert safety["paper_shadow_allowed"] is False
     assert safety["production_allowed"] is False
     assert safety["manual_review_required"] is True
-    assert config["market_regime"]["regime_id"] == "ai_after_chatgpt"
-    assert str(config["market_regime"]["default_backtest_start"]) == "2022-12-01"
+    assert config["market_regime"]["regime_id"] == "unified_primary_2021"
+    assert str(config["market_regime"]["default_backtest_start"]) == "2021-02-22"
     assert balanced_core_policy["policy_id"] == "balanced_core_forward_aging_safety_v1"
     assert balanced_core_policy["observation_windows"] == [5, 10, 20, 60, 120]
     assert balanced_core_policy["minimum_required_20d"] == 20
@@ -869,7 +869,7 @@ def _assert_research_only_payload(payload: dict[str, object]) -> None:
     assert payload["paper_shadow_allowed"] is False
     assert payload["production_allowed"] is False
     assert payload["manual_review_required"] is True
-    assert payload["market_regime"] == "ai_after_chatgpt"
+    assert payload["market_regime"] == "unified_primary_2021"
     assert Path(payload["artifact_paths"]["json_path"]).exists()
     assert Path(payload["artifact_paths"]["markdown_path"]).exists()
 
@@ -920,7 +920,7 @@ def _balanced_core_ready_activation_sources() -> dict[str, dict[str, object]]:
         "paper_shadow_allowed": False,
         "production_allowed": False,
         "manual_review_required": True,
-        "market_regime": "ai_after_chatgpt",
+        "market_regime": "unified_primary_2021",
         "artifact_paths": {"json_path": "fixture.json", "markdown_path": "fixture.md"},
     }
     candidate_id = "equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1"
@@ -953,7 +953,7 @@ def _balanced_core_ready_activation_sources() -> dict[str, dict[str, object]]:
 
 
 def _write_growth_caches(tmp_path: Path) -> tuple[Path, Path, Path, date]:
-    dates = _business_dates(date(2022, 12, 1), 760)
+    dates = _business_dates(date(2021, 2, 22), 760)
     prices_path = tmp_path / "prices_daily.csv"
     marketstack_path = tmp_path / "prices_marketstack_daily.csv"
     rates_path = tmp_path / "rates_daily.csv"

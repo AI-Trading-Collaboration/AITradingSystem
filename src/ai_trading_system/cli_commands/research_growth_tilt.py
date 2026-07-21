@@ -8,6 +8,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.equal_risk_growth_tilt import (
     DEFAULT_BALANCED_CORE_LAUNCH_OWNER_REPORT_DOC_PATH,
     DEFAULT_BALANCED_CORE_OWNER_LAUNCH_PACK_DOC_PATH,
@@ -184,7 +185,7 @@ def _make_growth_tilt_data_command(
                 config_path=config_path,
                 output_root=output_root,
                 as_of_date=_parse_optional_date(as_of),
-                start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+                start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
                 end_date=_parse_optional_date(end_date),
             )
         )
@@ -232,7 +233,7 @@ def _make_growth_tilt_forward_data_command(
                 config_path=config_path,
                 output_root=output_root,
                 as_of_date=_parse_optional_date(as_of),
-                start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+                start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
                 end_date=_parse_optional_date(end_date),
                 decision_date=_parse_optional_date(decision_date),
             )
@@ -286,7 +287,7 @@ def _make_growth_tilt_doc_command(
                 output_root=output_root,
                 docs_path=docs_path,
                 as_of_date=_parse_optional_date(as_of),
-                start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+                start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
                 end_date=_parse_optional_date(end_date),
             )
         )
@@ -344,7 +345,7 @@ def strategies_roadmap_update_after_growth_tilt_review_command(
             growth_master_docs_path=growth_master_docs_path,
             growth_owner_docs_path=growth_owner_docs_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -399,7 +400,7 @@ def strategies_growth_tilt_real_cli_suite_command(
             owner_docs_path=owner_docs_path,
             master_docs_path=master_docs_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -464,7 +465,7 @@ def strategies_growth_tilt_real_result_master_review_command(
             source_owner_docs_path=source_owner_docs_path,
             source_master_docs_path=source_master_docs_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -509,7 +510,7 @@ def strategies_dual_forward_aging_comparator_panel_command(
             growth_output_root=growth_output_root,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -554,7 +555,7 @@ def strategies_dual_forward_aging_reader_brief_safe_preview_command(
             growth_output_root=growth_output_root,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -604,7 +605,7 @@ def strategies_balanced_core_owner_launch_pack_command(
             output_root=output_root,
             docs_path=docs_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -659,7 +660,7 @@ def strategies_dual_forward_aging_master_review_command(
             docs_path=docs_path,
             owner_docs_path=owner_docs_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -703,7 +704,7 @@ def strategies_balanced_core_launch_preflight_command(
             external_validation_output_root=external_validation_output_root,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
             decision_date=_parse_optional_date(decision_date),
         )
@@ -748,7 +749,7 @@ def strategies_balanced_core_first_observation_write_after_validation_command(
             external_validation_output_root=external_validation_output_root,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
             decision_date=_parse_optional_date(decision_date),
         )
@@ -790,7 +791,7 @@ def strategies_dual_forward_aging_comparator_panel_after_launch_command(
             growth_output_root=growth_output_root,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -829,7 +830,7 @@ def strategies_dual_forward_aging_scoreboard_safety_review_command(
             growth_output_root=growth_output_root,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -876,7 +877,7 @@ def strategies_dual_forward_aging_reader_brief_safe_preview_after_launch_command
             growth_output_root=growth_output_root,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -929,7 +930,7 @@ def strategies_balanced_core_launch_owner_report_command(
             output_root=output_root,
             docs_path=docs_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -984,7 +985,7 @@ def strategies_external_validation_balanced_core_launch_master_review_command(
             docs_path=docs_path,
             owner_docs_path=owner_docs_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )

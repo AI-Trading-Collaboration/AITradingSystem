@@ -1505,6 +1505,23 @@ scheduler applied=true、fallback=false，profile/telemetry/performance/provenan
 runner减少`3.72s / 0.40%`。单一自然样本仍不足以声明stable Full improvement；v20留作下一wave开始前
 reviewed seed，本轮不循环生成v21或运行第二次Full，`production_effect=none`。
 
+### Wave 7 W7E1：Simulation interpretation immutable DAG reuse
+
+2026-07-21：Wave 7 与 TRADING-2452 strategy lane 并行启动。候选筛选先实测
+`tests/test_paper_shadow_weekly_review.py`，isolated baseline/after=`257.87s -> 262.49s`，没有收益，
+因此完整撤回该候选，未把负优化带入集成。W7E1 最终仅修改
+`tests/test_sim_interpretation.py`：保持全部 10 个 nodeid、真实
+Event→Variant→Outcome→Calibration→Forward Bridge→Interpretation producer/validator、naive-time
+PIT、missing-data、invalid bridge source、live outcome drift 与 5 类 output tamper；只把 immutable
+PASS-only source DAG 提升到 module/worker scope，所有原地 tamper 均在 `finally` 中 byte-exact restore。
+
+同机 isolated baseline=`10 passed / 105.71s`，两次 after=`43.60s/43.89s`，格式化后复验=
+`45.15s`；较慢正式值相对 baseline 减少`60.56s / 57.29%`。冻结门槛为`<=75s`、
+`<=80% baseline`且绝对减少`>=20s`，全部 PASS。Ruff、Black、`git diff --check` PASS；未修改
+production/helper/CLI、DQ/PIT、research policy或投资语义。Formal architecture/contract/Full 与
+manifests/hash 由 coordinator 在 TRADING-2452 共享集成边界统一闭合；在唯一自然 Full 完成前，
+`stable_full_improvement_claimed=false`、`production_effect=none`。
+
 ## 验收标准
 
 - 当前 4 个 confirmation 长尾 module 的累计 wall time至少降低70%，最大单shard不超过当前

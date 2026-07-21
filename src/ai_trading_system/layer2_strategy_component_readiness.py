@@ -2458,6 +2458,13 @@ def _robustness_segments(prices: pd.DataFrame) -> list[dict[str, Any]]:
     ma_200 = prices["QQQ"].rolling(200, min_periods=200).mean()
     drawdown = prices["QQQ"] / prices["QQQ"].cummax() - 1.0
     segments = [
+        _date_segment(
+            "unified_primary_2021_full",
+            "period",
+            date_strings,
+            DEFAULT_AI_REGIME_BACKTEST_START,
+            None,
+        ),
         _date_segment("ai_after_chatgpt_full", "period", date_strings, date(2022, 12, 1), None),
         _date_segment(
             "2022_bear_market_tail",

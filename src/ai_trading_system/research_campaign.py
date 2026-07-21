@@ -7074,7 +7074,7 @@ def _requested_range_from_source(payload: dict[str, Any], *, default_source: str
     if isinstance(value, dict):
         return dict(value)
     return {
-        "start_date": "2022-12-01",
+        "start_date": "2021-02-22",
         "end_date": None,
         "source": default_source,
     }

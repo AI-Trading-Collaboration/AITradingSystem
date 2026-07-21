@@ -1,0 +1,115 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2452_UNIFIED_2021_PRIMARY_WINDOW_AND_CLEAN_RUN
+  title: null
+  domain: Strategy research / unified 2021 primary window、versioned preregistration
+    and historical clean evaluator
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: strategy lane 由 TRADING-2453 承接 constraint-hit 诊断；prospective holdout
+    仍需未来独立 owner 授权
+  requirement_refs:
+  - docs/requirements/TRADING-2452_Unified_2021_Primary_Window_and_Clean_Run.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2452_Unified_2021_Primary_Window_and_Clean_Run.md`。Active
+    default/primary conclusion 已统一从 `2021-02-22` 开始；旧 TRADING-2451 package 与paper/backfill
+    v1保持历史只读。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Versioned package 300 candidates、train-only top20、六个完整半年 folds与recent diagnostic；content/DQ/independent
+      validator、focused/architecture/contract/full与manifests/compatibility PASS；prospective/search/paper-shadow/production/broker关闭。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 17
+    row_sha256: 3efc1f15533d490acb6efbd23768fdd3c289848509d8f1f6ef39ae072ed4b489
+    cell_count: 8
+    all_cells:
+    - TRADING-2452_UNIFIED_2021_PRIMARY_WINDOW_AND_CLEAN_RUN
+    - Strategy research / unified 2021 primary window、versioned preregistration and
+      historical clean evaluator
+    - P0
+    - DONE
+    - strategy lane 由 TRADING-2453 承接 constraint-hit 诊断；prospective holdout 仍需未来独立
+      owner 授权
+    - 详见 `docs/requirements/TRADING-2452_Unified_2021_Primary_Window_and_Clean_Run.md`。Active
+      default/primary conclusion 已统一从 `2021-02-22` 开始；旧 TRADING-2451 package 与paper/backfill
+      v1保持历史只读。
+    - Versioned package 300 candidates、train-only top20、六个完整半年 folds与recent diagnostic；content/DQ/independent
+      validator、focused/architecture/contract/full与manifests/compatibility PASS；prospective/search/paper-shadow/production/broker关闭。
+    - 2026-07-21：有效 run=`trading2452-historical-seen_20260721T053621Z_144f31edee91`，24
+      workers/25m45s；1,800 COMPLETE train rows 全部被现有 constraint-hit policy reject，selected/test/recent=0，状态=`INCOMPLETE_NO_ELIGIBLE_CANDIDATE`。最终
+      Full=`6543 passed / 2 skipped / 642 warnings / 1010.39s`，profile/telemetry/performance/provenance
+      PASS；`production_effect=none`。
+    raw_line: '|TRADING-2452_UNIFIED_2021_PRIMARY_WINDOW_AND_CLEAN_RUN|Strategy research
+      / unified 2021 primary window、versioned preregistration and historical clean
+      evaluator|P0|DONE|strategy lane 由 TRADING-2453 承接 constraint-hit 诊断；prospective
+      holdout 仍需未来独立 owner 授权|详见 `docs/requirements/TRADING-2452_Unified_2021_Primary_Window_and_Clean_Run.md`。Active
+      default/primary conclusion 已统一从 `2021-02-22` 开始；旧 TRADING-2451 package 与paper/backfill
+      v1保持历史只读。|Versioned package 300 candidates、train-only top20、六个完整半年 folds与recent
+      diagnostic；content/DQ/independent validator、focused/architecture/contract/full与manifests/compatibility
+      PASS；prospective/search/paper-shadow/production/broker关闭。|2026-07-21：有效 run=`trading2452-historical-seen_20260721T053621Z_144f31edee91`，24
+      workers/25m45s；1,800 COMPLETE train rows 全部被现有 constraint-hit policy reject，selected/test/recent=0，状态=`INCOMPLETE_NO_ELIGIBLE_CANDIDATE`。最终
+      Full=`6543 passed / 2 skipped / 642 warnings / 1010.39s`，profile/telemetry/performance/provenance
+      PASS；`production_effect=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3efc1f15533d490acb6efbd2
+  task_id: TRADING-2452_UNIFIED_2021_PRIMARY_WINDOW_AND_CLEAN_RUN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: strategy lane 由 TRADING-2453 承接 constraint-hit 诊断；prospective holdout
+      仍需未来独立 owner 授权
+    notes: 2026-07-21：有效 run=`trading2452-historical-seen_20260721T053621Z_144f31edee91`，24
+      workers/25m45s；1,800 COMPLETE train rows 全部被现有 constraint-hit policy reject，selected/test/recent=0，状态=`INCOMPLETE_NO_ELIGIBLE_CANDIDATE`。最终
+      Full=`6543 passed / 2 skipped / 642 warnings / 1010.39s`，profile/telemetry/performance/provenance
+      PASS；`production_effect=none`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3efc1f15533d490acb6efbd23768fdd3c289848509d8f1f6ef39ae072ed4b489
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2452_UNIFIED_2021_PRIMARY_WINDOW_AND_CLEAN_RUN
+  - Strategy research / unified 2021 primary window、versioned preregistration and
+    historical clean evaluator
+  - P0
+  - DONE
+  - strategy lane 由 TRADING-2453 承接 constraint-hit 诊断；prospective holdout 仍需未来独立 owner
+    授权
+  - 详见 `docs/requirements/TRADING-2452_Unified_2021_Primary_Window_and_Clean_Run.md`。Active
+    default/primary conclusion 已统一从 `2021-02-22` 开始；旧 TRADING-2451 package 与paper/backfill
+    v1保持历史只读。
+  - Versioned package 300 candidates、train-only top20、六个完整半年 folds与recent diagnostic；content/DQ/independent
+    validator、focused/architecture/contract/full与manifests/compatibility PASS；prospective/search/paper-shadow/production/broker关闭。
+  - 2026-07-21：有效 run=`trading2452-historical-seen_20260721T053621Z_144f31edee91`，24
+    workers/25m45s；1,800 COMPLETE train rows 全部被现有 constraint-hit policy reject，selected/test/recent=0，状态=`INCOMPLETE_NO_ELIGIBLE_CANDIDATE`。最终
+    Full=`6543 passed / 2 skipped / 642 warnings / 1010.39s`，profile/telemetry/performance/provenance
+    PASS；`production_effect=none`。
+  docs_links:
+  - docs/requirements/TRADING-2452_Unified_2021_Primary_Window_and_Clean_Run.md
+  terminal: true
+  raw_row_sha256: 3efc1f15533d490acb6efbd23768fdd3c289848509d8f1f6ef39ae072ed4b489
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6786d489b17c9dc75e28e04eced7508a14213021db7836f7075ac5cf24125e3f

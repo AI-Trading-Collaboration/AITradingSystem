@@ -21,10 +21,10 @@ policy_metadata:
     fields change.
 
 market_regime:
-  regime_id: ai_after_chatgpt
+  regime_id: unified_primary_2021
   anchor_event: ChatGPT public launch
   anchor_date: 2022-11-30
-  default_evaluation_start: 2022-12-01
+  default_evaluation_start: 2021-02-22
 
 safety:
   observe_only: true

@@ -85,7 +85,13 @@ DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_UPDATED_PATH = (
     / "data_source_qualification_matrix_updated.json"
 )
 
-AI_REGIME_START = "2022-12-01"
+PRIMARY_RESEARCH_START = "2021-02-22"
+PRIMARY_RESEARCH_START_DATE = date(2021, 2, 22)
+AI_CYCLE_COMPARISON_START = "2022-12-01"
+AI_CYCLE_COMPARISON_START_DATE = date(2022, 12, 1)
+# Historical compatibility constant. Active default consumers must use
+# PRIMARY_RESEARCH_START; this value only identifies retained legacy evidence.
+AI_REGIME_START = AI_CYCLE_COMPARISON_START
 BASELINE_CODE_VERSION = "data_foundation_baseline_v1"
 BASELINE_POLICY_VERSION = "data_foundation_policy_v1"
 
@@ -389,7 +395,7 @@ def validate_asset_master(
 def build_tradability_calendar(
     *,
     universe: str = "data_foundation_minimum",
-    date_range: str = f"{AI_REGIME_START}:{AI_REGIME_START}",
+    date_range: str = f"{PRIMARY_RESEARCH_START}:{PRIMARY_RESEARCH_START}",
     asset_master_path: Path = DEFAULT_ASSET_MASTER_PATH,
     universe_path: Path = DEFAULT_UNIVERSE_DEFINITIONS_PATH,
     output_root: Path = DEFAULT_ASSET_MASTER_OUTPUT_ROOT,
@@ -484,7 +490,7 @@ def show_universe(
 def audit_universe(
     *,
     universe: str,
-    date_range: str = f"{AI_REGIME_START}:{AI_REGIME_START}",
+    date_range: str = f"{PRIMARY_RESEARCH_START}:{PRIMARY_RESEARCH_START}",
     output_root: Path = DEFAULT_ASSET_MASTER_OUTPUT_ROOT,
 ) -> dict[str, Any]:
     calendar = build_tradability_calendar(
@@ -570,7 +576,7 @@ def estimate_trading_costs(
 def audit_cost_liquidity(
     *,
     universe: str = "data_foundation_minimum",
-    date_range: str = f"{AI_REGIME_START}:{AI_REGIME_START}",
+    date_range: str = f"{PRIMARY_RESEARCH_START}:{PRIMARY_RESEARCH_START}",
     output_root: Path = DEFAULT_COST_LIQUIDITY_OUTPUT_ROOT,
     asset_master_path: Path = DEFAULT_ASSET_MASTER_PATH,
     universe_path: Path = DEFAULT_UNIVERSE_DEFINITIONS_PATH,
@@ -618,7 +624,7 @@ def audit_cost_liquidity(
 
 def build_regime_labels(
     *,
-    as_of_date: str = AI_REGIME_START,
+    as_of_date: str = PRIMARY_RESEARCH_START,
     output_root: Path = DEFAULT_RESEARCH_LABEL_OUTPUT_ROOT,
     definitions_path: Path = DEFAULT_REGIME_LABEL_DEFINITIONS_PATH,
 ) -> dict[str, Any]:
@@ -646,7 +652,7 @@ def build_regime_labels(
 
 def build_event_labels(
     *,
-    as_of_date: str = AI_REGIME_START,
+    as_of_date: str = PRIMARY_RESEARCH_START,
     output_root: Path = DEFAULT_RESEARCH_LABEL_OUTPUT_ROOT,
     definitions_path: Path = DEFAULT_EVENT_LABEL_DEFINITIONS_PATH,
 ) -> dict[str, Any]:
@@ -674,7 +680,7 @@ def build_event_labels(
 
 def build_cluster_labels(
     *,
-    as_of_date: str = AI_REGIME_START,
+    as_of_date: str = PRIMARY_RESEARCH_START,
     output_root: Path = DEFAULT_RESEARCH_LABEL_OUTPUT_ROOT,
     definitions_path: Path = DEFAULT_CLUSTER_LABEL_DEFINITIONS_PATH,
 ) -> dict[str, Any]:
@@ -704,7 +710,7 @@ def build_cluster_labels(
 
 def audit_research_labels(
     *,
-    as_of_date: str = AI_REGIME_START,
+    as_of_date: str = PRIMARY_RESEARCH_START,
     output_root: Path = DEFAULT_RESEARCH_LABEL_OUTPUT_ROOT,
 ) -> dict[str, Any]:
     regime = build_regime_labels(as_of_date=as_of_date, output_root=output_root)
@@ -1045,7 +1051,7 @@ def prune_research_execution_cache(
 
 def capture_forward_evidence(
     *,
-    as_of_date: str = AI_REGIME_START,
+    as_of_date: str = PRIMARY_RESEARCH_START,
     output_root: Path = DEFAULT_FORWARD_EVIDENCE_OUTPUT_ROOT,
     feature_snapshot_id: str = "pit_snapshot_required",
     baseline_outputs: Sequence[str] = (),
@@ -1277,7 +1283,7 @@ def build_cases_from_regret_casebook(
         "case_id": "regret_casebook_conversion_placeholder",
         "case_type": "known_baseline_failure",
         "research_ids": ["dynamic_trend_thresholds"],
-        "date_range": {"start": AI_REGIME_START, "end": None},
+        "date_range": {"start": PRIMARY_RESEARCH_START, "end": None},
         "assets": ["ETF_QQQ"],
         "regime_labels": ["risk_on_off_regime"],
         "event_labels": [],
@@ -1327,7 +1333,7 @@ def build_oracle_diagnostic_set(
         "case_id": "hindsight_oracle_diagnostic_placeholder",
         "case_type": "hindsight_oracle_case",
         "research_ids": ["portfolio_decision_problem_v1"],
-        "date_range": {"start": AI_REGIME_START, "end": None},
+        "date_range": {"start": PRIMARY_RESEARCH_START, "end": None},
         "assets": ["ETF_QQQ", "ETF_SMH"],
         "regime_labels": ["trend_regime"],
         "event_labels": [],
@@ -1421,7 +1427,9 @@ def run_data_foundation_acceptance(
     normal_window = _mapping(windows.get("normal_trend_window"))
     recent_forward = _mapping(windows.get("recent_forward_like_decision_date"))
     pit_acceptance = _mapping(config.get("pit_acceptance"))
-    snapshot_as_of_date = _text(pit_acceptance.get("snapshot_as_of_date"), AI_REGIME_START)
+    snapshot_as_of_date = _text(
+        pit_acceptance.get("snapshot_as_of_date"), PRIMARY_RESEARCH_START
+    )
     decision_time = _text(pit_acceptance.get("decision_time"), f"{snapshot_as_of_date}T21:00:00Z")
 
     output_root.mkdir(parents=True, exist_ok=True)
@@ -2215,7 +2223,7 @@ def _label_record(
 
 
 def _date_range_from_window(window: Mapping[str, Any]) -> str:
-    start = _text(window.get("start"), AI_REGIME_START)
+    start = _text(window.get("start"), PRIMARY_RESEARCH_START)
     end = _text(window.get("end"), start)
     return f"{start}:{end}"
 
@@ -3463,7 +3471,11 @@ def _research_run_record(
         "config_hash": _stable_hash(seed),
         "code_version": code_version,
         "policy_version": BASELINE_POLICY_VERSION,
-        "time_split": {"start": AI_REGIME_START, "end": None, "market_regime": "ai_after_chatgpt"},
+        "time_split": {
+            "start": PRIMARY_RESEARCH_START,
+            "end": None,
+            "market_regime": "unified_primary_2021",
+        },
         "horizon_set": ["1d", "5d", "10d", "20d", "60d"],
         "evaluation_stage": "stage_0_data_foundation_contract",
         "metrics_summary": {
@@ -3532,8 +3544,8 @@ def _base_payload(
         "title": title,
         "status": status,
         "generated_at": utc_now_iso(),
-        "market_regime": "ai_after_chatgpt",
-        "default_backtest_start": AI_REGIME_START,
+        "market_regime": "unified_primary_2021",
+        "default_backtest_start": PRIMARY_RESEARCH_START,
         "production_effect": "none",
         "broker_action": "none",
         "promotion_gate_allowed": False,

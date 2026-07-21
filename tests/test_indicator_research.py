@@ -52,7 +52,7 @@ def test_daily_indicator_inventory_flags_valuation_crowding_high_impact() -> Non
     payload = build_daily_indicator_inventory()
 
     assert payload["status"] == "PASS_WITH_WARNINGS"
-    assert payload["market_regime"] == "ai_after_chatgpt"
+    assert payload["market_regime"] == "unified_primary_2021"
     assert payload["safety_boundary"]["official_target_weights"] is False
 
     records = {item["indicator_id"]: item for item in payload["inventory"]}

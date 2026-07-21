@@ -14,6 +14,7 @@ import pandas as pd
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.etf_portfolio.dynamic_allocation import (
     DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH,
     DynamicAllocationPolicyConfig,
@@ -81,15 +82,15 @@ class DynamicRescueError(RuntimeError):
 
 
 class DynamicRescueMarketRegime(BaseModel):
-    regime_id: Literal["ai_after_chatgpt"]
+    regime_id: Literal["unified_primary_2021"]
     anchor_event: str = Field(min_length=1)
     anchor_date: date
     default_backtest_start: date
 
     @model_validator(mode="after")
     def validate_ai_regime_start(self) -> Self:
-        if self.default_backtest_start < date(2022, 12, 1):
-            raise ValueError("dynamic rescue default backtest start cannot predate 2022-12-01")
+        if self.default_backtest_start < PRIMARY_RESEARCH_START_DATE:
+            raise ValueError("dynamic rescue default backtest start cannot predate 2021-02-22")
         return self
 
 

@@ -78,8 +78,8 @@ def test_etf_config_loads_and_default_weights_sum_to_one() -> None:
 
     assert "CASH" in config.assets.assets
     assert abs(sum(asset.default_weight for asset in config.assets.assets.values()) - 1.0) < 1e-6
-    assert config.backtest.backtest.regime == "ai_after_chatgpt"
-    assert config.backtest.backtest.start_date == date(2022, 12, 1)
+    assert config.backtest.backtest.regime == "unified_primary_2021"
+    assert config.backtest.backtest.start_date == date(2021, 2, 22)
     assert config.backtest.backtest.primary_benchmark_id == "B001"
     assert config.p2 is not None
     assert not config.p2.live_interface.broker_routing_allowed
@@ -945,7 +945,8 @@ def test_daily_report_contains_required_sections() -> None:
     assert "no broker action" in markdown
     assert "## 1. Executive Summary" in markdown
     assert "Current regime" in markdown
-    assert "AI Regime Start: 2022-12-01" in markdown
+    assert "Market Regime: unified_primary_2021" in markdown
+    assert "Primary Research Anchor: 2021-02-22" in markdown
     assert "## 3. ETF Signal Dashboard" in markdown
     assert "## 4. Target Weights" in markdown
     assert "Previous Target" in markdown

@@ -11,7 +11,11 @@ from typing import Any
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
-from ai_trading_system.data_foundation import utc_now_iso, write_foundation_artifact_pair
+from ai_trading_system.data_foundation import (
+    PRIMARY_RESEARCH_START,
+    utc_now_iso,
+    write_foundation_artifact_pair,
+)
 from ai_trading_system.layer1_simple_rule_meta_policy import (
     DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
     DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
@@ -70,7 +74,7 @@ AI_REGIME_SUMMARY = {
     "market_regime": "ai_after_chatgpt",
     "anchor_event": "ChatGPT public launch",
     "anchor_date": "2022-11-30",
-    "default_backtest_start": "2022-12-01",
+    "default_backtest_start": PRIMARY_RESEARCH_START,
 }
 
 

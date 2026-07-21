@@ -368,7 +368,7 @@ def test_periodic_manual_dispatch_uses_runtime_control_and_blocks_duplicate(
     )
 
     assert first[0].status is CanonicalStatus.PASS
-    assert first[0].command == ("aits", "backtest", "--regime", "ai_after_chatgpt")
+    assert first[0].command == ("aits", "backtest", "--regime", "unified_primary_2021")
     assert duplicate[0].status is CanonicalStatus.PASS
     assert len(calls) == 1
     state_root = tmp_path / "periodic_control" / "states"

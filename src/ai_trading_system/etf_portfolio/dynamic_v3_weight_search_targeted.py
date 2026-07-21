@@ -29,7 +29,7 @@ DEFAULT_WEIGHT_SEARCH_TARGETED_POLICY_PATH = (
     / "config"
     / "etf_portfolio"
     / "dynamic_v3_rescue"
-    / "weight_search_targeted_v1.yaml"
+    / "weight_search_targeted_v2.yaml"
 )
 DEFAULT_TARGETED_SEARCH_V3_DIR = _legacy.DEFAULT_TARGETED_SEARCH_V3_DIR
 DEFAULT_TARGETED_V3_BACKFILL_DIR = _legacy.DEFAULT_TARGETED_V3_BACKFILL_DIR
@@ -127,7 +127,7 @@ def _chronology(generated: datetime, *sources: Mapping[str, Any]) -> None:
 def _policy(path: Path) -> dict[str, Any]:
     payload = st._load_yaml_mapping(path)
     _require(
-        payload.get("schema_version") == "dynamic_v3_weight_search_targeted_policy.v1",
+        payload.get("schema_version") == "dynamic_v3_weight_search_targeted_policy.v2",
         "targeted-search policy schema mismatch",
     )
     metadata = _mapping(payload.get("policy_metadata"))

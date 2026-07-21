@@ -16,9 +16,9 @@ policy_metadata:
     Review before using these features in first-layer re-ablation, changing
     score bands, or treating diagnostic features as model-ready.
 market_regime:
-  regime_id: ai_after_chatgpt
+  regime_id: unified_primary_2021
   anchor_date: 2022-11-30
-  default_backtest_start: 2022-12-01
+  default_backtest_start: 2021-02-22
 safety_boundary:
   research_only: true
   promotion_allowed: false

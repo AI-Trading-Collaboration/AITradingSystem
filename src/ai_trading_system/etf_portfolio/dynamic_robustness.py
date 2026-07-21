@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.backtest.engine import BacktestMetrics, summarize_long_only_backtest
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.etf_portfolio.backtest import calculate_portfolio_accounting_step
 from ai_trading_system.etf_portfolio.dynamic_allocation import (
     DynamicAllocationPolicyConfig,
@@ -73,10 +74,10 @@ class DynamicRobustnessMarketRegime(BaseModel):
 
     @model_validator(mode="after")
     def validate_ai_regime(self) -> Self:
-        if self.regime_id != "ai_after_chatgpt":
-            raise ValueError("TRADING-086 default market regime must be ai_after_chatgpt")
-        if self.default_backtest_start < date(2022, 12, 1):
-            raise ValueError("dynamic robustness default backtest start cannot predate 2022-12-01")
+        if self.regime_id != "unified_primary_2021":
+            raise ValueError("TRADING-086 default market regime must be unified_primary_2021")
+        if self.default_backtest_start < PRIMARY_RESEARCH_START_DATE:
+            raise ValueError("dynamic robustness default backtest start cannot predate 2021-02-22")
         return self
 
 

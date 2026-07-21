@@ -17,6 +17,7 @@ from ai_trading_system.config import (
     load_universe,
 )
 from ai_trading_system.data.quality import DataQualityReport, validate_data_cache
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START
 from ai_trading_system.features.event_risk_free import build_event_risk_free_features
 from ai_trading_system.features.macro_event_calendar_free import (
     build_macro_event_calendar_free_features,
@@ -542,7 +543,7 @@ def _scope_payload(run_date: date) -> dict[str, Any]:
             "regime_id": "ai_after_chatgpt",
             "anchor_event": "ChatGPT public launch",
             "anchor_date": "2022-11-30",
-            "default_backtest_start": "2022-12-01",
+            "default_backtest_start": PRIMARY_RESEARCH_START,
         },
         "scope": {
             "free_data_only": True,
@@ -962,8 +963,8 @@ def _render_scope(payload: Mapping[str, Any]) -> str:
             "# Free PIT Data Source Scope",
             "",
             f"- 状态：`{payload.get('status')}`",
-            "- 市场 regime：`ai_after_chatgpt`，anchor=`2022-11-30`，"
-            "default backtest start=`2022-12-01`。",
+            "- 市场 regime：`unified_primary_2021`，anchor=`2021-02-22`，"
+            "default backtest start=`2021-02-22`。",
             f"- 只接免费数据：`{scope.get('free_data_only')}`",
             f"- true PIT breadth built：`{scope.get('true_pit_breadth_built')}`",
             f"- promotion status：`{scope.get('promotion_status')}`",

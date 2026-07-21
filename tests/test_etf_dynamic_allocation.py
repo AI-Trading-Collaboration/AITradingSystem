@@ -26,7 +26,7 @@ def test_dynamic_allocation_policy_loads_and_rejects_unsafe(tmp_path: Path) -> N
     policy = load_dynamic_allocation_policy_config()
 
     assert policy.safety.model_dump(mode="json") == SAFETY_FIELDS
-    assert policy.market_regime.regime_id == "ai_after_chatgpt"
+    assert policy.market_regime.regime_id == "unified_primary_2021"
     assert policy.regime_weight_targets["neutral"].weights["CASH"] == pytest.approx(0.10)
 
     raw = yaml.safe_load(DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH.read_text(encoding="utf-8"))

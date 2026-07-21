@@ -60,7 +60,7 @@ def test_exposure_cap_mechanics_simulation_policy_is_governed() -> None:
     assert policy["status"] == "pilot_research_source_blocked"
     assert policy["owner"] == "research_governance"
     assert policy["task_id"] == TASK_ID
-    assert policy["market_regime"] == "ai_after_chatgpt"
+    assert policy["market_regime"] == "unified_primary_2021"
     assert policy["source_dependency"]["required_task_id"] == (
         "TRADING-2322_SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN"
     )
@@ -174,7 +174,7 @@ def test_exposure_cap_mechanics_simulation_cli_writes_source_blocked_outputs(
     summary = summary_payload["summary"]
     assert summary_payload["status"] == STATUS
     assert summary["status"] == STATUS
-    assert summary["market_regime"] == "ai_after_chatgpt"
+    assert summary["market_regime"] == "unified_primary_2021"
     assert summary["data_quality_status"] == DATA_QUALITY_STATUS
     assert summary["source_status"] == (
         "SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN_READY_PROMOTION_BLOCKED"

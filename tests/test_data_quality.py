@@ -319,8 +319,8 @@ def test_validate_data_cache_checks_download_manifest(tmp_path: Path) -> None:
     assert report.manifest_summary is not None
     assert report.manifest_summary.rows == 2
     assert "下载审计清单" in markdown
-    assert "价格一致性检查起点：2022-12-01" in markdown
-    assert "宏观变化检查起点：2022-12-01" in markdown
+    assert "价格一致性检查起点：2021-02-22" in markdown
+    assert "宏观变化检查起点：2021-02-22" in markdown
 
 
 def test_validate_data_cache_ignores_stale_reconstructed_manifest_rows(

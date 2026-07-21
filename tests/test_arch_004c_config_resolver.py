@@ -89,9 +89,9 @@ def test_market_regime_loader_moved_to_platform_with_legacy_import_parity() -> N
         resolved.value,
         resolved.value.default_backtest_regime,
     )
-    assert default_regime.regime_id == "ai_after_chatgpt"
-    assert default_regime.anchor_date.isoformat() == "2022-11-30"
-    assert default_regime.start_date.isoformat() == "2022-12-01"
+    assert default_regime.regime_id == "unified_primary_2021"
+    assert default_regime.anchor_date.isoformat() == "2021-02-22"
+    assert default_regime.start_date.isoformat() == "2021-02-22"
     assert (
         resolved.reference.sha256
         == hashlib.sha256(legacy_config.DEFAULT_MARKET_REGIMES_CONFIG_PATH.read_bytes()).hexdigest()

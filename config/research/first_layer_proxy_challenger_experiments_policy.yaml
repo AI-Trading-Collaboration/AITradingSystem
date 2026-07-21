@@ -15,9 +15,9 @@ validation_evidence: >
 review_condition: >
   Review before any challenger is trained, before adding paid true-breadth data,
   or before changing first-layer active gates.
-market_regime: ai_after_chatgpt
+market_regime: unified_primary_2021
 requested_window:
-  start: "2022-12-01"
+  start: "2021-02-22"
   end: latest
 data_quality_expected_price_tickers:
   - QQQ

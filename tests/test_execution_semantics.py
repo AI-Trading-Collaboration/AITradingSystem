@@ -50,7 +50,7 @@ def test_execution_policy_registry_contract() -> None:
     assert registry["safety_boundary"]["paper_shadow_allowed"] is False
     assert registry["safety_boundary"]["production_allowed"] is False
     assert registry["safety_boundary"]["broker_action"] == "none"
-    assert registry["market_regime"]["default_backtest_start"] == date(2022, 12, 1)
+    assert registry["market_regime"]["default_backtest_start"] == date(2021, 2, 22)
     assert {
         "monthly_eom_v1",
         "monthly_bom_v1",
@@ -234,7 +234,7 @@ def _assert_execution_semantics_payload(payload: dict[str, object]) -> None:
     assert payload["paper_shadow_allowed"] is False
     assert payload["production_allowed"] is False
     assert payload["manual_review_required"] is True
-    assert payload["market_regime"] == "ai_after_chatgpt"
+    assert payload["market_regime"] == "unified_primary_2021"
     assert Path(payload["artifact_paths"]["json_path"]).exists()
     assert Path(payload["artifact_paths"]["markdown_path"]).exists()
 

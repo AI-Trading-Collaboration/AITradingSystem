@@ -75,7 +75,7 @@ def test_reporting_architecture_policy_freezes_three_tier_safety_boundary() -> N
 def test_reporting_inventory_matches_frozen_f3_baseline() -> None:
     inventory = scan_reporting_architecture()
 
-    assert inventory.reader_brief_line_count == 29050
+    assert inventory.reader_brief_line_count == 29053
     assert inventory.reader_brief_top_level_function_count == 367
     assert inventory.report_registry_entry_count == 1360
     assert inventory.explicit_production_effect_count == 671

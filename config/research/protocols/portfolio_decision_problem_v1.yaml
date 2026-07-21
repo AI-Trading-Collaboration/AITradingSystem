@@ -4,9 +4,9 @@ title: Portfolio Decision Problem v1 Protocol
 owner: research_governance
 status: baseline_protocol
 market_regime:
-  regime_id: ai_after_chatgpt
-  requested_date_range: "2022-12-01..present"
-  anchor_event: "ChatGPT public launch on 2022-11-30"
+  regime_id: unified_primary_2021
+  requested_date_range: "2021-02-22..present"
+  anchor_event: "validated QQQ/SGOV/TQQQ common history start"
 problem_statement: >
   Compare candidate portfolio actions by horizon-conditioned expected utility
   using only PIT state, current portfolio, cost, risk constraints, and auditable

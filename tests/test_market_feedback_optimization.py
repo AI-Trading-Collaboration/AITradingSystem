@@ -22,7 +22,7 @@ def test_market_feedback_optimization_report_summarizes_readiness(
     report = build_market_feedback_optimization_report(
         as_of=date(2026, 4, 10),
         since=date(2026, 4, 1),
-        replay_start=date(2022, 12, 1),
+        replay_start=date(2021, 2, 22),
         replay_end=date(2026, 4, 10),
         data_quality_report_path=paths["data_quality"],
         decision_outcomes_path=paths["decision_outcomes"],
@@ -42,9 +42,9 @@ def test_market_feedback_optimization_report_summarizes_readiness(
 
     assert report.status == "PASS_WITH_LIMITATIONS"
     assert report.readiness == "READY_FOR_REPLAY_OR_SHADOW_REVIEW"
-    assert "市场阶段：ai_after_chatgpt" in markdown
+    assert "市场阶段：unified_primary_2021" in markdown
     assert "样本政策：feedback_sample_policy_test" in markdown
-    assert "as-if 回放窗口：2022-12-01 至 2026-04-10" in markdown
+    assert "as-if 回放窗口：2021-02-22 至 2026-04-10" in markdown
     assert "生产影响：none" in markdown
     assert "## 执行频次" in markdown
     assert (
@@ -71,7 +71,7 @@ def test_market_feedback_optimization_cli_writes_report(tmp_path: Path) -> None:
             "--since",
             "2026-04-01",
             "--replay-start",
-            "2022-12-01",
+            "2021-02-22",
             "--replay-end",
             "2026-04-10",
             "--data-quality-report-path",
@@ -119,7 +119,7 @@ def _write_feedback_optimization_artifacts(tmp_path: Path) -> dict[str, Path]:
             [
                 "version: feedback_sample_policy_test",
                 "status: pilot",
-                "market_regime_id: ai_after_chatgpt",
+                "market_regime_id: unified_primary_2021",
                 "review_after_reports: 8",
                 "decision_outcomes:",
                 "  reporting_floor: 1",

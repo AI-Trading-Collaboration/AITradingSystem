@@ -47,8 +47,8 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     inventory = scan_deprecation_inventory(load_deprecation_policy())
     surfaces = {item.surface_id: item for item in inventory.surfaces}
 
-    assert inventory.python_module_count == 992
-    assert inventory.python_test_file_count == 1143
+    assert inventory.python_module_count == 994
+    assert inventory.python_test_file_count == 1147
     assert inventory.direct_writer_baseline_count == 894
     assert inventory.direct_writer_current_count == 856
     assert inventory.direct_writer_violation_count == 0
@@ -61,9 +61,9 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     assert surfaces["etf_portfolio_cli_god_module"].line_count == 146
     assert surfaces["etf_portfolio_cli_god_module"].top_level_function_count == 0
     assert surfaces["etf_portfolio_cli_god_module"].cli_command_decorator_count == 0
-    assert surfaces["dynamic_v3_system_target_god_module"].line_count == 12951
+    assert surfaces["dynamic_v3_system_target_god_module"].line_count == 12956
     assert surfaces["dynamic_v3_system_target_god_module"].top_level_function_count == 680
-    assert surfaces["reader_brief_legacy_builder_renderer"].line_count == 29050
+    assert surfaces["reader_brief_legacy_builder_renderer"].line_count == 29053
     assert surfaces["dynamic_strategy_task_wrappers"].file_count == 99
     assert surfaces["dynamic_strategy_task_wrappers"].line_count == 88315
     assert surfaces["dynamic_strategy_task_wrappers"].top_level_function_count == 2114

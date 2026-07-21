@@ -3,9 +3,9 @@ version: v1
 status: pilot_research_source_bound_dry_run
 owner: research_governance
 task_id: TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING
-market_regime: ai_after_chatgpt
-anchor_event: ChatGPT public launch
-default_start_date: "2022-12-01"
+market_regime: unified_primary_2021
+anchor_event: validated QQQ/SGOV/TQQQ common history start
+default_start_date: "2021-02-22"
 rationale: >
   TRADING-2324 binds the TRADING-2323 source-blocked exposure-cap simulation
   framework to auditable risk-cap trigger, market price, portfolio-baseline,

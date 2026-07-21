@@ -16,10 +16,10 @@ policy_metadata:
     Review when a new free source is added, a paid source is proposed, or a
     feature family is promoted beyond diagnostic research.
 market_regime:
-  regime_id: ai_after_chatgpt
+  regime_id: unified_primary_2021
   anchor_event: ChatGPT public launch
   anchor_date: 2022-11-30
-  default_backtest_start: 2022-12-01
+  default_backtest_start: 2021-02-22
 safety_boundary:
   research_only: true
   promotion_allowed: false

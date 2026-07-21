@@ -50,6 +50,7 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert payload["narrative_executive_summary"]["today_conclusion"]
     assert payload["narrative_executive_summary"]["production_effect_statement"]
     assert payload["executive_summary"]["manual_review_count"] >= 1
+    # Preserve an explicitly bound historical-comparison regime from the snapshot.
     assert payload["run_context"]["market_regime"] == "ai_after_chatgpt"
     assert payload["executive_decision"]["action"] == "观察"
     assert payload["executive_decision"]["final_risk_asset_ai_position"] == "40%-60%"

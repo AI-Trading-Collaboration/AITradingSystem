@@ -1,0 +1,68 @@
+schema_version: 1
+
+paper_shadow_account:
+  name: dynamic_v3_rescue_paper_shadow_account_v2
+  mode: paper_shadow_only
+  base_currency: USD
+  initial_equity: 100000.0
+  start_date: "2021-02-22"
+  initial_method: static_baseline
+
+policy_metadata:
+  policy_id: dynamic_v3_rescue_paper_shadow_account_v2
+  owner: project_owner
+  version: 2026-07-21
+  status: pilot_baseline
+  rationale: >
+    Track research model target methods in an isolated paper shadow account
+    from the owner-approved unified primary research window, separate from
+    owner real portfolio snapshots and broker state.
+  intended_effect: >
+    Compare method-level returns, drawdown, volatility, and turnover over the
+    unified_primary_2021 window before any owner review escalation.
+  validation_evidence: >
+    TRADING-2452 unified-window migration, focused system-target tests, and
+    paper shadow content-derived validation.
+  review_condition: >
+    Revisit after enough forward paper observations exist to evaluate method
+    stability and pressure-regime behavior.
+
+tracking:
+  target_methods:
+    - static_baseline
+    - no_trade_baseline
+    - consensus_target
+    - limited_adjustment
+    - defensive_limited_adjustment
+    - equal_weight_shadow_candidates
+    - selected_top_candidate
+
+baseline:
+  static_weights:
+    QQQ: 0.50
+    SMH: 0.20
+    TLT: 0.10
+    CASH: 0.20
+
+pricing:
+  price_source: existing_price_cache
+  use_adjusted_close: true
+
+costs:
+  transaction_cost_bps: 0
+  slippage_bps: 0
+
+performance_policy:
+  minimum_common_observations: 20
+  minimum_regime_observations: 5
+  pressure_daily_return_threshold: -0.02
+
+safety:
+  research_target_only: true
+  paper_shadow_only: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  production_effect: none
+  order_ticket_generated: false
+  auto_apply: false

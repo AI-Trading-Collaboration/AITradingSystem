@@ -338,9 +338,9 @@ def build_research_governance_summary_payload(
         "production_effect": PRODUCTION_EFFECT,
         "summary_text": summary_text,
         "market_regime": {
-            "regime_id": "ai_after_chatgpt",
-            "start_date": "2022-12-01",
-            "anchor_date": "2022-11-30",
+            "regime_id": "unified_primary_2021",
+            "start_date": "2021-02-22",
+            "anchor_date": "2021-02-22",
         },
         "summary": {
             "card_count": len(cards),

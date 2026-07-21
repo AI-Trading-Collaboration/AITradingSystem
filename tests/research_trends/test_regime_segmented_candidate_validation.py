@@ -39,7 +39,7 @@ def test_regime_segmented_candidate_validation_policy_is_governed() -> None:
     assert policy["status"] == "pilot_research"
     assert policy["owner"] == "research_governance"
     assert policy["task_id"] == "TRADING-2317_REGIME_SEGMENTED_CANDIDATE_VALIDATION"
-    assert policy["market_regime"] == "ai_after_chatgpt"
+    assert policy["market_regime"] == "unified_primary_2021"
     assert policy["data_quality"]["required_command"] == "aits validate-data"
     assert policy["label_source"]["required_status"] == (
         "REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC_READY_SEGMENTATION_ONLY"
@@ -121,7 +121,7 @@ def test_regime_segmented_candidate_validation_cli_writes_outputs(
     )
     summary = summary_payload["summary"]
     assert summary["status"] == STATUS
-    assert summary["market_regime"] == "ai_after_chatgpt"
+    assert summary["market_regime"] == "unified_primary_2021"
     assert summary["actual_requested_date_range"] == "2022-12-01..2023-06-30"
     assert summary["data_quality_status"] in {"PASS", "PASS_WITH_WARNINGS"}
     assert summary["data_quality_gate"]["required_command"] == "aits validate-data"

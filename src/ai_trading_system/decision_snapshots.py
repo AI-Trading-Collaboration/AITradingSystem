@@ -211,10 +211,10 @@ def _risk_event_state_record(report: DailyScoreReport) -> dict[str, Any] | None:
 def _market_regime_record(market_regime: BacktestRegimeContext | None) -> dict[str, Any]:
     if market_regime is None:
         return {
-            "regime_id": "ai_after_chatgpt",
-            "anchor_date": "2022-11-30",
-            "anchor_event": "ChatGPT public launch",
-            "start_date": "2022-12-01",
+            "regime_id": "unified_primary_2021",
+            "anchor_date": "2021-02-22",
+            "anchor_event": "validated QQQ/SGOV/TQQQ common history start",
+            "start_date": "2021-02-22",
         }
     return {
         "regime_id": market_regime.regime_id,

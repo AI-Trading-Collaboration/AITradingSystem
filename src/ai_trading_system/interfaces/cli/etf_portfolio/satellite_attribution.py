@@ -5,6 +5,7 @@ from typing import Annotated, Any, Literal
 
 import typer
 
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START
 from ai_trading_system.etf_portfolio.ai_confirmation import (
     DEFAULT_AI_CONFIRMATION_STANDALONE_REPORT_DIR,
 )
@@ -109,7 +110,7 @@ def satellite_attribution_build_command(
     start: Annotated[
         str,
         typer.Option(help="attribution 起始日期，默认 AI regime start。"),
-    ] = "2022-12-01",
+    ] = PRIMARY_RESEARCH_START,
     satellite_report_dir: Annotated[
         Path,
         typer.Option(help="既有 satellite replacement report JSON 目录。"),
@@ -160,7 +161,7 @@ def satellite_attribution_report_command(
     start: Annotated[
         str,
         typer.Option(help="attribution 起始日期，默认 AI regime start。"),
-    ] = "2022-12-01",
+    ] = PRIMARY_RESEARCH_START,
     satellite_report_dir: Annotated[
         Path,
         typer.Option(help="既有 satellite replacement report JSON 目录。"),

@@ -2128,7 +2128,7 @@ def test_dual_track_calibration_report_includes_required_sections(tmp_path: Path
 
     assert payload["report_type"] == "etf_weight_dual_track_calibration_report"
     assert payload["status"] == "manual_review_ready"
-    assert payload["search_configuration"]["market_regime"] == "ai_after_chatgpt"
+    assert payload["search_configuration"]["market_regime"] == "unified_primary_2021"
     assert payload["top_historical_candidates"]
     assert payload["walk_forward_regime_robustness"]["status"] == "available"
     assert payload["overfit_diagnostics"]["risk_counts"]["low"] == 1

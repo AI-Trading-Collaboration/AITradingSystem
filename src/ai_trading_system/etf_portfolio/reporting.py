@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pandas as pd
 
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.etf_portfolio.models import ETFConfigBundle, ETFQualityReport
 from ai_trading_system.etf_portfolio.no_lookahead import (
     raise_for_no_lookahead_violations,
     validate_daily_brief_no_lookahead,
 )
 
-AI_REGIME_ANCHOR_DATE = date(2022, 11, 30)
-AI_REGIME_START_DATE = date(2022, 12, 1)
+PRIMARY_RESEARCH_ANCHOR_DATE = PRIMARY_RESEARCH_START_DATE
 
 # These bands mirror the allocation reason-code policy in allocation.py; they
 # explain existing decisions and do not introduce a new allocation threshold.
@@ -55,8 +55,8 @@ def render_daily_brief(
         f"- Suggested Action: {action}",
         f"- Main Change: {main_change}",
         f"- Market Regime Window: {config.backtest.backtest.regime}",
-        f"- AI Regime Anchor: ChatGPT public launch {AI_REGIME_ANCHOR_DATE.isoformat()}",
-        f"- AI Regime Start: {AI_REGIME_START_DATE.isoformat()}",
+        "- Market Regime: unified_primary_2021",
+        f"- Primary Research Anchor: {PRIMARY_RESEARCH_ANCHOR_DATE.isoformat()}",
         f"- Requested Date: {run_date.isoformat()}",
         f"- Data Quality: {quality_report.status}",
         f"- Model Version: {config.strategy.model.version}",
@@ -71,7 +71,7 @@ def render_daily_brief(
         f"- Regime score: {float(regime['regime_score']):.2f}",
         f"- Requested date: {run_date.isoformat()}",
         f"- Configured market regime: {config.backtest.backtest.regime}",
-        f"- Default AI-cycle conclusion window starts: {AI_REGIME_START_DATE.isoformat()}",
+        f"- Default primary conclusion window starts: {PRIMARY_RESEARCH_START_DATE.isoformat()}",
         f"- Reason codes: {_reason_codes(regime.get('reason_codes'))}",
         "",
         "## 3. ETF Signal Dashboard",

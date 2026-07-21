@@ -35,6 +35,7 @@ from ai_trading_system.current_subscription_qualification import (
 )
 from ai_trading_system.data_foundation import (
     DEFAULT_FORWARD_EVIDENCE_OUTPUT_ROOT,
+    PRIMARY_RESEARCH_START,
     audit_forward_evidence,
     capture_forward_evidence,
     report_forward_evidence,
@@ -57,7 +58,7 @@ def forward_evidence_capture_daily_command(
     as_of_date: Annotated[
         str,
         typer.Option("--as-of-date", "--as-of", help="Archive as-of date。"),
-    ] = "2022-12-01",
+    ] = PRIMARY_RESEARCH_START,
     feature_snapshot_id: Annotated[
         str,
         typer.Option("--feature-snapshot-id", help="Linked PIT feature snapshot id。"),

@@ -983,7 +983,7 @@ def asset_master_build_tradability_calendar_command(
     date_range: Annotated[
         str,
         typer.Option("--date-range", help="Date range start:end。"),
-    ] = "2022-12-01:2022-12-01",
+    ] = "2021-02-22:2021-02-22",
     output_root: Annotated[
         Path,
         typer.Option("--output-root", help="Asset master 输出目录。"),
@@ -1015,7 +1015,7 @@ def universe_audit_command(
     date_range: Annotated[
         str,
         typer.Option("--date-range", help="Date range start:end。"),
-    ] = "2022-12-01:2022-12-01",
+    ] = "2021-02-22:2021-02-22",
     output_root: Annotated[
         Path,
         typer.Option("--output-root", help="Asset master 输出目录。"),

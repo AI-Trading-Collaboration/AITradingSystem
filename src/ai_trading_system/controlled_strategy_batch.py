@@ -19,7 +19,7 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.data.quality import validate_data_cache
 from ai_trading_system.data_foundation import (
-    AI_REGIME_START,
+    PRIMARY_RESEARCH_START,
     SAFETY_BOUNDARY,
     utc_now_iso,
     write_foundation_artifact_pair,
@@ -14215,16 +14215,16 @@ def _tail_risk_independence_data_window(
         summary = payload.get("summary")
         if isinstance(summary, Mapping) and summary.get("requested_date_range"):
             return {
-                "date_start": AI_REGIME_START,
+                "date_start": PRIMARY_RESEARCH_START,
                 "date_end": "open",
                 "requested_date_range": summary.get("requested_date_range"),
                 "market_regime": "ai_after_chatgpt",
             }
     return {
-        "date_start": AI_REGIME_START,
+        "date_start": PRIMARY_RESEARCH_START,
         "date_end": "open",
-        "requested_date_range": f"{AI_REGIME_START}..open",
-        "market_regime": "ai_after_chatgpt",
+        "requested_date_range": f"{PRIMARY_RESEARCH_START}..open",
+        "market_regime": "unified_primary_2021",
     }
 
 
@@ -15896,7 +15896,7 @@ def _tail_risk_trigger_feature_availability_catalog(
             {
                 "feature_name": feature,
                 "source": row.get("source"),
-                "earliest_available_date": AI_REGIME_START,
+                "earliest_available_date": PRIMARY_RESEARCH_START,
                 "latest_available_date": "latest_valid_value_surface_case",
                 "update_frequency": "daily",
                 "decision_time_availability": "AVAILABLE" if not proxy else "PARTIAL_PROXY",
@@ -17609,7 +17609,7 @@ def _read_price_rows(path: Path, *, universe: list[str]) -> dict[str, dict[str, 
             if ticker not in wanted:
                 continue
             row_date = str(row.get("date") or "")
-            if row_date < AI_REGIME_START:
+            if row_date < PRIMARY_RESEARCH_START:
                 continue
             rows[ticker][row_date] = {
                 "open": _float(row.get("open"), 0.0),
@@ -18655,15 +18655,17 @@ def _controlled_payload(
         "title": title,
         "status": status,
         "generated_at": utc_now_iso(),
-        "market_regime": "ai_after_chatgpt",
-        "default_backtest_start": AI_REGIME_START,
+        "market_regime": "unified_primary_2021",
+        "default_backtest_start": PRIMARY_RESEARCH_START,
         "manual_review_required": True,
         "research_only": True,
         "manual_review_only": True,
         "diagnostic_only": True,
         "summary": {
-            "market_regime": "ai_after_chatgpt",
-            "requested_date_range": summary.get("requested_date_range", f"{AI_REGIME_START}..open"),
+            "market_regime": "unified_primary_2021",
+            "requested_date_range": summary.get(
+                "requested_date_range", f"{PRIMARY_RESEARCH_START}..open"
+            ),
             "ranking_policy": summary.get("ranking_policy", "heuristic"),
             "not_validated_utility_boundary": summary.get("not_validated_utility_boundary", True),
             **dict(summary),
@@ -18729,7 +18731,7 @@ def _configured_cost_bps() -> float:
 
 def _requested_date_range(dates: list[str]) -> str:
     if not dates:
-        return f"{AI_REGIME_START}..open"
+        return f"{PRIMARY_RESEARCH_START}..open"
     return f"{dates[0]}..{dates[-1]}"
 
 

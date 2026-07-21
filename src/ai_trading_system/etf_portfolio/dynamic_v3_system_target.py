@@ -25,6 +25,7 @@ from ai_trading_system.data.market_data import (
     YFinancePriceProvider,
 )
 from ai_trading_system.data.quality import DataQualityReport, validate_data_cache
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import DEFAULT_RATES_CACHE_PATH
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_CONSENSUS_DRIFT_DIR,
@@ -66,14 +67,14 @@ DEFAULT_MODEL_TARGET_CONFIG_PATH = (
     / "model_target_portfolio_v1.yaml"
 )
 DEFAULT_PAPER_SHADOW_CONFIG_PATH = (
-    PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v3_rescue" / "paper_shadow_account_v1.yaml"
+    PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v3_rescue" / "paper_shadow_account_v2.yaml"
 )
 DEFAULT_PAPER_SHADOW_BACKFILL_CONFIG_PATH = (
     PROJECT_ROOT
     / "config"
     / "etf_portfolio"
     / "dynamic_v3_rescue"
-    / "paper_shadow_backfill_v1.yaml"
+    / "paper_shadow_backfill_v2.yaml"
 )
 DEFAULT_RISK_CAPPED_LIMITED_CONFIG_PATH = (
     PROJECT_ROOT
@@ -233,7 +234,8 @@ DEFAULT_TOP_VARIANT_INTERPRETATION_DIR = (
 )
 DEFAULT_METHOD_PROMOTION_PLAN_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "method_promotion_plan"
 
-AI_AFTER_CHATGPT_START = date(2022, 12, 1)
+AI_AFTER_CHATGPT_START = PRIMARY_RESEARCH_START_DATE
+LEGACY_PAPER_SHADOW_BACKFILL_START = date(2022, 12, 1)
 
 # Reporting bucket boundary, not an approval or allocation rule. The 2% daily
 # loss level is intentionally named so future calibration work can audit it.
@@ -6916,8 +6918,8 @@ def _assert_paper_shadow_config_safe(payload: Mapping[str, Any]) -> None:
     account = _mapping(payload.get("paper_shadow_account"))
     if account.get("mode") != "paper_shadow_only":
         raise DynamicV3SystemTargetError("paper shadow config must use paper_shadow_only mode")
-    if _coerce_date(account.get("start_date"), date(1970, 1, 1)) < date(2022, 12, 1):
-        raise DynamicV3SystemTargetError("paper shadow start_date cannot predate 2022-12-01")
+    if _coerce_date(account.get("start_date"), date(1970, 1, 1)) < PRIMARY_RESEARCH_START_DATE:
+        raise DynamicV3SystemTargetError("paper shadow start_date cannot predate 2021-02-22")
     if not _safety_config_locked(_mapping(payload.get("safety"))):
         raise DynamicV3SystemTargetError("paper shadow safety fields are unsafe")
 
@@ -6934,7 +6936,10 @@ def _assert_paper_shadow_backfill_config_safe(payload: Mapping[str, Any]) -> Non
         raise DynamicV3SystemTargetError("paper shadow backfill must be research_target_only")
     if backfill.get("paper_shadow_only") is not True:
         raise DynamicV3SystemTargetError("paper shadow backfill must be paper_shadow_only")
-    if _coerce_date(date_range.get("start"), date(1970, 1, 1)) < AI_AFTER_CHATGPT_START:
+    if (
+        _coerce_date(date_range.get("start"), date(1970, 1, 1))
+        < LEGACY_PAPER_SHADOW_BACKFILL_START
+    ):
         raise DynamicV3SystemTargetError("paper shadow backfill start cannot predate 2022-12-01")
     if not source.get("model_target_config") or not source.get("paper_shadow_config"):
         raise DynamicV3SystemTargetError("paper shadow backfill source configs are required")

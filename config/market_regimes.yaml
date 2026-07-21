@@ -1,14 +1,23 @@
-default_backtest_regime: ai_after_chatgpt
+default_backtest_regime: unified_primary_2021
 regimes:
+  - regime_id: unified_primary_2021
+    name: 统一 AI 研究主窗口
+    start_date: 2021-02-22
+    anchor_date: 2021-02-22
+    anchor_event: QQQ/SGOV/TQQQ exact-three-asset validated coverage begins
+    description: >
+      项目后续活跃策略研究、主回测和主要结论的默认窗口。该窗口由三资产
+      可验证共同覆盖定义，不以单一市场事件作为起点。
+    primary: true
   - regime_id: ai_after_chatgpt
-    name: ChatGPT 后 AI 主线行情
+    name: ChatGPT 后 AI 主线行情（历史比较）
     start_date: 2022-12-01
     anchor_date: 2022-11-30
     anchor_event: ChatGPT 公开发布
     description: >
-      项目默认回测和策略解释区间。2022-11-30 是 ChatGPT 公开发布日，
-      2022-12-01 是其后的首个完整美股交易日。
-    primary: true
+      历史比较窗口，仅用于解释旧 run 和 immutable evidence；不再是 active default、
+      primary conclusion boundary、required comparator 或 minimum allowed start。
+    primary: false
   - regime_id: ai_infra_acceleration
     name: AI 基建加速行情
     start_date: 2023-05-25

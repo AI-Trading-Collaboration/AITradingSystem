@@ -15,6 +15,9 @@ import requests
 
 import ai_trading_system.data.market_data as market_data_module
 import ai_trading_system.external_request_cache as external_request_cache_module
+from ai_trading_system import (
+    external_request_cache_revalidation_coordination as revalidation_coordination_module,
+)
 from ai_trading_system.data.market_data import (
     CboeVixPriceProvider,
     FmpPriceProvider,
@@ -282,6 +285,41 @@ def test_concurrent_wrapper_revalidation_uses_single_live_request(tmp_path: Path
         "ACQUIRED",
         "COMPLETED",
     }
+
+
+def test_revalidation_arbiter_first_create_is_initialized_only_while_locked(
+    tmp_path: Path,
+) -> None:
+    lock_path = tmp_path / "new-request" / "revalidation_coordination" / "arbiter.lock"
+    worker_count = 16
+    start = threading.Barrier(worker_count)
+    state_lock = threading.Lock()
+    active_count = 0
+    max_active_count = 0
+    completed: list[int] = []
+
+    def enter_critical_section(worker_id: int) -> None:
+        nonlocal active_count, max_active_count
+        start.wait(timeout=5)
+        with revalidation_coordination_module._exclusive_file_lock(
+            lock_path,
+            timeout_seconds=5.0,
+            poll_seconds=0.001,
+        ):
+            with state_lock:
+                active_count += 1
+                max_active_count = max(max_active_count, active_count)
+            time.sleep(0.005)
+            with state_lock:
+                completed.append(worker_id)
+                active_count -= 1
+
+    with ThreadPoolExecutor(max_workers=worker_count) as executor:
+        list(executor.map(enter_critical_section, range(worker_count)))
+
+    assert max_active_count == 1
+    assert sorted(completed) == list(range(worker_count))
+    assert lock_path.read_bytes() == b"\0"
 
 
 def test_negative_observation_tamper_fails_closed_even_if_pointer_hash_is_updated(

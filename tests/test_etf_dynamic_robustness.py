@@ -29,7 +29,7 @@ def test_dynamic_robustness_policy_loads_and_rejects_unsafe(tmp_path: Path) -> N
     policy = load_dynamic_robustness_policy_config()
 
     assert policy.safety.model_dump(mode="json") == DYNAMIC_ROBUSTNESS_SAFETY
-    assert policy.market_regime.regime_id == "ai_after_chatgpt"
+    assert policy.market_regime.regime_id == "unified_primary_2021"
     assert policy.price_backtest.warmup_days >= 30
 
     raw = yaml.safe_load(DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH.read_text(encoding="utf-8"))

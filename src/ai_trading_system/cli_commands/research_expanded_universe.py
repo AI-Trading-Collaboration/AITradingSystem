@@ -7,6 +7,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.expanded_allocation_universe import (
     DEFAULT_ACTUAL_PATH_OUTPUT_ROOT,
     DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
@@ -97,7 +98,7 @@ def static_simplex_grid_command(
         step=step,
         rebalance=rebalance,
         as_of_date=_parse_optional_date(as_of),
-        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+        start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
         end_date=_parse_optional_date(end_date),
     )
     _print_payload("Static simplex grid", payload)
@@ -184,7 +185,7 @@ def actual_path_rebacktest_command(
         candidates_path=candidates_path,
         output_root=output_root,
         as_of_date=_parse_optional_date(as_of),
-        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+        start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
         end_date=_parse_optional_date(end_date),
     )
     _print_payload("Expanded actual-path rebacktest", payload)

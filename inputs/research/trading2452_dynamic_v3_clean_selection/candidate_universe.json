@@ -1,0 +1,4248 @@
+{
+  "axis_order": [
+    "rescue_intensity",
+    "smooth_window_days",
+    "constraint_buffer_bps",
+    "turnover_penalty",
+    "risk_off_confirmation_days",
+    "rebalance_cooldown_days",
+    "drawdown_guard"
+  ],
+  "candidate_count": 300,
+  "candidate_universe_id": "dynamic-v3-clean-universe-trading2452_aa64f915302704bb9224",
+  "candidate_universe_origin": "preregistered_candidate_universe",
+  "candidates": [
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "4f9e83e958c1940d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "e1cafe9f9d1c4839",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "3feb6de8f291ccef",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "a8cfb7c98db4a5f2",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "13edf79327c6356a",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "fbd0e7ee94e85951",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "3db6ce509dbd1b7c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b3b31e1d1126c4bb",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "dcb0e84fa313a0f7",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "f22acaaac3b60190",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "245056448248a0da",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "90af6c75a780d71e",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "3bf45c1ffd6129c6",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d45f324ba282af62",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "0d44f40d8ea8b369",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "a3e2aad11d22e49a",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "70e0d08134d6ede4",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "37e2e0f5c96c7202",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b83f73d1e7322f7b",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "2acc4c83e43c656c",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "524306225179583f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "bfdbf98b6b4333e2",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b6cf59e77d81aed8",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "8ec8fa574ee9c4d2",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "1df0ca56d92d27b4",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ebd82269c6eccf1a",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "8a86c2bd20a2bf6d",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d9deef7fc70171bc",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "73a00c02735ed2d5",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "80a2ef4e362f634e",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "4329c27860b0a2f8",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "3cd0b88816f581c8",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "661746f43b316cc1",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "4708895ea8eaeb9c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "f8d2f0e0bfccceb4",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c6ba919af31ee612",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "473a2942aea78400",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "dc0c10ccbb37730b",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "15cd04cc5a388823",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ac70b2068c6bf298",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "1fd805d832e165e9",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "3de5f034f0fe1dee",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "9e8872ca8ea55e61",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ad293eb5bf77c6f1",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "f3c00f0ae5bbab2b",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c29f71ba3b0bc01f",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "fe1caeb1adb039d0",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "694a21196de29617",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "580fe2987ec9b7f8",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d6842854fbfb8b1a",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "5585fb1b9955ccdf",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "a030b15681f874f3",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "dd313ca35b29e63e",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "28a71f462ff63188",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "bb341b9bdbacec4a",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "bf9f91d5260bf053",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "60772e69e75f2e77",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "12b64a8fdb4d9a43",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "8b6b169210fd7b9a",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "9bcf8dde7ba0bc40",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "54da36e7a9d115df",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "585ca652d64b5717",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "af2ecdabbea5abcb",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "45b90ff8c1e51712",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c672ac7572767e3c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "7386b634dc96c711",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "9f31e379106dd58e",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "67432fff240e2c83",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "1a0c58d44ae29cb6",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "94ea8b33e3952c9f",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "0f29b3c3b8f96c68",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "44268e16b4d7e187",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c14710f7afb9e1ab",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "afa72242d92cf56c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "f41886e7b053bce9",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "e44a3a41e12fdfd8",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "144585df59dc4fcd",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "9c3311ac774e7b59",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "6d1c94a14d7385fa",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "1efb2866fb0cdb7d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b2b668766497928c",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "26af1221d6612a94",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c314a99df54dbc3f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "8f9c3ab2350e7d4c",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c5e6d3f15cc067d2",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "2b9ce42cf66f4bb0",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b2e9b6f1bfac81ec",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d9b04c25a72aed48",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "e6622f8e57a50681",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "1f2a0de4f4c9026e",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "de792081dddc592b",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c17a331caa4ea621",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "946b2cd5b8ee0a49",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "a07f0715303a3a33",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "2a0e5d87fefbf1e4",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "56c301f33521ed08",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.5,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "63faab501c90a349",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d497abb81ac2d92d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "afd9c85049aace88",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "488d762989986e71",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "944f67fc5ccb11e1",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "42d26f13995de8d0",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "645057d0bbff49ac",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "9944e5af8ad379ba",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "05968c2051c8e743",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b18a3469d4dd82e7",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "78dec4f93eb3e86a",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "e4b43e5ee1fa5cb1",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "4f61c7b6c6241418",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "859d02b8f8a42c2a",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "20180fe100f007d5",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "1aca93c685a67e89",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ee34d59a4fa5adfb",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "8f7137a3ea6562ce",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "e79326e77dff7b65",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "7ae49846f6606ae5",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "25f9adfaadde6896",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "57827321dfdba070",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "e92e4a1b344bad0e",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "2eb95adac56d8b39",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "0c161f7795c1d304",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "171cb8734447d507",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "e55d0be3ba3e0a7d",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "18f94eb50fef8e0d",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "457f9ead59249dc4",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "de8a135db43e1477",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "0c1041aa3c4f0c51",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "4a88e0b0a9668d94",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "f53d7b98211f160c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "61bb143c1ad103b4",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "f40d75e04e742d12",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "836a4dfc71d188da",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "e69262b3e09504bd",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "8c26d80c6d83e96b",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c8c32f0fade60343",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "43a5bc4646f93c01",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "42bc0589f69028c6",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d4d1c1ee9b3709df",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b468543743cb38c0",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ec0c8c782e1b263a",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "f651921504be6c20",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ba3f13fcb3b0932e",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ca2f0aa68d796378",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "a41ab8856e091016",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "fc0abc333cc7d976",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b97481c78e3f9b91",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "685bf7dd49327999",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "2680219044f99b13",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "f221306c5bbc5b66",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "1d68c0bdbe59e81f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d7589611722140a3",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "bb3e483ac2612fbe",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c600193b943654f0",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "decc8ac3567dc410",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "3ab944fc763df3b9",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d4c1a7f12431e8eb",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "7ccd1053c7e2198d",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "0b5ef99f0468bfef",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "776392f3cc47bac0",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "3e0ce0dcfc5f3e2f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "6135950f974b86a7",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ac401a28847eaf4d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c88b60d1dd4d0b71",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "7a9a6f39029beae5",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "326c9e847e6e034f",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "1e270711ebe17033",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "85c06c93b0bb17c9",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "250e31a6dd4b4db2",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "5d6c665a6233b36d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "eaa94620c0c334c7",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c910c4f308a7a481",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ff266f9350525008",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ada3baec989b86b1",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b4395955d41a55f0",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "fb4f84628fde0149",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "5ab1bc50a1645ce1",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d04c3f8efa156ce6",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "fbbb22c0a0308cfc",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "e6e760798c6f4506",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "41d666a68b0df339",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d8f6b63a2eaf4875",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "a41c76bf4e2cd948",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d442675af1bc5278",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "7e50a6599748cd78",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "a9504a11e774ef26",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b542735e7f8ffbfb",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "914d771de66eac3a",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d063958673a3a0dd",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "413dd03373c49128",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "f992b322bf37effb",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "88f56cb1493dd01d",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "5a9c1689fd6cef27",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 0.75,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b55753003dc9ca0b",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "786f3aba2bff867c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "18fb3f30f40b6f03",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "0d1e4a8ee98ba380",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "52fdebac74d5ca00",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "eef28e200ec09e79",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "2cb09620e84053cd",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "beab43923a5f3ed0",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "1bda598131cd6367",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "6429ff77b9a6cf41",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "5d47a1a4cdea7e49",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "814f54d18914ae58",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "02f36258dbcefb22",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b2b5bb59418cd556",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c5ed35c1fbc01430",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "dc168e1419ff5370",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "2ac559691cb6ed70",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b5949182f2244bb6",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ff622e9cf7c4bbf8",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "55b76bd542581628",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b739e74d8c421fd6",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "f8a350a73e68eefa",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c00f07615f5a8a29",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "fee19ef585d416b0",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "8c85668954d135dd",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c81460710494d3ad",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "29ab9c769ddd3c62",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "0be51f0a596094ee",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b56494f102290946",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "dd71e770eeb4cc64",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "fb62ef1097483678",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "01cf4157aa7941ac",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "6e5dd6bf66568416",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "811c1a34c7d9b242",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "0032aec45dd2cb12",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "bf051af609ade8ff",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "47fab3f3cbe2ad82",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "80130184becbb313",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "4ce5862863447796",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "05919646aec7e8a3",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "10d89095b6e2b215",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "181e7de90ab1fce4",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "a088494d3d810e2e",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ce89be060fea76dc",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "accf273a8e2ad4bc",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ed76d42cbb13b44c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "53e62c7c8fb41f68",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ffd7114849151b23",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "8863ebfaec3895d6",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "07781cb963a18b21",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "08f9316fd752ea12",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "7d1d07bc86bf03d8",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "7895074adfa0bc98",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b7e9a5f0d91fcd4c",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c316669424544b20",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "398c4ec64b0483ff",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "863f282e53ac0bb0",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "9ab23ce14f7dcf46",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "e99bec44ef1782fc",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "faeda6f162a04c5b",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "a3604ad36388067f",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "15a0a25558e775cd",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "4e437470796c00d5",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d60bf20918d205ec",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 5,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "7174eee34ecf2605",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "067f756294a2ebdd",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "fe79be818d4012f8",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "6e26dcfd9d9473f1",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "bbe0ab2af3813792",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ac176b507dadce92",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "9f7ad67d62649874",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "66d4ffcda075959f",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "851fa817c1a5aa02",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "04e7ec7fe5e4c891",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "2a4b4f3d8594c0da",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "dff2cd0006dbb5ea",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "ea11bd3b9becf85d",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "859dc03f08bbdbb3",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "81e720e03fa40f00",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "4071323f9cf8fb9f",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "b52e27043cbd7533",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "1cef0039b42684d2",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "dbb31b08800f2cf1",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "5ef88ed84f3e9abf",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "c57b82d3a887df31",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "66d843f04b367d71",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "31911805ba2d2e96",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "80f8f040abcfa431",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "089935ffa1dc4b3c",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "4780a634f8a51743",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "4675692e9ffc4592",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "cb887256af043a2b",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "e998fed17494b890",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "e5c807476ad9b610",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "93e93611745ff9d4",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "6bc8f8646fb1318b",
+      "parameters": {
+        "constraint_buffer_bps": 25,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.0,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 10,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "050768aa0f519a8b",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "3fe41d619ba70788",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "cbe5585e8689cfd9",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "065496c2726b5e1c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "36eae854013fea77",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "73948ec9bc3f7ff6",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "6130dabc867e68b4",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "2b7a68ed6313825c",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 3,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.05
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "f5d2920d8506f6fb",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "d2dda542a10d9c0f",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 3,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "502c3624517e7c11",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "soft",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    },
+    {
+      "candidate_definition_version": "dynamic_v3_clean_selection_trading2452_candidate_definition_v2",
+      "candidate_id": "32b26ad0c37294e2",
+      "parameters": {
+        "constraint_buffer_bps": 10,
+        "drawdown_guard": "hard",
+        "rebalance_cooldown_days": 5,
+        "rescue_intensity": 1.25,
+        "risk_off_confirmation_days": 2,
+        "smooth_window_days": 3,
+        "turnover_penalty": 0.1
+      },
+      "strategy_family": "dynamic_v3_rescue"
+    }
+  ],
+  "derivation": "deterministic_cartesian_prefix",
+  "result_artifact_count": 0,
+  "result_artifacts_consumed": [],
+  "safety": {
+    "broker_action": "none",
+    "candidate_expansion_allowed": false,
+    "clean_run_authorized": true,
+    "evaluator_execution_allowed": true,
+    "historical_replay_execution_allowed": true,
+    "manual_review_required": true,
+    "new_parameter_search_allowed": false,
+    "paper_shadow_change_allowed": false,
+    "production_effect": "none",
+    "production_weight_change_allowed": false,
+    "prospective_holdout_access_allowed": false,
+    "recent_known_diagnostic_allowed": true,
+    "research_only": true,
+    "unbiased_oos_claim_allowed": false
+  },
+  "schema_version": "dynamic_v3_clean_candidate_universe.v2",
+  "source_commitments": {
+    "parameter_sweep_config": {
+      "path": "config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_real_smoke.yaml",
+      "sha256": "2c6620e497178a65b91e0cd58801901693c1d0acbfc3d7a792e8bb36ce5ef924",
+      "size": 3188
+    },
+    "sweep_profile_config": {
+      "path": "config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_profiles.yaml",
+      "sha256": "d009bb541838e59830478b43b5e10944af606810cfbbcd6db79b5f5c992a1eff",
+      "size": 1543
+    }
+  }
+}

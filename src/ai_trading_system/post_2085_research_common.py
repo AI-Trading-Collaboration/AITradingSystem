@@ -14,10 +14,10 @@ from ai_trading_system.config import PROJECT_ROOT, load_data_quality
 from ai_trading_system.data.quality import DataQualityReport, validate_data_cache
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
-MARKET_REGIME = "ai_after_chatgpt"
-ANCHOR_EVENT = "ChatGPT public launch"
-ANCHOR_DATE = "2022-11-30"
-DEFAULT_BACKTEST_START = "2022-12-01"
+MARKET_REGIME = "unified_primary_2021"
+ANCHOR_EVENT = "QQQ/SGOV/TQQQ exact-three-asset validated coverage begins"
+ANCHOR_DATE = "2021-02-22"
+DEFAULT_BACKTEST_START = "2021-02-22"
 PRIMARY_WINDOW_ID = "exact_three_asset_validated"
 PRIMARY_WINDOW_ALIAS = "EXACT_THREE_ASSET_VALIDATED_WINDOW"
 PRIMARY_WINDOW_START = "2021-02-22"

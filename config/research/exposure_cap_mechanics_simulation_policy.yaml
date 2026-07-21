@@ -3,9 +3,9 @@ version: v1
 status: pilot_research_source_blocked
 owner: research_governance
 task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
-market_regime: ai_after_chatgpt
-anchor_event: ChatGPT public launch
-default_start_date: "2022-12-01"
+market_regime: unified_primary_2021
+anchor_event: validated QQQ/SGOV/TQQQ common history start
+default_start_date: "2021-02-22"
 rationale: >
   Exposure-cap mechanics cannot be simulated from TRADING-2321 / TRADING-2322
   design-only artifacts alone. A valid simulation needs runtime observe records,

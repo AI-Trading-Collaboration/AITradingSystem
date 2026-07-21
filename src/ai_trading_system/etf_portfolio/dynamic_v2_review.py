@@ -12,6 +12,7 @@ from typing import Any, Literal, Self
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.etf_portfolio.dynamic_rescue import (
     DEFAULT_DYNAMIC_RESCUE_REPORT_DIR,
     latest_dynamic_rescue_report_path,
@@ -86,15 +87,15 @@ class DynamicV2ReviewError(ValueError):
 
 
 class DynamicV2ReviewMarketRegime(BaseModel):
-    regime_id: Literal["ai_after_chatgpt"]
+    regime_id: Literal["unified_primary_2021"]
     anchor_event: str = Field(min_length=1)
     anchor_date: date
     default_backtest_start: date
 
     @model_validator(mode="after")
     def validate_regime(self) -> Self:
-        if self.default_backtest_start < date(2022, 12, 1):
-            raise ValueError("dynamic v0.2 review start cannot predate 2022-12-01")
+        if self.default_backtest_start < PRIMARY_RESEARCH_START_DATE:
+            raise ValueError("dynamic v0.2 review start cannot predate 2021-02-22")
         return self
 
 
@@ -1703,7 +1704,7 @@ def _sample_dynamic_v2_review_inputs(
         "dynamic_robustness_report_id": "dynamic-robustness-report_v04_validation",
         "summary": {
             "dynamic_candidate_id": "v0_4_lower_turnover",
-            "market_regime": "ai_after_chatgpt",
+            "market_regime": "unified_primary_2021",
             "data_quality_status": "PASS",
             "dynamic_total_return": 0.23,
             "dynamic_max_drawdown": -0.16,

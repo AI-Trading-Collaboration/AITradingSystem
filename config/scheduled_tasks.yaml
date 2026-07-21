@@ -26,10 +26,10 @@ policy_metadata:
     parameter, documentation, report registry, scheduler command, or per-step
     attempt budget is added or changed.
 market_regime:
-  default_regime_id: ai_after_chatgpt
+  default_regime_id: unified_primary_2021
   anchor_event: ChatGPT public launch
   anchor_date: 2022-11-30
-  default_backtest_start: 2022-12-01
+  default_backtest_start: 2021-02-22
 safety_defaults:
   production_effect: none
   production_weight_write: false
@@ -490,11 +490,11 @@ cadences:
     tasks:
       - task_id: weekly_backtest
         title: Backtest
-        command: aits backtest --regime ai_after_chatgpt
+        command: aits backtest --regime unified_primary_2021
         production_effect: none
       - task_id: weekly_backtest_robustness
         title: Backtest robustness
-        command: aits backtest --regime ai_after_chatgpt --robustness-report
+        command: aits backtest --regime unified_primary_2021 --robustness-report
         production_effect: none
       - task_id: weekly_parameter_replay
         title: Parameter replay
@@ -616,7 +616,7 @@ cadences:
         production_effect: none
       - task_id: monthly_long_window_backtest_review
         title: Long-window backtest review
-        command: aits backtest --regime ai_after_chatgpt --to {as_of}
+        command: aits backtest --regime unified_primary_2021 --to {as_of}
         production_effect: none
   ad_hoc_research:
     description: Manual or owner-approved research commands; never part of daily-run.

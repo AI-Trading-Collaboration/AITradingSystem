@@ -9,10 +9,10 @@ safety_boundary:
   paper_shadow_change_allowed: false
   production_weight_change_allowed: false
 market_regime:
-  id: ai_after_chatgpt
-  anchor_event: ChatGPT public launch
-  anchor_date: 2022-11-30
-  default_backtest_start: 2022-12-01
+  id: unified_primary_2021
+  anchor_event: QQQ/SGOV/TQQQ exact-three-asset validated coverage begins
+  anchor_date: 2021-02-22
+  default_backtest_start: 2021-02-22
 representative_universe:
   universe_id: data_foundation_acceptance_representative
   requested_tickers: [SPY, QQQ, SMH, MSFT, GOOGL, NVDA, AMD, TSM, CASH]

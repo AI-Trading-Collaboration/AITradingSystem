@@ -956,11 +956,11 @@ def _backtest_cost_assumptions(result: DailyBacktestResult) -> TraceRecord:
 def _market_regime_record(market_regime: BacktestRegimeContext | None) -> TraceRecord:
     if market_regime is None:
         return {
-            "regime_id": "ai_after_chatgpt",
-            "name": "默认 AI regime",
-            "anchor_date": "2022-11-30",
-            "anchor_event": "ChatGPT public launch",
-            "start_date": "2022-12-01",
+            "regime_id": "unified_primary_2021",
+            "name": "统一 2021 主研究窗口",
+            "anchor_date": "2021-02-22",
+            "anchor_event": "validated QQQ/SGOV/TQQQ common history start",
+            "start_date": "2021-02-22",
             "source": "config/market_regimes.yaml default_backtest_regime",
         }
     return {

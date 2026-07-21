@@ -1659,7 +1659,7 @@ def build_rule_experiments_command(
     replay_start: Annotated[
         str,
         typer.Option(help="历史 replay 计划起点，格式为 YYYY-MM-DD。"),
-    ] = "2022-12-01",
+    ] = "2021-02-22",
     replay_end: Annotated[
         str | None,
         typer.Option(help="历史 replay 计划终点，格式为 YYYY-MM-DD，默认 as-of。"),
@@ -2285,7 +2285,7 @@ def optimize_market_feedback_command(
     ] = None,
     replay_start: Annotated[
         str,
-        typer.Option(help="as-if 回放窗口起始日期；默认 AI regime 起点 2022-12-01。"),
+        typer.Option(help="as-if 回放窗口起始日期；默认主研究窗口起点 2021-02-22。"),
     ] = DEFAULT_MARKET_FEEDBACK_REPLAY_START.isoformat(),
     replay_end: Annotated[
         str | None,

@@ -42,6 +42,7 @@ from ai_trading_system.controlled_growth_component_research import (
     run_research_roadmap_v2_master_review,
     run_volatility_targeted_growth_component_search,
 )
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.layer1_meta_policy_readiness import (
     DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
     run_layer1_dataset_lineage_leakage_audit,
@@ -302,7 +303,7 @@ def strategies_qqq_sgov_baseline_backtest_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -325,7 +326,7 @@ def strategies_qqq_sgov_baseline_backtest_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -351,7 +352,7 @@ def strategies_tqqq_sgov_risk_controlled_baseline_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -374,7 +375,7 @@ def strategies_tqqq_sgov_risk_controlled_baseline_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -400,7 +401,7 @@ def strategies_trend_vol_allocation_policy_search_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -423,7 +424,7 @@ def strategies_trend_vol_allocation_policy_search_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -497,7 +498,7 @@ def strategies_simple_baseline_cost_sensitivity_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -520,7 +521,7 @@ def strategies_simple_baseline_cost_sensitivity_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -546,7 +547,7 @@ def strategies_simple_baseline_regime_review_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -569,7 +570,7 @@ def strategies_simple_baseline_regime_review_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -595,7 +596,7 @@ def strategies_simple_baseline_forward_aging_tracker_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -618,7 +619,7 @@ def strategies_simple_baseline_forward_aging_tracker_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -814,7 +815,7 @@ def strategies_equal_risk_qqq_sgov_deep_dive_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="分析开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="分析开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -837,7 +838,7 @@ def strategies_equal_risk_qqq_sgov_deep_dive_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -1924,7 +1925,7 @@ def strategies_marketstack_ssl_failure_triage_command(
             marketstack_prices_path=marketstack_prices_path,
             manifest_path=manifest_path,
             output_root=output_root,
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -2188,7 +2189,7 @@ def strategies_controlled_tqqq_overlay_search_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -2211,7 +2212,7 @@ def strategies_controlled_tqqq_overlay_search_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -2237,7 +2238,7 @@ def strategies_trend_gated_leverage_policy_search_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -2260,7 +2261,7 @@ def strategies_trend_gated_leverage_policy_search_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -2286,7 +2287,7 @@ def strategies_volatility_targeted_growth_policy_search_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -2309,7 +2310,7 @@ def strategies_volatility_targeted_growth_policy_search_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -2335,7 +2336,7 @@ def strategies_drawdown_guarded_growth_policy_search_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -2358,7 +2359,7 @@ def strategies_drawdown_guarded_growth_policy_search_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -2384,7 +2385,7 @@ def strategies_qqq_outperformance_ranking_report_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -2407,7 +2408,7 @@ def strategies_qqq_outperformance_ranking_report_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -2433,7 +2434,7 @@ def strategies_qqq_outperformance_period_split_validation_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -2456,7 +2457,7 @@ def strategies_qqq_outperformance_period_split_validation_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -2482,7 +2483,7 @@ def strategies_qqq_outperformance_drawdown_replay_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -2505,7 +2506,7 @@ def strategies_qqq_outperformance_drawdown_replay_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -2569,7 +2570,7 @@ def strategies_qqq_plus_risk_budget_review_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="回测开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -2592,7 +2593,7 @@ def strategies_qqq_plus_risk_budget_review_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -2831,7 +2832,7 @@ def strategies_layer2_historical_weight_path_build_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="PIT weight path 开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="PIT weight path 开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -5723,7 +5724,7 @@ def strategies_layer1_selector_dry_run_archive_report_command(
     ] = None,
     start_date: Annotated[
         str | None,
-        typer.Option("--start-date", help="研究开始日期；默认 2022-12-01。"),
+        typer.Option("--start-date", help="研究开始日期；默认 2021-02-22。"),
     ] = None,
     end_date: Annotated[
         str | None,
@@ -6222,7 +6223,7 @@ def strategies_low_turnover_controlled_growth_search_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6259,7 +6260,7 @@ def strategies_volatility_targeted_growth_component_search_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6296,7 +6297,7 @@ def strategies_drawdown_guarded_growth_component_search_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6333,7 +6334,7 @@ def strategies_growth_component_beta_exposure_attribution_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6370,7 +6371,7 @@ def strategies_growth_component_period_drawdown_validation_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6407,7 +6408,7 @@ def strategies_growth_component_cost_turnover_sensitivity_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6444,7 +6445,7 @@ def strategies_growth_component_readiness_gate_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6486,7 +6487,7 @@ def strategies_growth_component_owner_decision_pack_command(
             output_root=output_root,
             docs_path=docs_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6555,7 +6556,7 @@ def strategies_research_roadmap_v2_master_review_command(
             owner_docs_path=owner_docs_path,
             docs_path=docs_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6619,7 +6620,7 @@ def strategies_equal_risk_growth_v2_real_cli_suite_command(
             growth_roadmap_docs_path=growth_roadmap_docs_path,
             as_of_date=_parse_optional_date(as_of),
             decision_date=_parse_optional_date(decision_date),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6689,7 +6690,7 @@ def strategies_controlled_growth_v2_candidate_summary_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6726,7 +6727,7 @@ def strategies_controlled_growth_beta_adjusted_edge_review_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6763,7 +6764,7 @@ def strategies_controlled_growth_period_drawdown_cost_triage_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6800,7 +6801,7 @@ def strategies_controlled_growth_component_final_gate_command(
             config_path=config_path,
             output_root=output_root,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6857,7 +6858,7 @@ def strategies_dual_track_owner_decision_pack_command(
             output_root=output_root,
             docs_path=docs_path,
             as_of_date=_parse_optional_date(as_of),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )
@@ -6931,7 +6932,7 @@ def strategies_roadmap_v2_real_result_master_review_command(
             dual_track_docs_path=dual_track_docs_path,
             as_of_date=_parse_optional_date(as_of),
             decision_date=_parse_optional_date(decision_date),
-            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
             end_date=_parse_optional_date(end_date),
         )
     )

@@ -45,7 +45,7 @@ def test_ai_leadership_scope_review_policy_is_governed() -> None:
     assert policy["version"] == "v1"
     assert policy["status"] == "pilot_research"
     assert policy["owner"] == "research_governance"
-    assert policy["market_regime"] == "ai_after_chatgpt"
+    assert policy["market_regime"] == "unified_primary_2021"
     assert policy["validation_evidence"]
     assert policy["review_condition"]
     assert policy["expiry_condition"]
@@ -151,7 +151,7 @@ def test_ai_leadership_scope_review_cli_writes_outputs(tmp_path: Path) -> None:
     summary = summary_payload["summary"]
     assert summary_payload["status"] == STATUS_READY_RESEARCH_ONLY
     assert summary["status"] == STATUS_READY_RESEARCH_ONLY
-    assert summary["market_regime"] == "ai_after_chatgpt"
+    assert summary["market_regime"] == "unified_primary_2021"
     assert summary["actual_requested_date_range"] == "2026-05-15..2026-06-29"
     assert summary["data_quality_status"] == "PASS"
     assert summary["full_universe_validation_blocker_out_of_scope"] == FULL_UNIVERSE_BLOCKER
@@ -322,8 +322,8 @@ def _write_scope_review_fixture(tmp_path: Path) -> dict[str, Path]:
         "report_type": "ai_leadership_actual_path_validation",
         "task_id": "TRADING-2309_AI_LEADERSHIP_ACTUAL_PATH_VALIDATION",
         "status": "AI_LEADERSHIP_VALIDATED_CONTINUE_RESEARCH",
-        "market_regime": "ai_after_chatgpt",
-        "selected_market_regime": "ai_after_chatgpt",
+        "market_regime": "unified_primary_2021",
+        "selected_market_regime": "unified_primary_2021",
         "requested_start_date": "2026-05-15",
         "requested_end_date": "2026-06-29",
         "actual_requested_date_range": "2026-05-15..2026-06-29",

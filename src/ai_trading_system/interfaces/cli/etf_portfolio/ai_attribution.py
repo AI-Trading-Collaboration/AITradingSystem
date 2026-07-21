@@ -5,6 +5,7 @@ from typing import Annotated
 
 import typer
 
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START
 from ai_trading_system.etf_portfolio.ai_attribution import (
     DEFAULT_AI_ATTRIBUTION_DATASET_DIR,
     DEFAULT_AI_ATTRIBUTION_REVIEW_DIR,
@@ -46,7 +47,7 @@ def ai_attribution_build_command(
     start: Annotated[
         str,
         typer.Option(help="attribution 起始日期，默认 AI regime start。"),
-    ] = "2022-12-01",
+    ] = PRIMARY_RESEARCH_START,
     ai_confirmation_report_dir: Annotated[
         Path,
         typer.Option(help="既有 AI confirmation report JSON 目录。"),
@@ -103,7 +104,7 @@ def ai_attribution_report_command(
     start: Annotated[
         str,
         typer.Option(help="attribution 起始日期，默认 AI regime start。"),
-    ] = "2022-12-01",
+    ] = PRIMARY_RESEARCH_START,
     ai_confirmation_report_dir: Annotated[
         Path,
         typer.Option(help="既有 AI confirmation report JSON 目录。"),

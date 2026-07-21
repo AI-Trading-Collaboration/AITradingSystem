@@ -52,6 +52,21 @@ def test_calibration_protocol_rejects_global_sharpe_only_manifest(tmp_path: Path
     assert "missing_purge_or_embargo" in codes
 
 
+def test_calibration_protocol_accepts_unified_primary_window(tmp_path: Path) -> None:
+    manifest = _valid_manifest()
+    manifest["market_regime"] = "unified_primary_2021"
+    manifest["date_range"] = {"start": "2021-02-22", "end": "2026-05-06"}
+
+    report = validate_calibration_protocol_manifest(
+        manifest,
+        manifest_path=tmp_path / "unified.yaml",
+        as_of=date(2026, 5, 6),
+    )
+
+    assert report.status == "PASS"
+    assert "pre_unified_primary_range" not in {issue.code for issue in report.issues}
+
+
 def test_calibration_protocol_cli_writes_report(tmp_path: Path) -> None:
     manifest_path = tmp_path / "calibration_protocol.yaml"
     output_path = tmp_path / "calibration_protocol.md"

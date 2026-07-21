@@ -14,8 +14,9 @@ from ai_trading_system.reports import next_research_cycle as next_cycle
 
 SCHEMA_VERSION = 1
 PRODUCTION_EFFECT = "none"
-MARKET_REGIME = "ai_after_chatgpt"
+MARKET_REGIME = "unified_primary_2021"
 AI_REGIME_START = "2022-12-01"
+PRIMARY_RESEARCH_START = "2021-02-22"
 PASS_STATUS = "PASS"
 FAIL_STATUS = "FAIL"
 
@@ -441,7 +442,7 @@ def build_executable_research_evidence_gap_ledger_payload(
             _mapping(payloads[next_cycle.BACKFILL_REPORT_TYPE].get("summary")).get(
                 "requested_date_range"
             ),
-            f"{next_cycle.AI_REGIME_START}..unspecified",
+            f"{next_cycle.PRIMARY_RESEARCH_START}..unspecified",
         ),
     )
     blocking_gap_count = len([row for row in gaps if row["blocking"] is True])
@@ -2866,7 +2867,7 @@ def build_candidate_v2_executable_binding_update_payload(
         spec_payload.get("requested_date_range"),
         _text(
             _mapping(backfill_payload.get("summary")).get("requested_date_range"),
-            f"{AI_REGIME_START}..unspecified",
+            f"{PRIMARY_RESEARCH_START}..unspecified",
         ),
     )
     data_quality = _v2_data_quality_gate(data_quality_gate)
@@ -3264,7 +3265,7 @@ def build_candidate_v2_mini_backfill_payload(
     candidate_id = _text(binding_summary.get("candidate_id"), "MISSING")
     requested_range = _text(
         binding_payload.get("requested_date_range"),
-        f"{AI_REGIME_START}..unspecified",
+        f"{PRIMARY_RESEARCH_START}..unspecified",
     )
     data_quality = _v2_data_quality_gate(data_quality_gate)
     blocking_reasons = _candidate_v2_mini_backfill_blocking_reasons(
@@ -3643,7 +3644,10 @@ def build_candidate_v2_mini_gate_payload(
     binding_summary = _mapping(binding_payload.get("summary"))
     requested_range = _text(
         mini_payload.get("requested_date_range"),
-        _text(spec_payload.get("requested_date_range"), f"{AI_REGIME_START}..unspecified"),
+        _text(
+            spec_payload.get("requested_date_range"),
+            f"{PRIMARY_RESEARCH_START}..unspecified",
+        ),
     )
     summary = {
         "candidate_v2_mini_gate_decision": decision,

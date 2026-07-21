@@ -31,9 +31,9 @@ def test_r0_preflight_freezes_dual_window_and_execution_contract(tmp_path: Path)
     assert payload["status"] == "PASS"
     assert payload["research_execution_unblocked"] is True
     assert payload["failed_check_count"] == 0
-    assert payload["window_semantics"]["project_ai_cycle_start"] == "2022-12-01"
+    assert payload["window_semantics"]["project_primary_start"] == "2021-02-22"
     assert payload["window_semantics"]["primary_validated_start"] == "2021-02-22"
-    assert payload["research_lane"]["source_window_role"] == "legacy_comparison"
+    assert payload["research_lane"]["source_window_role"] == "primary_validated"
     assert payload["cost_and_execution_snapshot"]["signal_execution_lag_days"] == 1
     assert payload["production_effect"] == "none"
     assert payload["promotion_gate_allowed"] is False

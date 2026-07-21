@@ -19,6 +19,7 @@ from ai_trading_system.config import (
     load_universe,
 )
 from ai_trading_system.data.quality import validate_data_cache, write_data_quality_report
+from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.etf_portfolio.data import load_standard_prices
 from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     DEFAULT_RATES_CACHE_PATH,
@@ -286,7 +287,7 @@ def validate_backtest_simulation_config(
         ),
         _check(
             "ai_after_chatgpt_start",
-            (_date_from_any(date_range.get("start")) or date.min) >= date(2022, 12, 1),
+            (_date_from_any(date_range.get("start")) or date.min) >= PRIMARY_RESEARCH_START_DATE,
             _text(date_range.get("start")),
         ),
         _check(
@@ -442,7 +443,7 @@ def generate_backtest_sim_events(
         raise DynamicV3BacktestSimulationError("backtest simulation config validation failed")
     source = _mapping(config.get("source"))
     date_range = _mapping(config.get("date_range"))
-    start = _date_from_any(date_range.get("start")) or date(2022, 12, 1)
+    start = _date_from_any(date_range.get("start")) or PRIMARY_RESEARCH_START_DATE
     end = _date_from_any(date_range.get("end")) or generated.date()
     if end > generated.date():
         raise DynamicV3BacktestSimulationError("simulation end exceeds generated cutoff")

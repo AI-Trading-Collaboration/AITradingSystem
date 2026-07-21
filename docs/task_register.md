@@ -53,6 +53,71 @@
 
 最新增量：
 
+2026-07-21：TRADING-2452 与 OPS-066 完成最终收口。最终 Full=
+`6543 passed / 2 skipped / 642 warnings`，pytest=`1009.31s`、runner=`1010.39s`；profile/
+telemetry/performance/provenance PASS，scheduler applied=true、fallback=false、tail idle max=`10.32s`。
+Full wall 与近三轮 `1005.04s / 1028.74s / 1005.52s` 同区间，无新增性能回归。TRADING-2452
+转 `DONE`，策略下一步 TRADING-2453；OPS-066 转 `DONE`，Windows lock first-create 回归与完整
+cache/coordination focused=`2/39 passed`。两项均移入 completed register，`production_effect=none`。
+
+2026-07-21：TRADING-2452 第三次 Full 的全部窗口迁移节点通过，但暴露独立 OPS-065 Windows
+lock 初始化竞态：`6541 passed / 1 failed / 2 skipped / 642 warnings / 1005.52s`。creator 发布
+空 `arbiter.lock` 后、写首字节前，waiter 可先锁住 byte 0，导致 creator `fdopen/flush`
+`PermissionError`。登记 `OPS-066`，改为所有 caller 先获取 OS lock、仅持锁者初始化空文件；
+不得标为 flaky 或以重跑掩盖，`production_effect=none`。
+
+2026-07-21：TRADING-2452 首次 failure-fix Full=`6541 passed / 1 failed / 2 skipped /
+643 warnings / 1028.74s`。唯一失败是 simple-baseline cache fixture 为覆盖 2021 窗口已从 420
+扩到 883 行，但 data-repair proof 的 after/expected/assert 三处仍为 420；统一为 883 后 focused
+`1 passed / 32.37s`。无生产计算、阈值或研究结果变化，继续执行带 parent provenance 的最终 Full。
+
+2026-07-21：TRADING-2452 formal gate 前发现 evaluator module 忽略 `--help` 并进入 24-worker
+正式执行路径。已仅终止本次可归属 process tree，并删除 incomplete run
+`...T081928Z_c99d1625db7d`（31 files / 186,744,597 bytes）；S4 增加 parse-before-execute
+contract，要求 help/unknown args 在 DQ、run directory、worker 创建前退出。该修复不改变 evaluator
+计算、策略阈值或有效 run，`production_effect=none`。
+
+2026-07-21：TRADING-2452 full failure audit 发现 TRADING-2450 canonical sidecar 绑定的两份历史
+config 已被本次 active-window 迁移合法替代。sidecar 与四份 legacy artifacts 保持冻结，当前 replay
+按设计以 `HISTORICAL_PORTABLE_CONFLICT` fail closed；登记 `TRADING-2454` 恢复精确历史 source
+archive 与分离 locator。不得用当前 source 重建 sidecar或回滚 `2021-02-22` active window；该债务不
+阻塞 TRADING-2452 closeout 或 TRADING-2453 诊断，`production_effect=none`。
+
+2026-07-21：TRADING-2452 S3 正式 evaluator 已完成。有效 run=
+`trading2452-historical-seen_20260721T053621Z_144f31edee91`，24 workers、总耗时
+`1545.11s`（25m45s），package/runtime DQ/output/source/cache commitments/独立 validator 全 PASS；
+DQ=`PASS_WITH_WARNINGS`、as_of=`2026-07-20`。全局 policy-hash 去重使每个 train build=`228`
+（原 8-worker affinity=`372`），六 fold 共删除 1,368 份 transient candidate reports、释放
+`15,318,824,739` bytes，最终 cache 为空。六 fold 的 1,800 个 train evaluations 均 COMPLETE，
+但全部 `gate=reject`/`selection_score=null`，因此 selected/test/recent=0，报告=
+`INCOMPLETE_NO_ELIGIBLE_CANDIDATE`；全部行命中 constraint-hit-rate policy，第6 fold另有96行命中
+constraint-hit-delta policy。此前一轮因 JSONL 多行 writer 被 validator 正确 FAIL 并排除；现已修复
+one-object-per-line、空 phase skip 与 1/8/16/24-worker 等价合同。当前进入 S4 shared manifests/
+compatibility/formal validation；不得据负面结果放宽阈值或扩候选，`production_effect=none`。
+
+2026-07-21：TRADING-2452 active window migration 补齐 paper-shadow 边界：新增
+`paper_shadow_account_v2.yaml` / `paper_shadow_backfill_v2.yaml`，active runtime/CLI resolver 从
+`2021-02-22`开始；v1只保留历史artifact replay。Evaluator首轮fixed+worker-affinity cache专项
+PASS，但真实第1 train约`6m20s`；`deepcopy`候选实测`6m11s`无显著收益并撤回。真实300候选
+policy分布为`72/6/144/6`、global unique=228，而现有8 batches仍build=372，正在把144次跨batch
+重复改为phase-local content-addressed global precompute。两次未完成run均主动停止、无研究结果进入
+lineage，prospective/paper-shadow/production/broker均未访问或改变，`production_effect=none`。
+
+2026-07-21：双线 Wave 7 已完成工程切片并冻结策略 policy。Engineering W7E1 最终只修改
+`tests/test_sim_interpretation.py`，10个nodeid及真实Event→Variant→Outcome→Calibration→Forward
+Bridge→Interpretation DAG、PIT/missing/live drift/tamper语义保持；isolated=`105.71s -> 45.15s`
+（`-57.29%`），门槛PASS。更早 weekly候选=`257.87s -> 262.49s`无收益，已完整撤回。
+Strategy 已完成 active `2021-02-22` policy/runtime/CLI 与 versioned glossary 收口，正在基于冻结source
+重建TRADING-2452 package、执行DQ及owner授权的historical-seen evaluator；prospective holdout仍关闭。
+Formal shared integration尚未结束，`production_effect=none`。
+
+2026-07-21：owner 确认后续活跃策略研究、主回测与主要结论统一从 `2021-02-22` 开始，
+`2022-12-01` 不再作为活跃默认边界；historical-seen 主 folds 延伸至 `2025-12-31`，2026 freeze
+前近期数据只作诊断，`2026-07-22..2027-07-21` prospective holdout 继续禁止读取。登记
+`TRADING-2452` 并启动双线：Strategy 重建 versioned preregistration 后执行 owner 已授权的
+historical-seen TRADING-106；Engineering 继续 Wave 7 bounded runtime optimization。共享文档、manifests、
+compatibility 与 formal integration 由 coordinator 单写，`production_effect=none`。
+
 2026-07-21：双线 Wave 6 完成。Engineering W6E1 isolated较慢after=`20.70s`，相对`41.93s`降低
 `50.63%`；自然Full中目标文件=`82.7893 -> 30.1328 worker-s`（`-63.60%`），3个nodeid、每test
 独立daily output、missing-input、真实producer/validator与CLI run/report/validate保持。focused/architecture/
@@ -1479,6 +1544,8 @@ ARCH-005 S0与G2.5仍锁定，`production_effect=none`。
 |TRADING-077|ETF portfolio governance/ETF Allocation Baseline Candidate Review Playbook|P0|BASELINE_DONE|项目 owner + 后续 source artifact refresh / owner baseline review cycle|详细拆解见 `docs/requirements/TRADING-077_ETF_Allocation_Baseline_Candidate_Review_Playbook.md`；TRADING-077A-J baseline review policy / eligibility gate / evidence matrix / manual package / owner decision capture / decision journal linkage / proposal-only draft / outcome tracker / Reader Brief / validation gate 基础设施已完成并复验通过；本轮修复 Markdown / HTML latest artifact 未读取同名 JSON sidecar、weight calibration proposal action type 被误判为 unsupported candidate type、forward sample 不足误标 `HIGH_DRAWDOWN` 的解释问题；当前真实 `weight_set_0009` package 为 `blocked`，后续需要刷新 source artifacts、积累 forward / journal evidence 并由 owner 执行 decision / proposal / outcome cycle，不自动 promotion、不写 baseline config、不触发 broker action|已按 runbook 先读取 `docs/operations/operations_runbook.md`；`validate-data --as-of 2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors）；`aits etf baseline-review validate --as-of 2026-06-08` 输出 `status=PASS`、`failed_check_count=0`；`aits etf baseline-review eligibility/package --candidate etf-weight-search-20260603T144553Z:weight_set_0009 --as-of 2026-06-08` 正确识别 candidate 且 fail-closed 为 `eligibility_status=blocked`、blocker_count 9，blockers 包含 evidence dashboard blocked、forward sample too small、parameter / weekly evidence insufficient、data quality blocked、ops blocked 和 missing decision journal link；Reader Brief `Baseline Candidate Review` 显示 `availability=AVAILABLE`、`status=blocked`、eligible_count 0、blocked_count 1、latest package detail link，decision/proposal/outcome 均为 `MISSING`；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`commands_executed=false`、`production_state_mutated=false`；专项 pytest 10 passed；最终 focused pytest 21 passed，docs freshness / report-contract / ruff / black / compileall / diff check 通过|2026-06-03: 新增并进入 IN_PROGRESS，原因：owner 提供 TRADING-077 计划，要求建立 ETF allocation candidate 进入 human baseline review 的 evidence-linked playbook；本阶段仅生成 manual review package、decision capture、journal linkage、proposal-only draft 和 outcome tracking，不自动 promotion、不写 production state、不触发 broker。2026-06-03: 从 IN_PROGRESS 改为 VALIDATING，原因：TRADING-077A~J baseline 已实现；新增 baseline review policy、eligibility gate、evidence matrix、review package generator、owner decision capture、decision journal integration、proposal draft generator、outcome tracker、Reader Brief section、report registry/catalog/system-flow/runbook/README integration 和专项测试；`python -m pytest tests -q`（2064 passed）、ruff、compileall、diff check 和 `aits etf baseline-review validate`（PASS）均通过；等待真实 candidate evidence 和 owner manual review cycle 观察。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：真实 2026-06-08 复验证明 playbook、validation gate、Reader Brief 可见性和 fail-closed package 行为已完成；剩余 owner review / source refresh / proposal draft cycle 属于人工治理依赖，不能由系统补造。|
 |TRADING-266_to_270_SMOOTHED_FORWARD_EVIDENCE_OPERATIONS_AND_PRIMARY_CANDIDATE_READINESS|ETF portfolio/dynamic v3 rescue smoothed progress/dashboard/event monitor/readiness/owner renewal|P0|BASELINE_DONE|研究流程：积累独立forward/PIT/DQ/cost/holdout证据；architecture coordinator：继续剩余G2.4 matrix|详细拆解见 `docs/requirements/TRADING-266_to_270_Smoothed_Forward_Evidence_Operations_and_Primary_Candidate_Readiness.md`。G2.4CR canonical closeout已完成；旧2026-06-13 DONE记录保留历史但已被G2.4CP/CQ source truth supersede。当前candidate=null、Binding=`targets=[]/NOT_REGISTERED`、Switch proposed=null，不得回填固定3d/3 targets/10-5-5 requirements；真实candidate/targets出现后再扩展非空业务路径。|15 callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output live upstream/cutoff validation；Binding-only candidate/targets；outcome/classification exact target lineage；Dashboard/Monitor同Progress lineage；Recheck与CQ Switch exact candidate；Renewal与Owner journal exact candidate；null/0-target/NOT_REGISTERED；content-derived全部views与byte rebuild；会话缓存键含validator/path/content fingerprint且byte变化必失效；CLI parity、docs/manifests/deprecation/compatibility及focused/architecture/contract；`production_effect=none`。|2026-07-14: G2.4CR=`COMPLETE_G2_4_CONTINUES`。性能progress`557.27s→13.60s`（-97.56%/40.98x），最大snapshot`633.06MB→9.49MB`（约-98.5%）；当前Progress/Dashboard/Monitor=`NOT_REGISTERED`、Recheck=`NO_ELIGIBLE_CANDIDATE`、Renewal建议`request_more_forward_data`。Focused/CLI baseline/architecture/contract=`147/120/279/203 passed`，generated=`922/1,122/858/0`。单slice不触发ARCH-005 handoff，不进入G2.5。|
 |TRADING-261_to_265_SMOOTHED_METHOD_PROMOTION_REVIEW_AND_PRIMARY_CANDIDATE_GATE|ETF portfolio/dynamic v3 rescue smoothed promotion/gate/binding/switch/owner journal|P0|BASELINE_DONE|研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据并执行人工 review；architecture coordinator：继续剩余 G2.4 matrix|详细拆解见 `docs/requirements/TRADING-261_to_265_Smoothed_Method_Promotion_Review_and_Primary_Candidate_Gate.md`。G2.4CQ canonical closeout已完成；旧固定3d/PROMOTE、静态evidence/criteria、0-target补造和candidate-null switch语义已撤销。当前无eligible candidate，workflow PASS不是promotion或投资结论。|16 callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output upstream/live policy validation；Confirmation-only candidate与Scorecard/Owner/Watch exact match；content-derived evidence/criteria/targets/switch/journal；null/0-target保持；reviewed policy；Owner record原子重建并拒绝无资格promote；全部views byte rebuild；bounded business-view commitments不递归嵌入上游snapshot；CLI parity、docs/manifests/deprecation/compatibility与focused/architecture/contract验证；`production_effect=none`。|2026-07-14: G2.4CQ=`COMPLETE_G2_4_CONTINUES`。当前candidate=null、Promotion不能进入owner review、Gate=`CONTINUE_OBSERVATION`、Binding=`targets=[]/NOT_REGISTERED`、Switch proposed=null、Owner推荐`request_more_forward_data`；非法promote record fail closed、合法continue-observation validation PASS。Focused=`7/5`、architecture/contract=`278/203 passed`，generated=`919/1,120/858/0`。单slice不触发ARCH-005 handoff，不进入G2.5。|
+|TRADING-2453_CONSTRAINT_HIT_REJECTION_DIAGNOSIS_AND_OWNER_REVIEW|Strategy research / constraint-hit 全量拒绝诊断与 owner review|P0|READY|strategy lane；依赖 TRADING-2452 S4 closeout，最终路径需 project owner review|详见 `docs/requirements/TRADING-2453_Constraint_Hit_Rejection_Diagnosis_and_Owner_Review.md`。TRADING-2452 的 1,800 个 COMPLETE train evaluations 全部因现有 constraint-hit policy 被 reject；本任务只做冻结输入重算、分层归因、policy/计算语义审计和 owner decision pack。|绑定有效 run/package/policy/source hashes；重算 gate exact match；按 fold/template/policy hash/constraint type 输出分布；区分正确拒绝、统计口径问题与统一窗口暴露的结构风险；不得改阈值、扩候选、搜索参数或访问 prospective；输出 owner options 且默认保持 KILL/PAUSE。|2026-07-21：由 TRADING-2452 正式负面结果登记；等待 TRADING-2452 focused/architecture/contract/full 与提交完成后启动，`production_effect=none`。|
+|TRADING-2454_HISTORICAL_PORTABLE_SOURCE_ARCHIVE_AFTER_WINDOW_MIGRATION|Strategy evidence platform / historical portable source archive after active-window migration|P1|READY|strategy evidence platform + integration coordinator；依赖可信历史 source bytes|详见 `docs/requirements/TRADING-2454_Historical_Portable_Source_Archive_After_Window_Migration.md`。TRADING-2450 sidecar 与四份 legacy artifacts 保持冻结；TRADING-2452 改变两份 active config 后，当前 locator 与历史 binding 冲突并正确 fail closed。|恢复两份配置在 sidecar freeze 时的 exact bytes 与 provenance；建立不覆盖 active config 的 versioned archive locator；四级 validator PASS，missing/tamper/drift 继续 fail closed；不得重建 sidecar、回滚 active window或运行研究搜索。|2026-07-21：由 full failure audit 登记；当前稳定状态=`HISTORICAL_PORTABLE_CONFLICT`，不阻塞 TRADING-2452/2453，`production_effect=none`、`broker_action=none`。|
 |TRADING-2446_to_2448_RESEARCH_RESTART_R0_R2|Strategy research / R0 contract、R1 evidence closure、R2 decision|P0|BASELINE_DONE|research owner + forward observation / selection protocol owner|详见 `docs/requirements/TRADING-2446_to_2448_Research_Restart_R0_R2.md` 和 `docs/research/strategy_research_restart_r0_r2_closeout_2026-07-20.md`；R0/R1/R2 工程和真实决策链已完成，但 R1 样本/continuity 证据未闭合且 OOS 为负面。|R0 preflight/validator PASS；096逐fold evaluator与完整window gate；097 real neighbor/dedicated stress/per-regime comparator；777当前真实ledger maturity；R2消费validated artifacts并输出 HOLD/CONTINUE/PAUSE/READY；focused/architecture/contract/report/reproducibility/full按风险通过；`production_effect=none`。剩余退出条件：event-risk样本自然达到floor、archive gap owner治理、未来无污染selection protocol；不得降低阈值。|2026-07-20: owner授权R0～R2连续推进；ARCH-004仍停G2.5前，ARCH-005 S2未启动。R0 13/13 checks PASS；R1 OOS 80/80 folds但20 reject+20 review-required，robustness `event_risk_high=15<20`；forward ledger=16、missing archive=5、20d/60d matured=0；R2=`CONTINUE_EVIDENCE_CLOSURE`，candidate expansion/new search=false，故转`BASELINE_DONE`而非DONE。最终 focused/fast-unit/architecture/contract/report/reproducibility=`187/300/419/265/55/23 passed`，full=`6403 passed, 2 skipped`（978.80s），无新增异常长尾。|
 |TRADING-096|ETF portfolio research/Dynamic v3 Rescue Walk-forward OOS Validation|P0|BASELINE_DONE|研究验证 owner；未来无污染selection protocol owner|逐fold real evaluator、purge/embargo、cost/lag/chronology/false-signal 与 content-derived validator 已完成；真实 OOS 为负面，且现有 source top-N 来自 full-period leaderboard并与 locked holdout 重叠，只能作为 legacy comparison。|Real top-N逐window path重算；source/path/report-id/checksum锁定；content-derived validation；完成purged/embargo逐fold evaluator与完整window gate后才可讨论PASS。未来无偏 OOS 需要独立 selection protocol，不得复用当前 source。|2026-07-12: artifact `7b6db671cbd67468`=20 candidates×2 windows/40 rows，`REVIEW_REQUIRED`且validation PASS；旧`c49f65c76e2b9b73` validation FAIL。2026-07-20: R1真实重跑20 candidates×2 windows×train/test=80/80 fold完整，40 test folds=20 reject+20 review-required，validator PASS；因selection/holdout污染转`BASELINE_DONE`，下一退出条件为另建无污染selection protocol。|
 |TRADING-097|ETF portfolio research/Dynamic v3 Rescue Robustness Sensitivity Overfit Diagnostics|P0|BASELINE_DONE|研究验证 owner + forward observation|9/9 real/derived neighbors 与 dedicated high-drawdown/fast-recovery、per-regime comparators均已实现并通过 content validator；`event_risk_high`真实样本15行低于reviewed floor 20，证据保持不完整。|所有neighbor path/report/checksum归属可证；stress/regime方法与completeness显式；validator从source重算；dedicated bucket与per-regime reviewed policy完成后才可校准PASS boundary。退出条件为独立样本自然达到floor后按同policy重跑，禁止降低门槛。|2026-07-12: artifact `87b0fc81d6681368`有8 real neighbors/1 missing，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、validation PASS；旧`6df822e705e15a42` validation FAIL。2026-07-20: R1真实重跑9/9 neighbors、2/2 stress完整，validator PASS；`event_risk_high=15<20`，故转`BASELINE_DONE`而非伪造robustness PASS。|
